@@ -3,7 +3,7 @@
 namespace common\components\Core\DataAccess;
 
 /**
- * Resuelve edit_surface_id desde NL (keywords en attribute_groups_v1.yaml).
+ * Resuelve edit_surface_id desde NL (keywords en data-access-config).
  */
 final class DataAccessEditDiscoveryService
 {
@@ -286,13 +286,7 @@ final class DataAccessEditDiscoveryService
      */
     private function aspectAssistantKeywords(array $aspectDef): array
     {
-        $assistant = $aspectDef['assistant'] ?? [];
-        if (!is_array($assistant)) {
-            return [];
-        }
-        $keywords = $assistant['keywords'] ?? [];
-
-        return is_array($keywords) ? array_values(array_filter(array_map('strval', $keywords))) : [];
+        return CatalogDefinitionHelper::keywords($aspectDef);
     }
 
     /**
@@ -301,13 +295,7 @@ final class DataAccessEditDiscoveryService
      */
     private function assistantKeywords(array $surfaceDef): array
     {
-        $assistant = $surfaceDef['assistant'] ?? [];
-        if (!is_array($assistant)) {
-            return [];
-        }
-        $keywords = $assistant['keywords'] ?? [];
-
-        return is_array($keywords) ? array_values(array_filter(array_map('strval', $keywords))) : [];
+        return CatalogDefinitionHelper::keywords($surfaceDef);
     }
 
     /**

@@ -28,10 +28,11 @@ class DataAccessCatalogController extends Controller
         $catalog = new AttributeGroupCatalog();
 
         return $this->render('index', [
+            'configDirectory' => AttributeGroupCatalog::configDirectory(),
             'entityGroups' => $catalog->listEntityGroupOptions(),
             'entities' => $catalog->listEntitiesForDisplay(),
             'metrics' => $catalog->listMetricsForDisplay(),
-            'yamlRoleGrants' => $catalog->listYamlRoleGrants(),
+            'editSurfaces' => $catalog->listEditSurfacesForDisplay(),
         ]);
     }
 }

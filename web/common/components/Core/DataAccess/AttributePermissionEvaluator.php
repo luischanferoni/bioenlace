@@ -7,7 +7,7 @@ use Yii;
 
 /**
  * Evalúa si un rol del usuario puede usar un grupo de atributos en una operación.
- * Grants efectivos: BD activa → YAML.
+ * Grants efectivos desde BD ({@see DataAccessRoleGrant}).
  */
 final class AttributePermissionEvaluator
 {

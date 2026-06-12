@@ -3,10 +3,11 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
+/* @var $configDirectory string */
 /* @var $entityGroups array<string, string> */
 /* @var $entities array<string, array<string, mixed>> */
 /* @var $metrics array<string, array<string, mixed>> */
-/* @var $yamlRoleGrants array<string, array<string, mixed>> */
+/* @var $editSurfaces array<string, array<string, mixed>> */
 
 $this->title = 'Catálogo DataAccess (YAML)';
 $this->params['breadcrumbs'][] = ['label' => 'Consultas staff', 'url' => ['#']];
@@ -20,8 +21,8 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 
     <p class="text-muted">
-        Referencia de <code>common/components/Core/DataAccess/metadata/attribute_groups_v1.yaml</code>.
-        Los grants en BD activos reemplazan estos valores por rol + grupo.
+        Referencia de <code><?= Html::encode($configDirectory) ?></code>.
+        Los permisos por rol se administran solo en base de datos.
     </p>
 
     <div class="card mb-4">
@@ -89,38 +90,29 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 
     <div class="card mb-4">
-        <div class="card-header"><strong>Grants YAML (referencia)</strong></div>
+        <div class="card-header"><strong>Superficies de edición</strong></div>
         <div class="card-body p-0">
             <table class="table table-sm table-striped mb-0">
                 <thead>
                     <tr>
-                        <th>Rol</th>
-                        <th>Grupo</th>
-                        <th>Operaciones</th>
-                        <th>Scope checker</th>
+                        <th>ID</th>
+                        <th>Etiqueta</th>
+                        <th>Datos (aspectos)</th>
                     </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($yamlRoleGrants as $roleName => $groups): ?>
-                    <?php if (!is_array($groups)) {
+                <?php foreach ($editSurfaces as $surfaceId => $def): ?>
+                    <?php if (!is_array($def)) {
                         continue;
                     } ?>
-                    <?php foreach ($groups as $groupKey => $grant): ?>
-                        <?php if (!is_array($grant)) {
-                            continue;
-                        } ?>
-                        <?php
-                        $ops = isset($grant['operations']) && is_array($grant['operations'])
-                            ? implode(', ', $grant['operations'])
-                            : '';
-                        ?>
-                        <tr>
-                            <td><?= Html::encode((string) $roleName) ?></td>
-                            <td><code><?= Html::encode((string) $groupKey) ?></code></td>
-                            <td><?= Html::encode($ops) ?></td>
-                            <td><code><?= Html::encode((string) ($grant['scope_checker'] ?? '')) ?></code></td>
-                        </tr>
-                    <?php endforeach; ?>
+                    <?php
+                    $aspects = isset($def['aspects']) && is_array($def['aspects']) ? array_keys($def['aspects']) : [];
+                    ?>
+                    <tr>
+                        <td><code><?= Html::encode((string) $surfaceId) ?></code></td>
+                        <td><?= Html::encode((string) ($def['label'] ?? '')) ?></td>
+                        <td><?= Html::encode(implode(', ', $aspects)) ?></td>
+                    </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>

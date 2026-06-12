@@ -38,6 +38,7 @@ class DataAccessGrantController extends Controller
 
         return $this->render('index', [
             'dataProvider' => $dataProvider,
+            'orphanRoleGrants' => DataAccessRoleGrant::orphanRoleGrantCounts(),
         ]);
     }
 

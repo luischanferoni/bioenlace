@@ -10,7 +10,7 @@ use common\components\Core\DataAccess\QueryOperation;
 use common\components\Core\DataAccess\ScopeCheckerRegistry;
 
 /**
- * Grant de acceso a grupo de atributos por rol (suplemento/override del YAML).
+ * Grant de acceso a grupo de atributos por rol (fuente única de permisos DataAccess).
  *
  * @property int $id
  * @property string $role_name
@@ -45,6 +45,7 @@ class DataAccessRoleGrant extends ActiveRecord
             [['active'], 'default', 'value' => 1],
             [['operationsSelected'], 'safe'],
             [['entity_group_key'], 'validateEntityGroupKey'],
+            [['role_name'], 'validateRoleName'],
             [['operationsSelected'], 'validateOperationsSelected'],
             [['scope_checker'], 'validateScopeChecker'],
             [
@@ -109,8 +110,53 @@ class DataAccessRoleGrant extends ActiveRecord
         }
         $catalog = new AttributeGroupCatalog();
         if (!$catalog->entityGroupExists($key)) {
-            $this->addError($attribute, 'Grupo no registrado en attribute_groups_v1.yaml.');
+            $this->addError($attribute, 'Grupo no registrado en data-access-config.');
         }
+    }
+
+    public function validateRoleName(string $attribute): void
+    {
+        $role = trim((string) $this->$attribute);
+        if ($role === '') {
+            return;
+        }
+        if (!isset(self::roleNameOptions()[$role])) {
+            $this->addError($attribute, 'El rol no existe en webvimark.');
+        }
+    }
+
+    /**
+     * Roles referenciados en grants que ya no existen en authManager.
+     *
+     * @return list<string>
+     */
+    public static function findOrphanRoleNames(): array
+    {
+        $known = array_keys(self::roleNameOptions());
+        $used = self::find()->select('role_name')->distinct()->column();
+        $orphans = [];
+        foreach ($used as $role) {
+            $role = (string) $role;
+            if ($role !== '' && !in_array($role, $known, true)) {
+                $orphans[] = $role;
+            }
+        }
+        sort($orphans);
+
+        return $orphans;
+    }
+
+    /**
+     * @return array<string, int> rol huérfano => cantidad de grants
+     */
+    public static function orphanRoleGrantCounts(): array
+    {
+        $out = [];
+        foreach (self::findOrphanRoleNames() as $role) {
+            $out[$role] = (int) self::find()->where(['role_name' => $role])->count();
+        }
+
+        return $out;
     }
 
     public function validateOperationsSelected(string $attribute): void

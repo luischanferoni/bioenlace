@@ -7,7 +7,7 @@ use common\components\Organization\Presentation\ProfesionalesConteoInfoPresentat
 use common\components\Organization\Presentation\ProfesionalesListadoRowsPresentation;
 
 /**
- * Mapa estable handler_id → presentación de métrica (IDs en attribute_groups_v1.yaml).
+ * Mapa estable handler_id → presentación de métrica (IDs en data-access-config).
  */
 final class MetricPresentationRegistry
 {

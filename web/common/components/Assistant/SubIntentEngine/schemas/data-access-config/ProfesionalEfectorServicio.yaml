@@ -1,34 +1,19 @@
-version: 1
+# Grupos, métricas staff y superficies de edición — ProfesionalEfectorServicio.
+entity: ProfesionalEfectorServicio
+groups:
+  asignacion:
+    attributes: [id_efector, id_servicio, id_persona]
 
-# Grupos de atributos por entidad (permiso fino). Wildcards sobre grupos, no sobre entidades enteras.
-
-entities:
-  Persona:
-    identidad_basica:
-      attributes: [nombre, apellido, otro_nombre, otro_apellido]
-    sexo_genero:
-      attributes: [sexo_biologico, genero]
-    edad_exacta:
-      attributes: [fecha_nacimiento]
-    identificadores:
-      attributes: [documento, id_tipodoc]
-
-  ProfesionalEfectorServicio:
-    asignacion:
-      attributes: [id_efector, id_servicio, id_persona]
-
-# Métricas registradas (consultas staff). Fase 1: una vertical slice.
 metrics:
   profesionales_conteo_efector:
     label: Conteo de profesionales por efector
-    assistant:
-      keywords:
-        - cuantos profesionales
-        - cuantos medicos hay
-        - cantidad de profesionales
-        - total de profesionales
-        - planta profesional
-        - personal del centro
+    keywords:
+      - cuantos profesionales
+      - cuantos medicos hay
+      - cantidad de profesionales
+      - total de profesionales
+      - planta profesional
+      - personal del centro
     presentation_handler: organization.profesionales_conteo_info
     scope_checker: efector_sesion
     required_groups:
@@ -80,15 +65,14 @@ metrics:
 
   profesionales_listado_efector:
     label: Listado de profesionales por efector
-    assistant:
-      keywords:
-        - listar profesionales
-        - mostrar profesionales del centro
-        - mostrar medicos del centro
-        - profesionales del centro
-        - quienes trabajan en el centro
-        - nombres de profesionales
-        - plantilla del centro
+    keywords:
+      - listar profesionales
+      - mostrar profesionales del centro
+      - mostrar medicos del centro
+      - profesionales del centro
+      - quienes trabajan en el centro
+      - nombres de profesionales
+      - plantilla del centro
     presentation_handler: organization.profesionales_listado_rows
     scope_checker: efector_sesion
     required_groups:
@@ -161,10 +145,9 @@ metrics:
 
   profesionales_conteo_por_servicio_efector:
     label: Distribución de profesionales por servicio
-    assistant:
-      keywords:
-        - profesionales por servicio
-        - distribucion por especialidad
+    keywords:
+      - profesionales por servicio
+      - distribucion por especialidad
     scope_checker: efector_sesion
     required_groups:
       - ProfesionalEfectorServicio.asignacion
@@ -205,18 +188,16 @@ metrics:
         modes: [grouped, aggregate]
         default: grouped
 
-# Superficies de edición dispersa (intent data-access.editar).
 edit_surfaces:
   profesional_en_efector:
     label: Personal del centro
-    assistant:
-      keywords:
-        - editar personal
-        - modificar profesional
-        - editar agenda del personal
-        - modificar agenda de un profesional
-        - cambiar datos del medico
-        - editar medico del centro
+    keywords:
+      - editar personal
+      - modificar profesional
+      - editar agenda del personal
+      - modificar agenda de un profesional
+      - cambiar datos del medico
+      - editar medico del centro
     scope_checker: efector_sesion
     subject_resolver:
       metric_id: profesionales_listado_efector
@@ -228,69 +209,21 @@ edit_surfaces:
         kind: scalar_group
         attribute_group: Persona.identidad_basica
         fields: [nombre, apellido, otro_nombre, otro_apellido]
-        assistant:
-          keywords:
-            - identidad
-            - nombre
-            - apellido
-            - datos personales
-            - cambiar nombre
+        keywords:
+          - identidad
+          - nombre
+          - apellido
+          - datos personales
+          - cambiar nombre
       agenda_horarios:
         label: Agenda y horarios
         kind: open_ui
         attribute_group: ProfesionalEfectorServicio.asignacion
         ui_action: profesional-agenda.configurar-agenda
         requires_params: [id_profesional_efector_servicio, id_servicio]
-        assistant:
-          keywords:
-            - agenda
-            - horarios
-            - horario
-            - cupo
-            - editar agenda
-
-# Permisos por rol sobre grupo + operación (+ scope checker opcional por grant).
-role_grants:
-  AdminEfector:
-    ProfesionalEfectorServicio.asignacion:
-      operations: [aggregate, filter, read, write]
-      scope_checker: efector_sesion
-    Persona.sexo_genero:
-      operations: [filter, aggregate, read]
-      scope_checker: efector_sesion_via_pes
-    Persona.identidad_basica:
-      operations: [read, write]
-      scope_checker: efector_sesion_via_pes
-
-  Medico:
-    ProfesionalEfectorServicio.asignacion:
-      operations: [aggregate, filter, read]
-      scope_checker: efector_sesion
-    Persona.identidad_basica:
-      operations: [read]
-      scope_checker: efector_sesion_via_pes
-
-  Administrativo:
-    ProfesionalEfectorServicio.asignacion:
-      operations: [aggregate, filter]
-      scope_checker: efector_sesion
-    Persona.sexo_genero:
-      operations: [filter, aggregate, read]
-      scope_checker: efector_sesion_via_pes
-    Persona.identidad_basica:
-      operations: [read]
-      scope_checker: efector_sesion_via_pes
-
-  paciente:
-    Persona.edad_exacta:
-      operations: [read, filter]
-      scope_checker: permitir_para_si_mismo
-    Persona.sexo_genero:
-      operations: [read, filter]
-      scope_checker: permitir_para_si_mismo
-
-# Sinónimos NL → filtros (asistente / preprocess).
-filter_synonyms:
-  sexo_biologico:
-    M: [2, varon, varones, hombre, hombres, masculino]
-    F: [1, mujer, mujeres, femenino, femenina]
+        keywords:
+          - agenda
+          - horarios
+          - horario
+          - cupo
+          - editar agenda

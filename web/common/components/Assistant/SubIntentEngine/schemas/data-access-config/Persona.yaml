@@ -1,0 +1,11 @@
+# Grupos de atributos — entidad Persona (permiso fino por grupo).
+entity: Persona
+groups:
+  identidad_basica:
+    attributes: [nombre, apellido, otro_nombre, otro_apellido]
+  sexo_genero:
+    attributes: [sexo_biologico, genero]
+  edad_exacta:
+    attributes: [fecha_nacimiento]
+  identificadores:
+    attributes: [documento, id_tipodoc]

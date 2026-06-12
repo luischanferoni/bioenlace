@@ -5,6 +5,7 @@ use yii\grid\GridView;
 
 /* @var $this yii\web\View */
 /* @var $dataProvider yii\data\ActiveDataProvider */
+/* @var $orphanRoleGrants array<string, int> */
 
 $this->title = 'Permisos por atributo (grants BD)';
 $this->params['breadcrumbs'][] = ['label' => 'Consultas staff', 'url' => ['#']];
@@ -23,9 +24,27 @@ $this->params['breadcrumbs'][] = $this->title;
             </div>
             <div class="card-body">
                 <p class="text-muted small">
-                    Overrides en base de datos sobre <code>attribute_groups_v1.yaml</code>.
-                    Si existe fila activa para rol + grupo, prevalece sobre el YAML.
+                    Permisos por rol y grupo de atributos. Los grupos deben existir en
+                    <code>data-access-config</code> (junto a los intents <code>data-access.*</code>).
                 </p>
+
+                <?php if ($orphanRoleGrants !== []): ?>
+                    <div class="alert alert-warning" role="alert">
+                        <strong>Roles huérfanos:</strong> hay grants asignados a roles que ya no existen en webvimark.
+                        <ul class="mb-0 mt-2">
+                            <?php foreach ($orphanRoleGrants as $roleName => $count): ?>
+                                <li>
+                                    <code><?= Html::encode($roleName) ?></code>
+                                    — <?= (int) $count ?> grant<?= $count === 1 ? '' : 's' ?>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <p class="small mb-0 mt-2">
+                            Reasigná o desactivá esos grants; no aplican a ningún usuario actual.
+                        </p>
+                    </div>
+                <?php endif; ?>
+
                 <?= GridView::widget([
                     'dataProvider' => $dataProvider,
                     'columns' => [

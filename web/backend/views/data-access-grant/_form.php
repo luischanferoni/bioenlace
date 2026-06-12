@@ -10,6 +10,10 @@ use common\components\Core\DataAccess\ScopeCheckerRegistry;
 
 $entityGroups = (new \common\components\Core\DataAccess\AttributeGroupCatalog())->listEntityGroupOptions();
 $roles = DataAccessRoleGrant::roleNameOptions();
+$currentRole = trim((string) $model->role_name);
+if ($currentRole !== '' && !isset($roles[$currentRole])) {
+    $roles = [$currentRole => $currentRole . ' (rol inexistente)'] + $roles;
+}
 $operations = DataAccessRoleGrant::operationOptions();
 $selected = array_flip($model->operationsSelected);
 

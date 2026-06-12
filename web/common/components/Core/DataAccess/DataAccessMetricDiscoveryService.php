@@ -3,7 +3,7 @@
 namespace common\components\Core\DataAccess;
 
 /**
- * Resuelve metric_id y keywords NL desde attribute_groups_v1 (sin valores de atributos en intents).
+ * Resuelve metric_id y keywords NL desde data-access-config (sin valores de atributos en intents).
  */
 final class DataAccessMetricDiscoveryService
 {
@@ -210,18 +210,7 @@ final class DataAccessMetricDiscoveryService
      */
     private function assistantKeywords(array $metricDef): array
     {
-        $assistant = isset($metricDef['assistant']) && is_array($metricDef['assistant'])
-            ? $metricDef['assistant']
-            : [];
-        $raw = isset($assistant['keywords']) && is_array($assistant['keywords']) ? $assistant['keywords'] : [];
-        $out = [];
-        foreach ($raw as $kw) {
-            if (is_string($kw) && trim($kw) !== '') {
-                $out[] = trim($kw);
-            }
-        }
-
-        return $out;
+        return CatalogDefinitionHelper::keywords($metricDef);
     }
 
     /**

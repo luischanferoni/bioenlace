@@ -4,7 +4,8 @@ Permisos por **grupos de atributos**, **scope checkers** y **métricas** staff p
 
 ## Archivos clave
 
-- `metadata/attribute_groups_v1.yaml` — grupos, métricas, grants YAML, plan query, `presentation_handler`
+- `Assistant/SubIntentEngine/schemas/data-access-config/` — grupos por entidad, métricas, edición dispersa, `filter_synonyms`
+- `data_access_role_grant` (BD) — permisos por rol + grupo (fuente única de grants)
 - `DataAccessUiService` — `/api/info` y `/api/listar` con ui_json genérico
 - `Presentation/MetricPresentationRegistry` — handlers de presentación por métrica
 - `QueryCompiler` / `MetricQueryExecutor` — compilación y ejecución
@@ -29,7 +30,7 @@ Dos intents YAML genéricos (no uno por métrica):
 | `data-access.listar` | `/api/listar` | Métricas rows |
 | `data-access.editar` | `/api/editar` | Edición dispersa (superficie → aspectos → sujeto) |
 
-El `metric_id` / `surface_id` y filtros se resuelven en runtime (`DataAccessMetricDiscoveryService`, `DataAccessEditDiscoveryService`, hydrators) desde keywords en este YAML — **sin valores de atributos** (sexo, especialidad concreta, etc.; eso va en `filter_synonyms` / resolvers).
+El `metric_id` / `surface_id` y filtros se resuelven en runtime (`DataAccessMetricDiscoveryService`, `DataAccessEditDiscoveryService`, hydrators) desde keywords en **data-access-config** — **sin valores de atributos** (sexo, especialidad concreta, etc.; eso va en `filter_synonyms` / resolvers).
 
 Edición: corte temprano si el rol no tiene ningún aspecto con `write` (`EditSurfaceAuthorizationService`). El intent `data-access.editar` se oculta del catálogo si no hay superficies editables. Preprocess: `ChatPreprocessService::isStaffDataAccessEditQuery`. Mutación vía `MutationExecutor` + handlers por grupo (`EditMutationRegistry`); aspectos `open_ui` devuelven `open_ui` en la respuesta.
 
@@ -39,10 +40,11 @@ Migración agenda staff: `agenda.editar-agenda-flow` deprecado (`catalog_exclude
 
 ## Extender
 
-1. Métrica + bloques `query`, `output`, `presentation_handler` y `assistant.keywords` en YAML.
+1. Grupo en `{Entidad}.yaml`; métrica con bloques `query`, `output`, `presentation_handler` y `keywords`.
 2. Handler en `MetricPresentationRegistry` + clase en dominio correspondiente.
-3. No crear intents YAML por métrica: reutilizar `data-access.info` o `data-access.listar`.
+3. Grant en BD (admin **Permisos por atributo**).
+4. No crear intents YAML por métrica: reutilizar `data-access.info` o `data-access.listar`.
 
 ## Admin backend
 
-Superadmin: menú **Consultas staff** → grants BD y catálogo YAML.
+Superadmin: menú **Consultas staff** → grants BD y catálogo YAML. La pantalla de grants avisa si hay roles huérfanos (eliminados de webvimark).

@@ -3,7 +3,7 @@
 use yii\db\Migration;
 
 /**
- * Grants DataAccess por rol (override/suplemento de attribute_groups_v1.yaml).
+ * Grants DataAccess por rol (fuente única de permisos; catálogo en data-access-config).
  */
 class m260608_140000_data_access_role_grant_table extends Migration
 {

@@ -34,7 +34,7 @@ class DataAccessMetricDiscoveryTest extends Unit
         $catalog = new AttributeGroupCatalog();
         $metric = $catalog->getMetric('profesionales_conteo_efector');
         $this->assertIsArray($metric);
-        $kw = $metric['assistant']['keywords'] ?? [];
+        $kw = $metric['keywords'] ?? [];
         $this->assertContains('cuantos profesionales', $kw);
         $this->assertNotContains('oftalmologos', $kw);
     }

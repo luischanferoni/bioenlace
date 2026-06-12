@@ -151,7 +151,7 @@ final class DataAccessUiActionCatalog
             'tags' => ['staff', 'metrics', 'data-access'],
             'parameters' => [
                 'expected' => [
-                    'metric_id' => ['description' => 'ID de métrica en attribute_groups_v1.yaml'],
+                    'metric_id' => ['description' => 'ID de métrica en data-access-config'],
                 ],
                 'provided' => [],
             ],

@@ -1,0 +1,7 @@
+version: 1
+
+# Sinónimos NL → filtros allowlisted (asistente / preprocess).
+filter_synonyms:
+  sexo_biologico:
+    M: [2, varon, varones, hombre, hombres, masculino]
+    F: [1, mujer, mujeres, femenino, femenina]

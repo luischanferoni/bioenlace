@@ -56,11 +56,13 @@ class DataAccessCatalogTest extends Unit
         $this->assertArrayHasKey('modes', $plan);
     }
 
-    public function testYamlRoleGrantFallback(): void
+    public function testLoadsMultiFileConfig(): void
     {
+        AttributeGroupCatalog::resetCacheForTests();
         $catalog = new AttributeGroupCatalog();
-        $grant = $catalog->getYamlRoleGrant('AdminEfector', 'Persona.identidad_basica');
-        $this->assertIsArray($grant);
-        $this->assertContains('read', $grant['operations'] ?? []);
+        $this->assertNotEmpty($catalog->listEntityGroupOptions());
+        $this->assertNotNull($catalog->getMetric('profesionales_conteo_efector'));
+        $this->assertNotNull($catalog->getEditSurface('profesional_en_efector'));
+        $this->assertStringContainsString('data-access-config', AttributeGroupCatalog::configDirectory());
     }
 }

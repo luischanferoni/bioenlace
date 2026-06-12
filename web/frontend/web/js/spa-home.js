@@ -1948,10 +1948,26 @@
         while (sib) {
             const next = sib.nextElementSibling;
             if (sib.classList.contains('bio-edit-sparse-step')
-                || sib.classList.contains('bio-edit-sparse-loader')) {
+                || sib.classList.contains('bio-edit-sparse-loader')
+                || sib.classList.contains('bio-edit-sparse-error')) {
                 sib.parentNode.removeChild(sib);
             }
             sib = next;
+        }
+    }
+
+    function appendEditSparseChainMessage(chain, mountEl, message, severity) {
+        const sev = severity === 'warning' ? 'warning' : 'danger';
+        const wrap = document.createElement('div');
+        wrap.className = 'bio-edit-sparse-step bio-edit-sparse-error w-100';
+        wrap.innerHTML = '<div class="alert alert-' + sev + ' mb-0">'
+            + escapeHtml(message)
+            + '</div>';
+        if (chain) {
+            chain.appendChild(wrap);
+        } else if (mountEl) {
+            mountEl.innerHTML = '';
+            mountEl.appendChild(wrap);
         }
     }
 
@@ -2009,7 +2025,16 @@
         })
             .then(function (r) {
                 if (!r.ok) {
-                    throw new Error('HTTP ' + r.status);
+                    return r.text().then(function (t) {
+                        let msg = '';
+                        try {
+                            const j = JSON.parse(t);
+                            if (j && typeof j.message === 'string') {
+                                msg = j.message.trim();
+                            }
+                        } catch (parseErr) { /* ignore */ }
+                        throw new Error(msg !== '' ? msg : ('HTTP ' + r.status));
+                    });
                 }
                 return r.json();
             })
@@ -2032,27 +2057,26 @@
                         editSparseMountRoot: mountEl,
                         enableFlowChainAutoAdvance: options.enableFlowChainAutoAdvance !== false
                     }));
-                } else if (chain) {
-                    const err = document.createElement('div');
-                    err.className = 'alert alert-warning mb-0';
-                    err.textContent = 'La respuesta no es una definición de UI válida.';
-                    chain.appendChild(err);
                 } else {
-                    mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
+                    appendEditSparseChainMessage(
+                        chain,
+                        mountEl,
+                        'La respuesta no es una definición de UI válida.',
+                        'warning'
+                    );
                 }
             })
-            .catch(function () {
+            .catch(function (err) {
                 if (loader.parentNode) {
                     loader.parentNode.removeChild(loader);
                 }
-                const errHtml = '<div class="alert alert-danger mb-0">Error al cargar el siguiente paso.</div>';
-                if (chain) {
-                    const err = document.createElement('div');
-                    err.innerHTML = errHtml;
-                    chain.appendChild(err);
-                } else {
-                    mountEl.innerHTML = errHtml;
-                }
+                const msg = (err && err.message) ? String(err.message).trim() : '';
+                appendEditSparseChainMessage(
+                    chain,
+                    mountEl,
+                    msg !== '' ? msg : 'Error al cargar el siguiente paso.',
+                    'danger'
+                );
             });
     }
 

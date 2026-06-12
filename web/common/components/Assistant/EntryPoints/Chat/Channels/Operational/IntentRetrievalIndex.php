@@ -2,6 +2,8 @@
 
 namespace common\components\Assistant\EntryPoints\Chat\Channels\Operational;
 
+use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Assistant\IntentEngine\IntentClassifier;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Assistant\IntentEngine\UiActionCatalogItem;
@@ -38,10 +40,43 @@ final class IntentRetrievalIndex
         }
 
         if ($out === []) {
-            return array_slice($catalog->items, 0, min($k, count($catalog->items)));
+            $out = array_slice($catalog->items, 0, min($k, count($catalog->items)));
         }
 
-        return $out;
+        return self::ensureDeclarativeFallbackInTopK($message, $catalog, $out, $k);
+    }
+
+    /**
+     * Si hay fallback operativo declarativo, el intent debe entrar en top-K aunque el score base sea bajo.
+     *
+     * @param UiActionCatalogItem[] $items
+     * @return UiActionCatalogItem[]
+     */
+    private static function ensureDeclarativeFallbackInTopK(
+        string $message,
+        UiActionCatalog $catalog,
+        array $items,
+        int $k
+    ): array {
+        if (!ChatPreprocessService::isStaffDataAccessOperationalQuery($message)) {
+            return $items;
+        }
+        $fallback = IntentClassificationRulesService::resolveOperationalFallback($message, $catalog);
+        if ($fallback === null || !$fallback['item'] instanceof UiActionCatalogItem) {
+            return $items;
+        }
+        $target = $fallback['item'];
+        foreach ($items as $it) {
+            if ($it->action_id === $target->action_id) {
+                return $items;
+            }
+        }
+        array_unshift($items, $target);
+        if (count($items) > $k) {
+            $items = array_slice($items, 0, $k);
+        }
+
+        return $items;
     }
 
     private static function scoreItem(string $messageLower, UiActionCatalogItem $item): int

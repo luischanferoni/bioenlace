@@ -45,7 +45,7 @@ score_adjustments:
   - when_rule: staff_agenda_config_edit
     apply:
       - intent_id: data-access.editar
-        delta: 45
+        delta: 50
       - intent_id: profesional-efector-servicio.crear-flow
         delta: -30
       - intent_id_prefix: licencia.cargar
@@ -54,7 +54,7 @@ score_adjustments:
   - when_rule: own_agenda_config_edit
     apply:
       - intent_id: data-access.editar
-        delta: 45
+        delta: 50
       - intent_id: profesional-efector-servicio.crear-flow
         delta: -30
       - intent_id_prefix: licencia.cargar

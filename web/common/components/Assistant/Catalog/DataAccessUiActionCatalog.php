@@ -46,7 +46,17 @@ final class DataAccessUiActionCatalog
                 'Edición dispersa',
                 'Modificar datos por superficie y aspectos autorizados (permiso write por grupo).',
                 '/api/editar',
-                ['editar', 'modificar', 'actualizar', 'cambiar']
+                [
+                    'editar',
+                    'modificar',
+                    'actualizar',
+                    'cambiar',
+                    'modificar agenda',
+                    'editar agenda',
+                    'agenda profesional',
+                    'horarios profesional',
+                    'configurar agenda',
+                ]
             ),
         ];
 

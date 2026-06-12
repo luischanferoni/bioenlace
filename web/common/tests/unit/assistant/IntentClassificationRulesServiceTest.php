@@ -24,6 +24,42 @@ class IntentClassificationRulesServiceTest extends Unit
         ));
     }
 
+    public function testOperationalFallbackRoutesAgendaEditToEditar(): void
+    {
+        $catalog = \common\components\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'data-access.editar',
+                    'Edición dispersa',
+                    '',
+                    null,
+                    '/api/editar',
+                    ['modificar', 'modificar agenda'],
+                    []
+                ),
+                new UiActionCatalogItem(
+                    'profesional-efector-servicio.crear-flow',
+                    'Alta',
+                    '',
+                    null,
+                    '/api/test',
+                    ['agenda'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['data-access.editar'] = $catalog->items[0];
+        $catalog->byActionId['profesional-efector-servicio.crear-flow'] = $catalog->items[1];
+
+        $msg = 'necesito modificar la agenda de un profesional';
+        $fb = IntentClassificationRulesService::resolveOperationalFallback($msg, $catalog);
+
+        $this->assertNotNull($fb);
+        $this->assertSame('data-access.editar', $fb['item']->action_id);
+        $this->assertSame('rules_declarative_fallback', $fb['method']);
+    }
+
     public function testScoreAdjustmentPrefersEditarOverLicencia(): void
     {
         $msg = 'necesito modificar las formas de atencion';

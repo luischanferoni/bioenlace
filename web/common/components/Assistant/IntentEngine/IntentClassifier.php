@@ -4,6 +4,7 @@ namespace common\components\Assistant\IntentEngine;
 
 use Yii;
 use common\components\Ai\IAManager;
+use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
 
 /**
  * Clasificación: reglas sobre keywords del catálogo; IA solo en {@see classify()} (catálogo completo).
@@ -39,6 +40,13 @@ final class IntentClassifier
         $rules = self::classifyByRules($message, $catalog->items);
         if ($rules !== null && $rules['confidence'] >= self::RULES_HIGH_CONFIDENCE) {
             return $rules;
+        }
+
+        if (ChatPreprocessService::isStaffDataAccessOperationalQuery($message)) {
+            $declarative = IntentClassificationRulesService::resolveOperationalFallback($message, $catalog);
+            if ($declarative !== null) {
+                return $declarative;
+            }
         }
 
         $ai = self::classifyByAi($message, $catalog, $rules);

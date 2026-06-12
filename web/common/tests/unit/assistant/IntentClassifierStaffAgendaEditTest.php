@@ -24,11 +24,12 @@ class IntentClassifierStaffAgendaEditTest extends Unit
         $messageLower = mb_strtolower($msg, 'UTF-8');
 
         $this->assertTrue(IntentClassifier::messageSuggestsStaffAgendaEdit($msg));
+        $editarScore = IntentClassifier::scoreItemPublic($messageLower, $editar);
         $this->assertGreaterThan(
             IntentClassifier::scoreItemPublic($messageLower, $crear),
-            IntentClassifier::scoreItemPublic($messageLower, $editar)
+            $editarScore
         );
-        $this->assertGreaterThanOrEqual(30, IntentClassifier::scoreItemPublic($messageLower, $editar));
+        $this->assertGreaterThanOrEqual(70, $editarScore);
     }
 
     public function testCrearAgendaIsNotStaffAgendaEdit(): void

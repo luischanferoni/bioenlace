@@ -53,17 +53,19 @@ final class OperationalChannel
             return self::finalize(IntentEngine::processQuery($queryText, $userId, null));
         }
 
+        // Reglas declarativas (p. ej. editar agenda staff) antes de top-K e IA.
+        if (ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
+            $declarative = IntentClassificationRulesService::resolveOperationalFallback($queryText, $catalog);
+            if ($declarative !== null) {
+                return self::buildFromClassification($declarative, $queryText, $userId);
+            }
+        }
+
         $top = IntentRetrievalIndex::topK($queryText, $catalog, 8);
         $classification = IntentClassifier::classifyAmongItems($queryText, $top, $catalog);
 
         if ($classification === null && ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
-            $fallback = IntentClassificationRulesService::resolveOperationalFallback($queryText, $catalog);
-            if ($fallback !== null) {
-                $classification = $fallback;
-            }
-            if ($classification === null) {
-                $classification = IntentClassifier::classify($queryText, $catalog);
-            }
+            $classification = IntentClassifier::classify($queryText, $catalog);
         }
 
         if ($classification === null) {

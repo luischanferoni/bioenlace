@@ -633,8 +633,11 @@
         mountEl.innerHTML = '';
         if (json && json.kind === 'ui_definition') {
             const isTerminalFlowStep = isActiveFlowSubmitRequest(flowSubmitRequestOpt);
+            const hasEditSparse = !!(json.ui_meta && json.ui_meta.edit_sparse);
             renderDynamicUi(json, mountEl, {
                 url: fullUrl,
+                rootContainer: mountEl,
+                editSparseMountRoot: hasEditSparse ? mountEl : null,
                 enableFlowChainAutoAdvance: enableFlowChainAutoAdvance === true && !isTerminalFlowStep,
                 isTerminalFlowStep: isTerminalFlowStep
             });
@@ -1911,6 +1914,32 @@
         return null;
     }
 
+    function ensureEditSparseChainRoot(mountEl) {
+        if (!mountEl) {
+            return null;
+        }
+        let chain = mountEl.querySelector(':scope > .bio-edit-sparse-chain');
+        if (chain) {
+            return chain;
+        }
+        chain = document.createElement('div');
+        chain.className = 'bio-edit-sparse-chain d-flex flex-column gap-3 w-100';
+        const nodes = [];
+        while (mountEl.firstChild) {
+            nodes.push(mountEl.firstChild);
+        }
+        if (nodes.length > 0) {
+            const firstStep = document.createElement('div');
+            firstStep.className = 'bio-edit-sparse-step bio-edit-sparse-step--locked w-100';
+            nodes.forEach(function (n) {
+                firstStep.appendChild(n);
+            });
+            chain.appendChild(firstStep);
+        }
+        mountEl.appendChild(chain);
+        return chain;
+    }
+
     function buildEditSparseAdvanceUrl(baseUrl, editSparse, selectedId, item) {
         const url = new URL(resolveSpaFetchUrl(String(baseUrl || '')), window.location.origin);
         const nextStep = editSparse.next_step != null ? String(editSparse.next_step).trim() : 'aspects';
@@ -1942,11 +1971,20 @@
     }
 
     function fetchEditSparseUiDefinition(nextUrl, rootContainer, options) {
-        const mountEl = rootContainer;
+        options = options && typeof options === 'object' ? options : {};
+        const mountEl = options.editSparseMountRoot || rootContainer;
         if (!mountEl) {
             return Promise.resolve();
         }
-        mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+        const chain = ensureEditSparseChainRoot(mountEl);
+        const loader = document.createElement('div');
+        loader.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted bio-edit-sparse-loader';
+        loader.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
+        if (chain) {
+            chain.appendChild(loader);
+        } else {
+            mountEl.innerHTML = loader.outerHTML;
+        }
         return fetch(nextUrl, {
             method: 'GET',
             headers: window.BioenlaceApiClient.mergeHeaders({
@@ -1961,17 +1999,45 @@
                 return r.json();
             })
             .then(function (json) {
+                if (loader.parentNode) {
+                    loader.parentNode.removeChild(loader);
+                }
                 if (json && json.kind === 'ui_definition') {
-                    renderDynamicUi(json, mountEl, Object.assign({}, options || {}, {
+                    const stepEl = document.createElement('div');
+                    stepEl.className = 'bio-edit-sparse-step w-100';
+                    if (chain) {
+                        chain.appendChild(stepEl);
+                    } else {
+                        mountEl.innerHTML = '';
+                        mountEl.appendChild(stepEl);
+                    }
+                    renderDynamicUi(json, stepEl, Object.assign({}, options, {
                         url: nextUrl,
-                        rootContainer: mountEl
+                        rootContainer: stepEl,
+                        editSparseMountRoot: mountEl,
+                        enableFlowChainAutoAdvance: options.enableFlowChainAutoAdvance !== false
                     }));
+                } else if (chain) {
+                    const err = document.createElement('div');
+                    err.className = 'alert alert-warning mb-0';
+                    err.textContent = 'La respuesta no es una definición de UI válida.';
+                    chain.appendChild(err);
                 } else {
                     mountEl.innerHTML = '<div class="alert alert-warning mb-0">La respuesta no es una definición de UI válida.</div>';
                 }
             })
             .catch(function () {
-                mountEl.innerHTML = '<div class="alert alert-danger mb-0">Error al cargar el siguiente paso.</div>';
+                if (loader.parentNode) {
+                    loader.parentNode.removeChild(loader);
+                }
+                const errHtml = '<div class="alert alert-danger mb-0">Error al cargar el siguiente paso.</div>';
+                if (chain) {
+                    const err = document.createElement('div');
+                    err.innerHTML = errHtml;
+                    chain.appendChild(err);
+                } else {
+                    mountEl.innerHTML = errHtml;
+                }
             });
     }
 
@@ -2379,16 +2445,27 @@
                 : null;
             const item = itemsById[selectedId];
 
-            if (editSparse && options.rootContainer && options.url) {
+            if (editSparse && options.url) {
+                const sparseRoot = options.editSparseMountRoot || options.rootContainer;
+                if (!sparseRoot) {
+                    return;
+                }
                 locked = true;
                 try {
                     allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
                 } catch (e) { /* ignore */ }
                 const nextUrl = buildEditSparseAdvanceUrl(options.url, editSparse, selectedId, item);
-                fetchEditSparseUiDefinition(nextUrl, options.rootContainer, {
+                const stepWrap = container.closest ? container.closest('.bio-edit-sparse-step') : null;
+                if (stepWrap) {
+                    stepWrap.classList.add('bio-edit-sparse-step--locked');
+                }
+                fetchEditSparseUiDefinition(nextUrl, sparseRoot, {
                     url: nextUrl,
-                    rootContainer: options.rootContainer
+                    rootContainer: sparseRoot,
+                    editSparseMountRoot: sparseRoot,
+                    enableFlowChainAutoAdvance: options.enableFlowChainAutoAdvance
                 });
+                setTimeout(scrollChatToBottom, 20);
                 return;
             }
 

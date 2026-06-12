@@ -190,57 +190,37 @@ final class DataAccessEditUiService
             return $this->renderSubjectList($params, $ctx, $surfaceId);
         }
 
-        $preselectedAspects = EditSparseAspectIds::fromParams($params);
-        if ($preselectedAspects !== []) {
-            return $this->renderForm($params, $ctx, $surfaceId);
-        }
-
         $out = UiScreenService::renderUiDefinition('data-access', 'editar', [
             'title' => 'Editar: ' . $label,
-            'message' => $needsSubject
-                ? 'Primero elegí el registro; después marcá qué aspectos querés modificar.'
-                : 'Elegí qué aspectos querés modificar y continuá al formulario.',
+            'message' => 'Elegí qué aspecto querés modificar.',
             'step' => 'aspects',
             'surface_id' => $surfaceId,
             'aspect_options' => $aspects,
-            'subject_list_url' => $needsSubject && $metricId !== ''
-                ? '/api/v1/editar?step=subjects&surface_id=' . rawurlencode($surfaceId)
-                : null,
         ], null);
 
-        if (!$needsSubject) {
-            $hidden = $this->contextHiddenFields(
-                [
-                    'surface_id' => $surfaceId,
-                    'id_persona' => (string) ($params['id_persona'] ?? ''),
-                    'id_profesional_efector_servicio' => (string) ($params['id_profesional_efector_servicio'] ?? ''),
-                    'id_servicio' => (string) ($params['id_servicio'] ?? ''),
-                    'id_efector' => (string) ($params['id_efector'] ?? ''),
-                ],
-                'form'
-            );
-            $aspectOptions = [];
-            foreach ($aspects as $aspect) {
-                $aspectOptions[] = [
-                    'value' => (string) ($aspect['id'] ?? ''),
-                    'label' => (string) ($aspect['label'] ?? ''),
-                ];
-            }
-            $hidden[] = [
-                'name' => 'aspect_ids',
-                'type' => 'select',
-                'label' => 'Aspecto a modificar',
-                'required' => true,
-                'include_in_submit' => true,
-                'options' => $aspectOptions,
+        $listItems = [];
+        foreach ($aspects as $aspect) {
+            $listItems[] = [
+                'id' => (string) ($aspect['id'] ?? ''),
+                'name' => (string) ($aspect['label'] ?? ''),
             ];
-            $out = $this->appendBlocks($out, [[
-                'kind' => 'fields',
-                'id' => 'editar_elegir_aspectos',
-                'title' => 'Aspectos',
-                'fields' => $hidden,
-            ]]);
         }
+
+        $out = $this->appendBlocks($out, [[
+            'kind' => 'list',
+            'id' => 'editar_aspectos',
+            'title' => 'Aspectos',
+            'items' => $listItems,
+            'presentation' => [
+                'tile' => 'medium',
+                'shape' => 'wide',
+            ],
+            'selection' => [
+                'mode' => 'single',
+                'requires_confirmation' => false,
+            ],
+            'draft_field' => 'aspect_ids',
+        ]]);
 
         $out['kind'] = 'ui_definition';
         $out['success'] = true;
@@ -248,11 +228,19 @@ final class DataAccessEditUiService
             'step' => 'aspects',
             'surface_id' => $surfaceId,
             'aspects' => $aspects,
-            'needs_subject' => $needsSubject,
-            'next_subject_step' => $needsSubject && $metricId !== ''
-                ? ['step' => 'subjects', 'surface_id' => $surfaceId, 'metric_id' => $metricId]
-                : null,
+            'edit_context' => [
+                'step' => 'aspects',
+                'surface_id' => $surfaceId,
+                'next_step' => 'form',
+                'pes_param' => 'aspect_ids',
+            ],
         ];
+
+        if (isset($out['ui_meta']) && is_array($out['ui_meta'])) {
+            $out['ui_meta']['edit_sparse'] = $out['data']['edit_context'];
+        } else {
+            $out['ui_meta'] = ['edit_sparse' => $out['data']['edit_context']];
+        }
 
         return $out;
     }

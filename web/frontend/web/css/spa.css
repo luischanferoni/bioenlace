@@ -699,6 +699,19 @@ html:has(.spa-asistente-root) {
     line-height: 1.45;
 }
 
+/* Edición dispersa: pasos apilados (sujeto → aspecto → formulario) */
+.bio-edit-sparse-step--locked .bio-ui-json-list-items button[data-embed-pick] {
+    pointer-events: none;
+}
+
+.bio-edit-sparse-step--locked .bio-ui-json-list-items button[data-embed-pick].border-3 {
+    opacity: 1;
+}
+
+.bio-edit-sparse-step--locked .bio-ui-json-list-items button[data-embed-pick]:not(.border-3) {
+    opacity: 0.55;
+}
+
 .bio-ui-json-list--layout-table .bio-ui-json-list-table th {
     font-size: 0.8125rem;
     white-space: nowrap;

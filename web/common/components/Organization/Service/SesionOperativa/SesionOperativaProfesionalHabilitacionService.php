@@ -68,20 +68,6 @@ class SesionOperativaProfesionalHabilitacionService extends Component
             $nombreEfector = $efectorRow !== null ? (string) $efectorRow->nombre : '';
             $contact = $this->formatContactList($this->getContactosAdministradorEfector($idEfector));
 
-            $tieneLaboralPes = ProfesionalEfectorServicioCondicionLaboral::existeAlgunaActivaParaPersonaEfector(
-                $idPersona,
-                $idEfector
-            );
-            if (!$tieneLaboralPes) {
-                $problemas[] = [
-                    'id_efector' => $idEfector,
-                    'nombre' => $nombreEfector,
-                    'message' => 'Falta registrar al menos una condición laboral vigente para este efector. El administrador debe completar el alta del profesional.',
-                    'contact' => $contact,
-                ];
-                continue;
-            }
-
             $candidatosClinicos = [];
             $candidatosAdmin = [];
             $pesRows = ProfesionalEfectorServicio::find()
@@ -104,6 +90,21 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                     continue;
                 }
                 $candidatosClinicos[] = $pes;
+            }
+
+            // Condición laboral solo para asignaciones clínicas (PES con agenda). AdminEfector no la requiere.
+            if ($candidatosClinicos !== []
+                && !ProfesionalEfectorServicioCondicionLaboral::existeAlgunaActivaParaPersonaEfector(
+                    $idPersona,
+                    $idEfector
+                )) {
+                $problemas[] = [
+                    'id_efector' => $idEfector,
+                    'nombre' => $nombreEfector,
+                    'message' => 'Falta registrar al menos una condición laboral vigente para este efector. El administrador debe completar el alta del profesional.',
+                    'contact' => $contact,
+                ];
+                continue;
             }
 
             $validPes = [];

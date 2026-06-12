@@ -13,7 +13,6 @@ use yii\db\ActiveRecord;
  * @property string $vigente_desde
  * @property int $intervalo_minutos
  * @property string $formas_atencion
- * @property int|null $cupo_pacientes
  * @property bool $acepta_consultas_online
  * @property string|null $lunes_2
  * @property string|null $martes_2
@@ -38,7 +37,7 @@ class ProfesionalEfectorServicioAgendaVersion extends ActiveRecord
     {
         return [
             [['id_profesional_efector_servicio', 'id_efector', 'vigente_desde', 'intervalo_minutos', 'formas_atencion'], 'required'],
-            [['id_profesional_efector_servicio', 'id_efector', 'cupo_pacientes', 'intervalo_minutos', 'created_by'], 'integer'],
+            [['id_profesional_efector_servicio', 'id_efector', 'intervalo_minutos', 'created_by'], 'integer'],
             [['acepta_consultas_online'], 'boolean'],
             [['vigente_desde', 'created_at'], 'safe'],
             [['formas_atencion'], 'string', 'max' => 32],

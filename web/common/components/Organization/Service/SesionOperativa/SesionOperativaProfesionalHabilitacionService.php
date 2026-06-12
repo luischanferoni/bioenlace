@@ -140,7 +140,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                         $problemas[] = [
                             'id_efector' => $idEfector,
                             'nombre' => $nombreEfector,
-                            'message' => 'Falta configuración de agenda o cupos para los servicios asignados (mismos requisitos que el alta del profesional).',
+                            'message' => 'Falta configuración de agenda para los servicios asignados (mismos requisitos que el alta del profesional).',
                             'contact' => $contact,
                         ];
                         continue;
@@ -289,9 +289,6 @@ class SesionOperativaProfesionalHabilitacionService extends Component
     private function agendaCompletaParaServicio(Servicio $servicio, ProfesionalEfectorServicioAgenda $ag): bool
     {
         if ($ag->formas_atencion === null || $ag->formas_atencion === '') {
-            return false;
-        }
-        if ($ag->cupo_pacientes === null || $ag->cupo_pacientes === '') {
             return false;
         }
 

@@ -62,11 +62,6 @@
           "include_in_submit": true
         },
         {
-          "name": "cupo_pacientes",
-          "type": "hidden",
-          "include_in_submit": true
-        },
-        {
           "name": "formas_atencion",
           "type": "hidden",
           "include_in_submit": true

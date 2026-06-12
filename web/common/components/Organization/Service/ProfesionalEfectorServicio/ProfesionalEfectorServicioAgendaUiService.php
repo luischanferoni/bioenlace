@@ -113,7 +113,6 @@ final class ProfesionalEfectorServicioAgendaUiService
         $agenda = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id);
 
         if ($agenda !== null) {
-            $out['cupo_pacientes'] = (string) $agenda->cupo_pacientes;
             $out['intervalo_minutos'] = (string) ($agenda->intervalo_minutos ?? AgendaIntervaloMinutos::DEFAULT);
             $out['formas_atencion'] = (string) $agenda->formas_atencion;
             $out['acepta_consultas_online'] = $agenda->acepta_consultas_online ? '1' : '0';

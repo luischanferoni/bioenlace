@@ -14,7 +14,6 @@ use yii\db\ActiveRecord;
  * @property int $id_profesional_efector_servicio
  * @property int $id_efector
  * @property string $formas_atencion
- * @property int|null $cupo_pacientes
  * @property int|null $duracion_slot_minutos
  * @property int|null $intervalo_minutos
  * @property bool $acepta_consultas_online
@@ -61,7 +60,7 @@ class ProfesionalEfectorServicioAgenda extends ActiveRecord
     {
         return [
             [['id_profesional_efector_servicio', 'id_efector', 'formas_atencion'], 'required'],
-            [['id_profesional_efector_servicio', 'id_efector', 'cupo_pacientes', 'duracion_slot_minutos', 'intervalo_minutos'], 'integer'],
+            [['id_profesional_efector_servicio', 'id_efector', 'duracion_slot_minutos', 'intervalo_minutos'], 'integer'],
             ['intervalo_minutos', 'validateIntervaloMinutos'],
             [['acepta_consultas_online'], 'boolean'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],

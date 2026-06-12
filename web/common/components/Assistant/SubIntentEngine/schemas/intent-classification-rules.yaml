@@ -9,7 +9,7 @@ vocab:
   own_scope: '\b(mi|mis)\s+(agenda|horario|horarios|formas?\s+de\s+atencion)\b'
   staff_third_party: '\b(profesional|medico|doctor|personal)\b'
   agenda_de_uno: '\b(agenda|horario|horarios)\s+de\s+(un|el|la|los|las)\b'
-  config_topics: '\b(formas?\s+de\s+atencion|forma\s+de\s+atencion|teleconsulta|intervalo|cupo)\b'
+  config_topics: '\b(formas?\s+de\s+atencion|forma\s+de\s+atencion|teleconsulta|intervalo)\b'
   list_verbs: '\b(listar|mostrar|mostrame|ver listado|nombres de|quienes|quien es|quién es|plantilla)\b'
   count_verbs: '\b(cuantos|cuantos hay|total de|conteo|cantidad de|numero de|cuenta)\b'
   list_phrases:
@@ -23,7 +23,7 @@ match_rules:
     require_any: [staff_third_party, agenda_de_uno, config_topics]
     ai_hint: >-
       Si el mensaje pide modificar/editar agenda, horarios, formas de atención, teleconsulta,
-      intervalo o cupo de un profesional (sin crear/alta), priorizá el intent de edición dispersa
+      intervalo entre turnos de un profesional (sin crear/alta), priorizá el intent de edición dispersa
       staff cuyo goal/how describa modificar datos por superficie o aspectos autorizados.
 
   own_agenda_config_edit:

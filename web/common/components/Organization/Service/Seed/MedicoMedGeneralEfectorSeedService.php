@@ -340,7 +340,6 @@ final class MedicoMedGeneralEfectorSeedService
         $agenda->id_profesional_efector_servicio = $idPes;
         $agenda->id_efector = $idEfector;
         $agenda->formas_atencion = 'SIN_ATENCION';
-        $agenda->cupo_pacientes = 20;
         $agenda->duracion_slot_minutos = 15;
         $agenda->intervalo_minutos = 15;
         $agenda->acepta_consultas_online = 0;

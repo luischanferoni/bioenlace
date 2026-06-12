@@ -20,10 +20,9 @@ final class AgendaConfigImpactProfile
         'domingo_2',
     ];
 
-    /** Campos de modalidad / cupo sin preview de grilla (persistencia directa). */
+    /** Campos de modalidad sin preview de grilla (persistencia directa). */
     private const MODALITY_FIELD_NAMES = [
         'acepta_consultas_online',
-        'cupo_pacientes',
         'formas_atencion',
     ];
 

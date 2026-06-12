@@ -98,21 +98,6 @@ class TurnoPersistService
                 $model->scenario = ServiciosEfector::ORDEN_LLEGADA_PARA_TODOS;
             } elseif ($servicioEfector->formas_atencion == ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL) {
                 $model->scenario = ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL;
-                $idPesCupo = (int) ($model->id_profesional_efector_servicio ?? 0);
-                if ($idPesCupo > 0) {
-                    $agenda = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPesCupo);
-                    if ($agenda) {
-                        $cantTurnosOtorgados = Turno::cantidadDeTurnosOtorgadosPorProfesionalEfectorServicio(
-                            $idPesCupo,
-                            (string) $model->fecha
-                        );
-                        if ($agenda->cupo_pacientes != 0 && $agenda->cupo_pacientes <= $cantTurnosOtorgados) {
-                            throw new \InvalidArgumentException(
-                                'Ya se otorgaron todos los turnos correspondientes al límite establecido'
-                            );
-                        }
-                    }
-                }
             }
         }
 

@@ -118,14 +118,14 @@ class ProfesionalAgendaController extends BaseController
     }
 
     /**
-     * UI JSON: configurar agenda semanal por servicio (cupo, forma de atención y horarios).
+     * UI JSON: configurar agenda semanal por servicio (intervalo, forma de atención y horarios).
      *
      * GET|POST /api/v1/profesional-agenda/configurar-agenda
      *
-     * @action_name Configurar agenda (horarios/cupo/modo) por servicio
+     * @action_name Configurar agenda (horarios/intervalo/modo) por servicio
      * @entity Agendas
-     * @tags agenda, profesional, servicios, horarios, cupo, staff
-     * @keywords configurar agenda profesional, horarios por servicio, cupo pacientes, forma de atención
+     * @tags agenda, profesional, servicios, horarios, intervalo, staff
+     * @keywords configurar agenda profesional, horarios por servicio, intervalo turnos, forma de atención
      * @spa_presentation fullscreen
      */
     public function actionConfigurarAgenda(): array

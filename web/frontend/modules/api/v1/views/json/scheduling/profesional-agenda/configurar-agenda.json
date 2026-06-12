@@ -32,11 +32,6 @@
         "impact_profile": "grid",
         "turno_impact": "grid"
       },
-      "cupo_pacientes": {
-        "impact_profile": "capacity",
-        "turno_impact": "none",
-        "hint": "Tope diario para nuevas reservas. No reprograma ni cancela turnos ya agendados."
-      },
       "formas_atencion": {
         "impact_profile": "capacity",
         "turno_impact": "none",
@@ -56,7 +51,7 @@
     {
       "kind": "message",
       "id": "policy_turnos",
-      "text": "Si modificás horarios semanales o el intervalo entre turnos, el sistema revisa los turnos pendientes desde la fecha de vigencia. Los que ya no encajan en la grilla pasan a «en resolución»: el paciente recibe aviso para elegir otro horario con el mismo profesional o cancelar. Cupo diario, forma de atención y teleconsulta se guardan sin ese recorrido porque no desplazan turnos reservados."
+      "text": "Si modificás horarios semanales o el intervalo entre turnos, el sistema revisa los turnos pendientes desde la fecha de vigencia. Los que ya no encajan en la grilla pasan a «en resolución»: el paciente recibe aviso para elegir otro horario con el mismo profesional o cancelar. Forma de atención y teleconsulta se guardan sin ese recorrido porque no desplazan turnos reservados."
     },
     {
       "kind": "fields",
@@ -133,22 +128,6 @@
           "layout": { "col": 12, "breakpoint": "md" }
         },
         {
-          "name": "cupo_pacientes",
-          "label": "Cupo diario (nuevas reservas)",
-          "type": "select",
-          "required": false,
-          "options": [
-            { "value": "0", "label": "Sin cupo" },
-            { "value": "5", "label": "5" },
-            { "value": "10", "label": "10" },
-            { "value": "15", "label": "15" },
-            { "value": "20", "label": "20" },
-            { "value": "25", "label": "25" },
-            { "value": "30", "label": "30" }
-          ],
-          "layout": { "col": 4, "breakpoint": "md" }
-        },
-        {
           "name": "formas_atencion",
           "label": "Forma de atención",
           "type": "select",
@@ -158,7 +137,7 @@
             { "value": "TURNO", "label": "Programado" },
             { "value": "SIN_ATENCION", "label": "Sin atención por turnos" }
           ],
-          "layout": { "col": 4, "breakpoint": "md" }
+          "layout": { "col": 6, "breakpoint": "md" }
         },
         {
           "name": "acepta_consultas_online",
@@ -170,7 +149,7 @@
             { "value": "0", "label": "No" },
             { "value": "1", "label": "Sí" }
           ],
-          "layout": { "col": 4, "breakpoint": "md" }
+          "layout": { "col": 6, "breakpoint": "md" }
         }
       ]
     }

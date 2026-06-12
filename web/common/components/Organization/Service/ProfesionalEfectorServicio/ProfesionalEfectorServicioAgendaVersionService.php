@@ -141,7 +141,6 @@ final class ProfesionalEfectorServicioAgendaVersionService
             $agenda->id_efector = $idEfector;
         }
         $agenda->formas_atencion = $version->formas_atencion;
-        $agenda->cupo_pacientes = $version->cupo_pacientes;
         $agenda->intervalo_minutos = $version->getIntervaloMinutosEfectivo();
         $agenda->duracion_slot_minutos = null;
         $agenda->acepta_consultas_online = (bool) $version->acepta_consultas_online;

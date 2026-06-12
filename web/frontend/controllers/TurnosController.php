@@ -21,6 +21,8 @@ use common\models\Persona;
 use common\models\User;
 use frontend\components\UserRequest;
 use common\components\Scheduling\Service\TurnoSlotFinder;
+use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
+use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
 
 /**
  * TurnosController implements the CRUD actions for Turno model.
@@ -260,7 +262,7 @@ class TurnosController extends Controller
         $nroDiaDeSemana = date('N', strtotime($dia)) - 1;
         $columnasAgenda = ['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'];
 
-        $agregoSegundos = false;
+        $slots = [];
 
         if ($id_servicio && $idPesReq == 0) {
             $pesRows = ProfesionalEfectorServicio::findAllActivosPorServicioEfector((int) $id_servicio, (int) $id_efector);
@@ -302,7 +304,11 @@ class TurnosController extends Controller
                 return $ret;
             }
 
-            $cupoPacientes = count($horariosAgenda) * 5;
+            $slots = ProfesionalEfectorServicioAgenda::crearSlotsDesdeHorarios(
+                $horariosAgenda,
+                AgendaIntervaloMinutos::DEFAULT,
+                false
+            );
         } else {
             $idPes = null;
             if ($idPesReq > 0 && $id_efector) {
@@ -345,26 +351,17 @@ class TurnosController extends Controller
 
             $horariosAgenda = array_map('intval', explode(",", $agenda->{$columnasAgenda[$nroDiaDeSemana]}));
 
-            // cupo pacientes / cantidad de horas por dia
-
-            if (is_null($agenda->cupo_pacientes) || $agenda->cupo_pacientes == 0) {
-                $minutosXHora = 15;
-            } else {
-                $minutosXHora = 60 * count($horariosAgenda) / $agenda->cupo_pacientes;
-                $agregoSegundos = $minutosXHora - intval($minutosXHora) < 0.5 ? false : true;
-            }
-
-            $cupoPacientes = $agenda->cupo_pacientes > 0 ? $agenda->cupo_pacientes : count($horariosAgenda) * 5;
+            $slots = AgendaSlotEngine::slotsParaDia(
+                $agenda,
+                $dia,
+                $agenda->resolveIntervaloMinutosParaSlots()
+            );
         }
 
         $botonesTurnosManiana = [];
         $botonesTurnosTarde = [];
         $slotsDisponibles = [];
-
-        // bandera para saber si todos los turnos ya estan tomados, para el sobreturno
         $todosTomados = true;
-
-        $slots = $this->crearSlots($horariosAgenda, $cupoPacientes, $minutosXHora, $agregoSegundos);
 
         foreach ($slots as $slot) {
 
@@ -455,53 +452,6 @@ class TurnosController extends Controller
             }, $slotsDisponibles);
         }
         return $resp;
-    }
-
-    public function crearSlots($horariosAgenda, $cupoPacientes, $minutosXPaciente, $agregoSegundos)
-    {
-        // Inicializar el array para los intervalos
-        $intervalos = [];
-        $intervaloActual = [];
-
-        // Recorrer el array de horarios
-        for ($i = 0; $i < count($horariosAgenda); $i++) {
-            // Si el intervalo actual está vacío, agregar el primer horario
-            if (empty($intervaloActual)) {
-                $intervaloActual[] = $horariosAgenda[$i];
-            } else {
-                // Si el siguiente horario es consecutivo, agregar al intervalo actual
-                if ($horariosAgenda[$i] == $intervaloActual[count($intervaloActual) - 1] + 1) {
-                    $intervaloActual[] = $horariosAgenda[$i];
-                } else {
-                    // Si no es consecutivo, guardar el intervalo actual y empezar uno nuevo
-                    $intervalos[] = $intervaloActual;
-                    $intervaloActual = [$horariosAgenda[$i]];
-                }
-            }
-        }
-        // No olvidar agregar el último intervalo al final
-        if (!empty($intervaloActual)) {
-            $intervalos[] = $intervaloActual;
-        }
-
-        $slots = [];
-
-        $minutosXPaciente = intval($minutosXPaciente);
-
-        foreach ($intervalos as $horarios) {
-
-            $inicio = new \DateTime(sprintf('%02d:00', $horarios[0]));
-            $ultHora = new \DateTime(sprintf('%02d:00', $horarios[count($horarios) - 1]));
-            $fin = $ultHora->modify('+60 minutes');
-
-            while ($inicio < $fin && $cupoPacientes > 0) {
-                $slots[] = $inicio->format('H:i');
-                $agregoSegundos ? $inicio->modify("+{$minutosXPaciente} minutes 30 seconds") : $inicio->modify("+{$minutosXPaciente} minutes");
-                $cupoPacientes--;
-            }
-        }
-
-        return $slots;
     }
 
     /**

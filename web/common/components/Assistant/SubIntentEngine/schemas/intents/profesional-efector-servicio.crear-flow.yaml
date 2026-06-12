@@ -20,7 +20,7 @@ intent_semantics:
     y, si el servicio admite turnos, abrir la configuración de una agenda nueva.
   how: >-
     Buscar persona en el padrón, elegir un servicio del establecimiento (efector en sesión).
-    Al completar ese paso se persiste el vínculo persona–efector–servicio; si el servicio acepta turnos sigue la pantalla de configuración de agenda (donde se guardan horarios/cupo) y luego el cierre declarativo del flujo (`flow_submit`), si no, el cierre ocurre al terminar la selección de servicio.
+    Al completar ese paso se persiste el vínculo persona–efector–servicio; si el servicio acepta turnos sigue la pantalla de configuración de agenda (horarios e intervalo) y luego el cierre declarativo del flujo (`flow_submit`), si no, el cierre ocurre al terminar la selección de servicio.
   preconditions:
     - Efector operativo en sesión.
     - Permisos para dar de alta asignaciones en el efector.
@@ -48,7 +48,7 @@ business_rules:
     when: pre_flow
     checker: content_regex
     require_any:
-      - "(cargar|configurar|editar|modificar|actualizar).*(agenda|horario|formas?\\s+de\\s+atencion|cupo|teleconsulta|intervalo)"
+      - "(cargar|configurar|editar|modificar|actualizar).*(agenda|horario|formas?\\s+de\\s+atencion|teleconsulta|intervalo)"
       - "(agenda|horario|formas?\\s+de\\s+atencion).*(profesional|m[eé]dico|doctor)"
     forbid_any:
       - "crear|agregar|nuevo|alta|asociar|recurso humano"

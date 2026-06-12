@@ -202,7 +202,7 @@
       var n = parseInt(v, 10);
       return isFinite(n) ? n : null;
     }
-    if (field === 'cupo_pacientes' || field === 'duracion_slot_minutos') {
+    if (field === 'duracion_slot_minutos') {
       var raw = String(el.value || '').trim();
       if (raw === '') return null;
       var num = Number(raw);
@@ -330,7 +330,7 @@
       if (!target || !target.classList || !target.classList.contains('al_field')) return;
       if (target.type === 'checkbox') return;
       var field = target.getAttribute('data-field');
-      if (field === 'hora_inicio' || field === 'hora_fin' || field === 'cupo_pacientes') {
+      if (field === 'hora_inicio' || field === 'hora_fin') {
         refreshJornadaAndHint(cardEl);
       }
       scheduleFieldSave(target);
@@ -340,7 +340,7 @@
       var target = ev.target;
       if (!target || !target.classList || !target.classList.contains('al_field')) return;
       var field = target.getAttribute('data-field');
-      if (field === 'hora_inicio' || field === 'hora_fin' || field === 'cupo_pacientes') {
+      if (field === 'hora_inicio' || field === 'hora_fin') {
         refreshJornadaAndHint(cardEl);
       }
       scheduleFieldSave(target);

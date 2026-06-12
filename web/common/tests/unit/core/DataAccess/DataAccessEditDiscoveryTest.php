@@ -22,17 +22,25 @@ class DataAccessEditDiscoveryTest extends Unit
         $this->assertSame('profesional_en_efector', $surface);
     }
 
+    public function testResolveSurfaceAgendaProfesional(): void
+    {
+        $svc = new DataAccessEditDiscoveryService();
+        $ctx = new PermissionContext(1, ['AdminEfector']);
+        $surface = $svc->resolveSurfaceId('modificar agenda de un profesional', [], $ctx);
+        $this->assertSame('agenda_profesional_en_efector', $surface);
+    }
+
     public function testResolveAspectAgendaUnambiguous(): void
     {
         $svc = new DataAccessEditDiscoveryService();
         $ctx = new PermissionContext(1, ['AdminEfector']);
         $aspects = $svc->resolveAspectIds(
             'modificar horarios de agenda del medico',
-            'profesional_en_efector',
+            'agenda_profesional_en_efector',
             [],
             $ctx
         );
-        $this->assertSame(['agenda_horarios'], $aspects);
+        $this->assertSame(['agenda_grilla'], $aspects);
     }
 
     public function testResolveAspectFormasAtencion(): void
@@ -41,11 +49,11 @@ class DataAccessEditDiscoveryTest extends Unit
         $ctx = new PermissionContext(1, ['AdminEfector']);
         $aspects = $svc->resolveAspectIds(
             'necesito modificar las formas de atencion de un profesional',
-            'profesional_en_efector',
+            'agenda_profesional_en_efector',
             [],
             $ctx
         );
-        $this->assertSame(['agenda_horarios'], $aspects);
+        $this->assertSame(['agenda_modalidad'], $aspects);
     }
 
     public function testAmbiguousAspectsReturnEmpty(): void

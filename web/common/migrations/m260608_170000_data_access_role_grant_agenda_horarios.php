@@ -3,7 +3,7 @@
 use yii\db\Migration;
 
 /**
- * Grant write sobre ProfesionalEfectorServicio.agenda_horarios (formulario declarativo en catálogo).
+ * Grant write sobre ProfesionalEfectorServicioAgenda.configuracion (formulario declarativo en catálogo).
  */
 class m260608_170000_data_access_role_grant_agenda_horarios extends Migration
 {
@@ -15,7 +15,7 @@ class m260608_170000_data_access_role_grant_agenda_horarios extends Migration
             self::TABLE,
             [
                 'role_name' => 'AdminEfector',
-                'entity_group_key' => 'ProfesionalEfectorServicio.agenda_horarios',
+                'entity_group_key' => 'ProfesionalEfectorServicioAgenda.configuracion',
                 'operations_csv' => 'write',
                 'scope_checker' => 'efector_sesion',
                 'active' => 1,
@@ -33,7 +33,7 @@ class m260608_170000_data_access_role_grant_agenda_horarios extends Migration
     {
         $this->delete(self::TABLE, [
             'role_name' => 'AdminEfector',
-            'entity_group_key' => 'ProfesionalEfectorServicio.agenda_horarios',
+            'entity_group_key' => 'ProfesionalEfectorServicioAgenda.configuracion',
         ]);
     }
 }

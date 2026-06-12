@@ -3,6 +3,7 @@
 namespace common\components\Organization\Service\ProfesionalEfectorServicio;
 
 use common\components\Ui\UiScreenService;
+use common\models\ProfesionalEfectorServicioAgenda;
 use Yii;
 
 /**
@@ -71,27 +72,30 @@ final class AgendaConfigUiFlowService
         $idPes = ProfesionalEfectorServicioAgendaUiService::resolvePesIdForAgendaSubmitPublic($idEfector, $post);
         $preview = ProfesionalEfectorServicioAgendaVersionService::previewImpacto($idPes, $idEfector, $post);
 
-        if (!AgendaConfigImpactProfile::previewRequiresUserConfirmation($preview, $post)) {
-            if (AgendaConfigImpactProfile::isModalityOnlySubmit($post)) {
-                $post['forzar_sin_confirmacion'] = '1';
-            }
+        if (self::mustRouteThroughImpactStep($idPes, $post)
+            || AgendaConfigImpactProfile::previewRequiresUserConfirmation($preview, $post)) {
+            $impactParams = array_merge($post, [
+                'ui_step' => self::STEP_IMPACTO,
+                'preview_message' => (string) ($preview['mensaje'] ?? ''),
+                'requiere_confirmacion' => AgendaConfigImpactProfile::previewRequiresUserConfirmation($preview, $post)
+                    ? '1'
+                    : '0',
+            ]);
 
-            return [
-                'success' => true,
-                'kind' => 'ui_submit_result',
-                'action_id' => 'profesional-agenda.configurar-agenda',
-                'data' => ProfesionalEfectorServicioAgendaUiService::submitAgendaConfig($idEfector, $post),
-                'errors' => null,
-            ];
+            return self::renderImpactoStep($impactParams);
         }
 
-        $impactParams = array_merge($post, [
-            'ui_step' => self::STEP_IMPACTO,
-            'preview_message' => (string) ($preview['mensaje'] ?? ''),
-            'requiere_confirmacion' => '1',
-        ]);
+        if (AgendaConfigImpactProfile::isModalityOnlySubmit($post)) {
+            $post['forzar_sin_confirmacion'] = '1';
+        }
 
-        return self::renderImpactoStep($impactParams);
+        return [
+            'success' => true,
+            'kind' => 'ui_submit_result',
+            'action_id' => 'profesional-agenda.configurar-agenda',
+            'data' => ProfesionalEfectorServicioAgendaUiService::submitAgendaConfig($idEfector, $post),
+            'errors' => null,
+        ];
     }
 
     /**
@@ -173,6 +177,27 @@ final class AgendaConfigUiFlowService
         $step = mb_strtolower(trim($step), 'UTF-8');
 
         return $step === self::STEP_IMPACTO ? self::STEP_IMPACTO : self::STEP_DATOS;
+    }
+
+    /**
+     * Edición de agenda existente con cambios de grilla: obliga paso de impacto (no aplica al alta inicial).
+     *
+     * @param array<string, mixed> $post
+     */
+    private static function mustRouteThroughImpactStep(int $idPes, array $post): bool
+    {
+        $policy = trim((string) ($post['impact_preview_policy'] ?? ''));
+        if ($policy !== 'when_existing_agenda') {
+            return false;
+        }
+        if ($idPes <= 0) {
+            return false;
+        }
+        if (ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) === null) {
+            return false;
+        }
+
+        return AgendaConfigImpactProfile::postTouchesGridFields($post);
     }
 
     /**

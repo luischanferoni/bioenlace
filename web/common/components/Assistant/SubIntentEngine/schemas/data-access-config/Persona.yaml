@@ -1,5 +1,6 @@
 # Grupos de atributos — entidad Persona (permiso fino por grupo + definición de campos).
 entity: Persona
+model: common\models\Persona
 groups:
   # Campos del formulario: tabla data_access_attribute_field.
   identidad_basica: {}

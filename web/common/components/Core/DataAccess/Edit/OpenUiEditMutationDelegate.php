@@ -35,6 +35,28 @@ final class OpenUiEditMutationDelegate
             }
         }
 
+        $fields = $aspectDef['fields'] ?? null;
+        if (is_array($fields) && $fields !== []) {
+            $names = [];
+            foreach ($fields as $fieldName) {
+                $name = trim((string) $fieldName);
+                if ($name !== '') {
+                    $names[] = $name;
+                }
+            }
+            if ($names !== []) {
+                $params['fields'] = implode(',', $names);
+            }
+        }
+
+        $uiFlow = $aspectDef['ui_flow'] ?? null;
+        if (is_array($uiFlow)) {
+            $policy = trim((string) ($uiFlow['impact_preview_policy'] ?? ''));
+            if ($policy !== '') {
+                $params['impact_preview_policy'] = $policy;
+            }
+        }
+
         return [
             'aspect_id' => $aspectId,
             'action_id' => $uiAction,

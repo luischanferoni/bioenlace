@@ -45,7 +45,7 @@ class m260608_160000_data_access_role_grant_canonical_seed extends Migration
     {
         return [
             ['AdminEfector', 'ProfesionalEfectorServicio.asignacion', 'aggregate,filter,read,write', 'efector_sesion', 'Catálogo canónico'],
-            ['AdminEfector', 'ProfesionalEfectorServicio.agenda_horarios', 'write', 'efector_sesion', 'Formulario agenda data-access'],
+            ['AdminEfector', 'ProfesionalEfectorServicioAgenda.configuracion', 'write', 'efector_sesion', 'Formulario agenda data-access'],
             ['AdminEfector', 'Persona.sexo_genero', 'aggregate,filter,read', 'efector_sesion_via_pes', null],
             ['AdminEfector', 'Persona.identidad_basica', 'read,write', 'efector_sesion_via_pes', 'Catálogo canónico'],
             ['Medico', 'ProfesionalEfectorServicio.asignacion', 'aggregate,filter,read', 'efector_sesion', null],

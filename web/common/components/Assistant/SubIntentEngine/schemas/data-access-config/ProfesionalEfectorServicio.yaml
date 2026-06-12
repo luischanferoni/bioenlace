@@ -1,10 +1,10 @@
-# Grupos, métricas staff y superficies de edición — ProfesionalEfectorServicio.
+# Asignación PES y métricas staff — modelo ProfesionalEfectorServicio.
+# Agenda → ProfesionalEfectorServicioAgenda.yaml
 entity: ProfesionalEfectorServicio
+model: common\models\ProfesionalEfectorServicio
 groups:
   asignacion:
     attributes: [id_efector, id_servicio, id_persona]
-  # Solo registro del grupo (clave para grants y aspectos). Campos → admin «Campos por grupo (BD)» o tabla data_access_attribute_field.
-  agenda_horarios: {}
 
 metrics:
   profesionales_conteo_efector:
@@ -196,14 +196,8 @@ edit_surfaces:
     keywords:
       - editar personal
       - modificar profesional
-      - editar agenda del personal
-      - modificar agenda de un profesional
       - cambiar datos del medico
       - editar medico del centro
-      - mi agenda
-      - modificar mi agenda
-      - editar mi agenda
-      - mis horarios
     scope_checker: efector_sesion
     subject_resolver:
       metric_id: profesionales_listado_efector
@@ -222,19 +216,3 @@ edit_surfaces:
           - apellido
           - datos personales
           - cambiar nombre
-      agenda_horarios:
-        label: Agenda y horarios
-        kind: open_ui
-        attribute_group: ProfesionalEfectorServicio.agenda_horarios
-        ui_action: profesional-agenda.configurar-agenda
-        requires_params: [id_profesional_efector_servicio, id_servicio]
-        keywords:
-          - agenda
-          - horarios
-          - horario
-          - editar agenda
-          - formas de atencion
-          - forma de atencion
-          - teleconsulta
-          - intervalo entre turnos
-          - modalidad de atencion

@@ -201,6 +201,11 @@ final class DataAccessEditDiscoveryService
             $score += 18;
         }
 
+        if ($surfaceId === 'agenda_profesional_en_efector'
+            && preg_match('/\b(agenda|horario|horarios|grilla|turnos)\b/u', $contentLower)) {
+            $score += 20;
+        }
+
         return $score;
     }
 

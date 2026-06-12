@@ -23,7 +23,7 @@ class m260619_110000_drop_agenda_cupo_pacientes extends Migration
         }
         if ($this->db->schema->getTableSchema(self::ATTR_FIELD, true) !== null) {
             $this->delete(self::ATTR_FIELD, [
-                'entity_group_key' => 'ProfesionalEfectorServicio.agenda_horarios',
+                'entity_group_key' => 'ProfesionalEfectorServicioAgenda.configuracion',
                 'field_name' => 'cupo_pacientes',
             ]);
         }

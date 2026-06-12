@@ -47,7 +47,7 @@ class m260608_180000_data_access_attribute_field_table extends Migration
 
         $order = 0;
         foreach ($this->agendaHorariosFields() as $row) {
-            $this->insertField('ProfesionalEfectorServicio.agenda_horarios', $row, $order++);
+            $this->insertField('ProfesionalEfectorServicioAgenda.configuracion', $row, $order++);
         }
     }
 

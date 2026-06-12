@@ -37,7 +37,7 @@ Edición: corte temprano si el rol no tiene ningún aspecto con `write` (`EditSu
 
 Auditoría mutaciones: canal `data-access`, evento `data_access_edit_applied` (`EditMutationAuditLogger`).
 
-Migración agenda staff: `profesional-agenda.editar-flow` deprecado (`catalog_exclude`); usar `data-access.editar` → aspecto `agenda_horarios` → `profesional-agenda.configurar-agenda`.
+Migración agenda staff: `profesional-agenda.editar-flow` deprecado (`catalog_exclude`); usar `data-access.editar` → superficie `agenda_profesional_en_efector` → aspectos `agenda_grilla` / `agenda_modalidad` → `profesional-agenda.configurar-agenda`. Validar catálogo: `php yii data-access-catalog/check`.
 
 ## Extender
 

@@ -1,0 +1,76 @@
+# Agenda PES — modelo ProfesionalEfectorServicioAgenda (+ versiones con vigente_desde).
+entity: ProfesionalEfectorServicioAgenda
+model: common\models\ProfesionalEfectorServicioAgenda
+version_model: common\models\ProfesionalEfectorServicioAgendaVersion
+groups:
+  configuracion:
+    attributes:
+      - formas_atencion
+      - intervalo_minutos
+      - acepta_consultas_online
+      - lunes_2
+      - martes_2
+      - miercoles_2
+      - jueves_2
+      - viernes_2
+      - sabado_2
+      - domingo_2
+    version_attributes:
+      - vigente_desde
+    ui_json_source:
+      entity: profesional-agenda
+      action: configurar-agenda
+
+edit_surfaces:
+  agenda_profesional_en_efector:
+    label: Agenda del profesional
+    keywords:
+      - modificar agenda de un profesional
+      - editar agenda del personal
+      - editar agenda de un profesional
+      - modificar horarios del medico
+      - editar horarios del profesional
+      - configurar agenda
+      - mi agenda
+      - modificar mi agenda
+      - editar mi agenda
+      - mis horarios
+    scope_checker: efector_sesion
+    subject_resolver:
+      metric_id: profesionales_listado_efector
+      selection_param: id_persona
+      pes_param: id_profesional_efector_servicio
+      prefill_session_id_persona_when_rule: own_agenda_config_edit
+    aspects:
+      agenda_grilla:
+        label: Horarios y grilla de turnos
+        kind: open_ui
+        attribute_group: ProfesionalEfectorServicioAgenda.configuracion
+        ui_action: profesional-agenda.configurar-agenda
+        fields: [vigente_desde, intervalo_minutos, weekly_scheduler_widget]
+        requires_params: [id_profesional_efector_servicio, id_servicio]
+        ui_flow:
+          impact_preview_policy: when_existing_agenda
+        keywords:
+          - horarios
+          - horario
+          - grilla
+          - editar agenda
+          - intervalo entre turnos
+          - vigencia
+          - vigente desde
+      agenda_modalidad:
+        label: Forma de atención y teleconsulta
+        kind: open_ui
+        attribute_group: ProfesionalEfectorServicioAgenda.configuracion
+        ui_action: profesional-agenda.configurar-agenda
+        fields: [formas_atencion, acepta_consultas_online]
+        requires_params: [id_profesional_efector_servicio, id_servicio]
+        ui_flow:
+          impact_preview_policy: never
+        keywords:
+          - agenda
+          - formas de atencion
+          - forma de atencion
+          - teleconsulta
+          - modalidad de atencion

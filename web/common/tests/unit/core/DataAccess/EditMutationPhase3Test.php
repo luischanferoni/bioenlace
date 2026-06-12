@@ -53,7 +53,7 @@ class EditMutationPhase3Test extends Unit
     public function testAgendaHorariosCatalogDefinesFormFieldsFromDatabase(): void
     {
         $catalog = new AttributeGroupCatalog();
-        $defs = $catalog->getEntityGroupFieldDefinitions('ProfesionalEfectorServicio.agenda_horarios');
+        $defs = $catalog->getEntityGroupFieldDefinitions('ProfesionalEfectorServicioAgenda.configuracion');
         if ($defs === []) {
             $this->markTestSkipped('Ejecutá la migración data_access_attribute_field.');
         }
@@ -65,15 +65,16 @@ class EditMutationPhase3Test extends Unit
     public function testCatalogFormFieldBuilderMapsTypesToUiJson(): void
     {
         $catalog = new AttributeGroupCatalog();
-        $defs = $catalog->getEntityGroupFieldDefinitions('ProfesionalEfectorServicio.agenda_horarios');
+        $defs = $catalog->getEntityGroupFieldDefinitions('ProfesionalEfectorServicioAgenda.configuracion');
         if ($defs === []) {
             $this->markTestSkipped('Ejecutá la migración data_access_attribute_field.');
         }
         $builder = new EditCatalogFormFieldBuilder($catalog);
         $aspectDef = [
-            'attribute_group' => 'ProfesionalEfectorServicio.agenda_horarios',
+            'attribute_group' => 'ProfesionalEfectorServicioAgenda.configuracion',
+            'fields' => ['vigente_desde', 'intervalo_minutos', 'weekly_scheduler_widget'],
         ];
-        $fields = $builder->buildUiFieldsForAspect('agenda_horarios', $aspectDef, [
+        $fields = $builder->buildUiFieldsForAspect('agenda_grilla', $aspectDef, [
             'vigente_desde' => '2026-06-01',
             'lunes_2' => '08:00-12:00',
         ], [
@@ -94,17 +95,21 @@ class EditMutationPhase3Test extends Unit
     public function testOpenUiDelegateBuildsAgendaAction(): void
     {
         $delegate = new OpenUiEditMutationDelegate();
-        $action = $delegate->buildAction('agenda_horarios', [
+        $action = $delegate->buildAction('agenda_grilla', [
             'ui_action' => 'profesional-agenda.configurar-agenda',
             'requires_params' => ['id_profesional_efector_servicio', 'id_servicio'],
+            'fields' => ['vigente_desde', 'intervalo_minutos'],
+            'ui_flow' => ['impact_preview_policy' => 'when_existing_agenda'],
         ], [
             'id_profesional_efector_servicio' => '42',
             'id_servicio' => '7',
         ]);
 
-        $this->assertSame('agenda_horarios', $action['aspect_id']);
+        $this->assertSame('agenda_grilla', $action['aspect_id']);
         $this->assertSame('profesional-agenda.configurar-agenda', $action['action_id']);
         $this->assertSame('42', $action['params']['id_profesional_efector_servicio']);
         $this->assertSame('7', $action['params']['id_servicio']);
+        $this->assertSame('vigente_desde,intervalo_minutos', $action['params']['fields']);
+        $this->assertSame('when_existing_agenda', $action['params']['impact_preview_policy']);
     }
 }

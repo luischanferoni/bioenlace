@@ -1,5 +1,9 @@
 version: 1
 
+# Validación: php yii data-access-catalog/check
+# Cada {Entidad}.yaml declara entity, model (+ version_model si aplica), groups y opcionalmente edit_surfaces.
+# ui_json_source en un grupo enlaza campos BD ↔ views/json; aspectos open_ui declaran fields[] y ui_flow.
+
 # Sinónimos NL → filtros allowlisted (asistente / preprocess).
 filter_synonyms:
   sexo_biologico:

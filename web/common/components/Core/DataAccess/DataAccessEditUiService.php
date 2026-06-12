@@ -272,7 +272,17 @@ final class DataAccessEditUiService
         );
 
         $scalarFields = $built['fields'];
-        $blocks = $this->embedOpenUiFieldBlocks($built['open_ui'], $subject['context'], $params);
+        try {
+            $blocks = $this->embedOpenUiFieldBlocks(
+                $built['open_ui'],
+                $subject['context'],
+                array_merge($params, ['surface_id' => $surfaceId])
+            );
+        } catch (\yii\web\HttpException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw new \RuntimeException($e->getMessage(), 0, $e);
+        }
 
         if ($scalarFields !== []) {
             $blocks[] = [
@@ -496,7 +506,12 @@ final class DataAccessEditUiService
 
             $nested = UiScreenService::renderUiDefinition($entity, $actionName, $queryParams, null);
             $aspectLabel = trim((string) ($openUi['label'] ?? $aspectId)) ?: $aspectId;
-            $submitRoute = $this->httpRouteForUiAction($action['action_id']);
+            $surfaceId = trim((string) ($params['surface_id'] ?? ''));
+            $applyHidden = $this->contextHiddenFields(
+                array_merge($subjectContext, $surfaceId !== '' ? ['surface_id' => $surfaceId] : []),
+                'apply',
+                ['aspect_ids' => $aspectId]
+            );
 
             foreach ($nested['blocks'] ?? [] as $block) {
                 if (!is_array($block) || trim((string) ($block['kind'] ?? '')) !== 'fields') {
@@ -504,8 +519,10 @@ final class DataAccessEditUiService
                 }
                 $block['id'] = 'editar_open_ui_' . $aspectId;
                 $block['title'] = $aspectLabel;
+                $existingFields = isset($block['fields']) && is_array($block['fields']) ? $block['fields'] : [];
+                $block['fields'] = array_merge($applyHidden, $existingFields);
                 $block['submit_api'] = [
-                    'route' => $submitRoute,
+                    'route' => '/api/v1/editar',
                     'method' => 'POST',
                 ];
                 $blocks[] = $block;

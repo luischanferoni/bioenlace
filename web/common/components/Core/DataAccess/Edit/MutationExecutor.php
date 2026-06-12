@@ -5,7 +5,9 @@ namespace common\components\Core\DataAccess\Edit;
 use common\components\Core\DataAccess\AttributeGroupCatalog;
 use common\components\Core\DataAccess\EditSurfaceAuthorizationService;
 use common\components\Core\DataAccess\PermissionContext;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use Yii;
+use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 
 /**
@@ -80,7 +82,19 @@ final class MutationExecutor
 
             $kind = trim((string) ($def['kind'] ?? 'scalar_group'));
             if ($kind === 'open_ui') {
-                $openUiActions[] = $this->openUiDelegate->buildAction($aspectId, $def, $subjectContext);
+                $persisted = $this->applyOpenUiAspect(
+                    $surfaceId,
+                    $aspectId,
+                    $def,
+                    $subjectContext,
+                    $params,
+                    $ctx
+                );
+                if ($persisted !== []) {
+                    $appliedChanges = array_merge($appliedChanges, $persisted);
+                } else {
+                    $openUiActions[] = $this->openUiDelegate->buildAction($aspectId, $def, $subjectContext);
+                }
                 continue;
             }
 
@@ -165,5 +179,54 @@ final class MutationExecutor
         }
 
         return new EditMutationResult($appliedChanges, $openUiActions, $subjectContext);
+    }
+
+    /**
+     * Persiste aspectos open_ui conocidos (p. ej. agenda) bajo permiso write del attribute_group.
+     *
+     * @param array<string, mixed> $def
+     * @param array<string, int|string> $subjectContext
+     * @param array<string, mixed> $params
+     * @return list<array{field: string, label: string, before: string, after: string}>
+     */
+    private function applyOpenUiAspect(
+        string $surfaceId,
+        string $aspectId,
+        array $def,
+        array $subjectContext,
+        array $params,
+        PermissionContext $ctx
+    ): array {
+        $uiAction = trim((string) ($def['ui_action'] ?? ''));
+        if ($uiAction !== 'profesional-agenda.configurar-agenda') {
+            return [];
+        }
+
+        $this->mutationAuth->assertCanApplyOpenUiAspect($ctx, $surfaceId, $aspectId, $def, $params);
+
+        $idEfector = (int) ($subjectContext['id_efector'] ?? $params['id_efector'] ?? 0);
+        if ($idEfector <= 0) {
+            $idEfector = (int) Yii::$app->user->getIdEfector();
+        }
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        $post = [];
+        foreach ($params as $key => $value) {
+            if (is_scalar($value)) {
+                $post[(string) $key] = $value;
+            }
+        }
+
+        $result = ProfesionalEfectorServicioAgendaUiService::submitAgendaConfig($idEfector, $post);
+        $label = trim((string) ($def['label'] ?? $aspectId)) ?: $aspectId;
+
+        return [[
+            'field' => $aspectId,
+            'label' => $label,
+            'before' => '',
+            'after' => (string) ($result['message'] ?? 'Guardado'),
+        ]];
     }
 }

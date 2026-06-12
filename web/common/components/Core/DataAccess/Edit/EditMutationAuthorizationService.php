@@ -33,6 +33,37 @@ final class EditMutationAuthorizationService
     /**
      * @param array<string, mixed> $aspectDef
      * @param array<string, mixed> $params
+     */
+    public function assertCanApplyOpenUiAspect(
+        PermissionContext $ctx,
+        string $surfaceId,
+        string $aspectId,
+        array $aspectDef,
+        array $params
+    ): void {
+        if (!$this->surfaceAuth->userCanAccessAspect($ctx, $surfaceId, $aspectId, $params)) {
+            throw new ForbiddenHttpException('No tenés permiso para modificar ese aspecto.');
+        }
+
+        $group = trim((string) ($aspectDef['attribute_group'] ?? ''));
+        if ($group === '') {
+            throw new ForbiddenHttpException('Aspecto sin grupo de atributos.');
+        }
+
+        if (!$this->permissions->can($ctx, $group, QueryOperation::WRITE)) {
+            throw new ForbiddenHttpException('No tenés permiso de escritura sobre ' . $group . '.');
+        }
+
+        $checkerId = $this->permissions->scopeCheckerFor($ctx, $group);
+        if ($checkerId !== null && $checkerId !== '') {
+            $spec = QuerySpec::fromParams('edit_mutation', $params);
+            ScopeCheckerRegistry::get($checkerId)->assertAndResolve($spec, $ctx);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $aspectDef
+     * @param array<string, mixed> $params
      * @param array<string, string> $fieldChanges
      */
     public function assertCanApplyScalarChanges(

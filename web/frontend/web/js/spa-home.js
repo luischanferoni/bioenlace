@@ -2825,7 +2825,10 @@
                         });
                         return;
                     }
-                    container.innerHTML = '<div class="alert alert-danger mb-0">Error al guardar.</div>';
+                    const errMsg = (json && typeof json.message === 'string' && json.message.trim() !== '')
+                        ? json.message.trim()
+                        : 'Error al guardar.';
+                    container.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(errMsg) + '</div>';
                 })
                 .catch(() => {
                     container.innerHTML = '<div class="alert alert-danger mb-0">Error de red al guardar.</div>';

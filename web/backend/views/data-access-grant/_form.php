@@ -44,6 +44,7 @@ $form = ActiveForm::begin();
             <strong>filter</strong>: usar en filtros de métricas.
             <strong>read</strong>: columnas en listados.
             <strong>aggregate</strong>: conteos y agrupaciones.
+            <strong>write</strong>: edición dispersa (identidad, agenda, etc.).
         </p>
     </div>
 

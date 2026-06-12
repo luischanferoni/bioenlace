@@ -42,6 +42,10 @@ class HomeScreenState extends State<HomeScreen> {
 
   late TurnosService _turnosService;
   late CarePlanService _carePlanService;
+  late final HomePanelApi _homePanelApi = HomePanelApi(
+    authToken: widget.authToken,
+    appClient: 'paciente-flutter',
+  );
   final ScrollController _scrollController = ScrollController();
 
   List<Map<String, dynamic>> _carePlansActivos = [];
@@ -167,39 +171,92 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _cargarCarePlans() async {
     setState(() => _loadingCarePlans = true);
-    final r = await _carePlanService.fetchActivePlans(
+    try {
+      final panel = await _homePanelApi.getPanel(
+        sections: 'care_plans_active',
+        subjectPersonaId: _subjectPersonaId,
+      );
+      if (!mounted) return;
+      final care = panel.sectionByKind('patient_care_plans_active');
+      setState(() {
+        _loadingCarePlans = false;
+        if (care != null) {
+          _carePlansActivos = _asMapList(care.data['items']);
+        }
+      });
+    } catch (_) {
+      final r = await _carePlanService.fetchActivePlans(
+        subjectPersonaId: _subjectPersonaId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _loadingCarePlans = false;
+        if (r['success'] == true) {
+          _carePlansActivos = _asMapList(r['data']);
+        }
+      });
+    }
+    await CarePlanLocalReminderService.instance.syncFromApi(authToken: widget.authToken);
+  }
+
+  Future<void> _applyUpcomingFromPanel() async {
+    final panel = await _homePanelApi.getPanel(
+      sections: 'upcoming_appointments,care_plans_active',
       subjectPersonaId: _subjectPersonaId,
     );
-    if (!mounted) return;
-    setState(() {
-      _loadingCarePlans = false;
-      if (r['success'] == true) {
-        _carePlansActivos = _asMapList(r['data']);
+    final upcoming = panel.sectionByKind('patient_upcoming_appointments');
+    if (upcoming != null) {
+      final enR = upcoming.data['en_resolucion'];
+      final pend = upcoming.data['pendientes'];
+      if (enR is Map) {
+        _enResolucion
+          ..clear()
+          ..addAll(_asMapList(enR['turnos']));
       }
-    });
-    await CarePlanLocalReminderService.instance.syncFromApi(authToken: widget.authToken);
+      if (pend is Map) {
+        _pendientes
+          ..clear()
+          ..addAll(_asMapList(pend['turnos']));
+      }
+    }
+    final care = panel.sectionByKind('patient_care_plans_active');
+    if (care != null) {
+      _carePlansActivos = _asMapList(care.data['items']);
+      _loadingCarePlans = false;
+    }
   }
 
   Future<void> _cargarInicial() async {
     setState(() {
       _loadingInicial = true;
+      _loadingCarePlans = true;
       _error = null;
       _pendientes.clear();
       _pasados.clear();
       _totalPasados = 0;
     });
-    final pendientesFuture = _fetchAllPorAlcance('pendientes');
-    await Future.wait([_cargarEnResolucion(), _cargarCarePlans()]);
-    final pendientesR = await pendientesFuture;
+    try {
+      await _applyUpcomingFromPanel();
+      await CarePlanLocalReminderService.instance.syncFromApi(authToken: widget.authToken);
+    } catch (e) {
+      final pendientesFuture = _fetchAllPorAlcance('pendientes');
+      await _cargarEnResolucion();
+      await _cargarCarePlans();
+      final pendientesR = await pendientesFuture;
+      if (!mounted) return;
+      setState(() {
+        _pendientes
+          ..clear()
+          ..addAll(pendientesR.turnos);
+        if (pendientesR.error != null && pendientesR.turnos.isEmpty) {
+          _error = pendientesR.error;
+        }
+      });
+    }
     if (!mounted) return;
     setState(() {
       _loadingInicial = false;
-      _pendientes
-        ..clear()
-        ..addAll(pendientesR.turnos);
-      if (pendientesR.error != null && pendientesR.turnos.isEmpty) {
-        _error = pendientesR.error;
-      }
+      _loadingCarePlans = false;
     });
   }
 
@@ -210,9 +267,21 @@ class HomeScreenState extends State<HomeScreen> {
       _enResolucion.clear();
       _pasados.clear();
     });
-    final pendientesFuture = _fetchAllPorAlcance('pendientes');
-    await Future.wait([_cargarEnResolucion(), _cargarCarePlans()]);
-    final pendientesR = await pendientesFuture;
+    try {
+      await _applyUpcomingFromPanel();
+      await CarePlanLocalReminderService.instance.syncFromApi(authToken: widget.authToken);
+    } catch (_) {
+      final pendientesFuture = _fetchAllPorAlcance('pendientes');
+      await _cargarEnResolucion();
+      await _cargarCarePlans();
+      final pendientesR = await pendientesFuture;
+      if (!mounted) return;
+      setState(() {
+        _pendientes
+          ..clear()
+          ..addAll(pendientesR.turnos);
+      });
+    }
     final r2 = await _turnosService.getMisTurnos(
       alcance: 'pasados',
       limit: _pasadosPageLimit,
@@ -221,14 +290,6 @@ class HomeScreenState extends State<HomeScreen> {
     );
     if (!mounted) return;
     setState(() {
-      _pendientes
-        ..clear()
-        ..addAll(pendientesR.turnos);
-      if (pendientesR.error != null &&
-          pendientesR.turnos.isEmpty &&
-          _enResolucion.isEmpty) {
-        _error = pendientesR.error;
-      }
       if (r2['success'] == true) {
         _pasados
           ..clear()
@@ -270,19 +331,25 @@ class HomeScreenState extends State<HomeScreen> {
       _pendientes.clear();
       _enResolucion.clear();
     });
-    final pendientesR = await _fetchAllPorAlcance('pendientes');
-    await _cargarEnResolucion();
-    if (!mounted) return;
-    setState(() {
-      _pendientes
-        ..clear()
-        ..addAll(pendientesR.turnos);
-      if (pendientesR.error != null && pendientesR.turnos.isEmpty) {
-        _error = pendientesR.error;
-      } else if (pendientesR.error == null) {
-        _error = null;
-      }
-    });
+    try {
+      await _applyUpcomingFromPanel();
+      if (!mounted) return;
+      setState(() => _error = null);
+    } catch (_) {
+      final pendientesR = await _fetchAllPorAlcance('pendientes');
+      await _cargarEnResolucion();
+      if (!mounted) return;
+      setState(() {
+        _pendientes
+          ..clear()
+          ..addAll(pendientesR.turnos);
+        if (pendientesR.error != null && pendientesR.turnos.isEmpty) {
+          _error = pendientesR.error;
+        } else if (pendientesR.error == null) {
+          _error = null;
+        }
+      });
+    }
   }
 
   Future<void> _recargarPasadosDesdeCero() async {

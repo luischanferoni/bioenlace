@@ -9,7 +9,6 @@ import '../models/cirugia_agenda_item.dart';
 import '../auth/medico_post_login.dart';
 import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
-import '../services/home_panel_api.dart';
 import 'emergency/emergency_guardia_actions.dart';
 import 'emergency/emergency_triage_screen.dart';
 import 'patient_timeline_screen.dart';
@@ -39,6 +38,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final HomePanelApi _homePanelApi = HomePanelApi(
     authToken: widget.authToken,
     userId: widget.userId,
+    appClient: 'medico-flutter',
   );
   late final EmergencyGuardiaApi _emergencyApi = EmergencyGuardiaApi(
     authToken: widget.authToken,

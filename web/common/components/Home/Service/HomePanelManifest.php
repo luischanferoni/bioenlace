@@ -22,6 +22,27 @@ final class HomePanelManifest
      *   sections: list<array{id: string, provider: string, kind: string, poll_interval_seconds?: int}>
      * }
      */
+    public function resolve(string $audience, ?string $encounterClass): array
+    {
+        $manifest = $this->load();
+        if ($audience === HomePanelAudienceResolver::PATIENT) {
+            return $this->normalizePanel($manifest['panels']['patient'] ?? $manifest['panels']['fallback'] ?? []);
+        }
+
+        if ($audience === HomePanelAudienceResolver::STAFF) {
+            return $this->resolveForStaff($encounterClass);
+        }
+
+        return $this->normalizePanel($manifest['panels']['fallback'] ?? []);
+    }
+
+    /**
+     * @return array{
+     *   layout: string,
+     *   title: string,
+     *   sections: list<array{id: string, provider: string, kind: string, poll_interval_seconds?: int}>
+     * }
+     */
     public function resolveForStaff(?string $encounterClass): array
     {
         $manifest = $this->load();

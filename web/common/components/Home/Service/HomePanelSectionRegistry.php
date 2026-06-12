@@ -8,6 +8,8 @@ use common\components\Home\Service\Sections\EmergencyBoardSectionProvider;
 use common\components\Home\Service\Sections\EmergencyIndicatorsSectionProvider;
 use common\components\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\components\Home\Service\Sections\InpatientsSectionProvider;
+use common\components\Home\Service\Sections\PatientCarePlansActiveSectionProvider;
+use common\components\Home\Service\Sections\PatientUpcomingAppointmentsSectionProvider;
 use common\components\Home\Service\Sections\SurgeriesDaySectionProvider;
 
 /**
@@ -39,6 +41,8 @@ final class HomePanelSectionRegistry
             'inpatients' => new InpatientsSectionProvider(),
             'surgeries_day' => new SurgeriesDaySectionProvider(),
             'action_cards' => new ActionCardsSectionProvider(),
+            'patient_upcoming_appointments' => new PatientUpcomingAppointmentsSectionProvider(),
+            'patient_care_plans_active' => new PatientCarePlansActiveSectionProvider(),
         ];
 
         return self::$providers;

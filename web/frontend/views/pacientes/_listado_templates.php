@@ -148,3 +148,21 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
         </div>
     </div>
 </template>
+
+<template id="tpl-home-action-cards-wrap">
+    <div data-role="action-cards-wrap"></div>
+</template>
+
+<template id="tpl-home-action-card-category">
+    <div class="mb-4" data-role="action-category">
+        <h3 class="h6 text-decoration-underline mb-3" data-field="titulo"></h3>
+        <div class="d-grid gap-2" data-slot="actions"></div>
+    </div>
+</template>
+
+<template id="tpl-home-action-card">
+    <a href="#" class="btn btn-outline-secondary text-start" data-role="action-link">
+        <div class="fw-semibold" data-field="nombre"></div>
+        <div class="small text-muted" data-field="descripcion"></div>
+    </a>
+</template>

@@ -40,3 +40,13 @@ panels:
       - id: action_cards
         provider: action_cards
         kind: action_cards
+  patient:
+    layout: patient_home
+    title: Inicio
+    sections:
+      - id: upcoming_appointments
+        provider: patient_upcoming_appointments
+        kind: patient_upcoming_appointments
+      - id: care_plans_active
+        provider: patient_care_plans_active
+        kind: patient_care_plans_active

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared/shared.dart';
+import 'package:shared/config/api_config.dart';
 
 /// Sección del panel de inicio (`GET /api/v1/home/panel`).
 class HomePanelSection {
@@ -28,6 +28,7 @@ class HomePanelSection {
 
 class HomePanelResponse {
   final String layout;
+  final String? audience;
   final String? encounterClass;
   final String? fecha;
   final String title;
@@ -35,6 +36,7 @@ class HomePanelResponse {
 
   HomePanelResponse({
     required this.layout,
+    this.audience,
     this.encounterClass,
     this.fecha,
     required this.title,
@@ -45,6 +47,7 @@ class HomePanelResponse {
     final rawSections = json['sections'] as List<dynamic>? ?? [];
     return HomePanelResponse(
       layout: (json['layout'] as String?) ?? '',
+      audience: json['audience'] as String?,
       encounterClass: json['encounter_class'] as String?,
       fecha: json['fecha'] as String?,
       title: (json['title'] as String?) ?? 'Inicio',
@@ -65,17 +68,15 @@ class HomePanelResponse {
 class HomePanelApi {
   String? authToken;
   String? userId;
+  String? appClient;
 
-  HomePanelApi({this.authToken, this.userId});
+  HomePanelApi({this.authToken, this.userId, this.appClient});
 
   Map<String, String> get _headers {
-    final headers = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    };
-    if (authToken != null && authToken!.isNotEmpty) {
-      headers['Authorization'] = 'Bearer $authToken';
-    }
+    final headers = AppConfig.jsonHeaders(
+      bearerToken: authToken,
+      appClient: appClient,
+    );
     return headers;
   }
 
@@ -83,11 +84,15 @@ class HomePanelApi {
     String? fecha,
     String? sections,
     int? idEfector,
+    int? subjectPersonaId,
   }) async {
     final query = <String, String>{};
     if (fecha != null && fecha.isNotEmpty) query['fecha'] = fecha;
     if (sections != null && sections.isNotEmpty) query['sections'] = sections;
     if (idEfector != null) query['id_efector'] = idEfector.toString();
+    if (subjectPersonaId != null && subjectPersonaId > 0) {
+      query['subject_persona_id'] = subjectPersonaId.toString();
+    }
     if (userId != null &&
         (authToken == null ||
             authToken!.isEmpty ||

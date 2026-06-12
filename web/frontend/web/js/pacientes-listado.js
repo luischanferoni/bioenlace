@@ -899,6 +899,74 @@
       });
     }
 
+    function renderActionCards(data) {
+      var categories = Array.isArray(data.categories) ? data.categories : [];
+      var actions = Array.isArray(data.actions) ? data.actions : [];
+      if (!categories.length && !actions.length) {
+        showListadoEmpty('No hay atajos disponibles para tu rol.');
+        return;
+      }
+      clearNode(container);
+      var wrapFrag = importTemplate('tpl-home-action-cards-wrap');
+      if (!wrapFrag) return;
+      var wrapRoot = wrapFrag.querySelector('[data-role="action-cards-wrap"]');
+      container.appendChild(wrapFrag);
+
+      function appendActionLink(slotEl, action) {
+        if (!action || !slotEl) return;
+        var itemFrag = importTemplate('tpl-home-action-card');
+        if (!itemFrag) return;
+        var link = itemFrag.querySelector('[data-role="action-link"]');
+        if (!link) return;
+        var co = action.client_open && typeof action.client_open === 'object' ? action.client_open : null;
+        var path = co && co.web && co.web.path ? String(co.web.path) : '';
+        var nombre = action.name || action.display_name || action.action_id || 'Atajo';
+        link.querySelector('[data-field="nombre"]').textContent = nombre;
+        var descEl = link.querySelector('[data-field="descripcion"]');
+        if (action.description) {
+          descEl.textContent = action.description;
+        } else {
+          descEl.classList.add('d-none');
+        }
+        if (path) {
+          link.href = path;
+          link.setAttribute('data-spa-nav', '1');
+        } else if (action.action_id) {
+          link.href = '/site/asistente?intent=' + encodeURIComponent(String(action.action_id));
+          link.setAttribute('data-spa-nav', '1');
+        } else {
+          link.classList.add('disabled');
+          link.removeAttribute('href');
+        }
+        slotEl.appendChild(itemFrag);
+      }
+
+      if (categories.length) {
+        categories.forEach(function (cat) {
+          var catFrag = importTemplate('tpl-home-action-card-category');
+          if (!catFrag) return;
+          var catRoot = catFrag.querySelector('[data-role="action-category"]');
+          catRoot.querySelector('[data-field="titulo"]').textContent = cat.titulo || 'Atajos';
+          var slot = catRoot.querySelector('[data-slot="actions"]');
+          (cat.actions || []).forEach(function (a) {
+            appendActionLink(slot, a);
+          });
+          wrapRoot.appendChild(catFrag);
+        });
+      } else {
+        var flatFrag = importTemplate('tpl-home-action-card-category');
+        if (flatFrag) {
+          var flatRoot = flatFrag.querySelector('[data-role="action-category"]');
+          flatRoot.querySelector('[data-field="titulo"]').textContent = 'Atajos';
+          var flatSlot = flatRoot.querySelector('[data-slot="actions"]');
+          actions.forEach(function (a) {
+            appendActionLink(flatSlot, a);
+          });
+          wrapRoot.appendChild(flatFrag);
+        }
+      }
+    }
+
     function findPanelSection(panel, kind) {
       var sections = panel.sections || [];
       for (var i = 0; i < sections.length; i++) {
@@ -952,6 +1020,11 @@
         }
       }
       if (layout === 'cards') {
+        var cardsSec = findPanelSection(panel, 'action_cards');
+        if (cardsSec) {
+          renderActionCards(cardsSec.data || {});
+          return;
+        }
         showListadoEmpty('Sin acciones disponibles en el panel.');
         return;
       }

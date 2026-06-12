@@ -214,6 +214,7 @@ edit_surfaces:
         - editar personal
         - modificar profesional
         - editar agenda del personal
+        - modificar agenda de un profesional
         - cambiar datos del medico
         - editar medico del centro
     scope_checker: efector_sesion

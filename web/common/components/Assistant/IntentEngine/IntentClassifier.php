@@ -138,8 +138,53 @@ final class IntentClassifier
         }
 
         $score += self::scoreDataAccessListVsInfo($messageLower, $item->action_id);
+        $score += self::scoreStaffAgendaEditDispersa($messageLower, $item->action_id);
 
         return $score;
+    }
+
+    /**
+     * Modificar agenda/horarios de un profesional ya asociado → edición dispersa, no alta PES.
+     */
+    private static function scoreStaffAgendaEditDispersa(string $messageLower, string $actionId): int
+    {
+        if ($actionId === 'data-access.editar' && self::messageSuggestsStaffAgendaEdit($messageLower)) {
+            return 45;
+        }
+
+        if ($actionId === 'agenda.crear-profesional-flow' && self::messageSuggestsStaffAgendaEdit($messageLower)) {
+            return -30;
+        }
+
+        return 0;
+    }
+
+    public static function messageSuggestsStaffAgendaEdit(string $message): bool
+    {
+        $folded = self::foldAccents(mb_strtolower(trim($message), 'UTF-8'));
+        if ($folded === '') {
+            return false;
+        }
+
+        if (!preg_match('/\b(editar|modificar|actualizar|cambiar|ajustar|configurar)\b/u', $folded)) {
+            return false;
+        }
+
+        if (!preg_match('/\b(agenda|horario|horarios|disponibilidad|cupo)\b/u', $folded)) {
+            return false;
+        }
+
+        if (preg_match('/\b(crear|agregar|nuevo|nueva|alta|asociar|dar de alta)\b/u', $folded)) {
+            return false;
+        }
+
+        if (preg_match('/\b(mi|mis)\s+(agenda|horario|horarios)\b/u', $folded)) {
+            return false;
+        }
+
+        return preg_match('/\b(profesional|medico|doctor|personal)\b/u', $folded) === 1
+            || preg_match('/\b(agenda|horario|horarios)\s+de\s+un\b/u', $folded) === 1
+            || preg_match('/\b(agenda|horario|horarios)\s+del\b/u', $folded) === 1;
     }
 
     /**
@@ -274,6 +319,8 @@ Reglas:
 - Usa "NONE" solo si el mensaje NO corresponde a ninguno de los intents.
 - Usa s (intent_semantics) para razonar por objetivo, cómo se logra y restricciones. k son frases ancla.
 - Si dos intents son plausibles y falta una condición clave, marca needs_disambiguation y propone opciones.
+- En remediation[*].intent_id solo ids de c[*].id (nunca inventes ids).
+- Si el usuario pide modificar/editar agenda u horarios de un profesional (sin crear/alta), best_id = data-access.editar.
 
 Responde ÚNICAMENTE con JSON:
 {
@@ -318,6 +365,10 @@ PROMPT;
                     $label = trim((string) ($r['label'] ?? ''));
                     $iid = trim((string) ($r['intent_id'] ?? ''));
                     if ($label === '' || $iid === '') {
+                        continue;
+                    }
+                    $iid = \common\components\Assistant\Catalog\IntentIdAliasResolver::resolve($iid);
+                    if (!isset($catalog->byActionId[$iid])) {
                         continue;
                     }
                     if ($rid === '') {

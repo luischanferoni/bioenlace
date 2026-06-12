@@ -73,61 +73,75 @@
             html += '</ul>';
         }
         if (data.requiere_confirmacion) {
-            html += '<p class="mb-0 mt-2 text-warning">Debe confirmar el cambio (campo «Confirmo el cambio…» = Sí) antes de guardar.</p>';
+            html += '<p class="mb-0 mt-2 text-warning">Confirmá el guardado solo si aceptás el impacto en turnos futuros.</p>';
         }
         html += '</div>';
         panel.innerHTML = html;
     }
 
+    function fetchPreview(root, panel, btn) {
+        var form = findForm(root);
+        if (!form) {
+            panel.innerHTML = '<div class="alert alert-warning small mb-0">No se encontró el formulario.</div>';
+            return;
+        }
+        if (btn) {
+            btn.disabled = true;
+        }
+        panel.innerHTML = '<div class="text-muted small">Calculando impacto…</div>';
+        fetch('/api/v1/profesional-agenda/preview-configurar-agenda', {
+            method: 'POST',
+            headers: global.BioenlaceApiClient.mergeHeaders({
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }),
+            credentials: 'same-origin',
+            body: collectBody(form)
+        })
+            .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
+            .then(function (res) {
+                if (res.ok && res.json && res.json.data) {
+                    renderPreview(panel, res.json.data);
+                } else {
+                    var msg = (res.json && res.json.message) ? res.json.message : 'No se pudo obtener el preview.';
+                    panel.innerHTML = '<div class="alert alert-danger small mb-0">' + escapeHtml(msg) + '</div>';
+                }
+            })
+            .catch(function () {
+                panel.innerHTML = '<div class="alert alert-danger small mb-0">Error de red al calcular el impacto.</div>';
+            })
+            .finally(function () {
+                if (btn) {
+                    btn.disabled = false;
+                }
+            });
+    }
+
     global.BioenlaceUiWidgets.agenda_config_preview = {
-        init: function (root) {
+        init: function (root, fieldDef) {
             var mount = root.querySelector('[data-weekly-scheduler-mount]');
             if (mount && mount.parentNode) {
                 mount.parentNode.removeChild(mount);
             }
+            var autoFetch = fieldDef && (fieldDef.auto_fetch_on_init === true || fieldDef.auto_fetch_on_init === 1);
             root.insertAdjacentHTML(
                 'beforeend',
-                '<button type="button" class="btn btn-outline-primary btn-sm mb-2" data-agenda-preview-btn="1">Ver impacto antes de guardar</button>' +
+                (autoFetch ? '' : '<button type="button" class="btn btn-outline-primary btn-sm mb-2" data-agenda-preview-btn="1">Ver impacto antes de guardar</button>') +
                 '<div data-agenda-preview-panel="1"></div>'
             );
             var panel = root.querySelector('[data-agenda-preview-panel="1"]');
             var btn = root.querySelector('[data-agenda-preview-btn="1"]');
-            if (!panel || !btn) {
+            if (!panel) {
                 return;
             }
-            btn.addEventListener('click', function () {
-                var form = findForm(root);
-                if (!form) {
-                    panel.innerHTML = '<div class="alert alert-warning small mb-0">No se encontró el formulario.</div>';
-                    return;
-                }
-                btn.disabled = true;
-                panel.innerHTML = '<div class="text-muted small">Calculando impacto…</div>';
-                fetch('/api/v1/profesional-agenda/preview-configurar-agenda', {
-                    method: 'POST',
-                    headers: global.BioenlaceApiClient.mergeHeaders({
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }),
-                    credentials: 'same-origin',
-                    body: collectBody(form)
-                })
-                    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
-                    .then(function (res) {
-                        if (res.ok && res.json && res.json.data) {
-                            renderPreview(panel, res.json.data);
-                        } else {
-                            var msg = (res.json && res.json.message) ? res.json.message : 'No se pudo obtener el preview.';
-                            panel.innerHTML = '<div class="alert alert-danger small mb-0">' + escapeHtml(msg) + '</div>';
-                        }
-                    })
-                    .catch(function () {
-                        panel.innerHTML = '<div class="alert alert-danger small mb-0">Error de red al calcular el impacto.</div>';
-                    })
-                    .finally(function () {
-                        btn.disabled = false;
-                    });
-            });
+            if (btn) {
+                btn.addEventListener('click', function () {
+                    fetchPreview(root, panel, btn);
+                });
+            }
+            if (autoFetch) {
+                fetchPreview(root, panel, null);
+            }
         }
     };
 })(typeof window !== 'undefined' ? window : this);

@@ -1,9 +1,9 @@
-intent_id: agenda.editar-mi-agenda-flow
+intent_id: profesional-agenda.editar-mi-flow
 version: 1
 
 action_name: "Editar mi agenda"
 description: "Para modificar tus horarios de atención en un servicio del efector."
-rbac_route: "/api/profesional-agenda/editar-mi-agenda-flow"
+rbac_route: "/api/profesional-agenda/editar-mi-flow"
 keywords:
   - mi agenda
   - mis horarios
@@ -52,7 +52,7 @@ business_rules:
     remediation:
       - id: mi_agenda
         label: "Mi agenda (mis servicios)"
-        intent_id: agenda.editar-mi-agenda-flow
+        intent_id: profesional-agenda.editar-mi-flow
         reset_flow: true
       - id: otro_profesional
         label: "Agenda de otro profesional (edición dispersa)"
@@ -69,7 +69,7 @@ subintents:
       - when:
           draft_equals:
             servicio_acepta_turnos: "SI"
-        next: configurar_agenda
+        next: configurar_agenda_datos
       - when:
           draft_equals:
             servicio_acepta_turnos: "NO"
@@ -80,7 +80,7 @@ subintents:
     open_ui:
       action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
 
-  - id: configurar_agenda
+  - id: configurar_agenda_datos
     assistant_text: "Agenda"
     provides:
       - draft.agenda_ui_completed
@@ -93,9 +93,10 @@ subintents:
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
+        ui_step: "datos"
 
 flow_submit:
-  action_id: profesional-agenda.editar-mi-agenda-flow
+  action_id: profesional-agenda.editar-mi-flow
   params:
     id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
     id_servicio: "draft.id_servicio"

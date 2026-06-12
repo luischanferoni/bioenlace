@@ -244,6 +244,14 @@ final class ProfesionalEfectorServicioAgendaUiService
     /**
      * @param array<string, mixed> $post
      */
+    public static function resolvePesIdForAgendaSubmitPublic(int $idEfector, array $post): int
+    {
+        return self::resolvePesIdForAgendaSubmit($idEfector, $post);
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     */
     private static function resolvePesIdForAgendaSubmit(int $idEfector, array $post): int
     {
         $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($post);

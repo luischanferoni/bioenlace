@@ -219,10 +219,10 @@ edit_surfaces:
           - cambiar nombre
       agenda_horarios:
         label: Agenda y horarios
-        kind: field_group
+        kind: open_ui
         attribute_group: ProfesionalEfectorServicio.agenda_horarios
-        submit_handler: profesional-agenda.configurar-agenda
-        prefill: agenda_config
+        ui_action: profesional-agenda.configurar-agenda
+        requires_params: [id_profesional_efector_servicio, id_servicio]
         keywords:
           - agenda
           - horarios

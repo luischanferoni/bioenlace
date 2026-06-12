@@ -140,16 +140,16 @@ Los lists de pasos **previos del mismo flow activo** quedan clickables (no se ma
 
 ## Cierres POST-only (sin UI en GET)
 
-Algunos `flow_submit.action_id` apuntan a endpoints que **sólo aceptan POST** y devuelven `ui_submit_result`, sin descriptor `ui_definition` (no se puede "abrir" con GET). El `rbac_route` del YAML debe coincidir con el permiso webvimark (sin `v1`), p. ej. `rbac_route: "/api/profesional-agenda/crear-agenda-flow"` → API `POST /api/v1/profesional-agenda/crear-agenda-flow`. Ver `AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute`.
+Algunos `flow_submit.action_id` apuntan a endpoints que **sólo aceptan POST** y devuelven `ui_submit_result`, sin descriptor `ui_definition` (no se puede "abrir" con GET). El `rbac_route` del YAML debe coincidir con el permiso webvimark (sin `v1`), p. ej. `rbac_route: "/api/profesional-efector-servicio/crear-flow"` → API `POST /api/v1/profesional-efector-servicio/crear-flow`. Ver `AssistantClientOpenEnricher::isPostOnlyFlowClosureRoute`.
 
 Para esos flujos el motor emite el envelope con `flow_submit` (y eventualmente `open_ui` del último paso si lo hay); el cliente nunca intenta abrir GET sobre la ruta de cierre.
 
 ## Alineación entre intents
 
 - Flujos `turnos.*` usan **`flow_submit`** hacia acciones API ya existentes (`crear-como-paciente`, `cancelar-como-paciente`, `reprogramar-como-paciente`).
-- `agenda.crear-profesional-flow` usa **`flow_submit`** hacia `profesional-agenda.crear-agenda-flow` tras configurar agenda (con `provides` que marca fin de la pantalla de configuración) o al terminar la rama sin turnos.
-- `agenda.editar-agenda-flow` (**deprecado**, `catalog_exclude: true`) — reemplazado por `data-access.editar` + aspecto `agenda_horarios`. El YAML legacy conserva **`flow_submit`** hacia `profesional-agenda.editar-agenda-flow` solo para sesiones en vuelo.
-- `agenda.editar-mi-agenda-flow` usa **`flow_submit`** hacia `profesional-agenda.editar-mi-agenda-flow` (misma estructura que editar agenda, sin paso de selección de profesional; servicios propios vía `listar-mis-servicios-en-efector`).
+- `profesional-efector-servicio.crear-flow` usa **`flow_submit`** hacia `profesional-efector-servicio.crear-flow` tras configurar agenda (con `provides` que marca fin de la pantalla de configuración) o al terminar la rama sin turnos.
+- `profesional-agenda.editar-flow` (**deprecado**, `catalog_exclude: true`) — reemplazado por `data-access.editar` + aspecto `agenda_horarios`. El YAML legacy conserva **`flow_submit`** hacia `profesional-agenda.editar-flow` solo para sesiones en vuelo.
+- `profesional-agenda.editar-mi-flow` usa **`flow_submit`** hacia `profesional-agenda.editar-mi-flow` (misma estructura que editar agenda, sin paso de selección de profesional; servicios propios vía `listar-mis-servicios-en-efector`).
 
 ## Referencia de código
 

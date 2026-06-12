@@ -85,6 +85,10 @@ final class ProfesionalEfectorServicioAgendaVersionService
         $intervaloNuevo = (int) $preview['intervalo_nuevo'];
         $confirmar = !empty($post['confirmar_cambios']) && (string) $post['confirmar_cambios'] !== '0';
 
+        if (AgendaConfigImpactProfile::isModalityOnlySubmit($post)) {
+            $confirmar = true;
+        }
+
         $cambioIntervalo = (int) $preview['intervalo_actual'] !== $intervaloNuevo;
         if ($cambioIntervalo) {
             $cambiosAnio = (int) $preview['cambios_intervalo_este_anio'];
@@ -96,15 +100,16 @@ final class ProfesionalEfectorServicioAgendaVersionService
             }
         }
 
-        if ((int) $preview['turnos_en_conflicto'] > 0 && !$confirmar) {
+        $needsConfirm = AgendaConfigImpactProfile::previewRequiresUserConfirmation($preview, $post);
+        if ($needsConfirm && !$confirmar) {
             throw new BadRequestHttpException(
-                'Hay turnos que no encajan en la nueva grilla. Revise el impacto y confirme con confirmar_cambios=1.'
+                'Confirme el cambio de agenda tras revisar el impacto en turnos futuros.'
             );
         }
 
-        if ($preview['requiere_confirmacion'] && !$confirmar && empty($post['forzar_sin_confirmacion'])) {
+        if ((int) $preview['turnos_en_conflicto'] > 0 && !$confirmar && $needsConfirm) {
             throw new BadRequestHttpException(
-                'Confirme el cambio de agenda (confirmar_cambios=1) tras revisar el impacto.'
+                'Hay turnos que no encajan en la nueva grilla. Revise el impacto y confirme el cambio.'
             );
         }
 

@@ -21,6 +21,4 @@ Catálogo staff (grupos de atributos, métricas, edición dispersa) junto a los 
 
 ## Intents relacionados
 
-- `intents/data-access.info.yaml`
-- `intents/data-access.listar.yaml`
-- `intents/data-access.editar.yaml`
+Los canales staff **info / listar / editar** se descubren vía `DataAccessUiActionCatalog` (sin YAML de flow en `intents/`).

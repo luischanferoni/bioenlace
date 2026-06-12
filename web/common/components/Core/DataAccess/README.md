@@ -27,9 +27,9 @@ Dos intents YAML genéricos (no uno por métrica):
 
 | Intent | HTTP | Uso |
 |--------|------|-----|
-| `data-access.info` | `/api/info` | Métricas aggregate/grouped |
-| `data-access.listar` | `/api/listar` | Métricas rows |
-| `data-access.editar` | `/api/editar` | Edición dispersa (superficie → aspectos → sujeto) |
+| `data-access.info` | `/api/info` | Métricas aggregate/grouped (catálogo PHP, sin YAML flow) |
+| `data-access.listar` | `/api/listar` | Métricas rows (catálogo PHP, sin YAML flow) |
+| `data-access.editar` | `/api/editar` | Edición dispersa (catálogo PHP, sin YAML flow) |
 
 El `metric_id` / `surface_id` y filtros se resuelven en runtime (`DataAccessMetricDiscoveryService`, `DataAccessEditDiscoveryService`, hydrators) desde keywords en **data-access-config** — **sin valores de atributos** (sexo, especialidad concreta, etc.; eso va en `filter_synonyms` / resolvers).
 
@@ -37,7 +37,7 @@ Edición: corte temprano si el rol no tiene ningún aspecto con `write` (`EditSu
 
 Auditoría mutaciones: canal `data-access`, evento `data_access_edit_applied` (`EditMutationAuditLogger`).
 
-Migración agenda staff: `agenda.editar-agenda-flow` deprecado (`catalog_exclude`); usar `data-access.editar` → aspecto `agenda_horarios` → `profesional-agenda.configurar-agenda`.
+Migración agenda staff: `profesional-agenda.editar-flow` deprecado (`catalog_exclude`); usar `data-access.editar` → aspecto `agenda_horarios` → `profesional-agenda.configurar-agenda`.
 
 ## Extender
 

@@ -8,6 +8,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
+use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaConfigUiFlowService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Scheduling\Service\TurnoResolucionElecciones;
@@ -29,68 +30,26 @@ use common\models\ProfesionalEfectorServicioAgenda;
  *
  * Permisos `/api/profesional-agenda/...` (sin `v1` en webvimark):
  * dia, listar, crear, actualizar, eliminar, listar-para-recurso, crear-para-recurso, actualizar-para-recurso, eliminar-para-recurso,
- * crear-agenda-flow, editar-agenda-flow, editar-mi-agenda-flow
+ * editar-flow, editar-mi-flow, resolver-conflictos-flow
  */
 class ProfesionalAgendaController extends BaseController
 {
     /**
-     * Cierre declarativo del flujo asistente «alta profesional y agenda» (solo POST; sin descriptor UI).
-     * Permiso RBAC: `/api/profesional-agenda/crear-agenda-flow` (alineado al YAML `agenda.crear-profesional-flow`).
-     *
-     * POST /api/v1/profesional-agenda/crear-agenda-flow
-     *
-     * @action_name Cerrar flujo alta profesional/agenda (asistente)
-     * @entity Agendas
-     * @tags agenda, asistente, flow
-     */
-    public function actionCrearAgendaFlow(): array
-    {
-        $req = Yii::$app->request;
-        if (!$req->isPost) {
-            throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
-        }
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Se requiere efector en sesión.');
-        }
-
-        $post = $req->post();
-        $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
-        if ($idPes > 0) {
-            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-            if ($pes === null || (int) $pes->id_efector !== $idEfector) {
-                throw new ForbiddenHttpException('Asignación inválida para este efector.');
-            }
-        }
-
-        return [
-            'success' => true,
-            'kind' => 'ui_submit_result',
-            'action_id' => 'profesional-agenda.crear-agenda-flow',
-            'data' => [
-                'success' => true,
-                'message' => 'Flujo de alta completado.',
-            ],
-            'errors' => null,
-        ];
-    }
-
-    /**
      * Cierre declarativo del flujo asistente «editar agenda» (solo POST; sin descriptor UI).
      *
-     * @deprecated Flujo legacy `agenda.editar-agenda-flow`; nuevos casos vía `data-access.editar` (aspecto agenda_horarios).
-     * Permiso RBAC: `/api/profesional-agenda/editar-agenda-flow` (alineado al YAML `agenda.editar-agenda-flow`).
+     * @deprecated Flujo legacy `profesional-agenda.editar-flow`; nuevos casos vía `data-access.editar` (aspecto agenda_horarios).
+     * Permiso RBAC: `/api/profesional-agenda/editar-flow` (alineado al YAML `profesional-agenda.editar-flow`).
      *
-     * POST /api/v1/profesional-agenda/editar-agenda-flow
+     * POST /api/v1/profesional-agenda/editar-flow
      *
      * @action_name Cerrar flujo editar agenda (asistente)
      * @entity Agendas
      * @tags agenda, asistente, flow
      */
-    public function actionEditarAgendaFlow(): array
+    public function actionEditarFlow(): array
     {
-        return $this->editarAgendaFlowResponse(
-            'profesional-agenda.editar-agenda-flow',
+        return $this->agendaFlowClosureResponse(
+            'profesional-agenda.editar-flow',
             'Flujo de edición de agenda cerrado.',
             false
         );
@@ -98,24 +57,24 @@ class ProfesionalAgendaController extends BaseController
 
     /**
      * Cierre declarativo del flujo asistente «editar mi agenda» (solo POST; sin descriptor UI).
-     * Permiso RBAC: `/api/profesional-agenda/editar-mi-agenda-flow` (alineado al YAML `agenda.editar-mi-agenda-flow`).
+     * Permiso RBAC: `/api/profesional-agenda/editar-mi-flow` (alineado al YAML `profesional-agenda.editar-mi-flow`).
      *
-     * POST /api/v1/profesional-agenda/editar-mi-agenda-flow
+     * POST /api/v1/profesional-agenda/editar-mi-flow
      *
      * @action_name Cerrar flujo editar mi agenda (asistente)
      * @entity Agendas
      * @tags agenda, asistente, flow, profesional
      */
-    public function actionEditarMiAgendaFlow(): array
+    public function actionEditarMiFlow(): array
     {
-        return $this->editarAgendaFlowResponse(
-            'profesional-agenda.editar-mi-agenda-flow',
+        return $this->agendaFlowClosureResponse(
+            'profesional-agenda.editar-mi-flow',
             'Flujo de edición de tu agenda cerrado.',
             true
         );
     }
 
-    private function editarAgendaFlowResponse(string $actionId, string $message, bool $requireOwnPes): array
+    private function agendaFlowClosureResponse(string $actionId, string $message, bool $requireOwnPes): array
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
@@ -170,8 +129,8 @@ class ProfesionalAgendaController extends BaseController
     {
         $req = Yii::$app->request;
         $idEfector = (int) Yii::$app->user->getIdEfector();
-
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+
         if ($req->isPost && ($fromClient['preview'] ?? '') === '1') {
             return [
                 'success' => true,
@@ -180,18 +139,30 @@ class ProfesionalAgendaController extends BaseController
             ];
         }
 
-        $defaults = ProfesionalEfectorServicioAgendaUiService::buildFieldValuesForGet($idEfector, $fromClient);
-        $paramsForRender = array_merge($defaults, $fromClient);
+        if ($req->isPost) {
+            return AgendaConfigUiFlowService::handlePost($idEfector, $fromClient);
+        }
 
-        return UiScreenService::handleScreen(
-            'profesional-agenda',
-            'configurar-agenda',
-            $paramsForRender,
-            $req->post(),
-            function (array $post) use ($idEfector): array {
-                return ProfesionalEfectorServicioAgendaUiService::submitAgendaConfig($idEfector, $post);
-            }
-        );
+        return AgendaConfigUiFlowService::renderStep($idEfector, $fromClient);
+    }
+
+    /**
+     * GET|POST /api/v1/profesional-agenda/preview-impacto-agenda
+     *
+     * Paso de revisión de impacto (tras datos de agenda).
+     */
+    public function actionPreviewImpactoAgenda(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        $fromClient['ui_step'] = AgendaConfigUiFlowService::STEP_IMPACTO;
+
+        if ($req->isPost) {
+            return AgendaConfigUiFlowService::handlePost($idEfector, $fromClient);
+        }
+
+        return AgendaConfigUiFlowService::renderStep($idEfector, $fromClient);
     }
 
     /**
@@ -635,14 +606,14 @@ class ProfesionalAgendaController extends BaseController
     /**
      * Resuelve conflicto de agenda en nombre del paciente (staff).
      *
-     * POST /api/v1/profesional-agenda/resolver-conflicto-agenda-para-paciente
+     * POST /api/v1/profesional-agenda/resolver-conflictos-flow
      * Body: id, eleccion (antes|despues|cancelar)
      *
-     * @action_name Resolver conflicto agenda para paciente (staff)
+     * @action_name Resolver conflictos de agenda (staff)
      * @entity Agendas
      * @tags agenda, staff, turnos, conflicto
      */
-    public function actionResolverConflictoAgendaParaPaciente(): array
+    public function actionResolverConflictosFlow(): array
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
@@ -664,7 +635,10 @@ class ProfesionalAgendaController extends BaseController
 
         return [
             'success' => true,
+            'kind' => 'ui_submit_result',
+            'action_id' => 'profesional-agenda.resolver-conflictos-flow',
             'data' => TurnoResolucionService::resolverConflictoStaff($tid, $idEfector, $eleccion),
+            'errors' => null,
         ];
     }
 

@@ -91,9 +91,9 @@ final class AssistantClientOpenEnricher
     private const POST_ONLY_FLOW_CLOSURE_ROUTES = [
         '/api/v1/turnos/cancelar-como-paciente',
         '/api/v1/turnos/reprogramar-como-paciente',
-        '/api/v1/profesional-agenda/crear-agenda-flow',
-        '/api/v1/profesional-agenda/editar-agenda-flow',
-        '/api/v1/profesional-agenda/editar-mi-agenda-flow',
+        '/api/v1/profesional-efector-servicio/crear-flow',
+        '/api/v1/profesional-agenda/editar-flow',
+        '/api/v1/profesional-agenda/editar-mi-flow',
         '/api/v1/profesional-efector-servicio/cargar-licencia-como-profesional-flow',
         '/api/v1/profesional-efector-servicio/cargar-licencia-para-profesional-flow',
     ];

@@ -96,7 +96,16 @@ class m260608_180000_data_access_attribute_field_table extends Migration
         }
 
         $parsed = json_decode((string) file_get_contents($jsonPath), true);
-        $fields = $parsed['blocks'][0]['fields'] ?? null;
+        $fields = null;
+        foreach ($parsed['blocks'] ?? [] as $block) {
+            if (!is_array($block) || ($block['kind'] ?? '') !== 'fields') {
+                continue;
+            }
+            if (is_array($block['fields'] ?? null)) {
+                $fields = $block['fields'];
+                break;
+            }
+        }
         if (!is_array($fields)) {
             throw new \RuntimeException('configurar-agenda.json sin bloque fields.');
         }

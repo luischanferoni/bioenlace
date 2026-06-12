@@ -2,17 +2,40 @@
   "ui_type": "ui_json",
   "ui_meta": {
     "schema_version": "1",
+    "field_meta": {
+      "vigente_desde": {
+        "impact_profile": "grid",
+        "hint": "Los turnos anteriores a esta fecha no se modifican. Desde esta fecha se evalúa el impacto si cambiás horarios o intervalo."
+      },
+      "intervalo_minutos": { "impact_profile": "grid" },
+      "lunes_2": { "impact_profile": "grid", "form": false },
+      "martes_2": { "impact_profile": "grid", "form": false },
+      "miercoles_2": { "impact_profile": "grid", "form": false },
+      "jueves_2": { "impact_profile": "grid", "form": false },
+      "viernes_2": { "impact_profile": "grid", "form": false },
+      "sabado_2": { "impact_profile": "grid", "form": false },
+      "domingo_2": { "impact_profile": "grid", "form": false },
+      "cupo_pacientes": { "impact_profile": "capacity" },
+      "formas_atencion": { "impact_profile": "capacity" },
+      "acepta_consultas_online": { "impact_profile": "none" }
+    },
     "clients": {
-      "*": {
-        "min_app_version": "1.0.0"
-      }
+      "*": { "min_app_version": "1.0.0" }
     }
   },
   "blocks": [
     {
       "kind": "fields",
-      "id": "default",
+      "id": "datos",
+      "title": "Configuración de agenda",
       "fields": [
+        {
+          "name": "ui_step",
+          "label": "",
+          "type": "hidden",
+          "value": "datos",
+          "include_in_submit": true
+        },
         {
           "name": "id_efector",
           "label": "",
@@ -35,7 +58,7 @@
         },
         {
           "name": "vigente_desde",
-          "label": "Vigente desde",
+          "label": "¿Desde qué fecha aplica este cambio?",
           "type": "date",
           "required": true,
           "layout": { "col": 4, "breakpoint": "md" }
@@ -93,28 +116,6 @@
             { "value": "1", "label": "Sí" }
           ],
           "layout": { "col": 6, "breakpoint": "md" }
-        },
-        {
-          "name": "confirmar_cambios",
-          "label": "Confirmo el cambio tras revisar el impacto en turnos futuros",
-          "type": "select",
-          "required": false,
-          "options": [
-            { "value": "0", "label": "No" },
-            { "value": "1", "label": "Sí, guardar" }
-          ],
-          "layout": { "col": 6, "breakpoint": "md" }
-        },
-        {
-          "name": "agenda_impact_preview",
-          "label": "Impacto en turnos futuros",
-          "type": "custom_widget",
-          "widget_id": "agenda_config_preview",
-          "required": false,
-          "assets": {
-            "js": ["/js/widgets/ui-widget-agenda-config-preview.js"]
-          },
-          "layout": { "col": 12, "breakpoint": "md" }
         },
         {
           "name": "weekly_scheduler_widget",

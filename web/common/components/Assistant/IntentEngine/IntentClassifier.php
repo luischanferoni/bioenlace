@@ -152,7 +152,7 @@ final class IntentClassifier
             return 45;
         }
 
-        if ($actionId === 'agenda.crear-profesional-flow' && self::messageSuggestsStaffAgendaEdit($messageLower)) {
+        if ($actionId === 'profesional-efector-servicio.crear-flow' && self::messageSuggestsStaffAgendaEdit($messageLower)) {
             return -30;
         }
 

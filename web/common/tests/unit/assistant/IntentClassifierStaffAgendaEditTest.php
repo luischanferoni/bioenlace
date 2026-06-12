@@ -16,7 +16,7 @@ class IntentClassifierStaffAgendaEditTest extends Unit
             ['modificar', 'agenda', 'editar', 'modificar agenda']
         );
         $crear = $this->catalogItem(
-            'agenda.crear-profesional-flow',
+            'profesional-efector-servicio.crear-flow',
             ['agenda', 'cargar agenda']
         );
 

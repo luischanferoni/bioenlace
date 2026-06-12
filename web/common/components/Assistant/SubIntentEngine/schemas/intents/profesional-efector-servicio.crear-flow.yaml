@@ -1,9 +1,9 @@
-intent_id: agenda.crear-profesional-flow
+intent_id: profesional-efector-servicio.crear-flow
 version: 1
 
 action_name: "Alta profesional en efector y agenda"
 description: "Agregar un profesional a un servicio y, si corresponde, crear su agenda."
-rbac_route: "/api/profesional-agenda/crear-agenda-flow"
+rbac_route: "/api/profesional-efector-servicio/crear-flow"
 keywords:
   - agenda
   - cargar agenda
@@ -58,7 +58,7 @@ business_rules:
     remediation:
       - id: flujo_completo
         label: "Flujo completo (profesional / servicio / agenda si aplica)"
-        intent_id: agenda.crear-profesional-flow
+        intent_id: profesional-efector-servicio.crear-flow
         reset_flow: true
       - id: solo_agenda
         label: "Solo horarios (edición dispersa)"
@@ -66,7 +66,7 @@ business_rules:
         reset_flow: true
       - id: mi_agenda
         label: "Mi agenda (mis servicios)"
-        intent_id: agenda.editar-mi-agenda-flow
+        intent_id: profesional-agenda.editar-mi-flow
         reset_flow: true
 
 subintents:
@@ -75,31 +75,26 @@ subintents:
     provides:
       - draft.id_persona
     next: select_servicio
-    # SPA (`spa-home.js`): si la URL de la mini-UI devuelve HTTP≠200, JSON sin `kind: ui_definition` o `success: false`,
-    # no se muestra la tira de pasos como si el flujo hubiera avanzado (no “saltamos” visualmente a los siguientes pasos).
     open_ui:
       action_id: persona.buscar-para-asistente
       pass_content_as_query: q
 
   - id: select_servicio
     assistant_text: "Servicio"
-    # La mini-UI solo usa efector en sesión; `id_persona` sigue viniendo del paso anterior por orden del flujo.
     provides:
       - draft.id_servicio
     next_routing:
       - when:
           draft_equals:
             servicio_acepta_turnos: "SI"
-        next: configurar_agenda
+        next: configurar_agenda_datos
       - when:
           default: true
         next: ""
     open_ui:
-      # Misma regla SPA que en `select_persona`: error de carga de UI → no tira de plan / pasos siguientes.
-      # Catálogo del establecimiento (`ServiciosEfector`), no RRHH. `q` opcional en la API para filtrar por nombre.
       action_id: efectores.listar-servicios-habilitados
 
-  - id: configurar_agenda
+  - id: configurar_agenda_datos
     assistant_text: "Agenda"
     provides:
       - draft.agenda_ui_completed
@@ -108,15 +103,14 @@ subintents:
       - draft.id_servicio
     next: ""
     open_ui:
-      # Misma regla SPA al abrir la configuración de agenda.
       action_id: profesional-agenda.configurar-agenda
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
+        ui_step: "datos"
 
-# Cierre POST-only (sin GET UI); rbac_route = permiso /api/profesional-agenda/crear-agenda-flow
 flow_submit:
-  action_id: profesional-agenda.crear-agenda-flow
+  action_id: profesional-efector-servicio.crear-flow
   params:
     id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
     id_servicio: "draft.id_servicio"

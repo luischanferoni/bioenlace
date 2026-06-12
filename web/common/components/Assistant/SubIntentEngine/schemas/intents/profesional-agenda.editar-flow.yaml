@@ -1,13 +1,13 @@
 # Deprecado: usar intent `data-access.editar` (aspecto agenda_horarios → configurar-agenda).
 # Se conserva para cierres POST en vuelo y SubIntentEngine; no aparece en el catálogo del asistente.
-intent_id: agenda.editar-agenda-flow
+intent_id: profesional-agenda.editar-flow
 version: 1
 catalog_exclude: true
 deprecated_successor: data-access.editar
 
 action_name: "Editar agenda (legacy)"
 description: "Deprecado — reemplazado por edición dispersa data-access.editar."
-rbac_route: "/api/profesional-agenda/editar-agenda-flow"
+rbac_route: "/api/profesional-agenda/editar-flow"
 keywords: []
 
 intent_semantics:
@@ -15,7 +15,7 @@ intent_semantics:
     Cargar o ajustar horarios de agenda de un profesional ya existente en el contexto de un servicio que habilite turnos.
   how: >-
     Seleccioná profesional y servicio; si el servicio habilita turnos abrís la configuración de agenda y guardás;
-    si no admite agenda de turnos, el flujo cierra con confirmación. El cierre declarativo usa la misma ruta RBAC del intent.
+    si no admite agenda de turnos, el flujo cierra con confirmación.
   preconditions:
     - El profesional ya existe y es seleccionable.
     - Existe un servicio seleccionable en el efector.
@@ -51,11 +51,11 @@ business_rules:
         reset_flow: true
       - id: mi_agenda
         label: "Mi agenda (mis servicios)"
-        intent_id: agenda.editar-mi-agenda-flow
+        intent_id: profesional-agenda.editar-mi-flow
         reset_flow: true
       - id: flujo_completo
         label: "Flujo completo (profesional / servicio / agenda si aplica)"
-        intent_id: agenda.crear-profesional-flow
+        intent_id: profesional-efector-servicio.crear-flow
         reset_flow: true
 
 subintents:
@@ -77,7 +77,7 @@ subintents:
       - when:
           draft_equals:
             servicio_acepta_turnos: "SI"
-        next: configurar_agenda
+        next: configurar_agenda_datos
       - when:
           draft_equals:
             servicio_acepta_turnos: "NO"
@@ -90,7 +90,7 @@ subintents:
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
 
-  - id: configurar_agenda
+  - id: configurar_agenda_datos
     assistant_text: "Agenda"
     provides:
       - draft.agenda_ui_completed
@@ -103,9 +103,10 @@ subintents:
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         id_servicio: "draft.id_servicio"
+        ui_step: "datos"
 
 flow_submit:
-  action_id: profesional-agenda.editar-agenda-flow
+  action_id: profesional-agenda.editar-flow
   params:
     id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
     id_servicio: "draft.id_servicio"

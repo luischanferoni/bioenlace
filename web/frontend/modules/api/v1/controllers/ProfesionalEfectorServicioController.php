@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
+use yii\web\MethodNotAllowedHttpException;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Ui\UiScreenService;
@@ -507,6 +508,48 @@ class ProfesionalEfectorServicioController extends BaseController
                 return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral($idEfector, $post, true);
             }
         );
+    }
+
+    /**
+     * Cierre declarativo del flujo asistente «alta profesional en efector» (solo POST; sin descriptor UI).
+     * Permiso RBAC: `/api/profesional-efector-servicio/crear-flow` (alineado al YAML `profesional-efector-servicio.crear-flow`).
+     *
+     * POST /api/v1/profesional-efector-servicio/crear-flow
+     *
+     * @action_name Cerrar flujo alta profesional en efector (asistente)
+     * @entity ProfesionalEfectorServicio
+     * @tags profesional, asistente, flow
+     */
+    public function actionCrearFlow(): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
+        }
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        $post = $req->post();
+        $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
+        if ($idPes > 0) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+            if ($pes === null || (int) $pes->id_efector !== $idEfector) {
+                throw new ForbiddenHttpException('Asignación inválida para este efector.');
+            }
+        }
+
+        return [
+            'success' => true,
+            'kind' => 'ui_submit_result',
+            'action_id' => 'profesional-efector-servicio.crear-flow',
+            'data' => [
+                'success' => true,
+                'message' => 'Flujo de alta completado.',
+            ],
+            'errors' => null,
+        ];
     }
 
     /**

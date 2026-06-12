@@ -10,6 +10,7 @@ use common\components\Core\DataAccess\Edit\EditSparseSubjectLoader;
 use common\components\Core\DataAccess\Edit\EditMutationResult;
 use common\components\Core\DataAccess\Edit\MutationExecutor;
 use common\components\Core\DataAccess\Edit\OpenUiEditMutationDelegate;
+use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaConfigUiFlowService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Ui\UiScreenService;
 use yii\web\ForbiddenHttpException;
@@ -554,18 +555,13 @@ final class DataAccessEditUiService
 
             if ($action['action_id'] === 'profesional-agenda.configurar-agenda') {
                 $idEfector = (int) ($subjectContext['id_efector'] ?? $params['id_efector'] ?? 0);
-                $defaults = ProfesionalEfectorServicioAgendaUiService::buildFieldValuesForGet($idEfector, $queryParams);
-                $queryParams = array_merge($defaults, $queryParams);
+                $queryParams['ui_step'] = trim((string) ($queryParams['ui_step'] ?? AgendaConfigUiFlowService::STEP_DATOS));
+                $nested = AgendaConfigUiFlowService::renderStep($idEfector, $queryParams);
+            } else {
+                $nested = UiScreenService::renderUiDefinition($entity, $actionName, $queryParams, null);
             }
 
-            $nested = UiScreenService::renderUiDefinition($entity, $actionName, $queryParams, null);
             $aspectLabel = trim((string) ($openUi['label'] ?? $aspectId)) ?: $aspectId;
-            $surfaceId = trim((string) ($params['surface_id'] ?? ''));
-            $applyHidden = $this->contextHiddenFields(
-                array_merge($subjectContext, $surfaceId !== '' ? ['surface_id' => $surfaceId] : []),
-                'apply',
-                ['aspect_ids' => $aspectId]
-            );
 
             foreach ($nested['blocks'] ?? [] as $block) {
                 if (!is_array($block) || trim((string) ($block['kind'] ?? '')) !== 'fields') {
@@ -573,12 +569,25 @@ final class DataAccessEditUiService
                 }
                 $block['id'] = 'editar_open_ui_' . $aspectId;
                 $block['title'] = $aspectLabel;
-                $existingFields = isset($block['fields']) && is_array($block['fields']) ? $block['fields'] : [];
-                $block['fields'] = array_merge($applyHidden, $existingFields);
-                $block['submit_api'] = [
-                    'route' => '/api/v1/editar',
-                    'method' => 'POST',
-                ];
+                if ($action['action_id'] === 'profesional-agenda.configurar-agenda') {
+                    $block['submit_api'] = [
+                        'route' => '/api/v1/profesional-agenda/configurar-agenda',
+                        'method' => 'POST',
+                    ];
+                } else {
+                    $surfaceId = trim((string) ($params['surface_id'] ?? ''));
+                    $applyHidden = $this->contextHiddenFields(
+                        array_merge($subjectContext, $surfaceId !== '' ? ['surface_id' => $surfaceId] : []),
+                        'apply',
+                        ['aspect_ids' => $aspectId]
+                    );
+                    $existingFields = isset($block['fields']) && is_array($block['fields']) ? $block['fields'] : [];
+                    $block['fields'] = array_merge($applyHidden, $existingFields);
+                    $block['submit_api'] = [
+                        'route' => '/api/v1/editar',
+                        'method' => 'POST',
+                    ];
+                }
                 $blocks[] = $block;
             }
         }

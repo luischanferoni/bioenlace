@@ -1,9 +1,9 @@
-intent_id: agenda.resolver-conflictos-staff-flow
+intent_id: profesional-agenda.resolver-conflictos-flow
 version: 1
 
 action_name: "Resolver conflictos de agenda (staff)"
 description: "Para resolver turnos con conflicto por cambios en la agenda."
-rbac_route: "/api/profesional-agenda/resolver-conflicto-agenda-para-paciente"
+rbac_route: "/api/profesional-agenda/resolver-conflictos-flow"
 keywords:
   - conflictos agenda
   - resolver conflicto paciente
@@ -42,7 +42,7 @@ subintents:
         id: "draft.id"
 
 flow_submit:
-  action_id: profesional-agenda.resolver-conflicto-agenda-para-paciente
+  action_id: profesional-agenda.resolver-conflictos-flow
   params:
     id: "draft.id"
     eleccion: "draft.eleccion"

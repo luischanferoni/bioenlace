@@ -27,6 +27,6 @@ La conversación se guía por:
   - `turnos.conflicto-agenda-flow.yaml`, `turnos.confirmar-asistencia-flow.yaml`, `turnos.consultar-politica-autogestion-flow.yaml`
   - `turnos.crear-para-paciente-flow.yaml`, `turnos.cancelar-para-paciente-flow.yaml`, `turnos.no-se-presento-flow.yaml`, `turnos.crear-sobreturno-flow.yaml`
   - `turnos.consultar-ocupacion-dia-flow.yaml`, `turnos.ver-agenda-dia-profesional-flow.yaml`
-  - `agenda.crear-profesional-flow.yaml`, `agenda.editar-agenda-flow.yaml`, `agenda.editar-mi-agenda-flow.yaml`, `agenda.resolver-conflictos-staff-flow.yaml`
+  - `profesional-efector-servicio.crear-flow.yaml`, `profesional-agenda.editar-flow.yaml`, `profesional-agenda.editar-mi-flow.yaml`, `profesional-agenda.resolver-conflictos-flow.yaml`
   - `licencia.cargar-como-profesional-flow.yaml`, `licencia.cargar-para-profesional-flow.yaml`
   - Matriz intent ↔ API: `web/docs/Turnos/flows/intents-turnos.md`

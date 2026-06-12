@@ -6,7 +6,7 @@ use common\models\Servicio;
 use Yii;
 
 /**
- * Completa el draft del intent `agenda.crear-profesional-flow` antes de {@see \common\components\Assistant\SubIntentEngine\SubIntentEngine::process}:
+ * Completa el draft del intent `profesional-efector-servicio.crear-flow` antes de {@see \common\components\Assistant\SubIntentEngine\SubIntentEngine::process}:
  * - `servicio_acepta_turnos` desde catálogo si hay `id_servicio`
  * - Alta idempotente del vínculo persona–efector–servicio vía {@see ProfesionalEfectorServicioAltaService} al tener
  *   persona + servicio + efector en sesión y aún sin `id_profesional_efector_servicio` (mismo criterio con o sin agenda de turnos).

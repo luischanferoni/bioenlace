@@ -99,8 +99,8 @@ final class CommonActionsService
                 'id' => 'profesional_agenda',
                 'titulo' => 'Profesional, agenda y condición laboral',
                 'models' => [
-                    'agenda.crear-profesional-flow',
-                    'agenda.editar-mi-agenda-flow',
+                    'profesional-efector-servicio.crear-flow',
+                    'profesional-agenda.editar-mi-flow',
                     'data-access.editar',
                     'licencia.cargar-como-profesional-flow',
                     'licencia.cargar-para-profesional-flow',

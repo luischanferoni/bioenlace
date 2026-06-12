@@ -68,6 +68,7 @@ final class MutationExecutor
 
         $scalarJobs = [];
         $openUiActions = [];
+        $appliedChanges = [];
 
         foreach ($aspectIds as $aspectId) {
             if (!$this->surfaceAuth->userCanAccessAspect($ctx, $surfaceId, $aspectId, $params)) {
@@ -80,7 +81,11 @@ final class MutationExecutor
                 continue;
             }
 
-            $kind = trim((string) ($def['kind'] ?? 'scalar_group'));
+            $kind = trim((string) ($def['kind'] ?? 'field_group'));
+            if ($kind === 'scalar_group') {
+                $kind = 'field_group';
+            }
+
             if ($kind === 'open_ui') {
                 $persisted = $this->applyOpenUiAspect(
                     $surfaceId,
@@ -98,13 +103,31 @@ final class MutationExecutor
                 continue;
             }
 
-            if ($kind !== 'scalar_group') {
+            if ($kind !== 'field_group') {
+                continue;
+            }
+
+            $submitHandler = trim((string) ($def['submit_handler'] ?? ''));
+            if ($submitHandler !== '') {
+                $persisted = $this->applyFieldGroupSubmitHandler(
+                    $surfaceId,
+                    $aspectId,
+                    $def,
+                    $submitHandler,
+                    $proposed,
+                    $subjectContext,
+                    $params,
+                    $ctx
+                );
+                if ($persisted !== []) {
+                    $appliedChanges = array_merge($appliedChanges, $persisted);
+                }
                 continue;
             }
 
             $aspectBaseline = $baseline[$aspectId] ?? [];
             if (!is_array($aspectBaseline)) {
-                continue;
+                $aspectBaseline = [];
             }
 
             $changes = [];
@@ -146,11 +169,10 @@ final class MutationExecutor
             ];
         }
 
-        if ($scalarJobs === [] && $openUiActions === []) {
+        if ($scalarJobs === [] && $openUiActions === [] && $appliedChanges === []) {
             throw new \InvalidArgumentException('No hay cambios para aplicar.');
         }
 
-        $appliedChanges = [];
         if ($scalarJobs !== []) {
             $tx = Yii::$app->db->beginTransaction();
             try {
@@ -182,7 +204,96 @@ final class MutationExecutor
     }
 
     /**
-     * Persiste aspectos open_ui conocidos (p. ej. agenda) bajo permiso write del attribute_group.
+     * Persiste field_group con submit_handler declarado en catálogo.
+     *
+     * @param array<string, mixed> $def
+     * @param array<string, string> $proposed
+     * @param array<string, int|string> $subjectContext
+     * @param array<string, mixed> $params
+     * @return list<array{field: string, label: string, before: string, after: string}>
+     */
+    private function applyFieldGroupSubmitHandler(
+        string $surfaceId,
+        string $aspectId,
+        array $def,
+        string $submitHandler,
+        array $proposed,
+        array $subjectContext,
+        array $params,
+        PermissionContext $ctx
+    ): array {
+        if ($submitHandler === 'profesional-agenda.configurar-agenda') {
+            return $this->applyAgendaConfigSubmitHandler(
+                $surfaceId,
+                $aspectId,
+                $def,
+                $proposed,
+                $subjectContext,
+                $params,
+                $ctx
+            );
+        }
+
+        throw new \RuntimeException('submit_handler desconocido: ' . $submitHandler);
+    }
+
+    /**
+     * @param array<string, mixed> $def
+     * @param array<string, string> $proposed
+     * @param array<string, int|string> $subjectContext
+     * @param array<string, mixed> $params
+     * @return list<array{field: string, label: string, before: string, after: string}>
+     */
+    private function applyAgendaConfigSubmitHandler(
+        string $surfaceId,
+        string $aspectId,
+        array $def,
+        array $proposed,
+        array $subjectContext,
+        array $params,
+        PermissionContext $ctx
+    ): array {
+        $group = trim((string) ($def['attribute_group'] ?? ''));
+        $payload = [];
+        foreach ($this->mutationAuth->allowedFieldsForAspect($def, $group) as $field) {
+            if (array_key_exists($field, $proposed)) {
+                $payload[$field] = $proposed[$field];
+            }
+        }
+        if ($payload === []) {
+            throw new BadRequestHttpException('No se recibieron datos del formulario.');
+        }
+
+        $this->mutationAuth->assertCanApplyScalarChanges(
+            $ctx,
+            $surfaceId,
+            $aspectId,
+            $def,
+            $params,
+            $payload
+        );
+
+        $idEfector = (int) ($subjectContext['id_efector'] ?? $params['id_efector'] ?? 0);
+        if ($idEfector <= 0) {
+            $idEfector = (int) Yii::$app->user->getIdEfector();
+        }
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        $result = ProfesionalEfectorServicioAgendaUiService::submitAgendaConfig($idEfector, $payload);
+        $label = trim((string) ($def['label'] ?? $aspectId)) ?: $aspectId;
+
+        return [[
+            'field' => $aspectId,
+            'label' => $label,
+            'before' => '',
+            'after' => (string) ($result['message'] ?? 'Guardado'),
+        ]];
+    }
+
+    /**
+     * Persiste aspectos open_ui conocidos (legacy) bajo permiso write del attribute_group.
      *
      * @param array<string, mixed> $def
      * @param array<string, int|string> $subjectContext

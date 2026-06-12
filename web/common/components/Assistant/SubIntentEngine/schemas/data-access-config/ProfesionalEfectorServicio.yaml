@@ -3,6 +3,8 @@ entity: ProfesionalEfectorServicio
 groups:
   asignacion:
     attributes: [id_efector, id_servicio, id_persona]
+  # Campos del formulario: tabla data_access_attribute_field (seed desde configurar-agenda.json).
+  agenda_horarios: {}
 
 metrics:
   profesionales_conteo_efector:
@@ -206,7 +208,7 @@ edit_surfaces:
     aspects:
       identidad:
         label: Identidad (nombre y apellido)
-        kind: scalar_group
+        kind: field_group
         attribute_group: Persona.identidad_basica
         fields: [nombre, apellido, otro_nombre, otro_apellido]
         keywords:
@@ -217,11 +219,10 @@ edit_surfaces:
           - cambiar nombre
       agenda_horarios:
         label: Agenda y horarios
-        kind: open_ui
-        # Permiso: write sobre este grupo (grant BD). La UI es open_ui → configurar-agenda.
-        attribute_group: ProfesionalEfectorServicio.asignacion
-        ui_action: profesional-agenda.configurar-agenda
-        requires_params: [id_profesional_efector_servicio, id_servicio]
+        kind: field_group
+        attribute_group: ProfesionalEfectorServicio.agenda_horarios
+        submit_handler: profesional-agenda.configurar-agenda
+        prefill: agenda_config
         keywords:
           - agenda
           - horarios

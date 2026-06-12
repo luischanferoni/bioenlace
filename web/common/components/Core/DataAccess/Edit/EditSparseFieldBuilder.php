@@ -7,34 +7,32 @@ use common\components\Core\DataAccess\EditSurfaceAuthorizationService;
 use common\components\Core\DataAccess\PermissionContext;
 
 /**
- * Campos ui_json para formulario parcial según aspectos elegidos.
+ * Campos ui_json para formulario parcial según aspectos elegidos (catálogo data-access-config).
  */
 final class EditSparseFieldBuilder
 {
-    private const FIELD_LABELS = [
-        'nombre' => 'Nombre',
-        'apellido' => 'Apellido',
-        'otro_nombre' => 'Otro nombre',
-        'otro_apellido' => 'Otro apellido',
-    ];
-
     private AttributeGroupCatalog $catalog;
     private EditSurfaceAuthorizationService $authorization;
+    private EditCatalogFormFieldBuilder $catalogFields;
 
     public function __construct(
         ?AttributeGroupCatalog $catalog = null,
-        ?EditSurfaceAuthorizationService $authorization = null
+        ?EditSurfaceAuthorizationService $authorization = null,
+        ?EditCatalogFormFieldBuilder $catalogFields = null
     ) {
         $this->catalog = $catalog ?? new AttributeGroupCatalog();
         $this->authorization = $authorization ?? new EditSurfaceAuthorizationService($this->catalog);
+        $this->catalogFields = $catalogFields ?? new EditCatalogFormFieldBuilder($this->catalog);
     }
 
     /**
      * @param list<string> $aspectIds
      * @param array<string, array<string, string>> $baseline
      * @param array<string, mixed> $params
+     * @param array<string, int|string> $subjectContext
      * @return array{
      *   fields: list<array<string, mixed>>,
+     *   aspect_blocks: list<array<string, mixed>>,
      *   open_ui: list<array<string, mixed>>,
      *   aspect_ids: list<string>
      * }
@@ -44,7 +42,8 @@ final class EditSparseFieldBuilder
         array $aspectIds,
         array $baseline,
         array $params,
-        PermissionContext $ctx
+        PermissionContext $ctx,
+        array $subjectContext = []
     ): array {
         $surface = $this->catalog->getEditSurface($surfaceId);
         if ($surface === null) {
@@ -57,6 +56,7 @@ final class EditSparseFieldBuilder
         }
 
         $fields = [];
+        $aspectBlocks = [];
         $openUi = [];
         $accepted = [];
 
@@ -69,7 +69,7 @@ final class EditSparseFieldBuilder
                 continue;
             }
 
-            $kind = trim((string) ($def['kind'] ?? 'scalar_group'));
+            $kind = trim((string) ($def['kind'] ?? 'field_group'));
             if ($kind === 'open_ui') {
                 $openUi[] = [
                     'aspect_id' => $aspectId,
@@ -81,33 +81,44 @@ final class EditSparseFieldBuilder
                 continue;
             }
 
-            if ($kind !== 'scalar_group') {
+            if ($kind === 'scalar_group') {
+                $kind = 'field_group';
+            }
+
+            if ($kind !== 'field_group') {
                 continue;
             }
 
-            $aspectFields = $def['fields'] ?? [];
-            if (!is_array($aspectFields)) {
-                $aspectFields = [];
-            }
             $prefill = $baseline[$aspectId] ?? [];
-
-            foreach ($aspectFields as $fieldName) {
-                $key = trim((string) $fieldName);
-                if ($key === '') {
-                    continue;
-                }
-                $fields[] = [
-                    'name' => $key,
-                    'type' => 'text',
-                    'label' => self::FIELD_LABELS[$key] ?? ucfirst(str_replace('_', ' ', $key)),
-                    'value' => (string) ($prefill[$key] ?? ''),
-                    'include_in_submit' => true,
-                    'meta' => [
-                        'aspect_id' => $aspectId,
-                        'attribute_group' => trim((string) ($def['attribute_group'] ?? '')),
-                    ],
-                ];
+            if (!is_array($prefill)) {
+                $prefill = [];
             }
+
+            $aspectFields = $this->catalogFields->buildUiFieldsForAspect(
+                $aspectId,
+                $def,
+                $prefill,
+                $subjectContext
+            );
+
+            if ($aspectFields === []) {
+                continue;
+            }
+
+            $submitHandler = trim((string) ($def['submit_handler'] ?? ''));
+            if ($submitHandler !== '') {
+                $aspectBlocks[] = [
+                    'aspect_id' => $aspectId,
+                    'title' => trim((string) ($def['label'] ?? $aspectId)) ?: $aspectId,
+                    'fields' => $aspectFields,
+                    'submit_handler' => $submitHandler,
+                ];
+            } else {
+                foreach ($aspectFields as $field) {
+                    $fields[] = $field;
+                }
+            }
+
             $accepted[] = $aspectId;
         }
 
@@ -117,6 +128,7 @@ final class EditSparseFieldBuilder
 
         return [
             'fields' => $fields,
+            'aspect_blocks' => $aspectBlocks,
             'open_ui' => $openUi,
             'aspect_ids' => $accepted,
         ];

@@ -9,7 +9,7 @@ use yii\helpers\Html;
 /* @var $metrics array<string, array<string, mixed>> */
 /* @var $editSurfaces array<string, array<string, mixed>> */
 
-$this->title = 'Catálogo DataAccess (YAML)';
+$this->title = 'Catálogo DataAccess';
 $this->params['breadcrumbs'][] = ['label' => 'Consultas staff', 'url' => ['#']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -21,35 +21,26 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 
     <p class="text-muted">
-        Referencia de <code><?= Html::encode($configDirectory) ?></code>.
-        Los permisos por rol se administran solo en base de datos.
+        Métricas y flujos en <code><?= Html::encode($configDirectory) ?></code>.
+        Grants y campos de formulario en BD (<code>data_access_role_grant</code>, <code>data_access_attribute_field</code>).
     </p>
 
     <div class="card mb-4">
-        <div class="card-header"><strong>Grupos de atributos</strong></div>
+        <div class="card-header"><strong>Grupos de atributos</strong> <span class="text-muted small">(unión YAML + BD)</span></div>
         <div class="card-body p-0">
             <table class="table table-sm table-striped mb-0">
                 <thead>
                     <tr>
                         <th>Grupo</th>
-                        <th>Atributos</th>
+                        <th>Campos</th>
                     </tr>
                 </thead>
                 <tbody>
-                <?php foreach ($entities as $entityName => $groups): ?>
-                    <?php if (!is_array($groups)) {
-                        continue;
-                    } ?>
-                    <?php foreach ($groups as $groupKey => $def): ?>
-                        <?php
-                        $fullKey = $entityName . '.' . $groupKey;
-                        $attrs = is_array($def) ? ($def['attributes'] ?? []) : [];
-                        ?>
-                        <tr>
-                            <td><code><?= Html::encode($fullKey) ?></code></td>
-                            <td><?= Html::encode(is_array($attrs) ? implode(', ', $attrs) : '') ?></td>
-                        </tr>
-                    <?php endforeach; ?>
+                <?php foreach ($entityGroups as $fullKey => $label): ?>
+                    <tr>
+                        <td><code><?= Html::encode((string) $fullKey) ?></code></td>
+                        <td><?= Html::encode((string) $label) ?></td>
+                    </tr>
                 <?php endforeach; ?>
                 </tbody>
             </table>

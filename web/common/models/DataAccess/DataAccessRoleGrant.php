@@ -110,7 +110,7 @@ class DataAccessRoleGrant extends ActiveRecord
         }
         $catalog = new AttributeGroupCatalog();
         if (!$catalog->entityGroupExists($key)) {
-            $this->addError($attribute, 'Grupo no registrado en data-access-config.');
+            $this->addError($attribute, 'Grupo no registrado (data-access-config o data_access_attribute_field).');
         }
     }
 

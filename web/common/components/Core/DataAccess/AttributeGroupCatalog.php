@@ -2,6 +2,7 @@
 
 namespace common\components\Core\DataAccess;
 
+use common\components\Core\DataAccess\Attribute\DatabaseAttributeDefinitionSource;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -168,6 +169,49 @@ final class AttributeGroupCatalog
    */
   public function listEntityGroupOptions(): array
   {
+    $out = DatabaseAttributeDefinitionSource::listGroupOptions();
+    $entities = self::load()['entities'] ?? [];
+    if (is_array($entities)) {
+      foreach ($entities as $entityName => $groups) {
+        if (!is_string($entityName) || !is_array($groups)) {
+          continue;
+        }
+        foreach ($groups as $groupKey => $def) {
+          if (!is_string($groupKey)) {
+            continue;
+          }
+          $fullKey = $entityName . '.' . $groupKey;
+          if (isset($out[$fullKey])) {
+            continue;
+          }
+          $attrList = implode(', ', $this->getEntityGroupAttributes($fullKey));
+          $out[$fullKey] = $attrList !== '' ? ($fullKey . ' (' . $attrList . ')') : $fullKey;
+        }
+      }
+    }
+    ksort($out);
+
+    return $out;
+  }
+
+  public function entityGroupExists(string $entityGroupKey): bool
+  {
+    $entityGroupKey = trim($entityGroupKey);
+    if ($entityGroupKey === '') {
+      return false;
+    }
+    if (DatabaseAttributeDefinitionSource::groupExists($entityGroupKey)) {
+      return true;
+    }
+
+    return isset($this->listYamlEntityGroupKeys()[$entityGroupKey]);
+  }
+
+  /**
+   * @return array<string, true>
+   */
+  private function listYamlEntityGroupKeys(): array
+  {
     $out = [];
     $entities = self::load()['entities'] ?? [];
     if (!is_array($entities)) {
@@ -178,23 +222,13 @@ final class AttributeGroupCatalog
         continue;
       }
       foreach ($groups as $groupKey => $def) {
-        if (!is_string($groupKey)) {
-          continue;
+        if (is_string($groupKey)) {
+          $out[$entityName . '.' . $groupKey] = true;
         }
-        $fullKey = $entityName . '.' . $groupKey;
-        $attrs = is_array($def) ? ($def['attributes'] ?? []) : [];
-        $attrList = is_array($attrs) ? implode(', ', array_map('strval', $attrs)) : '';
-        $out[$fullKey] = $attrList !== '' ? ($fullKey . ' (' . $attrList . ')') : $fullKey;
       }
     }
-    ksort($out);
 
     return $out;
-  }
-
-  public function entityGroupExists(string $entityGroupKey): bool
-  {
-    return isset($this->listEntityGroupOptions()[trim($entityGroupKey)]);
   }
 
   /**
@@ -202,7 +236,36 @@ final class AttributeGroupCatalog
    */
   public function getEntityGroupAttributes(string $entityGroupKey): array
   {
+    return array_keys($this->getEntityGroupFieldDefinitions($entityGroupKey));
+  }
+
+  /**
+   * Definiciones de campos del grupo (tipo, label, options, widget, etc.).
+   *
+   * @return array<string, array<string, mixed>>
+   */
+  public function getEntityGroupFieldDefinitions(string $entityGroupKey): array
+  {
     $entityGroupKey = trim($entityGroupKey);
+    if ($entityGroupKey === '') {
+      return [];
+    }
+
+    $fromDb = DatabaseAttributeDefinitionSource::getFieldDefinitions($entityGroupKey);
+    if ($fromDb !== []) {
+      return $fromDb;
+    }
+
+    return $this->getYamlEntityGroupFieldDefinitions($entityGroupKey);
+  }
+
+  /**
+   * Fallback legacy: grupos con lista simple de nombres en YAML (p. ej. asignacion).
+   *
+   * @return array<string, array<string, mixed>>
+   */
+  private function getYamlEntityGroupFieldDefinitions(string $entityGroupKey): array
+  {
     $dot = strpos($entityGroupKey, '.');
     if ($dot === false) {
       return [];
@@ -221,14 +284,35 @@ final class AttributeGroupCatalog
     }
 
     $attrs = $group['attributes'] ?? [];
-    if (!is_array($attrs)) {
+    if (!is_array($attrs) || $attrs === []) {
       return [];
     }
 
-    return array_values(array_filter(array_map(
-      static fn ($a): string => trim((string) $a),
-      $attrs
-    ), static fn (string $a): bool => $a !== ''));
+    if (array_is_list($attrs)) {
+      $out = [];
+      foreach ($attrs as $name) {
+        $key = trim((string) $name);
+        if ($key !== '') {
+          $out[$key] = ['type' => 'text'];
+        }
+      }
+
+      return $out;
+    }
+
+    $out = [];
+    foreach ($attrs as $name => $def) {
+      if (!is_string($name)) {
+        continue;
+      }
+      $key = trim($name);
+      if ($key === '') {
+        continue;
+      }
+      $out[$key] = is_array($def) ? $def : ['type' => 'text'];
+    }
+
+    return $out;
   }
 
   /**
@@ -278,6 +362,7 @@ final class AttributeGroupCatalog
   public static function resetCacheForTests(): void
   {
     self::$cache = null;
+    DatabaseAttributeDefinitionSource::clearCache();
   }
 
   /**

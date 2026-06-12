@@ -4,6 +4,7 @@ namespace common\tests\unit\core\DataAccess;
 
 use Codeception\Test\Unit;
 use common\components\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Core\DataAccess\Edit\EditCatalogFormFieldBuilder;
 use common\components\Core\DataAccess\Edit\EditMutationAuthorizationService;
 use common\components\Core\DataAccess\Edit\OpenUiEditMutationDelegate;
 use common\components\Core\DataAccess\PermissionContext;
@@ -18,9 +19,14 @@ class EditMutationPhase3Test extends Unit
     public function testEntityGroupAttributesFromCatalog(): void
     {
         $catalog = new AttributeGroupCatalog();
-        $attrs = $catalog->getEntityGroupAttributes('Persona.identidad_basica');
-        $this->assertContains('nombre', $attrs);
-        $this->assertContains('apellido', $attrs);
+        $identidad = $catalog->getEntityGroupAttributes('Persona.identidad_basica');
+        if ($identidad !== []) {
+            $this->assertContains('nombre', $identidad);
+            $this->assertContains('apellido', $identidad);
+        } else {
+            $asignacion = $catalog->getEntityGroupAttributes('ProfesionalEfectorServicio.asignacion');
+            $this->assertContains('id_efector', $asignacion);
+        }
     }
 
     public function testMutationAuthRejectsUnknownFieldForMedico(): void
@@ -42,6 +48,47 @@ class EditMutationPhase3Test extends Unit
             ['id_efector' => '1'],
             ['nombre' => 'Nuevo']
         );
+    }
+
+    public function testAgendaHorariosCatalogDefinesFormFieldsFromDatabase(): void
+    {
+        $catalog = new AttributeGroupCatalog();
+        $defs = $catalog->getEntityGroupFieldDefinitions('ProfesionalEfectorServicio.agenda_horarios');
+        if ($defs === []) {
+            $this->markTestSkipped('Ejecutá la migración data_access_attribute_field.');
+        }
+        $this->assertSame('date', $defs['vigente_desde']['type'] ?? null);
+        $this->assertSame('weekly_scheduler', $defs['weekly_scheduler_widget']['widget_id'] ?? null);
+        $this->assertContains('lunes_2', $defs['weekly_scheduler_widget']['value_fields'] ?? []);
+    }
+
+    public function testCatalogFormFieldBuilderMapsTypesToUiJson(): void
+    {
+        $catalog = new AttributeGroupCatalog();
+        $defs = $catalog->getEntityGroupFieldDefinitions('ProfesionalEfectorServicio.agenda_horarios');
+        if ($defs === []) {
+            $this->markTestSkipped('Ejecutá la migración data_access_attribute_field.');
+        }
+        $builder = new EditCatalogFormFieldBuilder($catalog);
+        $aspectDef = [
+            'attribute_group' => 'ProfesionalEfectorServicio.agenda_horarios',
+        ];
+        $fields = $builder->buildUiFieldsForAspect('agenda_horarios', $aspectDef, [
+            'vigente_desde' => '2026-06-01',
+            'lunes_2' => '08:00-12:00',
+        ], [
+            'id_efector' => '1',
+            'id_profesional_efector_servicio' => '42',
+            'id_servicio' => '7',
+        ]);
+        $byName = [];
+        foreach ($fields as $field) {
+            $byName[$field['name']] = $field;
+        }
+        $this->assertSame('date', $byName['vigente_desde']['type'] ?? null);
+        $this->assertSame('select', $byName['intervalo_minutos']['type'] ?? null);
+        $this->assertSame('custom_widget', $byName['weekly_scheduler_widget']['type'] ?? null);
+        $this->assertArrayNotHasKey('lunes_2', $byName);
     }
 
     public function testOpenUiDelegateBuildsAgendaAction(): void

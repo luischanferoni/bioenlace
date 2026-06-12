@@ -6,6 +6,7 @@ use common\components\Core\DataAccess\AttributeGroupCatalog;
 use common\components\Core\DataAccess\EditSurfaceAuthorizationService;
 use common\components\Core\DataAccess\PermissionContext;
 use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 
@@ -68,7 +69,7 @@ final class EditSparseSubjectLoader
         }
 
         $label = $this->buildSubjectLabel($idPersona, $pes);
-        $baseline = $this->buildBaseline($surfaceId, $surface, $params, $ctx, $idPersona);
+        $baseline = $this->buildBaseline($surfaceId, $surface, $params, $ctx, $idPersona, $pes, $idEfector);
 
         $context = [
             'surface_id' => $surfaceId,
@@ -148,7 +149,9 @@ final class EditSparseSubjectLoader
         array $surface,
         array $params,
         PermissionContext $ctx,
-        int $idPersona
+        int $idPersona,
+        ?ProfesionalEfectorServicio $pes,
+        int $idEfector
     ): array {
         $aspects = $surface['aspects'] ?? [];
         if (!is_array($aspects)) {
@@ -166,8 +169,33 @@ final class EditSparseSubjectLoader
                 continue;
             }
 
-            $kind = trim((string) ($def['kind'] ?? 'scalar_group'));
-            if ($kind !== 'scalar_group') {
+            $kind = trim((string) ($def['kind'] ?? 'field_group'));
+            if ($kind === 'scalar_group') {
+                $kind = 'field_group';
+            }
+            if ($kind === 'open_ui' || $kind !== 'field_group') {
+                continue;
+            }
+
+            $prefill = trim((string) ($def['prefill'] ?? ''));
+            if ($prefill === 'agenda_config') {
+                $queryParams = array_merge($params, ['id_efector' => $idEfector]);
+                if ($pes instanceof ProfesionalEfectorServicio) {
+                    $queryParams['id_profesional_efector_servicio'] = $pes->id;
+                    $queryParams['id_servicio'] = $pes->id_servicio;
+                }
+                $snapshot = ProfesionalEfectorServicioAgendaUiService::buildFieldValuesForGet($idEfector, $queryParams);
+                if ($snapshot !== []) {
+                    $stringified = [];
+                    foreach ($snapshot as $key => $value) {
+                        if (is_scalar($value)) {
+                            $stringified[(string) $key] = trim((string) $value);
+                        }
+                    }
+                    if ($stringified !== []) {
+                        $baseline[$aspectId] = $stringified;
+                    }
+                }
                 continue;
             }
 

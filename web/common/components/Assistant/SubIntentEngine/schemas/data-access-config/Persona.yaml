@@ -1,11 +1,20 @@
-# Grupos de atributos — entidad Persona (permiso fino por grupo).
+# Grupos de atributos — entidad Persona (permiso fino por grupo + definición de campos).
 entity: Persona
 groups:
-  identidad_basica:
-    attributes: [nombre, apellido, otro_nombre, otro_apellido]
+  # Campos del formulario: tabla data_access_attribute_field.
+  identidad_basica: {}
   sexo_genero:
     attributes: [sexo_biologico, genero]
   edad_exacta:
-    attributes: [fecha_nacimiento]
+    attributes:
+      fecha_nacimiento:
+        type: date
+        label: Fecha de nacimiento
   identificadores:
-    attributes: [documento, id_tipodoc]
+    attributes:
+      documento:
+        type: text
+        label: Documento
+      id_tipodoc:
+        type: text
+        label: Tipo de documento

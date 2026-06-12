@@ -81,7 +81,7 @@ final class EditSurfaceAuthorizationService
             $out[] = [
                 'id' => $aspectId,
                 'label' => trim((string) ($def['label'] ?? $aspectId)) ?: $aspectId,
-                'kind' => trim((string) ($def['kind'] ?? 'scalar_group')) ?: 'scalar_group',
+                'kind' => trim((string) ($def['kind'] ?? 'field_group')) ?: 'field_group',
                 'attribute_group' => $group,
             ];
         }

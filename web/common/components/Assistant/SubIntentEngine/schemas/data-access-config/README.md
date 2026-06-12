@@ -9,10 +9,12 @@ Catálogo staff (grupos de atributos, métricas, edición dispersa) junto a los 
 | `manifest.yaml` | Versión global y `filter_synonyms` |
 | `{Entidad}.yaml` | `groups` de la entidad; opcionalmente `metrics` y `edit_surfaces` |
 
-Los permisos por rol (**grants**) no viven aquí: se administran en BD (`data_access_role_grant`, pantalla backend **Permisos por atributo**).
+- **Permisos por rol**: BD `data_access_role_grant` (backend **Permisos por atributo**).
+- **Campos de formulario por grupo**: BD `data_access_attribute_field` (misma clave `Entidad.grupo`; seed canónico desde `configurar-agenda.json` para agenda).
 
 ## Convenciones
 
+- **`groups` en YAML**: registro del grupo (clave para grants y métricas). Listas simples de nombres (`asignacion`) solo como fallback legacy; formularios ricos van en BD.
 - **`keywords`**: vocabulario NL para descubrimiento (métricas y superficies). El verbo (listar, contar, editar) lo resuelve el intent, no el catálogo.
 - **`metrics`**: consultas allowlisted (`query`, `output`, `presentation_handler`).
 - **`edit_surfaces`**: flujo entidad → sujeto → dato → formulario (`data-access.editar`).

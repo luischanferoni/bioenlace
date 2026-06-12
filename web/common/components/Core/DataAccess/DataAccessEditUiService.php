@@ -2,6 +2,7 @@
 
 namespace common\components\Core\DataAccess;
 
+use common\components\Core\DataAccess\Edit\EditMutationAuthorizationService;
 use common\components\Core\DataAccess\Edit\EditSparseAspectIds;
 use common\components\Core\DataAccess\Edit\EditSparseConfirmPresenter;
 use common\components\Core\DataAccess\Edit\EditSparseFieldBuilder;
@@ -25,6 +26,7 @@ final class DataAccessEditUiService
     private EditSparseFieldBuilder $fieldBuilder;
     private EditSparseConfirmPresenter $confirmPresenter;
     private MutationExecutor $mutationExecutor;
+    private EditMutationAuthorizationService $mutationAuth;
 
     public function __construct(
         ?AttributeGroupCatalog $catalog = null,
@@ -33,7 +35,8 @@ final class DataAccessEditUiService
         ?EditSparseSubjectLoader $subjectLoader = null,
         ?EditSparseFieldBuilder $fieldBuilder = null,
         ?EditSparseConfirmPresenter $confirmPresenter = null,
-        ?MutationExecutor $mutationExecutor = null
+        ?MutationExecutor $mutationExecutor = null,
+        ?EditMutationAuthorizationService $mutationAuth = null
     ) {
         $this->catalog = $catalog ?? new AttributeGroupCatalog();
         $this->authorization = $authorization ?? new EditSurfaceAuthorizationService($this->catalog);
@@ -42,6 +45,7 @@ final class DataAccessEditUiService
         $this->fieldBuilder = $fieldBuilder ?? new EditSparseFieldBuilder($this->catalog, $this->authorization);
         $this->confirmPresenter = $confirmPresenter ?? new EditSparseConfirmPresenter();
         $this->mutationExecutor = $mutationExecutor ?? new MutationExecutor($this->catalog, $this->authorization);
+        $this->mutationAuth = $mutationAuth ?? new EditMutationAuthorizationService($this->catalog);
     }
 
     /**
@@ -272,11 +276,19 @@ final class DataAccessEditUiService
         );
 
         $scalarFields = $built['fields'];
+        $blocks = $this->buildAspectFieldBlocks(
+            $built['aspect_blocks'],
+            $subject['context'],
+            $surfaceId
+        );
         try {
-            $blocks = $this->embedOpenUiFieldBlocks(
-                $built['open_ui'],
-                $subject['context'],
-                array_merge($params, ['surface_id' => $surfaceId])
+            $blocks = array_merge(
+                $blocks,
+                $this->embedOpenUiFieldBlocks(
+                    $built['open_ui'],
+                    $subject['context'],
+                    array_merge($params, ['surface_id' => $surfaceId])
+                )
             );
         } catch (\yii\web\HttpException $e) {
             throw $e;
@@ -347,7 +359,7 @@ final class DataAccessEditUiService
             $ctx
         );
 
-        $proposed = $this->extractProposedValues($params, $subject['baseline'], $built['aspect_ids']);
+        $proposed = $this->extractProposedValues($surfaceId, $params, $subject['baseline'], $built['aspect_ids']);
         $diff = $this->confirmPresenter->buildDiff($subject['baseline'], $proposed, $built['aspect_ids']);
         $previewText = $this->confirmPresenter->formatPreviewText(
             $subject['label'],
@@ -417,7 +429,7 @@ final class DataAccessEditUiService
             $params,
             $ctx
         );
-        $proposed = $this->extractProposedValues($params, $subject['baseline'], $built['aspect_ids']);
+        $proposed = $this->extractProposedValues($surfaceId, $params, $subject['baseline'], $built['aspect_ids']);
 
         $result = $this->mutationExecutor->apply(
             $surfaceId,
@@ -464,7 +476,49 @@ final class DataAccessEditUiService
     }
 
     /**
-     * Incrusta formularios ui_json de aspectos open_ui (p. ej. configurar agenda) en el paso form.
+     * Bloques de formulario declarados en catálogo (field_group + submit_handler).
+     *
+     * @param list<array<string, mixed>> $aspectBlocks
+     * @param array<string, int|string> $subjectContext
+     * @return list<array<string, mixed>>
+     */
+    private function buildAspectFieldBlocks(array $aspectBlocks, array $subjectContext, string $surfaceId): array
+    {
+        $blocks = [];
+        foreach ($aspectBlocks as $aspectBlock) {
+            if (!is_array($aspectBlock)) {
+                continue;
+            }
+            $aspectId = trim((string) ($aspectBlock['aspect_id'] ?? ''));
+            if ($aspectId === '') {
+                continue;
+            }
+            $fields = isset($aspectBlock['fields']) && is_array($aspectBlock['fields']) ? $aspectBlock['fields'] : [];
+            if ($fields === []) {
+                continue;
+            }
+            $applyHidden = $this->contextHiddenFields(
+                array_merge($subjectContext, $surfaceId !== '' ? ['surface_id' => $surfaceId] : []),
+                'apply',
+                ['aspect_ids' => $aspectId]
+            );
+            $blocks[] = [
+                'kind' => 'fields',
+                'id' => 'editar_aspect_' . $aspectId,
+                'title' => trim((string) ($aspectBlock['title'] ?? $aspectId)) ?: $aspectId,
+                'fields' => array_merge($applyHidden, $fields),
+                'submit_api' => [
+                    'route' => '/api/v1/editar',
+                    'method' => 'POST',
+                ],
+            ];
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * Incrusta formularios ui_json de aspectos open_ui (legacy) en el paso form.
      *
      * @param list<array<string, mixed>> $openUiAspects
      * @param array<string, int|string> $subjectContext
@@ -720,20 +774,35 @@ final class DataAccessEditUiService
      * @param list<string> $aspectIds
      * @return array<string, string>
      */
-    private function extractProposedValues(array $params, array $baseline, array $aspectIds): array
-    {
+    private function extractProposedValues(
+        string $surfaceId,
+        array $params,
+        array $baseline,
+        array $aspectIds
+    ): array {
+        $surface = $this->catalog->getEditSurface($surfaceId);
+        $aspects = is_array($surface['aspects'] ?? null) ? $surface['aspects'] : [];
+
         $out = [];
         foreach ($aspectIds as $aspectId) {
-            $aspectBaseline = $baseline[$aspectId] ?? [];
-            if (!is_array($aspectBaseline)) {
+            $def = $aspects[$aspectId] ?? null;
+            if (!is_array($def)) {
                 continue;
             }
-            foreach (array_keys($aspectBaseline) as $field) {
-                if (!is_string($field)) {
-                    continue;
-                }
+            $group = trim((string) ($def['attribute_group'] ?? ''));
+            if ($group === '') {
+                continue;
+            }
+            $allowed = $this->mutationAuth->allowedFieldsForAspect($def, $group);
+            $aspectBaseline = $baseline[$aspectId] ?? [];
+            if (!is_array($aspectBaseline)) {
+                $aspectBaseline = [];
+            }
+            foreach ($allowed as $field) {
                 if (array_key_exists($field, $params)) {
                     $out[$field] = trim((string) $params[$field]);
+                } elseif (array_key_exists($field, $aspectBaseline)) {
+                    $out[$field] = trim((string) $aspectBaseline[$field]);
                 }
             }
         }

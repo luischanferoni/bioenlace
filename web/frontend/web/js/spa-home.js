@@ -1926,7 +1926,7 @@
         chain.className = 'bio-edit-sparse-chain d-flex flex-column gap-3 w-100';
         const nodes = [];
         while (mountEl.firstChild) {
-            nodes.push(mountEl.firstChild);
+            nodes.push(mountEl.removeChild(mountEl.firstChild));
         }
         if (nodes.length > 0) {
             const firstStep = document.createElement('div');

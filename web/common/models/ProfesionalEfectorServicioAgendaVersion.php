@@ -59,6 +59,24 @@ class ProfesionalEfectorServicioAgendaVersion extends ActiveRecord
     }
 
     /**
+     * Versión programada exactamente para una fecha de vigencia (clave única PES + vigente_desde).
+     */
+    public static function findPorPesYVigenteDesde(int $idPes, string $vigenteDesdeYmd): ?self
+    {
+        if ($idPes <= 0 || $vigenteDesdeYmd === '') {
+            return null;
+        }
+
+        /** @var self|null $row */
+        $row = static::findOne([
+            'id_profesional_efector_servicio' => $idPes,
+            'vigente_desde' => $vigenteDesdeYmd,
+        ]);
+
+        return $row;
+    }
+
+    /**
      * Versión vigente para una fecha (mayor vigente_desde <= fecha).
      */
     public static function findVigenteParaPesEnFecha(int $idPes, string $fechaYmd): ?self

@@ -160,7 +160,8 @@ final class ProfesionalEfectorServicioAgendaVersionService
         string $vigenteDesde,
         int $intervaloMinutos
     ): ProfesionalEfectorServicioAgendaVersion {
-        $version = new ProfesionalEfectorServicioAgendaVersion();
+        $version = ProfesionalEfectorServicioAgendaVersion::findPorPesYVigenteDesde($idPes, $vigenteDesde)
+            ?? new ProfesionalEfectorServicioAgendaVersion();
         $version->id_profesional_efector_servicio = $idPes;
         $version->id_efector = $idEfector;
         $version->vigente_desde = $vigenteDesde;

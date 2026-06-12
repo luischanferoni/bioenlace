@@ -166,51 +166,8 @@ class SiteController extends Controller
     }
 
     /**
-     * @no_intent_catalog
-    */
-    public function buscarInternados($pisos_efector, $sala)
-    {
-        $internados = array();
-        $i = 0;
-        foreach ($pisos_efector as $key => $piso) {
-
-            $salas = $piso->infraestructuraSalas;
-
-            foreach ($salas as $key => $sala) {
-
-                $camas = $sala->infraestructuraCamas;
-
-                foreach ($camas as $key => $cama) {
-
-                    if ($cama->estado == 'ocupada') {
-                        $i++;
-                        if ($i > 5) continue;
-                        $url = "internacion/view";
-                        $id = $cama->internacionActual->id;
-
-                        if (is_object($cama->internacionActual)) {
-                            $internados[$id]['id'] = $id;
-                            $internados[$id]['id_persona'] = $cama->internacionActual->id_persona;
-                            $internados[$id]['nombre'] = $cama->internacionActual->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D);
-                            $internados[$id]['cama'] = $cama->nro_cama;
-                            $internados[$id]['sala'] = $sala->nro_sala;
-                            $internados[$id]['piso'] = $piso->nro_piso;
-                        } else {
-                            $internados[$id]['nombre'] = "Cama " . $cama->nro_cama . " - Ocupada";
-                        }
-                    }
-                }
-            }
-        }
-
-        return $internados;
-    }
-
-    /**
-     * Se la llama desde config/web
-     * 1. components/UserConfig afterLogin
-     * 2. SiteController despuesDeLogin para establecer permisos iniciales, antes de decidir el Efector
-     * 3. En pantalla para seleccionar el Efector se redirecciona y va a establecerSessionFinal
+     * Se invoca desde UserConfig::afterLogin (config frontend).
+     * Prepara efectores en sesión y redirige al wizard de sesión operativa.
      */
     public static function despuesDeLogin()
     {
@@ -219,41 +176,18 @@ class SiteController extends Controller
             return;
         }
 
-        $urlARedireccionar = self::establecerSessionInicial();
+        $urlARedireccionar = self::establecerSesionInicial();
         Yii::$app->response->redirect($urlARedireccionar)->send();
-        return;
     }
 
     /**
-     * Llega hasta aqui despues de elegir el efector con el que desea trabajar
-     * setea en session el efector elegido y redirige a elegir el encounter class
      * @no_intent_catalog
-    */
-    public function actionSessionEfectorRedireccionar()
-    {
-        return $this->redirect(['site/sesion-operativa']);
-    }
-
-    /**
-     * Llega hasta aqui despues de elegir el encounter class
-     * setea en session el encounter y hace la redireccion final
      */
-    /*public function actionSessionEncounterclassRedireccionar($codigo)
-    {
-        $url = self::establecerSessionFinal();
-
-        return $this->redirect($url);
-    }
-    */
-
-    /**
-     * @no_intent_catalog
-    */
     public function actionCambiarEncounterClass($codigo)
     {
         Yii::$app->user->setEncounterClass($codigo);
 
-        return $this->redirect(self::generarUrlUsurioEfectorAredireccionar());
+        return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
     }
 
     /**
@@ -285,7 +219,7 @@ class SiteController extends Controller
 
         SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
 
-        return $this->redirect(self::generarUrlUsurioEfectorAredireccionar());
+        return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
     }
 
     /**
@@ -318,38 +252,37 @@ class SiteController extends Controller
     }
 
     /**
-     * Servicios del contexto (id_servicio => nombre) desde PES persona+efector.
+     * Establece efector + servicio + encounter en sesión (p. ej. cambio de efector en layout).
      *
-     * @return array<int, string>
+     * @no_intent_catalog
      */
-    private static function serviciosNombrePorPersonaEfector(int $idPersona, int $idEfector): array
+    public function actionEstablecerSesionFinal()
     {
-        if ($idPersona <= 0 || $idEfector <= 0) {
-            return [];
-        }
-        $pesRows = ProfesionalEfectorServicio::find()
-            ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector, 'deleted_at' => null])
-            ->with('servicio')
-            ->all();
-        $out = [];
-        foreach ($pesRows as $p) {
-            if ($p->servicio !== null) {
-                $out[(int) $p->id_servicio] = (string) $p->servicio->nombre;
-            }
+        $req = Yii::$app->request;
+        try {
+            $data = (new SesionOperativaService())->establecer([
+                'efector_id' => (int) $req->post('idEfector'),
+                'servicio_id' => (int) $req->post('servicio'),
+                'encounter_class' => (string) $req->post('encounterClass'),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        } catch (\RuntimeException $e) {
+            throw new BadRequestHttpException($e->getMessage());
         }
 
-        return $out;
+        return $this->redirect($data['redirect_url']);
     }
 
-    /*
-    * establece en session el id de efector, de recurso humano y/o los permisos que tiene para el efector usando updatePermissions
-    */
-    private static function establecerSessionInicial()
+    /**
+     * Tras login: lista de efectores en sesión y permisos RBAC; destino wizard sesión operativa.
+     *
+     * @return array<int|string, string>
+     */
+    private static function establecerSesionInicial()
     {
-        // Confirmamos que el usuario no este asociado a un efector
         $efectoresParaSesion = ProfesionalEfectorServicio::getEfectoresParaSesion((int) Yii::$app->user->getIdPersona());
 
-        // Si el usuario no esta en ningun efector se puede tratar de un usuario con permisos para todos los efectores o ninguno
         if (count($efectoresParaSesion) == 0) {
             \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
             \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
@@ -374,119 +307,17 @@ class SiteController extends Controller
             }
         }
 
-        /*  if (count($efectoresParaSesion) == 1) {
-            // Seteamos el efector con el que el usuario trabajará          
-            Yii::$app->user->setIdEfector($efectoresParaSesion[0]['id_efector']);
-            Yii::$app->user->setNombreEfector($efectoresParaSesion[0]['nombre']);
-            Yii::$app->user->setIdProfesionalEfectorServicio($efectoresParaSesion[0]['id_profesional_efector_servicio']);
-            // Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector((int) Yii::$app->user->getIdPersona(), (int) $efectoresParaSesion[0]['id_efector']));
-
-            \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user);
-
-            self::establecerAgendaDisponible($efectoresParaSesion[0]['id_profesional_efector_servicio']);
-
-            //   return ['consultas/tipoatencion'];
-        }*/
-
-        // En session todos los efectores en los que el usuario trabaja
-        // para que luego pueda cambiar si necesita
         Yii::$app->user->setEfectores(ArrayHelper::map($efectoresParaSesion, 'id_efector', 'nombre'));
 
-        // BioenlaceDbManager usa contexto PES en sesión para armar permisos; tras elegir lista de efectores
-        // aún puede faltar ese dato (varios efectores). Refrescar rutas con el contexto actual.
         \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
         return ['site/sesion-operativa'];
     }
 
-    /* Código muerto (sesión operativa PES / wizard): reemplazado por flujos actuales. */
-
     /**
      * @no_intent_catalog
-    */
-    public function actionEstablecerSessionFinal()
-    {
-        $encounterClass = Yii::$app->request->post('encounterClass');
-        Yii::$app->user->setEncounterClass($encounterClass);
-
-        $servicio = Yii::$app->request->post('servicio');
-        Yii::$app->user->setServicioActual($servicio);
-
-        $idEfector = (int) Yii::$app->request->post('idEfector');
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        $idServicio = (int) $servicio;
-
-        $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $idEfector, $idServicio);
-        if ($pes === null) {
-            try {
-                $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector($idPersona, $idEfector, $idServicio);
-                $pes = ProfesionalEfectorServicio::findOne([
-                    'id' => $out['id_profesional_efector_servicio'],
-                    'deleted_at' => null,
-                ]);
-            } catch (\Throwable $e) {
-                throw new BadRequestHttpException(
-                    'No hay asignación PES para este efector y servicio: ' . $e->getMessage()
-                );
-            }
-        }
-        if ($pes === null) {
-            throw new BadRequestHttpException('No hay asignación PES en el efector seleccionado para este usuario.');
-        }
-
-        $efector = Efector::findOne($idEfector);
-        Yii::$app->user->setIdEfector($idEfector);
-        Yii::$app->user->setNombreEfector($efector !== null ? (string) $efector->nombre : '');
-        Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
-        Yii::$app->user->setServicios(self::serviciosNombrePorPersonaEfector($idPersona, $idEfector));
-
-        \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
-        \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
-
-        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
-
-        return \yii\helpers\Url::to(self::generarUrlUsurioEfectorAredireccionar());
-    }
-
-    /*
-    * Despues de elegir el Efector se lo redirige al usuario a diferentes paginas 
-    * dependiendo del rol/profesion que disponga
-    */
-    private static function generarUrlUsurioEfectorAredireccionar()
-    {
-        User::hasRole(['Medico']);
-        if (User::hasRole(['Medico'])) {
-            $url = ['/site/index'];
-        }
-
-        if (User::hasRole(['Administrativo'])) {
-            $url = ['/site/index'];
-        } elseif (User::hasRole(['AdminEfector'])) {
-            $url = ['/site/index'];
-        } elseif (User::hasRole(['Enfermeria'])) {
-            $url = ['/personas/buscar-persona'];
-        } else {
-            $url = ['/site/index'];
-        }
-
-        return $url;
-    }
-
-    /**
-     * Establece en session un array que nos va a pemitir saber la agenda del dia actual
      */
-    /**
-     * @param mixed $_unused ignorado; la agenda se resuelve por PES en sesión (persona + efector).
-     */
-    public static function establecerAgendaDisponible($_unused = null)
-    {
-        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
-    }
-
-    /**
-     * @no_intent_catalog
-    */
     public function actionImpersonate()
     {
         $path = Yii::getAlias('@runtime') . '/impersonation/a.txt';
@@ -538,49 +369,6 @@ class SiteController extends Controller
             $this->layout = '@frontend/views/layouts/loginLayout.php';
         }
         return $this->render('error', ['exception' => $exception]);
-    }
-
-    /**
-     * Obtener acciones comunes para el usuario actual (misma lógica que GET /api/v1/acciones/comunes).
-     * @no_intent_catalog
-     * @return \yii\web\Response
-     */
-    public function actionGetCommonActions()
-    {
-        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        $userId = (int) Yii::$app->user->id;
-        if ($userId <= 0) {
-            return [
-                'success' => false,
-                'error' => 'No autenticado',
-                'actions' => [],
-            ];
-        }
-
-        try {
-            $actions = \common\components\Core\Service\Actions\CommonActionsService::getFormattedForUser($userId);
-            $out = [];
-            foreach ($actions as $row) {
-                $out[] = [
-                    'route' => $row['route'],
-                    'name' => $row['name'],
-                    'description' => $row['description'],
-                ];
-            }
-
-            return [
-                'success' => true,
-                'actions' => $out,
-            ];
-        } catch (\Throwable $e) {
-            Yii::error("Error obteniendo acciones comunes: " . $e->getMessage(), 'site-controller');
-            return [
-                'success' => false,
-                'error' => 'Error al cargar acciones comunes',
-                'actions' => [],
-            ];
-        }
     }
 
 }

@@ -230,7 +230,7 @@ if (Yii::$app->user->username) {
     function cambiarEfector(idEfector) {
         var form = document.createElement('form');
         form.method = 'POST';
-        form.action = '<?= Url::to(['site/establecer-session-final']) ?>';
+        form.action = '<?= Url::to(['site/establecer-sesion-final']) ?>';
         
         var csrfInput = document.createElement('input');
         csrfInput.type = 'hidden';

@@ -111,14 +111,6 @@ class EfectoresController extends Controller
     */
     public function actionIndexuserefector()
     {
-        $this->layout = 'main_sinmenuizquierda';
-        $searchModel = new EfectorBusqueda();
-        $array_efectores = Yii::$app->user->getEfectores() ?? [];
-        $dataProvider = $searchModel->search(['EfectorBusqueda' => ['efectores' => array_keys($array_efectores)]]);
-
-        return $this->render('indexuserefector', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
+        return $this->redirect(['site/sesion-operativa']);
     }
 }

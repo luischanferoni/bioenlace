@@ -91,6 +91,8 @@ return [
                 'site/login' => 'user-management/auth/login',
                 'login' => 'user-management/auth/login',
                 'site/inicio' => 'site/sesion-operativa',
+                'site/establecer-session-final' => 'site/establecer-sesion-final',
+                'site/session-efector-redireccionar' => 'site/sesion-operativa',
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',

@@ -111,7 +111,7 @@ class SesionOperativaService extends Component
 
         $this->establecerAgendaDisponiblePorContextoSesion();
 
-        $redirectUrl = Yii::$app->urlManager->createUrl($this->getRedirectRouteForCurrentUser());
+        $redirectUrl = Yii::$app->urlManager->createUrl(self::redirectRouteForCurrentUser());
 
         // Token stateless con contexto operativo: permite que clientes m?viles operen sin cookie de sesi?n.
         $identity = Yii::$app->user->identity;
@@ -149,11 +149,11 @@ class SesionOperativaService extends Component
     }
 
     /**
-     * Replica SiteController::generarUrlUsurioEfectorAredireccionar().
+     * Ruta post-login / cambio de contexto según rol (web).
      *
-     * @return array
+     * @return array<int|string, string|int>
      */
-    private function getRedirectRouteForCurrentUser(): array
+    public static function redirectRouteForCurrentUser(): array
     {
         if (User::hasRole(['Medico'])) {
             return ['/site/index'];

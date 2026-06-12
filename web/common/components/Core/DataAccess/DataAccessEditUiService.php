@@ -107,6 +107,21 @@ final class DataAccessEditUiService
             throw new ForbiddenHttpException('No tenés permiso para modificar datos en el sistema.');
         }
 
+        if (count($options) === 1) {
+            $onlyId = (string) $options[0]['value'];
+            $params['surface_id'] = $onlyId;
+
+            return $this->renderAspectPicker($onlyId, $params, $ctx);
+        }
+
+        $listItems = [];
+        foreach ($options as $opt) {
+            $listItems[] = [
+                'id' => (string) ($opt['value'] ?? ''),
+                'name' => (string) ($opt['label'] ?? ''),
+            ];
+        }
+
         $out = UiScreenService::renderUiDefinition('data-access', 'editar', [
             'title' => '¿Qué querés editar?',
             'message' => 'Elegí el tipo de datos que necesitás modificar.',
@@ -114,12 +129,38 @@ final class DataAccessEditUiService
             'surface_options' => $options,
         ], null);
 
+        $out = $this->appendBlocks($out, [[
+            'kind' => 'list',
+            'id' => 'editar_superficies',
+            'title' => 'Tipo de datos',
+            'items' => $listItems,
+            'presentation' => [
+                'tile' => 'medium',
+                'shape' => 'wide',
+            ],
+            'selection' => [
+                'mode' => 'single',
+                'requires_confirmation' => false,
+            ],
+            'draft_field' => 'surface_id',
+        ]]);
+
         $out['kind'] = 'ui_definition';
         $out['success'] = true;
         $out['data'] = [
             'step' => 'surfaces',
             'surfaces' => $options,
+            'edit_context' => [
+                'step' => 'surfaces',
+                'next_step' => 'aspects',
+                'pes_param' => 'surface_id',
+            ],
         ];
+        if (isset($out['ui_meta']) && is_array($out['ui_meta'])) {
+            $out['ui_meta']['edit_sparse'] = $out['data']['edit_context'];
+        } else {
+            $out['ui_meta'] = ['edit_sparse' => $out['data']['edit_context']];
+        }
 
         return $out;
     }
@@ -147,6 +188,11 @@ final class DataAccessEditUiService
 
         if ($needsSubject && $metricId !== '') {
             return $this->renderSubjectList($params, $ctx, $surfaceId);
+        }
+
+        $preselectedAspects = EditSparseAspectIds::fromParams($params);
+        if ($preselectedAspects !== []) {
+            return $this->renderForm($params, $ctx, $surfaceId);
         }
 
         $out = UiScreenService::renderUiDefinition('data-access', 'editar', [

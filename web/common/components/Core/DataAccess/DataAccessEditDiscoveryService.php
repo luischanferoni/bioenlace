@@ -196,6 +196,11 @@ final class DataAccessEditDiscoveryService
             $score += 3;
         }
 
+        if ($surfaceId === 'profesional_en_efector'
+            && preg_match('/\b(profesional|medico|m[eé]dico|doctor|personal)\b/u', $contentLower)) {
+            $score += 18;
+        }
+
         return $score;
     }
 

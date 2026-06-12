@@ -166,3 +166,94 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
         <div class="small text-muted" data-field="descripcion"></div>
     </a>
 </template>
+
+<template id="tpl-patient-home-wrap">
+    <div data-role="patient-home-wrap">
+        <div class="d-none alert alert-warning mb-3" data-role="patient-en-resolucion-banner">
+            <strong>Turno en resolución.</strong>
+            <span data-field="en-resolucion-texto"></span>
+            <a href="#" class="alert-link ms-1" data-role="en-resolucion-cta" data-spa-nav="1">Elegir nuevo horario</a>
+        </div>
+        <div data-slot="patient-sections"></div>
+        <ul class="nav nav-tabs mb-3 mt-2" data-role="patient-turnos-tabs">
+            <li class="nav-item">
+                <button type="button" class="nav-link active" data-tab="proximos">Próximos turnos</button>
+            </li>
+            <li class="nav-item">
+                <button type="button" class="nav-link" data-tab="pasados">Historial</button>
+            </li>
+        </ul>
+        <div data-role="patient-tab-proximos">
+            <div class="row" data-slot="proximos-grid"></div>
+        </div>
+        <div class="d-none" data-role="patient-tab-pasados">
+            <div data-slot="pasados-list"></div>
+            <div class="text-center mt-3">
+                <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-role="pasados-load-more">
+                    Cargar más
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-patient-home-section">
+    <section class="mb-4" data-role="patient-section">
+        <h3 class="h5 mb-3" data-field="titulo"></h3>
+        <div class="row" data-slot="items"></div>
+    </section>
+</template>
+
+<template id="tpl-patient-turno-card">
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100 shadow-sm" data-role="patient-turno-card">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-1 mb-2">
+                    <span class="badge d-none" data-field="proximidad-badge"></span>
+                    <span class="badge" data-field="estado-badge"></span>
+                </div>
+                <h5 class="card-title h6 mb-2" data-field="servicio"></h5>
+                <div class="mb-1 small"><strong>Fecha:</strong> <span data-field="fecha"></span></div>
+                <div class="mb-1 small"><strong>Hora:</strong> <span data-field="hora"></span></div>
+                <div class="mb-2 small d-none" data-slot="profesional">
+                    <strong>Profesional:</strong> <span data-field="profesional"></span>
+                </div>
+                <div class="mt-auto pt-2 d-flex flex-wrap gap-2" data-slot="actions"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-patient-care-plan-card">
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title h6" data-field="titulo"></h5>
+                <p class="small text-muted mb-2" data-field="categoria"></p>
+                <span class="badge bg-info text-dark mb-2 align-self-start" data-field="estado"></span>
+                <ul class="small mb-3 ps-3 d-none" data-slot="actividades"></ul>
+                <a href="#" class="btn btn-sm btn-outline-primary mt-auto align-self-start" data-role="link-detalle" data-spa-nav="1">
+                    Ver tratamiento
+                </a>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-patient-turno-list-item">
+    <div class="card mb-2 shadow-sm" data-role="patient-turno-list-item">
+        <div class="card-body py-2 px-3">
+            <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+                <div>
+                    <div class="fw-semibold" data-field="servicio"></div>
+                    <div class="small text-muted">
+                        <span data-field="fecha"></span>
+                        <span data-field="hora-sep" class="d-none"> · </span>
+                        <span data-field="hora"></span>
+                    </div>
+                </div>
+                <span class="badge bg-secondary" data-field="estado-badge"></span>
+            </div>
+        </div>
+    </div>
+</template>

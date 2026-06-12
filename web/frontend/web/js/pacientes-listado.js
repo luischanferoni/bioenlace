@@ -53,6 +53,16 @@
     var finalizarModalGuardiaId = 0;
     var efectoresDerivacionCache = null;
 
+    var patientHomeState = {
+      wrapRoot: null,
+      pasados: [],
+      pasadosTotal: 0,
+      pasadosLoading: false,
+      tab: 'proximos',
+    };
+
+    var PASADOS_PAGE_LIMIT = 20;
+
     function setLoading(isLoading) {
       loading.classList.toggle('d-none', !isLoading);
       container.classList.toggle('d-none', isLoading);
@@ -967,6 +977,344 @@
       }
     }
 
+    function asistenteUrl(intentId) {
+      return '/site/asistente?intent=' + encodeURIComponent(String(intentId || ''));
+    }
+
+    function applyPanelChrome(panel) {
+      if (!panel || !panel.title) return;
+      var h2 = document.querySelector('.mb-4 h2');
+      if (h2) h2.textContent = panel.title;
+    }
+
+    function formatFechaAmigable(fechaYmd) {
+      if (!fechaYmd) return '';
+      var parts = String(fechaYmd).split('-');
+      if (parts.length !== 3) return fechaYmd;
+      var y = parseInt(parts[0], 10);
+      var mo = parseInt(parts[1], 10);
+      var d = parseInt(parts[2], 10);
+      if (isNaN(y) || isNaN(mo) || isNaN(d)) return fechaYmd;
+      var slot = new Date(y, mo - 1, d);
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      slot.setHours(0, 0, 0, 0);
+      var diffDays = Math.round((slot.getTime() - today.getTime()) / 86400000);
+      if (diffDays === 0) return 'Hoy';
+      if (diffDays === 1) return 'Mañana';
+      if (diffDays === 2) return 'Pasado mañana';
+      var weekdays = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+      return weekdays[slot.getDay()] + ' ' + String(d).padStart(2, '0') + '/' + String(mo).padStart(2, '0');
+    }
+
+    function proximidadTurno(fechaYmd) {
+      if (!fechaYmd) return null;
+      var parts = String(fechaYmd).split('-');
+      if (parts.length !== 3) return null;
+      var y = parseInt(parts[0], 10);
+      var mo = parseInt(parts[1], 10);
+      var d = parseInt(parts[2], 10);
+      if (isNaN(y) || isNaN(mo) || isNaN(d)) return null;
+      var slot = new Date(y, mo - 1, d);
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      slot.setHours(0, 0, 0, 0);
+      var diffDays = Math.round((slot.getTime() - today.getTime()) / 86400000);
+      if (diffDays === 0) return 'hoy';
+      if (diffDays === 1) return 'manana';
+      return 'mas';
+    }
+
+    function appendAsistenteAction(slotEl, label, intentId, btnClass) {
+      if (!slotEl) return;
+      var a = document.createElement('a');
+      a.className = btnClass || 'btn btn-sm btn-outline-primary';
+      a.href = asistenteUrl(intentId);
+      a.setAttribute('data-spa-nav', '1');
+      a.textContent = label;
+      slotEl.appendChild(a);
+    }
+
+    function fillPatientTurnoCard(colEl, t) {
+      var servicio = t.servicio || 'Turno';
+      colEl.querySelector('[data-field="servicio"]').textContent = servicio;
+      colEl.querySelector('[data-field="fecha"]').textContent = formatFechaAmigable(t.fecha);
+      colEl.querySelector('[data-field="hora"]').textContent = t.hora || '—';
+
+      var profSlot = colEl.querySelector('[data-slot="profesional"]');
+      if (t.profesional && profSlot) {
+        profSlot.classList.remove('d-none');
+        colEl.querySelector('[data-field="profesional"]').textContent = t.profesional;
+      }
+
+      var enRes = t.en_resolucion === true || t.estado === 'EN_RESOLUCION';
+      var proxBadge = colEl.querySelector('[data-field="proximidad-badge"]');
+      if (!enRes && proxBadge) {
+        var prox = proximidadTurno(t.fecha);
+        if (prox === 'hoy') {
+          proxBadge.textContent = 'Hoy';
+          proxBadge.className = 'badge bg-danger';
+          proxBadge.classList.remove('d-none');
+        } else if (prox === 'manana') {
+          proxBadge.textContent = 'Mañana';
+          proxBadge.className = 'badge bg-info text-dark';
+          proxBadge.classList.remove('d-none');
+        } else if (prox === 'mas') {
+          proxBadge.textContent = 'Próximamente';
+          proxBadge.className = 'badge bg-success';
+          proxBadge.classList.remove('d-none');
+        }
+      }
+
+      var estadoBadge = colEl.querySelector('[data-field="estado-badge"]');
+      if (estadoBadge) {
+        var estadoClass = enRes ? 'warning' : (t.estado === 'PENDIENTE' ? 'primary' : 'secondary');
+        estadoBadge.className = 'badge bg-' + estadoClass;
+        estadoBadge.textContent = t.estado_label || t.estado || '';
+      }
+
+      var actions = colEl.querySelector('[data-slot="actions"]');
+      if (actions) {
+        if (enRes) {
+          appendAsistenteAction(actions, 'Elegir nuevo horario', 'turnos.reubicar-como-paciente-flow', 'btn btn-sm btn-warning');
+        } else {
+          appendAsistenteAction(actions, 'Gestionar turno', 'turnos.elegir-pendiente-como-paciente', 'btn btn-sm btn-outline-primary');
+        }
+      }
+    }
+
+    function appendPatientTurnoCards(slotEl, turnos) {
+      if (!slotEl || !turnos || !turnos.length) return;
+      turnos.forEach(function (t) {
+        var itemFrag = importTemplate('tpl-patient-turno-card');
+        if (!itemFrag) return;
+        var col = itemFrag.firstElementChild;
+        if (!col) return;
+        fillPatientTurnoCard(col, t);
+        slotEl.appendChild(itemFrag);
+      });
+    }
+
+    function fillPatientTurnoListItem(rowEl, t) {
+      rowEl.querySelector('[data-field="servicio"]').textContent = t.servicio || 'Turno';
+      rowEl.querySelector('[data-field="fecha"]').textContent = formatFechaAmigable(t.fecha);
+      var horaEl = rowEl.querySelector('[data-field="hora"]');
+      var sepEl = rowEl.querySelector('[data-field="hora-sep"]');
+      if (t.hora) {
+        horaEl.textContent = t.hora;
+        if (sepEl) sepEl.classList.remove('d-none');
+      } else if (sepEl) {
+        sepEl.classList.add('d-none');
+      }
+      var badge = rowEl.querySelector('[data-field="estado-badge"]');
+      if (badge) {
+        badge.textContent = t.estado_label || t.estado || '';
+      }
+    }
+
+    function renderPatientCarePlans(sectionSlot, items) {
+      if (!items || !items.length) return;
+      var secFrag = importTemplate('tpl-patient-home-section');
+      if (!secFrag) return;
+      var secRoot = secFrag.querySelector('[data-role="patient-section"]');
+      secRoot.querySelector('[data-field="titulo"]').textContent = 'Tratamiento activo';
+      var grid = secRoot.querySelector('[data-slot="items"]');
+      items.forEach(function (plan) {
+        var itemFrag = importTemplate('tpl-patient-care-plan-card');
+        if (!itemFrag) return;
+        var col = itemFrag.firstElementChild;
+        if (!col) return;
+        var titulo = plan.title || plan.categoryLabel || 'Plan de tratamiento';
+        col.querySelector('[data-field="titulo"]').textContent = titulo;
+        var catEl = col.querySelector('[data-field="categoria"]');
+        if (plan.categoryLabel && plan.title) {
+          catEl.textContent = plan.categoryLabel;
+        } else {
+          catEl.classList.add('d-none');
+        }
+        col.querySelector('[data-field="estado"]').textContent = plan.statusLabel || plan.status || '';
+        var acts = Array.isArray(plan.activitySummaries) ? plan.activitySummaries : [];
+        var actsSlot = col.querySelector('[data-slot="actividades"]');
+        if (acts.length && actsSlot) {
+          actsSlot.classList.remove('d-none');
+          acts.forEach(function (line) {
+            var li = document.createElement('li');
+            li.textContent = line;
+            actsSlot.appendChild(li);
+          });
+        }
+        var link = col.querySelector('[data-role="link-detalle"]');
+        if (link) {
+          link.href = asistenteUrl('clinical.care-plan.ver-tratamiento-paciente');
+        }
+        grid.appendChild(itemFrag);
+      });
+      sectionSlot.appendChild(secFrag);
+    }
+
+    function bindPatientHomeTabs(wrapRoot) {
+      if (!wrapRoot || wrapRoot.getAttribute('data-tabs-bound') === '1') return;
+      wrapRoot.setAttribute('data-tabs-bound', '1');
+      var tabProx = wrapRoot.querySelector('[data-role="patient-tab-proximos"]');
+      var tabPas = wrapRoot.querySelector('[data-role="patient-tab-pasados"]');
+      wrapRoot.querySelectorAll('[data-role="patient-turnos-tabs"] [data-tab]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var tab = btn.getAttribute('data-tab') || 'proximos';
+          patientHomeState.tab = tab;
+          wrapRoot.querySelectorAll('[data-role="patient-turnos-tabs"] .nav-link').forEach(function (b) {
+            b.classList.toggle('active', b === btn);
+          });
+          if (tabProx) tabProx.classList.toggle('d-none', tab !== 'proximos');
+          if (tabPas) tabPas.classList.toggle('d-none', tab !== 'pasados');
+          if (tab === 'pasados' && patientHomeState.pasados.length === 0 && !patientHomeState.pasadosLoading) {
+            loadPatientPasados(wrapRoot, true);
+          }
+        });
+      });
+      var loadMore = wrapRoot.querySelector('[data-role="pasados-load-more"]');
+      if (loadMore) {
+        loadMore.addEventListener('click', function () {
+          loadPatientPasados(wrapRoot, false);
+        });
+      }
+    }
+
+    async function loadPatientPasados(wrapRoot, reset) {
+      if (patientHomeState.pasadosLoading) return;
+      if (!reset && patientHomeState.pasados.length >= patientHomeState.pasadosTotal) return;
+
+      var listEl = wrapRoot.querySelector('[data-slot="pasados-list"]');
+      var loadMoreBtn = wrapRoot.querySelector('[data-role="pasados-load-more"]');
+      if (!listEl) return;
+
+      patientHomeState.pasadosLoading = true;
+      if (reset) {
+        patientHomeState.pasados = [];
+        patientHomeState.pasadosTotal = 0;
+        clearNode(listEl);
+      }
+      if (loadMoreBtn) loadMoreBtn.classList.add('d-none');
+
+      try {
+        var api = window.BioenlaceNativePage;
+        if (!api) throw new Error('NativePage bridge no disponible');
+        var url = api.apiV1Url('turnos/listar-como-paciente');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            alcance: 'pasados',
+            limit: PASADOS_PAGE_LIMIT,
+            offset: reset ? 0 : patientHomeState.pasados.length,
+          }),
+        });
+        if (json.success !== true) {
+          throw new Error(json.message || 'No se pudo cargar el historial.');
+        }
+        var block = json.data || json;
+        var turnos = Array.isArray(block.turnos) ? block.turnos : [];
+        var total = block.total != null ? parseInt(block.total, 10) : turnos.length;
+        if (reset) {
+          patientHomeState.pasados = turnos.slice();
+        } else {
+          patientHomeState.pasados = patientHomeState.pasados.concat(turnos);
+        }
+        patientHomeState.pasadosTotal = isNaN(total) ? patientHomeState.pasados.length : total;
+
+        if (reset && turnos.length === 0) {
+          var emptyFrag = importTemplate('tpl-pacientes-alert-empty');
+          if (emptyFrag) {
+            var msgEl = emptyFrag.querySelector('[data-field="message"]');
+            if (msgEl) msgEl.textContent = 'No hay turnos en tu historial.';
+            listEl.appendChild(emptyFrag);
+          }
+        } else {
+          turnos.forEach(function (t) {
+            var itemFrag = importTemplate('tpl-patient-turno-list-item');
+            if (!itemFrag) return;
+            var row = itemFrag.querySelector('[data-role="patient-turno-list-item"]');
+            if (!row) return;
+            fillPatientTurnoListItem(row, t);
+            listEl.appendChild(itemFrag);
+          });
+        }
+
+        if (loadMoreBtn) {
+          var hayMas = patientHomeState.pasados.length < patientHomeState.pasadosTotal;
+          loadMoreBtn.classList.toggle('d-none', !hayMas);
+        }
+      } catch (e) {
+        showError(errorEl, e && e.message ? e.message : 'No se pudo cargar el historial.');
+      } finally {
+        patientHomeState.pasadosLoading = false;
+      }
+    }
+
+    function renderPatientHome(panel) {
+      var upcomingSec = findPanelSection(panel, 'patient_upcoming_appointments');
+      var careSec = findPanelSection(panel, 'patient_care_plans_active');
+      var enResolucion = upcomingSec && upcomingSec.data && upcomingSec.data.en_resolucion
+        ? (upcomingSec.data.en_resolucion.turnos || [])
+        : [];
+      var pendientes = upcomingSec && upcomingSec.data && upcomingSec.data.pendientes
+        ? (upcomingSec.data.pendientes.turnos || [])
+        : [];
+      var careItems = careSec && careSec.data ? (careSec.data.items || []) : [];
+
+      clearNode(container);
+      var wrapFrag = importTemplate('tpl-patient-home-wrap');
+      if (!wrapFrag) {
+        showListadoEmpty('No se pudo renderizar el panel de inicio.');
+        return;
+      }
+      var wrapRoot = wrapFrag.querySelector('[data-role="patient-home-wrap"]');
+      container.appendChild(wrapFrag);
+      patientHomeState.wrapRoot = wrapRoot;
+
+      var banner = wrapRoot.querySelector('[data-role="patient-en-resolucion-banner"]');
+      if (enResolucion.length && banner) {
+        var t0 = enResolucion[0];
+        var txt = (t0.servicio ? String(t0.servicio) + ' — ' : '')
+          + formatFechaAmigable(t0.fecha)
+          + (t0.hora ? (' ' + t0.hora) : '');
+        banner.querySelector('[data-field="en-resolucion-texto"]').textContent = txt;
+        var cta = banner.querySelector('[data-role="en-resolucion-cta"]');
+        if (cta) cta.href = asistenteUrl('turnos.reubicar-como-paciente-flow');
+        banner.classList.remove('d-none');
+      }
+
+      var sectionsSlot = wrapRoot.querySelector('[data-slot="patient-sections"]');
+      if (careItems.length && sectionsSlot) {
+        renderPatientCarePlans(sectionsSlot, careItems);
+      }
+
+      var proxGrid = wrapRoot.querySelector('[data-slot="proximos-grid"]');
+      var proximos = enResolucion.concat(pendientes);
+      if (proximos.length && proxGrid) {
+        appendPatientTurnoCards(proxGrid, proximos);
+      } else if (proxGrid) {
+        var emptyFrag = importTemplate('tpl-pacientes-alert-empty');
+        if (emptyFrag) {
+          var msgEl = emptyFrag.querySelector('[data-field="message"]');
+          if (msgEl) {
+            msgEl.textContent = 'No tenés turnos próximos.';
+          }
+          proxGrid.appendChild(emptyFrag);
+          var solicitar = document.createElement('a');
+          solicitar.className = 'btn btn-primary btn-sm mt-2';
+          solicitar.href = asistenteUrl('atencion.necesito-atencion');
+          solicitar.setAttribute('data-spa-nav', '1');
+          solicitar.textContent = 'Solicitar turno';
+          proxGrid.appendChild(solicitar);
+        }
+      }
+
+      bindPatientHomeTabs(wrapRoot);
+    }
+
     function findPanelSection(panel, kind) {
       var sections = panel.sections || [];
       for (var i = 0; i < sections.length; i++) {
@@ -1000,22 +1348,26 @@
         var items = boardSec && boardSec.data ? boardSec.data.items || [] : [];
         var indicatorsSec = findPanelSection(panel, 'emergency_indicators');
         renderGuardiaTablero(items, indicatorsSec ? indicatorsSec.data : null);
+        applyPanelChrome(panel);
         return;
       }
       if (layout === 'clinical_list') {
         var appt = findPanelSection(panel, 'appointments_day');
         if (appt) {
           renderTurnos((appt.data && appt.data.items) || []);
+          applyPanelChrome(panel);
           return;
         }
         var inpat = findPanelSection(panel, 'inpatients');
         if (inpat) {
           renderInternados((inpat.data && inpat.data.items) || []);
+          applyPanelChrome(panel);
           return;
         }
         var surg = findPanelSection(panel, 'surgeries_day');
         if (surg) {
           renderCirugias((surg.data && surg.data.items) || []);
+          applyPanelChrome(panel);
           return;
         }
       }
@@ -1023,9 +1375,16 @@
         var cardsSec = findPanelSection(panel, 'action_cards');
         if (cardsSec) {
           renderActionCards(cardsSec.data || {});
+          applyPanelChrome(panel);
           return;
         }
         showListadoEmpty('Sin acciones disponibles en el panel.');
+        applyPanelChrome(panel);
+        return;
+      }
+      if (layout === 'patient_home') {
+        renderPatientHome(panel);
+        applyPanelChrome(panel);
         return;
       }
       showListadoEmpty('Sin resultados.');

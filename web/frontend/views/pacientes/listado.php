@@ -34,8 +34,9 @@ $metaEc = ($encounter_class && isset($encounterMeta[$encounter_class]))
     : ['label' => ''];
 
 $encounterJson = Json::encode($encounter_class);
+$esPacienteHome = empty($encounter_class);
 
-$this->title = $esGuardia ? 'Tablero de guardia' : 'Pacientes';
+$this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' : 'Pacientes');
 ?>
 
 <div class="mb-4">
@@ -94,7 +95,7 @@ $this->title = $esGuardia ? 'Tablero de guardia' : 'Pacientes';
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Cargando...</span>
         </div>
-        <p class="mt-2 text-muted">Cargando listado de pacientes…</p>
+        <p class="mt-2 text-muted"><?= $esPacienteHome ? 'Cargando tu panel…' : 'Cargando listado de pacientes…' ?></p>
     </div>
     <div id="pacientes-listado-content" class="d-none"></div>
     <div id="pacientes-listado-error" class="d-none alert alert-warning"></div>

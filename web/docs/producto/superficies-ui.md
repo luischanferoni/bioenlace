@@ -37,6 +37,8 @@ flowchart TB
 
 - Equivalente al **home de la app médico**: muta según rol y `encounter_class` en sesión. Datos: **`GET /api/v1/home/panel`** (web `site/index`, móvil staff).
 - Ejemplos: tablero EMER, mapa de camas IMP, listado ambulatorio AMB.
+- **Paciente web/móvil** (sin sesión operativa): mismo endpoint con audiencia `patient` y layout `patient_home` (próximos turnos + planes activos).
+- **Sin sesión operativa (staff)**: layout `cards` con atajos del asistente.
 - **No** es lugar de captura clínica ni de formularios largos por pestaña.
 
 Referencias: [apps-paciente-medico.md](./apps-paciente-medico.md), [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md).

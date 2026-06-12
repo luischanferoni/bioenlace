@@ -271,23 +271,25 @@ final class DataAccessEditUiService
             $ctx
         );
 
-        $fields = $built['fields'];
-        $fields = array_merge(
-            $fields,
-            $this->contextHiddenFields($subject['context'], 'confirm', [
-                'aspect_ids' => implode(',', $built['aspect_ids']),
-            ])
-        );
-
+        $scalarFields = $built['fields'];
         $blocks = $this->embedOpenUiFieldBlocks($built['open_ui'], $subject['context'], $params);
 
-        if ($fields !== []) {
+        if ($scalarFields !== []) {
             $blocks[] = [
                 'kind' => 'fields',
                 'id' => 'editar_formulario',
                 'title' => 'Datos a modificar — ' . $subject['label'],
-                'fields' => $fields,
+                'fields' => array_merge(
+                    $scalarFields,
+                    $this->contextHiddenFields($subject['context'], 'confirm', [
+                        'aspect_ids' => implode(',', $built['aspect_ids']),
+                    ])
+                ),
             ];
+        }
+
+        if ($blocks === []) {
+            throw new \RuntimeException('No hay datos editables para el dato seleccionado.');
         }
 
         $out = UiScreenService::renderUiDefinition('data-access', 'editar', [

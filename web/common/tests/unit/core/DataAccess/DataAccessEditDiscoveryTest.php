@@ -19,7 +19,7 @@ class DataAccessEditDiscoveryTest extends Unit
         $svc = new DataAccessEditDiscoveryService();
         $ctx = new PermissionContext(1, ['AdminEfector']);
         $surface = $svc->resolveSurfaceId('editar personal del centro', [], $ctx);
-        $this->assertSame('profesional_en_efector', $surface);
+        $this->assertSame('ProfesionalEfectorServicio', $surface);
     }
 
     public function testResolveSurfaceAgendaProfesional(): void
@@ -27,7 +27,7 @@ class DataAccessEditDiscoveryTest extends Unit
         $svc = new DataAccessEditDiscoveryService();
         $ctx = new PermissionContext(1, ['AdminEfector']);
         $surface = $svc->resolveSurfaceId('modificar agenda de un profesional', [], $ctx);
-        $this->assertSame('agenda_profesional_en_efector', $surface);
+        $this->assertSame('ProfesionalEfectorServicioAgenda', $surface);
     }
 
     public function testResolveAspectAgendaUnambiguous(): void
@@ -36,11 +36,11 @@ class DataAccessEditDiscoveryTest extends Unit
         $ctx = new PermissionContext(1, ['AdminEfector']);
         $aspects = $svc->resolveAspectIds(
             'modificar horarios de agenda del medico',
-            'agenda_profesional_en_efector',
+            'ProfesionalEfectorServicioAgenda',
             [],
             $ctx
         );
-        $this->assertSame(['agenda_grilla'], $aspects);
+        $this->assertSame(['weekly_scheduler_widget'], $aspects);
     }
 
     public function testResolveAspectFormasAtencion(): void
@@ -49,11 +49,11 @@ class DataAccessEditDiscoveryTest extends Unit
         $ctx = new PermissionContext(1, ['AdminEfector']);
         $aspects = $svc->resolveAspectIds(
             'necesito modificar las formas de atencion de un profesional',
-            'agenda_profesional_en_efector',
+            'ProfesionalEfectorServicioAgenda',
             [],
             $ctx
         );
-        $this->assertSame(['agenda_modalidad'], $aspects);
+        $this->assertSame(['formas_atencion'], $aspects);
     }
 
     public function testAmbiguousAspectsReturnEmpty(): void
@@ -62,7 +62,7 @@ class DataAccessEditDiscoveryTest extends Unit
         $ctx = new PermissionContext(1, ['AdminEfector']);
         $aspects = $svc->resolveAspectIds(
             'editar personal del centro',
-            'profesional_en_efector',
+            'ProfesionalEfectorServicio',
             [],
             $ctx
         );
@@ -75,10 +75,10 @@ class DataAccessEditDiscoveryTest extends Unit
         $ctx = new PermissionContext(1, ['AdminEfector']);
         $aspects = $svc->resolveAspectIds(
             'corregir apellido del profesional',
-            'profesional_en_efector',
+            'ProfesionalEfectorServicio',
             [],
             $ctx
         );
-        $this->assertSame(['identidad'], $aspects);
+        $this->assertSame(['apellido'], $aspects);
     }
 }

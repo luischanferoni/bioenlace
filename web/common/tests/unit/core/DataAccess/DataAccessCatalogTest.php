@@ -62,7 +62,8 @@ class DataAccessCatalogTest extends Unit
         $catalog = new AttributeGroupCatalog();
         $this->assertNotEmpty($catalog->listEntityGroupOptions());
         $this->assertNotNull($catalog->getMetric('profesionales_conteo_efector'));
-        $this->assertNotNull($catalog->getEditSurface('profesional_en_efector'));
+        $this->assertNotNull($catalog->getEditSurface('ProfesionalEfectorServicio'));
+        $this->assertNotNull($catalog->getEditSurface('ProfesionalEfectorServicioAgenda'));
         $this->assertStringContainsString('data-access-config', AttributeGroupCatalog::configDirectory());
     }
 }

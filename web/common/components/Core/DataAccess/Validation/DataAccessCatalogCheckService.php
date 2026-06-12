@@ -78,7 +78,38 @@ final class DataAccessCatalogCheckService
         }
 
         if (isset($chunk['metrics']) && !isset($chunk['info_list'])) {
-            $errors[] = $basename . ': usar info_list en lugar de metrics (edit_surfaces es solo edición)';
+            $errors[] = $basename . ': usar info_list en lugar de metrics';
+        }
+
+        if (isset($chunk['edit_surfaces'])) {
+            $errors[] = $basename . ': usar edit (flow id = entity) en lugar de edit_surfaces';
+        }
+
+        $entityUiSource = $chunk['ui_json_source'] ?? null;
+        if (is_array($entityUiSource)) {
+            $uiGroupKey = trim((string) ($entityUiSource['attribute_group'] ?? ''));
+            $errors = array_merge(
+                $errors,
+                $this->checkUiJsonSource($uiGroupKey !== '' ? $uiGroupKey : $entity, $entityUiSource)
+            );
+        }
+
+        $edit = $chunk['edit'] ?? null;
+        if (is_array($edit)) {
+            $attributes = $edit['attributes'] ?? null;
+            if (!is_array($attributes) || $attributes === []) {
+                $errors[] = $basename . ': edit requiere attributes no vacío';
+            } else {
+                foreach ($attributes as $attrName => $attrDef) {
+                    if (!is_string($attrName) || !is_array($attrDef)) {
+                        continue;
+                    }
+                    $errors = array_merge(
+                        $errors,
+                        $this->checkAspectDefinition($basename, $entity, $attrName, $attrDef)
+                    );
+                }
+            }
         }
 
         $groups = $chunk['groups'] ?? null;
@@ -127,25 +158,6 @@ final class DataAccessCatalogCheckService
             $uiSource = $def['ui_json_source'] ?? null;
             if (is_array($uiSource)) {
                 $errors = array_merge($errors, $this->checkUiJsonSource($fullKey, $uiSource));
-            }
-        }
-
-        $surfaces = $chunk['edit_surfaces'] ?? null;
-        if (is_array($surfaces)) {
-            foreach ($surfaces as $surfaceId => $surfaceDef) {
-                if (!is_string($surfaceId) || !is_array($surfaceDef)) {
-                    continue;
-                }
-                $aspects = $surfaceDef['aspects'] ?? [];
-                if (!is_array($aspects)) {
-                    continue;
-                }
-                foreach ($aspects as $aspectId => $aspectDef) {
-                    if (!is_string($aspectId) || !is_array($aspectDef)) {
-                        continue;
-                    }
-                    $errors = array_merge($errors, $this->checkAspectDefinition($basename, $surfaceId, $aspectId, $aspectDef));
-                }
             }
         }
 
@@ -221,10 +233,13 @@ final class DataAccessCatalogCheckService
     {
         $errors = [];
         $kind = trim((string) ($aspectDef['kind'] ?? 'field_group'));
+        $uiAction = trim((string) ($aspectDef['ui_action'] ?? ''));
+        if ($kind === 'field_group' && $uiAction !== '') {
+            $kind = 'open_ui';
+        }
         $groupKey = trim((string) ($aspectDef['attribute_group'] ?? ''));
 
         if ($kind === 'open_ui') {
-            $uiAction = trim((string) ($aspectDef['ui_action'] ?? ''));
             if ($uiAction === '') {
                 $errors[] = $file . ' ' . $surfaceId . '.' . $aspectId . ': open_ui sin ui_action';
             } else {
@@ -238,6 +253,9 @@ final class DataAccessCatalogCheckService
         }
 
         $fields = $aspectDef['fields'] ?? null;
+        if ((!is_array($fields) || $fields === []) && $kind === 'open_ui') {
+            $fields = [$aspectId];
+        }
         if (is_array($fields) && $fields !== [] && $groupKey !== '') {
             $catalog = new AttributeGroupCatalog();
             $definitions = $catalog->getEntityGroupFieldDefinitions($groupKey);
@@ -286,25 +304,29 @@ final class DataAccessCatalogCheckService
             }
         }
         $known['Persona.identidad_basica'] = true;
+        $known['ProfesionalEfectorServicioAgenda.configuracion'] = true;
+
+        foreach ($entityFiles as $row) {
+            $attributes = $row['chunk']['edit']['attributes'] ?? null;
+            if (is_array($attributes)) {
+                foreach ($attributes as $attrDef) {
+                    if (!is_array($attrDef)) {
+                        continue;
+                    }
+                    $group = trim((string) ($attrDef['attribute_group'] ?? ''));
+                    if ($group !== '') {
+                        $known[$group] = true;
+                    }
+                }
+            }
+        }
 
         $errors = [];
         foreach ($entityFiles as $row) {
-            $surfaces = $row['chunk']['edit_surfaces'] ?? [];
-            if (!is_array($surfaces)) {
-                continue;
-            }
-            foreach ($surfaces as $surfaceDef) {
-                if (!is_array($surfaceDef)) {
-                    continue;
-                }
-                foreach ($surfaceDef['aspects'] ?? [] as $aspectDef) {
-                    if (!is_array($aspectDef)) {
-                        continue;
-                    }
-                    $group = trim((string) ($aspectDef['attribute_group'] ?? ''));
-                    if ($group !== '' && !isset($known[$group])) {
-                        $errors[] = basename($row['path']) . ': attribute_group desconocido «' . $group . '»';
-                    }
+            foreach ($this->iterEditAttributeDefs($row['chunk']) as $attrDef) {
+                $group = trim((string) ($attrDef['attribute_group'] ?? ''));
+                if ($group !== '' && !isset($known[$group])) {
+                    $errors[] = basename($row['path']) . ': attribute_group desconocido «' . $group . '»';
                 }
             }
         }
@@ -331,12 +353,21 @@ final class DataAccessCatalogCheckService
                 }
                 $fullKey = $entity . '.' . $groupKey;
                 $hasUiSource = is_array($def['ui_json_source'] ?? null);
-                $hasFieldGroupAspect = $this->groupUsedByFieldGroupAspect($entityFiles, $fullKey);
+                $hasFieldGroupAspect = $this->groupUsedByEditAttribute($entityFiles, $fullKey);
                 if (!$hasUiSource && !$hasFieldGroupAspect) {
                     continue;
                 }
                 if (!DataAccessAttributeField::find()->where(['entity_group_key' => $fullKey, 'active' => 1])->exists()) {
                     $errors[] = 'BD: sin campos activos para «' . $fullKey . '» (data_access_attribute_field)';
+                }
+            }
+
+            $entityUiSource = $row['chunk']['ui_json_source'] ?? null;
+            if (is_array($entityUiSource)) {
+                $groupFromSource = trim((string) ($entityUiSource['attribute_group'] ?? ''));
+                if ($groupFromSource !== ''
+                    && !DataAccessAttributeField::find()->where(['entity_group_key' => $groupFromSource, 'active' => 1])->exists()) {
+                    $errors[] = 'BD: sin campos activos para «' . $groupFromSource . '» (data_access_attribute_field)';
                 }
             }
         }
@@ -347,33 +378,38 @@ final class DataAccessCatalogCheckService
     /**
      * @param list<array{path: string, chunk: array<string, mixed>}> $entityFiles
      */
-    private function groupUsedByFieldGroupAspect(array $entityFiles, string $groupKey): bool
+    private function groupUsedByEditAttribute(array $entityFiles, string $groupKey): bool
     {
         foreach ($entityFiles as $row) {
-            $surfaces = $row['chunk']['edit_surfaces'] ?? [];
-            if (!is_array($surfaces)) {
-                continue;
-            }
-            foreach ($surfaces as $surfaceDef) {
-                if (!is_array($surfaceDef)) {
+            foreach ($this->iterEditAttributeDefs($row['chunk']) as $attrDef) {
+                if (trim((string) ($attrDef['attribute_group'] ?? '')) !== $groupKey) {
                     continue;
                 }
-                foreach ($surfaceDef['aspects'] ?? [] as $aspectDef) {
-                    if (!is_array($aspectDef)) {
-                        continue;
-                    }
-                    if (trim((string) ($aspectDef['attribute_group'] ?? '')) !== $groupKey) {
-                        continue;
-                    }
-                    $kind = trim((string) ($aspectDef['kind'] ?? 'field_group'));
-                    if ($kind === 'field_group') {
-                        return true;
-                    }
+                $uiAction = trim((string) ($attrDef['ui_action'] ?? ''));
+                if ($uiAction === '') {
+                    return true;
                 }
             }
         }
 
         return false;
+    }
+
+    /**
+     * @param array<string, mixed> $chunk
+     * @return \Generator<int, array<string, mixed>>
+     */
+    private function iterEditAttributeDefs(array $chunk): \Generator
+    {
+        $attributes = $chunk['edit']['attributes'] ?? null;
+        if (!is_array($attributes)) {
+            return;
+        }
+        foreach ($attributes as $attrDef) {
+            if (is_array($attrDef)) {
+                yield $attrDef;
+            }
+        }
     }
 
     /**

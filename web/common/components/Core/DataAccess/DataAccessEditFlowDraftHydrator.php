@@ -113,7 +113,7 @@ final class DataAccessEditFlowDraftHydrator
     ): ?string {
         if (IntentClassificationRulesService::ruleMatches('staff_agenda_config_edit', $content)
             || IntentClassificationRulesService::ruleMatches('own_agenda_config_edit', $content)) {
-            $candidate = 'agenda_profesional_en_efector';
+            $candidate = 'ProfesionalEfectorServicioAgenda';
             if ($auth->userCanAccessEditSurface($ctx, $candidate, $params)) {
                 return $candidate;
             }

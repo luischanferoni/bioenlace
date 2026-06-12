@@ -1,13 +1,13 @@
 # Data Access — configuración declarativa
 
-Catálogo staff (grupos de atributos, métricas, edición dispersa) junto a los intents `data-access.*`.
+Catálogo staff (grupos de atributos, consultas info/listar, edición dispersa) junto a los intents `data-access.*`.
 
 ## Estructura
 
 | Archivo | Contenido |
 |---------|-----------|
 | `manifest.yaml` | Versión global y `filter_synonyms` |
-| `{Entidad}.yaml` | `entity`, `model`, `groups`; opcionalmente `info_list` (consultas info/listar) y `edit_surfaces` |
+| `{Entidad}.yaml` | `entity`, `model`; opcionalmente `info_list`, `edit`, `ui_json_source` |
 
 Una entidad YAML = un modelo de dominio (p. ej. `ProfesionalEfectorServicioAgenda`, no mezclar agenda dentro de `ProfesionalEfectorServicio`).
 
@@ -16,13 +16,13 @@ Una entidad YAML = un modelo de dominio (p. ej. `ProfesionalEfectorServicioAgend
 
 ## Convenciones
 
-- **`groups`**: registro del grupo + `attributes` alineados al modelo AR. `version_attributes` si el dato vive en tabla de versiones.
-- **`ui_json_source`**: enlace explícito grupo ↔ `views/json/.../*.json` (source of truth de widgets y `field_meta`).
-- **`keywords`**: vocabulario NL por superficie/aspecto (el verbo lo resuelve el intent).
+- **`groups`** (opcional, legacy): solo si hace falta declarar atributos de modelo para filtros/métricas. Los grants y campos de formulario viven en BD.
+- **`ui_json_source`** (nivel entidad): enlace explícito entidad ↔ `views/json/.../*.json` (source of truth de widgets y `field_meta`).
+- **`keywords`**: vocabulario NL por flujo/atributo (el verbo lo resuelve el intent).
 - **`info_list`**: consultas staff info/listar allowlisted (`query`, `output`, `presentation_handler`). No usar `metrics` (nombre legacy).
-- **`edit_surfaces`**: flujo entidad → sujeto → dato → formulario (`data-access.editar`).
-- **Aspectos `field_group`**: `fields: [nombre, apellido, …]` — edición por atributos, no por grupo entero.
-- **Aspectos `open_ui`**: `ui_action` + `fields` opcional (subconjunto del JSON) + `ui_flow.impact_preview_policy` (`never` | `when_existing_agenda` | `always`).
+- **`edit`**: flujo `data-access.editar`; **flow id = `entity`** del archivo. Atributos editables en `edit.attributes` (plano, sin `groups` ni `aspects` en YAML).
+- **Atributos con `ui_action`**: `open_ui` + `fields` implícito (el atributo) + `ui_flow.impact_preview_policy` (`never` | `when_existing_agenda` | `always`).
+- **Atributos sin `ui_action`**: edición escalar vía `attribute_group` + campos en BD.
 
 ## Validación
 
@@ -30,7 +30,7 @@ Una entidad YAML = un modelo de dominio (p. ej. `ProfesionalEfectorServicioAgend
 php yii data-access-catalog/check
 ```
 
-Comprueba: modelos AR, atributos YAML, aspectos ↔ grupos, ui_json existente, campos BD vs JSON.
+Comprueba: modelos AR, atributos YAML, `edit.attributes` ↔ grupos, ui_json existente, campos BD vs JSON.
 
 También: `php yii ui-json-templates/check` para contrato UI JSON.
 
@@ -38,4 +38,4 @@ También: `php yii ui-json-templates/check` para contrato UI JSON.
 
 Los canales staff **info / listar / editar** se descubren vía `DataAccessUiActionCatalog` (sin YAML de flow en `intents/`).
 
-Agenda staff: `data-access.editar` → superficie `agenda_profesional_en_efector` → aspectos `agenda_grilla` / `agenda_modalidad` → `profesional-agenda.configurar-agenda` (paso impacto si ya hay agenda y se tocan campos de grilla).
+Agenda staff: `data-access.editar` → flujo `ProfesionalEfectorServicioAgenda` → atributo (p. ej. `weekly_scheduler_widget`, `formas_atencion`) → `profesional-agenda.configurar-agenda` (paso impacto si ya hay agenda y se tocan campos de grilla).

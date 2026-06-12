@@ -2,9 +2,6 @@
 # Agenda → ProfesionalEfectorServicioAgenda.yaml
 entity: ProfesionalEfectorServicio
 model: common\models\ProfesionalEfectorServicio
-groups:
-  asignacion:
-    attributes: [id_efector, id_servicio, id_persona]
 
 info_list:
   profesionales_conteo_efector:
@@ -190,29 +187,29 @@ info_list:
         modes: [grouped, aggregate]
         default: grouped
 
-edit_surfaces:
-  profesional_en_efector:
-    label: Personal del centro
-    keywords:
-      - editar personal
-      - modificar profesional
-      - cambiar datos del medico
-      - editar medico del centro
-    scope_checker: efector_sesion
-    subject_resolver:
-      metric_id: profesionales_listado_efector
-      selection_param: id_persona
-      pes_param: id_profesional_efector_servicio
-      prefill_session_id_persona_when_rule: own_agenda_config_edit
-    aspects:
-      identidad:
-        label: Identidad (nombre y apellido)
-        kind: field_group
-        attribute_group: Persona.identidad_basica
-        fields: [nombre, apellido, otro_nombre, otro_apellido]
-        keywords:
-          - identidad
-          - nombre
-          - apellido
-          - datos personales
-          - cambiar nombre
+edit:
+  label: Personal del centro
+  keywords:
+    - editar personal
+    - modificar profesional
+    - cambiar datos del medico
+    - editar medico del centro
+  scope_checker: efector_sesion
+  subject_resolver:
+    metric_id: profesionales_listado_efector
+    selection_param: id_persona
+    pes_param: id_profesional_efector_servicio
+    prefill_session_id_persona_when_rule: own_agenda_config_edit
+  attributes:
+    nombre:
+      attribute_group: Persona.identidad_basica
+      keywords: [nombre, identidad, datos personales, cambiar nombre]
+    apellido:
+      attribute_group: Persona.identidad_basica
+      keywords: [apellido, identidad, datos personales]
+    otro_nombre:
+      attribute_group: Persona.identidad_basica
+      keywords: [otro nombre]
+    otro_apellido:
+      attribute_group: Persona.identidad_basica
+      keywords: [otro apellido]

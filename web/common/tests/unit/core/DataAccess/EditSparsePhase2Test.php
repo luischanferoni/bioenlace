@@ -51,14 +51,18 @@ class EditSparsePhase2Test extends Unit
         $builder = new EditSparseFieldBuilder();
 
         $built = $builder->build(
-            'profesional_en_efector',
-            ['identidad'],
-            ['identidad' => ['nombre' => 'Ana', 'apellido' => 'López', 'otro_nombre' => '', 'otro_apellido' => '']],
+            'ProfesionalEfectorServicio',
+            ['nombre', 'apellido'],
+            [
+                'nombre' => ['nombre' => 'Ana'],
+                'apellido' => ['apellido' => 'López'],
+            ],
             ['id_efector' => '1'],
             $ctx
         );
 
-        $this->assertContains('identidad', $built['aspect_ids']);
+        $this->assertContains('nombre', $built['aspect_ids']);
+        $this->assertContains('apellido', $built['aspect_ids']);
         $names = array_map(static fn (array $f): string => (string) ($f['name'] ?? ''), $built['fields']);
         $this->assertContains('nombre', $names);
         $this->assertContains('apellido', $names);

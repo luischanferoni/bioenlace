@@ -341,12 +341,22 @@ final class AttributeGroupCatalog
   public function getEditSurface(string $surfaceId): ?array
   {
     $surfaceId = trim($surfaceId);
-    $surfaces = self::load()['edit_surfaces'] ?? [];
-    if (!is_array($surfaces) || !isset($surfaces[$surfaceId]) || !is_array($surfaces[$surfaceId])) {
+    if ($surfaceId === '') {
       return null;
     }
 
-    return $surfaces[$surfaceId];
+    $data = self::load();
+    $flows = $data['edit_flows'] ?? [];
+    if (is_array($flows) && isset($flows[$surfaceId]) && is_array($flows[$surfaceId])) {
+      return $flows[$surfaceId];
+    }
+
+    $surfaces = $data['edit_surfaces'] ?? [];
+    if (is_array($surfaces) && isset($surfaces[$surfaceId]) && is_array($surfaces[$surfaceId])) {
+      return $surfaces[$surfaceId];
+    }
+
+    return null;
   }
 
   /**
@@ -354,9 +364,11 @@ final class AttributeGroupCatalog
    */
   public function listEditSurfacesForDisplay(): array
   {
-    $surfaces = self::load()['edit_surfaces'] ?? [];
+    $data = self::load();
+    $flows = is_array($data['edit_flows'] ?? null) ? $data['edit_flows'] : [];
+    $legacy = is_array($data['edit_surfaces'] ?? null) ? $data['edit_surfaces'] : [];
 
-    return is_array($surfaces) ? $surfaces : [];
+    return array_merge($legacy, $flows);
   }
 
   public static function resetCacheForTests(): void
@@ -402,7 +414,9 @@ final class AttributeGroupCatalog
     $merged = [
       'version' => $manifest['version'] ?? 1,
       'entities' => [],
+      'entity_sources' => [],
       'metrics' => [],
+      'edit_flows' => [],
       'edit_surfaces' => [],
       'filter_synonyms' => is_array($manifest['filter_synonyms'] ?? null) ? $manifest['filter_synonyms'] : [],
     ];
@@ -461,16 +475,85 @@ final class AttributeGroupCatalog
       }
     }
 
+    $uiSource = $chunk['ui_json_source'] ?? null;
+    if ($entity !== '' && is_array($uiSource)) {
+      $merged['entity_sources'][$entity] = $uiSource;
+    }
+
+    if (isset($chunk['edit']) && is_array($chunk['edit'])) {
+      if ($entity === '') {
+        throw new \RuntimeException('edit requiere entity en ' . $sourceFile);
+      }
+      if (isset($merged['edit_flows'][$entity])) {
+        throw new \RuntimeException('edit duplicado para entity ' . $entity . ' en ' . $sourceFile);
+      }
+      $merged['edit_flows'][$entity] = self::normalizeEditBlock($chunk['edit']);
+    }
+
     if (isset($chunk['edit_surfaces']) && is_array($chunk['edit_surfaces'])) {
       foreach ($chunk['edit_surfaces'] as $surfaceId => $def) {
         if (!is_string($surfaceId)) {
           continue;
         }
-        if (isset($merged['edit_surfaces'][$surfaceId])) {
+        if (isset($merged['edit_surfaces'][$surfaceId]) || isset($merged['edit_flows'][$surfaceId])) {
           throw new \RuntimeException('Superficie duplicada ' . $surfaceId . ' en ' . $sourceFile);
         }
-        $merged['edit_surfaces'][$surfaceId] = $def;
+        $merged['edit_surfaces'][$surfaceId] = is_array($def) ? self::normalizeEditBlock($def) : $def;
       }
     }
+  }
+
+  /**
+   * Convierte edit.attributes (declarativo) en aspects internos (1 atributo = 1 aspecto).
+   *
+   * @param array<string, mixed> $edit
+   * @return array<string, mixed>
+   */
+  private static function normalizeEditBlock(array $edit): array
+  {
+    if (isset($edit['aspects']) && is_array($edit['aspects']) && !isset($edit['attributes'])) {
+      return $edit;
+    }
+
+    $attributes = $edit['attributes'] ?? null;
+    if (!is_array($attributes)) {
+      return $edit;
+    }
+
+    $aspects = [];
+    foreach ($attributes as $attrName => $attrDef) {
+      if (!is_string($attrName) || !is_array($attrDef)) {
+        continue;
+      }
+      $aspects[$attrName] = self::attributeDefToAspect($attrName, $attrDef);
+    }
+
+    $out = $edit;
+    unset($out['attributes']);
+    $out['aspects'] = $aspects;
+
+    return $out;
+  }
+
+  /**
+   * @param array<string, mixed> $def
+   * @return array<string, mixed>
+   */
+  private static function attributeDefToAspect(string $attrName, array $def): array
+  {
+    $uiAction = trim((string) ($def['ui_action'] ?? ''));
+    $kind = $uiAction !== '' ? 'open_ui' : trim((string) ($def['kind'] ?? 'field_group'));
+    if ($kind === '') {
+      $kind = 'field_group';
+    }
+
+    $aspect = $def;
+    $aspect['kind'] = $kind;
+    $aspect['fields'] = [$attrName];
+    if ($uiAction !== '') {
+      $aspect['ui_action'] = $uiAction;
+    }
+
+    return $aspect;
   }
 }

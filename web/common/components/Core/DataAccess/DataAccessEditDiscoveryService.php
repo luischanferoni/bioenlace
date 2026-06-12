@@ -207,12 +207,12 @@ final class DataAccessEditDiscoveryService
             $score += 3;
         }
 
-        if ($surfaceId === 'profesional_en_efector'
+        if ($surfaceId === 'ProfesionalEfectorServicio'
             && preg_match('/\b(profesional|medico|m[eé]dico|doctor|personal)\b/u', $contentLower)) {
             $score += 18;
         }
 
-        if ($surfaceId === 'agenda_profesional_en_efector'
+        if ($surfaceId === 'ProfesionalEfectorServicioAgenda'
             && preg_match('/\b(agenda|horario|horarios|grilla|turnos)\b/u', $contentLower)) {
             $score += 20;
         }

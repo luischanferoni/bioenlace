@@ -18,10 +18,10 @@ class EditSurfaceAuthorizationTest extends Unit
     public function testEditSurfaceRegisteredInCatalog(): void
     {
         $catalog = new AttributeGroupCatalog();
-        $surface = $catalog->getEditSurface('profesional_en_efector');
+        $surface = $catalog->getEditSurface('ProfesionalEfectorServicio');
         $this->assertIsArray($surface);
         $this->assertArrayHasKey('aspects', $surface);
-        $this->assertArrayHasKey('identidad', $surface['aspects']);
+        $this->assertArrayHasKey('apellido', $surface['aspects']);
     }
 
     public function testAdminEfectorHasWriteOnPilotGroups(): void

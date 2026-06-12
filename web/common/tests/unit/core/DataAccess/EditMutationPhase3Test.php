@@ -34,16 +34,16 @@ class EditMutationPhase3Test extends Unit
         $auth = new EditMutationAuthorizationService();
         $ctx = new PermissionContext(1, ['Medico']);
         $aspectDef = [
-            'kind' => 'scalar_group',
+            'kind' => 'field_group',
             'attribute_group' => 'Persona.identidad_basica',
-            'fields' => ['nombre', 'apellido', 'otro_nombre', 'otro_apellido'],
+            'fields' => ['apellido'],
         ];
 
         $this->expectException(\yii\web\ForbiddenHttpException::class);
         $auth->assertCanApplyScalarChanges(
             $ctx,
-            'profesional_en_efector',
-            'identidad',
+            'ProfesionalEfectorServicio',
+            'apellido',
             $aspectDef,
             ['id_efector' => '1'],
             ['nombre' => 'Nuevo']
@@ -74,7 +74,7 @@ class EditMutationPhase3Test extends Unit
             'attribute_group' => 'ProfesionalEfectorServicioAgenda.configuracion',
             'fields' => ['vigente_desde', 'intervalo_minutos', 'weekly_scheduler_widget'],
         ];
-        $fields = $builder->buildUiFieldsForAspect('agenda_grilla', $aspectDef, [
+        $fields = $builder->buildUiFieldsForAspect('weekly_scheduler_widget', $aspectDef, [
             'vigente_desde' => '2026-06-01',
             'lunes_2' => '08:00-12:00',
         ], [
@@ -95,7 +95,7 @@ class EditMutationPhase3Test extends Unit
     public function testOpenUiDelegateBuildsAgendaAction(): void
     {
         $delegate = new OpenUiEditMutationDelegate();
-        $action = $delegate->buildAction('agenda_grilla', [
+        $action = $delegate->buildAction('weekly_scheduler_widget', [
             'ui_action' => 'profesional-agenda.configurar-agenda',
             'requires_params' => ['id_profesional_efector_servicio', 'id_servicio'],
             'fields' => ['vigente_desde', 'intervalo_minutos'],
@@ -105,7 +105,7 @@ class EditMutationPhase3Test extends Unit
             'id_servicio' => '7',
         ]);
 
-        $this->assertSame('agenda_grilla', $action['aspect_id']);
+        $this->assertSame('weekly_scheduler_widget', $action['aspect_id']);
         $this->assertSame('profesional-agenda.configurar-agenda', $action['action_id']);
         $this->assertSame('42', $action['params']['id_profesional_efector_servicio']);
         $this->assertSame('7', $action['params']['id_servicio']);

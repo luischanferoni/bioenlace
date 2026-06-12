@@ -8,6 +8,8 @@ use common\components\Core\DataAccess\Edit\EditSparseFieldBuilder;
 use common\components\Core\DataAccess\Edit\EditSparseSubjectLoader;
 use common\components\Core\DataAccess\Edit\EditMutationResult;
 use common\components\Core\DataAccess\Edit\MutationExecutor;
+use common\components\Core\DataAccess\Edit\OpenUiEditMutationDelegate;
+use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Ui\UiScreenService;
 use yii\web\ForbiddenHttpException;
 
@@ -178,7 +180,7 @@ final class DataAccessEditUiService
 
         $aspects = $this->authorization->listEditableAspects($ctx, $surfaceId, $params);
         if ($aspects === []) {
-            throw new ForbiddenHttpException('No tenés permiso para modificar ningún aspecto de ' . $label . '.');
+            throw new ForbiddenHttpException('No tenés permiso para modificar ningún dato de ' . $label . '.');
         }
 
         $resolver = is_array($surface) ? ($surface['subject_resolver'] ?? []) : [];
@@ -192,7 +194,7 @@ final class DataAccessEditUiService
 
         $out = UiScreenService::renderUiDefinition('data-access', 'editar', [
             'title' => 'Editar: ' . $label,
-            'message' => 'Elegí qué aspecto querés modificar.',
+            'message' => 'Elegí qué dato querés modificar.',
             'step' => 'aspects',
             'surface_id' => $surfaceId,
             'aspect_options' => $aspects,
@@ -208,8 +210,8 @@ final class DataAccessEditUiService
 
         $out = $this->appendBlocks($out, [[
             'kind' => 'list',
-            'id' => 'editar_aspectos',
-            'title' => 'Aspectos',
+            'id' => 'editar_datos',
+            'title' => 'Datos',
             'items' => $listItems,
             'presentation' => [
                 'tile' => 'medium',
@@ -257,7 +259,7 @@ final class DataAccessEditUiService
 
         $aspectIds = EditSparseAspectIds::fromParams($params);
         if ($aspectIds === []) {
-            throw new \InvalidArgumentException('aspect_ids es requerido (elegí al menos un aspecto).');
+            throw new \InvalidArgumentException('aspect_ids es requerido (elegí al menos un dato).');
         }
 
         $subject = $this->subjectLoader->load($surfaceId, $params, $ctx);
@@ -277,23 +279,7 @@ final class DataAccessEditUiService
             ])
         );
 
-        $blocks = [];
-        foreach ($built['open_ui'] as $openUi) {
-            if (!is_array($openUi)) {
-                continue;
-            }
-            $uiAction = trim((string) ($openUi['ui_action'] ?? ''));
-            $aspectLabel = trim((string) ($openUi['label'] ?? ''));
-            $blocks[] = [
-                'kind' => 'message',
-                'id' => 'editar_open_ui_' . ($openUi['aspect_id'] ?? 'aspect'),
-                'title' => $aspectLabel !== '' ? $aspectLabel : 'Pantalla dedicada',
-                'text' => $uiAction !== ''
-                    ? 'Este aspecto se configura en una pantalla dedicada (' . $uiAction . '). Podés continuar con los demás campos o volver más adelante.'
-                    : 'Este aspecto se configura en una pantalla dedicada.',
-                'severity' => 'warning',
-            ];
-        }
+        $blocks = $this->embedOpenUiFieldBlocks($built['open_ui'], $subject['context'], $params);
 
         if ($fields !== []) {
             $blocks[] = [
@@ -306,7 +292,7 @@ final class DataAccessEditUiService
 
         $out = UiScreenService::renderUiDefinition('data-access', 'editar', [
             'title' => 'Editar: ' . $subject['label'],
-            'message' => 'Revisá los valores actuales y modificá solo lo necesario.',
+            'message' => '',
             'step' => 'form',
             'surface_id' => $surfaceId,
         ], null);
@@ -456,13 +442,103 @@ final class DataAccessEditUiService
     private function buildApplySuccessMessage(EditMutationResult $result): string
     {
         if ($result->hasScalarChanges() && $result->hasOpenUiActions()) {
-            return 'Cambios guardados. Abrí la pantalla dedicada para completar los demás aspectos.';
+            return 'Los cambios se guardaron correctamente.';
         }
         if ($result->hasScalarChanges()) {
             return 'Los cambios se guardaron correctamente.';
         }
 
-        return 'Abrí la pantalla dedicada para continuar con la edición.';
+        return 'Los cambios se guardaron correctamente.';
+    }
+
+    /**
+     * Incrusta formularios ui_json de aspectos open_ui (p. ej. configurar agenda) en el paso form.
+     *
+     * @param list<array<string, mixed>> $openUiAspects
+     * @param array<string, int|string> $subjectContext
+     * @param array<string, mixed> $params
+     * @return list<array<string, mixed>>
+     */
+    private function embedOpenUiFieldBlocks(array $openUiAspects, array $subjectContext, array $params): array
+    {
+        if ($openUiAspects === []) {
+            return [];
+        }
+
+        $delegate = new OpenUiEditMutationDelegate();
+        $blocks = [];
+
+        foreach ($openUiAspects as $openUi) {
+            if (!is_array($openUi)) {
+                continue;
+            }
+            $aspectId = trim((string) ($openUi['aspect_id'] ?? ''));
+            $uiAction = trim((string) ($openUi['ui_action'] ?? ''));
+            if ($aspectId === '' || $uiAction === '') {
+                continue;
+            }
+
+            $action = $delegate->buildAction($aspectId, [
+                'ui_action' => $uiAction,
+                'requires_params' => is_array($openUi['requires_params'] ?? null) ? $openUi['requires_params'] : [],
+            ], $subjectContext);
+
+            [$entity, $actionName] = $this->splitUiActionId($action['action_id']);
+            $queryParams = array_merge($params, $action['params']);
+
+            if ($action['action_id'] === 'profesional-agenda.configurar-agenda') {
+                $idEfector = (int) ($subjectContext['id_efector'] ?? $params['id_efector'] ?? 0);
+                $defaults = ProfesionalEfectorServicioAgendaUiService::buildFieldValuesForGet($idEfector, $queryParams);
+                $queryParams = array_merge($defaults, $queryParams);
+            }
+
+            $nested = UiScreenService::renderUiDefinition($entity, $actionName, $queryParams, null);
+            $aspectLabel = trim((string) ($openUi['label'] ?? $aspectId)) ?: $aspectId;
+            $submitRoute = $this->httpRouteForUiAction($action['action_id']);
+
+            foreach ($nested['blocks'] ?? [] as $block) {
+                if (!is_array($block) || trim((string) ($block['kind'] ?? '')) !== 'fields') {
+                    continue;
+                }
+                $block['id'] = 'editar_open_ui_' . $aspectId;
+                $block['title'] = $aspectLabel;
+                $block['submit_api'] = [
+                    'route' => $submitRoute,
+                    'method' => 'POST',
+                ];
+                $blocks[] = $block;
+            }
+        }
+
+        if ($blocks === [] && $openUiAspects !== []) {
+            throw new \RuntimeException('No se pudo cargar la UI de edición para el dato seleccionado.');
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * @return array{0: string, 1: string}
+     */
+    private function splitUiActionId(string $actionId): array
+    {
+        $actionId = trim($actionId);
+        $dot = strpos($actionId, '.');
+        if ($dot === false) {
+            throw new \InvalidArgumentException('ui_action inválido: ' . $actionId);
+        }
+
+        return [
+            substr($actionId, 0, $dot),
+            substr($actionId, $dot + 1),
+        ];
+    }
+
+    private function httpRouteForUiAction(string $actionId): string
+    {
+        [$entity, $actionName] = $this->splitUiActionId($actionId);
+
+        return '/api/v1/' . rawurlencode($entity) . '/' . rawurlencode($actionName);
     }
 
     /**

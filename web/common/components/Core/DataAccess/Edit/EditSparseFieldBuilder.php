@@ -112,7 +112,7 @@ final class EditSparseFieldBuilder
         }
 
         if ($accepted === []) {
-            throw new \InvalidArgumentException('Elegí al menos un aspecto editable.');
+            throw new \InvalidArgumentException('Elegí al menos un dato editable.');
         }
 
         return [

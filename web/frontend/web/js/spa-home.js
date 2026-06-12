@@ -1930,7 +1930,7 @@
         }
         if (nodes.length > 0) {
             const firstStep = document.createElement('div');
-            firstStep.className = 'bio-edit-sparse-step bio-edit-sparse-step--locked w-100';
+            firstStep.className = 'bio-edit-sparse-step w-100';
             nodes.forEach(function (n) {
                 firstStep.appendChild(n);
             });
@@ -1938,6 +1938,21 @@
         }
         mountEl.appendChild(chain);
         return chain;
+    }
+
+    function removeEditSparseStepsAfter(stepEl) {
+        if (!stepEl || !stepEl.parentNode) {
+            return;
+        }
+        let sib = stepEl.nextElementSibling;
+        while (sib) {
+            const next = sib.nextElementSibling;
+            if (sib.classList.contains('bio-edit-sparse-step')
+                || sib.classList.contains('bio-edit-sparse-loader')) {
+                sib.parentNode.removeChild(sib);
+            }
+            sib = next;
+        }
     }
 
     function buildEditSparseAdvanceUrl(baseUrl, editSparse, selectedId, item) {
@@ -2250,6 +2265,10 @@
 
     function renderUiJsonMessageBlock(block, container) {
         const text = block.text != null ? String(block.text) : (block.body != null ? String(block.body) : '');
+        if (text.trim() === '') {
+            container.innerHTML = '';
+            return;
+        }
         const severity = block.severity ? String(block.severity) : '';
         const alertClass = severity === 'warning' ? ' alert alert-warning' : (severity === 'danger' ? ' alert alert-danger' : '');
         let html = '<div class="bio-ui-json-message' + alertClass + '">';
@@ -2450,20 +2469,20 @@
                 if (!sparseRoot) {
                     return;
                 }
-                locked = true;
-                try {
-                    allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
-                } catch (e) { /* ignore */ }
+                if (container.__bioEditSparseAdvancing) {
+                    return;
+                }
+                container.__bioEditSparseAdvancing = true;
                 const nextUrl = buildEditSparseAdvanceUrl(options.url, editSparse, selectedId, item);
                 const stepWrap = container.closest ? container.closest('.bio-edit-sparse-step') : null;
-                if (stepWrap) {
-                    stepWrap.classList.add('bio-edit-sparse-step--locked');
-                }
+                removeEditSparseStepsAfter(stepWrap);
                 fetchEditSparseUiDefinition(nextUrl, sparseRoot, {
                     url: nextUrl,
                     rootContainer: sparseRoot,
                     editSparseMountRoot: sparseRoot,
                     enableFlowChainAutoAdvance: options.enableFlowChainAutoAdvance
+                }).finally(function () {
+                    container.__bioEditSparseAdvancing = false;
                 });
                 setTimeout(scrollChatToBottom, 20);
                 return;
@@ -2514,7 +2533,13 @@
                 clearTimeout(singleAutoTimer);
                 singleAutoTimer = null;
             }
-            if (locked) return;
+            const editSparseCtx = options.editSparse && typeof options.editSparse === 'object'
+                ? options.editSparse
+                : null;
+            if (editSparseCtx && container.__bioEditSparseAdvancing) {
+                return;
+            }
+            if (locked && !editSparseCtx) return;
             const id = btn.getAttribute('data-embed-id') || '';
             if (!id) return;
             setSelected(btn, id);
@@ -2599,7 +2624,11 @@
     function renderUiJsonFieldsBlock(block, container, options = {}) {
         const title = block.title ? String(block.title) : '';
         const fields = Array.isArray(block.fields) ? block.fields : [];
-        const submitUrl = options.url || null;
+        let submitUrl = options.url || null;
+        const submitApi = block.submit_api && typeof block.submit_api === 'object' ? block.submit_api : null;
+        if (submitApi && submitApi.route) {
+            submitUrl = resolveSpaFetchUrl(String(submitApi.route));
+        }
 
         const grid = fieldsBlockUsesBootstrapGrid(fields);
         const hiddenFields = [];

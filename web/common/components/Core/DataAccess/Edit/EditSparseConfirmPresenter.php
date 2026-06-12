@@ -84,7 +84,7 @@ final class EditSparseConfirmPresenter
 
         if ($openUiAspects !== []) {
             $parts[] = '';
-            $parts[] = 'Aspectos con pantalla dedicada (se abren al confirmar):';
+            $parts[] = 'Datos con formulario propio:';
             foreach ($openUiAspects as $aspect) {
                 if (!is_array($aspect)) {
                     continue;

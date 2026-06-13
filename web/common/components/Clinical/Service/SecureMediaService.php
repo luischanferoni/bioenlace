@@ -2,6 +2,7 @@
 
 namespace common\components\Clinical\Service;
 
+use common\components\Core\Permission\Domain\EncounterDomainAccessService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaChatMessage;
 use common\models\ConsultaMotivosMessage;
@@ -67,7 +68,7 @@ final class SecureMediaService
         if ($encounter === null) {
             throw new NotFoundHttpException('Encounter no encontrado');
         }
-        if (!EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+        if (!EncounterDomainAccessService::canAccess($encounter)) {
             throw new ForbiddenHttpException('No tiene permiso para ver este archivo');
         }
 

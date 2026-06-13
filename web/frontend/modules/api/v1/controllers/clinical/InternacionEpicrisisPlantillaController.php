@@ -3,9 +3,9 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaAdminService;
-use common\components\Clinical\Inpatient\Service\InternacionEfectorAccess;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
+use yii\web\ForbiddenHttpException;
 
 /**
  * ABM plantillas de epicrisis (staff).
@@ -19,6 +19,8 @@ use Yii;
  */
 class InternacionEpicrisisPlantillaController extends BaseController
 {
+    use ClinicalAccessTrait;
+
     private InternacionEpicrisisPlantillaAdminService $admin;
 
     public function init(): void
@@ -31,9 +33,7 @@ class InternacionEpicrisisPlantillaController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? 0) ?: null
-            );
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
             $incluirInactivas = filter_var(
                 $req->get('incluir_inactivas', '1'),
                 FILTER_VALIDATE_BOOLEAN
@@ -41,6 +41,8 @@ class InternacionEpicrisisPlantillaController extends BaseController
             $plantillas = $this->admin->listarAdmin($idEfector, $incluirInactivas);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success([
@@ -52,12 +54,12 @@ class InternacionEpicrisisPlantillaController extends BaseController
     public function actionVer(int $id): array
     {
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) (Yii::$app->request->get('id_efector') ?? 0) ?: null
-            );
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
             $plantilla = $this->admin->obtener($id, $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success(['plantilla' => $plantilla], 'Plantilla de epicrisis');
@@ -66,9 +68,7 @@ class InternacionEpicrisisPlantillaController extends BaseController
     public function actionCrear(): array
     {
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($this->body()['id_efector'] ?? 0) ?: null
-            );
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
             $plantilla = $this->admin->crear(
                 $this->body(),
                 $idEfector,
@@ -76,6 +76,8 @@ class InternacionEpicrisisPlantillaController extends BaseController
             );
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success(['plantilla' => $plantilla], 'Plantilla creada', 201);
@@ -84,9 +86,7 @@ class InternacionEpicrisisPlantillaController extends BaseController
     public function actionActualizar(int $id): array
     {
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($this->body()['id_efector'] ?? 0) ?: null
-            );
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
             $plantilla = $this->admin->actualizar(
                 $id,
                 $this->body(),
@@ -95,6 +95,8 @@ class InternacionEpicrisisPlantillaController extends BaseController
             );
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success(['plantilla' => $plantilla], 'Plantilla actualizada');
@@ -113,9 +115,7 @@ class InternacionEpicrisisPlantillaController extends BaseController
     private function toggleActivo(int $id, bool $activo): array
     {
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($this->body()['id_efector'] ?? Yii::$app->request->get('id_efector') ?? 0) ?: null
-            );
+            $idEfector = $this->resolveIdEfectorForDomainOperation('InternacionEpicrisisPlantilla.admin');
             if ($activo) {
                 $this->admin->activar($id, $idEfector, (bool) (Yii::$app->user->isSuperadmin ?? false));
             } else {
@@ -123,6 +123,8 @@ class InternacionEpicrisisPlantillaController extends BaseController
             }
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         $msg = $activo ? 'Plantilla activada' : 'Plantilla desactivada';

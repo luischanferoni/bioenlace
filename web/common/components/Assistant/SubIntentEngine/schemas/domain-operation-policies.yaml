@@ -96,6 +96,10 @@ operations:
     policies:
       - clinical.internacion_staff_access
 
+  InternacionEpicrisisPlantilla.admin:
+    policies:
+      - organization.efector_sesion
+
   Clinical.staff_efector:
     policies:
       - organization.efector_sesion

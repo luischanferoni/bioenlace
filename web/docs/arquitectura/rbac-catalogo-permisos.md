@@ -64,10 +64,11 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 - **Metadata:** `schemas/domain-operation-policies.yaml` — mapeo `Turno.cancel` → handlers (`any_of` / `policies`).
 - **Registry:** `DomainOperationPolicyRegistry` — handler_id → clase PHP (estable, sin reglas).
 - **Implementaciones:** `Scheduling/Service/Authorization/*`, `Organization/Service/Authorization/*`, `Clinical/Service/Authorization/*`, `Clinical/Inpatient/Service/Authorization/*`.
-- **API:** `ApiDomainOperationBridge::assertOrForbidden()` traduce a HTTP 403; `ClinicalAccessTrait::resolveIdEfectorForDomainOperation()` para operaciones acotadas por efector.
-- **Integridad:** `CatalogIntegrityService::checkDomainOperationPolicyHandlers()` valida que cada handler del YAML exista en el registry.
-- Integrado en: `TurnosController`, DataAccess (`Info`, `Listar`, `Editar`), `ProfesionalEfectorServicioController`, `ProfesionalAgendaController`, `MotivosConsultaController`, `ConsultaChatController`, `PacientesController`, `InternacionController`, `EmergencyGuardiaController`, `EpisodeOfCareController`, `ElectronicPrescriptionController`.
-- Handlers PES: `organization.pes_efector`, `organization.pes_own` (cierres de flujo asistente, condición laboral, draft hydrator).
+- **API:** `ApiDomainOperationBridge`, `EfectorDomainAccessService`, `EncounterDomainAccessService`; `ClinicalAccessTrait` en controllers clínicos.
+- Handlers PES: `organization.pes_efector`, `organization.pes_own` (cierres de flujo, condición laboral, draft hydrator). Servicio: `ProfesionalEfectorServicioDomainAuthorizationService`.
+- **Integridad:** `CatalogIntegrityService::checkDomainOperationPolicyHandlers()` valida handlers YAML ↔ registry.
+- Integrado en controllers API clínicos/organizacionales, home panel (guardia), `SecureMediaService`, `AppointmentReasonEntry`.
+- Wrappers legacy `GuardiaEfectorAccess` / `InternacionEfectorAccess`: delegan en `OrganizationEfectorAccess`; métodos de autorización marcados `@deprecated`.
 
 `scope_checker` (DataAccess) sigue siendo ABAC del canal métricas/edición dispersa; las políticas de dominio generalizan el mismo concepto para operaciones del catálogo RBAC.
 

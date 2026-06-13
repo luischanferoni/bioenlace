@@ -3,16 +3,16 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Clinical\Inpatient\Service\InternacionAccessService;
-use common\components\Clinical\Inpatient\Service\InternacionEfectorAccess;
-use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
+use common\components\Core\Permission\Domain\EncounterDomainAccessService;
+use common\components\Core\Permission\Domain\EfectorDomainAccessService;
 use common\components\Core\Permission\Domain\DomainOperationAuthorizer;
-use common\components\Core\Permission\Domain\DomainOperationContext;
 use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\SegNivelInternacion;
 use Yii;
+use yii\web\ForbiddenHttpException;
 
 trait ClinicalAccessTrait
 {
@@ -29,12 +29,10 @@ trait ClinicalAccessTrait
         }
 
         try {
-            (new DomainOperationAuthorizer())->assert(
-                'Encounter.access',
+            EncounterDomainAccessService::assertAccess(
                 $encounter,
-                DomainOperationContext::fromApplication([
-                    'representation_permission' => $representationPermission,
-                ])
+                'Encounter.access',
+                $representationPermission
             );
         } catch (DomainOperationForbiddenException $e) {
             Yii::$app->response->statusCode = 403;
@@ -50,19 +48,11 @@ trait ClinicalAccessTrait
         string $operationKey = 'Encounter.access',
         ?string $representationPermission = null
     ): bool {
-        try {
-            (new DomainOperationAuthorizer())->assert(
-                $operationKey,
-                $encounter,
-                DomainOperationContext::fromApplication([
-                    'representation_permission' => $representationPermission,
-                ])
-            );
-
-            return true;
-        } catch (DomainOperationForbiddenException) {
-            return false;
-        }
+        return EncounterDomainAccessService::canAccess(
+            $encounter,
+            $operationKey,
+            $representationPermission
+        );
     }
 
     protected function staffCanAccessInternacion(SegNivelInternacion $internacion): bool
@@ -155,9 +145,10 @@ trait ClinicalAccessTrait
     {
         $req = Yii::$app->request;
         $params = array_merge($req->get(), $req->post());
-        ApiDomainOperationBridge::assertOrForbidden($operationKey, $params, $params);
-        $from = (int) ($params['id_efector'] ?? 0);
-
-        return InternacionEfectorAccess::resolveIdEfector($from > 0 ? $from : null);
+        try {
+            return EfectorDomainAccessService::assertAndResolveIdEfector($operationKey, $params);
+        } catch (DomainOperationForbiddenException $e) {
+            throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 namespace common\components\Organization\Service\ProfesionalEfectorServicio;
 
-use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioFlowAuthorizationService;
+use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
 use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\models\Condiciones_laborales;
 use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
@@ -328,7 +328,7 @@ final class ProfesionalEfectorServicioAgendaUiService
         }
 
         try {
-            (new ProfesionalEfectorServicioFlowAuthorizationService())->assertCondicionLaboral(
+            (new ProfesionalEfectorServicioDomainAuthorizationService())->assertCondicionLaboral(
                 array_merge($post, [
                     'id_profesional_efector_servicio' => $idPes,
                     'id_efector' => $idEfector,

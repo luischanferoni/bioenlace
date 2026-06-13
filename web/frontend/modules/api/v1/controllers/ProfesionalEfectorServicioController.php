@@ -6,7 +6,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
 use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioFlowAuthorizationService;
+use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
 use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
@@ -610,7 +610,7 @@ class ProfesionalEfectorServicioController extends BaseController
         }
 
         try {
-            (new ProfesionalEfectorServicioFlowAuthorizationService())->assertFlowClosure($req->post(), $requireOwnPes);
+            (new ProfesionalEfectorServicioDomainAuthorizationService())->assertFlowClosure($req->post(), $requireOwnPes);
         } catch (DomainOperationForbiddenException $e) {
             throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }

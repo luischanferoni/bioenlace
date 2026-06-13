@@ -2,8 +2,8 @@
 
 namespace common\components\Clinical\Inpatient\Service;
 
-use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Clinical\Specialty\Inpatient\InpatientClinicalContext;
+use common\components\Core\Permission\Domain\EncounterDomainAccessService;
 use common\models\SegNivelInternacion;
 use Yii;
 
@@ -24,7 +24,7 @@ final class InternacionAccessService
         }
 
         $encounter = InpatientClinicalContext::findOpenInpatientEncounter((int) $internacion->id);
-        if ($encounter !== null && EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+        if ($encounter !== null && EncounterDomainAccessService::canAccess($encounter)) {
             return true;
         }
 

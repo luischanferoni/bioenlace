@@ -9,7 +9,7 @@ use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioFlowAuthorizationService;
+use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaConfigUiFlowService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
@@ -98,7 +98,7 @@ class ProfesionalAgendaController extends BaseController
         }
 
         try {
-            (new ProfesionalEfectorServicioFlowAuthorizationService())->assertAgendaFlowClosure($post, $requireOwnPes);
+            (new ProfesionalEfectorServicioDomainAuthorizationService())->assertAgendaFlowClosure($post, $requireOwnPes);
         } catch (DomainOperationForbiddenException $e) {
             throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }

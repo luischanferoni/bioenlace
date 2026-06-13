@@ -2,41 +2,29 @@
 
 namespace common\components\Clinical\Emergency\Service;
 
+use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 use common\models\Guardia;
-use Yii;
 
 /**
- * Acceso staff a episodios de guardia por efector (sin revalidar identidad).
+ * Utilidades de guardia por efector (PES, pertenencia de episodio).
+ * Para autorización por efector preferir políticas `GuardiaEpisode.*` / {@see OrganizationEfectorAccess}.
  */
 final class GuardiaEfectorAccess
 {
+    /**
+     * @deprecated Use {@see OrganizationEfectorAccess::resolveIdEfector()} o {@see EfectorDomainAccessService}.
+     */
     public static function resolveIdEfector(?int $fromRequest): int
     {
-        if ($fromRequest !== null && $fromRequest > 0) {
-            return $fromRequest;
-        }
-
-        return (int) Yii::$app->user->getIdEfector();
+        return OrganizationEfectorAccess::resolveIdEfector($fromRequest);
     }
 
+    /**
+     * @deprecated Use políticas de dominio (`GuardiaEpisode.view_board`, etc.).
+     */
     public static function assertCanAccessEfector(int $idEfector): void
     {
-        if ($idEfector <= 0) {
-            throw new \InvalidArgumentException(
-                'Se requiere id_efector en la solicitud o sesión operativa con efector de guardia.'
-            );
-        }
-        if (Yii::$app->user->isSuperadmin) {
-            return;
-        }
-        if ((int) Yii::$app->user->getIdEfector() === $idEfector) {
-            return;
-        }
-        $efectores = Yii::$app->user->getEfectores();
-        if (is_array($efectores) && array_key_exists($idEfector, $efectores)) {
-            return;
-        }
-        throw new \InvalidArgumentException('No tiene acceso al efector indicado.');
+        OrganizationEfectorAccess::assertCanAccessEfector($idEfector);
     }
 
     public static function assertGuardiaEnEfector(Guardia $guardia, int $idEfector): void
@@ -51,7 +39,7 @@ final class GuardiaEfectorAccess
         if ($fromBody !== null && $fromBody > 0) {
             return $fromBody;
         }
-        $raw = Yii::$app->user->getIdProfesionalEfectorServicio();
+        $raw = \Yii::$app->user->getIdProfesionalEfectorServicio();
         if ($raw === null || $raw === '') {
             return null;
         }

@@ -2,43 +2,31 @@
 
 namespace common\components\Clinical\Inpatient\Service;
 
+use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 use common\models\InfraestructuraCama;
 use common\models\InfraestructuraPiso;
 use common\models\SegNivelInternacion;
-use Yii;
 
 /**
- * Acceso staff a internación / camas por efector (sin revalidar identidad).
+ * Utilidades de internación por efector (camas, pisos, pertenencia geográfica).
+ * Para autorización por efector preferir políticas `Internacion.*` / {@see OrganizationEfectorAccess}.
  */
 final class InternacionEfectorAccess
 {
+    /**
+     * @deprecated Use {@see OrganizationEfectorAccess::resolveIdEfector()} o {@see EfectorDomainAccessService}.
+     */
     public static function resolveIdEfector(?int $fromRequest): int
     {
-        if ($fromRequest !== null && $fromRequest > 0) {
-            return $fromRequest;
-        }
-
-        return (int) Yii::$app->user->getIdEfector();
+        return OrganizationEfectorAccess::resolveIdEfector($fromRequest);
     }
 
+    /**
+     * @deprecated Use políticas de dominio (`Clinical.staff_efector`, `Internacion.*`, etc.).
+     */
     public static function assertCanAccessEfector(int $idEfector): void
     {
-        if ($idEfector <= 0) {
-            throw new \InvalidArgumentException(
-                'Se requiere id_efector en la solicitud o sesión operativa con efector de internación.'
-            );
-        }
-        if (Yii::$app->user->isSuperadmin) {
-            return;
-        }
-        if ((int) Yii::$app->user->getIdEfector() === $idEfector) {
-            return;
-        }
-        $efectores = Yii::$app->user->getEfectores();
-        if (is_array($efectores) && array_key_exists($idEfector, $efectores)) {
-            return;
-        }
-        throw new \InvalidArgumentException('No tiene acceso al efector indicado.');
+        OrganizationEfectorAccess::assertCanAccessEfector($idEfector);
     }
 
     public static function assertInternacionEnEfector(SegNivelInternacion $internacion, int $idEfector): void

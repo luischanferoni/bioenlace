@@ -2,12 +2,12 @@
 
 namespace frontend\modules\api\v1\controllers;
 
-use Yii;
-use yii\web\UploadedFile;
 use common\models\ConsultaChatMessage;
-use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
+use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
+use Yii;
+use yii\web\UploadedFile;
 
 /**
  * API chat clínico por encounter (mensajes, envío, subida, estado).
@@ -16,6 +16,8 @@ use common\models\Clinical\Encounter;
  */
 class ConsultaChatController extends BaseController
 {
+    use ClinicalAccessTrait;
+
     public $enableCsrfValidation = false;
 
     /**
@@ -257,26 +259,6 @@ class ConsultaChatController extends BaseController
         $id = $body['encounter_id'] ?? $body['consulta_id'] ?? null;
 
         return $id ? (int) $id : 0;
-    }
-
-    /**
-     * @return array{0: Encounter|null, 1: array<string, mixed>|null}
-     */
-    protected function requireEncounterAccess(int $encounterId): array
-    {
-        $encounter = Encounter::findOne($encounterId);
-        if (!$encounter) {
-            Yii::$app->response->statusCode = 404;
-
-            return [null, ['success' => false, 'message' => 'Encounter no encontrado', 'data' => null]];
-        }
-        if (!EncounterAccessService::userCanAccessEncounterApi($encounter)) {
-            Yii::$app->response->statusCode = 403;
-
-            return [null, ['success' => false, 'message' => 'No tiene permiso para acceder a este encounter', 'data' => null]];
-        }
-
-        return [$encounter, null];
     }
 
     private const UPLOAD_MESSAGE_TYPES = ['imagen', 'audio', 'video', 'documento'];

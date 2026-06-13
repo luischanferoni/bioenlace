@@ -8,16 +8,12 @@ use yii\web\UploadedFile;
 use common\components\Assistant\EntryPoints\AppointmentReason\AppointmentReasonEntry;
 use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Person\Representation\Enum\RepresentationPermission;
-use common\components\Core\Permission\Domain\DomainOperationAuthorizer;
-use common\components\Core\Permission\Domain\DomainOperationContext;
-use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Clinical\Service\EncounterAccessService;
-use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\components\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaMotivosMessage;
+use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 
 /**
  * API motivos de consulta (mensajes, envío, subida de archivos).
@@ -26,6 +22,8 @@ use common\models\ConsultaMotivosMessage;
  */
 class MotivosConsultaController extends BaseController
 {
+    use ClinicalAccessTrait;
+
     public $enableCsrfValidation = false;
 
     /**
@@ -34,7 +32,7 @@ class MotivosConsultaController extends BaseController
     public function actionListarMensajes($id)
     {
         $encounterId = (int) $id;
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
         if ($err !== null) {
             return $err;
         }
@@ -105,7 +103,7 @@ class MotivosConsultaController extends BaseController
             return ['success' => false, 'message' => 'Falta encounter_id (o consulta_id)', 'data' => null];
         }
 
-        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
         if ($err !== null) {
             return $err;
         }
@@ -212,44 +210,6 @@ class MotivosConsultaController extends BaseController
         }
 
         return (int) $raw;
-    }
-
-    /**
-     * Paciente: `consulta.id_persona` === sesión `idPersona` ({@see JsonHttpBearerAuth}).
-     * Médico: mismo contexto PES que en sesión operativa ({@see EncounterAccessService::userCanAccessEncounterApi}).
-     */
-    protected function canAccessEncounter(Encounter $encounter): bool
-    {
-        try {
-            (new DomainOperationAuthorizer())->assert(
-                'Encounter.access',
-                $encounter,
-                DomainOperationContext::fromApplication([
-                    'representation_permission' => RepresentationPermission::CLINICAL_MOTIVOS,
-                ])
-            );
-
-            return true;
-        } catch (DomainOperationForbiddenException) {
-            return false;
-        }
-    }
-
-    /**
-     * @return array{0: Encounter|null, 1: array|null}
-     */
-    protected function requireEncounterAccess($encounterId)
-    {
-        $encounter = Encounter::findOne((int) $encounterId);
-        if (!$encounter) {
-            Yii::$app->response->statusCode = 404;
-            return [null, ['success' => false, 'message' => 'Encounter no encontrado', 'data' => null]];
-        }
-        if (!$this->canAccessEncounter($encounter)) {
-            Yii::$app->response->statusCode = 403;
-            return [null, ['success' => false, 'message' => 'No tiene permiso para acceder a este encounter', 'data' => null]];
-        }
-        return [$encounter, null];
     }
 
     private const UPLOAD_MESSAGE_TYPES = ['imagen', 'audio'];

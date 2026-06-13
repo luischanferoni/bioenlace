@@ -5,6 +5,9 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
+use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioFlowAuthorizationService;
+use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
@@ -606,17 +609,10 @@ class ProfesionalEfectorServicioController extends BaseController
             throw new BadRequestHttpException('Se requiere efector en sesión.');
         }
 
-        $post = $req->post();
-        $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
-        if ($idPes <= 0) {
-            throw new BadRequestHttpException('Indique id_profesional_efector_servicio.');
-        }
-        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-        if ($pes === null || (int) $pes->id_efector !== $idEfector) {
-            throw new ForbiddenHttpException('Asignación inválida para este efector.');
-        }
-        if ($requireOwnPes && (int) $pes->id_persona !== (int) Yii::$app->user->getIdPersona()) {
-            throw new ForbiddenHttpException('Solo podés cerrar el flujo sobre tus propias asignaciones.');
+        try {
+            (new ProfesionalEfectorServicioFlowAuthorizationService())->assertFlowClosure($req->post(), $requireOwnPes);
+        } catch (DomainOperationForbiddenException $e) {
+            throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }
 
         return [

@@ -2,6 +2,8 @@
 
 namespace common\components\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioFlowAuthorizationService;
+use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\models\Condiciones_laborales;
 use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioRecord;
@@ -303,13 +305,6 @@ final class ProfesionalEfectorServicioAgendaUiService
         $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
         if ($idPes > 0) {
             $idStaff = $idPes;
-        }
-
-        if ($idPes > 0) {
-            $pesOk = ProfesionalEfectorServicioRecord::findOne(['id' => $idPes, 'deleted_at' => null]);
-            if ($pesOk === null || (int) $pesOk->id_efector !== $idEfector) {
-                throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este efector.');
-            }
         } elseif ($idStaff > 0) {
             self::assertStaffContextPerteneceAEfector($idStaff, $idEfector);
             $idPersonaLegacy = ProfesionalEfectorServicioRecord::resolveIdPersonaFromStaffContextId($idStaff);
@@ -332,12 +327,16 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new BadRequestHttpException('Indique id_profesional_efector_servicio con PES en este efector.');
         }
 
-        if ($requireOwnPes) {
-            $idPersona = (int) Yii::$app->user->getIdPersona();
-            $pesOwn = ProfesionalEfectorServicioRecord::findOne(['id' => $idPes, 'deleted_at' => null]);
-            if ($pesOwn === null || (int) $pesOwn->id_persona !== $idPersona) {
-                throw new ForbiddenHttpException('Solo podés registrar licencias sobre tus asignaciones.');
-            }
+        try {
+            (new ProfesionalEfectorServicioFlowAuthorizationService())->assertCondicionLaboral(
+                array_merge($post, [
+                    'id_profesional_efector_servicio' => $idPes,
+                    'id_efector' => $idEfector,
+                ]),
+                $requireOwnPes
+            );
+        } catch (DomainOperationForbiddenException $e) {
+            throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }
 
         $idCondicion = isset($post['id_condicion_laboral']) ? (int) $post['id_condicion_laboral'] : 0;

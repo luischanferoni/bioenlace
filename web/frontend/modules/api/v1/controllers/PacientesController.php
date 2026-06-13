@@ -8,7 +8,6 @@ use common\components\Clinical\CareCohort\Service\CarePackEncounterStaffService;
 use common\components\Clinical\Service\AppointmentReasonBatchService;
 use common\components\Clinical\Service\AppointmentReasonClinicalInsightsService;
 use common\components\Clinical\Service\AppointmentReasonWindowService;
-use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Clinical\Service\EncounterAppointmentReasonLookupService;
 use common\components\Home\Service\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
@@ -20,11 +19,14 @@ use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 use common\models\ConsultaMotivosMessage;
 use common\components\Person\Service\PersonaSignosVitalesService;
+use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 /**
  * Historia clínica staff (listado del día: GET /api/v1/home/panel).
  */
 class PacientesController extends BaseController
 {
+    use ClinicalAccessTrait;
+
     /**
      * Resumen de historia clínica (persona + información médica + signos vitales + mensajes de motivos de la app del paciente). No arma lista de eventos aquí.
      *
@@ -279,7 +281,7 @@ class PacientesController extends BaseController
             ];
         }
 
-        if (!EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+        if (!$this->canAccessEncounterDomain($encounter, 'Atencion.view_mine')) {
             return [
                 'motivos_consulta' => null,
                 'motivos_consulta_paciente' => $emptyPaciente,
@@ -388,7 +390,7 @@ class PacientesController extends BaseController
         $out = [];
         foreach ($rows as $row) {
             $encounter = Encounter::findOne((int) $row['encounter_id']);
-            if ($encounter === null || !EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+            if ($encounter === null || !$this->canAccessEncounterDomain($encounter, 'Atencion.view_mine')) {
                 continue;
             }
             $out[] = $row;

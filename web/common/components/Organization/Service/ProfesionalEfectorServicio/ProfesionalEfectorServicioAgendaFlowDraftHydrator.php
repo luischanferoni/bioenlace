@@ -2,6 +2,8 @@
 
 namespace common\components\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioFlowAuthorizationService;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use Yii;
@@ -63,12 +65,17 @@ final class ProfesionalEfectorServicioAgendaFlowDraftHydrator
             return;
         }
 
-        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-        if ($pes === null || (int) $pes->id_persona !== $idPersona) {
-            throw new ForbiddenHttpException('Solo podés operar sobre tus propias asignaciones.');
-        }
-        if ($idEfector > 0 && (int) $pes->id_efector !== $idEfector) {
-            throw new ForbiddenHttpException('La asignación no corresponde al efector de sesión.');
+        try {
+            (new ProfesionalEfectorServicioFlowAuthorizationService())->assertPesOperation(
+                [
+                    'id_profesional_efector_servicio' => $idPes,
+                    'id_efector' => $idEfector,
+                    'id_servicio' => $idServicio,
+                ],
+                'ProfesionalEfectorServicio.pes_own'
+            );
+        } catch (DomainOperationForbiddenException $e) {
+            throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }
     }
 }

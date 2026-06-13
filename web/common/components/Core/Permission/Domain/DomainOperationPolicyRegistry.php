@@ -5,6 +5,8 @@ namespace common\components\Core\Permission\Domain;
 use common\components\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
 use common\components\Clinical\Service\Authorization\ClinicalEncounterAccessPolicy;
 use common\components\Organization\Service\Authorization\OrganizationEfectorSesionPolicy;
+use common\components\Organization\Service\Authorization\OrganizationPesEfectorPolicy;
+use common\components\Organization\Service\Authorization\OrganizationPesOwnPolicy;
 use common\components\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
 use common\components\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
 use common\components\Scheduling\Service\Authorization\TurnoSubjectOrRepresentativePolicy;
@@ -20,6 +22,8 @@ final class DomainOperationPolicyRegistry
         'turno.staff_efector_belongs' => TurnoStaffEfectorBelongsPolicy::class,
         'turno.create_subject_or_representative' => TurnoCreateSubjectPolicy::class,
         'organization.efector_sesion' => OrganizationEfectorSesionPolicy::class,
+        'organization.pes_efector' => OrganizationPesEfectorPolicy::class,
+        'organization.pes_own' => OrganizationPesOwnPolicy::class,
         'clinical.encounter_participant' => ClinicalEncounterAccessPolicy::class,
         'clinical.internacion_staff_access' => ClinicalInternacionStaffAccessPolicy::class,
     ];

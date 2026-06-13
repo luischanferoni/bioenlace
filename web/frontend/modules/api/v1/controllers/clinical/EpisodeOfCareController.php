@@ -2,7 +2,6 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Clinical\Service\EpisodeOfCareService;
 use common\components\Clinical\Specialty\Inpatient\InpatientClinicalContext;
 use common\components\Clinical\Specialty\Inpatient\InpatientClinicalQuery;
@@ -102,25 +101,7 @@ class EpisodeOfCareController extends BaseController
 
     private function canAccessInternacion(SegNivelInternacion $internacion): bool
     {
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona > 0 && (int) $internacion->id_persona === $idPersona) {
-            return true;
-        }
-
-        $encounter = InpatientClinicalContext::findOpenInpatientEncounter((int) $internacion->id);
-        if ($encounter !== null && EncounterAccessService::userCanAccessEncounterApi($encounter)) {
-            return true;
-        }
-
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        if ($idEfector > 0) {
-            $episode = $this->episodes->findActiveForInternacion((int) $internacion->id);
-            if ($episode !== null && (int) ($episode->efector_id ?? 0) === $idEfector) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->staffCanAccessInternacion($internacion);
     }
 
     private function canAccessEpisode(EpisodeOfCare $episode): bool

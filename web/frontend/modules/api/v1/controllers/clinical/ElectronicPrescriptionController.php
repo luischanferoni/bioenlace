@@ -7,7 +7,6 @@ use common\components\Clinical\Prescription\Enum\PrescriptionLegalStatus;
 use common\components\Clinical\Prescription\Service\ElectronicPrescriptionPdfService;
 use common\components\Clinical\Prescription\Service\ElectronicPrescriptionPresentationService;
 use common\components\Clinical\Prescription\Service\ElectronicPrescriptionService;
-use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
@@ -335,7 +334,7 @@ class ElectronicPrescriptionController extends BaseController
 
         $encounter = Encounter::findOne((int) $rx->encounter_id);
 
-        return $encounter !== null && EncounterAccessService::userCanAccessEncounterApi($encounter);
+        return $encounter !== null && $this->canAccessEncounterDomain($encounter, 'Encounter.access');
     }
 
     /** @return array<string, mixed> */

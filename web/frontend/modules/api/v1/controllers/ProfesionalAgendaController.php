@@ -8,6 +8,8 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
+use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioFlowAuthorizationService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaConfigUiFlowService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
@@ -94,15 +96,11 @@ class ProfesionalAgendaController extends BaseController
         if ($idPes <= 0 || $idServicio <= 0) {
             throw new BadRequestHttpException('Indique id_profesional_efector_servicio e id_servicio.');
         }
-        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
-        if ($pes === null || (int) $pes->id_efector !== $idEfector) {
-            throw new ForbiddenHttpException('Asignación inválida para este efector.');
-        }
-        if ((int) $pes->id_servicio !== $idServicio) {
-            throw new BadRequestHttpException('id_servicio no coincide con la asignación profesional.');
-        }
-        if ($requireOwnPes && (int) $pes->id_persona !== (int) Yii::$app->user->getIdPersona()) {
-            throw new ForbiddenHttpException('Solo podés cerrar el flujo sobre tu propia agenda.');
+
+        try {
+            (new ProfesionalEfectorServicioFlowAuthorizationService())->assertAgendaFlowClosure($post, $requireOwnPes);
+        } catch (DomainOperationForbiddenException $e) {
+            throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }
 
         return [

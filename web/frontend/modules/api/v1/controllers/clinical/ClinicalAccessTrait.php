@@ -4,11 +4,11 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Clinical\Inpatient\Service\InternacionAccessService;
 use common\components\Clinical\Inpatient\Service\InternacionEfectorAccess;
-use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
 use common\components\Core\Permission\Domain\DomainOperationAuthorizer;
 use common\components\Core\Permission\Domain\DomainOperationContext;
 use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\SegNivelInternacion;
@@ -43,6 +43,26 @@ trait ClinicalAccessTrait
         }
 
         return [$encounter, null];
+    }
+
+    protected function canAccessEncounterDomain(
+        Encounter $encounter,
+        string $operationKey = 'Encounter.access',
+        ?string $representationPermission = null
+    ): bool {
+        try {
+            (new DomainOperationAuthorizer())->assert(
+                $operationKey,
+                $encounter,
+                DomainOperationContext::fromApplication([
+                    'representation_permission' => $representationPermission,
+                ])
+            );
+
+            return true;
+        } catch (DomainOperationForbiddenException) {
+            return false;
+        }
     }
 
     protected function staffCanAccessInternacion(SegNivelInternacion $internacion): bool
@@ -82,7 +102,11 @@ trait ClinicalAccessTrait
         if ($plan->encounter_id) {
             $encounter = Encounter::findOne((int) $plan->encounter_id);
 
-            return $encounter !== null && EncounterAccessService::userCanAccessEncounterApi($encounter);
+            return $encounter !== null && $this->canAccessEncounterDomain(
+                $encounter,
+                'Encounter.access',
+                RepresentationPermission::CLINICAL_CARE_PLAN
+            );
         }
 
         return false;

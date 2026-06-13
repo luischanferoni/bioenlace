@@ -24,6 +24,13 @@ $this->params['breadcrumbs'][] = $this->title;
                 </div>
             </div>
             <div class="card-body">
+                <div class="alert alert-info" role="alert">
+                    <strong>Nuevo panel RBAC:</strong>
+                    los grants por grupo se migran a permisos atómicos en
+                    <?= Html::a('Catálogo de permisos → Roles', ['/permission-catalog/roles'], ['class' => 'alert-link']) ?>.
+                    Este CRUD legacy sigue activo como respaldo hasta completar la migración.
+                </div>
+
                 <p class="text-muted small">
                     Permisos por rol y grupo de atributos. Los grupos deben existir en
                     <code>data-access-config</code> (junto a los intents <code>data-access.*</code>).

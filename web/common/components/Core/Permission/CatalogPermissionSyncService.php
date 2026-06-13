@@ -121,6 +121,22 @@ final class CatalogPermissionSyncService
         ];
     }
 
+    /**
+     * Sync catálogo + migración de data_access_role_grant → auth_item.
+     *
+     * @return array<string, mixed>
+     */
+    public function syncAll(bool $inheritRoleGrantsFromRoutes = true, bool $deactivateLegacyGrants = false): array
+    {
+        $catalog = $this->sync($inheritRoleGrantsFromRoutes);
+        $grants = (new DataAccessGrantMigratorService())->migrate($deactivateLegacyGrants);
+
+        return [
+            'catalog' => $catalog,
+            'grants' => $grants,
+        ];
+    }
+
     private function authItemExists(string $authItem, string $name): bool
     {
         return (new \yii\db\Query())

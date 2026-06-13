@@ -3,6 +3,7 @@
 namespace backend\controllers;
 
 use common\components\Core\Permission\CatalogPermissionSyncService;
+use common\components\Core\Permission\DataAccessGrantMigratorService;
 use common\components\Core\Permission\PermissionCatalogService;
 use common\components\Core\Permission\RolePermissionAssignmentService;
 use common\components\Core\Permission\RolePermissionMatrixService;
@@ -28,6 +29,7 @@ class PermissionCatalogController extends Controller
                 'actions' => [
                     'integrity' => ['GET', 'POST'],
                     'sync' => ['POST'],
+                    'migrate-grants' => ['POST'],
                     'edit-role' => ['GET', 'POST'],
                 ],
             ],
@@ -67,15 +69,41 @@ class PermissionCatalogController extends Controller
 
     public function actionSync()
     {
-        $result = (new CatalogPermissionSyncService())->sync(true);
+        $deactivate = (bool) Yii::$app->request->post('deactivate_legacy_grants', false);
+        $result = (new CatalogPermissionSyncService())->syncAll(true, $deactivate);
+        $catalog = $result['catalog'];
+        $grants = $result['grants'];
         $msg = sprintf(
-            'Sync: %d permiso(s) creado(s), %d enlace(s) a rutas, %d grant(s) de rol copiado(s).',
-            $result['created'],
-            $result['linked'],
-            $result['role_grants']
+            'Catálogo: %d permiso(s) creado(s), %d enlace(s), %d grant(s) rol. Grants legacy: %d procesado(s), %d enlace(s) rol, %d permiso(s) creado(s).',
+            $catalog['created'],
+            $catalog['linked'],
+            $catalog['role_grants'],
+            $grants['grants_processed'],
+            $grants['role_links_added'],
+            $grants['permissions_created']
         );
-        if ($result['errors'] !== []) {
-            Yii::$app->session->setFlash('error', $msg . ' Errores: ' . implode('; ', $result['errors']));
+        $errors = array_merge($catalog['errors'], $grants['errors']);
+        if ($errors !== []) {
+            Yii::$app->session->setFlash('error', $msg . ' Errores: ' . implode('; ', $errors));
+        } else {
+            Yii::$app->session->setFlash('success', $msg);
+        }
+
+        return $this->redirect(['roles']);
+    }
+
+    public function actionMigrateGrants()
+    {
+        $deactivate = (bool) Yii::$app->request->post('deactivate_legacy_grants', false);
+        $grants = (new DataAccessGrantMigratorService())->migrate($deactivate);
+        $msg = sprintf(
+            'Migración grants: %d procesado(s), %d permiso(s) creado(s), %d enlace(s) rol.',
+            $grants['grants_processed'],
+            $grants['permissions_created'],
+            $grants['role_links_added']
+        );
+        if ($grants['errors'] !== []) {
+            Yii::$app->session->setFlash('error', $msg . ' Errores: ' . implode('; ', $grants['errors']));
         } else {
             Yii::$app->session->setFlash('success', $msg);
         }

@@ -17,19 +17,38 @@ $unassigned = array_filter($matrix, static fn (array $r): bool => $r['roles'] ==
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h1 class="h2 mb-0"><?= Html::encode($this->title) ?></h1>
-        <div>
-            <?= Html::a('Sincronizar → auth_item', ['sync'], [
-                'class' => 'btn btn-warning btn-sm',
-                'data' => ['method' => 'post', 'confirm' => '¿Registrar permisos lógicos del catálogo en auth_item?'],
-            ]) ?>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+            <?= Html::beginForm(['sync'], 'post', ['class' => 'd-inline-flex align-items-center gap-2']) ?>
+                <label class="form-check-label small mb-0">
+                    <input type="checkbox" name="deactivate_legacy_grants" value="1" class="form-check-input">
+                    Desactivar grants legacy
+                </label>
+                <?= Html::submitButton('Sincronizar catálogo + grants', [
+                    'class' => 'btn btn-warning btn-sm',
+                    'data' => ['confirm' => '¿Registrar permisos del catálogo en auth_item y migrar data_access_role_grant?'],
+                ]) ?>
+            <?= Html::endForm() ?>
+            <?= Html::beginForm(['migrate-grants'], 'post', ['class' => 'd-inline-flex align-items-center gap-2']) ?>
+                <label class="form-check-label small mb-0">
+                    <input type="checkbox" name="deactivate_legacy_grants" value="1" class="form-check-input">
+                    Desactivar legacy
+                </label>
+                <?= Html::submitButton('Solo migrar grants', [
+                    'class' => 'btn btn-outline-warning btn-sm',
+                    'data' => ['confirm' => '¿Migrar data_access_role_grant → auth_item (sin sync de intents)?'],
+                ]) ?>
+            <?= Html::endForm() ?>
             <?= Html::a('Catálogo', ['index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
             <?= Html::a('Integridad', ['integrity'], ['class' => 'btn btn-outline-primary btn-sm']) ?>
         </div>
     </div>
 
     <p class="text-muted">
-        Cruce declarativo (intents + atributos) con <code>auth_item</code> y grants legacy <code>data_access_role_grant</code>.
-        Permisos lógicos greenfield (p. ej. <code>Turno.create</code>) aparecen como «sin auth_item» hasta migración RBAC.
+        Cruce declarativo (intents + atributos) con <code>auth_item</code> y grants legacy
+        <code>data_access_role_grant</code>. La migración crea permisos atómicos
+        <code>Entidad.atributo.read|info|edit</code> y enlaces rol → permiso.
+        <?= Html::a('Panel legacy de grants', ['/data-access-grant/index'], ['class' => 'ms-1']) ?>
+        queda en desuso tras migrar.
     </p>
 
     <?php if ($unregistered !== []): ?>

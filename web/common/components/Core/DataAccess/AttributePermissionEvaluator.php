@@ -2,7 +2,10 @@
 
 namespace common\components\Core\DataAccess;
 
+use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Core\DataAccess\Grant\CompositeRoleGrantSource;
+use common\components\Core\DataAccess\QueryOperation;
+use common\components\Core\Permission\AttributePermissionKeyMapper;
 use Yii;
 
 /**
@@ -29,6 +32,10 @@ final class AttributePermissionEvaluator
             return true;
         }
 
+        if ($this->canViaAuthItem($ctx, $entityGroupKey, $operation)) {
+            return true;
+        }
+
         foreach ($ctx->roleNames as $role) {
             $grant = $this->grantSource->getGrant($role, $entityGroupKey);
             if ($grant === null) {
@@ -44,6 +51,26 @@ final class AttributePermissionEvaluator
         }
 
         return false;
+    }
+
+    private function canViaAuthItem(PermissionContext $ctx, string $entityGroupKey, string $operation): bool
+    {
+        if ($ctx->userId <= 0) {
+            return false;
+        }
+
+        $keys = AttributePermissionKeyMapper::permissionKeysForGroup($entityGroupKey, $operation);
+        if ($keys === []) {
+            return false;
+        }
+
+        foreach ($keys as $permKey) {
+            if (!YamlIntentCatalogService::userIdCanPermissionKey($ctx->userId, $permKey)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function scopeCheckerFor(PermissionContext $ctx, string $entityGroupKey): ?string

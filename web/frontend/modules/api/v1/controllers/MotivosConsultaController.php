@@ -7,6 +7,10 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\components\Assistant\EntryPoints\AppointmentReason\AppointmentReasonEntry;
 use common\components\Clinical\Service\AppointmentReasonWindowService;
+use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Core\Permission\Domain\DomainOperationAuthorizer;
+use common\components\Core\Permission\Domain\DomainOperationContext;
+use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Clinical\Service\EncounterAccessService;
 use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
@@ -216,10 +220,19 @@ class MotivosConsultaController extends BaseController
      */
     protected function canAccessEncounter(Encounter $encounter): bool
     {
-        return EncounterAccessService::userCanAccessEncounterApi(
-            $encounter,
-            RepresentationPermission::CLINICAL_MOTIVOS
-        );
+        try {
+            (new DomainOperationAuthorizer())->assert(
+                'Encounter.access',
+                $encounter,
+                DomainOperationContext::fromApplication([
+                    'representation_permission' => RepresentationPermission::CLINICAL_MOTIVOS,
+                ])
+            );
+
+            return true;
+        } catch (DomainOperationForbiddenException) {
+            return false;
+        }
     }
 
     /**

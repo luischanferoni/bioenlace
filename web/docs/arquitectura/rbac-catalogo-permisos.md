@@ -63,9 +63,10 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 
 - **Metadata:** `schemas/domain-operation-policies.yaml` — mapeo `Turno.cancel` → handlers (`any_of` / `policies`).
 - **Registry:** `DomainOperationPolicyRegistry` — handler_id → clase PHP (estable, sin reglas).
-- **Implementaciones:** `Scheduling/Service/Authorization/*`, `Organization/Service/Authorization/*`.
-- **API:** `ApiDomainOperationBridge::assertOrForbidden()` traduce a HTTP 403.
-- Piloto: `TurnosController`, `InfoController`, `ListarController`, `EditarController`.
+- **Implementaciones:** `Scheduling/Service/Authorization/*`, `Organization/Service/Authorization/*`, `Clinical/Service/Authorization/*`, `Clinical/Inpatient/Service/Authorization/*`.
+- **API:** `ApiDomainOperationBridge::assertOrForbidden()` traduce a HTTP 403; `ClinicalAccessTrait::resolveIdEfectorForDomainOperation()` para operaciones acotadas por efector.
+- **Integridad:** `CatalogIntegrityService::checkDomainOperationPolicyHandlers()` valida que cada handler del YAML exista en el registry.
+- Integrado en: `TurnosController`, DataAccess (`Info`, `Listar`, `Editar`), `ProfesionalEfectorServicioController`, `MotivosConsultaController`, `InternacionController`, `EmergencyGuardiaController`.
 
 `scope_checker` (DataAccess) sigue siendo ABAC del canal métricas/edición dispersa; las políticas de dominio generalizan el mismo concepto para operaciones del catálogo RBAC.
 

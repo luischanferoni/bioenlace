@@ -15,6 +15,7 @@ use common\components\Clinical\Emergency\Service\GuardiaTriageService;
 use common\components\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
+use yii\web\ForbiddenHttpException;
 use yii\web\Response;
 
 /**
@@ -39,6 +40,8 @@ use yii\web\Response;
  */
 class EmergencyGuardiaController extends BaseController
 {
+    use ClinicalAccessTrait;
+
     private GuardiaIngresoService $ingreso;
     private GuardiaTriageService $triage;
     private GuardiaQueueService $queue;
@@ -64,13 +67,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionIngresar(): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) (Yii::$app->request->post('id_efector') ?? 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $data = $this->ingreso->ingresar(Yii::$app->request->post(), $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), null, 500);
         }
@@ -81,13 +83,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionRegistrarTriage(int $guardiaId): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) (Yii::$app->request->post('id_efector') ?? Yii::$app->request->get('id_efector') ?? 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector('GuardiaEpisode.triage');
             $data = $this->triage->registrar($guardiaId, Yii::$app->request->post(), $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), null, 500);
         }
@@ -98,13 +99,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionVer(int $guardiaId): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) Yii::$app->request->get('id_efector', 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $data = $this->queue->detalle($guardiaId, $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         if ($data === null) {
@@ -117,12 +117,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionListarEfectoresDerivacion(): array
     {
         try {
-            GuardiaEfectorAccess::assertCanAccessEfector(
-                GuardiaEfectorAccess::resolveIdEfector((int) Yii::$app->request->get('id_efector', 0) ?: null)
-            );
+            $this->requireGuardiaEfector();
             $data = $this->queue->listarEfectoresDerivacion();
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Efectores para derivación');
@@ -131,13 +131,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionIndicadoresResumen(): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) Yii::$app->request->get('id_efector', 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector('GuardiaEpisode.view_board');
             $data = $this->indicadores->resumen($idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Indicadores de guardia');
@@ -146,10 +145,7 @@ class EmergencyGuardiaController extends BaseController
     public function actionAsignar(int $guardiaId): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) (Yii::$app->request->post('id_efector') ?? 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $pesId = (int) (Yii::$app->request->post('id_profesional_efector_servicio') ?? 0);
             if ($pesId <= 0) {
                 $resolved = GuardiaEfectorAccess::resolvePesId(null);
@@ -161,6 +157,8 @@ class EmergencyGuardiaController extends BaseController
             $data = $this->operacion->asignar($guardiaId, $pesId, $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Profesional asignado');
@@ -169,13 +167,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionIniciarAtencion(int $guardiaId): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) (Yii::$app->request->post('id_efector') ?? 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $data = $this->operacion->iniciarAtencion($guardiaId, $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Atención iniciada');
@@ -184,13 +181,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionDerivar(int $guardiaId): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) (Yii::$app->request->post('id_efector') ?? 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $data = $this->operacion->derivar($guardiaId, Yii::$app->request->post(), $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Derivación registrada');
@@ -199,13 +195,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionFinalizar(int $guardiaId): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) (Yii::$app->request->post('id_efector') ?? 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $data = $this->operacion->finalizar($guardiaId, Yii::$app->request->post(), $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Egreso registrado');
@@ -214,13 +209,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionResumenClinico(int $guardiaId): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) Yii::$app->request->get('id_efector', 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $data = $this->clinical->resumen($guardiaId, $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Resumen clínico de guardia');
@@ -229,13 +223,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionCrearPedido(int $guardiaId): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) (Yii::$app->request->post('id_efector') ?? 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $data = $this->clinical->crearPedido($guardiaId, $idEfector, Yii::$app->request->post());
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Pedido registrado', 201);
@@ -244,10 +237,7 @@ class EmergencyGuardiaController extends BaseController
     public function actionSolicitarInternacion(int $guardiaId): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) (Yii::$app->request->post('id_efector') ?? 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $idEfectorInternacion = (int) (
                 Yii::$app->request->post('notificar_internacion_id_efector')
                 ?? Yii::$app->request->post('id_efector_internacion')
@@ -256,6 +246,8 @@ class EmergencyGuardiaController extends BaseController
             $data = $this->internacion->solicitarInternacion($guardiaId, $idEfector, $idEfectorInternacion);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Internación solicitada');
@@ -264,13 +256,12 @@ class EmergencyGuardiaController extends BaseController
     public function actionSlaConfig(): array
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) Yii::$app->request->get('id_efector', 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $data = (new GuardiaSlaService())->configForEfector($idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Configuración SLA de guardia');
@@ -279,10 +270,7 @@ class EmergencyGuardiaController extends BaseController
     public function actionIndicadoresExportCsv()
     {
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) Yii::$app->request->get('id_efector', 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector();
             $built = $this->export->buildCsv(
                 $idEfector,
                 Yii::$app->request->get('fecha_desde'),
@@ -290,6 +278,8 @@ class EmergencyGuardiaController extends BaseController
             );
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         $response = Yii::$app->response;
@@ -313,12 +303,11 @@ class EmergencyGuardiaController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? 0) ?: null
-            );
-            GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->requireGuardiaEfector('GuardiaEpisode.triage');
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         $out = UiScreenService::handleScreen(
@@ -332,9 +321,6 @@ class EmergencyGuardiaController extends BaseController
         );
 
         if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
-            $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? 0) ?: null
-            );
             $tablero = $this->queue->tablero($idEfector, ['sin_triage' => true, 'solo_activos' => true]);
             $items = [];
             foreach ($tablero['items'] as $row) {
@@ -373,10 +359,7 @@ class EmergencyGuardiaController extends BaseController
                 if ($guardiaId <= 0) {
                     throw new \InvalidArgumentException('Se requiere guardia_id.');
                 }
-                $idEfector = GuardiaEfectorAccess::resolveIdEfector(
-                    (int) ($post['id_efector'] ?? 0) ?: null
-                );
-                GuardiaEfectorAccess::assertCanAccessEfector($idEfector);
+                $idEfector = $this->requireGuardiaEfector('GuardiaEpisode.triage');
 
                 $vitals = [];
                 if (!empty($post['bp_sys'])) {
@@ -416,5 +399,14 @@ class EmergencyGuardiaController extends BaseController
         }
 
         return $out;
+    }
+
+    /**
+     * @throws \InvalidArgumentException
+     * @throws ForbiddenHttpException
+     */
+    private function requireGuardiaEfector(string $operationKey = 'GuardiaEpisode.view_board'): int
+    {
+        return $this->resolveIdEfectorForDomainOperation($operationKey);
     }
 }

@@ -6,7 +6,6 @@ use common\components\Clinical\Inpatient\Service\InternacionAltaEstructuradaServ
 use common\components\Clinical\Inpatient\Service\InternacionCambioCamaService;
 use common\components\Clinical\Inpatient\Service\InternacionIngresoService;
 use common\components\Clinical\Inpatient\Service\InternacionCamaEstadoService;
-use common\components\Clinical\Inpatient\Service\InternacionEfectorAccess;
 use common\components\Clinical\Inpatient\Service\InternacionIndicadoresService;
 use common\components\Clinical\Inpatient\Service\InternacionMapaCamasService;
 use common\components\Ui\UiScreenService;
@@ -14,6 +13,7 @@ use common\models\Persona;
 use common\models\SegNivelInternacion;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
+use yii\web\ForbiddenHttpException;
 
 /**
  * Internación: mapa de camas, indicadores y alta estructurada (staff).
@@ -53,10 +53,7 @@ class InternacionController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? $req->post('id_efector') ?? 0) ?: null
-            );
-            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->resolveIdEfectorForDomainOperation('Internacion.view_map');
             $data = $this->mapa->mapa(
                 $idEfector,
                 (int) ($req->get('id_piso') ?? $req->post('id_piso') ?? 0) ?: null,
@@ -64,6 +61,8 @@ class InternacionController extends BaseController
             );
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         if ($req->isPost && ($req->post('ui_submit') ?? '') === '') {
@@ -105,13 +104,12 @@ class InternacionController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? 0) ?: null
-            );
-            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
             $data = $this->indicadores->resumen($idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success($data, 'Indicadores de internación');
@@ -121,10 +119,7 @@ class InternacionController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($req->post('id_efector') ?? $req->get('id_efector') ?? 0) ?: null
-            );
-            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
             $data = $this->camaEstado->marcar(
                 $camaId,
                 $idEfector,
@@ -133,6 +128,8 @@ class InternacionController extends BaseController
             );
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), null, 500);
         }
@@ -144,12 +141,11 @@ class InternacionController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? $req->post('id_efector') ?? 0) ?: null
-            );
-            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         $out = UiScreenService::handleScreen(
@@ -158,7 +154,7 @@ class InternacionController extends BaseController
             $req->get(),
             $req->post(),
             function (array $post) use ($internacionId, $idEfector): array {
-                [, $err] = $this->requireInternacionStaffAccess($internacionId);
+                [, $err] = $this->requireInternacionStaffAccess($internacionId, 'Internacion.discharge');
                 if ($err !== null) {
                     throw new \InvalidArgumentException((string) ($err['message'] ?? 'Sin permiso'));
                 }
@@ -172,7 +168,7 @@ class InternacionController extends BaseController
         );
 
         if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
-            [$internacion, $err] = $this->requireInternacionStaffAccess($internacionId);
+            [$internacion, $err] = $this->requireInternacionStaffAccess($internacionId, 'Internacion.discharge');
             if ($err !== null) {
                 return $err;
             }
@@ -232,12 +228,11 @@ class InternacionController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? $req->post('id_efector') ?? 0) ?: null
-            );
-            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         $out = UiScreenService::handleScreen(
@@ -246,7 +241,7 @@ class InternacionController extends BaseController
             $req->get(),
             $req->post(),
             function (array $post) use ($internacionId, $idEfector): array {
-                [, $err] = $this->requireInternacionStaffAccess($internacionId);
+                [, $err] = $this->requireInternacionStaffAccess($internacionId, 'Internacion.change_bed');
                 if ($err !== null) {
                     throw new \InvalidArgumentException((string) ($err['message'] ?? 'Sin permiso'));
                 }
@@ -260,7 +255,7 @@ class InternacionController extends BaseController
         );
 
         if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
-            [$internacion, $err] = $this->requireInternacionStaffAccess($internacionId);
+            [$internacion, $err] = $this->requireInternacionStaffAccess($internacionId, 'Internacion.change_bed');
             if ($err !== null) {
                 return $err;
             }
@@ -309,12 +304,11 @@ class InternacionController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? $req->post('id_efector') ?? 0) ?: null
-            );
-            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->resolveIdEfectorForDomainOperation('Internacion.create');
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         $out = UiScreenService::handleScreen(
@@ -422,14 +416,13 @@ class InternacionController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? 0) ?: null
-            );
-            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
             $plantillas = (new \common\components\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaService())
                 ->listar($idEfector, (int) ($req->get('id_servicio') ?? 0) ?: null);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success(['plantillas' => $plantillas], 'Plantillas de epicrisis');
@@ -439,10 +432,7 @@ class InternacionController extends BaseController
     {
         $req = Yii::$app->request;
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(
-                (int) ($req->get('id_efector') ?? 0) ?: null
-            );
-            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+            $idEfector = $this->resolveIdEfectorForDomainOperation('Clinical.staff_efector');
             $plantillaId = (int) ($req->get('plantilla_id') ?? 0);
             if ($plantillaId <= 0) {
                 throw new \InvalidArgumentException('Se requiere plantilla_id.');
@@ -450,6 +440,8 @@ class InternacionController extends BaseController
             $texto = $this->alta->previewPlantilla($plantillaId, $internacionId, $idEfector);
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
         }
 
         return $this->success(['epicrisis' => $texto], 'Vista previa de plantilla');

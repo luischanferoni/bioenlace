@@ -41,3 +41,49 @@ operations:
   DataAccess.list:
     policies:
       - organization.efector_sesion
+
+  Internacion.view_map:
+    policies:
+      - organization.efector_sesion
+
+  Internacion.create:
+    policies:
+      - organization.efector_sesion
+
+  Internacion.discharge:
+    policies:
+      - organization.efector_sesion
+      - clinical.internacion_staff_access
+
+  Internacion.change_bed:
+    policies:
+      - organization.efector_sesion
+      - clinical.internacion_staff_access
+
+  Internacion.staff_access:
+    policies:
+      - clinical.internacion_staff_access
+
+  Clinical.staff_efector:
+    policies:
+      - organization.efector_sesion
+
+  GuardiaEpisode.view_board:
+    policies:
+      - organization.efector_sesion
+
+  GuardiaEpisode.triage:
+    policies:
+      - organization.efector_sesion
+
+  Encounter.access:
+    policies:
+      - clinical.encounter_participant
+
+  Atencion.view_mine:
+    policies:
+      - clinical.encounter_participant
+
+  Atencion.view_last:
+    policies:
+      - clinical.encounter_participant

@@ -3,6 +3,7 @@
 namespace common\components\Core\DataAccess;
 
 use common\components\Core\DataAccess\Scope\EfectorSesionScopeChecker;
+use common\components\Core\DataAccess\Scope\EfectorSesionViaPesScopeChecker;
 use common\components\Core\DataAccess\Scope\PermitirParaSiMismoScopeChecker;
 
 /**
@@ -31,8 +32,9 @@ final class ScopeCheckerRegistry
     {
         switch ($checkerId) {
             case 'efector_sesion':
-            case 'efector_sesion_via_pes':
                 return new EfectorSesionScopeChecker();
+            case 'efector_sesion_via_pes':
+                return new EfectorSesionViaPesScopeChecker();
             case 'permitir_para_si_mismo':
                 return new PermitirParaSiMismoScopeChecker();
             default:

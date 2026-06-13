@@ -5,6 +5,7 @@ namespace common\components\Core\Permission\Validation;
 use common\components\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Core\DataAccess\Validation\DataAccessCatalogCheckService;
 use common\components\Core\Permission\IntentManifestIndex;
+use common\components\Core\Permission\Domain\DomainOperationPolicyRegistry;
 use common\components\Core\Permission\PermissionCatalogService;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
@@ -33,6 +34,7 @@ final class CatalogIntegrityService
         $warnings = array_merge($warnings, $this->checkFlowOnlyAttributesInEdit());
         $warnings = array_merge($warnings, $this->checkIntentCategoryFolder());
         $warnings = array_merge($warnings, $this->checkAttributesPresentationGroups());
+        $errors = array_merge($errors, $this->checkDomainOperationPolicyHandlers());
 
         $errors = array_values(array_unique($errors));
         $warnings = array_values(array_unique($warnings));
@@ -338,6 +340,49 @@ final class CatalogIntegrityService
         }
 
         return $warnings;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function checkDomainOperationPolicyHandlers(): array
+    {
+        $errors = [];
+        $known = array_flip(DomainOperationPolicyRegistry::knownHandlerIds());
+        $configFile = Yii::getAlias('@common/components/Assistant/SubIntentEngine/schemas/domain-operation-policies.yaml');
+        if (!is_file($configFile)) {
+            return ['domain-operation-policies.yaml no encontrado'];
+        }
+
+        try {
+            $parsed = Yaml::parseFile($configFile);
+        } catch (\Throwable $e) {
+            return ['domain-operation-policies.yaml ilegible: ' . $e->getMessage()];
+        }
+
+        $operations = is_array($parsed['operations'] ?? null) ? $parsed['operations'] : [];
+        foreach ($operations as $operationKey => $def) {
+            if (!is_array($def)) {
+                continue;
+            }
+            foreach (['policies', 'any_of'] as $listKey) {
+                if (!isset($def[$listKey]) || !is_array($def[$listKey])) {
+                    continue;
+                }
+                foreach ($def[$listKey] as $handlerId) {
+                    $handlerId = trim((string) $handlerId);
+                    if ($handlerId === '') {
+                        continue;
+                    }
+                    if (!isset($known[$handlerId])) {
+                        $errors[] = 'domain-operation-policies: «' . $operationKey . '» referencia handler «'
+                            . $handlerId . '» no registrado en DomainOperationPolicyRegistry';
+                    }
+                }
+            }
+        }
+
+        return $errors;
     }
 
     private function uiJsonPathForActionId(string $actionId): ?string

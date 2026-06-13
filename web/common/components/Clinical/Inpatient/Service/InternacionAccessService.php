@@ -4,6 +4,7 @@ namespace common\components\Clinical\Inpatient\Service;
 
 use common\components\Clinical\Specialty\Inpatient\InpatientClinicalContext;
 use common\components\Core\Permission\Domain\EncounterDomainAccessService;
+use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 use common\models\SegNivelInternacion;
 use Yii;
 
@@ -28,7 +29,7 @@ final class InternacionAccessService
             return true;
         }
 
-        $idEfector = InternacionEfectorAccess::resolveIdEfector(null);
+        $idEfector = OrganizationEfectorAccess::resolveIdEfector(null);
         if ($idEfector > 0 && InternacionEfectorAccess::internacionPerteneceEfector($internacion, $idEfector)) {
             return true;
         }

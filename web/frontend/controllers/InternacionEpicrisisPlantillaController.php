@@ -2,8 +2,9 @@
 
 namespace frontend\controllers;
 
+use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Core\Permission\Domain\EfectorDomainAccessService;
 use common\components\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaAdminService;
-use common\components\Clinical\Inpatient\Service\InternacionEfectorAccess;
 use common\models\ServiciosEfector;
 use frontend\filters\SisseActionFilter;
 use Yii;
@@ -152,12 +153,9 @@ class InternacionEpicrisisPlantillaController extends Controller
     private function requireIdEfector(): int
     {
         try {
-            $idEfector = InternacionEfectorAccess::resolveIdEfector(null);
-            InternacionEfectorAccess::assertCanAccessEfector($idEfector);
-
-            return $idEfector;
-        } catch (\InvalidArgumentException $e) {
-            throw new NotFoundHttpException($e->getMessage());
+            return EfectorDomainAccessService::assertAndResolveIdEfector('InternacionEpicrisisPlantilla.admin', []);
+        } catch (DomainOperationForbiddenException $e) {
+            throw new NotFoundHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }
     }
 

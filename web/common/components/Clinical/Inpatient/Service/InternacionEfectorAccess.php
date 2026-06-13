@@ -2,33 +2,16 @@
 
 namespace common\components\Clinical\Inpatient\Service;
 
-use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 use common\models\InfraestructuraCama;
 use common\models\InfraestructuraPiso;
 use common\models\SegNivelInternacion;
 
 /**
- * Utilidades de internación por efector (camas, pisos, pertenencia geográfica).
- * Para autorización por efector preferir políticas `Internacion.*` / {@see OrganizationEfectorAccess}.
+ * Pertinencia geográfica internación ↔ efector (camas, pisos).
+ * Autorización por efector: políticas `Internacion.*` + {@see EfectorDomainAccessService}.
  */
 final class InternacionEfectorAccess
 {
-    /**
-     * @deprecated Use {@see OrganizationEfectorAccess::resolveIdEfector()} o {@see EfectorDomainAccessService}.
-     */
-    public static function resolveIdEfector(?int $fromRequest): int
-    {
-        return OrganizationEfectorAccess::resolveIdEfector($fromRequest);
-    }
-
-    /**
-     * @deprecated Use políticas de dominio (`Clinical.staff_efector`, `Internacion.*`, etc.).
-     */
-    public static function assertCanAccessEfector(int $idEfector): void
-    {
-        OrganizationEfectorAccess::assertCanAccessEfector($idEfector);
-    }
-
     public static function assertInternacionEnEfector(SegNivelInternacion $internacion, int $idEfector): void
     {
         if (!self::internacionPerteneceEfector($internacion, $idEfector)) {

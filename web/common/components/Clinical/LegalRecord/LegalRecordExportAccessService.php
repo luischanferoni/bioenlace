@@ -3,7 +3,7 @@
 namespace common\components\Clinical\LegalRecord;
 
 use common\components\Clinical\Enum\EncounterStatus;
-use common\components\Clinical\Service\EncounterAccessService;
+use common\components\Core\Permission\Domain\EncounterDomainAccessService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\LegalRecordExportRequest;
 use common\models\Persona;
@@ -76,7 +76,7 @@ final class LegalRecordExportAccessService
         }
 
         foreach ($encounters as $encounter) {
-            if (EncounterAccessService::userCanAccessEncounterApi($encounter)) {
+            if (EncounterDomainAccessService::canAccess($encounter)) {
                 return true;
             }
         }

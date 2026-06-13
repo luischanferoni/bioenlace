@@ -2,7 +2,6 @@
 
 namespace common\components\Clinical\Inpatient\Service;
 
-use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 use common\models\InternacionEpicrisisPlantilla;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
@@ -27,8 +26,6 @@ final class InternacionEpicrisisPlantillaAdminService
      */
     public function listarAdmin(int $idEfector, bool $incluirInactivas = true): array
     {
-        OrganizationEfectorAccess::assertCanAccessEfector($idEfector);
-
         $q = (new Query())
             ->from(['p' => InternacionEpicrisisPlantilla::tableName()])
             ->where([
@@ -57,7 +54,6 @@ final class InternacionEpicrisisPlantillaAdminService
      */
     public function obtener(int $id, int $idEfector): array
     {
-        OrganizationEfectorAccess::assertCanAccessEfector($idEfector);
         $row = $this->findRow($id);
         if ($row === null) {
             throw new \InvalidArgumentException('Plantilla no encontrada.');
@@ -77,8 +73,6 @@ final class InternacionEpicrisisPlantillaAdminService
      */
     public function crear(array $payload, int $idEfector, bool $isSuperadmin): array
     {
-        OrganizationEfectorAccess::assertCanAccessEfector($idEfector);
-
         $targetEfector = $this->resolveTargetEfectorOnCreate($payload, $idEfector, $isSuperadmin);
         $model = new InternacionEpicrisisPlantilla();
         $model->id_efector = $targetEfector;
@@ -97,7 +91,6 @@ final class InternacionEpicrisisPlantillaAdminService
      */
     public function actualizar(int $id, array $payload, int $idEfector, bool $isSuperadmin): array
     {
-        OrganizationEfectorAccess::assertCanAccessEfector($idEfector);
         $model = $this->findModel($id);
         $this->assertCanManage($model, $idEfector, $isSuperadmin);
         $this->applyPayload($model, $payload, (int) $model->id_efector);
@@ -121,7 +114,6 @@ final class InternacionEpicrisisPlantillaAdminService
 
     private function setActivo(int $id, int $idEfector, bool $isSuperadmin, bool $activo): void
     {
-        OrganizationEfectorAccess::assertCanAccessEfector($idEfector);
         $model = $this->findModel($id);
         $this->assertCanManage($model, $idEfector, $isSuperadmin);
         $model->activo = $activo;
@@ -195,7 +187,6 @@ final class InternacionEpicrisisPlantillaAdminService
             return 0;
         }
         if ($requested !== $idEfector) {
-            OrganizationEfectorAccess::assertCanAccessEfector($requested);
         }
 
         return $requested;

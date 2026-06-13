@@ -65,10 +65,9 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 - **Registry:** `DomainOperationPolicyRegistry` — handler_id → clase PHP (estable, sin reglas).
 - **Implementaciones:** `Scheduling/Service/Authorization/*`, `Organization/Service/Authorization/*`, `Clinical/Service/Authorization/*`, `Clinical/Inpatient/Service/Authorization/*`.
 - **API:** `ApiDomainOperationBridge`, `EfectorDomainAccessService`, `EncounterDomainAccessService`; `ClinicalAccessTrait` en controllers clínicos.
-- Handlers PES: `organization.pes_efector`, `organization.pes_own` (cierres de flujo, condición laboral, draft hydrator). Servicio: `ProfesionalEfectorServicioDomainAuthorizationService`.
-- **Integridad:** `CatalogIntegrityService::checkDomainOperationPolicyHandlers()` valida handlers YAML ↔ registry.
-- Integrado en controllers API clínicos/organizacionales, home panel (guardia), `SecureMediaService`, `AppointmentReasonEntry`.
-- Wrappers legacy `GuardiaEfectorAccess` / `InternacionEfectorAccess`: delegan en `OrganizationEfectorAccess`; métodos de autorización marcados `@deprecated`.
+- **Servicios transversales:** `EfectorDomainAccessService`, `EncounterDomainAccessService`; `ProfesionalEfectorServicioDomainAuthorizationService` (PES).
+- **Primitivo efector:** `OrganizationEfectorAccess` solo en políticas/handlers; no en controllers.
+- `GuardiaEfectorAccess` / `InternacionEfectorAccess`: solo utilidades de dominio (PES, camas, pertenencia geográfica).
 
 `scope_checker` (DataAccess) sigue siendo ABAC del canal métricas/edición dispersa; las políticas de dominio generalizan el mismo concepto para operaciones del catálogo RBAC.
 

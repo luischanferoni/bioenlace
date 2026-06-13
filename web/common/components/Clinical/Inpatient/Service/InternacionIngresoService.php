@@ -4,6 +4,8 @@ namespace common\components\Clinical\Inpatient\Service;
 
 use common\components\Clinical\Service\CarePlanLifecycleService;
 use common\components\Clinical\Emergency\Service\GuardiaInternacionService;
+use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Core\Permission\Domain\EfectorDomainAccessService;
 use common\models\CoberturaMedica;
 use common\models\Efector;
 use common\models\Guardia;
@@ -34,7 +36,7 @@ final class InternacionIngresoService
         if ($idPersona <= 0) {
             throw new \InvalidArgumentException('Se requiere id_persona.');
         }
-        InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+        $this->assertIngresoEfector($idEfector);
 
         if (SegNivelInternacion::personaInternada($idPersona)) {
             throw new \InvalidArgumentException('El paciente ya tiene una internación activa.');
@@ -94,7 +96,7 @@ final class InternacionIngresoService
      */
     public function registrarIngreso(int $idEfector, array $post): array
     {
-        InternacionEfectorAccess::assertCanAccessEfector($idEfector);
+        $this->assertIngresoEfector($idEfector);
 
         $idPersona = (int) ($post['id_persona'] ?? 0);
         $idCama = (int) ($post['id_cama'] ?? 0);
@@ -347,5 +349,14 @@ final class InternacionIngresoService
         }
 
         return $options;
+    }
+
+    private function assertIngresoEfector(int $idEfector): void
+    {
+        try {
+            EfectorDomainAccessService::assertAndResolveIdEfector('Internacion.create', ['id_efector' => $idEfector]);
+        } catch (DomainOperationForbiddenException $e) {
+            throw new \InvalidArgumentException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.', 0, $e);
+        }
     }
 }

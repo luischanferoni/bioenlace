@@ -5,7 +5,7 @@ namespace common\components\Clinical\CareCohort\Service;
 use common\components\Clinical\CareCohort\CohortKeyBuilder;
 use common\components\Clinical\CareCohort\Enum\CarePackType;
 use common\components\Clinical\CareCohort\Presentation\CarePackAssistancePresenter;
-use common\components\Clinical\Service\EncounterAccessService;
+use common\components\Core\Permission\Domain\EncounterDomainAccessService;
 use common\components\Clinical\Service\EncounterAppointmentReasonLookupService;
 use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
@@ -195,8 +195,9 @@ final class CarePackAssistanceService
         $subjectSvc = new PersonRepresentationSubjectService();
         $subjectId = (int) $encounter->subject_persona_id;
         $subjectSvc->assertCanAct($subjectId, RepresentationPermission::CLINICAL_CARE_PACK_ASSISTANCE);
-        if (!EncounterAccessService::userCanAccessEncounterApi(
+        if (!EncounterDomainAccessService::canAccess(
             $encounter,
+            'Encounter.access',
             RepresentationPermission::CLINICAL_CARE_PACK_ASSISTANCE
         )) {
             throw new ForbiddenHttpException('No tiene permiso para este encounter.');

@@ -34,6 +34,7 @@
 ## Fase 3 — sync auth_item + asignación por rol
 
 - CLI: `php yii catalog-permission/sync` — registra permisos lógicos, enlaza rutas legacy y migra grants de atributos.
+- La herencia rol → permiso lógico (`inheritRoleGrantsFromRoute`) sube la jerarquía `auth_item_child` (rol → permiso → ruta), no solo padres directos de la ruta.
 - CLI (solo grants): `php yii catalog-permission/migrate-grants`
 - Opción `--deactivateLegacyGrants=1` — desactiva filas en `data_access_role_grant` tras migrar.
 - Migraciones: `m260621_100000_catalog_logical_permissions_rbac`, `m260622_100000_migrate_data_access_grants_to_auth_item`.

@@ -73,17 +73,9 @@ class m260623_100000_internacion_epicrisis_plantilla_logical_permission extends 
             $this->ensureChildLink($childTable, self::PERMISSION, $route);
         }
 
-        $roles = (new Query())
-            ->select('parent')
-            ->from($childTable)
-            ->where(['child' => self::ROLE_INHERIT_FROM])
-            ->column($this->db);
-
+        $syncService = new CatalogPermissionSyncService();
         $roleGrants = 0;
-        foreach ($roles as $role) {
-            if (!is_string($role) || $role === '') {
-                continue;
-            }
+        foreach ($syncService->resolveRoleNamesWithAccessToItem(self::ROLE_INHERIT_FROM) as $role) {
             if ($this->ensureChildLink($childTable, $role, self::PERMISSION)) {
                 $roleGrants++;
             }

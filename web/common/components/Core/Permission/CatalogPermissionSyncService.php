@@ -2,6 +2,9 @@
 
 namespace common\components\Core\Permission;
 
+use yii\db\Query;
+use yii\rbac\Item;
+
 /**
  * Sincroniza permisos lógicos del catálogo declarativo con auth_item / auth_item_child.
  */
@@ -175,25 +178,73 @@ final class CatalogPermissionSyncService
     }
 
     /**
-     * Roles que tenían la ruta legacy reciben también el permiso lógico.
+     * Roles (type=1) que alcanzan un ítem RBAC subiendo la jerarquía auth_item_child.
+     *
+     * @return list<string>
+     */
+    public function resolveRoleNamesWithAccessToItem(string $itemName): array
+    {
+        $itemName = trim($itemName);
+        if ($itemName === '') {
+            return [];
+        }
+
+        $db = \Yii::$app->db;
+        $authItem = $db->schema->getRawTableName('{{%auth_item}}');
+        $childTable = $db->schema->getRawTableName('{{%auth_item_child}}');
+        if ($db->schema->getTableSchema($authItem, true) === null
+            || $db->schema->getTableSchema($childTable, true) === null) {
+            return [];
+        }
+
+        $roles = [];
+        $queue = [$itemName];
+        $seen = [];
+
+        while ($queue !== []) {
+            $current = array_shift($queue);
+            if (isset($seen[$current])) {
+                continue;
+            }
+            $seen[$current] = true;
+
+            $parents = (new Query())
+                ->select('parent')
+                ->from($childTable)
+                ->where(['child' => $current])
+                ->column($db);
+
+            foreach ($parents as $parent) {
+                if (!is_string($parent) || $parent === '') {
+                    continue;
+                }
+                $type = (new Query())
+                    ->select('type')
+                    ->from($authItem)
+                    ->where(['name' => $parent])
+                    ->scalar($db);
+                if ((int) $type === Item::TYPE_ROLE) {
+                    $roles[$parent] = true;
+                } else {
+                    $queue[] = $parent;
+                }
+            }
+        }
+
+        ksort($roles);
+
+        return array_keys($roles);
+    }
+
+    /**
+     * Roles que tenían la ruta legacy (directa o vía permiso intermedio) reciben el permiso lógico.
      */
     private function inheritRoleGrantsFromRoute(string $childTable, string $route, string $permissionKey): int
     {
-        $roles = (new \yii\db\Query())
-            ->select('parent')
-            ->from($childTable)
-            ->where(['child' => $route])
-            ->column(\Yii::$app->db);
-
         $added = 0;
-        foreach ($roles as $role) {
-            if (!is_string($role) || $role === '') {
-                continue;
-            }
-            if ((new \yii\db\Query())->from('{{%auth_item}}')->where(['name' => $role, 'type' => 1])->exists(\Yii::$app->db)) {
-                if ($this->ensureChildLink($childTable, $role, $permissionKey)) {
-                    $added++;
-                }
+        foreach ($this->resolveRoleNamesWithAccessToItem($route) as $role) {
+            if ($this->ensureChildLink($childTable, $role, $permissionKey)) {
+                $added++;
             }
         }
 

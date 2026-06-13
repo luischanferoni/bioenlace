@@ -32,6 +32,16 @@ final class UiJsonDomain
         'data-access' => 'core',
     ];
 
+    /**
+     * Plantillas reutilizadas por otro action_id (misma entidad).
+     * Clave: «entidad/acción» → acción del JSON existente.
+     *
+     * @see EncounterPatientSummaryController::actionUltimaAtencionUiComoPaciente()
+     */
+    private const ACTION_TEMPLATE_ALIASES = [
+        'encounter/ultima-atencion-ui-como-paciente' => 'ver-resumen-atencion-como-paciente',
+    ];
+
     public static function forEntity(string $entity): ?string
     {
         $key = strtolower(trim($entity));
@@ -75,9 +85,23 @@ final class UiJsonDomain
             return null;
         }
 
-        return UiDefinitionTemplateManager::resolveTemplateAbsolutePath(
+        $path = UiDefinitionTemplateManager::resolveTemplateAbsolutePath(
             $parsed['entity'],
             $parsed['action']
+        );
+        if ($path !== null) {
+            return $path;
+        }
+
+        $aliasKey = $parsed['entity'] . '/' . $parsed['action'];
+        $aliasAction = self::ACTION_TEMPLATE_ALIASES[$aliasKey] ?? null;
+        if ($aliasAction === null || $aliasAction === '') {
+            return null;
+        }
+
+        return UiDefinitionTemplateManager::resolveTemplateAbsolutePath(
+            $parsed['entity'],
+            $aliasAction
         );
     }
 

@@ -1,11 +1,6 @@
-# Alias legacy / alucinaciones IA → intent_id canónico del catálogo.
+# Alucinaciones IA → intent_id canónico del catálogo.
 # Mantener aquí; no en PHP de orquestación.
 version: 1
 aliases:
-  agenda.modificar-profesional-flow: data-access.editar
   agenda.crear-profesional-flow: profesional-efector-servicio.crear-flow
-  agenda.editar-mi-agenda-flow: data-access.editar
-  agenda.editar-agenda-flow: data-access.editar
   agenda.resolver-conflictos-staff-flow: profesional-agenda.resolver-conflictos-flow
-  profesional-agenda.editar-flow: data-access.editar
-  profesional-agenda.editar-mi-flow: data-access.editar

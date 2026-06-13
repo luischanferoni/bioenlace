@@ -3,7 +3,6 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Assistant\Catalog\IntentIdAliasResolver;
 use common\components\Assistant\IntentEngine\IntentClassifier;
 use common\components\Assistant\IntentEngine\UiActionCatalogItem;
 
@@ -74,22 +73,6 @@ class IntentClassifierStaffAgendaEditTest extends Unit
             );
             $this->assertGreaterThanOrEqual(30, $editarScore, 'Editar debe superar umbral: ' . $msg);
         }
-    }
-
-    public function testModificarProfesionalFlowAliasResolvesToEditar(): void
-    {
-        $this->assertSame(
-            'data-access.editar',
-            IntentIdAliasResolver::resolve('agenda.modificar-profesional-flow')
-        );
-        $this->assertSame(
-            'data-access.editar',
-            IntentIdAliasResolver::resolve('profesional-agenda.editar-mi-flow')
-        );
-        $this->assertSame(
-            'data-access.editar',
-            IntentIdAliasResolver::resolve('agenda.editar-mi-agenda-flow')
-        );
     }
 
     /**

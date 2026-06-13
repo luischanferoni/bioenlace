@@ -83,7 +83,7 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 
 - Todos los YAML en `schemas/intents/{create,read,update,delete}/` declaran `permission:` explícito.
 - Stubs catalog-only: `read/data-access.info.yaml`, `read/data-access.listar.yaml`, `update/data-access.editar.yaml` (sincronizables a `auth_item`).
-- Alias legacy (`intent-aliases.yaml`): `agenda.*` → intents canónicos; no requieren YAML propio.
+- Alias NLP (`intent-aliases.yaml`): solo ids inventados por el clasificador (p. ej. `agenda.crear-profesional-flow`); no sustitutos de rutas API retiradas.
 - `IntentPermissionResolver`: mapeo explícito con y sin sufijo `-flow` (p. ej. `mapa-camas` → `view_map`).
 
 ### Atributos

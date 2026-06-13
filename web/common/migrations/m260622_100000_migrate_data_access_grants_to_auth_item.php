@@ -1,11 +1,10 @@
 <?php
 
 use common\components\Core\Permission\CatalogPermissionSyncService;
-use common\components\Core\Permission\DataAccessGrantMigratorService;
 use yii\db\Migration;
 
 /**
- * RBAC: sync catálogo declarativo + migración data_access_role_grant → auth_item (atributos).
+ * RBAC: sync catálogo declarativo → auth_item (permisos lógicos + enlaces a rutas).
  */
 class m260622_100000_migrate_data_access_grants_to_auth_item extends Migration
 {
@@ -31,25 +30,13 @@ class m260622_100000_migrate_data_access_grants_to_auth_item extends Migration
             $catalog['linked'],
             $catalog['role_grants']
         );
-
-        $grants = (new DataAccessGrantMigratorService())->migrate(false);
-        echo sprintf(
-            "m260622_100000 grants: procesados=%d permisos=%d enlaces_rol=%d omitidos=%d\n",
-            $grants['grants_processed'],
-            $grants['permissions_created'],
-            $grants['role_links_added'],
-            $grants['grants_skipped']
-        );
-        foreach ($grants['warnings'] as $w) {
-            echo '  [warn] ' . $w . "\n";
-        }
-        foreach (array_merge($catalog['errors'], $grants['errors']) as $e) {
+        foreach ($catalog['errors'] as $e) {
             echo '  [error] ' . $e . "\n";
         }
     }
 
     public function safeDown()
     {
-        echo "m260622_100000: safeDown no revierte migración de grants.\n";
+        echo "m260622_100000: safeDown no revierte sync de catálogo.\n";
     }
 }

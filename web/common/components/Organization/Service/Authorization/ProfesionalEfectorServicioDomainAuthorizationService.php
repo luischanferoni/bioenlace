@@ -50,21 +50,6 @@ final class ProfesionalEfectorServicioDomainAuthorizationService
      *
      * @throws DomainOperationForbiddenException
      */
-    public function assertAgendaFlowClosure(array $params, bool $requireOwnPes): ProfesionalEfectorServicio
-    {
-        return $this->assertPesOperation(
-            $params,
-            $requireOwnPes
-                ? 'ProfesionalAgenda.flow_closure_own'
-                : 'ProfesionalAgenda.flow_closure_staff'
-        );
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     *
-     * @throws DomainOperationForbiddenException
-     */
     public function assertCondicionLaboral(array $params, bool $requireOwnPes): ProfesionalEfectorServicio
     {
         return $this->assertPesOperation(

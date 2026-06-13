@@ -7,8 +7,6 @@ domain_only_operations:
   - Internacion.staff_access
   - ProfesionalEfectorServicio.flow_closure_staff
   - ProfesionalEfectorServicio.flow_closure_own
-  - ProfesionalAgenda.flow_closure_staff
-  - ProfesionalAgenda.flow_closure_own
   - ProfesionalEfectorServicio.condicion_laboral_staff
   - ProfesionalEfectorServicio.condicion_laboral_own
   - ProfesionalEfectorServicio.pes_own
@@ -48,15 +46,6 @@ operations:
       - organization.pes_efector
 
   ProfesionalEfectorServicio.flow_closure_own:
-    policies:
-      - organization.pes_efector
-      - organization.pes_own
-
-  ProfesionalAgenda.flow_closure_staff:
-    policies:
-      - organization.pes_efector
-
-  ProfesionalAgenda.flow_closure_own:
     policies:
       - organization.pes_efector
       - organization.pes_own

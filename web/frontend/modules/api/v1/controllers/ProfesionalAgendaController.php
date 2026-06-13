@@ -8,8 +8,6 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
-use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaConfigUiFlowService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
@@ -32,89 +30,10 @@ use common\models\ProfesionalEfectorServicioAgenda;
  *
  * Permisos `/api/profesional-agenda/...` (sin `v1` en webvimark):
  * dia, listar, crear, actualizar, eliminar, listar-para-recurso, crear-para-recurso, actualizar-para-recurso, eliminar-para-recurso,
- * editar-flow, editar-mi-flow, resolver-conflictos-flow
+ * resolver-conflictos-flow
  */
 class ProfesionalAgendaController extends BaseController
 {
-    /**
-     * Cierre declarativo del flujo asistente «editar agenda» (solo POST; sin descriptor UI).
-     *
-    /**
-     * @deprecated Solo compatibilidad API; el asistente usa `data-access.editar`.
-     * Permiso RBAC: `/api/profesional-agenda/editar-flow`.
-     *
-     * POST /api/v1/profesional-agenda/editar-flow
-     *
-     * @action_name Cerrar flujo editar agenda (asistente)
-     * @entity Agendas
-     * @tags agenda, asistente, flow
-     */
-    public function actionEditarFlow(): array
-    {
-        return $this->agendaFlowClosureResponse(
-            'profesional-agenda.editar-flow',
-            'Flujo de edición de agenda cerrado.',
-            false
-        );
-    }
-
-    /**
-     * Cierre declarativo del flujo asistente «editar mi agenda» (solo POST; sin descriptor UI).
-    /**
-     * @deprecated Solo compatibilidad API; el asistente usa `data-access.editar`.
-     * Permiso RBAC: `/api/profesional-agenda/editar-mi-flow`.
-     *
-     * POST /api/v1/profesional-agenda/editar-mi-flow
-     *
-     * @action_name Cerrar flujo editar mi agenda (asistente)
-     * @entity Agendas
-     * @tags agenda, asistente, flow, profesional
-     */
-    public function actionEditarMiFlow(): array
-    {
-        return $this->agendaFlowClosureResponse(
-            'profesional-agenda.editar-mi-flow',
-            'Flujo de edición de tu agenda cerrado.',
-            true
-        );
-    }
-
-    private function agendaFlowClosureResponse(string $actionId, string $message, bool $requireOwnPes): array
-    {
-        $req = Yii::$app->request;
-        if (!$req->isPost) {
-            throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
-        }
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Se requiere efector en sesión.');
-        }
-
-        $post = $req->post();
-        $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
-        $idServicio = (int) ($post['id_servicio'] ?? 0);
-        if ($idPes <= 0 || $idServicio <= 0) {
-            throw new BadRequestHttpException('Indique id_profesional_efector_servicio e id_servicio.');
-        }
-
-        try {
-            (new ProfesionalEfectorServicioDomainAuthorizationService())->assertAgendaFlowClosure($post, $requireOwnPes);
-        } catch (DomainOperationForbiddenException $e) {
-            throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
-        }
-
-        return [
-            'success' => true,
-            'kind' => 'ui_submit_result',
-            'action_id' => $actionId,
-            'data' => [
-                'success' => true,
-                'message' => $message,
-            ],
-            'errors' => null,
-        ];
-    }
-
     /**
      * UI JSON: configurar agenda semanal por servicio (intervalo, forma de atención y horarios).
      *

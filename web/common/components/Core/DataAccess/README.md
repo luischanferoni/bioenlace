@@ -37,7 +37,7 @@ Edición: corte temprano si el rol no tiene ningún aspecto con `write` (`EditSu
 
 Auditoría mutaciones: canal `data-access`, evento `data_access_edit_applied` (`EditMutationAuditLogger`).
 
-Migración agenda staff: `profesional-agenda.editar-flow` deprecado (`catalog_exclude`); usar `data-access.editar` → flujo `ProfesionalEfectorServicioAgenda` → atributos (`weekly_scheduler_widget`, `formas_atencion`, …) → `profesional-agenda.configurar-agenda`. Validar catálogo: `php yii data-access-catalog/check`.
+Edición agenda staff: intent `data-access.editar` → flujo `ProfesionalEfectorServicioAgenda` → atributos (`weekly_scheduler_widget`, `formas_atencion`, …) → `profesional-agenda.configurar-agenda`. Validar catálogo: `php yii data-access-catalog/check`.
 
 ## Extender
 

@@ -125,22 +125,6 @@ final class CatalogPermissionSyncService
     }
 
     /**
-     * Sync catálogo declarativo → auth_item (+ migración legacy si la tabla aún existe).
-     *
-     * @return array<string, mixed>
-     */
-    public function syncAll(bool $inheritRoleGrantsFromRoutes = true, bool $deactivateLegacyGrants = false): array
-    {
-        $catalog = $this->sync($inheritRoleGrantsFromRoutes);
-        $grants = (new DataAccessGrantMigratorService())->migrate($deactivateLegacyGrants);
-
-        return [
-            'catalog' => $catalog,
-            'grants' => $grants,
-        ];
-    }
-
-    /**
      * Asigna permisos lógicos a roles que alcanzan un ítem RBAC (permiso o ruta).
      *
      * @param list<string> $permissionKeys

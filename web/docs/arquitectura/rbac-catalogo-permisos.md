@@ -33,13 +33,11 @@
 
 ## Fase 3 — sync auth_item + asignación por rol
 
-- CLI: `php yii catalog-permission/sync` — registra permisos lógicos, enlaza rutas legacy y migra grants de atributos.
+- CLI: `php yii catalog-permission/sync` — registra permisos lógicos y enlaza rutas API.
 - La herencia rol → permiso lógico (`inheritRoleGrantsFromRoute`) sube la jerarquía `auth_item_child` (rol → permiso → ruta), no solo padres directos de la ruta.
 - Rutas ghost (internación, UI clínica): `RbacRouteGhostInheritanceService` propaga **rol → ruta hija** desde roles con acceso a la ruta padre; no copiar permisos lógicos como padres de rutas downstream.
-- CLI (solo grants): `php yii catalog-permission/migrate-grants`
-- Opción `--deactivateLegacyGrants=1` — desactiva filas en `data_access_role_grant` tras migrar.
-- Migraciones: `m260621_100000_catalog_logical_permissions_rbac`, `m260622_100000_migrate_data_access_grants_to_auth_item`, `m260626_*`, `m260627_*`.
-- Admin: `/admin/permission-catalog/roles` — sync + migración; `/admin/permission-catalog/edit-role?role=…`.
+- Migraciones: `m260621_*`, `m260622_*`, `m260626_*`, `m260627_*`, `m260628_*`.
+- Admin: `/admin/permission-catalog/roles` — sync; `/admin/permission-catalog/edit-role?role=…`.
 
 Jerarquía webvimark compatible con `AllowedRoutesResolver`:
 
@@ -47,13 +45,10 @@ Jerarquía webvimark compatible con `AllowedRoutesResolver`:
 rol → Turno.create (type 2) → /api/turnos/crear-como-paciente (type 3)
 ```
 
-## Fase 4 — grants de atributos → auth_item
+## Fase 4 — permisos atómicos de atributos
 
-- **`AttributePermissionKeyMapper`**: grupo legacy (`Persona.identidad`) + operación DataAccess (`filter|read|aggregate|write`) → claves `Entidad.atributo.read|info|edit`.
-- **`DataAccessGrantMigratorService`**: copia `data_access_role_grant` activos a `auth_item` + `auth_item_child` (rol → permiso atómico).
-- **`AttributePermissionEvaluator`**: evalúa primero vía `auth_item`; fallback a grants legacy en BD.
-- **`syncAll()`** en `CatalogPermissionSyncService`: sync de catálogo + migración de grants en un paso.
-- Admin legacy (`/admin/data-access-grant`) muestra banner hacia el nuevo panel; deprecar cuando la matriz cubra todos los roles.
+- **`AttributePermissionKeyMapper`**: grupo (`Persona.identidad`) + operación DataAccess (`filter|read|aggregate|write`) → claves `Entidad.atributo.read|info|edit`.
+- **`AttributePermissionEvaluator`**: evalúa vía `auth_item` + scope desde YAML (`data-access-config`).
 
 ### Políticas de dominio por operación
 
@@ -101,10 +96,11 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 - `AttributeGroupCatalog::getEntityGroupScopeChecker()` — lee `groups.scope_checker` o `edit.scope_checker` del YAML.
 - `AttributePermissionEvaluator` — solo `auth_item` (permisos atómicos) + scope desde YAML.
 
-### Cierre legacy (m260626–m260627)
+### Cierre legacy (m260626–m260628)
 
 - Elimina permisos huérfanos `Internacion.update` / `Internacion.view` (duplicados de `discharge` / `view_map`).
-- Elimina tabla `data_access_role_grant` (grants ya migrados en m260622).
+- Elimina tabla `data_access_role_grant`.
+- Retira rutas API deprecated (`editar-flow`, `efectores/elegir*`) y re-enlaza permisos webvimark a rutas canónicas.
 - Admin `/admin/data-access-grant` retirado; asignación en **Catálogo de permisos → Roles**.
 
 ### CLI

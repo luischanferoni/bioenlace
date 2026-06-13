@@ -67,26 +67,15 @@ class PermissionCatalogController extends Controller
 
     public function actionSync()
     {
-        $result = (new CatalogPermissionSyncService())->syncAll(true, false);
-        $catalog = $result['catalog'];
-        $grants = $result['grants'];
+        $catalog = (new CatalogPermissionSyncService())->sync(true);
         $msg = sprintf(
             'Catálogo: %d permiso(s) creado(s), %d enlace(s), %d grant(s) rol.',
             $catalog['created'],
             $catalog['linked'],
             $catalog['role_grants']
         );
-        if ($grants['grants_processed'] > 0) {
-            $msg .= sprintf(
-                ' Migración legacy: %d grant(s), %d enlace(s) rol, %d permiso(s) creado(s).',
-                $grants['grants_processed'],
-                $grants['role_links_added'],
-                $grants['permissions_created']
-            );
-        }
-        $errors = array_merge($catalog['errors'], $grants['errors']);
-        if ($errors !== []) {
-            Yii::$app->session->setFlash('error', $msg . ' Errores: ' . implode('; ', $errors));
+        if ($catalog['errors'] !== []) {
+            Yii::$app->session->setFlash('error', $msg . ' Errores: ' . implode('; ', $catalog['errors']));
         } else {
             Yii::$app->session->setFlash('success', $msg);
         }

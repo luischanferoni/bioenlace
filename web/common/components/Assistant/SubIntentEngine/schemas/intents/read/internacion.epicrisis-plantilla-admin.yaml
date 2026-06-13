@@ -1,0 +1,14 @@
+intent_id: internacion.epicrisis-plantilla-admin
+permission: InternacionEpicrisisPlantilla.admin
+version: 1
+
+action_name: "ABM plantillas epicrisis"
+description: "Administrar plantillas de epicrisis de internación por efector."
+rbac_route: "/api/clinical/internacion-epicrisis-plantilla/listar-admin"
+keywords:
+  - plantillas epicrisis
+  - epicrisis internación
+  - plantilla alta hospitalaria
+
+intent_semantics:
+  goal: Configurar plantillas reutilizables de epicrisis para el alta estructurada.

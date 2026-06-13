@@ -27,7 +27,9 @@ final class DomainOperationAuthorizer
 
         $def = $this->catalog->getOperationDefinition($operationKey);
         if ($def === null || $def === []) {
-            return;
+            throw new DomainOperationForbiddenException(
+                'Operación de dominio no declarada en domain-operation-policies.yaml: ' . $operationKey
+            );
         }
 
         $ctx = $ctx ?? DomainOperationContext::fromApplication(

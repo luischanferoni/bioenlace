@@ -5,7 +5,7 @@ Permisos por **grupos de atributos**, **scope checkers** y **métricas** staff p
 ## Archivos clave
 
 - `Assistant/SubIntentEngine/schemas/data-access-config/` — grupos por entidad, métricas, edición dispersa, `filter_synonyms`
-- `data_access_role_grant` (BD) — permisos por rol + grupo (fuente única de grants)
+- `data_access_role_grant` (BD) — grants legacy (desactivados tras `catalog-permission/sync --deactivateLegacyGrants=1`); fuente efectiva: `auth_item` vía `AttributePermissionEvaluator`
 - `data_access_attribute_field` (BD) — esquema de campos editables por grupo (tipos, widgets, options)
 - `DataAccessUiService` — `/api/info` y `/api/listar` con ui_json genérico
 - `Presentation/MetricPresentationRegistry` — handlers de presentación por métrica

@@ -1,5 +1,18 @@
 version: 1
 
+# Operaciones solo ABAC (sin permiso assignable en auth_item; RBAC vía ruta/intent padre).
+domain_only_operations:
+  - Encounter.access
+  - Clinical.staff_efector
+  - Internacion.staff_access
+  - ProfesionalEfectorServicio.flow_closure_staff
+  - ProfesionalEfectorServicio.flow_closure_own
+  - ProfesionalAgenda.flow_closure_staff
+  - ProfesionalAgenda.flow_closure_own
+  - ProfesionalEfectorServicio.condicion_laboral_staff
+  - ProfesionalEfectorServicio.condicion_laboral_own
+  - ProfesionalEfectorServicio.pes_own
+
 # Políticas de recurso por operación RBAC (Entidad.operacion del catálogo).
 # RBAC responde «¿puede intentar?»; aquí «¿sobre ESTE recurso?».
 # Modos: policies (AND) | any_of (OR).

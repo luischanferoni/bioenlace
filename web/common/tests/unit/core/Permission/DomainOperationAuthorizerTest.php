@@ -54,10 +54,11 @@ class DomainOperationAuthorizerTest extends Unit
         $this->assertTrue(true);
     }
 
-    public function testUnknownOperationSkipsPolicy(): void
+    public function testUnknownOperationThrowsForbidden(): void
     {
         $turno = new Turno();
+        $this->expectException(DomainOperationForbiddenException::class);
+        $this->expectExceptionMessage('Entidad.inexistente');
         (new DomainOperationAuthorizer())->assert('Entidad.inexistente', $turno);
-        $this->assertTrue(true);
     }
 }

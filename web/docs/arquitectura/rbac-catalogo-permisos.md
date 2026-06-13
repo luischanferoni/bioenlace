@@ -61,7 +61,8 @@ Capa **después del RBAC** (ruta / `auth_item`) y **antes de reglas de negocio**
 RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobre ESTE recurso?) → servicio de dominio
 ```
 
-- **Metadata:** `schemas/domain-operation-policies.yaml` — mapeo `Turno.cancel` → handlers (`any_of` / `policies`).
+- **Metadata:** `schemas/domain-operation-policies.yaml` — mapeo `Turno.cancel` → handlers (`any_of` / `policies`); clave `domain_only_operations` lista operaciones ABAC internas sin permiso assignable en `auth_item`.
+- **Fail-closed:** toda clave pasada a `DomainOperationAuthorizer::assert()` debe existir en el YAML; si falta, `DomainOperationForbiddenException`.
 - **Registry:** `DomainOperationPolicyRegistry` — handler_id → clase PHP (estable, sin reglas).
 - **Implementaciones:** `Scheduling/Service/Authorization/*`, `Organization/Service/Authorization/*`, `Clinical/Service/Authorization/*`, `Clinical/Inpatient/Service/Authorization/*`.
 - **API:** `ApiDomainOperationBridge`, `EfectorDomainAccessService`, `EncounterDomainAccessService`; `ClinicalAccessTrait` en controllers clínicos.
@@ -91,7 +92,7 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 ### Atributos
 
 - `Persona.yaml`, `Turno.yaml`, `ProfesionalEfectorServicio.yaml`, `ProfesionalEfectorServicioAgenda.yaml` con bloque `attributes:` + `groups:` (presentación + `scope_checker`).
-- Grants atómicos vía `catalog-permission/sync`; desactivar legacy con `--deactivateLegacyGrants=1`.
+- Grants atómicos vía `catalog-permission/sync`; legacy desactivado con `--deactivateLegacyGrants=1` (filas `data_access_role_grant.active = 0`).
 
 ### Scope ABAC post-migración
 

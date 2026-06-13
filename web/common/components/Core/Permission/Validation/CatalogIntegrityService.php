@@ -35,6 +35,8 @@ final class CatalogIntegrityService
         $warnings = array_merge($warnings, $this->checkIntentCategoryFolder());
         $warnings = array_merge($warnings, $this->checkAttributesPresentationGroups());
         $errors = array_merge($errors, $this->checkDomainOperationPolicyHandlers());
+        $errors = array_merge($errors, $this->checkDomainOperationEmptyPolicies());
+        $warnings = array_merge($warnings, $this->checkDomainOperationsCatalogCoverage());
 
         $errors = array_values(array_unique($errors));
         $warnings = array_values(array_unique($warnings));
@@ -383,6 +385,95 @@ final class CatalogIntegrityService
         }
 
         return $errors;
+    }
+
+    /**
+     * Operaciones declaradas sin políticas (any_of / policies vacíos).
+     *
+     * @return list<string>
+     */
+    private function checkDomainOperationEmptyPolicies(): array
+    {
+        $errors = [];
+        $configFile = Yii::getAlias('@common/components/Assistant/SubIntentEngine/schemas/domain-operation-policies.yaml');
+        if (!is_file($configFile)) {
+            return [];
+        }
+
+        try {
+            $parsed = Yaml::parseFile($configFile);
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $operations = is_array($parsed['operations'] ?? null) ? $parsed['operations'] : [];
+        foreach ($operations as $operationKey => $def) {
+            if (!is_array($def)) {
+                continue;
+            }
+            $anyOf = is_array($def['any_of'] ?? null) ? $def['any_of'] : [];
+            $policies = is_array($def['policies'] ?? null) ? $def['policies'] : [];
+            if ($anyOf === [] && $policies === []) {
+                $errors[] = 'domain-operation-policies: «' . $operationKey . '» no define policies ni any_of';
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Operaciones de dominio que deberían existir en catálogo declarativo (intent/atributo).
+     *
+     * @return list<string>
+     */
+    private function checkDomainOperationsCatalogCoverage(): array
+    {
+        $warnings = [];
+        $configFile = Yii::getAlias('@common/components/Assistant/SubIntentEngine/schemas/domain-operation-policies.yaml');
+        if (!is_file($configFile)) {
+            return [];
+        }
+
+        try {
+            $parsed = Yaml::parseFile($configFile);
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        $domainOnly = [];
+        foreach ($parsed['domain_only_operations'] ?? [] as $item) {
+            $key = trim((string) $item);
+            if ($key !== '') {
+                $domainOnly[$key] = true;
+            }
+        }
+
+        $catalogKeys = [];
+        $catalog = new PermissionCatalogService();
+        foreach ($catalog->listIntents() as $row) {
+            $key = trim((string) ($row['key'] ?? ''));
+            if ($key !== '') {
+                $catalogKeys[$key] = true;
+            }
+        }
+        foreach ($catalog->listAttributes() as $row) {
+            $key = trim((string) ($row['key'] ?? ''));
+            if ($key !== '') {
+                $catalogKeys[$key] = true;
+            }
+        }
+
+        $operations = is_array($parsed['operations'] ?? null) ? $parsed['operations'] : [];
+        foreach (array_keys($operations) as $operationKey) {
+            $operationKey = trim((string) $operationKey);
+            if ($operationKey === '' || isset($domainOnly[$operationKey]) || isset($catalogKeys[$operationKey])) {
+                continue;
+            }
+            $warnings[] = 'domain-operation-policies: «' . $operationKey
+                . '» no está en catálogo ni en domain_only_operations; agregar intent/permission o marcarla como solo dominio';
+        }
+
+        return $warnings;
     }
 
     private function uiJsonPathForActionId(string $actionId): ?string

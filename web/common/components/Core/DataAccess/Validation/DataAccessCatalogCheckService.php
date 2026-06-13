@@ -3,6 +3,8 @@
 namespace common\components\Core\DataAccess\Validation;
 
 use common\components\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Ui\UiDefinitionTemplateManager;
+use common\components\Ui\UiJsonDomain;
 use common\models\DataAccess\DataAccessAttributeField;
 use Symfony\Component\Yaml\Yaml;
 use yii\db\ActiveRecord;
@@ -120,6 +122,7 @@ final class DataAccessCatalogCheckService
         $modelAttrs = $modelClass !== '' ? $this->activeRecordAttributes($modelClass) : [];
         $versionClass = trim((string) ($chunk['version_model'] ?? ''));
         $versionAttrs = $versionClass !== '' ? $this->activeRecordAttributes($versionClass) : [];
+        $catalogAttrs = $this->catalogDeclaredAttributeNames($chunk);
         if ($versionClass !== '') {
             $errors = array_merge($errors, $this->checkModelClass($versionClass, $basename . ' (version_model)'));
         }
@@ -135,7 +138,9 @@ final class DataAccessCatalogCheckService
                 if ($name === '') {
                     continue;
                 }
-                if ($modelAttrs !== [] && !in_array($name, $modelAttrs, true)) {
+                if ($modelAttrs !== []
+                    && !in_array($name, $modelAttrs, true)
+                    && !isset($catalogAttrs[$name])) {
                     $errors[] = $fullKey . ': atributo «' . $name . '» no existe en ' . $modelClass;
                 }
             }
@@ -177,10 +182,9 @@ final class DataAccessCatalogCheckService
             return $errors;
         }
 
-        $jsonPath = \Yii::getAlias('@frontend/modules/api/v1/views/json')
-            . '/' . str_replace('.', '/', $entity) . '/' . $action . '.json';
-        if (!is_file($jsonPath)) {
-            $errors[] = $groupKey . ': ui_json no encontrado ' . $jsonPath;
+        $jsonPath = UiDefinitionTemplateManager::resolveTemplateAbsolutePath($entity, $action);
+        if ($jsonPath === null || !is_file($jsonPath)) {
+            $errors[] = $groupKey . ': ui_json no encontrado ' . ($jsonPath ?? $entity . '/' . $action . '.json');
 
             return $errors;
         }
@@ -241,11 +245,10 @@ final class DataAccessCatalogCheckService
             if ($uiAction === '') {
                 $errors[] = $file . ' ' . $surfaceId . '.' . $aspectId . ': open_ui sin ui_action';
             } else {
-                [$entity, $action] = $this->splitUiActionId($uiAction);
-                $jsonPath = \Yii::getAlias('@frontend/modules/api/v1/views/json')
-                    . '/' . str_replace('.', '/', $entity) . '/' . $action . '.json';
-                if (!is_file($jsonPath)) {
-                    $errors[] = $file . ' ' . $aspectId . ': ui_action sin JSON ' . $jsonPath;
+                $jsonPath = UiJsonDomain::resolveActionIdTemplatePath($uiAction);
+                if ($jsonPath === null || !is_file($jsonPath)) {
+                    $errors[] = $file . ' ' . $aspectId . ': ui_action sin JSON '
+                        . ($jsonPath ?? $uiAction);
                 }
             }
         }
@@ -494,18 +497,33 @@ final class DataAccessCatalogCheckService
     }
 
     /**
-     * @return array{0: string, 1: string}
+     * Atributos lógicos declarados en YAML (no necesariamente columnas AR).
+     *
+     * @param array<string, mixed> $chunk
+     * @return array<string, true>
      */
-    private function splitUiActionId(string $actionId): array
+    private function catalogDeclaredAttributeNames(array $chunk): array
     {
-        $dot = strpos($actionId, '.');
-        if ($dot === false) {
-            return [$actionId, 'index'];
+        $out = [];
+        $attributes = $chunk['attributes'] ?? null;
+        if (is_array($attributes)) {
+            foreach (array_keys($attributes) as $name) {
+                $key = trim((string) $name);
+                if ($key !== '') {
+                    $out[$key] = true;
+                }
+            }
+        }
+        $flowOnly = $chunk['flow_only_attributes'] ?? null;
+        if (is_array($flowOnly)) {
+            foreach ($flowOnly as $name) {
+                $key = trim((string) $name);
+                if ($key !== '') {
+                    $out[$key] = true;
+                }
+            }
         }
 
-        return [
-            substr($actionId, 0, $dot),
-            substr($actionId, $dot + 1),
-        ];
+        return $out;
     }
 }

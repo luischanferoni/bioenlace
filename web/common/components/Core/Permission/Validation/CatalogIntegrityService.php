@@ -7,6 +7,8 @@ use common\components\Core\DataAccess\Validation\DataAccessCatalogCheckService;
 use common\components\Core\Permission\IntentManifestIndex;
 use common\components\Core\Permission\Domain\DomainOperationPolicyRegistry;
 use common\components\Core\Permission\PermissionCatalogService;
+use common\components\Ui\OpenUiStaticTemplatePolicy;
+use common\components\Ui\UiJsonDomain;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -118,7 +120,10 @@ final class CatalogIntegrityService
             if ($actionId === '') {
                 continue;
             }
-            $jsonPath = $this->uiJsonPathForActionId($actionId);
+            if (!OpenUiStaticTemplatePolicy::requiresStaticTemplateFile($actionId)) {
+                continue;
+            }
+            $jsonPath = UiJsonDomain::resolveActionIdTemplatePath($actionId);
             if ($jsonPath === null || !is_file($jsonPath)) {
                 $errors[] = 'open_ui «' . $actionId . '» (intent «' . ($row['intent_id'] ?? '') . '»): ui_json no encontrado';
             }
@@ -326,6 +331,15 @@ final class CatalogIntegrityService
                 continue;
             }
             $known = array_fill_keys(array_keys($attributes), true);
+            $flowOnly = $chunk['flow_only_attributes'] ?? null;
+            if (is_array($flowOnly)) {
+                foreach ($flowOnly as $attrName) {
+                    $name = trim((string) $attrName);
+                    if ($name !== '') {
+                        $known[$name] = true;
+                    }
+                }
+            }
             foreach ($groups as $groupKey => $def) {
                 if (!is_array($def)) {
                     continue;
@@ -513,16 +527,5 @@ final class CatalogIntegrityService
         }
 
         return $warnings;
-    }
-
-    private function uiJsonPathForActionId(string $actionId): ?string
-    {
-        if (strpos($actionId, '.') === false) {
-            return null;
-        }
-        [$entity, $action] = explode('.', $actionId, 2);
-
-        return Yii::getAlias('@frontend/modules/api/v1/views/json')
-            . '/' . str_replace('.', '/', $entity) . '/' . $action . '.json';
     }
 }

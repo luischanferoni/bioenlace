@@ -40,6 +40,48 @@ final class UiJsonDomain
     }
 
     /**
+     * Parsea action_id canónico (p. ej. turnos.crear-como-paciente, clinical.internacion.mapa-camas).
+     *
+     * @return array{entity: string, action: string}|null
+     */
+    public static function parseActionId(string $actionId): ?array
+    {
+        $actionId = strtolower(trim($actionId));
+        if ($actionId === '' || strpos($actionId, '.') === false) {
+            return null;
+        }
+
+        $parts = explode('.', $actionId);
+        if ($parts[0] === self::CLINICAL && count($parts) >= 3) {
+            return [
+                'entity' => $parts[1],
+                'action' => implode('.', array_slice($parts, 2)),
+            ];
+        }
+
+        return [
+            'entity' => $parts[0],
+            'action' => implode('.', array_slice($parts, 1)),
+        ];
+    }
+
+    /**
+     * Ruta absoluta del template ui_json para un action_id, o null si no hay archivo estático.
+     */
+    public static function resolveActionIdTemplatePath(string $actionId): ?string
+    {
+        $parsed = self::parseActionId($actionId);
+        if ($parsed === null) {
+            return null;
+        }
+
+        return UiDefinitionTemplateManager::resolveTemplateAbsolutePath(
+            $parsed['entity'],
+            $parsed['action']
+        );
+    }
+
+    /**
      * Rutas relativas a probar (dominio primero, luego legacy plano).
      *
      * @return list<string> sin prefijo alias; ej. `scheduling/turnos/foo.json`

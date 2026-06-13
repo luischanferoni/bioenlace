@@ -1,6 +1,14 @@
 # Data Access — configuración declarativa
 
-Catálogo staff (grupos de atributos, consultas info/listar, edición dispersa) junto a los intents `data-access.*`.
+Catálogo de **permisos por atributo** (read / info / edit) y consultas staff, junto a intents `data-access.*`.
+
+## Permisos
+
+- Unidad de grant: **`Entidad.atributo.read`**, **`.info`**, **`.edit`** (bloque `attributes:` en YAML).
+- **`groups`**: solo presentación (agrupar chips/bloques en el asistente); no son permisos.
+- Mutaciones complejas: intents en `schemas/intents/update/` — no duplicar esos campos en `edit.attributes`.
+
+Ver también: [`docs/arquitectura/rbac-catalogo-permisos.md`](../../../../../../docs/arquitectura/rbac-catalogo-permisos.md).
 
 ## Estructura
 

@@ -129,20 +129,18 @@ final class DataAccessCatalogCheckService
                 continue;
             }
             $fullKey = $entity . '.' . $groupKey;
-            $attrs = $def['attributes'] ?? [];
-            if (is_array($attrs)) {
-                foreach ($attrs as $attrName) {
-                    $name = trim((string) $attrName);
-                    if ($name === '') {
-                        continue;
-                    }
-                    if ($modelAttrs !== [] && !in_array($name, $modelAttrs, true)) {
-                        $errors[] = $fullKey . ': atributo «' . $name . '» no existe en ' . $modelClass;
-                    }
+            $attrNames = $this->normalizeGroupAttributeNames($def);
+            foreach ($attrNames as $attrName) {
+                $name = trim((string) $attrName);
+                if ($name === '') {
+                    continue;
+                }
+                if ($modelAttrs !== [] && !in_array($name, $modelAttrs, true)) {
+                    $errors[] = $fullKey . ': atributo «' . $name . '» no existe en ' . $modelClass;
                 }
             }
 
-            $versionOnly = $def['version_attributes'] ?? [];
+            $versionOnly = is_array($def) && !array_is_list($def) ? ($def['version_attributes'] ?? []) : [];
             if (is_array($versionOnly)) {
                 foreach ($versionOnly as $attrName) {
                     $name = trim((string) $attrName);
@@ -155,7 +153,7 @@ final class DataAccessCatalogCheckService
                 }
             }
 
-            $uiSource = $def['ui_json_source'] ?? null;
+            $uiSource = is_array($def) && !array_is_list($def) ? ($def['ui_json_source'] ?? null) : null;
             if (is_array($uiSource)) {
                 $errors = array_merge($errors, $this->checkUiJsonSource($fullKey, $uiSource));
             }
@@ -440,6 +438,26 @@ final class DataAccessCatalogCheckService
         }
 
         return [];
+    }
+
+    /**
+     * @param array<string, mixed>|list<mixed> $def
+     * @return list<string>
+     */
+    private function normalizeGroupAttributeNames(array $def): array
+    {
+        if (array_is_list($def)) {
+            return array_map(static fn ($v): string => trim((string) $v), $def);
+        }
+        $attrs = $def['attributes'] ?? [];
+        if (!is_array($attrs)) {
+            return [];
+        }
+        if (array_is_list($attrs)) {
+            return array_map(static fn ($v): string => trim((string) $v), $attrs);
+        }
+
+        return array_map(static fn ($k): string => trim((string) $k), array_keys($attrs));
     }
 
     /**

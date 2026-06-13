@@ -3,12 +3,15 @@
 namespace common\components\Assistant\Catalog;
 
 use common\components\Assistant\UiActions\ActionMappingService;
+use common\components\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Core\Permission\IntentPermissionResolver;
 use common\components\Ui\ApiV1HttpRoute;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
+use webvimark\modules\UserManagement\models\User;
 
 /**
- * Descubre intents conversacionales desde YAML (`SubIntentEngine/schemas/intents/*.yaml`).
+ * Descubre intents conversacionales desde YAML (`SubIntentEngine/schemas/intents/**/*.yaml`).
  *
  * Fuente de verdad de “qué puede sugerir” el asistente (IntentEngine / shortcuts) cuando trabajamos con flows.
  */
@@ -21,7 +24,7 @@ final class YamlIntentCatalogService
     {
         $cache = Yii::$app->cache;
         // Cache key debe cambiar cuando cambian los YAML (keywords/rules/etc.).
-        $cacheKeyBase = 'yaml_intents_catalog_v3';
+        $cacheKeyBase = 'yaml_intents_catalog_v5';
         if ($useCache && $cache) {
             $hit = $cache->get($cacheKeyBase);
             if (is_array($hit)) {
@@ -29,8 +32,8 @@ final class YamlIntentCatalogService
             }
         }
 
-        $base = dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
-        $files = glob($base . DIRECTORY_SEPARATOR . '*.yaml') ?: [];
+        $base = IntentSchemaPaths::baseDir();
+        $files = IntentSchemaPaths::discoverYamlFiles();
         if ($files === []) {
             // Usar categoría ya visible en producción (evitar filtros por categoría).
             Yii::warning('YamlIntentCatalogService: no se encontraron YAML intents en ' . $base, 'asistente');
@@ -96,6 +99,12 @@ final class YamlIntentCatalogService
                 continue;
             }
 
+            $category = IntentSchemaPaths::categoryFromPath($path);
+            $permission = trim((string) ($data['permission'] ?? ''));
+            if ($permission === '') {
+                $permission = IntentPermissionResolver::inferFromIntentId($intentId, $category ?? '');
+            }
+
             $actionName = isset($data['action_name']) ? trim((string) $data['action_name']) : '';
             if ($actionName === '') {
                 $actionName = $intentId;
@@ -140,6 +149,8 @@ final class YamlIntentCatalogService
                 'description' => $desc,
                 'route' => '', // flows se ejecutan vía /asistente/enviar con action_id
                 'rbac_route' => $rbacRoute,
+                'permission' => $permission,
+                'category' => $category,
                 'keywords' => $kw,
                 'synonyms' => [],
                 'tags' => [],
@@ -191,7 +202,7 @@ final class YamlIntentCatalogService
     }
 
     /**
-     * Intents YAML visibles para un usuario según `rbac_route` del manifiesto (misma regla que atajos / CommonActionsService).
+     * Intents YAML visibles según `permission` (auth_item) o `rbac_route` (legacy webvimark).
      *
      * @param array<int, array<string, mixed>> $items salida de {@see discoverAll}
      * @return array<int, array<string, mixed>>
@@ -207,17 +218,43 @@ final class YamlIntentCatalogService
             if ($aid === '') {
                 continue;
             }
+            $permission = isset($flow['permission']) ? trim((string) $flow['permission']) : '';
             $rbacRoute = isset($flow['rbac_route']) ? trim((string) $flow['rbac_route']) : '';
-            if ($rbacRoute === '') {
+            if ($permission === '' && $rbacRoute === '') {
                 continue;
             }
-            if (!ActionMappingService::userIdCanAccessRoute($userId, $rbacRoute)) {
+            if ($permission !== '' && self::userIdCanPermissionKey($userId, $permission)) {
+                $out[] = $flow;
                 continue;
             }
-            $out[] = $flow;
+            if ($rbacRoute !== '' && ActionMappingService::userIdCanAccessRoute($userId, $rbacRoute)) {
+                $out[] = $flow;
+            }
         }
 
         return $out;
+    }
+
+    public static function userIdCanPermissionKey(int $userId, string $permissionKey): bool
+    {
+        $permissionKey = trim($permissionKey);
+        if ($permissionKey === '') {
+            return false;
+        }
+        if (strncmp($permissionKey, '/api/', 5) === 0) {
+            return ActionMappingService::userIdCanAccessRoute($userId, $permissionKey);
+        }
+
+        $user = User::findOne($userId);
+        if ($user !== null && (int) $user->superadmin === 1) {
+            return true;
+        }
+
+        if (!Yii::$app->has('authManager')) {
+            return false;
+        }
+
+        return Yii::$app->authManager->checkAccess($userId, $permissionKey);
     }
 
     public static function intentExists(string $intentId): bool
@@ -226,10 +263,7 @@ final class YamlIntentCatalogService
         if ($intentId === '') {
             return false;
         }
-        $base = dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
-        $path = $base . '/' . $intentId . '.yaml';
-
-        return is_file($path);
+        return IntentSchemaPaths::resolveFileForIntentId($intentId) !== null;
     }
 
     /**
@@ -239,8 +273,7 @@ final class YamlIntentCatalogService
      */
     public static function postOnlyFlowClosureRoutes(): array
     {
-        $base = dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
-        $files = glob($base . DIRECTORY_SEPARATOR . '*.yaml') ?: [];
+        $files = IntentSchemaPaths::discoverYamlFiles();
         $routes = [];
         foreach ($files as $path) {
             if (!is_string($path) || !is_file($path)) {

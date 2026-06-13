@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\SubIntentEngine;
 
+use common\components\Assistant\Catalog\IntentSchemaPaths;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -77,8 +78,8 @@ final class IntentBusinessRules
      */
     private static function loadIntentYaml(string $intentId): ?array
     {
-        $path = __DIR__ . '/schemas/intents/' . $intentId . '.yaml';
-        if (!is_file($path)) {
+        $path = IntentSchemaPaths::resolveFileForIntentId($intentId);
+        if ($path === null || !is_file($path)) {
             return null;
         }
         try {

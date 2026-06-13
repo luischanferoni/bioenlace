@@ -1,5 +1,6 @@
 intent_id: profesional-efector-servicio.crear-flow
 version: 1
+permission: ProfesionalEfectorServicio.create
 
 action_name: "Alta profesional en efector y agenda"
 description: "Agregar un profesional a un servicio y, si corresponde, crear su agenda."

@@ -3,6 +3,7 @@
 namespace common\components\Assistant\FlowManifest;
 
 use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
+use common\components\Assistant\Catalog\IntentSchemaPaths;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -167,8 +168,8 @@ final class FlowManifest
         if ($intentId === '') {
             return null;
         }
-        $path = self::INTENTS_DIR . '/' . $intentId . '.yaml';
-        if (!is_file($path)) {
+        $path = IntentSchemaPaths::resolveFileForIntentId($intentId);
+        if ($path === null || !is_file($path)) {
             return null;
         }
         try {

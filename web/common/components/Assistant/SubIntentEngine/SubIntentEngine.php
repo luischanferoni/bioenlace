@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\SubIntentEngine;
 
+use common\components\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\FlowManifest\FlowManifest;
@@ -529,9 +530,8 @@ final class SubIntentEngine
      */
     private static function loadIntentYaml(string $intentId)
     {
-        $base = dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
-        $path = $base . '/' . $intentId . '.yaml';
-        if (!is_file($path)) {
+        $path = IntentSchemaPaths::resolveFileForIntentId($intentId);
+        if ($path === null || !is_file($path)) {
             return null;
         }
         try {

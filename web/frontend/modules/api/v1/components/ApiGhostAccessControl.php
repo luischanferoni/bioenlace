@@ -93,6 +93,16 @@ class ApiGhostAccessControl extends ActionFilter
             return true;
         }
 
+        $flowIntentId = Yii::$app->request->getHeaders()->get(\common\components\Core\Permission\FlowStepAccessService::HEADER_FLOW_INTENT_ID);
+        $flowIntentId = is_string($flowIntentId) ? trim($flowIntentId) : null;
+        if ($flowIntentId === '') {
+            $flowIntentId = null;
+        }
+        $userId = Yii::$app->user->identity ? (int) Yii::$app->user->identity->id : 0;
+        if ($userId > 0 && (new \common\components\Core\Permission\FlowStepAccessService())->canAccessViaParentIntent($userId, $route, $flowIntentId)) {
+            return true;
+        }
+
         // Diagnóstico: cuando el móvil reporta 403, necesitamos ver qué ruta se chequea
         // y qué identidad/roles quedaron cargados en esta request.
         try {

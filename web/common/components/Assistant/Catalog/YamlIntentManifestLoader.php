@@ -20,9 +20,8 @@ final class YamlIntentManifestLoader
             return null;
         }
 
-        $base = dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
-        $path = $base . DIRECTORY_SEPARATOR . $intentId . '.yaml';
-        if (!is_file($path)) {
+        $path = IntentSchemaPaths::resolveFileForIntentId($intentId);
+        if ($path === null || !is_file($path)) {
             return null;
         }
 

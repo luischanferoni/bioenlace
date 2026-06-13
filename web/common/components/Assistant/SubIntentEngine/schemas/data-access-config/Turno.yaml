@@ -1,0 +1,35 @@
+# Turno — permisos por atributo (read/info/edit) y operaciones vía intents.
+entity: Turno
+model: common\models\Turno
+
+# Atributos mutados solo por flows (no declarar en edit disperso).
+flow_only_attributes:
+  - id_profesional_efector_servicio
+  - fecha
+  - hora
+  - slot_id
+  - id_servicio_asignado
+  - id_efector
+
+attributes:
+  tipo_atencion:
+    read: true
+    info: false
+    edit: true
+  estado:
+    read: true
+    info: true
+    edit: false
+  observaciones:
+    read: true
+    info: false
+    edit: true
+
+groups:
+  reserva:
+    - id_profesional_efector_servicio
+    - fecha
+    - hora
+  detalle:
+    - tipo_atencion
+    - estado

@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\Service;
 
+use common\components\Assistant\Catalog\IntentSchemaPaths;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -204,11 +205,8 @@ final class FlowHintService
      */
     private static function loadIntentYaml(string $intentId): ?array
     {
-        $path = self::INTENTS_DIR . '/' . $intentId . '.yaml';
-        if (!is_file($path)) {
-            $path = self::INTENTS_DIR . '/' . $intentId . '.yml';
-        }
-        if (!is_file($path)) {
+        $path = IntentSchemaPaths::resolveFileForIntentId($intentId);
+        if ($path === null || !is_file($path)) {
             return null;
         }
 

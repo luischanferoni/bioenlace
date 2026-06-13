@@ -1,21 +1,41 @@
-# Grupos de atributos — entidad Persona (permiso fino por grupo + definición de campos).
+# Grupos de presentación + permisos por atributo (read / info / edit).
 entity: Persona
 model: common\models\Persona
+
+attributes:
+  nombre:
+    read: true
+    info: true
+  apellido:
+    read: true
+    info: true
+  documento:
+    read: true
+    info: true
+  id_tipodoc:
+    read: true
+    info: false
+  sexo_biologico:
+    read: true
+    info: true
+  genero:
+    read: true
+    info: true
+  fecha_nacimiento:
+    read: true
+    info: true
+
 groups:
-  # Campos del formulario: tabla data_access_attribute_field.
-  identidad_basica: {}
+  identidad_basica:
+    - nombre
+    - apellido
+    - documento
+    - id_tipodoc
   sexo_genero:
-    attributes: [sexo_biologico, genero]
+    - sexo_biologico
+    - genero
   edad_exacta:
-    attributes:
-      fecha_nacimiento:
-        type: date
-        label: Fecha de nacimiento
+    - fecha_nacimiento
   identificadores:
-    attributes:
-      documento:
-        type: text
-        label: Documento
-      id_tipodoc:
-        type: text
-        label: Tipo de documento
+    - documento
+    - id_tipodoc

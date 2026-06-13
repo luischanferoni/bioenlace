@@ -283,7 +283,13 @@ final class AttributeGroupCatalog
       return [];
     }
 
-    $attrs = $group['attributes'] ?? [];
+    $attrs = $group;
+    if (isset($group['attributes']) && is_array($group['attributes'])) {
+      $attrs = $group['attributes'];
+    } elseif (array_is_list($group)) {
+      $attrs = $group;
+    }
+
     if (!is_array($attrs) || $attrs === []) {
       return [];
     }

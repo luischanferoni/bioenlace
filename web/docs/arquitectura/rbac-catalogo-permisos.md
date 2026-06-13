@@ -31,10 +31,14 @@
 3. Bloque `attributes:` por entidad en data-access-config (grupos opcionales).
 4. Reemplazar grants `data_access_role_grant` por permisos en `auth_item` (fase posterior).
 
-## Fase implementada (actual)
+## Fase 3 — sync auth_item + asignación por rol
 
-- `IntentSchemaPaths` — carga recursiva `create|read|update|delete/`.
-- Intents migrados a subcarpetas CRUD (2025-06).
-- `permission:` explícito en intents piloto; inferencia vía `IntentPermissionResolver`.
-- `Turno.yaml` + `attributes` en `Persona.yaml`.
-- `CatalogIntegrityService`, admin `/permission-catalog/*`, herencia open_ui en API.
+- CLI: `php yii catalog-permission/sync` — registra permisos lógicos y enlaza rutas legacy.
+- Migración: `m260621_100000_catalog_logical_permissions_rbac`.
+- Admin: `/admin/permission-catalog/sync` (POST), `/admin/permission-catalog/edit-role?role=…`.
+
+Jerarquía webvimark compatible con `AllowedRoutesResolver`:
+
+```
+rol → Turno.create (type 2) → /api/turnos/crear-como-paciente (type 3)
+```

@@ -17,8 +17,14 @@ $unassigned = array_filter($matrix, static fn (array $r): bool => $r['roles'] ==
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h1 class="h2 mb-0"><?= Html::encode($this->title) ?></h1>
-        <?= Html::a('Catálogo', ['index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
-        <?= Html::a('Integridad', ['integrity'], ['class' => 'btn btn-outline-primary btn-sm']) ?>
+        <div>
+            <?= Html::a('Sincronizar → auth_item', ['sync'], [
+                'class' => 'btn btn-warning btn-sm',
+                'data' => ['method' => 'post', 'confirm' => '¿Registrar permisos lógicos del catálogo en auth_item?'],
+            ]) ?>
+            <?= Html::a('Catálogo', ['index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+            <?= Html::a('Integridad', ['integrity'], ['class' => 'btn btn-outline-primary btn-sm']) ?>
+        </div>
     </div>
 
     <p class="text-muted">
@@ -72,6 +78,10 @@ $unassigned = array_filter($matrix, static fn (array $r): bool => $r['roles'] ==
     </div>
 
     <p class="text-muted small mt-3">
-        Roles en sistema: <?= Html::encode(implode(', ', $roleNames)) ?: '—' ?>
+        Roles en sistema:
+        <?php foreach ($roleNames as $rn): ?>
+            <?= Html::a(Html::encode($rn), ['edit-role', 'role' => $rn], ['class' => 'badge bg-secondary text-decoration-none me-1']) ?>
+        <?php endforeach; ?>
+        <?= $roleNames === [] ? '—' : '' ?>
     </p>
 </div>

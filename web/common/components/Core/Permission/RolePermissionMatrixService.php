@@ -29,7 +29,7 @@ final class RolePermissionMatrixService
                 'kind' => 'intent',
                 'source' => (string) ($intent['intent_id'] ?? ''),
                 'in_auth_item' => $this->permissionExistsInAuthItem($key),
-                'roles' => $this->rolesWithPermission($key),
+                'roles' => $this->rolesWithPermissionKey($key),
             ];
         }
 
@@ -45,10 +45,7 @@ final class RolePermissionMatrixService
                 'kind' => (string) ($attr['kind'] ?? 'attribute'),
                 'source' => (string) ($attr['source'] ?? ''),
                 'in_auth_item' => $this->permissionExistsInAuthItem($key),
-                'roles' => array_values(array_unique(array_merge(
-                    $this->rolesWithPermission($key),
-                    $this->rolesWithDataAccessGrant($key)
-                ))),
+                'roles' => $this->rolesWithPermissionKey($key),
             ];
         }
 
@@ -86,9 +83,32 @@ final class RolePermissionMatrixService
     }
 
     /**
+     * Roles con permiso lógico directo, vía ruta legacy enlazada, o grant DataAccess.
+     *
      * @return list<string>
      */
-    private function rolesWithPermission(string $permissionKey): array
+    private function rolesWithPermissionKey(string $permissionKey): array
+    {
+        $roles = $this->rolesWithDirectPermission($permissionKey);
+        if (strncmp($permissionKey, '/api/', 5) === 0) {
+            $roles = array_merge($roles, $this->rolesWithRoutePermission($permissionKey));
+        } else {
+            $routes = $this->legacyRoutesForLogicalPermission($permissionKey);
+            foreach ($routes as $route) {
+                $roles = array_merge($roles, $this->rolesWithRoutePermission($route));
+            }
+        }
+        $roles = array_merge($roles, $this->rolesWithDataAccessGrant($permissionKey));
+        $roles = array_values(array_unique(array_filter($roles)));
+        sort($roles);
+
+        return $roles;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function rolesWithDirectPermission(string $permissionKey): array
     {
         if (!Yii::$app->has('authManager')) {
             return [];
@@ -97,20 +117,33 @@ final class RolePermissionMatrixService
         $auth = Yii::$app->authManager;
         $roles = [];
         foreach ($auth->getRoles() as $roleName => $_role) {
-            $roleName = (string) $roleName;
-            $permissions = $auth->getPermissionsByRole($roleName);
+            $permissions = $auth->getPermissionsByRole((string) $roleName);
             if (isset($permissions[$permissionKey])) {
-                $roles[] = $roleName;
+                $roles[] = (string) $roleName;
             }
         }
 
-        if ($roles === [] && strncmp($permissionKey, '/api/', 5) === 0) {
-            $roles = $this->rolesWithRoutePermission($permissionKey);
+        return $roles;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function legacyRoutesForLogicalPermission(string $permissionKey): array
+    {
+        if (!Yii::$app->has('authManager')) {
+            return [];
         }
 
-        sort($roles);
+        $children = Yii::$app->authManager->getChildren($permissionKey);
+        $routes = [];
+        foreach ($children as $item) {
+            if ((int) $item->type === 3) {
+                $routes[] = $item->name;
+            }
+        }
 
-        return $roles;
+        return $routes;
     }
 
     /**

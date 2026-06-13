@@ -3,6 +3,29 @@
 entity: ProfesionalEfectorServicio
 model: common\models\ProfesionalEfectorServicio
 
+attributes:
+  id_profesional_efector_servicio:
+    read: true
+    info: true
+  id_persona:
+    read: true
+    info: true
+  id_servicio:
+    read: true
+    info: true
+  id_efector:
+    read: true
+    info: true
+
+groups:
+  asignacion:
+    scope_checker: efector_sesion
+    attributes:
+      - id_profesional_efector_servicio
+      - id_persona
+      - id_servicio
+      - id_efector
+
 info_list:
   profesionales_conteo_efector:
     label: Conteo de profesionales por efector

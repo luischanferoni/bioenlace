@@ -51,33 +51,22 @@ class DataAccessGrantController extends Controller
 
     public function actionCreate()
     {
-        $model = new DataAccessRoleGrant();
-        $model->active = 1;
+        Yii::$app->session->setFlash(
+            'warning',
+            'Los grants por grupo legacy están en desuso. Asigná permisos atómicos en Catálogo de permisos → Roles.'
+        );
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Grant creado.');
-
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('create', [
-            'model' => $model,
-        ]);
+        return $this->redirect(['/permission-catalog/roles']);
     }
 
     public function actionUpdate($id)
     {
-        $model = $this->findModel($id);
+        Yii::$app->session->setFlash(
+            'warning',
+            'Los grants por grupo legacy están en desuso. Asigná permisos atómicos en Catálogo de permisos → Roles.'
+        );
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            Yii::$app->session->setFlash('success', 'Grant actualizado.');
-
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
+        return $this->redirect(['/permission-catalog/roles']);
     }
 
     public function actionDelete($id)

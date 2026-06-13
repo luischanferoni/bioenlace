@@ -79,6 +79,11 @@ final class AttributePermissionEvaluator
             return null;
         }
 
+        $fromYaml = (new AttributeGroupCatalog())->getEntityGroupScopeChecker($entityGroupKey);
+        if ($fromYaml !== null && $fromYaml !== '') {
+            return $fromYaml;
+        }
+
         foreach ($ctx->roleNames as $role) {
             $grant = $this->grantSource->getGrant($role, $entityGroupKey);
             if ($grant === null) {

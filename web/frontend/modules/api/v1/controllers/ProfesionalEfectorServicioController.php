@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
-use yii\web\ForbiddenHttpException;
+use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
 use yii\web\MethodNotAllowedHttpException;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
@@ -526,12 +526,14 @@ class ProfesionalEfectorServicioController extends BaseController
         if (!$req->isPost) {
             throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
         }
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        if ($idEfector <= 0) {
-            throw new BadRequestHttpException('Se requiere efector en sesión.');
-        }
-
         $post = $req->post();
+        ApiDomainOperationBridge::assertOrForbidden(
+            'ProfesionalEfectorServicio.create',
+            $post,
+            array_merge($req->get(), $post)
+        );
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+
         $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
         if ($idPes > 0) {
             $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);

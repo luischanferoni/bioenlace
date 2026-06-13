@@ -34,4 +34,22 @@ class IntentPermissionResolverTest extends Unit
         ]);
         $this->assertSame('Custom.permission', $key);
     }
+
+    public function testInferInternacionMapaCamasFlow(): void
+    {
+        $key = IntentPermissionResolver::inferFromIntentId(
+            'internacion.mapa-camas-flow',
+            IntentSchemaPaths::CATEGORY_READ
+        );
+        $this->assertSame('Internacion.view_map', $key);
+    }
+
+    public function testInferDataAccessListar(): void
+    {
+        $key = IntentPermissionResolver::inferFromIntentId(
+            'data-access.listar',
+            IntentSchemaPaths::CATEGORY_READ
+        );
+        $this->assertSame('DataAccess.list', $key);
+    }
 }

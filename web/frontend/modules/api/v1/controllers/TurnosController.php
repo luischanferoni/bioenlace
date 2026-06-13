@@ -49,6 +49,7 @@ use yii\web\ConflictHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\db\Expression;
 use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
 use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 
@@ -470,7 +471,7 @@ class TurnosController extends BaseController
             if (!$turno) {
                 throw new NotFoundHttpException('Turno no encontrado');
             }
-            $this->assertTurnoSchedulingAccess($turno);
+            $this->assertTurnoDomain('Turno.view_conflicts', $turno);
             $res = TurnoResolucionElecciones::requireResolucionPendienteParaTurno(
                 (int) $tid,
                 (int) $turno->id_persona
@@ -503,7 +504,7 @@ class TurnosController extends BaseController
                 if (!$turno) {
                     throw new NotFoundHttpException('Turno no encontrado');
                 }
-                $this->assertTurnoSchedulingAccess($turno);
+                $this->assertTurnoDomain('Turno.view_conflicts', $turno);
                 TurnoResolucionElecciones::requireResolucionPendienteParaTurno(
                     (int) $tid,
                     (int) $turno->id_persona
@@ -579,7 +580,7 @@ class TurnosController extends BaseController
                 if (!$turno) {
                     throw new NotFoundHttpException('Turno no encontrado');
                 }
-                $this->assertTurnoSchedulingAccess($turno);
+                $this->assertTurnoDomain('Turno.cancel', $turno);
                 $razon = isset($post['razon_cancelacion']) ? trim((string) $post['razon_cancelacion']) : '';
                 if ($razon === '' || !TurnoCancelacionRazones::esCodigoPacienteAppValido($razon)) {
                     throw new BadRequestHttpException('Indicá un motivo de cancelación válido (razon_cancelacion).');
@@ -909,10 +910,7 @@ class TurnosController extends BaseController
                 if (!$turno) {
                     throw new NotFoundHttpException('Turno no encontrado');
                 }
-                $idEfector = Yii::$app->user->getIdEfector();
-                if ($idEfector && (int) $turno->id_efector !== (int) $idEfector) {
-                    throw new ForbiddenHttpException('No autorizado');
-                }
+                $this->assertTurnoDomain('Turno.cancel', $turno);
                 $razon = trim((string) ($post['razon_cancelacion'] ?? ''));
                 if ($razon === '') {
                     throw new BadRequestHttpException('razon_cancelacion requerida.');
@@ -975,7 +973,7 @@ class TurnosController extends BaseController
                 if (!$turno) {
                     throw new NotFoundHttpException('Turno no encontrado');
                 }
-                $this->assertTurnoSchedulingAccess($turno);
+                $this->assertTurnoDomain('Turno.confirmar_asistencia', $turno);
                 $token = $post['token'] ?? null;
                 if ($token && $turno->confirmacion_token && !hash_equals((string) $turno->confirmacion_token, (string) $token)) {
                     throw new BadRequestHttpException('Token inválido');
@@ -1019,7 +1017,7 @@ class TurnosController extends BaseController
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
-        $this->assertTurnoSchedulingAccess($turno);
+        $this->assertTurnoDomain('Turno.reprogramar', $turno);
 
         return [
             'success' => true,
@@ -1140,7 +1138,7 @@ class TurnosController extends BaseController
                 if (!$turno) {
                     throw new NotFoundHttpException('Turno no encontrado');
                 }
-                $this->assertTurnoSchedulingAccess($turno);
+                $this->assertTurnoDomain('Turno.reprogramar', $turno);
 
                 return [
                     'data' => TurnoResolucionService::reubicarComoPaciente(
@@ -1698,7 +1696,7 @@ class TurnosController extends BaseController
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
-        $this->assertTurnoSchedulingAccess($turno);
+        $this->assertTurnoDomain('Turno.reprogramar', $turno);
         if (
             $turno->estado !== Turno::ESTADO_PENDIENTE
             && $turno->estado !== Turno::ESTADO_EN_RESOLUCION
@@ -1753,7 +1751,7 @@ class TurnosController extends BaseController
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
-        $this->assertTurnoSchedulingAccess($turno);
+        $this->assertTurnoDomain('Turno.cancel', $turno);
         $subjectSvc = new PersonRepresentationSubjectService();
         $razon = isset($post['razon_cancelacion']) ? trim((string) $post['razon_cancelacion']) : '';
         if ($razon === '' && (($post['estado_motivo'] ?? '') === Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE)) {
@@ -1803,7 +1801,7 @@ class TurnosController extends BaseController
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
-        $this->assertTurnoSchedulingAccess($turno);
+        $this->assertTurnoDomain('Turno.reprogramar', $turno);
         $idPersona = (int) $turno->id_persona;
         if ($turno->estado === Turno::ESTADO_EN_RESOLUCION) {
             throw new BadRequestHttpException('Este turno está en resolución: usá el flujo de reubicación.');
@@ -2110,24 +2108,19 @@ class TurnosController extends BaseController
         return UiScreenService::renderUiDefinition('turnos', 'indicadores-agenda', $params, null);
     }
 
-    protected function representationSubjects(): PersonRepresentationSubjectService
-    {
-        return new PersonRepresentationSubjectService();
-    }
-
     /**
      * @param array<string, mixed> $params
      */
     protected function resolveSubjectTurnos(array $params): int
     {
-        return $this->representationSubjects()->resolveAndAuthorize(
-            $params,
-            RepresentationPermission::SCHEDULING_TURNO
-        );
+        ApiDomainOperationBridge::assertOrForbidden('Turno.create', $params, $params);
+        $subjectSvc = new PersonRepresentationSubjectService();
+
+        return $subjectSvc->resolveSubjectPersonaId($params);
     }
 
-    protected function assertTurnoSchedulingAccess(Turno $turno): void
+    protected function assertTurnoDomain(string $operationKey, Turno $turno): void
     {
-        $this->representationSubjects()->assertTurnoAccess($turno, RepresentationPermission::SCHEDULING_TURNO);
+        ApiDomainOperationBridge::assertOrForbidden($operationKey, $turno);
     }
 }

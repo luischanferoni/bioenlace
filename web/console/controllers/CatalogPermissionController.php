@@ -85,4 +85,46 @@ class CatalogPermissionController extends Controller
 
         return ExitCode::OK;
     }
+
+    /**
+     * Añade `permission:` explícito a intents CRUD que aún lo infieren.
+     */
+    public function actionSeedPermissions(): int
+    {
+        $base = \common\components\Assistant\Catalog\IntentSchemaPaths::baseDir();
+        $updated = 0;
+        foreach (\common\components\Assistant\Catalog\IntentSchemaPaths::CATEGORIES as $cat) {
+            foreach (glob($base . DIRECTORY_SEPARATOR . $cat . DIRECTORY_SEPARATOR . '*.yaml') ?: [] as $path) {
+                $raw = (string) file_get_contents($path);
+                $data = \Symfony\Component\Yaml\Yaml::parseFile($path);
+                if (!is_array($data)) {
+                    continue;
+                }
+                $intentId = trim((string) ($data['intent_id'] ?? basename($path, '.yaml')));
+                if (trim((string) ($data['permission'] ?? '')) !== '' || preg_match('/^permission\s*:/m', $raw)) {
+                    continue;
+                }
+                $permission = \common\components\Core\Permission\IntentPermissionResolver::resolve($intentId, $data);
+                if ($permission === '' || strncmp($permission, '/api/', 5) === 0) {
+                    $this->stderr("Skip {$intentId}\n");
+                    continue;
+                }
+                $lines = preg_split('/\r\n|\n|\r/', $raw);
+                $insertAt = 0;
+                foreach ($lines as $i => $line) {
+                    if (preg_match('/^intent_id\s*:/', $line)) {
+                        $insertAt = $i + 1;
+                        break;
+                    }
+                }
+                array_splice($lines, $insertAt, 0, ['permission: ' . $permission]);
+                file_put_contents($path, implode("\n", $lines));
+                $this->stdout(basename($path) . ' => ' . $permission . "\n");
+                $updated++;
+            }
+        }
+        $this->stdout("Actualizados: {$updated}\n");
+
+        return ExitCode::OK;
+    }
 }

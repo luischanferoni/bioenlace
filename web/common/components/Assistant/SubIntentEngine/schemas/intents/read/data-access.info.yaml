@@ -1,0 +1,15 @@
+intent_id: data-access.info
+permission: DataAccess.info
+version: 1
+
+action_name: "Consulta informativa staff"
+description: "Métricas aggregate/grouped del catálogo DataAccess (sin flow conversacional)."
+rbac_route: "/api/info"
+keywords:
+  - info staff
+  - conteo
+  - métrica
+  - resumen datos
+
+intent_semantics:
+  goal: Consultar métricas informativas autorizadas por grupo de atributos.

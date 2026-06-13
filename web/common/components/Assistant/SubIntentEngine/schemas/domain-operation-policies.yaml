@@ -1,0 +1,43 @@
+version: 1
+
+# Políticas de recurso por operación RBAC (Entidad.operacion del catálogo).
+# RBAC responde «¿puede intentar?»; aquí «¿sobre ESTE recurso?».
+# Modos: policies (AND) | any_of (OR).
+
+operations:
+  Turno.cancel:
+    any_of:
+      - turno.subject_or_representative
+      - turno.staff_efector_belongs
+
+  Turno.reprogramar:
+    policies:
+      - turno.subject_or_representative
+
+  Turno.confirmar_asistencia:
+    policies:
+      - turno.subject_or_representative
+
+  Turno.view_conflicts:
+    policies:
+      - turno.subject_or_representative
+
+  Turno.create:
+    policies:
+      - turno.create_subject_or_representative
+
+  ProfesionalEfectorServicio.create:
+    policies:
+      - organization.efector_sesion
+
+  DataAccess.edit:
+    policies:
+      - organization.efector_sesion
+
+  DataAccess.info:
+    policies:
+      - organization.efector_sesion
+
+  DataAccess.list:
+    policies:
+      - organization.efector_sesion

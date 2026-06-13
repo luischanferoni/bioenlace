@@ -1,0 +1,17 @@
+intent_id: data-access.editar
+permission: DataAccess.edit
+version: 1
+
+action_name: "Edición dispersa"
+description: "Modificar datos por superficie y aspectos autorizados (permiso write por grupo)."
+rbac_route: "/api/editar"
+keywords:
+  - editar
+  - modificar
+  - actualizar
+  - cambiar
+  - modificar agenda
+  - editar agenda
+
+intent_semantics:
+  goal: Aplicar cambios escalar sobre grupos de atributos declarados en data-access-config.

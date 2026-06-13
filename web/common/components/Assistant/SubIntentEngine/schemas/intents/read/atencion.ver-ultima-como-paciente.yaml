@@ -1,4 +1,5 @@
 intent_id: atencion.ver-ultima-como-paciente
+permission: Atencion.view_last
 version: 1
 
 action_name: "Ver mi última atención"

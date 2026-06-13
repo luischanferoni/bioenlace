@@ -232,6 +232,60 @@ final class AttributeGroupCatalog
   }
 
   /**
+   * Scope ABAC declarado para un grupo (YAML groups.scope_checker o edit.scope_checker del surface).
+   */
+  public function getEntityGroupScopeChecker(string $entityGroupKey): ?string
+  {
+    $entityGroupKey = trim($entityGroupKey);
+    $dot = strpos($entityGroupKey, '.');
+    if ($dot === false) {
+      return null;
+    }
+
+    $entityName = substr($entityGroupKey, 0, $dot);
+    $groupKey = substr($entityGroupKey, $dot + 1);
+    $entities = self::load()['entities'] ?? [];
+    if (is_array($entities) && isset($entities[$entityName][$groupKey]) && is_array($entities[$entityName][$groupKey])) {
+      $scope = trim((string) ($entities[$entityName][$groupKey]['scope_checker'] ?? ''));
+      if ($scope !== '') {
+        return $scope;
+      }
+    }
+
+    $editFlows = self::load()['edit_flows'] ?? [];
+    if (!is_array($editFlows)) {
+      return null;
+    }
+
+    foreach ($editFlows as $surfaceEntity => $edit) {
+      if (!is_array($edit)) {
+        continue;
+      }
+      $editScope = trim((string) ($edit['scope_checker'] ?? ''));
+      if ($editScope === '') {
+        continue;
+      }
+      $aspects = $edit['aspects'] ?? $edit['attributes'] ?? null;
+      if (!is_array($aspects)) {
+        continue;
+      }
+      foreach ($aspects as $def) {
+        if (!is_array($def)) {
+          continue;
+        }
+        if (trim((string) ($def['attribute_group'] ?? '')) === $entityGroupKey) {
+          return $editScope;
+        }
+      }
+      if ($surfaceEntity === $entityName && isset($entities[$entityName][$groupKey])) {
+        return $editScope;
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * @return list<string>
    */
   public function getEntityGroupAttributes(string $entityGroupKey): array

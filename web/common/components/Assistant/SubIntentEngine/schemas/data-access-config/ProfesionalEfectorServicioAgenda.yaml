@@ -2,6 +2,41 @@
 entity: ProfesionalEfectorServicioAgenda
 model: common\models\ProfesionalEfectorServicioAgenda
 version_model: common\models\ProfesionalEfectorServicioAgendaVersion
+
+attributes:
+  vigente_desde:
+    edit: true
+  intervalo_minutos:
+    edit: true
+  weekly_scheduler_widget:
+    edit: true
+  formas_atencion:
+    edit: true
+  acepta_consultas_online:
+    edit: true
+  id_profesional_efector_servicio:
+    read: true
+    edit: true
+  id_servicio:
+    read: true
+    edit: true
+  id_efector:
+    read: true
+    edit: true
+
+groups:
+  configuracion:
+    scope_checker: efector_sesion
+    attributes:
+      - vigente_desde
+      - intervalo_minutos
+      - weekly_scheduler_widget
+      - formas_atencion
+      - acepta_consultas_online
+      - id_profesional_efector_servicio
+      - id_servicio
+      - id_efector
+
 ui_json_source:
   entity: profesional-agenda
   action: configurar-agenda

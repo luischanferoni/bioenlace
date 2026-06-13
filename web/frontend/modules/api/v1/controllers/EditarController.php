@@ -6,6 +6,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use common\components\Core\DataAccess\DataAccessEditUiService;
+use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
 
 /**
  * Edición dispersa staff (superficies / aspectos / sujeto vía listar).
@@ -28,6 +29,8 @@ class EditarController extends BaseController
     public function actionIndex(): array
     {
         $params = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
+
+        ApiDomainOperationBridge::assertOrForbidden('DataAccess.edit', $params, $params);
 
         try {
             return (new DataAccessEditUiService())->render($params);

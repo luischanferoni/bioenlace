@@ -53,6 +53,22 @@ rol → Turno.create (type 2) → /api/turnos/crear-como-paciente (type 3)
 - **`syncAll()`** en `CatalogPermissionSyncService`: sync de catálogo + migración de grants en un paso.
 - Admin legacy (`/admin/data-access-grant`) muestra banner hacia el nuevo panel; deprecar cuando la matriz cubra todos los roles.
 
+### Políticas de dominio por operación
+
+Capa **después del RBAC** (ruta / `auth_item`) y **antes de reglas de negocio** (ventanas de cancelación, etc.):
+
+```
+RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobre ESTE recurso?) → servicio de dominio
+```
+
+- **Metadata:** `schemas/domain-operation-policies.yaml` — mapeo `Turno.cancel` → handlers (`any_of` / `policies`).
+- **Registry:** `DomainOperationPolicyRegistry` — handler_id → clase PHP (estable, sin reglas).
+- **Implementaciones:** `Scheduling/Service/Authorization/*`, `Organization/Service/Authorization/*`.
+- **API:** `ApiDomainOperationBridge::assertOrForbidden()` traduce a HTTP 403.
+- Piloto: `TurnosController`, `InfoController`, `ListarController`, `EditarController`.
+
+`scope_checker` (DataAccess) sigue siendo ABAC del canal métricas/edición dispersa; las políticas de dominio generalizan el mismo concepto para operaciones del catálogo RBAC.
+
 ### Mapeo operaciones
 
 | DataAccess | Permiso catálogo |
@@ -60,3 +76,31 @@ rol → Turno.create (type 2) → /api/turnos/crear-como-paciente (type 3)
 | `filter`, `read` | `.read` |
 | `aggregate` | `.info` |
 | `write` | `.edit` |
+
+## Fase 5 — catálogo completo y cierre legacy
+
+### Intents
+
+- Todos los YAML en `schemas/intents/{create,read,update,delete}/` declaran `permission:` explícito.
+- Stubs catalog-only: `read/data-access.info.yaml`, `read/data-access.listar.yaml`, `update/data-access.editar.yaml` (sincronizables a `auth_item`).
+- Alias legacy (`intent-aliases.yaml`): `agenda.*` → intents canónicos; no requieren YAML propio.
+- `IntentPermissionResolver`: mapeo explícito con y sin sufijo `-flow` (p. ej. `mapa-camas` → `view_map`).
+
+### Atributos
+
+- `Persona.yaml`, `Turno.yaml`, `ProfesionalEfectorServicio.yaml`, `ProfesionalEfectorServicioAgenda.yaml` con bloque `attributes:` + `groups:` (presentación + `scope_checker`).
+- Grants atómicos vía `catalog-permission/sync`; desactivar legacy con `--deactivateLegacyGrants=1`.
+
+### Scope ABAC post-migración
+
+- `AttributeGroupCatalog::getEntityGroupScopeChecker()` — lee `groups.scope_checker` o `edit.scope_checker` del YAML.
+- `AttributePermissionEvaluator::scopeCheckerFor()` — YAML primero; fallback a `data_access_role_grant` legacy.
+
+### Admin legacy
+
+- `/admin/data-access-grant` — solo lectura (create/update redirigen a `/admin/permission-catalog/roles`).
+- Menú: «Grants legacy (solo lectura)».
+
+### CLI
+
+- `php yii catalog-permission/seed-permissions` — re-aplica `permission:` inferido a intents nuevos.

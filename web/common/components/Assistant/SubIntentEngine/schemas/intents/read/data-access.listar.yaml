@@ -1,0 +1,15 @@
+intent_id: data-access.listar
+permission: DataAccess.list
+version: 1
+
+action_name: "Listado staff"
+description: "Métricas en modo filas del catálogo DataAccess (sin flow conversacional)."
+rbac_route: "/api/listar"
+keywords:
+  - listar
+  - listado
+  - mostrar listado
+  - ver listado
+
+intent_semantics:
+  goal: Listar filas de métricas autorizadas por grupo de atributos.

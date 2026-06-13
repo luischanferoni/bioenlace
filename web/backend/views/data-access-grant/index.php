@@ -20,7 +20,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 <div>
                     <?= Html::a('Campos BD', ['data-access-attribute-field/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
                     <?= Html::a('Catálogo', ['data-access-catalog/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
-                    <?= Html::a('Nuevo grant', ['create'], ['class' => 'btn btn-success btn-sm']) ?>
+                    <?= Html::a('Panel RBAC', ['/permission-catalog/roles'], ['class' => 'btn btn-primary btn-sm']) ?>
                 </div>
             </div>
             <div class="card-body">

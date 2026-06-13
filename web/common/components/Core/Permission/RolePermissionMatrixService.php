@@ -7,7 +7,7 @@ use yii\db\Query;
 use yii\rbac\Item;
 
 /**
- * Matriz rol ↔ permisos del catálogo declarativo vs auth_item / data_access_role_grant.
+ * Matriz rol ↔ permisos del catálogo declarativo vs auth_item.
  */
 final class RolePermissionMatrixService
 {
@@ -83,7 +83,7 @@ final class RolePermissionMatrixService
     }
 
     /**
-     * Roles con permiso lógico directo, vía ruta legacy enlazada, o grant DataAccess.
+     * Roles con permiso lógico directo o vía ruta legacy enlazada.
      *
      * @return list<string>
      */
@@ -98,7 +98,6 @@ final class RolePermissionMatrixService
                 $roles = array_merge($roles, $this->rolesWithRoutePermission($route));
             }
         }
-        $roles = array_merge($roles, $this->rolesWithDataAccessGrant($permissionKey));
         $roles = array_values(array_unique(array_filter($roles)));
         sort($roles);
 
@@ -185,47 +184,5 @@ final class RolePermissionMatrixService
         sort($roles);
 
         return array_values(array_unique($roles));
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function rolesWithDataAccessGrant(string $permissionKey): array
-    {
-        if (!Yii::$app->db->schema->getTableSchema('{{%data_access_role_grant}}', true)) {
-            return [];
-        }
-
-        $parts = explode('.', $permissionKey);
-        if (count($parts) < 3) {
-            return [];
-        }
-        $operation = array_pop($parts);
-        $attribute = array_pop($parts);
-        $entity = implode('.', $parts);
-        $groupKey = $entity . '.' . $attribute;
-
-        $opsMap = [
-            'read' => 'read,filter',
-            'info' => 'read,filter,aggregate',
-            'edit' => 'write',
-        ];
-        $needle = $opsMap[$operation] ?? $operation;
-
-        $rows = (new Query())
-            ->from('{{%data_access_role_grant}}')
-            ->where(['entity_group_key' => $groupKey, 'active' => 1])
-            ->all();
-
-        $roles = [];
-        foreach ($rows as $row) {
-            $csv = (string) ($row['operations_csv'] ?? '');
-            if ($csv === '' || !str_contains($csv, explode(',', $needle)[0])) {
-                continue;
-            }
-            $roles[] = (string) ($row['role_name'] ?? '');
-        }
-
-        return array_values(array_filter(array_unique($roles)));
     }
 }

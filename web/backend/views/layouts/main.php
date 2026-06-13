@@ -105,7 +105,6 @@ $home = Yii::$app->getHomeUrl();
                                         ['label' => 'Catálogo de permisos', 'url' => ['/permission-catalog/index']],
                                         ['label' => 'Roles ↔ permisos', 'url' => ['/permission-catalog/roles']],
                                         ['label' => 'Integridad del catálogo', 'url' => ['/permission-catalog/integrity']],
-                                        ['label' => 'Grants legacy (solo lectura)', 'url' => ['/data-access-grant/index']],
                                         ['label' => 'Campos por grupo (BD)', 'url' => ['/data-access-attribute-field/index']],
                                         ['label' => 'Catálogo DataAccess', 'url' => ['/data-access-catalog/index']],
                                     ]

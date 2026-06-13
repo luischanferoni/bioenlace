@@ -15,7 +15,7 @@ class CatalogPermissionController extends Controller
     /** @var bool Copiar asignaciones rol→ruta hacia rol→permiso lógico */
     public bool $inheritRoles = true;
 
-    /** @var bool Desactivar filas en data_access_role_grant tras migrar */
+    /** @var bool Desactivar filas legacy en data_access_role_grant tras migrar (no-op si la tabla fue eliminada) */
     public bool $deactivateLegacyGrants = false;
 
     public function options($actionID): array

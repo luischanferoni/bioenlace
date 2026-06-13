@@ -29,7 +29,7 @@
 1. Campo opcional `permission:` en intents (nombre lógico, p. ej. `ProfesionalEfectorServicio.create`).
 2. Mover YAML a subcarpetas CRUD (warnings de integridad mientras queden en raíz).
 3. Bloque `attributes:` por entidad en data-access-config (grupos opcionales).
-4. Migrar grants `data_access_role_grant` → `auth_item` (`catalog-permission/migrate-grants` o sync completo).
+4. Migrar grants `data_access_role_grant` → `auth_item` (`m260622`; tabla eliminada en `m260627`).
 
 ## Fase 3 — sync auth_item + asignación por rol
 
@@ -38,7 +38,7 @@
 - Rutas ghost (internación, UI clínica): `RbacRouteGhostInheritanceService` propaga **rol → ruta hija** desde roles con acceso a la ruta padre; no copiar permisos lógicos como padres de rutas downstream.
 - CLI (solo grants): `php yii catalog-permission/migrate-grants`
 - Opción `--deactivateLegacyGrants=1` — desactiva filas en `data_access_role_grant` tras migrar.
-- Migraciones: `m260621_100000_catalog_logical_permissions_rbac`, `m260622_100000_migrate_data_access_grants_to_auth_item`.
+- Migraciones: `m260621_100000_catalog_logical_permissions_rbac`, `m260622_100000_migrate_data_access_grants_to_auth_item`, `m260626_*`, `m260627_*`.
 - Admin: `/admin/permission-catalog/roles` — sync + migración; `/admin/permission-catalog/edit-role?role=…`.
 
 Jerarquía webvimark compatible con `AllowedRoutesResolver`:
@@ -94,18 +94,20 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 ### Atributos
 
 - `Persona.yaml`, `Turno.yaml`, `ProfesionalEfectorServicio.yaml`, `ProfesionalEfectorServicioAgenda.yaml` con bloque `attributes:` + `groups:` (presentación + `scope_checker`).
-- Grants atómicos vía `catalog-permission/sync`; legacy desactivado con `--deactivateLegacyGrants=1` (filas `data_access_role_grant.active = 0`).
+- Grants atómicos vía `catalog-permission/sync` → `auth_item` + `auth_item_child`.
 
 ### Scope ABAC post-migración
 
 - `AttributeGroupCatalog::getEntityGroupScopeChecker()` — lee `groups.scope_checker` o `edit.scope_checker` del YAML.
-- `AttributePermissionEvaluator::scopeCheckerFor()` — YAML primero; fallback a `data_access_role_grant` legacy.
+- `AttributePermissionEvaluator` — solo `auth_item` (permisos atómicos) + scope desde YAML.
 
-### Admin legacy
+### Cierre legacy (m260626–m260627)
 
-- `/admin/data-access-grant` — solo lectura (create/update redirigen a `/admin/permission-catalog/roles`).
-- Menú: «Grants legacy (solo lectura)».
+- Elimina permisos huérfanos `Internacion.update` / `Internacion.view` (duplicados de `discharge` / `view_map`).
+- Elimina tabla `data_access_role_grant` (grants ya migrados en m260622).
+- Admin `/admin/data-access-grant` retirado; asignación en **Catálogo de permisos → Roles**.
 
 ### CLI
 
 - `php yii catalog-permission/seed-permissions` — re-aplica `permission:` inferido a intents nuevos.
+- `php yii catalog-integrity/check` — integridad catálogo (0 errores esperado).

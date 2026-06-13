@@ -125,7 +125,7 @@ final class CatalogPermissionSyncService
     }
 
     /**
-     * Sync catálogo + migración de data_access_role_grant → auth_item.
+     * Sync catálogo declarativo → auth_item (+ migración legacy si la tabla aún existe).
      *
      * @return array<string, mixed>
      */

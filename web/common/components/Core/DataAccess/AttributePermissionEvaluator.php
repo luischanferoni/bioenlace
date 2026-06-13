@@ -3,25 +3,16 @@
 namespace common\components\Core\DataAccess;
 
 use common\components\Assistant\Catalog\YamlIntentCatalogService;
-use common\components\Core\DataAccess\Grant\CompositeRoleGrantSource;
 use common\components\Core\DataAccess\QueryOperation;
 use common\components\Core\Permission\AttributePermissionKeyMapper;
 use Yii;
 
 /**
  * Evalúa si un rol del usuario puede usar un grupo de atributos en una operación.
- * Grants efectivos desde BD ({@see DataAccessRoleGrant}).
+ * Fuente efectiva: permisos atómicos en auth_item (Entidad.atributo.read|info|edit).
  */
 final class AttributePermissionEvaluator
 {
-    /** @var CompositeRoleGrantSource */
-    private $grantSource;
-
-    public function __construct(?CompositeRoleGrantSource $grantSource = null)
-    {
-        $this->grantSource = $grantSource ?? new CompositeRoleGrantSource();
-    }
-
     public function can(PermissionContext $ctx, string $entityGroupKey, string $operation): bool
     {
         if (!QueryOperation::isValid($operation)) {
@@ -32,25 +23,7 @@ final class AttributePermissionEvaluator
             return true;
         }
 
-        if ($this->canViaAuthItem($ctx, $entityGroupKey, $operation)) {
-            return true;
-        }
-
-        foreach ($ctx->roleNames as $role) {
-            $grant = $this->grantSource->getGrant($role, $entityGroupKey);
-            if ($grant === null) {
-                continue;
-            }
-            $ops = $grant['operations'] ?? [];
-            if (!is_array($ops)) {
-                continue;
-            }
-            if (in_array($operation, $ops, true)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->canViaAuthItem($ctx, $entityGroupKey, $operation);
     }
 
     private function canViaAuthItem(PermissionContext $ctx, string $entityGroupKey, string $operation): bool
@@ -82,16 +55,6 @@ final class AttributePermissionEvaluator
         $fromYaml = (new AttributeGroupCatalog())->getEntityGroupScopeChecker($entityGroupKey);
         if ($fromYaml !== null && $fromYaml !== '') {
             return $fromYaml;
-        }
-
-        foreach ($ctx->roleNames as $role) {
-            $grant = $this->grantSource->getGrant($role, $entityGroupKey);
-            if ($grant === null) {
-                continue;
-            }
-            $checker = trim((string) ($grant['scope_checker'] ?? ''));
-
-            return $checker !== '' ? $checker : null;
         }
 
         return null;

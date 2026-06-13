@@ -2,13 +2,13 @@
 
 namespace common\components\Core\Permission;
 
-use common\components\Core\DataAccess\Grant\DatabaseRoleGrantSource;
 use common\components\Core\DataAccess\QueryOperation;
-use common\models\DataAccess\DataAccessRoleGrant;
 use Yii;
+use yii\db\Query;
 
 /**
- * Migra grants legacy {@see DataAccessRoleGrant} → auth_item + auth_item_child (rol → Entidad.atributo.op).
+ * Migra grants legacy data_access_role_grant → auth_item + auth_item_child (rol → Entidad.atributo.op).
+ * No-op si la tabla legacy ya fue eliminada (m260627).
  */
 final class DataAccessGrantMigratorService
 {
@@ -28,6 +28,8 @@ final class DataAccessGrantMigratorService
         $db = Yii::$app->db;
         $authItem = $db->schema->getRawTableName('{{%auth_item}}');
         $childTable = $db->schema->getRawTableName('{{%auth_item_child}}');
+        $grantTable = $db->schema->getRawTableName('{{%data_access_role_grant}}');
+
         if ($db->schema->getTableSchema($authItem, true) === null
             || $db->schema->getTableSchema($childTable, true) === null) {
             return [
@@ -41,7 +43,7 @@ final class DataAccessGrantMigratorService
             ];
         }
 
-        if ($db->schema->getTableSchema('{{%data_access_role_grant}}', true) === null) {
+        if ($db->schema->getTableSchema($grantTable, true) === null) {
             return [
                 'permissions_created' => 0,
                 'role_links_added' => 0,
@@ -62,15 +64,16 @@ final class DataAccessGrantMigratorService
         $warnings = [];
         $errors = [];
 
-        $rows = DataAccessRoleGrant::find()->where(['active' => 1])->all();
-        foreach ($rows as $grant) {
-            if (!$grant instanceof DataAccessRoleGrant) {
-                continue;
-            }
+        $rows = (new Query())
+            ->from($grantTable)
+            ->where(['active' => 1])
+            ->all($db);
 
-            $roleName = trim((string) $grant->role_name);
-            $groupKey = trim((string) $grant->entity_group_key);
-            $operations = DataAccessRoleGrant::parseOperationsCsv((string) $grant->operations_csv);
+        foreach ($rows as $grant) {
+            $grantId = (int) ($grant['id'] ?? 0);
+            $roleName = trim((string) ($grant['role_name'] ?? ''));
+            $groupKey = trim((string) ($grant['entity_group_key'] ?? ''));
+            $operations = self::parseOperationsCsv((string) ($grant['operations_csv'] ?? ''));
             if ($roleName === '' || $groupKey === '' || $operations === []) {
                 $grantsSkipped++;
                 continue;
@@ -117,16 +120,17 @@ final class DataAccessGrantMigratorService
                 }
             }
 
-            if ($deactivateLegacyGrants) {
-                $grant->active = 0;
-                $grant->notas = trim((string) $grant->notas . ' [migrado a auth_item ' . date('Y-m-d') . ']');
-                if ($grant->save(false, ['active', 'notas'])) {
+            if ($deactivateLegacyGrants && $grantId > 0) {
+                $notas = trim((string) ($grant['notas'] ?? '') . ' [migrado a auth_item ' . date('Y-m-d') . ']');
+                $updated = $db->createCommand()->update($grantTable, [
+                    'active' => 0,
+                    'notas' => $notas,
+                ], ['id' => $grantId])->execute();
+                if ($updated > 0) {
                     $deactivated++;
                 }
             }
         }
-
-        DatabaseRoleGrantSource::clearCache();
 
         return [
             'permissions_created' => $permissionsCreated,
@@ -139,9 +143,26 @@ final class DataAccessGrantMigratorService
         ];
     }
 
+    /**
+     * @return list<string>
+     */
+    private static function parseOperationsCsv(string $csv): array
+    {
+        if ($csv === '') {
+            return [];
+        }
+
+        $ops = array_values(array_unique(array_filter(array_map(static function ($op) {
+            return mb_strtolower(trim((string) $op), 'UTF-8');
+        }, explode(',', $csv)))));
+        sort($ops);
+
+        return $ops;
+    }
+
     private function authItemExists(string $authItem, string $name): bool
     {
-        return (new \yii\db\Query())
+        return (new Query())
             ->from($authItem)
             ->where(['name' => $name])
             ->exists(Yii::$app->db);
@@ -149,7 +170,7 @@ final class DataAccessGrantMigratorService
 
     private function ensureChildLink(string $childTable, string $parent, string $child): bool
     {
-        if ((new \yii\db\Query())->from($childTable)->where(['parent' => $parent, 'child' => $child])->exists(Yii::$app->db)) {
+        if ((new Query())->from($childTable)->where(['parent' => $parent, 'child' => $child])->exists(Yii::$app->db)) {
             return false;
         }
         Yii::$app->db->createCommand()->insert($childTable, [

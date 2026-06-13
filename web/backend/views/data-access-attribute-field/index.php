@@ -19,7 +19,7 @@ $this->params['breadcrumbs'][] = $this->title;
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h2 class="card-title mt-1 mb-0"><?= Html::encode($this->title) ?></h2>
                 <div>
-                    <?= Html::a('Grants', ['data-access-grant/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+                    <?= Html::a('Permisos por rol', ['permission-catalog/roles'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
                     <?= Html::a('Catálogo', ['data-access-catalog/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
                     <?= Html::a('Nuevo campo', ['create', 'group' => $groupFilter], ['class' => 'btn btn-success btn-sm']) ?>
                 </div>

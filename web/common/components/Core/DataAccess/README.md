@@ -5,8 +5,8 @@ Permisos por **grupos de atributos**, **scope checkers** y **métricas** staff p
 ## Archivos clave
 
 - `Assistant/SubIntentEngine/schemas/data-access-config/` — grupos por entidad, métricas, edición dispersa, `filter_synonyms`
-- `data_access_role_grant` (BD) — grants legacy (desactivados tras `catalog-permission/sync --deactivateLegacyGrants=1`); fuente efectiva: `auth_item` vía `AttributePermissionEvaluator`
 - `data_access_attribute_field` (BD) — esquema de campos editables por grupo (tipos, widgets, options)
+- Permisos atómicos en `auth_item` (`Entidad.atributo.read|info|edit`) vía `AttributePermissionEvaluator`
 - `DataAccessUiService` — `/api/info` y `/api/listar` con ui_json genérico
 - `Presentation/MetricPresentationRegistry` — handlers de presentación por métrica
 - `QueryCompiler` / `MetricQueryExecutor` — compilación y ejecución
@@ -43,9 +43,9 @@ Migración agenda staff: `profesional-agenda.editar-flow` deprecado (`catalog_ex
 
 1. Grupo en `{Entidad}.yaml`; métrica con bloques `query`, `output`, `presentation_handler` y `keywords`.
 2. Handler en `MetricPresentationRegistry` + clase en dominio correspondiente.
-3. Grant en BD (admin **Permisos por atributo**).
+3. Permiso atómico en admin **Catálogo de permisos → Roles** (o `php yii catalog-permission/sync`).
 4. No crear intents YAML por métrica: reutilizar `data-access.info` o `data-access.listar`.
 
 ## Admin backend
 
-Superadmin: menú **Consultas staff** → grants BD y catálogo YAML. La pantalla de grants avisa si hay roles huérfanos (eliminados de webvimark).
+Superadmin: menú **Acceso a datos** → catálogo de permisos, roles, integridad; campos por grupo en BD.

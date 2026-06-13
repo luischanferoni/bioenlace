@@ -27,26 +27,10 @@ class NotificacionesController extends BaseController
     }
 
     /**
-     * @deprecated Usar {@see actionListar()}. Alias móvil legacy.
-     */
-    public function actionListarComoPaciente(): array
-    {
-        return $this->listarResponse();
-    }
-
-    /**
      * POST /api/v1/notificaciones/marcar-leida
      * Body: id (opcional; si falta, marca todas)
      */
     public function actionMarcarLeida(): array
-    {
-        return $this->marcarLeidaResponse();
-    }
-
-    /**
-     * @deprecated Usar {@see actionMarcarLeida()}. Alias móvil legacy.
-     */
-    public function actionMarcarLeidaComoPaciente(): array
     {
         return $this->marcarLeidaResponse();
     }

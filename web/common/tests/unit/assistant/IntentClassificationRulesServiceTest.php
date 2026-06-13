@@ -3,7 +3,6 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Assistant\Catalog\IntentAliasCatalog;
 use common\components\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Assistant\IntentEngine\IntentClassifier;
 use common\components\Assistant\IntentEngine\UiActionCatalogItem;
@@ -13,7 +12,6 @@ class IntentClassificationRulesServiceTest extends Unit
     protected function _after(): void
     {
         IntentClassificationRulesService::resetCacheForTests();
-        IntentAliasCatalog::resetCacheForTests();
     }
 
     public function testStaffAgendaRuleMatchesFormasAtencion(): void

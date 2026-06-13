@@ -727,32 +727,4 @@ class ProfesionalEfectorServicioController extends BaseController
 
         return $ui;
     }
-
-    /**
-     * Vista embebible: elegir profesional para un efector/servicio.
-     *
-     * GET|POST /api/v1/profesional-efector-servicio/elegir
-     *
-     * @deprecated Preferir listar-por-efector-servicio-acepta-turnos en nuevos flujos.
-     */
-    public function actionElegir(): array
-    {
-        $req = Yii::$app->request;
-        // Mantener compatibilidad: redirigir al listado explícito si llegan los parámetros requeridos.
-        $idEfector = $this->reqParamRaw('id_efector');
-        $idServicio = $this->reqParamRaw('id_servicio');
-        if ($idEfector !== null && $idServicio !== null) {
-            return $this->actionListarPorEfectorServicioAceptaTurnos();
-        }
-
-        return UiScreenService::handleScreen(
-            'profesional-efector-servicio',
-            'elegir',
-            $req->get(),
-            $req->post(),
-            static function (array $post): array {
-                return ['data' => ['ok' => true]];
-            }
-        );
-    }
 }

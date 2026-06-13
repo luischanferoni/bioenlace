@@ -32,8 +32,6 @@ class ApiGhostAccessControl extends ActionFilter
         '/api/media/ver',
         '/api/notificaciones/listar',
         '/api/notificaciones/marcar-leida',
-        '/api/notificaciones/listar-como-paciente',
-        '/api/notificaciones/marcar-leida-como-paciente',
     ];
 
     /**

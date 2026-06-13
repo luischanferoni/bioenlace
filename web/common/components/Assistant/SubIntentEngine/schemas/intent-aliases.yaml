@@ -1,6 +1,0 @@
-# Alucinaciones IA → intent_id canónico del catálogo.
-# Mantener aquí; no en PHP de orquestación.
-version: 1
-aliases:
-  agenda.crear-profesional-flow: profesional-efector-servicio.crear-flow
-  agenda.resolver-conflictos-staff-flow: profesional-agenda.resolver-conflictos-flow

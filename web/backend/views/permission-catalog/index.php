@@ -18,7 +18,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <div>
             <?= Html::a('Integridad del catálogo', ['integrity'], ['class' => 'btn btn-primary btn-sm']) ?>
             <?= Html::a('Roles ↔ permisos', ['roles'], ['class' => 'btn btn-outline-primary btn-sm']) ?>
-            <?= Html::a('Catálogo DataAccess (legacy)', ['data-access-catalog/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+            <?= Html::a('Catálogo DataAccess', ['data-access-catalog/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
         </div>
     </div>
 

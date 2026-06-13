@@ -95,10 +95,6 @@ final class YamlIntentCatalogService
                 continue;
             }
 
-            if (!empty($data['catalog_exclude'])) {
-                continue;
-            }
-
             $category = IntentSchemaPaths::categoryFromPath($path);
             $permission = trim((string) ($data['permission'] ?? ''));
             if ($permission === '') {

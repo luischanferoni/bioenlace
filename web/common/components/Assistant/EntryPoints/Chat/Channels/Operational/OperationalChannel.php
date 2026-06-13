@@ -2,7 +2,6 @@
 
 namespace common\components\Assistant\EntryPoints\Chat\Channels\Operational;
 
-use common\components\Assistant\Catalog\IntentIdAliasResolver;
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\IntentEngine\IntentClassificationRulesService;
@@ -27,8 +26,6 @@ final class OperationalChannel
         $queryText = $normalized !== '' ? $normalized : trim($content);
 
         if ($actionId !== null && $actionId !== '') {
-            $actionId = IntentIdAliasResolver::resolve($actionId);
-
             return self::finalize(IntentEngine::processQuery($queryText, $userId, $actionId));
         }
 

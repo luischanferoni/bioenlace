@@ -4,7 +4,7 @@ use yii\db\Migration;
 use yii\db\Query;
 
 /**
- * Retira rutas API deprecated (sin clientes legacy): flujos agenda editar-* y efectores/elegir*.
+ * Retira rutas API deprecated (lote 1, ya aplicado en prod): flujos agenda editar-* y efectores/elegir*.
  */
 class m260628_100000_retire_deprecated_api_routes_rbac extends Migration
 {

@@ -148,8 +148,7 @@ Para esos flujos el motor emite el envelope con `flow_submit` (y eventualmente `
 
 - Flujos `turnos.*` usan **`flow_submit`** hacia acciones API ya existentes (`crear-como-paciente`, `cancelar-como-paciente`, `reprogramar-como-paciente`).
 - `profesional-efector-servicio.crear-flow` usa **`flow_submit`** hacia `profesional-efector-servicio.crear-flow` tras configurar agenda (con `provides` que marca fin de la pantalla de configuración) o al terminar la rama sin turnos.
-- `profesional-agenda.editar-flow` (**deprecado**, `catalog_exclude: true`) — reemplazado por `data-access.editar` + aspecto `agenda_horarios`. El YAML legacy conserva **`flow_submit`** hacia `profesional-agenda.editar-flow` solo para sesiones en vuelo.
-- `profesional-agenda.editar-mi-flow` usa **`flow_submit`** hacia `profesional-agenda.editar-mi-flow` (misma estructura que editar agenda, sin paso de selección de profesional; servicios propios vía `listar-mis-servicios-en-efector`).
+- Edición de agenda staff: intent `data-access.editar` + aspecto `agenda_horarios` → `profesional-agenda.configurar-agenda`.
 
 ## Referencia de código
 

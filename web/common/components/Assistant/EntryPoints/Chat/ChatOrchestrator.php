@@ -2,7 +2,6 @@
 
 namespace common\components\Assistant\EntryPoints\Chat;
 
-use common\components\Assistant\Catalog\IntentIdAliasResolver;
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
 use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
@@ -22,13 +21,6 @@ final class ChatOrchestrator
     public static function handle(array $body, int $userId): array
     {
         $intentId = isset($body['intent_id']) ? trim((string) $body['intent_id']) : '';
-        if ($intentId !== '') {
-            $resolved = IntentIdAliasResolver::resolve($intentId);
-            if ($resolved !== $intentId) {
-                $body['intent_id'] = $resolved;
-                $intentId = $resolved;
-            }
-        }
 
         if ($intentId !== '') {
             $content = isset($body['content']) ? trim((string) $body['content']) : '';

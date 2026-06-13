@@ -36,7 +36,7 @@
 - CLI: `php yii catalog-permission/sync` — registra permisos lógicos y enlaza rutas API.
 - La herencia rol → permiso lógico (`inheritRoleGrantsFromRoute`) sube la jerarquía `auth_item_child` (rol → permiso → ruta), no solo padres directos de la ruta.
 - Rutas ghost (internación, UI clínica): `RbacRouteGhostInheritanceService` propaga **rol → ruta hija** desde roles con acceso a la ruta padre; no copiar permisos lógicos como padres de rutas downstream.
-- Migraciones: `m260621_*`, `m260622_*`, `m260626_*`, `m260627_*`, `m260628_*`.
+- Migraciones: `m260621_*`, `m260622_*`, `m260626_*`, `m260627_*`, `m260628_*`, `m260629_*`.
 - Admin: `/admin/permission-catalog/roles` — sync; `/admin/permission-catalog/edit-role?role=…`.
 
 Jerarquía webvimark compatible con `AllowedRoutesResolver`:
@@ -83,7 +83,6 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 
 - Todos los YAML en `schemas/intents/{create,read,update,delete}/` declaran `permission:` explícito.
 - Stubs catalog-only: `read/data-access.info.yaml`, `read/data-access.listar.yaml`, `update/data-access.editar.yaml` (sincronizables a `auth_item`).
-- Alias NLP (`intent-aliases.yaml`): solo ids inventados por el clasificador (p. ej. `agenda.crear-profesional-flow`); no sustitutos de rutas API retiradas.
 - `IntentPermissionResolver`: mapeo explícito con y sin sufijo `-flow` (p. ej. `mapa-camas` → `view_map`).
 
 ### Atributos
@@ -96,11 +95,12 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 - `AttributeGroupCatalog::getEntityGroupScopeChecker()` — lee `groups.scope_checker` o `edit.scope_checker` del YAML.
 - `AttributePermissionEvaluator` — solo `auth_item` (permisos atómicos) + scope desde YAML.
 
-### Cierre legacy (m260626–m260628)
+### Cierre legacy (m260626–m260629)
 
 - Elimina permisos huérfanos `Internacion.update` / `Internacion.view` (duplicados de `discharge` / `view_map`).
 - Elimina tabla `data_access_role_grant`.
-- Retira rutas API deprecated (`editar-flow`, `efectores/elegir*`) y re-enlaza permisos webvimark a rutas canónicas.
+- `m260628`: rutas agenda `editar-*` y `efectores/elegir*`.
+- `m260629`: `pes/elegir`, `servicios/elegir`, notificaciones `*-como-paciente` + re-enlaces RBAC.
 - Admin `/admin/data-access-grant` retirado; asignación en **Catálogo de permisos → Roles**.
 
 ### CLI

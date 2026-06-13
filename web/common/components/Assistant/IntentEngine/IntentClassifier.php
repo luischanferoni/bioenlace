@@ -293,7 +293,6 @@ PROMPT;
                     if ($label === '' || $iid === '') {
                         continue;
                     }
-                    $iid = \common\components\Assistant\Catalog\IntentIdAliasResolver::resolve($iid);
                     if (!isset($catalog->byActionId[$iid])) {
                         continue;
                     }

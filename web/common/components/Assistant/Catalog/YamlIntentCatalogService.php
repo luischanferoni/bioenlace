@@ -11,7 +11,7 @@ use Yii;
 use webvimark\modules\UserManagement\models\User;
 
 /**
- * Descubre intents conversacionales desde YAML (`SubIntentEngine/schemas/intents/**/*.yaml`).
+ * Descubre intents conversacionales desde YAML en SubIntentEngine/schemas/intents/ (árbol recursivo).
  *
  * Fuente de verdad de “qué puede sugerir” el asistente (IntentEngine / shortcuts) cuando trabajamos con flows.
  */

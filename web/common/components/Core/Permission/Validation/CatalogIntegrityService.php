@@ -37,6 +37,7 @@ final class CatalogIntegrityService
         $errors = array_merge($errors, $this->checkDomainOperationPolicyHandlers());
         $errors = array_merge($errors, $this->checkDomainOperationEmptyPolicies());
         $warnings = array_merge($warnings, $this->checkDomainOperationsCatalogCoverage());
+        $warnings = array_merge($warnings, $this->checkLogicalPermissionRoutePollution());
 
         $errors = array_values(array_unique($errors));
         $warnings = array_values(array_unique($warnings));
@@ -471,6 +472,44 @@ final class CatalogIntegrityService
             }
             $warnings[] = 'domain-operation-policies: «' . $operationKey
                 . '» no está en catálogo ni en domain_only_operations; agregar intent/permission o marcarla como solo dominio';
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Permisos lógicos del catálogo no deben apuntar a rutas ajenas a su intent (contaminación ghost).
+     *
+     * @return list<string>
+     */
+    private function checkLogicalPermissionRoutePollution(): array
+    {
+        $warnings = [];
+        $childTable = Yii::$app->db->schema->getTableSchema('{{%auth_item_child}}', true);
+        if ($childTable === null) {
+            return [];
+        }
+
+        /** @var array<string, list<string>> */
+        $allowedRoutes = [
+            'Internacion.discharge' => ['/api/clinical/episode-of-care/by-internacion'],
+            'Internacion.change_bed' => ['/api/clinical/episode-of-care/by-internacion'],
+        ];
+
+        foreach ($allowedRoutes as $permission => $allowed) {
+            $allowedFlip = array_flip($allowed);
+            $children = (new \yii\db\Query())
+                ->select('child')
+                ->from('{{%auth_item_child}}')
+                ->where(['parent' => $permission])
+                ->column();
+            foreach ($children as $route) {
+                if (!is_string($route) || isset($allowedFlip[$route])) {
+                    continue;
+                }
+                $warnings[] = 'RBAC: «' . $permission . '» enlazado a ruta «' . $route
+                    . '» fuera del rbac_route del intent; revisar auth_item_child';
+            }
         }
 
         return $warnings;

@@ -140,6 +140,34 @@ final class CatalogPermissionSyncService
         ];
     }
 
+    /**
+     * Asigna permisos lógicos a roles que alcanzan un ítem RBAC (permiso o ruta).
+     *
+     * @param list<string> $permissionKeys
+     */
+    public function grantPermissionsToRolesWithAccessToItem(string $sourceItemName, array $permissionKeys): int
+    {
+        $childTable = \Yii::$app->db->schema->getRawTableName('{{%auth_item_child}}');
+        if (\Yii::$app->db->schema->getTableSchema($childTable, true) === null) {
+            return 0;
+        }
+
+        $added = 0;
+        foreach ($this->resolveRoleNamesWithAccessToItem($sourceItemName) as $role) {
+            foreach ($permissionKeys as $permissionKey) {
+                $permissionKey = trim($permissionKey);
+                if ($permissionKey === '') {
+                    continue;
+                }
+                if ($this->ensureChildLink($childTable, $role, $permissionKey)) {
+                    $added++;
+                }
+            }
+        }
+
+        return $added;
+    }
+
     private function authItemExists(string $authItem, string $name): bool
     {
         return (new \yii\db\Query())

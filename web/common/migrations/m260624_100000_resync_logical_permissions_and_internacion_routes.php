@@ -1,6 +1,7 @@
 <?php
 
 use common\components\Core\Permission\CatalogPermissionSyncService;
+use common\components\Core\Permission\RbacRouteGhostInheritanceService;
 use yii\db\Migration;
 use yii\db\Query;
 
@@ -53,13 +54,10 @@ class m260624_100000_resync_logical_permissions_and_internacion_routes extends M
         }
 
         $now = time();
-        $routeLinks = 0;
         foreach (array_keys(self::ROUTE_INHERIT) as $route) {
             $this->ensureRoute($authItem, $route, $now);
         }
-        foreach (self::ROUTE_INHERIT as $childRoute => $parentRoute) {
-            $routeLinks += $this->inheritRouteFrom($childTable, $parentRoute, $childRoute);
-        }
+        $routeLinks = (new RbacRouteGhostInheritanceService())->propagateChain(self::ROUTE_INHERIT);
 
         $sync = (new CatalogPermissionSyncService())->sync(true);
         echo sprintf(
@@ -93,34 +91,5 @@ class m260624_100000_resync_logical_permissions_and_internacion_routes extends M
             'created_at' => $now,
             'updated_at' => $now,
         ])->execute();
-    }
-
-    private function inheritRouteFrom(string $childTable, string $parentRoute, string $childRoute): int
-    {
-        $parents = (new Query())
-            ->select('parent')
-            ->from($childTable)
-            ->where(['child' => $parentRoute])
-            ->column($this->db);
-
-        $added = 0;
-        foreach ($parents as $parent) {
-            if (!is_string($parent) || $parent === '') {
-                continue;
-            }
-            if ((new Query())->from($childTable)->where([
-                'parent' => $parent,
-                'child' => $childRoute,
-            ])->exists($this->db)) {
-                continue;
-            }
-            $this->db->createCommand()->insert($childTable, [
-                'parent' => $parent,
-                'child' => $childRoute,
-            ])->execute();
-            $added++;
-        }
-
-        return $added;
     }
 }

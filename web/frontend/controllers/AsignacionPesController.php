@@ -7,13 +7,13 @@ use yii\web\Controller;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 
 /**
- * Endpoints MVC legacy mínimos para asignaciones PES.
- * CRUD y listados viven en API v1 (`ProfesionalEfectorServicioController`).
+ * Endpoint MVC mínimo para autocomplete PES en formularios legacy (encuesta mamaria).
+ * Equivalente API: GET/POST /api/v1/profesional-efector-servicio/autocomplete.
  */
 class AsignacionPesController extends Controller
 {
     /**
-     * Autocomplete Select2 (misma forma que API /api/v1/profesional-efector-servicio/autocomplete).
+     * Autocomplete Select2.
      *
      * @no_intent_catalog
      */

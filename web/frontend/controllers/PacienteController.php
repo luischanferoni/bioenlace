@@ -175,60 +175,6 @@ class PacienteController extends Controller
     }
 
     /**
-     * @no_intent_catalog
-    */
-    public function getForms($id_persona)
-    {
-        $respuesta = false;
-        try {
-            $client = new \yii\httpclient\Client();
-            $request = str_replace('"#PERSONAID"', $id_persona, file_get_contents('../assets/jsonForms/formsPorPersonaId.json'));
-            $decodedText = urlencode($request);
-
-            $response = $client->createRequest()
-                ->setMethod('GET')
-                ->setUrl(Yii::$app->params['hostFormsAPI'] . '/instancias?filter=' . $decodedText)
-                ->setHeaders(['Content-type' => 'application/json'])
-                ->setData([])
-                ->send();
-
-                //var_dump($response->data);
-            if (!$response->isOk) {
-                $respuesta = false;
-            } else {
-                //var_dump($response->data);
-                foreach ($response->data as $instancia) {
-                    $profesionalNombre = null;
-                    if (!empty($instancia['createdBy'])) {
-                        $creador = Persona::findOne(['id_user' => (int) $instancia['createdBy']]);
-                        if ($creador !== null) {
-                            $profesionalNombre = $creador->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
-                        }
-                    }
-
-                    $respuesta[] = [
-                        'fecha' => $instancia['createdAt'],
-                        'resumen' => 'form/verinstancia/' . $instancia['id'],
-                        'parent_class' => 'Forms',
-                        'servicio' => null,
-                        'tipo' => 'Forms',
-                        'parent_id' => $instancia['form']['nombre'] ?? null,
-                        'profesional' => $profesionalNombre,
-                        'nombre_profesional' => $profesionalNombre,
-                        'id_profesional_efector_servicio' => null,
-                        'efector' => null,
-                        'tipo_historia' => 'Forms',
-                    ];
-                }
-            }
-        } catch (\Exception $e) {
-            return $respuesta;
-        }
-
-        return $respuesta;
-    }
-
-    /**
      * Busca un registro de Persona basado en su valor de clave primaria.
      * Si el modelo no se encuentra, se lanzará una excepción HTTP 404.
      * @param integer $id

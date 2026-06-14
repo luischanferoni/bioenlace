@@ -6,7 +6,7 @@ use yii\helpers\Html;
 /* @var $model common\models\EncuestaParchesMamarios */
 
 $this->title = 'Encuesta Parches Mamarios';
-$this->params['breadcrumbs'][] = ['label' => 'Encuesta Parches Mamarios', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Personas', 'url' => ['personas/buscar-persona']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="encuesta-parches-mamarios-create">

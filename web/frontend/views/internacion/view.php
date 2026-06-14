@@ -47,7 +47,7 @@ InternacionCambioCamaAsset::register($this);
             <h3 class="card-title mt-1"><?= "Cama " . $model->cama->nro_cama . " en Sala " . $model->cama->sala->descripcion . " del Piso/Sector " . $model->cama->sala->piso->descripcion; ?></h3>
             <div class="btn-group" role="group">
                 <?php if (Yii::$app->user->getIdEfector() === $model->cama->sala->piso->id_efector) : ?>
-                    <?php if ($model->enableCambioCama()) : ?>
+                    <?php if ($model->enableCambioCama() && !empty($cambioCtx)) : ?>
                         <?= Html::a(
                             '<svg fill="#000000" width="20" height="20" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                             <g data-name="Layer 21" id="Layer_21">                            
@@ -57,9 +57,7 @@ InternacionCambioCamaAsset::register($this);
                             </g>                            
                             </svg>'
                                 . ' Cambiar Cama',
-                            !empty($cambioCtx)
-                                ? Url::to(['internacion/view', 'id' => $model->id]) . '#cambio-cama'
-                                : ['internacion-hcama/create', 'id' => $model->id],
+                            Url::to(['internacion/view', 'id' => $model->id]) . '#cambio-cama',
                             [
                                 'class' => 'btn btn-primary rounded-pill mt-2 me-2',
                                 'data-bs-toggle' => 'tooltip',

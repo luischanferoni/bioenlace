@@ -14,13 +14,13 @@ Webvimark acoplaba login, caché de rutas (`AuthHelper`) y admin legacy de grupo
 
 ## Fuera de alcance inmediato
 
-- Quitar paquete Composer `webvimark/module-user-management` (login, CRUD usuarios).
-- Reemplazar todas las vistas que usan `User::hasRole` / `GhostHtml`.
+- Quitar paquete Composer `webvimark/module-user-management` (login, CRUD usuarios) — ver [fase 3](phases/03-login-usuarios-webvimark.md).
+- Reemplazar todas las vistas que usan `GhostHtml` (ya no `User::hasRole`: override en `common/models/User.php`).
 
 ## Criterios de cierre
 
 - [ ] Migración `m260630_*` aplicada en entornos.
-- [ ] Admin: menú «Acceso a datos» = catálogo + integridad únicamente.
-- [ ] URLs legacy (`data-access-catalog`, `data-access-attribute-field`, `permission-catalog/roles`) redirigen al catálogo.
+- [x] Admin: menú «Acceso a datos» = catálogo + integridad únicamente.
+- [x] URLs legacy (`data-access-catalog`, `data-access-attribute-field`, `permission-catalog/roles`, `user-management/permission|role|auth-item-group`) redirigen al catálogo.
 - [ ] `php yii catalog-integrity/check` sin errores.
-- [ ] Documentación estable actualizada en `arquitectura/rbac-catalogo-permisos.md`.
+- [x] Documentación estable actualizada en `arquitectura/rbac-catalogo-permisos.md`.

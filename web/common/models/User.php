@@ -8,7 +8,7 @@ use Yii;
 use webvimark\modules\UserManagement\models\User as webvimarkUser;
 
 /**
- * Usuario de aplicación. RBAC de rutas vía {@see BioenlaceAccessChecker} (Yii), no webvimark AuthHelper.
+ * Usuario de aplicación. RBAC vía {@see BioenlaceAccessChecker} / {@see BioenlaceSessionPermissions} (Yii), no webvimark AuthHelper.
  */
 class User extends webvimarkUser
 {
@@ -39,6 +39,74 @@ class User extends webvimarkUser
         }
 
         return false;
+    }
+
+    /**
+     * Roles asignados vía Yii RBAC ({@see BioenlaceDbManager}) y caché de sesión Bioenlace.
+     *
+     * @param string|array<int|string, string> $roles
+     */
+    public static function hasRole($roles, $superAdminAllowed = true): bool
+    {
+        if (Yii::$app->user->isGuest) {
+            return false;
+        }
+
+        $userId = (int) Yii::$app->user->id;
+        if ($userId <= 0) {
+            return false;
+        }
+
+        if ($superAdminAllowed && BioenlaceAccessChecker::isSuperadminUserId($userId)) {
+            return true;
+        }
+
+        $roleList = self::normalizeRoleList($roles);
+        if ($roleList === []) {
+            return false;
+        }
+
+        BioenlaceSessionPermissions::ensureUpToDate();
+        if (Yii::$app->has('session')) {
+            $sessionRoles = Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROLES, []);
+            if (is_array($sessionRoles)) {
+                foreach ($roleList as $role) {
+                    if (in_array($role, $sessionRoles, true)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        if (Yii::$app->has('authManager')) {
+            foreach ($roleList as $role) {
+                if (Yii::$app->authManager->checkAccess($userId, $role)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string|array<int|string, string> $roles
+     * @return list<string>
+     */
+    private static function normalizeRoleList($roles): array
+    {
+        $raw = is_array($roles) ? $roles : [$roles];
+        $out = [];
+        foreach ($raw as $role) {
+            if (is_string($role)) {
+                $role = trim($role);
+                if ($role !== '') {
+                    $out[] = $role;
+                }
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 
     /**

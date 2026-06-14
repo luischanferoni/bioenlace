@@ -7,11 +7,8 @@ use Yii;
 use yii\web\User;
 use yii\web\ForbiddenHttpException;
 
-use webvimark\modules\UserManagement\models\User as WebvimarkUser;
-use webvimark\modules\UserManagement\components\AuthHelper;
-use webvimark\modules\UserManagement\models\rbacDB\Route;
-
 use common\models\Persona;
+use common\components\Core\Permission\BioenlaceAccessChecker;
 
 /**
  * Class UserConfig
@@ -99,10 +96,11 @@ class UserConfig extends User
 	 */
 	protected function afterLogin($identity, $cookieBased, $duration)
 	{
-		if (!$identity->superadmin && !WebvimarkUser::hasRole("_x_efector_AdminSisse")) {
+		if (!$identity->superadmin && !\common\models\User::hasRole('_x_efector_AdminSisse')) {
 			throw new ForbiddenHttpException();
 		}
 
 		parent::afterLogin($identity, $cookieBased, $duration);
+		BioenlaceAccessChecker::refreshForIdentity($identity);
 	}
 }

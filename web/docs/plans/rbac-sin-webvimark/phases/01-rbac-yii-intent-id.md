@@ -16,11 +16,13 @@
 | Nav / links condicionales | `NavSisse`, `SisseGhostHtml` vía `User::canRoute` |
 | Controllers backend | 18 controllers → `BioenlaceBackendAccessControl` |
 | Legacy aliases | `ApiGhostAccessControl`, `SisseGhostAccessControl` → Bioenlace |
+| `User::hasRole` | Override → sesión Bioenlace + `authManager` |
+| Admin RBAC webvimark | `LegacyRbacRedirectController` (permission, role, auth-item-group) |
 
 ## Pendiente
 
-- Retirar paquete Composer `webvimark/module-user-management` (login, módulo user-management).
-- Reemplazar `User::hasRole` en vistas legacy por chequeo declarativo o rol en sesión Bioenlace.
+- Retirar paquete Composer `webvimark/module-user-management` (login, módulo user-management) — [fase 3](../03-login-usuarios-webvimark.md).
+- Migrar CRUD usuarios y `user-permission/set` fuera de webvimark.
 - Eliminar admin `user-management/*` del menú backend (usuarios siguen en webvimark hasta migrar login).
 
 ## Verificación

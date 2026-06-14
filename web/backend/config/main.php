@@ -127,6 +127,9 @@ return [
             'class' => 'webvimark\modules\UserManagement\UserManagementModule',
             'controllerMap' => [
                 'auth' => 'frontend\controllers\userManagement\AuthController',
+                'permission' => 'backend\controllers\LegacyRbacRedirectController',
+                'role' => 'backend\controllers\LegacyRbacRedirectController',
+                'auth-item-group' => 'backend\controllers\LegacyRbacRedirectController',
             ],
             //'registrationFormClass' => 'app\models\User',
             // 'enableRegistration' => true,

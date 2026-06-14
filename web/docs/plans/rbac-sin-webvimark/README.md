@@ -3,14 +3,15 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `rbac-sin-webvimark` |
-| Estado | En curso (fase 2 admin cerrada; fase 1 pendiente retiro webvimark) |
+| Estado | En curso (fases 1–2 cerradas; fase 3 login/usuarios pendiente) |
 | Objetivo | RBAC sobre Yii (`BioenlaceDbManager`); permisos por `intent_id`; web SPA auth-only; admin unificado en catálogo de permisos |
 
 ## Índice
 
 - [overview.md](./overview.md)
-- [phases/01-rbac-yii-intent-id.md](./phases/01-rbac-yii-intent-id.md) — **en curso / mayormente hecho**
+- [phases/01-rbac-yii-intent-id.md](./phases/01-rbac-yii-intent-id.md) — **cerrada** (retiro webvimark → fase 3)
 - [phases/02-admin-catalogo-unico.md](./phases/02-admin-catalogo-unico.md) — **cerrada**
+- [phases/03-login-usuarios-webvimark.md](./phases/03-login-usuarios-webvimark.md) — **en curso**
 
 ## Al cerrar
 

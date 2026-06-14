@@ -126,9 +126,11 @@ final class SubIntentEngine
             $visited[$currentId] = true;
 
             $missing = self::missingDraftFields($current, $draft);
-            if ($missing !== []) {
+            $missingRequires = self::missingRequiresFields($current, $draft);
+            if ($missingRequires !== []) {
                 $open = self::resolveOpenUiForSubintent($current, $content, $draft);
-                if ($open && !empty($open['action_id']) && !self::openUiBlockedByMissingDraft($open, $missing)) {
+                $actionId = AssistantDraftNormalizer::scalarString($open['action_id'] ?? '');
+                if ($open && $actionId !== '' && !self::openUiBlockedByMissingDraft($open, $missingRequires)) {
                     return self::buildOpenUiResponse(
                         $intentId,
                         $currentId,
@@ -147,7 +149,7 @@ final class SubIntentEngine
                     'text' => 'Necesito más información para continuar.',
                     'intent_id' => $intentId,
                     'subintent_id' => $currentId,
-                    'required_draft_fields' => $missing,
+                    'required_draft_fields' => $missingRequires,
                     'draft_delta' => (object) [],
                 ], $hints), $intentId, $currentId);
             }
@@ -156,7 +158,8 @@ final class SubIntentEngine
             $nextId = self::resolveNextSubintentId($current, $draft);
             $openWhenComplete = self::resolveOpenUiForSubintent($current, $content, $draft);
             if ($nextId === '') {
-                if ($openWhenComplete && !empty($openWhenComplete['action_id'])) {
+                $openActionId = AssistantDraftNormalizer::scalarString($openWhenComplete['action_id'] ?? '');
+                if ($openWhenComplete && $openActionId !== '') {
                     return self::buildOpenUiResponse(
                         $intentId,
                         $currentId,
@@ -465,7 +468,7 @@ final class SubIntentEngine
         }
         $out = [];
         foreach ($provides as $p) {
-            $p = is_string($p) ? trim($p) : '';
+            $p = AssistantDraftNormalizer::scalarString($p);
             if ($p === '' || strncmp($p, 'draft.', 6) !== 0) {
                 continue;
             }
@@ -591,24 +594,52 @@ final class SubIntentEngine
         // Para subintents “de selección”, lo que el paso **provee** (draft.*) también es obligatorio
         // para poder considerarlo completo y avanzar.
         $provides = isset($subintent['provides']) && is_array($subintent['provides']) ? $subintent['provides'] : [];
-        $needs = array_merge($requires, $provides);
+
+        return array_values(array_unique(array_merge(
+            self::missingDraftKeysForList($requires, $draft),
+            self::missingDraftKeysForList($provides, $draft)
+        )));
+    }
+
+    /**
+     * Solo `requires`: prerequisitos para abrir UI o pedir más datos (no incluye `provides` del formulario).
+     *
+     * @param array<string, mixed> $subintent
+     * @param array<string, mixed> $draft
+     * @return list<string>
+     */
+    private static function missingRequiresFields(array $subintent, array $draft): array
+    {
+        $requires = isset($subintent['requires']) && is_array($subintent['requires']) ? $subintent['requires'] : [];
+
+        return self::missingDraftKeysForList($requires, $draft);
+    }
+
+    /**
+     * @param list<mixed> $keys
+     * @param array<string, mixed> $draft
+     * @return list<string>
+     */
+    private static function missingDraftKeysForList(array $keys, array $draft): array
+    {
         $missing = [];
-        foreach ($needs as $r) {
-            $k = trim((string) $r);
+        foreach ($keys as $r) {
+            $k = AssistantDraftNormalizer::scalarString($r);
             if ($k === '') {
                 continue;
             }
-            // require format: draft.<field>
-            if (strncmp($k, 'draft.', 6) === 0) {
-                $field = substr($k, 6);
-                if ($field === '') {
-                    continue;
-                }
-                if (!isset($draft[$field]) || $draft[$field] === null || $draft[$field] === '') {
-                    $missing[] = $k;
-                }
+            if (strncmp($k, 'draft.', 6) !== 0) {
+                continue;
+            }
+            $field = substr($k, 6);
+            if ($field === '') {
+                continue;
+            }
+            if (!isset($draft[$field]) || $draft[$field] === null || $draft[$field] === '') {
+                $missing[] = $k;
             }
         }
+
         return array_values(array_unique($missing));
     }
 
@@ -697,7 +728,7 @@ final class SubIntentEngine
         ?array $flowSubmitBlock,
         array $hints = []
     ): array {
-        $actionId = (string) ($openUiDef['action_id'] ?? '');
+        $actionId = AssistantDraftNormalizer::scalarString($openUiDef['action_id'] ?? '');
         $open = self::resolveClientOpen($actionId, $userId);
 
         // Parametrización declarativa: query del mini-UI desde open_ui.params.
@@ -941,7 +972,7 @@ final class SubIntentEngine
         }
         $action = AssistantClientOpenEnricher::enrich($action);
         $clientOpen = $action['client_open'] ?? null;
-        if (!is_array($clientOpen) || trim((string) ($clientOpen['kind'] ?? '')) === '') {
+        if (!is_array($clientOpen) || AssistantDraftNormalizer::scalarString($clientOpen['kind'] ?? '') === '') {
             $clientOpen = self::clientOpenFromHttpRoute($item->route, $actionId);
         }
 
@@ -973,7 +1004,7 @@ final class SubIntentEngine
         ];
         $enriched = AssistantClientOpenEnricher::enrich($action);
         $clientOpen = $enriched['client_open'] ?? null;
-        if (is_array($clientOpen) && trim((string) ($clientOpen['kind'] ?? '')) !== '') {
+        if (is_array($clientOpen) && AssistantDraftNormalizer::scalarString($clientOpen['kind'] ?? '') !== '') {
             return $clientOpen;
         }
 

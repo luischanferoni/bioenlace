@@ -3,6 +3,7 @@
 namespace common\components\Assistant\EntryPoints\Chat\Envelope;
 
 use common\components\Assistant\FlowManifest\FlowManifest;
+use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Ui\ApiV1HttpRoute;
 use common\components\Ui\UiDefinitionTemplateManager;
@@ -47,8 +48,8 @@ final class AssistantEnvelope
             return self::interactiveFromMotor($motor);
         }
 
-        if (isset($motor['text']) && trim((string) $motor['text']) !== '') {
-            return self::message((string) $motor['text']);
+        if (AssistantDraftNormalizer::scalarString($motor['text'] ?? '') !== '') {
+            return self::message(AssistantDraftNormalizer::scalarString($motor['text'] ?? ''));
         }
 
         return self::message('');
@@ -199,8 +200,8 @@ final class AssistantEnvelope
     public static function flowFromMotor(array $motor): array
     {
         $text = self::resolvePrimaryText($motor);
-        $intentId = trim((string) ($motor['intent_id'] ?? ''));
-        $subintentId = trim((string) ($motor['subintent_id'] ?? ''));
+        $intentId = AssistantDraftNormalizer::scalarString($motor['intent_id'] ?? '');
+        $subintentId = AssistantDraftNormalizer::scalarString($motor['subintent_id'] ?? '');
         $draftDelta = self::normalizeObjectMap($motor['draft_delta'] ?? []);
 
         $manifest = isset($motor['flow_manifest']) && is_array($motor['flow_manifest'])
@@ -251,7 +252,7 @@ final class AssistantEnvelope
         $provides = [];
         if (isset($motor['provides']) && is_array($motor['provides'])) {
             foreach ($motor['provides'] as $p) {
-                $s = self::scalarString($p);
+                $s = AssistantDraftNormalizer::scalarString($p);
                 if ($s !== '') {
                     $provides[] = $s;
                 }
@@ -261,14 +262,14 @@ final class AssistantEnvelope
         $pending = [];
         if (isset($motor['required_draft_fields']) && is_array($motor['required_draft_fields'])) {
             foreach ($motor['required_draft_fields'] as $f) {
-                $s = self::scalarString($f);
+                $s = AssistantDraftNormalizer::scalarString($f);
                 if ($s !== '') {
                     $pending[] = $s;
                 }
             }
         }
 
-        if ($openUi === null || self::scalarString($openUi['action_id'] ?? '') === '') {
+        if ($openUi === null || AssistantDraftNormalizer::scalarString($openUi['action_id'] ?? '') === '') {
             return [
                 'active' => false,
                 'action_id' => '',
@@ -279,7 +280,7 @@ final class AssistantEnvelope
         }
 
         $co = isset($openUi['client_open']) && is_array($openUi['client_open']) ? $openUi['client_open'] : [];
-        if (self::scalarString($co['kind'] ?? '') === '' && $manifest !== null) {
+        if (AssistantDraftNormalizer::scalarString($co['kind'] ?? '') === '' && $manifest !== null) {
             $fromManifest = self::clientOpenFromManifest($manifest);
             if ($fromManifest !== null) {
                 $co = $fromManifest;
@@ -288,7 +289,7 @@ final class AssistantEnvelope
 
         return [
             'active' => true,
-            'action_id' => self::scalarString($openUi['action_id'] ?? ''),
+            'action_id' => AssistantDraftNormalizer::scalarString($openUi['action_id'] ?? ''),
             'client_open' => self::normalizeClientOpen($co),
             'provides' => $provides,
             'pending_fields' => $pending,
@@ -310,7 +311,7 @@ final class AssistantEnvelope
             ];
         }
 
-        $route = self::scalarString($flowSubmit['route'] ?? '');
+        $route = AssistantDraftNormalizer::scalarString($flowSubmit['route'] ?? '');
         if ($route === '') {
             return [
                 'active' => false,
@@ -320,7 +321,7 @@ final class AssistantEnvelope
             ];
         }
 
-        $method = self::scalarString($flowSubmit['method'] ?? 'POST', 'POST');
+        $method = AssistantDraftNormalizer::scalarString($flowSubmit['method'] ?? 'POST', 'POST');
         if ($method === '') {
             $method = 'POST';
         }
@@ -399,11 +400,11 @@ final class AssistantEnvelope
             if (!is_array($tab)) {
                 continue;
             }
-            $route = ApiV1HttpRoute::normalize(self::scalarString($tab['route'] ?? ''));
+            $route = ApiV1HttpRoute::normalize(AssistantDraftNormalizer::scalarString($tab['route'] ?? ''));
             if ($route === '') {
                 continue;
             }
-            $actionId = self::scalarString($tab['action_id'] ?? '');
+            $actionId = AssistantDraftNormalizer::scalarString($tab['action_id'] ?? '');
             $action = [
                 'action_id' => $actionId !== '' ? $actionId : 'flow.ui',
                 'display_name' => $actionId,
@@ -414,7 +415,7 @@ final class AssistantEnvelope
             ];
             $enriched = AssistantClientOpenEnricher::enrich($action);
             $co = $enriched['client_open'] ?? null;
-            if (is_array($co) && trim((string) ($co['kind'] ?? '')) !== '') {
+            if (is_array($co) && AssistantDraftNormalizer::scalarString($co['kind'] ?? '') !== '') {
                 if (($co['kind'] ?? '') === 'intent' && UiDefinitionTemplateManager::hasTemplateForApiRoute($route)) {
                     return [
                         'kind' => 'ui_json',
@@ -462,10 +463,10 @@ final class AssistantEnvelope
      */
     private static function normalizeClientOpen(array $co): array
     {
-        $kind = self::scalarString($co['kind'] ?? '');
+        $kind = AssistantDraftNormalizer::scalarString($co['kind'] ?? '');
         $api = isset($co['api']) && is_array($co['api']) ? $co['api'] : [];
-        $route = self::scalarString($api['route'] ?? '');
-        $method = self::scalarString($api['method'] ?? '');
+        $route = AssistantDraftNormalizer::scalarString($api['route'] ?? '');
+        $method = AssistantDraftNormalizer::scalarString($api['method'] ?? '');
         $query = isset($api['query']) && is_array($api['query']) ? $api['query'] : [];
         $queryOut = [];
         foreach ($query as $qk => $qv) {
@@ -494,24 +495,6 @@ final class AssistantEnvelope
     }
 
     /**
-     * @param mixed $value
-     */
-    private static function scalarString($value, string $default = ''): string
-    {
-        if ($value === null || is_array($value) || is_object($value)) {
-            return $default;
-        }
-        if (is_bool($value)) {
-            return $value ? '1' : '0';
-        }
-        if (!is_string($value) && !is_int($value) && !is_float($value)) {
-            return $default;
-        }
-
-        return trim((string) $value);
-    }
-
-    /**
      * @return array<string, mixed>
      */
     public static function emptyManifestScaffold(string $intentId): array
@@ -533,7 +516,7 @@ final class AssistantEnvelope
      */
     private static function looksLikeFlowMotorPayload(array $motor): bool
     {
-        if (trim((string) ($motor['intent_id'] ?? '')) === '') {
+        if (AssistantDraftNormalizer::scalarString($motor['intent_id'] ?? '') === '') {
             return false;
         }
 
@@ -548,12 +531,12 @@ final class AssistantEnvelope
      */
     private static function resolvePrimaryText(array $motor): string
     {
-        $text = self::scalarString($motor['text'] ?? '');
+        $text = AssistantDraftNormalizer::scalarString($motor['text'] ?? '');
         if ($text !== '') {
             return $text;
         }
 
-        return self::scalarString($motor['explanation'] ?? '');
+        return AssistantDraftNormalizer::scalarString($motor['explanation'] ?? '');
     }
 
     /**
@@ -584,10 +567,10 @@ final class AssistantEnvelope
                 continue;
             }
             $out[] = [
-                'entity' => trim((string) ($h['entity'] ?? '')),
-                'id' => trim((string) ($h['id'] ?? '')),
-                'value' => trim((string) ($h['value'] ?? '')),
-                'draft_field' => trim((string) ($h['draft_field'] ?? '')),
+                'entity' => AssistantDraftNormalizer::scalarString($h['entity'] ?? ''),
+                'id' => AssistantDraftNormalizer::scalarString($h['id'] ?? ''),
+                'value' => AssistantDraftNormalizer::scalarString($h['value'] ?? ''),
+                'draft_field' => AssistantDraftNormalizer::scalarString($h['draft_field'] ?? ''),
             ];
         }
 

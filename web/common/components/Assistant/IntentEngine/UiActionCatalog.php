@@ -5,6 +5,7 @@ namespace common\components\Assistant\IntentEngine;
 use Yii;
 use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Assistant\UiActions\ActionDiscoveryService;
+use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\Assistant\Catalog\CarePackUiActionCatalog;
 use common\components\Assistant\Catalog\ClinicalUiActionCatalog;
@@ -49,18 +50,19 @@ final class UiActionCatalog
         $byId = [];
 
         foreach ($raw as $a) {
-            $actionId = isset($a['action_id']) ? (string) $a['action_id'] : '';
+            $actionId = AssistantDraftNormalizer::scalarString($a['action_id'] ?? '');
             if ($actionId === '') {
                 continue;
             }
 
-            $display = (string) ($a['action_name'] ?? $a['display_name'] ?? '');
+            $display = AssistantDraftNormalizer::scalarString($a['action_name'] ?? $a['display_name'] ?? '');
             if ($display === '' || strncmp($display, 'RBAC:', 5) === 0) {
                 $display = $actionId;
             }
-            $desc = (string) ($a['description'] ?? '');
-            $entity = isset($a['entity']) ? (string) $a['entity'] : null;
-            $route = (string) ($a['route'] ?? '');
+            $desc = AssistantDraftNormalizer::scalarString($a['description'] ?? '');
+            $entityRaw = AssistantDraftNormalizer::scalarString($a['entity'] ?? '');
+            $entity = $entityRaw !== '' ? $entityRaw : null;
+            $route = AssistantDraftNormalizer::scalarString($a['route'] ?? '');
 
             $kw = [];
             foreach (['keywords', 'synonyms', 'tags'] as $k) {

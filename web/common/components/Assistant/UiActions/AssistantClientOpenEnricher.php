@@ -4,6 +4,7 @@ namespace common\components\Assistant\UiActions;
 
 use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Assistant\Catalog\YamlIntentCatalogService;
+use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Ui\ApiV1HttpRoute;
 use common\components\Ui\UiDefinitionTemplateManager;
 
@@ -19,11 +20,11 @@ final class AssistantClientOpenEnricher
      */
     public static function enrich(array $action): array
     {
-        $route = ApiV1HttpRoute::normalize((string) ($action['route'] ?? ''));
+        $route = ApiV1HttpRoute::normalize(AssistantDraftNormalizer::scalarString($action['route'] ?? ''));
         if ($route !== '') {
             $action['route'] = $route;
         }
-        $actionId = trim((string) ($action['action_id'] ?? ''));
+        $actionId = AssistantDraftNormalizer::scalarString($action['action_id'] ?? '');
 
         // Si la acción ya trae client_open.kind (ej. nativas descubiertas por catálogo), respetarlo,
         // pero asegurarnos de que la estructura mínima exista.

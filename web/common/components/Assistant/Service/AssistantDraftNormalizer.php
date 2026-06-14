@@ -28,14 +28,34 @@ final class AssistantDraftNormalizer
         }
 
         if (self::isEmpty($draft, 'encounter_id') && !self::isEmpty($draft, 'id_consulta')) {
-            $draft['encounter_id'] = trim((string) $draft['id_consulta']);
+            $draft['encounter_id'] = self::scalarString($draft['id_consulta']);
         }
 
         if (self::isEmpty($draft, 'care_plan_id') && !self::isEmpty($draft, 'id_care_plan')) {
-            $draft['care_plan_id'] = trim((string) $draft['id_care_plan']);
+            $draft['care_plan_id'] = self::scalarString($draft['id_care_plan']);
         }
 
         return $draft;
+    }
+
+    /**
+     * Coerción segura a string escalar (evita "Array to string conversion" en motores/envelope).
+     *
+     * @param mixed $value
+     */
+    public static function scalarString($value, string $default = ''): string
+    {
+        if ($value === null || is_array($value) || is_object($value)) {
+            return $default;
+        }
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            return $default;
+        }
+
+        return trim((string) $value);
     }
 
     /**

@@ -62,4 +62,14 @@ class AuthController extends WebvimarkAuthController
     {
         return $this->redirect(['/auth/password-recovery-receive', 'token' => $token]);
     }
+
+    public function actionConfirmEmail()
+    {
+        return $this->redirect(['/auth/confirm-email']);
+    }
+
+    public function actionConfirmEmailReceive($token)
+    {
+        return $this->redirect(['/auth/confirm-email-receive', 'token' => $token]);
+    }
 }

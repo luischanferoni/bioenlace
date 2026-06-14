@@ -3,6 +3,7 @@
 namespace frontend\controllers;
 
 use common\models\forms\ChangeOwnPasswordForm;
+use common\models\forms\ConfirmEmailForm;
 use common\models\forms\PasswordRecoveryForm;
 use common\models\LoginForm;
 use common\models\User;
@@ -12,7 +13,7 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 /**
- * Autenticación web: login, logout, recuperación y cambio de contraseña.
+ * Autenticación web: login, logout, contraseña y confirmación de e-mail.
  */
 class AuthController extends Controller
 {
@@ -116,5 +117,51 @@ class AuthController extends Controller
         }
 
         return $this->render('@frontend/views/login/change-own-password', ['model' => $model]);
+    }
+
+    public function actionConfirmEmail()
+    {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(['/auth/login']);
+        }
+
+        $user = User::findOne((int) Yii::$app->user->id);
+        if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
+            throw new ForbiddenHttpException();
+        }
+
+        if ((int) $user->email_confirmed === 1) {
+            return $this->render('@frontend/views/login/confirm-email-success', ['user' => $user]);
+        }
+
+        $model = new ConfirmEmailForm([
+            'email' => $user->email,
+            'user' => $user,
+        ]);
+
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            if ($model->sendEmail(false)) {
+                return $this->refresh();
+            }
+            Yii::$app->session->setFlash('error', 'No se pudo enviar el mensaje al e-mail indicado.');
+        }
+
+        return $this->render('@frontend/views/login/confirm-email', ['model' => $model]);
+    }
+
+    public function actionConfirmEmailReceive($token)
+    {
+        $user = User::findByConfirmationToken($token);
+        if ($user === null) {
+            throw new NotFoundHttpException('Token no encontrado o expirado.');
+        }
+
+        $user->email_confirmed = 1;
+        $user->removeConfirmationToken();
+        $user->save(false);
+
+        $this->layout = '@frontend/views/layouts/loginLayout.php';
+
+        return $this->render('@frontend/views/login/confirm-email-success', ['user' => $user]);
     }
 }

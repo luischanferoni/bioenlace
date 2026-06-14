@@ -85,6 +85,8 @@ return [
                 'user-management/auth/change-own-password' => 'auth/change-own-password',
                 'user-management/auth/password-recovery' => 'auth/password-recovery',
                 'user-management/auth/password-recovery-receive/<token:[\w\-]+>' => 'auth/password-recovery-receive',
+                'user-management/auth/confirm-email' => 'auth/confirm-email',
+                'user-management/auth/confirm-email-receive/<token:[\w\-]+>' => 'auth/confirm-email-receive',
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',

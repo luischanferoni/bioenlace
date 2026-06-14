@@ -15,19 +15,18 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 | Vistas login | `frontend/views/login/login.php` y `loginLayout.php` sin webvimark |
 | Modelo identidad | `common/models/User` AR propio (`IdentityInterface`); `identityClass` → `common\models\User` |
 | Contraseña | `ChangeOwnPasswordForm`, `PasswordRecoveryForm` + `/auth/change-own-password`, `/auth/password-recovery*` |
+| Confirmación e-mail | `ConfirmEmailForm` + `/auth/confirm-email`, `/auth/confirm-email-receive` |
 
 ## Pendiente
 
 | Pieza | Notas |
 |-------|-------|
-| Confirmación de e-mail | Sustituir `user-management/auth/confirm-email` |
 | CRUD usuarios | Migrar `user-management/user/*` y `user-permission/set` al admin Bioenlace o API |
 | Composer | Quitar `webvimark/module-user-management` cuando no queden referencias |
 | `pathMap` vistas vendor | Eliminar overrides en `backend/config/main.php` |
 
 ## Qué se mantiene temporalmente
 
-- Confirmación de e-mail en `user-management/auth/confirm-email`.
 - CRUD usuarios webvimark (`user-management/user`, `user-permission/set`) para alta de cuentas staff.
 - `UserVisitLog` webvimark (registro de visitas post-login).
 
@@ -35,7 +34,7 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 
 - Vistas legacy (`nomenclador/*`, `internacion/*`, `SesionOperativaService`) responden igual con `User::hasRole`.
 - URLs `/user-management/permission/index`, `/user-management/role/*`, `/user-management/auth-item-group/*` redirigen al catálogo.
-- URLs `/auth/login`, `/site/login` y legacy `/user-management/auth/login` muestran el formulario Bioenlace.
+- URLs `/auth/confirm-email` y legacy `user-management/auth/confirm-email*` redirigen al flujo Bioenlace.
 
 ## Despliegue (fases 1–2)
 

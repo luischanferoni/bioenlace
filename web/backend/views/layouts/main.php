@@ -128,7 +128,7 @@ $home = Yii::$app->getHomeUrl();
                                     'linkOptions' => ['class' => 'dropdown-item border-end'],
                                     'items' => [
                                         ['label' => 'Modificar Contraseña', 'url' => ['/auth/change-own-password']],
-                                        ['label' => 'Confirmacion de email', 'url' => ['/user-management/auth/confirm-email']],
+                                        ['label' => 'Confirmacion de email', 'url' => ['/auth/confirm-email']],
                                     ],
                                 ],
                                 [

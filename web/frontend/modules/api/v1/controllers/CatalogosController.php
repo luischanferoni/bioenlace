@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers;
 
-use common\models\ConsultasConfiguracion;
+use common\models\Clinical\EncounterDefinition;
 
 /**
  * API Catálogos: listas estáticas para clientes (web/móvil).
@@ -24,7 +24,7 @@ class CatalogosController extends BaseController
      */
     public function actionEncounterClasses()
     {
-        $encounterClasses = ConsultasConfiguracion::ENCOUNTER_CLASS;
+        $encounterClasses = EncounterDefinition::ENCOUNTER_CLASS;
         $formatted = [];
         foreach ($encounterClasses as $code => $label) {
             $formatted[] = [

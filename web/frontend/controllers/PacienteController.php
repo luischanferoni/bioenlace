@@ -8,6 +8,8 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use common\models\Person\Persona;
 use common\models\Clinical\Encounter;
+use common\models\Clinical\EncounterDefinition;
+use common\models\ConsultasConfiguracion;
 use frontend\filters\SisseActionFilter;
 
 /**
@@ -180,22 +182,22 @@ class PacienteController extends Controller
         if ($idConsulta) {
             $encounter = Encounter::findOne((int) $idConsulta);
             if ($encounter !== null) {
-                $configuracion = \common\models\ConsultasConfiguracion::find()
-                    ->where(['id_servicio' => $encounter->service_id])
+                $configuracion = EncounterDefinition::find()
+                    ->where(['service_id' => $encounter->service_id])
                     ->andWhere(['encounter_class' => $encounter->encounter_class])
                     ->andWhere('deleted_at is null')
                     ->one();
             }
         } else {
             // Determinar configuración basada en el servicio y encounter class
-            $resultadoValidacion = \common\models\ConsultasConfiguracion::validarPermisoAtencion($parent, $parentId, $paciente);
+            $resultadoValidacion = ConsultasConfiguracion::validarPermisoAtencion($parent, $parentId, $paciente);
             if (!$resultadoValidacion['success']) {
                 return $resultadoValidacion;
             }
 
-            /** @var ?\common\models\ConsultasConfiguracion $configuracion */
-            $configuracion = \common\models\ConsultasConfiguracion::find()
-                ->where(['id_servicio' => $resultadoValidacion['idServicio']])
+            /** @var ?EncounterDefinition $configuracion */
+            $configuracion = EncounterDefinition::find()
+                ->where(['service_id' => $resultadoValidacion['idServicio']])
                 ->andWhere(['encounter_class' => $resultadoValidacion['encounterClass']])
                 ->andWhere('deleted_at is null')
                 ->one();

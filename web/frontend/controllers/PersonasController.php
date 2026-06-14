@@ -342,7 +342,7 @@ class PersonasController extends Controller
      */
     protected function findModel($id)
     {
-        if (($model = persona::findOne($id)) !== null) {
+        if (($model = Persona::findOne($id)) !== null) {
             return $model;
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
@@ -463,10 +463,10 @@ class PersonasController extends Controller
             $nombre = explode(":", $data['nombre']);
             $dni = $dni[0];
             $nombre = $nombre[0];
-            $persona = \common\models\Persona::getDatosPersonaXDni($dni, $nombre);
+            $persona = Persona::getDatosPersonaXDni($dni, $nombre);
 
             //PUCO
-            $persona_puco = \common\models\Persona::existe_en_puco($dni);
+            $persona_puco = Persona::existe_en_puco($dni);
             if (count($persona_puco) > 0) {
 
                 $nombre_obrasocial = '';

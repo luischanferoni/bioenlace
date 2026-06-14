@@ -9,7 +9,7 @@ use yii\bootstrap5\NavBar;
 use frontend\assets\AppAsset;
 use frontend\assets\BioenlaceApiClientAsset;
 use yii\helpers\Url;
-use common\models\ConsultasConfiguracion;
+use common\models\Clinical\EncounterDefinition;
 
 AppAsset::register($this);
 
@@ -27,7 +27,7 @@ $nombreUsuario = Yii::$app->user->getNombreUsuario();
 $listaEfectores = Yii::$app->user->getEfectores();
 
 $encounterClass = Yii::$app->user->getEncounterClass();
-$listaEncounters = ConsultasConfiguracion::ENCOUNTER_CLASS;
+$listaEncounters = EncounterDefinition::ENCOUNTER_CLASS;
 $itemsMenuEncounters = [];
 if (!is_null($listaEncounters)) {
     foreach ($listaEncounters as $key => $value) {

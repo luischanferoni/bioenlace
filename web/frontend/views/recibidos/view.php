@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 use common\models\Mensajes;
-use \webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\Recibidos 

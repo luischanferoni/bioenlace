@@ -246,7 +246,7 @@ class Persona extends \yii\db\ActiveRecord
      */
     public function getUser()
     {
-        return $this->hasOne(\webvimark\modules\UserManagement\models\User::className(), ['id' => 'id_user']);
+        return $this->hasOne(\common\models\User::className(), ['id' => 'id_user']);
     }
 
     /**

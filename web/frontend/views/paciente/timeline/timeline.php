@@ -6,7 +6,7 @@ use yii\bootstrap5\Modal;
 
 use common\models\Persona;
 use common\helpers\TimelineHelper;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use yii\web\View;
 
 

@@ -10,7 +10,7 @@ use common\models\busquedas\ReferenciasBusquedas;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 use yii\helpers\Json;
 

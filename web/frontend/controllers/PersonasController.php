@@ -43,7 +43,7 @@ use common\models\DiagnosticoConsultaRepository as DCRepo;
 use frontend\controllers\Model;
 use frontend\controllers\MpiApiController;
 use frontend\filters\SisseActionFilter;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use frontend\components\UserRequest;
 use yii\authclient\InvalidResponseException;
 use yii\httpclient\Client;

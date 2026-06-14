@@ -6,7 +6,7 @@ use yii\helpers\Url;
 use yii\bootstrap5\Modal;
 use yii\bootstrap5\Dropdown;
 
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 use common\models\Persona;
 

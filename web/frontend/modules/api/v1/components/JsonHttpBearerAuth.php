@@ -73,7 +73,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         $userId = $decoded->user_id;
         $idPersonaClaim = isset($decoded->id_persona) ? (int) $decoded->id_persona : 0;
 
-        $userModel = \webvimark\modules\UserManagement\models\User::findOne($userId);
+        $userModel = \common\models\User::findOne($userId);
         if (!$userModel) {
             $response->statusCode = 401;
             $response->data = [
@@ -85,7 +85,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             Yii::$app->end();
         }
 
-        if ($userModel->status !== \webvimark\modules\UserManagement\models\User::STATUS_ACTIVE) {
+        if ($userModel->status !== \common\models\User::STATUS_ACTIVE) {
             $response->statusCode = 401;
             $response->data = [
                 'success' => false,

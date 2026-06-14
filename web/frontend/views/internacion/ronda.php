@@ -6,7 +6,7 @@ use yii\helpers\Url;
 use common\models\Persona;
 use common\components\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 
 /* @var $this yii\web\View */

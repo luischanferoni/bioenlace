@@ -6,7 +6,7 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\web\JsExpression;
 
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use kartik\select2\Select2;
 
 use common\models\ProfesionalEfectorServicio;

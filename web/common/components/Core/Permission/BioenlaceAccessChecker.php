@@ -104,6 +104,6 @@ final class BioenlaceAccessChecker
             return true;
         }
 
-        return (int) $identity->status === 10;
+        return (int) $identity->status === 1;
     }
 }

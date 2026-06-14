@@ -8,7 +8,7 @@ use yii\base\Component;
 use yii\base\InvalidConfigException;
 use yii\helpers\Json;
 use yii\httpclient\Client;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use common\models\Efector;
 use common\models\Persona;
 

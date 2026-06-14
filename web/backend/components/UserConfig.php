@@ -19,7 +19,7 @@ class UserConfig extends User
 	/**
 	 * @inheritdoc
 	 */
-	public $identityClass = 'webvimark\modules\UserManagement\models\User';
+	public $identityClass = \common\models\User::class;
 
 	/**
 	 * @inheritdoc

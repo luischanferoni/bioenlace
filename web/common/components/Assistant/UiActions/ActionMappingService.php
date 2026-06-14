@@ -4,7 +4,7 @@ namespace common\components\Assistant\UiActions;
 
 use Yii;
 use common\components\Core\Service\ClientContextService;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use webvimark\modules\UserManagement\models\rbacDB\Route;
 
 /**

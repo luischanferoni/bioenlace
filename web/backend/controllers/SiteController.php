@@ -10,7 +10,7 @@ use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 
 //use webvimark\modules\UserManagement\UserManagementModule;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 use common\models\LoginForm;
 use common\models\Efector;

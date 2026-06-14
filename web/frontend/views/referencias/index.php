@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 use yii\grid\GridView;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use common\models\Clinical\Encounter;
 use common\models\Persona;
 use yii\helpers\Url;

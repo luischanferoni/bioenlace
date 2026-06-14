@@ -25,7 +25,7 @@ use common\models\DiagnosticoConsultaRepository as DCRepo;
 use \frontend\components\UserRequest;
 // Filtros y componentes
 use frontend\filters\SisseActionFilter;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use yii\authclient\InvalidResponseException;
 
 /**

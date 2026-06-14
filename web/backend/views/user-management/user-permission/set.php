@@ -2,7 +2,7 @@
 /**
  * @var yii\web\View $this
  * @var array $permissionsByGroup
- * @var webvimark\modules\UserManagement\models\User $user
+ * @var common\models\User $user
  */
 
 use webvimark\modules\UserManagement\components\GhostHtml;

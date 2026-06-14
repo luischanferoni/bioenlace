@@ -6,7 +6,7 @@ use Yii;
 use common\components\Core\Service\ClientContextService;
 use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Core\Permission\BioenlaceSessionPermissions;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 /**
  * Resuelve el conjunto de rutas permitidas para un usuario o roles sin repetir

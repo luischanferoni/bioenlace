@@ -1,7 +1,7 @@
 <?php
 
 namespace common\models;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use Yii;
 
 /**

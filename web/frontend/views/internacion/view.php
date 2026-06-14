@@ -8,7 +8,7 @@ use common\models\SegNivelInternacion;
 use common\models\Servicio;
 use yii\bootstrap5\Modal;
 
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\SegNivelInternacion */

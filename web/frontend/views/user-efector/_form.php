@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\widgets\ActiveForm;
 use common\models\Efector;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use yii\helpers\ArrayHelper;
 use kartik\select2\Select2;
 /* @var $this yii\web\View */

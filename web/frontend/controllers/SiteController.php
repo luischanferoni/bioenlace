@@ -9,7 +9,7 @@ use yii\helpers\ArrayHelper;
 
 use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Core\Permission\BioenlaceSessionPermissions;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 use common\components\Clinical\Inpatient\Service\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;

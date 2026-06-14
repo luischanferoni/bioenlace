@@ -6,7 +6,7 @@ use yii\widgets\ActiveForm;
 use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 //use common\models\Mensajes; 
-use \webvimark\modules\UserManagement\models\User;
+use common\models\User;
 //use common\models\User;
 
 

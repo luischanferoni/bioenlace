@@ -8,7 +8,7 @@ use yii\helpers\Inflector;
 use yii\helpers\Url;
 use ReflectionClass;
 use ReflectionMethod;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use webvimark\modules\UserManagement\models\rbacDB\Route;
 
 /**

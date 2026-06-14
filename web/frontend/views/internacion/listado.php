@@ -5,7 +5,7 @@ use yii\grid\GridView;
 
 use common\models\Persona;
 
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\busquedas\SegNivelInternacionBusqueda */

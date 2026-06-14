@@ -7,7 +7,7 @@ use yii\helpers\FileHelper;
 use yii\web\NotFoundHttpException;
 
 use webvimark\components\AdminDefaultController;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use webvimark\modules\UserManagement\models\search\UserSearch;
 
 use common\models\Persona;

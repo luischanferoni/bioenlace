@@ -31,7 +31,7 @@ use common\models\ProfesionalEfectorServicio;
 use common\components\Clinical\PatientHistoriaUrl;
 use common\components\Clinical\Inpatient\Service\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 
 /**
  * InternacionController implements the CRUD actions for SegNivelInternacion model.

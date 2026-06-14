@@ -13,12 +13,13 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 | Login backend admin | `UserConfig::afterLogin` usa `User::hasRole` + `BioenlaceAccessChecker::refreshForIdentity` |
 | Login web canónico | `AuthController` + `LoginForm` en `/auth/login` (frontend y backend) |
 | Vistas login | `frontend/views/login/login.php` y `loginLayout.php` sin webvimark |
+| Modelo identidad | `common/models/User` AR propio (`IdentityInterface`); `identityClass` → `common\models\User` |
+| Bugfix | `BioenlaceAccessChecker::isActiveIdentity` comparaba `status === 10` → `=== 1` |
 
 ## Pendiente
 
 | Pieza | Notas |
 |-------|-------|
-| `identityClass` | Sustituir `webvimark\…\User` por modelo propio en `BaseUserConfig` / `UserConfig` |
 | Recuperación / cambio contraseña | Sustituir `user-management/auth/password-recovery`, `change-own-password` |
 | CRUD usuarios | Migrar `user-management/user/*` y `user-permission/set` al admin Bioenlace o API |
 | Composer | Quitar `webvimark/module-user-management` cuando no queden referencias |
@@ -28,7 +29,7 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 
 - Recuperación y cambio de contraseña en `user-management/auth/*`.
 - CRUD usuarios webvimark (`user-management/user`, `user-permission/set`) para alta de cuentas staff.
-- `User` extiende `webvimarkUser` solo por herencia de modelo AR.
+- `UserVisitLog` webvimark (registro de visitas post-login).
 
 ## Verificación
 

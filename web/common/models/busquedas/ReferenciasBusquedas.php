@@ -6,7 +6,7 @@ use common\models\Clinical\Encounter;
 use common\models\Referencia;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;

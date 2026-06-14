@@ -7,7 +7,7 @@ use yii\base\DynamicModel;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use common\models\Persona;
 use common\models\ServiciosEfector;
 use common\models\busquedas\EncounterReporteBusqueda;

@@ -1,6 +1,6 @@
 <?php
 
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use webvimark\modules\UserManagement\UserManagementModule;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
@@ -8,7 +8,7 @@ use webvimark\extensions\BootstrapSwitch\BootstrapSwitch;
 
 /**
  * @var yii\web\View $this
- * @var webvimark\modules\UserManagement\models\User $model
+ * @var common\models\User $model
  * @var yii\bootstrap\ActiveForm $form
  */
 ?>

@@ -307,7 +307,7 @@ class AuthController extends BaseController
         ?string $encounterClass = null,
         bool $autoPes = true
     ): array {
-        $identity = \webvimark\modules\UserManagement\models\User::findOne((int) $user->id);
+        $identity = \common\models\User::findOne((int) $user->id);
         if (!$identity) {
             throw new \RuntimeException('No se pudo cargar identidad webvimark para user_id ' . $user->id);
         }

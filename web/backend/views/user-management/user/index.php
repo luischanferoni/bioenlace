@@ -2,7 +2,7 @@
 
 use webvimark\modules\UserManagement\components\GhostHtml;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use webvimark\modules\UserManagement\UserManagementModule;
 use yii\helpers\Html;
 use yii\helpers\ArrayHelper;

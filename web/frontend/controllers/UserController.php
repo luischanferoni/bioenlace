@@ -6,7 +6,7 @@ use Yii;
 use yii\web\NotFoundHttpException;
 
 use webvimark\components\AdminDefaultController;
-use webvimark\modules\UserManagement\models\User;
+use common\models\User;
 use webvimark\modules\UserManagement\models\search\UserSearch;
 
 use frontend\filters\SisseActionFilter;

@@ -4,7 +4,7 @@ use yii\helpers\Html;
 
 
 /* @var $this yii\web\View */
-/* @var $model common\models\persona */
+/* @var $model common\models\Person\Persona */
 
 $this->title = 'Alta de Persona';
 $this->params['breadcrumbs'][] = ['label' => 'Personas', 'url' => ['index']];

@@ -7,7 +7,7 @@ use yii\filters\AccessControl;
 use yii\web\Controller;
 use yii\filters\VerbFilter;
 use common\models\Efector;
-use common\models\Persona;
+use common\models\Person\Persona;
 use yii\httpclient\Client;
 use yii\base\DynamicModel;
 use common\models\Barrios;

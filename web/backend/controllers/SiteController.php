@@ -14,7 +14,7 @@ use common\models\User;
 use common\models\LoginForm;
 use common\models\Efector;
 use common\models\ContactForm;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 class SiteController extends Controller
 {

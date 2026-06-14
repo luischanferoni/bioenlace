@@ -3,7 +3,7 @@
 namespace backend\components;
 
 use common\components\Core\Permission\BioenlaceAccessChecker;
-use common\models\Persona;
+use common\models\Person\Persona;
 use frontend\components\BaseUserConfig;
 use Yii;
 use yii\web\ForbiddenHttpException;

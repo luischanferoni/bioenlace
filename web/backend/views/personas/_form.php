@@ -27,7 +27,7 @@ use kartik\depdrop\DepDrop;
 //use dosamigos\google\maps\layers\BicyclingLayer;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\persona */
+/* @var $model common\models\Person\Persona */
 /* @var $form yii\widgets\ActiveForm */
 
 $localidades = \common\models\Localidad::find()->indexBy('id_localidad')->asArray()->all();

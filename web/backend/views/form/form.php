@@ -6,7 +6,7 @@ use kartik\date\DatePicker;
 use kartik\time\TimePicker;
 use kartik\select2\Select2;
 use yii\httpclient\Client;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 echo '<div class="row d-flex align-items-center  mb-5"> 
 <div class="card">

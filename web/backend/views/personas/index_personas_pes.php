@@ -44,7 +44,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'format' => 'raw',
                 'value' => function ($data) {
                     if ($data['id_user'] != 0) {
-                        $persona = new common\models\Persona();
+                        $persona = new common\models\Person\Persona();
                         $nombre_usuario = $persona->getNombredeusuario($data['id_user']);
 
                         return Html::a($nombre_usuario, ['user-management/user/update', 'id' => $data['id_user']]);

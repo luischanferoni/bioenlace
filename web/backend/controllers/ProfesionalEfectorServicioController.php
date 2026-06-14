@@ -13,7 +13,7 @@ use yii\web\Response;
 
 use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
 use common\models\ProfesionalEfectorServicio;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\Servicio;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 

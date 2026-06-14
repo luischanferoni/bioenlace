@@ -28,7 +28,7 @@ use yii\helpers\BaseJson;
 use yii\helpers\Json;
 
 //agregamos el modulo de la extension para el control de acceso
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\busquedas\PersonaBusqueda;
 use common\models\PersonaTelefono;
 use common\models\Tipo_telefono;
@@ -874,7 +874,7 @@ public function actionListaCandidatos(){
             $parents = $_POST['depdrop_parents'];
             $cat_id = empty($parents[0]) ? null : $parents[0];
             if ($cat_id != null) {
-                //$data = \common\models\Persona::getLocalidadxiddepartamento($cat_id);
+                //$data = \common\models\Person\Persona::getLocalidadxiddepartamento($cat_id);
                 $model_persona = new Persona;
                 $out = $model_persona->getLocalidadxiddepartamento($cat_id);
 
@@ -941,10 +941,10 @@ public function actionListaCandidatos(){
             $nombre = explode(":", $data['nombre']);
             $dni = $dni[0];
             $nombre = $nombre[0];
-            $persona = \common\models\Persona::getDatosPersonaXDni($dni, $nombre);
+            $persona = \common\models\Person\Persona::getDatosPersonaXDni($dni, $nombre);
             
             //PUCO
-            $persona_puco = \common\models\Persona::existe_en_puco($dni);
+            $persona_puco = \common\models\Person\Persona::existe_en_puco($dni);
             if (count($persona_puco) > 0) {
 
                 $nombre_obrasocial='';

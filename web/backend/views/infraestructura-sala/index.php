@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
 use common\models\InfraestructuraPiso;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\Servicio;
 
 /* @var $this yii\web\View */

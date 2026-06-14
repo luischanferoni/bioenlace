@@ -38,7 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'label'=> 'Responsable',
                 'attribute'=>'id_responsable',
                 'value'=> $model->responsable
-                    ? $model->responsable->getNombreCompleto(\common\models\Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                    ? $model->responsable->getNombreCompleto(\common\models\Person\Persona::FORMATO_NOMBRE_A_OA_N_ON)
                     : 'No definido',
             ],
             //'id_piso',

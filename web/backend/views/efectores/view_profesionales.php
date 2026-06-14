@@ -11,7 +11,7 @@ use kartik\select2\Select2;
 
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\busquedas\ProfesionalEfectorServicioBusqueda */

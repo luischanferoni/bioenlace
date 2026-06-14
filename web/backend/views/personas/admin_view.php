@@ -14,7 +14,7 @@ use common\models\Tipo_telefono;
 use common\models\Localidad;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\persona */
+/* @var $model common\models\Person\Persona */
 
 //$this->title = $model->id_persona; 
 $this->title = "Datos Personales de: " . $model->apellido . " " . $model->otro_apellido . ", " . $model->nombre . " " . $model->otro_nombre;

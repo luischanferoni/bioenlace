@@ -13,6 +13,8 @@ use yii\web\NotFoundHttpException;
  */
 class RbacRoleController extends Controller
 {
+    private const VIEW_PREFIX = '@backend/views/rbac-role';
+
     public function behaviors(): array
     {
         return [
@@ -32,7 +34,7 @@ class RbacRoleController extends Controller
     {
         $service = new RbacRoleAdminService();
 
-        return $this->render('index', [
+        return $this->render(self::VIEW_PREFIX . '/index', [
             'roles' => $service->listAll(),
         ]);
     }
@@ -57,7 +59,7 @@ class RbacRoleController extends Controller
             }
         }
 
-        return $this->render('create', ['model' => $model]);
+        return $this->render(self::VIEW_PREFIX . '/create', ['model' => $model]);
     }
 
     public function actionUpdate(string $name)
@@ -92,7 +94,7 @@ class RbacRoleController extends Controller
             $intents = $service->intentPermissionsForRole($name);
         }
 
-        return $this->render('update', [
+        return $this->render(self::VIEW_PREFIX . '/update', [
             'role' => $role,
             'intents' => $intents,
         ]);

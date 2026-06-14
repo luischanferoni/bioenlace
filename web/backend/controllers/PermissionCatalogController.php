@@ -4,6 +4,7 @@ namespace backend\controllers;
 
 use common\components\Core\Permission\CatalogPermissionSyncService;
 use common\components\Core\Permission\PermissionCatalogService;
+use common\components\Core\Permission\PermissionRolesAssignmentService;
 use common\components\Core\Permission\RolePermissionAssignmentService;
 use common\components\Core\Permission\RolePermissionMatrixService;
 use common\components\Core\Permission\Validation\CatalogIntegrityService;
@@ -28,7 +29,7 @@ class PermissionCatalogController extends Controller
                 'actions' => [
                     'integrity' => ['GET', 'POST'],
                     'sync' => ['POST'],
-                    'edit-role' => ['GET', 'POST'],
+                    'edit-attribute-roles' => ['GET', 'POST'],
                 ],
             ],
         ];
@@ -37,29 +38,43 @@ class PermissionCatalogController extends Controller
     public function actionIndex()
     {
         $catalog = new PermissionCatalogService();
-        $matrix = (new RolePermissionMatrixService())->buildMatrix();
+        $matrix = new RolePermissionMatrixService();
+        $attributesByEntity = $catalog->listAttributesGroupedByEntity();
         $rolesByKey = [];
         $inAuthItemByKey = [];
-        foreach ($matrix as $row) {
-            $rolesByKey[$row['key']] = $row['roles'];
-            $inAuthItemByKey[$row['key']] = (bool) $row['in_auth_item'];
+        $assignment = new RolePermissionAssignmentService();
+
+        foreach ($catalog->listAttributes() as $row) {
+            $key = trim((string) ($row['key'] ?? ''));
+            if ($key === '') {
+                continue;
+            }
+            $rolesByKey[$key] = $matrix->buildMatrixRowRoles($key);
+            $inAuthItemByKey[$key] = $assignment->permissionExistsInAuthItem($key);
         }
 
-        $unregistered = array_filter(
-            $matrix,
-            static fn (array $r): bool => !$r['in_auth_item'] && strncmp($r['key'], '/api/', 5) !== 0
-        );
-        $unassigned = array_filter($matrix, static fn (array $r): bool => $r['roles'] === []);
+        $intentInAuth = [];
+        foreach ($catalog->listIntents() as $intent) {
+            $key = trim((string) ($intent['key'] ?? ''));
+            if ($key !== '' && strncmp($key, '/api/', 5) !== 0) {
+                $intentInAuth[$key] = $assignment->permissionExistsInAuthItem($key);
+            }
+        }
+
+        $unregisteredAttributes = count(array_filter(
+            $inAuthItemByKey,
+            static fn (bool $ok): bool => !$ok
+        ));
 
         return $this->render('index', [
             'intents' => $catalog->listIntents(),
-            'attributes' => $catalog->listAttributes(),
+            'attributesByEntity' => $attributesByEntity,
             'flowSteps' => $catalog->listFlowStepDependencies(),
             'rolesByKey' => $rolesByKey,
             'inAuthItemByKey' => $inAuthItemByKey,
-            'roleNames' => (new RolePermissionAssignmentService())->listRoleNames(),
-            'unregisteredCount' => count($unregistered),
-            'unassignedCount' => count($unassigned),
+            'intentInAuth' => $intentInAuth,
+            'roleNames' => $assignment->listRoleNames(),
+            'unregisteredCount' => $unregisteredAttributes,
         ]);
     }
 
@@ -74,7 +89,7 @@ class PermissionCatalogController extends Controller
 
     public function actionRoles()
     {
-        return $this->redirect(['index']);
+        return $this->redirect(['/user-management/role/index']);
     }
 
     public function actionSync()
@@ -95,34 +110,53 @@ class PermissionCatalogController extends Controller
         return $this->redirect(['index']);
     }
 
+    /** @deprecated Redirige al CRUD de roles (intents por rol). */
     public function actionEditRole(string $role)
     {
-        $assignment = new RolePermissionAssignmentService();
-        $role = trim($role);
-        if ($role === '' || !in_array($role, $assignment->listRoleNames(), true)) {
-            throw new NotFoundHttpException('Rol no encontrado.');
+        return $this->redirect(['/user-management/role/update', 'name' => $role]);
+    }
+
+    public function actionEditAttributeRoles(string $key)
+    {
+        $key = trim($key);
+        $catalog = new PermissionCatalogService();
+        $attributeRow = null;
+        foreach ($catalog->listAttributes() as $row) {
+            if ((string) ($row['key'] ?? '') === $key) {
+                $attributeRow = $row;
+                break;
+            }
+        }
+        if ($attributeRow === null) {
+            throw new NotFoundHttpException('Permiso de atributo no encontrado en el catálogo.');
         }
 
-        $permissions = $assignment->catalogPermissionsForRole($role);
+        $service = new PermissionRolesAssignmentService();
+        $assignment = new RolePermissionAssignmentService();
+        $roleNames = $assignment->listRoleNames();
+        $assignedRoles = array_flip($service->rolesWithPermission($key));
 
         if (Yii::$app->request->isPost) {
-            $selected = Yii::$app->request->post('permissions', []);
+            $selected = Yii::$app->request->post('roles', []);
             if (!is_array($selected)) {
                 $selected = [];
             }
             try {
-                $assignment->saveRolePermissions($role, $selected);
-                Yii::$app->session->setFlash('success', 'Permisos actualizados para «' . $role . '».');
+                $service->saveRolesForPermission($key, $selected);
+                Yii::$app->session->setFlash('success', 'Roles actualizados para «' . $key . '».');
             } catch (\InvalidArgumentException $e) {
                 Yii::$app->session->setFlash('error', $e->getMessage());
             }
 
-            return $this->redirect(['edit-role', 'role' => $role]);
+            return $this->redirect(['edit-attribute-roles', 'key' => $key]);
         }
 
-        return $this->render('edit-role', [
-            'roleName' => $role,
-            'permissions' => $permissions,
+        return $this->render('edit-attribute-roles', [
+            'permissionKey' => $key,
+            'attributeRow' => $attributeRow,
+            'roleNames' => $roleNames,
+            'assignedRoles' => $assignedRoles,
+            'inAuthItem' => $assignment->permissionExistsInAuthItem($key),
         ]);
     }
 }

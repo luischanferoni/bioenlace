@@ -81,6 +81,24 @@ final class PermissionCatalogService
     }
 
     /**
+     * @return array<string, list<array<string, mixed>>>
+     */
+    public function listAttributesGroupedByEntity(): array
+    {
+        $groups = [];
+        foreach ($this->listAttributes() as $row) {
+            $entity = trim((string) ($row['entity'] ?? ''));
+            if ($entity === '') {
+                $entity = '_sin_entidad';
+            }
+            $groups[$entity][] = $row;
+        }
+        ksort($groups);
+
+        return $groups;
+    }
+
+    /**
      * Pasos open_ui agrupados por intent (heredan permiso del intent padre).
      *
      * @return list<array<string, mixed>>

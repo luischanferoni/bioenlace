@@ -139,6 +139,11 @@ final class RolePermissionAssignmentService
         ])->execute();
     }
 
+    public function permissionExistsInAuthItem(string $key): bool
+    {
+        return $this->permissionExists($key);
+    }
+
     private function permissionExists(string $key): bool
     {
         return (new Query())

@@ -60,8 +60,8 @@ if (Yii::$app->has('user-management')) {
 							<?= Html::encode($aRole->description ?: $roleName) ?>
 						</label>
 						<?= Html::a(
-							'Permisos del rol',
-							['/permission-catalog/edit-role', 'role' => $roleName],
+							'Permisos del rol (intents)',
+							['/user-management/role/update', 'name' => $roleName],
 							['class' => 'btn btn-link btn-sm', 'target' => '_blank']
 						) ?>
 					</div>
@@ -83,7 +83,9 @@ if (Yii::$app->has('user-management')) {
 	</div>
 	<div class="col-sm-4">
 		<div class="alert alert-info">
-			Los <strong>permisos</strong> se administran por rol en
+			Los <strong>intents</strong> se administran por rol en
+			<?= Html::a('Roles RBAC', ['/user-management/role/index']) ?>.
+			Los <strong>atributos</strong> en
 			<?= Html::a('Catálogo de permisos', ['/permission-catalog/index']) ?>.
 		</div>
 	</div>

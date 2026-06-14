@@ -53,8 +53,9 @@ Entrypoint: **`/admin/permission-catalog/index`**.
 | Pantalla | URL |
 |----------|-----|
 | Catálogo de permisos | `/permission-catalog/index` |
+| Roles RBAC (CRUD + intents) | `/user-management/role/index` |
 | Integridad del catálogo | `/permission-catalog/integrity` |
-| Editar grants de un rol | `/permission-catalog/edit-role?role=…` |
+| Editar roles de un atributo | `/permission-catalog/edit-attribute-roles?key=…` |
 
 Menú backend «Acceso a datos»: solo **Catálogo** + **Integridad**.
 
@@ -65,7 +66,8 @@ Menú backend «Acceso a datos»: solo **Catálogo** + **Integridad**.
 | `/data-access-catalog/*` | Catálogo de permisos |
 | `/data-access-attribute-field/*` | Catálogo de permisos |
 | `/permission-catalog/roles` | Catálogo de permisos |
-| `/user-management/permission/*`, `/role/*`, `/auth-item-group/*` | Catálogo (`LegacyRbacRedirectController`) |
+| `/user-management/permission/*`, `/auth-item-group/*` | Catálogo (`LegacyRbacRedirectController`) |
+| `/user-management/role/*` (excepto CRUD activo) | `RbacRoleController` |
 | `/user-management/auth/*` | `/auth/*` |
 
 ### Usuarios y roles
@@ -73,7 +75,10 @@ Menú backend «Acceso a datos»: solo **Catálogo** + **Integridad**.
 | Función | URL / controlador |
 |---------|-------------------|
 | Listado / CRUD usuarios | `/user-management/user/*` → `UserAccountController` |
+| CRUD roles RBAC | `/user-management/role/*` → `RbacRoleController` |
 | Asignar roles a usuario | `/user-management/user-permission/set` → `UserRoleController` |
+| Asignar intents a rol | `/user-management/role/update?name=…` |
+| Asignar atributos a roles | `/permission-catalog/edit-attribute-roles?key=…` |
 | Login web | `/auth/login`, `/auth/logout`, `/auth/change-own-password`, … |
 | Alta desde persona (frontend) | `/user/crear` → `frontend\controllers\UserController` |
 
@@ -153,7 +158,7 @@ web/frontend/components/
 web/common/models/User.php
 web/common/models/forms/{LoginForm,ChangeOwnPasswordForm,...}.php
 web/common/modules/UserManagementCompatModule.php
-web/backend/controllers/{PermissionCatalogController,UserAccountController,UserRoleController,LegacyRbacRedirectController}.php
+web/backend/controllers/{PermissionCatalogController,RbacRoleController,UserAccountController,UserRoleController,LegacyRbacRedirectController}.php
 web/common/components/Ui/Grid/{GridPageSize,GridBulkActions,StatusColumn}.php
 ```
 

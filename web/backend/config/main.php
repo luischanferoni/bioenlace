@@ -120,7 +120,7 @@ return [
             'controllerMap' => [
                 'auth' => 'frontend\controllers\userManagement\AuthController',
                 'permission' => 'backend\controllers\LegacyRbacRedirectController',
-                'role' => 'backend\controllers\LegacyRbacRedirectController',
+                'role' => 'backend\controllers\RbacRoleController',
                 'auth-item-group' => 'backend\controllers\LegacyRbacRedirectController',
                 'user' => 'backend\controllers\UserAccountController',
                 'user-permission' => 'backend\controllers\UserRoleController',

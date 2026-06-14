@@ -55,6 +55,21 @@ final class RolePermissionMatrixService
     }
 
     /**
+     * Roles con acceso directo o vía ruta enlazada al permiso lógico.
+     *
+     * @return list<string>
+     */
+    public function buildMatrixRowRoles(string $permissionKey): array
+    {
+        $permissionKey = trim($permissionKey);
+        if ($permissionKey === '') {
+            return [];
+        }
+
+        return $this->rolesWithPermissionKey($permissionKey);
+    }
+
+    /**
      * @return list<string>
      */
     public function listRoleNames(): array

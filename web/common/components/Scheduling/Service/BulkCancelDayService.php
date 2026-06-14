@@ -6,7 +6,7 @@ use common\components\Core\Service\Push\PushNotificationSender;
 use Yii;
 use yii\db\Expression;
 use common\models\ProfesionalEfectorServicio;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\EfectorTurnosConfig;
 use common\models\TurnoEventoAudit;
 use common\models\TurnoNotificacionProgramada;

@@ -3,7 +3,7 @@
 namespace common\components\Clinical\Service;
 
 use common\models\Clinical\Encounter;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use Yii;
 
 /**

@@ -16,7 +16,7 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\ConsultasConfiguracion;
 use common\models\DiagnosticoConsulta;
-use common\models\Persona;
+use common\models\Person\Persona;
 use Yii;
 use yii\base\Component;
 

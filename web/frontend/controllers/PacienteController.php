@@ -22,7 +22,6 @@ use common\models\Guardia;
 use common\models\Alergias;
 use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
-use \frontend\components\UserRequest;
 // Filtros y componentes
 use frontend\filters\SisseActionFilter;
 use common\models\User;

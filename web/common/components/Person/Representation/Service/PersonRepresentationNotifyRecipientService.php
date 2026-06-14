@@ -7,7 +7,7 @@ use common\components\Person\Representation\Enum\PersonRelatedStatus;
 use common\components\Person\Representation\Enum\RepresentationRegime;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 /**
  * Resuelve a quién enviar notificaciones push de producto paciente cuando el sujeto

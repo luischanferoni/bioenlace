@@ -9,7 +9,7 @@ use common\components\Clinical\Inpatient\Service\InternacionCamaEstadoService;
 use common\components\Clinical\Inpatient\Service\InternacionIndicadoresService;
 use common\components\Clinical\Inpatient\Service\InternacionMapaCamasService;
 use common\components\Ui\UiScreenService;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\SegNivelInternacion;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;

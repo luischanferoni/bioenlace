@@ -4,7 +4,7 @@ namespace common\components\Organization\Service\Seed;
 
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\models\Efector;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\Servicio;

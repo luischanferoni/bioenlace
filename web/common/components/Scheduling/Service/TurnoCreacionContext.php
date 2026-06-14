@@ -3,7 +3,7 @@
 namespace common\components\Scheduling\Service;
 
 use Yii;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 
 /**
  * Contexto del actor al persistir un turno (autogestión vs gestión para tercero).

@@ -10,7 +10,7 @@ use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Person\RelationshipType;
-use common\models\Persona;
+use common\models\Person\Persona;
 use Yii;
 
 /**

@@ -14,7 +14,7 @@ use common\models\Clinical\CareAssistanceResponse;
 use common\models\Clinical\CareCohortPack;
 use common\models\Clinical\CareEncounterPack;
 use common\models\Clinical\Encounter;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use Yii;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;

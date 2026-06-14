@@ -10,7 +10,7 @@ use common\models\Clinical\Encounter;
 use common\models\Efector;
 use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;
-use common\models\Persona;
+use common\models\Person\Persona;
 use yii\db\ActiveQuery;
 
 final class GuardiaQueueService

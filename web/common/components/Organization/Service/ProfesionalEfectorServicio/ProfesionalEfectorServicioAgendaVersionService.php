@@ -4,7 +4,7 @@ namespace common\components\Organization\Service\ProfesionalEfectorServicio;
 
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ProfesionalEfectorServicioAgendaVersion;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\components\Scheduling\Service\TurnoResolucionService;
 use Yii;
 use yii\web\BadRequestHttpException;

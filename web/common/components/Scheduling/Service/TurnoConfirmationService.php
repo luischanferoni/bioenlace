@@ -3,7 +3,7 @@
 namespace common\components\Scheduling\Service;
 
 use common\models\Clinical\Encounter;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\TurnoNotificacionProgramada;
 use common\models\EfectorTurnosConfig;
 use common\models\TurnoEventoAudit;

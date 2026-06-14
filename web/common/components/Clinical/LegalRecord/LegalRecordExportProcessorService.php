@@ -6,7 +6,7 @@ use common\components\Core\Service\Push\PushNotificationSender;
 use common\components\Core\Service\Push\PushNotificationTypes;
 use common\models\Clinical\LegalRecordExportAudit;
 use common\models\Clinical\LegalRecordExportRequest;
-use common\models\Persona;
+use common\models\Person\Persona;
 use Yii;
 
 /**

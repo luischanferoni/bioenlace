@@ -4,7 +4,7 @@ namespace common\components\Scheduling\Service;
 
 use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
 use common\models\ProfesionalEfectorServicioAgendaVersion;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\TurnoResolucion;
 
 /**

@@ -3,7 +3,7 @@
 namespace common\models;
 
 use Yii;
-use common\models\snomed\SnomedHallazgos;
+use common\models\Terminology\Snomed\SnomedHallazgos;
 use common\models\DiagnosticoConsultaRepository as DiagnosticoRepo;
 
 /**

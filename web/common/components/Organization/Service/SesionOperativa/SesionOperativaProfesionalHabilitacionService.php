@@ -6,7 +6,7 @@ use common\models\ConsultasConfiguracion;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ProfesionalEfectorServicioCondicionLaboral;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\Efector;
 use common\models\Servicio;
 use common\models\ServiciosEfector;

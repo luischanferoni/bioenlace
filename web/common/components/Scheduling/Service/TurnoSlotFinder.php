@@ -3,7 +3,7 @@
 namespace common\components\Scheduling\Service;
 
 use Yii;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\ProfesionalEfectorServicio;
 use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
 use common\models\ProfesionalEfectorServicioAgenda;

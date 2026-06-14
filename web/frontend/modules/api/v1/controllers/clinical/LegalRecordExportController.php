@@ -6,7 +6,7 @@ use common\components\Clinical\LegalRecord\LegalRecordExportAccessService;
 use common\components\Clinical\LegalRecord\LegalRecordExportRequestService;
 use common\models\Clinical\LegalRecordExportAudit;
 use common\models\Clinical\LegalRecordExportRequest;
-use common\models\Persona;
+use common\models\Person\Persona;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\NotFoundHttpException;

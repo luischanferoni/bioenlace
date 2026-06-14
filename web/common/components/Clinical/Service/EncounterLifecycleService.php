@@ -6,7 +6,7 @@ use common\components\Clinical\Enum\EncounterStatus;
 use common\components\Clinical\CareCohort\Service\CareEncounterOrchestrator;
 use common\components\Clinical\PatientSummary\PatientEncounterSummaryPublishService;
 use common\models\Clinical\Encounter;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use common\models\Turno as TurnoAlias;

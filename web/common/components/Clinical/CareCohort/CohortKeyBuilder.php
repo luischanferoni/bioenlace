@@ -6,7 +6,7 @@ use common\components\Clinical\AiContext\PatientAiContextBuilder;
 use common\models\Clinical\Encounter;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 use common\models\Efector;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 /**
  * Perfil de cohorte estable y clave hash para reutilizar packs de asistencia/seguimiento/educación.

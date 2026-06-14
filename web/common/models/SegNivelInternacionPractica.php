@@ -3,7 +3,7 @@
 namespace common\models;
 
 use Yii;
-use common\models\snomed\SnomedProcedimientos;
+use common\models\Terminology\Snomed\SnomedProcedimientos;
 
 /**
  * This is the model class for table "seg_nivel_internacion_practica".

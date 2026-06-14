@@ -2,7 +2,7 @@
 
 namespace common\components\Scheduling\Service;
 
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\Efector;
 
 /**

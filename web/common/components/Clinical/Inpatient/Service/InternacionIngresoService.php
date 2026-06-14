@@ -10,7 +10,7 @@ use common\models\CoberturaMedica;
 use common\models\Efector;
 use common\models\Guardia;
 use common\models\InfraestructuraCama;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\SegNivelInternacion;
 use common\models\SegNivelInternacionHcama;

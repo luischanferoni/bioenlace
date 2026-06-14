@@ -4,7 +4,7 @@ namespace common\models;
 
 use Yii;
 
-use common\models\snomed\SnomedHallazgos;
+use common\models\Terminology\Snomed\SnomedHallazgos;
 
 /**
  * This is the model class for table "consulta_odontologia_diagnosticos".

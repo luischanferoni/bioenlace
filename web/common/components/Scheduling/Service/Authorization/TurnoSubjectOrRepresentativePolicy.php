@@ -7,7 +7,7 @@ use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Core\Permission\Domain\DomainOperationPolicyInterface;
 use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\components\Person\Representation\Service\PersonRepresentationAccessService;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 
 /**
  * Paciente titular o representante con permiso de agenda sobre el turno.

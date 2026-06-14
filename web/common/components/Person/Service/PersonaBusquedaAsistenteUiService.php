@@ -2,7 +2,7 @@
 
 namespace common\components\Person\Service;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 
 /**
  * Items para listados ui_json del asistente (búsqueda de personas).

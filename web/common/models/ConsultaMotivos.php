@@ -2,7 +2,7 @@
 
 namespace common\models;
 
-use common\models\snomed\SnomedProblemas;
+use common\models\Terminology\Snomed\SnomedProblemas;
 
 use Yii;
 

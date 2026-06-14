@@ -42,7 +42,7 @@ use common\components\Core\Form\NestedFormModels;
 use common\components\Integrations\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
 use common\models\User;
-use frontend\components\UserRequest;
+use common\components\Core\Http\UserRequest;
 use yii\authclient\InvalidResponseException;
 use yii\httpclient\Client;
 use \yii\authclient\OAuth2;

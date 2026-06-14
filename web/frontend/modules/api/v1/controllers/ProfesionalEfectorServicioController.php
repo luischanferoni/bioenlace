@@ -13,7 +13,7 @@ use common\components\Organization\Service\ProfesionalEfectorServicio\Profesiona
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Ui\UiScreenService;
 use common\components\UiSelectOptionSourceResolver;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 

@@ -2,7 +2,7 @@
 
 namespace common\components\Person\Service;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 
 /**
  * Actualiza el grupo Persona.identidad_basica (sin HTTP).

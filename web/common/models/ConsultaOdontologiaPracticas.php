@@ -3,8 +3,8 @@
 namespace common\models;
 
 use yii\db\Query;
-use common\models\snomed\SnomedProcedimientos;
-use common\models\snomed\SnomedHallazgos;
+use common\models\Terminology\Snomed\SnomedProcedimientos;
+use common\models\Terminology\Snomed\SnomedHallazgos;
 
 use Yii;
 

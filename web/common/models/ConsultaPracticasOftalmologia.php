@@ -4,7 +4,7 @@ namespace common\models;
 
 use yii\validators\NumberValidator;
 
-use common\models\snomed\SnomedProcedimientos;
+use common\models\Terminology\Snomed\SnomedProcedimientos;
 use Yii;
 
 /**

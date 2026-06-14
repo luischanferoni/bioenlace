@@ -6,7 +6,7 @@ use common\components\Clinical\Enum\RequestStatus;
 use common\components\Clinical\Service\ReferralRequestService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
-use common\models\snomed\SnomedProcedimientos;
+use common\models\Terminology\Snomed\SnomedProcedimientos;
 use yii\data\ActiveDataProvider;
 use Yii;
 

@@ -4,7 +4,7 @@ namespace common\components\Person\Service;
 
 use Yii;
 use common\components\Integrations\Identity\DiditClient;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\PersonaMpi;
 use common\models\User;
 use common\models\rbac\AuthRole;

@@ -7,7 +7,7 @@ use common\components\Clinical\Service\CarePlanPresentationService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\Encounter;
-use common\models\Persona;
+use common\models\Person\Persona;
 use yii\db\Query;
 
 /**

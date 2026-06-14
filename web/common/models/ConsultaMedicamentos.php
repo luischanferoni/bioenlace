@@ -10,7 +10,7 @@
 
 namespace common\models;
 
-use common\models\snomed\SnomedMedicamentos;
+use common\models\Terminology\Snomed\SnomedMedicamentos;
 use Yii;
 
 /**

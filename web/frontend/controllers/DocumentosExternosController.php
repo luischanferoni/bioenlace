@@ -10,7 +10,7 @@ use yii\web\UploadedFile;
 use yii\base\Exception;
 
 use frontend\filters\SisseActionFilter;
-use frontend\components\UserRequest;
+use common\components\Core\Http\UserRequest;
 
 use common\models\DocumentosExternos;
 use common\models\Adjunto;

@@ -4,7 +4,7 @@ namespace common\components\Person\Representation\Service;
 
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 /**
  * Serialización API de vínculos de representación.

@@ -5,7 +5,7 @@ namespace common\components\Person\Representation\Service;
 use common\components\Core\Service\Push\PushNotificationSender;
 use common\components\Core\Service\Push\PushNotificationTypes;
 use common\models\Person\PersonRelatedAuditLog;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 /**
  * Notificación opcional al paciente (N9) cuando un representante actúa en su nombre.

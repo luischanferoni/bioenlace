@@ -2,10 +2,10 @@
 
 namespace common\components\Organization\Service\ProfesionalEfectorServicio;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use yii\db\Expression;
 use yii\db\Query;
 

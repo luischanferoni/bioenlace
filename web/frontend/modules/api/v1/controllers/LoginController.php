@@ -6,7 +6,7 @@ use Yii;
 use Exception;
 use yii\web\UnauthorizedHttpException;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\User;
 use common\models\Localidad;
 use common\models\Barrios;

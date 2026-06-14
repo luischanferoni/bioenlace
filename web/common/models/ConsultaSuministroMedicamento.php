@@ -4,7 +4,7 @@ namespace common\models;
 
 use common\models\Clinical\Encounter;
 use Yii;
-use common\models\snomed\SnomedMedicamentos;
+use common\models\Terminology\Snomed\SnomedMedicamentos;
 
 
 /**

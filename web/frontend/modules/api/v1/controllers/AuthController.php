@@ -9,7 +9,7 @@ use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\models\BioenlaceDbManager;
 use common\models\ProfesionalEfectorServicio;
 use common\models\User;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\components\DiditClient;
 use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Core\Permission\RbacRoleQueryService;

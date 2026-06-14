@@ -6,11 +6,11 @@ use Yii;
 use common\components\Clinical\Service\EncounterAppointmentReasonLookupService;
 use common\models\Cirugia;
 use common\models\InfraestructuraPiso;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\QuirofanoSala;
 use common\models\ServiciosEfector;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 
 /**
  * Listados clínicos del día para staff (AMB / IMP piso / IMP quirófano).

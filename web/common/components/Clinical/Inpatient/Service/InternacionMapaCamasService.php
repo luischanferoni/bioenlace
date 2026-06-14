@@ -3,7 +3,7 @@
 namespace common\components\Clinical\Inpatient\Service;
 
 use common\models\InfraestructuraCama;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\SegNivelInternacion;
 use yii\db\ActiveQuery;
 

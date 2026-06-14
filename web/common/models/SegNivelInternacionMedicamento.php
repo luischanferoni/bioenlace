@@ -3,7 +3,7 @@
 namespace common\models;
 
 use Yii;
-use common\models\snomed\SnomedMedicamentos;
+use common\models\Terminology\Snomed\SnomedMedicamentos;
 
 
 /**

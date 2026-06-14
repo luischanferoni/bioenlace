@@ -3,7 +3,7 @@
 namespace common\components\Scheduling\Service;
 
 use common\components\Clinical\Service\EncounterLifecycleService;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\Clinical\Encounter;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;

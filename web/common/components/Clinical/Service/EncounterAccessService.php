@@ -4,7 +4,7 @@ namespace common\components\Clinical\Service;
 
 use common\components\Person\Representation\Service\PersonRepresentationAccessService;
 use common\models\Clinical\Encounter;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use Yii;
 

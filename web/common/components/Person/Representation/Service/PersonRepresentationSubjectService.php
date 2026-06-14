@@ -4,7 +4,7 @@ namespace common\components\Person\Representation\Service;
 
 use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\models\Person\PersonRelatedAuditLog;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use Yii;
 use yii\web\ForbiddenHttpException;
 

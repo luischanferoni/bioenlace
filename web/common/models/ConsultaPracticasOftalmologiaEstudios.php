@@ -2,7 +2,7 @@
 
 namespace common\models;
 
-use common\models\snomed\SnomedProcedimientos;
+use common\models\Terminology\Snomed\SnomedProcedimientos;
 use Yii;
 
 /**

@@ -4,7 +4,7 @@ namespace common\components\Scheduling\Service\Quirofano;
 
 use Yii;
 use yii\web\ForbiddenHttpException;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 
 /**

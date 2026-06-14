@@ -11,7 +11,7 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 
 use frontend\filters\SisseActionFilter;
-use frontend\components\UserRequest;
+use common\components\Core\Http\UserRequest;
 use common\models\ProfesionalEfectorServicio;
 
 /**

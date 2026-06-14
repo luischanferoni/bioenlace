@@ -5,7 +5,7 @@ namespace common\components\Scheduling\Service\Authorization;
 use common\components\Core\Permission\Domain\DomainOperationContext;
 use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Core\Permission\Domain\DomainOperationPolicyInterface;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 
 /**
  * Staff: el turno pertenece al efector de la sesión operativa.

@@ -4,7 +4,7 @@ namespace frontend\modules\api\v1\components;
 
 use Yii;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use yii\filters\auth\HttpBearerAuth;
 use yii\web\UnauthorizedHttpException;

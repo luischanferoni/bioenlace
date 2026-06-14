@@ -29,10 +29,6 @@ return [
             'timeFormat' => 'php:H:i:s',
             'defaultTimeZone' => 'America/Argentina/Tucuman',
         ],
-	   'jwt' => [
-      		'class' => \sizeg\jwt\Jwt::class,
-      		'key'   => 'yt14zxFvJUdIXnOIHP87TpfR42JKyi6Ni2wUX5JoHpLiLtikL1p7vdHWcvGIpCfK',
-    	],        
         'request' => [
             'csrfParam' => '_csrf-backend',
             'baseUrl' => $baseUrl,

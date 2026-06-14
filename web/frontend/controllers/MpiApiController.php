@@ -1,6 +1,7 @@
 <?php
 namespace frontend\controllers;
 
+use common\components\Integrations\Mpi\MpiJwtTokenService;
 use Yii;
 
 /**
@@ -29,18 +30,10 @@ class MpiApiController
         );
 	*/	
 
-        $jwt = Yii::$app->jwt;
-        $signer = $jwt->getSigner('HS512');
-        $key = $jwt->getKey();
-        $time = time();
-
-        $token = $jwt->getBuilder()
-                ->issuedBy('https://sisse.msalsgo.gob.ar') // Configures the issuer (iss claim)
-                ->permittedFor('https://esalud.msaludsgo.gov.ar/seipa/web/api/v1') // Configures the audience (aud claim)
-                ->issuedAt($time) // Configures the time that the token was issue (iat claim)
-                ->expiresAt($time + 15) // Configures the expiration time of the token (exp claim)
-                ->withClaim('id_cliente', "sisse") 
-                ->getToken($signer, $key); // Retrieves the generated token
+        $token = MpiJwtTokenService::buildBearerToken(
+            'https://sisse.msalsgo.gob.ar',
+            'https://esalud.msaludsgo.gov.ar/seipa/web/api/v1'
+        );
 
         $headers = [
                 'Authorization: Bearer '.$token,         
@@ -198,20 +191,10 @@ class MpiApiController
 
     public function tokenPrueba()
     {
-        $jwt = Yii::$app->jwt;
-        $signer = $jwt->getSigner('HS512');
-        $key = $jwt->getKey();
-        $time = time();
-    
-        $token = $jwt->getBuilder()
-                ->issuedBy('http://sisse.redes-sgo.gob.ar') // Configures the issuer (iss claim)
-                ->permittedFor('https://esalud.msaludsgo.gov.ar/seipa/web/api/v1') // Configures the audience (aud claim)
-                ->issuedAt($time) // Configures the time that the token was issue (iat claim)
-                ->expiresAt($time + 15) // Configures the expiration time of the token (exp claim)
-                ->withClaim('id_cliente', "sisse") 
-                ->getToken($signer, $key); // Retrieves the generated token
-
-        return $token;
+        return MpiJwtTokenService::buildBearerToken(
+            'http://sisse.redes-sgo.gob.ar',
+            'https://esalud.msaludsgo.gov.ar/seipa/web/api/v1'
+        );
     }
     
     private function transformarFecha($fecha_nacimiento){

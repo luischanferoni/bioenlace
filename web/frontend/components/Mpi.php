@@ -1,6 +1,7 @@
 <?php
 namespace frontend\components;
 
+use common\components\Integrations\Mpi\MpiJwtTokenService;
 use Yii;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
@@ -12,18 +13,10 @@ class Mpi extends Component
 {
 	function caller($metodo, $json,  $verb="GET") {
 
-        $jwt = Yii::$app->jwt;
-        $signer = $jwt->getSigner('HS512');
-        $key = $jwt->getKey();
-        $time = time();
-
-	    $token = $jwt->getBuilder()
-            ->issuedBy('http://sisse.redes-sgo.gob.ar') // Configures the issuer (iss claim)
-            ->permittedFor('https://esalud.msaludsgo.gov.ar/seipa/web/api/v1') // Configures the audience (aud claim)
-            ->issuedAt($time) // Configures the time that the token was issue (iat claim)
-            ->expiresAt($time + 15) // Configures the expiration time of the token (exp claim)
-            ->withClaim('id_cliente', "sisse") 
-            ->getToken($signer, $key); // Retrieves the generated token
+	    $token = MpiJwtTokenService::buildBearerToken(
+            'http://sisse.redes-sgo.gob.ar',
+            'https://esalud.msaludsgo.gov.ar/seipa/web/api/v1'
+        );
 
 	    $headers = [
         	'Authorization: Bearer '.$token,         

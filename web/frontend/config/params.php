@@ -114,5 +114,5 @@ return [
     'face_match_threshold' => 0.7, // Umbral de similitud (0.0 - 1.0)
     
     // Configuración de JWT para autenticación API
-    'jwtSecret' => 'yt14zxFvJUdIXnOIHP87TpfR42JKyi6Ni2wUX5JoHpLiLtikL1p7vdHWcvGIpCfK', // Misma clave que el componente jwt
+    'jwtSecret' => 'yt14zxFvJUdIXnOIHP87TpfR42JKyi6Ni2wUX5JoHpLiLtikL1p7vdHWcvGIpCfK', // App HS256 + MPI HS512 (MpiJwtTokenService)
 ];

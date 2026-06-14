@@ -13,8 +13,6 @@ use yii\helpers\Url;
 use frontend\modules\mapear\models\Regla;
 use frontend\modules\mapear\models\ConceptoDestino;
 
-use sizeg\jwt\Jwt;
-
 class SiteController extends \yii\rest\Controller
 {
   /**

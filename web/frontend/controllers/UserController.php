@@ -13,7 +13,7 @@ use yii\web\NotFoundHttpException;
  */
 class UserController extends \backend\controllers\UserAccountController
 {
-    public function behaviors()
+    public function behaviors(): array
     {
         return [
             'access' => [

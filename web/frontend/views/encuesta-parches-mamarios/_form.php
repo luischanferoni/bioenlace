@@ -2,15 +2,18 @@
 
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
-use yii\helpers\Url;
 use kartik\select2\Select2;
-use yii\helpers\ArrayHelper;
+use frontend\assets\BioenlaceApiClientAsset;
 
 use yii\web\JsExpression;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\EncuestaParchesMamarios */
 /* @var $form yii\widgets\ActiveForm */
+
+$idEfectorAutocomplete = (int) Yii::$app->user->getIdEfector();
+$idServicioAutocomplete = (int) Yii::$app->user->getServicioActual();
+$this->registerAssetBundle(BioenlaceApiClientAsset::class);
 ?>
 
 <style>
@@ -61,9 +64,20 @@ use yii\web\JsExpression;
                             'allowClear' => true,
                             'minimumInputLength' => 3,
                             'ajax' => [
-                                'url' => Url::to(['asignacion-pes/profesionales-autocomplete']),
+                                'url' => '/api/v1/profesional-efector-servicio/autocomplete',
                                 'dataType' => 'json',
-                                'data' => new JsExpression('function(params) { return {q:params.term}; }'),
+                                'delay' => 250,
+                                'headers' => new JsExpression(
+                                    '(typeof window.getBioenlaceApiClientHeaders === "function"'
+                                    . ' ? window.getBioenlaceApiClientHeaders() : {})'
+                                ),
+                                'data' => new JsExpression(
+                                    'function(params) { return {'
+                                    . 'q: params.term,'
+                                    . 'id_efector: ' . $idEfectorAutocomplete . ','
+                                    . 'id_servicio: ' . $idServicioAutocomplete
+                                    . '}; }'
+                                ),
                             ],
                         ],
                     ]);

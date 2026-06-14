@@ -2,14 +2,21 @@
 
 namespace frontend\modules\api\v1\controllers;
 
+use common\components\Organization\Service\GeografiaDepdropService;
 use common\models\Clinical\EncounterDefinition;
+use Yii;
 
 /**
- * API Catálogos: listas estáticas para clientes (web/móvil).
+ * API Catálogos: listas estáticas y DepDrop geográfico para clientes (web/móvil).
  */
 class CatalogosController extends BaseController
 {
-    public static $authenticatorExcept = ['encounter-classes'];
+    public static $authenticatorExcept = [
+        'encounter-classes',
+        'departamentos-depdrop',
+        'localidades-depdrop',
+        'barrios-depdrop',
+    ];
 
     public function actions()
     {
@@ -33,6 +40,31 @@ class CatalogosController extends BaseController
             ];
         }
         return $this->success(['encounter_classes' => $formatted]);
+    }
+
+    /**
+     * POST /api/v1/catalogos/departamentos-depdrop
+     * Contrato Kartik DepDrop: {@code { output, selected }} (sin envoltorio success).
+     */
+    public function actionDepartamentosDepdrop(): array
+    {
+        return GeografiaDepdropService::departamentosResponse(Yii::$app->request->post());
+    }
+
+    /**
+     * POST /api/v1/catalogos/localidades-depdrop
+     */
+    public function actionLocalidadesDepdrop(): array
+    {
+        return GeografiaDepdropService::localidadesResponse(Yii::$app->request->post());
+    }
+
+    /**
+     * POST /api/v1/catalogos/barrios-depdrop
+     */
+    public function actionBarriosDepdrop(): array
+    {
+        return GeografiaDepdropService::barriosResponse(Yii::$app->request->post());
     }
 }
 

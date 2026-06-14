@@ -441,24 +441,17 @@ class Persona extends \yii\db\ActiveRecord
     }
 
     // funcion para consultar los departamentos segun un id de provincia
+    /** @deprecated use {@see \common\components\Organization\Service\GeografiaDepdropService::departamentosPorProvincia} */
     public function getDepartamentoxidprovincia($id)
     {
-        //$departamentos=Departamento::find()->asArray()->select('id_departamento, nombre')->from('departamentos')->where(['id_provincia' => $id])->all();
-        $departamentos = Departamento::find()->asArray()->select(['id' => 'id_departamento', 'name' => 'nombre'])
-            ->from('departamentos')
-            ->where(['id_provincia' => $id])
-            ->orderBy('nombre')->all();
-        return $departamentos;
+        return \common\components\Organization\Service\GeografiaDepdropService::departamentosPorProvincia((int) $id);
     }
 
     // funcion para consultar las localidades segun el id de departamento
+    /** @deprecated use {@see \common\components\Organization\Service\GeografiaDepdropService::localidadesPorDepartamento} */
     public function getLocalidadxiddepartamento($idd)
     {
-        $localidades = Localidad::find()->asArray()->select(['id' => 'id_localidad', 'name' => 'nombre'])
-            ->from('localidades')
-            ->where(['id_departamento' => $idd])
-            ->orderBy('nombre')->all();
-        return $localidades;
+        return \common\components\Organization\Service\GeografiaDepdropService::localidadesPorDepartamento((int) $idd);
     }
 
     public function getDatosPersonaXDni($dni, $nombre)

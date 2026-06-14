@@ -17,7 +17,6 @@ use common\models\PersonaTelefono;
 use common\models\Tipo_telefono;
 use common\models\Domicilio;
 use common\models\Persona_domicilio;
-use common\models\Barrios;
 use common\models\Localidad;
 use common\models\Provincia;
 use common\models\Departamento;
@@ -63,8 +62,7 @@ class PersonasController extends Controller
         ];
     }
 
-    // Esta funcion se agrego para solucionar error 400 Bad Request
-    // con los llamados ajax a las funciones  actionLoc  y actionSubcat
+    // CSRF deshabilitado: llamadas AJAX (Renaper, vacunas, DepDrop vía API, etc.)
     public function beforeAction($action)
     {
         $this->enableCsrfValidation = false;
@@ -347,109 +345,6 @@ class PersonasController extends Controller
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
-    }
-
-    /**
-     * 
-     * Funcion para crear el select dependiente de Departamentos
-     * @no_intent_catalog
-    */
-    public function actionSubcat()
-    {
-        $out = [];
-        if (isset($_POST['depdrop_parents'])) {
-            $parents = $_POST['depdrop_parents'];
-            if ($parents != null) {
-                $cat_id = $parents[0];
-                $model_persona = new Persona;
-                $out = $model_persona->getDepartamentoxidprovincia($cat_id);
-                echo Json::encode(['output' => $out, 'selected' => '']);
-                return;
-            }
-        }
-        if (isset($_POST['id_provincia'])) {
-            $countDptos = Departamento::find()
-                ->where(['id_provincia' => $_POST['id_provincia']])
-                ->count();
-            $dptos = Departamento::find()
-                ->where(['id_provincia' => $_POST['id_provincia']])
-                ->all();
-            if ($countDptos > 0) {
-                foreach ($dptos as $dpto) {
-                    $selected = ($dpto->id_departamento == $_POST['id_departamento']) ? "selected" : "";
-                    echo "<option value='$dpto->id_departamento' $selected >" . $dpto->nombre . "</option>";
-                }
-            }
-            return;
-        }
-        echo Json::encode(['output' => '', 'selected' => '']);
-    }
-
-    /**
-     * 
-     * Funcion para crear el select dependiente de localidades
-     * @no_intent_catalog
-    */
-    public function actionLoc()
-    {
-        $out = [];
-        if (isset($_POST['depdrop_parents'])) {
-            $parents = $_POST['depdrop_parents'];
-            $cat_id = empty($parents[0]) ? null : $parents[0];
-            if ($cat_id != null) {
-                //$data = \common\models\Persona::getLocalidadxiddepartamento($cat_id);
-                $model_persona = new Persona;
-                $out = $model_persona->getLocalidadxiddepartamento($cat_id);
-
-                echo Json::encode(['output' => $out, 'selected' => $cat_id]);
-                return;
-            }
-        }
-        if (isset($_POST['id_localidad'])) {
-            // quiere decir que es un UPDATE y hay que cargar el select localidades
-            $countLocs = Localidad::find()
-                ->where(['id_departamento' => $_POST['id_departamento']])
-                ->count();
-            $locs = Localidad::find()
-                ->where(['id_departamento' => $_POST['id_departamento']])
-                ->all();
-            if ($countLocs > 0) {
-                foreach ($locs as $loc) {
-                    $selected = ($loc->id_localidad == $_POST['id_localidad']) ? "selected" : "";
-                    echo "<option value='$loc->id_localidad' $selected >" . $loc->nombre . "</option>";
-                }
-            }
-        }
-
-        echo Json::encode(['output' => '', 'selected' => '']);
-    }
-
-    /**
-     * Funcion para crear el select dependiente de barrios
-     * @no_intent_catalog
-    */
-    public function actionBarrio()
-    {
-        $out = [];
-        $selected = '';
-        if (isset($_POST['depdrop_parents'])) {
-            $ids = $_POST['depdrop_parents'];
-            $id_loc = empty($ids[0]) ? null : $ids[0];
-            $id_barrio = empty($ids[1]) ? null : $ids[1];
-            if ($id_loc != null) {
-                if (!empty($_POST['depdrop_params'])) {
-
-                    $params = $_POST['depdrop_params'];
-                    $selected = $params[1];
-                }
-
-                $out = Barrios::depDropBarrios($id_loc);
-            }
-            if (isset($_POST['id_localidad'])) {
-                $out = Barrios::depDropBarrios($_POST['id_localidad']);
-            }
-        }
-        return Json::encode(['output' => $out, 'selected' => $selected]);
     }
 
     //View PUCO

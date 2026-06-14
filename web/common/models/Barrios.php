@@ -48,15 +48,9 @@ class Barrios extends \yii\db\ActiveRecord
         ];
     }
 
+    /** @deprecated use {@see \common\components\Organization\Service\GeografiaDepdropService::barriosPorLocalidad} */
     public static function depDropBarrios($id_loc){
-
-        $out = [];
-        $brrios = Barrios::find()->select("id_barrio, nombre")->where(['id_localidad'=>$id_loc])->orderBy('nombre')->all();
-        foreach ($brrios as $brrio) {                    
-            $out[] =  ["id" => $brrio->id_barrio, "name" => $brrio->nombre];
-        }
-
-        return $out;
+        return \common\components\Organization\Service\GeografiaDepdropService::barriosPorLocalidad((int) $id_loc);
     } 
 
     /**

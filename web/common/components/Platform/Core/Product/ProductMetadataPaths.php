@@ -97,4 +97,9 @@ final class ProductMetadataPaths
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
     }
+
+    public static function snomedCategoriesFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-categories.yaml';
+    }
 }

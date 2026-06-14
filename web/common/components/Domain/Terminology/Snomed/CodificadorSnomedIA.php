@@ -15,29 +15,6 @@ class CodificadorSnomedIA
     private $snowstorm;
     private $cache;
     private $estadisticas;
-    
-    // Configuración de confianza mínima para matching semántico
-    const CONFIANZA_SEMANTICA = 0.7;
-    
-    // Categorías SNOMED y sus ECL correspondientes
-    const CATEGORIAS_SNOMED = [
-        'diagnosticos' => [
-            'ecl' => '<<404684003 |hallazgo clinico (hallazgo)| OR <272379006 |Event (event)| OR <243796009 |Situation with explicit context (situation)|',
-            'metodo' => 'getProblemas'
-        ],
-        'medicamentos' => [
-            'ecl' => '(<763158003 |producto medicinal (producto)|: 732943007 |tiene base de sustancia de la potencia (atributo)|=*, [0..0] 774159003 |tiene proveedor (atributo)|=*) OR (^ 425091000221109 |conjunto de referencias simples de fármacos de uso clínico sin unidad de presentación definida (metadato fundacional)|)',
-            'metodo' => 'getMedicamentosGenericos'
-        ],
-        'procedimientos' => [
-            'ecl' => '< 71388002 | procedimiento (procedimiento) |',
-            'metodo' => 'getPracticas'
-        ],
-        'sintomas' => [
-            'ecl' => '<< 404684003 | hallazgo clínico (hallazgo)|',
-            'metodo' => 'getSintomas'
-        ]
-    ];
 
     public function __construct()
     {
@@ -132,12 +109,11 @@ class CodificadorSnomedIA
      */
     public function buscarCodigoSnomed($texto, $categoria)
     {
-        // Solo matching semántico real con embeddings
         $resultado = $this->matchingSemantico($texto, $categoria);
-        if ($resultado && $resultado['confianza'] >= self::CONFIANZA_SEMANTICA) {
+        if ($resultado && $resultado['confianza'] >= SnomedCategoryCatalog::semanticConfidenceThreshold()) {
             return $resultado;
         }
-        
+
         return null;
     }
 
@@ -204,14 +180,25 @@ class CodificadorSnomedIA
     private function buscarCandidatosEnSnowstorm($texto, $categoria)
     {
         try {
-            $metodo = self::CATEGORIAS_SNOMED[$categoria]['metodo'];
-            $resultados = $this->snowstorm->$metodo($texto, 20); // Limitar a 20 candidatos
-            
-            \Yii::info("Encontrados " . count($resultados) . " candidatos en Snowstorm para: '{$texto}'", 'snomed-codificador');
+            $ecl = SnomedCategoryCatalog::eclForCategory($categoria);
+            if ($ecl === null) {
+                \Yii::warning("Categoría SNOMED sin ECL en metadata: {$categoria}", 'snomed-codificador');
+
+                return [];
+            }
+
+            $resultados = $this->snowstorm->buscarConceptosPorEcl(
+                $texto,
+                $ecl,
+                SnomedCategoryCatalog::candidateLimit()
+            );
+
+            \Yii::info('Encontrados ' . count($resultados) . " candidatos en Snowstorm para: '{$texto}'", 'snomed-codificador');
+
             return $resultados;
-            
         } catch (\Exception $e) {
-            \Yii::error("Error buscando candidatos en Snowstorm: " . $e->getMessage(), 'snomed-codificador');
+            \Yii::error('Error buscando candidatos en Snowstorm: ' . $e->getMessage(), 'snomed-codificador');
+
             return [];
         }
     }
@@ -262,7 +249,7 @@ class CodificadorSnomedIA
             }
             
             // Solo devolver si supera el umbral mínimo
-            if ($mejorSimilitud >= self::CONFIANZA_SEMANTICA) {
+            if ($mejorSimilitud >= SnomedCategoryCatalog::semanticConfidenceThreshold()) {
                 \Yii::info("Mejor candidato encontrado: '{$mejorMatch['text']}' (similitud: {$mejorSimilitud})", 'snomed-codificador');
                 return $mejorMatch;
             }
@@ -283,16 +270,7 @@ class CodificadorSnomedIA
      */
     private function mapearCategoriaSnomed($categoria)
     {
-        $mapeo = [
-            'Diagnóstico' => 'diagnosticos',
-            'Diagnósticos' => 'diagnosticos',
-            'Síntomas' => 'sintomas',
-            'Medicamentos' => 'medicamentos',
-            'Prácticas' => 'procedimientos',
-            'Procedimientos' => 'procedimientos'
-        ];
-        
-        return $mapeo[$categoria] ?? null;
+        return SnomedCategoryCatalog::resolveCategoryKey((string) $categoria);
     }
 
     /**

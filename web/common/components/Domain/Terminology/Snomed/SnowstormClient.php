@@ -83,6 +83,28 @@ class SnowstormClient extends Component
     	return $this->caller("concepts?".$get_params, "GET");
     }
 
+    /**
+     * @return list<array{id: mixed, text: string}>
+     */
+    public function buscarConceptosPorEcl(string $term, string $ecl, int $limit = 10): array
+    {
+        $resultados = $this->busquedaFiltradaEcl($term, $ecl, [], $limit);
+        $items = $resultados['items'] ?? [];
+
+        $return = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $return[] = [
+                'id' => $item['conceptId'] ?? null,
+                'text' => (string) ($item['pt']['term'] ?? ''),
+            ];
+        }
+
+        return $return;
+    }
+
     // Diagnosticos | Hallazgos
     public function getProblemas($term)
     {

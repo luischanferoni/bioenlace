@@ -6,6 +6,7 @@ use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
 use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\EntryPoints\Chat\Routing\ChatRouter;
+use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\SubIntentEngine\FlowDraftHydratorService;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
 
@@ -20,10 +21,10 @@ final class ChatOrchestrator
      */
     public static function handle(array $body, int $userId): array
     {
-        $intentId = isset($body['intent_id']) ? trim((string) $body['intent_id']) : '';
+        $intentId = AssistantDraftNormalizer::scalarString($body['intent_id'] ?? '');
 
         if ($intentId !== '') {
-            $content = isset($body['content']) ? trim((string) $body['content']) : '';
+            $content = AssistantDraftNormalizer::scalarString($body['content'] ?? '');
             if ($content !== '') {
                 ChatPreprocessContext::set(ChatPreprocessService::run($content, $userId));
             }
@@ -55,7 +56,7 @@ final class ChatOrchestrator
      */
     public static function botReplyTextForPersistence(array $envelope): string
     {
-        $text = isset($envelope['text']) ? trim((string) $envelope['text']) : '';
+        $text = AssistantDraftNormalizer::scalarString($envelope['text'] ?? '');
         if ($text !== '') {
             return $text;
         }

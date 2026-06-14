@@ -32,18 +32,18 @@ final class SubIntentEngine
      */
     public static function process(array $snapshot, int $userId): array
     {
-        $intentId = isset($snapshot['intent_id']) ? trim((string) $snapshot['intent_id']) : '';
+        $intentId = AssistantDraftNormalizer::scalarString($snapshot['intent_id'] ?? '');
         if ($intentId === '' && isset($snapshot['flow_key'])) {
-            $intentId = trim((string) $snapshot['flow_key']);
+            $intentId = AssistantDraftNormalizer::scalarString($snapshot['flow_key']);
         }
         if ($intentId === '') {
             return ['success' => false, 'error' => 'Se requiere intent_id'];
         }
 
-        $subintentId = isset($snapshot['subintent_id']) ? trim((string) $snapshot['subintent_id']) : '';
+        $subintentId = AssistantDraftNormalizer::scalarString($snapshot['subintent_id'] ?? '');
         $draft = isset($snapshot['draft']) && is_array($snapshot['draft']) ? $snapshot['draft'] : [];
         $draft = AssistantDraftNormalizer::normalize(self::mergeFlowSnapshotIntoDraft($snapshot, $draft));
-        $content = isset($snapshot['content']) ? trim((string) $snapshot['content']) : '';
+        $content = AssistantDraftNormalizer::scalarString($snapshot['content'] ?? '');
         $interaction = isset($snapshot['interaction']) && is_array($snapshot['interaction']) ? $snapshot['interaction'] : null;
 
         $hints = isset($snapshot['hints']) && is_array($snapshot['hints']) ? $snapshot['hints'] : [];
@@ -96,7 +96,10 @@ final class SubIntentEngine
         if (!is_array($current) || empty($current['id'])) {
             return ['success' => false, 'error' => 'subintent_id inválido', 'intent_id' => $intentId];
         }
-        $currentId = (string) $current['id'];
+        $currentId = AssistantDraftNormalizer::scalarString($current['id'] ?? '');
+        if ($currentId === '') {
+            return ['success' => false, 'error' => 'subintent_id inválido', 'intent_id' => $intentId];
+        }
 
         // Confirmación tipada: si llega, aplicar draft_delta (confirm) o no (cancel).
         if ($interaction && isset($interaction['kind']) && $interaction['kind'] === 'confirm_selection') {
@@ -129,8 +132,8 @@ final class SubIntentEngine
             $missingRequires = self::missingRequiresFields($current, $draft);
             if ($missingRequires !== []) {
                 $open = self::resolveOpenUiForSubintent($current, $content, $draft);
-                $actionId = AssistantDraftNormalizer::scalarString($open['action_id'] ?? '');
-                if ($open && $actionId !== '' && !self::openUiBlockedByMissingDraft($open, $missingRequires)) {
+                $actionId = AssistantDraftNormalizer::scalarString(is_array($open) ? ($open['action_id'] ?? '') : '');
+                if (is_array($open) && $actionId !== '' && !self::openUiBlockedByMissingDraft($open, $missingRequires)) {
                     return self::buildOpenUiResponse(
                         $intentId,
                         $currentId,
@@ -158,8 +161,10 @@ final class SubIntentEngine
             $nextId = self::resolveNextSubintentId($current, $draft);
             $openWhenComplete = self::resolveOpenUiForSubintent($current, $content, $draft);
             if ($nextId === '') {
-                $openActionId = AssistantDraftNormalizer::scalarString($openWhenComplete['action_id'] ?? '');
-                if ($openWhenComplete && $openActionId !== '') {
+                $openActionId = AssistantDraftNormalizer::scalarString(
+                    is_array($openWhenComplete) ? ($openWhenComplete['action_id'] ?? '') : ''
+                );
+                if (is_array($openWhenComplete) && $openActionId !== '') {
                     return self::buildOpenUiResponse(
                         $intentId,
                         $currentId,
@@ -179,7 +184,10 @@ final class SubIntentEngine
                 break;
             }
             $current = $nextSub;
-            $currentId = (string) $current['id'];
+            $currentId = AssistantDraftNormalizer::scalarString($current['id'] ?? '');
+            if ($currentId === '') {
+                break;
+            }
         }
 
         // Salida del loop: el flow no tiene más pasos por delante (o el "siguiente" es un stub
@@ -300,7 +308,7 @@ final class SubIntentEngine
             }
         }
 
-        return isset($subintent['next']) ? trim((string) $subintent['next']) : '';
+        return AssistantDraftNormalizer::scalarString($subintent['next'] ?? '');
     }
 
     /**
@@ -349,7 +357,7 @@ final class SubIntentEngine
 
     private static function flowSubmitHasActionId(array $flowSubmitBlock): bool
     {
-        return trim((string) ($flowSubmitBlock['action_id'] ?? '')) !== '';
+        return AssistantDraftNormalizer::scalarString($flowSubmitBlock['action_id'] ?? '') !== '';
     }
 
     /**
@@ -389,7 +397,7 @@ final class SubIntentEngine
      */
     private static function buildFlowSubmitTemplate(array $flowSubmitBlock): ?array
     {
-        $actionId = trim((string) ($flowSubmitBlock['action_id'] ?? ''));
+        $actionId = AssistantDraftNormalizer::scalarString($flowSubmitBlock['action_id'] ?? '');
         if ($actionId === '') {
             return null;
         }
@@ -576,7 +584,7 @@ final class SubIntentEngine
             if (!is_array($s)) {
                 continue;
             }
-            if (isset($s['id']) && (string) $s['id'] === $id) {
+            if (AssistantDraftNormalizer::scalarString($s['id'] ?? '') === $id) {
                 return $s;
             }
         }

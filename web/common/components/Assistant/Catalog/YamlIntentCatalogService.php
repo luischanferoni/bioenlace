@@ -3,6 +3,7 @@
 namespace common\components\Assistant\Catalog;
 
 use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
+use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\UiActions\ActionMappingService;
 use common\components\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Core\Permission\BioenlaceAccessChecker;
@@ -25,7 +26,7 @@ final class YamlIntentCatalogService
     {
         $cache = Yii::$app->cache;
         // Cache key debe cambiar cuando cambian los YAML (keywords/rules/etc.).
-        $cacheKeyBase = 'yaml_intents_catalog_v5';
+        $cacheKeyBase = 'yaml_intents_catalog_v6';
         if ($useCache && $cache) {
             $hit = $cache->get($cacheKeyBase);
             if (is_array($hit)) {
@@ -87,7 +88,7 @@ final class YamlIntentCatalogService
                 }
                 continue;
             }
-            $intentId = isset($data['intent_id']) ? trim((string) $data['intent_id']) : '';
+            $intentId = AssistantDraftNormalizer::scalarString($data['intent_id'] ?? '');
             if ($intentId === '') {
                 // fallback: nombre de archivo
                 $intentId = basename($path, '.yaml');
@@ -103,12 +104,12 @@ final class YamlIntentCatalogService
             $category = IntentSchemaPaths::categoryFromPath($path);
             $permission = IntentPermissionResolver::resolve($intentId, $data);
 
-            $actionName = isset($data['action_name']) ? trim((string) $data['action_name']) : '';
+            $actionName = AssistantDraftNormalizer::scalarString($data['action_name'] ?? '');
             if ($actionName === '') {
                 $actionName = $intentId;
             }
-            $desc = isset($data['description']) ? trim((string) $data['description']) : '';
-            $rbacRoute = isset($data['rbac_route']) ? trim((string) $data['rbac_route']) : '';
+            $desc = AssistantDraftNormalizer::scalarString($data['description'] ?? '');
+            $rbacRoute = AssistantDraftNormalizer::scalarString($data['rbac_route'] ?? '');
             if ($rbacRoute !== '') {
                 $rbacRoute = '/' . ltrim($rbacRoute, '/');
             }
@@ -212,12 +213,12 @@ final class YamlIntentCatalogService
             if (!is_array($flow)) {
                 continue;
             }
-            $aid = isset($flow['action_id']) ? trim((string) $flow['action_id']) : '';
+            $aid = isset($flow['action_id']) ? AssistantDraftNormalizer::scalarString($flow['action_id']) : '';
             if ($aid === '') {
                 continue;
             }
             $permission = $aid;
-            $rbacRoute = isset($flow['rbac_route']) ? trim((string) $flow['rbac_route']) : '';
+            $rbacRoute = AssistantDraftNormalizer::scalarString($flow['rbac_route'] ?? '');
             if ($permission === '' && $rbacRoute === '') {
                 continue;
             }
@@ -284,7 +285,7 @@ final class YamlIntentCatalogService
             if (!is_array($flowSubmit)) {
                 continue;
             }
-            $rbac = trim((string) ($data['rbac_route'] ?? ''));
+            $rbac = AssistantDraftNormalizer::scalarString($data['rbac_route'] ?? '');
             if ($rbac === '') {
                 continue;
             }

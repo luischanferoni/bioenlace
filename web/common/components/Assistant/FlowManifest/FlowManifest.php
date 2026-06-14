@@ -4,6 +4,7 @@ namespace common\components\Assistant\FlowManifest;
 
 use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Assistant\Service\AssistantDraftNormalizer;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -31,7 +32,7 @@ final class FlowManifest
         $rawYaml = self::loadIntentYaml($intentId);
         $actionName = '';
         if (is_array($rawYaml) && isset($rawYaml['action_name'])) {
-            $actionName = trim((string) $rawYaml['action_name']);
+            $actionName = AssistantDraftNormalizer::scalarString($rawYaml['action_name']);
         }
 
         $uiMeta = isset($root['ui_meta']) && is_array($root['ui_meta']) ? $root['ui_meta'] : [];
@@ -46,11 +47,11 @@ final class FlowManifest
                 continue;
             }
             $stepsCompact[] = [
-                'id' => (string) $step['id'],
-                'assistant_text' => isset($step['assistant_text']) ? (string) $step['assistant_text'] : '',
+                'id' => AssistantDraftNormalizer::scalarString($step['id'] ?? ''),
+                'assistant_text' => AssistantDraftNormalizer::scalarString($step['assistant_text'] ?? ''),
                 'requires' => isset($step['requires']) && is_array($step['requires']) ? $step['requires'] : [],
                 'provides' => isset($step['provides']) && is_array($step['provides']) ? $step['provides'] : [],
-                'next' => isset($step['next']) ? (string) $step['next'] : '',
+                'next' => AssistantDraftNormalizer::scalarString($step['next'] ?? ''),
             ];
         }
 
@@ -59,18 +60,18 @@ final class FlowManifest
             if (!is_array($step)) {
                 continue;
             }
-            if (($step['id'] ?? '') === $activeSubintentId) {
+            if (AssistantDraftNormalizer::scalarString($step['id'] ?? '') === $activeSubintentId) {
                 $activeStep = $step;
                 break;
             }
         }
 
         return [
-            'schema_version' => isset($uiMeta['schema_version']) ? (string) $uiMeta['schema_version'] : '1',
-            'intent_id' => isset($flow['intent_id']) ? (string) $flow['intent_id'] : $intentId,
+            'schema_version' => AssistantDraftNormalizer::scalarString($uiMeta['schema_version'] ?? '', '1'),
+            'intent_id' => AssistantDraftNormalizer::scalarString($flow['intent_id'] ?? '', $intentId),
             'action_name' => $actionName,
             'draft_keys' => isset($flow['draft_keys']) && is_array($flow['draft_keys']) ? $flow['draft_keys'] : [],
-            'entry_subintent_id' => isset($flow['entry_subintent_id']) ? (string) $flow['entry_subintent_id'] : '',
+            'entry_subintent_id' => AssistantDraftNormalizer::scalarString($flow['entry_subintent_id'] ?? ''),
             'steps' => $stepsCompact,
             'active_subintent_id' => $activeSubintentId,
             'active_step' => $activeStep,
@@ -94,10 +95,11 @@ final class FlowManifest
         $label = DataAccessCatalogIntentSupport::displayLabelForIntent($intentId);
         $text = $label !== '' ? $label : 'Abrir pantalla';
 
-        $actionId = strtolower(trim((string) ($openUiDef['action_id'] ?? '')));
+        $actionId = AssistantDraftNormalizer::scalarString($openUiDef['action_id'] ?? '');
         if ($actionId === '') {
             return null;
         }
+        $actionId = strtolower($actionId);
 
         $stepCompact = [
             'id' => 'open',
@@ -146,10 +148,7 @@ final class FlowManifest
         if ($yaml === null || !is_array($yaml)) {
             return null;
         }
-        $id = isset($yaml['intent_id']) ? trim((string) $yaml['intent_id']) : '';
-        if ($id === '') {
-            $id = $intentId;
-        }
+        $id = AssistantDraftNormalizer::scalarString($yaml['intent_id'] ?? '', $intentId);
 
         try {
             return self::buildRootArrayFromIntentYaml($yaml, $id);
@@ -194,7 +193,7 @@ final class FlowManifest
         }
         $entry = '';
         if (isset($subintents[0]) && is_array($subintents[0]) && !empty($subintents[0]['id'])) {
-            $entry = (string) $subintents[0]['id'];
+            $entry = AssistantDraftNormalizer::scalarString($subintents[0]['id'] ?? '');
         }
 
         $steps = [];
@@ -238,10 +237,13 @@ final class FlowManifest
      */
     private static function compileStep(array $sub): array
     {
-        $id = (string) $sub['id'];
+        $id = AssistantDraftNormalizer::scalarString($sub['id'] ?? '');
+        if ($id === '') {
+            throw new \InvalidArgumentException('Subintent sin id');
+        }
         $step = [
             'id' => $id,
-            'assistant_text' => isset($sub['assistant_text']) ? (string) $sub['assistant_text'] : '',
+            'assistant_text' => AssistantDraftNormalizer::scalarString($sub['assistant_text'] ?? ''),
             'requires' => self::stringList($sub['requires'] ?? null),
             'provides' => self::stringList($sub['provides'] ?? null),
             'next' => self::compileStepNextField($sub),
@@ -262,7 +264,7 @@ final class FlowManifest
 
             $tabs = [];
             if (is_array($otherwiseOpen) && !empty($otherwiseOpen['action_id'])) {
-                $aid = strtolower(trim((string) $otherwiseOpen['action_id']));
+                $aid = strtolower(AssistantDraftNormalizer::scalarString($otherwiseOpen['action_id'] ?? ''));
                 $tabs[] = [
                     'id' => 'default',
                     'label' => 'Lista',
@@ -273,7 +275,7 @@ final class FlowManifest
                 ];
             }
             if (is_array($nearOpen) && !empty($nearOpen['action_id'])) {
-                $aid = strtolower(trim((string) $nearOpen['action_id']));
+                $aid = strtolower(AssistantDraftNormalizer::scalarString($nearOpen['action_id'] ?? ''));
                 $params = self::paramsAssoc($nearOpen['params'] ?? null);
                 $params['latitud'] = 'client.latitud';
                 $params['longitud'] = 'client.longitud';
@@ -296,7 +298,7 @@ final class FlowManifest
 
         $direct = isset($sub['open_ui']) && is_array($sub['open_ui']) ? $sub['open_ui'] : null;
         if (is_array($direct) && !empty($direct['action_id'])) {
-            $aid = strtolower(trim((string) $direct['action_id']));
+            $aid = strtolower(AssistantDraftNormalizer::scalarString($direct['action_id'] ?? ''));
             $step['ui'] = [
                 'default_tab' => 'default',
                 'tabs' => [
@@ -329,7 +331,7 @@ final class FlowManifest
     private static function compileStepNextField(array $sub): string
     {
         if (isset($sub['next'])) {
-            $n = trim((string) $sub['next']);
+            $n = AssistantDraftNormalizer::scalarString($sub['next'] ?? '');
             if ($n !== '') {
                 return $n;
             }
@@ -345,7 +347,7 @@ final class FlowManifest
             }
             $when = isset($rule['when']) && is_array($rule['when']) ? $rule['when'] : null;
             if ($when !== null && isset($when['default']) && $when['default'] === true) {
-                $nn = isset($rule['next']) ? trim((string) $rule['next']) : '';
+                $nn = AssistantDraftNormalizer::scalarString($rule['next'] ?? '');
                 if ($nn !== '') {
                     $defaultNext = $nn;
                 }
@@ -358,7 +360,7 @@ final class FlowManifest
             if (!is_array($rule)) {
                 continue;
             }
-            $nn = isset($rule['next']) ? trim((string) $rule['next']) : '';
+            $nn = AssistantDraftNormalizer::scalarString($rule['next'] ?? '');
             if ($nn !== '') {
                 return $nn;
             }
@@ -479,7 +481,10 @@ final class FlowManifest
             if (!is_array($sub) || empty($sub['id'])) {
                 continue;
             }
-            $sid = (string) $sub['id'];
+            $sid = AssistantDraftNormalizer::scalarString($sub['id'] ?? '');
+            if ($sid === '') {
+                continue;
+            }
             $chooser = isset($sub['chooser']) && is_array($sub['chooser']) ? $sub['chooser'] : null;
             if ($chooser !== null) {
                 $nearBranch = isset($chooser['when_user_says_nearby']) && is_array($chooser['when_user_says_nearby'])
@@ -493,17 +498,17 @@ final class FlowManifest
                     ? $otherwiseBranch['open_ui']
                     : null;
                 if (is_array($otherwiseOpen) && !empty($otherwiseOpen['action_id'])) {
-                    $hints[$sid] = ['action_id' => strtolower(trim((string) $otherwiseOpen['action_id']))];
+                    $hints[$sid] = ['action_id' => strtolower(AssistantDraftNormalizer::scalarString($otherwiseOpen['action_id'] ?? ''))];
                 }
                 if (is_array($nearOpen) && !empty($nearOpen['action_id'])) {
                     $nearKey = $sid . '_nearby';
-                    $hints[$nearKey] = ['action_id' => strtolower(trim((string) $nearOpen['action_id']))];
+                    $hints[$nearKey] = ['action_id' => strtolower(AssistantDraftNormalizer::scalarString($nearOpen['action_id'] ?? ''))];
                 }
                 continue;
             }
             $direct = isset($sub['open_ui']) && is_array($sub['open_ui']) ? $sub['open_ui'] : null;
             if (is_array($direct) && !empty($direct['action_id'])) {
-                $hints[$sid] = ['action_id' => strtolower(trim((string) $direct['action_id']))];
+                $hints[$sid] = ['action_id' => strtolower(AssistantDraftNormalizer::scalarString($direct['action_id'] ?? ''))];
             }
         }
 

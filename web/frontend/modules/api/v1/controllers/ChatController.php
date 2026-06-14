@@ -90,7 +90,12 @@ class ChatController extends BaseController
         try {
             $out = ChatOrchestrator::handle($body, $userId);
         } catch (\Throwable $e) {
-            Yii::error('ChatOrchestrator en asistente/enviar: ' . $e->getMessage(), 'asistente');
+            Yii::error(
+                'ChatOrchestrator en asistente/enviar: ' . $e->getMessage()
+                . ' @ ' . $e->getFile() . ':' . $e->getLine(),
+                'asistente'
+            );
+            Yii::error($e->getTraceAsString(), 'asistente');
             return $this->error('Error al procesar la consulta', null, 500);
         }
 

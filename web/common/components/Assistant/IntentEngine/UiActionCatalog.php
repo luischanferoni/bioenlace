@@ -113,21 +113,20 @@ final class UiActionCatalog
         }
 
         foreach (ClinicalUiActionCatalog::forUser($userId) as $a) {
-            $actionId = isset($a['action_id']) ? (string) $a['action_id'] : '';
+            $actionId = AssistantDraftNormalizer::scalarString($a['action_id'] ?? '');
             if ($actionId === '' || isset($byId[$actionId])) {
                 continue;
             }
-            $display = (string) ($a['action_name'] ?? $a['display_name'] ?? $actionId);
+            $display = AssistantDraftNormalizer::scalarString($a['action_name'] ?? $a['display_name'] ?? '', $actionId);
             $clientOpen = isset($a['client_open']) && is_array($a['client_open']) ? $a['client_open'] : null;
-            $clientInteraction = isset($a['client_interaction']) && is_string($a['client_interaction'])
-                ? $a['client_interaction']
-                : null;
+            $clientInteraction = AssistantDraftNormalizer::scalarString($a['client_interaction'] ?? '');
+            $clientInteraction = $clientInteraction !== '' ? $clientInteraction : null;
             $item = new UiActionCatalogItem(
                 $actionId,
                 $display,
-                (string) ($a['description'] ?? ''),
-                isset($a['entity']) ? (string) $a['entity'] : 'clinical',
-                (string) ($a['route'] ?? ''),
+                AssistantDraftNormalizer::scalarString($a['description'] ?? ''),
+                AssistantDraftNormalizer::scalarString($a['entity'] ?? '', 'clinical'),
+                AssistantDraftNormalizer::scalarString($a['route'] ?? ''),
                 is_array($a['keywords'] ?? null) ? array_values($a['keywords']) : [],
                 is_array($a['parameters'] ?? null) ? $a['parameters'] : ['expected' => [], 'provided' => []],
                 is_array($a['intent_semantics'] ?? null) ? $a['intent_semantics'] : null,

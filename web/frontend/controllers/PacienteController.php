@@ -9,7 +9,7 @@ use yii\web\Response;
 use common\models\Person\Persona;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\models\ConsultasConfiguracion;
+use common\components\Clinical\Service\EncounterCaptureContextService;
 use frontend\filters\SisseActionFilter;
 
 /**
@@ -190,7 +190,7 @@ class PacienteController extends Controller
             }
         } else {
             // Determinar configuración basada en el servicio y encounter class
-            $resultadoValidacion = ConsultasConfiguracion::validarPermisoAtencion($parent, $parentId, $paciente);
+            $resultadoValidacion = EncounterCaptureContextService::validarPermisoAtencion($parent, $parentId, $paciente);
             if (!$resultadoValidacion['success']) {
                 return $resultadoValidacion;
             }

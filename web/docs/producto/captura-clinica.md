@@ -42,7 +42,7 @@ flowchart TB
 ```
 
 1. **Entrada:** audio transcrito o texto libre.
-2. **Configuración:** `validarPermisoAtencion(parent, parent_id)` + lookup de `EncounterDefinition` → categorías/pasos del workflow.
+2. **Configuración:** `EncounterCaptureContextService::validarPermisoAtencion(parent, parent_id)` + lookup de `EncounterDefinition` → categorías/pasos del workflow.
 3. **Análisis:** extracción de conceptos; lo no mapeado puede quedar para revisión.
 4. **Guardado:** `EncounterDocumentationService` persiste FHIR; no escribe en tabla legacy `consultas`.
 

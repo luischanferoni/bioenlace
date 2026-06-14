@@ -5,7 +5,7 @@ namespace common\components\Organization\Service\SesionOperativa;
 use Yii;
 use yii\base\Component;
 use yii\helpers\ArrayHelper;
-use common\models\ConsultasConfiguracion;
+use common\models\Clinical\EncounterDefinition;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
@@ -96,7 +96,7 @@ class SesionOperativaService extends Component
             throw new \InvalidArgumentException('encounter_class es requerido para este servicio.');
         }
 
-        $validEncounterClasses = array_keys(ConsultasConfiguracion::ENCOUNTER_CLASS);
+        $validEncounterClasses = array_keys(EncounterDefinition::ENCOUNTER_CLASS);
         if ($encounterClass !== '' && !in_array($encounterClass, $validEncounterClasses, true)) {
             throw new \InvalidArgumentException('Encounter class inv?lido');
         }
@@ -178,7 +178,7 @@ class SesionOperativaService extends Component
             'encounter_class' => $encounterClass !== ''
                 ? [
                     'code' => $encounterClass,
-                    'label' => (string) ConsultasConfiguracion::ENCOUNTER_CLASS[$encounterClass],
+                    'label' => (string) EncounterDefinition::ENCOUNTER_CLASS[$encounterClass],
                 ]
                 : null,
             'id_contexto_profesional' => $idContextoStaff,

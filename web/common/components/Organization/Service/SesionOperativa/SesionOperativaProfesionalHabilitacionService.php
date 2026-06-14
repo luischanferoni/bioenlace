@@ -2,7 +2,7 @@
 
 namespace common\components\Organization\Service\SesionOperativa;
 
-use common\models\ConsultasConfiguracion;
+use common\models\Clinical\EncounterDefinition;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ProfesionalEfectorServicioCondicionLaboral;
@@ -33,7 +33,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
     public function buildOpcionesIniciales(int $idPersona): array
     {
         $encounterClasses = [];
-        foreach (ConsultasConfiguracion::ENCOUNTER_CLASS as $code => $label) {
+        foreach (EncounterDefinition::ENCOUNTER_CLASS as $code => $label) {
             $encounterClasses[] = [
                 'code' => (string) $code,
                 'label' => (string) $label,

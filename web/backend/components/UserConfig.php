@@ -32,6 +32,47 @@ class UserConfig extends BaseUserConfig
 
     public const ADMIN_PERMISSION = 'admin';
 
+    /**
+     * No guardar como returnUrl rutas de estáticos ni auth (p. ej. /admin/js/ajax-wrapper.js).
+     *
+     * @param mixed $url
+     */
+    public function setReturnUrl($url): void
+    {
+        if (!self::isValidReturnUrl((string) $url)) {
+            return;
+        }
+
+        parent::setReturnUrl($url);
+    }
+
+    public static function isValidReturnUrl(string $url): bool
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return false;
+        }
+
+        $path = parse_url($url, PHP_URL_PATH);
+        if (!is_string($path) || $path === '') {
+            $path = $url;
+        }
+
+        if (preg_match('#/(js|css|assets|images)/#i', $path)) {
+            return false;
+        }
+
+        if (preg_match('#\.(js|css|map|png|jpe?g|gif|webp|ico|woff2?|ttf|svg)$#i', $path)) {
+            return false;
+        }
+
+        if (preg_match('#/auth/(login|logout)(/|$)#i', $path)) {
+            return false;
+        }
+
+        return true;
+    }
+
     public function getIsImpersonated()
     {
         return !is_null(Yii::$app->session->get(self::IDENTITY_ID_KEY));

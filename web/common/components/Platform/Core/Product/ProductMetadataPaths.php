@@ -102,4 +102,9 @@ final class ProductMetadataPaths
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-categories.yaml';
     }
+
+    public static function snomedSearchProfilesFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-search-profiles.yaml';
+    }
 }

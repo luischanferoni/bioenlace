@@ -105,175 +105,97 @@ class SnowstormClient extends Component
         return $return;
     }
 
+    /**
+     * @return list<array{id: mixed, text: string}>|array<string, mixed>
+     */
+    public function searchByProfile(string $profileKey, string $term, ?int $limit = null)
+    {
+        $ecl = SnomedSearchProfileCatalog::eclForProfile($profileKey);
+        if ($ecl === null) {
+            return [];
+        }
+
+        $limit = $limit ?? SnomedSearchProfileCatalog::limitForProfile($profileKey);
+        if (SnomedSearchProfileCatalog::returnFormatForProfile($profileKey) === 'raw_api') {
+            return $this->busquedaFiltradaEcl($term, $ecl, [], $limit);
+        }
+
+        return $this->buscarConceptosPorEcl($term, $ecl, $limit);
+    }
+
+    /**
+     * @return list<array{id: mixed, text: string}>|array<string, mixed>
+     */
+    private function searchByClientMethod(string $methodName, string $term, ?int $limit = null)
+    {
+        $profileKey = SnomedSearchProfileCatalog::profileKeyForClientMethod($methodName);
+        if ($profileKey === null) {
+            return [];
+        }
+
+        return $this->searchByProfile($profileKey, $term, $limit);
+    }
+
     // Diagnosticos | Hallazgos
     public function getProblemas($term)
     {
-        $ECL = "<<404684003 |hallazgo clinico (hallazgo)| OR <272379006 |Event (event)| OR <243796009 |Situation with explicit context (situation)|";
-        $resultados = $this->busquedaFiltradaEcl($term, $ECL);
-       // var_dump($resultados); die;
-        $resultados = $resultados['items']??[];
-        //var_dump($resultados); die();
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-        	$return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-        return $return;
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
     
     public function getMedicamentosGenericos($term)
     {
-
-        // ecl de los medicamentos genéricos + medicamentos de uso clinico (contiene ibuprofeno, paracetamol, etc gotas y otros)
-        $ECL = "(<763158003 |producto medicinal (producto)|: 732943007 |tiene base de sustancia de la potencia (atributo)|=*, [0..0] 774159003 |tiene proveedor (atributo)|=*) OR (^ 425091000221109 |conjunto de referencias simples de fármacos de uso clínico sin unidad de presentación definida (metadato fundacional)|)";
-        $resultados = $this->busquedaFiltradaEcl($term, $ECL);
-        $resultados = $resultados['items']??[];
-
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-        	$return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
 
     public function getMedicamentosAnmat($term)
     {
-        $ECL = "^ 331101000221109 |conjunto de referencias simples de presentaciones farmacéuticas comerciales del Vademecum Nacional de Medicamentos en estado comercializado (metadato fundacional)|";
-        $resultados = $this->busquedaFiltradaEcl($term, $ECL);
-        $resultados = $resultados['items']??[];
-
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-        	$return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
-    
 
     // Practicas | Procedimientos
     public function getPracticas($term)
     {
-        $ECL = "< 71388002 | procedimiento (procedimiento) |";
-        $resultados = $this->busquedaFiltradaEcl($term, $ECL);
-        $resultados = $resultados['items']??[];
-        
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-        	$return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;        
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
 
     public function getInmunizaciones($term)
     {
-        $ECL = "%5E 2281000221106";
-        return $this->busquedaFiltradaEcl($term, $ECL);
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
 
     public function getAntecedentesPersonales($term)
     {
-    	$ECL = "<< 417662000 |antecedente de hallazgo clínico en el sujeto (situación)|";
-    	$resultados = $this->busquedaFiltradaEcl($term, $ECL);
-        $resultados = $resultados['items']??[];
-        
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-            $return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;        
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
 
     public function getAntecedentesFamiliares($term)
     {
-    	$ECL = "<< 57177007 |antecedente familiar con contexto explícito (situación)|";
-    	$resultados =  $this->busquedaFiltradaEcl($term, $ECL);
-        $resultados = $resultados['items']??[];
-        
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-            $return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;        
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
 
     public function getAlergias($term)
     {
-    	$ECL = "< 420134006 | propensión a experimentar reacciones adversas (hallazgo) |";
-    	$resultados =  $this->busquedaFiltradaEcl($term, $ECL);
-        $resultados = $resultados['items']??[];
-        
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-            $return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;        
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
 
     public function getMotivosDeConsulta($term)
     {
-    	$ECL = "(<< 71388002 OR << 243796009 OR << 272379006 OR << 404684003)";
-    	$resultados =  $this->busquedaFiltradaEcl($term, $ECL);
-        
-        $resultados = $resultados['items']??[];
-        
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-            $return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;        
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
 
     public function getSintomas($term)
     {
-    	$ECL = "<< 404684003 | hallazgo clínico (hallazgo)|";
-    	$resultados =  $this->busquedaFiltradaEcl($term, $ECL);
-        //var_dump($resultados);die;
-        $resultados = $resultados['items']??[];
-        
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-            $return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;        
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
 
     public function getDiagnosticosOdontologia($term)
     {
-        // (posible para los diagnosticos generales)$ECL = "^ 398711000221107 |conjunto de referencias simples de diagnósticos de odontología de Argentina (metadato fundacional)|";
-
-    	$ECL = "< 278544002 |hallazgo de diente (hallazgo)|";
-    	$resultados =  $this->busquedaFiltradaEcl($term, $ECL);
-        
-        $resultados = $resultados['items']??[];
-        
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-            $return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;        
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
 
     public function getPracticasOdontologia($term)
     {
-    	$ECL = "^399211000221109";
-    	$resultados =  $this->busquedaFiltradaEcl($term, $ECL);
-        
-        $resultados = $resultados['items']??[];
-        
-        $return = [];
-        for ($i=0; $i < count($resultados); $i++) { 
-            $return[] = ['id' => $resultados[$i]['conceptId'], 'text' => $resultados[$i]['pt']['term']];
-        }
-
-        return $return;        
+        return $this->searchByClientMethod(__FUNCTION__, (string) $term);
     }
         
 }

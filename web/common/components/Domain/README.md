@@ -13,7 +13,9 @@ Todo lo **específico del rubro actual**. Para otro producto, esta carpeta se re
 | **`Person/`** | Personas, registro, representación |
 | **`Organization/`** | Efectores, PES, sesión operativa |
 | **`Integrations/`** | SISSE, receta digital, MPI, laboratorio FHIR, identidad |
-| **`Terminology/`** | SNOMED, codificación clínica |
+| **`Terminology/`** | SNOMED, codificación clínica (`SnomedCategoryCatalog`, `SnomedSearchProfileCatalog`) |
+
+Metadata SNOMED: `common/metadata/bioenlace/terminology/` (`snomed-categories.yaml`, `snomed-search-profiles.yaml`).
 
 ## Cableado con motores
 

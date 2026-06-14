@@ -28,7 +28,7 @@ class UiSelectOptionSourceMetadataTest extends Unit
         $this->assertSame('scheduling', UiSelectOptionSourceMetadata::providerKeyForSource('profesional-efector-servicio'));
     }
 
-    public function testSchedulingSourceReturnsEmptyList(): void
+    public function testSchedulingSourceReturnsEmptyWithoutParams(): void
     {
         $options = UiSelectOptionSourceProviderRegistry::resolve(
             'profesional-efector-servicio',

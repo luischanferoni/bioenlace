@@ -6,8 +6,6 @@ use common\components\Platform\Ui\UiSelectOptionSourceProviderInterface;
 
 /**
  * Opciones de selects de turnos (profesionales, slots).
- *
- * Autocomplete con endpoint suele hidratar en cliente; estas fuentes cubren preload estático.
  */
 final class SchedulingUiSelectOptionSourceProvider implements UiSelectOptionSourceProviderInterface
 {
@@ -25,7 +23,13 @@ final class SchedulingUiSelectOptionSourceProvider implements UiSelectOptionSour
     public static function resolve(string $sourceKey, $filter, array $params, array $optionConfig): array
     {
         return match ($sourceKey) {
-            'profesionales', 'profesional-efector-servicio', 'slots_disponibles_paciente' => [],
+            'profesionales', 'profesional-efector-servicio' => SchedulingUiSelectOptionsService::resolveProfesionales(
+                $sourceKey,
+                $filter,
+                $params,
+                $optionConfig
+            ),
+            'slots_disponibles_paciente' => SchedulingUiSelectOptionsService::resolveSlotsDisponiblesPaciente($params),
             default => [],
         };
     }

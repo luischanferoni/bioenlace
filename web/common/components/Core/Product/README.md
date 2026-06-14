@@ -1,10 +1,10 @@
 # Core / Product
 
-Resolución de metadata y registries del producto (agnósticos del rubro en código PHP).
-
 | Clase | Uso |
 |-------|-----|
-| `ProductMetadataPaths` | Rutas YAML (`common/metadata/bioenlace/`) — intents, reglas NL, permisos, panel |
-| `ProductRegistryConfig` | Acceso a `common/config/product-registries.php` — handlers cableados a motores (incl. variantes panel home staff) |
+| `ProductMetadataPaths` | Rutas YAML bajo `common/metadata/bioenlace/` |
+| `ProductRegistryConfig` | Lee `common/config/product-registries.php` (`productRegistries` en params) |
 
-Para otro vertical: copiar `metadata/bioenlace/` y `config/product-registries.php`; opcionalmente `productMetadataDir` en params.
+Secciones del registry: `flowDraftHydrators`, `domainOperationPolicies`, `dataAccessScopeCheckers`, `dataAccessFilterResolvers`, `metricPresentationHandlers`, `dataAccessEditMutationHandlers`, `homePanelStaffPanelSliceResolvers`, `uiActionCatalogProviders`, `homePanelSectionProviders`.
+
+Para otro vertical: reemplazar metadata + `product-registries.php` (opcional `productMetadataDir` en params-local).

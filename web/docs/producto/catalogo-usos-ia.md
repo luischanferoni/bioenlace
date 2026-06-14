@@ -106,7 +106,7 @@ Plan: [cohortes-asistencia-batch](../plans/cohortes-asistencia-batch/README.md).
 
 | Uso | Dónde | Camino feliz |
 |-----|-------|--------------|
-| Dictado médico §4 | `EncounterSpeechInputResolver` | **Edge-Cloud Routing** STT: texto en dispositivo; fallback `SpeechToTextManager` / Groq — ver [stt.md § Edge-Cloud](../costos/estrategias-reduccion/stt.md#edge-cloud-routing-stt) |
+| Dictado médico §4 | `ClinicalSpeechInputResolver` | **Edge-Cloud Routing** STT: texto en dispositivo; fallback `SpeechToTextManager` / Groq — ver [stt.md § Edge-Cloud](../costos/estrategias-reduccion/stt.md#edge-cloud-routing-stt) |
 | Notas de voz en motivos | `AppointmentReasonBatchService` | Hoy STT en servidor al procesar lote |
 | Transcribir audio suelto | `POST /api/v1/audio/transcribir` | Igual política dispositivo → servidor |
 

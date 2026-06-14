@@ -2,58 +2,26 @@
 
 namespace common\components\Assistant\Catalog;
 
-use common\components\Clinical\Assistant\ClinicalUiActionCatalog;
-use common\components\Clinical\CareCohort\Assistant\CarePackUiActionCatalog;
-use common\components\Person\Representation\Assistant\PersonRepresentationUiActionCatalog;
-use Yii;
+use common\components\Core\Product\ProductRegistryConfig;
 
 /**
- * Registro estable de providers de catálogo UI (solo clases, sin reglas de dominio).
+ * Registro de providers de catálogo UI. Clases en {@see common/config/product-registries.php}.
  */
 final class UiActionCatalogProviderRegistry
 {
-    /** @var list<class-string<UiActionCatalogProviderInterface>> */
-    private const PROVIDERS = [
-        ClinicalUiActionCatalog::class,
-        CarePackUiActionCatalog::class,
-        PersonRepresentationUiActionCatalog::class,
-        DataAccessUiActionCatalog::class,
-    ];
-
-    /** @var list<class-string<UiActionCatalogProviderInterface>>|null */
-    private static ?array $extraProviders = null;
-
-    /**
-     * Registra providers adicionales en runtime (tests, módulos verticales).
-     *
-     * @param list<class-string<UiActionCatalogProviderInterface>> $classes
-     */
-    public static function registerExtra(array $classes): void
-    {
-        self::$extraProviders = array_values(array_unique(array_merge(
-            self::$extraProviders ?? [],
-            $classes
-        )));
-    }
-
-    public static function resetForTests(): void
-    {
-        self::$extraProviders = null;
-    }
-
     /**
      * @return list<class-string<UiActionCatalogProviderInterface>>
      */
     public static function allProviderClasses(): array
     {
-        $fromParams = Yii::$app->params['uiActionCatalogProviders'] ?? [];
-        $extra = is_array($fromParams) ? array_values($fromParams) : [];
+        $classes = [];
+        foreach (ProductRegistryConfig::section('uiActionCatalogProviders') as $class) {
+            if (is_string($class) && $class !== '' && is_subclass_of($class, UiActionCatalogProviderInterface::class)) {
+                $classes[] = $class;
+            }
+        }
 
-        return array_values(array_unique(array_merge(
-            self::PROVIDERS,
-            self::$extraProviders ?? [],
-            $extra
-        )));
+        return array_values(array_unique($classes));
     }
 
     /**
@@ -108,5 +76,10 @@ final class UiActionCatalogProviderRegistry
         }
 
         return '';
+    }
+
+    public static function resetForTests(): void
+    {
+        ProductRegistryConfig::resetForTests();
     }
 }

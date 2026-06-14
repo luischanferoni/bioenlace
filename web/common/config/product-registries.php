@@ -3,13 +3,19 @@
 /**
  * Registro de handlers de dominio para motores genéricos (Bioenlace / salud).
  *
- * Para otro rubro: copiar este archivo, ajustar clases y cargarlo vía params
- * (`productRegistries`) o reemplazarlo en params-local.
+ * Fuente única de cableado producto → motor. Para otro rubro: reemplazar este archivo en params-local.
  *
  * @see \common\components\Core\Product\ProductRegistryConfig
  */
 
+use common\components\Assistant\Catalog\DataAccessUiActionCatalog;
+use common\components\Clinical\Assistant\ClinicalUiActionCatalog;
+use common\components\Clinical\CareCohort\Assistant\CarePackUiActionCatalog;
 use common\components\Clinical\Home\InpatientHomePanelSliceResolver;
+use common\components\Clinical\Home\Sections\EmergencyBoardSectionProvider;
+use common\components\Clinical\Home\Sections\EmergencyIndicatorsSectionProvider;
+use common\components\Clinical\Home\Sections\InpatientsSectionProvider;
+use common\components\Clinical\Home\Sections\PatientCarePlansActiveSectionProvider;
 use common\components\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
 use common\components\Clinical\Service\Authorization\ClinicalEncounterAccessPolicy;
 use common\components\Core\DataAccess\DataAccessEditFlowDraftHydrator;
@@ -28,16 +34,17 @@ use common\components\Organization\Service\ProfesionalEfectorServicio\Profesiona
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
 use common\components\Person\DataAccess\Filter\SexoBiologicoFilterResolver;
 use common\components\Person\DataAccess\Scope\PermitirParaSiMismoScopeChecker;
+use common\components\Person\Representation\Assistant\PersonRepresentationUiActionCatalog;
+use common\components\Scheduling\Home\Sections\AppointmentsDaySectionProvider;
+use common\components\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
+use common\components\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
 use common\components\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
 use common\components\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
 use common\components\Scheduling\Service\Authorization\TurnoSubjectOrRepresentativePolicy;
 use common\components\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
+use common\components\Ui\Home\Service\Sections\ActionCardsSectionProvider;
 
 return [
-    /**
-     * draft_hydrator.handler → [class, method] (asistente).
-     * Los handlers data_access.* son genéricos pero se registran aquí como producto Bioenlace.
-     */
     'flowDraftHydrators' => [
         'organization.pes_crear_alta' => [ProfesionalEfectorServicioCrearFlowDraftHydrator::class, 'hydrateWithOptions'],
         'organization.pes_from_servicio' => [ProfesionalEfectorServicioAgendaFlowDraftHydrator::class, 'hydrateWithOptions'],
@@ -46,7 +53,6 @@ return [
         'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
     ],
 
-    /** handler_id → política de recurso (domain-operation-policies.yaml). */
     'domainOperationPolicies' => [
         'turno.subject_or_representative' => TurnoSubjectOrRepresentativePolicy::class,
         'turno.staff_efector_belongs' => TurnoStaffEfectorBelongsPolicy::class,
@@ -58,21 +64,18 @@ return [
         'clinical.internacion_staff_access' => ClinicalInternacionStaffAccessPolicy::class,
     ],
 
-    /** scope_checker id → clase (data-access-config). */
     'dataAccessScopeCheckers' => [
         'efector_sesion' => EfectorSesionScopeChecker::class,
         'efector_sesion_via_pes' => EfectorSesionViaPesScopeChecker::class,
         'permitir_para_si_mismo' => PermitirParaSiMismoScopeChecker::class,
     ],
 
-    /** filter resolver id → clase (data-access-config). */
     'dataAccessFilterResolvers' => [
         'servicio_rol_efector_ids' => ServicioRolEfectorIdsFilterResolver::class,
         'servicio_rol_from_mention' => ServicioRolFromMentionFilterResolver::class,
         'sexo_biologico' => SexoBiologicoFilterResolver::class,
     ],
 
-    /** presentation_handler id → clase (métricas data-access). */
     'metricPresentationHandlers' => [
         'info' => [
             'organization.profesionales_conteo_info' => ProfesionalesConteoInfoPresentation::class,
@@ -82,13 +85,29 @@ return [
         ],
     ],
 
-    /** Handlers de mutación escalar por grupo de atributos (data-access edit). */
     'dataAccessEditMutationHandlers' => [
         PersonIdentidadBasicaEditMutationHandler::class,
     ],
 
-    /** Variantes de panel staff (manifiesto home) por encounter_class. */
     'homePanelStaffPanelSliceResolvers' => [
         InpatientHomePanelSliceResolver::class,
+    ],
+
+    'uiActionCatalogProviders' => [
+        ClinicalUiActionCatalog::class,
+        CarePackUiActionCatalog::class,
+        PersonRepresentationUiActionCatalog::class,
+        DataAccessUiActionCatalog::class,
+    ],
+
+    'homePanelSectionProviders' => [
+        'emergency_board' => EmergencyBoardSectionProvider::class,
+        'emergency_indicators' => EmergencyIndicatorsSectionProvider::class,
+        'appointments_day' => AppointmentsDaySectionProvider::class,
+        'inpatients' => InpatientsSectionProvider::class,
+        'surgeries_day' => SurgeriesDaySectionProvider::class,
+        'action_cards' => ActionCardsSectionProvider::class,
+        'patient_upcoming_appointments' => PatientUpcomingAppointmentsSectionProvider::class,
+        'patient_care_plans_active' => PatientCarePlansActiveSectionProvider::class,
     ],
 ];

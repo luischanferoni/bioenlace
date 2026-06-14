@@ -12,7 +12,7 @@ use common\models\Mensajes;
 use common\models\Referencia;
 use yii\helpers\Url;
 use common\components\Core\Permission\BioenlaceGhostNav;
-use webvimark\modules\UserManagement\UserManagementModule;
+use common\components\Legacy\UserManagementCompat;
 
 AppAsset::register($this);
 
@@ -117,7 +117,7 @@ if(Yii::$app->user->idEfector){
             ],
             [
                 'label' => 'Administrar',
-                'items' => UserManagementModule::menuItems()
+                'items' => UserManagementCompat::adminMenuItems()
             ],
             [
                 'label' => $user,
@@ -140,7 +140,7 @@ NavBar::end();
         'items' => [
             [
                 'label' => 'Administrar',
-                'items' => UserManagementModule::menuItems()
+                'items' => UserManagementCompat::adminMenuItems()
             ],
             [
                 'label' => $user,

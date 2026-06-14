@@ -575,7 +575,7 @@ return [
     'params' => $params,
     'modules' => [
         'user-management' => [
-            'class' => 'webvimark\modules\UserManagement\UserManagementModule',
+            'class' => \common\modules\UserManagementCompatModule::class,
             'controllerMap' => [
                 'auth' => 'frontend\controllers\userManagement\AuthController',
                 'permission' => 'backend\controllers\LegacyRbacRedirectController',

@@ -1,6 +1,6 @@
 <?php
 
-use webvimark\modules\UserManagement\UserManagementModule;
+use common\components\Legacy\UserManagementCompat;
 use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 
@@ -9,10 +9,10 @@ use yii\helpers\Html;
  * @var common\models\User $model
  */
 
-$this->title = UserManagementModule::t('back', 'Changing password for user: ') . ' ' . $model->username;
-$this->params['breadcrumbs'][] = ['label' => UserManagementModule::t('back', 'Users'), 'url' => ['index']];
+$this->title = UserManagementCompat::t('back', 'Changing password for user: ') . ' ' . $model->username;
+$this->params['breadcrumbs'][] = ['label' => UserManagementCompat::t('back', 'Users'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->username, 'url' => ['view', 'id' => $model->id]];
-$this->params['breadcrumbs'][] = UserManagementModule::t('back', 'Changing password');
+$this->params['breadcrumbs'][] = UserManagementCompat::t('back', 'Changing password');
 ?>
 <div class="user-update">
 
@@ -37,12 +37,12 @@ $this->params['breadcrumbs'][] = UserManagementModule::t('back', 'Changing passw
 					<div class="col-sm-offset-3 col-sm-9">
 						<?php if ( $model->isNewRecord ): ?>
 							<?= Html::submitButton(
-								'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementModule::t('back', 'Create'),
+								'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementCompat::t('back', 'Create'),
 								['class' => 'btn btn-success']
 							) ?>
 						<?php else: ?>
 							<?= Html::submitButton(
-								'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('back', 'Save'),
+								'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementCompat::t('back', 'Save'),
 								['class' => 'btn btn-primary']
 							) ?>
 						<?php endif; ?>

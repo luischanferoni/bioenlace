@@ -4,7 +4,6 @@ use yii\helpers\Html;
 
 use backend\assets\AppAsset;
 
-use webvimark\modules\UserManagement\UserManagementModule;
 use common\components\Integrations\Sisse\NavSisse;
 use common\components\Integrations\Sisse\NavSisseHigh;
 

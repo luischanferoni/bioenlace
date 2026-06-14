@@ -20,12 +20,16 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 | UI RBAC helpers | `BioenlaceGhostHtml`, `BioenlaceGhostNav`, `RbacFreeRouteChecker`, `UserVisitLog` propios |
 | Roles RBAC | `RbacRoleQueryService`, `common\models\rbac\AuthRole` (sin `webvimark\Role` en flujos activos) |
 
+| `UserManagementCompatModule` | Módulo Yii stub en configs (backend, frontend, console) |
+| `UserManagementCompat` | `t()` y menú admin sin webvimark |
+| Checklist staging | `staging-validacion.md` |
+
 ## Pendiente
 
 | Pieza | Notas |
 |-------|-------|
-| Composer | Quitar `webvimark/module-user-management` (módulo Yii stub, vistas role/permission legacy) |
-| `pathMap` vistas vendor | Eliminar overrides en `backend/config/main.php` |
+| Composer | Quitar `webvimark/module-user-management` — requiere reemplazar widgets `GridPageSize`, `GridBulkActions`, `BootstrapSwitch`, `StatusColumn` |
+| `pathMap` vistas vendor | Eliminar overrides en `backend/config/main.php` tras retiro Composer |
 
 ## Qué se mantiene temporalmente
 

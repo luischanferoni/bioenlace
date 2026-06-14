@@ -3,7 +3,7 @@
 use common\components\Core\Permission\BioenlaceGhostHtml;
 use common\components\Core\Permission\RbacRoleQueryService;
 use common\models\User;
-use webvimark\modules\UserManagement\UserManagementModule;
+use common\components\Legacy\UserManagementCompat;
 use yii\helpers\Html;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
@@ -18,7 +18,7 @@ use yii\grid\GridView;
  * @var common\models\search\UserSearch $searchModel
  */
 
-$this->title = UserManagementModule::t('back', 'Users');
+$this->title = UserManagementCompat::t('back', 'Users');
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="user-index">
@@ -116,19 +116,19 @@ $this->params['breadcrumbs'][] = $this->title;
 						[
 							'value' => function (User $model) {
 								return BioenlaceGhostHtml::a(
-									UserManagementModule::t('back', 'Roles and permissions'),
+									UserManagementCompat::t('back', 'Roles and permissions'),
 									['/user-management/user-permission/set', 'id' => $model->id],
 									['class' => 'btn btn-sm btn-primary', 'data-pjax' => 0]
 								)
 									. '<br>' .
 									BioenlaceGhostHtml::a(
-										UserManagementModule::t('back', 'Change password'),
+										UserManagementCompat::t('back', 'Change password'),
 										['change-password', 'id' => $model->id],
 										['class' => 'btn btn-sm btn-warning', 'data-pjax' => 0]
 									)
 									. '<br>' .
 									BioenlaceGhostHtml::a(
-										UserManagementModule::t('back', 'Log in as this user'),
+										UserManagementCompat::t('back', 'Log in as this user'),
 										['/user/impersonate', 'id' => $model->id],
 										['linkOptions' => ['target' => '_blank']],
 										['class' => 'btn btn-sm btn-success', 'data-pjax' => 0]
@@ -144,9 +144,9 @@ $this->params['breadcrumbs'][] = $this->title;
 							'class' => 'webvimark\components\StatusColumn',
 							'attribute' => 'status',
 							'optionsArray' => [
-								[User::STATUS_ACTIVE, UserManagementModule::t('back', 'Active'), 'success'],
-								[User::STATUS_INACTIVE, UserManagementModule::t('back', 'Inactive'), 'warning'],
-								[User::STATUS_BANNED, UserManagementModule::t('back', 'Banned'), 'danger'],
+								[User::STATUS_ACTIVE, UserManagementCompat::t('back', 'Active'), 'success'],
+								[User::STATUS_INACTIVE, UserManagementCompat::t('back', 'Inactive'), 'warning'],
+								[User::STATUS_BANNED, UserManagementCompat::t('back', 'Banned'), 'danger'],
 							],
 						],
 						[

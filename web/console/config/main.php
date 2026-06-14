@@ -20,7 +20,7 @@ return [
      */
     'modules' => [
         'user-management' => [
-            'class' => \webvimark\modules\UserManagement\UserManagementModule::class,
+            'class' => \common\modules\UserManagementCompatModule::class,
         ],
     ],
     'components' => [

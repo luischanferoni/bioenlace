@@ -581,6 +581,8 @@ return [
                 'permission' => 'backend\controllers\LegacyRbacRedirectController',
                 'role' => 'backend\controllers\LegacyRbacRedirectController',
                 'auth-item-group' => 'backend\controllers\LegacyRbacRedirectController',
+                'user' => 'backend\controllers\UserAccountController',
+                'user-permission' => 'backend\controllers\UserRoleController',
             ],
             //'registrationFormClass' => 'common\models\User',
             // 'enableRegistration' => true,

@@ -2,79 +2,9 @@
 
 namespace backend\controllers;
 
-use Yii;
-use yii\helpers\FileHelper;
-use yii\web\NotFoundHttpException;
-
-use webvimark\components\AdminDefaultController;
-use common\models\User;
-use webvimark\modules\UserManagement\models\search\UserSearch;
-
-use common\models\Persona;
-
 /**
- * UserController implements the CRUD actions for User model.
+ * Alias de rutas `/user/*` (crear, impersonate) sobre {@see UserAccountController}.
  */
-class UserController extends \webvimark\modules\UserManagement\controllers\UserController
+class UserController extends UserAccountController
 {
-    public function behaviors() {
-        //control de acceso mediante la extensión
-        return [
-            'ghost-access' => [
-                'class' => \frontend\components\BioenlaceBackendAccessControl::class,
-            ],
-        ];
-    }
-
-	/**
-	 * @return mixed|string|\yii\web\Response
-	 */    
-    public function actionCrear()
-    {
-        $model = new User(['scenario'=>'newUser']);
-
-        $persona = Yii::$app->session['persona'];
-        $persona =  unserialize($persona);
-
-        $model->username = strtolower($persona->nombre.''.$persona->apellido);
-
-        if (Yii::$app->request->post()) {
-            // Recibimos el mail, en caso de ya existir en el sistema
-            // asignamos directamente el id_user encontrado
-           /* $user = false;
-            $username = Yii::$app->request->post('User')['username'];
-            if(isset($username) && $username != '') {
-                $user = User::find()->where(['username' => $username])->one();
-            }*/
-            // No existe usuario, lo creo y asocio con persona
-            //if (!$user) {
-                if ($model->load(Yii::$app->request->post()) && $model->save()) {
-                    
-                    $persona->scenario = "scenarioactualizaruser";
-                    $persona->id_user = $model->id;
-                    
-                    $persona->save();
-
-                    // pisamos la session para que lleve el id_user
-                    $session = Yii::$app->getSession();
-                    $session->set('persona', serialize($persona));
-
-                    return $this->redirect(['/user-management/user/view', 'id' => $model->id]);
-                }                        
-        }
-
-        return $this->render('@backend/views/user-management/user/create', ['model' => $model]);
-    }
-
-    public function actionImpersonate($id)
-    {
-        $dir = Yii::getAlias('@frontend') . '/runtime/impersonation';
-        FileHelper::createDirectory($dir);
-        file_put_contents($dir . '/a.txt', (string) (int) $id, LOCK_EX);
-
-        $url = Yii::$app->urlManager->createAbsoluteUrl(['site/impersonate']);
-        $url = str_replace("/admin/", "/", $url);
-
-        return $this->redirect($url);
-    }  
 }

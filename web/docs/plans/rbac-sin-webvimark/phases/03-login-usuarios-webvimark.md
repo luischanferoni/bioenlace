@@ -16,18 +16,18 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 | Modelo identidad | `common/models/User` AR propio (`IdentityInterface`); `identityClass` → `common\models\User` |
 | Contraseña | `ChangeOwnPasswordForm`, `PasswordRecoveryForm` + `/auth/change-own-password`, `/auth/password-recovery*` |
 | Confirmación e-mail | `ConfirmEmailForm` + `/auth/confirm-email`, `/auth/confirm-email-receive` |
+| CRUD usuarios admin | `UserAccountController` + `UserRoleController` (controllerMap user-management) |
 
 ## Pendiente
 
 | Pieza | Notas |
 |-------|-------|
-| CRUD usuarios | Migrar `user-management/user/*` y `user-permission/set` al admin Bioenlace o API |
-| Composer | Quitar `webvimark/module-user-management` cuando no queden referencias |
+| Composer | Quitar `webvimark/module-user-management` cuando no queden referencias (GhostHtml, UserVisitLog, SisseRole AR) |
 | `pathMap` vistas vendor | Eliminar overrides en `backend/config/main.php` |
 
 ## Qué se mantiene temporalmente
 
-- CRUD usuarios webvimark (`user-management/user`, `user-permission/set`) para alta de cuentas staff.
+- Vistas en `backend/views/user-management/*` (pathMap vendor) y `GhostHtml` en grids legacy.
 - `UserVisitLog` webvimark (registro de visitas post-login).
 
 ## Verificación

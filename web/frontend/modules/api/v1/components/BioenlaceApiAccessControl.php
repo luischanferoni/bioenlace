@@ -83,7 +83,7 @@ class BioenlaceApiAccessControl extends ActionFilter
         if ($flowIntentId === '') {
             $flowIntentId = null;
         }
-        if ($flowIntentId !== null && (new FlowStepAccessService())->canAccessViaParentIntent($userId, $route, $flowIntentId)) {
+        if ((new FlowStepAccessService())->canAccessViaParentIntent($userId, $route, $flowIntentId)) {
             return true;
         }
 

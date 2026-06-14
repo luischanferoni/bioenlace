@@ -12,7 +12,7 @@ use yii\helpers\ArrayHelper;
 use kartik\export\ExportMenu;
 use common\models\Servicio;
 /* @var $this yii\web\View */
-/* @var $searchModel common\models\busquedas\GuardiaBusqueda */
+/* @var $searchModel yii\base\Model */
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 $this->title = 'Historial de Turnos';

@@ -9,7 +9,6 @@ Episodio FHIR: `EpisodeOfCare` + `CarePlan` category `inpatient` + `Encounter` c
 | `InpatientClinicalContext` | Resuelve episode + care plan + encounter IMP abierto |
 | `InpatientOrderService` | Medicación / prácticas / diagnósticos → `medication_request`, `service_request`, `clinical_condition` |
 | `InpatientClinicalQuery` | Bundle de lectura (staff / API) |
-| `InternacionClinicalBridge` (`Clinical/Legacy/`) | Puente Yii web desde formularios legacy |
 
 ## Ciclo de vida
 

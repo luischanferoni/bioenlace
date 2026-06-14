@@ -11,7 +11,7 @@ use common\models\Persona;
 
 /**
  * API Persona: CRUD y signos vitales. Historia clínica: {@see PacientesController::actionHistoriaClinica}.
- * Lógica migrada desde frontend\controllers\PersonaController.
+ * CRUD y signos vitales vía API (sin equivalente MVC web).
  */
 class PersonaController extends BaseController
 {

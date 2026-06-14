@@ -45,7 +45,7 @@ use yii\helpers\Html;
             <strong>Formulario de consulta</strong>
         </label>
         <textarea 
-            class="form-control speech-input" 
+            class="form-control" 
             id="chat-input" 
             name="consulta_texto"
             lang="es-AR"

@@ -25,7 +25,7 @@ class AdjuntoController extends Controller
     {
         return [
            /* 'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
+                'class' => \frontend\components\BioenlaceBackendAccessControl::class,
             ],    */        
             'verbs' => [
                 'class' => VerbFilter::className(),

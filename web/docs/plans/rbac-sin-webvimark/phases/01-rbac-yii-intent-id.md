@@ -12,12 +12,16 @@
 | YAML | Eliminado campo `permission:` (38 archivos) |
 | Migración grants | `m260630_100000_intent_id_permission_keys` |
 | Backend catálogo | `BioenlaceBackendAccessControl` |
+| `User::canRoute` | Override en `common/models/User.php` → Bioenlace |
+| Nav / links condicionales | `NavSisse`, `SisseGhostHtml` vía `User::canRoute` |
+| Controllers backend | 18 controllers → `BioenlaceBackendAccessControl` |
+| Legacy aliases | `ApiGhostAccessControl`, `SisseGhostAccessControl` → Bioenlace |
 
 ## Pendiente
 
-- Sustituir `SisseGhostAccessControl` en resto de controllers backend.
-- Migrar `NavSisse` / `SisseGhostHtml` a `BioenlaceAccessChecker`.
-- Retirar dependencia webvimark (login + `common/models/User`).
+- Retirar paquete Composer `webvimark/module-user-management` (login, módulo user-management).
+- Reemplazar `User::hasRole` en vistas legacy por chequeo declarativo o rol en sesión Bioenlace.
+- Eliminar admin `user-management/*` del menú backend (usuarios siguen en webvimark hasta migrar login).
 
 ## Verificación
 

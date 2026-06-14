@@ -24,7 +24,7 @@ class ServiciosController extends Controller
         //control de acceso mediante la extension
         return [
             'ghost-access'=> [
-                'class' => 'frontend\components\SisseGhostAccessControl',
+                'class' => \frontend\components\BioenlaceBackendAccessControl::class,
                 'except' => ['search']
             ],
             'verbs' => [

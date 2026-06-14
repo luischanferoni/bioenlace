@@ -2,19 +2,107 @@
 
 namespace common\models;
 
+use common\components\Core\Permission\BioenlaceAccessChecker;
+use common\components\Core\Permission\BioenlaceSessionPermissions;
 use Yii;
-
-use webvimark\modules\UserManagement\models\rbacDB\Route;
-use webvimark\modules\UserManagement\components\AuthHelper;
 use webvimark\modules\UserManagement\models\User as webvimarkUser;
 
-class User extends webvimarkUser {
+/**
+ * Usuario de aplicación. RBAC de rutas vía {@see BioenlaceAccessChecker} (Yii), no webvimark AuthHelper.
+ */
+class User extends webvimarkUser
+{
+    /**
+     * @param string|array<int|string, string> $route
+     */
+    public static function canRoute($route, $superAdminAllowed = true): bool
+    {
+        if (Yii::$app->user->isGuest) {
+            return false;
+        }
 
+        $userId = (int) Yii::$app->user->id;
+        if ($userId <= 0) {
+            return false;
+        }
 
-    public static function getPorRolPorEfector($rol, $id_efector) {
+        if ($superAdminAllowed && BioenlaceAccessChecker::isSuperadminUserId($userId)) {
+            return true;
+        }
 
+        BioenlaceSessionPermissions::ensureUpToDate();
+
+        foreach (self::expandRouteCandidates($route) as $candidate) {
+            if (BioenlaceAccessChecker::userHasRoute($userId, $candidate)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param string|array<int|string, string> $route
+     * @return list<string>
+     */
+    private static function expandRouteCandidates($route): array
+    {
+        $raw = is_array($route) ? $route : [$route];
+        $out = [];
+        foreach ($raw as $part) {
+            if (is_string($part) && $part !== '') {
+                $out[] = self::normalizeRbacRoute($part);
+            }
+        }
+        if ($out === [] && is_array($route) && isset($route[0])) {
+            $built = self::normalizeRbacRouteFromArray($route);
+            if ($built !== '') {
+                $out[] = $built;
+            }
+        }
+
+        return array_values(array_unique(array_filter($out)));
+    }
+
+    /**
+     * @param array<int|string, string> $route
+     */
+    private static function normalizeRbacRouteFromArray(array $route): string
+    {
+        $parts = [];
+        foreach ($route as $k => $v) {
+            if ($k === 0 && is_string($v)) {
+                $parts[] = trim($v, '/');
+            } elseif (is_string($k) && $k !== '0' && is_scalar($v)) {
+                $parts[] = $k . '/' . $v;
+            }
+        }
+
+        return self::normalizeRbacRoute(implode('/', $parts));
+    }
+
+    private static function normalizeRbacRoute(string $route): string
+    {
+        $route = '/' . ltrim(trim($route), '/');
+        if (strncmp($route, '/api/', 5) === 0) {
+            return BioenlaceSessionPermissions::unifyRoute($route);
+        }
+        if (preg_match('#^/(frontend|backend)/#', $route) === 1) {
+            return $route;
+        }
+
+        $prefix = trim((string) (Yii::$app->params['path'] ?? ''), '/');
+        if ($prefix !== '') {
+            return '/' . $prefix . $route;
+        }
+
+        return $route;
+    }
+
+    public static function getPorRolPorEfector($rol, $id_efector)
+    {
         $query = new yii\db\Query;
-        $query->select(["`user`.*"])
+        $query->select(['`user`.*'])
                 ->from('user')
                 ->where('auth_item.name', $rol)
                 ->andWhere('auth_item.type', 1)
@@ -25,30 +113,26 @@ class User extends webvimarkUser {
 
         $command = $query->createCommand();
         $data = $command->queryAll();
-        // "SELECT `user`.* FROM `user` LEFT JOIN `auth_assignment` ON `user`.`id` = `auth_assignment`.`user_id` LEFT JOIN `auth_item` ON `auth_assignment`.`item_name` = `auth_item`.`name` WHERE (`auth_item`.name='Administrativo') AND (`auth_item`.type=1)"
 
         return $data;
     }
 
-    //funcion que devuelve el nombre de la persona a la cual se le creara un usuario
-    public function getNombrepersona($id){
-        
-        $consulta_persona = \common\models\Persona::findOne(['id_persona'=>$id]);            
-        $apellido_persona = $consulta_persona->apellido;            
-        $nombre_persona = $consulta_persona->nombre.' '.$consulta_persona->otro_nombre;            
-        $nombre = $apellido_persona.", ".$nombre_persona;            
+    public function getNombrepersona($id)
+    {
+        $consulta_persona = \common\models\Persona::findOne(['id_persona' => $id]);
+        $apellido_persona = $consulta_persona->apellido;
+        $nombre_persona = $consulta_persona->nombre . ' ' . $consulta_persona->otro_nombre;
+        $nombre = $apellido_persona . ', ' . $nombre_persona;
+
         return $nombre;
-    }    
-    
-    public function actualizarIduserpersona($idpersona,$iduser) {
-        
-        //actualizar id_user para el id_persona solicitado---------------
-        $actualizar_persona = \common\models\Persona::findOne(['id_persona'=>$idpersona]);     
+    }
+
+    public function actualizarIduserpersona($idpersona, $iduser)
+    {
+        $actualizar_persona = \common\models\Persona::findOne(['id_persona' => $idpersona]);
         $actualizar_persona->id_user = $iduser;
-        $actualizar_persona->scenario = "scenarioregistrar";      
+        $actualizar_persona->scenario = 'scenarioregistrar';
         $actualizar_persona->save();
-        //---------------------------------------------------------------
-        
     }
 
     public function afterSave($insert, $changedAttributes)
@@ -63,11 +147,4 @@ class User extends webvimarkUser {
             }
         }
     }
-
-	/*public static function canRoute($route, $superAdminAllowed = true)
-	{
-        $route[0] = Yii::$app->params['path'].$route[0];
-        //var_dump(parent::canRoute($route));var_dump($route);
-        return parent::canRoute($route);
-    }*/
 }

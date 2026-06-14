@@ -7,8 +7,8 @@ namespace common\components\Integrations\Sisse;
 use Yii;
 use yii\base\Widget;
 use common\models\User;
-use webvimark\modules\UserManagement\components\AuthHelper;
-use webvimark\modules\UserManagement\models\rbacDB\Route as RbacRoute;
+use common\components\Core\Permission\BioenlaceAccessChecker;
+use common\components\Core\Permission\BioenlaceSessionPermissions;
 
 class NavSisse extends Widget
 {
@@ -187,21 +187,16 @@ class NavSisse extends Widget
         if (Yii::$app->user->isGuest) {
             return false;
         }
-        if (Yii::$app->user->isSuperadmin) {
+        $userId = (int) Yii::$app->user->id;
+        if (BioenlaceAccessChecker::isSuperadminUserId($userId)) {
             return true;
         }
-        AuthHelper::ensurePermissionsUpToDate();
-        $allowed = Yii::$app->session->get(AuthHelper::SESSION_PREFIX_ROUTES, []);
-        $unified = AuthHelper::unifyRoute($url);
+
+        BioenlaceSessionPermissions::ensureUpToDate();
+        $unified = BioenlaceSessionPermissions::unifyRoute($url);
         $withSlash = '/' . ltrim($unified, '/');
-        $noSlash = ltrim($unified, '/');
-        if (RbacRoute::isRouteAllowed($withSlash, $allowed) || RbacRoute::isRouteAllowed($noSlash, $allowed)) {
-            return true;
-        }
-        if (RbacRoute::isFreeAccess($withSlash) || ($noSlash !== '' && RbacRoute::isFreeAccess('/' . $noSlash))) {
-            return true;
-        }
-        return User::canRoute($url, true);
+
+        return BioenlaceAccessChecker::userHasRoute($userId, $withSlash);
     }
 }
 

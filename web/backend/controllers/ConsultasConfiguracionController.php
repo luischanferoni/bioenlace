@@ -24,7 +24,7 @@ class ConsultasConfiguracionController extends Controller
     {
         return [
             'ghost-access' => [
-                'class' => 'webvimark\modules\UserManagement\components\GhostAccessControl',
+                'class' => \frontend\components\BioenlaceBackendAccessControl::class,
             ],  
             'verbs' => [
                 'class' => VerbFilter::className(),

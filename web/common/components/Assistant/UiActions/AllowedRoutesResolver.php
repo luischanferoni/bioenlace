@@ -4,13 +4,13 @@ namespace common\components\Assistant\UiActions;
 
 use Yii;
 use common\components\Core\Service\ClientContextService;
+use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Core\Permission\BioenlaceSessionPermissions;
 use webvimark\modules\UserManagement\models\User;
 
 /**
  * Resuelve el conjunto de rutas permitidas para un usuario o roles sin repetir
- * consultas RBAC pesadas en cada request cuando hay sesión webvimark (__userRoutes)
- * o caché de aplicación.
+ * consultas RBAC pesadas en cada request cuando hay sesión Bioenlace o caché de aplicación.
  */
 final class AllowedRoutesResolver
 {
@@ -26,7 +26,7 @@ final class AllowedRoutesResolver
     /**
      * Tras refrescar permisos Bioenlace, debe coincidir el dueño de sesión con userId.
      */
-    public const SESSION_ROUTES_OWNER_KEY = '__bioenlace_user_routes_owner_id';
+    public const SESSION_ROUTES_OWNER_KEY = BioenlaceSessionPermissions::SESSION_OWNER_KEY;
 
     /**
      * Mapa route => true a partir de roles (misma lógica que el motor de actions/mapping).
@@ -137,12 +137,12 @@ final class AllowedRoutesResolver
     {
         $useAppCache = ActionCatalogSettings::shouldUseCache($useAppCache);
 
-        $user = User::findOne($userId);
-        if (!$user) {
-            return [];
-        }
-        if ((int) $user->superadmin === 1) {
+        if (BioenlaceAccessChecker::isSuperadminUserId($userId)) {
             return null;
+        }
+
+        if (!User::findOne($userId)) {
+            return [];
         }
 
         $cache = Yii::$app->cache;
@@ -262,7 +262,7 @@ final class AllowedRoutesResolver
     }
 
     /**
-     * Rutas candidatas para comprobar {@see User::canRoute} sobre controladores en `frontend/controllers`.
+     * Rutas candidatas para {@see BioenlaceAccessChecker::userHasRoute} en controladores web.
      *
      * En webvimark a veces el permiso figura con o sin prefijo de módulo (`/foo/bar` vs `/frontend/foo/bar`)
      * (según cómo se generó/registró la ruta). Hay que probar ambas para no filtrar UIs nativas en vano.
@@ -309,7 +309,7 @@ final class AllowedRoutesResolver
     }
 
     /**
-     * Marcar que {@see AuthHelper::SESSION_PREFIX_ROUTES} corresponde a este usuario (llamar tras updatePermissions).
+     * Marcar dueño de sesión de permisos Bioenlace (tras refreshForIdentity).
      */
     public static function markSessionRoutesOwner(int $userId): void
     {

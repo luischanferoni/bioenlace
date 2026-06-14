@@ -40,8 +40,7 @@ class UserConfig extends BaseUserConfig
                 $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
                 $session->set('apiJwtToken', $token);
 
-                // BioenlaceDbManager arma permisos con contexto PES en sesión; sin esto, __userRoutes queda vacío
-                // hasta elegir efector (impersonate nunca pasa por ese POST).
+                // BioenlaceDbManager arma permisos con contexto PES en sesión.
                 $this->tryBootstrapSingleEfectorSession($persona);
             } else {
                 throw new NotFoundHttpException('Hubo un error con su usuario, comuníquese con los encargados del sistema.');
@@ -55,9 +54,7 @@ class UserConfig extends BaseUserConfig
 
         \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($identity->id);
 
-        // Igual que webvimark UserConfig: refrescar __userRoles / __userRoutes para la identidad actual.
-        // Imprescindible tras impersonate (SiteController::actionImpersonate): si no, la sesión conserva
-        // rutas del usuario anterior y ghost-access / RBAC en sesión quedan desalineados con AllowedRoutesResolver.
+        // Refrescar permisos/rutas Bioenlace en sesión para la identidad actual.
         \common\components\Core\Permission\BioenlaceAccessChecker::refreshForIdentity($identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) $identity->id);
 

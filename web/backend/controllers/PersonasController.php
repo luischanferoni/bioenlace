@@ -59,7 +59,7 @@ class PersonasController extends Controller {
     public function behaviors() {
         return [
             'ghost-access'=> [
-                'class' => 'webvimark\modules\UserManagement\components\GhostAccessControl',
+                'class' => \frontend\components\BioenlaceBackendAccessControl::class,
                 'except' => ['vacunas']
             ],
             'access' => [

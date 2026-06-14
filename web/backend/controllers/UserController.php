@@ -21,7 +21,7 @@ class UserController extends \webvimark\modules\UserManagement\controllers\UserC
         //control de acceso mediante la extensión
         return [
             'ghost-access' => [
-                'class' => 'webvimark\modules\UserManagement\components\GhostAccessControl',
+                'class' => \frontend\components\BioenlaceBackendAccessControl::class,
             ],
         ];
     }

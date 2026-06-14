@@ -4,7 +4,7 @@ namespace common\models\webvimark\moduleusermanagement\models\rbacDB;
 
 use Exception;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
-use webvimark\modules\UserManagement\components\AuthHelper;
+use common\components\Core\Permission\BioenlaceSessionPermissions;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\rbac\DbManager;
@@ -31,7 +31,7 @@ class SisseRole extends Role
             $rolesEspeciales[] = 'name LIKE "%'.$rolEspecial.'%"';
         }
                 
-		$condition = (Yii::$app->user->isSuperAdmin OR $showAll) ? implode(' OR ', $rolesEspeciales) : ['name'=>Yii::$app->session->get(AuthHelper::SESSION_PREFIX_ROLES)];
+		$condition = (Yii::$app->user->isSuperAdmin OR $showAll) ? implode(' OR ', $rolesEspeciales) : ['name' => Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROLES)];
 
 		$result = static::find()->andWhere($condition)->all();
 

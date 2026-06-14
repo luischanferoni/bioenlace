@@ -10,7 +10,6 @@
     "yiisoft/yii2-bootstrap5": "*",
     "yiisoft/yii2-swiftmailer": "~2.0.0 || ~2.1.0",
     "yiisoft/yii2-jui": "~2.0.0",
-    "webvimark/module-user-management": "*",
     "phpoffice/phpexcel": "dev-develop",
     "kartik-v/yii2-widget-select2": "@dev",
     "kartik-v/yii2-widget-datepicker": "@dev",

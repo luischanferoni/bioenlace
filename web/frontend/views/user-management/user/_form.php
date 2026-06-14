@@ -1,10 +1,9 @@
 <?php
 
+use common\components\Legacy\UserManagementCompat;
 use common\models\User;
-use webvimark\modules\UserManagement\UserManagementModule;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
-use webvimark\extensions\BootstrapSwitch\BootstrapSwitch;
 
 /**
  * @var yii\web\View $this
@@ -48,7 +47,7 @@ use webvimark\extensions\BootstrapSwitch\BootstrapSwitch;
 
 		<?= $form->field($model, 'bind_to_ip')
 			->textInput(['maxlength' => 255])
-			->hint(UserManagementModule::t('back','For example: 123.34.56.78, 168.111.192.12')) ?>
+			->hint(UserManagementCompat::t('back','For example: 123.34.56.78, 168.111.192.12')) ?>
 
 	<?php endif;*/ ?>
 
@@ -64,12 +63,12 @@ use webvimark\extensions\BootstrapSwitch\BootstrapSwitch;
 		<div class="float-end pe-4">
 			<?php if ( $model->isNewRecord ): ?>
 				<?= Html::submitButton(
-					'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementModule::t('back', 'Crear'),
+					'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementCompat::t('back', 'Crear'),
 					['class' => 'btn btn-success rounded-pill']
 				) ?>
 			<?php else: ?>
 				<?= Html::submitButton(
-					'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementModule::t('back', 'Save'),
+					'<span class="glyphicon glyphicon-ok"></span> ' . UserManagementCompat::t('back', 'Save'),
 					['class' => 'btn btn-primary rounded-pill']
 				) ?>
 			<?php endif; ?>
@@ -79,5 +78,3 @@ use webvimark\extensions\BootstrapSwitch\BootstrapSwitch;
 	<?php ActiveForm::end(); ?>
 
 </div>
-
-<?php BootstrapSwitch::widget() ?>

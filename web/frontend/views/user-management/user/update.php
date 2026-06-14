@@ -1,8 +1,7 @@
 <?php
 
+use common\components\Legacy\UserManagementCompat;
 use common\models\User;
-use webvimark\extensions\BootstrapSwitch\BootstrapSwitch;
-use webvimark\modules\UserManagement\UserManagementModule;
 use yii\bootstrap\ActiveForm;
 use yii\helpers\Html;
 
@@ -11,10 +10,10 @@ use yii\helpers\Html;
  * @var common\models\User $model
  */
 
-$this->title = UserManagementModule::t('back', 'Editing user: ') . ' ' . $model->username;
-$this->params['breadcrumbs'][] = ['label' => UserManagementModule::t('back', 'Users'), 'url' => ['index']];
+$this->title = UserManagementCompat::t('back', 'Editing user: ') . ' ' . $model->username;
+$this->params['breadcrumbs'][] = ['label' => UserManagementCompat::t('back', 'Users'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = ['label' => $model->username, 'url' => ['view', 'id' => $model->id]];
-$this->params['breadcrumbs'][] = UserManagementModule::t('back', 'Editing');
+$this->params['breadcrumbs'][] = UserManagementCompat::t('back', 'Editing');
 ?>
 <div class="card">
 

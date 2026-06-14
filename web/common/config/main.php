@@ -29,11 +29,7 @@ return [
         ],
         'view' => [
             'theme' => [
-                // Login webvimark (transitorio). RBAC: BioenlaceAccessChecker + EnforceGhostAccessBootstrap.
-                'pathMap' => [
-                    '@vendor/webvimark/module-user-management/views' => '@frontend/views/login',
-                    '@vendor/webvimark/module-user-management/views/auth' => '@frontend/views/login',
-                ],
+                'pathMap' => [],
             ],
         ],
         'assetManager' => [

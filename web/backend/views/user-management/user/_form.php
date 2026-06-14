@@ -4,7 +4,6 @@ use common\models\User;
 use common\components\Legacy\UserManagementCompat;
 use yii\helpers\Html;
 use yii\bootstrap5\ActiveForm;
-use webvimark\extensions\BootstrapSwitch\BootstrapSwitch;
 
 /**
  * @var yii\web\View $this
@@ -71,5 +70,3 @@ use webvimark\extensions\BootstrapSwitch\BootstrapSwitch;
 	<?php ActiveForm::end(); ?>
 
 </div>
-
-<?php BootstrapSwitch::widget() ?>

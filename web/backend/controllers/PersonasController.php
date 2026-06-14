@@ -28,8 +28,6 @@ use yii\helpers\BaseJson;
 use yii\helpers\Json;
 
 //agregamos el modulo de la extension para el control de acceso
-use webvimark\modules\UserManagement\UserManagementModule;
-
 use common\models\Persona;
 use common\models\busquedas\PersonaBusqueda;
 use common\models\PersonaTelefono;

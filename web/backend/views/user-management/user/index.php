@@ -2,17 +2,16 @@
 
 use common\components\Core\Permission\BioenlaceGhostHtml;
 use common\components\Core\Permission\RbacRoleQueryService;
-use common\models\User;
 use common\components\Legacy\UserManagementCompat;
-use yii\helpers\Html;
+use common\components\Ui\Grid\GridBulkActions;
+use common\components\Ui\Grid\GridPageSize;
+use common\components\Ui\Grid\StatusColumn;
+use common\models\User;
+use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\widgets\Pjax;
-use webvimark\extensions\GridBulkActions\GridBulkActions;
-use webvimark\extensions\GridPageSize\GridPageSize;
-use yii\grid\GridView;
-
-/**
  * @var yii\web\View $this
  * @var yii\data\ActiveDataProvider $dataProvider
  * @var common\models\search\UserSearch $searchModel
@@ -71,7 +70,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					'columns' => [
 						['class' => 'yii\grid\CheckboxColumn', 'options' => ['style' => 'width:10px']],
 						[
-							'class' => 'webvimark\components\StatusColumn',
+							'class' => StatusColumn::class,
 							'attribute' => 'superadmin',
 							'label'=>'SuperAdmin',
 							'visible' => Yii::$app->user->isSuperadmin,
@@ -91,7 +90,7 @@ $this->params['breadcrumbs'][] = $this->title;
 							'visible' => User::hasPermission('viewUserEmail'),
 						],
 						[
-							'class' => 'webvimark\components\StatusColumn',
+							'class' => StatusColumn::class,
 							'attribute' => 'email_confirmed',
 							'label' => 'Email confirmado',
 							'visible' => User::hasPermission('viewUserEmail'),
@@ -141,7 +140,7 @@ $this->params['breadcrumbs'][] = $this->title;
 							],
 						],
 						[
-							'class' => 'webvimark\components\StatusColumn',
+							'class' => StatusColumn::class,
 							'attribute' => 'status',
 							'optionsArray' => [
 								[User::STATUS_ACTIVE, UserManagementCompat::t('back', 'Active'), 'success'],

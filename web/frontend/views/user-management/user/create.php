@@ -1,6 +1,6 @@
 <?php
 
-use webvimark\modules\UserManagement\UserManagementModule;
+use common\components\Legacy\UserManagementCompat;
 use yii\helpers\Html;
 
 /**
@@ -8,8 +8,8 @@ use yii\helpers\Html;
  * @var common\models\User $model
  */
 
-$this->title = UserManagementModule::t('back', 'User creation');
-$this->params['breadcrumbs'][] = ['label' => UserManagementModule::t('back', 'Users'), 'url' => ['index']];
+$this->title = UserManagementCompat::t('back', 'User creation');
+$this->params['breadcrumbs'][] = ['label' => UserManagementCompat::t('back', 'Users'), 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 

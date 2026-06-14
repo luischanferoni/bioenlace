@@ -12,7 +12,6 @@ use yii\httpclient\Client;
 use yii\base\DynamicModel;
 use common\models\Barrios;
 //agregamos el modulo de la extension para el control de acceso
-use webvimark\modules\UserManagement\UserManagementModule;
 use common\models\User;
 
 class FormController extends Controller

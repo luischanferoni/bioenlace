@@ -28,14 +28,9 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 
 | Pieza | Notas |
 |-------|-------|
-| Composer | Quitar `webvimark/module-user-management` — requiere reemplazar widgets `GridPageSize`, `GridBulkActions`, `BootstrapSwitch`, `StatusColumn` |
-| `pathMap` vistas vendor | Eliminar overrides en `backend/config/main.php` tras retiro Composer |
-
-## Qué se mantiene temporalmente
-
-- Módulo Composer `webvimark/module-user-management` (registro consola, `SisseRole` AR, vistas pathMap).
-- Vistas legacy `user-management/role|permission|auth-item-group` (redirigen o sin uso en menú).
-- `UserVisitLog` webvimark (registro de visitas post-login).
+| Composer | **Retirado** `webvimark/module-user-management` |
+| Widgets grid | `GridPageSize`, `GridBulkActions`, `StatusColumn` en `common/components/Ui/Grid/` |
+| `pathMap` vistas vendor | Eliminado en `common/config` y `backend/config` |
 
 ## Verificación
 

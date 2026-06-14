@@ -14,8 +14,6 @@ use common\models\Efector;
 use common\models\busquedas\EfectorBusqueda;
 
 //agregamos el modulo de la extension para el control de acceso
-use webvimark\modules\UserManagement\UserManagementModule;
-
 /**
  *
  * La clase EfectoresController implementa las action que posibilitan la gestión de

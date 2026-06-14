@@ -4,7 +4,9 @@ namespace backend\controllers;
 
 use common\models\search\UserSearch;
 use common\models\User;
+use common\components\Controller\GridAdminActionsTrait;
 use Yii;
+use yii\filters\VerbFilter;
 use yii\helpers\FileHelper;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -14,6 +16,8 @@ use yii\web\NotFoundHttpException;
  */
 class UserAccountController extends Controller
 {
+    use GridAdminActionsTrait;
+
     private const VIEW_PREFIX = '@backend/views/user-management/user';
 
     public function behaviors(): array
@@ -22,7 +26,21 @@ class UserAccountController extends Controller
             'ghost-access' => [
                 'class' => \frontend\components\BioenlaceBackendAccessControl::class,
             ],
+            'verbs' => [
+                'class' => VerbFilter::class,
+                'actions' => [
+                    'bulk-activate' => ['POST'],
+                    'bulk-deactivate' => ['POST'],
+                    'bulk-delete' => ['POST'],
+                    'grid-page-size' => ['POST'],
+                ],
+            ],
         ];
+    }
+
+    protected function gridModelClass(): string
+    {
+        return User::class;
     }
 
     public function actionIndex()

@@ -15,7 +15,7 @@ return [
     'bootstrap' => ['log'],
     'controllerNamespace' => 'console\controllers',
     /**
-     * webvimark User (common\models\User) usa tableName() vía este módulo.
+     * Módulo user-management (UserManagementCompatModule) expone nombres de tabla.
      * Sin registrarlo, comandos que crean usuarios fallan con "user_table on null".
      */
     'modules' => [

@@ -106,13 +106,7 @@ return [
         ],
         'view' => [
             'theme' => [
-                'pathMap' => [
-                    '@vendor/webvimark/module-user-management/views/user' => '@backend/views/user-management/user',
-                    '@vendor/webvimark/module-user-management/views/user-permission' => '@backend/views/user-management/user-permission',                    
-                    '@vendor/webvimark/module-user-management/views/role' => '@backend/views/user-management/role',
-                    '@vendor/webvimark/module-user-management/views/permission' => '@backend/views/user-management/permission',
-                    '@vendor/webvimark/module-user-management/views/auth-item-group' => '@backend/views/user-management/auth-item-group',
-                ],
+                'pathMap' => [],
             ],
         ],
     ],

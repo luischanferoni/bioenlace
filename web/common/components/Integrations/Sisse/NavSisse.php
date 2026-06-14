@@ -16,7 +16,7 @@ class NavSisse extends Widget
     public $options = ['class' => 'list-unstyled ps-0'];
     public $encodeLabels = false;
 
-    public function init()
+    public function init(): void
     {
         parent::init();
         $this->ensureVisibility($this->items);

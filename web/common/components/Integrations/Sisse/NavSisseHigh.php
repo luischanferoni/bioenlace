@@ -14,7 +14,7 @@ use yii\helpers\Html;
 
 class NavSisseHigh extends Nav
 {
-    public function init()
+    public function init(): void
     {
         parent::init();
 

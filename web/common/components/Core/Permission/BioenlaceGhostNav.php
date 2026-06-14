@@ -10,7 +10,7 @@ use yii\bootstrap5\Nav;
  */
 class BioenlaceGhostNav extends Nav
 {
-    public function init()
+    public function init(): void
     {
         parent::init();
         $this->ensureVisibility($this->items);

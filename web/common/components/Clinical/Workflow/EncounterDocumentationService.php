@@ -68,6 +68,27 @@ class EncounterDocumentationService extends Component
     }
 
     /**
+     * Análisis IA sobre texto ya transcrito/procesado (sin resolver STT).
+     *
+     * @return array<string, mixed>
+     */
+    public function analizarTextoProcesado(
+        string $textoProcesado,
+        ?string $nombreServicio,
+        $idConfiguracion,
+        ?int $subjectPersonaId = null
+    ): array {
+        $legacy = new ConsultaProcesamientoService();
+
+        return $legacy->analizarConsultaConIA(
+            $textoProcesado,
+            $nombreServicio,
+            $legacy->getModelosPorConfiguracion($idConfiguracion),
+            $subjectPersonaId
+        );
+    }
+
+    /**
      * @param array<string, mixed> $body
      * @return array<string, mixed>
      */

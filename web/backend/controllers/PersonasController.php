@@ -43,7 +43,7 @@ use common\models\Persona_hc;
 use common\models\Tipo_documento;
 use common\models\ProfesionalEfectorServicio;
 use common\controllers\Model;
-use frontend\controllers\MpiApiController;
+use common\components\Integrations\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
 
 /**
@@ -137,7 +137,7 @@ class PersonasController extends Controller {
     }
     
     public function actionBuscarRenaper($parametros = []){
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $respuesta = [];
         if (Yii::$app->request->isAjax) {
             $data = Yii::$app->request->post();
@@ -529,7 +529,7 @@ class PersonasController extends Controller {
     }
 
 public function actionListaCandidatos(){
-    $this->_mpi_api = new MpiApiController;
+    $this->_mpi_api = new MpiApiClient;
     $post = Yii::$app->request->post();
 
     $parametros['apellido'] = $post['Persona']['apellido'];
@@ -614,7 +614,7 @@ public function actionListaCandidatos(){
      */
     public function actionView($id) {
         //$this->layout = 'dos_columnas';
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $model_persona_telefono = new PersonaTelefono();
         $model_tipo_telefono = new Tipo_telefono();
         $model_domicilio = new Domicilio();
@@ -650,7 +650,7 @@ public function actionListaCandidatos(){
      * Vista solamente para el superadmin
      */
     public function actionAdminView($id) {        
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $model_persona_telefono = new PersonaTelefono();
         $model_tipo_telefono = new Tipo_telefono();
         $model_domicilio = new Domicilio();
@@ -976,7 +976,7 @@ public function actionListaCandidatos(){
         $dni = Yii::$app->getRequest()->getQueryParam('dni');
         $sexo = Yii::$app->getRequest()->getQueryParam('sexo');
 
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $respuesta = $this->_mpi_api->caller_mpi('coberturas?dni='.$dni."&sexo=".$sexo,'{}'); 
 
         return $this->renderAjax('viewpuco', [

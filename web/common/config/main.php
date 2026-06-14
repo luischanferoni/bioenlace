@@ -49,6 +49,9 @@ return [
         'iamanager' => [
             'class' => 'common\\components\\Ai\\IAManager',
         ],
+        'mpi' => [
+            'class' => \common\components\Integrations\Mpi\MpiApiClient::class,
+        ],
         'mailer' => require __DIR__ . '/mailer.php',
     ],
 ];

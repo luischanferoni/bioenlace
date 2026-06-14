@@ -39,7 +39,7 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 
 use frontend\controllers\Model;
-use frontend\controllers\MpiApiController;
+use common\components\Integrations\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
 use common\models\User;
 use frontend\components\UserRequest;
@@ -108,7 +108,7 @@ class PersonasController extends Controller
     */
     public function actionBuscarRenaper($parametros = [])
     {
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $respuesta = [];
         if (Yii::$app->request->isAjax) {
             $data = Yii::$app->request->post();
@@ -149,7 +149,7 @@ class PersonasController extends Controller
     */
     public function actionListaCandidatos()
     {
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $post = Yii::$app->request->post();
 
         $parametros['apellido'] = $post['Persona']['apellido'];
@@ -235,7 +235,7 @@ class PersonasController extends Controller
     */
     public function actionView($id)
     {
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $model_persona_telefono = new PersonaTelefono();
         $model_tipo_telefono = new Tipo_telefono();
         $model_domicilio = new Domicilio();
@@ -273,7 +273,7 @@ class PersonasController extends Controller
     */
     public function actionDatosPersonales($id)
     {
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $federado = false;
         $resultado_empadronado = $this->_mpi_api->traerPaciente($id, 'local');
         if(isset($resultado_empadronado['successful']) && $resultado_empadronado['successful'] == true && count($resultado_empadronado['data']) == 1){
@@ -708,7 +708,7 @@ class PersonasController extends Controller
         $dni = Yii::$app->getRequest()->getQueryParam('dni');
         $sexo = Yii::$app->getRequest()->getQueryParam('sexo');
 
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $respuesta = $this->_mpi_api->caller_mpi('coberturas?dni=' . $dni . "&sexo=" . $sexo, '{}');
 
         return $this->renderAjax('viewpuco', [
@@ -1199,7 +1199,7 @@ class PersonasController extends Controller
     */
     public function actionSeleccionarPersona($id = null, $tipo = null)
     {
-        $this->_mpi_api = new MpiApiController;
+        $this->_mpi_api = new MpiApiClient;
         $post = Yii::$app->request->post();
         if (isset($post['tipo'])) {
             $tipo = $post['tipo'];

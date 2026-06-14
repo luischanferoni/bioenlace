@@ -23,7 +23,6 @@ use common\models\Efector;
 use common\models\Servicio;
 
 use frontend\filters\SisseActionFilter;
-use frontend\controllers\MpiApiController;
 use common\models\Telefono;
 use frontend\components\CPacienteHistorial;
 use frontend\components\PacienteHistorial;

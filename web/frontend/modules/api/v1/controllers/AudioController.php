@@ -6,7 +6,7 @@ use Yii;
 use common\components\Ai\SpeechToText\EncounterSpeechInputResolver;
 use common\components\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Text\ProcesadorTextoMedico;
-use common\components\Clinical\Legacy\ConsultaProcesamientoService;
+use common\components\Clinical\Workflow\EncounterDocumentationService;
 
 class AudioController extends BaseController
 {
@@ -82,12 +82,11 @@ class AudioController extends BaseController
                         ? $resultadoProcesamiento['texto_procesado'] 
                         : $resultadoProcesamiento;
 
-                    $consultaSvc = new ConsultaProcesamientoService();
-                    $categorias = $consultaSvc->getModelosPorConfiguracion($idConfiguracion);
-                    $resultadoIA = $consultaSvc->analizarConsultaConIA(
+                    $docSvc = new EncounterDocumentationService();
+                    $resultadoIA = $docSvc->analizarTextoProcesado(
                         $textoProcesado,
                         $servicio ? $servicio->nombre : null,
-                        $categorias
+                        $idConfiguracion
                     );
 
                     return [

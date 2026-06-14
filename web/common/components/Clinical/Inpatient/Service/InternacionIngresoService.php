@@ -15,7 +15,7 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\SegNivelInternacion;
 use common\models\SegNivelInternacionHcama;
 use common\models\SegNivelInternacionRepository;
-use frontend\controllers\MpiApiController;
+use common\components\Integrations\Mpi\MpiApiClient;
 use Yii;
 use yii\helpers\ArrayHelper;
 
@@ -236,7 +236,7 @@ final class InternacionIngresoService
         try {
             $sexoMap = ['m' => 0, 'f' => 1];
             $personaSexo = ArrayHelper::getValue($sexoMap, strtolower((string) $persona->sexo), 0);
-            $mpi = new MpiApiController();
+            $mpi = new MpiApiClient();
             $coberturasApi = $mpi->get_cobertura_social((string) $persona->documento, $personaSexo);
             if (count($coberturasApi) === 1) {
                 return (int) ($coberturasApi[0]['codigo'] ?? 0) ?: null;
@@ -257,7 +257,7 @@ final class InternacionIngresoService
         try {
             $sexoMap = ['m' => 0, 'f' => 1];
             $personaSexo = ArrayHelper::getValue($sexoMap, strtolower((string) $persona->sexo), 0);
-            $mpi = new MpiApiController();
+            $mpi = new MpiApiClient();
             $coberturasApi = $mpi->get_cobertura_social((string) $persona->documento, $personaSexo);
             if ($coberturasApi !== []) {
                 $filtro = ArrayHelper::getColumn($coberturasApi, 'codigo');

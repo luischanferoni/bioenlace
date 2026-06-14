@@ -251,7 +251,7 @@ class RegistroService
         }
 
         try {
-            /** @var \frontend\components\Mpi $mpi */
+            /** @var \common\components\Integrations\Mpi\MpiApiClient $mpi */
             $mpi = Yii::$app->mpi;
 
             $respuesta = $mpi->traerPaciente($persona->id_persona);

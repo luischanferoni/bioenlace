@@ -3,7 +3,7 @@ use yii\helpers\ArrayHelper;
 use common\models\Persona;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaOdontologiaEstados;
-use frontend\controllers\MpiApiController;
+use common\components\Integrations\Mpi\MpiApiClient;
 ?>
 <div class="row">
     <table>
@@ -104,7 +104,7 @@ use frontend\controllers\MpiApiController;
                 $domicilio = ($modelPersona->getDomicilioActivo())? $modelPersona->getDomicilioActivo()->getDomicilioCompleto(): "No especificado.";
                 
 
-                $mpi = new MpiApiController;
+                $mpi = new MpiApiClient();
                 $sexo_map = ['2'=>0, '1'=>1]; // 1 : femenino 2: masculino
                 $persona_sexo = ArrayHelper::getValue($sexo_map, strtolower($modelPersona->sexo_biologico), 0);                
                 $coberturas_api = $mpi->get_cobertura_social($modelPersona->documento, $persona_sexo);

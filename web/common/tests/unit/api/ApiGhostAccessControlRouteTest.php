@@ -3,7 +3,7 @@
 namespace common\tests\unit\api;
 
 use Codeception\Test\Unit;
-use frontend\modules\api\v1\components\ApiGhostAccessControl;
+use frontend\modules\api\v1\components\BioenlaceApiAccessControl;
 
 /**
  * Rutas RBAC vs uniqueId Yii (actionIndex).
@@ -12,7 +12,7 @@ final class ApiGhostAccessControlRouteTest extends Unit
 {
     public function testInfoIndexMapsToApiInfoPermission(): void
     {
-        $candidates = ApiGhostAccessControl::permissionRouteCandidates('/api/info/index');
+        $candidates = BioenlaceApiAccessControl::permissionRouteCandidates('/api/info/index');
 
         $this->assertContains('/api/info/index', $candidates);
         $this->assertContains('/api/info', $candidates);
@@ -20,7 +20,7 @@ final class ApiGhostAccessControlRouteTest extends Unit
 
     public function testListarIndexMapsToApiListarPermission(): void
     {
-        $candidates = ApiGhostAccessControl::permissionRouteCandidates('/api/listar/index');
+        $candidates = BioenlaceApiAccessControl::permissionRouteCandidates('/api/listar/index');
 
         $this->assertContains('/api/listar/index', $candidates);
         $this->assertContains('/api/listar', $candidates);

@@ -564,9 +564,6 @@ return [
         'imagenes' => [
             'class' => 'frontend\components\Pentalogic',
         ],
-        'forms' => [
-            'class' => 'frontend\components\apis\Forms',
-        ],
     ],
     'params' => $params,
     'modules' => [

@@ -210,6 +210,3 @@ SCRIPT;
     <?php ActiveForm::end(); ?>
 
 </div>
-<?php
-$this->registerJsFile("js/referencias.js")
-?>

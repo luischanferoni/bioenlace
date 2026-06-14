@@ -7,8 +7,6 @@ use yii\helpers\Html;
 
 use yii\widgets\Breadcrumbs;
 use frontend\assets\AppAsset;
-use common\models\Mensajes;
-use common\models\Referencia;
 use yii\helpers\Url;
 
 AppAsset::register($this);

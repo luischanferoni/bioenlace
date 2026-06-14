@@ -4,7 +4,7 @@ use yii\db\Migration;
 use yii\db\Query;
 
 /**
- * RBAC alineado a {@see \frontend\modules\api\v1\components\ApiGhostAccessControl}:
+ * RBAC alineado a {@see \frontend\modules\api\v1\components\BioenlaceApiAccessControl}:
  * el controlador Yii es `clinical/laboratory-result/*` (singular), no `laboratory-results` del path HTTP.
  *
  * Copia asignaciones de rol desde las rutas plural ya registradas en migraciones anteriores.

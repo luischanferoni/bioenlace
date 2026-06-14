@@ -235,7 +235,6 @@ class PersonasController extends Controller
     */
     public function actionView($id)
     {
-        //$this->layout = 'dos_columnas';
         $this->_mpi_api = new MpiApiController;
         $model_persona_telefono = new PersonaTelefono();
         $model_tipo_telefono = new Tipo_telefono();
@@ -1400,7 +1399,6 @@ class PersonasController extends Controller
                     }
                     if ($flag) {
                         $transaction->commit();
-                        $this->layout = 'dos_columnas';
                         return $this->redirect(['view', 'id' => $model->id_persona]);
                     }
                 } catch (Exception $e) {

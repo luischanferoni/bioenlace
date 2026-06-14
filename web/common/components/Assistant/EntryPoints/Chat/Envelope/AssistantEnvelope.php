@@ -464,16 +464,34 @@ final class AssistantEnvelope
     {
         $kind = trim((string) ($co['kind'] ?? ''));
         $api = isset($co['api']) && is_array($co['api']) ? $co['api'] : [];
-        $route = trim((string) ($api['route'] ?? ''));
+        $routeRaw = $api['route'] ?? '';
+        $route = is_string($routeRaw) || is_int($routeRaw) || is_float($routeRaw)
+            ? trim((string) $routeRaw)
+            : '';
         $method = trim((string) ($api['method'] ?? ''));
         $query = isset($api['query']) && is_array($api['query']) ? $api['query'] : [];
+        $queryOut = [];
+        foreach ($query as $qk => $qv) {
+            $key = is_string($qk) ? trim($qk) : '';
+            if ($key === '' || is_array($qv) || is_object($qv)) {
+                continue;
+            }
+            if (is_bool($qv)) {
+                $queryOut[$key] = $qv ? '1' : '0';
+                continue;
+            }
+            if (!is_string($qv) && !is_int($qv) && !is_float($qv)) {
+                continue;
+            }
+            $queryOut[$key] = trim((string) $qv);
+        }
 
         return [
             'kind' => $kind,
             'api' => [
                 'route' => $route,
                 'method' => $method,
-                'query' => $query === [] ? (object) [] : $query,
+                'query' => $queryOut === [] ? (object) [] : $queryOut,
             ],
         ];
     }

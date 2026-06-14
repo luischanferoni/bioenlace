@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\Catalog;
 
+use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Assistant\UiActions\ActionMappingService;
 use common\components\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Core\Permission\BioenlaceAccessChecker;
@@ -92,6 +93,10 @@ final class YamlIntentCatalogService
                 $intentId = basename($path, '.yaml');
             }
             if ($intentId === '') {
+                continue;
+            }
+
+            if (DataAccessCatalogIntentSupport::isCatalogOnlyIntent($intentId)) {
                 continue;
             }
 
@@ -247,6 +252,10 @@ final class YamlIntentCatalogService
         if ($intentId === '') {
             return false;
         }
+        if (DataAccessCatalogIntentSupport::isCatalogOnlyIntent($intentId)) {
+            return false;
+        }
+
         return IntentSchemaPaths::resolveFileForIntentId($intentId) !== null;
     }
 

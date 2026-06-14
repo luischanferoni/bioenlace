@@ -4,6 +4,7 @@ namespace common\components\Core\DataAccess;
 
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\IntentEngine\IntentClassificationRulesService;
+use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Core\DataAccess\Edit\EditSparseAspectIds;
 use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 
@@ -38,7 +39,7 @@ final class DataAccessEditFlowDraftHydrator
 
         $scopeParams = self::scopeParamsFromDraft($draft);
 
-        if (trim((string) ($draft['surface_id'] ?? $draft['edit_surface_id'] ?? '')) === '') {
+        if (AssistantDraftNormalizer::asOptionalString($draft['surface_id'] ?? $draft['edit_surface_id'] ?? null) === null) {
             $surfaceId = $discovery->resolveSurfaceId(
                 $content,
                 ChatPreprocessContext::extractions(),
@@ -56,11 +57,11 @@ final class DataAccessEditFlowDraftHydrator
             }
         }
 
-        $surfaceId = trim((string) ($draft['surface_id'] ?? $draft['edit_surface_id'] ?? ''));
+        $surfaceId = AssistantDraftNormalizer::asOptionalString($draft['surface_id'] ?? $draft['edit_surface_id'] ?? null) ?? '';
         self::applySubjectPrefillFromSurface($draft, $catalog->getEditSurface($surfaceId), $content);
 
         $aspectIds = [];
-        if ($surfaceId !== '' && trim((string) ($draft['aspect_ids'] ?? '')) === '') {
+        if ($surfaceId !== '' && EditSparseAspectIds::parse($draft['aspect_ids'] ?? null) === []) {
             $aspectIds = $discovery->resolveAspectIds(
                 $content,
                 $surfaceId,
@@ -72,7 +73,7 @@ final class DataAccessEditFlowDraftHydrator
                 $draft['aspect_ids'] = implode(',', $aspectIds);
             }
         } elseif ($surfaceId !== '') {
-            $aspectIds = EditSparseAspectIds::parse((string) ($draft['aspect_ids'] ?? ''));
+            $aspectIds = EditSparseAspectIds::parse($draft['aspect_ids'] ?? null);
         }
 
         if (trim((string) ($draft['edit_step'] ?? '')) === '') {

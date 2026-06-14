@@ -2,6 +2,7 @@
 
 namespace common\components\Assistant\SubIntentEngine;
 
+use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
 use common\components\Assistant\Service\AssistantDraftNormalizer;
@@ -53,6 +54,21 @@ final class SubIntentEngine
                 $userId,
                 $draft
             );
+        }
+
+        if (DataAccessCatalogIntentSupport::isCatalogOnlyIntent($intentId)) {
+            $catalogOnly = self::processCatalogOnlyIntent(
+                $intentId,
+                $draft,
+                $content,
+                $userId,
+                $hints
+            );
+            if ($catalogOnly !== null) {
+                return $catalogOnly;
+            }
+
+            return ['success' => false, 'error' => 'Intent no soportado', 'intent_id' => $intentId];
         }
 
         $intent = self::loadIntentYaml($intentId);

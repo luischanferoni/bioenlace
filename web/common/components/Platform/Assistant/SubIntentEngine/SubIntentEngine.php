@@ -496,11 +496,6 @@ final class SubIntentEngine
         if ($clinicalRoute !== '') {
             return $clinicalRoute;
         }
-        if (preg_match('#^clinical\.([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
-            return '/api/v1/clinical/'
-                . rawurlencode((string) $m[1]) . '/'
-                . rawurlencode((string) $m[2]);
-        }
         if (preg_match('#^data-access\.(info|listar)$#', $actionId, $m) === 1) {
             return '/api/v1/' . (string) $m[1];
         }

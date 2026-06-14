@@ -429,11 +429,6 @@ final class FlowManifest
         if ($dataAccessRoute !== '') {
             return $dataAccessRoute;
         }
-        if (preg_match('#^clinical\.([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
-            return '/api/v1/clinical/'
-                . rawurlencode((string) $m[1]) . '/'
-                . rawurlencode((string) $m[2]);
-        }
         $p = strpos($actionId, '.');
         if ($p === false) {
             return '';

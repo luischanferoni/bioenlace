@@ -4,9 +4,12 @@ namespace common\components\Platform\Assistant\Chat\Preprocess;
 
 use Yii;
 use common\components\Platform\Ai\IAManager;
+use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 
 /**
  * Preprocess: canal (user_goal), texto normalizado y extracciones (spans).
+ *
+ * Detección léxica y overrides de goal: metadata {@see IntentClassificationRulesService}.
  */
 final class ChatPreprocessService
 {
@@ -19,111 +22,34 @@ final class ChatPreprocessService
         'unclear',
     ];
 
-    /**
-     * Categorías de entidad permitidas en extracciones (acotado; ampliar según producto).
-     *
-     * @return list<string>
-     */
-    /**
-     * Contenido clínico (síntomas, malestar) sin pedido operativo del sistema.
-     */
     public static function isClinicalSymptomContent(string $content): bool
     {
-        $lower = mb_strtolower(trim($content), 'UTF-8');
-        if ($lower === '') {
-            return false;
-        }
-
-        return (bool) preg_match(
-            '/\b(problema|dolor|duele|síntoma|sintoma|malestar|enfermo|fiebre|tos|náusea|nausea|vómito|vomito|mareo|hinchazón|hinchazon|presión|presion|diabetes|hipertensión|hipertension|chichón|chichon|golpe|hematoma|moretón|moreton|bulto|hinchado|inflamado|cabeza|manos|pies|brazo|pierna|herida|sangra|sangrado)\b/u',
-            $lower
-        );
+        return IntentClassificationRulesService::isClinicalSymptomContent($content);
     }
 
-    /**
-     * Consultas staff vía DataAccess (/api/info, /api/listar): conteos, listados, resúmenes.
-     */
     public static function isStaffDataAccessQuery(string $content): bool
     {
-        $lower = self::foldAccents(mb_strtolower(trim($content), 'UTF-8'));
-        if ($lower === '') {
-            return false;
-        }
-
-        if (preg_match(
-            '/\b(cuantos|numero de|total de|conteo de|cantidad de|resumen de|resumen)\b/u',
-            $lower
-        )) {
-            return true;
-        }
-
-        if (preg_match(
-            '/\b(listar|mostrar|mostrame|ver listado|nombres de|quienes|listado)\b/u',
-            $lower
-        )) {
-            return true;
-        }
-
-        if (str_contains($lower, 'profesionales del centro')
-            || str_contains($lower, 'medicos del centro')) {
-            return true;
-        }
-
-        return false;
+        return IntentClassificationRulesService::isStaffDataAccessQuery($content);
     }
 
-    /**
-     * Edición dispersa staff (/api/editar): modificar datos autorizados del centro.
-     */
     public static function isStaffDataAccessEditQuery(string $content): bool
     {
-        $lower = self::foldAccents(mb_strtolower(trim($content), 'UTF-8'));
-        if ($lower === '') {
-            return false;
-        }
+        return IntentClassificationRulesService::isStaffDataAccessEditQuery($content);
+    }
 
-        if (!preg_match(
-            '/\b(editar|modificar|actualizar|cambiar|corregir)\b/u',
-            $lower
-        )) {
-            return false;
-        }
-
-        if (preg_match(
-            '/\b(turno|turnos|cita|cancelar turno|reprogramar|sobreturno)\b/u',
-            $lower
-        )) {
-            return false;
-        }
-
-        return true;
+    public static function isStaffDataAccessOperationalQuery(string $content): bool
+    {
+        return IntentClassificationRulesService::isStaffDataAccessOperationalQuery($content);
     }
 
     /**
-     * Consultas o edición staff vía DataAccess (info / listar / editar).
+     * @return list<string>
      */
-    public static function isStaffDataAccessOperationalQuery(string $content): bool
-    {
-        return self::isStaffDataAccessQuery($content) || self::isStaffDataAccessEditQuery($content);
-    }
-
-    private static function foldAccents(string $text): string
-    {
-        return strtr($text, [
-            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
-            'ñ' => 'n',
-        ]);
-    }
-
     public static function allowedEntityCategories(): array
     {
-        return [
-            'servicio',
-            'efector',
-            'persona',
-            'profesional',
-            'turno',
-        ];
+        $fromMeta = IntentClassificationRulesService::chatPreprocessEntityCategories();
+
+        return $fromMeta !== [] ? $fromMeta : ['servicio', 'efector', 'persona', 'profesional', 'turno'];
     }
 
     /**
@@ -149,43 +75,9 @@ final class ChatPreprocessService
         return self::heuristicFallback($content);
     }
 
-    /**
-     * Bloque estable al inicio del prompt (context caching: instrucciones + esquema JSON).
-     */
     public static function stablePromptPrefix(): string
     {
-        $categories = json_encode(self::allowedEntityCategories(), JSON_UNESCAPED_UNICODE);
-        $goals = json_encode(self::GOALS, JSON_UNESCAPED_UNICODE);
-
-        return <<<PROMPT
-Analizá el mensaje del usuario para un asistente de salud.
-
-Respondé ÚNICAMENTE con JSON:
-{
-  "normalized_text": "mensaje limpio, ortografía corregida y abreviaturas médicas abiertas cuando aplique",
-  "user_goal": "uno de {$goals}",
-  "action_text": "fragmento que expresa la acción pedida (turno, cancelar, etc.) o vacío",
-  "extractions": [
-    {
-      "span": "fragmento mencionado (no palabras sueltas)",
-      "category": "una de {$categories}",
-      "synonyms": ["0-2 variantes ortográficas o abreviaturas"]
-    }
-  ]
-}
-
-Reglas:
-- user_goal operational si pide hacer algo en el sistema (turno, agenda, cancelar), consulta datos operativos del centro (cuántos profesionales hay, planta profesional, listar médicos del efector) o modificar datos del personal (editar nombre, cambiar horarios de agenda del centro).
-- conversational si es saludo, consulta de salud/síntomas, lesiones (golpe, chichón, bulto), malestar o charla sin pedir una acción del sistema (no confundir con informational).
-- informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas, quejas clínicas ni consultas de plantilla/conteo de profesionales del efector.
-- No uses category servicio para síntomas, partes del cuerpo ni malestar; esas menciones van solo en normalized_text.
-- meta: preguntas sobre el asistente o la app (no operativas).
-- normalized_text: corregí ortografía y expandí abreviaturas clínicas comunes; conservá el sentido del mensaje.
-- extractions: solo menciones de entidades del mundo (servicio, centro, persona), no verbos ni la acción.
-- synonyms: máximo 2 strings por extracción.
-
-Mensaje:
-PROMPT;
+        return IntentClassificationRulesService::chatPreprocessStablePromptPrefix();
     }
 
     public static function userMessagePart(string $content): string
@@ -266,8 +158,7 @@ PROMPT;
             }
         }
 
-        $goal = self::applyClinicalGoalOverride($normalized, $goal);
-        $goal = self::applyStaffOperationalGoalOverride($normalized, $goal);
+        $goal = IntentClassificationRulesService::applyChatPreprocessGoalOverrides($normalized, $goal);
 
         return [
             'normalized_text' => $normalized,
@@ -277,50 +168,12 @@ PROMPT;
         ];
     }
 
-    private static function applyClinicalGoalOverride(string $normalized, string $goal): string
-    {
-        if (!self::isClinicalSymptomContent($normalized)) {
-            return $goal;
-        }
-
-        if ($goal === 'informational' || $goal === 'unclear') {
-            return 'conversational';
-        }
-
-        if ($goal === 'operational' && !preg_match('/\b(turno|turnos|reservar|sacar turno|cancelar|agenda|cita)\b/u', mb_strtolower($normalized, 'UTF-8'))) {
-            return 'conversational';
-        }
-
-        return $goal;
-    }
-
-    private static function applyStaffOperationalGoalOverride(string $normalized, string $goal): string
-    {
-        if (!self::isStaffDataAccessOperationalQuery($normalized)) {
-            return $goal;
-        }
-
-        return 'operational';
-    }
-
     /**
      * @return array<string, mixed>
      */
     private static function heuristicFallback(string $content): array
     {
-        $lower = mb_strtolower($content, 'UTF-8');
-        $goal = 'unclear';
-        if (preg_match('/\b(turno|turnos|reservar|sacar turno|cancelar turno|agenda|cita)\b/u', $lower)) {
-            $goal = 'operational';
-        } elseif (self::isStaffDataAccessOperationalQuery($content)) {
-            $goal = 'operational';
-        } elseif (preg_match('/\b(ayuda|qué puedo|que puedo|menu|menú|opciones|qué hace|que hace)\b/u', $lower)) {
-            $goal = 'informational';
-        } elseif (preg_match('/\b(hola|buenos|gracias|qué tal|como estas)\b/u', $lower)) {
-            $goal = 'conversational';
-        } elseif (self::isClinicalSymptomContent($content)) {
-            $goal = 'conversational';
-        }
+        $goal = IntentClassificationRulesService::resolveHeuristicUserGoal($content);
 
         return [
             'normalized_text' => $content,

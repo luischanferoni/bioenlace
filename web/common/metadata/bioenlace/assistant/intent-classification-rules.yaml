@@ -3,7 +3,7 @@
 version: 1
 
 vocab:
-  edit_verbs: '\b(editar|modificar|actualizar|cambiar|ajustar|configurar)\b'
+  edit_verbs: '\b(editar|modificar|actualizar|cambiar|corregir|ajustar|configurar)\b'
   alta_verbs: '\b(crear|agregar|nuevo|nueva|alta|asociar|dar de alta)\b'
   agenda_targets: '\b(agenda|horario|horarios|disponibilidad|cupo|formas?\s+de\s+atencion|forma\s+de\s+atencion|teleconsulta|intervalo|modalidad)\b'
   own_scope: '\b(mi|mis)\s+(agenda|horario|horarios|formas?\s+de\s+atencion)\b'
@@ -15,6 +15,11 @@ vocab:
   list_phrases:
     - profesionales del centro
     - medicos del centro
+  clinical_symptoms: '\b(problema|dolor|duele|sintoma|síntoma|malestar|enfermo|fiebre|tos|nausea|náusea|vomito|vómito|mareo|hinchazon|hinchazón|presion|presión|diabetes|hipertension|hipertensión|chichon|chichón|golpe|hematoma|moreton|moretón|bulto|hinchado|inflamado|cabeza|manos|pies|brazo|pierna|herida|sangra|sangrado)\b'
+  scheduling_ops: '\b(turno|turnos|reservar|sacar turno|cancelar turno|cancelar|agenda|cita|reprogramar|sobreturno)\b'
+  help_menu: '\b(ayuda|qué puedo|que puedo|menu|menú|opciones|qué hace|que hace|qué se puede|que se puede|mostrar acciones)\b'
+  greeting: '\b(hola|buenos|gracias|qué tal|que tal|como estas|cómo estás)\b'
+  resumen_phrases: '\b(resumen de|resumen)\b'
 
 match_rules:
   staff_agenda_config_edit:
@@ -40,6 +45,31 @@ match_rules:
 
   staff_count:
     require_any: [count_verbs]
+
+  staff_data_access_list:
+    require_any: [list_verbs]
+
+  staff_data_access_list_phrase:
+    require_phrase_any: list_phrases
+
+  staff_data_access_count_or_resumen:
+    require_any: [count_verbs, resumen_phrases]
+
+  staff_data_access_edit:
+    require_all: [edit_verbs]
+    forbid_any: [scheduling_ops]
+
+  clinical_symptom:
+    require_any: [clinical_symptoms]
+
+  scheduling_operational:
+    require_any: [scheduling_ops]
+
+  help_menu_query:
+    require_any: [help_menu]
+
+  greeting:
+    require_any: [greeting]
 
 score_adjustments:
   - when_rule: staff_agenda_config_edit
@@ -86,3 +116,89 @@ operational_fallbacks:
     intent_id: data-access.editar
     confidence: 0.9
     method: rules_declarative_fallback
+
+chat_preprocess:
+  entity_categories:
+    - servicio
+    - efector
+    - persona
+    - profesional
+    - turno
+
+  staff_data_access_rules:
+    query_any:
+      - staff_data_access_count_or_resumen
+      - staff_data_access_list
+      - staff_data_access_list_phrase
+    edit: staff_data_access_edit
+    operational_any:
+      - staff_data_access_count_or_resumen
+      - staff_data_access_list
+      - staff_data_access_list_phrase
+      - staff_data_access_edit
+
+  prompt:
+    intro: 'Analizá el mensaje del usuario para un asistente de salud.'
+    rules:
+      - 'user_goal operational si pide hacer algo en el sistema (turno, agenda, cancelar), consulta datos operativos del centro (cuántos profesionales hay, planta profesional, listar médicos del efector) o modificar datos del personal (editar nombre, cambiar horarios de agenda del centro).'
+      - 'conversational si es saludo, consulta de salud/síntomas, lesiones (golpe, chichón, bulto), malestar o charla sin pedir una acción del sistema (no confundir con informational).'
+      - 'informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas, quejas clínicas ni consultas de plantilla/conteo de profesionales del efector.'
+      - 'No uses category servicio para síntomas, partes del cuerpo ni malestar; esas menciones van solo en normalized_text.'
+      - 'meta: preguntas sobre el asistente o la app (no operativas).'
+      - 'normalized_text: corregí ortografía y expandí abreviaturas clínicas comunes; conservá el sentido del mensaje.'
+      - 'extractions: solo menciones de entidades del mundo (servicio, centro, persona), no verbos ni la acción.'
+      - 'synonyms: máximo 2 strings por extracción.'
+
+  goal_overrides:
+    - when_rule: clinical_symptom
+      from_goals: [informational, unclear]
+      to_goal: conversational
+    - when_rule: clinical_symptom
+      from_goal: operational
+      when_not_rule: scheduling_operational
+      to_goal: conversational
+    - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit]
+      to_goal: operational
+
+  heuristic_fallback:
+    - when_rule: scheduling_operational
+      goal: operational
+    - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit]
+      goal: operational
+    - when_rule: help_menu_query
+      goal: informational
+    - when_rule: greeting
+      goal: conversational
+    - when_rule: clinical_symptom
+      goal: conversational
+
+conversational_channel:
+  stable_prompt: |
+    Sos el asistente de Bioenlace, una aplicación de salud donde las personas reservan turnos con profesionales y centros de la red.
+
+    Respondé en español, breve y amable (3–5 oraciones salvo que pidan más detalle).
+    No inventes datos clínicos, diagnósticos ni confirmes turnos ya hechos.
+
+    Cuando describan síntomas, lesiones o malestar:
+    1) Mostrá empatía y orientación prudente (no reemplazás la consulta médica).
+    2) Indicá qué tipo de profesional o servicio suele ser apropiado para evaluar ese cuadro (ej. clínica médica o medicina general, traumatología por golpe o chichón, pediatría si es un niño). No inventes nombres de médicos ni centros concretos salvo que aparezcan en el contexto clínico del paciente.
+    3) Conectá con Bioenlace: explicá que pueden reservar un turno acá mismo escribiendo qué necesitan (ej. "Quiero turno con clínica médica" o "Sacar turno de traumatología").
+    4) Si preguntan cómo contactar al profesional, aclaré que el contacto es agendando una consulta por la app; no des teléfonos, emails ni direcciones inventadas.
+
+    Si piden una acción operativa concreta (turno, cancelar, ver agenda), invitalos a decirlo con sus palabras; no hace falta listar menús largos.
+
+    Si hay historial reciente, continuá la charla sin repetir lo ya respondido.
+  empty_response_fallback: >-
+    Entiendo tu consulta. Te recomiendo que un profesional te evalúe en persona.
+    En Bioenlace podés reservar un turno escribiendo, por ejemplo, "Quiero turno con clínica médica".
+  booking_button:
+    when_rule: clinical_symptom
+    intent_priority:
+      - atencion.necesito-atencion
+      - turnos.crear-como-paciente
+      - turnos.crear-para-paciente
+    intent_prefix_fallback: turnos.crear
+    labels:
+      atencion.necesito-atencion: Necesito atención
+      turnos.crear-como-paciente: Reservar turno
+      turnos.crear-para-paciente: Reservar turno

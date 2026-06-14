@@ -4,7 +4,7 @@ namespace common\components\Platform\Assistant\Chat\Channels\Informational;
 
 use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
-use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Platform\Assistant\IntentEngine\IntentEngine;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 
@@ -26,7 +26,7 @@ final class InformationalChannel
             return ConversationalChannel::handle($content, $userId);
         }
 
-        if (ChatPreprocessService::isClinicalSymptomContent($content)) {
+        if (IntentClassificationRulesService::isClinicalSymptomContent($content)) {
             return ConversationalChannel::handle($content, $userId);
         }
 
@@ -50,15 +50,7 @@ final class InformationalChannel
      */
     public static function isCapabilityMenuQuery(string $content): bool
     {
-        $lower = mb_strtolower(trim($content), 'UTF-8');
-        if ($lower === '') {
-            return false;
-        }
-
-        return (bool) preg_match(
-            '/\b(ayuda|qué puedo|que puedo|menu|menú|opciones|qué hace|que hace|qué se puede|que se puede|listar|mostrar acciones)\b/u',
-            $lower
-        );
+        return IntentClassificationRulesService::isCapabilityMenuQuery($content);
     }
 
     /**

@@ -17,4 +17,6 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 
 Contrato de pasos YAML: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 
-Handlers de dominio (hydrators, políticas, scope, filtros, presentación, panel home): `common/config/product-registries.php` vía `ProductRegistryConfig`.
+Handlers de dominio (hydrators, políticas, scope, filtros, presentación, panel home, canal conversacional): `common/config/product-registries.php` vía `ProductRegistryConfig`.
+
+Reglas NL del preprocess del chat y del clasificador: `assistant/intent-classification-rules.yaml` (`chat_preprocess`, `conversational_channel`, `match_rules`).

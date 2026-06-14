@@ -9,6 +9,7 @@
  */
 
 use common\components\Platform\Assistant\Catalog\DataAccessUiActionCatalog;
+use common\components\Domain\Clinical\Assistant\ClinicalConversationalChannelProvider;
 use common\components\Domain\Clinical\Assistant\ClinicalUiActionCatalog;
 use common\components\Domain\Clinical\CareCohort\Assistant\CarePackUiActionCatalog;
 use common\components\Domain\Clinical\Home\InpatientHomePanelSliceResolver;
@@ -98,6 +99,10 @@ return [
         CarePackUiActionCatalog::class,
         PersonRepresentationUiActionCatalog::class,
         DataAccessUiActionCatalog::class,
+    ],
+
+    'conversationalChannelProviders' => [
+        ClinicalConversationalChannelProvider::class,
     ],
 
     'homePanelSectionProviders' => [

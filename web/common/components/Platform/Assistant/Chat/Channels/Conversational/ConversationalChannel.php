@@ -3,39 +3,26 @@
 namespace common\components\Platform\Assistant\Chat\Channels\Conversational;
 
 use common\components\Platform\Ai\IAManager;
+use common\components\Platform\Assistant\Chat\Conversational\ConversationalChannelProviderRegistry;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
-use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
-use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use Yii;
 
 /**
  * Canal conversacional: preprocess + respuesta automática con ventana acotada de historial.
+ *
+ * Prompt y reglas de booking: metadata ({@see IntentClassificationRulesService::conversationalChannelConfig()}).
+ * Contexto de paciente: providers en {@see ConversationalChannelProviderRegistry}.
  */
 final class ConversationalChannel
 {
-    /**
-     * Instrucciones estables (context caching): sin historial ni mensaje actual.
-     */
     public static function stablePromptPrefix(): string
     {
-        return <<<'PROMPT'
-Sos el asistente de Bioenlace, una aplicación de salud donde las personas reservan turnos con profesionales y centros de la red.
+        $cfg = IntentClassificationRulesService::conversationalChannelConfig();
+        $prompt = trim((string) ($cfg['stable_prompt'] ?? ''));
 
-Respondé en español, breve y amable (3–5 oraciones salvo que pidan más detalle).
-No inventes datos clínicos, diagnósticos ni confirmes turnos ya hechos.
-
-Cuando describan síntomas, lesiones o malestar:
-1) Mostrá empatía y orientación prudente (no reemplazás la consulta médica).
-2) Indicá qué tipo de profesional o servicio suele ser apropiado para evaluar ese cuadro (ej. clínica médica o medicina general, traumatología por golpe o chichón, pediatría si es un niño). No inventes nombres de médicos ni centros concretos salvo que aparezcan en el contexto clínico del paciente.
-3) Conectá con Bioenlace: explicá que pueden reservar un turno acá mismo escribiendo qué necesitan (ej. "Quiero turno con clínica médica" o "Sacar turno de traumatología").
-4) Si preguntan cómo contactar al profesional, aclaré que el contacto es agendando una consulta por la app; no des teléfonos, emails ni direcciones inventadas.
-
-Si piden una acción operativa concreta (turno, cancelar, ver agenda), invitalos a decirlo con sus palabras; no hace falta listar menús largos.
-
-Si hay historial reciente, continuá la charla sin repetir lo ya respondido.
-
-PROMPT;
+        return $prompt !== '' ? $prompt : 'Respondé en español, breve y amable.';
     }
 
     public static function buildPrompt(string $content, int $userId): string
@@ -44,20 +31,7 @@ PROMPT;
         $parts = [rtrim(self::stablePromptPrefix())];
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
-        if ($idPersona > 0) {
-            try {
-                $patientBlock = (new PatientAiContextBuilder())->build(
-                    $idPersona,
-                    PatientAiContextBuilder::PROFILE_CONVERSATIONAL
-                );
-                if ($patientBlock !== '') {
-                    $parts[] = '';
-                    $parts[] = $patientBlock;
-                }
-            } catch (\Throwable $e) {
-                Yii::warning('ConversationalChannel contexto paciente: ' . $e->getMessage(), 'asistente');
-            }
-        }
+        ConversationalChannelProviderRegistry::appendPatientContext($idPersona, $parts);
 
         $history = ConversationalHistoryWindow::formatForPrompt($userId, $content);
         if ($history !== '') {
@@ -98,8 +72,11 @@ PROMPT;
         }
 
         if ($text === null || $text === '') {
-            $text = 'Entiendo tu consulta. Te recomiendo que un profesional te evalúe en persona. '
-                . 'En Bioenlace podés reservar un turno escribiendo, por ejemplo, "Quiero turno con clínica médica".';
+            $cfg = IntentClassificationRulesService::conversationalChannelConfig();
+            $text = trim((string) ($cfg['empty_response_fallback'] ?? ''));
+            if ($text === '') {
+                $text = 'Entiendo tu consulta.';
+            }
         }
 
         return self::finalizeResponse($content, $userId, $text);
@@ -110,7 +87,7 @@ PROMPT;
      */
     private static function finalizeResponse(string $content, int $userId, string $text): array
     {
-        if (!ChatPreprocessService::isClinicalSymptomContent($content)) {
+        if (!self::shouldOfferBookingButton($content)) {
             return AssistantEnvelope::message($text);
         }
 
@@ -122,26 +99,60 @@ PROMPT;
         return AssistantEnvelope::interactive($text, [$button]);
     }
 
+    private static function shouldOfferBookingButton(string $content): bool
+    {
+        $cfg = IntentClassificationRulesService::conversationalChannelConfig();
+        $buttonCfg = $cfg['booking_button'] ?? [];
+        if (!is_array($buttonCfg)) {
+            return false;
+        }
+        $whenRule = trim((string) ($buttonCfg['when_rule'] ?? ''));
+
+        return $whenRule !== '' && IntentClassificationRulesService::ruleMatches($whenRule, $content);
+    }
+
     /**
      * @return array{label: string, intent_id: string}|null
      */
     private static function resolveBookingButton(int $userId): ?array
     {
+        $cfg = IntentClassificationRulesService::conversationalChannelConfig();
+        $buttonCfg = $cfg['booking_button'] ?? [];
+        if (!is_array($buttonCfg)) {
+            return null;
+        }
+
+        $labels = $buttonCfg['labels'] ?? [];
+        if (!is_array($labels)) {
+            $labels = [];
+        }
+
         $catalog = UiActionCatalog::forUser($userId);
-        foreach (['atencion.necesito-atencion', 'turnos.crear-como-paciente', 'turnos.crear-para-paciente'] as $intentId) {
+        foreach ($buttonCfg['intent_priority'] ?? [] as $intentId) {
+            if (!is_string($intentId) || trim($intentId) === '') {
+                continue;
+            }
+            $intentId = trim($intentId);
             $item = $catalog->byActionId[$intentId] ?? null;
             if ($item === null) {
                 continue;
             }
 
+            $fallbackLabel = trim((string) ($labels[$intentId] ?? ''));
+
             return [
-                'label' => $item->display_name !== '' ? $item->display_name : ($intentId === 'atencion.necesito-atencion' ? 'Necesito atención' : 'Reservar turno'),
+                'label' => $item->display_name !== '' ? $item->display_name : ($fallbackLabel !== '' ? $fallbackLabel : $intentId),
                 'intent_id' => $intentId,
             ];
         }
 
+        $prefix = trim((string) ($buttonCfg['intent_prefix_fallback'] ?? ''));
+        if ($prefix === '') {
+            return null;
+        }
+
         foreach ($catalog->items as $item) {
-            if (strpos($item->action_id, 'turnos.crear') === 0) {
+            if (str_starts_with($item->action_id, $prefix)) {
                 return [
                     'label' => $item->display_name !== '' ? $item->display_name : $item->action_id,
                     'intent_id' => $item->action_id,

@@ -314,8 +314,16 @@ final class ClinicalUiActionCatalog implements UiActionCatalogProviderInterface
     public static function httpRouteForActionId(string $actionId): string
     {
         $def = self::definitionByActionId($actionId);
+        if ($def !== null) {
+            return trim((string) ($def['route'] ?? ''));
+        }
+        if (preg_match('#^clinical\.([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
+            return '/api/v1/clinical/'
+                . rawurlencode((string) $m[1]) . '/'
+                . rawurlencode((string) $m[2]);
+        }
 
-        return $def !== null ? trim((string) ($def['route'] ?? '')) : '';
+        return '';
     }
 
     /**

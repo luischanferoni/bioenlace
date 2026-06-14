@@ -85,4 +85,16 @@ class IntentClassificationRulesServiceTest extends Unit
             $this->assertDoesNotMatchRegularExpression('/\bdata-access\.\w+\b/', $line);
         }
     }
+
+    public function testClinicalSymptomRuleMatches(): void
+    {
+        $this->assertTrue(IntentClassificationRulesService::isClinicalSymptomContent('me duele la cabeza'));
+        $this->assertFalse(IntentClassificationRulesService::isClinicalSymptomContent('quiero un turno'));
+    }
+
+    public function testStaffDataAccessEditExcludesScheduling(): void
+    {
+        $this->assertTrue(IntentClassificationRulesService::isStaffDataAccessEditQuery('modificar agenda del personal'));
+        $this->assertFalse(IntentClassificationRulesService::isStaffDataAccessEditQuery('modificar turno del paciente'));
+    }
 }

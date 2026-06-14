@@ -3,7 +3,7 @@
 namespace common\components\Core\Permission;
 
 use Yii;
-use yii\db\IdentityInterface;
+use yii\web\IdentityInterface;
 use yii\rbac\Item;
 
 /**

@@ -3,7 +3,7 @@
 namespace common\components\Core\Permission;
 
 use Yii;
-use yii\db\IdentityInterface;
+use yii\web\IdentityInterface;
 
 /**
  * Chequeos RBAC vía {@see BioenlaceDbManager} (Yii), sin webvimark User::canRoute.

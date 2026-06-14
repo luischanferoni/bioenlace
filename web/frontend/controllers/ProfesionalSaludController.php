@@ -5,8 +5,6 @@ namespace frontend\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\base\Exception;
-use yii\web\NotFoundHttpException;
-use yii\filters\VerbFilter;
 use yii\helpers\Json;
 use yii\helpers\ArrayHelper;
 
@@ -14,7 +12,6 @@ use frontend\filters\SisseActionFilter;
 use common\models\ProfesionalSalud;
 use common\models\Profesiones;
 use common\models\Especialidades;
-use common\models\busquedas\ProfesionalSaludBusqueda;
 
 /**
  * ProfesionalSaludController implements the CRUD actions for ProfesionalSalud model.
@@ -31,44 +28,8 @@ class ProfesionalSaludController extends Controller
                 'class' => SisseActionFilter::className(),
                 'only' => ['create'],
                 'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE, SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
-            ],        
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'delete' => ['POST'],
-                ],
             ],
         ];
-    }
-
-    /**
-     * Lists all ProfesionalSalud models.
-     * @return mixed
-     * @no_intent_catalog
-    */
-    public function actionIndex()
-    {
-        $searchModel = new ProfesionalSaludBusqueda();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-
-        return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
-    }
-
-    /**
-     * Displays a single ProfesionalSalud model.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     * @no_intent_catalog
-    */
-    public function actionView($id)
-    {
-        return $this->render('view', [
-            'model' => $this->findModel($id),
-        ]);
     }
 
     /**
@@ -196,58 +157,6 @@ class ProfesionalSaludController extends Controller
     }
 
     /**
-     * Updates an existing ProfesionalSalud model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     * @no_intent_catalog
-    */
-    public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
-
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('update', [
-            'model' => $model,
-        ]);
-    }
-
-    /**
-     * Deletes an existing ProfesionalSalud model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     * @no_intent_catalog
-    */
-    public function actionDelete($id)
-    {
-        $this->findModel($id)->delete();
-
-        return $this->redirect(['index']);
-    }
-
-    /**
-     * Finds the ProfesionalSalud model based on its primary key value.
-     * If the model is not found, a 404 HTTP exception will be thrown.
-     * @param integer $id
-     * @return ProfesionalSalud the loaded model
-     * @throws NotFoundHttpException if the model cannot be found
-     */
-    protected function findModel($id)
-    {
-        if (($model = ProfesionalSalud::findOne($id)) !== null) {
-            return $model;
-        }
-
-        throw new NotFoundHttpException('The requested page does not exist.');
-    }
-
-     /**
      * Funcion para ejecutar los select dependientes de profesiones y especialidades
      * @return type
      * @no_intent_catalog   

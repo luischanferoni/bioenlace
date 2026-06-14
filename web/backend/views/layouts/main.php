@@ -77,7 +77,6 @@ $home = Yii::$app->getHomeUrl();
                                         ['label' => 'Reportes', 'url' => ['/personas/reporte']],
                                         ['label' => 'Reportes Estadísticos Nivel Central', 'url' => ['/personas/reportesestadisticos-central']],
                                         ['label' => 'Reportes Nivel Central', 'url' => ['/personas/reporte-central']],
-                                        ['label' => 'Atenciones de Enfermería', 'url' => ['/atenciones_enfermeria/reporte']],
                                         ['label' => 'Reportes de Camas', 'url' => ['/infraestructura-cama/reportecamas']],
                                     ]
                                 ],

@@ -4,7 +4,6 @@ namespace frontend\controllers;
 
 use Yii;
 use yii\base\Exception;
-use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
@@ -12,8 +11,6 @@ use yii\filters\VerbFilter;
 use frontend\filters\SisseActionFilter;
 use common\models\EncuestaParchesMamarios;
 use common\models\PersonasAntecedente;
-use common\models\ProfesionalEfectorServicio;
-use common\models\busquedas\EncuestaParchesMamariosBusqueda;
 use common\components\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaAtencionesEnfermeria;
@@ -66,26 +63,6 @@ class EncuestaParchesMamariosController extends Controller
                 ],
             ],
         ];
-    }
-
-    /**
-     * Lists all EncuestaParchesMamarios models.
-     * @return mixed
-     * @no_intent_catalog
-    */
-    public function actionIndex()
-    {
-        $searchModel = new EncuestaParchesMamariosBusqueda();
-        if(Yii::$app->user->getIdEfector() != 811){
-            $searchModel->id_efector = Yii::$app->user->getIdEfector();
-        }
-                
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-
-        return $this->render('index', [
-                    'searchModel' => $searchModel,
-                    'dataProvider' => $dataProvider,
-        ]);
     }
 
     /**
@@ -249,27 +226,6 @@ class EncuestaParchesMamariosController extends Controller
         return $this->render('create', [
             'model' => $model,
             'modelAtencionEnfermeria' => isset($model_a_enf) ? $model_a_enf : NULL
-        ]);
-    }
-
-    /**
-     * Updates an existing EncuestaParchesMamarios model.
-     * If update is successful, the browser will be redirected to the 'view' page.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     * @no_intent_catalog
-    */
-    public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
-
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
-        }
-
-        return $this->render('update', [
-            'model' => $model,
         ]);
     }
 

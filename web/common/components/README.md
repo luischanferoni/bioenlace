@@ -20,7 +20,7 @@ Código reutilizable por web, API, consola y jobs.
 | `Scheduling/` | Turnos, agenda, `Service/Quirofano/` |
 | `Person/` | `Service/` personas y registro |
 | `Organization/` | Efectores, PES, sesión operativa |
-| `Core/` | Push, notificaciones |
+| `Core/` | Push, notificaciones, `Core/Product/` (metadata paths, registries) |
 | `Ui/` | UI JSON y pantallas |
 | `Assistant/` | IntentEngine, SubIntentEngine, flows |
 | `Integrations/` | Receta nacional, externos |

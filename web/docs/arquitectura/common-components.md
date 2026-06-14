@@ -58,9 +58,9 @@ Código reutilizable por API v1, consola, jobs y (legacy) frontend Yii. La regla
 
 | Capa | Ubicación | Responsabilidad |
 |------|-----------|-----------------|
-| **Motores** | `Assistant/IntentEngine`, `Assistant/SubIntentEngine`, `Core/DataAccess`, `Core/Permission/Domain/*Authorizer*` | Interpretar metadata; sin reglas de negocio por rubro |
+| **Motores** | `Assistant/IntentEngine`, `Assistant/SubIntentEngine`, `Core/DataAccess`, `Core/Permission/Domain/*Authorizer*`, `Core/Product/` | Interpretar metadata; sin reglas de negocio por rubro |
 | **Metadata producto** | `common/metadata/bioenlace/` (`assistant/`, `permission/`, `ui/`) | Qué hacer (flows, métricas, permisos, panel) — específico de Bioenlace hoy |
-| **Plugins dominio** | `{Clinical\|Person\|Organization}/Assistant/`, `*/DataAccess/Scope`, `*/Service/Authorization/` | Catálogos UI, scope checkers, políticas — registrados en motores genéricos |
+| **Plugins dominio** | `{Clinical\|Person\|Organization}/Assistant/`, `*/DataAccess/Scope`, `*/Service/Authorization/`, `common/config/product-registries.php` | Catálogos UI, scope checkers, políticas — registrados en motores genéricos |
 | **Negocio** | `Clinical/`, `Scheduling/`, `Person/`, `Organization/` | Persistencia, reglas, autorización de recurso |
 
 Ver también: [arquitectura-yii2-bioenlace.mdc](../../../.cursor/rules/arquitectura-yii2-bioenlace.mdc), [api-v1-autenticacion-y-sesion.mdc](../../../.cursor/rules/api-v1-autenticacion-y-sesion.mdc).

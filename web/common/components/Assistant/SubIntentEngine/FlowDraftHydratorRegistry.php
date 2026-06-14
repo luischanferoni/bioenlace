@@ -2,29 +2,20 @@
 
 namespace common\components\Assistant\SubIntentEngine;
 
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
-use common\components\Core\DataAccess\DataAccessEditFlowDraftHydrator;
-use common\components\Core\DataAccess\DataAccessFlowDraftHydrator;
-use common\components\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
+use common\components\Core\Product\ProductRegistryConfig;
 
 /**
  * Registro de handlers de enriquecimiento de draft (lógica de dominio en capas inferiores).
  *
  * Los intents YAML declaran `draft_hydrator.handler`; el orquestador del chat no lista intents.
+ * Implementaciones en {@see common/config/product-registries.php} (`flowDraftHydrators`).
  *
  * @phpstan-type HydratorCallable callable(array<string, mixed>&, array<string, mixed>): void
  */
 final class FlowDraftHydratorRegistry
 {
-    /** @var array<string, HydratorCallable> */
-    private const HANDLERS = [
-        'organization.pes_crear_alta' => [ProfesionalEfectorServicioCrearFlowDraftHydrator::class, 'hydrateWithOptions'],
-        'organization.pes_from_servicio' => [ProfesionalEfectorServicioAgendaFlowDraftHydrator::class, 'hydrateWithOptions'],
-        'data_access.metric_flow' => [DataAccessFlowDraftHydrator::class, 'hydrateWithOptions'],
-        'data_access.edit_flow' => [DataAccessEditFlowDraftHydrator::class, 'hydrateWithOptions'],
-        'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
-    ];
+    /** @var array<string, HydratorCallable>|null */
+    private static ?array $handlers = null;
 
     /**
      * @param array<string, mixed> $body request del asistente (mutado in-place)
@@ -33,15 +24,15 @@ final class FlowDraftHydratorRegistry
     public static function apply(string $handlerId, array &$body, array $options = []): void
     {
         $handlerId = trim($handlerId);
-        if ($handlerId === '' || !isset(self::HANDLERS[$handlerId])) {
+        $handlers = self::handlers();
+        if ($handlerId === '' || !isset($handlers[$handlerId])) {
             throw new \InvalidArgumentException(
                 'draft_hydrator.handler desconocido: ' . $handlerId
-                . '. Registrados: ' . implode(', ', array_keys(self::HANDLERS))
+                . '. Registrados: ' . implode(', ', array_keys($handlers))
             );
         }
 
-        $callable = self::HANDLERS[$handlerId];
-        $callable($body, $options);
+        $handlers[$handlerId]($body, $options);
     }
 
     /**
@@ -49,6 +40,39 @@ final class FlowDraftHydratorRegistry
      */
     public static function registeredHandlerIds(): array
     {
-        return array_keys(self::HANDLERS);
+        return array_keys(self::handlers());
+    }
+
+    public static function resetForTests(): void
+    {
+        self::$handlers = null;
+        ProductRegistryConfig::resetForTests();
+    }
+
+    /**
+     * @return array<string, HydratorCallable>
+     */
+    private static function handlers(): array
+    {
+        if (self::$handlers !== null) {
+            return self::$handlers;
+        }
+
+        self::$handlers = [];
+        foreach (ProductRegistryConfig::section('flowDraftHydrators') as $handlerId => $callable) {
+            if (!is_string($handlerId) || $handlerId === '') {
+                continue;
+            }
+            if (!is_array($callable) || count($callable) !== 2) {
+                continue;
+            }
+            [$class, $method] = $callable;
+            if (!is_string($class) || !is_string($method) || !method_exists($class, $method)) {
+                continue;
+            }
+            self::$handlers[$handlerId] = [$class, $method];
+        }
+
+        return self::$handlers;
     }
 }

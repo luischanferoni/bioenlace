@@ -1,7 +1,9 @@
-# AppointmentReason
+# Entrypoints clínicos (movidos)
 
-Entry point para **motivo de consulta del paciente** (pre-turno; recurso `encounter_id`).
+Los entrypoints de **motivos de consulta** y **captura clínica** viven en:
 
-- **No** usa `Chat/Preprocess`.
-- Persistencia: `enviarTexto` → `interaccion_motivos_consulta.encounter_id`.
-- HTTP: `MotivosConsultaController` (`/api/v1/motivos-consulta/...`). Body: `encounter_id` (alias `consulta_id` en clientes en transición).
+`common/components/Clinical/Assistant/`
+
+Ver `Clinical/Assistant/README.md`.
+
+El chat genérico permanece en `EntryPoints/Chat/`.

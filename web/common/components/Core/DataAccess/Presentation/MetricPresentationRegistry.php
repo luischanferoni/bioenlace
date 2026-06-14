@@ -3,24 +3,15 @@
 namespace common\components\Core\DataAccess\Presentation;
 
 use common\components\Core\DataAccess\MetricExecutionResult;
-use common\components\Organization\Presentation\ProfesionalesConteoInfoPresentation;
-use common\components\Organization\Presentation\ProfesionalesListadoRowsPresentation;
+use common\components\Core\Product\ProductRegistryConfig;
 
 /**
  * Mapa estable handler_id → presentación de métrica (IDs en data-access-config).
+ *
+ * Clases en {@see common/config/product-registries.php} (`metricPresentationHandlers`).
  */
 final class MetricPresentationRegistry
 {
-    /** @var array<string, class-string> */
-    private const INFO_HANDLERS = [
-        'organization.profesionales_conteo_info' => ProfesionalesConteoInfoPresentation::class,
-    ];
-
-    /** @var array<string, class-string> */
-    private const LIST_HANDLERS = [
-        'organization.profesionales_listado_rows' => ProfesionalesListadoRowsPresentation::class,
-    ];
-
     public static function buildInfoRenderParams(string $handlerId, MetricExecutionResult $result): array
     {
         $handler = self::resolveInfoHandler($handlerId);
@@ -58,8 +49,10 @@ final class MetricPresentationRegistry
 
     private static function resolveInfoHandler(string $handlerId): MetricInfoPresentationHandlerInterface
     {
-        $class = self::INFO_HANDLERS[trim($handlerId)] ?? null;
-        if ($class === null || !is_subclass_of($class, MetricInfoPresentationHandlerInterface::class)) {
+        $handlers = ProductRegistryConfig::section('metricPresentationHandlers');
+        $info = is_array($handlers['info'] ?? null) ? $handlers['info'] : [];
+        $class = $info[trim($handlerId)] ?? null;
+        if ($class === null || !is_string($class) || !is_subclass_of($class, MetricInfoPresentationHandlerInterface::class)) {
             throw new \InvalidArgumentException('presentation_handler info desconocido: ' . $handlerId);
         }
 
@@ -68,8 +61,10 @@ final class MetricPresentationRegistry
 
     private static function resolveListHandler(string $handlerId): MetricListPresentationHandlerInterface
     {
-        $class = self::LIST_HANDLERS[trim($handlerId)] ?? null;
-        if ($class === null || !is_subclass_of($class, MetricListPresentationHandlerInterface::class)) {
+        $handlers = ProductRegistryConfig::section('metricPresentationHandlers');
+        $list = is_array($handlers['list'] ?? null) ? $handlers['list'] : [];
+        $class = $list[trim($handlerId)] ?? null;
+        if ($class === null || !is_string($class) || !is_subclass_of($class, MetricListPresentationHandlerInterface::class)) {
             throw new \InvalidArgumentException('presentation_handler list desconocido: ' . $handlerId);
         }
 

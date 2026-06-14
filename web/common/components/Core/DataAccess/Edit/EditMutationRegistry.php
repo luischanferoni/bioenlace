@@ -2,10 +2,12 @@
 
 namespace common\components\Core\DataAccess\Edit;
 
-use common\components\Core\DataAccess\Edit\Handler\PersonIdentidadBasicaEditMutationHandler;
+use common\components\Core\Product\ProductRegistryConfig;
 
 /**
  * Handlers de mutación por grupo de atributos.
+ *
+ * Clases en {@see common/config/product-registries.php} (`dataAccessEditMutationHandlers`).
  */
 final class EditMutationRegistry
 {
@@ -17,9 +19,19 @@ final class EditMutationRegistry
      */
     public function __construct(?array $handlers = null)
     {
-        $this->handlers = $handlers ?? [
-            new PersonIdentidadBasicaEditMutationHandler(),
-        ];
+        if ($handlers !== null) {
+            $this->handlers = $handlers;
+
+            return;
+        }
+
+        $this->handlers = [];
+        foreach (ProductRegistryConfig::section('dataAccessEditMutationHandlers') as $class) {
+            if (!is_string($class) || !is_subclass_of($class, EditMutationHandlerInterface::class)) {
+                continue;
+            }
+            $this->handlers[] = new $class();
+        }
     }
 
     public function getHandler(string $attributeGroup): ?EditMutationHandlerInterface

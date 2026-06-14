@@ -2,32 +2,15 @@
 
 namespace common\components\Core\Permission\Domain;
 
-use common\components\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
-use common\components\Clinical\Service\Authorization\ClinicalEncounterAccessPolicy;
-use common\components\Organization\Service\Authorization\OrganizationEfectorSesionPolicy;
-use common\components\Organization\Service\Authorization\OrganizationPesEfectorPolicy;
-use common\components\Organization\Service\Authorization\OrganizationPesOwnPolicy;
-use common\components\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
-use common\components\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
-use common\components\Scheduling\Service\Authorization\TurnoSubjectOrRepresentativePolicy;
+use common\components\Core\Product\ProductRegistryConfig;
 
 /**
  * Mapa estable handler_id → implementación (solo IDs, sin reglas de negocio).
+ *
+ * Clases en {@see common/config/product-registries.php} (`domainOperationPolicies`).
  */
 final class DomainOperationPolicyRegistry
 {
-    /** @var array<string, class-string<DomainOperationPolicyInterface>> */
-    private const HANDLERS = [
-        'turno.subject_or_representative' => TurnoSubjectOrRepresentativePolicy::class,
-        'turno.staff_efector_belongs' => TurnoStaffEfectorBelongsPolicy::class,
-        'turno.create_subject_or_representative' => TurnoCreateSubjectPolicy::class,
-        'organization.efector_sesion' => OrganizationEfectorSesionPolicy::class,
-        'organization.pes_efector' => OrganizationPesEfectorPolicy::class,
-        'organization.pes_own' => OrganizationPesOwnPolicy::class,
-        'clinical.encounter_participant' => ClinicalEncounterAccessPolicy::class,
-        'clinical.internacion_staff_access' => ClinicalInternacionStaffAccessPolicy::class,
-    ];
-
     /** @var array<string, DomainOperationPolicyInterface> */
     private static array $instances = [];
 
@@ -37,11 +20,17 @@ final class DomainOperationPolicyRegistry
         if ($handlerId === '') {
             throw new \InvalidArgumentException('handler_id de política vacío.');
         }
-        if (!isset(self::HANDLERS[$handlerId])) {
+
+        $handlers = ProductRegistryConfig::section('domainOperationPolicies');
+        if (!isset($handlers[$handlerId])) {
             throw new \InvalidArgumentException('Política de dominio desconocida: ' . $handlerId);
         }
+
         if (!isset(self::$instances[$handlerId])) {
-            $class = self::HANDLERS[$handlerId];
+            $class = $handlers[$handlerId];
+            if (!is_string($class) || !is_subclass_of($class, DomainOperationPolicyInterface::class)) {
+                throw new \InvalidArgumentException('Implementación inválida para política: ' . $handlerId);
+            }
             self::$instances[$handlerId] = new $class();
         }
 
@@ -51,11 +40,12 @@ final class DomainOperationPolicyRegistry
     /** @return list<string> */
     public static function knownHandlerIds(): array
     {
-        return array_keys(self::HANDLERS);
+        return array_keys(ProductRegistryConfig::section('domainOperationPolicies'));
     }
 
     public static function resetForTests(): void
     {
         self::$instances = [];
+        ProductRegistryConfig::resetForTests();
     }
 }

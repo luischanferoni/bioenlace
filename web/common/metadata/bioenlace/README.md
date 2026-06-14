@@ -16,3 +16,5 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 | `ui/home_panel_manifest.yaml` | Layout del panel de inicio staff/paciente |
 
 Contrato de pasos YAML: `common/components/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
+
+Handlers de dominio (hydrators, políticas, scope, filtros): `common/config/product-registries.php` vía `ProductRegistryConfig`.

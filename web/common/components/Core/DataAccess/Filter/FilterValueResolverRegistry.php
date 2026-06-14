@@ -2,24 +2,17 @@
 
 namespace common\components\Core\DataAccess\Filter;
 
-use common\components\Organization\DataAccess\Filter\ServicioRolEfectorIdsFilterResolver;
-use common\components\Organization\DataAccess\Filter\ServicioRolFromMentionFilterResolver;
-use common\components\Person\DataAccess\Filter\SexoBiologicoFilterResolver;
+use common\components\Core\Product\ProductRegistryConfig;
 
 /**
  * Registro de resolvers de filtros declarados en metadata (`resolver:` en YAML).
+ *
+ * Clases en {@see common/config/product-registries.php} (`dataAccessFilterResolvers`).
  */
 final class FilterValueResolverRegistry
 {
     /** @var array<string, FilterValueResolverInterface> */
     private static $instances = [];
-
-    /** @var array<string, class-string<FilterValueResolverInterface>> */
-    private const HANDLERS = [
-        'servicio_rol_efector_ids' => ServicioRolEfectorIdsFilterResolver::class,
-        'servicio_rol_from_mention' => ServicioRolFromMentionFilterResolver::class,
-        'sexo_biologico' => SexoBiologicoFilterResolver::class,
-    ];
 
     public static function get(string $resolverId): FilterValueResolverInterface
     {
@@ -37,12 +30,22 @@ final class FilterValueResolverRegistry
 
     private static function build(string $resolverId): FilterValueResolverInterface
     {
-        if (!isset(self::HANDLERS[$resolverId])) {
+        $handlers = ProductRegistryConfig::section('dataAccessFilterResolvers');
+        if (!isset($handlers[$resolverId])) {
             throw new \InvalidArgumentException('resolver de filtro desconocido: ' . $resolverId);
         }
 
-        $class = self::HANDLERS[$resolverId];
+        $class = $handlers[$resolverId];
+        if (!is_string($class) || !is_subclass_of($class, FilterValueResolverInterface::class)) {
+            throw new \InvalidArgumentException('resolver de filtro inválido: ' . $resolverId);
+        }
 
         return new $class();
+    }
+
+    public static function resetForTests(): void
+    {
+        self::$instances = [];
+        ProductRegistryConfig::resetForTests();
     }
 }

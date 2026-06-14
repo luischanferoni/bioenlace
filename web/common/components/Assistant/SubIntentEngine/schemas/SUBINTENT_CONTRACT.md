@@ -34,7 +34,7 @@ draft_hydrator:
 | `options` | Opcional: mapa anidado de opciones para el handler. |
 | *(otras claves al mismo nivel)* | Se fusionan en `options` (p. ej. `require_own_pes: true`). |
 
-Handlers viven en **servicios de dominio** (`common/components/{Domain}/Service/…`); el registry del asistente solo mapea ID → callable. **No** agregar un handler nuevo sin documentarlo aquí y registrarlo en `FlowDraftHydratorRegistry.php`.
+Handlers viven en **servicios de dominio** (`common/components/{Domain}/Service/…`); el motor solo mapea ID → callable vía `common/config/product-registries.php` (`flowDraftHydrators`). **No** agregar un handler nuevo sin documentarlo aquí y registrarlo en ese archivo.
 
 ## Nodo `subintents[]` — claves soportadas
 

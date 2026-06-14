@@ -2,24 +2,17 @@
 
 namespace common\components\Core\DataAccess;
 
-use common\components\Organization\DataAccess\Scope\EfectorSesionScopeChecker;
-use common\components\Organization\DataAccess\Scope\EfectorSesionViaPesScopeChecker;
-use common\components\Person\DataAccess\Scope\PermitirParaSiMismoScopeChecker;
+use common\components\Core\Product\ProductRegistryConfig;
 
 /**
  * Registro estable de scope checkers (IDs declarados en metadata YAML).
+ *
+ * Clases en {@see common/config/product-registries.php} (`dataAccessScopeCheckers`).
  */
 final class ScopeCheckerRegistry
 {
     /** @var array<string, ScopeCheckerInterface> */
     private static array $instances = [];
-
-    /** @var array<string, class-string<ScopeCheckerInterface>> */
-    private const HANDLERS = [
-        'efector_sesion' => EfectorSesionScopeChecker::class,
-        'efector_sesion_via_pes' => EfectorSesionViaPesScopeChecker::class,
-        'permitir_para_si_mismo' => PermitirParaSiMismoScopeChecker::class,
-    ];
 
     public static function get(string $checkerId): ScopeCheckerInterface
     {
@@ -37,11 +30,15 @@ final class ScopeCheckerRegistry
 
     private static function build(string $checkerId): ScopeCheckerInterface
     {
-        if (!isset(self::HANDLERS[$checkerId])) {
+        $handlers = ProductRegistryConfig::section('dataAccessScopeCheckers');
+        if (!isset($handlers[$checkerId])) {
             throw new \InvalidArgumentException('scope_checker desconocido: ' . $checkerId);
         }
 
-        $class = self::HANDLERS[$checkerId];
+        $class = $handlers[$checkerId];
+        if (!is_string($class) || !is_subclass_of($class, ScopeCheckerInterface::class)) {
+            throw new \InvalidArgumentException('scope_checker inválido: ' . $checkerId);
+        }
 
         return new $class();
     }
@@ -49,7 +46,7 @@ final class ScopeCheckerRegistry
     /** @return list<string> */
     public static function knownIds(): array
     {
-        return array_keys(self::HANDLERS);
+        return array_keys(ProductRegistryConfig::section('dataAccessScopeCheckers'));
     }
 
     /** @return array<string, string> */
@@ -61,5 +58,11 @@ final class ScopeCheckerRegistry
         }
 
         return $out;
+    }
+
+    public static function resetForTests(): void
+    {
+        self::$instances = [];
+        ProductRegistryConfig::resetForTests();
     }
 }

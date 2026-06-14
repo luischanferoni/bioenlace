@@ -128,7 +128,7 @@ final class SubIntentEngine
             $missing = self::missingDraftFields($current, $draft);
             if ($missing !== []) {
                 $open = self::resolveOpenUiForSubintent($current, $content, $draft);
-                if ($open && !empty($open['action_id'])) {
+                if ($open && !empty($open['action_id']) && !self::openUiBlockedByMissingDraft($open, $missing)) {
                     return self::buildOpenUiResponse(
                         $intentId,
                         $currentId,
@@ -481,6 +481,10 @@ final class SubIntentEngine
     private static function apiRouteForActionId(string $actionId): string
     {
         $actionId = trim($actionId);
+        $clinicalRoute = \common\components\Assistant\Catalog\ClinicalUiActionCatalog::httpRouteForActionId($actionId);
+        if ($clinicalRoute !== '') {
+            return $clinicalRoute;
+        }
         if (preg_match('#^clinical\.([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
             return '/api/v1/clinical/'
                 . rawurlencode((string) $m[1]) . '/'
@@ -755,6 +759,7 @@ final class SubIntentEngine
         }
 
         self::mergeHintQueryForSubintent($open, $subintent, $hints);
+        self::applyDraftRoutePlaceholdersToClientOpen($open, $openUiDef);
 
         $payload = [
             'success' => true,
@@ -997,6 +1002,82 @@ final class SubIntentEngine
         }
 
         return $payload;
+    }
+
+    /**
+     * No abrir mini-UI si `open_ui.params` referencia campos del draft que aún faltan.
+     *
+     * @param array<string, mixed> $openUiDef
+     * @param list<string> $missing claves `draft.<campo>`
+     */
+    private static function openUiBlockedByMissingDraft(array $openUiDef, array $missing): bool
+    {
+        if ($missing === []) {
+            return false;
+        }
+        $paramsMap = isset($openUiDef['params']) && is_array($openUiDef['params']) ? $openUiDef['params'] : [];
+        if ($paramsMap === []) {
+            return false;
+        }
+
+        $missingFields = [];
+        foreach ($missing as $m) {
+            $m = is_string($m) ? trim($m) : '';
+            if ($m === '' || strncmp($m, 'draft.', 6) !== 0) {
+                continue;
+            }
+            $field = substr($m, 6);
+            if ($field !== '') {
+                $missingFields[$field] = true;
+            }
+        }
+        if ($missingFields === []) {
+            return false;
+        }
+
+        foreach ($paramsMap as $v) {
+            $vv = is_string($v) ? trim($v) : '';
+            if ($vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
+                continue;
+            }
+            $field = substr($vv, 6);
+            if (str_ends_with($field, '?')) {
+                $field = substr($field, 0, -1);
+            }
+            if ($field !== '' && isset($missingFields[$field])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Sustituye `{campo}` en `client_open.api.route` cuando el draft ya trae el valor.
+     *
+     * @param array<string, mixed> $open
+     * @param array<string, mixed> $openUiDef
+     */
+    private static function applyDraftRoutePlaceholdersToClientOpen(array &$open, array $openUiDef): void
+    {
+        if (!isset($open['client_open']) || !is_array($open['client_open'])) {
+            return;
+        }
+        $co = $open['client_open'];
+        if (!isset($co['api']) || !is_array($co['api'])) {
+            return;
+        }
+        $routeRaw = $co['api']['route'] ?? '';
+        if (!is_string($routeRaw) || trim($routeRaw) === '' || !str_contains($routeRaw, '{')) {
+            return;
+        }
+        $draft = isset($openUiDef['__draft']) && is_array($openUiDef['__draft']) ? $openUiDef['__draft'] : [];
+        $resolved = AssistantDraftNormalizer::applyRoutePlaceholders($routeRaw, $draft);
+        if ($resolved === null) {
+            return;
+        }
+        $co['api']['route'] = $resolved;
+        $open['client_open'] = $co;
     }
 
     /**

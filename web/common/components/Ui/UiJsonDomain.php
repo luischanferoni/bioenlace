@@ -141,6 +141,10 @@ final class UiJsonDomain
             $path = trim($route);
         }
 
+        if (preg_match('#^/api/v\d+/clinical/([\\w-]+)/(?:\d+|\{[\w-]+\})/([\\w-]+)$#', $path, $m) === 1) {
+            return ['entity' => strtolower((string) $m[1]), 'action' => (string) $m[2]];
+        }
+
         if (preg_match('#^/api/v\d+/clinical/([\\w-]+)/([\\w-]+)$#', $path, $m) === 1) {
             return ['entity' => strtolower((string) $m[1]), 'action' => (string) $m[2]];
         }

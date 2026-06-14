@@ -251,7 +251,7 @@ final class AssistantEnvelope
         $provides = [];
         if (isset($motor['provides']) && is_array($motor['provides'])) {
             foreach ($motor['provides'] as $p) {
-                $s = trim((string) $p);
+                $s = self::scalarString($p);
                 if ($s !== '') {
                     $provides[] = $s;
                 }
@@ -261,14 +261,14 @@ final class AssistantEnvelope
         $pending = [];
         if (isset($motor['required_draft_fields']) && is_array($motor['required_draft_fields'])) {
             foreach ($motor['required_draft_fields'] as $f) {
-                $s = trim((string) $f);
+                $s = self::scalarString($f);
                 if ($s !== '') {
                     $pending[] = $s;
                 }
             }
         }
 
-        if ($openUi === null || trim((string) ($openUi['action_id'] ?? '')) === '') {
+        if ($openUi === null || self::scalarString($openUi['action_id'] ?? '') === '') {
             return [
                 'active' => false,
                 'action_id' => '',
@@ -279,7 +279,7 @@ final class AssistantEnvelope
         }
 
         $co = isset($openUi['client_open']) && is_array($openUi['client_open']) ? $openUi['client_open'] : [];
-        if (trim((string) ($co['kind'] ?? '')) === '' && $manifest !== null) {
+        if (self::scalarString($co['kind'] ?? '') === '' && $manifest !== null) {
             $fromManifest = self::clientOpenFromManifest($manifest);
             if ($fromManifest !== null) {
                 $co = $fromManifest;
@@ -288,7 +288,7 @@ final class AssistantEnvelope
 
         return [
             'active' => true,
-            'action_id' => trim((string) ($openUi['action_id'] ?? '')),
+            'action_id' => self::scalarString($openUi['action_id'] ?? ''),
             'client_open' => self::normalizeClientOpen($co),
             'provides' => $provides,
             'pending_fields' => $pending,
@@ -310,7 +310,7 @@ final class AssistantEnvelope
             ];
         }
 
-        $route = trim((string) ($flowSubmit['route'] ?? ''));
+        $route = self::scalarString($flowSubmit['route'] ?? '');
         if ($route === '') {
             return [
                 'active' => false,
@@ -320,7 +320,7 @@ final class AssistantEnvelope
             ];
         }
 
-        $method = trim((string) ($flowSubmit['method'] ?? 'POST'));
+        $method = self::scalarString($flowSubmit['method'] ?? 'POST', 'POST');
         if ($method === '') {
             $method = 'POST';
         }
@@ -399,11 +399,11 @@ final class AssistantEnvelope
             if (!is_array($tab)) {
                 continue;
             }
-            $route = ApiV1HttpRoute::normalize(trim((string) ($tab['route'] ?? '')));
+            $route = ApiV1HttpRoute::normalize(self::scalarString($tab['route'] ?? ''));
             if ($route === '') {
                 continue;
             }
-            $actionId = trim((string) ($tab['action_id'] ?? ''));
+            $actionId = self::scalarString($tab['action_id'] ?? '');
             $action = [
                 'action_id' => $actionId !== '' ? $actionId : 'flow.ui',
                 'display_name' => $actionId,
@@ -462,13 +462,10 @@ final class AssistantEnvelope
      */
     private static function normalizeClientOpen(array $co): array
     {
-        $kind = trim((string) ($co['kind'] ?? ''));
+        $kind = self::scalarString($co['kind'] ?? '');
         $api = isset($co['api']) && is_array($co['api']) ? $co['api'] : [];
-        $routeRaw = $api['route'] ?? '';
-        $route = is_string($routeRaw) || is_int($routeRaw) || is_float($routeRaw)
-            ? trim((string) $routeRaw)
-            : '';
-        $method = trim((string) ($api['method'] ?? ''));
+        $route = self::scalarString($api['route'] ?? '');
+        $method = self::scalarString($api['method'] ?? '');
         $query = isset($api['query']) && is_array($api['query']) ? $api['query'] : [];
         $queryOut = [];
         foreach ($query as $qk => $qv) {
@@ -494,6 +491,24 @@ final class AssistantEnvelope
                 'query' => $queryOut === [] ? (object) [] : $queryOut,
             ],
         ];
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function scalarString($value, string $default = ''): string
+    {
+        if ($value === null || is_array($value) || is_object($value)) {
+            return $default;
+        }
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+        if (!is_string($value) && !is_int($value) && !is_float($value)) {
+            return $default;
+        }
+
+        return trim((string) $value);
     }
 
     /**
@@ -533,12 +548,12 @@ final class AssistantEnvelope
      */
     private static function resolvePrimaryText(array $motor): string
     {
-        $text = isset($motor['text']) ? trim((string) $motor['text']) : '';
+        $text = self::scalarString($motor['text'] ?? '');
         if ($text !== '') {
             return $text;
         }
 
-        return isset($motor['explanation']) ? trim((string) $motor['explanation']) : '';
+        return self::scalarString($motor['explanation'] ?? '');
     }
 
     /**

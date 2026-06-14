@@ -256,7 +256,9 @@ final class ClinicalUiActionCatalog
                 'Epicrisis y checklist de egreso estructurado.',
                 '/api/clinical/internacion/alta-formulario',
                 ['alta internación', 'epicrisis', 'egreso hospitalario'],
-                true
+                true,
+                null,
+                '/api/clinical/internacion/{internacion_id}/alta-formulario'
             ),
             self::def(
                 'clinical.internacion.cambio-cama-formulario',
@@ -264,7 +266,9 @@ final class ClinicalUiActionCatalog
                 'Traslado del paciente internado a otra cama del efector.',
                 '/api/clinical/internacion/cambio-cama-formulario',
                 ['cambio de cama', 'traslado internación', 'mover cama'],
-                true
+                true,
+                null,
+                '/api/clinical/internacion/{internacion_id}/cambio-cama-formulario'
             ),
             self::def(
                 'clinical.internacion.ingreso-formulario',
@@ -288,6 +292,31 @@ final class ClinicalUiActionCatalog
     }
 
     /**
+     * @return array<string, mixed>|null
+     */
+    public static function definitionByActionId(string $actionId): ?array
+    {
+        $actionId = trim($actionId);
+        if ($actionId === '') {
+            return null;
+        }
+        foreach (self::discoverAll() as $def) {
+            if (trim((string) ($def['action_id'] ?? '')) === $actionId) {
+                return $def;
+            }
+        }
+
+        return null;
+    }
+
+    public static function httpRouteForActionId(string $actionId): string
+    {
+        $def = self::definitionByActionId($actionId);
+
+        return $def !== null ? trim((string) ($def['route'] ?? '')) : '';
+    }
+
+    /**
      * @param list<string> $keywords
      * @return array<string, mixed>
      */
@@ -302,9 +331,10 @@ final class ClinicalUiActionCatalog
         string $rbacRoute,
         array $keywords,
         bool $uiJsonDescriptor = false,
-        ?array $clientOpen = null
+        ?array $clientOpen = null,
+        ?string $httpRouteTemplate = null
     ): array {
-        $httpRoute = ApiV1HttpRoute::normalize($rbacRoute);
+        $httpRoute = ApiV1HttpRoute::normalize($httpRouteTemplate ?? $rbacRoute);
 
         $row = [
             'action_id' => $actionId,

@@ -421,6 +421,10 @@ final class FlowManifest
     private static function routeForActionId(string $actionId): string
     {
         $actionId = strtolower(trim($actionId));
+        $clinicalRoute = \common\components\Assistant\Catalog\ClinicalUiActionCatalog::httpRouteForActionId($actionId);
+        if ($clinicalRoute !== '') {
+            return $clinicalRoute;
+        }
         $dataAccessRoute = \common\components\Assistant\Catalog\DataAccessUiActionCatalog::httpRouteForActionId($actionId);
         if ($dataAccessRoute !== '') {
             return $dataAccessRoute;

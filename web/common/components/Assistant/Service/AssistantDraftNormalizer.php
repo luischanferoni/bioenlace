@@ -61,6 +61,49 @@ final class AssistantDraftNormalizer
     }
 
     /**
+     * Sustituye placeholders `{campo}` en rutas HTTP con valores escalares del draft (URL-encoded).
+     * Devuelve null si queda algún placeholder sin resolver.
+     */
+    public static function applyRoutePlaceholders(string $route, array $draft): ?string
+    {
+        $route = trim($route);
+        if ($route === '') {
+            return null;
+        }
+        if (!str_contains($route, '{')) {
+            return $route;
+        }
+
+        $unresolved = false;
+        $out = preg_replace_callback(
+            '/\{([\w-]+)\}/',
+            static function (array $m) use ($draft, &$unresolved): string {
+                $field = (string) ($m[1] ?? '');
+                if ($field === '') {
+                    $unresolved = true;
+
+                    return $m[0];
+                }
+                $scalar = self::asOptionalString($draft[$field] ?? null);
+                if ($scalar === null) {
+                    $unresolved = true;
+
+                    return $m[0];
+                }
+
+                return rawurlencode($scalar);
+            },
+            $route
+        );
+
+        if (!is_string($out) || $out === '' || $unresolved) {
+            return null;
+        }
+
+        return $out;
+    }
+
+    /**
      * @param array<string, mixed> $arr
      */
     private static function isEmpty(array $arr, string $key): bool

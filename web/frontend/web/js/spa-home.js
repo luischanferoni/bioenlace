@@ -47,11 +47,26 @@
         }
     }
 
+    function applyDraftPlaceholdersToRoute(route) {
+        var raw = route == null ? '' : String(route);
+        if (raw === '' || raw.indexOf('{') === -1) {
+            return raw;
+        }
+        return raw.replace(/\{([\w-]+)\}/g, function (m, field) {
+            var dv = draft && Object.prototype.hasOwnProperty.call(draft, field) ? draft[field] : '';
+            var sv = (dv == null ? '' : String(dv)).trim();
+            if (!sv) {
+                return m;
+            }
+            return encodeURIComponent(sv);
+        });
+    }
+
     function buildUrlForFlowTab(tab) {
         if (!tab || !tab.route) {
             return '';
         }
-        const base = resolveSpaFetchUrl(String(tab.route));
+        const base = resolveSpaFetchUrl(applyDraftPlaceholdersToRoute(String(tab.route)));
         try {
             const u = new URL(base);
             const params = tab.params && typeof tab.params === 'object' ? tab.params : {};
@@ -528,7 +543,7 @@
                 return;
             }
             btn.disabled = true;
-            var postUrl = resolveSpaFetchUrl(String(fs.route));
+            var postUrl = resolveSpaFetchUrl(applyDraftPlaceholdersToRoute(String(fs.route)));
             var bodyObj = resolved.body;
             fetch(postUrl, {
                 method: 'POST',
@@ -1509,7 +1524,7 @@
                 // (mismo paso, no mensaje aparte).
                 let fullUrl = '';
                 if (okUiJson) {
-                    const route = String(co.api.route || '');
+                    const route = applyDraftPlaceholdersToRoute(String(co.api.route || ''));
                     fullUrl = mergeApiQueryIntoUrl(resolveSpaFetchUrl(route), co.api);
                 } else if (fsr && fsr.route && tabs.length >= 1) {
                     let defIdx = 0;

@@ -12,9 +12,9 @@ use yii\helpers\Json;
 use yii\helpers\Url;
 
 // Modelos
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\Clinical\Encounter;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use common\models\ServiciosEfector;
 use common\models\ConsultaAtencionesEnfermeria;
 use common\models\SegNivelInternacion;

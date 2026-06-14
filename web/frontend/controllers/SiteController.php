@@ -14,7 +14,7 @@ use common\models\User;
 use common\components\Clinical\Inpatient\Service\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;
 use common\models\Efector;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use common\components\Organization\Service\SesionOperativa\SesionOperativaService;

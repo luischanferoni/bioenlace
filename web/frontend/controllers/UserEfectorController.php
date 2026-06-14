@@ -4,7 +4,7 @@ namespace frontend\controllers;
 
 use Yii;
 use common\models\UserEfector;
-use common\models\Persona;
+use common\models\Person\Persona;
 use yii\data\ActiveDataProvider;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;

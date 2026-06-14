@@ -4,7 +4,7 @@ namespace frontend\controllers;
 
 use Yii;
 use common\models\PersonaTelefono;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\busquedas\PersonaTelefonoBusqueda;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;

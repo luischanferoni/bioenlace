@@ -3,7 +3,7 @@
 namespace frontend\controllers;
 
 use common\models\ConsultaDerivaciones;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use Yii;
 
 use yii\web\Controller;
@@ -17,7 +17,7 @@ use yii\helpers\Url;
 use yii\data\ActiveDataProvider;
 
 //agregamos el modulo de la extension para el control de acceso
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\busquedas\PersonaBusqueda;
 use common\models\PersonaTelefono;
 use common\models\Tipo_telefono;

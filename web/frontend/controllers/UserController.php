@@ -2,7 +2,7 @@
 
 namespace frontend\controllers;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\User;
 use frontend\filters\SisseActionFilter;
 use Yii;

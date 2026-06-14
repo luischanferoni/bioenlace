@@ -12,7 +12,7 @@ use yii\helpers\ArrayHelper;
 use common\models\ProfesionalEfectorServicio;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\Efector;
 use common\models\Servicio;
 use common\models\ServiciosEfector;

@@ -16,7 +16,7 @@ use common\models\SegNivelInternacionRepository;
 use common\models\busquedas\SegNivelInternacionBusqueda;
 use common\models\InfraestructuraPiso;
 use common\models\InfraestructuraCama;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\Setup;
 use common\models\CoberturaMedica;
 use common\models\Efector;

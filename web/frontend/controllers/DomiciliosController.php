@@ -7,7 +7,7 @@ use common\models\Domicilio;
 use common\models\Localidad;
 use common\models\Departamento;
 use common\models\Provincia;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\Persona_domicilio;
 use common\models\busquedas\DomicilioBusqueda;
 use yii\web\Controller;

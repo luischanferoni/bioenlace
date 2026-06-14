@@ -5,20 +5,22 @@ use yii\widgets\ActiveForm;
 
 /* @var $this yii\web\View */
 /* @var $permissionKey string */
-/* @var $attributeRow array<string, mixed> */
+/* @var $catalogRow array<string, mixed> */
 /* @var $roleNames list<string> */
 /* @var $assignedRoles array<string, int> */
 /* @var $inAuthItem bool */
+/* @var $returnTab string */
 
+$kind = (string) ($catalogRow['kind'] ?? '');
 $this->title = 'Roles: ' . $permissionKey;
 $this->params['breadcrumbs'][] = ['label' => 'Catálogo de permisos', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
-<div class="permission-catalog-edit-attribute-roles">
+<div class="permission-catalog-edit-permission-roles">
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h1 class="h2 mb-0"><?= Html::encode($this->title) ?></h1>
-        <?= Html::a('Volver al catálogo', ['index', '#' => 'tab-attributes'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+        <?= Html::a('Volver al catálogo', ['index', '#' => $returnTab], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
     </div>
 
     <?php if (!$inAuthItem): ?>
@@ -31,10 +33,22 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
     <?php endif; ?>
 
-    <p class="text-muted small">
-        Entidad <code><?= Html::encode((string) ($attributeRow['entity'] ?? '')) ?></code>
-        · origen <?= Html::encode((string) ($attributeRow['source'] ?? '')) ?>
-    </p>
+    <?php if ($kind === 'intent'): ?>
+        <p class="text-muted small">
+            Intent <code><?= Html::encode((string) ($catalogRow['intent_id'] ?? '')) ?></code>
+            <?php if (!empty($catalogRow['rbac_route'])): ?>
+                · API <code><?= Html::encode((string) $catalogRow['rbac_route']) ?></code>
+            <?php endif; ?>
+        </p>
+    <?php else: ?>
+        <p class="text-muted small">
+            Entidad <code><?= Html::encode((string) ($catalogRow['entity'] ?? '')) ?></code>
+            · operación <?= Html::encode((string) ($catalogRow['operation'] ?? '')) ?>
+            <?php if (!empty($catalogRow['source'])): ?>
+                · origen <?= Html::encode((string) $catalogRow['source']) ?>
+            <?php endif; ?>
+        </p>
+    <?php endif; ?>
 
     <?php $form = ActiveForm::begin(['method' => 'post']); ?>
 

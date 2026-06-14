@@ -10,7 +10,8 @@ use yii\helpers\Html;
 /* @var $inAuthItemByKey array<string, bool> */
 /* @var $intentInAuth array<string, bool> */
 /* @var $roleNames list<string> */
-/* @var $unregisteredCount int */
+/* @var $unregisteredAttributesCount int */
+/* @var $unregisteredIntentsCount int */
 
 $this->title = 'Catálogo de permisos';
 $this->params['breadcrumbs'][] = $this->title;
@@ -31,17 +32,22 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
     </div>
 
-    <?php if ($unregisteredCount > 0): ?>
+    <?php if ($unregisteredIntentsCount > 0): ?>
         <div class="alert alert-warning py-2 small">
-            <?= (int) $unregisteredCount ?> permiso(s) de atributos aún no están en <code>auth_item</code>.
+            <?= (int) $unregisteredIntentsCount ?> intent(s) aún no están en <code>auth_item</code>.
+            Ejecutá «Sincronizar → auth_item».
+        </div>
+    <?php endif; ?>
+    <?php if ($unregisteredAttributesCount > 0): ?>
+        <div class="alert alert-warning py-2 small">
+            <?= (int) $unregisteredAttributesCount ?> permiso(s) de atributos aún no están en <code>auth_item</code>.
             Ejecutá «Sincronizar → auth_item».
         </div>
     <?php endif; ?>
 
     <p class="text-muted">
-        <strong>Intents:</strong> solo consulta; asignación de roles en
-        <?= Html::a('Roles RBAC', ['/user-management/role/index']) ?>.
-        <strong>Atributos:</strong> agrupados por entidad; editá roles por permiso.
+        Asigná <strong>roles</strong> por intent o por atributo con «Editar roles».
+        También podés editar todos los intents de un rol en <?= Html::a('Roles RBAC', ['/user-management/role/index']) ?>.
     </p>
 
     <ul class="nav nav-tabs mb-3" role="tablist">
@@ -65,13 +71,19 @@ $this->params['breadcrumbs'][] = $this->title;
                         <tr>
                             <th>Intent (permiso)</th>
                             <th>Ruta API</th>
+                            <th>Roles con acceso</th>
+                            <th class="text-end">Acciones</th>
                         </tr>
                         </thead>
                         <tbody>
                         <?php foreach ($intents as $row): ?>
                             <?php
                             $key = (string) ($row['key'] ?? $row['intent_id'] ?? '');
-                            $inAuth = $intentInAuth[$key] ?? true;
+                            if ($key === '' || strncmp($key, '/api/', 5) === 0) {
+                                continue;
+                            }
+                            $roles = $rolesByKey[$key] ?? [];
+                            $inAuth = $intentInAuth[$key] ?? false;
                             ?>
                             <tr class="<?= !$inAuth ? 'table-warning' : '' ?>">
                                 <td>
@@ -81,6 +93,14 @@ $this->params['breadcrumbs'][] = $this->title;
                                     <?php endif; ?>
                                 </td>
                                 <td><code class="small"><?= Html::encode((string) ($row['rbac_route'] ?? '—')) ?></code></td>
+                                <td class="small">
+                                    <?= $roles === [] ? '—' : Html::encode(implode(', ', $roles)) ?>
+                                </td>
+                                <td class="text-end">
+                                    <?= Html::a('Editar roles', ['edit-intent-roles', 'key' => $key], [
+                                        'class' => 'btn btn-outline-primary btn-sm',
+                                    ]) ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>

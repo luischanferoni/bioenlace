@@ -30,6 +30,7 @@ class PermissionCatalogController extends Controller
                     'integrity' => ['GET', 'POST'],
                     'sync' => ['POST'],
                     'edit-attribute-roles' => ['GET', 'POST'],
+                    'edit-intent-roles' => ['GET', 'POST'],
                 ],
             ],
         ];
@@ -58,11 +59,16 @@ class PermissionCatalogController extends Controller
             $key = trim((string) ($intent['key'] ?? ''));
             if ($key !== '' && strncmp($key, '/api/', 5) !== 0) {
                 $intentInAuth[$key] = $assignment->permissionExistsInAuthItem($key);
+                $rolesByKey[$key] = $matrix->buildMatrixRowRoles($key);
             }
         }
 
         $unregisteredAttributes = count(array_filter(
             $inAuthItemByKey,
+            static fn (bool $ok): bool => !$ok
+        ));
+        $unregisteredIntents = count(array_filter(
+            $intentInAuth,
             static fn (bool $ok): bool => !$ok
         ));
 
@@ -74,7 +80,8 @@ class PermissionCatalogController extends Controller
             'inAuthItemByKey' => $inAuthItemByKey,
             'intentInAuth' => $intentInAuth,
             'roleNames' => $assignment->listRoleNames(),
-            'unregisteredCount' => $unregisteredAttributes,
+            'unregisteredAttributesCount' => $unregisteredAttributes,
+            'unregisteredIntentsCount' => $unregisteredIntents,
         ]);
     }
 
@@ -116,25 +123,32 @@ class PermissionCatalogController extends Controller
         return $this->redirect(['/user-management/role/update', 'name' => $role]);
     }
 
+    public function actionEditIntentRoles(string $key)
+    {
+        return $this->editPermissionRoles($key, 'tab-intents');
+    }
+
     public function actionEditAttributeRoles(string $key)
     {
+        return $this->editPermissionRoles($key, 'tab-attributes');
+    }
+
+    /**
+     * @return string|\yii\web\Response
+     */
+    private function editPermissionRoles(string $key, string $returnTab)
+    {
         $key = trim($key);
-        $catalog = new PermissionCatalogService();
-        $attributeRow = null;
-        foreach ($catalog->listAttributes() as $row) {
-            if ((string) ($row['key'] ?? '') === $key) {
-                $attributeRow = $row;
-                break;
-            }
-        }
-        if ($attributeRow === null) {
-            throw new NotFoundHttpException('Permiso de atributo no encontrado en el catálogo.');
+        $catalogRow = (new PermissionCatalogService())->findPermissionRow($key);
+        if ($catalogRow === null) {
+            throw new NotFoundHttpException('Permiso no encontrado en el catálogo.');
         }
 
         $service = new PermissionRolesAssignmentService();
         $assignment = new RolePermissionAssignmentService();
         $roleNames = $assignment->listRoleNames();
         $assignedRoles = array_flip($service->rolesWithPermission($key));
+        $kind = (string) ($catalogRow['kind'] ?? '');
 
         if (Yii::$app->request->isPost) {
             $selected = Yii::$app->request->post('roles', []);
@@ -148,15 +162,18 @@ class PermissionCatalogController extends Controller
                 Yii::$app->session->setFlash('error', $e->getMessage());
             }
 
-            return $this->redirect(['edit-attribute-roles', 'key' => $key]);
+            $redirectAction = $kind === 'intent' ? 'edit-intent-roles' : 'edit-attribute-roles';
+
+            return $this->redirect([$redirectAction, 'key' => $key]);
         }
 
-        return $this->render('edit-attribute-roles', [
+        return $this->render('edit-permission-roles', [
             'permissionKey' => $key,
-            'attributeRow' => $attributeRow,
+            'catalogRow' => $catalogRow,
             'roleNames' => $roleNames,
             'assignedRoles' => $assignedRoles,
             'inAuthItem' => $assignment->permissionExistsInAuthItem($key),
+            'returnTab' => $returnTab,
         ]);
     }
 }

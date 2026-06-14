@@ -7,7 +7,7 @@ use yii\db\Query;
 use yii\rbac\Item;
 
 /**
- * Asignación permiso lógico (atributo) ↔ roles (auth_item_child, parent=rol, child=permiso).
+ * Asignación permiso lógico del catálogo (intent o atributo) ↔ roles.
  */
 final class PermissionRolesAssignmentService
 {
@@ -28,8 +28,8 @@ final class PermissionRolesAssignmentService
         if ($permissionKey === '') {
             throw new \InvalidArgumentException('Permiso inválido.');
         }
-        if (!$this->isCatalogAttributePermission($permissionKey)) {
-            throw new \InvalidArgumentException('Solo se pueden asignar roles a permisos de atributos del catálogo.');
+        if (!$this->isCatalogPermission($permissionKey)) {
+            throw new \InvalidArgumentException('El permiso no pertenece al catálogo declarativo.');
         }
 
         $assignment = new RolePermissionAssignmentService();
@@ -59,15 +59,9 @@ final class PermissionRolesAssignmentService
         }
     }
 
-    private function isCatalogAttributePermission(string $permissionKey): bool
+    private function isCatalogPermission(string $permissionKey): bool
     {
-        foreach ((new PermissionCatalogService())->listAttributes() as $row) {
-            if ((string) ($row['key'] ?? '') === $permissionKey) {
-                return true;
-            }
-        }
-
-        return false;
+        return (new PermissionCatalogService())->findPermissionRow($permissionKey) !== null;
     }
 
     /**

@@ -99,6 +99,34 @@ final class PermissionCatalogService
     }
 
     /**
+     * Fila del catálogo (intent o atributo) por clave de permiso.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findPermissionRow(string $permissionKey): ?array
+    {
+        $permissionKey = trim($permissionKey);
+        if ($permissionKey === '') {
+            return null;
+        }
+
+        foreach ($this->listIntents() as $row) {
+            $key = trim((string) ($row['key'] ?? ''));
+            if ($key !== '' && strncmp($key, '/api/', 5) !== 0 && $key === $permissionKey) {
+                return $row;
+            }
+        }
+
+        foreach ($this->listAttributes() as $row) {
+            if ((string) ($row['key'] ?? '') === $permissionKey) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Pasos open_ui agrupados por intent (heredan permiso del intent padre).
      *
      * @return list<array<string, mixed>>

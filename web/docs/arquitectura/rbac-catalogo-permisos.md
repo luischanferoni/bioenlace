@@ -55,6 +55,7 @@ Entrypoint: **`/admin/permission-catalog/index`**.
 | Catálogo de permisos | `/permission-catalog/index` |
 | Roles RBAC (CRUD + intents) | `/user-management/role/index` |
 | Integridad del catálogo | `/permission-catalog/integrity` |
+| Editar roles de un intent | `/permission-catalog/edit-intent-roles?key=…` |
 | Editar roles de un atributo | `/permission-catalog/edit-attribute-roles?key=…` |
 
 Menú backend «Acceso a datos»: solo **Catálogo** + **Integridad**.
@@ -77,7 +78,8 @@ Menú backend «Acceso a datos»: solo **Catálogo** + **Integridad**.
 | Listado / CRUD usuarios | `/user-management/user/*` → `UserAccountController` |
 | CRUD roles RBAC | `/user-management/role/*` → `RbacRoleController` |
 | Asignar roles a usuario | `/user-management/user-permission/set` → `UserRoleController` |
-| Asignar intents a rol | `/user-management/role/update?name=…` |
+| Asignar intents a roles (por permiso) | `/permission-catalog/edit-intent-roles?key=…` |
+| Asignar intents a un rol (vista inversa) | `/user-management/role/update?name=…` |
 | Asignar atributos a roles | `/permission-catalog/edit-attribute-roles?key=…` |
 | Login web | `/auth/login`, `/auth/logout`, `/auth/change-own-password`, … |
 | Alta desde persona (frontend) | `/user/crear` → `frontend\controllers\UserController` |

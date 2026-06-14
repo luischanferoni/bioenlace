@@ -6,6 +6,7 @@ Explica piezas que atraviesan varios módulos del producto. Hoy el foco principa
 |-----------|-----------|
 | [common-components.md](./common-components.md) | Organización de `web/common/components/` (leer antes de mover código) |
 | [asistente-motores.md](./asistente-motores.md) | IntentEngine y SubIntentEngine: qué hace cada uno y cómo encadenan |
+| [rbac-catalogo-permisos.md](./rbac-catalogo-permisos.md) | RBAC Yii, permisos por `intent_id`, catálogo admin, identidad sin webvimark |
 
 ## Relacionado
 

@@ -1,14 +1,37 @@
-# RBAC y catálogo de permisos (greenfield)
+# RBAC y catálogo de permisos
+
+Documentación estable del modelo de autorización Bioenlace: motor Yii, permisos por `intent_id`, catálogo unificado en admin, identidad sin webvimark.
 
 ## Principios
 
-- **BioenlaceDbManager** se conserva: PES → rol vía `servicios.item_name`.
+- **Motor RBAC:** `BioenlaceDbManager` (Yii) + caché en sesión (`BioenlaceSessionPermissions`) y chequeos (`BioenlaceAccessChecker`).
+- **PES → rol:** se conserva la resolución vía `servicios.item_name`.
 - **Permisos assignables** en admin:
-  - **Intents** — clave = `intent_id` del YAML.
+  - **Intents** — clave = `intent_id` del YAML (no nombres lógicos `Entidad.operacion` duplicados).
   - **Atributos** — `Entidad.atributo.read|info|edit` declarados en `data-access-config`.
-- **Grupos** en data-access-config: solo presentación en YAML; no se administran en el panel.
-- **Edit complejo**: solo intent (BD → AR → YAML intent); no duplicar en `edit` disperso.
-- **open_ui intermedio**: hereda permiso del intent padre (`FlowStepAccessService` + header opcional `X-Flow-Intent-Id`).
+- **Grupos** en `data-access-config`: solo presentación en YAML; no se administran en el panel.
+- **Web staff (SPA):** `frontend/controllers` exigen autenticación; el RBAC real vive en **API v1** (`BioenlaceApiAccessControl`).
+- **Backend admin:** RBAC por ruta (`BioenlaceBackendAccessControl`).
+
+## Capas
+
+| Capa | Componentes | Responsabilidad |
+|------|-------------|-----------------|
+| API v1 | `BioenlaceApiAccessControl`, `ApiRoutePermissionResolver` | `403` si falta permiso de ruta / intent |
+| Web SPA | `FrontendAuthenticatedAccessControl`, `EnforceGhostAccessBootstrap` | Solo login; sin enumerar intents en controllers |
+| Sesión | `BioenlaceSessionPermissions`, `BioenlaceAccessChecker::refreshForIdentity` | Pobla `__bioenlace_user_*` tras login |
+| Permiso intent | `IntentPermissionResolver::resolve()` | Devuelve `intent_id` como clave en `auth_item` |
+| Admin catálogo | `PermissionCatalogController` | Intents + atributos + roles por fila + `edit-role` |
+| Identidad | `common\models\User`, `AuthController`, formularios en `common/models/forms/` | Login, contraseña, confirmación e-mail |
+| Usuarios admin | `UserAccountController`, `UserRoleController` | CRUD `user` y asignación de roles |
+| Rutas libres | `RbacFreeRouteChecker` | Login, error, permiso común guest |
+| UI condicional | `BioenlaceGhostHtml`, `BioenlaceGhostNav`, `User::canRoute()` | Enlaces/menús según permiso de ruta |
+
+### Jerarquía RBAC (ejemplo)
+
+```
+rol → atencion.mis-atenciones-como-paciente (type 2) → /api/clinical/encounter-patient-summary/listar-atenciones-como-paciente (type 3)
+```
 
 ## Fuentes de verdad
 
@@ -17,61 +40,68 @@
 | Create / update / delete complejo | BD → AR → `schemas/intents/{create,update,delete}/` |
 | Read / info por atributo | BD → AR → `data-access-config` |
 | Edit escalar | BD → AR → `data-access-config` (`edit.attributes`) |
-| Pasos UI dentro de flow | Derivados del intent (sin grant propio) |
+| Pasos UI dentro de flow | Derivados del intent (sin grant propio); `FlowStepAccessService` + header opcional `X-Flow-Intent-Id` |
 
-## Herramientas
+Los intents YAML **no** declaran campo `permission:`; la clave RBAC es el propio `intent_id`.
 
-- **Admin**: `/admin/permission-catalog/index`, `/admin/permission-catalog/integrity`
-- **CLI**: `php yii catalog-integrity/check`
+## Admin
 
-## Migración gradual
+### Catálogo único
 
-1. Campo opcional `permission:` en intents (nombre lógico, p. ej. `ProfesionalEfectorServicio.create`).
-2. Mover YAML a subcarpetas CRUD (warnings de integridad mientras queden en raíz).
-3. Bloque `attributes:` por entidad en data-access-config (grupos opcionales).
-4. Migrar grants `data_access_role_grant` → `auth_item` (`m260622`; tabla eliminada en `m260627`).
+Entrypoint: **`/admin/permission-catalog/index`**.
 
-## Fase 3 — sync auth_item + asignación por rol
+| Pantalla | URL |
+|----------|-----|
+| Catálogo de permisos | `/permission-catalog/index` |
+| Integridad del catálogo | `/permission-catalog/integrity` |
+| Editar grants de un rol | `/permission-catalog/edit-role?role=…` |
 
-- CLI: `php yii catalog-permission/sync` — registra permisos lógicos y enlaza rutas API.
-- La herencia rol → permiso lógico (`inheritRoleGrantsFromRoute`) sube la jerarquía `auth_item_child` (rol → permiso → ruta), no solo padres directos de la ruta.
-- Rutas ghost (internación, UI clínica): `RbacRouteGhostInheritanceService` propaga **rol → ruta hija** desde roles con acceso a la ruta padre; no copiar permisos lógicos como padres de rutas downstream.
-- Migraciones: `m260621_*`, `m260622_*`, `m260626_*`, `m260627_*`, `m260628_*`, `m260629_*`.
-- Admin: `/admin/permission-catalog/index` (intents + atributos + roles por fila); `/admin/permission-catalog/edit-role?role=…` para asignar grants.
+Menú backend «Acceso a datos»: solo **Catálogo** + **Integridad**.
 
-Jerarquía RBAC (Yii `BioenlaceDbManager`):
+### Redirects legacy
 
+| URL antigua | Destino |
+|-------------|---------|
+| `/data-access-catalog/*` | Catálogo de permisos |
+| `/data-access-attribute-field/*` | Catálogo de permisos |
+| `/permission-catalog/roles` | Catálogo de permisos |
+| `/user-management/permission/*`, `/role/*`, `/auth-item-group/*` | Catálogo (`LegacyRbacRedirectController`) |
+| `/user-management/auth/*` | `/auth/*` |
+
+### Usuarios y roles
+
+| Función | URL / controlador |
+|---------|-------------------|
+| Listado / CRUD usuarios | `/user-management/user/*` → `UserAccountController` |
+| Asignar roles a usuario | `/user-management/user-permission/set` → `UserRoleController` |
+| Login web | `/auth/login`, `/auth/logout`, `/auth/change-own-password`, … |
+| Alta desde persona (frontend) | `/user/crear` → `frontend\controllers\UserController` |
+
+Módulo Yii: `UserManagementCompatModule` (configs backend, frontend, console). Traducciones/menú: `UserManagementCompat`.
+
+## Identidad y sesión
+
+- **Modelo:** `common\models\User` implementa `IdentityInterface`; tablas `user`, `auth_*` sin cambio de esquema.
+- **Login:** `frontend/controllers/AuthController` (+ herencia en backend); vistas en `frontend/views/login/`.
+- **API JWT:** `JsonHttpBearerAuth` valida token, persona y sesión; contexto operativo (efector, PES) se fija aparte (`SesionOperativaService`).
+- **Paciente móvil:** puede no ejecutar `set-session`; endpoints que requieren efector deben pedirlo en body/query o responder `400`.
+- Tras login staff: **re-login** necesario tras despliegues RBAC para refrescar `__bioenlace_user_*` en sesión.
+
+## Herramientas CLI
+
+```bash
+cd web
+php yii catalog-permission/sync      # Registra intents/atributos en auth_item y enlaza rutas API
+php yii catalog-integrity/check      # Integridad catálogo (0 errores esperado)
+php yii catalog-permission/seed-permissions   # Re-aplica permission inferido a intents nuevos (si aplica)
 ```
-rol → atencion.mis-atenciones-como-paciente (type 2) → /api/clinical/encounter-patient-summary/listar-atenciones-como-paciente (type 3)
-```
 
-Web staff (SPA): rutas `frontend/controllers` solo exigen login; RBAC en API v1 (`BioenlaceApiAccessControl`).
+Migración clave de claves intent: `m260630_100000_intent_id_permission_keys`.
 
-## Fase 4 — permisos atómicos de atributos
+## Permisos atómicos de atributos
 
-- **`AttributePermissionKeyMapper`**: grupo (`Persona.identidad`) + operación DataAccess (`filter|read|aggregate|write`) → claves `Entidad.atributo.read|info|edit`.
-- **`AttributePermissionEvaluator`**: evalúa vía `auth_item` + scope desde YAML (`data-access-config`).
-
-### Políticas de dominio por operación
-
-Capa **después del RBAC** (ruta / `auth_item`) y **antes de reglas de negocio** (ventanas de cancelación, etc.):
-
-```
-RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobre ESTE recurso?) → servicio de dominio
-```
-
-- **Metadata:** `schemas/domain-operation-policies.yaml` — mapeo `Turno.cancel` → handlers (`any_of` / `policies`); clave `domain_only_operations` lista operaciones ABAC internas sin permiso assignable en `auth_item`.
-- **Fail-closed:** toda clave pasada a `DomainOperationAuthorizer::assert()` debe existir en el YAML; si falta, `DomainOperationForbiddenException`.
-- **Registry:** `DomainOperationPolicyRegistry` — handler_id → clase PHP (estable, sin reglas).
-- **Implementaciones:** `Scheduling/Service/Authorization/*`, `Organization/Service/Authorization/*`, `Clinical/Service/Authorization/*`, `Clinical/Inpatient/Service/Authorization/*`.
-- **API:** `ApiDomainOperationBridge`, `EfectorDomainAccessService`, `EncounterDomainAccessService`; `ClinicalAccessTrait` en controllers clínicos.
-- **Servicios transversales:** `EfectorDomainAccessService`, `EncounterDomainAccessService`; `ProfesionalEfectorServicioDomainAuthorizationService` (PES).
-- **Primitivo efector:** `OrganizationEfectorAccess` solo en políticas/handlers; no en controllers.
-- `GuardiaEfectorAccess` / `InternacionEfectorAccess`: solo utilidades de dominio (PES, camas, pertenencia geográfica).
-
-`scope_checker` (DataAccess) sigue siendo ABAC del canal métricas/edición dispersa; las políticas de dominio generalizan el mismo concepto para operaciones del catálogo RBAC.
-
-### Mapeo operaciones
+- **`AttributePermissionKeyMapper`:** grupo + operación DataAccess → `Entidad.atributo.read|info|edit`.
+- **`AttributePermissionEvaluator`:** evalúa vía `auth_item` + scope desde YAML.
 
 | DataAccess | Permiso catálogo |
 |------------|------------------|
@@ -79,33 +109,76 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 | `aggregate` | `.info` |
 | `write` | `.edit` |
 
-## Fase 5 — catálogo completo y cierre legacy
+### Políticas de dominio (post-RBAC)
 
-### Intents
+```
+RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobre ESTE recurso?) → servicio de dominio
+```
 
-- Todos los YAML en `schemas/intents/{create,read,update,delete}/` declaran `permission:` explícito.
-- Stubs catalog-only: `read/data-access.info.yaml`, `read/data-access.listar.yaml`, `update/data-access.editar.yaml` (sincronizables a `auth_item`).
-- `IntentPermissionResolver`: mapeo explícito con y sin sufijo `-flow` (p. ej. `mapa-camas` → `view_map`).
+- **Metadata:** `schemas/domain-operation-policies.yaml`
+- **Registry:** `DomainOperationPolicyRegistry`
+- **API:** `ApiDomainOperationBridge`, `EfectorDomainAccessService`, `EncounterDomainAccessService`
 
-### Atributos
+`scope_checker` en DataAccess sigue siendo ABAC del canal métricas/edición dispersa.
 
-- `Persona.yaml`, `Turno.yaml`, `ProfesionalEfectorServicio.yaml`, `ProfesionalEfectorServicioAgenda.yaml` con bloque `attributes:` + `groups:` (presentación + `scope_checker`).
-- Grants atómicos vía `catalog-permission/sync` → `auth_item` + `auth_item_child`.
+## Rutas ghost y herencia
 
-### Scope ABAC post-migración
+- `inheritRoleGrantsFromRoute` sube la jerarquía `auth_item_child` (rol → permiso → ruta).
+- `RbacRouteGhostInheritanceService` propaga **rol → ruta hija** desde roles con acceso a la ruta padre (internación, UI clínica).
 
-- `AttributeGroupCatalog::getEntityGroupScopeChecker()` — lee `groups.scope_checker` o `edit.scope_checker` del YAML.
-- `AttributePermissionEvaluator` — solo `auth_item` (permisos atómicos) + scope desde YAML.
+## Alias históricos (delegan a Bioenlace)
 
-### Cierre legacy (m260626–m260629)
+- `ApiGhostAccessControl` → `BioenlaceApiAccessControl`
+- `SisseGhostAccessControl` → `BioenlaceBackendAccessControl`
 
-- Elimina permisos huérfanos `Internacion.update` / `Internacion.view` (duplicados de `discharge` / `view_map`).
-- Elimina tabla `data_access_role_grant`.
-- `m260628`: rutas agenda `editar-*` y `efectores/elegir*`.
-- `m260629`: `pes/elegir`, `servicios/elegir`, notificaciones `*-como-paciente` + re-enlaces RBAC.
-- Admin `/admin/data-access-grant` retirado; asignación en **Catálogo de permisos → Roles**.
+## Archivos de referencia
 
-### CLI
+```
+web/common/components/Core/Permission/
+  BioenlaceAccessChecker.php
+  BioenlaceSessionPermissions.php
+  BioenlaceGhostHtml.php, BioenlaceGhostNav.php
+  IntentPermissionResolver.php, ApiRoutePermissionResolver.php
+  RbacFreeRouteChecker.php, RbacRoleQueryService.php
 
-- `php yii catalog-permission/seed-permissions` — re-aplica `permission:` inferido a intents nuevos.
-- `php yii catalog-integrity/check` — integridad catálogo (0 errores esperado).
+web/frontend/modules/api/v1/components/
+  BioenlaceApiAccessControl.php
+  JsonHttpBearerAuth.php
+
+web/frontend/components/
+  BioenlaceBackendAccessControl.php
+  FrontendAuthenticatedAccessControl.php
+
+web/common/models/User.php
+web/common/models/forms/{LoginForm,ChangeOwnPasswordForm,...}.php
+web/common/modules/UserManagementCompatModule.php
+web/backend/controllers/{PermissionCatalogController,UserAccountController,UserRoleController,LegacyRbacRedirectController}.php
+web/common/components/Ui/Grid/{GridPageSize,GridBulkActions,StatusColumn}.php
+```
+
+## Despliegue y validación
+
+```bash
+cd web
+php yii migrate --interactive=0
+php yii catalog-permission/sync
+php yii catalog-integrity/check
+```
+
+Checklist staging:
+
+- [ ] Login `/auth/login` (staff y paciente)
+- [ ] `GET /api/v1/home/panel` respeta rol
+- [ ] Grant `atencion.mis-atenciones-como-paciente` → listado propio; sin grant → `403` API
+- [ ] Admin: catálogo, integridad, usuarios, asignación roles, `edit-role`
+- [ ] URLs legacy RBAC → redirect catálogo
+- [ ] Menús `BioenlaceGhostNav` / `User::canRoute` coherentes
+- [ ] Impersonate `/user/impersonate` y alta `/user/crear`
+
+**Rollback:** restaurar backup `auth_item` / `auth_assignment` o revertir `m260630_100000_intent_id_permission_keys` en entorno de prueba antes de producción.
+
+## Migraciones relevantes (cronología)
+
+- `m260621_*` … `m260629_*` — catálogo, cierre `data_access_role_grant`, rutas deprecadas
+- `m260630_100000_intent_id_permission_keys` — claves permiso = `intent_id`
+- Cierre legacy internación/agenda/notificaciones documentado en migraciones `m260626`–`m260629`

@@ -12,6 +12,7 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 | `assistant/globals/` | Piezas reutilizables entre flows |
 | `assistant/intent-classification-rules.yaml` | Vocabulario NL, score, fallbacks operativos |
 | `assistant/assistant-shortcuts.yaml` | Atajos visibles del asistente |
+| `assistant/hint-resolution.yaml` | Intents/prefixes de hints por entidad (scheduling, organization, person) |
 | `permission/domain-operation-policies.yaml` | Operaciones RBAC → políticas de recurso |
 | `ui/home_panel_manifest.yaml` | Layout del panel de inicio staff/paciente |
 

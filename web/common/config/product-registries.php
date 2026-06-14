@@ -42,6 +42,9 @@ use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvide
 use common\components\Domain\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoSubjectOrRepresentativePolicy;
+use common\components\Domain\Organization\Assistant\OrganizationHintCandidateProvider;
+use common\components\Domain\Person\Assistant\PersonHintCandidateProvider;
+use common\components\Domain\Scheduling\Assistant\SchedulingHintCandidateProvider;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 use common\components\Platform\Ui\Home\Service\Sections\ActionCardsSectionProvider;
 
@@ -103,6 +106,12 @@ return [
 
     'conversationalChannelProviders' => [
         ClinicalConversationalChannelProvider::class,
+    ],
+
+    'hintCandidateProviders' => [
+        SchedulingHintCandidateProvider::class,
+        OrganizationHintCandidateProvider::class,
+        PersonHintCandidateProvider::class,
     ],
 
     'homePanelSectionProviders' => [

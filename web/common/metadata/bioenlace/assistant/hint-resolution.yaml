@@ -1,0 +1,24 @@
+# Reglas de resolución de hints del asistente (entidades en flows YAML).
+# {@see HintResolutionMetadata} — no hardcodear intent_id en Platform.
+version: 1
+
+scheduling:
+  servicios_acepta_turnos:
+    intent_ids:
+      - atencion.necesito-atencion
+      - turnos.crear-como-paciente
+      - turnos.crear-para-paciente
+    intent_prefixes:
+      - turnos.
+  triage_atencion_intent_id: atencion.necesito-atencion
+
+entity_ownership:
+  servicio:
+    - scheduling
+    - organization
+  efector:
+    - organization
+  profesional:
+    - organization
+  persona:
+    - person

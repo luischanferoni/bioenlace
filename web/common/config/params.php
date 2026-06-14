@@ -4,6 +4,8 @@ return [
     'supportEmail' => 'support@example.com',
     'senderEmail' => 'noreply@example.com',
     'senderName' => 'Example.com mailer',
+    /** null o vacío: emails a archivo (runtime/mail). Producción: smtp://user:pass@host:587 */
+    'mailerDsn' => null,
     'user.passwordResetTokenExpire' => 3600,
     'user.passwordMinLength' => 8,
     'bsVersion' => '5.x',

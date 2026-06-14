@@ -53,6 +53,7 @@ return [
         ],
         'iamanager' => [
             'class' => 'common\\components\\Ai\\IAManager',
-        ]
+        ],
+        'mailer' => require __DIR__ . '/mailer.php',
     ],
 ];

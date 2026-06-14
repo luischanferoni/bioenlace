@@ -8,10 +8,9 @@ return [
     'google_cloud_project_id' => 'integracion-voz-del-agro',
     'google_cloud_region' => 'us-central1',
 
-    /**
-     * Vertex batch cohortes (prod): solo frontend/admin si aplica.
-     * Cron / Vertex: console/config/params-local.php
-     */
+    // Mail (Symfony Mailer). Vacío = guardar en runtime/mail.
+    // 'mailerDsn' => 'smtp://user:pass@smtp.example.com:587',
+    // 'mailerDsn' => 'sendmail://default',
 
     // Push FCM plataforma (proyecto Firebase august-cirrus-482714-f4)
     'fcmPush' => [

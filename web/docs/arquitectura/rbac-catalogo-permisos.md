@@ -83,6 +83,7 @@ Módulo Yii: `UserManagementCompatModule` (configs backend, frontend, console). 
 
 - **Modelo:** `common\models\User` implementa `IdentityInterface`; tablas `user`, `auth_*` sin cambio de esquema.
 - **Login:** `frontend/controllers/AuthController` (+ herencia en backend); vistas en `frontend/views/login/`.
+- **Mail:** `yii\symfonymailer\Mailer` (`common/config/mailer.php`); sin `mailerDsn` en params-local → `useFileTransport` (runtime/mail).
 - **API JWT:** `JsonHttpBearerAuth` valida token, persona y sesión; contexto operativo (efector, PES) se fija aparte (`SesionOperativaService`).
 - **Paciente móvil:** puede no ejecutar `set-session`; endpoints que requieren efector deben pedirlo en body/query o responder `400`.
 - Tras login staff: **re-login** necesario tras despliegues RBAC para refrescar `__bioenlace_user_*` en sesión.

@@ -14,8 +14,8 @@ use common\models\EfectorTurnosConfig;
 use common\models\PersonaEfectorAutogestionLiberacion;
 use common\models\busquedas\EfectorBusqueda;
 use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
-
-//agregamos el modulo de la extension para el control de acceso
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Worksheet;
 /**
  * 
  * La clase EfectoresController implementa las action que posibilitan la gestión de 
@@ -164,16 +164,12 @@ class EfectoresController extends Controller
      {        
         $inputFile = 'archivos/establecimientos SISA COMPLETO.xls';
         try {
-            //Leo el archivo
-            $inputFileType = \PHPExcel_IOFactory::identify($inputFile);
-            $objReader = \PHPExcel_IOFactory::createReader($inputFileType);
-            $objPHPExcel = $objReader->load($inputFile);
-        } catch (Exception $ex) {
+            $hoja = $this->loadSisaSpreadsheetSheet($inputFile);
+        } catch (\Throwable $ex) {
             die('Error al leer el archivo');
         }
 
-        $hoja = $objPHPExcel ->getSheet(0);
-        $cantRegistros = $hoja ->getHighestRow();
+        $cantRegistros = $hoja->getHighestRow();
        // $cantColumnas = $hoja ->getHighestColumn();
         
        /*$reg = 15;
@@ -282,16 +278,12 @@ class EfectoresController extends Controller
         $inputFile = 'archivos/establecimientos SISA COMPLETO.xls';
         
         try {
-            //Leo el archivo
-            $inputFileType = \PHPExcel_IOFactory::identify($inputFile);
-            $objReader = \PHPExcel_IOFactory::createReader($inputFileType);
-            $objPHPExcel = $objReader->load($inputFile);
-        } catch (Exception $ex) {
+            $hoja = $this->loadSisaSpreadsheetSheet($inputFile);
+        } catch (\Throwable $ex) {
             die('Error al leer el archivo');
         }
 
-        $hoja = $objPHPExcel ->getSheet(0);
-        $cantRegistros = $hoja ->getHighestRow();
+        $cantRegistros = $hoja->getHighestRow();
   
         $registros_desactivados = 0; //guardará la cantidad de registros que se den de baja
         
@@ -325,6 +317,14 @@ class EfectoresController extends Controller
         $this->redirect(["efectores/subir_archivo","mensaje_dos" => $mensaje_dos]);    
     
    }
+
+    /**
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     */
+    private function loadSisaSpreadsheetSheet(string $inputFile): Worksheet
+    {
+        return IOFactory::load($inputFile)->getSheet(0);
+    }
 
     /**
      * Configuración integral de turnos y comunicación entre médicos (AdminEfector).

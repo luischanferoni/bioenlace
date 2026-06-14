@@ -91,7 +91,7 @@
       "type": "path",
       "url": "packages/yii2-dynamicform",
       "options": {
-        "symlink": true
+        "symlink": false
       }
     },
     {

@@ -6,7 +6,8 @@ use Yii;
 use yii\web\Controller;
 
 /**
- * Redirige el admin RBAC legacy de webvimark (permisos, roles, grupos) al catálogo unificado.
+ * Redirige URLs legacy de admin RBAC (permisos, roles, grupos) al catálogo unificado.
+ * Las vistas webvimark asociadas fueron eliminadas; solo aplica redirect.
  */
 class LegacyRbacRedirectController extends Controller
 {

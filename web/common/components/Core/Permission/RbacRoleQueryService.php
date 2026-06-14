@@ -26,7 +26,7 @@ final class RbacRoleQueryService
     }
 
     /**
-     * Roles PES / efector disponibles para asignar (lógica legacy SisseRole).
+     * Roles PES / efector disponibles para asignar.
      *
      * @return list<AuthRole>
      */

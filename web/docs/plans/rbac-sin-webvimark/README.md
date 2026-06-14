@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `rbac-sin-webvimark` |
-| Estado | Fase 3 cerrada; retiro Composer completado |
+| Estado | Cerrado (fases 1–3 + limpieza legacy) |
 | Objetivo | RBAC sobre Yii (`BioenlaceDbManager`); permisos por `intent_id`; web SPA auth-only; admin unificado en catálogo de permisos |
 
 ## Índice

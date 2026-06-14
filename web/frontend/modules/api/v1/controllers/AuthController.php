@@ -309,7 +309,7 @@ class AuthController extends BaseController
     ): array {
         $identity = \common\models\User::findOne((int) $user->id);
         if (!$identity) {
-            throw new \RuntimeException('No se pudo cargar identidad webvimark para user_id ' . $user->id);
+            throw new \RuntimeException('No se pudo cargar identidad para user_id ' . $user->id);
         }
 
         $session = Yii::$app->session;

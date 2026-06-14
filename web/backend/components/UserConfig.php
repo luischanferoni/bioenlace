@@ -11,8 +11,7 @@ use common\models\Persona;
 use common\components\Core\Permission\BioenlaceAccessChecker;
 
 /**
- * Class UserConfig
- * @package webvimark\modules\UserManagement\components
+ * Configuración de usuario web backend (identidad, login, permisos en sesión).
  */
 class UserConfig extends User
 {

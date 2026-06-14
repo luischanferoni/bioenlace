@@ -32,6 +32,15 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 | Widgets grid | `GridPageSize`, `GridBulkActions`, `StatusColumn` en `common/components/Ui/Grid/` |
 | `pathMap` vistas vendor | Eliminado en `common/config` y `backend/config` |
 
+| Vistas legacy RBAC | Eliminadas (`role/`, `permission/`, `auth-item-group/`); redirect en `LegacyRbacRedirectController` |
+| `SisseRole` | Eliminado (usar `RbacRoleQueryService` + `AuthRole`) |
+| `user/update` backend | Vista añadida (faltaba para admin) |
+
+## Qué queda con nombre histórico
+
+- Comentarios en migraciones antiguas (`m2605*_webvimark_*`) — solo documentación de datos.
+- Alias de clase `ApiGhostAccessControl` / `SisseGhostAccessControl` (delegan a Bioenlace).
+
 ## Verificación
 
 - Vistas legacy (`nomenclador/*`, `internacion/*`, `SesionOperativaService`) responden igual con `User::hasRole`.

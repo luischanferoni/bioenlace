@@ -43,16 +43,6 @@ $this->params['breadcrumbs'][] = $this->title;
 					['class' => 'btn btn-sm btn-default']
 				) ?>
 
-				<?php /*
-				<?= GhostHtml::a(UserManagementModule::t('back', 'Delete'), ['delete', 'id' => $model->id], [
-					'class' => 'btn btn-sm btn-danger pull-right',
-					'data' => [
-						'confirm' => UserManagementModule::t('back', 'Are you sure you want to delete this user?'),
-						'method' => 'post',
-					],
-				]) ?>
-				*/?>
-
 			</p>
 
 			<?= DetailView::widget([

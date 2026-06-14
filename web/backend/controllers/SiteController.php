@@ -9,7 +9,6 @@ use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 
-//use webvimark\modules\UserManagement\UserManagementModule;
 use common\models\User;
 
 use common\models\LoginForm;

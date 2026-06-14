@@ -2,8 +2,6 @@
 
 namespace frontend\controllers;
 
-use common\models\ConsultaDerivaciones;
-use common\models\Scheduling\Turno;
 use Yii;
 
 use yii\web\Controller;
@@ -11,7 +9,6 @@ use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
-use yii\helpers\BaseJson;
 use yii\helpers\Json;
 use yii\helpers\Url;
 
@@ -27,19 +24,13 @@ use common\models\Departamento;
 use common\models\Persona_mails;
 use common\models\Persona_hc;
 use common\models\Tipo_documento;
-use common\models\Guardia;
 use common\models\PersonaRepository;
 use common\models\Percentilos;
-use common\models\DiagnosticoConsultaRepository as DCRepo;
 
 use common\components\Core\Form\NestedFormModels;
 use common\components\Integrations\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
 use common\components\Core\Http\UserRequest;
-use yii\authclient\InvalidResponseException;
-use yii\httpclient\Client;
-use \yii\authclient\OAuth2;
-use yii\base\InvalidParamException;
 
 /**
  * PersonasController implements the CRUD actions for persona model.

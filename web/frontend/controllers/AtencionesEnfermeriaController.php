@@ -2,6 +2,7 @@
 
 namespace frontend\controllers;
 
+use common\models\Person\Persona;
 use yii\web\Controller;
 
 /**
@@ -16,7 +17,7 @@ class AtencionesEnfermeriaController extends Controller
     public function actionView($id)
     {
         return $this->renderAjax('/consulta-atenciones-enfermeria/view', [
-            'model' => \common\models\Persona::findOne($id),
+            'model' => Persona::findOne($id),
         ]);
     }
 }

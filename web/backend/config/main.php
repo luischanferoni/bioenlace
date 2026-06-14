@@ -100,11 +100,6 @@ return [
         'sisa' => [
             'class' => 'frontend\components\apis\Sisa',
         ],
-        'view' => [
-            'theme' => [
-                'pathMap' => [],
-            ],
-        ],
     ],
     'params' => $params,
     'modules' => [

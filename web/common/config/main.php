@@ -27,11 +27,6 @@ return [
         'cache' => [
             'class' => \yii\caching\FileCache::class,
         ],
-        'view' => [
-            'theme' => [
-                'pathMap' => [],
-            ],
-        ],
         'assetManager' => [
             'bundles' => [                
                 'kartik\select2\ThemeDefaultAsset' => ['css' => [], 'js' => []],

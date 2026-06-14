@@ -88,15 +88,6 @@ return [
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
             ],            
         ],
-        'snowstorm' => [
-            'class' => 'frontend\components\Snowstorm',
-        ],
-        'suri' => [
-            'class' => 'frontend\components\Suri',
-        ], 
-        'ips' => [
-            'class' => 'frontend\components\Ips',
-        ],
         'sisa' => [
             'class' => 'frontend\components\apis\Sisa',
         ],

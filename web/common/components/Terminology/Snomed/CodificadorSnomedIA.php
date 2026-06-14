@@ -3,7 +3,7 @@
 namespace common\components\Terminology\Snomed;
 
 use Yii;
-use frontend\components\Snowstorm;
+use common\components\Terminology\Snomed\SnowstormClient;
 use common\components\Ai\Embeddings\EmbeddingsManager;
 
 /**
@@ -41,7 +41,7 @@ class CodificadorSnomedIA
 
     public function __construct()
     {
-        $this->snowstorm = new Snowstorm();
+        $this->snowstorm = new SnowstormClient();
         $this->cache = Yii::$app->cache;
         $this->estadisticas = [
             'total_conceptos' => 0,

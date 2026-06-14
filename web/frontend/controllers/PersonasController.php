@@ -38,7 +38,7 @@ use common\models\ServiciosEfector;
 use common\models\ProfesionalEfectorServicio;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 
-use frontend\controllers\Model;
+use common\components\Core\Form\NestedFormModels;
 use common\components\Integrations\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
 use common\models\User;
@@ -55,7 +55,14 @@ class PersonasController extends Controller
 {
 
     public $token;
-    private $_mpi_api;
+
+    private function mpiApi(): MpiApiClient
+    {
+        /** @var MpiApiClient $client */
+        $client = Yii::$app->get('mpi');
+
+        return $client;
+    }
 
     public function behaviors()
     {
@@ -108,7 +115,6 @@ class PersonasController extends Controller
     */
     public function actionBuscarRenaper($parametros = [])
     {
-        $this->_mpi_api = new MpiApiClient;
         $respuesta = [];
         if (Yii::$app->request->isAjax) {
             $data = Yii::$app->request->post();
@@ -117,7 +123,7 @@ class PersonasController extends Controller
             $parametros['dni'] = $dni[0];
             $parametros['sexo'] = $sexo[0];
         }
-        $respuesta = $this->_mpi_api->caller_mpi('renaper?dni=' . $parametros['dni'] . "&sexo=" . $parametros['sexo'], '{}');
+        $respuesta = $this->mpiApi()->caller_mpi('renaper?dni=' . $parametros['dni'] . "&sexo=" . $parametros['sexo'], '{}');
         if (isset($respuesta['data'][0]['apellido'])) {
             $apellidos_separados = self::separarApellidos($respuesta['data'][0]['apellido']);
             $respuesta['data'][0]['apellido'] = $apellidos_separados;
@@ -149,7 +155,6 @@ class PersonasController extends Controller
     */
     public function actionListaCandidatos()
     {
-        $this->_mpi_api = new MpiApiClient;
         $post = Yii::$app->request->post();
 
         $parametros['apellido'] = $post['Persona']['apellido'];
@@ -179,7 +184,7 @@ class PersonasController extends Controller
             $tipo = '';
             if ($cantidad_candidatos == 0 || $post['tipo'] == 'masmpi') {
                 //buscar mpi
-                $resultado = $this->_mpi_api->candidatos($parametros);
+                $resultado = $this->mpiApi()->candidatos($parametros);
 
                 if (isset($resultado['statusCode']) && $resultado['statusCode'] == 200 && $resultado['successful'] == true && count($resultado['data']) == 0) { //mostrar boton agegar persona 
                     $bandera_boton_agregar = true;
@@ -235,7 +240,6 @@ class PersonasController extends Controller
     */
     public function actionView($id)
     {
-        $this->_mpi_api = new MpiApiClient;
         $model_persona_telefono = new PersonaTelefono();
         $model_tipo_telefono = new Tipo_telefono();
         $model_domicilio = new Domicilio();
@@ -247,7 +251,7 @@ class PersonasController extends Controller
 
         /*
         $federado = false;
-        $resultado_empadronado = $this->_mpi_api->traerPaciente($id, 'local');
+        $resultado_empadronado = $this->mpiApi()->traerPaciente($id, 'local');
         if(isset($resultado_empadronado['successful']) && $resultado_empadronado['successful'] == true && count($resultado_empadronado['data']) == 1){
             $federado = true;
         }
@@ -273,9 +277,8 @@ class PersonasController extends Controller
     */
     public function actionDatosPersonales($id)
     {
-        $this->_mpi_api = new MpiApiClient;
         $federado = false;
-        $resultado_empadronado = $this->_mpi_api->traerPaciente($id, 'local');
+        $resultado_empadronado = $this->mpiApi()->traerPaciente($id, 'local');
         if(isset($resultado_empadronado['successful']) && $resultado_empadronado['successful'] == true && count($resultado_empadronado['data']) == 1){
             $federado = true;
         } 
@@ -708,8 +711,7 @@ class PersonasController extends Controller
         $dni = Yii::$app->getRequest()->getQueryParam('dni');
         $sexo = Yii::$app->getRequest()->getQueryParam('sexo');
 
-        $this->_mpi_api = new MpiApiClient;
-        $respuesta = $this->_mpi_api->caller_mpi('coberturas?dni=' . $dni . "&sexo=" . $sexo, '{}');
+        $respuesta = $this->mpiApi()->caller_mpi('coberturas?dni=' . $dni . "&sexo=" . $sexo, '{}');
 
         return $this->renderAjax('viewpuco', [
             'coberturas' => $respuesta,
@@ -1024,7 +1026,7 @@ class PersonasController extends Controller
         } elseif ($tipo == 'mpi') {
             //paciente seleccionado desde el mpi, se preparan todos los modelos para guardarlo locamente
             //echo "//persona en el MPI <br>";
-            $resultado = $this->_mpi_api->traerPaciente($id, $tipo);
+            $resultado = $this->mpiApi()->traerPaciente($id, $tipo);
 
             $model_tipo_documento = new Tipo_documento();
             $tipo_doc = $model_tipo_documento->findOne($resultado["data"]['paciente']['set_minimo']['tipo_documento']);
@@ -1199,7 +1201,6 @@ class PersonasController extends Controller
     */
     public function actionSeleccionarPersona($id = null, $tipo = null)
     {
-        $this->_mpi_api = new MpiApiClient;
         $post = Yii::$app->request->post();
         if (isset($post['tipo'])) {
             $tipo = $post['tipo'];
@@ -1247,19 +1248,19 @@ class PersonasController extends Controller
             if (isset($model->id_persona)) {
                 //Para eliminar los registros de telefonos o emails seleccionados
                 $oldIDsTels = ArrayHelper::map($model_persona_telefono, 'id_persona_telefono', 'id_persona_telefono');
-                $model_persona_telefono = Model::createMultiple(PersonaTelefono::classname(), 'id_persona_telefono', $model_persona_telefono);
+                $model_persona_telefono = NestedFormModels::createMultiple(PersonaTelefono::classname(), 'id_persona_telefono', $model_persona_telefono);
                 Model::loadMultiple($model_persona_telefono, Yii::$app->request->post());
                 $deletedIDsTels = array_diff($oldIDsTels, array_filter(ArrayHelper::map($model_persona_telefono, 'id_persona_telefono', 'id_persona_telefono')));
 
                 $oldIDsEmails = ArrayHelper::map($model_persona_mails, 'id_persona_mail', 'id_persona_mail');
-                $model_persona_mails = Model::createMultiple(Persona_mails::classname(), 'id_persona_mail', $model_persona_mails);
+                $model_persona_mails = NestedFormModels::createMultiple(Persona_mails::classname(), 'id_persona_mail', $model_persona_mails);
                 Model::loadMultiple($model_persona_mails, Yii::$app->request->post());
                 $deletedIDsEmails = array_diff($oldIDsEmails, array_filter(ArrayHelper::map($model_persona_mails, 'id_persona_mail', 'id_persona_mail')));
             } else {
-                $model_persona_telefono = Model::createMultiple(PersonaTelefono::classname(), 'id_persona_telefono');
+                $model_persona_telefono = NestedFormModels::createMultiple(PersonaTelefono::classname(), 'id_persona_telefono');
                 Model::loadMultiple($model_persona_telefono, Yii::$app->request->post());
 
-                $model_persona_mails = Model::createMultiple(Persona_mails::classname(), 'id_persona_mail');
+                $model_persona_mails = NestedFormModels::createMultiple(Persona_mails::classname(), 'id_persona_mail');
                 Model::loadMultiple($model_persona_mails, Yii::$app->request->post());
             }
             // validate all models
@@ -1339,7 +1340,7 @@ class PersonasController extends Controller
                             $identificador = $model->id_persona;
                             $fuente = 'local';
                         }
-                        $paciente_local_empadronado = $this->_mpi_api->traerPaciente($identificador, $fuente);
+                        $paciente_local_empadronado = $this->mpiApi()->traerPaciente($identificador, $fuente);
                         if ($tipo == 'local' || $tipo == 'nuevo' || $tipo == '') {
 
                             if (isset($paciente_local_empadronado['successful']) && $paciente_local_empadronado['successful'] == false && $paciente_local_empadronado['statusCode'] == 404) {
@@ -1373,7 +1374,7 @@ class PersonasController extends Controller
                                     'domicilio' => $post['Domicilio'],
                                     'barrio' => $nombreBarrio
                                 ];
-                                $resultado = $this->_mpi_api->empadronar($parametros);
+                                $resultado = $this->mpiApi()->empadronar($parametros);
                             } else {
                                 //echo "//Esta opcion se deja para actualizar el registro cuando lo tengo localmente y tambien en el mpi"; 
                             }
@@ -1394,7 +1395,7 @@ class PersonasController extends Controller
                                 'domicilio' => $post['Domicilio'],
                                 'barrio' => $model_persona_domicilio->domicilio->modelBarrio->nombre
                             ];
-                            $resultado = $this->_mpi_api->asociar($parametros);
+                            $resultado = $this->mpiApi()->asociar($parametros);
                         }
                     }
                     if ($flag) {

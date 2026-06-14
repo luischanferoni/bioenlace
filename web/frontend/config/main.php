@@ -561,12 +561,6 @@ return [
                 'OPTIONS api/<version:\w+>/quirofano/cirugias/<id:\d+>/estado' => '<version>/quirofano/options',
             ],            
         ],
-        'snowstorm' => [
-            'class' => 'frontend\components\Snowstorm',
-        ], 
-        'imagenes' => [
-            'class' => 'frontend\components\Pentalogic',
-        ],
     ],
     'params' => $params,
     'modules' => [

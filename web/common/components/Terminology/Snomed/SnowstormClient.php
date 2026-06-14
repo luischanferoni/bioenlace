@@ -1,13 +1,10 @@
 <?php
 
-namespace frontend\components;
- 
- 
-use Yii;
+namespace common\components\Terminology\Snomed;
+
 use yii\base\Component;
-use yii\base\InvalidConfigException;
- 
-class Snowstorm extends Component
+
+class SnowstormClient extends Component
 {
     const URL = 'https://snowstorm.msal.gob.ar/MAIN/';
     const URL_TEST = 'https://snowstorm.msal.gob.ar/MAIN/';

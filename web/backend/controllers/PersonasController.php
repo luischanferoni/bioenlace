@@ -52,7 +52,14 @@ use frontend\filters\SisseActionFilter;
 class PersonasController extends Controller {
     
     public $token;
-    private $_mpi_api;
+
+    private function mpiApi(): MpiApiClient
+    {
+        /** @var MpiApiClient $client */
+        $client = Yii::$app->get('mpi');
+
+        return $client;
+    }
 
     public function behaviors() {
         return [
@@ -137,7 +144,6 @@ class PersonasController extends Controller {
     }
     
     public function actionBuscarRenaper($parametros = []){
-        $this->_mpi_api = new MpiApiClient;
         $respuesta = [];
         if (Yii::$app->request->isAjax) {
             $data = Yii::$app->request->post();
@@ -146,7 +152,7 @@ class PersonasController extends Controller {
             $parametros['dni'] = $dni[0];
             $parametros['sexo'] = $sexo[0];            
         }
-        $respuesta = $this->_mpi_api->caller_mpi('renaper?dni='.$parametros['dni']."&sexo=".$parametros['sexo'],'{}');          
+        $respuesta = $this->mpiApi()->caller_mpi('renaper?dni='.$parametros['dni']."&sexo=".$parametros['sexo'],'{}');          
         if(isset($respuesta['data'][0]['apellido'])){
             $apellidos_separados = self::separarApellidos($respuesta['data'][0]['apellido']);
             $respuesta['data'][0]['apellido'] = $apellidos_separados;
@@ -338,7 +344,7 @@ class PersonasController extends Controller {
         } elseif($tipo == 'mpi') {
             //paciente seleccionado desde el mpi, se preparan todos los modelos para guardarlo locamente
             //echo "//persona en el MPI <br>";
-            $resultado = $this->_mpi_api->traerPaciente($id,$tipo);   
+            $resultado = $this->mpiApi()->traerPaciente($id,$tipo);   
         
             $model_tipo_documento = new Tipo_documento();
             $tipo_doc = $model_tipo_documento->findOne($resultado["data"]['paciente']['set_minimo']['tipo_documento']);
@@ -529,7 +535,6 @@ class PersonasController extends Controller {
     }
 
 public function actionListaCandidatos(){
-    $this->_mpi_api = new MpiApiClient;
     $post = Yii::$app->request->post();
 
     $parametros['apellido'] = $post['Persona']['apellido'];
@@ -559,7 +564,7 @@ public function actionListaCandidatos(){
         $tipo = '';
         if($cantidad_candidatos == 0 || $post['tipo'] == 'masmpi'){
             //buscar mpi
-            $resultado = $this->_mpi_api->candidatos($parametros);  
+            $resultado = $this->mpiApi()->candidatos($parametros);  
    
             if(isset($resultado['statusCode']) && $resultado['statusCode'] == 200 && $resultado['successful'] == true && count($resultado['data'])==0){ //mostrar boton agegar persona 
                 $bandera_boton_agregar = true;
@@ -614,7 +619,6 @@ public function actionListaCandidatos(){
      */
     public function actionView($id) {
         //$this->layout = 'dos_columnas';
-        $this->_mpi_api = new MpiApiClient;
         $model_persona_telefono = new PersonaTelefono();
         $model_tipo_telefono = new Tipo_telefono();
         $model_domicilio = new Domicilio();
@@ -626,7 +630,7 @@ public function actionListaCandidatos(){
         
         /*
         $federado = false;
-        $resultado_empadronado = $this->_mpi_api->traerPaciente($id, 'local');
+        $resultado_empadronado = $this->mpiApi()->traerPaciente($id, 'local');
         if(isset($resultado_empadronado['successful']) && $resultado_empadronado['successful'] == true && count($resultado_empadronado['data']) == 1){
             $federado = true;
         }
@@ -650,7 +654,6 @@ public function actionListaCandidatos(){
      * Vista solamente para el superadmin
      */
     public function actionAdminView($id) {        
-        $this->_mpi_api = new MpiApiClient;
         $model_persona_telefono = new PersonaTelefono();
         $model_tipo_telefono = new Tipo_telefono();
         $model_domicilio = new Domicilio();
@@ -976,8 +979,7 @@ public function actionListaCandidatos(){
         $dni = Yii::$app->getRequest()->getQueryParam('dni');
         $sexo = Yii::$app->getRequest()->getQueryParam('sexo');
 
-        $this->_mpi_api = new MpiApiClient;
-        $respuesta = $this->_mpi_api->caller_mpi('coberturas?dni='.$dni."&sexo=".$sexo,'{}'); 
+        $respuesta = $this->mpiApi()->caller_mpi('coberturas?dni='.$dni."&sexo=".$sexo,'{}'); 
 
         return $this->renderAjax('viewpuco', [
             'coberturas' => $respuesta,

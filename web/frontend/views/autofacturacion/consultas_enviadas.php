@@ -1,8 +1,8 @@
 <?php
 
 use yii\grid\GridView;
-use common\models\Persona;
-use common\models\Turno;
+use common\models\Person\Persona;
+use common\models\Scheduling\Turno;
 use kartik\daterange\DateRangePicker;
 use yii\bootstrap5\ActiveForm;
 

@@ -2,7 +2,7 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 $this->title = 'Internaciones de '. $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
 $this->params['breadcrumbs'][] = $this->title;

@@ -1,7 +1,7 @@
 <?php
 /**
  * Vista parcial para el formulario de consulta
- * @var $paciente \common\models\Persona
+ * @var $paciente \common\models\Person\Persona
  * @var $idConfiguracion int|null
  * @var $idConsulta int|string|null
  * @var $parent string|null

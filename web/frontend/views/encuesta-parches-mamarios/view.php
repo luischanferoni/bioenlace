@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\widgets\DetailView;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 
 
 /* @var $this yii\web\View */

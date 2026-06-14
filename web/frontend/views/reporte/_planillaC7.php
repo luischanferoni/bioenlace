@@ -1,6 +1,6 @@
 <?php
 use yii\helpers\ArrayHelper;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaOdontologiaEstados;
 use common\components\Integrations\Mpi\MpiApiClient;

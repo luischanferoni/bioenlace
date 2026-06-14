@@ -9,7 +9,7 @@ use common\models\ServiciosEfector;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\ProfesionalEfectorServicio */
-/* @var $model_persona common\models\Persona|null */
+/* @var $model_persona common\models\Person\Persona|null */
 /* @var $form yii\widgets\ActiveForm */
 
 $idEfectorForm = (int) ($model->id_efector ?: (Yii::$app->user->getIdEfector() ?: 0));

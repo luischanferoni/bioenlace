@@ -5,7 +5,7 @@ namespace frontend\components;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\User;
 use common\models\ProfesionalEfectorServicio;
 use Firebase\JWT\JWT;

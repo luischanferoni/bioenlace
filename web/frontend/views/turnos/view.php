@@ -2,11 +2,11 @@
 
 use yii\helpers\Html;
 use yii\helpers\ArrayHelper;
-use common\models\Persona;
+use common\models\Person\Persona;
 use yii\widgets\DetailView;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Turno */
+/* @var $model common\models\Scheduling\Turno */
 
 $this->title = 'Turnos Otorgados';
 $this->params['breadcrumbs'][] = ['label' => 'Turnos', 'url' => ['index']];

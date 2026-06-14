@@ -2,8 +2,8 @@
 
 use yii\helpers\Html;
 use yii\grid\GridView;
-use common\models\Persona;
-use common\models\Turno;
+use common\models\Person\Persona;
+use common\models\Scheduling\Turno;
 
 
 $this->title = 'Consulta de Turnos Pendientes';

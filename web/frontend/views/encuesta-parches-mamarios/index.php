@@ -122,7 +122,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         'value' => function ($data) {
                            
                                 return $data->operadorPersona !== null
-                                    ? $data->operadorPersona->getNombreCompleto(common\models\Persona::FORMATO_NOMBRE_A_OA_N_ON)
+                                    ? $data->operadorPersona->getNombreCompleto(common\models\Person\Persona::FORMATO_NOMBRE_A_OA_N_ON)
                                     : '';
                             
                         }
@@ -133,9 +133,9 @@ $this->params['breadcrumbs'][] = $this->title;
                         'value' => function ($data) {
                            
                              if(isset($data->created_by_id)){
-                                $dataEntry = common\models\Persona::findOne(['id_user' => $data->created_by_id]);                                
+                                $dataEntry = common\models\Person\Persona::findOne(['id_user' => $data->created_by_id]);                                
                              }
-                             return isset($dataEntry)? $dataEntry->getNombreCompleto(common\models\Persona::FORMATO_NOMBRE_A_OA_N_ON) : '-'; 
+                             return isset($dataEntry)? $dataEntry->getNombreCompleto(common\models\Person\Persona::FORMATO_NOMBRE_A_OA_N_ON) : '-'; 
                             
                         }
                     ],

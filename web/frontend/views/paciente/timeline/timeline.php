@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\bootstrap5\Modal;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\helpers\TimelineHelper;
 use common\models\User;
 use yii\web\View;

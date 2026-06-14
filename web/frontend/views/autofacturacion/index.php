@@ -4,7 +4,7 @@ use yii\helpers\Url;
 use yii\grid\GridView;
 use yii\widgets\LinkPager;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 
 
 $this->title = 'Autofacturación';

@@ -1,7 +1,7 @@
 <?php
 
 use yii\grid\GridView;
-use common\models\Persona;
+use common\models\Person\Persona;
 use kartik\daterange\DateRangePicker;
 use yii\bootstrap5\ActiveForm;
 

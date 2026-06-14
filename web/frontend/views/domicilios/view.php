@@ -10,7 +10,7 @@ $this->title = $model->id_domicilio;
 $this->params['breadcrumbs'][] = ['label' => 'Domicilios', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 
-$persona= new \common\models\Persona();
+$persona= new \common\models\Person\Persona();
 $persona_domicilio= new \common\models\Persona_domicilio();
 $d_persona= $persona_domicilio::findOne($model->id_domicilio);
 $persona = $persona::findOne($d_persona->id_persona);

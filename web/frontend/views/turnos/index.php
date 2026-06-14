@@ -11,7 +11,7 @@ use yii\helpers\ArrayHelper;
 use yii\widgets\ActiveForm;
 use yii\bootstrap5\Dropdown;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 use common\models\ServiciosEfector;
 
 
@@ -20,7 +20,7 @@ use common\models\ServiciosEfector;
 /* @var $dataProvider yii\data\ActiveDataProvider */
 
 /* @var $this yii\web\View */
-/* @var $model common\models\Turno */
+/* @var $model common\models\Scheduling\Turno */
 /* @var $form yii\widgets\ActiveForm */
 
 

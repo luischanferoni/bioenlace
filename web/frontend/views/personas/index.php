@@ -8,7 +8,7 @@ use yii\bootstrap5\Dropdown;
 
 use common\models\User;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 
 /* @var $this yii\web\View */
 /* @var $searchModel common\models\busquedas\PersonaBusqueda */

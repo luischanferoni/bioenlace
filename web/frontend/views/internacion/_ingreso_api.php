@@ -2,7 +2,7 @@
 
 use yii\helpers\Html;
 
-/** @var common\models\Persona $persona */
+/** @var common\models\Person\Persona $persona */
 /** @var array<string, mixed> $ctx */
 
 $profesionales = $ctx['profesionales'] ?? [];

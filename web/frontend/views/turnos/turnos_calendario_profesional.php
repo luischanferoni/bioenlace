@@ -4,7 +4,7 @@ use yii\helpers\Url;
 use yii\helpers\Html;
 use kartik\select2\Select2;
 use yii\bootstrap5\Dropdown;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 
 $hoy = (new DateTime())->format('Y-m-d');
 

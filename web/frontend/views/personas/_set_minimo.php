@@ -9,7 +9,7 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 
 /* @var $this yii\web\View */
-/* @var $model common\models\persona */
+/* @var $model common\models\Person\Persona */
 
 //$this->title = $model->id_persona; 
 

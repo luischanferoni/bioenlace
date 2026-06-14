@@ -4,7 +4,7 @@ use frontend\assets\InternacionIngresoAsset;
 use yii\helpers\Html;
 
 /** @var yii\web\View $this */
-/** @var common\models\Persona $persona */
+/** @var common\models\Person\Persona $persona */
 /** @var array<string, mixed> $ctx */
 
 $this->title = 'Ingreso a internación';

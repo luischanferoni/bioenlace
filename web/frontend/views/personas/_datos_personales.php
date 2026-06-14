@@ -1,6 +1,6 @@
 <?php
 use yii\widgets\DetailView;
-use common\models\Persona;
+use common\models\Person\Persona;
 
 echo DetailView::widget([
         'model' => $model,

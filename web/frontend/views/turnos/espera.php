@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\helpers\Url;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 
 
 $this->title = 'Lista de Espera';

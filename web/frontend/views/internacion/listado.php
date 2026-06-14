@@ -3,7 +3,7 @@
 use yii\helpers\Html;
 use yii\grid\GridView;
 
-use common\models\Persona;
+use common\models\Person\Persona;
 
 use common\models\User;
 

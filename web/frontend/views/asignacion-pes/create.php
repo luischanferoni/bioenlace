@@ -4,7 +4,7 @@ use yii\helpers\Html;
 
 /* @var $this yii\web\View */
 /* @var $model common\models\ProfesionalEfectorServicio */
-/* @var $model_persona common\models\Persona|null */
+/* @var $model_persona common\models\Person\Persona|null */
 
 $this->title = 'Nueva asignación profesional' . ($model_persona ? ' para: ' . $model_persona->apellido . ', ' . $model_persona->nombre : '');
 $this->params['breadcrumbs'][] = ['label' => 'Asignaciones', 'url' => ['index']];

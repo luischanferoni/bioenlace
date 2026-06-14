@@ -4,7 +4,7 @@ use common\models\AgendaFeriados;
 use yii\bootstrap5\Modal;
 use yii\helpers\Html;
 use yii\helpers\Url;
-use common\models\Turno;
+use common\models\Scheduling\Turno;
 use frontend\assets\BioenlaceApiClientAsset;
 
 

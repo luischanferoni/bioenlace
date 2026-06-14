@@ -2,104 +2,71 @@
 
 namespace backend\components;
 
-use Yii;
-
-use yii\web\User;
-use yii\web\ForbiddenHttpException;
-
-use common\models\Persona;
 use common\components\Core\Permission\BioenlaceAccessChecker;
+use common\models\Persona;
+use frontend\components\BaseUserConfig;
+use Yii;
+use yii\web\ForbiddenHttpException;
 
 /**
  * Configuración de usuario web backend (identidad, login, permisos en sesión).
  */
-class UserConfig extends User
+class UserConfig extends BaseUserConfig
 {
-	/**
-	 * @inheritdoc
-	 */
-	public $identityClass = \common\models\User::class;
-
-	/**
-	 * @inheritdoc
-	 */
-	public $enableAutoLogin = true;
-
-	/**
-	 * @inheritdoc
-	 */
-	public $cookieLifetime = 2592000;
-
-	/**
-	 * @inheritdoc
-	 */
-	public $loginUrl = ['/auth/login'];
-
-	const IDENTITY_ID_KEY = 'mainIdentityId';
-	const ADMIN_PERMISSION = 'admin';
-
-	public function getIsImpersonated()
-	{
-    	return !is_null(Yii::$app->session->get(self::IDENTITY_ID_KEY));
-	}
- 
-	public function setMainIdentityId($userId)
-	{
-  	  Yii::$app->sesion->set(self::IDENTITY_ID_KEY, $userId);
-	}
- 
-	public function getMainIdentityId()
-	{
-    	$mainIdentityId = Yii::$app->session->get(self::IDENTITY_ID_KEY);
-    	return !empty($mainIdentityId) ? $mainIdentityId : $this->getId();
-	}
-
-	/**
-	 * Allows to call Yii::$app->user->isSuperadmin
-	 *
-	 * @return bool
-	 */
-	public function getIsSuperadmin()
-	{
-		return @Yii::$app->user->identity->superadmin == 1;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getUsername()
-	{
-		return @Yii::$app->user->identity->username;
-	}
-
-	public function getIdProfesionalEfectorServicio()
-	{
-		return null;
-	}
+    /**
+     * @inheritdoc
+     */
+    public $enableAutoLogin = true;
 
     /**
-     * Compatibilidad con helpers de frontend: efector en sesión.
+     * @inheritdoc
      */
-    public function setIdEfector($idEfector)
+    public $cookieLifetime = 2592000;
+
+    /**
+     * @inheritdoc
+     */
+    public $loginUrl = ['/auth/login'];
+
+    public const IDENTITY_ID_KEY = 'mainIdentityId';
+
+    public const ADMIN_PERMISSION = 'admin';
+
+    public function getIsImpersonated()
     {
-        Yii::$app->session->set('idEfector', $idEfector);
+        return !is_null(Yii::$app->session->get(self::IDENTITY_ID_KEY));
     }
 
-    public function getIdEfector()
+    public function setMainIdentityId($userId)
     {
-        return Yii::$app->session->get('idEfector');
+        Yii::$app->session->set(self::IDENTITY_ID_KEY, $userId);
     }
 
-	/**
-	 * @inheritdoc
-	 */
-	protected function afterLogin($identity, $cookieBased, $duration)
-	{
-		if (!$identity->superadmin && !\common\models\User::hasRole('_x_efector_AdminSisse')) {
-			throw new ForbiddenHttpException();
-		}
+    public function getMainIdentityId()
+    {
+        $mainIdentityId = Yii::$app->session->get(self::IDENTITY_ID_KEY);
 
-		parent::afterLogin($identity, $cookieBased, $duration);
-		BioenlaceAccessChecker::refreshForIdentity($identity);
-	}
+        return !empty($mainIdentityId) ? $mainIdentityId : $this->getId();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    protected function afterLogin($identity, $cookieBased, $duration)
+    {
+        if (!$identity->superadmin && !\common\models\User::hasRole('_x_efector_AdminSisse')) {
+            throw new ForbiddenHttpException();
+        }
+
+        $persona = Persona::findOne(['id_user' => $identity->id]);
+        if ($persona) {
+            $session = Yii::$app->session;
+            $session->set('idPersona', $persona->id_persona);
+            $session->set('apellidoUsuario', $persona->apellido);
+            $session->set('nombreUsuario', $persona->nombre);
+        }
+
+        parent::afterLogin($identity, $cookieBased, $duration);
+        BioenlaceAccessChecker::refreshForIdentity($identity);
+    }
 }

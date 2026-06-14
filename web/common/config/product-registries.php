@@ -42,9 +42,12 @@ use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvide
 use common\components\Domain\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoSubjectOrRepresentativePolicy;
+use common\models\Condiciones_laborales;
 use common\components\Domain\Organization\Assistant\OrganizationHintCandidateProvider;
+use common\components\Domain\Organization\Assistant\OrganizationUiSelectOptionSourceProvider;
 use common\components\Domain\Person\Assistant\PersonHintCandidateProvider;
 use common\components\Domain\Scheduling\Assistant\SchedulingHintCandidateProvider;
+use common\components\Domain\Scheduling\Assistant\SchedulingUiSelectOptionSourceProvider;
 use common\components\Domain\Scheduling\Assistant\SchedulingUiScreenParamsExpander;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 use common\components\Platform\Ui\Home\Service\Sections\ActionCardsSectionProvider;
@@ -117,6 +120,20 @@ return [
 
     'uiScreenParamsExpanders' => [
         SchedulingUiScreenParamsExpander::class,
+    ],
+
+    'uiSelectOptionSourceProviders' => [
+        OrganizationUiSelectOptionSourceProvider::class,
+        SchedulingUiSelectOptionSourceProvider::class,
+    ],
+
+    'uiCatalogOptionDefinitions' => [
+        'condiciones_laborales' => [
+            'class' => Condiciones_laborales::class,
+            'value' => 'id_condicion_laboral',
+            'label' => 'nombre',
+            'orderBy' => ['nombre' => SORT_ASC],
+        ],
     ],
 
     'homePanelSectionProviders' => [

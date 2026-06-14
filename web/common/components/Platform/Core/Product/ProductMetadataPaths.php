@@ -87,4 +87,9 @@ final class ProductMetadataPaths
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'screen-params.yaml';
     }
+
+    public static function uiSelectOptionSourcesFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'select-option-sources.yaml';
+    }
 }

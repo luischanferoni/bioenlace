@@ -2,15 +2,14 @@
 
 namespace common\components;
 
-use common\models\Condiciones_laborales;
+use common\components\Platform\Core\Product\ProductRegistryConfig;
 use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Catálogos permitidos para {@see UiSelectOptionSourceResolver} cuando `option_config.source` es `catalog`.
+ * Catálogos permitidos para {@see Platform\Ui\UiSelectOptionSourceResolver} cuando `source=catalog`.
  *
- * No se lee modelo/columnas desde el JSON: solo la clave `catalog`; el mapeo AR vive aquí (lista blanca).
- * Para proyectos: fusionar {@see Yii::$app->params['uiCatalogOptionDefinitions']} (misma forma).
+ * Definiciones de producto en {@see product-registries.php} (`uiCatalogOptionDefinitions`).
  *
  * @phpstan-type CatalogDef array{class: class-string<ActiveRecord>, value: string, label: string, orderBy?: array<string, int>}
  */
@@ -27,21 +26,26 @@ final class UiCatalogOptionDefinitions
             return $merged;
         }
 
-        $core = [
-            'condiciones_laborales' => [
-                'class' => Condiciones_laborales::class,
-                'value' => 'id_condicion_laboral',
-                'label' => 'nombre',
-                'orderBy' => ['nombre' => SORT_ASC],
-            ],
-        ];
+        $fromRegistry = ProductRegistryConfig::section('uiCatalogOptionDefinitions');
+        $core = is_array($fromRegistry) ? $fromRegistry : [];
 
         $extra = [];
         if (Yii::$app !== null && isset(Yii::$app->params['uiCatalogOptionDefinitions']) && is_array(Yii::$app->params['uiCatalogOptionDefinitions'])) {
             $extra = Yii::$app->params['uiCatalogOptionDefinitions'];
         }
 
-        $merged = array_merge($core, $extra);
+        $normalized = [];
+        foreach (array_merge($core, $extra) as $key => $def) {
+            if (!is_string($key)) {
+                continue;
+            }
+            $norm = self::normalizeDefinition($def);
+            if ($norm !== null) {
+                $normalized[trim($key)] = $norm;
+            }
+        }
+
+        $merged = $normalized;
 
         return $merged;
     }
@@ -58,12 +62,11 @@ final class UiCatalogOptionDefinitions
 
         $all = self::all();
 
-        return isset($all[$catalogKey]) ? self::normalizeDefinition($all[$catalogKey]) : null;
+        return $all[$catalogKey] ?? null;
     }
 
     /**
      * @param mixed $def
-     *
      * @return CatalogDef|null
      */
     private static function normalizeDefinition($def): ?array

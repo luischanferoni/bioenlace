@@ -1,0 +1,15 @@
+# Fuentes de opciones para selects en UI JSON (Bioenlace).
+# {@see UiSelectOptionSourceMetadata}
+version: 1
+
+source_aliases:
+  condiciones_laborales:
+    source: catalog
+    catalog: condiciones_laborales
+
+source_providers:
+  efectores: organization
+  servicios: organization
+  profesionales: scheduling
+  profesional-efector-servicio: scheduling
+  slots_disponibles_paciente: scheduling

@@ -18,6 +18,7 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 | `ui/client-context.yaml` | Flows/notificaciones paciente ocultos en web staff |
 | `ui/json-domains.yaml` | Entidad API → carpeta `views/json/{dominio}/` |
 | `ui/screen-params.yaml` | Expansión de params UI (p. ej. `slot_id` turnos) |
+| `ui/select-option-sources.yaml` | Fuentes `option_config.source` → provider de dominio |
 
 Contrato de pasos YAML: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 

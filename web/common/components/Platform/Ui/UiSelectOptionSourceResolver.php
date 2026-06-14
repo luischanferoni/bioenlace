@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Ui;
 
+use common\components\Platform\Core\Product\UiSelectOptionSourceMetadata;
 use common\components\UiCatalogOptionDefinitions;
 use Yii;
 use yii\db\ActiveRecord;
@@ -9,68 +10,54 @@ use yii\db\ActiveRecord;
 /**
  * Resuelve `option_config` de campos `select` con `options: "{{options}}"`.
  *
- * - **`source: catalog`** + **`catalog: "<clave>"`**: catálogo genérico declarado en
- *   {@see UiCatalogOptionDefinitions} (lista blanca: clase AR + atributos).
- * - **`efectores` / `servicios` / `profesionales` / `profesional-efector-servicio`**: fuentes con filtros/joins propios (no reducibles a un find() simple).
- *
- * Extensión: {@see register()} o `Yii::$app->params['uiCatalogOptionDefinitions']`.
+ * Fuentes de dominio: {@see UiSelectOptionSourceProviderRegistry} + metadata producto.
+ * Catálogos AR genéricos: {@see UiCatalogOptionDefinitions}.
  */
 final class UiSelectOptionSourceResolver
 {
     public const LOG_CATEGORY = 'ui-definition-template';
 
-    /** @var array<string, callable(mixed, array<string, mixed>, array<string, mixed>): array<int, array<string, mixed>>>|null */
-    private static $sources;
-
-    /**
-     * Registra o reemplaza una fuente especializada en runtime (tests, módulos).
-     *
-     * Firma del callable: `function ($filter, array $params, array $optionConfig): array`
-     *
-     * @param callable(mixed, array<string, mixed>, array<string, mixed>): array<int, array<string, mixed>> $resolver
-     */
-    public static function register(string $sourceKey, callable $resolver): void
-    {
-        self::bootstrap();
-        self::$sources[$sourceKey] = $resolver;
-    }
-
     /**
      * @param array<string, mixed> $optionConfig
      * @param array<string, mixed> $params
-     *
-     * @return array<int, array<string, mixed>>|null null si la fuente no existe o el catálogo no es válido
+     * @return array<int, array<string, mixed>>|null
      */
     public static function resolve(string $sourceKey, array $optionConfig, array $params): ?array
     {
-        // Compat: descriptores antiguos usaban el nombre del catálogo como `source`.
-        if ($sourceKey === 'condiciones_laborales') {
-            $optionConfig = array_merge(['catalog' => 'condiciones_laborales'], $optionConfig);
-            $sourceKey = 'catalog';
+        $normalized = UiSelectOptionSourceMetadata::normalizeSource($sourceKey, $optionConfig);
+        if ($normalized === null) {
+            return null;
         }
+
+        $sourceKey = $normalized['source'];
+        $optionConfig = $normalized['option_config'];
 
         if ($sourceKey === 'catalog') {
             return self::buildCatalogSelectOptions($optionConfig);
         }
 
-        self::bootstrap();
-
-        if (!isset(self::$sources[$sourceKey])) {
-            Yii::warning("Fuente de opciones no soportada: {$sourceKey}", self::LOG_CATEGORY);
+        $options = UiSelectOptionSourceProviderRegistry::resolveNormalized($sourceKey, $optionConfig, $params);
+        if ($options === null) {
+            Yii::warning('Fuente de opciones no soportada: ' . $sourceKey, self::LOG_CATEGORY);
 
             return null;
         }
 
-        $filter = $optionConfig['filter'] ?? null;
-
-        return call_user_func(self::$sources[$sourceKey], $filter, $params, $optionConfig);
+        return $options;
     }
 
     /**
-     * Catálogo genérico (lista blanca {@see UiCatalogOptionDefinitions}).
+     * Registra fuente en runtime (tests).
      *
+     * @param callable(mixed, array<string, mixed>, array<string, mixed>): array<int, array<string, mixed>> $resolver
+     */
+    public static function register(string $sourceKey, callable $resolver): void
+    {
+        UiSelectOptionSourceProviderRegistry::registerRuntime($sourceKey, $resolver);
+    }
+
+    /**
      * @param array<string, mixed> $optionConfig
-     *
      * @return array<int, array{value: string, label: string}>|null
      */
     private static function buildCatalogSelectOptions(array $optionConfig): ?array
@@ -113,140 +100,5 @@ final class UiSelectOptionSourceResolver
         }
 
         return $options;
-    }
-
-    private static function bootstrap(): void
-    {
-        if (self::$sources !== null) {
-            return;
-        }
-
-        self::$sources = [
-            'efectores' => [self::class, 'resolveEfectores'],
-            'servicios' => [self::class, 'resolveServicios'],
-            'profesional-efector-servicio' => [self::class, 'resolveProfesionalesOptions'],
-            'profesionales' => [self::class, 'resolveProfesionalesOptions'],
-        ];
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $optionConfig
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private static function resolveEfectores($filter, array $params, array $optionConfig): array
-    {
-        $userId = Yii::$app->user->id ?? null;
-
-        $idServicio = null;
-        if (isset($params['id_servicio']) && $params['id_servicio'] !== null && $params['id_servicio'] !== '') {
-            $idServicio = (int) $params['id_servicio'];
-        } elseif (isset($params['id_servicio_asignado']) && $params['id_servicio_asignado'] !== null && $params['id_servicio_asignado'] !== '') {
-            $idServicio = (int) $params['id_servicio_asignado'];
-        }
-
-        if ($filter === 'user_efectores' && $userId) {
-            $q = \common\models\UserEfector::find()
-                ->joinWith('efector')
-                ->where(['user_efector.id_user' => $userId])
-                ->andWhere('efectores.deleted_at IS NULL');
-
-            if ($idServicio) {
-                $q->innerJoin('servicios_efector se', 'se.id_efector = efectores.id_efector')
-                    ->andWhere(['se.id_servicio' => $idServicio])
-                    ->distinct();
-            }
-
-            $efectores = $q->orderBy('efectores.nombre')->all();
-
-            $options = [];
-            foreach ($efectores as $efector) {
-                $options[] = [
-                    'id' => $efector->efector->id_efector,
-                    'name' => $efector->efector->nombre,
-                ];
-            }
-
-            return $options;
-        }
-
-        if ($idServicio) {
-            $efectores = \common\models\Efector::find()
-                ->innerJoin('servicios_efector se', 'se.id_efector = efectores.id_efector')
-                ->where('efectores.deleted_at IS NULL')
-                ->andWhere(['se.id_servicio' => $idServicio])
-                ->distinct()
-                ->orderBy('efectores.nombre')
-                ->all();
-        } else {
-            $efectores = \common\models\Efector::find()
-                ->where('deleted_at IS NULL')
-                ->orderBy('nombre')
-                ->all();
-        }
-
-        $options = [];
-        foreach ($efectores as $efector) {
-            $options[] = [
-                'id' => $efector->id_efector,
-                'name' => $efector->nombre,
-            ];
-        }
-
-        return $options;
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $optionConfig
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private static function resolveServicios($filter, array $params, array $optionConfig): array
-    {
-        if ($filter === 'efector_servicios' && isset($params['id_efector']) && $params['id_efector'] !== null && $params['id_efector'] !== '') {
-            $servicios = \common\models\Servicio::find()
-                ->innerJoin('servicios_efector se', 'se.id_servicio = servicios.id_servicio')
-                ->where(['se.id_efector' => $params['id_efector']])
-                ->andWhere('se.deleted_at IS NULL')
-                ->orderBy('servicios.nombre')
-                ->all();
-
-            $options = [];
-            foreach ($servicios as $servicio) {
-                $options[] = [
-                    'id' => (string) $servicio->id_servicio,
-                    'name' => $servicio->nombre,
-                ];
-            }
-
-            return $options;
-        }
-
-        $servicios = \common\models\Servicio::find()
-            ->orderBy('nombre')
-            ->all();
-
-        $options = [];
-        foreach ($servicios as $servicio) {
-            $options[] = [
-                'id' => (string) $servicio->id_servicio,
-                'name' => $servicio->nombre,
-            ];
-        }
-
-        return $options;
-    }
-
-    /**
-     * @param array<string, mixed> $params
-     * @param array<string, mixed> $optionConfig
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private static function resolveProfesionalesOptions($filter, array $params, array $optionConfig): array
-    {
-        return [];
     }
 }

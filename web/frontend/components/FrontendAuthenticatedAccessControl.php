@@ -17,6 +17,9 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
     /** @var list<string> uniqueId sin RBAC (público o ticket especial) */
     private const FREE_ACTIONS = [
         'auth/login',
+        'auth/password-recovery',
+        'auth/password-recovery-receive',
+        'auth/captcha',
         'site/captcha',
         'site/error',
         'site/impersonate',

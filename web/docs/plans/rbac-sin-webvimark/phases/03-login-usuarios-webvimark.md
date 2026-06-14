@@ -14,20 +14,20 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 | Login web canónico | `AuthController` + `LoginForm` en `/auth/login` (frontend y backend) |
 | Vistas login | `frontend/views/login/login.php` y `loginLayout.php` sin webvimark |
 | Modelo identidad | `common/models/User` AR propio (`IdentityInterface`); `identityClass` → `common\models\User` |
-| Bugfix | `BioenlaceAccessChecker::isActiveIdentity` comparaba `status === 10` → `=== 1` |
+| Contraseña | `ChangeOwnPasswordForm`, `PasswordRecoveryForm` + `/auth/change-own-password`, `/auth/password-recovery*` |
 
 ## Pendiente
 
 | Pieza | Notas |
 |-------|-------|
-| Recuperación / cambio contraseña | Sustituir `user-management/auth/password-recovery`, `change-own-password` |
+| Confirmación de e-mail | Sustituir `user-management/auth/confirm-email` |
 | CRUD usuarios | Migrar `user-management/user/*` y `user-permission/set` al admin Bioenlace o API |
 | Composer | Quitar `webvimark/module-user-management` cuando no queden referencias |
 | `pathMap` vistas vendor | Eliminar overrides en `backend/config/main.php` |
 
 ## Qué se mantiene temporalmente
 
-- Recuperación y cambio de contraseña en `user-management/auth/*`.
+- Confirmación de e-mail en `user-management/auth/confirm-email`.
 - CRUD usuarios webvimark (`user-management/user`, `user-permission/set`) para alta de cuentas staff.
 - `UserVisitLog` webvimark (registro de visitas post-login).
 

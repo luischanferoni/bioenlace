@@ -122,7 +122,7 @@ if(Yii::$app->user->idEfector){
             [
                 'label' => $user,
                 'items' => [                   
-                    ['label' => 'Modificar Contraseña', 'url' => ['/user-management/auth/change-own-password']],
+                    ['label' => 'Modificar Contraseña', 'url' => ['/auth/change-own-password']],
                     ['label' => 'Confirmacion de email', 'url' => ['/user-management/auth/confirm-email']],
                      !Yii::$app->user->isGuest ? ['label' => 'Salir', 'url' => ['/auth/logout']]:'',
                 ],
@@ -145,7 +145,7 @@ NavBar::end();
             [
                 'label' => $user,
                 'items' => [                   
-                    ['label' => 'Modificar Contraseña', 'url' => ['/user-management/auth/change-own-password']],
+                    ['label' => 'Modificar Contraseña', 'url' => ['/auth/change-own-password']],
                     ['label' => 'Confirmacion de email', 'url' => ['/user-management/auth/confirm-email']],
                      !Yii::$app->user->isGuest ? ['label' => 'Salir', 'url' => ['/auth/logout']]:'',
                 ],

@@ -47,4 +47,19 @@ class AuthController extends WebvimarkAuthController
 
         return $this->redirect(Yii::$app->user->loginUrl);
     }
+
+    public function actionChangeOwnPassword()
+    {
+        return $this->redirect(['/auth/change-own-password']);
+    }
+
+    public function actionPasswordRecovery()
+    {
+        return $this->redirect(array_merge(['/auth/password-recovery'], Yii::$app->request->get()));
+    }
+
+    public function actionPasswordRecoveryReceive($token)
+    {
+        return $this->redirect(['/auth/password-recovery-receive', 'token' => $token]);
+    }
 }

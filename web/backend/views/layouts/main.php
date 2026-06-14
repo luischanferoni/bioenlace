@@ -127,7 +127,7 @@ $home = Yii::$app->getHomeUrl();
                                     'label' => '<span><h6><i class="bi bi-person-circle"></i> ' . Yii::$app->user->identity->username . '</h6></span>',
                                     'linkOptions' => ['class' => 'dropdown-item border-end'],
                                     'items' => [
-                                        ['label' => 'Modificar Contraseña', 'url' => ['/user-management/auth/change-own-password']],
+                                        ['label' => 'Modificar Contraseña', 'url' => ['/auth/change-own-password']],
                                         ['label' => 'Confirmacion de email', 'url' => ['/user-management/auth/confirm-email']],
                                     ],
                                 ],

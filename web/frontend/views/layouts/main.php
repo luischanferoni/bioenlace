@@ -181,7 +181,7 @@ if (Yii::$app->user->username) {
                                     <?= Html::encode($user) ?>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownUser">
-                                    <li><a class="dropdown-item" href="<?= Url::to(['/user-management/auth/change-own-password']) ?>">Modificar Contraseña</a></li>
+                                    <li><a class="dropdown-item" href="<?= Url::to(['/auth/change-own-password']) ?>">Modificar Contraseña</a></li>
                                     <li><a class="dropdown-item" href="<?= Url::to(['/user-management/auth/confirm-email']) ?>">Confirmación de email</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="<?= Url::to(['/auth/logout']) ?>">Salir</a></li>

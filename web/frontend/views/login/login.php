@@ -56,7 +56,7 @@ use yii\helpers\Html;
 									<div class="col-sm-12 text-right">
 										<?= Html::a(
 											'¿Olvidó su contraseña?',
-											['/user-management/auth/password-recovery']
+											['/auth/password-recovery']
 										) ?>
 									</div>
 								</div>

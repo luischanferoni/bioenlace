@@ -4,12 +4,8 @@ namespace frontend\controllers;
 
 use Yii;
 use yii\web\Controller;
-use yii\filters\VerbFilter;
-use yii\helpers\ArrayHelper;
 use yii\web\UploadedFile;
-use yii\base\Exception;
 
-use frontend\filters\SisseActionFilter;
 use common\components\Core\Http\UserRequest;
 
 use common\models\DocumentosExternos;
@@ -22,14 +18,7 @@ class DocumentosExternosController extends Controller
     public function behaviors()
     {
         //control de acceso mediante la extensión
-        return [
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'delete' => ['post'],
-                ],
-            ],
-        ];
+        return [];
     }
 
     /**

@@ -29,7 +29,6 @@ use common\models\Persona_hc;
 use common\models\Tipo_documento;
 use common\models\Guardia;
 use common\models\PersonaRepository;
-use common\components\Person\Service\PersonaSignosVitalesService;
 use common\models\Percentilos;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 
@@ -63,7 +62,7 @@ class PersonasController extends Controller
         return [
             'access' => [
                 'class' => SisseActionFilter::className(),
-                'only' => ['historia', 'view', 'crear-numero-historia-clinica'],
+                'only' => ['view', 'crear-numero-historia-clinica'],
                 'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
             'verbs' => [
@@ -341,32 +340,6 @@ class PersonasController extends Controller
         ];
 
         return $this->renderAjax('curvas_crecimiento', $context);
-    }
-
-    /**
-     * @no_intent_catalog
-    */
-    public function actionSignosVitales($id)
-    {
-        $persona = $this->findModel($id);
-
-        $simular = (defined('YII_DEBUG') && YII_DEBUG) || (bool) Yii::$app->getRequest()->getQueryParam('simular_signos');
-        $service = new PersonaSignosVitalesService();
-        $payload = $service->getSignosVitalesData($persona, $simular);
-        $datos_sv = $payload['datos_sv'];
-        $ultimos_sv = $payload['ultimos_sv'];
-
-        $data_provider = new \yii\data\ArrayDataProvider([
-            'allModels' => $datos_sv,
-            'pagination' => false,
-        ]);
-
-        return $this->renderAjax('signos_vitales', [
-            'persona' => $persona,
-            'datos_sv' => $datos_sv,
-            'ultimos_sv' => $ultimos_sv,
-            'data_provider' => $data_provider,
-        ]);
     }
 
     /**

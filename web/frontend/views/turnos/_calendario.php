@@ -15,7 +15,6 @@ $period = new DatePeriod(
 );
 
 $turnos_url_eventos = '/api/v1/turnos/calendario-ocupacion-dia';
-$turnos_url_historial = Url::to(['turnos/historial']);
 $turnos_url_create = '/api/v1/turnos/para-paciente';
 $turnos_url_crear_sobreturno = '/api/v1/turnos/crear-sobreturno';
 $turnos_url_cancelar_operativo_base = '/api/v1/turnos';
@@ -48,9 +47,6 @@ Modal::begin([
 ]);
 ?>
 <div class="row mb-1">
-    <div class="col-3 d-none">
-        <a href="<?= $turnos_url_historial ?>" target="_blank" class="btn btn-sm btn-soft-dark me-1">Turnos pasados</a>
-    </div>
     <div class="col-12 d-flex justify-content-center controls" id="controles-personalizados">
         <button type="button" class="btn btn-sm btn-soft-primary me-1 prev" data-controls="prev">Días anteriores</button>
         <button type="button" class="btn btn-sm btn-soft-primary ms-1 next" data-controls="next">Siguientes días</button>

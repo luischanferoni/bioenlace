@@ -6,29 +6,19 @@ use Yii;
 use yii\base\Exception;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\helpers\ArrayHelper;
 use yii\filters\VerbFilter;
-use yii\filters\AccessControl;
-use yii\filters\AccessRule;
 
 use common\models\SegNivelInternacion;
 use common\models\SegNivelInternacionRepository;
 use common\models\busquedas\SegNivelInternacionBusqueda;
 use common\models\InfraestructuraPiso;
-use common\models\InfraestructuraCama;
 use common\models\Person\Persona;
-use common\models\Setup;
-use common\models\CoberturaMedica;
-use common\models\Efector;
+use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
+use common\models\Clinical\Encounter;
+use common\components\Clinical\PatientHistoriaUrl;
 
 use frontend\filters\SisseActionFilter;
-use common\models\Telefono;
-use common\models\ProfesionalEfectorServicio;
-use common\components\Clinical\PatientHistoriaUrl;
-use common\components\Clinical\Inpatient\Service\InternacionMapaWebContext;
-use common\models\Clinical\Encounter;
-use common\models\User;
 
 /**
  * InternacionController implements the CRUD actions for SegNivelInternacion model.
@@ -43,14 +33,12 @@ class InternacionController extends Controller
         return [
             'access' => [
                 'class' => SisseActionFilter::className(),
-                'only' => ['index', 'espera'],
+                'only' => ['index'],
                 'filtrosExtra' => [SisseActionFilter::FILTRO_PACIENTE],
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),
-                'actions' => [
-                    'delete' => ['POST'],
-                ],
+                'actions' => [],
             ],
         ];
     }
@@ -293,21 +281,6 @@ class InternacionController extends Controller
     }
 
     /**
-     * Deletes an existing SegNivelInternacion model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param integer $id
-     * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
-     * @no_intent_catalog
-    */
-    public function actionDelete($id)
-    {
-        $this->findModel($id)->delete();
-
-        return $this->redirect(['index']);
-    }
-
-    /**
      * Finds the SegNivelInternacion model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
@@ -321,23 +294,6 @@ class InternacionController extends Controller
         }
 
         throw new NotFoundHttpException('The requested page does not exist.');
-    }
-
-    /**
-     * Lists all SegNivelInternacion models.
-     * @return mixed
-     * @no_intent_catalog
-    */
-    public function actionFinalizadas()
-    {
-        $searchModel = new SegNivelInternacionBusqueda();
-        $dataProvider = $searchModel->searchFinalizadas(Yii::$app->request->queryParams);
-        $efector = Yii::$app->user->getIdEfector();
-
-        return $this->render('finalizadas', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider
-        ]);
     }
 
     /**
@@ -370,26 +326,6 @@ class InternacionController extends Controller
 
         return $this->renderAjax('_datosAcompaniante', [
             'model' => $model
-        ]);
-    }
-
-    /**
-     * @no_intent_catalog
-    */
-    public function actionListado()
-    {
-        $persona = Yii::$app->session['persona'];
-        $persona =  unserialize($persona);
-
-        $pacienteInternado = false;
-
-        $pisos = new InfraestructuraPiso();
-        $idEfector = Yii::$app->user->getIdEfector();
-
-        $pisos_efector = $pisos->pisosPorEfector($idEfector);
-
-        return $this->render('listado', [
-            'pisos_efector' => $pisos_efector,
         ]);
     }
 }

@@ -6,26 +6,9 @@ use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
-use yii\filters\VerbFilter;
-use yii\helpers\ArrayHelper;
-use yii\helpers\Json;
-use yii\helpers\Url;
-
-// Modelos
 use common\models\Person\Persona;
 use common\models\Clinical\Encounter;
-use common\models\Scheduling\Turno;
-use common\models\ServiciosEfector;
-use common\models\ConsultaAtencionesEnfermeria;
-use common\models\SegNivelInternacion;
-use common\models\Guardia;
-use common\models\Alergias;
-use common\models\PersonasAntecedente;
-use common\models\DiagnosticoConsultaRepository as DCRepo;
-// Filtros y componentes
 use frontend\filters\SisseActionFilter;
-use common\models\User;
-use yii\authclient\InvalidResponseException;
 
 /**
  * PacienteHistorialController implementa las acciones CRUD para el modelo PacienteHistoriall.
@@ -40,14 +23,8 @@ class PacienteController extends Controller
         return [
             'access' => [
                 'class' => SisseActionFilter::className(),
-                'only' => ['historia', 'formulario-consulta', 'test'],
+                'only' => ['historia', 'formulario-consulta'],
                 'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
-            ],
-            'verbs' => [
-                'class' => VerbFilter::className(),
-                'actions' => [
-                    'delete' => ['POST'],
-                ],
             ],
         ];
     }

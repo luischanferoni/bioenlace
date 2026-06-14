@@ -1,0 +1,18 @@
+# Reglas de contexto cliente web vs móvil (Bioenlace / salud).
+# {@see ClientContextMetadata} — no hardcodear intents de paciente en Platform.
+version: 1
+
+web_staff:
+  hide_paciente_flows:
+    intent_ids:
+      - atencion.necesito-atencion
+    intent_id_contains:
+      - como-paciente
+      - '-paciente-'
+    rbac_route_contains:
+      - como-paciente
+
+  hide_notification_tipos:
+    - TURNO_REQUIERE_REUBICACION
+    - TURNO_CANCELADO_EFECTOR
+    - TURNO_RECORDATORIO

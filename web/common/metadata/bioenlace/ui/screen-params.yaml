@@ -1,0 +1,11 @@
+# Expansión de query/post params antes de renderizar UI JSON (Bioenlace).
+# {@see UiScreenParamsMetadata}
+version: 1
+
+param_expanders:
+  scheduling:
+    - entity: turnos
+      actions:
+        - crear-como-paciente
+        - reprogramar-como-paciente
+        - reubicar-como-paciente

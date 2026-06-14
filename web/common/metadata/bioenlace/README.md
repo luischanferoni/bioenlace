@@ -15,6 +15,9 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 | `assistant/hint-resolution.yaml` | Intents/prefixes de hints por entidad (scheduling, organization, person) |
 | `permission/domain-operation-policies.yaml` | Operaciones RBAC → políticas de recurso |
 | `ui/home_panel_manifest.yaml` | Layout del panel de inicio staff/paciente |
+| `ui/client-context.yaml` | Flows/notificaciones paciente ocultos en web staff |
+| `ui/json-domains.yaml` | Entidad API → carpeta `views/json/{dominio}/` |
+| `ui/screen-params.yaml` | Expansión de params UI (p. ej. `slot_id` turnos) |
 
 Contrato de pasos YAML: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 

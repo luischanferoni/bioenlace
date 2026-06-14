@@ -1,57 +1,20 @@
 <?php
 
-namespace common\components\Ui;
+namespace common\components\Platform\Ui;
+
+use common\components\Platform\Core\Product\UiJsonDomainMetadata;
 
 /**
- * Dominio de carpetas bajo `views/json/` (fase 11 — reorganización por área).
+ * Resolución de carpetas bajo `views/json/` según metadata de producto.
  */
 final class UiJsonDomain
 {
-    public const SCHEDULING = 'scheduling';
-    public const CLINICAL = 'clinical';
-    public const PERSONA = 'persona';
-    public const ORGANIZATION = 'organization';
-
-    /** @var array<string, string> entidad (kebab) → dominio */
-    private const ENTITY_TO_DOMAIN = [
-        'turnos' => self::SCHEDULING,
-        'profesional-agenda' => self::SCHEDULING,
-        'efectores' => self::SCHEDULING,
-        'servicios' => self::SCHEDULING,
-        'care-plan' => self::CLINICAL,
-        'emergency-guardia' => self::CLINICAL,
-        'internacion' => self::CLINICAL,
-        'laboratory-result' => self::CLINICAL,
-        'electronic-prescription' => self::CLINICAL,
-        'encounter' => self::CLINICAL,
-        'medication-request' => self::CLINICAL,
-        'service-request' => self::CLINICAL,
-        'condition' => self::CLINICAL,
-        'persona' => self::PERSONA,
-        'profesional-efector-servicio' => self::ORGANIZATION,
-        'data-access' => 'core',
-    ];
-
-    /**
-     * Plantillas reutilizadas por otro action_id (misma entidad).
-     * Clave: «entidad/acción» → acción del JSON existente.
-     *
-     * @see EncounterPatientSummaryController::actionUltimaAtencionUiComoPaciente()
-     */
-    private const ACTION_TEMPLATE_ALIASES = [
-        'encounter/ultima-atencion-ui-como-paciente' => 'ver-resumen-atencion-como-paciente',
-    ];
-
     public static function forEntity(string $entity): ?string
     {
-        $key = strtolower(trim($entity));
-
-        return self::ENTITY_TO_DOMAIN[$key] ?? null;
+        return UiJsonDomainMetadata::domainForEntity($entity);
     }
 
     /**
-     * Parsea action_id canónico (p. ej. turnos.crear-como-paciente, clinical.internacion.mapa-camas).
-     *
      * @return array{entity: string, action: string}|null
      */
     public static function parseActionId(string $actionId): ?array
@@ -62,7 +25,8 @@ final class UiJsonDomain
         }
 
         $parts = explode('.', $actionId);
-        if ($parts[0] === self::CLINICAL && count($parts) >= 3) {
+        $clinicalPrefix = UiJsonDomainMetadata::clinicalActionIdPrefix();
+        if ($parts[0] === $clinicalPrefix && count($parts) >= 3) {
             return [
                 'entity' => $parts[1],
                 'action' => implode('.', array_slice($parts, 2)),
@@ -75,9 +39,6 @@ final class UiJsonDomain
         ];
     }
 
-    /**
-     * Ruta absoluta del template ui_json para un action_id, o null si no hay archivo estático.
-     */
     public static function resolveActionIdTemplatePath(string $actionId): ?string
     {
         $parsed = self::parseActionId($actionId);
@@ -93,8 +54,7 @@ final class UiJsonDomain
             return $path;
         }
 
-        $aliasKey = $parsed['entity'] . '/' . $parsed['action'];
-        $aliasAction = self::ACTION_TEMPLATE_ALIASES[$aliasKey] ?? null;
+        $aliasAction = UiJsonDomainMetadata::templateAliasAction($parsed['entity'], $parsed['action']);
         if ($aliasAction === null || $aliasAction === '') {
             return null;
         }
@@ -106,9 +66,7 @@ final class UiJsonDomain
     }
 
     /**
-     * Rutas relativas a probar (dominio primero, luego legacy plano).
-     *
-     * @return list<string> sin prefijo alias; ej. `scheduling/turnos/foo.json`
+     * @return list<string>
      */
     public static function candidateRelativePaths(string $entity, string $action): array
     {
@@ -130,8 +88,6 @@ final class UiJsonDomain
     }
 
     /**
-     * Parsea ruta HTTP `/api/v1/...` a par entity + action (+ dominio clínico con prefijo).
-     *
      * @return array{entity: string, action: string}|null
      */
     public static function parseApiV1UiRoute(string $route): ?array
@@ -141,11 +97,13 @@ final class UiJsonDomain
             $path = trim($route);
         }
 
-        if (preg_match('#^/api/v\d+/clinical/([\\w-]+)/(?:\d+|\{[\w-]+\})/([\\w-]+)$#', $path, $m) === 1) {
+        $clinicalPrefix = preg_quote(UiJsonDomainMetadata::clinicalActionIdPrefix(), '#');
+
+        if (preg_match('#^/api/v\d+/' . $clinicalPrefix . '/([\\w-]+)/(?:\d+|\{[\w-]+\})/([\\w-]+)$#', $path, $m) === 1) {
             return ['entity' => strtolower((string) $m[1]), 'action' => (string) $m[2]];
         }
 
-        if (preg_match('#^/api/v\d+/clinical/([\\w-]+)/([\\w-]+)$#', $path, $m) === 1) {
+        if (preg_match('#^/api/v\d+/' . $clinicalPrefix . '/([\\w-]+)/([\\w-]+)$#', $path, $m) === 1) {
             return ['entity' => strtolower((string) $m[1]), 'action' => (string) $m[2]];
         }
 

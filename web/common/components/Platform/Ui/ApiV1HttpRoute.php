@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Ui;
+namespace common\components\Platform\Ui;
 
 /**
  * Normaliza paths HTTP de API a `/api/v1/...` (evita mezclar permisos `/api/clinical/...` con fetch).

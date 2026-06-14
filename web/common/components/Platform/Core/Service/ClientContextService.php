@@ -2,13 +2,13 @@
 
 namespace common\components\Platform\Core\Service;
 
-use common\models\PersonaNotificacion;
-use Yii;
+use common\components\Platform\Core\Product\ClientContextMetadata;
 
 /**
  * Contexto de cliente (web vs móvil) para RBAC y descubrimiento de acciones.
  *
  * En web el rol `paciente` se omite: el staff opera con roles PES / especiales.
+ * Reglas de flows/notificaciones paciente: {@see ClientContextMetadata} (metadata producto).
  */
 final class ClientContextService
 {
@@ -23,11 +23,7 @@ final class ClientContextService
      */
     public static function pacienteNotificacionTipos(): array
     {
-        return [
-            PersonaNotificacion::TIPO_TURNO_REQUIERE_REUBICACION,
-            PersonaNotificacion::TIPO_TURNO_CANCELADO_EFECTOR,
-            PersonaNotificacion::TIPO_TURNO_RECORDATORIO,
-        ];
+        return ClientContextMetadata::pacienteNotificacionTipos();
     }
 
     public static function isWebClient(): bool
@@ -69,26 +65,11 @@ final class ClientContextService
     }
 
     /**
-     * Flow/intent YAML orientado solo a autogestión paciente (no mostrar en web).
-     *
      * @param array<string, mixed> $flow
      */
     public static function isPacienteOnlyFlow(array $flow): bool
     {
-        $intentId = trim((string) ($flow['action_id'] ?? ''));
-        $rbac = trim((string) ($flow['rbac_route'] ?? ''));
-
-        if ($intentId === 'atencion.necesito-atencion') {
-            return true;
-        }
-        if ($intentId !== '' && (str_contains($intentId, 'como-paciente') || str_contains($intentId, '-paciente-'))) {
-            return true;
-        }
-        if ($rbac !== '' && str_contains($rbac, 'como-paciente')) {
-            return true;
-        }
-
-        return false;
+        return ClientContextMetadata::isPacienteOnlyFlow($flow);
     }
 
     /**

@@ -72,4 +72,19 @@ final class ProductMetadataPaths
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'home_panel_manifest.yaml';
     }
+
+    public static function clientContextFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'client-context.yaml';
+    }
+
+    public static function uiJsonDomainsFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'json-domains.yaml';
+    }
+
+    public static function uiScreenParamsFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'screen-params.yaml';
+    }
 }

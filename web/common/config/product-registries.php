@@ -45,6 +45,7 @@ use common\components\Domain\Scheduling\Service\Authorization\TurnoSubjectOrRepr
 use common\components\Domain\Organization\Assistant\OrganizationHintCandidateProvider;
 use common\components\Domain\Person\Assistant\PersonHintCandidateProvider;
 use common\components\Domain\Scheduling\Assistant\SchedulingHintCandidateProvider;
+use common\components\Domain\Scheduling\Assistant\SchedulingUiScreenParamsExpander;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 use common\components\Platform\Ui\Home\Service\Sections\ActionCardsSectionProvider;
 
@@ -112,6 +113,10 @@ return [
         SchedulingHintCandidateProvider::class,
         OrganizationHintCandidateProvider::class,
         PersonHintCandidateProvider::class,
+    ],
+
+    'uiScreenParamsExpanders' => [
+        SchedulingUiScreenParamsExpander::class,
     ],
 
     'homePanelSectionProviders' => [

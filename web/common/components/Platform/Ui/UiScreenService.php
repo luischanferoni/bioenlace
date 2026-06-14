@@ -1,25 +1,17 @@
 <?php
 
-namespace common\components\Ui;
+namespace common\components\Platform\Ui;
 
 use Yii;
 use yii\web\ServerErrorHttpException;
-use common\models\ProfesionalEfectorServicio;
 
 /**
  * Helper para endpoints de definiciones de vistas JSON (plantillas en `frontend/modules/api/v1/views/json/...`)
  * expuestos como rutas normales bajo `/api/v1/<entidad>/<accion>`.
- *
- * - GET  => devuelve definición de UI (wizard/list/detail) desde templates JSON (`views/json/...`).
- * - POST => ejecuta submit específico (callable); si falla devuelve la misma UI con `success=false` + `errors` + `values`.
- *
- * Nota: el submit NO se generaliza (cada entidad decide cómo persistir).
  */
 final class UiScreenService
 {
     /**
-     * Inyecta items en el primer block `kind=list` (o por id).
-     *
      * @param array<string,mixed> $ui
      * @param list<array<string,mixed>> $items
      * @return array<string,mixed>
@@ -43,14 +35,11 @@ final class UiScreenService
             $ui['blocks'][$idx] = $b;
             break;
         }
+
         return $ui;
     }
 
     /**
-     * Screen UI genérico basado en templates (`UiDefinitionTemplateManager`).
-     *
-     * @param string $entity ej. 'turnos'
-     * @param string $action ej. 'crear-como-paciente'
      * @param array<string, mixed> $queryParams
      * @param array<string, mixed> $postParams
      * @param callable $submit fn(array $post): array{data?: mixed, values?: array, errors?: array}|mixed
@@ -63,8 +52,9 @@ final class UiScreenService
 
         if ($req->isPost) {
             try {
-                $postParams = self::expandTurnosSlotIdParams($entity, $action, $postParams);
+                $postParams = UiScreenParamsExpanderRegistry::expand($entity, $action, $postParams);
                 $submitResult = $submit($postParams);
+
                 return [
                     'success' => true,
                     'kind' => 'ui_submit_result',
@@ -101,7 +91,7 @@ final class UiScreenService
         if ($values !== null) {
             $params = array_merge($params, $values);
         }
-        $params = self::expandTurnosSlotIdParams($entity, $action, $params);
+        $params = UiScreenParamsExpanderRegistry::expand($entity, $action, $params);
 
         $config = UiDefinitionTemplateManager::render($entity, $action, $params);
         if (!is_array($config) || $config === []) {
@@ -135,72 +125,4 @@ final class UiScreenService
             $config
         );
     }
-
-    /**
-     * El flujo conversacional guarda el slot como `slot_id`:
-     * - numérico (compat): "<id_profesional_efector_servicio>|fecha|hora"
-     * - canónico: "pes:<id_profesional_efector_servicio>|fecha|hora"
-     *
-     * Expande `slot_id` a `fecha`, `hora`, `id_profesional_efector_servicio` en creación y reprogramación paciente.
-     *
-     * @param array<string, mixed> $params
-     * @return array<string, mixed>
-     */
-    private static function expandTurnosSlotIdParams(string $entity, string $action, array $params): array
-    {
-        if (strtolower($entity) !== 'turnos') {
-            return $params;
-        }
-        $actions = ['crear-como-paciente', 'reprogramar-como-paciente', 'reubicar-como-paciente'];
-        if (!in_array($action, $actions, true)) {
-            return $params;
-        }
-        $slotId = $params['slot_id'] ?? null;
-        if (!is_string($slotId) || trim($slotId) === '') {
-            return $params;
-        }
-        $parsed = \common\components\Domain\Scheduling\Service\TurnoReservaSlotService::parseSlotId($slotId);
-        if ($parsed === null) {
-            return $params;
-        }
-        $pesId = (int) $parsed['id_profesional_efector_servicio'];
-        if (
-            $pesId > 0
-            && (!isset($params['id_profesional_efector_servicio']) || $params['id_profesional_efector_servicio'] === '' || $params['id_profesional_efector_servicio'] === null)
-        ) {
-            $params['id_profesional_efector_servicio'] = $pesId;
-        }
-        $fecha = (string) $parsed['fecha'];
-        $hora = (string) $parsed['hora'];
-        if ($fecha !== '' && (!isset($params['fecha']) || $params['fecha'] === '' || $params['fecha'] === null)) {
-            $params['fecha'] = $fecha;
-        }
-        if ($hora !== '' && (!isset($params['hora']) || $params['hora'] === '' || $params['hora'] === null)) {
-            $params['hora'] = $hora;
-        }
-        if (!isset($params['intervalo_minutos_reserva']) || $params['intervalo_minutos_reserva'] === '' || $params['intervalo_minutos_reserva'] === null) {
-            $params['intervalo_minutos_reserva'] = (int) $parsed['intervalo_minutos'];
-        }
-
-        if ($pesId > 0) {
-            $pes = ProfesionalEfectorServicio::findOne(['id' => $pesId, 'deleted_at' => null]);
-            if ($pes !== null) {
-                if (
-                    (!isset($params['id_servicio_asignado']) || $params['id_servicio_asignado'] === '' || $params['id_servicio_asignado'] === null)
-                    && (int) $pes->id_servicio > 0
-                ) {
-                    $params['id_servicio_asignado'] = (int) $pes->id_servicio;
-                }
-                if (
-                    (!isset($params['id_efector']) || $params['id_efector'] === '' || $params['id_efector'] === null)
-                    && (int) $pes->id_efector > 0
-                ) {
-                    $params['id_efector'] = (int) $pes->id_efector;
-                }
-            }
-        }
-
-        return $params;
-    }
 }
-

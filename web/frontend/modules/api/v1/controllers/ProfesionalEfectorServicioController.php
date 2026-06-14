@@ -12,7 +12,7 @@ use yii\web\MethodNotAllowedHttpException;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Platform\Ui\UiScreenService;
-use common\components\UiSelectOptionSourceResolver;
+use common\components\Platform\Ui\UiSelectOptionSourceResolver;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;

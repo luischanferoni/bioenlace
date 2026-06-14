@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Ui;
+namespace common\components\Platform\Ui;
 
 use common\components\UiCatalogOptionDefinitions;
 use Yii;

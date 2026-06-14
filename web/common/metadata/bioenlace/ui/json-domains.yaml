@@ -1,0 +1,27 @@
+# Mapeo entidad API → carpeta bajo views/json/{dominio}/ (Bioenlace).
+# {@see UiJsonDomainMetadata}
+version: 1
+
+entity_domains:
+  turnos: scheduling
+  profesional-agenda: scheduling
+  efectores: scheduling
+  servicios: scheduling
+  care-plan: clinical
+  emergency-guardia: clinical
+  internacion: clinical
+  laboratory-result: clinical
+  electronic-prescription: clinical
+  encounter: clinical
+  medication-request: clinical
+  service-request: clinical
+  condition: clinical
+  persona: persona
+  profesional-efector-servicio: organization
+  data-access: core
+
+action_id_parse:
+  clinical_prefix: clinical
+
+action_template_aliases:
+  encounter/ultima-atencion-ui-como-paciente: ver-resumen-atencion-como-paciente

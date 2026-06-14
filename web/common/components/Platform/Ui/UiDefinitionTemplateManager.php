@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components\Ui;
+namespace common\components\Platform\Ui;
 
-use common\components\UiSelectOptionSourceResolver;
+use common\components\Platform\Ui\UiSelectOptionSourceResolver;
 use Yii;
 use yii\helpers\Json;
 

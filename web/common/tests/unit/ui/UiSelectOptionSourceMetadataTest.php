@@ -38,4 +38,14 @@ class UiSelectOptionSourceMetadataTest extends Unit
         $this->assertIsArray($options);
         $this->assertSame([], $options);
     }
+
+    public function testAllowsMissingDependsOnForEfectorServicios(): void
+    {
+        $this->assertTrue(UiSelectOptionSourceMetadata::allowsMissingDependsOn('servicios', [
+            'filter' => 'efector_servicios',
+        ]));
+        $this->assertFalse(UiSelectOptionSourceMetadata::allowsMissingDependsOn('servicios', [
+            'filter' => 'other',
+        ]));
+    }
 }

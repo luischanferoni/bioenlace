@@ -19,6 +19,7 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 | `ui/json-domains.yaml` | Entidad API → carpeta `views/json/{dominio}/` |
 | `ui/screen-params.yaml` | Expansión de params UI (p. ej. `slot_id` turnos) |
 | `ui/select-option-sources.yaml` | Fuentes `option_config.source` → provider de dominio |
+| `ai/clinical-text-ia.yaml` | Prompts SNOMED y heurísticas de confianza para corrección LLM |
 
 Contrato de pasos YAML: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 

@@ -13,3 +13,8 @@ source_providers:
   profesionales: scheduling
   profesional-efector-servicio: scheduling
   slots_disponibles_paciente: scheduling
+
+# Resolver aunque falte el param de depends_on (p. ej. servicios filtrados por id_efector).
+depends_on_optional:
+  - source: servicios
+    filter: efector_servicios

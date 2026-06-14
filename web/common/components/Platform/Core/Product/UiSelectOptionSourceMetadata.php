@@ -65,6 +65,36 @@ final class UiSelectOptionSourceMetadata
     }
 
     /**
+     * Permite resolver opciones aunque falte el param referenciado por depends_on del campo.
+     *
+     * @param array<string, mixed> $optionConfig
+     */
+    public static function allowsMissingDependsOn(string $sourceKey, array $optionConfig): bool
+    {
+        $sourceKey = trim($sourceKey);
+        if ($sourceKey === '') {
+            return false;
+        }
+
+        $filter = isset($optionConfig['filter']) ? trim((string) $optionConfig['filter']) : '';
+
+        foreach (self::loadConfig()['depends_on_optional'] ?? [] as $rule) {
+            if (!is_array($rule)) {
+                continue;
+            }
+            if (trim((string) ($rule['source'] ?? '')) !== $sourceKey) {
+                continue;
+            }
+            $ruleFilter = trim((string) ($rule['filter'] ?? ''));
+            if ($ruleFilter === '' || $ruleFilter === $filter) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function loadConfig(): array
@@ -76,6 +106,7 @@ final class UiSelectOptionSourceMetadata
         self::$config = [
             'source_aliases' => [],
             'source_providers' => [],
+            'depends_on_optional' => [],
         ];
 
         $path = ProductMetadataPaths::uiSelectOptionSourcesFile();
@@ -99,6 +130,10 @@ final class UiSelectOptionSourceMetadata
             if (isset($data[$key]) && is_array($data[$key])) {
                 self::$config[$key] = $data[$key];
             }
+        }
+
+        if (isset($data['depends_on_optional']) && is_array($data['depends_on_optional'])) {
+            self::$config['depends_on_optional'] = $data['depends_on_optional'];
         }
 
         return self::$config;

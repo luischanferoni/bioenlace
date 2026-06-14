@@ -6,7 +6,8 @@ use Yii;
 use yii\httpclient\Client;
 use common\components\Logging\ConsultaLogger;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
-use common\components\Platform\Infra\Requests\RequestDeduplicator;
+use common\components\Domain\Clinical\Text\MedicalLlmConfidenceService;
+use common\components\Domain\Terminology\Snomed\SnomedContextualPromptBuilder;
 
 /**
  * Componente para manejar todas las interacciones con IA
@@ -972,21 +973,7 @@ class IAManager
      */
     public static function crearPromptContextual($texto, $categoria)
     {
-        $contextosCategoria = [
-            'diagnosticos' => 'diagnósticos médicos, enfermedades, condiciones patológicas, hallazgos clínicos',
-            'sintomas' => 'síntomas, signos, manifestaciones clínicas, motivos de consulta',
-            'medicamentos' => 'medicamentos, fármacos, sustancias farmacológicas, tratamientos',
-            'procedimientos' => 'procedimientos médicos, intervenciones, técnicas diagnósticas, exámenes'
-        ];
-        
-        $contexto = $contextosCategoria[$categoria] ?? 'conceptos médicos';
-        
-        return "Analiza el siguiente término médico en el contexto de {$contexto} y proporciona el término SNOMED CT más apropiado y preciso. 
-
-Término: '{$texto}'
-Contexto: {$contexto}
-
-Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adicionales:";
+        return SnomedContextualPromptBuilder::build($texto, $categoria);
     }
 
     /**
@@ -1760,13 +1747,7 @@ Texto: {$texto}";
         $similitud = 1 - (levenshtein($original, $suggestion) / max(strlen($original), strlen($suggestion)));
         $confianza += $similitud * 0.3;
 
-        $terminosMedicos = ['paciente', 'consulta', 'diagnóstico', 'tratamiento', 'medicamento', 'síntoma', 'enfermedad'];
-        foreach ($terminosMedicos as $termino) {
-            if (stripos($contexto, $termino) !== false) {
-                $confianza += 0.1;
-                break;
-            }
-        }
+        $confianza += MedicalLlmConfidenceService::contextBoost($contexto);
 
         if (strlen($suggestion) < 3) {
             $confianza -= 0.2;

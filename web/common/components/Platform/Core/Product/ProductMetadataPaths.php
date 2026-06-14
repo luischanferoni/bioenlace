@@ -92,4 +92,9 @@ final class ProductMetadataPaths
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'select-option-sources.yaml';
     }
+
+    public static function clinicalTextIaFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
+    }
 }

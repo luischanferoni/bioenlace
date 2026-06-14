@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Ui;
 
+use common\components\Platform\Core\Product\UiSelectOptionSourceMetadata;
 use common\components\Platform\Ui\UiSelectOptionSourceResolver;
 use Yii;
 use yii\helpers\Json;
@@ -407,10 +408,14 @@ class UiDefinitionTemplateManager
             return null;
         }
 
+        $normalized = UiSelectOptionSourceMetadata::normalizeSource((string) $source, $optionConfig);
+        if ($normalized !== null) {
+            $source = $normalized['source'];
+            $optionConfig = $normalized['option_config'];
+        }
+
         if ($dependsOn && !isset($params[$dependsOn])) {
-            if ($source === 'servicios' && $filter === 'efector_servicios') {
-                // continuar
-            } else {
+            if (!UiSelectOptionSourceMetadata::allowsMissingDependsOn((string) $source, $optionConfig)) {
                 return null;
             }
         }

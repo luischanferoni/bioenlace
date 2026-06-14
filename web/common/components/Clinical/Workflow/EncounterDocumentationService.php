@@ -14,7 +14,6 @@ use common\components\Clinical\Legacy\ConsultaProcesamientoService;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\models\ConsultasConfiguracion;
 use common\models\DiagnosticoConsulta;
 use common\models\Person\Persona;
 use Yii;
@@ -207,7 +206,7 @@ class EncounterDocumentationService extends Component
         EncounterDefinition $configuracion,
         array $datosExtraidos
     ): void {
-        $categorias = ConsultasConfiguracion::getCategoriasParaPrompt($configuracion);
+        $categorias = EncounterDefinition::getCategoriasParaPrompt($configuracion);
         $carePlan = null;
 
         foreach ($categorias as $categoria) {

@@ -401,12 +401,12 @@ HTML;
         if ($idConfiguracion === null || $idConfiguracion === '') {
             return [];
         }
-        $configuracion = \common\models\ConsultasConfiguracion::findOne($idConfiguracion);
+        $configuracion = \common\models\Clinical\EncounterDefinition::findOne($idConfiguracion);
         if (!$configuracion) {
             return [];
         }
 
-        return \common\models\ConsultasConfiguracion::getCategoriasParaPrompt($configuracion);
+        return \common\models\Clinical\EncounterDefinition::getCategoriasParaPrompt($configuracion);
     }
 
     private function generarPromptEspecializado($texto, $servicio, $categorias, ?int $subjectPersonaId = null)

@@ -452,46 +452,6 @@ class PersonasController extends Controller
         return Json::encode(['output' => $out, 'selected' => $selected]);
     }
 
-    /**
-     * @no_intent_catalog
-    */
-    public function actionValidardni()
-    {
-        if (Yii::$app->request->isAjax) {
-            $data = Yii::$app->request->post();
-            $dni = explode(":", $data['dni']);
-            $nombre = explode(":", $data['nombre']);
-            $dni = $dni[0];
-            $nombre = $nombre[0];
-            $persona = Persona::getDatosPersonaXDni($dni, $nombre);
-
-            //PUCO
-            $persona_puco = Persona::existe_en_puco($dni);
-            if (count($persona_puco) > 0) {
-
-                $nombre_obrasocial = '';
-                if ($persona_puco['NombreObraSocial'] == '') {
-                    $nombre_obrasocial = 'No Especificada';
-                } else {
-                    $nombre_obrasocial = $persona_puco['NombreObraSocial'];
-                }
-
-                $mje_puco = "Tiene Obra Social " . $nombre_obrasocial . ", " . $persona_puco['NombreYApellido'];
-            } else {
-                $mje_puco = "NO tiene Obra Social";
-            }
-
-            if (count($persona) > 0) {
-                //Exixte el mismo DNI cargado en la base de datos
-                echo $mje = "<input type='hidden' id='existedni' value='1' />"
-                    . "<div class='alert alert-danger' role='alert'>El DNI $dni ya existe y pertenece a " . $persona[0]['nombre'] . ", " . $persona[0]['apellido'] . "<br><b>P.U.C.O: </b>" . $mje_puco . '</div>';
-            } else {
-                echo $mje = "<input type='hidden' id='existedni' value='1' />"
-                    . "<div class='alert alert-danger' role='alert'><b>P.U.C.O: </b>" . $mje_puco . '</div>';
-            }
-        }
-    }
-
     //View PUCO
     /**
      * @no_intent_catalog

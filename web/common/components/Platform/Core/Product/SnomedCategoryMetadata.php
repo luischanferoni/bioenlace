@@ -2,20 +2,14 @@
 
 namespace common\components\Platform\Core\Product;
 
-use Symfony\Component\Yaml\Yaml;
-use Yii;
-
 /**
- * Metadata de categorías SNOMED ({@see ProductMetadataPaths::snomedCategoriesFile()}).
+ * Metadata de categorías SNOMED para codificación ({@see SnomedTerminologyMetadata}).
  */
 final class SnomedCategoryMetadata
 {
-    /** @var array<string, mixed>|null */
-    private static ?array $config = null;
-
     public static function semanticConfidenceThreshold(): float
     {
-        $section = self::loadConfig()['semantic_matching'] ?? [];
+        $section = SnomedTerminologyMetadata::config()['semantic_matching'] ?? [];
         if (!is_array($section)) {
             return 0.7;
         }
@@ -27,7 +21,7 @@ final class SnomedCategoryMetadata
 
     public static function candidateLimit(): int
     {
-        $section = self::loadConfig()['semantic_matching'] ?? [];
+        $section = SnomedTerminologyMetadata::config()['semantic_matching'] ?? [];
         if (!is_array($section)) {
             return 20;
         }
@@ -44,14 +38,12 @@ final class SnomedCategoryMetadata
             return null;
         }
 
-        $categories = self::loadConfig()['categories'] ?? [];
+        $categories = self::codificationSection()['categories'] ?? [];
         if (!is_array($categories) || !isset($categories[$categoryKey]) || !is_array($categories[$categoryKey])) {
             return null;
         }
 
-        $ecl = trim((string) ($categories[$categoryKey]['ecl'] ?? ''));
-
-        return $ecl !== '' ? $ecl : null;
+        return SnomedTerminologyMetadata::resolveEcl($categories[$categoryKey]);
     }
 
     public static function categoryKeyForExtractionLabel(string $label): ?string
@@ -61,7 +53,7 @@ final class SnomedCategoryMetadata
             return null;
         }
 
-        $map = self::loadConfig()['extraction_labels'] ?? [];
+        $map = self::codificationSection()['extraction_labels'] ?? [];
         if (!is_array($map) || !isset($map[$label])) {
             return null;
         }
@@ -76,7 +68,7 @@ final class SnomedCategoryMetadata
      */
     public static function categoryKeys(): array
     {
-        $categories = self::loadConfig()['categories'] ?? [];
+        $categories = self::codificationSection()['categories'] ?? [];
         if (!is_array($categories)) {
             return [];
         }
@@ -93,47 +85,16 @@ final class SnomedCategoryMetadata
 
     public static function resetCacheForTests(): void
     {
-        self::$config = null;
+        SnomedTerminologyMetadata::resetCacheForTests();
     }
 
     /**
      * @return array<string, mixed>
      */
-    private static function loadConfig(): array
+    private static function codificationSection(): array
     {
-        if (self::$config !== null) {
-            return self::$config;
-        }
+        $section = SnomedTerminologyMetadata::config()['codification'] ?? [];
 
-        self::$config = [
-            'semantic_matching' => [],
-            'categories' => [],
-            'extraction_labels' => [],
-        ];
-
-        $path = ProductMetadataPaths::snomedCategoriesFile();
-        if (!is_file($path)) {
-            return self::$config;
-        }
-
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            Yii::warning('SnomedCategoryMetadata: YAML inválido: ' . $e->getMessage(), __METHOD__);
-
-            return self::$config;
-        }
-
-        if (!is_array($data)) {
-            return self::$config;
-        }
-
-        foreach (['semantic_matching', 'categories', 'extraction_labels'] as $key) {
-            if (isset($data[$key]) && is_array($data[$key])) {
-                self::$config[$key] = $data[$key];
-            }
-        }
-
-        return self::$config;
+        return is_array($section) ? $section : [];
     }
 }

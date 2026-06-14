@@ -20,8 +20,7 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 | `ui/screen-params.yaml` | Expansión de params UI (p. ej. `slot_id` turnos) |
 | `ui/select-option-sources.yaml` | Fuentes `option_config.source` → provider de dominio |
 | `ai/clinical-text-ia.yaml` | Prompts SNOMED y heurísticas de confianza para corrección LLM |
-| `terminology/snomed-categories.yaml` | ECL por categoría, mapeo extracción IA → SNOMED, umbral semántico |
-| `terminology/snomed-search-profiles.yaml` | Perfiles autocomplete Snowstorm (ECL + alias métodos cliente) |
+| `terminology/snomed-terminology.yaml` | ECL canónicos, codificación IA, perfiles Snowstorm |
 
 Contrato de pasos YAML: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 

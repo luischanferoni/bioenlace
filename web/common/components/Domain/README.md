@@ -15,7 +15,7 @@ Todo lo **específico del rubro actual**. Para otro producto, esta carpeta se re
 | **`Integrations/`** | SISSE, receta digital, MPI, laboratorio FHIR, identidad |
 | **`Terminology/`** | SNOMED, codificación clínica (`SnomedCategoryCatalog`, `SnomedSearchProfileCatalog`) |
 
-Metadata SNOMED: `common/metadata/bioenlace/terminology/` (`snomed-categories.yaml`, `snomed-search-profiles.yaml`).
+Metadata SNOMED: `common/metadata/bioenlace/terminology/snomed-terminology.yaml` (ECL canónicos + codificación + búsqueda).
 
 ## Cableado con motores
 

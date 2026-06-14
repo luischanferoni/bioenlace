@@ -11,7 +11,7 @@ Código compartido por API v1, consola, jobs y (legacy) frontend Yii.
 | **Person** | `Domain/Person/Service/` | `Person/Persona.php` (+ alias `models/Persona.php`) |
 | **Organization** | `Domain/Organization/Service/` (PES, sesión operativa, efectores) | `ProfesionalEfectorServicio`, … |
 | **Plataforma** | `Platform/Core/`, `Platform/Ui/`, `Platform/Assistant/`, `Platform/Ai/`, `Platform/Infra/` | — |
-| **Terminology** | `Domain/Terminology/` | `Terminology/Snomed/*` (+ alias `models/snomed/*`) |
+| **Terminology** | `Domain/Terminology/` | `Terminology/Snomed/*` (modelos AR) |
 | **Integrations** | `Domain/Integrations/` | — |
 
 ## Reglas

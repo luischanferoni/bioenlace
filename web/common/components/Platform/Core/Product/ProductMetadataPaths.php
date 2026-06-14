@@ -98,13 +98,8 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
     }
 
-    public static function snomedCategoriesFile(): string
+    public static function snomedTerminologyFile(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-categories.yaml';
-    }
-
-    public static function snomedSearchProfilesFile(): string
-    {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-search-profiles.yaml';
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-terminology.yaml';
     }
 }

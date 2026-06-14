@@ -133,25 +133,11 @@ final class RbacFreeRouteChecker
     {
         $result = [];
         foreach (array_keys($allRoutes) as $route) {
-            if (self::isSubRoute($givenRoute, $route)) {
+            if (RbacRoute::isSubRoute($givenRoute, $route)) {
                 $result[] = $route;
             }
         }
 
         return $result;
-    }
-
-    private static function isSubRoute(string $route, string $candidate): bool
-    {
-        if ($route === $candidate) {
-            return true;
-        }
-        if (str_ends_with($route, '/*')) {
-            $prefix = rtrim($route, '*');
-
-            return strncmp($candidate, $prefix, strlen($prefix)) === 0;
-        }
-
-        return false;
     }
 }

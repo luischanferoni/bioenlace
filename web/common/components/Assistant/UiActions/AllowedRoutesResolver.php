@@ -6,6 +6,7 @@ use Yii;
 use common\components\Core\Service\ClientContextService;
 use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Core\Permission\BioenlaceSessionPermissions;
+use common\components\Core\Permission\RbacRoute;
 use common\models\User;
 
 /**

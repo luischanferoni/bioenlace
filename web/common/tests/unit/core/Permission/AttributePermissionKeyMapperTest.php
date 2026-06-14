@@ -3,7 +3,7 @@
 namespace common\tests\unit\core\Permission;
 
 use Codeception\Test\Unit;
-use common\components\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
 
 class AttributePermissionKeyMapperTest extends Unit
 {
@@ -14,7 +14,7 @@ class AttributePermissionKeyMapperTest extends Unit
 
     public function testPermissionKeysForPersonaIdentidadBasicaRead(): void
     {
-        $keys = \common\components\Core\Permission\AttributePermissionKeyMapper::permissionKeysForGroup(
+        $keys = \common\components\Platform\Core\Permission\AttributePermissionKeyMapper::permissionKeysForGroup(
             'Persona.identidad_basica',
             'read'
         );

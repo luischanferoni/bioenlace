@@ -1,7 +1,7 @@
 <?php
 
-use common\components\Core\Permission\BioenlaceGhostHtml;
-use common\components\Core\Permission\RbacRoleQueryService;
+use common\components\Platform\Core\Permission\BioenlaceGhostHtml;
+use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use common\models\User;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;

@@ -3,7 +3,7 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 
 class PersonRepresentationSubjectServiceTest extends Unit
 {

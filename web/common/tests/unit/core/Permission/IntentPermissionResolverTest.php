@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\core\Permission;
 
-use common\components\Core\Permission\IntentPermissionResolver;
+use common\components\Platform\Core\Permission\IntentPermissionResolver;
 use Codeception\Test\Unit;
 
 class IntentPermissionResolverTest extends Unit

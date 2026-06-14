@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Clinical\Enum\ProcedureStatus;
+use common\components\Domain\Clinical\Enum\ProcedureStatus;
 use yii\db\ActiveRecord;
 
 class Procedure extends ActiveRecord

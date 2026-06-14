@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Infra\Migration\MigrationEnumColumn;
+use common\components\Platform\Infra\Migration\MigrationEnumColumn;
 use common\models\Servicio;
 use yii\db\Migration;
 

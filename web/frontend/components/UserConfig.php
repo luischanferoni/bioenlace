@@ -9,7 +9,7 @@ use common\models\Person\Persona;
 use common\models\User;
 use common\models\ProfesionalEfectorServicio;
 use Firebase\JWT\JWT;
-use common\components\Organization\Service\SesionOperativa\SesionOperativaService;
+use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
 
 /**
  * Componente user para la aplicación web (sesión, cookie, login por formulario).
@@ -56,7 +56,7 @@ class UserConfig extends BaseUserConfig
         \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($identity->id);
 
         // Refrescar permisos/rutas Bioenlace en sesión para la identidad actual.
-        \common\components\Core\Permission\BioenlaceAccessChecker::refreshForIdentity($identity);
+        \common\components\Platform\Core\Permission\BioenlaceAccessChecker::refreshForIdentity($identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) $identity->id);
 
         parent::afterLogin($identity, $cookieBased, $duration);

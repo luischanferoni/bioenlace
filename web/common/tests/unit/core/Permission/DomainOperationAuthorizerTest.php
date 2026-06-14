@@ -3,11 +3,11 @@
 namespace common\tests\unit\core\Permission;
 
 use Codeception\Test\Unit;
-use common\components\Core\Permission\Domain\DomainOperationAuthorizer;
-use common\components\Core\Permission\Domain\DomainOperationContext;
-use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Core\Permission\Domain\DomainOperationPolicyCatalog;
-use common\components\Core\Permission\Domain\DomainOperationPolicyRegistry;
+use common\components\Platform\Core\Permission\Domain\DomainOperationAuthorizer;
+use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
+use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyCatalog;
+use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyRegistry;
 use common\models\Turno;
 
 class DomainOperationAuthorizerTest extends Unit

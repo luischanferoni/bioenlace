@@ -1,6 +1,6 @@
 # Metadata del producto Bioenlace
 
-Metadata declarativa específica del rubro (salud). Los **motores genéricos** la consumen vía `common\components\Core\Product\ProductMetadataPaths`.
+Metadata declarativa específica del rubro (salud). Los **motores genéricos** la consumen vía `common\components\Platform\Core\Product\ProductMetadataPaths`.
 
 Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente fijar `productMetadataDir` en `common/config/params-local.php`.
 
@@ -15,6 +15,6 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 | `permission/domain-operation-policies.yaml` | Operaciones RBAC → políticas de recurso |
 | `ui/home_panel_manifest.yaml` | Layout del panel de inicio staff/paciente |
 
-Contrato de pasos YAML: `common/components/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
+Contrato de pasos YAML: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 
 Handlers de dominio (hydrators, políticas, scope, filtros, presentación, panel home): `common/config/product-registries.php` vía `ProductRegistryConfig`.

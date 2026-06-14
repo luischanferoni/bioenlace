@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Clinical\CareCohort\Presentation\CareEducationModuleResolver;
+use common\components\Domain\Clinical\CareCohort\Presentation\CareEducationModuleResolver;
 use Codeception\Test\Unit;
 
 class CareEducationModuleResolverTest extends Unit

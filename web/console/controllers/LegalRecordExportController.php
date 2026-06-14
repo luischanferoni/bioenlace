@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Clinical\LegalRecord\LegalRecordExportProcessorService;
+use common\components\Domain\Clinical\LegalRecord\LegalRecordExportProcessorService;
 use common\models\Clinical\LegalRecordExportRequest;
 use yii\console\Controller;
 use yii\console\ExitCode;

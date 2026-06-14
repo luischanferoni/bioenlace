@@ -2,86 +2,78 @@
 
 **Leer este documento antes de crear, mover o refactorizar código en `web/common/components/`.**
 
-Código reutilizable por API v1, consola, jobs y (legacy) frontend Yii. La regla de oro: **agrupar por dominio y responsabilidad**, sin carpetas top-level sueltas ni el antiguo `Services/`.
+Código reutilizable por API v1, consola, jobs y (legacy) frontend Yii. La regla de oro: **separar motores (`Platform/`) del rubro (`Domain/`)**, y declarar el producto en metadata + registries.
 
-## Árbol permitido (top-level)
+## Dos capas top-level
+
+| Capa | Ruta | Namespace | Contenido |
+|------|------|-----------|-----------|
+| **Plataforma / motores** | `components/Platform/` | `common\components\Platform\…` | IA, asistente, DataAccess, permisos genéricos, UI JSON, infra |
+| **Rubro Bioenlace** | `components/Domain/` | `common\components\Domain\…` | Clínico, turnos, personas, organización, integraciones, terminología |
+
+**Metadata del producto:** `common/metadata/bioenlace/` (intents, reglas NL, permisos, panel).
+
+**Cableado dominio → motor:** `common/config/product-registries.php` (`productRegistries` en `params.php`).
+
+Para otro rubro: nuevo `Domain/`, metadata y registries; **`Platform/`** se mantiene.
+
+## `Platform/` — motores (agnósticos)
 
 | Carpeta | Contenido |
 |---------|-----------|
-| **`Clinical/`** | Dominio clínico: encounters, prescripción, laboratorio, guardia, internación operativa, pathways, etc. |
-| **`Scheduling/`** | Turnos, agenda, quirófano (`Scheduling/Service/Quirofano/`) |
-| **`Person/`** | Personas, registro (`Person/Service/`) |
-| **`Organization/`** | Efectores, PES, sesión operativa (`Organization/Service/`) |
-| **`Core/`** | Push, notificaciones, acciones transversales (`Core/Service/`) |
-| **`Ui/`** | Pantallas JSON, plantillas UI, panel home (`Ui/Home/`) |
-| **`Assistant/`** | Stack completo del asistente (ver [Assistant/README.md](../../common/components/Assistant/README.md)) |
-| **`Integrations/`** | Clientes/adaptadores a sistemas externos |
-| **`Ai/`**, **`Infra/`**, **`Text/`**, **`Terminology/`**, **`Logging/`** | Utilidades técnicas transversales |
+| **`Platform/Assistant/`** | IntentEngine, SubIntentEngine, Chat — ver [Assistant/README.md](../../common/components/Platform/Assistant/README.md) |
+| **`Platform/Core/`** | DataAccess, permisos, push, `Core/Product/` |
+| **`Platform/Ui/`** | Pantallas JSON, panel home (motor), grid |
+| **`Platform/Ai/`** | Proveedores IA, STT genérico, embeddings |
+| **`Platform/Infra/`**, **`Platform/Legacy/`** | Técnico transversal |
 
-**No crear** carpetas top-level como `Emergency/`, `Inpatient/`, `Services/` ni dominios clínicos fuera de `Clinical/`.
+**Prohibido** en `Platform/`: reglas de negocio clínico, listas de intents por rubro, `if (intentId === …)`.
+
+## `Domain/` — negocio salud
+
+| Carpeta | Contenido |
+|---------|-----------|
+| **`Domain/Clinical/`** | Encounters, guardia, internación, prescripción, lab, `Text/` |
+| **`Domain/Scheduling/`** | Turnos, agenda, quirófano |
+| **`Domain/Person/`** | Personas, registro |
+| **`Domain/Organization/`** | Efectores, PES, sesión operativa |
+| **`Domain/Integrations/`** | Sistemas externos (SISSE, receta, MPI, LIS) |
+| **`Domain/Terminology/`** | SNOMED |
+
+**No crear** carpetas clínicas sueltas fuera de `Domain/Clinical/` (`Emergency/`, `Inpatient/` van ahí).
 
 ## Patrones dentro de un dominio
 
-### Negocio por subdominio
+- Servicios: `{Dominio}/{Subdominio}/Service/*.php`
+- Plugins para motores: registrar en `product-registries.php`, implementación en `Domain/…`
 
-- Servicios: `{Dominio}/{Subdominio}/Service/*.php` → namespace `common\components\{Dominio}\{Subdominio}\Service`
-- Enums: `{Dominio}/{Subdominio}/Enum/*.php` → namespace `common\components\{Dominio}\{Subdominio}\Enum`
-- DTOs, mappers, support: subcarpetas dedicadas (ej. `Clinical/Dto/`, `Prescription/Mapper/`)
-
-### Clinical — subdominios actuales
-
-| Subdominio | Ruta | Notas |
-|------------|------|-------|
-| Encounter / care plans | `Clinical/Service/`, `Clinical/Workflow/` | Núcleo FHIR |
-| Prescripción | `Clinical/Prescription/Service/` | Receta electrónica |
-| Laboratorio | `Clinical/Laboratory/Service/` | |
-| **Guardia / urgencias** | `Clinical/Emergency/Service/`, `Clinical/Emergency/Enum/` | Tablero triage, circuito, SLA |
-| **Internación (operativa)** | `Clinical/Inpatient/Service/` | Mapa camas, ingreso, alta, epicrisis |
-| Internación (FHIR clínico) | `Clinical/Specialty/Inpatient/` | Contexto encounter, órdenes — no confundir con `Clinical/Inpatient/` |
-| Especialidades | `Clinical/Specialty/Odontology/`, `Ophthalmology/` | |
-| Legacy consulta | `Clinical/Legacy/` | Puente temporal |
-
-### Scheduling
-
-- Turnos: `Scheduling/Service/`
-- Quirófano: `Scheduling/Service/Quirofano/` (no carpeta top-level)
-
-## Responsabilidades (capas)
-
-| Capa | Dónde | Qué va |
-|------|-------|--------|
-| **Service** | `*/Service/` | Lógica de negocio reutilizable (API, consola, jobs). Sin `*HttpException`, HTML ni flash. |
-| **Controller API** | `frontend/modules/api/v1/` | Delgado: permisos, JSON, traduce excepciones a HTTP. |
-| **Assistant** | `Assistant/` | Intents, flows YAML, RBAC UI — motores en `IntentEngine/`, `SubIntentEngine/`, `Chat/` |
-
-## Motores genéricos vs dominio
+## Motores vs metadata vs negocio
 
 | Capa | Ubicación | Responsabilidad |
 |------|-----------|-----------------|
-| **Motores** | `Assistant/IntentEngine`, `Assistant/SubIntentEngine`, `Core/DataAccess`, `Core/Permission/Domain/*Authorizer*`, `Core/Product/` | Interpretar metadata; sin reglas de negocio por rubro |
-| **Metadata producto** | `common/metadata/bioenlace/` (`assistant/`, `permission/`, `ui/`) | Qué hacer (flows, métricas, permisos, panel) — específico de Bioenlace hoy |
-| **Plugins dominio** | `common/config/product-registries.php` | Catálogos UI, scope, políticas, panel home — una sola fuente |
-| **Negocio** | `Clinical/`, `Scheduling/`, `Person/`, `Organization/` | Persistencia, reglas, autorización de recurso |
-
-Ver también: [arquitectura-yii2-bioenlace.mdc](../../../.cursor/rules/arquitectura-yii2-bioenlace.mdc), [api-v1-autenticacion-y-sesion.mdc](../../../.cursor/rules/api-v1-autenticacion-y-sesion.mdc).
+| **Motores** | `Platform/Assistant/…`, `Platform/Core/DataAccess`, `Platform/Core/Product/` | Interpretar manifiestos; sin reglas por rubro en PHP |
+| **Metadata producto** | `common/metadata/bioenlace/` | Qué hacer (flows, métricas, permisos, panel) |
+| **Plugins dominio** | `product-registries.php` + clases en `Domain/` | Catálogos UI, scope, políticas, panel home |
+| **Negocio** | `Domain/Clinical/`, `Domain/Scheduling/`, … | Persistencia, reglas, autorización de recurso |
 
 ## Dónde ubicar código nuevo
 
 | Necesidad | Ubicación |
 |-----------|-----------|
-| Guardia, triage, circuito urgencias | `Clinical/Emergency/Service/` |
-| Mapa camas, ingreso/alta internación | `Clinical/Inpatient/Service/` |
-| Encounter, care plan, service request | `Clinical/Service/` o subcarpeta temática |
-| Turno, agenda, cancelación | `Scheduling/Service/` |
-| Quirófano | `Scheduling/Service/Quirofano/` |
-| Efector, PES, sesión operativa | `Organization/Service/` |
-| Intent / flow asistente | `Assistant/` |
-| Proveedor IA, STT | `Ai/` |
-| Cliente receta nacional, LIS externo | `Integrations/` |
+| Guardia, triage | `Domain/Clinical/Emergency/Service/` |
+| Mapa camas, ingreso internación | `Domain/Clinical/Inpatient/Service/` |
+| Encounter, care plan | `Domain/Clinical/Service/` |
+| Turno, agenda | `Domain/Scheduling/Service/` |
+| Efector, PES | `Domain/Organization/Service/` |
+| Motor asistente / flow genérico | `Platform/Assistant/` |
+| Intent / YAML producto | `common/metadata/bioenlace/assistant/` |
+| Proveedor IA | `Platform/Ai/` |
+| Cliente externo salud | `Domain/Integrations/` |
+| Texto clínico pre-IA | `Domain/Clinical/Text/` |
 
 ## Referencias
 
 - [README en código](../../common/components/README.md)
-- [README `common/`](../../common/README.md)
+- [Platform/README.md](../../common/components/Platform/README.md)
+- [Domain/README.md](../../common/components/Domain/README.md)
 - [Asistente — motores](./asistente-motores.md)
-- [Decisión FHIR clínico](../decisions/fhir-clinical.md)

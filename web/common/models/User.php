@@ -2,8 +2,8 @@
 
 namespace common\models;
 
-use common\components\Core\Permission\BioenlaceAccessChecker;
-use common\components\Core\Permission\BioenlaceSessionPermissions;
+use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
+use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use Yii;
 use yii\base\Security;
 use yii\behaviors\TimestampBehavior;

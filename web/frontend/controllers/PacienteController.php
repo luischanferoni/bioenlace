@@ -9,7 +9,7 @@ use yii\web\Response;
 use common\models\Person\Persona;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
-use common\components\Clinical\Service\EncounterCaptureContextService;
+use common\components\Domain\Clinical\Service\EncounterCaptureContextService;
 use frontend\filters\SisseActionFilter;
 
 /**

@@ -1,7 +1,7 @@
 <?php
 namespace common\models;
 
-use common\components\Core\Service\ClientContextService;
+use common\components\Platform\Core\Service\ClientContextService;
 use Yii;
 use yii\db\Query;
 use yii\rbac\Item;

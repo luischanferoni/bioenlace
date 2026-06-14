@@ -32,4 +32,4 @@
 
 ## Al cerrar el programa
 
-Volcar narrativa estable en `common/components/Core/DataAccess/README.md` y borrar esta carpeta.
+Volcar narrativa estable en `common/components/Platform/Core/DataAccess/README.md` y borrar esta carpeta.

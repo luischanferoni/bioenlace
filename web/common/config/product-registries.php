@@ -5,44 +5,44 @@
  *
  * Fuente única de cableado producto → motor. Para otro rubro: reemplazar este archivo en params-local.
  *
- * @see \common\components\Core\Product\ProductRegistryConfig
+ * @see \common\components\Platform\Core\Product\ProductRegistryConfig
  */
 
-use common\components\Assistant\Catalog\DataAccessUiActionCatalog;
-use common\components\Clinical\Assistant\ClinicalUiActionCatalog;
-use common\components\Clinical\CareCohort\Assistant\CarePackUiActionCatalog;
-use common\components\Clinical\Home\InpatientHomePanelSliceResolver;
-use common\components\Clinical\Home\Sections\EmergencyBoardSectionProvider;
-use common\components\Clinical\Home\Sections\EmergencyIndicatorsSectionProvider;
-use common\components\Clinical\Home\Sections\InpatientsSectionProvider;
-use common\components\Clinical\Home\Sections\PatientCarePlansActiveSectionProvider;
-use common\components\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
-use common\components\Clinical\Service\Authorization\ClinicalEncounterAccessPolicy;
-use common\components\Core\DataAccess\DataAccessEditFlowDraftHydrator;
-use common\components\Core\DataAccess\DataAccessFlowDraftHydrator;
-use common\components\Core\DataAccess\Edit\Handler\PersonIdentidadBasicaEditMutationHandler;
-use common\components\Organization\DataAccess\Filter\ServicioRolEfectorIdsFilterResolver;
-use common\components\Organization\DataAccess\Filter\ServicioRolFromMentionFilterResolver;
-use common\components\Organization\DataAccess\Scope\EfectorSesionScopeChecker;
-use common\components\Organization\DataAccess\Scope\EfectorSesionViaPesScopeChecker;
-use common\components\Organization\Presentation\ProfesionalesConteoInfoPresentation;
-use common\components\Organization\Presentation\ProfesionalesListadoRowsPresentation;
-use common\components\Organization\Service\Authorization\OrganizationEfectorSesionPolicy;
-use common\components\Organization\Service\Authorization\OrganizationPesEfectorPolicy;
-use common\components\Organization\Service\Authorization\OrganizationPesOwnPolicy;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
-use common\components\Person\DataAccess\Filter\SexoBiologicoFilterResolver;
-use common\components\Person\DataAccess\Scope\PermitirParaSiMismoScopeChecker;
-use common\components\Person\Representation\Assistant\PersonRepresentationUiActionCatalog;
-use common\components\Scheduling\Home\Sections\AppointmentsDaySectionProvider;
-use common\components\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
-use common\components\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
-use common\components\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
-use common\components\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
-use common\components\Scheduling\Service\Authorization\TurnoSubjectOrRepresentativePolicy;
-use common\components\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
-use common\components\Ui\Home\Service\Sections\ActionCardsSectionProvider;
+use common\components\Platform\Assistant\Catalog\DataAccessUiActionCatalog;
+use common\components\Domain\Clinical\Assistant\ClinicalUiActionCatalog;
+use common\components\Domain\Clinical\CareCohort\Assistant\CarePackUiActionCatalog;
+use common\components\Domain\Clinical\Home\InpatientHomePanelSliceResolver;
+use common\components\Domain\Clinical\Home\Sections\EmergencyBoardSectionProvider;
+use common\components\Domain\Clinical\Home\Sections\EmergencyIndicatorsSectionProvider;
+use common\components\Domain\Clinical\Home\Sections\InpatientsSectionProvider;
+use common\components\Domain\Clinical\Home\Sections\PatientCarePlansActiveSectionProvider;
+use common\components\Domain\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
+use common\components\Domain\Clinical\Service\Authorization\ClinicalEncounterAccessPolicy;
+use common\components\Platform\Core\DataAccess\DataAccessEditFlowDraftHydrator;
+use common\components\Platform\Core\DataAccess\DataAccessFlowDraftHydrator;
+use common\components\Platform\Core\DataAccess\Edit\Handler\PersonIdentidadBasicaEditMutationHandler;
+use common\components\Domain\Organization\DataAccess\Filter\ServicioRolEfectorIdsFilterResolver;
+use common\components\Domain\Organization\DataAccess\Filter\ServicioRolFromMentionFilterResolver;
+use common\components\Domain\Organization\DataAccess\Scope\EfectorSesionScopeChecker;
+use common\components\Domain\Organization\DataAccess\Scope\EfectorSesionViaPesScopeChecker;
+use common\components\Domain\Organization\Presentation\ProfesionalesConteoInfoPresentation;
+use common\components\Domain\Organization\Presentation\ProfesionalesListadoRowsPresentation;
+use common\components\Domain\Organization\Service\Authorization\OrganizationEfectorSesionPolicy;
+use common\components\Domain\Organization\Service\Authorization\OrganizationPesEfectorPolicy;
+use common\components\Domain\Organization\Service\Authorization\OrganizationPesOwnPolicy;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
+use common\components\Domain\Person\DataAccess\Filter\SexoBiologicoFilterResolver;
+use common\components\Domain\Person\DataAccess\Scope\PermitirParaSiMismoScopeChecker;
+use common\components\Domain\Person\Representation\Assistant\PersonRepresentationUiActionCatalog;
+use common\components\Domain\Scheduling\Home\Sections\AppointmentsDaySectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
+use common\components\Domain\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
+use common\components\Domain\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
+use common\components\Domain\Scheduling\Service\Authorization\TurnoSubjectOrRepresentativePolicy;
+use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
+use common\components\Platform\Ui\Home\Service\Sections\ActionCardsSectionProvider;
 
 return [
     'flowDraftHydrators' => [

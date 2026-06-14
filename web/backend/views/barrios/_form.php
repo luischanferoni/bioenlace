@@ -9,7 +9,7 @@ use common\models\Localidad;
 use kartik\select2\Select2;
 
 
-use common\components\Organization\Service\GeografiaDepdropService;
+use common\components\Domain\Organization\Service\GeografiaDepdropService;
 use kartik\depdrop\DepDrop;
 use yii\helpers\Url;
 

@@ -4,7 +4,7 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\Url;
 use common\models\Person\Persona;
-use common\components\Clinical\PatientHistoriaUrl;
+use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
 use common\models\User;
 

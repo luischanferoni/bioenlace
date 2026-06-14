@@ -42,7 +42,7 @@ flowchart TB
   G -->|unclear| U
 ```
 
-Código: [`ChatRouter.php`](../../common/components/Assistant/Chat/Routing/ChatRouter.php).
+Código: [`ChatRouter.php`](../../common/components/Platform/Assistant/Chat/Routing/ChatRouter.php).
 
 | `user_goal` (preprocess) | Segunda llamada IA | Contexto `IAManager` | Qué hace el producto |
 |--------------------------|-------------------|----------------------|----------------------|

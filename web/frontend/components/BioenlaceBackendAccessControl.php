@@ -2,7 +2,7 @@
 
 namespace frontend\components;
 
-use common\components\Core\Permission\BioenlaceAccessChecker;
+use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use Yii;
 use yii\base\Action;
 use yii\base\ActionFilter;

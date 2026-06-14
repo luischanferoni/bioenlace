@@ -3,7 +3,7 @@
 namespace common\tests\unit\costos;
 
 use Yii;
-use common\components\Ai\Cost\AICostTracker;
+use common\components\Platform\Ai\Cost\AICostTracker;
 
 /**
  * Tests del tracker de costos de IA.

@@ -2,7 +2,7 @@
 
 namespace common\models;
 
-use common\components\Clinical\PatientHistoriaUrl;
+use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
 use Yii;
 use yii\helpers\Console;

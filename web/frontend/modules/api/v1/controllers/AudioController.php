@@ -3,10 +3,10 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Clinical\SpeechToText\ClinicalSpeechInputResolver;
-use common\components\Ai\SpeechToText\SpeechToTextManager;
-use common\components\Text\ProcesadorTextoMedico;
-use common\components\Clinical\Workflow\EncounterDocumentationService;
+use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
+use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
+use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
+use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 
 class AudioController extends BaseController
 {

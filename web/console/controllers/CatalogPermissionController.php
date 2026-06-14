@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Core\Permission\CatalogPermissionSyncService;
+use common\components\Platform\Core\Permission\CatalogPermissionSyncService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -53,9 +53,9 @@ class CatalogPermissionController extends Controller
      */
     public function actionSeedPermissions(): int
     {
-        $base = \common\components\Assistant\Catalog\IntentSchemaPaths::baseDir();
+        $base = \common\components\Platform\Assistant\Catalog\IntentSchemaPaths::baseDir();
         $updated = 0;
-        foreach (\common\components\Assistant\Catalog\IntentSchemaPaths::CATEGORIES as $cat) {
+        foreach (\common\components\Platform\Assistant\Catalog\IntentSchemaPaths::CATEGORIES as $cat) {
             foreach (glob($base . DIRECTORY_SEPARATOR . $cat . DIRECTORY_SEPARATOR . '*.yaml') ?: [] as $path) {
                 $raw = (string) file_get_contents($path);
                 $data = \Symfony\Component\Yaml\Yaml::parseFile($path);
@@ -66,7 +66,7 @@ class CatalogPermissionController extends Controller
                 if (trim((string) ($data['permission'] ?? '')) !== '' || preg_match('/^permission\s*:/m', $raw)) {
                     continue;
                 }
-                $permission = \common\components\Core\Permission\IntentPermissionResolver::resolve($intentId, $data);
+                $permission = \common\components\Platform\Core\Permission\IntentPermissionResolver::resolve($intentId, $data);
                 if ($permission === '' || strncmp($permission, '/api/', 5) === 0) {
                     $this->stderr("Skip {$intentId}\n");
                     continue;

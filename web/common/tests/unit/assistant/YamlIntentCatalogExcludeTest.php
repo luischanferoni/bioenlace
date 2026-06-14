@@ -3,7 +3,7 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Assistant\Catalog\YamlIntentCatalogService;
+use common\components\Platform\Assistant\Catalog\YamlIntentCatalogService;
 
 class YamlIntentCatalogExcludeTest extends Unit
 {

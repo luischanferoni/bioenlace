@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Clinical\Prescription\Enum\PrescriptionLegalStatus;
+use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
 use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 

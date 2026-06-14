@@ -2,11 +2,11 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Clinical\PatientSummary\PatientEncounterSummaryQueryService;
-use common\components\Clinical\PatientSummary\PatientEncounterSummaryUiFormatter;
-use common\components\Person\Representation\Enum\RepresentationPermission;
-use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
-use common\components\Ui\UiScreenService;
+use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryQueryService;
+use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryUiFormatter;
+use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\components\Platform\Ui\UiScreenService;
 use common\models\Person\PersonRelatedAuditLog;
 use Yii;
 use frontend\modules\api\v1\controllers\BaseController;

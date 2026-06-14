@@ -3,7 +3,7 @@
 namespace common\tests\unit\core\DataAccess;
 
 use Codeception\Test\Unit;
-use common\components\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
 
 class DataAccessCatalogTest extends Unit
 {

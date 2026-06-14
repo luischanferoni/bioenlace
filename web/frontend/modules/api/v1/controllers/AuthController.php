@@ -5,14 +5,14 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\UnauthorizedHttpException;
-use common\components\Assistant\UiActions\AllowedRoutesResolver;
+use common\components\Platform\Assistant\UiActions\AllowedRoutesResolver;
 use common\models\BioenlaceDbManager;
 use common\models\ProfesionalEfectorServicio;
 use common\models\User;
 use common\models\Person\Persona;
 use common\components\DiditClient;
-use common\components\Core\Permission\BioenlaceAccessChecker;
-use common\components\Core\Permission\RbacRoleQueryService;
+use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
+use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 

@@ -2,8 +2,8 @@
 
 namespace common\models\Person;
 
-use common\components\Person\Representation\Enum\PersonRelatedStatus;
-use common\components\Person\Representation\Enum\RepresentationRegime;
+use common\components\Domain\Person\Representation\Enum\PersonRelatedStatus;
+use common\components\Domain\Person\Representation\Enum\RepresentationRegime;
 use yii\db\ActiveRecord;
 
 /**
@@ -62,7 +62,7 @@ class PersonRelated extends ActiveRecord
     public function getActiveConsent(): \yii\db\ActiveQuery
     {
         return $this->hasOne(PersonDelegationConsent::class, ['person_related_id' => 'id'])
-            ->andWhere(['status' => \common\components\Person\Representation\Enum\DelegationConsentStatus::ACTIVE]);
+            ->andWhere(['status' => \common\components\Domain\Person\Representation\Enum\DelegationConsentStatus::ACTIVE]);
     }
 
     public static function findActiveLink(int $actorPersonaId, int $subjectPersonaId): ?self

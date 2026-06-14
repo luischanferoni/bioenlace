@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Clinical\Enum\EncounterStatus;
+use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Efector;

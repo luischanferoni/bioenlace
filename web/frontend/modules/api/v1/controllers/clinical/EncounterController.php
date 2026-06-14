@@ -3,12 +3,12 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
-use common\components\Clinical\Assistant\ClinicalEncounterEntry;
-use common\components\Clinical\Dto\MedicationRequestDto;
-use common\components\Clinical\Dto\ServiceRequestDto;
-use common\components\Clinical\Service\MedicationRequestService;
-use common\components\Clinical\Service\ServiceRequestService;
-use common\components\Ui\UiScreenService;
+use common\components\Domain\Clinical\Assistant\ClinicalEncounterEntry;
+use common\components\Domain\Clinical\Dto\MedicationRequestDto;
+use common\components\Domain\Clinical\Dto\ServiceRequestDto;
+use common\components\Domain\Clinical\Service\MedicationRequestService;
+use common\components\Domain\Clinical\Service\ServiceRequestService;
+use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 
 /**

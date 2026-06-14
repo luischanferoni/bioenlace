@@ -2,7 +2,7 @@
 
 ## Componente: `AICostTracker`
 
-Ubicación: `web/common/components/Ai/Cost/AICostTracker.php`
+Ubicación: `web/common/components/Platform/Ai/Cost/AICostTracker.php`
 
 | Métrica | Cuándo se incrementa |
 |---------|----------------------|

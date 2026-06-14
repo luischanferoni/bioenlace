@@ -2,8 +2,8 @@
 
 namespace common\models;
 
-use common\components\Clinical\Enum\RequestStatus;
-use common\components\Clinical\Service\ReferralRequestService;
+use common\components\Domain\Clinical\Enum\RequestStatus;
+use common\components\Domain\Clinical\Service\ReferralRequestService;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
 use common\models\Terminology\Snomed\SnomedProcedimientos;

@@ -19,7 +19,7 @@
 | Área | Ubicación |
 |------|-----------|
 | Modelos | `common/models/Clinical/ElectronicPrescription*.php` |
-| Servicios | `common/components/Clinical/Prescription/` |
+| Servicios | `common/components/Domain/Clinical/Prescription/` |
 | API | `clinical/ElectronicPrescriptionController` |
 | Docs operativas | `web/docs/receta-electronica/` (al cerrar fases) |
 

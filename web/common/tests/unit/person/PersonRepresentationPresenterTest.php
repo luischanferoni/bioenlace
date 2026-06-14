@@ -3,9 +3,9 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Person\Representation\Enum\PersonRelatedStatus;
-use common\components\Person\Representation\Enum\RepresentationRegime;
-use common\components\Person\Representation\Service\PersonRepresentationPresenter;
+use common\components\Domain\Person\Representation\Enum\PersonRelatedStatus;
+use common\components\Domain\Person\Representation\Enum\RepresentationRegime;
+use common\components\Domain\Person\Representation\Service\PersonRepresentationPresenter;
 use common\models\Person\PersonRelated;
 use common\models\Person\RelationshipType;
 

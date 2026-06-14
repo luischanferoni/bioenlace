@@ -11,7 +11,7 @@ use yii\filters\VerbFilter;
 use frontend\filters\SisseActionFilter;
 use common\models\EncuestaParchesMamarios;
 use common\models\PersonasAntecedente;
-use common\components\Clinical\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaAtencionesEnfermeria;
 

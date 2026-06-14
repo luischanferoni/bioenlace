@@ -3,7 +3,7 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Person\Representation\Service\PersonRepresentationPreferenceService;
+use common\components\Domain\Person\Representation\Service\PersonRepresentationPreferenceService;
 
 class PersonRepresentationPreferenceServiceTest extends Unit
 {

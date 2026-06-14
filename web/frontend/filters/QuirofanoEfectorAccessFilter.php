@@ -5,7 +5,7 @@ namespace frontend\filters;
 use Yii;
 use yii\base\ActionFilter;
 use yii\web\ForbiddenHttpException;
-use common\components\Scheduling\Service\Quirofano\UserEfectorAccess as QuirofanoUserEfectorAccess;
+use common\components\Domain\Scheduling\Service\Quirofano\UserEfectorAccess as QuirofanoUserEfectorAccess;
 
 /**
  * Exige id_efector en GET (o id_efector de sesión) y que el usuario tenga asignación profesional en ese efector.

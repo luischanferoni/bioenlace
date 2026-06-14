@@ -1,6 +1,6 @@
 ---
 description: Routing del asistente — metadata declarativa, sin hardcode de intents en PHP/prompts
-globs: web/common/components/Assistant/**/*.php,web/common/components/Assistant/SubIntentEngine/schemas/**
+globs: web/common/components/Platform/Assistant/**/*.php,web/common/components/Platform/Assistant/SubIntentEngine/schemas/**
 alwaysApply: false
 ---
 

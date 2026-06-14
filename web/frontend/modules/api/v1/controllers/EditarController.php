@@ -5,8 +5,8 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
-use common\components\Core\DataAccess\DataAccessEditUiService;
-use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
+use common\components\Platform\Core\DataAccess\DataAccessEditUiService;
+use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
 
 /**
  * Edición dispersa staff (superficies / aspectos / sujeto vía listar).

@@ -2,9 +2,9 @@
 
 namespace console\controllers;
 
-use common\components\Clinical\CareCohort\Service\CareFollowupTouchpointProcessor;
-use common\components\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Clinical\CareCohort\Service\CarePackJobProcessor;
+use common\components\Domain\Clinical\CareCohort\Service\CareFollowupTouchpointProcessor;
+use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Service\CarePackJobProcessor;
 use common\models\Clinical\CarePackJob;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -52,7 +52,7 @@ class CarePackController extends Controller
     /** Solo poll de jobs Vertex ya enviados. */
     public function actionPollVertex($limit = 20): int
     {
-        $n = (new \common\components\Clinical\CareCohort\Batch\CarePackVertexBatchPoller())->poll((int) $limit);
+        $n = (new \common\components\Domain\Clinical\CareCohort\Batch\CarePackVertexBatchPoller())->poll((int) $limit);
         $this->stdout("care-pack poll-vertex: completed={$n}\n");
 
         return ExitCode::OK;

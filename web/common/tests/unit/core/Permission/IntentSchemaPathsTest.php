@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\core\Permission;
 
-use common\components\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use Codeception\Test\Unit;
 
 class IntentSchemaPathsTest extends Unit

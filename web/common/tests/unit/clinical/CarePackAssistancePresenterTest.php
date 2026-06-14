@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Clinical\CareCohort\Presentation\CarePackAssistancePresenter;
+use common\components\Domain\Clinical\CareCohort\Presentation\CarePackAssistancePresenter;
 use Codeception\Test\Unit;
 
 class CarePackAssistancePresenterTest extends Unit

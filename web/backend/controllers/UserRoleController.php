@@ -3,7 +3,7 @@
 namespace backend\controllers;
 
 use common\models\User;
-use common\components\Core\Permission\RbacRoleQueryService;
+use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;

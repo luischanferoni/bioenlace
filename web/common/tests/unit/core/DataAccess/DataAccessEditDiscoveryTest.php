@@ -3,9 +3,9 @@
 namespace common\tests\unit\core\DataAccess;
 
 use Codeception\Test\Unit;
-use common\components\Core\DataAccess\AttributeGroupCatalog;
-use common\components\Core\DataAccess\DataAccessEditDiscoveryService;
-use common\components\Core\DataAccess\PermissionContext;
+use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Platform\Core\DataAccess\DataAccessEditDiscoveryService;
+use common\components\Platform\Core\DataAccess\PermissionContext;
 
 class DataAccessEditDiscoveryTest extends Unit
 {

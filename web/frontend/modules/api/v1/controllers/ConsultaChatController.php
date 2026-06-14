@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use common\models\ConsultaChatMessage;
-use common\components\Clinical\Service\SecureMediaService;
+use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 use Yii;

@@ -7,18 +7,18 @@ use yii\web\Controller;
 use yii\web\BadRequestHttpException;
 use yii\helpers\ArrayHelper;
 
-use common\components\Core\Permission\BioenlaceAccessChecker;
-use common\components\Core\Permission\BioenlaceSessionPermissions;
+use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
+use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use common\models\User;
 
-use common\components\Clinical\Inpatient\Service\InternacionMapaWebContext;
+use common\components\Domain\Clinical\Inpatient\Service\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;
 use common\models\Efector;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
-use common\components\Organization\Service\SesionOperativa\SesionOperativaService;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
+use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use Firebase\JWT\JWT;
 
 class SiteController extends Controller

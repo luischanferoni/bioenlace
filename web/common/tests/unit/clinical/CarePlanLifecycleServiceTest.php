@@ -2,11 +2,11 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Clinical\Enum\CarePlanCategory;
-use common\components\Clinical\Enum\CarePlanStatus;
-use common\components\Clinical\Service\CarePlanLifecycleService;
-use common\components\Clinical\Service\CarePlanService;
-use common\components\Clinical\Support\CarePlanProgramMeta;
+use common\components\Domain\Clinical\Enum\CarePlanCategory;
+use common\components\Domain\Clinical\Enum\CarePlanStatus;
+use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\Service\CarePlanService;
+use common\components\Domain\Clinical\Support\CarePlanProgramMeta;
 use common\models\Clinical\CarePlan;
 use Codeception\Test\Unit;
 

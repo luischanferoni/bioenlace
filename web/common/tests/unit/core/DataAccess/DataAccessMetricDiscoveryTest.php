@@ -3,8 +3,8 @@
 namespace common\tests\unit\core\DataAccess;
 
 use Codeception\Test\Unit;
-use common\components\Core\DataAccess\AttributeGroupCatalog;
-use common\components\Core\DataAccess\DataAccessMetricDiscoveryService;
+use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Platform\Core\DataAccess\DataAccessMetricDiscoveryService;
 
 class DataAccessMetricDiscoveryTest extends Unit
 {
@@ -19,7 +19,7 @@ class DataAccessMetricDiscoveryTest extends Unit
     public function testResolveMetricIdFromAssistantKeywords(): void
     {
         $svc = new DataAccessMetricDiscoveryService();
-        $ctx = new \common\components\Core\DataAccess\PermissionContext(0, ['AdminEfector']);
+        $ctx = new \common\components\Platform\Core\DataAccess\PermissionContext(0, ['AdminEfector']);
         $id = $svc->resolveMetricId(
             DataAccessMetricDiscoveryService::CHANNEL_INFO,
             '¿Cuántos profesionales hay en el centro?',

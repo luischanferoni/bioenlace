@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\assistant;
 
-use common\components\Assistant\Chat\Channels\Conversational\ConversationalHistoryWindow;
+use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalHistoryWindow;
 use common\models\AsistenteInteraccion;
 
 class ConversationalHistoryWindowTest extends \Codeception\Test\Unit

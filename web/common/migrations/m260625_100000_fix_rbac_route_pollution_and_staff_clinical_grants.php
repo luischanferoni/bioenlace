@@ -1,7 +1,7 @@
 <?php
 
-use common\components\Core\Permission\CatalogPermissionSyncService;
-use common\components\Core\Permission\RbacRouteGhostInheritanceService;
+use common\components\Platform\Core\Permission\CatalogPermissionSyncService;
+use common\components\Platform\Core\Permission\RbacRouteGhostInheritanceService;
 use yii\db\Migration;
 use yii\db\Query;
 

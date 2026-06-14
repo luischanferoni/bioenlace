@@ -156,6 +156,6 @@ Implementación: `PersonRepresentationNotifyRecipientService`.
 
 ## Referencia técnica
 
-- Dominio: `common/components/Person/Representation/`
+- Dominio: `common/components/Domain/Person/Representation/`
 - API: `PersonRepresentationController`
 - Autorización transversal: `PersonRepresentationSubjectService`

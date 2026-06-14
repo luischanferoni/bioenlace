@@ -6,7 +6,7 @@ use Yii;
 use yii\web\Controller;
 use yii\web\UploadedFile;
 
-use common\components\Core\Http\UserRequest;
+use common\components\Platform\Core\Http\UserRequest;
 
 use common\models\DocumentosExternos;
 use common\models\Adjunto;

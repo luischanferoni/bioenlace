@@ -16,7 +16,7 @@ Los tokens del bloque cacheado se facturan a **~10 %** del precio de input en Ge
 
 ## Simulación local (implementado)
 
-`web/common/components/Ai/Providers/Google/VertexContextCacheSimulator.php`:
+`web/common/components/Platform/Ai/Providers/Google/VertexContextCacheSimulator.php`:
 
 - Parte **estable** → `systemInstruction` (instrucciones, esquema JSON, reglas).
 - Parte **variable** → `contents[0].parts` (mensaje del usuario, transcript, etc.).

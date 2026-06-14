@@ -3,11 +3,11 @@
 namespace common\tests\unit\core\DataAccess;
 
 use Codeception\Test\Unit;
-use common\components\Core\DataAccess\AttributeGroupCatalog;
-use common\components\Core\DataAccess\Edit\EditSparseAspectIds;
-use common\components\Core\DataAccess\Edit\EditSparseConfirmPresenter;
-use common\components\Core\DataAccess\Edit\EditSparseFieldBuilder;
-use common\components\Core\DataAccess\PermissionContext;
+use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Platform\Core\DataAccess\Edit\EditSparseAspectIds;
+use common\components\Platform\Core\DataAccess\Edit\EditSparseConfirmPresenter;
+use common\components\Platform\Core\DataAccess\Edit\EditSparseFieldBuilder;
+use common\components\Platform\Core\DataAccess\PermissionContext;
 
 class EditSparsePhase2Test extends Unit
 {

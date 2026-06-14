@@ -2,8 +2,8 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Clinical\Enum\CarePlanStatus;
-use common\components\Clinical\Service\CarePlanService;
+use common\components\Domain\Clinical\Enum\CarePlanStatus;
+use common\components\Domain\Clinical\Service\CarePlanService;
 use Codeception\Test\Unit;
 
 class CarePlanServiceTest extends Unit

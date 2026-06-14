@@ -3,7 +3,7 @@
 namespace common\tests\unit\permission;
 
 use Codeception\Test\Unit;
-use common\components\Core\Permission\IntentManifestIndex;
+use common\components\Platform\Core\Permission\IntentManifestIndex;
 
 /**
  * Pasos open_ui de flows deben indexarse para autorización vía intent padre.

@@ -2,8 +2,8 @@
 
 use yii\helpers\Html;
 use yii\helpers\Url;
-use common\components\Clinical\PatientHistoriaUrl;
-use common\components\Clinical\Inpatient\Service\InternacionMapaCamasService;
+use common\components\Domain\Clinical\PatientHistoriaUrl;
+use common\components\Domain\Clinical\Inpatient\Service\InternacionMapaCamasService;
 use common\models\Clinical\Encounter;
 
 /** @var array<string, mixed>|null $mapa */

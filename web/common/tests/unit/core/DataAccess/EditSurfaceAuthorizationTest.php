@@ -3,10 +3,10 @@
 namespace common\tests\unit\core\DataAccess;
 
 use Codeception\Test\Unit;
-use common\components\Core\DataAccess\AttributeGroupCatalog;
-use common\components\Core\DataAccess\AttributePermissionEvaluator;
-use common\components\Core\DataAccess\PermissionContext;
-use common\components\Core\DataAccess\QueryOperation;
+use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Platform\Core\DataAccess\AttributePermissionEvaluator;
+use common\components\Platform\Core\DataAccess\PermissionContext;
+use common\components\Platform\Core\DataAccess\QueryOperation;
 
 class EditSurfaceAuthorizationTest extends Unit
 {

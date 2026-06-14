@@ -2,12 +2,12 @@
 
 namespace backend\controllers;
 
-use common\components\Core\Permission\CatalogPermissionSyncService;
-use common\components\Core\Permission\PermissionCatalogService;
-use common\components\Core\Permission\PermissionRolesAssignmentService;
-use common\components\Core\Permission\RolePermissionAssignmentService;
-use common\components\Core\Permission\RolePermissionMatrixService;
-use common\components\Core\Permission\Validation\CatalogIntegrityService;
+use common\components\Platform\Core\Permission\CatalogPermissionSyncService;
+use common\components\Platform\Core\Permission\PermissionCatalogService;
+use common\components\Platform\Core\Permission\PermissionRolesAssignmentService;
+use common\components\Platform\Core\Permission\RolePermissionAssignmentService;
+use common\components\Platform\Core\Permission\RolePermissionMatrixService;
+use common\components\Platform\Core\Permission\Validation\CatalogIntegrityService;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\web\Controller;

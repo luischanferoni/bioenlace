@@ -3,10 +3,10 @@
 namespace common\tests\unit\core\Permission;
 
 use Codeception\Test\Unit;
-use common\components\Core\Permission\Domain\DomainOperationContext;
-use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Core\Permission\Domain\DomainOperationPolicyRegistry;
-use common\components\Organization\Service\Authorization\OrganizationPesOwnPolicy;
+use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
+use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyRegistry;
+use common\components\Domain\Organization\Service\Authorization\OrganizationPesOwnPolicy;
 use common\models\ProfesionalEfectorServicio;
 
 class OrganizationPesDomainPolicyTest extends Unit

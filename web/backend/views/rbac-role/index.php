@@ -38,7 +38,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <td><?= Html::encode((string) $role->description) ?></td>
                         <td class="text-end text-nowrap">
                             <?= Html::a('Editar', ['update', 'name' => $role->name], ['class' => 'btn btn-outline-primary btn-sm']) ?>
-                            <?php if (!in_array($role->name, \common\components\Core\Permission\RbacRoleAdminService::PROTECTED_ROLE_NAMES, true)): ?>
+                            <?php if (!in_array($role->name, \common\components\Platform\Core\Permission\RbacRoleAdminService::PROTECTED_ROLE_NAMES, true)): ?>
                                 <?= Html::beginForm(['delete', 'name' => $role->name], 'post', ['class' => 'd-inline']) ?>
                                 <?= Html::submitButton('Eliminar', [
                                     'class' => 'btn btn-outline-danger btn-sm',

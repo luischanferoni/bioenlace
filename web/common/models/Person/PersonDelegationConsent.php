@@ -2,7 +2,7 @@
 
 namespace common\models\Person;
 
-use common\components\Person\Representation\Enum\DelegationConsentStatus;
+use common\components\Domain\Person\Representation\Enum\DelegationConsentStatus;
 use yii\db\ActiveRecord;
 
 /**

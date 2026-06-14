@@ -6,15 +6,13 @@ Código compartido por API v1, consola, jobs y (legacy) frontend Yii.
 
 | Dominio | `components/` | `models/` |
 |---------|---------------|-----------|
-| **Clinical** | `Clinical/` (Service, Workflow, `Emergency/`, `Inpatient/`, Prescription, Legacy, …) | `Clinical/` |
-| **Scheduling** | `Scheduling/Service/` (turnos, `Service/Quirofano/`) | `Scheduling/Turno.php` (+ alias `models/Turno.php`) |
-| **Person** | `Person/Service/` | `Person/Persona.php` (+ alias `models/Persona.php`) |
-| **Organization** | `Organization/Service/` (PES, sesión operativa, efectores) | `ProfesionalEfectorServicio`, … |
-| **Core** | `Core/Service/` (push, notificaciones, acciones comunes) | — |
-| **Ui** | `Ui/` (`UiScreenService`, `UiDefinitionTemplateManager`) | — |
-| **Assistant** | `Assistant/` (+ `Assistant/Service/` hints) | — |
-| **Terminology** | `Terminology/` | `Terminology/Snomed/*` (+ alias `models/snomed/*`) |
-| **Ai**, **Integrations**, **Infra**, **Text**, **Logging** | transversal | — |
+| **Clinical** | `Domain/Clinical/` (Service, Workflow, `Emergency/`, `Inpatient/`, Prescription, Legacy, `Text/`, …) | `Clinical/` |
+| **Scheduling** | `Domain/Scheduling/Service/` (turnos, `Service/Quirofano/`) | `Scheduling/Turno.php` (+ alias `models/Turno.php`) |
+| **Person** | `Domain/Person/Service/` | `Person/Persona.php` (+ alias `models/Persona.php`) |
+| **Organization** | `Domain/Organization/Service/` (PES, sesión operativa, efectores) | `ProfesionalEfectorServicio`, … |
+| **Plataforma** | `Platform/Core/`, `Platform/Ui/`, `Platform/Assistant/`, `Platform/Ai/`, `Platform/Infra/` | — |
+| **Terminology** | `Domain/Terminology/` | `Terminology/Snomed/*` (+ alias `models/snomed/*`) |
+| **Integrations** | `Domain/Integrations/` | — |
 
 ## Reglas
 
@@ -22,7 +20,7 @@ Código compartido por API v1, consola, jobs y (legacy) frontend Yii.
 2. **No** crear código bajo `components/Services/` ni carpetas top-level clínicas sueltas (`Emergency/`, `Inpatient/` → van bajo `Clinical/`).
 3. **No** lógica de negocio en controllers API; usar `*/Service/` del dominio.
 4. Código nuevo de modelos: preferir `models/{Dominio}/` y alias `@deprecated` en raíz solo si hace falta compatibilidad.
-5. Legacy consulta (IA): `components/Clinical/Legacy/ConsultaProcesamientoService.php`.
+5. Legacy consulta (IA): `components/Domain/Clinical/Legacy/ConsultaProcesamientoService.php`.
 6. API clínica: `/api/v1/clinical/...`.
 
 ## Migración Clinical

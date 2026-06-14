@@ -2,8 +2,8 @@
 
 namespace common\models\DataAccess;
 
-use common\components\Core\DataAccess\Attribute\DatabaseAttributeDefinitionSource;
-use common\components\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Platform\Core\DataAccess\Attribute\DatabaseAttributeDefinitionSource;
+use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
 use yii\db\ActiveRecord;
 
 /**

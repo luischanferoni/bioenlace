@@ -37,7 +37,7 @@ Si el comando no existe en el entorno, usar tests unitarios (abajo).
 
 ## Componente `AICostTracker`
 
-`web/common/components/Ai/Cost/AICostTracker.php`
+`web/common/components/Platform/Ai/Cost/AICostTracker.php`
 
 | Modo | Activación | Qué mide |
 |------|------------|----------|

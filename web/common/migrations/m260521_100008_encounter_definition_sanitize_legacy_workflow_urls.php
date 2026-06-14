@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Clinical\EncounterDefinitionWorkflowSanitizer;
+use common\components\Domain\Clinical\EncounterDefinitionWorkflowSanitizer;
 use yii\db\Migration;
 use yii\db\Query;
 

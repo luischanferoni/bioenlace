@@ -2,15 +2,15 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Clinical\Dto\ElectronicPrescriptionDto;
-use common\components\Clinical\Prescription\Enum\PrescriptionLegalStatus;
-use common\components\Clinical\Prescription\Service\ElectronicPrescriptionPdfService;
-use common\components\Clinical\Prescription\Service\ElectronicPrescriptionPresentationService;
-use common\components\Clinical\Prescription\Service\ElectronicPrescriptionService;
-use common\components\Person\Representation\Enum\RepresentationPermission;
-use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\components\Domain\Clinical\Dto\ElectronicPrescriptionDto;
+use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
+use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionPdfService;
+use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionPresentationService;
+use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionService;
+use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
-use common\components\Ui\UiScreenService;
+use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;

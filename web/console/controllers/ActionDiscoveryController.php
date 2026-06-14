@@ -4,8 +4,8 @@ namespace console\controllers;
 
 use Yii;
 use yii\console\Controller;
-use common\components\Assistant\UiActions\ActionDiscoveryService;
-use common\components\Assistant\UiActions\ActionMappingService;
+use common\components\Platform\Assistant\UiActions\ActionDiscoveryService;
+use common\components\Platform\Assistant\UiActions\ActionMappingService;
 
 /**
  * Controlador de consola para descubrir y actualizar acciones del sistema

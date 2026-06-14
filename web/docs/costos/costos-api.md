@@ -1,4 +1,4 @@
-﻿# Costos – Uso de APIs
+# Costos – Uso de APIs
 
 Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollamadas), alineados con **Bioenlace en producción**:
 
@@ -103,7 +103,7 @@ Detalle de cada tipo: [implícita](./estrategias-reduccion/context-caching-impli
 
 ### Contexto clínico en prompts IA
 
-Implementación: `common/components/Clinical/AiContext/PatientAiContextBuilder.php` (`patient_ai_context` en `params.php`).
+Implementación: `common/components/Domain/Clinical/AiContext/PatientAiContextBuilder.php` (`patient_ai_context` en `params.php`).
 
 | Flujo | Perfil | Qué incluye | Tokens input extra (ref.) |
 |-------|--------|-------------|---------------------------|

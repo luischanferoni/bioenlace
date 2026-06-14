@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Clinical\Emergency\Service\GuardiaMetricsMaterializeService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaMetricsMaterializeService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 

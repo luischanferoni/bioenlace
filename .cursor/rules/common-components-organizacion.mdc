@@ -1,29 +1,36 @@
 ---
-description: Organización de web/common/components — leer doc antes de cambiar
+description: Organización de web/common/components — Platform vs Domain
 globs:
   - web/common/components/**
 alwaysApply: false
 ---
 
-# common/components: organización
+# common/components: Platform vs Domain
 
 **Antes de crear, mover o refactorizar** cualquier archivo bajo `web/common/components/`, leer:
 
 - [web/docs/arquitectura/common-components.md](web/docs/arquitectura/common-components.md)
 - [web/common/components/README.md](web/common/components/README.md)
 
+## Dos capas
+
+| Capa | Ruta | Qué va |
+|------|------|--------|
+| **Motores** | `web/common/components/Platform/` | Assistant, Core, Ai, Ui, Infra, Legacy — agnóstico del rubro |
+| **Rubro salud** | `web/common/components/Domain/` | Clinical, Scheduling, Person, Organization, Integrations, Terminology |
+
+Metadata producto: `web/common/metadata/bioenlace/`. Cableado: `web/common/config/product-registries.php`.
+
 ## Reglas
 
-- **Agrupar por dominio**. Evitar carpetas top-level sueltas sin dominio claro.
-- **Dominios** (`Clinical/`, `Scheduling/`, `Person/`, `Organization/`, `Core/`, `Ui/`): lógica de negocio en `*/Service/` (o `{Subdominio}/Service/`). **No** usar `Services/` (eliminado).
-- **Clinical**: guardia/urgencias → `Clinical/Emergency/`; internación operativa (mapa, ingreso, alta) → `Clinical/Inpatient/`; FHIR clínico de internación → `Clinical/Specialty/Inpatient/` (no mezclar).
-- **Quirófano** → `Scheduling/Service/Quirofano/`.
-- **`Assistant/`**: todo el stack del asistente. Documentar en `Assistant/README.md`.
-- **`Integrations/`**: sistemas externos. **`Ai/`**, **`Infra/`**, **`Text/`**, **`Terminology/`**, **`Logging/`**: transversal.
+- **Negocio** solo bajo `Domain/…/Service/` (o subdominio). **No** `Services/` (eliminado).
+- **Clinical**: guardia → `Domain/Clinical/Emergency/`; internación operativa → `Domain/Clinical/Inpatient/`.
+- **Quirófano** → `Domain/Scheduling/Service/Quirofano/`.
+- **`Platform/Assistant/`**: motores; el rubro en metadata + registries, no en switches PHP.
 - **Services sin HTTP**: no `*HttpException`, HTML ni flash en `*/Service/`.
 
 ## Regla práctica
 
-- Cambio en asistente → `web/common/components/Assistant/` + [Assistant/README.md](web/common/components/Assistant/README.md).
-- Cambio en guardia/triage → `Clinical/Emergency/`.
-- Cambio en mapa camas / ingreso internación → `Clinical/Inpatient/`.
+- Asistente (motor) → `Platform/Assistant/` + [Assistant/README.md](web/common/components/Platform/Assistant/README.md).
+- Guardia/triage → `Domain/Clinical/Emergency/`.
+- Mapa camas / ingreso → `Domain/Clinical/Inpatient/`.

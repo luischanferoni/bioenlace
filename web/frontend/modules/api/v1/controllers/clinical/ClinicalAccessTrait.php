@@ -2,12 +2,12 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Clinical\Inpatient\Service\InternacionAccessService;
-use common\components\Clinical\Service\Authorization\EncounterAccessService;
-use common\components\Organization\Service\Authorization\EfectorAccessService;
-use common\components\Core\Permission\Domain\DomainOperationAuthorizer;
-use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Clinical\Inpatient\Service\InternacionAccessService;
+use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;
+use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
+use common\components\Platform\Core\Permission\Domain\DomainOperationAuthorizer;
+use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\SegNivelInternacion;

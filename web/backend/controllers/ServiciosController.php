@@ -8,7 +8,7 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\Json;
 use yii\helpers\ArrayHelper;
-use common\components\Core\Permission\RbacRoleQueryService;
+use common\components\Platform\Core\Permission\RbacRoleQueryService;
 
 
 use common\models\Servicio;

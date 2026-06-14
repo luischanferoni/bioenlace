@@ -5,8 +5,8 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
-use common\components\Person\Representation\Service\PatientDelegationService;
-use common\components\Person\Representation\Service\VerifiedGuardianshipService;
+use common\components\Domain\Person\Representation\Service\PatientDelegationService;
+use common\components\Domain\Person\Representation\Service\VerifiedGuardianshipService;
 
 /**
  * Representación operativa paciente — régimen A (tutela), régimen B (delegación) y staff.
@@ -267,7 +267,7 @@ class PersonRepresentationController extends BaseController
 
         $params = $this->mergedParams();
         $subjectRaw = $params['subject_persona_id'] ?? $params['id_persona_sujeto'] ?? null;
-        $svc = new \common\components\Person\Representation\Service\PersonRepresentationSubjectService();
+        $svc = new \common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService();
 
         if ($subjectRaw === null || $subjectRaw === '' || (int) $subjectRaw <= 0) {
             $svc->establecerSujetoEnSesion(null);

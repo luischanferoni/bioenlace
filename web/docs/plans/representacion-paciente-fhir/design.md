@@ -157,10 +157,10 @@ Plantilla en metadata; no enumerar en orquestadores.
 
 | Capa | Ruta |
 |------|------|
-| Dominio | `common/components/Person/Representation/` |
+| Dominio | `common/components/Domain/Person/Representation/` |
 | Modelos | `common/models/Person/PersonRelated.php`, … |
 | API | `frontend/modules/api/v1/controllers/PersonRepresentationController.php` |
-| Metadata permisos | `common/components/Person/Representation/metadata/representation_permissions_v1.yaml` |
+| Metadata permisos | `common/components/Domain/Person/Representation/metadata/representation_permissions_v1.yaml` |
 | Migración | `common/migrations/m*_person_related_fhir.php` |
 
 ## Reglas de arquitectura proyecto

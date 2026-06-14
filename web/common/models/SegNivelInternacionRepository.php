@@ -2,8 +2,8 @@
 
 namespace common\models;
 
-use common\components\Clinical\Service\CarePlanLifecycleService;
-use common\components\Clinical\Specialty\Inpatient\InpatientEncounterAuxService;
+use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\Specialty\Inpatient\InpatientEncounterAuxService;
 use common\models\Clinical\Encounter;
 use Yii;
 
@@ -78,7 +78,7 @@ class SegNivelInternacionRepository
             $transaction->commit();
 
             try {
-                (new \common\components\Clinical\Service\CarePlanLifecycleService())
+                (new \common\components\Domain\Clinical\Service\CarePlanLifecycleService())
                     ->completeOnDischarge($model);
             } catch (\Throwable $e) {
                 Yii::error(

@@ -71,7 +71,7 @@ return [
         'default' => 'sianlabs',
         'connectors' => [
             'sianlabs' => [
-                'class' => \common\components\Integrations\Laboratory\Connector\SianlabsFhirConnector::class,
+                'class' => \common\components\Domain\Integrations\Laboratory\Connector\SianlabsFhirConnector::class,
                 'baseUrl' => 'https://sianlabs.msalsgo.gob.ar/api/fhir/',
                 'tokenUrl' => 'https://sianlabs.msalsgo.gob.ar/oauth/token',
                 'clientId' => null,
@@ -90,10 +90,10 @@ return [
         'verificationPublicBaseUrl' => null,
         'connectors' => [
             'null' => [
-                'class' => \common\components\Integrations\Prescription\Connector\NullRecetaDigitalRepositoryConnector::class,
+                'class' => \common\components\Domain\Integrations\Prescription\Connector\NullRecetaDigitalRepositoryConnector::class,
             ],
             'msal-rdi' => [
-                'class' => \common\components\Integrations\Prescription\Connector\HttpRecetaDigitalRepositoryConnector::class,
+                'class' => \common\components\Domain\Integrations\Prescription\Connector\HttpRecetaDigitalRepositoryConnector::class,
                 'enabled' => false,
                 'baseUrl' => null,
                 'tokenUrl' => null,
@@ -118,7 +118,7 @@ return [
     /**
      * Metadata declarativa del producto (intents, reglas NL, permisos dominio, panel home).
      * Para otro rubro: apuntar a otra carpeta bajo common/metadata/.
-     * Default: @common/metadata/bioenlace (resuelto en {@see \common\components\Core\Product\ProductMetadataPaths}).
+     * Default: @common/metadata/bioenlace (resuelto en {@see \common\components\Platform\Core\Product\ProductMetadataPaths}).
      */
     // 'productMetadataDir' => dirname(__DIR__) . '/metadata/bioenlace',
 ];

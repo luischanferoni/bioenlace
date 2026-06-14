@@ -3,13 +3,13 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Clinical\CareCohort\Service\CarePackEncounterStaffService;
-use common\components\Clinical\Service\AppointmentReasonBatchService;
-use common\components\Clinical\Service\AppointmentReasonClinicalInsightsService;
-use common\components\Clinical\Service\AppointmentReasonWindowService;
-use common\components\Clinical\Service\EncounterAppointmentReasonLookupService;
-use common\components\Clinical\Home\StaffClinicalDayListService;
+use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
+use common\components\Domain\Clinical\CareCohort\Service\CarePackEncounterStaffService;
+use common\components\Domain\Clinical\Service\AppointmentReasonBatchService;
+use common\components\Domain\Clinical\Service\AppointmentReasonClinicalInsightsService;
+use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Service\EncounterAppointmentReasonLookupService;
+use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
@@ -18,7 +18,7 @@ use common\models\Clinical\AllergyIntolerance;
 use common\models\PersonasAntecedente;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 use common\models\ConsultaMotivosMessage;
-use common\components\Person\Service\PersonaSignosVitalesService;
+use common\components\Domain\Person\Service\PersonaSignosVitalesService;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 /**
  * Historia clínica staff (listado del día: GET /api/v1/home/panel).

@@ -2,7 +2,7 @@
 
 namespace backend\controllers;
 
-use common\components\Core\Permission\RbacRoleAdminService;
+use common\components\Platform\Core\Permission\RbacRoleAdminService;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\web\Controller;

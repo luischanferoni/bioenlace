@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Core\Permission\CatalogPermissionSyncService;
+use common\components\Platform\Core\Permission\CatalogPermissionSyncService;
 use yii\db\Migration;
 use yii\db\Query;
 

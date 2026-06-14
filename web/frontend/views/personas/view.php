@@ -7,7 +7,7 @@ use yii\helpers\Url;
 use yii\bootstrap5\Modal;
 
 use common\models\User;
-use common\components\Core\Permission\BioenlaceGhostHtml;
+use common\components\Platform\Core\Permission\BioenlaceGhostHtml;
 
 use common\models\persona_telefono;
 use common\models\Tipo_telefono;

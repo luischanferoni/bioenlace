@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaAdminService;
+use common\components\Domain\Clinical\Inpatient\Service\InternacionEpicrisisPlantillaAdminService;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\ForbiddenHttpException;

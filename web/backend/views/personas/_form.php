@@ -10,7 +10,7 @@ use yii\helpers\Url;
 use common\models\Provincia;
 use common\models\Departamento;
 use common\models\Barrios;
-use common\components\Organization\Service\GeografiaDepdropService;
+use common\components\Domain\Organization\Service\GeografiaDepdropService;
 use kartik\depdrop\DepDrop;
 
 // se agregan las librerias google-maps para obtener las coordenadas

@@ -132,6 +132,6 @@ Catálogo: [catalogo-usos-ia.md](./catalogo-usos-ia.md)
 
 | Área | Ubicación |
 |------|-----------|
-| Dominio | `common/components/Clinical/CareCohort/` |
+| Dominio | `common/components/Domain/Clinical/CareCohort/` |
 | API | `frontend/modules/api/v1/controllers/CarePacksController.php` |
 | Consola | `console/controllers/CarePackController.php` |

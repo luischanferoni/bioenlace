@@ -3,8 +3,8 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Assistant\IntentEngine\IntentClassifier;
-use common\components\Assistant\IntentEngine\UiActionCatalogItem;
+use common\components\Platform\Assistant\IntentEngine\IntentClassifier;
+use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 class IntentClassifierStaffAgendaEditTest extends Unit
 {

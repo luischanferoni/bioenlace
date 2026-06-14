@@ -3,13 +3,13 @@
 namespace common\tests\unit\person;
 
 use Codeception\Test\Unit;
-use common\components\Person\Representation\Enum\DelegationConsentStatus;
-use common\components\Person\Representation\Enum\PersonRelatedStatus;
-use common\components\Person\Representation\Enum\PersonRelatedVerifiedBy;
-use common\components\Person\Representation\Enum\RepresentationPermission;
-use common\components\Person\Representation\Enum\RepresentationRegime;
-use common\components\Person\Representation\Service\PersonRepresentationAccessService;
-use common\components\Person\Representation\Service\RepresentationPermissionsCatalog;
+use common\components\Domain\Person\Representation\Enum\DelegationConsentStatus;
+use common\components\Domain\Person\Representation\Enum\PersonRelatedStatus;
+use common\components\Domain\Person\Representation\Enum\PersonRelatedVerifiedBy;
+use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Person\Representation\Enum\RepresentationRegime;
+use common\components\Domain\Person\Representation\Service\PersonRepresentationAccessService;
+use common\components\Domain\Person\Representation\Service\RepresentationPermissionsCatalog;
 use common\models\Person\PersonDelegationConsent;
 use common\models\Person\PersonRelated;
 

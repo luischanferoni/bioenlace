@@ -3,12 +3,12 @@
 namespace console\controllers;
 
 use common\components\CrearUsuarioDePruebaHelper;
-use common\components\Clinical\Laboratory\Service\LaboratoryDemoSeedService;
-use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
-use common\components\Clinical\CarePlan\Reminder\CarePlanReminderDemoTimingService;
-use common\components\Clinical\Prescription\Service\ElectronicPrescriptionDemoSeedService;
-use common\components\Clinical\Prescription\Support\PrescriptionDocumentSupport;
-use common\components\Organization\Service\Seed\MedicoMedGeneralEfectorSeedService;
+use common\components\Domain\Clinical\Laboratory\Service\LaboratoryDemoSeedService;
+use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
+use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderDemoTimingService;
+use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionDemoSeedService;
+use common\components\Domain\Clinical\Prescription\Support\PrescriptionDocumentSupport;
+use common\components\Domain\Organization\Service\Seed\MedicoMedGeneralEfectorSeedService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 use yii\db\Query;

@@ -21,7 +21,7 @@
 
 | Área | Ubicación |
 |------|-----------|
-| Dominio cohorte + packs | `common/components/Clinical/CareCohort/` |
+| Dominio cohorte + packs | `common/components/Domain/Clinical/CareCohort/` |
 | Tablas | migración `m260613_100000_care_cohort_packs` |
 | Cron / consola | `console/controllers/CarePackController.php` |
 | Hook cierre encounter | `EncounterLifecycleService::finalize` |

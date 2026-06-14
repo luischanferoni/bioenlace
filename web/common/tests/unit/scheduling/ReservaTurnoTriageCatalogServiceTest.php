@@ -3,7 +3,7 @@
 namespace common\tests\unit\scheduling;
 
 use Codeception\Test\Unit;
-use common\components\Scheduling\Service\ReservaTurnoTriageCatalogService;
+use common\components\Domain\Scheduling\Service\ReservaTurnoTriageCatalogService;
 
 class ReservaTurnoTriageCatalogServiceTest extends Unit
 {

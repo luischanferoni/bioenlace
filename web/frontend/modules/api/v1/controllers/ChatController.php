@@ -3,8 +3,8 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Assistant\Chat\ChatOrchestrator;
-use common\components\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Platform\Assistant\Chat\ChatOrchestrator;
+use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
 

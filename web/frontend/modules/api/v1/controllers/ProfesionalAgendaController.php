@@ -8,12 +8,12 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
-use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaConfigUiFlowService;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
-use common\components\Scheduling\Service\TurnoResolucionElecciones;
-use common\components\Scheduling\Service\TurnoResolucionService;
-use common\components\Ui\UiScreenService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaConfigUiFlowService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaApiService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
+use common\components\Domain\Scheduling\Service\TurnoResolucionElecciones;
+use common\components\Domain\Scheduling\Service\TurnoResolucionService;
+use common\components\Platform\Ui\UiScreenService;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 

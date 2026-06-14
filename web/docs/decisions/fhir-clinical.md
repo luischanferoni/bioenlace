@@ -39,4 +39,4 @@ Fecha de registro: 2026-05-20.
 ## Referencias
 
 - [planes-de-tratamiento.md](../producto/planes-de-tratamiento.md)
-- Código: `common/components/Clinical/`, `common/models/Clinical/`
+- Código: `common/components/Domain/Clinical/`, `common/models/Clinical/`

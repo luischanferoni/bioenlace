@@ -7,7 +7,7 @@ use common\models\DataAccess\DataAccessAttributeField;
 /* @var $this yii\web\View */
 /* @var $model common\models\DataAccess\DataAccessAttributeField */
 
-$entityGroups = (new \common\components\Core\DataAccess\AttributeGroupCatalog())->listEntityGroupOptions();
+$entityGroups = (new \common\components\Platform\Core\DataAccess\AttributeGroupCatalog())->listEntityGroupOptions();
 $model->config_json = $model->configJsonForForm();
 
 $form = ActiveForm::begin();

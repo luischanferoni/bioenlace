@@ -6,11 +6,11 @@
  */
 
 require __DIR__ . '/../../vendor/autoload.php';
-require_once __DIR__ . '/../../common/components/Assistant/Catalog/IntentSchemaPaths.php';
-require_once __DIR__ . '/../../common/components/Core/Permission/IntentPermissionResolver.php';
+require_once __DIR__ . '/../../common/components/Platform/Assistant/Catalog/IntentSchemaPaths.php';
+require_once __DIR__ . '/../../common/components/Platform/Core/Permission/IntentPermissionResolver.php';
 
-use common\components\Assistant\Catalog\IntentSchemaPaths;
-use common\components\Core\Permission\IntentPermissionResolver;
+use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Core\Permission\IntentPermissionResolver;
 use Symfony\Component\Yaml\Yaml;
 
 $dryRun = in_array('--dry-run', $argv ?? [], true);

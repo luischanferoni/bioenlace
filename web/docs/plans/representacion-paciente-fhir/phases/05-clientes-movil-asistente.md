@@ -42,7 +42,7 @@ Al cambiar sujeto: `subject_persona_id` en turnos, care plans, pre-consulta y se
 ## Documentación estable
 
 - [producto/representacion-paciente.md](../../../producto/representacion-paciente.md)
-- Técnica: `common/components/Person/Representation/README.md`
+- Técnica: `common/components/Domain/Person/Representation/README.md`
 
 ## Fuera de fase
 

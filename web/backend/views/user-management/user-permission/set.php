@@ -4,7 +4,7 @@
  * @var common\models\User $user
  */
 
-use common\components\Core\Permission\RbacRoleQueryService;
+use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use yii\bootstrap5\BootstrapPluginAsset;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;

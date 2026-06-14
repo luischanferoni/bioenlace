@@ -3,7 +3,7 @@
 namespace common\tests\unit\core\Permission;
 
 use Codeception\Test\Unit;
-use common\components\Core\Permission\Validation\CatalogIntegrityService;
+use common\components\Platform\Core\Permission\Validation\CatalogIntegrityService;
 
 class CatalogIntegrityDomainPoliciesTest extends Unit
 {

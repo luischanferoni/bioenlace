@@ -16,7 +16,7 @@ use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use common\models\Clinical\Encounter;
-use common\components\Clinical\PatientHistoriaUrl;
+use common\components\Domain\Clinical\PatientHistoriaUrl;
 
 use frontend\filters\SisseActionFilter;
 
@@ -138,7 +138,7 @@ class InternacionController extends Controller
             try {
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector > 0) {
-                    $altaCtx = (new \common\components\Clinical\Inpatient\Service\InternacionAltaEstructuradaService())
+                    $altaCtx = (new \common\components\Domain\Clinical\Inpatient\Service\InternacionAltaEstructuradaService())
                         ->contextoAlta($model, $idEfector);
                 }
             } catch (\Throwable $e) {
@@ -151,7 +151,7 @@ class InternacionController extends Controller
             try {
                 $idEfector = (int) Yii::$app->user->getIdEfector();
                 if ($idEfector > 0) {
-                    $cambioCtx = (new \common\components\Clinical\Inpatient\Service\InternacionCambioCamaService())
+                    $cambioCtx = (new \common\components\Domain\Clinical\Inpatient\Service\InternacionCambioCamaService())
                         ->contextoCambioCama($model, $idEfector);
                 }
             } catch (\Throwable $e) {
@@ -206,7 +206,7 @@ class InternacionController extends Controller
         $idGuardia = isset($get['id_guardia']) ? (int) $get['id_guardia'] : null;
 
         try {
-            $ctx = (new \common\components\Clinical\Inpatient\Service\InternacionIngresoService())->contextoIngreso(
+            $ctx = (new \common\components\Domain\Clinical\Inpatient\Service\InternacionIngresoService())->contextoIngreso(
                 (int) $persona->id_persona,
                 $idEfector,
                 $idCama > 0 ? $idCama : null,

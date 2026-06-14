@@ -3,17 +3,17 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use Yii;
-use common\components\Person\Representation\Enum\RepresentationPermission;
-use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
-use common\components\Clinical\CarePlan\Reminder\CarePlanReminderPreferenceService;
-use common\components\Clinical\CarePlan\Reminder\CarePlanReminderScheduleBuilder;
-use common\components\Clinical\Dto\CarePlanDto;
-use common\components\Clinical\Service\CarePlanLifecycleService;
-use common\components\Clinical\Service\CarePlanPresentationService;
-use common\components\Clinical\CarePlan\CarePlanAdherenceStaffService;
-use common\components\Clinical\Service\PatientActiveCarePlanQuery;
-use common\components\Ui\UiScreenService;
+use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderPreferenceService;
+use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderScheduleBuilder;
+use common\components\Domain\Clinical\Dto\CarePlanDto;
+use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\Service\CarePlanPresentationService;
+use common\components\Domain\Clinical\CarePlan\CarePlanAdherenceStaffService;
+use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
+use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 
 /**

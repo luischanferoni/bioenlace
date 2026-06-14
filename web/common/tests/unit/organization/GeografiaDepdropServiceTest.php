@@ -3,7 +3,7 @@
 namespace common\tests\unit\organization;
 
 use Codeception\Test\Unit;
-use common\components\Organization\Service\GeografiaDepdropService;
+use common\components\Domain\Organization\Service\GeografiaDepdropService;
 
 class GeografiaDepdropServiceTest extends Unit
 {

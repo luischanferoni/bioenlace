@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\models\User;
-use common\components\Organization\Service\SesionOperativa\SesionOperativaProfesionalHabilitacionService;
-use common\components\Organization\Service\SesionOperativa\SesionOperativaService;
+use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaProfesionalHabilitacionService;
+use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
 
 /**
  * API Sesión Operativa: contexto operativo en sesión y opciones validadas para el wizard.

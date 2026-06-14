@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\api;
 
-use common\components\Core\Permission\ApiRoutePermissionResolver;
+use common\components\Platform\Core\Permission\ApiRoutePermissionResolver;
 use Codeception\Test\Unit;
 
 final class ApiRoutePermissionResolverTest extends Unit

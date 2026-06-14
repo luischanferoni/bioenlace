@@ -15,7 +15,7 @@ use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Person\Persona;
 use common\models\Servicio;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 
 /**
  * Gestión backend de filas PES (`profesional_efector_servicio`): listados, admin efector, live search.

@@ -11,4 +11,4 @@ Explica piezas que atraviesan varios módulos del producto. Hoy el foco principa
 ## Relacionado
 
 - Narrativa de producto del chat: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md)
-- Código: `web/common/components/Assistant/`
+- Código: `web/common/components/Platform/Assistant/`

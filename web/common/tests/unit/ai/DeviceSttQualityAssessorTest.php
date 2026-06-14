@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\ai;
 
-use common\components\Ai\SpeechToText\DeviceSttQualityAssessor;
+use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
 
 class DeviceSttQualityAssessorTest extends \Codeception\Test\Unit
 {

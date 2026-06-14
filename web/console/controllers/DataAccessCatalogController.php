@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Core\DataAccess\Validation\DataAccessCatalogCheckService;
+use common\components\Platform\Core\DataAccess\Validation\DataAccessCatalogCheckService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 

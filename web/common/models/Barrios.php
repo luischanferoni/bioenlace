@@ -48,9 +48,9 @@ class Barrios extends \yii\db\ActiveRecord
         ];
     }
 
-    /** @deprecated use {@see \common\components\Organization\Service\GeografiaDepdropService::barriosPorLocalidad} */
+    /** @deprecated use {@see \common\components\Domain\Organization\Service\GeografiaDepdropService::barriosPorLocalidad} */
     public static function depDropBarrios($id_loc){
-        return \common\components\Organization\Service\GeografiaDepdropService::barriosPorLocalidad((int) $id_loc);
+        return \common\components\Domain\Organization\Service\GeografiaDepdropService::barriosPorLocalidad((int) $id_loc);
     } 
 
     /**

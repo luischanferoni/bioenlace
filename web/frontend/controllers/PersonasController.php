@@ -26,10 +26,10 @@ use common\models\Tipo_documento;
 use common\models\PersonaRepository;
 use common\models\Percentilos;
 
-use common\components\Core\Form\NestedFormModels;
-use common\components\Integrations\Mpi\MpiApiClient;
+use common\components\Platform\Core\Form\NestedFormModels;
+use common\components\Domain\Integrations\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
-use common\components\Core\Http\UserRequest;
+use common\components\Platform\Core\Http\UserRequest;
 
 /**
  * PersonasController implements the CRUD actions for persona model.

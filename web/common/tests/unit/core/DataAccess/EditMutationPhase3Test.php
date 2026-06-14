@@ -3,11 +3,11 @@
 namespace common\tests\unit\core\DataAccess;
 
 use Codeception\Test\Unit;
-use common\components\Core\DataAccess\AttributeGroupCatalog;
-use common\components\Core\DataAccess\Edit\EditCatalogFormFieldBuilder;
-use common\components\Core\DataAccess\Edit\EditMutationAuthorizationService;
-use common\components\Core\DataAccess\Edit\OpenUiEditMutationDelegate;
-use common\components\Core\DataAccess\PermissionContext;
+use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
+use common\components\Platform\Core\DataAccess\Edit\EditCatalogFormFieldBuilder;
+use common\components\Platform\Core\DataAccess\Edit\EditMutationAuthorizationService;
+use common\components\Platform\Core\DataAccess\Edit\OpenUiEditMutationDelegate;
+use common\components\Platform\Core\DataAccess\PermissionContext;
 
 class EditMutationPhase3Test extends Unit
 {

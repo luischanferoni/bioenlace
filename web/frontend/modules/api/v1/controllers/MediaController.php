@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers;
 
-use common\components\Clinical\Service\SecureMediaService;
+use common\components\Domain\Clinical\Service\SecureMediaService;
 use Yii;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;

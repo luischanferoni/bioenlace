@@ -4,7 +4,7 @@
 
 Cuando un usuario escribe en el chat de Bioenlace, el sistema no responde con una sola pieza de software. Primero **entiende qué quiere hacer** (reservar un turno, ver un resultado de laboratorio, abrir un formulario), y después **lo guía paso a paso** si hace falta elegir fechas, confirmar datos o completar pantallas.
 
-Dos motores cooperan en esa tarea. Están en `web/common/components/Assistant/`, sobre todo en las carpetas `IntentEngine/` y `SubIntentEngine/`.
+Dos motores cooperan en esa tarea. Están en `web/common/components/Platform/Assistant/`, sobre todo en las carpetas `IntentEngine/` y `SubIntentEngine/`.
 
 ---
 

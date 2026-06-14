@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\components;
 
 use Yii;
-use common\components\Assistant\UiActions\AllowedRoutesResolver;
+use common\components\Platform\Assistant\UiActions\AllowedRoutesResolver;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use yii\filters\auth\HttpBearerAuth;
@@ -161,7 +161,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         // Igual que en frontend\components\UserConfig::afterLogin: updatePermissions trabaja sobre la identidad.
         // Si se pasa el componente Yii::$app->user, en algunos contextos no se hidratan __userRoutes/__userRoles
         // como espera webvimark, y puede resultar en 403 aun con permisos asignados.
-        \common\components\Core\Permission\BioenlaceAccessChecker::refreshForIdentity($userModel);
+        \common\components\Platform\Core\Permission\BioenlaceAccessChecker::refreshForIdentity($userModel);
         AllowedRoutesResolver::markSessionRoutesOwner((int) $userModel->id);
 
         return $userModel;

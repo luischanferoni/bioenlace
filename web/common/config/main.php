@@ -50,10 +50,10 @@ return [
             'class' => 'common\\components\\Ai\\IAManager',
         ],
         'mpi' => [
-            'class' => \common\components\Integrations\Mpi\MpiApiClient::class,
+            'class' => \common\components\Domain\Integrations\Mpi\MpiApiClient::class,
         ],
         'snowstorm' => [
-            'class' => \common\components\Terminology\Snomed\SnowstormClient::class,
+            'class' => \common\components\Domain\Terminology\Snomed\SnowstormClient::class,
         ],
         'mailer' => require __DIR__ . '/mailer.php',
     ],

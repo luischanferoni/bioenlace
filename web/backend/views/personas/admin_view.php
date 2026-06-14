@@ -5,7 +5,7 @@ use yii\widgets\DetailView;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\bootstrap5\Modal;
-use common\components\Core\Permission\BioenlaceGhostHtml;
+use common\components\Platform\Core\Permission\BioenlaceGhostHtml;
 
 use common\models\User;
 

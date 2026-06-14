@@ -1,5 +1,5 @@
 <?php 
-use common\components\Organization\Service\InfraestructuraDepdropService;
+use common\components\Domain\Organization\Service\InfraestructuraDepdropService;
 use kartik\depdrop\DepDrop;
 use yii\bootstrap5\ActiveForm;
 use kartik\select2\Select2;

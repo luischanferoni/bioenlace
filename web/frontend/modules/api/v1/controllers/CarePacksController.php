@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Clinical\CareCohort\Service\CarePackAssistanceService;
-use common\components\Clinical\CareCohort\Service\CarePackFollowupService;
+use common\components\Domain\Clinical\CareCohort\Service\CarePackAssistanceService;
+use common\components\Domain\Clinical\CareCohort\Service\CarePackFollowupService;
 
 /**
  * Packs de cohorte expuestos al paciente (asistencia pre-consulta, seguimiento futuro).

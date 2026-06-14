@@ -2,17 +2,17 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Clinical\Emergency\Service\GuardiaClinicalSummaryService;
-use common\components\Clinical\Emergency\Service\GuardiaEfectorAccess;
-use common\components\Clinical\Emergency\Service\GuardiaIndicadoresExportService;
-use common\components\Clinical\Emergency\Service\GuardiaIndicadoresService;
-use common\components\Clinical\Emergency\Service\GuardiaIngresoService;
-use common\components\Clinical\Emergency\Service\GuardiaInternacionService;
-use common\components\Clinical\Emergency\Service\GuardiaOperacionService;
-use common\components\Clinical\Emergency\Service\GuardiaQueueService;
-use common\components\Clinical\Emergency\Service\GuardiaSlaService;
-use common\components\Clinical\Emergency\Service\GuardiaTriageService;
-use common\components\Ui\UiScreenService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaClinicalSummaryService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaEfectorAccess;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaIndicadoresExportService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaIndicadoresService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaIngresoService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaInternacionService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaOperacionService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaQueueService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaSlaService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
+use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\ForbiddenHttpException;

@@ -2,10 +2,10 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Clinical\Laboratory\Service\LaboratoryReportPdfService;
-use common\components\Clinical\Laboratory\Service\LaboratoryResultQueryService;
-use common\components\Clinical\PatientSummary\PatientEncounterSummaryQueryService;
-use common\components\Ui\UiScreenService;
+use common\components\Domain\Clinical\Laboratory\Service\LaboratoryReportPdfService;
+use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
+use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryQueryService;
+use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Person\Persona;
 use frontend\modules\api\v1\controllers\BaseController;

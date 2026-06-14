@@ -2,10 +2,10 @@
 
 namespace frontend\modules\api\v1\components;
 
-use common\components\Core\Permission\ApiRoutePermissionResolver;
-use common\components\Core\Permission\BioenlaceAccessChecker;
-use common\components\Core\Permission\BioenlaceSessionPermissions;
-use common\components\Core\Permission\FlowStepAccessService;
+use common\components\Platform\Core\Permission\ApiRoutePermissionResolver;
+use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
+use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
+use common\components\Platform\Core\Permission\FlowStepAccessService;
 use Yii;
 use yii\base\ActionFilter;
 use yii\web\Response;

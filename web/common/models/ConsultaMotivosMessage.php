@@ -2,7 +2,7 @@
 
 namespace common\models;
 
-use common\components\Clinical\Service\SecureMediaService;
+use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use Yii;
 use yii\db\ActiveRecord;

@@ -6,9 +6,9 @@ use Yii;
 use yii\web\NotFoundHttpException;
 use yii\web\BadRequestHttpException;
 use yii\web\ServerErrorHttpException;
-use common\components\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Clinical\Service\AppointmentReasonWindowService;
-use common\components\Clinical\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
+use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
 use common\models\AgendaFeriados;
@@ -16,42 +16,42 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Person\Persona;
-use common\components\Ui\UiDefinitionTemplateManager;
-use common\components\Ui\UiScreenService;
-use common\components\Scheduling\Service\TurnoSlotFinder;
-use common\components\Scheduling\Service\TurnoSlotOfferService;
-use common\components\Scheduling\Service\TurnoSlotOfferUiPresenter;
-use common\components\Scheduling\Service\TurnoPersistService;
-use common\components\Scheduling\Service\TurnoCreacionContext;
-use common\components\Scheduling\Service\TurnoLifecycleService;
-use common\components\Scheduling\Service\TurnoConfirmationService;
-use common\components\Scheduling\Service\PolicyModeradaException;
-use common\components\Scheduling\Service\AutogestionAnticipacionException;
-use common\components\Scheduling\Service\TurnoAutogestionAnticipacionService;
-use common\components\Scheduling\Service\TurnoCancellationPolicyService;
-use common\components\Scheduling\Service\TurnoCancelacionRazones;
-use common\components\Scheduling\Service\BulkCancelDayService;
-use common\components\Scheduling\Service\SobreturnoService;
-use common\components\Scheduling\Service\TurnoReservaSlotService;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
-use common\components\Scheduling\Service\TurnoAgendaMetricsService;
-use common\components\Scheduling\Service\ReservaTriageModalidadStepService;
-use common\components\Scheduling\Service\ReservaTurnoTriageCatalogService;
-use common\components\Scheduling\Service\ReservaTriageServicioSugeridoService;
-use common\components\Scheduling\Service\TeleconsultaElegibilidadService;
-use common\components\Scheduling\Service\TurnoPacienteListadoService;
-use common\components\Scheduling\Service\TurnoResolucionService;
-use common\components\Scheduling\Service\TurnoResolucionElecciones;
-use common\components\Scheduling\Service\TurnoCalendarioOcupacionDiaService;
-use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
+use common\components\Platform\Ui\UiDefinitionTemplateManager;
+use common\components\Platform\Ui\UiScreenService;
+use common\components\Domain\Scheduling\Service\TurnoSlotFinder;
+use common\components\Domain\Scheduling\Service\TurnoSlotOfferService;
+use common\components\Domain\Scheduling\Service\TurnoSlotOfferUiPresenter;
+use common\components\Domain\Scheduling\Service\TurnoPersistService;
+use common\components\Domain\Scheduling\Service\TurnoCreacionContext;
+use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
+use common\components\Domain\Scheduling\Service\TurnoConfirmationService;
+use common\components\Domain\Scheduling\Service\PolicyModeradaException;
+use common\components\Domain\Scheduling\Service\AutogestionAnticipacionException;
+use common\components\Domain\Scheduling\Service\TurnoAutogestionAnticipacionService;
+use common\components\Domain\Scheduling\Service\TurnoCancellationPolicyService;
+use common\components\Domain\Scheduling\Service\TurnoCancelacionRazones;
+use common\components\Domain\Scheduling\Service\BulkCancelDayService;
+use common\components\Domain\Scheduling\Service\SobreturnoService;
+use common\components\Domain\Scheduling\Service\TurnoReservaSlotService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
+use common\components\Domain\Scheduling\Service\TurnoAgendaMetricsService;
+use common\components\Domain\Scheduling\Service\ReservaTriageModalidadStepService;
+use common\components\Domain\Scheduling\Service\ReservaTurnoTriageCatalogService;
+use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
+use common\components\Domain\Scheduling\Service\TeleconsultaElegibilidadService;
+use common\components\Domain\Scheduling\Service\TurnoPacienteListadoService;
+use common\components\Domain\Scheduling\Service\TurnoResolucionService;
+use common\components\Domain\Scheduling\Service\TurnoResolucionElecciones;
+use common\components\Domain\Scheduling\Service\TurnoCalendarioOcupacionDiaService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use common\models\TurnoResolucion;
 use yii\web\ForbiddenHttpException;
 use yii\web\ConflictHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use yii\db\Expression;
-use common\components\Person\Representation\Enum\RepresentationPermission;
-use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
-use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
+use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
+use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
+use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 
 /**
@@ -837,7 +837,7 @@ class TurnosController extends BaseController
                 }
                 $params = array_merge($req->get(), $post);
                 $idPersona = $this->resolveSubjectTurnos($params);
-                $svc = new \common\components\Scheduling\Service\TurnoCancellationPolicyService();
+                $svc = new \common\components\Domain\Scheduling\Service\TurnoCancellationPolicyService();
 
                 return ['data' => array_merge(['success' => true], $svc->evaluarAutogestion($idPersona, (int) $idEfector))];
             }
@@ -1818,7 +1818,7 @@ class TurnosController extends BaseController
         if ($turno->estado === Turno::ESTADO_EN_RESOLUCION) {
             throw new BadRequestHttpException('Este turno está en resolución: usá el flujo de reubicación.');
         }
-        $policy = new \common\components\Scheduling\Service\TurnoCancellationPolicyService();
+        $policy = new \common\components\Domain\Scheduling\Service\TurnoCancellationPolicyService();
         if ($policy->autogestionBloqueada($idPersona, (int) $turno->id_efector)) {
             if ($forUiSubmit) {
                 throw new PolicyModeradaException('Reprogramación por app no disponible: acercate al efector o llamá.');
@@ -1961,7 +1961,7 @@ class TurnosController extends BaseController
         if (count($cps) > 0) {
             $parent_id = null;
             foreach ($cps as $cp) {
-                \common\components\Clinical\Service\ReferralRequestService::markBooked($cp);
+                \common\components\Domain\Clinical\Service\ReferralRequestService::markBooked($cp);
                 $parent_id = $cp->id;
             }
             $model->parent_class = Encounter::PARENT_DERIVACION;

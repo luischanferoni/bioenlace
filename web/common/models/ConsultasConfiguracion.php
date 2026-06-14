@@ -2,8 +2,8 @@
 
 namespace common\models;
 
-use common\components\Clinical\EncounterDefinitionWorkflowSanitizer;
-use common\components\Clinical\Service\EncounterCaptureContextService;
+use common\components\Domain\Clinical\EncounterDefinitionWorkflowSanitizer;
+use common\components\Domain\Clinical\Service\EncounterCaptureContextService;
 use Yii;
 
 use common\models\Clinical\EncounterDefinition;

@@ -3,9 +3,9 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Ui\UiScreenService;
-use common\components\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
-use common\components\Scheduling\Service\ReservaTriageServicioSugeridoService;
+use common\components\Platform\Ui\UiScreenService;
+use common\components\Domain\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
+use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
 
 /**
  * API Servicios: views JSON embebibles (selección/autocomplete) para flujos conversacionales.

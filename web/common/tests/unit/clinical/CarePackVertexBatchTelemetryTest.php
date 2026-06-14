@@ -2,8 +2,8 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Clinical\CareCohort\Batch\CarePackVertexBatchTelemetry;
-use common\components\Ai\Cost\AICostTracker;
+use common\components\Domain\Clinical\CareCohort\Batch\CarePackVertexBatchTelemetry;
+use common\components\Platform\Ai\Cost\AICostTracker;
 
 class CarePackVertexBatchTelemetryTest extends \Codeception\Test\Unit
 {

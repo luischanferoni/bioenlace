@@ -4,8 +4,8 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
-use common\components\Core\DataAccess\DataAccessUiService;
-use common\components\Core\Permission\Domain\ApiDomainOperationBridge;
+use common\components\Platform\Core\DataAccess\DataAccessUiService;
+use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
 
 /**
  * Consultas staff agregadas / informativas (métricas DataAccess).

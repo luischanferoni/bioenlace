@@ -3,8 +3,8 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Assistant\Chat\Envelope\AssistantEnvelope;
-use common\components\Assistant\Service\AssistantDraftNormalizer;
+use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 
 /**
  * Regresión: flows con `provides` (formulario) no deben romper el sobre con "Array to string conversion".

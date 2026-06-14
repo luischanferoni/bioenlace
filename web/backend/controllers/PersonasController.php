@@ -43,7 +43,7 @@ use common\models\Persona_hc;
 use common\models\Tipo_documento;
 use common\models\ProfesionalEfectorServicio;
 use common\controllers\Model;
-use common\components\Integrations\Mpi\MpiApiClient;
+use common\components\Domain\Integrations\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
 
 /**

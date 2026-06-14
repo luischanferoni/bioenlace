@@ -2,7 +2,7 @@
 
 namespace console\controllers;
 
-use common\components\Core\Permission\Validation\CatalogIntegrityService;
+use common\components\Platform\Core\Permission\Validation\CatalogIntegrityService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 

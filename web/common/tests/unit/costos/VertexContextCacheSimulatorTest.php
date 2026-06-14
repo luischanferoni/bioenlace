@@ -3,8 +3,8 @@
 namespace common\tests\unit\costos;
 
 use Yii;
-use common\components\Ai\Providers\Google\VertexContextCacheSimulator;
-use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Ai\Providers\Google\VertexContextCacheSimulator;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 
 class VertexContextCacheSimulatorTest extends \Codeception\Test\Unit
 {

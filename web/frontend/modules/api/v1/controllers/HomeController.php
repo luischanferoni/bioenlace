@@ -2,7 +2,7 @@
 
 namespace frontend\modules\api\v1\controllers;
 
-use common\components\Ui\Home\Service\HomePanelService;
+use common\components\Platform\Ui\Home\Service\HomePanelService;
 use Yii;
 
 /**

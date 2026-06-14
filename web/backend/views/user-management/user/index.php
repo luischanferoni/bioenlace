@@ -1,11 +1,11 @@
 <?php
 
-use common\components\Core\Permission\BioenlaceGhostHtml;
-use common\components\Core\Permission\RbacRoleQueryService;
-use common\components\Legacy\UserManagementCompat;
-use common\components\Ui\Grid\GridBulkActions;
-use common\components\Ui\Grid\GridPageSize;
-use common\components\Ui\Grid\StatusColumn;
+use common\components\Platform\Core\Permission\BioenlaceGhostHtml;
+use common\components\Platform\Core\Permission\RbacRoleQueryService;
+use common\components\Platform\Legacy\UserManagementCompat;
+use common\components\Platform\Ui\Grid\GridBulkActions;
+use common\components\Platform\Ui\Grid\GridPageSize;
+use common\components\Platform\Ui\Grid\StatusColumn;
 use common\models\User;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;

@@ -6,10 +6,10 @@ use Yii;
 use yii\console\Controller;
 use common\models\TurnoNotificacionProgramada;
 use common\models\Turno;
-use common\components\Core\Service\Push\PushNotificationSender;
-use common\components\Core\Service\Push\FcmPushConfig;
-use common\components\Scheduling\Service\TurnoReminderContentBuilder;
-use common\components\Clinical\Service\AppointmentReasonBatchService;
+use common\components\Platform\Core\Service\Push\PushNotificationSender;
+use common\components\Platform\Core\Service\Push\FcmPushConfig;
+use common\components\Domain\Scheduling\Service\TurnoReminderContentBuilder;
+use common\components\Domain\Clinical\Service\AppointmentReasonBatchService;
 
 /**
  * Procesa turno_notificacion_programada (cron cada N minutos).
@@ -46,7 +46,7 @@ class TurnoNotificacionController extends Controller
                         $push->sendToPersona((int) $turno->id_persona, $content['data'], $content['title'], $content['body']);
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_CONFIRM_REQUEST) {
-                    $token = (new \common\components\Scheduling\Service\TurnoConfirmationService())->ensureConfirmacionToken($turno);
+                    $token = (new \common\components\Domain\Scheduling\Service\TurnoConfirmationService())->ensureConfirmacionToken($turno);
                     $push->sendToPersona(
                         (int) $turno->id_persona,
                         [

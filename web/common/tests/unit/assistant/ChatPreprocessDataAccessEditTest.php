@@ -3,7 +3,7 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 
 class ChatPreprocessDataAccessEditTest extends Unit
 {

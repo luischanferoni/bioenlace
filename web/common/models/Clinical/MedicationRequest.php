@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Clinical\Enum\RequestStatus;
+use common\components\Domain\Clinical\Enum\RequestStatus;
 use yii\db\ActiveRecord;
 
 class MedicationRequest extends ActiveRecord

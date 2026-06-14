@@ -2,7 +2,7 @@
 
 namespace common\models\Clinical;
 
-use common\components\Clinical\EncounterDefinitionWorkflowSanitizer;
+use common\components\Domain\Clinical\EncounterDefinitionWorkflowSanitizer;
 use Yii;
 use yii\db\ActiveRecord;
 

@@ -1,6 +1,6 @@
 <?php
 
-use common\components\Legacy\UserManagementCompat;
+use common\components\Platform\Legacy\UserManagementCompat;
 use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 

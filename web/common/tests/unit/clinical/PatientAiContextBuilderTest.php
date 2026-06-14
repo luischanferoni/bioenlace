@@ -2,7 +2,7 @@
 
 namespace common\tests\unit\clinical;
 
-use common\components\Clinical\AiContext\PatientAiContextBuilder;
+use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 
 class PatientAiContextBuilderTest extends \Codeception\Test\Unit
 {

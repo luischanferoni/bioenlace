@@ -2,9 +2,9 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
-use common\components\Clinical\Service\EpisodeOfCareService;
-use common\components\Clinical\Specialty\Inpatient\InpatientClinicalContext;
-use common\components\Clinical\Specialty\Inpatient\InpatientClinicalQuery;
+use common\components\Domain\Clinical\Service\EpisodeOfCareService;
+use common\components\Domain\Clinical\Specialty\Inpatient\InpatientClinicalContext;
+use common\components\Domain\Clinical\Specialty\Inpatient\InpatientClinicalQuery;
 use common\models\Clinical\EpisodeOfCare;
 use common\models\SegNivelInternacion;
 use frontend\modules\api\v1\controllers\BaseController;

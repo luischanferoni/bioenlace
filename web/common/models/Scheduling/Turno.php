@@ -2,7 +2,7 @@
 
 namespace common\models\Scheduling;
 
-use common\components\Clinical\PatientHistoriaUrl;
+use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaAtencionesEnfermeria;
 use common\models\Efector;
@@ -875,7 +875,7 @@ class Turno extends \yii\db\ActiveRecord
             return false;
         }
 
-        return !\common\components\Scheduling\Service\TurnoSlotOccupancyService::estaDisponibleSlot($idPes, $fecha, $hora, null);
+        return !\common\components\Domain\Scheduling\Service\TurnoSlotOccupancyService::estaDisponibleSlot($idPes, $fecha, $hora, null);
     }
 
 

@@ -142,7 +142,7 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 ## Archivos de referencia
 
 ```
-web/common/components/Core/Permission/
+web/common/components/Platform/Core/Permission/
   BioenlaceAccessChecker.php
   BioenlaceSessionPermissions.php
   BioenlaceGhostHtml.php, BioenlaceGhostNav.php
@@ -161,7 +161,7 @@ web/common/models/User.php
 web/common/models/forms/{LoginForm,ChangeOwnPasswordForm,...}.php
 web/common/modules/UserManagementCompatModule.php
 web/backend/controllers/{PermissionCatalogController,RbacRoleController,UserAccountController,UserRoleController,LegacyRbacRedirectController}.php
-web/common/components/Ui/Grid/{GridPageSize,GridBulkActions,StatusColumn}.php
+web/common/components/Platform/Ui/Grid/{GridPageSize,GridBulkActions,StatusColumn}.php
 ```
 
 ## Despliegue y validación

@@ -2,8 +2,8 @@
 
 namespace common\traits;
 
-use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
-use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
 
 /**
  * Cálculo de slots HH:MM y validación de solapamiento entre agendas (columnas *_2).

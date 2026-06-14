@@ -2,28 +2,11 @@
 
 namespace common\components\Integrations\Sisse;
 
-use yii\helpers\Html;
-use common\models\User;
+use common\components\Core\Permission\BioenlaceGhostHtml;
 
 /**
- * Class SisseGhostHtml
- *
- * Show elements only to those, who can access to them
+ * @deprecated Usar {@see BioenlaceGhostHtml}
  */
-class SisseGhostHtml extends Html
+class SisseGhostHtml extends BioenlaceGhostHtml
 {
-    /**
-     * Hide link if user hasn't access to it
-     *
-     * @inheritdoc
-     */
-    public static function a($text, $url = null, $options = [])
-    {
-        if (in_array($url, [null, '', '#'], true)) {
-            return parent::a($text, $url, $options);
-        }
-
-        return User::canRoute($url) ? parent::a($text, $url, $options) : '';
-    }
 }
-

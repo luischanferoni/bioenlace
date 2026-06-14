@@ -5,7 +5,7 @@ namespace common\components\Assistant\UiActions;
 use Yii;
 use common\components\Core\Service\ClientContextService;
 use common\models\User;
-use webvimark\modules\UserManagement\models\rbacDB\Route;
+use common\components\Core\Permission\RbacFreeRouteChecker;
 
 /**
  * Servicio para mapear acciones descubiertas a formato consumible por IA
@@ -179,7 +179,7 @@ class ActionMappingService
 
         try {
             $rbacPath = AllowedRoutesResolver::apiHttpPathToPermissionRoute($route);
-            if (Route::isFreeAccess($route) || ($rbacPath !== $route && Route::isFreeAccess($rbacPath))) {
+            if (RbacFreeRouteChecker::isFreeAccess($route) || ($rbacPath !== $route && RbacFreeRouteChecker::isFreeAccess($rbacPath))) {
                 return true;
             }
 

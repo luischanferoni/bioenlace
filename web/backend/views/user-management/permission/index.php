@@ -1,7 +1,7 @@
 <?php
 use webvimark\extensions\GridBulkActions\GridBulkActions;
 use webvimark\extensions\GridPageSize\GridPageSize;
-use webvimark\modules\UserManagement\components\GhostHtml;
+use common\components\Core\Permission\BioenlaceGhostHtml;
 use webvimark\modules\UserManagement\models\rbacDB\AuthItemGroup;
 use webvimark\modules\UserManagement\models\rbacDB\Permission;
 use webvimark\modules\UserManagement\UserManagementModule;
@@ -28,7 +28,7 @@ $this->params['breadcrumbs'][] = $this->title;
 		<div class="row">
 			<div class="col-sm-6">
 				<p>
-					<?= GhostHtml::a(
+					<?= BioenlaceGhostHtml::a(
 						'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementModule::t('back', 'Create'),
 						['create'],
 						['class' => 'btn btn-success']

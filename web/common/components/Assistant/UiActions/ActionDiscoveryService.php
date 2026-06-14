@@ -9,7 +9,6 @@ use yii\helpers\Url;
 use ReflectionClass;
 use ReflectionMethod;
 use common\models\User;
-use webvimark\modules\UserManagement\models\rbacDB\Route;
 
 /**
  * Servicio para descubrir dinámicamente todas las acciones disponibles en los controladores

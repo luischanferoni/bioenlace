@@ -1,6 +1,6 @@
 <?php
 
-use webvimark\modules\UserManagement\components\GhostHtml;
+use common\components\Core\Permission\BioenlaceGhostHtml;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
 use common\models\User;
 use webvimark\modules\UserManagement\UserManagementModule;
@@ -115,19 +115,19 @@ $this->params['breadcrumbs'][] = $this->title;
 						],
 						[
 							'value' => function (User $model) {
-								return GhostHtml::a(
+								return BioenlaceGhostHtml::a(
 									UserManagementModule::t('back', 'Roles and permissions'),
 									['/user-management/user-permission/set', 'id' => $model->id],
 									['class' => 'btn btn-sm btn-primary', 'data-pjax' => 0]
 								)
 									. '<br>' .
-									GhostHtml::a(
+									BioenlaceGhostHtml::a(
 										UserManagementModule::t('back', 'Change password'),
 										['change-password', 'id' => $model->id],
 										['class' => 'btn btn-sm btn-warning', 'data-pjax' => 0]
 									)
 									. '<br>' .
-									GhostHtml::a(
+									BioenlaceGhostHtml::a(
 										UserManagementModule::t('back', 'Log in as this user'),
 										['/user/impersonate', 'id' => $model->id],
 										['linkOptions' => ['target' => '_blank']],

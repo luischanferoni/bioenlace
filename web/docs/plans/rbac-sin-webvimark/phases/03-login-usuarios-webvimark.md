@@ -17,17 +17,19 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 | Contraseña | `ChangeOwnPasswordForm`, `PasswordRecoveryForm` + `/auth/change-own-password`, `/auth/password-recovery*` |
 | Confirmación e-mail | `ConfirmEmailForm` + `/auth/confirm-email`, `/auth/confirm-email-receive` |
 | CRUD usuarios admin | `UserAccountController` + `UserRoleController` (controllerMap user-management) |
+| UI RBAC helpers | `BioenlaceGhostHtml`, `BioenlaceGhostNav`, `RbacFreeRouteChecker`, `UserVisitLog` propios |
 
 ## Pendiente
 
 | Pieza | Notas |
 |-------|-------|
-| Composer | Quitar `webvimark/module-user-management` cuando no queden referencias (GhostHtml, UserVisitLog, SisseRole AR) |
+| Composer | Quitar `webvimark/module-user-management` (módulo Yii, `SisseRole`, pathMap) |
 | `pathMap` vistas vendor | Eliminar overrides en `backend/config/main.php` |
 
 ## Qué se mantiene temporalmente
 
-- Vistas en `backend/views/user-management/*` (pathMap vendor) y `GhostHtml` en grids legacy.
+- Módulo Composer `webvimark/module-user-management` (registro consola, `SisseRole` AR, vistas pathMap).
+- Vistas legacy `user-management/role|permission|auth-item-group` (redirigen o sin uso en menú).
 - `UserVisitLog` webvimark (registro de visitas post-login).
 
 ## Verificación

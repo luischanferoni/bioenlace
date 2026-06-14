@@ -1,9 +1,8 @@
 <?php
 
-use webvimark\modules\UserManagement\components\GhostHtml;
+use common\components\Core\Permission\BioenlaceGhostHtml;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
 use common\models\User;
-use webvimark\modules\UserManagement\UserManagementModule;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\widgets\DetailView;
@@ -26,19 +25,19 @@ $this->params['breadcrumbs'][] = $this->title;
 		<div class="card-body">
 
 			<p>
-				<?= GhostHtml::a(UserManagementModule::t('back', 'Edit'), ['update', 'id' => $model->id], ['class' => 'btn btn-sm btn-primary']) ?>
-				<?= GhostHtml::a(UserManagementModule::t('back', 'Create'), ['create'], ['class' => 'btn btn-sm btn-success']) ?>
-				<?= GhostHtml::a(
+				<?= BioenlaceGhostHtml::a('Editar', ['update', 'id' => $model->id], ['class' => 'btn btn-sm btn-primary']) ?>
+				<?= BioenlaceGhostHtml::a('Nuevo', ['create'], ['class' => 'btn btn-sm btn-success']) ?>
+				<?= BioenlaceGhostHtml::a(
 					'Cambiar contraseña',
 					['change-password', 'id' => $model->id],
 					['class' => 'btn btn-sm btn-default', 'data-pjax' => 0]
 				) ?>
-				<?= GhostHtml::a(
+				<?= BioenlaceGhostHtml::a(
 					'Administracion de Efector',
 					['/profesional-efector-servicio/create-admin-efector-desde-usuario', 'id' => $model->id],
 					['class' => 'btn btn-sm btn-warning', 'data-pjax' => 0]
 				) ?>
-				<?= GhostHtml::a(
+				<?= BioenlaceGhostHtml::a(
 					'Editar roles',
 					['/user-management/user-permission/set', 'id' => $model->id],
 					['class' => 'btn btn-sm btn-default']
@@ -78,7 +77,7 @@ $this->params['breadcrumbs'][] = $this->title;
 						'visible' => User::hasPermission('viewUserEmail'),
 					],
 					[
-						'label' => UserManagementModule::t('back', 'Roles'),
+						'label' => 'Roles',
 						'value' => implode('<br>', ArrayHelper::map(Role::getUserRoles($model->id), 'name', 'description')),
 						'visible' => User::hasPermission('viewUserRoles'),
 						'format' => 'raw',

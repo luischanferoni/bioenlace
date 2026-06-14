@@ -11,7 +11,7 @@ use frontend\assets\AppAsset;
 use common\models\Mensajes;
 use common\models\Referencia;
 use yii\helpers\Url;
-use webvimark\modules\UserManagement\components\GhostNav;
+use common\components\Core\Permission\BioenlaceGhostNav;
 use webvimark\modules\UserManagement\UserManagementModule;
 
 AppAsset::register($this);
@@ -70,7 +70,7 @@ if(Yii::$app->user->idEfector){
     //Obtengo la cantidad de referencias
     $cant = Referencia::cantidadPorEfector(Yii::$app->user->idEfector);
 
-    echo GhostNav::widget([
+    echo BioenlaceGhostNav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],
         'encodeLabels' => false,
         'activateParents' => true,
@@ -133,7 +133,7 @@ if(Yii::$app->user->idEfector){
 NavBar::end();
     }
     else{
-        echo GhostNav::widget([
+        echo BioenlaceGhostNav::widget([
         'options' => ['class' => 'navbar-nav navbar-right'],
         'encodeLabels' => false,
         'activateParents' => true,

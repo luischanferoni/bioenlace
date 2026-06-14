@@ -9,7 +9,7 @@
  * @var yii\rbac\Permission $item
  */
 
-use webvimark\modules\UserManagement\components\GhostHtml;
+use common\components\Core\Permission\BioenlaceGhostHtml;
 use webvimark\modules\UserManagement\UserManagementModule;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
@@ -29,8 +29,8 @@ $this->params['breadcrumbs'][] = $this->title;
 <?php endif; ?>
 
 <p>
-	<?= GhostHtml::a(UserManagementModule::t('back', 'Edit'), ['update', 'id' => $item->name], ['class' => 'btn btn-sm btn-primary']) ?>
-	<?= GhostHtml::a(UserManagementModule::t('back', 'Create'), ['create'], ['class' => 'btn btn-sm btn-success']) ?>
+	<?= BioenlaceGhostHtml::a(UserManagementModule::t('back', 'Edit'), ['update', 'id' => $item->name], ['class' => 'btn btn-sm btn-primary']) ?>
+	<?= BioenlaceGhostHtml::a(UserManagementModule::t('back', 'Create'), ['create'], ['class' => 'btn btn-sm btn-success']) ?>
 </p>
 
 <div class="row">
@@ -58,7 +58,7 @@ $this->params['breadcrumbs'][] = $this->title;
 										<?= $permission->description ?>
 									</label>
 
-									<?= GhostHtml::a(
+									<?= BioenlaceGhostHtml::a(
 										'<span class="glyphicon glyphicon-edit"></span>',
 										['view', 'id'=>$permission->name],
 										['target'=>'_blank']

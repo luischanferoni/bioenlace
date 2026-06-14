@@ -1,6 +1,6 @@
 <?php
 
-use webvimark\modules\UserManagement\components\GhostHtml;
+use common\components\Core\Permission\BioenlaceGhostHtml;
 use webvimark\modules\UserManagement\UserManagementModule;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -31,7 +31,7 @@ $this->params['breadcrumbs'][] = $this->title;
 			<div class="row">
 				<div class="col-sm-6">
 					<p>
-						<?= GhostHtml::a(
+						<?= BioenlaceGhostHtml::a(
 							'<span class="glyphicon glyphicon-plus-sign"></span> ' . UserManagementModule::t('back', 'Create'),
 							['create'],
 							['class' => 'btn btn-success']

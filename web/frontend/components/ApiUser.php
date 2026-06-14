@@ -14,7 +14,7 @@ class ApiUser extends BaseUserConfig
 {
     public $enableAutoLogin = true;
     public $cookieLifetime = 2592000;
-    public $loginUrl = ['/user-management/auth/login'];
+    public $loginUrl = ['/auth/login'];
 
     protected function afterLogin($identity, $cookieBased, $duration)
     {

@@ -6,6 +6,7 @@ use Yii;
 use yii\helpers\ArrayHelper;
 use yii\web\NotFoundHttpException;
 use common\models\Persona;
+use common\models\User;
 use common\models\ProfesionalEfectorServicio;
 use Firebase\JWT\JWT;
 use common\components\Organization\Service\SesionOperativa\SesionOperativaService;
@@ -17,7 +18,7 @@ class UserConfig extends BaseUserConfig
 {
     public $enableAutoLogin = true;
     public $cookieLifetime = 2592000;
-    public $loginUrl = ['/user-management/auth/login'];
+    public $loginUrl = ['/auth/login'];
 
     protected function afterLogin($identity, $cookieBased, $duration)
     {
@@ -47,7 +48,7 @@ class UserConfig extends BaseUserConfig
             }
         }
 
-        if ($identity->status !== \webvimark\modules\UserManagement\models\User::STATUS_ACTIVE) {
+        if ($identity->status !== User::STATUS_ACTIVE) {
             Yii::$app->user->logout();
             throw new \yii\web\ForbiddenHttpException('Usuario inactivo');
         }

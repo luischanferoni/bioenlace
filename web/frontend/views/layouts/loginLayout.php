@@ -1,13 +1,12 @@
 <?php
 use frontend\assets\AppAsset;
-use webvimark\modules\UserManagement\UserManagementModule;
 use yii\bootstrap5\BootstrapAsset;
 use yii\helpers\Html;
 
 /* @var $this \yii\web\View */
 /* @var $content string */
 
-$this->title = UserManagementModule::t('front', 'BIOENLACE');
+$this->title = 'BIOENLACE';
 AppAsset::register($this);
 
 ?>

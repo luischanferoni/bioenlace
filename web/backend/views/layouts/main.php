@@ -133,13 +133,13 @@ $home = Yii::$app->getHomeUrl();
                                 ],
                                 [
                                     'label' => '<span><h6>SALIR <i class="bi bi-box-arrow-right"></i></h6></span>',
-                                    'url' => ['/user-management/auth/logout'],
+                                    'url' => ['/auth/logout'],
                                 ]
 
                             ] : [
                                 [
                                     'label' => '<h6><i class="bi bi-box-arrow-up"></i> INGRESAR</h6>',
-                                    'url' => ['/user-management/auth/login']
+                                    'url' => ['/auth/login']
 
                                 ]
                             ]

@@ -78,8 +78,10 @@ return [
             // Disable r= routes
             'enablePrettyUrl' => true,
             'rules' => [  
-                'site/login' => 'user-management/auth/login',
-                'login' => 'user-management/auth/login',
+                'site/login' => 'auth/login',
+                'login' => 'auth/login',
+                'user-management/auth/login' => 'auth/login',
+                'user-management/auth/logout' => 'auth/logout',
                 '<controller:\w+>/<id:\d+>' => '<controller>/view',
                 '<controller:\w+>/<action:\w+>/<id:\d+>' => '<controller>/<action>',
                 '<controller:\w+>/<action:\w+>' => '<controller>/<action>',
@@ -136,9 +138,9 @@ return [
             // Here you can set your handler to change layout for any controller or action
             // Tip: you can use this event in any module
             'on beforeAction' => function(yii\base\ActionEvent $event) {
-                if ($event->action->uniqueId == 'user-management/auth/login') {
+                if ($event->action->uniqueId === 'auth/login') {
                     $event->action->controller->layout = '@frontend/views/layouts/loginLayout.php';
-                };
+                }
             },
         ],
         'frontend' => ['class' => \frontend\Module::class],

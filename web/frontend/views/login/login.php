@@ -2,11 +2,9 @@
 
 /**
  * @var $this yii\web\View
- * @var $model webvimark\modules\UserManagement\models\forms\LoginForm
+ * @var $model common\models\LoginForm
  */
 
-use webvimark\modules\UserManagement\components\GhostHtml;
-use webvimark\modules\UserManagement\UserManagementModule;
 use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 ?>
@@ -42,7 +40,7 @@ use yii\helpers\Html;
 								
 								<div class="d-flex justify-content-center">
 									<?= Html::submitButton(
-										UserManagementModule::t('front', 'Ingresar'),
+										'Ingresar',
 										['class' => 'btn btn-primary mb-5']
 									) ?>
 								</div>
@@ -55,22 +53,13 @@ use yii\helpers\Html;
 								<?php endif;?>
 
 								<div class="row registration-block">
-									<div class="col-sm-6">
-										<?= GhostHtml::a(
-											UserManagementModule::t('front', "Registration"),
-											['/user-management/auth/registration']
-										) ?>
-									</div>
-									<div class="col-sm-6 text-right">
-										<?= GhostHtml::a(
-											UserManagementModule::t('front', "Forgot password ?"),
+									<div class="col-sm-12 text-right">
+										<?= Html::a(
+											'¿Olvidó su contraseña?',
 											['/user-management/auth/password-recovery']
 										) ?>
 									</div>
 								</div>
-
-
-
 
 								<?php ActiveForm::end() ?>
 							</div>

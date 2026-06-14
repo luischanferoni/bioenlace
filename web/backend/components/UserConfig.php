@@ -34,7 +34,7 @@ class UserConfig extends User
 	/**
 	 * @inheritdoc
 	 */
-	public $loginUrl = ['/user-management/auth/login'];
+	public $loginUrl = ['/auth/login'];
 
 	const IDENTITY_ID_KEY = 'mainIdentityId';
 	const ADMIN_PERMISSION = 'admin';

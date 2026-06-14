@@ -16,6 +16,7 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
 {
     /** @var list<string> uniqueId sin RBAC (público o ticket especial) */
     private const FREE_ACTIONS = [
+        'auth/login',
         'site/captcha',
         'site/error',
         'site/impersonate',

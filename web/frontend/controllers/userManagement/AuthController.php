@@ -36,6 +36,11 @@ class AuthController extends WebvimarkAuthController
         ];
     }
 
+    public function actionLogin()
+    {
+        return $this->redirect(array_merge(['/auth/login'], Yii::$app->request->get()));
+    }
+
     public function actionLogout()
     {
         Yii::$app->user->logout();

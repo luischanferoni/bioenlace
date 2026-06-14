@@ -62,7 +62,7 @@ if(Yii::$app->user->username)
         'options' => ['class' => 'navbar-nav navbar-right'],
         'items' => [
              Yii::$app->user->isGuest ?
-                            ['label' => 'Ingresar', 'url' => ['/user-management/auth/login']] : '',
+                            ['label' => 'Ingresar', 'url' => ['/auth/login']] : '',
             
             ],
     ]);
@@ -124,7 +124,7 @@ if(Yii::$app->user->idEfector){
                 'items' => [                   
                     ['label' => 'Modificar Contraseña', 'url' => ['/user-management/auth/change-own-password']],
                     ['label' => 'Confirmacion de email', 'url' => ['/user-management/auth/confirm-email']],
-                     !Yii::$app->user->isGuest ? ['label' => 'Salir', 'url' => ['/user-management/auth/logout']]:'',
+                     !Yii::$app->user->isGuest ? ['label' => 'Salir', 'url' => ['/auth/logout']]:'',
                 ],
             ],
             //]:'',
@@ -147,7 +147,7 @@ NavBar::end();
                 'items' => [                   
                     ['label' => 'Modificar Contraseña', 'url' => ['/user-management/auth/change-own-password']],
                     ['label' => 'Confirmacion de email', 'url' => ['/user-management/auth/confirm-email']],
-                     !Yii::$app->user->isGuest ? ['label' => 'Salir', 'url' => ['/user-management/auth/logout']]:'',
+                     !Yii::$app->user->isGuest ? ['label' => 'Salir', 'url' => ['/auth/logout']]:'',
                 ],
             ],
             //]:'',

@@ -1,5 +1,4 @@
 intent_id: turnos.confirmar-asistencia-flow
-permission: Turno.confirmar_asistencia
 version: 1
 
 action_name: "Confirmar asistencia al turno"

@@ -4,8 +4,7 @@ namespace common\components\Assistant\UiActions;
 
 use Yii;
 use common\components\Core\Service\ClientContextService;
-use webvimark\modules\UserManagement\components\AuthHelper;
-use webvimark\modules\UserManagement\models\rbacDB\Route as RbacRoute;
+use common\components\Core\Permission\BioenlaceSessionPermissions;
 use webvimark\modules\UserManagement\models\User;
 
 /**
@@ -25,8 +24,7 @@ final class AllowedRoutesResolver
     public const LOG_CATEGORY = 'allowed-routes-resolver';
 
     /**
-     * Tras {@see AuthHelper::updatePermissions}, debe coincidir con el usuario cuyas rutas están en
-     * {@see AuthHelper::SESSION_PREFIX_ROUTES}; si no, no se reutiliza la sesión (evita JWT ≠ dueño de __userRoutes).
+     * Tras refrescar permisos Bioenlace, debe coincidir el dueño de sesión con userId.
      */
     public const SESSION_ROUTES_OWNER_KEY = '__bioenlace_user_routes_owner_id';
 
@@ -89,7 +87,7 @@ final class AllowedRoutesResolver
         if (!Yii::$app->has('session') || Yii::$app->session->getIsActive() === false) {
             return null;
         }
-        $roles = Yii::$app->session->get(AuthHelper::SESSION_PREFIX_ROLES);
+        $roles = Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROLES);
         return is_array($roles) ? $roles : null;
     }
 
@@ -103,7 +101,7 @@ final class AllowedRoutesResolver
         if (!Yii::$app->has('session') || Yii::$app->session->getIsActive() === false) {
             return null;
         }
-        $routes = Yii::$app->session->get(AuthHelper::SESSION_PREFIX_ROUTES);
+        $routes = Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROUTES);
         return is_array($routes) ? $routes : null;
     }
 
@@ -166,7 +164,7 @@ final class AllowedRoutesResolver
         $fromSession = false;
         if (!Yii::$app->user->isGuest && (int) Yii::$app->user->id === $userId) {
             try {
-                AuthHelper::ensurePermissionsUpToDate();
+                BioenlaceSessionPermissions::ensureUpToDate();
             } catch (\Throwable $e) {
                 Yii::debug('ensurePermissionsUpToDate: ' . $e->getMessage(), self::LOG_CATEGORY);
             }
@@ -197,8 +195,8 @@ final class AllowedRoutesResolver
 
         if (!$fromSession) {
             try {
-                $list = RbacRoute::getUserRoutes($userId, true);
-                foreach ($list as $r) {
+                $built = BioenlaceSessionPermissions::buildForUserId($userId);
+                foreach (array_keys($built['routes']) as $r) {
                     $r = is_string($r) ? '/' . ltrim($r, '/') : '';
                     if ($r !== '' && $r !== '/') {
                         $map[$r] = true;

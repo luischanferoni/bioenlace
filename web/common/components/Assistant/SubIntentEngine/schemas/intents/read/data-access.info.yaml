@@ -1,5 +1,4 @@
 intent_id: data-access.info
-permission: DataAccess.info
 version: 1
 
 action_name: "Consulta informativa staff"

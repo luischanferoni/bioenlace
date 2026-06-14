@@ -52,16 +52,11 @@ final class IntentManifestIndex
     }
 
     /**
-     * Permiso lógico del intent (`permission` en YAML; fallback `rbac_route`).
+     * Clave RBAC del intent: siempre el intent_id.
      */
     public static function permissionKeyForIntent(string $intentId): string
     {
-        $row = self::get($intentId);
-        if ($row === null) {
-            return '';
-        }
-
-        return trim((string) ($row['permission'] ?? ''));
+        return trim($intentId);
     }
 
     public static function rbacRouteForIntent(string $intentId): string
@@ -112,15 +107,12 @@ final class IntentManifestIndex
             }
             $seenIds[$intentId] = $path;
 
-            $permission = trim((string) ($data['permission'] ?? ''));
+            $permission = IntentPermissionResolver::resolve($intentId, $data);
             $rbacRoute = trim((string) ($data['rbac_route'] ?? ''));
             if ($rbacRoute !== '') {
                 $rbacRoute = '/' . ltrim($rbacRoute, '/');
             }
             $category = IntentSchemaPaths::categoryFromPath($path);
-            if ($permission === '') {
-                $permission = IntentPermissionResolver::inferFromIntentId($intentId, $category ?? '');
-            }
 
             $openUiSteps = self::extractOpenUiSteps($data);
             $flowSubmit = is_array($data['flow_submit'] ?? null) ? $data['flow_submit'] : null;

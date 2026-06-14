@@ -8,7 +8,7 @@ use yii\grid\GridView;
 /* @var $groupFilter string */
 /* @var $entityGroups array<string, string> */
 
-$this->title = 'Campos por grupo (BD)';
+$this->title = 'Campos por atributo (BD)';
 $this->params['breadcrumbs'][] = ['label' => 'Consultas staff', 'url' => ['#']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
@@ -32,11 +32,11 @@ $this->params['breadcrumbs'][] = $this->title;
 
                 <?= Html::beginForm(['index'], 'get', ['class' => 'row g-2 align-items-end mb-3']) ?>
                 <div class="col-md-8">
-                    <label class="form-label small mb-1" for="group-filter">Filtrar por grupo</label>
+                    <label class="form-label small mb-1" for="group-filter">Filtrar por clave YAML</label>
                     <?= Html::dropDownList('group', $groupFilter, $entityGroups, [
                         'id' => 'group-filter',
                         'class' => 'form-select form-select-sm',
-                        'prompt' => 'Todos los grupos',
+                        'prompt' => 'Todas las claves',
                     ]) ?>
                 </div>
                 <div class="col-md-4">

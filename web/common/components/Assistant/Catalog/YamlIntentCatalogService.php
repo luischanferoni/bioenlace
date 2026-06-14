@@ -4,11 +4,11 @@ namespace common\components\Assistant\Catalog;
 
 use common\components\Assistant\UiActions\ActionMappingService;
 use common\components\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Core\Permission\IntentPermissionResolver;
 use common\components\Ui\ApiV1HttpRoute;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
-use webvimark\modules\UserManagement\models\User;
 
 /**
  * Descubre intents conversacionales desde YAML en SubIntentEngine/schemas/intents/ (árbol recursivo).
@@ -96,10 +96,7 @@ final class YamlIntentCatalogService
             }
 
             $category = IntentSchemaPaths::categoryFromPath($path);
-            $permission = trim((string) ($data['permission'] ?? ''));
-            if ($permission === '') {
-                $permission = IntentPermissionResolver::inferFromIntentId($intentId, $category ?? '');
-            }
+            $permission = IntentPermissionResolver::resolve($intentId, $data);
 
             $actionName = isset($data['action_name']) ? trim((string) $data['action_name']) : '';
             if ($actionName === '') {
@@ -198,7 +195,7 @@ final class YamlIntentCatalogService
     }
 
     /**
-     * Intents YAML visibles según `permission` (auth_item) o `rbac_route` (legacy webvimark).
+     * Intents YAML visibles según intent_id (auth_item) o rbac_route legacy.
      *
      * @param array<int, array<string, mixed>> $items salida de {@see discoverAll}
      * @return array<int, array<string, mixed>>
@@ -214,7 +211,7 @@ final class YamlIntentCatalogService
             if ($aid === '') {
                 continue;
             }
-            $permission = isset($flow['permission']) ? trim((string) $flow['permission']) : '';
+            $permission = $aid;
             $rbacRoute = isset($flow['rbac_route']) ? trim((string) $flow['rbac_route']) : '';
             if ($permission === '' && $rbacRoute === '') {
                 continue;
@@ -241,16 +238,7 @@ final class YamlIntentCatalogService
             return ActionMappingService::userIdCanAccessRoute($userId, $permissionKey);
         }
 
-        $user = User::findOne($userId);
-        if ($user !== null && (int) $user->superadmin === 1) {
-            return true;
-        }
-
-        if (!Yii::$app->has('authManager')) {
-            return false;
-        }
-
-        return Yii::$app->authManager->checkAccess($userId, $permissionKey);
+        return BioenlaceAccessChecker::userCanPermissionKey($userId, $permissionKey);
     }
 
     public static function intentExists(string $intentId): bool

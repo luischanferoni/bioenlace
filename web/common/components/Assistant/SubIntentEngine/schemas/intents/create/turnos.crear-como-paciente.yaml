@@ -1,6 +1,5 @@
 intent_id: turnos.crear-como-paciente
 version: 3
-permission: Turno.create
 
 action_name: "Reservar turno"
 description: "Elegir servicio, centro de salud, profesional y horario (sin repreguntar motivo clínico)."

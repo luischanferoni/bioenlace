@@ -2,12 +2,11 @@
 
 namespace backend\controllers;
 
+use Yii;
 use yii\web\Controller;
-use yii\filters\VerbFilter;
-use common\components\Core\DataAccess\AttributeGroupCatalog;
 
 /**
- * Vista read-only del catálogo DataAccess (YAML de referencia).
+ * Retirado del menú admin: el catálogo unificado está en {@see PermissionCatalogController}.
  */
 class DataAccessCatalogController extends Controller
 {
@@ -15,24 +14,18 @@ class DataAccessCatalogController extends Controller
     {
         return [
             'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
-            ],
-            'verbs' => [
-                'class' => VerbFilter::class,
+                'class' => \frontend\components\BioenlaceBackendAccessControl::class,
             ],
         ];
     }
 
     public function actionIndex()
     {
-        $catalog = new AttributeGroupCatalog();
+        Yii::$app->session->setFlash(
+            'info',
+            'El catálogo DataAccess se consulta en Catálogo de permisos (pestaña Atributos).'
+        );
 
-        return $this->render('index', [
-            'configDirectory' => AttributeGroupCatalog::configDirectory(),
-            'entityGroups' => $catalog->listEntityGroupOptions(),
-            'entities' => $catalog->listEntitiesForDisplay(),
-            'metrics' => $catalog->listMetricsForDisplay(),
-            'editSurfaces' => $catalog->listEditSurfacesForDisplay(),
-        ]);
+        return $this->redirect(['permission-catalog/index']);
     }
 }

@@ -1,5 +1,4 @@
 intent_id: internacion.mapa-camas-flow
-permission: Internacion.view_map
 version: 1
 
 action_name: "Mapa de camas"

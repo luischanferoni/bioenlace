@@ -1,5 +1,4 @@
 intent_id: turnos.conflicto-agenda-flow
-permission: Turno.view_conflicts
 version: 1
 
 action_name: "Resolver cambio de horario por agenda"

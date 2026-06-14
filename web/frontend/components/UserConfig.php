@@ -58,7 +58,7 @@ class UserConfig extends BaseUserConfig
         // Igual que webvimark UserConfig: refrescar __userRoles / __userRoutes para la identidad actual.
         // Imprescindible tras impersonate (SiteController::actionImpersonate): si no, la sesión conserva
         // rutas del usuario anterior y ghost-access / RBAC en sesión quedan desalineados con AllowedRoutesResolver.
-        \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions($identity);
+        \common\components\Core\Permission\BioenlaceAccessChecker::refreshForIdentity($identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) $identity->id);
 
         parent::afterLogin($identity, $cookieBased, $duration);

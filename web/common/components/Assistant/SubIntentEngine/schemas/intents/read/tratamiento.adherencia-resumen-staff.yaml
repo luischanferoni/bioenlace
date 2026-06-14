@@ -1,5 +1,4 @@
 intent_id: tratamiento.adherencia-resumen-staff
-permission: Tratamiento.view_adherence
 version: 1
 
 action_name: "Adherencia a tratamientos (staff)"

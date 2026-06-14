@@ -1,5 +1,4 @@
 intent_id: data-access.listar
-permission: DataAccess.list
 version: 1
 
 action_name: "Listado staff"

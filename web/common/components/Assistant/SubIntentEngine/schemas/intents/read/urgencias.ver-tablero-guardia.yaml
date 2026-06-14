@@ -1,5 +1,4 @@
 intent_id: urgencias.ver-tablero-guardia
-permission: GuardiaEpisode.view_board
 version: 1
 
 action_name: "Ver tablero de guardia"

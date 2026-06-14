@@ -9,7 +9,6 @@ use yii\widgets\ActiveForm;
 
 $this->title = 'Permisos del rol: ' . $roleName;
 $this->params['breadcrumbs'][] = ['label' => 'Catálogo de permisos', 'url' => ['index']];
-$this->params['breadcrumbs'][] = ['label' => 'Roles ↔ permisos', 'url' => ['roles']];
 $this->params['breadcrumbs'][] = $this->title;
 
 $intents = array_values(array_filter($permissions, static fn (array $p): bool => ($p['kind'] ?? '') === 'intent'));
@@ -20,7 +19,7 @@ $missingAuth = array_filter($permissions, static fn (array $p): bool => empty($p
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h1 class="h2 mb-0"><?= Html::encode($this->title) ?></h1>
-        <?= Html::a('Volver a matriz', ['roles'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+        <?= Html::a('Volver al catálogo', ['index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
     </div>
 
     <?php if ($missingAuth !== []): ?>

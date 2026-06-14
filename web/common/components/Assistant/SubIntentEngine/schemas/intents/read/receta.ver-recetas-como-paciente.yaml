@@ -1,5 +1,4 @@
 intent_id: receta.ver-recetas-como-paciente
-permission: Receta.view
 version: 1
 
 action_name: "Ver mis recetas electrónicas"

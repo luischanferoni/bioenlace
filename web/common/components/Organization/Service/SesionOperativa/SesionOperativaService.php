@@ -11,7 +11,7 @@ use common\models\ProfesionalEfectorServicioAgenda;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\models\Servicio;
 use common\models\User;
-use webvimark\modules\UserManagement\components\AuthHelper;
+use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use Firebase\JWT\JWT;
 
@@ -143,7 +143,7 @@ class SesionOperativaService extends Component
             }
         ));
 
-        AuthHelper::updatePermissions(Yii::$app->user->identity);
+        BioenlaceAccessChecker::refreshForIdentity(Yii::$app->user->identity);
         AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
         $this->establecerAgendaDisponiblePorContextoSesion();

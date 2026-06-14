@@ -1,5 +1,4 @@
 intent_id: turnos.reubicar-como-paciente-flow
-permission: Turno.reprogramar
 version: 1
 
 action_name: "Reubicar turno"

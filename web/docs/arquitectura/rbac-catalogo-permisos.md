@@ -4,9 +4,9 @@
 
 - **BioenlaceDbManager** se conserva: PES → rol vía `servicios.item_name`.
 - **Permisos assignables** en admin:
-  - **Intents** — operaciones / flows (`create/`, `read/`, `update/`, `delete/`).
+  - **Intents** — clave = `intent_id` del YAML.
   - **Atributos** — `Entidad.atributo.read|info|edit` declarados en `data-access-config`.
-- **Grupos** en data-access-config: solo presentación (chips/bloques); el grant es por **atributo**.
+- **Grupos** en data-access-config: solo presentación en YAML; no se administran en el panel.
 - **Edit complejo**: solo intent (BD → AR → YAML intent); no duplicar en `edit` disperso.
 - **open_ui intermedio**: hereda permiso del intent padre (`FlowStepAccessService` + header opcional `X-Flow-Intent-Id`).
 
@@ -37,13 +37,15 @@
 - La herencia rol → permiso lógico (`inheritRoleGrantsFromRoute`) sube la jerarquía `auth_item_child` (rol → permiso → ruta), no solo padres directos de la ruta.
 - Rutas ghost (internación, UI clínica): `RbacRouteGhostInheritanceService` propaga **rol → ruta hija** desde roles con acceso a la ruta padre; no copiar permisos lógicos como padres de rutas downstream.
 - Migraciones: `m260621_*`, `m260622_*`, `m260626_*`, `m260627_*`, `m260628_*`, `m260629_*`.
-- Admin: `/admin/permission-catalog/roles` — sync; `/admin/permission-catalog/edit-role?role=…`.
+- Admin: `/admin/permission-catalog/index` (intents + atributos + roles por fila); `/admin/permission-catalog/edit-role?role=…` para asignar grants.
 
-Jerarquía webvimark compatible con `AllowedRoutesResolver`:
+Jerarquía RBAC (Yii `BioenlaceDbManager`):
 
 ```
-rol → Turno.create (type 2) → /api/turnos/crear-como-paciente (type 3)
+rol → atencion.mis-atenciones-como-paciente (type 2) → /api/clinical/encounter-patient-summary/listar-atenciones-como-paciente (type 3)
 ```
+
+Web staff (SPA): rutas `frontend/controllers` solo exigen login; RBAC en API v1 (`BioenlaceApiAccessControl`).
 
 ## Fase 4 — permisos atómicos de atributos
 

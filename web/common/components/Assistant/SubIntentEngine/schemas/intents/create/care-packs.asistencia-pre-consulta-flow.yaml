@@ -1,5 +1,4 @@
 intent_id: care-packs.asistencia-pre-consulta-flow
-permission: CarePack.pre_consultation
 version: 1
 
 action_name: "Cuestionario pre-consulta"

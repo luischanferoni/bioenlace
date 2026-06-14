@@ -1,6 +1,5 @@
 intent_id: turnos.modificar-como-paciente-flow
 version: 1
-permission: Turno.reprogramar
 
 action_name: "Cambiar horario de turno"
 description: "Para cambiar el horario de tus turnos pendientes."

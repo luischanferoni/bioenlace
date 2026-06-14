@@ -11,7 +11,7 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\User;
 use common\models\Persona;
 use common\components\DiditClient;
-use webvimark\modules\UserManagement\components\AuthHelper;
+use common\components\Core\Permission\BioenlaceAccessChecker;
 use webvimark\modules\UserManagement\models\rbacDB\Role;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -359,7 +359,7 @@ class AuthController extends BaseController
         }
 
         BioenlaceDbManager::asignarRolPacienteSiNoExiste((int) $user->id);
-        AuthHelper::updatePermissions($identity);
+        BioenlaceAccessChecker::refreshForIdentity($identity);
         AllowedRoutesResolver::markSessionRoutesOwner((int) $user->id);
 
         $authManager = Yii::$app->authManager;

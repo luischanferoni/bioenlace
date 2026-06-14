@@ -1,6 +1,5 @@
 intent_id: turnos.cancelar-como-paciente-flow
 version: 1
-permission: Turno.cancel
 
 action_name: "Cancelar turno"
 description: "Para cancelar un turno pendiente."

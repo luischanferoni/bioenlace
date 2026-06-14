@@ -21,7 +21,7 @@ class PermissionCatalogController extends Controller
     {
         return [
             'ghost-access' => [
-                'class' => 'frontend\components\SisseGhostAccessControl',
+                'class' => \frontend\components\BioenlaceBackendAccessControl::class,
             ],
             'verbs' => [
                 'class' => VerbFilter::class,
@@ -37,11 +37,29 @@ class PermissionCatalogController extends Controller
     public function actionIndex()
     {
         $catalog = new PermissionCatalogService();
+        $matrix = (new RolePermissionMatrixService())->buildMatrix();
+        $rolesByKey = [];
+        $inAuthItemByKey = [];
+        foreach ($matrix as $row) {
+            $rolesByKey[$row['key']] = $row['roles'];
+            $inAuthItemByKey[$row['key']] = (bool) $row['in_auth_item'];
+        }
+
+        $unregistered = array_filter(
+            $matrix,
+            static fn (array $r): bool => !$r['in_auth_item'] && strncmp($r['key'], '/api/', 5) !== 0
+        );
+        $unassigned = array_filter($matrix, static fn (array $r): bool => $r['roles'] === []);
 
         return $this->render('index', [
             'intents' => $catalog->listIntents(),
             'attributes' => $catalog->listAttributes(),
             'flowSteps' => $catalog->listFlowStepDependencies(),
+            'rolesByKey' => $rolesByKey,
+            'inAuthItemByKey' => $inAuthItemByKey,
+            'roleNames' => (new RolePermissionAssignmentService())->listRoleNames(),
+            'unregisteredCount' => count($unregistered),
+            'unassignedCount' => count($unassigned),
         ]);
     }
 
@@ -56,13 +74,7 @@ class PermissionCatalogController extends Controller
 
     public function actionRoles()
     {
-        $matrix = (new RolePermissionMatrixService())->buildMatrix();
-        $assignment = new RolePermissionAssignmentService();
-
-        return $this->render('roles', [
-            'matrix' => $matrix,
-            'roleNames' => $assignment->listRoleNames(),
-        ]);
+        return $this->redirect(['index']);
     }
 
     public function actionSync()
@@ -80,7 +92,7 @@ class PermissionCatalogController extends Controller
             Yii::$app->session->setFlash('success', $msg);
         }
 
-        return $this->redirect(['roles']);
+        return $this->redirect(['index']);
     }
 
     public function actionEditRole(string $role)

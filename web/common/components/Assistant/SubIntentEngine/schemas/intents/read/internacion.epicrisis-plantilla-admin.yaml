@@ -1,5 +1,4 @@
 intent_id: internacion.epicrisis-plantilla-admin
-permission: InternacionEpicrisisPlantilla.admin
 version: 1
 
 action_name: "ABM plantillas epicrisis"

@@ -8,7 +8,7 @@ use yii\filters\Cors;
 use yii\filters\ContentNegotiator;
 use yii\web\Response;
 use frontend\modules\api\v1\components\JsonHttpBearerAuth;
-use frontend\modules\api\v1\components\ApiGhostAccessControl;
+use frontend\modules\api\v1\components\BioenlaceApiAccessControl;
 
 class BaseController extends Controller
 {
@@ -48,7 +48,7 @@ class BaseController extends Controller
 
         // Control de acceso por permisos (rutas api/v1/...)
         $behaviors['api-ghost-access'] = [
-            'class' => ApiGhostAccessControl::class,
+            'class' => BioenlaceApiAccessControl::class,
             'except' => array_values(array_unique($except)),
         ];
 

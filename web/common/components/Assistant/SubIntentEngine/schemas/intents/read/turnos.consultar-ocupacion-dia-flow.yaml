@@ -1,5 +1,4 @@
 intent_id: turnos.consultar-ocupacion-dia-flow
-permission: Turno.view_occupancy
 version: 1
 
 action_name: "Consultar ocupación del día"

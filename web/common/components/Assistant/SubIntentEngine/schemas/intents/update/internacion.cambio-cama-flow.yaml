@@ -1,5 +1,4 @@
 intent_id: internacion.cambio-cama-flow
-permission: Internacion.change_bed
 version: 1
 
 action_name: "Cambio de cama"

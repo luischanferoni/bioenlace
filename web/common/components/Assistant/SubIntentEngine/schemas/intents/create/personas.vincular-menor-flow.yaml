@@ -1,5 +1,4 @@
 intent_id: personas.vincular-menor-flow
-permission: Persona.link_minor
 version: 1
 
 action_name: "Vincular menor como tutor"

@@ -1,5 +1,4 @@
 intent_id: turnos.indicadores-agenda-flow
-permission: Turno.view_indicators
 version: 1
 
 action_name: "Indicadores de agenda"

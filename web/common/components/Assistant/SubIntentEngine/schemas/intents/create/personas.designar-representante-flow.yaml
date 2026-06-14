@@ -1,5 +1,4 @@
 intent_id: personas.designar-representante-flow
-permission: Persona.designate_representative
 version: 1
 
 action_name: "Designar representante"

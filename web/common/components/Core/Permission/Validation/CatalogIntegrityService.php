@@ -99,10 +99,9 @@ final class CatalogIntegrityService
     {
         $errors = [];
         foreach (IntentManifestIndex::all() as $intentId => $meta) {
-            $permission = trim((string) ($meta['permission'] ?? ''));
             $rbac = trim((string) ($meta['rbac_route'] ?? ''));
-            if ($permission === '' && $rbac === '') {
-                $errors[] = 'Intent «' . $intentId . '»: falta permission o rbac_route';
+            if ($rbac === '') {
+                $errors[] = 'Intent «' . $intentId . '»: falta rbac_route';
             }
         }
 

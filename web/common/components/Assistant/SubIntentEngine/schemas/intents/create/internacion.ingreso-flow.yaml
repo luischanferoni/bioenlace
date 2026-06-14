@@ -1,5 +1,4 @@
 intent_id: internacion.ingreso-flow
-permission: Internacion.create
 version: 1
 
 action_name: "Ingreso a internación"

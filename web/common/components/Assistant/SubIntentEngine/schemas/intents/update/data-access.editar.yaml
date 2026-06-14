@@ -1,5 +1,4 @@
 intent_id: data-access.editar
-permission: DataAccess.edit
 version: 1
 
 action_name: "Edición dispersa"

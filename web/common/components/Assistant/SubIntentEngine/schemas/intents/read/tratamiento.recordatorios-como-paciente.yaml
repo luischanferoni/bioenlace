@@ -1,5 +1,4 @@
 intent_id: tratamiento.recordatorios-como-paciente
-permission: Tratamiento.view_reminders
 version: 1
 
 action_name: "Recordatorios de tratamiento"

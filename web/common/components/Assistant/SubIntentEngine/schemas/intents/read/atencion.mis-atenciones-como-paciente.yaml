@@ -1,5 +1,4 @@
 intent_id: atencion.mis-atenciones-como-paciente
-permission: Atencion.view_mine
 version: 1
 
 action_name: "Ver mis atenciones"

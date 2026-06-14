@@ -7,7 +7,8 @@ use yii\web\Controller;
 use yii\web\BadRequestHttpException;
 use yii\helpers\ArrayHelper;
 
-//use webvimark\modules\UserManagement\UserManagementModule;
+use common\components\Core\Permission\BioenlaceAccessChecker;
+use common\components\Core\Permission\BioenlaceSessionPermissions;
 use webvimark\modules\UserManagement\models\User;
 
 use common\components\Clinical\Inpatient\Service\InternacionMapaWebContext;
@@ -282,9 +283,9 @@ class SiteController extends Controller
         $efectoresParaSesion = ProfesionalEfectorServicio::getEfectoresParaSesion((int) Yii::$app->user->getIdPersona());
 
         if (count($efectoresParaSesion) == 0) {
-            \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
+            BioenlaceAccessChecker::refreshForIdentity(Yii::$app->user->identity);
             \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
-            $keys = Yii::$app->session->get(\webvimark\modules\UserManagement\components\AuthHelper::SESSION_PREFIX_ROLES);
+            $keys = Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROLES);
 
             $x_efector = false;
             foreach ($keys as $key) {
@@ -307,7 +308,7 @@ class SiteController extends Controller
 
         Yii::$app->user->setEfectores(ArrayHelper::map($efectoresParaSesion, 'id_efector', 'nombre'));
 
-        \webvimark\modules\UserManagement\components\AuthHelper::updatePermissions(Yii::$app->user->identity);
+        BioenlaceAccessChecker::refreshForIdentity(Yii::$app->user->identity);
         \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
         return ['site/sesion-operativa'];

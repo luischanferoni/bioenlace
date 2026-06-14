@@ -1,5 +1,4 @@
 intent_id: urgencias.triage-paciente-guardia
-permission: GuardiaEpisode.triage
 version: 1
 
 action_name: "Triage en guardia"

@@ -114,11 +114,6 @@ final class PermissionCatalogService
      */
     private function intentPermissionKey(string $intentId, array $meta): string
     {
-        $permission = trim((string) ($meta['permission'] ?? ''));
-        if ($permission !== '') {
-            return $permission;
-        }
-
         return IntentPermissionResolver::resolve($intentId, $meta);
     }
 

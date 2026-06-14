@@ -1,5 +1,4 @@
 intent_id: licencia.cargar-para-profesional-flow
-permission: Licencia.create
 version: 1
 
 action_name: "Cargar licencia (staff)"

@@ -3,7 +3,7 @@
 namespace common\components\Assistant\IntentEngine;
 
 use Yii;
-use webvimark\modules\UserManagement\models\User;
+use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Assistant\UiActions\ActionDiscoveryService;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
 use common\components\Assistant\Catalog\CarePackUiActionCatalog;
@@ -415,13 +415,13 @@ final class UiActionCatalog
      */
     private static function userCanNativeFrontendWeb(int $userId, string $controller, string $action): bool
     {
-        $u = User::findOne($userId);
-        if ($u && (int) $u->superadmin === 1) {
+        $userId = (int) $userId;
+        if (BioenlaceAccessChecker::isSuperadminUserId($userId)) {
             return true;
         }
 
         foreach (AllowedRoutesResolver::nativeFrontendWebRbacRouteCandidates($controller, $action) as $rbacRoute) {
-            if (User::canRoute($rbacRoute)) {
+            if (BioenlaceAccessChecker::userHasRoute($userId, $rbacRoute)) {
                 return true;
             }
         }

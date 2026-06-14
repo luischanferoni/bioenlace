@@ -1,5 +1,4 @@
 intent_id: turnos.crear-sobreturno-flow
-permission: Turno.create
 version: 1
 
 action_name: "Crear sobreturno"

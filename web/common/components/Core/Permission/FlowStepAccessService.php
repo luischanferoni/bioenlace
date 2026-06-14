@@ -53,9 +53,9 @@ final class FlowStepAccessService
      */
     private function userCanAccessIntent(int $userId, array $parent): bool
     {
-        $permission = trim((string) ($parent['permission'] ?? ''));
-        if ($permission !== '') {
-            return \common\components\Assistant\Catalog\YamlIntentCatalogService::userIdCanPermissionKey($userId, $permission);
+        $intentId = trim((string) ($parent['intent_id'] ?? ''));
+        if ($intentId !== '') {
+            return \common\components\Assistant\Catalog\YamlIntentCatalogService::userIdCanPermissionKey($userId, $intentId);
         }
 
         $rbacRoute = trim((string) ($parent['rbac_route'] ?? ''));
@@ -76,7 +76,6 @@ final class FlowStepAccessService
         if (!$this->userCanAccessIntent($userId, [
             'intent_id' => $flowIntentId,
             'step_id' => '',
-            'permission' => (string) ($meta['permission'] ?? ''),
             'rbac_route' => (string) ($meta['rbac_route'] ?? ''),
         ])) {
             return false;

@@ -1,5 +1,4 @@
 intent_id: laboratorio.ver-resultados-como-paciente
-permission: Laboratorio.view
 version: 1
 
 action_name: "Ver resultados de laboratorio"

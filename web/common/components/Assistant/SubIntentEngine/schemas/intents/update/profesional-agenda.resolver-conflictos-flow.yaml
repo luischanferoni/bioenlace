@@ -1,5 +1,4 @@
 intent_id: profesional-agenda.resolver-conflictos-flow
-permission: ProfesionalEfectorServicioAgenda.resolve_conflicts
 version: 1
 
 action_name: "Resolver conflictos de agenda (staff)"

@@ -1,5 +1,4 @@
 intent_id: turnos.ver-agenda-dia-profesional-flow
-permission: Turno.view_day
 version: 1
 
 action_name: "Ver agenda del día"

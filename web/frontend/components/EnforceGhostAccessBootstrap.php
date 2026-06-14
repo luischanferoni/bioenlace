@@ -8,9 +8,7 @@ use yii\base\BootstrapInterface;
 use yii\base\ActionEvent;
 
 /**
- * Enforces Webvimark GhostAccessControl for ALL web frontend controllers.
- *
- * This avoids relying on each controller's behaviors() to include ghost-access.
+ * Shell web staff: solo autenticación. RBAC de negocio en API v1.
  */
 class EnforceGhostAccessBootstrap implements BootstrapInterface
 {
@@ -26,11 +24,10 @@ class EnforceGhostAccessBootstrap implements BootstrapInterface
                 return;
             }
 
-            $filter = new SisseGhostAccessControl();
+            $filter = new FrontendAuthenticatedAccessControl();
             $filter->attach($controller);
 
             if (!$filter->beforeAction($action)) {
-                // Filter already handled denyAccess/redirect.
                 $event->isValid = false;
             }
         });

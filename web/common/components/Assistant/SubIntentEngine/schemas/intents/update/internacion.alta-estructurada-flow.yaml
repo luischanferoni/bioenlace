@@ -1,5 +1,4 @@
 intent_id: internacion.alta-estructurada-flow
-permission: Internacion.discharge
 version: 1
 
 action_name: "Alta hospitalaria"

@@ -14,7 +14,7 @@ use yii\db\ActiveRecord;
  * @property string $field_name
  * @property string $field_type
  * @property string|null $label
- * @property string|null $config_json
+ * @property string|null $config_json JSON en BD (Yii puede exponerlo como array<string, mixed> al leer columna json)
  * @property int $sort_order
  * @property int $active
  */
@@ -33,7 +33,7 @@ class DataAccessAttributeField extends ActiveRecord
             [['field_name'], 'string', 'max' => 64],
             [['field_type'], 'string', 'max' => 32],
             [['label'], 'string', 'max' => 255],
-            [['config_json'], 'string'],
+            [['config_json'], 'safe'],
             [['sort_order'], 'integer'],
             [['active'], 'integer'],
             [['active'], 'default', 'value' => 1],
@@ -87,19 +87,33 @@ class DataAccessAttributeField extends ActiveRecord
 
     public function validateConfigJson(string $attribute): void
     {
-        $raw = trim((string) $this->$attribute);
-        if ($raw === '') {
+        $raw = $this->$attribute;
+        if ($raw === null || $raw === '') {
             $this->$attribute = null;
 
             return;
         }
-        $decoded = json_decode($raw, true);
+        if (is_array($raw)) {
+            return;
+        }
+        if (!is_string($raw)) {
+            $this->addError($attribute, 'JSON inválido (objeto esperado).');
+
+            return;
+        }
+        $trimmed = trim($raw);
+        if ($trimmed === '') {
+            $this->$attribute = null;
+
+            return;
+        }
+        $decoded = json_decode($trimmed, true);
         if (!is_array($decoded)) {
             $this->addError($attribute, 'JSON inválido (objeto esperado).');
 
             return;
         }
-        $this->$attribute = json_encode($decoded, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+        $this->$attribute = $decoded;
     }
 
     public function configJsonForForm(): string
@@ -160,11 +174,21 @@ class DataAccessAttributeField extends ActiveRecord
      */
     public function decodedConfig(): array
     {
-        $raw = trim((string) $this->config_json);
-        if ($raw === '') {
+        $raw = $this->config_json;
+        if ($raw === null || $raw === '') {
             return [];
         }
-        $decoded = json_decode($raw, true);
+        if (is_array($raw)) {
+            return $raw;
+        }
+        if (!is_string($raw)) {
+            return [];
+        }
+        $trimmed = trim($raw);
+        if ($trimmed === '') {
+            return [];
+        }
+        $decoded = json_decode($trimmed, true);
 
         return is_array($decoded) ? $decoded : [];
     }

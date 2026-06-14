@@ -8,9 +8,7 @@ use common\models\DataAccess\DataAccessAttributeField;
 /* @var $model common\models\DataAccess\DataAccessAttributeField */
 
 $entityGroups = (new \common\components\Core\DataAccess\AttributeGroupCatalog())->listEntityGroupOptions();
-if ($model->config_json === null || trim((string) $model->config_json) === '') {
-    $model->config_json = $model->configJsonForForm();
-}
+$model->config_json = $model->configJsonForForm();
 
 $form = ActiveForm::begin();
 ?>

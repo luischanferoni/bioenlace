@@ -26,35 +26,54 @@ function getEventos(dia) {
     '<div class="iq-loader-box"><div class="iq-loader-8"></div></div>'
   );
 
-  $.get(
-    turnos_url_eventos,
-    turnosQueryConSlot({
-      dia: dia,
-      id_servicio: turnos_id_servicio,
-    }),
-    function (data) {
-      $("#eventos_maniana").html(data.turnos.maniana);
-      $("#eventos_tarde").html(data.turnos.tarde);
-      $("#todosTomados").val(data.turnos.todosTomados ? "1" : "");
+  var query = turnosQueryConSlot({
+    id_servicio: turnos_id_servicio,
+  });
+  if (dia) {
+    query.dia = dia;
+  }
 
-      if (
-        data.turnos.mensajeFeriado != "" &&
-        data.turnos.mensajeFeriado != undefined
-      ) {
-        $("#mensaje_feriado").html(data.turnos.mensajeFeriado);
-        //aqui tendria que cambiar la card de color para hacer notar que es un feriado
-      } else {
-        $("#mensaje_feriado").html("");
-      }
-
-      const tooltipTriggerList = document.querySelectorAll(
-        '[data-bs-toggle="tooltip"]'
-      );
-      const tooltipList = [...tooltipTriggerList].map(
-        (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
-      );
+  $.ajax({
+    url: turnos_url_eventos,
+    type: "GET",
+    headers:
+      typeof window.BioenlaceApiClient !== "undefined" &&
+      typeof window.BioenlaceApiClient.mergeHeaders === "function"
+        ? window.BioenlaceApiClient.mergeHeaders({})
+        : {},
+    data: query,
+    dataType: "json",
+  }).done(function (resp) {
+    var data = resp && resp.success === true ? resp.data : resp;
+    if (!data || !data.turnos) {
+      return;
     }
-  );
+    var maniana = data.turnos.maniana;
+    var tarde = data.turnos.tarde;
+    $("#eventos_maniana").html(
+      Array.isArray(maniana) ? maniana.join("") : maniana || ""
+    );
+    $("#eventos_tarde").html(
+      Array.isArray(tarde) ? tarde.join("") : tarde || ""
+    );
+    $("#todosTomados").val(data.turnos.todosTomados ? "1" : "");
+
+    if (
+      data.turnos.mensajeFeriado != "" &&
+      data.turnos.mensajeFeriado != undefined
+    ) {
+      $("#mensaje_feriado").html(data.turnos.mensajeFeriado);
+    } else {
+      $("#mensaje_feriado").html("");
+    }
+
+    const tooltipTriggerList = document.querySelectorAll(
+      '[data-bs-toggle="tooltip"]'
+    );
+    const tooltipList = [...tooltipTriggerList].map(
+      (tooltipTriggerEl) => new bootstrap.Tooltip(tooltipTriggerEl)
+    );
+  });
 }
 
 $(document).ready(function () {

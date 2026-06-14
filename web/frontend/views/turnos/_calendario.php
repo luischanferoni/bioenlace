@@ -5,6 +5,7 @@ use yii\bootstrap5\Modal;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use common\models\Turno;
+use frontend\assets\BioenlaceApiClientAsset;
 
 
 $period = new DatePeriod(
@@ -13,7 +14,7 @@ $period = new DatePeriod(
     new DateTime('NOW +90day')
 );
 
-$turnos_url_eventos = Url::to(['turnos/eventos']);
+$turnos_url_eventos = '/api/v1/turnos/calendario-ocupacion-dia';
 $turnos_url_historial = Url::to(['turnos/historial']);
 $turnos_url_create = '/api/v1/turnos/para-paciente';
 $turnos_url_crear_sobreturno = '/api/v1/turnos/crear-sobreturno';
@@ -37,7 +38,7 @@ $this->registerJsVar(
 );
 $this->registerJsFile(
     "@web/js/turnos_calendario.js",
-    ['depends' => [\yii\web\JqueryAsset::class]]
+    ['depends' => [BioenlaceApiClientAsset::class]]
 );
 
 Modal::begin([

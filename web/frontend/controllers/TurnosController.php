@@ -5,7 +5,6 @@ namespace frontend\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
-use yii\db\Expression;
 use yii\web\BadRequestHttpException;
 use yii\filters\VerbFilter;
 
@@ -14,15 +13,9 @@ use common\models\busquedas\TurnoBusqueda;
 use common\models\Turno;
 use common\models\AgendaFeriados;
 use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ServiciosEfector;
 use common\models\ConsultaDerivaciones;
 use common\models\Persona;
-use common\models\User;
-use frontend\components\UserRequest;
-use common\components\Scheduling\Service\TurnoSlotFinder;
-use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
-use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
 
 /**
  * TurnosController implements the CRUD actions for Turno model.
@@ -35,7 +28,6 @@ class TurnosController extends Controller
         'index' => ['GET', 'HEAD', 'OPTIONS'],
         'view' => ['GET', 'HEAD', 'OPTIONS'],
         'update' => ['PUT', 'PATCH', 'OPTIONS'],
-        'eventos' => ['GET', 'OPTIONS'],
         'espera' => ['GET', 'HEAD', 'OPTIONS'],
         'como-paciente' => ['GET', 'OPTIONS'],
         'proximo-disponible' => ['GET', 'POST', 'OPTIONS'],
@@ -172,8 +164,7 @@ class TurnosController extends Controller
         ]);
     }
 
-    // Nota: la creación/cancelación/no-se-presentó/sobreturno viven en la API v1 (TurnosController API).
-    // En web, las vistas/JS deben llamar a /api/v1/turnos/... con Authorization header.
+    // Nota: ocupación por día (calendario staff) → GET /api/v1/turnos/calendario-ocupacion-dia.
 
     /**
      * Se lo llama desde el index
@@ -201,283 +192,6 @@ class TurnosController extends Controller
             'id_profesional_efector_servicio' => $id_profesional_efector_servicio,
             'persona' => $session_paciente,
         ]);
-    }
-
-    /**
-     * Este metodo carga las horas disponibles por día
-     * Se lo llama desde js despues de llamar a turnos/calendario
-     *
-     * Recibe `id_profesional_efector_servicio` (PES), más `id_servicio` y día cuando corresponda.
-     * @no_intent_catalog
-    */
-    public function actionEventos()
-    {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-
-        $request = Yii::$app->request;
-        $params = array_merge($request->get(), $request->post());
-        $dia = $params['dia'] ?? date("Y-m-d");
-        $id_servicio = $params['id_servicio'] ?? null;
-        $id_efector = Yii::$app->user->getIdEfector();
-
-        $idPesReq = (int) ($params['id_profesional_efector_servicio'] ?? 0);
-
-        $formatoSlots = (($params['formato'] ?? '') === 'slots');
-
-        $turnosQuery = Turno::findActive();
-        if ($idPesReq > 0) {
-            $pesFiltro = ProfesionalEfectorServicio::findOne(['id' => $idPesReq, 'deleted_at' => null]);
-            if ($pesFiltro && (int) $pesFiltro->id_efector === (int) $id_efector) {
-                $turnosQuery->andWhere(['id_profesional_efector_servicio' => $idPesReq]);
-            } else {
-                $turnosQuery->andWhere(['id_efector' => $id_efector])
-                    ->andWhere(['id_servicio_asignado' => $id_servicio]);
-            }
-        } else {
-            $turnosQuery->andWhere(['id_efector' => $id_efector])
-                ->andWhere(['id_servicio_asignado' => $id_servicio]);
-        }
-
-        $turnos = $turnosQuery->andWhere(['fecha' => $dia])
-            ->andWhere(['estado' => Turno::ESTADOS_PARA_DESHABILITAR])
-            ->orderBy('hora')
-            ->all();
-
-        //Feriados
-        $feriado = AgendaFeriados::getFeriadosPorFecha($dia);
-        $mensajeFeriado = '';
-
-        if ($feriado != null) {
-            $mensajeFeriado = '<h5 class="ps-5"><u><strong>No se pueden asignar turnos para un dia feriado.</strong></u></h5>';
-        }
-
-        $horasTurnosOcupados = [];
-        // este array solamente es para agregar un custom attribute al span de hora
-        $pacientesTurnosOcupados = [];
-        foreach ($turnos as $turno) {
-            $horasTurnosOcupados[$turno->id_turnos] = $turno->hora;
-            $pacientesTurnosOcupados[$turno->id_turnos] = $turno->paciente->id_persona;
-        }
-
-        $nroDiaDeSemana = date('N', strtotime($dia)) - 1;
-        $columnasAgenda = ['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'];
-
-        $slots = [];
-
-        if ($id_servicio && $idPesReq == 0) {
-            $pesRows = ProfesionalEfectorServicio::findAllActivosPorServicioEfector((int) $id_servicio, (int) $id_efector);
-            $idsPes = array_map(static function (ProfesionalEfectorServicio $p) {
-                return (int) $p->id;
-            }, $pesRows);
-            $agendas = $idsPes !== []
-                ? array_values(ProfesionalEfectorServicioAgenda::findPorIdsProfesionalEfectorServicio($idsPes))
-                : [];
-
-            $agendaDiaSeleccionado = false;
-            $horariosAgenda = [];
-            foreach ($agendas as $agenda) {
-                if ($agenda->{$columnasAgenda[$nroDiaDeSemana]}) {
-                    $agendaDiaSeleccionado = true;
-                    $horariosAgenda = array_merge($horariosAgenda, array_map('intval', explode(",", $agenda->{$columnasAgenda[$nroDiaDeSemana]})));
-                }
-            }
-
-            $minutosXHora = 15;
-            $formasAtencion = 'ORDEN_LLEGADA';
-            // no hay agenda para el dia seleccionado
-            if (!$agendaDiaSeleccionado) {
-                $mensajeSinTurnosDisponibles = '<p class="fst-italic ps-5">Sin turnos disponibles.</p>';
-                $ret = ['turnos' => ['maniana' => $mensajeSinTurnosDisponibles, 'tarde' => $mensajeSinTurnosDisponibles]];
-                if ($formatoSlots) $ret['results'] = [];
-                return $ret;
-            }
-
-            // quito posibles repetidos por el array_merge
-            $horariosAgenda = array_unique($horariosAgenda, SORT_NUMERIC);
-            sort($horariosAgenda);
-
-            // si hay agenda (no salta en el return anterior) y si el dia seleccionado no es el dia actual
-            $mensajePorOrdendeLlegada = '<p class="ps-5"><u><strong>Los turnos se otorgan por orden de llegada.</strong></u></p>';
-            if ($dia !== date("Y-m-d")) {
-                $ret = ['turnos' => ['maniana' => $mensajePorOrdendeLlegada, 'tarde' => $mensajePorOrdendeLlegada]];
-                if ($formatoSlots) $ret['results'] = [];
-                return $ret;
-            }
-
-            $slots = ProfesionalEfectorServicioAgenda::crearSlotsDesdeHorarios(
-                $horariosAgenda,
-                AgendaIntervaloMinutos::DEFAULT,
-                false
-            );
-        } else {
-            $idPes = null;
-            if ($idPesReq > 0 && $id_efector) {
-                $pesAgenda = ProfesionalEfectorServicio::findOne(['id' => $idPesReq, 'deleted_at' => null]);
-                if (
-                    $pesAgenda
-                    && (int) $pesAgenda->id_efector === (int) $id_efector
-                    && (!$id_servicio || (int) $pesAgenda->id_servicio === (int) $id_servicio)
-                ) {
-                    $idPes = $idPesReq;
-                }
-            }
-            $agenda = $idPes ? ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes) : null;
-            if ($agenda === null) {
-                $mensajeSinTurnosDisponibles = '<p class="fst-italic ps-5">Sin turnos disponibles.</p>';
-                $ret = ['turnos' => ['maniana' => $mensajeSinTurnosDisponibles, 'tarde' => $mensajeSinTurnosDisponibles]];
-                if ($formatoSlots) {
-                    $ret['results'] = [];
-                }
-                return $ret;
-            }
-
-            $formasAtencion = $agenda->formas_atencion;
-
-            $mensajeSinTurnosDisponibles = '<p class="fst-italic ps-5">Sin turnos disponibles.</p>';
-            if (!$agenda->{$columnasAgenda[$nroDiaDeSemana]} || $agenda->{$columnasAgenda[$nroDiaDeSemana]} == '') {
-                $ret = ['turnos' => ['maniana' => $mensajeSinTurnosDisponibles, 'tarde' => $mensajeSinTurnosDisponibles]];
-                if ($formatoSlots) $ret['results'] = [];
-                return $ret;
-            }
-
-            // TODO: Bug, por mas que sea por orden de llegada, si no hay ningun servicio (agenda)
-            // que atienda para el día elegido no se puede otorgar
-            $mensajePorOrdendeLlegada = '<p class="ps-5"><u><strong>Los turnos se otorgan por orden de llegada.</strong></u></p>';
-            if ($agenda->formas_atencion == 'ORDEN_LLEGADA' && $dia !== date("Y-m-d")) {
-                $ret = ['turnos' => ['maniana' => $mensajePorOrdendeLlegada, 'tarde' => $mensajePorOrdendeLlegada]];
-                if ($formatoSlots) $ret['results'] = [];
-                return $ret;
-            }
-
-            $horariosAgenda = array_map('intval', explode(",", $agenda->{$columnasAgenda[$nroDiaDeSemana]}));
-
-            $slots = AgendaSlotEngine::slotsParaDia(
-                $agenda,
-                $dia,
-                $agenda->resolveIntervaloMinutosParaSlots()
-            );
-        }
-
-        $botonesTurnosManiana = [];
-        $botonesTurnosTarde = [];
-        $slotsDisponibles = [];
-        $todosTomados = true;
-
-        foreach ($slots as $slot) {
-
-            $break = false;
-            $options = ['class' => 'hora btn btn-outline-primary rounded-pill mt-2 me-1 '];
-
-            $hora = $slot;
-
-            // Si esta viendo los turnos del día actual entonces no habilitamos
-            // para que seleccione las horas que sean menores a la hora actual
-            //ademas deshabilitamos los botones si el dia es feriado.
-            $deshabilitado = false;
-            if ($dia == date("Y-m-d")) {
-                if ($hora <= date("H:i")) {
-                    $options['class'] = 'btn btn-outline-secondary rounded-pill mt-2 me-1 ';
-                    $deshabilitado = true;
-                } else {
-                    // El if del orden de llegada va aqui para calcular la hora del siguiente turno
-                    if ($formasAtencion == 'ORDEN_LLEGADA') {
-                        $break = true;
-                    }
-                }
-            }
-
-            if ($feriado != null) {
-                $options['class'] = 'btn btn-outline-secondary rounded-pill mt-2 me-1 ';
-                $deshabilitado = true;
-            }
-
-            $horario = \DateTime::createFromFormat('H:i', $hora);
-
-            // si para esta hora ya existe un turno asignado, array_search devuelve el key si encuentra
-            $id_turno = array_search($hora . ":00", $horasTurnosOcupados);
-            if ($id_turno) {
-                $break = false;
-                $paciente = Persona::findOne($pacientesTurnosOcupados[$id_turno]);
-                $turno = Turno::findOne($id_turno);
-                $nombrePaciente = $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON);
-
-                $hora = '<del>' . $hora . '</del>';
-                $options['id'] = $id_turno;
-                $options['id-persona'] = $pacientesTurnosOcupados[$id_turno];
-                $options['estado-turno'] = $turno->estado;
-                $options['data-bs-toggle'] = 'tooltip';
-                $options['tabindex'] = "0";
-                $options['data-bs-placement'] = 'top';
-                $options['title'] = $nombrePaciente;
-
-                //si existe un turno y es feriado, habilito la posibilidad de cancelar el turno
-                if ($feriado != null) {
-                    $options['class'] .= 'hora';
-                }
-            } else {
-                $todosTomados = false;
-                if (!$deshabilitado) {
-                    $slotsDisponibles[] = $slot;
-                }
-            }
-
-            $unaDeLaManiana = \DateTime::createFromFormat('H:i', "00:00");
-            $unaDeLaTarde =  \DateTime::createFromFormat('H:i', "13:00");
-
-            if ($horario >= $unaDeLaManiana && $horario <= $unaDeLaTarde) {
-                $botonesTurnosManiana[] = \yii\helpers\Html::tag('span', $hora, $options);
-            } else {
-                $botonesTurnosTarde[] = \yii\helpers\Html::tag('span', $hora, $options);
-            }
-
-            if ($break) {
-                $resp = [
-                    'turnos' => ['maniana' => $botonesTurnosManiana, 'tarde' => $botonesTurnosTarde, 'todosTomados' => $todosTomados, 'mensajeFeriado' => $mensajeFeriado],
-                ];
-                if (($request->get('formato') ?: $request->post('formato')) === 'slots') {
-                    $resp['results'] = array_map(function ($h) {
-                        return ['id' => $h, 'text' => $h];
-                    }, $slotsDisponibles);
-                }
-                return $resp;
-            }
-            // }
-        }
-        $resp = [
-            'turnos' => ['maniana' => $botonesTurnosManiana, 'tarde' => $botonesTurnosTarde, 'todosTomados' => $todosTomados, 'mensajeFeriado' => $mensajeFeriado],
-        ];
-        if (($request->get('formato') ?: $request->post('formato')) === 'slots') {
-            $resp['results'] = array_map(function ($h) {
-                return ['id' => $h, 'text' => $h];
-            }, $slotsDisponibles);
-        }
-        return $resp;
-    }
-
-    /**
-     * @no_intent_catalog
-    */
-    public function actionOpcionesProfesionalesPorServicio($id_servicio)
-    {
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        $idServicio = (int) $id_servicio;
-        $sql = 'SELECT DISTINCT pes.id, personas.nombre, personas.apellido '
-            . 'FROM profesional_efector_servicio pes '
-            . 'INNER JOIN personas ON personas.id_persona = pes.id_persona '
-            . 'WHERE pes.id_servicio = :sid AND pes.id_efector = :eid AND pes.deleted_at IS NULL '
-            . 'ORDER BY personas.apellido, personas.nombre';
-
-        $result = $idServicio > 0 && $idEfector > 0
-            ? Yii::$app->db->createCommand($sql, [':sid' => $idServicio, ':eid' => $idEfector])->queryAll()
-            : [];
-
-        $opciones = '<option>Seleccione...</option>';
-
-        foreach ($result as $row) {
-            $opciones .= '<option value="' . (int) $row['id'] . '">' . $row['apellido'] . ', ' . $row['nombre'] . '</option>';
-        }
-        echo $opciones;
-        Yii::$app->end();
     }
 
     // actionUpdate eliminado: la actualización de turnos vive en la API v1 (TurnosController::actionActualizarTurno).

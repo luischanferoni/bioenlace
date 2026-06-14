@@ -42,6 +42,7 @@ use common\components\Scheduling\Service\TeleconsultaElegibilidadService;
 use common\components\Scheduling\Service\TurnoPacienteListadoService;
 use common\components\Scheduling\Service\TurnoResolucionService;
 use common\components\Scheduling\Service\TurnoResolucionElecciones;
+use common\components\Scheduling\Service\TurnoCalendarioOcupacionDiaService;
 use common\components\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use common\models\TurnoResolucion;
 use yii\web\ForbiddenHttpException;
@@ -1554,6 +1555,17 @@ class TurnosController extends BaseController
                 ],
             ],
         ];
+    }
+
+    /**
+     * Ocupación de agenda por día para calendario staff (HTML slots). GET|POST /api/v1/turnos/calendario-ocupacion-dia.
+     * RBAC: /api/turnos/calendario-ocupacion-dia (hereda home/panel; intent turnos.consultar-ocupacion-dia-flow).
+     */
+    public function actionCalendarioOcupacionDia(): array
+    {
+        $params = array_merge(Yii::$app->request->get(), Yii::$app->request->post());
+
+        return $this->success((new TurnoCalendarioOcupacionDiaService())->build($params));
     }
 
     /**

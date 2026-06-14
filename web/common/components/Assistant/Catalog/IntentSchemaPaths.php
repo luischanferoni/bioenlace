@@ -2,8 +2,10 @@
 
 namespace common\components\Assistant\Catalog;
 
+use common\components\Core\Product\ProductMetadataPaths;
+
 /**
- * Rutas y resolución de manifiestos YAML de intents (`schemas/intents/`).
+ * Rutas y resolución de manifiestos YAML de intents (`metadata/.../assistant/intents/`).
  *
  * Soporta layout plano (`<intent_id>.yaml`) y subcarpetas CRUD (`create/`, `read/`, `update/`, `delete/`).
  */
@@ -27,7 +29,7 @@ final class IntentSchemaPaths
 
     public static function baseDir(): string
     {
-        return dirname(__DIR__) . '/SubIntentEngine/schemas/intents';
+        return ProductMetadataPaths::intentsDir();
     }
 
     /**

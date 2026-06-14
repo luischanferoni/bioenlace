@@ -53,7 +53,7 @@ flowchart LR
 
 - Texto del usuario.
 - Permisos (qué rutas API puede llamar).
-- Metadatos del intent (objetivo, palabras clave, restricciones) definidos en YAML bajo `SubIntentEngine/schemas/intents/`.
+- Metadatos del intent (objetivo, palabras clave, restricciones) definidos en YAML bajo `common/metadata/bioenlace/assistant/intents/`.
 
 ---
 
@@ -66,7 +66,7 @@ flowchart LR
 | Pieza | Ubicación aproximada | Idea en una frase |
 |-------|----------------------|-------------------|
 | Motor | `SubIntentEngine/SubIntentEngine.php` | Lee el YAML del intent y avanza según sub-pasos (`subintents`) |
-| Definiciones | `SubIntentEngine/schemas/intents/*.yaml` | Guion: textos del asistente, qué pantalla abrir, qué datos pedir |
+| Definiciones | `common/metadata/bioenlace/assistant/intents/*.yaml` | Guion: textos del asistente, qué pantalla abrir, qué datos pedir |
 | Manifiesto de flujo | `FlowManifest/FlowManifest.php` | Describe en runtime qué pasos tiene el flujo (sin duplicar pantallas en otro sitio) |
 | Reglas de negocio | `SubIntentEngine/IntentBusinessRules.php` | Comprueba condiciones antes de entrar al flujo (por ejemplo “falta efector”) |
 | Pantallas embebibles | `frontend/modules/api/v1/views/json/…` | JSON que la interfaz renderiza como formularios y listas |
@@ -112,8 +112,8 @@ No todo pasa por el chat genérico:
 
 | Canal | Entry | Uso |
 |-------|-------|-----|
-| Motivos de consulta | `EntryPoints/AppointmentReason/` | Conversación previa al turno |
-| Captura clínica | `EntryPoints/ClinicalEncounter/` | Analizar/guardar texto o audio del encuentro |
+| Motivos de consulta | `Clinical/Assistant/AppointmentReasonEntry` | Conversación previa al turno |
+| Captura clínica | `Clinical/Assistant/ClinicalEncounterEntry` | Analizar/guardar texto o audio del encuentro |
 
 Comparten ideas de draft y permisos, pero **no siempre** pasan por el clasificador de intents del chat operativo.
 

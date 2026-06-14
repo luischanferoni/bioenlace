@@ -13,7 +13,7 @@ use Symfony\Component\Yaml\Yaml;
 use Yii;
 
 /**
- * Descubre intents conversacionales desde YAML en SubIntentEngine/schemas/intents/ (árbol recursivo).
+ * Descubre intents conversacionales desde YAML en metadata de producto ({@see IntentSchemaPaths}).
  *
  * Fuente de verdad de “qué puede sugerir” el asistente (IntentEngine / shortcuts) cuando trabajamos con flows.
  */

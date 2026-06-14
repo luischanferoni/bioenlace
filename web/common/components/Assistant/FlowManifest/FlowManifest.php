@@ -14,8 +14,6 @@ use Yii;
  */
 final class FlowManifest
 {
-    private const INTENTS_DIR = __DIR__ . '/../SubIntentEngine/schemas/intents';
-
     /**
      * @return array<string, mixed>|null
      */

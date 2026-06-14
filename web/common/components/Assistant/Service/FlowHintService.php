@@ -10,8 +10,6 @@ use Symfony\Component\Yaml\Yaml;
  */
 final class FlowHintService
 {
-    private const INTENTS_DIR = __DIR__ . '/../../Assistant/SubIntentEngine/schemas/intents';
-
     /**
      * @param list<array<string, mixed>> $extractions
      * @return list<array{entity: string, id: string, value: string, draft_field: string}>

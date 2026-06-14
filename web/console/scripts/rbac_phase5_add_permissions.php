@@ -9,11 +9,12 @@ require __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../common/components/Assistant/Catalog/IntentSchemaPaths.php';
 require_once __DIR__ . '/../../common/components/Core/Permission/IntentPermissionResolver.php';
 
+use common\components\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Core\Permission\IntentPermissionResolver;
 use Symfony\Component\Yaml\Yaml;
 
 $dryRun = in_array('--dry-run', $argv ?? [], true);
-$base = dirname(__DIR__, 2) . '/common/components/Assistant/SubIntentEngine/schemas/intents';
+$base = IntentSchemaPaths::baseDir();
 $updated = 0;
 
 foreach (['create', 'read', 'update', 'delete'] as $cat) {

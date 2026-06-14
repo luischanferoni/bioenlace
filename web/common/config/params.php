@@ -108,4 +108,17 @@ return [
      * @see common/config/params-care-cohort.php
      */
     'care_cohort' => require __DIR__ . '/params-care-cohort.php',
+
+    /**
+     * Metadata declarativa del producto (intents, reglas NL, permisos dominio, panel home).
+     * Para otro rubro: apuntar a otra carpeta bajo common/metadata/.
+     * Default: @common/metadata/bioenlace (resuelto en {@see \common\components\Core\Product\ProductMetadataPaths}).
+     */
+    // 'productMetadataDir' => dirname(__DIR__) . '/metadata/bioenlace',
+
+    /** @var list<class-string<\common\components\Assistant\Catalog\UiActionCatalogProviderInterface>> */
+    'uiActionCatalogProviders' => [],
+
+    /** @var array<string, class-string<\common\components\Ui\Home\Service\Sections\HomePanelSectionProviderInterface>> */
+    'homePanelSectionProviders' => [],
 ];

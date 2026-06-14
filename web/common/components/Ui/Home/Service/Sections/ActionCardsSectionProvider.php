@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Home\Service\Sections;
+namespace common\components\Ui\Home\Service\Sections;
 
 use Yii;
 use common\components\Core\Service\Actions\CommonActionsService;

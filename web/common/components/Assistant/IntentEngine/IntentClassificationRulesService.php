@@ -3,11 +3,12 @@
 namespace common\components\Assistant\IntentEngine;
 
 use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Core\Product\ProductMetadataPaths;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
 /**
- * Motor genérico sobre {@see schemas/intent-classification-rules.yaml}.
+ * Motor genérico sobre metadata de producto ({@see ProductMetadataPaths::intentClassificationRulesFile()}).
  */
 final class IntentClassificationRulesService
 {
@@ -167,7 +168,7 @@ final class IntentClassificationRulesService
             'operational_fallbacks' => [],
         ];
 
-        $path = dirname(__DIR__) . '/SubIntentEngine/schemas/intent-classification-rules.yaml';
+        $path = \common\components\Core\Product\ProductMetadataPaths::intentClassificationRulesFile();
         if (!is_file($path)) {
             return self::$config;
         }

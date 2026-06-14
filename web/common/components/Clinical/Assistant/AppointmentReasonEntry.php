@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\AppointmentReason;
+namespace common\components\Clinical\Assistant;
 
 use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Clinical\Service\Authorization\EncounterAccessService;

@@ -5,6 +5,7 @@ namespace common\components\Assistant\Catalog;
 use common\components\Clinical\Assistant\ClinicalUiActionCatalog;
 use common\components\Clinical\CareCohort\Assistant\CarePackUiActionCatalog;
 use common\components\Person\Representation\Assistant\PersonRepresentationUiActionCatalog;
+use Yii;
 
 /**
  * Registro estable de providers de catálogo UI (solo clases, sin reglas de dominio).
@@ -45,9 +46,13 @@ final class UiActionCatalogProviderRegistry
      */
     public static function allProviderClasses(): array
     {
+        $fromParams = Yii::$app->params['uiActionCatalogProviders'] ?? [];
+        $extra = is_array($fromParams) ? array_values($fromParams) : [];
+
         return array_values(array_unique(array_merge(
             self::PROVIDERS,
-            self::$extraProviders ?? []
+            self::$extraProviders ?? [],
+            $extra
         )));
     }
 

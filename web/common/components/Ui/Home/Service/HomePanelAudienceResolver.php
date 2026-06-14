@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Home\Service;
+namespace common\components\Ui\Home\Service;
 
 use common\components\Organization\Service\SesionOperativa\SesionOperativaService;
 use Yii;

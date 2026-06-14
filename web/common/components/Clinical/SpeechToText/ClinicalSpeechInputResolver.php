@@ -1,13 +1,15 @@
 <?php
 
-namespace common\components\Ai\SpeechToText;
+namespace common\components\Clinical\SpeechToText;
 
+use common\components\Ai\SpeechToText\DeviceSttQualityAssessor;
+use common\components\Ai\SpeechToText\SpeechToTextManager;
 use Yii;
 
 /**
  * Resuelve texto de captura clínica: dispositivo primero, STT servidor si hace falta.
  */
-final class EncounterSpeechInputResolver
+final class ClinicalSpeechInputResolver
 {
     public const PROVENANCE_DEVICE = 'device';
     public const PROVENANCE_SERVER = 'server';

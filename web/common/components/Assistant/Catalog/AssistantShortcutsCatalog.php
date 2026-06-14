@@ -23,7 +23,7 @@ final class AssistantShortcutsCatalog
         }
 
         self::$categories = [];
-        $path = dirname(__DIR__) . '/SubIntentEngine/schemas/assistant-shortcuts.yaml';
+        $path = \common\components\Core\Product\ProductMetadataPaths::assistantShortcutsFile();
         if (!is_file($path)) {
             return self::$categories;
         }

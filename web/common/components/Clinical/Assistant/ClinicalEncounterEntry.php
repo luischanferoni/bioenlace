@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\ClinicalEncounter;
+namespace common\components\Clinical\Assistant;
 
 use common\components\Clinical\Workflow\EncounterDocumentationService;
 

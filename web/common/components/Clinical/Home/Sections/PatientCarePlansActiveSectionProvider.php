@@ -1,7 +1,8 @@
 <?php
 
-namespace common\components\Home\Service\Sections;
+namespace common\components\Clinical\Home\Sections;
 
+use common\components\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\components\Clinical\Service\CarePlanPresentationService;
 use common\components\Clinical\Service\PatientActiveCarePlanQuery;
 use common\components\Person\Representation\Enum\RepresentationPermission;

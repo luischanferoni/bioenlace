@@ -5,7 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\Response;
 use yii\web\UploadedFile;
-use common\components\Assistant\EntryPoints\AppointmentReason\AppointmentReasonEntry;
+use common\components\Clinical\Assistant\AppointmentReasonEntry;
 use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\components\Person\Representation\Service\PersonRepresentationSubjectService;

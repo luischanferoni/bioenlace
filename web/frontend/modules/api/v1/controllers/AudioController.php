@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Ai\SpeechToText\EncounterSpeechInputResolver;
+use common\components\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Text\ProcesadorTextoMedico;
 use common\components\Clinical\Workflow\EncounterDocumentationService;
@@ -26,7 +26,7 @@ class AudioController extends BaseController
             $modelo = $body['modelo'] ?? 'economico';
             $procesarInmediatamente = !empty($body['procesar']);
 
-            $speech = EncounterSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
+            $speech = ClinicalSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
             if (!empty($speech['ok'])) {
                 $textoTranscrito = (string) $speech['text'];
                 $resultado = [
@@ -53,7 +53,7 @@ class AudioController extends BaseController
                 $textoTranscrito = $resultado['texto'];
                 $speech = [
                     'ok' => true,
-                    'provenance' => EncounterSpeechInputResolver::PROVENANCE_SERVER,
+                    'provenance' => ClinicalSpeechInputResolver::PROVENANCE_SERVER,
                     'used_server_stt' => true,
                 ];
             }
@@ -104,7 +104,7 @@ class AudioController extends BaseController
             return [
                 'success' => true,
                 'texto_transcrito' => $textoTranscrito,
-                'stt_provenance' => $speech['provenance'] ?? EncounterSpeechInputResolver::PROVENANCE_SERVER,
+                'stt_provenance' => $speech['provenance'] ?? ClinicalSpeechInputResolver::PROVENANCE_SERVER,
                 'stt_used_server' => !empty($speech['used_server_stt']) || empty($speech['ok']),
                 'confidence' => $resultado['confidence'] ?? 0.8,
                 'modelo_usado' => $resultado['modelo_usado'] ?? $modelo,

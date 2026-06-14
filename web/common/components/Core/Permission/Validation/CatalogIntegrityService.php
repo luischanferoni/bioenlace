@@ -5,6 +5,7 @@ namespace common\components\Core\Permission\Validation;
 use common\components\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Core\DataAccess\Validation\DataAccessCatalogCheckService;
 use common\components\Core\Permission\IntentManifestIndex;
+use common\components\Core\Product\ProductMetadataPaths;
 use common\components\Core\Permission\Domain\DomainOperationPolicyRegistry;
 use common\components\Core\Permission\PermissionCatalogService;
 use common\components\Ui\OpenUiStaticTemplatePolicy;
@@ -365,7 +366,7 @@ final class CatalogIntegrityService
     {
         $errors = [];
         $known = array_flip(DomainOperationPolicyRegistry::knownHandlerIds());
-        $configFile = Yii::getAlias('@common/components/Assistant/SubIntentEngine/schemas/domain-operation-policies.yaml');
+        $configFile = ProductMetadataPaths::domainOperationPoliciesFile();
         if (!is_file($configFile)) {
             return ['domain-operation-policies.yaml no encontrado'];
         }
@@ -409,7 +410,7 @@ final class CatalogIntegrityService
     private function checkDomainOperationEmptyPolicies(): array
     {
         $errors = [];
-        $configFile = Yii::getAlias('@common/components/Assistant/SubIntentEngine/schemas/domain-operation-policies.yaml');
+        $configFile = ProductMetadataPaths::domainOperationPoliciesFile();
         if (!is_file($configFile)) {
             return [];
         }
@@ -443,7 +444,7 @@ final class CatalogIntegrityService
     private function checkDomainOperationsCatalogCoverage(): array
     {
         $warnings = [];
-        $configFile = Yii::getAlias('@common/components/Assistant/SubIntentEngine/schemas/domain-operation-policies.yaml');
+        $configFile = ProductMetadataPaths::domainOperationPoliciesFile();
         if (!is_file($configFile)) {
             return [];
         }

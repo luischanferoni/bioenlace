@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Home\Service\Sections;
+namespace common\components\Ui\Home\Service\Sections;
 
 /**
  * Proveedor de datos para una sección del panel de inicio.

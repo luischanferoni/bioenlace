@@ -9,7 +9,7 @@ use common\components\Clinical\Service\AppointmentReasonBatchService;
 use common\components\Clinical\Service\AppointmentReasonClinicalInsightsService;
 use common\components\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Clinical\Service\EncounterAppointmentReasonLookupService;
-use common\components\Home\Service\StaffClinicalDayListService;
+use common\components\Clinical\Home\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;

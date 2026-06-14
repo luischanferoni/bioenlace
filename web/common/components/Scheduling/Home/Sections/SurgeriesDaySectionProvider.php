@@ -1,8 +1,9 @@
 <?php
 
-namespace common\components\Home\Service\Sections;
+namespace common\components\Scheduling\Home\Sections;
 
-use common\components\Home\Service\StaffClinicalDayListService;
+use common\components\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
+use common\components\Clinical\Home\StaffClinicalDayListService;
 
 final class SurgeriesDaySectionProvider implements HomePanelSectionProviderInterface
 {

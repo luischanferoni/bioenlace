@@ -13,7 +13,7 @@ Código reutilizable por API v1, consola, jobs y (legacy) frontend Yii. La regla
 | **`Person/`** | Personas, registro (`Person/Service/`) |
 | **`Organization/`** | Efectores, PES, sesión operativa (`Organization/Service/`) |
 | **`Core/`** | Push, notificaciones, acciones transversales (`Core/Service/`) |
-| **`Ui/`** | Pantallas JSON, plantillas UI (`UiScreenService`, …) |
+| **`Ui/`** | Pantallas JSON, plantillas UI, panel home (`Ui/Home/`) |
 | **`Assistant/`** | Stack completo del asistente (ver [Assistant/README.md](../../common/components/Assistant/README.md)) |
 | **`Integrations/`** | Clientes/adaptadores a sistemas externos |
 | **`Ai/`**, **`Infra/`**, **`Text/`**, **`Terminology/`**, **`Logging/`** | Utilidades técnicas transversales |
@@ -59,7 +59,7 @@ Código reutilizable por API v1, consola, jobs y (legacy) frontend Yii. La regla
 | Capa | Ubicación | Responsabilidad |
 |------|-----------|-----------------|
 | **Motores** | `Assistant/IntentEngine`, `Assistant/SubIntentEngine`, `Core/DataAccess`, `Core/Permission/Domain/*Authorizer*` | Interpretar metadata; sin reglas de negocio por rubro |
-| **Metadata producto** | `Assistant/SubIntentEngine/schemas/intents/`, `Core/DataAccess/schemas/` | Qué hacer (flows, métricas, permisos) — específico de Bioenlace hoy |
+| **Metadata producto** | `common/metadata/bioenlace/` (`assistant/`, `permission/`, `ui/`) | Qué hacer (flows, métricas, permisos, panel) — específico de Bioenlace hoy |
 | **Plugins dominio** | `{Clinical\|Person\|Organization}/Assistant/`, `*/DataAccess/Scope`, `*/Service/Authorization/` | Catálogos UI, scope checkers, políticas — registrados en motores genéricos |
 | **Negocio** | `Clinical/`, `Scheduling/`, `Person/`, `Organization/` | Persistencia, reglas, autorización de recurso |
 

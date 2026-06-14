@@ -7,9 +7,8 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 - `IntentEngine/`: entrypoint para clasificar y devolver una acción UI (o arrancar un flow conversacional).
 - `Catalog/`: catálogo de UIs sugeribles (hoy basado en YAML).
 - `EntryPoints/Chat/`: `asistente/enviar` — preprocess, routing, canales, sobre (`message` | `interactive` | `flow`).
-- `EntryPoints/AppointmentReason/`: motivos de consulta paciente (`motivos-consulta/*`), sin preprocess del chat.
-- `EntryPoints/ClinicalEncounter/`: captura clínica (`/api/v1/clinical/encounter/analizar|guardar`), sin preprocess del chat. Contexto clínico acotado del paciente vía `Clinical/AiContext/PatientAiContextBuilder` (captura, motivos batch, chat conversacional).
-- `Catalog/UiActionCatalogProviderRegistry.php`: registro de plugins de catálogo UI por dominio (`Clinical/Assistant/`, `Person/Representation/Assistant/`, …).
+- Entrypoints de dominio clínico: `Clinical/Assistant/` (`ClinicalEncounterEntry`, `AppointmentReasonEntry`).
+- `Catalog/UiActionCatalogProviderRegistry.php`: plugins de catálogo UI por dominio.
 - `Catalog/DataAccessUiActionCatalog.php`: acciones API genéricas staff (`/api/info`, `/api/listar`, `/api/editar`).
 - `Service/AssistantDraftNormalizer.php`: `encounter_id`, `care_plan_id` en draft de flows.
 - Documentación: [web/docs/arquitectura/asistente-motores.md](../../docs/arquitectura/asistente-motores.md), [web/docs/producto/asistente-y-chat.md](../../docs/producto/asistente-y-chat.md)
@@ -19,8 +18,9 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 
 ## Fuentes de verdad
 
-- **Conversación por intent**: `SubIntentEngine/schemas/intents/*.yaml` — contrato de pasos (`open_ui`, `flow_submit`, etc.): `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`
-- **Piezas reutilizables**: `SubIntentEngine/schemas/globals/*.yaml`
+- **Conversación por intent**: `common/metadata/bioenlace/assistant/intents/*.yaml` — contrato: `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`
+- **Piezas reutilizables**: `common/metadata/bioenlace/assistant/globals/*.yaml`
+- **Metadata producto**: `Core/Product/ProductMetadataPaths.php` (ruta configurable vía `productMetadataDir` en params)
 - **Mini-UIs** (`ui_json` / wizard): `frontend/modules/api/v1/views/json/<entidad>/<accion>.json`
 
 ## Clasificación IA (señal semántica)
@@ -33,8 +33,8 @@ Los intents YAML pueden declarar `intent_semantics` (`goal/how/preconditions/con
 ## Entrypoints importantes
 
 - API chat: `ChatController` → `asistente/enviar`
-- Motivos consulta: `MotivosConsultaController` → `AppointmentReasonEntry`
-- Captura clínica: `clinical/EncounterController` → `ClinicalEncounterEntry`
+- Motivos consulta: `MotivosConsultaController` → `Clinical/Assistant/AppointmentReasonEntry`
+- Captura clínica: `clinical/EncounterController` → `Clinical/Assistant/ClinicalEncounterEntry`
  
 
 ## Comandos útiles

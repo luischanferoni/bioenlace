@@ -2,6 +2,8 @@
 
 namespace common\components\Core\Permission\Domain;
 
+use common\components\Core\Product\ProductMetadataPaths;
+use common\components\Core\Product\ProductMetadataPaths;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -9,8 +11,10 @@ use Symfony\Component\Yaml\Yaml;
  */
 final class DomainOperationPolicyCatalog
 {
-    private const CONFIG_FILE = __DIR__
-        . '/../../../Assistant/SubIntentEngine/schemas/domain-operation-policies.yaml';
+    private static function configFile(): string
+    {
+        return ProductMetadataPaths::domainOperationPoliciesFile();
+    }
 
     /** @var array<string, array<string, mixed>>|null */
     private static ?array $operations = null;
@@ -37,13 +41,14 @@ final class DomainOperationPolicyCatalog
             return self::$operations;
         }
 
-        if (!is_file(self::CONFIG_FILE)) {
+        $configFile = self::configFile();
+        if (!is_file($configFile)) {
             self::$operations = [];
 
             return self::$operations;
         }
 
-        $parsed = Yaml::parseFile(self::CONFIG_FILE);
+        $parsed = Yaml::parseFile($configFile);
         if (!is_array($parsed)) {
             self::$operations = [];
 

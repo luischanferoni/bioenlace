@@ -1,7 +1,8 @@
 <?php
 
-namespace common\components\Home\Service;
+namespace common\components\Ui\Home\Service;
 
+use common\components\Core\Product\ProductMetadataPaths;
 use common\models\Clinical\Encounter;
 use common\models\Servicio;
 use Symfony\Component\Yaml\Yaml;
@@ -79,7 +80,12 @@ final class HomePanelManifest
         if (self::$cache !== null) {
             return self::$cache;
         }
-        $path = dirname(__DIR__) . '/home_panel_manifest.yaml';
+        $path = ProductMetadataPaths::homePanelManifestFile();
+        if (!is_file($path)) {
+            self::$cache = [];
+
+            return self::$cache;
+        }
         self::$cache = Yaml::parseFile($path);
 
         return self::$cache;

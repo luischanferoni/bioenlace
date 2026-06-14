@@ -1,7 +1,8 @@
 <?php
 
-namespace common\components\Home\Service\Sections;
+namespace common\components\Clinical\Home\Sections;
 
+use common\components\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\components\Clinical\Emergency\Service\GuardiaIndicadoresService;
 use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Organization\Service\Authorization\EfectorAccessService;

@@ -18,7 +18,7 @@ use Yii;
 /**
  * SubIntentEngine: motor conversacional dentro de un intent_id (stateless).
  *
- * Consume YAML bajo `common/components/Assistant/SubIntentEngine/schemas/`.
+ * Consume metadata de producto vía {@see \common\components\Core\Product\ProductMetadataPaths} e {@see \common\components\Assistant\Catalog\IntentSchemaPaths}.
  * Contrato de intents (`flow_submit`, subintents): `schemas/SUBINTENT_CONTRACT.md`.
  *
  * Nota: este motor NO implementa IA aquí; expone `prompt_context` para que el caller

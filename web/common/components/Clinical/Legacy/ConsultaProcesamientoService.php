@@ -4,7 +4,7 @@ namespace common\components\Clinical\Legacy;
 
 use Yii;
 use yii\base\Component;
-use common\components\Ai\SpeechToText\EncounterSpeechInputResolver;
+use common\components\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Text\ProcesadorTextoMedico;
@@ -27,7 +27,7 @@ class ConsultaProcesamientoService extends Component
             $idServicio = $userPerTabConfig['servicio_actual'] ?? null;
             $idConfiguracion = $body['id_configuracion'] ?? null;
 
-            $speech = EncounterSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
+            $speech = ClinicalSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
             if (empty($speech['ok'])) {
                 return [
                     '__statusCode' => 400,
@@ -214,7 +214,7 @@ HTML;
                 'success' => true,
                 'datos' => $datos,
                 'html' => $html,
-                'stt_provenance' => $speech['provenance'] ?? EncounterSpeechInputResolver::PROVENANCE_TEXT_ONLY,
+                'stt_provenance' => $speech['provenance'] ?? ClinicalSpeechInputResolver::PROVENANCE_TEXT_ONLY,
                 'stt_used_server' => !empty($speech['used_server_stt']),
                 'texto_original' => $textoConsulta,
                 'texto_procesado' => $textoProcesado,

@@ -1,10 +1,10 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\Chat\Channels\Informational;
+namespace common\components\Assistant\Chat\Channels\Informational;
 
-use common\components\Assistant\EntryPoints\Chat\Channels\Conversational\ConversationalChannel;
-use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
-use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\Chat\Channels\Conversational\ConversationalChannel;
+use common\components\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\IntentEngine\IntentEngine;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
 

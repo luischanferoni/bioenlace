@@ -6,7 +6,7 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 
 - `IntentEngine/`: entrypoint para clasificar y devolver una acción UI (o arrancar un flow conversacional).
 - `Catalog/`: catálogo de UIs sugeribles (hoy basado en YAML).
-- `EntryPoints/Chat/`: `asistente/enviar` — preprocess, routing, canales, sobre (`message` | `interactive` | `flow`).
+- `Chat/`: `asistente/enviar` — preprocess, routing, canales, sobre (`message` | `interactive` | `flow`).
 - Entrypoints de dominio clínico: `Clinical/Assistant/` (`ClinicalEncounterEntry`, `AppointmentReasonEntry`).
 - `Catalog/UiActionCatalogProviderRegistry.php`: plugins de catálogo UI por dominio.
 - `Catalog/DataAccessUiActionCatalog.php`: acciones API genéricas staff (`/api/info`, `/api/listar`, `/api/editar`).

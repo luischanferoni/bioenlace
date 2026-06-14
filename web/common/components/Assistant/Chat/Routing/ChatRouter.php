@@ -1,12 +1,12 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\Chat\Routing;
+namespace common\components\Assistant\Chat\Routing;
 
-use common\components\Assistant\EntryPoints\Chat\Channels\Conversational\ConversationalChannel;
-use common\components\Assistant\EntryPoints\Chat\Channels\Informational\InformationalChannel;
-use common\components\Assistant\EntryPoints\Chat\Channels\Operational\OperationalChannel;
-use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
-use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\Chat\Channels\Conversational\ConversationalChannel;
+use common\components\Assistant\Chat\Channels\Informational\InformationalChannel;
+use common\components\Assistant\Chat\Channels\Operational\OperationalChannel;
+use common\components\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\IntentEngine\IntentEngine;
 
 /**
@@ -33,7 +33,7 @@ final class ChatRouter
         }
 
         $preprocess = ChatPreprocessService::run($content, $userId);
-        \common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext::set($preprocess);
+        \common\components\Assistant\Chat\ChatPreprocessContext::set($preprocess);
 
         $goal = isset($preprocess['user_goal']) ? trim((string) $preprocess['user_goal']) : 'unclear';
         $queryText = isset($preprocess['normalized_text']) ? trim((string) $preprocess['normalized_text']) : $content;

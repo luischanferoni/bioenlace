@@ -1,5 +1,8 @@
 <?php
 /**
+ * OBSOLETO — no referenciado en runtime. Reemplazado por intents YAML + SubIntentEngine.
+ * Conservado solo como referencia histórica de parámetros conversacionales.
+ *
  * Configuración de parámetros por intent
  * 
  * Define qué parámetros son requeridos/opcionales para cada intent,

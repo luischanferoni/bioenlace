@@ -2,7 +2,7 @@
 
 namespace common\components\Assistant\IntentEngine;
 
-use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Core\Product\ProductMetadataPaths;
 use Symfony\Component\Yaml\Yaml;
 use Yii;

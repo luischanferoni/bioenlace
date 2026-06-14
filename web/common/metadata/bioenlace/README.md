@@ -17,4 +17,4 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 
 Contrato de pasos YAML: `common/components/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 
-Handlers de dominio (hydrators, políticas, scope, filtros): `common/config/product-registries.php` vía `ProductRegistryConfig`.
+Handlers de dominio (hydrators, políticas, scope, filtros, presentación, panel home): `common/config/product-registries.php` vía `ProductRegistryConfig`.

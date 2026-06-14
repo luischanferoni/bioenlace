@@ -3,10 +3,7 @@
 namespace common\components\Ui\Home\Service;
 
 use common\components\Core\Product\ProductMetadataPaths;
-use common\models\Clinical\Encounter;
-use common\models\Servicio;
 use Symfony\Component\Yaml\Yaml;
-use Yii;
 
 /**
  * Resuelve layout y secciones del panel desde home_panel_manifest.yaml.
@@ -52,21 +49,14 @@ final class HomePanelManifest
         }
 
         $staff = $manifest['panels']['staff'] ?? [];
-        if (!isset($staff[$encounterClass])) {
+        if (!isset($staff[$encounterClass]) || !is_array($staff[$encounterClass])) {
             return $this->normalizePanel($manifest['panels']['fallback'] ?? []);
         }
 
         $panel = $staff[$encounterClass];
-        if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
-            $idServicio = (int) Yii::$app->user->getServicioActual();
-            $key = ($idServicio > 0 && Servicio::esServicioAgendaQuirurgica($idServicio))
-                ? 'imp_surgical'
-                : 'imp_floor';
-            $panel = [
-                'layout' => $panel['layout'] ?? 'clinical_list',
-                'title' => $panel['title'] ?? 'Internación',
-                'sections' => $panel[$key]['sections'] ?? [],
-            ];
+        $resolved = HomePanelStaffPanelSliceRegistry::resolve($encounterClass, $panel);
+        if ($resolved !== null) {
+            $panel = $resolved;
         }
 
         return $this->normalizePanel($panel);

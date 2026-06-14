@@ -4,7 +4,7 @@ namespace common\components\Assistant\SubIntentEngine;
 
 use common\components\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Assistant\Catalog\IntentSchemaPaths;
-use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
+use common\components\Assistant\Chat\ChatPreprocessContext;
 use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\FlowManifest\FlowManifest;
 use common\components\Assistant\Service\FlowHintService;

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\Chat\Preprocess;
+namespace common\components\Assistant\Chat\Preprocess;
 
 use Yii;
 use common\components\Ai\IAManager;

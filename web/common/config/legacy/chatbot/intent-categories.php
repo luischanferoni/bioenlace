@@ -1,5 +1,7 @@
 <?php
 /**
+ * OBSOLETO — no referenciado en runtime. Reemplazado por IntentEngine + metadata YAML.
+ *
  * Configuración de categorías e intents para el orquestador de mensajes (MensajeIntentRouter).
  *
  * Define categorías, intents, keywords y patrones para la fase de reglas.

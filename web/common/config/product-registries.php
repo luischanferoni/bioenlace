@@ -9,6 +9,7 @@
  * @see \common\components\Core\Product\ProductRegistryConfig
  */
 
+use common\components\Clinical\Home\InpatientHomePanelSliceResolver;
 use common\components\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
 use common\components\Clinical\Service\Authorization\ClinicalEncounterAccessPolicy;
 use common\components\Core\DataAccess\DataAccessEditFlowDraftHydrator;
@@ -84,5 +85,10 @@ return [
     /** Handlers de mutación escalar por grupo de atributos (data-access edit). */
     'dataAccessEditMutationHandlers' => [
         PersonIdentidadBasicaEditMutationHandler::class,
+    ],
+
+    /** Variantes de panel staff (manifiesto home) por encounter_class. */
+    'homePanelStaffPanelSliceResolvers' => [
+        InpatientHomePanelSliceResolver::class,
     ],
 ];

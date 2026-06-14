@@ -52,7 +52,7 @@ Código reutilizable por API v1, consola, jobs y (legacy) frontend Yii. La regla
 |------|-------|--------|
 | **Service** | `*/Service/` | Lógica de negocio reutilizable (API, consola, jobs). Sin `*HttpException`, HTML ni flash. |
 | **Controller API** | `frontend/modules/api/v1/` | Delgado: permisos, JSON, traduce excepciones a HTTP. |
-| **Assistant** | `Assistant/` | Intents, flows YAML, RBAC UI — motores genéricos; metadata de producto en YAML; plugins de dominio registrados vía registry |
+| **Assistant** | `Assistant/` | Intents, flows YAML, RBAC UI — motores en `IntentEngine/`, `SubIntentEngine/`, `Chat/` |
 
 ## Motores genéricos vs dominio
 

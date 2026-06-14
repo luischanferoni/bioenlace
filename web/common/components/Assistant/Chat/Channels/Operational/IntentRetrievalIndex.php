@@ -1,8 +1,8 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\Chat\Channels\Operational;
+namespace common\components\Assistant\Chat\Channels\Operational;
 
-use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Assistant\IntentEngine\IntentClassifier;
 use common\components\Assistant\IntentEngine\UiActionCatalog;

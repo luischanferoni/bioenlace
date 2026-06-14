@@ -4,7 +4,7 @@ namespace common\components\Assistant\IntentEngine;
 
 use Yii;
 use common\components\Ai\IAManager;
-use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
 
 /**
  * Clasificación: reglas sobre keywords del catálogo; IA solo en {@see classify()} (catálogo completo).

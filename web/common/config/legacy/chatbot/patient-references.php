@@ -1,5 +1,7 @@
 <?php
 /**
+ * OBSOLETO — no referenciado en runtime.
+ *
  * Configuración genérica de referencias del paciente
  * 
  * Mapea texto del usuario a configuraciones de resolución de referencias.

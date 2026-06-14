@@ -1,15 +1,15 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\Chat\Channels\Operational;
+namespace common\components\Assistant\Chat\Channels\Operational;
 
-use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
-use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\Chat\ChatPreprocessContext;
+use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Assistant\IntentEngine\IntentClassifier;
 use common\components\Assistant\IntentEngine\IntentEngine;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Assistant\IntentEngine\UiActionCatalogItem;
-use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
+use common\components\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Assistant\SubIntentEngine\SubIntentEngine;
 
 /**

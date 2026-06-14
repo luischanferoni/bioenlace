@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\Chat;
+namespace common\components\Assistant\Chat;
 
 use Yii;
 

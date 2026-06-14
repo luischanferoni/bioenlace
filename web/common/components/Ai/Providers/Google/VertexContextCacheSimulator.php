@@ -4,7 +4,7 @@ namespace common\components\Ai\Providers\Google;
 
 use Yii;
 use common\components\Ai\Cost\AICostTracker;
-use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
 
 /**
  * Simula cachedContents en local: parte estable + variable, registro en memoria y

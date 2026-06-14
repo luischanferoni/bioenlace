@@ -2,7 +2,7 @@
 
 namespace common\components\Core\DataAccess;
 
-use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
+use common\components\Assistant\Chat\ChatPreprocessContext;
 use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 use common\components\Organization\Service\Servicios\ServicioMencionLookupService;
 

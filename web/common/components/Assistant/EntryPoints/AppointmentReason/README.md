@@ -6,4 +6,4 @@ Los entrypoints de **motivos de consulta** y **captura clínica** viven en:
 
 Ver `Clinical/Assistant/README.md`.
 
-El chat genérico permanece en `EntryPoints/Chat/`.
+El chat genérico permanece en `Assistant/Chat/`.

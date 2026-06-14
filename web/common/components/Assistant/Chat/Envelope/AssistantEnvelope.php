@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\Chat\Envelope;
+namespace common\components\Assistant\Chat\Envelope;
 
 use common\components\Assistant\FlowManifest\FlowManifest;
 use common\components\Assistant\Service\AssistantDraftNormalizer;

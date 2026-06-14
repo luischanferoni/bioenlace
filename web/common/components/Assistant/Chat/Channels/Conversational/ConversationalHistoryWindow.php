@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\Chat\Channels\Conversational;
+namespace common\components\Assistant\Chat\Channels\Conversational;
 
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;

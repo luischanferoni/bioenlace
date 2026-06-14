@@ -2,7 +2,7 @@
 
 namespace common\components\Core\DataAccess;
 
-use common\components\Assistant\EntryPoints\Chat\ChatPreprocessContext;
+use common\components\Assistant\Chat\ChatPreprocessContext;
 use common\components\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Core\DataAccess\Edit\EditSparseAspectIds;

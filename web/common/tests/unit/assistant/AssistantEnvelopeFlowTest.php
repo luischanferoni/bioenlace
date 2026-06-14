@@ -3,7 +3,7 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
+use common\components\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Assistant\Service\AssistantDraftNormalizer;
 
 /**

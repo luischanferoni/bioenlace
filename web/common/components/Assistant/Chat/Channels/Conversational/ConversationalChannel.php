@@ -1,10 +1,10 @@
 <?php
 
-namespace common\components\Assistant\EntryPoints\Chat\Channels\Conversational;
+namespace common\components\Assistant\Chat\Channels\Conversational;
 
 use common\components\Ai\IAManager;
-use common\components\Assistant\EntryPoints\Chat\Envelope\AssistantEnvelope;
-use common\components\Assistant\EntryPoints\Chat\Preprocess\ChatPreprocessService;
+use common\components\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Clinical\AiContext\PatientAiContextBuilder;
 use Yii;

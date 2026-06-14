@@ -3,7 +3,7 @@
 namespace common\components\Assistant\EntryPoints\AppointmentReason;
 
 use common\components\Clinical\Service\AppointmentReasonWindowService;
-use common\components\Core\Permission\Domain\EncounterDomainAccessService;
+use common\components\Clinical\Service\Authorization\EncounterAccessService;
 use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaMotivosMessage;
@@ -84,7 +84,7 @@ final class AppointmentReasonEntry
 
             return [null, ['success' => false, 'message' => 'Encounter no encontrado', 'data' => null]];
         }
-        if (!EncounterDomainAccessService::canAccess($encounter, 'Encounter.access', RepresentationPermission::CLINICAL_MOTIVOS)) {
+        if (!EncounterAccessService::canAccess($encounter, 'Encounter.access', RepresentationPermission::CLINICAL_MOTIVOS)) {
             Yii::$app->response->statusCode = 403;
 
             return [null, ['success' => false, 'message' => 'No tiene permiso para acceder a este encounter', 'data' => null]];

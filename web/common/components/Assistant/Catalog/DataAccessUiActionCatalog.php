@@ -12,7 +12,7 @@ use Yii;
  *
  * Rutas HTTP: `/api/v1/info`, `/api/v1/listar`; RBAC: `/api/info`, `/api/listar`.
  */
-final class DataAccessUiActionCatalog
+final class DataAccessUiActionCatalog implements UiActionCatalogProviderInterface
 {
     /** @var list<array<string, mixed>>|null */
     private static ?array $definitions = null;

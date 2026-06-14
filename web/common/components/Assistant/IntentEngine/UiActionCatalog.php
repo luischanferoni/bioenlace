@@ -7,10 +7,7 @@ use common\components\Core\Permission\BioenlaceAccessChecker;
 use common\components\Assistant\UiActions\ActionDiscoveryService;
 use common\components\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Assistant\UiActions\AllowedRoutesResolver;
-use common\components\Assistant\Catalog\CarePackUiActionCatalog;
-use common\components\Assistant\Catalog\ClinicalUiActionCatalog;
-use common\components\Assistant\Catalog\DataAccessUiActionCatalog;
-use common\components\Assistant\Catalog\PersonRepresentationUiActionCatalog;
+use common\components\Assistant\Catalog\UiActionCatalogProviderRegistry;
 use common\components\Assistant\Catalog\IntentCatalogService;
 
 /**
@@ -112,7 +109,7 @@ final class UiActionCatalog
             $byId[$actionId] = $item;
         }
 
-        foreach (ClinicalUiActionCatalog::forUser($userId) as $a) {
+        foreach (UiActionCatalogProviderRegistry::forUserFromProviders($userId) as $a) {
             $actionId = AssistantDraftNormalizer::scalarString($a['action_id'] ?? '');
             if ($actionId === '' || isset($byId[$actionId])) {
                 continue;
@@ -121,89 +118,18 @@ final class UiActionCatalog
             $clientOpen = isset($a['client_open']) && is_array($a['client_open']) ? $a['client_open'] : null;
             $clientInteraction = AssistantDraftNormalizer::scalarString($a['client_interaction'] ?? '');
             $clientInteraction = $clientInteraction !== '' ? $clientInteraction : null;
+            $entityDefault = AssistantDraftNormalizer::scalarString($a['entity'] ?? '');
             $item = new UiActionCatalogItem(
                 $actionId,
                 $display,
                 AssistantDraftNormalizer::scalarString($a['description'] ?? ''),
-                AssistantDraftNormalizer::scalarString($a['entity'] ?? '', 'clinical'),
+                $entityDefault !== '' ? $entityDefault : null,
                 AssistantDraftNormalizer::scalarString($a['route'] ?? ''),
                 is_array($a['keywords'] ?? null) ? array_values($a['keywords']) : [],
                 is_array($a['parameters'] ?? null) ? $a['parameters'] : ['expected' => [], 'provided' => []],
                 is_array($a['intent_semantics'] ?? null) ? $a['intent_semantics'] : null,
                 $clientOpen,
                 $clientInteraction,
-                null
-            );
-            $items[] = $item;
-            $byId[$actionId] = $item;
-        }
-
-        foreach (CarePackUiActionCatalog::forUser($userId) as $a) {
-            $actionId = isset($a['action_id']) ? (string) $a['action_id'] : '';
-            if ($actionId === '' || isset($byId[$actionId])) {
-                continue;
-            }
-            $display = (string) ($a['action_name'] ?? $a['display_name'] ?? $actionId);
-            $item = new UiActionCatalogItem(
-                $actionId,
-                $display,
-                (string) ($a['description'] ?? ''),
-                isset($a['entity']) ? (string) $a['entity'] : 'care-packs',
-                (string) ($a['route'] ?? ''),
-                is_array($a['keywords'] ?? null) ? array_values($a['keywords']) : [],
-                is_array($a['parameters'] ?? null) ? $a['parameters'] : ['expected' => [], 'provided' => []],
-                is_array($a['intent_semantics'] ?? null) ? $a['intent_semantics'] : null,
-                null,
-                null,
-                null
-            );
-            $items[] = $item;
-            $byId[$actionId] = $item;
-        }
-
-        foreach (PersonRepresentationUiActionCatalog::forUser($userId) as $a) {
-            $actionId = isset($a['action_id']) ? (string) $a['action_id'] : '';
-            if ($actionId === '' || isset($byId[$actionId])) {
-                continue;
-            }
-            $display = (string) ($a['action_name'] ?? $a['display_name'] ?? $actionId);
-            $clientOpen = isset($a['client_open']) && is_array($a['client_open']) ? $a['client_open'] : null;
-            $clientInteraction = isset($a['client_interaction']) ? (string) $a['client_interaction'] : null;
-            $item = new UiActionCatalogItem(
-                $actionId,
-                $display,
-                (string) ($a['description'] ?? ''),
-                isset($a['entity']) ? (string) $a['entity'] : 'person-representation',
-                (string) ($a['route'] ?? ''),
-                is_array($a['keywords'] ?? null) ? array_values($a['keywords']) : [],
-                is_array($a['parameters'] ?? null) ? $a['parameters'] : ['expected' => [], 'provided' => []],
-                is_array($a['intent_semantics'] ?? null) ? $a['intent_semantics'] : null,
-                $clientOpen,
-                $clientInteraction,
-                null
-            );
-            $items[] = $item;
-            $byId[$actionId] = $item;
-        }
-
-        foreach (DataAccessUiActionCatalog::forUser($userId) as $a) {
-            $actionId = isset($a['action_id']) ? (string) $a['action_id'] : '';
-            if ($actionId === '' || isset($byId[$actionId])) {
-                continue;
-            }
-            $display = (string) ($a['action_name'] ?? $a['display_name'] ?? $actionId);
-            $clientOpen = isset($a['client_open']) && is_array($a['client_open']) ? $a['client_open'] : null;
-            $item = new UiActionCatalogItem(
-                $actionId,
-                $display,
-                (string) ($a['description'] ?? ''),
-                isset($a['entity']) ? (string) $a['entity'] : 'DataAccess',
-                (string) ($a['route'] ?? ''),
-                is_array($a['keywords'] ?? null) ? array_values($a['keywords']) : [],
-                is_array($a['parameters'] ?? null) ? $a['parameters'] : ['expected' => [], 'provided' => []],
-                is_array($a['intent_semantics'] ?? null) ? $a['intent_semantics'] : null,
-                $clientOpen,
-                null,
                 null
             );
             $items[] = $item;

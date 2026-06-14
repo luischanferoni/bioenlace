@@ -52,7 +52,16 @@ Código reutilizable por API v1, consola, jobs y (legacy) frontend Yii. La regla
 |------|-------|--------|
 | **Service** | `*/Service/` | Lógica de negocio reutilizable (API, consola, jobs). Sin `*HttpException`, HTML ni flash. |
 | **Controller API** | `frontend/modules/api/v1/` | Delgado: permisos, JSON, traduce excepciones a HTTP. |
-| **Assistant** | `Assistant/` | Intents, flows YAML, RBAC UI — no dispersar fuera. |
+| **Assistant** | `Assistant/` | Intents, flows YAML, RBAC UI — motores genéricos; metadata de producto en YAML; plugins de dominio registrados vía registry |
+
+## Motores genéricos vs dominio
+
+| Capa | Ubicación | Responsabilidad |
+|------|-----------|-----------------|
+| **Motores** | `Assistant/IntentEngine`, `Assistant/SubIntentEngine`, `Core/DataAccess`, `Core/Permission/Domain/*Authorizer*` | Interpretar metadata; sin reglas de negocio por rubro |
+| **Metadata producto** | `Assistant/SubIntentEngine/schemas/intents/`, `Core/DataAccess/schemas/` | Qué hacer (flows, métricas, permisos) — específico de Bioenlace hoy |
+| **Plugins dominio** | `{Clinical\|Person\|Organization}/Assistant/`, `*/DataAccess/Scope`, `*/Service/Authorization/` | Catálogos UI, scope checkers, políticas — registrados en motores genéricos |
+| **Negocio** | `Clinical/`, `Scheduling/`, `Person/`, `Organization/` | Persistencia, reglas, autorización de recurso |
 
 Ver también: [arquitectura-yii2-bioenlace.mdc](../../../.cursor/rules/arquitectura-yii2-bioenlace.mdc), [api-v1-autenticacion-y-sesion.mdc](../../../.cursor/rules/api-v1-autenticacion-y-sesion.mdc).
 

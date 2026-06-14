@@ -2,10 +2,7 @@
 
 namespace common\components\Ui;
 
-use common\components\Assistant\Catalog\CarePackUiActionCatalog;
-use common\components\Assistant\Catalog\ClinicalUiActionCatalog;
-use common\components\Assistant\Catalog\DataAccessUiActionCatalog;
-use common\components\Assistant\Catalog\PersonRepresentationUiActionCatalog;
+use common\components\Assistant\Catalog\UiActionCatalogProviderRegistry;
 
 /**
  * Qué pasos open_ui no requieren plantilla JSON estática bajo views/json/.
@@ -35,13 +32,7 @@ final class OpenUiStaticTemplatePolicy
         }
 
         $out = [];
-        $catalogs = [
-            ClinicalUiActionCatalog::class,
-            PersonRepresentationUiActionCatalog::class,
-            CarePackUiActionCatalog::class,
-            DataAccessUiActionCatalog::class,
-        ];
-        foreach ($catalogs as $catalogClass) {
+        foreach (UiActionCatalogProviderRegistry::allProviderClasses() as $catalogClass) {
             if (!method_exists($catalogClass, 'discoverAll')) {
                 continue;
             }

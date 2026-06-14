@@ -1,7 +1,8 @@
 <?php
 
-namespace common\components;
+namespace common\components\Ui;
 
+use common\components\UiCatalogOptionDefinitions;
 use Yii;
 use yii\db\ActiveRecord;
 

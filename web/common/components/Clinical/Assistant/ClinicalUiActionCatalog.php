@@ -1,7 +1,9 @@
 <?php
 
-namespace common\components\Assistant\Catalog;
+namespace common\components\Clinical\Assistant;
 
+use common\components\Assistant\Catalog\UiActionCatalogProviderInterface;
+use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Ui\ApiV1HttpRoute;
 
 /**
@@ -9,7 +11,7 @@ use common\components\Ui\ApiV1HttpRoute;
  *
  * Rutas HTTP: `/api/v1/clinical/...`; RBAC: `/api/clinical/...` (sin segmento v1).
  */
-final class ClinicalUiActionCatalog
+final class ClinicalUiActionCatalog implements UiActionCatalogProviderInterface
 {
     /** @var list<array<string, mixed>>|null */
     private static ?array $definitions = null;

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Logging;
+namespace common\components\Clinical\Legacy;
 
 use Yii;
 

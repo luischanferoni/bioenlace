@@ -1,13 +1,15 @@
 <?php
 
-namespace common\components\Assistant\Catalog;
+namespace common\components\Person\Representation\Assistant;
 
+use common\components\Assistant\Catalog\UiActionCatalogProviderInterface;
+use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Ui\ApiV1HttpRoute;
 
 /**
  * Acciones API de representación paciente (tutela A, delegación B, contexto sujeto).
  */
-final class PersonRepresentationUiActionCatalog
+final class PersonRepresentationUiActionCatalog implements UiActionCatalogProviderInterface
 {
     /** @var list<array<string, mixed>>|null */
     private static ?array $definitions = null;

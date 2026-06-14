@@ -492,7 +492,7 @@ final class SubIntentEngine
     private static function apiRouteForActionId(string $actionId): string
     {
         $actionId = trim($actionId);
-        $clinicalRoute = \common\components\Assistant\Catalog\ClinicalUiActionCatalog::httpRouteForActionId($actionId);
+        $clinicalRoute = \common\components\Assistant\Catalog\UiActionCatalogProviderRegistry::httpRouteForActionId($actionId);
         if ($clinicalRoute !== '') {
             return $clinicalRoute;
         }

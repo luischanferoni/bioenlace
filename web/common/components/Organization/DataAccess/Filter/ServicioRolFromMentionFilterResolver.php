@@ -1,7 +1,10 @@
 <?php
 
-namespace common\components\Core\DataAccess\Filter;
+namespace common\components\Organization\DataAccess\Filter;
 
+use common\components\Core\DataAccess\Filter\FilterResolvedValue;
+use common\components\Core\DataAccess\Filter\FilterValueResolverContext;
+use common\components\Core\DataAccess\Filter\FilterValueResolverInterface;
 use common\components\Organization\Service\Servicios\ServicioMencionLookupService;
 
 /**

@@ -18,7 +18,7 @@ La conversación se guía por:
 
 ### Estructura
 
-- `data-access-config/` — catálogo staff (grupos, métricas, edición dispersa); ver `data-access-config/README.md`.
+- Catálogo staff DataAccess: `Core/DataAccess/schemas/data-access-config/` (motor genérico; no vive bajo Assistant).
 - `globals/` — ejemplos / contratos reutilizables para un futuro loader (p. ej. `location_acquisition.yaml`).
 - `intents/` — manifiestos por intent_id:
   - `turnos.crear-como-paciente.yaml`

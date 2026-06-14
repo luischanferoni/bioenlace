@@ -7,11 +7,11 @@ use Symfony\Component\Yaml\Yaml;
 
 /**
  * Catálogo declarativo de grupos de atributos, métricas y superficies de edición.
- * Fuente: SubIntentEngine/schemas/data-access-config/*.yaml
+ * Fuente: Core/DataAccess/schemas/data-access-config/*.yaml
  */
 final class AttributeGroupCatalog
 {
-  private const CONFIG_DIR = __DIR__ . '/../../Assistant/SubIntentEngine/schemas/data-access-config';
+  private const CONFIG_DIR = __DIR__ . '/schemas/data-access-config';
 
   private const MANIFEST_FILE = 'manifest.yaml';
 

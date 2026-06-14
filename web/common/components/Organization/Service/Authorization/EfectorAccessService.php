@@ -1,13 +1,16 @@
 <?php
 
-namespace common\components\Core\Permission\Domain;
+namespace common\components\Organization\Service\Authorization;
 
+use common\components\Core\Permission\Domain\DomainOperationAuthorizer;
+use common\components\Core\Permission\Domain\DomainOperationContext;
+use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Organization\Service\Efectores\OrganizationEfectorAccess;
 
 /**
  * Resolución de id_efector vía políticas de dominio (API, home panel, servicios).
  */
-final class EfectorDomainAccessService
+final class EfectorAccessService
 {
     /**
      * @param array<string, mixed> $params

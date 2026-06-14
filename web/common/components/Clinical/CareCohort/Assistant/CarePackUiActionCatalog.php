@@ -1,13 +1,15 @@
 <?php
 
-namespace common\components\Assistant\Catalog;
+namespace common\components\Clinical\CareCohort\Assistant;
 
+use common\components\Assistant\Catalog\UiActionCatalogProviderInterface;
+use common\components\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Ui\ApiV1HttpRoute;
 
 /**
  * Acciones API care-packs para el catálogo del asistente (asistencia, seguimiento).
  */
-final class CarePackUiActionCatalog
+final class CarePackUiActionCatalog implements UiActionCatalogProviderInterface
 {
     /** @var list<array<string, mixed>>|null */
     private static ?array $definitions = null;

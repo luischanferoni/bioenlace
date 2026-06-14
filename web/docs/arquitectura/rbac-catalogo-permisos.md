@@ -125,7 +125,7 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 
 - **Metadata:** `schemas/domain-operation-policies.yaml`
 - **Registry:** `DomainOperationPolicyRegistry`
-- **API:** `ApiDomainOperationBridge`, `EfectorDomainAccessService`, `EncounterDomainAccessService`
+- **API:** `ApiDomainOperationBridge`, `EfectorAccessService`, `EncounterAccessService`
 
 `scope_checker` en DataAccess sigue siendo ABAC del canal métricas/edición dispersa.
 

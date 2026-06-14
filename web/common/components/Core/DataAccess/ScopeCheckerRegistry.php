@@ -2,9 +2,9 @@
 
 namespace common\components\Core\DataAccess;
 
-use common\components\Core\DataAccess\Scope\EfectorSesionScopeChecker;
-use common\components\Core\DataAccess\Scope\EfectorSesionViaPesScopeChecker;
-use common\components\Core\DataAccess\Scope\PermitirParaSiMismoScopeChecker;
+use common\components\Organization\DataAccess\Scope\EfectorSesionScopeChecker;
+use common\components\Organization\DataAccess\Scope\EfectorSesionViaPesScopeChecker;
+use common\components\Person\DataAccess\Scope\PermitirParaSiMismoScopeChecker;
 
 /**
  * Registro estable de scope checkers (IDs declarados en metadata YAML).
@@ -13,6 +13,13 @@ final class ScopeCheckerRegistry
 {
     /** @var array<string, ScopeCheckerInterface> */
     private static array $instances = [];
+
+    /** @var array<string, class-string<ScopeCheckerInterface>> */
+    private const HANDLERS = [
+        'efector_sesion' => EfectorSesionScopeChecker::class,
+        'efector_sesion_via_pes' => EfectorSesionViaPesScopeChecker::class,
+        'permitir_para_si_mismo' => PermitirParaSiMismoScopeChecker::class,
+    ];
 
     public static function get(string $checkerId): ScopeCheckerInterface
     {
@@ -30,22 +37,19 @@ final class ScopeCheckerRegistry
 
     private static function build(string $checkerId): ScopeCheckerInterface
     {
-        switch ($checkerId) {
-            case 'efector_sesion':
-                return new EfectorSesionScopeChecker();
-            case 'efector_sesion_via_pes':
-                return new EfectorSesionViaPesScopeChecker();
-            case 'permitir_para_si_mismo':
-                return new PermitirParaSiMismoScopeChecker();
-            default:
-                throw new \InvalidArgumentException('scope_checker desconocido: ' . $checkerId);
+        if (!isset(self::HANDLERS[$checkerId])) {
+            throw new \InvalidArgumentException('scope_checker desconocido: ' . $checkerId);
         }
+
+        $class = self::HANDLERS[$checkerId];
+
+        return new $class();
     }
 
     /** @return list<string> */
     public static function knownIds(): array
     {
-        return ['efector_sesion', 'efector_sesion_via_pes', 'permitir_para_si_mismo'];
+        return array_keys(self::HANDLERS);
     }
 
     /** @return array<string, string> */

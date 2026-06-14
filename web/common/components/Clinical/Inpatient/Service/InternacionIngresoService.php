@@ -5,7 +5,7 @@ namespace common\components\Clinical\Inpatient\Service;
 use common\components\Clinical\Service\CarePlanLifecycleService;
 use common\components\Clinical\Emergency\Service\GuardiaInternacionService;
 use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
-use common\components\Core\Permission\Domain\EfectorDomainAccessService;
+use common\components\Organization\Service\Authorization\EfectorAccessService;
 use common\models\CoberturaMedica;
 use common\models\Efector;
 use common\models\Guardia;
@@ -354,7 +354,7 @@ final class InternacionIngresoService
     private function assertIngresoEfector(int $idEfector): void
     {
         try {
-            EfectorDomainAccessService::assertAndResolveIdEfector('Internacion.create', ['id_efector' => $idEfector]);
+            EfectorAccessService::assertAndResolveIdEfector('Internacion.create', ['id_efector' => $idEfector]);
         } catch (DomainOperationForbiddenException $e) {
             throw new \InvalidArgumentException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.', 0, $e);
         }

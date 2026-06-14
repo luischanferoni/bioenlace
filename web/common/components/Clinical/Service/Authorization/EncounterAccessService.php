@@ -1,13 +1,16 @@
 <?php
 
-namespace common\components\Core\Permission\Domain;
+namespace common\components\Clinical\Service\Authorization;
 
+use common\components\Core\Permission\Domain\DomainOperationAuthorizer;
+use common\components\Core\Permission\Domain\DomainOperationContext;
+use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\models\Clinical\Encounter;
 
 /**
  * Acceso a encounter vía políticas de dominio (servicios transversales, media, asistente).
  */
-final class EncounterDomainAccessService
+final class EncounterAccessService
 {
     /**
      * @throws DomainOperationForbiddenException

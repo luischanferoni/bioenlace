@@ -15,7 +15,7 @@ use yii\helpers\Json;
  */
 final class DataAccessCatalogCheckService
 {
-    private const CONFIG_DIR = __DIR__ . '/../../../Assistant/SubIntentEngine/schemas/data-access-config';
+    private const CONFIG_DIR = __DIR__ . '/../schemas/data-access-config';
 
     private const MANIFEST_FILE = 'manifest.yaml';
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Controller;
+namespace common\components\Ui\Grid;
 
 use Yii;
 use yii\web\Cookie;

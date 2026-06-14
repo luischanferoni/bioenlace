@@ -3,8 +3,8 @@
 namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Clinical\Inpatient\Service\InternacionAccessService;
-use common\components\Core\Permission\Domain\EncounterDomainAccessService;
-use common\components\Core\Permission\Domain\EfectorDomainAccessService;
+use common\components\Clinical\Service\Authorization\EncounterAccessService;
+use common\components\Organization\Service\Authorization\EfectorAccessService;
 use common\components\Core\Permission\Domain\DomainOperationAuthorizer;
 use common\components\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Person\Representation\Enum\RepresentationPermission;
@@ -29,7 +29,7 @@ trait ClinicalAccessTrait
         }
 
         try {
-            EncounterDomainAccessService::assertAccess(
+            EncounterAccessService::assertAccess(
                 $encounter,
                 'Encounter.access',
                 $representationPermission
@@ -48,7 +48,7 @@ trait ClinicalAccessTrait
         string $operationKey = 'Encounter.access',
         ?string $representationPermission = null
     ): bool {
-        return EncounterDomainAccessService::canAccess(
+        return EncounterAccessService::canAccess(
             $encounter,
             $operationKey,
             $representationPermission
@@ -146,7 +146,7 @@ trait ClinicalAccessTrait
         $req = Yii::$app->request;
         $params = array_merge($req->get(), $req->post());
         try {
-            return EfectorDomainAccessService::assertAndResolveIdEfector($operationKey, $params);
+            return EfectorAccessService::assertAndResolveIdEfector($operationKey, $params);
         } catch (DomainOperationForbiddenException $e) {
             throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
         }

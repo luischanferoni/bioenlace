@@ -62,7 +62,7 @@ Push de resumen de atención y touchpoints de cohorte se envían al sujeto (si t
 
 ## Asistente
 
-- `Assistant/Catalog/PersonRepresentationUiActionCatalog.php`
+- `Person/Representation/Assistant/PersonRepresentationUiActionCatalog.php`
 - Intents: `personas.vincular-menor-flow.yaml`, `personas.designar-representante-flow.yaml`
 
 ## Móvil (Flutter)

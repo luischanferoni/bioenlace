@@ -2,6 +2,10 @@
 
 namespace common\components\Core\DataAccess\Filter;
 
+use common\components\Organization\DataAccess\Filter\ServicioRolEfectorIdsFilterResolver;
+use common\components\Organization\DataAccess\Filter\ServicioRolFromMentionFilterResolver;
+use common\components\Person\DataAccess\Filter\SexoBiologicoFilterResolver;
+
 /**
  * Registro de resolvers de filtros declarados en metadata (`resolver:` en YAML).
  */
@@ -9,6 +13,13 @@ final class FilterValueResolverRegistry
 {
     /** @var array<string, FilterValueResolverInterface> */
     private static $instances = [];
+
+    /** @var array<string, class-string<FilterValueResolverInterface>> */
+    private const HANDLERS = [
+        'servicio_rol_efector_ids' => ServicioRolEfectorIdsFilterResolver::class,
+        'servicio_rol_from_mention' => ServicioRolFromMentionFilterResolver::class,
+        'sexo_biologico' => SexoBiologicoFilterResolver::class,
+    ];
 
     public static function get(string $resolverId): FilterValueResolverInterface
     {
@@ -26,15 +37,12 @@ final class FilterValueResolverRegistry
 
     private static function build(string $resolverId): FilterValueResolverInterface
     {
-        switch ($resolverId) {
-            case 'servicio_rol_efector_ids':
-                return new ServicioRolEfectorIdsFilterResolver();
-            case 'servicio_rol_from_mention':
-                return new ServicioRolFromMentionFilterResolver();
-            case 'sexo_biologico':
-                return new SexoBiologicoFilterResolver();
-            default:
-                throw new \InvalidArgumentException('resolver de filtro desconocido: ' . $resolverId);
+        if (!isset(self::HANDLERS[$resolverId])) {
+            throw new \InvalidArgumentException('resolver de filtro desconocido: ' . $resolverId);
         }
+
+        $class = self::HANDLERS[$resolverId];
+
+        return new $class();
     }
 }

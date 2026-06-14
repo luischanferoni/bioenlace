@@ -1,8 +1,10 @@
 <?php
 
-namespace common\components\Core\DataAccess\Filter;
+namespace common\components\Person\DataAccess\Filter;
 
-/**
+use common\components\Core\DataAccess\Filter\FilterResolvedValue;
+use common\components\Core\DataAccess\Filter\FilterValueResolverContext;
+use common\components\Core\DataAccess\Filter\FilterValueResolverInterface;
  * sexo_biologico literal o sinónimo NL → código 1|2.
  */
 final class SexoBiologicoFilterResolver implements FilterValueResolverInterface

@@ -4,7 +4,7 @@ namespace common\components\Clinical\CareCohort\Service;
 
 use common\components\Clinical\CareCohort\Presentation\CareEducationModuleResolver;
 use common\components\Clinical\CareCohort\Presentation\CarePackFollowupPresenter;
-use common\components\Core\Permission\Domain\EncounterDomainAccessService;
+use common\components\Clinical\Service\Authorization\EncounterAccessService;
 use common\components\Person\Representation\Enum\RepresentationPermission;
 use common\components\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\CareCohortPack;
@@ -192,7 +192,7 @@ final class CarePackFollowupService
             $subjectId,
             RepresentationPermission::CLINICAL_CARE_PACK_ASSISTANCE
         );
-        if (!EncounterDomainAccessService::canAccess(
+        if (!EncounterAccessService::canAccess(
             $encounter,
             'Encounter.access',
             RepresentationPermission::CLINICAL_CARE_PACK_ASSISTANCE

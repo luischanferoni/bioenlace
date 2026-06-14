@@ -4,7 +4,7 @@ Permisos por **grupos de atributos**, **scope checkers** y **métricas** staff p
 
 ## Archivos clave
 
-- `Assistant/SubIntentEngine/schemas/data-access-config/` — grupos por entidad, métricas, edición dispersa, `filter_synonyms`
+- `Core/DataAccess/schemas/data-access-config/` — grupos por entidad, métricas, edición dispersa, `filter_synonyms`
 - `data_access_attribute_field` (BD) — esquema de campos editables por grupo (tipos, widgets, options)
 - Permisos atómicos en `auth_item` (`Entidad.atributo.read|info|edit`) vía `AttributePermissionEvaluator`
 - `DataAccessUiService` — `/api/info` y `/api/listar` con ui_json genérico

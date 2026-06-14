@@ -250,7 +250,7 @@ final class CatalogIntegrityService
     private function collectFlowOnlyAttributeKeys(): array
     {
         $out = [];
-        $dir = realpath(dirname(__DIR__, 3) . '/Assistant/SubIntentEngine/schemas/data-access-config');
+        $dir = realpath(dirname(__DIR__, 3) . '/Core/DataAccess/schemas/data-access-config');
         if ($dir === false) {
             return $out;
         }
@@ -306,7 +306,7 @@ final class CatalogIntegrityService
     private function checkAttributesPresentationGroups(): array
     {
         $warnings = [];
-        $dir = realpath(dirname(__DIR__, 3) . '/Assistant/SubIntentEngine/schemas/data-access-config');
+        $dir = realpath(dirname(__DIR__, 3) . '/Core/DataAccess/schemas/data-access-config');
         if ($dir === false) {
             return $warnings;
         }

@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Core\DataAccess\Scope;
+namespace common\components\Organization\DataAccess\Scope;
 
 use common\components\Core\DataAccess\PermissionContext;
 use common\components\Core\DataAccess\QuerySpec;

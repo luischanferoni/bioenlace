@@ -8,7 +8,7 @@ use common\models\SegNivelInternacion;
 
 /**
  * Pertinencia geográfica internación ↔ efector (camas, pisos).
- * Autorización por efector: políticas `Internacion.*` + {@see EfectorDomainAccessService}.
+ * Autorización por efector: políticas `Internacion.*` + {@see EfectorAccessService}.
  */
 final class InternacionEfectorAccess
 {

@@ -521,6 +521,8 @@ return [
                 'POST api/<version:\w+>/catalogos/departamentos-depdrop' => '<version>/catalogos/departamentos-depdrop',
                 'POST api/<version:\w+>/catalogos/localidades-depdrop' => '<version>/catalogos/localidades-depdrop',
                 'POST api/<version:\w+>/catalogos/barrios-depdrop' => '<version>/catalogos/barrios-depdrop',
+                'POST api/<version:\w+>/catalogos/especialidades-depdrop' => '<version>/catalogos/especialidades-depdrop',
+                'POST api/<version:\w+>/catalogos/salas-por-piso-depdrop' => '<version>/catalogos/salas-por-piso-depdrop',
 
                 // Sesión Operativa API
                 'POST api/<version:\w+>/sesion-operativa/establecer' => '<version>/sesion-operativa/establecer',

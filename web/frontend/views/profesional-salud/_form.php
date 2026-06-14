@@ -2,7 +2,7 @@
 
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
-use yii\helpers\Url;
+use common\components\Organization\Service\ProfesionalDepdropService;
 use kartik\depdrop\DepDrop;
 use kartik\select2\Select2;
 use yii\widgets\ActiveForm;
@@ -65,7 +65,7 @@ use common\models\Especialidades;
                     'pluginOptions' => [
                         'initialize' => true,
                         'depends' => ['profesiones'],
-                        'url' => Url::to(['/profesional-salud/especialidades']),
+                        'url' => ProfesionalDepdropService::URL_ESPECIALIDADES,
                         'loadingText' => 'Cargando especialidades ...',
                         'params' => ['especialidades_seleccionadas']
                     ]

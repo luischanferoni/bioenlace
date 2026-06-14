@@ -1,5 +1,5 @@
 <?php 
-use yii\helpers\Url;
+use common\components\Organization\Service\InfraestructuraDepdropService;
 use kartik\depdrop\DepDrop;
 use yii\bootstrap5\ActiveForm;
 use kartik\select2\Select2;
@@ -50,7 +50,7 @@ $form = ActiveForm::begin([
                 'pluginOptions' => [
                     'depends' => ['piso'],
                     'placeholder' => 'Seleccione sala...',
-                    'url' => Url::to(['/infraestructura-sala/salas-por-piso']),
+                    'url' => InfraestructuraDepdropService::URL_SALAS_POR_PISO,
 
                 ]
             ]);

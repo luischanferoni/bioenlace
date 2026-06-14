@@ -3,6 +3,8 @@
 namespace frontend\modules\api\v1\controllers;
 
 use common\components\Organization\Service\GeografiaDepdropService;
+use common\components\Organization\Service\InfraestructuraDepdropService;
+use common\components\Organization\Service\ProfesionalDepdropService;
 use common\models\Clinical\EncounterDefinition;
 use Yii;
 
@@ -16,6 +18,8 @@ class CatalogosController extends BaseController
         'departamentos-depdrop',
         'localidades-depdrop',
         'barrios-depdrop',
+        'especialidades-depdrop',
+        'salas-por-piso-depdrop',
     ];
 
     public function actions()
@@ -65,6 +69,22 @@ class CatalogosController extends BaseController
     public function actionBarriosDepdrop(): array
     {
         return GeografiaDepdropService::barriosResponse(Yii::$app->request->post());
+    }
+
+    /**
+     * POST /api/v1/catalogos/especialidades-depdrop
+     */
+    public function actionEspecialidadesDepdrop(): array
+    {
+        return ProfesionalDepdropService::especialidadesResponse(Yii::$app->request->post());
+    }
+
+    /**
+     * POST /api/v1/catalogos/salas-por-piso-depdrop
+     */
+    public function actionSalasPorPisoDepdrop(): array
+    {
+        return InfraestructuraDepdropService::salasPorPisoResponse(Yii::$app->request->post());
     }
 }
 

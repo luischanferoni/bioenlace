@@ -316,16 +316,4 @@ class InternacionController extends Controller
             'persona' => $model_persona
         ]);
     }
-
-    /**
-     * @no_intent_catalog
-    */
-    public function actionMostrarDatosAcompaniante($id_internacion)
-    {
-        $model = $this->findModel($id_internacion);
-
-        return $this->renderAjax('_datosAcompaniante', [
-            'model' => $model
-        ]);
-    }
 }

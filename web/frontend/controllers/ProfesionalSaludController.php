@@ -5,7 +5,6 @@ namespace frontend\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\base\Exception;
-use yii\helpers\Json;
 use yii\helpers\ArrayHelper;
 
 use frontend\filters\SisseActionFilter;
@@ -154,35 +153,5 @@ class ProfesionalSaludController extends Controller
             'persona_profesiones' => $persona_profesiones,
             'persona_especialidades' => $persona_especialidades,
         ]);
-    }
-
-    /**
-     * Funcion para ejecutar los select dependientes de profesiones y especialidades
-     * @return type
-     * @no_intent_catalog   
-    */
-    public function actionEspecialidades()
-    {
-        $out = [];
-       
-        if (!isset($_POST['depdrop_parents']) || is_null($_POST['depdrop_parents'])) {
-            echo Json::encode(['output' => $out, 'selected' => '']);
-        }
-
-        // depdrop_parents es un array
-        $profesiones_id = $_POST['depdrop_parents'][0];
-        $especialidades = Especialidades::find()
-                                ->select(['CONCAT(id_especialidad, "-", id_profesion) AS id', 'nombre AS name'])
-                                ->where(['in', 'id_profesion', $profesiones_id])
-                                ->asArray()
-                                ->all();
-        
-        $out = $especialidades;
-
-        $especialidades_seleccionadas = json_decode($_POST['depdrop_all_params']['especialidades_seleccionadas']);
-
-        echo Json::encode(['output' => $out, 'selected' => $especialidades_seleccionadas]);
-
-        return;
     }
 }

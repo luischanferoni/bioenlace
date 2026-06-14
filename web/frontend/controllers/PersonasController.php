@@ -14,11 +14,8 @@ use yii\helpers\ArrayHelper;
 use yii\helpers\BaseJson;
 use yii\helpers\Json;
 use yii\helpers\Url;
-use yii\data\ActiveDataProvider;
 
-//agregamos el modulo de la extension para el control de acceso
 use common\models\Person\Persona;
-use common\models\busquedas\PersonaBusqueda;
 use common\models\PersonaTelefono;
 use common\models\Tipo_telefono;
 use common\models\Domicilio;
@@ -34,14 +31,11 @@ use common\models\Guardia;
 use common\models\PersonaRepository;
 use common\components\Person\Service\PersonaSignosVitalesService;
 use common\models\Percentilos;
-use common\models\ServiciosEfector;
-use common\models\ProfesionalEfectorServicio;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
 
 use common\components\Core\Form\NestedFormModels;
 use common\components\Integrations\Mpi\MpiApiClient;
 use frontend\filters\SisseActionFilter;
-use common\models\User;
 use common\components\Core\Http\UserRequest;
 use yii\authclient\InvalidResponseException;
 use yii\httpclient\Client;
@@ -74,10 +68,7 @@ class PersonasController extends Controller
             ],
             'verbs' => [
                 'class' => VerbFilter::className(),
-                'actions' => [
-                    'delete' => ['post'],
-                    'eliminar-asignaciones-pes-en-efector' => ['post'],
-                ],
+                'actions' => [],
             ],
         ];
     }
@@ -88,26 +79,6 @@ class PersonasController extends Controller
     {
         $this->enableCsrfValidation = false;
         return parent::beforeAction($action);
-    }
-
-    /**
-     * Lists all persona models.
-     * @entity Pacientes
-     * @tags persona,paciente,listar,ver todos
-     * @keywords listar,ver todos,mostrar,personas,pacientes
-     * @synonyms paciente,persona,listado
-     * @return mixed
-     * @no_intent_catalog
-    */
-    public function actionIndex()
-    {
-        $searchModel = new PersonaBusqueda();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-
-        return $this->render('index', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
     }
 
     /**
@@ -399,118 +370,6 @@ class PersonasController extends Controller
     }
 
     /**
-     * @no_intent_catalog
-    */
-    public function actionUpdate($id)
-    {
-        $model = $this->findModel($id);
-        $model->scenario = 'scenarioregistrar';
-        $model_persona_telefono = new PersonaTelefono();
-        $model_tipo_telefono = new Tipo_telefono();
-        $model_domicilio = new Domicilio();
-        $model_localidad = new Localidad();
-        $model_persona_mails = new Persona_mails();
-
-        $model_persona_hc = Persona_hc::find()
-            ->where(['id_persona' => $id, 'id_efector' => UserRequest::requireUserParam('idEfector')])
-            ->one();
-
-        // //obtengo el numero de historia clinica
-        // $hc = $model_persona_hc->getHcPorPersona($id);
-        //obtengo los datos de mail, telefono y domicilio para mostrar en la vista
-
-        $domicilios = $model_domicilio->getDomiciliosPorPersona($id);
-        $tels = $model_persona_telefono->getTelefonosPorPersona($id);
-        $mailsxpersona = Persona_mails::find()
-            ->where(['id_persona' => $id])
-            ->all();
-
-        $transaction = Yii::$app->db->beginTransaction();
-
-        try {
-            if ($model_persona_hc != null)
-                $model_persona_hc->load(Yii::$app->request->post()) && $model_persona_hc->save();
-
-            if ($model->load(Yii::$app->request->post()) && $model->save()) {
-                $transaction->commit();
-                return $this->redirect(['view', 'id' => $model->id_persona]);
-            } else {
-                $transaction->rollBack();
-            }
-        } catch (Exception $e) {
-            $transaction->rollBack();
-        }
-
-        return $this->render('update', [
-            'model' => $model,
-            'model_persona_telefono' => $model_persona_telefono,
-            'model_tipo_telefono' => $model_tipo_telefono,
-            'model_domicilio' => $model_domicilio,
-            'model_localidad' => $model_localidad,
-            'model_persona_mails' => $model_persona_mails,
-            'model_persona_hc' => $model_persona_hc,
-            'domicilios' => $domicilios,
-            'tels' => $tels,
-            'mailsxpersona' => $mailsxpersona,
-        ]);
-        // if () {
-        //     return $this->redirect(['view', 'id' => $model->id_persona]);
-        // } else {
-
-        // }
-    }
-
-    /**
-     * Deletes an existing persona model.
-     * If deletion is successful, the browser will be redirected to the 'index' page.
-     * @param integer $id
-     * @return mixed
-     * @no_intent_catalog
-    */
-    public function actionDelete($id)
-    {
-        $this->findModel($id)->delete();
-
-        return $this->redirect(['index']);
-    }
-
-    /**
-     * Quita todas las filas PES de la persona en el efector de sesión.
-     * POST `id`: id PES (`profesional_efector_servicio.id`) preferido; compatibilidad: id de pestaña antigua → persona.
-     *
-     * @no_intent_catalog
-     */
-    public function actionEliminarAsignacionesPesEnEfector()
-    {
-        Yii::$app->response->format = Response::FORMAT_RAW;
-        $id = (int) Yii::$app->request->post('id');
-        $idEfectorSesion = (int) Yii::$app->user->getIdEfector();
-        if ($id <= 0 || $idEfectorSesion <= 0) {
-            return 'ok';
-        }
-        $pes = ProfesionalEfectorServicio::findOne(['id' => $id, 'deleted_at' => null]);
-        $idPersona = null;
-        if ($pes !== null && (int) $pes->id_efector === $idEfectorSesion) {
-            $idPersona = (int) $pes->id_persona;
-        } else {
-            $resolved = ProfesionalEfectorServicio::resolveIdPersonaFromStaffContextId($id);
-            $idPersona = ($resolved !== null && (int) $resolved > 0) ? (int) $resolved : null;
-        }
-        if ($idPersona === null || $idPersona <= 0) {
-            return 'ok';
-        }
-        foreach (
-            ProfesionalEfectorServicio::find()
-                ->where(['id_persona' => $idPersona, 'id_efector' => $idEfectorSesion, 'deleted_at' => null])
-                ->all() as $row
-        ) {
-            $row->delete();
-        }
-
-        return 'ok';
-    }
-
-    /**
      * Finds the persona model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
      * @param integer $id
@@ -524,39 +383,6 @@ class PersonasController extends Controller
         } else {
             throw new NotFoundHttpException('The requested page does not exist.');
         }
-    }
-
-    /**
-     * Listado de personas con asignación PES en el efector de sesión (vista `personas_pes_efector`).
-     *
-     * @no_intent_catalog
-     */
-    public function actionIndexPersonasPes()
-    {
-        $searchModel = new PersonaBusqueda();
-        $dataProvider = $searchModel->searchPersonasPorProfesionalEfectorServicioEnEfector(Yii::$app->request->queryParams);
-
-        return $this->render('index_personas_pes', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
-    }
-
-    /**
-     * @no_intent_catalog
-    */
-    public function actionPersonasAutocomplete($q = null, $id = null)
-    {
-        \Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
-        $out = ['results' => ['id' => '', 'text' => '']];
-        if (!is_null($q)) {
-            $data = Persona::autocomplete($q);
-
-            $out['results'] = array_values($data);
-        } elseif ($id > 0) {
-            $out['results'] = ['id' => $id, 'text' => Persona::find($id)->apellido];
-        }
-        return $out;
     }
 
     /**
@@ -816,49 +642,6 @@ class PersonasController extends Controller
         return $this->renderAjax('_vacunas', [
             'vacunas' => $provider,
         ]);
-    }
-
-    /**
-     * @no_intent_catalog
-    */
-    public function actionReporte()
-    {
-        $searchModel = new PersonaBusqueda();
-        $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
-
-        return $this->render('reporte', [
-            'searchModel' => $searchModel,
-            'dataProvider' => $dataProvider,
-        ]);
-    }
-
-    /**
-     * @no_intent_catalog
-    */
-    public function actionReportesestadisticos()
-    {
-        return $this->render('reportesEstadisticos');
-    }
-
-    /**
-     * Lists all persona models.
-     * @no_intent_catalog
-     * @modificacion: 16/01/2018
-     * actionReporteCdentral() y actionReportesestadisticosCentral creada para
-     *  mostrar los reportes sin filtro de efector
-     * @autor: Mercedes Diaz
-    */
-    public function actionReporteCentral()
-    {
-        return $this->render('reporte_central');
-    }
-
-    /**
-     * @no_intent_catalog
-    */
-    public function actionReportesestadisticosCentral()
-    {
-        return $this->render('reportesEstadisticos_central');
     }
 
     //Action para cargar un nuevo numero de historia clinica
@@ -1480,92 +1263,5 @@ class PersonasController extends Controller
         }
 
         return $apellidos;
-    }  
-
-    /**
-     * Para la busqueda de personas desde el index
-     * @no_intent_catalog
-     * @return mixed
-    */
-    public function actionBuscarhome()
-    {
-        $personas = Persona::find()
-            ->where(['like', 'documento', $_POST['documento']])
-            ->andWhere([
-                'and', ['like', 'nombre', $_POST['nombre']], ['like', 'apellido', $_POST['apellido']]
-            ])->andWhere('deleted_at is NULL')->limit(3)->all();
-
-        $result = "";
-        $urlBuscarPersona = Url::to(['/personas/buscar-persona']);
-        $urlViewPersona = Url::to(['/personas']);
-
-        //TODO: sino se encuentra nada devolver error y poner el enlace al timeline de persona
-        if (count($personas) > 0) {
-            foreach ($personas as $key => $value) {
-                $url = self::crearUrlBotonV2($value);
-                $result .=  '<div class="d-flex align-items-center bd-highlight p-3 mb-2 bg-soft-white rounded">
-                <div class="bg-soft-white avatar-30 rounded bd-highlight">
-                        <svg width="25" viewBox="0 0 31 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M30.0785 8.21373H23.9029C21.029 8.21878 18.7009 10.4888 18.6957 13.2908C18.6918 16.0992 21.0225 18.3793 23.9029 18.3831H30.0837V18.8292C30.0837 23.7281 27.1138 26.625 22.0881 26.625H8.91384C3.88681 26.625 0.916992 23.7281 0.916992 18.8292V8.15938C0.916992 3.26049 3.88681 0.375 8.91384 0.375H22.0829C27.1087 0.375 30.0785 3.26049 30.0785 8.15938V8.21373ZM7.82884 8.20235H16.0538H16.059H16.0694C16.6851 8.19982 17.1829 7.71069 17.1803 7.10907C17.1777 6.50872 16.6748 6.02338 16.059 6.02591H7.82884C7.21699 6.02844 6.72051 6.51251 6.71792 7.11034C6.71533 7.71069 7.2131 8.19982 7.82884 8.20235Z" fill="currentColor"></path>
-                        <path opacity="0.4" d="M21.3885 13.9326C21.6935 15.3198 22.9097 16.2957 24.2982 16.2704H29.0377C29.6154 16.2704 30.084 15.7919 30.084 15.2005V11.5086C30.0827 10.9185 29.6154 10.4388 29.0377 10.4375H24.1866C22.6072 10.4426 21.3315 11.7536 21.334 13.3692C21.334 13.5583 21.3526 13.7474 21.3885 13.9326Z" fill="currentColor"></path>
-                        <ellipse cx="24.2503" cy="13.3542" rx="1.45833" ry="1.45833" fill="currentColor"></ellipse>
-                    </svg>
-                </div>
-                <a href="' . $url . '" class="text-white d-flex"> <div class="ms-3" style="width: 100%;">                                
-                    <div class="d-flex align-items-center justify-content-between">
-                        <h5 class="mb-0 d-flex align-items-center">
-                            ' . $value["nombre"] . ' ' . $value["apellido"] . '
-                        </h5>                                    
-                    </div>
-                    <p class="mb-1"><strong>DNI: </strong> ' . $value["documento"] . '</p>
-                </div> </a>
-                
-                    <a  href="' . $url . '" class="d-flex bd-highlight ms-auto btn btn-success btn-sm me-2 mt-2">
-                        <svg class="ms-1" width="18" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12.9785 3.53978L13.0276 12.0773L4.48926 12.0903" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            <path opacity="0.4" d="M13.0263 12.0773L2.38157 1.50895" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                    </a>    
-
-                </div>
-            ';
-            }
-        } else {
-            $result .=  '<div class="d-flex align-items-center p-3 mb-2 bg-soft-white rounded">
-            <div class="bg-soft-white avatar-30 rounded">
-                    <svg width="25" viewBox="0 0 31 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fill-rule="evenodd" clip-rule="evenodd" d="M30.0785 8.21373H23.9029C21.029 8.21878 18.7009 10.4888 18.6957 13.2908C18.6918 16.0992 21.0225 18.3793 23.9029 18.3831H30.0837V18.8292C30.0837 23.7281 27.1138 26.625 22.0881 26.625H8.91384C3.88681 26.625 0.916992 23.7281 0.916992 18.8292V8.15938C0.916992 3.26049 3.88681 0.375 8.91384 0.375H22.0829C27.1087 0.375 30.0785 3.26049 30.0785 8.15938V8.21373ZM7.82884 8.20235H16.0538H16.059H16.0694C16.6851 8.19982 17.1829 7.71069 17.1803 7.10907C17.1777 6.50872 16.6748 6.02338 16.059 6.02591H7.82884C7.21699 6.02844 6.72051 6.51251 6.71792 7.11034C6.71533 7.71069 7.2131 8.19982 7.82884 8.20235Z" fill="currentColor"></path>
-                    <path opacity="0.4" d="M21.3885 13.9326C21.6935 15.3198 22.9097 16.2957 24.2982 16.2704H29.0377C29.6154 16.2704 30.084 15.7919 30.084 15.2005V11.5086C30.0827 10.9185 29.6154 10.4388 29.0377 10.4375H24.1866C22.6072 10.4426 21.3315 11.7536 21.334 13.3692C21.334 13.5583 21.3526 13.7474 21.3885 13.9326Z" fill="currentColor"></path>
-                    <ellipse cx="24.2503" cy="13.3542" rx="1.45833" ry="1.45833" fill="currentColor"></ellipse>
-                </svg>
-            </div>
-            <div class="ms-3" style="width: 100%;">                                
-                <div class="d-flex align-items-center justify-content-between">
-                    <h5 class="mb-0 d-flex align-items-center">
-                        No se encontraron resultados.
-                    </h5>                                    
-                </div>                
-            </div>     
-        </div>';
-        }
-
-        $result .= '<div class="d-flex align-items-center p-3 mb-2 bg-soft-white rounded">
-                        <div class="ms-3" style="width: 100%;">                                
-                            <div class="d-flex align-items-center justify-content-center">
-                                    <a href="' . $urlBuscarPersona . '" class="btn btn-primary me-2 mt-2 w-100">Buscar más</a>                                
-                            </div>                
-                        </div>     
-                    </div>';
-
-        return $result;
-    }
-
-    private function crearUrlBotonV2($paciente)
-    {
-        // Timeline deshabilitado: no enlazar a paciente/historia
-        // if (User::hasPermission('paciente/historia')) {
-        //     return Url::toRoute('paciente/historia/' . $paciente->id_persona);
-        // }
-        return Url::toRoute('personas/' . $paciente->id_persona);
     }
 }

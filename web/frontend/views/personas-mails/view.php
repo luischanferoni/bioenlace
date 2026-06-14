@@ -9,7 +9,7 @@ $persona = app\models\Persona::findOne($model->id_persona);
 $this->title = 'Mail Actualizado  ' . 'de : ' .$persona->apellido.', '.$persona->nombre;
 //$this->title = $model->id_persona_mail;
 //$this->params['breadcrumbs'][] = ['label' => 'Persona Mails', 'url' => ['index']];
-$this->params['breadcrumbs'][] = ['label' => 'Personas', 'url' => ['personas/index']];
+$this->params['breadcrumbs'][] = ['label' => 'Personas', 'url' => ['personas/buscar-persona']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="persona-mails-view">

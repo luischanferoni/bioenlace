@@ -1,7 +1,7 @@
 <?php
 
 use common\components\Core\Permission\BioenlaceGhostHtml;
-use webvimark\modules\UserManagement\models\rbacDB\Role;
+use common\components\Core\Permission\RbacRoleQueryService;
 use common\models\User;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
@@ -78,7 +78,7 @@ $this->params['breadcrumbs'][] = $this->title;
 					],
 					[
 						'label' => 'Roles',
-						'value' => implode('<br>', ArrayHelper::map(Role::getUserRoles($model->id), 'name', 'description')),
+						'value' => implode('<br>', ArrayHelper::map(RbacRoleQueryService::getUserRoles($model->id), 'name', 'description')),
 						'visible' => User::hasPermission('viewUserRoles'),
 						'format' => 'raw',
 					],

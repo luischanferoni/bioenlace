@@ -3,36 +3,22 @@
 namespace frontend\controllers\userManagement;
 
 use Yii;
-use webvimark\modules\UserManagement\UserManagementModule;
-use webvimark\modules\UserManagement\controllers\AuthController as WebvimarkAuthController;
+use yii\web\Controller;
 
 /**
- * Auth webvimark frontend: logout → login (no homeUrl legacy site/index).
- *
- * controllerMap en user-management apunta acá; $this->module puede no ser UserManagementModule
- * (p. ej. backend monta frontend\Module), por eso captchaOptions se lee del módulo explícito.
+ * Redirecciones legacy `user-management/auth/*` → rutas Bioenlace {@see \frontend\controllers\AuthController}.
  */
-class AuthController extends WebvimarkAuthController
+class AuthController extends Controller
 {
-    /**
-     * @return array<string, mixed>
-     */
-    public function actions()
+    public function actions(): array
     {
-        $userManagement = Yii::$app->getModule('user-management');
-        if (!$userManagement instanceof UserManagementModule) {
-            return [
-                'captcha' => [
-                    'class' => 'yii\captcha\CaptchaAction',
-                    'minLength' => 3,
-                    'maxLength' => 4,
-                    'offset' => 5,
-                ],
-            ];
-        }
-
         return [
-            'captcha' => $userManagement->captchaOptions,
+            'captcha' => [
+                'class' => 'yii\captcha\CaptchaAction',
+                'minLength' => 3,
+                'maxLength' => 4,
+                'offset' => 5,
+            ],
         ];
     }
 
@@ -71,5 +57,15 @@ class AuthController extends WebvimarkAuthController
     public function actionConfirmEmailReceive($token)
     {
         return $this->redirect(['/auth/confirm-email-receive', 'token' => $token]);
+    }
+
+    public function actionRegistration()
+    {
+        return $this->redirect(['/auth/login']);
+    }
+
+    public function actionConfirmRegistrationEmail($token)
+    {
+        return $this->redirect(['/auth/login']);
     }
 }

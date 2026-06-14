@@ -1,7 +1,7 @@
 <?php
 
 use common\components\Core\Permission\BioenlaceGhostHtml;
-use webvimark\modules\UserManagement\models\rbacDB\Role;
+use common\components\Core\Permission\RbacRoleQueryService;
 use common\models\User;
 use webvimark\modules\UserManagement\UserManagementModule;
 use yii\helpers\Html;
@@ -98,7 +98,7 @@ $this->params['breadcrumbs'][] = $this->title;
 						],
 						[
 							'attribute' => 'gridRoleSearch',
-							'filter' => ArrayHelper::map(Role::getAvailableRoles(Yii::$app->user->isSuperAdmin), 'name', 'description'),
+							'filter' => ArrayHelper::map(RbacRoleQueryService::getAvailableRoles(Yii::$app->user->isSuperadmin), 'name', 'description'),
 							'value' => function (User $model) {
 								return implode('</br>', ArrayHelper::map($model->roles, 'name', 'name'));
 							},

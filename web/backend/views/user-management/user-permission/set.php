@@ -4,8 +4,7 @@
  * @var common\models\User $user
  */
 
-use common\models\webvimark\moduleusermanagement\models\rbacDB\SisseRole;
-use webvimark\modules\UserManagement\models\rbacDB\Role;
+use common\components\Core\Permission\RbacRoleQueryService;
 use yii\bootstrap5\BootstrapPluginAsset;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
@@ -15,7 +14,7 @@ $this->title = 'Roles del usuario: ' . $user->username;
 $this->params['breadcrumbs'][] = ['label' => 'Usuarios', 'url' => ['/user-management/user/index']];
 $this->params['breadcrumbs'][] = $this->title;
 
-$userRoleNames = ArrayHelper::map(Role::getUserRoles($user->id), 'name', 'name');
+$userRoleNames = ArrayHelper::map(RbacRoleQueryService::getUserRoles($user->id), 'name', 'name');
 $multipleRoles = true;
 if (Yii::$app->has('user-management')) {
     $module = Yii::$app->getModule('user-management');
@@ -48,7 +47,7 @@ if (Yii::$app->has('user-management')) {
 			<div class="card-body">
 				<?= Html::beginForm(['set-roles', 'id' => $user->id]) ?>
 
-				<?php foreach (SisseRole::getAvailableRoles() as $aRole): ?>
+				<?php foreach (RbacRoleQueryService::getAvailableRoles() as $aRole): ?>
 					<?php $roleName = (string) $aRole->name; ?>
 					<?php $isChecked = isset($userRoleNames[$roleName]) ? 'checked' : ''; ?>
 					<div class="form-check mb-2">

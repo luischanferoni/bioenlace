@@ -7,7 +7,8 @@ use common\components\Integrations\Identity\DiditClient;
 use common\models\Persona;
 use common\models\PersonaMpi;
 use common\models\User;
-use webvimark\modules\UserManagement\models\rbacDB\Role;
+use common\models\rbac\AuthRole;
+use common\components\Core\Permission\RbacRoleQueryService;
 use Firebase\JWT\JWT;
 
 /**
@@ -158,7 +159,7 @@ class RegistroService
                         \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($user->id);
                     }
                 } elseif ($tipo === 'medico') {
-                    $medicoRole = Role::findOne(['name' => 'Medico']) ?? Role::findOne(['name' => 'medico']);
+                    $medicoRole = AuthRole::findOne(['name' => 'Medico']) ?? AuthRole::findOne(['name' => 'medico']);
                     if ($medicoRole) {
                         Yii::$app->authManager->assign($medicoRole, $user->id);
                     }
@@ -172,7 +173,7 @@ class RegistroService
         $roleName = 'usuario';
         if ($user) {
             try {
-                $roles = Role::getUserRoles($user->id);
+                $roles = RbacRoleQueryService::getUserRoles((int) $user->id);
                 if (!empty($roles)) {
                     $firstRole = reset($roles);
                     if ($firstRole && isset($firstRole->name)) {

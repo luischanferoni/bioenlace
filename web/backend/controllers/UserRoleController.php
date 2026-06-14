@@ -3,8 +3,7 @@
 namespace backend\controllers;
 
 use common\models\User;
-use common\models\webvimark\moduleusermanagement\models\rbacDB\SisseRole;
-use webvimark\modules\UserManagement\models\rbacDB\Role;
+use common\components\Core\Permission\RbacRoleQueryService;
 use Yii;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
@@ -44,10 +43,10 @@ class UserRoleController extends Controller
             return $this->redirect(['set', 'id' => $userId]);
         }
 
-        $oldAssignments = array_keys(Role::getUserRoles($userId));
+        $oldAssignments = array_keys(RbacRoleQueryService::getUserRoles($userId));
         $available = array_map(
             static fn ($role) => $role->name,
-            SisseRole::getAvailableRoles(true)
+            RbacRoleQueryService::getAvailableRoles(true)
         );
 
         $posted = Yii::$app->request->post('roles', []);

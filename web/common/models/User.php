@@ -384,7 +384,7 @@ class User extends ActiveRecord implements IdentityInterface
     public function getRoles()
     {
         return $this->hasMany(
-            \webvimark\modules\UserManagement\models\rbacDB\Role::class,
+            \common\models\rbac\AuthRole::class,
             ['name' => 'item_name']
         )->viaTable('auth_assignment', ['user_id' => 'id']);
     }

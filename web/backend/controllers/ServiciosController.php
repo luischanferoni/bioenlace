@@ -8,7 +8,7 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\helpers\Json;
 use yii\helpers\ArrayHelper;
-use common\models\webvimark\moduleusermanagement\models\rbacDB\SisseRole;
+use common\components\Core\Permission\RbacRoleQueryService;
 
 
 use common\models\Servicio;
@@ -71,7 +71,7 @@ class ServiciosController extends Controller
     public function actionCreate()
     {
         $model = new Servicio();
-        $roles = ArrayHelper::map(SisseRole::getAvailableRoles(true), 'name', 'description');
+        $roles = ArrayHelper::map(RbacRoleQueryService::getAvailableRoles(true), 'name', 'description');
  //var_dump($roles);die;
         if ($model->load(Yii::$app->request->post())){
             $model->parametros = serialize(array("color" => Yii::$app->request->post('color')));
@@ -96,7 +96,7 @@ class ServiciosController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id); 
-        $roles = ArrayHelper::map(SisseRole::getAvailableRoles(true), 'name', 'description');
+        $roles = ArrayHelper::map(RbacRoleQueryService::getAvailableRoles(true), 'name', 'description');
 
         if ($model->load(Yii::$app->request->post())){
             $model->parametros = serialize(array("color" => Yii::$app->request->post('color')));

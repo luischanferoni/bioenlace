@@ -5,7 +5,7 @@ namespace common\components;
 use Yii;
 use common\models\Persona;
 use common\models\User;
-use webvimark\modules\UserManagement\models\rbacDB\Role;
+use common\models\rbac\AuthRole;
 
 /**
  * Alta única de persona + usuario de prueba (sin Didit ni MPI). No actualiza registros existentes.
@@ -110,7 +110,7 @@ final class CrearUsuarioDePruebaHelper
             ) {
                 \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($user->id);
             } else {
-                $pacienteRole = Role::findOne(['name' => 'paciente']);
+                $pacienteRole = AuthRole::findOne(['name' => 'paciente']);
                 if ($pacienteRole) {
                     Yii::$app->authManager->assign($pacienteRole, $user->id);
                 }

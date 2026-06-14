@@ -12,7 +12,7 @@ use common\models\User;
 use common\models\Persona;
 use common\components\DiditClient;
 use common\components\Core\Permission\BioenlaceAccessChecker;
-use webvimark\modules\UserManagement\models\rbacDB\Role;
+use common\components\Core\Permission\RbacRoleQueryService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -241,7 +241,7 @@ class AuthController extends BaseController
      */
     private function getUserRole($user)
     {
-        $roles = Role::getUserRoles($user->id);
+        $roles = RbacRoleQueryService::getUserRoles((int) $user->id);
         $names = [];
         foreach ($roles as $role) {
             if (!empty($role->name)) {

@@ -18,12 +18,13 @@ Desacoplar identidad y sesión del paquete `webvimark/module-user-management`, m
 | Confirmación e-mail | `ConfirmEmailForm` + `/auth/confirm-email`, `/auth/confirm-email-receive` |
 | CRUD usuarios admin | `UserAccountController` + `UserRoleController` (controllerMap user-management) |
 | UI RBAC helpers | `BioenlaceGhostHtml`, `BioenlaceGhostNav`, `RbacFreeRouteChecker`, `UserVisitLog` propios |
+| Roles RBAC | `RbacRoleQueryService`, `common\models\rbac\AuthRole` (sin `webvimark\Role` en flujos activos) |
 
 ## Pendiente
 
 | Pieza | Notas |
 |-------|-------|
-| Composer | Quitar `webvimark/module-user-management` (módulo Yii, `SisseRole`, pathMap) |
+| Composer | Quitar `webvimark/module-user-management` (módulo Yii stub, vistas role/permission legacy) |
 | `pathMap` vistas vendor | Eliminar overrides en `backend/config/main.php` |
 
 ## Qué se mantiene temporalmente

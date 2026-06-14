@@ -2,6 +2,7 @@
 
 namespace common\components\Scheduling\Service;
 
+use common\components\Core\Service\Push\PushNotificationSender;
 use Yii;
 use common\models\Turno;
 use common\models\ProfesionalEfectorServicio;

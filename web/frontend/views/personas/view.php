@@ -7,7 +7,7 @@ use yii\helpers\Url;
 use yii\bootstrap5\Modal;
 
 use common\models\User;
-use common\components\Integrations\Sisse\SisseGhostHtml;
+use common\components\Core\Permission\BioenlaceGhostHtml;
 
 use common\models\persona_telefono;
 use common\models\Tipo_telefono;
@@ -346,19 +346,19 @@ $this->params['breadcrumbs'][] = $this->title;
                         <div class="row">
                             <?php
                             if ($model->id_user === null || $model->id_user === 0) {
-                                echo SisseGhostHtml::a(
+                                echo BioenlaceGhostHtml::a(
                                     'Crear acceso a BIOENLACE',
                                     ['/user/crear'],
                                     ['class' => 'ms-2', 'title' => 'Crear acceso a BIOENLACE']
                                 );
                             } else {
-                                echo SisseGhostHtml::a(
+                                echo BioenlaceGhostHtml::a(
                                     'Editar acceso a BIOENLACE',
                                     ['/user/update', 'id' => $model->id_user],
                                     ['class' => 'ms-2', 'title' => 'Editar datos de acceso a BIOENLACE']
                                 );
 
-                                echo SisseGhostHtml::a(
+                                echo BioenlaceGhostHtml::a(
                                     'Flujos staff (asistente)',
                                     ['/site/asistente'],
                                     ['class' => 'ms-2', 'title' => 'Abrir el asistente (agenda laboral, etc.)']

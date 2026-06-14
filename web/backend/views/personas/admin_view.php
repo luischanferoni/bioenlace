@@ -5,7 +5,7 @@ use yii\widgets\DetailView;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Url;
 use yii\bootstrap5\Modal;
-use common\components\Integrations\Sisse\SisseGhostHtml;
+use common\components\Core\Permission\BioenlaceGhostHtml;
 
 use common\models\User;
 
@@ -143,7 +143,7 @@ $this->params['breadcrumbs'][] = $this->title;
         <?php
         if ($model->id_user != 0) {
 
-            echo SisseGhostHtml::a(
+            echo BioenlaceGhostHtml::a(
                 'Editar acceso a BIOENLACE',
                 ['/user/update', 'id' => $model->id_user],
                 ['class' => 'ms-2', 'title' => 'Editar datos de acceso a BIOENLACE']
@@ -158,7 +158,7 @@ $this->params['breadcrumbs'][] = $this->title;
         ?>
 
         <?php
-        echo SisseGhostHtml::a(
+        echo BioenlaceGhostHtml::a(
             'Administrar RRHH',
             ['/profesional-efector-servicio/create'],
             ['class' => 'ms-2', 'title' => 'Administrar persona como recurso humano']

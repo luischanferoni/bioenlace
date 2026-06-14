@@ -7,7 +7,7 @@ use yii\helpers\Url;
 use yii\bootstrap5\Modal;
 
 use common\models\User;
-use common\components\Integrations\Sisse\SisseGhostHtml;
+use common\components\Core\Permission\BioenlaceGhostHtml;
 
 use common\models\persona_telefono;
 use common\models\Tipo_telefono;
@@ -240,7 +240,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         <h4 class="mb-2">Administración</h4>
                         <div class="row">
                             <?php
-                            echo SisseGhostHtml::a(
+                            echo BioenlaceGhostHtml::a(
                                 'Editar acceso a BIOENLACE',
                                 ['/user/update', 'id' => $model->id_user],
                                 ['class' => 'ms-2', 'title' => 'Editar datos de acceso a BIOENLACE']
@@ -249,7 +249,7 @@ $this->params['breadcrumbs'][] = $this->title;
                         </div>
                         <div class="row">
                             <?php
-                            echo SisseGhostHtml::a(
+                            echo BioenlaceGhostHtml::a(
                                 'Administrar RRHH',
                                 ['/profesional-efector-servicio/create'],
                                 ['class' => 'ms-2', 'title' => 'Administrar persona como recurso humano']

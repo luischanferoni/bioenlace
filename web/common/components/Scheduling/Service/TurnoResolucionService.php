@@ -2,6 +2,7 @@
 
 namespace common\components\Scheduling\Service;
 
+use common\components\Core\Service\Push\PushNotificationSender;
 use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
 use common\components\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
 use common\models\Persona;

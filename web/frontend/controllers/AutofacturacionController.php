@@ -2,11 +2,6 @@
 
 namespace frontend\controllers;
 
-use common\models\BeneficiarioSumar;
-use frontend\modules\mapear\models\ConceptoDestino;
-use frontend\modules\mapear\models\Regla;
-
-
 use Yii;
 use yii\helpers\Url;
 use yii\helpers\ArrayHelper;

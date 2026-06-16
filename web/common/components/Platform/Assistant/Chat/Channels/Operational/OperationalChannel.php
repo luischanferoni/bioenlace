@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\Chat\Channels\Operational;
 
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\IntentEngine\IntentFamilyClassificationService;
 use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Platform\Assistant\IntentEngine\IntentClassifier;
 use common\components\Platform\Assistant\IntentEngine\IntentEngine;
@@ -54,15 +55,16 @@ final class OperationalChannel
         if (ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
             $declarative = IntentClassificationRulesService::resolveOperationalFallback($queryText, $catalog);
             if ($declarative !== null) {
+                $declarative = (new IntentFamilyClassificationService())->refine($declarative, $queryText, $userId, $catalog);
                 return self::buildFromClassification($declarative, $queryText, $userId);
             }
         }
 
         $top = IntentRetrievalIndex::topK($queryText, $catalog, 8);
-        $classification = IntentClassifier::classifyAmongItems($queryText, $top, $catalog);
+        $classification = IntentClassifier::classifyAmongItems($queryText, $top, $catalog, $userId);
 
         if ($classification === null && ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
-            $classification = IntentClassifier::classify($queryText, $catalog);
+            $classification = IntentClassifier::classify($queryText, $catalog, $userId);
         }
 
         if ($classification === null) {

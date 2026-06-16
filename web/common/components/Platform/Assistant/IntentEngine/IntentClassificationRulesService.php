@@ -328,6 +328,26 @@ final class IntentClassificationRulesService
     }
 
     /**
+     * Fallbacks operativos por familia NL (resolución vía {@see IntentFamilyClassificationService}).
+     *
+     * @return list<mixed>
+     */
+    public static function familyOperationalFallbacks(): array
+    {
+        $out = [];
+        foreach (self::operationalFallbacks() as $fb) {
+            if (!is_array($fb)) {
+                continue;
+            }
+            if (trim((string) ($fb['intent_family'] ?? '')) !== '') {
+                $out[] = $fb;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * Pistas para el prompt de IA (sin intent_id fijos).
      *
      * @return list<string>

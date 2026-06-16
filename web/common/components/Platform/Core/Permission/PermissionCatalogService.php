@@ -200,6 +200,7 @@ final class PermissionCatalogService
             'flow_submit' => $meta['flow_submit'] ?? null,
             'keywords' => is_array($raw['keywords'] ?? null) ? $raw['keywords'] : [],
             'intent_semantics' => is_array($raw['intent_semantics'] ?? null) ? $raw['intent_semantics'] : null,
+            'field_resolution' => is_array($raw['field_resolution'] ?? null) ? $raw['field_resolution'] : null,
             'path' => $path,
             'uses_extended_contract' => (bool) ($meta['uses_extended_contract'] ?? false),
         ];

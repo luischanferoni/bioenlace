@@ -184,6 +184,12 @@ operational_fallbacks:
     confidence: 0.9
     method: rules_declarative_fallback
 
+  - id: condicion_laboral_family_nl
+    when_any_rule: [own_condicion_laboral, staff_condicion_laboral]
+    intent_family: condicion-laboral.edit
+    confidence: 0.88
+    method: rules_family_fallback
+
 chat_preprocess:
   entity_categories:
     - servicio

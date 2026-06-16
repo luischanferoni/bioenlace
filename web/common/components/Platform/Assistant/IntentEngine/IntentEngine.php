@@ -8,6 +8,7 @@ use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\YamlIntentCatalogService;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Assistant\UiActions\AssistantClientOpenEnricher;
+use common\components\Platform\Core\Permission\IntentFieldResolutionService;
 use common\components\Platform\Assistant\SubIntentEngine\FlowDraftHydratorService;
 use common\components\Platform\Assistant\SubIntentEngine\IntentBusinessRules;
 use common\components\Platform\Assistant\SubIntentEngine\SubIntentEngine;
@@ -79,7 +80,7 @@ final class IntentEngine
             ];
         }
 
-        $classification = IntentClassifier::classify($content, $catalog);
+        $classification = IntentClassifier::classify($content, $catalog, $userId);
         if ($classification === null) {
             return self::processQueryNoMatch($content, $catalog);
         }
@@ -179,7 +180,26 @@ final class IntentEngine
         // Si el action_id corresponde a un intent YAML, el asistente debe arrancar en modo conversacional (SubIntentEngine),
         // no abriendo un wizard monolítico.
         if ($userId > 0 && self::isFlowUiTemplateForCatalogItem($item)) {
+            $fieldResolver = new IntentFieldResolutionService();
+            if ($fieldResolver->mentionsUnavailableField($item->action_id, $content)) {
+                return [
+                    'success' => true,
+                    'text' => $fieldResolver->unavailableFieldMessage($item->action_id),
+                    'candidate_intent_id' => $item->action_id,
+                    'rule_id' => 'intent_field_unavailable',
+                    'match' => [
+                        'action_id' => $item->action_id,
+                        'confidence' => max(0.0, min(1.0, $confidence)),
+                        'method' => $method,
+                    ],
+                ];
+            }
+
             $draft = self::draftFromAssistantActionParameters($action);
+            $focusFields = $fieldResolver->matchFieldNames($item->action_id, $content);
+            if ($focusFields !== []) {
+                $draft['focus_fields'] = $focusFields;
+            }
             $blocked = IntentBusinessRules::evaluatePreFlow($item->action_id, $content, $draft, $userId);
             if ($blocked !== null) {
                 return [

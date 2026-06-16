@@ -47,5 +47,12 @@ fields:
       - hasta
       - fin
 
+field_resolution:
+  reject_keywords:
+    - apellido
+    - nombre
+    - documento
+    - dni
+
 open_ui:
   action_id: profesional-efector-servicio.crear-condicion-laboral

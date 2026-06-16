@@ -31,7 +31,7 @@ final class IntentClassifier
      *   }
      * }|null
      */
-    public static function classify(string $message, UiActionCatalog $catalog): ?array
+    public static function classify(string $message, UiActionCatalog $catalog, int $userId = 0): ?array
     {
         if ($catalog->items === []) {
             return null;
@@ -39,22 +39,22 @@ final class IntentClassifier
 
         $rules = self::classifyByRules($message, $catalog->items);
         if ($rules !== null && $rules['confidence'] >= self::RULES_HIGH_CONFIDENCE) {
-            return $rules;
+            return (new IntentFamilyClassificationService())->refine($rules, $message, $userId, $catalog);
         }
 
         if (ChatPreprocessService::isStaffDataAccessOperationalQuery($message)) {
             $declarative = IntentClassificationRulesService::resolveOperationalFallback($message, $catalog);
             if ($declarative !== null) {
-                return $declarative;
+                return (new IntentFamilyClassificationService())->refine($declarative, $message, $userId, $catalog);
             }
         }
 
         $ai = self::classifyByAi($message, $catalog, $rules);
         if ($ai !== null) {
-            return $ai;
+            return (new IntentFamilyClassificationService())->refine($ai, $message, $userId, $catalog);
         }
 
-        return $rules;
+        return (new IntentFamilyClassificationService())->refine($rules, $message, $userId, $catalog);
     }
 
     /**
@@ -97,14 +97,15 @@ final class IntentClassifier
      * @param UiActionCatalogItem[] $items
      * @return array<string, mixed>|null
      */
-    public static function classifyAmongItems(string $message, array $items, UiActionCatalog $catalog): ?array
+    public static function classifyAmongItems(string $message, array $items, UiActionCatalog $catalog, int $userId = 0): ?array
     {
-        unset($catalog);
         if ($items === []) {
             return null;
         }
 
-        return self::classifyByRules($message, $items);
+        $rules = self::classifyByRules($message, $items);
+
+        return (new IntentFamilyClassificationService())->refine($rules, $message, $userId, $catalog);
     }
 
     /**

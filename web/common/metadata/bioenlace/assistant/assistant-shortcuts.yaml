@@ -17,6 +17,7 @@ categories:
       - profesional-identidad.editar-staff
       - profesionales.conteo-efector
       - profesionales.listado-efector
+      - profesionales.distribucion-servicio-efector
       - licencia.cargar-como-profesional-flow
       - licencia.cargar-para-profesional-flow
       - turnos.indicadores-agenda-flow

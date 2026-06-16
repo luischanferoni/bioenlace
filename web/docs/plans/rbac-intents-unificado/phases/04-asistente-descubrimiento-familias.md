@@ -38,9 +38,13 @@ Que el asistente resuelva «modificar X» hacia el intent correcto (o pregunte e
 
 ## Entregables
 
-- [ ] Flujo conversacional piloto condición laboral end-to-end en asistente
+- [x] Motor `IntentFamilyClassificationService` + refinamiento en `IntentClassifier` / `OperationalChannel`
+- [x] Fallback operativo por `intent_family` en classification rules (piloto condición laboral)
+- [x] `IntentFieldResolutionService` + `field_resolution.reject_keywords` en YAML piloto
+- [x] `DataAccessGenericChannelRetirement` (fase 3, catálogo NL sin `data-access.*`)
+- [ ] Flujo conversacional piloto condición laboral end-to-end en asistente (staging)
 - [ ] Sin `if (intentId === '…')` nuevos en orquestación
-- [ ] Tests clasificación / elección
+- [x] Tests unitarios clasificación / campos
 
 ## Dependencias
 
@@ -49,4 +53,4 @@ Que el asistente resuelva «modificar X» hacia el intent correcto (o pregunte e
 
 ## Estado
 
-Pendiente.
+En progreso — motor genérico cableado; E2E staging pendiente.

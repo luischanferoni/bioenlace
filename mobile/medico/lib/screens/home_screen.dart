@@ -49,6 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<InternadoItem> _internados = [];
   List<EmergencyBoardItem> _guardiaTablero = [];
   List<CirugiaAgendaItem> _cirugias = [];
+  List<HomePanelKpiGroup> _kpiGroups = [];
+  Map<String, dynamic>? _staffContext;
   String _lastListKind = '';
   bool _isLoading = true;
   String _errorMessage = '';
@@ -127,10 +129,15 @@ class _HomeScreenState extends State<HomeScreen> {
       final fechaStr = DateFormat('yyyy-MM-dd').format(_fechaSeleccionada);
       final panel = await _homePanelApi.getPanel(
         fecha: fechaStr,
-        sections: silent && _encounterClass == 'EMER' ? 'emergency_board' : null,
+        sections: silent && _encounterClass == 'EMER'
+            ? 'emergency_board,emergency_indicators'
+            : null,
       );
       if (!mounted) return;
-      _applyHomePanel(panel);
+      _applyHomePanel(
+        panel,
+        partial: silent && _encounterClass == 'EMER',
+      );
       if (_encounterClass == 'EMER') {
         _startTableroPoll();
       } else {
@@ -167,14 +174,29 @@ class _HomeScreenState extends State<HomeScreen> {
     // repoll encadenado; al cambiar encounter se corta por _encounterClass check
   }
 
-  void _applyHomePanel(HomePanelResponse panel) {
+  void _applyHomePanel(HomePanelResponse panel, {bool partial = false}) {
     setState(() {
-      _turnos = [];
-      _internados = [];
-      _guardiaTablero = [];
-      _cirugias = [];
-      _lastListKind = '';
+      if (!partial) {
+        _turnos = [];
+        _internados = [];
+        _guardiaTablero = [];
+        _cirugias = [];
+        _lastListKind = '';
+        _staffContext = null;
+      }
       _errorMessage = '';
+
+      final newKpis = homePanelKpiGroupsFromResponse(panel);
+      if (newKpis.isNotEmpty || !partial) {
+        _kpiGroups = newKpis;
+      }
+
+      final ctx = panel.sectionByKind('staff_session_context');
+      if (ctx != null) {
+        _staffContext = Map<String, dynamic>.from(ctx.data);
+      } else if (!partial) {
+        _staffContext = null;
+      }
 
       final board = panel.sectionByKind('emergency_board');
       if (board != null) {
@@ -212,12 +234,46 @@ class _HomeScreenState extends State<HomeScreen> {
         _lastListKind = 'cirugias';
       }
 
-      if (_lastListKind.isEmpty && panel.layout == 'cards') {
-        _errorMessage = 'Sin acciones en el panel de inicio.';
+      if (_lastListKind.isEmpty && panel.layout == 'staff_dashboard') {
+        _lastListKind = 'staff_dashboard';
       }
 
       _isLoading = false;
     });
+  }
+
+  Widget _wrapWithPanelKpis(Widget child) {
+    if (_kpiGroups.isEmpty && _staffContext == null) {
+      return child;
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_staffContext != null)
+          HomePanelStaffContextBanner(data: _staffContext!),
+        if (_kpiGroups.isNotEmpty) ...[
+          HomePanelKpiGroupsList(groups: _kpiGroups),
+          const SizedBox(height: BioSpacing.sm),
+        ],
+        Expanded(child: child),
+      ],
+    );
+  }
+
+  Widget _buildStaffDashboard() {
+    if (_kpiGroups.isEmpty && _staffContext == null) {
+      return _buildEmpty(
+        icon: Icons.dashboard_outlined,
+        text: 'No hay indicadores disponibles para tu rol en este efector.',
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.only(bottom: BioSpacing.xl),
+      children: [
+        if (_staffContext != null) HomePanelStaffContextBanner(data: _staffContext!),
+        if (_kpiGroups.isNotEmpty) HomePanelKpiGroupsList(groups: _kpiGroups),
+      ],
+    );
   }
 
   void _cambiarFecha(int dias) {
@@ -315,18 +371,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : _errorMessage.isNotEmpty
                     ? _buildError(context)
+                    : _lastListKind == 'staff_dashboard'
+                    ? _buildStaffDashboard()
                     : _encounterClass == 'IMP'
-                        ? (_lastListKind == 'cirugias'
-                            ? _buildCirugiasList()
-                            : _buildInternadosList())
+                        ? _wrapWithPanelKpis(
+                            _lastListKind == 'cirugias'
+                                ? _buildCirugiasList()
+                                : _buildInternadosList(),
+                          )
                         : _encounterClass == 'EMER'
-                            ? _buildGuardiaTableroList()
-                            : _turnos.isEmpty
-                                ? _buildEmpty(
-                                    icon: Icons.event_busy_outlined,
-                                    text: 'No hay turnos programados para esta fecha.',
-                                  )
-                                : _buildTurnosPorEstado(siguienteTurno),
+                            ? _wrapWithPanelKpis(_buildGuardiaTableroList())
+                            : _wrapWithPanelKpis(
+                                _turnos.isEmpty
+                                    ? _buildEmpty(
+                                        icon: Icons.event_busy_outlined,
+                                        text:
+                                            'No hay turnos programados para esta fecha.',
+                                      )
+                                    : _buildTurnosPorEstado(siguienteTurno),
+                              ),
           ),
         ],
       ),

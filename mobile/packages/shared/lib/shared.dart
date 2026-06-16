@@ -42,6 +42,7 @@ export 'clinical/encounter_patient_summary_api.dart';
 export 'clinical/device_speech_dictation.dart';
 export 'clinical/encounter_capture_api.dart';
 export 'home/home_panel_api.dart';
+export 'home/home_panel_kpi_widgets.dart';
 export 'person/person_representation_api.dart';
 export 'person/person_representation_context.dart';
 export 'person/person_representation_subject_chip.dart';

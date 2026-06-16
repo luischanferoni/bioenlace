@@ -36,9 +36,21 @@ flowchart TB
 ## Inicio (página de inicio del médico)
 
 - Equivalente al **home de la app médico**: muta según rol y `encounter_class` en sesión. Datos: **`GET /api/v1/home/panel`** (web `site/index`, móvil staff).
-- Ejemplos: tablero EMER, mapa de camas IMP, listado ambulatorio AMB.
-- **Paciente web/móvil** (sin sesión operativa): mismo endpoint con audiencia `patient` y layout `patient_home` (próximos turnos + planes activos).
-- **Sin sesión operativa (staff)**: layout `cards` con atajos del asistente.
+- Manifiesto declarativo: `web/common/metadata/bioenlace/ui/home_panel_manifest.yaml` (resuelto por `HomePanelService` + `HomePanelManifest`).
+- **Audiencia** (`HomePanelAudienceResolver`, roles en bloque `audience` del manifiesto):
+  - `staff` — sesión operativa (`encounter_class`), efector+servicio, o rol staff (Médico, enfermería, Admin efector, etc.).
+  - `patient` — rol paciente sin rol staff (app móvil paciente).
+  - `fallback` — invitado / sin contexto.
+- **Layouts staff** (sin atajos del asistente en el panel):
+  | Contexto | Layout | Contenido |
+  |----------|--------|-----------|
+  | Sin `encounter_class` | `staff_dashboard` | Contexto de sesión + KPIs (agenda, guardia, internación) según permisos |
+  | EMER | `clinical_board` | Tablero guardia + indicadores en vivo |
+  | AMB | `clinical_list` | KPIs agenda + turnos del día |
+  | IMP piso | `clinical_list` | KPIs internación + internados |
+  | IMP quirúrgico | `clinical_list` | KPIs quirófano + cirugías del día |
+- **Paciente web/móvil** (sin sesión operativa staff): mismo endpoint con audiencia `patient` y layout `patient_home` (próximos turnos + planes activos).
+- Secciones KPI (`kind: staff_kpi_group`) y providers registrados en `product-registries.php` → `homePanelSectionProviders`.
 - **No** es lugar de captura clínica ni de formularios largos por pestaña.
 
 Referencias: [apps-paciente-medico.md](./apps-paciente-medico.md), [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md).

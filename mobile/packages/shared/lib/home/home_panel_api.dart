@@ -63,6 +63,10 @@ class HomePanelResponse {
     }
     return null;
   }
+
+  List<HomePanelSection> sectionsByKind(String kind) {
+    return sections.where((s) => s.kind == kind).toList(growable: false);
+  }
 }
 
 class HomePanelApi {

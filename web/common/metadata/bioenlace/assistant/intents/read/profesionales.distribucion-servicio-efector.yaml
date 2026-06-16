@@ -1,0 +1,35 @@
+intent_id: profesionales.distribucion-servicio-efector
+version: 1
+
+operation: info
+intent_family: profesionales.distribucion-servicio-efector
+domain_operation: DataAccess.info
+metric_id: profesionales_conteo_por_servicio_efector
+
+action_name: "Distribución de profesionales por servicio"
+description: "Cuántos profesionales hay en cada servicio del efector (métrica grouped)."
+rbac_route: "/api/info"
+
+keywords:
+  - profesionales por servicio
+  - distribucion por especialidad
+  - distribución por servicio
+  - cuantos medicos por servicio
+  - plantilla por servicio
+
+intent_semantics:
+  goal: Consultar la distribución de profesionales por servicio en el efector de sesión.
+  how: Ejecuta la métrica agrupada por servicio y muestra el desglose.
+  constraints:
+    - Requiere efector en sesión operativa.
+
+subintents:
+  - id: mostrar_distribucion
+    assistant_text: "Consultando distribución de profesionales por servicio"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: data-access.info
+      params:
+        metric_id: profesionales_conteo_por_servicio_efector
+        output_mode: grouped

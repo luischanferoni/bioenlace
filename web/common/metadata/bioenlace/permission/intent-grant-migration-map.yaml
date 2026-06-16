@@ -17,9 +17,11 @@ role_grant_sources:
   - source_permission: data-access.info
     intent_targets:
       - profesionales.conteo-efector
+      - profesionales.distribucion-servicio-efector
   - source_permission: DataAccess.info
     intent_targets:
       - profesionales.conteo-efector
+      - profesionales.distribucion-servicio-efector
   - source_permission: data-access.listar
     intent_targets:
       - profesionales.listado-efector

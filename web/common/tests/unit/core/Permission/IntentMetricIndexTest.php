@@ -25,6 +25,10 @@ class IntentMetricIndexTest extends Unit
             IntentMetricIndex::intentForMetric('profesionales_listado_efector')
         );
         $this->assertSame(
+            'profesionales.distribucion-servicio-efector',
+            IntentMetricIndex::intentForMetric('profesionales_conteo_por_servicio_efector')
+        );
+        $this->assertSame(
             'profesionales_conteo_efector',
             IntentMetricIndex::metricForIntent('profesionales.conteo-efector')
         );

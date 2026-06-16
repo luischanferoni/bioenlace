@@ -9,6 +9,9 @@ use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
 
 /**
  * Consultas staff agregadas / informativas (métricas DataAccess).
+ *
+ * @deprecated Preferir intents concretos con metric_id (p. ej. profesionales.conteo-efector).
+ *             El endpoint sigue sirviendo open_ui de intents migrados vía action_id data-access.info.
  */
 class InfoController extends BaseController
 {

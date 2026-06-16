@@ -12,6 +12,11 @@ vocab:
   config_topics: '\b(formas?\s+de\s+atencion|forma\s+de\s+atencion|teleconsulta|intervalo)\b'
   list_verbs: '\b(listar|mostrar|mostrame|ver listado|nombres de|quienes|quien es|quién es|plantilla)\b'
   count_verbs: '\b(cuantos|cuantos hay|total de|conteo|cantidad de|numero de|cuenta)\b'
+  distribucion_servicio_phrases:
+    - profesionales por servicio
+    - distribucion por servicio
+    - distribución por servicio
+    - distribucion por especialidad
   list_phrases:
     - profesionales del centro
     - medicos del centro
@@ -48,6 +53,9 @@ match_rules:
 
   staff_count:
     require_any: [count_verbs]
+
+  staff_distribucion_servicio:
+    require_phrase_any: distribucion_servicio_phrases
 
   staff_data_access_list:
     require_any: [list_verbs]
@@ -128,6 +136,13 @@ score_adjustments:
         delta: 40
       - intent_id: data-access.editar
         delta: 10
+
+  - when_rule: staff_distribucion_servicio
+    apply:
+      - intent_id: profesionales.distribucion-servicio-efector
+        delta: 40
+      - intent_id: data-access.info
+        delta: -15
 
   - when_rule: staff_list_not_count
     when_not_rule: staff_count

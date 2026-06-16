@@ -20,6 +20,11 @@ families:
     members:
       - profesionales.listado-efector
 
+  profesionales.distribucion-servicio-efector:
+    operation: info
+    members:
+      - profesionales.distribucion-servicio-efector
+
   profesional-agenda.configurar:
     operation: edit
     members:

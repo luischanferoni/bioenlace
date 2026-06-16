@@ -10,6 +10,8 @@ use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
 
 /**
  * Edición dispersa staff (superficies / aspectos / sujeto vía listar).
+ *
+ * @deprecated Preferir intents concretos con edit_surface_id (agenda, identidad profesional).
  */
 class EditarController extends BaseController
 {

@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Catalog;
 
+use common\components\Platform\Core\DataAccess\DataAccessGenericChannelRetirement;
 use common\components\Platform\Core\DataAccess\EditSurfaceAuthorizationService;
 use common\components\Platform\Core\DataAccess\PermissionContext;
 use common\components\Platform\Ui\ApiV1HttpRoute;
@@ -18,6 +19,11 @@ final class DataAccessUiActionCatalog implements UiActionCatalogProviderInterfac
     private static ?array $definitions = null;
 
     /**
+     * @return list<array<string, mixed>>
+     */
+    /**
+     * Definiciones runtime (open_ui, rutas HTTP). Incluye genéricos aunque estén retirados del catálogo NL.
+     *
      * @return list<array<string, mixed>>
      */
     public static function discoverAll(): array
@@ -64,11 +70,25 @@ final class DataAccessUiActionCatalog implements UiActionCatalogProviderInterfac
     }
 
     /**
+     * Entradas sugeribles al asistente (vacío cuando fase 3 migró todas las métricas/superficies).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function discoverCatalogEntries(): array
+    {
+        if (DataAccessGenericChannelRetirement::areGenericChannelsRetired()) {
+            return [];
+        }
+
+        return self::discoverAll();
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public static function forUser(int $userId): array
     {
-        $items = YamlIntentCatalogService::filterByRbac(self::discoverAll(), $userId);
+        $items = YamlIntentCatalogService::filterByRbac(self::discoverCatalogEntries(), $userId);
         if (!self::userHasEditableSurfaces($userId)) {
             $items = array_values(array_filter(
                 $items,

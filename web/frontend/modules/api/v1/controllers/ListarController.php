@@ -9,6 +9,8 @@ use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
 
 /**
  * Listados por métrica DataAccess.
+ *
+ * @deprecated Preferir intents concretos con metric_id (p. ej. profesionales.listado-efector).
  */
 class ListarController extends BaseController
 {

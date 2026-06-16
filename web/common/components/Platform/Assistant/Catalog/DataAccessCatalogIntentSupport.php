@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 use common\components\Platform\Assistant\SubIntentEngine\FlowDraftHydratorRegistry;
+use common\components\Platform\Core\DataAccess\DataAccessGenericChannelRetirement;
 use common\components\Platform\Core\DataAccess\DataAccessMetricDiscoveryService;
 
 /**
@@ -23,7 +24,11 @@ final class DataAccessCatalogIntentSupport
 
     public static function isCatalogOnlyIntent(string $intentId): bool
     {
-        return in_array(trim($intentId), self::CATALOG_INTENT_IDS, true);
+        if (!in_array(trim($intentId), self::CATALOG_INTENT_IDS, true)) {
+            return false;
+        }
+
+        return !DataAccessGenericChannelRetirement::areGenericChannelsRetired();
     }
 
     /**

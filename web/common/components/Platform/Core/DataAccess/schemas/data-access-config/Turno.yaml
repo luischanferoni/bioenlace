@@ -1,4 +1,5 @@
-# Turno — permisos por atributo (read/info/edit) y operaciones vía intents.
+# Turno — permisos por atributo (read/info/edit) en grupos; sin canal data-access.info|listar|editar.
+# Operaciones de negocio (crear, cancelar, reubicar, …) vía intents turnos.* en metadata/assistant/intents/.
 entity: Turno
 model: common\models\Turno
 

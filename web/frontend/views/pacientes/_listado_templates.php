@@ -257,3 +257,38 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
         </div>
     </div>
 </template>
+
+<template id="tpl-staff-dashboard-wrap">
+    <div data-role="staff-dashboard-wrap"></div>
+</template>
+
+<template id="tpl-staff-dashboard-context">
+    <div class="alert alert-light border mb-4" data-role="staff-context">
+        <div class="d-flex flex-wrap gap-3 align-items-center">
+            <div><strong data-field="efector"></strong></div>
+            <div class="text-muted" data-field="servicio"></div>
+            <div class="text-muted" data-field="encounter"></div>
+        </div>
+        <div class="mt-2 text-muted small d-none" data-field="hint"></div>
+    </div>
+</template>
+
+<template id="tpl-staff-kpi-group">
+    <div class="card mb-4" data-role="kpi-group">
+        <div class="card-header">
+            <h5 class="mb-0" data-field="title"></h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-3" data-slot="kpi-items"></div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-staff-kpi-item">
+    <div class="col-md-4 col-lg-3">
+        <div class="border rounded p-3 h-100 text-center bg-light">
+            <div class="text-muted small mb-1" data-field="label"></div>
+            <div class="fs-4 fw-semibold" data-field="value"></div>
+        </div>
+    </div>
+</template>

@@ -1341,8 +1341,86 @@
       el.classList.remove('d-none');
     }
 
+    function renderStaffKpiGroup(wrapRoot, data) {
+      if (!wrapRoot || !data || !Array.isArray(data.items) || !data.items.length) return;
+      var groupFrag = importTemplate('tpl-staff-kpi-group');
+      if (!groupFrag) return;
+      var groupRoot = groupFrag.querySelector('[data-role="kpi-group"]');
+      if (!groupRoot) return;
+      groupRoot.querySelector('[data-field="title"]').textContent = data.title || 'Indicadores';
+      var slot = groupRoot.querySelector('[data-slot="kpi-items"]');
+      data.items.forEach(function (item) {
+        var itemFrag = importTemplate('tpl-staff-kpi-item');
+        if (!itemFrag) return;
+        var col = itemFrag.firstElementChild;
+        if (!col) return;
+        col.querySelector('[data-field="label"]').textContent = item.label || '';
+        col.querySelector('[data-field="value"]').textContent = item.value != null ? String(item.value) : '—';
+        slot.appendChild(col);
+      });
+      wrapRoot.appendChild(groupFrag);
+    }
+
+    function renderStaffDashboard(panel) {
+      clearNode(container);
+      var wrapFrag = importTemplate('tpl-staff-dashboard-wrap');
+      if (!wrapFrag) {
+        showListadoEmpty('No se pudo renderizar el panel.');
+        return;
+      }
+      var wrapRoot = wrapFrag.querySelector('[data-role="staff-dashboard-wrap"]');
+      container.appendChild(wrapFrag);
+
+      var ctxSec = findPanelSection(panel, 'staff_session_context');
+      if (ctxSec && ctxSec.data) {
+        var d = ctxSec.data;
+        var ctxFrag = importTemplate('tpl-staff-dashboard-context');
+        if (ctxFrag) {
+          var ctxRoot = ctxFrag.querySelector('[data-role="staff-context"]');
+          var efectorEl = ctxRoot.querySelector('[data-field="efector"]');
+          if (efectorEl) {
+            efectorEl.textContent = d.nombre_efector || 'Sin efector en sesión';
+          }
+          var servicioEl = ctxRoot.querySelector('[data-field="servicio"]');
+          if (servicioEl) {
+            servicioEl.textContent = d.nombre_servicio
+              ? 'Servicio: ' + d.nombre_servicio
+              : (d.id_servicio ? 'Servicio #' + d.id_servicio : '');
+          }
+          var encounterEl = ctxRoot.querySelector('[data-field="encounter"]');
+          if (encounterEl) {
+            encounterEl.textContent = d.encounter_class
+              ? 'Contexto: ' + d.encounter_class
+              : '';
+          }
+          var hintEl = ctxRoot.querySelector('[data-field="hint"]');
+          if (hintEl && d.hint) {
+            hintEl.textContent = d.hint;
+            hintEl.classList.remove('d-none');
+          }
+          wrapRoot.appendChild(ctxFrag);
+        }
+      }
+
+      var sections = panel.sections || [];
+      sections.forEach(function (sec) {
+        if (sec.kind === 'staff_kpi_group' && sec.data) {
+          renderStaffKpiGroup(wrapRoot, sec.data);
+        }
+      });
+
+      if (!wrapRoot.children.length) {
+        showListadoEmpty('No hay indicadores disponibles para tu rol en este efector.');
+      }
+    }
+
     function renderFromPanel(panel) {
       var layout = panel.layout || '';
+      if (layout === 'staff_dashboard') {
+        renderStaffDashboard(panel);
+        applyPanelChrome(panel);
+        return;
+      }
       if (layout === 'clinical_board') {
         var boardSec = findPanelSection(panel, 'emergency_board');
         var items = boardSec && boardSec.data ? boardSec.data.items || [] : [];

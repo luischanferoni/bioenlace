@@ -53,12 +53,6 @@ final class HomePanelService
             throw new \InvalidArgumentException('No hay secciones disponibles para el contexto operativo actual.');
         }
 
-        if ($sections === [] && $audience !== HomePanelAudienceResolver::FALLBACK) {
-            $fallback = $this->manifest->resolve(HomePanelAudienceResolver::FALLBACK, null);
-            $sections = $this->buildSections($fallback['sections'], $context, $filterSectionIds, false);
-            $panelDef = $fallback;
-        }
-
         return [
             'layout' => $panelDef['layout'],
             'title' => $panelDef['title'],

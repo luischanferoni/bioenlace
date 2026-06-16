@@ -34,12 +34,25 @@ panels:
             provider: inpatients
             kind: inpatients
   fallback:
-    layout: cards
-    title: Inicio
+    layout: staff_dashboard
+    title: Panel operativo
+    sections: []
+  staff_operations:
+    layout: staff_dashboard
+    title: Panel operativo
     sections:
-      - id: action_cards
-        provider: action_cards
-        kind: action_cards
+      - id: staff_session_context
+        provider: staff_session_context
+        kind: staff_session_context
+      - id: staff_agenda_kpis
+        provider: staff_agenda_kpis
+        kind: staff_kpi_group
+      - id: staff_guardia_kpis
+        provider: staff_guardia_kpis
+        kind: staff_kpi_group
+      - id: staff_internacion_kpis
+        provider: staff_internacion_kpis
+        kind: staff_kpi_group
   patient:
     layout: patient_home
     title: Inicio

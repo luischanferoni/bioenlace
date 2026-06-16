@@ -45,12 +45,16 @@ final class HomePanelManifest
     {
         $manifest = $this->load();
         if ($encounterClass === null || $encounterClass === '') {
-            return $this->normalizePanel($manifest['panels']['fallback'] ?? []);
+            $ops = $manifest['panels']['staff_operations'] ?? $manifest['panels']['fallback'] ?? [];
+
+            return $this->normalizePanel($ops);
         }
 
         $staff = $manifest['panels']['staff'] ?? [];
         if (!isset($staff[$encounterClass]) || !is_array($staff[$encounterClass])) {
-            return $this->normalizePanel($manifest['panels']['fallback'] ?? []);
+            $ops = $manifest['panels']['staff_operations'] ?? $manifest['panels']['fallback'] ?? [];
+
+            return $this->normalizePanel($ops);
         }
 
         $panel = $staff[$encounterClass];

@@ -17,8 +17,11 @@ use common\components\Domain\Clinical\Home\Sections\EmergencyBoardSectionProvide
 use common\components\Domain\Clinical\Home\Sections\EmergencyIndicatorsSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\InpatientsSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\PatientCarePlansActiveSectionProvider;
+use common\components\Domain\Clinical\Home\Sections\StaffGuardiaKpiSectionProvider;
+use common\components\Domain\Clinical\Home\Sections\StaffInternacionKpiSectionProvider;
 use common\components\Domain\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
 use common\components\Domain\Clinical\Service\Authorization\ClinicalEncounterAccessPolicy;
+use common\components\Platform\Ui\Home\Service\Sections\StaffSessionContextSectionProvider;
 use common\components\Platform\Core\DataAccess\DataAccessEditFlowDraftHydrator;
 use common\components\Platform\Core\DataAccess\DataAccessFlowDraftHydrator;
 use common\components\Platform\Core\DataAccess\Edit\Handler\PersonIdentidadBasicaEditMutationHandler;
@@ -38,6 +41,7 @@ use common\components\Domain\Person\DataAccess\Scope\PermitirParaSiMismoScopeChe
 use common\components\Domain\Person\Representation\Assistant\PersonRepresentationUiActionCatalog;
 use common\components\Domain\Scheduling\Home\Sections\AppointmentsDaySectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\StaffAgendaKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
@@ -145,5 +149,9 @@ return [
         'action_cards' => ActionCardsSectionProvider::class,
         'patient_upcoming_appointments' => PatientUpcomingAppointmentsSectionProvider::class,
         'patient_care_plans_active' => PatientCarePlansActiveSectionProvider::class,
+        'staff_session_context' => StaffSessionContextSectionProvider::class,
+        'staff_agenda_kpis' => StaffAgendaKpiSectionProvider::class,
+        'staff_guardia_kpis' => StaffGuardiaKpiSectionProvider::class,
+        'staff_internacion_kpis' => StaffInternacionKpiSectionProvider::class,
     ],
 ];

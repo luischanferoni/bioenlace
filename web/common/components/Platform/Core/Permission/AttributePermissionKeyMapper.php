@@ -7,6 +7,8 @@ use common\components\Platform\Core\DataAccess\QueryOperation;
 
 /**
  * Mapeo operaciones DataAccess ↔ claves de permiso del catálogo (Entidad.atributo.read|info|edit).
+ *
+ * @deprecated Convivencia integridad; no usar en autorización runtime de dominios migrados.
  */
 final class AttributePermissionKeyMapper
 {

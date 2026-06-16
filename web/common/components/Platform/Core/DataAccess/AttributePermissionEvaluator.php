@@ -9,7 +9,8 @@ use Yii;
 
 /**
  * Evalúa si un rol del usuario puede usar un grupo de atributos en una operación.
- * Fuente efectiva: permisos atómicos en auth_item (Entidad.atributo.read|info|edit).
+ *
+ * @deprecated Modelo Entidad.atributo.read|info|edit; autorizar por intent_id en dominios migrados.
  */
 final class AttributePermissionEvaluator
 {

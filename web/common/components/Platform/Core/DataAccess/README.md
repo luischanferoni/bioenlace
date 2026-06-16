@@ -1,51 +1,40 @@
 # Core / DataAccess
 
-Permisos por **grupos de atributos**, **scope checkers** y **métricas** staff para consultas API y asistente.
+Motor de **métricas** y **edición dispersa** staff detrás de intents concretos. La autorización de producto es por **`intent_id`**; este módulo ejecuta consultas y UI JSON.
+
+## Estado (post-migración intents)
+
+| Antes | Ahora |
+|-------|--------|
+| Asistente sugería `data-access.info\|listar\|editar` | Intents por dominio (`profesionales.conteo-efector`, `profesional-agenda.configurar-staff`, …) |
+| RBAC `Entidad.atributo.read\|info\|edit` | RBAC `intent_id`; grants atributo legacy en retiro |
+| Descubrimiento NL desde `data-access-config` | `IntentMetricIndex` / `IntentEditSurfaceIndex`; genéricos fuera del catálogo si hay paridad |
+
+Los endpoints `/api/info`, `/api/listar`, `/api/editar` siguen como **transporte HTTP** para `open_ui` de intents (`action_id: data-access.info`, etc.) hasta retiro final del código.
 
 ## Archivos clave
 
-- `Core/DataAccess/schemas/data-access-config/` — grupos por entidad, métricas, edición dispersa, `filter_synonyms`
-- `data_access_attribute_field` (BD) — esquema de campos editables por grupo (tipos, widgets, options)
-- Permisos atómicos en `auth_item` (`Entidad.atributo.read|info|edit`) vía `AttributePermissionEvaluator`
-- `DataAccessUiService` — `/api/info` y `/api/listar` con ui_json genérico
-- `Presentation/MetricPresentationRegistry` — handlers de presentación por métrica
-- `QueryCompiler` / `MetricQueryExecutor` — compilación y ejecución
+- `schemas/data-access-config/` — definición de métricas, superficies edit, grupos (presentación; no grants)
+- `DataAccessUiService`, `DataAccessEditUiService` — respuestas ui_json
+- `QueryAuthorizationService` — métricas: intent enlazado → RBAC intent; legacy → grants atributo (`@deprecated`)
+- `EditSurfaceAuthorizationService` — superficies: intent enlazado → RBAC intent
+- `DataAccessGenericChannelRetirement` — catálogo NL sin `data-access.*` cuando todo migró
+- `IntentMetricIndex`, `IntentEditSurfaceIndex` — enlaces declarativos YAML ↔ métrica/superficie
 
-## API staff (genérica)
+## Extender un dominio staff
 
-| Ruta RBAC | HTTP | Uso |
-|-----------|------|-----|
-| `/api/info` | `GET|POST /api/v1/info` | Métricas aggregate/grouped + ui_json mensaje |
-| `/api/listar` | `GET|POST /api/v1/listar` | Métricas rows + ui_json listado |
-| `/api/editar` | `GET|POST /api/v1/editar` | Superficie → sujeto → aspectos → formulario → confirmación → `step=apply` (mutación) |
+1. Crear intent(s) YAML con `metric_id` o `edit_surface_id`, `domain_operation`, `fields` si aplica.
+2. Marcar `migrated_intent_id(s)` en la entrada de `data-access-config` (convivencia).
+3. Entrada en `intent-grant-migration-map.yaml` si hay grants legacy que copiar.
+4. `php yii catalog-permission/sync` + `migrate-grants`.
+5. **No** crear nuevos intents genéricos `data-access.*`.
 
-Parámetros comunes: `metric_id` (requerido), filtros allowlisted por métrica.
+## Admin e integridad
 
-## Intents (asistente)
+- Permisos: **solo intents** en `/admin/permission-catalog`.
+- `php yii catalog-integrity/check` — errores si quedan grants `Entidad.atributo.*` en `auth_item`.
 
-Dos intents YAML genéricos (no uno por métrica):
+## Referencia
 
-| Intent | HTTP | Uso |
-|--------|------|-----|
-| `data-access.info` | `/api/info` | Métricas aggregate/grouped (catálogo PHP, sin YAML flow) |
-| `data-access.listar` | `/api/listar` | Métricas rows (catálogo PHP, sin YAML flow) |
-| `data-access.editar` | `/api/editar` | Edición dispersa (catálogo PHP, sin YAML flow) |
-
-El `metric_id` / `surface_id` y filtros se resuelven en runtime (`DataAccessMetricDiscoveryService`, `DataAccessEditDiscoveryService`, hydrators) desde keywords en **data-access-config** — **sin valores de atributos** (sexo, especialidad concreta, etc.; eso va en `filter_synonyms` / resolvers).
-
-Edición: corte temprano si el rol no tiene ningún aspecto con `write` (`EditSurfaceAuthorizationService`). El intent `data-access.editar` se oculta del catálogo si no hay superficies editables. Preprocess: `ChatPreprocessService::isStaffDataAccessEditQuery`. Mutación vía `MutationExecutor` + handlers por grupo (`EditMutationRegistry`); aspectos `open_ui` devuelven `open_ui` en la respuesta.
-
-Auditoría mutaciones: canal `data-access`, evento `data_access_edit_applied` (`EditMutationAuditLogger`).
-
-Edición agenda staff: intent `data-access.editar` → flujo `ProfesionalEfectorServicioAgenda` → atributos (`weekly_scheduler_widget`, `formas_atencion`, …) → `profesional-agenda.configurar-agenda`. Validar catálogo: `php yii data-access-catalog/check`.
-
-## Extender
-
-1. Grupo en `{Entidad}.yaml`; métrica con bloques `query`, `output`, `presentation_handler` y `keywords`.
-2. Handler en `MetricPresentationRegistry` + clase en dominio correspondiente.
-3. Permiso atómico en admin **Catálogo de permisos → Roles** (o `php yii catalog-permission/sync`).
-4. No crear intents YAML por métrica: reutilizar `data-access.info` o `data-access.listar`.
-
-## Admin
-
-Superadmin: menú **Acceso a datos** → catálogo de permisos, roles, integridad; campos por grupo en BD.
+- [rbac-catalogo-permisos.md](../../../../docs/arquitectura/rbac-catalogo-permisos.md)
+- [autorizacion-solo-por-intents.md](../../../../docs/decisions/autorizacion-solo-por-intents.md)

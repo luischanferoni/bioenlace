@@ -5,6 +5,7 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | ID | Título | Ubicación |
 |----|--------|-----------|
 | Dominio clínico FHIR | Producto, modelo, API clínica, greenfield | [fhir-clinical.md](./fhir-clinical.md) |
+| Autorización solo por intents | RBAC assignable = intent_id; retiro grants atributo | [autorizacion-solo-por-intents.md](./autorizacion-solo-por-intents.md) |
 
 ## Formato sugerido para nuevas entradas
 

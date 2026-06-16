@@ -14,9 +14,12 @@ class CatalogPermissionController extends Controller
     /** @var bool Copiar asignaciones rol→ruta hacia rol→permiso lógico */
     public bool $inheritRoles = true;
 
+    /** @var bool Ejecutar borrado real (sin flag = solo listar candidatos) */
+    public bool $execute = false;
+
     public function options($actionID): array
     {
-        return array_merge(parent::options($actionID), ['inheritRoles']);
+        return array_merge(parent::options($actionID), ['inheritRoles', 'execute']);
     }
 
     public function actionSync(): int
@@ -57,6 +60,33 @@ class CatalogPermissionController extends Controller
             $result['created_permissions'],
             $result['role_grants']
         ));
+        foreach ($result['errors'] as $err) {
+            $this->stderr(' - ' . $err . "\n");
+        }
+
+        return $result['errors'] === [] ? ExitCode::OK : ExitCode::UNSPECIFIED_ERROR;
+    }
+
+    /**
+     * Lista o elimina permisos atómicos legacy Entidad.atributo.* en auth_item.
+     * Sin --execute=1 solo muestra candidatos (dry-run).
+     */
+    public function actionPruneAttributes(): int
+    {
+        $result = (new CatalogPermissionSyncService())->pruneLegacyAttributeAuthItems(!$this->execute);
+
+        if ($result['dry_run']) {
+            $this->stdout(sprintf("Dry-run: %d permiso(s) atributo candidatos a eliminar\n", count($result['candidates'])));
+            foreach ($result['candidates'] as $key) {
+                $this->stdout('  - ' . $key . "\n");
+            }
+            if ($result['candidates'] !== []) {
+                $this->stdout("Ejecutar con --execute=1 tras validar migrate-grants\n");
+            }
+        } else {
+            $this->stdout(sprintf("Eliminados: %d ítem(s) auth_item\n", $result['removed']));
+        }
+
         foreach ($result['errors'] as $err) {
             $this->stderr(' - ' . $err . "\n");
         }

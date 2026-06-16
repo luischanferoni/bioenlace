@@ -247,4 +247,68 @@ final class CatalogPermissionSyncService
 
         return $added;
     }
+
+    /**
+     * Elimina permisos atómicos Entidad.atributo.{read|info|edit} de auth_item (fase 6).
+     * Ejecutar tras catalog-permission/migrate-grants y validar integridad.
+     *
+     * @return array{dry_run: bool, candidates: list<string>, removed: int, errors: list<string>}
+     */
+    public function pruneLegacyAttributeAuthItems(bool $dryRun = true): array
+    {
+        $db = \Yii::$app->db;
+        $authItem = $db->schema->getRawTableName('{{%auth_item}}');
+        $childTable = $db->schema->getRawTableName('{{%auth_item_child}}');
+        if ($db->schema->getTableSchema($authItem, true) === null) {
+            return [
+                'dry_run' => $dryRun,
+                'candidates' => [],
+                'removed' => 0,
+                'errors' => ['Tabla auth_item no disponible'],
+            ];
+        }
+
+        $hasChild = $db->schema->getTableSchema($childTable, true) !== null;
+        $candidates = [];
+        foreach ((new PermissionCatalogService())->listAttributes() as $row) {
+            $key = trim((string) ($row['key'] ?? ''));
+            if ($key !== '' && $this->authItemExists($authItem, $key)) {
+                $candidates[] = $key;
+            }
+        }
+        sort($candidates);
+
+        if ($dryRun) {
+            return [
+                'dry_run' => true,
+                'candidates' => $candidates,
+                'removed' => 0,
+                'errors' => [],
+            ];
+        }
+
+        $removed = 0;
+        $errors = [];
+        foreach ($candidates as $key) {
+            try {
+                if ($hasChild) {
+                    $db->createCommand()->delete($childTable, ['child' => $key])->execute();
+                    $db->createCommand()->delete($childTable, ['parent' => $key])->execute();
+                }
+                $deleted = $db->createCommand()->delete($authItem, ['name' => $key, 'type' => 2])->execute();
+                if ($deleted > 0) {
+                    $removed += $deleted;
+                }
+            } catch (\Throwable $e) {
+                $errors[] = $key . ': ' . $e->getMessage();
+            }
+        }
+
+        return [
+            'dry_run' => false,
+            'candidates' => $candidates,
+            'removed' => $removed,
+            'errors' => $errors,
+        ];
+    }
 }

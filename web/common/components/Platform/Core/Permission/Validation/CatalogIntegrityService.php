@@ -38,7 +38,7 @@ final class CatalogIntegrityService
         $warnings = array_merge($warnings, $this->checkIntentExtendedMetadataWarnings());
         $errors = array_merge($errors, $this->checkIntentFamilies());
         $warnings = array_merge($warnings, $this->checkIntentFamilyOrphans());
-        $warnings = array_merge($warnings, $this->checkLegacyAttributeGrantsInAuthItem());
+        $errors = array_merge($errors, $this->checkLegacyAttributeGrantsInAuthItem());
         $errors = array_merge($errors, $this->checkOpenUiActionIdsResolve());
         $warnings = array_merge($warnings, $this->checkOpenUiSeparateRbacDebt());
         $warnings = array_merge($warnings, $this->checkEditAttributesVsFlowOnly());
@@ -667,14 +667,14 @@ final class CatalogIntegrityService
      */
     private function checkLegacyAttributeGrantsInAuthItem(): array
     {
-        $warnings = [];
+        $errors = [];
         if (!Yii::$app->has('db')) {
-            return $warnings;
+            return $errors;
         }
 
         $itemTable = Yii::$app->db->schema->getTableSchema('{{%auth_item}}', true);
         if ($itemTable === null) {
-            return $warnings;
+            return $errors;
         }
 
         $catalogKeys = [];
@@ -696,9 +696,9 @@ final class CatalogIntegrityService
             if ($name === '' || !isset($catalogKeys[$name])) {
                 continue;
             }
-            $warnings[] = 'RBAC legacy: grant atributo «' . $name . '» aún en auth_item (migrar a intents)';
+            $errors[] = 'RBAC legacy: grant atributo «' . $name . '» aún en auth_item; ejecutar catalog-permission/migrate-grants y catalog-permission/prune-attributes';
         }
 
-        return $warnings;
+        return $errors;
     }
 }

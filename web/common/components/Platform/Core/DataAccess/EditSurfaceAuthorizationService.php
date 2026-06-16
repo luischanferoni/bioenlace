@@ -6,11 +6,15 @@ use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\IntentEditSurfaceIndex;
 
 /**
- * Autorización de superficies y aspectos editables (permiso write por grupo + scope).
+ * Autorización de superficies editables. Superficies migradas: permiso por intent; legacy: grants atributo.
+ *
+ * @deprecated Rutas legacy por grant atributo; nuevos dominios deben declarar intents con edit_surface_id.
  */
 final class EditSurfaceAuthorizationService
 {
     private AttributeGroupCatalog $catalog;
+
+    /** @deprecated Solo rutas sin intent enlazado */
     private AttributePermissionEvaluator $permissions;
 
     public function __construct(
@@ -41,6 +45,24 @@ final class EditSurfaceAuthorizationService
      */
     public function userHasAnyWriteGrantForEdit(PermissionContext $ctx): bool
     {
+        if (DataAccessGenericChannelRetirement::areGenericChannelsRetired()) {
+            foreach ($this->catalog->listEditSurfacesForDisplay() as $surfaceId => $def) {
+                if (!is_string($surfaceId) || !is_array($def)) {
+                    continue;
+                }
+                if (!IntentEditSurfaceIndex::isSurfaceMigrated($surfaceId)) {
+                    continue;
+                }
+                foreach (IntentEditSurfaceIndex::intentsForSurface($surfaceId) as $intentId) {
+                    if (BioenlaceAccessChecker::userCanPermissionKey($ctx->userId, $intentId)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         foreach ($this->catalog->listEditSurfacesForDisplay() as $surfaceId => $def) {
             if (!is_string($surfaceId) || !is_array($def)) {
                 continue;

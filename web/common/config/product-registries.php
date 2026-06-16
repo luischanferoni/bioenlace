@@ -34,6 +34,7 @@ use common\components\Domain\Organization\Presentation\ProfesionalesListadoRowsP
 use common\components\Domain\Organization\Service\Authorization\OrganizationEfectorSesionPolicy;
 use common\components\Domain\Organization\Service\Authorization\OrganizationPesEfectorPolicy;
 use common\components\Domain\Organization\Service\Authorization\OrganizationPesOwnPolicy;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\OrganizationIntentSubjectResolvers;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
 use common\components\Domain\Person\DataAccess\Filter\SexoBiologicoFilterResolver;
@@ -64,6 +65,11 @@ return [
         'data_access.metric_flow' => [DataAccessFlowDraftHydrator::class, 'hydrateWithOptions'],
         'data_access.edit_flow' => [DataAccessEditFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
+    ],
+
+    'intentSubjectResolvers' => [
+        'organization.pes_own_in_efector' => [OrganizationIntentSubjectResolvers::class, 'hydratePesOwnInEfector'],
+        'organization.pes_staff_in_efector' => [OrganizationIntentSubjectResolvers::class, 'hydratePesStaffInEfector'],
     ],
 
     'domainOperationPolicies' => [

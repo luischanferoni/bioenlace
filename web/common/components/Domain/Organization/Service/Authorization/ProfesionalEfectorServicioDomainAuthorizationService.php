@@ -5,6 +5,7 @@ namespace common\components\Domain\Organization\Service\Authorization;
 use common\components\Platform\Core\Permission\Domain\DomainOperationAuthorizer;
 use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
+use common\components\Platform\Core\Permission\IntentRequestContextService;
 use common\models\ProfesionalEfectorServicio;
 
 /**
@@ -58,5 +59,17 @@ final class ProfesionalEfectorServicioDomainAuthorizationService
                 ? 'ProfesionalEfectorServicio.condicion_laboral_own'
                 : 'ProfesionalEfectorServicio.condicion_laboral_staff'
         );
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     *
+     * @throws DomainOperationForbiddenException
+     */
+    public function assertCondicionLaboralForIntent(array $params, string $intentId): ProfesionalEfectorServicio
+    {
+        $operation = (new IntentRequestContextService())->domainOperationForIntent($intentId);
+
+        return $this->assertPesOperation($params, $operation);
     }
 }

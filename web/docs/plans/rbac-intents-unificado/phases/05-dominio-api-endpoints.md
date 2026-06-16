@@ -46,9 +46,17 @@ Ajustar nombres en implementación según convención acordada en fase 0.
 
 ## Entregables
 
-- [ ] Piloto condición laboral funcional con intents
-- [ ] Documentación de mapeo grants legacy → intents piloto (input fase 6)
+- [x] `IntentRequestContextService` (header `X-Flow-Intent-Id`, body, default ruta)
+- [x] `submitCondicionLaboral` + `assertCondicionLaboralForIntent` por `domain_operation` del YAML
+- [x] `subject_resolution` handlers (`organization.pes_own_in_efector`, `organization.pes_staff_in_efector`)
+- [x] Subintents conversacionales (listar servicio/profesional → formulario vigencia)
+- [x] Tests unitarios `IntentRequestContextService`, `IntentSubmitFieldFilter`
+- [ ] Piloto condición laboral validado en staging (matriz fase 0)
 - [ ] Demo asistente + API directa
+
+## Mapeo grants legacy → intents (input fase 6)
+
+Ver `permission/intent-grant-migration-map.yaml` (licencia.*, Licencia.create → condicion-laboral.*).
 
 ## Dependencias
 
@@ -58,4 +66,4 @@ Ajustar nombres en implementación según convención acordada en fase 0.
 
 ## Estado
 
-Pendiente.
+En progreso — código piloto cableado; validación staging/E2E pendiente.

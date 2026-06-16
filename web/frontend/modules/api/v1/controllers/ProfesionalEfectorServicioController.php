@@ -511,7 +511,6 @@ class ProfesionalEfectorServicioController extends BaseController
                 return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
                     $idEfector,
                     $post,
-                    true,
                     'condicion-laboral.editar-propio'
                 );
             }
@@ -660,7 +659,6 @@ class ProfesionalEfectorServicioController extends BaseController
                 return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
                     $idEfector,
                     $post,
-                    true,
                     'condicion-laboral.editar-propio'
                 );
             }
@@ -697,7 +695,6 @@ class ProfesionalEfectorServicioController extends BaseController
                 return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
                     $idEfector,
                     $post,
-                    false,
                     'condicion-laboral.editar-staff'
                 );
             }

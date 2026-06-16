@@ -24,6 +24,8 @@ intent_semantics:
 
 subject_resolution:
   handler: organization.pes_staff_in_efector
+  open_ui:
+    action_id: profesional-efector-servicio.listar-por-efector
 
 field_groups:
   vigencia:
@@ -54,5 +56,18 @@ field_resolution:
     - documento
     - dni
 
-open_ui:
-  action_id: profesional-efector-servicio.crear-condicion-laboral
+subintents:
+  - id: elegir_profesional
+    assistant_text: "Elegí el profesional del efector"
+    provides:
+      - draft.id_profesional_efector_servicio
+    next: cargar_vigencia
+    open_ui:
+      action_id: profesional-efector-servicio.listar-por-efector
+
+  - id: cargar_vigencia
+    assistant_text: "Completá la condición laboral del profesional"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: profesional-efector-servicio.crear-condicion-laboral

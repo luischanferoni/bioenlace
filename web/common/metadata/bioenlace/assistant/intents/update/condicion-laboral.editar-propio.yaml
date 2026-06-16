@@ -57,5 +57,19 @@ field_resolution:
     - documento
     - dni
 
-open_ui:
-  action_id: profesional-efector-servicio.editar-condicion-laboral
+subintents:
+  - id: elegir_servicio
+    assistant_text: "Elegí el servicio para actualizar tu condición laboral"
+    provides:
+      - draft.id_profesional_efector_servicio
+      - draft.id_servicio
+    next: editar_vigencia
+    open_ui:
+      action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
+
+  - id: editar_vigencia
+    assistant_text: "Actualizá tipo y fechas de vigencia"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: profesional-efector-servicio.editar-condicion-laboral

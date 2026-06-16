@@ -5,6 +5,7 @@ namespace common\components\Platform\Assistant\SubIntentEngine;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\IntentMetricCatalogSupport;
 use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
+use common\components\Platform\Core\Permission\IntentSubjectResolutionService;
 
 /**
  * Aplica `draft_hydrator` declarado en el YAML del intent antes de {@see SubIntentEngine::process}.
@@ -25,6 +26,8 @@ final class FlowDraftHydratorService
         if (IntentMetricCatalogSupport::isMetricBoundIntent($intentId)) {
             IntentMetricCatalogSupport::applyDraftHydrator($intentId, $body);
 
+            (new IntentSubjectResolutionService())->applyToBody($intentId, $body);
+
             return;
         }
 
@@ -36,23 +39,21 @@ final class FlowDraftHydratorService
         $cfg = isset($manifest['draft_hydrator']) && is_array($manifest['draft_hydrator'])
             ? $manifest['draft_hydrator']
             : null;
-        if ($cfg === null) {
-            return;
-        }
+        if ($cfg !== null) {
+            $handlerId = trim((string) ($cfg['handler'] ?? ''));
+            if ($handlerId !== '') {
+                $options = isset($cfg['options']) && is_array($cfg['options']) ? $cfg['options'] : [];
+                foreach ($cfg as $key => $value) {
+                    if ($key === 'handler' || $key === 'options') {
+                        continue;
+                    }
+                    $options[$key] = $value;
+                }
 
-        $handlerId = trim((string) ($cfg['handler'] ?? ''));
-        if ($handlerId === '') {
-            return;
-        }
-
-        $options = isset($cfg['options']) && is_array($cfg['options']) ? $cfg['options'] : [];
-        foreach ($cfg as $key => $value) {
-            if ($key === 'handler' || $key === 'options') {
-                continue;
+                FlowDraftHydratorRegistry::apply($handlerId, $body, $options);
             }
-            $options[$key] = $value;
         }
 
-        FlowDraftHydratorRegistry::apply($handlerId, $body, $options);
+        (new IntentSubjectResolutionService())->applyToBody($intentId, $body);
     }
 }

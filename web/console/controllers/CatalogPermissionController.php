@@ -48,6 +48,22 @@ class CatalogPermissionController extends Controller
         return ExitCode::OK;
     }
 
+    public function actionMigrateGrants(): int
+    {
+        $result = (new \common\components\Platform\Core\Permission\IntentGrantMigrationService())->migrate();
+
+        $this->stdout(sprintf(
+            "Migración grants: permisos_creados=%d grants_rol=%d\n",
+            $result['created_permissions'],
+            $result['role_grants']
+        ));
+        foreach ($result['errors'] as $err) {
+            $this->stderr(' - ' . $err . "\n");
+        }
+
+        return $result['errors'] === [] ? ExitCode::OK : ExitCode::UNSPECIFIED_ERROR;
+    }
+
     /**
      * Añade `permission:` explícito a intents CRUD que aún lo infieren.
      */

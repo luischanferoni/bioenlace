@@ -10,6 +10,8 @@ categories:
     titulo: Profesional, agenda y condición laboral
     intent_ids:
       - profesional-efector-servicio.crear-flow
+      - condicion-laboral.editar-propio
+      - condicion-laboral.editar-staff
       - data-access.editar
       - licencia.cargar-como-profesional-flow
       - licencia.cargar-para-profesional-flow

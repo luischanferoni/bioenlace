@@ -3,6 +3,7 @@
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
 use common\components\Domain\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
+use common\components\Platform\Core\Permission\IntentSubmitFieldFilter;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\models\Condiciones_laborales;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
@@ -299,8 +300,18 @@ final class ProfesionalEfectorServicioAgendaUiService
      * @param array<string, mixed> $post
      * @return array{message: string, condicion_laboral_ui_completed: string}
      */
-    public static function submitCondicionLaboral(int $idEfector, array $post, bool $requireOwnPes = false): array
-    {
+    public static function submitCondicionLaboral(
+        int $idEfector,
+        array $post,
+        bool $requireOwnPes = false,
+        ?string $intentId = null
+    ): array {
+        $intentId = trim((string) ($intentId ?? ($post['intent_id'] ?? '')));
+        if ($intentId === '') {
+            $intentId = $requireOwnPes ? 'condicion-laboral.editar-propio' : 'condicion-laboral.editar-staff';
+        }
+        $post = (new IntentSubmitFieldFilter())->filter($intentId, $post);
+
         $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($post);
         $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
         if ($idPes > 0) {

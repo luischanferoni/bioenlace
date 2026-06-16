@@ -57,4 +57,4 @@ Por cada dominio:
 
 ## Estado
 
-Pendiente.
+En progreso — piloto condición laboral (resolución familia, whitelist submit, grants, clasificación NL).

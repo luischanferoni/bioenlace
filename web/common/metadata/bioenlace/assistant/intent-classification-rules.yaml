@@ -20,6 +20,9 @@ vocab:
   help_menu: '\b(ayuda|qué puedo|que puedo|menu|menú|opciones|qué hace|que hace|qué se puede|que se puede|mostrar acciones)\b'
   greeting: '\b(hola|buenos|gracias|qué tal|que tal|como estas|cómo estás)\b'
   resumen_phrases: '\b(resumen de|resumen)\b'
+  licencia_topics: '\b(licencia|permiso|ausencia|vacacion|vacaciones|franco|condicion laboral|condición laboral)\b'
+  own_licencia: '\b(mi|mis)\s+(licencia|permiso|ausencia|vacaciones|condicion laboral|condición laboral)\b'
+  staff_licencia_third: '\b(licencia|permiso|ausencia|condicion laboral|condición laboral)\s+(del|de un|de la|de otro|profesional|medico|médico|colega)\b'
 
 match_rules:
   staff_agenda_config_edit:
@@ -71,7 +74,28 @@ match_rules:
   greeting:
     require_any: [greeting]
 
+  own_condicion_laboral:
+    require_all: [licencia_topics, own_licencia]
+
+  staff_condicion_laboral:
+    require_any: [licencia_topics, staff_licencia_third]
+    forbid_any: [own_licencia]
+
 score_adjustments:
+  - when_rule: staff_condicion_laboral
+    apply:
+      - intent_id: condicion-laboral.editar-staff
+        delta: 40
+      - intent_id_prefix: licencia.cargar-para
+        delta: 20
+
+  - when_rule: own_condicion_laboral
+    apply:
+      - intent_id: condicion-laboral.editar-propio
+        delta: 40
+      - intent_id_prefix: licencia.cargar-como
+        delta: 20
+
   - when_rule: staff_agenda_config_edit
     apply:
       - intent_id: data-access.editar

@@ -508,7 +508,12 @@ class ProfesionalEfectorServicioController extends BaseController
             $paramsForRender,
             $req->post(),
             static function (array $post) use ($idEfector): array {
-                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral($idEfector, $post, true);
+                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
+                    $idEfector,
+                    $post,
+                    true,
+                    'condicion-laboral.editar-propio'
+                );
             }
         );
     }
@@ -628,7 +633,7 @@ class ProfesionalEfectorServicioController extends BaseController
     }
 
     /**
-     * UI JSON: crear/editar condición laboral (vigencia) de un profesional.
+     * UI JSON: crear/editar condición laboral (vigencia) propia.
      *
      * GET|POST /api/v1/profesional-efector-servicio/editar-condicion-laboral
      *
@@ -652,13 +657,18 @@ class ProfesionalEfectorServicioController extends BaseController
             $paramsForRender,
             $req->post(),
             static function (array $post) use ($idEfector): array {
-                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral($idEfector, $post);
+                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
+                    $idEfector,
+                    $post,
+                    true,
+                    'condicion-laboral.editar-propio'
+                );
             }
         );
     }
 
     /**
-     * UI JSON: crear condición laboral (vigencia) de un profesional.
+     * UI JSON: crear condición laboral (vigencia) de un profesional (staff).
      * Nota: el submit es un upsert; este endpoint existe por claridad de intención.
      *
      * GET|POST /api/v1/profesional-efector-servicio/crear-condicion-laboral
@@ -684,7 +694,12 @@ class ProfesionalEfectorServicioController extends BaseController
             $paramsForRender,
             $req->post(),
             static function (array $post) use ($idEfector): array {
-                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral($idEfector, $post);
+                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
+                    $idEfector,
+                    $post,
+                    false,
+                    'condicion-laboral.editar-staff'
+                );
             }
         );
     }

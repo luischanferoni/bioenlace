@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `rbac-intents-unificado` |
-| Estado | Fase 1–2 completadas; fase 3 pendiente |
+| Estado | Fase 1–2 completadas; fase 3 piloto condición laboral en progreso |
 | Reemplaza / tensiona con | Catálogo intents + atributos; intents genéricos `data-access.*`; scopes ABAC como dimensión admin |
 | Doc estable al cerrar | `arquitectura/rbac-catalogo-permisos.md` + `decisions/` (ADR autorización) |
 

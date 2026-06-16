@@ -1,0 +1,19 @@
+version: 1
+
+# Mapeo idempotente grants rol → intents (fase 3 piloto condición laboral).
+# Ejecutar: php yii catalog-permission/migrate-grants
+
+role_grant_sources:
+  - source_permission: licencia.cargar-como-profesional-flow
+    intent_targets:
+      - condicion-laboral.editar-propio
+  - source_permission: licencia.cargar-para-profesional-flow
+    intent_targets:
+      - condicion-laboral.editar-staff
+  - source_permission: Licencia.create
+    intent_targets:
+      - condicion-laboral.editar-propio
+      - condicion-laboral.editar-staff
+
+# Futuro: Entidad.atributo.read|info|edit → intents concretos (fase 6).
+attribute_grant_sources: []

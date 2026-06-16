@@ -73,6 +73,11 @@ final class ProductMetadataPaths
         return self::permissionDir() . DIRECTORY_SEPARATOR . 'domain-operation-policies.yaml';
     }
 
+    public static function intentGrantMigrationMapFile(): string
+    {
+        return self::permissionDir() . DIRECTORY_SEPARATOR . 'intent-grant-migration-map.yaml';
+    }
+
     public static function homePanelManifestFile(): string
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'home_panel_manifest.yaml';

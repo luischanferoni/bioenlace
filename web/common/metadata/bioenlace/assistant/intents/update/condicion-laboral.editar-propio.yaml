@@ -1,0 +1,54 @@
+intent_id: condicion-laboral.editar-propio
+version: 1
+
+operation: edit
+intent_family: condicion-laboral.edit
+domain_operation: ProfesionalEfectorServicio.condicion_laboral_own
+
+action_name: "Editar condición laboral propia"
+description: "Modificar vigencia de condición laboral sobre una asignación PES propia en el efector."
+rbac_route: "/api/profesional-efector-servicio/editar-condicion-laboral"
+
+keywords:
+  - mi condición laboral
+  - mi licencia
+  - editar mi vigencia
+  - cambiar mi licencia
+  - actualizar mi ausencia
+
+intent_semantics:
+  goal: Editar la condición laboral vigente sobre una asignación propia en el efector de sesión.
+  how: Elegís el servicio afectado y actualizás tipo y fechas en el formulario de condición laboral.
+  constraints:
+    - Solo sobre tus propias asignaciones PES en el efector actual.
+
+subject_resolution:
+  handler: organization.pes_own_in_efector
+
+field_groups:
+  vigencia:
+    label: Vigencia
+    fields:
+      - id_condicion_laboral
+      - fecha_inicio
+      - fecha_fin
+
+fields:
+  - name: id_condicion_laboral
+    keywords:
+      - tipo de licencia
+      - condición laboral
+      - motivo de ausencia
+  - name: fecha_inicio
+    keywords:
+      - desde
+      - inicio
+      - fecha de inicio
+  - name: fecha_fin
+    keywords:
+      - hasta
+      - fin
+      - fecha de fin
+
+open_ui:
+  action_id: profesional-efector-servicio.editar-condicion-laboral

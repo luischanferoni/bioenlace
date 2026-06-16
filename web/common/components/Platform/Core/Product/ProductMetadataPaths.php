@@ -53,6 +53,11 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'intent-classification-rules.yaml';
     }
 
+    public static function intentFamiliesFile(): string
+    {
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'intent-families.yaml';
+    }
+
     public static function hintResolutionFile(): string
     {
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'hint-resolution.yaml';

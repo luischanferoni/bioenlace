@@ -116,6 +116,7 @@ final class IntentManifestIndex
 
             $openUiSteps = self::extractOpenUiSteps($data);
             $flowSubmit = is_array($data['flow_submit'] ?? null) ? $data['flow_submit'] : null;
+            $operation = IntentManifestMetadata::resolveOperation($category, $data);
 
             self::$byIntentId[$intentId] = [
                 'intent_id' => $intentId,
@@ -124,8 +125,18 @@ final class IntentManifestIndex
                 'permission' => $permission,
                 'rbac_route' => $rbacRoute,
                 'action_name' => trim((string) ($data['action_name'] ?? '')),
+                'operation' => $operation,
+                'intent_family' => trim((string) ($data['intent_family'] ?? '')),
+                'domain_operation' => trim((string) ($data['domain_operation'] ?? '')),
+                'subject_resolution' => is_array($data['subject_resolution'] ?? null)
+                    ? $data['subject_resolution']
+                    : null,
+                'fields' => IntentManifestMetadata::extractFieldNames($data),
+                'field_groups' => is_array($data['field_groups'] ?? null) ? $data['field_groups'] : null,
+                'keywords' => is_array($data['keywords'] ?? null) ? $data['keywords'] : [],
                 'open_ui_steps' => $openUiSteps,
                 'flow_submit' => $flowSubmit,
+                'uses_extended_contract' => IntentManifestMetadata::usesExtendedContract($data),
             ];
 
             foreach ($openUiSteps as $step) {

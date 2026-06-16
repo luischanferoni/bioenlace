@@ -4,7 +4,9 @@ namespace common\components\Platform\Core\Permission\Validation;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Core\DataAccess\Validation\DataAccessCatalogCheckService;
+use common\components\Platform\Core\Permission\IntentFamilyCatalog;
 use common\components\Platform\Core\Permission\IntentManifestIndex;
+use common\components\Platform\Core\Permission\IntentManifestMetadata;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyRegistry;
 use common\components\Platform\Core\Permission\PermissionCatalogService;
@@ -25,12 +27,18 @@ final class CatalogIntegrityService
     {
         IntentManifestIndex::resetCache();
         IntentSchemaPaths::resetIndexCache();
+        IntentFamilyCatalog::resetCache();
 
         $errors = (new DataAccessCatalogCheckService())->run();
         $warnings = [];
 
         $errors = array_merge($errors, $this->checkDuplicateIntentIds());
         $errors = array_merge($errors, $this->checkIntentsHavePermissionOrRoute());
+        $errors = array_merge($errors, $this->checkIntentExtendedMetadata());
+        $warnings = array_merge($warnings, $this->checkIntentExtendedMetadataWarnings());
+        $errors = array_merge($errors, $this->checkIntentFamilies());
+        $warnings = array_merge($warnings, $this->checkIntentFamilyOrphans());
+        $warnings = array_merge($warnings, $this->checkLegacyAttributeGrantsInAuthItem());
         $errors = array_merge($errors, $this->checkOpenUiActionIdsResolve());
         $warnings = array_merge($warnings, $this->checkOpenUiSeparateRbacDebt());
         $warnings = array_merge($warnings, $this->checkEditAttributesVsFlowOnly());
@@ -54,6 +62,11 @@ final class CatalogIntegrityService
                 'errors' => count($errors),
                 'warnings' => count($warnings),
                 'intents' => count(IntentManifestIndex::all()),
+                'intent_families' => count(IntentFamilyCatalog::all()),
+                'extended_intents' => count(array_filter(
+                    IntentManifestIndex::all(),
+                    static fn (array $meta): bool => (bool) ($meta['uses_extended_contract'] ?? false)
+                )),
                 'attributes' => count((new PermissionCatalogService())->listAttributes()),
                 'flow_steps' => count((new PermissionCatalogService())->listFlowStepDependencies()),
             ],
@@ -471,6 +484,12 @@ final class CatalogIntegrityService
                 $catalogKeys[$key] = true;
             }
         }
+        foreach (IntentManifestIndex::all() as $meta) {
+            $domainOp = trim((string) ($meta['domain_operation'] ?? ''));
+            if ($domainOp !== '') {
+                $catalogKeys[$domainOp] = true;
+            }
+        }
         foreach ($catalog->listAttributes() as $row) {
             $key = trim((string) ($row['key'] ?? ''));
             if ($key !== '') {
@@ -524,6 +543,160 @@ final class CatalogIntegrityService
                 $warnings[] = 'RBAC: «' . $permission . '» enlazado a ruta «' . $route
                     . '» fuera del rbac_route del intent; revisar auth_item_child';
             }
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Contrato extendido read/list/edit: domain_operation, fields, field_groups.
+     *
+     * @return list<string>
+     */
+    private function checkIntentExtendedMetadata(): array
+    {
+        $errors = [];
+        foreach (IntentSchemaPaths::discoverYamlFiles() as $path) {
+            try {
+                $data = Yaml::parseFile($path);
+            } catch (\Throwable $e) {
+                continue;
+            }
+            if (!is_array($data)) {
+                continue;
+            }
+            $intentId = trim((string) ($data['intent_id'] ?? IntentSchemaPaths::intentIdFromPath($path)));
+            if ($intentId === '') {
+                continue;
+            }
+            $category = IntentSchemaPaths::categoryFromPath($path);
+            $result = IntentManifestMetadata::validate($intentId, $category, $data);
+            $errors = array_merge($errors, $result['errors']);
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function checkIntentExtendedMetadataWarnings(): array
+    {
+        $warnings = [];
+        foreach (IntentSchemaPaths::discoverYamlFiles() as $path) {
+            try {
+                $data = Yaml::parseFile($path);
+            } catch (\Throwable $e) {
+                continue;
+            }
+            if (!is_array($data)) {
+                continue;
+            }
+            $intentId = trim((string) ($data['intent_id'] ?? IntentSchemaPaths::intentIdFromPath($path)));
+            if ($intentId === '') {
+                continue;
+            }
+            $category = IntentSchemaPaths::categoryFromPath($path);
+            $result = IntentManifestMetadata::validate($intentId, $category, $data);
+            $warnings = array_merge($warnings, $result['warnings']);
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Familias declaradas en intent-families.yaml ↔ manifiestos en disco.
+     *
+     * @return list<string>
+     */
+    private function checkIntentFamilies(): array
+    {
+        $errors = [];
+        foreach (IntentFamilyCatalog::all() as $familyId => $def) {
+            $expectedOperation = trim((string) ($def['operation'] ?? ''));
+            foreach ($def['members'] as $memberId) {
+                $meta = IntentManifestIndex::get($memberId);
+                if ($meta === null) {
+                    $errors[] = 'Familia «' . $familyId . '»: miembro «' . $memberId . '» sin YAML de intent';
+
+                    continue;
+                }
+                $memberFamily = trim((string) ($meta['intent_family'] ?? ''));
+                if ($memberFamily !== $familyId) {
+                    $errors[] = 'Familia «' . $familyId . '»: «' . $memberId . '» declara intent_family «'
+                        . ($memberFamily !== '' ? $memberFamily : '(vacío)') . '»';
+                }
+                $memberOperation = trim((string) ($meta['operation'] ?? ''));
+                if ($expectedOperation !== '' && $memberOperation !== '' && $memberOperation !== $expectedOperation) {
+                    $errors[] = 'Familia «' . $familyId . '»: «' . $memberId . '» tiene operation «'
+                        . $memberOperation . '»; se esperaba «' . $expectedOperation . '»';
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Intents con intent_family no listados en intent-families.yaml.
+     *
+     * @return list<string>
+     */
+    private function checkIntentFamilyOrphans(): array
+    {
+        $warnings = [];
+        $knownFamilies = array_fill_keys(array_keys(IntentFamilyCatalog::all()), true);
+
+        foreach (IntentManifestIndex::all() as $intentId => $meta) {
+            $family = trim((string) ($meta['intent_family'] ?? ''));
+            if ($family === '') {
+                continue;
+            }
+            if (!isset($knownFamilies[$family])) {
+                $warnings[] = 'Intent «' . $intentId . '»: intent_family «' . $family . '» no está en intent-families.yaml';
+            }
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Convivencia: grants atómicos Entidad.atributo.{read|info|edit} aún en auth_item.
+     *
+     * @return list<string>
+     */
+    private function checkLegacyAttributeGrantsInAuthItem(): array
+    {
+        $warnings = [];
+        if (!Yii::$app->has('db')) {
+            return $warnings;
+        }
+
+        $itemTable = Yii::$app->db->schema->getTableSchema('{{%auth_item}}', true);
+        if ($itemTable === null) {
+            return $warnings;
+        }
+
+        $catalogKeys = [];
+        foreach ((new PermissionCatalogService())->listAttributes() as $row) {
+            $key = trim((string) ($row['key'] ?? ''));
+            if ($key !== '') {
+                $catalogKeys[$key] = true;
+            }
+        }
+
+        $rows = (new \yii\db\Query())
+            ->select(['name', 'type'])
+            ->from('{{%auth_item}}')
+            ->where(['type' => 2])
+            ->all();
+
+        foreach ($rows as $row) {
+            $name = trim((string) ($row['name'] ?? ''));
+            if ($name === '' || !isset($catalogKeys[$name])) {
+                continue;
+            }
+            $warnings[] = 'RBAC legacy: grant atributo «' . $name . '» aún en auth_item (migrar a intents)';
         }
 
         return $warnings;

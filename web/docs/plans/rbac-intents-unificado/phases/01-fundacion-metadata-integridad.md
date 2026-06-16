@@ -47,4 +47,4 @@ Definir el contrato YAML de intents read/list/edit y adaptar el checker de integ
 
 ## Estado
 
-Pendiente.
+En progreso (fase 1 iniciada): contrato extendido, `intent-families.yaml`, índice ampliado, checker de integridad y piloto condición laboral.

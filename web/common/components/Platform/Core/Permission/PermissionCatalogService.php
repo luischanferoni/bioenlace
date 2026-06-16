@@ -27,6 +27,12 @@ final class PermissionCatalogService
                 'action_name' => $meta['action_name'] ?? '',
                 'rbac_route' => $meta['rbac_route'] ?? '',
                 'permission' => $meta['permission'] ?? '',
+                'operation' => $meta['operation'] ?? null,
+                'intent_family' => $meta['intent_family'] ?? '',
+                'domain_operation' => $meta['domain_operation'] ?? '',
+                'fields' => $meta['fields'] ?? [],
+                'field_groups' => $meta['field_groups'] ?? null,
+                'uses_extended_contract' => (bool) ($meta['uses_extended_contract'] ?? false),
                 'open_ui_steps' => $meta['open_ui_steps'] ?? [],
                 'path' => $meta['path'] ?? '',
             ];

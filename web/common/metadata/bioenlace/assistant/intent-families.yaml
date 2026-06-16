@@ -1,0 +1,11 @@
+version: 1
+
+# Familias NL: agrupan variantes de contexto (propio/staff) del mismo eje de producto.
+# Cada miembro debe declarar intent_family y operation coherentes en su YAML.
+
+families:
+  condicion-laboral.edit:
+    operation: edit
+    members:
+      - condicion-laboral.editar-propio
+      - condicion-laboral.editar-staff

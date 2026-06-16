@@ -39,6 +39,9 @@ panels:
       title: Internación
       imp_surgical:
         sections:
+          - id: staff_surgery_kpis
+            provider: staff_surgery_kpis
+            kind: staff_kpi_group
           - id: surgeries_day
             provider: surgeries_day
             kind: surgeries_day

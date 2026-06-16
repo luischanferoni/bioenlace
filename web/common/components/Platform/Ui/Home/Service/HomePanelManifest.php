@@ -148,4 +148,9 @@ final class HomePanelManifest
 
         return $role !== '' ? $role : 'paciente';
     }
+
+    public static function resetCacheForTests(): void
+    {
+        self::$cache = null;
+    }
 }

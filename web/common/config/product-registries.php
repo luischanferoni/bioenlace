@@ -42,6 +42,7 @@ use common\components\Domain\Person\Representation\Assistant\PersonRepresentatio
 use common\components\Domain\Scheduling\Home\Sections\AppointmentsDaySectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffAgendaKpiSectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\StaffSurgeryKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoCreateSubjectPolicy;
 use common\components\Domain\Scheduling\Service\Authorization\TurnoStaffEfectorBelongsPolicy;
@@ -153,5 +154,6 @@ return [
         'staff_agenda_kpis' => StaffAgendaKpiSectionProvider::class,
         'staff_guardia_kpis' => StaffGuardiaKpiSectionProvider::class,
         'staff_internacion_kpis' => StaffInternacionKpiSectionProvider::class,
+        'staff_surgery_kpis' => StaffSurgeryKpiSectionProvider::class,
     ],
 ];

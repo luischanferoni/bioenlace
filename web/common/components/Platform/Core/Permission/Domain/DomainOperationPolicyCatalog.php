@@ -3,7 +3,6 @@
 namespace common\components\Platform\Core\Permission\Domain;
 
 use common\components\Platform\Core\Product\ProductMetadataPaths;
-use common\components\Platform\Core\Product\ProductMetadataPaths;
 use Symfony\Component\Yaml\Yaml;
 
 /**

@@ -3,7 +3,9 @@
 
 namespace common\assets;
 
+use common\components\Platform\Ui\BioenlaceFavicon;
 use yii\web\AssetBundle;
+use yii\web\View;
 
 /**
  * @author Qiang Xue <qiang.xue@gmail.com>
@@ -44,4 +46,12 @@ class AppAsset extends AssetBundle
         'yii\web\YiiAsset',
         'yii\bootstrap5\BootstrapIconAsset',
     ];
+
+    public function registerAssetFiles($view): void
+    {
+        parent::registerAssetFiles($view);
+        if ($view instanceof View) {
+            BioenlaceFavicon::register($view);
+        }
+    }
 }

@@ -1,0 +1,38 @@
+intent_id: plataforma.enviar-queja-como-paciente-flow
+version: 1
+
+action_name: "Enviar queja"
+description: "Registrar una queja sobre la app, turnos, atención u otro tema operativo."
+rbac_route: "/api/queja-paciente/enviar-como-paciente"
+keywords:
+  - queja
+  - reclamo
+  - problema con la app
+  - mal servicio
+  - quejarme
+  - reportar problema
+  - sugerencia de mejora
+
+intent_semantics:
+  goal: >-
+    Registrar una queja operativa del paciente (app, turnos, atención administrativa, facturación).
+  how: >-
+    Formulario con categoría fija y descripción libre; confirmación al enviar.
+  constraints:
+    - No es para síntomas ni urgencias clínicas (usar «Necesito atención»).
+  outcome:
+    - La queja queda registrada para revisión del equipo de plataforma.
+
+subintents:
+  - id: completar
+    assistant_text: "Completá el formulario"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: queja-paciente.enviar-como-paciente
+
+flow_submit:
+  action_id: queja-paciente.enviar-como-paciente
+  params:
+    categoria: "draft.categoria"
+    descripcion: "draft.descripcion"

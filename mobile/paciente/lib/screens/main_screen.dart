@@ -11,6 +11,7 @@ import 'chat_screen.dart';
 import 'care_plan_detail_screen.dart';
 import 'configuracion_screen.dart';
 import 'encounter_summary_detail_screen.dart';
+import '../config/paciente_intents.dart';
 
 /// Pantalla principal del paciente con bottom nav: Inicio, Asistente, Configuración.
 class MainScreen extends StatefulWidget {
@@ -30,6 +31,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   PendingTurnoResolver? _pendingResolver;
+  String? _pendingIntentId;
   int _alertasNoLeidas = 0;
   final GlobalKey<HomeScreenState> _homeKey = GlobalKey<HomeScreenState>();
 
@@ -136,6 +138,17 @@ class _MainScreenState extends State<MainScreen> {
     _homeKey.currentState?.refrescarProximos();
   }
 
+  void _onPendingIntentHandled() {
+    setState(() => _pendingIntentId = null);
+  }
+
+  void _abrirIntentQueja() {
+    setState(() {
+      _selectedIndex = 1;
+      _pendingIntentId = PacienteIntents.enviarQueja;
+    });
+  }
+
   void _openAlertas() {
     Navigator.push(
       context,
@@ -167,6 +180,8 @@ class _MainScreenState extends State<MainScreen> {
             chatService: widget.chatService,
             pendingResolver: _pendingResolver,
             onPendingResolverHandled: _onPendingResolverHandled,
+            pendingIntentId: _pendingIntentId,
+            onPendingIntentHandled: _onPendingIntentHandled,
           ),
           ConfiguracionScreen(
             userId: widget.chatService.currentUserId,
@@ -174,6 +189,7 @@ class _MainScreenState extends State<MainScreen> {
             authToken: widget.authToken,
             onOpenAlertas: _openAlertas,
             alertasNoLeidas: _alertasNoLeidas,
+            onEnviarQueja: _abrirIntentQueja,
           ),
         ],
       ),

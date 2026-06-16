@@ -56,3 +56,8 @@ categories:
       - internacion.ingreso-flow
       - internacion.cambio-cama-flow
       - internacion.alta-estructurada-flow
+
+  - id: plataforma
+    titulo: Ayuda y plataforma
+    intent_ids:
+      - plataforma.enviar-queja-como-paciente-flow

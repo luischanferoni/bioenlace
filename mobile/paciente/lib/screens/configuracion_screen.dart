@@ -15,6 +15,7 @@ class ConfiguracionScreen extends StatelessWidget {
   final String userName;
   final String? authToken;
   final VoidCallback? onOpenAlertas;
+  final VoidCallback? onEnviarQueja;
   final int alertasNoLeidas;
 
   const ConfiguracionScreen({
@@ -23,6 +24,7 @@ class ConfiguracionScreen extends StatelessWidget {
     required this.userName,
     this.authToken,
     this.onOpenAlertas,
+    this.onEnviarQueja,
     this.alertasNoLeidas = 0,
   }) : super(key: key);
 
@@ -115,6 +117,20 @@ class ConfiguracionScreen extends StatelessWidget {
                 ),
               );
             },
+          ),
+          BioDivider.subtle(),
+          _ConfigTile(
+            icon: Icons.report_outlined,
+            title: 'Enviar queja',
+            subtitle: 'Problemas con la app, turnos o la atención recibida',
+            onTap: onEnviarQueja ??
+                () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Iniciá sesión para enviar una queja'),
+                    ),
+                  );
+                },
           ),
           BioDivider.subtle(),
           _ConfigTile(

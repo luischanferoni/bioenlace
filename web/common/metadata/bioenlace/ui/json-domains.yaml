@@ -19,6 +19,7 @@ entity_domains:
   persona: persona
   profesional-efector-servicio: organization
   data-access: core
+  queja-paciente: core
 
 action_id_parse:
   clinical_prefix: clinical

@@ -1,0 +1,41 @@
+{
+  "ui_type": "ui_json",
+  "title": "Enviar queja",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "queja",
+      "title": "Contanos qué pasó",
+      "fields": [
+        {
+          "name": "categoria",
+          "label": "Motivo",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "APP", "label": "Aplicación" },
+            { "value": "TURNOS", "label": "Turnos" },
+            { "value": "ATENCION", "label": "Atención recibida" },
+            { "value": "FACTURACION_COBERTURA", "label": "Facturación / cobertura" },
+            { "value": "OTRO", "label": "Otro" }
+          ]
+        },
+        {
+          "name": "descripcion",
+          "label": "Descripción",
+          "type": "textarea",
+          "required": true,
+          "rows": 5,
+          "placeholder": "Describí el problema con el mayor detalle posible (mínimo 20 caracteres)."
+        }
+      ]
+    }
+  ]
+}

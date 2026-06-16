@@ -102,6 +102,12 @@ $home = Yii::$app->getHomeUrl();
                                     ]
                                 ],
                                 [
+                                    'label' => 'Plataforma',
+                                    'items' => [
+                                        ['label' => 'Quejas de pacientes', 'url' => ['/queja-paciente/index']],
+                                    ],
+                                ],
+                                [
                                     'label' => 'Resumen IA',
                                     'items' => [
                                         ['label' => 'Categorías de sensibilidad', 'url' => ['/sensibilidad-categoria/index']],

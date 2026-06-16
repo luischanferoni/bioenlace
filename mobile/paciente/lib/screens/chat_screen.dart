@@ -19,12 +19,16 @@ class ChatScreen extends StatefulWidget {
   final ChatService chatService;
   final PendingTurnoResolver? pendingResolver;
   final VoidCallback? onPendingResolverHandled;
+  final String? pendingIntentId;
+  final VoidCallback? onPendingIntentHandled;
 
   const ChatScreen({
     Key? key,
     required this.chatService,
     this.pendingResolver,
     this.onPendingResolverHandled,
+    this.pendingIntentId,
+    this.onPendingIntentHandled,
   }) : super(key: key);
 
   @override
@@ -1075,6 +1079,14 @@ class ChatScreenState extends State<ChatScreen> {
         }
       });
     }
+    if (widget.pendingIntentId != null &&
+        widget.pendingIntentId != oldWidget.pendingIntentId) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.pendingIntentId != null) {
+          _runPendingIntent(widget.pendingIntentId!);
+        }
+      });
+    }
   }
 
   Future<void> _initializeService() async {
@@ -1106,6 +1118,18 @@ class ChatScreenState extends State<ChatScreen> {
         }
       });
     }
+    if (widget.pendingIntentId != null && mounted) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && widget.pendingIntentId != null) {
+          _runPendingIntent(widget.pendingIntentId!);
+        }
+      });
+    }
+  }
+
+  Future<void> _runPendingIntent(String intentId) async {
+    widget.onPendingIntentHandled?.call();
+    await _startFlowFromShortcut(intentId, 'Enviar queja');
   }
 
   /// Desde Inicio (Resolver) o push: inicia el flow y salta la elección del turno.

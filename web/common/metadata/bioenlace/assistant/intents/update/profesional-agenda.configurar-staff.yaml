@@ -1,0 +1,68 @@
+intent_id: profesional-agenda.configurar-staff
+version: 1
+
+operation: edit
+intent_family: profesional-agenda.configurar
+domain_operation: DataAccess.edit
+edit_surface_id: ProfesionalEfectorServicioAgenda
+
+action_name: "Configurar agenda (staff)"
+description: "Modificar horarios y configuración de agenda de un profesional del efector."
+rbac_route: "/api/profesional-agenda/configurar-agenda"
+
+keywords:
+  - modificar agenda de un profesional
+  - editar agenda del personal
+  - editar agenda de un profesional
+  - modificar horarios del medico
+  - editar horarios del profesional
+  - configurar agenda profesional
+
+intent_semantics:
+  goal: Configurar agenda de un profesional del efector (staff).
+  how: Elegís profesional y servicio, luego editás horarios e intervalo.
+  constraints:
+    - Solo profesionales con PES en el efector de sesión.
+
+fields:
+  - name: vigente_desde
+  - name: intervalo_minutos
+  - name: weekly_scheduler_widget
+  - name: formas_atencion
+  - name: acepta_consultas_online
+
+subintents:
+  - id: select_profesional
+    assistant_text: "Profesional"
+    provides:
+      - draft.id_profesional_efector_servicio
+    next: select_servicio
+    open_ui:
+      action_id: profesional-efector-servicio.listar-por-efector
+
+  - id: select_servicio
+    assistant_text: "Servicio"
+    requires:
+      - draft.id_profesional_efector_servicio
+    provides:
+      - draft.id_servicio
+    next: configurar_agenda
+    open_ui:
+      action_id: profesional-efector-servicio.listar-servicios-en-efector
+      params:
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+
+  - id: configurar_agenda
+    assistant_text: "Configurá horarios e intervalo"
+    requires:
+      - draft.id_profesional_efector_servicio
+      - draft.id_servicio
+    provides:
+      - draft.agenda_ui_completed
+    next: ""
+    open_ui:
+      action_id: profesional-agenda.configurar-agenda
+      params:
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        id_servicio: "draft.id_servicio"
+        ui_step: datos

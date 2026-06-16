@@ -47,9 +47,10 @@ Por cada dominio:
 ## Entregables
 
 - [x] Al menos **dos dominios** migrados (piloto condición laboral + profesionales conteo/listado)
-- [ ] `data-access.*` sin uso en flujos migrados (parcial: métricas profesionales fuera del descubrimiento genérico)
+- [x] Dominios **agenda PES** e **identidad profesional** migrados a intents concretos
+- [ ] `data-access.*` sin uso en flujos migrados (parcial: métricas y superficies agenda/identidad fuera del descubrimiento genérico)
 - [ ] Tests API por intent migrado
 
 ## Estado
 
-En progreso — dominios 1–2 migrados; agenda/edit dispersa y retiro `data-access.*` pendientes.
+En progreso — dominios 1–4 migrados; retiro completo `data-access.*` y Turno pendientes.

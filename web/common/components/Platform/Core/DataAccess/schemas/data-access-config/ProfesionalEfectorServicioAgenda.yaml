@@ -44,6 +44,9 @@ ui_json_source:
 
 edit:
   label: Agenda del profesional
+  migrated_intent_ids:
+    - profesional-agenda.configurar-propio
+    - profesional-agenda.configurar-staff
   keywords:
     - modificar agenda de un profesional
     - editar agenda del personal

@@ -19,3 +19,14 @@ families:
     operation: list
     members:
       - profesionales.listado-efector
+
+  profesional-agenda.configurar:
+    operation: edit
+    members:
+      - profesional-agenda.configurar-propio
+      - profesional-agenda.configurar-staff
+
+  profesional-identidad.editar:
+    operation: edit
+    members:
+      - profesional-identidad.editar-staff

@@ -62,12 +62,12 @@ business_rules:
         intent_id: profesional-efector-servicio.crear-flow
         reset_flow: true
       - id: solo_agenda
-        label: "Solo horarios (edición dispersa)"
-        intent_id: data-access.editar
+        label: "Solo horarios (agenda existente)"
+        intent_id: profesional-agenda.configurar-staff
         reset_flow: true
       - id: mi_agenda
         label: "Mi agenda (mis servicios)"
-        intent_id: data-access.editar
+        intent_id: profesional-agenda.configurar-propio
         reset_flow: true
 
 subintents:

@@ -214,6 +214,7 @@ info_list:
 
 edit:
   label: Personal del centro
+  migrated_intent_id: profesional-identidad.editar-staff
   keywords:
     - editar personal
     - modificar profesional

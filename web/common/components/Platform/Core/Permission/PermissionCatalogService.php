@@ -190,6 +190,7 @@ final class PermissionCatalogService
             'intent_family' => $meta['intent_family'] ?? '',
             'domain_operation' => $meta['domain_operation'] ?? '',
             'metric_id' => $meta['metric_id'] ?? '',
+            'edit_surface_id' => $meta['edit_surface_id'] ?? '',
             'subject_resolution' => is_array($raw['subject_resolution'] ?? null) ? $raw['subject_resolution'] : null,
             'open_ui' => is_array($raw['open_ui'] ?? null) ? $raw['open_ui'] : null,
             'field_groups' => is_array($raw['field_groups'] ?? null) ? $raw['field_groups'] : null,

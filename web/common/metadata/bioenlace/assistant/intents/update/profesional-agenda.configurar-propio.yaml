@@ -1,0 +1,62 @@
+intent_id: profesional-agenda.configurar-propio
+version: 1
+
+operation: edit
+intent_family: profesional-agenda.configurar
+domain_operation: DataAccess.edit
+edit_surface_id: ProfesionalEfectorServicioAgenda
+
+action_name: "Configurar mi agenda"
+description: "Modificar horarios, intervalo y formas de atención de tus servicios en el efector."
+rbac_route: "/api/profesional-agenda/configurar-agenda"
+
+keywords:
+  - mi agenda
+  - modificar mi agenda
+  - editar mi agenda
+  - mis horarios
+  - configurar mi agenda
+  - modificar horarios propios
+
+intent_semantics:
+  goal: Configurar la agenda de uno de tus servicios asignados en el efector de sesión.
+  how: Elegís el servicio y editás horarios, intervalo y modalidades en la pantalla de configuración.
+  constraints:
+    - Solo sobre tus propias asignaciones PES.
+
+fields:
+  - name: vigente_desde
+    keywords: [vigencia, vigente desde]
+  - name: intervalo_minutos
+    keywords: [intervalo entre turnos]
+  - name: weekly_scheduler_widget
+    keywords: [horarios, grilla, editar agenda]
+  - name: formas_atencion
+    keywords: [formas de atencion, modalidad]
+  - name: acepta_consultas_online
+    keywords: [teleconsulta]
+
+subintents:
+  - id: select_servicio
+    assistant_text: "Elegí el servicio"
+    provides:
+      - draft.id_profesional_efector_servicio
+      - draft.id_servicio
+    next: configurar_agenda
+    open_ui:
+      action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
+
+  - id: configurar_agenda
+    assistant_text: "Configurá horarios e intervalo"
+    requires:
+      - draft.id_profesional_efector_servicio
+      - draft.id_servicio
+    provides:
+      - draft.agenda_ui_completed
+    next: ""
+    open_ui:
+      action_id: profesional-agenda.configurar-agenda
+      params:
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        id_servicio: "draft.id_servicio"
+        ui_step: datos

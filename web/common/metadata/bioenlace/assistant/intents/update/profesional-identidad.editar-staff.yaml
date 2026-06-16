@@ -1,0 +1,46 @@
+intent_id: profesional-identidad.editar-staff
+version: 1
+
+operation: edit
+intent_family: profesional-identidad.editar
+domain_operation: DataAccess.edit
+edit_surface_id: ProfesionalEfectorServicio
+
+action_name: "Editar datos del profesional (staff)"
+description: "Modificar nombre y apellido de un profesional del centro."
+rbac_route: "/api/editar"
+
+keywords:
+  - editar personal
+  - modificar profesional
+  - cambiar datos del medico
+  - editar medico del centro
+  - cambiar nombre del medico
+  - corregir apellido profesional
+
+intent_semantics:
+  goal: Editar datos de identidad básica de un profesional del efector.
+  how: Elegís el profesional y modificás los campos autorizados en el formulario disperso.
+  constraints:
+    - Solo profesionales con asignación en el efector de sesión.
+
+fields:
+  - name: nombre
+    keywords: [nombre, identidad, datos personales, cambiar nombre]
+  - name: apellido
+    keywords: [apellido, identidad]
+  - name: otro_nombre
+    keywords: [otro nombre]
+  - name: otro_apellido
+    keywords: [otro apellido]
+
+subintents:
+  - id: editar_identidad
+    assistant_text: "Editar identidad del profesional"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: data-access.editar
+      params:
+        surface_id: ProfesionalEfectorServicio
+        step: surfaces

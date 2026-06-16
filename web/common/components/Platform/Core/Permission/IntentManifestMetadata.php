@@ -19,7 +19,7 @@ final class IntentManifestMetadata
      */
     public static function usesExtendedContract(array $data): bool
     {
-        foreach (['operation', 'intent_family', 'domain_operation', 'metric_id', 'subject_resolution', 'fields', 'field_groups'] as $key) {
+        foreach (['operation', 'intent_family', 'domain_operation', 'metric_id', 'edit_surface_id', 'subject_resolution', 'fields', 'field_groups'] as $key) {
             if (!array_key_exists($key, $data)) {
                 continue;
             }
@@ -129,6 +129,13 @@ final class IntentManifestMetadata
             }
         }
 
+        $editSurfaceId = trim((string) ($data['edit_surface_id'] ?? ''));
+        if ($editSurfaceId !== '' && in_array($operationForFields, ['edit'], true)) {
+            if (!self::isKnownEditSurfaceId($editSurfaceId)) {
+                $errors[] = 'Intent «' . $intentId . '»: edit_surface_id «' . $editSurfaceId . '» no registrada en data-access-config';
+            }
+        }
+
         $knownFields = array_fill_keys($fieldNames, true);
         $groups = $data['field_groups'] ?? null;
         if (is_array($groups)) {
@@ -196,5 +203,15 @@ final class IntentManifestMetadata
         }
 
         return (new \common\components\Platform\Core\DataAccess\AttributeGroupCatalog())->getMetric($metricId) !== null;
+    }
+
+    public static function isKnownEditSurfaceId(string $surfaceId): bool
+    {
+        $surfaceId = trim($surfaceId);
+        if ($surfaceId === '') {
+            return false;
+        }
+
+        return (new \common\components\Platform\Core\DataAccess\AttributeGroupCatalog())->getEditSurface($surfaceId) !== null;
     }
 }

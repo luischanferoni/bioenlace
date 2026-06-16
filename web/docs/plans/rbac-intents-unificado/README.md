@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `rbac-intents-unificado` |
-| Estado | Fase 1–2 completadas; fase 3 dominios 1–2 migrados |
+| Estado | Fase 3 dominios 1–4 migrados; retiro `data-access.*` pendiente |
 | Reemplaza / tensiona con | Catálogo intents + atributos; intents genéricos `data-access.*`; scopes ABAC como dimensión admin |
 | Doc estable al cerrar | `arquitectura/rbac-catalogo-permisos.md` + `decisions/` (ADR autorización) |
 

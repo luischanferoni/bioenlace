@@ -81,6 +81,10 @@ match_rules:
     require_any: [licencia_topics, staff_licencia_third]
     forbid_any: [own_licencia]
 
+  staff_identidad_edit:
+    require_all: [edit_verbs, staff_third_party]
+    forbid_any: [agenda_targets, alta_verbs, scheduling_ops]
+
 score_adjustments:
   - when_rule: staff_condicion_laboral
     apply:
@@ -98,8 +102,10 @@ score_adjustments:
 
   - when_rule: staff_agenda_config_edit
     apply:
+      - intent_id: profesional-agenda.configurar-staff
+        delta: 45
       - intent_id: data-access.editar
-        delta: 50
+        delta: 15
       - intent_id: profesional-efector-servicio.crear-flow
         delta: -30
       - intent_id_prefix: licencia.cargar
@@ -107,12 +113,21 @@ score_adjustments:
 
   - when_rule: own_agenda_config_edit
     apply:
+      - intent_id: profesional-agenda.configurar-propio
+        delta: 45
       - intent_id: data-access.editar
-        delta: 50
+        delta: 15
       - intent_id: profesional-efector-servicio.crear-flow
         delta: -30
       - intent_id_prefix: licencia.cargar
         delta: -35
+
+  - when_rule: staff_identidad_edit
+    apply:
+      - intent_id: profesional-identidad.editar-staff
+        delta: 40
+      - intent_id: data-access.editar
+        delta: 10
 
   - when_rule: staff_list_not_count
     when_not_rule: staff_count
@@ -140,10 +155,17 @@ score_adjustments:
         delta: 5
 
 operational_fallbacks:
-  - id: data_access_edit_nl
+  - id: staff_agenda_config_edit_nl
     requires_staff_data_access: true
-    when_any_rule: [staff_agenda_config_edit, own_agenda_config_edit]
-    intent_id: data-access.editar
+    when_any_rule: [staff_agenda_config_edit]
+    intent_id: profesional-agenda.configurar-staff
+    confidence: 0.9
+    method: rules_declarative_fallback
+
+  - id: own_agenda_config_edit_nl
+    requires_staff_data_access: true
+    when_any_rule: [own_agenda_config_edit]
+    intent_id: profesional-agenda.configurar-propio
     confidence: 0.9
     method: rules_declarative_fallback
 

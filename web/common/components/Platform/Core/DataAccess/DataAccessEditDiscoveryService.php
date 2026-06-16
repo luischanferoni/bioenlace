@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Core\DataAccess;
 
+use common\components\Platform\Core\Permission\IntentEditSurfaceIndex;
+
 /**
  * Resuelve edit_surface_id desde NL (keywords en data-access-config).
  */
@@ -44,6 +46,9 @@ final class DataAccessEditDiscoveryService
 
         foreach ($this->catalog->listEditSurfacesForDisplay() as $surfaceId => $def) {
             if (!is_string($surfaceId) || !is_array($def)) {
+                continue;
+            }
+            if (IntentEditSurfaceIndex::isSurfaceMigrated($surfaceId)) {
                 continue;
             }
             if (!$this->authorization->userCanAccessEditSurface($ctx, $surfaceId, $params)) {
@@ -145,6 +150,9 @@ final class DataAccessEditDiscoveryService
         ];
         foreach ($this->catalog->listEditSurfacesForDisplay() as $surfaceId => $def) {
             if (!is_string($surfaceId) || !is_array($def)) {
+                continue;
+            }
+            if (IntentEditSurfaceIndex::isSurfaceMigrated($surfaceId)) {
                 continue;
             }
             if ($this->authorization->listAspectIdsWithWriteGrant($ctx, $surfaceId) === []) {

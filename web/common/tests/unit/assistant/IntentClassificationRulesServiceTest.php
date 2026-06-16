@@ -22,17 +22,17 @@ class IntentClassificationRulesServiceTest extends Unit
         ));
     }
 
-    public function testOperationalFallbackRoutesAgendaEditToEditar(): void
+    public function testOperationalFallbackRoutesAgendaEditToConfigurarStaff(): void
     {
         $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
             [
                 new UiActionCatalogItem(
-                    'data-access.editar',
-                    'Edición dispersa',
+                    'profesional-agenda.configurar-staff',
+                    'Configurar agenda (staff)',
                     '',
                     null,
-                    '/api/editar',
-                    ['modificar', 'modificar agenda'],
+                    '/api/profesional-agenda/configurar-agenda',
+                    ['modificar agenda de un profesional'],
                     []
                 ),
                 new UiActionCatalogItem(
@@ -47,21 +47,29 @@ class IntentClassificationRulesServiceTest extends Unit
             ],
             []
         );
-        $catalog->byActionId['data-access.editar'] = $catalog->items[0];
+        $catalog->byActionId['profesional-agenda.configurar-staff'] = $catalog->items[0];
         $catalog->byActionId['profesional-efector-servicio.crear-flow'] = $catalog->items[1];
 
         $msg = 'necesito modificar la agenda de un profesional';
         $fb = IntentClassificationRulesService::resolveOperationalFallback($msg, $catalog);
 
         $this->assertNotNull($fb);
-        $this->assertSame('data-access.editar', $fb['item']->action_id);
+        $this->assertSame('profesional-agenda.configurar-staff', $fb['item']->action_id);
         $this->assertSame('rules_declarative_fallback', $fb['method']);
     }
 
-    public function testScoreAdjustmentPrefersEditarOverLicencia(): void
+    public function testScoreAdjustmentPrefersConfigurarStaffOverLicencia(): void
     {
         $msg = 'necesito modificar las formas de atencion';
-        $editar = new UiActionCatalogItem('data-access.editar', 'Edición dispersa', '', null, '/api/editar', ['modificar'], []);
+        $configurar = new UiActionCatalogItem(
+            'profesional-agenda.configurar-staff',
+            'Configurar agenda',
+            '',
+            null,
+            '/api/profesional-agenda/configurar-agenda',
+            ['formas de atencion'],
+            []
+        );
         $licencia = new UiActionCatalogItem(
             'licencia.cargar-para-profesional-flow',
             'Licencia',
@@ -74,7 +82,7 @@ class IntentClassificationRulesServiceTest extends Unit
         $lower = mb_strtolower($msg, 'UTF-8');
         $this->assertGreaterThan(
             IntentClassifier::scoreItemPublic($lower, $licencia),
-            IntentClassifier::scoreItemPublic($lower, $editar)
+            IntentClassifier::scoreItemPublic($lower, $configurar)
         );
     }
 

@@ -26,6 +26,16 @@ role_grant_sources:
   - source_permission: DataAccess.list
     intent_targets:
       - profesionales.listado-efector
+  - source_permission: data-access.editar
+    intent_targets:
+      - profesional-agenda.configurar-propio
+      - profesional-agenda.configurar-staff
+      - profesional-identidad.editar-staff
+  - source_permission: DataAccess.edit
+    intent_targets:
+      - profesional-agenda.configurar-propio
+      - profesional-agenda.configurar-staff
+      - profesional-identidad.editar-staff
 
 # Futuro: Entidad.atributo.read|info|edit → intents concretos (fase 6).
 attribute_grant_sources: []

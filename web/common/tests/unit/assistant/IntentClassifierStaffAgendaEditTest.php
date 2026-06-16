@@ -8,8 +8,12 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
 
 class IntentClassifierStaffAgendaEditTest extends Unit
 {
-    public function testModificarAgendaProfesionalPrefersEditar(): void
+    public function testModificarAgendaProfesionalPrefersConfigurarStaff(): void
     {
+        $configurar = $this->catalogItem(
+            'profesional-agenda.configurar-staff',
+            ['modificar agenda de un profesional', 'configurar agenda profesional', 'horarios del profesional']
+        );
         $editar = $this->catalogItem(
             'data-access.editar',
             ['modificar', 'agenda', 'editar', 'modificar agenda']
@@ -23,12 +27,16 @@ class IntentClassifierStaffAgendaEditTest extends Unit
         $messageLower = mb_strtolower($msg, 'UTF-8');
 
         $this->assertTrue(IntentClassifier::messageSuggestsStaffAgendaEdit($msg));
-        $editarScore = IntentClassifier::scoreItemPublic($messageLower, $editar);
+        $configurarScore = IntentClassifier::scoreItemPublic($messageLower, $configurar);
         $this->assertGreaterThan(
             IntentClassifier::scoreItemPublic($messageLower, $crear),
-            $editarScore
+            $configurarScore
         );
-        $this->assertGreaterThanOrEqual(70, $editarScore);
+        $this->assertGreaterThan(
+            IntentClassifier::scoreItemPublic($messageLower, $editar),
+            $configurarScore
+        );
+        $this->assertGreaterThanOrEqual(70, $configurarScore);
     }
 
     public function testCrearAgendaIsNotStaffAgendaEdit(): void
@@ -36,8 +44,12 @@ class IntentClassifierStaffAgendaEditTest extends Unit
         $this->assertFalse(IntentClassifier::messageSuggestsStaffAgendaEdit('crear agenda para un profesional nuevo'));
     }
 
-    public function testModificarFormasAtencionPrefersEditar(): void
+    public function testModificarFormasAtencionPrefersConfigurarStaff(): void
     {
+        $configurar = $this->catalogItem(
+            'profesional-agenda.configurar-staff',
+            ['formas de atencion', 'configurar agenda profesional', 'modificar agenda']
+        );
         $editar = $this->catalogItem(
             'data-access.editar',
             ['modificar', 'formas de atencion', 'editar', 'modificar agenda']
@@ -60,18 +72,23 @@ class IntentClassifierStaffAgendaEditTest extends Unit
                 IntentClassifier::messageSuggestsStaffAgendaEdit($msg),
                 'Debe detectar edición staff de formas de atención: ' . $msg
             );
-            $editarScore = IntentClassifier::scoreItemPublic($messageLower, $editar);
+            $configurarScore = IntentClassifier::scoreItemPublic($messageLower, $configurar);
             $this->assertGreaterThan(
                 IntentClassifier::scoreItemPublic($messageLower, $licencia),
-                $editarScore,
-                'Licencia no debe ganar a editar: ' . $msg
+                $configurarScore,
+                'Licencia no debe ganar a configurar staff: ' . $msg
             );
             $this->assertGreaterThan(
                 IntentClassifier::scoreItemPublic($messageLower, $crear),
-                $editarScore,
-                'Crear-flow no debe ganar a editar: ' . $msg
+                $configurarScore,
+                'Crear-flow no debe ganar a configurar staff: ' . $msg
             );
-            $this->assertGreaterThanOrEqual(30, $editarScore, 'Editar debe superar umbral: ' . $msg);
+            $this->assertGreaterThan(
+                IntentClassifier::scoreItemPublic($messageLower, $editar),
+                $configurarScore,
+                'data-access.editar no debe ganar a intent concreto: ' . $msg
+            );
+            $this->assertGreaterThanOrEqual(30, $configurarScore, 'Configurar staff debe superar umbral: ' . $msg);
         }
     }
 

@@ -20,7 +20,7 @@ final class HomePanelService
     ) {
         $this->manifest = $manifest ?? new HomePanelManifest();
         $this->registry = $registry ?? new HomePanelSectionRegistry();
-        $this->audienceResolver = $audienceResolver ?? new HomePanelAudienceResolver();
+        $this->audienceResolver = $audienceResolver ?? new HomePanelAudienceResolver($this->manifest);
     }
 
     /**

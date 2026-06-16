@@ -292,3 +292,10 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
         </div>
     </div>
 </template>
+
+<template id="tpl-clinical-list-panel-wrap">
+    <div data-role="clinical-list-panel">
+        <div data-slot="kpi-sections" class="mb-3"></div>
+        <div data-slot="list-content"></div>
+    </div>
+</template>

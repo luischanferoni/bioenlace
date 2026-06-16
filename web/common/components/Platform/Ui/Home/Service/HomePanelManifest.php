@@ -119,4 +119,33 @@ final class HomePanelManifest
             'sections' => $sections,
         ];
     }
+
+    /**
+     * @return list<string>
+     */
+    public function audienceStaffRoles(): array
+    {
+        $manifest = $this->load();
+        $raw = $manifest['audience']['staff_roles'] ?? [];
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $role) {
+            $role = trim((string) $role);
+            if ($role !== '') {
+                $out[] = $role;
+            }
+        }
+
+        return $out;
+    }
+
+    public function audiencePatientRole(): string
+    {
+        $manifest = $this->load();
+        $role = trim((string) ($manifest['audience']['patient_role'] ?? 'paciente'));
+
+        return $role !== '' ? $role : 'paciente';
+    }
 }

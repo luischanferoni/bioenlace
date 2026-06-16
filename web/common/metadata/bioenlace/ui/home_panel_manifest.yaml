@@ -1,5 +1,16 @@
 # Manifiesto del panel de inicio (web site/index + apps).
 # El orquestador HomePanelService interpreta audience + encounter_class.
+
+audience:
+  staff_roles:
+    - Medico
+    - enfermeria
+    - Administrativo
+    - AdminEfector
+    - facturista
+    - nivelCentral
+  patient_role: paciente
+
 panels:
   staff:
     EMER:
@@ -17,6 +28,9 @@ panels:
       layout: clinical_list
       title: Pacientes del día
       sections:
+        - id: staff_agenda_kpis
+          provider: staff_agenda_kpis
+          kind: staff_kpi_group
         - id: appointments_day
           provider: appointments_day
           kind: appointments_day
@@ -30,6 +44,9 @@ panels:
             kind: surgeries_day
       imp_floor:
         sections:
+          - id: staff_internacion_kpis
+            provider: staff_internacion_kpis
+            kind: staff_kpi_group
           - id: inpatients
             provider: inpatients
             kind: inpatients

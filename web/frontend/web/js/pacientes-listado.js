@@ -68,13 +68,14 @@
       container.classList.toggle('d-none', isLoading);
     }
 
-    function showListadoEmpty(message) {
-      clearNode(container);
+    function showListadoEmpty(message, targetEl) {
+      var el = targetEl || container;
+      clearNode(el);
       var frag = importTemplate('tpl-pacientes-alert-empty');
       if (!frag) return;
       var msgEl = frag.querySelector('[data-field="message"]');
       if (msgEl) msgEl.textContent = message;
-      container.appendChild(frag);
+      el.appendChild(frag);
     }
 
     function historiaConContexto(personaId, ctx) {
@@ -114,16 +115,17 @@
       if (a && urlHistoria) a.href = urlHistoria;
     }
 
-    function renderTurnos(data) {
+    function renderTurnos(data, targetEl) {
+      var target = targetEl || container;
       if (!data || !data.length) {
-        showListadoEmpty(msgEmptyTurnos);
+        showListadoEmpty(msgEmptyTurnos, target);
         return;
       }
-      clearNode(container);
+      clearNode(target);
       var wrapFrag = importTemplate('tpl-pacientes-turnos-wrap');
       if (!wrapFrag) return;
       var row = wrapFrag.querySelector('[data-role="turnos-grid"]');
-      container.appendChild(wrapFrag);
+      target.appendChild(wrapFrag);
 
       data.forEach(function (t) {
         var itemFrag = importTemplate('tpl-paciente-turno');
@@ -153,16 +155,17 @@
       }
     }
 
-    function renderInternados(data) {
+    function renderInternados(data, targetEl) {
+      var target = targetEl || container;
       if (!data || !data.length) {
-        showListadoEmpty(msgEmptyInternados);
+        showListadoEmpty(msgEmptyInternados, target);
         return;
       }
-      clearNode(container);
+      clearNode(target);
       var wrapFrag = importTemplate('tpl-pacientes-internados-wrap');
       if (!wrapFrag) return;
       var rowsSlot = wrapFrag.querySelector('[data-slot="internados-rows"]');
-      container.appendChild(wrapFrag);
+      target.appendChild(wrapFrag);
 
       data.forEach(function (i) {
         var itemFrag = importTemplate('tpl-paciente-internado-row');
@@ -888,16 +891,17 @@
       if (a && urlHistoria) a.href = urlHistoria;
     }
 
-    function renderCirugias(data) {
+    function renderCirugias(data, targetEl) {
+      var target = targetEl || container;
       if (!data || !data.length) {
-        showListadoEmpty(msgEmptyCirugias);
+        showListadoEmpty(msgEmptyCirugias, target);
         return;
       }
-      clearNode(container);
+      clearNode(target);
       var wrapFrag = importTemplate('tpl-pacientes-cirurgias-wrap');
       if (!wrapFrag) return;
       var row = wrapFrag.querySelector('[data-role="cirugias-grid"]');
-      container.appendChild(wrapFrag);
+      target.appendChild(wrapFrag);
 
       data.forEach(function (c) {
         var itemFrag = importTemplate('tpl-paciente-cirugia');
@@ -1414,6 +1418,27 @@
       }
     }
 
+    function beginClinicalListPanel(panel) {
+      var kpiSections = (panel.sections || []).filter(function (sec) {
+        return sec.kind === 'staff_kpi_group' && sec.data && Array.isArray(sec.data.items) && sec.data.items.length;
+      });
+      if (!kpiSections.length) {
+        return container;
+      }
+      clearNode(container);
+      var wrapFrag = importTemplate('tpl-clinical-list-panel-wrap');
+      if (!wrapFrag) {
+        return container;
+      }
+      var kpiSlot = wrapFrag.querySelector('[data-slot="kpi-sections"]');
+      var listSlot = wrapFrag.querySelector('[data-slot="list-content"]');
+      container.appendChild(wrapFrag);
+      kpiSections.forEach(function (sec) {
+        renderStaffKpiGroup(kpiSlot, sec.data);
+      });
+      return listSlot || container;
+    }
+
     function renderFromPanel(panel) {
       var layout = panel.layout || '';
       if (layout === 'staff_dashboard') {
@@ -1430,21 +1455,22 @@
         return;
       }
       if (layout === 'clinical_list') {
+        var listTarget = beginClinicalListPanel(panel);
         var appt = findPanelSection(panel, 'appointments_day');
         if (appt) {
-          renderTurnos((appt.data && appt.data.items) || []);
+          renderTurnos((appt.data && appt.data.items) || [], listTarget);
           applyPanelChrome(panel);
           return;
         }
         var inpat = findPanelSection(panel, 'inpatients');
         if (inpat) {
-          renderInternados((inpat.data && inpat.data.items) || []);
+          renderInternados((inpat.data && inpat.data.items) || [], listTarget);
           applyPanelChrome(panel);
           return;
         }
         var surg = findPanelSection(panel, 'surgeries_day');
         if (surg) {
-          renderCirugias((surg.data && surg.data.items) || []);
+          renderCirugias((surg.data && surg.data.items) || [], listTarget);
           applyPanelChrome(panel);
           return;
         }

@@ -33,22 +33,6 @@ final class RolePermissionMatrixService
             ];
         }
 
-        $seen = [];
-        foreach ($catalog->listAttributes() as $attr) {
-            $key = trim((string) ($attr['key'] ?? ''));
-            if ($key === '' || isset($seen[$key])) {
-                continue;
-            }
-            $seen[$key] = true;
-            $rows[] = [
-                'key' => $key,
-                'kind' => (string) ($attr['kind'] ?? 'attribute'),
-                'source' => (string) ($attr['source'] ?? ''),
-                'in_auth_item' => $this->permissionExistsInAuthItem($key),
-                'roles' => $this->rolesWithPermissionKey($key),
-            ];
-        }
-
         usort($rows, static fn (array $a, array $b): int => strcmp($a['key'], $b['key']));
 
         return $rows;

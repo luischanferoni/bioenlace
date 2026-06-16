@@ -17,8 +17,8 @@ $this->params['breadcrumbs'][] = $this->title;
     </div>
 
     <p class="text-muted small">
-        Los <strong>intents</strong> se asignan al editar cada rol.
-        Los <strong>atributos</strong> se asignan desde el catálogo de permisos (pestaña Atributos).
+        Los <strong>intents</strong> se asignan al editar cada rol o desde el catálogo de permisos.
+        Los campos editables/listables se definen en el YAML de cada intent (vista Detalle).
     </p>
 
     <div class="card">

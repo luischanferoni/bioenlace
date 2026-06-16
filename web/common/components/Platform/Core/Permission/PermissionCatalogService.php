@@ -45,6 +45,8 @@ final class PermissionCatalogService
     /**
      * Atributos declarados para grants read/info/edit (data-access-config).
      *
+     * @deprecated Convivencia integridad/migración; no usar para asignación admin.
+     *
      * @return list<array<string, mixed>>
      */
     public function listAttributes(): array
@@ -105,14 +107,14 @@ final class PermissionCatalogService
     }
 
     /**
-     * Fila del catálogo (intent o atributo) por clave de permiso.
+     * Fila del catálogo assignable (solo intents).
      *
      * @return array<string, mixed>|null
      */
     public function findPermissionRow(string $permissionKey): ?array
     {
         $permissionKey = trim($permissionKey);
-        if ($permissionKey === '') {
+        if ($permissionKey === '' || !$this->isIntentPermissionKey($permissionKey)) {
             return null;
         }
 
@@ -123,13 +125,82 @@ final class PermissionCatalogService
             }
         }
 
-        foreach ($this->listAttributes() as $row) {
-            if ((string) ($row['key'] ?? '') === $permissionKey) {
-                return $row;
+        return null;
+    }
+
+    public function isIntentPermissionKey(string $permissionKey): bool
+    {
+        $permissionKey = trim($permissionKey);
+        if ($permissionKey === '' || self::isLegacyAttributePermissionKey($permissionKey)) {
+            return false;
+        }
+
+        foreach ($this->listIntents() as $row) {
+            $key = trim((string) ($row['key'] ?? ''));
+            if ($key !== '' && strncmp($key, '/api/', 5) !== 0 && $key === $permissionKey) {
+                return true;
             }
         }
 
-        return null;
+        return false;
+    }
+
+    public static function isLegacyAttributePermissionKey(string $permissionKey): bool
+    {
+        return preg_match(
+            '/^[A-Za-z][A-Za-z0-9_]*\.[A-Za-z][A-Za-z0-9_]*\.(read|info|edit)$/',
+            trim($permissionKey)
+        ) === 1;
+    }
+
+    /**
+     * Campos, grupos y metadatos del intent parseados del YAML (solo lectura admin).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function buildIntentFieldManifest(string $intentId): ?array
+    {
+        $intentId = trim($intentId);
+        $meta = IntentManifestIndex::get($intentId);
+        if ($meta === null) {
+            return null;
+        }
+
+        $path = trim((string) ($meta['path'] ?? ''));
+        $raw = [];
+        if ($path !== '' && is_file($path)) {
+            try {
+                $parsed = Yaml::parseFile($path);
+                if (is_array($parsed)) {
+                    $raw = $parsed;
+                }
+            } catch (\Throwable $e) {
+                $raw = [];
+            }
+        }
+
+        return [
+            'intent_id' => $intentId,
+            'kind' => 'intent',
+            'key' => $this->intentPermissionKey($intentId, $meta),
+            'category' => $meta['category'] ?? null,
+            'action_name' => $meta['action_name'] ?? '',
+            'rbac_route' => $meta['rbac_route'] ?? '',
+            'operation' => $meta['operation'] ?? null,
+            'intent_family' => $meta['intent_family'] ?? '',
+            'domain_operation' => $meta['domain_operation'] ?? '',
+            'subject_resolution' => is_array($raw['subject_resolution'] ?? null) ? $raw['subject_resolution'] : null,
+            'open_ui' => is_array($raw['open_ui'] ?? null) ? $raw['open_ui'] : null,
+            'field_groups' => is_array($raw['field_groups'] ?? null) ? $raw['field_groups'] : null,
+            'fields' => $this->parseFieldDefinitions($raw),
+            'flow_fields' => $this->parseFlowSubmitFields($raw),
+            'open_ui_steps' => $meta['open_ui_steps'] ?? [],
+            'flow_submit' => $meta['flow_submit'] ?? null,
+            'keywords' => is_array($raw['keywords'] ?? null) ? $raw['keywords'] : [],
+            'intent_semantics' => is_array($raw['intent_semantics'] ?? null) ? $raw['intent_semantics'] : null,
+            'path' => $path,
+            'uses_extended_contract' => (bool) ($meta['uses_extended_contract'] ?? false),
+        ];
     }
 
     /**
@@ -356,5 +427,72 @@ final class PermissionCatalogService
         [$entity, $action] = explode('.', $actionId, 2);
 
         return '/api/' . $entity . '/' . $action;
+    }
+
+    /**
+     * @param array<string, mixed> $raw
+     * @return list<array{name: string, keywords: list<string>}>
+     */
+    private function parseFieldDefinitions(array $raw): array
+    {
+        $fields = $raw['fields'] ?? null;
+        if (!is_array($fields)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($fields as $field) {
+            if (is_string($field)) {
+                $name = trim($field);
+                if ($name !== '') {
+                    $out[] = ['name' => $name, 'keywords' => []];
+                }
+                continue;
+            }
+            if (!is_array($field)) {
+                continue;
+            }
+            $name = trim((string) ($field['name'] ?? $field['attribute'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $keywords = [];
+            foreach ($field['keywords'] ?? [] as $kw) {
+                $kw = trim((string) $kw);
+                if ($kw !== '') {
+                    $keywords[] = $kw;
+                }
+            }
+            $out[] = ['name' => $name, 'keywords' => $keywords];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $raw
+     * @return list<string>
+     */
+    private function parseFlowSubmitFields(array $raw): array
+    {
+        $flowSubmit = $raw['flow_submit'] ?? null;
+        if (!is_array($flowSubmit)) {
+            return [];
+        }
+        $params = $flowSubmit['params'] ?? null;
+        if (!is_array($params)) {
+            return [];
+        }
+
+        $names = [];
+        foreach (array_keys($params) as $paramName) {
+            $name = trim((string) $paramName);
+            if ($name === '' || $name === 'id') {
+                continue;
+            }
+            $names[] = preg_replace('/^draft\./', '', $name) ?? $name;
+        }
+
+        return array_values(array_unique(array_filter($names)));
     }
 }

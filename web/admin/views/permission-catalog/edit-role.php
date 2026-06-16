@@ -12,7 +12,6 @@ $this->params['breadcrumbs'][] = ['label' => 'Catálogo de permisos', 'url' => [
 $this->params['breadcrumbs'][] = $this->title;
 
 $intents = array_values(array_filter($permissions, static fn (array $p): bool => ($p['kind'] ?? '') === 'intent'));
-$attributes = array_values(array_filter($permissions, static fn (array $p): bool => ($p['kind'] ?? '') !== 'intent'));
 $missingAuth = array_filter($permissions, static fn (array $p): bool => empty($p['in_auth_item']));
 ?>
 <div class="permission-catalog-edit-role">
@@ -21,6 +20,10 @@ $missingAuth = array_filter($permissions, static fn (array $p): bool => empty($p
         <h1 class="h2 mb-0"><?= Html::encode($this->title) ?></h1>
         <?= Html::a('Volver al catálogo', ['index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
     </div>
+
+    <p class="text-muted small">
+        Los campos editables de cada intent se definen en su YAML (vista Detalle del catálogo).
+    </p>
 
     <?php if ($missingAuth !== []): ?>
         <div class="alert alert-warning">
@@ -34,48 +37,24 @@ $missingAuth = array_filter($permissions, static fn (array $p): bool => empty($p
 
     <?php $form = ActiveForm::begin(['method' => 'post']); ?>
 
-    <div class="row">
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header"><strong>Intents / operaciones</strong> (<?= count($intents) ?>)</div>
-                <div class="card-body" style="max-height: 420px; overflow-y: auto;">
-                    <?php foreach ($intents as $perm): ?>
-                        <?php $id = 'perm_' . md5($perm['key']); ?>
-                        <div class="form-check mb-1">
-                            <input class="form-check-input" type="checkbox" name="permissions[]"
-                                   value="<?= Html::encode($perm['key']) ?>" id="<?= $id ?>"
-                                   <?= $perm['assigned'] ? 'checked' : '' ?>
-                                   <?= !$perm['in_auth_item'] ? 'disabled' : '' ?>>
-                            <label class="form-check-label small" for="<?= $id ?>">
-                                <code><?= Html::encode($perm['key']) ?></code>
-                                <?php if ($perm['description'] !== '' && $perm['description'] !== $perm['key']): ?>
-                                    <span class="text-muted">— <?= Html::encode($perm['description']) ?></span>
-                                <?php endif; ?>
-                            </label>
-                        </div>
-                    <?php endforeach; ?>
+    <div class="card mb-4">
+        <div class="card-header"><strong>Intents / operaciones</strong> (<?= count($intents) ?>)</div>
+        <div class="card-body" style="max-height: 520px; overflow-y: auto;">
+            <?php foreach ($intents as $perm): ?>
+                <?php $id = 'perm_' . md5($perm['key']); ?>
+                <div class="form-check mb-1">
+                    <input class="form-check-input" type="checkbox" name="permissions[]"
+                           value="<?= Html::encode($perm['key']) ?>" id="<?= $id ?>"
+                           <?= $perm['assigned'] ? 'checked' : '' ?>
+                           <?= !$perm['in_auth_item'] ? 'disabled' : '' ?>>
+                    <label class="form-check-label small" for="<?= $id ?>">
+                        <code><?= Html::encode($perm['key']) ?></code>
+                        <?php if ($perm['description'] !== '' && $perm['description'] !== $perm['key']): ?>
+                            <span class="text-muted">— <?= Html::encode($perm['description']) ?></span>
+                        <?php endif; ?>
+                    </label>
                 </div>
-            </div>
-        </div>
-
-        <div class="col-lg-6 mb-4">
-            <div class="card">
-                <div class="card-header"><strong>Atributos</strong> (<?= count($attributes) ?>)</div>
-                <div class="card-body" style="max-height: 420px; overflow-y: auto;">
-                    <?php foreach ($attributes as $perm): ?>
-                        <?php $id = 'perm_' . md5($perm['key']); ?>
-                        <div class="form-check mb-1">
-                            <input class="form-check-input" type="checkbox" name="permissions[]"
-                                   value="<?= Html::encode($perm['key']) ?>" id="<?= $id ?>"
-                                   <?= $perm['assigned'] ? 'checked' : '' ?>
-                                   <?= !$perm['in_auth_item'] ? 'disabled' : '' ?>>
-                            <label class="form-check-label small" for="<?= $id ?>">
-                                <code><?= Html::encode($perm['key']) ?></code>
-                            </label>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
+            <?php endforeach; ?>
         </div>
     </div>
 

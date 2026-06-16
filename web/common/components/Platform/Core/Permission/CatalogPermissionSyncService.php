@@ -34,21 +34,6 @@ final class CatalogPermissionSyncService
             ];
         }
 
-        foreach ($catalog->listAttributes() as $row) {
-            $key = trim((string) ($row['key'] ?? ''));
-            if ($key === '' || isset($seen[$key])) {
-                continue;
-            }
-            $seen[$key] = true;
-            $out[] = [
-                'key' => $key,
-                'kind' => (string) ($row['kind'] ?? 'attribute'),
-                'description' => $key,
-                'legacy_route' => '',
-                'intent_id' => '',
-            ];
-        }
-
         usort($out, static fn (array $a, array $b): int => strcmp($a['key'], $b['key']));
 
         return $out;

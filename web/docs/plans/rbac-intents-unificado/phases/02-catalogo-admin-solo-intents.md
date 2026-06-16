@@ -35,9 +35,9 @@ Simplificar el panel de permisos: asignación **rol ↔ intent** únicamente; vi
 
 ## Entregables
 
-- [ ] Admin usable solo con intents
-- [ ] Vista lectura campos desde YAML
-- [ ] Sync no genera nuevos permisos atributo
+- [x] Admin usable solo con intents
+- [x] Vista lectura campos desde YAML
+- [x] Sync no genera nuevos permisos atributo
 - [ ] Checklist manual: asignar rol piloto sin pantalla de atributos
 
 ## Dependencias
@@ -50,4 +50,4 @@ Simplificar el panel de permisos: asignación **rol ↔ intent** únicamente; vi
 
 ## Estado
 
-Pendiente.
+Completada (admin solo intents, vista lectura YAML, sync sin atributos nuevos).

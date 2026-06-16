@@ -23,7 +23,7 @@ class DataAccessCatalogController extends Controller
     {
         Yii::$app->session->setFlash(
             'info',
-            'El catálogo DataAccess se consulta en Catálogo de permisos (pestaña Atributos).'
+            'El catálogo DataAccess se consulta en Catálogo de permisos (intents y detalle YAML).'
         );
 
         return $this->redirect(['permission-catalog/index']);

@@ -44,8 +44,16 @@ $ok = $errors === [];
         <div class="col-md-3">
             <div class="card text-center">
                 <div class="card-body">
+                    <div class="display-6"><?= (int) ($summary['extended_intents'] ?? 0) ?></div>
+                    <div class="text-muted small">Intents con contrato extendido</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center">
+                <div class="card-body">
                     <div class="display-6"><?= (int) ($summary['attributes'] ?? 0) ?></div>
-                    <div class="text-muted small">Atributos catalogados</div>
+                    <div class="text-muted small">Atributos legacy (integridad)</div>
                 </div>
             </div>
         </div>

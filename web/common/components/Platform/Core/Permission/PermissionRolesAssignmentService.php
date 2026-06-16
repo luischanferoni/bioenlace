@@ -61,7 +61,7 @@ final class PermissionRolesAssignmentService
 
     private function isCatalogPermission(string $permissionKey): bool
     {
-        return (new PermissionCatalogService())->findPermissionRow($permissionKey) !== null;
+        return (new PermissionCatalogService())->isIntentPermissionKey($permissionKey);
     }
 
     /**

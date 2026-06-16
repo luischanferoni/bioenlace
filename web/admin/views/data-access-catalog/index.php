@@ -17,13 +17,13 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h2 mb-0"><?= Html::encode($this->title) ?></h1>
-        <?= Html::a('Campos en BD', ['data-access-attribute-field/index'], ['class' => 'btn btn-outline-primary btn-sm']) ?>
-        <?= Html::a('Permisos por rol', ['permission-catalog/roles'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+        <?= Html::a('Catálogo de permisos', ['permission-catalog/index'], ['class' => 'btn btn-outline-primary btn-sm']) ?>
+        <?= Html::a('Roles RBAC', ['permission-catalog/roles'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
     </div>
 
     <p class="text-muted">
-        Métricas y flujos en <code><?= Html::encode($configDirectory) ?></code>.
-        Permisos atómicos en <code>auth_item</code>; campos de formulario en <code>data_access_attribute_field</code>.
+        Métricas y flujos en <code><?= Html::encode($configDirectory) ?></code> (referencia técnica).
+        La asignación de permisos es por <strong>intent</strong> en <?= Html::a('Catálogo de permisos', ['permission-catalog/index']) ?>.
     </p>
 
     <div class="card mb-4">

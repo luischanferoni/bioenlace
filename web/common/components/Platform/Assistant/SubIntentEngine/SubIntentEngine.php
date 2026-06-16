@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\SubIntentEngine;
 
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
+use common\components\Platform\Assistant\Catalog\IntentMetricCatalogSupport;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
@@ -82,6 +83,11 @@ final class SubIntentEngine
             );
             if ($catalogOnly !== null) {
                 return $catalogOnly;
+            }
+
+            $metricOpen = self::processMetricBoundIntent($intentId, $draft, $content, $userId, $hints);
+            if ($metricOpen !== null) {
+                return $metricOpen;
             }
 
             return ['success' => false, 'error' => 'Intent no soportado', 'intent_id' => $intentId];
@@ -532,6 +538,48 @@ final class SubIntentEngine
 
         $openUiDef['__draft'] = $draft;
         $label = \common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport::displayLabelForIntent($intentId);
+        $text = $label !== '' ? $label : 'Abrir pantalla';
+
+        return self::buildOpenUiResponse(
+            $intentId,
+            'open',
+            [
+                'id' => 'open',
+                'assistant_text' => $text,
+                'provides' => [],
+            ],
+            $text,
+            $userId,
+            $openUiDef,
+            $content,
+            null,
+            $hints
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     * @param list<array<string, mixed>> $hints
+     * @return array<string, mixed>|null
+     */
+    private static function processMetricBoundIntent(
+        string $intentId,
+        array $draft,
+        string $content,
+        int $userId,
+        array $hints
+    ): ?array {
+        if (!IntentMetricCatalogSupport::isMetricBoundIntent($intentId)) {
+            return null;
+        }
+
+        $openUiDef = IntentMetricCatalogSupport::openUiDefForIntent($intentId);
+        if ($openUiDef === null) {
+            return null;
+        }
+
+        $openUiDef['__draft'] = $draft;
+        $label = IntentMetricCatalogSupport::displayLabelForIntent($intentId);
         $text = $label !== '' ? $label : 'Abrir pantalla';
 
         return self::buildOpenUiResponse(

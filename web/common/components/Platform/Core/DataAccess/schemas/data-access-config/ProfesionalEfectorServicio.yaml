@@ -29,6 +29,7 @@ groups:
 info_list:
   profesionales_conteo_efector:
     label: Conteo de profesionales por efector
+    migrated_intent_id: profesionales.conteo-efector
     keywords:
       - cuantos profesionales
       - cuantos medicos hay
@@ -87,6 +88,7 @@ info_list:
 
   profesionales_listado_efector:
     label: Listado de profesionales por efector
+    migrated_intent_id: profesionales.listado-efector
     keywords:
       - listar profesionales
       - mostrar profesionales del centro

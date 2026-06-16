@@ -9,3 +9,13 @@ families:
     members:
       - condicion-laboral.editar-propio
       - condicion-laboral.editar-staff
+
+  profesionales.conteo-efector:
+    operation: info
+    members:
+      - profesionales.conteo-efector
+
+  profesionales.listado-efector:
+    operation: list
+    members:
+      - profesionales.listado-efector

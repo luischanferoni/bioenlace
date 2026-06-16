@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\SubIntentEngine;
 
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
+use common\components\Platform\Assistant\Catalog\IntentMetricCatalogSupport;
 use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
 
 /**
@@ -17,6 +18,12 @@ final class FlowDraftHydratorService
     {
         if (DataAccessCatalogIntentSupport::isCatalogOnlyIntent($intentId)) {
             DataAccessCatalogIntentSupport::applyDraftHydrator($intentId, $body);
+
+            return;
+        }
+
+        if (IntentMetricCatalogSupport::isMetricBoundIntent($intentId)) {
+            IntentMetricCatalogSupport::applyDraftHydrator($intentId, $body);
 
             return;
         }

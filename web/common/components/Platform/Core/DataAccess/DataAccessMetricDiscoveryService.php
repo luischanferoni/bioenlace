@@ -2,6 +2,9 @@
 
 namespace common\components\Platform\Core\DataAccess;
 
+use common\components\Platform\Assistant\Catalog\IntentMetricCatalogSupport;
+use common\components\Platform\Core\Permission\IntentMetricIndex;
+
 /**
  * Resuelve metric_id y keywords NL desde data-access-config (sin valores de atributos en intents).
  */
@@ -35,7 +38,7 @@ final class DataAccessMetricDiscoveryService
             return self::CHANNEL_LISTAR;
         }
 
-        return null;
+        return IntentMetricCatalogSupport::channelForIntentId($intentId);
     }
 
     /**
@@ -55,6 +58,9 @@ final class DataAccessMetricDiscoveryService
 
         foreach ($this->catalog->listMetricsForDisplay() as $metricId => $def) {
             if (!is_string($metricId) || !is_array($def)) {
+                continue;
+            }
+            if (IntentMetricIndex::intentForMetric($metricId) !== null) {
                 continue;
             }
             if (!$this->userCanAccessMetric($ctx, $metricId, $channel)) {
@@ -84,6 +90,9 @@ final class DataAccessMetricDiscoveryService
             if (!is_string($metricId) || !is_array($def)) {
                 continue;
             }
+            if (IntentMetricIndex::intentForMetric($metricId) !== null) {
+                continue;
+            }
             if (!$this->userCanAccessMetric($ctx, $metricId, $channel)) {
                 continue;
             }
@@ -103,6 +112,10 @@ final class DataAccessMetricDiscoveryService
         $metric = $this->catalog->getMetric($metricId);
         if ($metric === null) {
             return false;
+        }
+
+        if (IntentMetricIndex::intentForMetric($metricId) !== null) {
+            return IntentMetricCatalogSupport::userCanAccessMetricIntent($ctx->userId, $metricId);
         }
 
         $required = $metric['required_groups'] ?? [];

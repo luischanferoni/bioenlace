@@ -46,15 +46,10 @@ Por cada dominio:
 
 ## Entregables
 
-- [ ] Al menos **dos dominios** migrados (piloto + uno adicional)
-- [ ] `data-access.*` sin uso en flujos migrados
+- [x] Al menos **dos dominios** migrados (piloto condición laboral + profesionales conteo/listado)
+- [ ] `data-access.*` sin uso en flujos migrados (parcial: métricas profesionales fuera del descubrimiento genérico)
 - [ ] Tests API por intent migrado
-
-## Dependencias
-
-- Fases 1–2
-- Fase 5 piloto condición laboral puede adelantarse antes del resto de 3
 
 ## Estado
 
-En progreso — piloto condición laboral (resolución familia, whitelist submit, grants, clasificación NL).
+En progreso — dominios 1–2 migrados; agenda/edit dispersa y retiro `data-access.*` pendientes.

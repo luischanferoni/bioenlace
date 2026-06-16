@@ -128,6 +128,7 @@ final class IntentManifestIndex
                 'operation' => $operation,
                 'intent_family' => trim((string) ($data['intent_family'] ?? '')),
                 'domain_operation' => trim((string) ($data['domain_operation'] ?? '')),
+                'metric_id' => trim((string) ($data['metric_id'] ?? '')),
                 'subject_resolution' => is_array($data['subject_resolution'] ?? null)
                     ? $data['subject_resolution']
                     : null,

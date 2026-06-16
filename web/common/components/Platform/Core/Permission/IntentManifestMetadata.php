@@ -19,7 +19,7 @@ final class IntentManifestMetadata
      */
     public static function usesExtendedContract(array $data): bool
     {
-        foreach (['operation', 'intent_family', 'domain_operation', 'subject_resolution', 'fields', 'field_groups'] as $key) {
+        foreach (['operation', 'intent_family', 'domain_operation', 'metric_id', 'subject_resolution', 'fields', 'field_groups'] as $key) {
             if (!array_key_exists($key, $data)) {
                 continue;
             }
@@ -117,8 +117,16 @@ final class IntentManifestMetadata
         }
 
         $fieldNames = self::extractFieldNames($data);
-        if ($fieldNames === []) {
+        $operationForFields = self::resolveOperation($category, $data);
+        if ($fieldNames === [] && !in_array($operationForFields, ['info', 'list', 'read'], true)) {
             $warnings[] = 'Intent «' . $intentId . '»: contrato extendido sin fields';
+        }
+
+        $metricId = trim((string) ($data['metric_id'] ?? ''));
+        if ($metricId !== '' && in_array($operationForFields, ['info', 'list'], true)) {
+            if (!self::isKnownMetricId($metricId)) {
+                $errors[] = 'Intent «' . $intentId . '»: metric_id «' . $metricId . '» no registrada en data-access-config';
+            }
         }
 
         $knownFields = array_fill_keys($fieldNames, true);
@@ -178,5 +186,15 @@ final class IntentManifestMetadata
         }
 
         return false;
+    }
+
+    public static function isKnownMetricId(string $metricId): bool
+    {
+        $metricId = trim($metricId);
+        if ($metricId === '') {
+            return false;
+        }
+
+        return (new \common\components\Platform\Core\DataAccess\AttributeGroupCatalog())->getMetric($metricId) !== null;
     }
 }

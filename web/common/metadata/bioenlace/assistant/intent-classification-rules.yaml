@@ -117,21 +117,27 @@ score_adjustments:
   - when_rule: staff_list_not_count
     when_not_rule: staff_count
     apply:
+      - intent_id: profesionales.listado-efector
+        delta: 35
       - intent_id: data-access.listar
-        delta: 25
+        delta: 10
       - intent_id: data-access.info
         delta: -20
 
   - when_rule: staff_list_not_count
     when_also: staff_count
     apply:
+      - intent_id: profesionales.listado-efector
+        delta: 15
       - intent_id: data-access.listar
-        delta: 10
+        delta: 5
 
   - when_rule: staff_count
     apply:
+      - intent_id: profesionales.conteo-efector
+        delta: 35
       - intent_id: data-access.info
-        delta: 15
+        delta: 5
 
 operational_fallbacks:
   - id: data_access_edit_nl

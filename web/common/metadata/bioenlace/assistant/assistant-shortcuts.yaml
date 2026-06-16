@@ -12,6 +12,8 @@ categories:
       - profesional-efector-servicio.crear-flow
       - condicion-laboral.editar-propio
       - condicion-laboral.editar-staff
+      - profesionales.conteo-efector
+      - profesionales.listado-efector
       - data-access.editar
       - licencia.cargar-como-profesional-flow
       - licencia.cargar-para-profesional-flow

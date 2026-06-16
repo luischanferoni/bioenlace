@@ -1,0 +1,36 @@
+intent_id: profesionales.listado-efector
+version: 1
+
+operation: list
+intent_family: profesionales.listado-efector
+domain_operation: DataAccess.list
+metric_id: profesionales_listado_efector
+
+action_name: "Listado de profesionales del efector"
+description: "Nombres y datos básicos de profesionales del centro."
+rbac_route: "/api/listar"
+
+keywords:
+  - listar profesionales
+  - mostrar profesionales del centro
+  - mostrar medicos del centro
+  - profesionales del centro
+  - quienes trabajan en el centro
+  - nombres de profesionales
+  - plantilla del centro
+
+intent_semantics:
+  goal: Ver el listado de profesionales con asignación en el efector de sesión.
+  how: Tabla con nombre, apellido y datos básicos autorizados.
+  constraints:
+    - Requiere efector en sesión operativa.
+
+subintents:
+  - id: mostrar_listado
+    assistant_text: "Listando profesionales del efector"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: data-access.listar
+      params:
+        metric_id: profesionales_listado_efector

@@ -2,6 +2,9 @@
 
 namespace common\components\Platform\Core\DataAccess;
 
+use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
+use common\components\Platform\Core\Permission\IntentMetricIndex;
+
 /**
  * Autoriza métricas staff: scope de métrica + permisos por grupo de atributos en filtros.
  */
@@ -37,6 +40,10 @@ final class QueryAuthorizationService
         }
 
         $scope = ScopeCheckerRegistry::get($metricScopeId)->assertAndResolve($spec, $ctx);
+
+        if ($this->authorizeByBoundIntent($ctx, $spec->metricId)) {
+            return $this->authorizeFiltersAndReturn($spec, $ctx, $metric, $scope, skipAttributeFilterGrants: true);
+        }
 
         $requiredGroups = $metric['required_groups'] ?? [];
         if (is_array($requiredGroups)) {
@@ -80,6 +87,48 @@ final class QueryAuthorizationService
             : [];
         $filterGroupMap = $this->catalog->filterEntityGroupMap($spec->metricId);
 
+        return $this->authorizeFiltersAndReturn(
+            $spec,
+            $ctx,
+            $metric,
+            $scope,
+            skipAttributeFilterGrants: false,
+            optionalGroups: $optionalGroups,
+            filterScopeCheckers: $filterScopeCheckers,
+            filterGroupMap: $filterGroupMap
+        );
+    }
+
+    /**
+     * @param array<string, mixed> $metric
+     * @param list<string> $optionalGroups
+     * @param array<string, string> $filterScopeCheckers
+     * @param array<string, string> $filterGroupMap
+     */
+    private function authorizeFiltersAndReturn(
+        QuerySpec $spec,
+        PermissionContext $ctx,
+        array $metric,
+        ScopeConstraint $scope,
+        bool $skipAttributeFilterGrants,
+        array $optionalGroups = [],
+        array $filterScopeCheckers = [],
+        array $filterGroupMap = []
+    ): AuthorizedQuery {
+        if ($filterGroupMap === []) {
+            $filterGroupMap = $this->catalog->filterEntityGroupMap($spec->metricId);
+        }
+        if ($optionalGroups === []) {
+            $optionalGroups = is_array($metric['optional_filter_groups'] ?? null)
+                ? $metric['optional_filter_groups']
+                : [];
+        }
+        if ($filterScopeCheckers === []) {
+            $filterScopeCheckers = is_array($metric['filter_scope_checkers'] ?? null)
+                ? $metric['filter_scope_checkers']
+                : [];
+        }
+
         foreach ($spec->filters as $filterKey => $filterValue) {
             if ($filterValue === null || $filterValue === '') {
                 continue;
@@ -91,7 +140,8 @@ final class QueryAuthorizationService
             if (is_array($optionalGroups) && $optionalGroups !== [] && !in_array($groupKey, $optionalGroups, true)) {
                 throw new \InvalidArgumentException('Filtro no permitido para esta métrica: ' . $filterKey);
             }
-            if (!$this->permissions->can($ctx, $groupKey, QueryOperation::FILTER)) {
+            if (!$skipAttributeFilterGrants
+                && !$this->permissions->can($ctx, $groupKey, QueryOperation::FILTER)) {
                 throw new \InvalidArgumentException(
                     'No tiene permiso para filtrar por ' . $filterKey . '.'
                 );
@@ -110,6 +160,16 @@ final class QueryAuthorizationService
         QueryAuditLogger::logAuthorized($spec, $ctx, $scope);
 
         return new AuthorizedQuery($spec, $scope, $spec->metricId);
+    }
+
+    private function authorizeByBoundIntent(PermissionContext $ctx, string $metricId): bool
+    {
+        $intentId = IntentMetricIndex::intentForMetric($metricId);
+        if ($intentId === null) {
+            return false;
+        }
+
+        return BioenlaceAccessChecker::userCanPermissionKey($ctx->userId, $intentId);
     }
 
     private static function mergeScope(ScopeConstraint $base, ScopeConstraint $extra): ScopeConstraint

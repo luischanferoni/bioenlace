@@ -13,7 +13,7 @@ Plan de implementación: [plans/cohortes-asistencia-batch](../plans/cohortes-asi
 | **common** | Defaults **frontend + admin** | `common/config/params.php`, `params-care-cohort.php` |
 | **frontend** | API, asistente, móvil — cohortes **on** | merge: common + `frontend/config/params.php` |
 | **console** | Cron — **independiente** | solo `console/config/params.php` + `params-local.php` |
-| **admin (backend)** | Hereda common | merge: common + `backend/config/params.php` |
+| **admin** | Hereda common | merge: common + `admin/config/params.php` |
 
 ### Cadena de merge
 

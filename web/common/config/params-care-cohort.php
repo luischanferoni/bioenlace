@@ -6,7 +6,7 @@
  * Definición compartida (common). Cada aplicación activa o extiende en su params:
  * - frontend/config/params.php — API / asistente / móvil (enabled true)
  * - console/config/params.php — cron care-pack (enabled true)
- * - admin (backend): hereda common; queda disabled salvo override explícito
+ * - admin: hereda common; queda disabled salvo override explícito
  *
  * Secretos prod (bucket GCS): common/config/params-local.php o console/frontend params-local.
  *

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script de despliegue para el hosting
-# Este script actualiza el repositorio, ejecuta las migraciones de BD y copia las carpetas necesarias del frontend y backend
+# Este script actualiza el repositorio, ejecuta las migraciones de BD y copia las carpetas necesarias del frontend y admin
 
 # Colores para mensajes
 RED='\033[0;31m'
@@ -16,12 +16,12 @@ BASE_DIR="/home/u257309594/domains/bioenlace.io"
 REPO_DIR="$BASE_DIR/repo/web"
 FRONTEND_SOURCE_DIR="$BASE_DIR/repo/web/frontend/web"
 FRONTEND_DEST_DIR="$BASE_DIR/public_html/app"
-BACKEND_SOURCE_DIR="$BASE_DIR/repo/web/backend/web"
-BACKEND_DEST_DIR="$BASE_DIR/public_html/app/admin"
+ADMIN_SOURCE_DIR="$BASE_DIR/repo/web/admin/web"
+ADMIN_DEST_DIR="$BASE_DIR/public_html/app/admin"
 
 # Carpetas a copiar
 FRONTEND_FOLDERS=("css" "custom-template" "images" "js")
-BACKEND_FOLDERS=("css" "js" "images")
+ADMIN_FOLDERS=("css" "js" "images")
 
 SKIP_COMPOSER=0
 COMPOSER_DEV=0
@@ -36,7 +36,7 @@ for arg in "$@"; do
     esac
 done
 
-echo -e "${YELLOW}Iniciando despliegue del frontend y backend...${NC}"
+echo -e "${YELLOW}Iniciando despliegue del frontend y admin...${NC}"
 
 # Paso 1: Git pull
 echo -e "${YELLOW}Ejecutando git pull...${NC}"
@@ -93,8 +93,8 @@ if [ ! -d "$FRONTEND_SOURCE_DIR" ]; then
     exit 1
 fi
 
-if [ ! -d "$BACKEND_SOURCE_DIR" ]; then
-    echo -e "${RED}Error: El directorio fuente del backend $BACKEND_SOURCE_DIR no existe${NC}"
+if [ ! -d "$ADMIN_SOURCE_DIR" ]; then
+    echo -e "${RED}Error: El directorio fuente del admin $ADMIN_SOURCE_DIR no existe${NC}"
     exit 1
 fi
 
@@ -104,8 +104,8 @@ if [ ! -d "$FRONTEND_DEST_DIR" ]; then
     exit 1
 fi
 
-if [ ! -d "$BACKEND_DEST_DIR" ]; then
-    echo -e "${RED}Error: El directorio destino del backend $BACKEND_DEST_DIR no existe${NC}"
+if [ ! -d "$ADMIN_DEST_DIR" ]; then
+    echo -e "${RED}Error: El directorio destino del admin $ADMIN_DEST_DIR no existe${NC}"
     exit 1
 fi
 
@@ -147,35 +147,35 @@ for folder in "${FRONTEND_FOLDERS[@]}"; do
 done
 
 # ==========================================
-# DESPLIEGUE DEL BACKEND
+# DESPLIEGUE DEL ADMIN
 # ==========================================
-echo -e "${YELLOW}=== Desplegando Backend ===${NC}"
+echo -e "${YELLOW}=== Desplegando Admin ===${NC}"
 
-# Paso 7: Borrar el contenido de la carpeta assets del backend
-BACKEND_ASSETS_DIR="$BACKEND_DEST_DIR/assets"
-if [ -d "$BACKEND_ASSETS_DIR" ]; then
-    echo -e "${YELLOW}Borrando contenido de la carpeta assets del backend...${NC}"
-    if rm -rf "$BACKEND_ASSETS_DIR"/*; then
-        echo -e "${GREEN}Contenido de assets del backend borrado exitosamente${NC}"
+# Paso 7: Borrar el contenido de la carpeta assets del admin
+ADMIN_ASSETS_DIR="$ADMIN_DEST_DIR/assets"
+if [ -d "$ADMIN_ASSETS_DIR" ]; then
+    echo -e "${YELLOW}Borrando contenido de la carpeta assets del admin...${NC}"
+    if rm -rf "$ADMIN_ASSETS_DIR"/*; then
+        echo -e "${GREEN}Contenido de assets del admin borrado exitosamente${NC}"
     else
-        echo -e "${YELLOW}Advertencia: No se pudo borrar el contenido de assets del backend (puede estar vacía)${NC}"
+        echo -e "${YELLOW}Advertencia: No se pudo borrar el contenido de assets del admin (puede estar vacía)${NC}"
     fi
 else
-    echo -e "${YELLOW}La carpeta assets del backend no existe, se omite la limpieza${NC}"
+    echo -e "${YELLOW}La carpeta assets del admin no existe, se omite la limpieza${NC}"
 fi
 
-# Paso 8: Copiar las carpetas especificadas del backend
-echo -e "${YELLOW}Copiando carpetas del backend a $BACKEND_DEST_DIR...${NC}"
-for folder in "${BACKEND_FOLDERS[@]}"; do
-    SOURCE_PATH="$BACKEND_SOURCE_DIR/$folder"
+# Paso 8: Copiar las carpetas especificadas del admin
+echo -e "${YELLOW}Copiando carpetas del admin a $ADMIN_DEST_DIR...${NC}"
+for folder in "${ADMIN_FOLDERS[@]}"; do
+    SOURCE_PATH="$ADMIN_SOURCE_DIR/$folder"
     
     if [ ! -d "$SOURCE_PATH" ]; then
-        echo -e "${YELLOW}Advertencia: La carpeta $folder no existe en $BACKEND_SOURCE_DIR, se omite${NC}"
+        echo -e "${YELLOW}Advertencia: La carpeta $folder no existe en $ADMIN_SOURCE_DIR, se omite${NC}"
         continue
     fi
     
     echo -e "  Copiando $folder..."
-    if cp -r "$SOURCE_PATH" "$BACKEND_DEST_DIR/"; then
+    if cp -r "$SOURCE_PATH" "$ADMIN_DEST_DIR/"; then
         echo -e "  ${GREEN}✓${NC} $folder copiada exitosamente"
     else
         echo -e "  ${RED}✗${NC} Error al copiar $folder"

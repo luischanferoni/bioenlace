@@ -46,6 +46,6 @@ Edición agenda staff: intent `data-access.editar` → flujo `ProfesionalEfector
 3. Permiso atómico en admin **Catálogo de permisos → Roles** (o `php yii catalog-permission/sync`).
 4. No crear intents YAML por métrica: reutilizar `data-access.info` o `data-access.listar`.
 
-## Admin backend
+## Admin
 
 Superadmin: menú **Acceso a datos** → catálogo de permisos, roles, integridad; campos por grupo en BD.

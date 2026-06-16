@@ -543,7 +543,7 @@ class User extends ActiveRecord implements IdentityInterface
         if (strncmp($route, '/api/', 5) === 0) {
             return BioenlaceSessionPermissions::unifyRoute($route);
         }
-        if (preg_match('#^/(frontend|backend)/#', $route) === 1) {
+        if (preg_match('#^/(frontend|admin)/#', $route) === 1) {
             return $route;
         }
 

@@ -18,7 +18,7 @@ $roots = [
     $base . '/common/models',
     $base . '/frontend/controllers',
     $base . '/frontend/modules',
-    $base . '/backend/controllers',
+    $base . '/admin/controllers',
 ];
 
 $excludeDirs = ['vendor', 'runtime', 'assets', 'node_modules', '.git'];

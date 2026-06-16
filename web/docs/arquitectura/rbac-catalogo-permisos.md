@@ -11,7 +11,7 @@ Documentación estable del modelo de autorización Bioenlace: motor Yii, permiso
   - **Atributos** — `Entidad.atributo.read|info|edit` declarados en `data-access-config`.
 - **Grupos** en `data-access-config`: solo presentación en YAML; no se administran en el panel.
 - **Web staff (SPA):** `frontend/controllers` exigen autenticación; el RBAC real vive en **API v1** (`BioenlaceApiAccessControl`).
-- **Backend admin:** RBAC por ruta (`BioenlaceBackendAccessControl`).
+- **Admin:** RBAC por ruta (`BioenlaceAdminAccessControl`).
 
 ## Capas
 
@@ -58,7 +58,7 @@ Entrypoint: **`/admin/permission-catalog/index`**.
 | Editar roles de un intent | `/permission-catalog/edit-intent-roles?key=…` |
 | Editar roles de un atributo | `/permission-catalog/edit-attribute-roles?key=…` |
 
-Menú backend «Acceso a datos»: solo **Catálogo** + **Integridad**.
+Menú admin «Acceso a datos»: solo **Catálogo** + **Integridad**.
 
 ### Redirects legacy
 
@@ -84,12 +84,12 @@ Menú backend «Acceso a datos»: solo **Catálogo** + **Integridad**.
 | Login web | `/auth/login`, `/auth/logout`, `/auth/change-own-password`, … |
 | Alta desde persona (frontend) | `/user/crear` → `frontend\controllers\UserController` |
 
-Módulo Yii: `UserManagementCompatModule` (configs backend, frontend, console). Traducciones/menú: `UserManagementCompat`.
+Módulo Yii: `UserManagementCompatModule` (configs admin, frontend, console). Traducciones/menú: `UserManagementCompat`.
 
 ## Identidad y sesión
 
 - **Modelo:** `common\models\User` implementa `IdentityInterface`; tablas `user`, `auth_*` sin cambio de esquema.
-- **Login:** `frontend/controllers/AuthController` (+ herencia en backend); vistas en `frontend/views/login/`.
+- **Login:** `frontend/controllers/AuthController` (+ herencia en admin); vistas en `frontend/views/login/`.
 - **Mail:** `yii\symfonymailer\Mailer` (`common/config/mailer.php`); sin `mailerDsn` en params-local → `useFileTransport` (runtime/mail).
 - **API JWT:** `JsonHttpBearerAuth` valida token, persona y sesión; contexto operativo (efector, PES) se fija aparte (`SesionOperativaService`).
 - **Paciente móvil:** puede no ejecutar `set-session`; endpoints que requieren efector deben pedirlo en body/query o responder `400`.
@@ -137,7 +137,7 @@ RBAC (¿puede intentar Entidad.operacion?) → DomainOperationAuthorizer (¿sobr
 ## Alias históricos (delegan a Bioenlace)
 
 - `ApiGhostAccessControl` → `BioenlaceApiAccessControl`
-- `SisseGhostAccessControl` → `BioenlaceBackendAccessControl`
+- `SisseGhostAccessControl` → `BioenlaceAdminAccessControl`
 
 ## Archivos de referencia
 
@@ -154,13 +154,13 @@ web/frontend/modules/api/v1/components/
   JsonHttpBearerAuth.php
 
 web/frontend/components/
-  BioenlaceBackendAccessControl.php
+  BioenlaceAdminAccessControl.php
   FrontendAuthenticatedAccessControl.php
 
 web/common/models/User.php
 web/common/models/forms/{LoginForm,ChangeOwnPasswordForm,...}.php
 web/common/modules/UserManagementCompatModule.php
-web/backend/controllers/{PermissionCatalogController,RbacRoleController,UserAccountController,UserRoleController,LegacyRbacRedirectController}.php
+web/admin/controllers/{PermissionCatalogController,RbacRoleController,UserAccountController,UserRoleController,LegacyRbacRedirectController}.php
 web/common/components/Platform/Ui/Grid/{GridPageSize,GridBulkActions,StatusColumn}.php
 ```
 

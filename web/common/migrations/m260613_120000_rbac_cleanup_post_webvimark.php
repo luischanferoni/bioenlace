@@ -26,7 +26,7 @@ class m260613_120000_rbac_cleanup_post_webvimark extends Migration
 
         $hasChild = $this->db->schema->getTableSchema($childTable, true) !== null;
 
-        // 1) Rutas MVC /frontend/* (SPA usa API; backend admin usa /personas/* sin prefijo)
+        // 1) Rutas MVC /frontend/* (SPA usa API; admin usa /personas/* sin prefijo)
         $frontendRoutes = (new Query())
             ->select(['name'])
             ->from($itemTable)

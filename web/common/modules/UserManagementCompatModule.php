@@ -39,5 +39,5 @@ class UserManagementCompatModule extends Module
 
     public $auth_rule_table = '{{%auth_rule}}';
 
-    public $controllerNamespace = 'backend\controllers';
+    public $controllerNamespace = 'admin\controllers';
 }

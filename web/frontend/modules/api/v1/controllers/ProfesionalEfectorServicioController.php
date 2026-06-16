@@ -20,7 +20,7 @@ use common\models\ServiciosEfector;
 /**
  * API profesional en efector: autocomplete por efector/servicio; servicios asignados en sesión.
  * Autocomplete: migrado desde listados web legacy.
- * Servicios por PES: ver backend ProfesionalEfectorServicio.
+ * Servicios por PES: ver admin ProfesionalEfectorServicio.
  */
 class ProfesionalEfectorServicioController extends BaseController
 {

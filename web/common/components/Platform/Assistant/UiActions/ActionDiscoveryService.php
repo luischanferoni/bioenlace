@@ -18,7 +18,7 @@ class ActionDiscoveryService
 {
     /**
      * Orquestador / descubrimiento de acciones: solo API v1 (ver {@see discoverApiV1ControllerActions}).
-     * No se indexan controladores web de frontend ni backend.
+     * No se indexan controladores web de frontend ni admin.
      */
     private static $controllerPaths = [];
 

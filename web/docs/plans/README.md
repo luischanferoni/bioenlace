@@ -23,7 +23,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 
 | Plan | Documentación estable |
 |------|------------------------|
-| Permisos DataAccess staff | `common/components/Platform/Core/DataAccess/README.md` + backend «Consultas staff» |
+| Permisos DataAccess staff | `common/components/Platform/Core/DataAccess/README.md` + admin «Consultas staff» |
 | RBAC sin webvimark | [arquitectura/rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md) |
 
 ## Convenciones (solo dentro de `plans/`)

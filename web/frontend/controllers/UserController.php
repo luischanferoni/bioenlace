@@ -11,7 +11,7 @@ use yii\web\NotFoundHttpException;
 /**
  * Alta/actualización de usuario desde flujos frontend (personas / profesional-salud).
  */
-class UserController extends \backend\controllers\UserAccountController
+class UserController extends \admin\controllers\UserAccountController
 {
     public function behaviors(): array
     {

@@ -12,20 +12,20 @@
 frontend/web/index.php
 frontend/web/index-test.php
 frontend/web/robots.txt
-backend/web/index.php
-backend/web/index-test.php
-backend/web/robots.txt
+admin/web/index.php
+admin/web/index-test.php
+admin/web/robots.txt
 
 # Uploads y archivos generados por usuarios
 frontend/web/uploads/*
 frontend/web/practicas/*
-backend/web/uploads/*
+admin/web/uploads/*
 
 # Runtime y cache
 frontend/runtime/*
-backend/runtime/*
+admin/runtime/*
 console/runtime/*
-backend/web/assets
+admin/web/assets
 
 # Logs
 frontend/runtime/logs/analisis-consultas/*.log

@@ -3,6 +3,7 @@
 namespace common\components\Platform\Core\Service;
 
 use common\components\Platform\Core\Product\ClientContextMetadata;
+use Yii;
 
 /**
  * Contexto de cliente (web vs móvil) para RBAC y descubrimiento de acciones.

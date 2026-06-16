@@ -18,7 +18,6 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Representación paciente (FHIR) | `representacion-paciente-fhir/` | Fases 1–5 implementadas; doc estable en [producto/representacion-paciente.md](../producto/representacion-paciente.md); E2E móvil manual pendiente |
 | Limpieza legacy Yii / modelos / BD | `clean-legacy/` | Código fases 01–04 cerrado; migrate BD + smoke opcional |
 | DataAccess — edición dispersa | `data-access-edicion-sparse/` | Cerrado (`/api/editar`, `data-access.editar`; agenda legacy deprecada) |
-| RBAC unificado por intents | `rbac-intents-unificado/` | Fases 1–5 hechas; fase 6 prune + doc estable en curso |
 
 ## Planes archivados (carpeta eliminada)
 
@@ -26,6 +25,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 |------|------------------------|
 | Permisos DataAccess staff | `common/components/Platform/Core/DataAccess/README.md` + admin «Consultas staff» |
 | RBAC sin webvimark | [arquitectura/rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md) |
+| RBAC unificado por intents | [decisions/autorizacion-solo-por-intents.md](../decisions/autorizacion-solo-por-intents.md) + [arquitectura/rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md) |
 
 ## Convenciones (solo dentro de `plans/`)
 

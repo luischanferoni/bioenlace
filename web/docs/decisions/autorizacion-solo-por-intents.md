@@ -26,7 +26,7 @@ Eso duplicaba reglas (mismo eje «sobre quién actúo» en YAML, dominio y grant
 
 - Admin catálogo: solo intents + vista de manifiesto de campos (solo lectura).
 - Integridad: grants atributo en `auth_item` son **error** (`catalog-integrity/check`).
-- Código legacy (`AttributePermissionEvaluator`, etc.) queda `@deprecated` hasta eliminar referencias runtime restantes.
+- Autorización runtime de métricas y superficies edit ya no usa grants atómicos por atributo.
 - Nuevos dominios staff deben declarar YAML intent antes de exponer API/asistente.
 
 ## Referencias

@@ -6,23 +6,15 @@ use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\IntentEditSurfaceIndex;
 
 /**
- * Autorización de superficies editables. Superficies migradas: permiso por intent; legacy: grants atributo.
- *
- * @deprecated Rutas legacy por grant atributo; nuevos dominios deben declarar intents con edit_surface_id.
+ * Autorización de superficies editables vía intent enlazado.
  */
 final class EditSurfaceAuthorizationService
 {
     private AttributeGroupCatalog $catalog;
 
-    /** @deprecated Solo rutas sin intent enlazado */
-    private AttributePermissionEvaluator $permissions;
-
-    public function __construct(
-        ?AttributeGroupCatalog $catalog = null,
-        ?AttributePermissionEvaluator $permissions = null
-    ) {
+    public function __construct(?AttributeGroupCatalog $catalog = null)
+    {
         $this->catalog = $catalog ?? new AttributeGroupCatalog();
-        $this->permissions = $permissions ?? new AttributePermissionEvaluator();
     }
 
     public function userHasAnyEditableSurface(PermissionContext $ctx, array $params = []): bool
@@ -40,35 +32,22 @@ final class EditSurfaceAuthorizationService
     }
 
     /**
-     * Grants write en algún aspecto editable (sin validar scope de sesión).
-     * Usado para descubrimiento del asistente: el scope se aplica al ejecutar /api/editar.
+     * Grants intent en alguna superficie migrada (sin validar scope de sesión).
+     * El scope se aplica al ejecutar /api/editar.
      */
     public function userHasAnyWriteGrantForEdit(PermissionContext $ctx): bool
     {
-        if (DataAccessGenericChannelRetirement::areGenericChannelsRetired()) {
-            foreach ($this->catalog->listEditSurfacesForDisplay() as $surfaceId => $def) {
-                if (!is_string($surfaceId) || !is_array($def)) {
-                    continue;
-                }
-                if (!IntentEditSurfaceIndex::isSurfaceMigrated($surfaceId)) {
-                    continue;
-                }
-                foreach (IntentEditSurfaceIndex::intentsForSurface($surfaceId) as $intentId) {
-                    if (BioenlaceAccessChecker::userCanPermissionKey($ctx->userId, $intentId)) {
-                        return true;
-                    }
-                }
-            }
-
-            return false;
-        }
-
         foreach ($this->catalog->listEditSurfacesForDisplay() as $surfaceId => $def) {
             if (!is_string($surfaceId) || !is_array($def)) {
                 continue;
             }
-            if ($this->listAspectIdsWithWriteGrant($ctx, $surfaceId) !== []) {
-                return true;
+            if (!IntentEditSurfaceIndex::isSurfaceMigrated($surfaceId)) {
+                continue;
+            }
+            foreach (IntentEditSurfaceIndex::intentsForSurface($surfaceId) as $intentId) {
+                if (BioenlaceAccessChecker::userCanPermissionKey($ctx->userId, $intentId)) {
+                    return true;
+                }
             }
         }
 
@@ -80,6 +59,10 @@ final class EditSurfaceAuthorizationService
      */
     public function listAspectIdsWithWriteGrant(PermissionContext $ctx, string $surfaceId): array
     {
+        if ($this->resolveBoundIntent($ctx, $surfaceId) === null) {
+            return [];
+        }
+
         $surface = $this->catalog->getEditSurface($surfaceId);
         if ($surface === null) {
             return [];
@@ -90,30 +73,11 @@ final class EditSurfaceAuthorizationService
             return [];
         }
 
-        if ($this->resolveBoundIntent($ctx, $surfaceId) !== null) {
-            $out = [];
-            foreach ($aspects as $aspectId => $def) {
-                if (is_string($aspectId)) {
-                    $out[] = $aspectId;
-                }
-            }
-
-            return $out;
-        }
-
         $out = [];
         foreach ($aspects as $aspectId => $def) {
-            if (!is_string($aspectId) || !is_array($def)) {
-                continue;
+            if (is_string($aspectId)) {
+                $out[] = $aspectId;
             }
-            $group = trim((string) ($def['attribute_group'] ?? ''));
-            if ($group === '') {
-                continue;
-            }
-            if (!$this->permissions->can($ctx, $group, QueryOperation::WRITE)) {
-                continue;
-            }
-            $out[] = $aspectId;
         }
 
         return $out;
@@ -148,27 +112,13 @@ final class EditSurfaceAuthorizationService
             return [];
         }
 
-        $aspects = $surface['aspects'] ?? [];
-        if (!is_array($aspects)) {
+        if ($this->resolveBoundIntent($ctx, $surfaceId) === null) {
             return [];
         }
 
-        if ($this->resolveBoundIntent($ctx, $surfaceId) !== null) {
-            $out = [];
-            foreach ($aspects as $aspectId => $def) {
-                if (!is_string($aspectId) || !is_array($def)) {
-                    continue;
-                }
-                $group = trim((string) ($def['attribute_group'] ?? ''));
-                $out[] = [
-                    'id' => $aspectId,
-                    'label' => trim((string) ($def['label'] ?? $aspectId)) ?: $aspectId,
-                    'kind' => trim((string) ($def['kind'] ?? 'field_group')) ?: 'field_group',
-                    'attribute_group' => $group,
-                ];
-            }
-
-            return $out;
+        $aspects = $surface['aspects'] ?? [];
+        if (!is_array($aspects)) {
+            return [];
         }
 
         $out = [];
@@ -177,12 +127,6 @@ final class EditSurfaceAuthorizationService
                 continue;
             }
             $group = trim((string) ($def['attribute_group'] ?? ''));
-            if ($group === '') {
-                continue;
-            }
-            if (!$this->permissions->can($ctx, $group, QueryOperation::WRITE)) {
-                continue;
-            }
             $out[] = [
                 'id' => $aspectId,
                 'label' => trim((string) ($def['label'] ?? $aspectId)) ?: $aspectId,

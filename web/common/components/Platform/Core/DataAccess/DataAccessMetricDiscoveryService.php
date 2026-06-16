@@ -17,15 +17,9 @@ final class DataAccessMetricDiscoveryService
     /** @var AttributeGroupCatalog */
     private $catalog;
 
-    /** @var AttributePermissionEvaluator */
-    private $permissions;
-
-    public function __construct(
-        ?AttributeGroupCatalog $catalog = null,
-        ?AttributePermissionEvaluator $permissions = null
-    ) {
+    public function __construct(?AttributeGroupCatalog $catalog = null)
+    {
         $this->catalog = $catalog ?? new AttributeGroupCatalog();
-        $this->permissions = $permissions ?? new AttributePermissionEvaluator();
     }
 
     public static function channelForIntentId(string $intentId): ?string
@@ -60,7 +54,7 @@ final class DataAccessMetricDiscoveryService
             if (!is_string($metricId) || !is_array($def)) {
                 continue;
             }
-            if (IntentMetricIndex::intentForMetric($metricId) !== null) {
+            if (IntentMetricIndex::intentForMetric($metricId) === null) {
                 continue;
             }
             if (!$this->userCanAccessMetric($ctx, $metricId, $channel)) {
@@ -90,7 +84,7 @@ final class DataAccessMetricDiscoveryService
             if (!is_string($metricId) || !is_array($def)) {
                 continue;
             }
-            if (IntentMetricIndex::intentForMetric($metricId) !== null) {
+            if (IntentMetricIndex::intentForMetric($metricId) === null) {
                 continue;
             }
             if (!$this->userCanAccessMetric($ctx, $metricId, $channel)) {
@@ -109,46 +103,11 @@ final class DataAccessMetricDiscoveryService
 
     public function userCanAccessMetric(PermissionContext $ctx, string $metricId, string $channel): bool
     {
-        $metric = $this->catalog->getMetric($metricId);
-        if ($metric === null) {
+        if (IntentMetricIndex::intentForMetric($metricId) === null) {
             return false;
         }
 
-        if (IntentMetricIndex::intentForMetric($metricId) !== null) {
-            return IntentMetricCatalogSupport::userCanAccessMetricIntent($ctx->userId, $metricId);
-        }
-
-        $required = $metric['required_groups'] ?? [];
-        if (!is_array($required)) {
-            return false;
-        }
-        foreach ($required as $group) {
-            $group = trim((string) $group);
-            if ($group === '') {
-                continue;
-            }
-            if (!$this->permissions->can($ctx, $group, QueryOperation::AGGREGATE)) {
-                return false;
-            }
-        }
-
-        if ($channel === self::CHANNEL_LISTAR) {
-            $readGroups = $metric['read_groups'] ?? [];
-            if (!is_array($readGroups) || $readGroups === []) {
-                return false;
-            }
-            foreach ($readGroups as $group) {
-                $group = trim((string) $group);
-                if ($group === '') {
-                    continue;
-                }
-                if (!$this->permissions->can($ctx, $group, QueryOperation::READ)) {
-                    return false;
-                }
-            }
-        }
-
-        return true;
+        return IntentMetricCatalogSupport::userCanAccessMetricIntent($ctx->userId, $metricId);
     }
 
     public function metricSupportsChannel(string $metricId, string $channel): bool

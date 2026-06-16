@@ -3,24 +3,10 @@
 namespace common\components\Platform\Core\DataAccess;
 
 /**
- * Resuelve columnas proyectables según grants READ del usuario.
+ * Resuelve columnas proyectables de un listado (autorización ya aplicada a nivel métrica/intent).
  */
 final class QueryProjectionBuilder
 {
-    /** @var AttributeGroupCatalog */
-    private $catalog;
-
-    /** @var AttributePermissionEvaluator */
-    private $permissions;
-
-    public function __construct(
-        ?AttributeGroupCatalog $catalog = null,
-        ?AttributePermissionEvaluator $permissions = null
-    ) {
-        $this->catalog = $catalog ?? new AttributeGroupCatalog();
-        $this->permissions = $permissions ?? new AttributePermissionEvaluator();
-    }
-
     /**
      * @param array<string, mixed> $rowsDef bloque output.rows del plan
      * @return list<array{output_key: string, sql_expression: string, entity_group: string}>
@@ -40,9 +26,6 @@ final class QueryProjectionBuilder
             if ($outputKey === '' || $group === '' || $column === '') {
                 continue;
             }
-            if (!$this->permissions->can($ctx, $group, QueryOperation::READ)) {
-                continue;
-            }
             $out[] = [
                 'output_key' => $outputKey,
                 'sql_expression' => $column,
@@ -51,7 +34,7 @@ final class QueryProjectionBuilder
         }
 
         if ($out === []) {
-            throw new \InvalidArgumentException('No tiene permiso de lectura sobre ningún campo del listado.');
+            throw new \InvalidArgumentException('La métrica no declara campos legibles para el listado.');
         }
 
         return $out;

@@ -26,7 +26,7 @@ final class QueryCompiler
         ?QueryProjectionBuilder $projection = null
     ) {
         $this->catalog = $catalog ?? new AttributeGroupCatalog();
-        $this->projection = $projection ?? new QueryProjectionBuilder($this->catalog);
+        $this->projection = $projection ?? new QueryProjectionBuilder();
     }
 
     public function execute(AuthorizedQuery $authorized, PermissionContext $ctx): MetricExecutionResult

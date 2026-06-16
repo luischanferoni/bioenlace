@@ -3,31 +3,26 @@
 namespace common\components\Platform\Core\DataAccess\Edit;
 
 use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
-use common\components\Platform\Core\DataAccess\AttributePermissionEvaluator;
 use common\components\Platform\Core\DataAccess\EditSurfaceAuthorizationService;
 use common\components\Platform\Core\DataAccess\PermissionContext;
-use common\components\Platform\Core\DataAccess\QueryOperation;
 use common\components\Platform\Core\DataAccess\QuerySpec;
 use common\components\Platform\Core\DataAccess\ScopeCheckerRegistry;
 use yii\web\ForbiddenHttpException;
 
 /**
- * Revalida permisos write y allowlist de campos al aplicar mutación.
+ * Revalida permiso intent y allowlist de campos al aplicar mutación.
  */
 final class EditMutationAuthorizationService
 {
     private AttributeGroupCatalog $catalog;
-    private AttributePermissionEvaluator $permissions;
     private EditSurfaceAuthorizationService $surfaceAuth;
 
     public function __construct(
         ?AttributeGroupCatalog $catalog = null,
-        ?AttributePermissionEvaluator $permissions = null,
         ?EditSurfaceAuthorizationService $surfaceAuth = null
     ) {
         $this->catalog = $catalog ?? new AttributeGroupCatalog();
-        $this->permissions = $permissions ?? new AttributePermissionEvaluator();
-        $this->surfaceAuth = $surfaceAuth ?? new EditSurfaceAuthorizationService($this->catalog, $this->permissions);
+        $this->surfaceAuth = $surfaceAuth ?? new EditSurfaceAuthorizationService($this->catalog);
     }
 
     /**
@@ -50,15 +45,7 @@ final class EditMutationAuthorizationService
             throw new ForbiddenHttpException('Aspecto sin grupo de atributos.');
         }
 
-        if (!$this->permissions->can($ctx, $group, QueryOperation::WRITE)) {
-            throw new ForbiddenHttpException('No tenés permiso de escritura sobre ' . $group . '.');
-        }
-
-        $checkerId = $this->permissions->scopeCheckerFor($ctx, $group);
-        if ($checkerId !== null && $checkerId !== '') {
-            $spec = QuerySpec::fromParams('edit_mutation', $params);
-            ScopeCheckerRegistry::get($checkerId)->assertAndResolve($spec, $ctx);
-        }
+        $this->assertGroupScope($ctx, $group, $params);
     }
 
     /**
@@ -87,15 +74,7 @@ final class EditMutationAuthorizationService
             throw new ForbiddenHttpException('Aspecto sin grupo de atributos.');
         }
 
-        if (!$this->permissions->can($ctx, $group, QueryOperation::WRITE)) {
-            throw new ForbiddenHttpException('No tenés permiso de escritura sobre ' . $group . '.');
-        }
-
-        $checkerId = $this->permissions->scopeCheckerFor($ctx, $group);
-        if ($checkerId !== null && $checkerId !== '') {
-            $spec = QuerySpec::fromParams('edit_mutation', $params);
-            ScopeCheckerRegistry::get($checkerId)->assertAndResolve($spec, $ctx);
-        }
+        $this->assertGroupScope($ctx, $group, $params);
 
         $allowed = $this->allowedFieldsForAspect($aspectDef, $group);
         foreach (array_keys($fieldChanges) as $field) {
@@ -120,5 +99,19 @@ final class EditMutationAuthorizationService
         }
 
         return $this->catalog->getEntityGroupAttributes($attributeGroup);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function assertGroupScope(PermissionContext $ctx, string $group, array $params): void
+    {
+        $checkerId = trim((string) ($this->catalog->getEntityGroupScopeChecker($group) ?? ''));
+        if ($checkerId === '') {
+            return;
+        }
+
+        $spec = QuerySpec::fromParams('edit_mutation', $params);
+        ScopeCheckerRegistry::get($checkerId)->assertAndResolve($spec, $ctx);
     }
 }

@@ -16,7 +16,7 @@ Los endpoints `/api/info`, `/api/listar`, `/api/editar` siguen como **transporte
 
 - `schemas/data-access-config/` — definición de métricas, superficies edit, grupos (presentación; no grants)
 - `DataAccessUiService`, `DataAccessEditUiService` — respuestas ui_json
-- `QueryAuthorizationService` — métricas: intent enlazado → RBAC intent; legacy → grants atributo (`@deprecated`)
+- `QueryAuthorizationService` — métricas: intent enlazado → RBAC intent
 - `EditSurfaceAuthorizationService` — superficies: intent enlazado → RBAC intent
 - `DataAccessGenericChannelRetirement` — catálogo NL sin `data-access.*` cuando todo migró
 - `IntentMetricIndex`, `IntentEditSurfaceIndex` — enlaces declarativos YAML ↔ métrica/superficie

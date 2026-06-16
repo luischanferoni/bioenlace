@@ -4,8 +4,6 @@ namespace common\tests\unit\core\DataAccess;
 
 use Codeception\Test\Unit;
 use common\components\Platform\Core\DataAccess\AttributeGroupCatalog;
-use common\components\Platform\Core\DataAccess\AttributePermissionEvaluator;
-use common\components\Platform\Core\DataAccess\PermissionContext;
 use common\components\Platform\Core\DataAccess\QueryOperation;
 
 class EditSurfaceAuthorizationTest extends Unit
@@ -24,20 +22,14 @@ class EditSurfaceAuthorizationTest extends Unit
         $this->assertArrayHasKey('apellido', $surface['aspects']);
     }
 
-    public function testAdminEfectorHasWriteOnPilotGroups(): void
+    public function testEntityGroupScopeFromYaml(): void
     {
-        $eval = new AttributePermissionEvaluator();
-        $ctx = new PermissionContext(1, ['AdminEfector']);
-        $this->assertTrue($eval->can($ctx, 'Persona.identidad_basica', QueryOperation::WRITE));
-        $this->assertTrue($eval->can($ctx, 'ProfesionalEfectorServicio.asignacion', QueryOperation::WRITE));
-    }
-
-    public function testMedicoHasNoWriteOnPilotGroups(): void
-    {
-        $eval = new AttributePermissionEvaluator();
-        $ctx = new PermissionContext(1, ['Medico']);
-        $this->assertFalse($eval->can($ctx, 'Persona.identidad_basica', QueryOperation::WRITE));
-        $this->assertFalse($eval->can($ctx, 'ProfesionalEfectorServicio.asignacion', QueryOperation::WRITE));
+        $catalog = new AttributeGroupCatalog();
+        $scope = $catalog->getEntityGroupScopeChecker('ProfesionalEfectorServicio.asignacion');
+        if ($scope === null) {
+            $this->markTestSkipped('ProfesionalEfectorServicio.yaml sin groups.scope_checker.');
+        }
+        $this->assertSame('efector_sesion', $scope);
     }
 
     public function testWriteOperationIsRegistered(): void

@@ -19,7 +19,7 @@ class BioenlaceAdminAccessControl extends ActionFilter
             return true;
         }
 
-        if ($action->id === 'captcha') {
+        if (in_array($action->id, ['captcha', 'error'], true)) {
             return true;
         }
 
@@ -68,6 +68,8 @@ class BioenlaceAdminAccessControl extends ActionFilter
     {
         if (Yii::$app->user->isGuest) {
             Yii::$app->user->loginRequired();
+
+            return;
         }
 
         throw new ForbiddenHttpException(Yii::t('yii', 'You are not allowed to perform this action.'));

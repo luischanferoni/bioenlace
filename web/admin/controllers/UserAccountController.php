@@ -4,7 +4,7 @@ namespace admin\controllers;
 
 use common\models\search\UserSearch;
 use common\models\User;
-use common\components\Controller\GridAdminActionsTrait;
+use common\components\Platform\Ui\Grid\GridAdminActionsTrait;
 use Yii;
 use yii\filters\VerbFilter;
 use yii\helpers\FileHelper;

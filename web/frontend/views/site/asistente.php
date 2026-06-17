@@ -39,9 +39,6 @@ $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAs
                     <!-- Estado inicial: intro + atajos (misma API que el menú Atajos); se ocultan al escribir o al primer envío -->
                     <div class="d-flex justify-content-start w-100" id="spa-chat-empty-hint">
                         <div class="spa-chat-empty-hint-inner text-start px-3 py-3 w-100">
-                            <p class="text-muted small spa-chat-empty-intro mb-3">
-                                Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”.
-                            </p>
                             <div id="spa-chat-welcome-actions" class="spa-chat-welcome-actions" aria-label="Acciones sugeridas"></div>
                         </div>
                     </div>
@@ -55,7 +52,7 @@ $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAs
                             id="spa-query-input"
                             class="spa-chat-input"
                             rows="2"
-                            placeholder="Escribe tu mensaje…"
+                            placeholder="Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”."
                         ></textarea>
                         <button type="button" id="spa-send-btn" class="spa-chat-send-btn" aria-label="Enviar mensaje">
                             <span class="spa-send-text" aria-hidden="true">→</span>

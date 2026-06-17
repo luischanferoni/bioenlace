@@ -306,10 +306,6 @@ html:has(.spa-asistente-root) {
     flex: 0 1 auto;
 }
 
-.spa-chat-empty-intro {
-    color: var(--bio-paper-500) !important;
-}
-
 .spa-chat-messages {
     overflow: visible;
     min-height: 0;

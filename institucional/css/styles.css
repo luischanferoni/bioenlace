@@ -864,6 +864,10 @@ section {
     order: 2;
 }
 
+.ia-layout--reverse .ia-diagram--unified {
+    order: 1;
+}
+
 .ia-layout--reverse .benefit-list {
     order: 1;
 }
@@ -911,6 +915,39 @@ section {
 .ia-arrow {
     color: var(--text-muted);
     font-size: 0.75rem;
+}
+
+.ia-diagram--unified {
+    gap: 0.35rem;
+}
+
+.ia-diagram--unified .ia-step {
+    gap: 0.25rem;
+    padding: 1rem 1.125rem;
+}
+
+.ia-step__label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.ia-diagram--unified .ia-step h3 {
+    margin: 0.15rem 0 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--brand-dark);
+}
+
+.ia-diagram--unified .ia-step p {
+    margin: 0.2rem 0 0;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    line-height: 1.45;
+    color: var(--text-muted);
 }
 
 /* Audiencia (pacientes) */
@@ -1167,6 +1204,7 @@ section {
     }
 
     .ia-layout--reverse .ia-diagram,
+    .ia-layout--reverse .ia-diagram--unified,
     .ia-layout--reverse .encounter-demo,
     .ia-layout--reverse .benefit-list {
         order: unset;
@@ -1180,6 +1218,15 @@ section {
 
     .ia-arrow {
         transform: rotate(-90deg);
+    }
+
+    .ia-diagram--unified {
+        flex-direction: column;
+        flex-wrap: nowrap;
+    }
+
+    .ia-diagram--unified .ia-arrow {
+        transform: none;
     }
 
     .benefit-list {

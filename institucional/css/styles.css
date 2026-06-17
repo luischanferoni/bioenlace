@@ -846,13 +846,18 @@ section {
     margin: 0 auto;
 }
 
-.ia-layout .assistant-demo {
+.ia-layout .assistant-demo,
+.ia-layout .encounter-demo {
     width: 100%;
     min-width: 0;
 }
 
 .ia-layout--reverse {
-    grid-template-columns: 1fr 280px;
+    grid-template-columns: 1fr minmax(300px, 400px);
+}
+
+.ia-layout--reverse .encounter-demo {
+    order: 2;
 }
 
 .ia-layout--reverse .ia-diagram {
@@ -1162,6 +1167,7 @@ section {
     }
 
     .ia-layout--reverse .ia-diagram,
+    .ia-layout--reverse .encounter-demo,
     .ia-layout--reverse .benefit-list {
         order: unset;
     }

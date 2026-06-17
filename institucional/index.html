@@ -67,17 +67,25 @@
                         <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="crear">Crear</button>
                     </div>
                     <div class="assistant-demo__body">
-                        <div class="assistant-demo__messages spa-chat-messages" aria-live="polite" aria-relevant="additions"></div>
+                        <div class="assistant-demo__messages spa-chat-messages" aria-live="polite" aria-relevant="additions">
+                            <div class="assistant-demo__empty-hint" id="assistant-demo-empty-hint">
+                                <div class="assistant-demo__welcome-actions" aria-label="Ejemplos sugeridos">
+                                    <span class="assistant-demo__welcome-chip">Listar profesionales</span>
+                                    <span class="assistant-demo__welcome-chip">Modificar condición laboral</span>
+                                    <span class="assistant-demo__welcome-chip">Crear turno para paciente</span>
+                                </div>
+                            </div>
+                        </div>
                         <div class="assistant-demo__composer spa-chat-composer">
                             <div class="spa-chat-input-wrap">
                                 <div class="spa-query-input">
-                                    <textarea class="spa-chat-input assistant-demo__composer-input" rows="1" readonly placeholder="Escribe tu mensaje…" aria-hidden="true"></textarea>
+                                    <textarea class="spa-chat-input assistant-demo__composer-input" rows="2" readonly placeholder="Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”." aria-hidden="true"></textarea>
                                     <button type="button" class="spa-chat-send-btn" tabindex="-1" aria-hidden="true">
                                         <span class="spa-send-text" aria-hidden="true">→</span>
                                     </button>
                                 </div>
                             </div>
-                            <p class="spa-chat-composer-hint">Ejemplo ilustrado — datos ficticios</p>
+                            <p class="spa-chat-composer-hint">Enter para enviar, Shift+Enter para salto de línea. <span class="assistant-demo__composer-note">Ejemplo ilustrado — datos ficticios</span></p>
                         </div>
                     </div>
                 </div>
@@ -132,16 +140,23 @@
                 <p class="section-subtitle">Asistencia en consulta y seguimiento clínico</p>
             </div>
             <div class="ia-layout ia-layout--reverse reveal">
-                <div class="ia-diagram" aria-hidden="true">
-                    <div class="ia-step ia-step--clinical"><i class="fas fa-book-medical"></i><span>Historia legible</span></div>
-                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--medico"><i class="fas fa-user-doctor"></i><span>Escribes o dictas</span></div>
-                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--ai"><i class="fas fa-wand-magic-sparkles"></i><span>IA interpreta</span></div>
-                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--clinical"><i class="fas fa-file-medical"></i><span>Registro clínico</span></div>
-                    <div class="ia-arrow"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--confirm"><i class="fas fa-circle-check"></i><span>Vos validás</span></div>
+                <div class="encounter-demo" id="encounter-demo" aria-label="Demostración captura clínica en historia del paciente">
+                    <div class="encounter-demo__tabs assistant-demo__tabs" role="tablist" aria-label="Ejemplos de captura">
+                        <button type="button" class="assistant-demo__tab is-active" role="tab" aria-selected="true" data-flow="consulta">Consulta</button>
+                        <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="evolucion">Evolución</button>
+                        <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="guardia">Guardia</button>
+                    </div>
+                    <div class="encounter-demo__body">
+                        <header class="encounter-demo__header" id="encounter-demo-header" aria-hidden="true">
+                            <div class="encounter-demo__header-main">
+                                <span class="encounter-demo__patient-name" id="encounter-demo-patient-name"></span>
+                                <span class="encounter-demo__patient-meta" id="encounter-demo-patient-meta"></span>
+                            </div>
+                            <span class="encounter-demo__context-badge" id="encounter-demo-context-badge"></span>
+                        </header>
+                        <div class="encounter-demo__stage" id="encounter-demo-stage" aria-live="polite" aria-relevant="additions"></div>
+                    </div>
+                    <p class="encounter-demo__note">Historia del paciente — formulario de captura. Ejemplo ilustrado con datos ficticios.</p>
                 </div>
                 <ul class="benefit-list benefit-list--compact">
                     <li class="benefit-item">
@@ -490,6 +505,7 @@
     </footer>
 
     <script src="js/assistant-demo.js"></script>
+    <script src="js/encounter-demo.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

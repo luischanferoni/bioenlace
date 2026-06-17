@@ -26,6 +26,10 @@ institucional/
 
 Mock animado alineado a `spa.css` (burbujas, flow header, tabla, formulario, composer). Tres pestañas con datos ficticios (lorem). Arranca al hacer scroll a la sección; rota automáticamente salvo hover o foco en la demo.
 
+## Demo captura clínica (`js/encounter-demo.js`)
+
+Mock del **formulario de encounter en la historia del paciente** (`_formulario_consulta.php`), no del chat del asistente. Pestañas Consulta / Evolución / Guardia: contexto → **dictado simulado** (micrófono, ondas, transcripción) → analizar → confirmar. Datos ficticios.
+
 ## Desarrollo local
 
 ```bash

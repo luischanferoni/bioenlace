@@ -1,11 +1,7 @@
 /**
-
  * Demo animado del asistente web (sitio institucional).
-
  * Mock estático — sin API ni spa-home.js.
-
- * Editar: alineado a data-access.editar (edición dispersa).
-
+ * Editar: intents por contexto (propio / staff) → sujeto → campos del YAML.
  */
 
 (function () {
@@ -25,14 +21,13 @@
 
 
     var messagesEl = demo.querySelector('.assistant-demo__messages');
-
+    var emptyHintEl = document.getElementById('assistant-demo-empty-hint');
     var composerInput = demo.querySelector('.assistant-demo__composer-input');
-
     var queryInputWrap = demo.querySelector('.spa-query-input');
-
     var tabs = demo.querySelectorAll('.assistant-demo__tab');
-
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var COMPOSER_PLACEHOLDER = 'Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”.';
 
 
 
@@ -59,47 +54,26 @@
     var FLOWS = {
 
         listar: {
-
-            userText: 'Mostrame el listado de registros',
-
-            botText: 'Estos son los registros que encontré.',
-
-            flowTitle: 'Listado',
-
+            userText: 'Mostrame los profesionales del centro',
+            botText: 'Este es el listado de profesionales en tu efector.',
+            flowTitle: 'Listar profesionales',
             showConfirm: false,
-
             buildUi: buildListUi,
-
             animate: animateListFlow
-
         },
-
         editar: {
-
-            userText: 'Quiero modificar datos del personal',
-
-            botText: 'Elegí qué editar, el registro y los aspectos a modificar.',
-
-            flowTitle: 'Edición',
-
-            successText: 'Los cambios se guardaron correctamente.',
-
-            animate: animateEditSparseFlow
-
+            userText: 'Necesito modificar una condición laboral',
+            botText: '¿Querés modificar tu condición laboral o la de un profesional del centro?',
+            flowTitle: 'Condición laboral',
+            successText: 'La condición laboral se actualizó correctamente.',
+            animate: animateEditIntentFlow
         },
-
         crear: {
-
-            userText: 'Necesito dar de alta un registro',
-
-            botText: 'Seguí los pasos: persona, servicio y confirmá el alta.',
-
-            flowTitle: 'Crear',
-
-            successText: 'Registro creado correctamente.',
-
+            userText: 'Necesito crear un turno para un paciente',
+            botText: 'Elegí servicio, centro de salud, profesional y horario.',
+            flowTitle: 'Crear turno',
+            successText: 'Turno reservado correctamente.',
             animate: animateCreateFlow
-
         }
 
     };
@@ -154,20 +128,26 @@
 
 
 
+    function setEmptyHintVisible(visible) {
+        if (!emptyHintEl) {
+            return;
+        }
+        emptyHintEl.classList.toggle('is-hidden', !visible);
+    }
+
     function clearMessages() {
-
         if (messagesEl) {
-
+            var hint = emptyHintEl;
             messagesEl.innerHTML = '';
-
+            if (hint) {
+                messagesEl.appendChild(hint);
+            }
         }
-
+        setEmptyHintVisible(false);
         if (composerInput) {
-
             composerInput.value = '';
-
+            composerInput.placeholder = COMPOSER_PLACEHOLDER;
         }
-
     }
 
 
@@ -189,7 +169,7 @@
 
 
     function appendUserBubble(text) {
-
+        setEmptyHintVisible(false);
         var row = document.createElement('div');
 
         row.className = 'assistant-demo__row assistant-demo__row--user';
@@ -330,312 +310,234 @@
 
     }
 
+    function buildPickCardGroup(options, selectedValue) {
+        var html = '<div class="assistant-demo__pick-group">';
+        html += '<div class="assistant-demo__pick-list assistant-demo__pick-list--cards">';
+        options.forEach(function (opt) {
+            var sel = opt.value === selectedValue ? ' is-selected' : '';
+            html += '<button type="button" class="assistant-demo__pick-btn assistant-demo__pick-btn--card' + sel + '" data-demo-pick="'
+                + escapeHtml(opt.value) + '" tabindex="-1">';
+            html += '<span class="assistant-demo__pick-card-label">' + escapeHtml(opt.label) + '</span>';
+            if (opt.meta) {
+                html += '<span class="assistant-demo__pick-card-meta">' + escapeHtml(opt.meta) + '</span>';
+            }
+            html += '</button>';
+        });
+        html += '</div></div>';
+        return html;
+    }
+
 
 
     function buildListUi() {
-
         return ''
-
             + '<div class="bio-ui-json-list bio-ui-json-list--layout-table">'
-
             + '<table class="bio-ui-json-list-table">'
-
-            + '<thead><tr><th>Nombre</th><th>Área</th><th>Estado</th></tr></thead>'
-
+            + '<thead><tr><th>Profesional</th><th>Servicio</th><th>Condición</th></tr></thead>'
             + '<tbody>'
-
-            + '<tr data-demo-row="1"><td>Lorem Ipsum</td><td>Dolor sit</td><td>Activo</td></tr>'
-
-            + '<tr data-demo-row="2"><td>Amet Consect</td><td>Adipiscing elit</td><td>Activo</td></tr>'
-
-            + '<tr data-demo-row="3"><td>Sed Eiusmod</td><td>Tempor incid</td><td>Activo</td></tr>'
-
+            + '<tr data-demo-row="1"><td>Dra. Lorem Ipsum</td><td>Clínica médica</td><td>Planta permanente</td></tr>'
+            + '<tr data-demo-row="2"><td>Dr. Amet Consect</td><td>Pediatría</td><td>Contrato</td></tr>'
+            + '<tr data-demo-row="3"><td>Dra. Sed Eiusmod</td><td>Ginecología</td><td>Planta permanente</td></tr>'
             + '</tbody></table></div>';
-
     }
 
-
-
-    /** Paso surfaces — ¿Qué querés editar? */
-
-    function buildEditSurfacesUi(selectedId) {
-
+    /** Paso 1 — contexto (intent propio vs staff) */
+    function buildEditContextUi(selectedId) {
         return buildIntroMessage(
-
-            '¿Qué querés editar?',
-
-            'Elegí el tipo de datos que necesitás modificar.'
-
+            '¿Sobre quién querés actuar?',
+            'Elegí si modificás tu condición laboral o la de otro profesional del centro.'
         ) + buildPickGroup('', [
-
-            { value: 'profesional_en_efector', label: 'Personal del centro' }
-
+            { value: 'propio', label: 'Mi condición laboral' },
+            { value: 'staff', label: 'De un profesional del centro' }
         ], selectedId || '');
-
     }
 
-
-
-    /** Paso subjects — elegir registro (métrica listar) */
-
-    function buildEditSubjectsUi(highlightRow) {
-
-        var html = buildIntroMessage(
-
-            'Elegí el registro',
-
-            'Primero elegí el registro; después marcá qué aspectos querés modificar.'
-
-        );
-
-        html += '<div class="bio-ui-json-list bio-ui-json-list--layout-table">';
-
-        html += '<table class="bio-ui-json-list-table"><thead><tr>';
-
-        html += '<th>Profesional</th><th>Servicio</th><th>Estado</th>';
-
-        html += '</tr></thead><tbody>';
-
-        var rows = [
-
-            ['1', 'Lorem Ipsum', 'Dolor sit', 'Activo'],
-
-            ['2', 'Amet Consect', 'Adipiscing elit', 'Activo'],
-
-            ['3', 'Sed Eiusmod', 'Tempor incid', 'Activo']
-
-        ];
-
-        rows.forEach(function (r) {
-
-            var hi = highlightRow === r[0] ? ' class="is-highlight"' : '';
-
-            html += '<tr data-demo-row="' + r[0] + '"' + hi + '>';
-
-            html += '<td>' + escapeHtml(r[1]) + '</td><td>' + escapeHtml(r[2]) + '</td><td>' + escapeHtml(r[3]) + '</td>';
-
-            html += '</tr>';
-
-        });
-
-        html += '</tbody></table></div>';
-
-        return html;
-
-    }
-
-
-
-    /** Paso aspects — aspectos editables */
-
-    function buildEditAspectsUi(selectedId) {
-
+    /** Paso 2 — elegir PES (staff) */
+    function buildEditPesPickUi(selectedId) {
         return buildIntroMessage(
-
-            'Editar: Personal del centro',
-
-            'Elegí qué aspectos querés modificar y continuá al formulario.'
-
-        ) + buildPickGroup('Aspectos', [
-
-            { value: 'identidad', label: 'Identidad (nombre y apellido)' },
-
-            { value: 'agenda_horarios', label: 'Agenda y horarios' }
-
+            'Elegí el profesional',
+            'Tocá la asignación cuya condición laboral querés modificar.'
+        ) + buildPickCardGroup([
+            { value: '1', label: 'Dra. Lorem Ipsum', meta: 'Clínica médica · vigente desde 01/2024' },
+            { value: '2', label: 'Dr. Amet Consect', meta: 'Pediatría · vigente desde 03/2025' },
+            { value: '3', label: 'Dra. Sed Eiusmod', meta: 'Ginecología · vigente desde 06/2023' }
         ], selectedId || '');
-
     }
 
+    /** Paso 3 — grupos de campos (presentación YAML) */
+    function buildEditFieldGroupsUi(selectedId) {
+        return buildIntroMessage(
+            '¿Qué querés modificar?',
+            'Elegí un grupo de campos o continuá si ya lo indicaste en tu mensaje.'
+        ) + buildPickGroup('Grupos', [
+            { value: 'condicion', label: 'Condición y tipo' },
+            { value: 'vigencia', label: 'Vigencia (fechas)' }
+        ], selectedId || '');
+    }
 
-
-    /** Paso form — aspecto open_ui (agenda_horarios) */
-
-    function buildEditFormUi() {
-
+    /** Paso 4 — formulario escalar */
+    function buildEditCondicionLaboralFormUi() {
         return ''
-
             + buildIntroMessage(
-
-                'Editar: Amet Consect',
-
-                'Revisá los valores actuales y modificá solo lo necesario.'
-
+                'Dr. Amet Consect — vigencia',
+                'Modificá solo los campos que necesites.'
             )
-
-            + '<div class="bio-ui-json-message bio-ui-json-message--warning">'
-
-            + '<div class="bio-ui-json-message__title">Agenda y horarios</div>'
-
-            + '<div class="bio-ui-json-message__body">Este aspecto se configura en una pantalla dedicada. Podés continuar con los demás campos o volver más adelante.</div>'
-
+            + '<div class="bio-ui-json-fields">'
+            + '<div class="assistant-demo__field"><label>Condición laboral</label>'
+            + '<input type="text" readonly value="Contrato" data-demo-field="condicion"></div>'
+            + '<div class="assistant-demo__field"><label>Fecha inicio</label>'
+            + '<input type="text" readonly value="01/03/2025" data-demo-field="inicio"></div>'
+            + '<div class="assistant-demo__field"><label>Fecha fin</label>'
+            + '<input type="text" readonly value="" data-demo-field="fin" placeholder="31/12/2026"></div>'
             + '</div>';
-
     }
 
-
-
-    /** Paso confirm — diff antes de persistir */
-
-    function buildEditConfirmUi() {
-
+    /** Paso 5 — confirmar */
+    function buildEditCondicionLaboralConfirmUi() {
         return ''
-
             + buildIntroMessage(
-
                 'Confirmar cambios',
-
-                'Amet Consect — aspecto Agenda y horarios: se abrirá la pantalla dedicada para configurar horarios.'
-
+                'Dr. Amet Consect — se actualizará la vigencia de la condición laboral.'
             )
-
             + '<div class="assistant-demo__diff">'
-
             + '<div class="assistant-demo__diff-row">'
-
-            + '<span class="assistant-demo__diff-label">Aspecto</span>'
-
-            + '<span class="assistant-demo__diff-value">Agenda y horarios</span>'
-
+            + '<span class="assistant-demo__diff-label">Fecha fin</span>'
+            + '<span class="assistant-demo__diff-value">— → 31/12/2026</span>'
             + '</div>'
-
             + '<div class="assistant-demo__diff-row">'
-
-            + '<span class="assistant-demo__diff-label">Acción</span>'
-
-            + '<span class="assistant-demo__diff-value">Abrir pantalla dedicada</span>'
-
+            + '<span class="assistant-demo__diff-label">Condición</span>'
+            + '<span class="assistant-demo__diff-value">Contrato (sin cambios)</span>'
             + '</div>'
-
             + '</div>';
-
     }
 
 
 
     var CREATE_STEPS = [
+        { num: 1, label: 'Servicio' },
+        { num: 2, label: 'Centro de salud' },
+        { num: 3, label: 'Profesional y horario' }
+    ];
 
-        { num: 1, label: 'Persona' },
-
-        { num: 2, label: 'Servicio' },
-
-        { num: 3, label: 'Alta' }
-
+    var EDIT_STEPS = [
+        { num: 1, label: 'Ámbito' },
+        { num: 2, label: 'Profesional' },
+        { num: 3, label: 'Campos' },
+        { num: 4, label: 'Confirmar' }
     ];
 
 
 
-    function buildCreateTimelineShell() {
-
+    function buildFlowTimelineShell(steps, stepAttr) {
         var html = '<ol class="spa-flow-steps-list assistant-demo__timeline">';
-
-        CREATE_STEPS.forEach(function (step, idx) {
-
-            html += '<li class="spa-flow-step-item spa-flow-step-item--pending" data-demo-create-step="' + idx + '">';
-
+        steps.forEach(function (step, idx) {
+            html += '<li class="spa-flow-step-item spa-flow-step-item--pending" ' + stepAttr + '="' + idx + '">';
             html += '<div class="spa-flow-step-track">';
-
             html += '<span class="spa-flow-step-num" aria-hidden="true">' + step.num + '</span>';
-
             html += '<div class="spa-flow-step-body">';
-
             html += '<div class="spa-flow-step-text">' + escapeHtml(step.label) + '</div>';
-
             html += '<div class="spa-flow-step-ui"></div>';
-
             html += '</div></div></li>';
-
         });
-
         html += '</ol>';
-
         return html;
+    }
 
+    function buildCreateTimelineShell() {
+        return buildFlowTimelineShell(CREATE_STEPS, 'data-demo-create-step');
+    }
+
+    function buildEditTimelineShell() {
+        return buildFlowTimelineShell(EDIT_STEPS, 'data-demo-edit-step');
+    }
+
+
+
+    function setFlowStepState(container, activeIdx, stepAttr) {
+        var items = container.querySelectorAll('[' + stepAttr + ']');
+        items.forEach(function (li, idx) {
+            li.classList.remove('spa-flow-step-item--active', 'spa-flow-step-item--done', 'spa-flow-step-item--pending');
+            if (idx < activeIdx) {
+                li.classList.add('spa-flow-step-item--done');
+            } else if (idx === activeIdx) {
+                li.classList.add('spa-flow-step-item--active');
+            } else {
+                li.classList.add('spa-flow-step-item--pending');
+            }
+        });
+    }
+
+    function flowStepUiMount(container, stepIdx, stepAttr) {
+        var item = container.querySelector('[' + stepAttr + '="' + stepIdx + '"]');
+        return item ? item.querySelector('.spa-flow-step-ui') : null;
     }
 
 
 
     function setCreateStepState(container, activeIdx) {
-
-        var items = container.querySelectorAll('[data-demo-create-step]');
-
-        items.forEach(function (li, idx) {
-
-            li.classList.remove('spa-flow-step-item--active', 'spa-flow-step-item--done', 'spa-flow-step-item--pending');
-
-            if (idx < activeIdx) {
-
-                li.classList.add('spa-flow-step-item--done');
-
-            } else if (idx === activeIdx) {
-
-                li.classList.add('spa-flow-step-item--active');
-
-            } else {
-
-                li.classList.add('spa-flow-step-item--pending');
-
-            }
-
-        });
-
+        setFlowStepState(container, activeIdx, 'data-demo-create-step');
     }
 
 
 
     function createStepUiMount(container, stepIdx) {
-
-        var item = container.querySelector('[data-demo-create-step="' + stepIdx + '"]');
-
-        return item ? item.querySelector('.spa-flow-step-ui') : null;
-
+        return flowStepUiMount(container, stepIdx, 'data-demo-create-step');
     }
 
+    function setEditStepState(container, activeIdx) {
+        setFlowStepState(container, activeIdx, 'data-demo-edit-step');
+    }
 
+    function editStepUiMount(container, stepIdx) {
+        return flowStepUiMount(container, stepIdx, 'data-demo-edit-step');
+    }
 
-    function buildCreatePersonaUi() {
+    function mountEditStep(timeline, stepIdx, html) {
+        setEditStepState(timeline, stepIdx);
+        var mount = editStepUiMount(timeline, stepIdx);
+        if (mount) {
+            mount.innerHTML = html;
+        }
+        scrollMessages();
+        return mount;
+    }
 
-        return buildPickGroup('', [
-
-            { value: 'lorem', label: 'Lorem Ipsum' },
-
-            { value: 'amet', label: 'Amet Consect' }
-
-        ], '');
-
+    function mountCreateStep(timeline, stepIdx, html) {
+        setCreateStepState(timeline, stepIdx);
+        var mount = createStepUiMount(timeline, stepIdx);
+        if (mount) {
+            mount.innerHTML = html;
+        }
+        scrollMessages();
+        return mount;
     }
 
 
 
     function buildCreateServicioUi() {
-
         return buildPickGroup('', [
-
-            { value: 'dolor', label: 'Dolor sit' },
-
-            { value: 'magna', label: 'Magna aliqua' }
-
+            { value: 'clinica', label: 'Clínica médica' },
+            { value: 'pediatria', label: 'Pediatría' }
         ], '');
-
     }
 
+    function buildCreateEfectorUi() {
+        return buildPickGroup('', [
+            { value: 'norte', label: 'Centro de salud Norte' },
+            { value: 'sur', label: 'Centro de salud Sur' }
+        ], '');
+    }
 
-
-    function buildCreateAltaUi() {
-
+    function buildCreateTurnoUi() {
         return ''
-
             + '<div class="bio-ui-json-fields">'
-
-            + '<div class="assistant-demo__field"><label>Resumen</label>'
-
-            + '<input type="text" readonly value="" data-demo-field="resumen" placeholder="Persona y servicio"></div>'
-
-            + '<div class="assistant-demo__field"><label>Estado</label>'
-
-            + '<input type="text" readonly value="" data-demo-field="estado" placeholder="Activo"></div>'
-
+            + '<div class="assistant-demo__field"><label>Profesional</label>'
+            + '<input type="text" readonly value="" data-demo-field="profesional" placeholder="Dr. Amet Consect"></div>'
+            + '<div class="assistant-demo__field"><label>Horario</label>'
+            + '<input type="text" readonly value="" data-demo-field="horario" placeholder="Martes 10:30"></div>'
+            + '<div class="assistant-demo__field"><label>Paciente</label>'
+            + '<input type="text" readonly value="" data-demo-field="paciente" placeholder="Beneficiario del turno"></div>'
             + '</div>';
-
     }
 
 
@@ -705,7 +607,7 @@
         }
 
         demo.classList.add('is-typing');
-
+        setEmptyHintVisible(false);
         if (queryInputWrap) {
 
             queryInputWrap.classList.add('is-typing');
@@ -803,77 +705,63 @@
 
 
     /**
-
-     * Edición dispersa: surfaces → subjects → aspects → form → confirm
-
-     * (data-access.editar.yaml)
-
+     * Edición: timeline acumulativo — los pasos previos quedan visibles con la selección.
      */
-
-    async function animateEditSparseFlow(flowRow, token) {
-
+    async function animateEditIntentFlow(flowRow, token) {
         var uiEl = flowRow.querySelector('.spa-chat-flow-ui');
-
         if (!uiEl) {
-
             return;
-
         }
-
-
 
         setConfirmLabel(flowRow, 'Continuar');
-
+        uiEl.innerHTML = buildEditTimelineShell();
         requestAnimationFrame(function () {
-
             flowRow.classList.add('is-visible');
-
+            uiEl.classList.add('is-visible');
         });
 
-
-
-        uiEl.innerHTML = buildEditSurfacesUi();
-
-        uiEl.classList.add('is-visible');
-
+        var timeline = uiEl;
+        var mount0 = mountEditStep(timeline, 0, buildEditContextUi());
         await wait(reducedMotion ? 300 : 600);
-
-        await selectPick(uiEl, 'profesional_en_efector', token);
-
-
-
-        await swapUi(uiEl, buildEditSubjectsUi(), token);
-
-        await wait(reducedMotion ? 200 : 400);
-
-        var subjectRow = uiEl.querySelector('[data-demo-row="2"]');
-
-        if (subjectRow) {
-
-            subjectRow.classList.add('is-highlight');
-
+        if (mount0) {
+            await selectPick(mount0, 'staff', token);
         }
 
-        await wait(reducedMotion ? 400 : 700);
+        if (token !== runToken) {
+            return;
+        }
+        var mount1 = mountEditStep(timeline, 1, buildEditPesPickUi());
+        await wait(reducedMotion ? 250 : 500);
+        if (mount1) {
+            await selectPick(mount1, '2', token);
+        }
 
+        if (token !== runToken) {
+            return;
+        }
+        var mount2 = mountEditStep(timeline, 2, buildEditFieldGroupsUi());
+        await wait(reducedMotion ? 250 : 450);
+        if (mount2) {
+            await selectPick(mount2, 'vigencia', token);
+        }
 
-
-        await swapUi(uiEl, buildEditAspectsUi(), token);
-
-        await selectPick(uiEl, 'agenda_horarios', token);
-
-
-
-        await swapUi(uiEl, buildEditFormUi(), token);
-
+        if (token !== runToken) {
+            return;
+        }
+        var mount3 = mountEditStep(timeline, 3, buildEditCondicionLaboralFormUi());
         await wait(reducedMotion ? 300 : 550);
+        var finField = mount3 ? mount3.querySelector('[data-demo-field="fin"]') : null;
+        if (finField) {
+            finField.value = '31/12/2026';
+            finField.classList.add('is-changed');
+            await wait(reducedMotion ? 250 : 500);
+        }
 
-
-
-        await swapUi(uiEl, buildEditConfirmUi(), token);
+        if (mount3) {
+            await swapUi(mount3, buildEditCondicionLaboralConfirmUi(), token);
+        }
 
         setConfirmLabel(flowRow, 'Confirmar');
-
     }
 
 
@@ -906,99 +794,36 @@
 
 
 
-        /* Paso 1 — Persona */
-
-        setCreateStepState(timeline, 0);
-
-        var mount0 = createStepUiMount(timeline, 0);
-
-        if (mount0) {
-
-            mount0.innerHTML = buildCreatePersonaUi();
-
-        }
-
-        scrollMessages();
-
+        /* Paso 1 — Servicio */
+        var mount0 = mountCreateStep(timeline, 0, buildCreateServicioUi());
         await wait(reducedMotion ? 300 : 550);
-
         if (mount0) {
-
-            await selectPick(mount0, 'amet', token);
-
+            await selectPick(mount0, 'pediatria', token);
         }
 
-
-
-        /* Paso 2 — Servicio */
-
+        /* Paso 2 — Centro */
         if (token !== runToken) {
-
             return;
-
         }
-
-        setCreateStepState(timeline, 1);
-
-        if (mount0) {
-
-            mount0.innerHTML = '';
-
-        }
-
-        var mount1 = createStepUiMount(timeline, 1);
-
-        if (mount1) {
-
-            mount1.innerHTML = buildCreateServicioUi();
-
-        }
-
-        scrollMessages();
-
+        var mount1 = mountCreateStep(timeline, 1, buildCreateEfectorUi());
         await wait(reducedMotion ? 250 : 450);
-
         if (mount1) {
-
-            await selectPick(mount1, 'magna', token);
-
+            await selectPick(mount1, 'norte', token);
         }
 
-
-
-        /* Paso 3 — Alta */
-
+        /* Paso 3 — Profesional y horario */
         if (token !== runToken) {
-
             return;
-
         }
-
-        setCreateStepState(timeline, 2);
-
-        if (mount1) {
-
-            mount1.innerHTML = '';
-
-        }
-
-        var mount2 = createStepUiMount(timeline, 2);
-
-        if (mount2) {
-
-            mount2.innerHTML = buildCreateAltaUi();
-
-        }
-
-        scrollMessages();
-
+        var mount2 = mountCreateStep(timeline, 2, buildCreateTurnoUi());
         await wait(reducedMotion ? 300 : 500);
 
-
-
         var fields = mount2 ? mount2.querySelectorAll('[data-demo-field]') : [];
-
-        var values = { resumen: 'Amet Consect — Magna aliqua', estado: 'Activo' };
+        var values = {
+            profesional: 'Dr. Amet Consect',
+            horario: 'Martes 10:30',
+            paciente: 'Beneficiario del turno'
+        };
 
         for (var i = 0; i < fields.length; i++) {
 
@@ -1139,59 +964,70 @@
 
 
     async function runFlowInstant(flow, flowId) {
-
+        setEmptyHintVisible(false);
         composerInput.value = flow.userText;
-
         appendUserBubble(flow.userText);
-
         appendBotBubble(flow.botText);
-
         var staticRow = appendFlowShell(flow.flowTitle);
-
         staticRow.classList.add('is-visible');
-
         var staticUi = staticRow.querySelector('.spa-chat-flow-ui');
-
         var staticSubmit = staticRow.querySelector('.spa-flow-submit-inline');
 
-
-
         if (staticUi) {
-
             if (flowId === 'editar') {
-
-                staticUi.innerHTML = buildEditConfirmUi();
-
-                setConfirmLabel(staticRow, 'Confirmar');
-
-            } else if (flowId === 'crear') {
-
-                staticUi.innerHTML = buildCreateTimelineShell();
-
-                setCreateStepState(staticUi, 2);
-
-                var m2 = createStepUiMount(staticUi, 2);
-
-                if (m2) {
-
-                    m2.innerHTML = buildCreateAltaUi();
-
-                    m2.querySelectorAll('[data-demo-field]').forEach(function (el) {
-
-                        var key = el.getAttribute('data-demo-field');
-
-                        var vals = { resumen: 'Amet Consect — Magna aliqua', estado: 'Activo' };
-
-                        el.value = vals[key] || '';
-
-                        el.classList.add('is-filled');
-
-                    });
-
+                staticUi.innerHTML = buildEditTimelineShell();
+                setEditStepState(staticUi, 3);
+                var e0 = editStepUiMount(staticUi, 0);
+                var e1 = editStepUiMount(staticUi, 1);
+                var e2 = editStepUiMount(staticUi, 2);
+                var e3 = editStepUiMount(staticUi, 3);
+                if (e0) {
+                    e0.innerHTML = buildEditContextUi('staff');
                 }
-
+                if (e1) {
+                    e1.innerHTML = buildEditPesPickUi('2');
+                }
+                if (e2) {
+                    e2.innerHTML = buildEditFieldGroupsUi('vigencia');
+                }
+                if (e3) {
+                    e3.innerHTML = buildEditCondicionLaboralConfirmUi();
+                }
                 setConfirmLabel(staticRow, 'Confirmar');
-
+            } else if (flowId === 'crear') {
+                staticUi.innerHTML = buildCreateTimelineShell();
+                setCreateStepState(staticUi, 2);
+                var c0 = createStepUiMount(staticUi, 0);
+                var c1 = createStepUiMount(staticUi, 1);
+                var m2 = createStepUiMount(staticUi, 2);
+                if (c0) {
+                    c0.innerHTML = buildCreateServicioUi();
+                    var ped = c0.querySelector('[data-demo-pick="pediatria"]');
+                    if (ped) {
+                        ped.classList.add('is-selected');
+                    }
+                }
+                if (c1) {
+                    c1.innerHTML = buildCreateEfectorUi();
+                    var norte = c1.querySelector('[data-demo-pick="norte"]');
+                    if (norte) {
+                        norte.classList.add('is-selected');
+                    }
+                }
+                if (m2) {
+                    m2.innerHTML = buildCreateTurnoUi();
+                    m2.querySelectorAll('[data-demo-field]').forEach(function (el) {
+                        var key = el.getAttribute('data-demo-field');
+                        var vals = {
+                            profesional: 'Dr. Amet Consect',
+                            horario: 'Martes 10:30',
+                            paciente: 'Beneficiario del turno'
+                        };
+                        el.value = vals[key] || '';
+                        el.classList.add('is-filled');
+                    });
+                }
+                setConfirmLabel(staticRow, 'Confirmar');
             } else if (flow.buildUi) {
 
                 staticUi.innerHTML = flow.buildUi();
@@ -1275,25 +1111,17 @@
         await wait(500);
 
         await typeComposer(flow.userText, token);
-
         if (token !== runToken) {
-
             return;
-
         }
 
-
-
         stopTypingState();
-
         await wait(280);
-
+        setEmptyHintVisible(false);
         appendUserBubble(flow.userText);
-
         if (composerInput) {
-
             composerInput.value = '';
-
+            composerInput.placeholder = COMPOSER_PLACEHOLDER;
         }
 
 

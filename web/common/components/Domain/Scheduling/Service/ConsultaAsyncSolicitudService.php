@@ -68,6 +68,8 @@ final class ConsultaAsyncSolicitudService
         $encounter->status = EncounterStatus::PLANNED;
         $encounter->save(false, ['status', 'updated_at', 'updated_by']);
 
+        (new ConsultaAsyncInitialChatService())->seedMensajePaciente($encounter, $idPersona, $mensaje);
+
         return [
             'success' => true,
             'data' => [

@@ -104,6 +104,28 @@ $this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' :
 
 <?= $this->render('_listado_templates') ?>
 
+<div class="modal fade" id="async-chat-modal" tabindex="-1" aria-labelledby="asyncChatModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="asyncChatModalLabel">Consulta por mensaje</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body d-flex flex-column" style="min-height: 320px;">
+                <p class="text-muted small mb-2" id="async-chat-subtitle"></p>
+                <div id="async-chat-loading" class="text-muted small">Cargando mensajes…</div>
+                <div id="async-chat-messages" class="flex-grow-1 overflow-auto mb-3 d-none" style="max-height: 360px;"></div>
+                <div id="async-chat-compose" class="d-none">
+                    <label class="form-label visually-hidden" for="async-chat-input">Mensaje</label>
+                    <textarea class="form-control form-control-sm mb-2" id="async-chat-input" rows="3" placeholder="Escribí tu mensaje…"></textarea>
+                    <button type="button" class="btn btn-primary btn-sm" id="async-chat-send">Enviar</button>
+                </div>
+                <div id="async-chat-error" class="alert alert-danger d-none mt-2 mb-0"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php if ($esGuardia): ?>
 <div class="modal fade" id="guardia-triage-modal" tabindex="-1" aria-labelledby="guardiaTriageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

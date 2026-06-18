@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Person\Representation\Service\PersonRepresentationAccessService;
+use common\components\Domain\Scheduling\Service\ConsultaAsyncAccessService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
@@ -44,6 +45,10 @@ final class EncounterAccessService
             ) {
                 return true;
             }
+        }
+
+        if (ConsultaAsyncAccessService::staffCanAccessAsyncEncounter($encounter)) {
+            return true;
         }
 
         return false;

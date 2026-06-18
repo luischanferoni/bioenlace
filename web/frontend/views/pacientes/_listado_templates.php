@@ -298,6 +298,59 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 <template id="tpl-clinical-list-panel-wrap">
     <div data-role="clinical-list-panel">
         <div data-slot="kpi-sections" class="mb-3"></div>
+        <div data-slot="async-bandeja" class="mb-4"></div>
         <div data-slot="list-content"></div>
+    </div>
+</template>
+
+<template id="tpl-async-bandeja-wrap">
+    <div class="card mb-4" data-role="async-bandeja-wrap">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h4 class="mb-0" data-field="title"></h4>
+            <small class="text-muted d-none" data-field="sla-resumen"></small>
+        </div>
+        <div class="card-body">
+            <div class="row" data-slot="async-grid"></div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-async-solicitud-card">
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100 shadow-sm border-start border-4 border-info" data-role="async-card">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-1 mb-2">
+                    <span class="badge bg-info text-dark">Por mensaje</span>
+                    <span class="badge" data-field="estado-badge"></span>
+                </div>
+                <h5 class="card-title h6 mb-1" data-field="paciente"></h5>
+                <div class="small text-muted mb-2" data-field="servicio"></div>
+                <div class="small mb-2"><strong>Solicitado:</strong> <span data-field="created-at"></span></div>
+                <p class="small mb-2 flex-grow-1" data-field="preview"></p>
+                <div class="small mb-2 d-none" data-slot="sla-alerta">
+                    <span class="badge bg-danger" data-field="sla-badge"></span>
+                </div>
+                <div class="mt-auto d-flex flex-wrap gap-2" data-slot="actions"></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-patient-async-card">
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card h-100 shadow-sm" data-role="patient-async-card">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex flex-wrap justify-content-between gap-1 mb-2">
+                    <span class="badge bg-info text-dark">Consulta por mensaje</span>
+                    <span class="badge" data-field="estado-badge"></span>
+                </div>
+                <h5 class="card-title h6 mb-2" data-field="servicio"></h5>
+                <div class="small mb-2"><strong>Enviada:</strong> <span data-field="created-at"></span></div>
+                <p class="small text-muted mb-3 flex-grow-1" data-field="preview"></p>
+                <button type="button" class="btn btn-sm btn-outline-primary mt-auto align-self-start" data-role="async-chat-open">
+                    Ver conversación
+                </button>
+            </div>
+        </div>
     </div>
 </template>

@@ -41,7 +41,9 @@ use common\components\Domain\Person\DataAccess\Filter\SexoBiologicoFilterResolve
 use common\components\Domain\Person\DataAccess\Scope\PermitirParaSiMismoScopeChecker;
 use common\components\Domain\Person\Representation\Assistant\PersonRepresentationUiActionCatalog;
 use common\components\Domain\Scheduling\Home\Sections\AppointmentsDaySectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\PatientConsultaAsyncSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\StaffConsultaAsyncBandejaSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffAgendaKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffSurgeryKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
@@ -151,10 +153,12 @@ return [
         'emergency_board' => EmergencyBoardSectionProvider::class,
         'emergency_indicators' => EmergencyIndicatorsSectionProvider::class,
         'appointments_day' => AppointmentsDaySectionProvider::class,
+        'async_consultations_queue' => StaffConsultaAsyncBandejaSectionProvider::class,
         'inpatients' => InpatientsSectionProvider::class,
         'surgeries_day' => SurgeriesDaySectionProvider::class,
         'action_cards' => ActionCardsSectionProvider::class,
         'patient_upcoming_appointments' => PatientUpcomingAppointmentsSectionProvider::class,
+        'patient_async_consultations' => PatientConsultaAsyncSectionProvider::class,
         'patient_care_plans_active' => PatientCarePlansActiveSectionProvider::class,
         'staff_session_context' => StaffSessionContextSectionProvider::class,
         'staff_agenda_kpis' => StaffAgendaKpiSectionProvider::class,

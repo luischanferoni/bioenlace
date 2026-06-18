@@ -1,0 +1,25 @@
+# Bandeja staff y SLA para consultas async (encounter VR / SOLICITUD_ASYNC).
+version: "1"
+
+section:
+  title: Consultas por mensaje
+  empty_message: No hay consultas por mensaje pendientes en tus servicios.
+
+# Horas desde created_at hasta primera respuesta del equipo (por banda de urgencia del triage).
+sla_horas_respuesta:
+  A: 4
+  B: 12
+  C: 24
+  D: 48
+  default: 48
+
+status_labels:
+  planned: Pendiente de respuesta
+  in-progress: En curso
+  on-hold: En espera
+  finished: Finalizada
+  cancelled: Cancelada
+
+patient_section:
+  title: Consultas por mensaje
+  empty_message: No tenés consultas por mensaje activas.

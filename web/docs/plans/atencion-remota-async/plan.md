@@ -20,7 +20,7 @@ Introducir atención remota (videollamada con turno) y consulta async (mensaje, 
 | 0 | Observación | Insight en listado de turnos del día (presencial + triage elegible) | Hecho |
 | 1 | Oferta paciente | Flow `atencion.necesito-atencion` ofrece remoto cuando política de servicio lo permite; hub si nadie tiene agenda online | Hecho |
 | 2 | Opt-in profesional | Capacitación + `acepta_consultas_online`; priorizar async sobre video | Hecho |
-| 3 | Bandeja async | Encounter VR sin `appointment_id`, chat, SLA, reparto por servicio | Pendiente |
+| 3 | Bandeja async | Encounter VR sin `appointment_id`, chat, SLA, reparto por servicio | Hecho |
 | 4 | Política por servicio | Métricas AdminEfector, reglas por servicio en metadata | Pendiente |
 
 ## Etapa 0 (detalle)
@@ -93,10 +93,41 @@ Introducir atención remota (videollamada con turno) y consulta async (mensaje, 
 - Copy en configurar agenda
 - Dashboard efector: % turnos presenciales con insight `sugerido`
 
-## Etapa 3 (borrador)
+## Etapa 3 (detalle)
+
+### Backend / metadata
+
+- `consulta_async_bandeja.yaml` — SLA por banda de urgencia, textos de sección
+- `ConsultaAsyncBandejaCatalogService`, `ConsultaAsyncStaffScopeService`, `ConsultaAsyncAccessService`
+- `ConsultaAsyncBandejaService` — listado staff/paciente, `tomarComoStaff`
+- `ConsultaAsyncInitialChatService` — mensaje inicial del paciente al crear solicitud
+- `EncounterAccessService` — acceso staff por servicio en efector (sin PES asignado previo)
+- API `POST /api/v1/consulta-async/tomar-como-staff`
+- Migración RBAC `m260618_130000_api_consulta_async_tomar_staff_rbac`
+- Secciones home panel: `async_consultations_queue` (staff AMB), `patient_async_consultations`
+
+### UI web
+
+- Bandeja sobre turnos del día (`_listado_templates.php`, `pacientes-listado.js`)
+- Modal chat reutilizando `consulta-chat` API
+- Inicio paciente: tarjetas de consultas async activas
+
+### Criterios bandeja staff
+
+- Encounter `SOLICITUD_ASYNC`, clase VR, estado `planned` / `in-progress` / `on-hold`
+- Visible si `service_id` coincide con un PES del profesional en el efector de sesión
+- `planned` sin asignar: botón «Tomar y responder»; en curso solo para el PES asignado
+- SLA desde `created_at` + horas según `urgency_band` del triage en `note`
+
+## Etapa 3 (borrador — archivado)
 
 - Nuevo parent encounter / flujo asistente solicitud async
 - Bandeja staff separada del listado horario
+
+## Etapa 4 (borrador)
+
+- Métricas AdminEfector (% turnos presencial con potencial remoto)
+- Política por servicio (`teleconsulta_politica`) editable en UI staff
 
 ## Referencias
 

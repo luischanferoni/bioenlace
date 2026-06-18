@@ -62,6 +62,12 @@
       tab: 'proximos',
     };
 
+    var asyncChatState = {
+      encounterId: null,
+      canCompose: true,
+      modal: null,
+    };
+
     var PASADOS_PAGE_LIMIT = 20;
 
     function setLoading(isLoading) {
@@ -1324,6 +1330,7 @@
     }
 
     function renderPatientHome(panel) {
+      var asyncSec = findPanelSection(panel, 'patient_async_consultations');
       var upcomingSec = findPanelSection(panel, 'patient_upcoming_appointments');
       var careSec = findPanelSection(panel, 'patient_care_plans_active');
       var enResolucion = upcomingSec && upcomingSec.data && upcomingSec.data.en_resolucion
@@ -1357,6 +1364,9 @@
       }
 
       var sectionsSlot = wrapRoot.querySelector('[data-slot="patient-sections"]');
+      if (asyncSec && asyncSec.data) {
+        renderPatientAsyncSection(sectionsSlot, asyncSec.data);
+      }
       if (careItems.length && sectionsSlot) {
         renderPatientCarePlans(sectionsSlot, careItems);
       }
@@ -1453,25 +1463,277 @@
       }
     }
 
+    function formatAsyncCreatedAt(iso) {
+      if (!iso) return '';
+      var d = new Date(String(iso).replace(' ', 'T'));
+      if (isNaN(d.getTime())) return String(iso);
+      return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
+    }
+
+    function getAsyncChatModal() {
+      if (!asyncChatState.modal) {
+        var el = document.getElementById('async-chat-modal');
+        if (el && window.bootstrap && window.bootstrap.Modal) {
+          asyncChatState.modal = new window.bootstrap.Modal(el);
+        }
+      }
+      return asyncChatState.modal;
+    }
+
+    function renderAsyncChatMessages(messages) {
+      var box = document.getElementById('async-chat-messages');
+      if (!box) return;
+      clearNode(box);
+      (messages || []).forEach(function (m) {
+        var row = document.createElement('div');
+        row.className = 'mb-2 small';
+        var who = document.createElement('div');
+        who.className = 'fw-semibold text-muted';
+        who.textContent = (m.user_name || m.user_role || 'Usuario')
+          + (m.created_at ? (' · ' + formatAsyncCreatedAt(m.created_at)) : '');
+        row.appendChild(who);
+        var body = document.createElement('div');
+        body.textContent = m.content || '';
+        row.appendChild(body);
+        box.appendChild(row);
+      });
+      box.scrollTop = box.scrollHeight;
+    }
+
+    async function loadAsyncChatMessages(encounterId) {
+      var api = window.BioenlaceNativePage;
+      var loading = document.getElementById('async-chat-loading');
+      var box = document.getElementById('async-chat-messages');
+      var compose = document.getElementById('async-chat-compose');
+      var errEl = document.getElementById('async-chat-error');
+      if (!api || !encounterId) return;
+      if (loading) loading.classList.remove('d-none');
+      if (box) box.classList.add('d-none');
+      if (compose) compose.classList.add('d-none');
+      if (errEl) errEl.classList.add('d-none');
+      try {
+        var url = api.apiV1Url('consulta-chat/mensajes/' + encodeURIComponent(encounterId));
+        var json = await api.fetchJson(url, {
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudieron cargar los mensajes.');
+        }
+        var messages = json.data && json.data.messages ? json.data.messages : [];
+        renderAsyncChatMessages(messages);
+        if (loading) loading.classList.add('d-none');
+        if (box) box.classList.remove('d-none');
+        if (compose && asyncChatState.canCompose) compose.classList.remove('d-none');
+      } catch (e) {
+        if (loading) loading.classList.add('d-none');
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'Error al cargar el chat.';
+          errEl.classList.remove('d-none');
+        }
+      }
+    }
+
+    async function sendAsyncChatMessage() {
+      var api = window.BioenlaceNativePage;
+      var input = document.getElementById('async-chat-input');
+      var errEl = document.getElementById('async-chat-error');
+      if (!api || !asyncChatState.encounterId || !input) return;
+      var text = String(input.value || '').trim();
+      if (!text) return;
+      if (errEl) errEl.classList.add('d-none');
+      try {
+        var url = api.apiV1Url('consulta-chat/enviar');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({
+            encounter_id: asyncChatState.encounterId,
+            message: text,
+          }),
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo enviar el mensaje.');
+        }
+        input.value = '';
+        await loadAsyncChatMessages(asyncChatState.encounterId);
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'Error al enviar.';
+          errEl.classList.remove('d-none');
+        }
+      }
+    }
+
+    function openAsyncChat(item, canCompose) {
+      if (!item || !item.encounter_id) return;
+      asyncChatState.encounterId = item.encounter_id;
+      asyncChatState.canCompose = canCompose !== false;
+      var subtitle = document.getElementById('async-chat-subtitle');
+      if (subtitle) {
+        var parts = [];
+        if (item.paciente && item.paciente.nombre_completo) parts.push(item.paciente.nombre_completo);
+        if (item.servicio) parts.push(item.servicio);
+        subtitle.textContent = parts.join(' — ');
+      }
+      var input = document.getElementById('async-chat-input');
+      if (input) input.value = '';
+      var modal = getAsyncChatModal();
+      if (modal) modal.show();
+      loadAsyncChatMessages(item.encounter_id);
+    }
+
+    async function tomarAsyncCaso(item) {
+      var api = window.BioenlaceNativePage;
+      if (!api || !item || !item.encounter_id) return;
+      try {
+        var url = api.apiV1Url('consulta-async/tomar-como-staff');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ encounter_id: item.encounter_id }),
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo tomar la solicitud.');
+        }
+        await loadPanel({ showSpinner: false });
+        openAsyncChat(item, true);
+      } catch (e) {
+        showError(errorEl, e && e.message ? e.message : 'No se pudo tomar la solicitud.');
+      }
+    }
+
+    function fillAsyncSolicitudCard(colEl, item) {
+      var paciente = item.paciente || {};
+      colEl.querySelector('[data-field="paciente"]').textContent = paciente.nombre_completo || 'Paciente';
+      colEl.querySelector('[data-field="servicio"]').textContent = item.servicio || '';
+      colEl.querySelector('[data-field="created-at"]').textContent = formatAsyncCreatedAt(item.created_at);
+      colEl.querySelector('[data-field="preview"]').textContent = item.reason_preview || '';
+      var badge = colEl.querySelector('[data-field="estado-badge"]');
+      if (badge) {
+        badge.className = 'badge bg-secondary';
+        if (item.status === 'planned') badge.className = 'badge bg-warning text-dark';
+        if (item.status === 'in-progress') badge.className = 'badge bg-success';
+        badge.textContent = item.status_label || item.status || '';
+      }
+      var slaSlot = colEl.querySelector('[data-slot="sla-alerta"]');
+      if (slaSlot && item.sla && item.sla.incumplido) {
+        slaSlot.classList.remove('d-none');
+        var slaBadge = slaSlot.querySelector('[data-field="sla-badge"]');
+        if (slaBadge) {
+          slaBadge.textContent = 'SLA vencido (' + (item.sla.horas_objetivo || '') + ' h)';
+        }
+      } else if (slaSlot) {
+        slaSlot.classList.add('d-none');
+      }
+      var actions = colEl.querySelector('[data-slot="actions"]');
+      if (!actions) return;
+      clearNode(actions);
+      if (item.acciones && item.acciones.tomar) {
+        var tomar = document.createElement('button');
+        tomar.type = 'button';
+        tomar.className = 'btn btn-sm btn-primary';
+        tomar.textContent = 'Tomar y responder';
+        tomar.addEventListener('click', function () { tomarAsyncCaso(item); });
+        actions.appendChild(tomar);
+      }
+      if (item.acciones && item.acciones.abrir_chat) {
+        var chat = document.createElement('button');
+        chat.type = 'button';
+        chat.className = 'btn btn-sm btn-outline-primary';
+        chat.textContent = 'Ver conversación';
+        chat.addEventListener('click', function () { openAsyncChat(item, true); });
+        actions.appendChild(chat);
+      }
+    }
+
+    function renderAsyncBandeja(data, targetEl) {
+      if (!targetEl || !data || !Array.isArray(data.items) || !data.items.length) {
+        if (targetEl) clearNode(targetEl);
+        return;
+      }
+      clearNode(targetEl);
+      var wrapFrag = importTemplate('tpl-async-bandeja-wrap');
+      if (!wrapFrag) return;
+      var wrapRoot = wrapFrag.querySelector('[data-role="async-bandeja-wrap"]');
+      targetEl.appendChild(wrapFrag);
+      wrapRoot.querySelector('[data-field="title"]').textContent = data.title || 'Consultas por mensaje';
+      var slaResumen = wrapRoot.querySelector('[data-field="sla-resumen"]');
+      if (slaResumen && data.sla_incumplidos > 0) {
+        slaResumen.textContent = data.sla_incumplidos + ' con SLA vencido';
+        slaResumen.classList.remove('d-none');
+      }
+      var grid = wrapRoot.querySelector('[data-slot="async-grid"]');
+      data.items.forEach(function (item) {
+        var cardFrag = importTemplate('tpl-async-solicitud-card');
+        if (!cardFrag) return;
+        var col = cardFrag.firstElementChild;
+        if (!col) return;
+        fillAsyncSolicitudCard(col, item);
+        grid.appendChild(col);
+      });
+    }
+
+    function renderPatientAsyncSection(sectionsSlot, data) {
+      if (!sectionsSlot || !data || !Array.isArray(data.items) || !data.items.length) return;
+      var secFrag = importTemplate('tpl-patient-home-section');
+      if (!secFrag) return;
+      var secRoot = secFrag.querySelector('[data-role="patient-section"]');
+      secRoot.querySelector('[data-field="titulo"]').textContent = data.title || 'Consultas por mensaje';
+      var itemsSlot = secRoot.querySelector('[data-slot="items"]');
+      data.items.forEach(function (item) {
+        var cardFrag = importTemplate('tpl-patient-async-card');
+        if (!cardFrag) return;
+        var col = cardFrag.firstElementChild;
+        if (!col) return;
+        col.querySelector('[data-field="servicio"]').textContent = item.servicio || '';
+        col.querySelector('[data-field="created-at"]').textContent = formatAsyncCreatedAt(item.created_at);
+        col.querySelector('[data-field="preview"]').textContent = item.reason_preview || '';
+        var badge = col.querySelector('[data-field="estado-badge"]');
+        if (badge) {
+          badge.textContent = item.status_label || item.status || '';
+        }
+        var btn = col.querySelector('[data-role="async-chat-open"]');
+        if (btn) {
+          btn.addEventListener('click', function () { openAsyncChat(item, true); });
+        }
+        itemsSlot.appendChild(col);
+      });
+      sectionsSlot.appendChild(secFrag);
+    }
+
     function beginClinicalListPanel(panel) {
       var kpiSections = (panel.sections || []).filter(function (sec) {
         return sec.kind === 'staff_kpi_group' && sec.data && Array.isArray(sec.data.items) && sec.data.items.length;
       });
-      if (!kpiSections.length) {
-        return container;
+      var asyncSec = findPanelSection(panel, 'async_consultations_queue');
+      var hasAsync = asyncSec && asyncSec.data && asyncSec.data.items && asyncSec.data.items.length;
+      if (!kpiSections.length && !hasAsync) {
+        return { listTarget: container, asyncSlot: null };
       }
       clearNode(container);
       var wrapFrag = importTemplate('tpl-clinical-list-panel-wrap');
       if (!wrapFrag) {
-        return container;
+        return { listTarget: container, asyncSlot: null };
       }
       var kpiSlot = wrapFrag.querySelector('[data-slot="kpi-sections"]');
       var listSlot = wrapFrag.querySelector('[data-slot="list-content"]');
+      var asyncSlot = wrapFrag.querySelector('[data-slot="async-bandeja"]');
       container.appendChild(wrapFrag);
       kpiSections.forEach(function (sec) {
         renderStaffKpiGroup(kpiSlot, sec.data);
       });
-      return listSlot || container;
+      return {
+        listTarget: listSlot || container,
+        asyncSlot: asyncSlot,
+        asyncSec: asyncSec,
+      };
     }
 
     function renderFromPanel(panel) {
@@ -1490,22 +1752,25 @@
         return;
       }
       if (layout === 'clinical_list') {
-        var listTarget = beginClinicalListPanel(panel);
+        var panelParts = beginClinicalListPanel(panel);
+        if (panelParts.asyncSlot && panelParts.asyncSec) {
+          renderAsyncBandeja(panelParts.asyncSec.data, panelParts.asyncSlot);
+        }
         var appt = findPanelSection(panel, 'appointments_day');
         if (appt) {
-          renderTurnos((appt.data && appt.data.items) || [], listTarget);
+          renderTurnos((appt.data && appt.data.items) || [], panelParts.listTarget);
           applyPanelChrome(panel);
           return;
         }
         var inpat = findPanelSection(panel, 'inpatients');
         if (inpat) {
-          renderInternados((inpat.data && inpat.data.items) || [], listTarget);
+          renderInternados((inpat.data && inpat.data.items) || [], panelParts.listTarget);
           applyPanelChrome(panel);
           return;
         }
         var surg = findPanelSection(panel, 'surgeries_day');
         if (surg) {
-          renderCirugias((surg.data && surg.data.items) || [], listTarget);
+          renderCirugias((surg.data && surg.data.items) || [], panelParts.listTarget);
           applyPanelChrome(panel);
           return;
         }
@@ -1630,6 +1895,10 @@
     var clinicalPedidoSubmit = document.getElementById('guardia-clinical-pedido-submit');
     if (clinicalPedidoSubmit) {
       clinicalPedidoSubmit.addEventListener('click', submitClinicalPedido);
+    }
+    var asyncChatSend = document.getElementById('async-chat-send');
+    if (asyncChatSend) {
+      asyncChatSend.addEventListener('click', sendAsyncChatMessage);
     }
 
     load();

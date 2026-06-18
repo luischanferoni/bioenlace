@@ -31,6 +31,9 @@ panels:
         - id: staff_agenda_kpis
           provider: staff_agenda_kpis
           kind: staff_kpi_group
+        - id: async_consultations_queue
+          provider: async_consultations_queue
+          kind: async_consultations_queue
         - id: appointments_day
           provider: appointments_day
           kind: appointments_day
@@ -77,6 +80,9 @@ panels:
     layout: patient_home
     title: Inicio
     sections:
+      - id: patient_async_consultations
+        provider: patient_async_consultations
+        kind: patient_async_consultations
       - id: upcoming_appointments
         provider: patient_upcoming_appointments
         kind: patient_upcoming_appointments

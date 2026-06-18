@@ -496,23 +496,16 @@ final class ProfesionalEfectorServicioAgendaUiService
         string $profNombre,
         string $vigencia
     ): string {
-        $tipo = $tipoNombre !== '' ? $tipoNombre : 'licencia';
+        $tipo = $tipoNombre !== '' ? $tipoNombre : 'condición laboral';
         $servicio = $servicioNombre !== '' ? $servicioNombre : 'tu servicio';
         $vigenciaSuffix = $vigencia !== '' ? (' ' . $vigencia . '.') : '.';
-
-        if ($wasNew) {
-            if ($isStaff && $profNombre !== '') {
-                return 'Registramos licencia de ' . $tipo . ' para ' . $profNombre . ' en ' . $servicio . $vigenciaSuffix;
-            }
-
-            return 'Registramos tu licencia de ' . $tipo . ' en ' . $servicio . $vigenciaSuffix;
-        }
+        $verbo = $wasNew ? 'Registramos' : 'Actualizamos';
 
         if ($isStaff && $profNombre !== '') {
-            return 'Actualizamos la condición laboral de ' . $profNombre . ' (' . $tipo . ') en ' . $servicio . $vigenciaSuffix;
+            return $verbo . ' la condición laboral (' . $tipo . ') de ' . $profNombre . ' en ' . $servicio . $vigenciaSuffix;
         }
 
-        return 'Actualizamos tu condición laboral (' . $tipo . ') en ' . $servicio . $vigenciaSuffix;
+        return $verbo . ' tu condición laboral (' . $tipo . ') en ' . $servicio . $vigenciaSuffix;
     }
 
     private static function formatVigenciaPhrase(?string $fechaInicio, ?string $fechaFin): string

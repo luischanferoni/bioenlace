@@ -18,7 +18,7 @@ Introducir atención remota (videollamada con turno) y consulta async (mensaje, 
 | Etapa | Nombre | Entregable | Estado |
 |-------|--------|------------|--------|
 | 0 | Observación | Insight en listado de turnos del día (presencial + triage elegible) | Hecho |
-| 1 | Oferta paciente | Flow `atencion.necesito-atencion` ofrece remoto cuando política de servicio lo permite; hub si nadie tiene agenda online | Pendiente |
+| 1 | Oferta paciente | Flow `atencion.necesito-atencion` ofrece remoto cuando política de servicio lo permite; hub si nadie tiene agenda online | Hecho |
 | 2 | Opt-in profesional | Capacitación + `acepta_consultas_online`; priorizar async sobre video | Pendiente |
 | 3 | Bandeja async | Encounter VR sin `appointment_id`, chat, SLA, reparto por servicio | Pendiente |
 | 4 | Política por servicio | Métricas AdminEfector, reglas por servicio en metadata | Pendiente |
@@ -48,10 +48,29 @@ Introducir atención remota (videollamada con turno) y consulta async (mensaje, 
 
 - `StaffTurnoModalidadInsightServiceTest` — draft builder e insight nulo/visible
 
-## Etapa 1 (borrador)
+## Etapa 1 (detalle)
 
-- Paciente con triage elegible y servicio con `teleconsulta_politica` distinta de `NINGUNA`
-- Sin PES online: derivar a cola/hub async (placeholder hasta etapa 3)
+### Backend
+
+- Catálogo `reserva_modalidad_atencion.yaml` — presencial, teleconsulta, async
+- `ReservaModalidadAtencionService` — opciones y flags `modalidad_paso_requerido`, `async_ofrecible`
+- `ConsultaAsyncSolicitudService` — encounter VR `planned`, parent `SOLICITUD_ASYNC`
+- API `GET|POST /api/v1/consulta-async/solicitar-como-paciente`
+- Migración RBAC `m260618_120000_api_consulta_async_solicitar_rbac`
+- Paso modalidad en `TurnosController` usa el nuevo servicio
+- Hub teleconsulta sin cupos: mensaje en `slots-dias-disponibles-como-paciente`
+
+### Flow asistente
+
+- `atencion.necesito-atencion`: salta modalidad si solo presencial; rama `tipo_atencion=async` → `solicitud_async`
+- Subintent `solicitud_async` con UI form (POST directo, sin `flow_submit` de turno)
+
+### Criterios async paciente
+
+- Elegibilidad clínica `sugerido` o `permitido` (no requiere `teleconsulta_politica` del servicio)
+- Teleconsulta sigue reglas existentes (`TeleconsultaElegibilidadService` + hub)
+
+## Etapa 1 (borrador — archivado)
 
 ## Etapa 2 (borrador)
 

@@ -43,6 +43,8 @@ draft_hydrator:
 draft_keys_extra:
   - tipo_atencion
   - teleconsulta_ofercible
+  - async_ofrecible
+  - modalidad_paso_requerido
   - servicio_reserva_rol
   - triage_servicio_rol_ideal
   - triage_codigo_servicio_resolutor
@@ -77,6 +79,10 @@ subintents:
             triage_raiz: seguimiento_cronico
         next: select_care_plan
       - when:
+          draft_equals:
+            modalidad_paso_requerido: "0"
+        next: select_servicio
+      - when:
           default: true
         next: select_tipo_atencion
     open_ui:
@@ -110,7 +116,14 @@ subintents:
       - draft.triage_raiz
     provides:
       - draft.triage_zona
-    next: select_tipo_atencion
+    next_routing:
+      - when:
+          draft_equals:
+            modalidad_paso_requerido: "0"
+        next: select_servicio
+      - when:
+          default: true
+        next: select_tipo_atencion
     open_ui:
       action_id: turnos.reserva-triage-paso
       params:
@@ -123,7 +136,14 @@ subintents:
       - draft.triage_raiz
     provides:
       - draft.care_plan_id
-    next: select_tipo_atencion
+    next_routing:
+      - when:
+          draft_equals:
+            modalidad_paso_requerido: "0"
+        next: select_servicio
+      - when:
+          default: true
+        next: select_tipo_atencion
     open_ui:
       action_id: clinical.care-plan.ver-tratamiento-paciente
 
@@ -152,6 +172,10 @@ subintents:
     next_routing:
       - when:
           draft_equals:
+            tipo_atencion: async
+        next: solicitud_async
+      - when:
+          draft_equals:
             tipo_atencion: teleconsulta
         next: select_dia_teleconsulta
       - when:
@@ -166,6 +190,27 @@ subintents:
         triage_alarmas: "draft.triage_alarmas"
         triage_zona: "draft.triage_zona"
         care_plan_id: "draft.care_plan_id"
+
+  - id: solicitud_async
+    assistant_text: "Consulta por mensaje"
+    requires:
+      - draft.triage_raiz
+      - draft.tipo_atencion
+    provides:
+      - draft.mensaje
+    next: ""
+    terminal_without_submit: true
+    flow_dismiss:
+      label: "Cerrar"
+    open_ui:
+      action_id: consulta-async.solicitar-como-paciente
+      params:
+        triage_raiz: "draft.triage_raiz"
+        triage_alarmas: "draft.triage_alarmas?"
+        triage_zona: "draft.triage_zona?"
+        triage_evolucion: "draft.triage_evolucion?"
+        care_plan_id: "draft.care_plan_id?"
+        triage_nota: "draft.triage_nota?"
 
   - id: select_servicio
     assistant_text: "Servicio"

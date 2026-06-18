@@ -10,36 +10,40 @@ Bioenlace puede atender algunos motivos de consulta **sin que el paciente concur
 - **Profesional (PES)** — atiende turnos del día; puede habilitar remoto en su agenda (`acepta_consultas_online`).
 - **Admin efector** — política de teleconsulta por servicio y métricas agregadas (etapas futuras).
 
-## Cómo funciona (etapa 0 — observación)
+## Cómo funciona (etapa 0 — observación staff)
 
-Cuando un turno es **presencial** pero el **motivo de reserva** (triage persistido en el turno) tiene elegibilidad clínica **sugerida** o **permitida** para remoto, el listado **Pacientes del día** del staff muestra un aviso informativo:
+Cuando un turno es **presencial** pero el triage persistido tiene elegibilidad **sugerida** o **permitida** para remoto, el listado **Pacientes del día** muestra un aviso informativo (videollamada y/o mensaje). Textos en `staff_modalidad_insight.yaml`; reglas clínicas vía `TeleconsultaElegibilidadService`.
 
-- Resume que el caso suele poder resolverse sin presencial.
-- Enumera modalidades posibles (videollamada con turno, consulta por mensaje).
-- Si la agenda del profesional aún no acepta consultas online, un pie opcional indica cómo habilitarlas — **sin obligar**.
+## Cómo funciona (etapa 1 — oferta al paciente)
 
-Las reglas clínicas no se duplican: se reutilizan `TeleconsultaElegibilidadService` y el catálogo `reserva_triage_teleconsulta_elegibilidad`. Los textos de UI viven en `staff_modalidad_insight.yaml`.
+Tras el triage, el paciente puede ver el paso **Modalidad** con hasta tres opciones (catálogo `reserva_modalidad_atencion.yaml`):
+
+- **Presencial** — siempre que el caso no sea de urgencia bloqueada.
+- **Videollamada con turno** — si `TeleconsultaElegibilidadService` y la política del servicio lo permiten; slots vía hub teleconsulta sin elegir profesional.
+- **Consulta por mensaje** — si la elegibilidad clínica es `sugerido` o `permitido`; crea un encounter virtual planificado (`SOLICITUD_ASYNC`) sin turno.
+
+Si solo aplica presencial, el asistente **omite** el paso modalidad y fija `tipo_atencion=presencial`. Si no hay cupos de videollamada en el hub, la UI de días muestra un mensaje orientando a mensaje o presencial.
 
 ```mermaid
-flowchart LR
-  T[Turno presencial] --> D[Draft desde reserva_triage_meta]
-  D --> E[TeleconsultaElegibilidadService]
-  E --> C{Elegibilidad sugerido o permitido?}
-  C -->|sí| I[Insight en tarjeta del turno]
-  C -->|no| X[Sin aviso]
+flowchart TD
+  T[Triage] --> M{Más de una modalidad?}
+  M -->|no| P[Turno presencial directo]
+  M -->|sí| E[Elegir modalidad]
+  E -->|presencial / teleconsulta| R[Reserva turno]
+  E -->|async| S[Formulario mensaje → encounter VR]
 ```
 
 ## Etapas previstas
 
 | Etapa | Foco |
 |-------|------|
-| 0 | Insight educativo en listado (actual) |
-| 1 | Oferta remota al paciente en reserva cuando el servicio lo permite |
-| 2 | Opt-in profesional en agenda; priorizar async |
-| 3 | Bandeja async sin turno |
+| 0 | Insight educativo en listado staff |
+| 1 | Oferta modalidad al paciente + solicitud async mínima |
+| 2 | Opt-in profesional en agenda |
+| 3 | Bandeja staff para async + chat operativo |
 | 4 | Política y métricas por efector/servicio |
 
-Plan de implementación activo: `web/docs/plans/atencion-remota-async/plan.md` (temporal).
+Plan de implementación: `web/docs/plans/atencion-remota-async/plan.md` (temporal).
 
 ## Relación con el resto
 

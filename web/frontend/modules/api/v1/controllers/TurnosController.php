@@ -35,6 +35,8 @@ use common\components\Domain\Scheduling\Service\SobreturnoService;
 use common\components\Domain\Scheduling\Service\TurnoReservaSlotService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaVersionService;
 use common\components\Domain\Scheduling\Service\TurnoAgendaMetricsService;
+use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionCatalogService;
+use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionService;
 use common\components\Domain\Scheduling\Service\ReservaTriageModalidadStepService;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageCatalogService;
 use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
@@ -174,7 +176,7 @@ class TurnosController extends BaseController
             $draft = $this->draftDesdeParamsReservaTriage($params);
             (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
             $eleg = new TeleconsultaElegibilidadService();
-            $modalOpts = $eleg->opcionesModalidadParaDraft($draft);
+            $modalOpts = (new ReservaModalidadAtencionService())->opcionesParaDraft($draft);
             $options = [];
             foreach ($modalOpts as $row) {
                 $options[] = [
@@ -1327,6 +1329,16 @@ class TurnosController extends BaseController
             if ($blocks !== []) {
                 $out['blocks'] = $blocks;
             } else {
+                $params = array_merge($req->get(), $req->post());
+                if (ReservaTriageServicioSugeridoService::esModoTeleconsultaHub($params)) {
+                    $hubMsg = (new ReservaModalidadAtencionCatalogService())->mensajeTeleconsultaHubSinCupos();
+                    if ($hubMsg['summary'] !== '') {
+                        $out['description'] = $hubMsg['summary'];
+                        if ($hubMsg['hint'] !== '') {
+                            $out['description'] .= ' ' . $hubMsg['hint'];
+                        }
+                    }
+                }
                 $out = UiScreenService::withListBlockItems($out, []);
             }
         }

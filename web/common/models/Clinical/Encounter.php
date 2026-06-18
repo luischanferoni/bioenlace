@@ -51,6 +51,7 @@ class Encounter extends ActiveRecord
     const PARENT_PASE_PREVIO = 'PASE_PREVIO';
     const PARENT_ENCUESTA_PARCHES = 'ENCUESTA_PARCHES';
     const PARENT_CIRUGIA = 'CIRUGIA';
+    const PARENT_SOLICITUD_ASYNC = 'SOLICITUD_ASYNC';
 
     /** Paso de workflow para encounter finalizado (legacy paso 999). */
     const WORKFLOW_STEP_FINALIZED = 999;

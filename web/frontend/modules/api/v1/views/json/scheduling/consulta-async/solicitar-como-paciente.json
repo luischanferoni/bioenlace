@@ -1,0 +1,28 @@
+{
+  "ui_type": "ui_json",
+  "title": "Consulta por mensaje",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "consulta-async",
+      "title": "Escribí tu consulta",
+      "fields": [
+        {
+          "name": "mensaje",
+          "label": "¿Qué necesitás?",
+          "type": "textarea",
+          "required": true,
+          "rows": 6,
+          "placeholder": "Contanos tu consulta con el mayor detalle posible. Un profesional te responderá por mensaje (sin videollamada ni turno)."
+        }
+      ]
+    }
+  ]
+}

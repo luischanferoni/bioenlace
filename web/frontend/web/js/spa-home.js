@@ -893,6 +893,111 @@
     let currentSubintentId = null;
     let draft = {};
     let flowSnapshot = {};
+    /** Último manifiesto del flow activo (pasos, paso terminal, etc.). */
+    let currentFlowManifest = null;
+
+    function flowStepById(manifest, stepId) {
+        if (!manifest || !stepId) {
+            return null;
+        }
+        const steps = Array.isArray(manifest.steps) ? manifest.steps : [];
+        const sid = String(stepId).trim();
+        for (let i = 0; i < steps.length; i++) {
+            const st = steps[i];
+            if (st && String(st.id || '') === sid) {
+                return st;
+            }
+        }
+        return null;
+    }
+
+    function flowStepIsTerminal(manifest, stepId) {
+        const st = flowStepById(manifest, stepId);
+        if (!st) {
+            return false;
+        }
+        const nxt = st.next;
+        return nxt == null || String(nxt).trim() === '';
+    }
+
+    function uiSubmitDataMarksFlowComplete(data) {
+        if (!data || typeof data !== 'object') {
+            return false;
+        }
+        if (data.condicion_laboral_ui_completed != null && String(data.condicion_laboral_ui_completed).trim() !== '') {
+            return true;
+        }
+        return false;
+    }
+
+    /** ¿El POST del formulario ya cerró el flow (paso terminal / marcador de provides)? */
+    function shouldFinishFlowAfterFormUiSubmit(options, json) {
+        if (options.isTerminalFlowStep === true) {
+            return true;
+        }
+        if (!currentIntentId) {
+            return false;
+        }
+        const data = json && json.data && typeof json.data === 'object' ? json.data : {};
+        if (uiSubmitDataMarksFlowComplete(data)) {
+            return true;
+        }
+        if (currentFlowManifest && currentSubintentId && flowStepIsTerminal(currentFlowManifest, currentSubintentId)) {
+            return true;
+        }
+        return false;
+    }
+
+    function buildUiFormDraftDelta(form, fields) {
+        const delta = {};
+        if (!form) {
+            return delta;
+        }
+        const fieldList = Array.isArray(fields) ? fields : [];
+        try {
+            const fd = new FormData(form);
+            fd.forEach(function (v, k) {
+                if (v == null || String(v).trim() === '') {
+                    return;
+                }
+                const ff = fieldList.find(function (f) {
+                    return f && String(f.name) === String(k);
+                });
+                if (ff && ff.include_in_submit === false) {
+                    return;
+                }
+                delta[k] = String(v).trim();
+                if (ff && String(ff.type) === 'select') {
+                    const sel = form.querySelector('[name="' + String(k).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
+                    let lbl = '';
+                    if (sel && sel.selectedOptions && sel.selectedOptions[0]) {
+                        lbl = String(sel.selectedOptions[0].textContent || '').trim();
+                    }
+                    if (!lbl && k === 'razon_cancelacion' && typeof etiquetaRazonCancelacionPaciente === 'function') {
+                        lbl = etiquetaRazonCancelacionPaciente(delta[k]);
+                    }
+                    if (lbl) {
+                        delta['_flow_item_' + k] = { code: delta[k], label: lbl };
+                    }
+                } else if (ff && (String(ff.type) === 'chips' || String(ff.type) === 'radio')) {
+                    const nameSel = String(k).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                    const activeChip = form.querySelector('.spa-ui-chip-btn.is-active[data-field="' + nameSel + '"]');
+                    let lbl = activeChip ? String(activeChip.textContent || '').trim() : '';
+                    if (!lbl) {
+                        const checked = form.querySelector('input[type="radio"][name="' + nameSel + '"]:checked');
+                        if (checked) {
+                            const labEl = form.querySelector('label[for="' + String(checked.id || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
+                            lbl = labEl ? String(labEl.textContent || '').trim() : '';
+                        }
+                    }
+                    if (lbl) {
+                        delta['_flow_item_' + k] = { code: delta[k], label: lbl };
+                    }
+                }
+            });
+        } catch (eForm) { /* ignore */ }
+        return delta;
+    }
 
     function applyDraftDelta(delta) {
         if (!delta || typeof delta !== 'object') return;
@@ -914,6 +1019,7 @@
         currentSubintentId = null;
         draft = {};
         flowSnapshot = {};
+        currentFlowManifest = null;
         writeFlowState();
     }
 
@@ -1573,6 +1679,9 @@
             // Flow conversacional: mini-UI en bloque a ancho completo (no burbuja angosta).
             if (kind === 'flow') {
                 const fm = assistantFlowManifest(envelope);
+                if (fm && typeof fm === 'object') {
+                    currentFlowManifest = fm;
+                }
 
                 let flowActionTitle = '';
                 if (fm && fm.action_name != null && String(fm.action_name).trim() !== '') {
@@ -2844,47 +2953,7 @@
                 return;
             }
             try {
-                const delta = {};
-                const fd = new FormData(form);
-                fd.forEach(function (v, k) {
-                    if (v == null || String(v).trim() === '') {
-                        return;
-                    }
-                    const ff = fields.find(function (f) {
-                        return f && String(f.name) === String(k);
-                    });
-                    if (ff && ff.include_in_submit === false) {
-                        return;
-                    }
-                    delta[k] = String(v).trim();
-                    if (ff && String(ff.type) === 'select') {
-                        const sel = form.querySelector('[name="' + String(k).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
-                        let lbl = '';
-                        if (sel && sel.selectedOptions && sel.selectedOptions[0]) {
-                            lbl = String(sel.selectedOptions[0].textContent || '').trim();
-                        }
-                        if (!lbl && k === 'razon_cancelacion' && typeof etiquetaRazonCancelacionPaciente === 'function') {
-                            lbl = etiquetaRazonCancelacionPaciente(delta[k]);
-                        }
-                        if (lbl) {
-                            delta['_flow_item_' + k] = { code: delta[k], label: lbl };
-                        }
-                    } else if (ff && (String(ff.type) === 'chips' || String(ff.type) === 'radio')) {
-                        const nameSel = String(k).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-                        const activeChip = form.querySelector('.spa-ui-chip-btn.is-active[data-field="' + nameSel + '"]');
-                        let lbl = activeChip ? String(activeChip.textContent || '').trim() : '';
-                        if (!lbl) {
-                            const checked = form.querySelector('input[type="radio"][name="' + nameSel + '"]:checked');
-                            if (checked) {
-                                const labEl = form.querySelector('label[for="' + String(checked.id || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
-                                lbl = labEl ? String(labEl.textContent || '').trim() : '';
-                            }
-                        }
-                        if (lbl) {
-                            delta['_flow_item_' + k] = { code: delta[k], label: lbl };
-                        }
-                    }
-                });
+                const delta = buildUiFormDraftDelta(form, fields);
                 if (Object.keys(delta).length < 1) {
                     return;
                 }
@@ -2936,6 +3005,12 @@
                             container.querySelectorAll('input, select, textarea, button').forEach(function (el) { el.disabled = true; });
                         } catch (e) { /* ignore */ }
                         markInlineButtonConfirmed(submitBtn);
+                        try {
+                            const formDelta = buildUiFormDraftDelta(form, fields);
+                            if (Object.keys(formDelta).length > 0) {
+                                applyDraftDelta(formDelta);
+                            }
+                        } catch (eFormDelta) { /* ignore */ }
                         if (json.data && typeof json.data === 'object' && !Array.isArray(json.data)) {
                             try {
                                 const delta = Object.assign({}, json.data);
@@ -2960,10 +3035,10 @@
                                 writeFlowState();
                             } catch (e) { /* ignore */ }
                         }
-                        if (currentIntentId && !options.isTerminalFlowStep) {
-                            setTimeout(() => { try { handleSendQuery(''); } catch (e) { /* ignore */ } }, 50);
-                        } else if (options.isTerminalFlowStep) {
+                        if (currentIntentId && shouldFinishFlowAfterFormUiSubmit(options, json)) {
                             finishActiveFlowAfterTerminalUiSubmit(container, json);
+                        } else if (currentIntentId) {
+                            setTimeout(() => { try { handleSendQuery(''); } catch (e) { /* ignore */ } }, 50);
                         }
                         return;
                     }

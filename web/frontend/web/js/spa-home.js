@@ -215,6 +215,55 @@
         return h ? (dia + ' · ' + h) : dia;
     }
 
+    function formatFechaEs(iso) {
+        const s = String(iso || '').trim();
+        const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+        if (!m) {
+            return s;
+        }
+        return m[3] + '/' + m[2] + '/' + m[1].slice(-2);
+    }
+
+    function enrichUiSubmitSummaryData(data) {
+        const out = data && typeof data === 'object' ? Object.assign({}, data) : {};
+        const d = draft && typeof draft === 'object' ? draft : {};
+        if (!out.fecha_inicio && d.fecha_inicio) {
+            out.fecha_inicio = d.fecha_inicio;
+        }
+        if (!out.fecha_fin && d.fecha_fin) {
+            out.fecha_fin = d.fecha_fin;
+        }
+        const condFlow = d._flow_item_id_condicion_laboral;
+        if (!out.condicion_laboral_label && condFlow && typeof condFlow === 'object') {
+            const lbl = condFlow.label != null ? String(condFlow.label).trim() : (condFlow.name != null ? String(condFlow.name).trim() : '');
+            if (lbl) {
+                out.condicion_laboral_label = lbl;
+            }
+        }
+        return out;
+    }
+
+    /** Tras guardar la mini-UI del último paso (formulario): colapsar flow y mostrar resumen. */
+    function finishActiveFlowAfterTerminalUiSubmit(fromEl, json) {
+        const host = flowSubmitHostFromEl(fromEl);
+        const row = host && host.closest ? host.closest('.spa-chat-flow-row') : null;
+        const seq = row ? row.getAttribute('data-flow-activation-seq') : String(bioFlowActivationSeq);
+        let title = '';
+        try {
+            const tEl = row && row.querySelector('.spa-flow-chat-title');
+            if (tEl) {
+                title = String(tEl.textContent || '').trim();
+            }
+        } catch (eTitle) { /* ignore */ }
+        const rawData = json && json.data && typeof json.data === 'object' ? json.data : {};
+        const d = enrichUiSubmitSummaryData(rawData);
+        const intentForSummary = currentIntentId ? String(currentIntentId) : '';
+        const snapForSummary = Object.assign({}, flowSnapshot || {});
+        collapseCompletedFlowActivation(seq, d, title, intentForSummary, snapForSummary);
+        clearFlowState();
+        removeFlowPlanStrip();
+    }
+
     function applyFlowPickToSnapshot(snap, draftField, item) {
         if (!snap || !item || typeof item !== 'object') return;
         const label = String(item.name || item.label || item.id || '').trim();
@@ -327,6 +376,33 @@
             if (snap.profesional && snap.profesional.label) lines.push('Profesional: ' + String(snap.profesional.label).trim());
             const nuevo = nuevoHorarioLinea(snap, d);
             if (nuevo) lines.push('Nuevo horario: ' + nuevo);
+            return lines;
+        }
+        if (iid === 'licencia.cargar-como-profesional-flow' || iid === 'licencia.cargar-para-profesional-flow') {
+            const lines = [];
+            const msg = (d.message != null && String(d.message).trim() !== '')
+                ? String(d.message).trim()
+                : 'Licencia registrada.';
+            lines.push(/[.!?]$/.test(msg) ? msg : msg + '.');
+            if (iid === 'licencia.cargar-para-profesional-flow' && snap.profesional && snap.profesional.label) {
+                lines.push('Profesional: ' + String(snap.profesional.label).trim());
+            }
+            if (snap.servicio && snap.servicio.label) {
+                lines.push('Servicio: ' + String(snap.servicio.label).trim());
+            }
+            const condLbl = d.condicion_laboral_label != null ? String(d.condicion_laboral_label).trim() : '';
+            if (condLbl) {
+                lines.push('Tipo: ' + condLbl);
+            }
+            const fi = d.fecha_inicio != null ? String(d.fecha_inicio).trim() : '';
+            const ff = d.fecha_fin != null ? String(d.fecha_fin).trim() : '';
+            if (fi && ff) {
+                lines.push('Desde ' + formatFechaEs(fi) + ' hasta ' + formatFechaEs(ff));
+            } else if (fi) {
+                lines.push('Desde ' + formatFechaEs(fi));
+            } else if (ff) {
+                lines.push('Hasta ' + formatFechaEs(ff));
+            }
             return lines;
         }
         if (iid === 'turnos.crear-como-paciente') {
@@ -2761,6 +2837,7 @@
         initCustomWidgetsInContainer(container, fields);
         attachAutocompleteHandlers(container);
         bindDynamicFormFieldControls(form);
+        initSpaDateInputs(container);
 
         function syncTerminalFormDraftFromForm() {
             if (options.isTerminalFlowStep !== true) {
@@ -2886,8 +2963,7 @@
                         if (currentIntentId && !options.isTerminalFlowStep) {
                             setTimeout(() => { try { handleSendQuery(''); } catch (e) { /* ignore */ } }, 50);
                         } else if (options.isTerminalFlowStep) {
-                            clearFlowSubmitMissingHint(container);
-                            revealFlowSubmitInlineForContainer(container);
+                            finishActiveFlowAfterTerminalUiSubmit(container, json);
                         }
                         return;
                     }
@@ -3326,8 +3402,109 @@
      * Renderizar campo de fecha
      */
     function renderDateField(field) {
-        let html = '<input type="date" class="form-control" name="' + escapeHtml(field.name) + '" value="' + (field.value || '') + '"' + (field.required ? ' required' : '') + '>';
+        const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
+        let html = '<input type="text" class="form-control spa-ui-date-input" data-spa-date-input="1" inputmode="numeric" autocomplete="off" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '" placeholder="dd/mm/aa"';
+        if (field.required) {
+            html += ' required';
+        }
+        if (field.min != null && String(field.min).trim() !== '') {
+            html += ' data-min="' + escapeHtml(String(field.min)) + '"';
+        }
+        if (field.max != null && String(field.max).trim() !== '') {
+            html += ' data-max="' + escapeHtml(String(field.max)) + '"';
+        }
+        html += '>';
         return html;
+    }
+
+    const SPA_FLATPICKR_LOCALE_ES = {
+        weekdays: {
+            shorthand: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+            longhand: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+        },
+        months: {
+            shorthand: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+            longhand: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre']
+        },
+        firstDayOfWeek: 1,
+        rangeSeparator: ' a ',
+        weekAbbreviation: 'Sem',
+        scrollTitle: 'Desplazar para cambiar',
+        toggleTitle: 'Click para abrir el calendario',
+        time_24hr: true
+    };
+
+    function initSpaDateInputs(root) {
+        const scope = root && root.querySelectorAll ? root : document;
+        const inputs = scope.querySelectorAll
+            ? scope.querySelectorAll('input[data-spa-date-input="1"]')
+            : [];
+        inputs.forEach(function (input) {
+            if (input.dataset.spaDateBound === '1') {
+                return;
+            }
+            input.dataset.spaDateBound = '1';
+
+            if (typeof flatpickr === 'undefined') {
+                input.addEventListener('click', function () {
+                    if (typeof input.showPicker === 'function') {
+                        try {
+                            input.showPicker();
+                        } catch (e) { /* ignore */ }
+                    }
+                });
+                input.addEventListener('focus', function () {
+                    if (typeof input.showPicker === 'function') {
+                        try {
+                            input.showPicker();
+                        } catch (e) { /* ignore */ }
+                    }
+                });
+                return;
+            }
+
+            if (input._flatpickr) {
+                try {
+                    input._flatpickr.destroy();
+                } catch (e) { /* ignore */ }
+            }
+
+            const opts = {
+                altInput: true,
+                altFormat: 'd/m/y',
+                dateFormat: 'Y-m-d',
+                locale: SPA_FLATPICKR_LOCALE_ES,
+                allowInput: false,
+                clickOpens: true,
+                disableMobile: true,
+                onChange: function (_selectedDates, _dateStr, instance) {
+                    try {
+                        instance.input.dispatchEvent(new Event('change', { bubbles: true }));
+                    } catch (e) { /* ignore */ }
+                }
+            };
+            const minRaw = input.getAttribute('data-min');
+            const maxRaw = input.getAttribute('data-max');
+            if (minRaw && String(minRaw).trim() !== '') {
+                opts.minDate = String(minRaw).trim();
+            }
+            if (maxRaw && String(maxRaw).trim() !== '') {
+                opts.maxDate = String(maxRaw).trim();
+            }
+            flatpickr(input, opts);
+
+            const fp = input._flatpickr;
+            if (fp && fp.altInput) {
+                fp.altInput.classList.add('form-control', 'spa-ui-date-input');
+                fp.altInput.setAttribute('placeholder', 'dd/mm/aa');
+                fp.altInput.addEventListener('click', function () {
+                    if (fp.isOpen) {
+                        return;
+                    }
+                    fp.open();
+                });
+            }
+        });
     }
 
     /**
@@ -3462,6 +3639,7 @@
         });
         
         bindDynamicFormFieldControls(form);
+        initSpaDateInputs(form);
     }
 
     /**

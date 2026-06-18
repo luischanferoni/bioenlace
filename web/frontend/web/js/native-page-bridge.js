@@ -28,6 +28,10 @@
   }
 
   async function fetchJson(url, options) {
+    if (window.BioenlaceApiClient && typeof window.BioenlaceApiClient.fetchJson === 'function') {
+      var wrapped = await window.BioenlaceApiClient.fetchJson(url, options);
+      return wrapped.json;
+    }
     var opts = Object.assign({}, options || {});
     opts.headers = window.BioenlaceApiClient.mergeHeaders(
       Object.assign({ Accept: 'application/json' }, opts.headers || {})
@@ -40,6 +44,9 @@
       throw new Error('Se esperaba JSON. Recibido: ' + text.slice(0, 120));
     }
     var json = await res.json();
+    if (window.BioenlaceApiClient && window.BioenlaceApiClient.handleUnauthorized(res.status, json)) {
+      return json;
+    }
     if (!res.ok) {
       throw new Error((json && (json.message || json.error)) ? (json.message || json.error) : ('HTTP ' + res.status));
     }

@@ -60,6 +60,7 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
 
         if ($identity !== null) {
             BioenlaceAccessChecker::refreshForIdentity($identity);
+            WebApiJwtSessionService::ensureValidTokenInSession();
         }
 
         return true;

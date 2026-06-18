@@ -29,6 +29,13 @@
         return window.spaConfig.baseUrl + '/' + url;
     }
 
+    function handleApiUnauthorized(status, body) {
+        if (window.BioenlaceApiClient && typeof window.BioenlaceApiClient.handleUnauthorized === 'function') {
+            return window.BioenlaceApiClient.handleUnauthorized(status, body);
+        }
+        return false;
+    }
+
     function mergeApiQueryIntoUrl(baseUrl, apiObj) {
         if (!apiObj || !apiObj.query || typeof apiObj.query !== 'object') {
             return baseUrl;
@@ -1814,6 +1821,9 @@
                     if (text && String(text).trim() !== '') {
                         try {
                             const j = JSON.parse(text);
+                            if (handleApiUnauthorized(response.status, j)) {
+                                return;
+                            }
                             if (j && typeof j === 'object') {
                                 if (j.message != null && String(j.message).trim() !== '') {
                                     msgFromBody = String(j.message).trim();
@@ -1824,6 +1834,9 @@
                         } catch (parseErr) {
                             // No era JSON; seguimos con mensajes por código HTTP.
                         }
+                    }
+                    if (handleApiUnauthorized(response.status, null)) {
+                        return;
                     }
                     if (msgFromBody) {
                         throw new Error(msgFromBody);
@@ -4508,21 +4521,34 @@
             headers: window.BioenlaceApiClient.mergeHeaders({
                 'X-Requested-With': 'XMLHttpRequest',
                 'Accept': 'application/json'
-            })
+            }),
+            credentials: 'same-origin'
         })
         .then(response => {
-            // Verificar que la respuesta sea JSON
             const contentType = response.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-                // Si no es JSON, probablemente es un error HTML
+                if (handleApiUnauthorized(response.status, null)) {
+                    return null;
+                }
                 return response.text().then(text => {
                     console.warn('El servidor devolvió HTML en lugar de JSON:', text.substring(0, 200));
                     throw new Error('Respuesta no válida del servidor');
                 });
             }
-            return response.json();
+            return response.json().then(data => ({ response: response, data: data }));
         })
-        .then(data => {
+        .then(result => {
+            if (!result) {
+                return;
+            }
+            const response = result.response;
+            const data = result.data;
+            if (handleApiUnauthorized(response.status, data)) {
+                return;
+            }
+            if (!response.ok) {
+                throw new Error((data && data.message) ? String(data.message) : ('HTTP ' + response.status));
+            }
             if (data && data.success && Array.isArray(data.categories)) {
                 renderShortcutsCategories(data.categories);
                 renderWelcomeShortcutsCategories(data.categories);

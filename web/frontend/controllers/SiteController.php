@@ -14,12 +14,11 @@ use common\models\User;
 use common\components\Domain\Clinical\Inpatient\Service\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;
 use common\models\Efector;
-use common\models\Person\Persona;
+use frontend\components\WebApiJwtSessionService;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
-use Firebase\JWT\JWT;
 
 class SiteController extends Controller
 {    
@@ -74,7 +73,7 @@ class SiteController extends Controller
         }
 
         $this->layout = 'main_sinmenuizquierda';
-        $this->ensureApiJwtTokenEnSesion();
+        WebApiJwtSessionService::ensureValidTokenInSession();
 
         return $this->render('despuesdelogin/inicio');
     }
@@ -106,31 +105,6 @@ class SiteController extends Controller
     private function sesionOperativaCompleta(): bool
     {
         return SesionOperativaService::isSesionOperativaCompleta();
-    }
-
-    private function ensureApiJwtTokenEnSesion(): void
-    {
-        $session = Yii::$app->session;
-        if ($session->get('apiJwtToken') || Yii::$app->user->isGuest) {
-            return;
-        }
-        $identity = Yii::$app->user->identity;
-        if (!$identity) {
-            return;
-        }
-        $persona = Persona::findOne(['id_user' => $identity->id]);
-        if (!$persona) {
-            return;
-        }
-        $payload = [
-            'user_id' => $identity->id,
-            'email' => $identity->email,
-            'id_persona' => (int) $persona->id_persona,
-            'iat' => time(),
-            'exp' => time() + (24 * 60 * 60),
-        ];
-        $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
-        $session->set('apiJwtToken', $token);
     }
 
     /**

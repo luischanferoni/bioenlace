@@ -8,7 +8,6 @@ use yii\web\NotFoundHttpException;
 use common\models\Person\Persona;
 use common\models\User;
 use common\models\ProfesionalEfectorServicio;
-use Firebase\JWT\JWT;
 use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
 
 /**
@@ -31,15 +30,7 @@ class UserConfig extends BaseUserConfig
                 $session->set('nombreUsuario', $persona->nombre);
 
                 // Generar token JWT para que la SPA web use la API v1 igual que el móvil
-                $payload = [
-                    'user_id' => $identity->id,
-                    'email' => $identity->email,
-                    'id_persona' => $persona->id_persona,
-                    'iat' => time(),
-                    'exp' => time() + (24 * 60 * 60),
-                ];
-                $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
-                $session->set('apiJwtToken', $token);
+                WebApiJwtSessionService::storeTokenForIdentity($identity, $persona);
 
                 // BioenlaceDbManager arma permisos con contexto PES en sesión.
                 $this->tryBootstrapSingleEfectorSession($persona);

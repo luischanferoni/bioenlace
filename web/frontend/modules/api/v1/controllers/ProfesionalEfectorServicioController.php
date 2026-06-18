@@ -178,7 +178,11 @@ class ProfesionalEfectorServicioController extends BaseController
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $idPersona = (int) Yii::$app->user->getIdPersona();
             $idEfector = $this->resolveIdEfectorParaMisServicios();
-            $items = $this->serviciosAsignadosItemsForPersonaEfector($idPersona, $idEfector);
+            $incluirSinAgenda = filter_var(
+                $req->get('incluir_sin_agenda') ?: $req->post('incluir_sin_agenda') ?: '0',
+                FILTER_VALIDATE_BOOLEAN
+            );
+            $items = $this->serviciosAsignadosItemsForPersonaEfector($idPersona, $idEfector, $incluirSinAgenda);
             $uiItems = [];
             foreach ($items as $it) {
                 $uiItems[] = [
@@ -429,7 +433,7 @@ class ProfesionalEfectorServicioController extends BaseController
     /**
      * @return list<array{id:int,name:string,meta:array{id_profesional_efector_servicio:int, acepta_turnos:string}}>
      */
-    private function serviciosAsignadosItemsForPersonaEfector(int $idPersona, int $idEfector): array
+    private function serviciosAsignadosItemsForPersonaEfector(int $idPersona, int $idEfector, bool $incluirSinAgenda = false): array
     {
         $pesRows = ProfesionalEfectorServicio::find()
             ->where([
@@ -443,7 +447,7 @@ class ProfesionalEfectorServicioController extends BaseController
 
         $items = [];
         foreach ($pesRows as $pes) {
-            if ((int) $pes->id_servicio === 62) {
+            if (!$incluirSinAgenda && (int) $pes->id_servicio === 62) {
                 continue;
             }
             $nombre = $pes->servicio !== null ? (string) $pes->servicio->nombre : ('Servicio #' . $pes->id_servicio);

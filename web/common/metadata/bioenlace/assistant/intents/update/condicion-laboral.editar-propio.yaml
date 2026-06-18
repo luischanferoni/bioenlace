@@ -66,6 +66,8 @@ subintents:
     next: editar_vigencia
     open_ui:
       action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
+      params:
+        incluir_sin_agenda: "1"
 
   - id: editar_vigencia
     assistant_text: "Actualizá tipo y fechas de vigencia"

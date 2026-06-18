@@ -40,9 +40,6 @@ draft_hydrator:
   handler: organization.pes_from_servicio
   require_own_pes: true
 
-subject_resolution:
-  handler: organization.pes_own_in_efector
-
 business_rules:
   - id: licencia_propia_vs_staff
     when: pre_flow
@@ -66,13 +63,15 @@ business_rules:
 
 subintents:
   - id: select_servicio
-    assistant_text: "Servicio"
+    assistant_text: "Elegí el servicio"
     provides:
       - draft.id_servicio
       - draft.id_profesional_efector_servicio
     next: cargar_licencia
     open_ui:
       action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
+      params:
+        incluir_sin_agenda: "1"
 
   - id: cargar_licencia
     assistant_text: "Licencia"

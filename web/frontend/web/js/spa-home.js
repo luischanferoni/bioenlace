@@ -248,6 +248,16 @@
         } else if (field === 'id_servicio_asignado') {
             snap.servicio = { id: item.id != null ? String(item.id) : '' };
             if (label) snap.servicio.label = label;
+        } else if (field === 'id_servicio') {
+            snap.servicio = { id: item.id != null ? String(item.id) : '' };
+            if (label) snap.servicio.label = label;
+            const metaServ = item.meta && typeof item.meta === 'object' ? item.meta : {};
+            if (metaServ.id_profesional_efector_servicio != null) {
+                snap.profesional = {
+                    id: String(metaServ.id_profesional_efector_servicio),
+                    label: label,
+                };
+            }
         } else if (field === 'id_efector') {
             snap.efector = { id: item.id != null ? String(item.id) : '' };
             if (label) snap.efector.label = label;
@@ -2560,6 +2570,13 @@
                 delta[draftField] = selectedId;
                 if (item) {
                     delta['_flow_item_' + draftField] = item;
+                    const meta = item.meta && typeof item.meta === 'object' ? item.meta : {};
+                    if (draftField === 'id_servicio' && meta.id_profesional_efector_servicio != null) {
+                        const pesId = String(meta.id_profesional_efector_servicio).trim();
+                        if (pesId !== '') {
+                            delta.id_profesional_efector_servicio = pesId;
+                        }
+                    }
                 }
                 applyDraftDelta(delta);
                 writeFlowState();
@@ -2743,6 +2760,7 @@
 
         initCustomWidgetsInContainer(container, fields);
         attachAutocompleteHandlers(container);
+        bindDynamicFormFieldControls(form);
 
         function syncTerminalFormDraftFromForm() {
             if (options.isTerminalFlowStep !== true) {
@@ -2770,6 +2788,20 @@
                         }
                         if (!lbl && k === 'razon_cancelacion' && typeof etiquetaRazonCancelacionPaciente === 'function') {
                             lbl = etiquetaRazonCancelacionPaciente(delta[k]);
+                        }
+                        if (lbl) {
+                            delta['_flow_item_' + k] = { code: delta[k], label: lbl };
+                        }
+                    } else if (ff && (String(ff.type) === 'chips' || String(ff.type) === 'radio')) {
+                        const nameSel = String(k).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                        const activeChip = form.querySelector('.spa-ui-chip-btn.is-active[data-field="' + nameSel + '"]');
+                        let lbl = activeChip ? String(activeChip.textContent || '').trim() : '';
+                        if (!lbl) {
+                            const checked = form.querySelector('input[type="radio"][name="' + nameSel + '"]:checked');
+                            if (checked) {
+                                const labEl = form.querySelector('label[for="' + String(checked.id || '').replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"]');
+                                lbl = labEl ? String(labEl.textContent || '').trim() : '';
+                            }
                         }
                         if (lbl) {
                             delta['_flow_item_' + k] = { code: delta[k], label: lbl };
@@ -3253,7 +3285,8 @@
             const value = typeof option === 'object' ? option.value : option;
             const label = typeof option === 'object' ? option.label : option;
             const active = current !== '' && String(value) === current ? ' is-active' : '';
-            html += '<button type="button" class="spa-ui-chip-btn' + active + '" data-field="' + escapeHtml(field.name) + '" data-value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</button>';
+            const pressed = active ? 'true' : 'false';
+            html += '<button type="button" class="spa-ui-chip-btn' + active + '" data-field="' + escapeHtml(field.name) + '" data-value="' + escapeHtml(value) + '" aria-pressed="' + pressed + '">' + escapeHtml(label) + '</button>';
         });
         html += '</div>';
         return html;
@@ -3341,6 +3374,80 @@
         return html;
     }
 
+    function bindDynamicFormFieldControls(form) {
+        if (!form) {
+            return;
+        }
+
+        form.querySelectorAll('.quick-option-btn, .spa-ui-chip-btn').forEach(function (btn) {
+            if (btn.dataset.fieldControlBound === '1') {
+                return;
+            }
+            btn.dataset.fieldControlBound = '1';
+            btn.addEventListener('click', function () {
+                const fieldName = this.dataset.field;
+                const value = this.dataset.value;
+                if (!fieldName) {
+                    return;
+                }
+                const nameSel = String(fieldName).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                const input = form.querySelector('input.spa-ui-chip-value[name="' + nameSel + '"]')
+                    || form.querySelector('input[name="' + nameSel + '"]:not([type="radio"])');
+                if (!input) {
+                    return;
+                }
+                input.value = value;
+                form.querySelectorAll('.quick-option-btn[data-field="' + nameSel + '"], .spa-ui-chip-btn[data-field="' + nameSel + '"]').forEach(function (b) {
+                    b.classList.remove('active', 'is-active');
+                    b.setAttribute('aria-pressed', 'false');
+                });
+                this.classList.add(this.classList.contains('spa-ui-chip-btn') ? 'is-active' : 'active');
+                this.setAttribute('aria-pressed', 'true');
+                try {
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                } catch (e) { /* ignore */ }
+            });
+        });
+
+        form.querySelectorAll('.number-increment').forEach(function (btn) {
+            if (btn.dataset.fieldControlBound === '1') {
+                return;
+            }
+            btn.dataset.fieldControlBound = '1';
+            btn.addEventListener('click', function () {
+                const fieldName = this.dataset.field;
+                const nameSel = String(fieldName).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                const input = form.querySelector('input[name="' + nameSel + '"]');
+                if (input) {
+                    const current = parseInt(input.value, 10) || 0;
+                    const step = parseFloat(input.step) || 1;
+                    input.value = current + step;
+                }
+            });
+        });
+
+        form.querySelectorAll('.number-decrement').forEach(function (btn) {
+            if (btn.dataset.fieldControlBound === '1') {
+                return;
+            }
+            btn.dataset.fieldControlBound = '1';
+            btn.addEventListener('click', function () {
+                const fieldName = this.dataset.field;
+                const nameSel = String(fieldName).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+                const input = form.querySelector('input[name="' + nameSel + '"]');
+                if (input) {
+                    const current = parseInt(input.value, 10) || 0;
+                    const step = parseFloat(input.step) || 1;
+                    const min = input.min ? parseFloat(input.min) : null;
+                    const newValue = current - step;
+                    if (min === null || newValue >= min) {
+                        input.value = newValue;
+                    }
+                }
+            });
+        });
+    }
+
     /**
      * Adjuntar listeners a formulario dinámico
      */
@@ -3354,50 +3461,7 @@
             submitCrudForm(this);
         });
         
-        // Opciones rápidas para números
-        document.querySelectorAll('.quick-option-btn, .spa-ui-chip-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const fieldName = this.dataset.field;
-                const value = this.dataset.value;
-                const input = form.querySelector('input[name="' + fieldName + '"]');
-                if (input) {
-                    input.value = value;
-                    document.querySelectorAll('.quick-option-btn[data-field="' + fieldName + '"], .spa-ui-chip-btn[data-field="' + fieldName + '"]').forEach(function (b) {
-                        b.classList.remove('active', 'is-active');
-                    });
-                    this.classList.add(this.classList.contains('spa-ui-chip-btn') ? 'is-active' : 'active');
-                }
-            });
-        });
-        
-        // Botones incremento/decremento
-        document.querySelectorAll('.number-increment').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const fieldName = this.dataset.field;
-                const input = form.querySelector('input[name="' + fieldName + '"]');
-                if (input) {
-                    const current = parseInt(input.value) || 0;
-                    const step = parseFloat(input.step) || 1;
-                    input.value = current + step;
-                }
-            });
-        });
-        
-        document.querySelectorAll('.number-decrement').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const fieldName = this.dataset.field;
-                const input = form.querySelector('input[name="' + fieldName + '"]');
-                if (input) {
-                    const current = parseInt(input.value) || 0;
-                    const step = parseFloat(input.step) || 1;
-                    const min = input.min ? parseFloat(input.min) : null;
-                    const newValue = current - step;
-                    if (min === null || newValue >= min) {
-                        input.value = newValue;
-                    }
-                }
-            });
-        });
+        bindDynamicFormFieldControls(form);
     }
 
     /**

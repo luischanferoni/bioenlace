@@ -353,6 +353,7 @@ html:has(.spa-asistente-root) {
     background: var(--bio-primary-50, #ebf8ff);
     border-color: var(--bio-primary-500, #3182ce);
     font-weight: 600;
+    box-shadow: inset 0 0 0 1px var(--bio-primary-500, #3182ce);
 }
 
 .spa-shortcut-cards-grid {

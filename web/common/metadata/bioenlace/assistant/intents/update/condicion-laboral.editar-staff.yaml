@@ -5,7 +5,7 @@ operation: edit
 intent_family: condicion-laboral.edit
 domain_operation: ProfesionalEfectorServicio.condicion_laboral_staff
 
-action_name: "Editar condición laboral (staff)"
+action_name: "Condición laboral de un profesional"
 description: "Registrar o modificar condición laboral de un profesional del efector (staff)."
 rbac_route: "/api/profesional-efector-servicio/crear-condicion-laboral"
 

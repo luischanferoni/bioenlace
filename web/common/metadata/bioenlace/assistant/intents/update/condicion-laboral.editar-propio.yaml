@@ -5,7 +5,7 @@ operation: edit
 intent_family: condicion-laboral.edit
 domain_operation: ProfesionalEfectorServicio.condicion_laboral_own
 
-action_name: "Editar condición laboral propia"
+action_name: "Mi condición laboral"
 description: "Modificar vigencia de condición laboral sobre una asignación PES propia en el efector."
 rbac_route: "/api/profesional-efector-servicio/editar-condicion-laboral"
 

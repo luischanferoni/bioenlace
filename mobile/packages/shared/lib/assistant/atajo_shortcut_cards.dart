@@ -49,12 +49,35 @@ class AtajoShortcutCards extends StatelessWidget {
                   ),
                   BioSpacing.gapH(BioSpacing.sm),
                 ],
-                _ShortcutGrid(
-                  items: cat.items,
-                  twoColumns: twoCols,
-                  enabled: enabled,
-                  onTap: onTap,
-                ),
+                if (cat.subgroups.isNotEmpty) ...[
+                  for (final sg in cat.subgroups) ...[
+                    if (sg.titulo.isNotEmpty) ...[
+                      Text(
+                        sg.titulo,
+                        style: BioTypography.title.copyWith(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: tokens.textMuted.withValues(alpha: 0.9),
+                          letterSpacing: 0.15,
+                        ),
+                      ),
+                      BioSpacing.gapH(BioSpacing.xs),
+                    ],
+                    _ShortcutGrid(
+                      items: sg.items,
+                      twoColumns: twoCols,
+                      enabled: enabled,
+                      onTap: onTap,
+                    ),
+                    BioSpacing.gapH(BioSpacing.sm),
+                  ],
+                ] else
+                  _ShortcutGrid(
+                    items: cat.items,
+                    twoColumns: twoCols,
+                    enabled: enabled,
+                    onTap: onTap,
+                  ),
                 BioSpacing.gapH(BioSpacing.md),
               ],
             ],

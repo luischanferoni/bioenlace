@@ -1,7 +1,7 @@
 intent_id: licencia.cargar-como-profesional-flow
 version: 1
 
-action_name: "Cargar licencia"
+action_name: "Mi licencia"
 description: "Para registrar una licencia o permiso sobre uno de tus servicios en el efector."
 rbac_route: "/api/profesional-efector-servicio/cargar-licencia-como-profesional-flow"
 keywords:

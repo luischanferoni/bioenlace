@@ -10,11 +10,11 @@ use Yii;
  */
 final class AssistantShortcutsCatalog
 {
-    /** @var list<array{id: string, titulo: string, intent_ids: list<string>}>|null */
+    /** @var list<array{id: string, titulo: string, intent_ids: list<string>, subgroups: list<array{id: string, titulo: string, intent_ids: list<string>}>}>|null */
     private static ?array $categories = null;
 
     /**
-     * @return list<array{id: string, titulo: string, intent_ids: list<string>}>
+     * @return list<array{id: string, titulo: string, intent_ids: list<string>, subgroups: list<array{id: string, titulo: string, intent_ids: list<string>}>}>
      */
     public static function categories(): array
     {
@@ -46,24 +46,75 @@ final class AssistantShortcutsCatalog
                 continue;
             }
             $id = trim((string) ($cat['id'] ?? ''));
-            $titulo = trim((string) ($cat['titulo'] ?? ''));
-            $intentIds = [];
-            foreach ($cat['intent_ids'] ?? [] as $iid) {
-                if (is_string($iid) && trim($iid) !== '') {
-                    $intentIds[] = trim($iid);
-                }
+            if ($id === '') {
+                continue;
             }
-            if ($id === '' || $intentIds === []) {
+            $titulo = trim((string) ($cat['titulo'] ?? ''));
+            $subgroups = self::parseSubgroups($cat['subgroups'] ?? []);
+            $intentIds = self::parseIntentIds($cat['intent_ids'] ?? []);
+            if ($subgroups === [] && $intentIds === []) {
                 continue;
             }
             self::$categories[] = [
                 'id' => $id,
                 'titulo' => $titulo !== '' ? $titulo : $id,
                 'intent_ids' => $intentIds,
+                'subgroups' => $subgroups,
             ];
         }
 
         return self::$categories;
+    }
+
+    /**
+     * @param mixed $raw
+     *
+     * @return list<array{id: string, titulo: string, intent_ids: list<string>}>
+     */
+    private static function parseSubgroups($raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+        $subgroups = [];
+        foreach ($raw as $sg) {
+            if (!is_array($sg)) {
+                continue;
+            }
+            $sgId = trim((string) ($sg['id'] ?? ''));
+            $intentIds = self::parseIntentIds($sg['intent_ids'] ?? []);
+            if ($sgId === '' || $intentIds === []) {
+                continue;
+            }
+            $sgTitulo = trim((string) ($sg['titulo'] ?? ''));
+            $subgroups[] = [
+                'id' => $sgId,
+                'titulo' => $sgTitulo !== '' ? $sgTitulo : $sgId,
+                'intent_ids' => $intentIds,
+            ];
+        }
+
+        return $subgroups;
+    }
+
+    /**
+     * @param mixed $raw
+     *
+     * @return list<string>
+     */
+    private static function parseIntentIds($raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+        $intentIds = [];
+        foreach ($raw as $iid) {
+            if (is_string($iid) && trim($iid) !== '') {
+                $intentIds[] = trim($iid);
+            }
+        }
+
+        return $intentIds;
     }
 
     public static function resetCacheForTests(): void

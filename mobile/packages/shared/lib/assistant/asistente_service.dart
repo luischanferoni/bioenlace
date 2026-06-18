@@ -33,11 +33,23 @@ class AtajoItem {
   });
 }
 
-class AtajoCategoria {
+class AtajoSubgrupo {
   final String titulo;
   final List<AtajoItem> items;
 
-  AtajoCategoria({required this.titulo, required this.items});
+  AtajoSubgrupo({required this.titulo, required this.items});
+}
+
+class AtajoCategoria {
+  final String titulo;
+  final List<AtajoItem> items;
+  final List<AtajoSubgrupo> subgroups;
+
+  AtajoCategoria({
+    required this.titulo,
+    required this.items,
+    this.subgroups = const [],
+  });
 }
 
 String normalizeAtajoDescription(String raw) {
@@ -253,23 +265,30 @@ class AsistenteService {
           if (c is! Map) continue;
           final cm = Map<String, dynamic>.from(c);
           final titulo = cm['titulo']?.toString() ?? 'Atajos';
-          final actions = cm['actions'];
-          final items = <AtajoItem>[];
-          if (actions is List) {
-            for (final a in actions) {
-              if (a is! Map) continue;
-              final am = Map<String, dynamic>.from(a);
-              final iid = intentIdFromCommonActionMap(am);
-              if (iid == null || iid.isEmpty) continue;
-              items.add(AtajoItem(
-                intentId: iid,
-                title: actionDisplayNameFromMap(am),
-                description: normalizeAtajoDescription(
-                  am['description']?.toString() ?? '',
-                ),
+          final subgroupsRaw = cm['subgroups'];
+          if (subgroupsRaw is List && subgroupsRaw.isNotEmpty) {
+            final subgroups = <AtajoSubgrupo>[];
+            final flatItems = <AtajoItem>[];
+            for (final sg in subgroupsRaw) {
+              if (sg is! Map) continue;
+              final sm = Map<String, dynamic>.from(sg);
+              final sgTitulo = sm['titulo']?.toString() ?? '';
+              final sgItems = _parseAtajoItems(sm['actions']);
+              if (sgItems.isEmpty) continue;
+              subgroups.add(AtajoSubgrupo(titulo: sgTitulo, items: sgItems));
+              flatItems.addAll(sgItems);
+            }
+            if (subgroups.isNotEmpty) {
+              out.add(AtajoCategoria(
+                titulo: titulo,
+                items: flatItems,
+                subgroups: subgroups,
               ));
             }
+            continue;
           }
+
+          final items = _parseAtajoItems(cm['actions']);
           if (items.isNotEmpty) {
             out.add(AtajoCategoria(titulo: titulo, items: items));
           }
@@ -279,24 +298,30 @@ class AsistenteService {
 
       final raw = responseData['actions'];
       if (raw is! List) return [];
-      final flat = <AtajoItem>[];
-      for (final a in raw) {
-        if (a is! Map) continue;
-        final am = Map<String, dynamic>.from(a);
-        final iid = intentIdFromCommonActionMap(am);
-        if (iid == null || iid.isEmpty) continue;
-        flat.add(AtajoItem(
-          intentId: iid,
-          title: actionDisplayNameFromMap(am),
-          description: normalizeAtajoDescription(
-            am['description']?.toString() ?? '',
-          ),
-        ));
-      }
+      final flat = _parseAtajoItems(raw);
       if (flat.isEmpty) return [];
       return [AtajoCategoria(titulo: 'Atajos', items: flat)];
     } catch (_) {
       return [];
     }
+  }
+
+  List<AtajoItem> _parseAtajoItems(dynamic actions) {
+    final items = <AtajoItem>[];
+    if (actions is! List) return items;
+    for (final a in actions) {
+      if (a is! Map) continue;
+      final am = Map<String, dynamic>.from(a);
+      final iid = intentIdFromCommonActionMap(am);
+      if (iid == null || iid.isEmpty) continue;
+      items.add(AtajoItem(
+        intentId: iid,
+        title: actionDisplayNameFromMap(am),
+        description: normalizeAtajoDescription(
+          am['description']?.toString() ?? '',
+        ),
+      ));
+    }
+    return items;
   }
 }

@@ -6,7 +6,7 @@ intent_family: profesional-agenda.configurar
 domain_operation: DataAccess.edit
 edit_surface_id: ProfesionalEfectorServicioAgenda
 
-action_name: "Configurar agenda (staff)"
+action_name: "Agenda de un profesional"
 description: "Modificar horarios y configuración de agenda de un profesional del efector."
 rbac_route: "/api/profesional-agenda/configurar-agenda"
 

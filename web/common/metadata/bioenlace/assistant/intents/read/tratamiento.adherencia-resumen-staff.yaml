@@ -1,7 +1,7 @@
 intent_id: tratamiento.adherencia-resumen-staff
 version: 1
 
-action_name: "Adherencia a tratamientos (staff)"
+action_name: "Adherencia a tratamientos"
 description: "Ver el avance de los planes de tratamiento y sus actividades."
 rbac_route: "/api/clinical/care-plan/active"
 keywords:

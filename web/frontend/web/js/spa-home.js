@@ -4428,6 +4428,19 @@
         syncShortcutsToolbarVisibility();
     }
 
+    function appendShortcutCardsGridHtml(actions) {
+        let html = '';
+        const items = Array.isArray(actions) ? actions : [];
+        items.forEach(function (a) {
+            const m = shortcutMetaFromAction(a);
+            if (!m) {
+                return;
+            }
+            html += welcomeShortcutButtonHtml(m);
+        });
+        return html;
+    }
+
     function renderWelcomeShortcutsCategories(categories) {
         if (!welcomeActionsEl) {
             return;
@@ -4440,20 +4453,40 @@
         let html = '<div class="spa-chat-welcome-categories d-flex flex-column gap-3">';
         cats.forEach(function (c) {
             const title = c && c.titulo ? String(c.titulo) : 'Atajos';
+            const subgroups = c && Array.isArray(c.subgroups) ? c.subgroups : [];
             const actions = c && Array.isArray(c.actions) ? c.actions : [];
+            if (subgroups.length > 0) {
+                let hasAny = false;
+                let sectionHtml = '<section class="spa-chat-welcome-category">';
+                sectionHtml += '<h3 class="spa-chat-welcome-category-title h6 mb-2">' + escapeHtml(title) + '</h3>';
+                subgroups.forEach(function (sg) {
+                    const sgTitle = sg && sg.titulo ? String(sg.titulo) : '';
+                    const sgActions = sg && Array.isArray(sg.actions) ? sg.actions : [];
+                    if (!sgActions.length) {
+                        return;
+                    }
+                    hasAny = true;
+                    sectionHtml += '<div class="spa-chat-welcome-subgroup mb-2">';
+                    if (sgTitle) {
+                        sectionHtml += '<h4 class="spa-chat-welcome-subgroup-title h6 mb-2">' + escapeHtml(sgTitle) + '</h4>';
+                    }
+                    sectionHtml += '<div class="spa-shortcut-cards-grid">';
+                    sectionHtml += appendShortcutCardsGridHtml(sgActions);
+                    sectionHtml += '</div></div>';
+                });
+                sectionHtml += '</section>';
+                if (hasAny) {
+                    html += sectionHtml;
+                }
+                return;
+            }
             if (!actions.length) {
                 return;
             }
             html += '<section class="spa-chat-welcome-category">';
             html += '<h3 class="spa-chat-welcome-category-title h6 mb-2">' + escapeHtml(title) + '</h3>';
             html += '<div class="spa-shortcut-cards-grid">';
-            actions.forEach(function (a) {
-                const m = shortcutMetaFromAction(a);
-                if (!m) {
-                    return;
-                }
-                html += welcomeShortcutButtonHtml(m);
-            });
+            html += appendShortcutCardsGridHtml(actions);
             html += '</div></section>';
         });
         html += '</div>';
@@ -4614,9 +4647,43 @@
             return;
         }
         let html = '<div class="d-flex flex-column gap-3">';
-        cats.forEach(function (c, idx) {
+        cats.forEach(function (c) {
             const title = c && c.titulo ? String(c.titulo) : 'Atajos';
+            const subgroups = c && Array.isArray(c.subgroups) ? c.subgroups : [];
             const actions = c && Array.isArray(c.actions) ? c.actions : [];
+
+            if (subgroups.length > 0) {
+                let hasAny = false;
+                let blockHtml = '<div>';
+                blockHtml += '<h4 class="spa-chat-welcome-category-title h6 mb-2">' + escapeHtml(title) + '</h4>';
+                subgroups.forEach(function (sg) {
+                    const sgTitle = sg && sg.titulo ? String(sg.titulo) : '';
+                    const sgActions = sg && Array.isArray(sg.actions) ? sg.actions : [];
+                    if (!sgActions.length) {
+                        return;
+                    }
+                    hasAny = true;
+                    blockHtml += '<div class="spa-chat-welcome-subgroup mb-2">';
+                    if (sgTitle) {
+                        blockHtml += '<h5 class="spa-chat-welcome-subgroup-title h6 mb-2">' + escapeHtml(sgTitle) + '</h5>';
+                    }
+                    blockHtml += '<div class="spa-shortcut-cards-grid">';
+                    sgActions.forEach(function (a) {
+                        const m = shortcutMetaFromAction(a);
+                        if (!m) {
+                            return;
+                        }
+                        blockHtml += shortcutCardHtml(m);
+                    });
+                    blockHtml += '</div></div>';
+                });
+                blockHtml += '</div>';
+                if (hasAny) {
+                    html += blockHtml;
+                }
+                return;
+            }
+
             if (!actions || actions.length < 1) {
                 return;
             }

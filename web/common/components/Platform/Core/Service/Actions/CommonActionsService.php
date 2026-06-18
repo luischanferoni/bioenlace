@@ -17,7 +17,7 @@ final class CommonActionsService
     public const DEFAULT_LIMIT = 50;
 
     /**
-     * @return array{actions: list<array{route: string, name: string, description: string, action_id: string|null, client_open?: array, client_interaction?: string}>, categories: list<array{id: string, titulo: string, actions: list<array{route: string, name: string, description: string, action_id: string|null, client_open?: array, client_interaction?: string}>}>}
+     * @return array{actions: list<array{route: string, name: string, description: string, action_id: string|null, client_open?: array, client_interaction?: string}>, categories: list<array{id: string, titulo: string, actions: list<array{route: string, name: string, description: string, action_id: string|null, client_open?: array, client_interaction?: string}>, subgroups?: list<array{id: string, titulo: string, actions: list<array{route: string, name: string, description: string, action_id: string|null, client_open?: array, client_interaction?: string}>}>}>}
      */
     public static function getFormattedForUser(int $userId, int $limit = self::DEFAULT_LIMIT): array
     {
@@ -39,29 +39,11 @@ final class CommonActionsService
         }
 
         $categories = [];
-        foreach (self::flowCategoriesDefinition() as $cat) {
-            $catId = isset($cat['id']) ? (string) $cat['id'] : '';
-            $title = isset($cat['titulo']) ? (string) $cat['titulo'] : '';
-            $models = isset($cat['models']) && is_array($cat['models']) ? $cat['models'] : [];
-            $actions = [];
-            foreach ($models as $intentId) {
-                $intentId = is_string($intentId) ? trim($intentId) : '';
-                if ($intentId === '' || !isset($byId[$intentId])) {
-                    continue;
-                }
-                $actions[] = self::flowToActionRow($byId[$intentId]);
+        foreach (AssistantShortcutsCatalog::categories() as $catDef) {
+            $payload = self::buildCategoryPayload($catDef, $byId);
+            if ($payload !== null) {
+                $categories[] = $payload;
             }
-            if ($actions === []) {
-                continue;
-            }
-            usort($actions, static function (array $a, array $b): int {
-                return strcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
-            });
-            $categories[] = [
-                'id' => $catId !== '' ? $catId : strtolower(preg_replace('/\s+/', '-', $title) ?? 'categoria'),
-                'titulo' => $title !== '' ? $title : 'Atajos',
-                'actions' => $actions,
-            ];
         }
 
         // Flatten para compat con clientes actuales (si todavía renderizan `actions` plano).
@@ -73,6 +55,7 @@ final class CommonActionsService
         }
 
         $flat = array_slice($flat, 0, $limit);
+
         return [
             'actions' => $flat,
             'categories' => $categories,
@@ -80,26 +63,81 @@ final class CommonActionsService
     }
 
     /**
-     * Categorías de atajos desde {@see schemas/assistant-shortcuts.yaml}.
+     * @param array{id: string, titulo: string, intent_ids: list<string>, subgroups: list<array{id: string, titulo: string, intent_ids: list<string>}>} $catDef
+     * @param array<string, array<string, mixed>> $byId
      *
-     * @return list<array{id: string, titulo: string, models: list<string>}>
+     * @return array{id: string, titulo: string, actions: list<array<string, mixed>>, subgroups?: list<array{id: string, titulo: string, actions: list<array<string, mixed>>}>}|null
      */
-    private static function flowCategoriesDefinition(): array
+    private static function buildCategoryPayload(array $catDef, array $byId): ?array
     {
-        $out = [];
-        foreach (AssistantShortcutsCatalog::categories() as $cat) {
-            $out[] = [
-                'id' => $cat['id'],
-                'titulo' => $cat['titulo'],
-                'models' => $cat['intent_ids'],
+        $subgroupsDef = $catDef['subgroups'] ?? [];
+        if ($subgroupsDef !== []) {
+            $subgroups = [];
+            $allActions = [];
+            foreach ($subgroupsDef as $sgDef) {
+                $actions = self::resolveActions($sgDef['intent_ids'], $byId);
+                if ($actions === []) {
+                    continue;
+                }
+                $subgroups[] = [
+                    'id' => $sgDef['id'],
+                    'titulo' => $sgDef['titulo'],
+                    'actions' => $actions,
+                ];
+                foreach ($actions as $action) {
+                    $allActions[] = $action;
+                }
+            }
+            if ($subgroups === []) {
+                return null;
+            }
+
+            return [
+                'id' => $catDef['id'],
+                'titulo' => $catDef['titulo'],
+                'subgroups' => $subgroups,
+                'actions' => $allActions,
             ];
         }
 
-        return $out;
+        $actions = self::resolveActions($catDef['intent_ids'], $byId);
+        if ($actions === []) {
+            return null;
+        }
+
+        return [
+            'id' => $catDef['id'],
+            'titulo' => $catDef['titulo'],
+            'actions' => $actions,
+        ];
+    }
+
+    /**
+     * @param list<string> $intentIds
+     * @param array<string, array<string, mixed>> $byId
+     *
+     * @return list<array{route: string, name: string, description: string, action_id: string|null, client_open?: array, client_interaction?: string}>
+     */
+    private static function resolveActions(array $intentIds, array $byId): array
+    {
+        $actions = [];
+        foreach ($intentIds as $intentId) {
+            $intentId = is_string($intentId) ? trim($intentId) : '';
+            if ($intentId === '' || !isset($byId[$intentId])) {
+                continue;
+            }
+            $actions[] = self::flowToActionRow($byId[$intentId]);
+        }
+        usort($actions, static function (array $a, array $b): int {
+            return strcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+        });
+
+        return $actions;
     }
 
     /**
      * @param array<string, mixed> $flow
+     *
      * @return array{route: string, name: string, description: string, action_id: string|null, client_open?: array, client_interaction?: string}
      */
     private static function flowToActionRow(array $flow): array

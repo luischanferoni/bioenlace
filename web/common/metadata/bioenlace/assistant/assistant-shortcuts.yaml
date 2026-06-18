@@ -8,20 +8,26 @@ categories:
 
   - id: profesional_agenda
     titulo: Profesional, agenda y condición laboral
-    intent_ids:
-      - profesional-efector-servicio.crear-flow
-      - condicion-laboral.editar-propio
-      - condicion-laboral.editar-staff
-      - profesional-agenda.configurar-propio
-      - profesional-agenda.configurar-staff
-      - profesional-identidad.editar-staff
-      - profesionales.conteo-efector
-      - profesionales.listado-efector
-      - profesionales.distribucion-servicio-efector
-      - licencia.cargar-como-profesional-flow
-      - licencia.cargar-para-profesional-flow
-      - turnos.indicadores-agenda-flow
-      - servicio-teleconsulta.configurar-efector-flow
+    subgroups:
+      - id: own
+        titulo: Para mí
+        intent_ids:
+          - condicion-laboral.editar-propio
+          - profesional-agenda.configurar-propio
+          - licencia.cargar-como-profesional-flow
+      - id: team
+        titulo: Para el personal
+        intent_ids:
+          - profesional-efector-servicio.crear-flow
+          - condicion-laboral.editar-staff
+          - profesional-agenda.configurar-staff
+          - profesional-identidad.editar-staff
+          - profesionales.conteo-efector
+          - profesionales.listado-efector
+          - profesionales.distribucion-servicio-efector
+          - licencia.cargar-para-profesional-flow
+          - turnos.indicadores-agenda-flow
+          - servicio-teleconsulta.configurar-efector-flow
 
   - id: turnos
     titulo: Turnos
@@ -41,9 +47,15 @@ categories:
 
   - id: tratamiento
     titulo: Tratamiento
-    intent_ids:
-      - tratamiento.recordatorios-como-paciente
-      - tratamiento.adherencia-resumen-staff
+    subgroups:
+      - id: own
+        titulo: Para mí
+        intent_ids:
+          - tratamiento.recordatorios-como-paciente
+      - id: team
+        titulo: Para el personal
+        intent_ids:
+          - tratamiento.adherencia-resumen-staff
 
   - id: atenciones
     titulo: Mis atenciones

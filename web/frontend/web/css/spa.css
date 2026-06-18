@@ -316,6 +316,18 @@ html:has(.spa-asistente-root) {
     color: var(--bio-paper-500);
 }
 
+.spa-chat-welcome-subgroup-title {
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.01em;
+    color: var(--bio-paper-400);
+    opacity: 0.92;
+}
+
+.spa-chat-welcome-subgroup:last-child {
+    margin-bottom: 0 !important;
+}
+
 .spa-shortcut-cards-grid {
     display: grid;
     grid-template-columns: 1fr;

@@ -37,6 +37,7 @@
     var esGuardia = root.getAttribute('data-es-guardia') === '1';
     var urlHistoriaBase = root.getAttribute('data-url-historia') || '';
     var urlInternacionView = root.getAttribute('data-url-internacion-view') || '';
+    var urlAsistente = root.getAttribute('data-url-asistente') || '';
 
     var msgEmptyTurnos = root.getAttribute('data-msg-empty-turnos') || 'Sin resultados.';
     var msgEmptyInternados = root.getAttribute('data-msg-empty-internados') || 'Sin resultados.';
@@ -117,13 +118,27 @@
       }
       var footerEl = slot.querySelector('[data-field="insight-footer"]');
       if (footerEl) {
+        clearNode(footerEl);
+        var hasFooter = false;
         if (insight.footer) {
-          footerEl.textContent = insight.footer;
-          footerEl.classList.remove('d-none');
-        } else {
-          footerEl.textContent = '';
-          footerEl.classList.add('d-none');
+          footerEl.appendChild(document.createTextNode(insight.footer));
+          hasFooter = true;
         }
+        if (insight.agenda_config && insight.agenda_config.link_label) {
+          if (hasFooter) {
+            footerEl.appendChild(document.createTextNode(' '));
+          }
+          var cfg = insight.agenda_config;
+          var link = document.createElement('a');
+          link.href = cfg.assistant_url_path || urlAsistente || '#';
+          link.className = 'link-primary fw-semibold';
+          link.textContent = cfg.link_label;
+          link.setAttribute('data-spa-nav', '1');
+          link.setAttribute('data-spa-title', cfg.link_label);
+          footerEl.appendChild(link);
+          hasFooter = true;
+        }
+        footerEl.classList.toggle('d-none', !hasFooter);
       }
     }
 

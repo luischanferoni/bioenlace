@@ -87,6 +87,29 @@ class ReservaTriageTeleconsultaElegibilidad extends ActiveRecord
         return null;
     }
 
+    /**
+     * @return list<string>
+     */
+    public static function listCodigosPorElegibilidad(string $elegibilidad): array
+    {
+        $elegibilidad = trim($elegibilidad);
+        if ($elegibilidad === '') {
+            return [];
+        }
+
+        self::warmCache();
+        $out = [];
+        foreach (self::$cachePorCodigo ?? [] as $code => $eleg) {
+            if ($eleg === $elegibilidad) {
+                $out[] = $code;
+            }
+        }
+
+        sort($out);
+
+        return $out;
+    }
+
     public static function resetCache(): void
     {
         self::$cachePorCodigo = null;

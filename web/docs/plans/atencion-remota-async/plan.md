@@ -19,7 +19,7 @@ Introducir atención remota (videollamada con turno) y consulta async (mensaje, 
 |-------|--------|------------|--------|
 | 0 | Observación | Insight en listado de turnos del día (presencial + triage elegible) | Hecho |
 | 1 | Oferta paciente | Flow `atencion.necesito-atencion` ofrece remoto cuando política de servicio lo permite; hub si nadie tiene agenda online | Hecho |
-| 2 | Opt-in profesional | Capacitación + `acepta_consultas_online`; priorizar async sobre video | Pendiente |
+| 2 | Opt-in profesional | Capacitación + `acepta_consultas_online`; priorizar async sobre video | Hecho |
 | 3 | Bandeja async | Encounter VR sin `appointment_id`, chat, SLA, reparto por servicio | Pendiente |
 | 4 | Política por servicio | Métricas AdminEfector, reglas por servicio en metadata | Pendiente |
 
@@ -72,7 +72,23 @@ Introducir atención remota (videollamada con turno) y consulta async (mensaje, 
 
 ## Etapa 1 (borrador — archivado)
 
-## Etapa 2 (borrador)
+## Etapa 2 (detalle)
+
+### Backend / metadata
+
+- `agenda_atencion_remota.yaml` — copy capacitación, KPI, link a configurar agenda
+- `AgendaAtencionRemotaCatalogService`
+- `StaffModalidadInsightMetricsService` — turnos presenciales con triage `sugerido` (30 días)
+- `AgendaConfigUiFlowService::enrichAtencionRemotaCopy` — mensaje + label/hint en configurar agenda
+- KPI extra en `StaffAgendaKpiSectionProvider` cuando hay casos sugeridos
+- Insight turno: `agenda_config` con link al asistente si agenda sin online
+
+### UI
+
+- `pacientes-listado.js` — enlace «Configurar mi agenda» en pie del insight
+- Intent `profesional-agenda.configurar-propio` — semántica actualizada
+
+## Etapa 2 (borrador — archivado)
 
 - Copy en configurar agenda
 - Dashboard efector: % turnos presenciales con insight `sugerido`

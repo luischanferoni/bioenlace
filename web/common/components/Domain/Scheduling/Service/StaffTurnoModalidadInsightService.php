@@ -61,6 +61,10 @@ final class StaffTurnoModalidadInsightService
             if ($footer !== '') {
                 $payload['footer'] = $footer;
             }
+            $agendaCfg = (new AgendaAtencionRemotaCatalogService())->insightAgendaConfig();
+            if ($agendaCfg['link_label'] !== '') {
+                $payload['agenda_config'] = $agendaCfg;
+            }
         }
 
         return $payload;

@@ -85,6 +85,7 @@ $this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' :
      data-encounter="<?= Html::encode($encounter_class) ?>"
      data-url-historia="<?= Html::encode(Url::to(['/paciente/historia'], true)) ?>"
      data-url-internacion-view="<?= Html::encode(Url::to(['internacion/view'], true)) ?>"
+     data-url-asistente="<?= Html::encode(Url::to(['/site/asistente'], true)) ?>"
      data-msg-empty-turnos="<?= Html::encode('No hay pacientes con turno pendiente de atención en la fecha seleccionada.') ?>"
      data-msg-empty-internados="<?= Html::encode('No hay pacientes internados para mostrar.') ?>"
      data-msg-empty-guardias="<?= Html::encode('No hay pacientes en el tablero de guardia.') ?>"

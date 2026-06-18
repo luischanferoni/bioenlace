@@ -1,0 +1,24 @@
+# Capacitación y copy para opt-in de atención remota en agenda del profesional (etapa 2).
+
+version: "1"
+
+configurar_agenda:
+  info_message: >-
+    La atención remota es opcional. Videollamada usa los mismos horarios de tu grilla cuando activás
+    «Acepto videollamada». La consulta por mensaje la recibe el equipo sin turno (no requiere este switch).
+    Podés empezar solo con mensaje y habilitar videollamada cuando te sientas listo.
+  acepta_consultas_online:
+    label: Acepto videollamada en esta agenda
+    hint: >-
+      Los pacientes podrán reservar turnos remotos por video en tus horarios publicados.
+      No cambia turnos ya confirmados. La consulta por mensaje funciona aunque dejes esto en No.
+
+insight_agenda_config:
+  action_id: profesional-agenda.configurar-propio
+  link_label: Configurar mi agenda
+  assistant_url_path: /site/asistente
+
+kpi:
+  label: Presencial (remoto posible)
+  periodo_dias: 30
+  elegibilidad: sugerido

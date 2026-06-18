@@ -20,9 +20,10 @@ keywords:
 
 intent_semantics:
   goal: Configurar la agenda de uno de tus servicios asignados en el efector de sesión.
-  how: Elegís el servicio y editás horarios, intervalo y modalidades en la pantalla de configuración.
+  how: Elegís el servicio y editás horarios, intervalo y si aceptás videollamada en tus cupos (opcional).
   constraints:
     - Solo sobre tus propias asignaciones PES.
+    - La consulta por mensaje para pacientes no requiere activar videollamada.
 
 fields:
   - name: vigente_desde

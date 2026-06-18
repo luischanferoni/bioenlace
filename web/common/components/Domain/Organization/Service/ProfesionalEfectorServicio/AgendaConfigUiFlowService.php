@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Domain\Scheduling\Service\AgendaAtencionRemotaCatalogService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\ProfesionalEfectorServicioAgenda;
 use Yii;
@@ -107,6 +108,7 @@ final class AgendaConfigUiFlowService
         $onlyFields = self::parseFieldsFilter($params);
         $out = UiScreenService::renderUiDefinition('profesional-agenda', 'configurar-agenda', $params, null);
         $out = self::filterUiBlocks($out, self::STEP_DATOS, $onlyFields);
+        $out = self::enrichAtencionRemotaCopy($out);
         $out['action_id'] = 'profesional-agenda.configurar-agenda';
         $out['kind'] = 'ui_definition';
         $out['success'] = true;
@@ -254,6 +256,69 @@ final class AgendaConfigUiFlowService
         }
 
         $out['blocks'] = array_values($out['blocks']);
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $out
+     * @return array<string, mixed>
+     */
+    private static function enrichAtencionRemotaCopy(array $out): array
+    {
+        $catalog = new AgendaAtencionRemotaCatalogService();
+        $info = $catalog->mensajeInfoConfigurarAgenda();
+        if ($info !== '' && isset($out['blocks']) && is_array($out['blocks'])) {
+            $messageBlock = [
+                'kind' => 'message',
+                'id' => 'atencion_remota_info',
+                'text' => $info,
+            ];
+            $inserted = false;
+            $blocks = [];
+            foreach ($out['blocks'] as $block) {
+                $blocks[] = $block;
+                if (!$inserted && is_array($block) && ($block['id'] ?? '') === 'policy_turnos') {
+                    $blocks[] = $messageBlock;
+                    $inserted = true;
+                }
+            }
+            if (!$inserted) {
+                array_unshift($blocks, $messageBlock);
+            }
+            $out['blocks'] = $blocks;
+        }
+
+        $campo = $catalog->campoAceptaConsultasOnline();
+        if (($campo['label'] !== '' || $campo['hint'] !== '') && isset($out['blocks']) && is_array($out['blocks'])) {
+            foreach ($out['blocks'] as $idx => $block) {
+                if (!is_array($block) || ($block['kind'] ?? '') !== 'fields') {
+                    continue;
+                }
+                $fields = $block['fields'] ?? [];
+                if (!is_array($fields)) {
+                    continue;
+                }
+                foreach ($fields as $fi => $field) {
+                    if (!is_array($field) || ($field['name'] ?? '') !== 'acepta_consultas_online') {
+                        continue;
+                    }
+                    if ($campo['label'] !== '') {
+                        $field['label'] = $campo['label'];
+                    }
+                    if ($campo['hint'] !== '') {
+                        $field['hint'] = $campo['hint'];
+                    }
+                    $fields[$fi] = $field;
+                }
+                $block['fields'] = $fields;
+                $out['blocks'][$idx] = $block;
+            }
+        }
+
+        if ($campo['hint'] !== '' && isset($out['ui_meta']['field_meta']['acepta_consultas_online'])) {
+            $out['ui_meta']['field_meta']['acepta_consultas_online']['hint'] = $campo['hint'];
+        }
 
         return $out;
     }

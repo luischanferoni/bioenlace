@@ -39,11 +39,19 @@ flowchart TD
 |-------|------|
 | 0 | Insight educativo en listado staff |
 | 1 | Oferta modalidad al paciente + solicitud async mínima |
-| 2 | Opt-in profesional en agenda |
+| 2 | Opt-in profesional: copy en agenda, KPI y link desde insight |
 | 3 | Bandeja staff para async + chat operativo |
 | 4 | Política y métricas por efector/servicio |
 
 Plan de implementación: `web/docs/plans/atencion-remota-async/plan.md` (temporal).
+
+## Cómo funciona (etapa 2 — opt-in profesional)
+
+Al **configurar agenda**, el profesional ve un texto que distingue videollamada (switch opcional) y consulta por mensaje (no requiere el switch). El campo pasó a llamarse «Acepto videollamada en esta agenda».
+
+En el listado del día, si la agenda no tiene remoto habilitado, el insight incluye enlace a **Configurar mi agenda** (asistente).
+
+En los KPI de agenda (30 días), si hubo turnos presenciales con triage `sugerido`, aparece el indicador **Presencial (remoto posible)**.
 
 ## Relación con el resto
 

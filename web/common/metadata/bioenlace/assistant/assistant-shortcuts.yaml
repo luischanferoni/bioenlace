@@ -21,6 +21,7 @@ categories:
       - licencia.cargar-como-profesional-flow
       - licencia.cargar-para-profesional-flow
       - turnos.indicadores-agenda-flow
+      - servicio-teleconsulta.configurar-efector-flow
 
   - id: turnos
     titulo: Turnos

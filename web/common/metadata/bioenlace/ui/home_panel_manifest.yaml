@@ -67,6 +67,9 @@ panels:
       - id: staff_session_context
         provider: staff_session_context
         kind: staff_session_context
+      - id: staff_efector_modalidad_kpis
+        provider: staff_efector_modalidad_kpis
+        kind: staff_kpi_group
       - id: staff_agenda_kpis
         provider: staff_agenda_kpis
         kind: staff_kpi_group

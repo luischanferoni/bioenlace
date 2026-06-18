@@ -1,0 +1,37 @@
+intent_id: servicio-teleconsulta.configurar-efector-flow
+version: 1
+
+action_name: "Política de teleconsulta por servicio"
+description: "AdminEfector: define si los pacientes pueden elegir videollamada al reservar en cada servicio."
+rbac_route: "/api/home/panel"
+keywords:
+  - teleconsulta política
+  - videollamada servicio
+  - atención remota efector
+  - configurar teleconsulta
+
+intent_semantics:
+  goal: >-
+    Habilitar o restringir la opción de videollamada en la reserva por servicio del efector.
+  how: >-
+    Pantalla configurar con servicio, política (ninguna / todas / algunas) y códigos de triage si aplica.
+  outcome:
+    - Política persistida en servicios.teleconsulta_politica y allowlist servicio_teleconsulta_caso.
+
+subintents:
+  - id: configurar_politica
+    assistant_text: "Elegí servicio y política de videollamada"
+    provides:
+      - draft.id_servicio
+      - draft.teleconsulta_politica
+      - draft.caso_codigos_text
+    next: ""
+    open_ui:
+      action_id: servicio-teleconsulta.configurar
+
+flow_submit:
+  action_id: servicio-teleconsulta.configurar
+  params:
+    id_servicio: "draft.id_servicio"
+    teleconsulta_politica: "draft.teleconsulta_politica"
+    caso_codigos_text: "draft.caso_codigos_text"

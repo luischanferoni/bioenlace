@@ -21,7 +21,7 @@ Introducir atención remota (videollamada con turno) y consulta async (mensaje, 
 | 1 | Oferta paciente | Flow `atencion.necesito-atencion` ofrece remoto cuando política de servicio lo permite; hub si nadie tiene agenda online | Hecho |
 | 2 | Opt-in profesional | Capacitación + `acepta_consultas_online`; priorizar async sobre video | Hecho |
 | 3 | Bandeja async | Encounter VR sin `appointment_id`, chat, SLA, reparto por servicio | Hecho |
-| 4 | Política por servicio | Métricas AdminEfector, reglas por servicio en metadata | Pendiente |
+| 4 | Política por servicio | Métricas AdminEfector, reglas por servicio en metadata | Hecho |
 
 ## Etapa 0 (detalle)
 
@@ -124,7 +124,26 @@ Introducir atención remota (videollamada con turno) y consulta async (mensaje, 
 - Nuevo parent encounter / flujo asistente solicitud async
 - Bandeja staff separada del listado horario
 
-## Etapa 4 (borrador)
+## Etapa 4 (detalle)
+
+### Backend / metadata
+
+- `servicio_teleconsulta_politica.yaml` — copy UI, opciones de política, labels KPI efector
+- `ServicioTeleconsultaPoliticaCatalogService`
+- `ServicioTeleconsultaPoliticaService` — guardar política + allowlist `servicio_teleconsulta_caso` (AdminEfector)
+- `ServicioTeleconsultaPoliticaUiPresenter` — opciones dinámicas en UI JSON
+- API `GET|POST /api/v1/servicio-teleconsulta/configurar`
+- Migración RBAC `m260618_140000_api_servicio_teleconsulta_politica_rbac` + grant AdminEfector
+- KPI panel operativo: `staff_efector_modalidad_kpis` (potencial remoto agregado + servicios con video)
+- Intent asistente `servicio-teleconsulta.configurar-efector-flow`
+
+### Criterios
+
+- Solo AdminEfector (rol o servicio AdminEfector en sesión)
+- Servicios limitados a los del efector con `acepta_turnos=SI`
+- Política `ALGUNAS` exige al menos un código de triage
+
+## Etapa 4 (borrador — archivado)
 
 - Métricas AdminEfector (% turnos presencial con potencial remoto)
 - Política por servicio (`teleconsulta_politica`) editable en UI staff

@@ -1,0 +1,47 @@
+{
+  "ui_type": "ui_json",
+  "title": "Política de teleconsulta por servicio",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "resumen_efector",
+      "title": "Panorama del efector (30 días)",
+      "text_field": "resumen_texto",
+      "text": "Cargá un servicio para ver o editar su política."
+    },
+    {
+      "kind": "fields",
+      "id": "config",
+      "title": "Configuración",
+      "fields": [
+        {
+          "name": "id_servicio",
+          "label": "Servicio",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "teleconsulta_politica",
+          "label": "Videollamada en reserva",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "caso_codigos_text",
+          "label": "Códigos de triage permitidos",
+          "type": "textarea",
+          "required": false,
+          "hint": "Solo si elegiste «Algunos motivos»: un código por línea."
+        }
+      ]
+    }
+  ]
+}

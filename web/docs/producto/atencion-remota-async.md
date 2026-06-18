@@ -8,7 +8,7 @@ Bioenlace puede atender algunos motivos de consulta **sin que el paciente concur
 
 - **Paciente** — reserva o solicita atención vía asistente (`atencion.necesito-atencion`) con triage previo.
 - **Profesional (PES)** — atiende turnos del día; puede habilitar remoto en su agenda (`acepta_consultas_online`).
-- **Admin efector** — política de teleconsulta por servicio y métricas agregadas (etapas futuras).
+- **Admin efector** — política de teleconsulta por servicio y métricas agregadas del efector.
 
 ## Cómo funciona (etapa 0 — observación staff)
 
@@ -41,7 +41,7 @@ flowchart TD
 | 1 | Oferta modalidad al paciente + solicitud async mínima |
 | 2 | Opt-in profesional: copy en agenda, KPI y link desde insight |
 | 3 | Bandeja staff para async + chat operativo |
-| 4 | Política y métricas por efector/servicio |
+| 4 | Política y métricas por efector/servicio (AdminEfector) |
 
 ## Cómo funciona (etapa 2 — opt-in profesional)
 
@@ -60,7 +60,17 @@ Las solicitudes por mensaje generan un encounter VR en estado **planificado**, s
 - **SLA** — plazo objetivo según banda de urgencia del triage (`consulta_async_bandeja.yaml`); badge si venció sin respuesta del staff.
 - **Paciente** — en inicio ve sus consultas async activas con acceso al mismo chat.
 
-Plan de implementación: `web/docs/plans/atencion-remota-async/plan.md` (temporal).
+Plan de implementación: `web/docs/plans/atencion-remota-async/plan.md` (etapas 0–4 completas).
+
+## Cómo funciona (etapa 4 — política por servicio)
+
+**AdminEfector** ve en el panel operativo KPIs agregados del efector: turnos presenciales con potencial remoto (30 días) y cuántos servicios tienen videollamada habilitada en reserva.
+
+Desde el asistente (**Política de teleconsulta por servicio**), configura por cada servicio del efector:
+
+- **Sin videollamada** (`NINGUNA`) — default; solo presencial en reserva (el mensaje async sigue por triage).
+- **Todas las elegibles** (`TODAS`) — video si el triage y la agenda del profesional lo permiten.
+- **Algunos motivos** (`ALGUNAS`) — allowlist en `servicio_teleconsulta_caso`.
 
 ## Relación con el resto
 

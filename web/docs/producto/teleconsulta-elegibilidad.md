@@ -32,7 +32,7 @@ No es diagnóstico: combina triage de reserva, política del servicio y configur
 - **`ninguna`** (default tras migración): presencial en reserva hub; se salta modalidad remota.
 - **`todas` / `algunas`:** ver allowlist `servicio_teleconsulta_caso` para hub; especialistas con derivación requieren política que permita remoto.
 
-Configuración operativa: actualizar `servicios.teleconsulta_politica` y filas en allowlist (sin UI admin dedicada en fase 1).
+Configuración operativa: UI staff AdminEfector (`servicio-teleconsulta.configurar-efector-flow`) o columna `servicios.teleconsulta_politica` + allowlist.
 
 ## Flujo del asistente (`atencion.necesito-atencion`)
 
@@ -61,7 +61,6 @@ La agenda del día expone `tipo_atencion` en cada turno; la lista muestra badge 
 
 ## Evolución prevista
 
-- UI staff para editar política y allowlist por servicio.
 - Códigos SNOMED / terminología clínica en lugar de solo códigos internos de triage.
 - Slots diferenciados presencial/remoto (hoy comparten grilla).
 - Insight educativo en listado del día y consulta async sin turno: [atencion-remota-async.md](./atencion-remota-async.md).

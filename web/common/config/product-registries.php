@@ -44,6 +44,7 @@ use common\components\Domain\Scheduling\Home\Sections\AppointmentsDaySectionProv
 use common\components\Domain\Scheduling\Home\Sections\PatientConsultaAsyncSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\PatientUpcomingAppointmentsSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffConsultaAsyncBandejaSectionProvider;
+use common\components\Domain\Scheduling\Home\Sections\StaffEfectorModalidadKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffAgendaKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\StaffSurgeryKpiSectionProvider;
 use common\components\Domain\Scheduling\Home\Sections\SurgeriesDaySectionProvider;
@@ -162,6 +163,7 @@ return [
         'patient_care_plans_active' => PatientCarePlansActiveSectionProvider::class,
         'staff_session_context' => StaffSessionContextSectionProvider::class,
         'staff_agenda_kpis' => StaffAgendaKpiSectionProvider::class,
+        'staff_efector_modalidad_kpis' => StaffEfectorModalidadKpiSectionProvider::class,
         'staff_guardia_kpis' => StaffGuardiaKpiSectionProvider::class,
         'staff_internacion_kpis' => StaffInternacionKpiSectionProvider::class,
         'staff_surgery_kpis' => StaffSurgeryKpiSectionProvider::class,

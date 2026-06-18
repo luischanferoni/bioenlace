@@ -19,5 +19,3 @@ No es una checklist de QA: no hay plantillas, prioridades ni tablas para marcar 
 | [quien-puede-que.md](./quien-puede-que.md) | Paciente vs staff vs qué pantalla usa cada uno |
 
 Más contexto de producto: [docs/producto/](../producto/README.md).
-
-**Equipo técnico** (migraciones FHIR, legacy): [plans/clean-legacy/](../plans/clean-legacy/README.md) — no está duplicado acá.

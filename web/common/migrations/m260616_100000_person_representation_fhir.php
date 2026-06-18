@@ -5,7 +5,7 @@ use yii\db\Migration;
 /**
  * Representación operativa paciente (FHIR RelatedPerson + Consent).
  *
- * @see web/docs/plans/representacion-paciente-fhir/
+ * @see web/docs/producto/representacion-paciente.md
  */
 class m260616_100000_person_representation_fhir extends Migration
 {

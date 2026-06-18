@@ -741,6 +741,7 @@
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
     const shortcutsContent = document.getElementById('spa-shortcuts-content');
+    const shortcutsToolbar = document.getElementById('spa-chat-toolbar');
     const chatMessagesDiv = document.getElementById('spa-chat-messages');
     const chatEmptyHint = document.getElementById('spa-chat-empty-hint');
     const welcomeActionsEl = document.getElementById('spa-chat-welcome-actions');
@@ -1749,6 +1750,7 @@
         if (chatEmptyHint) {
             chatEmptyHint.classList.add('d-none');
         }
+        syncShortcutsToolbarVisibility();
 
         // Limpiar el textarea inmediatamente (UX tipo chat) solo si el input existe
         // y el envío vino del textarea (no por override programático).
@@ -3475,7 +3477,7 @@
     }
 
     /**
-     * Oculta los chips de acciones del estado inicial mientras el usuario escribe (siguen en menú Atajos).
+     * Oculta las tarjetas de bienvenida mientras el usuario escribe (siguen en menú Atajos).
      */
     function toggleWelcomeActionsForComposer() {
         if (!welcomeActionsEl || !chatEmptyHint) {
@@ -3491,6 +3493,7 @@
         } else {
             welcomeActionsEl.classList.remove('d-none');
         }
+        syncShortcutsToolbarVisibility();
     }
 
     /**
@@ -4362,11 +4365,43 @@
         return { name: name, desc: desc, iid: iid };
     }
 
-    function welcomeShortcutButtonHtml(meta) {
-        return '<button type="button" class="btn btn-outline-secondary btn-sm spa-chat-welcome-action-btn text-start" data-shortcut-intent-id="' + escapeHtml(meta.iid) + '" data-shortcut-name="' + escapeHtml(meta.name) + '">' +
-            '<span class="spa-chat-welcome-action-title fw-semibold d-block">' + escapeHtml(meta.name) + '</span>' +
-            (meta.desc ? '<span class="spa-chat-welcome-action-desc text-muted small d-block">' + escapeHtml(meta.desc) + '</span>' : '') +
+    function shortcutCardHtml(meta) {
+        return '<button type="button" class="spa-shortcut-card" data-shortcut-intent-id="' + escapeHtml(meta.iid) + '" data-shortcut-name="' + escapeHtml(meta.name) + '">' +
+            '<span class="spa-shortcut-card-body">' +
+            '<span class="spa-shortcut-card-title">' + escapeHtml(meta.name) + '</span>' +
+            (meta.desc ? '<span class="spa-shortcut-card-desc">' + escapeHtml(meta.desc) + '</span>' : '') +
+            '</span>' +
+            '<span class="spa-shortcut-card-chevron" aria-hidden="true">›</span>' +
             '</button>';
+    }
+
+    function welcomeShortcutButtonHtml(meta) {
+        return shortcutCardHtml(meta);
+    }
+
+    /**
+     * Panel inicial con atajos: ocultar menú «Atajos» del toolbar; al escribir o elegir atajo, mostrarlo.
+     */
+    function syncShortcutsToolbarVisibility() {
+        if (!shortcutsToolbar) {
+            return;
+        }
+        const panelVisible = isWelcomeShortcutsPanelVisible();
+        shortcutsToolbar.classList.toggle('d-none', panelVisible);
+    }
+
+    function isWelcomeShortcutsPanelVisible() {
+        if (!chatEmptyHint || chatEmptyHint.classList.contains('d-none')) {
+            return false;
+        }
+        if (!welcomeActionsEl || welcomeActionsEl.classList.contains('d-none')) {
+            return false;
+        }
+        const raw = queryInput ? String(queryInput.value || '') : '';
+        if (raw.trim().length > 0) {
+            return false;
+        }
+        return welcomeActionsEl.querySelector('.spa-shortcut-card, .spa-chat-welcome-categories') !== null;
     }
 
     function renderWelcomeShortcutsEmpty(msg) {
@@ -4377,6 +4412,7 @@
         welcomeActionsEl.innerHTML = t !== ''
             ? '<div class="text-muted small">' + escapeHtml(t) + '</div>'
             : '<div class="text-muted small">No hay atajos disponibles.</div>';
+        syncShortcutsToolbarVisibility();
     }
 
     function renderWelcomeShortcutsCategories(categories) {
@@ -4388,7 +4424,8 @@
             renderWelcomeShortcutsEmpty();
             return;
         }
-        let html = '<div class="spa-chat-welcome-categories d-flex flex-column gap-3">';
+        let html = '<p class="spa-chat-welcome-lead text-muted mb-3">Elegí un atajo para comenzar o escribí tu consulta abajo.</p>';
+        html += '<div class="spa-chat-welcome-categories d-flex flex-column gap-3">';
         cats.forEach(function (c) {
             const title = c && c.titulo ? String(c.titulo) : 'Atajos';
             const actions = c && Array.isArray(c.actions) ? c.actions : [];
@@ -4396,8 +4433,8 @@
                 return;
             }
             html += '<section class="spa-chat-welcome-category">';
-            html += '<h3 class="h6 text-secondary text-decoration-underline mb-2">' + escapeHtml(title) + '</h3>';
-            html += '<div class="spa-chat-welcome-category-chips d-flex flex-wrap gap-2 justify-content-start">';
+            html += '<h3 class="spa-chat-welcome-category-title h6 mb-2">' + escapeHtml(title) + '</h3>';
+            html += '<div class="spa-shortcut-cards-grid">';
             actions.forEach(function (a) {
                 const m = shortcutMetaFromAction(a);
                 if (!m) {
@@ -4411,6 +4448,7 @@
         welcomeActionsEl.innerHTML = html;
         attachWelcomeShortcutListeners();
         toggleWelcomeActionsForComposer();
+        syncShortcutsToolbarVisibility();
     }
 
     function renderWelcomeShortcutsFlat(actions) {
@@ -4422,9 +4460,10 @@
             renderWelcomeShortcutsEmpty();
             return;
         }
-        let html = '<div class="spa-chat-welcome-category">';
-        html += '<h3 class="h6 text-secondary text-decoration-underline mb-2">Atajos</h3>';
-        html += '<div class="spa-chat-welcome-category-chips d-flex flex-wrap gap-2 justify-content-start">';
+        let html = '<p class="spa-chat-welcome-lead text-muted mb-3">Elegí un atajo para comenzar o escribí tu consulta abajo.</p>';
+        html += '<div class="spa-chat-welcome-category">';
+        html += '<h3 class="spa-chat-welcome-category-title h6 mb-2">Atajos</h3>';
+        html += '<div class="spa-shortcut-cards-grid">';
         items.forEach(function (a) {
             const m = shortcutMetaFromAction(a);
             if (!m) {
@@ -4436,6 +4475,7 @@
         welcomeActionsEl.innerHTML = html;
         attachWelcomeShortcutListeners();
         toggleWelcomeActionsForComposer();
+        syncShortcutsToolbarVisibility();
     }
 
     function attachWelcomeShortcutListeners() {
@@ -4519,17 +4559,13 @@
         }
         let html = '<div>';
         html += '<h4 class="h6 text-decoration-underline mb-2">Atajos</h4>';
-        html += '<div class="d-grid gap-2">';
+        html += '<div class="spa-shortcut-cards-grid">';
         items.forEach(function (a) {
-            const name = a && (a.name || a.display_name) ? String(a.name || a.display_name) : (a && a.action_id ? String(a.action_id) : '');
-            const desc = a && a.description ? String(a.description) : '';
-            const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
-            const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
-            if (!iid) return;
-            html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
-            html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
-            if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
-            html += '</button>';
+            const m = shortcutMetaFromAction(a);
+            if (!m) {
+                return;
+            }
+            html += shortcutCardHtml(m);
         });
         html += '</div></div>';
         shortcutsContent.innerHTML = html;
@@ -4552,18 +4588,14 @@
             }
 
             html += '<div>';
-            html += '<h4 class="h6 text-decoration-underline mb-2">' + escapeHtml(title) + '</h4>';
-            html += '<div class="d-grid gap-2">';
+            html += '<h4 class="spa-chat-welcome-category-title h6 mb-2">' + escapeHtml(title) + '</h4>';
+            html += '<div class="spa-shortcut-cards-grid">';
             actions.forEach(function (a) {
-                const name = a && (a.name || a.display_name) ? String(a.name || a.display_name) : (a && a.action_id ? String(a.action_id) : '');
-                const desc = a && a.description ? String(a.description) : '';
-                const co = a && a.client_open && typeof a.client_open === 'object' ? a.client_open : null;
-                const iid = co && String(co.kind || '') === 'intent' ? String(co.intent_id || '') : (a && a.action_id ? String(a.action_id) : '');
-                if (!iid) return;
-                html += '<button type="button" class="btn btn-outline-secondary text-start" data-shortcut-intent-id="' + escapeHtml(iid) + '" data-shortcut-name="' + escapeHtml(name) + '">';
-                html += '<div class="fw-semibold">' + escapeHtml(name) + '</div>';
-                if (desc) html += '<div class="text-muted small">' + escapeHtml(desc) + '</div>';
-                html += '</button>';
+                const m = shortcutMetaFromAction(a);
+                if (!m) {
+                    return;
+                }
+                html += shortcutCardHtml(m);
             });
             html += '</div></div>';
         });

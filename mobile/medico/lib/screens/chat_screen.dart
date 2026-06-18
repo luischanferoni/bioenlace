@@ -1547,36 +1547,16 @@ class ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   Expanded(
-                    child: ListView(
-                      children: [
-                        for (final cat in cats) ...[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                            child: Text(
-                              cat.titulo,
-                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                            ),
-                          ),
-                          ...cat.items.map(
-                            (item) => ListTile(
-                              title: Text(item.title),
-                              subtitle: item.description.isNotEmpty
-                                  ? Text(
-                                      item.description,
-                                      style: Theme.of(context).textTheme.bodySmall,
-                                    )
-                                  : null,
-                              onTap: () {
-                                Navigator.pop(sheetContext);
-                                _startFlowFromShortcut(item.intentId, item.title);
-                              },
-                            ),
-                          ),
-                        ],
-                      ],
+                    child: SingleChildScrollView(
+                      child: AtajoShortcutCards(
+                        categorias: cats,
+                        enabled: !_isSending,
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                        onTap: (intentId, title) {
+                          Navigator.pop(sheetContext);
+                          _startFlowFromShortcut(intentId, title);
+                        },
+                      ),
                     ),
                   ),
                 ],
@@ -2320,11 +2300,12 @@ class ChatScreenState extends State<ChatScreen> {
       appBar: BioAppBar(
         title: 'BioEnlace',
         actions: [
-          IconButton(
-            icon: const Icon(Icons.bookmarks_outlined),
-            tooltip: 'Atajos',
-            onPressed: _isSending ? null : _showAtajosSheet,
-          ),
+          if (!_showWelcomeShortcutGrid)
+            IconButton(
+              icon: const Icon(Icons.bookmarks_outlined),
+              tooltip: 'Atajos',
+              onPressed: _isSending ? null : _showAtajosSheet,
+            ),
         ],
       ),
       body: Column(

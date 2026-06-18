@@ -2,8 +2,6 @@
 
 Packs reutilizables de **preguntas pre-consulta**, **seguimiento post-atención** y **educación**, generados por cohorte clínica (~90 % de similitud) y consumidos sin IA en runtime (salvo delta puntual).
 
-Plan de implementación: [plans/cohortes-asistencia-batch](../plans/cohortes-asistencia-batch/README.md).
-
 ---
 
 ## Configuración por capa
@@ -45,8 +43,6 @@ En **`console/config/params-local.php`**:
 ```
 
 Diagnóstico: `php yii care-pack/vertex-status`
-
-Detalle GCP: [phases/05-vertex-batch-produccion.md](../plans/cohortes-asistencia-batch/phases/05-vertex-batch-produccion.md)
 
 ---
 

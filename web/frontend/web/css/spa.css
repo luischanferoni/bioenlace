@@ -298,12 +298,83 @@ html:has(.spa-asistente-root) {
 
 .spa-chat-shortcuts-menu {
     text-align: left;
+    min-width: min(100vw - 2rem, 22rem);
 }
 
-.spa-chat-welcome-action-btn {
-    width: auto;
-    max-width: min(100%, 22rem);
-    flex: 0 1 auto;
+.spa-chat-welcome-lead {
+    font-size: 0.95rem;
+    line-height: 1.35;
+}
+
+.spa-chat-welcome-category-title {
+    font-weight: 600;
+    font-size: 0.8125rem;
+    letter-spacing: 0.02em;
+    color: var(--bio-paper-500);
+}
+
+.spa-shortcut-cards-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+}
+
+@media (min-width: 520px) {
+    .spa-shortcut-cards-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.spa-shortcut-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--bio-paper-200);
+    border-radius: 0.65rem;
+    background: var(--bio-paper-50);
+    color: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.spa-shortcut-card:hover,
+.spa-shortcut-card:focus-visible {
+    border-color: var(--bioenlace-primary, var(--bs-primary, #54a0ff));
+    background: var(--bio-paper-25);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    outline: none;
+}
+
+.spa-shortcut-card-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.spa-shortcut-card-title {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.25;
+    color: var(--bioenlace-primary, var(--bs-primary, #54a0ff));
+}
+
+.spa-shortcut-card-desc {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8125rem;
+    line-height: 1.35;
+    color: var(--bio-paper-500);
+}
+
+.spa-shortcut-card-chevron {
+    flex-shrink: 0;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: var(--bio-paper-400);
+    padding-top: 0.1rem;
 }
 
 .spa-chat-messages {

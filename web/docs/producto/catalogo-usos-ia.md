@@ -98,7 +98,7 @@ Detalle: [captura-clinica.md](./captura-clinica.md) · API: `clinical/encounter/
 | Generación Vertex batch | GCS + `batchPredictionJobs` | `care-pack-vertex-batch` |
 | Runtime paciente (formularios) | Sin IA | Lee JSON del pack ya generado |
 
-Plan: [cohortes-asistencia-batch](../plans/cohortes-asistencia-batch/README.md).
+Operación y cron: [asistencia-cohortes.md](./asistencia-cohortes.md).
 
 ---
 

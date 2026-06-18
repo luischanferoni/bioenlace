@@ -71,4 +71,4 @@ La captura puede iniciarse desde la conversación integrada o desde el timeline;
 
 - Tableros de inicio (guardia, mapa de camas, agenda).
 - Flows operativos (alta de internación, cambio de cama).
-- Vistas MVC legacy por pestaña (`internacion-diagnostico/*`, etc.) — retiradas; ver plan [clean-legacy](../plans/clean-legacy/README.md).
+- Vistas MVC legacy por pestaña (`internacion-diagnostico/*`, etc.) — retiradas en migración legacy.

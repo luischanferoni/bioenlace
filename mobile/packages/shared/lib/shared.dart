@@ -27,6 +27,7 @@ export 'diagnostics/app_diagnostic_log.dart';
 export 'diagnostics/crashlytics_bootstrap.dart';
 export 'diagnostics/client_diagnostic_api.dart';
 export 'text/user_friendly_error.dart';
+export 'assistant/atajo_shortcut_cards.dart';
 export 'assistant/welcome_shortcuts_panel.dart';
 export 'clinical/care_pack_navigation.dart';
 export 'clinical/care_plan_service.dart';

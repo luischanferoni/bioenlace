@@ -20,7 +20,3 @@ php yii care-pack/run-jobs          # cada 5 min
 php yii care-pack/poll-vertex       # cada 15 min — Vertex batch
 php yii care-pack/vertex-status
 ```
-
-## Plan
-
-`web/docs/plans/cohortes-asistencia-batch/`

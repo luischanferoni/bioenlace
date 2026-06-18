@@ -60,8 +60,6 @@ Las solicitudes por mensaje generan un encounter VR en estado **planificado**, s
 - **SLA** — plazo objetivo según banda de urgencia del triage (`consulta_async_bandeja.yaml`); badge si venció sin respuesta del staff.
 - **Paciente** — en inicio ve sus consultas async activas con acceso al mismo chat.
 
-Plan de implementación: `web/docs/plans/atencion-remota-async/plan.md` (etapas 0–4 completas).
-
 ## Cómo funciona (etapa 4 — política por servicio)
 
 **AdminEfector** ve en el panel operativo KPIs agregados del efector: turnos presenciales con potencial remoto (30 días) y cuántos servicios tienen videollamada habilitada en reserva.

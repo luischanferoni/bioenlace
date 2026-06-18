@@ -1133,6 +1133,74 @@
         return -1;
     }
 
+    function resolveFlowStepIndexById(fm, stepId) {
+        if (!fm || typeof fm !== 'object' || !stepId) {
+            return -1;
+        }
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        const target = String(stepId);
+        for (let i = 0; i < steps.length; i++) {
+            const sid = steps[i] && steps[i].id != null ? String(steps[i].id) : '';
+            if (sid !== '' && sid === target) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    function clearDraftProvidesFromStepIndex(fm, fromStepIdx) {
+        if (!fm || typeof fm !== 'object' || fromStepIdx < 0) {
+            return;
+        }
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        for (let i = fromStepIdx + 1; i < steps.length; i++) {
+            const provides = steps[i] && Array.isArray(steps[i].provides) ? steps[i].provides : [];
+            provides.forEach(function (p) {
+                const raw = String(p || '').trim();
+                if (raw === '') {
+                    return;
+                }
+                const field = raw.indexOf('draft.') === 0 ? raw.slice(6) : raw;
+                if (field === '') {
+                    return;
+                }
+                try {
+                    delete draft[field];
+                    delete flowSnapshot[field];
+                    delete draft['_flow_item_' + field];
+                } catch (e) { /* ignore */ }
+            });
+        }
+    }
+
+    function clearFlowStepUiFromIndex(flowRow, fromStepIdx) {
+        if (!flowRow || fromStepIdx < 0) {
+            return;
+        }
+        const items = flowRow.querySelectorAll('.spa-flow-step-item');
+        for (let i = fromStepIdx; i < items.length; i++) {
+            const uiMount = items[i].querySelector('.spa-flow-step-ui');
+            if (uiMount) {
+                uiMount.innerHTML = '';
+            }
+        }
+    }
+
+    function unlockFlowListPicksInRow(flowRow) {
+        if (!flowRow) {
+            return;
+        }
+        try {
+            flowRow.querySelectorAll('.bio-ui-json-list').forEach(function (el) {
+                el.__bioListPickLocked = false;
+                el.querySelectorAll('button[data-embed-pick="1"]').forEach(function (btn) {
+                    btn.disabled = false;
+                    btn.classList.remove('disabled');
+                });
+            });
+        } catch (e) { /* ignore */ }
+    }
+
     /**
      * @param {object} st
      * @param {number} idx
@@ -1307,15 +1375,6 @@
                         const uiMount = li.querySelector('.spa-flow-step-ui');
                         if (uiMount) {
                             uiMount.innerHTML = '';
-                        }
-                    } else if (idx < activeIdx && activeIdx >= 0) {
-                        const uiMount = li.querySelector('.spa-flow-step-ui');
-                        if (uiMount) {
-                            try {
-                                uiMount.querySelectorAll('input, select, textarea, button').forEach(function (el) {
-                                    el.disabled = true;
-                                });
-                            } catch (e) { /* ignore */ }
                         }
                     }
                 });
@@ -1736,6 +1795,7 @@
                     showError('No se pudo mostrar el flujo en el chat.');
                     return;
                 }
+                unlockFlowListPicksInRow(panel.row);
 
                 const flowSectionInner = panel.activeMount;
 
@@ -2675,6 +2735,7 @@
         const baseListUrl = options.url ? String(options.url) : '';
         const presClass = uiJsonListPresentationClass(block);
 
+        container.__bioListPickLocked = container.__bioListPickLocked === true;
         let locked = false;
         let selectedId = '';
         let itemsById = {};
@@ -2755,8 +2816,12 @@
             if (confirmBtn) confirmBtn.disabled = !selectedId;
         }
 
+        function isListPickLocked() {
+            return locked === true || container.__bioListPickLocked === true;
+        }
+
         function confirmSelection() {
-            if (locked) return;
+            if (isListPickLocked()) return;
             if (!draftField) return;
             if (!selectedId) return;
 
@@ -2765,6 +2830,18 @@
                 ? options.editSparse
                 : null;
             const item = itemsById[selectedId];
+
+            const flowRow = container.closest('.spa-chat-flow-row');
+            const stepLi = container.closest('.spa-flow-step-item');
+            const stepId = stepLi ? stepLi.getAttribute('data-step-id') : '';
+            const pickedStepIdx = resolveFlowStepIndexById(currentFlowManifest, stepId);
+            const activeIdx = resolveFlowActiveStepIndex(currentFlowManifest);
+            if (pickedStepIdx >= 0 && activeIdx >= 0 && pickedStepIdx <= activeIdx) {
+                clearDraftProvidesFromStepIndex(currentFlowManifest, pickedStepIdx);
+                if (flowRow) {
+                    clearFlowStepUiFromIndex(flowRow, pickedStepIdx + 1);
+                }
+            }
 
             if (editSparse && options.url) {
                 const sparseRoot = options.editSparseMountRoot || options.rootContainer;
@@ -2815,6 +2892,7 @@
             }
 
             locked = true;
+            container.__bioListPickLocked = true;
             try {
                 allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
             } catch (e) { /* ignore */ }
@@ -2848,7 +2926,7 @@
             if (editSparseCtx && container.__bioEditSparseAdvancing) {
                 return;
             }
-            if (locked && !editSparseCtx) return;
+            if (isListPickLocked() && !editSparseCtx) return;
             const id = btn.getAttribute('data-embed-id') || '';
             if (!id) return;
             setSelected(btn, id);
@@ -2858,7 +2936,7 @@
         container.addEventListener('click', onListPickClick);
         if (confirmBtn) {
             confirmBtn.addEventListener('click', function () {
-                if (locked) return;
+                if (isListPickLocked()) return;
                 confirmSelection();
             });
         }
@@ -2866,12 +2944,12 @@
         let searchDebounce = null;
         if (showPersonaSearch && searchInput && itemsMount) {
             searchInput.addEventListener('input', function () {
-                if (locked) return;
+                if (isListPickLocked()) return;
                 const q = String(searchInput.value || '').trim();
                 if (searchDebounce) clearTimeout(searchDebounce);
                 searchDebounce = setTimeout(function () {
                     searchDebounce = null;
-                    if (locked) return;
+                    if (isListPickLocked()) return;
                     if (q.length < 1) {
                         itemsMount.innerHTML = buildPickButtonsHtml([]);
                         if (emptyHintEl && emptyMsg) emptyHintEl.classList.remove('d-none');
@@ -2892,7 +2970,7 @@
                             return r.json();
                         })
                         .then(function (json) {
-                            if (locked) return;
+                            if (isListPickLocked()) return;
                             const nextItems = listBlockItemsFromUiDefinition(json, blockId);
                             rebuildItemsById(nextItems);
                             itemsMount.innerHTML = buildPickButtonsHtml(nextItems);
@@ -2906,7 +2984,7 @@
                             }
                         })
                         .catch(function () {
-                            if (locked) return;
+                            if (isListPickLocked()) return;
                             itemsMount.innerHTML = '<div class="alert alert-warning mb-0 py-2 small">No se pudo buscar. Intentá de nuevo.</div>';
                             if (emptyHintEl && emptyMsg) emptyHintEl.classList.remove('d-none');
                         });
@@ -2922,7 +3000,7 @@
             && draftField) {
             singleAutoTimer = setTimeout(function () {
                 singleAutoTimer = null;
-                if (locked) return;
+                if (isListPickLocked()) return;
                 const only = allPickButtons()[0];
                 if (!only || only.disabled) return;
                 only.click();

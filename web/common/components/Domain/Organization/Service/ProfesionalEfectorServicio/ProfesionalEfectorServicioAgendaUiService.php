@@ -158,8 +158,11 @@ final class ProfesionalEfectorServicioAgendaUiService
      *
      * @return array<string, mixed>
      */
-    public static function buildCondicionLaboralValuesForGet(int $idEfector, array $query): array
-    {
+    public static function buildCondicionLaboralValuesForGet(
+        int $idEfector,
+        array $query,
+        bool $allowOwnPesFallback = true
+    ): array {
         $idPesIn = isset($query['id_profesional_efector_servicio']) ? (int) $query['id_profesional_efector_servicio'] : 0;
         $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($query);
         if ($idPesIn > 0) {
@@ -174,7 +177,7 @@ final class ProfesionalEfectorServicioAgendaUiService
                 $out['id_profesional_efector_servicio'] = (string) $idPesIn;
             }
         }
-        if (!isset($out['id_profesional_efector_servicio'])) {
+        if (!isset($out['id_profesional_efector_servicio']) && $allowOwnPesFallback) {
             $resolvedOwn = self::resolveOwnPesIdInEfector($idEfector, $query);
             if ($resolvedOwn > 0) {
                 $out['id_profesional_efector_servicio'] = (string) $resolvedOwn;
@@ -222,9 +225,12 @@ final class ProfesionalEfectorServicioAgendaUiService
      *
      * @return array<string, mixed>
      */
-    public static function buildLicenciaValuesForGet(int $idEfector, array $query): array
-    {
-        $out = self::buildCondicionLaboralValuesForGet($idEfector, $query);
+    public static function buildLicenciaValuesForGet(
+        int $idEfector,
+        array $query,
+        bool $allowOwnPesFallback = true
+    ): array {
+        $out = self::buildCondicionLaboralValuesForGet($idEfector, $query, $allowOwnPesFallback);
         unset($out['id_condicion_laboral']);
 
         return $out;

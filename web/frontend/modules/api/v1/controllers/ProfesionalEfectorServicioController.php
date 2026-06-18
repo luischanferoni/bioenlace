@@ -537,7 +537,11 @@ class ProfesionalEfectorServicioController extends BaseController
         $idEfector = (int) Yii::$app->user->getIdEfector();
 
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
-        $defaults = ProfesionalEfectorServicioAgendaUiService::buildLicenciaValuesForGet($idEfector, $fromClient);
+        $defaults = ProfesionalEfectorServicioAgendaUiService::buildLicenciaValuesForGet(
+            $idEfector,
+            $fromClient,
+            false
+        );
         $paramsForRender = array_merge($defaults, $fromClient);
 
         return UiScreenService::handleScreen(
@@ -720,8 +724,12 @@ class ProfesionalEfectorServicioController extends BaseController
         $idEfector = (int) Yii::$app->user->getIdEfector();
 
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
-        // Precarga si existe (upsert). Para "crear", esto también ayuda a no duplicar.
-        $defaults = ProfesionalEfectorServicioAgendaUiService::buildCondicionLaboralValuesForGet($idEfector, $fromClient);
+        // Precarga si existe (upsert). Staff: no inferir PES del usuario en sesión.
+        $defaults = ProfesionalEfectorServicioAgendaUiService::buildCondicionLaboralValuesForGet(
+            $idEfector,
+            $fromClient,
+            false
+        );
         $paramsForRender = array_merge($defaults, $fromClient);
 
         return UiScreenService::handleScreen(

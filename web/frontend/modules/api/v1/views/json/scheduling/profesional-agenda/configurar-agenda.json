@@ -49,11 +49,6 @@
   },
   "blocks": [
     {
-      "kind": "message",
-      "id": "policy_turnos",
-      "text": "Si modificás horarios semanales o el intervalo entre turnos, el sistema revisa los turnos pendientes desde la fecha de vigencia. Los que ya no encajan en la grilla pasan a «en resolución»: el paciente recibe aviso para elegir otro horario con el mismo profesional o cancelar. Forma de atención y teleconsulta se guardan sin ese recorrido porque no desplazan turnos reservados."
-    },
-    {
       "kind": "fields",
       "id": "datos",
       "title": "Configuración de agenda",

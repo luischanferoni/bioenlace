@@ -12,9 +12,11 @@ final class PersonaBusquedaAsistenteUiService
     /**
      * Solo devuelve filas si `$q` no está vacío (evita listar todo el padrón sin criterio).
      *
+     * @param int|null $excluirIdEfector Si > 0, omite personas con asignación PES activa en ese efector.
+     *
      * @return list<array{id: string, name: string}>
      */
-    public static function buscar(?string $q, int $limit = 200): array
+    public static function buscar(?string $q, int $limit = 200, ?int $excluirIdEfector = null): array
     {
         $q = $q !== null ? trim($q) : '';
         if ($q === '') {
@@ -37,6 +39,21 @@ final class PersonaBusquedaAsistenteUiService
             ['like', 'p.nombre', $term, false],
             ['like', 'p.documento', $term, false],
         ]);
+
+        $excluirIdEfector = $excluirIdEfector !== null ? (int) $excluirIdEfector : 0;
+        if ($excluirIdEfector > 0) {
+            $query->andWhere([
+                'not exists',
+                (new \yii\db\Query())
+                    ->from(['pes_ex' => 'profesional_efector_servicio'])
+                    ->where('pes_ex.id_persona = p.id_persona')
+                    ->andWhere([
+                        'pes_ex.id_efector' => $excluirIdEfector,
+                        'pes_ex.deleted_at' => null,
+                    ]),
+            ]);
+        }
+
         $rows = $query->orderBy(['p.apellido' => SORT_ASC, 'p.nombre' => SORT_ASC])->limit($limit)->all();
 
         $items = [];

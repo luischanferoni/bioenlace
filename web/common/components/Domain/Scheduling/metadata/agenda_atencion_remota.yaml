@@ -3,10 +3,7 @@
 version: "1"
 
 configurar_agenda:
-  info_message: >-
-    La atención remota es opcional. Videollamada usa los mismos horarios de tu grilla cuando activás
-    «Acepto videollamada». La consulta por mensaje la recibe el equipo sin turno (no requiere este switch).
-    Podés empezar solo con mensaje y habilitar videollamada cuando te sientas listo.
+  info_message: ""
   acepta_consultas_online:
     label: Acepto videollamada en esta agenda
     hint: >-

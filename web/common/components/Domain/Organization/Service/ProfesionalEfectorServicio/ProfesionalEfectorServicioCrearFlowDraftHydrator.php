@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
+use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Servicio;
 use Yii;
 
@@ -42,6 +43,9 @@ final class ProfesionalEfectorServicioCrearFlowDraftHydrator
         $idPes = isset($draft['id_profesional_efector_servicio']) ? (int) $draft['id_profesional_efector_servicio'] : 0;
 
         if ($idPersona > 0 && $idServicio > 0 && $idEfector > 0 && $idPes <= 0) {
+            if (ProfesionalEfectorServicioModel::existePersonaActivaEnEfector($idPersona, $idEfector)) {
+                throw new \InvalidArgumentException('Esa persona ya está asignada a este efector.');
+            }
             $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector($idPersona, $idEfector, $idServicio);
             $draft['id_profesional_efector_servicio'] = (string) $out['id_profesional_efector_servicio'];
             $draft['servicio_acepta_turnos'] = $out['servicio_acepta_turnos'];

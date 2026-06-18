@@ -12,10 +12,10 @@ class AgendaAtencionRemotaCatalogServiceTest extends Unit
         AgendaAtencionRemotaCatalogService::resetCache();
     }
 
-    public function testCatalogoDeclaraMensajeYCampoAgenda(): void
+    public function testCatalogoDeclaraCampoAgenda(): void
     {
         $catalog = new AgendaAtencionRemotaCatalogService();
-        $this->assertNotSame('', $catalog->mensajeInfoConfigurarAgenda());
+        $this->assertSame('', $catalog->mensajeInfoConfigurarAgenda());
         $campo = $catalog->campoAceptaConsultasOnline();
         $this->assertNotSame('', $campo['label']);
         $this->assertNotSame('', $campo['hint']);

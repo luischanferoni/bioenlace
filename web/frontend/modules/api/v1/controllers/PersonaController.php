@@ -48,7 +48,19 @@ class PersonaController extends BaseController
 
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $q = $req->get('q') ?: $req->post('q');
-            $items = PersonaBusquedaAsistenteUiService::buscar(is_string($q) ? $q : null);
+            $excluirIdEfector = null;
+            $excluirFlag = $req->get('excluir_en_efector') ?? $req->post('excluir_en_efector');
+            if ((string) $excluirFlag === '1') {
+                $idEf = (int) Yii::$app->user->getIdEfector();
+                if ($idEf > 0) {
+                    $excluirIdEfector = $idEf;
+                }
+            }
+            $items = PersonaBusquedaAsistenteUiService::buscar(
+                is_string($q) ? $q : null,
+                200,
+                $excluirIdEfector
+            );
             $uiItems = [];
             foreach ($items as $it) {
                 $uiItems[] = [

@@ -104,6 +104,20 @@ class ProfesionalEfectorServicio extends ActiveRecord
     }
 
     /**
+     * ¿La persona tiene al menos una asignación PES activa en el efector?
+     */
+    public static function existePersonaActivaEnEfector(int $idPersona, int $idEfector): bool
+    {
+        if ($idPersona <= 0 || $idEfector <= 0) {
+            return false;
+        }
+
+        return static::findActive()
+            ->where(['id_persona' => $idPersona, 'id_efector' => $idEfector])
+            ->exists();
+    }
+
+    /**
      * Efectores donde la persona tiene al menos una PES activa.
      *
      * @return array<int, array{id_profesional_efector_servicio:int, id_efector:int, nombre:string, id_localidad:int}>

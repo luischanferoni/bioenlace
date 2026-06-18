@@ -26,6 +26,7 @@ intent_semantics:
     - Permisos para dar de alta asignaciones en el efector.
   constraints:
     - La búsqueda de persona en padrón usa texto; el listado de servicios del efector se carga completo (filtro opcional por nombre vía `q` en la API).
+    - No se puede elegir una persona que ya tenga asignación en el efector.
     - Agenda solo si servicios.acepta_turnos = SI.
   outcome:
     - Asignación persona–efector–servicio persistida.
@@ -79,6 +80,8 @@ subintents:
     open_ui:
       action_id: persona.buscar-para-asistente
       pass_content_as_query: q
+      params:
+        excluir_en_efector: "1"
 
   - id: select_servicio
     assistant_text: "Servicio"

@@ -4516,33 +4516,43 @@
 
         // API: ver nota de duplicación /api arriba.
         const url = window.location.origin + '/api/v1/acciones/comunes';
-        fetch(url, {
-            method: 'GET',
-            headers: window.BioenlaceApiClient.mergeHeaders({
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }),
-            credentials: 'same-origin'
-        })
-        .then(response => {
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                if (handleApiUnauthorized(response.status, null)) {
-                    return null;
-                }
-                return response.text().then(text => {
-                    console.warn('El servidor devolvió HTML en lugar de JSON:', text.substring(0, 200));
-                    throw new Error('Respuesta no válida del servidor');
+        const fetchPromise =
+            window.BioenlaceApiClient && typeof window.BioenlaceApiClient.fetchJson === 'function'
+                ? window.BioenlaceApiClient.fetchJson(url, {
+                    method: 'GET',
+                    headers: window.BioenlaceApiClient.mergeHeaders({
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    })
+                })
+                : fetch(url, {
+                    method: 'GET',
+                    headers: window.BioenlaceApiClient.mergeHeaders({
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }),
+                    credentials: 'same-origin'
+                }).then(response => {
+                    const contentType = response.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        if (handleApiUnauthorized(response.status, null)) {
+                            return null;
+                        }
+                        return response.text().then(text => {
+                            console.warn('El servidor devolvió HTML en lugar de JSON:', text.substring(0, 200));
+                            throw new Error('Respuesta no válida del servidor');
+                        });
+                    }
+                    return response.json().then(data => ({ response: response, json: data }));
                 });
-            }
-            return response.json().then(data => ({ response: response, data: data }));
-        })
+
+        fetchPromise
         .then(result => {
             if (!result) {
                 return;
             }
             const response = result.response;
-            const data = result.data;
+            const data = result.json != null ? result.json : result.data;
             if (handleApiUnauthorized(response.status, data)) {
                 return;
             }

@@ -403,6 +403,9 @@
           mostrarAlerta(m, true);
           return;
         }
+        if (res.data && res.data.context_token) {
+          window.apiAuthToken = String(res.data.context_token);
+        }
         var redirectUrl = res.data && res.data.redirect_url ? res.data.redirect_url : null;
         if (redirectUrl) {
           window.location.replace(redirectUrl);

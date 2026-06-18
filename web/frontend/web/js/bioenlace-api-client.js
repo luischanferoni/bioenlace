@@ -12,6 +12,8 @@
 
   var NS = (window.BioenlaceApiClient = window.BioenlaceApiClient || {});
 
+  var webJwtRefreshInFlight = null;
+
   /**
    * @param {Object<string,string>=} extra Se fusiona encima del base (Object.assign final).
    * @returns {Object<string,string>}
@@ -42,31 +44,24 @@
   };
 
   /**
+   * Headers para endpoints que autentican solo con cookie de sesión (sin Bearer).
+   * @param {Object<string,string>=} extra
+   * @returns {Object<string,string>}
+   */
+  NS.mergeSessionHeaders = function (extra) {
+    var headers = NS.mergeHeaders(extra || {});
+    delete headers.Authorization;
+    delete headers.authorization;
+    return headers;
+  };
+
+  /**
    * @param {number} status HTTP status
    * @param {object|null|undefined} body JSON parseado
    * @returns {boolean}
    */
   NS.isUnauthorizedApi = function (status, body) {
-    if (status === 401) {
-      return true;
-    }
-    if (!body || typeof body !== 'object' || body.success !== false) {
-      return false;
-    }
-    var msg = String(body.message || body.error || '').toLowerCase();
-    if (!msg) {
-      return false;
-    }
-    if (msg.indexOf('autenticado') !== -1) {
-      return true;
-    }
-    if (msg.indexOf('credenciales') !== -1) {
-      return true;
-    }
-    if (msg.indexOf('token') !== -1 && (msg.indexOf('inválido') !== -1 || msg.indexOf('invalido') !== -1 || msg.indexOf('expirado') !== -1)) {
-      return true;
-    }
-    return false;
+    return status === 401;
   };
 
   NS.redirectToLoginOnUnauthorized = function () {
@@ -75,6 +70,49 @@
     }
     window.__bioenlaceRedirectingToLogin = true;
     window.location.replace(NS.logoutUrl());
+  };
+
+  /**
+   * Obtiene el JWT vigente de la sesión web (cookie) y actualiza window.apiAuthToken.
+   * @returns {Promise<boolean>}
+   */
+  NS.refreshWebJwtFromSession = function () {
+    if (webJwtRefreshInFlight) {
+      return webJwtRefreshInFlight;
+    }
+
+    var url = NS.normalizeApiV1Path('/api/auth/web-jwt');
+    if (!/^https?:\/\//i.test(url)) {
+      url = window.location.origin + url;
+    }
+
+    webJwtRefreshInFlight = window
+      .fetch(url, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: NS.mergeSessionHeaders({ Accept: 'application/json' }),
+      })
+      .then(function (response) {
+        return response.json().then(function (json) {
+          if (!response.ok || !json || json.success !== true) {
+            return false;
+          }
+          var token = json.data && json.data.token ? String(json.data.token) : '';
+          if (!token) {
+            return false;
+          }
+          window.apiAuthToken = token;
+          return true;
+        });
+      })
+      .catch(function () {
+        return false;
+      })
+      .finally(function () {
+        webJwtRefreshInFlight = null;
+      });
+
+    return webJwtRefreshInFlight;
   };
 
   /**
@@ -91,7 +129,67 @@
   };
 
   /**
-   * fetch + JSON con redirección a login en 401.
+   * @param {string} url
+   * @param {RequestInit} opts
+   * @param {boolean} jwtRetried
+   * @returns {Promise<{response: Response, json: *}>}
+   */
+  function fetchJsonInternal(url, opts, jwtRetried) {
+    return window.fetch(url, opts).then(function (response) {
+      var ct = (response.headers.get('content-type') || '').toLowerCase();
+      if (!ct.includes('application/json')) {
+        if (NS.isUnauthorizedApi(response.status, null)) {
+          if (!jwtRetried) {
+            return NS.refreshWebJwtFromSession().then(function (ok) {
+              if (!ok) {
+                NS.handleUnauthorized(response.status, null);
+                return { response: response, json: null };
+              }
+              var retryOpts = Object.assign({}, opts, {
+                headers: NS.mergeHeaders(opts.headers || {}),
+              });
+              return fetchJsonInternal(url, retryOpts, true);
+            });
+          }
+          NS.handleUnauthorized(response.status, null);
+          return { response: response, json: null };
+        }
+        return response.text().then(function (text) {
+          throw new Error('Se esperaba JSON. Recibido: ' + String(text || '').slice(0, 120));
+        });
+      }
+
+      return response.json().then(function (json) {
+        if (NS.isUnauthorizedApi(response.status, json)) {
+          if (!jwtRetried) {
+            return NS.refreshWebJwtFromSession().then(function (ok) {
+              if (!ok) {
+                NS.handleUnauthorized(response.status, json);
+                return { response: response, json: json };
+              }
+              var retryOpts = Object.assign({}, opts, {
+                headers: NS.mergeHeaders(opts.headers || {}),
+              });
+              return fetchJsonInternal(url, retryOpts, true);
+            });
+          }
+          NS.handleUnauthorized(response.status, json);
+          return { response: response, json: json };
+        }
+        if (!response.ok) {
+          var msg =
+            json && (json.message || json.error)
+              ? json.message || json.error
+              : 'HTTP ' + response.status;
+          throw new Error(String(msg));
+        }
+        return { response: response, json: json };
+      });
+    });
+  }
+
+  /**
+   * fetch + JSON con reintento de JWT vía sesión y redirección a login si persiste 401.
    * @param {string} url
    * @param {RequestInit=} options
    * @returns {Promise<{response: Response, json: *}>}
@@ -101,27 +199,7 @@
     if (!opts.headers) {
       opts.headers = NS.mergeHeaders({ Accept: 'application/json' });
     }
-    return window.fetch(url, opts).then(function (response) {
-      var ct = (response.headers.get('content-type') || '').toLowerCase();
-      if (!ct.includes('application/json')) {
-        if (NS.handleUnauthorized(response.status, null)) {
-          return { response: response, json: null };
-        }
-        return response.text().then(function (text) {
-          throw new Error('Se esperaba JSON. Recibido: ' + String(text || '').slice(0, 120));
-        });
-      }
-      return response.json().then(function (json) {
-        if (NS.handleUnauthorized(response.status, json)) {
-          return { response: response, json: json };
-        }
-        if (!response.ok) {
-          var msg = json && (json.message || json.error) ? (json.message || json.error) : ('HTTP ' + response.status);
-          throw new Error(String(msg));
-        }
-        return { response: response, json: json };
-      });
-    });
+    return fetchJsonInternal(url, opts, false);
   };
 
   /**

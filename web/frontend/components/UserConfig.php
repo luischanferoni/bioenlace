@@ -21,7 +21,9 @@ class UserConfig extends BaseUserConfig
 
     protected function afterLogin($identity, $cookieBased, $duration)
     {
-        if ($identity->superadmin !== 1) {
+        if ((int) ($identity->superadmin ?? 0) === 1) {
+            WebApiJwtSessionService::storeTokenForSuperadmin($identity);
+        } else {
             $session = Yii::$app->session;
             $persona = Persona::findOne(['id_user' => $identity->id]);
             if ($persona) {

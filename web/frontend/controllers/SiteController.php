@@ -244,6 +244,10 @@ class SiteController extends Controller
             throw new BadRequestHttpException($e->getMessage());
         }
 
+        if (!empty($data['context_token'])) {
+            WebApiJwtSessionService::storeRawToken((string) $data['context_token']);
+        }
+
         return $this->redirect($data['redirect_url']);
     }
 

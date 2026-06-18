@@ -13,13 +13,20 @@ use common\models\Person\Persona;
 use common\components\DiditClient;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
+use frontend\components\WebApiJwtSessionService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 class AuthController extends BaseController
 {
-    /** Acciones sin autenticación (no mapea a frontend; solo API). */
-    public static $authenticatorExcept = ['registrar', 'refrescar-token', 'generar-token-prueba', 'login-biometrico'];
+    /** Acciones sin autenticación Bearer (no mapea a frontend; solo API). */
+    public static $authenticatorExcept = [
+        'registrar',
+        'refrescar-token',
+        'generar-token-prueba',
+        'login-biometrico',
+        'web-jwt',
+    ];
 
     /**
      * Registro de usuario
@@ -112,6 +119,26 @@ class AuthController extends BaseController
         // En JWT, el logout se maneja del lado del cliente
         // Aquí podríamos implementar una blacklist de tokens si es necesario
         return $this->success(null, 'Logout exitoso');
+    }
+
+    /**
+     * JWT vigente para el frontend web autenticado por cookie de sesión (sin Bearer).
+     *
+     * GET /api/v1/auth/web-jwt
+     */
+    public function actionWebJwt()
+    {
+        if (Yii::$app->user->isGuest || Yii::$app->user->identity === null) {
+            return $this->error('Usuario no autenticado', null, 401);
+        }
+
+        WebApiJwtSessionService::ensureValidTokenInSession();
+        $token = WebApiJwtSessionService::getSessionToken();
+        if ($token === null) {
+            return $this->error('No se pudo emitir token de sesión web', null, 500);
+        }
+
+        return $this->success(['token' => $token], 'Token de sesión web');
     }
 
     /**

@@ -36,6 +36,12 @@ final class WebApiJwtSessionService
             return;
         }
 
+        if ((int) ($identity->superadmin ?? 0) === 1) {
+            self::storeTokenForSuperadmin($identity);
+
+            return;
+        }
+
         $persona = Persona::findOne(['id_user' => $identity->id]);
         if ($persona === null) {
             return;
@@ -44,9 +50,39 @@ final class WebApiJwtSessionService
         self::storeTokenForIdentity($identity, $persona);
     }
 
+    public static function getSessionToken(): ?string
+    {
+        $token = Yii::$app->session->get(self::SESSION_KEY);
+
+        return is_string($token) && $token !== '' ? $token : null;
+    }
+
+    public static function storeRawToken(string $token): void
+    {
+        if ($token !== '') {
+            Yii::$app->session->set(self::SESSION_KEY, $token);
+        }
+    }
+
     public static function storeTokenForIdentity(IdentityInterface $identity, Persona $persona): void
     {
         Yii::$app->session->set(self::SESSION_KEY, self::encodeToken($identity, $persona));
+    }
+
+    public static function storeTokenForSuperadmin(IdentityInterface $identity): void
+    {
+        $now = time();
+        $payload = [
+            'user_id' => $identity->id,
+            'email' => $identity->email,
+            'iat' => $now,
+            'exp' => $now + self::TTL_SECONDS,
+        ];
+
+        Yii::$app->session->set(
+            self::SESSION_KEY,
+            JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256')
+        );
     }
 
     private static function encodeToken(IdentityInterface $identity, Persona $persona): string

@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\models\User;
+use frontend\components\WebApiJwtSessionService;
 use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaProfesionalHabilitacionService;
 use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
 
@@ -72,6 +73,10 @@ class SesionOperativaController extends BaseController
                 : new SesionOperativaService();
 
             $data = $service->establecer($body);
+
+            if (!empty($data['context_token'])) {
+                WebApiJwtSessionService::storeRawToken((string) $data['context_token']);
+            }
 
             return $this->success($data, 'Sesión operativa establecida correctamente');
         } catch (\InvalidArgumentException $e) {

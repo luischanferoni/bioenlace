@@ -3205,23 +3205,31 @@
         return html;
     }
 
+    function normalizeFieldOptions(field) {
+        if (!field || field.options == null) {
+            return [];
+        }
+        if (Array.isArray(field.options)) {
+            return field.options;
+        }
+        return [];
+    }
+
     /**
      * Renderizar campo radio (opciones seleccionables)
      */
     function renderRadioField(field) {
         let html = '<div class="d-flex flex-wrap gap-2">';
-        if (field.options) {
-            field.options.forEach(option => {
-                const value = typeof option === 'object' ? option.value : option;
-                const label = typeof option === 'object' ? option.label : option;
-                const id = field.name + '_' + value;
-                html += '<div class="form-check">';
-                const checked = field.value !== undefined && field.value !== null && String(value) === String(field.value) ? ' checked' : '';
-                html += '<input class="form-check-input" type="radio" name="' + escapeHtml(field.name) + '" id="' + id + '" value="' + escapeHtml(value) + '"' + (field.required ? ' required' : '') + checked + '>';
-                html += '<label class="form-check-label" for="' + id + '">' + escapeHtml(label) + '</label>';
-                html += '</div>';
-            });
-        }
+        normalizeFieldOptions(field).forEach(function (option) {
+            const value = typeof option === 'object' ? option.value : option;
+            const label = typeof option === 'object' ? option.label : option;
+            const id = field.name + '_' + value;
+            html += '<div class="form-check">';
+            const checked = field.value !== undefined && field.value !== null && String(value) === String(field.value) ? ' checked' : '';
+            html += '<input class="form-check-input" type="radio" name="' + escapeHtml(field.name) + '" id="' + id + '" value="' + escapeHtml(value) + '"' + (field.required ? ' required' : '') + checked + '>';
+            html += '<label class="form-check-label" for="' + id + '">' + escapeHtml(label) + '</label>';
+            html += '</div>';
+        });
         html += '</div>';
         return html;
     }
@@ -3241,14 +3249,12 @@
             html += ' aria-label="' + escapeHtml(String(field.label)) + '"';
         }
         html += '>';
-        if (field.options) {
-            field.options.forEach(function (option) {
-                const value = typeof option === 'object' ? option.value : option;
-                const label = typeof option === 'object' ? option.label : option;
-                const active = current !== '' && String(value) === current ? ' is-active' : '';
-                html += '<button type="button" class="spa-ui-chip-btn' + active + '" data-field="' + escapeHtml(field.name) + '" data-value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</button>';
-            });
-        }
+        normalizeFieldOptions(field).forEach(function (option) {
+            const value = typeof option === 'object' ? option.value : option;
+            const label = typeof option === 'object' ? option.label : option;
+            const active = current !== '' && String(value) === current ? ' is-active' : '';
+            html += '<button type="button" class="spa-ui-chip-btn' + active + '" data-field="' + escapeHtml(field.name) + '" data-value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</button>';
+        });
         html += '</div>';
         return html;
     }

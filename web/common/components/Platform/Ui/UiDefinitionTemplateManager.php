@@ -362,7 +362,7 @@ class UiDefinitionTemplateManager
                 $field['max'] = $params['today'] ?? date('Y-m-d');
             }
 
-            if (isset($field['type']) && ($field['type'] === 'select' || $field['type'] === 'radio')) {
+            if (isset($field['type']) && in_array($field['type'], ['select', 'radio', 'chips'], true)) {
                 if (isset($field['options']) && $field['options'] === '{{options}}') {
                     $options = self::getOptionsForField($field, $params);
                     if ($options !== null) {

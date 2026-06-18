@@ -136,7 +136,7 @@ final class SubIntentEngine
 
             $missing = self::missingDraftFields($current, $draft);
             $missingRequires = self::missingRequiresFields($current, $draft);
-            if ($missingRequires !== []) {
+            if ($missing !== []) {
                 $open = self::resolveOpenUiForSubintent($current, $content, $draft);
                 $actionId = AssistantDraftNormalizer::scalarString(is_array($open) ? ($open['action_id'] ?? '') : '');
                 if (is_array($open) && $actionId !== '' && !self::openUiBlockedByMissingDraft($open, $missingRequires)) {
@@ -158,7 +158,7 @@ final class SubIntentEngine
                     'text' => 'Necesito más información para continuar.',
                     'intent_id' => $intentId,
                     'subintent_id' => $currentId,
-                    'required_draft_fields' => $missingRequires,
+                    'required_draft_fields' => $missing,
                     'draft_delta' => (object) [],
                 ], $hints), $intentId, $currentId);
             }

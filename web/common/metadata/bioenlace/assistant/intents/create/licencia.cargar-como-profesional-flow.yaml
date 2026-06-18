@@ -63,7 +63,7 @@ business_rules:
 
 subintents:
   - id: select_servicio
-    assistant_text: "Elegí el servicio"
+    assistant_text: "Servicio"
     provides:
       - draft.id_servicio
       - draft.id_profesional_efector_servicio

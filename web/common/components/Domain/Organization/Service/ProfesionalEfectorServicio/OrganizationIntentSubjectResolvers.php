@@ -28,38 +28,29 @@ final class OrganizationIntentSubjectResolvers
 
         $idEfector = (int) Yii::$app->user->getIdEfector();
         $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idEfector > 0) {
+            $draft['id_efector'] = $idEfector;
+        }
         if ($idEfector <= 0 || $idPersona <= 0) {
             return;
         }
 
         $idServicio = (int) ($draft['id_servicio'] ?? 0);
-        $pes = null;
-        if ($idServicio > 0) {
-            $pes = ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
-                $idPersona,
-                $idEfector,
-                $idServicio
-            );
-        } else {
-            $pes = ProfesionalEfectorServicioRecord::find()
-                ->where([
-                    'id_persona' => $idPersona,
-                    'id_efector' => $idEfector,
-                    'deleted_at' => null,
-                ])
-                ->orderBy(['id' => SORT_ASC])
-                ->one();
+        if ($idServicio <= 0) {
+            return;
         }
+
+        $pes = ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
+            $idPersona,
+            $idEfector,
+            $idServicio
+        );
 
         if ($pes === null) {
             return;
         }
 
         $draft['id_profesional_efector_servicio'] = (int) $pes->id;
-        $draft['id_efector'] = $idEfector;
-        if ($idServicio <= 0) {
-            $draft['id_servicio'] = (int) $pes->id_servicio;
-        }
     }
 
     /**

@@ -59,7 +59,7 @@ field_resolution:
 
 subintents:
   - id: elegir_servicio
-    assistant_text: "Elegí el servicio para actualizar tu condición laboral"
+    assistant_text: "Servicio"
     provides:
       - draft.id_profesional_efector_servicio
       - draft.id_servicio
@@ -70,7 +70,7 @@ subintents:
         incluir_sin_agenda: "1"
 
   - id: editar_vigencia
-    assistant_text: "Actualizá tipo y fechas de vigencia"
+    assistant_text: "Tipo y fechas de vigencia"
     provides: []
     next: ""
     open_ui:

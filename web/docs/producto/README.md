@@ -10,6 +10,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [representacion-paciente.md](./representacion-paciente.md) | Tutela de menor y delegación (operar por otro paciente) |
 | [turnos.md](./turnos.md) | Agenda, reserva, cancelación, notificaciones |
 | [triage-reserva-turno.md](./triage-reserva-turno.md) | Motivo y alarmas antes de reservar (catálogo + bandas A–D) |
+| [atencion-remota-async.md](./atencion-remota-async.md) | Atención remota y consulta async (adopción gradual) |
 | [catalogo-usos-ia.md](./catalogo-usos-ia.md) | Catálogo de contextos y usos de IA (referencia rápida) |
 | [asistente-y-chat.md](./asistente-y-chat.md) | Conversación y acciones en lenguaje natural |
 | [captura-clinica.md](./captura-clinica.md) | Audio/texto, corrección, resumen con IA |

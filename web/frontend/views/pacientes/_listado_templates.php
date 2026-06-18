@@ -37,7 +37,20 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
                     <strong><i class="bi bi-chat-left-text me-2"></i>Observaciones:</strong>
                     <small class="text-muted" data-field="observaciones"></small>
                 </div>
-                <div class="mt-3"><span class="badge" data-field="estado-badge"></span></div>
+                <div class="mt-3 d-flex flex-wrap gap-2 align-items-center">
+                    <span class="badge" data-field="estado-badge"></span>
+                    <span class="badge d-none" data-field="tipo-atencion-badge"></span>
+                </div>
+                <div class="alert alert-sm mt-3 mb-0 py-2 px-2 small d-none" data-slot="modalidad-insight" role="note">
+                    <div class="d-flex gap-2">
+                        <i class="bi bi-lightbulb flex-shrink-0" data-field="insight-icon"></i>
+                        <div class="flex-grow-1">
+                            <p class="mb-1 fw-semibold" data-field="insight-summary"></p>
+                            <ul class="mb-1 ps-3" data-slot="insight-modalidades"></ul>
+                            <p class="mb-0 text-muted" data-field="insight-footer"></p>
+                        </div>
+                    </div>
+                </div>
                 <a href="#" class="stretched-link" data-role="link-historia" data-spa-nav="1" data-spa-title="Historia clínica" aria-label="Ver historia clínica"></a>
             </div>
         </div>

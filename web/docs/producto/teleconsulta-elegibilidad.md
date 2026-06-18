@@ -64,5 +64,6 @@ La agenda del día expone `tipo_atencion` en cada turno; la lista muestra badge 
 - UI staff para editar política y allowlist por servicio.
 - Códigos SNOMED / terminología clínica en lugar de solo códigos internos de triage.
 - Slots diferenciados presencial/remoto (hoy comparten grilla).
+- Insight educativo en listado del día y consulta async sin turno: [atencion-remota-async.md](./atencion-remota-async.md).
 
 Ver también: [triage-reserva-turno.md](./triage-reserva-turno.md), [turnos.md](./turnos.md), [medicina-clinica-hub-reserva.md](./medicina-clinica-hub-reserva.md).

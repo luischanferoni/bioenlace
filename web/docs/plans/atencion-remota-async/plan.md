@@ -1,0 +1,70 @@
+# Plan: atención remota y async (por etapas)
+
+Plan de implementación. Al cerrar cada etapa, volcar lo estable a `web/docs/producto/atencion-remota-async.md` y retirar este archivo.
+
+## Objetivo
+
+Introducir atención remota (videollamada con turno) y consulta async (mensaje, sin turno ni video) con adopción gradual: el personal médico y los encargados de efector parten de un modelo 100 % presencial.
+
+## Principios
+
+- Reutilizar triage de reserva (`reserva_triage_*`) y `TeleconsultaElegibilidadService`; no duplicar reglas clínicas en orquestadores.
+- La agenda presencial sigue siendo el default; `acepta_consultas_online` es opt-in del profesional.
+- Educar antes de obligar: insights informativos, no auditoría individual.
+- Diferenciar en producto **videollamada** (turno + `tipo_atencion=teleconsulta`) y **async** (encounter sin cita, chat).
+
+## Etapas
+
+| Etapa | Nombre | Entregable | Estado |
+|-------|--------|------------|--------|
+| 0 | Observación | Insight en listado de turnos del día (presencial + triage elegible) | Hecho |
+| 1 | Oferta paciente | Flow `atencion.necesito-atencion` ofrece remoto cuando política de servicio lo permite; hub si nadie tiene agenda online | Pendiente |
+| 2 | Opt-in profesional | Capacitación + `acepta_consultas_online`; priorizar async sobre video | Pendiente |
+| 3 | Bandeja async | Encounter VR sin `appointment_id`, chat, SLA, reparto por servicio | Pendiente |
+| 4 | Política por servicio | Métricas AdminEfector, reglas por servicio en metadata | Pendiente |
+
+## Etapa 0 (detalle)
+
+### Backend
+
+- Catálogo declarativo: `Domain/Scheduling/metadata/staff_modalidad_insight.yaml`
+- `TurnoReservaTriageDraftBuilder` — reconstruye draft desde `reserva_triage_meta_json` / columnas triage
+- `StaffModalidadInsightCatalogService` — textos y modalidades sugeridas por elegibilidad
+- `StaffTurnoModalidadInsightService` — insight por turno (null si no aplica)
+- `StaffClinicalDayListService` — campo `modalidad_insight` en cada turno del panel
+
+### Frontend web
+
+- Plantilla turno en `_listado_templates.php` + `fillTurnoCard` en `pacientes-listado.js`
+
+### Criterios de visualización
+
+- Turno `tipo_atencion=presencial`
+- Triage persistido (`reserva_triage_code` o path en meta)
+- Elegibilidad clínica `sugerido` o `permitido` (no `excluido`, no `presencial_preferido`)
+- Mensaje informativo; si la agenda del PES no tiene `acepta_consultas_online`, pie opcional sin obligar acción
+
+### Tests
+
+- `StaffTurnoModalidadInsightServiceTest` — draft builder e insight nulo/visible
+
+## Etapa 1 (borrador)
+
+- Paciente con triage elegible y servicio con `teleconsulta_politica` distinta de `NINGUNA`
+- Sin PES online: derivar a cola/hub async (placeholder hasta etapa 3)
+
+## Etapa 2 (borrador)
+
+- Copy en configurar agenda
+- Dashboard efector: % turnos presenciales con insight `sugerido`
+
+## Etapa 3 (borrador)
+
+- Nuevo parent encounter / flujo asistente solicitud async
+- Bandeja staff separada del listado horario
+
+## Referencias
+
+- `web/docs/producto/teleconsulta-elegibilidad.md`
+- `web/docs/producto/triage-reserva-turno.md`
+- `TeleconsultaElegibilidadService`, `StaffClinicalDayListService`

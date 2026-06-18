@@ -10,6 +10,7 @@ use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\QuirofanoSala;
 use common\models\ServiciosEfector;
+use common\components\Domain\Scheduling\Service\StaffTurnoModalidadInsightService;
 use common\models\Scheduling\Turno;
 
 /**
@@ -80,6 +81,7 @@ final class StaffClinicalDayListService
 
         $turnos = $turnosQuery->all();
         $motivosLookup = new EncounterAppointmentReasonLookupService();
+        $modalidadInsight = new StaffTurnoModalidadInsightService();
 
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
@@ -88,7 +90,7 @@ final class StaffClinicalDayListService
             $servicioObj = $turno->getServicioEmbebidoParaApi();
             $encounterId = $motivosLookup->encounterIdParaTurno((int) $turno->id_turnos);
             $pesTurno = (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null;
-            $formattedTurnos[] = [
+            $row = [
                 'id' => $turno->id_turnos,
                 'id_persona' => $turno->id_persona,
                 'id_profesional_efector_servicio' => $pesTurno,
@@ -111,6 +113,11 @@ final class StaffClinicalDayListService
                 'created_at' => $turno->created_at,
                 'observaciones' => $turno->hasAttribute('observaciones') ? $turno->observaciones : null,
             ];
+            $insight = $modalidadInsight->insightParaTurno($turno);
+            if ($insight !== null) {
+                $row['modalidad_insight'] = $insight;
+            }
+            $formattedTurnos[] = $row;
         }
 
         if ($agregarTurnoPruebaSiHoy && $fecha === date('Y-m-d')) {

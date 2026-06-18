@@ -1,0 +1,35 @@
+# Insight educativo en listado de turnos del staff (etapa 0 — modo observación).
+# Las reglas clínicas siguen en TeleconsultaElegibilidadService y reserva_triage_teleconsulta_elegibilidad.
+
+version: "1"
+
+show_when_elegibilidad:
+  - sugerido
+  - permitido
+
+modalidades:
+  teleconsulta:
+    code: teleconsulta
+    label: Videollamada con turno
+    description: El paciente reserva un horario y se atiende por video desde su casa o el consultorio.
+  async:
+    code: async
+    label: Consulta por mensaje
+    description: Sin turno ni videollamada; el paciente escribe y el equipo responde en un plazo acordado.
+
+elegibilidad_modalidades:
+  sugerido:
+    - teleconsulta
+    - async
+  permitido:
+    - async
+
+messages:
+  sugerido:
+    summary: Según el motivo de reserva, este caso suele resolverse sin concurrir presencialmente.
+    tone: info
+  permitido:
+    summary: Este motivo también puede atenderse de forma remota en algunos casos.
+    tone: secondary
+
+agenda_no_online_footer: Tu agenda aún no ofrece atención remota. Podés habilitarla cuando quieras desde Configurar agenda.

@@ -89,6 +89,44 @@
       return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
     }
 
+    function fillModalidadInsight(colEl, insight) {
+      var slot = colEl.querySelector('[data-slot="modalidad-insight"]');
+      if (!slot) return;
+      if (!insight || !insight.summary) {
+        slot.classList.add('d-none');
+        return;
+      }
+      var tone = insight.tone === 'secondary' ? 'alert-secondary' : 'alert-info';
+      slot.className = 'alert alert-sm mt-3 mb-0 py-2 px-2 small ' + tone;
+      slot.classList.remove('d-none');
+      var summaryEl = slot.querySelector('[data-field="insight-summary"]');
+      if (summaryEl) summaryEl.textContent = insight.summary;
+      var listEl = slot.querySelector('[data-slot="insight-modalidades"]');
+      if (listEl) {
+        clearNode(listEl);
+        (insight.modalidades || []).forEach(function (m) {
+          var li = document.createElement('li');
+          var strong = document.createElement('strong');
+          strong.textContent = m.label || m.code || '';
+          li.appendChild(strong);
+          if (m.description) {
+            li.appendChild(document.createTextNode(': ' + m.description));
+          }
+          listEl.appendChild(li);
+        });
+      }
+      var footerEl = slot.querySelector('[data-field="insight-footer"]');
+      if (footerEl) {
+        if (insight.footer) {
+          footerEl.textContent = insight.footer;
+          footerEl.classList.remove('d-none');
+        } else {
+          footerEl.textContent = '';
+          footerEl.classList.add('d-none');
+        }
+      }
+    }
+
     function fillTurnoCard(colEl, t) {
       colEl.querySelector('[data-field="nombre"]').textContent =
         (t.paciente && t.paciente.nombre_completo) ? t.paciente.nombre_completo : 'Sin paciente';
@@ -101,6 +139,19 @@
         badge.className = 'badge bg-' + estadoClass;
         badge.textContent = t.estado_label || t.estado || '';
       }
+
+      var tipoBadge = colEl.querySelector('[data-field="tipo-atencion-badge"]');
+      if (tipoBadge) {
+        if (t.tipo_atencion === 'teleconsulta') {
+          tipoBadge.className = 'badge bg-info';
+          tipoBadge.textContent = 'Teleconsulta';
+          tipoBadge.classList.remove('d-none');
+        } else {
+          tipoBadge.classList.add('d-none');
+        }
+      }
+
+      fillModalidadInsight(colEl, t.modalidad_insight);
 
       var obsSlot = colEl.querySelector('[data-slot="observaciones"]');
       if (t.observaciones && obsSlot) {

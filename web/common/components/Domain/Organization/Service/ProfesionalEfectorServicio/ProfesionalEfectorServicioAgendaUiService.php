@@ -218,6 +218,19 @@ final class ProfesionalEfectorServicioAgendaUiService
     }
 
     /**
+     * Valores para precargar UI de licencia (solo fechas; el tipo contractual ya está en el PES).
+     *
+     * @return array<string, mixed>
+     */
+    public static function buildLicenciaValuesForGet(int $idEfector, array $query): array
+    {
+        $out = self::buildCondicionLaboralValuesForGet($idEfector, $query);
+        unset($out['id_condicion_laboral']);
+
+        return $out;
+    }
+
+    /**
      * Persistencia: agenda del servicio seleccionado (sin condición laboral).
      *
      * @param array<string, mixed> $post
@@ -365,7 +378,15 @@ final class ProfesionalEfectorServicioAgendaUiService
         }
 
         $idCondicion = isset($post['id_condicion_laboral']) ? (int) $post['id_condicion_laboral'] : 0;
-        if ($idCondicion <= 0) {
+        if ($idCondicion <= 0 && self::condicionLaboralIntentEsLicencia($intentId)) {
+            $laboralExistente = ProfesionalEfectorServicioCondicionLaboral::findUltimaActivaPorPes($idPes);
+            if ($laboralExistente === null) {
+                throw new BadRequestHttpException(
+                    'No hay condición laboral registrada en este servicio. Pedí al administrador que complete el alta.'
+                );
+            }
+            $idCondicion = (int) $laboralExistente->id_condicion_laboral;
+        } elseif ($idCondicion <= 0) {
             throw new BadRequestHttpException('id_condicion_laboral es obligatorio.');
         }
         if (!Condiciones_laborales::find()->where(['id_condicion_laboral' => $idCondicion])->exists()) {
@@ -463,11 +484,14 @@ final class ProfesionalEfectorServicioAgendaUiService
             $tipoNombre,
             $servicioNombre,
             $profNombre,
-            $vigencia
+            $vigencia,
+            $intentId
         );
 
         return [
-            'message' => 'Condición laboral guardada.',
+            'message' => self::condicionLaboralIntentEsLicencia($intentId)
+                ? 'Licencia guardada.'
+                : 'Condición laboral guardada.',
             'mensaje' => $mensaje,
             'condicion_laboral_ui_completed' => '1',
             'fecha_inicio' => $fechaInicio,
@@ -475,6 +499,13 @@ final class ProfesionalEfectorServicioAgendaUiService
             'condicion_laboral_label' => $tipoNombre,
             'servicio_detalle' => $servicioDetalle,
         ];
+    }
+
+    private static function condicionLaboralIntentEsLicencia(string $intentId): bool
+    {
+        $intentId = trim($intentId);
+
+        return $intentId !== '' && str_contains($intentId, 'licencia.cargar');
     }
 
     private static function condicionLaboralIntentEsStaff(string $intentId): bool
@@ -494,12 +525,22 @@ final class ProfesionalEfectorServicioAgendaUiService
         string $tipoNombre,
         string $servicioNombre,
         string $profNombre,
-        string $vigencia
+        string $vigencia,
+        string $intentId = ''
     ): string {
-        $tipo = $tipoNombre !== '' ? $tipoNombre : 'condición laboral';
         $servicio = $servicioNombre !== '' ? $servicioNombre : 'tu servicio';
         $vigenciaSuffix = $vigencia !== '' ? (' ' . $vigencia . '.') : '.';
         $verbo = $wasNew ? 'Registramos' : 'Actualizamos';
+
+        if (self::condicionLaboralIntentEsLicencia($intentId)) {
+            if ($isStaff && $profNombre !== '') {
+                return $verbo . ' la licencia de ' . $profNombre . ' en ' . $servicio . $vigenciaSuffix;
+            }
+
+            return $verbo . ' tu licencia en ' . $servicio . $vigenciaSuffix;
+        }
+
+        $tipo = $tipoNombre !== '' ? $tipoNombre : 'condición laboral';
 
         if ($isStaff && $profNombre !== '') {
             return $verbo . ' la condición laboral (' . $tipo . ') de ' . $profNombre . ' en ' . $servicio . $vigenciaSuffix;

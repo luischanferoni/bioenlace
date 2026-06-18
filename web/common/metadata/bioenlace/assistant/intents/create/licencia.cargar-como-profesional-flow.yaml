@@ -18,16 +18,16 @@ keywords:
 
 intent_semantics:
   goal: >-
-    Registrar una condición laboral con vigencia (licencia, permiso o ausencia) sobre una asignación propia PES en el efector.
+    Registrar una licencia, permiso o ausencia (solo fechas de inicio y fin) sobre una asignación propia PES en el efector.
   how: >-
-    Elegís el servicio afectado, completás tipo de licencia y fechas; se persiste al guardar el formulario y el flujo cierra con confirmación.
+    Elegís el servicio afectado y completás las fechas; se persiste al guardar el formulario y el flujo cierra con confirmación.
   preconditions:
     - Profesional autenticado con asignación en el efector de sesión.
+    - Condición laboral contractual ya registrada en el servicio (la define el administrador).
   constraints:
     - Solo sobre tus propias asignaciones (PES); no podés cargar licencias de otro médico.
-    - El tipo de licencia proviene del catálogo `condiciones_laborales` del establecimiento.
   outcome:
-    - Condición laboral vigente registrada en `profesional_efector_servicio_condicion_laboral`.
+    - Vigencia de licencia actualizada en la asignación PES elegida.
   keyphrases:
     - avisar que no voy a trabajar un período
     - registrar vacaciones o licencia en mi servicio
@@ -77,7 +77,6 @@ subintents:
     assistant_text: "Licencia"
     provides:
       - draft.condicion_laboral_ui_completed
-      - draft.id_condicion_laboral
       - draft.fecha_inicio
       - draft.fecha_fin
     requires:
@@ -95,6 +94,5 @@ flow_submit:
   params:
     id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
     id_servicio: "draft.id_servicio"
-    id_condicion_laboral: "draft.id_condicion_laboral"
     fecha_inicio: "draft.fecha_inicio"
     fecha_fin: "draft.fecha_fin"

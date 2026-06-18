@@ -503,7 +503,7 @@ class ProfesionalEfectorServicioController extends BaseController
         $idEfector = (int) Yii::$app->user->getIdEfector();
 
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
-        $defaults = ProfesionalEfectorServicioAgendaUiService::buildCondicionLaboralValuesForGet($idEfector, $fromClient);
+        $defaults = ProfesionalEfectorServicioAgendaUiService::buildLicenciaValuesForGet($idEfector, $fromClient);
         $paramsForRender = array_merge($defaults, $fromClient);
 
         return UiScreenService::handleScreen(
@@ -515,7 +515,41 @@ class ProfesionalEfectorServicioController extends BaseController
                 return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
                     $idEfector,
                     $post,
-                    'condicion-laboral.editar-propio'
+                    'licencia.cargar-como-profesional-flow'
+                );
+            }
+        );
+    }
+
+    /**
+     * UI JSON: cargar licencia / permiso de un profesional del efector (staff).
+     *
+     * GET|POST /api/v1/profesional-efector-servicio/cargar-licencia-para-profesional
+     *
+     * @action_name Cargar licencia (staff)
+     * @entity Profesional
+     * @tags licencia, permiso, vacaciones, staff
+     * @keywords cargar licencia profesional, registrar licencia, permiso staff
+     */
+    public function actionCargarLicenciaParaProfesional(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        $defaults = ProfesionalEfectorServicioAgendaUiService::buildLicenciaValuesForGet($idEfector, $fromClient);
+        $paramsForRender = array_merge($defaults, $fromClient);
+
+        return UiScreenService::handleScreen(
+            'profesional-efector-servicio',
+            'cargar-licencia-para-profesional',
+            $paramsForRender,
+            $req->post(),
+            static function (array $post) use ($idEfector): array {
+                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
+                    $idEfector,
+                    $post,
+                    'licencia.cargar-para-profesional-flow'
                 );
             }
         );

@@ -4437,8 +4437,7 @@
             renderWelcomeShortcutsEmpty();
             return;
         }
-        let html = '<p class="spa-chat-welcome-lead text-muted mb-3">Elegí un atajo para comenzar o escribí tu consulta abajo.</p>';
-        html += '<div class="spa-chat-welcome-categories d-flex flex-column gap-3">';
+        let html = '<div class="spa-chat-welcome-categories d-flex flex-column gap-3">';
         cats.forEach(function (c) {
             const title = c && c.titulo ? String(c.titulo) : 'Atajos';
             const actions = c && Array.isArray(c.actions) ? c.actions : [];
@@ -4473,8 +4472,7 @@
             renderWelcomeShortcutsEmpty();
             return;
         }
-        let html = '<p class="spa-chat-welcome-lead text-muted mb-3">Elegí un atajo para comenzar o escribí tu consulta abajo.</p>';
-        html += '<div class="spa-chat-welcome-category">';
+        let html = '<div class="spa-chat-welcome-category">';
         html += '<h3 class="spa-chat-welcome-category-title h6 mb-2">Atajos</h3>';
         html += '<div class="spa-shortcut-cards-grid">';
         items.forEach(function (a) {

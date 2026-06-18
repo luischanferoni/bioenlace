@@ -174,6 +174,13 @@ final class ProfesionalEfectorServicioAgendaUiService
                 $out['id_profesional_efector_servicio'] = (string) $idPesIn;
             }
         }
+        if (!isset($out['id_profesional_efector_servicio'])) {
+            $resolvedOwn = self::resolveOwnPesIdInEfector($idEfector, $query);
+            if ($resolvedOwn > 0) {
+                $out['id_profesional_efector_servicio'] = (string) $resolvedOwn;
+                $idStaff = $resolvedOwn;
+            }
+        }
         if ($idStaff <= 0 && !isset($out['id_profesional_efector_servicio'])) {
             return $out;
         }
@@ -338,6 +345,10 @@ final class ProfesionalEfectorServicioAgendaUiService
         }
 
         if ($idPes <= 0) {
+            $idPes = self::resolveOwnPesIdInEfector($idEfector, $post);
+        }
+
+        if ($idPes <= 0) {
             throw new BadRequestHttpException('Indique id_profesional_efector_servicio con PES en este efector.');
         }
 
@@ -402,5 +413,69 @@ final class ProfesionalEfectorServicioAgendaUiService
         if (!ProfesionalEfectorServicioRecord::staffContextTienePesEnEfector($idStaffContext, $idEfector)) {
             throw new ForbiddenHttpException('El profesional no pertenece al efector actual.');
         }
+    }
+
+    /**
+     * PES propio en el efector para UI/submit «como profesional» (licencia, condición laboral).
+     * Prioridad: param explícito → persona+servicio → PES de sesión operativa → único PES en efector.
+     *
+     * @param array<string, mixed> $params
+     */
+    private static function resolveOwnPesIdInEfector(int $idEfector, array $params): int
+    {
+        if ($idEfector <= 0) {
+            return 0;
+        }
+
+        $idPes = isset($params['id_profesional_efector_servicio']) ? (int) $params['id_profesional_efector_servicio'] : 0;
+        if ($idPes > 0) {
+            $pes = ProfesionalEfectorServicioRecord::findOne(['id' => $idPes, 'deleted_at' => null]);
+            if ($pes !== null && (int) $pes->id_efector === $idEfector) {
+                return $idPes;
+            }
+
+            return 0;
+        }
+
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            return 0;
+        }
+
+        $idServicio = isset($params['id_servicio']) ? (int) $params['id_servicio'] : 0;
+        if ($idServicio > 0) {
+            $pes = ProfesionalEfectorServicioRecord::findOneActivoPorPersonaEfectorServicio(
+                $idPersona,
+                $idEfector,
+                $idServicio
+            );
+
+            return $pes !== null ? (int) $pes->id : 0;
+        }
+
+        $idPesSesion = (int) (Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
+        if ($idPesSesion > 0) {
+            $pesSesion = ProfesionalEfectorServicioRecord::findOne(['id' => $idPesSesion, 'deleted_at' => null]);
+            if (
+                $pesSesion !== null
+                && (int) $pesSesion->id_efector === $idEfector
+                && (int) $pesSesion->id_persona === $idPersona
+            ) {
+                return $idPesSesion;
+            }
+        }
+
+        $pesRows = ProfesionalEfectorServicioRecord::find()
+            ->where([
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfector,
+                'deleted_at' => null,
+            ])
+            ->all();
+        if (count($pesRows) === 1) {
+            return (int) $pesRows[0]->id;
+        }
+
+        return 0;
     }
 }

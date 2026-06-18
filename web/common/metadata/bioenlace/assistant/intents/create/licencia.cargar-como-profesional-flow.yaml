@@ -40,6 +40,9 @@ draft_hydrator:
   handler: organization.pes_from_servicio
   require_own_pes: true
 
+subject_resolution:
+  handler: organization.pes_own_in_efector
+
 business_rules:
   - id: licencia_propia_vs_staff
     when: pre_flow

@@ -18,7 +18,8 @@
     --bio-paper-900: #1a1916;
 
     /* Asistente: sticky toolbar y composer fijo */
-    --spa-chat-toolbar-sticky-top: 4.75rem;
+    --navbar-height: 4.5rem;
+    --spa-chat-toolbar-sticky-top: calc(var(--navbar-height) + 0.25rem);
     --spa-chat-composer-reserve: calc(7.25rem + env(safe-area-inset-bottom, 0px));
     --spa-chat-input-min-height: 3.75rem;
 }
@@ -30,6 +31,11 @@
 }
 
 /* Shell: navbar y menú en paper surface; área de contenido más clara */
+body.boxed .boxed-inner {
+    /* overflow:hidden del tema impide position:sticky en el navbar */
+    overflow: visible;
+}
+
 .main-content {
     background-color: var(--bio-paper-25);
 }
@@ -37,6 +43,9 @@
 .iq-navbar.navbar {
     background-color: var(--bio-paper-50) !important;
     border-bottom-color: var(--bio-paper-500) !important;
+    position: sticky;
+    top: 0;
+    z-index: 10001;
 }
 
 .sidebar-menu {
@@ -178,22 +187,16 @@
     pointer-events: auto;
 }
 
-/* Navbar debe estar por encima del sidebar */
-.iq-navbar {
-    position: relative;
-    z-index: 10001;
-}
-
 /* Menú vertical lateral - Desktop */
 .sidebar-menu {
     width: 90px;
     height: 500px; /* Altura fija definible - ajustar según necesidad */
     position: sticky;
-    top: calc(var(--navbar-height, 80px) + 16px); /* Altura del navbar + margen */
-    z-index: 100; /* Reducido para que esté por debajo del navbar */
+    top: calc(var(--navbar-height) + 16px);
+    z-index: 100; /* Por debajo del navbar sticky */
     flex-shrink: 0;
     overflow-y: auto;
-    max-height: calc(100vh - var(--navbar-height, 80px) - 32px); /* Altura máxima para que no se salga de la pantalla */
+    max-height: calc(100vh - var(--navbar-height) - 32px);
 }
 
 .sidebar-menu .nav {

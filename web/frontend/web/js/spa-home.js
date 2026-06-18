@@ -2981,6 +2981,9 @@
             case 'radio':
                 html += renderRadioField(field);
                 break;
+            case 'chips':
+                html += renderChipsField(field);
+                break;
             case 'number':
                 html += renderNumberField(field);
                 break;
@@ -3224,6 +3227,33 @@
     }
 
     /**
+     * Renderizar campo chips (selección única con botones tipo chip).
+     */
+    function renderChipsField(field) {
+        const current = field.value !== undefined && field.value !== null ? String(field.value) : '';
+        let html = '<input type="hidden" class="spa-ui-chip-value" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(current) + '"';
+        if (field.required) {
+            html += ' required';
+        }
+        html += '>';
+        html += '<div class="spa-ui-chips d-flex flex-wrap gap-2" role="radiogroup"';
+        if (field.label) {
+            html += ' aria-label="' + escapeHtml(String(field.label)) + '"';
+        }
+        html += '>';
+        if (field.options) {
+            field.options.forEach(function (option) {
+                const value = typeof option === 'object' ? option.value : option;
+                const label = typeof option === 'object' ? option.label : option;
+                const active = current !== '' && String(value) === current ? ' is-active' : '';
+                html += '<button type="button" class="spa-ui-chip-btn' + active + '" data-field="' + escapeHtml(field.name) + '" data-value="' + escapeHtml(value) + '">' + escapeHtml(label) + '</button>';
+            });
+        }
+        html += '</div>';
+        return html;
+    }
+
+    /**
      * Renderizar campo numérico con opciones rápidas y botones +/-
      */
     function renderNumberField(field) {
@@ -3319,16 +3349,17 @@
         });
         
         // Opciones rápidas para números
-        document.querySelectorAll('.quick-option-btn').forEach(btn => {
+        document.querySelectorAll('.quick-option-btn, .spa-ui-chip-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const fieldName = this.dataset.field;
                 const value = this.dataset.value;
                 const input = form.querySelector('input[name="' + fieldName + '"]');
                 if (input) {
                     input.value = value;
-                    // Resaltar botón seleccionado
-                    document.querySelectorAll('.quick-option-btn[data-field="' + fieldName + '"]').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
+                    document.querySelectorAll('.quick-option-btn[data-field="' + fieldName + '"], .spa-ui-chip-btn[data-field="' + fieldName + '"]').forEach(function (b) {
+                        b.classList.remove('active', 'is-active');
+                    });
+                    this.classList.add(this.classList.contains('spa-ui-chip-btn') ? 'is-active' : 'active');
                 }
             });
         });

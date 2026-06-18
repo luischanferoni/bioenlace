@@ -328,6 +328,33 @@ html:has(.spa-asistente-root) {
     margin-bottom: 0 !important;
 }
 
+.spa-ui-chip-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--bio-paper-600, #4a5568);
+    background: var(--bio-paper-50, #fff);
+    border: 1px solid var(--bio-paper-300, #cbd5e0);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.spa-ui-chip-btn:hover {
+    border-color: var(--bio-primary-400, #4299e1);
+    color: var(--bio-primary-700, #2b6cb0);
+}
+
+.spa-ui-chip-btn.is-active {
+    color: var(--bio-primary-800, #2c5282);
+    background: var(--bio-primary-50, #ebf8ff);
+    border-color: var(--bio-primary-500, #3182ce);
+    font-weight: 600;
+}
+
 .spa-shortcut-cards-grid {
     display: grid;
     grid-template-columns: 1fr;

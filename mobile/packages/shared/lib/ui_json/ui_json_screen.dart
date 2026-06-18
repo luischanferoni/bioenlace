@@ -10,6 +10,7 @@ import '../config/api_config.dart';
 import '../diagnostics/app_diagnostic_log.dart';
 import '../text/user_friendly_error.dart';
 import '../theme/tokens/tokens.dart';
+import '../ui/bio_chip.dart';
 import 'ui_json_list_auto_advance.dart';
 import 'ui_json_list_presentation.dart';
 import 'ui_json_list_readonly.dart';
@@ -922,6 +923,50 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
             ),
           ],
         );
+      case 'chips':
+        final copts = (field['options'] as List?) ?? [];
+        final cseen = <String>{};
+        final centries = <MapEntry<String, String>>[];
+        for (final o in copts) {
+          final om = o is Map ? Map<String, dynamic>.from(o) : {'value': o, 'label': o};
+          final v = (om['value']?.toString() ?? om['id']?.toString() ?? '').trim();
+          if (v.isEmpty || cseen.contains(v)) continue;
+          cseen.add(v);
+          final lab = (om['label']?.toString() ?? om['name']?.toString() ?? v).trim();
+          centries.add(MapEntry(v, lab));
+        }
+        final gvc = _accum[name]?.trim();
+        final effectiveChip = (gvc != null && gvc.isNotEmpty && cseen.contains(gvc)) ? gvc : null;
+        if (centries.isEmpty) {
+          return ListTile(
+            title: Text(required ? '$label *' : label),
+            subtitle: const Text('Sin opciones disponibles'),
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (label.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(
+                  required ? '$label *' : label,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+            Wrap(
+              spacing: BioSpacing.sm,
+              runSpacing: BioSpacing.sm,
+              children: centries.map(
+                (e) => BioChip(
+                  label: e.value,
+                  selected: effectiveChip == e.key,
+                  onTap: () => setState(() => _setAccumField(name, e.key)),
+                ),
+              ).toList(),
+            ),
+          ],
+        );
       case 'number':
         return TextFormField(
           initialValue: _accum[name] ?? '',
@@ -1230,7 +1275,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       if (v.isEmpty) continue;
       delta[name] = v;
       final type = f['type']?.toString();
-      if (type == 'select' || type == 'radio') {
+      if (type == 'select' || type == 'radio' || type == 'chips') {
         final label = _labelForFieldOption(f, v);
         if (label != null && label.isNotEmpty) {
           delta['_flow_item_$name'] = {'code': v, 'label': label};

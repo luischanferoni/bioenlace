@@ -28,7 +28,7 @@
         {
           "name": "id_condicion_laboral",
           "label": "Tipo de licencia o permiso",
-          "type": "radio",
+          "type": "chips",
           "required": true,
           "options": "{{options}}",
           "option_config": {

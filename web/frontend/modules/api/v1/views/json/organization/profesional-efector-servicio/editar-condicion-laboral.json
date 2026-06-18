@@ -29,7 +29,7 @@
         {
           "name": "id_condicion_laboral",
           "label": "Tipos de contratos",
-          "type": "radio",
+          "type": "chips",
           "required": true,
           "options": "{{options}}",
           "option_config": {

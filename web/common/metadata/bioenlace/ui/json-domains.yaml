@@ -5,6 +5,7 @@ version: 1
 entity_domains:
   turnos: scheduling
   profesional-agenda: scheduling
+  servicio-teleconsulta: scheduling
   efectores: scheduling
   servicios: scheduling
   care-plan: clinical

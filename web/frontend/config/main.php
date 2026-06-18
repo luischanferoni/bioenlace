@@ -599,6 +599,9 @@ return [
             'class' => 'frontend\modules\api\v1\Module',
             'basePath' => '@frontend/modules/api/v1',
             'controllerNamespace' => 'frontend\modules\api\v1\controllers',
+            'controllerMap' => [
+                'servicio-teleconsulta' => \frontend\modules\api\v1\controllers\ServicioTeleconsultaPoliticaController::class,
+            ],
         ],           
     ],
     'aliases' => [

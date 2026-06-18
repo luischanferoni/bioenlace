@@ -233,6 +233,9 @@
         if (!out.fecha_fin && d.fecha_fin) {
             out.fecha_fin = d.fecha_fin;
         }
+        if (!out.condicion_laboral_label && d.condicion_laboral_label) {
+            out.condicion_laboral_label = d.condicion_laboral_label;
+        }
         const condFlow = d._flow_item_id_condicion_laboral;
         if (!out.condicion_laboral_label && condFlow && typeof condFlow === 'object') {
             const lbl = condFlow.label != null ? String(condFlow.label).trim() : (condFlow.name != null ? String(condFlow.name).trim() : '');
@@ -240,7 +243,74 @@
                 out.condicion_laboral_label = lbl;
             }
         }
+        if (!out.servicio_detalle && d.servicio_detalle && typeof d.servicio_detalle === 'object') {
+            out.servicio_detalle = d.servicio_detalle;
+        }
         return out;
+    }
+
+    function flowSubmitMensajeFromData(data) {
+        const d = data && typeof data === 'object' ? data : {};
+        const msg = d.mensaje != null ? String(d.mensaje).trim() : '';
+        return msg;
+    }
+
+    /** Detalle legible cuando la API no envía `mensaje` (fallback genérico para flows). */
+    function buildGenericFlowSubmitDetailLines(data, snap) {
+        const d = data && typeof data === 'object' ? data : {};
+        const s = snap && typeof snap === 'object' ? snap : {};
+        const lines = [];
+
+        const shortMsg = (d.message != null && String(d.message).trim() !== '') ? String(d.message).trim() : '';
+        if (shortMsg && !/^listo\.?$/i.test(shortMsg)) {
+            lines.push(/[.!?]$/.test(shortMsg) ? shortMsg : shortMsg + '.');
+        }
+
+        if (s.profesional && s.profesional.label) {
+            lines.push('Profesional: ' + String(s.profesional.label).trim());
+        }
+        let svc = (s.servicio && s.servicio.label) ? String(s.servicio.label).trim() : '';
+        if (!svc && d.servicio_detalle && typeof d.servicio_detalle === 'object') {
+            const sd = d.servicio_detalle;
+            svc = (sd.nombre != null && String(sd.nombre).trim() !== '')
+                ? String(sd.nombre).trim()
+                : ((sd.descripcion != null && String(sd.descripcion).trim() !== '') ? String(sd.descripcion).trim() : '');
+        }
+        if (svc) {
+            lines.push('Servicio: ' + svc);
+        }
+        if (s.efector && s.efector.label) {
+            lines.push('Centro: ' + String(s.efector.label).trim());
+        }
+        if (s.turno && s.turno.label) {
+            lines.push('Turno: ' + String(s.turno.label).trim());
+        }
+
+        const condLbl = d.condicion_laboral_label != null ? String(d.condicion_laboral_label).trim() : '';
+        if (condLbl) {
+            lines.push('Tipo: ' + condLbl);
+        }
+
+        const fi = d.fecha_inicio != null ? String(d.fecha_inicio).trim() : '';
+        const ff = d.fecha_fin != null ? String(d.fecha_fin).trim() : '';
+        if (fi && ff) {
+            lines.push('Desde ' + formatFechaEs(fi) + ' hasta ' + formatFechaEs(ff));
+        } else if (fi) {
+            lines.push('Desde ' + formatFechaEs(fi));
+        } else if (ff) {
+            lines.push('Hasta ' + formatFechaEs(ff));
+        }
+
+        const cuando = formatCuandoDesdeFechaHora(d.fecha, d.hora) || nuevoHorarioLinea(s, d);
+        if (cuando && !lines.some(function (ln) { return String(ln).indexOf(cuando) >= 0; })) {
+            lines.push('Fecha: ' + cuando);
+        }
+
+        if (d.razon_cancelacion_label != null && String(d.razon_cancelacion_label).trim() !== '') {
+            lines.push('Motivo: ' + String(d.razon_cancelacion_label).trim());
+        }
+
+        return lines;
     }
 
     /** Tras guardar la mini-UI del último paso (formulario): colapsar flow y mostrar resumen. */
@@ -378,38 +448,18 @@
             if (nuevo) lines.push('Nuevo horario: ' + nuevo);
             return lines;
         }
-        if (iid === 'licencia.cargar-como-profesional-flow' || iid === 'licencia.cargar-para-profesional-flow') {
-            const lines = [];
-            const msg = (d.message != null && String(d.message).trim() !== '')
-                ? String(d.message).trim()
-                : 'Licencia registrada.';
-            lines.push(/[.!?]$/.test(msg) ? msg : msg + '.');
-            if (iid === 'licencia.cargar-para-profesional-flow' && snap.profesional && snap.profesional.label) {
-                lines.push('Profesional: ' + String(snap.profesional.label).trim());
-            }
-            if (snap.servicio && snap.servicio.label) {
-                lines.push('Servicio: ' + String(snap.servicio.label).trim());
-            }
-            const condLbl = d.condicion_laboral_label != null ? String(d.condicion_laboral_label).trim() : '';
-            if (condLbl) {
-                lines.push('Tipo: ' + condLbl);
-            }
-            const fi = d.fecha_inicio != null ? String(d.fecha_inicio).trim() : '';
-            const ff = d.fecha_fin != null ? String(d.fecha_fin).trim() : '';
-            if (fi && ff) {
-                lines.push('Desde ' + formatFechaEs(fi) + ' hasta ' + formatFechaEs(ff));
-            } else if (fi) {
-                lines.push('Desde ' + formatFechaEs(fi));
-            } else if (ff) {
-                lines.push('Hasta ' + formatFechaEs(ff));
-            }
-            return lines;
+
+        const mensajeApi = flowSubmitMensajeFromData(d);
+        if (mensajeApi) {
+            return [mensajeApi];
         }
+
+        const genericLines = buildGenericFlowSubmitDetailLines(d, snap);
+        if (genericLines.length) {
+            return genericLines;
+        }
+
         if (iid === 'turnos.crear-como-paciente') {
-            const msg = (d.mensaje != null && String(d.mensaje).trim() !== '')
-                ? String(d.mensaje).trim()
-                : ((d.message != null && String(d.message).trim() !== '') ? String(d.message).trim() : '');
-            if (msg) return [msg];
             var svc = (snap.servicio && snap.servicio.label) ? String(snap.servicio.label).trim() : '';
             if (!svc && d.servicio_detalle && typeof d.servicio_detalle === 'object') {
                 const sd = d.servicio_detalle;
@@ -422,17 +472,7 @@
             if (cuando) return ['Reservamos tu turno (' + cuando + ').'];
         }
 
-        const lines = [];
-        const primary = (d.mensaje != null && String(d.mensaje).trim() !== '')
-            ? String(d.mensaje).trim()
-            : ((d.message != null && String(d.message).trim() !== '') ? String(d.message).trim() : '');
-        if (primary) lines.push(primary);
-        if (d.razon_cancelacion_label != null && String(d.razon_cancelacion_label).trim() !== '') {
-            lines.push('Motivo: ' + String(d.razon_cancelacion_label).trim());
-        }
-        const cuando = formatCuandoDesdeFechaHora(d.fecha, d.hora);
-        if (cuando) lines.push('Fecha: ' + cuando);
-        return lines.length ? lines : ['Listo.'];
+        return ['Listo.'];
     }
 
     function buildFlowChatHeaderHtml(actionTitle) {
@@ -677,7 +717,7 @@
                                 title = String(tEl.textContent || '').trim();
                             }
                         } catch (eTitle) { /* ignore */ }
-                        var d = json.data && typeof json.data === 'object' ? json.data : null;
+                        var d = json.data && typeof json.data === 'object' ? enrichUiSubmitSummaryData(json.data) : null;
                         var snapForSummary = Object.assign({}, flowSnapshot || {});
                         var intentForSummary = currentIntentId ? String(currentIntentId) : '';
                         collapseCompletedFlowActivation(seq, d, title, intentForSummary, snapForSummary);

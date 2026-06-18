@@ -307,7 +307,7 @@ final class ProfesionalEfectorServicioAgendaUiService
      * Crear/editar condición laboral (upsert) de un RRHH (sin tocar agenda por servicio).
      *
      * @param array<string, mixed> $post
-     * @return array{message: string, condicion_laboral_ui_completed: string}
+     * @return array{message: string, mensaje: string, condicion_laboral_ui_completed: string, fecha_inicio?: string|null, fecha_fin?: string|null, condicion_laboral_label?: string, servicio_detalle?: array{id_servicio: int, nombre: string}|null}
      */
     public static function submitCondicionLaboral(
         int $idEfector,
@@ -380,7 +380,9 @@ final class ProfesionalEfectorServicioAgendaUiService
             ])
             ->one();
 
+        $wasNew = false;
         if ($laboral === null) {
+            $wasNew = true;
             $laboral = new ProfesionalEfectorServicioCondicionLaboral();
             $laboral->id_profesional_efector_servicio = $idPes;
             $laboral->id_condicion_laboral = $idCondicion;
@@ -398,10 +400,149 @@ final class ProfesionalEfectorServicioAgendaUiService
             throw new \RuntimeException('No se pudo guardar la condición laboral.');
         }
 
+        return self::buildCondicionLaboralSubmitData(
+            $idPes,
+            $idCondicion,
+            $fi !== '' ? $fi : null,
+            $ff !== '' ? $ff : null,
+            $intentId,
+            $wasNew
+        );
+    }
+
+    /**
+     * Payload de cierre para UI / asistente (patrón {@see \common\components\Domain\Scheduling\Service\TurnoPersistService::crear}).
+     *
+     * @return array{
+     *   message: string,
+     *   mensaje: string,
+     *   condicion_laboral_ui_completed: string,
+     *   fecha_inicio: string|null,
+     *   fecha_fin: string|null,
+     *   condicion_laboral_label: string,
+     *   servicio_detalle: array{id_servicio: int, nombre: string}|null
+     * }
+     */
+    private static function buildCondicionLaboralSubmitData(
+        int $idPes,
+        int $idCondicion,
+        ?string $fechaInicio,
+        ?string $fechaFin,
+        string $intentId,
+        bool $wasNew
+    ): array {
+        $pes = ProfesionalEfectorServicioRecord::findOne(['id' => $idPes, 'deleted_at' => null]);
+        $condicion = Condiciones_laborales::findOne(['id_condicion_laboral' => $idCondicion]);
+        $tipoNombre = $condicion !== null ? trim((string) $condicion->nombre) : '';
+        $servicioNombre = '';
+        $servicioDetalle = null;
+        $profNombre = '';
+
+        if ($pes !== null) {
+            $servicio = $pes->servicio;
+            if ($servicio !== null) {
+                $servicioNombre = trim((string) $servicio->nombre);
+                if ($servicioNombre !== '') {
+                    $servicioDetalle = [
+                        'id_servicio' => (int) $servicio->id_servicio,
+                        'nombre' => $servicioNombre,
+                    ];
+                }
+            }
+            $persona = $pes->persona;
+            if ($persona !== null) {
+                $profNombre = trim(trim((string) $persona->apellido) . ', ' . trim((string) $persona->nombre));
+            }
+        }
+
+        $vigencia = self::formatVigenciaPhrase($fechaInicio, $fechaFin);
+        $isStaff = self::condicionLaboralIntentEsStaff($intentId);
+        $mensaje = self::composeCondicionLaboralMensaje(
+            $wasNew,
+            $isStaff,
+            $tipoNombre,
+            $servicioNombre,
+            $profNombre,
+            $vigencia
+        );
+
         return [
             'message' => 'Condición laboral guardada.',
+            'mensaje' => $mensaje,
             'condicion_laboral_ui_completed' => '1',
+            'fecha_inicio' => $fechaInicio,
+            'fecha_fin' => $fechaFin,
+            'condicion_laboral_label' => $tipoNombre,
+            'servicio_detalle' => $servicioDetalle,
         ];
+    }
+
+    private static function condicionLaboralIntentEsStaff(string $intentId): bool
+    {
+        $intentId = trim($intentId);
+        if ($intentId === '') {
+            return false;
+        }
+
+        return str_contains($intentId, 'staff')
+            || str_contains($intentId, 'cargar-para-profesional');
+    }
+
+    private static function composeCondicionLaboralMensaje(
+        bool $wasNew,
+        bool $isStaff,
+        string $tipoNombre,
+        string $servicioNombre,
+        string $profNombre,
+        string $vigencia
+    ): string {
+        $tipo = $tipoNombre !== '' ? $tipoNombre : 'licencia';
+        $servicio = $servicioNombre !== '' ? $servicioNombre : 'tu servicio';
+        $vigenciaSuffix = $vigencia !== '' ? (' ' . $vigencia . '.') : '.';
+
+        if ($wasNew) {
+            if ($isStaff && $profNombre !== '') {
+                return 'Registramos licencia de ' . $tipo . ' para ' . $profNombre . ' en ' . $servicio . $vigenciaSuffix;
+            }
+
+            return 'Registramos tu licencia de ' . $tipo . ' en ' . $servicio . $vigenciaSuffix;
+        }
+
+        if ($isStaff && $profNombre !== '') {
+            return 'Actualizamos la condición laboral de ' . $profNombre . ' (' . $tipo . ') en ' . $servicio . $vigenciaSuffix;
+        }
+
+        return 'Actualizamos tu condición laboral (' . $tipo . ') en ' . $servicio . $vigenciaSuffix;
+    }
+
+    private static function formatVigenciaPhrase(?string $fechaInicio, ?string $fechaFin): string
+    {
+        $fi = self::formatFechaEsDisplay($fechaInicio);
+        $ff = self::formatFechaEsDisplay($fechaFin);
+        if ($fi !== '' && $ff !== '') {
+            return 'del ' . $fi . ' al ' . $ff;
+        }
+        if ($fi !== '') {
+            return 'desde el ' . $fi;
+        }
+        if ($ff !== '') {
+            return 'hasta el ' . $ff;
+        }
+
+        return '';
+    }
+
+    private static function formatFechaEsDisplay(?string $iso): string
+    {
+        $s = trim((string) $iso);
+        if ($s === '') {
+            return '';
+        }
+        try {
+            return (new \DateTimeImmutable($s))->format('d/m/Y');
+        } catch (\Throwable $e) {
+            return $s;
+        }
     }
 
     private static function assertStaffContextPerteneceAEfector(int $idStaffContext, int $idEfector): void

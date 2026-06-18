@@ -3,6 +3,7 @@
 namespace frontend\components;
 
 use common\models\Person\Persona;
+use common\models\User;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Yii;
@@ -14,6 +15,9 @@ use yii\web\IdentityInterface;
 final class WebApiJwtSessionService
 {
     private const SESSION_KEY = 'apiJwtToken';
+
+    /** Yii\User guarda el id autenticado web en sesión PHP con esta clave por defecto. */
+    private const WEB_SESSION_USER_ID_KEY = '__id';
 
     /** Renovar si faltan menos de 5 minutos para expirar. */
     private const REFRESH_BEFORE_EXPIRY_SECONDS = 300;
@@ -31,23 +35,28 @@ final class WebApiJwtSessionService
             return;
         }
 
-        $existing = Yii::$app->session->get(self::SESSION_KEY);
-        if (is_string($existing) && $existing !== '' && !self::shouldRefreshToken($existing)) {
-            return;
+        self::ensureValidTokenForIdentity($identity);
+    }
+
+    /**
+     * Token JWT para cliente web leyendo la sesión PHP (cookie bioenlace-frontend).
+     * Usado desde API v1 donde el componente user tiene enableSession=false.
+     */
+    public static function resolveTokenFromWebSession(): ?string
+    {
+        $identity = self::findIdentityFromWebSession();
+        if ($identity === null) {
+            return null;
         }
 
-        if ((int) ($identity->superadmin ?? 0) === 1) {
-            self::storeTokenForSuperadmin($identity);
+        self::ensureValidTokenForIdentity($identity);
 
-            return;
-        }
+        return self::getSessionToken();
+    }
 
-        $persona = Persona::findOne(['id_user' => $identity->id]);
-        if ($persona === null) {
-            return;
-        }
-
-        self::storeTokenForIdentity($identity, $persona);
+    public static function hasWebSessionUser(): bool
+    {
+        return self::findIdentityFromWebSession() !== null;
     }
 
     public static function getSessionToken(): ?string
@@ -83,6 +92,47 @@ final class WebApiJwtSessionService
             self::SESSION_KEY,
             JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256')
         );
+    }
+
+    private static function ensureValidTokenForIdentity(IdentityInterface $identity): void
+    {
+        $existing = Yii::$app->session->get(self::SESSION_KEY);
+        if (is_string($existing) && $existing !== '' && !self::shouldRefreshToken($existing)) {
+            return;
+        }
+
+        if ((int) ($identity->superadmin ?? 0) === 1) {
+            self::storeTokenForSuperadmin($identity);
+
+            return;
+        }
+
+        $persona = Persona::findOne(['id_user' => $identity->id]);
+        if ($persona === null) {
+            return;
+        }
+
+        self::storeTokenForIdentity($identity, $persona);
+    }
+
+    private static function findIdentityFromWebSession(): ?User
+    {
+        $session = Yii::$app->session;
+        if (!$session->isActive) {
+            $session->open();
+        }
+
+        $userId = $session->get(self::WEB_SESSION_USER_ID_KEY);
+        if (!$userId) {
+            return null;
+        }
+
+        $user = User::findOne($userId);
+        if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
+            return null;
+        }
+
+        return $user;
     }
 
     private static function encodeToken(IdentityInterface $identity, Persona $persona): string

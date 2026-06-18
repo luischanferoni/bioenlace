@@ -7,10 +7,12 @@ use common\models\forms\ConfirmEmailForm;
 use common\models\forms\PasswordRecoveryForm;
 use common\models\LoginForm;
 use common\models\User;
+use frontend\components\WebApiJwtSessionService;
 use Yii;
 use yii\web\Controller;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
+use yii\web\Response;
 
 /**
  * Autenticación web: login, logout, contraseña y confirmación de e-mail.
@@ -52,6 +54,44 @@ class AuthController extends Controller
         Yii::$app->user->logout();
 
         return $this->redirect(Yii::$app->user->loginUrl);
+    }
+
+    /**
+     * JWT vigente para la SPA web (autenticación por cookie de sesión Yii, no Bearer).
+     *
+     * GET /auth/web-jwt
+     */
+    public function actionWebJwt()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        if (Yii::$app->user->isGuest || Yii::$app->user->identity === null) {
+            Yii::$app->response->statusCode = 401;
+
+            return [
+                'success' => false,
+                'message' => 'Usuario no autenticado',
+                'data' => null,
+            ];
+        }
+
+        WebApiJwtSessionService::ensureValidTokenInSession();
+        $token = WebApiJwtSessionService::getSessionToken();
+        if ($token === null) {
+            Yii::$app->response->statusCode = 500;
+
+            return [
+                'success' => false,
+                'message' => 'No se pudo emitir token de sesión web',
+                'data' => null,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Token de sesión web',
+            'data' => ['token' => $token],
+        ];
     }
 
     public function actionChangeOwnPassword()

@@ -528,10 +528,6 @@ return [
                 'POST api/<version:\w+>/sesion-operativa/establecer' => '<version>/sesion-operativa/establecer',
                 'OPTIONS api/<version:\w+>/sesion-operativa/establecer' => '<version>/sesion-operativa/establecer',
 
-                // JWT de sesión web (cookie, sin Bearer)
-                'GET api/<version:\w+>/auth/web-jwt' => '<version>/auth/web-jwt',
-                'OPTIONS api/<version:\w+>/auth/web-jwt' => '<version>/auth/web-jwt',
-
                 // Acciones comunes (web SPA / móvil; filtrado por permisos en servicio)
                 'GET api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',
                 'OPTIONS api/<version:\w+>/acciones/comunes' => '<version>/acciones/comunes',

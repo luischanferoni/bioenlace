@@ -81,7 +81,7 @@
       return webJwtRefreshInFlight;
     }
 
-    var url = NS.normalizeApiV1Path('/api/auth/web-jwt');
+    var url = NS.logoutUrl().replace(/\/logout\/?$/, '/web-jwt');
     if (!/^https?:\/\//i.test(url)) {
       url = window.location.origin + url;
     }

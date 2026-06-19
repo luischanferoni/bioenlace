@@ -42,10 +42,6 @@ class BioenlaceAdminAccessControl extends ActionFilter
             return false;
         }
 
-        if ($identity !== null) {
-            BioenlaceAccessChecker::refreshForIdentity($identity);
-        }
-
         $userId = (int) Yii::$app->user->id;
         if (BioenlaceAccessChecker::isSuperadminUserId($userId)) {
             return true;

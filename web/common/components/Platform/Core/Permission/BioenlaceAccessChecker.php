@@ -15,6 +15,11 @@ final class BioenlaceAccessChecker
         BioenlaceSessionPermissions::refreshForIdentity($identity);
     }
 
+    public static function ensureUpToDate(): void
+    {
+        BioenlaceSessionPermissions::ensureUpToDate();
+    }
+
     public static function userCanPermissionKey(int $userId, string $permissionKey): bool
     {
         $permissionKey = trim($permissionKey);

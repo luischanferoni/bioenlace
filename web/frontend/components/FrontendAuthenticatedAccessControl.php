@@ -59,7 +59,7 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
         }
 
         if ($identity !== null) {
-            BioenlaceAccessChecker::refreshForIdentity($identity);
+            BioenlaceAccessChecker::ensureUpToDate();
             WebApiJwtSessionService::ensureValidTokenInSession();
         }
 

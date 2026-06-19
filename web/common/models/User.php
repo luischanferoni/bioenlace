@@ -3,6 +3,7 @@
 namespace common\models;
 
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
+use common\components\Platform\Core\Permission\BioenlaceRbacRevision;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use Yii;
 use yii\base\Security;
@@ -309,6 +310,7 @@ class User extends ActiveRecord implements IdentityInterface
                 'item_name' => $roleName,
                 'created_at' => time(),
             ])->execute();
+            BioenlaceRbacRevision::bump();
             self::refreshSessionPermissionsForUserId((int) $userId);
 
             return true;
@@ -323,6 +325,7 @@ class User extends ActiveRecord implements IdentityInterface
             ->delete('auth_assignment', ['user_id' => $userId, 'item_name' => $roleName])
             ->execute() > 0;
         if ($result) {
+            BioenlaceRbacRevision::bump();
             self::refreshSessionPermissionsForUserId((int) $userId);
         }
 

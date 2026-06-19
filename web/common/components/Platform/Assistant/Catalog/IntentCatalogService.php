@@ -27,7 +27,7 @@ final class IntentCatalogService
      */
     public static function getAvailableUiForUser(int $userId, bool $useCache = true): array
     {
-        // Intents YAML filtrados por `rbac_route` (permiso webvimark alineado al manifiesto).
+        // Intents YAML filtrados por permiso intent_id ({@see IntentAccessService}).
         $all = YamlIntentCatalogService::discoverAll($useCache);
 
         $filtered = YamlIntentCatalogService::filterByRbac($all, $userId);

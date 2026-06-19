@@ -39,6 +39,7 @@ final class BioenlaceSessionPermissions
         $session->set(self::SESSION_PREFIX_ROLES, $built['roles']);
         $session->set(self::SESSION_PREFIX_PERMISSIONS, $built['permissions']);
         $session->set(self::SESSION_OWNER_KEY, $userId);
+        $session->set(BioenlaceRbacRevision::SESSION_KEY, BioenlaceRbacRevision::current());
     }
 
     public static function ensureUpToDate(): void
@@ -50,6 +51,13 @@ final class BioenlaceSessionPermissions
         if (!Yii::$app->has('session')) {
             return;
         }
+        $sessionRevision = (int) Yii::$app->session->get(BioenlaceRbacRevision::SESSION_KEY, -1);
+        if ($sessionRevision < BioenlaceRbacRevision::current()) {
+            self::refreshForIdentity(Yii::$app->user->identity);
+
+            return;
+        }
+
         $owner = (int) Yii::$app->session->get(self::SESSION_OWNER_KEY, 0);
         if ($owner === $userId) {
             $routes = Yii::$app->session->get(self::SESSION_PREFIX_ROUTES);

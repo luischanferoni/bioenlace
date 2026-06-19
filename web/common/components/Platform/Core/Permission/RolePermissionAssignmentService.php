@@ -129,6 +129,8 @@ final class RolePermissionAssignmentService
             'parent' => $roleName,
             'child' => $permissionKey,
         ])->execute();
+
+        $this->afterMutation();
     }
 
     public function revoke(string $roleName, string $permissionKey): void
@@ -137,6 +139,8 @@ final class RolePermissionAssignmentService
             'parent' => $roleName,
             'child' => $permissionKey,
         ])->execute();
+
+        $this->afterMutation();
     }
 
     public function permissionExistsInAuthItem(string $key): bool
@@ -150,5 +154,10 @@ final class RolePermissionAssignmentService
             ->from('{{%auth_item}}')
             ->where(['name' => $key, 'type' => Item::TYPE_PERMISSION])
             ->exists();
+    }
+
+    private function afterMutation(): void
+    {
+        BioenlaceRbacRevision::bump();
     }
 }

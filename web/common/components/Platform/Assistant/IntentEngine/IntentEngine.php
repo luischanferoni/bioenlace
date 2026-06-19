@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\IntentEngine;
 
 use Yii;
+use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Assistant\Catalog\IntentCatalogService;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\YamlIntentCatalogService;
@@ -174,6 +175,14 @@ final class IntentEngine
 
     private static function buildSingleActionResponse(UiActionCatalogItem $item, string $method, float $confidence = 1.0, string $content = '', int $userId = 0): array
     {
+        if ($userId > 0 && self::requiresIntentPermissionCheck($item->action_id) && !IntentAccessService::userCanExecuteIntent($userId, $item->action_id)) {
+            return [
+                'success' => false,
+                'error' => 'No tiene permiso para ejecutar esta acción.',
+                'actions' => [],
+            ];
+        }
+
         $action = self::formatActionForClient($item);
         $action = self::enrichProvidedParamsFromQuery($action, $content);
 
@@ -383,6 +392,16 @@ final class IntentEngine
         }
 
         return preg_match('/\b(que puedo hacer|qué puedo hacer|que opciones tengo|qué opciones tengo|ayuda|menu|menú|opciones|permisos|capacidades)\b/u', $s) === 1;
+    }
+
+    /**
+     * UIs nativas web (`native.*`) usan RBAC de ruta frontend, no intent_id en auth_item.
+     */
+    private static function requiresIntentPermissionCheck(string $actionId): bool
+    {
+        $actionId = trim($actionId);
+
+        return $actionId !== '' && !str_starts_with($actionId, 'native.');
     }
 }
 

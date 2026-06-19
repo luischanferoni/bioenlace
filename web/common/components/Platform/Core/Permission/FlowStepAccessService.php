@@ -2,8 +2,6 @@
 
 namespace common\components\Platform\Core\Permission;
 
-use common\components\Platform\Assistant\UiActions\ActionMappingService;
-
 /**
  * Autorización de pasos open_ui intermedios: heredan el permiso del intent padre.
  */
@@ -54,16 +52,11 @@ final class FlowStepAccessService
     private function userCanAccessIntent(int $userId, array $parent): bool
     {
         $intentId = trim((string) ($parent['intent_id'] ?? ''));
-        if ($intentId !== '') {
-            return \common\components\Platform\Assistant\Catalog\YamlIntentCatalogService::userIdCanPermissionKey($userId, $intentId);
+        if ($intentId === '') {
+            return false;
         }
 
-        $rbacRoute = trim((string) ($parent['rbac_route'] ?? ''));
-        if ($rbacRoute !== '') {
-            return ActionMappingService::userIdCanAccessRoute($userId, $rbacRoute);
-        }
-
-        return false;
+        return IntentAccessService::userCanExecuteIntent($userId, $intentId);
     }
 
     private function canAccessForIntentAndRoute(int $userId, string $flowIntentId, string $apiRoute): bool

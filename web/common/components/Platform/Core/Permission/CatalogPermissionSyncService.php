@@ -100,6 +100,10 @@ final class CatalogPermissionSyncService
             }
         }
 
+        if ($roleGrants > 0 || $linked > 0 || $created > 0) {
+            BioenlaceRbacRevision::bump();
+        }
+
         return [
             'created' => $created,
             'linked' => $linked,
@@ -132,6 +136,10 @@ final class CatalogPermissionSyncService
                     $added++;
                 }
             }
+        }
+
+        if ($added > 0) {
+            BioenlaceRbacRevision::bump();
         }
 
         return $added;

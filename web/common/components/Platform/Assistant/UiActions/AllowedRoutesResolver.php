@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\UiActions;
 
 use Yii;
 use common\components\Platform\Core\Service\ClientContextService;
+use common\components\Platform\Core\Permission\BioenlaceRbacRevision;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use common\components\Platform\Core\Permission\RbacRoute;
@@ -41,7 +42,7 @@ final class AllowedRoutesResolver
 
         $roles = array_values(array_filter(array_map('strval', $roles)));
         sort($roles);
-        $cacheKey = 'target_routes_roles_' . md5(implode(',', $roles));
+        $cacheKey = 'target_routes_roles_r' . BioenlaceRbacRevision::current() . '_' . md5(implode(',', $roles));
         $cache = Yii::$app->cache;
         if ($useCache && $cache) {
             $cached = $cache->get($cacheKey);
@@ -152,7 +153,7 @@ final class AllowedRoutesResolver
         }
 
         $cache = Yii::$app->cache;
-        $cacheKey = self::CACHE_KEY_PREFIX . $userId . ClientContextService::rbacCacheSuffix();
+        $cacheKey = self::CACHE_KEY_PREFIX . $userId . '_r' . BioenlaceRbacRevision::current() . ClientContextService::rbacCacheSuffix();
         if ($useAppCache && $cache) {
             $cached = $cache->get($cacheKey);
             if ($cached !== false) {

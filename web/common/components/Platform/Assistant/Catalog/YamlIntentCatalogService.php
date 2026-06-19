@@ -2,12 +2,12 @@
 
 namespace common\components\Platform\Assistant\Catalog;
 
+use common\components\Platform\Assistant\UiActions\ActionMappingService;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
-use common\components\Platform\Assistant\UiActions\ActionMappingService;
+use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
-use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\IntentPermissionResolver;
 use common\components\Platform\Ui\ApiV1HttpRoute;
 use Symfony\Component\Yaml\Yaml;
@@ -204,7 +204,7 @@ final class YamlIntentCatalogService
     }
 
     /**
-     * Intents YAML visibles según intent_id (auth_item) o rbac_route legacy.
+     * Intents visibles para el usuario: misma regla que la ejecución ({@see IntentAccessService}).
      *
      * @param array<int, array<string, mixed>> $items salida de {@see discoverAll}
      * @return array<int, array<string, mixed>>
@@ -216,20 +216,11 @@ final class YamlIntentCatalogService
             if (!is_array($flow)) {
                 continue;
             }
-            $aid = isset($flow['action_id']) ? AssistantDraftNormalizer::scalarString($flow['action_id']) : '';
-            if ($aid === '') {
+            $intentId = isset($flow['action_id']) ? AssistantDraftNormalizer::scalarString($flow['action_id']) : '';
+            if ($intentId === '') {
                 continue;
             }
-            $permission = $aid;
-            $rbacRoute = AssistantDraftNormalizer::scalarString($flow['rbac_route'] ?? '');
-            if ($permission === '' && $rbacRoute === '') {
-                continue;
-            }
-            if ($permission !== '' && self::userIdCanPermissionKey($userId, $permission)) {
-                $out[] = $flow;
-                continue;
-            }
-            if ($rbacRoute !== '' && ActionMappingService::userIdCanAccessRoute($userId, $rbacRoute)) {
+            if (IntentAccessService::userCanExecuteIntent($userId, $intentId)) {
                 $out[] = $flow;
             }
         }
@@ -247,7 +238,7 @@ final class YamlIntentCatalogService
             return ActionMappingService::userIdCanAccessRoute($userId, $permissionKey);
         }
 
-        return BioenlaceAccessChecker::userCanPermissionKey($userId, $permissionKey);
+        return IntentAccessService::userCanExecuteIntent($userId, $permissionKey);
     }
 
     public static function intentExists(string $intentId): bool

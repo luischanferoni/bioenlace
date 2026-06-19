@@ -17,8 +17,8 @@ Documentación estable del modelo de autorización Bioenlace: motor Yii, **permi
 |------|-------------|-----------------|
 | API v1 | `BioenlaceApiAccessControl`, `ApiRoutePermissionResolver` | `403` si falta permiso de ruta / intent |
 | Web SPA | `FrontendAuthenticatedAccessControl`, `EnforceGhostAccessBootstrap` | Solo login; sin enumerar intents en controllers |
-| Sesión | `BioenlaceSessionPermissions`, `BioenlaceAccessChecker::refreshForIdentity` | Pobla `__bioenlace_user_*` tras login |
-| Permiso intent | `IntentPermissionResolver::resolve()` | Devuelve `intent_id` como clave en `auth_item` |
+| Sesión | `BioenlaceSessionPermissions`, `BioenlaceRbacRevision` | Pobla `__bioenlace_user_*` tras login; revisión global invalida caché tras cambios RBAC |
+| Permiso intent | `IntentPermissionResolver`, `IntentAccessService` | Clave = `intent_id`; listado de atajos y ejecución usan la misma regla |
 | Dominio recurso | `DomainOperationAuthorizer`, políticas en `domain-operation-policies.yaml` | ¿Sobre **este** PES/turno/efector? |
 | Admin catálogo | `PermissionCatalogController` | Intents, integridad, roles por intent |
 | Identidad | `common\models\User`, `AuthController` | Login, contraseña, confirmación e-mail |
@@ -36,6 +36,7 @@ rol → condicion-laboral.editar-propio (type 2) → /api/profesional-efector-se
 | Operaciones de producto | `schemas/intents/{create,read,update,delete}/` + `intent-families.yaml` |
 | Staff métricas / edición (migrado) | Intent con `metric_id` o `edit_surface_id` + executor DataAccess detrás de `open_ui` |
 | Pasos UI dentro de flow | Derivados del intent; `FlowStepAccessService` + header `X-Flow-Intent-Id` |
+| Listado NL / IA / atajos | `IntentAccessService` vía `IntentCatalogService`, `UiActionCatalog`, `ActionMappingService` |
 | Campos editables | `fields` / `field_groups` en YAML del intent; whitelist en servicio de dominio (`IntentSubmitFieldFilter`) |
 
 Los intents YAML **no** declaran campo `permission:`; la clave RBAC es el propio `intent_id`.
@@ -103,7 +104,8 @@ Checklist staging:
 
 ```
 web/common/components/Platform/Core/Permission/
-  BioenlaceAccessChecker.php, IntentManifestIndex.php, IntentMetricIndex.php
+  BioenlaceAccessChecker.php, IntentAccessService.php, BioenlaceRbacRevision.php
+  IntentManifestIndex.php, IntentMetricIndex.php
   IntentRequestContextService.php, IntentSubmitFieldFilter.php
   CatalogPermissionSyncService.php, IntentGrantMigrationService.php
 

@@ -801,6 +801,7 @@
     }
 
     function mountFlowUiDefinition(json, mountEl, fullUrl, flowSubmitRequestOpt, enableFlowChainAutoAdvance, flowDismissOpt) {
+        setFlowStepUiLoadingState(mountEl, false);
         mountEl.innerHTML = '';
         if (json && json.kind === 'ui_definition') {
             const isTerminalFlowStep = isActiveFlowSubmitRequest(flowSubmitRequestOpt);
@@ -829,6 +830,105 @@
         }
     }
 
+    function flowStepUiLoadingHtml(message) {
+        const msg = (message && String(message).trim() !== '') ? String(message).trim() : 'Cargando...';
+        return '<div class="spa-flow-step-loading d-flex align-items-center gap-2 py-3 text-muted" role="status" aria-live="polite">'
+            + '<div class="spinner-border spinner-border-sm" aria-hidden="true"></div>'
+            + '<span class="spa-flow-step-loading-text">' + escapeHtml(msg) + '</span>'
+            + '</div>';
+    }
+
+    function setFlowStepUiLoadingState(mountEl, loading) {
+        if (!mountEl || !mountEl.classList) {
+            return;
+        }
+        mountEl.classList.toggle('spa-flow-step-ui--loading', loading === true);
+    }
+
+    function showFlowStepUiLoading(mountEl, message) {
+        if (!mountEl) {
+            return;
+        }
+        setFlowStepUiLoadingState(mountEl, true);
+        mountEl.innerHTML = flowStepUiLoadingHtml(message);
+    }
+
+    function resolveActiveFlowStepMount(intentId) {
+        const iid = String(intentId || '').trim();
+        if (!iid || !chatMessagesDiv) {
+            return null;
+        }
+        const row = findActiveFlowRow(iid);
+        if (!row) {
+            return null;
+        }
+        let activeIdx = 0;
+        if (currentFlowManifest && typeof currentFlowManifest === 'object') {
+            activeIdx = resolveFlowActiveStepIndex(currentFlowManifest);
+            if (activeIdx < 0) {
+                activeIdx = 0;
+            }
+        }
+        const items = row.querySelectorAll('.spa-flow-step-item');
+        const activeLi = items[activeIdx] || items[0];
+        if (!activeLi) {
+            return null;
+        }
+        let mount = activeLi.querySelector('.spa-flow-step-ui');
+        if (!mount) {
+            const body = activeLi.querySelector('.spa-flow-step-body') || activeLi;
+            mount = document.createElement('div');
+            mount.className = 'spa-flow-step-ui';
+            body.appendChild(mount);
+        }
+        for (let i = activeIdx + 1; i < items.length; i++) {
+            const nextMount = items[i].querySelector('.spa-flow-step-ui');
+            if (nextMount) {
+                setFlowStepUiLoadingState(nextMount, false);
+                nextMount.innerHTML = '';
+            }
+        }
+        return mount;
+    }
+
+    /**
+     * Spinner en `.spa-flow-step-ui` mientras el motor resuelve el paso o se descarga la mini-UI.
+     */
+    function showFlowLoadingForIntent(intentId, message) {
+        const iid = String(intentId || '').trim();
+        if (!iid || !chatMessagesDiv) {
+            return;
+        }
+        const existingMount = resolveActiveFlowStepMount(iid);
+        if (existingMount) {
+            showFlowStepUiLoading(existingMount, message);
+            setTimeout(scrollChatToBottom, 10);
+            return;
+        }
+        const row = document.createElement('div');
+        row.className = 'w-100 mb-3 spa-chat-flow-row spa-chat-flow-row--awaiting-manifest';
+        row.setAttribute('data-flow-intent-id', iid);
+        row.setAttribute('data-flow-activation-seq', String(bioFlowActivationSeq));
+        const inner = document.createElement('div');
+        inner.className = 'spa-chat-flow-turn w-100';
+        const list = document.createElement('ol');
+        list.className = 'spa-flow-steps-list list-unstyled mb-0';
+        const li = document.createElement('li');
+        li.className = 'spa-flow-step-item spa-flow-step-item--active';
+        const body = document.createElement('div');
+        body.className = 'spa-flow-step-body';
+        const mount = document.createElement('div');
+        mount.className = 'spa-flow-step-ui spa-flow-step-ui--loading';
+        mount.innerHTML = flowStepUiLoadingHtml(message);
+        body.appendChild(mount);
+        li.appendChild(body);
+        list.appendChild(li);
+        inner.appendChild(list);
+        row.appendChild(inner);
+        chatMessagesDiv.appendChild(row);
+        setTimeout(scrollChatToBottom, 10);
+    }
+
     function fetchFlowUiDefinition(fullUrl, mountEl, flowSubmitRequestOpt, fetchOpts) {
         fetchOpts = fetchOpts && typeof fetchOpts === 'object' ? fetchOpts : {};
         const enableFlowChainAutoAdvance = fetchOpts.enableFlowChainAutoAdvance === true;
@@ -846,7 +946,7 @@
             setTimeout(scrollChatToBottom, 10);
             return Promise.resolve();
         }
-        mountEl.innerHTML = '<div class="d-flex align-items-center justify-content-center gap-2 py-3 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+        showFlowStepUiLoading(mountEl);
         return fetch(fullUrl, {
             method: 'GET',
             headers: window.BioenlaceApiClient.mergeHeaders({
@@ -882,6 +982,7 @@
             .catch(function (err) {
                 console.error('Error cargando UI JSON (flow):', err);
                 const msg = (err && err.message) ? String(err.message) : 'Error al cargar la UI';
+                setFlowStepUiLoadingState(mountEl, false);
                 mountEl.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(msg) + '</div>';
             })
             .finally(function () {
@@ -1415,10 +1516,19 @@
             chatMessagesDiv.appendChild(row);
             setTimeout(scrollChatToBottom, 10);
         } else {
+            row.classList.remove('spa-chat-flow-row--awaiting-manifest');
             list = row.querySelector('.spa-flow-steps-list');
             if (!list) {
-                return null;
-            }
+                const inner = row.querySelector('.spa-chat-flow-turn') || row;
+                inner.innerHTML = '';
+                list = document.createElement('ol');
+                list.className = 'spa-flow-steps-list list-unstyled mb-0'
+                    + (numberedSteps ? ' spa-flow-steps-list--numbered' : '');
+                inner.appendChild(list);
+                steps.forEach(function (st, idx) {
+                    list.appendChild(createFlowStepListItem(st, idx, activeIdx, passthroughFlow, numberedSteps));
+                });
+            } else {
             list.classList.toggle('spa-flow-steps-list--numbered', numberedSteps);
             const items = list.querySelectorAll('.spa-flow-step-item');
             if (items.length !== steps.length) {
@@ -1448,6 +1558,7 @@
                         }
                     }
                 });
+            }
             }
         }
 
@@ -1965,9 +2076,8 @@
 
                 // Montaje: solo en el paso activo (`.spa-flow-step-ui`).
                 flowSectionInner.innerHTML = '';
+                setFlowStepUiLoadingState(flowSectionInner, false);
                 const mountHost = flowSectionInner;
-                /** Nodo dedicado para `renderDynamicUi` (no sustituir el contenedor del título). */
-                let flowUiMount = null;
 
                 if (tabs.length >= 2) {
                     const tabRow = document.createElement('div');
@@ -1996,7 +2106,7 @@
                                 return;
                             }
                             // Loader genérico (no específico del dominio): mientras esperamos geolocalización.
-                            mountEl.innerHTML = '<div class="d-flex align-items-center gap-2 py-2 text-muted"><div class="spinner-border spinner-border-sm"></div> Cargando...</div>';
+                            showFlowStepUiLoading(mountEl);
                             navigator.geolocation.getCurrentPosition(function (pos) {
                                 const u = new URL(buildUrlForFlowTab(tab));
                                 u.searchParams.set('latitud', String(pos.coords.latitude));
@@ -2037,12 +2147,8 @@
                     return;
                 }
 
-                // No montar en el root del bloque: `renderDynamicUi` reemplaza innerHTML del hijo, no el h4.
-                flowUiMount = document.createElement('div');
-                flowUiMount.className = 'spa-chat-flow-ui w-100 mt-2';
-                flowUiMount.setAttribute('data-spa-flow-ui-mount', '1');
-                mountHost.appendChild(flowUiMount);
-                fetchFlowUiDefinition(fullUrl, flowUiMount, fsr, flowFetchOpts);
+                showFlowStepUiLoading(flowSectionInner);
+                fetchFlowUiDefinition(fullUrl, flowSectionInner, fsr, flowFetchOpts);
                 return;
             }
 
@@ -2122,6 +2228,9 @@
 
         // Deshabilitar botón y mostrar loading
         setLoadingState(true);
+        if (currentIntentId) {
+            showFlowLoadingForIntent(currentIntentId);
+        }
         if (chatEmptyHint) {
             chatEmptyHint.classList.add('d-none');
         }
@@ -2421,7 +2530,7 @@
         const chain = ensureEditSparseChainRoot(mountEl);
         const loader = document.createElement('div');
         loader.className = 'd-flex align-items-center justify-content-center gap-2 py-2 text-muted bio-edit-sparse-loader';
-        loader.innerHTML = '<div class="spinner-border spinner-border-sm"></div> Cargando...';
+        loader.innerHTML = flowStepUiLoadingHtml();
         if (chain) {
             chain.appendChild(loader);
         } else {
@@ -2982,6 +3091,9 @@
                 allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
             } catch (e) { /* ignore */ }
             if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
+            if (currentIntentId) {
+                showFlowLoadingForIntent(currentIntentId);
+            }
             setTimeout(function () {
                 if (queryInput) {
                     queryInput.value = '';

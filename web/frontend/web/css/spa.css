@@ -855,6 +855,19 @@ html:has(.spa-asistente-root) {
     display: none;
 }
 
+.spa-flow-step-ui.spa-flow-step-ui--loading,
+.spa-flow-step-ui:not(:empty) {
+    display: block;
+}
+
+.spa-flow-step-loading {
+    min-height: 2.5rem;
+}
+
+.spa-flow-step-loading-text {
+    font-size: 0.875rem;
+}
+
 .spa-flow-step-ui:not(:empty) {
     margin-top: 0.5rem;
     margin-left: 0;

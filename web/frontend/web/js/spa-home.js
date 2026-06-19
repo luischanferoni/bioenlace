@@ -1130,6 +1130,24 @@
     }
 
     /**
+     * Timeline con badge 1, 2, 3… (flows multi-paso). Excluye `data-access.editar` (un solo paso).
+     *
+     * @param {object|null|undefined} fm
+     * @returns {boolean}
+     */
+    function shouldShowNumberedFlowSteps(fm) {
+        if (!fm || typeof fm !== 'object' || isPassthroughSingleStepFlow(fm)) {
+            return false;
+        }
+        const intentId = fm.intent_id != null ? String(fm.intent_id).trim() : '';
+        if (intentId === 'data-access.editar') {
+            return false;
+        }
+        const steps = Array.isArray(fm.steps) ? fm.steps : [];
+        return steps.length > 1;
+    }
+
+    /**
      * Índice del paso activo en `manifest.steps` (por `active_subintent_id`).
      *
      * @param {object} fm
@@ -1274,7 +1292,7 @@
      * @param {number} activeIdx
      * @returns {HTMLLIElement}
      */
-    function createFlowStepListItem(st, idx, activeIdx, hideStepLabel) {
+    function createFlowStepListItem(st, idx, activeIdx, hideStepLabel, numberedSteps) {
         const li = document.createElement('li');
         li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, activeIdx);
         if (hideStepLabel === true) {
@@ -1298,7 +1316,20 @@
         uiMount.className = 'spa-flow-step-ui';
 
         body.appendChild(uiMount);
-        li.appendChild(body);
+
+        if (numberedSteps === true && hideStepLabel !== true) {
+            const track = document.createElement('div');
+            track.className = 'spa-flow-step-track';
+            const numEl = document.createElement('span');
+            numEl.className = 'spa-flow-step-num';
+            numEl.setAttribute('aria-hidden', 'true');
+            numEl.textContent = String(idx + 1);
+            track.appendChild(numEl);
+            track.appendChild(body);
+            li.appendChild(track);
+        } else {
+            li.appendChild(body);
+        }
         return li;
     }
 
@@ -1342,6 +1373,7 @@
         purgeLegacyFlowPlanWraps();
         const activeIdx = resolveFlowActiveStepIndex(fm);
         const passthroughFlow = isPassthroughSingleStepFlow(fm);
+        const numberedSteps = shouldShowNumberedFlowSteps(fm);
         let row = findActiveFlowRow(flowIntentId);
         let list;
 
@@ -1373,9 +1405,10 @@
             }
 
             list = document.createElement('ol');
-            list.className = 'spa-flow-steps-list list-unstyled mb-0';
+            list.className = 'spa-flow-steps-list list-unstyled mb-0'
+                + (numberedSteps ? ' spa-flow-steps-list--numbered' : '');
             steps.forEach(function (st, idx) {
-                list.appendChild(createFlowStepListItem(st, idx, activeIdx, passthroughFlow));
+                list.appendChild(createFlowStepListItem(st, idx, activeIdx, passthroughFlow, numberedSteps));
             });
             inner.appendChild(list);
             row.appendChild(inner);
@@ -1386,11 +1419,12 @@
             if (!list) {
                 return null;
             }
+            list.classList.toggle('spa-flow-steps-list--numbered', numberedSteps);
             const items = list.querySelectorAll('.spa-flow-step-item');
             if (items.length !== steps.length) {
                 list.innerHTML = '';
                 steps.forEach(function (st, idx) {
-                    list.appendChild(createFlowStepListItem(st, idx, activeIdx, passthroughFlow));
+                    list.appendChild(createFlowStepListItem(st, idx, activeIdx, passthroughFlow, numberedSteps));
                 });
             } else {
                 items.forEach(function (li, idx) {
@@ -1398,6 +1432,10 @@
                         + (passthroughFlow ? ' spa-flow-step-item--passthrough' : '');
                     const st = steps[idx];
                     if (st && !passthroughFlow) {
+                        const numEl = li.querySelector('.spa-flow-step-num');
+                        if (numberedSteps && numEl) {
+                            numEl.textContent = String(idx + 1);
+                        }
                         const textEl = li.querySelector('.spa-flow-step-text');
                         if (textEl) {
                             textEl.textContent = flowStepDisplayText(st, idx);

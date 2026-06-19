@@ -740,6 +740,82 @@ html:has(.spa-asistente-root) {
     list-style: none;
 }
 
+/* Timeline numerado (create / update multi-paso; no data-access.editar) */
+.spa-flow-steps-list--numbered .spa-flow-step-item {
+    position: relative;
+    padding: 0 0 0.65rem 0;
+}
+
+.spa-flow-steps-list--numbered .spa-flow-step-item:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 0.65rem;
+    top: 1.45rem;
+    bottom: 0;
+    width: 2px;
+    background: var(--bio-paper-300);
+    transform: translateX(-50%);
+}
+
+.spa-flow-steps-list--numbered .spa-flow-step-item--done:not(:last-child)::before {
+    background: var(--bioenlace-primary, var(--bs-primary, #54a0ff));
+    opacity: 0.45;
+}
+
+.spa-flow-step-track {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.spa-flow-step-num {
+    flex-shrink: 0;
+    width: 1.3rem;
+    height: 1.3rem;
+    margin-top: 0.1rem;
+    border-radius: 50%;
+    background: var(--bio-paper-300);
+    color: var(--bio-paper-500);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.3rem;
+    text-align: center;
+    transition: background 0.25s ease, color 0.25s ease;
+}
+
+.spa-flow-step-item--active .spa-flow-step-num {
+    background: var(--bioenlace-primary, var(--bs-primary, #54a0ff));
+    color: #fff;
+    box-shadow: 0 0 0 2px rgba(84, 160, 255, 0.2);
+}
+
+.spa-flow-step-item--done .spa-flow-step-num {
+    background: var(--bio-paper-500);
+    color: #fff;
+}
+
+.spa-flow-steps-list--numbered .spa-flow-step-text {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0 0 0.35rem 0;
+}
+
+.spa-flow-steps-list--numbered .spa-flow-step-item--pending .spa-flow-step-text {
+    color: var(--bio-paper-500);
+    font-weight: 500;
+    opacity: 0.8;
+}
+
+.spa-flow-steps-list--numbered .spa-flow-step-item--done .spa-flow-step-text {
+    color: var(--bio-paper-500);
+    font-weight: 500;
+}
+
+.spa-flow-steps-list--numbered .spa-flow-step-item--active .spa-flow-step-text {
+    color: var(--bio-paper-600);
+}
+
 .spa-flow-step-item {
     margin: 0;
     padding: 0;

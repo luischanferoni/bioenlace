@@ -3,7 +3,6 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 use common\components\Platform\Core\Product\ProductMetadataPaths;
-use Symfony\Component\Yaml\Yaml;
 
 /**
  * Rutas y resolución de manifiestos YAML de intents (`metadata/.../assistant/intents/`).
@@ -115,7 +114,7 @@ final class IntentSchemaPaths
 
         self::$index = [];
         foreach (self::discoverYamlFiles() as $path) {
-            $intentId = self::intentIdFromManifestPath($path);
+            $intentId = self::intentIdFromPath($path);
             if ($intentId === '') {
                 continue;
             }
@@ -140,38 +139,6 @@ final class IntentSchemaPaths
 
     public static function intentIdFromPath(string $absolutePath): string
     {
-        return self::stripOrderPrefix(basename($absolutePath, '.yaml'));
-    }
-
-    /**
-     * Prefijo opcional de orden en disco: `01-turnos.foo.yaml` → intent_id `turnos.foo` si el YAML no declara uno.
-     */
-    public static function stripOrderPrefix(string $basenameWithoutExt): string
-    {
-        $name = trim($basenameWithoutExt);
-        if ($name === '') {
-            return '';
-        }
-
-        return (string) preg_replace('/^\d{2,}-/', '', $name);
-    }
-
-    private static function intentIdFromManifestPath(string $absolutePath): string
-    {
-        if (is_file($absolutePath)) {
-            try {
-                $data = Yaml::parseFile($absolutePath);
-                if (is_array($data)) {
-                    $fromYaml = trim((string) ($data['intent_id'] ?? ''));
-                    if ($fromYaml !== '') {
-                        return $fromYaml;
-                    }
-                }
-            } catch (\Throwable $e) {
-                // fallback: nombre de archivo (sin prefijo de orden)
-            }
-        }
-
-        return self::intentIdFromPath($absolutePath);
+        return basename($absolutePath, '.yaml');
     }
 }

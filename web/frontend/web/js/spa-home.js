@@ -2795,6 +2795,48 @@
         return '';
     }
 
+    function resolveUiJsonSubmitErrorMessage(json) {
+        if (!json || typeof json !== 'object') {
+            return 'Error al guardar.';
+        }
+        if (typeof json.message === 'string' && json.message.trim() !== '') {
+            return json.message.trim();
+        }
+        const fromErrors = firstUiErrorMessage(json.errors);
+        if (fromErrors) {
+            return fromErrors;
+        }
+        return 'Error al guardar.';
+    }
+
+    function showUiJsonInlineFormError(container, message) {
+        if (!container || !message) {
+            return;
+        }
+        const fieldsRoot = container.querySelector('.bio-ui-json-fields') || container;
+        let banner = fieldsRoot.querySelector('[data-ui-json-form-error="1"]');
+        if (!banner) {
+            banner = document.createElement('div');
+            banner.className = 'alert alert-danger mb-2';
+            banner.setAttribute('data-ui-json-form-error', '1');
+            fieldsRoot.insertBefore(banner, fieldsRoot.firstChild);
+        }
+        banner.textContent = message;
+        banner.classList.remove('d-none');
+    }
+
+    function clearUiJsonInlineFormError(container) {
+        if (!container) {
+            return;
+        }
+        const fieldsRoot = container.querySelector('.bio-ui-json-fields') || container;
+        const banner = fieldsRoot.querySelector('[data-ui-json-form-error="1"]');
+        if (banner) {
+            banner.classList.add('d-none');
+            banner.textContent = '';
+        }
+    }
+
     function setInlineButtonSpinner(btn, loading) {
         if (!btn) return;
         try {
@@ -3393,6 +3435,7 @@
 
         submitBtn.addEventListener('click', function () {
             if (submitBtn.disabled) return;
+            clearUiJsonInlineFormError(container);
             setInlineButtonSpinner(submitBtn, true);
             submitBtn.disabled = true;
 
@@ -3469,13 +3512,14 @@
                         });
                         return;
                     }
-                    const errMsg = (json && typeof json.message === 'string' && json.message.trim() !== '')
-                        ? json.message.trim()
-                        : 'Error al guardar.';
-                    container.innerHTML = '<div class="alert alert-danger mb-0">' + escapeHtml(errMsg) + '</div>';
+                    showUiJsonInlineFormError(container, resolveUiJsonSubmitErrorMessage(json));
+                    setInlineButtonSpinner(submitBtn, false);
+                    submitBtn.disabled = false;
                 })
-                .catch(() => {
-                    container.innerHTML = '<div class="alert alert-danger mb-0">Error de red al guardar.</div>';
+                .catch(function () {
+                    showUiJsonInlineFormError(container, 'Error de red al guardar.');
+                    setInlineButtonSpinner(submitBtn, false);
+                    submitBtn.disabled = false;
                 });
         });
     }

@@ -57,16 +57,7 @@ final class AgendaConfigUiFlowService
                     'errors' => null,
                 ];
             } catch (\Throwable $e) {
-                $impactParams = array_merge($post, [
-                    'ui_step' => self::STEP_IMPACTO,
-                    'preview_message' => $e->getMessage(),
-                ]);
-                $ui = self::renderImpactoStep($impactParams);
-                $ui['success'] = false;
-                $ui['errors'] = ['_error' => [$e->getMessage()]];
-                $ui['values'] = $post;
-
-                return $ui;
+                return self::renderImpactoStepWithSubmitError($post, $e);
             }
         }
 
@@ -90,13 +81,17 @@ final class AgendaConfigUiFlowService
             $post['forzar_sin_confirmacion'] = '1';
         }
 
-        return [
-            'success' => true,
-            'kind' => 'ui_submit_result',
-            'action_id' => 'profesional-agenda.configurar-agenda',
-            'data' => ProfesionalEfectorServicioAgendaUiService::submitAgendaConfig($idEfector, $post),
-            'errors' => null,
-        ];
+        try {
+            return [
+                'success' => true,
+                'kind' => 'ui_submit_result',
+                'action_id' => 'profesional-agenda.configurar-agenda',
+                'data' => ProfesionalEfectorServicioAgendaUiService::submitAgendaConfig($idEfector, $post),
+                'errors' => null,
+            ];
+        } catch (\Throwable $e) {
+            return self::renderDatosStepWithSubmitError($post, $e);
+        }
     }
 
     /**
@@ -117,6 +112,39 @@ final class AgendaConfigUiFlowService
         ];
 
         return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     * @return array<string, mixed>
+     */
+    private static function renderDatosStepWithSubmitError(array $post, \Throwable $e): array
+    {
+        $params = array_merge($post, ['ui_step' => self::STEP_DATOS]);
+        $ui = self::renderDatosStep($params);
+        $ui['success'] = false;
+        $ui['errors'] = ['_error' => [$e->getMessage()]];
+        $ui['values'] = $post;
+
+        return $ui;
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     * @return array<string, mixed>
+     */
+    private static function renderImpactoStepWithSubmitError(array $post, \Throwable $e): array
+    {
+        $impactParams = array_merge($post, [
+            'ui_step' => self::STEP_IMPACTO,
+            'preview_message' => $e->getMessage(),
+        ]);
+        $ui = self::renderImpactoStep($impactParams);
+        $ui['success'] = false;
+        $ui['errors'] = ['_error' => [$e->getMessage()]];
+        $ui['values'] = $post;
+
+        return $ui;
     }
 
     /**

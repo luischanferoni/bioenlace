@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Core\Permission;
 
+use common\components\Platform\Core\Db\BioenlaceDb;
 use Yii;
 use yii\web\IdentityInterface;
 use yii\rbac\Item;
@@ -34,7 +35,7 @@ final class BioenlaceSessionPermissions
         }
 
         $userId = (int) $identity->getId();
-        $built = self::buildForUserId($userId);
+        $built = BioenlaceDb::withReconnectOnLost(static fn (): array => self::buildForUserId($userId));
         $session->set(self::SESSION_PREFIX_ROUTES, $built['routes']);
         $session->set(self::SESSION_PREFIX_ROLES, $built['roles']);
         $session->set(self::SESSION_PREFIX_PERMISSIONS, $built['permissions']);

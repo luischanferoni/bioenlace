@@ -47,15 +47,21 @@ final class PermissionRolesAssignmentService
         }
 
         $current = array_flip($this->rolesWithDirectPermissionOnly($permissionKey));
+        $mutated = false;
         foreach (array_keys($current) as $role) {
             if (!isset($desired[$role])) {
-                $assignment->revoke($role, $permissionKey);
+                $assignment->revoke($role, $permissionKey, false);
+                $mutated = true;
             }
         }
         foreach (array_keys($desired) as $role) {
             if (!isset($current[$role])) {
-                $assignment->grant($role, $permissionKey);
+                $assignment->grant($role, $permissionKey, false);
+                $mutated = true;
             }
+        }
+        if ($mutated) {
+            BioenlaceRbacRevision::bump();
         }
     }
 

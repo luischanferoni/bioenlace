@@ -100,21 +100,28 @@ final class RolePermissionAssignmentService
         }
 
         $current = $this->assignedPermissionKeysForRole($roleName);
+        $mutated = false;
 
         foreach (array_keys($current) as $key) {
             if (!isset($desired[$key])) {
-                $this->revoke($roleName, $key);
+                $this->revoke($roleName, $key, false);
+                $mutated = true;
             }
         }
 
         foreach (array_keys($desired) as $key) {
             if (!isset($current[$key])) {
-                $this->grant($roleName, $key);
+                $this->grant($roleName, $key, false);
+                $mutated = true;
             }
+        }
+
+        if ($mutated) {
+            $this->afterMutation();
         }
     }
 
-    public function grant(string $roleName, string $permissionKey): void
+    public function grant(string $roleName, string $permissionKey, bool $notifyRevision = true): void
     {
         if (!$this->permissionExists($permissionKey)) {
             throw new \InvalidArgumentException('Permiso no registrado en auth_item: ' . $permissionKey);
@@ -130,17 +137,21 @@ final class RolePermissionAssignmentService
             'child' => $permissionKey,
         ])->execute();
 
-        $this->afterMutation();
+        if ($notifyRevision) {
+            $this->afterMutation();
+        }
     }
 
-    public function revoke(string $roleName, string $permissionKey): void
+    public function revoke(string $roleName, string $permissionKey, bool $notifyRevision = true): void
     {
         Yii::$app->db->createCommand()->delete(Yii::$app->authManager->itemChildTable, [
             'parent' => $roleName,
             'child' => $permissionKey,
         ])->execute();
 
-        $this->afterMutation();
+        if ($notifyRevision) {
+            $this->afterMutation();
+        }
     }
 
     public function permissionExistsInAuthItem(string $key): bool

@@ -35,12 +35,10 @@ class BioenlaceApiAccessControl extends ActionFilter
             return true;
         }
 
-        $uniqueId = $action->uniqueId;
-        $parts = explode('/', $uniqueId);
-        if (!empty($parts) && $parts[0] === 'v1') {
-            array_shift($parts);
-        }
-        $route = '/api/' . implode('/', $parts);
+        $route = ApiRoutePermissionResolver::resolveCheckedRouteForAction(
+            (string) Yii::$app->request->pathInfo,
+            (string) $action->uniqueId
+        );
 
         if (Yii::$app->user->isGuest) {
             $this->denyAccessJson();

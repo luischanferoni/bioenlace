@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Core\Permission;
 
+use common\components\Platform\Core\Db\BioenlaceDb;
 use Yii;
 use yii\web\IdentityInterface;
 
@@ -17,6 +18,7 @@ final class BioenlaceAccessChecker
 
     public static function ensureUpToDate(): void
     {
+        BioenlaceDb::ensureConnection();
         BioenlaceSessionPermissions::ensureUpToDate();
     }
 

@@ -100,4 +100,32 @@ class IntentManifestMetadataTest extends Unit
             "Errores integridad piloto condicion-laboral:\n" . implode("\n", $familyErrors)
         );
     }
+
+    public function testFormatDisplayActionNameAddsCrudPrefixForEdit(): void
+    {
+        $label = IntentManifestMetadata::formatDisplayActionName('Mi condición laboral', 'edit');
+        $this->assertSame('Editar mi condición laboral', $label);
+    }
+
+    public function testFormatDisplayActionNameSkipsDuplicateVerb(): void
+    {
+        $label = IntentManifestMetadata::formatDisplayActionName('Ver agenda del día', 'read');
+        $this->assertSame('Ver agenda del día', $label);
+    }
+
+    public function testResolveCrudToneMapsOperations(): void
+    {
+        $this->assertSame('create', IntentManifestMetadata::resolveCrudTone('create'));
+        $this->assertSame('read', IntentManifestMetadata::resolveCrudTone('list'));
+        $this->assertSame('update', IntentManifestMetadata::resolveCrudTone('edit'));
+        $this->assertSame('delete', IntentManifestMetadata::resolveCrudTone('delete'));
+    }
+
+    public function testIntentManifestIndexFormatsDisplayActionName(): void
+    {
+        $meta = IntentManifestIndex::get('condicion-laboral.editar-propio');
+        $this->assertNotNull($meta);
+        $this->assertSame('Editar mi condición laboral', $meta['action_name']);
+        $this->assertSame('update', $meta['crud_tone']);
+    }
 }

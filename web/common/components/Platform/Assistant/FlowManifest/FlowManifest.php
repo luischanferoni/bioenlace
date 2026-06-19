@@ -5,6 +5,8 @@ namespace common\components\Platform\Assistant\FlowManifest;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
+use common\components\Platform\Core\Permission\IntentManifestIndex;
+use common\components\Platform\Core\Permission\IntentManifestMetadata;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -28,10 +30,8 @@ final class FlowManifest
             return null;
         }
         $rawYaml = self::loadIntentYaml($intentId);
-        $actionName = '';
-        if (is_array($rawYaml) && isset($rawYaml['action_name'])) {
-            $actionName = AssistantDraftNormalizer::scalarString($rawYaml['action_name']);
-        }
+        $actionName = self::displayActionNameForIntent($intentId, $rawYaml);
+        $flowMeta = self::flowPresentationMetaForIntent($intentId, $rawYaml);
 
         $uiMeta = isset($root['ui_meta']) && is_array($root['ui_meta']) ? $root['ui_meta'] : [];
         $flow = isset($uiMeta['flow']) && is_array($uiMeta['flow']) ? $uiMeta['flow'] : [];
@@ -68,6 +68,8 @@ final class FlowManifest
             'schema_version' => AssistantDraftNormalizer::scalarString($uiMeta['schema_version'] ?? '', '1'),
             'intent_id' => AssistantDraftNormalizer::scalarString($flow['intent_id'] ?? '', $intentId),
             'action_name' => $actionName,
+            'operation' => $flowMeta['operation'],
+            'crud_tone' => $flowMeta['crud_tone'],
             'draft_keys' => isset($flow['draft_keys']) && is_array($flow['draft_keys']) ? $flow['draft_keys'] : [],
             'entry_subintent_id' => AssistantDraftNormalizer::scalarString($flow['entry_subintent_id'] ?? ''),
             'steps' => $stepsCompact,
@@ -90,7 +92,16 @@ final class FlowManifest
         }
 
         $subintentId = trim($activeSubintentId) !== '' ? trim($activeSubintentId) : 'open';
-        $label = DataAccessCatalogIntentSupport::displayLabelForIntent($intentId);
+        $operation = match ($intentId) {
+            'data-access.info' => 'info',
+            'data-access.listar' => 'list',
+            'data-access.editar' => 'edit',
+            default => null,
+        };
+        $label = IntentManifestMetadata::formatDisplayActionName(
+            DataAccessCatalogIntentSupport::displayLabelForIntent($intentId),
+            $operation
+        );
         $text = $label !== '' ? $label : 'Abrir pantalla';
 
         $actionId = AssistantDraftNormalizer::scalarString($openUiDef['action_id'] ?? '');
@@ -127,6 +138,8 @@ final class FlowManifest
             'schema_version' => '1',
             'intent_id' => $intentId,
             'action_name' => $label,
+            'operation' => $operation,
+            'crud_tone' => IntentManifestMetadata::resolveCrudTone($operation),
             'draft_keys' => [],
             'entry_subintent_id' => 'open',
             'steps' => [$stepCompact],
@@ -405,6 +418,51 @@ final class FlowManifest
         }
 
         return $out;
+    }
+
+    /**
+     * @param array<string, mixed>|null $rawYaml
+     */
+    private static function displayActionNameForIntent(string $intentId, ?array $rawYaml): string
+    {
+        $indexed = IntentManifestIndex::get($intentId);
+        if ($indexed !== null && trim((string) ($indexed['action_name'] ?? '')) !== '') {
+            return trim((string) $indexed['action_name']);
+        }
+
+        $base = '';
+        if (is_array($rawYaml) && isset($rawYaml['action_name'])) {
+            $base = AssistantDraftNormalizer::scalarString($rawYaml['action_name']);
+        }
+        $flowMeta = self::flowPresentationMetaForIntent($intentId, $rawYaml);
+
+        return IntentManifestMetadata::formatDisplayActionName($base, $flowMeta['operation']);
+    }
+
+    /**
+     * @param array<string, mixed>|null $rawYaml
+     * @return array{operation: ?string, crud_tone: string}
+     */
+    private static function flowPresentationMetaForIntent(string $intentId, ?array $rawYaml): array
+    {
+        $indexed = IntentManifestIndex::get($intentId);
+        if ($indexed !== null) {
+            return [
+                'operation' => isset($indexed['operation']) ? (string) $indexed['operation'] : null,
+                'crud_tone' => trim((string) ($indexed['crud_tone'] ?? '')),
+            ];
+        }
+
+        $path = IntentSchemaPaths::resolveFileForIntentId($intentId);
+        $category = $path !== null ? IntentSchemaPaths::categoryFromPath($path) : null;
+        $operation = is_array($rawYaml)
+            ? IntentManifestMetadata::resolveOperation($category, $rawYaml)
+            : null;
+
+        return [
+            'operation' => $operation,
+            'crud_tone' => IntentManifestMetadata::resolveCrudTone($operation),
+        ];
     }
 
     /**

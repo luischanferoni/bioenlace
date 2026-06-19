@@ -629,6 +629,22 @@ html:has(.spa-asistente-root) {
     box-sizing: border-box;
 }
 
+.spa-flow-chat-title--create {
+    color: var(--bs-primary, #0d6efd);
+}
+
+.spa-flow-chat-title--read {
+    color: var(--bs-dark, #212529);
+}
+
+.spa-flow-chat-title--update {
+    color: var(--bs-warning, #ffc107);
+}
+
+.spa-flow-chat-title--delete {
+    color: var(--bs-danger, #dc3545);
+}
+
 .spa-flow-chat-rule {
     display: block;
     width: 100%;
@@ -638,6 +654,22 @@ html:has(.spa-asistente-root) {
     border: none;
     border-bottom: 2px solid var(--bs-primary, #0d6efd);
     box-sizing: border-box;
+}
+
+.spa-flow-chat-rule--create {
+    border-bottom-color: var(--bs-primary, #0d6efd);
+}
+
+.spa-flow-chat-rule--read {
+    border-bottom-color: var(--bs-dark, #212529);
+}
+
+.spa-flow-chat-rule--update {
+    border-bottom-color: var(--bs-warning, #ffc107);
+}
+
+.spa-flow-chat-rule--delete {
+    border-bottom-color: var(--bs-danger, #dc3545);
 }
 
 /* Flow completado: resumen único en lugar de mini-UIs */

@@ -508,14 +508,88 @@
         return ['Listo.'];
     }
 
-    function buildFlowChatHeaderHtml(actionTitle) {
+    const FLOW_CRUD_TONE_CLASSES = ['spa-flow-chat--create', 'spa-flow-chat--read', 'spa-flow-chat--update', 'spa-flow-chat--delete'];
+    const FLOW_CRUD_TITLE_TONE_CLASSES = [
+        'spa-flow-chat-title--create',
+        'spa-flow-chat-title--read',
+        'spa-flow-chat-title--update',
+        'spa-flow-chat-title--delete'
+    ];
+    const FLOW_CRUD_RULE_TONE_CLASSES = [
+        'spa-flow-chat-rule--create',
+        'spa-flow-chat-rule--read',
+        'spa-flow-chat-rule--update',
+        'spa-flow-chat-rule--delete'
+    ];
+
+    function flowCrudToneFromManifest(fm) {
+        if (!fm || typeof fm !== 'object') {
+            return '';
+        }
+        const tone = fm.crud_tone != null ? String(fm.crud_tone).trim().toLowerCase() : '';
+        if (tone === 'create' || tone === 'read' || tone === 'update' || tone === 'delete') {
+            return tone;
+        }
+        const op = fm.operation != null ? String(fm.operation).trim().toLowerCase() : '';
+        if (op === 'create') {
+            return 'create';
+        }
+        if (op === 'read' || op === 'list' || op === 'info') {
+            return 'read';
+        }
+        if (op === 'edit') {
+            return 'update';
+        }
+        if (op === 'delete') {
+            return 'delete';
+        }
+        return '';
+    }
+
+    function applyFlowChatCrudTone(header, fm) {
+        if (!header) {
+            return;
+        }
+        FLOW_CRUD_TONE_CLASSES.forEach(function (cls) {
+            header.classList.remove(cls);
+        });
+        const title = header.querySelector('.spa-flow-chat-title');
+        const rule = header.querySelector('.spa-flow-chat-rule');
+        if (title) {
+            FLOW_CRUD_TITLE_TONE_CLASSES.forEach(function (cls) {
+                title.classList.remove(cls);
+            });
+        }
+        if (rule) {
+            FLOW_CRUD_RULE_TONE_CLASSES.forEach(function (cls) {
+                rule.classList.remove(cls);
+            });
+        }
+        const tone = flowCrudToneFromManifest(fm);
+        if (!tone) {
+            return;
+        }
+        header.classList.add('spa-flow-chat--' + tone);
+        if (title) {
+            title.classList.add('spa-flow-chat-title--' + tone);
+        }
+        if (rule) {
+            rule.classList.add('spa-flow-chat-rule--' + tone);
+        }
+    }
+
+    function buildFlowChatHeaderHtml(actionTitle, fm) {
         const titleStr = typeof actionTitle === 'string' ? actionTitle.trim() : '';
         if (titleStr === '') {
             return '';
         }
-        return '<div class="spa-flow-chat-header">'
-            + '<h3 class="spa-flow-chat-title">' + escapeHtml(titleStr) + '</h3>'
-            + '<div class="spa-flow-chat-rule" aria-hidden="true"></div>'
+        const tone = flowCrudToneFromManifest(fm);
+        const titleClass = 'spa-flow-chat-title' + (tone ? ' spa-flow-chat-title--' + tone : '');
+        const ruleClass = 'spa-flow-chat-rule' + (tone ? ' spa-flow-chat-rule--' + tone : '');
+        const headerClass = 'spa-flow-chat-header' + (tone ? ' spa-flow-chat--' + tone : '');
+        return '<div class="' + headerClass + '">'
+            + '<h3 class="' + titleClass + '">' + escapeHtml(titleStr) + '</h3>'
+            + '<div class="' + ruleClass + '" aria-hidden="true"></div>'
             + '</div>';
     }
 
@@ -559,6 +633,7 @@
             header.insertBefore(hFlow, header.firstChild);
         }
         hFlow.textContent = titleStr;
+        applyFlowChatCrudTone(header, fm);
     }
 
     function buildFlowSubmitSummaryHtml(data, intentId, flowSnapshotOpt) {
@@ -606,7 +681,7 @@
                 if (existingHeader) {
                     headerHtml = existingHeader.outerHTML;
                 } else {
-                    headerHtml = buildFlowChatHeaderHtml(actionTitle);
+                    headerHtml = buildFlowChatHeaderHtml(actionTitle, currentFlowManifest);
                 }
                 inner.innerHTML = headerHtml + summaryHtml;
                 var summaryEl = inner.querySelector('.spa-flow-completed-summary');

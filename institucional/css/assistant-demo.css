@@ -258,8 +258,13 @@
     line-height: 1.3;
     text-align: center;
     margin: 0 0 0.25rem 0;
-    color: var(--bioenlace-primary);
+    color: var(--bs-primary, var(--bioenlace-primary));
 }
+
+.spa-flow-chat-title--create { color: var(--bs-primary, var(--bioenlace-primary)); }
+.spa-flow-chat-title--read { color: var(--bs-dark, #212529); }
+.spa-flow-chat-title--update { color: var(--bs-warning, #ffc107); }
+.spa-flow-chat-title--delete { color: var(--bs-danger, #dc3545); }
 
 .spa-flow-chat-rule {
     display: block;
@@ -267,8 +272,13 @@
     height: 0;
     margin: 0 0 0.45rem 0;
     border: none;
-    border-bottom: 2px solid var(--bioenlace-primary);
+    border-bottom: 2px solid var(--bs-primary, var(--bioenlace-primary));
 }
+
+.spa-flow-chat-rule--create { border-bottom-color: var(--bs-primary, var(--bioenlace-primary)); }
+.spa-flow-chat-rule--read { border-bottom-color: var(--bs-dark, #212529); }
+.spa-flow-chat-rule--update { border-bottom-color: var(--bs-warning, #ffc107); }
+.spa-flow-chat-rule--delete { border-bottom-color: var(--bs-danger, #dc3545); }
 
 .spa-chat-flow-ui {
     opacity: 0;

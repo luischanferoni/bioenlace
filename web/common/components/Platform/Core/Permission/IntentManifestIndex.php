@@ -117,6 +117,7 @@ final class IntentManifestIndex
             $openUiSteps = self::extractOpenUiSteps($data);
             $flowSubmit = is_array($data['flow_submit'] ?? null) ? $data['flow_submit'] : null;
             $operation = IntentManifestMetadata::resolveOperation($category, $data);
+            $actionNameBase = trim((string) ($data['action_name'] ?? ''));
 
             self::$byIntentId[$intentId] = [
                 'intent_id' => $intentId,
@@ -124,8 +125,10 @@ final class IntentManifestIndex
                 'category' => $category,
                 'permission' => $permission,
                 'rbac_route' => $rbacRoute,
-                'action_name' => trim((string) ($data['action_name'] ?? '')),
+                'action_name' => IntentManifestMetadata::formatDisplayActionName($actionNameBase, $operation),
+                'action_name_base' => $actionNameBase,
                 'operation' => $operation,
+                'crud_tone' => IntentManifestMetadata::resolveCrudTone($operation),
                 'intent_family' => trim((string) ($data['intent_family'] ?? '')),
                 'domain_operation' => trim((string) ($data['domain_operation'] ?? '')),
                 'metric_id' => trim((string) ($data['metric_id'] ?? '')),

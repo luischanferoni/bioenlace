@@ -6,7 +6,7 @@ intent_family: profesional-identidad.editar
 domain_operation: DataAccess.edit
 edit_surface_id: ProfesionalEfectorServicio
 
-action_name: "Datos de un profesional"
+action_name: "Editar datos de un profesional"
 description: "Modificar nombre y apellido de un profesional del centro."
 rbac_route: "/api/editar"
 

@@ -6,6 +6,7 @@ use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Assistant\UiActions\ActionMappingService;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Core\Permission\IntentManifestMetadata;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\IntentPermissionResolver;
 use common\components\Platform\Ui\ApiV1HttpRoute;
@@ -104,10 +105,12 @@ final class YamlIntentCatalogService
             $category = IntentSchemaPaths::categoryFromPath($path);
             $permission = IntentPermissionResolver::resolve($intentId, $data);
 
-            $actionName = AssistantDraftNormalizer::scalarString($data['action_name'] ?? '');
-            if ($actionName === '') {
-                $actionName = $intentId;
+            $actionNameBase = AssistantDraftNormalizer::scalarString($data['action_name'] ?? '');
+            if ($actionNameBase === '') {
+                $actionNameBase = $intentId;
             }
+            $operation = IntentManifestMetadata::resolveOperation($category, $data);
+            $actionName = IntentManifestMetadata::formatDisplayActionName($actionNameBase, $operation);
             $desc = AssistantDraftNormalizer::scalarString($data['description'] ?? '');
             $rbacRoute = AssistantDraftNormalizer::scalarString($data['rbac_route'] ?? '');
             if ($rbacRoute !== '') {

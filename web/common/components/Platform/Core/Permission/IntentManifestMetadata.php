@@ -48,9 +48,76 @@ final class IntentManifestMetadata
             IntentSchemaPaths::CATEGORY_CREATE => 'create',
             IntentSchemaPaths::CATEGORY_READ => 'read',
             IntentSchemaPaths::CATEGORY_UPDATE => 'edit',
-            IntentSchemaPaths::CATEGORY_DELETE => null,
+            IntentSchemaPaths::CATEGORY_DELETE => 'delete',
             default => null,
         };
+    }
+
+    /**
+     * Tono visual CRUD para clientes web/móvil: create | read | update | delete.
+     */
+    public static function resolveCrudTone(?string $operation): string
+    {
+        return match (trim((string) $operation)) {
+            'create' => 'create',
+            'read', 'list', 'info' => 'read',
+            'edit' => 'update',
+            'delete' => 'delete',
+            default => '',
+        };
+    }
+
+    /**
+     * Prefijo de acción CRUD en español para `action_name` mostrado al usuario.
+     */
+    public static function crudPrefixForOperation(?string $operation): string
+    {
+        return match (trim((string) $operation)) {
+            'create' => 'Crear',
+            'read', 'list', 'info' => 'Ver',
+            'edit' => 'Editar',
+            'delete' => 'Eliminar',
+            default => '',
+        };
+    }
+
+    /**
+     * Arma el título visible del intent: prefijo CRUD + etiqueta base del YAML (sin duplicar verbos).
+     */
+    public static function formatDisplayActionName(string $actionName, ?string $operation): string
+    {
+        $label = trim($actionName);
+        if ($label === '') {
+            return '';
+        }
+
+        $prefix = self::crudPrefixForOperation($operation);
+        if ($prefix === '') {
+            return $label;
+        }
+
+        $lower = mb_strtolower($label, 'UTF-8');
+        $verbsByOperation = [
+            'create' => ['crear', 'cargar', 'reservar', 'alta', 'ingreso', 'designar', 'vincular', 'enviar', 'registrar', 'agregar', 'solicitar'],
+            'read' => ['ver', 'consultar', 'listar', 'listado', 'mapa', 'indicadores', 'abm'],
+            'list' => ['ver', 'consultar', 'listar', 'listado', 'mapa', 'indicadores', 'abm'],
+            'info' => ['ver', 'consultar', 'listar', 'listado', 'mapa', 'indicadores', 'abm'],
+            'edit' => ['editar', 'configurar', 'modificar', 'cambiar', 'reubicar', 'confirmar', 'marcar', 'resolver', 'actualizar'],
+            'delete' => ['eliminar', 'cancelar', 'baja'],
+        ];
+        $operationKey = trim((string) $operation);
+        foreach ($verbsByOperation[$operationKey] ?? [] as $verb) {
+            if ($lower === $verb || str_starts_with($lower, $verb . ' ')) {
+                return $label;
+            }
+        }
+
+        $rest = $label;
+        if (preg_match('/^\p{Lu}/u', $rest) === 1) {
+            $rest = mb_strtolower(mb_substr($rest, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($rest, 1, null, 'UTF-8');
+        }
+
+        return $prefix . ' ' . $rest;
     }
 
     /**

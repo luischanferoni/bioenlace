@@ -34,7 +34,7 @@ class m260618_160000_api_preview_impacto_licencia_rbac extends Migration
 
         $now = time();
         foreach (self::INHERIT as $route => $parentRoute) {
-            $this->ensureRoute($authItem, $route, $now);
+            $this->ensureRoute($authItem, $route, $parentRoute, $now);
             $this->inheritFrom($childTable, $parentRoute, $route);
         }
     }
@@ -57,7 +57,7 @@ class m260618_160000_api_preview_impacto_licencia_rbac extends Migration
         }
     }
 
-    private function ensureRoute(string $authItem, string $name, int $now): void
+    private function ensureRoute(string $authItem, string $name, string $parentRoute, int $now): void
     {
         if ((new Query())->from($authItem)->where(['name' => $name])->exists($this->db)) {
             return;
@@ -74,10 +74,38 @@ class m260618_160000_api_preview_impacto_licencia_rbac extends Migration
         ];
 
         if ($this->columnExists($authItem, 'group_code')) {
-            $row['group_code'] = 'recursos_humanos';
+            $row['group_code'] = $this->resolveGroupCode($authItem, $parentRoute);
         }
 
         $this->db->createCommand()->insert($authItem, $row)->execute();
+    }
+
+    private function resolveGroupCode(string $authItem, string $parentRoute): ?string
+    {
+        if ($parentRoute === '') {
+            return null;
+        }
+
+        $parentGroup = (new Query())
+            ->select('group_code')
+            ->from($authItem)
+            ->where(['name' => $parentRoute])
+            ->scalar($this->db);
+
+        if (!is_string($parentGroup) || $parentGroup === '') {
+            return null;
+        }
+
+        $groupTable = $this->db->schema->getRawTableName('{{%auth_item_group}}');
+        if ($this->db->schema->getTableSchema($groupTable, true) === null) {
+            return null;
+        }
+
+        if (!(new Query())->from($groupTable)->where(['code' => $parentGroup])->exists($this->db)) {
+            return null;
+        }
+
+        return $parentGroup;
     }
 
     private function inheritFrom(string $childTable, string $parentRoute, string $newRoute): void

@@ -845,15 +845,50 @@
         mountEl.classList.toggle('spa-flow-step-ui--loading', loading === true);
     }
 
-    function showFlowStepUiLoading(mountEl, message) {
-        if (!mountEl) {
-            return;
+    function ensureFlowStepUiMount(stepLi) {
+        if (!stepLi) {
+            return null;
         }
-        setFlowStepUiLoadingState(mountEl, true);
-        mountEl.innerHTML = flowStepUiLoadingHtml(message);
+        let mount = stepLi.querySelector('.spa-flow-step-ui');
+        if (!mount) {
+            const body = stepLi.querySelector('.spa-flow-step-body') || stepLi;
+            mount = document.createElement('div');
+            mount.className = 'spa-flow-step-ui';
+            body.appendChild(mount);
+        }
+        return mount;
     }
 
-    function resolveActiveFlowStepMount(intentId) {
+    function applyOptimisticFlowStepStates(flowRow, nextActiveIdx) {
+        if (!flowRow || nextActiveIdx < 0) {
+            return;
+        }
+        const passthroughSuffix = flowRow.classList.contains('spa-chat-flow-row--passthrough')
+            ? ' spa-flow-step-item--passthrough'
+            : '';
+        const items = flowRow.querySelectorAll('.spa-flow-step-item');
+        items.forEach(function (li, idx) {
+            li.className = 'spa-flow-step-item ' + flowStepItemStateClass(idx, nextActiveIdx) + passthroughSuffix;
+        });
+    }
+
+    function resolveFlowStepMountAtIndex(flowRow, stepIdx) {
+        if (!flowRow || stepIdx < 0) {
+            return null;
+        }
+        const items = flowRow.querySelectorAll('.spa-flow-step-item');
+        const stepLi = items[stepIdx];
+        return ensureFlowStepUiMount(stepLi);
+    }
+
+    /**
+     * Mount del paso que se está cargando al avanzar (siguiente paso si existe; si no, el activo).
+     *
+     * @param {string} intentId
+     * @param {number} [fromStepIdx] índice del paso desde el que se avanza (p. ej. rebind en lista)
+     * @returns {HTMLElement|null}
+     */
+    function resolveFlowAdvanceLoadingMount(intentId, fromStepIdx) {
         const iid = String(intentId || '').trim();
         if (!iid || !chatMessagesDiv) {
             return null;
@@ -862,44 +897,44 @@
         if (!row) {
             return null;
         }
-        let activeIdx = 0;
-        if (currentFlowManifest && typeof currentFlowManifest === 'object') {
-            activeIdx = resolveFlowActiveStepIndex(currentFlowManifest);
-            if (activeIdx < 0) {
-                activeIdx = 0;
-            }
+        const steps = currentFlowManifest && Array.isArray(currentFlowManifest.steps)
+            ? currentFlowManifest.steps
+            : [];
+        let baseIdx = typeof fromStepIdx === 'number' && fromStepIdx >= 0
+            ? fromStepIdx
+            : resolveFlowActiveStepIndex(currentFlowManifest);
+        if (baseIdx < 0) {
+            baseIdx = 0;
         }
-        const items = row.querySelectorAll('.spa-flow-step-item');
-        const activeLi = items[activeIdx] || items[0];
-        if (!activeLi) {
-            return null;
+        const nextIdx = baseIdx + 1;
+        if (steps.length > 1 && nextIdx < steps.length) {
+            applyOptimisticFlowStepStates(row, nextIdx);
+            return resolveFlowStepMountAtIndex(row, nextIdx);
         }
-        let mount = activeLi.querySelector('.spa-flow-step-ui');
-        if (!mount) {
-            const body = activeLi.querySelector('.spa-flow-step-body') || activeLi;
-            mount = document.createElement('div');
-            mount.className = 'spa-flow-step-ui';
-            body.appendChild(mount);
+        return resolveFlowStepMountAtIndex(row, baseIdx);
+    }
+
+    function showFlowStepUiLoading(mountEl, message) {
+        if (!mountEl) {
+            return;
         }
-        for (let i = activeIdx + 1; i < items.length; i++) {
-            const nextMount = items[i].querySelector('.spa-flow-step-ui');
-            if (nextMount) {
-                setFlowStepUiLoadingState(nextMount, false);
-                nextMount.innerHTML = '';
-            }
-        }
-        return mount;
+        setFlowStepUiLoadingState(mountEl, true);
+        mountEl.innerHTML = flowStepUiLoadingHtml(message);
     }
 
     /**
      * Spinner en `.spa-flow-step-ui` mientras el motor resuelve el paso o se descarga la mini-UI.
+     *
+     * @param {string} intentId
+     * @param {string} [message]
+     * @param {number} [fromStepIdx] paso desde el que se avanza (lista / rebind)
      */
-    function showFlowLoadingForIntent(intentId, message) {
+    function showFlowLoadingForIntent(intentId, message, fromStepIdx) {
         const iid = String(intentId || '').trim();
         if (!iid || !chatMessagesDiv) {
             return;
         }
-        const existingMount = resolveActiveFlowStepMount(iid);
+        const existingMount = resolveFlowAdvanceLoadingMount(iid, fromStepIdx);
         if (existingMount) {
             showFlowStepUiLoading(existingMount, message);
             setTimeout(scrollChatToBottom, 10);
@@ -3092,7 +3127,8 @@
             } catch (e) { /* ignore */ }
             if (confirmBtn) markInlineButtonConfirmed(confirmBtn);
             if (currentIntentId) {
-                showFlowLoadingForIntent(currentIntentId);
+                const loadingFromIdx = pickedStepIdx >= 0 ? pickedStepIdx : undefined;
+                showFlowLoadingForIntent(currentIntentId, undefined, loadingFromIdx);
             }
             setTimeout(function () {
                 if (queryInput) {

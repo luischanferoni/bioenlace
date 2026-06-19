@@ -561,6 +561,7 @@
 
     const FLOW_COLLAPSE_FADE_MS = 620;
     const FLOW_SUMMARY_ENTER_MS = 520;
+    const FLOW_SUBMIT_BUTTON_LABEL = 'Confirmar y Enviar';
 
     /** Tras submit exitoso: anima salida de mini-UIs y reemplaza por un resumen con los datos. */
     function collapseCompletedFlowActivation(activationSeq, data, actionTitle, intentIdOpt, flowSnapshotOpt) {
@@ -650,7 +651,7 @@
     }
 
     /**
-     * Render del botón "Confirmar y enviar" del último paso del flow (integrado al `open_ui` terminal).
+     * Render del botón de cierre del último paso del flow (integrado al `open_ui` terminal).
      * Resuelve `body_template` con el `draft` global al apretar; si faltan campos, muestra error inline.
      * @param {HTMLElement} hostEl contenedor (la mini-UI del paso o el bloque del flow)
      * @param {{ route: string, method?: string, action_id?: string, body_template?: object }} fs `flow_submit` del payload
@@ -722,7 +723,7 @@
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn btn-success';
-        btn.textContent = 'Confirmar y enviar';
+        btn.textContent = FLOW_SUBMIT_BUTTON_LABEL;
         var errBox = document.createElement('div');
         errBox.className = 'small text-danger mt-2 d-none';
         wrap.appendChild(btn);
@@ -3032,7 +3033,7 @@
         const effectiveRequiresConfirmation = requiresConfirmation && options.isTerminalFlowStep !== true;
         if (effectiveRequiresConfirmation) {
             html += '<div class="spa-flow-submit-inline">';
-            html += '<button type="button" class="btn btn-success" data-embed-confirm="1" disabled>Confirmar</button>';
+            html += '<button type="button" class="btn btn-success" data-embed-confirm="1" disabled>' + escapeHtml(FLOW_SUBMIT_BUTTON_LABEL) + '</button>';
             html += '</div>';
         }
         html += '</div>';
@@ -3325,7 +3326,7 @@
             || options.isTerminalFlowStep === true;
         if (!hideSubmit) {
             html += '<div class="spa-flow-submit-inline">';
-            html += '<button type="button" class="btn btn-success" data-ui-json-submit="1">Confirmar</button>';
+            html += '<button type="button" class="btn btn-success" data-ui-json-submit="1">' + escapeHtml(FLOW_SUBMIT_BUTTON_LABEL) + '</button>';
             html += '</div>';
         }
         html += '</form></div>';

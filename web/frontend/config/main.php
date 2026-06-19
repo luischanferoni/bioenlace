@@ -409,6 +409,8 @@ return [
                 'GET api/<version:\w+>/profesional-efector-servicio/cargar-licencia-para-profesional-flow' => '<version>/profesional-efector-servicio/cargar-licencia-para-profesional-flow',
                 'POST api/<version:\w+>/profesional-efector-servicio/cargar-licencia-para-profesional-flow' => '<version>/profesional-efector-servicio/cargar-licencia-para-profesional-flow',
                 'OPTIONS api/<version:\w+>/profesional-efector-servicio/cargar-licencia-para-profesional-flow' => '<version>/profesional-efector-servicio/cargar-licencia-para-profesional-flow',
+                'POST api/<version:\w+>/profesional-efector-servicio/preview-impacto-licencia' => '<version>/profesional-efector-servicio/preview-impacto-licencia',
+                'OPTIONS api/<version:\w+>/profesional-efector-servicio/preview-impacto-licencia' => '<version>/profesional-efector-servicio/preview-impacto-licencia',
                 
                 // Turnos (rutas de compat / consumo histórico): algunos clientes consumen /api/<v>/turnos/*
                 // Nota: los descriptores JSON viven en `modules/api/v1/views/json/...` pero se exponen como `/api/<v>/turnos/*`.

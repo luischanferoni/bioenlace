@@ -329,6 +329,11 @@
             lines.push('Duración: ' + diasLbl);
         }
 
+        const turnosAfect = d.turnos_afectados != null ? parseInt(String(d.turnos_afectados), 10) : 0;
+        if (turnosAfect > 0) {
+            lines.push('Turnos en resolución: ' + turnosAfect);
+        }
+
         const cuando = formatCuandoDesdeFechaHora(d.fecha, d.hora) || nuevoHorarioLinea(s, d);
         if (cuando && !lines.some(function (ln) { return String(ln).indexOf(cuando) >= 0; })) {
             lines.push('Fecha: ' + cuando);
@@ -749,6 +754,10 @@
             btn.disabled = true;
             var postUrl = resolveSpaFetchUrl(applyDraftPlaceholdersToRoute(String(fs.route)));
             var bodyObj = resolved.body;
+            if (hostEl.getAttribute('data-licencia-impact-step') === '1') {
+                bodyObj.ui_step = 'impacto';
+                bodyObj.confirmar_impacto_turnos = '1';
+            }
             fetch(postUrl, {
                 method: 'POST',
                 headers: window.BioenlaceApiClient.mergeHeaders({
@@ -778,6 +787,15 @@
                     });
                 })
                 .then(function (json) {
+                    if (json && json.kind === 'ui_definition' && json.success !== false) {
+                        var step = json.data && json.data.ui_step != null ? String(json.data.ui_step).trim() : '';
+                        if (step === 'impacto') {
+                            hostEl.setAttribute('data-licencia-impact-step', '1');
+                            mountFlowUiDefinition(json, hostEl, '', fs, false, null);
+                            btn.disabled = false;
+                            return;
+                        }
+                    }
                     if (json && json.kind === 'ui_submit_result' && json.success !== false) {
                         var row = hostEl.closest ? hostEl.closest('.spa-chat-flow-row') : null;
                         var seq = row ? row.getAttribute('data-flow-activation-seq') : String(bioFlowActivationSeq);

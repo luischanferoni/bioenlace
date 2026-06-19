@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Domain\Scheduling\Service\TurnoIndisponibilidadImpactService;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
@@ -202,14 +203,12 @@ final class ProfesionalEfectorServicioAgendaVersionService
      */
     private static function turnosPendientesFuturos(int $idPes, string $desdeYmd): array
     {
-        return Turno::find()
-            ->where([
-                'id_profesional_efector_servicio' => $idPes,
-                'estado' => [Turno::ESTADO_PENDIENTE, Turno::ESTADO_EN_RESOLUCION],
-            ])
-            ->andWhere(['>=', 'fecha', $desdeYmd])
-            ->orderBy(['fecha' => SORT_ASC, 'hora' => SORT_ASC])
-            ->all();
+        return TurnoIndisponibilidadImpactService::findTurnosAfectados(
+            $idPes,
+            $desdeYmd,
+            null,
+            [Turno::ESTADO_PENDIENTE, Turno::ESTADO_EN_RESOLUCION]
+        );
     }
 
     private static function contarCambiosIntervaloEnAnio(int $idPes, int $anio): int

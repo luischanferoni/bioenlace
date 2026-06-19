@@ -16,6 +16,7 @@ import 'ui_json_list_presentation.dart';
 import 'ui_json_list_readonly.dart';
 import 'laboratory_pdf_download_widget.dart';
 import 'licencia_rango_dias_legend.dart';
+import 'licencia_turnos_impact_preview.dart';
 import 'prescription_pdf_download_widget.dart';
 import 'weekly_scheduler_widget.dart';
 
@@ -796,6 +797,13 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           return LicenciaRangoDiasLegend(
             fechaInicio: _accum[fiName],
             fechaFin: _accum[ffName],
+          );
+        }
+        if (wid == 'licencia_turnos_impact_preview') {
+          return LicenciaTurnosImpactPreviewWidget(
+            fieldValues: Map<String, String>.from(_accum),
+            authToken: widget.authToken,
+            appClient: widget.appClient ?? 'bioenlace-medico',
           );
         }
         if (wid == 'laboratory_pdf_download') {

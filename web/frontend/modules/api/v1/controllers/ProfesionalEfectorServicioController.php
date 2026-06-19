@@ -9,6 +9,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenEx
 use common\components\Domain\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
 use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\LicenciaUiFlowService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Platform\Ui\UiScreenService;
@@ -519,23 +520,26 @@ class ProfesionalEfectorServicioController extends BaseController
     {
         $req = Yii::$app->request;
         $idEfector = (int) Yii::$app->user->getIdEfector();
-
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
-        $defaults = ProfesionalEfectorServicioAgendaUiService::buildLicenciaValuesForGet($idEfector, $fromClient);
-        $paramsForRender = array_merge($defaults, $fromClient);
 
-        return UiScreenService::handleScreen(
+        if ($req->isPost) {
+            return LicenciaUiFlowService::handlePost(
+                $idEfector,
+                $fromClient,
+                'profesional-efector-servicio',
+                'cargar-licencia-como-profesional',
+                'licencia.cargar-como-profesional-flow',
+                true
+            );
+        }
+
+        return LicenciaUiFlowService::renderGet(
+            $idEfector,
+            $fromClient,
             'profesional-efector-servicio',
             'cargar-licencia-como-profesional',
-            $paramsForRender,
-            $req->post(),
-            static function (array $post) use ($idEfector): array {
-                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
-                    $idEfector,
-                    $post,
-                    'licencia.cargar-como-profesional-flow'
-                );
-            }
+            'licencia.cargar-como-profesional-flow',
+            true
         );
     }
 
@@ -553,28 +557,53 @@ class ProfesionalEfectorServicioController extends BaseController
     {
         $req = Yii::$app->request;
         $idEfector = (int) Yii::$app->user->getIdEfector();
-
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
-        $defaults = ProfesionalEfectorServicioAgendaUiService::buildLicenciaValuesForGet(
+
+        if ($req->isPost) {
+            return LicenciaUiFlowService::handlePost(
+                $idEfector,
+                $fromClient,
+                'profesional-efector-servicio',
+                'cargar-licencia-para-profesional',
+                'licencia.cargar-para-profesional-flow',
+                false
+            );
+        }
+
+        return LicenciaUiFlowService::renderGet(
             $idEfector,
             $fromClient,
-            false
-        );
-        $paramsForRender = array_merge($defaults, $fromClient);
-
-        return UiScreenService::handleScreen(
             'profesional-efector-servicio',
             'cargar-licencia-para-profesional',
-            $paramsForRender,
-            $req->post(),
-            static function (array $post) use ($idEfector): array {
-                return ProfesionalEfectorServicioAgendaUiService::submitCondicionLaboral(
-                    $idEfector,
-                    $post,
-                    'licencia.cargar-para-profesional-flow'
-                );
-            }
+            'licencia.cargar-para-profesional-flow',
+            false
         );
+    }
+
+    /**
+     * POST /api/v1/profesional-efector-servicio/preview-impacto-licencia
+     *
+     * Simula turnos afectados por licencia sin persistir.
+     */
+    public function actionPreviewImpactoLicencia(): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Solo POST.');
+        }
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $post = array_merge($req->get(), $req->post());
+        $intentId = trim((string) ($post['intent_id'] ?? ''));
+        $allowOwn = $intentId === '' || !str_contains($intentId, 'para-profesional');
+        $defaultIntent = $intentId !== ''
+            ? $intentId
+            : ($allowOwn ? 'licencia.cargar-como-profesional-flow' : 'licencia.cargar-para-profesional-flow');
+
+        return [
+            'success' => true,
+            'kind' => 'licencia_impact_preview',
+            'data' => LicenciaUiFlowService::previewImpacto($idEfector, $post, $defaultIntent, $allowOwn),
+        ];
     }
 
     /**
@@ -633,9 +662,20 @@ class ProfesionalEfectorServicioController extends BaseController
      */
     public function actionCargarLicenciaComoProfesionalFlow(): array
     {
-        return $this->licenciaFlowClosureResponse(
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new BadRequestHttpException('Este endpoint solo acepta POST (cierre del flujo del asistente).');
+        }
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        return LicenciaUiFlowService::handleFlowSubmit(
+            $idEfector,
+            $req->post(),
+            'licencia.cargar-como-profesional-flow',
             'profesional-efector-servicio.cargar-licencia-como-profesional-flow',
-            'Licencia registrada.',
             true
         );
     }
@@ -652,18 +692,6 @@ class ProfesionalEfectorServicioController extends BaseController
      */
     public function actionCargarLicenciaParaProfesionalFlow(): array
     {
-        return $this->licenciaFlowClosureResponse(
-            'profesional-efector-servicio.cargar-licencia-para-profesional-flow',
-            'Licencia del profesional registrada.',
-            false
-        );
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function licenciaFlowClosureResponse(string $actionId, string $message, bool $requireOwnPes): array
-    {
         $req = Yii::$app->request;
         if (!$req->isPost) {
             throw new BadRequestHttpException('Este endpoint solo acepta POST (cierre del flujo del asistente).');
@@ -673,22 +701,13 @@ class ProfesionalEfectorServicioController extends BaseController
             throw new BadRequestHttpException('Se requiere efector en sesión.');
         }
 
-        try {
-            (new ProfesionalEfectorServicioDomainAuthorizationService())->assertFlowClosure($req->post(), $requireOwnPes);
-        } catch (DomainOperationForbiddenException $e) {
-            throw new ForbiddenHttpException($e->getMessage() !== '' ? $e->getMessage() : 'No autorizado.');
-        }
-
-        return [
-            'success' => true,
-            'kind' => 'ui_submit_result',
-            'action_id' => $actionId,
-            'data' => [
-                'success' => true,
-                'message' => $message,
-            ],
-            'errors' => null,
-        ];
+        return LicenciaUiFlowService::handleFlowSubmit(
+            $idEfector,
+            $req->post(),
+            'licencia.cargar-para-profesional-flow',
+            'profesional-efector-servicio.cargar-licencia-para-profesional-flow',
+            false
+        );
     }
 
     /**

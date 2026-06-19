@@ -343,6 +343,33 @@ final class ProfesionalEfectorServicioAgendaUiService
         array $post,
         ?string $defaultIntentId = null
     ): array {
+        $allowOwnPesFallback = $defaultIntentId === null
+            || !self::condicionLaboralIntentEsStaff((string) $defaultIntentId);
+        $prepared = self::prepareCondicionLaboralSubmit($idEfector, $post, $defaultIntentId, $allowOwnPesFallback);
+
+        return self::persistPreparedCondicionLaboral($prepared);
+    }
+
+    /**
+     * Valida permisos y arma el modelo de condición laboral sin persistir.
+     *
+     * @param array<string, mixed> $post
+     * @return array{
+     *   id_pes: int,
+     *   intent_id: string,
+     *   id_condicion: int,
+     *   laboral: ProfesionalEfectorServicioCondicionLaboral,
+     *   was_new: bool,
+     *   fecha_inicio: string|null,
+     *   fecha_fin: string|null
+     * }
+     */
+    public static function prepareCondicionLaboralSubmit(
+        int $idEfector,
+        array $post,
+        ?string $defaultIntentId = null,
+        bool $allowOwnPesFallback = true
+    ): array {
         $ctx = new IntentRequestContextService();
         $intentId = $ctx->resolveIntentId($post, $defaultIntentId);
         $userId = (int) (Yii::$app->user->id ?? 0);
@@ -373,7 +400,7 @@ final class ProfesionalEfectorServicioAgendaUiService
             }
         }
 
-        if ($idPes <= 0) {
+        if ($idPes <= 0 && $allowOwnPesFallback) {
             $idPes = self::resolveOwnPesIdInEfector($idEfector, $post);
         }
 
@@ -433,17 +460,45 @@ final class ProfesionalEfectorServicioAgendaUiService
         if (!$laboral->validate()) {
             throw new BadRequestHttpException(implode(' ', $laboral->getFirstErrors()));
         }
+
+        return [
+            'id_pes' => $idPes,
+            'intent_id' => $intentId,
+            'id_condicion' => $idCondicion,
+            'laboral' => $laboral,
+            'was_new' => $wasNew,
+            'fecha_inicio' => $fi !== '' ? $fi : null,
+            'fecha_fin' => $ff !== '' ? $ff : null,
+        ];
+    }
+
+    /**
+     * @param array{
+     *   id_pes: int,
+     *   intent_id: string,
+     *   id_condicion: int,
+     *   laboral: ProfesionalEfectorServicioCondicionLaboral,
+     *   was_new: bool,
+     *   fecha_inicio: string|null,
+     *   fecha_fin: string|null
+     * } $prepared
+     * @return array{message: string, mensaje: string, condicion_laboral_ui_completed: string, fecha_inicio?: string|null, fecha_fin?: string|null, condicion_laboral_label?: string, servicio_detalle?: array{id_servicio: int, nombre: string}|null, dias_licencia?: int|null, dias_licencia_leyenda?: string, turnos_afectados?: int}
+     */
+    public static function persistPreparedCondicionLaboral(array $prepared): array
+    {
+        /** @var ProfesionalEfectorServicioCondicionLaboral $laboral */
+        $laboral = $prepared['laboral'];
         if (!$laboral->save(false)) {
             throw new \RuntimeException('No se pudo guardar la condición laboral.');
         }
 
         return self::buildCondicionLaboralSubmitData(
-            $idPes,
-            $idCondicion,
-            $fi !== '' ? $fi : null,
-            $ff !== '' ? $ff : null,
-            $intentId,
-            $wasNew
+            (int) $prepared['id_pes'],
+            (int) $prepared['id_condicion'],
+            $prepared['fecha_inicio'],
+            $prepared['fecha_fin'],
+            (string) $prepared['intent_id'],
+            (bool) $prepared['was_new']
         );
     }
 

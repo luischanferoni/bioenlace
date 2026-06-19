@@ -126,6 +126,62 @@ final class TurnoResolucionService
     }
 
     /**
+     * @param list<Turno> $turnos
+     * @param array<string, mixed> $meta
+     */
+    public static function crearDesdeLicencia(array $turnos, array $meta = []): void
+    {
+        $metaJson = [
+            'fecha_inicio' => $meta['fecha_inicio'] ?? null,
+            'fecha_fin' => $meta['fecha_fin'] ?? null,
+            'id_profesional_efector_servicio' => isset($meta['id_profesional_efector_servicio'])
+                ? (int) $meta['id_profesional_efector_servicio']
+                : null,
+        ];
+
+        foreach ($turnos as $turno) {
+            if (!$turno instanceof Turno) {
+                continue;
+            }
+            if ($turno->estado !== Turno::ESTADO_PENDIENTE) {
+                continue;
+            }
+            $idTurno = (int) $turno->id_turnos;
+            if ($idTurno <= 0) {
+                continue;
+            }
+            $existente = TurnoResolucion::findPendientePorTurno($idTurno);
+            if ($existente !== null) {
+                continue;
+            }
+
+            self::marcarTurnoEnResolucion($turno, TurnoResolucion::ORIGEN_LICENCIA, [
+                'permitir_otro_efector' => true,
+                'permitir_otro_pes' => true,
+                'meta_json' => $metaJson,
+            ]);
+
+            $fechaDisplay = self::formatFechaEsParaAviso((string) $turno->fecha);
+            $push = new PushNotificationSender();
+            $push->sendToPersona(
+                (int) $turno->id_persona,
+                ['type' => 'TURNO_REQUIERE_REUBICACION', 'id_turno' => (string) $turno->id_turnos],
+                'Tu turno requiere una nueva cita',
+                'El profesional registró una licencia. Elegí otro horario para el ' . $fechaDisplay . '.'
+            );
+        }
+    }
+
+    private static function formatFechaEsParaAviso(string $fecha): string
+    {
+        try {
+            return (new \DateTimeImmutable($fecha))->format('d/m/Y');
+        } catch (\Throwable $e) {
+            return $fecha;
+        }
+    }
+
+    /**
      * @param list<array<string, mixed>> $conflictos
      */
     public static function crearDesdeCambioAgenda(int $idVersion, array $conflictos): void

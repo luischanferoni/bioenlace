@@ -1,0 +1,84 @@
+{
+  "ui_type": "ui_json",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "intro",
+      "text_field": "preview_message",
+      "text": "Hay turnos pendientes en el período de la licencia. Al confirmar, los pacientes podrán reubicar o cancelar desde la app."
+    },
+    {
+      "kind": "fields",
+      "id": "impacto",
+      "title": "Impacto en turnos",
+      "fields": [
+        {
+          "name": "ui_step",
+          "label": "",
+          "type": "hidden",
+          "value": "impacto",
+          "include_in_submit": true
+        },
+        {
+          "name": "confirmar_impacto_turnos",
+          "label": "",
+          "type": "hidden",
+          "value": "1",
+          "include_in_submit": true
+        },
+        {
+          "name": "id_efector",
+          "label": "",
+          "type": "hidden",
+          "include_in_submit": true
+        },
+        {
+          "name": "id_profesional_efector_servicio",
+          "label": "",
+          "type": "hidden",
+          "include_in_submit": true
+        },
+        {
+          "name": "id_servicio",
+          "label": "",
+          "type": "hidden",
+          "include_in_submit": true
+        },
+        {
+          "name": "fecha_inicio",
+          "type": "hidden",
+          "include_in_submit": true
+        },
+        {
+          "name": "fecha_fin",
+          "type": "hidden",
+          "include_in_submit": true
+        },
+        {
+          "name": "intent_id",
+          "label": "",
+          "type": "hidden",
+          "include_in_submit": true
+        },
+        {
+          "name": "licencia_turnos_impact_preview",
+          "label": "Turnos afectados",
+          "type": "custom_widget",
+          "widget_id": "licencia_turnos_impact_preview",
+          "required": false,
+          "auto_fetch_on_init": true,
+          "assets": {
+            "js": ["/js/widgets/ui-widget-licencia-turnos-impact-preview.js"]
+          },
+          "layout": { "col": 12, "breakpoint": "md" }
+        }
+      ]
+    }
+  ]
+}

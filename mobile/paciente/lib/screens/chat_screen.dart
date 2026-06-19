@@ -2311,7 +2311,10 @@ class ChatScreenState extends State<ChatScreen> {
     });
     try {
       final uri = Uri.parse(resolveApiAbsoluteUrl(route));
-      final bodyMap = resolved.body;
+      final bodyMap = FlowLicenciaImpact.augmentFlowSubmitBody(
+        resolved.body,
+        licenciaImpactStep: msg['_licencia_impact_step'] == true,
+      );
       final headers = AppConfig.jsonHeaders(
         bearerToken: _asistenteService.authToken,
         appClient: 'bioenlace-paciente',
@@ -2373,6 +2376,15 @@ class ChatScreenState extends State<ChatScreen> {
         _scrollToBottom();
         return;
       }
+      if (FlowLicenciaImpact.isImpactUiDefinition(m)) {
+        setState(() {
+          msg['_flow_impact_ui'] = m;
+          msg['_licencia_impact_step'] = true;
+          msg['_flow_submit_ready'] = true;
+        });
+        _scrollToBottom();
+        return;
+      }
       if (m['kind'] == 'ui_definition' && m['errors'] is Map) {
         final err = m['errors'] as Map;
         final first = err.values.isNotEmpty ? err.values.first.toString() : 'No se pudo validar.';
@@ -2429,7 +2441,9 @@ class ChatScreenState extends State<ChatScreen> {
                 final actions = message['actions'] as List<Map<String, dynamic>>?;
                 final suggestedQuery = message['suggested_query'] as String?;
                 final inlineUi = message['inline_ui'];
-                final hasEmbeddedUi = !isUser && inlineUi is Map;
+                final impactUiEnvelope = message['_flow_impact_ui'];
+                final showingLicenciaImpact = impactUiEnvelope is Map;
+                final hasEmbeddedUi = !isUser && (inlineUi is Map || showingLicenciaImpact);
                 final flowActionTitle = !isUser ? _flowActionTitleFromMessage(message) : null;
                 final hasFlowSubmit = !isUser && message['flow_submit'] is Map;
                 final hasFlowDismiss = !isUser && message['flow_dismiss'] is Map;
@@ -2449,7 +2463,7 @@ class ChatScreenState extends State<ChatScreen> {
                     !isUser && _messageInteractiveButtons(message).isNotEmpty;
                 /// Separación antes de tabs/UI inline (ver también padding del [UiJsonScreen] abajo).
                 double inlineUiLeadGapHeight = 4.0;
-                if (!hasFormConfig && !isUser && inlineUi is Map && hasEmbeddedUi) {
+                if (!hasFormConfig && !isUser && (inlineUi is Map || showingLicenciaImpact) && hasEmbeddedUi) {
                   if (hasFlowContext) {
                     inlineUiLeadGapHeight = showFlowStepText ? 0.0 : 2.0;
                   } else if (content.isNotEmpty && !hasActionsRow && !hasRemediationRow) {
@@ -2641,7 +2655,7 @@ class ChatScreenState extends State<ChatScreen> {
                       ),
                     ],
                     // Inline UI JSON embebida en chat (antes del "Confirmar y enviar" del flow)
-                    if (!isUser && inlineUi is Map)
+                    if (!isUser && (inlineUi is Map || showingLicenciaImpact))
                       _wrapFlowInteractiveCollapse(
                         collapsing: flowCollapsing,
                         child: Column(
@@ -2703,15 +2717,18 @@ class ChatScreenState extends State<ChatScreen> {
                                 child: UiJsonScreen(
                               key: ValueKey(
                                 'inline-ui-$index-'
-                                '${inlineUi['route'] ?? ''}-'
-                                '${inlineUi['api_absolute_url'] ?? ''}',
+                                '${showingLicenciaImpact ? 'impacto' : (inlineUi is Map ? inlineUi['route'] ?? '' : '')}-'
+                                '${showingLicenciaImpact ? '' : (inlineUi is Map ? inlineUi['api_absolute_url'] ?? '' : '')}',
                               ),
-                              initialDefinition: inlineUi['ui_definition'] is Map
-                                  ? Map<String, dynamic>.from(inlineUi['ui_definition'] as Map)
-                                  : null,
-                              onDefinitionLoaded: flowUiDisabled
+                              initialDefinition: showingLicenciaImpact
+                                  ? Map<String, dynamic>.from(impactUiEnvelope as Map)
+                                  : (inlineUi is Map && inlineUi['ui_definition'] is Map
+                                      ? Map<String, dynamic>.from(inlineUi['ui_definition'] as Map)
+                                      : null),
+                              onDefinitionLoaded: (flowUiDisabled || showingLicenciaImpact)
                                   ? null
                                   : (def) {
+                                      if (inlineUi is! Map) return;
                                       inlineUi['ui_definition'] = def;
                                       WidgetsBinding.instance.addPostFrameCallback((_) {
                                         if (!mounted) return;
@@ -2745,22 +2762,29 @@ class ChatScreenState extends State<ChatScreen> {
                                       });
                                     },
                               enableFlowChainAutoAdvance: false,
-                              isTerminalFlowStep: _messageIsTerminalFlowStep(message),
+                              isTerminalFlowStep: _messageIsTerminalFlowStep(message) || showingLicenciaImpact,
                               initialListEmbedSelectedId:
                                   message['_flow_auto_selected_id']?.toString(),
-                              apiAbsoluteUrl: (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty
-                                  ? inlineUi['api_absolute_url']!.toString()
-                                  : applyProvidedParamsToRoute(
-                                      inlineUi['route']?.toString() ?? '',
-                                      inlineUi['provided'] is Map ? Map<String, dynamic>.from(inlineUi['provided'] as Map) : null,
-                                    ),
+                              apiAbsoluteUrl: showingLicenciaImpact
+                                  ? null
+                                  : ((inlineUi is Map &&
+                                          (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty)
+                                      ? inlineUi['api_absolute_url']!.toString()
+                                      : applyProvidedParamsToRoute(
+                                          inlineUi is Map ? inlineUi['route']?.toString() ?? '' : '',
+                                          inlineUi is Map && inlineUi['provided'] is Map
+                                              ? Map<String, dynamic>.from(inlineUi['provided'] as Map)
+                                              : null,
+                                        )),
                               authToken: _asistenteService.authToken,
                               appClient: 'bioenlace-paciente',
-                              title: inlineUi['title']?.toString(),
+                              title: inlineUi is Map ? inlineUi['title']?.toString() : null,
                               embedded: true,
                               onCancel: flowUiDisabled
                                   ? null
-                                  : (_inlineUiIsConfirmacionTurno(inlineUi) ? _resetAssistantToWelcome : null),
+                                  : (inlineUi is Map && _inlineUiIsConfirmacionTurno(inlineUi)
+                                      ? _resetAssistantToWelcome
+                                      : null),
                               onDraftDelta: flowUiDisabled ? null : (dd) async {
                                 // Cambio 1: si este mensaje NO es el último interactivo del flow
                                 // activo, "rebobinar" el flow: eliminar mensajes posteriores del
@@ -2777,7 +2801,9 @@ class ChatScreenState extends State<ChatScreen> {
                                   }
                                 }
                                 _applyDraftDelta(Map<String, dynamic>.from(dd));
-                                _applyInlineUiQueryToDraft(Map<String, dynamic>.from(inlineUi));
+                                if (inlineUi is Map) {
+                                  _applyInlineUiQueryToDraft(Map<String, dynamic>.from(inlineUi));
+                                }
                                 _asistenteService.draft = Map<String, dynamic>.from(_draft);
 
                                 // Step terminal (último del flow): el tap mergeó local; NO postear al motor.
@@ -2952,7 +2978,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 const SizedBox(height: 8),
                               ],
                               BioButton.primary(
-                                label: 'Confirmar y enviar',
+                                label: 'Confirmar y Enviar',
                                 icon: Icons.check_circle_outline,
                                 size: BioButtonSize.lg,
                                 fullWidth: true,

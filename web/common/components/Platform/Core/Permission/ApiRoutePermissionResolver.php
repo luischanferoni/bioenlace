@@ -27,21 +27,38 @@ final class ApiRoutePermissionResolver
     }
 
     /**
-     * Ruta RBAC a chequear: path HTTP público si existe; si no, uniqueId del action (legacy).
+     * Rutas RBAC candidatas: URL HTTP pública y ruta del controlador (aliases urlManager).
+     *
+     * @return list<string>
      */
-    public static function resolveCheckedRouteForAction(string $pathInfo, string $actionUniqueId): string
+    public static function checkedRoutesForAction(string $pathInfo, string $actionUniqueId): array
     {
+        $uniq = [];
         $fromHttp = self::permissionRouteFromHttpPath($pathInfo);
         if ($fromHttp !== '') {
-            return $fromHttp;
+            $uniq[$fromHttp] = true;
         }
 
         $parts = explode('/', $actionUniqueId);
         if (!empty($parts) && $parts[0] === 'v1') {
             array_shift($parts);
         }
+        $fromController = '/api/' . implode('/', $parts);
+        if ($fromController !== '/api/' && $fromController !== '') {
+            $uniq[$fromController] = true;
+        }
 
-        return '/api/' . implode('/', $parts);
+        return array_keys($uniq);
+    }
+
+    /**
+     * Ruta RBAC principal a chequear (primera de {@see checkedRoutesForAction}).
+     */
+    public static function resolveCheckedRouteForAction(string $pathInfo, string $actionUniqueId): string
+    {
+        $routes = self::checkedRoutesForAction($pathInfo, $actionUniqueId);
+
+        return $routes[0] ?? '';
     }
 
     /**

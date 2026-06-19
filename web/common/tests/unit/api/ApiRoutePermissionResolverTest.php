@@ -16,6 +16,28 @@ final class ApiRoutePermissionResolverTest extends Unit
         $this->assertSame('/api/clinical/care-plans/adherencia-resumen-staff', $route);
     }
 
+    public function testCheckedRoutesIncludeHttpAndControllerPaths(): void
+    {
+        $routes = ApiRoutePermissionResolver::checkedRoutesForAction(
+            'api/v1/clinical/care-plans/adherencia-resumen-staff',
+            'v1/clinical/care-plan/adherencia-resumen-staff'
+        );
+
+        $this->assertContains('/api/clinical/care-plans/adherencia-resumen-staff', $routes);
+        $this->assertContains('/api/clinical/care-plan/adherencia-resumen-staff', $routes);
+    }
+
+    public function testCheckedRoutesForAsistenteAlias(): void
+    {
+        $routes = ApiRoutePermissionResolver::checkedRoutesForAction(
+            'api/v1/asistente/enviar',
+            'v1/chat/recibir'
+        );
+
+        $this->assertContains('/api/asistente/enviar', $routes);
+        $this->assertContains('/api/chat/recibir', $routes);
+    }
+
     public function testResolveCheckedRoutePrefersHttpPathOverControllerUniqueId(): void
     {
         $route = ApiRoutePermissionResolver::resolveCheckedRouteForAction(

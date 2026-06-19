@@ -19,6 +19,10 @@ class BioenlaceApiAccessControl extends ActionFilter
     protected static array $authenticatedOnlyRoutes = [
         '/api/sesion-operativa/establecer',
         '/api/acciones/comunes',
+        '/api/asistente/enviar',
+        '/api/asistente/estado',
+        '/api/chat/recibir',
+        '/api/chat/estado',
         '/api/client-diagnostic/registrar',
         '/api/media/ver',
         '/api/notificaciones/listar',
@@ -35,7 +39,7 @@ class BioenlaceApiAccessControl extends ActionFilter
             return true;
         }
 
-        $route = ApiRoutePermissionResolver::resolveCheckedRouteForAction(
+        $routesToCheck = ApiRoutePermissionResolver::checkedRoutesForAction(
             (string) Yii::$app->request->pathInfo,
             (string) $action->uniqueId
         );
@@ -66,14 +70,18 @@ class BioenlaceApiAccessControl extends ActionFilter
             return true;
         }
 
-        $normalized = BioenlaceSessionPermissions::unifyRoute($route);
-        if (in_array($normalized, self::$authenticatedOnlyRoutes, true)) {
-            return true;
+        foreach ($routesToCheck as $route) {
+            $normalized = BioenlaceSessionPermissions::unifyRoute($route);
+            if (in_array($normalized, self::$authenticatedOnlyRoutes, true)) {
+                return true;
+            }
         }
 
         $userId = (int) $identity->getId();
-        if (BioenlaceAccessChecker::userCanApiRoute($userId, $route)) {
-            return true;
+        foreach ($routesToCheck as $route) {
+            if (BioenlaceAccessChecker::userCanApiRoute($userId, $route)) {
+                return true;
+            }
         }
 
         $flowIntentId = Yii::$app->request->getHeaders()->get(FlowStepAccessService::HEADER_FLOW_INTENT_ID);
@@ -81,14 +89,16 @@ class BioenlaceApiAccessControl extends ActionFilter
         if ($flowIntentId === '') {
             $flowIntentId = null;
         }
-        if ((new FlowStepAccessService())->canAccessViaParentIntent($userId, $route, $flowIntentId)) {
-            return true;
+        foreach ($routesToCheck as $route) {
+            if ((new FlowStepAccessService())->canAccessViaParentIntent($userId, $route, $flowIntentId)) {
+                return true;
+            }
         }
 
         try {
             $roles = Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROLES, []);
             Yii::info(
-                'BioenlaceApiAccessControl: deny 403 route=' . $route
+                'BioenlaceApiAccessControl: deny 403 routes=' . json_encode($routesToCheck)
                 . ' userId=' . $userId
                 . ' roles=' . json_encode($roles),
                 'access-control'

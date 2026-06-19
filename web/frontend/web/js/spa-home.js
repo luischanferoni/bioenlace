@@ -509,6 +509,48 @@
             + '</div>';
     }
 
+    /**
+     * Encabezado `action_name` del flow (una vez por activación), también si la fila ya existía por el loader.
+     *
+     * @param {HTMLElement|null} inner `.spa-chat-flow-turn`
+     * @param {object|null|undefined} fm
+     * @param {string} flowActionTitle
+     */
+    function ensureFlowChatHeader(inner, fm, flowActionTitle) {
+        if (!inner) {
+            return;
+        }
+        let titleStr = typeof flowActionTitle === 'string' ? flowActionTitle.trim() : '';
+        if (titleStr === '' && fm && fm.action_name != null) {
+            titleStr = String(fm.action_name).trim();
+        }
+        if (titleStr === '' || !shouldShowFlowChatHeader(fm)) {
+            return;
+        }
+        let header = inner.querySelector('.spa-flow-chat-header');
+        if (!header) {
+            header = document.createElement('div');
+            header.className = 'spa-flow-chat-header';
+            const list = inner.querySelector('.spa-flow-steps-list');
+            if (list) {
+                inner.insertBefore(header, list);
+            } else {
+                inner.insertBefore(header, inner.firstChild);
+            }
+            const rule = document.createElement('div');
+            rule.className = 'spa-flow-chat-rule';
+            rule.setAttribute('aria-hidden', 'true');
+            header.appendChild(rule);
+        }
+        let hFlow = header.querySelector('.spa-flow-chat-title');
+        if (!hFlow) {
+            hFlow = document.createElement('h3');
+            hFlow.className = 'spa-flow-chat-title';
+            header.insertBefore(hFlow, header.firstChild);
+        }
+        hFlow.textContent = titleStr;
+    }
+
     function buildFlowSubmitSummaryHtml(data, intentId, flowSnapshotOpt) {
         const lines = formatFlowSubmitSummaryLines(data, intentId, flowSnapshotOpt);
         const body = lines.length
@@ -675,11 +717,11 @@
             return;
         }
         var wrap = document.createElement('div');
-        wrap.className = 'mt-3 pt-2 border-top spa-flow-submit-inline' +
+        wrap.className = 'spa-flow-submit-inline' +
             (opts.deferReveal === true ? ' spa-flow-submit-inline--pending' : '');
         var btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'btn btn-primary';
+        btn.className = 'btn btn-success';
         btn.textContent = 'Confirmar y enviar';
         var errBox = document.createElement('div');
         errBox.className = 'small text-danger mt-2 d-none';
@@ -1525,21 +1567,6 @@
             const inner = document.createElement('div');
             inner.className = 'spa-chat-flow-turn w-100';
 
-            const titleStr = typeof flowActionTitle === 'string' ? flowActionTitle.trim() : '';
-            if (titleStr !== '' && shouldShowFlowChatHeader(fm)) {
-                const header = document.createElement('div');
-                header.className = 'spa-flow-chat-header';
-                const hFlow = document.createElement('h3');
-                hFlow.className = 'spa-flow-chat-title';
-                hFlow.textContent = titleStr;
-                header.appendChild(hFlow);
-                const rule = document.createElement('div');
-                rule.className = 'spa-flow-chat-rule';
-                rule.setAttribute('aria-hidden', 'true');
-                header.appendChild(rule);
-                inner.appendChild(header);
-            }
-
             list = document.createElement('ol');
             list.className = 'spa-flow-steps-list list-unstyled mb-0'
                 + (numberedSteps ? ' spa-flow-steps-list--numbered' : '');
@@ -1596,6 +1623,9 @@
             }
             }
         }
+
+        const flowTurn = row.querySelector('.spa-chat-flow-turn') || row;
+        ensureFlowChatHeader(flowTurn, fm, flowActionTitle);
 
         let activeMount = null;
         if (activeIdx >= 0 && list) {
@@ -3001,8 +3031,8 @@
         html += '</div>';
         const effectiveRequiresConfirmation = requiresConfirmation && options.isTerminalFlowStep !== true;
         if (effectiveRequiresConfirmation) {
-            html += '<div class="d-flex justify-content-end pt-2">';
-            html += '<button type="button" class="btn btn-primary btn-sm" data-embed-confirm="1" disabled>Confirmar</button>';
+            html += '<div class="spa-flow-submit-inline">';
+            html += '<button type="button" class="btn btn-success" data-embed-confirm="1" disabled>Confirmar</button>';
             html += '</div>';
         }
         html += '</div>';
@@ -3294,8 +3324,8 @@
         const hideSubmit = block.hide_submit === true || block.hide_submit === 1 || block.hide_submit === '1'
             || options.isTerminalFlowStep === true;
         if (!hideSubmit) {
-            html += '<div class="d-flex justify-content-end pt-2">';
-            html += '<button type="button" class="btn btn-success btn-sm" data-ui-json-submit="1">Confirmar</button>';
+            html += '<div class="spa-flow-submit-inline">';
+            html += '<button type="button" class="btn btn-success" data-ui-json-submit="1">Confirmar</button>';
             html += '</div>';
         }
         html += '</form></div>';

@@ -888,6 +888,23 @@ html:has(.spa-asistente-root) {
     color: inherit;
 }
 
+/* Confirmación de pasos / flow_submit: centrado, sin borde superior */
+.spa-flow-submit-inline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-top: 0.75rem;
+    padding: 0;
+    border: none;
+    box-sizing: border-box;
+}
+
+.spa-flow-submit-inline .btn {
+    min-width: 10.5rem;
+}
+
 /* flow_submit integrado: oculto hasta que la mini-UI del paso terminó de montarse. */
 .spa-flow-submit-inline--pending {
     visibility: hidden;

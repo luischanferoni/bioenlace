@@ -50,6 +50,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   DeviceDictationResult? _lastDictation;
   Map<String, dynamic>? _lastAnalysis;
   String _sttStatus = '';
+  SttClientConfig _sttConfig = SttClientConfig.defaults;
+  bool _audioOnlyRecording = false;
 
   final TextEditingController _chatController = TextEditingController();
   final FocusNode _chatFocusNode = FocusNode();
@@ -69,7 +71,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _encounterApi.authToken = widget.authToken;
     }
     _dictation.initialize();
+    _loadSttConfig();
     _cargarHistoriaClinica();
+  }
+
+  Future<void> _loadSttConfig() async {
+    try {
+      final cfg = await _encounterApi.fetchSttConfig();
+      if (!mounted) return;
+      setState(() => _sttConfig = cfg);
+    } catch (_) {
+      // Mantener defaults locales.
+    }
   }
 
   @override
@@ -558,24 +571,36 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _toggleDictation() async {
     if (_guardandoConsulta) return;
-    if (_dictating) {
-      final result = await _dictation.stop();
-      await _stopBackupRecording();
-      if (!mounted) return;
-      setState(() {
-        _dictating = false;
-        _lastDictation = result;
-        if (result.text.trim().isNotEmpty) {
-          _chatController.text = result.text.trim();
-        }
-        final ok = DeviceSttLocalQuality.isAcceptable(
-          _chatController.text,
-          result,
-        );
-        _sttStatus = ok
-            ? 'Dictado listo. Revise y analice.'
-            : 'Calidad baja: use «Servidor» o corrija el texto.';
-      });
+    if (_dictating || _audioOnlyRecording) {
+      if (_audioOnlyRecording) {
+        await _stopAudioOnlyRecording();
+      } else {
+        final result = await _dictation.stop();
+        await _stopBackupRecording();
+        if (!mounted) return;
+        setState(() {
+          _dictating = false;
+          _lastDictation = result;
+          if (result.text.trim().isNotEmpty) {
+            _chatController.text = result.text.trim();
+          }
+          final ok = DeviceSttLocalQuality.isAcceptable(
+            _chatController.text,
+            result,
+          );
+          _sttStatus = ok
+              ? 'Dictado listo. Revise y analice.'
+              : 'Calidad baja: use «Servidor» o corrija el texto.';
+        });
+      }
+      return;
+    }
+    if (!_sttConfig.deviceEnabled && _sttConfig.serverEnabled) {
+      await _startAudioOnlyRecording();
+      return;
+    }
+    if (!_sttConfig.deviceEnabled) {
+      _snack('Dictado en dispositivo deshabilitado.', UiIntent.warning);
       return;
     }
     try {
@@ -595,6 +620,42 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     } catch (e) {
       _snack('No se pudo iniciar dictado: $e', UiIntent.danger);
     }
+  }
+
+  Future<void> _startAudioOnlyRecording() async {
+    try {
+      if (!await _audioRecorder.hasPermission()) {
+        _snack('Permiso de micrófono denegado.', UiIntent.warning);
+        return;
+      }
+      final dir = await getTemporaryDirectory();
+      _pendingAudioPath =
+          '${dir.path}/encounter_${DateTime.now().millisecondsSinceEpoch}.m4a';
+      await _audioRecorder.start(
+        const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100),
+        path: _pendingAudioPath!,
+      );
+      if (!mounted) return;
+      setState(() {
+        _audioOnlyRecording = true;
+        _sttStatus = 'Grabando… pulse micrófono para detener.';
+      });
+    } catch (e) {
+      _snack('No se pudo grabar audio: $e', UiIntent.danger);
+    }
+  }
+
+  Future<void> _stopAudioOnlyRecording() async {
+    if (await _audioRecorder.isRecording()) {
+      await _audioRecorder.stop();
+    }
+    if (!mounted) return;
+    setState(() {
+      _audioOnlyRecording = false;
+      _sttStatus = _pendingAudioPath != null
+          ? 'Audio grabado. Pulse «Servidor» para transcribir.'
+          : 'No se capturó audio.';
+    });
   }
 
   Future<void> _startBackupRecording() async {
@@ -624,6 +685,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Future<void> _transcribirEnServidor() async {
+    if (!_sttConfig.serverEnabled) {
+      _snack('Transcripción en servidor deshabilitada.', UiIntent.warning);
+      return;
+    }
     if (_pendingAudioPath == null) {
       _snack('Grabe con el micrófono antes de usar servidor.', UiIntent.warning);
       return;
@@ -798,20 +863,29 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           maxLines: 6,
           leading: canCapture
               ? [
-                  IconButton(
-                    icon: Icon(_dictating ? Icons.stop_circle : Icons.mic_none),
-                    color: _dictating
-                        ? IntentPalette.of(UiIntent.danger).base
-                        : cs.onSurfaceVariant,
-                    onPressed: _guardandoConsulta ? null : _toggleDictation,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.cloud_upload_outlined),
-                    color: cs.onSurfaceVariant,
-                    onPressed:
-                        _guardandoConsulta ? null : _transcribirEnServidor,
-                    tooltip: 'Transcribir en servidor',
-                  ),
+                  if (_sttConfig.deviceEnabled || _sttConfig.serverEnabled)
+                    IconButton(
+                      icon: Icon(
+                        (_dictating || _audioOnlyRecording)
+                            ? Icons.stop_circle
+                            : Icons.mic_none,
+                      ),
+                      color: (_dictating || _audioOnlyRecording)
+                          ? IntentPalette.of(UiIntent.danger).base
+                          : cs.onSurfaceVariant,
+                      onPressed: _guardandoConsulta ? null : _toggleDictation,
+                      tooltip: _sttConfig.deviceEnabled
+                          ? 'Dictar'
+                          : 'Grabar audio',
+                    ),
+                  if (_sttConfig.serverEnabled)
+                    IconButton(
+                      icon: const Icon(Icons.cloud_upload_outlined),
+                      color: cs.onSurfaceVariant,
+                      onPressed:
+                          _guardandoConsulta ? null : _transcribirEnServidor,
+                      tooltip: 'Transcribir en servidor',
+                    ),
                 ]
               : [
                   IconButton(

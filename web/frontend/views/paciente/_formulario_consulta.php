@@ -12,13 +12,15 @@ $idConsulta = $idConsulta ?? null;
 $parent = $parent ?? null;
 $parentId = $parentId ?? null;
 $motivoPacientePrefill = trim((string) ($motivoPacientePrefill ?? ''));
+$sttClientConfig = \common\components\Platform\Ai\SpeechToText\SttConfigService::clientSnapshot();
 ?>
 
 <?php
 use yii\helpers\Url;
 use yii\helpers\Html;
 ?>
-<form id="form-consulta-chat" method="POST" action="<?= Url::to(['/api/v1/clinical/encounter/guardar']) ?>">
+<form id="form-consulta-chat" method="POST" action="<?= Url::to(['/api/v1/clinical/encounter/guardar']) ?>"
+      data-stt-config="<?= Html::encode(json_encode($sttClientConfig, JSON_UNESCAPED_UNICODE)) ?>">
     <?= Html::hiddenInput('id_persona', $paciente->id_persona) ?>
     <?php if (!empty($idConfiguracion)): ?>
         <?= Html::hiddenInput('id_configuracion', (int) $idConfiguracion) ?>

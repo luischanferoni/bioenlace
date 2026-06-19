@@ -546,6 +546,8 @@ return [
                 'POST api/<version:\w+>/<controller:[\\w-]+>/<action:[\\w-]+>' => '<version>/<controller>/<action>',
                 
                 // Audio API (Speech-to-Text)
+                'GET api/<version:\w+>/audio/stt-config' => '<version>/audio/stt-config',
+                'OPTIONS api/<version:\w+>/audio/stt-config' => '<version>/audio/stt-config',
                 'POST api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
                 'OPTIONS api/<version:\w+>/audio/transcribir' => '<version>/audio/transcribir',
 

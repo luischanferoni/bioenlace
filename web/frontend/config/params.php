@@ -80,10 +80,24 @@ return [
     'ffmpeg_path' => 'ffmpeg', // Ruta al ejecutable de FFmpeg
 
     /**
-     * STT en dispositivo (captura clínica): umbrales de calidad y fallback a servidor.
+     * STT servidor (Groq / Hugging Face) y política device vs cloud.
      * Ver web/docs/costos/estrategias-reduccion/stt.md
      */
+    'stt' => [
+        /** groq | huggingface */
+        'proveedor_servidor' => 'groq',
+        'device_enabled' => true,
+        'server_enabled' => true,
+        'groq_model' => 'whisper-large-v3-turbo',
+        'groq_language' => 'es',
+    ],
+
+    /**
+     * STT en dispositivo (captura clínica): umbrales de calidad y fallback a servidor.
+     * `enabled` false = solo texto manual o STT servidor (si server_enabled).
+     */
     'stt_device' => [
+        'enabled' => true,
         'min_confidence' => 0.75,
         'min_chars' => 3,
         'min_words_per_minute' => 20,

@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\SpeechToText;
 
 use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
+use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use Yii;
 
 /**
@@ -44,6 +45,10 @@ final class ClinicalSpeechInputResolver
             return self::ok($primaryText, self::PROVENANCE_TEXT_ONLY, false, null);
         }
 
+        if ($forceServer && !SttConfigService::isServerEnabled()) {
+            return self::fail('La transcripción en servidor está deshabilitada por configuración.');
+        }
+
         if ($primaryText !== '' && !$forceServer && self::shouldEvaluateDevice($stt)) {
             $quality = DeviceSttQualityAssessor::assess($primaryText, $stt, $flowProfile);
             if ($quality['ok']) {
@@ -52,6 +57,12 @@ final class ClinicalSpeechInputResolver
                 return self::ok($primaryText, self::PROVENANCE_DEVICE, false, $quality);
             }
             if (!empty($audio)) {
+                if (!SttConfigService::isServerEnabled()) {
+                    return self::fail(
+                        'La transcripción del dispositivo no es confiable y el STT en servidor está deshabilitado.',
+                        $quality
+                    );
+                }
                 $serverText = self::transcribeServer($audio, (string) ($body['modelo'] ?? 'economico'));
                 if ($serverText !== '') {
                     self::logRoute(self::PROVENANCE_SERVER, $quality, true);
@@ -105,6 +116,9 @@ final class ClinicalSpeechInputResolver
      */
     private static function shouldEvaluateDevice(array $stt): bool
     {
+        if (!SttConfigService::isDeviceEnabled()) {
+            return false;
+        }
         if (($stt['provenance'] ?? '') === self::PROVENANCE_DEVICE) {
             return true;
         }
@@ -117,6 +131,9 @@ final class ClinicalSpeechInputResolver
 
     private static function transcribeServer($audio, string $modelo): string
     {
+        if (!SttConfigService::isServerEnabled()) {
+            return '';
+        }
         $result = SpeechToTextManager::transcribir($audio, $modelo);
 
         return trim((string) ($result['texto'] ?? ''));

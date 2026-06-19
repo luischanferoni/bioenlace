@@ -3,26 +3,16 @@
 namespace common\components\Platform\Ai\SpeechToText;
 
 use Yii;
-use yii\httpclient\Client;
 
 /**
- * Gestor de conversión de audio a texto usando HuggingFace
- * Optimizado para reducir costos mediante pre-procesamiento y selección de modelos
+ * Gestor de conversión de audio a texto (Groq / Hugging Face según params).
+ * Optimizado para reducir costos mediante pre-procesamiento y selección de modelos.
  */
 class SpeechToTextManager
 {
     // TTL extendido a 30 días para reducir costos (optimización agresiva)
     private const CACHE_TTL = 2592000; // 30 días para transcripciones
     private const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB máximo
-
-    /**
-     * Modelos disponibles ordenados por costo (de menor a mayor)
-     */
-    private const MODELOS = [
-        'economico' => 'jonatasgrosman/wav2vec2-xlsr-53-spanish',
-        'balanceado' => 'jonatasgrosman/wav2vec2-large-xlsr-53-spanish',
-        'premium' => 'openai/whisper-large-v2'
-    ];
 
     /**
      * Convertir audio a texto
@@ -66,24 +56,16 @@ class SpeechToTextManager
                 ];
             }
 
-            // Seleccionar modelo
-            $modeloSeleccionado = self::MODELOS[$modelo] ?? self::MODELOS['economico'];
-            $modeloConfigurado = Yii::$app->params['hf_stt_model'] ?? null;
-
-            // Registrar uso del modelo para gestión de memoria
-            \common\components\ModelManager::registrarUso($modeloSeleccionado, 'stt');
-
-            // Verificar si el modelo debe estar cargado
-            if (!\common\components\ModelManager::debeEstarCargado($modeloSeleccionado, 'stt')) {
-                \Yii::warning("Modelo STT no disponible en memoria: {$modeloSeleccionado}. Cargando...", 'speech-to-text');
-                // En un sistema real, aquí se cargaría el modelo
-            }
-            if ($modeloConfigurado) {
-                $modeloSeleccionado = $modeloConfigurado;
+            if (!SttConfigService::isServerEnabled()) {
+                return [
+                    'texto' => '',
+                    'confidence' => 0,
+                    'error' => 'STT en servidor deshabilitado por configuración',
+                ];
             }
 
-            // Realizar transcripción
-            $resultado = self::llamarAPIHuggingFace($audioData, $modeloSeleccionado);
+            $modeloSeleccionado = self::resolveModelLabel($modelo);
+            $resultado = self::transcribirConProveedor($audioData, $modelo);
 
             if ($resultado && !empty($resultado['texto'])) {
                 // Guardar en cache
@@ -425,56 +407,34 @@ class SpeechToTextManager
         }
     }
 
-    private static function llamarAPIHuggingFace($audioData, $modelo)
+    /**
+     * @return array{texto?: string, confidence?: float}|null
+     */
+    private static function transcribirConProveedor(string $audioData, string $modeloAlias)
     {
-        try {
-            $apiKey = Yii::$app->params['hf_api_key'] ?? '';
-            if (empty($apiKey)) {
-                return null;
-            }
+        $provider = SttConfigService::serverProvider();
 
-            $audioBase64 = base64_encode($audioData);
-
-            $client = new Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl("https://router.huggingface.co/hf-inference/{$modelo}")
-                ->addHeaders([
-                    'Authorization' => 'Bearer ' . $apiKey,
-                    'Content-Type' => 'application/json'
-                ])
-                ->setContent(json_encode([
-                    'inputs' => $audioBase64,
-                    'options' => [
-                        'wait_for_model' => false
-                    ]
-                ]))
-                ->send();
-
-            if ($response->isOk) {
-                $data = json_decode($response->content, true);
-
-                $texto = '';
-                if (isset($data['text'])) {
-                    $texto = $data['text'];
-                } elseif (isset($data[0]['text'])) {
-                    $texto = $data[0]['text'];
-                } elseif (is_string($data)) {
-                    $texto = $data;
-                }
-
-                if (!empty($texto)) {
-                    return [
-                        'texto' => trim($texto),
-                        'confidence' => isset($data['confidence']) ? (float)$data['confidence'] : 0.8
-                    ];
-                }
-            }
-        } catch (\Exception $e) {
-            \Yii::error("Error llamando API HuggingFace: " . $e->getMessage(), 'speech-to-text');
+        if ($provider === SttConfigService::PROVIDER_GROQ) {
+            return GroqSttClient::transcribe(
+                $audioData,
+                SttConfigService::groqModel(),
+                SttConfigService::groqLanguage()
+            );
         }
 
-        return null;
+        $hfModel = SttConfigService::huggingFaceModel($modeloAlias);
+        \common\components\ModelManager::registrarUso($hfModel, 'stt');
+
+        return HuggingFaceSttClient::transcribe($audioData, $hfModel);
+    }
+
+    private static function resolveModelLabel(string $modeloAlias): string
+    {
+        if (SttConfigService::serverProvider() === SttConfigService::PROVIDER_GROQ) {
+            return SttConfigService::groqModel();
+        }
+
+        return SttConfigService::huggingFaceModel($modeloAlias);
     }
 }
 

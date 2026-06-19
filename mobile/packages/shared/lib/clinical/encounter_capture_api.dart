@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import 'stt_client_config.dart';
 
 /// API captura clínica: analizar y guardar encounter.
 class EncounterCaptureApi {
@@ -19,6 +20,29 @@ class EncounterCaptureApi {
       h['Authorization'] = 'Bearer $authToken';
     }
     return h;
+  }
+
+  /// GET /api/v1/audio/stt-config
+  Future<SttClientConfig> fetchSttConfig() async {
+    final uri = Uri.parse('${AppConfig.apiUrl}/audio/stt-config');
+    final response = await http
+        .get(
+          uri,
+          headers: AppConfig.jsonHeaders(
+            bearerToken: authToken,
+            appClient: 'medico-flutter',
+          ),
+        )
+        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    final decoded = json.decode(response.body);
+    if (decoded is! Map<String, dynamic> || decoded['success'] != true) {
+      return SttClientConfig.defaults;
+    }
+    final stt = decoded['stt'];
+    if (stt is Map<String, dynamic>) {
+      return SttClientConfig.fromJson(stt);
+    }
+    return SttClientConfig.defaults;
   }
 
   /// POST /api/v1/clinical/encounter/analizar

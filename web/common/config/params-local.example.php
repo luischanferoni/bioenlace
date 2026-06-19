@@ -19,4 +19,9 @@ return [
         'fcmServerKey' => null,
         'httpEndpoint' => null,
     ],
+
+    // STT servidor (Groq Whisper) — copiar a frontend/config/params-local.php si aplica
+    // 'groq_api_key' => 'gsk_...',
+    // 'stt' => ['proveedor_servidor' => 'groq', 'device_enabled' => true, 'server_enabled' => true],
+    // 'optimizar_audio' => false, // shared hosting sin FFmpeg
 ];

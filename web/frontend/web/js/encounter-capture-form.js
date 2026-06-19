@@ -46,8 +46,26 @@
         });
     }
 
+    function parseSttConfig(formEl) {
+        var defaults = {
+            device_enabled: true,
+            server_enabled: true,
+            proveedor_servidor: 'groq',
+            server_configured: false,
+        };
+        if (!formEl || !formEl.dataset || !formEl.dataset.sttConfig) {
+            return defaults;
+        }
+        try {
+            return Object.assign(defaults, JSON.parse(formEl.dataset.sttConfig));
+        } catch (e) {
+            return defaults;
+        }
+    }
+
     function EncounterCaptureForm(formEl) {
         this.form = formEl;
+        this.sttConfig = parseSttConfig(formEl);
         this.textarea = formEl.querySelector('#chat-input');
         this.analyzeBtn = formEl.querySelector('#analyze-consultation');
         this.responseEl = formEl.querySelector('#agent-response');
@@ -65,8 +83,9 @@
         this.pendingAudioBlob = null;
         this.lastAnalysisPayload = null;
         this.initialTextOnListen = '';
+        this.audioOnlyRecording = false;
 
-        if (SpeechRecognitionCtor && this.textarea) {
+        if (SpeechRecognitionCtor && this.textarea && this.sttConfig.device_enabled) {
             this.recognition = new SpeechRecognitionCtor();
             this.recognition.continuous = true;
             this.recognition.interimResults = true;
@@ -114,9 +133,39 @@
         }
         if (this.recognition) {
             this.setupRecognition();
-        } else if (micBtn) {
-            micBtn.disabled = true;
-            this.setStatus('Dictado por voz no disponible en este navegador. Escriba el texto o use «Transcribir en servidor».', 'warning');
+        }
+        this.applySttUiPolicy();
+    };
+
+    EncounterCaptureForm.prototype.applySttUiPolicy = function () {
+        var micBtn = this.form.querySelector('#encounter-dictate-btn');
+        var serverBtn = this.form.querySelector('#encounter-stt-server-btn');
+        var deviceOn = !!this.sttConfig.device_enabled;
+        var serverOn = !!this.sttConfig.server_enabled;
+
+        if (micBtn) {
+            if (!deviceOn && serverOn) {
+                micBtn.disabled = false;
+                micBtn.title = 'Grabar audio para transcribir en servidor';
+            } else if (!deviceOn) {
+                micBtn.disabled = true;
+            } else if (!this.recognition) {
+                micBtn.disabled = true;
+            }
+        }
+        if (serverBtn) {
+            serverBtn.style.display = serverOn ? '' : 'none';
+            serverBtn.disabled = !serverOn;
+        }
+        if (!deviceOn && !serverOn) {
+            this.setStatus('Dictado por voz deshabilitado. Escriba el texto manualmente.', 'warning');
+        } else if (!deviceOn && serverOn && !this.recognition) {
+            this.setStatus('Use el micrófono para grabar y «Transcribir en servidor».', 'muted');
+        } else if (deviceOn && !this.recognition) {
+            this.setStatus(
+                'Dictado del navegador no disponible. Escriba el texto o use «Transcribir en servidor».',
+                'warning'
+            );
         }
     };
 
@@ -222,8 +271,12 @@
     };
 
     EncounterCaptureForm.prototype.toggleDictation = function () {
-        if (this.listening) {
+        if (this.listening || this.audioOnlyRecording) {
             this.stopDictation();
+            return;
+        }
+        if (!this.sttConfig.device_enabled && this.sttConfig.server_enabled) {
+            this.toggleAudioOnlyRecording();
             return;
         }
         if (!this.recognition) {
@@ -242,7 +295,35 @@
         }
     };
 
+    EncounterCaptureForm.prototype.toggleAudioOnlyRecording = function () {
+        var self = this;
+        if (this.audioOnlyRecording) {
+            this.stopAudioOnlyRecording();
+            return;
+        }
+        this.pendingAudioBlob = null;
+        this.dictationStartedAt = Date.now();
+        this.startAudioCapture();
+        this.audioOnlyRecording = true;
+        this.setStatus('Grabando audio… pulse de nuevo para detener y transcribir en servidor.', 'primary');
+    };
+
+    EncounterCaptureForm.prototype.stopAudioOnlyRecording = function () {
+        var self = this;
+        this.audioOnlyRecording = false;
+        this.stopAudioCapture();
+        if (!this.pendingAudioBlob) {
+            this.setStatus('No se capturó audio.', 'warning');
+            return;
+        }
+        this.setStatus('Audio grabado. Pulse «Transcribir en servidor».', 'success');
+    };
+
     EncounterCaptureForm.prototype.stopDictation = function () {
+        if (this.audioOnlyRecording) {
+            this.stopAudioOnlyRecording();
+            return;
+        }
         this.listening = false;
         if (this.recognition) {
             try {
@@ -373,6 +454,10 @@
 
     EncounterCaptureForm.prototype.transcribeOnServer = function () {
         var self = this;
+        if (!this.sttConfig.server_enabled) {
+            this.setStatus('Transcripción en servidor deshabilitada por configuración.', 'warning');
+            return;
+        }
         if (!this.pendingAudioBlob) {
             this.setStatus('Grabe con el micrófono primero para tener audio de respaldo.', 'warning');
             return;

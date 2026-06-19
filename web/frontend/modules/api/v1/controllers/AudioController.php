@@ -5,11 +5,24 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
+use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
 use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 
 class AudioController extends BaseController
 {
+    /**
+     * Configuración STT para clientes (sin secretos).
+     * GET /api/v1/audio/stt-config
+     */
+    public function actionSttConfig()
+    {
+        return [
+            'success' => true,
+            'stt' => SttConfigService::clientSnapshot(),
+        ];
+    }
+
     /**
      * Endpoint para recibir audio y transcribirlo
      * POST /api/v1/audio/transcribir

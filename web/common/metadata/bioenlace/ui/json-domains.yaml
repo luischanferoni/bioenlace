@@ -9,6 +9,7 @@ entity_domains:
   efectores: scheduling
   servicios: scheduling
   care-plan: clinical
+  care-plans: clinical
   emergency-guardia: clinical
   internacion: clinical
   laboratory-result: clinical
@@ -27,3 +28,7 @@ action_id_parse:
 
 action_template_aliases:
   encounter/ultima-atencion-ui-como-paciente: ver-resumen-atencion-como-paciente
+
+# Carpeta bajo views/json/{dominio}/ cuando la entidad REST difiere (p. ej. care-plans → care-plan).
+entity_folder_aliases:
+  care-plans: care-plan

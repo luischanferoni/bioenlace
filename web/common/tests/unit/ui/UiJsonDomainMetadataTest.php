@@ -50,4 +50,18 @@ class UiJsonDomainMetadataTest extends Unit
             'indicadores-agenda'
         ));
     }
+
+    public function testCarePlansRestEntityResolvesCarePlanTemplateFolder(): void
+    {
+        $this->assertSame('care-plan', UiJsonDomainMetadata::templateFolderForEntity('care-plans'));
+        $this->assertSame('clinical', UiJsonDomainMetadata::domainForEntity('care-plans'));
+
+        $path = UiJsonDomain::resolveActionIdTemplatePath('clinical.care-plan.adherencia-resumen-staff');
+        $this->assertNotNull($path);
+        $this->assertStringContainsString('care-plan/adherencia-resumen-staff.json', str_replace('\\', '/', $path));
+
+        $this->assertTrue(\common\components\Platform\Ui\UiDefinitionTemplateManager::hasTemplateForApiRoute(
+            '/api/v1/clinical/care-plans/adherencia-resumen-staff'
+        ));
+    }
 }

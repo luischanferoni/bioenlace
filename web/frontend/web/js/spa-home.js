@@ -2177,16 +2177,7 @@
                         mergeApiQueryIntoUrl(resolveSpaFetchUrl(route), co.api),
                         co.api
                     );
-                } else if (fsr && fsr.route && tabs.length >= 1) {
-                    let defIdx = 0;
-                    for (let ti = 0; ti < tabs.length; ti++) {
-                        if (defaultTabId !== '' && String(tabs[ti].id) === defaultTabId) {
-                            defIdx = ti;
-                            break;
-                        }
-                    }
-                    fullUrl = buildUrlForFlowTab(tabs[defIdx]);
-                } else if (tabs.length >= 1 && !(hasOpenUi && !okUiJson)) {
+                } else if (tabs.length >= 1 && !okUiJson) {
                     let defIdx = 0;
                     for (let ti = 0; ti < tabs.length; ti++) {
                         if (defaultTabId !== '' && String(tabs[ti].id) === defaultTabId) {

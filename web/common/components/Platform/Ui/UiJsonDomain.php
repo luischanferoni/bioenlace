@@ -76,13 +76,14 @@ final class UiJsonDomain
             return [];
         }
 
+        $folderEntity = UiJsonDomainMetadata::templateFolderForEntity($entity);
         $file = $action . '.json';
         $out = [];
-        $domain = self::forEntity($entity);
+        $domain = self::forEntity($folderEntity) ?? self::forEntity($entity);
         if ($domain !== null) {
-            $out[] = $domain . '/' . $entity . '/' . $file;
+            $out[] = $domain . '/' . $folderEntity . '/' . $file;
         }
-        $out[] = $entity . '/' . $file;
+        $out[] = $folderEntity . '/' . $file;
 
         return array_values(array_unique($out));
     }

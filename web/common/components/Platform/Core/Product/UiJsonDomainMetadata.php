@@ -52,6 +52,21 @@ final class UiJsonDomainMetadata
         return is_string($target) && trim($target) !== '' ? trim($target) : null;
     }
 
+    public static function templateFolderForEntity(string $entity): string
+    {
+        $entity = strtolower(trim($entity));
+        if ($entity === '') {
+            return '';
+        }
+        $aliases = self::loadConfig()['entity_folder_aliases'] ?? [];
+        if (!is_array($aliases)) {
+            return $entity;
+        }
+        $target = $aliases[$entity] ?? null;
+
+        return is_string($target) && trim($target) !== '' ? trim($target) : $entity;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -65,6 +80,7 @@ final class UiJsonDomainMetadata
             'entity_domains' => [],
             'action_id_parse' => [],
             'action_template_aliases' => [],
+            'entity_folder_aliases' => [],
         ];
 
         $path = ProductMetadataPaths::uiJsonDomainsFile();
@@ -84,7 +100,7 @@ final class UiJsonDomainMetadata
             return self::$config;
         }
 
-        foreach (['entity_domains', 'action_id_parse', 'action_template_aliases'] as $key) {
+        foreach (['entity_domains', 'action_id_parse', 'action_template_aliases', 'entity_folder_aliases'] as $key) {
             if (isset($data[$key]) && is_array($data[$key])) {
                 self::$config[$key] = $data[$key];
             }

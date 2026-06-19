@@ -3,6 +3,7 @@
 namespace common\tests\unit\permission;
 
 use Codeception\Test\Unit;
+use common\components\Platform\Core\Permission\FlowStepAccessService;
 use common\components\Platform\Core\Permission\IntentManifestIndex;
 
 /**
@@ -13,15 +14,31 @@ final class FlowStepAccessServiceTest extends Unit
     protected function _before(): void
     {
         IntentManifestIndex::resetCache();
+        FlowStepAccessService::resetRouteIndexForTests();
     }
 
-    public function testIndicadoresAgendaFlowRegistersOpenUiAction(): void
+    public function testAdherenciaStaffOpenUiRouteResolvesInIndex(): void
     {
-        $parents = IntentManifestIndex::parentIntentsForOpenUiAction('turnos.indicadores-agenda');
+        $svc = new FlowStepAccessService();
+        $ref = new \ReflectionClass(FlowStepAccessService::class);
+        $method = $ref->getMethod('actionIdsForRoute');
+        $method->setAccessible(true);
+
+        $ids = $method->invoke(
+            $svc,
+            '/api/v1/clinical/care-plans/adherencia-resumen-staff'
+        );
+
+        $this->assertContains('clinical.care-plan.adherencia-resumen-staff', $ids);
+    }
+
+    public function testAdherenciaStaffFlowRegistersOpenUiAction(): void
+    {
+        $parents = IntentManifestIndex::parentIntentsForOpenUiAction('clinical.care-plan.adherencia-resumen-staff');
 
         $this->assertNotEmpty($parents);
         $intentIds = array_map(static fn (array $row): string => (string) ($row['intent_id'] ?? ''), $parents);
-        $this->assertContains('turnos.indicadores-agenda-flow', $intentIds);
+        $this->assertContains('tratamiento.adherencia-resumen-staff', $intentIds);
     }
 
     public function testIndicadoresAgendaFlowUsesHomePanelRbacRoute(): void

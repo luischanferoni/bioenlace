@@ -1123,12 +1123,19 @@
             return Promise.resolve();
         }
         showFlowStepUiLoading(mountEl);
+        const flowHeaders = {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        };
+        if (flowRow) {
+            const flowIntentId = (flowRow.getAttribute('data-flow-intent-id') || '').trim();
+            if (flowIntentId !== '') {
+                flowHeaders['X-Flow-Intent-Id'] = flowIntentId;
+            }
+        }
         return fetch(fullUrl, {
             method: 'GET',
-            headers: window.BioenlaceApiClient.mergeHeaders({
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            })
+            headers: window.BioenlaceApiClient.mergeHeaders(flowHeaders)
         })
             .then(function (r) {
                 if (!r.ok) {

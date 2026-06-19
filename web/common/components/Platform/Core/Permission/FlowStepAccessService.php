@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Core\Permission;
 
+use common\components\Platform\Assistant\Catalog\UiActionCatalogProviderRegistry;
+
 /**
  * Autorización de pasos open_ui intermedios: heredan el permiso del intent padre.
  */
@@ -11,6 +13,11 @@ final class FlowStepAccessService
 
     /** @var array<string, list<string>>|null api route → action_ids */
     private static ?array $routeToActionIds = null;
+
+    public static function resetRouteIndexForTests(): void
+    {
+        self::$routeToActionIds = null;
+    }
 
     /**
      * ¿Puede acceder a la ruta API como paso de un flow cuyo intent padre está autorizado?
@@ -74,6 +81,20 @@ final class FlowStepAccessService
             return false;
         }
 
+        foreach ($meta['open_ui_steps'] ?? [] as $step) {
+            if (!is_array($step)) {
+                continue;
+            }
+            $aid = trim((string) ($step['action_id'] ?? ''));
+            if ($aid === '') {
+                continue;
+            }
+            $stepRoute = trim(UiActionCatalogProviderRegistry::httpRouteForActionId($aid));
+            if ($stepRoute !== '' && $this->normalizeApiRoute($stepRoute) === $apiRoute) {
+                return true;
+            }
+        }
+
         $actionIds = $this->actionIdsForRoute($apiRoute);
         if ($actionIds === []) {
             return false;
@@ -123,11 +144,17 @@ final class FlowStepAccessService
                     continue;
                 }
                 $actionId = trim((string) ($step['action_id'] ?? ''));
-                if ($actionId === '' || strpos($actionId, '.') === false) {
+                if ($actionId === '') {
                     continue;
                 }
-                [$entity, $action] = explode('.', $actionId, 2);
-                $route = '/api/' . $entity . '/' . $action;
+                $route = trim(UiActionCatalogProviderRegistry::httpRouteForActionId($actionId));
+                if ($route === '') {
+                    continue;
+                }
+                $route = $this->normalizeApiRoute($route);
+                if ($route === '') {
+                    continue;
+                }
                 self::$routeToActionIds[$route][] = $actionId;
             }
         }

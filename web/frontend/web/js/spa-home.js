@@ -54,6 +54,29 @@
         }
     }
 
+    /** Completa query del fetch de flow con valores ya elegidos en `draft` (rebind / pasos posteriores). */
+    function mergeFlowDraftParamsIntoFetchUrl(baseUrl, apiObj) {
+        if (!baseUrl || !draft || typeof draft !== 'object') {
+            return baseUrl;
+        }
+        const extra = { query: {} };
+        if (apiObj && apiObj.query && typeof apiObj.query === 'object') {
+            Object.keys(apiObj.query).forEach(function (k) {
+                const v = apiObj.query[k];
+                if (v != null && String(v) !== '') {
+                    extra.query[k] = String(v);
+                }
+            });
+        }
+        ['id_profesional_efector_servicio', 'id_servicio', 'id_efector'].forEach(function (field) {
+            const dv = draft[field];
+            if (dv != null && String(dv).trim() !== '') {
+                extra.query[field] = String(dv).trim();
+            }
+        });
+        return mergeApiQueryIntoUrl(baseUrl, extra);
+    }
+
     function applyDraftPlaceholdersToRoute(route) {
         var raw = route == null ? '' : String(route);
         if (raw === '' || raw.indexOf('{') === -1) {
@@ -1191,13 +1214,22 @@
             return;
         }
         try {
-            flowRow.querySelectorAll('.bio-ui-json-list').forEach(function (el) {
+            flowRow.querySelectorAll('.bio-ui-json-list, .bio-ui-json-block[data-block-kind="list"]').forEach(function (el) {
                 el.__bioListPickLocked = false;
                 el.querySelectorAll('button[data-embed-pick="1"]').forEach(function (btn) {
                     btn.disabled = false;
                     btn.classList.remove('disabled');
                 });
             });
+        } catch (e) { /* ignore */ }
+    }
+
+    function clearFlowUiCacheForRow(flowRow) {
+        if (!flowRow) {
+            return;
+        }
+        try {
+            flowRow.__bioFlowUiCache = {};
         } catch (e) { /* ignore */ }
     }
 
@@ -1828,7 +1860,10 @@
                 let fullUrl = '';
                 if (okUiJson) {
                     const route = applyDraftPlaceholdersToRoute(String(co.api.route || ''));
-                    fullUrl = mergeApiQueryIntoUrl(resolveSpaFetchUrl(route), co.api);
+                    fullUrl = mergeFlowDraftParamsIntoFetchUrl(
+                        mergeApiQueryIntoUrl(resolveSpaFetchUrl(route), co.api),
+                        co.api
+                    );
                 } else if (fsr && fsr.route && tabs.length >= 1) {
                     let defIdx = 0;
                     for (let ti = 0; ti < tabs.length; ti++) {
@@ -2735,7 +2770,7 @@
         const baseListUrl = options.url ? String(options.url) : '';
         const presClass = uiJsonListPresentationClass(block);
 
-        container.__bioListPickLocked = container.__bioListPickLocked === true;
+        let listLockEl = container;
         let selectedId = '';
         let itemsById = {};
 
@@ -2791,6 +2826,9 @@
         html += '</div>';
         container.innerHTML = html;
 
+        listLockEl = container.querySelector('.bio-ui-json-list') || container;
+        listLockEl.__bioListPickLocked = listLockEl.__bioListPickLocked === true;
+
         const itemsMount = container.querySelector('[data-bio-list-items="1"]');
         const emptyHintEl = container.querySelector('[data-bio-list-empty-hint="1"]');
         const confirmBtn = container.querySelector('button[data-embed-confirm="1"]');
@@ -2816,7 +2854,7 @@
         }
 
         function isListPickLocked() {
-            return container.__bioListPickLocked === true;
+            return listLockEl.__bioListPickLocked === true;
         }
 
         function confirmSelection() {
@@ -2835,10 +2873,13 @@
             const stepId = stepLi ? stepLi.getAttribute('data-step-id') : '';
             const pickedStepIdx = resolveFlowStepIndexById(currentFlowManifest, stepId);
             const activeIdx = resolveFlowActiveStepIndex(currentFlowManifest);
-            if (pickedStepIdx >= 0 && activeIdx >= 0 && pickedStepIdx <= activeIdx) {
+            const isFlowRebind = pickedStepIdx >= 0 && activeIdx >= 0 && pickedStepIdx <= activeIdx;
+            if (isFlowRebind) {
+                listLockEl.__bioListPickLocked = false;
                 clearDraftProvidesFromStepIndex(currentFlowManifest, pickedStepIdx);
                 if (flowRow) {
                     clearFlowStepUiFromIndex(flowRow, pickedStepIdx + 1);
+                    clearFlowUiCacheForRow(flowRow);
                 }
                 if (pickedStepIdx < activeIdx && currentFlowManifest) {
                     const rewindSteps = Array.isArray(currentFlowManifest.steps) ? currentFlowManifest.steps : [];
@@ -2898,7 +2939,7 @@
                 return;
             }
 
-            container.__bioListPickLocked = true;
+            listLockEl.__bioListPickLocked = true;
             try {
                 allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });
             } catch (e) { /* ignore */ }
@@ -2996,6 +3037,19 @@
                         });
                 }, 320);
             });
+        }
+
+        if (draftField && draft && draft[draftField] != null) {
+            const preId = String(draft[draftField]).trim();
+            if (preId !== '' && itemsById[preId]) {
+                const sel = 'button[data-embed-pick="1"][data-embed-id="' + (typeof CSS !== 'undefined' && CSS.escape
+                    ? CSS.escape(preId)
+                    : preId.replace(/\\/g, '\\\\').replace(/"/g, '\\"')) + '"]';
+                const preBtn = container.querySelector(sel);
+                if (preBtn) {
+                    setSelected(preBtn, preId);
+                }
+            }
         }
 
         const pickButtons = allPickButtons();

@@ -71,5 +71,11 @@ final class OrganizationIntentSubjectResolvers
         if ($idEfector > 0) {
             $draft['id_efector'] = $idEfector;
         }
+
+        // Inicio de flow staff: no arrastrar PES de sesión ni borrador previo; el sujeto se elige en el listado.
+        $subintentId = trim((string) ($body['subintent_id'] ?? ''));
+        if ($subintentId === '') {
+            unset($draft['id_profesional_efector_servicio']);
+        }
     }
 }

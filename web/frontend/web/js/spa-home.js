@@ -1153,7 +1153,7 @@
             return;
         }
         const steps = Array.isArray(fm.steps) ? fm.steps : [];
-        for (let i = fromStepIdx + 1; i < steps.length; i++) {
+        for (let i = fromStepIdx; i < steps.length; i++) {
             const provides = steps[i] && Array.isArray(steps[i].provides) ? steps[i].provides : [];
             provides.forEach(function (p) {
                 const raw = String(p || '').trim();

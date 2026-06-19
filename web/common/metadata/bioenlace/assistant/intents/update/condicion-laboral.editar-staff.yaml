@@ -64,6 +64,8 @@ subintents:
     next: cargar_vigencia
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector
+      params:
+        excluir_id_persona_sesion: "1"
 
   - id: cargar_vigencia
     assistant_text: "Completá la condición laboral del profesional"

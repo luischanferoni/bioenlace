@@ -19,7 +19,12 @@ final class ProfesionalEnEfectorListadoUiService
     /**
      * @return list<array{id: string, name: string}>
      */
-    public static function listarPorEfector(int $idEfector, ?string $q = null, int $limit = 200): array
+    public static function listarPorEfector(
+        int $idEfector,
+        ?string $q = null,
+        int $limit = 200,
+        ?int $excluirIdPersona = null
+    ): array
     {
         if ($idEfector <= 0) {
             throw new \InvalidArgumentException('idEfector inválido.');
@@ -64,6 +69,9 @@ final class ProfesionalEnEfectorListadoUiService
 
         $items = [];
         foreach ($byPersona as $pid => $pesRep) {
+            if ($excluirIdPersona !== null && $excluirIdPersona > 0 && (int) $pid === $excluirIdPersona) {
+                continue;
+            }
             $id = (string) (int) $pesRep->id;
             $name = $pesRep->persona !== null
                 ? $pesRep->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)

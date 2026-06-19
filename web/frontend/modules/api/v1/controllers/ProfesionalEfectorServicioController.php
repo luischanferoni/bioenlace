@@ -243,7 +243,8 @@ class ProfesionalEfectorServicioController extends BaseController
      *
      * GET|POST /api/v1/profesional-efector-servicio/listar-por-efector
      *
-     * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional).
+     * Parámetros: id_efector (opcional, default sesión), q (opcional), limit (opcional),
+     * excluir_id_persona_sesion (opcional, 1 = no listar la persona del usuario en sesión).
      *
      * @action_name Listar profesionales por efector
      * @entity Profesional
@@ -282,10 +283,27 @@ class ProfesionalEfectorServicioController extends BaseController
                 $limit = 200;
             }
 
+            $excluirSesion = filter_var(
+                $req->get('excluir_id_persona_sesion') ?: $req->post('excluir_id_persona_sesion') ?: '0',
+                FILTER_VALIDATE_BOOLEAN
+            );
+            $excluirIdPersona = null;
+            if ($excluirSesion) {
+                $idPersonaSesion = (int) Yii::$app->user->getIdPersona();
+                if ($idPersonaSesion > 0) {
+                    $excluirIdPersona = $idPersonaSesion;
+                }
+            }
+
             try {
                 $ui = UiScreenService::withListBlockItems(
                     $ui,
-                    ProfesionalEnEfectorListadoUiService::listarPorEfector($idEfector, is_string($q) ? $q : null, $limit)
+                    ProfesionalEnEfectorListadoUiService::listarPorEfector(
+                        $idEfector,
+                        is_string($q) ? $q : null,
+                        $limit,
+                        $excluirIdPersona
+                    )
                 );
             } catch (\InvalidArgumentException $e) {
                 throw new BadRequestHttpException($e->getMessage());

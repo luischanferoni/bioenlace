@@ -38,6 +38,18 @@
           "type": "date",
           "required": false,
           "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "licencia_dias_leyenda",
+          "label": "",
+          "type": "custom_widget",
+          "widget_id": "licencia_rango_dias",
+          "required": false,
+          "watch_fields": ["fecha_inicio", "fecha_fin"],
+          "assets": {
+            "js": ["/js/widgets/ui-widget-licencia-rango-dias.js"]
+          },
+          "layout": { "col": 12, "breakpoint": "md" }
         }
       ]
     }

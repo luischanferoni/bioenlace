@@ -15,6 +15,7 @@ import 'ui_json_list_auto_advance.dart';
 import 'ui_json_list_presentation.dart';
 import 'ui_json_list_readonly.dart';
 import 'laboratory_pdf_download_widget.dart';
+import 'licencia_rango_dias_legend.dart';
 import 'prescription_pdf_download_widget.dart';
 import 'weekly_scheduler_widget.dart';
 
@@ -786,6 +787,15 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 }),
               ),
             ],
+          );
+        }
+        if (wid == 'licencia_rango_dias') {
+          final wf = (field['watch_fields'] as List?)?.map((e) => e.toString()).toList();
+          final fiName = (wf != null && wf.isNotEmpty) ? wf[0] : 'fecha_inicio';
+          final ffName = (wf != null && wf.length > 1) ? wf[1] : 'fecha_fin';
+          return LicenciaRangoDiasLegend(
+            fechaInicio: _accum[fiName],
+            fechaFin: _accum[ffName],
           );
         }
         if (wid == 'laboratory_pdf_download') {

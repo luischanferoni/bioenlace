@@ -324,6 +324,11 @@
             lines.push('Hasta ' + formatFechaEs(ff));
         }
 
+        const diasLbl = d.dias_licencia_leyenda != null ? String(d.dias_licencia_leyenda).trim() : '';
+        if (diasLbl) {
+            lines.push('Duración: ' + diasLbl);
+        }
+
         const cuando = formatCuandoDesdeFechaHora(d.fecha, d.hora) || nuevoHorarioLinea(s, d);
         if (cuando && !lines.some(function (ln) { return String(ln).indexOf(cuando) >= 0; })) {
             lines.push('Fecha: ' + cuando);

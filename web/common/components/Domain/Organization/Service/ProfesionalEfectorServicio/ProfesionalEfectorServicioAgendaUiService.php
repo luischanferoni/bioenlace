@@ -232,6 +232,16 @@ final class ProfesionalEfectorServicioAgendaUiService
     ): array {
         $out = self::buildCondicionLaboralValuesForGet($idEfector, $query, $allowOwnPesFallback);
         unset($out['id_condicion_laboral']);
+        $fi = isset($out['fecha_inicio']) ? trim((string) $out['fecha_inicio']) : '';
+        $ff = isset($out['fecha_fin']) ? trim((string) $out['fecha_fin']) : '';
+        $out['dias_licencia'] = LicenciaRangoDiasFormatter::countInclusiveCalendarDays(
+            $fi !== '' ? $fi : null,
+            $ff !== '' ? $ff : null
+        );
+        $out['dias_licencia_leyenda'] = LicenciaRangoDiasFormatter::leyendaFromIso(
+            $fi !== '' ? $fi : null,
+            $ff !== '' ? $ff : null
+        );
 
         return $out;
     }
@@ -484,6 +494,12 @@ final class ProfesionalEfectorServicioAgendaUiService
 
         $vigencia = self::formatVigenciaPhrase($fechaInicio, $fechaFin);
         $isStaff = self::condicionLaboralIntentEsStaff($intentId);
+        $diasLeyenda = self::condicionLaboralIntentEsLicencia($intentId)
+            ? LicenciaRangoDiasFormatter::leyendaFromIso($fechaInicio, $fechaFin)
+            : '';
+        if ($diasLeyenda !== '' && $vigencia !== '') {
+            $vigencia .= ' (' . $diasLeyenda . ')';
+        }
         $mensaje = self::composeCondicionLaboralMensaje(
             $wasNew,
             $isStaff,
@@ -502,6 +518,8 @@ final class ProfesionalEfectorServicioAgendaUiService
             'condicion_laboral_ui_completed' => '1',
             'fecha_inicio' => $fechaInicio,
             'fecha_fin' => $fechaFin,
+            'dias_licencia' => LicenciaRangoDiasFormatter::countInclusiveCalendarDays($fechaInicio, $fechaFin),
+            'dias_licencia_leyenda' => $diasLeyenda,
             'condicion_laboral_label' => $tipoNombre,
             'servicio_detalle' => $servicioDetalle,
         ];

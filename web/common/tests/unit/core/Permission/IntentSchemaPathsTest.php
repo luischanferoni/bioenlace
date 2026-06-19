@@ -29,4 +29,18 @@ class IntentSchemaPathsTest extends Unit
         }
         $this->assertTrue($hasNested, 'Debe incluir YAML bajo intents/create/');
     }
+
+    public function testStripOrderPrefixFromFilename(): void
+    {
+        $this->assertSame('condicion-laboral.editar-staff', IntentSchemaPaths::stripOrderPrefix('02-condicion-laboral.editar-staff'));
+        $this->assertSame('data-access.editar', IntentSchemaPaths::stripOrderPrefix('data-access.editar'));
+    }
+
+    public function testResolvesNumberedUpdateIntentByYamlIntentId(): void
+    {
+        IntentSchemaPaths::resetIndexCache();
+        $path = IntentSchemaPaths::resolveFileForIntentId('condicion-laboral.editar-staff');
+        $this->assertNotNull($path);
+        $this->assertStringContainsString('02-condicion-laboral.editar-staff.yaml', str_replace('\\', '/', $path));
+    }
 }

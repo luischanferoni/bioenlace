@@ -2736,7 +2736,6 @@
         const presClass = uiJsonListPresentationClass(block);
 
         container.__bioListPickLocked = container.__bioListPickLocked === true;
-        let locked = false;
         let selectedId = '';
         let itemsById = {};
 
@@ -2817,7 +2816,7 @@
         }
 
         function isListPickLocked() {
-            return locked === true || container.__bioListPickLocked === true;
+            return container.__bioListPickLocked === true;
         }
 
         function confirmSelection() {
@@ -2840,6 +2839,14 @@
                 clearDraftProvidesFromStepIndex(currentFlowManifest, pickedStepIdx);
                 if (flowRow) {
                     clearFlowStepUiFromIndex(flowRow, pickedStepIdx + 1);
+                }
+                if (pickedStepIdx < activeIdx && currentFlowManifest) {
+                    const rewindSteps = Array.isArray(currentFlowManifest.steps) ? currentFlowManifest.steps : [];
+                    const rewindStep = rewindSteps[pickedStepIdx];
+                    if (rewindStep && rewindStep.id != null) {
+                        currentSubintentId = String(rewindStep.id);
+                        writeFlowState();
+                    }
                 }
             }
 
@@ -2891,7 +2898,6 @@
                 return;
             }
 
-            locked = true;
             container.__bioListPickLocked = true;
             try {
                 allPickButtons().forEach(b => { b.disabled = true; b.classList.add('disabled'); });

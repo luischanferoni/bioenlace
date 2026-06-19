@@ -764,10 +764,6 @@ html:has(.spa-asistente-root) {
     font-weight: 500;
 }
 
-.spa-flow-step-item--done .spa-flow-step-ui {
-    pointer-events: none;
-}
-
 .spa-flow-step-item--pending .spa-flow-step-text {
     color: var(--bs-secondary-color, #6c757d);
     font-weight: 500;

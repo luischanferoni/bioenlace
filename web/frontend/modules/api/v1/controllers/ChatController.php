@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use common\components\Platform\Assistant\Chat\ChatOrchestrator;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Platform\Core\Db\BioenlaceDb;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
 
@@ -104,10 +105,9 @@ class ChatController extends BaseController
             return $this->error($err, $out, 400);
         }
 
-        if ($intentId === '') {
-            Yii::$app->db->close();
-            Yii::$app->db->open();
+        BioenlaceDb::ensureConnection();
 
+        if ($intentId === '') {
             $replyText = ChatOrchestrator::botReplyTextForPersistence($out);
 
             $conversacion = AsistenteConversacion::findOne(['usuario_id' => $uidStr, 'bot_id' => 'BOT']);

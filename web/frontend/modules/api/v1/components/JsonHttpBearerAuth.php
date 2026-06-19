@@ -185,10 +185,15 @@ class JsonHttpBearerAuth extends HttpBearerAuth
             Yii::$app->end();
         }
         if ($persona !== null) {
-            $session->set('idPersona', (int) $persona->id_persona);
+            $idPersona = (int) $persona->id_persona;
+            $session->set('idPersona', $idPersona);
             $session->set('apellidoUsuario', $persona->apellido);
             $session->set('nombreUsuario', $persona->nombre);
-            $session->set('efectores', ProfesionalEfectorServicio::getEfectoresParaSesion((int) $persona->id_persona));
+            $efectoresOwner = (int) $session->get('__efectores_persona_id', 0);
+            if ($efectoresOwner !== $idPersona || !$session->has('efectores')) {
+                $session->set('efectores', ProfesionalEfectorServicio::getEfectoresParaSesion($idPersona));
+                $session->set('__efectores_persona_id', $idPersona);
+            }
         }
 
         try {
@@ -209,7 +214,7 @@ class JsonHttpBearerAuth extends HttpBearerAuth
         }
 
         $user->setIdentity($userModel);
-        \common\components\Platform\Core\Permission\BioenlaceAccessChecker::refreshForIdentity($userModel);
+        \common\components\Platform\Core\Permission\BioenlaceAccessChecker::ensureUpToDate();
         AllowedRoutesResolver::markSessionRoutesOwner((int) $userModel->id);
 
         return $userModel;

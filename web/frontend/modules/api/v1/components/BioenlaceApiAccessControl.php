@@ -62,7 +62,7 @@ class BioenlaceApiAccessControl extends ActionFilter
             return false;
         }
 
-        BioenlaceAccessChecker::refreshForIdentity($identity);
+        BioenlaceAccessChecker::ensureUpToDate();
 
         if (BioenlaceAccessChecker::isSuperadminUserId((int) $identity->getId())) {
             return true;

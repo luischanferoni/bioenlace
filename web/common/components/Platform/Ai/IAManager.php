@@ -3,6 +3,7 @@
 namespace common\components\Ai;
 
 use Yii;
+use common\components\Platform\Core\Db\BioenlaceDb;
 use yii\httpclient\Client;
 use common\components\Logging\ConsultaLogger;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
@@ -803,13 +804,18 @@ class IAManager
                 return [];
             }
             
-            $client = new Client();
-            $response = $client->createRequest()
-                ->setMethod('POST')
-                ->setUrl($proveedorIA['endpoint'])
-                ->addHeaders($headersConCompresion)
-                ->setContent($compresion['data'])
-                ->send();
+            BioenlaceDb::releaseConnection();
+            try {
+                $client = new Client();
+                $response = $client->createRequest()
+                    ->setMethod('POST')
+                    ->setUrl($proveedorIA['endpoint'])
+                    ->addHeaders($headersConCompresion)
+                    ->setContent($compresion['data'])
+                    ->send();
+            } finally {
+                BioenlaceDb::ensureConnection();
+            }
 
             if ($response->isOk) {
                 if (

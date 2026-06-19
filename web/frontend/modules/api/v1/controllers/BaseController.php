@@ -3,6 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
+use common\components\Platform\Core\Db\BioenlaceDb;
 use yii\web\Controller;
 use yii\filters\Cors;
 use yii\filters\ContentNegotiator;
@@ -70,6 +71,7 @@ class BaseController extends Controller
     public function beforeAction($action)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
+        BioenlaceDb::ensureConnection();
 
         return parent::beforeAction($action);
     }

@@ -376,7 +376,13 @@ final class ProfesionalEfectorServicioAgendaUiService
         $ctx->assertUserCanIntent($userId, $intentId);
 
         $post['intent_id'] = $intentId;
-        $post = (new IntentSubmitFieldFilter())->filter($intentId, $post);
+        $post = (new IntentSubmitFieldFilter())->filter($intentId, $post, [
+            'id_servicio',
+            'ui_step',
+            'confirmar_impacto_turnos',
+            'preview',
+            'confirmar_cambios',
+        ]);
 
         $idStaff = ProfesionalEfectorServicioRecord::staffContextIdFromRequestParams($post);
         $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);

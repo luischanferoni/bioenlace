@@ -43,6 +43,15 @@ class IntentRequestContextServiceTest extends Unit
         $this->assertSame('ProfesionalEfectorServicio.condicion_laboral_staff', $staffOp);
     }
 
+    public function testDomainOperationFromLicenciaFlowIntents(): void
+    {
+        $own = (new IntentRequestContextService())->domainOperationForIntent('licencia.cargar-como-profesional-flow');
+        $this->assertSame('ProfesionalEfectorServicio.condicion_laboral_own', $own);
+
+        $staff = (new IntentRequestContextService())->domainOperationForIntent('licencia.cargar-para-profesional-flow');
+        $this->assertSame('ProfesionalEfectorServicio.condicion_laboral_staff', $staff);
+    }
+
     public function testFlowIntentHeaderConstant(): void
     {
         $this->assertSame('X-Flow-Intent-Id', FlowStepAccessService::HEADER_FLOW_INTENT_ID);

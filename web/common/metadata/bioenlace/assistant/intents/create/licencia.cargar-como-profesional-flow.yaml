@@ -1,6 +1,20 @@
 intent_id: licencia.cargar-como-profesional-flow
 version: 1
 
+operation: create
+intent_family: licencia.cargar
+domain_operation: ProfesionalEfectorServicio.condicion_laboral_own
+
+subject_resolution:
+  handler: organization.pes_own_in_efector
+
+fields:
+  - name: id_servicio
+  - name: fecha_inicio
+  - name: fecha_fin
+  - name: ui_step
+  - name: confirmar_impacto_turnos
+
 action_name: "Mi licencia"
 description: "Para registrar una licencia o permiso sobre uno de tus servicios en el efector."
 rbac_route: "/api/profesional-efector-servicio/cargar-licencia-como-profesional-flow"

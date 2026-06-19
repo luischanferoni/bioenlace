@@ -387,4 +387,54 @@ class BioenlaceDbManager extends DbManager
 
         return $roles;
     }
+
+    /**
+     * Rutas RBAC (type 3) hijas directas de permisos o roles, en pocas consultas.
+     *
+     * @param list<string> $parentNames
+     * @return array<string, true>
+     */
+    public function resolveRouteMapForParents(array $parentNames): array
+    {
+        $parentNames = array_values(array_unique(array_filter(
+            array_map(static fn ($n): string => trim((string) $n), $parentNames),
+            static fn (string $n): bool => $n !== ''
+        )));
+        if ($parentNames === []) {
+            return [];
+        }
+
+        $childrenList = $this->getChildrenList();
+        $candidateChildren = [];
+        foreach ($parentNames as $parent) {
+            if (!isset($childrenList[$parent]) || !is_array($childrenList[$parent])) {
+                continue;
+            }
+            foreach ($childrenList[$parent] as $childName) {
+                $childName = trim((string) $childName);
+                if ($childName !== '') {
+                    $candidateChildren[$childName] = true;
+                }
+            }
+        }
+        if ($candidateChildren === []) {
+            return [];
+        }
+
+        $routeNames = (new Query())
+            ->select(['name'])
+            ->from($this->itemTable)
+            ->where(['type' => 3, 'name' => array_keys($candidateChildren)])
+            ->column($this->db);
+
+        $routes = [];
+        foreach ($routeNames as $name) {
+            $name = trim((string) $name);
+            if ($name !== '') {
+                $routes[$name] = true;
+            }
+        }
+
+        return $routes;
+    }
 }

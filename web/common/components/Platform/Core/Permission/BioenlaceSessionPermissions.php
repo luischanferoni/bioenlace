@@ -50,10 +50,14 @@ final class BioenlaceSessionPermissions
         if (!Yii::$app->has('session')) {
             return;
         }
-        $owner = Yii::$app->session->get(self::SESSION_OWNER_KEY);
-        if ((int) $owner !== $userId) {
-            self::refreshForIdentity(Yii::$app->user->identity);
+        $owner = (int) Yii::$app->session->get(self::SESSION_OWNER_KEY, 0);
+        if ($owner === $userId) {
+            $routes = Yii::$app->session->get(self::SESSION_PREFIX_ROUTES);
+            if (is_array($routes) && $routes !== []) {
+                return;
+            }
         }
+        self::refreshForIdentity(Yii::$app->user->identity);
     }
 
     /**
@@ -71,20 +75,24 @@ final class BioenlaceSessionPermissions
             $permissions[(string) $name] = true;
         }
 
+        $roles = array_keys($auth->getRolesByUser($userId));
+
         $routes = [];
-        foreach (array_keys($permissions) as $permName) {
-            foreach ($auth->getChildren($permName) as $child) {
-                if (self::isRouteItem($child)) {
-                    $routes[$child->name] = true;
+        if ($auth instanceof \common\models\BioenlaceDbManager) {
+            $routes = $auth->resolveRouteMapForParents(array_merge(array_keys($permissions), $roles));
+        } else {
+            foreach (array_keys($permissions) as $permName) {
+                foreach ($auth->getChildren($permName) as $child) {
+                    if (self::isRouteItem($child)) {
+                        $routes[$child->name] = true;
+                    }
                 }
             }
-        }
-
-        $roles = array_keys($auth->getRolesByUser($userId));
-        foreach ($roles as $roleName) {
-            foreach ($auth->getChildren((string) $roleName) as $child) {
-                if (self::isRouteItem($child)) {
-                    $routes[$child->name] = true;
+            foreach ($roles as $roleName) {
+                foreach ($auth->getChildren((string) $roleName) as $child) {
+                    if (self::isRouteItem($child)) {
+                        $routes[$child->name] = true;
+                    }
                 }
             }
         }

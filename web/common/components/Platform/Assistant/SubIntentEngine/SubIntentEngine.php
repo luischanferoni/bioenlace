@@ -996,6 +996,25 @@ final class SubIntentEngine
             ];
         }
 
+        $route = self::apiRouteForActionId($actionId);
+        if ($route !== '') {
+            $clientOpen = self::clientOpenFromHttpRoute($route, $actionId);
+            if ($clientOpen !== null) {
+                $enriched = AssistantClientOpenEnricher::enrich([
+                    'action_id' => $actionId,
+                    'route' => $route,
+                    'client_open' => $clientOpen,
+                ]);
+                $co = $enriched['client_open'] ?? $clientOpen;
+                if (is_array($co) && AssistantDraftNormalizer::scalarString($co['kind'] ?? '') !== '') {
+                    return [
+                        'action_id' => $actionId,
+                        'client_open' => $co,
+                    ];
+                }
+            }
+        }
+
         $catalog = UiActionCatalog::forUser($userId);
         $item = $catalog->byActionId[$actionId] ?? null;
         if ($item === null) {

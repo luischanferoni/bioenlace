@@ -103,7 +103,12 @@ final class AllowedRoutesResolver
             return null;
         }
         $routes = Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROUTES);
-        return is_array($routes) ? $routes : null;
+        if (!is_array($routes) || $routes === []) {
+            return is_array($routes) ? [] : null;
+        }
+
+        // En sesión se guarda mapa route => true (no lista indexada).
+        return array_keys($routes);
     }
 
     /**

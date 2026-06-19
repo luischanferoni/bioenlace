@@ -30,7 +30,13 @@ class Module extends \yii\base\Module
 
         $target = new \Yii\log\FileTarget();
         $target->logFile = \Yii::getAlias('@runtime') . '/logs/chats/chats.log';
-        $target->levels = ['error', 'info'];
+        $target->levels = ['error', 'warning'];
+        $target->except = [
+            'yii\db\Command::query',
+            'yii\db\Command::execute',
+            'yii\db\Connection::open',
+            'yii\db\Connection::close',
+        ];
         
         //$targetDebug = new \Yii\log\FileTarget();
         //$targetDebug->logFile = \Yii::getAlias('@runtime') . '/logs/chats/chats.log';

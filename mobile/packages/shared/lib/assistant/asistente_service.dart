@@ -202,10 +202,16 @@ class AsistenteService {
 
       final decoded = json.decode(response.body);
       if (response.statusCode != 200) {
-        final rawMsg = decoded is Map ? decoded['message']?.toString() : null;
+        final rawMsg = decoded is Map ? apiMessageFromJson(decoded) : null;
+        if (rawMsg != null && rawMsg.isNotEmpty) {
+          return {
+            'success': false,
+            'message': rawMsg,
+            if (decoded is Map) 'errors': decoded['errors'],
+          };
+        }
         final msg = userFriendlyErrorMessage(
           Exception('HTTP ${response.statusCode}'),
-          serverMessage: rawMsg,
           fallback: 'Error en la consulta',
         );
         return {

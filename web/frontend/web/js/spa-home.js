@@ -1132,17 +1132,7 @@
         })
             .then(function (r) {
                 if (!r.ok) {
-                    return r.text().then(function (t) {
-                        try {
-                            const j = JSON.parse(t);
-                            if (j && typeof j.message === 'string' && j.message.trim() !== '') {
-                                throw new Error(j.message.trim());
-                            }
-                        } catch (e) {
-                            // ignore parse error; use generic below
-                        }
-                        throw new Error('HTTP ' + r.status);
-                    });
+                    return window.BioenlaceApiClient.errorFromFailedResponse(r);
                 }
                 return r.json();
             })
@@ -4781,7 +4771,7 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Error al cargar UI JSON');
+                    return window.BioenlaceApiClient.errorFromFailedResponse(response);
                 }
                 return response.json();
             })
@@ -4795,7 +4785,8 @@
             })
             .catch(error => {
                 console.error('Error cargando UI JSON (inline):', error);
-                container.innerHTML = '<div class="alert alert-danger">Error al cargar la UI</div>';
+                const msg = (error && error.message) ? String(error.message) : 'Error al cargar la UI';
+                container.innerHTML = '<div class="alert alert-danger">' + escapeHtml(msg) + '</div>';
             });
             return;
         }
@@ -4940,7 +4931,7 @@
             })
             .then(response => {
                 if (!response.ok) {
-                    throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+                    return window.BioenlaceApiClient.errorFromFailedResponse(response);
                 }
                 const contentType = response.headers.get('content-type') || '';
                 if (!contentType.includes('application/json')) {
@@ -5001,7 +4992,7 @@
                 if (response.ok) {
                     return response.text();
                 }
-                throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+                return window.BioenlaceApiClient.errorFromFailedResponse(response);
             })
             .then(html => {
                 const pageElement = document.getElementById(`spa-page-${pageId}`);
@@ -5037,7 +5028,7 @@
             if (response.ok) {
                 return response.text();
             }
-            throw new Error(`Error HTTP ${response.status}: ${response.statusText}`);
+            return window.BioenlaceApiClient.errorFromFailedResponse(response);
         })
         .then(html => {
             const pageElement = document.getElementById(`spa-page-${pageId}`);

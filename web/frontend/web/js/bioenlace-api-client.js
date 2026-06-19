@@ -129,6 +129,59 @@
   };
 
   /**
+   * Extrae mensaje legible del cuerpo JSON de error API ({ message, error, errors._error }).
+   * @param {string|object|null|undefined} body
+   * @returns {string}
+   */
+  NS.extractApiErrorMessage = function (body) {
+    if (body == null) {
+      return '';
+    }
+    var j = body;
+    if (typeof body === 'string') {
+      var t = String(body).trim();
+      if (t === '') {
+        return '';
+      }
+      try {
+        j = JSON.parse(t);
+      } catch (e) {
+        return '';
+      }
+    }
+    if (!j || typeof j !== 'object') {
+      return '';
+    }
+    if (j.message != null && String(j.message).trim() !== '') {
+      return String(j.message).trim();
+    }
+    if (j.error != null && String(j.error).trim() !== '') {
+      return String(j.error).trim();
+    }
+    if (j.errors && typeof j.errors === 'object') {
+      var err = j.errors._error;
+      if (Array.isArray(err) && err.length >= 1 && err[0] != null && String(err[0]).trim() !== '') {
+        return String(err[0]).trim();
+      }
+    }
+    return '';
+  };
+
+  /**
+   * @param {Response} response
+   * @returns {Promise<never>}
+   */
+  NS.errorFromFailedResponse = function (response) {
+    return response.text().then(function (text) {
+      var msg = NS.extractApiErrorMessage(text);
+      if (msg) {
+        throw new Error(msg);
+      }
+      throw new Error('HTTP ' + response.status);
+    });
+  };
+
+  /**
    * @param {string} url
    * @param {RequestInit} opts
    * @param {boolean} jwtRetried
@@ -177,10 +230,10 @@
           return { response: response, json: json };
         }
         if (!response.ok) {
-          var msg =
-            json && (json.message || json.error)
-              ? json.message || json.error
-              : 'HTTP ' + response.status;
+          var msg = NS.extractApiErrorMessage(json);
+          if (!msg) {
+            msg = 'HTTP ' + response.status;
+          }
           throw new Error(String(msg));
         }
         return { response: response, json: json };

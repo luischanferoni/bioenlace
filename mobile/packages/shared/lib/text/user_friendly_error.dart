@@ -1,5 +1,52 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+
+import 'package:http/http.dart' as http;
+
+/// Mensaje de error desde cuerpo JSON típico de la API Bioenlace.
+String? apiMessageFromJson(dynamic json) {
+  if (json is! Map) {
+    return null;
+  }
+  final message = json['message']?.toString().trim();
+  if (message != null && message.isNotEmpty) {
+    return message;
+  }
+  final error = json['error']?.toString().trim();
+  if (error != null && error.isNotEmpty) {
+    return error;
+  }
+  final errors = json['errors'];
+  if (errors is Map) {
+    final generic = errors['_error'];
+    if (generic is List && generic.isNotEmpty) {
+      final first = generic.first?.toString().trim();
+      if (first != null && first.isNotEmpty) {
+        return first;
+      }
+    }
+  }
+  return null;
+}
+
+/// Mensaje legible a partir de status HTTP + cuerpo de respuesta.
+String messageFromHttpResponse(http.Response res) {
+  return messageFromHttpResponseBody(res.statusCode, utf8.decode(res.bodyBytes));
+}
+
+String messageFromHttpResponseBody(int statusCode, String bodyText) {
+  String? bodyMsg;
+  final trimmed = bodyText.trim();
+  if (trimmed.isNotEmpty) {
+    try {
+      bodyMsg = apiMessageFromJson(jsonDecode(trimmed));
+    } catch (_) {
+      // ignore
+    }
+  }
+  return userFriendlyHttpStatusMessage(statusCode, bodyMessage: bodyMsg);
+}
 
 /// Mensajes de error legibles para el usuario final (release).
 String userFriendlyErrorMessage(
@@ -10,6 +57,18 @@ String userFriendlyErrorMessage(
   final server = serverMessage?.trim();
   if (server != null && server.isNotEmpty && _looksUserFacing(server)) {
     return server;
+  }
+
+  if (error is String) {
+    final direct = error.trim();
+    if (direct.isNotEmpty && _looksUserFacing(direct)) {
+      return direct;
+    }
+  }
+
+  final unwrapped = _unwrapExceptionMessage(error);
+  if (unwrapped != null && _looksUserFacing(unwrapped)) {
+    return unwrapped;
   }
 
   if (error is TimeoutException) {
@@ -86,9 +145,21 @@ bool _looksUserFacing(String message) {
   return true;
 }
 
+String? _unwrapExceptionMessage(Object error) {
+  final raw = error.toString().trim();
+  const prefix = 'Exception:';
+  if (raw.startsWith(prefix)) {
+    final inner = raw.substring(prefix.length).trim();
+    if (inner.isNotEmpty) {
+      return inner;
+    }
+  }
+  return null;
+}
+
 String userFriendlyHttpStatusMessage(int statusCode, {String? bodyMessage}) {
   final body = bodyMessage?.trim();
-  if (body != null && body.isNotEmpty && _looksUserFacing(body)) {
+  if (body != null && body.isNotEmpty) {
     return body;
   }
   if (statusCode >= 500) {

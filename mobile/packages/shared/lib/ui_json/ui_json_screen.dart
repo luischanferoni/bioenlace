@@ -21,23 +21,13 @@ import 'prescription_pdf_download_widget.dart';
 import 'weekly_scheduler_widget.dart';
 
 String _messageFromErrorBody(http.Response res) {
-  String? bodyMsg;
-  try {
-    final json = jsonDecode(utf8.decode(res.bodyBytes));
-    if (json is Map) {
-      final msg = json['message']?.toString();
-      if (msg != null && msg.trim().isNotEmpty) {
-        bodyMsg = msg.trim();
-        return userFriendlyHttpStatusMessage(res.statusCode, bodyMessage: bodyMsg);
-      }
-    }
-  } catch (_) {
-    // ignore
-  }
-  return userFriendlyHttpStatusMessage(res.statusCode, bodyMessage: bodyMsg);
+  return messageFromHttpResponse(res);
 }
 
 String _humanizeExceptionMessage(Object e) {
+  if (e is String) {
+    return e;
+  }
   return userFriendlyErrorMessage(e);
 }
 
@@ -446,7 +436,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           return;
         }
         if (res.statusCode < 200 || res.statusCode >= 300) {
-          throw Exception(_messageFromErrorBody(res));
+          throw messageFromHttpResponse(res);
         }
         final json = jsonDecode(utf8.decode(res.bodyBytes));
         if (json is! Map) {
@@ -477,9 +467,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     if (!mounted || loadGen != _loadGeneration) {
       return;
     }
-    final friendly = userFriendlyErrorMessage(
-      lastError ?? Exception('Error desconocido'),
-    );
+    final friendly = lastError is String
+        ? lastError
+        : userFriendlyErrorMessage(lastError ?? Exception('Error desconocido'));
     unawaited(AppDiagnosticLog.reportIssue('ui_json_load', 'load_fail', data: {
       'error': lastError?.toString() ?? '',
       'url': url.length > 200 ? '${url.substring(0, 200)}…' : url,

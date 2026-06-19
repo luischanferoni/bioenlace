@@ -2259,16 +2259,7 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   String _messageFromHttpResponse(http.Response res) {
-    String? bodyMsg;
-    try {
-      final decoded = json.decode(utf8.decode(res.bodyBytes));
-      if (decoded is Map && decoded['message'] != null) {
-        bodyMsg = decoded['message'].toString().trim();
-      }
-    } catch (_) {
-      // ignore
-    }
-    return userFriendlyHttpStatusMessage(res.statusCode, bodyMessage: bodyMsg);
+    return messageFromHttpResponse(res);
   }
 
   void _showErrorSnackbar(Object error, {String? serverMessage}) {

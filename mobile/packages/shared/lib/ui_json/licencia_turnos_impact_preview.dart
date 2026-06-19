@@ -56,7 +56,7 @@ class _LicenciaTurnosImpactPreviewWidgetState extends State<LicenciaTurnosImpact
       if (res.statusCode < 200 || res.statusCode >= 300) {
         setState(() {
           _loading = false;
-          _error = userFriendlyHttpStatusMessage(res.statusCode);
+          _error = messageFromHttpResponse(res);
         });
         return;
       }

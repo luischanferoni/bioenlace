@@ -134,7 +134,7 @@ Ver `common/config/params.php`. Campos clave:
 | Comando | Frecuencia sugerida | Acción |
 |---------|-------------------|--------|
 | `php yii clinical-history-exchange/process-outbound` | cada 5 min | Procesa cola saliente |
-| (futuro) `php yii clinical-history-exchange/reconcile` | diario | Compara `ENVIADO` sin acuse |
+| (futuro) `php yii clinical-history-exchange/reconcile` | diario | Actualiza `external_id` en jobs `ENVIADO` sin acuse (`statusPath`) |
 
 Registrar en el mismo scheduler que `legal-record-export/run` y `encounter-patient-summary/process`.
 

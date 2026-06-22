@@ -75,5 +75,5 @@ php yii clinical-history-exchange/process-one 123
 - [x] Hook finalize encounter
 - [x] Mapper Bundle v1 (recursos clínicos del encounter)
 - [x] API staff listar/ver estado jobs
-- [ ] Tests unitarios enqueue + retry backoff (parcial)
+- [x] Tests unitarios enqueue + retry backoff
 - [x] RBAC lectura estado jobs

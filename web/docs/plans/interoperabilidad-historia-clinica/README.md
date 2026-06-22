@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `interoperabilidad-historia-clinica` |
-| Estado | Fase 0–1 — estructura y cola (sin endpoint nacional definitivo) |
+| Estado | Fase 1–2 completas; Fase 3 código listo (credenciales TBD); Fase 4 reconcile (polling) |
 | Dueño | Equipo clínico / integraciones |
 | Norma referencia | FHIR R4; perfiles nacionales TBD con MSAL / red jurisdiccional |
 

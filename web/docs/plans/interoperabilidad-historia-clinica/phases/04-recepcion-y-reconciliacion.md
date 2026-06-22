@@ -35,5 +35,5 @@ Si el encuentro se **corrige** post-envío (política producto):
 
 - [ ] Definir si el receptor expone webhook o solo polling
 - [ ] Endpoint inbound + validación Bundle
-- [ ] Conciliación diaria
+- [x] Conciliación diaria (`php yii clinical-history-exchange/reconcile`, requiere `statusPath`)
 - [ ] Dashboard operaciones (jobs `MUERTO` / sin acuse)

@@ -29,10 +29,19 @@ Completar `FhirClinicalHistoryBundleMapper::buildForEncounter()` para producir u
 - Texto clínico principal: `encounter.note` o nota estructurada post-IA
 - Codificación diagnósticos: ICD-10 en `Condition.code`
 
+## Estado
+
+| Ítem | Estado |
+|------|--------|
+| Mapper recursos clínicos | Implementado |
+| DocumentReference recetas emitidas | Implementado |
+| Golden structure test | Implementado |
+| Perfil nacional StructureDefinition | Pendiente Fase 0 |
+
 ## Validación
 
-- Golden file JSON en `common/tests/_data/fhir/encounter-document-v1.json`
-- Test: mapper genera Bundle con `entry` mínimo Patient + Encounter + Composition
+- Golden structure en `common/tests/_data/fhir/encounter-document-v1-minimal.structure.json`
+- Test: `FhirClinicalHistoryBundleMapperTest` — Bundle con Patient + Encounter + Composition mínimo
 
 ## Fuera de Fase 2
 

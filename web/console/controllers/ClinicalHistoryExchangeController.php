@@ -3,6 +3,7 @@
 namespace console\controllers;
 
 use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundProcessorService;
+use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundReconcileService;
 use common\models\Clinical\ClinicalHistoryOutboundJob;
 use yii\console\Controller;
 
@@ -12,6 +13,8 @@ use yii\console\Controller;
  * php yii clinical-history-exchange/process-outbound
  * php yii clinical-history-exchange/process-outbound 50
  * php yii clinical-history-exchange/process-one 123
+ * php yii clinical-history-exchange/reconcile
+ * php yii clinical-history-exchange/reconcile 100
  *
  * @see web/docs/plans/interoperabilidad-historia-clinica/phases/01-estructura-y-cola.md
  */
@@ -69,6 +72,17 @@ class ClinicalHistoryExchangeController extends Controller
         $row->save(false);
 
         $this->stdout("Job {$jobId} reencolado.\n");
+
+        return 0;
+    }
+
+    /**
+     * Concilia jobs ENVIADO sin acuse definitivo (requiere statusPath en conector nacional).
+     */
+    public function actionReconcile(int $limit = 50): int
+    {
+        $n = (new ClinicalHistoryOutboundReconcileService())->reconcileDue($limit);
+        $this->stdout("Jobs reconciliados: {$n}\n");
 
         return 0;
     }

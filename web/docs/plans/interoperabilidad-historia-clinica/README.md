@@ -19,16 +19,18 @@
 | [phases/03-conector-nacional.md](./phases/03-conector-nacional.md) | HTTP POST definitivo (pendiente credenciales) |
 | [phases/04-recepcion-y-reconciliacion.md](./phases/04-recepcion-y-reconciliacion.md) | Acuses, pull, conciliación |
 
-## Código (Fase 1)
+## Código
 
 | Área | Ubicación |
 |------|-----------|
-| Conectores | `common/components/Domain/Integrations/ClinicalHistory/` |
-| Dominio (cola) | `common/components/Domain/Clinical/HistoryExchange/` |
-| Modelos | `common/models/Clinical/ClinicalHistoryOutboundJob.php` |
+| Conectores + mapper | `common/components/Domain/Integrations/ClinicalHistory/` |
+| Dominio (cola, retry, reconcile) | `common/components/Domain/Clinical/HistoryExchange/` |
+| Modelos | `ClinicalHistoryOutboundJob`, `ClinicalHistoryOutboundAudit` |
+| API staff | `frontend/modules/api/v1/controllers/clinical/HistoryExchangeController.php` |
 | Consola | `console/controllers/ClinicalHistoryExchangeController.php` |
+| Tests | `common/tests/unit/clinical/ClinicalHistory*`, `FhirClinicalHistoryBundleMapperTest` |
 | Params | `common/config/params.php` → `clinicalHistoryExchange` |
-| Migración | `common/migrations/m260618_100000_clinical_history_outbound.php` |
+| Migraciones | `m260618_100000_clinical_history_outbound.php`, `m260618_100001_api_clinical_history_exchange_rbac.php` |
 
 ## Relacionado
 

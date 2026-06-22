@@ -20,9 +20,9 @@ Para **historia clínica entrante** desde el Estado (si aplica):
 
 Tras Fase 3, si el nacional no devuelve id en línea:
 
-1. Job queda `ENVIADO` con `external_id` null.
-2. Cron `reconcile` consulta API de estado (TBD).
-3. Actualiza job o marca discrepancia.
+1. Job queda `ENVIADO` con `external_id` null o sintético (`bioenlace-job-*`).
+2. Cron `php yii clinical-history-exchange/reconcile` consulta API de estado (`statusPath`).
+3. Actualiza `external_id` y registra auditoría `reconciliado`.
 
 ## Actualización de documento
 

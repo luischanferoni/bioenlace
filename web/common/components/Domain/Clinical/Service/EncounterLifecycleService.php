@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\components\Domain\Clinical\CareCohort\Service\CareEncounterOrchestrator;
+use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundEnqueueService;
 use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryPublishService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
@@ -57,6 +58,8 @@ final class EncounterLifecycleService
             (new PatientEncounterSummaryPublishService())->schedulePublication($encounter);
             (new CareEncounterOrchestrator())->onEncounterFinalized($encounter);
         }
+
+        (new ClinicalHistoryOutboundEnqueueService())->scheduleIfApplicable($encounter);
 
         return $encounter;
     }

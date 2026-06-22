@@ -104,6 +104,40 @@ return [
     ],
 
     /**
+     * Export FHIR historia clínica hacia servidor nacional / red (cola saliente).
+     * Credenciales y enabled en params-local. Ver docs/plans/interoperabilidad-historia-clinica/
+     */
+    'clinicalHistoryExchange' => [
+        'enabled' => false,
+        'default' => 'null',
+        'exchange_profile' => 'encounter-document-v1',
+        'encounter_classes' => ['AMB', 'EMER', 'IMP'],
+        'excluded_efector_ids' => [],
+        'allowed_efector_ids' => null,
+        'log_bundle_snapshot' => false,
+        'retry' => [
+            'max_attempts' => 5,
+            'backoff_seconds' => [60, 300, 900, 3600, 14400],
+            'batch_limit' => 20,
+            'delay_after_finalize_seconds' => 120,
+        ],
+        'connectors' => [
+            'null' => [
+                'class' => \common\components\Domain\Integrations\ClinicalHistory\Connector\NullClinicalHistoryExchangeConnector::class,
+            ],
+            'nacional-fhir' => [
+                'class' => \common\components\Domain\Integrations\ClinicalHistory\Connector\HttpNationalClinicalHistoryConnector::class,
+                'enabled' => false,
+                'baseUrl' => null,
+                'tokenUrl' => null,
+                'clientId' => null,
+                'clientSecret' => null,
+                'submitPath' => '/fhir/Bundle',
+            ],
+        ],
+    ],
+
+    /**
      * Cohortes — defaults compartidos (estructura). Activación por app en frontend/console params.
      * @see common/config/params-care-cohort.php
      */

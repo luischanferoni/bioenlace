@@ -136,6 +136,12 @@ return [
                 'OPTIONS api/<version:\w+>/clinical/legal-record-export/ver-estado' => '<version>/clinical/legal-record-export/ver-estado',
                 'GET api/<version:\w+>/clinical/legal-record-export/descargar' => '<version>/clinical/legal-record-export/descargar',
                 'OPTIONS api/<version:\w+>/clinical/legal-record-export/descargar' => '<version>/clinical/legal-record-export/descargar',
+
+                // Export FHIR historia clínica (estado jobs staff)
+                'GET api/<version:\w+>/clinical/history-exchange/listar-por-encounter' => '<version>/clinical/history-exchange/listar-por-encounter',
+                'OPTIONS api/<version:\w+>/clinical/history-exchange/listar-por-encounter' => '<version>/clinical/history-exchange/listar-por-encounter',
+                'GET api/<version:\w+>/clinical/history-exchange/ver-estado' => '<version>/clinical/history-exchange/ver-estado',
+                'OPTIONS api/<version:\w+>/clinical/history-exchange/ver-estado' => '<version>/clinical/history-exchange/ver-estado',
                 'POST api/<version:\w+>/clinical/emergency-guardia/ingresar' => '<version>/clinical/emergency-guardia/ingresar',
                 'OPTIONS api/<version:\w+>/clinical/emergency-guardia/ingresar' => '<version>/clinical/emergency-guardia/ingresar',
                 'POST api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/registrar-triage' => '<version>/clinical/emergency-guardia/registrar-triage',

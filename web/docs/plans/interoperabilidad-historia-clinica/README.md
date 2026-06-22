@@ -1,0 +1,37 @@
+# Plan — Interoperabilidad historia clínica (FHIR saliente)
+
+| Campo | Valor |
+|-------|--------|
+| Slug | `interoperabilidad-historia-clinica` |
+| Estado | Fase 0–1 — estructura y cola (sin endpoint nacional definitivo) |
+| Dueño | Equipo clínico / integraciones |
+| Norma referencia | FHIR R4; perfiles nacionales TBD con MSAL / red jurisdiccional |
+
+## Índice
+
+| Doc | Contenido |
+|-----|-----------|
+| [overview.md](./overview.md) | Alcance, actores, qué entra y qué no |
+| [design.md](./design.md) | Arquitectura, capas, reintentos, idempotencia |
+| [phases/00-marco.md](./phases/00-marco.md) | Marco normativo y contrato con el Estado |
+| [phases/01-estructura-y-cola.md](./phases/01-estructura-y-cola.md) | Cola, cron, hook al finalizar encounter |
+| [phases/02-mapper-fhir-bundle.md](./phases/02-mapper-fhir-bundle.md) | Bundle documental (Composition + recursos) |
+| [phases/03-conector-nacional.md](./phases/03-conector-nacional.md) | HTTP POST definitivo (pendiente credenciales) |
+| [phases/04-recepcion-y-reconciliacion.md](./phases/04-recepcion-y-reconciliacion.md) | Acuses, pull, conciliación |
+
+## Código (Fase 1)
+
+| Área | Ubicación |
+|------|-----------|
+| Conectores | `common/components/Domain/Integrations/ClinicalHistory/` |
+| Dominio (cola) | `common/components/Domain/Clinical/HistoryExchange/` |
+| Modelos | `common/models/Clinical/ClinicalHistoryOutboundJob.php` |
+| Consola | `console/controllers/ClinicalHistoryExchangeController.php` |
+| Params | `common/config/params.php` → `clinicalHistoryExchange` |
+| Migración | `common/migrations/m260618_100000_clinical_history_outbound.php` |
+
+## Relacionado
+
+- Modelo FHIR interno: [decisions/fhir-clinical.md](../../decisions/fhir-clinical.md)
+- Receta RDI (patrón conector): [plans/receta-electronica/](../receta-electronica/README.md)
+- Madurez HIS: [his-completo/10-atencion-ambulatoria.md](../../his-completo/10-atencion-ambulatoria.md) (ítem interoperabilidad saliente)

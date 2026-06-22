@@ -12,7 +12,7 @@ Todo lo **específico del rubro actual**. Para otro producto, esta carpeta se re
 | **`Scheduling/`** | Turnos, agenda, quirófano |
 | **`Person/`** | Personas, registro, representación |
 | **`Organization/`** | Efectores, PES, sesión operativa |
-| **`Integrations/`** | SISSE, receta digital, MPI, laboratorio FHIR, identidad |
+| **`Integrations/`** | SISSE, receta digital, **export HC FHIR**, MPI, laboratorio FHIR, identidad |
 | **`Terminology/`** | SNOMED, codificación clínica (`SnomedCategoryCatalog`, `SnomedSearchProfileCatalog`) |
 
 Metadata SNOMED: `common/metadata/bioenlace/terminology/snomed-terminology.yaml` (ECL canónicos + codificación + búsqueda).
@@ -30,5 +30,6 @@ Los handlers que conectan dominio con motores genéricos (hydrators, scope check
 | `Clinical/Inpatient/` | Mapa camas, ingreso/alta |
 | `Clinical/Text/` | Procesador texto clínico, SymSpell médico |
 | `Clinical/Legacy/` | Puente consulta legacy |
+| `Clinical/HistoryExchange/` | Cola export FHIR HC → nacional |
 
 Ver [Clinical/README.md](./Clinical/README.md).

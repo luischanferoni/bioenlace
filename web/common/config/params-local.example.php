@@ -24,4 +24,21 @@ return [
     // 'groq_api_key' => 'gsk_...',
     // 'stt' => ['proveedor_servidor' => 'groq', 'device_enabled' => true, 'server_enabled' => true],
     // 'optimizar_audio' => false, // shared hosting sin FFmpeg
+
+    // Export FHIR HC → nacional (cuando haya contrato)
+    // 'clinicalHistoryExchange' => [
+    //     'enabled' => true,
+    //     'default' => 'nacional-fhir',
+    //     'log_bundle_snapshot' => true,
+    //     'connectors' => [
+    //         'nacional-fhir' => [
+    //             'enabled' => true,
+    //             'baseUrl' => 'https://…',
+    //             'tokenUrl' => 'https://…/oauth/token',
+    //             'clientId' => '…',
+    //             'clientSecret' => '…',
+    //             'submitPath' => '/fhir/Bundle', // TBD contrato estatal
+    //         ],
+    //     ],
+    // ],
 ];

@@ -10,7 +10,7 @@ use common\models\BioenlaceDbManager;
 use common\models\ProfesionalEfectorServicio;
 use common\models\User;
 use common\models\Person\Persona;
-use common\components\DiditClient;
+use common\components\Domain\Integrations\Identity\DiditClient;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use Firebase\JWT\JWT;

@@ -282,9 +282,6 @@ return [
                 'OPTIONS api/<version:\w+>/clinical/laboratory-result/descargar-pdf-como-paciente' => '<version>/clinical/laboratory-result/descargar-pdf-como-paciente',
                 'GET api/<version:\w+>/clinical/encounter/<encounterId:\d+>/laboratory-result' => '<version>/clinical/laboratory-result/por-encounter',
                 'OPTIONS api/<version:\w+>/clinical/encounter/<encounterId:\d+>/laboratory-result' => '<version>/clinical/laboratory-result/por-encounter',
-                // sign up
-                'POST api/<version:\w+>/signup' => '<version>/signup/registrar',
-                // OPTIONS: cubierto por behaviors del controller (CORS/preflight) si aplica
                 // login
                 'POST api/<version:\w+>/login' => '<version>/login/login',
                 // login biométrico con Didit

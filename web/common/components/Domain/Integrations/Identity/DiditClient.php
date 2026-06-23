@@ -177,10 +177,15 @@ class DiditClient extends Component
     {
         $baseUrl = rtrim(Yii::$app->params['didit_base_url'] ?? 'https://api.didit.me', '/');
 
+        $timeout = (int) (Yii::$app->params['didit_timeout'] ?? 30);
+
         return new Client([
             'baseUrl' => $baseUrl,
             'requestConfig' => [
                 'format' => Client::FORMAT_JSON,
+                'options' => [
+                    'timeout' => $timeout,
+                ],
             ],
             'responseConfig' => [
                 'format' => Client::FORMAT_JSON,

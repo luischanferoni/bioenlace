@@ -119,18 +119,7 @@ return [
     'motivos_consulta_cierre_minutos' => 2,
     /** Minutos antes del turno en que el médico puede abrir historia clínica (motivos resumidos por IA). */
     'historia_clinica_apertura_medico_minutos' => 1,
-    
-    // Configuración de reconocimiento facial
-    'face_verification_provider' => 'azure', // 'azure', 'google', 'simple'
-    'google_vision_api_key' => '', // API key para Google Vision API
-    
-    // Google Cloud / Vertex AI / API keys: ver frontend/config/params-local.php
-    'azure_face_api_key' => '', // API key para Azure Face API
-    'azure_face_endpoint' => '', // Endpoint de Azure Face API (ej: https://<resource>.cognitiveservices.azure.com)
-    'azure_face_min_quality' => 0.35, // Umbral mínimo de qualityForRecognition (0.0 - 1.0)
-    'azure_face_fail_on_occlusion' => true, // Rechazar si hay oclusiones (ojos/boca)
-    'face_match_threshold' => 0.7, // Umbral de similitud (0.0 - 1.0)
-    
+
     // Configuración de JWT para autenticación API
     'jwtSecret' => 'yt14zxFvJUdIXnOIHP87TpfR42JKyi6Ni2wUX5JoHpLiLtikL1p7vdHWcvGIpCfK', // App HS256 + MPI HS512 (MpiJwtTokenService)
 ];

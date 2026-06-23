@@ -26,6 +26,10 @@ return [
     // 'mailerDsn' => 'smtp://user:pass@smtp.example.com:587',
     // 'mailerDsn' => 'sendmail://default',
 
+    // --- Didit — identidad (registro) y auth biométrica (POST /api/v1/registro/registrar, login-biometrico) ---
+    // Workflows en móvil: mobile/packages/shared/lib/config/api_config.dart
+    'didit_api_key' => '…', // Didit Console → API Keys
+
     // --- Push FCM plataforma (proyecto Firebase distinto de Vertex) ---
     'fcmPush' => [
         'projectId' => 'august-cirrus-482714-f4',

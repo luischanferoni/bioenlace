@@ -3,7 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
-use common\components\Domain\Scheduling\Service\RegistroService;
+use common\components\Domain\Person\Service\RegistroService;
 
 /**
  * Controlador de registro unificado para pacientes y médicos.

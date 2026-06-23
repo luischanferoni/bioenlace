@@ -4,6 +4,7 @@ Visión de producto **no comprometida** en el roadmap actual. Sirve para captura
 
 | Documento | Tema |
 |-----------|------|
+| [agentes-autonomos-backlog.md](./agentes-autonomos-backlog.md) | Backlog de agentes proactivos (turnos, seguimiento, lab, documentación…) con casos de uso |
 | [contexto-asistencia-dinamica.md](./contexto-asistencia-dinamica.md) | Contexto clínico amplio y preguntas generadas por IA al asistir |
 | [seguimiento-post-consulta-educacion.md](./seguimiento-post-consulta-educacion.md) | Seguimiento diferido, carga de evolución e instrucción al paciente |
 

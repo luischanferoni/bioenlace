@@ -20,7 +20,7 @@ return [
     'google_cloud_credentials_path' => __DIR__ . '/credentials/integracion-voz-del-agro-b5c802c87e77.json',
     'google_cloud_project_id' => 'integracion-voz-del-agro',
     'google_cloud_region' => 'us-central1',
-    // 'google_cloud_api_key' => '', // solo dev local; menos seguro que JSON
+    // 'google_cloud_api_key' => '', // solo dev local; menos seguro que500 JSON
 
     // --- Mail (Symfony Mailer). null/vacío = archivo en runtime/mail ---
     // 'mailerDsn' => 'smtp://user:pass@smtp.example.com:587',

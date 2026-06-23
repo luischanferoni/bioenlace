@@ -29,6 +29,10 @@ return [
 
     /** Modelo Gemini en Vertex / Generative Language API (producción: gemini-2.5-flash-lite). */
     'vertex_ai_model' => 'gemini-2.5-flash-lite',
+    'vertex_ai_location' => 'us-central1',
+    'vertex_ai_temperature' => 0.3,
+    'vertex_ai_max_tokens' => 1000,
+    'google_max_output_tokens' => 8192,
 
     /**
      * Acumula usageMetadata de Gemini en AICostTracker (tokens, cachedContentTokenCount por contexto).
@@ -76,7 +80,7 @@ return [
     'max_modelos_memoria' => 3, // Máximo de modelos cargados simultáneamente en memoria
     'chunk_audio_duration' => 10, // Duración de chunks de audio en segundos
     'similitud_minima_respuestas' => 0.85, // Umbral mínimo de similitud para reutilizar respuestas predefinidas
-    'optimizar_audio' => true, // Activar optimizaciones de audio (compresión, eliminación de silencios)
+    'optimizar_audio' => false, // Activar optimizaciones de audio (compresión, eliminación de silencios)
     'ffmpeg_path' => 'ffmpeg', // Ruta al ejecutable de FFmpeg
 
     /**
@@ -87,7 +91,7 @@ return [
         /** groq | huggingface */
         'proveedor_servidor' => 'groq',
         'device_enabled' => true,
-        'server_enabled' => true,
+        'server_enabled' => false,
         'groq_model' => 'whisper-large-v3-turbo',
         'groq_language' => 'es',
     ],

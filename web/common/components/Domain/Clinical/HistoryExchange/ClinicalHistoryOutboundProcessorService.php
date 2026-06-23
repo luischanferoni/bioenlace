@@ -131,25 +131,19 @@ final class ClinicalHistoryOutboundProcessorService
     private function markFailed(ClinicalHistoryOutboundJob $row, string $message, bool $retryable): void
     {
         $config = ClinicalHistoryExchangeRegistry::config();
-        $maxAttempts = (int) ($config['retry']['max_attempts'] ?? 5);
-        $backoff = $config['retry']['backoff_seconds'] ?? [60, 300, 900, 3600, 14400];
-        if (!is_array($backoff)) {
-            $backoff = [60, 300, 900, 3600, 14400];
-        }
+        $retry = is_array($config['retry'] ?? null) ? $config['retry'] : [];
 
         $row->ultimo_error = $message;
         $row->updated_at = date('Y-m-d H:i:s');
 
-        if (!$retryable || (int) $row->intentos >= $maxAttempts) {
+        if (ClinicalHistoryOutboundRetryPolicy::shouldMarkDead((int) $row->intentos, $retryable, $retry)) {
             $this->markDead($row, $message);
 
             return;
         }
 
-        $idx = min((int) $row->intentos - 1, count($backoff) - 1);
-        $wait = (int) ($backoff[$idx] ?? 300);
         $row->estado = ClinicalHistoryOutboundJob::ESTADO_FALLIDO;
-        $row->run_at = date('Y-m-d H:i:s', time() + max(1, $wait));
+        $row->run_at = ClinicalHistoryOutboundRetryPolicy::nextRunAt((int) $row->intentos, $retry);
         $row->save(false);
 
         ClinicalHistoryOutboundAudit::registrar(

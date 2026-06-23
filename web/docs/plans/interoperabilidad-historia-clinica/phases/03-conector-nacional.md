@@ -29,6 +29,7 @@ En `frontend/config/params-local.php` o `common/config/params-local.php`:
             'clientId' => '…',
             'clientSecret' => '…',
             'submitPath' => '/fhir/Bundle', // TBD
+            'statusPath' => '/fhir/Bundle/{id}/_status', // TBD polling acuse
         ],
     ],
 ],
@@ -44,8 +45,8 @@ En `frontend/config/params-local.php` o `common/config/params-local.php`:
 ## Checklist Fase 3
 
 - [ ] URL y credenciales del entorno homologación
-- [ ] Implementar POST + parseo respuesta
-- [ ] Manejo 401 refresh token
+- [x] Implementar POST + parseo respuesta
+- [x] Manejo 401 refresh token (reintento una vez)
 - [ ] Piloto con un efector (`allowed_efector_ids`)
 - [ ] Runbook operaciones (reprocesar `MUERTO`)
 
@@ -56,6 +57,6 @@ En `frontend/config/params-local.php` o `common/config/params-local.php`:
 Falta únicamente configurar en homologación:
 
 - `baseUrl`, `tokenUrl`, `clientId`, `clientSecret`
-- **`submitPath`** — path definitivo del organismo (hoy default `/fhir/Bundle`)
+- **`statusPath`** — path GET de estado (placeholder `{id}`); vacío = sin reconcile
 
 Sin credenciales reales el conector sigue con `enabled => false` y el flujo usa `null` → jobs `OMITIDO`.

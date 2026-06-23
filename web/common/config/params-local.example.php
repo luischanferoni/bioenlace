@@ -74,6 +74,7 @@ return [
     //             'clientId' => '…',
     //             'clientSecret' => '…',
     //             'submitPath' => '/fhir/Bundle', // TBD contrato estatal
+    //             'statusPath' => '/fhir/Bundle/{id}/_status', // TBD polling acuse
     //         ],
     //     ],
     // ],

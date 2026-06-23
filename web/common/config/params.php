@@ -121,6 +121,9 @@ return [
             'batch_limit' => 20,
             'delay_after_finalize_seconds' => 120,
         ],
+        'reconcile' => [
+            'batch_limit' => 50,
+        ],
         'connectors' => [
             'null' => [
                 'class' => \common\components\Domain\Integrations\ClinicalHistory\Connector\NullClinicalHistoryExchangeConnector::class,
@@ -133,6 +136,7 @@ return [
                 'clientId' => null,
                 'clientSecret' => null,
                 'submitPath' => '/fhir/Bundle',
+                'statusPath' => null, // ej. '/fhir/Bundle/{id}/_status' cuando el contrato lo defina
             ],
         ],
     ],

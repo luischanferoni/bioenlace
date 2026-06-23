@@ -5,9 +5,11 @@ namespace common\components\Domain\Integrations\ClinicalHistory\Mapper;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\Condition;
 use common\models\Clinical\DiagnosticReport;
+use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
 use common\models\Clinical\ServiceRequest;
+use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
 use common\models\Efector;
 use common\models\Persona;
 use common\models\ProfesionalEfectorServicio;
@@ -127,6 +129,19 @@ final class FhirClinicalHistoryBundleMapper
             $compositionSections[] = [
                 'title' => 'Resultados de laboratorio',
                 'entry' => $labRefs,
+            ];
+        }
+
+        $prescriptionRefs = [];
+        foreach ($this->loadElectronicPrescriptions($encounterId) as $prescription) {
+            $resource = $this->mapDocumentReference($prescription, $patientRef, $encounterRef);
+            $entries[] = $this->entry('prescription-' . (int) $prescription->id, $resource);
+            $prescriptionRefs[] = ['reference' => 'DocumentReference/' . (int) $prescription->id];
+        }
+        if ($prescriptionRefs !== []) {
+            $compositionSections[] = [
+                'title' => 'Recetas electrónicas',
+                'entry' => $prescriptionRefs,
             ];
         }
 
@@ -411,6 +426,64 @@ final class FhirClinicalHistoryBundleMapper
                 ]],
             ],
             'patient' => ['reference' => $patientRef],
+        ]);
+    }
+
+    /**
+     * @return ElectronicPrescription[]
+     */
+    private function loadElectronicPrescriptions(int $encounterId): array
+    {
+        return ElectronicPrescription::find()
+            ->andWhere([
+                'encounter_id' => $encounterId,
+                'status' => PrescriptionLegalStatus::ISSUED,
+                'deleted_at' => null,
+            ])
+            ->orderBy(['id' => SORT_ASC])
+            ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapDocumentReference(
+        ElectronicPrescription $prescription,
+        string $patientRef,
+        string $encounterRef
+    ): array {
+        $identifiers = [];
+        if (!empty($prescription->prescription_number)) {
+            $identifiers[] = [
+                'system' => 'urn:bioenlace:prescription-number',
+                'value' => (string) $prescription->prescription_number,
+            ];
+        }
+        if (!empty($prescription->verification_token)) {
+            $identifiers[] = [
+                'system' => 'urn:bioenlace:prescription-verification',
+                'value' => (string) $prescription->verification_token,
+            ];
+        }
+
+        return array_filter([
+            'resourceType' => 'DocumentReference',
+            'id' => (string) (int) $prescription->id,
+            'status' => 'current',
+            'type' => [
+                'coding' => [[
+                    'system' => 'http://loinc.org',
+                    'code' => '57833-6',
+                    'display' => 'Prescription record',
+                ]],
+            ],
+            'subject' => ['reference' => $patientRef],
+            'context' => [
+                'encounter' => [['reference' => $encounterRef]],
+            ],
+            'identifier' => $identifiers !== [] ? $identifiers : null,
+            'date' => $prescription->issued_at,
+            'description' => 'Receta electrónica emitida',
         ]);
     }
 

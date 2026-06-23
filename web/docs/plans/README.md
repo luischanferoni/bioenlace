@@ -13,7 +13,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Plan | Carpeta | Notas |
 |------|---------|--------|
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
-| Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Fase 1 estructura + cola; endpoint nacional pendiente |
+| Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Fases 1–2 + reconcile; homologación nacional pendiente |
 | Urgencias — triage + tablero | `urgencias-triage-tablero/` | Fase 1 (API dominio) en curso; fases 2–5 pendientes |
 
 ## Planes archivados (carpeta eliminada)

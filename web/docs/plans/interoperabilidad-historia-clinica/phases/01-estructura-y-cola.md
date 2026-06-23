@@ -11,7 +11,7 @@
 | `ClinicalHistoryOutboundProcessorService` | Implementado |
 | Conector `null` | Implementado |
 | Conector HTTP nacional | OAuth + POST implementado; `submitPath` configurable (contrato TBD) |
-| Mapper FHIR | Esqueleto v1 con Patient, Encounter, Composition, Condition, pedidos, alergias, lab |
+| Mapper FHIR | v1 completo (Patient, Encounter, Composition, Condition, pedidos, alergias, lab, recetas) |
 | Cron consola | Implementado |
 
 ## Flujo temporal (cuándo se envía)
@@ -64,6 +64,12 @@ php yii clinical-history-exchange/process-outbound 50
 
 # Un job por id (soporte)
 php yii clinical-history-exchange/process-one 123
+
+# Reencolar MUERTO/FALLIDO/OMITIDO
+php yii clinical-history-exchange/requeue 123
+
+# Conciliar acuse (requiere statusPath en conector nacional)
+php yii clinical-history-exchange/reconcile
 ```
 
 ## Checklist Fase 1
@@ -75,5 +81,5 @@ php yii clinical-history-exchange/process-one 123
 - [x] Hook finalize encounter
 - [x] Mapper Bundle v1 (recursos clínicos del encounter)
 - [x] API staff listar/ver estado jobs
-- [ ] Tests unitarios enqueue + retry backoff (parcial)
+- [x] Tests unitarios enqueue + retry backoff
 - [x] RBAC lectura estado jobs

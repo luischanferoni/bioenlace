@@ -27,26 +27,31 @@ flowchart TB
   subgraph integration [Integrations]
     REG[ClinicalHistoryExchangeRegistry]
     NULL[NullConnector]
-    HTTP[HttpNationalConnector stub]
+    HTTP[HttpNationalConnector]
   end
   subgraph external [Externo TBD]
     GOV[Servidor FHIR nacional / red]
   end
   subgraph cron [Consola]
-    CLI[php yii clinical-history-exchange/process-outbound]
+    CLI_OUT[process-outbound]
+    CLI_REC[reconcile]
   end
 
   FIN --> ENQ
   ENQ --> JOB
-  CLI --> PROC
+  CLI_OUT --> PROC
+  CLI_REC --> REC[ClinicalHistoryOutboundReconcileService]
   PROC --> JOB
   PROC --> MAP
   MAP --> PROC
   PROC --> REG
   REG --> NULL
   REG --> HTTP
-  HTTP -.->|POST pendiente| GOV
+  HTTP --> GOV
+  REC --> REG
+  REC --> JOB
   PROC --> AUD
+  REC --> AUD
 ```
 
 ## Capas y responsabilidades
@@ -58,7 +63,9 @@ flowchart TB
 | Dominio | `FhirClinicalHistoryBundleMapper` | Armar `Bundle` documental desde `Encounter` + hijos |
 | Dominio | `ClinicalHistoryOutboundProcessorService` | Tomar jobs vencidos, mapear, invocar conector, actualizar estado |
 | Integración | `ClinicalHistoryExchangeConnector` | `submitEncounterBundle(job, bundleJson)` |
-| Integración | `HttpNationalClinicalHistoryConnector` | OAuth + POST (stub hasta contrato) |
+| Integración | `HttpNationalClinicalHistoryConnector` | OAuth + POST + polling acuse (`statusPath`) |
+| Dominio | `ClinicalHistoryOutboundReconcileService` | Jobs `ENVIADO` sin acuse → consulta estado |
+| Dominio | `ClinicalHistoryOutboundRetryPolicy` | Backoff entre reintentos |
 | Persistencia | `ClinicalHistoryOutboundJob` | Cola, payload snapshot, `external_id`, reintentos |
 
 ## Perfil de intercambio (v1 interno)
@@ -77,7 +84,7 @@ Recursos previstos en el Bundle (Fase 2 completa el mapper):
 | `MedicationRequest` | órdenes del encounter |
 | `ServiceRequest` | pedidos |
 | `DiagnosticReport` | refs a `diagnostic_report` vinculados |
-| `DocumentReference` | recetas emitidas (opcional Fase 2+) |
+| `DocumentReference` | recetas emitidas (`electronic_prescription` status `issued`) |
 
 El perfil **nacional exacto** (StructureDefinition argentino) se fija en Fase 0 cuando MSAL / jurisdicción publique la guía.
 
@@ -91,6 +98,8 @@ El perfil **nacional exacto** (StructureDefinition argentino) se fija en Fase 0 
 | `OMITIDO` | Conector `null` o reglas de negocio (efector excluido) |
 | `FALLIDO` | Error transitorio; reintento si quedan intentos |
 | `MUERTO` | Agotados reintentos; requiere intervención |
+
+Evento de auditoría adicional: `reconciliado` (actualización de `external_id` vía cron reconcile).
 
 ## Política de reintentos
 
@@ -134,7 +143,7 @@ Ver `common/config/params.php`. Campos clave:
 | Comando | Frecuencia sugerida | Acción |
 |---------|-------------------|--------|
 | `php yii clinical-history-exchange/process-outbound` | cada 5 min | Procesa cola saliente |
-| (futuro) `php yii clinical-history-exchange/reconcile` | diario | Compara `ENVIADO` sin acuse |
+| `php yii clinical-history-exchange/reconcile` | diario | Actualiza `external_id` en jobs `ENVIADO` sin acuse (`statusPath`) |
 
 Registrar en el mismo scheduler que `legal-record-export/run` y `encounter-patient-summary/process`.
 

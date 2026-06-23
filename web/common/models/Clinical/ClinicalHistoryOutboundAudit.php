@@ -21,6 +21,7 @@ class ClinicalHistoryOutboundAudit extends ActiveRecord
     public const EVENT_OMITIDO = 'omitido';
     public const EVENT_FALLIDO = 'fallido';
     public const EVENT_MUERTO = 'muerto';
+    public const EVENT_RECONCILIADO = 'reconciliado';
 
     public static function tableName(): string
     {

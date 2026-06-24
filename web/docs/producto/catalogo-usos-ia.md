@@ -116,7 +116,7 @@ Operación y cron: [asistencia-cohortes.md](./asistencia-cohortes.md).
 
 | Uso | Tecnología | Notas |
 |-----|------------|-------|
-| Verificación selfie vs DNI | Google Vision API (opcional) | `FaceVerificationManager`; no es LLM |
+| Verificación identidad (registro / biométrico) | Didit (KYC + liveness) | `DiditClient`; SDK en móvil; no es LLM |
 | Medios clínicos analizados en nube | Vision (COGS §5 hoy en $0) | Modelo de producto: costo al enviar a analizar |
 
 ---

@@ -26,6 +26,13 @@ return [
         'fcmServerKey' => null,
         'httpEndpoint' => null,
     ],
+    /**
+     * Didit — KYC (registro paciente/médico) y login biométrico.
+     * API key en params-local.php. Cliente: {@see \common\components\Domain\Integrations\Identity\DiditClient}.
+     */
+    'didit_base_url' => 'https://api.didit.me',
+    'didit_timeout' => 30,
+
     /** Autogestión paciente: oferta de próximos slots (endpoint slots-disponibles-como-paciente en API v1). */
     /**
      * Defaults de {@see \common\models\EfectorTurnosConfig} cuando el campo en BD es NULL.

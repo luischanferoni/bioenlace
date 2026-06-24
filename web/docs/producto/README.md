@@ -18,6 +18,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [resumen-atencion-paciente.md](./resumen-atencion-paciente.md) | Resumen post-consulta y expediente staff |
 | [planes-de-tratamiento.md](./planes-de-tratamiento.md) | Care plans y recordatorios |
 | [receta-electronica.md](./receta-electronica.md) | Receta emitida, PDF, paciente |
+| [interoperabilidad-historia-clinica.md](./interoperabilidad-historia-clinica.md) | Export FHIR de atención finalizada hacia red / Estado |
 | [urgencias-guardia.md](./urgencias-guardia.md) | Triage, tablero operativo, circuito EMER |
 | [internacion.md](./internacion.md) | Mapa de camas, alta estructurada, plantillas de epicrisis (ABM) |
 | [superficies-ui.md](./superficies-ui.md) | Inicio vs captura encounter vs flows (web = móvil) |

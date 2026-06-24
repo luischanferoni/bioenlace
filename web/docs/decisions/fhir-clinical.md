@@ -7,7 +7,7 @@ Fecha de registro: 2026-05-20.
 | Tema | Decisión |
 |------|----------|
 | Retrocompatibilidad | **No.** Sin dual-write ni alias HTTP legacy. |
-| Interoperabilidad export | **Fuera** de este programa (bundles receta, IPS). |
+| Interoperabilidad export | **Programa aparte:** export FHIR saliente de atención finalizada — ver [producto/interoperabilidad-historia-clinica.md](../producto/interoperabilidad-historia-clinica.md). Bundles de receta/IPS no cubiertos por este ADR. |
 | Canal principal | **API v1** + clientes; Yii web clínico retirado para captura clínica nueva. |
 | Datos existentes | **Greenfield** en dev: migración crea esquema nuevo y elimina tablas clínicas legacy. ETL producción = sub-proyecto si aplica. |
 

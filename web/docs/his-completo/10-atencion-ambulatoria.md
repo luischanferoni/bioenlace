@@ -21,8 +21,8 @@ Núcleo clínico actual de Bioenlace para consulta externa: modelo **encounter**
 - [x] Guardia: captura clínica vía consulta hijo (`GUARDIA`) y tablero operativo EMER (circuito v1).
 - [ ] Pedidos y resultados en guardia con la misma UX que ambulatorio sin salir del módulo.
 - [ ] Derivaciones estructuradas (encounter hijo / turno futuro) en producto.
-- [ ] Interoperabilidad saliente (HL7/FHIR bundle) a redes de salud.
+- [x] Interoperabilidad saliente (FHIR bundle): cola, mapper y conector configurable — [producto/interoperabilidad-historia-clinica.md](../producto/interoperabilidad-historia-clinica.md) (homologación nacional pendiente).
 
 ## En producto hoy
 
-[producto/captura-clinica.md](../producto/captura-clinica.md) · [producto/resumen-atencion-paciente.md](../producto/resumen-atencion-paciente.md)
+[producto/captura-clinica.md](../producto/captura-clinica.md) · [producto/resumen-atencion-paciente.md](../producto/resumen-atencion-paciente.md) · [producto/interoperabilidad-historia-clinica.md](../producto/interoperabilidad-historia-clinica.md)

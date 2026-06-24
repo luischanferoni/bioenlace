@@ -90,6 +90,6 @@ php yii emergency-guardia/materialize-metrics
 
 ## Referencias
 
-- Plan de implementación: [`plans/urgencias-triage-tablero/`](../plans/urgencias-triage-tablero/)  
-- HIS madurez: [`his-completo/02-urgencias.md`](../his-completo/02-urgencias.md)  
-- Motores asistente: [`arquitectura/asistente-motores.md`](../arquitectura/asistente-motores.md)
+- Madurez HIS: [his-completo/02-urgencias.md](../his-completo/02-urgencias.md)
+- Motores asistente: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md)
+- Captura clínica en guardia: [captura-clinica.md](./captura-clinica.md)

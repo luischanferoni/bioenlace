@@ -2,21 +2,20 @@
 
 Export saliente de documentación clínica hacia servidor nacional / red jurisdiccional.
 
-## Plan
+## Documentación de producto
 
-`web/docs/plans/interoperabilidad-historia-clinica/`
+Narrativa end-to-end: `web/docs/producto/interoperabilidad-historia-clinica.md`
 
 ## Piezas
 
 | Rol | Clase |
 |-----|--------|
-| Contrato | `Contract/ClinicalHistoryExchangeConnector` |
+| Contrato envío | `Contract/ClinicalHistoryExchangeConnector` |
+| Contrato polling acuse | `Contract/ClinicalHistorySubmissionStatusConnector` |
 | Registry | `ClinicalHistoryExchangeRegistry` |
 | Conector off | `Connector/NullClinicalHistoryExchangeConnector` |
 | Conector HTTP | `Connector/HttpNationalClinicalHistoryConnector` |
-| Polling acuse | `Contract/ClinicalHistorySubmissionStatusConnector` |
 | Mapper Bundle | `Mapper/FhirClinicalHistoryBundleMapper` |
-| Reconcile | `HistoryExchange/ClinicalHistoryOutboundReconcileService` |
 
 ## Dominio (cola)
 
@@ -24,7 +23,8 @@ Export saliente de documentación clínica hacia servidor nacional / red jurisdi
 
 - `ClinicalHistoryOutboundEnqueueService` — hook desde `EncounterLifecycleService::finalize`
 - `ClinicalHistoryOutboundProcessorService` — cron saliente
-- `ClinicalHistoryOutboundReconcileService` — cron acuse (Fase 4)
+- `ClinicalHistoryOutboundReconcileService` — cron acuse
+- `ClinicalHistoryOutboundRetryPolicy` — backoff
 
 ## Cron
 

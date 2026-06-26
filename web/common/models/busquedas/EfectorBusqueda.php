@@ -6,6 +6,7 @@ use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\Efector;
+use common\models\Person\PersonaPacienteContexto;
 
 
 /**
@@ -18,19 +19,26 @@ class EfectorBusqueda extends Efector
      */
     public $efectores;
     
-    public $localidadNombre; // propiedad agregada
+    public $localidadNombre;
     
-    public $departamentoNombre; // propiedad agregada
+    public $departamentoNombre;
     
-    public $departamentoId; // propiedad agregada 
+    public $departamentoId;
+
+    /** @var int|null Filtro por provincias.id_provincia */
+    public $provinciaId;
+
+    /** @var string|null PUBLICO|PRIVADO */
+    public $sectorSalud;
     
     public function rules()
     {
         return [
-            [['id_efector', 'id_localidad'], 'integer'],
+            [['id_efector', 'id_localidad', 'departamentoId', 'provinciaId'], 'integer'],
             [['codigo_sisa', 'nombre', 
               'dependencia', 'tipologia', 
-              'domicilio', 'telefono', 'origen_financiamiento', 'efectores'], 'safe'],
+              'domicilio', 'telefono', 'origen_financiamiento', 'efectores',
+              'localidadNombre', 'departamentoNombre', 'sectorSalud', 'estado'], 'safe'],
         ];
     }
 
@@ -62,7 +70,8 @@ class EfectorBusqueda extends Efector
         // Agrego dataProvider
         $dataProvider->setSort([
             'attributes' => [
-                'nombre',            
+                'nombre',
+                'origen_financiamiento',
                 'localidadNombre' => [
                     'asc' => ['localidades.nombre' => SORT_ASC],
                     'desc' => ['localidades.nombre' => SORT_DESC],
@@ -72,7 +81,12 @@ class EfectorBusqueda extends Efector
                     'asc' => ['departamentos.nombre' => SORT_ASC],
                     'desc' => ['departamentos.nombre' => SORT_DESC],
                     'label' => 'Departamento'
-                ]
+                ],
+                'localidad.departamento.provincia.nombre' => [
+                    'asc' => ['provincias.nombre' => SORT_ASC],
+                    'desc' => ['provincias.nombre' => SORT_DESC],
+                    'label' => 'Provincia'
+                ],
             ]
         ]);
 
@@ -82,7 +96,7 @@ class EfectorBusqueda extends Efector
         if (!$this->validate()) {
             //Descomentar esta linea si no quiere devolver ningún registro cuando falle la validación
             // $query->where('0=1');
-            $query->joinWith('localidad'); //agrego esta línea para que me haga un join con la tabla localidades
+            $this->applyGeoJoins($query);
             return $dataProvider;
         }        
                    
@@ -107,22 +121,38 @@ class EfectorBusqueda extends Efector
             ->andFilterWhere(['like', 'telefono', $this->telefono])
             ->andFilterWhere(['like', 'origen_financiamiento', $this->origen_financiamiento])
             ->andFilterWhere(['like', 'estado', $this->estado]);
-                
-            //Esto agrego para filtrar por localidad en el listado
-           // ->andFilterWhere(['like', 'localidades.nombre', $this->id_localidad]); 
-                
-        $query->joinWith(['localidad' => function($q) {
-            $q->andFilterWhere(['like', 'localidades.nombre', $this->localidadNombre]);
-        }]);      
-        
-        //Esto agrego para filtrar por departamento en el listado
-        $query->joinWith(['localidad.departamento' => function($q) {
-                $q->andFilterWhere([
-                    'departamentos.id_departamento' => $this->departamentoId
-                ]);
-            }]);
-        //echo $query->createCommand()->getRawSql();die;
+
+        $this->applyGeoJoins($query);
+
+        $sector = strtoupper(trim((string) $this->sectorSalud));
+        if ($sector === PersonaPacienteContexto::SECTOR_SALUD_PUBLICO
+            || $sector === PersonaPacienteContexto::SECTOR_SALUD_PRIVADO) {
+            Efector::applySectorSaludFilterToQuery($query, $sector);
+        }
+
         return $dataProvider;
+    }
+
+    /**
+     * @param \yii\db\ActiveQuery $query
+     */
+    private function applyGeoJoins($query): void
+    {
+        $query->joinWith(['localidad' => function ($q) {
+            $q->andFilterWhere(['like', 'localidades.nombre', $this->localidadNombre]);
+        }]);
+
+        $query->joinWith(['localidad.departamento' => function ($q) {
+            $q->andFilterWhere([
+                'departamentos.id_departamento' => $this->departamentoId,
+            ]);
+        }]);
+
+        $query->joinWith(['localidad.departamento.provincia' => function ($q) {
+            $q->andFilterWhere([
+                'provincias.id_provincia' => $this->provinciaId,
+            ]);
+        }]);
     }
     
     public function searchuserefector($params)

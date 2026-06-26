@@ -336,6 +336,16 @@ class Efector extends \yii\db\ActiveRecord
     }
 
     /**
+     * Filtra efectores según sector de salud (reglas en paciente-contexto-offering.yaml).
+     *
+     * @param \yii\db\ActiveQuery $query
+     */
+    public static function applySectorSaludFilterToQuery($query, string $sectorSalud): void
+    {
+        self::applySectorSaludFilter($query, $sectorSalud);
+    }
+
+    /**
      * @param \yii\db\ActiveQuery $query
      */
     private static function applySectorSaludFilter($query, string $sectorSalud): void

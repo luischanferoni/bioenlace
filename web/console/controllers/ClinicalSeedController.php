@@ -8,6 +8,7 @@ use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQuerySe
 use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderDemoTimingService;
 use common\components\Domain\Clinical\Prescription\Service\ElectronicPrescriptionDemoSeedService;
 use common\components\Domain\Clinical\Prescription\Support\PrescriptionDocumentSupport;
+use common\components\Domain\Organization\Service\Seed\EfectorDemoSeedService;
 use common\components\Domain\Organization\Service\Seed\MedicoMedGeneralEfectorSeedService;
 use yii\console\Controller;
 use yii\console\ExitCode;
@@ -56,6 +57,8 @@ class ClinicalSeedController extends Controller
             'medico-med-general',
             'medico-med-general-remove',
             'medico-med-general-info',
+            'efector-demo-contexto',
+            'efector-demo-contexto-remove',
         ], true)) {
             $opts[] = 'efector';
             $opts[] = 'agenda';
@@ -72,6 +75,106 @@ class ClinicalSeedController extends Controller
             'e' => 'efector',
             'a' => 'agenda',
         ]);
+    }
+
+    /**
+     * Crea efector público en Santa Fe y clínica privada en Santiago del Estero, cada uno con médico MED GENERAL.
+     *
+     * php yii clinical-seed/efector-demo-contexto
+     * php yii clinical-seed/efector-demo-contexto --agenda=0
+     */
+    public function actionEfectorDemoContexto(): int
+    {
+        $withAgenda = (int) $this->agenda !== 0;
+
+        try {
+            $result = (new EfectorDemoSeedService())->upsertAll(true, $withAgenda);
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        foreach (['public' => 'Público (otra provincia)', 'private' => 'Privado'] as $key => $label) {
+            $row = $result[$key];
+            $verb = !empty($row['created']) ? 'creado' : 'actualizado';
+            $this->stdout(
+                "{$label}: efector {$verb} id={$row['id_efector']} | {$row['nombre']} | "
+                . "{$row['provincia']} | financiamiento={$row['origen_financiamiento']}\n",
+                Console::FG_GREEN
+            );
+            if (isset($row['medico'])) {
+                $med = $row['medico'];
+                $this->stdout(
+                    "  médico: user={$med['username']} | doc={$med['documento']} | password: {$med['password']}\n",
+                    Console::FG_CYAN
+                );
+            }
+        }
+
+        $this->stdout(
+            "\nAdmin: filtrá por provincia o sector en /admin/efectores.\n"
+            . "Paciente: contexto PUBLICO + Santa Fe / PRIVADO + Santiago del Estero para probar offering.\n",
+            Console::FG_YELLOW
+        );
+
+        return ExitCode::OK;
+    }
+
+    public function actionEfectorDemoContextoInfo(): int
+    {
+        $service = new EfectorDemoSeedService();
+        $medicoSeed = new MedicoMedGeneralEfectorSeedService();
+        $found = false;
+
+        foreach (
+            [
+                EfectorDemoSeedService::COD_SISA_PUBLIC_OTRA_PROV => 'Público Santa Fe',
+                EfectorDemoSeedService::COD_SISA_PRIVATE => 'Clínica privada',
+            ] as $codigo => $label
+        ) {
+            $row = $service->findByCodigoSisa($codigo);
+            if ($row === null) {
+                $this->stdout("{$label}: no existe (codigo_sisa={$codigo}).\n", Console::FG_YELLOW);
+                continue;
+            }
+
+            $found = true;
+            $idEfector = (int) $row['id_efector'];
+            $this->stdout(
+                "{$label}: id={$idEfector} | {$row['nombre']} | {$row['origen_financiamiento']}\n",
+                Console::FG_CYAN
+            );
+            $med = $medicoSeed->findSeedRow($idEfector);
+            if ($med === null || !isset($med['pes'])) {
+                $this->stdout("  Sin médico MED GENERAL. Ejecutá: php yii clinical-seed/efector-demo-contexto\n");
+            } else {
+                $p = $med['persona'];
+                $this->stdout("  Médico: {$p['apellido']}, {$p['nombre']} | doc={$p['documento']}\n");
+            }
+        }
+
+        if (!$found) {
+            $this->stderr("No hay efectores demo. Ejecutá: php yii clinical-seed/efector-demo-contexto\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        return ExitCode::OK;
+    }
+
+    public function actionEfectorDemoContextoRemove(): int
+    {
+        $result = (new EfectorDemoSeedService())->removeAll(true);
+        if (!$result['removed_public'] && !$result['removed_private']) {
+            $this->stderr("No se encontraron efectores demo para eliminar.\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        $this->stdout("Efectores demo eliminados (PES/agenda médicos incluidos).\n", Console::FG_GREEN);
+
+        return ExitCode::OK;
     }
 
     /**

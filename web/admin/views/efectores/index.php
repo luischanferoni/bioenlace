@@ -11,6 +11,8 @@ use yii\helpers\Html;
 use yii\grid\GridView;
 use yii\helpers\ArrayHelper;
 use common\models\Departamento;
+use common\models\Provincia;
+use common\models\Person\PersonaPacienteContexto;
 
 
 /* @var $this yii\web\View */
@@ -63,6 +65,43 @@ $this->params['breadcrumbs'][] = $this->title;
                                     ArrayHelper::map(Departamento::find()->all(),'id_departamento', 'nombre'), 
                                     ['class' => 'form-control', 
                                     'prompt' => '- Seleccione uno -'])
+                    ],
+                    [
+                        'attribute' => 'localidad.departamento.provincia.nombre',
+                        'label' => 'Provincia',
+                        'value' => 'localidad.departamento.provincia.nombre',
+                        'filter' => Html::activeDropDownList(
+                            $searchModel,
+                            'provinciaId',
+                            ArrayHelper::map(Provincia::find()->orderBy(['nombre' => SORT_ASC])->all(), 'id_provincia', 'nombre'),
+                            ['class' => 'form-control', 'prompt' => '- Todas -']
+                        ),
+                    ],
+                    [
+                        'attribute' => 'origen_financiamiento',
+                        'label' => 'Financiamiento',
+                        'contentOptions' => ['class' => 'text-wrap'],
+                    ],
+                    [
+                        'attribute' => 'sectorSalud',
+                        'label' => 'Sector',
+                        'value' => static function ($model) {
+                            $origen = strtoupper((string) $model->origen_financiamiento);
+                            if ($origen !== '' && str_contains($origen, 'PRIVADO')) {
+                                return 'Privado';
+                            }
+
+                            return 'Público';
+                        },
+                        'filter' => Html::activeDropDownList(
+                            $searchModel,
+                            'sectorSalud',
+                            [
+                                PersonaPacienteContexto::SECTOR_SALUD_PUBLICO => 'Público',
+                                PersonaPacienteContexto::SECTOR_SALUD_PRIVADO => 'Privado',
+                            ],
+                            ['class' => 'form-control', 'prompt' => '- Todos -']
+                        ),
                     ],
                 [
                     'class' => 'yii\grid\ActionColumn',

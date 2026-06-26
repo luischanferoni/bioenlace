@@ -18,7 +18,7 @@ Conviene tener ya [sesión operativa](./00-transversal.md) y algunas atenciones 
 
 ## Diagnósticos
 
-1. **Vos** buscás en el nomenclador de diagnósticos (CIE / SNOMED según configuración).
+1. **Vos** buscás en el nomenclador de diagnósticos (CIE / SNOMED según lo que muestre la pantalla).
 2. **El sistema** muestra términos; podés dar de alta uno local si el flujo lo permite.
 3. En captura usás ese diagnóstico y guardás.
 4. **El sistema** lo persiste y las planillas que usen diagnósticos **lo pueden** incluir.
@@ -59,7 +59,7 @@ Conviene tener ya [sesión operativa](./00-transversal.md) y algunas atenciones 
 ## Reporte de farmacia
 
 1. **Vos** (si el efector lo tiene) generás reporte de dispensación / recetas.
-2. **El sistema** exporta según lo implementado (puede ser parcial según el módulo).
+2. **El sistema** exporta según lo que tenga configurado el efector (puede ser parcial según el módulo).
 
 ---
 

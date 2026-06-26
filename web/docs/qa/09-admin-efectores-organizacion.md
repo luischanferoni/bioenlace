@@ -1,97 +1,73 @@
-# Admin: efectores, geografía y seeds de desarrollo
+# Admin: efectores y datos de prueba
 
 [← Índice](./README.md) · Checklist: [10-checklist-ejecutable.md](./10-checklist-ejecutable.md)
+
+Rol **administrador** en la web. Complementa [08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md) cuando probás sector/provincia en la app.
 
 ---
 
 ## Listado de efectores (`/admin/efectores`)
 
-### Filtros disponibles
+### Filtros
 
-| Columna / filtro | Qué hace |
-|------------------|----------|
-| Nombre | Búsqueda parcial por nombre del efector |
-| Localidad | Texto sobre `localidades.nombre` |
-| Departamento | Dropdown de departamentos |
-| **Provincia** | Dropdown de provincias (`provincias.id_provincia`) |
-| **Financiamiento** | Texto sobre `origen_financiamiento` |
-| **Sector** | Público / Privado (mismas reglas que offering paciente en `paciente-contexto-offering.yaml`) |
+| Filtro | Qué hace al probar |
+|--------|-------------------|
+| Nombre | Busca por texto en el nombre del centro |
+| Localidad | Filtra por nombre de localidad |
+| Departamento | Elige un departamento |
+| **Provincia** | Solo centros de esa provincia |
+| **Financiamiento** | Busca por texto (ej. “Provincial”, “Privado”) |
+| **Sector** | **Público** o **Privado** (misma lógica que en la app paciente) |
 
-### Casos a probar
+### Casos
 
 | ID | Acción | Resultado esperado |
 |----|--------|-------------------|
-| ADM-01 | Sin filtros | Lista todos los efectores accesibles al admin |
-| ADM-02 | Filtro provincia = Santa Fe (o la del CAP demo) | Solo efectores cuya localidad pertenece a esa provincia |
-| ADM-03 | Filtro sector = **Público** | Efectores con financiamiento Nacional/Provincial/Municipal; **sin** `Privado` en origen |
-| ADM-04 | Filtro sector = **Privado** | Solo efectores con `Privado` en `origen_financiamiento` |
-| ADM-05 | Provincia + sector combinados | Intersección de ambos criterios |
-| ADM-06 | Ordenar por columna Provincia | Orden alfabético estable |
-| ADM-07 | Abrir detalle desde el nombre | Navega a `efectores/view` sin error |
+| ADM-01 | Abrir listado sin filtros | Carga el listado sin error |
+| ADM-02 | Filtrar por provincia (ej. Santa Fe) | Solo centros de esa provincia |
+| ADM-03 | Sector **Público** | No aparecen clínicas privadas |
+| ADM-04 | Sector **Privado** | Solo centros privados |
+| ADM-05 | Provincia + sector juntos | Resultado coherente con ambos filtros |
+| ADM-06 | Ordenar por columna Provincia | Orden alfabético |
+| ADM-07 | Clic en el nombre de un centro | Abre el detalle sin error |
 
 ---
 
-## Seeds de efectores demo (consola)
+## Datos de prueba (equipo desarrollo / staging)
 
-### Comandos
+Si necesitás centros demo para cruzar con la app paciente, pedí que en staging existan:
 
-```bash
-php yii clinical-seed/efector-demo-contexto
-php yii clinical-seed/efector-demo-contexto-info
-php yii clinical-seed/efector-demo-contexto-remove
-php yii clinical-seed/medico-med-general --efector=<id>
-```
+- Un **CAP público** en otra provincia (ej. Santa Fe), con médico de medicina general.
+- Una **clínica privada** en Santiago del Estero, con médico de medicina general.
 
-### Casos a probar
+El desarrollo puede cargarlos con herramientas de consola del servidor; **no es paso obligatorio del tester** salvo que te lo indiquen.
 
-| ID | Comando | Resultado esperado |
-|----|---------|-------------------|
-| SEED-01 | `efector-demo-contexto` (1ª vez) | Crea 2 efectores + 2 médicos MED GENERAL; imprime ids y credenciales |
-| SEED-02 | `efector-demo-contexto` (2ª vez) | Idempotente: actualiza sin duplicar por `codigo_sisa` |
-| SEED-03 | `efector-demo-contexto-info` | Lista ambos efectores y médicos asociados |
-| SEED-04 | `efector-demo-contexto-remove` | Elimina efectores demo y PES/agenda médicos; conserva personas/usuarios |
-| SEED-05 | Catálogo geo vacío o localidad huérfana | El seed crea provincia/localidad demo (`cod_bahra` DEV*) y completa igual |
-| SEED-06 | `medico-med-general --efector=<id_cap_demo>` | Documento del médico ≤ 8 caracteres; usuario `medico_med_general_<id>` |
-
-### Códigos SISA reservados
-
-| Código | Efector |
-|--------|---------|
-| `DEV99001SFPUB` | CAP público otra provincia |
-| `DEV99002PRIV` | Clínica privada demo |
+| ID | Qué verificar después de la carga |
+|----|-----------------------------------|
+| ADM-08 | Paciente público + provincia del CAP → turno en ese centro |
+| ADM-09 | Paciente privado + provincia de la clínica → turno en clínica demo |
+| ADM-10 | Admin filtro Público → lista el CAP, no la clínica privada |
 
 ---
 
-## Médico MED GENERAL por efector
-
-| ID | Escenario | Resultado esperado |
-|----|-----------|-------------------|
-| MED-01 | `--efector=863` | Usuario `medico_med_general_863`, doc `39999863` |
-| MED-02 | `--efector=1000` o id alto | Documento `39001000` (8 dígitos, sin error de validación) |
-| MED-03 | Segunda ejecución mismo efector | Reutiliza persona/PES existentes |
-| MED-04 | `--agenda=0` | Crea PES sin agenda laboral |
-| MED-05 | Tras seed, login médico + `set-session` | Puede operar en el efector con servicio MED GENERAL |
-
----
-
-## Geografía en admin
+## Localidades (admin)
 
 | ID | Pantalla | Resultado esperado |
 |----|----------|-------------------|
-| GEO-01 | `/admin/localidades` — filtro provincia | Filtra localidades por provincia |
-| GEO-02 | Efector demo tras seed sin catálogo previo | Admin provincias muestra al menos SDE + Santa Fe demo |
-| GEO-03 | Crear localidad manual | Valida departamento y código postal único |
+| GEO-01 | `/admin/localidades` — filtro provincia | Solo localidades de esa provincia |
+| GEO-02 | Tras cargar datos demo | Provincias nuevas visibles en dropdowns |
+| GEO-03 | Crear localidad | Valida campos obligatorios y código postal duplicado |
 
 ---
 
-## Cruce con contexto paciente
+## Médico de prueba en un centro
 
-Después de `efector-demo-contexto`:
+Si te dan usuario de médico demo para un centro:
 
-| ID | Paciente | Resultado esperado |
-|----|----------|-------------------|
-| ADM-08 | `PUBLICO` + provincia CAP demo | Turnos / búsqueda ofrece CAP demo |
-| ADM-09 | `PRIVADO` + provincia clínica demo | Ofrece clínica privada demo |
-| ADM-10 | Admin filtro sector Público | Lista incluye CAP demo, excluye clínica privada |
+| ID | Escenario | Resultado esperado |
+|----|-----------|-------------------|
+| MED-01 | Login médico demo | Entra a la web |
+| MED-02 | Elegir efector y servicio medicina general | Puede ver agenda / atender |
+| MED-03 | Sacar turno para paciente en ese centro | Turno creado |
 
-Ver también [08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md).
+Credenciales y pasos exactos: responsable del entorno.

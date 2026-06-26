@@ -61,6 +61,6 @@ Detalle de madurez HIS: [his-completo/](../his-completo/README.md).
 | Reportes | [06-reportes-nomenclador.md](./06-reportes-nomenclador.md) |
 | Frases del asistente | [07-asistente.md](./07-asistente.md) |
 | Contexto paciente y registro | [08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md) |
-| Admin efectores y seeds | [09-admin-efectores-organizacion.md](./09-admin-efectores-organizacion.md) |
+| Admin efectores y datos de prueba | [09-admin-efectores-organizacion.md](./09-admin-efectores-organizacion.md) |
 | Checklist ejecutable | [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) |
-| Agentes autónomos (reglas) | [11-agentes-reglas-autonomas.md](./11-agentes-reglas-autonomas.md) |
+| Avisos automáticos | [11-notificaciones-automaticas.md](./11-notificaciones-automaticas.md) |

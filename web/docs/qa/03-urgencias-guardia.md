@@ -57,7 +57,7 @@ Trabajá con el efector en modo **guardia** ([00-transversal](./00-transversal.m
 ## Ver cómo va el día (indicadores)
 
 1. **Vos** abrís resumen o indicadores de guardia.
-2. **El sistema** muestra tiempos de espera, cantidad por estado, etc., según lo implementado.
+2. **El sistema** muestra tiempos de espera, cantidad por estado, etc., según lo que tenga configurado el efector.
 
 ---
 

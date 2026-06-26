@@ -1,25 +1,35 @@
-# Cómo funciona Bioenlace — paso a paso
+# Guía de pruebas — Bioenlace
 
-Acá describimos **qué hace el usuario y qué responde el sistema**, en lenguaje llano. Sirve para entender el producto, capacitar gente nueva o repasar un flujo antes de probarlo.
+Documentación para **probar la app y la web**: qué hacer, qué deberías ver y qué marcar en el checklist.
 
-Para **casos de prueba ejecutables** (checklist con IDs, prioridades y tests automatizados), ver [10-checklist-ejecutable.md](./10-checklist-ejecutable.md).
+## Cómo usar estos archivos
 
-## Por dónde empezar
+| Tipo | Archivo | Para qué sirve |
+|------|---------|----------------|
+| **Checklist** | [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) | Casos numerados (TRN, CTX, TUR…) para marcar hecho / falló |
+| **Flujos paso a paso** | `00`–`11` (excepto el checklist `10`) | Entender un módulo antes de probarlo |
+| **Roles** | [quien-puede-que.md](./quien-puede-que.md) | Qué puede paciente vs personal |
+
+**Convención en los flujos:** **Vos** = acción del tester · **El sistema** = respuesta esperada en pantalla.
+
+No hace falta conocer bases de datos, APIs ni nombres internos del código. Si algo pide credenciales o datos de prueba que no tenés, pedilos al responsable del entorno (staging).
+
+## Índice por módulo
 
 | Archivo | De qué habla |
 |---------|----------------|
-| [00-transversal.md](./00-transversal.md) | Entrar, elegir efector, buscar pacientes, permisos |
-| [01-captura-clinica.md](./01-captura-clinica.md) | Historia, consulta con IA, guardar atención |
+| [00-transversal.md](./00-transversal.md) | Entrar, elegir efector, buscar pacientes |
+| [01-captura-clinica.md](./01-captura-clinica.md) | Historia, consulta, guardar atención |
 | [02-turnos-agenda.md](./02-turnos-agenda.md) | Turnos, lista de espera, derivaciones |
-| [03-urgencias-guardia.md](./03-urgencias-guardia.md) | Guardia, triage, atender, derivar |
+| [03-urgencias-guardia.md](./03-urgencias-guardia.md) | Guardia, triage, atender |
 | [04-internacion.md](./04-internacion.md) | Mapa de camas, ingreso, alta |
-| [05-laboratorio-receta-planes.md](./05-laboratorio-receta-planes.md) | Lab, recetas, tratamientos, resumen al paciente |
+| [05-laboratorio-receta-planes.md](./05-laboratorio-receta-planes.md) | Lab, recetas, tratamientos |
 | [06-reportes-nomenclador.md](./06-reportes-nomenclador.md) | Nomencladores y planillas |
-| [07-asistente.md](./07-asistente.md) | Chat y asistente (frases que entiende) |
-| [08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md) | Registro, sector público/privado, provincia, offering |
-| [09-admin-efectores-organizacion.md](./09-admin-efectores-organizacion.md) | Admin efectores, filtros, seeds de consola |
-| [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) | **Checklist maestro** (~80+ casos TRN/CTX/ADM/TUR/…) |
-| [11-agentes-reglas-autonomas.md](./11-agentes-reglas-autonomas.md) | Agentes autónomos v1 (reglas, sin IA) |
-| [quien-puede-que.md](./quien-puede-que.md) | Paciente vs staff vs qué pantalla usa cada uno |
+| [07-asistente.md](./07-asistente.md) | Chat y frases del asistente |
+| [08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md) | Registro, sector público/privado, provincia |
+| [09-admin-efectores-organizacion.md](./09-admin-efectores-organizacion.md) | Admin efectores y datos de prueba |
+| [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) | **Checklist maestro** |
+| [11-notificaciones-automaticas.md](./11-notificaciones-automaticas.md) | Avisos automáticos (turnos, guardia, seguimiento) |
+| [quien-puede-que.md](./quien-puede-que.md) | Paciente vs personal |
 
-Más contexto de producto: [docs/producto/](../producto/README.md).
+Más contexto de producto (no orientado a QA): [docs/producto/](../producto/README.md).

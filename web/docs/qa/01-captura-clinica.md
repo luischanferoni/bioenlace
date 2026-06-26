@@ -1,40 +1,40 @@
 # Captura clínica — historia y consulta
 
-[← Índice](./README.md) · Más detalle: [captura-clinica.md](../producto/captura-clinica.md)
+[← Índice](./README.md)
 
 ---
 
 ## Ver la historia de un paciente
 
 1. **Vos** (personal) abrís la historia / línea de tiempo del paciente.
-2. **El sistema** lista consultas y episodios anteriores con fecha y tipo.
-3. **Vos** abrís uno cerrado o uno en curso.
-4. **El sistema** muestra el detalle sin romperse (todo sale del registro clínico nuevo, no de tablas viejas de “consultas”).
+2. **El sistema** lista atenciones anteriores con fecha y tipo.
+3. **Vos** abrís una cerrada o una en curso.
+4. **El sistema** muestra el detalle completo: fecha, tipo, motivo, diagnósticos, medicación y estudios — sin pantallas vacías ni errores.
 
 ---
 
-## Escribir la atención y que la IA te ayude a ordenar
+## Escribir la atención con ayuda de IA
 
-1. **Vos** entrás a la captura (desde un turno, guardia o internación) y escribís en texto libre: motivo, diagnóstico, medicación, estudios, etc.
-2. **El sistema** (con IA) te propone un borrador ordenado: qué va en diagnóstico, qué en recetas, qué en pedidos.
-3. **Vos** revisás, corregís si hace falta y confirmás.
-4. **El sistema** todavía **no** guarda definitivo hasta que vos digas guardar.
+1. **Vos** entrás a la captura (desde turno, guardia o internación) y escribís en texto libre: motivo, diagnóstico, medicación, estudios, etc.
+2. **El sistema** te propone un borrador ordenado por secciones.
+3. **Vos** revisás, corregís y confirmás el análisis.
+4. **El sistema** **no** guarda definitivo hasta que vos confirmes **Guardar**.
 
 ---
 
 ## Guardar la consulta
 
 1. **Vos** confirmás el guardado.
-2. **El sistema** persiste la atención y te muestra que quedó registrada.
-3. En la historia del paciente **aparece** el encuentro nuevo con diagnósticos, medicación y prácticas que cargaste.
+2. **El sistema** confirma que quedó registrada.
+3. En la historia del paciente **aparece** la atención nueva con lo que cargaste.
 
 ---
 
-## Dictar o grabar audio en lugar de tipear
+## Dictar o grabar audio
 
 1. **Vos** grabás o subís audio en la captura.
-2. **El sistema** lo transcribe a texto y sigue el mismo flujo de “analizar → revisar → guardar”.
-3. Si el audio no se entiende, **el sistema** te pide que repitas o escribas.
+2. **El sistema** lo transcribe y sigue el mismo flujo: analizar → revisar → guardar.
+3. Si no se entiende el audio, **te pide** repetir o escribir.
 
 ---
 
@@ -42,7 +42,7 @@
 
 1. **Vos** abrís el turno desde agenda o lista de espera.
 2. **El sistema** verifica que seas el profesional (o tengas permiso) para ese turno.
-3. Si no corresponde, **el sistema** no te deja entrar a la captura.
+3. Si no corresponde, **no** te deja entrar a la captura.
 4. Si sí, **te lleva** a la pantalla de atención.
 
 ---
@@ -50,41 +50,41 @@
 ## Atender en internación (piso)
 
 1. **Vos** entrás a la captura desde el mapa de camas o la ficha del internado.
-2. **El sistema** sabe que es un episodio de **internación** y muestra lo que corresponde (incluido balance hídrico, régimen, medicación de piso si está habilitado).
+2. **El sistema** muestra las secciones de internación (evolución, balance hídrico, régimen, medicación de piso si aplica).
 3. **Vos** guardás igual que en ambulatorio.
-4. **El sistema** actualiza el episodio de internación, no pantallas sueltas viejas.
+4. Al volver al mapa de camas, **ves** lo que guardaste en la ficha del internado.
 
 ---
 
 ## Atender en guardia
 
 1. **Vos** iniciás la atención desde el tablero de guardia (ver [03-urgencias-guardia.md](./03-urgencias-guardia.md)).
-2. **El sistema** abre la captura ligada a ese ingreso de guardia.
-3. Al guardar, **queda** vinculado al circuito de urgencias.
+2. **El sistema** abre la captura de ese ingreso.
+3. Al guardar, **queda** vinculada a ese episodio de guardia.
 
 ---
 
 ## Odontología u oftalmología (si el servicio lo tiene)
 
-1. **Vos** cargás prácticas de odontología (piezas, CPO) u oftalmología (estudios, lentes) según el formulario del servicio.
-2. **El sistema** guarda en el modelo clínico de esa especialidad.
-3. Las planillas ministeriales de odontología **pueden** tomar esos datos si el efector las usa.
+1. **Vos** completás el formulario de la especialidad (piezas, CPO, estudios, lentes…).
+2. **El sistema** guarda los datos.
+3. Si el efector usa planillas ministeriales de odontología, **pueden** incluir esos datos al generar reportes.
 
 ---
 
 ## Derivar a otro servicio o efector
 
-1. **Vos** en la captura indicás derivación (a qué servicio/efector va el paciente).
-2. **El sistema** registra la derivación como pedido de referencia.
-3. En **referencias** o en agenda, el personal ve la derivación pendiente y puede programar turno.
+1. **Vos** indicás la derivación en la captura.
+2. **El sistema** la registra.
+3. En **Referencias** o en agenda, el personal ve la derivación pendiente y puede programar turno.
 
 ---
 
 ## Balance hídrico, régimen y medicación en piso
 
-1. **Vos** cargás balance, régimen alimentario o administración de medicación en la captura de internación.
-2. **El sistema** lo guarda como parte del episodio (no en tablas viejas de “consulta internación”).
-3. Al volver a abrir el internado, **ves** lo cargado en el resumen clínico.
+1. **Vos** cargás balance, régimen o medicación en la captura del internado.
+2. **El sistema** guarda y muestra esos datos en el resumen del internado.
+3. Al reabrir la captura, **ves** lo cargado.
 
 ---
 

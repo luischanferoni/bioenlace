@@ -1,107 +1,102 @@
-# Registro de paciente y contexto operativo
+# Registro de paciente y contexto (sector y provincia)
 
-[← Índice](./README.md) · Producto: [registro-paciente.md](../producto/registro-paciente.md) · Checklist: [10-checklist-ejecutable.md](./10-checklist-ejecutable.md)
+[← Índice](./README.md) · Checklist: [10-checklist-ejecutable.md](./10-checklist-ejecutable.md)
 
-El **contexto paciente** (`sector_salud` + `provincia`) define qué efectores, intents y secciones del home ve el paciente en la app.
-
----
-
-## Preparar datos de prueba (consola)
-
-```bash
-php yii clinical-seed/efector-demo-contexto
-php yii clinical-seed/efector-demo-contexto-info
-```
-
-Crea (o actualiza):
-
-| Efector | Sector | Uso |
-|---------|--------|-----|
-| `[DEV] CAP … Demo` | Público (`Provincial`) | Otra provincia (ej. Santa Fe) |
-| `[DEV] Clínica Privada Demo` | Privado | Santiago del Estero (referencia efector 863) |
-
-Cada uno con médico **MED GENERAL** y agenda Lun–Vie 08–17.
+En la **app paciente**, cada usuario tiene un **contexto**: sector de salud (**Público** o **Privado**) y **provincia**. Eso define qué centros de salida y qué opciones del menú ve al sacar turno, ver el inicio, etc.
 
 ---
 
-## Configurar contexto del paciente (app / API)
+## Datos de prueba
 
-1. **Vos** (paciente autenticado) abrís la app o llamás `GET /api/v1/paciente-contexto/obtener`.
-2. **El sistema** devuelve `sector_salud`, `id_provincia_contexto`, estado de domicilio y si podés operar.
-3. **Vos** actualizás con `POST /api/v1/paciente-contexto/actualizar` (`sector_salud`, `id_provincia_contexto`).
-4. **El sistema** persiste en `persona_paciente_contexto` y recalcula la oferta.
+Pedí al responsable del entorno que confirme si existen estos centros de prueba:
 
-### Casos a probar
+| Centro | Sector | Para probar |
+|--------|--------|-------------|
+| CAP demo (otra provincia, ej. Santa Fe) | Público | Paciente público de esa provincia |
+| Clínica privada demo | Privado | Paciente privado de Santiago del Estero |
+
+Si no están cargados, el equipo de desarrollo puede prepararlos en staging.
+
+---
+
+## Configurar sector y provincia (app paciente)
+
+1. **Vos** entrás a **Configuración** en la app.
+2. **Vos** tocás **Sector de salud** y alternás Público / Privado (o el flujo de primera vez que pida elegir).
+3. **Vos** tocás **Provincia de contexto** y elegís una provincia.
+4. **El sistema** guarda la elección y actualiza qué centros y opciones ves.
+
+### Qué verificar
 
 | ID | Sector | Provincia | Resultado esperado |
 |----|--------|-----------|-------------------|
-| CTX-01 | `PUBLICO` | Provincia del CAP demo | En búsqueda de efectores / turnos aparece el CAP demo; no la clínica privada |
-| CTX-02 | `PRIVADO` | Provincia de la clínica demo | Aparece la clínica privada; no el CAP público de otra provincia |
-| CTX-03 | `PUBLICO` | Provincia distinta al CAP demo | No aparecen efectores demo si la provincia no coincide |
-| CTX-04 | Sin provincia (`id_provincia_contexto` null) | — | Intents que requieren contexto operativo bloqueados; banner de verificación |
-| CTX-05 | Cambio de sector después de elegir efector | — | Al pedir turno, `assertEfectorPermitido` rechaza efector incompatible |
+| CTX-01 | Público | Misma que el CAP demo | Al sacar turno aparece el CAP demo; **no** la clínica privada |
+| CTX-02 | Privado | Misma que la clínica demo | Aparece la clínica privada; **no** el CAP de otra provincia |
+| CTX-03 | Público | Otra provincia (no la del CAP) | No aparecen los centros demo |
+| CTX-04 | Cualquiera | Sin provincia elegida | Banner o mensaje pidiendo completar contexto; turnos / inicio limitados |
+| CTX-05 | Cambiás de Público a Privado (o al revés) tras haber visto un centro | Al sacar turno, centros del sector anterior **ya no** aplican |
 
 ---
 
-## Sugerir provincias (geolocalización)
+## Sugerencia de provincias
 
-1. **Vos** llamás `GET /api/v1/paciente-contexto/sugerir-provincias-como-paciente`.
-2. **El sistema** devuelve hasta 5 provincias (IP + vecinos declarativos en `provincias-vecinas.yaml`).
-3. **CTX-06:** Con IP local/privada, la lista incluye Santiago del Estero (`86`) entre las sugeridas.
-
----
-
-## Recurso provincial (asistente / FAQ)
-
-1. **Vos** (paciente con contexto listo) disparás el intent `paciente-contexto.recurso-provincial-como-paciente-flow` o la frase equivalente en el asistente.
-2. **El sistema** busca en `recursos-provinciales.yaml` por `cod_indec` de la provincia del contexto.
-3. **CTX-07:** Para Santiago del Estero muestra ministerio / contacto declarado en metadata.
-4. **CTX-08:** Para Santa Fe muestra el recurso de Santa Fe, no el de otra provincia.
+1. **Vos** (paciente nuevo o en configuración) pedís sugerencia de provincia si la app lo ofrece.
+2. **El sistema** muestra una lista corta de provincias (hasta 5).
+3. **CTX-06:** En red local o sin GPS, la lista igual aparece con opciones razonables (no vacía ni error).
 
 ---
 
-## Registro autoregistro (app)
+## Recurso del ministerio de salud (asistente)
 
-1. **Vos** completás identidad (Didit / flujo configurado).
-2. **El sistema** crea persona, usuario, rol paciente e inicializa contexto (`PUBLICO` por defecto).
-3. **CTX-09:** Tras el alta existe fila en `persona_paciente_contexto`.
-4. **CTX-10:** Cron `paciente-domicilio/run` avanza estado de domicilio RENAPER (reintentos).
-
----
-
-## Registro por staff (asistente)
-
-1. **Vos** (staff) abrís `/personas/registrar-paciente` vía asistente o atajo.
-2. **Vos** escaneás DNI (PDF417) o usás Didit.
-3. **El sistema** confirma alta sin redirigir a ficha clínica ni cambiar tu sesión operativa (efector/servicio staff).
-4. **CTX-11:** El `id_persona` del nuevo paciente no queda en sesión del profesional.
-5. **CTX-12:** Pantallas legacy MPI (`buscar-persona`, candidatos) responden **410 Gone**.
+1. **Vos** (paciente con provincia configurada) preguntás en el chat algo como “ministerio de salud de mi provincia” o usás el acceso del menú si existe.
+2. **El sistema** muestra teléfono / dirección / web del ministerio **de tu provincia**.
+3. **CTX-07:** Con provincia Santiago del Estero, datos de SDE (no de otra provincia).
+4. **CTX-08:** Cambiando a Santa Fe, datos de Santa Fe.
 
 ---
 
-## Home panel y intents filtrados
+## Registro nuevo en la app (paciente)
 
-1. **Vos** (paciente sin provincia operativa) abrís el home de la app.
-2. **El sistema** oculta secciones que requieren contexto (`upcoming_appointments`, `patient_async_consultations`).
-3. **CTX-13:** Tras fijar provincia, esas secciones vuelven a mostrarse.
-4. **CTX-14:** Intent `turnos.crear-como-paciente` no aparece o no avanza sin `puedeOperarApp()`.
-
----
-
-## Representación (tutor / familiar)
-
-1. **Vos** actuás en nombre de otro paciente (representación verificada).
-2. **CTX-15:** El contexto operativo usado es el del **actor logueado**, no del `subject_persona_id` — documentar comportamiento actual al probar representación.
+1. **Vos** te registrás con validación de identidad (DNI / Didit según el entorno).
+2. **El sistema** crea tu cuenta y te pide o asigna sector y provincia.
+3. **CTX-09:** Tras el registro podés entrar al inicio; el contexto queda guardado al cerrar y abrir la app.
+4. **CTX-10:** Si el domicilio sigue “verificando”, el banner lo indica; puede actualizarse más adelante sin que hagas nada.
 
 ---
 
-## API — referencia rápida
+## Alta de paciente por personal (asistente / web)
 
-| Método | Ruta | Rol |
-|--------|------|-----|
-| GET | `/api/v1/paciente-contexto/obtener` | Paciente |
-| POST | `/api/v1/paciente-contexto/actualizar` | Paciente |
-| GET | `/api/v1/paciente-contexto/sugerir-provincias-como-paciente` | Paciente |
-| GET | `/api/v1/paciente-contexto/buscar-recurso-provincial-como-paciente` | Paciente |
+1. **Vos** (staff) das de alta un paciente desde el asistente (“registrar paciente”).
+2. **Vos** escaneás DNI o completás Didit.
+3. **El sistema** confirma el alta en la misma pantalla (nombre, documento).
+4. **CTX-11:** Tu sesión de trabajo (efector y servicio que tenías elegidos) **no cambia** al paciente recién creado.
+5. **CTX-12:** La búsqueda antigua de candidatos duplicados **ya no existe** — solo el flujo nuevo de registro.
 
-Más casos en [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) (prefijo **CTX-**).
+---
+
+## Inicio de la app sin provincia
+
+1. **Vos** (paciente sin provincia) abrís el inicio.
+2. **El sistema** oculta o deshabilita bloques que requieren contexto (próximos turnos, consultas asíncronas, etc.).
+3. **CTX-13:** Tras elegir provincia, esos bloques **vuelven** a mostrarse.
+4. **CTX-14:** “Quiero un turno” en el chat **no avanza** hasta tener provincia (mensaje claro).
+
+---
+
+## Representación (actuar por otro familiar)
+
+1. **Vos** configurás representación (tutor, hijo, etc.) y operás en nombre de otro.
+2. **CTX-15:** El sector y provincia que aplican son **los tuyos** (del usuario logueado), no los del familiar representado — anotá el comportamiento al reportar bugs.
+
+---
+
+## Dónde probar en la app
+
+| Pantalla / acción | Qué mirar |
+|-------------------|-----------|
+| Configuración → Sector / Provincia | Cambio guardado al volver |
+| Inicio | Secciones visibles según contexto |
+| Chat → sacar turno | Centros ofrecidos |
+| Chat → recurso provincial | Datos correctos por provincia |
+
+Más casos numerados: [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) (prefijo **CTX-**).

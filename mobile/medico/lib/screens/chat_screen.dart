@@ -2655,7 +2655,7 @@ class ChatScreenState extends State<ChatScreen> {
                               initialListEmbedSelectedId:
                                   message['_flow_auto_selected_id']?.toString(),
                               apiAbsoluteUrl: showingLicenciaImpact
-                                  ? null
+                                  ? ''
                                   : ((inlineUi is Map &&
                                           (inlineUi['api_absolute_url']?.toString() ?? '').trim().isNotEmpty)
                                       ? inlineUi['api_absolute_url']!.toString()

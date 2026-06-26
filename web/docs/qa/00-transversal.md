@@ -20,11 +20,11 @@
 
 ---
 
-## Recorrer el menú sin sorpresas
+## Recorrer el menú
 
 1. **Vos** tocás las opciones del menú (turnos, personas, nomenclador, referencias…).
-2. **El sistema** abre cada pantalla sin error raro.
-3. Si entrás a una dirección vieja que ya no existe (por ejemplo pantallas de guardia o internación que sacamos), **el sistema** te dice que eso ya no se usa y te orienta a la captura o al mapa nuevo — no un “página no encontrada” vacío.
+2. **El sistema** abre cada pantalla sin error.
+3. Si abrís un enlace guardado que ya no existe, **el sistema** muestra un mensaje claro (qué usar en su lugar) — no una pantalla en blanco ni “página no encontrada” sin explicación.
 
 ---
 
@@ -48,14 +48,14 @@
 
 ## Dar de alta un paciente nuevo
 
-1. **Vos** completás el registro (web o app, según el flujo que uses): documento, datos personales, validación de identidad si aplica.
-2. **El sistema** crea la persona y te confirma.
-3. **Vos** la buscás de nuevo por documento.
-4. **El sistema** la encuentra y ya podés sacarle turno o atenderla.
+1. **Vos** completás el registro (web o app, según el flujo): documento, datos personales, validación de identidad si aplica.
+2. **El sistema** confirma el alta.
+3. **Vos** buscás de nuevo por documento.
+4. **El sistema** encuentra al paciente y ya podés sacarle turno o atenderlo.
 
 ---
 
-## Pantallas viejas de internación (medicación, prácticas, diagnósticos sueltos)
+## Enlace antiguo de internación (medicación, prácticas sueltas)
 
-1. **Vos** (si tenés un bookmark antiguo) intentás abrir formularios viejos de “cargar medicación/práctica/diagnóstico” de internación.
-2. **El sistema** te dice que eso ya no se usa así: la carga va por la **historia / captura** del episodio de internación, no por pantallas sueltas.
+1. **Vos** (si tenés un favorito viejo) intentás abrir pantallas sueltas de “cargar medicación” o “cargar práctica” de internación.
+2. **El sistema** te indica que esa forma ya no se usa: todo se carga desde la **captura clínica** del internado (mapa de camas → atender / historia).

@@ -14,9 +14,9 @@
 
 ## Llegan resultados nuevos del laboratorio
 
-1. En el efector, el laboratorio o la integración **carga** resultados (proceso de fondo o carga manual según el despliegue).
-2. **Vos** (paciente) volvés a abrir Laboratorio.
-3. **El sistema** muestra el estudio nuevo vinculado a tu persona.
+1. Cuando el laboratorio o el efector **cargan** resultados nuevos (manual o integración).
+2. **Vos** (paciente) volvés a abrir Laboratorio en la app.
+3. **El sistema** muestra el estudio nuevo en tu lista.
 
 ---
 

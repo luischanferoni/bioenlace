@@ -110,7 +110,10 @@ class _SignupScreenState extends State<SignupScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => ChatScreen(chatService: chatService),
+          builder: (_) => MainScreen(
+            chatService: chatService,
+            authToken: null,
+          ),
         ),
       );
     } catch (e) {

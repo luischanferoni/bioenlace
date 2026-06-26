@@ -79,7 +79,7 @@ class HomePanelApi {
   Map<String, String> get _headers {
     final headers = AppConfig.jsonHeaders(
       bearerToken: authToken,
-      appClient: appClient,
+      appClient: appClient ?? 'flutter',
     );
     return headers;
   }

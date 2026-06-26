@@ -1,0 +1,31 @@
+{
+  "ui_type": "ui_json",
+  "title": "Recurso provincial",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "query",
+      "title": "¿Qué institución buscás?",
+      "fields": [
+        {
+          "name": "q",
+          "label": "Ej. ministerio de salud",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "tipo",
+          "label": "Tipo (opcional)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

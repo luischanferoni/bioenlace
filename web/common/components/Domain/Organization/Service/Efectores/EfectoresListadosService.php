@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\Efectores;
 
+use common\components\Domain\Person\Service\PacienteContextoOfferingService;
 use common\models\Efector;
 use yii\web\Request;
 
@@ -52,7 +53,7 @@ final class EfectoresListadosService
 
         $filters['limit'] = self::reqParam($req, 'limit') ?? '200';
 
-        return $filters;
+        return (new PacienteContextoOfferingService())->mergeEfectorFilters($filters);
     }
 
     public static function requireServicioId(Request $req): ?string

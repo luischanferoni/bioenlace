@@ -359,6 +359,9 @@ return [
                 'GET api/<version:\w+>/paciente-contexto/sugerir-provincias-como-paciente' => '<version>/paciente-contexto/sugerir-provincias-como-paciente',
                 'POST api/<version:\w+>/paciente-contexto/sugerir-provincias-como-paciente' => '<version>/paciente-contexto/sugerir-provincias-como-paciente',
                 'OPTIONS api/<version:\w+>/paciente-contexto/sugerir-provincias-como-paciente' => '<version>/paciente-contexto/sugerir-provincias-como-paciente',
+                'GET api/<version:\w+>/paciente-contexto/buscar-recurso-provincial-como-paciente' => '<version>/paciente-contexto/buscar-recurso-provincial-como-paciente',
+                'POST api/<version:\w+>/paciente-contexto/buscar-recurso-provincial-como-paciente' => '<version>/paciente-contexto/buscar-recurso-provincial-como-paciente',
+                'OPTIONS api/<version:\w+>/paciente-contexto/buscar-recurso-provincial-como-paciente' => '<version>/paciente-contexto/buscar-recurso-provincial-como-paciente',
                 
                 // Turnos / agenda profesional API: día operativo; ABM profesional_efector_servicio_agenda = listar|crear|actualizar|eliminar (propio) vs *-para-recurso (staff; query id_efector + id_profesional_efector_servicio)
                 'GET api/<version:\w+>/profesional-agenda/dia' => '<version>/profesional-agenda/dia',

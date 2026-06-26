@@ -53,6 +53,7 @@ use yii\web\MethodNotAllowedHttpException;
 use yii\db\Expression;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Platform\Core\Permission\Domain\ApiDomainOperationBridge;
+use common\components\Domain\Person\Service\PacienteContextoOfferingService;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 
@@ -95,6 +96,8 @@ class TurnosController extends BaseController
             $req->post(),
             function (array $post): array {
                 $params = array_merge(Yii::$app->request->get(), $post);
+                $idEfector = (int) ($post['id_efector'] ?? $params['id_efector'] ?? 0);
+                $this->assertPacienteOfferingForTurnos($idEfector > 0 ? $idEfector : null);
                 $subjectSvc = new PersonRepresentationSubjectService();
                 $model = new Turno();
                 $model->load($post, '');
@@ -1372,6 +1375,8 @@ class TurnosController extends BaseController
             throw new BadRequestHttpException('No se pudo determinar id_efector');
         }
 
+        $this->assertPacienteOfferingForTurnos((int) $idEfector);
+
         $defaults = TurnoSlotOfferService::leerDefaultsTurnosPaciente();
         $criteria = [
             'id_servicio' => (int) $idServicio,
@@ -2146,5 +2151,21 @@ class TurnosController extends BaseController
     protected function assertTurnoDomain(string $operationKey, Turno $turno): void
     {
         ApiDomainOperationBridge::assertOrForbidden($operationKey, $turno);
+    }
+
+    protected function assertPacienteOfferingForTurnos(?int $idEfector = null): void
+    {
+        $offering = new PacienteContextoOfferingService();
+        if (!$offering->shouldApplyForCurrentRequest()) {
+            return;
+        }
+        try {
+            $offering->assertOperativeContextReady();
+            if ($idEfector !== null && $idEfector > 0) {
+                $offering->assertEfectorPermitido($idEfector);
+            }
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
     }
 }

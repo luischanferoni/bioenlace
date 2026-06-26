@@ -35,6 +35,7 @@ use common\components\Domain\Organization\Service\Authorization\OrganizationEfec
 use common\components\Domain\Organization\Service\Authorization\OrganizationPesEfectorPolicy;
 use common\components\Domain\Organization\Service\Authorization\OrganizationPesOwnPolicy;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\OrganizationIntentSubjectResolvers;
+use common\components\Domain\Person\Assistant\PacienteRecursoProvincialFlowDraftHydrator;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaFlowDraftHydrator;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCrearFlowDraftHydrator;
 use common\components\Domain\Person\DataAccess\Filter\SexoBiologicoFilterResolver;
@@ -68,6 +69,7 @@ return [
         'data_access.metric_flow' => [DataAccessFlowDraftHydrator::class, 'hydrateWithOptions'],
         'data_access.edit_flow' => [DataAccessEditFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
+        'person.paciente_recurso_provincial' => [PacienteRecursoProvincialFlowDraftHydrator::class, 'hydrateWithOptions'],
     ],
 
     'intentSubjectResolvers' => [

@@ -77,6 +77,11 @@ categories:
       - internacion.cambio-cama-flow
       - internacion.alta-estructurada-flow
 
+  - id: mi_provincia
+    titulo: Mi provincia
+    intent_ids:
+      - paciente-contexto.recurso-provincial-como-paciente-flow
+
   - id: plataforma
     titulo: Ayuda y plataforma
     intent_ids:

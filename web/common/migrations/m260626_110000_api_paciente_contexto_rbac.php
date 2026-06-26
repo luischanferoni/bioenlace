@@ -14,6 +14,7 @@ class m260626_110000_api_paciente_contexto_rbac extends Migration
         '/api/paciente-contexto/obtener-como-paciente',
         '/api/paciente-contexto/actualizar-como-paciente',
         '/api/paciente-contexto/sugerir-provincias-como-paciente',
+        '/api/paciente-contexto/buscar-recurso-provincial-como-paciente',
     ];
 
     private const PARENT_ROUTE = '/api/turnos/crear-como-paciente';

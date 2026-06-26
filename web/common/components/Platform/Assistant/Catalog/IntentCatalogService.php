@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\Catalog;
 
 use common\components\Platform\Core\Service\ClientContextService;
+use common\components\Domain\Person\Service\PacienteContextoOfferingService;
 use Yii;
 
 /**
@@ -32,7 +33,31 @@ final class IntentCatalogService
 
         $filtered = YamlIntentCatalogService::filterByRbac($all, $userId);
 
-        return ClientContextService::filterPacienteFlows($filtered);
+        $filtered = ClientContextService::filterPacienteFlows($filtered);
+
+        return self::filterByPacienteOffering($filtered);
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $flows
+     * @return array<int, array<string, mixed>>
+     */
+    private static function filterByPacienteOffering(array $flows): array
+    {
+        $offering = new PacienteContextoOfferingService();
+        if (!$offering->shouldApplyForCurrentRequest()) {
+            return $flows;
+        }
+
+        $out = [];
+        foreach ($flows as $flow) {
+            if (!is_array($flow) || !$offering->isFlowAllowed($flow)) {
+                continue;
+            }
+            $out[] = $flow;
+        }
+
+        return $out;
     }
 }
 

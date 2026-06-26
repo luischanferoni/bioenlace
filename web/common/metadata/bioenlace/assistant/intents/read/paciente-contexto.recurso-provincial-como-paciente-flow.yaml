@@ -1,0 +1,37 @@
+intent_id: paciente-contexto.recurso-provincial-como-paciente-flow
+version: 1
+
+action_name: "Recurso de salud en tu provincia"
+description: "Consultar dirección y teléfono del ministerio u organismo de salud de tu provincia."
+rbac_route: "/api/paciente-contexto/buscar-recurso-provincial-como-paciente"
+keywords:
+  - ministerio de salud
+  - ministerio salud
+  - dónde está el ministerio
+  - ubicación ministerio
+  - dirección ministerio
+  - teléfono ministerio
+  - organismo de salud provincial
+
+draft_hydrator:
+  handler: person.paciente_recurso_provincial
+
+intent_semantics:
+  goal: >-
+    Obtener datos de contacto de instituciones de salud según la provincia de contexto del paciente.
+  how: >-
+    Lookup declarativo por provincia + texto del usuario (aliases en recursos-provinciales.yaml).
+  outcome:
+    - Nombre, dirección y teléfono del recurso provincial solicitado.
+
+subintents:
+  - id: buscar
+    assistant_text: "Busco el recurso en tu provincia de contexto."
+    provides: []
+    next: ""
+
+flow_submit:
+  action_id: paciente-contexto.buscar-recurso-provincial-como-paciente
+  params:
+    q: "draft.q"
+    tipo: "draft.tipo"

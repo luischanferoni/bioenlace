@@ -87,4 +87,18 @@ class PacienteContextApi {
   Future<Map<String, dynamic>> sugerirProvincias() {
     return _request('/paciente-contexto/sugerir-provincias-como-paciente');
   }
+
+  Future<Map<String, dynamic>> buscarRecursoProvincial({
+    String? query,
+    String? tipo,
+  }) {
+    final body = <String, dynamic>{};
+    if (query != null && query.isNotEmpty) body['q'] = query;
+    if (tipo != null && tipo.isNotEmpty) body['tipo'] = tipo;
+    return _request(
+      '/paciente-contexto/buscar-recurso-provincial-como-paciente',
+      method: 'POST',
+      body: body,
+    );
+  }
 }

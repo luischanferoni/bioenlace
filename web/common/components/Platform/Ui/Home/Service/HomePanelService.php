@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Ui\Home\Service;
 
+use common\components\Domain\Person\Service\PacienteContextoOfferingService;
 use Yii;
 
 /**
@@ -48,6 +49,10 @@ final class HomePanelService
         ];
 
         $sections = $this->buildSections($panelDef['sections'], $context, $filterSectionIds, true);
+
+        if ($audience === HomePanelAudienceResolver::PATIENT) {
+            $sections = $this->filterPatientSectionsWhenContextPending($sections, $panelDef['sections']);
+        }
 
         if ($sections === [] && $audience === HomePanelAudienceResolver::STAFF && $encounterClass) {
             throw new \InvalidArgumentException('No hay secciones disponibles para el contexto operativo actual.');
@@ -103,6 +108,37 @@ final class HomePanelService
         }
 
         return $sections;
+    }
+
+    /**
+     * Si el contexto paciente aún no está operativo, oculta secciones que requieren provincia.
+     *
+     * @param list<array<string, mixed>> $built
+     * @param list<array{id: string, provider: string, kind: string}> $definitions
+     * @return list<array<string, mixed>>
+     */
+    private function filterPatientSectionsWhenContextPending(array $built, array $definitions): array
+    {
+        $offering = new PacienteContextoOfferingService();
+        $ctx = $offering->getContextOrNull();
+        if ($ctx === null || $ctx->puedeOperarApp()) {
+            return $built;
+        }
+
+        $allowedIds = array_map(
+            static fn (array $def): string => (string) ($def['id'] ?? ''),
+            $offering->filterHomePanelSectionDefinitions($definitions)
+        );
+
+        $out = [];
+        foreach ($built as $section) {
+            $id = (string) ($section['id'] ?? '');
+            if ($id === '' || in_array($id, $allowedIds, true)) {
+                $out[] = $section;
+            }
+        }
+
+        return $out;
     }
 
     /**

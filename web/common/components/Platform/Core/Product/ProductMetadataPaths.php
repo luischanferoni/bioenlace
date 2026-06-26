@@ -88,6 +88,16 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'client-context.yaml';
     }
 
+    public static function pacienteContextoOfferingFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'paciente-contexto-offering.yaml';
+    }
+
+    public static function recursosProvincialesFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'geo' . DIRECTORY_SEPARATOR . 'recursos-provinciales.yaml';
+    }
+
     public static function uiJsonDomainsFile(): string
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'json-domains.yaml';

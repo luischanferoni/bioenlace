@@ -205,6 +205,17 @@ class Efector extends \yii\db\ActiveRecord
             $query->andWhere(['like', 'efectores.nombre', '%'.$q.'%', false]);
         }
         
+        // Filtro por provincia (vía localidad → departamento)
+        if (!empty($filters['id_provincia'])) {
+            $query->joinWith(['localidad.departamento'])
+                  ->andWhere(['departamentos.id_provincia' => (int) $filters['id_provincia']]);
+        }
+
+        // Sector salud paciente (origen_financiamiento)
+        if (!empty($filters['sector_salud'])) {
+            self::applySectorSaludFilter($query, (string) $filters['sector_salud']);
+        }
+        
         // Filtro por localidad
         if (!empty($filters['id_localidad'])) {
             $query->andWhere(['efectores.id_localidad' => $filters['id_localidad']]);
@@ -322,6 +333,35 @@ class Efector extends \yii\db\ActiveRecord
         $results = $query->asArray()->all();
         
         return $results;
+    }
+
+    /**
+     * @param \yii\db\ActiveQuery $query
+     */
+    private static function applySectorSaludFilter($query, string $sectorSalud): void
+    {
+        $rules = \common\components\Platform\Core\Product\PacienteContextoOfferingMetadata::origenFinanciamientoRulesForSector(
+            strtoupper($sectorSalud)
+        );
+
+        foreach ($rules['exclude'] as $needle) {
+            if ($needle === '') {
+                continue;
+            }
+            $query->andWhere(['not like', 'efectores.origen_financiamiento', $needle, false]);
+        }
+
+        if ($rules['include'] !== []) {
+            $or = ['or'];
+            foreach ($rules['include'] as $needle) {
+                if ($needle !== '') {
+                    $or[] = ['like', 'efectores.origen_financiamiento', $needle, false];
+                }
+            }
+            if (count($or) > 1) {
+                $query->andWhere($or);
+            }
+        }
     }
 
     /**

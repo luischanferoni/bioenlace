@@ -1,0 +1,25 @@
+version: 1
+# Recursos institucionales por provincia (cod_indec). Lookup genérico para asistente / FAQ.
+recursos:
+  ministerio_salud:
+    aliases:
+      - ministerio de salud
+      - ministerio salud
+      - ms
+    por_cod_indec:
+      "86":
+        nombre: Ministerio de Salud de Santiago del Estero
+        direccion: Av. Juan Bautista Alberdi 601, Santiago del Estero
+        telefono: "0385-421-0100"
+      "14":
+        nombre: Ministerio de Salud de la Provincia de Buenos Aires
+        direccion: Calle 7 entre 50 y 51, La Plata
+        telefono: "0221-429-3400"
+      "82":
+        nombre: Ministerio de Salud de Santa Fe
+        direccion: San Martín 2627, Santa Fe
+        telefono: "0342-450-6500"
+      "00":
+        nombre: Ministerio de Salud de la Nación
+        direccion: Av. Paseo Colón 195, CABA
+        telefono: "0800-222-3362"

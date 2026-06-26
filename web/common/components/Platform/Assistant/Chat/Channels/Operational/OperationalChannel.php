@@ -51,13 +51,11 @@ final class OperationalChannel
             return self::finalize(IntentEngine::processQuery($queryText, $userId, null));
         }
 
-        // Reglas declarativas (p. ej. editar agenda staff) antes de top-K e IA.
-        if (ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
-            $declarative = IntentClassificationRulesService::resolveOperationalFallback($queryText, $catalog);
-            if ($declarative !== null) {
-                $declarative = (new IntentFamilyClassificationService())->refine($declarative, $queryText, $userId, $catalog);
-                return self::buildFromClassification($declarative, $queryText, $userId);
-            }
+        // Reglas declarativas antes de top-K e IA (fallbacks YAML con `operational_fallbacks`).
+        $declarative = IntentClassificationRulesService::resolveOperationalFallback($queryText, $catalog);
+        if ($declarative !== null) {
+            $declarative = (new IntentFamilyClassificationService())->refine($declarative, $queryText, $userId, $catalog);
+            return self::buildFromClassification($declarative, $queryText, $userId);
         }
 
         $top = IntentRetrievalIndex::topK($queryText, $catalog, 8);

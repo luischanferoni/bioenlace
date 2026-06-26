@@ -28,6 +28,7 @@ vocab:
   licencia_topics: '\b(licencia|permiso|ausencia|vacacion|vacaciones|franco|condicion laboral|condición laboral)\b'
   own_licencia: '\b(mi|mis)\s+(licencia|permiso|ausencia|vacaciones|condicion laboral|condición laboral)\b'
   staff_licencia_third: '\b(licencia|permiso|ausencia|condicion laboral|condición laboral)\s+(del|de un|de la|de otro|profesional|medico|médico|colega)\b'
+  provincial_resource: '\b(ministerio\s+(de\s+)?salud|organismo\s+de\s+salud|direcci[oó]n\s+del\s+ministerio|d[oó]nde\s+est[aá]\s+el\s+ministerio|ubicaci[oó]n\s+ministerio|tel[eé]fono\s+ministerio)\b'
 
 match_rules:
   staff_agenda_config_edit:
@@ -92,6 +93,9 @@ match_rules:
   staff_identidad_edit:
     require_all: [edit_verbs, staff_third_party]
     forbid_any: [agenda_targets, alta_verbs, scheduling_ops]
+
+  paciente_provincial_resource:
+    require_any: [provincial_resource]
 
 score_adjustments:
   - when_rule: staff_condicion_laboral
@@ -169,6 +173,11 @@ score_adjustments:
       - intent_id: data-access.info
         delta: 5
 
+  - when_rule: paciente_provincial_resource
+    apply:
+      - intent_id: paciente-contexto.recurso-provincial-como-paciente-flow
+        delta: 45
+
 operational_fallbacks:
   - id: staff_agenda_config_edit_nl
     requires_staff_data_access: true
@@ -189,6 +198,12 @@ operational_fallbacks:
     intent_family: condicion-laboral.edit
     confidence: 0.88
     method: rules_family_fallback
+
+  - id: paciente_provincial_resource_nl
+    when_any_rule: [paciente_provincial_resource]
+    intent_id: paciente-contexto.recurso-provincial-como-paciente-flow
+    confidence: 0.88
+    method: rules_declarative_fallback
 
 chat_preprocess:
   entity_categories:
@@ -235,6 +250,8 @@ chat_preprocess:
 
   heuristic_fallback:
     - when_rule: scheduling_operational
+      goal: operational
+    - when_rule: paciente_provincial_resource
       goal: operational
     - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit]
       goal: operational

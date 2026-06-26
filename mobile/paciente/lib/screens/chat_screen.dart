@@ -2416,6 +2416,7 @@ class ChatScreenState extends State<ChatScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const PacienteOperativeLimitedNotice(),
           Expanded(
             child: _showWelcomeShortcutGrid
                 ? _buildWelcomeShortcutsPanel()

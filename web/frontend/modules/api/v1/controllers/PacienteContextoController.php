@@ -7,6 +7,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use common\components\Domain\Person\Service\PacienteContextoService;
 use common\components\Domain\Person\Service\ProvinciaSuggestionService;
+use common\components\Domain\Person\Service\ProvincialResourceLookupService;
 
 /**
  * Contexto operativo persistente del paciente (sector salud, provincia de contexto).
@@ -91,6 +92,108 @@ class PacienteContextoController extends BaseController
         return [
             'success' => true,
             'data' => ['provincias' => $provincias],
+        ];
+    }
+
+    /**
+     * GET|POST /api/v1/paciente-contexto/buscar-recurso-provincial-como-paciente
+     *
+     * Query: q (texto libre, ej. "ministerio de salud"), tipo (opcional, ej. ministerio_salud).
+     *
+     * @action_name Buscar recurso provincial
+     * @entity PacienteContexto
+     * @tags paciente, contexto, geografía
+     */
+    public function actionBuscarRecursoProvincialComoPaciente(): array
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            throw new BadRequestHttpException('Sesión sin persona.');
+        }
+
+        $ctx = (new PacienteContextoService())->getOrCreate($idPersona);
+        if (!$ctx->puedeOperarApp()) {
+            throw new BadRequestHttpException('Definí tu provincia de contexto para consultar recursos locales.');
+        }
+
+        $params = $this->mergedParams();
+        $query = trim((string) ($params['q'] ?? $params['query'] ?? ''));
+        $tipo = trim((string) ($params['tipo'] ?? ''));
+
+        $result = (new ProvincialResourceLookupService())->findForProvincia(
+            (int) $ctx->id_provincia_contexto,
+            $tipo,
+            $query !== '' ? $query : null
+        );
+
+        if (Yii::$app->request->isPost) {
+            return $this->buildRecursoSubmitEnvelope($result);
+        }
+
+        if ($result === null) {
+            return [
+                'success' => true,
+                'data' => [
+                    'encontrado' => false,
+                    'mensaje' => 'No encontramos ese recurso para tu provincia de contexto.',
+                ],
+            ];
+        }
+
+        return [
+            'success' => true,
+            'data' => [
+                'encontrado' => true,
+                'recurso' => $result,
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $result
+     * @return array<string, mixed>
+     */
+    private function buildRecursoSubmitEnvelope(?array $result): array
+    {
+        if ($result === null) {
+            return [
+                'kind' => 'ui_submit_result',
+                'success' => true,
+                'data' => [
+                    'mensaje' => 'No encontramos ese recurso para tu provincia de contexto.',
+                    'encontrado' => false,
+                ],
+            ];
+        }
+
+        $row = $result['recurso'] ?? [];
+        if (!is_array($row)) {
+            $row = [];
+        }
+        $nombre = trim((string) ($row['nombre'] ?? ''));
+        $direccion = trim((string) ($row['direccion'] ?? ''));
+        $telefono = trim((string) ($row['telefono'] ?? ''));
+        $provincia = trim((string) ($result['provincia'] ?? ''));
+
+        $lines = [];
+        if ($nombre !== '') {
+            $lines[] = $nombre . ($provincia !== '' ? " ($provincia)" : '');
+        }
+        if ($direccion !== '') {
+            $lines[] = 'Dirección: ' . $direccion;
+        }
+        if ($telefono !== '') {
+            $lines[] = 'Teléfono: ' . $telefono;
+        }
+
+        return [
+            'kind' => 'ui_submit_result',
+            'success' => true,
+            'data' => [
+                'mensaje' => $lines !== [] ? implode("\n", $lines) : 'Recurso encontrado.',
+                'encontrado' => true,
+                'recurso' => $result,
+            ],
         ];
     }
 

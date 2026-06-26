@@ -76,6 +76,16 @@ Si el paciente no responde al push de reubicación dentro del plazo configurado 
 
 Parámetros: `turnoResolucionMulticanal` (`public_base_url`, `app_deep_link`, `signing_key`). Flag: `autonomous_agent_resolucion_multicanal_enabled`.
 
+## Cierre de loop (agente A06, v1)
+
+Si tras **72 h** (configurable) el turno sigue en `EN_RESOLUCION` sin reubicar:
+
+1. El agente `turno-resolucion-loop-close` evalúa reglas YAML.
+2. **Default:** cancela el turno, notifica al paciente (`TURNO_RESOLUCION_SIN_RESPUESTA`) y libera el cupo (dispara waitlist A03 si aplica).
+3. **Banda C/D:** escala a staff del PES (`TURNO_RESOLUCION_STAFF_ESCALATE`) y mantiene la resolución abierta.
+
+Flag: `autonomous_agent_resolucion_loop_close_enabled`.
+
 ## Relación con el resto del producto
 
 - Representación operativa (tutela/delegación): [representacion-paciente.md](./representacion-paciente.md).

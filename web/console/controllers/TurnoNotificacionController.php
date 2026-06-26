@@ -85,6 +85,14 @@ class TurnoNotificacionController extends Controller
                     if ($result === 'deferred') {
                         continue;
                     }
+                } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RESOLUCION_LOOP_CLOSE) {
+                    $result = (new \common\components\Domain\Scheduling\Service\TurnoResolucionLoopCloseAgent())
+                        ->processScheduled($row, $turno);
+                    if ($result === 'cancelled') {
+                        $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
+                        $row->save(false);
+                        continue;
+                    }
                 }
                 $row->estado = TurnoNotificacionProgramada::ESTADO_ENVIADA;
                 $row->save(false);

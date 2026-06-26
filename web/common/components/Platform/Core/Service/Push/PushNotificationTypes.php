@@ -18,6 +18,12 @@ final class PushNotificationTypes
     /** Lista de espera: oferta de hueco liberado (agente A03). */
     public const TURNO_WAITLIST_OFFER = 'TURNO_WAITLIST_OFFER';
 
+    /** Resolución: cierre por falta de respuesta del paciente (agente A06). */
+    public const TURNO_RESOLUCION_SIN_RESPUESTA = 'TURNO_RESOLUCION_SIN_RESPUESTA';
+
+    /** Resolución: escalamiento a staff por timeout (agente A06). */
+    public const TURNO_RESOLUCION_STAFF_ESCALATE = 'TURNO_RESOLUCION_STAFF_ESCALATE';
+
     /** Resumen de atención ambulatoria publicado al paciente. */
     public const ENCOUNTER_SUMMARY_READY = 'ENCOUNTER_SUMMARY_READY';
 

@@ -1,0 +1,28 @@
+# Cierre de loop tras reubicación sin respuesta (agente A06 v1).
+# {@see TurnoResolucionLoopCloseAgent}
+version: 1
+agent_id: turno-resolucion-loop-close
+
+# Horas desde el push inicial de reubicación hasta evaluar cierre.
+loop_close_hours: 72
+
+# Acción si ninguna regla coincide.
+default_action: cancel_turno
+
+rules:
+  - id: chronic_escalate_coordination
+    when:
+      field: urgency_band
+      in: [C, D]
+    action: escalate_staff
+    staff:
+      title: "Resolución sin respuesta — seguimiento prioritario"
+      body_template: "Turno del {{fecha}} sin reubicar tras el plazo de contacto. Paciente banda {{urgency_band}}."
+
+patient_messages:
+  cancel_turno:
+    title: "Turno liberado"
+    body: "No recibimos respuesta para reubicar tu turno del {{fecha}}. Volvé a reservar cuando puedas desde la app."
+  keep_in_resolution:
+    title: "Seguimos con tu turno"
+    body: "Aún estamos gestionando un nuevo horario para tu turno del {{fecha}}. Te avisaremos cuando haya novedades."

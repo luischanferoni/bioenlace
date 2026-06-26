@@ -568,6 +568,12 @@ final class TurnoResolucionService
         } catch (\Throwable $e) {
             Yii::warning('Multicanal schedule: ' . $e->getMessage(), 'turno-resolucion-multicanal');
         }
+
+        try {
+            (new TurnoResolucionLoopCloseScheduler())->scheduleAfterInitialPush($turno);
+        } catch (\Throwable $e) {
+            Yii::warning('Loop close schedule: ' . $e->getMessage(), 'turno-resolucion-loop-close');
+        }
     }
 
     /**

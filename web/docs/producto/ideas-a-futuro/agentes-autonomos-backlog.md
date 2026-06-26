@@ -140,6 +140,7 @@ Priorizar **agente** (reglas) antes que **agente IA** cuando alcanza: más barat
 | Post-lab + `post-lab-classification` | **Agente** D2 | LOINC + umbrales → push — **implementado** |
 | Cancelación turno + `turno-waitlist-fill` | **Agente** D2–D3 | FIFO + cascada TTL → reserva — **implementado (v1)** |
 | Resolución sin respuesta + `turno-resolucion-multicanal` | **Agente** D3 | push → email/SMS + link firmado — **implementado (v1)** |
+| Timeout reubicación + `turno-resolucion-loop-close` | **Agente** D2 | cancelar / escalar staff — **implementado (v1)** |
 
 ---
 
@@ -154,7 +155,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | B01 | Touchpoints cohorte / plan | **Agente** | Respuesta estructurada → rama | D2 | ~~P0~~ **Hecho** |
 | A02 | Negociación multicanal + cierre | **Agente** | Canal, escalar, timeout | D3 | ~~P0~~ **Hecho (v1)** |
 | A01 | Auto-reserva en resolución (opt-out) | **Agente** | Slot por score + preferencias en BD | D2 | P1 |
-| A06 | Cierre de loop (sin respuesta) | **Agente** | Cancelar / mantener / escalar | D2 | P1 |
+| A06 | Cierre de loop (sin respuesta) | **Agente** | Cancelar / mantener / escalar | D2 | ~~P1~~ **Hecho (v1)** |
 | A04 | Anti no-show predictivo | **Agente** | Liberar slot vs recordatorio | D2 | P1 |
 | A05 | Ruteo post-triage sin cupo | **Agente** | Canal por triage + cupos (reglas) | D1–D2 | P1 |
 | H01 | Bandeja async priorizada | **Agente** | Orden por SLA + triage en BD | D1 | P1 |
@@ -229,7 +230,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 ### A02 — Negociación multicanal (reprogramar)
 
-> **Estado:** **implementado (v1)** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md). WhatsApp y cierre A06 pendientes.
+> **Estado:** **implementado (v1)** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md). WhatsApp pendiente; cierre A06 v1 hecho.
 
 | Campo | Valor |
 |-------|--------|
@@ -309,6 +310,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 ---
 
 ### A06 — Cierre de loop (sin respuesta)
+
+> **Estado:** **implementado (v1)** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md). Rama `keep_in_resolution` por política de efector pendiente.
 
 | Campo | Valor |
 |-------|--------|
@@ -823,7 +826,7 @@ flowchart LR
 
 1. **Fase 0:** Preferencias de agenda en perfil paciente + política score; auditoría agente vs agente IA.
 2. **Fase 1:** ~~Agentes P0~~ completada (~~B01~~ ~~B03~~ ~~A03~~ ~~A02 v1~~).
-3. **Fase 2:** A01 auto-reserva + shortlist; H01; A04/A06.
+3. **Fase 2:** A01 auto-reserva + shortlist; H01; A04; ~~A06~~ v1 hecho.
 4. **Fase 3:** Agentes E01/E02; C03/D02 como **agente IA** donde aplique NL.
 5. **Fase 4:** D03 (codificación automática), F02; redacción IA en pushes ya decididos por regla.
 

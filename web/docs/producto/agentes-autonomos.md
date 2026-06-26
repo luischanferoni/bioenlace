@@ -102,13 +102,28 @@ Ver [turnos.md](./turnos.md).
 
 Ver [turnos.md](./turnos.md).
 
+### A06 — Cierre de loop sin respuesta (agente D2, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (reglas) |
+| **Trigger** | Timeout tras push/multicanal (72 h por defecto) con resolución aún pendiente |
+| **Política** | `autonomous_agents/turno-resolucion-loop-close.yaml` |
+| **Decisiones** | Banda C/D → escalar staff; default → cancelar turno y liberar cupo |
+| **Efecto** | Push `TURNO_RESOLUCION_SIN_RESPUESTA` o `TURNO_RESOLUCION_STAFF_ESCALATE`; waitlist A03 si cancela |
+| **Cron** | `yii turno-notificacion/run` (`TIPO_RESOLUCION_LOOP_CLOSE`) |
+| **Auditoría** | `agent_run` (`agent_id`: `turno-resolucion-loop-close`) |
+| **Flag** | `autonomous_agent_resolucion_loop_close_enabled` |
+
+Ver [turnos.md](./turnos.md).
+
 ---
 
 ## En implementación / backlog
 
 | ID | Nombre | Fase plan |
 |----|--------|-----------|
-| A01, H01, A04, A06, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
+| A01, H01, A04, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
 
 ---
 

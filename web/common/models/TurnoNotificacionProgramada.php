@@ -28,6 +28,9 @@ class TurnoNotificacionProgramada extends ActiveRecord
     /** Escalada multicanal tras push de reubicación (agente A02). */
     const TIPO_RESOLUCION_MULTICANAL = 'RESOLUCION_MULTICANAL';
 
+    /** Cierre de loop sin respuesta (agente A06). */
+    const TIPO_RESOLUCION_LOOP_CLOSE = 'RESOLUCION_LOOP_CLOSE';
+
     const ESTADO_PENDIENTE = 'PENDIENTE';
     const ESTADO_ENVIADA = 'ENVIADA';
     const ESTADO_CANCELADA = 'CANCELADA';

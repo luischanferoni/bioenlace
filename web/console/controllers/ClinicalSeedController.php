@@ -114,7 +114,8 @@ class ClinicalSeedController extends Controller
 
         $this->stdout(
             "\nAdmin: filtrá por provincia o sector en /admin/efectores.\n"
-            . "Paciente: contexto PUBLICO + Santa Fe / PRIVADO + Santiago del Estero para probar offering.\n",
+            . "Paciente: contexto PUBLICO + provincia del CAP demo / PRIVADO + provincia del efector "
+            . EfectorDemoSeedService::DEFAULT_EFECTOR_REF . " para probar offering.\n",
             Console::FG_YELLOW
         );
 

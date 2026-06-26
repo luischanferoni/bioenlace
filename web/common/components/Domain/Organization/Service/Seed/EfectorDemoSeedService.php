@@ -11,21 +11,25 @@ use yii\db\Query;
 /**
  * Seed de desarrollo: efector público en otra provincia y clínica privada, cada uno con médico MED GENERAL.
  *
- * Idempotente por codigo_sisa reservado.
+ * Idempotente por codigo_sisa reservado. Si el catálogo geográfico no tiene otra provincia,
+ * crea provincia/departamento/localidad mínimos de demo (Santa Fe).
  */
 final class EfectorDemoSeedService
 {
     public const SEED_MARKER = 'seed:efector-demo-contexto';
 
-    /** Efector público provincial (Santa Fe, cod_indec 82). */
     public const COD_SISA_PUBLIC_OTRA_PROV = 'DEV99001SFPUB';
 
-    /** Clínica privada (Santiago del Estero, cod_indec 86). */
     public const COD_SISA_PRIVATE = 'DEV99002PRIV';
 
-    public const PROVINCIA_PUBLIC_COD_INDEC = '82';
+    /** Efector de referencia (Santiago del Estero en prod). */
+    public const DEFAULT_EFECTOR_REF = 863;
 
-    public const PROVINCIA_PRIVATE_COD_INDEC = '86';
+    private const DEV_LOCALIDAD_OTRA_PROV_COD_BAHRA = 'DEV99001SF';
+
+    private const PREFER_PROVINCIA_NOMBRE = 'Santa Fe';
+
+    private const PREFER_PROVINCIA_COD_INDEC = '82';
 
     /**
      * @return array{
@@ -54,29 +58,31 @@ final class EfectorDemoSeedService
     /**
      * @return array<string, mixed>
      */
-    public function upsertPublicOtraProvincia(): array
+    public function upsertPublicOtraProvincia(int $idEfectorReferencia = self::DEFAULT_EFECTOR_REF): array
     {
-        $localidad = $this->findFirstLocalidadInProvincia(self::PROVINCIA_PUBLIC_COD_INDEC);
+        $localidad = $this->findLocalidadEnOtraProvincia($idEfectorReferencia);
+        $provinciaNombre = $this->resolveProvinciaNombreForLocalidad($localidad);
 
         return $this->upsertEfector(
             self::COD_SISA_PUBLIC_OTRA_PROV,
-            '[DEV] CAP Santa Fe Demo',
+            '[DEV] CAP ' . $provinciaNombre . ' Demo',
             'Provincial',
             'CAP',
             'Av. San Martín 100',
             'Provincial',
             '0342-4000000',
             (int) $localidad->id_localidad,
-            (string) $localidad->departamento->provincia->nombre
+            $provinciaNombre
         );
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function upsertClinicaPrivada(): array
+    public function upsertClinicaPrivada(int $idEfectorReferencia = self::DEFAULT_EFECTOR_REF): array
     {
-        $localidad = $this->findFirstLocalidadInProvincia(self::PROVINCIA_PRIVATE_COD_INDEC);
+        $localidad = $this->findLocalidadDeEfector($idEfectorReferencia);
+        $provinciaNombre = $this->resolveProvinciaNombreForLocalidad($localidad);
 
         return $this->upsertEfector(
             self::COD_SISA_PRIVATE,
@@ -87,7 +93,7 @@ final class EfectorDemoSeedService
             'Privado',
             '0385-4220000',
             (int) $localidad->id_localidad,
-            (string) $localidad->departamento->provincia->nombre
+            $provinciaNombre
         );
     }
 
@@ -186,34 +192,216 @@ final class EfectorDemoSeedService
         ];
     }
 
-    private function findFirstLocalidadInProvincia(string $codIndecProvincia): Localidad
+    private function findLocalidadEnOtraProvincia(int $idEfectorReferencia): Localidad
     {
-        $provincia = Provincia::findOne(['cod_indec' => $codIndecProvincia]);
-        if ($provincia === null) {
-            throw new \InvalidArgumentException(
-                "Provincia cod_indec={$codIndecProvincia} no encontrada. Verificá el catálogo geográfico."
+        $homeProvinciaId = $this->resolveProvinciaIdFromEfector($idEfectorReferencia);
+
+        $localidad = $this->queryPrimeraLocalidadEnProvinciaDistinta($homeProvinciaId);
+        if ($localidad !== null) {
+            return $localidad;
+        }
+
+        return $this->ensureLocalidadDemoOtraProvincia($homeProvinciaId);
+    }
+
+    private function findLocalidadDeEfector(int $idEfectorReferencia): Localidad
+    {
+        $efector = Efector::findOne($idEfectorReferencia);
+        if ($efector === null) {
+            $efector = Efector::find()
+                ->where(['not', ['id_localidad' => null]])
+                ->andWhere(['>', 'id_localidad', 0])
+                ->orderBy(['id_efector' => SORT_ASC])
+                ->one();
+        }
+
+        if ($efector === null || (int) $efector->id_localidad <= 0) {
+            throw new \RuntimeException(
+                'No hay efector de referencia con localidad (probá id_efector='
+                . self::DEFAULT_EFECTOR_REF
+                . ').'
             );
         }
 
         $localidad = Localidad::find()
+            ->where(['id_localidad' => (int) $efector->id_localidad])
+            ->with(['departamento.provincia'])
+            ->one();
+
+        if ($localidad === null) {
+            throw new \RuntimeException(
+                'No existe localidades.id_localidad=' . (int) $efector->id_localidad
+                . ' para el efector ' . (int) $efector->id_efector . '.'
+            );
+        }
+
+        return $localidad;
+    }
+
+    private function resolveProvinciaIdFromEfector(int $idEfector): ?int
+    {
+        $idLocalidad = (new Query())
+            ->select('id_localidad')
+            ->from('{{%efectores}}')
+            ->where(['id_efector' => $idEfector])
+            ->scalar();
+
+        if ($idLocalidad === false || (int) $idLocalidad <= 0) {
+            return null;
+        }
+
+        $idProvincia = (new Query())
+            ->select('d.id_provincia')
+            ->from(['l' => '{{%localidades}}'])
+            ->innerJoin(['d' => '{{%departamentos}}'], 'd.id_departamento = l.id_departamento')
+            ->where(['l.id_localidad' => (int) $idLocalidad])
+            ->scalar();
+
+        return $idProvincia !== false && (int) $idProvincia > 0 ? (int) $idProvincia : null;
+    }
+
+    private function queryPrimeraLocalidadEnProvinciaDistinta(?int $excludeProvinciaId): ?Localidad
+    {
+        $query = Localidad::find()
             ->alias('l')
             ->innerJoin(
                 ['d' => Departamento::tableName()],
                 'd.id_departamento = l.id_departamento'
             )
-            ->where(['d.id_provincia' => (int) $provincia->id_provincia])
             ->with(['departamento.provincia'])
-            ->orderBy(['l.id_localidad' => SORT_ASC])
-            ->one();
+            ->orderBy(['l.id_localidad' => SORT_ASC]);
 
-        if ($localidad === null) {
-            throw new \RuntimeException(
-                'No hay localidades en provincia '
-                . $provincia->nombre
-                . " (cod_indec={$codIndecProvincia})."
-            );
+        if ($excludeProvinciaId !== null && $excludeProvinciaId > 0) {
+            $query->andWhere(['not', ['d.id_provincia' => $excludeProvinciaId]]);
         }
 
-        return $localidad;
+        $localidad = $query->one();
+
+        return $localidad instanceof Localidad ? $localidad : null;
+    }
+
+    private function ensureLocalidadDemoOtraProvincia(?int $homeProvinciaId): Localidad
+    {
+        $existing = Localidad::findOne(['cod_bahra' => self::DEV_LOCALIDAD_OTRA_PROV_COD_BAHRA]);
+        if ($existing !== null) {
+            return Localidad::find()
+                ->where(['id_localidad' => (int) $existing->id_localidad])
+                ->with(['departamento.provincia'])
+                ->one() ?? $existing;
+        }
+
+        $provincia = $this->resolveProvinciaPreferidaOtraProvincia($homeProvinciaId);
+        $idProvincia = (int) $provincia->id_provincia;
+
+        $departamento = Departamento::find()
+            ->where(['id_provincia' => $idProvincia])
+            ->orderBy(['id_departamento' => SORT_ASC])
+            ->one();
+
+        if ($departamento === null) {
+            $departamento = new Departamento();
+            $departamento->id_departamento = $this->nextTableId('{{%departamentos}}', 'id_departamento');
+            $departamento->nombre = 'La Capital';
+            $departamento->cod_indec = '001';
+            $departamento->id_provincia = $idProvincia;
+            if (!$departamento->save()) {
+                throw new \RuntimeException(
+                    'Departamento demo: ' . json_encode($departamento->getErrors())
+                );
+            }
+        }
+
+        $localidad = new Localidad();
+        $localidad->id_localidad = $this->nextTableId('{{%localidades}}', 'id_localidad');
+        $localidad->nombre = self::PREFER_PROVINCIA_NOMBRE . ' (demo)';
+        $localidad->cod_postal = 'D9901';
+        $localidad->id_departamento = (int) $departamento->id_departamento;
+        $localidad->id_provincia = $idProvincia;
+        $localidad->cod_bahra = self::DEV_LOCALIDAD_OTRA_PROV_COD_BAHRA;
+        if (!$localidad->save()) {
+            throw new \RuntimeException('Localidad demo: ' . json_encode($localidad->getErrors()));
+        }
+
+        return Localidad::find()
+            ->where(['id_localidad' => (int) $localidad->id_localidad])
+            ->with(['departamento.provincia'])
+            ->one() ?? $localidad;
+    }
+
+    private function resolveProvinciaPreferidaOtraProvincia(?int $homeProvinciaId): Provincia
+    {
+        $provincia = Provincia::find()
+            ->where(['like', 'nombre', self::PREFER_PROVINCIA_NOMBRE, false])
+            ->orderBy(['id_provincia' => SORT_ASC])
+            ->one();
+
+        if ($provincia !== null
+            && ($homeProvinciaId === null || (int) $provincia->id_provincia !== $homeProvinciaId)) {
+            return $provincia;
+        }
+
+        $provincia = Provincia::findOne(['cod_indec' => self::PREFER_PROVINCIA_COD_INDEC]);
+        if ($provincia !== null
+            && ($homeProvinciaId === null || (int) $provincia->id_provincia !== $homeProvinciaId)) {
+            return $provincia;
+        }
+
+        if ($homeProvinciaId !== null && $homeProvinciaId > 0) {
+            $otra = Provincia::find()
+                ->where(['not', ['id_provincia' => $homeProvinciaId]])
+                ->orderBy(['nombre' => SORT_ASC])
+                ->one();
+            if ($otra !== null) {
+                return $otra;
+            }
+        }
+
+        $provincia = Provincia::find()
+            ->orderBy(['nombre' => SORT_ASC])
+            ->one();
+        if ($provincia !== null
+            && ($homeProvinciaId === null || (int) $provincia->id_provincia !== $homeProvinciaId)) {
+            return $provincia;
+        }
+
+        $provincia = new Provincia();
+        $provincia->id_provincia = $this->nextTableId('{{%provincias}}', 'id_provincia');
+        $provincia->nombre = self::PREFER_PROVINCIA_NOMBRE;
+        $provincia->region_pais = 'Centro';
+        $provincia->superficie = 133007;
+        $provincia->cod_indec = self::PREFER_PROVINCIA_COD_INDEC;
+        if (!$provincia->save()) {
+            throw new \RuntimeException('Provincia demo: ' . json_encode($provincia->getErrors()));
+        }
+
+        return $provincia;
+    }
+
+    private function resolveProvinciaNombreForLocalidad(Localidad $localidad): string
+    {
+        $departamento = $localidad->departamento;
+        if ($departamento !== null) {
+            $provincia = $departamento->provincia;
+            if ($provincia !== null && trim((string) $provincia->nombre) !== '') {
+                return (string) $provincia->nombre;
+            }
+
+            $idProvincia = (int) $departamento->id_provincia;
+            if ($idProvincia > 0) {
+                $row = Provincia::findOne($idProvincia);
+                if ($row !== null && trim((string) $row->nombre) !== '') {
+                    return (string) $row->nombre;
+                }
+            }
+        }
+
+        return self::PREFER_PROVINCIA_NOMBRE;
+    }
+
+    private function nextTableId(string $table, string $column): int
+    {
+        $max = (new Query())->from($table)->max($column);
+
+        return $max !== null && (int) $max > 0 ? ((int) $max) + 1 : 1;
     }
 }

@@ -11,23 +11,8 @@ class ReconnectingCommand extends Command
 {
     public function execute()
     {
-        return $this->runWithReconnect(static fn (): int => parent::execute());
-    }
-
-    protected function queryInternal($method, $fetchMode = null)
-    {
-        return $this->runWithReconnect(static fn () => parent::queryInternal($method, $fetchMode));
-    }
-
-    /**
-     * @template T
-     * @param callable(): T $fn
-     * @return T
-     */
-    private function runWithReconnect(callable $fn)
-    {
         try {
-            return $fn();
+            return parent::execute();
         } catch (\Throwable $e) {
             if (!$this->shouldReconnect($e)) {
                 throw $e;
@@ -36,7 +21,23 @@ class ReconnectingCommand extends Command
             $db = $this->db;
             $db->reconnect();
 
-            return $fn();
+            return parent::execute();
+        }
+    }
+
+    protected function queryInternal($method, $fetchMode = null)
+    {
+        try {
+            return parent::queryInternal($method, $fetchMode);
+        } catch (\Throwable $e) {
+            if (!$this->shouldReconnect($e)) {
+                throw $e;
+            }
+            /** @var ReconnectingConnection $db */
+            $db = $this->db;
+            $db->reconnect();
+
+            return parent::queryInternal($method, $fetchMode);
         }
     }
 

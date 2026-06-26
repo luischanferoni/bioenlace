@@ -9,7 +9,7 @@ use common\assets\RegistroPacienteStaffAsset;
 /** @var string $diditStatus */
 
 $this->title = 'Registrar paciente';
-$this->params['breadcrumbs'][] = ['label' => 'Personas', 'url' => ['buscar-persona']];
+$this->params['breadcrumbs'][] = ['label' => 'Personas', 'url' => ['registrar-paciente']];
 $this->params['breadcrumbs'][] = $this->title;
 
 RegistroPacienteStaffAsset::register($this);
@@ -24,7 +24,7 @@ $config = [
         'registrar' => Url::to(['personas/registrar-paciente-submit']),
         'crearSesionDidit' => Url::to(['personas/crear-sesion-didit-staff']),
         'diditCallback' => Url::to(['personas/registrar-paciente'], true),
-        'verPersona' => Url::to(['personas/view', 'id' => '__ID__']),
+        'nuevaAlta' => Url::to(['personas/registrar-paciente']),
     ],
 ];
 $this->registerJs(
@@ -40,7 +40,6 @@ $this->registerJs(
 
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1 class="h4 mb-0"><?= Html::encode($this->title) ?></h1>
-        <?= Html::a('Búsqueda legacy (MPI)', ['buscar-persona'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
     </div>
 
     <p class="text-muted">
@@ -95,4 +94,6 @@ $this->registerJs(
             <?php endif; ?>
         </div>
     </div>
+
+    <div id="registro-paciente-resultado" class="d-none mt-3"></div>
 </div>

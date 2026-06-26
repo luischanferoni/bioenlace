@@ -198,8 +198,8 @@ class PersonasController extends Controller {
     public function actionBuscarPersona() {
         $session = Yii::$app->session;
         $session->remove('persona');
-        $model = new Persona();
-        return $this->render('buscarPersona',['model'=> $model]);
+
+        return $this->redirect(['registrar-paciente']);
     }
     
     private static function sexo($valor){
@@ -536,78 +536,16 @@ class PersonasController extends Controller {
     }
 
 public function actionListaCandidatos(){
-    $post = Yii::$app->request->post();
-
-    $parametros['apellido'] = $post['Persona']['apellido'];
-    $parametros['nombre'] = $post['Persona']['nombre'];
-    $parametros['documento'] = $post['Persona']['documento'];
-    $parametros['fecha_nacimiento'] = $post['Persona']['fecha_nacimiento'];
-    $parametros['sexo'] = $post['Persona']['genero'];
-    $parametros['tipo_doc'] = $post['Persona']['id_tipodoc'];
-    $resultados_ordenados_local = [];
-    $resultados_ordenados_mpi = [];
-    $model = new Persona;
-    $model->scenario = 'scenariobuscar';
-    $model->load(Yii::$app->request->post());
-
-    $model->apellido_materno = $post['Persona']['apellido_materno'];
-    $model->apellido_paterno = $post['Persona']['apellido_paterno'];
-    $model->otro_apellido = $post['Persona']['otro_apellido'];
-
-    $valid = $model->validate();
-    if ($valid) {
-        $resultados = $model->listadoCandidatos($parametros);
-			    
-        $resultados_ordenados_local = $this->ordenarListado($resultados, $parametros, 'local');
-
-        $cantidad_candidatos = count($resultados_ordenados_local);
-        $bandera_boton_buscar = $bandera_boton_agregar = false;
-        $tipo = '';
-        if($cantidad_candidatos == 0 || $post['tipo'] == 'masmpi'){
-            //buscar mpi
-            $resultado = $this->mpiApi()->candidatos($parametros);  
-   
-            if(isset($resultado['statusCode']) && $resultado['statusCode'] == 200 && $resultado['successful'] == true && count($resultado['data'])==0){ //mostrar boton agegar persona 
-                $bandera_boton_agregar = true;
-            } else {
-                $tipo = 'mpi';
-                if(isset($resultado['data']) && count($resultado['data']) > 0) {
-                    $resultados_ordenados_mpi = $resultado['data'];
-                    if($resultados_ordenados_mpi[0]['score'] == 100){
-                        $bandera_boton_agregar = false;
-                    } else {
-                        $bandera_boton_agregar = true;                    
-                    }
-		        } else {
-                   $bandera_boton_agregar = true;
-                }
-            }
-        } else {             
-            //agregar boton para buscar en mpi
-            //verificar que el candidato no coincida 100%
-            if($resultados_ordenados_local[0]['peso_relativo'] == 100){
-                $bandera_boton_buscar = false;
-            } else {
-                $bandera_boton_buscar = true;                    
-            }
-        }
-        if(is_array($resultados_ordenados_mpi)){
-            $resultados_ordenados = array_merge ( $resultados_ordenados_local, $resultados_ordenados_mpi);    
-        } else {
-            $resultados_ordenados = $resultados_ordenados_local;
-        }
-
-        return $this->render('listaCandidatos', [                                        
-        'lista' => $resultados_ordenados,
-        'tipo' => $tipo,
-        'bandera_boton_buscar' => $bandera_boton_buscar,
-        'bandera_boton_agregar' => $bandera_boton_agregar,
-        'model' => $model
-    ]);
-    } else {
-        return $this->render('buscarPersona',['model'=> $model]);
-    }
+    \common\components\Domain\Person\Service\PersonasMpiLegacyGate::deny();
 }
+
+    /**
+     * @deprecated MPI legacy — retirado
+     */
+    public function actionSeleccionarPersona($id = null, $tipo = null)
+    {
+        \common\components\Domain\Person\Service\PersonasMpiLegacyGate::deny();
+    }
 
     /**
      * Displays a single persona model.

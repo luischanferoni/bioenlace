@@ -23,7 +23,7 @@ $session = Yii::$app->getSession();
         </div>
 
         <div class="col-md-1 d-flex justify-content-end">
-          <?= Html::a('<span class=""><i class="bi bi-x-lg"></i></span> ', ['personas/buscar-persona'], ['class' => 'alert-link']) ?>
+          <?= Html::a('<span class=""><i class="bi bi-x-lg"></i></span> ', ['personas/registrar-paciente'], ['class' => 'alert-link', 'title' => 'Cerrar paciente en contexto']) ?>
         </div>
       </div>
     </div>

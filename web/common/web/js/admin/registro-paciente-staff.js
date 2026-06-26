@@ -82,6 +82,60 @@
     };
   }
 
+  function showRegistroExito(persona) {
+    var box = el('registro-paciente-resultado');
+    var tabs = el('registroPacienteTabContent');
+    var tabList = el('registroPacienteTabs');
+    if (!box || !persona) {
+      return;
+    }
+
+    var nombre = [persona.apellido, persona.otro_apellido, persona.nombre, persona.otro_nombre]
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    var documento = persona.documento || '—';
+    var idPersona = persona.id_persona || '—';
+
+    var html =
+      '<div class="alert alert-success mb-3">' +
+      '<h2 class="h5 mb-2">Paciente registrado</h2>' +
+      '<p class="mb-1"><strong>' + nombre + '</strong></p>' +
+      '<p class="mb-1">DNI: ' + documento + '</p>' +
+      '<p class="mb-0">ID interno: ' + idPersona + '</p>' +
+      '<p class="small text-muted mt-2 mb-0">La verificación de domicilio RENAPER continúa en segundo plano.</p>' +
+      '</div>';
+
+    if (cfg.urls.datosPersonales) {
+      html +=
+        '<a class="btn btn-outline-secondary me-2" href="' +
+        cfg.urls.datosPersonales.replace('__ID__', String(idPersona)) +
+        '">Ver datos personales</a>';
+    }
+
+    html += '<button type="button" class="btn btn-primary" id="btn-registrar-otro-paciente">Registrar otro paciente</button>';
+
+    box.innerHTML = html;
+    box.classList.remove('d-none');
+    if (tabs) {
+      tabs.classList.add('d-none');
+    }
+    if (tabList) {
+      tabList.classList.add('d-none');
+    }
+
+    var btnOtro = el('btn-registrar-otro-paciente');
+    if (btnOtro) {
+      btnOtro.addEventListener('click', function () {
+        window.location.href = cfg.urls.nuevaAlta || window.location.pathname;
+      });
+    }
+  }
+
+  function onRegistroOk(persona) {
+    showRegistroExito(persona);
+  }
+
   function renderPreview(data) {
     var box = el('registro-paciente-preview');
     if (!box) return;
@@ -163,11 +217,11 @@
           return;
         }
         var persona = (data.data && data.data.persona) || data.persona;
-        var id = persona && persona.id_persona;
-        showAlert('success', 'Paciente registrado correctamente.');
-        if (id && cfg.urls.verPersona) {
-          window.location.href = cfg.urls.verPersona.replace('__ID__', String(id));
+        if (!persona) {
+          showAlert('error', 'Alta completada pero sin datos de persona en la respuesta.');
+          return;
         }
+        onRegistroOk(persona);
       })
       .catch(function () {
         setLoading(false);
@@ -220,11 +274,11 @@
           return;
         }
         var persona = (data.data && data.data.persona) || data.persona;
-        var id = persona && persona.id_persona;
-        showAlert('success', 'Paciente registrado con Didit.');
-        if (id && cfg.urls.verPersona) {
-          window.location.href = cfg.urls.verPersona.replace('__ID__', String(id));
+        if (!persona) {
+          showAlert('error', 'Alta completada pero sin datos de persona en la respuesta.');
+          return;
         }
+        onRegistroOk(persona);
       })
       .catch(function () {
         setLoading(false);

@@ -48,7 +48,7 @@ class TurnosController extends Controller
         $idPersonaEnSesion = (isset($session_persona->id_persona)) ? $session_persona->id_persona : null;
         $id = Yii::$app->request->get('id') ? Yii::$app->request->get('id') : null;
         if ($idPersonaEnSesion == null and $id == null) {
-            return $this->redirect(['personas/buscar-persona']);
+            return $this->redirect(['personas/registrar-paciente']);
         }
 
         $id_servicio_practica = Yii::$app->request->get('id_servicio');
@@ -70,7 +70,7 @@ class TurnosController extends Controller
         endif;
 
         if (!$session_persona) {
-            return $this->redirect(['personas/buscar-persona']);
+            return $this->redirect(['personas/registrar-paciente']);
         }
 
         $idEfector = Yii::$app->user->getIdEfector();

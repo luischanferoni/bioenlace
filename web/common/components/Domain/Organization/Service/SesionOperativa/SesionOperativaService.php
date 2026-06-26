@@ -204,7 +204,7 @@ class SesionOperativaService extends Component
             return ['/site/index'];
         }
         if (User::hasRole(['Enfermeria'])) {
-            return ['/personas/buscar-persona'];
+            return ['/personas/registrar-paciente'];
         }
         return ['/site/index'];
     }

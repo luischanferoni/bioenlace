@@ -31,6 +31,9 @@ return [
      * API key en params-local.php. Cliente: {@see \common\components\Domain\Integrations\Identity\DiditClient}.
      */
     'didit_base_url' => 'https://api.didit.me',
+    'didit_verification_base_url' => 'https://verification.didit.me',
+    /** UUID workflow KYC paciente (Didit Console). Configurar en params-local.php */
+    'didit_paciente_kyc_workflow_id' => null,
     'didit_timeout' => 30,
 
     /** Autogestión paciente: oferta de próximos slots (endpoint slots-disponibles-como-paciente en API v1). */

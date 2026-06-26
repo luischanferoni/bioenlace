@@ -26,6 +26,7 @@ use yii\filters\VerbFilter;
 use yii\helpers\ArrayHelper;
 use yii\helpers\BaseJson;
 use yii\helpers\Json;
+use yii\helpers\Url;
 
 //agregamos el modulo de la extension para el control de acceso
 use common\models\Person\Persona;
@@ -967,5 +968,120 @@ public function actionListaCandidatos(){
         }
     
         return $this->renderAjax('_form_num_historia_clinica', ['model' => $model]);
+    }
+
+    /**
+     * Alta de paciente (nuevo flujo: lector DNI / Didit, sin MPI).
+     */
+    public function actionRegistrarPaciente()
+    {
+        $request = Yii::$app->request;
+        $diditVerificationId = trim((string) (
+            $request->get('verificationSessionId')
+            ?? $request->get('session_id')
+            ?? ''
+        ));
+        $diditStatus = trim((string) ($request->get('status') ?? ''));
+
+        return $this->render('registrarPaciente', [
+            'diditVerificationId' => $diditVerificationId,
+            'diditStatus' => $diditStatus,
+        ]);
+    }
+
+    /**
+     * POST JSON: preview RENAPER (lector DNI).
+     */
+    public function actionPreviewRenaperStaff()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        try {
+            $body = $this->mergedJsonBody();
+            $data = (new \common\components\Domain\Person\Service\RegistroStaffPacienteService())->previewRenaper($body);
+
+            return ['success' => true, 'data' => $data];
+        } catch (\InvalidArgumentException $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        } catch (\Throwable $e) {
+            Yii::error('previewRenaperStaff: ' . $e->getMessage(), __METHOD__);
+
+            return ['success' => false, 'message' => 'Error al consultar RENAPER.'];
+        }
+    }
+
+    /**
+     * POST JSON: registrar paciente (modo didit | dni_lector).
+     */
+    public function actionRegistrarPacienteSubmit()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        try {
+            $body = $this->mergedJsonBody();
+            $data = (new \common\components\Domain\Person\Service\RegistroStaffPacienteService())->registrar($body);
+
+            return ['success' => true, 'data' => $data, 'persona' => $data['persona'] ?? null];
+        } catch (\InvalidArgumentException $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        } catch (\RuntimeException $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        } catch (\Throwable $e) {
+            Yii::error('registrarPacienteSubmit: ' . $e->getMessage(), __METHOD__);
+
+            return ['success' => false, 'message' => 'Error interno al registrar paciente.'];
+        }
+    }
+
+    /**
+     * POST JSON: crear sesión Didit hosted (foto DNI).
+     */
+    public function actionCrearSesionDiditStaff()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $body = $this->mergedJsonBody();
+        $callback = trim((string) ($body['callback'] ?? ''));
+        if ($callback === '') {
+            $callback = Url::to(['personas/registrar-paciente'], true);
+        }
+
+        $didit = Yii::$container->has(\common\components\Domain\Integrations\Identity\DiditClient::class)
+            ? Yii::$container->get(\common\components\Domain\Integrations\Identity\DiditClient::class)
+            : new \common\components\Domain\Integrations\Identity\DiditClient();
+
+        $session = $didit->createVerificationSession([
+            'callback' => $callback,
+            'vendor_data' => 'admin-staff-' . (int) Yii::$app->user->id,
+            'language' => 'es',
+        ]);
+
+        if (empty($session['success'])) {
+            return [
+                'success' => false,
+                'message' => (string) ($session['message'] ?? 'No se pudo crear sesión Didit.'),
+            ];
+        }
+
+        return [
+            'success' => true,
+            'data' => [
+                'session_id' => $session['session_id'] ?? '',
+                'url' => $session['url'] ?? '',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mergedJsonBody(): array
+    {
+        $raw = Yii::$app->request->getRawBody();
+        if ($raw !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return array_merge(Yii::$app->request->get(), Yii::$app->request->post());
     }
 }

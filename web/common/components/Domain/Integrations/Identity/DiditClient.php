@@ -19,6 +19,92 @@ use yii\httpclient\Client;
 class DiditClient extends Component
 {
     /**
+     * Crea sesión Didit v3 (hosted URL) para verificación con foto de DNI.
+     *
+     * @param array<string, mixed> $options workflow_id, callback, vendor_data, language
+     * @return array{success: bool, session_id?: string, url?: string, message?: string}
+     */
+    public function createVerificationSession(array $options = []): array
+    {
+        $workflowId = trim((string) ($options['workflow_id'] ?? Yii::$app->params['didit_paciente_kyc_workflow_id'] ?? ''));
+        if ($workflowId === '') {
+            return [
+                'success' => false,
+                'message' => 'didit_paciente_kyc_workflow_id no configurado.',
+            ];
+        }
+
+        $baseUrl = rtrim((string) (Yii::$app->params['didit_verification_base_url'] ?? 'https://verification.didit.me'), '/');
+        $apiKey = Yii::$app->params['didit_api_key'] ?? null;
+        if (empty($apiKey)) {
+            return [
+                'success' => false,
+                'message' => 'didit_api_key no configurada.',
+            ];
+        }
+
+        $payload = [
+            'workflow_id' => $workflowId,
+            'vendor_data' => (string) ($options['vendor_data'] ?? 'staff-registro-paciente'),
+            'language' => (string) ($options['language'] ?? 'es'),
+        ];
+        $callback = trim((string) ($options['callback'] ?? ''));
+        if ($callback !== '') {
+            $payload['callback'] = $callback;
+            $payload['callback_method'] = (string) ($options['callback_method'] ?? 'both');
+        }
+
+        try {
+            $client = new Client([
+                'baseUrl' => $baseUrl,
+                'requestConfig' => [
+                    'format' => Client::FORMAT_JSON,
+                    'options' => ['timeout' => (int) (Yii::$app->params['didit_timeout'] ?? 30)],
+                ],
+                'responseConfig' => ['format' => Client::FORMAT_JSON],
+            ]);
+
+            $response = $client->createRequest()
+                ->setMethod('POST')
+                ->setUrl('/v3/session/')
+                ->addHeaders([
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                    'x-api-key' => $apiKey,
+                ])
+                ->setData($payload)
+                ->send();
+
+            if (!$response->isOk) {
+                Yii::warning('Didit create session HTTP ' . $response->getStatusCode() . ': ' . $response->content, 'didit');
+
+                return [
+                    'success' => false,
+                    'message' => 'No se pudo crear la sesión Didit.',
+                    'raw' => $response->data,
+                ];
+            }
+
+            $data = is_array($response->data) ? $response->data : [];
+
+            return [
+                'success' => true,
+                'session_id' => (string) ($data['session_id'] ?? ''),
+                'url' => (string) ($data['url'] ?? ''),
+                'status' => (string) ($data['status'] ?? ''),
+                'raw' => $data,
+            ];
+        } catch (\Throwable $e) {
+            Yii::error('Didit create session: ' . $e->getMessage(), 'didit');
+
+            return [
+                'success' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Obtiene y normaliza el resultado de una verificación KYC completa (documento + selfie + liveness).
      *
      * @param string $verificationId

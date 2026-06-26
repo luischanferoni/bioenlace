@@ -29,6 +29,8 @@ return [
     // --- Didit — identidad (registro) y auth biométrica (POST /api/v1/registro/registrar, login-biometrico) ---
     // Workflows en móvil: mobile/packages/shared/lib/config/api_config.dart
     'didit_api_key' => '…', // Didit Console → API Keys
+    // UUID workflow KYC paciente (Didit Console → Workflows). Requerido para registro admin con foto.
+    'didit_paciente_kyc_workflow_id' => '…',
 
     // --- Push FCM plataforma (proyecto Firebase distinto de Vertex) ---
     'fcmPush' => [

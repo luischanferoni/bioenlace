@@ -1083,4 +1083,114 @@ class PersonasController extends Controller
 
         return $apellidos;
     }
+
+    /**
+     * Alta de paciente (lector DNI / Didit, sin MPI).
+     * @no_intent_catalog
+     */
+    public function actionRegistrarPaciente()
+    {
+        $request = Yii::$app->request;
+        $diditVerificationId = trim((string) (
+            $request->get('verificationSessionId')
+            ?? $request->get('session_id')
+            ?? ''
+        ));
+        $diditStatus = trim((string) ($request->get('status') ?? ''));
+
+        return $this->render('registrarPaciente', [
+            'diditVerificationId' => $diditVerificationId,
+            'diditStatus' => $diditStatus,
+        ]);
+    }
+
+    /** @no_intent_catalog */
+    public function actionPreviewRenaperStaff()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        try {
+            $body = $this->mergedJsonBodyStaffRegistro();
+            $data = (new \common\components\Domain\Person\Service\RegistroStaffPacienteService())->previewRenaper($body);
+
+            return ['success' => true, 'data' => $data];
+        } catch (\InvalidArgumentException $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        } catch (\Throwable $e) {
+            Yii::error('previewRenaperStaff: ' . $e->getMessage(), __METHOD__);
+
+            return ['success' => false, 'message' => 'Error al consultar RENAPER.'];
+        }
+    }
+
+    /** @no_intent_catalog */
+    public function actionRegistrarPacienteSubmit()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        try {
+            $body = $this->mergedJsonBodyStaffRegistro();
+            $data = (new \common\components\Domain\Person\Service\RegistroStaffPacienteService())->registrar($body);
+
+            return ['success' => true, 'data' => $data, 'persona' => $data['persona'] ?? null];
+        } catch (\InvalidArgumentException $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        } catch (\RuntimeException $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        } catch (\Throwable $e) {
+            Yii::error('registrarPacienteSubmit: ' . $e->getMessage(), __METHOD__);
+
+            return ['success' => false, 'message' => 'Error interno al registrar paciente.'];
+        }
+    }
+
+    /** @no_intent_catalog */
+    public function actionCrearSesionDiditStaff()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $body = $this->mergedJsonBodyStaffRegistro();
+        $callback = trim((string) ($body['callback'] ?? ''));
+        if ($callback === '') {
+            $callback = Url::to(['personas/registrar-paciente'], true);
+        }
+
+        $didit = Yii::$container->has(\common\components\Domain\Integrations\Identity\DiditClient::class)
+            ? Yii::$container->get(\common\components\Domain\Integrations\Identity\DiditClient::class)
+            : new \common\components\Domain\Integrations\Identity\DiditClient();
+
+        $session = $didit->createVerificationSession([
+            'callback' => $callback,
+            'vendor_data' => 'frontend-staff-' . (int) Yii::$app->user->id,
+            'language' => 'es',
+        ]);
+
+        if (empty($session['success'])) {
+            return [
+                'success' => false,
+                'message' => (string) ($session['message'] ?? 'No se pudo crear sesión Didit.'),
+            ];
+        }
+
+        return [
+            'success' => true,
+            'data' => [
+                'session_id' => $session['session_id'] ?? '',
+                'url' => $session['url'] ?? '',
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mergedJsonBodyStaffRegistro(): array
+    {
+        $raw = Yii::$app->request->getRawBody();
+        if ($raw !== '') {
+            $decoded = json_decode($raw, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return array_merge(Yii::$app->request->get(), Yii::$app->request->post());
+    }
 }

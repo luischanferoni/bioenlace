@@ -67,12 +67,17 @@ final class RenaperGatewayService
 
     private function resolveSexoQueryParam(Persona $persona): string
     {
+        $letra = $persona->getSexoLetra();
+        if ($letra === 'M' || $letra === 'F') {
+            return $letra;
+        }
+
         $sb = (int) $persona->sexo_biologico;
         if ($sb === 1) {
-            return 'M';
+            return 'F';
         }
         if ($sb === 2) {
-            return 'F';
+            return 'M';
         }
         $sexo = strtoupper(trim((string) ($persona->sexo ?? '')));
         if ($sexo === 'M' || $sexo === 'F') {

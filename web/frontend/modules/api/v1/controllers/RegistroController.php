@@ -4,6 +4,8 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use common\components\Domain\Person\Service\RegistroService;
+use common\components\Domain\Person\Service\RegistroStaffPacienteService;
+use common\components\Domain\Integrations\Identity\DiditClient;
 
 /**
  * Controlador de registro unificado para pacientes y médicos.
@@ -75,6 +77,17 @@ class RegistroController extends BaseController
     public static $authenticatorExcept = ['registrar'];
 
     /**
+     * Acciones staff autenticadas (registro paciente desde admin).
+     *
+     * @var string[]
+     */
+    public static $staffRegistroActions = [
+        'registrar-como-staff',
+        'preview-renaper-como-staff',
+        'crear-sesion-didit-como-staff',
+    ];
+
+    /**
      * Deshabilitamos las acciones REST por defecto; usamos acciones personalizadas.
      *
      * @return array
@@ -95,6 +108,10 @@ class RegistroController extends BaseController
     {
         $verbs = parent::verbs();
         $verbs['registrar'] = ['POST', 'OPTIONS'];
+        $verbs['registrar-como-staff'] = ['POST', 'OPTIONS'];
+        $verbs['preview-renaper-como-staff'] = ['POST', 'OPTIONS'];
+        $verbs['crear-sesion-didit-como-staff'] = ['POST', 'OPTIONS'];
+
         return $verbs;
     }
 
@@ -151,6 +168,84 @@ class RegistroController extends BaseController
             'Solicitud de registro recibida correctamente',
             202
         );
+    }
+
+    /**
+     * POST /api/v1/registro/registrar-como-staff
+     *
+     * Alta de paciente por personal (admin): modo didit | dni_lector.
+     */
+    public function actionRegistrarComoStaff(): array
+    {
+        $bodyParams = Yii::$app->request->getBodyParams();
+        $modo = trim((string) ($bodyParams['modo'] ?? ''));
+        if ($modo === '') {
+            return $this->error('El campo "modo" es requerido (didit | dni_lector).', null, 400);
+        }
+
+        try {
+            $result = (new RegistroStaffPacienteService())->registrar($bodyParams);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\RuntimeException $e) {
+            return $this->error($e->getMessage(), null, 422);
+        } catch (\Throwable $e) {
+            Yii::error('registrar-como-staff: ' . $e->getMessage(), 'registro');
+
+            return $this->error('Error interno al registrar paciente.', null, 500);
+        }
+
+        return $this->success($result, 'Paciente registrado correctamente.', 201);
+    }
+
+    /**
+     * POST /api/v1/registro/preview-renaper-como-staff
+     *
+     * Consulta RENAPER para previsualizar datos antes del alta (lector DNI).
+     */
+    public function actionPreviewRenaperComoStaff(): array
+    {
+        try {
+            $result = (new RegistroStaffPacienteService())->previewRenaper(Yii::$app->request->getBodyParams());
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\Throwable $e) {
+            Yii::error('preview-renaper-como-staff: ' . $e->getMessage(), 'registro');
+
+            return $this->error('Error al consultar RENAPER.', null, 500);
+        }
+
+        return $this->success($result, 'Consulta RENAPER', 200);
+    }
+
+    /**
+     * POST /api/v1/registro/crear-sesion-didit-como-staff
+     *
+     * Crea sesión Didit hosted para foto del DNI (sin lector).
+     */
+    public function actionCrearSesionDiditComoStaff(): array
+    {
+        $body = Yii::$app->request->getBodyParams();
+        $callback = trim((string) ($body['callback'] ?? ''));
+
+        $didit = Yii::$container->has(DiditClient::class)
+            ? Yii::$container->get(DiditClient::class)
+            : new DiditClient();
+
+        $session = $didit->createVerificationSession([
+            'callback' => $callback,
+            'vendor_data' => 'staff-' . (int) Yii::$app->user->id,
+            'language' => 'es',
+        ]);
+
+        if (empty($session['success'])) {
+            return $this->error((string) ($session['message'] ?? 'No se pudo crear sesión Didit.'), null, 422);
+        }
+
+        return $this->success([
+            'session_id' => $session['session_id'] ?? '',
+            'url' => $session['url'] ?? '',
+        ], 'Sesión Didit creada', 201);
     }
 }
 

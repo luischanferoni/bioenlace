@@ -111,6 +111,25 @@ class RegistroService
             throw new \RuntimeException('Error guardando datos de la persona: ' . json_encode($persona->getErrors()));
         }
 
+        return $this->finalizarAltaPaciente($persona, $bodyParams, $tipo, $esNueva, $diditResult);
+    }
+
+    /**
+     * Cierra el alta de paciente/médico tras persistir identidad (Didit, lector DNI staff, etc.).
+     *
+     * @param array<string, mixed>|null $diditResult
+     * @return array<string, mixed>
+     */
+    public function finalizarAltaPaciente(
+        Persona $persona,
+        array $bodyParams,
+        string $tipo,
+        bool $esNueva,
+        ?array $diditResult = null,
+        bool $emitJwt = true
+    ): array {
+        $dni = (string) $persona->documento;
+
         $pacienteContexto = null;
         if ($tipo === 'paciente') {
             (new PacienteDomicilioVerificacionService())->iniciarTrasRegistro($persona);
@@ -135,9 +154,7 @@ class RegistroService
 
         if ($user === null) {
             $user = new User();
-            // Username basado en tipo + documento
             $user->username = ($tipo === 'medico' ? 'medico_' : 'paciente_') . $dni;
-            // Email: usar el provisto o un placeholder derivado del documento
             $email = $bodyParams['email'] ?? null;
             if (empty($email)) {
                 $email = $dni . '@example.com';
@@ -151,17 +168,14 @@ class RegistroService
                 throw new \RuntimeException('Error creando usuario de aplicación: ' . json_encode($user->getErrors()));
             }
 
-            // Vincular persona al usuario recién creado (obligatorio para que queden asociados)
             $persona->id_user = $user->id;
             $persona->scenario = Persona::SCENARIOUSERUPDATE;
             if (!$persona->save(false)) {
                 throw new \RuntimeException('Error actualizando id_user en persona: ' . json_encode($persona->getErrors()));
             }
 
-            // Asignar rol según tipo
             try {
                 if ($tipo === 'paciente') {
-                    // Usa helper existente para pacientes si está disponible
                     if (class_exists(\common\models\BioenlaceDbManager::class) && method_exists(\common\models\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')) {
                         \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($user->id);
                     }
@@ -176,7 +190,6 @@ class RegistroService
             }
         }
 
-        // Obtener rol principal para incluir en el token/respuesta
         $roleName = 'usuario';
         if ($user) {
             try {
@@ -192,9 +205,8 @@ class RegistroService
             }
         }
 
-        // Generar JWT para permitir que las apps inicien sesión inmediatamente después del registro
         $token = null;
-        if ($user) {
+        if ($emitJwt && $user) {
             $jwtSecret = Yii::$app->params['jwtSecret'] ?? null;
             if ($jwtSecret) {
                 $payload = [

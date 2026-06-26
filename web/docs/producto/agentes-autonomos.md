@@ -87,13 +87,27 @@ Ver [laboratorio.md](./laboratorio.md).
 
 Ver [turnos.md](./turnos.md).
 
+### A02 — Negociación multicanal (agente D3, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (orquestación temporal) |
+| **Trigger** | Sin respuesta tras push `TURNO_REQUIERE_REUBICACION` |
+| **Política** | `autonomous_agents/turno-resolucion-multicanal.yaml` (push → email → SMS) |
+| **Decisiones** | Canal siguiente; ventana horaria legal; link firmado con TTL |
+| **Efecto** | Email/SMS stub con URL pública `/turno/resolucion/{token}` |
+| **Cron** | `yii turno-notificacion/run` (misma cola programada) |
+| **Auditoría** | `agent_run` (`agent_id`: `turno-resolucion-multicanal`) |
+| **Flag** | `autonomous_agent_resolucion_multicanal_enabled` |
+
+Ver [turnos.md](./turnos.md).
+
 ---
 
 ## En implementación / backlog
 
 | ID | Nombre | Fase plan |
 |----|--------|-----------|
-| A02 | Negociación multicanal | 1 |
 | A01, H01, A04, A06, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
 
 ---

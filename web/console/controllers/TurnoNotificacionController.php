@@ -74,6 +74,17 @@ class TurnoNotificacionController extends Controller
                             'Tu turno podría demorar ~' . $min . ' min por un sobreturno.'
                         );
                     }
+                } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RESOLUCION_MULTICANAL) {
+                    $result = (new \common\components\Domain\Scheduling\Service\TurnoResolucionMulticanalAgent())
+                        ->processScheduled($row, $turno);
+                    if ($result === 'cancelled') {
+                        $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
+                        $row->save(false);
+                        continue;
+                    }
+                    if ($result === 'deferred') {
+                        continue;
+                    }
                 }
                 $row->estado = TurnoNotificacionProgramada::ESTADO_ENVIADA;
                 $row->save(false);

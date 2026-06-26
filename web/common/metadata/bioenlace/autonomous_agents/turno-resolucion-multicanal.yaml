@@ -1,0 +1,34 @@
+# Escalada multicanal tras push de reubicación (agente A02 v1).
+# {@see TurnoResolucionMulticanalAgent}
+version: 1
+agent_id: turno-resolucion-multicanal
+
+# Horas sin respuesta tras el push inicial antes del primer canal alternativo.
+escalation_hours_after_push: 24
+
+# Horas entre canales alternativos (email → SMS).
+hours_between_channels: 12
+
+# Ventana horaria legal para SMS/email (hora local del servidor / TZ app).
+legal_hour_start: "09:00"
+legal_hour_end: "21:00"
+
+link_ttl_days: 7
+
+# Orden de canales. `push` se envía al entrar en resolución; el agente escala desde índice 1.
+channels:
+  - id: push
+    label: Push app
+  - id: email
+    label: Email
+    stub: true
+  - id: sms
+    label: SMS
+    stub: true
+
+message_templates:
+  email:
+    subject: "Tu turno requiere una nueva cita"
+    body: "Hola {{nombre}}, el consultorio modificó tu turno del {{fecha}}. Elegí otro horario aquí: {{link}}"
+  sms:
+    body: "Bioenlace: reubicá tu turno del {{fecha}}: {{link}}"

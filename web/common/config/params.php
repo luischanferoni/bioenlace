@@ -63,6 +63,13 @@ return [
         'min_minutes_before_slot' => 15,
     ],
     'autonomous_agent_waitlist_enabled' => true,
+    /** Escalada multicanal reubicación (agente A02). */
+    'turnoResolucionMulticanal' => [
+        'public_base_url' => null,
+        'app_deep_link' => '/',
+        'signing_key' => null,
+    ],
+    'autonomous_agent_resolucion_multicanal_enabled' => true,
     /**
      * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en home/panel (sección surgeries_day).
      * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Servicio::esServicioAgendaQuirurgica}.

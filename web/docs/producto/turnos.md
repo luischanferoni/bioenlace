@@ -66,6 +66,16 @@ Cuando un turno se **cancela** y queda un hueco en agenda, el sistema puede ofre
 
 Parámetros: `turnosWaitlist` en `params.php`. Flag: `autonomous_agent_waitlist_enabled`. Detalle técnico: [agentes-autonomos.md](./agentes-autonomos.md).
 
+## Escalada multicanal (agente A02, v1)
+
+Si el paciente no responde al push de reubicación dentro del plazo configurado (24 h por defecto), el agente `turno-resolucion-multicanal` escala a **email** y luego **SMS** (stub en v1: log + mailer si está disponible).
+
+1. Al marcar un turno `EN_RESOLUCION` y enviar push, se programa `RESOLUCION_MULTICANAL` en `turno_notificacion_programada`.
+2. El cron `yii turno-notificacion/run` ejecuta el agente: genera **link firmado** y lo incluye en el mensaje.
+3. La página pública `/turno/resolucion/{token}` muestra el turno y un botón hacia la app para reubicar.
+
+Parámetros: `turnoResolucionMulticanal` (`public_base_url`, `app_deep_link`, `signing_key`). Flag: `autonomous_agent_resolucion_multicanal_enabled`.
+
 ## Relación con el resto del producto
 
 - Representación operativa (tutela/delegación): [representacion-paciente.md](./representacion-paciente.md).

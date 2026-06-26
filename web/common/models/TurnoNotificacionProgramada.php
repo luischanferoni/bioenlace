@@ -25,6 +25,9 @@ class TurnoNotificacionProgramada extends ActiveRecord
     /** Procesar motivos de consulta (IA en lote) ~1 min antes del turno. */
     const TIPO_MOTIVOS_IA_BATCH = 'MOTIVOS_IA_BATCH';
 
+    /** Escalada multicanal tras push de reubicación (agente A02). */
+    const TIPO_RESOLUCION_MULTICANAL = 'RESOLUCION_MULTICANAL';
+
     const ESTADO_PENDIENTE = 'PENDIENTE';
     const ESTADO_ENVIADA = 'ENVIADA';
     const ESTADO_CANCELADA = 'CANCELADA';

@@ -3,6 +3,7 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
+use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
 use common\models\Person\Persona;
@@ -111,10 +112,8 @@ final class TurnoResolucionService
             'meta_json' => ['canal' => $canal],
         ]);
 
-        $push = new PushNotificationSender();
-        $push->sendToPersona(
-            (int) $turno->id_persona,
-            ['type' => 'TURNO_REQUIERE_REUBICACION', 'id_turno' => (string) $turno->id_turnos],
+        self::notificarPacienteRequiereReubicacion(
+            $turno,
             'Tu turno requiere una nueva cita',
             'El consultorio modificó tu turno del ' . $turno->fecha . '. Elegí otro horario o profesional desde la app.'
         );
@@ -162,10 +161,8 @@ final class TurnoResolucionService
             ]);
 
             $fechaDisplay = self::formatFechaEsParaAviso((string) $turno->fecha);
-            $push = new PushNotificationSender();
-            $push->sendToPersona(
-                (int) $turno->id_persona,
-                ['type' => 'TURNO_REQUIERE_REUBICACION', 'id_turno' => (string) $turno->id_turnos],
+            self::notificarPacienteRequiereReubicacion(
+                $turno,
                 'Tu turno requiere una nueva cita',
                 'El profesional registró una licencia. Elegí otro horario para el ' . $fechaDisplay . '.'
             );
@@ -211,10 +208,8 @@ final class TurnoResolucionService
                 'permitir_otro_pes' => false,
             ]);
 
-            $push = new PushNotificationSender();
-            $push->sendToPersona(
-                (int) $turno->id_persona,
-                ['type' => 'TURNO_REQUIERE_REUBICACION', 'id_turno' => (string) $turno->id_turnos],
+            self::notificarPacienteRequiereReubicacion(
+                $turno,
                 'Cambio de horario de tu turno',
                 'Tu profesional actualizó la agenda. Elegí un nuevo horario para el ' . $turno->fecha . '.'
             );
@@ -552,6 +547,26 @@ final class TurnoResolucionService
             $conf->programarNotificaciones($turno);
         } catch (\Throwable $e) {
             Yii::warning('reubicar notif: ' . $e->getMessage(), 'turno-resolucion');
+        }
+    }
+
+    private static function notificarPacienteRequiereReubicacion(Turno $turno, string $title, string $body): void
+    {
+        $push = new PushNotificationSender();
+        $push->sendToPersona(
+            (int) $turno->id_persona,
+            [
+                'type' => PushNotificationTypes::TURNO_REQUIERE_REUBICACION,
+                'id_turno' => (string) $turno->id_turnos,
+            ],
+            $title,
+            $body
+        );
+
+        try {
+            (new TurnoResolucionMulticanalScheduler())->scheduleAfterInitialPush($turno);
+        } catch (\Throwable $e) {
+            Yii::warning('Multicanal schedule: ' . $e->getMessage(), 'turno-resolucion-multicanal');
         }
     }
 

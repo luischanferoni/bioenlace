@@ -91,6 +91,7 @@ return [
                 'user-management/auth/password-recovery-receive/<token:[\w\-]+>' => 'auth/password-recovery-receive',
                 'user-management/auth/confirm-email' => 'auth/confirm-email',
                 'user-management/auth/confirm-email-receive/<token:[\w\-]+>' => 'auth/confirm-email-receive',
+                'turno/resolucion/<token:[\w\.\-\_=]+>' => 'turno-public/resolucion',
                 'site/inicio' => 'site/sesion-operativa',
                 'site/establecer-session-final' => 'site/establecer-sesion-final',
                 'site/session-efector-redireccionar' => 'site/sesion-operativa',

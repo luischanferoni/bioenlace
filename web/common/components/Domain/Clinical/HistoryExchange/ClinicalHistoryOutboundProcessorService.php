@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\HistoryExchange;
 
 use common\components\Domain\Integrations\ClinicalHistory\ClinicalHistoryExchangeRegistry;
 use common\components\Domain\Integrations\ClinicalHistory\Mapper\FhirClinicalHistoryBundleMapper;
+use common\components\Domain\Integrations\Service\IntegrationRetryAgent;
 use common\models\Clinical\ClinicalHistoryOutboundAudit;
 use common\models\Clinical\ClinicalHistoryOutboundJob;
 use common\models\Clinical\Encounter;
@@ -151,6 +152,12 @@ final class ClinicalHistoryOutboundProcessorService
             ClinicalHistoryOutboundAudit::EVENT_FALLIDO,
             ['message' => $message, 'next_run_at' => $row->run_at]
         );
+
+        try {
+            (new IntegrationRetryAgent())->onJobFailed($row, $message, $retryable);
+        } catch (\Throwable $e) {
+            Yii::warning('IntegrationRetryAgent: ' . $e->getMessage(), 'integration-retry');
+        }
     }
 
     private function markDead(ClinicalHistoryOutboundJob $row, string $message): void
@@ -165,5 +172,11 @@ final class ClinicalHistoryOutboundProcessorService
             ClinicalHistoryOutboundAudit::EVENT_MUERTO,
             ['message' => $message]
         );
+
+        try {
+            (new IntegrationRetryAgent())->onJobDead($row, $message);
+        } catch (\Throwable $e) {
+            Yii::warning('IntegrationRetryAgent: ' . $e->getMessage(), 'integration-retry');
+        }
     }
 }

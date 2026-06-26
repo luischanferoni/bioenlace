@@ -75,6 +75,18 @@ return [
     'autonomous_agent_resolucion_shortlist_enabled' => true,
     /** Auto-reserva en resolución con preferencias del paciente (agente A01 D2). */
     'autonomous_agent_resolucion_auto_reserva_enabled' => false,
+    /** Priorización bandeja consulta async (agente H01). */
+    'autonomous_agent_consulta_async_prioridad_enabled' => true,
+    /** Vincular informe de lab a encounter (agente E01). */
+    'autonomous_agent_lab_encounter_link_enabled' => true,
+    /** Reintentos / dead-letter integraciones (agente E02). */
+    'autonomous_agent_integration_retry_enabled' => true,
+    /**
+     * Personas a notificar en dead-letter de integración (agente E02). Vacío = solo log.
+     */
+    'integrationRetry' => [
+        'ops_persona_ids' => [],
+    ],
     /**
      * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en home/panel (sección surgeries_day).
      * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Servicio::esServicioAgendaQuirurgica}.

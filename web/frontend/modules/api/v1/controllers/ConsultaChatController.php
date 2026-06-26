@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use common\models\ConsultaChatMessage;
 use common\components\Domain\Clinical\Service\SecureMediaService;
+use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaPrioridadAgent;
 use common\models\Clinical\Encounter;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 use Yii;
@@ -122,6 +123,14 @@ class ConsultaChatController extends BaseController
             ];
         }
 
+        if ($user_role === 'paciente' && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
+            try {
+                (new ConsultaAsyncBandejaPrioridadAgent())->onPacienteMensaje($encounter);
+            } catch (\Throwable $e) {
+                Yii::warning('Prioridad async mensaje paciente: ' . $e->getMessage(), 'consulta-async-prioridad');
+            }
+        }
+
         return [
             'success' => true,
             'message' => 'Mensaje enviado exitosamente',
@@ -202,6 +211,14 @@ class ConsultaChatController extends BaseController
                 'message' => 'Error guardando mensaje: ' . implode(', ', $chatMessage->getFirstErrors()),
                 'data' => null,
             ];
+        }
+
+        if ($user_role === 'paciente' && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
+            try {
+                (new ConsultaAsyncBandejaPrioridadAgent())->onPacienteMensaje($encounter);
+            } catch (\Throwable $e) {
+                Yii::warning('Prioridad async mensaje paciente: ' . $e->getMessage(), 'consulta-async-prioridad');
+            }
         }
 
         $contentUrl = SecureMediaService::absoluteApiUrl(

@@ -157,13 +157,56 @@ Ver [turnos.md](./turnos.md).
 | **Auditoría** | `agent_run` (`agent_id`: `turno-resolucion-auto-reserva`) |
 | **Flag** | `autonomous_agent_resolucion_auto_reserva_enabled` |
 
+### H01 — Bandeja async priorizada (agente D1, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (score en metadata + datos bandeja) |
+| **Trigger** | Nueva `SOLICITUD_ASYNC`, mensaje paciente, refresco bandeja staff |
+| **Política** | `autonomous_agents/consulta-async-bandeja-prioridad.yaml` + SLA en `consulta_async_bandeja.yaml` |
+| **Decisiones** | Orden sugerido; escalamiento push staff si SLA vencido (bandas A/B) |
+| **Efecto** | Listado staff reordenado; badge prioridad; push `CONSULTA_ASYNC_SLA_ESCALATE_STAFF` |
+| **Auditoría** | `agent_run` (`agent_id`: `consulta-async-bandeja-prioridad`) |
+| **Flag** | `autonomous_agent_consulta_async_prioridad_enabled` |
+
+Ver [atencion-remota-async.md](./atencion-remota-async.md).
+
+### E01 — Asociar lab a encounter (agente D2, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (score + pedidos en BD) |
+| **Trigger** | Ingesta de `DiagnosticReport` sin referencia FHIR unívoca |
+| **Política** | `autonomous_agents/lab-encounter-link.yaml` |
+| **Decisiones** | Auto-vincular si score + brecha; si no → bandeja staff |
+| **API staff** | `listar-pendientes-vincular-como-staff`, `vincular-informe-a-encounter-como-staff` |
+| **Auditoría** | `agent_run` (`agent_id`: `lab-encounter-link`) |
+| **Flag** | `autonomous_agent_lab_encounter_link_enabled` |
+
+Ver [laboratorio.md](./laboratorio.md).
+
+### E02 — Reintentos integración (agente D3, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (auditoría sobre cola existente) |
+| **Trigger** | Job FHIR HC fallido o dead-letter (`ClinicalHistoryOutboundProcessorService`) |
+| **Política** | `autonomous_agents/integration-retry.yaml` + `clinicalHistoryExchange.retry` |
+| **Efecto** | `agent_run`; log/push ops si `integrationRetry.ops_persona_ids` |
+| **Flag** | `autonomous_agent_integration_retry_enabled` |
+
+Ver [interoperabilidad-historia-clinica.md](./interoperabilidad-historia-clinica.md). RDI/LIS: extensión futura cuando exista cola outbound.
+
 ---
 
-## En implementación / backlog
+## En implementación / backlog (sin agentes IA)
 
-| ID | Nombre | Fase plan |
+| ID | Nombre | Prioridad |
 |----|--------|-----------|
-| H01, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
+| A05, B02 | Ruteo post-triage; seguimiento post-alta | P1 |
+| E03, F02 | Validar receta RDI; sugerencia de cama | P2 |
+
+Agentes IA (C03, D02, redacción pushes): diferidos.
 
 ---
 

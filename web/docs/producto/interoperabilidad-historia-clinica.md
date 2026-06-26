@@ -40,7 +40,7 @@ flowchart TB
 1. **Disparo:** al pasar el encounter a estado finalizado, el sistema evalúa si la export está activa y si la clase de atención (ambulatoria, guardia, internación, según configuración) entra en el alcance.
 2. **Encolado:** se crea o actualiza un **job** con demora breve (por defecto unos minutos) para dejar estable la nota clínica antes del armado del paquete.
 3. **Procesamiento:** un cron toma jobs vencidos, construye el **Bundle documental** (paciente, encuentro, nota, diagnósticos, pedidos, medicación, alergias activas, laboratorio vinculado, recetas emitidas) e invoca el **conector** configurado.
-4. **Resultado:** el job queda en estado enviado, omitido (sin conector real), fallido (reintento) o muerto (intervención manual). Cada transición se registra en auditoría.
+4. **Resultado:** el job queda en estado enviado, omitido (sin conector real), fallido (reintento) o muerto (intervención manual). Cada transición se registra en auditoría y en `agent_run` (agente E02).
 5. **Acuse:** si el receptor no devuelve identificador en línea, un cron de **conciliación** puede consultar estado cuando exista endpoint de polling acordado.
 
 ## Contenido del paquete (perfil interno v1)

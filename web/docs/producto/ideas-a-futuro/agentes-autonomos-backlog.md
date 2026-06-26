@@ -160,9 +160,9 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | A06 | Cierre de loop (sin respuesta) | **Agente** | Cancelar / mantener / escalar | D2 | ~~P1~~ **Hecho (v1)** |
 | A04 | Anti no-show predictivo | **Agente** | Liberar slot vs recordatorio | D2 | ~~P1~~ **Hecho (v1)** |
 | A05 | Ruteo post-triage sin cupo | **Agente** | Canal por triage + cupos (reglas) | D1–D2 | P1 |
-| H01 | Bandeja async priorizada | **Agente** | Orden por SLA + triage en BD | D1 | P1 |
-| E01 | Asociar lab a encounter | **Agente** | Match fecha/pedido/PES | D2 | P1 |
-| E02 | Reintentos integración (FHIR/RDI) | **Agente** | Requeue / dead-letter | D3 | P1 |
+| H01 | Bandeja async priorizada | **Agente** | Orden por SLA + triage en BD | D1 | ~~P1~~ **Hecho (v1)** |
+| E01 | Asociar lab a encounter | **Agente** | Match fecha/pedido/PES | D2 | ~~P1~~ **Hecho (v1)** |
+| E02 | Reintentos integración (FHIR/RDI) | **Agente** | Requeue / dead-letter | D3 | ~~P1~~ **Hecho (v1 FHIR HC)** |
 | E03 | Validar receta pre-envío RDI | **Agente** | Bloquear envío | D2 | P2 |
 | B02 | Seguimiento post-alta | **Agente** | Igual que B01 | D2 | P1 |
 | F02 | Sugerencia de cama | **Agente** | Ranking por atributos de cama | D1 | P2 |
@@ -570,6 +570,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 ### E01 — Asociar lab a encounter
 
+> **Estado:** **implementado (v1)** — [laboratorio.md](../laboratorio.md), [agentes-autonomos.md](../agentes-autonomos.md).
+
 | Campo | Valor |
 |-------|--------|
 | **Grado** | D2 |
@@ -586,6 +588,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 ---
 
 ### E02 — Reintentos integración (FHIR HC, RDI, LIS)
+
+> **Estado:** **implementado (v1 FHIR HC)** — [interoperabilidad-historia-clinica.md](../interoperabilidad-historia-clinica.md), [agentes-autonomos.md](../agentes-autonomos.md). RDI/LIS cuando exista cola outbound.
 
 | Campo | Valor |
 |-------|--------|
@@ -725,6 +729,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 ### H01 — Bandeja async priorizada
 
+> **Estado:** **implementado (v1)** — [atencion-remota-async.md](../atencion-remota-async.md), [agentes-autonomos.md](../agentes-autonomos.md).
+
 > **Clasificación:** paso agente **D1** — orden entre muchas solicitudes con SLA, triage e historial en BD.
 
 | Campo | Valor |
@@ -834,9 +840,9 @@ flowchart LR
 
 1. **Fase 0:** Preferencias de agenda en perfil paciente + política score; auditoría agente vs agente IA.
 2. **Fase 1:** ~~Agentes P0~~ completada (~~B01~~ ~~B03~~ ~~A03~~ ~~A02 v1~~).
-3. **Fase 2:** ~~A01 shortlist~~ v1 hecho; ~~A01 auto-reserva~~ v1 hecho; H01; ~~A04~~ ~~A06~~ v1 hechos.
-4. **Fase 3:** Agentes E01/E02; C03/D02 como **agente IA** donde aplique NL.
-5. **Fase 4:** D03 (codificación automática), F02; redacción IA en pushes ya decididos por regla.
+3. **Fase 2:** ~~A01 shortlist~~ v1 hecho; ~~A01 auto-reserva~~ v1 hecho; ~~H01~~ v1 hecho; ~~A04~~ ~~A06~~ v1 hechos.
+4. **Fase 3:** ~~E01~~ ~~E02 v1 FHIR HC~~; agentes IA (C03/D02) diferidos.
+5. **Fase 4:** A05, B02, E03, F02; redacción IA en pushes diferida.
 
 Contextos **agente IA** (paso decisorio usa modelo): clasificación NL puerta de entrada, borrador resumen paciente, `encounter-codificacion-automatica`, `analisis-consulta`.
 

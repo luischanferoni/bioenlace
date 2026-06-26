@@ -5,6 +5,7 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
+use Yii;
 
 /**
  * Alta de solicitud de consulta async (encounter VR planificado, sin turno).
@@ -69,6 +70,12 @@ final class ConsultaAsyncSolicitudService
         $encounter->save(false, ['status', 'updated_at', 'updated_by']);
 
         (new ConsultaAsyncInitialChatService())->seedMensajePaciente($encounter, $idPersona, $mensaje);
+
+        try {
+            (new ConsultaAsyncBandejaPrioridadAgent())->onNuevaSolicitud($encounter);
+        } catch (\Throwable $e) {
+            Yii::warning('Prioridad async nueva solicitud: ' . $e->getMessage(), 'consulta-async-prioridad');
+        }
 
         return [
             'success' => true,

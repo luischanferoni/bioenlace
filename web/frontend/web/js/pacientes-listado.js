@@ -1622,6 +1622,16 @@
         if (item.status === 'in-progress') badge.className = 'badge bg-success';
         badge.textContent = item.status_label || item.status || '';
       }
+      var prioridadBadge = colEl.querySelector('[data-field="prioridad-badge"]');
+      if (prioridadBadge) {
+        var rank = item.prioridad && item.prioridad.rank != null ? parseInt(item.prioridad.rank, 10) : 0;
+        if (rank > 0 && rank <= 3) {
+          prioridadBadge.textContent = 'Prioridad ' + rank;
+          prioridadBadge.classList.remove('d-none');
+        } else {
+          prioridadBadge.classList.add('d-none');
+        }
+      }
       var slaSlot = colEl.querySelector('[data-slot="sla-alerta"]');
       if (slaSlot && item.sla && item.sla.incumplido) {
         slaSlot.classList.remove('d-none');

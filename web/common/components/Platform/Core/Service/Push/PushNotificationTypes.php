@@ -33,6 +33,12 @@ final class PushNotificationTypes
     /** Resolución: turno reubicado automáticamente por preferencias (agente A01 D2). */
     public const TURNO_AUTO_REUBICADO_RESOLUCION = 'TURNO_AUTO_REUBICADO_RESOLUCION';
 
+    /** Consulta async: SLA vencido — aviso staff (agente H01). */
+    public const CONSULTA_ASYNC_SLA_ESCALATE_STAFF = 'CONSULTA_ASYNC_SLA_ESCALATE_STAFF';
+
+    /** Integración: job en dead-letter (agente E02). */
+    public const INTEGRATION_DEAD_LETTER_OPS = 'INTEGRATION_DEAD_LETTER_OPS';
+
     /** Resumen de atención ambulatoria publicado al paciente. */
     public const ENCOUNTER_SUMMARY_READY = 'ENCOUNTER_SUMMARY_READY';
 

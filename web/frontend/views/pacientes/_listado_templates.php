@@ -321,7 +321,10 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
             <div class="card-body d-flex flex-column">
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-1 mb-2">
                     <span class="badge bg-info text-dark">Por mensaje</span>
-                    <span class="badge" data-field="estado-badge"></span>
+                    <div class="d-flex flex-wrap gap-1">
+                        <span class="badge bg-danger d-none" data-field="prioridad-badge"></span>
+                        <span class="badge" data-field="estado-badge"></span>
+                    </div>
                 </div>
                 <h5 class="card-title h6 mb-1" data-field="paciente"></h5>
                 <div class="small text-muted mb-2" data-field="servicio"></div>

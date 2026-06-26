@@ -1,0 +1,12 @@
+# Reintentos y dead-letter de integraciones (agente E02 v1).
+# {@see IntegrationRetryAgent}
+version: 1
+agent_id: integration-retry
+
+connectors:
+  clinical_history_exchange:
+    dead_letter_notify: true
+
+ops_alert:
+  title: "Integración fallida"
+  body_template: "{{connector}} job #{{job_id}}: {{message}}"

@@ -1,0 +1,24 @@
+# Priorización de bandeja async staff (agente H01 v1).
+# {@see ConsultaAsyncBandejaPrioridadAgent}
+version: 1
+agent_id: consulta-async-bandeja-prioridad
+
+scoring:
+  urgency_band:
+    A: 100
+    B: 70
+    C: 40
+    D: 20
+    default: 10
+  sla_incumplido: 50
+  waiting_points_per_hour: 3
+  waiting_points_cap: 36
+  paciente_sin_respuesta_staff: 15
+  in_progress_asignado: 8
+
+sla_escalation:
+  enabled: true
+  urgency_bands: [A, B]
+  staff_push:
+    title: "SLA vencido — consulta por mensaje"
+    body: "{{paciente}} · {{servicio}}. Responder cuanto antes."

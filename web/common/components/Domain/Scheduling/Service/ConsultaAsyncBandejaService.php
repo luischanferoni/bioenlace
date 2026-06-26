@@ -51,6 +51,7 @@ final class ConsultaAsyncBandejaService
             ->all();
 
         $items = [];
+        $encounterById = [];
         $slaIncumplidos = 0;
         foreach ($encounters as $encounter) {
             $item = $this->buildItem($encounter, true);
@@ -58,18 +59,21 @@ final class ConsultaAsyncBandejaService
                 continue;
             }
             $items[] = $item;
+            $encounterById[(int) $encounter->id] = $encounter;
             if (!empty($item['sla']['incumplido'])) {
                 $slaIncumplidos++;
             }
         }
 
-        return [
+        $result = [
             'title' => $catalog->tituloSeccionStaff(),
             'items' => $items,
             'total' => count($items),
             'sla_incumplidos' => $slaIncumplidos,
             'empty_message' => $catalog->mensajeVacioStaff(),
         ];
+
+        return (new ConsultaAsyncBandejaPrioridadAgent())->applyToStaffBandeja($result, $encounterById);
     }
 
     /**

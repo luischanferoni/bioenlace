@@ -58,6 +58,7 @@ Las solicitudes por mensaje generan un encounter VR en estado **planificado**, s
 - **Tomar y responder** — asigna el PES de sesión, pasa a `in-progress` y abre el chat.
 - **Chat** — API `consulta-chat` existente; el primer mensaje del paciente se guarda al crear la solicitud.
 - **SLA** — plazo objetivo según banda de urgencia del triage (`consulta_async_bandeja.yaml`); badge si venció sin respuesta del staff.
+- **Priorización (agente H01)** — orden sugerido por score (banda triage, SLA vencido, antigüedad, mensaje paciente sin respuesta). Badge «Prioridad 1–3» en tarjetas. Escalamiento push staff en bandas A/B con SLA vencido (una vez por solicitud).
 - **Paciente** — en inicio ve sus consultas async activas con acceso al mismo chat.
 
 ## Cómo funciona (etapa 4 — política por servicio)

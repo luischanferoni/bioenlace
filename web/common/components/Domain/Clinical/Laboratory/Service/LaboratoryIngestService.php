@@ -91,11 +91,22 @@ final class LaboratoryIngestService
         $model->display = $code['display'] ?? ($report['code']['text'] ?? null);
         $model->issued_at = $report['issued'] ?? $report['effectiveDateTime'] ?? null;
         $model->conclusion = $this->extractConclusion($report);
-        $model->encounter_id = $this->encounterLink->resolveEncounterId($idPersona, $report);
+        $model->encounter_id = null;
         $model->payload_json = json_encode($report, JSON_UNESCAPED_UNICODE);
 
         if (!$model->save()) {
             throw new \RuntimeException('DiagnosticReport: ' . json_encode($model->getErrors()));
+        }
+
+        $model->encounter_id = $this->encounterLink->resolveForIngest($idPersona, $report, [
+            'diagnostic_report_id' => (int) $model->id,
+            'code' => $model->code,
+            'code_system' => $model->code_system,
+            'display' => $model->display,
+            'issued_at' => $model->issued_at,
+        ]);
+        if ($model->encounter_id !== null) {
+            $model->save(false, ['encounter_id', 'updated_at']);
         }
 
         foreach ($observations as $obsFhir) {

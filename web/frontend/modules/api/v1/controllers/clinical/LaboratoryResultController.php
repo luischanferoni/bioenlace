@@ -2,6 +2,8 @@
 
 namespace frontend\modules\api\v1\controllers\clinical;
 
+use common\components\Domain\Clinical\Laboratory\Service\LaboratoryEncounterLinkAgent;
+use common\components\Domain\Clinical\Laboratory\Service\LaboratoryEncounterLinkPendingService;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryReportPdfService;
 use common\components\Domain\Clinical\Laboratory\Service\LaboratoryResultQueryService;
 use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryQueryService;
@@ -10,6 +12,8 @@ use common\models\Clinical\DiagnosticReport;
 use common\models\Person\Persona;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
+use yii\web\BadRequestHttpException;
+use yii\web\MethodNotAllowedHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 
@@ -227,5 +231,58 @@ class LaboratoryResultController extends BaseController
                 'reports' => $this->query->listForEncounter((int) $encounter->id),
             ],
         ];
+    }
+
+    /**
+     * GET /api/v1/clinical/laboratory-result/listar-pendientes-vincular-como-staff
+     */
+    public function actionListarPendientesVincularComoStaff(): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isGet) {
+            throw new MethodNotAllowedHttpException(['GET'], 'Solo GET.');
+        }
+
+        return [
+            'success' => true,
+            'data' => (new LaboratoryEncounterLinkPendingService())->listPending(
+                (int) ($req->get('limit') ?? 50)
+            ),
+        ];
+    }
+
+    /**
+     * POST /api/v1/clinical/laboratory-result/vincular-informe-a-encounter-como-staff
+     */
+    public function actionVincularInformeAEncounterComoStaff(): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Solo POST.');
+        }
+
+        $post = array_merge($req->get(), $req->post());
+        $reportId = (int) ($post['report_id'] ?? $post['id'] ?? 0);
+        $encounterId = (int) ($post['encounter_id'] ?? 0);
+        if ($reportId <= 0 || $encounterId <= 0) {
+            throw new BadRequestHttpException('report_id y encounter_id son requeridos.');
+        }
+
+        [$encounter, $err] = $this->requireEncounterAccess($encounterId);
+        if ($err !== null) {
+            return $err;
+        }
+
+        try {
+            $data = (new LaboratoryEncounterLinkAgent())->confirmLinkAsStaff(
+                $reportId,
+                $encounterId,
+                (int) Yii::$app->user->getIdPersona()
+            );
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+
+        return ['success' => true, 'data' => $data];
     }
 }

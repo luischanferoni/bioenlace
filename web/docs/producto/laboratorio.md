@@ -52,6 +52,18 @@ La decisión queda en `agent_run`. Re-sincronizar el mismo informe **no** re-not
 
 Flag: `autonomous_agent_post_lab_enabled` (default `true`). Detalle: [agentes-autonomos.md](./agentes-autonomos.md).
 
+## Vinculación informe ↔ encounter (agente E01)
+
+Tras ingestar un informe nuevo, `LaboratoryEncounterLinkAgent` puntúa encounters candidatos (mismo día, pedido de lab en `service_request`, proximidad, referencia FHIR).
+
+| Resultado | Comportamiento |
+|-----------|----------------|
+| **Ganador unívoco** | `encounter_id` persistido automáticamente |
+| **Ambigüedad** | Bandeja staff `listar-pendientes-vincular-como-staff`; confirmación con `vincular-informe-a-encounter-como-staff` |
+| **Sin match** | Informe huérfano; B03 notifica igual al paciente |
+
+Flag: `autonomous_agent_lab_encounter_link_enabled`.
+
 ## Relación con el resto
 
 - Pedidos de estudio en el **encounter** y resumen de **atención paciente** enlazan al informe cuando existe.

@@ -37,6 +37,7 @@ final class BioenlaceDb
         $db = Yii::$app->get($componentId);
         if ($db->pdo === null) {
             $db->open();
+            self::applySessionWaitTimeout($db);
 
             return;
         }
@@ -48,6 +49,36 @@ final class BioenlaceDb
             }
             $db->close();
             $db->open();
+            self::applySessionWaitTimeout($db);
+        }
+    }
+
+    /**
+     * @param object $db yii\db\Connection
+     */
+    public static function applySessionWaitTimeout(object $db): void
+    {
+        if (!isset($db->pdo) || $db->pdo === null) {
+            return;
+        }
+        if (!method_exists($db, 'getDriverName') || $db->getDriverName() !== 'mysql') {
+            return;
+        }
+        $timeout = Yii::$app->params['mysqlSessionWaitTimeout'] ?? null;
+        if ($timeout === null) {
+            return;
+        }
+        $timeout = (int) $timeout;
+        if ($timeout <= 0) {
+            return;
+        }
+        try {
+            $db->pdo->exec('SET SESSION wait_timeout = ' . $timeout);
+        } catch (\Throwable $e) {
+            Yii::warning(
+                'No se pudo fijar mysqlSessionWaitTimeout: ' . $e->getMessage(),
+                __METHOD__
+            );
         }
     }
 

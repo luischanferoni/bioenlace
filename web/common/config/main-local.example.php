@@ -4,6 +4,7 @@
  * Copiar a main-local.php y ajustar credenciales.
  *
  * ReconnectingConnection reintenta una vez ante MySQL 2006/2013 (conexión idle o servidor reiniciado).
+ * wait_timeout de sesión: params mysqlSessionWaitTimeout (no va en este array).
  */
 return [
     'components' => [
@@ -13,7 +14,6 @@ return [
             'username' => 'root',
             'password' => '',
             'charset' => 'utf8',
-            'sessionWaitTimeout' => 28800,
         ],
         'dbMap' => [
             'class' => \common\components\Platform\Core\Db\ReconnectingConnection::class,
@@ -21,7 +21,6 @@ return [
             'username' => 'root',
             'password' => '',
             'charset' => 'utf8',
-            'sessionWaitTimeout' => 28800,
         ],
         'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',

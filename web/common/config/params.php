@@ -6,6 +6,11 @@ return [
     'senderName' => 'Example.com mailer',
     /** null o vacío: emails a archivo (runtime/mail). Producción: smtp://user:pass@host:587 */
     'mailerDsn' => null,
+    /**
+     * SET SESSION wait_timeout al abrir conexión MySQL (segundos). null = no tocar.
+     * Configurar en params-local.php si el hosting usa timeout corto.
+     */
+    'mysqlSessionWaitTimeout' => 28800,
     'user.passwordResetTokenExpire' => 3600,
     'user.passwordMinLength' => 8,
     'bsVersion' => '5.x',

@@ -12,7 +12,10 @@ $params = ArrayHelper::merge(
 return [
     'id' => 'app-console',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
+    'bootstrap' => [
+        'log',
+        \common\components\Platform\Core\Db\EnsureDbConnectionBootstrap::class,
+    ],
     'controllerNamespace' => 'console\controllers',
     /**
      * Módulo user-management (UserManagementCompatModule) expone nombres de tabla.

@@ -19,6 +19,7 @@ return [
     'basePath' => dirname(__DIR__),
     'bootstrap' => [
         'log',
+        \common\components\Platform\Core\Db\EnsureDbConnectionBootstrap::class,
         \frontend\components\EnforceGhostAccessBootstrap::class,
     ],
     'timeZone' => 'America/Argentina/Tucuman',
@@ -70,7 +71,7 @@ return [
                     'levels' => ['warning'],
                 ],
                 [
-                    'class' => 'yii\log\DbTarget',
+                    'class' => \common\components\Platform\Infra\Log\ResilientDbTarget::class,
                     'levels' => ['error'],
                 ],
             ],

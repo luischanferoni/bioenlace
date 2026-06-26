@@ -21,12 +21,20 @@ final class BioenlaceDb
         }
     }
 
-    public static function ensureConnection(): void
+    public static function ensureAllConnections(): void
     {
-        if (!Yii::$app->has('db')) {
+        self::ensureConnection('db');
+        if (Yii::$app->has('dbMap')) {
+            self::ensureConnection('dbMap');
+        }
+    }
+
+    public static function ensureConnection(string $componentId = 'db'): void
+    {
+        if (!Yii::$app->has($componentId)) {
             return;
         }
-        $db = Yii::$app->db;
+        $db = Yii::$app->get($componentId);
         if ($db->pdo === null) {
             $db->open();
 

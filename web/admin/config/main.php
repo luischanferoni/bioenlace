@@ -19,7 +19,10 @@ return [
     'id' => 'bioenlace-admin',
     'language' => 'es',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
+    'bootstrap' => [
+        'log',
+        \common\components\Platform\Core\Db\EnsureDbConnectionBootstrap::class,
+    ],
     'timeZone' => 'America/Argentina/Tucuman',
     'controllerNamespace' => 'admin\controllers',
     'components' => [
@@ -61,8 +64,8 @@ return [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['warning', 'trace'],
                 ],
-				[
-                    'class' => 'yii\log\DbTarget',
+                [
+                    'class' => \common\components\Platform\Infra\Log\ResilientDbTarget::class,
                     'levels' => ['error'],
                 ],
             ],

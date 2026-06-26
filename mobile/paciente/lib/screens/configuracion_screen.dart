@@ -7,10 +7,11 @@ import '../auth/paciente_dev_login.dart';
 import '../services/chat_service.dart';
 import 'main_screen.dart';
 import 'person_representation_hub_screen.dart';
+import 'paciente_provincia_context_screen.dart';
 import 'signup_screen.dart';
 
 /// Pantalla de configuración del paciente (perfil, preferencias, cerrar sesión).
-class ConfiguracionScreen extends StatelessWidget {
+class ConfiguracionScreen extends StatefulWidget {
   final String userId;
   final String userName;
   final String? authToken;
@@ -27,6 +28,46 @@ class ConfiguracionScreen extends StatelessWidget {
     this.onEnviarQueja,
     this.alertasNoLeidas = 0,
   }) : super(key: key);
+
+  @override
+  State<ConfiguracionScreen> createState() => _ConfiguracionScreenState();
+}
+
+class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
+  @override
+  void initState() {
+    super.initState();
+    PacienteContextScope.instance.bindAuthToken(widget.authToken);
+    PacienteContextScope.instance.refresh(authToken: widget.authToken);
+  }
+
+  void _abrirProvinciaContexto() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PacienteProvinciaContextScreen(
+          authToken: widget.authToken,
+        ),
+      ),
+    ).then((changed) {
+      if (changed == true && mounted) setState(() {});
+    });
+  }
+
+  Future<void> _toggleSector() async {
+    final actual = PacienteContextScope.instance.state.sectorSalud;
+    final nuevo = actual == 'privado' ? 'publico' : 'privado';
+    final ok = await PacienteContextScope.instance.actualizarSector(
+      nuevo,
+      authToken: widget.authToken,
+    );
+    if (!mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo actualizar el sector')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,6 +140,34 @@ class ConfiguracionScreen extends StatelessWidget {
           ),
           BioDivider.subtle(),
           CarePlanReminderGlobalSwitch(authToken: authToken),
+          BioDivider.subtle(),
+          ListenableBuilder(
+            listenable: PacienteContextScope.instance,
+            builder: (context, _) {
+              final ctx = PacienteContextScope.instance.state;
+              final sectorLabel =
+                  ctx.sectorSalud == 'privado' ? 'Privado' : 'Público';
+              final provinciaLabel =
+                  ctx.provinciaNombre ?? 'Sin definir';
+              return Column(
+                children: [
+                  _ConfigTile(
+                    icon: Icons.account_balance_outlined,
+                    title: 'Sector de salud',
+                    subtitle: sectorLabel,
+                    onTap: _toggleSector,
+                  ),
+                  BioDivider.subtle(),
+                  _ConfigTile(
+                    icon: Icons.map_outlined,
+                    title: 'Provincia de contexto',
+                    subtitle: provinciaLabel,
+                    onTap: _abrirProvinciaContexto,
+                  ),
+                ],
+              );
+            },
+          ),
           BioDivider.subtle(),
           _ConfigTile(
             icon: Icons.family_restroom_outlined,
@@ -218,6 +287,7 @@ class ConfiguracionScreen extends StatelessWidget {
     await prefs.remove('user_name');
     await prefs.remove('auth_token');
     await PersonRepresentationContext.instance.clearOnLogout();
+    await PacienteContextScope.instance.clearOnLogout();
 
     if (!context.mounted) return;
 

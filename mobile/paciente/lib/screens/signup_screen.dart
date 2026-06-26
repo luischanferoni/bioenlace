@@ -5,7 +5,7 @@ import 'package:shared/shared.dart';
 
 import '../services/chat_service.dart';
 import '../services/registration_service.dart';
-import 'chat_screen.dart';
+import 'main_screen.dart';
 
 /// Registro del paciente: dispara el flujo de verificación de identidad.
 class SignupScreen extends StatefulWidget {
@@ -27,8 +27,10 @@ class _SignupScreenState extends State<SignupScreen> {
 
       if (result['success'] == true) {
         final data = result['data'];
-        final registro = data['registro'] ?? {};
-        final persona = registro['data']?['persona'] ?? {};
+        final registroWrapper = data['registro'] as Map<String, dynamic>? ?? {};
+        final registroInner =
+            registroWrapper['data'] as Map<String, dynamic>? ?? registroWrapper;
+        final persona = registroInner['persona'] as Map<String, dynamic>? ?? {};
         final userId =
             'paciente_${persona['id_persona'] ?? DateTime.now().millisecondsSinceEpoch}';
         final fullName =
@@ -38,9 +40,19 @@ class _SignupScreenState extends State<SignupScreen> {
         await prefs.setBool('is_logged_in', true);
         await prefs.setString('user_id', userId);
         await prefs.setString('user_name', fullName);
-        await prefs.setString('dni_detected', persona['documento'] ?? '');
+        await prefs.setString('dni_detected', persona['documento']?.toString() ?? '');
         await prefs.setString('name_detected', fullName);
         await prefs.setBool('biometric_enabled', true);
+
+        final ctxJson = registroInner['paciente_contexto'];
+        if (registroInner['token'] != null) {
+          final token = registroInner['token'].toString();
+          await prefs.setString('auth_token', token);
+          PacienteContextScope.instance.bindAuthToken(token);
+        }
+        if (ctxJson is Map<String, dynamic>) {
+          PacienteContextScope.instance.applyFromRegistration(ctxJson);
+        }
 
         if (!mounted) return;
         _snack('Registro completado exitosamente', UiIntent.success);
@@ -54,7 +66,10 @@ class _SignupScreenState extends State<SignupScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => ChatScreen(chatService: chatService),
+            builder: (_) => MainScreen(
+              chatService: chatService,
+              authToken: prefs.getString('auth_token'),
+            ),
           ),
         );
       } else {

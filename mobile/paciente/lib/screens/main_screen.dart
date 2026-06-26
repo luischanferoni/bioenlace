@@ -11,6 +11,7 @@ import 'chat_screen.dart';
 import 'care_plan_detail_screen.dart';
 import 'configuracion_screen.dart';
 import 'encounter_summary_detail_screen.dart';
+import 'paciente_provincia_context_screen.dart';
 import '../config/paciente_intents.dart';
 
 /// Pantalla principal del paciente con bottom nav: Inicio, Asistente, Configuración.
@@ -38,6 +39,8 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
+    PacienteContextScope.instance.bindAuthToken(widget.authToken);
+    PacienteContextScope.instance.refresh(authToken: widget.authToken);
     _initPush();
     _initCarePlanReminders();
     _refreshAlertasCount();
@@ -161,10 +164,29 @@ class _MainScreenState extends State<MainScreen> {
     ).then((_) => _refreshAlertasCount());
   }
 
+  void _abrirProvinciaContexto() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PacienteProvinciaContextScreen(
+          authToken: widget.authToken,
+        ),
+      ),
+    ).then((changed) {
+      if (changed == true) {
+        PacienteContextScope.instance.refresh(authToken: widget.authToken);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
+      body: Column(
+        children: [
+          PacienteContextBanner(onConfigurarProvincia: _abrirProvinciaContexto),
+          Expanded(
+            child: IndexedStack(
         index: _selectedIndex,
         children: [
           HomeScreen(
@@ -190,6 +212,9 @@ class _MainScreenState extends State<MainScreen> {
             onOpenAlertas: _openAlertas,
             alertasNoLeidas: _alertasNoLeidas,
             onEnviarQueja: _abrirIntentQueja,
+          ),
+        ],
+      ),
           ),
         ],
       ),

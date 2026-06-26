@@ -350,6 +350,15 @@ return [
                 'OPTIONS api/<version:\w+>/person-representation/preferencias-como-paciente' => '<version>/person-representation/preferencias-como-paciente',
                 'POST api/<version:\w+>/person-representation/establecer-sujeto-paciente' => '<version>/person-representation/establecer-sujeto-paciente',
                 'OPTIONS api/<version:\w+>/person-representation/establecer-sujeto-paciente' => '<version>/person-representation/establecer-sujeto-paciente',
+
+                'GET api/<version:\w+>/paciente-contexto/obtener-como-paciente' => '<version>/paciente-contexto/obtener-como-paciente',
+                'POST api/<version:\w+>/paciente-contexto/obtener-como-paciente' => '<version>/paciente-contexto/obtener-como-paciente',
+                'OPTIONS api/<version:\w+>/paciente-contexto/obtener-como-paciente' => '<version>/paciente-contexto/obtener-como-paciente',
+                'POST api/<version:\w+>/paciente-contexto/actualizar-como-paciente' => '<version>/paciente-contexto/actualizar-como-paciente',
+                'OPTIONS api/<version:\w+>/paciente-contexto/actualizar-como-paciente' => '<version>/paciente-contexto/actualizar-como-paciente',
+                'GET api/<version:\w+>/paciente-contexto/sugerir-provincias-como-paciente' => '<version>/paciente-contexto/sugerir-provincias-como-paciente',
+                'POST api/<version:\w+>/paciente-contexto/sugerir-provincias-como-paciente' => '<version>/paciente-contexto/sugerir-provincias-como-paciente',
+                'OPTIONS api/<version:\w+>/paciente-contexto/sugerir-provincias-como-paciente' => '<version>/paciente-contexto/sugerir-provincias-como-paciente',
                 
                 // Turnos / agenda profesional API: día operativo; ABM profesional_efector_servicio_agenda = listar|crear|actualizar|eliminar (propio) vs *-para-recurso (staff; query id_efector + id_profesional_efector_servicio)
                 'GET api/<version:\w+>/profesional-agenda/dia' => '<version>/profesional-agenda/dia',

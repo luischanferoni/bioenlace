@@ -2,15 +2,19 @@
 
 namespace common\components\Domain\Person\Representation\Service;
 
+use common\components\Domain\Integrations\Mpi\RenaperGatewayService;
 use common\models\Person\Persona;
-use common\models\PersonaMpi;
-use Yii;
 
 /**
- * Resolución/alta de Persona sujeto vía local + RENAPER/MPI (patrón admin/MPI).
+ * Resolución/alta de Persona sujeto vía local + RENAPER.
  */
 final class PersonRepresentationMpiService
 {
+    public function __construct(
+        private readonly RenaperGatewayService $renaper = new RenaperGatewayService(),
+    ) {
+    }
+
     /**
      * @param array<string, mixed> $input
      */
@@ -44,63 +48,41 @@ final class PersonRepresentationMpiService
         return $this->createPersonaFromManualInput($documento, $input);
     }
 
-    public function syncMpiIfAvailable(Persona $persona): void
-    {
-        if (!Yii::$app->has('mpi')) {
-            return;
-        }
-
-        try {
-            $mpi = Yii::$app->mpi;
-            $respuesta = $mpi->traerPaciente($persona->id_persona);
-            $idMpi = $respuesta['data']['paciente']['set_minimo']['identificador']['mpi'] ?? null;
-            if (!$idMpi) {
-                return;
-            }
-            $personaMpi = PersonaMpi::findOne($persona->id_persona);
-            if ($personaMpi === null) {
-                $personaMpi = new PersonaMpi();
-                $personaMpi->id_persona = (int) $persona->id_persona;
-            }
-            $personaMpi->id_mpi = $idMpi;
-            $personaMpi->save(false);
-        } catch (\Throwable $e) {
-            Yii::error('MPI sync representación: ' . $e->getMessage(), 'person_representation');
-        }
-    }
-
     /**
      * @param array<string, mixed> $input
      * @return array<string, mixed>|null
      */
     private function fetchRenaper(string $documento, array $input): ?array
     {
-        if (!Yii::$app->has('mpi')) {
-            return null;
-        }
-
-        $sexo = trim((string) ($input['sexo'] ?? $input['sexo_biologico'] ?? ''));
+        $sexo = $this->resolveSexoParam($input);
         if ($sexo === '') {
             return null;
         }
 
-        try {
-            $mpi = Yii::$app->mpi;
-            $respuesta = $mpi->caller('renaper?dni=' . rawurlencode($documento) . '&sexo=' . rawurlencode($sexo), '{}');
-            if (!is_array($respuesta)) {
-                return null;
-            }
-            $row = $respuesta['data'][0] ?? $respuesta['data'] ?? null;
-            if (!is_array($row) || empty($row['apellido'])) {
-                return null;
-            }
+        return $this->renaper->fetch($documento, $sexo);
+    }
 
-            return $row;
-        } catch (\Throwable $e) {
-            Yii::error('RENAPER representación: ' . $e->getMessage(), 'person_representation');
-
-            return null;
+    /**
+     * @param array<string, mixed> $input
+     */
+    private function resolveSexoParam(array $input): string
+    {
+        $raw = $input['sexo'] ?? $input['sexo_biologico'] ?? '';
+        if (is_int($raw) || (is_string($raw) && ctype_digit($raw))) {
+            $n = (int) $raw;
+            if ($n === 1) {
+                return 'M';
+            }
+            if ($n === 2) {
+                return 'F';
+            }
         }
+        $sexo = strtoupper(trim((string) $raw));
+        if ($sexo === 'M' || $sexo === 'F') {
+            return $sexo;
+        }
+
+        return '';
     }
 
     /**
@@ -123,8 +105,6 @@ final class PersonRepresentationMpiService
         if (!$persona->save()) {
             throw new \RuntimeException('No se pudo crear la persona: ' . json_encode($persona->getErrors()));
         }
-
-        $this->syncMpiIfAvailable($persona);
 
         return $persona;
     }
@@ -160,8 +140,6 @@ final class PersonRepresentationMpiService
         if (!$persona->save()) {
             throw new \RuntimeException('No se pudo crear la persona: ' . json_encode($persona->getErrors()));
         }
-
-        $this->syncMpiIfAvailable($persona);
 
         return $persona;
     }

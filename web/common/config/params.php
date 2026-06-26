@@ -166,4 +166,10 @@ return [
      * Default: @common/metadata/bioenlace (resuelto en {@see \common\components\Platform\Core\Product\ProductMetadataPaths}).
      */
     // 'productMetadataDir' => dirname(__DIR__) . '/metadata/bioenlace',
+
+    /**
+     * Capacidades MPI/SEIPA habilitadas. Solo renaper + coberturas por defecto.
+     * {@see \common\components\Domain\Integrations\Mpi\MpiCapability}
+     */
+    'mpiCapabilities' => ['renaper', 'coberturas'],
 ];

@@ -4,8 +4,9 @@ namespace common\components\Domain\Person\Service;
 
 use Yii;
 use common\components\Domain\Integrations\Identity\DiditClient;
+use common\components\Domain\Person\Service\PacienteDomicilioVerificacionService;
+use common\components\Domain\Person\Service\PacienteContextoService;
 use common\models\Person\Persona;
-use common\models\PersonaMpi;
 use common\models\User;
 use common\models\rbac\AuthRole;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
@@ -17,7 +18,7 @@ use Firebase\JWT\JWT;
  * Se encarga de:
  *  - Verificar identidad con Didit.
  *  - Crear o actualizar registros en la tabla personas.
- *  - Sincronizar información mínima con MPI (id_mpi).
+ *  - Inicializar contexto paciente y verificación de domicilio RENAPER (tipo paciente).
  *  - Validar profesionales contra REFEPS/SISA cuando el tipo es "medico".
  */
 class RegistroService
@@ -110,7 +111,13 @@ class RegistroService
             throw new \RuntimeException('Error guardando datos de la persona: ' . json_encode($persona->getErrors()));
         }
 
-        $mpiInfo = $this->syncMpiPersona($persona);
+        $pacienteContexto = null;
+        if ($tipo === 'paciente') {
+            (new PacienteDomicilioVerificacionService())->iniciarTrasRegistro($persona);
+            $pacienteContexto = (new PacienteContextoService())->export(
+                (new PacienteContextoService())->getOrCreate((int) $persona->id_persona)
+            );
+        }
 
         $refepsInfo = null;
         if ($tipo === 'medico') {
@@ -221,7 +228,7 @@ class RegistroService
         return [
             'persona' => $personaData,
             'didit' => $diditResult,
-            'mpi' => $mpiInfo,
+            'paciente_contexto' => $pacienteContexto,
             'refeps' => $refepsInfo,
             'user' => $user ? [
                 'id' => $user->id,
@@ -231,58 +238,6 @@ class RegistroService
             ] : null,
             'token' => $token,
         ];
-    }
-
-    /**
-     * Sincroniza información mínima de la persona con el MPI (id_mpi) si el componente está disponible.
-     *
-     * @param Persona $persona
-     * @return array
-     */
-    protected function syncMpiPersona(Persona $persona): array
-    {
-        if (!Yii::$app->has('mpi')) {
-            return [
-                'empadronado' => false,
-                'detalles' => [
-                    'message' => 'Componente MPI no configurado en la aplicación',
-                ],
-            ];
-        }
-
-        try {
-            /** @var \common\components\Domain\Integrations\Mpi\MpiApiClient $mpi */
-            $mpi = Yii::$app->mpi;
-
-            $respuesta = $mpi->traerPaciente($persona->id_persona);
-            $idMpi = $respuesta['data']['paciente']['set_minimo']['identificador']['mpi'] ?? null;
-
-            $empadronado = false;
-
-            if ($idMpi) {
-                /** @var PersonaMpi|null $personaMpi */
-                $personaMpi = PersonaMpi::findOne($persona->id_persona);
-                if ($personaMpi) {
-                    $personaMpi->id_mpi = $idMpi;
-                    $personaMpi->save(false);
-                    $empadronado = true;
-                }
-            }
-
-            return [
-                'empadronado' => $empadronado,
-                'detalles' => $respuesta,
-            ];
-        } catch (\Throwable $e) {
-            Yii::error('Error sincronizando persona con MPI: ' . $e->getMessage(), 'mpi');
-            return [
-                'empadronado' => false,
-                'detalles' => [
-                    'message' => 'Error al comunicarse con MPI',
-                    'exception' => $e->getMessage(),
-                ],
-            ];
-        }
     }
 
     /**

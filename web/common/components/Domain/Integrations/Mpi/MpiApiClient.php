@@ -4,6 +4,7 @@ namespace common\components\Domain\Integrations\Mpi;
 
 use Yii;
 use yii\base\Component;
+use common\components\Domain\Integrations\Mpi\MpiCapability;
 
 /**
  * Cliente HTTP para MPI/SEIPA (empadronamiento, RENAPER, coberturas).
@@ -69,6 +70,10 @@ class MpiApiClient extends Component
      */
     public function traerPaciente($id_persona = null, string $fuente = 'local'): ?array
     {
+        if (!MpiCapability::isEnabled(MpiCapability::TRAER_PACIENTE)) {
+            return null;
+        }
+
         return $this->call("pacientes?fuente=$fuente&identificador=$id_persona", '{}', 'GET');
     }
 
@@ -78,6 +83,10 @@ class MpiApiClient extends Component
      */
     public function candidatos(array $parametros): ?array
     {
+        if (!MpiCapability::isEnabled(MpiCapability::CANDIDATOS)) {
+            return null;
+        }
+
         $patientJson = $this->loadSchema('pivote-schema.json');
         $texto = str_replace('@tipo_documento', (string) $parametros['tipo_doc'], $patientJson);
         $texto = str_replace('@nro_documento', (string) $parametros['documento'], $texto);
@@ -95,6 +104,10 @@ class MpiApiClient extends Component
      */
     public function empadronar(array $parametros): ?array
     {
+        if (!MpiCapability::isEnabled(MpiCapability::EMPADRONAR)) {
+            return null;
+        }
+
         $fijo = $this->devolverTelefonos($parametros['telefonos'], 1);
         $celular = $this->devolverTelefonos($parametros['telefonos'], 2);
         $mails = $this->devolverMails($parametros['mails']);
@@ -164,6 +177,10 @@ class MpiApiClient extends Component
      */
     public function asociar(array $parametros): ?array
     {
+        if (!MpiCapability::isEnabled(MpiCapability::ASOCIAR)) {
+            return null;
+        }
+
         $fijo = $this->devolverTelefonos($parametros['telefonos'], 1);
         $celular = $this->devolverTelefonos($parametros['telefonos'], 2);
         $mails = $this->devolverMails($parametros['mails']);
@@ -208,6 +225,10 @@ class MpiApiClient extends Component
      */
     public function get_cobertura_social(string $dni, string $sexo, bool $include_exceptions = false): array
     {
+        if (!MpiCapability::isEnabled(MpiCapability::COBERTURAS)) {
+            return $include_exceptions ? [[0 => 'Capacidad coberturas MPI deshabilitada']] : [];
+        }
+
         $cmd = sprintf('coberturas?dni=%s&sexo=%s', $dni, $sexo);
         $coberturas = [];
 

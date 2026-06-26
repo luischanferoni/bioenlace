@@ -49,4 +49,7 @@ export 'home/home_panel_kpi_widgets.dart';
 export 'person/person_representation_api.dart';
 export 'person/person_representation_context.dart';
 export 'person/person_representation_subject_chip.dart';
+export 'person/paciente_context_api.dart';
+export 'person/paciente_context_scope.dart';
+export 'person/paciente_context_banner.dart';
 

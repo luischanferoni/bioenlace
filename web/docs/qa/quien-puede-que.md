@@ -13,6 +13,8 @@ Resumen en criollo: **paciente** usa la app; **personal** usa la web (y a veces 
 | Sacar turno | Sí, para sí | Sí, para cualquier paciente (si tiene permiso) |
 | Cancelar / cambiar turno | Sí, con reglas de anticipación | Sí, a veces sin las mismas restricciones |
 | Ver laboratorio y recetas | Sí, los propios | No es lo habitual (ve captura en consulta) |
+| Contexto sector / provincia | Sí, en la app | No aplica (staff usa sesión operativa) |
+| Admin listado efectores | No | Sí, roles administrativos |
 | Tablero de guardia y triage | No | Sí, en servicio de guardia |
 | Mapa de camas e internación | No | Sí, en servicio de internación |
 | Captura clínica / historia | No (solo ve resúmenes) | Sí |
@@ -58,3 +60,7 @@ Detalle de madurez HIS: [his-completo/](../his-completo/README.md).
 | Lab, receta, planes | [05-laboratorio-receta-planes.md](./05-laboratorio-receta-planes.md) |
 | Reportes | [06-reportes-nomenclador.md](./06-reportes-nomenclador.md) |
 | Frases del asistente | [07-asistente.md](./07-asistente.md) |
+| Contexto paciente y registro | [08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md) |
+| Admin efectores y seeds | [09-admin-efectores-organizacion.md](./09-admin-efectores-organizacion.md) |
+| Checklist ejecutable | [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) |
+| Agentes autónomos (reglas) | [11-agentes-reglas-autonomas.md](./11-agentes-reglas-autonomas.md) |

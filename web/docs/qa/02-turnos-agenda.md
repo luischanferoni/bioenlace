@@ -36,7 +36,8 @@ Antes conviene tener [sesión operativa](./00-transversal.md#elegir-efector-serv
 
 1. **Vos** (paciente) elegís servicio, profesional y horario disponible.
 2. **El sistema** confirma el turno y lo ves en “mis turnos”.
-3. Si no hay cupo, **te muestra** otros horarios o te dice que no hay.
+3. Si no hay cupo, **te muestra** otros horarios o te guía en el asistente.
+4. Con **contexto paciente** activo, solo ves profesionales/efectores de tu provincia y sector ([08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md)).
 
 ---
 

@@ -53,6 +53,9 @@ Detalle: [04-internacion.md](./04-internacion.md).
 | Cambiar turno | “cambiar mi turno”, “reprogramar” | Nuevos horarios |
 | Confirmar que vas | “confirmo que voy” | Marca asistencia |
 | Ver política | “cuánto antes puedo cancelar” | Te explica reglas del efector |
+| Recurso provincial | “ministerio de salud de mi provincia” | FAQ según contexto paciente |
+
+Detalle contexto: [08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md).
 
 ---
 

@@ -1,82 +1,127 @@
 # Agentes autónomos — backlog de producto
 
-> **Estado:** idea a futuro — no comprometido en roadmap. Extensiones operativas del HIS donde la IA y reglas ejecutan tareas **sin chat en vivo**, dentro de políticas auditables.
+> **Estado:** idea a futuro — no comprometido en roadmap. Flujos operativos del HIS en los que **el sistema toma al menos una decisión** que hoy haría una persona (staff, paciente o coordinación), dentro de políticas auditables.
 
 ## De qué se trata
 
-Un **agente autónomo** (en este documento) es un proceso disparado por un **evento de dominio** (turno en resolución, lab ingestado, encounter finalizado…) que:
+Un **agente** (en este documento) es un flujo — disparado por evento, cron o cola — que incluye **al menos un paso donde el sistema elige** entre alternativas o fija un curso de acción **sin que una persona decida en ese momento**.
 
-1. Lee contexto acotado (persona, encounter, políticas del efector).
-2. Usa **reglas declarativas** + opcionalmente **IA** (lenguaje, ranking, borradores).
-3. **Actúa** en el HIS (mensaje, cambio de estado, cola, borrador clínico) con trazabilidad.
-4. Respeta **nivel de autonomía** (L0–L3); nunca L4 (decisión clínica sin humano).
+No importa si la decisión usa reglas de dominio, consultas a BD o IA: lo que define al agente es **quién decide en ese paso**. La implementación puede ser servicio de dominio + job + metadata; no requiere un motor de «agents» ni un LLM.
 
-No es el asistente conversacional del chat: ese canal es **reactivo**; estos agentes son **proactivos** y batch/event-driven.
+Ejemplos de **decisión del sistema** (sustituye criterio humano en ese paso):
 
-## Niveles de autonomía
+| Tipo | Ejemplo | Sin agente (hoy suele hacerlo una persona) |
+|------|---------|---------------------------------------------|
+| **Selección** | Qué 2–3 slots ofrecer a un turno en resolución | El paciente recorre toda la agenda |
+| **Clasificación** | Resultado de lab crítico vs normal | Staff revisa bandeja manualmente |
+| **Enrutado** | Tras triage sin cupo, canal alternativo (tele/async) | Recepción orienta por teléfono |
+| **Priorización** | Orden de la bandeja async | Coordinador ordena «a ojo» |
+| **Emparejamiento** | Vincular lab al encounter más probable | Admisión arrastra el estudio |
+| **Acción condicionada** | Respuesta roja en touchpoint → alerta enfermería | Alguien lee formularios uno por uno |
 
-| Nivel | Nombre | Qué puede hacer | Confirmación |
-|-------|--------|-----------------|--------------|
-| **L0** | Informar | Resumir, clasificar, rankear | Ninguna |
-| **L1** | Proponer | Ofrecer 2–3 opciones al usuario | Usuario elige |
-| **L2** | Ejecutar acotado | Acción reversible si el usuario aceptó o no respondió en plazo | Opt-in / silencio = no actúa |
-| **L3** | Orquestar | Varias acciones encadenadas (multicanal, lista de espera) | Política del efector + auditoría |
-| **L4** | ~~Clínico~~ | Diagnóstico, prescripción, derivación guardia sola | **Fuera de alcance** |
+Ejemplos de **procesos que no son agentes** (aunque sean automáticos o proactivos):
+
+- Push genérico «tu turno requiere reubicación» **sin** precalcular opciones (solo avisa; decide el paciente al abrir la app).
+- Recordatorio de turno a hora fija (T−48 h) sin elegir acción según contexto.
+- Secuencia fija de onboarding día 0 / día 3 (calendario, no decisión).
+- Export FHIR en cola (ejecución determinística, sin ramas de criterio).
+- Briefing que **solo muestra** datos ya existentes sin priorizar ni clasificar.
+
+No es el asistente conversacional del chat: ese canal es **reactivo** (la persona escribe primero). Los agentes de este documento son **proactivos** y suelen ser event-driven; la diferencia clave respecto de un job cualquiera es la **decisión sustitutiva**.
+
+## Cuándo conviene que el sistema decida
+
+Criterios para priorizar un flujo como agente (automatizar la decisión):
+
+| Criterio | Por qué conviene |
+|----------|------------------|
+| **Volumen y repetición** | Misma decisión cientos de veces al mes; el costo humano no escala (reoferta de turnos, post-lab, priorizar async). |
+| **Ventana de tiempo corta** | Si nadie decide en minutos, se pierde valor (hueco de agenda, SLA guardia). |
+| **Reglas explícitas y auditables** | La política del efector puede declararse (umbrales LOINC, mismo PES, banda triage); la decisión es defendible en auditoría. |
+| **Reversibilidad o confirmación posterior** | Reprogramar turno, borrador de resumen, sugerencia CIE-10: el humano puede corregir después. |
+| **Criterio acotado y verificable** | Disponibilidad de slots, match fecha+pedido, validación nomenclador: no requiere juicio clínico abierto. |
+| **Reduce carga de rol no clínico** | Secretaría, admisión, coordinación: liberan tiempo para excepciones y trato humano. |
+
+Cuándo **no** conviene (o solo con humano en el loop):
+
+| Criterio | Por qué no |
+|----------|------------|
+| **Juicio clínico con responsabilidad legal** | Diagnóstico, prescripción, derivación a guardia por «sensación» de urgencia. |
+| **Alta ambigüedad + baja reversibilidad** | Casos sociales complejos, conflictos de cobertura, comunicación sensible. |
+| **Datos insuficientes en el sistema** | Decidir sin contexto empeora respecto de preguntar (ej. negociar obra social). |
+| **La decisión es puramente preferencia personal** | Horario «el que más me guste» sin política: mejor que elija el paciente en UI completa. |
+| **Solo formatear o entregar** | Resumen de KPIs, FAQ con cita de fuente: informar no es decidir. |
+
+La **IA** entra solo cuando las reglas no alcanzan para un subpaso concreto (redacción en lenguaje simple, desempate blando entre slots equivalentes, borrador de texto). **Alarmas clínicas y elegibilidad** siguen siendo reglas verificables, no LLM.
+
+## Grados de decisión (antes «niveles de autonomía»)
+
+Cuánto decide el sistema y cuánto queda para la persona **después** del paso automático:
+
+| Grado | Nombre | Decisión del sistema | La persona después |
+|-------|--------|----------------------|-------------------|
+| **D0** | Clasificar / rankear | Ordena o etiqueta alternativas | Solo consume (briefing, cohortes, KPIs narrados) — **borde**: si no hay elección sustitutiva, no es agente |
+| **D1** | Acotar opciones | Elige qué mostrar (2–3 slots, canal sugerido, códigos CIE-10) | Elige entre lo propuesto |
+| **D2** | Actuar con política | Ejecuta si reglas + opt-in o plazo (reprogramar al tocar, alerta por respuesta roja, reintento FHIR) | Puede deshacer o no intervino |
+| **D3** | Orquestar ramas | Encadena decisiones (multicanal, lista de espera en cascada, dead-letter) | Supervisión por auditoría y política del efector |
+| **D4** | ~~Clínico sin humano~~ | Diagnóstico, prescripción, derivación guardia sola | **Fuera de alcance** |
 
 ## Principios de diseño (alineado a arquitectura Bioenlace)
 
 - **Trigger** → servicio de dominio o job; no `if` en `ChatOrchestrator`.
-- **Política** (umbrales, canales, plazos, elegibilidad) en **metadata** (`params`, YAML catálogo, futuro `autonomous_agents/*.yaml`).
+- **Política de la decisión** (umbrales, canales, plazos, elegibilidad) en **metadata** (`params`, YAML catálogo, futuro `autonomous_agents/*.yaml`).
 - **Handler** registrable pequeño (`agent_id → callable`) si hace falta extensión de rubro.
-- **IA** solo donde aporta: redacción, ranking de slots, resumen; **alarmas clínicas** con reglas verificables.
-- **Idempotencia** y tabla de auditoría por agente (`agent_run`, `agent_action`).
+- **Trazabilidad de la decisión**: qué alternativas había, qué regla aplicó, qué se ejecutó (`agent_run`, `agent_action` o equivalente de dominio).
+- **Idempotencia** en acciones D2/D3.
 
 ## Relación con lo existente (parcial hoy)
 
-| Proceso actual | Agente “proto” | Contexto IA |
-|----------------|----------------|-------------|
-| Cierre ventana motivos | — | `motivos-consulta-batch`, `motivos-consulta-insights` |
-| Cola care-pack | — | `care-pack-*-batch` |
-| Captura encounter | — | `analisis-consulta` (humano confirma) |
-| Turno `en resolución` + push | Notificación estática | Sin negociación inteligente aún |
-| Export FHIR HC | Cola saliente | Sin agente conversacional |
-| Pull LIS | Cron / conector | Sin notify paciente automático |
+| Proceso actual | ¿Agente? | Decisión que falta o es manual |
+|----------------|----------|--------------------------------|
+| Turno `en resolución` + push | Parcial | Push avisa; **no** elige slots ni rankea |
+| Reubicar como paciente (flujo app) | No | Decide el paciente en UI |
+| Opciones vecinas (antes/después) | Parcial | Agenda fija el par; paciente elige |
+| Cierre ventana motivos / care-pack batch | No | Batch sin sustituir decisión operativa |
+| Captura encounter + `analisis-consulta` | Parcial (D1) | IA sugiere; médico confirma todo |
+| Pull LIS | No | Ingesta; sin clasificar ni notificar al paciente |
+| Export FHIR HC | No | Cola determinística |
 
 ---
 
 ## Backlog resumido (prioridad sugerida)
 
-| ID | Agente | Nivel | Prioridad | Dependencias |
-|----|--------|-------|-----------|--------------|
-| A01 | Reoferta de turnos en resolución | L1–L2 | **P0** | Turnos, push, slots |
-| A02 | Negociación multicanal (reprogramar) | L2–L3 | **P0** | A01, canales mensajería |
-| A03 | Relleno de huecos / lista de espera | L2–L3 | P1 | A01, waitlist (nuevo?) |
-| A04 | Anti no-show predictivo | L1–L2 | P1 | KPIs agenda, historial |
-| A05 | Ruteo de demanda post-triage | L1–L2 | P1 | Triage reserva, tele/async |
-| A06 | Cierre de loop (sin respuesta) | L2 | P1 | A02, política efector |
-| B01 | Touchpoints cohorte / plan | L2 | **P0** | care-pack, planes |
-| B02 | Seguimiento post-alta | L2 | P1 | Internación, epicrisis |
-| B03 | Post-lab: clasificar y notificar | L1–L2 | **P0** | LIS, FHIR results |
-| B04 | Adherencia / refill crónica | L1–L2 | P1 | Receta, planes |
-| B05 | Educación post-consulta diferida | L1 | P2 | [seguimiento-post-consulta-educacion.md](./seguimiento-post-consulta-educacion.md) |
-| C01 | Intake / completar MPI | L1–L2 | P1 | Persona, registro |
-| C02 | Briefing pre-atención al staff | L0 | **P0** | Motivos, HC, labs |
-| C03 | Clasificar puerta de entrada | L1 | P1 | Triage, asistente |
-| D01 | Huecos en nota + pedir completar | L1 | P1 | Captura clínica |
-| D02 | Resumen paciente al cerrar encounter | L1 | P1 | Encounter finalize |
-| D03 | Sugerencia CIE-10 (confirmar) | L1 | P2 | Terminología |
-| E01 | Asociar lab a encounter | L2 | P1 | LIS ingest |
-| E02 | Reintentos integración (FHIR/RDI) | L3 | P1 | Colas existentes |
-| E03 | Validar receta pre-envío RDI | L2 | P2 | Receta digital |
-| F01 | Alerta SLA tablero guardia | L0–L1 | P1 | Urgencias |
-| F02 | Sugerencia de cama | L1 | P2 | Internación |
-| F03 | Borrador epicrisis + checklist alta | L1 | P2 | Internación |
-| G01 | Identificar cohortes poblacionales | L0 | P2 | Analytics |
-| G02 | Informe narrativo dirección | L0 | P3 | KPIs |
-| H01 | Bandeja async priorizada | L1 | P2 | Atención async |
-| H02 | FAQ operativo efector (staff) | L0 | P3 | Metadata efector |
-| I01 | Onboarding post-registro | L1 | P2 | Didit, registro |
-| I02 | Guía “qué canal usar” | L1 | P1 | Triage + modalidades |
+Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son automaciones útiles pero **no agentes** bajo esta definición.
+
+| ID | Flujo | Decisión del sistema | ¿Conviene? | Grado | Prioridad |
+|----|-------|----------------------|------------|-------|-----------|
+| A01 | Reoferta de turnos en resolución | Qué slots ofrecer y en qué orden | Sí — volumen, reglas PES/tele | D1→D2 | **P0** |
+| A02 | Negociación multicanal (reprogramar) | Canal siguiente; recalcular oferta | Sí — tiempo y abandono | D2–D3 | **P0** |
+| A03 | Relleno de huecos / lista de espera | A quién ofrecer el hueco y en qué orden | Sí — ventana minutos | D2–D3 | P1 |
+| A04 | Anti no-show predictivo | Recordatorio extra vs liberar slot | Condicional — política efector | D1–D2 | P1 |
+| A05 | Ruteo de demanda post-triage | Canal alternativo si no hay cupo | Sí — reduce abandono | D1 | P1 |
+| A06 | Cierre de loop (sin respuesta) | Cancelar vs mantener vs escalar humano | Sí — evita turnos huérfanos | D2 | P1 |
+| B01 | Touchpoints cohorte / plan | Respuesta → alerta / educación / solo log | Sí — reglas rojo/amarillo/verde | D2 | **P0** |
+| B02 | Seguimiento post-alta | Igual que B01 por plantilla | Sí | D2 | P1 |
+| B03 | Post-lab: clasificar y notificar | Crítico vs normal; notificar a quién | Sí — reglas LOINC | D1–D2 | **P0** |
+| B04 | Adherencia / refill crónica | Recordar vs ofrecer async renovación | Moderado — bajo riesgo | D1 | P1 |
+| C01 | Intake / completar MPI | Qué campo pedir según tipo de atención | Moderado — lógica de formulario | D1 | P1 |
+| C03 | Clasificar puerta de entrada | Banda y flujo destino | Sí — reglas + IA fallback acotado | D1 | P1 |
+| D01 | Huecos en nota + pedir completar | Qué falta según checklist servicio | Sí — determinista | D1 | P1 |
+| D02 | Resumen paciente al cerrar encounter | Borrador de texto (no publicar) | Sí — humano publica | D1 | P1 |
+| D03 | Sugerencia CIE-10 | Códigos candidatos | Sí — médico confirma cada uno | D1 | P2 |
+| E01 | Asociar lab a encounter | Match encounter | Sí — reglas fecha/pedido | D2 | P1 |
+| E02 | Reintentos integración (FHIR/RDI) | Requeue vs dead-letter vs refresh token | Sí — ops estándar | D3 | P1 |
+| E03 | Validar receta pre-envío RDI | Bloquear envío o no | Sí — validación dura | D2 | P2 |
+| F01 | Alerta SLA tablero guardia | Resaltar breach SLA | Débil — umbral fijo | D0–D1 | P1 |
+| F02 | Sugerencia de cama | Ranking camas | Sí — humano confirma | D1 | P2 |
+| F03 | Borrador epicrisis + checklist alta | Borrador + pendientes | Parcial — asistencia documental | D1 | P2 |
+| H01 | Bandeja async priorizada | Orden de atención sugerido | Sí — SLA y triage | D1 | P2 |
+| I02 | Guía «qué canal usar» | Un camino recomendado | Sí — árbol decisión | D1 | P1 |
+| — | *B05 educación post-consulta* | Secuencia fija de contenido | *Proceso, no agente* | — | P2 |
+| — | *C02 briefing pre-atención* | Solo agrega datos | *Proceso, no agente* | — | **P0** aparte |
+| — | *G01/G02 analytics* | Query o narrativa KPI | *Proceso, no agente* | — | P2–P3 |
+| — | *H02 FAQ staff* | Recuperación metadata | *Proceso, no agente* | — | P3 |
+| — | *I01 onboarding* | Calendario fijo | *Proceso, no agente* | — | P2 |
 
 ---
 
@@ -86,7 +131,9 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 (propone) → L2 (confirma si paciente acepta en app/push) |
+| **Decisión del sistema** | Filtrar candidatos de slot y elegir cuáles mostrar (top 2–3) según política PES, `urgency_band`, tele |
+| **Grado** | D1 (acota opciones) → D2 (reprograma si el paciente confirma en app/push) |
+| **¿Por qué conviene?** | Alto volumen en licencias/cambios de agenda; hoy el paciente recorre toda la grilla; reglas auditables |
 | **Trigger** | `Turno` pasa a `en resolución` (cambio agenda efector) |
 | **Política** | Mismo PES si posible; respetar `urgency_band`; preferir tele si `teleconsulta_elegibilidad` |
 | **Efecto** | Push/in-app con 2–3 slots rankeados; draft de reprogramación |
@@ -105,7 +152,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L2–L3 |
+| **Grado** | D2–D3 |
 | **Trigger** | Sin respuesta a push A01 tras N horas; o paciente responde «no puedo» |
 | **Política** | Orden de canales: push → WhatsApp/SMS → email; tope de intentos; horario legal |
 | **Efecto** | Hilo estructurado (no chat libre): CONFIRMAR / REAGENDAR / CANCELAR; IA solo redacta |
@@ -123,7 +170,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L2–L3 |
+| **Grado** | D2–D3 |
 | **Trigger** | Cancelación &lt; 24 h antes; slot liberado |
 | **Política** | Cola por score: banda triage, crónico, distancia lead time, fairness (no saltear urgencias) |
 | **Efecto** | Oferta en cascada al primer «sí»; actualiza turno y notifica al que perdió la carrera |
@@ -141,7 +188,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1–L2 |
+| **Grado** | D1–D2 |
 | **Trigger** | T−48 h, T−2 h (configurable); score de riesgo alto |
 | **Política** | Modelo simple primero: historial no-show + distancia + primera vez; luego ML |
 | **Efecto** | Recordatorio extra, pedido confirmación explícita, oferta reprogramar antes del día |
@@ -160,7 +207,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | Fin de triage reserva sin banda A; sin cupo en servicio elegido |
 | **Política** | `TeleconsultaElegibilidadService`, async `SOLICITUD_ASYNC`, primaria |
 | **Efecto** | Mensaje: «No hay dermatólogo en 30 días; te ofrecemos…» + deep link al flujo correcto |
@@ -178,7 +225,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L2 |
+| **Grado** | D2 |
 | **Trigger** | Timeout tras A01/A02 (ej. 72 h) |
 | **Política** | Cancelar vs mantener en resolución; liberar cupo; notificar efector |
 | **Efecto** | Estado terminal auditado; paciente informado |
@@ -198,7 +245,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L2 |
+| **Grado** | D2 |
 | **Trigger** | Calendario del care-pack / ítem del plan (día +3, +7…) |
 | **Política** | Respuestas rojas → alerta staff; amarillas → mensaje educativo; verde → solo registro |
 | **Efecto** | Push + formulario corto; persistir en HC |
@@ -216,7 +263,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L2 |
+| **Grado** | D2 |
 | **Trigger** | `Encounter` IMP finalizado / alta estructurada |
 | **Política** | Plantilla por motivo de internación; días 1, 7, 30 |
 | **Efecto** | Preguntas + checklist medicación; escalamiento |
@@ -234,7 +281,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1–L2 |
+| **Grado** | D1–D2 |
 | **Trigger** | Ingesta FHIR `DiagnosticReport` / analitos |
 | **Política** | Reglas por LOINC + umbrales; IA solo redacta mensaje |
 | **Efecto** | Push paciente; flag staff si crítico |
@@ -252,7 +299,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1–L2 |
+| **Grado** | D1–D2 |
 | **Trigger** | Receta con duración conocida; T−7 días fin tratamiento |
 | **Política** | Solo crónicos en plan; no sustitutos controlados sin médico |
 | **Efecto** | Recordatorio + link async renovación o turno |
@@ -268,9 +315,11 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 ### B05 — Educación post-consulta diferida
 
+> **Clasificación:** proceso automático, no agente — secuencia fija de contenido; no elige rama según contexto del paciente.
+
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | T+N según diagnóstico orientativo / servicio |
 | **Política** | Contenido aprobado por protocolo; IA adapta redacción |
 | **Efecto** | Secuencia educativa en app |
@@ -290,7 +339,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1–L2 |
+| **Grado** | D1–D2 |
 | **Trigger** | Registro incompleto; pre-turno; pre-video |
 | **Política** | Campos obligatorios por tipo de atención |
 | **Efecto** | Mensajes progresivos hasta completar |
@@ -305,9 +354,11 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 ### C02 — Briefing pre-atención al staff
 
+> **Clasificación:** proceso automático, no agente — agrega y resume datos; el médico interpreta y decide en la consulta.
+
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L0 |
+| **Grado** | D0 |
 | **Trigger** | T−15 min turno o al abrir «Pacientes del día» |
 | **Política** | `PatientAiContextBuilder` perfiles `motivos` / `encounter` |
 | **Efecto** | Panel: motivos resumidos, labs 90 días, meds, alergias, banda triage |
@@ -325,7 +376,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | Mensaje inicial asistente / WhatsApp futuro / IVR |
 | **Política** | Árbol + IA fallback; banda A → guardia |
 | **Efecto** | Deep link al flujo correcto |
@@ -344,7 +395,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | Post `analisis-consulta`; checklist por `encounter_class` |
 | **Política** | Campos obligatorios por servicio |
 | **Efecto** | «Falta TA y peso» → prompt voz/texto antes de firmar |
@@ -362,7 +413,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 (borrador) → humano publica |
+| **Grado** | D1 (borrador) → humano publica |
 | **Trigger** | Encounter `finished` |
 | **Política** | Lenguaje simple; sin jerga; extiende resumen actual |
 | **Efecto** | Borrador en `resumen-atencion-paciente` |
@@ -380,7 +431,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | Cierre documentación; texto libre suficiente |
 | **Política** | Médico confirma cada código; auto solo baja ambigüedad |
 | **Efecto** | Lista sugerida con justificación |
@@ -399,7 +450,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L2 |
+| **Grado** | D2 |
 | **Trigger** | Lab ingestado sin `encounter_id` |
 | **Política** | Match por fecha, pedido, profesional solicitante |
 | **Efecto** | Vincula `DiagnosticReport` al encounter abierto más probable |
@@ -407,7 +458,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 **Casos de uso**
 
 1. **Pedido en consulta lunes:** Resultado miércoles → se adjunta al encounter del lunes automáticamente.
-2. **Ambigüedad:** Dos encounters misma semana → L1: staff elige en bandeja «pendientes vincular».
+2. **Ambigüedad:** Dos encounters misma semana → D1: staff elige en bandeja «pendientes vincular».
 3. **Sin encounter:** Guarda huérfano y B03 notifica igual al paciente.
 
 ---
@@ -416,7 +467,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L3 |
+| **Grado** | D3 |
 | **Trigger** | Job fallido; backoff exponencial |
 | **Política** | `clinicalHistoryExchange.retry`, conectores |
 | **Efecto** | Requeue, alerta ops, dead-letter |
@@ -434,7 +485,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L2 |
+| **Grado** | D2 |
 | **Trigger** | Pre-submit receta digital |
 | **Política** | Nomenclador, matrícula, campos obligatorios MSAL |
 | **Efecto** | Bloquea envío; mensaje al prescriptor |
@@ -453,7 +504,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L0–L1 |
+| **Grado** | D0–D1 |
 | **Trigger** | Tiempo espera &gt; SLA por triage level |
 | **Política** | Umbrales por efector; sonido futuro |
 | **Efecto** | Highlight + sugerencia «atender box 3» |
@@ -471,7 +522,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | Solicitud ingreso desde guardia |
 | **Política** | Sexo, aislamiento, especialidad, oxígeno |
 | **Efecto** | Ranking camas; humano confirma |
@@ -489,7 +540,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | Inicio proceso alta |
 | **Política** | Plantilla ABM epicrisis |
 | **Efecto** | Borrador desde encounters + labs; checklist pendientes |
@@ -506,9 +557,11 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 ### G01 — Identificar cohortes poblacionales
 
+> **Clasificación:** proceso automático, no agente — query con reglas fijas; la campaña o intervención la define dirección.
+
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L0 |
+| **Grado** | D0 |
 | **Trigger** | Job nocturno |
 | **Política** | Queries + reglas (no LLM para elegibilidad) |
 | **Efecto** | Lista para campañas / care-packs |
@@ -523,9 +576,11 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 ### G02 — Informe narrativo dirección
 
+> **Clasificación:** proceso automático, no agente — narrativa sobre KPIs agregados; sin decisión operativa sobre pacientes.
+
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L0 |
+| **Grado** | D0 |
 | **Trigger** | Fin de mes |
 | **Política** | Solo datos agregados; sin PHI en prompt |
 | **Efecto** | PDF «En marzo bajó no-show 2 pp; subió tele 15 %» |
@@ -544,7 +599,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | Nueva `SOLICITUD_ASYNC` o mensaje paciente |
 | **Política** | SLA, banda triage, antigüedad |
 | **Efecto** | Orden sugerido en bandeja staff |
@@ -560,9 +615,11 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 ### H02 — FAQ operativo del efector (staff)
 
+> **Clasificación:** proceso automático, no agente — recupera metadata; no elige acción clínica ni administrativa.
+
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L0 |
+| **Grado** | D0 |
 | **Trigger** | Pregunta staff en asistente |
 | **Política** | Solo metadata efector; sin inventar clínica |
 | **Efecto** | Respuesta con cita de fuente interna |
@@ -579,9 +636,11 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 ### I01 — Onboarding post-registro Didit
 
+> **Clasificación:** proceso automático, no agente — calendario fijo de mensajes; sin ramificación por perfil salvo variantes declaradas aparte.
+
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | Registro exitoso `RegistroService` |
 | **Política** | Secuencia 3 días |
 | **Efecto** | Tutoriales, completar perfil, primer uso asistente |
@@ -598,7 +657,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 | Campo | Valor |
 |-------|--------|
-| **Nivel** | L1 |
+| **Grado** | D1 |
 | **Trigger** | «Necesito atención» sin claridad |
 | **Política** | Árbol decisión: guardia / turno / async / admin |
 | **Efecto** | Un solo camino recomendado con explicación |
@@ -611,7 +670,7 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 ---
 
-## Fuera de alcance (L4 — no agentes autónomos)
+## Fuera de alcance (D4 — decisión clínica sin humano)
 
 | Acción | Por qué |
 |--------|---------|
@@ -626,25 +685,28 @@ No es el asistente conversacional del chat: ese canal es **reactivo**; estos age
 
 ## Implementación sugerida (cuando se priorice)
 
+Misma pila que cualquier job de dominio: evento → política en metadata → servicio que **decide y actúa** → auditoría de la decisión.
+
 ```mermaid
 flowchart LR
   EV[Evento dominio]
   POL[Política YAML / params]
-  AG[Agent runner cron/queue]
+  RUN[Job o cola]
+  DEC[Decisión reglas / IA opcional]
   DOM[Servicios dominio]
-  AUD[Auditoría agent_run]
-  EV --> POL --> AG
-  AG --> DOM
-  AG --> AUD
+  AUD[Auditoría decisión]
+  EV --> POL --> RUN
+  RUN --> DEC --> DOM
+  DEC --> AUD
 ```
 
-1. **Fase 0:** Esquema `agent_definition` + auditoría; wrappers sobre jobs existentes (motivos batch = agente documentado).
-2. **Fase 1:** A01 + A02 + B03 (valor inmediato, datos ya existen).
-3. **Fase 2:** B01 + C02 + A04.
-4. **Fase 3:** C03 + I02 + H01 (async maduro).
-5. **Fase 4:** F*, G*, integraciones E*.
+1. **Fase 0:** Esquema de auditoría de decisiones (`agent_run` o equivalente por dominio); política de reoferta en metadata sobre `TurnoResolucionService`.
+2. **Fase 1:** A01 + A02 + B03 (decisiones acotadas, datos ya existen).
+3. **Fase 2:** B01 + A04 (+ C02 briefing como proceso aparte, no agente).
+4. **Fase 3:** C03 + I02 + H01.
+5. **Fase 4:** F*, E*, procesos G* / onboarding si se priorizan.
 
-Contextos IA nuevos propuestos (para `catalogo-usos-ia.md` cuando existan): `agent-reoffer-slots`, `agent-patient-message`, `agent-lab-notify`, `agent-staff-briefing`.
+Contextos IA opcionales (para `catalogo-usos-ia.md` cuando existan): `agent-reoffer-slots`, `agent-patient-message`, `agent-lab-notify`.
 
 ---
 

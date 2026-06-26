@@ -4,15 +4,12 @@
 
 Antes conviene tener [sesión operativa](./00-transversal.md#elegir-efector-servicio-y-tipo-de-atención) en **ambulatorio** (personal web).
 
-En la **web staff** el acceso principal es el **panel Pacientes** y el **Asistente** (barra lateral). No hay menú legacy de Turnos.
-
-**Convención:** cada flujo indica **Web** o **App**, el **intent** cuando pasa por el asistente, y pasos numerados con resultado esperado.
 
 ---
 
 ## Web — Lista de espera del día
 
-Equivalente operativo al panel **Pacientes del día** (recepción / consultorio). Sustituye la pantalla legacy `turnos/espera`.
+Equivalente operativo al panel **Pacientes del día** (recepción / consultorio).
 
 1. **Vos** (personal) entrás con sesión en **ambulatorio** y abrís **Pacientes** en la barra lateral.
 2. **El sistema** muestra el panel **Pacientes del día** (turnos de la fecha con datos del paciente; KPIs de agenda si aplican).

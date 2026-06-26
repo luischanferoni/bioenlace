@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 import 'paciente_context_api.dart';
 
@@ -68,6 +69,18 @@ class PacienteContextScope extends ChangeNotifier {
   bool get loading => _loading;
   bool get puedeOperar => _state.puedeOperar;
 
+  void _notifyListenersSafely() {
+    final phase = SchedulerBinding.instance.schedulerPhase;
+    if (phase == SchedulerPhase.idle ||
+        phase == SchedulerPhase.postFrameCallbacks) {
+      notifyListeners();
+      return;
+    }
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
+  }
+
   void bindAuthToken(String? token) {
     _authToken = token;
   }
@@ -76,7 +89,6 @@ class PacienteContextScope extends ChangeNotifier {
     final token = authToken ?? _authToken;
     if (token == null || token.isEmpty) return;
     _loading = true;
-    notifyListeners();
     try {
       final api = PacienteContextApi(authToken: token);
       final res = await api.fetchContexto();
@@ -89,14 +101,14 @@ class PacienteContextScope extends ChangeNotifier {
       }
     } finally {
       _loading = false;
-      notifyListeners();
+      _notifyListenersSafely();
     }
   }
 
   void applyFromRegistration(Map<String, dynamic>? contextoJson) {
     if (contextoJson == null) return;
     _state = PacienteContextState.fromJson(contextoJson);
-    notifyListeners();
+    _notifyListenersSafely();
   }
 
   Future<bool> actualizarProvincia(int idProvincia, {String? authToken}) async {
@@ -108,7 +120,7 @@ class PacienteContextScope extends ChangeNotifier {
       final ctx = res['data']?['contexto'];
       if (ctx is Map<String, dynamic>) {
         _state = PacienteContextState.fromJson(ctx);
-        notifyListeners();
+        _notifyListenersSafely();
         return true;
       }
     }
@@ -124,7 +136,7 @@ class PacienteContextScope extends ChangeNotifier {
       final ctx = res['data']?['contexto'];
       if (ctx is Map<String, dynamic>) {
         _state = PacienteContextState.fromJson(ctx);
-        notifyListeners();
+        _notifyListenersSafely();
         return true;
       }
     }
@@ -134,6 +146,6 @@ class PacienteContextScope extends ChangeNotifier {
   void clearOnLogout() {
     _state = const PacienteContextState();
     _authToken = null;
-    notifyListeners();
+    _notifyListenersSafely();
   }
 }

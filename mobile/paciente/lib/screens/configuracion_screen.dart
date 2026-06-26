@@ -34,7 +34,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   void initState() {
     super.initState();
     PacienteContextScope.instance.bindAuthToken(widget.authToken);
-    PacienteContextScope.instance.refresh(authToken: widget.authToken);
   }
 
   void _abrirProvinciaContexto() {

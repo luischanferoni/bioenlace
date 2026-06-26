@@ -6,19 +6,33 @@
 
 ## Registro e identidad
 
+Detalle de flujos, MPI reducido y alta staff: **[registro-paciente.md](./registro-paciente.md)**.
+
 ```mermaid
-flowchart LR
-  U[Usuario nuevo]
-  UI[Interfaz Bioenlace]
-  API[API registro / Verifik]
-  MPI[Identidad en Bioenlace]
-  U --> UI --> API
-  API --> MPI
-  MPI --> UI
+flowchart TB
+  subgraph paciente [Paciente — app]
+    PU[Usuario nuevo]
+    PAPP[App móvil]
+    PAPI[API registro]
+  end
+  subgraph staff [Staff — asistente]
+    SU[Personal]
+    AS[Asistente / atajo]
+    WEB[Pantalla embebida alta]
+    SAPI[API registrar-como-staff]
+  end
+  REN[Gateway RENAPER]
+  LOC[(Persona en Bioenlace)]
+  PU --> PAPP --> PAPI --> REN
+  PAPI --> LOC
+  SU --> AS --> WEB --> SAPI --> REN
+  SAPI --> LOC
 ```
 
-- Alta con validación de documento y, para profesionales, referencias externas cuando corresponde.
-- Tras login, **token** y **sesión operativa** (efector, servicio, rol) fijan qué puede hacer cada pantalla.
+- **Paciente:** autoregistro en app; contexto provincial/sector y domicilio RENAPER en segundo plano.
+- **Staff:** alta por lector DNI o Didit desde el **asistente**; sin flujo MPI de candidatos; sin redirigir a ficha clínica ni fijar el paciente en la sesión del staff.
+- **MPI:** solo RENAPER y coberturas; empadronar/candidatos retirados.
+- Tras login, **token** y **sesión operativa** del staff (efector, servicio, rol) definen su contexto; el paciente en un flujo clínico se pasa **explícitamente** (asistente, API, captura).
 
 ## Capacidades transversales
 
@@ -46,6 +60,7 @@ flowchart LR
 
 ## Relación con otros documentos
 
+- [registro-paciente.md](./registro-paciente.md) — alta paciente, MPI reducido, contexto y domicilio RENAPER
 - [representacion-paciente.md](./representacion-paciente.md) — tutela de menor y delegación
 - [superficies-ui.md](./superficies-ui.md) — inicio vs captura vs flows (web = móvil)
 - [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md)

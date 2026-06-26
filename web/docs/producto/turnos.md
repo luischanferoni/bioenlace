@@ -9,6 +9,7 @@ Un **turno** es la cita entre una persona y un profesional en un efector y servi
 - **Paciente:** reserva y gestiona citas desde Bioenlace.
 - **Tutor o representante:** puede reservar y gestionar turnos **de otro paciente** (menor sin cuenta o adulto que delegó), fijando `subject_persona_id` o el contexto «A cargo de» en móvil. Ver [representacion-paciente.md](./representacion-paciente.md).
 - **Profesional y administración del efector:** calendario, alta para terceros, sobreturnos, cancelación masiva de un día.
+- **Staff (admisión / enfermería):** alta de persona vía asistente (lector DNI / Didit); no implica fijar paciente en la sesión operativa del staff — ver [registro-paciente.md](./registro-paciente.md).
 - **Sistema:** recordatorios y avisos cuando cambia la agenda o el turno entra en conflicto.
 
 ## Cómo funciona (reserva paciente)

@@ -20,7 +20,7 @@ Alineación conceptual FHIR: `Patient` → `personas`; vínculo → `RelatedPers
 | **Titular de cuenta** | Puede ser tutor (A) o representante (B) |
 | **Sujeto** | `Persona` sobre la que se actúa (menor sin login o paciente delegante) |
 | **Staff** | Verifica tutela (A), bloquea por orden legal, revoca vínculos |
-| **Sistema** | Valida identidad (RENAPER/MPI), audita actos delegados, push opcional (N9) |
+| **Sistema** | Valida identidad (RENAPER), audita actos delegados, push opcional (N9) |
 
 ## Decisiones de producto (cerradas)
 
@@ -58,7 +58,7 @@ sequenceDiagram
   participant M as Menor (Persona)
 
   T->>API: solicitar-menor-como-tutor
-  API->>M: alta/resolve MPI si falta
+  API->>M: alta o resolución de Persona si falta
   Note over API: person_related pending
   S->>API: verificar-vinculo-para-staff
   Note over API: person_related active

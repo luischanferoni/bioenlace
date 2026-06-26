@@ -1,0 +1,12 @@
+# Validación pre-envío receta digital RDI (agente E03 v1).
+# {@see PrescriptionRdiPreSubmitValidationAgent}
+version: 1
+agent_id: prescription-rdi-pre-submit
+
+checks:
+  require_prescriber_pes: true
+  require_diagnosis_code: true
+  require_medication_code: true
+  require_dosage_text: true
+  block_duplicate_medication_hours: 24
+  min_diagnosis_display_length: 3

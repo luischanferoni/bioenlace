@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\Prescription\Enum\PrescriptionEventType;
 use common\components\Domain\Clinical\Prescription\Enum\PrescriptionLegalStatus;
 use common\components\Domain\Clinical\Prescription\Mapper\FhirRecetaDigitalBundleMapper;
 use common\components\Domain\Clinical\Prescription\Support\PrescriptionDocumentSupport;
+use common\components\Domain\Clinical\Prescription\Service\PrescriptionRdiPreSubmitValidationAgent;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionEvent;
@@ -92,6 +93,8 @@ final class ElectronicPrescriptionService
         if ($itemCount < 1) {
             throw new \InvalidArgumentException('La receta no tiene ítems.');
         }
+
+        (new PrescriptionRdiPreSubmitValidationAgent())->assertCanIssue($rx);
 
         $tx = Yii::$app->db->beginTransaction();
         try {

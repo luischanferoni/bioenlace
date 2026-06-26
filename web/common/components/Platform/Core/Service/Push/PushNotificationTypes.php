@@ -36,6 +36,9 @@ final class PushNotificationTypes
     /** Consulta async: SLA vencido — aviso staff (agente H01). */
     public const CONSULTA_ASYNC_SLA_ESCALATE_STAFF = 'CONSULTA_ASYNC_SLA_ESCALATE_STAFF';
 
+    /** Reserva triage: canal alternativo sin cupos (agente A05). */
+    public const RESERVA_TRIAGE_CANAL_ALTERNATIVO = 'RESERVA_TRIAGE_CANAL_ALTERNATIVO';
+
     /** Integración: job en dead-letter (agente E02). */
     public const INTEGRATION_DEAD_LETTER_OPS = 'INTEGRATION_DEAD_LETTER_OPS';
 

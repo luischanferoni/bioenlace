@@ -133,6 +133,15 @@ final class InternacionAltaEstructuradaService
 
         SegNivelInternacionRepository::doExternacion($internacion);
 
+        try {
+            (new PostDischargeFollowupAgent())->onDischarge($internacion);
+        } catch (\Throwable $e) {
+            \Yii::warning(
+                'PostDischargeFollowupAgent tras alta #' . (int) $internacion->id . ': ' . $e->getMessage(),
+                'autonomous-agent'
+            );
+        }
+
         return [
             'id_internacion' => (int) $internacion->id,
             'fecha_fin' => $internacion->fecha_fin,

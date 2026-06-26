@@ -68,12 +68,19 @@ final class InternacionIngresoService
             ? $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
             : trim($persona->nombre . ' ' . $persona->apellido);
 
+        $camaSugerencias = (new InternacionCamaSugerenciaAgent())->suggestForIngreso(
+            $idEfector,
+            $idPersona,
+            $guardiaCtx['id_guardia']
+        );
+
         return [
             'id_persona' => $idPersona,
             'paciente_nombre' => $nombre,
             'paciente_documento' => (string) ($persona->documento ?? ''),
             'id_cama' => $idCamaResolved,
             'cama_label' => $camaLabel,
+            'cama_sugerencias' => $camaSugerencias,
             'id_guardia' => $guardiaCtx['id_guardia'],
             'id_tipo_ingreso_default' => $guardiaCtx['id_tipo_ingreso'],
             'condiciones_derivacion' => $guardiaCtx['condiciones_derivacion'],

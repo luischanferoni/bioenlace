@@ -159,13 +159,13 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | A01 | Auto-reserva en resolución (opt-out) | **Agente** | Slot por score + preferencias en BD | D2 | ~~P1~~ **Hecho (v1)** |
 | A06 | Cierre de loop (sin respuesta) | **Agente** | Cancelar / mantener / escalar | D2 | ~~P1~~ **Hecho (v1)** |
 | A04 | Anti no-show predictivo | **Agente** | Liberar slot vs recordatorio | D2 | ~~P1~~ **Hecho (v1)** |
-| A05 | Ruteo post-triage sin cupo | **Agente** | Canal por triage + cupos (reglas) | D1–D2 | P1 |
+| A05 | Ruteo post-triage sin cupo | **Agente** | Canal por triage + cupos (reglas) | D1–D2 | ~~P1~~ **Hecho (v1)** |
 | H01 | Bandeja async priorizada | **Agente** | Orden por SLA + triage en BD | D1 | ~~P1~~ **Hecho (v1)** |
 | E01 | Asociar lab a encounter | **Agente** | Match fecha/pedido/PES | D2 | ~~P1~~ **Hecho (v1)** |
 | E02 | Reintentos integración (FHIR/RDI) | **Agente** | Requeue / dead-letter | D3 | ~~P1~~ **Hecho (v1 FHIR HC)** |
-| E03 | Validar receta pre-envío RDI | **Agente** | Bloquear envío | D2 | P2 |
-| B02 | Seguimiento post-alta | **Agente** | Igual que B01 | D2 | P1 |
-| F02 | Sugerencia de cama | **Agente** | Ranking por atributos de cama | D1 | P2 |
+| E03 | Validar receta pre-envío RDI | **Agente** | Bloquear envío | D2 | ~~P2~~ **Hecho (v1)** |
+| B02 | Seguimiento post-alta | **Agente** | Igual que B01 | D2 | ~~P1~~ **Hecho (v1)** |
+| F02 | Sugerencia de cama | **Agente** | Ranking por atributos de cama | D1 | ~~P2~~ **Hecho (v1)** |
 | — | *Shortlist scoreado reoferta* | **Agente** | Top 2–3 por score | D1 | ~~P1~~ **Hecho (v1)** |
 | C03 | Clasificar puerta de entrada (NL) | **Agente IA** | Banda desde texto libre | D1–D2 | P1 |
 | D02 | Resumen paciente al cerrar encounter | **Agente IA** | Borrador desde nota HC | D1 | P1 |
@@ -299,6 +299,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 ### A05 — Ruteo de demanda post-triage
 
+> **Estado:** **implementado (v1)** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md).
+
 > **Clasificación:** **D1** si pondera canal según triage + cupos en BD y recomienda; **D2** si crea `SOLICITUD_ASYNC` o turno alternativo sin elección; **proceso** si solo mensaje + link.
 
 | Campo | Valor |
@@ -361,6 +363,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 ---
 
 ### B02 — Seguimiento post-alta (internación)
+
+> **Estado:** **implementado (v1)** — [internacion.md](../internacion.md), [agentes-autonomos.md](../agentes-autonomos.md).
 
 | Campo | Valor |
 |-------|--------|
@@ -609,6 +613,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 ### E03 — Validar receta pre-envío RDI
 
+> **Estado:** **implementado (v1)** — [receta-electronica.md](../receta-electronica.md), [agentes-autonomos.md](../agentes-autonomos.md).
+
 | Campo | Valor |
 |-------|--------|
 | **Grado** | D2 |
@@ -647,6 +653,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 ---
 
 ### F02 — Sugerencia de cama
+
+> **Estado:** **implementado (v1)** — [internacion.md](../internacion.md), [agentes-autonomos.md](../agentes-autonomos.md).
 
 > **Clasificación:** paso agente **D1** — matices (aislamiento, O2, especialidad) sobre mapa de camas; enfermería confirma.
 
@@ -842,7 +850,7 @@ flowchart LR
 2. **Fase 1:** ~~Agentes P0~~ completada (~~B01~~ ~~B03~~ ~~A03~~ ~~A02 v1~~).
 3. **Fase 2:** ~~A01 shortlist~~ v1 hecho; ~~A01 auto-reserva~~ v1 hecho; ~~H01~~ v1 hecho; ~~A04~~ ~~A06~~ v1 hechos.
 4. **Fase 3:** ~~E01~~ ~~E02 v1 FHIR HC~~; agentes IA (C03/D02) diferidos.
-5. **Fase 4:** A05, B02, E03, F02; redacción IA en pushes diferida.
+5. **Fase 4:** ~~A05~~ ~~B02~~ ~~E03~~ ~~F02~~ v1 hechos; redacción IA en pushes diferida.
 
 Contextos **agente IA** (paso decisorio usa modelo): clasificación NL puerta de entrada, borrador resumen paciente, `encounter-codificacion-automatica`, `analisis-consulta`.
 

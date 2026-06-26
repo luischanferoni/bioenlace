@@ -35,7 +35,7 @@ final class CarePackFollowupService
      */
     public function renderFollowup(array $params): array
     {
-        if (!CarePackConfig::isEnabled()) {
+        if (!$this->isFollowupChannelEnabled()) {
             throw new NotFoundHttpException('Seguimiento por cohorte no habilitado.');
         }
 
@@ -72,7 +72,7 @@ final class CarePackFollowupService
      */
     public function submitResponses(array $body): array
     {
-        if (!CarePackConfig::isEnabled()) {
+        if (!$this->isFollowupChannelEnabled()) {
             throw new NotFoundHttpException('Seguimiento por cohorte no habilitado.');
         }
 
@@ -285,5 +285,14 @@ final class CarePackFollowupService
             default:
                 return ['sintomas_evolucion', 'comparacion'];
         }
+    }
+
+    private function isFollowupChannelEnabled(): bool
+    {
+        if (CarePackConfig::isEnabled()) {
+            return true;
+        }
+
+        return (bool) (Yii::$app->params['autonomous_agent_post_discharge_followup_enabled'] ?? false);
     }
 }

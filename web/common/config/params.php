@@ -81,6 +81,17 @@ return [
     'autonomous_agent_lab_encounter_link_enabled' => true,
     /** Reintentos / dead-letter integraciones (agente E02). */
     'autonomous_agent_integration_retry_enabled' => true,
+    /** Ruteo post-triage sin cupos (agente A05). */
+    'autonomous_agent_reserva_triage_post_cupo_enabled' => true,
+    'reservaTriagePostCupo' => [
+        'push_cooldown_hours' => 24,
+    ],
+    /** Seguimiento post-alta internación (agente B02). */
+    'autonomous_agent_post_discharge_followup_enabled' => true,
+    /** Validación pre-envío receta RDI (agente E03). */
+    'autonomous_agent_prescription_rdi_validation_enabled' => true,
+    /** Sugerencia de cama al ingreso (agente F02). */
+    'autonomous_agent_internacion_cama_sugerencia_enabled' => true,
     /**
      * Personas a notificar en dead-letter de integración (agente E02). Vacío = solo log.
      */

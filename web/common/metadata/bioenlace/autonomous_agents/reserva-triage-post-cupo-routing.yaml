@@ -1,0 +1,70 @@
+# Ruteo de demanda cuando no hay cupos tras triage (agente A05 v1).
+# {@see ReservaTriagePostCupoRoutingAgent}
+version: 1
+agent_id: reserva-triage-post-cupo-routing
+
+push:
+  title: "Alternativas de atención"
+  body_template: "{{mensaje}}"
+
+deep_links:
+  async: "/asistente?intent=consulta-async.solicitar-flow"
+  tele_hub: "/asistente?intent=turnos.crear-como-paciente&modo=teleconsulta_hub"
+  presencial_primaria: "/asistente?intent=turnos.crear-como-paciente"
+  administrativo: "/asistente?intent=atencion.tramite-admin-flow"
+  lista_espera: "/asistente?intent=turnos.lista-espera-flow"
+
+rules:
+  - id: banda_a_halt
+    when:
+      field: urgency_band
+      equals: A
+    action: halt
+    mensaje: "Por lo que indicaste conviene atención urgente ahora. Acudí a guardia o emergencias."
+
+  - id: tramite_admin
+    when:
+      field: reserva_triage_code
+      in: [tramite_admin, tramite, certificado, duplicado_receta]
+    action: recommend
+    channel: administrativo
+    mensaje: "Tu trámite no requiere turno médico. Te guiamos por el canal administrativo digital."
+
+  - id: cronico_async
+    when:
+      all:
+        - field: async_available
+          equals: "true"
+        - field: urgency_band
+          in: [C, D]
+    action: recommend
+    channel: async
+    mensaje: "No hay turnos pronto; podés enviar tu consulta por mensaje y el equipo te responderá."
+    commit_async: false
+
+  - id: tele_hub_sin_especialista
+    when:
+      all:
+        - field: tele_hub_available
+          equals: "true"
+        - field: especialista_sin_cupo
+          equals: "true"
+    action: recommend
+    channel: tele_hub
+    mensaje: "No hay turno con el especialista elegido; te ofrecemos videollamada con clínica en los próximos días."
+
+  - id: primaria_presencial
+    when:
+      field: primaria_available
+      equals: "true"
+    action: recommend
+    channel: presencial_primaria
+    mensaje: "No hay cupo en el servicio elegido; podés reservar con clínica general con nota de derivación si corresponde."
+
+  - id: lista_espera_fallback
+    when:
+      field: lista_espera_habilitada
+      equals: "true"
+    action: recommend
+    channel: lista_espera
+    mensaje: "No hay horarios disponibles ahora. Podés inscribirte en lista de espera y te avisamos si se libera un cupo."

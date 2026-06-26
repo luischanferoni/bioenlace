@@ -197,14 +197,65 @@ Ver [laboratorio.md](./laboratorio.md).
 
 Ver [interoperabilidad-historia-clinica.md](./interoperabilidad-historia-clinica.md). RDI/LIS: extensión futura cuando exista cola outbound.
 
+### A05 — Ruteo post-triage sin cupo (agente D1, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (reglas triage + modalidad) |
+| **Trigger** | Grilla de slots vacía tras triage de reserva |
+| **Política** | `autonomous_agents/reserva-triage-post-cupo-routing.yaml` |
+| **Decisiones** | async / tele hub / primaria / lista de espera / halt banda A |
+| **Efecto** | Push `RESERVA_TRIAGE_CANAL_ALTERNATIVO` + `routing_recommendation` en API |
+| **Auditoría** | `agent_run` (`agent_id`: `reserva-triage-post-cupo-routing`) |
+| **Flag** | `autonomous_agent_reserva_triage_post_cupo_enabled` |
+
+Ver [turnos.md](./turnos.md), [triage-reserva-turno.md](./triage-reserva-turno.md).
+
+### B02 — Seguimiento post-alta (agente D2, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (reglas + touchpoints programados) |
+| **Trigger** | Alta hospitalaria (`InternacionAltaEstructuradaService::registrarAlta`) |
+| **Política** | `autonomous_agents/post-discharge-followup.yaml` |
+| **Decisiones** | Programa default o cirugía; touchpoints días 1, 7, 30 |
+| **Efecto** | Cola `care_followup_touchpoint_queue`; rama B01 en respuestas |
+| **Auditoría** | `agent_run` (`agent_id`: `post-discharge-followup`) |
+| **Flag** | `autonomous_agent_post_discharge_followup_enabled` |
+
+Ver [internacion.md](./internacion.md).
+
+### E03 — Validar receta pre-envío RDI (agente D2, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (reglas de validación) |
+| **Trigger** | `ElectronicPrescriptionService::issue` antes de emitir |
+| **Política** | `autonomous_agents/prescription-rdi-pre-submit.yaml` |
+| **Decisiones** | Bloquear si faltan PES, diagnóstico, código, posología o duplicado 24 h |
+| **Efecto** | `InvalidArgumentException` al prescriptor; no se emite |
+| **Auditoría** | `agent_run` (`agent_id`: `prescription-rdi-pre-submit`) |
+| **Flag** | `autonomous_agent_prescription_rdi_validation_enabled` |
+
+Ver [receta-electronica.md](./receta-electronica.md).
+
+### F02 — Sugerencia de cama (agente D1, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (score sobre mapa de camas) |
+| **Trigger** | Contexto de ingreso (`InternacionIngresoService::contextoIngreso`) |
+| **Política** | `autonomous_agents/internacion-cama-sugerencia.yaml` |
+| **Decisiones** | Top N camas por O2, aislamiento, pediatría, servicio |
+| **Efecto** | Campo `cama_sugerencias` en API ingreso; humano confirma |
+| **Auditoría** | `agent_run` (`agent_id`: `internacion-cama-sugerencia`) |
+| **Flag** | `autonomous_agent_internacion_cama_sugerencia_enabled` |
+
+Ver [internacion.md](./internacion.md).
+
 ---
 
 ## En implementación / backlog (sin agentes IA)
-
-| ID | Nombre | Prioridad |
-|----|--------|-----------|
-| A05, B02 | Ruteo post-triage; seguimiento post-alta | P1 |
-| E03, F02 | Validar receta RDI; sugerencia de cama | P2 |
 
 Agentes IA (C03, D02, redacción pushes): diferidos.
 

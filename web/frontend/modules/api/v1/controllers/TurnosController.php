@@ -39,6 +39,7 @@ use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionCatalogS
 use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionService;
 use common\components\Domain\Scheduling\Service\ReservaTriageModalidadStepService;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageCatalogService;
+use common\components\Domain\Scheduling\Service\ReservaTriagePostCupoRoutingAgent;
 use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
 use common\components\Domain\Scheduling\Service\TeleconsultaElegibilidadService;
 use common\components\Domain\Scheduling\Service\TurnoPacienteListadoService;
@@ -1337,7 +1338,18 @@ class TurnosController extends BaseController
                 $out['blocks'] = $blocks;
             } else {
                 $params = array_merge($req->get(), $req->post());
-                if (ReservaTriageServicioSugeridoService::esModoTeleconsultaHub($params)) {
+                $routing = null;
+                $idPersona = (int) Yii::$app->user->getIdPersona();
+                try {
+                    $routing = (new ReservaTriagePostCupoRoutingAgent())->onSinCupos($params, $idPersona);
+                } catch (\Throwable $e) {
+                    Yii::warning('A05 post-cupo routing: ' . $e->getMessage(), 'autonomous-agent');
+                }
+
+                if ($routing !== null && ($routing['mensaje'] ?? '') !== '') {
+                    $out['description'] = (string) $routing['mensaje'];
+                    $out['routing_recommendation'] = $routing;
+                } elseif (ReservaTriageServicioSugeridoService::esModoTeleconsultaHub($params)) {
                     $hubMsg = (new ReservaModalidadAtencionCatalogService())->mensajeTeleconsultaHubSinCupos();
                     if ($hubMsg['summary'] !== '') {
                         $out['description'] = $hubMsg['summary'];

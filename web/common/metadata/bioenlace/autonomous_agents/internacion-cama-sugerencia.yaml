@@ -1,0 +1,13 @@
+# Ranking de camas para ingreso (agente F02 v1).
+# {@see InternacionCamaSugerenciaAgent}
+version: 1
+agent_id: internacion-cama-sugerencia
+
+scoring:
+  respirador_required: 45
+  monitor_bonus: 8
+  sala_servicio_match: 30
+  covid_aislamiento_match: 35
+  pediatria_match: 40
+  estado_libre_bonus: 10
+top_n: 5

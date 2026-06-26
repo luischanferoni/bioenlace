@@ -1,0 +1,42 @@
+# Seguimiento post-alta de internación (agente B02 v1).
+# {@see PostDischargeFollowupAgent}
+version: 1
+agent_id: post-discharge-followup
+
+programs:
+  default:
+    touchpoints:
+      - delay_days: 1
+        title: "Primer día en casa"
+        purpose: recovery
+        form_kind: symptoms
+      - delay_days: 7
+        title: "Primera semana en casa"
+        purpose: evolution
+        form_kind: evolution_short
+      - delay_days: 30
+        title: "Un mes del alta"
+        purpose: adherence
+        form_kind: adherence
+
+  cirugia:
+    touchpoints:
+      - delay_days: 1
+        title: "Post cirugía — día 1"
+        purpose: recovery
+        form_kind: symptoms
+      - delay_days: 7
+        title: "Post cirugía — herida y fiebre"
+        purpose: evolution
+        form_kind: evolution_short
+      - delay_days: 30
+        title: "Control post cirugía"
+        purpose: evolution
+        form_kind: evolution_short
+
+rules:
+  - id: programa_cirugia
+    when:
+      field: tipo_ingreso_codigo
+      in: [cirugia, quirurgico, post_quirurgico]
+    program: cirugia

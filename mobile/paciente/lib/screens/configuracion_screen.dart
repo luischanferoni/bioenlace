@@ -104,7 +104,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
               Icon(Icons.person_outline, color: primary, size: 20),
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
-                child: Text('Usuario: $userName', style: BioTypography.body),
+                child: Text('Usuario: ${widget.userName}', style: BioTypography.body),
               ),
             ],
           ),
@@ -121,15 +121,15 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           _ConfigTile(
             icon: Icons.notifications_outlined,
             title: 'Alertas',
-            subtitle: alertasNoLeidas > 0
-                ? '$alertasNoLeidas sin leer'
+            subtitle: widget.alertasNoLeidas > 0
+                ? '${widget.alertasNoLeidas} sin leer'
                 : 'Avisos del consultorio y turnos',
-            trailing: alertasNoLeidas > 0
+            trailing: widget.alertasNoLeidas > 0
                 ? BioBadge.danger(
-                    alertasNoLeidas > 99 ? '99+' : '$alertasNoLeidas',
+                    widget.alertasNoLeidas > 99 ? '99+' : '${widget.alertasNoLeidas}',
                   )
                 : null,
-            onTap: onOpenAlertas ??
+            onTap: widget.onOpenAlertas ??
                 () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -139,7 +139,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                 },
           ),
           BioDivider.subtle(),
-          CarePlanReminderGlobalSwitch(authToken: authToken),
+          CarePlanReminderGlobalSwitch(authToken: widget.authToken),
           BioDivider.subtle(),
           ListenableBuilder(
             listenable: PacienteContextScope.instance,
@@ -174,14 +174,14 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             title: 'Representación',
             subtitle: 'Tutela, representantes y notificaciones',
             onTap: () {
-              final actorId = int.tryParse(userId) ?? 0;
+              final actorId = int.tryParse(widget.userId) ?? 0;
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (_) => PersonRepresentationHubScreen(
-                    authToken: authToken,
+                    authToken: widget.authToken,
                     actorPersonaId: actorId,
-                    actorLabel: userName,
+                    actorLabel: widget.userName,
                   ),
                 ),
               );
@@ -192,7 +192,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
             icon: Icons.report_outlined,
             title: 'Enviar queja',
             subtitle: 'Problemas con la app, turnos o la atención recibida',
-            onTap: onEnviarQueja ??
+            onTap: widget.onEnviarQueja ??
                 () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -287,7 +287,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     await prefs.remove('user_name');
     await prefs.remove('auth_token');
     await PersonRepresentationContext.instance.clearOnLogout();
-    await PacienteContextScope.instance.clearOnLogout();
+    PacienteContextScope.instance.clearOnLogout();
 
     if (!context.mounted) return;
 

@@ -45,6 +45,15 @@ class PacienteContextState {
       domicilioEstado == 'requiere_provincia_manual' && !puedeOperar;
 }
 
+/// Mensajes que el banner superior ya muestra; no repetir en el chat.
+bool pacienteContextShouldSuppressMessageInChat(String message) {
+  final banner = PacienteContextScope.instance.state.banner;
+  if (banner == null) return false;
+  if (banner['kind']?.toString() != 'domicilio_pendiente') return false;
+  final bannerMsg = (banner['message']?.toString() ?? '').trim();
+  return bannerMsg.isNotEmpty && message.trim() == bannerMsg;
+}
+
 /// Contexto global del paciente (persistido en BD, cache en memoria).
 class PacienteContextScope extends ChangeNotifier {
   PacienteContextScope._();

@@ -15,7 +15,12 @@ class PacienteOperativeLimitedNotice extends StatelessWidget {
         final state = PacienteContextScope.instance.state;
         if (state.puedeOperar) return const SizedBox.shrink();
 
-        final message = state.banner?['message']?.toString();
+        final banner = state.banner;
+        if (banner?['kind']?.toString() == 'domicilio_pendiente') {
+          return const SizedBox.shrink();
+        }
+
+        final message = banner?['message']?.toString();
         final text = (message != null && message.isNotEmpty)
             ? message
             : 'Completá tu provincia de contexto para reservar turnos y ver centros de tu zona.';

@@ -52,5 +52,6 @@ export 'person/person_representation_subject_chip.dart';
 export 'person/paciente_context_api.dart';
 export 'person/paciente_context_scope.dart';
 export 'person/paciente_context_banner.dart';
+export 'person/paciente_sector_salud_switch.dart';
 export 'person/paciente_operative_limited_notice.dart';
 

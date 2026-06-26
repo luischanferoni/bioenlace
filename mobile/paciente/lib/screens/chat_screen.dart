@@ -1186,6 +1186,19 @@ class ChatScreenState extends State<ChatScreen> {
     });
   }
 
+  bool _shouldSkipBotMessage(String content) =>
+      pacienteContextShouldSuppressMessageInChat(content);
+
+  void _addBotChatMessage(String content, {Map<String, dynamic>? extra}) {
+    if (_shouldSkipBotMessage(content)) return;
+    _chatHistory.add({
+      'type': 'bot',
+      'content': content,
+      'timestamp': DateTime.now(),
+      ...?extra,
+    });
+  }
+
   /// Mensaje genérico cuando el sobre no fue consumido por flow/interactive/message.
   void _appendGenericAsistenteBotMessage(Map<String, dynamic> data) {
     final actions = data['actions'] ?? (data['action'] != null ? [data['action']] : null);
@@ -1200,9 +1213,7 @@ class ChatScreenState extends State<ChatScreen> {
 
     setState(() {
       _isSending = false;
-      _chatHistory.add({
-        'type': 'bot',
-        'content': explanation,
+      _addBotChatMessage(explanation, extra: {
         'actions': actions != null && actions.isNotEmpty ? List<Map<String, dynamic>>.from(actions) : null,
         'suggested_query': suggestedQuery,
         'query_type': queryType,
@@ -1212,7 +1223,6 @@ class ChatScreenState extends State<ChatScreen> {
             ? Map<String, dynamic>.from(actionAnalysisRaw)
             : null,
         'parameters': data['parameters'],
-        'timestamp': DateTime.now(),
       });
     });
   }
@@ -1244,11 +1254,7 @@ class ChatScreenState extends State<ChatScreen> {
     if (kind == 'message') {
       setState(() {
         _isSending = false;
-        _chatHistory.add({
-          'type': 'bot',
-          'content': explanation,
-          'timestamp': DateTime.now(),
-        });
+        _addBotChatMessage(explanation);
       });
       _scrollToBottom();
       return true;
@@ -1545,11 +1551,9 @@ class ChatScreenState extends State<ChatScreen> {
         setState(() {
           _flowAdvancing = false;
           _isSending = false;
-          _chatHistory.add({
-            'type': 'bot',
-            'content': result['message']?.toString() ?? 'No se pudo iniciar el flujo.',
-            'timestamp': DateTime.now(),
-          });
+          _addBotChatMessage(
+            result['message']?.toString() ?? 'No se pudo iniciar el flujo.',
+          );
         });
         _scrollToBottom();
         return;
@@ -1737,13 +1741,11 @@ class ChatScreenState extends State<ChatScreen> {
         setState(() {
           _flowAdvancing = false;
           _isSending = false;
-          _chatHistory.add({
-            'type': 'bot',
-            'content': (textFromEnvelope != null && textFromEnvelope.trim().isNotEmpty)
-                ? textFromEnvelope.trim()
-                : (result['message']?.toString() ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.'),
+          final botText = (textFromEnvelope != null && textFromEnvelope.trim().isNotEmpty)
+              ? textFromEnvelope.trim()
+              : (result['message']?.toString() ?? 'Lo siento, no pude procesar tu consulta. Intenta nuevamente.');
+          _addBotChatMessage(botText, extra: {
             'suggested_query': data?['interaccion_sugerida']?['texto'],
-            'timestamp': DateTime.now(),
           });
         });
       }
@@ -2010,11 +2012,9 @@ class ChatScreenState extends State<ChatScreen> {
         if (result['success'] != true) {
           setState(() {
             _isSending = false;
-            _chatHistory.add({
-              'type': 'bot',
-              'content': result['message']?.toString() ?? 'No se pudo iniciar el flujo.',
-              'timestamp': DateTime.now(),
-            });
+            _addBotChatMessage(
+              result['message']?.toString() ?? 'No se pudo iniciar el flujo.',
+            );
           });
           _scrollToBottom();
           return true;
@@ -2416,7 +2416,6 @@ class ChatScreenState extends State<ChatScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const PacienteOperativeLimitedNotice(),
           Expanded(
             child: _showWelcomeShortcutGrid
                 ? _buildWelcomeShortcutsPanel()

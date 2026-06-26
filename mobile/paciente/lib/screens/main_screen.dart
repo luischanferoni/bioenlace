@@ -209,8 +209,6 @@ class _MainScreenState extends State<MainScreen> {
             userId: widget.chatService.currentUserId,
             userName: widget.chatService.currentUserName,
             authToken: widget.authToken,
-            onOpenAlertas: _openAlertas,
-            alertasNoLeidas: _alertasNoLeidas,
             onEnviarQueja: _abrirIntentQueja,
           ),
         ],

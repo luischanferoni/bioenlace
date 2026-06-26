@@ -47,8 +47,6 @@ class NativeScreenRouter {
             userId: userId,
             userName: userName,
             authToken: authToken,
-            onOpenAlertas: onOpenAlertas,
-            alertasNoLeidas: alertasNoLeidas,
           ),
         );
       case 'encounter_summary_list':

@@ -15,18 +15,14 @@ class ConfiguracionScreen extends StatefulWidget {
   final String userId;
   final String userName;
   final String? authToken;
-  final VoidCallback? onOpenAlertas;
   final VoidCallback? onEnviarQueja;
-  final int alertasNoLeidas;
 
   const ConfiguracionScreen({
     Key? key,
     required this.userId,
     required this.userName,
     this.authToken,
-    this.onOpenAlertas,
     this.onEnviarQueja,
-    this.alertasNoLeidas = 0,
   }) : super(key: key);
 
   @override
@@ -52,21 +48,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     ).then((changed) {
       if (changed == true && mounted) setState(() {});
     });
-  }
-
-  Future<void> _toggleSector() async {
-    final actual = PacienteContextScope.instance.state.sectorSalud;
-    final nuevo = actual == 'privado' ? 'publico' : 'privado';
-    final ok = await PacienteContextScope.instance.actualizarSector(
-      nuevo,
-      authToken: widget.authToken,
-    );
-    if (!mounted) return;
-    if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No se pudo actualizar el sector')),
-      );
-    }
   }
 
   @override
@@ -118,53 +99,20 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       padding: EdgeInsets.zero,
       child: Column(
         children: [
-          _ConfigTile(
-            icon: Icons.notifications_outlined,
-            title: 'Alertas',
-            subtitle: widget.alertasNoLeidas > 0
-                ? '${widget.alertasNoLeidas} sin leer'
-                : 'Avisos del consultorio y turnos',
-            trailing: widget.alertasNoLeidas > 0
-                ? BioBadge.danger(
-                    widget.alertasNoLeidas > 99 ? '99+' : '${widget.alertasNoLeidas}',
-                  )
-                : null,
-            onTap: widget.onOpenAlertas ??
-                () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Iniciá sesión para ver alertas'),
-                    ),
-                  );
-                },
-          ),
-          BioDivider.subtle(),
           CarePlanReminderGlobalSwitch(authToken: widget.authToken),
+          BioDivider.subtle(),
+          PacienteSectorSaludSwitch(authToken: widget.authToken),
           BioDivider.subtle(),
           ListenableBuilder(
             listenable: PacienteContextScope.instance,
             builder: (context, _) {
-              final ctx = PacienteContextScope.instance.state;
-              final sectorLabel =
-                  ctx.sectorSalud == 'privado' ? 'Privado' : 'Público';
               final provinciaLabel =
-                  ctx.provinciaNombre ?? 'Sin definir';
-              return Column(
-                children: [
-                  _ConfigTile(
-                    icon: Icons.account_balance_outlined,
-                    title: 'Sector de salud',
-                    subtitle: sectorLabel,
-                    onTap: _toggleSector,
-                  ),
-                  BioDivider.subtle(),
-                  _ConfigTile(
-                    icon: Icons.map_outlined,
-                    title: 'Provincia de contexto',
-                    subtitle: provinciaLabel,
-                    onTap: _abrirProvinciaContexto,
-                  ),
-                ],
+                  PacienteContextScope.instance.state.provinciaNombre ?? 'Sin definir';
+              return _ConfigTile(
+                icon: Icons.map_outlined,
+                title: 'Provincia de contexto',
+                subtitle: provinciaLabel,
+                onTap: _abrirProvinciaContexto,
               );
             },
           ),
@@ -352,14 +300,12 @@ class _ConfigTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
-    this.trailing,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -389,10 +335,6 @@ class _ConfigTile extends StatelessWidget {
                 ],
               ),
             ),
-            if (trailing != null) ...[
-              BioSpacing.gapW(BioSpacing.sm),
-              trailing!,
-            ],
             BioSpacing.gapW(BioSpacing.xs),
             Icon(Icons.chevron_right, color: tokens.textMuted),
           ],

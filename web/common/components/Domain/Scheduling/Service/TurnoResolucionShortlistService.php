@@ -50,6 +50,35 @@ final class TurnoResolucionShortlistService
     }
 
     /**
+     * Todos los candidatos puntuados (sin recorte a top N). Usado por auto-reserva A01 D2.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function buildScoredCandidates(Turno $turno, TurnoResolucion $res, ?array $config = null): array
+    {
+        $config = $config ?? AutonomousAgentMetadata::loadAgent(self::AGENT_ID) ?? [];
+        $candidates = $this->collectCandidates($turno, $res, $config);
+        if ($candidates === []) {
+            return [];
+        }
+
+        $scored = [];
+        foreach ($candidates as $candidate) {
+            $scored[] = array_merge($candidate, [
+                'score' => $this->scoreCandidate($turno, $candidate, $config),
+            ]);
+        }
+
+        usort($scored, static function (array $a, array $b): int {
+            return ($b['score'] <=> $a['score'])
+                ?: strcmp((string) ($a['fecha'] ?? ''), (string) ($b['fecha'] ?? ''))
+                ?: strcmp((string) ($a['hora'] ?? ''), (string) ($b['hora'] ?? ''));
+        });
+
+        return $scored;
+    }
+
+    /**
      * @param array<string, mixed> $config
      * @return list<array<string, mixed>>
      */

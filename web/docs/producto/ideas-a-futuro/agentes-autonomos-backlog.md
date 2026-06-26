@@ -156,7 +156,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | B03 | Post-lab: clasificar y notificar | **Agente** | Crítico vs normal; tarea staff (LOINC) | D2 | ~~P0~~ **Hecho** |
 | B01 | Touchpoints cohorte / plan | **Agente** | Respuesta estructurada → rama | D2 | ~~P0~~ **Hecho** |
 | A02 | Negociación multicanal + cierre | **Agente** | Canal, escalar, timeout | D3 | ~~P0~~ **Hecho (v1)** |
-| A01 | Auto-reserva en resolución (opt-out) | **Agente** | Slot por score + preferencias en BD | D2 | P1 |
+| A01 | Auto-reserva en resolución (opt-out) | **Agente** | Slot por score + preferencias en BD | D2 | ~~P1~~ **Hecho (v1)** |
 | A06 | Cierre de loop (sin respuesta) | **Agente** | Cancelar / mantener / escalar | D2 | ~~P1~~ **Hecho (v1)** |
 | A04 | Anti no-show predictivo | **Agente** | Liberar slot vs recordatorio | D2 | ~~P1~~ **Hecho (v1)** |
 | A05 | Ruteo post-triage sin cupo | **Agente** | Canal por triage + cupos (reglas) | D1–D2 | P1 |
@@ -166,7 +166,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | E03 | Validar receta pre-envío RDI | **Agente** | Bloquear envío | D2 | P2 |
 | B02 | Seguimiento post-alta | **Agente** | Igual que B01 | D2 | P1 |
 | F02 | Sugerencia de cama | **Agente** | Ranking por atributos de cama | D1 | P2 |
-| — | *Shortlist scoreado reoferta* | **Agente** | Top 2–3 por score | D1 | P1 |
+| — | *Shortlist scoreado reoferta* | **Agente** | Top 2–3 por score | D1 | ~~P1~~ **Hecho (v1)** |
 | C03 | Clasificar puerta de entrada (NL) | **Agente IA** | Banda desde texto libre | D1–D2 | P1 |
 | D02 | Resumen paciente al cerrar encounter | **Agente IA** | Borrador desde nota HC | D1 | P1 |
 | D03 | Codificación automática CIE-10/SNOMED | **Agente IA** | IA elige códigos y el HIS persiste | D2 | ~~P2~~ **Hecho** |
@@ -202,6 +202,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | **IA** | No en el paso decisorio |
 
 #### Agente (P1) — auto-reserva con preferencias (D2)
+
+> **Estado:** **implementado (v1)** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md).
 
 | Campo | Valor |
 |-------|--------|
@@ -832,7 +834,7 @@ flowchart LR
 
 1. **Fase 0:** Preferencias de agenda en perfil paciente + política score; auditoría agente vs agente IA.
 2. **Fase 1:** ~~Agentes P0~~ completada (~~B01~~ ~~B03~~ ~~A03~~ ~~A02 v1~~).
-3. **Fase 2:** ~~A01 shortlist~~ v1 hecho; A01 auto-reserva; H01; ~~A04~~ ~~A06~~ v1 hechos.
+3. **Fase 2:** ~~A01 shortlist~~ v1 hecho; ~~A01 auto-reserva~~ v1 hecho; H01; ~~A04~~ ~~A06~~ v1 hechos.
 4. **Fase 3:** Agentes E01/E02; C03/D02 como **agente IA** donde aplique NL.
 5. **Fase 4:** D03 (codificación automática), F02; redacción IA en pushes ya decididos por regla.
 

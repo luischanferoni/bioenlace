@@ -552,6 +552,32 @@ final class TurnoResolucionService
 
     private static function notificarPacienteRequiereReubicacion(Turno $turno, string $title, string $body): void
     {
+        $autoAgent = new TurnoResolucionAutoReservaAgent();
+        try {
+            $autoResult = $autoAgent->tryAutoReserva($turno);
+        } catch (\Throwable $e) {
+            Yii::warning('Auto-reserva resolución: ' . $e->getMessage(), 'turno-resolucion-auto-reserva');
+            $autoResult = null;
+        }
+
+        if ($autoResult !== null) {
+            $pushCopy = $autoAgent->buildAutoRebookedPush($autoResult);
+            $push = new PushNotificationSender();
+            $push->sendToPersona(
+                (int) $turno->id_persona,
+                [
+                    'type' => PushNotificationTypes::TURNO_AUTO_REUBICADO_RESOLUCION,
+                    'id_turno' => (string) $turno->id_turnos,
+                    'fecha' => (string) ($autoResult['fecha'] ?? ''),
+                    'hora' => (string) ($autoResult['hora'] ?? ''),
+                ],
+                $pushCopy['title'],
+                $pushCopy['body']
+            );
+
+            return;
+        }
+
         $shortlist = [];
         $agent = new TurnoResolucionShortlistAgent();
         try {

@@ -104,6 +104,16 @@ El paciente confirma una opción con `POST …/elegir-shortlist-resolucion-como-
 
 Flag: `autonomous_agent_resolucion_shortlist_enabled`.
 
+## Auto-reserva en resolución (agente A01 v1 D2)
+
+Antes del push de reubicación, si el paciente tiene **opt-in** (`auto_reserva_resolucion`) y el efector habilitó la política (`efector_turnos_config.auto_reserva_resolucion_habilitada`), el agente `turno-resolucion-auto-reserva` intenta elegir **un** slot unívoco según preferencias (franjas, días, modalidad, mismo PES prioritario).
+
+Si hay candidato con score y brecha suficientes, persiste la reprogramación y envía push `TURNO_AUTO_REUBICADO_RESOLUCION` (opt-out: reprogramar en app). Si no, continúa el flujo shortlist + multicanal.
+
+Preferencias: `GET|POST …/preferencias-agenda-como-paciente` (`auto_reserva_resolucion`, `franjas`, `dias_semana`, `tipo_atencion_preferido`, `mismo_pes_prioritario`).
+
+Flags: `autonomous_agent_resolucion_auto_reserva_enabled` (global) + columna efector.
+
 ## Relación con el resto del producto
 
 - Representación operativa (tutela/delegación): [representacion-paciente.md](./representacion-paciente.md).

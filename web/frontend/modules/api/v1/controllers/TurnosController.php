@@ -48,6 +48,7 @@ use common\components\Domain\Scheduling\Service\TurnoCalendarioOcupacionDiaServi
 use common\components\Domain\Scheduling\Service\TurnoWaitlistOfferAcceptService;
 use common\components\Domain\Scheduling\Service\TurnoWaitlistService;
 use common\components\Domain\Scheduling\Service\TurnoResolucionShortlistAgent;
+use common\components\Domain\Scheduling\Service\PersonaAgendaPreferenciasService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use common\models\TurnoResolucion;
 use yii\web\ForbiddenHttpException;
@@ -2258,6 +2259,54 @@ class TurnosController extends BaseController
             $data = (new TurnoResolucionShortlistAgent())->applyOption($turno, $idPersona, $optionId);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
+        }
+
+        return ['success' => true, 'data' => $data];
+    }
+
+    /**
+     * GET /api/v1/turnos/preferencias-agenda-como-paciente
+     *
+     * @action_name Preferencias de agenda del paciente
+     */
+    public function actionPreferenciasAgendaComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        if ($req->isPost) {
+            return $this->guardarPreferenciasAgendaComoPaciente();
+        }
+        if (!$req->isGet) {
+            throw new MethodNotAllowedHttpException(['GET', 'POST'], 'Solo GET o POST.');
+        }
+
+        $params = array_merge($req->get(), $req->post());
+        $subjectSvc = new PersonRepresentationSubjectService();
+        $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::SCHEDULING_TURNO);
+        $this->assertPacienteOfferingForTurnos();
+
+        return [
+            'success' => true,
+            'data' => (new PersonaAgendaPreferenciasService())->getForPersona($idPersona),
+        ];
+    }
+
+    /**
+     * POST /api/v1/turnos/preferencias-agenda-como-paciente
+     */
+    private function guardarPreferenciasAgendaComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $post = array_merge($req->get(), $req->post());
+        $subjectSvc = new PersonRepresentationSubjectService();
+        $idPersona = $subjectSvc->resolveAndAuthorize($post, RepresentationPermission::SCHEDULING_TURNO);
+        $this->assertPacienteOfferingForTurnos();
+
+        try {
+            $data = (new PersonaAgendaPreferenciasService())->saveForPersona($idPersona, $post);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        } catch (\RuntimeException $e) {
+            throw new ServerErrorHttpException($e->getMessage());
         }
 
         return ['success' => true, 'data' => $data];

@@ -23,6 +23,7 @@ use yii\db\ActiveRecord;
  * @property int|null $autogestion_min_horas_antes_cancelar
  * @property int|null $autogestion_min_horas_antes_reprogramar
  * @property bool $cancelacion_masiva
+ * @property bool $auto_reserva_resolucion_habilitada
  * @property string $created_at
  * @property string $updated_at
  */
@@ -47,7 +48,7 @@ class EfectorTurnosConfig extends ActiveRecord
             [['autogestion_min_horas_antes_cancelar', 'autogestion_min_horas_antes_reprogramar'], 'integer', 'min' => 0, 'skipOnEmpty' => true],
             [['autogestion_min_horas_antes_cancelar', 'autogestion_min_horas_antes_reprogramar'], 'default', 'value' => null],
             [['confirmacion_requerida', 'permitir_cambio_modalidad', 'recordatorios_habilitados',
-                'sobreturno_notificar_retraso', 'cancelacion_masiva'], 'boolean'],
+                'sobreturno_notificar_retraso', 'cancelacion_masiva', 'auto_reserva_resolucion_habilitada'], 'boolean'],
             [['modo_comunicacion_medicos'], 'string', 'max' => 32],
             [['modo_comunicacion_medicos'], 'in', 'range' => [
                 self::MODO_MEDICOS_DESHABILITADO,
@@ -75,6 +76,7 @@ class EfectorTurnosConfig extends ActiveRecord
             'autogestion_min_horas_antes_cancelar' => 'Horas mínimas antes para cancelar por app (vacío=default sistema; 0=sin límite)',
             'autogestion_min_horas_antes_reprogramar' => 'Horas mínimas antes para reprogramar por app (vacío=default; 0=sin límite)',
             'cancelacion_masiva' => 'Permitir cancelación masiva por día',
+            'auto_reserva_resolucion_habilitada' => 'Auto-reubicación con preferencias del paciente (agente A01 D2)',
         ];
     }
 

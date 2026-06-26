@@ -55,6 +55,9 @@
         if (t === 'TURNO_REQUIERE_REUBICACION' || t === 'TURNO_CANCELADO_EFECTOR') {
             return { id: 'turnos.reubicar-como-paciente-flow', name: 'Reubicar turno' };
         }
+        if (t === 'TURNO_AUTO_REUBICADO_RESOLUCION') {
+            return { id: 'turnos.reprogramar-como-paciente-flow', name: 'Cambiar turno' };
+        }
         return null;
     }
 

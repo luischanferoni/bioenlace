@@ -144,7 +144,18 @@ Ver [turnos.md](./turnos.md).
 | **Auditoría** | `agent_run` (`agent_id`: `turno-resolucion-shortlist`) |
 | **Flag** | `autonomous_agent_resolucion_shortlist_enabled` |
 
-Auto-reserva opt-in (D2) sigue en backlog.
+### A01 — Auto-reserva con preferencias (agente D2, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (score + preferencias en BD) |
+| **Trigger** | Turno en `EN_RESOLUCION`, antes del push de reubicación |
+| **Política** | `autonomous_agents/turno-resolucion-auto-reserva.yaml` + `turno-resolucion-shortlist.yaml` (pool) |
+| **Consentimiento** | Opt-in paciente (`persona_agenda_preferencias.auto_reserva_resolucion`) + política efector |
+| **Decisiones** | Un slot si score ≥ umbral y brecha vs. segundo candidato; si no → shortlist/grilla |
+| **Efecto** | Push `TURNO_AUTO_REUBICADO_RESOLUCION`; API `preferencias-agenda-como-paciente` |
+| **Auditoría** | `agent_run` (`agent_id`: `turno-resolucion-auto-reserva`) |
+| **Flag** | `autonomous_agent_resolucion_auto_reserva_enabled` |
 
 ---
 
@@ -152,7 +163,7 @@ Auto-reserva opt-in (D2) sigue en backlog.
 
 | ID | Nombre | Fase plan |
 |----|--------|-----------|
-| A01 auto-reserva, H01, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
+| H01, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
 
 ---
 

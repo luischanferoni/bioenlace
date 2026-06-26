@@ -30,6 +30,9 @@ final class PushNotificationTypes
     /** Anti no-show: turno liberado por falta de confirmación (agente A04). */
     public const TURNO_ANTINOSHOW_LIBERADO = 'TURNO_ANTINOSHOW_LIBERADO';
 
+    /** Resolución: turno reubicado automáticamente por preferencias (agente A01 D2). */
+    public const TURNO_AUTO_REUBICADO_RESOLUCION = 'TURNO_AUTO_REUBICADO_RESOLUCION';
+
     /** Resumen de atención ambulatoria publicado al paciente. */
     public const ENCOUNTER_SUMMARY_READY = 'ENCOUNTER_SUMMARY_READY';
 

@@ -9,7 +9,7 @@ Plan operativo derivado de [ideas-a-futuro/agentes-autonomos-backlog.md](../idea
 | Fase | Alcance | Estado |
 |------|---------|--------|
 | **0** | Infra: `agent_run`, metadata `autonomous_agents/`, `AgentRunRecorder`, motor de reglas | **Hecho** |
-| **1** | P0 reglas: ~~**B01**~~, ~~**B03**~~, **A03** waitlist FIFO, **A02** escalada mínima | En curso (B01 y B03 hechos) |
+| **1** | P0 reglas: ~~**B01**~~, ~~**B03**~~, ~~**A03**~~ waitlist FIFO, **A02** escalada mínima | En curso (B01, B03 y A03 hechos) |
 | **2** | P1 agenda: A01 auto-reserva, shortlist, H01, A04/A06 | Pendiente |
 | **3** | P1 integración: E01/E02; **C03** / **D02** agente IA | Pendiente |
 | **4** | P2: F02, redacción IA en pushes ya decididos por regla | Pendiente |
@@ -74,12 +74,14 @@ Plan operativo derivado de [ideas-a-futuro/agentes-autonomos-backlog.md](../idea
 
 | Paso | Detalle |
 |------|---------|
-| Modelo | `turno_waitlist_entry` |
+| Modelo | `turno_waitlist_entry`, `turno_waitlist_slot_offer` |
 | Trigger | Cancelación de turno con hueco liberado |
 | Decisión v1 | Primer inscripto FIFO + push confirmación |
-| Sin score** multi-criterio en v1 |
+| Sin score multi-criterio en v1 |
 
-**Complejidad:** L.
+**Estado:** **implementado (v1)**.
+
+**Complejidad:** L — hecho.
 
 ### A02 — Multicanal (v1)
 

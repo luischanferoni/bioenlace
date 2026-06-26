@@ -71,13 +71,28 @@ Requiere `care_cohort.enabled`. Ver [asistencia-cohortes.md](./asistencia-cohort
 
 Ver [laboratorio.md](./laboratorio.md).
 
+### A03 — Lista de espera / relleno de huecos (agente D2–D3, v1 FIFO)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (reglas) |
+| **Trigger** | Cancelación de turno con hueco liberado (`TurnoLifecycleService::cancelar`) |
+| **Política** | `autonomous_agents/turno-waitlist-fill.yaml` (FIFO, TTL 15 min, no ofertar banda A) |
+| **Decisiones** | Primer inscripto en cola; si no acepta en TTL → siguiente |
+| **Efecto** | Push `TURNO_WAITLIST_OFFER`; al aceptar, crea turno en el slot liberado |
+| **API paciente** | `lista-espera-inscribir/cancelar/estado/aceptar-oferta-como-paciente` |
+| **Cron** | `yii turno-waitlist/expire-offers` (cada 1–5 min junto a notificaciones) |
+| **Auditoría** | `agent_run` (`agent_id`: `turno-waitlist-fill`) |
+| **Flag** | `autonomous_agent_waitlist_enabled` |
+
+Ver [turnos.md](./turnos.md).
+
 ---
 
 ## En implementación / backlog
 
 | ID | Nombre | Fase plan |
 |----|--------|-----------|
-| A03 | Lista de espera / relleno huecos | 1 |
 | A02 | Negociación multicanal | 1 |
 | A01, H01, A04, A06, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
 

@@ -55,6 +55,17 @@ Para **dirección y coordinación** del efector, el equipo puede consultar métr
 
 Superficies: API `GET /api/v1/turnos/indicadores-agenda` (filtros por período y PES); intent de asistente `turnos.indicadores-agenda-flow` (UI JSON embebida).
 
+## Lista de espera (agente A03, v1 FIFO)
+
+Cuando un turno se **cancela** y queda un hueco en agenda, el sistema puede ofrecerlo al primer paciente inscripto en lista de espera para ese efector y servicio.
+
+1. El paciente se **inscribe** vía API (`POST …/lista-espera-inscribir-como-paciente`) indicando efector, servicio y opcionalmente PES o banda de urgencia.
+2. Tras una cancelación, el agente `turno-waitlist-fill` elige el candidato FIFO (excluye banda A de ofertas), envía push `TURNO_WAITLIST_OFFER` con token de oferta y TTL configurable (15 min por defecto).
+3. El paciente **acepta** con `POST …/lista-espera-aceptar-oferta-como-paciente` (`offer_token`); se crea el turno en el slot si sigue libre.
+4. Si expira el TTL, el cron `yii turno-waitlist/expire-offers` marca la oferta vencida y ofrece al siguiente en cola.
+
+Parámetros: `turnosWaitlist` en `params.php`. Flag: `autonomous_agent_waitlist_enabled`. Detalle técnico: [agentes-autonomos.md](./agentes-autonomos.md).
+
 ## Relación con el resto del producto
 
 - Representación operativa (tutela/delegación): [representacion-paciente.md](./representacion-paciente.md).

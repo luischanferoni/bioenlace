@@ -15,6 +15,9 @@ final class PushNotificationTypes
     public const TURNO_CONFIRMAR = 'TURNO_CONFIRMAR';
     public const TURNO_RETRASO_SOBRETURNO = 'TURNO_RETRASO_SOBRETURNO';
 
+    /** Lista de espera: oferta de hueco liberado (agente A03). */
+    public const TURNO_WAITLIST_OFFER = 'TURNO_WAITLIST_OFFER';
+
     /** Resumen de atención ambulatoria publicado al paciente. */
     public const ENCOUNTER_SUMMARY_READY = 'ENCOUNTER_SUMMARY_READY';
 

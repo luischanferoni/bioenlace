@@ -57,6 +57,12 @@ return [
         /** Oferta de slots de hoy: solo desde ahora + N minutos (autogestión / reprogramar). */
         'slots_min_minutos_desde_ahora' => 15,
     ],
+    /** Lista de espera (agente A03): TTL de oferta y mínimo antes del slot. */
+    'turnosWaitlist' => [
+        'offer_ttl_minutes' => 15,
+        'min_minutes_before_slot' => 15,
+    ],
+    'autonomous_agent_waitlist_enabled' => true,
     /**
      * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en home/panel (sección surgeries_day).
      * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Servicio::esServicioAgendaQuirurgica}.

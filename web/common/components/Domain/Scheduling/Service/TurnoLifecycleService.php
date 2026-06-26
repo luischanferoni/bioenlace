@@ -92,6 +92,12 @@ class TurnoLifecycleService
             );
         }
 
+        try {
+            (new \common\components\Domain\Scheduling\Service\TurnoWaitlistFillAgent())->onTurnoCancelled($turno);
+        } catch (\Throwable $e) {
+            Yii::warning('Waitlist fill: ' . $e->getMessage(), 'turno-waitlist');
+        }
+
         return true;
     }
 }

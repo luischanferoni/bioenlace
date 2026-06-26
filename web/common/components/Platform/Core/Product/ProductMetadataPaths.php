@@ -118,6 +118,16 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
     }
 
+    public static function autonomousAgentsDir(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'autonomous_agents';
+    }
+
+    public static function autonomousAgentFile(string $agentId): string
+    {
+        return self::autonomousAgentsDir() . DIRECTORY_SEPARATOR . $agentId . '.yaml';
+    }
+
     public static function snomedTerminologyFile(): string
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-terminology.yaml';

@@ -22,7 +22,7 @@ Los tokens del bloque cacheado se facturan a **~10 %** del precio de input en Ge
 - Parte **variable** → `contents[0].parts` (mensaje del usuario, transcript, etc.).
 - Registra entradas en memoria y, si `usageMetadata.cachedContentTokenCount` es 0, estima tokens cacheados en `AICostTracker` para calibrar el escenario favorable del doc.
 
-Contextos con split dedicado: `asistente-preprocess`, `asistente-conversational`; candidatos por bloque estable largo: `analisis-consulta`, `motivos-consulta-batch`. Ver [catálogo de IA](../../producto/catalogo-usos-ia.md).
+Contextos con split dedicado: `asistente-preprocess`, `asistente-conversational`; candidatos por bloque estable largo: `analisis-consulta`, `encounter-codificacion-automatica`, `motivos-consulta-batch`. Ver [catálogo de IA](../../producto/catalogo-usos-ia.md).
 
 Integración: `IAManager::consultarIA` antes del POST a Google.
 

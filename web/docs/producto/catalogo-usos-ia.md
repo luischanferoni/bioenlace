@@ -32,6 +32,7 @@ Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte
 | `care-pack-education-batch` | Sistema (cola sync) | Módulos educativos reutilizables | **1× por cohort_key** | `CarePackGenerationService` |
 | `care-pack-vertex-batch` | Sistema (Vertex batch) | Misma generación que arriba, vía `batchPredictionJobs` | **1 inferencia / job** en lote GCS | `CarePackVertexBatchPoller` + `AICostTracker` |
 | `analisis-consulta` | Médico (captura) | Extraer JSON estructurado del dictado según categorías del servicio | **1× por análisis** de encounter | `ConsultaProcesamientoService` |
+| `encounter-codificacion-automatica` | Sistema (al guardar) | Elegir códigos CIE-10 y/o SNOMED desde texto clínico y persistir `Condition` | **1× por guardado** de encounter con texto suficiente | `EncounterAutomaticCodingService` |
 | `terminos-contextuales` | — | Reservado en `IAManager`; sin llamadas activas en el repo | — | `IAManager::obtenerTerminosContextuales` |
 
 **Nota:** el canal **operativo** del asistente (turnos, formularios, flujos YAML) usa **reglas PHP** sobre `normalized_text`; no dispara `intent-engine-classification` en el camino habitual (`OperationalChannel` → `classifyAmongItems`).
@@ -85,6 +86,7 @@ Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arq
 | Dictado / audio | STT dispositivo o servidor | Política `captura_clinica`; contexto telemetría STT, no Gemini |
 | Preparación de texto | **CPU** (SymSpell, abreviaturas) | `ProcesadorTextoMedico` — no es llamada a Gemini |
 | Análisis → campos del formulario | IA | `analisis-consulta` + contexto clínico (`PatientAiContextBuilder`, perfil `encounter`) |
+| Guardado → codificación diagnóstica | IA | `encounter-codificacion-automatica` — decide CIE-10/SNOMED y persiste (sin UI de sugerencias) |
 
 Detalle: [captura-clinica.md](./captura-clinica.md) · API: `clinical/encounter/analizar|guardar`.
 
@@ -137,7 +139,7 @@ Operación y cron: [asistencia-cohortes.md](./asistencia-cohortes.md).
 | §1 Conversación | `asistente-preprocess`, `asistente-conversational` |
 | §2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights`, STT motivos |
 | §3 Onboarding | Mismo asistente (sin contexto propio) |
-| §4 Captura | `analisis-consulta`, STT captura |
+| §4 Captura | `analisis-consulta`, `encounter-codificacion-automatica`, STT captura |
 
 Matriz ahorro / caché: [matriz-casos-uso.md](../costos/estrategias-reduccion/matriz-casos-uso.md).
 

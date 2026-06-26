@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Terminology\Snomed;
 
+use common\components\Domain\Clinical\Service\EncounterAutomaticCodingService;
 use Yii;
 use common\models\SnomedDeferredJob;
 
@@ -67,21 +68,27 @@ class DeferredSnomedProcessor
                 throw new \Exception('Error decodificando datos del trabajo');
             }
 
-            // Procesar SNOMED
-            $codificador = new CodificadorSnomedIA();
-            $datosConSnomed = $codificador->codificarDatos($datosExtraidos, $categorias);
+            // Procesar codificación automática (IA) si hay encounter asociado
+            if ($job->consulta_id) {
+                $encounter = \common\models\Clinical\Encounter::findOne($job->consulta_id);
+                if ($encounter !== null) {
+                    $datos = is_array($datosExtraidos['datosExtraidos'] ?? null)
+                        ? $datosExtraidos['datosExtraidos']
+                        : [];
+                    EncounterAutomaticCodingService::codeAndPersistForEncounter($encounter, $datos);
+                }
+            }
 
-            // Guardar resultado
-            $job->resultado = json_encode($datosConSnomed);
+            $job->resultado = json_encode($datosExtraidos);
             $job->status = 'completed';
             $job->processed_at = date('Y-m-d H:i:s');
 
             if ($job->save(false)) {
                 Yii::info("Trabajo SNOMED {$job->id} procesado correctamente", 'snomed-codificador');
 
-                // Si hay consulta_id, actualizar la consulta con los datos SNOMED
+                // Legacy: la persistencia ocurre vía EncounterAutomaticCodingService en el job o en guardar.
                 if ($job->consulta_id) {
-                    self::actualizarConsulta($job->consulta_id, $datosConSnomed);
+                    Yii::info("Encounter {$job->consulta_id}: codificación automática procesada en job {$job->id}", 'snomed-codificador');
                 }
 
                 return true;
@@ -103,6 +110,9 @@ class DeferredSnomedProcessor
      * Actualizar consulta con datos SNOMED procesados
      * @param int $consultaId ID de la consulta
      * @param array $datosConSnomed Datos con códigos SNOMED
+     */
+    /**
+     * @deprecated La codificación persiste vía {@see EncounterAutomaticCodingService}.
      */
     private static function actualizarConsulta($consultaId, $datosConSnomed)
     {

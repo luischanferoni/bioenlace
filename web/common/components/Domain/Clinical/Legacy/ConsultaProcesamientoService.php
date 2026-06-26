@@ -9,7 +9,6 @@ use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
 use common\components\Logging\ConsultaLogger;
-use common\components\Domain\Terminology\Snomed\DeferredSnomedProcessor;
 
 /**
  * AnÃ¡lisis IA y persistencia de consultas (agnÃ³stico de capa HTTP).
@@ -145,22 +144,9 @@ class ConsultaProcesamientoService extends Component
 
             // } // al reactivar if ($esSimple) â€¦ else { â€¦ }, descomentar este cierre antes de $datosConSnomed
 
-            $datosConSnomed = null;
-            $estadisticasSnomed = null;
-            $requiereValidacionSnomed = false;
+            // Codificación CIE-10/SNOMED: al guardar encounter vía EncounterAutomaticCodingService (IA + persistencia).
 
-            if ($resultadoIA && isset($resultadoIA['datosExtraidos'])) {
-                DeferredSnomedProcessor::procesarDiferido(
-                    null,
-                    $resultadoIA,
-                    $categorias
-                );
-                Yii::info('SNOMED agregado a cola de procesamiento diferido', 'snomed-codificador');
-            }
-
-            if ($datosConSnomed) {
-                $datos = $datosConSnomed;
-            } elseif ($resultadoIA) {
+            if ($resultadoIA) {
                 $datos = $resultadoIA;
             } else {
                 $datos = [
@@ -222,9 +208,6 @@ HTML;
                 'tab_id' => $tabId,
                 'sugerencias' => $sugerencias,
                 'tiene_datos_faltantes' => $tieneDatosFaltantes,
-                'codigos_snomed' => $estadisticasSnomed,
-                'requiere_validacion_snomed' => $requiereValidacionSnomed,
-                'datos_con_snomed' => $datosConSnomed ? true : false,
                 'categorias' => $categorias,
             ];
 

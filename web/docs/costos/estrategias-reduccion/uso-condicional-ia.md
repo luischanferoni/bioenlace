@@ -5,6 +5,7 @@ Reglas, diccionarios y flujos guiados **antes** de llamar al modelo. Contextos: 
 ## Dónde está hoy
 
 - **`analisis-consulta` (captura clínica):** SymSpell + abreviaturas en CPU (`ProcesadorTextoMedico`), luego IA de análisis. SymSpell **no cubre bien** jerga clínica compleja; el ahorro fuerte ahí no es confiar en SymSpell sino en cuándo llamar a `analizar`.
+- **`encounter-codificacion-automatica`:** solo al **guardar** encounter con texto clínico; si `encounter_auto_codificacion_habilitada` es false, no invoca IA.
 - **Asistente chat (`asistente-preprocess`, `asistente-conversational`):** preprocess con IA; canal operativo con **top-K + reglas PHP** sobre `normalized_text` (**sin** 2.ª IA en el escenario central). Ver [matriz-casos-uso.md](./matriz-casos-uso.md).
 - **Onboarding / `intent-engine-classification`:** priorizar reglas + corpus de frases/keywords (consultas reales como fuente de sinónimos), no SymSpell de consulta completa.
 

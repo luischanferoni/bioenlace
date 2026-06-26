@@ -30,7 +30,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 - **§1 Conversación con el paciente:** 5 mensajes por encounter (~2.660 llamadas Vertex por mes)
 - **§2 Motivos de consulta:** 1 llamada a la IA por encounter; caso B (audio): COGS modela **~1 min de STT Groq por encounter** (400 min/mes) — ver [§ STT](#stt) si hay varios audios por chat.
 - **§3 Onboarding y día a día:** 400 llamadas a la IA por mes
-- **§4 Captura clínica (encounter):** **siempre** audio dictado por consulta — 400 min STT (1 dictado ≈ 1 min por encounter) + 400 llamadas a la IA (transcripción → análisis). Sin variante solo texto en el modelo de costos.
+- **§4 Captura clínica (encounter):** **siempre** audio dictado por consulta — 400 min STT (1 dictado ≈ 1 min por encounter) + **400** llamadas `analisis-consulta` + **400** llamadas `encounter-codificacion-automatica` al guardar. Sin variante solo texto en el modelo de costos.
 - **§5 Medios (fotos, etc.):** 2 fotos por encounter (Vision)
 - **§6 Videollamada:** 30 % de encounters; 12 min; 2 participantes
 
@@ -256,13 +256,14 @@ STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llam
 
 Cada consulta incluye **dictado en audio** del médico: no hay variante de costo «solo texto» ni «solo IA» — 1 e inferencia van **siempre** juntos.
 
-Flujo: audio dictado → STT → transcripción → **1 llamada a la IA** (`ConsultaProcesamientoService::analizar`, con **contexto clínico acotado** antes del dictado). Supuesto STT: **un dictado (~1 min) por consulta** si va a Groq — alineado con [§ STT](#stt).
+Flujo: audio dictado → STT → transcripción → **1 llamada** `analisis-consulta` (extracción a campos) → al guardar, **1 llamada** `encounter-codificacion-automatica` (CIE-10/SNOMED en `clinical_condition`). Supuesto STT: **un dictado (~1 min) por consulta** si va a Groq — alineado con [§ STT](#stt).
 
 | Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
 |----------|----------|------------------|------------------|-------------|
 | STT (Groq, ~1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
-| IA (análisis) | 400 x tarifa IA (~1.350 in + 500 out ref.) | **~$0.15** | **~$0.13** | **~$0.12** |
-| **Total §4 (IA + STT)** | | **~$0.43** | **~$0.41** | **~$0.40** |
+| IA (análisis `analisis-consulta`) | 400 x tarifa IA (~1.350 in + 500 out ref.) | **~$0.15** | **~$0.13** | **~$0.12** |
+| IA (codificación `encounter-codificacion-automatica`) | 400 x tarifa IA (~1.200 in + 400 out ref.) | **~$0.14** | **~$0.12** | **~$0.11** |
+| **Total §4 (IA + STT)** | | **~$0.57** | **~$0.53** | **~$0.51** |
 
 ---
 
@@ -299,7 +300,7 @@ Flujo: audio dictado → STT → transcripción → **1 llamada a la IA** (`Cons
 | Motivos — solo texto (§2 caso A) | ~$0.12 | ~$0.11 | ~$0.10 |
 | Motivos — siempre audio (§2 caso B, IA+STT) | ~$0.43 | ~$0.41 | ~$0.40 |
 | Agente onboarding (§3) | ~$0.14 | ~$0.12 | ~$0.11 |
-| Captura clínica (§4, **IA + STT**) | ~$0.43 | ~$0.41 | ~$0.40 |
+| Captura clínica (§4, **IA + STT**) | ~$0.57 | ~$0.53 | ~$0.51 |
 | **Total Apartado 1 — motivos solo texto** | **~$1.14** | **~$1.02** | **~$1.10** |
 | **Total Apartado 1 — motivos con audio** | **~$1.45** | **~$1.32** | **~$1.40** |
 
@@ -332,7 +333,7 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 | **Total con videollamada (Twilio)** — motivos audio | **~$12.97** | **~$12.84** | **~$12.92** |
 | **Total con videollamada (Daily ~$10)** — motivos audio | **~$11.45** | **~$11.32** | **~$11.40** |
 
-**Orden de magnitud uso intensivo (todo incluido, Twilio):** **~USD 12–13 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,3–1,5 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 + §3 + §4).
+**Orden de magnitud uso intensivo (todo incluido, Twilio):** **~USD 12–13 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,4–1,6 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 + §3 + §4).
 
 **Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 sigue siendo coste de proveedor de video salvo stack propio.
 

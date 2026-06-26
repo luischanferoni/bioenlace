@@ -20,6 +20,7 @@ Hoy un solo modelo para todos los contextos `IAManager`. Palanca futura: `vertex
 | `motivos-consulta-batch` | Flash Lite | Mantener |
 | **`motivos-consulta-insights`** | **2.5 Pro o 2.5 Flash** | **Subir** si se prioriza calidad de sugerencias clínicas (1×/consulta; impacto COGS acotado) |
 | `analisis-consulta` | Flash Lite | Mantener salvo piloto con muchos fallos de extracción |
+| `encounter-codificacion-automatica` | Flash Lite | Mantener; calidad crítica → piloto con 2.5 Flash antes de subir modelo global |
 
 **Subir modelo** solo donde el producto exige más razonamiento clínico; el resto del catálogo ya está en el tier económico de Gemini — ver tarifas en [costos-api § Gemini Flash](../costos-api.md#gemini-flash-tarifas-actuales-y-context-caching).
 

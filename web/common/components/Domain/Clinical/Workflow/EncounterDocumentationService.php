@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Workflow;
 
 use common\components\Domain\Clinical\Service\CarePlanService;
+use common\components\Domain\Clinical\Service\EncounterAutomaticCodingService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
 use common\components\Domain\Clinical\Service\ServiceRequestService;
@@ -128,6 +129,7 @@ class EncounterDocumentationService extends Component
             try {
                 $encounter = $this->resolveEncounter($encounterId, $body, $paciente, $configuracion);
                 $this->persistExtractedData($encounter, $configuracion, $datosExtraidos);
+                EncounterAutomaticCodingService::codeAndPersistForEncounter($encounter, $datosExtraidos, $configuracion);
 
                 $tx->commit();
 

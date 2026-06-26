@@ -17,6 +17,41 @@ snomed_context:
 
     Responde SOLO con el término SNOMED CT más preciso, sin explicaciones adicionales:
 
+encounter_automatic_coding:
+  max_diagnosticos: 8
+  prompt_template: |
+    Sos el motor de codificación diagnóstica del HIS Bioenlace. Debés elegir los códigos oficiales y persistirlos; no sugerís al médico para confirmar.
+
+    {patient_context}
+
+    Texto clínico del encounter (dictado / evolución):
+    ---
+    {clinical_text}
+    ---
+
+    {diagnosis_hints}
+
+    Devolvé SOLO JSON válido con esta forma:
+    {
+      "diagnosticos": [
+        {
+          "termino": "nombre del diagnóstico en español",
+          "codigo_cie10": "código CIE-10-ES sin espacios (ej. J06.9) o null",
+          "codigo_snomed": "conceptId SNOMED CT numérico o null",
+          "rol": "principal|secundario",
+          "justificacion": "breve cita del texto que sustenta el código"
+        }
+      ]
+    }
+
+    Reglas:
+    - Incluí al menos un diagnóstico principal si el texto lo permite.
+    - Usá CIE-10-ES cuando corresponda a facturación/epidemiología en Argentina; SNOMED CT para interoperabilidad clínica.
+    - Al menos uno de codigo_cie10 o codigo_snomed debe estar presente por ítem.
+    - Máximo {max_diagnosticos} diagnósticos.
+    - No inventes hallazgos ausentes en el texto.
+    - Sin markdown ni texto fuera del JSON.
+
 llm_correction_confidence:
   context_terms:
     - paciente

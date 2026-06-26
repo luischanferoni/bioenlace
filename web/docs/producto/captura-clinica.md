@@ -43,8 +43,8 @@ flowchart TB
 
 1. **Entrada:** audio transcrito o texto libre.
 2. **Configuración:** `EncounterCaptureContextService::validarPermisoAtencion(parent, parent_id)` + lookup de `EncounterDefinition` → categorías/pasos del workflow.
-3. **Análisis:** extracción de conceptos; lo no mapeado puede quedar para revisión.
-4. **Guardado:** `EncounterDocumentationService` persiste FHIR; no escribe en tabla legacy `consultas`.
+3. **Análisis:** extracción de conceptos a campos del workflow (el médico revisa el HTML antes de guardar).
+4. **Guardado:** `EncounterDocumentationService` persiste FHIR; **codificación CIE-10/SNOMED** vía `encounter-codificacion-automatica` (IA elige códigos y los guarda en `clinical_condition`).
 
 ## Mutación por contexto
 

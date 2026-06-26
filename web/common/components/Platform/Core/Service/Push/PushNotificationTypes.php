@@ -21,6 +21,9 @@ final class PushNotificationTypes
     /** Touchpoint de seguimiento post-consulta (pack cohorte). */
     public const CARE_FOLLOWUP_TOUCHPOINT = 'CARE_FOLLOWUP_TOUCHPOINT';
 
+    /** Alerta staff por rama de seguimiento cohorte (agente B01). */
+    public const CARE_FOLLOWUP_STAFF_ALERT = 'CARE_FOLLOWUP_STAFF_ALERT';
+
     /** Expediente legal PDF listo para descarga (staff solicitante). */
     public const LEGAL_RECORD_EXPORT_READY = 'LEGAL_RECORD_EXPORT_READY';
 

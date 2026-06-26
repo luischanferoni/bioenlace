@@ -1,127 +1,172 @@
 # Agentes autónomos — backlog de producto
 
-> **Estado:** idea a futuro — no comprometido en roadmap. Flujos operativos del HIS en los que **el sistema toma al menos una decisión** que hoy haría una persona (staff, paciente o coordinación), dentro de políticas auditables.
+> **Estado:** en implementación — ver [agentes-autonomos.md](../agentes-autonomos.md) y [plan](../planes/agentes-autonomos-implementacion.md). Ideas no comprometidas siguen en este archivo.
 
 ## De qué se trata
 
-Un **agente** (en este documento) es un flujo — disparado por evento, cron o cola — que incluye **al menos un paso donde el sistema elige** entre alternativas o fija un curso de acción **sin que una persona decida en ese momento**.
+Un flujo con **paso de decisión autónoma** es uno — disparado por evento, cron o cola — en el que el sistema decide **en lugar de una persona en ese momento**, bajo al menos una de estas condiciones:
 
-No importa si la decisión usa reglas de dominio, consultas a BD o IA: lo que define al agente es **quién decide en ese paso**. La implementación puede ser servicio de dominio + job + metadata; no requiere un motor de «agents» ni un LLM.
+| Condición | Qué significa | Ejemplo |
+|-----------|---------------|---------|
+| **Compromiso** | Elige un desenlace concreto y **actúa** | Auto-reserva con opt-out; lab crítico → tarea staff |
+| **Matices** | Factores contextuales que no bastan con una regla de un solo campo | Desempate entre slots válidos; priorizar async con triage + historial |
+| **Volumen o datos no estructurados** | Cruzar muchos datos del HIS a tiempo, o interpretar texto/señales no tabuladas | Lista de espera multi-criterio; clasificar mensaje inicial en NL |
 
-Ejemplos de **decisión del sistema** (sustituye criterio humano en ese paso):
+Si **ninguna** aplica → **proceso** o **asistencia**, no agente.
 
-| Tipo | Ejemplo | Sin agente (hoy suele hacerlo una persona) |
-|------|---------|---------------------------------------------|
-| **Selección** | Qué 2–3 slots ofrecer a un turno en resolución | El paciente recorre toda la agenda |
-| **Clasificación** | Resultado de lab crítico vs normal | Staff revisa bandeja manualmente |
-| **Enrutado** | Tras triage sin cupo, canal alternativo (tele/async) | Recepción orienta por teléfono |
-| **Priorización** | Orden de la bandeja async | Coordinador ordena «a ojo» |
-| **Emparejamiento** | Vincular lab al encounter más probable | Admisión arrastra el estudio |
-| **Acción condicionada** | Respuesta roja en touchpoint → alerta enfermería | Alguien lee formularios uno por uno |
+### Agente vs agente IA
 
-Ejemplos de **procesos que no son agentes** (aunque sean automáticos o proactivos):
+| | **Agente** | **Agente IA** |
+|---|------------|---------------|
+| **Qué es** | Autonomía del sistema **sin** que el paso decisorio use IA | Autonomía del sistema **mediante** IA en el paso que elige o interpreta |
+| **Cómo decide** | Reglas declaradas, scores en BD, políticas del efector, datos estructurados del paciente | Modelo de lenguaje u otro servicio IA sobre contenido del HIS (texto libre, síntesis) |
+| **Auditoría** | Regla, score, candidatos — reproducible | Prompt, contexto acotado, salida + humano en el loop si aplica |
+| **Costo / latencia** | Bajo; predecible | Mayor; planificar en catálogo de usos IA |
 
-- Push genérico «tu turno requiere reubicación» **sin** precalcular opciones (solo avisa; decide el paciente al abrir la app).
-- Recordatorio de turno a hora fija (T−48 h) sin elegir acción según contexto.
-- Secuencia fija de onboarding día 0 / día 3 (calendario, no decisión).
-- Export FHIR en cola (ejecución determinística, sin ramas de criterio).
-- Briefing que **solo muestra** datos ya existentes sin priorizar ni clasificar.
+**Regla práctica:** si la decisión se puede expresar en metadata + SQL + servicios de dominio **sin** llamar a IA en ese paso → **agente**. Si **quitar la IA cambia el desenlace** (no solo el redactado del mensaje) → **agente IA**.
 
-No es el asistente conversacional del chat: ese canal es **reactivo** (la persona escribe primero). Los agentes de este documento son **proactivos** y suelen ser event-driven; la diferencia clave respecto de un job cualquiera es la **decisión sustitutiva**.
+**Híbrido:** agente en el paso decisorio (p. ej. LOINC crítico) + IA solo para redactar el push → sigue siendo **agente**, no agente IA.
+
+**Ejemplo (agente, no agente IA):** el paciente activa «reubicar automáticamente si cancelan mi turno» y comparte **datos estructurados**: franjas horarias preferidas, días laborables, modalidad tele/presencial, mismo PES si es posible. Ante una cancelación del médico, el sistema **elige un slot y reserva** con score declarado sobre agenda + preferencias en BD. No hace falta IA: hace falta **más datos del paciente en el HIS** y política del efector.
+
+**Ejemplo (agente IA):** clasificar «me duele el pecho desde ayer» en banda y flujo, o **codificar CIE-10/SNOMED** desde la nota de evolución y persistir en `clinical_condition` — el paso decisorio **interpreta lenguaje natural** y **compromete** el código.
+
+```mermaid
+flowchart TD
+  S[Paso del flujo]
+  S --> D{¿Decisión autónoma?}
+  D -->|No| PR[Proceso / asistencia]
+  D -->|Sí| I{¿El paso decisorio llama a IA?}
+  I -->|No| AG[Agente]
+  I -->|Sí| AIG[Agente IA]
+  I -->|Regla decide; IA solo redacta| AG
+```
+
+La implementación de ambos es servicio de dominio + job + metadata; no requiere un motor de «agents» comercial.
+
+### Compromiso vs presentar opciones
+
+| Paso | ¿Paso agente? | Por qué |
+|------|---------------|---------|
+| Push + grilla; paciente elige y reserva | No | Compromiso lo hace el **paciente**; la grilla ya expone candidatos |
+| Push con 2–3 slots destacados | **No**, si es filtro trivial | Mismo PES, próximos huecos: atajo de UX |
+| Push con 2–3 slots tras **score multi-criterio** en BD | **Sí** — agente D1 | Reglas + preferencias estructuradas; paciente puede confirmar |
+| Sistema **reserva** un slot (opt-out) | **Sí** (compromiso) | Desenlace concreto sin elección previa del paciente |
+| Lista de espera: a **quién** contactar primero | **Sí** (matices + volumen) | Fairness, triage, antigüedad — datos HIS en cantidad |
+| Borrador de resumen o codificación diagnóstica desde texto clínico | **Sí** — agente **IA** D1/D2 | Interpretación de lenguaje natural; D03 persiste sin confirmación por código |
+| Orden sugerido en bandeja async | **Sí** si prioriza con SLA + triage + antigüedad a escala | **No** si es sort por fecha obvio |
+
+### Ejemplos por tipo de decisión
+
+| Tipo | Ejemplo | Hoy suele hacerlo una persona |
+|------|---------|-------------------------------|
+| **Reserva** | Elegir miércoles 9:00 con PES X y persistir (opt-out) | Secretaría agenda por teléfono |
+| **Juicio + datos** | Priorizar solicitud async entre 40 pendientes | Coordinador «a ojo» |
+| **Clasificación + acto** | Lab crítico → notificar y abrir tarea | Staff revisa bandeja |
+| **Interpretación NL** | «Me duele el pecho desde ayer» → banda + flujo (agente **IA**) | Recepción clasifica |
+| **Preferencias + agenda** | Cancelación médica → auto-reserva miércoles 9:00 (agente **reglas**) | Secretaría llama al paciente |
+| **Emparejamiento** | Vincular lab al encounter más probable | Admisión arrastra manualmente |
+| **Rama operativa** | Sin respuesta 72 h → cancelar vs escalar | Secretaría hace seguimiento |
+
+### Procesos que no son agentes
+
+- Recordatorio T−48 h sin rama según contexto.
+- Secuencia fija de onboarding o educación.
+- Export FHIR, pull LIS sin clasificar ni actuar.
+- FAQ con cita de metadata del efector.
+- Checklist determinista («falta TA») sin interpretar texto libre.
+
+No es el asistente conversacional del chat (reactivo). Los agentes de este documento son proactivos y event-driven.
 
 ## Cuándo conviene que el sistema decida
 
-Criterios para priorizar un flujo como agente (automatizar la decisión):
+Priorizar como agente cuando el paso reúne **compromiso, matices o volumen** y el efector puede auditar la política:
 
 | Criterio | Por qué conviene |
 |----------|------------------|
-| **Volumen y repetición** | Misma decisión cientos de veces al mes; el costo humano no escala (reoferta de turnos, post-lab, priorizar async). |
-| **Ventana de tiempo corta** | Si nadie decide en minutos, se pierde valor (hueco de agenda, SLA guardia). |
-| **Reglas explícitas y auditables** | La política del efector puede declararse (umbrales LOINC, mismo PES, banda triage); la decisión es defendible en auditoría. |
-| **Reversibilidad o confirmación posterior** | Reprogramar turno, borrador de resumen, sugerencia CIE-10: el humano puede corregir después. |
-| **Criterio acotado y verificable** | Disponibilidad de slots, match fecha+pedido, validación nomenclador: no requiere juicio clínico abierto. |
-| **Reduce carga de rol no clínico** | Secretaría, admisión, coordinación: liberan tiempo para excepciones y trato humano. |
+| **Volumen y repetición** | Misma decisión cientos de veces al mes; nadie la escala manualmente (post-lab, lista de espera, async). |
+| **Ventana de tiempo corta** | Hueco de agenda o SLA: no hay tiempo humano para cruzar datos. |
+| **Matices con datos estructurados** | Historial, triage, preferencias de agenda en BD — score en metadata |
+| **Matices en texto libre** | Motivos, NL, nota clínica — **agente IA** con contexto acotado del HIS |
+| **Reglas explícitas donde alcancen** | LOINC, PES, nomenclador: decisión defendible sin caja negra. |
+| **Reversibilidad u opt-out** | Auto-reserva, borradores, sugerencias: alguien puede corregir. |
+| **Libera rol no clínico** | Secretaría y coordinación para excepciones y trato humano. |
 
-Cuándo **no** conviene (o solo con humano en el loop):
+Cuándo **no** conviene (o solo humano / solo IA asistida sin autonomía):
 
 | Criterio | Por qué no |
 |----------|------------|
-| **Juicio clínico con responsabilidad legal** | Diagnóstico, prescripción, derivación a guardia por «sensación» de urgencia. |
-| **Alta ambigüedad + baja reversibilidad** | Casos sociales complejos, conflictos de cobertura, comunicación sensible. |
-| **Datos insuficientes en el sistema** | Decidir sin contexto empeora respecto de preguntar (ej. negociar obra social). |
-| **La decisión es puramente preferencia personal** | Horario «el que más me guste» sin política: mejor que elija el paciente en UI completa. |
-| **Solo formatear o entregar** | Resumen de KPIs, FAQ con cita de fuente: informar no es decidir. |
+| **Juicio clínico con responsabilidad legal (D4)** | Diagnóstico, prescripción, derivación guardia sin reglas verificables. |
+| **Datos que no están en el HIS** | Cobertura OS, situación social no registrada — preguntar o derivar. |
+| **Preferencia personal simple** | Horario «el que me quede mejor» sin política: grilla en app. |
+| **Regla obvia en un clic** | «Falta TA» en checklist; umbral SLA en tablero. |
+| **Comunicación sensible** | Mal pronóstico, abuso — solo humano. |
 
-La **IA** entra solo cuando las reglas no alcanzan para un subpaso concreto (redacción en lenguaje simple, desempate blando entre slots equivalentes, borrador de texto). **Alarmas clínicas y elegibilidad** siguen siendo reglas verificables, no LLM.
+**Agente IA** solo cuando el **paso que cambia el desenlace** usa IA. Redactar el texto del push después de una regla LOINC sigue siendo **agente**.
 
-## Grados de decisión (antes «niveles de autonomía»)
+Priorizar **agente** (reglas) antes que **agente IA** cuando alcanza: más barato, auditable y alineado a «más datos en el HIS, no más modelo».
 
-Cuánto decide el sistema y cuánto queda para la persona **después** del paso automático:
+## Grados de decisión
 
-| Grado | Nombre | Decisión del sistema | La persona después |
-|-------|--------|----------------------|-------------------|
-| **D0** | Clasificar / rankear | Ordena o etiqueta alternativas | Solo consume (briefing, cohortes, KPIs narrados) — **borde**: si no hay elección sustitutiva, no es agente |
-| **D1** | Acotar opciones | Elige qué mostrar (2–3 slots, canal sugerido, códigos CIE-10) | Elige entre lo propuesto |
-| **D2** | Actuar con política | Ejecuta si reglas + opt-in o plazo (reprogramar al tocar, alerta por respuesta roja, reintento FHIR) | Puede deshacer o no intervino |
-| **D3** | Orquestar ramas | Encadena decisiones (multicanal, lista de espera en cascada, dead-letter) | Supervisión por auditoría y política del efector |
+| Grado | Nombre | Qué hace el sistema | La persona después |
+|-------|--------|---------------------|-------------------|
+| **D1** | Juicio | Pesa matices o volumen HIS; propone o acota (slots scoreados, banda NL, orden async, borrador) | Confirma, elige entre lo propuesto o publica |
+| **D2** | Elegir y actuar | Desenlace concreto + persistencia (reserva, cancelación, alerta, vincular, bloquear) | Opt-out, reversión o no intervino |
+| **D3** | Orquestar ramas | Varias decisiones D1/D2 en el tiempo (multicanal, cascada lista de espera, reintentos) | Supervisión por auditoría |
 | **D4** | ~~Clínico sin humano~~ | Diagnóstico, prescripción, derivación guardia sola | **Fuera de alcance** |
+
+**No son agente:** atajos de UI sin juicio (grilla con filtro obvio), recordatorios fijos, FAQ, plantillas sin interpretar texto.
 
 ## Principios de diseño (alineado a arquitectura Bioenlace)
 
 - **Trigger** → servicio de dominio o job; no `if` en `ChatOrchestrator`.
 - **Política de la decisión** (umbrales, canales, plazos, elegibilidad) en **metadata** (`params`, YAML catálogo, futuro `autonomous_agents/*.yaml`).
 - **Handler** registrable pequeño (`agent_id → callable`) si hace falta extensión de rubro.
-- **Trazabilidad de la decisión**: qué alternativas había, qué regla aplicó, qué se ejecutó (`agent_run`, `agent_action` o equivalente de dominio).
+- **Trazabilidad del paso de decisión**: alternativas consideradas, score o regla aplicada, uso de IA si hubo, desenlace (`agent_run` o equivalente de dominio).
 - **Idempotencia** en acciones D2/D3.
 
 ## Relación con lo existente (parcial hoy)
 
-| Proceso actual | ¿Agente? | Decisión que falta o es manual |
-|----------------|----------|--------------------------------|
-| Turno `en resolución` + push | Parcial | Push avisa; **no** elige slots ni rankea |
-| Reubicar como paciente (flujo app) | No | Decide el paciente en UI |
-| Opciones vecinas (antes/después) | Parcial | Agenda fija el par; paciente elige |
-| Cierre ventana motivos / care-pack batch | No | Batch sin sustituir decisión operativa |
-| Captura encounter + `analisis-consulta` | Parcial (D1) | IA sugiere; médico confirma todo |
-| Pull LIS | No | Ingesta; sin clasificar ni notificar al paciente |
-| Export FHIR HC | No | Cola determinística |
+| Proceso actual | Tipo | Notas |
+|----------------|------|--------|
+| Turno `en resolución` + push | Proceso | Paciente reubica en app |
+| Reubicar como paciente | Proceso | Paciente elige y confirma |
+| Auto-reserva con preferencias (futuro) | **Agente** | Opt-in + franjas/modalidad en BD; score sin IA |
+| Shortlist scoreado en reoferta | **Agente** D1 | Reglas sobre HIS |
+| Captura encounter + `analisis-consulta` | **Agente IA** D1 | Texto libre; médico revisa extracción de campos |
+| Guardado encounter + `encounter-codificacion-automatica` | **Agente IA** D2 | IA elige CIE-10/SNOMED y persiste — **implementado** |
+| Touchpoint cohorte + `care-followup-branching` | **Agente** D2 | Reglas YAML → push staff / educativo — **implementado** |
+| Pull LIS / export FHIR | Proceso | Sin paso decisorio |
 
 ---
 
 ## Backlog resumido (prioridad sugerida)
 
-Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son automaciones útiles pero **no agentes** bajo esta definición.
+Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HIS). Los marcados *proceso* no cumplen los tres criterios en la práctica habitual.
 
-| ID | Flujo | Decisión del sistema | ¿Conviene? | Grado | Prioridad |
-|----|-------|----------------------|------------|-------|-----------|
-| A01 | Reoferta de turnos en resolución | Qué slots ofrecer y en qué orden | Sí — volumen, reglas PES/tele | D1→D2 | **P0** |
-| A02 | Negociación multicanal (reprogramar) | Canal siguiente; recalcular oferta | Sí — tiempo y abandono | D2–D3 | **P0** |
-| A03 | Relleno de huecos / lista de espera | A quién ofrecer el hueco y en qué orden | Sí — ventana minutos | D2–D3 | P1 |
-| A04 | Anti no-show predictivo | Recordatorio extra vs liberar slot | Condicional — política efector | D1–D2 | P1 |
-| A05 | Ruteo de demanda post-triage | Canal alternativo si no hay cupo | Sí — reduce abandono | D1 | P1 |
-| A06 | Cierre de loop (sin respuesta) | Cancelar vs mantener vs escalar humano | Sí — evita turnos huérfanos | D2 | P1 |
-| B01 | Touchpoints cohorte / plan | Respuesta → alerta / educación / solo log | Sí — reglas rojo/amarillo/verde | D2 | **P0** |
-| B02 | Seguimiento post-alta | Igual que B01 por plantilla | Sí | D2 | P1 |
-| B03 | Post-lab: clasificar y notificar | Crítico vs normal; notificar a quién | Sí — reglas LOINC | D1–D2 | **P0** |
-| B04 | Adherencia / refill crónica | Recordar vs ofrecer async renovación | Moderado — bajo riesgo | D1 | P1 |
-| C01 | Intake / completar MPI | Qué campo pedir según tipo de atención | Moderado — lógica de formulario | D1 | P1 |
-| C03 | Clasificar puerta de entrada | Banda y flujo destino | Sí — reglas + IA fallback acotado | D1 | P1 |
-| D01 | Huecos en nota + pedir completar | Qué falta según checklist servicio | Sí — determinista | D1 | P1 |
-| D02 | Resumen paciente al cerrar encounter | Borrador de texto (no publicar) | Sí — humano publica | D1 | P1 |
-| D03 | Sugerencia CIE-10 | Códigos candidatos | Sí — médico confirma cada uno | D1 | P2 |
-| E01 | Asociar lab a encounter | Match encounter | Sí — reglas fecha/pedido | D2 | P1 |
-| E02 | Reintentos integración (FHIR/RDI) | Requeue vs dead-letter vs refresh token | Sí — ops estándar | D3 | P1 |
-| E03 | Validar receta pre-envío RDI | Bloquear envío o no | Sí — validación dura | D2 | P2 |
-| F01 | Alerta SLA tablero guardia | Resaltar breach SLA | Débil — umbral fijo | D0–D1 | P1 |
-| F02 | Sugerencia de cama | Ranking camas | Sí — humano confirma | D1 | P2 |
-| F03 | Borrador epicrisis + checklist alta | Borrador + pendientes | Parcial — asistencia documental | D1 | P2 |
-| H01 | Bandeja async priorizada | Orden de atención sugerido | Sí — SLA y triage | D1 | P2 |
-| I02 | Guía «qué canal usar» | Un camino recomendado | Sí — árbol decisión | D1 | P1 |
-| — | *B05 educación post-consulta* | Secuencia fija de contenido | *Proceso, no agente* | — | P2 |
-| — | *C02 briefing pre-atención* | Solo agrega datos | *Proceso, no agente* | — | **P0** aparte |
-| — | *G01/G02 analytics* | Query o narrativa KPI | *Proceso, no agente* | — | P2–P3 |
-| — | *H02 FAQ staff* | Recuperación metadata | *Proceso, no agente* | — | P3 |
-| — | *I01 onboarding* | Calendario fijo | *Proceso, no agente* | — | P2 |
+| ID | Flujo | Tipo | Paso de decisión | Grado | Prioridad |
+|----|-------|------|------------------|-------|-----------|
+| A03 | Relleno de huecos / lista de espera | **Agente** | A quién ofrecer; cascada y reserva | D2–D3 | **P0** |
+| B03 | Post-lab: clasificar y notificar | **Agente** | Crítico vs normal; tarea staff (LOINC) | D2 | **P0** |
+| B01 | Touchpoints cohorte / plan | **Agente** | Respuesta estructurada → rama | D2 | ~~P0~~ **Hecho** |
+| A02 | Negociación multicanal + cierre | **Agente** | Canal, escalar, timeout | D3 | **P0** |
+| A01 | Auto-reserva en resolución (opt-out) | **Agente** | Slot por score + preferencias en BD | D2 | P1 |
+| A06 | Cierre de loop (sin respuesta) | **Agente** | Cancelar / mantener / escalar | D2 | P1 |
+| A04 | Anti no-show predictivo | **Agente** | Liberar slot vs recordatorio | D2 | P1 |
+| A05 | Ruteo post-triage sin cupo | **Agente** | Canal por triage + cupos (reglas) | D1–D2 | P1 |
+| H01 | Bandeja async priorizada | **Agente** | Orden por SLA + triage en BD | D1 | P1 |
+| E01 | Asociar lab a encounter | **Agente** | Match fecha/pedido/PES | D2 | P1 |
+| E02 | Reintentos integración (FHIR/RDI) | **Agente** | Requeue / dead-letter | D3 | P1 |
+| E03 | Validar receta pre-envío RDI | **Agente** | Bloquear envío | D2 | P2 |
+| B02 | Seguimiento post-alta | **Agente** | Igual que B01 | D2 | P1 |
+| F02 | Sugerencia de cama | **Agente** | Ranking por atributos de cama | D1 | P2 |
+| — | *Shortlist scoreado reoferta* | **Agente** | Top 2–3 por score | D1 | P1 |
+| C03 | Clasificar puerta de entrada (NL) | **Agente IA** | Banda desde texto libre | D1–D2 | P1 |
+| D02 | Resumen paciente al cerrar encounter | **Agente IA** | Borrador desde nota HC | D1 | P1 |
+| D03 | Codificación automática CIE-10/SNOMED | **Agente IA** | IA elige códigos y el HIS persiste | D2 | ~~P2~~ **Hecho** |
+| — | *Reoferta: push + grilla* | Proceso | Paciente reserva | — | **P0** |
+| — | *A05 / I02 solo link* | Proceso | Paciente elige | — | varias |
+| — | *B04, C01, F01, F03, B05, C02, G*, H02, I01* | Proceso / asistencia | Ver fichas | — | varias |
 
 ---
 
@@ -129,22 +174,53 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### A01 — Reoferta de turnos en resolución
 
+> **Clasificación:** grilla + push = **proceso** (P0). **Shortlist scoreado** = **agente** D1 (P1). **Auto-reserva con preferencias** = **agente** D2 (P1) — ver ejemplo abajo.
+
+#### Proceso (P0 UX) — push + reubicación en app
+
 | Campo | Valor |
 |-------|--------|
-| **Decisión del sistema** | Filtrar candidatos de slot y elegir cuáles mostrar (top 2–3) según política PES, `urgency_band`, tele |
-| **Grado** | D1 (acota opciones) → D2 (reprograma si el paciente confirma en app/push) |
-| **¿Por qué conviene?** | Alto volumen en licencias/cambios de agenda; hoy el paciente recorre toda la grilla; reglas auditables |
-| **Trigger** | `Turno` pasa a `en resolución` (cambio agenda efector) |
-| **Política** | Mismo PES si posible; respetar `urgency_band`; preferir tele si `teleconsulta_elegibilidad` |
-| **Efecto** | Push/in-app con 2–3 slots rankeados; draft de reprogramación |
-| **Métricas** | % reubicados &lt; 48 h, tiempo medio en resolución, abandono |
-| **Base hoy** | [turnos.md](../turnos.md) paso 6 |
+| **Qué hace** | Push `TURNO_REQUIERE_REUBICACION`; paciente abre flujo `reubicar-como-paciente` |
+| **Agente** | No — el paciente compromete al confirmar |
+| **Base hoy** | [turnos.md](../turnos.md) paso 6, `TurnoResolucionService` |
 
-**Casos de uso**
+#### Paso agente (P1) — shortlist scoreado (D1)
 
-1. **Agenda caída por licencia:** La Dra. García cancela el martes. Juan tenía control de HTA a las 10:00. El agente ofrece martes 15:30 con la Dra. García (reapertura parcial) o miércoles 9:00 con otro clínico del mismo servicio. Juan toca «Confirmar miércoles» y el turno se reprograma solo.
-2. **Misma modalidad remota:** María tenía teleconsulta dermatología. El efector mueve el bloque virtual al jueves. El agente solo ofrece slots `teleconsulta` en la misma semana; si no hay, explica presencial como alternativa con enlace a elegir.
-3. **Representante de menor:** El tutor de un paciente pediátrico recibe la reoferta en su app «A cargo de»; acepta un slot fuera de horario escolar porque el ranking priorizó franja 16–18 h.
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | **Agente** — score en metadata + BD |
+| **Paso de decisión** | Cruzar candidatos (PES, tele, `urgency_band`, preferencias **estructuradas**) y proponer top 2–3 |
+| **Datos extra del paciente** | Franjas horarias, días laborables, modalidad — catálogo en perfil, no texto libre |
+| **IA** | No en el paso decisorio |
+
+#### Agente (P1) — auto-reserva con preferencias (D2)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | **Agente** |
+| **Paso de decisión** | Elegir **un** slot y **persistir** reprogramación |
+| **Consentimiento** | Opt-in del paciente: «Reubicar automáticamente si cancelan mi turno» + preferencias en perfil |
+| **Datos en BD (ejemplos)** | Franjas preferidas, días sin atención (trabajo/estudio), modalidad tele/presencial, mismo PES prioritario |
+| **Política** | Score declarado en metadata del efector; sin candidato unívoco → no reserva (grilla o shortlist) |
+| **Grado** | D2 — opt-out: «Te movimos al miércoles 9:00; cambiá si no podés» |
+| **IA** | No — la calidad depende de **capturar preferencias estructuradas**, no de un modelo |
+| **Trigger** | `Turno` en resolución + `auto_reserva_resolucion: true` en política efector |
+| **Métricas** | % rechazos opt-out, tiempo en resolución, abandono |
+
+**Casos de uso (agente — auto-reserva)**
+
+1. **Preferencias cargadas:** María marcó «solo tardes» y tele. Cancelan su dermatólogo; el sistema reserva el jueves 17:00 tele con otro del mismo servicio y avisa con opt-out.
+2. **Sin candidato:** Ningún slot cumple franjas + PES; **no** reserva — push + grilla o shortlist.
+3. **Licencia masiva:** Mismo score para cientos de turnos; auditoría por `regla_id` + candidatos descartados.
+
+**Casos de uso (agente — shortlist D1)**
+
+1. Muchos PES y fechas; score en BD; push con 3 opciones — paciente confirma una.
+
+**Casos de uso (proceso UX)**
+
+1. Push + grilla completa; paciente elige como hoy.
+2. Push con tres botones; paciente toca uno — **decisión del paciente**, el sistema solo ejecuta.
 
 ---
 
@@ -152,17 +228,18 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D2–D3 |
-| **Trigger** | Sin respuesta a push A01 tras N horas; o paciente responde «no puedo» |
+| **Decisión del sistema** | Qué canal usar después; escalar a administración; rama tras timeout (con A06) |
+| **Grado** | D3 |
+| **Trigger** | Sin respuesta tras push de reubicación; o paciente responde «no puedo» |
 | **Política** | Orden de canales: push → WhatsApp/SMS → email; tope de intentos; horario legal |
-| **Efecto** | Hilo estructurado (no chat libre): CONFIRMAR / REAGENDAR / CANCELAR; IA solo redacta |
-| **Métricas** | Tasa respuesta por canal, costo mensajería, conversión a slot confirmado |
+| **Efecto** | Hilo estructurado: CONFIRMAR / REAGENDAR / CANCELAR; la **reserva** sigue siendo del paciente salvo auto-reserva A01 |
+| **Métricas** | Tasa respuesta por canal, costo mensajería, conversión a turno confirmado |
 
 **Casos de uso**
 
-1. **Push ignorado:** Pedro no abre la app en 24 h. El agente envía WhatsApp con los mismos 3 slots y botones. Pedro responde «el jueves no». El agente recalcula y ofrece viernes/lunes sin intervención de secretaría.
-2. **Idioma simple:** Adulto mayor con baja digitalidad. SMS corto con un solo link a página web mínima (sin login si token firmado) para confirmar el único slot viable.
-3. **Conflicto de obra social:** El paciente indica «mi OS no atiende ese día». El agente no negocia cobertura; deriva a bandeja administrativa con resumen y mantiene slot tentativo 48 h.
+1. **Push ignorado:** Pedro no abre la app en 24 h. El sistema envía WhatsApp (siguiente canal en política). Pedro responde «el jueves no» — se deriva a grilla o a coordinación; **no** es agente recalcular tres slots para mostrar.
+2. **Idioma simple:** SMS con link a página mínima (token firmado) para que **Pedro** confirme el horario que elija.
+3. **Conflicto de obra social:** El paciente indica «mi OS no atiende ese día». El sistema deriva a bandeja administrativa con resumen (decisión de escalamiento).
 
 ---
 
@@ -170,15 +247,15 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
+| **Decisión del sistema** | Qué paciente de la lista de espera contactar primero; reservar al confirmar en cascada |
 | **Grado** | D2–D3 |
-| **Trigger** | Cancelación &lt; 24 h antes; slot liberado |
 | **Política** | Cola por score: banda triage, crónico, distancia lead time, fairness (no saltear urgencias) |
 | **Efecto** | Oferta en cascada al primer «sí»; actualiza turno y notifica al que perdió la carrera |
 | **Métricas** | % huecos rellenados, lead time reducido, quejas por «me cortaron» |
 
 **Casos de uso**
 
-1. **Cancelación de último momento:** Un paciente cancela a las 8:00 un turno de las 9:00. El agente ofrece el hueco a tres pacientes en lista de espera de cardiología; la primera que confirma en 15 minutos lo toma.
+1. **Cancelación de último momento:** Cancelación 8:00, turno 9:00. El sistema elige el primer candidato en lista de espera (score en BD), le ofrece el hueco; si no confirma en 15 min, pasa al siguiente hasta reservar o agotar cola.
 2. **Sobreturno ético:** Lista de espera solo para controles crónicos banda C; el agente no ofrece huecos de urgencia banda A a la lista (regla dura).
 3. **Profesional con agenda hueca:** Viernes tarde con 2 slots vacíos; el agente agrupa ofertas a pacientes con `control_cronico` del servicio que llevan &gt; 90 días sin control.
 
@@ -188,7 +265,8 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1–D2 |
+| **Decisión del sistema** | Liberar slot a lista de espera si no confirma (rama D2, política estricta) |
+| **Grado** | D2 |
 | **Trigger** | T−48 h, T−2 h (configurable); score de riesgo alto |
 | **Política** | Modelo simple primero: historial no-show + distancia + primera vez; luego ML |
 | **Efecto** | Recordatorio extra, pedido confirmación explícita, oferta reprogramar antes del día |
@@ -205,9 +283,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### A05 — Ruteo de demanda post-triage
 
+> **Clasificación:** **D1** si pondera canal según triage + cupos en BD y recomienda; **D2** si crea `SOLICITUD_ASYNC` o turno alternativo sin elección; **proceso** si solo mensaje + link.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
+| **Agente** | D1–D2 — matices (triage, elegibilidad) + compromiso si abre flujo |
 | **Trigger** | Fin de triage reserva sin banda A; sin cupo en servicio elegido |
 | **Política** | `TeleconsultaElegibilidadService`, async `SOLICITUD_ASYNC`, primaria |
 | **Efecto** | Mensaje: «No hay dermatólogo en 30 días; te ofrecemos…» + deep link al flujo correcto |
@@ -225,8 +305,9 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
+| **Decisión del sistema** | Cancelar turno, mantener en cola o escalar a coordinación humana |
 | **Grado** | D2 |
-| **Trigger** | Timeout tras A01/A02 (ej. 72 h) |
+| **Trigger** | Timeout tras reoferta / multicanal (A02, ej. 72 h) |
 | **Política** | Cancelar vs mantener en resolución; liberar cupo; notificar efector |
 | **Efecto** | Estado terminal auditado; paciente informado |
 | **Métricas** | Turnos huérfanos, reclamos |
@@ -242,6 +323,8 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 ## Familia B — Seguimiento y continuidad
 
 ### B01 — Touchpoints cohorte / plan de tratamiento
+
+> **Estado:** **implementado (v1)** — [agentes-autonomos.md](../agentes-autonomos.md). Rama por reglas en `care-followup-branching.yaml`; auditoría `agent_run`.
 
 | Campo | Valor |
 |-------|--------|
@@ -281,7 +364,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1–D2 |
+| **Tipo** | **Agente** — LOINC y umbrales; IA opcional solo para redactar el push |
 | **Trigger** | Ingesta FHIR `DiagnosticReport` / analitos |
 | **Política** | Reglas por LOINC + umbrales; IA solo redacta mensaje |
 | **Efecto** | Push paciente; flag staff si crítico |
@@ -297,9 +380,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### B04 — Adherencia y refill crónica
 
+> **Clasificación:** recordatorio y link; no compromete renovación — **proceso**.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1–D2 |
+| **Agente** | No — proceso |
 | **Trigger** | Receta con duración conocida; T−7 días fin tratamiento |
 | **Política** | Solo crónicos en plan; no sustitutos controlados sin médico |
 | **Efecto** | Recordatorio + link async renovación o turno |
@@ -309,7 +394,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 1. **Losartán 30 días:** Día 23: «Te quedan ~7 días; ¿necesitás renovar?» → flujo async si política del efector lo permite.
 2. **Insulina:** No ofrece renovación automática; solo recordatorio de turno control endocrino.
-3. **Farmacia sin stock:** Paciente responde «no conseguí» → agente registra barrera adherencia y notifica coordinación (no cambia dosis).
+3. **Farmacia sin stock:** Paciente responde «no conseguí» → se registra barrera de adherencia y se notifica coordinación (no cambia dosis).
 
 ---
 
@@ -319,7 +404,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
+| **Agente** | No — proceso |
 | **Trigger** | T+N según diagnóstico orientativo / servicio |
 | **Política** | Contenido aprobado por protocolo; IA adapta redacción |
 | **Efecto** | Secuencia educativa en app |
@@ -337,9 +422,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### C01 — Intake / completar MPI
 
+> **Clasificación:** orden de campos en formulario — **proceso**.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1–D2 |
+| **Agente** | No — proceso |
 | **Trigger** | Registro incompleto; pre-turno; pre-video |
 | **Política** | Campos obligatorios por tipo de atención |
 | **Efecto** | Mensajes progresivos hasta completar |
@@ -358,7 +445,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D0 |
+| **Agente** | No — asistencia |
 | **Trigger** | T−15 min turno o al abrir «Pacientes del día» |
 | **Política** | `PatientAiContextBuilder` perfiles `motivos` / `encounter` |
 | **Efecto** | Panel: motivos resumidos, labs 90 días, meds, alergias, banda triage |
@@ -374,9 +461,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### C03 — Clasificar puerta de entrada
 
+> **Tipo:** **Agente IA** cuando el mensaje inicial es texto libre. **Agente** si el flujo solo consume triage estructurado (wizard con bandas fijas).
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
+| **Tipo** | Agente IA (NL) / Agente (solo árbol estructurado) |
 | **Trigger** | Mensaje inicial asistente / WhatsApp futuro / IVR |
 | **Política** | Árbol + IA fallback; banda A → guardia |
 | **Efecto** | Deep link al flujo correcto |
@@ -393,9 +482,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### D01 — Huecos en nota + pedir completar
 
+> **Clasificación:** asistencia (checklist); el médico completa o dicta — no agente.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
+| **Agente** | No — proceso |
 | **Trigger** | Post `analisis-consulta`; checklist por `encounter_class` |
 | **Política** | Campos obligatorios por servicio |
 | **Efecto** | «Falta TA y peso» → prompt voz/texto antes de firmar |
@@ -411,9 +502,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### D02 — Resumen paciente al cerrar encounter
 
+> **Tipo:** **Agente IA** — interpreta y redacta desde texto del encounter; publica el humano.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 (borrador) → humano publica |
+| **Tipo** | Agente IA |
 | **Trigger** | Encounter `finished` |
 | **Política** | Lenguaje simple; sin jerga; extiende resumen actual |
 | **Efecto** | Borrador en `resumen-atencion-paciente` |
@@ -423,24 +516,33 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 1. **Consulta aguda:** «Tomá ibuprofeno 3 días; volvé si fiebre &gt; 38» + link receta PDF.
 2. **Estudios pedidos:** Explica en criollo qué es la resonancia y ayuno requerido.
-3. **Derivación:** «Te derivamos a cardiología; en 48 h te llegará turno» (si A01 ya programó).
+3. **Derivación:** «Te derivamos a cardiología; reservá turno desde la app cuando te llegue el aviso».
 
 ---
 
-### D03 — Sugerencia CIE-10 con confirmación
+### D03 — Codificación automática CIE-10 / SNOMED
+
+> **Estado:** **implementado** — [captura-clinica.md](../captura-clinica.md), [agentes-autonomos.md](../agentes-autonomos.md).
+
+> **Tipo:** **Agente IA** D2 — la IA **elige** códigos desde texto libre y el backend **persiste** en `clinical_condition`; no hay UI de sugerencias para confirmar código a código.
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
-| **Trigger** | Cierre documentación; texto libre suficiente |
-| **Política** | Médico confirma cada código; auto solo baja ambigüedad |
-| **Efecto** | Lista sugerida con justificación |
+| **Tipo** | Agente IA |
+| **Grado** | D2 — compromiso (código guardado) |
+| **Trigger** | `EncounterDocumentationService::guardar` tras persistir datos extraídos |
+| **Contexto IA** | `encounter-codificacion-automatica` (`EncounterAutomaticCodingService`) |
+| **Política** | `encounter_auto_codificacion_habilitada` (params); `verification_status` = PROVISIONAL |
+| **Efecto** | `Condition` con `code` + `code_system` (CIE-10 y/o SNOMED) |
+| **Base hoy** | Prompt en `clinical-text-ia.yaml`; integrado en guardar encounter |
 
 **Casos de uso**
 
-1. **IVAS + sinusitis:** Sugiere J01.9 con cita del párrafo evaluación; médico un clic confirma.
-2. **Comorbilidades:** Sugiere secundarios para estadística hospitalaria; médico descarta.
-3. **Guardia:** Prioriza código motivo consulta para tablero epidemiológico.
+1. **IVAS + sinusitis:** Tras guardar evolución, el sistema codifica J01.9 (+ SNOMED si aplica) sin paso extra del médico.
+2. **Comorbilidades:** Secundarios para estadística hospitalaria codificados en el mismo guardado.
+3. **Guardia:** Código motivo consulta para tablero epidemiológico al cerrar documentación.
+
+**No es D03:** `motivos-consulta-insights` (hipótesis orientativas pre-consulta, sin persistir como Condition).
 
 ---
 
@@ -458,7 +560,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 **Casos de uso**
 
 1. **Pedido en consulta lunes:** Resultado miércoles → se adjunta al encounter del lunes automáticamente.
-2. **Ambigüedad:** Dos encounters misma semana → D1: staff elige en bandeja «pendientes vincular».
+2. **Ambigüedad:** Dos encounters misma semana → staff elige en bandeja «pendientes vincular» (no auto-vincular).
 3. **Sin encounter:** Guarda huérfano y B03 notifica igual al paciente.
 
 ---
@@ -502,9 +604,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### F01 — Alerta SLA tablero guardia
 
+> **Clasificación:** umbral visual — **asistencia**, no agente.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D0–D1 |
+| **Agente** | No — asistencia |
 | **Trigger** | Tiempo espera &gt; SLA por triage level |
 | **Política** | Umbrales por efector; sonido futuro |
 | **Efecto** | Highlight + sugerencia «atender box 3» |
@@ -520,9 +624,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### F02 — Sugerencia de cama
 
+> **Clasificación:** paso agente **D1** — matices (aislamiento, O2, especialidad) sobre mapa de camas; enfermería confirma.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
+| **Agente** | D1 — matices + volumen |
 | **Trigger** | Solicitud ingreso desde guardia |
 | **Política** | Sexo, aislamiento, especialidad, oxígeno |
 | **Efecto** | Ranking camas; humano confirma |
@@ -538,9 +644,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### F03 — Borrador epicrisis + checklist alta
 
+> **Clasificación:** borrador y checklist; cierra el humano — **asistencia**.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
+| **Agente** | No — proceso |
 | **Trigger** | Inicio proceso alta |
 | **Política** | Plantilla ABM epicrisis |
 | **Efecto** | Borrador desde encounters + labs; checklist pendientes |
@@ -549,7 +657,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 1. **Alta médica:** Epicrisis 80 % completa; falta firma y receta egreso.
 2. **Alta social:** Checklist «¿tiene domicilio? ¿cuidador?» antes de cerrar.
-3. **Turno control:** Agente propone fecha + dispara A01 si hay slot.
+3. **Turno control:** Checklist sugiere pedir control; el staff o paciente reserva (proceso normal de turnos).
 
 ---
 
@@ -561,7 +669,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D0 |
+| **Agente** | No — asistencia |
 | **Trigger** | Job nocturno |
 | **Política** | Queries + reglas (no LLM para elegibilidad) |
 | **Efecto** | Lista para campañas / care-packs |
@@ -580,7 +688,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D0 |
+| **Agente** | No — asistencia |
 | **Trigger** | Fin de mes |
 | **Política** | Solo datos agregados; sin PHI en prompt |
 | **Efecto** | PDF «En marzo bajó no-show 2 pp; subió tele 15 %» |
@@ -597,9 +705,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### H01 — Bandeja async priorizada
 
+> **Clasificación:** paso agente **D1** — orden entre muchas solicitudes con SLA, triage e historial en BD.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
+| **Agente** | D1 — volumen + matices |
 | **Trigger** | Nueva `SOLICITUD_ASYNC` o mensaje paciente |
 | **Política** | SLA, banda triage, antigüedad |
 | **Efecto** | Orden sugerido en bandeja staff |
@@ -619,7 +729,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D0 |
+| **Agente** | No — asistencia |
 | **Trigger** | Pregunta staff en asistente |
 | **Política** | Solo metadata efector; sin inventar clínica |
 | **Efecto** | Respuesta con cita de fuente interna |
@@ -640,7 +750,7 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
+| **Agente** | No — proceso |
 | **Trigger** | Registro exitoso `RegistroService` |
 | **Política** | Secuencia 3 días |
 | **Efecto** | Tutoriales, completar perfil, primer uso asistente |
@@ -655,9 +765,11 @@ Solo ítems con **decisión del sistema** relevante. Los marcados *proceso* son 
 
 ### I02 — Guía «qué canal usar»
 
+> **Clasificación:** recomendación + link; el paciente sigue el flujo — no agente salvo que el sistema **inicie** el canal sin elección.
+
 | Campo | Valor |
 |-------|--------|
-| **Grado** | D1 |
+| **Agente** | No — proceso |
 | **Trigger** | «Necesito atención» sin claridad |
 | **Política** | Árbol decisión: guardia / turno / async / admin |
 | **Efecto** | Un solo camino recomendado con explicación |
@@ -692,7 +804,7 @@ flowchart LR
   EV[Evento dominio]
   POL[Política YAML / params]
   RUN[Job o cola]
-  DEC[Decisión reglas / IA opcional]
+  DEC[Decisión: reglas / IA / compromiso]
   DOM[Servicios dominio]
   AUD[Auditoría decisión]
   EV --> POL --> RUN
@@ -700,13 +812,17 @@ flowchart LR
   DEC --> AUD
 ```
 
-1. **Fase 0:** Esquema de auditoría de decisiones (`agent_run` o equivalente por dominio); política de reoferta en metadata sobre `TurnoResolucionService`.
-2. **Fase 1:** A01 + A02 + B03 (decisiones acotadas, datos ya existen).
-3. **Fase 2:** B01 + A04 (+ C02 briefing como proceso aparte, no agente).
-4. **Fase 3:** C03 + I02 + H01.
-5. **Fase 4:** F*, E*, procesos G* / onboarding si se priorizan.
+1. **Fase 0:** Preferencias de agenda en perfil paciente + política score; auditoría agente vs agente IA.
+2. **Fase 1:** Agentes P0 restantes (A03, B03, A02) — sin IA en paso decisorio. ~~B01~~ hecho.
+3. **Fase 2:** A01 auto-reserva + shortlist; H01; A04/A06.
+4. **Fase 3:** Agentes E01/E02; C03/D02 como **agente IA** donde aplique NL.
+5. **Fase 4:** D03 (codificación automática), F02; redacción IA en pushes ya decididos por regla.
 
-Contextos IA opcionales (para `catalogo-usos-ia.md` cuando existan): `agent-reoffer-slots`, `agent-patient-message`, `agent-lab-notify`.
+Contextos **agente IA** (paso decisorio usa modelo): clasificación NL puerta de entrada, borrador resumen paciente, `encounter-codificacion-automatica`, `analisis-consulta`.
+
+Contextos **agente** (solo redacción opcional con IA): texto del push post-LOINC, mensajes de touchpoint — la rama ya la fijó la regla.
+
+Registrar en `catalogo-usos-ia.md` solo los **agente IA** y los subpasos de redacción si se facturan aparte.
 
 ---
 

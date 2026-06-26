@@ -114,6 +114,17 @@ Prompt: categorías del servicio + **contexto clínico acotado** + texto de cons
 | Explícito | Bloque por **servicio/configuración** si ≥2k tokens |
 | Caché app | Baja (cada dictado distinto) |
 
+### Codificación automática (`encounter-codificacion-automatica`)
+
+Prompt: `clinical-text-ia.yaml` + texto del encounter + contexto paciente (`EncounterAutomaticCodingService`).
+
+| Estrategia | Aplica |
+|------------|--------|
+| Implícito | Medio (~**25 %** favorable): instrucciones estables al inicio; texto clínico variable |
+| Explícito | Candidato si el bloque de reglas CIE-10/SNOMED crece y se repite |
+| Caché app | Baja (cada evolución distinta) |
+| **Uso condicional** | Solo al **guardar**; si no hay texto clínico suficiente, no invoca IA |
+
 ---
 
 ## Caso 4 — Onboarding / tareas del día
@@ -132,7 +143,7 @@ Prompt: categorías del servicio + **contexto clínico acotado** + texto de cons
 |------|-------------------------|------------------------|-------------------------|
 | 1 Chat paciente | `asistente-preprocess`, `asistente-conversational` | Preprocess + 2.ª IA conversacional con **historial acotado** | ~**40 %** preprocess · ~**40 %** conversacional — [costos-api §1](../costos-api.md#1-conversación-con-el-paciente) |
 | 2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights` (+ STT) | 1 lote + idempotencia; **subir modelo** solo en insights — [proveedor-modelo-tokens](./proveedor-modelo-tokens.md) | ~**25 %** favorable |
-| 3 Médico | `analisis-consulta` (+ STT) | SymSpell + 1 analizar | ~**25 %** favorable |
+| 3 Médico | `analisis-consulta`, `encounter-codificacion-automatica` (+ STT) | SymSpell + analizar + codificar al guardar | ~**25 %** favorable |
 | 4 Onboarding | mismo asistente | Reglas / FAQ | No priorizar |
 
 **Calibración:** `ia_usage_tracking_habilitado`, `vertex_context_cache_simulado` y `por_contexto` en `AICostTracker` — ver [monitoreo.md](./monitoreo.md).

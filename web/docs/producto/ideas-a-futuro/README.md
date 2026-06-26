@@ -4,13 +4,15 @@ Visión de producto **no comprometida** en el roadmap actual. Sirve para captura
 
 | Documento | Tema |
 |-----------|------|
-| [agentes-autonomos-backlog.md](./agentes-autonomos-backlog.md) | Backlog de agentes proactivos (turnos, seguimiento, lab, documentación…) con casos de uso |
+| [agentes-autonomos-backlog.md](./agentes-autonomos-backlog.md) | Backlog histórico y casos de uso |
+| [../agentes-autonomos.md](../agentes-autonomos.md) | **Agentes en producción o en curso** |
+| [../planes/agentes-autonomos-implementacion.md](../planes/agentes-autonomos-implementacion.md) | Plan por fases |
 | [contexto-asistencia-dinamica.md](./contexto-asistencia-dinamica.md) | Contexto clínico amplio y preguntas generadas por IA al asistir |
 | [seguimiento-post-consulta-educacion.md](./seguimiento-post-consulta-educacion.md) | Seguimiento diferido, carga de evolución e instrucción al paciente |
 
 ## Relación con el resto de `producto/`
 
-Los archivos del directorio padre describen **qué hace hoy** Bioenlace de punta a punta. Esta carpeta acumula **hipótesis y extensiones**; cuando una idea se concrete, su historia debería migrar a un documento propio en `producto/` o a arquitectura/QA según corresponda.
+Los archivos del directorio padre describen **qué hace hoy** Bioenlace de punta a punta. Esta carpeta acumula **hipótesis y extensiones**; cuando una idea se concrete, migrar a [agentes-autonomos.md](../agentes-autonomos.md) u otro doc de `producto/` y marcarla en el backlog.
 
 ## Documentos relacionados (estado actual)
 

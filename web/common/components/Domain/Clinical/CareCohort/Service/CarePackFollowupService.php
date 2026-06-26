@@ -136,7 +136,7 @@ final class CarePackFollowupService
             );
         }
 
-        $this->evaluateWorseningSignal($queue, $answers);
+        (new CareFollowupBranchingAgent())->runAfterSubmit($queue, $answers);
 
         return [
             'kind' => 'ui_submit_result',
@@ -284,30 +284,6 @@ final class CarePackFollowupService
             case 'evolution_short':
             default:
                 return ['sintomas_evolucion', 'comparacion'];
-        }
-    }
-
-    /**
-     * @param array<string, mixed> $answers
-     */
-    private function evaluateWorseningSignal(CareFollowupTouchpointQueue $queue, array $answers): void
-    {
-        $worsening = false;
-        $comparacion = strtolower(trim((string) ($answers['comparacion'] ?? '')));
-        if ($comparacion === 'peor') {
-            $worsening = true;
-        }
-        $intensidad = (int) ($answers['intensidad'] ?? 0);
-        if ($intensidad >= 8) {
-            $worsening = true;
-        }
-
-        if ($worsening) {
-            Yii::info(
-                'Care followup worsening signal encounter=' . (int) $queue->encounter_id
-                . ' touchpoint=' . (int) $queue->id,
-                'care-cohort-followup'
-            );
         }
     }
 }

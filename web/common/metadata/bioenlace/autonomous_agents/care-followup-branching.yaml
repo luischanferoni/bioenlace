@@ -1,0 +1,35 @@
+# Rama tras respuesta de touchpoint de cohorte (agente B01).
+# {@see CareFollowupBranchingAgent}
+version: 1
+agent_id: care-followup-branching
+
+rules:
+  - id: worsening_evolution
+    form_kinds: [evolution_short]
+    when:
+      field: comparacion
+      equals: peor
+    action: notify_staff
+    staff:
+      title: "Seguimiento: posible empeoramiento"
+      body_template: "El paciente reportó señales de empeoramiento en «{touchpoint_title}». Revisá el seguimiento post-consulta."
+
+  - id: poor_adherence
+    form_kinds: [adherence]
+    when:
+      field: tomo_medicacion
+      equals: "no"
+    action: educational_push
+    patient:
+      title: "Recordatorio de medicación"
+      body: "Es importante continuar el tratamiento indicado. Si tenés dificultades o efectos adversos, contactá a tu equipo de salud."
+
+  - id: high_symptom_intensity
+    form_kinds: [symptoms]
+    when:
+      field: intensidad
+      gte: 8
+    action: notify_staff
+    staff:
+      title: "Seguimiento: síntomas intensos"
+      body_template: "El paciente indicó intensidad alta ({intensidad}/10) en «{touchpoint_title}»."

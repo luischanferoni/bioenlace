@@ -186,9 +186,17 @@ final class MedicoMedGeneralEfectorSeedService
         }
 
         return [
-            'documento' => '39999' . str_pad((string) $idEfector, 3, '0', STR_PAD_LEFT),
+            'documento' => self::documentoReservadoParaEfector($idEfector),
             'username' => 'medico_med_general_' . $idEfector,
         ];
+    }
+
+    /**
+     * Documento reservado de desarrollo (máx. 8 caracteres — regla Persona.documento).
+     */
+    public static function documentoReservadoParaEfector(int $idEfector): string
+    {
+        return '39' . str_pad((string) ($idEfector % 1000000), 6, '0', STR_PAD_LEFT);
     }
 
     /**

@@ -93,6 +93,22 @@ class TurnoNotificacionController extends Controller
                         $row->save(false);
                         continue;
                     }
+                } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_ANTINOSHOW_CHECKPOINT) {
+                    $result = (new \common\components\Domain\Scheduling\Service\TurnoAntinoshowAgent())
+                        ->processCheckpoint($row, $turno);
+                    if ($result === 'cancelled') {
+                        $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
+                        $row->save(false);
+                        continue;
+                    }
+                } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_ANTINOSHOW_RELEASE) {
+                    $result = (new \common\components\Domain\Scheduling\Service\TurnoAntinoshowAgent())
+                        ->processRelease($row, $turno);
+                    if ($result === 'cancelled') {
+                        $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
+                        $row->save(false);
+                        continue;
+                    }
                 }
                 $row->estado = TurnoNotificacionProgramada::ESTADO_ENVIADA;
                 $row->save(false);

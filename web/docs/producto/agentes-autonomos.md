@@ -117,13 +117,28 @@ Ver [turnos.md](./turnos.md).
 
 Ver [turnos.md](./turnos.md).
 
+### A04 — Anti no-show predictivo (agente D2, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (reglas sobre historial BD) |
+| **Trigger** | Checkpoints T−48 h y T−2 h (`programarNotificaciones` al crear/reprogramar turno) |
+| **Política** | `autonomous_agents/turno-antinoshow.yaml` |
+| **Decisiones** | Score low/medium/high; confirmación extra; liberar cupo T−24 h si alto riesgo sin confirmar |
+| **Efecto** | Push `TURNO_ANTINOSHOW_CONFIRM` / recordatorio; `TURNO_ANTINOSHOW_LIBERADO` + waitlist A03 |
+| **Cron** | `yii turno-notificacion/run` |
+| **Auditoría** | `agent_run` (`agent_id`: `turno-antinoshow`) |
+| **Flag** | `autonomous_agent_antinoshow_enabled` |
+
+Ver [turnos.md](./turnos.md).
+
 ---
 
 ## En implementación / backlog
 
 | ID | Nombre | Fase plan |
 |----|--------|-----------|
-| A01, H01, A04, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
+| A01, H01, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
 
 ---
 

@@ -10,7 +10,7 @@ Plan operativo derivado de [ideas-a-futuro/agentes-autonomos-backlog.md](../idea
 |------|---------|--------|
 | **0** | Infra: `agent_run`, metadata `autonomous_agents/`, `AgentRunRecorder`, motor de reglas | **Hecho** |
 | **1** | P0 reglas: ~~**B01**~~, ~~**B03**~~, ~~**A03**~~ waitlist FIFO, ~~**A02**~~ escalada mínima | **Completada** |
-| **2** | P1 agenda: A01 auto-reserva, shortlist, H01, A04; ~~A06~~ cierre loop | En curso (A06 v1 hecho) |
+| **2** | P1 agenda: A01 auto-reserva, shortlist, H01; ~~A04~~ anti no-show; ~~A06~~ cierre loop | En curso (A04 y A06 v1 hechos) |
 | **3** | P1 integración: E01/E02; **C03** / **D02** agente IA | Pendiente |
 | **4** | P2: F02, redacción IA en pushes ya decididos por regla | Pendiente |
 

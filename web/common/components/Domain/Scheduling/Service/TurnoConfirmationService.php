@@ -45,6 +45,12 @@ class TurnoConfirmationService
         }
 
         $this->programarMotivosIaBatch($turno, $dt);
+
+        try {
+            (new TurnoAntinoshowScheduler())->scheduleForTurno($turno, $dt);
+        } catch (\Throwable $e) {
+            \Yii::warning('Antinoshow schedule: ' . $e->getMessage(), 'turno-antinoshow');
+        }
     }
 
     /**

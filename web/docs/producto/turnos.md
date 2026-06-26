@@ -86,6 +86,16 @@ Si tras **72 h** (configurable) el turno sigue en `EN_RESOLUCION` sin reubicar:
 
 Flag: `autonomous_agent_resolucion_loop_close_enabled`.
 
+## Anti no-show (agente A04, v1)
+
+Al crear o reprogramar un turno pendiente, el agente `turno-antinoshow` programa checkpoints según riesgo calculado en BD (ausencias previas, lead time, primera visita):
+
+1. **T−48 h:** riesgo medio/alto → push de confirmación explícita (`TURNO_ANTINOSHOW_CONFIRM`).
+2. **Alto riesgo sin confirmar:** a **T−24 h** cancela el turno y libera el cupo (`TURNO_ANTINOSHOW_LIBERADO` → waitlist A03).
+3. **T−2 h:** recordatorio adicional para riesgo medio/alto.
+
+Flag: `autonomous_agent_antinoshow_enabled`. Desactivar liberación automática: `release_slot.enabled: false` en el YAML.
+
 ## Relación con el resto del producto
 
 - Representación operativa (tutela/delegación): [representacion-paciente.md](./representacion-paciente.md).

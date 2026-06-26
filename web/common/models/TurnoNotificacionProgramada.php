@@ -31,6 +31,12 @@ class TurnoNotificacionProgramada extends ActiveRecord
     /** Cierre de loop sin respuesta (agente A06). */
     const TIPO_RESOLUCION_LOOP_CLOSE = 'RESOLUCION_LOOP_CLOSE';
 
+    /** Anti no-show: checkpoint de riesgo (agente A04). */
+    const TIPO_ANTINOSHOW_CHECKPOINT = 'ANTINOSHOW_CHECKPOINT';
+
+    /** Anti no-show: liberar cupo si no confirmó (agente A04). */
+    const TIPO_ANTINOSHOW_RELEASE = 'ANTINOSHOW_RELEASE';
+
     const ESTADO_PENDIENTE = 'PENDIENTE';
     const ESTADO_ENVIADA = 'ENVIADA';
     const ESTADO_CANCELADA = 'CANCELADA';

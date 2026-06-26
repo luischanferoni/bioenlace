@@ -24,6 +24,12 @@ final class PushNotificationTypes
     /** Resolución: escalamiento a staff por timeout (agente A06). */
     public const TURNO_RESOLUCION_STAFF_ESCALATE = 'TURNO_RESOLUCION_STAFF_ESCALATE';
 
+    /** Anti no-show: pedido explícito de confirmación (agente A04). */
+    public const TURNO_ANTINOSHOW_CONFIRM = 'TURNO_ANTINOSHOW_CONFIRM';
+
+    /** Anti no-show: turno liberado por falta de confirmación (agente A04). */
+    public const TURNO_ANTINOSHOW_LIBERADO = 'TURNO_ANTINOSHOW_LIBERADO';
+
     /** Resumen de atención ambulatoria publicado al paciente. */
     public const ENCOUNTER_SUMMARY_READY = 'ENCOUNTER_SUMMARY_READY';
 

@@ -1,0 +1,49 @@
+# Anti no-show predictivo (agente A04 v1).
+# {@see TurnoAntinoshowAgent}
+version: 1
+agent_id: turno-antinoshow
+
+risk:
+  lookback_months: 6
+  high_min_no_shows: 2
+  medium_min_no_shows: 1
+  long_lead_days: 21
+  first_visit_level: medium
+
+checkpoints:
+  - hours_before: 48
+    rules:
+      - id: high_extra_confirm
+        when:
+          field: risk_level
+          equals: high
+        action: extra_confirm_push
+        schedule_release_hours_before: 24
+  - hours_before: 2
+    rules:
+      - id: high_reminder
+        when:
+          field: risk_level
+          equals: high
+        action: reminder_push
+      - id: medium_reminder
+        when:
+          field: risk_level
+          equals: medium
+        action: reminder_push
+
+release_slot:
+  enabled: true
+  hours_before_appointment: 24
+  only_risk_levels: [high]
+
+patient_messages:
+  extra_confirm:
+    title: "Confirmá tu turno"
+    body: "Confirmá asistencia al turno del {{fecha}} {{hora}}. Si no confirmás a tiempo, el cupo puede liberarse."
+  reminder:
+    title: "Tu turno es pronto"
+    body: "Recordá tu turno del {{fecha}} a las {{hora}}."
+  slot_released:
+    title: "Turno liberado"
+    body: "No confirmaste tu turno del {{fecha}}. El cupo quedó disponible; podés reservar otro horario desde la app."

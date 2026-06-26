@@ -24,6 +24,15 @@ final class PushNotificationTypes
     /** Alerta staff por rama de seguimiento cohorte (agente B01). */
     public const CARE_FOLLOWUP_STAFF_ALERT = 'CARE_FOLLOWUP_STAFF_ALERT';
 
+    /** Laboratorio: resultado disponible para el paciente (agente B03). */
+    public const LAB_RESULT_AVAILABLE = 'LAB_RESULT_AVAILABLE';
+
+    /** Laboratorio: valor crítico — aviso urgente al paciente. */
+    public const LAB_RESULT_CRITICAL_PATIENT = 'LAB_RESULT_CRITICAL_PATIENT';
+
+    /** Laboratorio: valor crítico — aviso al profesional del encounter. */
+    public const LAB_RESULT_CRITICAL_STAFF = 'LAB_RESULT_CRITICAL_STAFF';
+
     /** Expediente legal PDF listo para descarga (staff solicitante). */
     public const LEGAL_RECORD_EXPORT_READY = 'LEGAL_RECORD_EXPORT_READY';
 

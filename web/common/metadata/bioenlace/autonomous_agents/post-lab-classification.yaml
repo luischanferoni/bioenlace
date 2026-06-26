@@ -1,0 +1,58 @@
+# Clasificación post-ingesta de laboratorio (agente B03).
+# {@see PostLabClassificationAgent}
+version: 1
+agent_id: post-lab-classification
+
+# Orden de severidad (mayor índice = más grave).
+severity_order: [normal, control, critical]
+
+analyte_rules:
+  - id: potassium_critical
+    loinc: "2823-3"
+    severity: critical
+    when:
+      any:
+        - gte: 6.0
+        - interpretation_in: [HH, A, AA]
+
+  - id: glucose_fasting_elevated
+    loinc: "2345-7"
+    severity: control
+    when:
+      gte: 126
+
+  - id: hba1c_elevated
+    loinc: "4548-4"
+    severity: control
+    when:
+      gte: 6.5
+
+  - id: creatinine_elevated
+    loinc: "2160-0"
+    severity: control
+    when:
+      gte: 1.5
+
+default_severity: normal
+
+outcomes:
+  critical:
+    action: notify_patient_and_staff
+    patient:
+      title: "Resultado de laboratorio importante"
+      body: "Uno de tus estudios requiere atención urgente. Acudí a guardia o contactá a tu equipo de salud de inmediato."
+    staff:
+      title: "Laboratorio: valor crítico"
+      body_template: "Crítico — {analyte_display}: {value} {unit} ({report_display})."
+
+  control:
+    action: notify_patient
+    patient:
+      title: "Resultado de laboratorio"
+      body: "Tu estudio muestra valores que conviene controlar. Tu equipo de salud te contactará o podés reservar un turno de seguimiento."
+
+  normal:
+    action: notify_patient
+    patient:
+      title: "Resultado de laboratorio"
+      body: "Tus estudios están dentro de rangos esperados. Tu médico los revisará en la próxima consulta."

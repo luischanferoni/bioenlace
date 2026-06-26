@@ -137,6 +137,7 @@ Priorizar **agente** (reglas) antes que **agente IA** cuando alcanza: más barat
 | Guardado encounter + `encounter-codificacion-automatica` | **Agente IA** D2 | IA elige CIE-10/SNOMED y persiste — **implementado** |
 | Touchpoint cohorte + `care-followup-branching` | **Agente** D2 | Reglas YAML → push staff / educativo — **implementado** |
 | Pull LIS / export FHIR | Proceso | Sin paso decisorio |
+| Post-lab + `post-lab-classification` | **Agente** D2 | LOINC + umbrales → push — **implementado** |
 
 ---
 
@@ -147,7 +148,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | ID | Flujo | Tipo | Paso de decisión | Grado | Prioridad |
 |----|-------|------|------------------|-------|-----------|
 | A03 | Relleno de huecos / lista de espera | **Agente** | A quién ofrecer; cascada y reserva | D2–D3 | **P0** |
-| B03 | Post-lab: clasificar y notificar | **Agente** | Crítico vs normal; tarea staff (LOINC) | D2 | **P0** |
+| B03 | Post-lab: clasificar y notificar | **Agente** | Crítico vs normal; tarea staff (LOINC) | D2 | ~~P0~~ **Hecho** |
 | B01 | Touchpoints cohorte / plan | **Agente** | Respuesta estructurada → rama | D2 | ~~P0~~ **Hecho** |
 | A02 | Negociación multicanal + cierre | **Agente** | Canal, escalar, timeout | D3 | **P0** |
 | A01 | Auto-reserva en resolución (opt-out) | **Agente** | Slot por score + preferencias en BD | D2 | P1 |
@@ -361,6 +362,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 ---
 
 ### B03 — Post-lab: clasificar y notificar
+
+> **Estado:** **implementado (v1)** — [laboratorio.md](../laboratorio.md), [agentes-autonomos.md](../agentes-autonomos.md).
 
 | Campo | Valor |
 |-------|--------|
@@ -813,7 +816,7 @@ flowchart LR
 ```
 
 1. **Fase 0:** Preferencias de agenda en perfil paciente + política score; auditoría agente vs agente IA.
-2. **Fase 1:** Agentes P0 restantes (A03, B03, A02) — sin IA en paso decisorio. ~~B01~~ hecho.
+2. **Fase 1:** Agentes P0 restantes (A03, A02) — sin IA en paso decisorio. ~~B01~~ ~~B03~~ hechos.
 3. **Fase 2:** A01 auto-reserva + shortlist; H01; A04/A06.
 4. **Fase 3:** Agentes E01/E02; C03/D02 como **agente IA** donde aplique NL.
 5. **Fase 4:** D03 (codificación automática), F02; redacción IA en pushes ya decididos por regla.

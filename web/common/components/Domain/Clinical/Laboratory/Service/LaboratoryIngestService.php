@@ -65,6 +65,7 @@ final class LaboratoryIngestService
 
     /**
      * @param array<int, array<string, mixed>> $observations
+     * @return bool True si el informe es nuevo (importado), false si ya existía (actualizado).
      */
     private function upsertReport(int $idPersona, string $source, array $report, array $observations): bool
     {
@@ -77,6 +78,8 @@ final class LaboratoryIngestService
             'source_system' => $source,
             'external_id' => $externalId,
         ]) ?? new DiagnosticReport();
+
+        $isNew = $model->isNewRecord;
 
         $code = $this->mapper->firstCoding($report['code'] ?? []);
         $model->subject_persona_id = $idPersona;
@@ -99,7 +102,11 @@ final class LaboratoryIngestService
             $this->upsertObservation($idPersona, $source, (int) $model->id, $model->encounter_id, $obsFhir);
         }
 
-        return true;
+        if ($isNew) {
+            (new PostLabClassificationAgent())->runAfterIngest($model);
+        }
+
+        return $isNew;
     }
 
     /**
@@ -143,8 +150,13 @@ final class LaboratoryIngestService
                 ? $obsFhir['valueString']
                 : (is_string($obsFhir['valueCodeableConcept']['text'] ?? null)
                     ? $obsFhir['valueCodeableConcept']['text']
-                    : null);
+                    : ($code['display'] ?? null));
         }
+
+        $obs->interpretation_code = $this->extractInterpretationCode($obsFhir);
+        [$refLow, $refHigh] = $this->extractReferenceRange($obsFhir);
+        $obs->reference_range_low = $refLow;
+        $obs->reference_range_high = $refHigh;
 
         if (!$obs->save()) {
             throw new \RuntimeException('Observation: ' . json_encode($obs->getErrors()));
@@ -170,5 +182,41 @@ final class LaboratoryIngestService
         }
 
         return null;
+    }
+
+    /**
+     * @param array<string, mixed> $obsFhir
+     */
+    private function extractInterpretationCode(array $obsFhir): ?string
+    {
+        $block = $obsFhir['interpretation'] ?? null;
+        if (!is_array($block) || $block === []) {
+            return null;
+        }
+        $first = isset($block[0]) && is_array($block[0]) ? $block[0] : $block;
+        if (isset($first['coding'][0]['code'])) {
+            return strtoupper(trim((string) $first['coding'][0]['code']));
+        }
+        if (isset($first['text']) && is_string($first['text'])) {
+            return strtoupper(trim($first['text']));
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $obsFhir
+     * @return array{0: float|null, 1: float|null}
+     */
+    private function extractReferenceRange(array $obsFhir): array
+    {
+        $rr = $obsFhir['referenceRange'][0] ?? null;
+        if (!is_array($rr)) {
+            return [null, null];
+        }
+        $low = isset($rr['low']['value']) && is_numeric($rr['low']['value']) ? (float) $rr['low']['value'] : null;
+        $high = isset($rr['high']['value']) && is_numeric($rr['high']['value']) ? (float) $rr['high']['value'] : null;
+
+        return [$low, $high];
     }
 }

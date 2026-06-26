@@ -36,8 +36,21 @@ flowchart LR
 ## Qué no hace hoy
 
 - Alta manual de resultados en pantallas Yii antiguas (módulo retirado).
-- Push automático desde el LIS al publicar (opcional futuro).
 - Ciclo completo de orden de laboratorio dentro del HIS (pedido → muestra → validación en planta).
+
+## Clasificación y notificación (agente B03)
+
+Tras **ingestar un informe nuevo** con estado `final`, `PostLabClassificationAgent` evalúa analitos (LOINC + umbrales) según `autonomous_agents/post-lab-classification.yaml`:
+
+| Severidad | Efecto |
+|-----------|--------|
+| **normal** | Push al paciente: resultado dentro de rangos esperados |
+| **control** | Push al paciente: conviene seguimiento |
+| **critical** | Push urgente al paciente + alerta al profesional del encounter (si hay PES vinculado) |
+
+La decisión queda en `agent_run`. Re-sincronizar el mismo informe **no** re-notifica (idempotencia por `diagnostic_report_id`).
+
+Flag: `autonomous_agent_post_lab_enabled` (default `true`). Detalle: [agentes-autonomos.md](./agentes-autonomos.md).
 
 ## Relación con el resto
 

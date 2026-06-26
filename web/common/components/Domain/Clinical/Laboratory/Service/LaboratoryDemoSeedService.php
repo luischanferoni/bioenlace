@@ -65,6 +65,10 @@ final class LaboratoryDemoSeedService
         $reportId = (int) $report->id;
         $obsCount = $this->upsertObservations($idPersona, $reportId);
 
+        if ($created) {
+            (new PostLabClassificationAgent())->runAfterIngest($report);
+        }
+
         return [
             'report_id' => $reportId,
             'created' => $created,

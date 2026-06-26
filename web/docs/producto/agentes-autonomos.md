@@ -58,13 +58,25 @@ Ver [captura-clinica.md](./captura-clinica.md) y [catalogo-usos-ia.md](./catalog
 
 Requiere `care_cohort.enabled`. Ver [asistencia-cohortes.md](./asistencia-cohortes.md).
 
+### B03 — Post-lab: clasificar y notificar (agente D2)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (reglas LOINC) |
+| **Trigger** | Ingesta nueva de `DiagnosticReport` (`LaboratoryIngestService`) |
+| **Política** | `autonomous_agents/post-lab-classification.yaml` |
+| **Decisiones** | normal / control / critical por analito |
+| **Efecto** | Push paciente; push staff si crítico y encounter con PES |
+| **Auditoría** | `agent_run` (`agent_id`: `post-lab-classification`) |
+
+Ver [laboratorio.md](./laboratorio.md).
+
 ---
 
 ## En implementación / backlog
 
 | ID | Nombre | Fase plan |
 |----|--------|-----------|
-| B03 | Post-lab clasificar y notificar | 1 |
 | A03 | Lista de espera / relleno huecos | 1 |
 | A02 | Negociación multicanal | 1 |
 | A01, H01, A04, A06, E01, E02, C03, D02, F02 | Ver plan | 2–4 |

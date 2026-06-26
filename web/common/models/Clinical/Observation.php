@@ -27,6 +27,8 @@ class Observation extends ActiveRecord
             [['external_id'], 'string', 'max' => 128],
             [['value_unit'], 'string', 'max' => 32],
             [['value_quantity'], 'number'],
+            [['interpretation_code'], 'string', 'max' => 16],
+            [['reference_range_low', 'reference_range_high'], 'number'],
             [['value_string', 'value_json'], 'string'],
             [['effective_datetime'], 'safe'],
             [['source_system', 'external_id'], 'unique', 'targetAttribute' => ['source_system', 'external_id'], 'skipOnEmpty' => true],

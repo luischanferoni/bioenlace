@@ -15,15 +15,15 @@
 ## Elegir efector, servicio y tipo de atención
 
 1. **Vos** (ya adentro) elegís en qué **efector** trabajás (sanatorio, clínica, etc.) y el **servicio** (ambulatorio, guardia, internación…).
-2. **El sistema** guarda esa elección y adapta el menú: en guardia ves el tablero de urgencias; en internación, el mapa de camas; en ambulatorio, turnos y consultorio.
+2. **El sistema** guarda esa elección y adapta el **panel Pacientes**: en guardia ves el tablero de urgencias; en internación, internados; en ambulatorio, turnos del día.
 3. Si no tenés ningún efector asignado, **el sistema** no te deja operar y te lo dice claro.
 
 ---
 
-## Recorrer el menú
+## Recorrer la web staff (panel y asistente)
 
-1. **Vos** tocás las opciones del menú (turnos, personas, nomenclador, referencias…).
-2. **El sistema** abre cada pantalla sin error.
+1. **Vos** usás la barra lateral: **Pacientes** (panel del día según ambulatorio, guardia o internación) y **Asistente** (chat con atajos).
+2. **El sistema** carga el panel o el asistente sin error.
 3. Si abrís un enlace guardado que ya no existe, **el sistema** muestra un mensaje claro (qué usar en su lugar) — no una pantalla en blanco ni “página no encontrada” sin explicación.
 
 ---

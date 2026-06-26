@@ -20,7 +20,7 @@ Marcá cada caso en tu planilla (Excel, Jira, etc.). Detalle ampliado en los arc
 |----|-----|-----------------|----------|
 | TRN-01 | 🔴 | Login web personal OK | Entrada al inicio o asistente |
 | TRN-02 | 🔴 | Login con contraseña incorrecta | Error, sin sesión |
-| TRN-03 | 🔴 | Elegir efector + servicio ambulatorio | Menú de turnos visible |
+| TRN-03 | 🔴 | Elegir efector + servicio ambulatorio | Panel Pacientes del día con turnos |
 | TRN-04 | 🟡 | Usuario sin efectores asignados | Mensaje claro, no opera |
 | TRN-05 | 🔴 | Login app paciente | Inicio sin elegir efector |
 | TRN-06 | 🟡 | Buscar persona por documento (staff) | Lista y ficha |

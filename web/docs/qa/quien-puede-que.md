@@ -29,7 +29,7 @@ Resumen en criollo: **paciente** usa la app; **personal** usa la web (y a veces 
 | **Guardia** | Tablero de urgencias, triage, atender |
 | **Internación** | Mapa de camas, ingreso, alta |
 
-Si elegís el modo equivocado, el menú no muestra lo que esperás — volvé a elegir efector y servicio ([00-transversal](./00-transversal.md)).
+Si elegís el modo equivocado, el panel no muestra lo que esperás — volvé a elegir efector y servicio ([00-transversal](./00-transversal.md)).
 
 ## Módulos del producto (madurez aproximada)
 

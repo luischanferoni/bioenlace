@@ -40,7 +40,7 @@
 
 ## Atender un turno del día
 
-1. **Vos** abrís el turno desde agenda o lista de espera.
+1. **Vos** abrís el turno desde el panel **Pacientes del día** o desde **Asistente** (`turnos.ver-agenda-dia-profesional-flow`).
 2. **El sistema** verifica que seas el profesional (o tengas permiso) para ese turno.
 3. Si no corresponde, **no** te deja entrar a la captura.
 4. Si sí, **te lleva** a la pantalla de atención.
@@ -76,7 +76,7 @@
 
 1. **Vos** indicás la derivación en la captura.
 2. **El sistema** la registra.
-3. En **Referencias** o en agenda, el personal ve la derivación pendiente y puede programar turno.
+3. El personal programa turno con **Asistente** (`turnos.crear-para-paciente-flow`); ver [02-turnos-agenda.md](./02-turnos-agenda.md).
 
 ---
 

@@ -10,9 +10,9 @@ Documentación para **probar la app y la web**: qué hacer, qué deberías ver y
 | **Flujos paso a paso** | `00`–`11` (excepto el checklist `10`) | Entender un módulo antes de probarlo |
 | **Roles** | [quien-puede-que.md](./quien-puede-que.md) | Qué puede paciente vs personal |
 
-**Convención en los flujos:** indicar **dónde** probar (web, app, asistente), **cómo** (menú, atajo o frase en el chat) y **resultado esperado** en pantalla.
+**Convención en los flujos:** título **Web — …** o **App — …**, pasos numerados (vos / el sistema), **intent** cuando el flujo pasa por el asistente, y **Atajo** (no “menú”) para acciones visibles del chat. En web staff: panel **Pacientes** + **Asistente**.
 
-No hace falta conocer bases de datos, APIs ni nombres internos del código. Si algo pide credenciales o datos de prueba que no tenés, pedilos al responsable del entorno (staging).
+Si algo pide credenciales o datos de prueba que no tenés, pedilos al responsable del entorno (staging).
 
 ## Índice por módulo
 

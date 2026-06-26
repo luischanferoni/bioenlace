@@ -2,7 +2,7 @@
 
 [← Índice](./README.md)
 
-El asistente entiende **frases en castellano** (o elegís una acción del menú). Te hace preguntas paso a paso y al final hace lo que pediste o te muestra una pantalla.
+El asistente entiende **frases en castellano** (o elegís un **Atajo** visible). Te hace preguntas paso a paso y al final hace lo que pediste o te muestra una pantalla.
 
 **Web (personal):** abrís el asistente y escribís.  
 **App (paciente):** igual, desde el chat.
@@ -46,31 +46,32 @@ Detalle: [04-internacion.md](./04-internacion.md).
 
 ## Turnos — paciente (app)
 
-| Qué querés | Ejemplos | Qué deberías ver |
-|------------|----------|------------------|
-| Sacar turno | “quiero un turno”, “sacar turno” | Cupos y confirmación |
-| Cancelar | “cancelar turno” | Verifica anticipación |
-| Cambiar | “reprogramar”, “cambiar mi turno” | Nuevos horarios |
-| Confirmar asistencia | “confirmo que voy” | Confirmación registrada |
-| Política de cancelación | “cuánto antes puedo cancelar” | Texto explicativo |
-| Ministerio de salud | “ministerio de salud de mi provincia” | Datos de tu provincia |
+Detalle paso a paso: [02-turnos-agenda.md](./02-turnos-agenda.md).
+
+- **Sacar turno** — `atencion.necesito-atencion`, `turnos.crear-como-paciente`: Atajo **Atención**; “quiero un turno”, “sacar turno”
+- **Cancelar** — `turnos.cancelar-como-paciente-flow`: Atajo **Turnos**; “cancelar turno”
+- **Cambiar** — `turnos.modificar-como-paciente-flow`: “reprogramar”, “cambiar mi turno”
+- **Confirmar asistencia** — `turnos.confirmar-asistencia-flow`: “confirmo que voy”
+- **Política de cancelación** — `turnos.consultar-politica-autogestion-flow`: “cuánto antes puedo cancelar”
+- **Ministerio de salud** — `paciente-contexto.recurso-provincial-como-paciente-flow`: “ministerio de salud de mi provincia”
 
 Requisito: sector y provincia configurados ([08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md)).
 
 ---
 
-## Turnos — personal
+## Turnos — personal (web)
 
-| Qué querés | Ejemplos | Qué deberías ver |
-|------------|----------|------------------|
-| Turno para paciente | “dar turno”, “turno para el paciente” | Busca paciente y horario |
-| Cancelar de otro | “cancelar turno del paciente” | Cancelación con permiso staff |
-| Sobreturno | “sobreturno” | Turno fuera de cupo |
-| Agenda del día | “agenda de hoy” | Lista de turnos |
-| Ocupación | “cómo está la agenda” | Resumen numérico |
-| No vino | “no vino”, “ausente” | Marca inasistencia |
+Detalle paso a paso: [02-turnos-agenda.md](./02-turnos-agenda.md).
 
-Detalle: [02-turnos-agenda.md](./02-turnos-agenda.md).
+- **Turno para paciente** — `turnos.crear-para-paciente-flow`: “dar turno”, “turno para el paciente”
+- **Cancelar de otro** — `turnos.cancelar-para-paciente-flow`: “cancelar turno del paciente”
+- **Sobreturno** — `turnos.crear-sobreturno-flow`: “sobreturno”
+- **Agenda del día** — `turnos.ver-agenda-dia-profesional-flow`: “agenda del día”, “turnos de hoy”
+- **Indicadores / ocupación** — `turnos.indicadores-agenda-flow`, `turnos.consultar-ocupacion-dia-flow`: Atajo **Profesional, agenda…**; “cómo está la agenda”
+- **No vino** — `turnos.no-se-presento-flow`: “no vino”, “ausente”
+- **Conflictos de agenda** — `profesional-agenda.resolver-conflictos-flow`: “conflictos agenda”
+
+Panel **Pacientes** (ambulatorio): turnos del día sin pasar por el asistente — ver [02-turnos-agenda.md](./02-turnos-agenda.md).
 
 ---
 

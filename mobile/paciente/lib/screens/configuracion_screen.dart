@@ -49,6 +49,21 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     });
   }
 
+  Future<void> _toggleSector() async {
+    final actual = PacienteContextScope.instance.state.sectorSalud;
+    final nuevo = actual == 'privado' ? 'publico' : 'privado';
+    final ok = await PacienteContextScope.instance.actualizarSector(
+      nuevo,
+      authToken: widget.authToken,
+    );
+    if (!mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo actualizar el sector')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
@@ -100,18 +115,30 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         children: [
           CarePlanReminderGlobalSwitch(authToken: widget.authToken),
           BioDivider.subtle(),
-          PacienteSectorSaludSwitch(authToken: widget.authToken),
-          BioDivider.subtle(),
           ListenableBuilder(
             listenable: PacienteContextScope.instance,
             builder: (context, _) {
+              final ctx = PacienteContextScope.instance.state;
+              final sectorLabel =
+                  ctx.sectorSalud == 'privado' ? 'Privado' : 'Público';
               final provinciaLabel =
-                  PacienteContextScope.instance.state.provinciaNombre ?? 'Sin definir';
-              return _ConfigTile(
-                icon: Icons.map_outlined,
-                title: 'Provincia de contexto',
-                subtitle: provinciaLabel,
-                onTap: _abrirProvinciaContexto,
+                  ctx.provinciaNombre ?? 'Sin definir';
+              return Column(
+                children: [
+                  _ConfigTile(
+                    icon: Icons.account_balance_outlined,
+                    title: 'Sector de salud',
+                    subtitle: sectorLabel,
+                    onTap: _toggleSector,
+                  ),
+                  BioDivider.subtle(),
+                  _ConfigTile(
+                    icon: Icons.map_outlined,
+                    title: 'Provincia de contexto',
+                    subtitle: provinciaLabel,
+                    onTap: _abrirProvinciaContexto,
+                  ),
+                ],
               );
             },
           ),

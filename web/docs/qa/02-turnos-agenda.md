@@ -1,114 +1,139 @@
 # Turnos y agenda
 
-[← Índice](./README.md) · Más detalle: [turnos.md](../producto/turnos.md)
+[← Índice](./README.md) · Más detalle: [turnos.md](../producto/turnos.md) · Frases del asistente: [07-asistente.md](./07-asistente.md)
 
-Antes conviene tener [sesión operativa](./00-transversal.md#elegir-efector-servicio-y-tipo-de-atención) en ambulatorio.
+Antes conviene tener [sesión operativa](./00-transversal.md#elegir-efector-servicio-y-tipo-de-atención) en **ambulatorio** (personal web).
+
+**Cómo leer cada flujo**
+
+| Columna | Significado |
+|---------|-------------|
+| **Dónde** | Web (menú), app paciente o asistente (web o app) |
+| **Cómo** | Menú, atajo visible, o texto a escribir en el chat |
+| **Resultado esperado** | Qué debería mostrarse en pantalla |
 
 ---
 
 ## Ver la agenda del consultorio (personal)
 
-1. **Vos** entrás a Turnos / agenda del efector.
-2. **El sistema** muestra los servicios, feriados y, si hay, derivaciones pendientes del paciente que tengas seleccionado.
-3. **Vos** elegís día y profesional.
-4. **El sistema** muestra los turnos de ese día.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **Web** | Menú **Turnos** | Pantalla de agenda del efector (servicios, feriados; derivaciones pendientes si hay paciente seleccionado) |
+| 2 | **Web** | Elegir día y profesional | Lista de turnos de ese día |
+| — | **Asistente (web)** | Escribir *«agenda de hoy»* | Lista de turnos del día (alternativa al menú) |
 
 ---
 
 ## Lista de espera del día
 
-1. **Vos** abrís la lista de espera (menú o desde la agenda).
-2. **El sistema** lista quién tiene turno hoy, con datos del paciente.
-3. **Vos** cambiás de fecha (ayer / mañana).
-4. **El sistema** actualiza la lista.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **Web** | Menú **Turnos** → **Lista de espera**, o desde la agenda | Quién tiene turno hoy, con datos del paciente |
+| 2 | **Web** | Cambiar fecha (ayer / mañana) | La lista se actualiza |
 
 ---
 
 ## Sacar un turno (secretaría / personal)
 
-1. **Vos** elegís paciente, profesional, fecha y horario con cupo libre.
-2. **El sistema** crea el turno y lo muestra en agenda y lista de espera.
-3. Si el horario ya está ocupado, **te avisa** y no lo duplica.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **Web** | Menú **Turnos** → alta / calendario (según pantalla del efector) | Formulario o grilla de cupos |
+| 2 | **Web** | Elegir paciente, profesional, fecha y horario libre | Turno creado; aparece en agenda y lista de espera |
+| — | **Asistente (web)** | Escribir *«dar turno»*, *«turno para el paciente»* | Flujo paso a paso hasta confirmar |
+| Error | — | Mismo horario ya ocupado | Mensaje de rechazo; no se duplica el turno |
 
 ---
 
-## Sacar turno desde la app (paciente)
+## Sacar turno (paciente)
 
-1. **Vos** (paciente) elegís servicio, profesional y horario disponible.
-2. **El sistema** confirma el turno y lo ves en “mis turnos”.
-3. Si no hay cupo, **te muestra** otros horarios o te guía en el asistente.
-4. Con **sector y provincia** configurados en la app, solo ves centros y profesionales que correspondan ([08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md)).
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **App** | Pestaña **Asistente** → atajo **Atención**, o escribir *«quiero un turno»*, *«sacar turno»* | Flujo de servicio, centro, profesional y horario |
+| 2 | **App** | Confirmar horario | Turno en **Inicio** → próximos turnos |
+| Sin cupo | **App / asistente** | Seguir el flujo | Otros horarios o mensaje claro |
+| Filtro | **App** | Con sector y provincia en Configuración | Solo centros y profesionales que correspondan ([08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md)) |
 
 ---
 
 ## Cancelar turno (paciente)
 
-1. **Vos** cancelás con la anticipación que permita la regla del efector.
-2. **El sistema** marca el turno cancelado y libera el cupo.
-3. Si cancelás muy tarde, **puede** rechazarlo y explicarte el motivo.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **App** | Asistente → atajo **Turnos** (cancelar), o escribir *«cancelar turno»* | Flujo de cancelación |
+| 2 | — | Con anticipación suficiente (regla del efector) | Turno cancelado; cupo liberado |
+| Error | — | Cancelación muy tarde | Rechazo con motivo |
 
 ---
 
 ## Cambiar fecha u hora del turno
 
-1. **Vos** (paciente o personal, según permiso) pedís reprogramar.
-2. **El sistema** ofrece nuevos cupos o te guía en el asistente.
-3. Al confirmar, **actualiza** el turno y el cupo viejo queda libre.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| Paciente | **App** | Asistente → atajo **Turnos** (modificar), o *«reprogramar»*, *«cambiar mi turno»* | Nuevos cupos y confirmación |
+| Personal | **Web** o **asistente** | Reprogramar desde agenda o *«reprogramar turno del paciente»* | Turno actualizado; cupo anterior libre |
 
 ---
 
 ## Ver derivaciones pendientes
 
-1. **Vos** entrás a Referencias (o el listado que use el efector).
-2. **El sistema** muestra derivaciones hechas en consulta que aún no tienen turno.
-3. **Vos** elegís una y programás turno.
-4. **El sistema** marca la derivación como con turno asignado.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **Web** | Menú **Referencias** (o listado equivalente del efector) | Derivaciones de consulta sin turno asignado |
+| 2 | **Web** | Elegir una y programar turno | Derivación marcada como con turno |
 
 ---
 
-## Sobreturno
+## Sobreturno (personal)
 
-1. **Vos** (personal con permiso) cargás un turno fuera del cupo normal.
-2. **El sistema** lo guarda marcado como sobreturno y aparece en la agenda del día.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **Web** o **asistente** | Alta de turno fuera de cupo, o escribir *«sobreturno»* | Turno guardado como sobreturno en la agenda del día |
 
 ---
 
-## Marcar “no se presentó”
+## Marcar «no se presentó»
 
-1. **Vos** indicás que el paciente no vino.
-2. **El sistema** cambia el estado del turno y el cupo puede quedar registrado como ausencia.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **Web** o **asistente** | Marcar inasistencia en agenda, o escribir *«no vino»*, *«ausente»* | Estado del turno actualizado (ausencia) |
 
 ---
 
 ## Calendario del profesional
 
-1. **Vos** ves el calendario de un profesional (día o semana).
-2. **El sistema** pinta turnos, bloqueos y feriados.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **Web** | Menú **Turnos** → vista calendario (día o semana) | Turnos, bloqueos y feriados visibles |
 
 ---
 
-## Indicadores de agenda (ocupación, etc.)
+## Indicadores de agenda (ocupación, no-show, etc.)
 
-1. **Vos** pedís en el asistente o en la pantalla de indicadores algo como “cómo va la agenda hoy”.
-2. **El sistema** responde con números o resumen según lo configurado.
-
----
-
-## Conflicto de agenda o cancelación masiva
-
-1. **Vos** (coordinación) iniciás el flujo de resolver conflictos o cancelar varios turnos.
-2. **El sistema** te va preguntando qué turnos afectar y confirma antes de aplicar.
-3. Al terminar, **los pacientes afectados** pueden recibir aviso si está activo el envío.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **Asistente (web)** | Atajo **Profesional, agenda…** → indicadores, o escribir *«cómo está la agenda»*, *«cómo va la agenda hoy»* | Resumen numérico o pantalla de indicadores |
 
 ---
 
-## Confirmar que vas a ir (paciente)
+## Conflicto de agenda o cancelación masiva (coordinación)
 
-1. **Vos** confirmás asistencia al turno desde la app o el asistente.
-2. **El sistema** registra la confirmación para el personal.
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **Web** o **asistente** | Flujo de resolver conflictos o cancelar varios turnos | Pregunta qué turnos afectar y pide confirmación |
+| 2 | — | Confirmar | Cambios aplicados; pacientes pueden recibir aviso si está activo |
 
 ---
 
-## Aviso al celular cuando cambia un turno
+## Confirmar asistencia (paciente)
 
-1. Si tenés la app con notificaciones, **el sistema** te manda push cuando te reprograman o cancelan un turno (cuando el efecto lo tenga configurado).
+| Paso | Dónde | Cómo | Resultado esperado |
+|------|-------|------|-------------------|
+| 1 | **App** | Asistente → escribir *«confirmo que voy»* | Confirmación registrada para el personal |
+
+---
+
+## Aviso en el celular cuando cambia un turno
+
+| Condición | Resultado esperado |
+|-----------|-------------------|
+| App con notificaciones permitidas; efector con envío activo | Push al reprogramar o cancelar un turno |

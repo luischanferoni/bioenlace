@@ -10,7 +10,7 @@ Documentación para **probar la app y la web**: qué hacer, qué deberías ver y
 | **Flujos paso a paso** | `00`–`11` (excepto el checklist `10`) | Entender un módulo antes de probarlo |
 | **Roles** | [quien-puede-que.md](./quien-puede-que.md) | Qué puede paciente vs personal |
 
-**Convención en los flujos:** **Vos** = acción del tester · **El sistema** = respuesta esperada en pantalla.
+**Convención en los flujos:** indicar **dónde** probar (web, app, asistente), **cómo** (menú, atajo o frase en el chat) y **resultado esperado** en pantalla.
 
 No hace falta conocer bases de datos, APIs ni nombres internos del código. Si algo pide credenciales o datos de prueba que no tenés, pedilos al responsable del entorno (staging).
 

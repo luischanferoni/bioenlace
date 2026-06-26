@@ -47,6 +47,7 @@ use common\components\Domain\Scheduling\Service\TurnoResolucionElecciones;
 use common\components\Domain\Scheduling\Service\TurnoCalendarioOcupacionDiaService;
 use common\components\Domain\Scheduling\Service\TurnoWaitlistOfferAcceptService;
 use common\components\Domain\Scheduling\Service\TurnoWaitlistService;
+use common\components\Domain\Scheduling\Service\TurnoResolucionShortlistAgent;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
 use common\models\TurnoResolucion;
 use yii\web\ForbiddenHttpException;
@@ -2221,6 +2222,40 @@ class TurnosController extends BaseController
 
         try {
             $data = (new TurnoWaitlistOfferAcceptService())->accept($token, $idPersona);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+
+        return ['success' => true, 'data' => $data];
+    }
+
+    /**
+     * POST /api/v1/turnos/elegir-shortlist-resolucion-como-paciente
+     */
+    public function actionElegirShortlistResolucionComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Solo POST.');
+        }
+        $post = array_merge($req->get(), $req->post());
+        $tid = (int) ($post['id'] ?? $post['id_turno'] ?? 0);
+        if ($tid <= 0) {
+            throw new BadRequestHttpException('id del turno requerido.');
+        }
+
+        $turno = Turno::findActive()->andWhere(['id_turnos' => $tid])->one();
+        if ($turno === null) {
+            throw new NotFoundHttpException('Turno no encontrado');
+        }
+        $this->assertTurnoDomain('Turno.reprogramar', $turno);
+
+        $subjectSvc = new PersonRepresentationSubjectService();
+        $idPersona = $subjectSvc->resolveAndAuthorize($post, RepresentationPermission::SCHEDULING_TURNO);
+        $optionId = (string) ($post['option_id'] ?? $post['shortlist_option_id'] ?? '');
+
+        try {
+            $data = (new TurnoResolucionShortlistAgent())->applyOption($turno, $idPersona, $optionId);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }

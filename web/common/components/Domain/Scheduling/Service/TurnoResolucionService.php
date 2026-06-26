@@ -552,13 +552,31 @@ final class TurnoResolucionService
 
     private static function notificarPacienteRequiereReubicacion(Turno $turno, string $title, string $body): void
     {
+        $shortlist = [];
+        $agent = new TurnoResolucionShortlistAgent();
+        try {
+            $shortlist = $agent->buildAndPersist($turno);
+        } catch (\Throwable $e) {
+            Yii::warning('Shortlist resolución: ' . $e->getMessage(), 'turno-resolucion-shortlist');
+        }
+
+        if ($shortlist !== []) {
+            $body .= $agent->formatPushBodySuffix($shortlist);
+        }
+
+        $pushData = [
+            'type' => PushNotificationTypes::TURNO_REQUIERE_REUBICACION,
+            'id_turno' => (string) $turno->id_turnos,
+        ];
+        if ($shortlist !== []) {
+            $pushData['has_shortlist'] = '1';
+            $pushData['shortlist'] = json_encode($shortlist, JSON_UNESCAPED_UNICODE);
+        }
+
         $push = new PushNotificationSender();
         $push->sendToPersona(
             (int) $turno->id_persona,
-            [
-                'type' => PushNotificationTypes::TURNO_REQUIERE_REUBICACION,
-                'id_turno' => (string) $turno->id_turnos,
-            ],
+            $pushData,
             $title,
             $body
         );

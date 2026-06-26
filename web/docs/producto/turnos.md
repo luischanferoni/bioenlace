@@ -96,6 +96,14 @@ Al crear o reprogramar un turno pendiente, el agente `turno-antinoshow` programa
 
 Flag: `autonomous_agent_antinoshow_enabled`. Desactivar liberación automática: `release_slot.enabled: false` en el YAML.
 
+## Shortlist en resolución (agente A01 v1 D1)
+
+Cuando un turno entra en `EN_RESOLUCION`, el agente `turno-resolucion-shortlist` busca candidatos (horarios vecinos + slots disponibles), los puntúa y adjunta hasta **3 opciones** al push (`shortlist` en payload FCM).
+
+El paciente confirma una opción con `POST …/elegir-shortlist-resolucion-como-paciente` (`id_turno`, `option_id` como `sl_0`…). Si no elige del shortlist, sigue disponible la grilla completa.
+
+Flag: `autonomous_agent_resolucion_shortlist_enabled`.
+
 ## Relación con el resto del producto
 
 - Representación operativa (tutela/delegación): [representacion-paciente.md](./representacion-paciente.md).

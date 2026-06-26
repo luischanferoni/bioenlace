@@ -142,6 +142,7 @@ Priorizar **agente** (reglas) antes que **agente IA** cuando alcanza: más barat
 | Resolución sin respuesta + `turno-resolucion-multicanal` | **Agente** D3 | push → email/SMS + link firmado — **implementado (v1)** |
 | Timeout reubicación + `turno-resolucion-loop-close` | **Agente** D2 | cancelar / escalar staff — **implementado (v1)** |
 | Turno pendiente + `turno-antinoshow` | **Agente** D2 | score riesgo → confirmar / liberar cupo — **implementado (v1)** |
+| Resolución + `turno-resolucion-shortlist` | **Agente** D1 | top 2–3 slots scoreados en push — **implementado (v1)** |
 
 ---
 
@@ -190,6 +191,8 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | **Base hoy** | [turnos.md](../turnos.md) paso 6, `TurnoResolucionService` |
 
 #### Paso agente (P1) — shortlist scoreado (D1)
+
+> **Estado:** **implementado (v1)** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md).
 
 | Campo | Valor |
 |-------|--------|
@@ -829,7 +832,7 @@ flowchart LR
 
 1. **Fase 0:** Preferencias de agenda en perfil paciente + política score; auditoría agente vs agente IA.
 2. **Fase 1:** ~~Agentes P0~~ completada (~~B01~~ ~~B03~~ ~~A03~~ ~~A02 v1~~).
-3. **Fase 2:** A01 auto-reserva + shortlist; H01; ~~A04~~ v1 hecho; ~~A06~~ v1 hecho.
+3. **Fase 2:** ~~A01 shortlist~~ v1 hecho; A01 auto-reserva; H01; ~~A04~~ ~~A06~~ v1 hechos.
 4. **Fase 3:** Agentes E01/E02; C03/D02 como **agente IA** donde aplique NL.
 5. **Fase 4:** D03 (codificación automática), F02; redacción IA en pushes ya decididos por regla.
 

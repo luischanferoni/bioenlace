@@ -480,6 +480,8 @@ return [
                 'OPTIONS api/<version:\w+>/turnos/lista-espera-estado-como-paciente' => '<version>/turnos/lista-espera-estado-como-paciente',
                 'POST api/<version:\w+>/turnos/lista-espera-aceptar-oferta-como-paciente' => '<version>/turnos/lista-espera-aceptar-oferta-como-paciente',
                 'OPTIONS api/<version:\w+>/turnos/lista-espera-aceptar-oferta-como-paciente' => '<version>/turnos/lista-espera-aceptar-oferta-como-paciente',
+                'POST api/<version:\w+>/turnos/elegir-shortlist-resolucion-como-paciente' => '<version>/turnos/elegir-shortlist-resolucion-como-paciente',
+                'OPTIONS api/<version:\w+>/turnos/elegir-shortlist-resolucion-como-paciente' => '<version>/turnos/elegir-shortlist-resolucion-como-paciente',
                 'GET api/<version:\w+>/turnos/calendario-ocupacion-dia' => '<version>/turnos/calendario-ocupacion-dia',
                 'POST api/<version:\w+>/turnos/calendario-ocupacion-dia' => '<version>/turnos/calendario-ocupacion-dia',
                 'OPTIONS api/<version:\w+>/turnos/calendario-ocupacion-dia' => '<version>/turnos/calendario-ocupacion-dia',

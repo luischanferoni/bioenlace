@@ -72,6 +72,7 @@ return [
     'autonomous_agent_resolucion_multicanal_enabled' => true,
     'autonomous_agent_resolucion_loop_close_enabled' => true,
     'autonomous_agent_antinoshow_enabled' => true,
+    'autonomous_agent_resolucion_shortlist_enabled' => true,
     /**
      * IDs de servicio (tabla servicios) que bajo encounter IMP listan agenda quirúrgica en home/panel (sección surgeries_day).
      * Vacío: solo heurística por nombre (cirugía, quirófano, etc.) en {@see \common\models\Servicio::esServicioAgendaQuirurgica}.

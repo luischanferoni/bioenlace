@@ -132,13 +132,27 @@ Ver [turnos.md](./turnos.md).
 
 Ver [turnos.md](./turnos.md).
 
+### A01 — Shortlist scoreado en resolución (agente D1, v1)
+
+| Campo | Valor |
+|-------|--------|
+| **Tipo** | Agente (score en metadata + BD) |
+| **Trigger** | Turno pasa a `EN_RESOLUCION` y se envía push de reubicación |
+| **Política** | `autonomous_agents/turno-resolucion-shortlist.yaml` |
+| **Decisiones** | Top 2–3 slots (mismo PES, vecinos, proximidad) — el paciente elige y confirma |
+| **Efecto** | Push `TURNO_REQUIERE_REUBICACION` con `shortlist` JSON; API `elegir-shortlist-resolucion-como-paciente` |
+| **Auditoría** | `agent_run` (`agent_id`: `turno-resolucion-shortlist`) |
+| **Flag** | `autonomous_agent_resolucion_shortlist_enabled` |
+
+Auto-reserva opt-in (D2) sigue en backlog.
+
 ---
 
 ## En implementación / backlog
 
 | ID | Nombre | Fase plan |
 |----|--------|-----------|
-| A01, H01, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
+| A01 auto-reserva, H01, E01, E02, C03, D02, F02 | Ver plan | 2–4 |
 
 ---
 

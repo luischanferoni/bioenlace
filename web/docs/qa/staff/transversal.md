@@ -1,6 +1,6 @@
 # Entrar, elegir dónde trabajás y encontrar pacientes
 
-[← Índice](./README.md)
+[← Staff](./README.md)
 
 ---
 
@@ -28,16 +28,7 @@
 
 ---
 
-## Entrar como paciente (app)
-
-1. **Vos** abrís la app e iniciás sesión.
-2. **El sistema** te muestra el inicio con tus turnos, tratamientos y accesos según tu cuenta.
-3. **No** hace falta que elijas efector como el personal: la app sabe quién sos por tu usuario.
-4. Si la sesión venció, **el sistema** te pide volver a entrar.
-
----
-
-## Buscar un paciente (personal)
+## Buscar un paciente
 
 1. **Vos** vas a buscar personas y escribís documento o apellido.
 2. **El sistema** lista coincidencias.
@@ -48,10 +39,12 @@
 
 ## Dar de alta un paciente nuevo
 
-1. **Vos** completás el registro (web o app, según el flujo): documento, datos personales, validación de identidad si aplica.
+1. **Vos** completás el registro desde web o asistente (ver [registro-paciente-staff.md](./registro-paciente-staff.md)).
 2. **El sistema** confirma el alta.
 3. **Vos** buscás de nuevo por documento.
 4. **El sistema** encuentra al paciente y ya podés sacarle turno o atenderlo.
+
+Registro en app paciente: [paciente/contexto-registro.md](../paciente/contexto-registro.md).
 
 ---
 

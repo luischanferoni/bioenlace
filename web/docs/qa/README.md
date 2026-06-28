@@ -2,34 +2,25 @@
 
 Documentación para **probar la app y la web**: qué hacer, qué deberías ver y qué marcar en el checklist.
 
-## Cómo usar estos archivos
+## Por rol / audiencia
 
-| Tipo | Archivo | Para qué sirve |
-|------|---------|----------------|
-| **Checklist** | [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) | Casos numerados (TRN, CTX, TUR…) para marcar hecho / falló |
-| **Flujos paso a paso** | `00`–`11` (excepto el checklist `10`) | Entender un módulo antes de probarlo |
-| **Roles** | [quien-puede-que.md](./quien-puede-que.md) | Qué puede paciente vs personal |
+| Carpeta | Quién prueba | Rol RBAC | Superficie |
+|---------|--------------|----------|------------|
+| [paciente/](./paciente/README.md) | Usuario paciente | `paciente` | App móvil |
+| [medico/](./medico/README.md) | Médico / profesional clínico | `Medico` | Web frontend (captura, agenda propia) |
+| [staff/](./staff/README.md) | Recepción, enfermería, coordinación | `Administrativo`, `enfermeria`, … | Web frontend (operación diaria) |
+| [admin_efector/](./admin_efector/README.md) | Admin del centro | `AdminEfector` | Web frontend |
 
-**Convención en los flujos:** título **Web — …** o **App — …**, pasos numerados (vos / el sistema), **intent** cuando el flujo pasa por el asistente, y **Atajo** (no “menú”) para acciones visibles del chat. En web staff: panel **Pacientes** + **Asistente**.
+Referencia cruzada: [quien-puede-que.md](./quien-puede-que.md). Mapeo desde BD: [roles-desde-bd.md](./roles-desde-bd.md).
+
+## Convenciones
+
+- Título **Web — …** o **App — …**
+- Pasos numerados (vos / el sistema)
+- **Intent** cuando el flujo pasa por el asistente
+- **Atajo** (no “menú”) para acciones visibles del chat
+- En web staff: panel **Pacientes** + **Asistente**
 
 Si algo pide credenciales o datos de prueba que no tenés, pedilos al responsable del entorno (staging).
-
-## Índice por módulo
-
-| Archivo | De qué habla |
-|---------|----------------|
-| [00-transversal.md](./00-transversal.md) | Entrar, elegir efector, buscar pacientes |
-| [01-captura-clinica.md](./01-captura-clinica.md) | Historia, consulta, guardar atención |
-| [02-turnos-agenda.md](./02-turnos-agenda.md) | Turnos, lista de espera, derivaciones |
-| [03-urgencias-guardia.md](./03-urgencias-guardia.md) | Guardia, triage, atender |
-| [04-internacion.md](./04-internacion.md) | Mapa de camas, ingreso, alta |
-| [05-laboratorio-receta-planes.md](./05-laboratorio-receta-planes.md) | Lab, recetas, tratamientos |
-| [06-reportes-nomenclador.md](./06-reportes-nomenclador.md) | Nomencladores y planillas |
-| [07-asistente.md](./07-asistente.md) | Chat y frases del asistente |
-| [08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md) | Registro, sector público/privado, provincia |
-| [09-admin-efectores-organizacion.md](./09-admin-efectores-organizacion.md) | Admin efectores y datos de prueba |
-| [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) | **Checklist maestro** |
-| [11-notificaciones-automaticas.md](./11-notificaciones-automaticas.md) | Avisos automáticos (turnos, guardia, seguimiento) |
-| [quien-puede-que.md](./quien-puede-que.md) | Paciente vs personal |
 
 Más contexto de producto (no orientado a QA): [docs/producto/](../producto/README.md).

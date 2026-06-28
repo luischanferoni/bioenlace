@@ -1,12 +1,12 @@
 # Captura clínica — historia y consulta
 
-[← Índice](./README.md)
+[← Médico](./README.md)
 
 ---
 
 ## Ver la historia de un paciente
 
-1. **Vos** (personal) abrís la historia / línea de tiempo del paciente.
+1. **Vos** abrís la historia / línea de tiempo del paciente.
 2. **El sistema** lista atenciones anteriores con fecha y tipo.
 3. **Vos** abrís una cerrada o una en curso.
 4. **El sistema** muestra el detalle completo: fecha, tipo, motivo, diagnósticos, medicación y estudios — sin pantallas vacías ni errores.
@@ -18,7 +18,7 @@
 1. **Vos** entrás a la captura (desde turno, guardia o internación) y escribís en texto libre: motivo, diagnóstico, medicación, estudios, etc.
 2. **El sistema** te propone un borrador ordenado por secciones.
 3. **Vos** revisás, corregís y confirmás el análisis.
-4. **El sistema** **no** guarda definitivo hasta que vos confirmes **Guardar**.
+4. **El sistema** **no** guarda definitivo hasta que vos confirmés **Guardar**.
 
 ---
 
@@ -45,6 +45,8 @@
 3. Si no corresponde, **no** te deja entrar a la captura.
 4. Si sí, **te lleva** a la pantalla de atención.
 
+Detalle turnos: [turnos.md](./turnos.md).
+
 ---
 
 ## Atender en internación (piso)
@@ -54,13 +56,17 @@
 3. **Vos** guardás igual que en ambulatorio.
 4. Al volver al mapa de camas, **ves** lo que guardaste en la ficha del internado.
 
+Mapa de camas: [staff/internacion.md](../staff/internacion.md).
+
 ---
 
 ## Atender en guardia
 
-1. **Vos** iniciás la atención desde el tablero de guardia (ver [03-urgencias-guardia.md](./03-urgencias-guardia.md)).
+1. **Vos** iniciás la atención desde el tablero de guardia.
 2. **El sistema** abre la captura de ese ingreso.
 3. Al guardar, **queda** vinculada a ese episodio de guardia.
+
+Detalle: [staff/urgencias-guardia.md](../staff/urgencias-guardia.md).
 
 ---
 
@@ -76,7 +82,7 @@
 
 1. **Vos** indicás la derivación en la captura.
 2. **El sistema** la registra.
-3. El personal programa turno con **Asistente** (`turnos.crear-para-paciente-flow`); ver [02-turnos-agenda.md](./02-turnos-agenda.md).
+3. El personal programa turno con **Asistente** (`turnos.crear-para-paciente-flow`); ver [staff/turnos-agenda.md](../staff/turnos-agenda.md).
 
 ---
 

@@ -1,8 +1,8 @@
 # Nomencladores y planillas
 
-[← Índice](./README.md)
+[← Staff](./README.md)
 
-Conviene tener ya [sesión operativa](./00-transversal.md) y algunas atenciones cargadas en el rango de fechas del reporte.
+Conviene tener ya [sesión operativa](./transversal.md) y algunas atenciones cargadas en el rango de fechas del reporte.
 
 ---
 

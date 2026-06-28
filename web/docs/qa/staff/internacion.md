@@ -1,8 +1,8 @@
 # Internación
 
-[← Índice](./README.md)
+[← Staff](./README.md)
 
-Elegí el efector en modo **internación** ([00-transversal](./00-transversal.md)).
+Elegí el efector en modo **internación** ([transversal.md](./transversal.md)).
 
 ---
 

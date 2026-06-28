@@ -1,8 +1,8 @@
-# Registro de paciente y contexto (sector y provincia)
+# Registro y contexto (sector y provincia)
 
-[← Índice](./README.md) · Checklist: [10-checklist-ejecutable.md](./10-checklist-ejecutable.md)
+[← Paciente](./README.md) · Checklist: [checklist.md](./checklist.md)
 
-En la **app paciente**, cada usuario tiene un **contexto**: sector de salud (**Público** o **Privado**) y **provincia**. Eso define qué centros de salida y qué opciones del menú ve al sacar turno, ver el inicio, etc.
+En la **app paciente**, cada usuario tiene un **contexto**: sector de salud (**Público** o **Privado**) y **provincia**. Eso define qué centros ves al sacar turno, qué bloques aparecen en el inicio, etc.
 
 ---
 
@@ -15,14 +15,12 @@ Pedí al responsable del entorno que confirme si existen estos centros de prueba
 | CAP demo (otra provincia, ej. Santa Fe) | Público | Paciente público de esa provincia |
 | Clínica privada demo | Privado | Paciente privado de Santiago del Estero |
 
-Si no están cargados, el equipo de desarrollo puede prepararlos en staging.
-
 ---
 
-## Configurar sector y provincia (app paciente)
+## Configurar sector y provincia (app)
 
 1. **Vos** entrás a **Configuración** en la app.
-2. **Vos** tocás **Sector de salud** y alternás Público / Privado (o el flujo de primera vez que pida elegir).
+2. **Vos** tocás **Sector de salud** y alternás Público / Privado (o el flujo de primera vez).
 3. **Vos** tocás **Provincia de contexto** y elegís una provincia.
 4. **El sistema** guarda la elección y actualiza qué centros y opciones ves.
 
@@ -34,7 +32,7 @@ Si no están cargados, el equipo de desarrollo puede prepararlos en staging.
 | CTX-02 | Privado | Misma que la clínica demo | Aparece la clínica privada; **no** el CAP de otra provincia |
 | CTX-03 | Público | Otra provincia (no la del CAP) | No aparecen los centros demo |
 | CTX-04 | Cualquiera | Sin provincia elegida | Banner o mensaje pidiendo completar contexto; turnos / inicio limitados |
-| CTX-05 | Cambiás de Público a Privado (o al revés) tras haber visto un centro | Al sacar turno, centros del sector anterior **ya no** aplican |
+| CTX-05 | Cambiás de Público a Privado (o al revés) | Tras haber visto un centro | Al sacar turno, centros del sector anterior **ya no** aplican |
 
 ---
 
@@ -48,14 +46,14 @@ Si no están cargados, el equipo de desarrollo puede prepararlos en staging.
 
 ## Recurso del ministerio de salud (asistente)
 
-1. **Vos** (paciente con provincia configurada) preguntás en el chat algo como “ministerio de salud de mi provincia” o usás el acceso del menú si existe.
+1. **Vos** (paciente con provincia configurada) preguntás en el chat *«ministerio de salud de mi provincia»* o usás el atajo correspondiente.
 2. **El sistema** muestra teléfono / dirección / web del ministerio **de tu provincia**.
 3. **CTX-07:** Con provincia Santiago del Estero, datos de SDE (no de otra provincia).
 4. **CTX-08:** Cambiando a Santa Fe, datos de Santa Fe.
 
 ---
 
-## Registro nuevo en la app (paciente)
+## Registro nuevo en la app
 
 1. **Vos** te registrás con validación de identidad (DNI / Didit según el entorno).
 2. **El sistema** crea tu cuenta y te pide o asigna sector y provincia.
@@ -64,22 +62,12 @@ Si no están cargados, el equipo de desarrollo puede prepararlos en staging.
 
 ---
 
-## Alta de paciente por personal (asistente / web)
-
-1. **Vos** (staff) das de alta un paciente desde el asistente (“registrar paciente”).
-2. **Vos** escaneás DNI o completás Didit.
-3. **El sistema** confirma el alta en la misma pantalla (nombre, documento).
-4. **CTX-11:** Tu sesión de trabajo (efector y servicio que tenías elegidos) **no cambia** al paciente recién creado.
-5. **CTX-12:** La búsqueda antigua de candidatos duplicados **ya no existe** — solo el flujo nuevo de registro.
-
----
-
 ## Inicio de la app sin provincia
 
 1. **Vos** (paciente sin provincia) abrís el inicio.
 2. **El sistema** oculta o deshabilita bloques que requieren contexto (próximos turnos, consultas asíncronas, etc.).
 3. **CTX-13:** Tras elegir provincia, esos bloques **vuelven** a mostrarse.
-4. **CTX-14:** “Quiero un turno” en el chat **no avanza** hasta tener provincia (mensaje claro).
+4. **CTX-14:** *«Quiero un turno»* en el chat **no avanza** hasta tener provincia (mensaje claro).
 
 ---
 
@@ -99,4 +87,4 @@ Si no están cargados, el equipo de desarrollo puede prepararlos en staging.
 | Chat → sacar turno | Centros ofrecidos |
 | Chat → recurso provincial | Datos correctos por provincia |
 
-Más casos numerados: [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) (prefijo **CTX-**).
+Más casos numerados: [checklist.md](./checklist.md) (prefijo **CTX-**).

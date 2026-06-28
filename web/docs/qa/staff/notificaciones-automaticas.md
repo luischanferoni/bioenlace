@@ -1,6 +1,6 @@
 # Notificaciones y avisos automáticos
 
-[← Índice](./README.md) · Checklist: [10-checklist-ejecutable.md](./10-checklist-ejecutable.md)
+[← Staff](./README.md) · Checklist: [checklist.md](./checklist.md)
 
 El sistema puede enviar **avisos al celular** (push) o mostrar mensajes según lo que pase en turnos, guardia, internación o laboratorio. En staging, pedí al responsable que confirme qué avisos están activos.
 
@@ -59,6 +59,6 @@ El sistema puede enviar **avisos al celular** (push) o mostrar mensajes según l
 ## Qué no incluye esta guía
 
 - Mensajes redactados por inteligencia artificial (aún no para QA).
-- Clasificación libre del chat por IA — ver [07-asistente.md](./07-asistente.md).
+- Clasificación libre del chat por IA — ver [asistente.md](./asistente.md).
 
 Si un aviso no llega, anotá: usuario, hora, acción hecha y si las notificaciones del celular están permitidas para la app.

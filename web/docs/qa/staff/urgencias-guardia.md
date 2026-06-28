@@ -1,8 +1,8 @@
 # Guardia y urgencias
 
-[← Índice](./README.md) · Más detalle: [urgencias-guardia.md](../producto/urgencias-guardia.md)
+[← Staff](./README.md) · Más detalle: [urgencias-guardia.md](../../producto/urgencias-guardia.md)
 
-Trabajá con el efector en modo **guardia** ([00-transversal](./00-transversal.md)).
+Trabajá con el efector en modo **guardia** ([transversal.md](./transversal.md)).
 
 ---
 
@@ -34,7 +34,7 @@ Trabajá con el efector en modo **guardia** ([00-transversal](./00-transversal.m
 
 1. **Vos** iniciás la atención desde el tablero.
 2. **El sistema** abre la captura clínica de ese ingreso de guardia.
-3. **Vos** documentás y guardás (ver [01-captura-clinica.md](./01-captura-clinica.md)).
+3. **Vos** documentás y guardás (ver [medico/captura-clinica.md](../medico/captura-clinica.md)).
 4. **El sistema** deja el caso en “en atención” mientras corresponda.
 
 ---
@@ -65,7 +65,7 @@ Trabajá con el efector en modo **guardia** ([00-transversal](./00-transversal.m
 
 1. **Vos** pedís internación para un paciente que está en guardia.
 2. **El sistema** te lleva al flujo de ingreso de internación con datos ya cargados.
-3. Al confirmar ingreso, **el caso de guardia** se enlaza con la internación (ver [04-internacion.md](./04-internacion.md)).
+3. Al confirmar ingreso, **el caso de guardia** se enlaza con la internación (ver [internacion.md](./internacion.md)).
 
 ---
 

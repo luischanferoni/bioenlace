@@ -2,24 +2,24 @@
 
 [← Índice](./README.md)
 
-Resumen en criollo: **paciente** usa la app; **personal** usa la web (y a veces el asistente); algunas cosas las hacen los dos con permisos distintos.
+Resumen: **paciente** usa la app; **médico**, **staff** y **admin efector** usan la **web clínica** (frontend). Detalle RBAC: [roles-desde-bd.md](./roles-desde-bd.md).
 
 ## Por tipo de usuario
 
-| Tema | Paciente (app) | Personal (web) |
-|------|----------------|----------------|
-| Entrar | Sí, con su usuario | Sí, con usuario staff |
-| Elegir sanatorio / servicio | No | Sí, al empezar el día |
-| Sacar turno | Sí, para sí | Sí, para cualquier paciente (si tiene permiso) |
-| Cancelar / cambiar turno | Sí, con reglas de anticipación | Sí, a veces sin las mismas restricciones |
-| Ver laboratorio y recetas | Sí, los propios | No es lo habitual (ve captura en consulta) |
-| Contexto sector / provincia | Sí, en la app | No aplica (staff usa sesión operativa) |
-| Admin listado efectores | No | Sí, roles administrativos |
-| Tablero de guardia y triage | No | Sí, en servicio de guardia |
-| Mapa de camas e internación | No | Sí, en servicio de internación |
-| Captura clínica / historia | No (solo ve resúmenes) | Sí |
-| Nomencladores y planillas | No | Sí, roles administrativos / médicos |
-| Asistente por chat | Sí, flujos de paciente | Sí, flujos de staff |
+| Tema | Paciente (app) | Médico (web) | Staff (web) | Admin efector (web) |
+|------|----------------|--------------|-------------|---------------------|
+| Entrar | Sí, con su usuario | Sí | Sí | Sí, rol `AdminEfector` |
+| Elegir sanatorio / servicio | No | Sí, al empezar el día | Sí | Sí (administra el centro) |
+| Sacar turno | Sí, para sí | Atender / agenda propia | Sí, para cualquier paciente | Configura cupos/PES; operación como staff |
+| Cancelar / cambiar turno | Sí, con reglas | — | Sí, a veces sin mismas restricciones | Sí (permisos staff ampliados) |
+| Ver laboratorio y recetas | Sí, los propios | Emitir en consulta | Carga / integración variable | No (salvo flujos compartidos) |
+| Contexto sector / provincia | Sí, en la app | No | No | Edita datos del efector |
+| Servicios, PES, usuarios del centro | No | No | No | **Sí** |
+| Tablero de guardia y triage | No | Sí | Sí, en servicio de guardia | Sí |
+| Mapa de camas e internación | No | Sí (captura piso) | Sí | Sí (+ infraestructura camas) |
+| Captura clínica / historia | No (solo resúmenes) | Sí | Enfermería / apoyo | No (salvo permisos clínicos puntuales) |
+| Nomencladores y planillas | No | Parcial | Sí, roles administrativos | Sí (reportes del efector) |
+| Asistente por chat | Sí, flujos de paciente | Sí, flujos clínicos | Sí, flujos operativos | Sí, flujos admin (PES, indicadores) |
 
 ## Por “modo” del sanatorio (lo que elegís al entrar)
 
@@ -29,38 +29,37 @@ Resumen en criollo: **paciente** usa la app; **personal** usa la web (y a veces 
 | **Guardia** | Tablero de urgencias, triage, atender |
 | **Internación** | Mapa de camas, ingreso, alta |
 
-Si elegís el modo equivocado, el panel no muestra lo que esperás — volvé a elegir efector y servicio ([00-transversal](./00-transversal.md)).
+Si elegís el modo equivocado, el panel no muestra lo que esperás — volvé a elegir efector y servicio ([staff/transversal.md](./staff/transversal.md)).
 
 ## Módulos del producto (madurez aproximada)
 
-Referencia de qué tan armado está cada cosa (no es una checklist):
+| Área | Paciente | Médico / staff | Admin efector | Asistente |
+|------|----------|----------------|---------------|-----------|
+| Turnos y agenda | Muy usado | Muy usado | Config + indicadores | Muchos flujos |
+| Guardia / urgencias | — | Muy usado | Muy usado | Tablero y triage |
+| Internación | — | Muy usado | Infraestructura + operación | Mapa, ingreso, alta |
+| Captura y consulta | Resúmenes | Muy usado | — | Parcial |
+| Laboratorio | Ver resultados | Carga / integración variable | — | Ver resultados (paciente) |
+| Receta electrónica | Ver recetas | Emitir en consulta | — | Ver recetas (paciente) |
+| Planes y recordatorios | Sí | Adherencia staff | — | Sí |
+| Quirófano, farmacia, facturación | — | Parcial | Reportes | Poco o nada en asistente |
 
-| Área | Paciente | Personal | Asistente |
-|------|----------|----------|------------|
-| Turnos y agenda | Muy usado | Muy usado | Muchos flujos |
-| Guardia / urgencias | — | Muy usado | Tablero y triage |
-| Internación | — | Muy usado | Mapa, ingreso, alta |
-| Captura y consulta | Resúmenes | Muy usado | Parcial |
-| Laboratorio | Ver resultados | Carga / integración variable | Ver resultados (paciente) |
-| Receta electrónica | Ver recetas | Emitir en consulta | Ver recetas (paciente) |
-| Planes y recordatorios | Sí | Adherencia staff | Sí |
-| Quirófano, farmacia, facturación | — | Parcial | Poco o nada en asistente |
-
-Detalle de madurez HIS: [his-completo/](../his-completo/README.md).
+Detalle HIS: [his-completo/](../his-completo/README.md).
 
 ## Dónde está cada flujo paso a paso
 
-| Tema | Archivo |
-|------|---------|
-| Entrar y permisos | [00-transversal.md](./00-transversal.md) |
-| Consulta e historia | [01-captura-clinica.md](./01-captura-clinica.md) |
-| Turnos | [02-turnos-agenda.md](./02-turnos-agenda.md) |
-| Guardia | [03-urgencias-guardia.md](./03-urgencias-guardia.md) |
-| Internación | [04-internacion.md](./04-internacion.md) |
-| Lab, receta, planes | [05-laboratorio-receta-planes.md](./05-laboratorio-receta-planes.md) |
-| Reportes | [06-reportes-nomenclador.md](./06-reportes-nomenclador.md) |
-| Frases del asistente | [07-asistente.md](./07-asistente.md) |
-| Contexto paciente y registro | [08-registro-contexto-paciente.md](./08-registro-contexto-paciente.md) |
-| Admin efectores y datos de prueba | [09-admin-efectores-organizacion.md](./09-admin-efectores-organizacion.md) |
-| Checklist ejecutable | [10-checklist-ejecutable.md](./10-checklist-ejecutable.md) |
-| Avisos automáticos | [11-notificaciones-automaticas.md](./11-notificaciones-automaticas.md) |
+| Audiencia | Carpeta |
+|-----------|---------|
+| Paciente (app) | [paciente/](./paciente/README.md) |
+| Médico | [medico/](./medico/README.md) |
+| Staff (web) | [staff/](./staff/README.md) |
+| Admin efector (web) | [admin_efector/](./admin_efector/README.md) |
+
+## Checklists por audiencia
+
+| Carpeta | Archivo |
+|---------|---------|
+| Paciente | [paciente/checklist.md](./paciente/checklist.md) |
+| Médico | [medico/checklist.md](./medico/checklist.md) |
+| Staff | [staff/checklist.md](./staff/checklist.md) |
+| Admin efector | [admin_efector/checklist.md](./admin_efector/checklist.md) |

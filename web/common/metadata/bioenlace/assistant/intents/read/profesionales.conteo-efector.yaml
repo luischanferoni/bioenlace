@@ -7,7 +7,7 @@ domain_operation: DataAccess.info
 metric_id: profesionales_conteo_efector
 
 action_name: "Conteo de profesionales del efector"
-description: "Cuántos profesionales hay en el centro (métrica aggregate)."
+description: "Cuántos profesionales hay en el centro."
 rbac_route: "/api/info"
 
 keywords:

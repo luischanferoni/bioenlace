@@ -8,12 +8,7 @@ requires_operative_context:
     - turnos.cancelar-como-paciente-flow
     - turnos.modificar-como-paciente-flow
     - atencion.necesito-atencion
-    - laboratorio.ver-resultados-como-paciente
-    - receta.ver-recetas-como-paciente
-    - atencion.mis-atenciones-como-paciente
-    - atencion.ver-ultima-como-paciente
     - plataforma.enviar-queja-como-paciente-flow
-    - paciente-contexto.recurso-provincial-como-paciente-flow
 
 sector_salud:
   PUBLICO:

@@ -39,7 +39,8 @@ class PacienteContextoOfferingMetadataTest extends Unit
 
         $this->assertContains('turnos.crear-como-paciente', $ids);
         $this->assertContains('atencion.necesito-atencion', $ids);
-        $this->assertContains('paciente-contexto.recurso-provincial-como-paciente-flow', $ids);
+        $this->assertNotContains('atencion.mis-atenciones-como-paciente', $ids);
+        $this->assertNotContains('paciente-contexto.recurso-provincial-como-paciente-flow', $ids);
     }
 
     public function testHomePanelOcultaSeccionesSinContextoListado(): void

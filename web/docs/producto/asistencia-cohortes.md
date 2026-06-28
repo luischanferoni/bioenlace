@@ -65,10 +65,18 @@ php yii care-pack/run-jobs
 
 **Frecuencia recomendada:** cada **5 minutos**.
 
-Ejemplo crontab (usuario del hosting):
+En el servidor, crear la carpeta de logs de consola **una vez**:
+
+```bash
+mkdir -p /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs
+```
+
+Los cron usan `php yii` (app **console**); los logs van en `console/runtime/logs/` con **ruta absoluta**. Lista completa: [operacion/cron-produccion-hostinger.md](../operacion/cron-produccion-hostinger.md).
+
+Ejemplo (cada 5 minutos):
 
 ```cron
-*/5 * * * * cd /home/.../repo/web && /usr/bin/php yii care-pack/run-jobs >> runtime/logs/care-pack-cron.log 2>&1
+*/5 * * * * /usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii care-pack/run-jobs >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/care-pack-cron.log 2>&1
 ```
 
 ### Poll Vertex (refuerzo, opcional)
@@ -82,7 +90,7 @@ Solo consulta batches ya enviados. Útil si el poll del `run-jobs` no alcanza po
 **Frecuencia:** cada **15 minutos** si usás Vertex batch.
 
 ```cron
-*/15 * * * * cd /home/.../repo/web && /usr/bin/php yii care-pack/poll-vertex >> runtime/logs/care-pack-poll.log 2>&1
+*/15 * * * * /usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii care-pack/poll-vertex >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/care-pack-poll.log 2>&1
 ```
 
 ### Seguimiento aislado (opcional)

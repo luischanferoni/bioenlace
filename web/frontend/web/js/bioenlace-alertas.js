@@ -44,6 +44,9 @@
     }
 
     function formatFecha(iso) {
+        if (window.BioenlaceFecha && typeof window.BioenlaceFecha.formatNotificacion === 'function') {
+            return window.BioenlaceFecha.formatNotificacion(iso);
+        }
         if (!iso) return '';
         var d = new Date(iso);
         if (isNaN(d.getTime())) return String(iso);

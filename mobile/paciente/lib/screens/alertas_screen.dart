@@ -158,6 +158,7 @@ class _AlertasScreenState extends State<AlertasScreen> {
     final leida = item['leida'] == true;
     final titulo = item['titulo']?.toString() ?? '';
     final cuerpo = item['cuerpo']?.toString() ?? '';
+    final fechaLabel = formatNotificacionFecha(item['created_at']);
 
     final contenido = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,6 +182,15 @@ class _AlertasScreenState extends State<AlertasScreen> {
         if (cuerpo.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.xs),
           Text(cuerpo, style: BioTypography.bodySm),
+        ],
+        if (fechaLabel.isNotEmpty) ...[
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            fechaLabel,
+            style: BioTypography.caption.copyWith(
+              color: context.bio.textMuted,
+            ),
+          ),
         ],
       ],
     );

@@ -18,6 +18,7 @@ $this->registerCssFile('@web/css/spa.css', ['depends' => [AppAsset::class]]);
 
 // Registrar JavaScript para manejo de dropdowns del navbar
 $this->registerJsFile('@web/js/navbar-dropdowns.js', ['depends' => [\yii\web\JqueryAsset::class]]);
+$this->registerJsFile('@web/js/bioenlace-fecha.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerJsFile('@web/js/bioenlace-alertas.js', ['depends' => [BioenlaceApiClientAsset::class]]);
 
 $home = Yii::$app->getHomeUrl();

@@ -6,7 +6,7 @@ use yii\console\Controller;
 use common\components\Domain\Person\Service\PacienteDomicilioVerificacionService;
 
 /**
- * Reintentos de verificación de domicilio RENAPER (cron cada ~30 min).
+ * Reintentos de verificación de domicilio vía MPI (cron cada ~30 min).
  */
 class PacienteDomicilioController extends Controller
 {

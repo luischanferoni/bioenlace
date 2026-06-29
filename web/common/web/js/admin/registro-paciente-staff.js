@@ -103,7 +103,7 @@
       '<p class="mb-1"><strong>' + nombre + '</strong></p>' +
       '<p class="mb-1">DNI: ' + documento + '</p>' +
       '<p class="mb-0">ID interno: ' + idPersona + '</p>' +
-      '<p class="small text-muted mt-2 mb-0">La verificación de domicilio RENAPER continúa en segundo plano.</p>' +
+      '<p class="small text-muted mt-2 mb-0">La verificación de domicilio vía MPI continúa en segundo plano.</p>' +
       '</div>';
 
     if (cfg.urls.datosPersonales) {
@@ -154,7 +154,7 @@
       '</strong><br>' +
       'DNI: ' +
       (r.numeroDocumento || data.identity.documento || '') +
-      '<br>Verificación de domicilio RENAPER se iniciará automáticamente tras el alta.' +
+      '<br>Verificación de domicilio vía MPI se iniciará automáticamente tras el alta.' +
       '</div>';
     box.dataset.codigoBarras = data.identity && data.identity.codigo_barras ? data.identity.codigo_barras : '';
     if (data.identity && data.identity.codigo_barras) {

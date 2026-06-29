@@ -13,6 +13,8 @@ final class MpiCapability
 
     public const COBERTURAS = 'coberturas';
 
+    public const DOMICILIO = 'domicilio';
+
     public const TRAER_PACIENTE = 'traer_paciente';
 
     public const EMPADRONAR = 'empadronar';
@@ -26,7 +28,7 @@ final class MpiCapability
      */
     public static function defaultEnabled(): array
     {
-        return [self::RENAPER, self::COBERTURAS];
+        return [self::RENAPER, self::COBERTURAS, self::DOMICILIO];
     }
 
     public static function isEnabled(string $capability): bool

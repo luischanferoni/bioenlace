@@ -7,7 +7,7 @@ use yii\base\Component;
 use common\components\Domain\Integrations\Mpi\MpiCapability;
 
 /**
- * Cliente HTTP para MPI/SEIPA (empadronamiento, RENAPER, coberturas).
+ * Cliente HTTP para MPI/SEIPA (empadronamiento, RENAPER, coberturas, domicilio).
  */
 class MpiApiClient extends Component
 {
@@ -269,6 +269,34 @@ class MpiApiClient extends Component
         }
 
         return $coberturas;
+    }
+
+    /**
+     * Domicilio declarado vía MPI (endpoint dedicado, no renaper?).
+     *
+     * @return array<string, mixed>|null Fila normalizada para {@see RenaperDomicilioPersisterService}
+     */
+    public function getDomicilio(string $dni, string $sexo): ?array
+    {
+        if (!MpiCapability::isEnabled(MpiCapability::DOMICILIO)) {
+            return null;
+        }
+
+        $cmd = sprintf(
+            'domicilio?dni=%s&sexo=%s',
+            rawurlencode($dni),
+            rawurlencode($sexo)
+        );
+
+        try {
+            $response = $this->call($cmd, '{}');
+
+            return MpiDomicilioNormalizer::normalizeResponse($response);
+        } catch (\Throwable $e) {
+            Yii::error('MPI domicilio: ' . $e->getMessage(), 'mpi');
+
+            return null;
+        }
     }
 
     private function loadSchema(string $filename): string

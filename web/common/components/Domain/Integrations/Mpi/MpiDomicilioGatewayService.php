@@ -6,12 +6,12 @@ use common\models\Person\Persona;
 use Yii;
 
 /**
- * Consulta identidad RENAPER vía gateway MPI (endpoint renaper?; sin empadronamiento MPI).
+ * Consulta domicilio declarado vía endpoint MPI (no renaper?).
  */
-final class RenaperGatewayService
+final class MpiDomicilioGatewayService
 {
     /**
-     * @return array<string, mixed>|null Fila RENAPER normalizada
+     * @return array<string, mixed>|null Fila de domicilio normalizada
      */
     public function fetchByPersona(Persona $persona): ?array
     {
@@ -21,6 +21,9 @@ final class RenaperGatewayService
         }
 
         $sexo = $this->resolveSexoQueryParam($persona);
+        if ($sexo === '') {
+            return null;
+        }
 
         return $this->fetch($documento, $sexo);
     }
@@ -30,7 +33,7 @@ final class RenaperGatewayService
      */
     public function fetch(string $documento, string $sexo): ?array
     {
-        if (!MpiCapability::isEnabled(MpiCapability::RENAPER)) {
+        if (!MpiCapability::isEnabled(MpiCapability::DOMICILIO)) {
             return null;
         }
         if (!Yii::$app->has('mpi')) {
@@ -45,21 +48,10 @@ final class RenaperGatewayService
         try {
             /** @var MpiApiClient $mpi */
             $mpi = Yii::$app->mpi;
-            $respuesta = $mpi->call(
-                'renaper?dni=' . rawurlencode($documento) . '&sexo=' . rawurlencode($sexo),
-                '{}'
-            );
-            if (!is_array($respuesta)) {
-                return null;
-            }
-            $row = $respuesta['data'][0] ?? $respuesta['data'] ?? null;
-            if (!is_array($row) || empty($row['apellido'])) {
-                return null;
-            }
 
-            return $row;
+            return $mpi->getDomicilio($documento, $sexo);
         } catch (\Throwable $e) {
-            Yii::error('RENAPER: ' . $e->getMessage(), 'renaper');
+            Yii::error('MPI domicilio gateway: ' . $e->getMessage(), 'mpi');
 
             return null;
         }

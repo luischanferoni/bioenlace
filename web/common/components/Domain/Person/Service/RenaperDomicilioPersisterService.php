@@ -11,7 +11,7 @@ use common\models\Provincia;
 use Yii;
 
 /**
- * Persiste domicilio de persona a partir de fila RENAPER (inmutable desde la app).
+ * Persiste domicilio de persona a partir de fila normalizada del gateway MPI.
  */
 final class RenaperDomicilioPersisterService
 {
@@ -51,10 +51,10 @@ final class RenaperDomicilioPersisterService
             $domicilio->numero = mb_substr($numero, 0, 10);
             $domicilio->barrio = mb_substr($barrio, 0, 60);
             $domicilio->id_localidad = (int) $localidad->id_localidad;
-            $domicilio->usuario_alta = 'renaper';
+            $domicilio->usuario_alta = 'mpi';
             $domicilio->fecha_alta = date('Y-m-d');
             if (!$domicilio->save(false)) {
-                throw new \RuntimeException('No se pudo guardar domicilio RENAPER.');
+                throw new \RuntimeException('No se pudo guardar domicilio MPI.');
             }
 
             Persona_domicilio::updateAll(['activo' => 'NO'], ['id_persona' => (int) $persona->id_persona]);
@@ -63,10 +63,10 @@ final class RenaperDomicilioPersisterService
             $vinculo->id_persona = (int) $persona->id_persona;
             $vinculo->id_domicilio = (int) $domicilio->id_domicilio;
             $vinculo->activo = 'SI';
-            $vinculo->usuario_alta = 'renaper';
+            $vinculo->usuario_alta = 'mpi';
             $vinculo->fecha_alta = date('Y-m-d');
             if (!$vinculo->save(false)) {
-                throw new \RuntimeException('No se pudo vincular domicilio RENAPER.');
+                throw new \RuntimeException('No se pudo vincular domicilio MPI.');
             }
 
             $tx->commit();

@@ -217,8 +217,8 @@ return [
     // 'productMetadataDir' => dirname(__DIR__) . '/metadata/bioenlace',
 
     /**
-     * Capacidades MPI/SEIPA habilitadas. Solo renaper + coberturas por defecto.
+     * Capacidades MPI/SEIPA habilitadas. renaper (identidad), coberturas y domicilio por defecto.
      * {@see \common\components\Domain\Integrations\Mpi\MpiCapability}
      */
-    'mpiCapabilities' => ['renaper', 'coberturas'],
+    'mpiCapabilities' => ['renaper', 'coberturas', 'domicilio'],
 ];

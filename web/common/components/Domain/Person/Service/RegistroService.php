@@ -18,7 +18,7 @@ use Firebase\JWT\JWT;
  * Se encarga de:
  *  - Verificar identidad con Didit.
  *  - Crear o actualizar registros en la tabla personas.
- *  - Inicializar contexto paciente y verificación de domicilio RENAPER (tipo paciente).
+ *  - Inicializar contexto paciente y verificación de domicilio MPI (tipo paciente).
  *  - Validar profesionales contra REFEPS/SISA cuando el tipo es "medico".
  */
 class RegistroService

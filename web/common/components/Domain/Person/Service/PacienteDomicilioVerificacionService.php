@@ -2,14 +2,14 @@
 
 namespace common\components\Domain\Person\Service;
 
-use common\components\Domain\Integrations\Mpi\RenaperGatewayService;
+use common\components\Domain\Integrations\Mpi\MpiDomicilioGatewayService;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\models\Person\Persona;
 use common\models\Person\PersonaPacienteContexto;
 use Yii;
 
 /**
- * Verificación de domicilio vía RENAPER con reintentos (ventana 24 h).
+ * Verificación de domicilio vía MPI con reintentos (ventana 24 h).
  */
 final class PacienteDomicilioVerificacionService
 {
@@ -18,7 +18,7 @@ final class PacienteDomicilioVerificacionService
     public const INTERVALO_REINTENTO_SEGUNDOS = 1800;
 
     public function __construct(
-        private readonly RenaperGatewayService $renaper = new RenaperGatewayService(),
+        private readonly MpiDomicilioGatewayService $domicilioGateway = new MpiDomicilioGatewayService(),
         private readonly RenaperDomicilioPersisterService $domicilioPersister = new RenaperDomicilioPersisterService(),
         private readonly PacienteContextoService $contextoService = new PacienteContextoService(),
     ) {
@@ -72,18 +72,18 @@ final class PacienteDomicilioVerificacionService
 
         $this->contextoService->registrarIntento($ctx);
 
-        $renaper = $this->renaper->fetchByPersona($persona);
-        if ($renaper === null) {
+        $domicilio = $this->domicilioGateway->fetchByPersona($persona);
+        if ($domicilio === null) {
             return false;
         }
 
-        $provincia = $this->domicilioPersister->resolveProvincia($renaper);
+        $provincia = $this->domicilioPersister->resolveProvincia($domicilio);
         if ($provincia === null) {
             return false;
         }
 
         try {
-            $result = $this->domicilioPersister->persistFromRenaper($persona, $renaper);
+            $result = $this->domicilioPersister->persistFromRenaper($persona, $domicilio);
         } catch (\Throwable $e) {
             Yii::warning('Verificación domicilio falló al persistir: ' . $e->getMessage(), 'paciente_contexto');
 

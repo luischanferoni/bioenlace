@@ -4,7 +4,7 @@
 
 Bioenlace da de alta **personas paciente** con identidad validada (RENAPER / Didit), persiste el registro en la base local y encadena verificación de domicilio y **contexto operativo** (sector de salud, provincia) sin depender del flujo MPI histórico de candidatos y empadronamiento.
 
-Hay **dos circuitos** con el mismo núcleo de dominio (`RegistroService`, gateway RENAPER):
+Hay **dos circuitos** con el mismo núcleo de dominio (`RegistroService`, gateway MPI):
 
 | Circuito | Quién | Superficie |
 |----------|-------|------------|
@@ -15,12 +15,13 @@ La navegación operativa del staff **no usa breadcrumbs ni menús MVC legacy**: 
 
 ## MPI: qué queda y qué no
 
-El gateway MPI/SEIPA quedó **reducido** a capacidades declarativas (`mpiCapabilities` en params; por defecto solo `renaper` y `coberturas`):
+El gateway MPI/SEIPA quedó **reducido** a capacidades declarativas (`mpiCapabilities` en params; por defecto `renaper`, `coberturas` y `domicilio`):
 
 | Capacidad | Uso actual |
 |-----------|------------|
-| **RENAPER** | Validar identidad y obtener domicilio declarado |
-| **Coberturas** | Consulta de cobertura cuando el producto la pide |
+| **RENAPER** (`renaper?`) | Validar identidad (nombre, documento, fecha nacimiento) |
+| **Domicilio** (`domicilio?`) | Obtener domicilio declarado para persistencia post-alta |
+| **Coberturas** (`coberturas?`) | Consulta de cobertura cuando el producto la pide |
 | ~~Candidatos~~ | **Retirado** — no hay búsqueda federada ni lista de matches |
 | ~~Empadronar / asociar / traer paciente~~ | **Retirado** del flujo de alta |
 
@@ -30,10 +31,10 @@ Intentos de usar las pantallas legacy (`buscar-persona` con formulario MPI, `lis
 
 | Actor | Rol |
 |-------|-----|
-| **Paciente** | Se registra en la app; completa contexto (sector, provincia); no edita domicilio RENAPER desde la app |
+| **Paciente** | Se registra en la app; completa contexto (sector, provincia); no edita domicilio MPI desde la app |
 | **Staff no médico** | Alta con lector PDF417 del DNI o foto Didit; confirma éxito en pantalla |
 | **Personal médico** | No es el destinatario del alta staff; la **ficha clínica** (`personas/view`) es exclusiva de rol médico |
-| **Sistema** | Cron de verificación domicilio RENAPER; encauzamiento por contexto paciente |
+| **Sistema** | Cron de verificación domicilio MPI; encauzamiento por contexto paciente |
 
 ## Autoregistro (app paciente)
 
@@ -42,19 +43,21 @@ flowchart LR
   U[Paciente]
   APP[App móvil]
   API[API registro]
-  REN[Gateway RENAPER]
+  REN[Gateway RENAPER identidad]
+  MPI_DOM[Gateway MPI domicilio]
   CTX[(persona_paciente_contexto)]
-  DOM[Cron domicilio RENAPER]
+  DOM[Cron domicilio MPI]
   U --> APP --> API
   API --> REN
   API --> CTX
   API --> DOM
+  DOM --> MPI_DOM
 ```
 
 1. El paciente valida identidad (Didit u otro modo configurado en app).
 2. Se crea `Persona`, usuario y rol paciente (`RegistroService`).
 3. Se inicializa **contexto paciente** (`sector_salud`, `id_provincia_contexto`, estado de verificación de domicilio).
-4. El domicilio RENAPER se persiste en **segundo plano** (reintentos ~30 min, ventana 24 h).
+4. El domicilio MPI se persiste en **segundo plano** (reintentos ~30 min, ventana 24 h).
 5. La app muestra banner/scope de contexto y ofrece recursos provinciales según metadata (`paciente-contexto-offering.yaml`).
 
 ## Alta por personal (staff)
@@ -92,7 +95,7 @@ Persistente por persona; guía encauzamiento de producto:
 |--------------|----------------|
 | `sector_salud` | Default `PUBLICO`; afecta oferta de turnos, efectores, home e intents |
 | `id_provincia_contexto` | Provincia de referencia del paciente (y del representante al actuar por otro) |
-| Verificación domicilio | Estados y reintentos; domicilio RENAPER inmutable desde apps |
+| Verificación domicilio | Estados y reintentos; domicilio MPI inmutable desde apps |
 
 Servicios de offering leen metadata YAML (`paciente-contexto-offering.yaml`, `recursos-provinciales.yaml`) — sin reglas hardcodeadas en orquestadores.
 
@@ -112,8 +115,8 @@ Permisos API staff heredan del mismo perfil que operaba búsqueda/alta de person
 ## Configuración y operación
 
 - `didit_paciente_kyc_workflow_id` en params locales (Didit staff y app).
-- `mpiCapabilities`: mantener solo lo necesario (`renaper`, `coberturas`).
-- Cron `paciente-domicilio/run` para verificación/persistencia de domicilio post-alta.
+- `mpiCapabilities`: mantener lo necesario (`renaper`, `domicilio`, `coberturas`).
+- Cron `paciente-domicilio/run` para verificación/persistencia de domicilio post-alta vía MPI.
 - Migraciones de contexto paciente y RBAC registro staff en despliegue.
 
 ## Relación con otros documentos

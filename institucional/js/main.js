@@ -35,19 +35,59 @@ const revealObserver = new IntersectionObserver((entries) => {
 
 document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
 
-contactForm.addEventListener('submit', (e) => {
+const contactFormSubmit = document.getElementById('contactFormSubmit');
+const contactFormStatus = document.getElementById('contactFormStatus');
+
+function setContactFormStatus(message, type) {
+    if (!contactFormStatus) return;
+    contactFormStatus.hidden = !message;
+    contactFormStatus.textContent = message;
+    contactFormStatus.classList.remove('is-success', 'is-error');
+    if (type) {
+        contactFormStatus.classList.add(type === 'success' ? 'is-success' : 'is-error');
+    }
+}
+
+contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const formData = {
-        name: document.getElementById('name').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        message: document.getElementById('message').value
-    };
+    if (!contactForm.reportValidity()) {
+        return;
+    }
 
-    console.log('Formulario enviado:', formData);
-    alert('¡Gracias por tu mensaje! Nos pondremos en contacto contigo pronto.');
-    contactForm.reset();
+    setContactFormStatus('', null);
+    contactFormSubmit.disabled = true;
+    contactFormSubmit.textContent = 'Enviando…';
+
+    try {
+        const response = await fetch(contactForm.action, {
+            method: 'POST',
+            body: new FormData(contactForm),
+            headers: { Accept: 'application/json' },
+        });
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            contactForm.reset();
+            setContactFormStatus(
+                '¡Gracias por tu mensaje! Nos pondremos en contacto a la brevedad en info@bioenlace.io.',
+                'success'
+            );
+        } else {
+            setContactFormStatus(
+                data.message || 'No pudimos enviar el mensaje. Probá de nuevo o escribinos a info@bioenlace.io.',
+                'error'
+            );
+        }
+    } catch (err) {
+        setContactFormStatus(
+            'Error de conexión. Probá de nuevo o escribinos a info@bioenlace.io.',
+            'error'
+        );
+    } finally {
+        contactFormSubmit.disabled = false;
+        contactFormSubmit.textContent = 'Enviar mensaje';
+    }
 });
 
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {

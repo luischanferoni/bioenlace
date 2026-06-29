@@ -1100,6 +1100,31 @@ section {
     min-height: 120px;
 }
 
+.contact-form__status {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    padding: 0.75rem 1rem;
+    border-radius: 0.5rem;
+}
+
+.contact-form__status.is-success {
+    color: #0d5c3d;
+    background: rgba(56, 190, 127, 0.12);
+    border: 1px solid rgba(56, 190, 127, 0.35);
+}
+
+.contact-form__status.is-error {
+    color: #8b1e1e;
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.35);
+}
+
+.contact-form button[type="submit"]:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
 /* Footer */
 .footer {
     background: var(--brand-dark);

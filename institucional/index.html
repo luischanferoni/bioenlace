@@ -495,7 +495,11 @@
                         </div>
                     </div>
                 </div>
-                <form class="contact-form" id="contactForm" novalidate>
+                <form class="contact-form" id="contactForm" action="https://api.web3forms.com/submit" method="POST" novalidate>
+                    <input type="hidden" name="access_key" value="701fa479-da9e-44c6-a6b6-e5382fb88c13">
+                    <input type="hidden" name="subject" value="Consulta web institucional — Bioenlace">
+                    <input type="hidden" name="from_name" value="Web institucional Bioenlace">
+                    <input type="checkbox" name="botcheck" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
                     <div class="form-group">
                         <label for="name" class="visually-hidden">Nombre</label>
                         <input type="text" id="name" name="name" placeholder="Nombre completo" required autocomplete="name">
@@ -512,7 +516,8 @@
                         <label for="message" class="visually-hidden">Mensaje</label>
                         <textarea id="message" name="message" rows="5" placeholder="Contanos sobre tu institución, provincia u organismo de salud" required></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Enviar mensaje</button>
+                    <p id="contactFormStatus" class="contact-form__status" role="status" aria-live="polite" hidden></p>
+                    <button type="submit" class="btn btn-primary btn-block" id="contactFormSubmit">Enviar mensaje</button>
                 </form>
             </div>
         </div>

@@ -44,4 +44,4 @@ Abrir `http://localhost:8000`.
 - **Colores**: variables CSS en `css/styles.css` (`:root`), alineadas al logo (`#093e4d`, `#ff6b6b`, `#38be7f`).
 - **Logo**: reemplazar `images/logo.svg` y `images/logo-icon.svg` (mantener sincronía con `web/docs/logo/`).
 - **Contenido**: editar textos en `index.html`.
-- **Formulario**: conectar envío en `js/main.js` (hoy muestra alerta de confirmación).
+- **Formulario**: envío vía [Web3Forms](https://web3forms.com) a `info@bioenlace.io` (configurar el destino en el panel de Web3Forms con la misma `access_key`). Lógica en `js/main.js`.

@@ -525,6 +525,21 @@ section {
     margin-top: 1rem;
 }
 
+.funcionalidades-group .gestion-group {
+    max-width: none;
+    margin: 0 0 2rem;
+}
+
+.funcionalidades-group .gestion-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.funcionalidades-group .gestion-group__title {
+    font-size: 0.9375rem;
+    color: var(--brand-teal);
+    letter-spacing: 0.02em;
+}
+
 .gestion-group {
     max-width: 960px;
     margin: 0 auto 2.5rem;

@@ -118,6 +118,11 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'clinical-text-ia.yaml';
     }
 
+    public static function aiCostReferenceFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'ai-cost-reference.yaml';
+    }
+
     public static function autonomousAgentsDir(): string
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'autonomous_agents';

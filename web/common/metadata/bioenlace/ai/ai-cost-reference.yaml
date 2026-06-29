@@ -1,0 +1,42 @@
+# Referencia de costos IA (alineado con web/docs/costos/costos-api.md).
+# Usado por AICostEstimationService para estimar USD cuando no hay usageMetadata real.
+
+modelo: gemini-2.5-flash-lite
+
+tarifas_usd_por_millon:
+  input: 0.10
+  input_cacheado: 0.01
+  output: 0.40
+
+# Tokens de referencia por llamada cuando la ejecución es simulada (sin HTTP).
+llamada_referencia:
+  prompt_tokens: 1000
+  candidates_tokens: 500
+  cached_ratio: 0.25
+
+# Overrides por contexto IAManager (web/docs/costos/costos-api.md §1 y catálogo-usos-ia).
+contextos:
+  asistente-preprocess:
+    prompt_tokens: 700
+    candidates_tokens: 250
+    cached_ratio: 0.40
+  asistente-conversational:
+    prompt_tokens: 930
+    candidates_tokens: 180
+    cached_ratio: 0.40
+  intent-engine-classification:
+    prompt_tokens: 800
+    candidates_tokens: 200
+    cached_ratio: 0.25
+  motivos-consulta-batch:
+    prompt_tokens: 1350
+    candidates_tokens: 400
+    cached_ratio: 0.25
+  analisis-consulta:
+    prompt_tokens: 1200
+    candidates_tokens: 600
+    cached_ratio: 0.25
+  encounter-codificacion-automatica:
+    prompt_tokens: 1000
+    candidates_tokens: 400
+    cached_ratio: 0.25

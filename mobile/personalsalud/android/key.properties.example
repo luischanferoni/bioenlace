@@ -2,4 +2,4 @@
 storePassword=TU_PASSWORD_DEL_KEYSTORE
 keyPassword=TU_PASSWORD_DE_LA_CLAVE
 keyAlias=upload
-storeFile=../upload-keystore.jks
+storeFile=../../paciente/android/upload-keystore.jks

@@ -18,8 +18,8 @@ institucional/
 ## Secciones
 
 1. **Hero** — Propuesta de valor principal
-2. **Cómo funciona para el personal** — Bullets + **demo animada del asistente** (listar / editar / crear)
-3. **Personal de salud** — Web + app móvil Personal de Salud (captura, guardia); **Pacientes** — App paciente; **Funcionalidades** — Por audiencia (centro de salud, paciente, ministerio)
+2. **Asistente** — Demo del asistente conversacional (listar / editar / crear)
+3. **Personal de salud** — Captura clínica web y app; **Pacientes** — App paciente; **Funcionalidades** — Por audiencia
 4. **Contacto** — Formulario e información
 
 ## Demo del asistente (`js/assistant-demo.js`)

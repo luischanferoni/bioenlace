@@ -18,6 +18,8 @@ flutter run
 
 Firebase / FCM: ver [FIREBASE_SETUP.md](./FIREBASE_SETUP.md).
 
+Publicación Play Store: borrador en [STORE_LISTING.md](./STORE_LISTING.md).
+
 ## Alcance
 
 Paridad con el **frontend web clínico** (sin superadmin `/admin`): inicio dinámico (`GET /home/panel`), asistente, captura encounter, guardia, internación.

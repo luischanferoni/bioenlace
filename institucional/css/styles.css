@@ -724,11 +724,11 @@ section {
     background: var(--bg-white);
 }
 
-.benefits--medico {
+.benefits--personalsalud {
     background: var(--bg-light);
 }
 
-.benefits--medico.benefits--ia .benefit-item {
+.benefits--personalsalud.benefits--ia .benefit-item {
     background: var(--bg-white);
 }
 
@@ -920,7 +920,7 @@ section {
 
 .ia-step--ai i { color: var(--brand-coral); }
 .ia-step--security i { color: var(--brand-teal); }
-.ia-step--medico i { color: var(--brand-coral); }
+.ia-step--personalsalud i { color: var(--brand-coral); }
 .ia-step--paciente i { color: var(--brand-teal-muted); }
 .ia-step--clinical i { color: var(--brand-teal-muted); }
 .ia-step--user i { color: var(--brand-teal-muted); }

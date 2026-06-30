@@ -79,13 +79,25 @@ Intents asistente (si probás chat): `profesionales.listado-efector`, `profesion
 
 Permisos: `crearUsuarioEfector`, `assignRolesToUsers`, `borrarUserEfector`, `asignarEfector`, `FrontEditarUser`.
 
+**Regla de producto**
+
+| Situación | Qué hace AdminEfector |
+|-----------|------------------------|
+| Persona **sin usuario Yii** que empieza en el efector | **Crea** el usuario y lo vincula al efector con rol (`Medico`, `enfermeria`, `Administrativo`, …) |
+| Persona **que ya tiene usuario** y pasa a otro efector | **Asigna** al nuevo efector (mismo login); no hace falta crear otro usuario |
+| Personal que abre la **app Personal de Salud** | Solo **login**; si no tiene usuario, debe pedirlo a administración del centro |
+
+La app móvil **no** tiene registro. Ver humo en [app-personalsalud/README.md](../app-personalsalud/README.md).
+
 1. **Vos** creás o vinculás usuario al efector.
 2. **Vos** asignás roles (p. ej. `Medico`, `Administrativo`).
 3. **El sistema** limita accesos según RBAC.
+4. **El personal** puede ingresar en web o en app con ese mismo usuario.
 
 | ID | Acción | Resultado esperado |
 |----|--------|-------------------|
-| AEF-14 | Crear usuario efector | Usuario puede login |
+| AEF-14 | Crear usuario efector (primera vez) | Usuario puede login web y app |
+| AEF-14b | Vincular persona existente a otro efector | Mismo usuario, nuevo efector en lista |
 | AEF-15 | Asignar rol Medico/Administrativo | Menús acordes al rol |
 | AEF-16 | Quitar usuario del efector | Pierde acceso al centro |
 
@@ -143,4 +155,14 @@ Tras configurar servicio + PES + agenda, verificá turnos desde [paciente/turnos
 |----|--------|-------------------|
 | AEF-23 | Paciente con contexto OK + PES con cupos | Puede sacar turno en ese servicio |
 
+## Cruzar con app Personal de Salud
+
+Tras AEF-14 / AEF-15, el mismo usuario debe poder login en `mobile/personalsalud`, completar wizard y ver inicio coherente con web.
+
+| ID | Acción | Resultado esperado |
+|----|--------|-------------------|
+| AEF-24 | Login app con usuario recién creado | Wizard + inicio OK |
+| AEF-25 | Mismo usuario en web y app (mismo efector) | Panel inicio alineado |
+
 Contexto paciente: [paciente/contexto-registro.md](../paciente/contexto-registro.md).
+App: [app-personalsalud/README.md](../app-personalsalud/README.md).

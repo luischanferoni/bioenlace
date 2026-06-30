@@ -33,7 +33,17 @@ Intentos de usar las pantallas legacy (`buscar-persona` con formulario MPI, `lis
 |-------|-----|
 | **Paciente** | Se registra en la app; completa contexto (sector, provincia); no edita domicilio MPI desde la app |
 | **Staff no médico** | Alta con lector PDF417 del DNI o foto Didit; confirma éxito en pantalla |
-| **Personal médico** | No es el destinatario del alta staff; la **ficha clínica** (`personas/view`) es exclusiva de rol médico |
+| **Personal médico** | No es el destinatario del alta **paciente** por asistente; la **ficha clínica** (`personas/view`) es exclusiva de rol médico |
+
+## Usuarios del personal de salud (distinto del alta paciente)
+
+El **login del personal** (web y app Personal de Salud) usa un **usuario Yii** que gestiona el **AdminEfector**:
+
+- **Primera vez** en cualquier efector: AdminEfector **crea** el usuario y lo asigna al efector con rol RBAC.
+- **Cambio de efector**: AdminEfector del nuevo centro **vincula** la misma persona/usuario; no se crea otro login.
+- La **app móvil Personal de Salud no registra** personal; solo login + sesión operativa.
+
+El endpoint `registrar-como-staff` y flujos Didit/RENAPER del asistente sirven para **dar de alta personas paciente** desde el staff, no para autoregistro del personal. Detalle operativo: [admin_efector/gestion-efector.md](../qa/admin_efector/gestion-efector.md) § Usuarios del efector.
 | **Sistema** | Cron de verificación domicilio MPI; encauzamiento por contexto paciente |
 
 ## Autoregistro (app paciente)
@@ -121,7 +131,7 @@ Permisos API staff heredan del mismo perfil que operaba búsqueda/alta de person
 
 ## Relación con otros documentos
 
-- [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — visión general paciente / médico
+- [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — visión general paciente y personal de salud
 - [asistente-y-chat.md](./asistente-y-chat.md) — entrada staff a pantallas embebidas
 - [representacion-paciente.md](./representacion-paciente.md) — operar por otro paciente (sujeto explícito, no sesión staff)
 - [turnos.md](./turnos.md) — reserva con `id_persona` o `subject_persona_id` según actor

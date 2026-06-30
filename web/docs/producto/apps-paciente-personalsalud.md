@@ -72,3 +72,5 @@ flowchart TB
 - [representacion-paciente.md](./representacion-paciente.md) — tutela de menor y delegación
 - [superficies-ui.md](./superficies-ui.md) — inicio vs captura vs flows (web = app Personal de Salud)
 - [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md)
+- [app-personalsalud/README.md](../qa/app-personalsalud/README.md) — QA humo app móvil
+- [STORE_LISTING.md](../../../mobile/personalsalud/STORE_LISTING.md) — borrador Play Store

@@ -65,6 +65,10 @@ android {
         }
     }
 
+    lint {
+        checkReleaseBuilds = false
+    }
+
     packaging {
         resources {
             excludes += "META-INF/versions/9/OSGI-INF/MANIFEST.MF"

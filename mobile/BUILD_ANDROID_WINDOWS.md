@@ -73,12 +73,9 @@ cd mobile/paciente/android
 
 Si falla `lintVitalAnalyzeRelease` con «archivo en uso»:
 
-```bash
-cd mobile/paciente/android
-.\gradlew --stop
-```
-
-Cerrar Android Studio / emulador que tenga el proyecto abierto y reintentar.
+1. El proyecto ya desactiva `lint.checkReleaseBuilds` en release (no bloquea el bundle).
+2. Si persiste: `cd mobile/paciente/android` → `.\gradlew --stop`, cerrar Android Studio y borrar `build/`.
+3. Reintentar `flutter build appbundle --release`.
 
 ## Release store
 

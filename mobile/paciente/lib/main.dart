@@ -5,8 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
-import 'config/paciente_dev_config.dart';
-import 'auth/paciente_dev_login.dart';
 import 'firebase/firebase_bootstrap.dart';
 import 'services/chat_service.dart';
 import 'screens/main_screen.dart';
@@ -72,7 +70,6 @@ class MyApp extends StatelessWidget {
               // Textos personalizados para la app del paciente
               welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
               signupButtonText: '¿No tienes cuenta? Regístrate aquí',
-              goToHomeButtonText: 'Ir al inicio de la app',
               diditBiometricWorkflowId: AppConfig.diditPacienteBiometricWorkflowId,
               onLoginSuccess: (userId, userName, loginContext) async {
                 await CrashlyticsBootstrap.setUserId(userId);
@@ -101,9 +98,6 @@ class MyApp extends StatelessWidget {
                   MaterialPageRoute(builder: (_) => SignupScreen()),
                 );
               },
-              onNavigateToHome: PacienteDevConfig.showDevHomeButton
-                  ? navigatePacienteDevHome
-                  : null,
             ),
     );
   }

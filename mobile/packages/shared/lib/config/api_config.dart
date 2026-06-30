@@ -29,7 +29,7 @@ class AppConfig {
   /// Versión de app para compatibilidad de descriptores UI (`X-App-Version`), alineado con la web.
   static const String appVersion = String.fromEnvironment(
     'APP_VERSION',
-    defaultValue: '1.0.0',
+    defaultValue: '1.0.1',
   );
 
   /// Cabeceras JSON estándar BioEnlace API v1 (CORS + compatibilidad `ui_meta.clients`).

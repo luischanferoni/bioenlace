@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
-import '../config/paciente_dev_config.dart';
-import '../auth/paciente_dev_login.dart';
 import '../services/chat_service.dart';
 import 'main_screen.dart';
 import 'person_representation_hub_screen.dart';
@@ -279,7 +277,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       appSubtitle: 'Tu asistente de salud personal',
       welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
       signupButtonText: '¿No tienes cuenta? Regístrate aquí',
-      goToHomeButtonText: 'Ir al inicio de la app',
       onLoginSuccess: (userId, userName, loginContext) async {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('is_logged_in', true);
@@ -312,9 +309,6 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           MaterialPageRoute(builder: (_) => SignupScreen()),
         );
       },
-      onNavigateToHome: PacienteDevConfig.showDevHomeButton
-          ? navigatePacienteDevHome
-          : null,
     );
   }
 }

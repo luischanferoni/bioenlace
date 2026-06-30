@@ -28,10 +28,6 @@ class LoginScreen extends StatefulWidget {
   /// Recibe BuildContext del LoginScreen.
   final Function(BuildContext context)? onNavigateToSignup;
 
-  /// Callback para navegar al inicio de la app sin registrarse (modo visitante).
-  /// Recibe BuildContext del LoginScreen.
-  final Function(BuildContext context)? onNavigateToHome;
-
   // Textos personalizables
   final String? biometricNotAvailableMessage;
 
@@ -40,7 +36,6 @@ class LoginScreen extends StatefulWidget {
   final String? authenticatingText;
   final String? biometricUnavailableButtonText;
   final String? signupButtonText;
-  final String? goToHomeButtonText;
   final String? biometricAvailableText;
 
   /// Workflow ID de Didit para autenticación biométrica ("Ya tengo cuenta").
@@ -53,13 +48,11 @@ class LoginScreen extends StatefulWidget {
     this.appSubtitle = 'Tu asistente de salud personal',
     required this.onLoginSuccess,
     this.onNavigateToSignup,
-    this.onNavigateToHome,
     this.biometricNotAvailableMessage,
     this.welcomeMessage,
     this.authenticatingText,
     this.biometricUnavailableButtonText,
     this.signupButtonText,
-    this.goToHomeButtonText,
     this.biometricAvailableText,
     this.diditBiometricWorkflowId,
   });
@@ -311,17 +304,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     icon: Icons.person_add_alt,
                     fullWidth: true,
                     onPressed: () => widget.onNavigateToSignup!(context),
-                  ),
-                ],
-                if (widget.onNavigateToHome != null) ...[
-                  BioSpacing.gapH(BioSpacing.md),
-                  BioButton(
-                    label: widget.goToHomeButtonText ?? 'Ir al inicio de la app',
-                    icon: Icons.home_outlined,
-                    intent: UiIntent.info,
-                    variant: BioButtonVariant.soft,
-                    fullWidth: true,
-                    onPressed: () => widget.onNavigateToHome!(context),
                   ),
                 ],
               ],

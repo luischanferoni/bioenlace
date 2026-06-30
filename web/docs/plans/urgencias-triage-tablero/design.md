@@ -11,7 +11,7 @@
 | Orden de cola | Prioridad triage + timestamp de ingreso; desempate estable por `id` |
 | Timestamps | Tabla de eventos `guardia_circuito_event` (o nombre equivalente) para auditoría y KPIs |
 | Auth | Staff: `id_efector` de sesión o body explícito; no revalidar identidad; autorización por efector + PES cuando aplique |
-| Médico móvil-first | Fase 3 prioriza `mobile/medico`; web conserva ingreso administrativo y tablero grande |
+| Médico móvil-first | Fase 3 prioriza `mobile/personalsalud`; web conserva ingreso administrativo y tablero grande |
 | Asistente | Sin `if` por pantalla; acciones vía catálogo UI / intents YAML cuando se agreguen (Fase 4 opcional) |
 | Captura clínica | Reutilizar `PatientHistoriaUrl` + `Consulta::PARENT_GUARDIA`; no duplicar formulario de consulta en guardia |
 
@@ -75,7 +75,7 @@ Rutas y permisos ApiGhost: nombres explícitos (`triage-para-guardia`, `tablero-
 | Cliente | Fases | Notas |
 |---------|-------|-------|
 | Web inicio `site/pacientes` (EMER) | 2 | Tablero + modal triage; sin vista `guardia/tablero` dedicada |
-| `mobile/medico` | 3 | Home EMER → cola priorizada → triage compacto → atender |
+| `mobile/personalsalud` | 3 | Home EMER → cola priorizada → triage compacto → atender |
 | Web listado pacientes EMER | 2 | Reemplazar/ampliar datos de `PacientesController` vía mismo endpoint tablero |
 | Push | 4 | Opcional: `EMERGENCY_PATIENT_READY`, asignación al médico |
 

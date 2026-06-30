@@ -217,7 +217,7 @@ class UiJsonScreen extends StatefulWidget {
   final String apiAbsoluteUrl;
   final String? authToken;
 
-  /// Valor de cabecera `X-App-Client` (p. ej. `bioenlace-medico`, `bioenlace-paciente`).
+  /// Valor de cabecera `X-App-Client` (p. ej. `bioenlace-personalsalud`, `bioenlace-paciente`).
   final String appClient;
 
   /// Título visible para el usuario (por ejemplo action_name/display_name).
@@ -793,7 +793,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           return LicenciaTurnosImpactPreviewWidget(
             fieldValues: Map<String, String>.from(_accum),
             authToken: widget.authToken,
-            appClient: widget.appClient ?? 'bioenlace-medico',
+            appClient: widget.appClient ?? 'bioenlace-personalsalud',
           );
         }
         if (wid == 'laboratory_pdf_download') {

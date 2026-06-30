@@ -8,7 +8,7 @@ Llevar el módulo de **guardia/urgencias** de “ingreso + lista pendiente” a 
 
 | Rol | Cliente principal | Uso |
 |-----|-------------------|-----|
-| **Médico de guardia** | App móvil médico (`mobile/medico`) | Triage rápido, tomar paciente, abrir captura EMER, cerrar atención |
+| **Médico de guardia** | App móvil médico (`mobile/personalsalud`) | Triage rápido, tomar paciente, abrir captura EMER, cerrar atención |
 | **Staff** (admisión, enfermería, coordinación) | Web Yii + misma app móvil donde aplique | Tablero de cola, ingreso, reasignación, tiempos, derivación |
 | **Paciente** | Fuera de alcance de este plan | Sin cambios de producto paciente en triage |
 

@@ -142,7 +142,7 @@ Implementación: `PersonRepresentationNotifyRecipientService`.
 
 ## Relación con otros documentos
 
-- [apps-paciente-medico.md](./apps-paciente-medico.md) — chip y hub en la app paciente
+- [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — chip y hub en la app paciente
 - [turnos.md](./turnos.md) — reserva con sujeto delegado
 - [asistente-y-chat.md](./asistente-y-chat.md) — intents `personas.*`
 - [planes-de-tratamiento.md](./planes-de-tratamiento.md), [resumen-atencion-paciente.md](./resumen-atencion-paciente.md) — mismos permisos v1 con `subject_persona_id`

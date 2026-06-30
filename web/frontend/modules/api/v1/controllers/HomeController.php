@@ -6,7 +6,7 @@ use common\components\Platform\Ui\Home\Service\HomePanelService;
 use Yii;
 
 /**
- * Panel de inicio unificado (web site/index + app médico).
+ * Panel de inicio unificado (web site/index + app Personal de Salud).
  *
  * GET /api/v1/home/panel
  * Query: fecha=YYYY-MM-DD, sections=id1,id2 (refresco parcial), prueba=1 (AMB debug)

@@ -1,4 +1,4 @@
-# Urgencias / guardia
+﻿# Urgencias / guardia
 
 **Madurez orientativa:** 4 / 4 (~95 %) — circuito v1 + post-v1 (pedidos/lab, cama, SLA, CSV, FCM médico) + triage UI JSON.
 
@@ -12,7 +12,7 @@
 - [x] Tablero operativo en inicio web y móvil médico (cola, estados, minutos de espera).
 - [x] Asignación, inicio de atención con `captura_url`, derivación y egreso vía API.
 - [x] Indicadores resumen (medianas door-to-triage / door-to-doctor) + materialización diaria opcional.
-- [x] Push servidor y cliente FCM app médico (`EMERGENCY_*`).
+- [x] Push servidor y cliente FCM app Personal de Salud (`EMERGENCY_*`).
 - [x] Intents asistente `urgencias.ver-tablero-guardia` y `urgencias.triage-paciente-guardia`.
 - [x] Pedidos y resultados de lab en tablero (`resumen-clinico`, `crear-pedido`).
 - [x] Solicitud de internación + badge “cama pendiente” + ingreso web con `id_guardia`.

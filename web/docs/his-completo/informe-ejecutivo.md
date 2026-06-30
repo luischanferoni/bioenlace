@@ -1,4 +1,4 @@
-# Bioenlace
+﻿# Bioenlace
 
 **Fuente interna:** mapa de madurez (revisión alineada al producto en construcción)
 
@@ -121,10 +121,10 @@ Eso define un **wedge** claro: instituciones que quieren **mejor operación ambu
 
 - Registro de episodios de guardia por paciente e institución (libro e ingresos).
 - **Triage** Manchester (1–5), motivo, signos vitales opcionales y **re-triage** con evento auditable.
-- **Tablero operativo** en inicio web y app médico (cola, estado del circuito, minutos de espera, indicadores resumen).
+- **Tablero operativo** en inicio web y app Personal de Salud (cola, estado del circuito, minutos de espera, indicadores resumen).
 - **Circuito:** tomar caso, iniciar atención con captura clínica, derivar a otro efector, egreso alineado al libro.
 - **Indicadores** door-to-triage y door-to-doctor (día actual + materialización nocturna opcional).
-- Notificaciones push (servidor + FCM app médico); intents de asistente para tablero y triage con **UI JSON** (lista sin triage + formulario).
+- Notificaciones push (servidor + FCM app Personal de Salud); intents de asistente para tablero y triage con **UI JSON** (lista sin triage + formulario).
 - **Pedidos y laboratorio** en el tablero (resumen clínico, alta rápida de pedidos, informes ligados a la atención de guardia).
 - **Internación:** solicitud de cama, badge pendiente e ingreso web con trazabilidad desde el ingreso de guardia.
 - **SLA** configurable por institución con alerta visual en tablero.
@@ -150,7 +150,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor operación ambu
 - Prácticas, consumos y medicación ligados al episodio.
 - Vínculo parcial con nomencladores y facturación según la institución.
 - Ingreso desde guardia con trazabilidad al episodio de urgencia.
-- **Mapa de camas** en web y app médico: libre, ocupada, bloqueada, aislamiento; cambio de estado desde web.
+- **Mapa de camas** en web y app Personal de Salud: libre, ocupada, bloqueada, aislamiento; cambio de estado desde web.
 - **Indicadores** de ocupación y estadía (media/mediana) en tablero web y cabecera operativa.
 - **Alta estructurada** con epicrisis, checklist, responsable de sesión y vista previa de plantilla.
 - **Plantillas de epicrisis** por efector/servicio (y globales de sistema) con placeholders clínicos.

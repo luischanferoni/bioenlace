@@ -1,4 +1,4 @@
-# Urgencias / guardia — producto
+﻿# Urgencias / guardia — producto
 
 Programa operativo de **triage + tablero** en efectores con `encounterClass = EMER`. La fuente de verdad es la API v1 `clinical/emergency-guardia`; web y móvil consumen la misma capa.
 
@@ -7,7 +7,7 @@ Programa operativo de **triage + tablero** en efectores con `encounterClass = EM
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
 | Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) | Tablero vía `GET /api/v1/home/panel`, triage modal, derivación, egreso, indicadores |
-| Médico guardia | App médico (inicio EMER) | Tablero, triage, atender → captura clínica, menú (tomar caso, derivar, egreso, re-triage) |
+| Médico guardia | app Personal de Salud (inicio EMER) | Tablero, triage, atender → captura clínica, menú (tomar caso, derivar, egreso, re-triage) |
 | Dirección / calidad | Web inicio + job nocturno | Resumen en vivo; histórico en `guardia_metrics_daily` |
 
 No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** según contexto operativo.
@@ -45,7 +45,7 @@ Backend envía:
 - `EMERGENCY_ASSIGNED_TO_YOU` — al asignar médico  
 - `EMERGENCY_PATIENT_CRITICAL` — triage nivel 1–2  
 
-App **médico**: registro FCM vía `POST /devices/push-token` (`appClient: medico-flutter`). Requiere `google-services.json` / configuración Firebase (mismo patrón que paciente).
+App **médico**: registro FCM vía `POST /devices/push-token` (`appClient: personalsalud-flutter`). Requiere `google-services.json` / configuración Firebase (mismo patrón que paciente).
 
 ## Post-v1 (paquete A)
 

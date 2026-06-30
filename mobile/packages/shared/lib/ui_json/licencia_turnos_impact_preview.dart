@@ -13,7 +13,7 @@ class LicenciaTurnosImpactPreviewWidget extends StatefulWidget {
     super.key,
     required this.fieldValues,
     this.authToken,
-    this.appClient = 'bioenlace-medico',
+    this.appClient = 'bioenlace-personalsalud',
   });
 
   final Map<String, String> fieldValues;

@@ -2,11 +2,11 @@
 
 [← Índice](./README.md)
 
-Resumen: **paciente** usa la app; **médico**, **staff** y **admin efector** usan la **web clínica** (frontend). Detalle RBAC: [roles-desde-bd.md](./roles-desde-bd.md).
+Resumen: **paciente** usa la app paciente; **personal de salud** (médico, enfermería, staff, admin efector) usa la **web clínica** y/o la **app Personal de Salud** (`mobile/personalsalud`). Detalle RBAC: [roles-desde-bd.md](./roles-desde-bd.md).
 
 ## Por tipo de usuario
 
-| Tema | Paciente (app) | Médico (web) | Staff (web) | Admin efector (web) |
+| Tema | Paciente (app) | Personal de salud (web / app) | Staff (web / app) | Admin efector (web) |
 |------|----------------|--------------|-------------|---------------------|
 | Entrar | Sí, con su usuario | Sí | Sí | Sí, rol `AdminEfector` |
 | Elegir sanatorio / servicio | No | Sí, al empezar el día | Sí | Sí (administra el centro) |

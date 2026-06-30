@@ -1,7 +1,7 @@
 # `shared` — Librería compartida BioEnlace (paciente + médico)
 
 Paquete Flutter interno que vive en `mobile/packages/shared` y se consume desde
-ambas apps (`mobile/paciente`, `mobile/medico`) vía `dependencies: shared:
+ambas apps (`mobile/paciente`, `mobile/personalsalud`) vía `dependencies: shared:
 path: ../packages/shared` en sus respectivos `pubspec.yaml`.
 
 ## Qué hay acá
@@ -54,7 +54,7 @@ en [`mobile/docs/design-system-papel.md`](../../../mobile/docs/design-system-pap
 Migración al sistema "papel" **cerrada** (Bloques A→D del plan
 [`mobile/docs/migracion-medico-cierre.md`](../../../mobile/docs/migracion-medico-cierre.md)):
 
-- `mobile/paciente`, `mobile/medico` y `mobile/packages/shared` solo dependen
+- `mobile/paciente`, `mobile/personalsalud` y `mobile/packages/shared` solo dependen
   de `AppTheme.lightTheme`, `Bio*`, `context.bio`, `IntentPalette` y
   `PaperPalette`.
 - Los archivos legacy `theme/color_palette.dart`, `theme/button_styles.dart` y

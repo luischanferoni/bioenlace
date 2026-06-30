@@ -1,4 +1,4 @@
-# Elegibilidad de teleconsulta al reservar turno
+﻿# Elegibilidad de teleconsulta al reservar turno
 
 ## Objetivo
 
@@ -51,7 +51,7 @@ En **Configurar agenda** (`/api/v1/profesional-agenda/configurar-agenda`), campo
 
 Al persistir turno teleconsulta, `TurnoPersistService::assertAgendaAceptaTeleconsultaPorPes` valida que la agenda vigente del PES lo permita.
 
-## App médico
+## app Personal de Salud
 
 La agenda del día expone `tipo_atencion` en cada turno; la lista muestra badge **Presencial** / **Teleconsulta**.
 

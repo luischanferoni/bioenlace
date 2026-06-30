@@ -19,7 +19,7 @@ institucional/
 
 1. **Hero** — Propuesta de valor principal
 2. **Cómo funciona para el personal** — Bullets + **demo animada del asistente** (listar / editar / crear)
-3. **Médicos / Pacientes / Funcionalidades** — Por audiencia
+3. **Personal de salud / Pacientes / Funcionalidades** — Por audiencia
 4. **Contacto** — Formulario e información
 
 ## Demo del asistente (`js/assistant-demo.js`)

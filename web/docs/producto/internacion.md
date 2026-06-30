@@ -1,6 +1,6 @@
-# Internación — producto
+﻿# Internación — producto
 
-Gestión del **episodio de internación** en el efector: camas, indicadores operativos, alta estructurada con epicrisis y **administración de plantillas** por institución. La fuente de verdad es la API v1 `clinical/internacion` y `clinical/internacion-epicrisis-plantilla`; web y app médico consumen la misma capa.
+Gestión del **episodio de internación** en el efector: camas, indicadores operativos, alta estructurada con epicrisis y **administración de plantillas** por institución. La fuente de verdad es la API v1 `clinical/internacion` y `clinical/internacion-epicrisis-plantilla`; web y app Personal de Salud consumen la misma capa.
 
 Modelo de superficies (web = móvil): [superficies-ui.md](./superficies-ui.md).
 
@@ -13,7 +13,7 @@ Modelo de superficies (web = móvil): [superficies-ui.md](./superficies-ui.md).
 | Médico / coordinación | **Flow** — alta estructurada (`internacion.alta-estructurada-flow`) | Epicrisis, plantilla, checklist → externación |
 | Staff | **Ficha episodio** — `/internacion/view` | Datos administrativos (cama, ingreso); enlace a historia clínica; **sin** pestañas clínicas MVC |
 | Administración clínica | Web `/internacion-epicrisis-plantilla/*` | ABM plantillas epicrisis del efector |
-| Médico (IMP) | App médico — inicio con efector en sesión | Mapa de camas (misma API que web) |
+| Médico (IMP) | app Personal de Salud — inicio con efector en sesión | Mapa de camas (misma API que web) |
 
 Requiere **sesión operativa** con efector (staff). Paciente móvil sin `set-session` no usa estos flujos.
 

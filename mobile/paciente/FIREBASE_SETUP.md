@@ -92,7 +92,7 @@ flutter run \
 
 ## 8. Firebase Crashlytics
 
-Crashlytics está integrado en **paciente** y **médico** (crashes + logs del asistente vía `AppDiagnosticLog`).
+Crashlytics está integrado en **paciente** y **Personal de Salud** (crashes + logs del asistente vía `AppDiagnosticLog`).
 
 ### Consola
 

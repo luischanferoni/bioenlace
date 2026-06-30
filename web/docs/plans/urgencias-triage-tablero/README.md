@@ -1,4 +1,4 @@
-# Plan — Urgencias: triage + tablero operativo
+﻿# Plan — Urgencias: triage + tablero operativo
 
 | Campo | Valor |
 |-------|--------|
@@ -25,7 +25,7 @@
 | Episodio guardia | `common/models/Guardia.php`, tabla `guardia` |
 | Web ingreso/listado/libro | `frontend/controllers/GuardiaController.php`, `frontend/views/guardia/` |
 | Listado EMER (API) | `frontend/modules/api/v1/controllers/PacientesController.php` (`kind: guardias`) |
-| App médico (lista básica) | `mobile/medico/lib/screens/home_screen.dart`, `guardia_service.dart` |
+| app Personal de Salud (lista básica) | `mobile/personalsalud/lib/screens/home_screen.dart`, `guardia_service.dart` |
 | Captura clínica EMER | `Consulta::PARENT_GUARDIA`, `Encounter::ENCOUNTER_CLASS_EMER`, `PatientHistoriaUrl` |
 | Sesión ámbito | `set-session` con `encounterClass = EMER` |
 

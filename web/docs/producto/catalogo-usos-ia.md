@@ -147,7 +147,7 @@ Matriz ahorro / caché: [matriz-casos-uso.md](../costos/estrategias-reduccion/ma
 
 ## Relación con otros documentos
 
-- [apps-paciente-medico.md](./apps-paciente-medico.md) — experiencia global
+- [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — experiencia global
 - [asistente-y-chat.md](./asistente-y-chat.md) — conversación
 - [captura-clinica.md](./captura-clinica.md) — dictado médico
 - [costos-api.md § COGS](../costos/costos-api.md#cogs-abreviatura) — definición de costo variable

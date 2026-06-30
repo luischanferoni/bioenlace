@@ -30,7 +30,7 @@ class EncounterCaptureApi {
           uri,
           headers: AppConfig.jsonHeaders(
             bearerToken: authToken,
-            appClient: 'medico-flutter',
+            appClient: 'personalsalud-flutter',
           ),
         )
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));

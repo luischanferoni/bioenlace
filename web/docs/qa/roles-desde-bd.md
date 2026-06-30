@@ -9,8 +9,8 @@ Fuente: `u257309594_bioenlace.sql` (`auth_item` type=1, `auth_item_child`). Los 
 | Carpeta QA | Rol(es) RBAC | Superficie |
 |------------|--------------|------------|
 | [paciente/](./paciente/README.md) | `paciente` | App móvil |
-| [medico/](./medico/README.md) | `Medico` | Web frontend (captura, guardia, internación clínica) |
-| [staff/](./staff/README.md) | `Administrativo`, `enfermeria`, otros operativos | Web frontend (recepción, guardia, internación, reportes) |
+| [medico/](./medico/README.md) | `Medico` | Web y app Personal de Salud (captura, guardia, internación clínica) |
+| [staff/](./staff/README.md) | `Administrativo`, `enfermeria`, otros operativos | Web y app Personal de Salud (recepción, guardia, internación, reportes) |
 | [admin_efector/](./admin_efector/README.md) | `AdminEfector` | Web frontend |
 
 **No confundir:** `AdminEfector` administra **su efector** en la web clínica (`editarEfector` → `/efectores/update`, servicios, PES, usuarios). No es el usuario plataforma con acceso a `/admin` (`user.superadmin = 1`); ese ámbito queda fuera de esta guía QA.

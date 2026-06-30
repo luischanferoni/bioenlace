@@ -21,7 +21,7 @@ Cómo está estructurado el sistema visual de las apps móviles de BioEnlace y *
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│ Pantallas (mobile/paciente, mobile/medico)                 │  ←  consumen
+│ Pantallas (mobile/paciente, mobile/personalsalud)                 │  ←  consumen
 │ - Importan `package:shared/shared.dart`                    │
 │ - Usan widgets `Bio*` y tokens; nunca colores literales    │
 └─────────────────────────┬──────────────────────────────────┘

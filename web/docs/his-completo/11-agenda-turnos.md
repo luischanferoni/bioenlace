@@ -1,4 +1,4 @@
-# Agenda y turnos
+﻿# Agenda y turnos
 
 **Madurez orientativa:** 3,25 / 4 (~81 %)
 
@@ -15,7 +15,7 @@
 
 ## Lo que falta
 
-- [x] **Teleconsulta en reserva:** política por servicio, elegibilidad por triage, modalidad condicional en `atencion.necesito-atencion`, `acepta_consultas_online` en agenda PES, badge en app médico. Ver [teleconsulta-elegibilidad.md](../producto/teleconsulta-elegibilidad.md).
+- [x] **Teleconsulta en reserva:** política por servicio, elegibilidad por triage, modalidad condicional en `atencion.necesito-atencion`, `acepta_consultas_online` en agenda PES, badge en app Personal de Salud. Ver [teleconsulta-elegibilidad.md](../producto/teleconsulta-elegibilidad.md).
 - [ ] Lista de espera nacional entre efectores con priorización clínica.
 - [ ] Integración con obras sociales / autorizaciones en el mismo flujo de reserva.
 - [ ] Slots diferenciados presencial/remoto (hoy comparten grilla).

@@ -17,4 +17,4 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 ## Relacionado
 
 - [producto/asistente-y-chat.md](../producto/asistente-y-chat.md)
-- [producto/apps-paciente-medico.md](../producto/apps-paciente-medico.md)
+- [producto/apps-paciente-personalsalud.md](../producto/apps-paciente-personalsalud.md)

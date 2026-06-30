@@ -121,7 +121,7 @@ Permisos API staff heredan del mismo perfil que operaba búsqueda/alta de person
 
 ## Relación con otros documentos
 
-- [apps-paciente-medico.md](./apps-paciente-medico.md) — visión general paciente / médico
+- [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — visión general paciente / médico
 - [asistente-y-chat.md](./asistente-y-chat.md) — entrada staff a pantallas embebidas
 - [representacion-paciente.md](./representacion-paciente.md) — operar por otro paciente (sujeto explícito, no sesión staff)
 - [turnos.md](./turnos.md) — reserva con `id_persona` o `subject_persona_id` según actor

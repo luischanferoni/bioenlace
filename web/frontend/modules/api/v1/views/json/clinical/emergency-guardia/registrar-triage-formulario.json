@@ -5,7 +5,7 @@
     "schema_version": "1",
     "clients": {
       "*": { "min_app_version": "1.0.0" },
-      "medico-flutter": { "min_app_version": "1.0.0" }
+      "personalsalud-flutter": { "min_app_version": "1.0.0" }
     }
   },
   "blocks": [

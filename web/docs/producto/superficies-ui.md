@@ -1,8 +1,8 @@
-# Superficies de UI — web y móvil
+﻿# Superficies de UI — web y móvil
 
 ## Principio
 
-**Web staff y app médico comparten la misma API y la misma sesión operativa** (efector, servicio, `encounter_class`, rol). La diferencia es solo el renderer (Yii, Flutter, asistente). No hay una tercera UI clínica por módulo (p. ej. pestañas MVC de internación).
+**Web staff y app Personal de Salud comparten la misma API y la misma sesión operativa** (efector, servicio, `encounter_class`, rol). La diferencia es solo el renderer (Yii, Flutter, asistente). No hay una tercera UI clínica por módulo (p. ej. pestañas MVC de internación).
 
 ## Tres tipos de superficie
 
@@ -35,7 +35,7 @@ flowchart TB
 
 ## Inicio (página de inicio del médico)
 
-- Equivalente al **home de la app médico**: muta según rol y `encounter_class` en sesión. Datos: **`GET /api/v1/home/panel`** (web `site/index`, móvil staff).
+- Equivalente al **home de la app Personal de Salud**: muta según rol y `encounter_class` en sesión. Datos: **`GET /api/v1/home/panel`** (web `site/index`, móvil staff).
 - Manifiesto declarativo: `web/common/metadata/bioenlace/ui/home_panel_manifest.yaml` (resuelto por `HomePanelService` + `HomePanelManifest`).
 - **Audiencia** (`HomePanelAudienceResolver`, roles en bloque `audience` del manifiesto):
   - `staff` — sesión operativa (`encounter_class`), efector+servicio, o rol staff (Médico, enfermería, Admin efector, etc.).
@@ -53,7 +53,7 @@ flowchart TB
 - Secciones KPI (`kind: staff_kpi_group`) y providers registrados en `product-registries.php` → `homePanelSectionProviders`.
 - **No** es lugar de captura clínica ni de formularios largos por pestaña.
 
-Referencias: [apps-paciente-medico.md](./apps-paciente-medico.md), [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md).
+Referencias: [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md), [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md).
 
 ## Captura clínica (timeline + formulario)
 

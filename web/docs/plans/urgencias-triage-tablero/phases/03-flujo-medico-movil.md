@@ -6,7 +6,7 @@ Que el **médico de guardia** pueda operar el turno completo desde el teléfono:
 
 ## Checklist implementación
 
-- [x] `EmergencyGuardiaApi` en `mobile/medico/lib/services/emergency_guardia_api.dart`
+- [x] `EmergencyGuardiaApi` en `mobile/personalsalud/lib/services/emergency_guardia_api.dart`
 - [x] Tablero en **Inicio** (`home_screen`) cuando `encounterClass == EMER`
 - [x] Orden por API (prioridad + ingreso); badge nivel con color Manchester
 - [x] Pantalla **Triage** (`emergency_triage_screen.dart`): nivel, motivo, TA/FC → `registrar-triage`
@@ -30,7 +30,7 @@ flowchart TD
   G --> H[Volver a cola]
 ```
 
-## Pantallas (Flutter `mobile/medico`)
+## Pantallas (Flutter `mobile/personalsalud`)
 
 | Pantalla | Archivo sugerido |
 |----------|------------------|

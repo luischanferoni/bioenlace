@@ -269,7 +269,7 @@ Flujo: audio dictado → STT → transcripción → **1 llamada** `analisis-cons
 
 ### 5. Intercambio de fotos y videos (Vision)
 
-**Modelo de uso**: Los medios no se almacenan en cloud; solo hay costo cuando se envía a la nube para analizar (Vision). El audio de captura clínica va en §4. Ver [producto/flows/capacidades-paciente-medico.md](../../producto/apps-paciente-medico.md).
+**Modelo de uso**: Los medios no se almacenan en cloud; solo hay costo cuando se envía a la nube para analizar (Vision). El audio de captura clínica va en §4. Ver [producto/flows/capacidades-paciente-medico.md](../../producto/apps-paciente-personalsalud.md).
 
 | Concepto | Supuesto | Costo real mensual (por médico) |
 |----------|----------|----------------------------------|
@@ -347,4 +347,4 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 - [Vertex AI – Context caching overview](https://cloud.google.com/vertex-ai/generative-ai/docs/context-cache/context-cache-overview)
 - [infra/costos.md](../infra/costos.md) – Costes cuando la IA corre en nuestra GPU.
 - [Together AI – Serverless Models / Pricing](https://docs.together.ai/docs/serverless-models) – Llama 3.1 8B y otros modelos.
-- [producto/flows/capacidades-paciente-medico.md](../../producto/apps-paciente-medico.md) – Descripción de las capacidades.
+- [producto/flows/capacidades-paciente-medico.md](../../producto/apps-paciente-personalsalud.md) – Descripción de las capacidades.

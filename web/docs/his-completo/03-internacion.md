@@ -1,4 +1,4 @@
-# Internación
+﻿# Internación
 
 **Madurez orientativa:** 3,3 / 4 (~82 %)
 
@@ -8,7 +8,7 @@
 - [x] Prácticas, consumos y medicación asociados al episodio.
 - [x] Vínculo con nomencladores y facturación parcial según configuración del efector.
 - [x] Ingreso desde guardia con `id_guardia` y cierre del pendiente en tablero.
-- [x] **Mapa de camas (API + web + móvil IMP):** libre, ocupada, bloqueada, aislamiento; acciones B/A/L en web; chips en app médico.
+- [x] **Mapa de camas (API + web + móvil IMP):** libre, ocupada, bloqueada, aislamiento; acciones B/A/L en web; chips en app Personal de Salud.
 - [x] **Indicadores:** ocupación %, internaciones activas, estadía media/mediana (API + resumen en web).
 - [x] **Alta estructurada:** epicrisis, plantillas por efector/servicio, responsable de sesión, checklist → `doExternacion`.
 - [x] **Plantillas epicrisis** (`internacion_epicrisis_plantilla`) con placeholders `{paciente}`, `{fecha_ingreso}`, `{dias_internacion}`, `{documento}`.
@@ -30,7 +30,7 @@
 | Ficha episodio (admin) | Web `/internacion/view`, `/internacion/ronda` |
 | Alta estructurada | Flow `internacion.alta-estructurada-flow` + API |
 | ABM plantillas | Web `/internacion-epicrisis-plantilla/index` |
-| Mapa móvil | App médico — inicio (efector en sesión) |
+| Mapa móvil | app Personal de Salud — inicio (efector en sesión) |
 | API operativa | `GET/POST /api/v1/clinical/internacion/*` |
 | API ABM plantillas | `/api/v1/clinical/internacion-epicrisis-plantilla/*` |
 

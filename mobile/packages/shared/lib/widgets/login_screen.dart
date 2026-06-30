@@ -9,6 +9,7 @@ import '../auth/biometric_auth.dart';
 import '../config/api_config.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/ui.dart';
+import 'privacy_policy_link.dart';
 
 /// Pantalla de login compartida con design system "papel".
 /// Acepta callbacks para navegación personalizada por app (paciente / médico).
@@ -306,6 +307,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () => widget.onNavigateToSignup!(context),
                   ),
                 ],
+                BioSpacing.gapH(BioSpacing.lg),
+                const PrivacyPolicyLink(),
               ],
             ),
           ),

@@ -7,6 +7,7 @@ Sitio institucional estático para presentar Bioenlace: asistente conversacional
 ```
 institucional/
 ├── index.html
+├── privacidad.html   # Política de privacidad (apps móviles)
 ├── css/styles.css
 ├── js/main.js
 ├── images/

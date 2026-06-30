@@ -177,6 +177,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   onPressed: _isSubmitting ? null : _skipRegistration,
                 ),
               ),
+              BioSpacing.gapH(BioSpacing.lg),
+              const PrivacyPolicyLink(),
             ],
           ),
         ),

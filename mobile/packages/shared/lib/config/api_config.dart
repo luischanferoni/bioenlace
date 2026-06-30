@@ -9,6 +9,13 @@ class AppConfig {
     defaultValue: 'https://app.bioenlace.io/api/v1',
   );
 
+  /// URL pública de la política de privacidad (Google Play / App Store).
+  /// Override: `--dart-define=PRIVACY_POLICY_URL=https://...`
+  static const String privacyPolicyUrl = String.fromEnvironment(
+    'PRIVACY_POLICY_URL',
+    defaultValue: 'https://bioenlace.io/privacidad.html',
+  );
+
   /// `/api/clinical/...` (RBAC) → `/api/v1/clinical/...` para fetch HTTP.
   static String normalizeApiV1Path(String path) {
     var p = path.trim();

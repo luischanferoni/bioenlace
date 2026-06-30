@@ -4,10 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
 import '../screens/config_wizard_screen.dart';
-import 'medico_session_prefs.dart';
+import 'personalsalud_session_prefs.dart';
 
 /// Tras login biométrico: wizard de efector/servicio/área (sesión operativa).
-Future<void> navigateMedicoAfterLogin(
+Future<void> navigatePersonalsaludAfterLogin(
   String userId,
   String userName,
   BuildContext loginContext,
@@ -15,7 +15,7 @@ Future<void> navigateMedicoAfterLogin(
   final prefs = await SharedPreferences.getInstance();
   final loginToken = prefs.getString('auth_token');
 
-  await MedicoSessionPrefs.clearOperationalContext(keepAuthToken: true);
+  await PersonalsaludSessionPrefs.clearOperationalContext(keepAuthToken: true);
   await prefs.setBool('is_logged_in', true);
   await prefs.setString('user_id', userId);
   await prefs.setString('user_name', userName);
@@ -25,7 +25,7 @@ Future<void> navigateMedicoAfterLogin(
   }
 
   if (!loginContext.mounted) return;
-  openMedicoSessionWizard(
+  openPersonalsaludSessionWizard(
     userId: userId,
     userName: userName,
     authToken: loginToken,
@@ -33,7 +33,7 @@ Future<void> navigateMedicoAfterLogin(
 }
 
 /// Abre el wizard de sesión operativa (efector / servicio / área).
-void openMedicoSessionWizard({
+void openPersonalsaludSessionWizard({
   required String userId,
   required String userName,
   String? authToken,
@@ -51,25 +51,25 @@ void openMedicoSessionWizard({
 }
 
 /// Si falta encounter en API o en prefs, limpia contexto y vuelve al wizard.
-Future<void> recoverMedicoOperationalSession({
+Future<void> recoverPersonalsaludOperationalSession({
   required String userId,
   required String userName,
   String? authToken,
 }) async {
   final prefs = await SharedPreferences.getInstance();
   final token = authToken ?? prefs.getString('auth_token');
-  await MedicoSessionPrefs.clearOperationalContext(keepAuthToken: true);
+  await PersonalsaludSessionPrefs.clearOperationalContext(keepAuthToken: true);
   if (token != null && token.isNotEmpty) {
     await prefs.setString('auth_token', token);
   }
-  openMedicoSessionWizard(
+  openPersonalsaludSessionWizard(
     userId: userId,
     userName: userName,
     authToken: token,
   );
 }
 
-bool isMedicoEncounterSessionError(Object error) {
+bool isPersonalsaludEncounterSessionError(Object error) {
   final msg = error.toString().toLowerCase();
   return msg.contains('encounter configurado') ||
       msg.contains('encounter_class') ||

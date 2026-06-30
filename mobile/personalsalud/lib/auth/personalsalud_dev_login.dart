@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../config/medico_dev_config.dart';
-import 'medico_post_login.dart';
-import 'medico_session_prefs.dart';
+import '../config/personalsalud_dev_config.dart';
+import 'personalsalud_post_login.dart';
+import 'personalsalud_session_prefs.dart';
 
 /// «Ir al inicio» dev: token de prueba → wizard (misma regla que login real).
-Future<void> navigateMedicoDevHome(BuildContext loginContext) async {
+Future<void> navigatePersonalsaludDevHome(BuildContext loginContext) async {
   final result = await withDevLoginLoading(
     loginContext,
     () => fetchDevTestSession(
-      userId: MedicoDevConfig.testUserId,
+      userId: PersonalsaludDevConfig.testUserId,
       autoPes: true,
     ),
   );
@@ -27,7 +27,7 @@ Future<void> navigateMedicoDevHome(BuildContext loginContext) async {
   }
 
   final payload = result.payload!;
-  await MedicoSessionPrefs.clearOperationalContext(keepAuthToken: false);
+  await PersonalsaludSessionPrefs.clearOperationalContext(keepAuthToken: false);
 
   final prefs = await SharedPreferences.getInstance();
   await prefs.setBool('is_logged_in', true);
@@ -49,7 +49,7 @@ Future<void> navigateMedicoDevHome(BuildContext loginContext) async {
     );
   }
 
-  openMedicoSessionWizard(
+  openPersonalsaludSessionWizard(
     userId: payload.userId,
     userName: payload.userName,
     authToken: payload.token,

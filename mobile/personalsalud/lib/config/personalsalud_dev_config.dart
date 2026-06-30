@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 /// Acceso de prueba «Ir al inicio» (token `/auth/generar-token-prueba`).
-abstract final class MedicoDevConfig {
+abstract final class PersonalsaludDevConfig {
   static const String _fromEnv = String.fromEnvironment('DEV_TEST_USER_ID');
 
   /// Por defecto `true` para APK release de prueba en dispositivo.

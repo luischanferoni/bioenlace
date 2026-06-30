@@ -1,7 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Claves de sesión operativa del médico (efector, PES, encounter, token).
-abstract final class MedicoSessionPrefs {
+/// Claves de sesión operativa del personal de salud (efector, PES, encounter, token).
+abstract final class PersonalsaludSessionPrefs {
   static const operationalKeys = [
     'auth_token',
     'config_completed',

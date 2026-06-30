@@ -2,7 +2,7 @@
 
 [← Índice](./README.md)
 
-Resumen: **paciente** usa la app paciente; **personal de salud** (médico, enfermería, staff, admin efector) usa la **web clínica** y/o la **app Personal de Salud** (`mobile/personalsalud`). Detalle RBAC: [roles-desde-bd.md](./roles-desde-bd.md).
+Resumen: **paciente** usa la app paciente (autoregistro); **personal de salud** ingresa con usuario creado por **AdminEfector** (primera asignación a un efector) en **web** y/o **app Personal de Salud** (`mobile/personalsalud`). Detalle RBAC: [roles-desde-bd.md](./roles-desde-bd.md).
 
 ## Por tipo de usuario
 

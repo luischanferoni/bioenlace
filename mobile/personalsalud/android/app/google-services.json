@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:684325222184:android:e5d64e8e22026c0a76421d",
+        "mobilesdk_app_id": "1:684325222184:android:8d9f090b95eec51976421d",
         "android_client_info": {
-          "package_name": "com.bioenlace.personalsalud"
+          "package_name": "com.bioenlace.paciente"
         }
       },
       "oauth_client": [],
@@ -26,9 +26,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:684325222184:android:8d9f090b95eec51976421d",
+        "mobilesdk_app_id": "1:684325222184:android:d8d13d703b85281e76421d",
         "android_client_info": {
-          "package_name": "com.bioenlace.paciente"
+          "package_name": "com.bioenlace.personalsalud"
         }
       },
       "oauth_client": [],

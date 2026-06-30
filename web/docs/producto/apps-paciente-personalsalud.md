@@ -6,7 +6,7 @@
 
 ## Registro e identidad
 
-Detalle de flujos, MPI reducido y alta staff: **[registro-paciente.md](./registro-paciente.md)**.
+Detalle de alta de **pacientes** y de **usuarios del personal**: **[registro-paciente.md](./registro-paciente.md)** y gestión AdminEfector en [admin_efector/gestion-efector.md](../qa/admin_efector/gestion-efector.md).
 
 ```mermaid
 flowchart TB
@@ -15,26 +15,30 @@ flowchart TB
     PAPP[App móvil paciente]
     PAPI[API registro]
   end
-  subgraph staff [Personal — web y app]
-    SU[Personal de salud]
-    AS[Asistente / atajo]
-    WEB[Pantalla embebida alta]
-    MOB[App Personal de Salud]
-    SAPI[API registrar-como-staff]
+  subgraph staff [Personal de salud]
+    SU[Profesional sin usuario aún]
+    ADM[AdminEfector del efector]
+    MOB[App Personal de Salud — solo login]
+    WEB[Web clínica]
+    LOC[(Persona + usuario Yii)]
   end
-  REN[Gateway RENAPER]
-  LOC[(Persona en Bioenlace)]
-  PU --> PAPP --> PAPI --> REN
-  PAPI --> LOC
-  SU --> AS --> WEB --> SAPI --> REN
-  SU --> MOB
-  SAPI --> LOC
+  subgraph alta_paciente [Alta paciente — staff]
+    AS[Asistente]
+    SAPI[API alta paciente]
+  end
+  PU --> PAPP --> PAPI --> LOC
+  SU --> ADM
+  ADM -->|Primera vez: crea usuario| LOC
+  ADM -->|Otro efector: solo asignación| LOC
+  LOC --> MOB
+  LOC --> WEB
+  AS --> SAPI --> LOC
 ```
 
-- **Paciente:** autoregistro en app; contexto provincial/sector y domicilio RENAPER en segundo plano.
-- **Staff:** alta por lector DNI o Didit desde el **asistente**; sin flujo MPI de candidatos; sin redirigir a ficha clínica ni fijar el paciente en la sesión del staff.
-- **App Personal de Salud:** login con usuario del centro; registro REFEPS solo para **médicos nuevos**; `appClient` `personalsalud-flutter`.
-- **MPI:** solo RENAPER, coberturas y domicilio; empadronar/candidatos retirados.
+- **Paciente:** autoregistro en app; contexto provincial/sector y domicilio en segundo plano (sin detalle técnico en la UI).
+- **Personal de salud:** **no hay registro en la app móvil**. Un **AdminEfector** crea el usuario Yii la **primera vez** que asigna a esa persona a cualquier efector. Si cambia de centro, el AdminEfector del nuevo efector la **asigna al efector** reutilizando el **mismo usuario**.
+- **App Personal de Salud:** solo **login** + wizard de sesión operativa (efector, servicio, área); `appClient` `personalsalud-flutter`.
+- **Alta de pacientes** (no de staff): la hace el personal desde web/asistente cuando corresponde — ver [registro-paciente.md](./registro-paciente.md).
 - Tras login, **token** y **sesión operativa** del staff (efector, servicio, rol) definen su contexto; el paciente en un flujo clínico se pasa **explícitamente** (asistente, API, captura).
 
 ## Capacidades transversales
@@ -55,6 +59,7 @@ flowchart TB
 
 ## Personal de salud en el día a día
 
+- **Primer acceso:** si no tenés usuario, el administrador del efector debe crearte uno; la app no ofrece alta.
 - Sesión con **efector y servicio**; la **página de inicio muta** según `encounter_class` y rol (tablero EMER, mapa IMP, agenda AMB, etc.) — ver [superficies-ui.md](./superficies-ui.md). Misma lógica en **web** y **app Personal de Salud** (`GET /home/panel`).
 - **Captura clínica** unificada: timeline del paciente + formulario encounter (texto/audio → API `clinical/encounter/*`); muta por encounter, rol y especialidad — [captura-clinica.md](./captura-clinica.md).
 - Operaciones puntuales (alta internación, triage, etc.) vía **flows del asistente** cuando aplica — [asistente-y-chat.md](./asistente-y-chat.md).

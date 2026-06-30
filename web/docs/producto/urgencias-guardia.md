@@ -45,7 +45,7 @@ Backend envía:
 - `EMERGENCY_ASSIGNED_TO_YOU` — al asignar médico  
 - `EMERGENCY_PATIENT_CRITICAL` — triage nivel 1–2  
 
-App **médico**: registro FCM vía `POST /devices/push-token` (`appClient: personalsalud-flutter`). Requiere `google-services.json` / configuración Firebase (mismo patrón que paciente).
+App **Personal de Salud**: registro FCM vía `POST /devices/push-token` (`appClient: personalsalud-flutter`). Requiere `google-services.json` / configuración Firebase (mismo patrón que paciente).
 
 ## Post-v1 (paquete A)
 

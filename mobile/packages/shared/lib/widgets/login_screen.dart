@@ -241,7 +241,10 @@ class _LoginScreenState extends State<LoginScreen> {
           break;
 
         case VerificationFailed(:final error):
-          _snack('Error en Didit: ${error.message}', UiIntent.danger);
+          _snack(
+            'No se pudo completar la verificación biométrica: ${error.message}',
+            UiIntent.danger,
+          );
           break;
       }
     } catch (e) {

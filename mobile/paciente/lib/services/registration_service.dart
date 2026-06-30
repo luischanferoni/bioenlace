@@ -68,7 +68,7 @@ class RegistrationService {
         case VerificationFailed(:final error):
           return {
             'success': false,
-            'message': 'Error en Didit: ${error.message}',
+            'message': 'No se pudo completar la verificación de identidad: ${error.message}',
           };
       }
     } catch (e) {

@@ -6,7 +6,7 @@ import 'package:shared/shared.dart';
 
 import '../models/turno.dart';
 import '../models/cirugia_agenda_item.dart';
-import '../auth/medico_post_login.dart';
+import '../auth/personalsalud_post_login.dart';
 import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
 import 'emergency/emergency_guardia_actions.dart';
@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final encounter = prefs.getString('encounter_class');
     if (encounter == null || encounter.isEmpty) {
       if (!mounted) return;
-      await recoverMedicoOperationalSession(
+      await recoverPersonalsaludOperationalSession(
         userId: widget.userId,
         userName: widget.userName,
         authToken: _homePanelApi.authToken ?? widget.authToken,
@@ -145,8 +145,8 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      if (isMedicoEncounterSessionError(e)) {
-        await recoverMedicoOperationalSession(
+      if (isPersonalsaludEncounterSessionError(e)) {
+        await recoverPersonalsaludOperationalSession(
           userId: widget.userId,
           userName: widget.userName,
           authToken: _homePanelApi.authToken ?? widget.authToken,

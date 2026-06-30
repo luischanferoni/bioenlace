@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
-import '../auth/medico_login_screen.dart';
-import '../auth/medico_post_login.dart';
-import '../auth/medico_session_prefs.dart';
+import '../auth/personalsalud_login_screen.dart';
+import '../auth/personalsalud_post_login.dart';
+import '../auth/personalsalud_session_prefs.dart';
 import '../main.dart';
 import '../services/config_service.dart';
 
@@ -307,12 +307,12 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     );
 
     if (confirm == true) {
-      await MedicoSessionPrefs.clearOnLogout();
+      await PersonalsaludSessionPrefs.clearOnLogout();
 
       navigatorKey.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (_) => buildMedicoLoginScreen(
-            onLoginSuccess: navigateMedicoAfterLogin,
+          builder: (_) => buildPersonalsaludLoginScreen(
+            onLoginSuccess: navigatePersonalsaludAfterLogin,
           ),
         ),
         (route) => false,

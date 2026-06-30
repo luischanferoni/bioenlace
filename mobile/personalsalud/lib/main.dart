@@ -6,8 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-import 'auth/medico_login_screen.dart';
-import 'auth/medico_post_login.dart';
+import 'auth/personalsalud_login_screen.dart';
+import 'auth/personalsalud_post_login.dart';
 import 'firebase/firebase_bootstrap.dart';
 import 'screens/main_screen.dart';
 import 'screens/config_wizard_screen.dart';
@@ -172,8 +172,8 @@ class MyApp extends StatelessWidget {
                 );
               },
             )
-          : buildMedicoLoginScreen(
-              onLoginSuccess: navigateMedicoAfterLogin,
+          : buildPersonalsaludLoginScreen(
+              onLoginSuccess: navigatePersonalsaludAfterLogin,
             ),
     );
   }

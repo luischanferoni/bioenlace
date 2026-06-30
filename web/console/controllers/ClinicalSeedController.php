@@ -38,6 +38,9 @@ class ClinicalSeedController extends Controller
     /** @var string contraseña del usuario médico seed (vacío = default) */
     public $password = '';
 
+    /** @var string contraseña cuenta play review paciente (vacío = default) */
+    public $playPassword = '';
+
     public function options($actionID): array
     {
         $opts = parent::options($actionID);
@@ -63,6 +66,9 @@ class ClinicalSeedController extends Controller
             $opts[] = 'efector';
             $opts[] = 'agenda';
             $opts[] = 'password';
+        }
+        if ($actionID === 'play-review-paciente') {
+            $opts[] = 'playPassword';
         }
 
         return $opts;
@@ -202,6 +208,32 @@ class ClinicalSeedController extends Controller
         $this->stdout($result['message'] . "\n", Console::FG_GREEN);
         $this->stdout('Persona: ' . json_encode($result['persona'], JSON_UNESCAPED_UNICODE) . "\n");
         $this->stdout('Usuario: ' . json_encode($result['user'], JSON_UNESCAPED_UNICODE) . "\n");
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Cuenta paciente para revisión Google Play ({@see PlayReviewPacienteSeedService}).
+     *
+     * php yii clinical-seed/play-review-paciente
+     * php yii clinical-seed/play-review-paciente --playPassword='TuClaveSegura1!'
+     */
+    public function actionPlayReviewPaciente(): int
+    {
+        $service = new \common\components\Domain\Person\Service\Seed\PlayReviewPacienteSeedService();
+        $plain = trim((string) $this->playPassword) !== '' ? (string) $this->playPassword : null;
+
+        try {
+            $result = $service->upsert($plain);
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        $this->stdout("Cuenta play review paciente lista.\n", Console::FG_GREEN);
+        $this->stdout("Usuario: {$result['username']} | doc {$result['documento']} | password: {$result['password']}\n", Console::FG_CYAN);
+        $this->stdout("Agregá este usuario a play_review_accounts en params-local y play_review_login_habilitado=true.\n");
 
         return ExitCode::OK;
     }

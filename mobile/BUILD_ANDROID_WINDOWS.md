@@ -79,6 +79,19 @@ Build directo con Gradle (sin chequeo final de Flutter):
 
 ```powershell
 cd mobile\paciente\android
+.\gradlew :app:bundleRelease
+```
+
+### Error R8 «Missing class … datepisker.PickerFragment» (Didit SDK)
+
+El AAR de `didit_sdk` referencia una clase con typo (`datepisker` en lugar de `datepicker`). En release, R8 falla en `minifyReleaseWithR8`.
+
+**Solución en el repo:** `android/app/proguard-rules.pro` con `-dontwarn com.google.android.material.datepisker.PickerFragment` (ya cableado en `app/build.gradle.kts`).
+
+Si aparece otro missing class, revisar `build/app/outputs/mapping/release/missing_rules.txt` y añadir las reglas sugeridas a `proguard-rules.pro`.
+
+```powershell
+cd mobile\paciente\android
 .\gradlew --stop
 .\gradlew :app:bundleRelease
 ```

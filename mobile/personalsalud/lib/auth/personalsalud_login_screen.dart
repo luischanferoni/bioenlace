@@ -19,6 +19,7 @@ Widget buildPersonalsaludLoginScreen({
     welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
     biometricAvailableText: 'Biometría configurada y lista para usar',
     diditBiometricWorkflowId: AppConfig.diditMedicoBiometricWorkflowId,
+    appClient: 'bioenlace-personalsalud',
     onLoginSuccess: onLoginSuccess,
   );
 }

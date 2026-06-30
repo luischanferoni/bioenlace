@@ -13,6 +13,7 @@ use common\models\Person\Persona;
 use common\components\Domain\Integrations\Identity\DiditClient;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
+use common\components\Platform\Core\Auth\PlayReviewLoginService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -24,6 +25,7 @@ class AuthController extends BaseController
         'refrescar-token',
         'generar-token-prueba',
         'login-biometrico',
+        'login-revision',
     ];
 
     /**
@@ -239,6 +241,55 @@ class AuthController extends BaseController
             'didit' => $diditResult,
             'token' => $token,
         ], 'Login biométrico exitoso');
+    }
+
+    /**
+     * Login usuario/contraseña para revisión de tiendas (cuentas allowlisted en params).
+     *
+     * POST /api/v1/auth/login-revision
+     * Body: { "username": "...", "password": "..." }
+     *
+     * Requiere play_review_login_habilitado y play_review_accounts en params-local.
+     *
+     * @see mobile/PLAY_APP_ACCESS.md
+     */
+    public function actionLoginRevision()
+    {
+        if (!PlayReviewLoginService::isEnabled()) {
+            return $this->error('Acceso de revisión no habilitado', null, 404);
+        }
+
+        $username = (string) (Yii::$app->request->post('username') ?? '');
+        $password = (string) (Yii::$app->request->post('password') ?? '');
+
+        try {
+            $auth = PlayReviewLoginService::authenticate($username, $password);
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, 401);
+        }
+
+        $user = $auth['user'];
+        $persona = $auth['persona'];
+        $token = $this->generateJwtToken($user, (int) $persona->id_persona);
+        $role = $this->getUserRole($user);
+        $permissions = $this->getUserPermissions($user);
+
+        return $this->success([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->username,
+                'email' => $user->email,
+                'role' => $role,
+                'permissions' => $permissions,
+            ],
+            'persona' => [
+                'id_persona' => $persona->id_persona,
+                'nombre' => $persona->nombre,
+                'apellido' => $persona->apellido,
+                'documento' => $persona->documento,
+            ],
+            'token' => $token,
+        ], 'Login de revisión exitoso');
     }
 
     /**

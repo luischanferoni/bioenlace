@@ -63,6 +63,10 @@ android {
                 // Solo desarrollo local; Play Console requiere key.properties — ver mobile/RELEASE_SIGNING.md
                 signingConfigs.getByName("debug")
             }
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 

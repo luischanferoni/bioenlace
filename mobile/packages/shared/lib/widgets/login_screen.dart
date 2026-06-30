@@ -10,6 +10,7 @@ import '../config/api_config.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/ui.dart';
 import 'privacy_policy_link.dart';
+import 'play_review_login_sheet.dart';
 
 /// Pantalla de login compartida con design system "papel".
 /// Acepta callbacks para navegación personalizada por app (paciente / médico).
@@ -43,6 +44,9 @@ class LoginScreen extends StatefulWidget {
   /// Si es `null`, se usa solo la biometría local del dispositivo.
   final String? diditBiometricWorkflowId;
 
+  /// Cabecera X-App-Client para llamadas API desde esta pantalla.
+  final String appClient;
+
   const LoginScreen({
     super.key,
     this.appTitle = 'Bienvenido a BioEnlace',
@@ -56,6 +60,7 @@ class LoginScreen extends StatefulWidget {
     this.signupButtonText,
     this.biometricAvailableText,
     this.diditBiometricWorkflowId,
+    this.appClient = 'bioenlace-flutter',
   });
 
   @override
@@ -67,6 +72,8 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isAuthenticating = false;
   bool _biometricAvailable = false;
   String _biometricType = '';
+  int _logoTapCount = 0;
+  DateTime? _lastLogoTap;
 
   @override
   void initState() {
@@ -168,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
           final response = await http
               .post(
                 uri,
-                headers: AppConfig.jsonHeaders(appClient: 'bioenlace-flutter'),
+                headers: AppConfig.jsonHeaders(appClient: widget.appClient),
                 body: jsonEncode({
                   'biometric_verification_id': session.sessionId,
                   'device_id': deviceId,
@@ -252,6 +259,26 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _onLogoTap() {
+    final now = DateTime.now();
+    if (_lastLogoTap == null || now.difference(_lastLogoTap!) > const Duration(seconds: 3)) {
+      _logoTapCount = 0;
+    }
+    _lastLogoTap = now;
+    _logoTapCount++;
+    if (_logoTapCount >= 5) {
+      _logoTapCount = 0;
+      PlayReviewLoginSheet.show(
+        context,
+        appClient: widget.appClient,
+        onSuccess: (userId, userName) async {
+          if (!mounted) return;
+          widget.onLoginSuccess(userId, userName, context);
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
@@ -266,7 +293,10 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                const BioLogo(height: 56),
+                GestureDetector(
+                  onTap: _onLogoTap,
+                  child: const BioLogo(height: 56),
+                ),
                 BioSpacing.gapH(BioSpacing.xl),
                 Text(
                   widget.appTitle,

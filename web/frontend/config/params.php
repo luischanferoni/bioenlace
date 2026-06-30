@@ -120,6 +120,19 @@ return [
     /** Minutos antes del turno en que el médico puede abrir historia clínica (motivos resumidos por IA). */
     'historia_clinica_apertura_medico_minutos' => 1,
 
+    /**
+     * Login usuario/contraseña para revisores de Google Play / App Store (apps móviles).
+     * Habilitar solo en el entorno que revisan las tiendas. Credenciales en params-local.
+     *
+     * @see mobile/PLAY_APP_ACCESS.md
+     */
+    'play_review_login_habilitado' => false,
+    'play_review_accounts' => [
+        // Definir en params-local.php, por ejemplo:
+        // ['username' => 'play_review_paciente'],
+        // ['username' => 'medico_med_general_863'],
+    ],
+
     // Configuración de JWT para autenticación API
     'jwtSecret' => 'yt14zxFvJUdIXnOIHP87TpfR42JKyi6Ni2wUX5JoHpLiLtikL1p7vdHWcvGIpCfK', // App HS256 + MPI HS512 (MpiJwtTokenService)
 ];

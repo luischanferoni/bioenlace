@@ -33,6 +33,7 @@ Bioenlace Personal de Salud es la app móvil para el **equipo del centro de salu
 
 **Privacidad**
 - Política de privacidad: https://bioenlace.io/privacidad.html
+- Detalles de acceso (revisores Google Play): ver [../PLAY_APP_ACCESS.md](../PLAY_APP_ACCESS.md)
 - Datos de salud bajo políticas de tu institución y normativa aplicable.
 - Contacto institucional: info@bioenlace.io
 

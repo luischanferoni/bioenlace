@@ -18,7 +18,7 @@ flutter run
 
 Firebase / FCM: ver [FIREBASE_SETUP.md](./FIREBASE_SETUP.md).
 
-Publicación Play Store: borrador en [STORE_LISTING.md](./STORE_LISTING.md).
+Publicación Play Store: borrador en [STORE_LISTING.md](./STORE_LISTING.md). **Detalles de acceso** para revisores: [../PLAY_APP_ACCESS.md](../PLAY_APP_ACCESS.md).
 
 ## Alcance
 

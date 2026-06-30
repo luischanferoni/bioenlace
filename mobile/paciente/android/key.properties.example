@@ -1,0 +1,5 @@
+# Copiar a key.properties (no commitear). Ver mobile/RELEASE_SIGNING.md
+storePassword=TU_PASSWORD_DEL_KEYSTORE
+keyPassword=TU_PASSWORD_DE_LA_CLAVE
+keyAlias=upload
+storeFile=../upload-keystore.jks

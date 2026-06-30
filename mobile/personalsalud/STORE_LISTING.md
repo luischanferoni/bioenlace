@@ -50,8 +50,8 @@ Medicina / Productividad
 
 ## Builds de tienda
 
-Desactivar acceso dev en release:
+**Firma release obligatoria para Play Console** — ver [../RELEASE_SIGNING.md](../RELEASE_SIGNING.md). Sin `android/key.properties`, el AAB queda firmado en debug y Google lo rechaza.
 
 ```bash
-flutter build appbundle --dart-define=ENABLE_DEV_TEST_LOGIN=false
+flutter build appbundle --release --dart-define=ENABLE_DEV_TEST_LOGIN=false
 ```

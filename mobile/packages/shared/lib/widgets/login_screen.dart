@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:didit_sdk/sdk_flutter.dart';
 
 import '../auth/biometric_auth.dart';
+import '../auth/biometric_session_prefs.dart';
 import '../config/api_config.dart';
 import '../config/didit_config_resolver.dart';
 import '../platform/didit_platform.dart';

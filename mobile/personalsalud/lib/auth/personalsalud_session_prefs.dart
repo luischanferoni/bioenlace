@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared/shared.dart';
 
 /// Claves de sesión operativa del personal de salud (efector, PES, encounter, token).
 abstract final class PersonalsaludSessionPrefs {
@@ -29,6 +30,7 @@ abstract final class PersonalsaludSessionPrefs {
     for (final key in operationalKeys) {
       await prefs.remove(key);
     }
+    await BiometricSessionPrefs.clearOnLogout();
   }
 
   /// Quita contexto operativo (efector/PES/encounter). Opcionalmente conserva JWT de login.

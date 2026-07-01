@@ -146,6 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
           await Future.delayed(const Duration(milliseconds: 200));
           if (mounted) {
+            await BiometricSessionPrefs.touchActivity();
             widget.onLoginSuccess(userId, userName, context);
           }
         } else {

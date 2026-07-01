@@ -45,7 +45,7 @@ class _SignupScreenState extends State<SignupScreen> {
         await prefs.setString('user_name', fullName);
         await prefs.setString('dni_detected', persona['documento']?.toString() ?? '');
         await prefs.setString('name_detected', fullName);
-        await prefs.setBool('biometric_enabled', true);
+        await BiometricSessionPrefs.touchActivity();
 
         final ctxJson = registroInner['paciente_contexto'];
         if (registroInner['token'] != null) {

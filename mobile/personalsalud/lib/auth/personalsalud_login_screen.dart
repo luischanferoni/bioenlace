@@ -140,9 +140,27 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
         userId: userId,
         userName: userName.isNotEmpty ? userName : 'Usuario',
         token: token,
-        markEstablished: true,
+        markEstablished: false,
       );
       await CrashlyticsBootstrap.setUserId(userId);
+
+      if (!mounted) return;
+
+      var biometricEstablished = false;
+      if (_biometricAvailable && _biometricType.isNotEmpty) {
+        biometricEstablished = await BiometricEnrollmentPrompt.show(
+          context,
+          appTitle: 'Personal de Salud',
+          biometricType: _biometricType,
+        );
+        if (biometricEstablished) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool(
+            PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
+            true,
+          );
+        }
+      }
 
       if (!mounted) return;
       widget.onLoginSuccess(

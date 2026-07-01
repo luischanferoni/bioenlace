@@ -63,7 +63,10 @@ class MyApp extends StatelessWidget {
       title: 'BioEnlace Paciente',
       theme: AppTheme.lightTheme,
       home: isLoggedIn
-          ? MainScreen(chatService: chatService!, authToken: authToken)
+          ? BiometricSessionLockScope(
+              appTitle: 'BioEnlace Paciente',
+              child: MainScreen(chatService: chatService!, authToken: authToken),
+            )
           : LoginScreen(
               appTitle: 'Bienvenido a BioEnlace',
               appSubtitle: 'Tu asistente de salud personal',

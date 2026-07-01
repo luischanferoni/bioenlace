@@ -258,6 +258,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     await prefs.remove('user_id');
     await prefs.remove('user_name');
     await prefs.remove('auth_token');
+    await BiometricSessionPrefs.clearOnLogout();
     await PersonRepresentationContext.instance.clearOnLogout();
     PacienteContextScope.instance.clearOnLogout();
 

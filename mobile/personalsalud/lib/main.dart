@@ -105,7 +105,10 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       navigatorKey: navigatorKey,
       home: isLoggedIn
-          ? FutureBuilder<Map<String, dynamic>>(
+          ? BiometricSessionLockScope(
+              appTitle: 'Personal de Salud',
+              requireUnlockEnabled: true,
+              child: FutureBuilder<Map<String, dynamic>>(
               future: _getUserData(),
               builder: (context, snapshot) {
                 // Manejar estado de conexión
@@ -171,6 +174,7 @@ class MyApp extends StatelessWidget {
                       data['idProfesionalEfectorServicio'] as String? ?? '0',
                 );
               },
+            ),
             )
           : buildPersonalsaludLoginScreen(
               onLoginSuccess: navigatePersonalsaludAfterLogin,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:shared/http/bioenlace_http_trace.dart';
 import 'package:shared/shared.dart';
 
 /// Bandeja de alertas in-app (API v1 notificaciones).
@@ -28,8 +29,11 @@ class NotificacionesService {
       final response = await http
           .post(uri, headers: headers, body: body)
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      BioenlaceHttpTrace.logResponse('notificaciones/listar', response);
       final data = json.decode(response.body) as Map<String, dynamic>;
-      if (response.statusCode == 200 && data['success'] == true) {
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          data['success'] == true) {
         final block = data['data'];
         return {
           'success': true,
@@ -60,8 +64,11 @@ class NotificacionesService {
       final response = await http
           .post(uri, headers: headers, body: body)
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      BioenlaceHttpTrace.logResponse('notificaciones/marcar-leida', response);
       final data = json.decode(response.body) as Map<String, dynamic>;
-      return response.statusCode == 200 && data['success'] == true;
+      return response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          data['success'] == true;
     } catch (_) {
       return false;
     }

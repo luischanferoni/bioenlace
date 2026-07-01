@@ -28,6 +28,12 @@ class BioenlaceApiAccessControl extends ActionFilter
         '/api/media/ver',
         '/api/notificaciones/listar',
         '/api/notificaciones/marcar-leida',
+        '/api/device/push-token',
+        '/api/devices/push-token',
+        '/api/paciente-contexto/obtener-como-paciente',
+        '/api/paciente-contexto/actualizar-como-paciente',
+        '/api/paciente-contexto/sugerir-provincias-como-paciente',
+        '/api/paciente-contexto/buscar-recurso-provincial-como-paciente',
         '/api/home/panel',
     ];
 

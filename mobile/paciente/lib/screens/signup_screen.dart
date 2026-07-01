@@ -52,6 +52,10 @@ class _SignupScreenState extends State<SignupScreen> {
           final token = registroInner['token'].toString();
           await prefs.setString('auth_token', token);
           PacienteContextScope.instance.bindAuthToken(token);
+          ClientDiagnosticApi.bindSession(
+            authToken: token,
+            appClient: 'paciente-flutter',
+          );
         }
         if (ctxJson is Map<String, dynamic>) {
           PacienteContextScope.instance.applyFromRegistration(ctxJson);

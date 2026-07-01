@@ -5,6 +5,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared/http/bioenlace_http_trace.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -151,6 +152,7 @@ class PushNotificationService {
             }),
           )
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      BioenlaceHttpTrace.logResponse('devices/push-token', response);
       if (response.statusCode >= 400) {
         debugPrint(
           'registerTokenWithApi: HTTP ${response.statusCode} ${response.body}',

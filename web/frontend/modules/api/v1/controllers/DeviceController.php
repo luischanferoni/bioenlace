@@ -17,6 +17,9 @@ class DeviceController extends BaseController
     public function actionPushToken()
     {
         $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            throw new BadRequestHttpException('Sesión sin persona asociada.');
+        }
         $req = Yii::$app->request;
         $deviceId = $req->post('device_id');
         $pushToken = $req->post('push_token');

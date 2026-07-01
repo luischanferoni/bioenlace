@@ -193,11 +193,7 @@ class RegistroService
             }
 
             try {
-                if ($tipo === 'paciente') {
-                    if (class_exists(\common\models\BioenlaceDbManager::class) && method_exists(\common\models\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')) {
-                        \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste($user->id);
-                    }
-                } elseif ($tipo === 'medico') {
+                if ($tipo === 'medico') {
                     $medicoRole = AuthRole::findOne(['name' => 'Medico']) ?? AuthRole::findOne(['name' => 'medico']);
                     if ($medicoRole) {
                         Yii::$app->authManager->assign($medicoRole, $user->id);
@@ -205,6 +201,17 @@ class RegistroService
                 }
             } catch (\Throwable $e) {
                 Yii::warning('No se pudo asignar rol al usuario recién creado: ' . $e->getMessage(), 'registro');
+            }
+        }
+
+        if ($user !== null && $tipo === 'paciente') {
+            try {
+                if (class_exists(\common\models\BioenlaceDbManager::class)
+                    && method_exists(\common\models\BioenlaceDbManager::class, 'asignarRolPacienteSiNoExiste')) {
+                    \common\models\BioenlaceDbManager::asignarRolPacienteSiNoExiste((int) $user->id);
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('No se pudo asegurar rol paciente: ' . $e->getMessage(), 'registro');
             }
         }
 

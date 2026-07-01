@@ -8,8 +8,8 @@ abstract final class BiometricSessionPrefs {
   /// El usuario vio el diálogo de enrolamiento y eligió «Ahora no».
   static const enrollmentDeclinedKey = 'biometric_enrollment_declined';
 
-  /// Tiempo sin actividad antes de pedir huella (1 min para pruebas; subir en producción).
-  static const inactivityLockDuration = Duration(minutes: 1);
+  /// Tiempo sin actividad antes de pedir huella al volver a la app.
+  static const inactivityLockDuration = Duration(minutes: 5);
 
   static Future<void> touchActivity() async {
     final prefs = await SharedPreferences.getInstance();

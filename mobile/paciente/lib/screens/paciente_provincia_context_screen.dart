@@ -61,18 +61,18 @@ class _PacienteProvinciaContextScreenState
 
   Future<void> _elegir(int idProvincia) async {
     setState(() => _saving = true);
-    final ok = await PacienteContextScope.instance.actualizarProvincia(
+    final error = await PacienteContextScope.instance.actualizarProvincia(
       idProvincia,
       authToken: widget.authToken,
     );
     if (!mounted) return;
     setState(() => _saving = false);
-    if (ok) {
+    if (error == null) {
       Navigator.pop(context, true);
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('No se pudo guardar la provincia')),
+      SnackBar(content: Text(error)),
     );
   }
 

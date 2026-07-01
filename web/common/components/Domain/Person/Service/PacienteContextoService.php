@@ -121,9 +121,9 @@ final class PacienteContextoService
             if (Provincia::findOne($idProvincia) === null) {
                 throw new \InvalidArgumentException('Provincia inexistente.');
             }
-            if ($ctx->domicilio_estado === PersonaPacienteContexto::DOMICILIO_PENDIENTE) {
-                throw new \InvalidArgumentException('La provincia de contexto aún no puede modificarse.');
-            }
+            // La provincia de contexto no modifica el domicilio MPI; el paciente puede
+            // elegirla desde Configuración mientras la verificación sigue en curso (CTX-13).
+            // Si MPI confirma después, marcarDomicilioVerificado respeta provincia_contexto_manual.
             $ctx->id_provincia_contexto = $idProvincia;
             $ctx->provincia_contexto_manual = true;
         }

@@ -111,9 +111,12 @@ class PacienteContextScope extends ChangeNotifier {
     _notifyListenersSafely();
   }
 
-  Future<bool> actualizarProvincia(int idProvincia, {String? authToken}) async {
+  /// Devuelve `null` si guardó bien; mensaje de error en caso contrario.
+  Future<String?> actualizarProvincia(int idProvincia, {String? authToken}) async {
     final token = authToken ?? _authToken;
-    if (token == null || token.isEmpty) return false;
+    if (token == null || token.isEmpty) {
+      return 'Sesión no disponible';
+    }
     final api = PacienteContextApi(authToken: token);
     final res = await api.actualizarContexto(idProvinciaContexto: idProvincia);
     if (res['success'] == true) {
@@ -121,10 +124,10 @@ class PacienteContextScope extends ChangeNotifier {
       if (ctx is Map<String, dynamic>) {
         _state = PacienteContextState.fromJson(ctx);
         _notifyListenersSafely();
-        return true;
+        return null;
       }
     }
-    return false;
+    return res['message']?.toString() ?? 'No se pudo guardar la provincia';
   }
 
   Future<bool> actualizarSector(String sector, {String? authToken}) async {

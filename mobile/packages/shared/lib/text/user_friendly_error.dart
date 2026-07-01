@@ -148,13 +148,26 @@ bool _looksUserFacing(String message) {
 String? _unwrapExceptionMessage(Object error) {
   final raw = error.toString().trim();
   const prefix = 'Exception:';
+  String inner = raw;
   if (raw.startsWith(prefix)) {
-    final inner = raw.substring(prefix.length).trim();
-    if (inner.isNotEmpty) {
-      return inner;
+    inner = raw.substring(prefix.length).trim();
+  }
+  if (inner.isEmpty) {
+    return null;
+  }
+  final jsonStart = inner.indexOf('{');
+  if (jsonStart >= 0) {
+    try {
+      final decoded = jsonDecode(inner.substring(jsonStart));
+      final apiMsg = apiMessageFromJson(decoded);
+      if (apiMsg != null && apiMsg.isNotEmpty) {
+        return apiMsg;
+      }
+    } catch (_) {
+      // ignore
     }
   }
-  return null;
+  return inner;
 }
 
 String userFriendlyHttpStatusMessage(int statusCode, {String? bodyMessage}) {

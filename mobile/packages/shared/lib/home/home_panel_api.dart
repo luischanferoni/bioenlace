@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/config/api_config.dart';
+import 'package:shared/text/user_friendly_error.dart';
 
 /// Sección del panel de inicio (`GET /api/v1/home/panel`).
 class HomePanelSection {
@@ -109,7 +110,7 @@ class HomePanelApi {
 
     final response = await http.get(uri, headers: _headers);
     if (response.statusCode != 200) {
-      throw Exception('Error al cargar panel (${response.statusCode})');
+      throw Exception(messageFromHttpResponse(response));
     }
 
     final decoded = json.decode(response.body);

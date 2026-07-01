@@ -6,6 +6,34 @@ import '../main.dart';
 import '../screens/config_wizard_screen.dart';
 import 'personalsalud_session_prefs.dart';
 
+/// Ofrece activar huella/Face ID tras el primer login con credenciales.
+Future<void> offerPersonalsaludBiometricEnrollment(BuildContext context) async {
+  final bio = BiometricAuth();
+  if (!await bio.isAvailable()) {
+    return;
+  }
+  final biometricType = await bio.getBiometricType();
+  final label = biometricType.isNotEmpty ? biometricType : 'Biometría';
+  if (!context.mounted) {
+    return;
+  }
+
+  final established = await BiometricEnrollmentPrompt.show(
+    context,
+    appTitle: 'Personal de Salud',
+    biometricType: label,
+  );
+  if (!established) {
+    return;
+  }
+
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool(
+    PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
+    true,
+  );
+}
+
 /// Tras login biométrico: wizard de efector/servicio/área (sesión operativa).
 Future<void> navigatePersonalsaludAfterLogin(
   String userId,
@@ -24,6 +52,8 @@ Future<void> navigatePersonalsaludAfterLogin(
     await prefs.setString('auth_token', loginToken);
   }
 
+  if (!loginContext.mounted) return;
+  await offerPersonalsaludBiometricEnrollment(loginContext);
   if (!loginContext.mounted) return;
   openPersonalsaludSessionWizard(
     userId: userId,

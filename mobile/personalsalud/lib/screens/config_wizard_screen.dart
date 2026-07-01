@@ -79,7 +79,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Error al cargar datos: ${e.toString()}';
+        _errorMessage = userFriendlyErrorMessage(e);
         _isLoading = false;
       });
     }
@@ -110,7 +110,7 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Error al cargar servicios: ${e.toString()}';
+        _errorMessage = userFriendlyErrorMessage(e);
         _isLoading = false;
       });
     }

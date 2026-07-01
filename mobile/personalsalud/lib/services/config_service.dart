@@ -111,12 +111,7 @@ class ConfigService {
     }
 
     if (response.statusCode != 200) {
-      try {
-        final err = json.decode(response.body) as Map<String, dynamic>?;
-        throw Exception(err?['message'] ?? 'Error ${response.statusCode}');
-      } catch (_) {
-        throw Exception('Error ${response.statusCode}: ${response.body}');
-      }
+      throw Exception(messageFromHttpResponse(response));
     }
 
     final data = json.decode(response.body) as Map<String, dynamic>;

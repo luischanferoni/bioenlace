@@ -93,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Error al cargar token de autenticación: ${e.toString()}';
+        _errorMessage = userFriendlyErrorMessage(e);
         _isLoading = false;
       });
     }
@@ -154,7 +154,7 @@ class _HomeScreenState extends State<HomeScreen> {
         return;
       }
       setState(() {
-        _errorMessage = 'Error al cargar panel: ${e.toString()}';
+        _errorMessage = userFriendlyErrorMessage(e);
         _isLoading = false;
       });
     }

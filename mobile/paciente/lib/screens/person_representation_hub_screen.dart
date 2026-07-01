@@ -63,11 +63,16 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
     if (!mounted) return;
 
     String? err;
+    for (var i = 0; i < results.length; i++) {
+      if (results[i]['success'] == true) continue;
+      final msg = results[i]['message']?.toString();
+      if (msg != null && msg.isNotEmpty) {
+        err ??= msg;
+      }
+    }
     if (results[0]['success'] == true) {
       final data = results[0]['data'];
       _vinculosTutor = data is Map ? _asList(data['vinculos']) : [];
-    } else {
-      err = results[0]['message']?.toString();
     }
     if (results[1]['success'] == true) {
       final data = results[1]['data'];

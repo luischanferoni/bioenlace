@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config/api_config.dart';
+import '../http/bioenlace_http_trace.dart';
 
 /// Cliente HTTP para `/api/v1/person-representation/*`.
 class PersonRepresentationApi {
@@ -34,6 +35,7 @@ class PersonRepresentationApi {
           body: json.encode(body ?? {}),
         )
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    BioenlaceHttpTrace.logResponse(path, response);
     return _decode(response);
   }
 
@@ -50,6 +52,7 @@ class PersonRepresentationApi {
           body: json.encode(body ?? {}),
         )
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    BioenlaceHttpTrace.logResponse(path, response);
     return _decode(response);
   }
 

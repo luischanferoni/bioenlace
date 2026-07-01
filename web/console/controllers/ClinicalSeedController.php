@@ -239,6 +239,34 @@ class ClinicalSeedController extends Controller
     }
 
     /**
+     * Carga las 24 jurisdicciones argentinas en {{%provincias}} (idempotente).
+     *
+     * php yii clinical-seed/provincias-argentina
+     */
+    public function actionProvinciasArgentina(): int
+    {
+        try {
+            $result = (new \common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService())->upsertAll();
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        $this->stdout(
+            sprintf(
+                "Provincias Argentina: %d en catálogo, %d insertadas, %d actualizadas.\n",
+                $result['total'],
+                $result['inserted'],
+                $result['updated']
+            ),
+            Console::FG_GREEN
+        );
+
+        return ExitCode::OK;
+    }
+
+    /**
      * Crea médico de prueba en MED GENERAL para el efector indicado (default 863).
      *
      * php yii clinical-seed/medico-med-general

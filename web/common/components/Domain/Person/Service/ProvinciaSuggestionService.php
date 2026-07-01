@@ -8,83 +8,100 @@ use Yii;
 use yii\helpers\ArrayHelper;
 
 /**
- * Sugiere provincias para contexto paciente (geolocalización IP + vecinos declarativos).
+ * Ordena provincias para contexto paciente (geolocalización IP + vecinos declarativos).
  */
 final class ProvinciaSuggestionService
 {
-    private const LIMITE = 5;
+    /** @var list<string> */
+    private const FALLBACK_COD_INDEC = ['86', '14', '06', '82', '02'];
+
+    /**
+     * Todas las provincias de BD, primero las más cercanas a la IP del cliente.
+     *
+     * @return list<array{id_provincia: int, nombre: string, cod_indec: string}>
+     */
+    public function listarOrdenadasPorProximidadIp(?string $ip = null): array
+    {
+        $provincias = Provincia::find()->all();
+        if ($provincias === []) {
+            return [];
+        }
+
+        $byCod = [];
+        foreach ($provincias as $provincia) {
+            $cod = str_pad(trim((string) $provincia->cod_indec), 2, '0', STR_PAD_LEFT);
+            $byCod[$cod] = $provincia;
+        }
+
+        $ip = $ip ?? $this->resolveClientIp();
+        $codIndec = $this->resolveCodIndecFromIp($ip);
+        $vecinos = $this->loadVecinosMap();
+
+        $orderedCods = [];
+        if ($codIndec !== null && $codIndec !== '' && isset($byCod[$codIndec])) {
+            $orderedCods[] = $codIndec;
+            foreach ($vecinos[$codIndec] ?? [] as $vecino) {
+                $vecino = str_pad(trim((string) $vecino), 2, '0', STR_PAD_LEFT);
+                if (!in_array($vecino, $orderedCods, true) && isset($byCod[$vecino])) {
+                    $orderedCods[] = $vecino;
+                }
+            }
+        } else {
+            foreach (self::FALLBACK_COD_INDEC as $cod) {
+                if (!isset($byCod[$cod])) {
+                    continue;
+                }
+                if (!in_array($cod, $orderedCods, true)) {
+                    $orderedCods[] = $cod;
+                }
+                foreach ($vecinos[$cod] ?? [] as $vecino) {
+                    $vecino = str_pad(trim((string) $vecino), 2, '0', STR_PAD_LEFT);
+                    if (!in_array($vecino, $orderedCods, true) && isset($byCod[$vecino])) {
+                        $orderedCods[] = $vecino;
+                    }
+                }
+            }
+        }
+
+        $remaining = array_keys($byCod);
+        usort($remaining, static function (string $a, string $b) use ($byCod): int {
+            return strcasecmp((string) $byCod[$a]->nombre, (string) $byCod[$b]->nombre);
+        });
+        foreach ($remaining as $cod) {
+            if (!in_array($cod, $orderedCods, true)) {
+                $orderedCods[] = $cod;
+            }
+        }
+
+        $out = [];
+        foreach ($orderedCods as $cod) {
+            if (!isset($byCod[$cod])) {
+                continue;
+            }
+            $out[] = $this->exportProvincia($byCod[$cod]);
+        }
+
+        return $out;
+    }
 
     /**
      * @return list<array{id_provincia: int, nombre: string, cod_indec: string}>
      */
     public function sugerirPorIp(?string $ip = null): array
     {
-        $ip = $ip ?? $this->resolveClientIp();
-        $codIndec = $this->resolveCodIndecFromIp($ip);
-        $vecinos = $this->loadVecinosMap();
+        return $this->listarOrdenadasPorProximidadIp($ip);
+    }
 
-        $codigos = [];
-        if ($codIndec !== null && $codIndec !== '') {
-            $codigos[] = $codIndec;
-            foreach ($vecinos[$codIndec] ?? [] as $vecino) {
-                if (!in_array($vecino, $codigos, true)) {
-                    $codigos[] = $vecino;
-                }
-            }
-        }
-
-        if ($codigos === []) {
-            $codigos = ['86', '14', '06', '82', '00'];
-        }
-
-        $codigos = array_slice($codigos, 0, self::LIMITE);
-        $provincias = Provincia::find()
-            ->where(['cod_indec' => $codigos])
-            ->all();
-        $byCod = [];
-        foreach ($provincias as $p) {
-            $byCod[(string) $p->cod_indec] = $p;
-        }
-
-        $out = [];
-        foreach ($codigos as $cod) {
-            if (!isset($byCod[$cod])) {
-                continue;
-            }
-            $p = $byCod[$cod];
-            $out[] = [
-                'id_provincia' => (int) $p->id_provincia,
-                'nombre' => (string) $p->nombre,
-                'cod_indec' => (string) $p->cod_indec,
-            ];
-            if (count($out) >= self::LIMITE) {
-                break;
-            }
-        }
-
-        if (count($out) < self::LIMITE) {
-            $extra = Provincia::find()
-                ->orderBy(['nombre' => SORT_ASC])
-                ->limit(self::LIMITE)
-                ->all();
-            foreach ($extra as $p) {
-                $id = (int) $p->id_provincia;
-                if (ArrayHelper::getColumn($out, 'id_provincia') !== []
-                    && in_array($id, ArrayHelper::getColumn($out, 'id_provincia'), true)) {
-                    continue;
-                }
-                $out[] = [
-                    'id_provincia' => $id,
-                    'nombre' => (string) $p->nombre,
-                    'cod_indec' => (string) $p->cod_indec,
-                ];
-                if (count($out) >= self::LIMITE) {
-                    break;
-                }
-            }
-        }
-
-        return $out;
+    /**
+     * @return array{id_provincia: int, nombre: string, cod_indec: string}
+     */
+    private function exportProvincia(Provincia $provincia): array
+    {
+        return [
+            'id_provincia' => (int) $provincia->id_provincia,
+            'nombre' => (string) $provincia->nombre,
+            'cod_indec' => str_pad(trim((string) $provincia->cod_indec), 2, '0', STR_PAD_LEFT),
+        ];
     }
 
     private function resolveClientIp(): string
@@ -138,7 +155,7 @@ final class ProvinciaSuggestionService
         foreach (Provincia::find()->all() as $provincia) {
             $pNorm = $this->normalize((string) $provincia->nombre);
             if ($pNorm === $norm || str_contains($pNorm, $norm) || str_contains($norm, $pNorm)) {
-                return (string) $provincia->cod_indec;
+                return str_pad(trim((string) $provincia->cod_indec), 2, '0', STR_PAD_LEFT);
             }
         }
 
@@ -167,8 +184,8 @@ final class ProvinciaSuggestionService
     {
         $value = mb_strtoupper(trim($value));
         $value = str_replace(
-            ['Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ', 'CIUDAD AUTÓNOMA DE BUENOS AIRES', 'CABA'],
-            ['A', 'E', 'I', 'O', 'U', 'N', 'BUENOS AIRES', 'BUENOS AIRES'],
+            ['Á', 'É', 'Í', 'Ó', 'Ú', 'Ñ', 'CIUDAD AUTÓNOMA DE BUENOS AIRES', 'CABA', 'CAPITAL FEDERAL'],
+            ['A', 'E', 'I', 'O', 'U', 'N', 'BUENOS AIRES', 'BUENOS AIRES', 'BUENOS AIRES'],
             $value
         );
 

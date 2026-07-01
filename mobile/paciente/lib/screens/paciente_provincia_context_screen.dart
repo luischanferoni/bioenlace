@@ -101,7 +101,7 @@ class _PacienteProvinciaContextScreenState
                     ),
                   ),
                 if (_provincias.isEmpty && _error == null)
-                  const Text('No hay provincias sugeridas disponibles.'),
+                  const Text('No hay provincias disponibles.'),
                 ..._provincias.map((p) {
                   final id = p['id_provincia'] as int? ?? 0;
                   final nombre = p['nombre']?.toString() ?? 'Provincia';

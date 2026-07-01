@@ -39,8 +39,8 @@ Pedí al responsable del entorno que confirme si existen estos centros de prueba
 ## Sugerencia de provincias
 
 1. **Vos** (paciente nuevo o en configuración) pedís sugerencia de provincia si la app lo ofrece.
-2. **El sistema** muestra una lista corta de provincias (hasta 5).
-3. **CTX-06:** En red local o sin GPS, la lista igual aparece con opciones razonables (no vacía ni error).
+2. **El sistema** muestra la lista de provincias ordenada por cercanía a tu ubicación (IP).
+3. **CTX-06:** En red local o sin GPS, la lista igual aparece completa (no vacía ni error).
 
 ---
 

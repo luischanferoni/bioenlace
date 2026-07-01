@@ -74,7 +74,7 @@ class PacienteContextoController extends BaseController
     /**
      * GET|POST /api/v1/paciente-contexto/sugerir-provincias-como-paciente
      *
-     * Devuelve hasta 5 provincias sugeridas según IP del cliente.
+     * Devuelve todas las provincias ordenadas por proximidad a la IP del cliente.
      *
      * @action_name Sugerir provincias por IP
      * @entity PacienteContexto

@@ -1,0 +1,100 @@
+version: 1
+# Jurisdicciones argentinas (24) con código INDEC de 2 dígitos.
+# Fuente de verdad para seed de {{%provincias}} y contexto paciente.
+provincias:
+  - cod_indec: "02"
+    nombre: "CABA"
+    region_pais: "Pampeana"
+    superficie: 203
+  - cod_indec: "06"
+    nombre: "Buenos Aires"
+    region_pais: "Pampeana"
+    superficie: 307571
+  - cod_indec: "10"
+    nombre: "Catamarca"
+    region_pais: "Norte"
+    superficie: 102602
+  - cod_indec: "14"
+    nombre: "Córdoba"
+    region_pais: "Centro"
+    superficie: 165321
+  - cod_indec: "18"
+    nombre: "Corrientes"
+    region_pais: "Litoral"
+    superficie: 88199
+  - cod_indec: "22"
+    nombre: "Chaco"
+    region_pais: "Litoral"
+    superficie: 99633
+  - cod_indec: "26"
+    nombre: "Chubut"
+    region_pais: "Patagonia"
+    superficie: 224686
+  - cod_indec: "30"
+    nombre: "Entre Ríos"
+    region_pais: "Litoral"
+    superficie: 78781
+  - cod_indec: "34"
+    nombre: "Formosa"
+    region_pais: "Litoral"
+    superficie: 72906
+  - cod_indec: "38"
+    nombre: "Jujuy"
+    region_pais: "Norte"
+    superficie: 53219
+  - cod_indec: "42"
+    nombre: "La Pampa"
+    region_pais: "Pampeana"
+    superficie: 143440
+  - cod_indec: "46"
+    nombre: "La Rioja"
+    region_pais: "Cuyo"
+    superficie: 89680
+  - cod_indec: "50"
+    nombre: "Mendoza"
+    region_pais: "Cuyo"
+    superficie: 148827
+  - cod_indec: "54"
+    nombre: "Misiones"
+    region_pais: "Litoral"
+    superficie: 29801
+  - cod_indec: "58"
+    nombre: "Neuquén"
+    region_pais: "Patagonia"
+    superficie: 94078
+  - cod_indec: "62"
+    nombre: "Río Negro"
+    region_pais: "Patagonia"
+    superficie: 203013
+  - cod_indec: "66"
+    nombre: "Salta"
+    region_pais: "Norte"
+    superficie: 155488
+  - cod_indec: "70"
+    nombre: "San Juan"
+    region_pais: "Cuyo"
+    superficie: 89651
+  - cod_indec: "74"
+    nombre: "San Luis"
+    region_pais: "Cuyo"
+    superficie: 76748
+  - cod_indec: "78"
+    nombre: "Santa Cruz"
+    region_pais: "Patagonia"
+    superficie: 243943
+  - cod_indec: "82"
+    nombre: "Santiago del Estero"
+    region_pais: "Norte"
+    superficie: 136351
+  - cod_indec: "86"
+    nombre: "Santa Fe"
+    region_pais: "Centro"
+    superficie: 133007
+  - cod_indec: "90"
+    nombre: "Tucumán"
+    region_pais: "Norte"
+    superficie: 22524
+  - cod_indec: "94"
+    nombre: "Tierra del Fuego"
+    region_pais: "Patagonia"
+    superficie: 21185

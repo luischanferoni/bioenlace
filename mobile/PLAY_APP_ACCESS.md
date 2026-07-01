@@ -89,28 +89,10 @@ If login fails, contact info@bioenlace.io — do not publish this email in the p
 ### Bioenlace Personal de Salud (`com.bioenlace.personalsalud`)
 
 ```
-This app is for hospital staff only. Use the hidden reviewer login:
-
-1. On the login screen, tap the Bioenlace logo 5 times quickly (within 3 seconds).
-2. Sign in with:
-   Username: medico_med_general_863
-   Password: [PASSWORD YOU SET ON SERVER]
-
-3. Complete the operational setup wizard:
-   - Select the demo health facility (efector) shown in the list
-   - Select service "MED GENERAL"
-   - Choose work area (e.g. ambulatory OUTP or emergency EMER as available)
-
-API: https://app.bioenlace.io/api/v1
-
-Staff accounts are normally created by the hospital administrator; this account is a dedicated sandbox for Google Play review.
-
-Privacy policy: https://bioenlace.io/privacidad.html
-
-Support during review: info@bioenlace.io (reviewers only).
+This app is for hospital staff only. Reviewer login: tap the Bioenlace logo 5 times within 3 seconds on the login screen. Username: medico_med_general_863. Password: [PASSWORD]. After sign-in, use the setup wizard: pick the demo health facility, select MED GENERAL, then choose work area OUTP (ambulatory) or EMER (emergency). API: https://app.bioenlace.io/api/v1. Dedicated Google Play review sandbox. Privacy: https://bioenlace.io/privacidad.html. Support: info@bioenlace.io (reviewers only).
 ```
 
-Reemplazá `[PASSWORD YOU SET ON SERVER]` por la clave real que configuraste con los comandos `clinical-seed` (no la subas al repo).
+Reemplazá `[PASSWORD]` por la clave real que configuraste con los comandos `clinical-seed` (no la subas al repo).
 
 ---
 

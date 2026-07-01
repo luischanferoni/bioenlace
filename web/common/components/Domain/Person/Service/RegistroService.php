@@ -52,7 +52,13 @@ class RegistroService
         $diditResult = $didit->getIdentityVerification($verificationId);
 
         if ($diditResult['success'] === false || $diditResult['status'] === 'rejected') {
-            throw new \RuntimeException('Verificación de identidad rechazada por Didit');
+            $detalle = trim((string) ($diditResult['message'] ?? ''));
+            $estado = trim((string) ($diditResult['status'] ?? 'unknown'));
+            throw new \RuntimeException(
+                'Verificación de identidad rechazada por Didit'
+                . ($estado !== '' ? ' (estado: ' . $estado . ')' : '')
+                . ($detalle !== '' ? ': ' . $detalle : '')
+            );
         }
 
         $dni = $diditResult['documento'] ?? null;

@@ -107,10 +107,217 @@ class DiditClient extends Component
     /**
      * Obtiene y normaliza el resultado de una verificación KYC completa (documento + selfie + liveness).
      *
-     * @param string $verificationId
+     * El SDK móvil y las sesiones hosted devuelven un session_id v3; se consulta primero
+     * GET /v3/session/{id}/decision/ y, si no existe, el endpoint legacy de identity.
+     *
+     * @param string $verificationId session_id (v3) o verification id legacy
      * @return array
      */
     public function getIdentityVerification(string $verificationId): array
+    {
+        $sessionDecision = $this->fetchSessionDecision($verificationId);
+        if ($sessionDecision !== null) {
+            return $this->buildIdentityResultFromPayload(
+                $sessionDecision,
+                $verificationId,
+                'Respuesta recibida desde Didit (session v3)'
+            );
+        }
+
+        return $this->getLegacyIdentityVerification($verificationId);
+    }
+
+    /**
+     * Obtiene y normaliza el resultado de una autenticación biométrica (selfie + liveness + face match).
+     *
+     * @param string $verificationId session_id (v3) o verification id legacy
+     * @return array
+     */
+    public function getBiometricAuth(string $verificationId): array
+    {
+        $sessionDecision = $this->fetchSessionDecision($verificationId);
+        if ($sessionDecision !== null) {
+            return $this->buildBiometricResultFromPayload(
+                $sessionDecision,
+                $verificationId,
+                'Respuesta recibida desde Didit (session v3 biometric)'
+            );
+        }
+
+        return $this->getLegacyBiometricAuth($verificationId);
+    }
+
+    /**
+     * GET /v3/session/{sessionId}/decision/ — decisión canónica de sesiones v3.
+     *
+     * @return array<string, mixed>|null null si la sesión no existe (404) en v3
+     */
+    protected function fetchSessionDecision(string $sessionId): ?array
+    {
+        $sessionId = trim($sessionId);
+        if ($sessionId === '') {
+            return null;
+        }
+
+        try {
+            $client = $this->createVerificationHttpClient();
+            $response = $client->createRequest()
+                ->setMethod('GET')
+                ->setUrl('/v3/session/' . rawurlencode($sessionId) . '/decision/')
+                ->addHeaders($this->buildVerificationApiHeaders())
+                ->send();
+
+            if ((int) $response->getStatusCode() === 404) {
+                return null;
+            }
+
+            if (!$response->isOk) {
+                Yii::warning(
+                    'Error HTTP en Didit session decision: ' . $response->getStatusCode() . ' ' . $response->content,
+                    'didit'
+                );
+
+                return null;
+            }
+
+            return is_array($response->data) ? $response->data : null;
+        } catch (\Throwable $e) {
+            Yii::error('Excepción llamando a Didit session decision: ' . $e->getMessage(), 'didit');
+
+            return null;
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    protected function buildIdentityResultFromPayload(array $data, string $verificationId, string $message): array
+    {
+        $status = $data['status'] ?? 'unknown';
+        $normalizedStatus = $this->normalizeStatus((string) $status);
+
+        $firstIdVerification = $this->pickPreferredIdVerification($data['id_verifications'] ?? []);
+        $documentTypeString = null;
+        if (!empty($firstIdVerification)) {
+            $persona = [
+                'first_name' => $firstIdVerification['first_name'] ?? null,
+                'last_name' => $firstIdVerification['last_name'] ?? null,
+                'date_of_birth' => $firstIdVerification['date_of_birth'] ?? null,
+                'gender' => $firstIdVerification['gender'] ?? null,
+            ];
+            $document = [
+                'number' => $firstIdVerification['document_number'] ?? $firstIdVerification['personal_number'] ?? null,
+                'type_id' => $firstIdVerification['document_type_id'] ?? null,
+                'type' => $firstIdVerification['document_type'] ?? null,
+            ];
+            $documentTypeString = $firstIdVerification['document_type'] ?? null;
+            $maritalStatus = $firstIdVerification['marital_status'] ?? null;
+        } else {
+            $persona = $data['person'] ?? [];
+            $document = $data['document'] ?? [];
+            $documentTypeString = $document['type'] ?? null;
+            $maritalStatus = $persona['marital_status'] ?? null;
+        }
+
+        $generoRaw = $persona['gender_id'] ?? $persona['gender'] ?? $persona['sex'] ?? null;
+        if ($generoRaw === 'M' || $generoRaw === 'male') {
+            $genero = 1;
+        } elseif ($generoRaw === 'F' || $generoRaw === 'female') {
+            $genero = 2;
+        } else {
+            $genero = 0;
+        }
+        $sexoBiologicoRaw = $persona['biological_sex_id'] ?? $persona['sex_id'] ?? $generoRaw;
+        if ($sexoBiologicoRaw === 'M' || $sexoBiologicoRaw === 'male') {
+            $sexoBiologico = 1;
+        } elseif ($sexoBiologicoRaw === 'F' || $sexoBiologicoRaw === 'female') {
+            $sexoBiologico = 2;
+        } elseif (is_numeric($sexoBiologicoRaw) && (int) $sexoBiologicoRaw >= 0) {
+            $sexoBiologico = (int) $sexoBiologicoRaw;
+        } else {
+            $sexoBiologico = $genero;
+        }
+
+        $documentNumber = $document['number'] ?? null;
+        $idTipodoc = $this->resolveIdTipodoc($document, $documentTypeString);
+        $idEstadoCivil = $this->mapMaritalStatusToIdEstadoCivil($maritalStatus);
+
+        return [
+            'success' => $normalizedStatus === 'approved',
+            'status' => $normalizedStatus,
+            'verification_id' => $data['session_id'] ?? $data['id'] ?? $verificationId,
+            'message' => $message,
+            'documento' => $documentNumber,
+            'nombre' => $persona['first_name'] ?? null,
+            'apellido' => $persona['last_name'] ?? null,
+            'fecha_nacimiento' => $persona['date_of_birth'] ?? null,
+            'genero' => $genero,
+            'sexo_biologico' => $sexoBiologico,
+            'id_tipodoc' => $idTipodoc,
+            'id_estado_civil' => $idEstadoCivil,
+            'didit_reference_id' => $data['user_reference'] ?? $data['vendor_data'] ?? null,
+            'raw' => $data,
+            'errors' => null,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>
+     */
+    protected function buildBiometricResultFromPayload(array $data, string $verificationId, string $message): array
+    {
+        $normalizedStatus = $this->normalizeStatus((string) ($data['status'] ?? 'unknown'));
+        $firstIdVerification = $this->pickPreferredIdVerification($data['id_verifications'] ?? []);
+        $linkedDocument = null;
+        if (!empty($firstIdVerification)) {
+            $linkedDocument = $firstIdVerification['document_number']
+                ?? $firstIdVerification['personal_number']
+                ?? null;
+        }
+        if ($linkedDocument === null && !empty($data['subject']['document_number'])) {
+            $linkedDocument = $data['subject']['document_number'];
+        }
+
+        return [
+            'success' => $normalizedStatus === 'approved',
+            'status' => $normalizedStatus,
+            'verification_id' => $data['session_id'] ?? $data['id'] ?? $verificationId,
+            'message' => $message,
+            'linked_document' => $linkedDocument,
+            'didit_reference_id' => $data['user_reference'] ?? $data['vendor_data'] ?? null,
+            'raw' => $data,
+            'errors' => null,
+        ];
+    }
+
+    /**
+     * @param mixed $idVerifications
+     * @return array<string, mixed>
+     */
+    protected function pickPreferredIdVerification($idVerifications): array
+    {
+        if (!is_array($idVerifications) || $idVerifications === []) {
+            return [];
+        }
+
+        foreach ($idVerifications as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            if ($this->normalizeStatus((string) ($item['status'] ?? '')) === 'approved') {
+                return $item;
+            }
+        }
+
+        return is_array($idVerifications[0]) ? $idVerifications[0] : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getLegacyIdentityVerification(string $verificationId): array
     {
         $client = $this->createHttpClient();
 
@@ -129,77 +336,13 @@ class DiditClient extends Component
                 return $this->buildErrorResult('identity', 'Error HTTP al consultar Didit', $response->data, $response->getStatusCode());
             }
 
-            $data = $response->data;
+            $data = is_array($response->data) ? $response->data : [];
 
-            $status = $data['status'] ?? 'unknown';
-            $normalizedStatus = $this->normalizeStatus($status);
-
-            // Soporta Session API (id_verifications) y formato alternativo (person + document)
-            $idVerifications = $data['id_verifications'] ?? [];
-            $firstIdVerification = is_array($idVerifications) && isset($idVerifications[0]) ? $idVerifications[0] : [];
-            $documentTypeString = null;
-            if (!empty($firstIdVerification)) {
-                $persona = [
-                    'first_name' => $firstIdVerification['first_name'] ?? null,
-                    'last_name' => $firstIdVerification['last_name'] ?? null,
-                    'date_of_birth' => $firstIdVerification['date_of_birth'] ?? null,
-                    'gender' => $firstIdVerification['gender'] ?? null,
-                ];
-                $document = [
-                    'number' => $firstIdVerification['document_number'] ?? $firstIdVerification['personal_number'] ?? null,
-                    'type_id' => $firstIdVerification['document_type_id'] ?? null,
-                    'type' => $firstIdVerification['document_type'] ?? null,
-                ];
-                $documentTypeString = $firstIdVerification['document_type'] ?? null;
-                $maritalStatus = $firstIdVerification['marital_status'] ?? null;
-            } else {
-                $persona = $data['person'] ?? [];
-                $document = $data['document'] ?? [];
-                $documentTypeString = $document['type'] ?? null;
-                $maritalStatus = $persona['marital_status'] ?? null;
-            }
-
-            // Género: Didit 'M'|'F'|'U'; nosotros 1=M, 2=F, 0=no especificado (genero no acepta null)
-            $generoRaw = $persona['gender_id'] ?? $persona['gender'] ?? $persona['sex'] ?? null;
-            if ($generoRaw === 'M' || $generoRaw === 'male') {
-                $genero = 1;
-            } elseif ($generoRaw === 'F' || $generoRaw === 'female') {
-                $genero = 2;
-            } else {
-                $genero = 0; // 'U' o no informado
-            }
-            $sexoBiologicoRaw = $persona['biological_sex_id'] ?? $persona['sex_id'] ?? $generoRaw;
-            if ($sexoBiologicoRaw === 'M' || $sexoBiologicoRaw === 'male') {
-                $sexoBiologico = 1;
-            } elseif ($sexoBiologicoRaw === 'F' || $sexoBiologicoRaw === 'female') {
-                $sexoBiologico = 2;
-            } elseif (is_numeric($sexoBiologicoRaw) && (int) $sexoBiologicoRaw >= 0) {
-                $sexoBiologico = (int) $sexoBiologicoRaw;
-            } else {
-                $sexoBiologico = $genero; // mismo que género si no viene
-            }
-
-            $documentNumber = $document['number'] ?? null;
-            $idTipodoc = $this->resolveIdTipodoc($document, $documentTypeString);
-            $idEstadoCivil = $this->mapMaritalStatusToIdEstadoCivil($maritalStatus);
-
-            return [
-                'success' => $normalizedStatus === 'approved',
-                'status' => $normalizedStatus,
-                'verification_id' => $data['id'] ?? $data['session_id'] ?? $verificationId,
-                'message' => 'Respuesta recibida desde Didit (identity verification)',
-                'documento' => $documentNumber,
-                'nombre' => $persona['first_name'] ?? null,
-                'apellido' => $persona['last_name'] ?? null,
-                'fecha_nacimiento' => $persona['date_of_birth'] ?? null,
-                'genero' => $genero,
-                'sexo_biologico' => $sexoBiologico,
-                'id_tipodoc' => $idTipodoc,
-                'id_estado_civil' => $idEstadoCivil,
-                'didit_reference_id' => $data['user_reference'] ?? $data['vendor_data'] ?? null,
-                'raw' => $data,
-                'errors' => null,
-            ];
+            return $this->buildIdentityResultFromPayload(
+                $data,
+                $verificationId,
+                'Respuesta recibida desde Didit (identity verification legacy)'
+            );
         } catch (\Throwable $e) {
             Yii::error('Excepción llamando a Didit identity verification: ' . $e->getMessage(), 'didit');
             return $this->buildExceptionResult('identity', $e);
@@ -207,12 +350,9 @@ class DiditClient extends Component
     }
 
     /**
-     * Obtiene y normaliza el resultado de una autenticación biométrica (selfie + liveness + face match).
-     *
-     * @param string $verificationId
-     * @return array
+     * @return array<string, mixed>
      */
-    public function getBiometricAuth(string $verificationId): array
+    protected function getLegacyBiometricAuth(string $verificationId): array
     {
         $client = $this->createHttpClient();
 
@@ -231,23 +371,13 @@ class DiditClient extends Component
                 return $this->buildErrorResult('biometric', 'Error HTTP al consultar Didit (biometric auth)', $response->data, $response->getStatusCode());
             }
 
-            $data = $response->data;
+            $data = is_array($response->data) ? $response->data : [];
 
-            $status = $data['status'] ?? 'unknown';
-            $normalizedStatus = $this->normalizeStatus($status);
-
-            $subject = $data['subject'] ?? [];
-
-            return [
-                'success' => $normalizedStatus === 'approved',
-                'status' => $normalizedStatus,
-                'verification_id' => $data['id'] ?? $verificationId,
-                'message' => 'Respuesta recibida desde Didit (biometric auth)',
-                'linked_document' => $subject['document_number'] ?? null,
-                'didit_reference_id' => $data['user_reference'] ?? null,
-                'raw' => $data,
-                'errors' => null,
-            ];
+            return $this->buildBiometricResultFromPayload(
+                $data,
+                $verificationId,
+                'Respuesta recibida desde Didit (biometric auth legacy)'
+            );
         } catch (\Throwable $e) {
             Yii::error('Excepción llamando a Didit biometric auth: ' . $e->getMessage(), 'didit');
             return $this->buildExceptionResult('biometric', $e);
@@ -263,6 +393,21 @@ class DiditClient extends Component
     {
         $baseUrl = rtrim(Yii::$app->params['didit_base_url'] ?? 'https://api.didit.me', '/');
 
+        return $this->createJsonHttpClient($baseUrl);
+    }
+
+    protected function createVerificationHttpClient(): Client
+    {
+        $baseUrl = rtrim(
+            (string) (Yii::$app->params['didit_verification_base_url'] ?? 'https://verification.didit.me'),
+            '/'
+        );
+
+        return $this->createJsonHttpClient($baseUrl);
+    }
+
+    protected function createJsonHttpClient(string $baseUrl): Client
+    {
         $timeout = (int) (Yii::$app->params['didit_timeout'] ?? 30);
 
         return new Client([
@@ -280,7 +425,28 @@ class DiditClient extends Component
     }
 
     /**
-     * Construye los headers de autenticación para Didit.
+     * Headers para verification.didit.me (sesiones v3).
+     *
+     * @return array<string, string>
+     */
+    protected function buildVerificationApiHeaders(): array
+    {
+        $apiKey = Yii::$app->params['didit_api_key'] ?? null;
+        $headers = [
+            'Accept' => 'application/json',
+        ];
+
+        if (!empty($apiKey)) {
+            $headers['x-api-key'] = (string) $apiKey;
+        } else {
+            Yii::warning('didit_api_key no configurada; se llamará a Didit sin x-api-key.', 'didit');
+        }
+
+        return $headers;
+    }
+
+    /**
+     * Construye los headers de autenticación para Didit API legacy (api.didit.me).
      *
      * @return array
      */
@@ -382,11 +548,11 @@ class DiditClient extends Component
             return 'approved';
         }
 
-        if (in_array($lower, ['rejected', 'invalid', 'failed', 'error'], true)) {
+        if (in_array($lower, ['rejected', 'declined', 'invalid', 'failed', 'error'], true)) {
             return 'rejected';
         }
 
-        if (in_array($lower, ['pending', 'in_progress', 'processing'], true)) {
+        if (in_array($lower, ['pending', 'in_progress', 'processing', 'in review', 'awaiting user', 'not started'], true)) {
             return 'pending';
         }
 

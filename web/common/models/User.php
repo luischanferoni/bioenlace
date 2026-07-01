@@ -40,6 +40,8 @@ class User extends ActiveRecord implements IdentityInterface
 
     public const STATUS_INACTIVE = 0;
 
+    public const STATUS_BANNED = -1;
+
     /** Alta por invitación (staff): sin contraseña en el formulario. */
     public const SCENARIO_INVITE = 'inviteUser';
 

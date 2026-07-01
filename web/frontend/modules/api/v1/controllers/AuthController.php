@@ -14,6 +14,7 @@ use common\components\Domain\Integrations\Identity\DiditClient;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use common\components\Platform\Core\Auth\PlayReviewLoginService;
+use common\components\Platform\Core\Auth\StaffMobileLoginService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
@@ -26,6 +27,7 @@ class AuthController extends BaseController
         'generar-token-prueba',
         'login-biometrico',
         'login-revision',
+        'login-credenciales',
     ];
 
     /**
@@ -290,6 +292,47 @@ class AuthController extends BaseController
             ],
             'token' => $token,
         ], 'Login de revisión exitoso');
+    }
+
+    /**
+     * Login usuario/contraseña para app móvil Personal de Salud (primera vez en el dispositivo).
+     *
+     * POST /api/v1/auth/login-credenciales
+     * Body: { "username": "...", "password": "..." }
+     */
+    public function actionLoginCredenciales()
+    {
+        $username = (string) (Yii::$app->request->post('username') ?? '');
+        $password = (string) (Yii::$app->request->post('password') ?? '');
+
+        try {
+            $auth = StaffMobileLoginService::authenticate($username, $password);
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, 401);
+        }
+
+        $user = $auth['user'];
+        $persona = $auth['persona'];
+        $token = $this->generateJwtToken($user, (int) $persona->id_persona);
+        $role = $this->getUserRole($user);
+        $permissions = $this->getUserPermissions($user);
+
+        return $this->success([
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->username,
+                'email' => $user->email,
+                'role' => $role,
+                'permissions' => $permissions,
+            ],
+            'persona' => [
+                'id_persona' => $persona->id_persona,
+                'nombre' => $persona->nombre,
+                'apellido' => $persona->apellido,
+                'documento' => $persona->documento,
+            ],
+            'token' => $token,
+        ], 'Login exitoso');
     }
 
     /**

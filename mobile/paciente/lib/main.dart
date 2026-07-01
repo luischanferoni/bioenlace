@@ -70,7 +70,8 @@ class MyApp extends StatelessWidget {
               // Textos personalizados para la app del paciente
               welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
               signupButtonText: '¿No tienes cuenta? Regístrate aquí',
-              diditBiometricWorkflowId: AppConfig.diditPacienteBiometricWorkflowId,
+              // Login paciente: huella del teléfono. Didit solo en el registro (KYC).
+              diditBiometricWorkflowId: null,
               onLoginSuccess: (userId, userName, loginContext) async {
                 await CrashlyticsBootstrap.setUserId(userId);
                 final prefs = await SharedPreferences.getInstance();

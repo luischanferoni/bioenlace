@@ -22,7 +22,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final registrationService = RegistrationService();
-      final result = await registrationService.submitRegistration();
+      final result = await registrationService.submitRegistration(
+        onVerificationUiStarting: () {
+          if (mounted) setState(() => _isSubmitting = false);
+        },
+      );
 
       if (result['success'] == true) {
         final data = result['data'];

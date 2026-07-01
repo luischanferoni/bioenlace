@@ -13,6 +13,7 @@ export 'media/chat_media_image.dart';
 export 'scheduling/turno_inicio.dart';
 export 'assistant/flow_submit_resolver.dart';
 export 'assistant/flow_licencia_impact.dart';
+export 'auth/staff_credential_auth.dart';
 export 'auth/biometric_auth.dart';
 export 'auth/play_review_auth.dart';
 export 'widgets/login_screen.dart';

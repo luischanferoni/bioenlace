@@ -82,6 +82,44 @@ cd mobile\paciente\android
 .\gradlew :app:bundleRelease
 ```
 
+### Registro paciente: spinner infinito en «Completar Registro»
+
+La app **no** embebe el UUID del workflow Didit en el binario. Lo obtiene del servidor:
+
+`GET https://app.bioenlace.io/api/v1/registro/config-movil`
+
+**En producción (servidor):** `web/common/config/params-local.php` debe tener el UUID real:
+
+```php
+'didit_paciente_kyc_workflow_id' => 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+```
+
+**En la app:** generar un AAB nuevo tras desplegar el backend. Alternativa en CI:
+
+```powershell
+flutter build appbundle --release --dart-define=DIDIT_PACIENTE_KYC_WORKFLOW_ID=<uuid>
+```
+
+Si el workflow no está configurado, la app muestra un error claro en lugar de quedar en loading.
+
+### MissingPluginException en `didit_sdk` / `startVerificationWithWorkflow`
+
+Didit **solo** tiene implementación nativa en **Android e iOS**. Si probás en **Chrome** (`flutter run -d chrome`), **Windows** o **macOS**, verás:
+
+`MissingPluginException (No implementation found for method startVerificationWithWorkflow on channel didit_sdk)`
+
+**Qué hacer:**
+
+1. Probar registro/login biométrico en **emulador Android** o **dispositivo físico**.
+2. Tras agregar o actualizar `didit_sdk`, **recompilar completo** (no alcanza hot reload):
+   ```powershell
+   cd mobile\paciente
+   flutter clean
+   flutter pub get
+   flutter run -d <id-dispositivo-android>
+   ```
+3. Para Play Store, generar un **AAB nuevo** (`flutter build appbundle --release`) e instalarlo; un build anterior sin el plugin nativo enlazado también produce este error.
+
 ### Error R8 «Missing class … datepisker.PickerFragment» (Didit SDK)
 
 El AAR de `didit_sdk` referencia una clase con typo (`datepisker` en lugar de `datepicker`). En release, R8 falla en `minifyReleaseWithR8`.

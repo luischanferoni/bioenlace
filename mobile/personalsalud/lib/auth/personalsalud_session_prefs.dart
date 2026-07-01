@@ -2,6 +2,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Claves de sesión operativa del personal de salud (efector, PES, encounter, token).
 abstract final class PersonalsaludSessionPrefs {
+  static const staffMobileLoginEstablishedKey = 'staff_mobile_login_established';
+
   static const operationalKeys = [
     'auth_token',
     'config_completed',
@@ -23,6 +25,7 @@ abstract final class PersonalsaludSessionPrefs {
     await prefs.setBool('is_logged_in', false);
     await prefs.remove('user_id');
     await prefs.remove('user_name');
+    await prefs.remove(staffMobileLoginEstablishedKey);
     for (final key in operationalKeys) {
       await prefs.remove(key);
     }

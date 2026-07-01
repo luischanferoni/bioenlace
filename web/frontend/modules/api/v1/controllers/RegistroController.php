@@ -74,7 +74,7 @@ class RegistroController extends BaseController
      *
      * @var string[]
      */
-    public static $authenticatorExcept = ['registrar'];
+    public static $authenticatorExcept = ['registrar', 'config-movil'];
 
     /**
      * Acciones staff autenticadas (registro paciente desde admin).
@@ -108,6 +108,7 @@ class RegistroController extends BaseController
     {
         $verbs = parent::verbs();
         $verbs['registrar'] = ['POST', 'OPTIONS'];
+        $verbs['config-movil'] = ['GET', 'OPTIONS'];
         $verbs['registrar-como-staff'] = ['POST', 'OPTIONS'];
         $verbs['preview-renaper-como-staff'] = ['POST', 'OPTIONS'];
         $verbs['crear-sesion-didit-como-staff'] = ['POST', 'OPTIONS'];
@@ -168,6 +169,34 @@ class RegistroController extends BaseController
             'Solicitud de registro recibida correctamente',
             202
         );
+    }
+
+    /**
+     * GET /api/v1/registro/config-movil
+     *
+     * Config pública para apps móviles (workflow Didit). Sin auth.
+     * Fuente: params-local `didit_paciente_kyc_workflow_id`.
+     */
+    public function actionConfigMovil(): array
+    {
+        $kyc = trim((string) (Yii::$app->params['didit_paciente_kyc_workflow_id'] ?? ''));
+        if ($kyc === '') {
+            return $this->error(
+                'Registro móvil no configurado (didit_paciente_kyc_workflow_id).',
+                null,
+                503
+            );
+        }
+
+        $biometric = trim((string) (Yii::$app->params['didit_paciente_biometric_workflow_id'] ?? ''));
+        if ($biometric === '') {
+            $biometric = $kyc;
+        }
+
+        return $this->success([
+            'didit_paciente_kyc_workflow_id' => $kyc,
+            'didit_paciente_biometric_workflow_id' => $biometric,
+        ], 'Configuración móvil Didit', 200);
     }
 
     /**

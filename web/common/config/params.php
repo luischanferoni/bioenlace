@@ -39,6 +39,8 @@ return [
     'didit_verification_base_url' => 'https://verification.didit.me',
     /** UUID workflow KYC paciente (Didit Console). Configurar en params-local.php */
     'didit_paciente_kyc_workflow_id' => null,
+    /** Opcional: workflow biométrico distinto; si null, se usa el KYC. */
+    'didit_paciente_biometric_workflow_id' => null,
     'didit_timeout' => 30,
 
     /** Autogestión paciente: oferta de próximos slots (endpoint slots-disponibles-como-paciente en API v1). */

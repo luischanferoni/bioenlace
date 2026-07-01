@@ -63,11 +63,31 @@ class AppConfig {
   /// Timeout para GET de descriptores UI JSON embebidos (evita spinner congelado minutos).
   static const int uiJsonHttpTimeoutSeconds = 60;
 
-  // IDs de workflow de Didit (configurar en entorno seguro / build flavors)
-  // Estos valores son placeholders y deben reemplazarse por los reales desde Didit Console.
-  static const String diditPacienteKycWorkflowId = 'DIDIT_WORKFLOW_PACIENTE_KYC';
-  static const String diditPacienteBiometricWorkflowId = 'DIDIT_WORKFLOW_PACIENTE_BIOMETRIC';
-  static const String diditMedicoKycWorkflowId = 'DIDIT_WORKFLOW_MEDICO_KYC';
-  static const String diditMedicoBiometricWorkflowId = 'DIDIT_WORKFLOW_MEDICO_BIOMETRIC';
+  // IDs de workflow Didit.
+  // Override en CI/release: --dart-define=DIDIT_PACIENTE_KYC_WORKFLOW_ID=<uuid>
+  // Si no vienen en build, la app los obtiene de GET /api/v1/registro/config-movil.
+  static const String diditPacienteKycWorkflowId = String.fromEnvironment(
+    'DIDIT_PACIENTE_KYC_WORKFLOW_ID',
+    defaultValue: '',
+  );
+  static const String diditPacienteBiometricWorkflowId = String.fromEnvironment(
+    'DIDIT_PACIENTE_BIOMETRIC_WORKFLOW_ID',
+    defaultValue: '',
+  );
+  static const String diditMedicoKycWorkflowId = String.fromEnvironment(
+    'DIDIT_MEDICO_KYC_WORKFLOW_ID',
+    defaultValue: '',
+  );
+  static const String diditMedicoBiometricWorkflowId = String.fromEnvironment(
+    'DIDIT_MEDICO_BIOMETRIC_WORKFLOW_ID',
+    defaultValue: '',
+  );
+
+  /// Placeholder de repo o valor vacío → hay que resolver vía API o dart-define.
+  static bool isDiditWorkflowPlaceholder(String workflowId) {
+    final id = workflowId.trim();
+    if (id.isEmpty) return true;
+    return id.startsWith('DIDIT_WORKFLOW_');
+  }
 }
 

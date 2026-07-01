@@ -1,12 +1,16 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:didit_sdk/sdk_flutter.dart';
 
 import '../auth/biometric_auth.dart';
 import '../config/api_config.dart';
+import '../config/didit_config_resolver.dart';
+import '../platform/didit_platform.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/ui.dart';
 import 'privacy_policy_link.dart';
@@ -40,8 +44,8 @@ class LoginScreen extends StatefulWidget {
   final String? signupButtonText;
   final String? biometricAvailableText;
 
-  /// Workflow ID de Didit para autenticación biométrica ("Ya tengo cuenta").
-  /// Si es `null`, se usa solo la biometría local del dispositivo.
+  /// Workflow Didit remoto para login. `null` = solo huella/Face ID del dispositivo
+  /// (sesión JWT ya guardada tras registro o primer login con contraseña).
   final String? diditBiometricWorkflowId;
 
   /// Cabecera X-App-Client para llamadas API desde esta pantalla.
@@ -100,6 +104,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
+  bool get _usesDiditRemoteLogin {
+    final id = widget.diditBiometricWorkflowId;
+    if (id == null || id.trim().isEmpty) return false;
+    return !AppConfig.isDiditWorkflowPlaceholder(id);
+  }
+
   Future<void> _loginWithBiometrics() async {
     if (!_biometricAvailable) {
       _snack(
@@ -115,8 +125,8 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // Si no hay workflow de Didit configurado, usar solo biometría local como fallback.
-      if (widget.diditBiometricWorkflowId == null) {
+      // Huella/Face ID del teléfono: desbloquea la sesión guardada en el dispositivo.
+      if (!_usesDiditRemoteLogin) {
         final localResult = await _biometricAuth.authenticate(
           'Autenticación con $_biometricType para ingresar a ${widget.appTitle}',
         );
@@ -148,9 +158,24 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
+      final workflowId =
+          await DiditConfigResolver.resolvePacienteBiometricWorkflowId();
+      if (workflowId == null) {
+        _snack(
+          'El login biométrico con Didit no está configurado. Contactá soporte.',
+          UiIntent.warning,
+        );
+        return;
+      }
+
+      if (!isDiditSupported) {
+        _snack(diditUnsupportedPlatformMessage, UiIntent.warning);
+        return;
+      }
+
       // 1) Autenticación biométrica remota con Didit.
       final diditResult = await DiditSdk.startVerificationWithWorkflow(
-        widget.diditBiometricWorkflowId!,
+        workflowId,
         config: const DiditConfig(
           languageCode: 'es',
           loggingEnabled: true,
@@ -248,6 +273,8 @@ class _LoginScreenState extends State<LoginScreen> {
           );
           break;
       }
+    } on MissingPluginException {
+      _snack(diditMissingPluginMessage, UiIntent.danger);
     } catch (e) {
       _snack('Error en la autenticación: ${e.toString()}', UiIntent.danger);
     } finally {

@@ -289,6 +289,7 @@ return [
                 // login biométrico con Didit
                 'POST api/<version:\w+>/auth/login-biometrico' => '<version>/auth/login-biometrico',
                 'POST api/<version:\w+>/auth/login-revision' => '<version>/auth/login-revision',
+                'POST api/<version:\w+>/auth/login-credenciales' => '<version>/auth/login-credenciales',
                 // generar token de prueba para paciente por DNI
                 'POST api/<version:\w+>/auth/generar-token-prueba' => '<version>/auth/generar-token-prueba',
                 'GET api/<version:\w+>/auth/generar-token-prueba' => '<version>/auth/generar-token-prueba',

@@ -47,6 +47,12 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Usamos tu ubicación para mostrar centros de salud cercanos cuando elegís la pestaña &quot;Cerca&quot; en el asistente.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>La cámara es necesaria para verificar tu identidad con Didit.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>El micrófono es necesario para la verificación de identidad con Didit.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Podés subir fotos del documento desde tu galería durante la verificación de identidad.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>fetch</string>

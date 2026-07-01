@@ -102,6 +102,11 @@ class RegistroService
         $persona->genero = in_array($genero, [1, 2], true) ? $genero : $sexoBiologico;
         $persona->sexo_biologico = $sexoBiologico;
         $persona->sexo = $sexoBiologico === 2 ? 'M' : 'F';
+        // Fuera del escenario de alta pero con validación global de letras: no arrastrar basura de BD.
+        $persona->otro_nombre = null;
+        $persona->otro_apellido = null;
+        $persona->apellido_paterno = null;
+        $persona->apellido_materno = null;
 
         if (property_exists($persona, 'email') && !empty($bodyParams['email'])) {
             $persona->email = $bodyParams['email'];

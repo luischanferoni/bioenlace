@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import 'firebase/firebase_bootstrap.dart';
+import 'auth/paciente_authenticated_shell.dart';
 import 'services/chat_service.dart';
 import 'screens/main_screen.dart';
 import 'screens/signup_screen.dart';
@@ -92,7 +93,12 @@ class MyApp extends StatelessWidget {
                 Navigator.pushReplacement(
                   loginContext,
                   MaterialPageRoute(
-                    builder: (_) => MainScreen(chatService: newChatService, authToken: token),
+                    builder: (_) => wrapPacienteAuthenticatedShell(
+                      child: MainScreen(
+                        chatService: newChatService,
+                        authToken: token,
+                      ),
+                    ),
                   ),
                 );
               },

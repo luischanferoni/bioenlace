@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import '../auth/personalsalud_authenticated_shell.dart';
 import '../auth/personalsalud_post_login.dart';
 import '../auth/personalsalud_login_screen.dart';
 import '../auth/personalsalud_session_prefs.dart';
@@ -215,12 +216,14 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         if (!mounted) return;
         navigatorKey.currentState?.pushReplacement(
           MaterialPageRoute(
-            builder: (_) => MainScreen(
-              userId: widget.userId,
-              userName: widget.userName,
-              authToken: sessionToken,
-              idProfesionalEfectorServicio:
-                  sessionConfig.idProfesionalEfectorServicio.toString(),
+            builder: (_) => wrapPersonalsaludAuthenticatedShell(
+              child: MainScreen(
+                userId: widget.userId,
+                userName: widget.userName,
+                authToken: sessionToken,
+                idProfesionalEfectorServicio:
+                    sessionConfig.idProfesionalEfectorServicio.toString(),
+              ),
             ),
           ),
         );

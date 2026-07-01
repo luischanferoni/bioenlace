@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
 import '../screens/config_wizard_screen.dart';
+import 'personalsalud_authenticated_shell.dart';
 import 'personalsalud_session_prefs.dart';
 
 /// Ofrece activar huella/Face ID tras el primer acceso exitoso (login + wizard).
@@ -103,7 +104,9 @@ void openPersonalsaludSessionWizard({
   );
 
   navigatorKey.currentState?.pushAndRemoveUntil(
-    MaterialPageRoute(builder: (_) => wizard),
+    MaterialPageRoute(
+      builder: (_) => wrapPersonalsaludAuthenticatedShell(child: wizard),
+    ),
     (route) => false,
   );
 }

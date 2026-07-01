@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../theme/tokens/tokens.dart';
@@ -33,6 +35,9 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
   bool _authenticating = false;
   bool _biometricAvailable = false;
   String _biometricType = '';
+  Timer? _idleCheckTimer;
+
+  static const _idlePollInterval = Duration(seconds: 10);
 
   @override
   void initState() {
@@ -43,6 +48,7 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
 
   @override
   void dispose() {
+    _idleCheckTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -50,17 +56,23 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
   Future<void> _bootstrap() async {
     await BiometricSessionPrefs.touchActivity();
     await _evaluateLock();
+    _startIdleCheckTimer();
+  }
+
+  void _startIdleCheckTimer() {
+    _idleCheckTimer?.cancel();
+    _idleCheckTimer = Timer.periodic(_idlePollInterval, (_) {
+      if (!mounted || _locked || _checking || _authenticating) {
+        return;
+      }
+      unawaited(_evaluateLock());
+    });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      BiometricSessionPrefs.touchActivity();
-      return;
-    }
     if (state == AppLifecycleState.resumed) {
-      _evaluateLock();
+      unawaited(_evaluateLock());
     }
   }
 

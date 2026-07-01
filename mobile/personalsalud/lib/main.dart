@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'auth/personalsalud_authenticated_shell.dart';
 import 'auth/personalsalud_login_screen.dart';
 import 'auth/personalsalud_post_login.dart';
 import 'firebase/firebase_bootstrap.dart';
@@ -105,9 +106,7 @@ class MyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       navigatorKey: navigatorKey,
       home: isLoggedIn
-          ? BiometricSessionLockScope(
-              appTitle: 'Personal de Salud',
-              requireUnlockEnabled: true,
+          ? wrapPersonalsaludAuthenticatedShell(
               child: FutureBuilder<Map<String, dynamic>>(
               future: _getUserData(),
               builder: (context, snapshot) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import '../auth/paciente_authenticated_shell.dart';
 import '../services/chat_service.dart';
 import '../services/registration_service.dart';
 import 'main_screen.dart';
@@ -73,9 +74,11 @@ class _SignupScreenState extends State<SignupScreen> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => MainScreen(
-              chatService: chatService,
-              authToken: prefs.getString('auth_token'),
+            builder: (_) => wrapPacienteAuthenticatedShell(
+              child: MainScreen(
+                chatService: chatService,
+                authToken: prefs.getString('auth_token'),
+              ),
             ),
           ),
         );

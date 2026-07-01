@@ -3,9 +3,9 @@
 namespace common\components\Domain\Person\Service;
 
 use common\models\Provincia;
+use Symfony\Component\Yaml\Yaml;
 use Yii;
 use yii\helpers\ArrayHelper;
-use yii\helpers\Yaml;
 
 /**
  * Sugiere provincias para contexto paciente (geolocalización IP + vecinos declarativos).

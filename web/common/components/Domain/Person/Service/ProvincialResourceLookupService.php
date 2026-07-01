@@ -4,8 +4,8 @@ namespace common\components\Domain\Person\Service;
 
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use common\models\Provincia;
+use Symfony\Component\Yaml\Yaml;
 use Yii;
-use yii\helpers\Yaml;
 
 /**
  * Lookup declarativo de recursos institucionales por provincia de contexto.

@@ -182,11 +182,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        children: [
-          PacienteContextBanner(onConfigurarProvincia: _abrirProvinciaContexto),
-          Expanded(
-            child: IndexedStack(
+      body: IndexedStack(
         index: _selectedIndex,
         children: [
           HomeScreen(
@@ -204,15 +200,13 @@ class _MainScreenState extends State<MainScreen> {
             onPendingResolverHandled: _onPendingResolverHandled,
             pendingIntentId: _pendingIntentId,
             onPendingIntentHandled: _onPendingIntentHandled,
+            onConfigurarProvincia: _abrirProvinciaContexto,
           ),
           ConfiguracionScreen(
             userId: widget.chatService.currentUserId,
             userName: widget.chatService.currentUserName,
             authToken: widget.authToken,
             onEnviarQueja: _abrirIntentQueja,
-          ),
-        ],
-      ),
           ),
         ],
       ),

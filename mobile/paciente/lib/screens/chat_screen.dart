@@ -21,6 +21,7 @@ class ChatScreen extends StatefulWidget {
   final VoidCallback? onPendingResolverHandled;
   final String? pendingIntentId;
   final VoidCallback? onPendingIntentHandled;
+  final VoidCallback? onConfigurarProvincia;
 
   const ChatScreen({
     Key? key,
@@ -29,6 +30,7 @@ class ChatScreen extends StatefulWidget {
     this.onPendingResolverHandled,
     this.pendingIntentId,
     this.onPendingIntentHandled,
+    this.onConfigurarProvincia,
   }) : super(key: key);
 
   @override
@@ -2416,6 +2418,9 @@ class ChatScreenState extends State<ChatScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          PacienteContextBanner(
+            onConfigurarProvincia: widget.onConfigurarProvincia,
+          ),
           Expanded(
             child: _showWelcomeShortcutGrid
                 ? _buildWelcomeShortcutsPanel()

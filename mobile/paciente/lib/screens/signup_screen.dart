@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
@@ -84,44 +83,6 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  Future<void> _skipRegistration() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final testUserId = 'test_user_${DateTime.now().millisecondsSinceEpoch}';
-      const testUserName = 'Usuario de Prueba';
-
-      await prefs.setBool('is_logged_in', true);
-      await prefs.setString('user_id', testUserId);
-      await prefs.setString('user_name', testUserName);
-      await prefs.setString('dni_detected', '12345678');
-      await prefs.setString('name_detected', testUserName);
-      await prefs.setBool('biometric_enabled', false);
-      await prefs.setDouble('face_match_score', 0.95);
-
-      final chatService = ChatService(
-        currentUserId: testUserId,
-        currentUserName: testUserName,
-        authToken: null,
-      );
-
-      if (!mounted) return;
-      _snack('Modo de prueba activado — Registro omitido', UiIntent.warning);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => MainScreen(
-            chatService: chatService,
-            authToken: null,
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      _snack('Error al saltar registro: ${e.toString()}', UiIntent.danger);
-    }
-  }
-
   void _snack(String msg, UiIntent intent) {
     final palette = IntentPalette.of(intent);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -165,17 +126,6 @@ class _SignupScreenState extends State<SignupScreen> {
                 fullWidth: true,
                 loading: _isSubmitting,
                 onPressed: _isSubmitting ? null : _submit,
-              ),
-              BioSpacing.gapH(BioSpacing.lg),
-              Center(
-                child: BioButton(
-                  label: 'Saltar registro (solo pruebas)',
-                  intent: UiIntent.warning,
-                  variant: BioButtonVariant.soft,
-                  size: BioButtonSize.sm,
-                  icon: Icons.flash_on,
-                  onPressed: _isSubmitting ? null : _skipRegistration,
-                ),
               ),
               BioSpacing.gapH(BioSpacing.lg),
               const PrivacyPolicyLink(),

@@ -17,7 +17,7 @@ Sistema visual unificado para las apps móviles de BioEnlace.
 - **Bootstrap-like**: el API expone `intent × variant × size` para que un
   componente se sienta como `btn-primary` / `btn-outline-danger` /
   `badge bg-warning`.
-- **Una sola fuente**: Open Sans (vía Google Fonts), escala fija
+- **Una sola fuente**: Open Sans embebida en assets del paquete `shared`
   ([`BioTypography`](tokens/bio_typography.dart)).
 - **Sin dark mode**: por ahora la app es claro-único. Los tokens están
   preparados para extender más adelante.

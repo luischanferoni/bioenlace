@@ -1,72 +1,82 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'paper_palette.dart';
 
-/// Escala tipográfica única (Open Sans). Colores por defecto: títulos `paper700`,
-/// body `paper600`, caption/overline `paper500`. Si se necesita otro color,
-/// usar `.copyWith(color: ...)` puntualmente.
+/// Escala tipográfica única (Open Sans embebida en assets). Colores por defecto:
+/// títulos `paper700`, body `paper600`, caption/overline `paper500`.
 @immutable
 class BioTypography {
   const BioTypography();
 
-  static TextStyle get display => GoogleFonts.openSans(
+  /// Familia declarada en `pubspec.yaml` del paquete shared (sin descarga en runtime).
+  static const String fontFamily = 'OpenSans';
+
+  static TextStyle get display => const TextStyle(
+        fontFamily: fontFamily,
         fontSize: 36,
         fontWeight: FontWeight.w700,
         color: PaperPalette.paper700,
         height: 1.15,
       );
 
-  static TextStyle get h1 => GoogleFonts.openSans(
+  static TextStyle get h1 => const TextStyle(
+        fontFamily: fontFamily,
         fontSize: 28,
         fontWeight: FontWeight.w700,
         color: PaperPalette.paper700,
         height: 1.2,
       );
 
-  static TextStyle get h2 => GoogleFonts.openSans(
+  static TextStyle get h2 => const TextStyle(
+        fontFamily: fontFamily,
         fontSize: 22,
         fontWeight: FontWeight.w600,
         color: PaperPalette.paper700,
         height: 1.25,
       );
 
-  static TextStyle get h3 => GoogleFonts.openSans(
+  static TextStyle get h3 => const TextStyle(
+        fontFamily: fontFamily,
         fontSize: 18,
         fontWeight: FontWeight.w600,
         color: PaperPalette.paper700,
         height: 1.3,
       );
 
-  static TextStyle get title => GoogleFonts.openSans(
+  static TextStyle get title => const TextStyle(
+        fontFamily: fontFamily,
         fontSize: 16,
         fontWeight: FontWeight.w600,
         color: PaperPalette.paper700,
         height: 1.35,
       );
 
-  static TextStyle get body => GoogleFonts.openSans(
+  static TextStyle get body => const TextStyle(
+        fontFamily: fontFamily,
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: PaperPalette.paper600,
         height: 1.45,
       );
 
-  static TextStyle get bodySm => GoogleFonts.openSans(
+  static TextStyle get bodySm => const TextStyle(
+        fontFamily: fontFamily,
         fontSize: 13,
         fontWeight: FontWeight.w400,
         color: PaperPalette.paper600,
         height: 1.45,
       );
 
-  static TextStyle get caption => GoogleFonts.openSans(
+  static TextStyle get caption => const TextStyle(
+        fontFamily: fontFamily,
         fontSize: 12,
         fontWeight: FontWeight.w400,
         color: PaperPalette.paper500,
         height: 1.4,
       );
 
-  static TextStyle get overline => GoogleFonts.openSans(
+  static TextStyle get overline => const TextStyle(
+        fontFamily: fontFamily,
         fontSize: 11,
         fontWeight: FontWeight.w600,
         color: PaperPalette.paper500,

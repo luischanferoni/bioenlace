@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'tokens/tokens.dart';
 
@@ -9,7 +8,7 @@ import 'tokens/tokens.dart';
 /// Decisiones:
 /// - Fondo de pantalla `PaperPalette.paper25` (superficies en `paper50`).
 /// - AppBar fondo papel, alineado a la izquierda, con borde inferior en widget propio.
-/// - Tipografía: Open Sans (única familia), escala [BioTypography].
+/// - Tipografía: Open Sans embebida ([BioTypography.fontFamily]).
 /// - Sin dark mode.
 /// - Splash táctil cálido (no tinta primaria).
 /// - Acentos de marca solo en estados / CTAs.
@@ -85,7 +84,7 @@ class AppTheme {
       colorScheme: colorScheme,
       textTheme: textTheme,
       primaryTextTheme: textTheme,
-      fontFamily: GoogleFonts.openSans().fontFamily,
+      fontFamily: BioTypography.fontFamily,
       extensions: const <ThemeExtension<dynamic>>[
         BioTokens.light,
       ],

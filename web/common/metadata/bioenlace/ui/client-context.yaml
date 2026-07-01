@@ -7,6 +7,7 @@ mobile_paciente:
     - paciente-flutter
   shortcuts_catalog: assistant-shortcuts-paciente.yaml
   shortcut_display:
+    # Atajos y título del flow en chat (`flow_manifest.action_name`).
     use_yaml_action_name: true
     omit_subgroups: true
 

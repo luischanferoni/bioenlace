@@ -9,6 +9,7 @@ use common\components\Platform\Core\Permission\IntentManifestIndex;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
+use yii\web\Request;
 
 /**
  * Construye el manifiesto de flujo (tabs, rutas, pasos) **en runtime** desde el YAML del intent.
@@ -98,9 +99,10 @@ final class FlowManifest
             'data-access.editar' => 'edit',
             default => null,
         };
-        $label = IntentManifestMetadata::formatDisplayActionName(
+        $label = IntentManifestMetadata::resolveDisplayActionNameForClient(
             DataAccessCatalogIntentSupport::displayLabelForIntent($intentId),
-            $operation
+            $operation,
+            self::requestAppClientId()
         );
         $text = $label !== '' ? $label : 'Abrir pantalla';
 
@@ -425,9 +427,16 @@ final class FlowManifest
      */
     private static function displayActionNameForIntent(string $intentId, ?array $rawYaml): string
     {
+        $appClientId = self::requestAppClientId();
         $indexed = IntentManifestIndex::get($intentId);
-        if ($indexed !== null && trim((string) ($indexed['action_name'] ?? '')) !== '') {
-            return trim((string) $indexed['action_name']);
+        if ($indexed !== null) {
+            $base = trim((string) ($indexed['action_name_base'] ?? ''));
+            if ($base === '') {
+                $base = trim((string) ($indexed['action_name'] ?? ''));
+            }
+            $operation = isset($indexed['operation']) ? (string) $indexed['operation'] : null;
+
+            return IntentManifestMetadata::resolveDisplayActionNameForClient($base, $operation, $appClientId);
         }
 
         $base = '';
@@ -436,7 +445,29 @@ final class FlowManifest
         }
         $flowMeta = self::flowPresentationMetaForIntent($intentId, $rawYaml);
 
-        return IntentManifestMetadata::formatDisplayActionName($base, $flowMeta['operation']);
+        return IntentManifestMetadata::resolveDisplayActionNameForClient(
+            $base,
+            $flowMeta['operation'],
+            $appClientId
+        );
+    }
+
+    private static function requestAppClientId(): ?string
+    {
+        try {
+            if (!Yii::$app->has('request')) {
+                return null;
+            }
+            $request = Yii::$app->request;
+            if (!$request instanceof Request) {
+                return null;
+            }
+            $id = trim((string) $request->headers->get('X-App-Client', ''));
+
+            return $id !== '' ? $id : null;
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

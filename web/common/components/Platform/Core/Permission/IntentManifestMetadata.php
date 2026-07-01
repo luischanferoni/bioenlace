@@ -3,6 +3,7 @@
 namespace common\components\Platform\Core\Permission;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Core\Product\ClientContextMetadata;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use Symfony\Component\Yaml\Yaml;
 
@@ -118,6 +119,27 @@ final class IntentManifestMetadata
         }
 
         return $prefix . ' ' . $rest;
+    }
+
+    /**
+     * Título visible según cliente: app paciente usa `action_name` del YAML sin prefijo CRUD.
+     */
+    public static function resolveDisplayActionNameForClient(
+        string $actionNameBase,
+        ?string $operation,
+        ?string $appClientId = null
+    ): string {
+        $base = trim($actionNameBase);
+        if ($base === '') {
+            return '';
+        }
+
+        if (ClientContextMetadata::isPacienteMobileClient($appClientId)
+            && ClientContextMetadata::pacienteMobileShortcutUseYamlActionName()) {
+            return $base;
+        }
+
+        return self::formatDisplayActionName($base, $operation);
     }
 
     /**

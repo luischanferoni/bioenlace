@@ -121,6 +121,26 @@ class IntentManifestMetadataTest extends Unit
         $this->assertSame('delete', IntentManifestMetadata::resolveCrudTone('delete'));
     }
 
+    public function testResolveDisplayActionNameForClientPacienteOmitsCrudPrefix(): void
+    {
+        $label = IntentManifestMetadata::resolveDisplayActionNameForClient(
+            'Necesito atención',
+            'create',
+            'paciente-flutter'
+        );
+        $this->assertSame('Necesito atención', $label);
+    }
+
+    public function testResolveDisplayActionNameForClientStaffKeepsCrudPrefix(): void
+    {
+        $label = IntentManifestMetadata::resolveDisplayActionNameForClient(
+            'Necesito atención',
+            'create',
+            'personalsalud-flutter'
+        );
+        $this->assertSame('Crear necesito atención', $label);
+    }
+
     public function testIntentManifestIndexFormatsDisplayActionName(): void
     {
         $meta = IntentManifestIndex::get('condicion-laboral.editar-propio');

@@ -101,13 +101,13 @@ class IntentManifestMetadataTest extends Unit
         );
     }
 
-    public function testFormatDisplayActionNameAddsCrudPrefixForEdit(): void
+    public function testFormatDisplayActionNameUsesYamlLabelAsIs(): void
     {
         $label = IntentManifestMetadata::formatDisplayActionName('Mi condición laboral', 'edit');
-        $this->assertSame('Editar mi condición laboral', $label);
+        $this->assertSame('Mi condición laboral', $label);
     }
 
-    public function testFormatDisplayActionNameSkipsDuplicateVerb(): void
+    public function testFormatDisplayActionNameDoesNotAlterExistingVerb(): void
     {
         $label = IntentManifestMetadata::formatDisplayActionName('Ver agenda del día', 'read');
         $this->assertSame('Ver agenda del día', $label);
@@ -121,31 +121,28 @@ class IntentManifestMetadataTest extends Unit
         $this->assertSame('delete', IntentManifestMetadata::resolveCrudTone('delete'));
     }
 
-    public function testResolveDisplayActionNameForClientPacienteOmitsCrudPrefix(): void
+    public function testResolveDisplayActionNameForClientUsesYamlLabelForAllClients(): void
     {
-        $label = IntentManifestMetadata::resolveDisplayActionNameForClient(
+        $paciente = IntentManifestMetadata::resolveDisplayActionNameForClient(
             'Necesito atención',
             'create',
             'paciente-flutter'
         );
-        $this->assertSame('Necesito atención', $label);
-    }
+        $this->assertSame('Necesito atención', $paciente);
 
-    public function testResolveDisplayActionNameForClientStaffKeepsCrudPrefix(): void
-    {
-        $label = IntentManifestMetadata::resolveDisplayActionNameForClient(
+        $staff = IntentManifestMetadata::resolveDisplayActionNameForClient(
             'Necesito atención',
             'create',
             'personalsalud-flutter'
         );
-        $this->assertSame('Crear necesito atención', $label);
+        $this->assertSame('Necesito atención', $staff);
     }
 
     public function testIntentManifestIndexFormatsDisplayActionName(): void
     {
         $meta = IntentManifestIndex::get('condicion-laboral.editar-propio');
         $this->assertNotNull($meta);
-        $this->assertSame('Editar mi condición laboral', $meta['action_name']);
+        $this->assertSame('Mi condición laboral', $meta['action_name']);
         $this->assertSame('update', $meta['crud_tone']);
     }
 }

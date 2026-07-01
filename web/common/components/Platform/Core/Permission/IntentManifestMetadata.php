@@ -3,7 +3,6 @@
 namespace common\components\Platform\Core\Permission;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
-use common\components\Platform\Core\Product\ClientContextMetadata;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use Symfony\Component\Yaml\Yaml;
 
@@ -83,63 +82,22 @@ final class IntentManifestMetadata
     }
 
     /**
-     * Arma el título visible del intent: prefijo CRUD + etiqueta base del YAML (sin duplicar verbos).
+     * Título visible del intent: usa `action_name` del YAML sin prefijos automáticos.
      */
     public static function formatDisplayActionName(string $actionName, ?string $operation): string
     {
-        $label = trim($actionName);
-        if ($label === '') {
-            return '';
-        }
-
-        $prefix = self::crudPrefixForOperation($operation);
-        if ($prefix === '') {
-            return $label;
-        }
-
-        $lower = mb_strtolower($label, 'UTF-8');
-        $verbsByOperation = [
-            'create' => ['crear', 'cargar', 'reservar', 'alta', 'ingreso', 'designar', 'vincular', 'enviar', 'registrar', 'agregar', 'solicitar'],
-            'read' => ['ver', 'consultar', 'listar', 'listado', 'mapa', 'indicadores', 'abm'],
-            'list' => ['ver', 'consultar', 'listar', 'listado', 'mapa', 'indicadores', 'abm'],
-            'info' => ['ver', 'consultar', 'listar', 'listado', 'mapa', 'indicadores', 'abm'],
-            'edit' => ['editar', 'configurar', 'modificar', 'cambiar', 'reubicar', 'confirmar', 'marcar', 'resolver', 'actualizar'],
-            'delete' => ['eliminar', 'cancelar', 'baja'],
-        ];
-        $operationKey = trim((string) $operation);
-        foreach ($verbsByOperation[$operationKey] ?? [] as $verb) {
-            if ($lower === $verb || str_starts_with($lower, $verb . ' ')) {
-                return $label;
-            }
-        }
-
-        $rest = $label;
-        if (preg_match('/^\p{Lu}/u', $rest) === 1) {
-            $rest = mb_strtolower(mb_substr($rest, 0, 1, 'UTF-8'), 'UTF-8') . mb_substr($rest, 1, null, 'UTF-8');
-        }
-
-        return $prefix . ' ' . $rest;
+        return trim($actionName);
     }
 
     /**
-     * Título visible según cliente: app paciente usa `action_name` del YAML sin prefijo CRUD.
+     * Título visible según cliente: mismo `action_name` del YAML para todos los clientes.
      */
     public static function resolveDisplayActionNameForClient(
         string $actionNameBase,
         ?string $operation,
         ?string $appClientId = null
     ): string {
-        $base = trim($actionNameBase);
-        if ($base === '') {
-            return '';
-        }
-
-        if (ClientContextMetadata::isPacienteMobileClient($appClientId)
-            && ClientContextMetadata::pacienteMobileShortcutUseYamlActionName()) {
-            return $base;
-        }
-
-        return self::formatDisplayActionName($base, $operation);
+        return trim($actionNameBase);
     }
 
     /**

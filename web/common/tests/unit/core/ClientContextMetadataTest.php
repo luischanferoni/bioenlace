@@ -51,7 +51,7 @@ class ClientContextMetadataTest extends Unit
 
     public function testPacienteMobileShortcutDisplayFlags(): void
     {
-        $this->assertTrue(ClientContextMetadata::pacienteMobileShortcutUseYamlActionName());
+        $this->assertFalse(ClientContextMetadata::pacienteMobileShortcutUseYamlActionName());
         $this->assertTrue(ClientContextMetadata::pacienteMobileShortcutOmitSubgroups());
         $this->assertSame(
             'assistant-shortcuts-paciente.yaml',

@@ -58,7 +58,6 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       _api.fetchVinculosComoTutor(),
       _api.fetchMisRepresentantes(),
       _api.fetchPacientesACargo(),
-      _api.fetchPreferencias(),
     ]);
     if (!mounted) return;
 
@@ -87,12 +86,6 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
     if (results[2]['success'] == true) {
       final data = results[2]['data'];
       _pacientesACargo = data is Map ? _asList(data['pacientes']) : [];
-    }
-    if (results[3]['success'] == true) {
-      final data = results[3]['data'];
-      if (data is Map && data.containsKey('notify_on_representative_action')) {
-        _notifyOnRepresentativeAction = data['notify_on_representative_action'] == true;
-      }
     }
 
     setState(() {

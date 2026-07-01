@@ -306,10 +306,13 @@ class PersonRepresentationController extends BaseController
 
         $service = new PatientDelegationService();
         if (Yii::$app->request->isPost) {
-            try {
-                return $service->guardarPreferencias($idPersona, $this->mergedParams());
-            } catch (\InvalidArgumentException $e) {
-                throw new BadRequestHttpException($e->getMessage());
+            $params = $this->mergedParams();
+            if (array_key_exists('notify_on_representative_action', $params)) {
+                try {
+                    return $service->guardarPreferencias($idPersona, $params);
+                } catch (\InvalidArgumentException $e) {
+                    throw new BadRequestHttpException($e->getMessage());
+                }
             }
         }
 

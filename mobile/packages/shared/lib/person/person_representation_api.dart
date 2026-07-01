@@ -39,6 +39,19 @@ class PersonRepresentationApi {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> _get(String path) async {
+    final token = await _token();
+    final uri = Uri.parse('${AppConfig.apiUrl}$path');
+    final response = await http
+        .get(
+          uri,
+          headers: AppConfig.jsonHeaders(bearerToken: token, appClient: appClient),
+        )
+        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    BioenlaceHttpTrace.logResponse(path, response);
+    return _decode(response);
+  }
+
   Future<Map<String, dynamic>> _getPost(
     String path, {
     Map<String, dynamic>? body,
@@ -112,7 +125,7 @@ class PersonRepresentationApi {
   }
 
   Future<Map<String, dynamic>> fetchPreferencias() {
-    return _getPost('/person-representation/preferencias-como-paciente');
+    return _get('/person-representation/preferencias-como-paciente');
   }
 
   Future<Map<String, dynamic>> guardarPreferencias({required bool notify}) {

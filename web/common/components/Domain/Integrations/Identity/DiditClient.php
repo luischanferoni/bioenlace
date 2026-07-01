@@ -200,46 +200,39 @@ class DiditClient extends Component
         $firstIdVerification = $this->pickPreferredIdVerification($data['id_verifications'] ?? []);
         $documentTypeString = null;
         if (!empty($firstIdVerification)) {
+            $identity = $this->extractIdVerificationIdentity($firstIdVerification);
             $persona = [
-                'first_name' => $firstIdVerification['first_name'] ?? null,
-                'last_name' => $firstIdVerification['last_name'] ?? null,
-                'date_of_birth' => $firstIdVerification['date_of_birth'] ?? null,
-                'gender' => $firstIdVerification['gender'] ?? null,
+                'first_name' => $identity['nombre'],
+                'last_name' => $identity['apellido'],
+                'date_of_birth' => $identity['fecha_nacimiento'],
+                'gender' => $identity['gender_raw'],
             ];
             $document = [
-                'number' => $firstIdVerification['document_number'] ?? $firstIdVerification['personal_number'] ?? null,
+                'number' => $identity['documento'],
                 'type_id' => $firstIdVerification['document_type_id'] ?? null,
                 'type' => $firstIdVerification['document_type'] ?? null,
             ];
             $documentTypeString = $firstIdVerification['document_type'] ?? null;
             $maritalStatus = $firstIdVerification['marital_status'] ?? null;
+            $sexMapped = $identity['sexo_biologico'];
         } else {
             $persona = $data['person'] ?? [];
             $document = $data['document'] ?? [];
             $documentTypeString = $document['type'] ?? null;
             $maritalStatus = $persona['marital_status'] ?? null;
+            $sexMapped = null;
         }
 
         $generoRaw = $persona['gender_id'] ?? $persona['gender'] ?? $persona['sex'] ?? null;
-        if ($generoRaw === 'M' || $generoRaw === 'male') {
-            $genero = 1;
-        } elseif ($generoRaw === 'F' || $generoRaw === 'female') {
-            $genero = 2;
-        } else {
-            $genero = 0;
+        $sexFromGender = $this->mapDiditSexToBioenlace($generoRaw !== null ? (string) $generoRaw : null);
+        if ($sexMapped === null) {
+            $sexMapped = $sexFromGender['sexo_biologico'];
         }
-        $sexoBiologicoRaw = $persona['biological_sex_id'] ?? $persona['sex_id'] ?? $generoRaw;
-        if ($sexoBiologicoRaw === 'M' || $sexoBiologicoRaw === 'male') {
-            $sexoBiologico = 1;
-        } elseif ($sexoBiologicoRaw === 'F' || $sexoBiologicoRaw === 'female') {
-            $sexoBiologico = 2;
-        } elseif (is_numeric($sexoBiologicoRaw) && (int) $sexoBiologicoRaw >= 0) {
-            $sexoBiologico = (int) $sexoBiologicoRaw;
-        } else {
-            $sexoBiologico = $genero;
-        }
-
-        $documentNumber = $document['number'] ?? null;
+        $genero = $sexFromGender['genero'] !== 0
+            ? $sexFromGender['genero']
+            : ($sexMapped !== 0 ? $sexMapped : 0);
+        $sexoBiologico = $sexMapped !== 0 ? $sexMapped : $sexFromGender['sexo_biologico'];
+        $documentNumber = $this->normalizeDocumentNumber($document['number'] ?? null);
         $idTipodoc = $this->resolveIdTipodoc($document, $documentTypeString);
         $idEstadoCivil = $this->mapMaritalStatusToIdEstadoCivil($maritalStatus);
 
@@ -251,7 +244,7 @@ class DiditClient extends Component
             'documento' => $documentNumber,
             'nombre' => $persona['first_name'] ?? null,
             'apellido' => $persona['last_name'] ?? null,
-            'fecha_nacimiento' => $persona['date_of_birth'] ?? null,
+            'fecha_nacimiento' => $this->normalizeBirthDate($persona['date_of_birth'] ?? null),
             'genero' => $genero,
             'sexo_biologico' => $sexoBiologico,
             'id_tipodoc' => $idTipodoc,
@@ -312,6 +305,101 @@ class DiditClient extends Component
         }
 
         return is_array($idVerifications[0]) ? $idVerifications[0] : [];
+    }
+
+    /**
+     * Campos de identidad desde un ítem de id_verifications (API v3).
+     *
+     * @param array<string, mixed> $row
+     * @return array{nombre: ?string, apellido: ?string, documento: ?string, fecha_nacimiento: ?string, gender_raw: ?string, sexo_biologico: int}
+     */
+    protected function extractIdVerificationIdentity(array $row): array
+    {
+        $nombre = trim((string) ($row['first_name'] ?? $row['first_name_latin'] ?? ''));
+        $apellido = trim((string) ($row['last_name'] ?? $row['last_name_latin'] ?? ''));
+        if ($nombre === '' && $apellido === '' && !empty($row['full_name'])) {
+            $parts = preg_split('/\s+/u', trim((string) $row['full_name']), 2) ?: [];
+            $nombre = trim((string) ($parts[0] ?? ''));
+            $apellido = trim((string) ($parts[1] ?? ''));
+        }
+
+        $genderRaw = $row['gender'] ?? $row['sex'] ?? null;
+        $sex = $this->mapDiditSexToBioenlace($genderRaw !== null ? (string) $genderRaw : null);
+
+        $documento = $this->normalizeDocumentNumber(
+            $row['document_number'] ?? $row['personal_number'] ?? null
+        );
+        $fecha = $this->normalizeBirthDate($row['date_of_birth'] ?? $row['birth_date'] ?? null);
+
+        return [
+            'nombre' => $nombre !== '' ? $nombre : null,
+            'apellido' => $apellido !== '' ? $apellido : null,
+            'documento' => $documento,
+            'fecha_nacimiento' => $fecha,
+            'gender_raw' => $genderRaw !== null ? (string) $genderRaw : null,
+            'sexo_biologico' => $sex['sexo_biologico'],
+        ];
+    }
+
+    /**
+     * Convención Bioenlace: 1 = F, 2 = M (ver Persona::getSexoLetra).
+     *
+     * @return array{genero: int, sexo_biologico: int}
+     */
+    protected function mapDiditSexToBioenlace(?string $raw): array
+    {
+        if ($raw === null || trim($raw) === '') {
+            return ['genero' => 0, 'sexo_biologico' => 0];
+        }
+
+        $normalized = strtoupper(trim($raw));
+        if ($normalized === 'M' || $normalized === 'MALE' || $normalized === 'MASCULINO') {
+            return ['genero' => 2, 'sexo_biologico' => 2];
+        }
+        if ($normalized === 'F' || $normalized === 'FEMALE' || $normalized === 'FEMENINO') {
+            return ['genero' => 1, 'sexo_biologico' => 1];
+        }
+
+        return ['genero' => 0, 'sexo_biologico' => 0];
+    }
+
+    protected function normalizeDocumentNumber($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $digits = preg_replace('/\D+/', '', (string) $value) ?? '';
+        return $digits !== '' ? $digits : null;
+    }
+
+    protected function normalizeBirthDate($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $value, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('#^(\d{2})/(\d{2})/(\d{4})$#', $value, $matches)) {
+            return $matches[3] . '-' . $matches[2] . '-' . $matches[1];
+        }
+
+        if (preg_match('/^\d{6}$/', $value)) {
+            $yy = (int) substr($value, 0, 2);
+            $mm = substr($value, 2, 2);
+            $dd = substr($value, 4, 2);
+            $year = $yy > 30 ? 1900 + $yy : 2000 + $yy;
+
+            return sprintf('%04d-%s-%s', $year, $mm, $dd);
+        }
+
+        return $value;
     }
 
     /**

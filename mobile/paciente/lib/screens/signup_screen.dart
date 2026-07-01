@@ -77,7 +77,12 @@ class _SignupScreenState extends State<SignupScreen> {
         );
       } else {
         if (!mounted) return;
-        _snack(result['message'] ?? 'Error en el registro', UiIntent.danger);
+        final errors = result['errors'];
+        var message = result['message']?.toString() ?? 'Error en el registro';
+        if (errors is Map && errors.isNotEmpty) {
+          message = '$message\n${errors.toString()}';
+        }
+        _snack(message, UiIntent.danger);
       }
     } catch (e) {
       if (!mounted) return;

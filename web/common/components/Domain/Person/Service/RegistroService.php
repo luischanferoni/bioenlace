@@ -61,12 +61,23 @@ class RegistroService
             );
         }
 
-        $dni = $diditResult['documento'] ?? null;
-        $nombre = $diditResult['nombre'] ?? null;
-        $apellido = $diditResult['apellido'] ?? null;
+        $dni = $this->normalizeDocumento((string) $diditResult['documento']);
+        $nombre = $this->normalizePersonName((string) $diditResult['nombre']);
+        $apellido = $this->normalizePersonName((string) $diditResult['apellido']);
 
-        if (!$dni || !$nombre || !$apellido) {
+        if ($dni === '' || $nombre === '' || $apellido === '') {
             throw new \RuntimeException('La respuesta de Didit no contiene datos mínimos de identidad (dni, nombre, apellido).');
+        }
+
+        $fechaNacimiento = $this->normalizeBirthDate($diditResult['fecha_nacimiento'] ?? null)
+            ?? $this->normalizeBirthDate($bodyParams['fecha_nacimiento'] ?? null);
+        if ($fechaNacimiento === null || $fechaNacimiento === '') {
+            throw new \RuntimeException('Didit no devolvió fecha de nacimiento; no se puede completar el registro.');
+        }
+
+        $sexoBiologico = (int) ($diditResult['sexo_biologico'] ?? 0);
+        if (!in_array($sexoBiologico, [1, 2], true)) {
+            throw new \RuntimeException('Didit no devolvió sexo biológico válido; no se puede completar el registro.');
         }
 
         // Crear o actualizar persona en base a los datos devueltos por Didit.
@@ -82,22 +93,15 @@ class RegistroService
         $persona->nombre = $nombre;
         $persona->apellido = $apellido;
         $persona->documento = $dni;
-        $persona->acredita_identidad = 1; // Verificación de identidad realizada con Didit
-
-        if (!empty($diditResult['fecha_nacimiento'])) {
-            $persona->fecha_nacimiento = $diditResult['fecha_nacimiento'];
-        } elseif (!empty($bodyParams['fecha_nacimiento'])) {
-            $persona->fecha_nacimiento = $bodyParams['fecha_nacimiento'];
-        }
-        if (empty($persona->fecha_nacimiento)) {
-            $persona->fecha_nacimiento = $bodyParams['fecha_nacimiento'] ?? null;
-        }
-
-        // Valores mapeados desde Didit (nunca null: genero 0=no especificado, id_tipodoc/id_estado_civil default 1)
+        $persona->documento_propio = 1;
+        $persona->acredita_identidad = 1;
+        $persona->fecha_nacimiento = $fechaNacimiento;
         $persona->id_tipodoc = $diditResult['id_tipodoc'] ?? $persona->id_tipodoc ?? 1;
         $persona->id_estado_civil = $diditResult['id_estado_civil'] ?? $persona->id_estado_civil ?? 1;
-        $persona->genero = $diditResult['genero'] ?? $persona->genero ?? 0;
-        $persona->sexo_biologico = $diditResult['sexo_biologico'] ?? $persona->sexo_biologico ?? 0;
+        $genero = (int) ($diditResult['genero'] ?? 0);
+        $persona->genero = in_array($genero, [1, 2], true) ? $genero : $sexoBiologico;
+        $persona->sexo_biologico = $sexoBiologico;
+        $persona->sexo = $sexoBiologico === 2 ? 'M' : 'F';
 
         if (property_exists($persona, 'email') && !empty($bodyParams['email'])) {
             $persona->email = $bodyParams['email'];
@@ -114,7 +118,10 @@ class RegistroService
         }
 
         if (!$persona->save()) {
-            throw new \RuntimeException('Error guardando datos de la persona: ' . json_encode($persona->getErrors()));
+            Yii::warning('Registro Didit: validación Persona: ' . json_encode($persona->getErrors()), 'registro');
+            throw new \RuntimeException(
+                'Error guardando datos de la persona: ' . json_encode($persona->getErrors(), JSON_UNESCAPED_UNICODE)
+            );
         }
 
         return $this->finalizarAltaPaciente($persona, $bodyParams, $tipo, $esNueva, $diditResult);
@@ -321,6 +328,51 @@ class RegistroService
                 ],
             ];
         }
+    }
+
+    private function normalizeDocumento(string $documento): string
+    {
+        return preg_replace('/\D+/', '', $documento) ?? '';
+    }
+
+    private function normalizePersonName(string $name): string
+    {
+        $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
+        if ($name === '') {
+            return '';
+        }
+
+        return trim(preg_replace('/[^A-ZÁÉÍÓÚÑa-záéíóúñ\s]/u', '', $name) ?? '');
+    }
+
+    private function normalizeBirthDate($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        if (preg_match('/^(\d{4}-\d{2}-\d{2})/', $value, $matches)) {
+            return $matches[1];
+        }
+
+        if (preg_match('#^(\d{2})/(\d{2})/(\d{4})$#', $value, $matches)) {
+            return $matches[3] . '-' . $matches[2] . '-' . $matches[1];
+        }
+
+        if (preg_match('/^\d{6}$/', $value)) {
+            $yy = (int) substr($value, 0, 2);
+            $mm = substr($value, 2, 2);
+            $dd = substr($value, 4, 2);
+            $year = $yy > 30 ? 1900 + $yy : 2000 + $yy;
+
+            return sprintf('%04d-%s-%s', $year, $mm, $dd);
+        }
+
+        return $value;
     }
 }
 

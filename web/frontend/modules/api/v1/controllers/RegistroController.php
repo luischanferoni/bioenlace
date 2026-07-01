@@ -158,7 +158,8 @@ class RegistroController extends BaseController
         try {
             $result = $service->registrar($bodyParams);
         } catch (\RuntimeException $e) {
-            return $this->error($e->getMessage(), null, 422);
+            $errors = $this->extractPersonaValidationErrors($e->getMessage());
+            return $this->error($e->getMessage(), $errors, 422);
         } catch (\Throwable $e) {
             Yii::error('Error inesperado en RegistroService: ' . $e->getMessage(), 'registro');
             return $this->error('Error interno al procesar el registro', null, 500);
@@ -275,6 +276,26 @@ class RegistroController extends BaseController
             'session_id' => $session['session_id'] ?? '',
             'url' => $session['url'] ?? '',
         ], 'Sesión Didit creada', 201);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function extractPersonaValidationErrors(string $message): ?array
+    {
+        $prefix = 'Error guardando datos de la persona: ';
+        if (!str_starts_with($message, $prefix)) {
+            return null;
+        }
+
+        $json = trim(substr($message, strlen($prefix)));
+        if ($json === '') {
+            return null;
+        }
+
+        $decoded = json_decode($json, true);
+
+        return is_array($decoded) ? $decoded : null;
     }
 }
 

@@ -44,7 +44,31 @@ class DiditClientTest extends Unit
         $this->assertSame('29486884', $result['documento']);
         $this->assertSame('Mercedes', $result['nombre']);
         $this->assertSame('Diaz', $result['apellido']);
+        $this->assertSame(1, $result['sexo_biologico']);
+        $this->assertSame(1, $result['genero']);
         $this->assertSame('paciente-42', $result['didit_reference_id']);
+    }
+
+    public function testMaleSexMapsToBioenlaceConvention(): void
+    {
+        $client = new DiditClientTestable();
+        $result = $client->identityFromPayload([
+            'session_id' => 'session-m',
+            'status' => 'Approved',
+            'id_verifications' => [
+                [
+                    'status' => 'Approved',
+                    'first_name' => 'Juan',
+                    'last_name' => 'Perez',
+                    'gender' => 'M',
+                    'document_number' => '30111222',
+                    'date_of_birth' => '1990-05-15',
+                ],
+            ],
+        ], 'session-m');
+
+        $this->assertSame(2, $result['sexo_biologico']);
+        $this->assertSame(2, $result['genero']);
     }
 
     public function testDeclinedStatusIsRejected(): void

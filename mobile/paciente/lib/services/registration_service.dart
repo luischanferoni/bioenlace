@@ -5,6 +5,7 @@ import 'package:didit_sdk/sdk_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared/config/didit_config_resolver.dart';
+import 'package:shared/http/bioenlace_http_trace.dart';
 import 'package:shared/platform/didit_platform.dart';
 import 'package:shared/shared.dart';
 
@@ -64,6 +65,8 @@ class RegistrationService {
                 )
                 .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
+            BioenlaceHttpTrace.logResponse('registro/registrar', registroResponse);
+
             final registroData = json.decode(registroResponse.body);
 
             if (registroResponse.statusCode >= 200 &&
@@ -85,6 +88,7 @@ class RegistrationService {
               'message':
                   registroData['message'] ?? 'Error en el registro en el backend',
               'errors': registroData['errors'],
+              'status_code': registroResponse.statusCode,
             };
           }
           return {

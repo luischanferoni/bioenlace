@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Legacy;
+namespace common\components\Platform\Legacy;
 
 /**
  * Traducciones y menú admin sin depender de webvimark UserManagementModule.

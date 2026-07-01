@@ -25,7 +25,12 @@ class AccionesController extends BaseController
 
         try {
             $limit = (int) Yii::$app->request->get('limit', CommonActionsService::DEFAULT_LIMIT);
-            $payload = CommonActionsService::getFormattedForUser($userId, $limit);
+            $appClient = trim((string) Yii::$app->request->headers->get('X-App-Client', ''));
+            $payload = CommonActionsService::getFormattedForUser(
+                $userId,
+                $limit,
+                $appClient !== '' ? $appClient : null
+            );
 
             return [
                 'success' => true,

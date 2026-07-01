@@ -231,8 +231,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
                   BioSpacing.gapH(BioSpacing.lg),
                   _sectionTitle('Preferencias'),
                   SwitchListTile(
-                    title: const Text('Avisarme cuando un representante actúe'),
-                    subtitle: const Text('Notificación push e inbox (N9)'),
+                    title: const Text('Avisame cuando un representante actúe'),
                     value: _notifyOnRepresentativeAction,
                     onChanged: _savingPrefs ? null : _toggleNotify,
                   ),

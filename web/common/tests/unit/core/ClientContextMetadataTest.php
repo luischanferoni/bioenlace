@@ -42,4 +42,20 @@ class ClientContextMetadataTest extends Unit
         $this->assertContains('TURNO_RECORDATORIO', $tipos);
         $this->assertNotContains('STAFF_ALERT', $tipos);
     }
+
+    public function testPacienteMobileClientDetection(): void
+    {
+        $this->assertTrue(ClientContextMetadata::isPacienteMobileClient('paciente-flutter'));
+        $this->assertFalse(ClientContextMetadata::isPacienteMobileClient('bioenlace-personalsalud'));
+    }
+
+    public function testPacienteMobileShortcutDisplayFlags(): void
+    {
+        $this->assertTrue(ClientContextMetadata::pacienteMobileShortcutUseYamlActionName());
+        $this->assertTrue(ClientContextMetadata::pacienteMobileShortcutOmitSubgroups());
+        $this->assertSame(
+            'assistant-shortcuts-paciente.yaml',
+            ClientContextMetadata::pacienteMobileShortcutsCatalogBasename()
+        );
+    }
 }

@@ -53,6 +53,42 @@ final class ClientContextMetadata
         return false;
     }
 
+    public static function isPacienteMobileClient(?string $appClientId): bool
+    {
+        $id = trim((string) $appClientId);
+        if ($id === '') {
+            return false;
+        }
+        foreach (self::mobilePacienteSection()['app_client_ids'] ?? [] as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '' && trim($candidate) === $id) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function pacienteMobileShortcutsCatalogBasename(): string
+    {
+        $file = trim((string) (self::mobilePacienteSection()['shortcuts_catalog'] ?? ''));
+
+        return $file !== '' ? $file : 'assistant-shortcuts-paciente.yaml';
+    }
+
+    public static function pacienteMobileShortcutUseYamlActionName(): bool
+    {
+        $display = self::mobilePacienteSection()['shortcut_display'] ?? [];
+
+        return is_array($display) && ($display['use_yaml_action_name'] ?? false) === true;
+    }
+
+    public static function pacienteMobileShortcutOmitSubgroups(): bool
+    {
+        $display = self::mobilePacienteSection()['shortcut_display'] ?? [];
+
+        return is_array($display) && ($display['omit_subgroups'] ?? false) === true;
+    }
+
     /**
      * Tipos de notificación in-app de paciente a ocultar en bandeja web staff.
      *
@@ -94,7 +130,7 @@ final class ClientContextMetadata
             return self::$config;
         }
 
-        self::$config = ['web_staff' => []];
+        self::$config = ['web_staff' => [], 'mobile_paciente' => []];
 
         $path = ProductMetadataPaths::clientContextFile();
         if (!is_file($path)) {
@@ -112,8 +148,21 @@ final class ClientContextMetadata
         if (is_array($data) && isset($data['web_staff']) && is_array($data['web_staff'])) {
             self::$config['web_staff'] = $data['web_staff'];
         }
+        if (is_array($data) && isset($data['mobile_paciente']) && is_array($data['mobile_paciente'])) {
+            self::$config['mobile_paciente'] = $data['mobile_paciente'];
+        }
 
         return self::$config;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function mobilePacienteSection(): array
+    {
+        $section = self::loadConfig()['mobile_paciente'] ?? [];
+
+        return is_array($section) ? $section : [];
     }
 
     public static function resetCacheForTests(): void

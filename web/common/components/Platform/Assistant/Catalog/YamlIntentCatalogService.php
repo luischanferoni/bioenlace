@@ -147,6 +147,7 @@ final class YamlIntentCatalogService
             $out[] = [
                 'action_id' => $intentId,
                 'action_name' => $actionName,
+                'action_name_base' => $actionNameBase,
                 'display_name' => $actionName,
                 'description' => $desc,
                 'route' => '', // flows se ejecutan vía /asistente/enviar con action_id

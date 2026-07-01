@@ -2,6 +2,14 @@
 # {@see ClientContextMetadata} — no hardcodear intents de paciente en Platform.
 version: 1
 
+mobile_paciente:
+  app_client_ids:
+    - paciente-flutter
+  shortcuts_catalog: assistant-shortcuts-paciente.yaml
+  shortcut_display:
+    use_yaml_action_name: true
+    omit_subgroups: true
+
 web_staff:
   hide_paciente_flows:
     intent_ids:

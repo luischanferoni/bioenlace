@@ -63,9 +63,14 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'hint-resolution.yaml';
     }
 
-    public static function assistantShortcutsFile(): string
+    public static function assistantShortcutsFile(?string $basename = null): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'assistant-shortcuts.yaml';
+        $file = trim((string) ($basename ?? ''));
+        if ($file === '') {
+            $file = 'assistant-shortcuts.yaml';
+        }
+
+        return self::assistantDir() . DIRECTORY_SEPARATOR . $file;
     }
 
     public static function domainOperationPoliciesFile(): string

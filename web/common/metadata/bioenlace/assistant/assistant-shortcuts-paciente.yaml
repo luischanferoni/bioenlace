@@ -1,0 +1,45 @@
+# Atajos visibles en la app paciente (sin flujos staff ni subgrupos «Para mí / Para el personal»).
+# {@see client-context.yaml} → mobile_paciente.shortcuts_catalog
+version: 1
+categories:
+  - id: atencion
+    titulo: Atención
+    intent_ids:
+      - atencion.necesito-atencion
+
+  - id: turnos
+    titulo: Turnos
+    intent_ids:
+      - turnos.cancelar-como-paciente-flow
+      - turnos.modificar-como-paciente-flow
+
+  - id: laboratorio
+    titulo: Laboratorio
+    intent_ids:
+      - laboratorio.ver-resultados-como-paciente
+
+  - id: recetas
+    titulo: Recetas
+    intent_ids:
+      - receta.ver-recetas-como-paciente
+
+  - id: tratamiento
+    titulo: Tratamiento
+    intent_ids:
+      - tratamiento.recordatorios-como-paciente
+
+  - id: atenciones
+    titulo: Mis atenciones
+    intent_ids:
+      - atencion.ver-ultima-como-paciente
+      - atencion.mis-atenciones-como-paciente
+
+  - id: mi_provincia
+    titulo: Mi provincia
+    intent_ids:
+      - paciente-contexto.recurso-provincial-como-paciente-flow
+
+  - id: ayuda
+    titulo: Ayuda
+    intent_ids:
+      - plataforma.enviar-queja-como-paciente-flow

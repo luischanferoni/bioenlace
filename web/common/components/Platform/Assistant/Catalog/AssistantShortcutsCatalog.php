@@ -10,36 +10,41 @@ use Yii;
  */
 final class AssistantShortcutsCatalog
 {
-    /** @var list<array{id: string, titulo: string, intent_ids: list<string>, subgroups: list<array{id: string, titulo: string, intent_ids: list<string>}>}>|null */
-    private static ?array $categories = null;
+    /** @var array<string, list<array{id: string, titulo: string, intent_ids: list<string>, subgroups: list<array{id: string, titulo: string, intent_ids: list<string>}>}>> */
+    private static array $categoriesByCatalog = [];
 
     /**
      * @return list<array{id: string, titulo: string, intent_ids: list<string>, subgroups: list<array{id: string, titulo: string, intent_ids: list<string>}>}>
      */
-    public static function categories(): array
+    public static function categories(?string $catalogBasename = null): array
     {
-        if (self::$categories !== null) {
-            return self::$categories;
+        $catalogBasename = trim((string) ($catalogBasename ?? ''));
+        if ($catalogBasename === '') {
+            $catalogBasename = 'assistant-shortcuts.yaml';
         }
 
-        self::$categories = [];
-        $path = \common\components\Platform\Core\Product\ProductMetadataPaths::assistantShortcutsFile();
+        if (isset(self::$categoriesByCatalog[$catalogBasename])) {
+            return self::$categoriesByCatalog[$catalogBasename];
+        }
+
+        self::$categoriesByCatalog[$catalogBasename] = [];
+        $path = \common\components\Platform\Core\Product\ProductMetadataPaths::assistantShortcutsFile($catalogBasename);
         if (!is_file($path)) {
-            return self::$categories;
+            return self::$categoriesByCatalog[$catalogBasename];
         }
         try {
             $data = Yaml::parseFile($path);
         } catch (\Throwable $e) {
             Yii::warning('AssistantShortcutsCatalog: YAML inválido: ' . $e->getMessage(), __METHOD__);
 
-            return self::$categories;
+            return self::$categoriesByCatalog[$catalogBasename];
         }
         if (!is_array($data)) {
-            return self::$categories;
+            return self::$categoriesByCatalog[$catalogBasename];
         }
         $raw = $data['categories'] ?? [];
         if (!is_array($raw)) {
-            return self::$categories;
+            return self::$categoriesByCatalog[$catalogBasename];
         }
         foreach ($raw as $cat) {
             if (!is_array($cat)) {
@@ -55,7 +60,7 @@ final class AssistantShortcutsCatalog
             if ($subgroups === [] && $intentIds === []) {
                 continue;
             }
-            self::$categories[] = [
+            self::$categoriesByCatalog[$catalogBasename][] = [
                 'id' => $id,
                 'titulo' => $titulo !== '' ? $titulo : $id,
                 'intent_ids' => $intentIds,
@@ -63,7 +68,7 @@ final class AssistantShortcutsCatalog
             ];
         }
 
-        return self::$categories;
+        return self::$categoriesByCatalog[$catalogBasename];
     }
 
     /**
@@ -119,6 +124,6 @@ final class AssistantShortcutsCatalog
 
     public static function resetCacheForTests(): void
     {
-        self::$categories = null;
+        self::$categoriesByCatalog = [];
     }
 }

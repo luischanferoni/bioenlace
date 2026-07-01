@@ -14,6 +14,7 @@ use common\components\Domain\Integrations\Identity\DiditClient;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use common\components\Platform\Core\Auth\PlayReviewLoginService;
+use common\components\Platform\Core\Auth\StaffAccountInvitationService;
 use common\components\Platform\Core\Auth\StaffMobileLoginService;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
@@ -28,6 +29,7 @@ class AuthController extends BaseController
         'login-biometrico',
         'login-revision',
         'login-credenciales',
+        'activar-cuenta',
     ];
 
     /**
@@ -333,6 +335,53 @@ class AuthController extends BaseController
             ],
             'token' => $token,
         ], 'Login exitoso');
+    }
+
+    /**
+     * Activación de cuenta staff con código presencial (app Personal de Salud / clientes móviles).
+     *
+     * POST /api/v1/auth/activar-cuenta
+     * Body: { "username": "...", "activation_code": "...", "password": "..." }
+     */
+    public function actionActivarCuenta()
+    {
+        $username = trim((string) (Yii::$app->request->post('username') ?? ''));
+        $code = trim((string) (Yii::$app->request->post('activation_code') ?? ''));
+        $password = (string) (Yii::$app->request->post('password') ?? '');
+
+        if ($username === '' || $code === '' || $password === '') {
+            return $this->error('Usuario, código de activación y contraseña son requeridos', null, 400);
+        }
+
+        $minLength = (int) (Yii::$app->params['user.passwordMinLength'] ?? 8);
+        if (strlen($password) < max(6, $minLength)) {
+            return $this->error('La contraseña debe tener al menos ' . max(6, $minLength) . ' caracteres', null, 400);
+        }
+
+        $user = StaffAccountInvitationService::findPendingByUsername($username);
+        if ($user === null) {
+            return $this->error('Usuario no encontrado o cuenta ya activada', null, 404);
+        }
+
+        if (!StaffAccountInvitationService::validateActivationCode($user, $code)) {
+            return $this->error('Código inválido o expirado', null, 400);
+        }
+
+        try {
+            if (!StaffAccountInvitationService::activateWithPassword(
+                $user,
+                $password,
+                StaffAccountInvitationService::ACTIVATION_METHOD_CODE
+            )) {
+                return $this->error('No se pudo activar la cuenta', null, 500);
+            }
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        }
+
+        return $this->success([
+            'username' => $user->username,
+        ], 'Cuenta activada. Ya podés iniciar sesión.');
     }
 
     /**

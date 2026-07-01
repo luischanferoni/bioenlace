@@ -27,14 +27,10 @@ use yii\bootstrap5\ActiveForm;
 	<?= $form->field($model, 'username')->textInput(['maxlength' => 255, 'autocomplete'=>'off']) ?>
 
 	<?php if ( $model->isNewRecord ): ?>
-
-		<?= $form->field($model, 'password')->passwordInput(['maxlength' => 255, 'autocomplete'=>'off']) ?>
-
-		<?= $form->field($model, 'repeat_password')->passwordInput(['maxlength' => 255, 'autocomplete'=>'off']) ?>
-		
+		<p class="help-block col-sm-offset-3 col-sm-9 text-muted">
+			No defina contraseña aquí: tras crear el usuario enviará invitación por e-mail o código presencial.
+		</p>
 	<?php endif; ?>
-
-
 	<?php if ( User::hasPermission('bindUserToIp') ): ?>
 
 		<?= $form->field($model, 'bind_to_ip')
@@ -43,10 +39,12 @@ use yii\bootstrap5\ActiveForm;
 
 	<?php endif; ?>
 
-	<?php if ( User::hasPermission('editUserEmail') ): ?>
+	<?php if ( User::hasPermission('editUserEmail') || $model->isNewRecord ): ?>
 
 		<?= $form->field($model, 'email')->textInput(['maxlength' => 255]) ?>
+		<?php if (!$model->isNewRecord): ?>
 		<?= $form->field($model, 'email_confirmed')->checkbox() ?>
+		<?php endif; ?>
 
 	<?php endif; ?>
 

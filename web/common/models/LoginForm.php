@@ -2,6 +2,7 @@
 
 namespace common\models;
 
+use common\components\Platform\Core\Auth\StaffAccountInvitationService;
 use Yii;
 use yii\base\Model;
 
@@ -50,7 +51,11 @@ class LoginForm extends Model
         if (!$this->hasErrors()) {
             $user = $this->getUser();
 
-            if (!$user || !$user->validatePassword($this->password)) {
+            if (!$user) {
+                $this->addError($attribute, 'Usuario y/o contraseña incorrectos.');
+            } elseif (StaffAccountInvitationService::isPendingActivation($user)) {
+                $this->addError($attribute, 'Tu cuenta aún no está activada. Usá el enlace del e-mail o el código que te dio administración.');
+            } elseif (!$user->validatePassword($this->password)) {
                 $this->addError($attribute, 'Usuario y/o contraseña incorrectos.');
             }
         }

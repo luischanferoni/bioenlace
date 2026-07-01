@@ -13,6 +13,11 @@ return [
     'mysqlSessionWaitTimeout' => 28800,
     'user.passwordResetTokenExpire' => 3600,
     'user.passwordMinLength' => 8,
+    /** Invitación staff: link de activación por e-mail (segundos). */
+    'user.accountInvitationTokenExpire' => 72 * 3600,
+    /** Código presencial de activación (segundos). */
+    'user.accountActivationCodeExpire' => 48 * 3600,
+    'user.accountActivationCodeLength' => 8,
     'bsVersion' => '5.x',
     'hostFormsAPI'=> 'http://10.10.10.235:9559',//'http://localhost:3000',//'http://saluddigital.msalsgo.gob.ar:9559'
     'SISA_APP_ID'=> '6df3d2f1',

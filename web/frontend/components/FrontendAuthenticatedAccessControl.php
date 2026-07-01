@@ -19,6 +19,8 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
         'auth/login',
         'auth/password-recovery',
         'auth/password-recovery-receive',
+        'auth/activate-account',
+        'auth/activate-account-receive',
         'auth/confirm-email-receive',
         'auth/captcha',
         'site/captcha',

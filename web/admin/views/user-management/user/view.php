@@ -1,5 +1,6 @@
 <?php
 
+use common\components\Platform\Core\Auth\StaffAccountInvitationService;
 use common\components\Platform\Core\Permission\BioenlaceGhostHtml;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use common\models\User;
@@ -32,6 +33,13 @@ $this->params['breadcrumbs'][] = $this->title;
 					['change-password', 'id' => $model->id],
 					['class' => 'btn btn-sm btn-default', 'data-pjax' => 0]
 				) ?>
+				<?php if (StaffAccountInvitationService::isPendingActivation($model)): ?>
+				<?= BioenlaceGhostHtml::a(
+					'Invitación / activación',
+					['invitation', 'id' => $model->id],
+					['class' => 'btn btn-sm btn-info', 'data-pjax' => 0]
+				) ?>
+				<?php endif; ?>
 				<?= BioenlaceGhostHtml::a(
 					'Administracion de Efector',
 					['/profesional-efector-servicio/create-admin-efector-desde-usuario', 'id' => $model->id],

@@ -53,7 +53,10 @@ use yii\helpers\Html;
 								<?php endif;?>
 
 								<div class="row registration-block">
-									<div class="col-sm-12 text-right">
+									<div class="col-sm-6">
+										<?= Html::a('Activar cuenta nueva', ['/auth/activate-account']) ?>
+									</div>
+									<div class="col-sm-6 text-end">
 										<?= Html::a(
 											'¿Olvidó su contraseña?',
 											['/auth/password-recovery']

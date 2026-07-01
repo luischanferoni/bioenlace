@@ -3,6 +3,7 @@ import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'personalsalud_session_prefs.dart';
+import 'personalsalud_staff_activation_screen.dart';
 
 typedef PersonalsaludLoginSuccess = void Function(
   String userId,
@@ -320,8 +321,8 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                 ),
                 BioSpacing.gapH(BioSpacing.sm),
                 Text(
-                  'Primera vez en este dispositivo: ingresá con el usuario '
-                  'y contraseña que te dio administración del efector.',
+                  'Primera vez: activá tu cuenta con el código de administración '
+                  'o ingresá si ya elegiste contraseña.',
                   style: BioTypography.body.copyWith(color: tokens.textMuted),
                   textAlign: TextAlign.center,
                 ),
@@ -363,6 +364,22 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                   fullWidth: true,
                   loading: _submitting,
                   onPressed: _submitting ? null : _submitCredentials,
+                ),
+                BioSpacing.gapH(BioSpacing.md),
+                BioButton.softPrimary(
+                  label: 'Activar cuenta con código',
+                  icon: Icons.vpn_key_outlined,
+                  fullWidth: true,
+                  onPressed: _submitting
+                      ? null
+                      : () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const PersonalsaludStaffActivationScreen(),
+                            ),
+                          );
+                        },
                 ),
                 BioSpacing.gapH(BioSpacing.lg),
                 const PrivacyPolicyLink(),

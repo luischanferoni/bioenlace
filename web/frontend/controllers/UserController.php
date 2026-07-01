@@ -32,7 +32,7 @@ class UserController extends \admin\controllers\UserAccountController
      */
     public function actionCrear()
     {
-        $model = new User(['scenario' => 'newUser']);
+        $model = new User(['scenario' => User::SCENARIO_INVITE]);
 
         $personaRaw = Yii::$app->session->get('persona');
         $persona = is_string($personaRaw) ? @unserialize($personaRaw) : null;
@@ -42,7 +42,10 @@ class UserController extends \admin\controllers\UserAccountController
 
         if (Yii::$app->request->isPost
             && $model->load(Yii::$app->request->post())
-            && $model->save()
+            && \common\components\Platform\Core\Auth\StaffAccountInvitationService::saveInvitedUser(
+                $model,
+                Yii::$app->user->isGuest ? null : (int) Yii::$app->user->id
+            )
             && $persona !== null
         ) {
             $persona->scenario = 'scenarioactualizaruser';
@@ -50,7 +53,11 @@ class UserController extends \admin\controllers\UserAccountController
             $persona->save();
             Yii::$app->session->set('persona', serialize($persona));
 
-            return $this->redirect(['profesional-salud/create']);
+            return $this->redirect([
+                'invitation',
+                'id' => $model->id,
+                'continue' => \yii\helpers\Url::to(['profesional-salud/create']),
+            ]);
         }
 
         return $this->render('@frontend/views/user-management/user/create', ['model' => $model]);

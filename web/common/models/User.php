@@ -28,6 +28,9 @@ use yii\web\IdentityInterface;
  * @property int $created_at
  * @property int $updated_at
  * @property string|null $password
+ * @property int|null $password_set_at
+ * @property string|null $activation_code_hash
+ * @property int|null $activation_code_expires_at
  * @property string|null $repeat_password
  * @property string|null $gridRoleSearch
  */
@@ -37,7 +40,8 @@ class User extends ActiveRecord implements IdentityInterface
 
     public const STATUS_INACTIVE = 0;
 
-    public const STATUS_BANNED = -1;
+    /** Alta por invitación (staff): sin contraseña en el formulario. */
+    public const SCENARIO_INVITE = 'inviteUser';
 
     /** @var string|null */
     public $password;
@@ -66,7 +70,8 @@ class User extends ActiveRecord implements IdentityInterface
             [['username'], 'required'],
             [['username'], 'unique'],
             [['username'], 'trim'],
-            [['status', 'email_confirmed'], 'integer'],
+            [['status', 'email_confirmed', 'password_set_at', 'activation_code_expires_at'], 'integer'],
+            [['email'], 'required', 'on' => self::SCENARIO_INVITE],
             [['email'], 'email'],
             [['email'], 'validateEmailConfirmedUnique'],
             [['bind_to_ip'], 'validateBindToIp'],
@@ -115,15 +120,9 @@ class User extends ActiveRecord implements IdentityInterface
         return static::findOne(['username' => $username, 'status' => self::STATUS_ACTIVE]);
     }
 
-    public static function findByConfirmationToken($token)
+    public static function findByConfirmationToken($token, ?int $expireSeconds = null)
     {
-        $expire = 3600;
-        if (Yii::$app->has('user-management')) {
-            $module = Yii::$app->getModule('user-management');
-            if ($module !== null && isset($module->confirmationTokenExpire)) {
-                $expire = (int) $module->confirmationTokenExpire;
-            }
-        }
+        $expire = $expireSeconds ?? self::resolveConfirmationTokenExpire();
 
         $parts = explode('_', (string) $token);
         $timestamp = (int) end($parts);
@@ -137,15 +136,22 @@ class User extends ActiveRecord implements IdentityInterface
         ]);
     }
 
-    public static function findInactiveByConfirmationToken($token)
+    private static function resolveConfirmationTokenExpire(): int
     {
-        $expire = 3600;
+        $expire = (int) (Yii::$app->params['user.passwordResetTokenExpire'] ?? 3600);
         if (Yii::$app->has('user-management')) {
             $module = Yii::$app->getModule('user-management');
             if ($module !== null && isset($module->confirmationTokenExpire)) {
                 $expire = (int) $module->confirmationTokenExpire;
             }
         }
+
+        return $expire;
+    }
+
+    public static function findInactiveByConfirmationToken($token)
+    {
+        $expire = self::resolveConfirmationTokenExpire();
 
         $parts = explode('_', (string) $token);
         $timestamp = (int) end($parts);
@@ -414,7 +420,7 @@ class User extends ActiveRecord implements IdentityInterface
             }
         }
 
-        if ($this->password) {
+        if ($this->password && $this->scenario !== self::SCENARIO_INVITE) {
             $this->setPassword($this->password);
         }
 

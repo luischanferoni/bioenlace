@@ -90,6 +90,8 @@ return [
                 'user-management/auth/change-own-password' => 'auth/change-own-password',
                 'user-management/auth/password-recovery' => 'auth/password-recovery',
                 'user-management/auth/password-recovery-receive/<token:[\w\-]+>' => 'auth/password-recovery-receive',
+                'user-management/auth/activate-account' => 'auth/activate-account',
+                'user-management/auth/activate-account-receive/<token:[\w\-]+>' => 'auth/activate-account-receive',
                 'user-management/auth/confirm-email' => 'auth/confirm-email',
                 'user-management/auth/confirm-email-receive/<token:[\w\-]+>' => 'auth/confirm-email-receive',
                 'turno/resolucion/<token:[\w\.\-\_=]+>' => 'turno-public/resolucion',
@@ -290,6 +292,7 @@ return [
                 'POST api/<version:\w+>/auth/login-biometrico' => '<version>/auth/login-biometrico',
                 'POST api/<version:\w+>/auth/login-revision' => '<version>/auth/login-revision',
                 'POST api/<version:\w+>/auth/login-credenciales' => '<version>/auth/login-credenciales',
+                'POST api/<version:\w+>/auth/activar-cuenta' => '<version>/auth/activar-cuenta',
                 // generar token de prueba para paciente por DNI
                 'POST api/<version:\w+>/auth/generar-token-prueba' => '<version>/auth/generar-token-prueba',
                 'GET api/<version:\w+>/auth/generar-token-prueba' => '<version>/auth/generar-token-prueba',

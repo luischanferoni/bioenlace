@@ -3,13 +3,14 @@
 /**
  * @var yii\web\View $this
  * @var common\models\forms\ChangeOwnPasswordForm $model
+ * @var string|null $title
  */
 
 use common\models\forms\ChangeOwnPasswordForm;
 use yii\bootstrap5\ActiveForm;
 use yii\helpers\Html;
 
-$this->title = 'Cambiar contraseña';
+$this->title = $title ?? 'Cambiar contraseña';
 ?>
 <div class="container py-5">
 	<div class="row justify-content-center">

@@ -2,6 +2,8 @@
 
 namespace frontend\controllers;
 
+use common\components\Platform\Core\Auth\StaffAccountInvitationService;
+use common\models\forms\ActivateAccountForm;
 use common\models\forms\ChangeOwnPasswordForm;
 use common\models\forms\ConfirmEmailForm;
 use common\models\forms\PasswordRecoveryForm;
@@ -203,5 +205,50 @@ class AuthController extends Controller
         $this->layout = '@frontend/views/layouts/loginLayout.php';
 
         return $this->render('@frontend/views/login/confirm-email-success', ['user' => $user]);
+    }
+
+    public function actionActivateAccount()
+    {
+        if (!Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+
+        $this->layout = '@frontend/views/layouts/loginLayout.php';
+        $model = new ActivateAccountForm();
+
+        if ($model->load(Yii::$app->request->post()) && $model->activate()) {
+            return $this->render('@frontend/views/login/activate-account-success');
+        }
+
+        return $this->render('@frontend/views/login/activate-account', ['model' => $model]);
+    }
+
+    public function actionActivateAccountReceive($token)
+    {
+        if (!Yii::$app->user->isGuest) {
+            return $this->goHome();
+        }
+
+        $this->layout = '@frontend/views/layouts/loginLayout.php';
+        $user = StaffAccountInvitationService::findByInvitationToken($token);
+        if ($user === null) {
+            throw new NotFoundHttpException('Enlace no encontrado o expirado. Pedí una nueva invitación a administración.');
+        }
+
+        $model = new ChangeOwnPasswordForm([
+            'scenario' => ChangeOwnPasswordForm::SCENARIO_RESTORE_VIA_EMAIL,
+            'user' => $user,
+        ]);
+
+        if ($model->load(Yii::$app->request->post()) && $model->validate()) {
+            $model->changePassword(false);
+
+            return $this->render('@frontend/views/login/activate-account-success');
+        }
+
+        return $this->render('@frontend/views/login/change-own-password', [
+            'model' => $model,
+            'title' => 'Elegí tu contraseña',
+        ]);
     }
 }

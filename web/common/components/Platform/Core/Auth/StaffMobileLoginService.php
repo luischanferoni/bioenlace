@@ -26,6 +26,13 @@ final class StaffMobileLoginService
         $model->username = $username;
         $model->password = $password;
 
+        $user = $model->getUser();
+        if ($user instanceof User && StaffAccountInvitationService::isPendingActivation($user)) {
+            throw new \DomainException(
+                'Tu cuenta aún no está activada. Pedí a administración el código o el e-mail de activación.'
+            );
+        }
+
         if (!$model->validate()) {
             throw new \DomainException('Usuario y/o contraseña incorrectos.');
         }

@@ -2,6 +2,7 @@
 
 namespace common\models\forms;
 
+use common\components\Platform\Core\Auth\StaffAccountInvitationService;
 use common\models\User;
 use Yii;
 use yii\base\Model;
@@ -60,6 +61,14 @@ class ChangeOwnPasswordForm extends Model
     {
         if ($performValidation && !$this->validate()) {
             return false;
+        }
+
+        if (!StaffAccountInvitationService::isPasswordSet($this->user)) {
+            return StaffAccountInvitationService::activateWithPassword(
+                $this->user,
+                (string) $this->password,
+                StaffAccountInvitationService::ACTIVATION_METHOD_EMAIL
+            );
         }
 
         $this->user->password = $this->password;

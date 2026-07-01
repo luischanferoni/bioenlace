@@ -17,6 +17,8 @@ class AuthController extends \frontend\controllers\AuthController
             'login',
             'password-recovery',
             'password-recovery-receive',
+            'activate-account',
+            'activate-account-receive',
         ];
         if (in_array($action->id, $guestLayoutActions, true)) {
             $this->layout = '@admin/views/layouts/loginLayout.php';

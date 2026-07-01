@@ -468,6 +468,9 @@ class User extends ActiveRecord implements IdentityInterface
     public function actualizarIduserpersona($idpersona, $iduser)
     {
         $actualizar_persona = Persona::findOne(['id_persona' => $idpersona]);
+        if ($actualizar_persona === null) {
+            return;
+        }
         $actualizar_persona->id_user = $iduser;
         $actualizar_persona->scenario = 'scenarioregistrar';
         $actualizar_persona->save();
@@ -476,6 +479,10 @@ class User extends ActiveRecord implements IdentityInterface
     public function afterSave($insert, $changedAttributes)
     {
         parent::afterSave($insert, $changedAttributes);
+
+        if (!$insert) {
+            return;
+        }
 
         $request = Yii::$app->getRequest();
         if ($request instanceof \yii\web\Request) {

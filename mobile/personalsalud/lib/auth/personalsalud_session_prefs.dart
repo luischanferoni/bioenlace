@@ -5,6 +5,10 @@ import 'package:shared/shared.dart';
 abstract final class PersonalsaludSessionPrefs {
   static const staffMobileLoginEstablishedKey = 'staff_mobile_login_established';
 
+  /// El usuario vio el diálogo y eligió «Ahora no» (no volver a preguntar hasta logout).
+  static const staffBiometricEnrollmentDeclinedKey =
+      'staff_biometric_enrollment_declined';
+
   static const operationalKeys = [
     'auth_token',
     'config_completed',
@@ -27,6 +31,7 @@ abstract final class PersonalsaludSessionPrefs {
     await prefs.remove('user_id');
     await prefs.remove('user_name');
     await prefs.remove(staffMobileLoginEstablishedKey);
+    await prefs.remove(staffBiometricEnrollmentDeclinedKey);
     for (final key in operationalKeys) {
       await prefs.remove(key);
     }

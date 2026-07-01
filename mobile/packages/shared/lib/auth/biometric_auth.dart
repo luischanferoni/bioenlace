@@ -4,12 +4,17 @@ import 'package:local_auth/local_auth.dart';
 class BiometricAuth {
   final LocalAuthentication _auth = LocalAuthentication();
   
-  /// Verifica si la autenticación biométrica está disponible
+  /// Verifica si la autenticación biométrica está disponible en el dispositivo.
   Future<bool> isAvailable() async {
     try {
-      final isAvailable = await _auth.canCheckBiometrics;
+      if (!await _auth.isDeviceSupported()) {
+        return false;
+      }
+      if (await _auth.canCheckBiometrics) {
+        return true;
+      }
       final biometrics = await _auth.getAvailableBiometrics();
-      return isAvailable && biometrics.isNotEmpty;
+      return biometrics.isNotEmpty;
     } catch (e) {
       return false;
     }
@@ -19,12 +24,16 @@ class BiometricAuth {
   Future<String> getBiometricType() async {
     try {
       final biometrics = await _auth.getAvailableBiometrics();
-      if (biometrics.contains(BiometricType.fingerprint)) {
+      if (biometrics.contains(BiometricType.fingerprint) ||
+          biometrics.contains(BiometricType.weak)) {
         return 'Huella digital';
       } else if (biometrics.contains(BiometricType.face)) {
         return 'Reconocimiento facial';
       } else if (biometrics.contains(BiometricType.iris)) {
         return 'Reconocimiento de iris';
+      }
+      if (await _auth.canCheckBiometrics) {
+        return 'Huella digital';
       }
       return '';
     } catch (e) {

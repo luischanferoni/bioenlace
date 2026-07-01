@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
+import '../auth/personalsalud_post_login.dart';
+import '../auth/personalsalud_login_screen.dart';
+import '../auth/personalsalud_session_prefs.dart';
 import '../services/config_service.dart';
 import '../main.dart';
 import 'main_screen.dart';
@@ -208,6 +211,8 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       await prefs.setString('auth_token', sessionToken);
 
       if (mounted) {
+        await maybeOfferPersonalsaludBiometricEnrollment(context: context);
+        if (!mounted) return;
         navigatorKey.currentState?.pushReplacement(
           MaterialPageRoute(
             builder: (_) => MainScreen(
@@ -227,6 +232,44 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _confirmarLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Cerrar sesión'),
+        content: const Text('¿Seguro que querés salir?'),
+        actions: [
+          BioButton(
+            label: 'Cancelar',
+            intent: UiIntent.neutral,
+            variant: BioButtonVariant.soft,
+            size: BioButtonSize.sm,
+            onPressed: () => Navigator.pop(dialogContext, false),
+          ),
+          BioButton.danger(
+            label: 'Cerrar sesión',
+            size: BioButtonSize.sm,
+            onPressed: () => Navigator.pop(dialogContext, true),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    await PersonalsaludSessionPrefs.clearOnLogout();
+    ClientDiagnosticApi.bindSession(authToken: null, appClient: 'bioenlace-personalsalud');
+
+    navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => buildPersonalsaludLoginScreen(
+          onLoginSuccess: navigatePersonalsaludAfterLogin,
+        ),
+      ),
+      (route) => false,
+    );
   }
 
   @override
@@ -297,16 +340,25 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
                 border: BioBorder.top(BorderWidth.thin, tokens.paperBorderDefault),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (_currentStep > 0)
+                  BioButton(
+                    label: 'Cerrar sesión',
+                    intent: UiIntent.danger,
+                    variant: BioButtonVariant.soft,
+                    icon: Icons.logout,
+                    size: BioButtonSize.sm,
+                    onPressed: _isLoading && _currentStep == 2 ? null : _confirmarLogout,
+                  ),
+                  if (_currentStep > 0) ...[
+                    BioSpacing.gapW(BioSpacing.sm),
                     BioButton.outlinePrimary(
                       label: 'Anterior',
                       icon: Icons.arrow_back,
+                      size: BioButtonSize.sm,
                       onPressed: _previousStep,
-                    )
-                  else
-                    const SizedBox(),
+                    ),
+                  ],
+                  const Spacer(),
                   BioButton.primary(
                     label: _currentStep == 2 ? 'Finalizar' : 'Siguiente',
                     icon: _currentStep == 2 ? Icons.check : Icons.arrow_forward,

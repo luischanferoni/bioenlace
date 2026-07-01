@@ -6,35 +6,65 @@ import '../main.dart';
 import '../screens/config_wizard_screen.dart';
 import 'personalsalud_session_prefs.dart';
 
-/// Ofrece activar huella/Face ID tras el primer login con credenciales.
-Future<void> offerPersonalsaludBiometricEnrollment(BuildContext context) async {
+/// Ofrece activar huella/Face ID tras el primer acceso exitoso (login + wizard).
+///
+/// [context] opcional; si no está montado usa [navigatorKey].
+Future<void> maybeOfferPersonalsaludBiometricEnrollment({
+  BuildContext? context,
+}) async {
+  final prefs = await SharedPreferences.getInstance();
+  if (prefs.getBool(PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey) ??
+      false) {
+    return;
+  }
+  if (prefs.getBool(
+        PersonalsaludSessionPrefs.staffBiometricEnrollmentDeclinedKey,
+      ) ??
+      false) {
+    return;
+  }
+  if (await BiometricSessionPrefs.isUnlockEnabled()) {
+    return;
+  }
+
   final bio = BiometricAuth();
   if (!await bio.isAvailable()) {
     return;
   }
+
   final biometricType = await bio.getBiometricType();
-  final label = biometricType.isNotEmpty ? biometricType : 'Biometría';
-  if (!context.mounted) {
+  final label = biometricType.isNotEmpty ? biometricType : 'Huella digital';
+
+  final ctx = (context != null && context.mounted)
+      ? context
+      : navigatorKey.currentContext;
+  if (ctx == null || !ctx.mounted) {
     return;
   }
 
-  final established = await BiometricEnrollmentPrompt.show(
-    context,
+  final result = await BiometricEnrollmentPrompt.show(
+    ctx,
     appTitle: 'Personal de Salud',
     biometricType: label,
   );
-  if (!established) {
+
+  if (result == BiometricEnrollmentResult.success) {
+    await prefs.setBool(
+      PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
+      true,
+    );
     return;
   }
 
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setBool(
-    PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
-    true,
-  );
+  if (result == BiometricEnrollmentResult.skipped) {
+    await prefs.setBool(
+      PersonalsaludSessionPrefs.staffBiometricEnrollmentDeclinedKey,
+      true,
+    );
+  }
 }
 
-/// Tras login biométrico: wizard de efector/servicio/área (sesión operativa).
+/// Tras login con credenciales: wizard de efector/servicio/área (sesión operativa).
 Future<void> navigatePersonalsaludAfterLogin(
   String userId,
   String userName,
@@ -52,8 +82,6 @@ Future<void> navigatePersonalsaludAfterLogin(
     await prefs.setString('auth_token', loginToken);
   }
 
-  if (!loginContext.mounted) return;
-  await offerPersonalsaludBiometricEnrollment(loginContext);
   if (!loginContext.mounted) return;
   openPersonalsaludSessionWizard(
     userId: userId,

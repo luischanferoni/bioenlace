@@ -5,6 +5,9 @@ abstract final class BiometricSessionPrefs {
   static const lastActivityMsKey = 'biometric_last_activity_ms';
   static const unlockEnabledKey = 'biometric_unlock_enabled';
 
+  /// El usuario vio el diálogo de enrolamiento y eligió «Ahora no».
+  static const enrollmentDeclinedKey = 'biometric_enrollment_declined';
+
   /// Minutos sin actividad antes de pedir huella al volver a la app.
   static const inactivityLockMinutes = 5;
 
@@ -47,6 +50,7 @@ abstract final class BiometricSessionPrefs {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(lastActivityMsKey);
     await prefs.remove(unlockEnabledKey);
+    await prefs.remove(enrollmentDeclinedKey);
     await prefs.remove('biometric_enabled');
   }
 }

@@ -1,5 +1,7 @@
 // Sobre v3 de POST /api/v1/asistente/enviar (`message` | `interactive` | `flow`).
 
+import 'assistant_composer_capture.dart';
+
 /// Vista de un sobre `kind: flow` para el renderer del chat / acciones.
 class AssistantFlowView {
   final String text;
@@ -73,19 +75,8 @@ class AssistantFlowView {
 
     Map<String, dynamic>? composerCapture;
     final cc = st['composer_capture'];
-    if (cc is Map && cc['active'] == true) {
-      composerCapture = <String, dynamic>{
-        'draft_field': cc['draft_field']?.toString() ?? '',
-        'placeholder': cc['placeholder']?.toString() ?? '',
-        'min_length': cc['min_length'] is int
-            ? cc['min_length'] as int
-            : int.tryParse(cc['min_length']?.toString() ?? '') ?? 1,
-        'action_id': cc['action_id']?.toString() ?? '',
-        'route': cc['route']?.toString() ?? '',
-        'method': cc['method']?.toString() ?? 'POST',
-        if (cc['body_template'] is Map)
-          'body_template': Map<String, dynamic>.from(cc['body_template'] as Map),
-      };
+    if (cc is Map && isComposerCaptureActive(cc['active'])) {
+      composerCapture = composerCaptureFromMap(Map<dynamic, dynamic>.from(cc));
     }
 
     final hintsRaw = envelope['hints'];

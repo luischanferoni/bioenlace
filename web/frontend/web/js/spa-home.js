@@ -2046,8 +2046,14 @@
     /** @param {object|null|undefined} envelope */
     function assistantFlowComposerCapture(envelope) {
         const step = assistantFlowStep(envelope);
-        const cc = step && step.composer_capture;
-        if (!cc || typeof cc !== 'object' || cc.active !== true) {
+        var cc = step && step.composer_capture;
+        if ((!cc || cc.active !== true) && envelope && envelope.manifest && envelope.manifest.active_step) {
+            var activeStep = envelope.manifest.active_step;
+            if (activeStep && activeStep.composer_capture) {
+                cc = activeStep.composer_capture;
+            }
+        }
+        if (!cc || typeof cc !== 'object') {
             return null;
         }
         const route = cc.route != null ? String(cc.route).trim() : '';

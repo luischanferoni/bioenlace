@@ -65,18 +65,49 @@ class ChatScreenState extends State<ChatScreen> {
         activeCapture: _activeComposerCapture,
         chatHistory: _chatHistory,
         flowActivationSeq: _flowActivationSeq,
+        flowManifest: _latestFlowManifest,
       );
 
   String get _composerHintText => assistantComposerHintText(
         activeCapture: _activeComposerCapture,
         chatHistory: _chatHistory,
         flowActivationSeq: _flowActivationSeq,
+        flowManifest: _latestFlowManifest,
       );
 
+  Map<String, dynamic>? get _latestFlowManifest {
+    for (var i = _chatHistory.length - 1; i >= 0; i--) {
+      final m = _chatHistory[i];
+      if (m['type'] == 'bot' &&
+          m['flow_manifest'] is Map &&
+          m['flow_superseded'] != true) {
+        return Map<String, dynamic>.from(m['flow_manifest'] as Map);
+      }
+    }
+    return null;
+  }
+
   void _syncComposerCaptureFromFlow(AssistantFlowView flow) {
-    _activeComposerCapture = flow.composerCapture != null
-        ? Map<String, dynamic>.from(flow.composerCapture!)
-        : null;
+    if (flow.composerCapture != null) {
+      _activeComposerCapture = Map<String, dynamic>.from(flow.composerCapture!);
+      return;
+    }
+    if (flow.manifest != null) {
+      final fromManifest = resolveActiveComposerCapture(
+        flowManifest: Map<String, dynamic>.from(flow.manifest!),
+      );
+      if (fromManifest != null) {
+        _activeComposerCapture = fromManifest;
+        return;
+      }
+    }
+    _activeComposerCapture = _composerCaptureFromLatestFlowManifest();
+  }
+
+  Map<String, dynamic>? _composerCaptureFromLatestFlowManifest() {
+    final fm = _latestFlowManifest;
+    if (fm == null) return null;
+    return resolveActiveComposerCapture(flowManifest: fm);
   }
 
   /// `turnos.crear-como-paciente` → `/api/v1/turnos/crear-como-paciente` (fallback si `client_open` viene null).
@@ -436,6 +467,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   /// Cierre informativo del flow (p. ej. urgencia banda A): acciones + «Entendido», sin POST.
   bool _showFlowDismissFooter(Map<String, dynamic> message) {
+    if (message['composer_capture'] is Map) return false;
     if (message['flow_dismiss'] is! Map) return false;
     if (message['inline_ui'] is! Map) return true;
     return message['_flow_dismiss_ready'] == true;
@@ -512,7 +544,7 @@ class ChatScreenState extends State<ChatScreen> {
     final openUi = nextFlow.openUi;
     final co = openUi != null ? openUi['client_open'] : null;
     final actionId = openUi != null ? openUi['action_id']?.toString() : null;
-    final hasComposerCapture = nextFlow.composerCapture != null;
+    final hasComposerCapture = _activeComposerCapture != null;
     final hasInlineUi =
         co is Map && (actionId != null && actionId.isNotEmpty);
     final isSubmitOnly = fsPayload != null && !hasInlineUi;
@@ -526,9 +558,9 @@ class ChatScreenState extends State<ChatScreen> {
         if (nextFlow.manifest != null) 'flow_manifest': nextFlow.manifest,
         if (nextFlow.hints.isNotEmpty) 'hints': nextFlow.hints,
         if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
-        if (fdPayload != null && (isDismissOnly || hasComposerCapture)) 'flow_dismiss': fdPayload,
+        if (fdPayload != null && isDismissOnly && !hasComposerCapture) 'flow_dismiss': fdPayload,
         if (hasComposerCapture)
-          'composer_capture': Map<String, dynamic>.from(nextFlow.composerCapture!),
+          'composer_capture': Map<String, dynamic>.from(_activeComposerCapture!),
         if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
         'timestamp': DateTime.now(),
       });
@@ -1343,12 +1375,42 @@ class ChatScreenState extends State<ChatScreen> {
     final flowDismiss = _normalizeFlowDismiss(flow.flowDismiss);
     final providesList = flow.provides;
     final openUi = flow.openUi;
-    if (openUi != null || flowSubmit != null || flowDismiss != null) {
+    if (openUi != null ||
+        flowSubmit != null ||
+        flowDismiss != null ||
+        _activeComposerCapture != null) {
       final co = openUi != null ? openUi['client_open'] : null;
       final actionId = openUi != null ? openUi['action_id']?.toString() : null;
       final hasInlineUiOpen = co is Map && actionId != null && actionId.isNotEmpty;
-      // Caso dismiss-only o composer_capture: cierre informativo y/o texto libre en el composer.
-      if (flowDismiss != null && flowSubmit == null && !hasInlineUiOpen) {
+      if (_activeComposerCapture != null && flowSubmit == null && !hasInlineUiOpen) {
+        final composerPayload = _activeComposerCapture!;
+        setState(() {
+          _flowAdvancing = false;
+          _isSending = false;
+          _chatHistory.add({
+            'type': 'bot',
+            'content': explanation,
+            'actions': null,
+            if (flow.manifest != null) 'flow_manifest': flow.manifest,
+            if (flow.hints.isNotEmpty) 'hints': flow.hints,
+            'composer_capture': Map<String, dynamic>.from(composerPayload),
+            if (providesList.isNotEmpty) 'flow_provides': providesList,
+            'timestamp': DateTime.now(),
+          });
+          _stampLastBotMessageFlowActivation();
+          _applyFlowSupersession(
+            previousIntentId: previousIntentId,
+            activeIntentId: _intentId,
+          );
+        });
+        _scrollToBottom();
+        return true;
+      }
+      // Caso dismiss-only (sin composer): cierre informativo sin POST.
+      if (flowDismiss != null &&
+          flowSubmit == null &&
+          !hasInlineUiOpen &&
+          flow.composerCapture == null) {
         setState(() {
           _flowAdvancing = false;
           _isSending = false;
@@ -1359,8 +1421,6 @@ class ChatScreenState extends State<ChatScreen> {
             if (flow.manifest != null) 'flow_manifest': flow.manifest,
             if (flow.hints.isNotEmpty) 'hints': flow.hints,
             'flow_dismiss': flowDismiss,
-            if (flow.composerCapture != null)
-              'composer_capture': Map<String, dynamic>.from(flow.composerCapture!),
             if (providesList.isNotEmpty) 'flow_provides': providesList,
             'timestamp': DateTime.now(),
           });

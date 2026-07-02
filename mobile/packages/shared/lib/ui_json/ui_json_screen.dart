@@ -663,6 +663,14 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     return true;
   }
 
+  /// Bloques `fields` / `message` con `depends_on` (p. ej. detalle tras cargar datos del ítem elegido).
+  bool _blockDepsOk(Map<String, dynamic> b) {
+    final dep = b['depends_on']?.toString().trim() ?? '';
+    if (dep.isEmpty) return true;
+    final v = _accum[dep]?.toString().trim() ?? '';
+    return v.isNotEmpty;
+  }
+
   Future<List<Map<String, dynamic>>> _fetchAutocomplete(Map<String, dynamic> field) async {
     final endpoint = field['endpoint']?.toString() ?? '';
     if (endpoint.isEmpty) return [];
@@ -1552,6 +1560,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     }
 
     Widget renderMessageBlock(Map<String, dynamic> b) {
+      if (!_blockDepsOk(b)) {
+        return const SizedBox.shrink();
+      }
       final text = b['text']?.toString() ?? b['body']?.toString() ?? '';
       final severity = b['severity']?.toString() ?? '';
       Color? bg;
@@ -1579,6 +1590,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     }
 
     Widget renderFieldsBlock(Map<String, dynamic> b) {
+      if (!_blockDepsOk(b)) {
+        return const SizedBox.shrink();
+      }
       final title = b['title']?.toString();
       final fieldsRaw = b['fields'];
       final fields = fieldsRaw is List ? fieldsRaw : const [];

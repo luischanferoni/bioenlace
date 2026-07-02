@@ -962,11 +962,6 @@ final class SubIntentEngine
             'draft_delta' => (object) [],
         ];
 
-        $dismiss = self::buildFlowDismissDescriptor($subintent);
-        if ($dismiss !== null) {
-            $payload['flow_dismiss'] = $dismiss;
-        }
-
         return self::withFlowManifest(self::attachHints($payload, $hints), $intentId, $subintentId);
     }
 

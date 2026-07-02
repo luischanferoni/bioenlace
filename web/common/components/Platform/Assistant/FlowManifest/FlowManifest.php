@@ -332,6 +332,33 @@ final class FlowManifest
             ];
         }
 
+        $composerCfg = isset($sub['composer_capture']) && is_array($sub['composer_capture'])
+            ? $sub['composer_capture']
+            : null;
+        if ($composerCfg !== null) {
+            $field = AssistantDraftNormalizer::scalarString($composerCfg['draft_field'] ?? '');
+            $submitActionId = AssistantDraftNormalizer::scalarString($composerCfg['submit_action_id'] ?? '');
+            $route = $submitActionId !== '' ? self::routeForActionId($submitActionId) : '';
+            if ($field !== '' && $route !== '') {
+                $paramsMap = isset($composerCfg['params']) && is_array($composerCfg['params'])
+                    ? self::normalizedParamsMap($composerCfg['params'])
+                    : new \stdClass();
+                $step['composer_capture'] = [
+                    'draft_field' => $field,
+                    'placeholder' => trim((string) ($composerCfg['placeholder'] ?? '')),
+                    'min_length' => max(1, (int) ($composerCfg['min_length'] ?? 1)),
+                    'action_id' => $submitActionId,
+                    'route' => $route,
+                    'method' => 'POST',
+                    'body_template' => $paramsMap,
+                ];
+                $step['ui'] = [
+                    'default_tab' => 'default',
+                    'tabs' => [],
+                ];
+            }
+        }
+
         return $step;
     }
 

@@ -192,7 +192,7 @@ subintents:
         care_plan_id: "draft.care_plan_id"
 
   - id: solicitud_async
-    assistant_text: "Describí tu consulta"
+    assistant_text: "Describí tu consulta en el campo de texto de abajo"
     requires:
       - draft.triage_raiz
       - draft.tipo_atencion
@@ -200,8 +200,6 @@ subintents:
       - draft.mensaje
     next: ""
     terminal_without_submit: true
-    flow_dismiss:
-      label: "Cerrar"
     composer_capture:
       draft_field: mensaje
       placeholder: "Contanos tu consulta con el mayor detalle posible. Un profesional te responderá por mensaje."

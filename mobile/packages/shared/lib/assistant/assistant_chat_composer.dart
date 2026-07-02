@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'assistant_composer_capture.dart';
 
 /// Barra inferior del asistente: campo multilínea que crece con el texto.
-class AssistantChatComposerBar extends StatelessWidget {
+class AssistantChatComposerBar extends StatefulWidget {
   const AssistantChatComposerBar({
     super.key,
     required this.controller,
@@ -25,6 +25,19 @@ class AssistantChatComposerBar extends StatelessWidget {
   final FocusNode? focusNode;
 
   @override
+  State<AssistantChatComposerBar> createState() => _AssistantChatComposerBarState();
+}
+
+class _AssistantChatComposerBarState extends State<AssistantChatComposerBar> {
+  @override
+  void didUpdateWidget(covariant AssistantChatComposerBar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.hintText != widget.hintText) {
+      setState(() {});
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
@@ -44,18 +57,18 @@ class AssistantChatComposerBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (leading != null) ...leading!,
+          if (widget.leading != null) ...widget.leading!,
           Expanded(
             child: TextField(
-              key: ValueKey(hintText),
-              controller: controller,
-              focusNode: focusNode,
+              key: ValueKey(widget.hintText),
+              controller: widget.controller,
+              focusNode: widget.focusNode,
               minLines: 1,
-              maxLines: maxLines,
+              maxLines: widget.maxLines,
               keyboardType: TextInputType.multiline,
               textInputAction: TextInputAction.send,
               decoration: InputDecoration(
-                hintText: hintText,
+                hintText: widget.hintText,
                 hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
@@ -80,7 +93,7 @@ class AssistantChatComposerBar extends StatelessWidget {
                   horizontal: 20,
                   vertical: 12,
                 ),
-                suffixIcon: isSending
+                suffixIcon: widget.isSending
                     ? Padding(
                         padding: const EdgeInsets.all(12.0),
                         child: CircularProgressIndicator(
@@ -90,8 +103,8 @@ class AssistantChatComposerBar extends StatelessWidget {
                       )
                     : null,
               ),
-              onSubmitted: (_) => onSend(),
-              enabled: !isSending,
+              onSubmitted: (_) => widget.onSend(),
+              enabled: !widget.isSending,
             ),
           ),
           const SizedBox(width: 8),
@@ -102,7 +115,7 @@ class AssistantChatComposerBar extends StatelessWidget {
             ),
             child: IconButton(
               icon: Icon(Icons.send, color: cs.onPrimary),
-              onPressed: isSending ? null : onSend,
+              onPressed: widget.isSending ? null : widget.onSend,
             ),
           ),
         ],

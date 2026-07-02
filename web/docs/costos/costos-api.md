@@ -40,6 +40,8 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 
 | Servicio | Precio (USD) | Uso en este doc | Fuente |
 |----------|--------------|-----------------|--------|
+| **Didit** — Full KYC bundle | **~$0.33** por sesión exitosa; **500 gratis/mes** | Registro / alta paciente (identidad) | [didit.me/pricing](https://didit.me/pricing); detalle [costos-didit.md](./costos-didit.md) |
+| **Didit** — Biometric Authentication | **~$0.10** por sesión exitosa | Reingreso tras logout (previsto) | Ídem |
 | **Groq** — Whisper Large v3 Turbo | **~$0.0007 por min** ($0.04 por h); **mín. 10 s por request** | STT (§2 caso B, §4) | [groq.com/pricing](https://groq.com/pricing), [GroqDocs STT](https://console.groq.com/docs/speech-to-text) |
 | **Vision API** (Label, Text, Face, etc.) | 1.000 unidades por mes gratis; luego $1.50 por 1.000 | Fotos §5 | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) |
 | **DeepSeek** — V4 Flash (API) | **$0.14 / $0.0028 / $0.28** por 1M (input miss / cache hit / output) | Comparativa IA | [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing) |
@@ -367,6 +369,20 @@ Orden de magnitud tenant: **< USD 50/mes** en generación sync hasta escalar coh
 
 ---
 
+## Anexo C — Didit (identidad y biometría remota)
+
+**Fuera del COGS por médico** de las tablas §1–§6: Didit se factura **por verificación exitosa** (KYC en registro, reingreso biométrico), no por consulta ni por profesional.
+
+| Concepto | Tarifa pública (ref.) | Cupo |
+|----------|----------------------|------|
+| Full KYC (registro paciente / alta staff) | **~USD 0,33** / sesión | **500 gratis / mes** por workspace |
+| Biometric Authentication (reingreso) | **~USD 0,10** / sesión | Comparte el mismo cupo mensual |
+| Huella local del dispositivo | **USD 0** | No es Didit |
+
+Proyección por escala (altas, pacientes activos, reingresos tras logout, escenario «Didit en cada apertura» a evitar): **[costos-didit.md](./costos-didit.md)**.
+
+---
+
 ## Resumen: costo real por API (por médico por mes)
 
 **Apartado 1:** IA generativa (Gemini y comparativa DeepSeek), incluido §4 con STT e **insights** de §2. **Apartado 2:** Vision (§5). **Apartado 3:** videollamadas (§6). Anexos A y B: [fuera del total](#anexo-a--intent-engine-classification-fuera-del-total-apartado-1).
@@ -426,4 +442,5 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 - [Vertex AI – Context caching overview](https://cloud.google.com/vertex-ai/generative-ai/docs/context-cache/context-cache-overview)
 - [infra/costos.md](../infra/costos.md) – Costes cuando la IA corre en nuestra GPU.
 - [DeepSeek API – Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing) – comparativa IA en tablas.
+- [costos-didit.md](./costos-didit.md) – Didit KYC y biometría remota (proyección por altas y reingresos).
 - [producto/flows/capacidades-paciente-medico.md](../../producto/apps-paciente-personalsalud.md) – Descripción de las capacidades.

@@ -124,5 +124,6 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 ## Notas
 
 - Por profesional y mes (escenario intensivo, COGS base sin caché): **~USD 1,38** (incluye `motivos-consulta-insights` y contexto clínico en prompts). Detalle y comparativa DeepSeek: [costos-api.md](./costos-api.md).
+- **Identidad (Didit):** costo aparte por verificación, no por profesional. Con &lt; 500 altas/mes suele ser **USD 0**; proyección: [costos-didit.md](./costos-didit.md).
 - No incluye videollamada ni impuestos.
 

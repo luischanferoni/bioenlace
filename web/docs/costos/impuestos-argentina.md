@@ -28,7 +28,7 @@ Los precios de la [matriz Argentina](../modelo-de-negocio/business-plan/matriz-a
 
 | Capa | Qué es | Dónde impacta |
 |------|--------|----------------|
-| **1. Costo directo** | IA, APIs, infra, nube | [costos-api.md](./costos-api.md), [infra-costos.md](./infra-costos.md) |
+| **1. Costo directo** | IA, APIs, infra, nube, **identidad (Didit)** | [costos-api.md](./costos-api.md), [costos-didit.md](./costos-didit.md), [infra-costos.md](./infra-costos.md) |
 | **2. Impuestos sobre compras** | IVA (y a veces percepciones) en facturas de proveedores | Caja y crédito fiscal si sos RI |
 | **3. Impuestos sobre ventas y resultado** | IIBB, ganancias; IVA en factura al cliente | Pricing y margen neto |
 

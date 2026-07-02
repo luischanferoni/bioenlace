@@ -5,6 +5,7 @@ export 'theme/theme.dart';
 export 'theme/tokens/tokens.dart';
 export 'ui/ui.dart';
 export 'config/api_config.dart';
+export 'config/didit_config_resolver.dart';
 export 'package:cross_file/cross_file.dart';
 
 export 'media/chat_media_upload.dart';

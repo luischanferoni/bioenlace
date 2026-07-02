@@ -259,6 +259,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
     await prefs.remove('user_id');
     await prefs.remove('user_name');
     await prefs.remove('auth_token');
+    DiditConfigResolver.clearCache();
     await BiometricSessionPrefs.clearOnLogout();
     await PersonRepresentationContext.instance.clearOnLogout();
     PacienteContextScope.instance.clearOnLogout();
@@ -279,6 +280,8 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
       appSubtitle: 'Tu asistente de salud personal',
       welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
       signupButtonText: '¿No tienes cuenta? Regístrate aquí',
+      diditRemoteLoginAfterLogout: true,
+      appClient: 'paciente-flutter',
       onLoginSuccess: (userId, userName, loginContext) async {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('is_logged_in', true);

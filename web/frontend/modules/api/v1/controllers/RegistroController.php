@@ -175,8 +175,9 @@ class RegistroController extends BaseController
     /**
      * GET /api/v1/registro/config-movil
      *
-     * Config pública para apps móviles (workflow Didit). Sin auth.
-     * Fuente: params-local `didit_paciente_kyc_workflow_id`.
+     * Config pública para apps móviles (workflows Didit). Sin auth.
+     * KYC: params `didit_paciente_kyc_workflow_id` (registro).
+     * Biométrico: params `didit_paciente_biometric_workflow_id`; si falta, se devuelve el KYC como respaldo.
      */
     public function actionConfigMovil(): array
     {

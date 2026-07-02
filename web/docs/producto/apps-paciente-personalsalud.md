@@ -35,7 +35,7 @@ flowchart TB
   AS --> SAPI --> LOC
 ```
 
-- **Paciente:** autoregistro en app; contexto provincial/sector y domicilio en segundo plano (sin detalle técnico en la UI).
+- **Paciente:** autoregistro en app; contexto provincial/sector y domicilio en segundo plano (sin detalle técnico en la UI). **Sesión:** huella local en el día a día; Didit al reingresar tras cerrar sesión — [sesion-paciente-app.md](./sesion-paciente-app.md).
 - **Personal de salud:** **no hay registro en la app móvil**. Un **AdminEfector** crea el usuario Yii la **primera vez** que asigna a esa persona a cualquier efector. Si cambia de centro, el AdminEfector del nuevo efector la **asigna al efector** reutilizando el **mismo usuario**.
 - **App Personal de Salud:** solo **login** + wizard de sesión operativa (efector, servicio, área); `appClient` `personalsalud-flutter`.
 - **Alta de pacientes** (no de staff): la hace el personal desde web/asistente cuando corresponde — ver [registro-paciente.md](./registro-paciente.md).
@@ -69,6 +69,7 @@ flowchart TB
 ## Relación con otros documentos
 
 - [registro-paciente.md](./registro-paciente.md) — alta paciente, MPI reducido, contexto y domicilio RENAPER
+- [sesion-paciente-app.md](./sesion-paciente-app.md) — sesión, bloqueo local y reingreso Didit
 - [representacion-paciente.md](./representacion-paciente.md) — tutela de menor y delegación
 - [superficies-ui.md](./superficies-ui.md) — inicio vs captura vs flows (web = app Personal de Salud)
 - [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md)

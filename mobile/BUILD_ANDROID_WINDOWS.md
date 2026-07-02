@@ -102,6 +102,14 @@ flutter build appbundle --release --dart-define=DIDIT_PACIENTE_KYC_WORKFLOW_ID=<
 
 Si el workflow no está configurado, la app muestra un error claro en lugar de quedar en loading.
 
+**Reingreso tras cerrar sesión:** conviene `didit_paciente_biometric_workflow_id` en el servidor (workflow Didit solo Biometric Authentication). Si solo existe el KYC, el servidor lo reutiliza como fallback. Ver `web/docs/producto/sesion-paciente-app.md`.
+
+Alternativa en CI para login biométrico:
+
+```powershell
+flutter build appbundle --release --dart-define=DIDIT_PACIENTE_BIOMETRIC_WORKFLOW_ID=<uuid>
+```
+
 ### MissingPluginException en `didit_sdk` / `startVerificationWithWorkflow`
 
 Didit **solo** tiene implementación nativa en **Android e iOS**. Si probás en **Chrome** (`flutter run -d chrome`), **Windows** o **macOS**, verás:

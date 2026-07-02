@@ -124,7 +124,8 @@ Permisos API staff heredan del mismo perfil que operaba búsqueda/alta de person
 
 ## Configuración y operación
 
-- `didit_paciente_kyc_workflow_id` en params locales (Didit staff y app).
+- `didit_paciente_kyc_workflow_id` en params locales (registro y alta staff con foto).
+- `didit_paciente_biometric_workflow_id` opcional: reingreso tras cerrar sesión en app paciente (recomendado workflow solo Biometric Authentication en Didit Console). Ver [sesion-paciente-app.md](./sesion-paciente-app.md).
 - `mpiCapabilities`: mantener lo necesario (`renaper`, `domicilio`, `coberturas`).
 - Cron `paciente-domicilio/run` para verificación/persistencia de domicilio post-alta vía MPI.
 - Migraciones de contexto paciente y RBAC registro staff en despliegue.
@@ -132,6 +133,7 @@ Permisos API staff heredan del mismo perfil que operaba búsqueda/alta de person
 ## Relación con otros documentos
 
 - [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — visión general paciente y personal de salud
+- [sesion-paciente-app.md](./sesion-paciente-app.md) — sesión, bloqueo local y reingreso Didit
 - [asistente-y-chat.md](./asistente-y-chat.md) — entrada staff a pantallas embebidas
 - [representacion-paciente.md](./representacion-paciente.md) — operar por otro paciente (sujeto explícito, no sesión staff)
 - [turnos.md](./turnos.md) — reserva con `id_persona` o `subject_persona_id` según actor

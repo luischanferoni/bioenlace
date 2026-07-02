@@ -30,11 +30,11 @@ Módulos sueltos (referencia): ID Verification 0,15 · Passive Liveness 0,10 · 
 |-------|----------|----------------|------------|-------------------|
 | Autoregistro paciente (app) | App paciente | KYC (`didit_paciente_kyc_workflow_id`) | Full KYC | **1 vez** por paciente nuevo |
 | Alta paciente por staff (modo Didit) | Asistente / web | KYC | Full KYC | **1 vez** por alta |
-| Reingreso tras cerrar sesión o dispositivo nuevo | App paciente (previsto) | `POST /api/v1/auth/login-biometrico` | Biometric Auth | **Cada reingreso** que use Didit |
+| Reingreso tras cerrar sesión o dispositivo nuevo | App paciente | `POST /api/v1/auth/login-biometrico` | Biometric Auth | **Cada reingreso** que use Didit |
 | Login diario / bloqueo por inactividad | App paciente / Personal | Huella local del teléfono | — | **Sin Didit** |
 | Registro médico (si aplica) | App / API | KYC médico | Full KYC | 1 vez por médico nuevo |
 
-Hoy en producción móvil paciente: **solo el registro** dispara Didit de forma sistemática. El login biométrico remoto está en backend y en `LoginScreen` compartido, pero la app paciente lo tiene desactivado (`diditBiometricWorkflowId: null`).
+En producción móvil paciente: **registro** usa KYC; **reingreso tras cerrar sesión** usa Didit remoto (`diditRemoteLoginAfterLogout` en `LoginScreen`). El workflow biométrico se resuelve vía `GET /api/v1/registro/config-movil`.
 
 ### Diseño de producto (no es login diario)
 
@@ -214,7 +214,7 @@ Didit no compite en la misma curva que Gemini: conviene **línea de presupuesto 
 | Monitorear Business Console Didit | Alertas al acercarse a 500 sesiones/mes |
 | Reusable KYC (red Didit) | Posible ahorro futuro si el paciente ya verificó en otro cliente Didit (módulo publicado como free en red; validar elegibilidad) |
 
-Detalle de producto: [registro-paciente.md](../producto/registro-paciente.md), [apps-paciente-personalsalud.md](../producto/apps-paciente-personalsalud.md).
+Detalle de producto: [registro-paciente.md](../producto/registro-paciente.md), [sesion-paciente-app.md](../producto/sesion-paciente-app.md), [apps-paciente-personalsalud.md](../producto/apps-paciente-personalsalud.md).
 
 ---
 

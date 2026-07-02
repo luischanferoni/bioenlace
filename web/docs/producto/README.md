@@ -7,6 +7,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | Documento | Tema |
 |-----------|------|
 | [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) | Experiencia paciente y personal de salud, registro, medios |
+| [sesion-paciente-app.md](./sesion-paciente-app.md) | Sesión, bloqueo local y reingreso Didit tras cerrar sesión (app paciente) |
 | [registro-paciente.md](./registro-paciente.md) | Alta paciente (app y staff), MPI reducido, contexto y RENAPER |
 | [representacion-paciente.md](./representacion-paciente.md) | Tutela de menor y delegación (operar por otro paciente) |
 | [turnos.md](./turnos.md) | Agenda, reserva, cancelación, notificaciones |

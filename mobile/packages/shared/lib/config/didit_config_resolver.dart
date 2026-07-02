@@ -26,18 +26,17 @@ class DiditConfigResolver {
     if (!AppConfig.isDiditWorkflowPlaceholder(fromDefine)) {
       return fromDefine;
     }
-    final kycFromDefine = AppConfig.diditPacienteKycWorkflowId;
-    if (!AppConfig.isDiditWorkflowPlaceholder(kycFromDefine)) {
-      return kycFromDefine;
-    }
     final remote = await _fetchMobileConfig();
     final bio = remote?.pacienteBiometric;
     if (bio != null && !AppConfig.isDiditWorkflowPlaceholder(bio)) {
       return bio;
     }
-    final kyc = remote?.pacienteKyc;
-    if (kyc == null || AppConfig.isDiditWorkflowPlaceholder(kyc)) return null;
-    return kyc;
+    return null;
+  }
+
+  /// Limpia caché de config Didit (p. ej. tras logout).
+  static void clearCache() {
+    _cache = null;
   }
 
   static Future<_MobileDiditConfig?> _fetchMobileConfig() async {

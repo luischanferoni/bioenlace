@@ -45,9 +45,13 @@ class LoginScreen extends StatefulWidget {
   final String? signupButtonText;
   final String? biometricAvailableText;
 
-  /// Workflow Didit remoto para login. `null` = solo huella/Face ID del dispositivo
-  /// (sesión JWT ya guardada tras registro o primer login con contraseña).
+  /// Workflow Didit remoto explícito. Si es null y [diditRemoteLoginAfterLogout] es true,
+  /// el workflow se resuelve vía DiditConfigResolver (API o dart-define).
   final String? diditBiometricWorkflowId;
+
+  /// Tras cerrar sesión: verificación remota Didit (selfie + face match) en lugar de
+  /// desbloquear una sesión JWT local (que ya no existe).
+  final bool diditRemoteLoginAfterLogout;
 
   /// Cabecera X-App-Client para llamadas API desde esta pantalla.
   final String appClient;
@@ -65,6 +69,7 @@ class LoginScreen extends StatefulWidget {
     this.signupButtonText,
     this.biometricAvailableText,
     this.diditBiometricWorkflowId,
+    this.diditRemoteLoginAfterLogout = false,
     this.appClient = 'bioenlace-flutter',
   });
 
@@ -106,18 +111,30 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   bool get _usesDiditRemoteLogin {
+    if (widget.diditRemoteLoginAfterLogout) return true;
     final id = widget.diditBiometricWorkflowId;
     if (id == null || id.trim().isEmpty) return false;
     return !AppConfig.isDiditWorkflowPlaceholder(id);
   }
 
+  bool get _canAttemptLogin {
+    if (_isAuthenticating) return false;
+    if (_usesDiditRemoteLogin) return isDiditSupported;
+    return _biometricAvailable;
+  }
+
   Future<void> _loginWithBiometrics() async {
-    if (!_biometricAvailable) {
+    if (!_usesDiditRemoteLogin && !_biometricAvailable) {
       _snack(
         widget.biometricNotAvailableMessage ??
             'La autenticación biométrica no está disponible en este dispositivo',
         UiIntent.warning,
       );
+      return;
+    }
+
+    if (_usesDiditRemoteLogin && !isDiditSupported) {
+      _snack(diditUnsupportedPlatformMessage, UiIntent.warning);
       return;
     }
 
@@ -235,16 +252,19 @@ class _LoginScreenState extends State<LoginScreen> {
               await prefs.setString('dni_detected', persona['documento']);
             }
 
-            // 3) Biometría local opcional como segundo factor.
-            final localResult = await _biometricAuth.authenticate(
-              'Confirmá con $_biometricType para ingresar a ${widget.appTitle}',
-            );
-            if (localResult['success'] != true) {
-              final error = localResult['error'] as String?;
-              if (error != null) {
-                _snack(error, UiIntent.danger);
+            // 3) Huella/Face ID local opcional como segundo factor en el dispositivo.
+            if (_biometricAvailable) {
+              final localResult = await _biometricAuth.authenticate(
+                'Confirmá con $_biometricType para ingresar a ${widget.appTitle}',
+              );
+              if (localResult['success'] != true) {
+                final isUserCancel = localResult['isUserCancel'] == true;
+                final error = localResult['error'] as String?;
+                if (!isUserCancel && error != null) {
+                  _snack(error, UiIntent.danger);
+                }
+                return;
               }
-              return;
             }
 
             final welcomeMsg =
@@ -256,6 +276,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             await Future.delayed(const Duration(milliseconds: 200));
             if (mounted) {
+              await BiometricSessionPrefs.touchActivity();
               widget.onLoginSuccess(userId, userName, context);
             }
           } else {
@@ -339,7 +360,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
                 BioSpacing.gapH(BioSpacing.xxl),
-                if (_biometricAvailable && _biometricType.isNotEmpty) ...[
+                if (_usesDiditRemoteLogin) ...[
+                  BioAlert.info(
+                    message:
+                        'Verificá tu identidad con una selfie para volver a entrar.',
+                  ),
+                  BioSpacing.gapH(BioSpacing.lg),
+                ] else if (_biometricAvailable && _biometricType.isNotEmpty) ...[
                   BioAlert.success(
                     message: widget.biometricAvailableText ??
                         '$_biometricType configurada y lista para usar',
@@ -348,13 +375,13 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
                 BioButton.primary(
                   label: _resolveLoginLabel(),
-                  icon: Icons.fingerprint,
+                  icon: _usesDiditRemoteLogin
+                      ? Icons.face_retouching_natural
+                      : Icons.fingerprint,
                   size: BioButtonSize.lg,
                   fullWidth: true,
                   loading: _isAuthenticating,
-                  onPressed: _biometricAvailable && !_isAuthenticating
-                      ? _loginWithBiometrics
-                      : null,
+                  onPressed: _canAttemptLogin ? _loginWithBiometrics : null,
                 ),
                 if (widget.onNavigateToSignup != null) ...[
                   BioSpacing.gapH(BioSpacing.lg),
@@ -379,6 +406,9 @@ class _LoginScreenState extends State<LoginScreen> {
   String _resolveLoginLabel() {
     if (_isAuthenticating) {
       return widget.authenticatingText ?? 'Autenticando…';
+    }
+    if (_usesDiditRemoteLogin) {
+      return 'Verificar identidad e ingresar';
     }
     if (_biometricAvailable) {
       return 'Ingresar con $_biometricType';

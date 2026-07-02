@@ -21,6 +21,7 @@ export 'auth/biometric_session_prefs.dart';
 export 'auth/biometric_session_lock_scope.dart';
 export 'auth/biometric_enrollment_prompt.dart';
 export 'auth/play_review_auth.dart';
+export 'auth/person_display_name.dart';
 export 'widgets/login_screen.dart';
 export 'widgets/privacy_policy_link.dart';
 export 'widgets/play_review_login_sheet.dart';

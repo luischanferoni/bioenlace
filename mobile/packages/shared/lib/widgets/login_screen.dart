@@ -9,6 +9,7 @@ import 'package:didit_sdk/sdk_flutter.dart';
 
 import '../auth/biometric_auth.dart';
 import '../auth/biometric_session_prefs.dart';
+import '../auth/person_display_name.dart';
 import '../config/api_config.dart';
 import '../config/didit_config_resolver.dart';
 import '../platform/didit_platform.dart';
@@ -239,8 +240,16 @@ class _LoginScreenState extends State<LoginScreen> {
             final token = payload['token'] as String?;
 
             final userId = (user['id'] ?? '').toString();
-            final userName = user['name'] ??
-                '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
+            final userMap = user is Map<String, dynamic>
+                ? user
+                : Map<String, dynamic>.from(user as Map);
+            final personaMap = persona is Map<String, dynamic>
+                ? persona
+                : Map<String, dynamic>.from(persona as Map);
+            final userName = PersonDisplayName.resolveForLogin(
+              user: userMap,
+              persona: personaMap,
+            );
 
             await prefs.setBool('is_logged_in', true);
             if (token != null) {
@@ -248,6 +257,9 @@ class _LoginScreenState extends State<LoginScreen> {
             }
             await prefs.setString('user_id', userId);
             await prefs.setString('user_name', userName);
+            if (userName.isNotEmpty) {
+              await prefs.setString('name_detected', userName);
+            }
             if (persona['documento'] != null) {
               await prefs.setString('dni_detected', persona['documento']);
             }

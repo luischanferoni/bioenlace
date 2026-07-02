@@ -9,5 +9,6 @@ export 'bio_button.dart';
 export 'bio_card.dart';
 export 'bio_chip.dart';
 export 'bio_divider.dart';
+export 'bio_segmented_tabs.dart';
 export 'bio_input.dart';
 export 'bio_logo.dart';

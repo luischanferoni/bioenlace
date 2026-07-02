@@ -64,21 +64,29 @@ class HomeScreenState extends State<HomeScreen> {
   /// 0 = próximos turnos, 1 = historial.
   int _tabTurnos = 0;
 
+  String _displayName = '';
+
   @override
   void initState() {
     super.initState();
     _turnosService = TurnosService(authToken: widget.authToken);
     _carePlanService = CarePlanService(authToken: widget.authToken);
     _scrollController.addListener(_onScroll);
-    _initRepresentationContext();
+    _loadDisplayNameAndActor();
     _cargarInicial();
   }
 
-  Future<void> _initRepresentationContext() async {
+  Future<void> _loadDisplayNameAndActor() async {
+    final name = await PersonDisplayName.resolveForHome(
+      userName: widget.userName,
+    );
+    if (!mounted) return;
+    setState(() => _displayName = name);
+
     final actorId = int.tryParse(widget.userId) ?? 0;
     await PersonRepresentationContext.instance.bindActor(
       actorPersonaId: actorId,
-      actorLabel: widget.userName.split(',').first.trim(),
+      actorLabel: name,
       authToken: widget.authToken,
     );
   }
@@ -591,17 +599,12 @@ class HomeScreenState extends State<HomeScreen> {
           BioSpacing.gapH(BioSpacing.lg),
           _buildTratamientoCard(context),
         ],
-        BioSpacing.gapH(BioSpacing.xl),
+        BioSpacing.gapH(BioSpacing.md),
         if (_error != null &&
             (_proximosVisibles.isNotEmpty || _pasados.isNotEmpty)) ...[
           BioAlert.danger(message: _error!),
           BioSpacing.gapH(BioSpacing.md),
         ],
-        if (_refrescandoTabActivo)
-          const Padding(
-            padding: EdgeInsets.only(bottom: BioSpacing.sm),
-            child: LinearProgressIndicator(minHeight: 3),
-          ),
         _buildSelectorTab(context),
         if (_tabTurnos == 0) ...[
           _leyenda(context),
@@ -798,6 +801,9 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildHeaderSaludo(BuildContext context) {
+    final nombre =
+        _displayName.isNotEmpty ? _displayName : widget.userName.split(',').first.trim();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -805,9 +811,22 @@ class HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Text(
-                '${_saludo()}, ${widget.userName.split(',').first.trim()}',
-                style: BioTypography.h2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _saludo(),
+                    style: BioTypography.title.copyWith(
+                      fontSize: 17,
+                      color: context.bio.textMuted,
+                    ),
+                  ),
+                  BioSpacing.gapH(BioSpacing.xs),
+                  Text(
+                    nombre,
+                    style: BioTypography.h3,
+                  ),
+                ],
               ),
             ),
             if (widget.onOpenAlertas != null)
@@ -834,25 +853,12 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSelectorTab(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: BioChip(
-            label: 'Próximos',
-            icon: Icons.event_outlined,
-            selected: _tabTurnos == 0,
-            onTap: () => _alCambiarTab(0),
-          ),
-        ),
-        BioSpacing.gapW(BioSpacing.sm),
-        Expanded(
-          child: BioChip(
-            label: 'Anteriores',
-            icon: Icons.history,
-            selected: _tabTurnos == 1,
-            onTap: () => _alCambiarTab(1),
-          ),
-        ),
+    return BioSegmentedTabs(
+      selectedIndex: _tabTurnos,
+      onSelected: _alCambiarTab,
+      tabs: const [
+        BioSegmentedTab(label: 'Próximos', icon: Icons.event_outlined),
+        BioSegmentedTab(label: 'Anteriores', icon: Icons.history),
       ],
     );
   }

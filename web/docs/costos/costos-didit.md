@@ -36,22 +36,43 @@ Módulos sueltos (referencia): ID Verification 0,15 · Passive Liveness 0,10 · 
 
 Hoy en producción móvil paciente: **solo el registro** dispara Didit de forma sistemática. El login biométrico remoto está en backend y en `LoginScreen` compartido, pero la app paciente lo tiene desactivado (`diditBiometricWorkflowId: null`).
 
+### Diseño de producto (no es login diario)
+
+| Momento | ¿Didit? |
+|---------|---------|
+| Abrir la app cada día | **No** — huella local del teléfono |
+| Bloqueo por inactividad (~5 min) | **No** — huella local |
+| Registro (primera vez) | **Sí** — KYC completo |
+| Volver tras **cerrar sesión** o **teléfono nuevo** | **Sí** — biometría remota (o contraseña si está implementada) |
+
+Didit **no** debe usarse en cada apertura de la app. El escenario D de este doc es solo un **techo** a evitar, no el diseño previsto.
+
 ---
 
 ## Supuestos de las proyecciones
 
-Las tablas usan escenarios **ilustrativos** para planificar; calibrar con contador de sesiones en Didit Business Console.
+Las tablas usan escenarios para planificar; calibrar con contador de sesiones en Didit Business Console y, cuando exista, telemetría de «Cerrar sesión» en la app.
 
-| Parámetro | Valores usados |
-|-----------|----------------|
-| Cupo gratis | 500 sesiones / mes |
+| Parámetro | Valor |
+|-----------|--------|
+| Cupo gratis | 500 sesiones / mes (KYC + reingreso **comparten** cupo) |
 | KYC (registro / alta) | 0,33 USD por sesión por encima del cupo |
-| Reingreso Didit | 0,10 USD por sesión por encima del cupo |
-| Tasa de cierre de sesión | **5 %** de pacientes activos / mes (conservador) |
-| Tasa alternativa «alta rotación» | **15 %** de pacientes activos / mes |
-| Altas staff con Didit | **10 %** de las altas mensuales de pacientes (orden de magnitud) |
+| Reingreso Didit (tras logout) | 0,10 USD por sesión por encima del cupo |
+| Altas staff con Didit | ~10 % de las altas mensuales de pacientes (orden de magnitud) |
 
-**Importante:** registro KYC y reingreso biométrico **comparten el mismo cupo** de 500 sesiones en el workspace Didit.
+### Tasa de «cerrar sesión» (por mes)
+
+**Qué significa:** del total de pacientes que **usaron la app ese mes**, qué porcentaje tocó **Cerrar sesión** al menos una vez en ese mes. No es uso diario ni aperturas de la app.
+
+Quien cierra sesión y vuelve a entrar puede usar Didit (biometría remota) o contraseña; en las tablas de reingreso se asume **Didit** para estimar el techo de costo.
+
+| Escenario | % activos que cierran sesión / mes | Cuándo usarlo |
+|-----------|-------------------------------------|---------------|
+| **Realista (base)** | **0,5 % – 1 %** | Presupuesto habitual: la mayoría no cierra sesión; lo hace quien cambia de teléfono, desinstala, comparte el dispositivo o es muy cauteloso |
+| **Conservador** | **3 %** | Margen de planificación si el producto empuja más el logout o hay mucha rotación de dispositivos |
+| **Estrés (no típico)** | **5 % – 15 %** | Solo para stress-test; no refleja el diseño esperado de Bioenlace |
+
+**Ejemplo (realista):** 10.000 pacientes activos en el mes × **1 %** cierra sesión → **100 reingresos Didit / mes** (no 100 × 30 días).
 
 ---
 
@@ -85,53 +106,73 @@ Fórmula: `max(0, altas_kyc − 500) × 0,33`.
 
 ---
 
-## Escenario B — KYC + reingreso Didit tras cerrar sesión
+## Escenario B — Reingreso Didit solo tras cerrar sesión
 
-Supuesto: quien cierra sesión vuelve a entrar con **Biometric Authentication** (0,10), no con KYC completo.
+Supuesto: quien **cerró sesión** vuelve a entrar con **Biometric Authentication** (0,10 USD), no con KYC completo. **No** incluye aperturas diarias de la app (esas van con huella local).
 
-### Por tamaño de base activa (5 % cierran sesión / mes)
+### Tasa realista (1 % de activos cierran sesión / mes)
 
-| Pacientes activos | Reingresos Didit / mes (5 %) | Costo reingreso solo (USD/mes)* |
-|-------------------|------------------------------|----------------------------------|
-| 2.000 | 100 | **0** |
-| 10.000 | 500 | **0** |
-| 20.000 | 1.000 | **~50** |
-| 50.000 | 2.500 | **~200** |
-| 100.000 | 5.000 | **~450** |
-| 200.000 | 10.000 | **~950** |
+| Pacientes activos / mes | Reingresos Didit / mes | Costo reingreso solo (USD/mes)* |
+|-------------------------|------------------------|----------------------------------|
+| 5.000 | 50 | **0** |
+| 10.000 | 100 | **0** |
+| 25.000 | 250 | **0** |
+| 50.000 | 500 | **0** |
+| 100.000 | 1.000 | **~50** |
+| 200.000 | 2.000 | **~150** |
 
-\* `max(0, reingresos − remanente_del_cupo_gratis) × 0,10`. Si en el mismo mes ya se consumieron las 500 gratis en KYC, el reingreso paga desde la sesión 501.
+### Tasa realista baja (0,5 % / mes)
 
-### Tasa alta de cierre de sesión (15 % / mes, 50.000 activos)
+| Pacientes activos / mes | Reingresos Didit / mes | Costo reingreso solo (USD/mes)* |
+|-------------------------|------------------------|----------------------------------|
+| 50.000 | 250 | **0** |
+| 100.000 | 500 | **0** |
+| 200.000 | 1.000 | **~50** |
 
-| Concepto | Sesiones / mes | Costo (USD/mes) aprox. |
-|----------|----------------|-------------------------|
-| Reingresos Didit (15 %) | 7.500 | **~700** |
-| + 2.000 altas KYC en el mismo mes | 2.000 KYC + 7.500 bio | Ver tabla combinada abajo |
+### Margen conservador (3 % / mes) — planificación, no lo habitual
+
+| Pacientes activos / mes | Reingresos Didit / mes | Costo reingreso solo (USD/mes)* |
+|-------------------------|------------------------|----------------------------------|
+| 10.000 | 300 | **0** |
+| 50.000 | 1.500 | **~100** |
+| 100.000 | 3.000 | **~250** |
+
+\* `max(0, reingresos − remanente_del_cupo_gratis) × 0,10`. Si en el mismo mes las **altas KYC** ya consumieron las 500 gratis, cada reingreso adicional paga 0,10 desde la primera sesión de reingreso que supere el cupo.
+
+**Lectura:** con **1 % o menos** de cierres de sesión y bases hasta ~50.000 activos, el reingreso Didit suele quedar en **0 USD** o ser marginal frente al costo de las **altas KYC**.
 
 ---
 
-## Escenario C — Totales combinados (KYC + reingreso)
+## Escenario C — Totales combinados (KYC + reingreso tras logout)
 
-Ejemplos **mensuales** con cupo compartido de 500 sesiones gratis.
+Ejemplos **mensuales** con cupo compartido de 500 sesiones gratis. Reingreso calculado con **1 %** de activos que cierran sesión / mes (realista).
 
-| Altas KYC / mes | Pacientes activos | Reingresos Didit (5 %) | Total sesiones | Costo Didit (USD/mes) |
+| Altas KYC / mes | Pacientes activos | Reingresos Didit (1 %) | Total sesiones | Costo Didit (USD/mes) |
 |-----------------|-------------------|------------------------|----------------|------------------------|
-| 300 | 5.000 | 250 | 550 | **~17** |
-| 500 | 10.000 | 500 | 1.000 | **~50** |
-| 800 | 15.000 | 750 | 1.550 | **~113** |
-| 1.000 | 20.000 | 1.000 | 2.000 | **~155** |
-| 2.000 | 50.000 | 2.500 | 4.500 | **~470** |
-| 3.000 | 100.000 | 5.000 | 8.000 | **~865** |
-| 5.000 | 150.000 | 7.500 | 12.500 | **~1.490** |
+| 200 | 5.000 | 50 | 250 | **0** |
+| 400 | 10.000 | 100 | 500 | **0** |
+| 600 | 15.000 | 150 | 750 | **~83** |
+| 800 | 20.000 | 200 | 1.000 | **~165** |
+| 1.500 | 50.000 | 500 | 2.000 | **~363** |
+| 2.500 | 100.000 | 1.000 | 3.500 | **~790** |
 
-Cálculo: las primeras **500** sesiones del mes (KYC + biométrico mezclados) a **0**; el resto a **0,33** si es KYC y **0,10** si es reingreso biométrico. La tabla asume orden típico «altas primero, luego reingresos»; el costo real puede variar ±10 % según el mix diario.
+Cálculo: las primeras **500** sesiones del mes a **0**; el excedente de **altas** a **0,33** y el de **reingresos** a **0,10** (se asume que las altas consumen primero el cupo gratis). Variación real ±10 % según el orden de las sesiones en el mes.
+
+### Misma tabla con 0,5 % de cierres de sesión (más optimista)
+
+| Altas KYC / mes | Pacientes activos | Reingresos (0,5 %) | Total sesiones | Costo (USD/mes) |
+|-----------------|-------------------|--------------------|----------------|-----------------|
+| 400 | 10.000 | 50 | 450 | **0** |
+| 800 | 50.000 | 250 | 1.050 | **~182** |
+| 1.500 | 100.000 | 500 | 2.000 | **~495** |
+
+En la práctica, **las altas KYC dominan el presupuesto**; el reingreso tras logout aporta poco mientras la tasa de cierre de sesión sea baja (0,5–1 % / mes).
 
 ---
 
-## Escenario D — Didit en cada apertura de app (no recomendado)
+## Escenario D — Didit en cada apertura de app (anti‑patrón)
 
-Si cada paciente abriera la app **20 veces / mes** con Didit en lugar de huella local:
+**No es el diseño de Bioenlace.** Si cada paciente abriera la app **20 veces / mes** con Didit en lugar de huella local:
 
 | Pacientes activos | Sesiones / mes | Costo (USD/mes) aprox. |
 |-------------------|----------------|-------------------------|
@@ -139,7 +180,11 @@ Si cada paciente abriera la app **20 veces / mes** con Didit en lugar de huella 
 | 5.000 | 100.000 | **~9.950** |
 | 10.000 | 200.000 | **~19.950** |
 
-Escala mal frente a huella local (0 USD). Este escenario sirve como **techo** a evitar en diseño de producto.
+Escala mal frente a huella local (0 USD). Documentado solo como **techo** si el producto se desviara del diseño acordado.
+
+### Anexo estrés — 5 % cierran sesión / mes (no típico)
+
+Útil solo para preguntar «¿qué pasa si muchísima gente cierra sesión?». Con 50.000 activos y **5 %** → 2.500 reingresos/mes → **~200 USD/mes** solo en reingreso (sin contar altas). Con el diseño real (huella diaria + Didit solo tras logout), **no se espera** esta tasa.
 
 ---
 
@@ -177,11 +222,12 @@ Detalle de producto: [registro-paciente.md](../producto/registro-paciente.md), [
 
 | Pregunta | Respuesta orientativa |
 |----------|------------------------|
-| ¿Los 500 gratis alcanzan? | Sí para **piloto y primeros meses** (&lt; 500 altas + pocos reingresos Didit / mes) |
-| ¿Cuánto cuesta cada paciente nuevo? | **0 USD** dentro del cupo; después **~0,17–0,33 USD** según volumen mensual |
-| ¿Cuánto cuesta reingreso con Didit? | **~0,10 USD** por sesión por encima del cupo |
-| ¿Riesgo principal? | Usar Didit como **login habitual** en lugar de huella local |
-| ¿Diseño más económico? | KYC una vez + huella local + contraseña como respaldo |
+| ¿Didit en el día a día? | **No** — huella local; Didit solo en **registro** y **reingreso tras cerrar sesión** (o sin biometría en el dispositivo) |
+| ¿Los 500 gratis alcanzan? | Sí en piloto y etapa inicial: pocas altas + pocos cierres de sesión (**0,5–1 % / mes** de activos) |
+| ¿Qué cuesta cada paciente nuevo? | **0 USD** dentro del cupo; después **~0,17–0,33 USD** según volumen mensual de altas |
+| ¿Qué cuesta reingreso tras logout? | **~0,10 USD** por sesión por encima del cupo; con **1 %** de cierres/mes suele ser **marginal** |
+| ¿Qué domina el presupuesto? | **Altas KYC**, no los reingresos |
+| ¿Diseño más económico? | KYC una vez + huella local + contraseña como respaldo al logout |
 
 ---
 

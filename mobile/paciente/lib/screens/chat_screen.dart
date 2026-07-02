@@ -61,12 +61,22 @@ class ChatScreenState extends State<ChatScreen> {
   bool _composerHasText = false;
   Map<String, dynamic>? _activeComposerCapture;
 
-  String get _composerHintText {
-    final placeholder = _activeComposerCapture?['placeholder']?.toString().trim() ?? '';
-    if (placeholder.isNotEmpty) {
-      return placeholder;
-    }
-    return 'Escribe tu consulta aquí... Ejemplo: "Necesito ver mis consultas" o "Quiero agendar un turno"';
+  Map<String, dynamic>? get _resolvedComposerCapture => resolveActiveComposerCapture(
+        activeCapture: _activeComposerCapture,
+        chatHistory: _chatHistory,
+        flowActivationSeq: _flowActivationSeq,
+      );
+
+  String get _composerHintText => assistantComposerHintText(
+        activeCapture: _activeComposerCapture,
+        chatHistory: _chatHistory,
+        flowActivationSeq: _flowActivationSeq,
+      );
+
+  void _syncComposerCaptureFromFlow(AssistantFlowView flow) {
+    _activeComposerCapture = flow.composerCapture != null
+        ? Map<String, dynamic>.from(flow.composerCapture!)
+        : null;
   }
 
   /// `turnos.crear-como-paciente` → `/api/v1/turnos/crear-como-paciente` (fallback si `client_open` viene null).
@@ -494,9 +504,7 @@ class ChatScreenState extends State<ChatScreen> {
     }
 
     _syncFlowSessionFromView(nextFlow);
-    _activeComposerCapture = nextFlow.composerCapture != null
-        ? Map<String, dynamic>.from(nextFlow.composerCapture!)
-        : null;
+    _syncComposerCaptureFromFlow(nextFlow);
     final msgText = nextFlow.text.trim().isNotEmpty ? nextFlow.text.trim() : 'Ok.';
     final fsPayload = _normalizeFlowSubmit(nextFlow.flowSubmit);
     final fdPayload = _normalizeFlowDismiss(nextFlow.flowDismiss);
@@ -1329,6 +1337,7 @@ class ChatScreenState extends State<ChatScreen> {
 
     final previousIntentId = _intentId;
     _syncFlowSessionFromView(flow);
+    _syncComposerCaptureFromFlow(flow);
 
     final flowSubmit = _normalizeFlowSubmit(flow.flowSubmit);
     final flowDismiss = _normalizeFlowDismiss(flow.flowDismiss);
@@ -1338,7 +1347,7 @@ class ChatScreenState extends State<ChatScreen> {
       final co = openUi != null ? openUi['client_open'] : null;
       final actionId = openUi != null ? openUi['action_id']?.toString() : null;
       final hasInlineUiOpen = co is Map && actionId != null && actionId.isNotEmpty;
-      // Caso "dismiss-only": cierre informativo sin POST (p. ej. urgencia banda A).
+      // Caso dismiss-only o composer_capture: cierre informativo y/o texto libre en el composer.
       if (flowDismiss != null && flowSubmit == null && !hasInlineUiOpen) {
         setState(() {
           _flowAdvancing = false;
@@ -1350,6 +1359,8 @@ class ChatScreenState extends State<ChatScreen> {
             if (flow.manifest != null) 'flow_manifest': flow.manifest,
             if (flow.hints.isNotEmpty) 'hints': flow.hints,
             'flow_dismiss': flowDismiss,
+            if (flow.composerCapture != null)
+              'composer_capture': Map<String, dynamic>.from(flow.composerCapture!),
             if (providesList.isNotEmpty) 'flow_provides': providesList,
             'timestamp': DateTime.now(),
           });
@@ -1729,7 +1740,7 @@ class ChatScreenState extends State<ChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
-    if (_activeComposerCapture != null) {
+    if (_resolvedComposerCapture != null) {
       setState(() => _isSending = true);
       await _submitComposerCapture(text);
       return;
@@ -1809,7 +1820,7 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _submitComposerCapture(String text) async {
-    final cc = _activeComposerCapture;
+    final cc = _resolvedComposerCapture;
     if (cc == null) {
       if (mounted) setState(() => _isSending = false);
       return;
@@ -3389,6 +3400,7 @@ class ChatScreenState extends State<ChatScreen> {
             ),
           ),
           AssistantChatComposerBar(
+            key: ValueKey(_composerHintText),
             controller: _messageController,
             onSend: _sendMessage,
             isSending: _isSending || _flowAdvancing,

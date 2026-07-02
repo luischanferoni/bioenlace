@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'assistant_composer_capture.dart';
+
 /// Barra inferior del asistente: campo multilínea que crece con el texto.
 class AssistantChatComposerBar extends StatelessWidget {
   const AssistantChatComposerBar({
@@ -7,8 +9,7 @@ class AssistantChatComposerBar extends StatelessWidget {
     required this.controller,
     required this.onSend,
     required this.isSending,
-    this.hintText =
-        'Escribe tu consulta aquí... Ejemplo: "Necesito ver mis consultas" o "Quiero agendar un turno"',
+    this.hintText = kAssistantComposerDefaultHint,
     this.maxLines = 6,
     this.leading,
     this.focusNode,
@@ -46,6 +47,7 @@ class AssistantChatComposerBar extends StatelessWidget {
           if (leading != null) ...leading!,
           Expanded(
             child: TextField(
+              key: ValueKey(hintText),
               controller: controller,
               focusNode: focusNode,
               minLines: 1,

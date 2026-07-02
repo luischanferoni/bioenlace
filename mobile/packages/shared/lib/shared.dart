@@ -31,6 +31,7 @@ export 'ui_json/ui_json_list_readonly.dart';
 export 'ui_json/flow_snapshot.dart';
 export 'ui_json/weekly_scheduler_widget.dart';
 export 'assistant/assistant_envelope.dart';
+export 'assistant/assistant_composer_capture.dart';
 export 'assistant/assistant_chat_composer.dart';
 export 'assistant/asistente_service.dart';
 export 'diagnostics/app_diagnostic_log.dart';

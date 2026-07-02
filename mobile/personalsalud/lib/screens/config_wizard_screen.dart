@@ -212,8 +212,6 @@ class _ConfigWizardScreenState extends State<ConfigWizardScreen> {
       await prefs.setString('auth_token', sessionToken);
 
       if (mounted) {
-        await maybeOfferPersonalsaludBiometricEnrollment(context: context);
-        if (!mounted) return;
         navigatorKey.currentState?.pushReplacement(
           MaterialPageRoute(
             builder: (_) => wrapPersonalsaludAuthenticatedShell(

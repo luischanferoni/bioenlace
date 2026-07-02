@@ -20,6 +20,7 @@ abstract final class BiometricEnrollmentPrompt {
     BuildContext context, {
     required String appTitle,
     required String biometricType,
+    bool mandatory = false,
   }) async {
     if (biometricType.isEmpty) return BiometricEnrollmentResult.failed;
 
@@ -28,22 +29,28 @@ abstract final class BiometricEnrollmentPrompt {
       barrierDismissible: false,
       builder: (ctx) {
         final tokens = ctx.bio;
+        final content = mandatory
+            ? 'Para usar $appTitle debés confirmar con $biometricType en este '
+                'dispositivo. También te la pediremos si la app estuvo inactiva '
+                'unos minutos.'
+            : 'Para ingresar más rápido a $appTitle, podés usar '
+                '$biometricType en este dispositivo. También te la pediremos '
+                'si la app estuvo inactiva unos minutos.';
         return AlertDialog(
           backgroundColor: tokens.paperBackground,
           title: Text('Activar $biometricType', style: BioTypography.h2),
           content: Text(
-            'Para ingresar más rápido a $appTitle, podés usar '
-            '$biometricType en este dispositivo. También te la pediremos '
-            'si la app estuvo inactiva unos minutos.',
+            content,
             style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Ahora no'),
-            ),
+            if (!mandatory)
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Ahora no'),
+              ),
             BioButton.primary(
-              label: 'Activar $biometricType',
+              label: mandatory ? 'Continuar con $biometricType' : 'Activar $biometricType',
               size: BioButtonSize.sm,
               onPressed: () => Navigator.pop(ctx, true),
             ),
@@ -53,7 +60,9 @@ abstract final class BiometricEnrollmentPrompt {
     );
 
     if (accept != true || !context.mounted) {
-      return BiometricEnrollmentResult.skipped;
+      return mandatory
+          ? BiometricEnrollmentResult.failed
+          : BiometricEnrollmentResult.skipped;
     }
 
     final auth = BiometricAuth();

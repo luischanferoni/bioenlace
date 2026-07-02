@@ -8,35 +8,82 @@ tarifas_usd_por_millon:
   input_cacheado: 0.01
   output: 0.40
 
+# Comparativa alternativa (no producción). Ver costos-api.md § DeepSeek.
+comparativa:
+  modelo: deepseek-v4-flash
+  tarifas_usd_por_millon:
+    input: 0.14
+    input_cacheado: 0.0028
+    output: 0.28
+  fuente: https://api-docs.deepseek.com/quick_start/pricing
+
 # Tokens de referencia por llamada cuando la ejecución es simulada (sin HTTP).
 llamada_referencia:
   prompt_tokens: 1000
   candidates_tokens: 500
   cached_ratio: 0.25
 
-# Overrides por contexto IAManager (web/docs/costos/costos-api.md §1 y catálogo-usos-ia).
+# Overrides por contexto IAManager (web/docs/costos/costos-api.md § Contextos).
+# volumen_mensual_por_profesional: null = no sumado al Apartado 1 (ver nota en doc).
 contextos:
   asistente-preprocess:
     prompt_tokens: 700
     candidates_tokens: 250
     cached_ratio: 0.40
+    volumen_mensual_por_profesional: 2000
   asistente-conversational:
     prompt_tokens: 930
     candidates_tokens: 180
     cached_ratio: 0.40
+    volumen_mensual_por_profesional: 660
+  asistente-onboarding:
+    # §3 costos-api: sin contexto dedicado en código; reutiliza preprocess/conversacional.
+    prompt_tokens: 1000
+    candidates_tokens: 500
+    cached_ratio: 0.25
+    volumen_mensual_por_profesional: 400
   intent-engine-classification:
     prompt_tokens: 800
     candidates_tokens: 200
     cached_ratio: 0.25
+    volumen_mensual_por_profesional: 25
   motivos-consulta-batch:
     prompt_tokens: 1350
     candidates_tokens: 400
     cached_ratio: 0.25
+    volumen_mensual_por_profesional: 400
+  motivos-consulta-insights:
+    prompt_tokens: 1200
+    candidates_tokens: 350
+    cached_ratio: 0.25
+    volumen_mensual_por_profesional: 400
   analisis-consulta:
     prompt_tokens: 1200
     candidates_tokens: 600
     cached_ratio: 0.25
+    volumen_mensual_por_profesional: 400
   encounter-codificacion-automatica:
     prompt_tokens: 1000
     candidates_tokens: 400
     cached_ratio: 0.25
+    volumen_mensual_por_profesional: 400
+  care-pack-assistance-batch:
+    prompt_tokens: 2200
+    candidates_tokens: 900
+    cached_ratio: 0.50
+    volumen_mensual_por_profesional: null
+  care-pack-followup-batch:
+    prompt_tokens: 2400
+    candidates_tokens: 1000
+    cached_ratio: 0.50
+    volumen_mensual_por_profesional: null
+  care-pack-education-batch:
+    prompt_tokens: 2000
+    candidates_tokens: 800
+    cached_ratio: 0.50
+    volumen_mensual_por_profesional: null
+  care-pack-vertex-batch:
+    prompt_tokens: 2200
+    candidates_tokens: 900
+    cached_ratio: 0.50
+    volumen_mensual_por_profesional: null

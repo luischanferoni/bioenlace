@@ -49,7 +49,8 @@ Chat aparte donde el paciente deja **por qué viene**, en texto, audio o fotos, 
 
 1. El paciente escribe o graba en el chat de motivos (puede ser solo texto, o incluir audios).
 2. Llegada la hora límite, el sistema junta todo el hilo y añade un **resumen clínico acotado** del paciente (alergias, condiciones, medicación).
-3. **Una sola** pasada automática redacta el motivo de consulta que verá el médico.
+3. **Una** pasada automática (`motivos-consulta-batch`) redacta el motivo de consulta que verá el médico.
+4. **Otra** pasada (`motivos-consulta-insights`) genera sugerencias orientativas preliminares (hipótesis / prácticas).
 
 **Ejemplo**
 
@@ -61,8 +62,8 @@ Chat aparte donde el paciente deja **por qué viene**, en texto, audio o fotos, 
 
 | Variante                                   | USD       |
 | ------------------------------------------ | --------- |
-| Motivos **solo texto**                     | **600**   |
-| Motivos **con audio** (1 min por consulta) | **2.150** |
+| Motivos **solo texto** (batch + insights)      | **1.000** |
+| Motivos **con audio** (1 min por consulta)   | **2.500** |
 
 
 ---
@@ -102,9 +103,9 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
 | Conversación con el paciente                   | 2.250     |
-| Motivos de consulta (sin audio)                | 600       |
-| Captura clínica del médico (siempre con audio) | 2.150     |
-| **Subtotal**                                   | **5.000** |
+| Motivos de consulta (sin audio, batch + insights) | 1.000     |
+| Captura clínica del médico (siempre con audio)      | 2.150     |
+| **Subtotal**                                        | **5.400** |
 
 
 ### Escenario intensivo (motivos con audio + onboarding)
@@ -113,15 +114,15 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
 | Conversación con el paciente                   | 2.250     |
-| Motivos de consulta (con audio)                | 2.150     |
+| Motivos de consulta (con audio)                | 2.500     |
 | Captura clínica del médico (siempre con audio) | 2.150     |
-| **Total**                                      | **6.550** |
+| **Total**                                      | **6.900** |
 
 
 ---
 
 ## Notas
 
-- Por profesional y mes (escenario intensivo): **~USD 1,31** (incluye contexto clínico acotado en prompts IA).
+- Por profesional y mes (escenario intensivo, COGS base sin caché): **~USD 1,38** (incluye `motivos-consulta-insights` y contexto clínico en prompts). Detalle y comparativa DeepSeek: [costos-api.md](./costos-api.md).
 - No incluye videollamada ni impuestos.
 

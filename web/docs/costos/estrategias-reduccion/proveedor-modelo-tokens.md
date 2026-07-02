@@ -6,7 +6,7 @@ Catálogo de contextos: [producto/catalogo-usos-ia.md](../../producto/catalogo-u
 
 `ia_proveedor` en params: `google` (Vertex/Gemini), `huggingface`, `groq`, `openai`, `ollama`.
 
-Producción Bioenlace: **Google** con **`gemini-2.5-flash-lite`** (global en `vertex_ai_model`). Together AI aparece en [costos-api.md](../costos-api.md) solo como comparativa de precio.
+Producción Bioenlace: **Google** con **`gemini-2.5-flash-lite`** (global en `vertex_ai_model`). **DeepSeek V4 Flash** aparece en [costos-api.md](../costos-api.md) como comparativa de precio (API directa).
 
 ## Modelo por contexto (diferencial)
 

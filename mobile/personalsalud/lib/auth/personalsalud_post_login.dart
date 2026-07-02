@@ -5,67 +5,97 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 import '../screens/config_wizard_screen.dart';
 import 'personalsalud_authenticated_shell.dart';
+import 'personalsalud_login_screen.dart';
 import 'personalsalud_session_prefs.dart';
 
-/// Ofrece activar huella/Face ID tras el primer acceso exitoso (login + wizard).
-///
-/// [context] opcional; si no está montado usa [navigatorKey].
-Future<void> maybeOfferPersonalsaludBiometricEnrollment({
-  BuildContext? context,
-}) async {
+Future<bool> _staffBiometricEnrollmentComplete() async {
   final prefs = await SharedPreferences.getInstance();
-  if (prefs.getBool(PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey) ??
-      false) {
-    return;
-  }
-  if (prefs.getBool(
-        PersonalsaludSessionPrefs.staffBiometricEnrollmentDeclinedKey,
-      ) ??
-      false) {
-    return;
-  }
-  if (await BiometricSessionPrefs.isUnlockEnabled()) {
-    return;
+  final established =
+      prefs.getBool(PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey) ??
+          false;
+  return established && await BiometricSessionPrefs.isUnlockEnabled();
+}
+
+/// Exige activar huella/Face ID inmediatamente tras el primer acceso con credenciales.
+Future<bool> requirePersonalsaludBiometricEnrollment(
+  BuildContext context,
+) async {
+  if (await _staffBiometricEnrollmentComplete()) {
+    return true;
   }
 
   final bio = BiometricAuth();
   if (!await bio.isAvailable()) {
-    return;
+    if (context.mounted) {
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) {
+          final tokens = ctx.bio;
+          return AlertDialog(
+            backgroundColor: tokens.paperBackground,
+            title: Text('Biometría requerida', style: BioTypography.h2),
+            content: Text(
+              'Este dispositivo debe tener huella digital o Face ID configurado '
+              'para usar Personal de Salud.',
+              style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+            ),
+            actions: [
+              BioButton.primary(
+                label: 'Entendido',
+                size: BioButtonSize.sm,
+                onPressed: () => Navigator.pop(ctx),
+              ),
+            ],
+          );
+        },
+      );
+    }
+    return false;
   }
 
   final biometricType = await bio.getBiometricType();
   final label = biometricType.isNotEmpty ? biometricType : 'Huella digital';
 
-  final ctx = (context != null && context.mounted)
-      ? context
-      : navigatorKey.currentContext;
-  if (ctx == null || !ctx.mounted) {
-    return;
-  }
+  while (true) {
+    if (!context.mounted) return false;
 
-  final result = await BiometricEnrollmentPrompt.show(
-    ctx,
-    appTitle: 'Personal de Salud',
-    biometricType: label,
-  );
-
-  if (result == BiometricEnrollmentResult.success) {
-    await prefs.setBool(
-      PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
-      true,
+    final result = await BiometricEnrollmentPrompt.show(
+      context,
+      appTitle: 'Personal de Salud',
+      biometricType: label,
+      mandatory: true,
     );
-    return;
-  }
 
-  if (result == BiometricEnrollmentResult.skipped) {
-    await prefs.setBool(
-      PersonalsaludSessionPrefs.staffBiometricEnrollmentDeclinedKey,
-      true,
-    );
+    if (result == BiometricEnrollmentResult.success) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(
+        PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
+        true,
+      );
+      await prefs.remove(
+        PersonalsaludSessionPrefs.staffBiometricEnrollmentDeclinedKey,
+      );
+      return true;
+    }
+
+    if (!context.mounted) return false;
   }
 }
 
-/// Tras login con credenciales: wizard de efector/servicio/área (sesión operativa).
+Future<void> _returnToLoginAfterEnrollmentFailure() async {
+  await PersonalsaludSessionPrefs.clearOnLogout();
+  navigatorKey.currentState?.pushAndRemoveUntil(
+    MaterialPageRoute<void>(
+      builder: (_) => buildPersonalsaludLoginScreen(
+        onLoginSuccess: navigatePersonalsaludAfterLogin,
+      ),
+    ),
+    (route) => false,
+  );
+}
+
+/// Tras login con credenciales: huella obligatoria y wizard de efector/servicio/área.
 Future<void> navigatePersonalsaludAfterLogin(
   String userId,
   String userName,
@@ -82,6 +112,17 @@ Future<void> navigatePersonalsaludAfterLogin(
   if (loginToken != null && loginToken.isNotEmpty) {
     await prefs.setString('auth_token', loginToken);
   }
+
+  if (!loginContext.mounted) return;
+
+  final enrolled =
+      await requirePersonalsaludBiometricEnrollment(loginContext);
+  if (!enrolled) {
+    await _returnToLoginAfterEnrollmentFailure();
+    return;
+  }
+
+  await BiometricSessionPrefs.touchActivity();
 
   if (!loginContext.mounted) return;
   openPersonalsaludSessionWizard(
@@ -135,4 +176,60 @@ bool isPersonalsaludEncounterSessionError(Object error) {
   return msg.contains('encounter configurado') ||
       msg.contains('encounter_class') ||
       msg.contains('área de atención configurada');
+}
+
+/// Bloquea el contenido autenticado hasta completar el enrolamiento biométrico.
+class PersonalsaludBiometricGate extends StatefulWidget {
+  const PersonalsaludBiometricGate({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<PersonalsaludBiometricGate> createState() =>
+      _PersonalsaludBiometricGateState();
+}
+
+class _PersonalsaludBiometricGateState extends State<PersonalsaludBiometricGate> {
+  bool _checking = true;
+  bool _enrolled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ensureEnrollment();
+  }
+
+  Future<void> _ensureEnrollment() async {
+    if (await _staffBiometricEnrollmentComplete()) {
+      if (!mounted) return;
+      setState(() {
+        _enrolled = true;
+        _checking = false;
+      });
+      return;
+    }
+
+    if (!mounted) return;
+    final ok = await requirePersonalsaludBiometricEnrollment(context);
+    if (!ok) {
+      await _returnToLoginAfterEnrollmentFailure();
+      return;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _enrolled = true;
+      _checking = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_checking || !_enrolled) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return widget.child;
+  }
 }

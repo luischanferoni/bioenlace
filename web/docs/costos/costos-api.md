@@ -16,7 +16,7 @@ Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollam
 Cuando un doc dice «fuera del COGS» o «no en COGS base», significa que **aún no sumamos esa cifra** a las tablas fiscales hasta tener telemetría o piloto.
 
 ---
-- **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`).
+- **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`). Columna **DeepSeek** = comparativa con **`deepseek-v4-flash`** (API directa); no es producción hoy.
 - **Columnas Google:** **sin context caching** = **COGS base seguro**; **con context caching** = **escenario favorable**, no costo esperado (tokens repetidos a tarifa reducida de Vertex; ver abajo). No incluyen caché de aplicación ni otras tácticas de producto.
 - **Contexto clínico del paciente:** bloque acotado (`PatientAiContextBuilder`) en §1 conversacional, §2 motivos y §4 captura — ver [§ Contexto clínico en prompts](#contexto-clínico-en-prompts-ia).
 - **Escenario intensivo (COGS):** volumen de STT según supuestos §2 y §4 (p. ej. 1 min de audio por encounter en §4).
@@ -28,8 +28,8 @@ Otras reducciones (caché Yii, STT en dispositivo, context caching explícito, e
 Por médico por mes, en orden del recorrido del paciente (detalle y costes en §1–6). Escala común **400 encounters por mes** (20 por día x 20 días) donde aplica §1, §2, §4, §5 y §6 — [infra-costos.md](./infra-costos.md).
 
 - **§1 Conversación con el paciente:** 5 mensajes por encounter (~2.660 llamadas Vertex por mes)
-- **§2 Motivos de consulta:** 1 llamada a la IA por encounter; caso B (audio): COGS modela **~1 min de STT Groq por encounter** (400 min/mes) — ver [§ STT](#stt) si hay varios audios por chat.
-- **§3 Onboarding y día a día:** 400 llamadas a la IA por mes
+- **§2 Motivos de consulta:** 1 llamada `motivos-consulta-batch` + **1** `motivos-consulta-insights` por encounter (si hay resumen); caso B (audio): COGS modela **~1 min de STT Groq por encounter** (400 min/mes) — ver [§ STT](#stt).
+- **§3 Onboarding y día a día:** 400 llamadas a la IA por mes (`asistente-onboarding` en metadata; en código reutiliza preprocess/conversacional)
 - **§4 Captura clínica (encounter):** **siempre** audio dictado por consulta — 400 min STT (1 dictado ≈ 1 min por encounter) + **400** llamadas `analisis-consulta` + **400** llamadas `encounter-codificacion-automatica` al guardar. Sin variante solo texto en el modelo de costos.
 - **§5 Medios (fotos, etc.):** 2 fotos por encounter (Vision)
 - **§6 Videollamada:** 30 % de encounters; 12 min; 2 participantes
@@ -42,7 +42,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 |----------|--------------|-----------------|--------|
 | **Groq** — Whisper Large v3 Turbo | **~$0.0007 por min** ($0.04 por h); **mín. 10 s por request** | STT (§2 caso B, §4) | [groq.com/pricing](https://groq.com/pricing), [GroqDocs STT](https://console.groq.com/docs/speech-to-text) |
 | **Vision API** (Label, Text, Face, etc.) | 1.000 unidades por mes gratis; luego $1.50 por 1.000 | Fotos §5 | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) |
-| **Together AI** — Llama 3.1 8B | **$0.18 por 1M tokens** (input y output) | Comparativa IA | [Together AI](https://docs.together.ai/docs/serverless-models) |
+| **DeepSeek** — V4 Flash (API) | **$0.14 / $0.0028 / $0.28** por 1M (input miss / cache hit / output) | Comparativa IA | [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing) |
 
 Para **Vertex AI / Gemini** y **videollamadas** (Twilio, Daily.co) conviene revisar el [Calculador de precios de Google Cloud](https://cloud.google.com/products/calculator) y la [tabla de precios de Gemini en Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/pricing) (revisar cada 6–12 meses).
 
@@ -72,15 +72,29 @@ Supuesto de referencia en este documento: **1.500 tokens totales** por llamada (
 | 2.0 Flash, sin caché | 1.000 x $0.15 por 1M + 500 x $0.60 por 1M | **~$0.00045** |
 | 2.0 Flash, reparto 50 y 50 input-output | 750 input y 750 output | **~$0.00056** |
 | 2.5 Flash Lite + caché parcial | 750 input nuevos + 250 input cacheados + 500 output | **~$0.00028** |
+| DeepSeek V4 Flash, sin caché | 1.000 x $0.14 por 1M + 500 x $0.28 por 1M | **~$0.00028** |
+| DeepSeek V4 Flash + caché parcial | 750 input nuevos + 250 input cacheados + 500 output | **~$0.00025** |
 
-**Cifras usadas en tablas §2–4** (1.500 tok., una invocación; redondeo conservador):
+**Cifras usadas en tablas §1–4** (1.500 tok., una invocación; redondeo conservador):
 
-| Columna | USD por llamada | Uso en pricing |
-|---------|-----------------|----------------|
-| **Sin context caching** | **~$0.00035** | **COGS base** |
-| **Con context caching** | **~$0.00031** | Escenario favorable (~**25 %** input cacheado) |
+| Columna | USD por llamada (Gemini) | USD por llamada (DeepSeek) | Uso en pricing |
+|---------|---------------------------|----------------------------|----------------|
+| **Sin context caching** | **~$0.00035** | **~$0.00030** | **COGS base** |
+| **Con context caching** | **~$0.00031** | **~$0.00027** | Escenario favorable (~**25 %** input cacheado) |
 
-En tablas §2–4, **tarifa IA** remite a esta tabla; **tarifa STT** a [Groq](#precios-de-referencia-mayo-2026).
+En tablas §1–4, **tarifa IA** remite a esta tabla; **tarifa STT** a [Groq](#precios-de-referencia-mayo-2026).
+
+### DeepSeek V4 Flash (comparativa)
+
+Referencia API oficial ([Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing)). **No es el proveedor de producción**; sirve para contrastar coste si se migrara el mismo volumen de tokens.
+
+| Concepto | Input (miss) | Input (cache hit) | Output |
+|----------|--------------|-------------------|--------|
+| **deepseek-v4-flash** | $0.14 | $0.0028 | $0.28 |
+
+- Input **miss** más caro que Gemini Lite; **output** y **cache hit** más baratos → el ahorro neto depende del mix input/output y del % cacheado (ver [§ Contextos IAManager](#contextos-iamanager-y-tokens-de-referencia)).
+- DeepSeek aplica **context caching automático** en prefijos repetidos (análogo al implícito de Vertex); las columnas «con caché» de DeepSeek usan los mismos `cached_ratio` por contexto que Gemini.
+- En `params.php`, DeepSeek-R1 vía **Hugging Face** (`hf_model_*`) es otro canal de facturación; no usar estas tarifas para ese camino.
 
 ### Context caching (Vertex AI) — base de las columnas «con caché»
 
@@ -99,7 +113,40 @@ Detalle de cada tipo: [implícita](./estrategias-reduccion/context-caching-impli
 - Calibrar con `ia_usage_tracking_habilitado`, `vertex_context_cache_simulado` y `AICostTracker` por `contexto` ([monitoreo](./estrategias-reduccion/monitoreo.md)).
 - El **output** no se cachea.
 
-**Together AI** no usa context caching de Vertex → columna «con caché» = **—**. Comparativa: [Precios de referencia](#precios-de-referencia-mayo-2026) (~**$0.00027** por llamada de 1.500 tokens).
+### Contextos IAManager y tokens de referencia
+
+Catálogo completo: [producto/catalogo-usos-ia.md](../producto/catalogo-usos-ia.md). Tokens y `cached_ratio` en `web/common/metadata/bioenlace/ai/ai-cost-reference.yaml` (usado por `AICostEstimationService`).
+
+| Contexto | Bloque COGS | Vol./prof/mes (ref.) | Input / output (tok.) | % input cacheado |
+|----------|-------------|----------------------|------------------------|------------------|
+| `asistente-preprocess` | §1 | **2.000** | 700 / 250 | **40 %** |
+| `asistente-conversational` | §1 | **660** | 930 / 180 | **40 %** |
+| `asistente-onboarding` | §3 | **400** | 1.000 / 500 | **25 %** |
+| `intent-engine-classification` | Anexo A | **25** (bajo) | 800 / 200 | **25 %** |
+| `motivos-consulta-batch` | §2 | **400** | 1.350 / 400 | **25 %** |
+| `motivos-consulta-insights` | §2 | **400** | 1.200 / 350 | **25 %** |
+| `analisis-consulta` | §4 | **400** | 1.200 / 600 | **25 %** |
+| `encounter-codificacion-automatica` | §4 | **400** | 1.000 / 400 | **25 %** |
+| `care-pack-assistance-batch` | Anexo B | por `cohort_key` | 2.200 / 900 | **50 %** |
+| `care-pack-followup-batch` | Anexo B | por `cohort_key` | 2.400 / 1.000 | **50 %** |
+| `care-pack-education-batch` | Anexo B | por `cohort_key` | 2.000 / 800 | **50 %** |
+| `care-pack-vertex-batch` | Anexo B | por job batch | 2.200 / 900 | **50 %** |
+| `terminos-contextuales` | — | 0 (reservado) | — | — |
+
+**Apartado 1 (totales §1–§4):** suma los contextos con volumen **por profesional** (escenario 400 encounters/mes). **`intent-engine-classification`** y **care-packs** van en anexos — volumen bajo o por cohorte, no inflan el total por médico hasta tener telemetría.
+
+**Coste unitario con caché (orientativo, por llamada):**
+
+| Contexto | Gemini | DeepSeek |
+|----------|--------|----------|
+| `asistente-preprocess` | ~$0.000145 | ~$0.000130 |
+| `asistente-conversational` | ~$0.000132 | ~$0.000130 |
+| `motivos-consulta-batch` | ~$0.000265 | ~$0.000255 |
+| `motivos-consulta-insights` | ~$0.000240 | ~$0.000230 |
+| `analisis-consulta` | ~$0.000333 | ~$0.000295 |
+| `encounter-codificacion-automatica` | ~$0.000238 | ~$0.000218 |
+
+A **5.000 profesionales**, solo los seis contextos del Apartado 1 (sin §3 ni insights en la fila anterior): Gemini **~$3.550/mes** · DeepSeek **~$3.270/mes** (~**8 %** menos en IA pura con caché favorable).
 
 ### Contexto clínico en prompts IA
 
@@ -210,7 +257,7 @@ Tarifas Gemini: ver [§ Gemini Flash](#gemini-flash-tarifas-actuales-y-context-c
 | 2.000 x preprocess | ~$0,34 | ~$0,29 |
 | 660 x conversacional | ~$0,11 | ~$0,09 |
 | **Total §1** | **~$0,45** | **~$0,38** |
-| Together AI (orden de magnitud) | **~$0,39** | **~$0,33** |
+| DeepSeek V4 Flash (orden de magnitud) | **~$0,36** | **~$0,32** |
 
 **Escenario alternativo (más conversacional, 45 % `conversational`):** sube a **~$0,49** sin caché · **~$0,41** con caché (~3.000 llamadas Vertex). **Escenario operativo fuerte (55 % operational):** baja a **~$0,41** · **~$0,35** (menos 2.ª IA conversacional).
 
@@ -220,35 +267,40 @@ Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](./estrat
 
 ### 2. Motivos de consulta (chat dedicado, antes de la atención)
 
-Tras el chat del asistente (§1), el paciente puede cargar en el chat de **motivos** texto, audio e imágenes hasta **1 minuto antes del turno** (sin IA en cada mensaje). Al cerrar la ventana, **1 llamada a la IA** resume el hilo en `encounter.reason_text` para el médico (incluye **contexto clínico acotado** del paciente). Implementación: `AppointmentReasonBatchService`, cron `MOTIVOS_IA_BATCH` vía `turno-notificacion/run`.
+Tras el chat del asistente (§1), el paciente puede cargar en el chat de **motivos** texto, audio e imágenes hasta **1 minuto antes del turno** (sin IA en cada mensaje). Al cerrar la ventana:
+
+1. **`motivos-consulta-batch`** — resume el hilo en `encounter.reason_text` (contexto clínico acotado).
+2. **`motivos-consulta-insights`** — sugerencias orientativas para el médico (hipótesis / prácticas preliminares), si hay resumen.
+
+Implementación: `AppointmentReasonBatchService`, `AppointmentReasonClinicalInsightsService`, cron `MOTIVOS_IA_BATCH` vía `turno-notificacion/run`.
 
 #### Caso A — solo texto (sin audio en el hilo)
 
-Prompt con contexto clínico (~**1.350 input + 400 output** por lote; sin transcripciones).
-
-| Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
-|----------|----------|------------------|------------------|-------------|
-| IA (resumen lote) | 400 x tarifa IA (prompt corto + contexto) | **~$0.12** | **~$0.11** | **~$0.10** |
+| Concepto | Supuesto | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
+|----------|----------|----------------------------|----------------------------|-------------------|
+| IA (`motivos-consulta-batch`) | 400 x tarifa IA | **~$0.12** | **~$0.11** | **~$0.10** |
+| IA (`motivos-consulta-insights`) | 400 x tarifa IA | **~$0.10** | **~$0.09** | **~$0.08** |
 | STT | — | — | — | — |
-| **Total caso A** | | **~$0.12** | **~$0.11** | **~$0.10** |
+| **Total caso A** | | **~$0.22** | **~$0.20** | **~$0.18** |
 
 #### Caso B — con audio en el hilo
 
 STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llamada: ~1.350 in + 500 out ref.). El COGS modela **~1 min de STT Groq por encounter** (fila siguiente); si cada nota de voz va a Groq por separado, el costo real puede ser **mayor** — ver [§ STT](#stt).
 
-| Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
-|----------|----------|------------------|------------------|-------------|
-| IA (resumen lote) | 400 x tarifa IA | **~$0.15** | **~$0.13** | **~$0.12** |
+| Concepto | Supuesto | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
+|----------|----------|----------------------------|----------------------------|-------------------|
+| IA (`motivos-consulta-batch`) | 400 x tarifa IA | **~$0.15** | **~$0.13** | **~$0.12** |
+| IA (`motivos-consulta-insights`) | 400 x tarifa IA | **~$0.10** | **~$0.09** | **~$0.08** |
 | STT (Groq, ~1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
-| **Total caso B** | | **~$0.43** | **~$0.41** | **~$0.40** |
+| **Total caso B** | | **~$0.53** | **~$0.50** | **~$0.48** |
 
 ---
 
 ### 3. Agente de IA para onboarding y tareas del día a día
 
-| Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
-|----------|----------|------------------|------------------|-------------|
-| IA generativa | 400 x tarifa IA | **~$0.14** | **~$0.12** | **~$0.11** |
+| Concepto | Supuesto | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
+|----------|----------|----------------------------|----------------------------|-------------------|
+| IA generativa (`asistente-onboarding`) | 400 x tarifa IA | **~$0.14** | **~$0.12** | **~$0.11** |
 
 ---
 
@@ -258,11 +310,11 @@ Cada consulta incluye **dictado en audio** del médico: no hay variante de costo
 
 Flujo: audio dictado → STT → transcripción → **1 llamada** `analisis-consulta` (extracción a campos) → al guardar, **1 llamada** `encounter-codificacion-automatica` (CIE-10/SNOMED en `clinical_condition`). Supuesto STT: **un dictado (~1 min) por consulta** si va a Groq — alineado con [§ STT](#stt).
 
-| Concepto | Supuesto | Google sin context caching | Google con context caching | Together AI |
-|----------|----------|------------------|------------------|-------------|
+| Concepto | Supuesto | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
+|----------|----------|----------------------------|----------------------------|-------------------|
 | STT (Groq, ~1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
-| IA (análisis `analisis-consulta`) | 400 x tarifa IA (~1.350 in + 500 out ref.) | **~$0.15** | **~$0.13** | **~$0.12** |
-| IA (codificación `encounter-codificacion-automatica`) | 400 x tarifa IA (~1.200 in + 400 out ref.) | **~$0.14** | **~$0.12** | **~$0.11** |
+| IA (análisis `analisis-consulta`) | 400 x tarifa IA (~1.200 in + 600 out ref.) | **~$0.15** | **~$0.13** | **~$0.12** |
+| IA (codificación `encounter-codificacion-automatica`) | 400 x tarifa IA (~1.000 in + 400 out ref.) | **~$0.14** | **~$0.12** | **~$0.11** |
 | **Total §4 (IA + STT)** | | **~$0.57** | **~$0.53** | **~$0.51** |
 
 ---
@@ -288,21 +340,48 @@ Flujo: audio dictado → STT → transcripción → **1 llamada** `analisis-cons
 
 ---
 
+## Anexo A — `intent-engine-classification` (fuera del total Apartado 1)
+
+Fallback del clasificador global cuando reglas + confianza no alcanzan. Volumen **bajo** (supuesto **25 llamadas/prof/mes**; calibrar con `AICostTracker`).
+
+| Escenario | Google (con caché favorable) | DeepSeek V4 Flash |
+|-----------|-------------------------------|-------------------|
+| Por profesional / mes | **~$0,004** | **~$0,004** |
+| **5.000 profesionales / mes** | **~$20** | **~$18** |
+
+---
+
+## Anexo B — Care packs (fuera del total Apartado 1)
+
+Generación por **`cohort_key`**, no por encounter. Contextos: `care-pack-assistance-batch`, `care-pack-followup-batch`, `care-pack-education-batch`, `care-pack-vertex-batch` (este último vía Vertex batch jobs; tarifa batch puede diferir).
+
+Supuesto ilustrativo: **10 cohortes nuevas/mes** en todo el tenant (no por médico), **1 llamada** por tipo de pack al crear cohorte:
+
+| Contexto | Tokens ref. (in / out) | % cache | Costo / llamada (Gemini, caché) | 10 llamadas / mes |
+|----------|------------------------|---------|--------------------------------|-------------------|
+| `care-pack-assistance-batch` | 2.200 / 900 | 50 % | ~$0.00055 | ~$0.006 |
+| `care-pack-followup-batch` | 2.400 / 1.000 | 50 % | ~$0.00062 | ~$0.006 |
+| `care-pack-education-batch` | 2.000 / 800 | 50 % | ~$0.00050 | ~$0.005 |
+
+Orden de magnitud tenant: **< USD 50/mes** en generación sync hasta escalar cohortes; **no** prorratear por los 5.000 profesionales sin telemetría real.
+
+---
+
 ## Resumen: costo real por API (por médico por mes)
 
-**Apartado 1:** IA generativa (Gemini y Together), incluido §4 con STT. **Apartado 2:** Vision (§5). **Apartado 3:** videollamadas (§6).
+**Apartado 1:** IA generativa (Gemini y comparativa DeepSeek), incluido §4 con STT e **insights** de §2. **Apartado 2:** Vision (§5). **Apartado 3:** videollamadas (§6). Anexos A y B: [fuera del total](#anexo-a--intent-engine-classification-fuera-del-total-apartado-1).
 
 ### Apartado 1 – IA generativa + STT captura clínica
 
-| Concepto | Google sin context caching | Google con context caching | Together AI |
-|----------|------------------|------------------|-------------|
-| Conversación con el paciente (§1, `user_goal`) | ~$0.45 | ~$0.38 | ~$0.39 |
-| Motivos — solo texto (§2 caso A) | ~$0.12 | ~$0.11 | ~$0.10 |
-| Motivos — siempre audio (§2 caso B, IA+STT) | ~$0.43 | ~$0.41 | ~$0.40 |
-| Agente onboarding (§3) | ~$0.14 | ~$0.12 | ~$0.11 |
-| Captura clínica (§4, **IA + STT**) | ~$0.57 | ~$0.53 | ~$0.51 |
-| **Total Apartado 1 — motivos solo texto** | **~$1.14** | **~$1.02** | **~$1.10** |
-| **Total Apartado 1 — motivos con audio** | **~$1.45** | **~$1.32** | **~$1.40** |
+| Concepto | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
+|----------|----------------------------|----------------------------|-------------------|
+| Conversación con el paciente (§1) | ~$0.45 | ~$0.38 | ~$0.41 / ~$0.35 |
+| Motivos — solo texto (§2 caso A, batch + insights) | ~$0.22 | ~$0.20 | ~$0.20 / ~$0.18 |
+| Motivos — con audio (§2 caso B, IA+STT) | ~$0.53 | ~$0.50 | ~$0.50 / ~$0.48 |
+| Agente onboarding (§3) | ~$0.14 | ~$0.12 | ~$0.13 / ~$0.11 |
+| Captura clínica (§4, **IA + STT**) | ~$0.57 | ~$0.53 | ~$0.52 / ~$0.49 |
+| **Total Apartado 1 — motivos solo texto** | **~$1.24** | **~$1.11** | **~$1.16 / ~$1.04** |
+| **Total Apartado 1 — motivos con audio** | **~$1.55** | **~$1.41** | **~$1.46 / ~$1.34** |
 
 ### Apartado 2 – Medios (Vision §5)
 
@@ -324,16 +403,16 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 §4 lleva STT **dentro** del total de apartado 1 (no fila aparte). En §2, no sumar dos veces el STT del caso B de motivos con el de §4: son audios distintos (paciente vs. médico).
 
-| Escenario | Google sin context caching | Google con context caching | Together AI |
-|-----------|------------------|------------------|-------------|
-| Apartados 1 + 2 (motivos **solo texto**) | **~$1.14** | **~$1.02** | **~$1.10** |
-| Apartados 1 + 2 (motivos **con audio**) | **~$1.45** | **~$1.32** | **~$1.40** |
+| Escenario | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
+|-----------|----------------------------|----------------------------|-------------------|
+| Apartados 1 + 2 (motivos **solo texto**) | **~$1.24** | **~$1.11** | **~$1.16 / ~$1.04** |
+| Apartados 1 + 2 (motivos **con audio**) | **~$1.55** | **~$1.41** | **~$1.46 / ~$1.34** |
 | + Apartado 3 (**Twilio Video**) | **+$11.52** | **+$11.52** | **+$11.52** |
-| **Total con videollamada (Twilio)** — motivos texto | **~$12.66** | **~$12.54** | **~$12.62** |
-| **Total con videollamada (Twilio)** — motivos audio | **~$12.97** | **~$12.84** | **~$12.92** |
-| **Total con videollamada (Daily ~$10)** — motivos audio | **~$11.45** | **~$11.32** | **~$11.40** |
+| **Total con videollamada (Twilio)** — motivos texto | **~$12.76** | **~$12.63** | **~$12.68 / ~$12.56** |
+| **Total con videollamada (Twilio)** — motivos audio | **~$13.07** | **~$12.93** | **~$12.98 / ~$12.86** |
+| **Total con videollamada (Daily ~$10)** — motivos audio | **~$11.55** | **~$11.41** | **~$11.46 / ~$11.34** |
 
-**Orden de magnitud uso intensivo (todo incluido, Twilio):** **~USD 12–13 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,4–1,6 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 + §3 + §4).
+**Orden de magnitud uso intensivo (todo incluido, Twilio):** **~USD 12–13 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,5–1,6 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 con insights + §3 + §4).
 
 **Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 sigue siendo coste de proveedor de video salvo stack propio.
 
@@ -346,5 +425,5 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 - [Groq pricing](https://groq.com/pricing) – STT de referencia en tablas.
 - [Vertex AI – Context caching overview](https://cloud.google.com/vertex-ai/generative-ai/docs/context-cache/context-cache-overview)
 - [infra/costos.md](../infra/costos.md) – Costes cuando la IA corre en nuestra GPU.
-- [Together AI – Serverless Models / Pricing](https://docs.together.ai/docs/serverless-models) – Llama 3.1 8B y otros modelos.
+- [DeepSeek API – Models & Pricing](https://api-docs.deepseek.com/quick_start/pricing) – comparativa IA en tablas.
 - [producto/flows/capacidades-paciente-medico.md](../../producto/apps-paciente-personalsalud.md) – Descripción de las capacidades.

@@ -107,7 +107,8 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       home: isLoggedIn
           ? wrapPersonalsaludAuthenticatedShell(
-              child: FutureBuilder<Map<String, dynamic>>(
+              child: PersonalsaludBiometricGate(
+                child: FutureBuilder<Map<String, dynamic>>(
               future: _getUserData(),
               builder: (context, snapshot) {
                 // Manejar estado de conexión
@@ -173,6 +174,7 @@ class MyApp extends StatelessWidget {
                       data['idProfesionalEfectorServicio'] as String? ?? '0',
                 );
               },
+            ),
             ),
             )
           : buildPersonalsaludLoginScreen(

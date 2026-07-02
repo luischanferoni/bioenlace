@@ -54,8 +54,10 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
   }
 
   Future<void> _bootstrap() async {
-    await BiometricSessionPrefs.touchActivity();
     await _evaluateLock();
+    if (!_locked) {
+      await BiometricSessionPrefs.touchActivity();
+    }
     _startIdleCheckTimer();
   }
 

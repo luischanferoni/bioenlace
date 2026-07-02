@@ -31,7 +31,12 @@ Ver [matriz-casos-uso.md](./matriz-casos-uso.md). Resumen conservador:
 | `motivos-consulta-insights` | ~**25 %** (1×/consulta; poco peso en COGS total) |
 | `analisis-consulta` | ~**25 %** (+ contexto clínico variable) |
 | `encounter-codificacion-automatica` | ~**25 %** (instrucciones estables + texto variable) |
-| `intent-engine-classification` | Bajo volumen; ~**25 %** si aplica |
+| `asistente-onboarding` | ~**25 %** (§3; mismo stack que preprocess en código) |
+| `intent-engine-classification` | ~**25 %** (anexo; bajo volumen) |
+| `care-pack-assistance-batch` | ~**50 %** (plantillas de cohorte repetidas) |
+| `care-pack-followup-batch` | ~**50 %** |
+| `care-pack-education-batch` | ~**50 %** |
+| `care-pack-vertex-batch` | ~**50 %** |
 
 No usar ratios altos (p. ej. 80 %) sin telemetría. Calibrar con `ratio_input_en_cache` por `contexto`.
 

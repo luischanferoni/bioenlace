@@ -136,10 +136,13 @@ Operación y cron: [asistencia-cohortes.md](./asistencia-cohortes.md).
 
 | Bloque costos-api | Flujos de este catálogo |
 |-------------------|-------------------------|
-| §1 Conversación | `asistente-preprocess`, `asistente-conversational` |
+| §1 Conversación | `asistente-preprocess`, `asistente-conversational`, `intent-engine-classification` (anexo) |
 | §2 Motivos | `motivos-consulta-batch`, `motivos-consulta-insights`, STT motivos |
-| §3 Onboarding | Mismo asistente (sin contexto propio) |
+| §3 Onboarding | `asistente-onboarding` (metadata; código: preprocess/conversacional) |
 | §4 Captura | `analisis-consulta`, `encounter-codificacion-automatica`, STT captura |
+| Anexo care packs | `care-pack-*-batch`, `care-pack-vertex-batch` |
+
+Tokens y volúmenes: [costos-api § Contextos](../costos/costos-api.md#contextos-iamanager-y-tokens-de-referencia) · `ai-cost-reference.yaml`.
 
 Matriz ahorro / caché: [matriz-casos-uso.md](../costos/estrategias-reduccion/matriz-casos-uso.md).
 

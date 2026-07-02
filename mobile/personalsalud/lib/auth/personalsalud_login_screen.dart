@@ -201,6 +201,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
         authToken: token,
         appClient: 'bioenlace-personalsalud',
       );
+      await BiometricSessionPrefs.touchActivity();
 
       if (!mounted) return;
       widget.onLoginSuccess(userId, userName, context);

@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
-import '../auth/personalsalud_post_login.dart';
 import '../services/push_notification_service.dart';
 import '../services/chat_service.dart';
 import 'home_screen.dart';
@@ -35,9 +34,6 @@ class _MainScreenState extends State<MainScreen> {
   void initState() {
     super.initState();
     _initPush();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      maybeOfferPersonalsaludBiometricEnrollment(context: context);
-    });
   }
 
   Future<void> _initPush() async {

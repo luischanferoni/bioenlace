@@ -59,6 +59,15 @@ class ChatScreenState extends State<ChatScreen> {
   /// Atajos para panel inicial (GET acciones/comunes); mismo origen que el bottom sheet Atajos.
   List<AtajoCategoria>? _welcomeAtajos;
   bool _composerHasText = false;
+  Map<String, dynamic>? _activeComposerCapture;
+
+  String get _composerHintText {
+    final placeholder = _activeComposerCapture?['placeholder']?.toString().trim() ?? '';
+    if (placeholder.isNotEmpty) {
+      return placeholder;
+    }
+    return 'Escribe tu consulta aquí... Ejemplo: "Necesito ver mis consultas" o "Quiero agendar un turno"';
+  }
 
   /// `turnos.crear-como-paciente` → `/api/v1/turnos/crear-como-paciente` (fallback si `client_open` viene null).
   String? _apiRouteFromActionId(String actionId) {
@@ -106,7 +115,8 @@ class ChatScreenState extends State<ChatScreen> {
   bool _messageHasFlowInteractiveUi(Map<String, dynamic> message) {
     return message['inline_ui'] is Map ||
         message['flow_submit'] is Map ||
-        message['flow_dismiss'] is Map;
+        message['flow_dismiss'] is Map ||
+        message['composer_capture'] is Map;
   }
 
   /// Mensaje del bot cuyo step es **terminal** (último paso del flow): trae `flow_submit`
@@ -484,6 +494,9 @@ class ChatScreenState extends State<ChatScreen> {
     }
 
     _syncFlowSessionFromView(nextFlow);
+    _activeComposerCapture = nextFlow.composerCapture != null
+        ? Map<String, dynamic>.from(nextFlow.composerCapture!)
+        : null;
     final msgText = nextFlow.text.trim().isNotEmpty ? nextFlow.text.trim() : 'Ok.';
     final fsPayload = _normalizeFlowSubmit(nextFlow.flowSubmit);
     final fdPayload = _normalizeFlowDismiss(nextFlow.flowDismiss);
@@ -491,6 +504,7 @@ class ChatScreenState extends State<ChatScreen> {
     final openUi = nextFlow.openUi;
     final co = openUi != null ? openUi['client_open'] : null;
     final actionId = openUi != null ? openUi['action_id']?.toString() : null;
+    final hasComposerCapture = nextFlow.composerCapture != null;
     final hasInlineUi =
         co is Map && (actionId != null && actionId.isNotEmpty);
     final isSubmitOnly = fsPayload != null && !hasInlineUi;
@@ -504,7 +518,9 @@ class ChatScreenState extends State<ChatScreen> {
         if (nextFlow.manifest != null) 'flow_manifest': nextFlow.manifest,
         if (nextFlow.hints.isNotEmpty) 'hints': nextFlow.hints,
         if (fsPayload != null && isSubmitOnly) 'flow_submit': fsPayload,
-        if (isDismissOnly) 'flow_dismiss': fdPayload,
+        if (fdPayload != null && (isDismissOnly || hasComposerCapture)) 'flow_dismiss': fdPayload,
+        if (hasComposerCapture)
+          'composer_capture': Map<String, dynamic>.from(nextFlow.composerCapture!),
         if (providesPayload.isNotEmpty) 'flow_provides': providesPayload,
         'timestamp': DateTime.now(),
       });
@@ -513,7 +529,7 @@ class ChatScreenState extends State<ChatScreen> {
     });
     _scrollToBottom();
 
-    if (openUi == null || isSubmitOnly || isDismissOnly) {
+    if (openUi == null || isSubmitOnly || isDismissOnly || hasComposerCapture) {
       return;
     }
     if (actionId == null || actionId.isEmpty) {
@@ -712,7 +728,8 @@ class ChatScreenState extends State<ChatScreen> {
         (message['flow_manifest'] is Map ||
             message['inline_ui'] is Map ||
             message['flow_dismiss'] is Map ||
-            message['flow_submit'] is Map)) {
+            message['flow_submit'] is Map ||
+            message['composer_capture'] is Map)) {
       return _intentId;
     }
     return null;
@@ -866,6 +883,7 @@ class ChatScreenState extends State<ChatScreen> {
     _flowSnapshot = {};
     _intentId = null;
     _subintentId = null;
+    _activeComposerCapture = null;
     _asistenteService.currentIntentId = null;
     _asistenteService.currentSubintentId = null;
     _asistenteService.draft = {};
@@ -1711,6 +1729,12 @@ class ChatScreenState extends State<ChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
 
+    if (_activeComposerCapture != null) {
+      setState(() => _isSending = true);
+      await _submitComposerCapture(text);
+      return;
+    }
+
     setState(() {
       _isSending = true;
 
@@ -1781,6 +1805,146 @@ class ChatScreenState extends State<ChatScreen> {
       });
       _showErrorSnackbar(e);
       _scrollToBottom();
+    }
+  }
+
+  Future<void> _submitComposerCapture(String text) async {
+    final cc = _activeComposerCapture;
+    if (cc == null) {
+      if (mounted) setState(() => _isSending = false);
+      return;
+    }
+
+    final minLen = cc['min_length'] is int
+        ? cc['min_length'] as int
+        : int.tryParse(cc['min_length']?.toString() ?? '') ?? 1;
+    if (text.length < minLen) {
+      if (mounted) {
+        setState(() => _isSending = false);
+        _messageController.text = text;
+        _showErrorSnackbar(
+          'Contanos tu consulta con al menos $minLen caracteres.',
+        );
+      }
+      return;
+    }
+
+    final field = cc['draft_field']?.toString() ?? '';
+    if (field.isNotEmpty) {
+      _draft[field] = text;
+      _asistenteService.draft = Map<String, dynamic>.from(_draft);
+    }
+
+    final route = cc['route']?.toString().trim() ?? '';
+    if (route.isEmpty) {
+      if (mounted) setState(() => _isSending = false);
+      return;
+    }
+
+    final tpl = cc['body_template'] is Map
+        ? Map<String, dynamic>.from(cc['body_template'] as Map)
+        : <String, dynamic>{};
+    final resolved = _resolveFlowSubmitBody(tpl);
+    if (resolved.missing.isNotEmpty) {
+      if (mounted) {
+        setState(() => _isSending = false);
+        _messageController.text = text;
+        _showErrorSnackbar(_missingFieldsMessage(resolved.missing));
+      }
+      return;
+    }
+
+    setState(() {
+      _chatHistory.add({
+        'type': 'user',
+        'content': text,
+        'timestamp': DateTime.now(),
+      });
+      _messageController.clear();
+    });
+    _scrollToBottom();
+
+    try {
+      final uri = Uri.parse(resolveApiAbsoluteUrl(route));
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: _asistenteService.authToken,
+        appClient: 'bioenlace-paciente',
+      );
+      final res = await http
+          .post(uri, headers: headers, body: json.encode(resolved.body))
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      if (!mounted) return;
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        _showErrorSnackbar(_messageFromHttpResponse(res));
+        return;
+      }
+      final decoded = json.decode(utf8.decode(res.bodyBytes));
+      if (decoded is! Map) {
+        _showErrorSnackbar('Respuesta inválida');
+        return;
+      }
+      final m = Map<String, dynamic>.from(decoded);
+      if (m['kind'] == 'ui_submit_result' && m['success'] != false) {
+        final data = m['data'];
+        var successText = 'Listo.';
+        if (data is Map) {
+          final s = data['mensaje']?.toString() ?? data['message']?.toString() ?? '';
+          if (s.trim().isNotEmpty) {
+            successText = s.trim();
+          }
+        } else {
+          final rootMsg = m['message']?.toString() ?? '';
+          if (rootMsg.trim().isNotEmpty) {
+            successText = rootMsg.trim();
+          }
+        }
+        final palette = IntentPalette.of(UiIntent.primary);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              successText,
+              style: TextStyle(color: palette.onBase),
+            ),
+            backgroundColor: palette.base,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        Map<String, dynamic>? sourceMsg;
+        for (var i = _chatHistory.length - 1; i >= 0; i--) {
+          final bot = _chatHistory[i];
+          if (bot['type'] == 'bot' && bot['composer_capture'] is Map) {
+            sourceMsg = bot;
+            break;
+          }
+        }
+        final activationSeq = sourceMsg?['flow_activation_seq'] is int
+            ? sourceMsg!['flow_activation_seq'] as int
+            : _flowActivationSeq;
+        final flowTitle = sourceMsg != null
+            ? _flowActionTitleFromMessage(sourceMsg)
+            : null;
+        final resultData = data is Map ? Map<String, dynamic>.from(data) : null;
+        final intentForSummary = _intentId;
+        final snapForSummary = Map<String, dynamic>.from(_flowSnapshot);
+        await _collapseCompletedFlowActivation(
+          activationSeq: activationSeq,
+          submitData: resultData,
+          flowActionTitle: flowTitle,
+          intentId: intentForSummary,
+          flowSnapshot: snapForSummary,
+        );
+        if (!mounted) return;
+        setState(() {
+          _clearFlowState();
+        });
+        _scrollToBottom();
+        return;
+      }
+      _showErrorSnackbar(m['message']?.toString() ?? 'No se pudo enviar la consulta');
+    } catch (e) {
+      if (mounted) _showErrorSnackbar(e);
+    } finally {
+      if (mounted) setState(() => _isSending = false);
     }
   }
 
@@ -2459,13 +2623,11 @@ class ChatScreenState extends State<ChatScreen> {
                 final showingLicenciaImpact = impactUiEnvelope is Map;
                 final hasEmbeddedUi = !isUser && (inlineUi is Map || showingLicenciaImpact);
                 final flowActionTitle = !isUser ? _flowActionTitleFromMessage(message) : null;
-                final hasFlowSubmit = !isUser && message['flow_submit'] is Map;
-                final hasFlowDismiss = !isUser && message['flow_dismiss'] is Map;
-                final hasFlowContext =
-                    flowActionTitle != null && (hasEmbeddedUi || hasFlowSubmit || hasFlowDismiss);
-                final showFlowHeader = hasFlowContext &&
+                final isFlowManifestBot = !isUser && message['flow_manifest'] is Map;
+                final showFlowStepText = isFlowManifestBot && content.isNotEmpty;
+                final showFlowHeader = isFlowManifestBot &&
+                    flowActionTitle != null &&
                     _shouldShowFlowChatHeader(index, message);
-                final showFlowStepText = hasFlowContext && content.isNotEmpty;
                 final flowUiDisabled = message['flow_superseded'] == true;
                 final flowCollapsing = message['flow_collapsing'] == true;
 
@@ -2478,7 +2640,7 @@ class ChatScreenState extends State<ChatScreen> {
                 /// Separación antes de tabs/UI inline (ver también padding del [UiJsonScreen] abajo).
                 double inlineUiLeadGapHeight = 4.0;
                 if (!hasFormConfig && !isUser && (inlineUi is Map || showingLicenciaImpact) && hasEmbeddedUi) {
-                  if (hasFlowContext) {
+                  if (isFlowManifestBot) {
                     inlineUiLeadGapHeight = showFlowStepText ? 0.0 : 2.0;
                   } else if (content.isNotEmpty && !hasActionsRow && !hasRemediationRow) {
                     inlineUiLeadGapHeight = 2.0;
@@ -2502,7 +2664,7 @@ class ChatScreenState extends State<ChatScreen> {
 
                 return Column(
                   children: [
-                    if (!hasFormConfig && hasFlowContext) ...[
+                    if (!hasFormConfig && isFlowManifestBot) ...[
                       if (showFlowHeader)
                         _buildFlowChatHeader(context, title: flowActionTitle),
                       if (showFlowStepText)
@@ -2549,7 +2711,7 @@ class ChatScreenState extends State<ChatScreen> {
                           ),
                         )
                       else if (hasEmbeddedUi) ...[
-                        if (!hasFlowContext && content.isNotEmpty)
+                        if (!isFlowManifestBot && content.isNotEmpty)
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Padding(
@@ -2565,7 +2727,7 @@ class ChatScreenState extends State<ChatScreen> {
                               ),
                             ),
                           ),
-                      ] else if (!hasFlowContext)
+                      ] else if (!isFlowManifestBot)
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Container(
@@ -3230,6 +3392,7 @@ class ChatScreenState extends State<ChatScreen> {
             controller: _messageController,
             onSend: _sendMessage,
             isSending: _isSending || _flowAdvancing,
+            hintText: _composerHintText,
           ),
         ],
       ),

@@ -202,8 +202,11 @@ subintents:
     terminal_without_submit: true
     flow_dismiss:
       label: "Cerrar"
-    open_ui:
-      action_id: consulta-async.solicitar-como-paciente
+    composer_capture:
+      draft_field: mensaje
+      placeholder: "Contanos tu consulta con el mayor detalle posible. Un profesional te responderá por mensaje."
+      min_length: 10
+      submit_action_id: consulta-async.solicitar-como-paciente
       params:
         triage_raiz: "draft.triage_raiz"
         triage_alarmas: "draft.triage_alarmas?"
@@ -211,6 +214,7 @@ subintents:
         triage_evolucion: "draft.triage_evolucion?"
         care_plan_id: "draft.care_plan_id?"
         triage_nota: "draft.triage_nota?"
+        mensaje: "draft.mensaje"
 
   - id: select_servicio
     assistant_text: "Servicio"

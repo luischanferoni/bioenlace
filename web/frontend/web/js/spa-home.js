@@ -1168,6 +1168,9 @@
     const chatRoot = document.getElementById('spa-chat-root');
     const chatComposer = document.getElementById('spa-chat-composer');
     const queryInput = document.getElementById('spa-query-input');
+    const DEFAULT_COMPOSER_PLACEHOLDER = queryInput
+        ? String(queryInput.getAttribute('placeholder') || '')
+        : '';
     const sendBtn = document.getElementById('spa-send-btn');
     const shortcutsToggleBtn = document.getElementById('spa-shortcuts-toggle-btn');
     const shortcutsContent = document.getElementById('spa-shortcuts-content');
@@ -1232,6 +1235,19 @@
     let flowSnapshot = {};
     /** Último manifiesto del flow activo (pasos, paso terminal, etc.). */
     let currentFlowManifest = null;
+    /** Paso activo que captura texto libre en el composer (metadata `composer_capture`). */
+    let currentComposerCapture = null;
+
+    function syncComposerPlaceholder() {
+        if (!queryInput) {
+            return;
+        }
+        const cc = currentComposerCapture;
+        const next = cc && cc.placeholder != null && String(cc.placeholder).trim() !== ''
+            ? String(cc.placeholder).trim()
+            : DEFAULT_COMPOSER_PLACEHOLDER;
+        queryInput.setAttribute('placeholder', next);
+    }
 
     function flowStepById(manifest, stepId) {
         if (!manifest || !stepId) {
@@ -1357,6 +1373,8 @@
         draft = {};
         flowSnapshot = {};
         currentFlowManifest = null;
+        currentComposerCapture = null;
+        syncComposerPlaceholder();
         writeFlowState();
     }
 
@@ -2025,6 +2043,117 @@
         };
     }
 
+    /** @param {object|null|undefined} envelope */
+    function assistantFlowComposerCapture(envelope) {
+        const step = assistantFlowStep(envelope);
+        const cc = step && step.composer_capture;
+        if (!cc || typeof cc !== 'object' || cc.active !== true) {
+            return null;
+        }
+        const route = cc.route != null ? String(cc.route).trim() : '';
+        const field = cc.draft_field != null ? String(cc.draft_field).trim() : '';
+        if (!route || !field) {
+            return null;
+        }
+        return {
+            draft_field: field,
+            placeholder: cc.placeholder != null ? String(cc.placeholder) : '',
+            min_length: cc.min_length != null ? parseInt(String(cc.min_length), 10) || 1 : 1,
+            route: route,
+            method: cc.method != null ? String(cc.method) : 'POST',
+            body_template: cc.body_template && typeof cc.body_template === 'object' ? cc.body_template : {}
+        };
+    }
+
+    /**
+     * POST declarativo de un paso `composer_capture` (texto libre en el composer).
+     * @param {string} text
+     */
+    function submitComposerCapture(text) {
+        const cc = currentComposerCapture;
+        if (!cc) {
+            return Promise.resolve();
+        }
+        const trimmed = String(text || '').trim();
+        const minLen = cc.min_length > 0 ? cc.min_length : 1;
+        if (trimmed.length < minLen) {
+            if (queryInput) {
+                queryInput.value = trimmed;
+                handleInput();
+            }
+            showError('Contanos tu consulta con al menos ' + minLen + ' caracteres.');
+            setLoadingState(false);
+            return Promise.resolve();
+        }
+        if (cc.draft_field) {
+            draft[cc.draft_field] = trimmed;
+            writeFlowState();
+        }
+        const resolved = resolveFlowSubmitBody(cc.body_template || {});
+        if (resolved.missing.length) {
+            if (queryInput) {
+                queryInput.value = trimmed;
+                handleInput();
+            }
+            showError('Faltan datos: ' + resolved.missing.join(', '));
+            setLoadingState(false);
+            return Promise.resolve();
+        }
+        if (queryInput) {
+            queryInput.value = '';
+            handleInput();
+        }
+        if (chatMessagesDiv) {
+            appendChatBubble('user', '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--user">' + escapeHtml(trimmed) + '</div>');
+        }
+        const url = resolveSpaFetchUrl(cc.route);
+        return fetch(url, {
+            method: (cc.method || 'POST').toUpperCase(),
+            headers: window.BioenlaceApiClient.mergeHeaders({
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }),
+            credentials: 'same-origin',
+            body: JSON.stringify(resolved.body)
+        }).then(function (response) {
+            if (!response.ok) {
+                return response.text().then(function (bodyText) {
+                    var msg = '';
+                    try {
+                        var j = JSON.parse(bodyText);
+                        if (j && j.message) {
+                            msg = String(j.message);
+                        }
+                    } catch (e) { /* ignore */ }
+                    showError(msg || ('Error HTTP ' + response.status));
+                    setLoadingState(false);
+                });
+            }
+            return response.json().then(function (json) {
+                var successText = 'Listo.';
+                if (json && json.data && (json.data.message || json.data.mensaje)) {
+                    successText = String(json.data.message || json.data.mensaje);
+                } else if (json && json.message) {
+                    successText = String(json.message);
+                }
+                appendAssistantResponsePanel({
+                    explanationHtml: escapeHtml(successText),
+                    actionsHtml: '',
+                    variant: 'info'
+                });
+                clearFlowState();
+                removeFlowPlanStrip();
+                setLoadingState(false);
+                setTimeout(scrollChatToBottom, 20);
+            });
+        }).catch(function (err) {
+            console.error('composer_capture POST:', err);
+            showError('No se pudo enviar la consulta.');
+            setLoadingState(false);
+        });
+    }
+
     /**
      * Procesar payload JSON del asistente (POST /api/v1/asistente/enviar).
      * También usado al ejecutar una acción tipo intent desde una card.
@@ -2152,6 +2281,15 @@
                 const fsr = assistantFlowSubmit(envelope);
                 const fdr = assistantFlowDismiss(envelope);
                 const flowFetchOpts = { enableFlowChainAutoAdvance: true, flowDismissOpt: fdr };
+                const composerCapture = assistantFlowComposerCapture(envelope);
+                if (composerCapture) {
+                    currentComposerCapture = composerCapture;
+                    syncComposerPlaceholder();
+                    setTimeout(scrollChatToBottom, 20);
+                    return;
+                }
+                currentComposerCapture = null;
+                syncComposerPlaceholder();
 
                 // `open_ui` en esta respuesta: lo que el servidor pide montar ahora. El manifiesto describe el paso
                 // (puede incluir tabs del paso anterior); no implica que siempre haya que abrir URL en este turno.
@@ -2373,13 +2511,22 @@
         const query = String(raw || '').trim();
         
         // En flows, se permite avanzar con `content=''` (solo snapshot draft/intento).
-        if (!query && !currentIntentId) {
-            showError('Por favor, ingresa una consulta');
-            return;
+        if (!query) {
+            if (currentComposerCapture) {
+                showError('Por favor, ingresa una consulta');
+                return;
+            }
+            if (!currentIntentId) {
+                showError('Por favor, ingresa una consulta');
+                return;
+            }
         }
 
         // Deshabilitar botón y mostrar loading
         setLoadingState(true);
+        if (currentComposerCapture) {
+            return submitComposerCapture(query);
+        }
         if (currentIntentId) {
             showFlowLoadingForIntent(currentIntentId);
         }
@@ -2410,7 +2557,7 @@
         const body = {};
 
         // Texto libre = nueva consulta al IntentEngine; se conserva el flow solo para “cerca…” (misma heurística que SubIntentEngine).
-        if (currentIntentId && query !== '' && !userSaysNearbyForEfectorChooser(query)) {
+        if (currentIntentId && query !== '' && !userSaysNearbyForEfectorChooser(query) && !currentComposerCapture) {
             supersedeAllFlowRows();
             currentIntentId = null;
             currentSubintentId = null;

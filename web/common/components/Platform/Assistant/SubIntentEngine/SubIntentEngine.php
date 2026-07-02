@@ -137,6 +137,18 @@ final class SubIntentEngine
             $missing = self::missingDraftFields($current, $draft);
             $missingRequires = self::missingRequiresFields($current, $draft);
             if ($missing !== []) {
+                $composer = self::buildComposerCaptureDescriptor($current);
+                if ($composer !== null) {
+                    return self::buildComposerCaptureResponse(
+                        $intentId,
+                        $currentId,
+                        $current,
+                        self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.'),
+                        $composer,
+                        $missing,
+                        $hints
+                    );
+                }
                 $open = self::resolveOpenUiForSubintent($current, $content, $draft);
                 $actionId = AssistantDraftNormalizer::scalarString(is_array($open) ? ($open['action_id'] ?? '') : '');
                 if (is_array($open) && $actionId !== '' && !self::openUiBlockedByMissingDraft($open, $missingRequires)) {
@@ -866,6 +878,96 @@ final class SubIntentEngine
         }
 
         return self::withFlowManifest($payload, $intentId, $subintentId);
+    }
+
+    /**
+     * Paso que captura texto libre en el composer del chat (sin mini-UI embebida).
+     *
+     * @param array<string, mixed> $subintent
+     * @return array<string, mixed>|null
+     */
+    private static function buildComposerCaptureDescriptor(array $subintent): ?array
+    {
+        $cfg = isset($subintent['composer_capture']) && is_array($subintent['composer_capture'])
+            ? $subintent['composer_capture']
+            : null;
+        if ($cfg === null) {
+            return null;
+        }
+        $field = AssistantDraftNormalizer::scalarString($cfg['draft_field'] ?? '');
+        if ($field === '') {
+            return null;
+        }
+        $actionId = AssistantDraftNormalizer::scalarString($cfg['submit_action_id'] ?? '');
+        if ($actionId === '') {
+            return null;
+        }
+        $route = self::apiRouteForActionId($actionId);
+        if ($route === '') {
+            return null;
+        }
+
+        $bodyTemplate = [];
+        $paramsMap = isset($cfg['params']) && is_array($cfg['params']) ? $cfg['params'] : [];
+        foreach ($paramsMap as $k => $v) {
+            $key = is_string($k) ? trim($k) : '';
+            $vv = is_string($v) ? trim($v) : '';
+            if ($key === '' || $vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
+                continue;
+            }
+            $bodyTemplate[$key] = $vv;
+        }
+        if (!isset($bodyTemplate[$field])) {
+            $bodyTemplate[$field] = 'draft.' . $field;
+        }
+
+        $placeholder = trim((string) ($cfg['placeholder'] ?? ''));
+        $minLength = max(1, (int) ($cfg['min_length'] ?? 1));
+
+        return [
+            'active' => true,
+            'draft_field' => $field,
+            'placeholder' => $placeholder,
+            'min_length' => $minLength,
+            'action_id' => $actionId,
+            'route' => $route,
+            'method' => 'POST',
+            'body_template' => $bodyTemplate === [] ? (object) [] : $bodyTemplate,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $composer
+     * @param list<string> $missing
+     * @param list<array<string, mixed>> $hints
+     * @return array<string, mixed>
+     */
+    private static function buildComposerCaptureResponse(
+        string $intentId,
+        string $subintentId,
+        array $subintent,
+        string $text,
+        array $composer,
+        array $missing,
+        array $hints
+    ): array {
+        $payload = [
+            'success' => true,
+            'text' => $text,
+            'intent_id' => $intentId,
+            'subintent_id' => $subintentId,
+            'composer_capture' => $composer,
+            'provides' => self::extractDraftKeys($subintent['provides'] ?? []),
+            'required_draft_fields' => $missing,
+            'draft_delta' => (object) [],
+        ];
+
+        $dismiss = self::buildFlowDismissDescriptor($subintent);
+        if ($dismiss !== null) {
+            $payload['flow_dismiss'] = $dismiss;
+        }
+
+        return self::withFlowManifest(self::attachHints($payload, $hints), $intentId, $subintentId);
     }
 
     /**

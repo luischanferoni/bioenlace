@@ -217,6 +217,11 @@ final class AssistantEnvelope
 
         $openUi = isset($motor['open_ui']) && is_array($motor['open_ui']) ? $motor['open_ui'] : null;
         $step = self::buildStepFromOpenUi($openUi, $motor, $manifest);
+        $step['composer_capture'] = self::buildComposerCapture(
+            isset($motor['composer_capture']) && is_array($motor['composer_capture'])
+                ? $motor['composer_capture']
+                : null
+        );
 
         $flowSubmit = isset($motor['flow_submit']) && is_array($motor['flow_submit']) ? $motor['flow_submit'] : null;
         $submit = self::buildSubmit($flowSubmit);
@@ -293,6 +298,41 @@ final class AssistantEnvelope
             'client_open' => self::normalizeClientOpen($co),
             'provides' => $provides,
             'pending_fields' => $pending,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $cfg
+     * @return array<string, mixed>
+     */
+    private static function buildComposerCapture(?array $cfg): array
+    {
+        if ($cfg === null || empty($cfg['active'])) {
+            return ['active' => false];
+        }
+        $field = AssistantDraftNormalizer::scalarString($cfg['draft_field'] ?? '');
+        $route = AssistantDraftNormalizer::scalarString($cfg['route'] ?? '');
+        if ($field === '' || $route === '') {
+            return ['active' => false];
+        }
+        $method = AssistantDraftNormalizer::scalarString($cfg['method'] ?? 'POST', 'POST');
+        if ($method === '') {
+            $method = 'POST';
+        }
+        $template = isset($cfg['body_template']) && is_array($cfg['body_template'])
+            ? $cfg['body_template']
+            : [];
+        $minLength = max(1, (int) ($cfg['min_length'] ?? 1));
+
+        return [
+            'active' => true,
+            'draft_field' => $field,
+            'placeholder' => trim((string) ($cfg['placeholder'] ?? '')),
+            'min_length' => $minLength,
+            'action_id' => AssistantDraftNormalizer::scalarString($cfg['action_id'] ?? ''),
+            'route' => $route,
+            'method' => $method,
+            'body_template' => $template === [] ? (object) [] : $template,
         ];
     }
 
@@ -521,6 +561,7 @@ final class AssistantEnvelope
         }
 
         return isset($motor['open_ui'])
+            || isset($motor['composer_capture'])
             || isset($motor['flow_manifest'])
             || isset($motor['flow_submit'])
             || isset($motor['subintent_id']);

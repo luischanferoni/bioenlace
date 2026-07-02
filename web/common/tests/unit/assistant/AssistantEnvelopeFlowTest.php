@@ -93,4 +93,36 @@ class AssistantEnvelopeFlowTest extends Unit
         $this->assertSame([], $envelope['step']['provides']);
         $this->assertSame([], $envelope['step']['pending_fields']);
     }
+
+    public function testFlowFromMotorComposerCaptureStep(): void
+    {
+        $motor = [
+            'success' => true,
+            'text' => 'Describí tu consulta',
+            'intent_id' => 'atencion.necesito-atencion',
+            'subintent_id' => 'solicitud_async',
+            'composer_capture' => [
+                'active' => true,
+                'draft_field' => 'mensaje',
+                'placeholder' => 'Contanos tu consulta…',
+                'min_length' => 10,
+                'action_id' => 'consulta-async.solicitar-como-paciente',
+                'route' => '/api/v1/consulta-async/solicitar-como-paciente',
+                'method' => 'POST',
+                'body_template' => [
+                    'mensaje' => 'draft.mensaje',
+                    'triage_raiz' => 'draft.triage_raiz',
+                ],
+            ],
+            'required_draft_fields' => ['draft.mensaje'],
+            'draft_delta' => (object) [],
+        ];
+
+        $envelope = AssistantEnvelope::fromMotorResponse($motor);
+
+        $this->assertSame('flow', $envelope['kind']);
+        $this->assertTrue($envelope['step']['composer_capture']['active']);
+        $this->assertSame('mensaje', $envelope['step']['composer_capture']['draft_field']);
+        $this->assertFalse($envelope['step']['active']);
+    }
 }

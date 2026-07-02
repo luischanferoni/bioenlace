@@ -11,6 +11,7 @@ class AssistantFlowView {
   final Map<String, dynamic>? openUi;
   final Map<String, dynamic>? flowSubmit;
   final Map<String, dynamic>? flowDismiss;
+  final Map<String, dynamic>? composerCapture;
   final List<String> provides;
   final List<String> pendingFields;
 
@@ -24,6 +25,7 @@ class AssistantFlowView {
     this.openUi,
     this.flowSubmit,
     this.flowDismiss,
+    this.composerCapture,
     this.provides = const [],
     this.pendingFields = const [],
   });
@@ -69,6 +71,23 @@ class AssistantFlowView {
       };
     }
 
+    Map<String, dynamic>? composerCapture;
+    final cc = st['composer_capture'];
+    if (cc is Map && cc['active'] == true) {
+      composerCapture = <String, dynamic>{
+        'draft_field': cc['draft_field']?.toString() ?? '',
+        'placeholder': cc['placeholder']?.toString() ?? '',
+        'min_length': cc['min_length'] is int
+            ? cc['min_length'] as int
+            : int.tryParse(cc['min_length']?.toString() ?? '') ?? 1,
+        'action_id': cc['action_id']?.toString() ?? '',
+        'route': cc['route']?.toString() ?? '',
+        'method': cc['method']?.toString() ?? 'POST',
+        if (cc['body_template'] is Map)
+          'body_template': Map<String, dynamic>.from(cc['body_template'] as Map),
+      };
+    }
+
     final hintsRaw = envelope['hints'];
     final hints = hintsRaw is List
         ? hintsRaw
@@ -91,6 +110,7 @@ class AssistantFlowView {
       openUi: openUi,
       flowSubmit: flowSubmit,
       flowDismiss: flowDismiss,
+      composerCapture: composerCapture,
       provides: st['provides'] is List
           ? List<String>.from((st['provides'] as List).map((e) => e.toString()))
           : <String>[],

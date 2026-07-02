@@ -94,7 +94,8 @@ class ChatScreenState extends State<ChatScreen> {
   bool _messageHasFlowInteractiveUi(Map<String, dynamic> message) {
     return message['inline_ui'] is Map ||
         message['flow_submit'] is Map ||
-        message['flow_dismiss'] is Map;
+        message['flow_dismiss'] is Map ||
+        message['composer_capture'] is Map;
   }
 
   /// Mensaje del bot cuyo step es **terminal** (último paso del flow): trae `flow_submit`
@@ -2350,13 +2351,11 @@ class ChatScreenState extends State<ChatScreen> {
                 final showingLicenciaImpact = impactUiEnvelope is Map;
                 final hasEmbeddedUi = !isUser && (inlineUi is Map || showingLicenciaImpact);
                 final flowActionTitle = !isUser ? _flowActionTitleFromMessage(message) : null;
-                final hasFlowSubmit = !isUser && message['flow_submit'] is Map;
-                final hasFlowDismiss = !isUser && message['flow_dismiss'] is Map;
-                final hasFlowContext =
-                    flowActionTitle != null && (hasEmbeddedUi || hasFlowSubmit || hasFlowDismiss);
-                final showFlowHeader = hasFlowContext &&
+                final isFlowManifestBot = !isUser && message['flow_manifest'] is Map;
+                final showFlowStepText = isFlowManifestBot && content.isNotEmpty;
+                final showFlowHeader = isFlowManifestBot &&
+                    flowActionTitle != null &&
                     _shouldShowFlowChatHeader(index, message);
-                final showFlowStepText = hasFlowContext && content.isNotEmpty;
                 final flowUiDisabled = message['flow_superseded'] == true;
                 final flowCollapsing = message['flow_collapsing'] == true;
 
@@ -2369,7 +2368,7 @@ class ChatScreenState extends State<ChatScreen> {
                 /// Separación antes de tabs/UI inline (ver también padding del [UiJsonScreen] abajo).
                 double inlineUiLeadGapHeight = 4.0;
                 if (!hasFormConfig && !isUser && (inlineUi is Map || showingLicenciaImpact) && hasEmbeddedUi) {
-                  if (hasFlowContext) {
+                  if (isFlowManifestBot) {
                     inlineUiLeadGapHeight = showFlowStepText ? 0.0 : 2.0;
                   } else if (content.isNotEmpty && !hasActionsRow && !hasRemediationRow) {
                     inlineUiLeadGapHeight = 2.0;
@@ -2393,7 +2392,7 @@ class ChatScreenState extends State<ChatScreen> {
 
                 return Column(
                   children: [
-                    if (!hasFormConfig && hasFlowContext) ...[
+                    if (!hasFormConfig && isFlowManifestBot) ...[
                       if (showFlowHeader)
                         _buildFlowChatHeader(context, title: flowActionTitle),
                       if (showFlowStepText)
@@ -2440,7 +2439,7 @@ class ChatScreenState extends State<ChatScreen> {
                           ),
                         )
                       else if (hasEmbeddedUi) ...[
-                        if (!hasFlowContext && content.isNotEmpty)
+                        if (!isFlowManifestBot && content.isNotEmpty)
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Padding(
@@ -2456,7 +2455,7 @@ class ChatScreenState extends State<ChatScreen> {
                               ),
                             ),
                           ),
-                      ] else if (!hasFlowContext)
+                      ] else if (!isFlowManifestBot)
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Container(

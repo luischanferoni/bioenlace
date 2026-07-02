@@ -147,12 +147,13 @@ final class CohortKeyBuilder
         if ($efector === null || (int) $efector->id_localidad <= 0) {
             return 'unknown';
         }
-        $localidad = $efector->idLocalidad;
+        $localidad = $efector->localidad;
         if ($localidad === null) {
             return 'unknown';
         }
-        if (isset($localidad->id_provincia) && (int) $localidad->id_provincia > 0) {
-            return 'prov-' . (int) $localidad->id_provincia;
+        $departamento = $localidad->departamento;
+        if ($departamento !== null && (int) ($departamento->id_provincia ?? 0) > 0) {
+            return 'prov-' . (int) $departamento->id_provincia;
         }
         if (!empty($localidad->nombre)) {
             return 'loc-' . $this->slugify((string) $localidad->nombre);

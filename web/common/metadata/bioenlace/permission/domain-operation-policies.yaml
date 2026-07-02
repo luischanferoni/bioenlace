@@ -114,6 +114,10 @@ operations:
     policies:
       - organization.efector_sesion
 
+  ServicioTeleconsultaPolitica.configurar:
+    policies:
+      - organization.efector_sesion
+
   Encounter.access:
     policies:
       - clinical.encounter_participant

@@ -1,6 +1,8 @@
 intent_id: servicio-teleconsulta.configurar-efector-flow
 version: 1
 
+domain_operation: ServicioTeleconsultaPolitica.configurar
+
 action_name: "Política de teleconsulta por servicio"
 description: "AdminEfector: define si los pacientes pueden elegir videollamada al reservar en cada servicio."
 rbac_route: "/api/home/panel"

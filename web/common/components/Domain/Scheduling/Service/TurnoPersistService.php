@@ -12,7 +12,9 @@ use common\components\Domain\Clinical\Service\ReferralRequestService;
 use common\models\ConsultaDerivaciones;
 use common\models\EfectorTurnosConfig;
 use common\models\Servicio;
+use common\models\TurnoResolucion;
 use common\components\Domain\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
+use Yii;
 
 /**
  * Persistencia y reglas comunes de turnos (API y otros callers). Sin HTTP.
@@ -41,9 +43,20 @@ class TurnoPersistService
 
         $model->hydrateLegacyIdsFromProfesionalEfectorServicioIfNeeded();
 
+        $existing = $this->findReservaIdempotente($model);
+        if ($existing !== null) {
+            return $this->formatCrearResult($existing);
+        }
+
         try {
             TurnoReservaSlotService::aplicarCamposReserva($model);
         } catch (\InvalidArgumentException $e) {
+            if (str_contains($e->getMessage(), 'ya no está disponible')) {
+                $existing = $this->findReservaIdempotente($model);
+                if ($existing !== null) {
+                    return $this->formatCrearResult($existing);
+                }
+            }
             throw $e;
         }
 
@@ -105,13 +118,32 @@ class TurnoPersistService
             throw new \InvalidArgumentException(implode(', ', $model->getErrorSummary(true)));
         }
 
-        (new EncounterLifecycleService())->ensureFromTurno($model);
+        try {
+            (new EncounterLifecycleService())->ensureFromTurno($model);
+        } catch (\Throwable $e) {
+            Yii::warning('ensureFromTurno: ' . $e->getMessage(), 'api-turnos');
+        }
         try {
             (new TurnoLifecycleService())->afterTurnoCreado($model);
         } catch (\Throwable $e) {
             Yii::warning('afterTurnoCreado: ' . $e->getMessage(), 'api-turnos');
         }
 
+        return $this->formatCrearResult($model);
+    }
+
+    /**
+     * @return array{
+     *   id: int,
+     *   fecha: mixed,
+     *   hora: mixed,
+     *   id_profesional_efector_servicio: int|null,
+     *   servicio_detalle: array{id_servicio: int, nombre: string}|null,
+     *   mensaje: string
+     * }
+     */
+    private function formatCrearResult(Turno $model): array
+    {
         $servicioNombre = trim((string) $model->getNombreServicioParaDisplay());
         $fechaStr = (string) ($model->fecha ?? '');
         $horaStr = (string) ($model->hora ?? '');
@@ -137,6 +169,35 @@ class TurnoPersistService
             'servicio_detalle' => $model->getServicioEmbebidoParaApi(),
             'mensaje' => $mensaje,
         ];
+    }
+
+    private function findReservaIdempotente(Turno $model): ?Turno
+    {
+        $idPersona = (int) ($model->id_persona ?? 0);
+        $idPes = (int) ($model->id_profesional_efector_servicio ?? 0);
+        $fecha = trim((string) ($model->fecha ?? ''));
+        $hora = trim((string) ($model->hora ?? ''));
+        if ($idPersona <= 0 || $idPes <= 0 || $fecha === '' || $hora === '') {
+            return null;
+        }
+
+        $horaNorm = substr(TurnoResolucion::normalizarHora($hora), 0, 5);
+        if ($horaNorm === '') {
+            return null;
+        }
+
+        $existing = Turno::find()
+            ->andWhere([
+                'id_persona' => $idPersona,
+                'id_profesional_efector_servicio' => $idPes,
+                'fecha' => $fecha,
+                'estado' => Turno::ESTADO_PENDIENTE,
+            ])
+            ->andWhere(['like', 'hora', $horaNorm . '%', false])
+            ->orderBy(['id_turnos' => SORT_DESC])
+            ->one();
+
+        return $existing instanceof Turno ? $existing : null;
     }
 
     /**

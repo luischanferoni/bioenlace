@@ -27,7 +27,7 @@ final class StaffEfectorModalidadKpiSectionProvider implements HomePanelSectionP
 
         try {
             $idEfector = EfectorAccessService::assertAndResolveIdEfector(
-                'servicio-teleconsulta.configurar-efector-flow',
+                ServicioTeleconsultaPoliticaService::DOMAIN_OPERATION_CONFIGURAR,
                 $params
             );
         } catch (DomainOperationForbiddenException $e) {

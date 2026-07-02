@@ -18,6 +18,8 @@ use yii\db\Transaction;
  */
 final class ServicioTeleconsultaPoliticaService
 {
+    public const DOMAIN_OPERATION_CONFIGURAR = 'ServicioTeleconsultaPolitica.configurar';
+
     /**
      * @return array<string, mixed>
      */
@@ -282,7 +284,7 @@ final class ServicioTeleconsultaPoliticaService
     public function resolveIdEfector(array $params): int
     {
         return EfectorAccessService::assertAndResolveIdEfector(
-            'servicio-teleconsulta.configurar-efector-flow',
+            self::DOMAIN_OPERATION_CONFIGURAR,
             $params
         );
     }

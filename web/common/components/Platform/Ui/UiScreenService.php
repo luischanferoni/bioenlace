@@ -64,7 +64,7 @@ final class UiScreenService
                 ];
             } catch (\Throwable $e) {
                 $values = $postParams;
-                $errors = ['_error' => [$e->getMessage()]];
+                $errors = ['_error' => [UiClientErrorMessage::fromThrowable($e)]];
 
                 $ui = self::renderUiDefinition($entity, $action, $queryParams, $values);
                 $ui['success'] = false;

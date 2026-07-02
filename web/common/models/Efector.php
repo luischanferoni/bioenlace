@@ -146,7 +146,7 @@ class Efector extends \yii\db\ActiveRecord
     //Esta funcion fue agregada, se relaciona con el modelo Localidad para obtener el nombre
     public function getLocalidadNombre()
     {
-        return $this->idLocalidad ? $this->idLocalidad->nombre : '- no hay localidad -';
+        return $this->localidad ? $this->localidad->nombre : '- no hay localidad -';
     }
 
     /**

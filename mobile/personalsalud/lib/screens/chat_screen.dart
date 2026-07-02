@@ -691,7 +691,23 @@ class ChatScreenState extends State<ChatScreen> {
         return id;
       }
     }
+    if (message['flow_activation_seq'] == _flowActivationSeq &&
+        _intentId != null &&
+        _intentId!.isNotEmpty &&
+        (message['flow_manifest'] is Map ||
+            message['inline_ui'] is Map ||
+            message['flow_dismiss'] is Map ||
+            message['flow_submit'] is Map)) {
+      return _intentId;
+    }
     return null;
+  }
+
+  void _truncateFlowAfterStepIfNeeded(int messageIndex) {
+    if (messageIndex < 0 || messageIndex >= _chatHistory.length - 1) return;
+    final activeIntent = _intentId;
+    if (activeIntent == null || activeIntent.isEmpty) return;
+    setState(() => _truncateFlowAfter(messageIndex));
   }
 
   /// Flow distinto al activo: marcar UIs interactivas anteriores como descartadas.
@@ -2675,20 +2691,7 @@ class ChatScreenState extends State<ChatScreen> {
                                       ? _resetAssistantToWelcome
                                       : null),
                               onDraftDelta: flowUiDisabled ? null : (dd) async {
-                                // Cambio 1: si este mensaje NO es el último interactivo del flow
-                                // activo, "rebobinar" el flow: eliminar mensajes posteriores del
-                                // mismo flow y limpiar las keys del draft que esos pasos proveyeron.
-                                // Luego se vuelve a pedir el siguiente paso al motor con el draft
-                                // truncado + la nueva elección.
-                                final activeIid = _intentId;
-                                if (activeIid != null && activeIid.isNotEmpty) {
-                                  final lastIdx = _lastFlowInteractiveMessageIndex(activeIid);
-                                  if (lastIdx != null && index < lastIdx) {
-                                    setState(() {
-                                      _truncateFlowAfter(index);
-                                    });
-                                  }
-                                }
+                                _truncateFlowAfterStepIfNeeded(index);
                                 _applyDraftDelta(Map<String, dynamic>.from(dd));
                                 if (inlineUi is Map) {
                                   _applyInlineUiQueryToDraft(Map<String, dynamic>.from(inlineUi));

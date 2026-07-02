@@ -192,7 +192,7 @@ subintents:
         care_plan_id: "draft.care_plan_id"
 
   - id: solicitud_async
-    assistant_text: "Consulta por mensaje"
+    assistant_text: "Describí tu consulta"
     requires:
       - draft.triage_raiz
       - draft.tipo_atencion

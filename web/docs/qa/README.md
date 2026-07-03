@@ -4,11 +4,11 @@ Documentación para **probar la app y la web**: qué hacer, qué deberías ver y
 
 ## Por escenario clínico (recomendado para pruebas integrales)
 
-| Carpeta | Tipo de encounter | Contenido |
-|---------|-------------------|-----------|
-| [escenarios/](./escenarios/README.md) | Ambulatorio, urgencia, seguimiento | Guías con guion de consulta, pasos paciente + médico y tabla de notificaciones |
+| Carpeta | Contenido |
+|---------|-----------|
+| [escenarios/](./escenarios/README.md) | Guías paso a paso: ambulatorio, urgencia, seguimiento, internación |
 
-Dentro de **ambulatorio**: [medicina general](./escenarios/ambulatorio/medicina-general.md), [teleconsulta](./escenarios/ambulatorio/teleconsulta.md) y [odontología](./escenarios/ambulatorio/odontologia.md). También [internación](./escenarios/internacion/README.md) y [urgencia / seguimiento](./escenarios/README.md).
+Cada guía incluye guion de consulta, pasos del paciente, pasos del personal y cuándo esperar avisos en el celular.
 
 ## Por rol / audiencia
 

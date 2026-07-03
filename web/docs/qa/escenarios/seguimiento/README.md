@@ -1,137 +1,82 @@
-# Seguimiento — Consulta general y plan de tratamiento
+# Seguimiento — consulta por mensaje y plan de tratamiento
 
-[← Escenarios](../README.md) · Producto: [consultas-seguimiento.md](../../../producto/consultas-seguimiento.md) · [atencion-remota-async.md](../../../producto/atencion-remota-async.md)
+[← Escenarios](../README.md)
 
-## De qué se trata
+Para renovar recetas, hacer preguntas sobre un tratamiento o contar evolución **sin** pedir turno por un malestar nuevo agudo (ese otro camino es **Atención** / necesito atención).
 
-Paciente que **no** describe un malestar agudo nuevo para reservar con `atencion.necesito-atencion`, sino que:
+## Consulta de ejemplo
 
-- Quiere una **consulta general por mensaje** (async), o
-- Tiene un **plan de tratamiento activo** y necesita renovar medicación, hacer una pregunta, contar evolución o pedir turno de seguimiento.
-
-**Intent:** `atencion.consultas-seguimiento-flow`  
-**Encounter:** `SOLICITUD_ASYNC` (mensaje) o AMB con turno de seguimiento.
-
-**No confundir** con el journey pre-turno ambulatorio ([recorrido-pre-post-consulta.md](../../../producto/recorrido-pre-post-consulta.md)).
-
----
-
-## Prerrequisitos QA
-
-| Requisito | Notas |
-|-----------|--------|
-| Usuario paciente con app | |
-| **Camino async:** bandeja «Consultas por mensaje» habilitada en el efector | Etapa 3+ [atencion-remota-async.md](../../../producto/atencion-remota-async.md) |
-| **Camino plan:** paciente con **care plan activo** | [planes-de-tratamiento.md](../../../producto/planes-de-tratamiento.md) |
-| Médico con sesión en el servicio del async o del plan | PES correcto |
-| Opcional: teleconsulta habilitada | Si probás rama «pedir turno» con video |
-
----
-
-## Consulta de ejemplo (guion)
-
-### Lo que dice el paciente (app)
-
-**Consulta general (async):**
+**Paciente — consulta general por mensaje:**
 
 > «Quiero consultar si puedo tomar ibuprofeno con la medicación que ya tomo.»
 
-**Seguimiento de plan — renovar:**
+**Paciente — seguimiento del plan, renovar receta:**
 
 > «Necesito renovar la receta de mi tratamiento para la presión. Me quedan dos días.»
 
-**Seguimiento — evolución:**
+**Paciente — contar evolución:**
 
 > «Vengo tomando la medicación hace dos semanas. Me siento mejor pero a veces me mareo al pararme.»
 
-### Lo que dice el médico (bandeja async o captura)
+**Médico respondiendo por mensaje:**
 
-**Respuesta async (chat):**
+> «Podés tomar ibuprofeno ocasional si no tenés antecedente de úlcera ni problema renal. Tomalo con comida. Si el mareo sigue, coordinamos turno presencial.»
 
-> «Podés tomar ibuprofeno ocasional si no tenés antecedente de úlcera ni insuficiencia renal. Tomalo con comida. Si el mareo persiste, coordinamos turno presencial.»
+**Médico en turno de seguimiento (si el paciente pidió turno):**
 
-**En turno de seguimiento (captura):**
-
-> «Control de HTA en tratamiento. Paciente refiere mejoría con episodios de ortostatismo leve. Ajusto horario de antihipertensivo y solicito control en 15 días.»
+> «Control de presión en tratamiento. Mejoría con mareos leves al pararse. Ajusto horario del medicamento. Control en quince días.»
 
 ---
 
-## Paciente — paso a paso
+## Paciente — consulta por mensaje
 
-### A. Consulta general por mensaje
-
-**Intent:** `atencion.consultas-seguimiento-flow` → **Consulta general**
-
-1. **Vos** abrís **Asistente** → atajo **Consultas y seguimiento** (o frase equivalente).
-2. **Vos** elegís consulta general y escribís el mensaje (guion ibuprofeno).
-3. **El sistema** crea solicitud async (`SOLICITUD_ASYNC`) sin turno.
-4. **El sistema** muestra la consulta activa en **Inicio** con acceso al chat.
-
-### B. Seguimiento desde plan de tratamiento
-
-**Intent:** `atencion.consultas-seguimiento-flow` → **Seguimiento**
-
-1. **Vos** entrás desde **detalle del plan** o el asistente.
-2. **Vos** elegís el plan activo y la necesidad (renovar / duda / evolución / turno).
-3. **Rama mensaje:** igual que async con contexto del plan.
-4. **Rama turno:** elegís modalidad (presencial / teleconsulta si aplica) y horario.
-
-### C. Esperar respuesta
-
-1. **Vos** esperás notificación de respuesta del equipo (push cuando el médico contesta, según configuración).
-2. **Vos** abrís el chat y leés la respuesta.
+1. **Vos** abrís el **Asistente** y elegís **Consultas y seguimiento** (atajo o frase parecida).
+2. **Vos** elegís **Consulta general** y escribís tu mensaje.
+3. **El sistema** crea la consulta sin turno ni fecha de videollamada.
+4. **El sistema** la muestra en **Inicio** con acceso al chat.
+5. **Vos** esperás la respuesta del equipo.
+6. Cuando el médico contesta, **vos** recibís un aviso y leés el mensaje en el chat.
 
 ---
 
-## Personal de salud — paso a paso
+## Paciente — seguimiento desde un plan de tratamiento
 
-### Bandeja «Consultas por mensaje»
-
-1. **Vos** abrís **Pacientes del día**; arriba aparece **Consultas por mensaje**.
-2. **El sistema** lista solicitudes con SLA, prioridad y mensaje del paciente.
-3. **Vos** tomás el caso (**Tomar y responder**).
-4. **El sistema** abre chat operativo (`consulta-chat`).
-5. **Vos** escribís la respuesta (guion médico).
-6. **El sistema** notifica al paciente; el caso puede cerrarse o quedar en seguimiento según flujo.
-
-### Turno de seguimiento (si el paciente eligió turno)
-
-1. **Vos** atendés desde agenda como ambulatorio, con motivo de seguimiento ya contextualizado.
-2. **Vos** documentás en captura (guion control HTA).
-3. **El sistema** guarda encounter AMB vinculado al turno.
+1. **Vos** entrás desde el **detalle de tu plan** o desde el asistente.
+2. **Vos** elegís el plan activo y qué necesitás: renovar medicación, una duda, contar evolución o pedir turno.
+3. Si elegís **mensaje**, escribís y esperás respuesta como arriba.
+4. Si elegís **turno**, elegís presencial o videollamada (si aparece) y un horario.
 
 ---
 
-## Notificaciones — cuándo esperar qué
+## Personal de salud — consultas por mensaje
 
-| Momento | Quién | Qué esperar |
-|---------|-------|-------------|
-| Al crear solicitud async | Paciente | Confirmación en app (consulta activa en inicio) |
-| SLA por vencer (bandas A/B) | Staff | Push de escalamiento (una vez por solicitud) | Ver `consulta_async_bandeja.yaml` |
-| Médico responde en chat | Paciente | Push de nueva respuesta / mensaje |
-| Recordatorios de care plan | Paciente | Push de adherencia o touchpoints del plan | [planes-de-tratamiento.md](../../../producto/planes-de-tratamiento.md) |
-| Turno de seguimiento reservado | Paciente | Confirmación de turno (igual ambulatorio) |
-
-No aplican pushes **JOURNEY_PRECONSULTA** del encounter journey de turno salvo que el paciente **también** tenga un turno AMB aparte.
+1. **Vos** abrís **Pacientes del día**.
+2. **El sistema** muestra arriba **Consultas por mensaje** con las solicitudes pendientes.
+3. **Vos** elegís una y tocás **Tomar y responder**.
+4. **El sistema** abre el chat con el mensaje del paciente.
+5. **Vos** escribís la respuesta (podés usar el guion de arriba).
+6. **El sistema** avisa al paciente en su celular.
 
 ---
 
-## Qué validar (checklist)
+## Personal de salud — turno de seguimiento
 
-| ID | Validación |
-|----|------------|
-| SEG-01 | `consultas-seguimiento-flow` no ofrece triage de malestar nuevo / urgencia |
-| SEG-02 | Async: solicitud en bandeja staff con mensaje del paciente |
-| SEG-03 | Staff responde; paciente ve mensaje en chat |
-| SEG-04 | Seguimiento desde plan: plan y necesidad prefijados si entró desde detalle |
-| SEG-05 | Rama turno: reserva exitosa y atención documentada |
-| SEG-06 | Frase de malestar agudo en chat clasifica a `necesito-atencion`, no a este flujo |
+1. **Vos** atendés el turno desde la agenda como un turno ambulatorio normal.
+2. **Vos** revisás en la historia el contexto del seguimiento.
+3. **Vos** guardás la consulta con el guion o el tuyo.
 
 ---
 
-## Referencias
+## Cuándo llegan los avisos
 
-- QA paciente: [asistente.md](../../paciente/asistente.md) · [laboratorio-receta-planes.md](../../paciente/laboratorio-receta-planes.md)
-- QA médico: [laboratorio-receta-planes.md](../../medico/laboratorio-receta-planes.md)
-- Producto: [consultas-seguimiento.md](../../../producto/consultas-seguimiento.md) · [planes-de-tratamiento.md](../../../producto/planes-de-tratamiento.md)
-- Notificaciones: [notificaciones-automaticas.md](../../staff/notificaciones-automaticas.md)
+| Cuándo | Quién | Qué debería pasar |
+|--------|-------|-------------------|
+| Al enviar la consulta por mensaje | Paciente | La consulta queda visible en Inicio |
+| Si pasa mucho tiempo sin respuesta | Personal del centro | Aviso de caso urgente o atrasado, si el centro lo usa |
+| Cuando el médico responde | Paciente | Aviso de mensaje nuevo |
+| Recordatorios del plan de tratamiento | Paciente | Avisos de medicación o controles, si están activos |
+| Si el paciente pidió turno de seguimiento | Paciente | Confirmación de turno como en ambulatorio |
+
+---
+
+[Medicina general](../ambulatorio/medicina-general.md) · [Teleconsulta](../ambulatorio/teleconsulta.md)

@@ -8,7 +8,6 @@ use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
 use common\models\Clinical\CareAssistanceResponse;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
-use common\models\Turno;
 
 /**
  * Contexto declarativo para ventanas y elegibilidad del journey (turno + encounter).

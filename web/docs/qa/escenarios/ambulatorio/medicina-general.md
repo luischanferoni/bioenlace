@@ -1,147 +1,86 @@
-# Ambulatorio — Medicina general (control / malestar leve)
+# Medicina general — turno presencial
 
-[← Ambulatorio](./README.md) · Producto: [triage-reserva-turno.md](../../../producto/triage-reserva-turno.md) · [recorrido-pre-post-consulta.md](../../../producto/recorrido-pre-post-consulta.md)
+[← Ambulatorio](./README.md)
 
-## De qué se trata
+## Consulta de ejemplo
 
-Paciente con **turno de medicina clínica / generalista**: control, síntoma leve programable (banda C/D) o seguimiento ambulatorio tras derivación. Incluye el **recorrido pre-consulta** (intake opcional, chat de motivos, cohorte) y la **atención del día** con captura clínica.
-
-**Intent principal (reserva):** `atencion.necesito-atencion`  
-**Encounter:** AMB, turno presencial o teleconsulta.
-
----
-
-## Prerrequisitos QA
-
-| Requisito | Notas |
-|-----------|--------|
-| Usuario paciente con sector/provincia | [contexto-registro.md](../../paciente/contexto-registro.md) |
-| Efector con servicio **Medicina clínica** y agenda con cupos | Hub paciente: solo generalistas en reserva directa |
-| Usuario médico (PES) con turno asignado al paciente de prueba | Misma fecha que la reserva |
-| Notificaciones push activas en el celular del paciente | Para recordatorios journey |
-| Opcional: `motivos_consulta_intake.yaml` con `enabled: true` | Si probás intake previo al chat |
-| Opcional: `care_cohort.enabled` en frontend | Si probás cuestionario pre-consulta por cohorte |
-
----
-
-## Consulta de ejemplo (guion)
-
-### Lo que dice el paciente (app / asistente)
-
-**Al reservar (asistente):**
+**Paciente al pedir turno (asistente):**
 
 > «Tengo un poco de tos desde hace tres días, sin fiebre. Quiero un turno con el médico clínico.»
 
-**En motivos pre-consulta (chat, 48–72 h antes del turno):**
+**Paciente al preparar la consulta (chat, unos días antes):**
 
 > «La tos es seca, más por la noche. No tuve fiebre. Tomé solo miel. No tengo dificultad para respirar.»
 
-**Si hay intake previo (formulario):**
+**Médico en la consulta (al guardar la atención):**
 
-- Motivo principal: *Síntoma o malestar nuevo*
-- Desde cuándo: *3 días*
-- Intensidad: *2 — leve*
-
-### Lo que dice el médico (en consultorio / captura)
-
-Dictado o texto en captura clínica:
-
-> «Paciente de 34 años, consulta por tos seca de tres días de evolución, sin fiebre ni disnea. Examen: buen estado general, auscultación sin ruidos agregados. Impresión: cuadro viral upper respiratory. Indicaciones: hidratación, analgesia si molesta, control si empeora o fiebre.»
+> «Paciente de 34 años, consulta por tos seca de tres días de evolución, sin fiebre ni dificultad para respirar. Buen estado general, auscultación sin ruidos agregados. Cuadro viral de vías respiratorias altas. Hidratación, analgesia si molesta, control si empeora o aparece fiebre.»
 
 ---
 
-## Paciente — paso a paso
+## Paciente
 
-### 1. Reservar turno
+### Sacar turno
 
-**Intent:** `atencion.necesito-atencion` (Atajo **Atención**)
+1. **Vos** abrís el **Asistente** (atajo **Atención**) y contás el malestar leve con tus palabras o el guion de arriba.
+2. **El sistema** hace unas preguntas breves: motivo, si hay signos de alarma, zona del cuerpo y cómo evolucionó.
+3. **Vos** elegís **Medicina clínica**, el centro, el profesional y un horario libre.
+4. **El sistema** confirma el turno y lo muestra en **Inicio** y en **Mis turnos**.
 
-1. **Vos** abrís **Asistente** y describís el malestar leve (frase del guion).
-2. **El sistema** muestra triage: motivo → alarmas → zona → evolución (sin banda A).
-3. **Vos** elegís servicio **Medicina clínica**, centro, profesional y horario.
-4. **El sistema** confirma el turno en **Inicio** → próximos turnos.
+### Preparar la consulta (unos días antes)
 
-### 2. Preparar la consulta (journey)
+1. Cuando se acerca la fecha (normalmente hasta tres días antes), **vos** entrás al turno desde **Inicio** o **Mis turnos** y elegís **Preparar tu consulta**.
+2. **El sistema** puede mostrar un formulario corto, un chat para contar tus motivos y, si el centro lo usa, un cuestionario de pre-consulta.
+3. **Vos** completás lo que aparezca y enviás los mensajes del chat.
+4. **El sistema** guarda todo; poco antes del horario arma un resumen para el médico.
 
-Cuando falten **≤ 72 h** para el turno (ventana por defecto):
+### Día del turno
 
-1. **Vos** entrás al turno desde **Inicio** o **Mis turnos** → **Preparar tu consulta** (hub journey).
-2. **El sistema** lista fases habilitadas: intake (si está activo), motivos de consulta, pre-consulta cohorte (si aplica).
-3. **Vos** completás intake (si corresponde) y el **chat de motivos** con el guion.
-4. **El sistema** guarda mensajes; el resumen IA se genera al **cerrar la ventana** (~2 min antes del turno).
-
-### 3. Día del turno
-
-1. **Vos** recibís recordatorios push si el cron los encoló al crear el turno.
-2. **Vos** podés confirmar asistencia: *«confirmo que voy»* (`turnos.confirmar-asistencia-flow`).
-3. Tras la atención, si hay pack followup, **el sistema** puede ofrecer **seguimiento post-consulta** en el hub (hasta +30 días).
+1. **Vos** podés recibir avisos en el celular recordando el turno.
+2. **Vos** podés escribir en el asistente *«confirmo que voy»* si el centro pide confirmar asistencia.
+3. **Vos** asistís al consultorio a la hora acordada.
+4. Después de la consulta, **el sistema** puede ofrecerte seguimiento en la app si el centro lo tiene activo.
 
 ---
 
-## Personal de salud — paso a paso
+## Personal de salud
 
-### 1. Antes del turno
+### Antes de la hora
 
-1. **Vos** (médico) abrís **Pacientes del día** o agenda con sesión ambulatoria.
-2. **El sistema** lista el turno del paciente de prueba.
+1. **Vos** abrís **Pacientes del día** o tu agenda del día (web o app Personal de Salud).
+2. **El sistema** muestra el turno del paciente.
 
-**Demasiado pronto (opcional):**
+Si abrís la historia demasiado pronto:
 
-1. **Vos** intentás abrir historia clínica muchas horas antes.
-2. **El sistema** puede responder `HC_ANTES_DE_VENTANA` hasta la ventana médico (~1 min antes por defecto).
+1. **El sistema** puede indicar que todavía no está disponible y pedirte esperar hasta unos minutos antes del turno.
 
-### 2. Pre-consulta en timeline
+### Revisar lo que envió el paciente
 
-1. **Vos** abrís timeline del paciente con `turno_id` en contexto (web o app Personal de Salud).
-2. **El sistema** muestra en orden:
-   - Preguntas previas al chat (si hubo intake),
-   - Resumen de motivos (chat/IA),
-   - Asistencia pre-consulta cohorte (si aplica),
-   - Signos vitales.
+1. **Vos** abrís la historia o línea de tiempo del paciente con ese turno en contexto.
+2. **El sistema** muestra, si existen: respuestas del formulario previo, resumen de motivos del chat y cuestionario de pre-consulta, y signos vitales.
 
-### 3. Atender y documentar
+### Atender
 
-1. **Vos** iniciás atención desde el turno ([medico/captura-clinica.md](../../medico/captura-clinica.md)).
-2. **Vos** dictás o escribís el guion del médico.
-3. **El sistema** propone borrador; **vos** revisás y **Guardar**.
-4. **El sistema** finaliza el encounter; puede programar notificaciones post-consulta (`JOURNEY_POSTCONSULTA_*`).
+1. **Vos** iniciás la atención desde el turno.
+2. **Vos** dictás o escribís la evolución (podés usar el guion del médico).
+3. **El sistema** propone un borrador ordenado.
+4. **Vos** revisás, corregís y tocás **Guardar**.
+5. **El sistema** registra la consulta; el paciente la ve en su historial.
 
 ---
 
-## Notificaciones — cuándo esperar qué
+## Cuándo llegan los avisos
 
-| Momento (referencia) | Quién | Qué esperar | Notas |
-|---------------------|-------|-------------|--------|
-| Al confirmar reserva | Paciente | Push de confirmación de turno | Según configuración del efector |
-| Tras crear turno (cron) | Paciente | Recordatorios journey (`JOURNEY_*`) hacia apertura de ventana motivos | Anchor `turno_start`; depende de `encounter_phase_windows.yaml` |
-| 72 h antes (aprox.) | Paciente | Aviso para preparar consulta / motivos | Deep link con `id_turno` y `phase` |
-| Cierre ventana motivos (~2 min antes) | — | Batch IA: resumen en `reason_text` | No es push; el médico lo ve en timeline |
-| 1 min antes del turno (aprox.) | Médico | Historia clínica disponible | Ventana `historia_clinica_apertura_medico_minutos` |
-| Tras finalizar atención | Paciente | Push post-consulta / touchpoints followup | Si hay pack y fase `post_consulta` habilitada |
-| Resumen de atención listo | Paciente | Aviso de resumen en lenguaje claro | [resumen-atencion-paciente.md](../../../producto/resumen-atencion-paciente.md) |
+| Cuándo | Quién | Qué debería pasar |
+|--------|-------|-------------------|
+| Al confirmar el turno | Paciente | Aviso de turno reservado (si las notificaciones están activas) |
+| Unos días antes | Paciente | Recordatorio para preparar la consulta y cargar motivos |
+| Pocos minutos antes del turno | Médico | Ya puede abrir la historia con los motivos del paciente |
+| Poco antes del horario | Paciente | Recordatorio del turno |
+| Después de la consulta | Paciente | Aviso de resumen de atención o encuesta de seguimiento, si el centro lo envía |
 
-En staging, el cron puede no correr en tiempo real: pedí al responsable ejecutar `php yii turno-notificacion/run` o confirmar intervalo.
+En el entorno de prueba los avisos pueden demorar un poco; si no llegan, consultá con quien administra el servidor.
 
 ---
 
-## Qué validar (checklist)
-
-| ID | Validación |
-|----|------------|
-| MG-01 | Reserva completa sin banda A; turno visible en app e agenda médico |
-| MG-02 | Hub «Preparar consulta» aparece dentro de ventana de motivos |
-| MG-03 | Chat de motivos guarda mensajes; resumen visible en timeline staff tras cierre de ventana |
-| MG-04 | Intake previo (si habilitado) visible en timeline antes del resumen |
-| MG-05 | Cohorte pre-consulta (si habilitada) visible en timeline staff |
-| MG-06 | Captura guarda encounter; paciente ve atención en historial |
-| MG-07 | Al menos un push journey o post-consulta recibido (o encolado verificado en BD/logs) |
-
----
-
-## Referencias
-
-- Ambulatorio remoto: [teleconsulta.md](./teleconsulta.md)
-- QA paciente: [turnos.md](../../paciente/turnos.md)
-- QA médico: [captura-clinica.md](../../medico/captura-clinica.md) · [turnos.md](../../medico/turnos.md)
-- QA staff: [turnos-agenda.md](../../staff/turnos-agenda.md) · [notificaciones-automaticas.md](../../staff/notificaciones-automaticas.md)
-- App Personal de Salud: [APS-07](../../app-personalsalud/README.md)
+También podés probar: [Teleconsulta](./teleconsulta.md) · [Odontología](./odontologia.md)

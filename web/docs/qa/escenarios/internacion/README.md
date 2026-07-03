@@ -1,144 +1,86 @@
-# Internación — Ingreso, evolución y alta (IMP)
+# Internación — ingreso, evolución y alta
 
-[← Escenarios](../README.md) · Producto: [internacion.md](../../../producto/internacion.md)
+[← Escenarios](../README.md)
 
-## De qué se trata
+El paciente no maneja la internación desde la app; el equipo usa la web o la app Personal de Salud con el centro en modo **internación**.
 
-Episodio de **internación en piso**: ingreso a cama, evoluciones clínicas durante la estadía y **alta estructurada** con epicrisis. El paciente **no opera** el circuito desde la app en el día a día; el equipo usa **web** o **app Personal de Salud** con sesión `encounter_class` internación (IMP).
+## Consulta de ejemplo
 
-**Encounter:** IMP con `parent=INTERNACION`, `parent_id=<id_internacion>`.
-
-**Intents típicos:** `internacion.mapa-camas-flow`, `internacion.alta-estructurada-flow`, `internacion.cambio-cama-flow`.
-
----
-
-## Prerrequisitos QA
-
-| Requisito | Notas |
-|-----------|--------|
-| Efector con módulo internación y camas cargadas | Al menos una cama libre |
-| Usuario staff con sesión **internación** | [transversal.md](../../staff/transversal.md) |
-| Paciente de prueba (persona en MPI) | Alta en guardia o ingreso directo |
-| Plantilla de epicrisis activa (opcional) | ABM `/internacion-epicrisis-plantilla` |
-| Médico / enfermería con permiso captura IMP | Mismo pipeline que ambulatorio |
-
----
-
-## Consulta de ejemplo (guion)
-
-### Lo que dice el paciente (guardia / admisión)
+**Paciente al ingreso (lo cuenta admisión o guardia):**
 
 > «Me internan por neumonía. Ya me hicieron la placa en guardia.»
 
-*(El paciente no usa la app para el mapa de camas; el relato es para admisión o ingreso desde guardia.)*
+**Médico de piso — evolución del día 2:**
 
-### Lo que dice el médico de piso (evolución — captura)
+> «Segundo día de internación por neumonía. Sin fiebre hace veinticuatro horas, buena saturación con oxígeno a demanda. Menos ruidos en el pulmón derecho. Sigue antibiótico endovenoso. Camina con ayuda. Laboratorio de control mañana.»
 
-> «Día 2 de internación por neumonía adquirida en comunidad. Afebril 24 h, saturación 97% con O2 discontinua. Auscultación: estertores basales derechos en mejoría. Continúa antibiótico EV. Deambulación asistida. Laboratorio control mañana.»
+**Médico — alta:**
 
-### Lo que dice el médico (alta — epicrisis)
-
-> «Egreso por mejoría clínica. Diagnóstico principal: neumonía NAC. Tratamiento completado. Alta con amoxicilina oral 3 días más. Control ambulatorio en 7 días. Reposo relativo e hidratación.»
+> «Egreso por mejoría. Neumonía tratada. Antibiótico oral tres días más. Control ambulatorio en una semana. Reposo relativo e hidratación.»
 
 ---
 
-## Paciente — paso a paso
+## Personal de salud — mapa de camas
 
-El paciente **no** gestiona internación desde la app. Lo que sí puede validarse del lado paciente:
-
-1. **Tras el alta**, si el programa lo prevé, **el sistema** puede enviar **seguimiento post-alta** o resumen de atención (push / Mis atenciones).
-2. Si el paciente tenía **turnos ambulatorios** previos, no se mezclan con el episodio IMP en el mismo flujo.
-
-Para QA integral, enfocá la prueba en **staff**; el paciente es dato de prueba en admisión/ingreso.
-
----
-
-## Personal de salud — paso a paso
-
-### 1. Mapa de camas
-
-**Intent:** `internacion.mapa-camas-flow` o menú Internación
-
-1. **Vos** fijás sesión en modo **internación**.
+1. **Vos** entrás con el centro en modo **internación**.
 2. **Vos** abrís el **mapa de camas**.
-3. **El sistema** muestra pisos/salas: libre, ocupada, bloqueada, aislamiento.
-4. **Vos** seleccionás una cama **libre** para ingreso o una **ocupada** para atender.
+3. **El sistema** muestra camas libres, ocupadas, bloqueadas o en aislamiento.
+4. **Vos** elegís una cama libre para ingresar o una ocupada para atender.
 
-### 2. Ingreso
+---
 
-1. **Vos** iniciás **ingreso** (mapa, ficha o desde guardia: `internacion/create?id_guardia=`).
-2. **El sistema** pide datos del episodio y confirma cama.
+## Personal de salud — ingresar paciente
+
+1. **Vos** iniciás el **ingreso** desde el mapa, desde guardia o desde la ficha del paciente.
+2. **El sistema** pide los datos del episodio y la cama.
 3. **Vos** confirmás.
-4. **El sistema** marca la cama **ocupada** y crea el episodio de internación.
+4. **El sistema** marca la cama como ocupada y abre la internación.
 
-Desde guardia: [urgencia](../urgencia/README.md) → internar paciente.
+---
 
-### 3. Atender en piso (evolución)
+## Personal de salud — evolución en el piso
 
-1. **Vos** elegís **Atender** desde la cama o la ficha.
-2. **El sistema** abre **timeline** con contexto `parent=INTERNACION`.
-3. **Vos** dictás o escribís la evolución (guion día 2).
-4. **El sistema** propone borrador; **vos** guardás.
-5. **El sistema** vincula el encounter IMP al episodio; al volver al mapa **se ve** la cama ocupada con el mismo paciente.
+1. **Vos** tocás **Atender** en la cama o en la ficha del internado.
+2. **El sistema** abre la historia clínica del paciente en contexto de internación.
+3. **Vos** escribís o dictás la evolución (guion del día 2).
+4. **Vos** guardás.
+5. **El sistema** registra la nota; al volver al mapa **sigue** el mismo paciente en la misma internación.
 
-Detalle captura: [medico/captura-clinica.md](../../medico/captura-clinica.md) (§ Internación).
+---
 
-### 4. Cambio de cama (opcional en la misma prueba)
+## Personal de salud — cambio de cama (opcional)
 
-**Intent:** `internacion.cambio-cama-flow`
-
-1. **Vos** pedís traslado a otra cama.
+1. **Vos** pedís **cambio de cama** (asistente o pantalla de internación).
 2. **El sistema** lista camas libres.
-3. **Vos** confirmás.
-4. **El sistema** libera la cama anterior, ocupa la nueva **sin** cambiar el id de internación.
-
-### 5. Alta estructurada
-
-**Intent:** `internacion.alta-estructurada-flow`
-
-1. **Vos** iniciás **alta estructurada** desde la ficha o el asistente.
-2. **El sistema** guía checklist, tipo de alta y **plantilla de epicrisis** (opcional).
-3. **Vos** editás la epicrisis (guion de egreso) y confirmás.
-4. **El sistema** ejecuta externación: cama **libre**, episodio **cerrado**.
-
-### 6. Ficha administrativa
-
-1. **Vos** abrís `/internacion/view` (datos administrativos: cama, fechas, obra social).
-2. **El sistema** **no** muestra pestañas clínicas MVC legacy; enlace a historia si aplica.
+3. **Vos** elegís una y confirmás.
+4. **El sistema** libera la cama anterior, ocupa la nueva y **mantiene** la misma internación.
 
 ---
 
-## Notificaciones — cuándo esperar qué
+## Personal de salud — alta
 
-| Momento | Quién | Qué esperar |
-|---------|-------|-------------|
-| Ingreso desde guardia | Staff | Caso sale de cola guardia; cama ocupada en mapa |
-| Inicio ingreso con camas libres | Staff | Sugerencia de camas candidatas (si configurado) |
-| Alta de internación | Paciente | Seguimiento post-alta / encuesta según programa (AGT-06) |
-| Resultado crítico en internado | Staff / paciente | Según reglas laboratorio del efecto |
-
-No aplican pushes **JOURNEY_PRECONSULTA** de turno ambulatorio durante la estadía (salvo turno ambulatorio aparte).
+1. **Vos** iniciás el **alta estructurada** desde la ficha o el asistente.
+2. **El sistema** guía los pasos: tipo de alta, checklist y texto de epicrisis (puede ofrecer una plantilla).
+3. **Vos** completás la epicrisis (guion de alta) y confirmás.
+4. **El sistema** da de alta al paciente, **libera** la cama y cierra el episodio.
 
 ---
 
-## Qué validar (checklist)
+## Paciente — después del alta
 
-| ID | Validación |
-|----|------------|
-| INT-01 | Mapa refleja estados libre / ocupada / bloqueada / aislamiento |
-| INT-02 | Ingreso ocupa cama y crea episodio único |
-| INT-03 | Captura IMP guarda evolución; visible al reabrir timeline del internado |
-| INT-04 | Cambio de cama: mismo episodio, cama nueva ocupada, anterior libre |
-| INT-05 | Alta estructurada cierra episodio y libera cama |
-| INT-06 | Plantilla epicrisis rellena placeholders (`{paciente}`, `{dias_internacion}`, …) |
-| INT-07 | Ingreso desde guardia enlaza `id_guardia` si aplica |
-| INT-08 | Ficha administrativa sin pestañas clínicas legacy rotas |
+1. Tras el alta, **el sistema** puede enviar al paciente un resumen o una encuesta de seguimiento en la app, si el centro lo tiene activo.
 
 ---
 
-## Referencias
+## Cuándo llegan los avisos
 
-- QA staff: [internacion.md](../../staff/internacion.md)
-- QA médico: [captura-clinica.md](../../medico/captura-clinica.md)
-- Guardia → internación: [urgencia](../urgencia/README.md)
-- Producto: [internacion.md](../../../producto/internacion.md) · [superficies-ui.md](../../../producto/superficies-ui.md)
+| Cuándo | Quién | Qué debería pasar |
+|--------|-------|-------------------|
+| Ingreso desde guardia | Personal | El caso sale de la cola de guardia; la cama figura ocupada |
+| Al iniciar ingreso | Personal | Sugerencia de camas libres, si el centro lo muestra |
+| Después del alta | Paciente | Seguimiento post-alta o encuesta, si el programa lo envía |
+| Resultado de laboratorio grave | Paciente o médico | Aviso según reglas del centro |
+
+---
+
+[Urgencia](../urgencia/README.md) (ingreso desde guardia) · [Medicina general](../ambulatorio/medicina-general.md)

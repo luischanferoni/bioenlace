@@ -1,114 +1,70 @@
-# Ambulatorio — Odontología (dolor dental / control)
+# Odontología — turno dental
 
-[← Ambulatorio](./README.md) · Producto: [medicina-clinica-hub-reserva.md](../../../producto/medicina-clinica-hub-reserva.md)
+[← Ambulatorio](./README.md)
 
-## De qué se trata
+## Consulta de ejemplo
 
-Paciente que necesita **odontología**: dolor en pieza dental, control semestral o tratamiento ya indicado. En el hub de reserva, el paciente **no elige odontólogo directamente** salvo que el efector lo permita con **derivación vigente** del clínico; en QA conviene tener ambos caminos claros.
-
-**Encounter:** AMB, workflow de odontología en `EncounterDefinition` (piezas, CPO, prácticas odontológicas).
-
----
-
-## Prerrequisitos QA
-
-| Requisito | Notas |
-|-----------|--------|
-| Servicio **Odontología** con agenda y profesional odontólogo | PES odontológico |
-| Paciente de prueba | Contexto sector/provincia |
-| **Camino A:** derivación del clínico al servicio odontológico | Registrar en captura clínica previa o asistente |
-| **Camino B:** turno odontológico directo | Solo si el efector lo permite fuera del hub |
-| Médico odontólogo con sesión ambulatoria | Para día de atención |
-
----
-
-## Consulta de ejemplo (guion)
-
-### Lo que dice el paciente (app / asistente)
-
-**Si entra por clínico primero (hub):**
+**Paciente al pedir turno con el clínico (primer paso):**
 
 > «Me duele una muela abajo a la derecha cuando como algo frío.»
 
-*(El clínico deriva a odontología; luego el paciente saca turno con derivación.)*
+**Paciente al preparar el turno con el odontólogo:**
 
-**Motivos pre-consulta (chat odontológico):**
+> «Dolor en un diente de abajo a la derecha, empeora con frío, desde hace una semana. Sin hinchazón ni fiebre.»
 
-> «Dolor en pieza inferior derecha, empeora con frío, desde hace una semana. No hinchazón ni fiebre.»
+**Odontólogo al guardar la atención:**
 
-### Lo que dice el odontólogo (captura)
-
-> «Paciente consulta por dolor a estímulos térmicos en pieza 4.6. Examen: caries oclusal profunda, percusión negativa, sin signos de absceso. Plan: obturación en sesión actual o en próximo turno según disponibilidad. Indicaciones postoperatorias si procede.»
-
-*(Completar campos del workflow: pieza, hallazgos, práctica realizada.)*
+> «Consulta por dolor al frío en pieza inferior derecha. Caries profunda, sin absceso. Se realiza obturación / se programa en próximo turno. Indicaciones postoperatorias si corresponde.»
 
 ---
 
-## Paciente — paso a paso
+## Paciente
 
-### Camino recomendado — con derivación
+### Si primero va al clínico (camino habitual)
 
-1. **Vos** reservás turno de **medicina clínica** con malestar dental leve (`atencion.necesito-atencion`).
-2. **El médico clínico** atiende y registra **derivación a odontología**.
-3. **Vos** sacás turno odontológico (asistente o pantalla de turnos con derivación vigente).
-4. **El sistema** confirma turno en odontología.
+1. **Vos** pedís turno de **medicina clínica** contando el dolor dental.
+2. **El médico clínico** te atiende y te deriva a odontología.
+3. **Vos** sacás turno con el odontólogo (asistente o pantalla de turnos; el sistema debe reconocer la derivación si el centro lo exige).
+4. **El sistema** confirma el turno de odontología.
 
-### Pre-consulta (si aplica al servicio)
+### Preparar el turno
 
-1. Dentro de la ventana de motivos, **vos** completás chat (y intake/cohorte si el efector los tiene para AMB).
-2. **El sistema** asocia motivos al encounter del turno odontológico.
+1. Unos días antes, **vos** entrás al turno y completás el chat de motivos si está habilitado.
+2. **El sistema** guarda lo que escribís para que lo vea el odontólogo.
 
 ### Día del turno
 
-1. **Vos** asistís al consultorio odontológico.
-2. Tras la atención, **el sistema** muestra la visita en **Mis atenciones**.
+1. **Vos** vas al consultorio odontológico a la hora acordada.
+2. Después, **el sistema** muestra la visita en **Mis atenciones**.
 
 ---
 
-## Personal de salud — paso a paso
+## Personal de salud
 
-### Clínico (si aplica derivación)
+### Médico clínico (derivación)
 
-1. **Vos** atendés en medicina general y registrás derivación a odontología en captura.
-2. **El sistema** deja la derivación disponible para reserva odontológica.
+1. **Vos** atendés al paciente por el dolor dental.
+2. **Vos** registrás la derivación a odontología al guardar la consulta.
+3. **El sistema** deja lista la derivación para que el paciente pueda sacar turno.
 
-### Odontólogo — día de atención
+### Odontólogo — día del turno
 
 1. **Vos** abrís el turno desde **Pacientes del día**.
-2. **Vos** revisás motivos en timeline (mismo orden que medicina general: intake → resumen → cohorte).
-3. **Vos** abrís captura con **formulario de odontología** (piezas, prácticas).
-4. **Vos** dictás el guion y completás campos estructurados (pieza 4.6, obturación, etc.).
-5. **El sistema** guarda el encounter; planillas ministeriales C7 si el efector las usa ([reportes-nomenclador.md](../../staff/reportes-nomenclador.md)).
+2. **Vos** revisás en la historia los motivos que cargó el paciente.
+3. **Vos** abrís la atención; **el sistema** muestra el formulario de odontología (piezas, prácticas).
+4. **Vos** completás la ficha y guardás con el guion de arriba o el tuyo.
+5. **El sistema** deja registrada la consulta; al reabrir la historia **se ve** lo guardado.
 
 ---
 
-## Notificaciones — cuándo esperar qué
+## Cuándo llegan los avisos
 
-| Momento | Quién | Qué esperar |
-|---------|-------|-------------|
-| Reserva turno odontológico | Paciente | Confirmación / recordatorio de turno (igual que ambulatorio general) |
-| Ventana motivos (si aplica) | Paciente | Push journey `JOURNEY_*` según fases habilitadas |
-| Cierre ventana motivos | — | Resumen IA en timeline odontólogo |
-| Post atención | Paciente | Resumen de atención; post-consulta cohorte si configurada |
-
-No hay circuito de guardia ni bandeja async en este escenario salvo que el paciente use por error [seguimiento](../seguimiento/README.md).
+| Cuándo | Quién | Qué debería pasar |
+|--------|-------|-------------------|
+| Al reservar turno odontológico | Paciente | Confirmación de turno |
+| Unos días antes | Paciente | Recordatorio para cargar motivos (si aplica) |
+| Después de la consulta | Paciente | Resumen de atención, si el centro lo envía |
 
 ---
 
-## Qué validar (checklist)
-
-| ID | Validación |
-|----|------------|
-| ODO-01 | Reserva odontológica exitosa (con derivación si el hub lo exige) |
-| ODO-02 | Timeline staff muestra motivos pre-turno |
-| ODO-03 | Formulario odontológico carga campos de especialidad (no workflow genérico solo) |
-| ODO-04 | Guardado persiste pieza/práctica; visible al reabrir historia |
-| ODO-05 | Planilla C7 genera sin error si el efector la usa (opcional) |
-
----
-
-## Referencias
-
-- QA médico: [captura-clinica.md](../../medico/captura-clinica.md) (§ Odontología)
-- QA staff: [reportes-nomenclador.md](../../staff/reportes-nomenclador.md) (§ Planilla odontología)
-- Producto hub: [medicina-clinica-hub-reserva.md](../../../producto/medicina-clinica-hub-reserva.md)
+[Medicina general](./medicina-general.md) · [Teleconsulta](./teleconsulta.md)

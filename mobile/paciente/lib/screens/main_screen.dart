@@ -11,6 +11,7 @@ import 'chat_screen.dart';
 import 'care_plan_detail_screen.dart';
 import 'configuracion_screen.dart';
 import 'encounter_summary_detail_screen.dart';
+import 'chat_motivos_screen.dart';
 import 'paciente_provincia_context_screen.dart';
 import '../config/paciente_intents.dart';
 
@@ -81,6 +82,11 @@ class _MainScreenState extends State<MainScreen> {
           _abrirResumenAtencion(encounterId);
           return;
         }
+        final journeyPush = journeyPushDesdeData(data);
+        if (journeyPush != null) {
+          _abrirJourneyDesdePush(journeyPush);
+          return;
+        }
         final stub = PushNotificationService.turnoStubDesdePush(data);
         if (stub != null) {
           _abrirResolverTurno(stub);
@@ -131,6 +137,67 @@ class _MainScreenState extends State<MainScreen> {
           apiAbsoluteUrl: uri.toString(),
           authToken: widget.authToken,
           appClient: 'paciente-flutter',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _abrirJourneyDesdePush(Map<String, String> push) async {
+    final turnoId = int.tryParse(push['id_turno'] ?? '') ?? 0;
+    if (turnoId <= 0) return;
+
+    final api = EncounterJourneyApi(authToken: widget.authToken);
+    final estado = await api.fetchEstado(turnoId: turnoId);
+    if (!mounted) return;
+    if (estado == null) {
+      _openAlertas();
+      return;
+    }
+
+    var turno = turnoConJourneyDesdeEstado({'id': turnoId}, estado);
+    final encounterRaw = push['encounter_id'];
+    if (encounterRaw != null && encounterRaw.isNotEmpty) {
+      final eid = int.tryParse(encounterRaw);
+      if (eid != null && eid > 0) {
+        turno['encounter_id'] = eid;
+        turno['id_consulta'] = eid;
+      }
+    }
+
+    final phase = push['phase']?.trim() ?? '';
+    if (phase.isNotEmpty && journeyPhase(turno, phase)?['enabled'] == true) {
+      abrirFaseEncounterJourney(
+        context: context,
+        turno: turno,
+        phaseId: phase,
+        authToken: widget.authToken,
+        onOpenMotivos: _abrirMotivosDesdeJourney,
+      );
+      return;
+    }
+
+    abrirPrepararConsultaHub(
+      context: context,
+      turno: turno,
+      authToken: widget.authToken,
+      onOpenMotivos: _abrirMotivosDesdeJourney,
+    );
+  }
+
+  void _abrirMotivosDesdeJourney(
+    BuildContext context, {
+    required int consultaId,
+    required String titulo,
+  }) {
+    final chat = widget.chatService;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChatMotivosScreen(
+          consultaId: consultaId,
+          authToken: widget.authToken,
+          userId: chat.currentUserId,
+          userName: chat.currentUserName,
+          titulo: titulo,
         ),
       ),
     );

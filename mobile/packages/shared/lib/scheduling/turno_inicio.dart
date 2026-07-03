@@ -83,6 +83,9 @@ bool turnoMotivosInputAbiertoEnProducto(
   Map<String, dynamic> turno, {
   int minutosAntesCierre = 2,
 }) {
+  final journeyEnabled = journeyPhaseEnabled(turno, 'motivos_consulta');
+  if (journeyEnabled != null) return journeyEnabled;
+
   final flag = turno['motivos_input_abierto'];
   if (flag is bool) return flag;
 
@@ -105,4 +108,16 @@ bool turnoTieneEncounterParaMotivos(Map<String, dynamic> turno) {
   if (raw == null) return false;
   final id = int.tryParse(raw.toString());
   return id != null && id > 0;
+}
+
+/// `enabled` de una fase del journey si el listado/API incluyó `journey.phases`.
+bool? journeyPhaseEnabled(Map<String, dynamic> turno, String phaseId) {
+  final journey = turno['journey'];
+  if (journey is! Map) return null;
+  final phases = journey['phases'];
+  if (phases is! Map) return null;
+  final phase = phases[phaseId];
+  if (phase is! Map) return null;
+  final enabled = phase['enabled'];
+  return enabled is bool ? enabled : null;
 }

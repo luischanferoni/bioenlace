@@ -512,6 +512,49 @@ class HomeScreenState extends State<HomeScreen> {
     return n != null && n > 0 ? n : null;
   }
 
+  void _abrirMotivosConsulta(
+    BuildContext context,
+    int consultaId,
+    Map<String, dynamic> t,
+  ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatMotivosScreen(
+          consultaId: consultaId,
+          authToken: widget.authToken,
+          userId: widget.userId,
+          userName: widget.userName,
+          titulo:
+              'Motivos · ${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
+        ),
+      ),
+    );
+  }
+
+  void _abrirPrepararConsulta(BuildContext context, Map<String, dynamic> t) {
+    abrirPrepararConsultaHub(
+      context: context,
+      turno: t,
+      authToken: widget.authToken,
+      subjectPersonaId: _subjectPersonaId,
+      onOpenMotivos: (ctx, {required consultaId, required titulo}) {
+        Navigator.push(
+          ctx,
+          MaterialPageRoute(
+            builder: (_) => ChatMotivosScreen(
+              consultaId: consultaId,
+              authToken: widget.authToken,
+              userId: widget.userId,
+              userName: widget.userName,
+              titulo: titulo,
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   String _horaSinSegundos(String? hora) {
     if (hora == null || hora.trim().isEmpty) return '';
     final t = hora.trim();
@@ -889,11 +932,16 @@ class HomeScreenState extends State<HomeScreen> {
   }) {
     final tokens = context.bio;
     final estado = t['estado_label']?.toString() ?? t['estado']?.toString() ?? '';
-    final puedeMotivos = futuro &&
+    final usaJourney = futuro && !enResolucion && turnoTieneJourneyPayload(t);
+    final prepararPendiente =
+        usaJourney && prepararConsultaTienePendientes(t);
+    final puedeMotivos = !usaJourney &&
+        futuro &&
         !enResolucion &&
         turnoTieneEncounterParaMotivos(t) &&
         turnoMotivosInputAbiertoEnProducto(t);
-    final puedeAsistenciaCohorte = futuro &&
+    final puedeAsistenciaCohorte = !usaJourney &&
+        futuro &&
         !enResolucion &&
         turnoAsistenciaCohorteDisponibleEnProducto(t);
     final idConsulta = puedeMotivos ? _encounterIdDesdeTurno(t) : null;
@@ -939,26 +987,19 @@ class HomeScreenState extends State<HomeScreen> {
         icon: Icons.build_circle_outlined,
         onPressed: () => widget.onResolverTurno!(t),
       ));
+    } else if (!enResolucion && prepararPendiente) {
+      acciones.add(BioButton.outlinePrimary(
+        label: 'Preparar tu consulta',
+        size: BioButtonSize.sm,
+        icon: Icons.event_available_outlined,
+        onPressed: () => _abrirPrepararConsulta(context, t),
+      ));
     } else if (!enResolucion && idConsulta != null) {
       acciones.add(BioButton.outlinePrimary(
         label: 'Cargar motivos de consulta',
         size: BioButtonSize.sm,
         icon: Icons.edit_note,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ChatMotivosScreen(
-                consultaId: idConsulta,
-                authToken: widget.authToken,
-                userId: widget.userId,
-                userName: widget.userName,
-                titulo:
-                    'Motivos · ${_fechaAmigable(t['fecha']?.toString())} · ${_horaSinSegundos(t['hora']?.toString())}',
-              ),
-            ),
-          );
-        },
+        onPressed: () => _abrirMotivosConsulta(context, idConsulta, t),
       ));
     }
     if (!enResolucion && puedeAsistenciaCohorte && turnoId != null) {

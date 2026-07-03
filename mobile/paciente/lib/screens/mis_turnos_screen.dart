@@ -243,15 +243,44 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     final tokens = context.bio;
     final tipoAtencion = t['tipo_atencion'] as String? ?? 'presencial';
     final idConsulta = t['id_consulta'];
+    final usaJourney = turnoTieneJourneyPayload(t);
+    final prepararPendiente = usaJourney && prepararConsultaTienePendientes(t);
     final puedeChat = tipoAtencion == 'teleconsulta' && idConsulta != null;
-    final puedeMotivos =
-        idConsulta != null && turnoMotivosInputAbiertoEnProducto(t);
+    final puedeMotivos = !usaJourney &&
+        idConsulta != null &&
+        turnoMotivosInputAbiertoEnProducto(t);
     final turnoId = turnoIdDesdePayloadProducto(t);
-    final puedeAsistenciaCohorte = turnoAsistenciaCohorteDisponibleEnProducto(t);
+    final puedeAsistenciaCohorte =
+        !usaJourney && turnoAsistenciaCohorteDisponibleEnProducto(t);
     final tituloMotivos = 'Motivos · ${t['fecha']} ${t['hora']}';
     final estado = t['estado_label']?.toString() ?? '';
 
     final acciones = <Widget>[
+      if (prepararPendiente)
+        BioButton.outlinePrimary(
+          label: 'Preparar tu consulta',
+          size: BioButtonSize.sm,
+          icon: Icons.event_available_outlined,
+          onPressed: () => abrirPrepararConsultaHub(
+            context: context,
+            turno: t,
+            authToken: widget.authToken,
+            onOpenMotivos: (ctx, {required consultaId, required titulo}) {
+              Navigator.push(
+                ctx,
+                MaterialPageRoute(
+                  builder: (_) => ChatMotivosScreen(
+                    consultaId: consultaId,
+                    authToken: widget.authToken,
+                    userId: widget.userId,
+                    userName: widget.userName ?? 'Paciente',
+                    titulo: titulo,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
       if (puedeMotivos)
         BioButton.outlinePrimary(
           label: 'Cargar motivos',

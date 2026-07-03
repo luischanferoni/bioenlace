@@ -1,0 +1,55 @@
+# Elegibilidad por fase del recorrido encounter (sin hardcode en listados ni app).
+# {@see EncounterJourneyEligibilityService}
+version: 1
+
+phases:
+  motivos_consulta:
+    label: "Cargar motivos de consulta"
+    surface: chat_motivos
+    skip_when_any:
+      - field: encounter_id
+        empty: true
+      - field: encounter_class
+        not_in: [AMB]
+      - field: encounter_parent_type
+        in: [SOLICITUD_ASYNC]
+      - field: tipo_atencion
+        in: [async]
+      - field: turno_estado
+        in: [CANCELADO, EN_RESOLUCION]
+
+  asistencia_pre_consulta:
+    label: "Cuestionario pre-consulta"
+    surface: flow
+    intent_id: care-packs.asistencia-pre-consulta-flow
+    action_id: care-packs.assistance
+    skip_when_any:
+      - field: care_cohort_enabled
+        equals: false
+      - field: encounter_id
+        empty: true
+      - field: encounter_class
+        not_in: [AMB]
+      - field: encounter_parent_type
+        in: [SOLICITUD_ASYNC]
+      - field: sin_pack_assistance
+        equals: true
+      - field: asistencia_completada
+        equals: true
+      - field: turno_estado
+        in: [CANCELADO, EN_RESOLUCION]
+
+  post_consulta:
+    label: "Seguimiento post-consulta"
+    surface: pack_followup
+    skip_when_any:
+      - field: care_cohort_enabled
+        equals: false
+      - field: encounter_id
+        empty: true
+      - field: encounter_finished
+        equals: false
+      - field: sin_pack_followup
+        equals: true
+      - field: encounter_class
+        not_in: [AMB]

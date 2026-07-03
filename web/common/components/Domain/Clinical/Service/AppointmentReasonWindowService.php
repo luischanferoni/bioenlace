@@ -2,6 +2,9 @@
 
 namespace common\components\Domain\Clinical\Service;
 
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyContextBuilder;
 use common\models\Clinical\Encounter;
 use common\models\Scheduling\Turno;
 use Yii;
@@ -16,9 +19,9 @@ final class AppointmentReasonWindowService
 
     public static function minutesBeforeClose(): int
     {
-        $v = (int) (Yii::$app->params['motivos_consulta_cierre_minutos'] ?? self::DEFAULT_CLOSE_MINUTES_BEFORE);
-
-        return max(0, $v);
+        return (new EncounterPhaseWindowService())->minutesBeforeCloseForPhase(
+            EncounterPhaseWindowsCatalogService::PHASE_MOTIVOS
+        );
     }
 
     /** Minutos antes del turno en que el médico puede abrir historia clínica / motivos. */
@@ -73,14 +76,17 @@ final class AppointmentReasonWindowService
 
     public static function isInputOpenForEncounter(Encounter $encounter): bool
     {
-        $turnoAt = self::turnoStartsAt($encounter);
-        if ($turnoAt === null) {
+        $turno = self::resolveTurno($encounter);
+        if ($turno === null) {
             return false;
         }
+        $context = (new EncounterJourneyContextBuilder())->fromTurno($turno, $encounter);
+        $window = (new EncounterPhaseWindowService())->state(
+            EncounterPhaseWindowsCatalogService::PHASE_MOTIVOS,
+            $context
+        );
 
-        $closeAt = $turnoAt - self::minutesBeforeClose() * 60;
-
-        return self::nowTimestamp() < $closeAt;
+        return !empty($window['input_abierto']);
     }
 
     /**

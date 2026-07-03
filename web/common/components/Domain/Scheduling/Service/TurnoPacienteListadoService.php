@@ -2,8 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
-use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;
@@ -223,6 +222,10 @@ final class TurnoPacienteListadoService
 
         $resolucion = TurnoResolucion::findPendientePorTurno((int) $turno->id_turnos);
 
+        $journeySvc = new EncounterJourneyService();
+        $legacy = $journeySvc->legacyFlagsForTurno($turno, $encounter);
+        $journey = $journeySvc->buildForTurno($turno, $encounter);
+
         return [
             'id' => $turno->id_turnos,
             'id_persona' => $turno->id_persona,
@@ -238,12 +241,10 @@ final class TurnoPacienteListadoService
             'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
             'encounter_id' => $encounterId,
             'id_consulta' => $encounterId,
-            'motivos_input_abierto' => $encounterId !== null
-                && AppointmentReasonWindowService::isInputOpen($encounterId),
-            'motivos_cierre_minutos' => AppointmentReasonWindowService::minutesBeforeClose(),
-            'asistencia_cohorte_disponible' => CarePackConfig::isEnabled()
-                && $encounterId !== null
-                && AppointmentReasonWindowService::isInputOpen($encounterId),
+            'motivos_input_abierto' => $legacy['motivos_input_abierto'],
+            'motivos_cierre_minutos' => $legacy['motivos_cierre_minutos'],
+            'asistencia_cohorte_disponible' => $legacy['asistencia_cohorte_disponible'],
+            'journey' => $journey,
             'profesional' => $profesional,
             'created_at' => $turno->created_at,
             'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION,

@@ -1,0 +1,63 @@
+<?php
+
+namespace common\tests\unit\clinical;
+
+use Codeception\Test\Unit;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyEligibilityService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseEligibilityCatalogService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
+
+class EncounterJourneyServiceTest extends Unit
+{
+    protected function _after(): void
+    {
+        EncounterPhaseWindowsCatalogService::resetCacheForTests();
+        EncounterPhaseEligibilityCatalogService::resetCacheForTests();
+    }
+
+    public function testMotivosSkipWhenEncounterAsync(): void
+    {
+        $elig = new EncounterJourneyEligibilityService();
+        $result = $elig->evaluate('motivos_consulta', [
+            'encounter_id' => 10,
+            'encounter_class' => 'AMB',
+            'encounter_parent_type' => 'SOLICITUD_ASYNC',
+            'tipo_atencion' => 'async',
+            'turno_estado' => 'PENDIENTE',
+        ]);
+        $this->assertFalse($result['applies']);
+        $this->assertStringContainsString('encounter_parent_type', (string) $result['skip_reason']);
+    }
+
+    public function testMotivosAppliesForAmbulatoryTurno(): void
+    {
+        $elig = new EncounterJourneyEligibilityService();
+        $result = $elig->evaluate('motivos_consulta', [
+            'encounter_id' => 10,
+            'encounter_class' => 'AMB',
+            'encounter_parent_type' => 'TURNO',
+            'tipo_atencion' => 'presencial',
+            'turno_estado' => 'PENDIENTE',
+        ]);
+        $this->assertTrue($result['applies']);
+        $this->assertNull($result['skip_reason']);
+    }
+
+    public function testWindowClosedBeforeOpenOffset(): void
+    {
+        $turnoAt = time() + 10 * 86400;
+        $context = ['turno_starts_at' => $turnoAt];
+        $window = (new EncounterPhaseWindowService())->state('motivos_consulta', $context);
+        $this->assertFalse($window['input_abierto']);
+        $this->assertNotNull($window['abre_en']);
+    }
+
+    public function testWindowOpenInsideRange(): void
+    {
+        $turnoAt = time() + 3600;
+        $context = ['turno_starts_at' => $turnoAt];
+        $window = (new EncounterPhaseWindowService())->state('motivos_consulta', $context);
+        $this->assertTrue($window['input_abierto']);
+    }
+}

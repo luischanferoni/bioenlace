@@ -63,6 +63,34 @@ class TurnoNotificacionController extends Controller
                     if ($encounterId > 0) {
                         AppointmentReasonBatchService::process($encounterId);
                     }
+                } elseif (in_array($row->tipo, [
+                    TurnoNotificacionProgramada::TIPO_JOURNEY_MOTIVOS_RECORDATORIO,
+                    TurnoNotificacionProgramada::TIPO_JOURNEY_MOTIVOS_ULTIMO_AVISO,
+                    TurnoNotificacionProgramada::TIPO_JOURNEY_PRECONSULTA_RECORDATORIO,
+                ], true)) {
+                    $meta = $row->payload_json ? json_decode($row->payload_json, true) : [];
+                    $title = is_array($meta) ? trim((string) ($meta['title'] ?? '')) : '';
+                    $body = is_array($meta) ? trim((string) ($meta['body'] ?? '')) : '';
+                    if ($title === '') {
+                        $title = 'Prepará tu consulta';
+                    }
+                    if ($body !== '') {
+                        $body = str_replace('{fecha}', (string) $turno->fecha, $body);
+                    } else {
+                        $body = 'Tenés acciones pendientes antes del turno del ' . $turno->fecha;
+                    }
+                    $encounter = \common\models\Clinical\Encounter::findOne(['appointment_id' => (int) $turno->id_turnos]);
+                    $push->sendToPersona(
+                        (int) $turno->id_persona,
+                        [
+                            'type' => $row->tipo,
+                            'id_turno' => (string) $turno->id_turnos,
+                            'encounter_id' => $encounter ? (string) $encounter->id : '',
+                            'phase' => is_array($meta) ? (string) ($meta['phase'] ?? '') : '',
+                        ],
+                        $title,
+                        $body
+                    );
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_RETRASO_SOBRETURNO) {
                     $meta = $row->payload_json ? json_decode($row->payload_json, true) : [];
                     $min = isset($meta['minutos_retraso_estimado']) ? (int) $meta['minutos_retraso_estimado'] : 30;

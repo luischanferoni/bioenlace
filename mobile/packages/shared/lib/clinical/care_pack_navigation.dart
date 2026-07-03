@@ -6,6 +6,9 @@ import '../ui_json/ui_json_screen.dart';
 
 /// Ventana de asistencia pre-consulta por cohorte (misma ventana que motivos).
 bool turnoAsistenciaCohorteDisponibleEnProducto(Map<String, dynamic> turno) {
+  final journeyEnabled = journeyPhaseEnabled(turno, 'asistencia_pre_consulta');
+  if (journeyEnabled != null) return journeyEnabled;
+
   final flag = turno['asistencia_cohorte_disponible'];
   if (flag is bool) return flag;
 

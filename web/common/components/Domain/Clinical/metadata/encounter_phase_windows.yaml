@@ -1,0 +1,33 @@
+# Ventanas temporales del recorrido pre/post consulta (relativas al inicio del turno salvo anchor distinto).
+# {@see EncounterPhaseWindowsCatalogService}
+version: 1
+
+phases:
+  motivos_consulta:
+    anchor: turno_start
+    open_offset: "-72h"
+    close_offset: "param:motivos_consulta_cierre_minutos"
+    notifications:
+      - offset: "-24h"
+        tipo: JOURNEY_MOTIVOS_RECORDATORIO
+        title: "Prepará tu consulta"
+        body: "Contanos tus motivos de consulta para el turno del {fecha}."
+      - offset: "-2h"
+        tipo: JOURNEY_MOTIVOS_ULTIMO_AVISO
+        title: "Últimas horas para cargar motivos"
+        body: "Tu turno es pronto. Podés cargar motivos hasta poco antes del horario."
+
+  asistencia_pre_consulta:
+    anchor: turno_start
+    open_offset: "-48h"
+    close_offset: "param:motivos_consulta_cierre_minutos"
+    notifications:
+      - offset: "-24h"
+        tipo: JOURNEY_PRECONSULTA_RECORDATORIO
+        title: "Cuestionario pre-consulta"
+        body: "Completá el cuestionario antes de tu turno del {fecha}."
+
+  post_consulta:
+    anchor: encounter_finished
+    open_offset: "0h"
+    close_offset: "+30d"

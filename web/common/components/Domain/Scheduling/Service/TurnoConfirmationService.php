@@ -8,6 +8,7 @@ use common\models\TurnoNotificacionProgramada;
 use common\models\EfectorTurnosConfig;
 use common\models\TurnoEventoAudit;
 use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyNotificationScheduler;
 
 class TurnoConfirmationService
 {
@@ -16,16 +17,12 @@ class TurnoConfirmationService
      */
     public function programarNotificaciones(Turno $turno)
     {
-        $cfg = EfectorTurnosConfig::getOrCreateForEfector((int) $turno->id_efector);
-        if (!$cfg->recordatorios_habilitados && !$cfg->confirmacion_requerida) {
-            return;
-        }
-
         $dt = strtotime($turno->fecha . ' ' . $turno->hora . ':00');
         if ($dt === false) {
             return;
         }
 
+        $cfg = EfectorTurnosConfig::getOrCreateForEfector((int) $turno->id_efector);
         if ($cfg->confirmacion_requerida) {
             $runConfirm = $dt - 48 * 3600;
             if ($runConfirm > time()) {
@@ -45,6 +42,12 @@ class TurnoConfirmationService
         }
 
         $this->programarMotivosIaBatch($turno, $dt);
+
+        try {
+            (new EncounterJourneyNotificationScheduler())->scheduleForTurno($turno, $dt);
+        } catch (\Throwable $e) {
+            \Yii::warning('EncounterJourney notifications: ' . $e->getMessage(), 'encounter-journey');
+        }
 
         try {
             (new TurnoAntinoshowScheduler())->scheduleForTurno($turno, $dt);

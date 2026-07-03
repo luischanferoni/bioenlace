@@ -25,6 +25,15 @@ class TurnoNotificacionProgramada extends ActiveRecord
     /** Procesar motivos de consulta (IA en lote) ~1 min antes del turno. */
     const TIPO_MOTIVOS_IA_BATCH = 'MOTIVOS_IA_BATCH';
 
+    /** Recordatorio journey: cargar motivos de consulta. */
+    const TIPO_JOURNEY_MOTIVOS_RECORDATORIO = 'JOURNEY_MOTIVOS_RECORDATORIO';
+
+    /** Último aviso journey: motivos de consulta. */
+    const TIPO_JOURNEY_MOTIVOS_ULTIMO_AVISO = 'JOURNEY_MOTIVOS_ULTIMO_AVISO';
+
+    /** Recordatorio journey: cuestionario pre-consulta. */
+    const TIPO_JOURNEY_PRECONSULTA_RECORDATORIO = 'JOURNEY_PRECONSULTA_RECORDATORIO';
+
     /** Escalada multicanal tras push de reubicación (agente A02). */
     const TIPO_RESOLUCION_MULTICANAL = 'RESOLUCION_MULTICANAL';
 

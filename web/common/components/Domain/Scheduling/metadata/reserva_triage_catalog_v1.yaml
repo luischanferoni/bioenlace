@@ -17,7 +17,7 @@ steps:
     draft_field: triage_zona
 
 nodes:
-  # --- Raíz (3 caminos) ---
+  # --- Raíz (2 opciones en UI; seguimiento_cronico solo uso interno / consultas-seguimiento) ---
   - code: malestar_nuevo
     step: raiz
     label: "Malestar nuevo"
@@ -26,6 +26,7 @@ nodes:
     step: raiz
     label: "Seguimiento"
     urgency_band: C
+    ui_selectable: false
   - code: urgencia
     step: raiz
     label: "Urgencia"

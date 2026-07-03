@@ -13,14 +13,15 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 
 ## Intent del asistente
 
-- **`atencion.necesito-atencion`** — flujo principal (atajo primero en el chat): triage + reserva ambulatoria.
+- **`atencion.necesito-atencion`** — malestar nuevo o urgencia (atajo en el chat): triage + reserva ambulatoria.
+- **`atencion.consultas-seguimiento-flow`** — consulta general o seguimiento de tratamiento (app paciente); ver [consultas-seguimiento.md](./consultas-seguimiento.md).
 - **`turnos.crear-como-paciente`** — solo agenda (sin triage); clasificación por frases tipo “sacar turno”.
 
 ## Pasos del flujo (asistente / SPA)
 
 | Paso | Subintent | API UI |
 |------|-----------|--------|
-| Motivo (raíz) | `triage_raiz` | `GET /api/v1/turnos/reserva-triage-paso?step=raiz` |
+| Motivo (raíz) | `triage_raiz` | `GET /api/v1/turnos/reserva-triage-paso?step=raiz` — **Malestar nuevo** y **Urgencia** (sin «Seguimiento»; ese camino está en consultas-seguimiento) |
 | Alarmas | `triage_alarmas` | `?step=alarmas` |
 | Urgencia (solo banda A) | `triage_urgencia` | `GET /api/v1/turnos/reserva-triage-urgencia` |
 | Zona corporal | `triage_zona` | `?step=zona&triage_raiz=…` |
@@ -30,11 +31,12 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 | Modalidad (si aplica) | `select_tipo_atencion` | `?step=modalidad&id_servicio_asignado=…` + campos triage |
 | Centro → profesional → día → horario | (sin cambios) | flujo turnos existente |
 
-**Atajos por motivo raíz:**
+**Atajos por motivo raíz (necesito-atención):**
 
-- `tramite_admin` → salta triage clínico y va directo a servicio.
-- `control_cronico` → alarmas + evolución (sin zona/detalle).
-- `sintoma_nuevo` → recorrido completo.
+- `malestar_nuevo` → zona → modalidad → servicio.
+- `urgencia` → categoría → pantalla de derivación (sin reserva).
+
+El código `seguimiento_cronico` permanece en el catálogo para persistencia y el flow **Consultas y seguimiento** (`ui_selectable: false` en raíz).
 
 **Servicio (Medicina clínica hub):**
 

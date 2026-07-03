@@ -17,18 +17,16 @@ keywords:
 
 intent_semantics:
   goal: >-
-    Tres caminos: malestar nuevo (zona → servicio filtrado), seguimiento (care plan → servicio),
-    urgencia (categoría → pantalla guardia, sin reserva).
+    Dos caminos: malestar nuevo (zona → servicio filtrado) o urgencia (categoría → pantalla guardia, sin reserva).
+    El seguimiento de tratamiento vive en atencion.consultas-seguimiento-flow (app paciente).
   how: >-
     Malestar nuevo → zona → modalidad → servicio (solo los de esa zona).
-    Seguimiento → plan de tratamiento activo → modalidad → servicio del plan.
     Urgencia → categoría clínica → derivación a guardia/emergencias.
   preconditions:
     - El usuario puede autogestionar turnos ambulatorios no urgentes.
   constraints:
     - Urgencia (raíz o categoría banda A/B con halt): no se completa reserva.
     - Malestar nuevo presencial: servicios filtrados por zona (p. ej. pecho no muestra oftalmología).
-    - Seguimiento: servicios desde care plan activo del paciente.
     - Modalidad obligatoria salvo pantalla de urgencia terminal.
   outcome:
     - Turno con servicio acorde al camino; triage persistido.
@@ -74,10 +72,6 @@ subintents:
           draft_equals:
             triage_raiz: malestar_nuevo
         next: triage_zona
-      - when:
-          draft_equals:
-            triage_raiz: seguimiento_cronico
-        next: select_care_plan
       - when:
           draft_equals:
             modalidad_paso_requerido: "0"
@@ -129,23 +123,6 @@ subintents:
       params:
         step: zona
         triage_raiz: "draft.triage_raiz"
-
-  - id: select_care_plan
-    assistant_text: "Tu tratamiento"
-    requires:
-      - draft.triage_raiz
-    provides:
-      - draft.care_plan_id
-    next_routing:
-      - when:
-          draft_equals:
-            modalidad_paso_requerido: "0"
-        next: select_servicio
-      - when:
-          default: true
-        next: select_tipo_atencion
-    open_ui:
-      action_id: clinical.care-plan.ver-tratamiento-paciente
 
   - id: triage_urgencia
     assistant_text: "Urgencia"

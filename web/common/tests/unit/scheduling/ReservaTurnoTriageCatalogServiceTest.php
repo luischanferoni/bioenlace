@@ -49,4 +49,14 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
             'triage_alarmas' => 'urg_cat_trauma_sangrado',
         ]);
     }
+
+    public function testRaizNoListaSeguimientoCronico(): void
+    {
+        $svc = new ReservaTurnoTriageCatalogService();
+        $codes = array_column($svc->getOptionsForStep('raiz'), 'code');
+        $this->assertContains('malestar_nuevo', $codes);
+        $this->assertContains('urgencia', $codes);
+        $this->assertNotContains('seguimiento_cronico', $codes);
+        $this->assertNotNull($svc->findNode('seguimiento_cronico'));
+    }
 }

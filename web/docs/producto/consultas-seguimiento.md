@@ -13,7 +13,7 @@ Flujo dedicado para que el **paciente** consulte al equipo de salud **sin mezcla
 
 | Situación | Flujo |
 |-----------|--------|
-| Malestar nuevo, síntoma agudo, «necesito atención», urgencia | `atencion.necesito-atencion` (triage + modalidad presencial / tele / async) |
+| Malestar nuevo, síntoma agudo, «necesito atención», urgencia | `atencion.necesito-atencion` (motivo: **Malestar nuevo** o **Urgencia** — sin opción Seguimiento) |
 | Renovar receta, duda de tratamiento, evolución, consulta general por mensaje | `atencion.consultas-seguimiento-flow` |
 | Solo reservar o cancelar turno sin motivo clínico de seguimiento | Intents de turnos |
 

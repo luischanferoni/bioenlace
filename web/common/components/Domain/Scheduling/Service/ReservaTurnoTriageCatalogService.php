@@ -136,6 +136,9 @@ final class ReservaTurnoTriageCatalogService
             if ($code === '' || $label === '') {
                 continue;
             }
+            if (array_key_exists('ui_selectable', $node) && $node['ui_selectable'] === false) {
+                continue;
+            }
             $out[] = [
                 'code' => $code,
                 'label' => $label,

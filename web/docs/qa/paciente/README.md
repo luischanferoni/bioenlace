@@ -2,6 +2,8 @@
 
 [← Índice general](../README.md)
 
+**Pruebas integrales por caso clínico:** [escenarios/](../escenarios/README.md) (ambulatorio, urgencia, seguimiento).
+
 ## Flujos paso a paso
 
 | Archivo | De qué habla |

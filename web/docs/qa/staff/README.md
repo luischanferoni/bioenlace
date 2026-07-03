@@ -6,6 +6,8 @@ Roles RBAC típicos: **`Administrativo`**, **`enfermeria`**. Operación diaria e
 
 Referencia BD: [roles-desde-bd.md](../roles-desde-bd.md).
 
+**Pruebas integrales por caso clínico:** [escenarios/](../escenarios/README.md).
+
 ## Flujos paso a paso
 
 | Archivo | De qué habla |

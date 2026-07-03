@@ -66,3 +66,5 @@ La agenda del día expone `tipo_atencion` en cada turno; la lista muestra badge 
 - Insight educativo en listado del día y consulta async sin turno: [atencion-remota-async.md](./atencion-remota-async.md).
 
 Ver también: [triage-reserva-turno.md](./triage-reserva-turno.md), [turnos.md](./turnos.md), [medicina-clinica-hub-reserva.md](./medicina-clinica-hub-reserva.md).
+
+QA integrado: [../qa/escenarios/ambulatorio/teleconsulta.md](../qa/escenarios/ambulatorio/teleconsulta.md).

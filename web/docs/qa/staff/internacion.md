@@ -4,6 +4,8 @@
 
 Elegí el efector en modo **internación** ([transversal.md](./transversal.md)).
 
+**Guía integral por escenario:** [escenarios/internacion/README.md](../escenarios/internacion/README.md).
+
 ---
 
 ## Ver el mapa de camas

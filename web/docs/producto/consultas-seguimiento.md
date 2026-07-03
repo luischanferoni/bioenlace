@@ -51,3 +51,4 @@ flowchart TD
 - [atencion-remota-async.md](./atencion-remota-async.md) — consulta por mensaje y bandeja staff.
 - [triage-reserva-turno.md](./triage-reserva-turno.md) — triage del flujo «necesito atención» (no aplica a consulta general de este flujo).
 - [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — canal paciente vs staff.
+- QA por escenario: [../qa/escenarios/seguimiento/README.md](../qa/escenarios/seguimiento/README.md)

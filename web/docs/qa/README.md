@@ -2,6 +2,14 @@
 
 Documentación para **probar la app y la web**: qué hacer, qué deberías ver y qué marcar en el checklist.
 
+## Por escenario clínico (recomendado para pruebas integrales)
+
+| Carpeta | Tipo de encounter | Contenido |
+|---------|-------------------|-----------|
+| [escenarios/](./escenarios/README.md) | Ambulatorio, urgencia, seguimiento | Guías con guion de consulta, pasos paciente + médico y tabla de notificaciones |
+
+Dentro de **ambulatorio**: [medicina general](./escenarios/ambulatorio/medicina-general.md), [teleconsulta](./escenarios/ambulatorio/teleconsulta.md) y [odontología](./escenarios/ambulatorio/odontologia.md). También [internación](./escenarios/internacion/README.md) y [urgencia / seguimiento](./escenarios/README.md).
+
 ## Por rol / audiencia
 
 | Carpeta | Quién prueba | Rol RBAC | Superficie |

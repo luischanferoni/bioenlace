@@ -121,6 +121,7 @@ Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_t
 
 - [captura-clinica.md](./captura-clinica.md) — timeline staff y motivos pre-turno.
 - [turnos.md](./turnos.md) — reserva y listado.
+- QA integrado ambulatorio: [../qa/escenarios/ambulatorio/medicina-general.md](../qa/escenarios/ambulatorio/medicina-general.md)
 - [asistencia-cohortes.md](./asistencia-cohortes.md) — generación de packs.
 - [consultas-seguimiento.md](./consultas-seguimiento.md) — seguimiento de tratamiento (care plan).
 - [triage-reserva-turno.md](./triage-reserva-turno.md) — triage al reservar (no sustituye motivos).

@@ -106,3 +106,4 @@ Intents YAML (UI JSON descubierta, sin hardcode de pantalla):
 - Guardia e ingreso: [urgencias-guardia.md](./urgencias-guardia.md)  
 - Captura clínica: [captura-clinica.md](./captura-clinica.md)  
 - Motores asistente: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md)
+- QA por escenario: [../qa/escenarios/internacion/README.md](../qa/escenarios/internacion/README.md)

@@ -92,4 +92,4 @@ En el entorno de prueba los avisos pueden demorar un poco; si no llegan, consult
 
 ---
 
-También podés probar: [Teleconsulta](./teleconsulta.md) · [Odontología](./odontologia.md)
+También podés probar: [Teleconsulta](./teleconsulta.md) · [Odontología](./odontologia.md) · [Cohorte pre/post consulta](./cohorte-pre-post-consulta.md) (si el centro tiene cohortes activas)

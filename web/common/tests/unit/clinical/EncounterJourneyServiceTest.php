@@ -127,18 +127,6 @@ class EncounterJourneyServiceTest extends Unit
         $this->assertSame('-96h', $def['open_offset'] ?? null);
     }
 
-    public function testMotivosIntakeSkipWhenDisabled(): void
-    {
-        $elig = new EncounterJourneyEligibilityService();
-        $result = $elig->evaluate('motivos_intake', [
-            'motivos_intake_habilitado' => false,
-            'encounter_id' => 10,
-            'encounter_class' => 'AMB',
-            'turno_estado' => 'PENDIENTE',
-        ]);
-        $this->assertFalse($result['applies']);
-    }
-
     public function testPhaseIdsByAnchor(): void
     {
         $catalog = new EncounterPhaseWindowsCatalogService();

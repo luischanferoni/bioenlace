@@ -3,11 +3,6 @@
 version: 1
 
 phases:
-  motivos_intake:
-    anchor: turno_start
-    open_offset: "param:encounter_journey_preparar_minutos_antes"
-    close_offset: "param:motivos_consulta_cierre_minutos"
-
   motivos_consulta:
     anchor: turno_start
     open_offset: "param:encounter_journey_preparar_minutos_antes"

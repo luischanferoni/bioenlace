@@ -40,10 +40,12 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   final AudioRecorder _recorder = AudioRecorder();
   bool _isRecording = false;
 
-  static const String _welcomeMessage =
-      'Contanos en pocas palabras por qué pediste este turno. Podés escribir, enviar audios o fotos hasta 1 minuto antes del horario del turno; después armamos un resumen para el médico.';
+  static const String _fallbackWelcomeMessage =
+      'Contanos en pocas palabras por qué pediste este turno. Podés escribir, enviar audios o fotos hasta poco antes del horario del turno; después armamos un resumen para el médico.';
   bool _inputAbierto = true;
   String? _motivosResumen;
+  String? _chatGuideMessage;
+  String? _chatGuideTitle;
 
   @override
   void initState() {
@@ -75,6 +77,14 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       _messages = result['messages'] ?? [];
       _inputAbierto = result['input_abierto'] == true;
       _motivosResumen = result['motivos_resumen']?.toString();
+      final guide = result['chat_guide'];
+      if (guide is Map) {
+        final message = guide['message']?.toString().trim();
+        if (message != null && message.isNotEmpty) {
+          _chatGuideMessage = message;
+          _chatGuideTitle = guide['title']?.toString();
+        }
+      }
       if (result['success'] != true) _error = result['message'] as String?;
     });
     _scrollToBottom();
@@ -266,6 +276,9 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   }
 
   Widget _buildLista(BuildContext context) {
+    final guideMessage = _chatGuideMessage ?? _fallbackWelcomeMessage;
+    final guideTitle = _chatGuideTitle;
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(
@@ -285,9 +298,9 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                BioAlert.info(
-                  message: _welcomeMessage,
-                  icon: Icons.info_outline,
+                MotivosConsultaGuideBubble(
+                  message: guideMessage,
+                  title: guideTitle,
                 ),
                 if (!_inputAbierto) ...[
                   BioSpacing.gapH(BioSpacing.sm),

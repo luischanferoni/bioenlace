@@ -48,6 +48,7 @@ class MotivosConsultaService {
           'input_abierto': payload['input_abierto'] == true,
           'motivos_resumen': payload['motivos_resumen'],
           'cierre_en': payload['cierre_en'],
+          'chat_guide': payload['chat_guide'],
         };
       }
       return {

@@ -3,33 +3,10 @@
 version: 1
 
 phases:
-  motivos_intake:
-    label: "Preguntas previas"
-    surface: flow
-    action_id: encounter-journey.motivos-intake
-    api_path: /api/v1/encounter-journey/motivos-intake
-    skip_when_any:
-      - field: motivos_intake_habilitado
-        equals: false
-      - field: motivos_intake_completado
-        equals: true
-      - field: encounter_id
-        empty: true
-      - field: encounter_class
-        not_in: [AMB]
-      - field: encounter_parent_type
-        in: [SOLICITUD_ASYNC]
-      - field: tipo_atencion
-        in: [async]
-      - field: turno_estado
-        in: [CANCELADO, EN_RESOLUCION]
-
   motivos_consulta:
-    label: "Cargar motivos de consulta"
+    label: "Contanos tus motivos de consulta"
     surface: chat_motivos
     skip_when_any:
-      - field: motivos_intake_bloquea_chat
-        equals: true
       - field: encounter_id
         empty: true
       - field: encounter_class

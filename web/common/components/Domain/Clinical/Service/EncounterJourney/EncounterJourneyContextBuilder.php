@@ -33,10 +33,7 @@ final class EncounterJourneyContextBuilder
             && CareAssistanceResponse::find()->where(['encounter_id' => $encounterId])->exists();
 
         $intakeCatalog = new EncounterMotivosIntakeCatalogService();
-        $motivosIntakeHabilitado = $intakeCatalog->isEnabled();
-        $motivosIntakeCompletado = $encounter !== null
-            && trim((string) ($encounter->motivos_intake_json ?? '')) !== '';
-        $motivosIntakeBloqueaChat = $motivosIntakeHabilitado && !$motivosIntakeCompletado;
+        $motivosGuiaHabilitada = $intakeCatalog->isEnabled();
 
         $tipoAtencion = trim((string) ($turno->tipo_atencion ?? Turno::TIPO_ATENCION_PRESENCIAL));
         if ($encounter !== null && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
@@ -67,9 +64,7 @@ final class EncounterJourneyContextBuilder
             'sin_pack_followup' => $followupPackId <= 0,
             'asistencia_completada' => $asistenciaCompletada,
             'motivos_resumen_present' => $encounter !== null && trim((string) $encounter->reason_text) !== '',
-            'motivos_intake_habilitado' => $motivosIntakeHabilitado,
-            'motivos_intake_completado' => $motivosIntakeCompletado,
-            'motivos_intake_bloquea_chat' => $motivosIntakeBloqueaChat,
+            'motivos_guia_habilitada' => $motivosGuiaHabilitada,
             'turno_starts_at' => $encounter !== null ? AppointmentReasonWindowService::turnoStartsAt($encounter) : null,
         ];
     }

@@ -22,27 +22,14 @@ final class EncounterMotivosIntakeStaffViewService
     public function buildForEncounter(Encounter $encounter): ?array
     {
         $answers = $this->decodeAnswers($encounter->motivos_intake_json ?? null);
-        $catalogEnabled = $this->catalog->isEnabled();
-
-        if ($answers === [] && !$catalogEnabled) {
-            return null;
-        }
-
-        $notesForStaff = $this->notesForStaff();
-
         if ($answers === []) {
-            return [
-                'status' => 'pending',
-                'title' => $this->catalog->title(),
-                'notes_for_staff' => $notesForStaff,
-                'answers' => [],
-            ];
+            return null;
         }
 
         return [
             'status' => 'submitted',
             'title' => $this->catalog->title(),
-            'notes_for_staff' => $notesForStaff,
+            'notes_for_staff' => $this->notesForStaff(),
             'answers' => $this->formatAnswersForStaff($answers),
         ];
     }

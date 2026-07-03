@@ -5,7 +5,6 @@ import 'care_pack_navigation.dart';
 
 /// Fases pre-turno del hub «Preparar tu consulta».
 const List<String> kEncounterJourneyPreTurnoPhases = [
-  'motivos_intake',
   'motivos_consulta',
   'asistencia_pre_consulta',
 ];
@@ -15,7 +14,6 @@ const List<String> kEncounterJourneyPostTurnoPhases = [
   'post_consulta',
 ];
 
-const String kEncounterJourneyPhaseMotivosIntake = 'motivos_intake';
 const String kEncounterJourneyPhaseMotivos = 'motivos_consulta';
 const String kEncounterJourneyPhaseAsistencia = 'asistencia_pre_consulta';
 const String kEncounterJourneyPhasePostConsulta = 'post_consulta';
@@ -56,7 +54,10 @@ Map<String, dynamic>? journeyPhase(
   if (journey is! Map) return null;
   final phases = journey['phases'];
   if (phases is! Map) return null;
-  final phase = phases[phaseId];
+  var phase = phases[phaseId];
+  if (phase == null && phaseId == 'motivos_intake') {
+    phase = phases[kEncounterJourneyPhaseMotivos];
+  }
   if (phase is! Map) return null;
   return Map<String, dynamic>.from(phase);
 }

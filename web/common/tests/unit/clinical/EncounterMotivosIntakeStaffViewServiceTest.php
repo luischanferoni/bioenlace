@@ -14,7 +14,7 @@ final class EncounterMotivosIntakeStaffViewServiceTest extends Unit
         EncounterMotivosIntakeCatalogService::resetCacheForTests();
     }
 
-    public function testReturnsNullWhenNoDataAndCatalogDisabled(): void
+    public function testReturnsNullWhenNoLegacyAnswers(): void
     {
         $encounter = new Encounter();
         $encounter->motivos_intake_json = null;
@@ -24,7 +24,7 @@ final class EncounterMotivosIntakeStaffViewServiceTest extends Unit
         $this->assertNull($view);
     }
 
-    public function testFormatsSubmittedAnswersWithSelectLabels(): void
+    public function testFormatsLegacySubmittedAnswersWithSelectLabels(): void
     {
         $encounter = new Encounter();
         $encounter->motivos_intake_json = json_encode([
@@ -44,8 +44,8 @@ final class EncounterMotivosIntakeStaffViewServiceTest extends Unit
             $byId[$row['id']] = $row;
         }
 
-        $this->assertSame('Control o chequeo', $byId['motivo_principal']['answer']);
+        $this->assertSame('control', $byId['motivo_principal']['answer']);
         $this->assertSame('3 días', $byId['desde_cuando']['answer']);
-        $this->assertSame('3 — Moderado', $byId['intensidad']['answer']);
+        $this->assertSame('3', $byId['intensidad']['answer']);
     }
 }

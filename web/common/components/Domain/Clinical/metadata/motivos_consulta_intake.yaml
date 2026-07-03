@@ -1,45 +1,27 @@
-# Preguntas estructuradas opcionales antes del chat de motivos.
+# Guía conversacional del chat de motivos de consulta (misma superficie que motivos_consulta).
 # {@see EncounterMotivosIntakeCatalogService}
-version: 1
-enabled: false
-title: "Antes de contarnos tus motivos"
-intro: "Estas respuestas ayudan a orientar tu consulta. Luego podés ampliar en el chat."
+version: 2
+enabled: true
+presentation: chat
+title: "Motivos de consulta"
 notes_for_staff: ""
 
-questions:
-  - id: motivo_principal
-    label: "¿Cuál es el principal motivo de tu consulta?"
-    type: select
-    required: true
-    options:
-      - value: control
-        label: Control o chequeo
-      - value: sintoma_nuevo
-        label: Síntoma o malestar nuevo
-      - value: seguimiento
-        label: Seguimiento de algo ya conocido
-      - value: renovacion
-        label: Renovación de tratamiento o estudio
-      - value: otro
-        label: Otro
+chat_guide:
+  greeting: "Hola. Para preparar tu consulta, contanos:"
+  questions:
+    - "¿Cuál es el principal motivo hoy?"
+    - "¿Desde cuándo lo tenés?"
+    - "¿Empeoró, mejoró o sigue igual?"
+    - "¿Tomás alguna medicación o tenés alguna enfermedad conocida?"
+    - "¿Hay algo que te preocupe especialmente (fiebre, dolor fuerte, falta de aire)?"
+  footer: "Podés responder todo en un solo mensaje, por audio o con fotos si hace falta. Hasta poco antes del horario del turno armamos un resumen para el médico."
 
-  - id: desde_cuando
-    label: "¿Desde cuándo lo notás? (opcional)"
-    type: text
-    required: false
-
-  - id: intensidad
-    label: "¿Qué tan molesto es? (1 = leve, 5 = muy intenso)"
-    type: select
-    required: false
-    options:
-      - value: "1"
-        label: "1 — Leve"
-      - value: "2"
-        label: "2"
-      - value: "3"
-        label: "3 — Moderado"
-      - value: "4"
-        label: "4"
-      - value: "5"
-        label: "5 — Muy intenso"
+variants:
+  - match:
+      reserva_triage_code: zona_pecho
+    extra_questions:
+      - "¿Sentís opresión o dolor en el pecho al respirar o al hacer esfuerzo?"
+  - match:
+      reserva_triage_code: zona_cabeza
+    extra_questions:
+      - "¿Tuviste mareos, visión borrosa o el peor dolor de cabeza de tu vida?"

@@ -7,13 +7,14 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\components\Domain\Clinical\Assistant\AppointmentReasonEntry;
 use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
-use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeCatalogService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaMotivosMessage;
+use common\models\Scheduling\Turno;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 
 /**
@@ -37,7 +38,6 @@ class MotivosConsultaController extends BaseController
         if ($err !== null) {
             return $err;
         }
-        unset($encounter);
 
         $messages = ConsultaMotivosMessage::find()
             ->where(['encounter_id' => $encounterId])
@@ -45,6 +45,9 @@ class MotivosConsultaController extends BaseController
             ->all();
 
         $formattedMessages = ConsultaMotivosMessage::serializeForApi($messages);
+        $chatGuide = (new EncounterMotivosIntakeCatalogService())->buildChatGuide(
+            $this->reservaTriageCodeForEncounter($encounter)
+        );
 
         return [
             'success' => true,
@@ -54,6 +57,7 @@ class MotivosConsultaController extends BaseController
                     'messages' => $formattedMessages,
                     'encounter_id' => $encounterId,
                     'consulta_id' => $encounterId,
+                    'chat_guide' => $chatGuide,
                 ],
                 AppointmentReasonWindowService::apiState($encounterId)
             ),
@@ -77,12 +81,8 @@ class MotivosConsultaController extends BaseController
         }
 
         $encounter = Encounter::findOne(['id' => $encounterId, 'deleted_at' => null]);
-        if ($encounter !== null && (new EncounterMotivosIntakeService())->blocksMotivosChat($encounter)) {
-            return [
-                'success' => false,
-                'message' => 'Completá las preguntas previas antes de cargar motivos en el chat.',
-                'data' => null,
-            ];
+        if ($encounter === null) {
+            return ['success' => false, 'message' => 'Encounter no encontrado', 'data' => null];
         }
 
         $userId = (int) Yii::$app->user->id;
@@ -116,13 +116,6 @@ class MotivosConsultaController extends BaseController
         [$encounter, $err] = $this->requireEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
         if ($err !== null) {
             return $err;
-        }
-        if ((new EncounterMotivosIntakeService())->blocksMotivosChat($encounter)) {
-            return [
-                'success' => false,
-                'message' => 'Completá las preguntas previas antes de cargar motivos en el chat.',
-                'data' => null,
-            ];
         }
         $subjectPersonaId = (int) $encounter->subject_persona_id;
 
@@ -230,4 +223,17 @@ class MotivosConsultaController extends BaseController
     }
 
     private const UPLOAD_MESSAGE_TYPES = ['imagen', 'audio'];
+
+    private function reservaTriageCodeForEncounter(Encounter $encounter): string
+    {
+        $turno = null;
+        if ($encounter->appointment_id) {
+            $turno = Turno::findActive()->andWhere(['id_turnos' => (int) $encounter->appointment_id])->one();
+        }
+        if (!$turno instanceof Turno && $encounter->parent_type === Encounter::PARENT_TURNO && $encounter->parent_id) {
+            $turno = Turno::findActive()->andWhere(['id_turnos' => (int) $encounter->parent_id])->one();
+        }
+
+        return $turno instanceof Turno ? trim((string) ($turno->reserva_triage_code ?? '')) : '';
+    }
 }

@@ -30,9 +30,8 @@
 ### Preparar la consulta (unas horas antes)
 
 1. Cuando faltan unas **cuatro horas** para el turno, **vos** entrás desde **Inicio** o **Mis turnos** y elegís **Preparar tu consulta**.
-2. **El sistema** puede mostrar un formulario corto, un chat para contar tus motivos y, si el centro lo usa, un cuestionario de pre-consulta.
-3. **Vos** completás lo que aparezca y enviás los mensajes del chat.
-4. **El sistema** guarda todo; poco antes del horario arma un resumen para el médico.
+2. **El sistema** abre un chat con una guía de preguntas; **vos** respondés en texto libre, audio o fotos.
+3. **El sistema** guarda todo; poco antes del horario arma un resumen para el médico.
 
 ### Día del turno
 
@@ -57,7 +56,7 @@ Si abrís la historia demasiado pronto:
 ### Revisar lo que envió el paciente
 
 1. **Vos** abrís la historia o línea de tiempo del paciente con ese turno en contexto.
-2. **El sistema** muestra, si existen: respuestas del formulario previo, resumen de motivos del chat y cuestionario de pre-consulta, y signos vitales.
+2. **El sistema** muestra, si existen: resumen de motivos del chat y, si el centro lo usa, cuestionario de pre-consulta, y signos vitales.
 
 ### Atender
 

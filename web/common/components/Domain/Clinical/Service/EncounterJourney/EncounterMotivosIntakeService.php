@@ -2,7 +2,6 @@
 
 namespace common\components\Domain\Clinical\Service\EncounterJourney;
 
-use common\components\Domain\Clinical\CareCohort\Presentation\CarePackAssistancePresenter;
 use common\components\Domain\Clinical\Service\Authorization\EncounterAccessService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
@@ -13,31 +12,20 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 
 /**
- * Formulario declarativo previo al chat de motivos de consulta.
+ * Guía declarativa del chat de motivos de consulta (misma superficie que motivos-consulta/*).
  */
 final class EncounterMotivosIntakeService
 {
     private EncounterMotivosIntakeCatalogService $catalog;
-    private CarePackAssistancePresenter $presenter;
 
-    public function __construct(
-        ?EncounterMotivosIntakeCatalogService $catalog = null,
-        ?CarePackAssistancePresenter $presenter = null
-    ) {
+    public function __construct(?EncounterMotivosIntakeCatalogService $catalog = null)
+    {
         $this->catalog = $catalog ?? new EncounterMotivosIntakeCatalogService();
-        $this->presenter = $presenter ?? new CarePackAssistancePresenter();
     }
 
     public function blocksMotivosChat(Encounter $encounter): bool
     {
-        if (!$this->catalog->isEnabled()) {
-            return false;
-        }
-        if ($this->isCompleted($encounter)) {
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
     public function isCompleted(Encounter $encounter): bool
@@ -52,21 +40,22 @@ final class EncounterMotivosIntakeService
     public function renderIntake(array $params): array
     {
         if (!$this->catalog->isEnabled()) {
-            throw new NotFoundHttpException('Preguntas previas no habilitadas.');
+            throw new NotFoundHttpException('Guía de motivos no habilitada.');
         }
 
         $encounter = $this->resolveEncounter($params);
         $this->assertPatientAccess($encounter, $params);
 
-        if ($this->isCompleted($encounter)) {
-            return $this->buildSubmittedUi((int) $encounter->id);
+        $guide = $this->catalog->buildChatGuide($this->reservaTriageCodeForEncounter($encounter));
+        if ($guide === null) {
+            throw new NotFoundHttpException('Guía de motivos no disponible.');
         }
 
-        return $this->presenter->buildUiJson(
-            $this->catalog->packContent(),
-            (int) $encounter->id,
-            0
-        );
+        return [
+            'kind' => 'motivos_chat_guide',
+            'encounter_id' => (int) $encounter->id,
+            'chat_guide' => $guide,
+        ];
     }
 
     /**
@@ -75,58 +64,9 @@ final class EncounterMotivosIntakeService
      */
     public function submitIntake(array $body): array
     {
-        if (!$this->catalog->isEnabled()) {
-            throw new NotFoundHttpException('Preguntas previas no habilitadas.');
-        }
-
-        $encounter = $this->resolveEncounter($body);
-        $this->assertPatientAccess($encounter, $body);
-
-        if ($this->isCompleted($encounter)) {
-            return [
-                'kind' => 'ui_submit_result',
-                'success' => true,
-                'data' => [
-                    'mensaje' => 'Las respuestas ya estaban registradas.',
-                    'encounter_id' => (int) $encounter->id,
-                ],
-            ];
-        }
-
-        $answers = $this->extractAnswers($body);
-        $error = $this->validateRequired($answers);
-        if ($error !== null) {
-            return [
-                'kind' => 'ui_submit_result',
-                'success' => false,
-                'message' => $error,
-                'errors' => ['_form' => $error],
-            ];
-        }
-
-        $encounter->motivos_intake_json = json_encode($answers, JSON_UNESCAPED_UNICODE);
-        if (!$encounter->save(false, ['motivos_intake_json'])) {
-            return [
-                'kind' => 'ui_submit_result',
-                'success' => false,
-                'message' => 'No se pudieron guardar las respuestas.',
-            ];
-        }
-
-        (new PersonRepresentationSubjectService())->auditDelegatedAction(
-            'motivos_intake',
-            (int) $encounter->subject_persona_id,
-            ['encounter_id' => (int) $encounter->id]
+        throw new BadRequestHttpException(
+            'Las respuestas se envían por el chat de motivos (motivos-consulta/enviar).'
         );
-
-        return [
-            'kind' => 'ui_submit_result',
-            'success' => true,
-            'data' => [
-                'mensaje' => 'Gracias. Ahora podés contarnos tus motivos en el chat.',
-                'encounter_id' => (int) $encounter->id,
-            ],
-        ];
     }
 
     /**
@@ -165,7 +105,6 @@ final class EncounterMotivosIntakeService
      */
     private function assertPatientAccess(Encounter $encounter, array $params): void
     {
-        $subjectId = (int) $encounter->subject_persona_id;
         (new PersonRepresentationSubjectService())->resolveAndAuthorize(
             $params,
             RepresentationPermission::CLINICAL_MOTIVOS
@@ -177,83 +116,18 @@ final class EncounterMotivosIntakeService
         )) {
             throw new ForbiddenHttpException('No tenés permiso para este encounter.');
         }
-        unset($subjectId);
     }
 
-    /**
-     * @param array<string, mixed> $body
-     * @return array<string, mixed>
-     */
-    private function extractAnswers(array $body): array
+    private function reservaTriageCodeForEncounter(Encounter $encounter): string
     {
-        $answers = [];
-        foreach ($this->catalog->questions() as $q) {
-            if (!is_array($q)) {
-                continue;
-            }
-            $id = trim((string) ($q['id'] ?? ''));
-            if ($id === '') {
-                continue;
-            }
-            if (array_key_exists($id, $body)) {
-                $answers[$id] = $body[$id];
-            }
+        $turno = null;
+        if ($encounter->appointment_id) {
+            $turno = Turno::findActive()->andWhere(['id_turnos' => (int) $encounter->appointment_id])->one();
+        }
+        if (!$turno instanceof Turno && $encounter->parent_type === Encounter::PARENT_TURNO && $encounter->parent_id) {
+            $turno = Turno::findActive()->andWhere(['id_turnos' => (int) $encounter->parent_id])->one();
         }
 
-        return $answers;
-    }
-
-    /**
-     * @param array<string, mixed> $answers
-     */
-    private function validateRequired(array $answers): ?string
-    {
-        foreach ($this->catalog->questions() as $q) {
-            if (!is_array($q)) {
-                continue;
-            }
-            if (empty($q['required'])) {
-                continue;
-            }
-            $id = trim((string) ($q['id'] ?? ''));
-            if ($id === '') {
-                continue;
-            }
-            $val = $answers[$id] ?? null;
-            if ($val === null || trim((string) $val) === '') {
-                $label = trim((string) ($q['label'] ?? $id));
-
-                return 'Completá: ' . $label;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function buildSubmittedUi(int $encounterId): array
-    {
-        return [
-            'kind' => 'ui_json',
-            'title' => $this->catalog->title(),
-            'blocks' => [
-                [
-                    'kind' => 'message',
-                    'id' => 'motivos-intake-done',
-                    'title' => 'Listo',
-                    'text' => 'Ya registramos tus respuestas. Podés continuar con el chat de motivos.',
-                ],
-            ],
-            'fields' => [
-                [
-                    'name' => 'encounter_id',
-                    'type' => 'hidden',
-                    'value' => (string) $encounterId,
-                ],
-            ],
-            'submit' => null,
-        ];
+        return $turno instanceof Turno ? trim((string) ($turno->reserva_triage_code ?? '')) : '';
     }
 }

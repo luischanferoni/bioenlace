@@ -13,6 +13,14 @@ use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWin
 
 class EncounterJourneyServiceTest extends Unit
 {
+    protected function _before(): void
+    {
+        if (class_exists(\Yii::class) && \Yii::$app !== null) {
+            \Yii::$app->params['encounter_journey_preparar_minutos_antes'] = 240;
+            \Yii::$app->params['motivos_consulta_cierre_minutos'] = 2;
+        }
+    }
+
     protected function _after(): void
     {
         EncounterPhaseWindowsCatalogService::resetCacheForTests();
@@ -56,6 +64,14 @@ class EncounterJourneyServiceTest extends Unit
         $window = (new EncounterPhaseWindowService())->state('motivos_consulta', $context);
         $this->assertFalse($window['input_abierto']);
         $this->assertNotNull($window['abre_en']);
+    }
+
+    public function testWindowClosedMoreThanFourHoursBefore(): void
+    {
+        $turnoAt = time() + 5 * 3600;
+        $context = ['turno_starts_at' => $turnoAt];
+        $window = (new EncounterPhaseWindowService())->state('motivos_consulta', $context);
+        $this->assertFalse($window['input_abierto']);
     }
 
     public function testWindowOpenInsideRange(): void

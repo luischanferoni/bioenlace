@@ -70,7 +70,7 @@ Si no aparece la opción de videollamada, el centro puede tener solo turnos pres
 | Cuándo | Quién | Qué debería pasar |
 |--------|-------|-------------------|
 | Al reservar | Paciente | Confirmación de turno por videollamada |
-| Unos días antes | Paciente | Recordatorio para preparar la consulta |
+| Unas cuatro horas antes | Paciente | Recordatorio para preparar la consulta |
 | Pocos minutos antes | Médico | Historia del paciente disponible |
 | A la hora del turno | Paciente y médico | Recordatorio; acceso a la videollamada desde Mis turnos |
 | Después de la consulta | Paciente | Resumen de atención |

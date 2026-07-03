@@ -28,11 +28,10 @@ El paciente opera desde la **app móvil**; el **personal de salud** consume moti
 
 | Fase | Apertura | Cierre |
 |------|----------|--------|
-| Motivos | 72 h antes del turno | `motivos_consulta_cierre_minutos` antes (params, default 2 min) |
-| Pre-consulta | 48 h antes | Mismo cierre que motivos |
+| Motivos / intake / pre-consulta | `encounter_journey_preparar_minutos_antes` antes del turno (default **4 h**) | `motivos_consulta_cierre_minutos` antes (params, default 2 min) |
 | Post-consulta | Al finalizar encounter | +30 días |
 
-Offsets configurables en `encounter_phase_windows.yaml` (`-72h`, `-48h`, `param:motivos_consulta_cierre_minutos`, etc.).
+Offsets en `encounter_phase_windows.yaml` (`param:encounter_journey_preparar_minutos_antes`, `param:motivos_consulta_cierre_minutos`, etc.).
 
 **Overrides por efector/servicio** (`encounter_phase_window_overrides.yaml`): reglas con `match.id_efector` y/o `match.id_servicio`; gana la regla más específica (más claves en `match`).
 

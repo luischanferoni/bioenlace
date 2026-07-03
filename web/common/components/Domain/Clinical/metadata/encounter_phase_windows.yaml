@@ -5,18 +5,18 @@ version: 1
 phases:
   motivos_intake:
     anchor: turno_start
-    open_offset: "-72h"
+    open_offset: "param:encounter_journey_preparar_minutos_antes"
     close_offset: "param:motivos_consulta_cierre_minutos"
 
   motivos_consulta:
     anchor: turno_start
-    open_offset: "-72h"
+    open_offset: "param:encounter_journey_preparar_minutos_antes"
     close_offset: "param:motivos_consulta_cierre_minutos"
     notifications:
-      - offset: "-24h"
+      - offset: "param:encounter_journey_preparar_minutos_antes"
         tipo: JOURNEY_MOTIVOS_RECORDATORIO
         title: "Prepará tu consulta"
-        body: "Contanos tus motivos de consulta para el turno del {fecha}."
+        body: "Ya podés contarnos tus motivos de consulta para el turno del {fecha}."
       - offset: "-2h"
         tipo: JOURNEY_MOTIVOS_ULTIMO_AVISO
         title: "Últimas horas para cargar motivos"
@@ -24,10 +24,10 @@ phases:
 
   asistencia_pre_consulta:
     anchor: turno_start
-    open_offset: "-48h"
+    open_offset: "param:encounter_journey_preparar_minutos_antes"
     close_offset: "param:motivos_consulta_cierre_minutos"
     notifications:
-      - offset: "-24h"
+      - offset: "param:encounter_journey_preparar_minutos_antes"
         tipo: JOURNEY_PRECONSULTA_RECORDATORIO
         title: "Cuestionario pre-consulta"
         body: "Completá el cuestionario antes de tu turno del {fecha}."

@@ -29,7 +29,7 @@
 
 ### Preparar el turno
 
-1. Unos días antes, **vos** entrás al turno y completás el chat de motivos si está habilitado.
+1. Unas **cuatro horas** antes del turno, **vos** entrás al turno y completás el chat de motivos si está habilitado.
 2. **El sistema** guarda lo que escribís para que lo vea el odontólogo.
 
 ### Día del turno
@@ -62,7 +62,7 @@
 | Cuándo | Quién | Qué debería pasar |
 |--------|-------|-------------------|
 | Al reservar turno odontológico | Paciente | Confirmación de turno |
-| Unos días antes | Paciente | Recordatorio para cargar motivos (si aplica) |
+| Unas cuatro horas antes | Paciente | Recordatorio para cargar motivos (si aplica) |
 | Después de la consulta | Paciente | Resumen de atención, si el centro lo envía |
 
 ---

@@ -8,7 +8,7 @@
 
 > «Tengo un poco de tos desde hace tres días, sin fiebre. Quiero un turno con el médico clínico.»
 
-**Paciente al preparar la consulta (chat, unos días antes):**
+**Paciente al preparar la consulta (chat, unas horas antes del turno):**
 
 > «La tos es seca, más por la noche. No tuve fiebre. Tomé solo miel. No tengo dificultad para respirar.»
 
@@ -27,9 +27,9 @@
 3. **Vos** elegís **Medicina clínica**, el centro, el profesional y un horario libre.
 4. **El sistema** confirma el turno y lo muestra en **Inicio** y en **Mis turnos**.
 
-### Preparar la consulta (unos días antes)
+### Preparar la consulta (unas horas antes)
 
-1. Cuando se acerca la fecha (normalmente hasta tres días antes), **vos** entrás al turno desde **Inicio** o **Mis turnos** y elegís **Preparar tu consulta**.
+1. Cuando faltan unas **cuatro horas** para el turno, **vos** entrás desde **Inicio** o **Mis turnos** y elegís **Preparar tu consulta**.
 2. **El sistema** puede mostrar un formulario corto, un chat para contar tus motivos y, si el centro lo usa, un cuestionario de pre-consulta.
 3. **Vos** completás lo que aparezca y enviás los mensajes del chat.
 4. **El sistema** guarda todo; poco antes del horario arma un resumen para el médico.
@@ -74,7 +74,7 @@ Si abrís la historia demasiado pronto:
 | Cuándo | Quién | Qué debería pasar |
 |--------|-------|-------------------|
 | Al confirmar el turno | Paciente | Aviso de turno reservado (si las notificaciones están activas) |
-| Unos días antes | Paciente | Recordatorio para preparar la consulta y cargar motivos |
+| Unas cuatro horas antes del turno | Paciente | Recordatorio para preparar la consulta y cargar motivos |
 | Pocos minutos antes del turno | Médico | Ya puede abrir la historia con los motivos del paciente |
 | Poco antes del horario | Paciente | Recordatorio del turno |
 | Después de la consulta | Paciente | Aviso de resumen de atención o encuesta de seguimiento, si el centro lo envía |

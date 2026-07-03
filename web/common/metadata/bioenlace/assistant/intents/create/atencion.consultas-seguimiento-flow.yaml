@@ -1,0 +1,250 @@
+intent_id: atencion.consultas-seguimiento-flow
+version: 1
+
+action_name: "Consultas y seguimiento"
+description: "Consulta general por mensaje o seguimiento de tu tratamiento activo."
+rbac_route: "/api/turnos/crear-como-paciente"
+keywords:
+  - consultas y seguimiento
+  - consulta general
+  - seguimiento tratamiento
+  - renovar medicacion
+  - duda tratamiento
+  - contar evolucion
+  - consulta por mensaje
+
+intent_semantics:
+  goal: >-
+    Separar consulta general libre de seguimiento sobre un plan de tratamiento:
+    mensaje async o reserva de turno según la necesidad elegida.
+  how: >-
+    Tipo (consulta general / seguimiento) → plan activo si aplica → necesidad típica
+    → mensaje o preferencia de turno → slots si corresponde.
+  outcome:
+    - Solicitud async o turno con contexto de care plan cuando aplica.
+
+draft_hydrator:
+  handler: scheduling.consultas_seguimiento_intake
+
+draft_keys_extra:
+  - intake_tipo
+  - seguimiento_necesidad
+  - preferencia_profesional_turno
+  - care_plan_id
+  - mensaje
+  - triage_raiz
+  - tipo_atencion
+  - id_servicio_asignado
+  - id_efector
+  - id_profesional_efector_servicio
+  - fecha_turno
+  - slot_id
+
+subintents:
+  - id: select_tipo
+    assistant_text: "Consultas y seguimiento"
+    provides:
+      - draft.intake_tipo
+    next_routing:
+      - when:
+          draft_equals:
+            intake_tipo: consulta_general
+        next: captura_consulta_general
+      - when:
+          default: true
+        next: select_care_plan
+    open_ui:
+      action_id: consultas-seguimiento.paso
+      params:
+        step: tipo
+
+  - id: select_care_plan
+    assistant_text: "Tu tratamiento"
+    requires:
+      - draft.intake_tipo
+    provides:
+      - draft.care_plan_id
+    next: select_necesidad
+    open_ui:
+      action_id: clinical.care-plan.ver-tratamiento-paciente
+
+  - id: select_necesidad
+    assistant_text: "¿Qué necesitás?"
+    requires:
+      - draft.care_plan_id
+    provides:
+      - draft.seguimiento_necesidad
+    next_routing:
+      - when:
+          draft_equals:
+            seguimiento_necesidad: solicitar_turno
+        next: select_preferencia_turno
+      - when:
+          default: true
+        next: captura_seguimiento_mensaje
+    open_ui:
+      action_id: consultas-seguimiento.paso
+      params:
+        step: necesidad
+
+  - id: captura_consulta_general
+    assistant_text: "Escribí tu consulta en el campo de abajo"
+    requires:
+      - draft.intake_tipo
+    provides:
+      - draft.mensaje
+    next: ""
+    terminal_without_submit: true
+    composer_capture:
+      draft_field: mensaje
+      placeholder: "Contanos tu consulta con el mayor detalle posible. Un profesional te responderá por mensaje."
+      min_length: 10
+      submit_action_id: consulta-async.solicitar-como-paciente
+      params:
+        intake_tipo: "draft.intake_tipo"
+        mensaje: "draft.mensaje"
+
+  - id: captura_seguimiento_mensaje
+    assistant_text: "Contanos en el campo de abajo"
+    requires:
+      - draft.seguimiento_necesidad
+      - draft.care_plan_id
+    provides:
+      - draft.mensaje
+    next: ""
+    terminal_without_submit: true
+    composer_capture:
+      draft_field: mensaje
+      placeholder: "Contanos tu consulta o evolución con el mayor detalle posible."
+      min_length: 10
+      submit_action_id: consulta-async.solicitar-como-paciente
+      params:
+        intake_tipo: "draft.intake_tipo"
+        seguimiento_necesidad: "draft.seguimiento_necesidad"
+        care_plan_id: "draft.care_plan_id"
+        triage_raiz: "draft.triage_raiz"
+        mensaje: "draft.mensaje"
+
+  - id: select_preferencia_turno
+    assistant_text: "Turno"
+    requires:
+      - draft.seguimiento_necesidad
+      - draft.care_plan_id
+    provides:
+      - draft.preferencia_profesional_turno
+      - draft.tipo_atencion
+    next_routing:
+      - when:
+          draft_equals:
+            preferencia_profesional_turno: teleconsulta
+        next: select_dia_teleconsulta
+      - when:
+          draft_equals:
+            preferencia_profesional_turno: mismo_medico
+        next: select_dia
+      - when:
+          default: true
+        next: select_efector
+    open_ui:
+      action_id: consultas-seguimiento.paso
+      params:
+        step: preferencia_turno
+
+  - id: select_efector
+    assistant_text: "Centro de salud"
+    requires:
+      - draft.id_servicio_asignado
+      - draft.tipo_atencion
+    provides:
+      - draft.id_efector
+    next: select_profesional
+    open_ui:
+      action_id: efectores.listar-por-servicio
+      params:
+        id_servicio: "draft.id_servicio_asignado"
+
+  - id: select_profesional
+    assistant_text: "Profesional"
+    requires:
+      - draft.id_efector
+      - draft.id_servicio_asignado
+    provides:
+      - draft.id_profesional_efector_servicio
+    next: select_dia
+    open_ui:
+      action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
+      params:
+        id_efector: "draft.id_efector"
+        id_servicio: "draft.id_servicio_asignado"
+        tipo_atencion: "draft.tipo_atencion"
+
+  - id: select_dia
+    assistant_text: "Día"
+    requires:
+      - draft.id_profesional_efector_servicio
+    provides:
+      - draft.fecha_turno
+    next: select_slot
+    open_ui:
+      action_id: turnos.slots-dias-disponibles-como-paciente
+      params:
+        id_servicio: "draft.id_servicio_asignado"
+        id_efector: "draft.id_efector"
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+
+  - id: select_slot
+    assistant_text: "Horario"
+    requires:
+      - draft.id_profesional_efector_servicio
+      - draft.fecha_turno
+    provides:
+      - draft.slot_id
+    next: ""
+    open_ui:
+      action_id: turnos.slots-disponibles-como-paciente
+      params:
+        id_servicio: "draft.id_servicio_asignado"
+        id_efector: "draft.id_efector"
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        fecha: "draft.fecha_turno"
+
+  - id: select_dia_teleconsulta
+    assistant_text: "Día"
+    requires:
+      - draft.tipo_atencion
+      - draft.care_plan_id
+    provides:
+      - draft.fecha_turno
+    next: select_slot_teleconsulta
+    open_ui:
+      action_id: turnos.slots-dias-disponibles-como-paciente
+      params:
+        reserva_modo: teleconsulta_hub
+        care_plan_id: "draft.care_plan_id"
+
+  - id: select_slot_teleconsulta
+    assistant_text: "Horario"
+    requires:
+      - draft.tipo_atencion
+      - draft.fecha_turno
+    provides:
+      - draft.slot_id
+    next: ""
+    open_ui:
+      action_id: turnos.slots-disponibles-como-paciente
+      params:
+        reserva_modo: teleconsulta_hub
+        care_plan_id: "draft.care_plan_id"
+        fecha: "draft.fecha_turno"
+
+flow_submit:
+  action_id: turnos.crear-como-paciente
+  params:
+    slot_id: "draft.slot_id"
+    triage_raiz: "draft.triage_raiz"
+    tipo_atencion: "draft.tipo_atencion"
+    care_plan_id: "draft.care_plan_id?"
+    intake_tipo: "draft.intake_tipo?"
+    seguimiento_necesidad: "draft.seguimiento_necesidad?"
+    id_servicio_asignado: "draft.id_servicio_asignado?"
+    id_efector: "draft.id_efector?"

@@ -4,6 +4,7 @@ categories:
   - id: atencion_solicitud
     titulo: Atención
     intent_ids:
+      - atencion.consultas-seguimiento-flow
       - atencion.necesito-atencion
 
   - id: profesional_agenda
@@ -51,6 +52,7 @@ categories:
       - id: own
         titulo: Para mí
         intent_ids:
+          - atencion.consultas-seguimiento-flow
           - tratamiento.recordatorios-como-paciente
       - id: team
         titulo: Para el personal

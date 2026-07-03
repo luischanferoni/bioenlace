@@ -33,6 +33,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 0;
   PendingTurnoResolver? _pendingResolver;
   String? _pendingIntentId;
+  Map<String, String> _pendingFlowDraft = {};
   int _alertasNoLeidas = 0;
   final GlobalKey<HomeScreenState> _homeKey = GlobalKey<HomeScreenState>();
 
@@ -142,7 +143,18 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _onPendingIntentHandled() {
-    setState(() => _pendingIntentId = null);
+    setState(() {
+      _pendingIntentId = null;
+      _pendingFlowDraft = {};
+    });
+  }
+
+  void _abrirFlowAsistente(String intentId, {Map<String, String>? draft}) {
+    setState(() {
+      _selectedIndex = 1;
+      _pendingIntentId = intentId;
+      _pendingFlowDraft = draft ?? {};
+    });
   }
 
   void _abrirIntentQueja() {
@@ -193,12 +205,14 @@ class _MainScreenState extends State<MainScreen> {
             alertasNoLeidas: _alertasNoLeidas,
             onOpenAlertas: _openAlertas,
             onResolverTurno: _abrirResolverTurno,
+            onStartAssistantFlow: _abrirFlowAsistente,
           ),
           ChatScreen(
             chatService: widget.chatService,
             pendingResolver: _pendingResolver,
             onPendingResolverHandled: _onPendingResolverHandled,
             pendingIntentId: _pendingIntentId,
+            pendingFlowDraft: _pendingFlowDraft,
             onPendingIntentHandled: _onPendingIntentHandled,
             onConfigurarProvincia: _abrirProvinciaContexto,
           ),

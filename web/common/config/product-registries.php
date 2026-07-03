@@ -59,6 +59,7 @@ use common\components\Domain\Person\Assistant\PersonHintCandidateProvider;
 use common\components\Domain\Scheduling\Assistant\SchedulingHintCandidateProvider;
 use common\components\Domain\Scheduling\Assistant\SchedulingUiSelectOptionSourceProvider;
 use common\components\Domain\Scheduling\Assistant\SchedulingUiScreenParamsExpander;
+use common\components\Domain\Scheduling\Service\ConsultasSeguimientoFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 use common\components\Platform\Ui\Home\Service\Sections\ActionCardsSectionProvider;
 
@@ -69,6 +70,7 @@ return [
         'data_access.metric_flow' => [DataAccessFlowDraftHydrator::class, 'hydrateWithOptions'],
         'data_access.edit_flow' => [DataAccessEditFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
+        'scheduling.consultas_seguimiento_intake' => [ConsultasSeguimientoFlowDraftHydrator::class, 'hydrateWithOptions'],
         'person.paciente_recurso_provincial' => [PacienteRecursoProvincialFlowDraftHydrator::class, 'hydrateWithOptions'],
     ],
 

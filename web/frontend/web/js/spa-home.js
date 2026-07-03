@@ -1850,7 +1850,7 @@
         // El menú Atajos se maneja como dropdown Bootstrap (no modal).
     }
 
-    function startFlowFromShortcut(intentId, displayName) {
+    function startFlowFromShortcut(intentId, displayName, initialDraft) {
         const iid = String(intentId || '').trim();
         if (!iid) return;
 
@@ -1860,6 +1860,9 @@
         currentIntentId = iid;
         currentSubintentId = null;
         draft = {};
+        if (initialDraft && typeof initialDraft === 'object') {
+            draft = Object.assign({}, initialDraft);
+        }
         flowSnapshot = {};
         writeFlowState();
 
@@ -5052,9 +5055,24 @@
                 return;
             }
             const intentName = params.get('spa_flow_intent_name') || '';
-            startFlowFromShortcut(String(intentId).trim(), String(intentName));
+            const draftFromQuery = {};
+            params.forEach((value, key) => {
+                if (!key.startsWith('draft_')) {
+                    return;
+                }
+                const draftKey = key.slice(6);
+                if (draftKey) {
+                    draftFromQuery[draftKey] = value;
+                }
+            });
+            if (Object.keys(draftFromQuery).length > 0) {
+                startFlowFromShortcut(String(intentId).trim(), String(intentName), draftFromQuery);
+            } else {
+                startFlowFromShortcut(String(intentId).trim(), String(intentName));
+            }
             params.delete('spa_flow_intent');
             params.delete('spa_flow_intent_name');
+            [...Object.keys(draftFromQuery)].forEach((k) => params.delete('draft_' + k));
             const qs = params.toString();
             const clean = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
             window.history.replaceState({}, '', clean);

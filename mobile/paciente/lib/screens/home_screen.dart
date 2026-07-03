@@ -3,6 +3,7 @@ import 'package:shared/shared.dart';
 
 import '../services/turnos_service.dart';
 import '../utils/turno_resolucion_utils.dart';
+import '../config/paciente_intents.dart';
 import 'care_plan_detail_screen.dart';
 import 'care_plans_list_screen.dart';
 import 'chat_motivos_screen.dart';
@@ -17,6 +18,7 @@ class HomeScreen extends StatefulWidget {
   final String userName;
   final String? authToken;
   final void Function(Map<String, dynamic> turno)? onResolverTurno;
+  final void Function(String intentId, {Map<String, String>? draft})? onStartAssistantFlow;
   final VoidCallback? onOpenAlertas;
   final int alertasNoLeidas;
 
@@ -26,6 +28,7 @@ class HomeScreen extends StatefulWidget {
     required this.userName,
     this.authToken,
     this.onResolverTurno,
+    this.onStartAssistantFlow,
     this.onOpenAlertas,
     this.alertasNoLeidas = 0,
   }) : super(key: key);
@@ -664,6 +667,7 @@ class HomeScreenState extends State<HomeScreen> {
           planId: id,
           authToken: widget.authToken,
           initialSummary: plan,
+          onStartAssistantFlow: widget.onStartAssistantFlow,
         ),
       ),
     );

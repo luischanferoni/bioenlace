@@ -20,6 +20,7 @@ class ChatScreen extends StatefulWidget {
   final PendingTurnoResolver? pendingResolver;
   final VoidCallback? onPendingResolverHandled;
   final String? pendingIntentId;
+  final Map<String, String> pendingFlowDraft;
   final VoidCallback? onPendingIntentHandled;
   final VoidCallback? onConfigurarProvincia;
 
@@ -29,6 +30,7 @@ class ChatScreen extends StatefulWidget {
     this.pendingResolver,
     this.onPendingResolverHandled,
     this.pendingIntentId,
+    this.pendingFlowDraft = const {},
     this.onPendingIntentHandled,
     this.onConfigurarProvincia,
   }) : super(key: key);
@@ -1207,7 +1209,16 @@ class ChatScreenState extends State<ChatScreen> {
 
   Future<void> _runPendingIntent(String intentId) async {
     widget.onPendingIntentHandled?.call();
-    await _startFlowFromShortcut(intentId, 'Enviar queja');
+    final pendingDraft = Map<String, dynamic>.from(widget.pendingFlowDraft);
+    await _onRemediationChoice({
+      'intent_id': intentId,
+      'reset_flow': true,
+    });
+    if (pendingDraft.isNotEmpty) {
+      _applyDraftDelta(pendingDraft);
+    }
+    if (!mounted) return;
+    await _asistenteService.procesarInteraccion('');
   }
 
   /// Desde Inicio (Resolver) o push: inicia el flow y salta la elección del turno.

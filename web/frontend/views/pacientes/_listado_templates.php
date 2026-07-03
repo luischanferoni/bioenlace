@@ -245,8 +245,9 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
                 <p class="small text-muted mb-2" data-field="categoria"></p>
                 <span class="badge bg-info text-dark mb-2 align-self-start" data-field="estado"></span>
                 <ul class="small mb-3 ps-3 d-none" data-slot="actividades"></ul>
-                <a href="#" class="btn btn-sm btn-outline-primary mt-auto align-self-start" data-role="link-detalle" data-spa-nav="1">
-                    Ver tratamiento
+                <div class="d-flex flex-wrap gap-2 mt-auto" data-slot="care-plan-actions"></div>
+                <a href="#" class="btn btn-sm btn-outline-secondary mt-2 align-self-start" data-role="link-detalle" data-spa-nav="1">
+                    Ver y consultar
                 </a>
             </div>
         </div>

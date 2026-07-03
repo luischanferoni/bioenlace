@@ -30,9 +30,23 @@ final class ConsultaAsyncSolicitudService
         $draft = $this->draftDesdeInput($input);
         $draft['tipo_atencion'] = ReservaModalidadAtencionCatalogService::CODE_ASYNC;
 
-        $triageCatalog = new ReservaTurnoTriageCatalogService();
-        $triageCatalog->assertCanPersistBooking($draft);
-        $compiled = $triageCatalog->compileSelections($draft);
+        $intakeSvc = new ConsultasSeguimientoIntakeService();
+        if (ConsultasSeguimientoIntakeService::esIntakeConsultasSeguimiento($draft)) {
+            $intakeSvc->prepararDraft($draft, $idPersona);
+            $intakeSvc->assertPuedeSolicitarAsync($draft, $idPersona);
+            $meta = $intakeSvc->compilarMetaAsync($draft);
+        } else {
+            $triageCatalog = new ReservaTurnoTriageCatalogService();
+            $triageCatalog->assertCanPersistBooking($draft);
+            $compiled = $triageCatalog->compileSelections($draft);
+            $meta = [
+                'tipo' => 'consulta_async_solicitud',
+                'reserva_triage_code' => $compiled['reserva_triage_code'],
+                'urgency_band' => $compiled['urgency_band'],
+                'reserva_triage_meta_json' => $compiled['reserva_triage_meta_json'],
+                'care_plan_id' => (int) ($draft['care_plan_id'] ?? 0) ?: null,
+            ];
+        }
 
         $modalidadService = new ReservaModalidadAtencionService();
         $opciones = $modalidadService->opcionesParaDraft($draft);
@@ -58,13 +72,7 @@ final class ConsultaAsyncSolicitudService
             'parent_type' => Encounter::PARENT_SOLICITUD_ASYNC,
             'parent_id' => null,
             'reason_text' => $mensaje,
-            'note' => json_encode([
-                'tipo' => 'consulta_async_solicitud',
-                'reserva_triage_code' => $compiled['reserva_triage_code'],
-                'urgency_band' => $compiled['urgency_band'],
-                'reserva_triage_meta_json' => $compiled['reserva_triage_meta_json'],
-                'care_plan_id' => (int) ($draft['care_plan_id'] ?? 0) ?: null,
-            ], JSON_UNESCAPED_UNICODE),
+            'note' => json_encode($meta, JSON_UNESCAPED_UNICODE),
         ]);
         $encounter->status = EncounterStatus::PLANNED;
         $encounter->save(false, ['status', 'updated_at', 'updated_by']);
@@ -101,6 +109,8 @@ final class ConsultaAsyncSolicitudService
             'triage_evolucion',
             'triage_nota',
             'care_plan_id',
+            'intake_tipo',
+            'seguimiento_necesidad',
         ] as $key) {
             $v = trim((string) ($input[$key] ?? ''));
             if ($v !== '') {
@@ -116,6 +126,19 @@ final class ConsultaAsyncSolicitudService
      */
     private function resolverIdServicio(array $draft): int
     {
+        $carePlanSvc = new ReservaTriageCarePlanServicioService();
+        $carePlanId = (int) ($draft['care_plan_id'] ?? 0);
+        if ($carePlanId > 0) {
+            $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
+            $plan = $carePlanSvc->findPlanForPersona($carePlanId, $idPersona);
+            if ($plan !== null) {
+                $ids = $carePlanSvc->idsServicioReservaDesdePlan($plan);
+                if ($ids !== []) {
+                    return (int) $ids[0];
+                }
+            }
+        }
+
         $servicioSugerido = new ReservaTriageServicioSugeridoService();
         $res = $servicioSugerido->resolverParaDraft($draft, false);
         if ($res['id_servicios'] !== []) {

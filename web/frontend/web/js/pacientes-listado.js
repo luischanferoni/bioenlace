@@ -1054,7 +1054,24 @@
     }
 
     function asistenteUrl(intentId) {
-      return '/site/asistente?intent=' + encodeURIComponent(String(intentId || ''));
+      return asistenteFlowUrl(intentId, {});
+    }
+
+  /**
+   * URL del asistente con flow y draft inicial (query draft_*).
+   * @param {string} intentId
+   * @param {Record<string, string|number>} draftParams
+   */
+    function asistenteFlowUrl(intentId, draftParams) {
+      var qs = new URLSearchParams();
+      qs.set('spa_flow_intent', String(intentId || ''));
+      var draft = draftParams && typeof draftParams === 'object' ? draftParams : {};
+      Object.keys(draft).forEach(function (key) {
+        var val = draft[key];
+        if (val === undefined || val === null || val === '') return;
+        qs.set('draft_' + key, String(val));
+      });
+      return '/site/asistente?' + qs.toString();
     }
 
     function applyPanelChrome(panel) {
@@ -1101,11 +1118,11 @@
       return 'mas';
     }
 
-    function appendAsistenteAction(slotEl, label, intentId, btnClass) {
+    function appendAsistenteAction(slotEl, label, intentId, btnClass, draftParams) {
       if (!slotEl) return;
       var a = document.createElement('a');
       a.className = btnClass || 'btn btn-sm btn-outline-primary';
-      a.href = asistenteUrl(intentId);
+      a.href = asistenteFlowUrl(intentId, draftParams || {});
       a.setAttribute('data-spa-nav', '1');
       a.textContent = label;
       slotEl.appendChild(a);
@@ -1210,6 +1227,7 @@
         }
         col.querySelector('[data-field="estado"]').textContent = plan.statusLabel || plan.status || '';
         var acts = Array.isArray(plan.activitySummaries) ? plan.activitySummaries : [];
+        var planId = plan.id != null ? String(plan.id) : '';
         var actsSlot = col.querySelector('[data-slot="actividades"]');
         if (acts.length && actsSlot) {
           actsSlot.classList.remove('d-none');
@@ -1219,9 +1237,25 @@
             actsSlot.appendChild(li);
           });
         }
+        var actionsSlot = col.querySelector('[data-slot="care-plan-actions"]');
+        if (actionsSlot && planId) {
+          appendAsistenteAction(
+            actionsSlot,
+            'Consultar',
+            'atencion.consultas-seguimiento-flow',
+            'btn btn-sm btn-primary',
+            { intake_tipo: 'seguimiento', care_plan_id: planId }
+          );
+        }
         var link = col.querySelector('[data-role="link-detalle"]');
-        if (link) {
-          link.href = asistenteUrl('clinical.care-plan.ver-tratamiento-paciente');
+        if (link && planId) {
+          link.href = asistenteFlowUrl('atencion.consultas-seguimiento-flow', {
+            intake_tipo: 'seguimiento',
+            care_plan_id: planId,
+          });
+          link.textContent = 'Ver y consultar';
+        } else if (link) {
+          link.href = asistenteUrl('atencion.consultas-seguimiento-flow');
         }
         grid.appendChild(itemFrag);
       });

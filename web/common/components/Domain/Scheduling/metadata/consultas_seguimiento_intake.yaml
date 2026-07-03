@@ -1,0 +1,55 @@
+# Intake paciente: consultas generales y seguimiento de plan de tratamiento.
+version: "1"
+
+intake_tipos:
+  consulta_general:
+    code: consulta_general
+    label: Consulta general
+    description: Escribí tu consulta con el mayor detalle posible.
+    composer_placeholder: "Contanos tu consulta. Un profesional te responderá por mensaje."
+  seguimiento:
+    code: seguimiento
+    label: Seguimiento
+    description: Sobre un tratamiento o plan de salud que ya tenés activo.
+
+seguimiento_necesidades:
+  renovar_medicacion:
+    code: renovar_medicacion
+    label: Renovar o ajustar medicación
+    description: Pedí renovación o cambios en tu tratamiento habitual.
+    composer_placeholder: "Indicá qué medicación necesitás renovar o ajustar y cualquier detalle útil."
+    permite_async: true
+  duda:
+    code: duda
+    label: Duda sobre el tratamiento
+    description: Preguntas sobre medicación, indicaciones o el plan.
+    composer_placeholder: "Escribí tu duda con el mayor detalle posible."
+    permite_async: true
+  solicitar_turno:
+    code: solicitar_turno
+    label: Solicitar turno
+    description: Reservá un control presencial, con el mismo médico u otro, o por videollamada.
+    permite_async: false
+  contar_evolucion:
+    code: contar_evolucion
+    label: Contar evolución
+    description: Contanos cómo venís con el tratamiento.
+    composer_placeholder: "Describí cómo te sentís y si notás cambios desde la última atención."
+    permite_async: true
+
+preferencias_turno:
+  teleconsulta:
+    code: teleconsulta
+    label: Videollamada
+    description: Atención remota con turno en un horario disponible.
+    tipo_atencion: teleconsulta
+  mismo_medico:
+    code: mismo_medico
+    label: Mismo médico
+    description: Turno presencial con quien te atendió en este tratamiento, si hay agenda.
+    tipo_atencion: presencial
+  otro_medico:
+    code: otro_medico
+    label: Otro profesional
+    description: Elegí centro, servicio y profesional disponibles.
+    tipo_atencion: presencial

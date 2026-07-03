@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../config/paciente_intents.dart';
+
 /// Detalle de un plan de tratamiento activo del paciente.
 class CarePlanDetailScreen extends StatefulWidget {
   final int planId;
   final String? authToken;
   final Map<String, dynamic>? initialSummary;
+  final void Function(String intentId, {Map<String, String>? draft})? onStartAssistantFlow;
 
   const CarePlanDetailScreen({
     Key? key,
     required this.planId,
     this.authToken,
     this.initialSummary,
+    this.onStartAssistantFlow,
   }) : super(key: key);
 
   @override
@@ -88,6 +92,8 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
                       ],
                       _buildResumen(context, _plan!),
                       BioSpacing.gapH(BioSpacing.lg),
+                      _buildConsultasSeguimiento(context, _plan!),
+                      BioSpacing.gapH(BioSpacing.lg),
                       CarePlanReminderPlanPanel(
                         carePlanId: widget.planId,
                         authToken: widget.authToken,
@@ -158,6 +164,62 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
               style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
             ),
           ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConsultasSeguimiento(BuildContext context, Map<String, dynamic> plan) {
+    final onStart = widget.onStartAssistantFlow;
+    if (onStart == null) {
+      return const SizedBox.shrink();
+    }
+    final raw = plan['seguimientoAcciones'];
+    final actions = raw is List
+        ? raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList()
+        : <Map<String, dynamic>>[];
+    if (actions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final planId = widget.planId.toString();
+
+    return BioCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Consultas y seguimiento', style: BioTypography.title),
+          BioSpacing.gapH(BioSpacing.sm),
+          Text(
+            'Elegí qué necesitás sobre este tratamiento.',
+            style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
+          ),
+          BioSpacing.gapH(BioSpacing.md),
+          ...actions.map((action) {
+            final code = action['seguimiento_necesidad']?.toString() ?? '';
+            final label = action['label']?.toString() ?? code;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+              child: BioButton(
+                label: label,
+                intent: UiIntent.info,
+                variant: BioButtonVariant.soft,
+                size: BioButtonSize.sm,
+                onPressed: code.isEmpty
+                    ? null
+                    : () {
+                        onStart(
+                          PacienteIntents.consultasSeguimiento,
+                          draft: {
+                            'intake_tipo': 'seguimiento',
+                            'care_plan_id': planId,
+                            'seguimiento_necesidad': code,
+                          },
+                        );
+                        Navigator.of(context).pop();
+                      },
+              ),
+            );
+          }),
         ],
       ),
     );

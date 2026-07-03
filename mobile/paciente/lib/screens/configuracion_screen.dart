@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import '../auth/paciente_authenticated_shell.dart';
+import '../auth/paciente_post_login.dart';
 import '../services/chat_service.dart';
 import 'main_screen.dart';
 import 'person_representation_hub_screen.dart';
@@ -293,6 +294,9 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
           appClient: 'paciente-flutter',
         );
         if (!loginContext.mounted) return;
+        final enrolled =
+            await requirePacienteBiometricEnrollment(loginContext);
+        if (!enrolled || !loginContext.mounted) return;
         final newChatService = ChatService(
           currentUserId: userId,
           currentUserName: userName,

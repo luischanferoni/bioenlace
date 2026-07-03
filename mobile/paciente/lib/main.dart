@@ -7,6 +7,7 @@ import 'package:shared/shared.dart';
 
 import 'firebase/firebase_bootstrap.dart';
 import 'auth/paciente_authenticated_shell.dart';
+import 'auth/paciente_post_login.dart';
 import 'services/chat_service.dart';
 import 'screens/main_screen.dart';
 import 'screens/signup_screen.dart';
@@ -66,7 +67,12 @@ class MyApp extends StatelessWidget {
       home: isLoggedIn
           ? BiometricSessionLockScope(
               appTitle: 'BioEnlace Paciente',
-              child: MainScreen(chatService: chatService!, authToken: authToken),
+              child: PacienteBiometricGate(
+                child: MainScreen(
+                  chatService: chatService!,
+                  authToken: authToken,
+                ),
+              ),
             )
           : LoginScreen(
               appTitle: 'Bienvenido a BioEnlace',
@@ -90,6 +96,9 @@ class MyApp extends StatelessWidget {
                   authToken: token,
                 );
                 if (!loginContext.mounted) return;
+                final enrolled =
+                    await requirePacienteBiometricEnrollment(loginContext);
+                if (!enrolled || !loginContext.mounted) return;
                 Navigator.pushReplacement(
                   loginContext,
                   MaterialPageRoute(

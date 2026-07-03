@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
 import '../auth/paciente_authenticated_shell.dart';
+import '../auth/paciente_post_login.dart';
 import '../services/chat_service.dart';
 import '../services/registration_service.dart';
 import 'main_screen.dart';
@@ -70,6 +71,10 @@ class _SignupScreenState extends State<SignupScreen> {
           currentUserName: prefs.getString('user_name') ?? 'Usuario',
           authToken: prefs.getString('auth_token'),
         );
+
+        if (!mounted) return;
+        final enrolled = await requirePacienteBiometricEnrollment(context);
+        if (!enrolled || !mounted) return;
 
         Navigator.pushReplacement(
           context,

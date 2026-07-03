@@ -13,7 +13,15 @@ Future<bool> _staffBiometricEnrollmentComplete() async {
   final established =
       prefs.getBool(PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey) ??
           false;
-  return established && await BiometricSessionPrefs.isUnlockEnabled();
+  final unlockEnabled = await BiometricSessionPrefs.isUnlockEnabled();
+  if (unlockEnabled && !established) {
+    await prefs.setBool(
+      PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
+      true,
+    );
+    return true;
+  }
+  return established && unlockEnabled;
 }
 
 /// Exige activar huella/Face ID inmediatamente tras el primer acceso con credenciales.

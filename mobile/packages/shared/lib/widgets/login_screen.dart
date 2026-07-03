@@ -264,21 +264,6 @@ class _LoginScreenState extends State<LoginScreen> {
               await prefs.setString('dni_detected', persona['documento']);
             }
 
-            // 3) Huella/Face ID local opcional como segundo factor en el dispositivo.
-            if (_biometricAvailable) {
-              final localResult = await _biometricAuth.authenticate(
-                'Confirmá con $_biometricType para ingresar a ${widget.appTitle}',
-              );
-              if (localResult['success'] != true) {
-                final isUserCancel = localResult['isUserCancel'] == true;
-                final error = localResult['error'] as String?;
-                if (!isUserCancel && error != null) {
-                  _snack(error, UiIntent.danger);
-                }
-                return;
-              }
-            }
-
             final welcomeMsg =
                 widget.welcomeMessage ?? '¡Bienvenido de vuelta, {userName}!';
             _snack(

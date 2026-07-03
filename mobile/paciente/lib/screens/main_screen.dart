@@ -44,12 +44,6 @@ class _MainScreenState extends State<MainScreen> {
     _initPush();
     _initCarePlanReminders();
     _refreshAlertasCount();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      maybeOfferBiometricEnrollment(
-        context: context,
-        appTitle: 'BioEnlace Paciente',
-      );
-    });
   }
 
   void _initCarePlanReminders() {

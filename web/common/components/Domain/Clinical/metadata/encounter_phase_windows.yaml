@@ -36,3 +36,12 @@ phases:
     anchor: encounter_finished
     open_offset: "0h"
     close_offset: "+30d"
+    notifications:
+      - offset: "+0h"
+        tipo: JOURNEY_POSTCONSULTA_DISPONIBLE
+        title: "Seguimiento post-consulta"
+        body: "Podés contarnos cómo seguís después de tu atención del {fecha}."
+      - offset: "+7d"
+        tipo: JOURNEY_POSTCONSULTA_RECORDATORIO
+        title: "Recordatorio de seguimiento"
+        body: "Revisá si tenés formularios pendientes de tu consulta del {fecha}."

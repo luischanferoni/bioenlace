@@ -63,31 +63,44 @@ class TurnoNotificacionController extends Controller
                     if ($encounterId > 0) {
                         AppointmentReasonBatchService::process($encounterId);
                     }
-                } elseif (in_array($row->tipo, [
-                    TurnoNotificacionProgramada::TIPO_JOURNEY_MOTIVOS_RECORDATORIO,
-                    TurnoNotificacionProgramada::TIPO_JOURNEY_MOTIVOS_ULTIMO_AVISO,
-                    TurnoNotificacionProgramada::TIPO_JOURNEY_PRECONSULTA_RECORDATORIO,
-                ], true)) {
+                } elseif (in_array($row->tipo, TurnoNotificacionProgramada::journeyTipos(), true)) {
                     $meta = $row->payload_json ? json_decode($row->payload_json, true) : [];
-                    $title = is_array($meta) ? trim((string) ($meta['title'] ?? '')) : '';
-                    $body = is_array($meta) ? trim((string) ($meta['body'] ?? '')) : '';
+                    if (!is_array($meta)) {
+                        $meta = [];
+                    }
+                    $journeyScheduler = new \common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyNotificationScheduler();
+                    if (!$journeyScheduler->shouldSendJourneyNotification($turno, $row->tipo, $meta)) {
+                        $row->estado = TurnoNotificacionProgramada::ESTADO_CANCELADA;
+                        $row->save(false);
+                        continue;
+                    }
+                    $title = trim((string) ($meta['title'] ?? ''));
+                    $body = trim((string) ($meta['body'] ?? ''));
                     if ($title === '') {
-                        $title = 'Prepará tu consulta';
+                        $title = in_array($row->tipo, TurnoNotificacionProgramada::journeyPostConsultaTipos(), true)
+                            ? 'Seguimiento post-consulta'
+                            : 'Prepará tu consulta';
                     }
                     if ($body !== '') {
                         $body = str_replace('{fecha}', (string) $turno->fecha, $body);
                     } else {
-                        $body = 'Tenés acciones pendientes antes del turno del ' . $turno->fecha;
+                        $body = in_array($row->tipo, TurnoNotificacionProgramada::journeyPostConsultaTipos(), true)
+                            ? 'Tenés acciones de seguimiento después de tu consulta del ' . $turno->fecha
+                            : 'Tenés acciones pendientes antes del turno del ' . $turno->fecha;
                     }
                     $encounter = \common\models\Clinical\Encounter::findOne(['appointment_id' => (int) $turno->id_turnos]);
+                    $pushPayload = [
+                        'type' => $row->tipo,
+                        'id_turno' => (string) $turno->id_turnos,
+                        'encounter_id' => $encounter ? (string) $encounter->id : '',
+                        'phase' => (string) ($meta['phase'] ?? ''),
+                    ];
+                    if (isset($meta['touchpoint_id']) && (int) $meta['touchpoint_id'] > 0) {
+                        $pushPayload['touchpoint_id'] = (string) (int) $meta['touchpoint_id'];
+                    }
                     $push->sendToPersona(
                         (int) $turno->id_persona,
-                        [
-                            'type' => $row->tipo,
-                            'id_turno' => (string) $turno->id_turnos,
-                            'encounter_id' => $encounter ? (string) $encounter->id : '',
-                            'phase' => is_array($meta) ? (string) ($meta['phase'] ?? '') : '',
-                        ],
+                        $pushPayload,
                         $title,
                         $body
                     );

@@ -71,6 +71,11 @@ class _MainScreenState extends State<MainScreen> {
   Future<void> _initPush() async {
     await PushNotificationService.instance.init(
       onOpen: (data) {
+        final journeyPush = journeyPushDesdeData(data);
+        if (journeyPush != null) {
+          _abrirJourneyDesdePush(journeyPush);
+          return;
+        }
         final touchpointId =
             PushNotificationService.followupTouchpointIdDesdePush(data);
         if (touchpointId != null) {
@@ -80,11 +85,6 @@ class _MainScreenState extends State<MainScreen> {
         final encounterId = PushNotificationService.encounterIdDesdePush(data);
         if (encounterId != null) {
           _abrirResumenAtencion(encounterId);
-          return;
-        }
-        final journeyPush = journeyPushDesdeData(data);
-        if (journeyPush != null) {
-          _abrirJourneyDesdePush(journeyPush);
           return;
         }
         final stub = PushNotificationService.turnoStubDesdePush(data);
@@ -152,6 +152,15 @@ class _MainScreenState extends State<MainScreen> {
     if (estado == null) {
       _openAlertas();
       return;
+    }
+
+    final touchpointRaw = push['touchpoint_id'];
+    if (touchpointRaw != null && touchpointRaw.isNotEmpty) {
+      final touchpointId = int.tryParse(touchpointRaw) ?? 0;
+      if (touchpointId > 0) {
+        _abrirFollowupTouchpoint(touchpointId);
+        return;
+      }
     }
 
     var turno = turnoConJourneyDesdeEstado({'id': turnoId}, estado);

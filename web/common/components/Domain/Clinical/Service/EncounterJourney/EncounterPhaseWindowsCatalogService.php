@@ -47,6 +47,29 @@ final class EncounterPhaseWindowsCatalogService
         return $phases[$phaseId];
     }
 
+    public function phaseAnchor(string $phaseId): string
+    {
+        $def = $this->phase($phaseId);
+
+        return trim((string) ($def['anchor'] ?? 'turno_start')) ?: 'turno_start';
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function phaseIdsByAnchor(string $anchor): array
+    {
+        $anchor = trim($anchor);
+        $out = [];
+        foreach ($this->phaseIds() as $phaseId) {
+            if ($this->phaseAnchor($phaseId) === $anchor) {
+                $out[] = $phaseId;
+            }
+        }
+
+        return $out;
+    }
+
     /**
      * @return list<array{offset: string, tipo: string, title: string, body: string}>
      */

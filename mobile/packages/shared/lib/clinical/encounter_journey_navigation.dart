@@ -24,6 +24,8 @@ const Set<String> kEncounterJourneyPushTypes = {
   'JOURNEY_MOTIVOS_RECORDATORIO',
   'JOURNEY_MOTIVOS_ULTIMO_AVISO',
   'JOURNEY_PRECONSULTA_RECORDATORIO',
+  'JOURNEY_POSTCONSULTA_DISPONIBLE',
+  'JOURNEY_POSTCONSULTA_RECORDATORIO',
 };
 
 class JourneyHubEntry {
@@ -342,19 +344,36 @@ void abrirJourneyHubEntry({
   );
 }
 
-/// Payload push de recordatorios del recorrido (`id_turno`, `phase`, `encounter_id`).
+/// Payload push de recordatorios del recorrido (`id_turno`, `phase`, `encounter_id`, `touchpoint_id`).
 Map<String, String>? journeyPushDesdeData(Map<String, dynamic> data) {
   final type = data['type']?.toString() ?? '';
-  if (!kEncounterJourneyPushTypes.contains(type)) return null;
-  final idTurno = data['id_turno']?.toString() ?? '';
-  if (idTurno.isEmpty) return null;
-  return {
-    'type': type,
-    'id_turno': idTurno,
-    if (data['phase'] != null) 'phase': data['phase'].toString(),
-    if (data['encounter_id'] != null)
-      'encounter_id': data['encounter_id'].toString(),
-  };
+  if (kEncounterJourneyPushTypes.contains(type)) {
+    final idTurno = data['id_turno']?.toString() ?? '';
+    if (idTurno.isEmpty) return null;
+    return {
+      'type': type,
+      'id_turno': idTurno,
+      if (data['phase'] != null) 'phase': data['phase'].toString(),
+      if (data['encounter_id'] != null)
+        'encounter_id': data['encounter_id'].toString(),
+      if (data['touchpoint_id'] != null)
+        'touchpoint_id': data['touchpoint_id'].toString(),
+    };
+  }
+  if (type == 'CARE_FOLLOWUP_TOUCHPOINT') {
+    final idTurno = data['id_turno']?.toString() ?? '';
+    final touchpointId = data['touchpoint_id']?.toString() ?? '';
+    if (idTurno.isEmpty || touchpointId.isEmpty) return null;
+    return {
+      'type': type,
+      'id_turno': idTurno,
+      'phase': data['phase']?.toString() ?? kEncounterJourneyPhasePostConsulta,
+      'touchpoint_id': touchpointId,
+      if (data['encounter_id'] != null)
+        'encounter_id': data['encounter_id'].toString(),
+    };
+  }
+  return null;
 }
 
 /// Combina datos del listado con respuesta de `/encounter-journey/estado`.

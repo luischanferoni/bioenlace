@@ -57,6 +57,12 @@ final class EncounterLifecycleService
         if ($encounter->encounter_class === Encounter::ENCOUNTER_CLASS_AMB) {
             (new PatientEncounterSummaryPublishService())->schedulePublication($encounter);
             (new CareEncounterOrchestrator())->onEncounterFinalized($encounter);
+            try {
+                (new \common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyNotificationScheduler())
+                    ->scheduleForEncounter($encounter);
+            } catch (\Throwable $e) {
+                Yii::warning('EncounterJourney post notifications: ' . $e->getMessage(), 'encounter-journey');
+            }
         }
 
         (new ClinicalHistoryOutboundEnqueueService())->scheduleIfApplicable($encounter);

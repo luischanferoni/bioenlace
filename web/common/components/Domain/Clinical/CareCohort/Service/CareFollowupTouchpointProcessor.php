@@ -4,9 +4,11 @@ namespace common\components\Domain\Clinical\CareCohort\Service;
 
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationNotifyRecipientService;
 use common\models\Clinical\CareFollowupTouchpointQueue;
+use common\models\Clinical\Encounter;
 use Yii;
 
 /**
@@ -72,6 +74,11 @@ final class CareFollowupTouchpointProcessor
         $subjectLabel = $recipientSvc->subjectDisplayLabel($subjectId);
         $sender = new PushNotificationSender();
         $sent = 0;
+        $turnoId = 0;
+        $encounter = Encounter::findOne(['id' => (int) $row->encounter_id, 'deleted_at' => null]);
+        if ($encounter !== null) {
+            $turnoId = (int) ($encounter->appointment_id ?? 0);
+        }
 
         foreach ($recipients as $recipientId) {
             $body = $recipientId === $subjectId
@@ -79,15 +86,21 @@ final class CareFollowupTouchpointProcessor
                 : 'Seguimiento de la atención de ' . $subjectLabel
                     . ': completá el formulario de evolución.';
 
+            $pushData = [
+                'type' => PushNotificationTypes::CARE_FOLLOWUP_TOUCHPOINT,
+                'encounter_id' => (string) (int) $row->encounter_id,
+                'touchpoint_id' => (string) (int) $row->id,
+                'touchpoint_key' => (string) $row->touchpoint_key,
+                'subject_persona_id' => (string) $subjectId,
+                'phase' => EncounterPhaseWindowsCatalogService::PHASE_POST,
+            ];
+            if ($turnoId > 0) {
+                $pushData['id_turno'] = (string) $turnoId;
+            }
+
             $sender->sendToPersona(
                 $recipientId,
-                [
-                    'type' => PushNotificationTypes::CARE_FOLLOWUP_TOUCHPOINT,
-                    'encounter_id' => (string) (int) $row->encounter_id,
-                    'touchpoint_id' => (string) (int) $row->id,
-                    'touchpoint_key' => (string) $row->touchpoint_key,
-                    'subject_persona_id' => (string) $subjectId,
-                ],
+                $pushData,
                 $title,
                 $body,
                 true

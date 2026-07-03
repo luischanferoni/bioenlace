@@ -122,4 +122,14 @@ class EncounterJourneyServiceTest extends Unit
         ]);
         $this->assertFalse($result['applies']);
     }
+
+    public function testPhaseIdsByAnchor(): void
+    {
+        $catalog = new EncounterPhaseWindowsCatalogService();
+        $pre = $catalog->phaseIdsByAnchor('turno_start');
+        $this->assertContains('motivos_consulta', $pre);
+        $this->assertNotContains('post_consulta', $pre);
+        $post = $catalog->phaseIdsByAnchor('encounter_finished');
+        $this->assertContains('post_consulta', $post);
+    }
 }

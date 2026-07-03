@@ -34,6 +34,35 @@ class TurnoNotificacionProgramada extends ActiveRecord
     /** Recordatorio journey: cuestionario pre-consulta. */
     const TIPO_JOURNEY_PRECONSULTA_RECORDATORIO = 'JOURNEY_PRECONSULTA_RECORDATORIO';
 
+    /** Journey post-consulta: ventana abierta tras finalizar atención. */
+    const TIPO_JOURNEY_POSTCONSULTA_DISPONIBLE = 'JOURNEY_POSTCONSULTA_DISPONIBLE';
+
+    /** Journey post-consulta: recordatorio si hay seguimiento pendiente. */
+    const TIPO_JOURNEY_POSTCONSULTA_RECORDATORIO = 'JOURNEY_POSTCONSULTA_RECORDATORIO';
+
+    /**
+     * @return list<string>
+     */
+    public static function journeyPostConsultaTipos(): array
+    {
+        return [
+            self::TIPO_JOURNEY_POSTCONSULTA_DISPONIBLE,
+            self::TIPO_JOURNEY_POSTCONSULTA_RECORDATORIO,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function journeyTipos(): array
+    {
+        return array_merge([
+            self::TIPO_JOURNEY_MOTIVOS_RECORDATORIO,
+            self::TIPO_JOURNEY_MOTIVOS_ULTIMO_AVISO,
+            self::TIPO_JOURNEY_PRECONSULTA_RECORDATORIO,
+        ], self::journeyPostConsultaTipos());
+    }
+
     /** Escalada multicanal tras push de reubicación (agente A02). */
     const TIPO_RESOLUCION_MULTICANAL = 'RESOLUCION_MULTICANAL';
 

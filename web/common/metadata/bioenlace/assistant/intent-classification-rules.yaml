@@ -340,8 +340,8 @@ conversational_channel:
   booking_button:
     when_rule: clinical_symptom
     intent_priority:
-      - atencion.consultas-seguimiento-flow
       - atencion.necesito-atencion
+      - atencion.consultas-seguimiento-flow
       - turnos.crear-como-paciente
       - turnos.crear-para-paciente
     intent_prefix_fallback: turnos.crear

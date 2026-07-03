@@ -4,8 +4,8 @@ categories:
   - id: atencion_solicitud
     titulo: Atención
     intent_ids:
-      - atencion.consultas-seguimiento-flow
       - atencion.necesito-atencion
+      - atencion.consultas-seguimiento-flow
 
   - id: profesional_agenda
     titulo: Profesional, agenda y condición laboral

@@ -64,4 +64,20 @@ class UiJsonDomainMetadataTest extends Unit
             '/api/v1/clinical/care-plans/adherencia-resumen-staff'
         ));
     }
+
+    public function testConsultasSeguimientoPasoResolvesSchedulingTemplate(): void
+    {
+        $this->assertSame('scheduling', UiJsonDomainMetadata::domainForEntity('consultas-seguimiento'));
+
+        $path = UiJsonDomain::resolveActionIdTemplatePath('consultas-seguimiento.paso');
+        $this->assertNotNull($path);
+        $this->assertStringContainsString(
+            'consultas-seguimiento/paso.json',
+            str_replace('\\', '/', $path)
+        );
+
+        $this->assertTrue(\common\components\Platform\Ui\UiDefinitionTemplateManager::hasTemplateForApiRoute(
+            '/api/v1/consultas-seguimiento/paso'
+        ));
+    }
 }

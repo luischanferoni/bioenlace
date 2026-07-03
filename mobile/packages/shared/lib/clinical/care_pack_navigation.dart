@@ -52,3 +52,27 @@ void abrirAsistenciaPreConsulta({
     ),
   );
 }
+
+/// Abre el formulario de evolución GET|POST `/api/v1/care-packs/followup`.
+void abrirSeguimientoPostConsulta({
+  required BuildContext context,
+  required int touchpointId,
+  String? authToken,
+  String appClient = 'paciente-flutter',
+}) {
+  final path = AppConfig.normalizeApiV1Path(
+    '/api/v1/care-packs/followup?touchpoint_id=$touchpointId',
+  );
+  final uri = path.startsWith('http')
+      ? Uri.parse(path)
+      : Uri.parse('${AppConfig.apiUrl}$path');
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => UiJsonScreen(
+        apiAbsoluteUrl: uri.toString(),
+        authToken: authToken,
+        appClient: appClient,
+      ),
+    ),
+  );
+}

@@ -3,10 +3,15 @@ import 'package:flutter/material.dart';
 import '../format/datetime_friendly.dart';
 import 'care_pack_navigation.dart';
 
-/// Fases pre-turno mostradas en el hub «Preparar tu consulta».
+/// Fases pre-turno del hub «Preparar tu consulta».
 const List<String> kEncounterJourneyPreTurnoPhases = [
   'motivos_consulta',
   'asistencia_pre_consulta',
+];
+
+/// Fases post-turno del hub «Seguimiento post-consulta».
+const List<String> kEncounterJourneyPostTurnoPhases = [
+  'post_consulta',
 ];
 
 const String kEncounterJourneyPhaseMotivos = 'motivos_consulta';
@@ -18,6 +23,22 @@ const Set<String> kEncounterJourneyPushTypes = {
   'JOURNEY_MOTIVOS_ULTIMO_AVISO',
   'JOURNEY_PRECONSULTA_RECORDATORIO',
 };
+
+class JourneyHubEntry {
+  final String phaseId;
+  final String label;
+  final String? subtitle;
+  final bool enabled;
+  final int? touchpointId;
+
+  const JourneyHubEntry({
+    required this.phaseId,
+    required this.label,
+    this.subtitle,
+    required this.enabled,
+    this.touchpointId,
+  });
+}
 
 bool turnoTieneJourneyPayload(Map<String, dynamic> turno) {
   return turno['journey'] is Map;
@@ -36,7 +57,110 @@ Map<String, dynamic>? journeyPhase(
   return Map<String, dynamic>.from(phase);
 }
 
-/// Fases pre-turno que aplican y aún no están completadas.
+List<JourneyHubEntry> journeyHubEntries(
+  Map<String, dynamic> turno,
+  List<String> phaseIds,
+) {
+  if (!turnoTieneJourneyPayload(turno)) return [];
+  final out = <JourneyHubEntry>[];
+  for (final phaseId in phaseIds) {
+    final phase = journeyPhase(turno, phaseId);
+    if (phase == null) continue;
+    if (phase['applies'] != true) continue;
+    if (phase['completed'] == true) continue;
+
+    if (phaseId == kEncounterJourneyPhasePostConsulta) {
+      out.addAll(_postConsultaHubEntries(phase));
+      continue;
+    }
+
+    out.add(
+      JourneyHubEntry(
+        phaseId: phaseId,
+        label: phase['label']?.toString() ?? 'Paso del recorrido',
+        subtitle: subtituloFaseJourney(phase),
+        enabled: phase['enabled'] == true,
+      ),
+    );
+  }
+  return out;
+}
+
+List<JourneyHubEntry> _postConsultaHubEntries(Map<String, dynamic> phase) {
+  final defaultLabel =
+      phase['label']?.toString() ?? 'Seguimiento post-consulta';
+  final followup = phase['followup'];
+  if (followup is! Map) {
+    return [
+      JourneyHubEntry(
+        phaseId: kEncounterJourneyPhasePostConsulta,
+        label: defaultLabel,
+        subtitle: subtituloFaseJourney(phase),
+        enabled: phase['enabled'] == true,
+      ),
+    ];
+  }
+
+  final items = followup['items'];
+  if (items is! List || items.isEmpty) {
+    return [
+      JourneyHubEntry(
+        phaseId: kEncounterJourneyPhasePostConsulta,
+        label: defaultLabel,
+        subtitle: subtituloFaseJourney(phase),
+        enabled: phase['enabled'] == true,
+      ),
+    ];
+  }
+
+  final out = <JourneyHubEntry>[];
+  for (final raw in items) {
+    if (raw is! Map) continue;
+    if (raw['completed'] == true) continue;
+    final title = raw['title']?.toString().trim();
+    final label = title != null && title.isNotEmpty ? title : defaultLabel;
+    final actionable = raw['actionable'] == true;
+    final touchpointId = _touchpointIdDesdeMap(raw);
+    String? subtitle;
+    if (!actionable) {
+      final runAt = raw['run_at']?.toString();
+      if (runAt != null && runAt.isNotEmpty) {
+        final when = formatNotificacionFecha(runAt);
+        if (when.isNotEmpty) subtitle = 'Disponible desde $when';
+      } else {
+        subtitle = subtituloFaseJourney(phase);
+      }
+    }
+    out.add(
+      JourneyHubEntry(
+        phaseId: kEncounterJourneyPhasePostConsulta,
+        label: label,
+        subtitle: subtitle,
+        enabled: actionable && touchpointId != null,
+        touchpointId: touchpointId,
+      ),
+    );
+  }
+
+  if (out.isEmpty) {
+    return [
+      JourneyHubEntry(
+        phaseId: kEncounterJourneyPhasePostConsulta,
+        label: defaultLabel,
+        subtitle: subtituloFaseJourney(phase),
+        enabled: false,
+      ),
+    ];
+  }
+  return out;
+}
+
+int? _touchpointIdDesdeMap(Map raw) {
+  final id = raw['id'];
+  if (id is int) return id > 0 ? id : null;
+  return int.tryParse(id?.toString() ?? '');
+}
+
 List<MapEntry<String, Map<String, dynamic>>> prepararConsultaFasesPendientes(
   Map<String, dynamic> turno,
 ) {
@@ -53,12 +177,32 @@ List<MapEntry<String, Map<String, dynamic>>> prepararConsultaFasesPendientes(
 }
 
 bool prepararConsultaTienePendientes(Map<String, dynamic> turno) {
-  return prepararConsultaFasesPendientes(turno).isNotEmpty;
+  return journeyHubEntries(turno, kEncounterJourneyPreTurnoPhases).isNotEmpty;
+}
+
+bool seguimientoPostConsultaTienePendientes(Map<String, dynamic> turno) {
+  final phase = journeyPhase(turno, kEncounterJourneyPhasePostConsulta);
+  if (phase == null || phase['applies'] != true || phase['completed'] == true) {
+    return false;
+  }
+  final followup = phase['followup'];
+  if (followup is Map) {
+    final count = followup['touchpoint_count'];
+    if (count is int && count <= 0) {
+      return false;
+    }
+  }
+  return journeyHubEntries(turno, kEncounterJourneyPostTurnoPhases).isNotEmpty;
+}
+
+bool seguimientoPostConsultaTieneAccionDisponible(Map<String, dynamic> turno) {
+  return journeyHubEntries(turno, kEncounterJourneyPostTurnoPhases)
+      .any((e) => e.enabled);
 }
 
 bool prepararConsultaTieneAccionDisponible(Map<String, dynamic> turno) {
-  return prepararConsultaFasesPendientes(turno)
-      .any((e) => e.value['enabled'] == true);
+  return journeyHubEntries(turno, kEncounterJourneyPreTurnoPhases)
+      .any((e) => e.enabled);
 }
 
 int? encounterIdDesdeTurno(Map<String, dynamic> turno) {
@@ -67,6 +211,14 @@ int? encounterIdDesdeTurno(Map<String, dynamic> turno) {
   if (raw == null) return null;
   final n = int.tryParse(raw.toString());
   return n != null && n > 0 ? n : null;
+}
+
+int? touchpointIdDesdeFasePostConsulta(Map<String, dynamic> phase) {
+  final followup = phase['followup'];
+  if (followup is! Map) return null;
+  final raw = followup['next_touchpoint_id'];
+  if (raw is int) return raw > 0 ? raw : null;
+  return int.tryParse(raw?.toString() ?? '');
 }
 
 String tituloMotivosDesdeTurno(Map<String, dynamic> turno) {
@@ -87,6 +239,11 @@ String? subtituloFaseJourney(Map<String, dynamic> phase) {
     final label = formatNotificacionFecha(abreEn);
     if (label.isNotEmpty) return 'Disponible desde $label';
   }
+  final cierraEn = window['cierra_en']?.toString();
+  if (cierraEn != null && cierraEn.isNotEmpty) {
+    final label = formatNotificacionFecha(cierraEn);
+    if (label.isNotEmpty) return 'Disponible hasta $label';
+  }
   return 'No disponible por ahora';
 }
 
@@ -103,13 +260,16 @@ void abrirFaseEncounterJourney({
   required String phaseId,
   String? authToken,
   int? subjectPersonaId,
+  int? touchpointId,
   required AbrirMotivosConsulta onOpenMotivos,
+  String appClient = 'paciente-flutter',
 }) {
   final phase = journeyPhase(turno, phaseId);
-  if (phase == null || phase['enabled'] != true) return;
+  if (phase == null) return;
 
   final surface = phase['surface']?.toString() ?? '';
   if (surface == 'chat_motivos') {
+    if (phase['enabled'] != true) return;
     final consultaId = encounterIdDesdeTurno(turno);
     if (consultaId == null) return;
     onOpenMotivos(
@@ -121,6 +281,7 @@ void abrirFaseEncounterJourney({
   }
 
   if (surface == 'flow') {
+    if (phase['enabled'] != true) return;
     final turnoId = turnoIdDesdePayloadProducto(turno);
     if (turnoId == null) return;
     abrirAsistenciaPreConsulta(
@@ -128,9 +289,43 @@ void abrirFaseEncounterJourney({
       turnoId: turnoId,
       authToken: authToken,
       subjectPersonaId: subjectPersonaId,
+      appClient: appClient,
     );
     return;
   }
+
+  if (surface == 'pack_followup') {
+    final tid = touchpointId ?? touchpointIdDesdeFasePostConsulta(phase);
+    if (tid == null || tid <= 0) return;
+    abrirSeguimientoPostConsulta(
+      context: context,
+      touchpointId: tid,
+      authToken: authToken,
+      appClient: appClient,
+    );
+  }
+}
+
+void abrirJourneyHubEntry({
+  required BuildContext context,
+  required Map<String, dynamic> turno,
+  required JourneyHubEntry entry,
+  String? authToken,
+  int? subjectPersonaId,
+  required AbrirMotivosConsulta onOpenMotivos,
+  String appClient = 'paciente-flutter',
+}) {
+  if (!entry.enabled) return;
+  abrirFaseEncounterJourney(
+    context: context,
+    turno: turno,
+    phaseId: entry.phaseId,
+    authToken: authToken,
+    subjectPersonaId: subjectPersonaId,
+    touchpointId: entry.touchpointId,
+    onOpenMotivos: onOpenMotivos,
+    appClient: appClient,
+  );
 }
 
 /// Payload push de recordatorios del recorrido (`id_turno`, `phase`, `encounter_id`).

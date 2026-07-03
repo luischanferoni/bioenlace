@@ -60,4 +60,32 @@ class EncounterJourneyServiceTest extends Unit
         $window = (new EncounterPhaseWindowService())->state('motivos_consulta', $context);
         $this->assertTrue($window['input_abierto']);
     }
+
+    public function testPostConsultaSkipWhenEncounterNotFinished(): void
+    {
+        $elig = new EncounterJourneyEligibilityService();
+        $result = $elig->evaluate('post_consulta', [
+            'encounter_id' => 10,
+            'encounter_class' => 'AMB',
+            'encounter_finished' => false,
+            'care_cohort_enabled' => true,
+            'sin_pack_followup' => false,
+        ]);
+        $this->assertFalse($result['applies']);
+    }
+
+    public function testPostConsultaAppliesWhenEncounterFinished(): void
+    {
+        $elig = new EncounterJourneyEligibilityService();
+        $result = $elig->evaluate('post_consulta', [
+            'encounter_id' => 10,
+            'encounter_class' => 'AMB',
+            'encounter_finished' => true,
+            'encounter_finished_at' => date('c', time() - 3600),
+            'care_cohort_enabled' => true,
+            'sin_pack_followup' => false,
+        ]);
+        $this->assertTrue($result['applies']);
+        $this->assertSame('pack_followup', $result['surface']);
+    }
 }

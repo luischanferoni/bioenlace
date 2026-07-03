@@ -45,7 +45,7 @@ export 'assistant/welcome_shortcuts_panel.dart';
 export 'clinical/care_pack_navigation.dart';
 export 'clinical/encounter_journey_api.dart';
 export 'clinical/encounter_journey_navigation.dart';
-export 'clinical/preparar_consulta_hub_screen.dart';
+export 'clinical/encounter_journey_hub_screen.dart';
 export 'clinical/care_plan_service.dart';
 export 'clinical/care_plan_ui.dart';
 export 'clinical/care_plan_reminder_api.dart';

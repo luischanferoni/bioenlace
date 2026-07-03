@@ -538,20 +538,36 @@ class HomeScreenState extends State<HomeScreen> {
       turno: t,
       authToken: widget.authToken,
       subjectPersonaId: _subjectPersonaId,
-      onOpenMotivos: (ctx, {required consultaId, required titulo}) {
-        Navigator.push(
-          ctx,
-          MaterialPageRoute(
-            builder: (_) => ChatMotivosScreen(
-              consultaId: consultaId,
-              authToken: widget.authToken,
-              userId: widget.userId,
-              userName: widget.userName,
-              titulo: titulo,
-            ),
-          ),
-        );
-      },
+      onOpenMotivos: _onOpenMotivosConsulta,
+    );
+  }
+
+  void _abrirSeguimientoPostConsulta(BuildContext context, Map<String, dynamic> t) {
+    abrirSeguimientoPostConsultaHub(
+      context: context,
+      turno: t,
+      authToken: widget.authToken,
+      subjectPersonaId: _subjectPersonaId,
+      onOpenMotivos: _onOpenMotivosConsulta,
+    );
+  }
+
+  void _onOpenMotivosConsulta(
+    BuildContext context, {
+    required int consultaId,
+    required String titulo,
+  }) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatMotivosScreen(
+          consultaId: consultaId,
+          authToken: widget.authToken,
+          userId: widget.userId,
+          userName: widget.userName,
+          titulo: titulo,
+        ),
+      ),
     );
   }
 
@@ -932,15 +948,19 @@ class HomeScreenState extends State<HomeScreen> {
   }) {
     final tokens = context.bio;
     final estado = t['estado_label']?.toString() ?? t['estado']?.toString() ?? '';
-    final usaJourney = futuro && !enResolucion && turnoTieneJourneyPayload(t);
+    final usaJourney = turnoTieneJourneyPayload(t);
+    final usaJourneyPre = futuro && !enResolucion && usaJourney;
+    final usaJourneyPost = !futuro && usaJourney;
     final prepararPendiente =
-        usaJourney && prepararConsultaTienePendientes(t);
-    final puedeMotivos = !usaJourney &&
+        usaJourneyPre && prepararConsultaTienePendientes(t);
+    final seguimientoPendiente =
+        usaJourneyPost && seguimientoPostConsultaTienePendientes(t);
+    final puedeMotivos = !usaJourneyPre &&
         futuro &&
         !enResolucion &&
         turnoTieneEncounterParaMotivos(t) &&
         turnoMotivosInputAbiertoEnProducto(t);
-    final puedeAsistenciaCohorte = !usaJourney &&
+    final puedeAsistenciaCohorte = !usaJourneyPre &&
         futuro &&
         !enResolucion &&
         turnoAsistenciaCohorteDisponibleEnProducto(t);
@@ -993,6 +1013,13 @@ class HomeScreenState extends State<HomeScreen> {
         size: BioButtonSize.sm,
         icon: Icons.event_available_outlined,
         onPressed: () => _abrirPrepararConsulta(context, t),
+      ));
+    } else if (!enResolucion && seguimientoPendiente) {
+      acciones.add(BioButton.outlinePrimary(
+        label: 'Seguimiento post-consulta',
+        size: BioButtonSize.sm,
+        icon: Icons.health_and_safety_outlined,
+        onPressed: () => _abrirSeguimientoPostConsulta(context, t),
       ));
     } else if (!enResolucion && idConsulta != null) {
       acciones.add(BioButton.outlinePrimary(

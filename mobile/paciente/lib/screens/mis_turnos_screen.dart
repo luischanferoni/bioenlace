@@ -174,7 +174,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
                       ..._pendientes.map((t) => Padding(
                             padding:
                                 const EdgeInsets.only(bottom: BioSpacing.sm),
-                            child: _cardTurno(context, t),
+                            child: _cardTurno(context, t, esFuturo: true),
                           )),
                       if (_loadingMasP) _loaderInline(),
                       if (_hayMasP && !_loadingMasP)
@@ -195,7 +195,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
                       ..._pasados.map((t) => Padding(
                             padding:
                                 const EdgeInsets.only(bottom: BioSpacing.sm),
-                            child: _cardTurno(context, t),
+                            child: _cardTurno(context, t, esFuturo: false),
                           )),
                       if (_loadingMasPa) _loaderInline(),
                       if (_hayMasPa && !_loadingMasPa)
@@ -239,21 +239,49 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     );
   }
 
-  Widget _cardTurno(BuildContext context, Map<String, dynamic> t) {
+  Widget _cardTurno(
+    BuildContext context,
+    Map<String, dynamic> t, {
+    required bool esFuturo,
+  }) {
     final tokens = context.bio;
     final tipoAtencion = t['tipo_atencion'] as String? ?? 'presencial';
     final idConsulta = t['id_consulta'];
     final usaJourney = turnoTieneJourneyPayload(t);
-    final prepararPendiente = usaJourney && prepararConsultaTienePendientes(t);
+    final prepararPendiente =
+        esFuturo && usaJourney && prepararConsultaTienePendientes(t);
+    final seguimientoPendiente =
+        !esFuturo && usaJourney && seguimientoPostConsultaTienePendientes(t);
     final puedeChat = tipoAtencion == 'teleconsulta' && idConsulta != null;
-    final puedeMotivos = !usaJourney &&
+    final puedeMotivos = esFuturo &&
+        !usaJourney &&
         idConsulta != null &&
         turnoMotivosInputAbiertoEnProducto(t);
     final turnoId = turnoIdDesdePayloadProducto(t);
-    final puedeAsistenciaCohorte =
-        !usaJourney && turnoAsistenciaCohorteDisponibleEnProducto(t);
+    final puedeAsistenciaCohorte = esFuturo &&
+        !usaJourney &&
+        turnoAsistenciaCohorteDisponibleEnProducto(t);
     final tituloMotivos = 'Motivos · ${t['fecha']} ${t['hora']}';
     final estado = t['estado_label']?.toString() ?? '';
+
+    void onOpenMotivos(
+      BuildContext ctx, {
+      required int consultaId,
+      required String titulo,
+    }) {
+      Navigator.push(
+        ctx,
+        MaterialPageRoute(
+          builder: (_) => ChatMotivosScreen(
+            consultaId: consultaId,
+            authToken: widget.authToken,
+            userId: widget.userId,
+            userName: widget.userName ?? 'Paciente',
+            titulo: titulo,
+          ),
+        ),
+      );
+    }
 
     final acciones = <Widget>[
       if (prepararPendiente)
@@ -265,20 +293,19 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
             context: context,
             turno: t,
             authToken: widget.authToken,
-            onOpenMotivos: (ctx, {required consultaId, required titulo}) {
-              Navigator.push(
-                ctx,
-                MaterialPageRoute(
-                  builder: (_) => ChatMotivosScreen(
-                    consultaId: consultaId,
-                    authToken: widget.authToken,
-                    userId: widget.userId,
-                    userName: widget.userName ?? 'Paciente',
-                    titulo: titulo,
-                  ),
-                ),
-              );
-            },
+            onOpenMotivos: onOpenMotivos,
+          ),
+        ),
+      if (seguimientoPendiente)
+        BioButton.outlinePrimary(
+          label: 'Seguimiento post-consulta',
+          size: BioButtonSize.sm,
+          icon: Icons.health_and_safety_outlined,
+          onPressed: () => abrirSeguimientoPostConsultaHub(
+            context: context,
+            turno: t,
+            authToken: widget.authToken,
+            onOpenMotivos: onOpenMotivos,
           ),
         ),
       if (puedeMotivos)

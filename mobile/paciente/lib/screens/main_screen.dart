@@ -165,11 +165,26 @@ class _MainScreenState extends State<MainScreen> {
     }
 
     final phase = push['phase']?.trim() ?? '';
-    if (phase.isNotEmpty && journeyPhase(turno, phase)?['enabled'] == true) {
-      abrirFaseEncounterJourney(
+    if (phase.isNotEmpty) {
+      final phaseMap = journeyPhase(turno, phase);
+      if (phaseMap != null &&
+          (phaseMap['enabled'] == true ||
+              phase == kEncounterJourneyPhasePostConsulta)) {
+        abrirFaseEncounterJourney(
+          context: context,
+          turno: turno,
+          phaseId: phase,
+          authToken: widget.authToken,
+          onOpenMotivos: _abrirMotivosDesdeJourney,
+        );
+        return;
+      }
+    }
+
+    if (seguimientoPostConsultaTienePendientes(turno)) {
+      abrirSeguimientoPostConsultaHub(
         context: context,
         turno: turno,
-        phaseId: phase,
         authToken: widget.authToken,
         onOpenMotivos: _abrirMotivosDesdeJourney,
       );

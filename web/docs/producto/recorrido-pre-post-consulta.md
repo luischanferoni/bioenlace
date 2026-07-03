@@ -64,3 +64,4 @@ Al programar turno (`TurnoConfirmationService`), se encolan recordatorios declar
 - Flow declarativo opcional de preguntas generales antes del chat de motivos.
 - Overrides de ventana por efector/servicio en metadata o `EfectorTurnosConfig`.
 - Hub único «Preparar tu consulta» en inicio app consumiendo solo `journey`.
+- Hub «Seguimiento post-consulta» en turnos pasados con touchpoints del pack followup (`journey.phases.post_consulta.followup`).

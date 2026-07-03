@@ -4,25 +4,33 @@ import '../theme/tokens/tokens.dart';
 import '../ui/bio_card.dart';
 import 'encounter_journey_navigation.dart';
 
-/// Hub «Preparar tu consulta»: lista fases pendientes leyendo solo `journey` del turno.
-class PrepararConsultaHubScreen extends StatelessWidget {
+/// Hub de fases del recorrido encounter (pre o post consulta), leyendo solo `journey`.
+class EncounterJourneyHubScreen extends StatelessWidget {
+  final String title;
+  final String intro;
   final Map<String, dynamic> turno;
+  final List<String> phaseIds;
   final String? authToken;
   final int? subjectPersonaId;
   final AbrirMotivosConsulta onOpenMotivos;
+  final String appClient;
 
-  const PrepararConsultaHubScreen({
+  const EncounterJourneyHubScreen({
     super.key,
+    required this.title,
+    required this.intro,
     required this.turno,
+    required this.phaseIds,
     this.authToken,
     this.subjectPersonaId,
     required this.onOpenMotivos,
+    this.appClient = 'paciente-flutter',
   });
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
-    final pendientes = prepararConsultaFasesPendientes(turno);
+    final entries = journeyHubEntries(turno, phaseIds);
     final fecha = turno['fecha']?.toString() ?? '';
     final hora = turno['hora']?.toString() ?? '';
     final horaCorta = hora.length >= 5 ? hora.substring(0, 5) : hora;
@@ -32,9 +40,9 @@ class PrepararConsultaHubScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Preparar tu consulta'),
+        title: Text(title),
       ),
-      body: pendientes.isEmpty
+      body: entries.isEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(BioSpacing.lg),
@@ -57,54 +65,45 @@ class PrepararConsultaHubScreen extends StatelessWidget {
                   ),
                   BioSpacing.gapH(BioSpacing.md),
                 ],
-                Text(
-                  'Completá estos pasos antes de tu consulta.',
-                  style: BioTypography.body,
-                ),
+                Text(intro, style: BioTypography.body),
                 BioSpacing.gapH(BioSpacing.md),
-                ...pendientes.map((entry) {
-                  final phaseId = entry.key;
-                  final phase = entry.value;
-                  final label =
-                      phase['label']?.toString() ?? 'Paso del recorrido';
-                  final enabled = phase['enabled'] == true;
-                  final hint = subtituloFaseJourney(phase);
-
+                ...entries.map((entry) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: BioSpacing.sm),
                     child: BioCard(
                       child: ListTile(
                         contentPadding: EdgeInsets.zero,
                         leading: Icon(
-                          _iconoFase(phaseId),
-                          color: enabled
+                          _iconoFase(entry.phaseId),
+                          color: entry.enabled
                               ? tokens.intentPalette(UiIntent.primary).base
                               : tokens.textMuted,
                         ),
-                        title: Text(label, style: BioTypography.title),
-                        subtitle: hint != null
+                        title: Text(entry.label, style: BioTypography.title),
+                        subtitle: entry.subtitle != null
                             ? Text(
-                                hint,
+                                entry.subtitle!,
                                 style: BioTypography.bodySm.copyWith(
                                   color: tokens.textMuted,
                                 ),
                               )
                             : null,
-                        trailing: enabled
+                        trailing: entry.enabled
                             ? Icon(
                                 Icons.chevron_right,
                                 color: tokens.textMuted,
                               )
                             : null,
-                        onTap: enabled
+                        onTap: entry.enabled
                             ? () {
-                                abrirFaseEncounterJourney(
+                                abrirJourneyHubEntry(
                                   context: context,
                                   turno: turno,
-                                  phaseId: phaseId,
+                                  entry: entry,
                                   authToken: authToken,
                                   subjectPersonaId: subjectPersonaId,
                                   onOpenMotivos: onOpenMotivos,
+                                  appClient: appClient,
                                 );
                               }
                             : null,
@@ -123,10 +122,39 @@ class PrepararConsultaHubScreen extends StatelessWidget {
         return Icons.edit_note;
       case kEncounterJourneyPhaseAsistencia:
         return Icons.fact_check_outlined;
+      case kEncounterJourneyPhasePostConsulta:
+        return Icons.health_and_safety_outlined;
       default:
         return Icons.checklist_outlined;
     }
   }
+}
+
+void abrirEncounterJourneyHub({
+  required BuildContext context,
+  required String title,
+  required String intro,
+  required Map<String, dynamic> turno,
+  required List<String> phaseIds,
+  String? authToken,
+  int? subjectPersonaId,
+  required AbrirMotivosConsulta onOpenMotivos,
+  String appClient = 'paciente-flutter',
+}) {
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => EncounterJourneyHubScreen(
+        title: title,
+        intro: intro,
+        turno: turno,
+        phaseIds: phaseIds,
+        authToken: authToken,
+        subjectPersonaId: subjectPersonaId,
+        onOpenMotivos: onOpenMotivos,
+        appClient: appClient,
+      ),
+    ),
+  );
 }
 
 void abrirPrepararConsultaHub({
@@ -135,15 +163,38 @@ void abrirPrepararConsultaHub({
   String? authToken,
   int? subjectPersonaId,
   required AbrirMotivosConsulta onOpenMotivos,
+  String appClient = 'paciente-flutter',
 }) {
-  Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => PrepararConsultaHubScreen(
-        turno: turno,
-        authToken: authToken,
-        subjectPersonaId: subjectPersonaId,
-        onOpenMotivos: onOpenMotivos,
-      ),
-    ),
+  abrirEncounterJourneyHub(
+    context: context,
+    title: 'Preparar tu consulta',
+    intro: 'Completá estos pasos antes de tu consulta.',
+    turno: turno,
+    phaseIds: kEncounterJourneyPreTurnoPhases,
+    authToken: authToken,
+    subjectPersonaId: subjectPersonaId,
+    onOpenMotivos: onOpenMotivos,
+    appClient: appClient,
+  );
+}
+
+void abrirSeguimientoPostConsultaHub({
+  required BuildContext context,
+  required Map<String, dynamic> turno,
+  String? authToken,
+  int? subjectPersonaId,
+  required AbrirMotivosConsulta onOpenMotivos,
+  String appClient = 'paciente-flutter',
+}) {
+  abrirEncounterJourneyHub(
+    context: context,
+    title: 'Seguimiento post-consulta',
+    intro: 'Contanos cómo seguís después de tu atención.',
+    turno: turno,
+    phaseIds: kEncounterJourneyPostTurnoPhases,
+    authToken: authToken,
+    subjectPersonaId: subjectPersonaId,
+    onOpenMotivos: onOpenMotivos,
+    appClient: appClient,
   );
 }

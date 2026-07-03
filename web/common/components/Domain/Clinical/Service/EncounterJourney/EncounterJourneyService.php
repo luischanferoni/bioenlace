@@ -14,17 +14,20 @@ final class EncounterJourneyService
     private EncounterPhaseWindowsCatalogService $windowsCatalog;
     private EncounterPhaseWindowService $windowService;
     private EncounterJourneyEligibilityService $eligibilityService;
+    private EncounterJourneyFollowupStateService $followupState;
 
     public function __construct(
         ?EncounterJourneyContextBuilder $contextBuilder = null,
         ?EncounterPhaseWindowsCatalogService $windowsCatalog = null,
         ?EncounterPhaseWindowService $windowService = null,
-        ?EncounterJourneyEligibilityService $eligibilityService = null
+        ?EncounterJourneyEligibilityService $eligibilityService = null,
+        ?EncounterJourneyFollowupStateService $followupState = null
     ) {
         $this->windowsCatalog = $windowsCatalog ?? new EncounterPhaseWindowsCatalogService();
         $this->contextBuilder = $contextBuilder ?? new EncounterJourneyContextBuilder();
         $this->windowService = $windowService ?? new EncounterPhaseWindowService($this->windowsCatalog);
         $this->eligibilityService = $eligibilityService ?? new EncounterJourneyEligibilityService();
+        $this->followupState = $followupState ?? new EncounterJourneyFollowupStateService();
     }
 
     /**
@@ -70,9 +73,16 @@ final class EncounterJourneyService
     {
         $elig = $this->eligibilityService->evaluate($phaseId, $context);
         $window = $this->windowService->state($phaseId, $context);
+        $followup = null;
         $enabled = $elig['applies'] && !empty($window['input_abierto']);
 
-        return [
+        if ($phaseId === EncounterPhaseWindowsCatalogService::PHASE_POST) {
+            $encounterId = (int) ($context['encounter_id'] ?? 0);
+            $followup = $this->followupState->stateForEncounter($encounterId);
+            $enabled = $enabled && (int) ($followup['actionable_count'] ?? 0) > 0;
+        }
+
+        $phase = [
             'applies' => $elig['applies'],
             'enabled' => $enabled,
             'skip_reason' => $elig['skip_reason'],
@@ -83,6 +93,11 @@ final class EncounterJourneyService
             'completed' => $this->isCompleted($phaseId, $context),
             'window' => $window,
         ];
+        if ($followup !== null) {
+            $phase['followup'] = $followup;
+        }
+
+        return $phase;
     }
 
     /**
@@ -90,10 +105,18 @@ final class EncounterJourneyService
      */
     private function isCompleted(string $phaseId, array $context): bool
     {
-        return match ($phaseId) {
-            EncounterPhaseWindowsCatalogService::PHASE_MOTIVOS => !empty($context['motivos_resumen_present']),
-            EncounterPhaseWindowsCatalogService::PHASE_ASISTENCIA => !empty($context['asistencia_completada']),
-            default => false,
-        };
+        if ($phaseId === EncounterPhaseWindowsCatalogService::PHASE_MOTIVOS) {
+            return !empty($context['motivos_resumen_present']);
+        }
+        if ($phaseId === EncounterPhaseWindowsCatalogService::PHASE_ASISTENCIA) {
+            return !empty($context['asistencia_completada']);
+        }
+        if ($phaseId === EncounterPhaseWindowsCatalogService::PHASE_POST) {
+            $encounterId = (int) ($context['encounter_id'] ?? 0);
+
+            return $this->followupState->isPhaseCompleted($encounterId);
+        }
+
+        return false;
     }
 }

@@ -13,6 +13,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [turnos.md](./turnos.md) | Agenda, reserva, cancelación, notificaciones |
 | [triage-reserva-turno.md](./triage-reserva-turno.md) | Motivo y alarmas antes de reservar (catálogo + bandas A–D) |
 | [atencion-remota-async.md](./atencion-remota-async.md) | Atención remota y consulta async (adopción gradual) |
+| [consultas-seguimiento.md](./consultas-seguimiento.md) | Consulta general y seguimiento de tratamiento (app paciente) |
 | [catalogo-usos-ia.md](./catalogo-usos-ia.md) | Catálogo de contextos y usos de IA (referencia rápida) |
 | [agentes-autonomos.md](./agentes-autonomos.md) | Agentes proactivos (decisión autónoma + auditoría) |
 | [asistente-y-chat.md](./asistente-y-chat.md) | Conversación y acciones en lenguaje natural |

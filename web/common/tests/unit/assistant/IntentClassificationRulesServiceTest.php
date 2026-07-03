@@ -105,4 +105,45 @@ class IntentClassificationRulesServiceTest extends Unit
         $this->assertTrue(IntentClassificationRulesService::isStaffDataAccessEditQuery('modificar agenda del personal'));
         $this->assertFalse(IntentClassificationRulesService::isStaffDataAccessEditQuery('modificar turno del paciente'));
     }
+
+    public function testConsultasSeguimientoRuleMatchesRenovarReceta(): void
+    {
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'consultas_seguimiento_followup',
+            'quiero renovar la medicación de mi tratamiento'
+        ));
+    }
+
+    public function testConsultasSeguimientoRuleDoesNotMatchAcuteSymptom(): void
+    {
+        $this->assertFalse(IntentClassificationRulesService::ruleMatches(
+            'consultas_seguimiento_followup',
+            'me siento mal y me duele mucho la cabeza'
+        ));
+    }
+
+    public function testConsultasSeguimientoOperationalFallback(): void
+    {
+        $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'atencion.consultas-seguimiento-flow',
+                    'Consultas y seguimiento',
+                    '',
+                    null,
+                    '/api/test',
+                    ['seguimiento tratamiento'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['atencion.consultas-seguimiento-flow'] = $catalog->items[0];
+        $fb = IntentClassificationRulesService::resolveOperationalFallback(
+            'tengo una duda sobre el tratamiento',
+            $catalog
+        );
+        $this->assertNotNull($fb);
+        $this->assertSame('atencion.consultas-seguimiento-flow', $fb['item']->action_id);
+    }
 }

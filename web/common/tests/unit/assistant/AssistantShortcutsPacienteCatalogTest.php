@@ -35,6 +35,7 @@ class AssistantShortcutsPacienteCatalogTest extends Unit
                 $intentIds[] = $id;
             }
         }
+        $this->assertContains('atencion.consultas-seguimiento-flow', $intentIds);
         $this->assertContains('atencion.necesito-atencion', $intentIds);
         $this->assertNotContains('profesional-agenda.configurar-staff', $intentIds);
         $this->assertNotContains('urgencias.ver-tablero-guardia', $intentIds);

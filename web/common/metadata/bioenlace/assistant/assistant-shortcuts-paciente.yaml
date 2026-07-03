@@ -5,6 +5,7 @@ categories:
   - id: atencion
     titulo: Atención
     intent_ids:
+      - atencion.consultas-seguimiento-flow
       - atencion.necesito-atencion
 
   - id: turnos

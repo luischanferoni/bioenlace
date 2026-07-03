@@ -1227,7 +1227,6 @@
         }
         col.querySelector('[data-field="estado"]').textContent = plan.statusLabel || plan.status || '';
         var acts = Array.isArray(plan.activitySummaries) ? plan.activitySummaries : [];
-        var planId = plan.id != null ? String(plan.id) : '';
         var actsSlot = col.querySelector('[data-slot="actividades"]');
         if (acts.length && actsSlot) {
           actsSlot.classList.remove('d-none');
@@ -1236,26 +1235,6 @@
             li.textContent = line;
             actsSlot.appendChild(li);
           });
-        }
-        var actionsSlot = col.querySelector('[data-slot="care-plan-actions"]');
-        if (actionsSlot && planId) {
-          appendAsistenteAction(
-            actionsSlot,
-            'Consultar',
-            'atencion.consultas-seguimiento-flow',
-            'btn btn-sm btn-primary',
-            { intake_tipo: 'seguimiento', care_plan_id: planId }
-          );
-        }
-        var link = col.querySelector('[data-role="link-detalle"]');
-        if (link && planId) {
-          link.href = asistenteFlowUrl('atencion.consultas-seguimiento-flow', {
-            intake_tipo: 'seguimiento',
-            care_plan_id: planId,
-          });
-          link.textContent = 'Ver y consultar';
-        } else if (link) {
-          link.href = asistenteUrl('atencion.consultas-seguimiento-flow');
         }
         grid.appendChild(itemFrag);
       });

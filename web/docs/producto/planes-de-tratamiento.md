@@ -23,7 +23,11 @@ flowchart TB
 1. El equipo crea o actualiza el plan desde la atención.
 2. El paciente sincroniza desde la API qué recordatorios aplican.
 3. El dispositivo dispara avisos según horarios (con preferencias por ítem cuando existen).
-4. Al tocar el aviso, abre el detalle del plan en Bioenlace.
+4. Al tocar el aviso, abre el detalle del plan en la app.
+
+## Consultas y seguimiento desde el plan
+
+En la **app paciente**, el detalle del plan ofrece acciones directas (renovar medicación, duda, evolución, pedir turno) que abren el flujo `atencion.consultas-seguimiento-flow` con el plan ya elegido. Detalle: [consultas-seguimiento.md](./consultas-seguimiento.md).
 
 ## Adherencia para el equipo (staff)
 

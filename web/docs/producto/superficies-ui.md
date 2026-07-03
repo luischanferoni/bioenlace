@@ -49,7 +49,7 @@ flowchart TB
   | AMB | `clinical_list` | KPIs agenda + turnos del día |
   | IMP piso | `clinical_list` | KPIs internación + internados |
   | IMP quirúrgico | `clinical_list` | KPIs quirófano + cirugías del día |
-- **Paciente web/móvil** (sin sesión operativa staff): mismo endpoint con audiencia `patient` y layout `patient_home` (próximos turnos + planes activos).
+- **Paciente en app móvil** — inicio con próximos turnos y planes activos vía API (`GET /home/panel`, audiencia `patient`). No hay superficie web de paciente en producción; el layout `patient_home` del manifiesto es legado técnico del mismo endpoint.
 - Secciones KPI (`kind: staff_kpi_group`) y providers registrados en `product-registries.php` → `homePanelSectionProviders`.
 - **No** es lugar de captura clínica ni de formularios largos por pestaña.
 

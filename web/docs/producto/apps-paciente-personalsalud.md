@@ -2,7 +2,7 @@
 
 ## De qué se trata
 
-**Una misma plataforma Bioenlace** con la misma API: el **paciente** gestiona turnos, resultados, resúmenes y conversación; el **personal de salud** trabaja agenda, captura clínica y operación en el efector (web clínica y **app móvil Personal de Salud**).
+**Una misma plataforma Bioenlace** con la misma API: el **paciente** gestiona turnos, resultados, resúmenes y conversación desde la **app móvil**; el **personal de salud** trabaja agenda, captura clínica y operación en el efector (web clínica y **app móvil Personal de Salud**).
 
 ## Registro e identidad
 
@@ -71,6 +71,7 @@ flowchart TB
 - [registro-paciente.md](./registro-paciente.md) — alta paciente, MPI reducido, contexto y domicilio RENAPER
 - [sesion-paciente-app.md](./sesion-paciente-app.md) — sesión, bloqueo local y reingreso Didit
 - [representacion-paciente.md](./representacion-paciente.md) — tutela de menor y delegación
+- [consultas-seguimiento.md](./consultas-seguimiento.md) — consulta general y seguimiento de tratamiento (app)
 - [superficies-ui.md](./superficies-ui.md) — inicio vs captura vs flows (web = app Personal de Salud)
 - [urgencias-guardia.md](./urgencias-guardia.md), [internacion.md](./internacion.md)
 - [app-personalsalud/README.md](../qa/app-personalsalud/README.md) — QA humo app móvil

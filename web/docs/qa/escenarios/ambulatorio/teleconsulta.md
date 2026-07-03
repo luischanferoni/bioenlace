@@ -36,7 +36,8 @@ Si no aparece la opción de videollamada, el centro puede tener solo turnos pres
 
 ### Preparar la consulta
 
-1. Igual que en [medicina general](./medicina-general.md): formulario previo, chat de motivos y cuestionarios si el centro los usa.
+1. Igual que en [medicina general](./medicina-general.md#preparar-la-consulta-unas-horas-antes): **Preparar tu consulta**, chat con guía de preguntas y respuesta libre hasta pocos minutos antes del horario.
+2. Si el centro usa cohortes, puede aparecer además un cuestionario de pre-consulta aparte.
 
 ### Día del turno
 

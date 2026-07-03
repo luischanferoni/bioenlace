@@ -15,6 +15,8 @@
 | CAP-03 | 🟡 | Audio → texto (si hay micrófono) | Texto en campos |
 | CAP-04 | 🟡 | Derivar a otro servicio | En referencias pendientes |
 | CAP-05 | 🟢 | Receta en misma consulta | Paciente ve receta |
+| CAP-06 | 🟡 | Timeline turno — paciente cargó motivos | Resumen del chat visible en ventana médico |
+| CAP-07 | 🟢 | Timeline turno — paciente sin motivos | Sin resumen; captura no bloqueada |
 
 → [captura-clinica.md](./captura-clinica.md)
 

@@ -15,6 +15,33 @@ Requisito de contexto: [contexto-registro.md](./contexto-registro.md).
 3. **Vos** confirmás el horario.
 4. **El sistema** muestra el turno en **Inicio** → próximos turnos.
 
+---
+
+## App — Preparar la consulta (motivos antes del turno)
+
+Turno ambulatorio con encounter vinculado; ventana desde unas **cuatro horas** antes del horario hasta **pocos minutos** antes.
+
+1. **Vos** abrís **Inicio** o **Mis turnos** y tocás **Preparar tu consulta** (o el aviso push equivalente).
+2. **El sistema** muestra un paso: **contanos tus motivos de consulta**.
+3. **Vos** entrás al chat; **ves** la burbuja guía con preguntas orientativas.
+4. **Vos** enviás texto, audio o fotos (uno o varios mensajes).
+5. **El sistema** confirma que el mensaje quedó guardado en el hilo.
+6. Poco antes del horario **cierra** la carga y arma un resumen para el médico.
+
+**Antes de la ventana**
+
+1. **Vos** intentás preparar la consulta con más de cuatro horas de anticipación.
+2. **El sistema** indica que todavía no está disponible o muestra el paso sin poder abrir el chat.
+
+**Después del cierre**
+
+1. **Vos** abrís el chat cuando ya pasó el plazo de carga.
+2. **El sistema** no deja enviar más mensajes; si hubo carga previa, puede mostrarse el resumen ya armado.
+
+Escenario completo: [medicina general](../escenarios/ambulatorio/medicina-general.md).
+
+---
+
 **Sin cupo**
 
 1. **Vos** seguís el flujo cuando no hay horarios.

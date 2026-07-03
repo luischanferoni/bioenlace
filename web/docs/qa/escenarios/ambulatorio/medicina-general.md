@@ -30,8 +30,16 @@
 ### Preparar la consulta (unas horas antes)
 
 1. Cuando faltan unas **cuatro horas** para el turno, **vos** entrás desde **Inicio** o **Mis turnos** y elegís **Preparar tu consulta**.
-2. **El sistema** abre un chat con una guía de preguntas; **vos** respondés en texto libre, audio o fotos.
-3. **El sistema** guarda todo; poco antes del horario arma un resumen para el médico.
+2. **El sistema** muestra un solo paso — **contanos tus motivos** — y abre un chat.
+3. Al entrar, **ves** una burbuja del sistema con preguntas guía (motivo principal, desde cuándo, evolución, medicación, alarmas). Si al sacar turno elegiste una zona del cuerpo, pueden sumarse preguntas extra (por ejemplo pecho o cabeza).
+4. **Vos** respondés en **un mensaje o varios**, en texto libre, por **audio** o con **fotos**.
+5. **El sistema** guarda todo; **hasta pocos minutos antes del horario** podés seguir enviando. Después cierra el chat y arma un **resumen** para el médico.
+
+**Qué verificar**
+
+- Antes de las cuatro horas, **Preparar tu consulta** no debería dejarte cargar motivos (o el paso aparece como «próximamente»).
+- La burbuja guía se ve al abrir el chat aunque todavía no hayas escrito nada.
+- Tras enviar un mensaje, **queda** en el hilo del chat.
 
 ### Día del turno
 
@@ -56,7 +64,8 @@ Si abrís la historia demasiado pronto:
 ### Revisar lo que envió el paciente
 
 1. **Vos** abrís la historia o línea de tiempo del paciente con ese turno en contexto.
-2. **El sistema** muestra, si existen: resumen de motivos del chat y, si el centro lo usa, cuestionario de pre-consulta, y signos vitales.
+2. **El sistema** muestra, si el paciente cargó motivos: el **resumen** del chat (cuando ya cerró la ventana y se procesó) y, si el centro lo usa, cuestionario de pre-consulta por cohorte, y signos vitales.
+3. Si el paciente **no** cargó motivos, no hay resumen; la captura sigue disponible igual.
 
 ### Atender
 
@@ -73,8 +82,9 @@ Si abrís la historia demasiado pronto:
 | Cuándo | Quién | Qué debería pasar |
 |--------|-------|-------------------|
 | Al confirmar el turno | Paciente | Aviso de turno reservado (si las notificaciones están activas) |
-| Unas cuatro horas antes del turno | Paciente | Recordatorio para preparar la consulta y cargar motivos |
-| Pocos minutos antes del turno | Médico | Ya puede abrir la historia con los motivos del paciente |
+| Unas cuatro horas antes del turno | Paciente | Recordatorio para preparar la consulta; se abre el chat de motivos con guía |
+| Pocos minutos antes del cierre del chat | Paciente | Último aviso para cargar motivos (si aún no lo hizo) |
+| Pocos minutos antes del turno | Médico | Ya puede abrir la historia; si el paciente cargó motivos, ve el resumen |
 | Poco antes del horario | Paciente | Recordatorio del turno |
 | Después de la consulta | Paciente | Aviso de resumen de atención o encuesta de seguimiento, si el centro lo envía |
 

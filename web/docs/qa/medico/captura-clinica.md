@@ -13,14 +13,15 @@
 
 ---
 
-## Motivos pre-turno (intake, chat, cohorte)
+## Motivos pre-turno (chat guiado y cohorte)
 
 Con turno ambulatorio y dentro de la ventana de historia clínica:
 
 1. **Vos** abrís el timeline del paciente (web o app Personal de Salud) con el turno en contexto.
-2. **El sistema** muestra, si existen: preguntas previas al chat completadas por el paciente, resumen de motivos del chat y cuestionario de cohorte pre-consulta.
-3. Si el paciente aún no completó el intake habilitado, **ves** el aviso correspondiente (sin bloquear la captura al médico).
-4. Si es demasiado pronto antes del turno, **el sistema** puede responder `HC_ANTES_DE_VENTANA` hasta abrir la ventana médico.
+2. **El sistema** muestra, si el paciente cargó motivos antes del turno, el **resumen** del chat (tras cerrar la ventana de carga y procesar el hilo).
+3. Si el centro tiene **cohortes** activas, puede aparecer además el cuestionario de pre-consulta completado.
+4. Si el paciente **no** cargó motivos, no hay resumen; **no** bloquea la captura.
+5. Si es demasiado pronto antes del turno, **el sistema** puede responder `HC_ANTES_DE_VENTANA` hasta abrir la ventana médico.
 
 Detalle: [recorrido-pre-post-consulta.md](../../producto/recorrido-pre-post-consulta.md).
 

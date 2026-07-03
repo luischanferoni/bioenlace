@@ -53,8 +53,11 @@
 | TUR-06 | 🟡 | Cancelar con anticipación suficiente | Cancelado |
 | TUR-07 | 🟡 | Cancelar fuera de plazo | Rechazo explicado |
 | TUR-08 | 🟡 | Reprogramar | Nuevo horario |
+| MOT-01 | 🔴 | Turno en &lt;4 h → Preparar tu consulta → motivos | Chat con burbuja guía; mensaje se guarda |
+| MOT-02 | 🟡 | Turno en &gt;4 h → Preparar consulta | Paso no habilitado o «próximamente» |
+| MOT-03 | 🟡 | Tras cierre de ventana de motivos | No permite enviar; resumen visible si hubo mensajes |
 
-→ [turnos.md](./turnos.md)
+→ [turnos.md](./turnos.md) (§ Preparar la consulta)
 
 ---
 

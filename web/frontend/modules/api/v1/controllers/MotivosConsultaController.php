@@ -7,6 +7,7 @@ use yii\web\Response;
 use yii\web\UploadedFile;
 use common\components\Domain\Clinical\Assistant\AppointmentReasonEntry;
 use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Person\PersonRelatedAuditLog;
@@ -75,6 +76,15 @@ class MotivosConsultaController extends BaseController
             return ['success' => false, 'message' => 'El mensaje no puede estar vacío', 'data' => null];
         }
 
+        $encounter = Encounter::findOne(['id' => $encounterId, 'deleted_at' => null]);
+        if ($encounter !== null && (new EncounterMotivosIntakeService())->blocksMotivosChat($encounter)) {
+            return [
+                'success' => false,
+                'message' => 'Completá las preguntas previas antes de cargar motivos en el chat.',
+                'data' => null,
+            ];
+        }
+
         $userId = (int) Yii::$app->user->id;
         $userName = Yii::$app->user->identity->username ?? 'Paciente';
 
@@ -106,6 +116,13 @@ class MotivosConsultaController extends BaseController
         [$encounter, $err] = $this->requireEncounterAccess($encounterId, RepresentationPermission::CLINICAL_MOTIVOS);
         if ($err !== null) {
             return $err;
+        }
+        if ((new EncounterMotivosIntakeService())->blocksMotivosChat($encounter)) {
+            return [
+                'success' => false,
+                'message' => 'Completá las preguntas previas antes de cargar motivos en el chat.',
+                'data' => null,
+            ];
         }
         $subjectPersonaId = (int) $encounter->subject_persona_id;
 

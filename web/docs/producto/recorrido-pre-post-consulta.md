@@ -10,6 +10,7 @@ El paciente opera desde la **app móvil**; staff consume los datos en captura cl
 
 | Fase | Superficie | Cuándo |
 |------|------------|--------|
+| `motivos_intake` | Formulario UI JSON (preguntas declarativas) | Antes del chat de motivos, misma ventana |
 | `motivos_consulta` | Chat libre (`motivos-consulta/*`) | Antes del turno, dentro de la ventana |
 | `asistencia_pre_consulta` | Flow / UI JSON care pack | Antes del turno, si hay pack de cohorte |
 | `post_consulta` | Touchpoints del pack followup | Tras encounter finalizado |
@@ -18,7 +19,7 @@ El paciente opera desde la **app móvil**; staff consume los datos en captura cl
 
 ## Principios
 
-1. **Metadata YAML** — ventanas en `encounter_phase_windows.yaml`, elegibilidad en `encounter_phase_eligibility.yaml`.
+1. **Metadata YAML** — ventanas en `encounter_phase_windows.yaml`, overrides en `encounter_phase_window_overrides.yaml`, elegibilidad en `encounter_phase_eligibility.yaml`, preguntas previas en `motivos_consulta_intake.yaml`.
 2. **Servicio de dominio** — `EncounterJourneyService` compone ventana + elegibilidad + `enabled` por fase.
 3. **Sin hardcode en listados ni Flutter** — el listado de turnos y `GET /api/v1/encounter-journey/estado` exponen `journey` y flags legacy (`motivos_input_abierto`, `asistencia_cohorte_disponible`).
 4. **Motivos siguen siendo conversacionales** — la IA corre en lote al cierre de ventana (`motivos-consulta-batch`), no por pregunta del wizard.
@@ -33,6 +34,12 @@ El paciente opera desde la **app móvil**; staff consume los datos en captura cl
 
 Offsets configurables en `encounter_phase_windows.yaml` (`-72h`, `-48h`, `param:motivos_consulta_cierre_minutos`, etc.).
 
+**Overrides por efector/servicio** (`encounter_phase_window_overrides.yaml`): reglas con `match.id_efector` y/o `match.id_servicio`; gana la regla más específica (más claves en `match`).
+
+## Preguntas previas al chat de motivos
+
+Catálogo `motivos_consulta_intake.yaml` (`enabled: true/false`). API `GET|POST /api/v1/encounter-journey/motivos-intake`. Respuestas en `encounter.motivos_intake_json`. El chat de motivos queda bloqueado hasta completar el intake si está habilitado.
+
 ## Elegibilidad (ejemplos)
 
 - **Motivos:** no aplica sin encounter, async (`SOLICITUD_ASYNC`), turno cancelado/en resolución, clase ≠ AMB.
@@ -44,6 +51,7 @@ Reglas en `encounter_phase_eligibility.yaml`; evaluación en `EncounterJourneyEl
 ## API
 
 - `GET|POST /api/v1/encounter-journey/estado?turno_id=` — estado completo + flags legacy.
+- `GET|POST /api/v1/encounter-journey/motivos-intake?turno_id=` — formulario previo al chat.
 - El listado `turnos/listar-como-paciente` incluye `journey` en cada fila.
 
 RBAC: hereda de `listar-como-paciente` (migración `m260703_120000_api_encounter_journey_estado_rbac`).
@@ -61,7 +69,5 @@ Al programar turno (`TurnoConfirmationService`), se encolan recordatorios declar
 
 ## Próximos pasos (producto)
 
-- Flow declarativo opcional de preguntas generales antes del chat de motivos.
-- Overrides de ventana por efector/servicio en metadata o `EfectorTurnosConfig`.
-- Hub único «Preparar tu consulta» en inicio app consumiendo solo `journey`.
-- Hub «Seguimiento post-consulta» en turnos pasados con touchpoints del pack followup (`journey.phases.post_consulta.followup`).
+- Activar `motivos_consulta_intake.yaml` (`enabled: true`) cuando el equipo quiera preguntas previas en producción.
+- Notificaciones journey para touchpoints post-consulta (hoy push vía cron `care-pack`).

@@ -7,6 +7,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeService;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Clinical\Encounter;
@@ -57,6 +58,32 @@ class EncounterJourneyController extends BaseController
             'motivos_cierre_minutos' => $legacy['motivos_cierre_minutos'],
             'asistencia_cohorte_disponible' => $legacy['asistencia_cohorte_disponible'],
         ];
+    }
+
+    /**
+     * GET|POST /api/v1/encounter-journey/motivos-intake
+     *
+     * Query/body: turno_id o encounter_id; subject_persona_id si representación.
+     *
+     * @action_name Preguntas previas motivos consulta
+     * @entity EncounterJourney
+     * @tags paciente, turnos, motivos
+     */
+    public function actionMotivosIntake(): array
+    {
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        $service = new EncounterMotivosIntakeService();
+
+        try {
+            if ($req->isPost) {
+                return $service->submitIntake($params);
+            }
+
+            return $service->renderIntake($params);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
     }
 
     /**

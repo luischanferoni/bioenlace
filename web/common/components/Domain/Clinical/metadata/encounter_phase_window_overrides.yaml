@@ -1,0 +1,5 @@
+# Overrides de ventana por efector y/o servicio (última regla coincidente gana).
+# {@see EncounterPhaseWindowOverrideCatalogService}
+version: 1
+
+rules: []

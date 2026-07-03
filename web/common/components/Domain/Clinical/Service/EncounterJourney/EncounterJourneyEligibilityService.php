@@ -22,7 +22,8 @@ final class EncounterJourneyEligibilityService
      *   label: string,
      *   surface: string|null,
      *   intent_id: string|null,
-     *   action_id: string|null
+     *   action_id: string|null,
+     *   api_path: string|null
      * }
      */
     public function evaluate(string $phaseId, array $context): array
@@ -36,6 +37,7 @@ final class EncounterJourneyEligibilityService
                 'surface' => null,
                 'intent_id' => null,
                 'action_id' => null,
+                'api_path' => null,
             ];
         }
 
@@ -48,6 +50,7 @@ final class EncounterJourneyEligibilityService
                 'surface' => $this->optionalString($def['surface'] ?? null),
                 'intent_id' => $this->optionalString($def['intent_id'] ?? null),
                 'action_id' => $this->optionalString($def['action_id'] ?? null),
+                'api_path' => $this->optionalString($def['api_path'] ?? null),
             ];
         }
 
@@ -58,6 +61,7 @@ final class EncounterJourneyEligibilityService
             'surface' => $this->optionalString($def['surface'] ?? null),
             'intent_id' => $this->optionalString($def['intent_id'] ?? null),
             'action_id' => $this->optionalString($def['action_id'] ?? null),
+            'api_path' => $this->optionalString($def['api_path'] ?? null),
         ];
     }
 

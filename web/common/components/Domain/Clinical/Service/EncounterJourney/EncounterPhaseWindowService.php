@@ -10,10 +10,14 @@ use Yii;
 final class EncounterPhaseWindowService
 {
     private EncounterPhaseWindowsCatalogService $catalog;
+    private EncounterPhaseWindowResolver $resolver;
 
-    public function __construct(?EncounterPhaseWindowsCatalogService $catalog = null)
-    {
+    public function __construct(
+        ?EncounterPhaseWindowsCatalogService $catalog = null,
+        ?EncounterPhaseWindowResolver $resolver = null
+    ) {
         $this->catalog = $catalog ?? new EncounterPhaseWindowsCatalogService();
+        $this->resolver = $resolver ?? new EncounterPhaseWindowResolver($this->catalog);
     }
 
     /**
@@ -29,7 +33,7 @@ final class EncounterPhaseWindowService
      */
     public function state(string $phaseId, array $context): array
     {
-        $def = $this->catalog->phase($phaseId);
+        $def = $this->resolver->phaseDefinition($phaseId, $context);
         if ($def === null) {
             return $this->emptyState();
         }
@@ -66,9 +70,14 @@ final class EncounterPhaseWindowService
         ];
     }
 
-    public function minutesBeforeCloseForPhase(string $phaseId): int
+    /**
+     * @param array<string, mixed> $context
+     */
+    public function minutesBeforeCloseForPhase(string $phaseId, array $context = []): int
     {
-        $def = $this->catalog->phase($phaseId);
+        $def = $context !== []
+            ? $this->resolver->phaseDefinition($phaseId, $context)
+            : $this->catalog->phase($phaseId);
         if ($def === null) {
             return 2;
         }

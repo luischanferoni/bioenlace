@@ -3,6 +3,11 @@
 version: 1
 
 phases:
+  motivos_intake:
+    anchor: turno_start
+    open_offset: "-72h"
+    close_offset: "param:motivos_consulta_cierre_minutos"
+
   motivos_consulta:
     anchor: turno_start
     open_offset: "-72h"

@@ -33,6 +33,12 @@ final class EncounterJourneyContextBuilder
         $asistenciaCompletada = $encounterId > 0
             && CareAssistanceResponse::find()->where(['encounter_id' => $encounterId])->exists();
 
+        $intakeCatalog = new EncounterMotivosIntakeCatalogService();
+        $motivosIntakeHabilitado = $intakeCatalog->isEnabled();
+        $motivosIntakeCompletado = $encounter !== null
+            && trim((string) ($encounter->motivos_intake_json ?? '')) !== '';
+        $motivosIntakeBloqueaChat = $motivosIntakeHabilitado && !$motivosIntakeCompletado;
+
         $tipoAtencion = trim((string) ($turno->tipo_atencion ?? Turno::TIPO_ATENCION_PRESENCIAL));
         if ($encounter !== null && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
             $tipoAtencion = 'async';
@@ -44,6 +50,7 @@ final class EncounterJourneyContextBuilder
 
         return [
             'turno_id' => (int) $turno->id_turnos,
+            'id_efector' => (int) ($turno->id_efector ?? 0),
             'turno_estado' => trim((string) $turno->estado),
             'turno_fecha' => trim((string) $turno->fecha),
             'turno_hora' => trim((string) $turno->hora),
@@ -61,6 +68,9 @@ final class EncounterJourneyContextBuilder
             'sin_pack_followup' => $followupPackId <= 0,
             'asistencia_completada' => $asistenciaCompletada,
             'motivos_resumen_present' => $encounter !== null && trim((string) $encounter->reason_text) !== '',
+            'motivos_intake_habilitado' => $motivosIntakeHabilitado,
+            'motivos_intake_completado' => $motivosIntakeCompletado,
+            'motivos_intake_bloquea_chat' => $motivosIntakeBloqueaChat,
             'turno_starts_at' => $encounter !== null ? AppointmentReasonWindowService::turnoStartsAt($encounter) : null,
         ];
     }

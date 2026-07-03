@@ -5,6 +5,9 @@ namespace common\tests\unit\clinical;
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Service\EncounterJourney\EncounterJourneyEligibilityService;
 use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseEligibilityCatalogService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeCatalogService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowOverrideCatalogService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowResolver;
 use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowService;
 use common\components\Domain\Clinical\Service\EncounterJourney\EncounterPhaseWindowsCatalogService;
 
@@ -14,6 +17,8 @@ class EncounterJourneyServiceTest extends Unit
     {
         EncounterPhaseWindowsCatalogService::resetCacheForTests();
         EncounterPhaseEligibilityCatalogService::resetCacheForTests();
+        EncounterPhaseWindowOverrideCatalogService::resetCacheForTests();
+        EncounterMotivosIntakeCatalogService::resetCacheForTests();
     }
 
     public function testMotivosSkipWhenEncounterAsync(): void
@@ -87,5 +92,34 @@ class EncounterJourneyServiceTest extends Unit
         ]);
         $this->assertTrue($result['applies']);
         $this->assertSame('pack_followup', $result['surface']);
+    }
+
+    public function testWindowOverrideByEfector(): void
+    {
+        $overrideCatalog = $this->createMock(EncounterPhaseWindowOverrideCatalogService::class);
+        $overrideCatalog->method('phaseOverride')->willReturnCallback(
+            static function (string $phaseId, array $context): ?array {
+                if ($phaseId === 'motivos_consulta' && (int) ($context['id_efector'] ?? 0) === 99) {
+                    return ['open_offset' => '-96h'];
+                }
+
+                return null;
+            }
+        );
+        $resolver = new EncounterPhaseWindowResolver(null, $overrideCatalog);
+        $def = $resolver->phaseDefinition('motivos_consulta', ['id_efector' => 99]);
+        $this->assertSame('-96h', $def['open_offset'] ?? null);
+    }
+
+    public function testMotivosIntakeSkipWhenDisabled(): void
+    {
+        $elig = new EncounterJourneyEligibilityService();
+        $result = $elig->evaluate('motivos_intake', [
+            'motivos_intake_habilitado' => false,
+            'encounter_id' => 10,
+            'encounter_class' => 'AMB',
+            'turno_estado' => 'PENDIENTE',
+        ]);
+        $this->assertFalse($result['applies']);
     }
 }

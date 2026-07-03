@@ -24,6 +24,35 @@ int? turnoIdDesdePayloadProducto(Map<String, dynamic> turno) {
   return parsed != null && parsed > 0 ? parsed : null;
 }
 
+/// Abre un formulario UI JSON del journey (`api_path` declarado en elegibilidad).
+void abrirEncounterJourneyFlowApi({
+  required BuildContext context,
+  required String apiPath,
+  required int turnoId,
+  String? authToken,
+  String appClient = 'paciente-flutter',
+  int? subjectPersonaId,
+}) {
+  var query = 'turno_id=$turnoId';
+  if (subjectPersonaId != null && subjectPersonaId > 0) {
+    query += '&subject_persona_id=$subjectPersonaId';
+  }
+  final separator = apiPath.contains('?') ? '&' : '?';
+  final path = AppConfig.normalizeApiV1Path('$apiPath$separator$query');
+  final uri = path.startsWith('http')
+      ? Uri.parse(path)
+      : Uri.parse('${AppConfig.apiUrl}$path');
+  Navigator.of(context).push(
+    MaterialPageRoute(
+      builder: (_) => UiJsonScreen(
+        apiAbsoluteUrl: uri.toString(),
+        authToken: authToken,
+        appClient: appClient,
+      ),
+    ),
+  );
+}
+
 /// Abre el formulario dinámico GET|POST `/api/v1/care-packs/assistance`.
 void abrirAsistenciaPreConsulta({
   required BuildContext context,

@@ -5,6 +5,7 @@ import 'care_pack_navigation.dart';
 
 /// Fases pre-turno del hub «Preparar tu consulta».
 const List<String> kEncounterJourneyPreTurnoPhases = [
+  'motivos_intake',
   'motivos_consulta',
   'asistencia_pre_consulta',
 ];
@@ -14,6 +15,7 @@ const List<String> kEncounterJourneyPostTurnoPhases = [
   'post_consulta',
 ];
 
+const String kEncounterJourneyPhaseMotivosIntake = 'motivos_intake';
 const String kEncounterJourneyPhaseMotivos = 'motivos_consulta';
 const String kEncounterJourneyPhaseAsistencia = 'asistencia_pre_consulta';
 const String kEncounterJourneyPhasePostConsulta = 'post_consulta';
@@ -282,7 +284,19 @@ void abrirFaseEncounterJourney({
 
   if (surface == 'flow') {
     if (phase['enabled'] != true) return;
+    final apiPath = phase['api_path']?.toString().trim() ?? '';
     final turnoId = turnoIdDesdePayloadProducto(turno);
+    if (apiPath.isNotEmpty && turnoId != null) {
+      abrirEncounterJourneyFlowApi(
+        context: context,
+        apiPath: apiPath,
+        turnoId: turnoId,
+        authToken: authToken,
+        subjectPersonaId: subjectPersonaId,
+        appClient: appClient,
+      );
+      return;
+    }
     if (turnoId == null) return;
     abrirAsistenciaPreConsulta(
       context: context,

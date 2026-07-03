@@ -11,10 +11,17 @@ use common\models\TurnoNotificacionProgramada;
 final class EncounterJourneyNotificationScheduler
 {
     private EncounterPhaseWindowsCatalogService $catalog;
+    private EncounterPhaseWindowResolver $resolver;
+    private EncounterJourneyContextBuilder $contextBuilder;
 
-    public function __construct(?EncounterPhaseWindowsCatalogService $catalog = null)
-    {
+    public function __construct(
+        ?EncounterPhaseWindowsCatalogService $catalog = null,
+        ?EncounterPhaseWindowResolver $resolver = null,
+        ?EncounterJourneyContextBuilder $contextBuilder = null
+    ) {
         $this->catalog = $catalog ?? new EncounterPhaseWindowsCatalogService();
+        $this->resolver = $resolver ?? new EncounterPhaseWindowResolver($this->catalog);
+        $this->contextBuilder = $contextBuilder ?? new EncounterJourneyContextBuilder();
     }
 
     public function scheduleForTurno(Turno $turno, int $turnoTimestamp): void
@@ -23,8 +30,10 @@ final class EncounterJourneyNotificationScheduler
             return;
         }
 
+        $context = $this->contextBuilder->fromTurno($turno);
+
         foreach ($this->catalog->phaseIds() as $phaseId) {
-            foreach ($this->catalog->notifications($phaseId) as $notif) {
+            foreach ($this->resolver->notifications($phaseId, $context) as $notif) {
                 $offsetSec = $this->catalog->offsetSeconds($notif['offset']);
                 if ($offsetSec === null) {
                     continue;

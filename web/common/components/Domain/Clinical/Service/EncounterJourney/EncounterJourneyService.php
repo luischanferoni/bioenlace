@@ -90,6 +90,7 @@ final class EncounterJourneyService
             'surface' => $elig['surface'],
             'intent_id' => $elig['intent_id'],
             'action_id' => $elig['action_id'],
+            'api_path' => $elig['api_path'],
             'completed' => $this->isCompleted($phaseId, $context),
             'window' => $window,
         ];
@@ -107,6 +108,9 @@ final class EncounterJourneyService
     {
         if ($phaseId === EncounterPhaseWindowsCatalogService::PHASE_MOTIVOS) {
             return !empty($context['motivos_resumen_present']);
+        }
+        if ($phaseId === EncounterPhaseWindowsCatalogService::PHASE_MOTIVOS_INTAKE) {
+            return !empty($context['motivos_intake_completado']);
         }
         if ($phaseId === EncounterPhaseWindowsCatalogService::PHASE_ASISTENCIA) {
             return !empty($context['asistencia_completada']);

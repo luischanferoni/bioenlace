@@ -17,6 +17,8 @@ final class EncounterPhaseWindowsCatalogService
 
     public const PHASE_MOTIVOS = 'motivos_consulta';
 
+    public const PHASE_MOTIVOS_INTAKE = 'motivos_intake';
+
     public const PHASE_ASISTENCIA = 'asistencia_pre_consulta';
 
     public const PHASE_POST = 'post_consulta';

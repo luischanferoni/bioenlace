@@ -118,6 +118,8 @@ class EncounterJourneyHubScreen extends StatelessWidget {
 
   IconData _iconoFase(String phaseId) {
     switch (phaseId) {
+      case kEncounterJourneyPhaseMotivosIntake:
+        return Icons.quiz_outlined;
       case kEncounterJourneyPhaseMotivos:
         return Icons.edit_note;
       case kEncounterJourneyPhaseAsistencia:

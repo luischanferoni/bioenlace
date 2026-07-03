@@ -327,6 +327,44 @@ class MotivoImagenAdjunta {
   }
 }
 
+class MotivosIntakeStaff {
+  final String status;
+  final String? title;
+  final String? notesForStaff;
+  final List<CarePackAssistanceAnswer> answers;
+
+  MotivosIntakeStaff({
+    required this.status,
+    this.title,
+    this.notesForStaff,
+    this.answers = const [],
+  });
+
+  bool get tieneContenido =>
+      answers.isNotEmpty ||
+      status == 'pending' ||
+      (notesForStaff != null && notesForStaff!.trim().isNotEmpty);
+
+  factory MotivosIntakeStaff.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return MotivosIntakeStaff(status: 'pending');
+    }
+    final rawAnswers = json['answers'] as List<dynamic>? ?? [];
+    return MotivosIntakeStaff(
+      status: json['status']?.toString() ?? 'pending',
+      title: json['title']?.toString(),
+      notesForStaff: json['notes_for_staff']?.toString(),
+      answers: rawAnswers
+          .whereType<Map>()
+          .map((e) => CarePackAssistanceAnswer.fromJson(
+                Map<String, dynamic>.from(e),
+              ))
+          .where((e) => e.question.isNotEmpty || e.answer.isNotEmpty)
+          .toList(),
+    );
+  }
+}
+
 class MotivosConsultaPaciente {
   final int? consultaId;
   final int? turnoId;
@@ -337,6 +375,7 @@ class MotivosConsultaPaciente {
   final bool resumenPendiente;
   final List<MotivoImagenAdjunta> imagenesAdjuntas;
   final SugerenciasClinicasMotivos? sugerenciasClinicas;
+  final MotivosIntakeStaff? motivosIntake;
   final List<MotivoConsultaMensajeApi> messages;
 
   MotivosConsultaPaciente({
@@ -349,6 +388,7 @@ class MotivosConsultaPaciente {
     this.resumenPendiente = false,
     this.imagenesAdjuntas = const [],
     this.sugerenciasClinicas,
+    this.motivosIntake,
     required this.messages,
   });
 
@@ -384,6 +424,7 @@ class MotivosConsultaPaciente {
             .toList()
         : <MotivoImagenAdjunta>[];
     final resumenTxt = json['resumen']?.toString() ?? json['resumen_ia']?.toString();
+    final intakeMap = json['motivos_intake'];
     return MotivosConsultaPaciente(
       consultaId: cid,
       turnoId: tid,
@@ -401,6 +442,11 @@ class MotivosConsultaPaciente {
       sugerenciasClinicas: sugMap is Map
           ? SugerenciasClinicasMotivos.fromJson(
               Map<String, dynamic>.from(sugMap),
+            )
+          : null,
+      motivosIntake: intakeMap is Map
+          ? MotivosIntakeStaff.fromJson(
+              Map<String, dynamic>.from(intakeMap),
             )
           : null,
       messages: raw

@@ -4,7 +4,7 @@
 
 Orquestación declarativa de **motivos de consulta**, **cuestionario pre-consulta** (care pack) y **seguimiento post-consulta**, con **ventanas temporales**, **elegibilidad** (cuándo no aplica cada fase) y **notificaciones** al paciente.
 
-El paciente opera desde la **app móvil**; staff consume los datos en captura clínica y bandejas existentes.
+El paciente opera desde la **app móvil**; el **personal de salud** consume motivos, intake y pre-consulta en **historia clínica / timeline** (web y app Personal de Salud) antes y durante la captura.
 
 ## Fases
 
@@ -38,7 +38,39 @@ Offsets configurables en `encounter_phase_windows.yaml` (`-72h`, `-48h`, `param:
 
 ## Preguntas previas al chat de motivos
 
-Catálogo `motivos_consulta_intake.yaml` (`enabled: true/false`). API `GET|POST /api/v1/encounter-journey/motivos-intake`. Respuestas en `encounter.motivos_intake_json`. El chat de motivos queda bloqueado hasta completar el intake si está habilitado.
+Catálogo `motivos_consulta_intake.yaml` (`enabled: true/false`). API paciente `GET|POST /api/v1/encounter-journey/motivos-intake`. Respuestas en `encounter.motivos_intake_json`. El chat de motivos queda bloqueado hasta completar el intake si está habilitado (`EncounterMotivosIntakeService::blocksMotivosChat`).
+
+**Sin IA:** formulario declarativo (select/texto); no hay inferencia por respuesta. Ver [catalogo-usos-ia.md](./catalogo-usos-ia.md) §2.
+
+### Vista staff (historia clínica)
+
+El equipo ve las respuestas **antes del resumen del chat**, en el mismo bloque de motivos del turno:
+
+| Superficie | Ubicación |
+|------------|-----------|
+| Web | Timeline paciente — sección «Preguntas previas al chat de motivos» (`paciente/timeline`) |
+| App Personal de Salud | Tarjeta «Preguntas previas al chat» en `patient_timeline_screen` |
+
+**API:** `GET /api/v1/personas/{id}/historia-clinica?turno_id=` (o `encounter_id=`) incluye en `motivos_consulta_paciente.motivos_intake`:
+
+```json
+{
+  "status": "submitted",
+  "title": "Antes de contarnos tus motivos",
+  "notes_for_staff": "",
+  "answers": [
+    { "id": "motivo_principal", "question": "¿Cuál es el principal motivo…?", "answer": "Control o chequeo" }
+  ]
+}
+```
+
+- `status`: `pending` (intake habilitado, paciente aún no completó) o `submitted`.
+- Las etiquetas de opciones (`control` → «Control o chequeo») las resuelve dominio: `EncounterMotivosIntakeStaffViewService` + catálogo YAML (no en clientes).
+- Si el catálogo está deshabilitado pero el encounter tiene JSON histórico, igual se muestran las respuestas guardadas.
+
+**Orden en timeline (staff):** intake previo → resumen motivos (chat/IA) → asistencia pre-consulta cohorte (`care_pack_cohorte`) → signos vitales y captura.
+
+**Ventana médico:** la historia clínica (incluido intake) sigue la regla de `AppointmentReasonWindowService::isHistoriaClinicaVisibleForEncounter` (p. ej. 1 min antes del turno en ambulatorio).
 
 ## Elegibilidad (ejemplos)
 
@@ -50,11 +82,18 @@ Reglas en `encounter_phase_eligibility.yaml`; evaluación en `EncounterJourneyEl
 
 ## API
 
+### Paciente (app móvil)
+
 - `GET|POST /api/v1/encounter-journey/estado?turno_id=` — estado completo + flags legacy.
 - `GET|POST /api/v1/encounter-journey/motivos-intake?turno_id=` — formulario previo al chat.
 - El listado `turnos/listar-como-paciente` incluye `journey` en cada fila.
 
-RBAC: hereda de `listar-como-paciente` (migración `m260703_120000_api_encounter_journey_estado_rbac`).
+### Staff (historia clínica)
+
+- `GET /api/v1/personas/{id}/historia-clinica?turno_id=` — resumen clínico del turno; `motivos_consulta_paciente.motivos_intake` + `care_pack_cohorte` cuando aplica.
+- Sin `turno_id` / `encounter_id`: motivos del turno con mensajes más reciente en el efector (comportamiento legacy del endpoint).
+
+RBAC journey paciente: hereda de `listar-como-paciente` (migración `m260703_120000_api_encounter_journey_estado_rbac`). Historia clínica: `/api/pacientes/historia-clinica`.
 
 ## Notificaciones
 
@@ -62,8 +101,25 @@ Al programar turno (`TurnoConfirmationService`), se encolan recordatorios de fas
 
 Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_turno` y `phase=post_consulta` para abrir el hub o el formulario directamente en la app.
 
+## App paciente (hub journey)
+
+- Hub «Preparar tu consulta» / «Seguimiento post-consulta» en inicio y mis turnos (`encounter_journey_hub_screen`, metadata `journey.phases`).
+- Deep links push: tipos `JOURNEY_*` y `CARE_FOLLOWUP_TOUCHPOINT` con `id_turno` + `phase`.
+
+## Implementación (referencia código)
+
+| Pieza | Ubicación |
+|-------|-----------|
+| Ventanas / elegibilidad | `encounter_phase_windows.yaml`, `encounter_phase_eligibility.yaml`, `EncounterJourneyService` |
+| Intake paciente | `EncounterMotivosIntakeService`, `motivos_consulta_intake.yaml` |
+| Intake staff | `EncounterMotivosIntakeStaffViewService` → `PacientesController::buildMotivosHistoriaClinicaContext` |
+| UI web timeline | `frontend/views/paciente/timeline/timeline.php` (`renderMotivosIntake`) |
+| UI móvil staff | `mobile/personalsalud/…/patient_timeline_screen.dart` |
+| UI móvil paciente | `mobile/packages/shared/lib/clinical/encounter_journey_*` |
+
 ## Relación con otros documentos
 
+- [captura-clinica.md](./captura-clinica.md) — timeline staff y motivos pre-turno.
 - [turnos.md](./turnos.md) — reserva y listado.
 - [asistencia-cohortes.md](./asistencia-cohortes.md) — generación de packs.
 - [consultas-seguimiento.md](./consultas-seguimiento.md) — seguimiento de tratamiento (care plan).
@@ -72,3 +128,5 @@ Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_t
 ## Próximos pasos (producto)
 
 - Activar `motivos_consulta_intake.yaml` (`enabled: true`) cuando el equipo quiera preguntas previas en producción.
+- Ejecutar migraciones pendientes: `m260703_140000_encounter_motivos_intake_json`, `m260703_140001_api_encounter_journey_motivos_intake_rbac` (y RBAC journey/estado si aún no corrieron).
+- Resumen compacto del journey (fases completadas) en timeline staff — hoy el médico ve intake, motivos y cohorte por separado.

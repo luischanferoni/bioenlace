@@ -10,7 +10,7 @@ La captura es **una sola superficie** para ambulatorio, guardia, internación y 
 
 | Pieza | Rol |
 |-------|-----|
-| `paciente/historia` (timeline) | Estado del paciente, historial, contexto |
+| `paciente/historia` (timeline) | Estado del paciente, historial, **motivos pre-turno** (intake, chat, cohorte) |
 | `_formulario_consulta.php` | Entrada texto/audio + análisis + confirmación |
 | `PacienteController::actionFormularioConsulta` | Resuelve `id_configuracion` vía `EncounterDefinition` |
 
@@ -22,6 +22,18 @@ La captura es **una sola superficie** para ambulatorio, guardia, internación y 
 - `id_configuracion` — fila de `encounter_definition` (servicio + `encounter_class` + workflow por especialidad)
 
 Entrada desde listados: `PatientHistoriaUrl::captura($idPersona, $parent, $parentId)`.
+
+## Motivos y pre-consulta (antes del dictado)
+
+En ambulatorio con turno, el timeline carga `GET /api/v1/personas/{id}/historia-clinica?turno_id=` y muestra, en orden:
+
+1. **Preguntas previas al chat** (`motivos_consulta_paciente.motivos_intake`) — formulario declarativo del paciente, sin IA.
+2. **Resumen de motivos** (`reason_text` / chat) y orientación preliminar (insights IA).
+3. **Asistencia pre-consulta por cohorte** (`care_pack_cohorte`) — si care packs están habilitados.
+
+Misma API y orden en la **app Personal de Salud** (`patient_timeline_screen`). Detalle de ventanas, journey y notificaciones: [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md).
+
+La apertura al médico respeta `historia_clinica_apertura_medico_minutos` (params): sin turno vinculado (guardia, etc.) los motivos son visibles de inmediato.
 
 ## Cómo funciona
 

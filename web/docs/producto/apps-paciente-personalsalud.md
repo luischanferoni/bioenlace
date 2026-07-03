@@ -61,7 +61,7 @@ flowchart TB
 
 - **Primer acceso:** si no tenés usuario, el administrador del efector debe crearte uno; la app no ofrece alta.
 - Sesión con **efector y servicio**; la **página de inicio muta** según `encounter_class` y rol (tablero EMER, mapa IMP, agenda AMB, etc.) — ver [superficies-ui.md](./superficies-ui.md). Misma lógica en **web** y **app Personal de Salud** (`GET /home/panel`).
-- **Captura clínica** unificada: timeline del paciente + formulario encounter (texto/audio → API `clinical/encounter/*`); muta por encounter, rol y especialidad — [captura-clinica.md](./captura-clinica.md).
+- **Captura clínica** unificada: timeline del paciente + formulario encounter (texto/audio → API `clinical/encounter/*`); muta por encounter, rol y especialidad — [captura-clinica.md](./captura-clinica.md). En ambulatorio, el timeline muestra **motivos pre-turno** (intake, resumen del chat, cohorte) antes del dictado — [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md).
 - Operaciones puntuales (alta internación, triage, etc.) vía **flows del asistente** cuando aplica — [asistente-y-chat.md](./asistente-y-chat.md).
 - Con **encounterClass = EMER** (guardia): tablero operativo, triage, atender, derivar y egreso — [urgencias-guardia.md](./urgencias-guardia.md).
 - **Internación (IMP):** mapa de camas en inicio; atención en piso vía timeline con `parent=INTERNACION` — [internacion.md](./internacion.md).

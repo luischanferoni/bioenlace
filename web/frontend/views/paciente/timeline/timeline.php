@@ -89,6 +89,11 @@ $this->registerJsFile(
                             </div>
                         </div>
 
+                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_motivos_intake_section" style="display:none;">
+                            <h6 class="mb-2 text-primary"><b>PREGUNTAS PREVIAS AL CHAT DE MOTIVOS</b></h6>
+                            <div id="tl_motivos_intake" class="text-body"></div>
+                        </div>
+
                         <div class="mb-3 pb-2 border-bottom border-2">
                             <h6 class="mb-2 text-primary"><b>MOTIVOS DE ESTA CONSULTA</b></h6>
                             <p class="mb-0 text-muted" id="tl_motivos_consulta">Cargando...</p>
@@ -305,6 +310,47 @@ Modal::end();
         return d.innerHTML;
     }
 
+    function renderMotivosIntake(intake) {
+        var section = document.getElementById('tl_motivos_intake_section');
+        var el = document.getElementById('tl_motivos_intake');
+        if (!section || !el) return;
+        if (!intake || typeof intake !== 'object') {
+            section.style.display = 'none';
+            el.innerHTML = '';
+            return;
+        }
+        var answers = intake.answers || [];
+        var notes = intake.notes_for_staff ? String(intake.notes_for_staff).trim() : '';
+        var status = intake.status ? String(intake.status) : '';
+        if (!notes && (!answers || !answers.length) && status !== 'pending') {
+            section.style.display = 'none';
+            el.innerHTML = '';
+            return;
+        }
+        section.style.display = '';
+        var html = '';
+        if (intake.title) {
+            html += '<div class="small text-muted mb-2">' + escMotivosHtml(intake.title) + '</div>';
+        }
+        if (notes !== '') {
+            html += '<div class="small text-uppercase text-muted">Orientación</div>';
+            html += '<p class="mb-2" style="white-space:pre-wrap">' + escMotivosHtml(notes) + '</p>';
+        }
+        if (!answers || !answers.length) {
+            html += '<p class="text-muted mb-0">El paciente aún no completó las preguntas previas.</p>';
+        } else {
+            html += '<div class="small text-uppercase text-muted">Respuestas del paciente</div>';
+            html += '<dl class="mb-0 mt-2">';
+            answers.forEach(function (a) {
+                if (!a) return;
+                html += '<dt class="fw-semibold">' + escMotivosHtml(a.question || a.id || '') + '</dt>';
+                html += '<dd class="mb-2" style="white-space:pre-wrap">' + escMotivosHtml(a.answer || '') + '</dd>';
+            });
+            html += '</dl>';
+        }
+        el.innerHTML = html;
+    }
+
     function renderCarePackCohorte(cohorte) {
         var section = document.getElementById('tl_care_pack_section');
         var el = document.getElementById('tl_care_pack_cohorte');
@@ -438,6 +484,7 @@ Modal::end();
             var mp = payload.data.motivos_consulta_paciente || {};
             var msgPac = (mp.messages && mp.messages.length) ? mp.messages.length : 0;
             renderMotivos(info.motivos_consulta || null, mp);
+            renderMotivosIntake(mp.motivos_intake || null);
             renderCarePackCohorte(payload.data.care_pack_cohorte || null);
             var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
             if (boxMsgs) boxMsgs.innerHTML = '';
@@ -450,6 +497,7 @@ Modal::end();
             renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
             renderMotivos(null, null);
+            renderMotivosIntake(null);
             renderCarePackCohorte(null);
             var boxMsgsErr = document.getElementById('tl_motivos_consulta_mensajes');
             if (boxMsgsErr) boxMsgsErr.innerHTML = '';

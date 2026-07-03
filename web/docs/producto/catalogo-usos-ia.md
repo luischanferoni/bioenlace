@@ -72,6 +72,7 @@ Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arq
 
 | Paso | Tecnología | Contexto / notas |
 |------|------------|------------------|
+| Preguntas previas al chat (`motivos_intake`) | **Sin IA** | Formulario YAML (`motivos_consulta_intake.yaml`); persiste en `motivos_intake_json`; staff ve respuestas en historia clínica |
 | Mensajes del paciente (texto) | Sin IA por mensaje | El chat de motivos no resume en cada nota |
 | Audio en el hilo | STT en servidor (lote) o **futuro** STT en dispositivo | `SpeechToTextManager` en batch; ver [stt.md](../costos/estrategias-reduccion/stt.md) |
 | Cierre de ventana → resumen | IA | `motivos-consulta-batch` + `PatientAiContextBuilder` (perfil `motivos`) |
@@ -128,6 +129,7 @@ Operación y cron: [asistencia-cohortes.md](./asistencia-cohortes.md).
 - Pasos de **flujos guiados** del asistente (`SubIntentEngine`) salvo preprocess al reingresar texto.
 - **Match operativo** de intents por keywords (`classifyAmongItems`).
 - Validaciones de negocio, RBAC, persistencia FHIR.
+- **Intake previo a motivos** (`motivos_consulta_intake.yaml`, `encounter.motivos_intake_json`).
 - Gran parte de **corrección ortográfica** previa al análisis de consulta (diccionario local).
 
 ---

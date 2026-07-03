@@ -178,6 +178,16 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                 _buildSignosVitales(
                                     _historiaClinicaData!.signosVitales),
                                 BioSpacing.gapH(BioSpacing.md),
+                                if (_historiaClinicaData!
+                                        .motivosConsultaPaciente.motivosIntake
+                                        ?.tieneContenido ==
+                                    true) ...[
+                                  _buildMotivosIntake(
+                                    _historiaClinicaData!
+                                        .motivosConsultaPaciente.motivosIntake!,
+                                  ),
+                                  BioSpacing.gapH(BioSpacing.md),
+                                ],
                                 _buildMotivosConsulta(_historiaClinicaData!),
                                 if (_historiaClinicaData!.carePackCohorte
                                         ?.tieneContenido ==
@@ -359,6 +369,59 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 .toList(),
           ),
       ],
+    );
+  }
+
+  Widget _buildMotivosIntake(MotivosIntakeStaff intake) {
+    return BioCard.intent(
+      intent: UiIntent.info,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Preguntas previas al chat', style: BioTypography.title),
+          if (intake.title != null && intake.title!.trim().isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              intake.title!.trim(),
+              style: BioTypography.caption.copyWith(
+                color: context.bio.textMuted,
+              ),
+            ),
+          ],
+          BioSpacing.gapH(BioSpacing.md),
+          if (intake.notesForStaff != null &&
+              intake.notesForStaff!.trim().isNotEmpty) ...[
+            Text('Orientación', style: BioTypography.overline),
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(intake.notesForStaff!.trim(), style: BioTypography.bodySm),
+            BioSpacing.gapH(BioSpacing.md),
+          ],
+          if (intake.answers.isEmpty)
+            Text(
+              intake.status == 'submitted'
+                  ? 'Respuestas registradas sin detalle disponible.'
+                  : 'El paciente aún no completó las preguntas previas.',
+              style: BioTypography.bodySm,
+            )
+          else ...[
+            Text('Respuestas del paciente', style: BioTypography.overline),
+            BioSpacing.gapH(BioSpacing.sm),
+            ...intake.answers.map(
+              (a) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(a.question, style: BioTypography.bodySm),
+                    BioSpacing.gapH(BioSpacing.xs),
+                    Text(a.answer, style: BioTypography.body),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

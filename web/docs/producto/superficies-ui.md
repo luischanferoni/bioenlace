@@ -61,6 +61,7 @@ Referencias: [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md),
 - Contexto vía query/hidden: `id_persona`, `parent` (`Encounter::PARENT_*`), `parent_id`, `id_consulta` (= encounter id), `id_configuracion`.
 - La **mutación por especialidad** no va hardcodeada en la vista: la resuelve `EncounterDefinition` (`service_id` + `encounter_class` → `workflow_json`).
 - Persistencia: `POST /api/v1/clinical/encounter/guardar` (FHIR).
+- **Pre-turno en timeline:** intake de motivos, resumen del chat y cuestionario de cohorte vía `GET /api/v1/personas/{id}/historia-clinica` — [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md).
 - Enlaces de entrada: `PatientHistoriaUrl::captura()` desde turnos, guardia, internación, etc.
 
 Referencias: [captura-clinica.md](./captura-clinica.md).

@@ -20,6 +20,7 @@ Pruebas de humo en **`mobile/personalsalud`** (Android). Misma API y sesión ope
 | APS-04 | Asistente — mensaje simple | Respuesta sin error de `appClient` |
 | APS-05 | Cerrar sesión en Configuración | Vuelve a login; no queda contexto operativo |
 | APS-06 | Usuario sin asignación a efector | Mensaje claro (no crash) |
+| APS-07 | Timeline paciente con turno — intake completado | Tarjeta «Preguntas previas al chat» con respuestas antes del resumen de motivos |
 
 ## Cruzar con web
 

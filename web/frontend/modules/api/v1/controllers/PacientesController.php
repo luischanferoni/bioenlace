@@ -9,6 +9,7 @@ use common\components\Domain\Clinical\Service\AppointmentReasonBatchService;
 use common\components\Domain\Clinical\Service\AppointmentReasonClinicalInsightsService;
 use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
 use common\components\Domain\Clinical\Service\EncounterAppointmentReasonLookupService;
+use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosIntakeStaffViewService;
 use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
@@ -331,6 +332,7 @@ class PacientesController extends BaseController
             $encounterId
         );
         $resumen = $reason !== '' ? $reason : null;
+        $motivosIntake = (new EncounterMotivosIntakeStaffViewService())->buildForEncounter($encounter);
 
         $motivosPaciente = [
             'encounter_id' => $encounterId,
@@ -345,6 +347,7 @@ class PacientesController extends BaseController
             'resumen_ia_pendiente' => $mensajes !== [] && $resumen === null,
             'imagenes_adjuntas' => $imagenesAdjuntas,
             'sugerencias_clinicas' => $insights,
+            'motivos_intake' => $motivosIntake,
             'messages' => [],
         ];
 

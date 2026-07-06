@@ -288,14 +288,21 @@ final class FhirClinicalHistoryBundleMapper
         }
         $prof = Persona::findOne(['id_persona' => (int) $pes->id_persona]);
 
+        $identifiers = [[
+            'system' => 'urn:bioenlace:pes',
+            'value' => (string) $pesId,
+        ]];
+        if ($prof !== null) {
+            foreach ($this->practitionerIdentifiers($prof) as $id) {
+                $identifiers[] = $id;
+            }
+        }
+
         return array_filter([
             'resourceType' => 'Practitioner',
             'id' => (string) $pesId,
             'name' => $prof ? $this->patientName($prof) : [],
-            'identifier' => [[
-                'system' => 'urn:bioenlace:pes',
-                'value' => (string) $pesId,
-            ]],
+            'identifier' => $identifiers,
         ]);
     }
 
@@ -592,6 +599,37 @@ final class FhirClinicalHistoryBundleMapper
             return [];
         }
         $ids = [];
+        if (!empty($persona->documento)) {
+            $ids[] = [
+                'system' => 'http://www.renaper.gob.ar/dni',
+                'value' => (string) $persona->documento,
+            ];
+        }
+        if (!empty($persona->cuil)) {
+            $ids[] = [
+                'system' => 'http://www.afip.gob.ar/cuil',
+                'value' => (string) $persona->cuil,
+            ];
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @return list<array<string, string>>
+     */
+    private function practitionerIdentifiers(?Persona $persona): array
+    {
+        if ($persona === null) {
+            return [];
+        }
+        $ids = [];
+        if (!empty($persona->cuil)) {
+            $ids[] = [
+                'system' => 'http://www.afip.gob.ar/cuil',
+                'value' => (string) $persona->cuil,
+            ];
+        }
         if (!empty($persona->documento)) {
             $ids[] = [
                 'system' => 'http://www.renaper.gob.ar/dni',

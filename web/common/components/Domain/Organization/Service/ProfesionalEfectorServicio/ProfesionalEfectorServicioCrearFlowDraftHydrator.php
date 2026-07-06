@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Domain\Person\Service\PersonCuilService;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Servicio;
 use Yii;
@@ -39,14 +41,26 @@ final class ProfesionalEfectorServicioCrearFlowDraftHydrator
         }
 
         $idPersona = isset($draft['id_persona']) ? (int) $draft['id_persona'] : 0;
+        if ($idPersona > 0) {
+            $persona = Persona::findOne(['id_persona' => $idPersona]);
+            $draft['persona_requiere_cuil'] = PersonCuilService::personaTieneCuil($persona) ? 'NO' : 'SI';
+        }
+
         $idEfector = (int) Yii::$app->user->getIdEfector();
         $idPes = isset($draft['id_profesional_efector_servicio']) ? (int) $draft['id_profesional_efector_servicio'] : 0;
+        $cuil = isset($draft['cuil']) ? trim((string) $draft['cuil']) : '';
 
         if ($idPersona > 0 && $idServicio > 0 && $idEfector > 0 && $idPes <= 0) {
             if (ProfesionalEfectorServicioModel::existePersonaActivaEnEfector($idPersona, $idEfector)) {
                 throw new \InvalidArgumentException('Esa persona ya está asignada a este efector.');
             }
-            $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector($idPersona, $idEfector, $idServicio);
+            $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+                $idPersona,
+                $idEfector,
+                $idServicio,
+                Yii::$app->has('user', true) && !Yii::$app->user->isGuest ? (int) Yii::$app->user->id : null,
+                $cuil !== '' ? $cuil : null
+            );
             $draft['id_profesional_efector_servicio'] = (string) $out['id_profesional_efector_servicio'];
             $draft['servicio_acepta_turnos'] = $out['servicio_acepta_turnos'];
         }

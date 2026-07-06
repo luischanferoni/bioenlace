@@ -1,0 +1,51 @@
+{
+  "ui_type": "ui_json",
+  "title": "Agregar código FHIR de servicio",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "mapping",
+      "fields": [
+        {
+          "name": "source_system",
+          "label": "Sistema origen",
+          "type": "text",
+          "required": false,
+          "hint": "Por defecto fhir-default"
+        },
+        {
+          "name": "code_system",
+          "label": "Code system (URI)",
+          "type": "text",
+          "required": true,
+          "hint": "Ej. http://snomed.info/sct"
+        },
+        {
+          "name": "code_value",
+          "label": "Código",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "id_servicio",
+          "label": "Servicio Bioenlace",
+          "type": "select",
+          "required": true,
+          "options_field": "servicio_options"
+        },
+        {
+          "name": "label",
+          "label": "Etiqueta (opcional)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

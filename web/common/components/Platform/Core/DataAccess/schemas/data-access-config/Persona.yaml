@@ -12,6 +12,9 @@ attributes:
   documento:
     read: true
     info: true
+  cuil:
+    read: true
+    info: true
   id_tipodoc:
     read: true
     info: false
@@ -39,3 +42,4 @@ groups:
   identificadores:
     - documento
     - id_tipodoc
+    - cuil

@@ -1,0 +1,37 @@
+{
+  "ui_type": "ui_json",
+  "title": "CUIL del profesional",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "persona",
+      "title": "Profesional",
+      "text_field": "persona_label"
+    },
+    {
+      "kind": "fields",
+      "id": "cuil",
+      "fields": [
+        {
+          "name": "id_persona",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "cuil",
+          "label": "CUIL (11 dígitos, sin guiones)",
+          "type": "text",
+          "required": true,
+          "hint": "Necesario para interoperar agendas FHIR y evitar homónimos."
+        }
+      ]
+    }
+  ]
+}

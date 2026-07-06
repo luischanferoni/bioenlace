@@ -1,0 +1,20 @@
+# Catálogo inicial — códigos HealthcareService FHIR (referencia)
+
+Los mapeos operativos viven en `integration_fhir_service_code` (BD).
+Este archivo documenta systems acordados con HAPI; cargar vía UI staff o seed por efector.
+
+```yaml
+source_system: fhir-default
+
+mappings:
+  - code_system: http://snomed.info/sct
+    code_value: "394814009"   # General practice
+    servicio_nombre_hint: MED GENERAL
+  - code_system: http://snomed.info/sct
+    code_value: "394587001"   # Psychiatry
+    servicio_nombre_hint: PSIQUIATRIA
+```
+
+URI Practitioner CUIL inbound: `http://www.afip.gob.ar/cuil`
+URI DNI paciente/profesional: `http://www.renaper.gob.ar/dni`
+URI SISA efector: valor en `Efector.codigo_sisa` (system a cerrar con HAPI en fase 0).

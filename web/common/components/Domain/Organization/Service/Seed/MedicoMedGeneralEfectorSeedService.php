@@ -3,6 +3,8 @@
 namespace common\components\Domain\Organization\Service\Seed;
 
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
+use common\components\Domain\Person\Service\PersonCuilService;
+use common\components\Domain\Person\Util\CuilValidator;
 use common\models\Efector;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
@@ -89,6 +91,7 @@ final class MedicoMedGeneralEfectorSeedService
             if ($user === null) {
                 [$persona, $user, , $createdUser] = $this->attachUserToPersona($persona, $username, $plainPassword);
             }
+            $this->ensureSeedCuil($persona, $documento);
         }
 
         if ($user === null) {
@@ -232,6 +235,8 @@ final class MedicoMedGeneralEfectorSeedService
             if (!$persona->save()) {
                 throw new \RuntimeException('Persona seed: ' . json_encode($persona->getErrors()));
             }
+            $persona->cuil = CuilValidator::buildFromDni($documento);
+            $persona->save(false, ['cuil']);
 
             $user = new User();
             $user->username = $username;
@@ -402,5 +407,14 @@ final class MedicoMedGeneralEfectorSeedService
             'pes' => $pes ?: null,
             'documento' => $documento,
         ];
+    }
+
+    private function ensureSeedCuil(Persona $persona, string $documento): void
+    {
+        if (PersonCuilService::personaTieneCuil($persona)) {
+            return;
+        }
+        $persona->cuil = CuilValidator::buildFromDni($documento);
+        $persona->save(false, ['cuil']);
     }
 }

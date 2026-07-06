@@ -3,6 +3,8 @@
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
 use common\components\Domain\Organization\Service\Seed\ActiveRecordConsoleBlame;
+use common\components\Domain\Person\Service\PersonCuilService;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
@@ -22,7 +24,8 @@ final class ProfesionalEfectorServicioAltaService
         int $idPersona,
         int $idEfector,
         int $idServicio,
-        ?int $actingUserId = null
+        ?int $actingUserId = null,
+        ?string $cuil = null
     ): array {
         if ($idPersona <= 0 || $idEfector <= 0 || $idServicio <= 0) {
             throw new \InvalidArgumentException('Datos inválidos para la asignación (persona, efector o servicio).');
@@ -41,6 +44,20 @@ final class ProfesionalEfectorServicioAltaService
             throw new \InvalidArgumentException('Servicio inexistente.');
         }
         $acepta = strtoupper(trim((string) $servicio->acepta_turnos));
+
+        if (self::servicioRequiereCuilProfesional($servicio)) {
+            $persona = Persona::findOne(['id_persona' => $idPersona]);
+            if ($persona === null) {
+                throw new \InvalidArgumentException('Persona inexistente.');
+            }
+            if ($cuil !== null && trim($cuil) !== '') {
+                PersonCuilService::ensureOnPersona($idPersona, $cuil);
+            } elseif (!PersonCuilService::personaTieneCuil($persona)) {
+                throw new \InvalidArgumentException(
+                    'Se requiere el CUIL del profesional para registrar la asignación en el efector.'
+                );
+            }
+        }
 
         $db = Yii::$app->db;
         $transaction = $db->beginTransaction();
@@ -80,5 +97,14 @@ final class ProfesionalEfectorServicioAltaService
             'id_servicio' => $idServicio,
             'servicio_acepta_turnos' => $acepta,
         ];
+    }
+
+    private static function servicioRequiereCuilProfesional(?Servicio $servicio): bool
+    {
+        if ($servicio === null) {
+            return true;
+        }
+
+        return strcasecmp(trim((string) ($servicio->item_name ?? '')), 'AdminEfector') !== 0;
     }
 }

@@ -18,6 +18,7 @@ use common\models\Turno;
  * @property string $otro_nombre
  * @property integer $id_tipodoc
  * @property string $documento
+ * @property string|null $cuil CUIL sin guiones (11 dígitos)
  * @property integer $documento_propio
  * @property string $sexo
  * @property integer $sexo_biologico
@@ -135,6 +136,8 @@ class Persona extends \yii\db\ActiveRecord
             [['apellido', 'nombre', 'otro_apellido', 'apellido_paterno', 'apellido_materno', 'otro_nombre'], 'match', 'pattern' => '/^[A-ZÃÃ‰ÃÃ“ÃšÃ‘a-zÃ¡Ã©Ã­Ã³ÃºÃ±\s]+$/', 'message' => 'El campo solo debe contener letras'],
             [['documento'], 'string', 'max' => 8],
             [['documento'], 'documentoUnico'],
+            [['cuil'], 'string', 'max' => 11],
+            [['cuil'], 'validateCuilAttribute'],
             [['usuario_alta', 'usuario_mod'], 'string', 'max' => 40],
             [['fecha_nacimiento_1'], 'validarFechaNacimiento']
         ];
@@ -156,6 +159,7 @@ class Persona extends \yii\db\ActiveRecord
             'otro_nombre' => 'Otro Nombre',
             'id_tipodoc' => 'Tipo documento',
             'documento' => 'Nro de Documento',
+            'cuil' => 'CUIL',
             'documento_propio' => 'Documento Propio',
             'sexo' => 'Sexo Biologico',
             'genero' => 'GÃ©nero Legal',
@@ -606,6 +610,29 @@ class Persona extends \yii\db\ActiveRecord
             }
         } else {
             return false;
+        }
+    }
+
+    public function validateCuilAttribute(string $attribute): void
+    {
+        $value = \common\components\Domain\Person\Util\CuilValidator::normalize((string) ($this->$attribute ?? ''));
+        if ($value === '') {
+            $this->$attribute = null;
+
+            return;
+        }
+        if (!\common\components\Domain\Person\Util\CuilValidator::isValid($value)) {
+            $this->addError($attribute, 'CUIL inválido.');
+
+            return;
+        }
+        $this->$attribute = $value;
+        $conflict = static::find()
+            ->where(['cuil' => $value])
+            ->andWhere(['<>', 'id_persona', (int) $this->id_persona])
+            ->exists();
+        if ($conflict) {
+            $this->addError($attribute, 'Ese CUIL ya está registrado para otra persona.');
         }
     }
 

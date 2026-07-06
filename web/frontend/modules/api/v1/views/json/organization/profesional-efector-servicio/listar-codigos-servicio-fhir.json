@@ -1,0 +1,29 @@
+{
+  "ui_type": "ui_json",
+  "title": "Códigos FHIR de servicios",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "help",
+      "title": "Catálogo",
+      "text": "Mapeo HealthcareService (code system + código) al servicio Bioenlace del efector."
+    },
+    {
+      "kind": "list",
+      "id": "items",
+      "title": "Mapeos vigentes",
+      "items_field": "items",
+      "item_template": {
+        "title": "{{code_value}}",
+        "subtitle": "{{servicio_nombre}}",
+        "meta": "{{code_system}}"
+      }
+    }
+  ]
+}

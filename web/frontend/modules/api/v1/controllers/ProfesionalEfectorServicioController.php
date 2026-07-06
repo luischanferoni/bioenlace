@@ -9,7 +9,9 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenEx
 use common\components\Domain\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
 use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\FhirServiceCodeCatalogUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\LicenciaUiFlowService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCuilUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
 use common\components\Platform\Ui\UiScreenService;
@@ -780,6 +782,88 @@ class ProfesionalEfectorServicioController extends BaseController
                     $post,
                     'condicion-laboral.editar-staff'
                 );
+            }
+        );
+    }
+
+    /**
+     * Carga CUIL de la persona antes del alta PES (flujo asistente).
+     *
+     * GET|POST /api/v1/profesional-efector-servicio/cargar-cuil-profesional
+     */
+    public function actionCargarCuilProfesional(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        $defaults = ProfesionalEfectorServicioCuilUiService::buildValuesForGet($idEfector, $fromClient);
+
+        return UiScreenService::handleScreen(
+            'profesional-efector-servicio',
+            'cargar-cuil-profesional',
+            array_merge($defaults, $fromClient),
+            $req->post(),
+            static function (array $post) use ($idEfector): array {
+                ApiDomainOperationBridge::assertOrForbidden(
+                    'ProfesionalEfectorServicio.create',
+                    $post,
+                    $post
+                );
+
+                return ProfesionalEfectorServicioCuilUiService::submit($idEfector, $post);
+            }
+        );
+    }
+
+    /**
+     * Catálogo staff: códigos HealthcareService FHIR → servicio Bioenlace.
+     *
+     * GET|POST /api/v1/profesional-efector-servicio/listar-codigos-servicio-fhir
+     */
+    public function actionListarCodigosServicioFhir(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+
+        return UiScreenService::handleScreen(
+            'profesional-efector-servicio',
+            'listar-codigos-servicio-fhir',
+            FhirServiceCodeCatalogUiService::buildListValues($idEfector, $fromClient),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+    }
+
+    /**
+     * Alta/actualización de código FHIR en catálogo de servicios.
+     *
+     * GET|POST /api/v1/profesional-efector-servicio/guardar-codigo-servicio-fhir
+     */
+    public function actionGuardarCodigoServicioFhir(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+
+        return UiScreenService::handleScreen(
+            'profesional-efector-servicio',
+            'guardar-codigo-servicio-fhir',
+            array_merge(
+                FhirServiceCodeCatalogUiService::buildListValues($idEfector, $fromClient),
+                $fromClient
+            ),
+            $req->post(),
+            static function (array $post) use ($idEfector): array {
+                ApiDomainOperationBridge::assertOrForbidden(
+                    'ProfesionalEfectorServicio.create',
+                    $post,
+                    $post
+                );
+
+                return FhirServiceCodeCatalogUiService::submit($idEfector, $post);
             }
         );
     }

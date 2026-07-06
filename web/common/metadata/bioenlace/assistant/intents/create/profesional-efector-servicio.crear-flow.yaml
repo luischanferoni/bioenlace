@@ -27,6 +27,7 @@ intent_semantics:
   constraints:
     - La búsqueda de persona en padrón usa texto; el listado de servicios del efector se carga completo (filtro opcional por nombre vía `q` en la API).
     - No se puede elegir una persona que ya tenga asignación en el efector.
+    - Si la persona no tiene CUIL cargado, el flujo solicita el CUIL antes de elegir servicio (obligatorio para alta PES clínica).
     - Agenda solo si servicios.acepta_turnos = SI.
   outcome:
     - Asignación persona–efector–servicio persistida.
@@ -39,6 +40,8 @@ intent_semantics:
 draft_keys_extra:
   - servicio_acepta_turnos
   - id_persona
+  - persona_requiere_cuil
+  - cuil
   - agenda_ui_completed
 
 draft_hydrator:
@@ -76,12 +79,29 @@ subintents:
     assistant_text: "Persona"
     provides:
       - draft.id_persona
-    next: select_servicio
+    next_routing:
+      - when:
+          draft_equals:
+            persona_requiere_cuil: "SI"
+        next: capture_cuil
+      - when:
+          default: true
+        next: select_servicio
     open_ui:
       action_id: persona.buscar-para-asistente
       pass_content_as_query: q
       params:
         excluir_en_efector: "1"
+
+  - id: capture_cuil
+    assistant_text: "CUIL del profesional"
+    provides:
+      - draft.cuil
+    next: select_servicio
+    open_ui:
+      action_id: profesional-efector-servicio.cargar-cuil-profesional
+      params:
+        id_persona: "draft.id_persona"
 
   - id: select_servicio
     assistant_text: "Servicio"

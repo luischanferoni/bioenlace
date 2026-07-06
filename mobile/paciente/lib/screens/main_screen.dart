@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
@@ -63,8 +65,10 @@ class _MainScreenState extends State<MainScreen> {
         ),
       );
     };
-    CarePlanLocalReminderService.instance.syncFromApi(
-      authToken: widget.authToken,
+    unawaited(
+      CarePlanLocalReminderService.instance.syncFromApi(
+        authToken: widget.authToken,
+      ),
     );
   }
 

@@ -15,11 +15,15 @@ class BiometricSessionLockScope extends StatefulWidget {
   /// Si `true`, solo bloquea cuando el usuario activó biometría (p. ej. staff).
   final bool requireUnlockEnabled;
 
+  /// Si retorna `false`, no se aplica bloqueo (p. ej. sin JWT persistido).
+  final Future<bool> Function()? canApplyLock;
+
   const BiometricSessionLockScope({
     super.key,
     required this.child,
     required this.appTitle,
     this.requireUnlockEnabled = false,
+    this.canApplyLock,
   });
 
   @override
@@ -79,11 +83,14 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
   }
 
   Future<void> _evaluateLock() async {
+    final sessionOk =
+        widget.canApplyLock == null || await widget.canApplyLock!();
     final bioAvailable = await _biometricAuth.isAvailable();
     final bioType = await _biometricAuth.getBiometricType();
-    final shouldLock = await BiometricSessionPrefs.shouldLock(
-      requireUnlockEnabled: widget.requireUnlockEnabled,
-    );
+    final shouldLock = sessionOk &&
+        await BiometricSessionPrefs.shouldLock(
+          requireUnlockEnabled: widget.requireUnlockEnabled,
+        );
 
     if (!mounted) return;
     setState(() {

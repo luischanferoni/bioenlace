@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared/config/api_config.dart';
+import 'package:shared/http/bioenlace_http_trace.dart';
 import 'package:shared/text/user_friendly_error.dart';
 
 /// Sección del panel de inicio (`GET /api/v1/home/panel`).
@@ -108,7 +109,10 @@ class HomePanelApi {
     final uri = Uri.parse('${AppConfig.apiUrl}/home/panel')
         .replace(queryParameters: query.isNotEmpty ? query : null);
 
-    final response = await http.get(uri, headers: _headers);
+    final response = await http
+        .get(uri, headers: _headers)
+        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    BioenlaceHttpTrace.logResponse('home/panel', response);
     if (response.statusCode != 200) {
       throw Exception(messageFromHttpResponse(response));
     }

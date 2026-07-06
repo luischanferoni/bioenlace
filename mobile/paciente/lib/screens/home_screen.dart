@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
@@ -59,9 +61,8 @@ class HomeScreenState extends State<HomeScreen> {
   final List<Map<String, dynamic>> _pasados = [];
 
   int _totalPasados = 0;
-  bool _loadingInicial = true;
   bool _loadingMasPasados = false;
-  bool _refrescandoTabActivo = false;
+  bool _refrescandoTabActivo = true;
   String? _error;
 
   /// 0 = próximos turnos, 1 = historial.
@@ -75,8 +76,13 @@ class HomeScreenState extends State<HomeScreen> {
     _turnosService = TurnosService(authToken: widget.authToken);
     _carePlanService = CarePlanService(authToken: widget.authToken);
     _scrollController.addListener(_onScroll);
-    _loadDisplayNameAndActor();
-    _cargarInicial();
+    unawaited(_bootstrap());
+  }
+
+  Future<void> _bootstrap() async {
+    await _loadDisplayNameAndActor();
+    if (!mounted) return;
+    await _cargarInicial();
   }
 
   Future<void> _loadDisplayNameAndActor() async {
@@ -207,7 +213,6 @@ class HomeScreenState extends State<HomeScreen> {
         }
       });
     }
-    await CarePlanLocalReminderService.instance.syncFromApi(authToken: widget.authToken);
   }
 
   Future<void> _applyUpcomingFromPanel() async {
@@ -239,16 +244,16 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _cargarInicial() async {
     setState(() {
-      _loadingInicial = true;
+      _refrescandoTabActivo = true;
       _loadingCarePlans = true;
       _error = null;
       _pendientes.clear();
+      _enResolucion.clear();
       _pasados.clear();
       _totalPasados = 0;
     });
     try {
       await _applyUpcomingFromPanel();
-      await CarePlanLocalReminderService.instance.syncFromApi(authToken: widget.authToken);
     } catch (e) {
       final pendientesFuture = _fetchAllPorAlcance('pendientes');
       await _cargarEnResolucion();
@@ -266,7 +271,7 @@ class HomeScreenState extends State<HomeScreen> {
     }
     if (!mounted) return;
     setState(() {
-      _loadingInicial = false;
+      _refrescandoTabActivo = false;
       _loadingCarePlans = false;
     });
   }
@@ -280,7 +285,6 @@ class HomeScreenState extends State<HomeScreen> {
     });
     try {
       await _applyUpcomingFromPanel();
-      await CarePlanLocalReminderService.instance.syncFromApi(authToken: widget.authToken);
     } catch (_) {
       final pendientesFuture = _fetchAllPorAlcance('pendientes');
       await _cargarEnResolucion();
@@ -598,11 +602,12 @@ class HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refrescoPullCompleto,
-          child: _loadingInicial
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null && _pendientes.isEmpty && _pasados.isEmpty
-                  ? _buildErrorEstado(context)
-                  : _buildContenido(context),
+          child: _error != null &&
+                !_refrescandoTabActivo &&
+                _proximosVisibles.isEmpty &&
+                _pasados.isEmpty
+            ? _buildErrorEstado(context)
+            : _buildContenido(context),
         ),
       ),
     );

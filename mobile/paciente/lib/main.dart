@@ -8,6 +8,7 @@ import 'package:shared/shared.dart';
 import 'firebase/firebase_bootstrap.dart';
 import 'auth/paciente_authenticated_shell.dart';
 import 'auth/paciente_post_login.dart';
+import 'auth/paciente_session_prefs.dart';
 import 'services/chat_service.dart';
 import 'screens/main_screen.dart';
 import 'screens/signup_screen.dart';
@@ -19,7 +20,8 @@ void main() {
     await bootstrapCarePlanReminders();
 
     final prefs = await SharedPreferences.getInstance();
-    final isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+    await PacienteSessionPrefs.reconcileStaleSessionOnLaunch();
+    final isLoggedIn = await PacienteSessionPrefs.hasRestorableSession();
     final userId = prefs.getString('user_id') ?? '';
     final userName = prefs.getString('user_name') ?? '';
     final authToken = prefs.getString('auth_token');
@@ -65,9 +67,8 @@ class MyApp extends StatelessWidget {
       title: 'BioEnlace Paciente',
       theme: AppTheme.lightTheme,
       home: isLoggedIn
-          ? BiometricSessionLockScope(
-              appTitle: 'BioEnlace Paciente',
-              child: PacienteBiometricGate(
+          ? PacienteBiometricGate(
+              child: wrapPacienteAuthenticatedShell(
                 child: MainScreen(
                   chatService: chatService!,
                   authToken: authToken,

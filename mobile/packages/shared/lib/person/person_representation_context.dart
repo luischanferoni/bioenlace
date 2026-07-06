@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -68,7 +70,7 @@ class PersonRepresentationContext extends ChangeNotifier {
       _subjectLabel = _actorLabel;
     }
     notifyListeners();
-    await refreshOptions(authToken: authToken);
+    unawaited(refreshOptions(authToken: authToken));
   }
 
   Future<void> _restoreFromPrefs() async {
@@ -96,7 +98,13 @@ class PersonRepresentationContext extends ChangeNotifier {
     );
     final merged = <int, RepresentationSubjectOption>{_actorPersonaId: self};
 
-    final cargo = await api.fetchPacientesACargo();
+    final results = await Future.wait([
+      api.fetchPacientesACargo(),
+      api.fetchVinculosComoTutor(status: 'active'),
+    ]);
+    final cargo = results[0];
+    final tutor = results[1];
+
     if (cargo['success'] == true) {
       final data = cargo['data'];
       if (data is Map<String, dynamic>) {
@@ -123,7 +131,6 @@ class PersonRepresentationContext extends ChangeNotifier {
       }
     }
 
-    final tutor = await api.fetchVinculosComoTutor(status: 'active');
     if (tutor['success'] == true) {
       final data = tutor['data'];
       if (data is Map<String, dynamic>) {

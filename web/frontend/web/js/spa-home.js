@@ -2313,18 +2313,7 @@
                 }
 
                 if (okNative) {
-                    const mobileCo = co.mobile && typeof co.mobile === 'object' ? co.mobile : null;
-                    const nativeScreenId = mobileCo && mobileCo.screen_id != null
-                        ? String(mobileCo.screen_id).trim()
-                        : '';
-                    const webPath = co.web && typeof co.web.path === 'string' ? String(co.web.path).trim() : '';
-                    if (nativeScreenId && flowSectionInner) {
-                        flowSectionInner.innerHTML = '<div class="alert alert-info mb-0 mt-2">Esta función está en la app móvil Bioenlace Paciente: <strong>Configuración → Representación</strong>.</div>';
-                    } else if (webPath) {
-                        window.location.assign(webPath);
-                    } else if (flowSectionInner) {
-                        flowSectionInner.innerHTML = '<div class="alert alert-info mb-0 mt-2">Abrí esta función desde la app móvil en <strong>Configuración</strong>.</div>';
-                    }
+                    // Pantallas nativas: solo apps móviles. En web el texto del flujo basta; no montar UI ni redirigir.
                     setTimeout(scrollChatToBottom, 20);
                     return;
                 }

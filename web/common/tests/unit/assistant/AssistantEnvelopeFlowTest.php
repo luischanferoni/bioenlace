@@ -108,9 +108,6 @@ class AssistantEnvelopeFlowTest extends Unit
                     'mobile' => [
                         'screen_id' => 'person_representation_hub',
                     ],
-                    'web' => [
-                        'path' => '/configuracion#representacion',
-                    ],
                 ],
             ],
             'draft_delta' => (object) [],
@@ -123,10 +120,7 @@ class AssistantEnvelopeFlowTest extends Unit
             'person_representation_hub',
             $envelope['step']['client_open']['mobile']['screen_id']
         );
-        $this->assertSame(
-            '/configuracion#representacion',
-            $envelope['step']['client_open']['web']['path']
-        );
+        $this->assertArrayNotHasKey('web', $envelope['step']['client_open']);
     }
 
     public function testFlowFromMotorComposerCaptureStep(): void

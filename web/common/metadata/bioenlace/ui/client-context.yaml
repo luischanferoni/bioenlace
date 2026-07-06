@@ -13,11 +13,14 @@ web_staff:
   hide_paciente_flows:
     intent_ids:
       - atencion.necesito-atencion
+      - personas.designar-representante-flow
+      - personas.vincular-menor-flow
     intent_id_contains:
       - como-paciente
       - '-paciente-'
     rbac_route_contains:
       - como-paciente
+      - person-representation
 
   hide_notification_tipos:
     - TURNO_REQUIERE_REUBICACION

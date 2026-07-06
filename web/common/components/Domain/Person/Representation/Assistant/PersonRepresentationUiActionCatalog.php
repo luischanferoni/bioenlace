@@ -56,10 +56,8 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
                 [
                     'designar representante',
                     'delegar cuenta',
-                    'delegar gestión',
                     'delegar gestión de turnos',
                     'delegar turnos',
-                    'gestión de turnos',
                     'autorizar familiar',
                     'representante',
                 ]
@@ -91,6 +89,20 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
                 'Notificación cuando un representante actúa por el paciente.',
                 '/api/person-representation/preferencias-como-paciente',
                 ['notificación representante', 'avisar representante', 'preferencias representación']
+            ),
+            self::def(
+                'person-representation.verificar-vinculo-para-staff',
+                'Verificar tutela de menor',
+                'Staff del centro aprueba una solicitud de tutela pendiente (régimen A).',
+                '/api/person-representation/verificar-vinculo-para-staff',
+                ['verificar tutela', 'aprobar tutela', 'solicitud tutela', 'vínculo pendiente menor']
+            ),
+            self::def(
+                'person-representation.vinculos-paciente-para-staff',
+                'Vínculos de representación (staff)',
+                'Listar solicitudes y vínculos de tutela/delegación de un paciente para gestión operativa.',
+                '/api/person-representation/vinculos-paciente-para-staff',
+                ['vínculos paciente', 'solicitudes tutela', 'representación paciente staff']
             ),
         ];
 
@@ -167,7 +179,6 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
         return [
             'kind' => 'native',
             'mobile' => ['screen_id' => 'person_representation_hub'],
-            'web' => ['path' => '/configuracion#representacion'],
         ];
     }
 

@@ -153,6 +153,10 @@ class IntentClassificationRulesServiceTest extends Unit
             'paciente_delegar_representacion',
             'Delegar gestión de turnos'
         ));
+        $this->assertFalse(IntentClassificationRulesService::ruleMatches(
+            'paciente_delegar_representacion',
+            'Delegar gestión'
+        ));
     }
 
     public function testDelegarRepresentacionOperationalFallback(): void
@@ -168,16 +172,33 @@ class IntentClassificationRulesServiceTest extends Unit
                     ['delegar gestión de turnos'],
                     []
                 ),
+                new UiActionCatalogItem(
+                    'personas.vincular-menor-flow',
+                    'Solicitar tutela de menor',
+                    '',
+                    null,
+                    '/api/person-representation/solicitar-menor-como-tutor',
+                    ['vincular hijo'],
+                    []
+                ),
             ],
             []
         );
         $catalog->byActionId['personas.designar-representante-flow'] = $catalog->items[0];
+        $catalog->byActionId['personas.vincular-menor-flow'] = $catalog->items[1];
         $fb = IntentClassificationRulesService::resolveOperationalFallback(
             'Delegar gestión de turnos',
             $catalog
         );
         $this->assertNotNull($fb);
         $this->assertSame('personas.designar-representante-flow', $fb['item']->action_id);
+
+        $fbTutela = IntentClassificationRulesService::resolveOperationalFallback(
+            'Quiero vincular a mi hijo menor',
+            $catalog
+        );
+        $this->assertNotNull($fbTutela);
+        $this->assertSame('personas.vincular-menor-flow', $fbTutela['item']->action_id);
     }
 
     public function testDelegarRepresentacionScoresAboveTurnosCrear(): void
@@ -189,7 +210,7 @@ class IntentClassificationRulesServiceTest extends Unit
             '',
             null,
             '/api/person-representation/designar-representante',
-            ['delegar gestión de turnos', 'delegar gestión', 'delegar'],
+            ['delegar gestión de turnos', 'designar representante'],
             []
         );
         $turno = new UiActionCatalogItem(

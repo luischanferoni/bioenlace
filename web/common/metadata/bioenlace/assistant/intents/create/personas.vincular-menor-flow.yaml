@@ -1,8 +1,8 @@
 intent_id: personas.vincular-menor-flow
 version: 1
 
-action_name: "Vincular menor como tutor"
-description: "Solicitar tutela verificada sobre un hijo o menor sin cuenta."
+action_name: "Solicitar tutela de menor"
+description: "Un padre, madre o tutor solicita operar por un menor sin cuenta (queda pendiente hasta que el centro lo verifique)."
 rbac_route: "/api/person-representation/solicitar-menor-como-tutor"
 keywords:
   - vincular hijo
@@ -15,17 +15,17 @@ keywords:
 
 intent_semantics:
   goal: >-
-    Registrar vínculo de tutela (padre, madre o tutor legal) sobre un menor sin cuenta.
+    El tutor (padre, madre o tutor legal) inicia una solicitud de tutela sobre un menor sin cuenta.
   how: >-
-    Pantalla de gestión: parentesco, documento del menor y evidencia si aplica → solicitud pending staff.
+    Completar parentesco, documento del menor y evidencia si aplica → estado pending hasta verificación del staff del centro.
   preconditions:
-    - Usuario con cuenta y permiso de tutela.
+    - Adulto con cuenta en la app paciente.
   outcome:
-    - Vínculo en estado pending hasta verificación del centro.
+    - Solicitud registrada; el vínculo pasa a active solo cuando el staff la aprueba.
 
 subintents:
   - id: gestionar_tutela
-    assistant_text: "Vincular menor"
+    assistant_text: "Solicitud de tutela"
     provides: []
     next: ""
     open_ui:
@@ -34,8 +34,6 @@ subintents:
         kind: native
         mobile:
           screen_id: person_representation_hub
-        web:
-          path: /configuracion#representacion
 
 flow_submit:
   action_id: person-representation.solicitar-menor-como-tutor

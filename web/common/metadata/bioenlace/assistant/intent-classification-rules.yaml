@@ -53,16 +53,24 @@ vocab:
   staff_licencia_third: '\b(licencia|permiso|ausencia|condicion laboral|condición laboral)\s+(del|de un|de la|de otro|profesional|medico|médico|colega)\b'
   provincial_resource: '\b(ministerio\s+(de\s+)?salud|organismo\s+de\s+salud|direcci[oó]n\s+del\s+ministerio|d[oó]nde\s+est[aá]\s+el\s+ministerio|ubicaci[oó]n\s+ministerio|tel[eé]fono\s+ministerio)\b'
   delegacion_repr_phrases:
-    - delegar gestión
-    - delegar gestion
     - delegar gestión de turnos
     - delegar gestion de turnos
-    - delegar turnos
-    - gestión de turnos
-    - gestion de turnos
+    - delegar la gestión de turnos
+    - que otra persona gestione mis turnos
     - designar representante
     - autorizar familiar
     - quien opera por mí
+    - operar por mí
+
+  tutela_menor_phrases:
+    - vincular hijo
+    - vincular menor
+    - agregar hijo
+    - tutela menor
+    - mi hijo
+    - mi hija
+    - solicitar tutela
+    - menor sin cuenta
 
 match_rules:
   staff_agenda_config_edit:
@@ -134,8 +142,14 @@ match_rules:
   paciente_delegar_representacion:
     require_phrase_any: delegacion_repr_phrases
     ai_hint: >-
-      Si el paciente pide delegar la gestión de turnos o designar a otra persona con cuenta
-      para operar en su nombre, priorizá el intent de designar representante (régimen B).
+      Si el paciente pide designar a otra persona con cuenta para operar en su nombre (régimen B),
+      priorizá personas.designar-representante-flow. No confundir con tutela de menor (régimen A).
+
+  paciente_solicitar_tutela:
+    require_phrase_any: tutela_menor_phrases
+    ai_hint: >-
+      Si un padre/madre/tutor pide vincular o solicitar tutela sobre un menor sin cuenta (régimen A),
+      priorizá personas.vincular-menor-flow. La solicitud queda pending hasta verificación del staff.
 
   consultas_seguimiento_followup:
     require_any: [consultas_seguimiento_topics]
@@ -231,8 +245,17 @@ score_adjustments:
     apply:
       - intent_id: personas.designar-representante-flow
         delta: 55
+      - intent_id: personas.vincular-menor-flow
+        delta: -40
       - intent_id_prefix: turnos.
         delta: -30
+
+  - when_rule: paciente_solicitar_tutela
+    apply:
+      - intent_id: personas.vincular-menor-flow
+        delta: 55
+      - intent_id: personas.designar-representante-flow
+        delta: -40
 
   - when_rule: consultas_seguimiento_followup
     apply:
@@ -279,6 +302,12 @@ operational_fallbacks:
   - id: paciente_delegar_representante_nl
     when_any_rule: [paciente_delegar_representacion]
     intent_id: personas.designar-representante-flow
+    confidence: 0.9
+    method: rules_declarative_fallback
+
+  - id: paciente_solicitar_tutela_nl
+    when_any_rule: [paciente_solicitar_tutela]
+    intent_id: personas.vincular-menor-flow
     confidence: 0.9
     method: rules_declarative_fallback
 
@@ -339,7 +368,7 @@ chat_preprocess:
       goal: operational
     - when_rule: paciente_provincial_resource
       goal: operational
-    - when_any_rule: [paciente_delegar_representacion]
+    - when_any_rule: [paciente_delegar_representacion, paciente_solicitar_tutela]
       goal: operational
     - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit]
       goal: operational

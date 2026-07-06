@@ -40,11 +40,15 @@ categories:
     intent_ids:
       - paciente-contexto.recurso-provincial-como-paciente-flow
 
-  - id: representacion
-    titulo: Representación
+  - id: tutela_menor
+    titulo: Tutela de menor
+    intent_ids:
+      - personas.vincular-menor-flow
+
+  - id: designar_representante
+    titulo: Designar representante
     intent_ids:
       - personas.designar-representante-flow
-      - personas.vincular-menor-flow
 
   - id: ayuda
     titulo: Ayuda

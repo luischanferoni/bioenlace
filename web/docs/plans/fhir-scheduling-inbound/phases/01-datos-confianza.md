@@ -1,25 +1,23 @@
-# Fase 1 — Datos de confianza (en curso)
+# Fase 1 — Datos de confianza
 
-## Objetivos
+## Hecho
 
-1. **`personas.cuil`**: obligatorio al alta PES clínico; captura en flujo asistente si falta.
-2. **`integration_fhir_service_code`**: catálogo código FHIR → `id_servicio`.
-3. **`integration_schedule_link`**: esquema para vínculo Schedule HAPI → PES (onboarding fase 2).
+- [x] `personas.cuil`, alta PES, flujo asistente `capture_cuil`
+- [x] `integration_fhir_service_code` + APIs catálogo
+- [x] `integration_schedule_link` + resolver fail-closed
+- [x] Migraciones `m260706_130000`, `m260706_130001`
 
-## Hecho / en PR
+## Fase 2 — En curso
 
-- [x] Migración `personas.cuil` (único, 11 dígitos).
-- [x] `PersonCuilService` + validación dígito verificador.
-- [x] `ProfesionalEfectorServicioAltaService` exige CUIL (excepto `AdminEfector`).
-- [x] Paso asistente `capture_cuil` en `profesional-efector-servicio.crear-flow`.
-- [x] API `cargar-cuil-profesional` + UI JSON.
-- [x] `FhirHealthcareServiceCodeCatalog` + modelo AR.
-- [x] API staff `listar-codigos-servicio-fhir` / `guardar-codigo-servicio-fhir`.
-- [x] `FhirSchedulePesResolver` (esqueleto fail-closed).
-- [ ] UI onboarding Schedule → PES (fase 2).
+- [x] Conector `MsalNisFhirSchedulingConnector` → NIS
+- [x] Onboarding Schedule: preview + confirmar vínculo
+- [x] `FhirScheduleLinkReconcileService`
+- [ ] Golden tests con Bundle fixture real de NIS (cuando haya datos)
 
-## Tests
+## Fase 3 — En curso
 
-- `CuilValidatorTest`
-- `FhirHealthcareServiceCodeCatalogTest`
-- `FhirSchedulePesResolverTest` (fixtures)
+- [x] Columnas turnos inbound + `integration_fhir_sync_state`
+- [x] `FhirSchedulingInboundPullService` + `TurnoInboundSyncService`
+- [x] Consola `php yii fhir-scheduling-inbound/pull`
+- [ ] Cron en hosting + `fhirSchedulingInbound.enabled=true` en params-local
+- [ ] Actualización estados salientes Bioenlace → FHIR (PATCH Appointment)

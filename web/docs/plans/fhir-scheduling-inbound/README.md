@@ -1,33 +1,48 @@
-# Plan — Agendamiento FHIR entrante (HAPI → Bioenlace)
+# Plan — Agendamiento FHIR entrante (HAPI NIS)
 
 | Campo | Valor |
 |-------|--------|
 | Slug | `fhir-scheduling-inbound` |
-| Estado | Fase 1 en curso |
-| Dueño | Integraciones / scheduling |
+| Estado | Fases 2–3 en curso |
+| Servidor FHIR | [https://nis.msalsgo.gob.ar/fhir](https://nis.msalsgo.gob.ar/fhir) |
 
 ## Índice
 
 | Doc | Contenido |
 |-----|-----------|
-| [overview.md](./overview.md) | Alcance, actores, qué entra y qué no |
-| [design.md](./design.md) | Capas, confianza PES, fail-closed |
-| [phases/00-marco.md](./phases/00-marco.md) | Contrato coordinado con HAPI (identifiers nacionales) |
-| [phases/01-datos-confianza.md](./phases/01-datos-confianza.md) | CUIL, catálogo servicios, schedule link |
-| [phases/02-resolver-pes.md](./phases/02-resolver-pes.md) | Resolver compuesto + onboarding verificado |
-| [phases/03-sync-appointments.md](./phases/03-sync-appointments.md) | Espejo turnos, estados FHIR |
+| [overview.md](./overview.md) | Alcance |
+| [design.md](./design.md) | Confianza PES, fail-closed |
+| [phases/00-marco.md](./phases/00-marco.md) | Contrato NIS |
+| [phases/01-datos-confianza.md](./phases/01-datos-confianza.md) | Estado por fase |
+| [phases/02-resolver-pes.md](./phases/02-resolver-pes.md) | Resolver + onboarding |
+| [phases/03-sync-appointments.md](./phases/03-sync-appointments.md) | Pull → turnos |
 
-## Código (Fase 1)
+## Código
 
 | Área | Ubicación |
 |------|-----------|
-| CUIL persona | `common/models/Person/Persona.php`, `Domain/Person/Service/PersonCuilService.php` |
-| Alta PES + CUIL | `ProfesionalEfectorServicioAltaService`, intent `profesional-efector-servicio.crear-flow` |
-| Catálogo servicio FHIR | `integration_fhir_service_code`, `FhirHealthcareServiceCodeCatalog` |
-| Vínculo Schedule→PES | `integration_schedule_link`, `FhirSchedulePesResolver` |
-| Integraciones | `common/components/Domain/Integrations/Scheduling/` |
+| Conector NIS | `Integrations/Scheduling/Connector/MsalNisFhirSchedulingConnector.php` |
+| Pull / sync | `FhirSchedulingInboundPullService`, `TurnoInboundSyncService` |
+| Onboarding | `FhirScheduleOnboardingUiService`, APIs `*-schedule-hapi` |
+| Consola | `console/controllers/FhirSchedulingInboundController.php` |
+| Params | `common/config/params.php` → `fhirSchedulingInbound` |
+| Migraciones | `m260706_130000` … `m260706_140001` |
 
-## Relacionado
+## Activación
 
-- [decisions/fhir-clinical.md](../../decisions/fhir-clinical.md)
-- [plans/interoperabilidad-historia-clinica/](../interoperabilidad-historia-clinica/README.md) (patrón conector + mapper)
+En `params-local.php`:
+
+```php
+return [
+    'fhirSchedulingInbound' => [
+        'enabled' => true,
+    ],
+];
+```
+
+Cron sugerido:
+
+```bash
+php yii fhir-scheduling-inbound/pull 50
+php yii fhir-scheduling-inbound/reconcile-schedule-links
+```

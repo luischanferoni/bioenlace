@@ -205,6 +205,31 @@ return [
     ],
 
     /**
+     * Agendamiento FHIR entrante (HAPI NIS → espejo turnos).
+     * Habilitar en params-local cuando el efector use pull de citas.
+     *
+     * @see web/docs/plans/fhir-scheduling-inbound/
+     * @see https://nis.msalsgo.gob.ar/fhir
+     */
+    'fhirSchedulingInbound' => [
+        'enabled' => false,
+        'default' => 'msal-nis',
+        'pull' => [
+            'batch_limit' => 50,
+            'reconcile_schedule_limit' => 100,
+        ],
+        'connectors' => [
+            'msal-nis' => [
+                'class' => \common\components\Domain\Integrations\Scheduling\Connector\MsalNisFhirSchedulingConnector::class,
+                'baseUrl' => 'https://nis.msalsgo.gob.ar/fhir',
+                'tokenUrl' => null,
+                'clientId' => null,
+                'clientSecret' => null,
+            ],
+        ],
+    ],
+
+    /**
      * Cohortes — defaults compartidos (estructura). Activación por app en frontend/console params.
      * @see common/config/params-care-cohort.php
      */

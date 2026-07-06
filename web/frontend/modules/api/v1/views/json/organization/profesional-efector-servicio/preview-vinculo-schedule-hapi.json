@@ -1,0 +1,40 @@
+{
+  "ui_type": "ui_json",
+  "title": "Vincular Schedule HAPI con PES",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "help",
+      "title": "Onboarding",
+      "text": "Ingresá el id del Schedule en NIS (https://nis.msalsgo.gob.ar/fhir) para ver la resolución PES candidata."
+    },
+    {
+      "kind": "fields",
+      "id": "schedule",
+      "fields": [
+        {
+          "name": "source_system",
+          "label": "Sistema origen",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "external_schedule_id",
+          "label": "Schedule id (HAPI)",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "kind": "message",
+      "id": "preview_box",
+      "title": "Resolución",
+      "text_field": "preview_error"
+    }
+  ]
+}

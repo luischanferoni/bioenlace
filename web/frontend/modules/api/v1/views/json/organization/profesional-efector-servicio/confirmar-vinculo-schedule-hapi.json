@@ -1,0 +1,36 @@
+{
+  "ui_type": "ui_json",
+  "title": "Confirmar vínculo Schedule → PES",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "confirm",
+      "fields": [
+        {
+          "name": "source_system",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "external_schedule_id",
+          "label": "Schedule id (HAPI)",
+          "type": "text",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_profesional_efector_servicio",
+          "label": "PES confirmado",
+          "type": "text",
+          "required": true,
+          "hint": "Id interno profesional_efector_servicio tras revisar el preview."
+        }
+      ]
+    }
+  ]
+}

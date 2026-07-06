@@ -9,6 +9,7 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenEx
 use common\components\Domain\Organization\Service\Authorization\ProfesionalEfectorServicioDomainAuthorizationService;
 use yii\web\ForbiddenHttpException;
 use yii\web\MethodNotAllowedHttpException;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\FhirScheduleOnboardingUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\FhirServiceCodeCatalogUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\LicenciaUiFlowService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCuilUiService;
@@ -864,6 +865,75 @@ class ProfesionalEfectorServicioController extends BaseController
                 );
 
                 return FhirServiceCodeCatalogUiService::submit($idEfector, $post);
+            }
+        );
+    }
+
+    /**
+     * Listado Schedule en HAPI NIS (onboarding).
+     *
+     * GET|POST /api/v1/profesional-efector-servicio/listar-schedules-hapi
+     */
+    public function actionListarSchedulesHapi(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+
+        return FhirScheduleOnboardingUiService::listSchedulesFromHapi(
+            $idEfector,
+            array_merge($req->get(), $req->isPost ? $req->post() : [])
+        );
+    }
+
+    /**
+     * Preview resolución PES para un Schedule HAPI.
+     *
+     * GET|POST /api/v1/profesional-efector-servicio/preview-vinculo-schedule-hapi
+     */
+    public function actionPreviewVinculoScheduleHapi(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+
+        return UiScreenService::handleScreen(
+            'profesional-efector-servicio',
+            'preview-vinculo-schedule-hapi',
+            FhirScheduleOnboardingUiService::buildPreviewValues($idEfector, $fromClient),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+    }
+
+    /**
+     * Confirmar vínculo verificado Schedule → PES.
+     *
+     * GET|POST /api/v1/profesional-efector-servicio/confirmar-vinculo-schedule-hapi
+     */
+    public function actionConfirmarVinculoScheduleHapi(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+
+        return UiScreenService::handleScreen(
+            'profesional-efector-servicio',
+            'confirmar-vinculo-schedule-hapi',
+            array_merge(
+                FhirScheduleOnboardingUiService::buildPreviewValues($idEfector, $fromClient),
+                $fromClient
+            ),
+            $req->post(),
+            static function (array $post) use ($idEfector): array {
+                ApiDomainOperationBridge::assertOrForbidden(
+                    'ProfesionalEfectorServicio.create',
+                    $post,
+                    $post
+                );
+
+                return FhirScheduleOnboardingUiService::submitVerify($idEfector, $post);
             }
         );
     }

@@ -1,15 +1,19 @@
-# Fase 0 — Contrato con HAPI
+# Fase 0 — Contrato con HAPI NIS
 
-Acordar con el equipo HAPI (sin `urn:bioenlace:pes`):
+Servidor acordado: **[HAPI FHIR NIS MSAL](https://nis.msalsgo.gob.ar/fhir)** (R4, HAPI 8.x).
 
 | Tema | Convención |
 |------|------------|
-| Efector | `Location.identifier` system SISA acordado, value = código SISA |
-| Profesional | `Practitioner.identifier` CUIL (`http://www.afip.gob.ar/cuil` u OID acordado); DNI RENAPER como respaldo |
-| Servicio | `HealthcareService.specialty` con code system estable (SNOMED u catálogo ministerial) |
-| Agenda | `Appointment.slot` → `Schedule/{id}` estable |
-| Estados | Mapeo Bioenlace ↔ FHIR `Appointment.status` (p. ej. `EN_RESOLUCION` → `booked`) |
+| Base URL | `https://nis.msalsgo.gob.ar/fhir` (`params.fhirSchedulingInbound.connectors.msal-nis`) |
+| Efector | `Location.identifier` / SISA (system a cerrar con NIS) |
+| Profesional | `Practitioner.identifier` CUIL `http://www.afip.gob.ar/cuil` |
+| Paciente | `Patient.identifier` DNI/CUIL cuando exista en Bioenlace |
+| Servicio | `HealthcareService.specialty` → catálogo `integration_fhir_service_code` |
+| Agenda | `Appointment.slot` → `Slot` → `Schedule/{id}` |
+| Pull | `GET Appointment?_lastUpdated=gt{instant}&_count=N` |
+
+OAuth: opcional vía `tokenUrl` / `clientId` en `params-local.php` cuando NIS lo exija.
 
 ## Entregable
 
-Documento adjunto al ticket de integración + fixtures Bundle de ejemplo para tests.
+Fixtures Bundle de ejemplo + golden tests en `common/tests/unit/integrations/scheduling/`.

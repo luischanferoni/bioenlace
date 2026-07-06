@@ -26,6 +26,12 @@ use common\traits\ParameterQuestionsTrait;
  * @property string $fech
  * @property string $hora
  * @property int|null $id_profesional_efector_servicio
+ * @property string|null $fhir_status
+ * @property string|null $appointment_type
+ * @property string|null $external_appointment_id
+ * @property string|null $appointment_source_system
+ * @property string|null $external_schedule_id
+ * @property string|null $pes_resolution_trust
  * @property string $confirmado
  * @property string $referenciado
  * @property integer $id_consulta_referencia

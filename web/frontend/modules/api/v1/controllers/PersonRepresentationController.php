@@ -6,6 +6,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use common\components\Domain\Person\Representation\Service\PatientDelegationService;
+use common\components\Domain\Person\Representation\Service\PersonRepresentationPresenter;
 use common\components\Domain\Person\Representation\Service\VerifiedGuardianshipService;
 use common\components\Platform\Ui\UiScreenService;
 
@@ -187,38 +188,16 @@ class PersonRepresentationController extends BaseController
             null
         );
 
+        $presenter = new PersonRepresentationPresenter();
         $items = [];
         foreach ($solicitudes as $row) {
             if (!is_array($row)) {
                 continue;
             }
-            $id = (int) ($row['id'] ?? 0);
-            if ($id <= 0) {
-                continue;
+            $item = $presenter->pendingGuardianshipStaffListItem($row);
+            if ($item !== null) {
+                $items[] = $item;
             }
-            $actor = is_array($row['actor'] ?? null) ? $row['actor'] : [];
-            $subject = is_array($row['subject'] ?? null) ? $row['subject'] : [];
-            $rel = is_array($row['relationship_type'] ?? null) ? $row['relationship_type'] : [];
-            $actorLabel = trim(((string) ($actor['apellido'] ?? '')) . ', ' . ((string) ($actor['nombre'] ?? '')));
-            $subjectLabel = trim(((string) ($subject['apellido'] ?? '')) . ', ' . ((string) ($subject['nombre'] ?? '')));
-            $doc = trim((string) ($subject['documento'] ?? ''));
-            $relLabel = trim((string) ($rel['label'] ?? $rel['code'] ?? 'Tutela'));
-            $name = $actorLabel !== ', ' ? $actorLabel : 'Solicitante';
-            $subtitle = ($subjectLabel !== ', ' ? $subjectLabel : 'Menor')
-                . ($doc !== '' ? ' · DNI ' . $doc : '')
-                . ' · ' . $relLabel;
-
-            $items[] = [
-                'id' => (string) $id,
-                'name' => $name,
-                'label' => $name,
-                'subtitle' => $subtitle,
-                'meta' => [
-                    'person_related_id' => $id,
-                    'status' => (string) ($row['status'] ?? 'pending'),
-                    'created_at' => $row['created_at'] ?? null,
-                ],
-            ];
         }
 
         $out['success'] = true;

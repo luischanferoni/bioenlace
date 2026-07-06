@@ -68,6 +68,110 @@ final class PersonRepresentationPresenter
     }
 
     /**
+     * Ítem de lista UI staff: solicitud de tutela pending (menor + solicitante + vínculo).
+     *
+     * @param array<string, mixed> $row salida de {@see linkToArray} con actor y subject
+     * @return array<string, mixed>|null
+     */
+    public function pendingGuardianshipStaffListItem(array $row): ?array
+    {
+        $id = (int) ($row['id'] ?? 0);
+        if ($id <= 0) {
+            return null;
+        }
+
+        $actor = is_array($row['actor'] ?? null) ? $row['actor'] : [];
+        $subject = is_array($row['subject'] ?? null) ? $row['subject'] : [];
+        $rel = is_array($row['relationship_type'] ?? null) ? $row['relationship_type'] : [];
+
+        $menorLabel = $this->personaDisplayLabel($subject);
+        if ($menorLabel === '') {
+            $menorLabel = 'Menor sin nombre';
+        }
+
+        $tutorLabel = $this->personaDisplayLabel($actor);
+        if ($tutorLabel === '') {
+            $tutorLabel = 'Solicitante';
+        }
+
+        $menorDoc = trim((string) ($subject['documento'] ?? ''));
+        $tutorDoc = trim((string) ($actor['documento'] ?? ''));
+        $relLabel = trim((string) ($rel['label'] ?? $rel['code'] ?? 'Tutela'));
+        $edad = $subject['edad'] ?? null;
+        $fnac = trim((string) ($subject['fecha_nacimiento'] ?? ''));
+        $createdAt = trim((string) ($row['created_at'] ?? ''));
+
+        $menorParts = [];
+        if ($menorDoc !== '') {
+            $menorParts[] = 'DNI ' . $menorDoc;
+        }
+        if ($edad !== null && (int) $edad >= 0) {
+            $menorParts[] = (int) $edad . ' años';
+        }
+        if ($fnac !== '') {
+            $menorParts[] = 'nac. ' . $this->formatDateForDisplay($fnac);
+        }
+
+        $subtitleParts = [];
+        if ($menorParts !== []) {
+            $subtitleParts[] = implode(' · ', $menorParts);
+        }
+        $subtitleParts[] = 'Solicita: ' . $tutorLabel . ($tutorDoc !== '' ? ' (DNI ' . $tutorDoc . ')' : '');
+        $subtitleParts[] = 'Vínculo: ' . $relLabel;
+        if ($createdAt !== '') {
+            $subtitleParts[] = 'Pedido: ' . $this->formatDateForDisplay($createdAt);
+        }
+
+        return [
+            'id' => (string) $id,
+            'name' => $menorLabel,
+            'label' => $menorLabel,
+            'subtitle' => implode(' · ', $subtitleParts),
+            'meta' => [
+                'person_related_id' => $id,
+                'menor_nombre' => $menorLabel,
+                'menor_documento' => $menorDoc,
+                'menor_edad' => $edad !== null ? (int) $edad : null,
+                'menor_fecha_nacimiento' => $fnac !== '' ? $fnac : null,
+                'tutor_nombre' => $tutorLabel,
+                'tutor_documento' => $tutorDoc,
+                'parentesco' => $relLabel,
+                'parentesco_code' => trim((string) ($rel['code'] ?? '')),
+                'status' => (string) ($row['status'] ?? 'pending'),
+                'created_at' => $createdAt !== '' ? $createdAt : null,
+            ],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $persona
+     */
+    private function personaDisplayLabel(?array $persona): string
+    {
+        if ($persona === null || $persona === []) {
+            return '';
+        }
+        $apellido = trim((string) ($persona['apellido'] ?? ''));
+        $nombre = trim((string) ($persona['nombre'] ?? ''));
+        $label = trim($apellido . ', ' . $nombre);
+
+        return $label !== ',' ? $label : '';
+    }
+
+    private function formatDateForDisplay(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return '';
+        }
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $value, $m) === 1) {
+            return $m[3] . '/' . $m[2] . '/' . $m[1];
+        }
+
+        return $value;
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     private function personaSummary(int $idPersona): ?array

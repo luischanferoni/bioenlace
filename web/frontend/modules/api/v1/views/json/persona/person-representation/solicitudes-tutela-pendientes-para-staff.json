@@ -23,6 +23,13 @@
       "empty_message": "No hay solicitudes de tutela pendientes de verificación.",
       "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
       "presentation": { "tile": "large", "shape": "wide" },
+      "columns": [
+        { "field": "name", "label": "Menor" },
+        { "field": "meta.menor_documento", "label": "DNI menor" },
+        { "field": "meta.menor_edad", "label": "Edad" },
+        { "field": "meta.tutor_nombre", "label": "Solicita" },
+        { "field": "meta.parentesco", "label": "Vínculo" }
+      ],
       "selection": { "mode": "single", "requires_confirmation": false },
       "items": []
     },

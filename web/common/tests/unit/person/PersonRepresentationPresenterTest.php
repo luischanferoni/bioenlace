@@ -37,4 +37,36 @@ class PersonRepresentationPresenterTest extends Unit
         verify($out['relationship_type']['code'])->equals('padre');
         verify(array_key_exists('subject', $out))->false();
     }
+
+    public function testPendingGuardianshipStaffListItemFormatsMenorAndVinculo(): void
+    {
+        $presenter = new PersonRepresentationPresenter();
+        $item = $presenter->pendingGuardianshipStaffListItem([
+            'id' => 12,
+            'status' => 'pending',
+            'created_at' => '2026-06-02 14:30:00',
+            'relationship_type' => ['code' => 'padre', 'label' => 'Padre'],
+            'subject' => [
+                'nombre' => 'Pedro',
+                'apellido' => 'Pérez',
+                'documento' => '50123456',
+                'fecha_nacimiento' => '2018-05-10',
+                'edad' => 8,
+            ],
+            'actor' => [
+                'nombre' => 'Juan',
+                'apellido' => 'García',
+                'documento' => '20111222',
+            ],
+        ]);
+
+        $this->assertNotNull($item);
+        $this->assertSame('12', $item['id']);
+        $this->assertSame('Pérez, Pedro', $item['name']);
+        $this->assertStringContainsString('DNI 50123456', $item['subtitle']);
+        $this->assertStringContainsString('García, Juan', $item['subtitle']);
+        $this->assertStringContainsString('Vínculo: Padre', $item['subtitle']);
+        $this->assertSame('50123456', $item['meta']['menor_documento']);
+        $this->assertSame(8, $item['meta']['menor_edad']);
+    }
 }

@@ -3289,14 +3289,23 @@
         rebuildItemsById(items);
 
         function buildPickButtonsHtml(listItems) {
-            let h = '<div class="d-flex gap-2 overflow-auto pb-2 flex-wrap">';
+            let h = '<div class="d-flex gap-2 overflow-auto pb-2 flex-wrap bio-ui-json-list-picks">';
             (Array.isArray(listItems) ? listItems : []).forEach((it) => {
                 const id = it && it.id !== undefined ? String(it.id) : '';
                 const name = it && (it.name || it.label) ? String(it.name || it.label) : id;
+                const subtitle = it && it.subtitle != null ? String(it.subtitle).trim() : '';
                 if (!id) return;
-                h += '<button type="button" class="btn btn-outline-primary btn-sm text-nowrap position-relative" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
+                const btnClass = subtitle !== ''
+                    ? 'btn btn-outline-primary btn-sm text-start position-relative bio-ui-json-list-pick--rich'
+                    : 'btn btn-outline-primary btn-sm text-nowrap position-relative';
+                h += '<button type="button" class="' + btnClass + '" data-embed-pick="1" data-embed-id="' + escapeHtml(id) + '" data-embed-label="' + escapeHtml(name) + '">';
                 h += '<span class="bio-ui-pick-check position-absolute top-50 end-0 translate-middle badge rounded-pill bg-success d-none" aria-hidden="true">✓</span>';
-                h += escapeHtml(name);
+                if (subtitle !== '') {
+                    h += '<span class="d-block fw-semibold pe-4">' + escapeHtml(name) + '</span>';
+                    h += '<span class="d-block small text-muted pe-4">' + escapeHtml(subtitle) + '</span>';
+                } else {
+                    h += escapeHtml(name);
+                }
                 h += '</button>';
             });
             h += '</div>';

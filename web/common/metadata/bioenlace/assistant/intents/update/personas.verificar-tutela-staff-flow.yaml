@@ -28,7 +28,6 @@ subintents:
     assistant_text: "Solicitudes de tutela pendientes"
     provides:
       - draft.person_related_id
-      - draft.nota
     next: ""
     open_ui:
       action_id: person-representation.solicitudes-tutela-pendientes-para-staff
@@ -37,4 +36,4 @@ flow_submit:
   action_id: person-representation.verificar-vinculo-para-staff
   params:
     person_related_id: "draft.person_related_id"
-    nota: "draft.nota"
+    nota: "draft.nota?"

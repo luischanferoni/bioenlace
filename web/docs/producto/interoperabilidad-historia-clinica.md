@@ -113,6 +113,7 @@ Requiere permisos RBAC de staff sobre esas rutas.
 | Modelo clínico FHIR interno (encounter, condiciones, etc.) | [decisions/fhir-clinical.md](../decisions/fhir-clinical.md) |
 | Receta electrónica (documento incluido en el Bundle) | [receta-electronica.md](./receta-electronica.md) |
 | Laboratorio entrante (informes en el Bundle) | [laboratorio.md](./laboratorio.md) |
+| Agendamiento entrante NIS (Appointment espejo) | [interoperabilidad-agendamiento-fhir.md](./interoperabilidad-agendamiento-fhir.md) |
 | Madurez ambulatoria | [his-completo/10-atencion-ambulatoria.md](../his-completo/10-atencion-ambulatoria.md) |
 
 Referencia técnica de módulo: `common/components/Domain/Integrations/ClinicalHistory/README.md`.

@@ -71,3 +71,5 @@ php yii fhir-scheduling-inbound/reconcile-schedule-links
 ```
 
 Detalle operativo: [phases/04-operacion.md](./phases/04-operacion.md).
+
+Documentación estable de producto: [producto/interoperabilidad-agendamiento-fhir.md](../../producto/interoperabilidad-agendamiento-fhir.md).

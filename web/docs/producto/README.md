@@ -11,6 +11,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [registro-paciente.md](./registro-paciente.md) | Alta paciente (app y staff), MPI reducido, contexto y RENAPER |
 | [representacion-paciente.md](./representacion-paciente.md) | Tutela de menor y delegación (operar por otro paciente) |
 | [turnos.md](./turnos.md) | Agenda, reserva, cancelación, notificaciones |
+| [interoperabilidad-agendamiento-fhir.md](./interoperabilidad-agendamiento-fhir.md) | Espejo de citas NIS HAPI ↔ turnos (entrante/saliente) |
 | [triage-reserva-turno.md](./triage-reserva-turno.md) | Motivo y alarmas antes de reservar (catálogo + bandas A–D) |
 | [atencion-remota-async.md](./atencion-remota-async.md) | Atención remota y consulta async (adopción gradual) |
 | [consultas-seguimiento.md](./consultas-seguimiento.md) | Consulta general y seguimiento de tratamiento (app paciente) |

@@ -114,9 +114,18 @@ Preferencias: `GET|POST …/preferencias-agenda-como-paciente` (`auto_reserva_re
 
 Flags: `autonomous_agent_resolucion_auto_reserva_enabled` (global) + columna efector.
 
+## Citas desde NIS (FHIR externo)
+
+Efectores que publican agenda en el **NIS MSAL** pueden tener un **espejo** de `Appointment` en Bioenlace: el staff vincula cada `Schedule` HAPI con un PES local; un job trae citas nuevas o modificadas y, si está habilitado, las cancelaciones o cierres en Bioenlace actualizan `Appointment.status` en NIS.
+
+- No reemplaza la reserva paciente nativa cuando el efector opera solo con grilla Bioenlace.
+- Turnos espejo pueden existir sin paciente local hasta resolver DNI/CUIL.
+- Detalle operativo y confianza PES: [interoperabilidad-agendamiento-fhir.md](./interoperabilidad-agendamiento-fhir.md).
+
 ## Relación con el resto del producto
 
 - Representación operativa (tutela/delegación): [representacion-paciente.md](./representacion-paciente.md).
+- Integración NIS HAPI (citas externas): [interoperabilidad-agendamiento-fhir.md](./interoperabilidad-agendamiento-fhir.md).
 - Un turno puede originar un **encounter** ambulatorio al atenderse (captura clínica).
 - Los turnos también se pueden iniciar por conversación; el detalle técnico del motor está en [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md).
 - Madurez HIS del módulo: [his-completo/11-agenda-turnos.md](../his-completo/11-agenda-turnos.md).

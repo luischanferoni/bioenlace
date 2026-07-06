@@ -70,7 +70,7 @@ class m260706_130000_fhir_scheduling_trust_data extends Migration
                     ->comment('URI del code system FHIR'),
                 'code_value' => $this->string(64)->notNull(),
                 // Debe coincidir con servicios.id_servicio (INT UNSIGNED).
-                'id_servicio' => $this->unsignedInteger()->notNull(),
+                'id_servicio' => $this->integer()->unsigned()->notNull(),
                 'id_efector_scope' => $this->integer()->notNull()->defaultValue(0)
                     ->comment('0 = global; >0 = id_efector'),
                 'label' => $this->string(255)->null(),
@@ -86,7 +86,7 @@ class m260706_130000_fhir_scheduling_trust_data extends Migration
             );
             $this->createIndex('idx_ifsc_servicio', $table, 'id_servicio');
         } elseif (isset($schema->columns['id_servicio']) && !$schema->columns['id_servicio']->unsigned) {
-            $this->alterColumn($table, 'id_servicio', $this->unsignedInteger()->notNull());
+            $this->alterColumn($table, 'id_servicio', $this->integer()->unsigned()->notNull());
         }
 
         if (!$this->foreignKeyExists($table, self::FK_IFSC_SERVICIO)) {

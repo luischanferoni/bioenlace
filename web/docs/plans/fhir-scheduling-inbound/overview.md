@@ -2,15 +2,15 @@
 
 ## Objetivo
 
-Bioenlace **consume** agendas y citas desde un servidor HAPI FHIR externo, materializa un espejo en `turnos` y actualiza estados (`Appointment.status`). No publica grilla propia por ahora.
+Bioenlace **consume** agendas y citas desde un servidor HAPI FHIR externo (NIS MSAL), materializa un **espejo** en `turnos` y **sincroniza estados** en ambos sentidos (`Appointment.status` ↔ `turnos.estado`). No publica grilla propia (`Slot` / `Schedule`) por ahora.
 
 ## Ancla operativa
 
-**PES** (`profesional_efector_servicio`) = profesional + efector + servicio.
+**PES** (`profesional_efector_servicio`) = profesional + efector + servicio. Es el vínculo operativo entre un `Schedule` HAPI y la agenda Bioenlace.
 
 ## Identificación sin `urn:bioenlace:pes`
 
-HAPI no incluirá identificador Bioenlace. Se coordina perfil nacional mínimo:
+HAPI no incluirá identificador Bioenlace. Perfil nacional mínimo acordado:
 
 | Recurso FHIR | Identificador Bioenlace |
 |--------------|-------------------------|
@@ -19,14 +19,33 @@ HAPI no incluirá identificador Bioenlace. Se coordina perfil nacional mínimo:
 | `HealthcareService` | Catálogo `integration_fhir_service_code` → `id_servicio` |
 | `Schedule` | Catálogo `integration_schedule_link` → `id_profesional_efector_servicio` (verificado) |
 
+## Flujos
+
+```mermaid
+flowchart LR
+  NIS[HAPI NIS]
+  Pull[pull / reconcile]
+  Turnos[(turnos)]
+  Push[push outbound]
+  NIS --> Pull --> Turnos
+  Turnos --> Push --> NIS
+```
+
+- **Entrante:** job `pull` + onboarding Schedule → PES.
+- **Saliente:** hooks al cambiar `estado` + job `push-outbound` de reintento.
+
 ## Fuera de alcance (fase inicial)
 
 - Publicar `Slot` / `Schedule` propios.
 - Materializar grilla local completa.
 - Paciente obligatorio en turno entrante (`id_persona` opcional en espejo).
 
-## Entregables por fase
+## Estado de entregables
 
-1. **Datos de confianza**: CUIL al alta PES, catálogo códigos servicio, tabla schedule link.
-2. **Resolver**: compuesto fail-closed + onboarding verificado con fingerprint.
-3. **Sync**: conector HAPI, mapper `Appointment` → `turnos`, job reconciliación.
+| Fase | Tema | Estado |
+|------|------|--------|
+| 1 | CUIL, catálogo servicio FHIR, tabla schedule link | Hecho |
+| 2 | Resolver fail-closed + onboarding verificado | Hecho |
+| 3 | Pull Appointment, push estados, consola | Hecho |
+| — | Golden tests con Bundle real NIS | Pendiente (sin datos en servidor) |
+| — | Cron + `enabled` en producción | Pendiente operativo |

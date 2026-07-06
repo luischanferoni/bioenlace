@@ -2,36 +2,73 @@
 
 ## Alcance
 
-- Conector pull HAPI (`Appointment?_lastUpdated=…`).
-- Mapper: `external_appointment_id`, `fhir_status`, refs Schedule.
-- Resolver PES vía fase 2; `id_persona` opcional en paciente desconocido.
-- **Saliente:** actualización `Appointment.status` en NIS cuando cambia `turnos.estado`.
+- Pull incremental HAPI (`Appointment?_lastUpdated=…`).
+- Mapper: `external_appointment_id`, `fhir_status`, refs `Schedule`.
+- Resolver PES vía fase 2; `id_persona` opcional si paciente desconocido localmente.
+- Push saliente: `Appointment.status` en NIS cuando cambia `turnos.estado` en Bioenlace.
 
-## Columnas turnos
+## Columnas `turnos`
 
 Migración `m260706_140000_turnos_fhir_inbound_columns`:
 
-- `external_appointment_id`, `appointment_source_system`, `external_schedule_id`, `pes_resolution_trust`
-- `fhir_status`, `appointment_type` (migración previa `m260520_100003`)
-- `id_persona` nullable para citas sin paciente local
+| Columna | Uso |
+|---------|-----|
+| `external_appointment_id` | `Appointment.id` en NIS |
+| `appointment_source_system` | Clave conector (`msal-nis`) |
+| `external_schedule_id` | `Schedule.id` HAPI |
+| `pes_resolution_trust` | `verified` \| `provisional` \| `unresolved` \| `stale` |
+| `fhir_status` | último `Appointment.status` conocido |
+| `appointment_type` | tipo FHIR (migración previa `m260520_100003`) |
+
+Índice único: `(appointment_source_system, external_appointment_id)`.
+
+Tabla de cursor: `integration_fhir_sync_state` (`last_cursor` = instante `_lastUpdated` del último pull OK).
 
 ## Mapeo estados
 
-| Interno | FHIR saliente |
-|---------|----------------|
-| PENDIENTE, EN_RESOLUCION | `booked` |
-| EN_ATENCION | `arrived` |
-| ATENDIDO | `fulfilled` |
-| CANCELADO | `cancelled` |
-| SIN_ATENDER | `noshow` |
+### Entrante (`mapToTurnoEstado`)
 
-Entrante: `FhirAppointmentStatusMapper::mapToTurnoEstado()`.
+| FHIR | `turnos.estado` |
+|------|-----------------|
+| `booked`, `pending`, `proposed`, `waitlist` | `PENDIENTE` |
+| `arrived`, `checked-in` | `EN_ATENCION` |
+| `fulfilled` | `ATENDIDO` |
+| `cancelled`, `entered-in-error` | `CANCELADO` |
+| `noshow` | `SIN_ATENDER` |
 
-Saliente: `FhirAppointmentStatusMapper::mapTurnoEstadoToFhir()` + `FhirAppointmentOutboundSyncService`.
+### Saliente (`mapTurnoEstadoToFhir`)
 
-Hooks: `TurnoFhirOutboundNotifier` desde `TurnoLifecycleService`, resolución, bulk cancel y métodos estáticos del modelo.
+| `turnos.estado` | FHIR |
+|-----------------|------|
+| `PENDIENTE`, `EN_RESOLUCION` | `booked` |
+| `EN_ATENCION` | `arrived` |
+| `ATENDIDO` | `fulfilled` |
+| `CANCELADO` | `cancelled` |
+| `SIN_ATENDER` | `noshow` |
 
-## Jobs consola
+Solo turnos con `external_appointment_id` y `appointment_source_system` participan del push.
+
+## Servicios
+
+| Servicio | Rol |
+|----------|-----|
+| `FhirSchedulingInboundPullService` | Orquesta búsqueda + cursor |
+| `TurnoInboundSyncService` | Upsert espejo local |
+| `FhirAppointmentOutboundSyncService` | PUT status a NIS |
+| `TurnoFhirOutboundNotifier` | Hook fail-soft post-cambio de estado |
+
+## Hooks outbound
+
+Se invoca `TurnoFhirOutboundNotifier::afterEstadoChanged()` desde:
+
+- `TurnoLifecycleService::cancelar`
+- `TurnoResolucionService` (`EN_RESOLUCION`, vuelta a `PENDIENTE` tras reubicación)
+- `BulkCancelDayService`
+- `Turno::NoSePresento`, `Turno::cambiarCampoAtendido`
+
+Errores de red hacia NIS se registran en log (`fhir-scheduling-outbound`); no revierten el cambio local.
+
+## Consola
 
 ```bash
 php yii fhir-scheduling-inbound/pull 50
@@ -48,8 +85,6 @@ php yii fhir-scheduling-inbound/reconcile-schedule-links
 ],
 ```
 
-## Cron sugerido
+`enabled` controla pull; `outbound.enabled` controla push (requiere también `enabled`).
 
-- Pull incremental cada 10 min.
-- Push outbound cada hora (o confiar en hooks en tiempo real).
-- Reconciliación links `stale` diaria.
+Ver [04-operacion.md](./04-operacion.md) para cron y troubleshooting.

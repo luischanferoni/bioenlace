@@ -4,7 +4,7 @@
 
 La resolución compuesta (SISA + CUIL/DNI + código servicio) **propone** candidatos; la **confianza operativa** viene del catálogo verificado y la reconciliación.
 
-## Capas
+## Capas (entrante)
 
 ```
 HAPI FHIR (externo)
@@ -14,12 +14,26 @@ HAPI FHIR (externo)
     → TurnoInboundSyncService (persiste turnos)
 ```
 
+## Capas (saliente)
+
+```
+Cambio turnos.estado (lifecycle / resolución / bulk)
+    → TurnoFhirOutboundNotifier (fail-soft)
+    → FhirAppointmentOutboundSyncService
+    → FhirSchedulingInboundConnector::updateAppointmentStatus (PUT Appointment)
+    → actualiza turnos.fhir_status local
+```
+
+El pull entrante **no** dispara outbound (evita loops). Los hooks solo corren en cambios originados en Bioenlace.
+
 | Capa | Responsabilidad |
 |------|-----------------|
-| Conector | HTTP, auth, paginación `_since` |
-| Mapper | FHIR R4 → DTO interno; sin reglas de negocio Bioenlace |
+| Conector | HTTP GET/PUT, auth OAuth opcional, paginación `_lastUpdated` |
+| Mapper entrante | FHIR R4 → DTO; sin reglas de negocio Bioenlace |
+| Mapper estados | `FhirAppointmentStatusMapper` bidireccional |
 | Resolver | Schedule → PES vía catálogo + fallback compuesto |
-| Dominio | Alta turno espejo, estados, `pes_resolution_trust` |
+| Dominio sync | Alta/actualización turno espejo, `pes_resolution_trust` |
+| Dominio outbound | Publicar `Appointment.status` solo si `external_appointment_id` + flags habilitados |
 
 ## Niveles de confianza (`pes_resolution_trust`)
 
@@ -60,6 +74,14 @@ Tabla `integration_fhir_service_code`:
 - `id_servicio`, `id_efector_scope` (0 = global).
 - Resolución única por `(source, system, code, scope)`; ambigüedad → fail-closed.
 
+API staff: `listar-codigos-servicio-fhir`, `guardar-codigo-servicio-fhir`.
+
 ## CUIL en alta PES
 
-`Persona.cuil` obligatorio al crear PES clínico (excepción: servicio `AdminEfector`). Mejora matching `Practitioner` inbound y export FHIR saliente.
+`Persona.cuil` obligatorio al crear PES clínico (excepción: servicio `AdminEfector`). Mejora matching `Practitioner` inbound y export FHIR saliente (`FhirClinicalHistoryBundleMapper`).
+
+## Espejo en `turnos`
+
+Clave natural: `(appointment_source_system, external_appointment_id)` — típicamente `msal-nis` + `Appointment.id` HAPI.
+
+Turnos sin paciente local: `id_persona` nullable hasta que inbound resuelva DNI/CUIL.

@@ -2,22 +2,36 @@
 
 ## Hecho
 
-- [x] `personas.cuil`, alta PES, flujo asistente `capture_cuil`
-- [x] `integration_fhir_service_code` + APIs catálogo
-- [x] `integration_schedule_link` + resolver fail-closed
+- [x] `personas.cuil` (11 dígitos, único), `CuilValidator`, `PersonCuilService`
+- [x] Alta PES exige CUIL (excepto servicio `AdminEfector`) — `ProfesionalEfectorServicioAltaService`
+- [x] Flujo asistente `profesional-efector-servicio.crear-flow`: paso `capture_cuil` + API `cargar-cuil-profesional`
+- [x] `integration_fhir_service_code` + `FhirHealthcareServiceCodeCatalog`
+- [x] APIs `listar-codigos-servicio-fhir`, `guardar-codigo-servicio-fhir`
+- [x] `integration_schedule_link` + `FhirSchedulePesResolver` + `ScheduleActorSet`
+- [x] Export FHIR: CUIL en Patient/Practitioner (`FhirClinicalHistoryBundleMapper`)
 - [x] Migraciones `m260706_130000`, `m260706_130001`
 
-## Fase 2 — En curso
+## Fase 2 — Hecho
 
 - [x] Conector `MsalNisFhirSchedulingConnector` → NIS
-- [x] Onboarding Schedule: preview + confirmar vínculo
-- [x] `FhirScheduleLinkReconcileService`
+- [x] Onboarding Schedule: `listar-schedules-hapi`, `preview-vinculo-schedule-hapi`, `confirmar-vinculo-schedule-hapi`
+- [x] UI JSON: `views/json/organization/profesional-efector-servicio/preview-vinculo-schedule-hapi.json`, `confirmar-vinculo-schedule-hapi.json`
+- [x] `FhirScheduleLinkReconcileService` + consola `reconcile-schedule-links`
+- [x] Tests: `FhirSchedulePesResolverTest`, `FhirHealthcareServiceCodeCatalogTest`
 - [ ] Golden tests con Bundle fixture real de NIS (cuando haya datos)
 
-## Fase 3 — En curso
+## Fase 3 — Hecho
 
-- [x] Columnas turnos inbound + `integration_fhir_sync_state`
+- [x] Columnas turnos inbound + `integration_fhir_sync_state` — migración `m260706_140000`
+- [x] RBAC onboarding — migración `m260706_140001`
 - [x] `FhirSchedulingInboundPullService` + `TurnoInboundSyncService`
-- [x] Consola `php yii fhir-scheduling-inbound/pull`
-- [ ] Cron en hosting + `fhirSchedulingInbound.enabled=true` en params-local
-- [ ] Actualización estados salientes Bioenlace → FHIR (PATCH Appointment)
+- [x] `FhirAppointmentOutboundSyncService` + `TurnoFhirOutboundNotifier`
+- [x] Consola: `pull`, `push-outbound`, `reconcile-schedule-links`
+- [x] Tests: `FhirAppointmentStatusMapperTest` (entrante y saliente)
+- [ ] Cron en hosting + `fhirSchedulingInbound.enabled=true` en params-local de prod
+
+## Pendiente operativo / QA
+
+- [ ] Onboarding al menos un `Schedule` real en cada efector piloto
+- [ ] Poblar catálogo `integration_fhir_service_code` por efector
+- [ ] Validar pull/push con citas reales en NIS

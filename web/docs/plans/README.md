@@ -15,7 +15,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Receta electrónica (AR) | `receta-electronica/` | Fases 1–2 en producción; repositorio nacional pendiente |
 | Interoperabilidad HC FHIR | `interoperabilidad-historia-clinica/` | Fases 1–2 + reconcile; homologación nacional pendiente |
 | Urgencias — triage + tablero | `urgencias-triage-tablero/` | Fase 1 (API dominio) en curso; fases 2–5 pendientes |
-| Agendamiento FHIR entrante | `fhir-scheduling-inbound/` | Fases 2–3 en curso (NIS HAPI) |
+| Agendamiento FHIR entrante | `fhir-scheduling-inbound/` | Implementado; pendiente activación prod y golden tests NIS |
 
 ## Planes archivados (carpeta eliminada)
 

@@ -17,6 +17,9 @@ final class IntentManifestIndex
     /** @var array<string, list<array{intent_id: string, step_id: string, permission: string, rbac_route: string}>>|null */
     private static ?array $byOpenUiActionId = null;
 
+    /** @var array<string, list<array{intent_id: string, permission: string, rbac_route: string}>>|null */
+    private static ?array $byFlowSubmitActionId = null;
+
     /**
      * @return array<string, array<string, mixed>>
      */
@@ -52,6 +55,19 @@ final class IntentManifestIndex
     }
 
     /**
+     * Intents que declaran `flow_submit` con este action_id.
+     *
+     * @return list<array{intent_id: string, permission: string, rbac_route: string}>
+     */
+    public static function parentIntentsForFlowSubmitAction(string $actionId): array
+    {
+        self::ensureBuilt();
+        $actionId = trim($actionId);
+
+        return self::$byFlowSubmitActionId[$actionId] ?? [];
+    }
+
+    /**
      * Clave RBAC del intent: siempre el intent_id.
      */
     public static function permissionKeyForIntent(string $intentId): string
@@ -73,6 +89,7 @@ final class IntentManifestIndex
     {
         self::$byIntentId = null;
         self::$byOpenUiActionId = null;
+        self::$byFlowSubmitActionId = null;
         IntentSchemaPaths::resetIndexCache();
     }
 
@@ -84,6 +101,7 @@ final class IntentManifestIndex
 
         self::$byIntentId = [];
         self::$byOpenUiActionId = [];
+        self::$byFlowSubmitActionId = [];
 
         $seenIds = [];
         foreach (IntentSchemaPaths::discoverYamlFiles() as $path) {
@@ -155,6 +173,17 @@ final class IntentManifestIndex
                     'permission' => $permission,
                     'rbac_route' => $rbacRoute,
                 ];
+            }
+
+            if (is_array($flowSubmit)) {
+                $submitActionId = trim((string) ($flowSubmit['action_id'] ?? ''));
+                if ($submitActionId !== '') {
+                    self::$byFlowSubmitActionId[$submitActionId][] = [
+                        'intent_id' => $intentId,
+                        'permission' => $permission,
+                        'rbac_route' => $rbacRoute,
+                    ];
+                }
             }
         }
     }

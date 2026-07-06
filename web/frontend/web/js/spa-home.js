@@ -833,13 +833,21 @@
                 bodyObj.ui_step = 'impacto';
                 bodyObj.confirmar_impacto_turnos = '1';
             }
+            var postHeaders = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            };
+            var flowRow = hostEl.closest ? hostEl.closest('.spa-chat-flow-row') : null;
+            if (flowRow) {
+                var flowIntentId = (flowRow.getAttribute('data-flow-intent-id') || '').trim();
+                if (flowIntentId !== '') {
+                    postHeaders['X-Flow-Intent-Id'] = flowIntentId;
+                }
+            }
             fetch(postUrl, {
                 method: 'POST',
-                headers: window.BioenlaceApiClient.mergeHeaders({
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }),
+                headers: window.BioenlaceApiClient.mergeHeaders(postHeaders),
                 credentials: 'same-origin',
                 body: JSON.stringify(bodyObj)
             })

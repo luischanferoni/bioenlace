@@ -5,7 +5,7 @@ namespace common\components\Platform\Core\Permission;
 use common\components\Platform\Assistant\Catalog\UiActionCatalogProviderRegistry;
 
 /**
- * Autorización de pasos open_ui intermedios: heredan el permiso del intent padre.
+ * Autorización de pasos de flow (`open_ui` y `flow_submit`): heredan el permiso del intent padre.
  */
 final class FlowStepAccessService
 {
@@ -44,6 +44,11 @@ final class FlowStepAccessService
 
         foreach ($actionIds as $actionId) {
             foreach (IntentManifestIndex::parentIntentsForOpenUiAction($actionId) as $parent) {
+                if ($this->userCanAccessIntent($userId, $parent)) {
+                    return true;
+                }
+            }
+            foreach (IntentManifestIndex::parentIntentsForFlowSubmitAction($actionId) as $parent) {
                 if ($this->userCanAccessIntent($userId, $parent)) {
                     return true;
                 }
@@ -95,6 +100,17 @@ final class FlowStepAccessService
             }
         }
 
+        $flowSubmit = is_array($meta['flow_submit'] ?? null) ? $meta['flow_submit'] : null;
+        if ($flowSubmit !== null) {
+            $submitActionId = trim((string) ($flowSubmit['action_id'] ?? ''));
+            if ($submitActionId !== '') {
+                $submitRoute = trim(UiActionCatalogProviderRegistry::httpRouteForActionId($submitActionId));
+                if ($submitRoute !== '' && $this->normalizeApiRoute($submitRoute) === $apiRoute) {
+                    return true;
+                }
+            }
+        }
+
         $actionIds = $this->actionIdsForRoute($apiRoute);
         if ($actionIds === []) {
             return false;
@@ -113,6 +129,19 @@ final class FlowStepAccessService
 
         foreach ($actionIds as $actionId) {
             if (isset($allowed[$actionId])) {
+                return true;
+            }
+        }
+
+        $submitAllowed = [];
+        if ($flowSubmit !== null) {
+            $submitActionId = trim((string) ($flowSubmit['action_id'] ?? ''));
+            if ($submitActionId !== '') {
+                $submitAllowed[$submitActionId] = true;
+            }
+        }
+        foreach ($actionIds as $actionId) {
+            if (isset($submitAllowed[$actionId])) {
                 return true;
             }
         }
@@ -144,6 +173,23 @@ final class FlowStepAccessService
                     continue;
                 }
                 $actionId = trim((string) ($step['action_id'] ?? ''));
+                if ($actionId === '') {
+                    continue;
+                }
+                $route = trim(UiActionCatalogProviderRegistry::httpRouteForActionId($actionId));
+                if ($route === '') {
+                    continue;
+                }
+                $route = $this->normalizeApiRoute($route);
+                if ($route === '') {
+                    continue;
+                }
+                self::$routeToActionIds[$route][] = $actionId;
+            }
+
+            $flowSubmit = is_array($meta['flow_submit'] ?? null) ? $meta['flow_submit'] : null;
+            if ($flowSubmit !== null) {
+                $actionId = trim((string) ($flowSubmit['action_id'] ?? ''));
                 if ($actionId === '') {
                     continue;
                 }

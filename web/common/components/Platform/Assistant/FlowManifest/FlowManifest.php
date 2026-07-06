@@ -312,18 +312,24 @@ final class FlowManifest
         $direct = isset($sub['open_ui']) && is_array($sub['open_ui']) ? $sub['open_ui'] : null;
         if (is_array($direct) && !empty($direct['action_id'])) {
             $aid = strtolower(AssistantDraftNormalizer::scalarString($direct['action_id'] ?? ''));
+            $clientOpen = isset($direct['client_open']) && is_array($direct['client_open'])
+                ? $direct['client_open']
+                : \common\components\Platform\Assistant\Catalog\UiActionCatalogProviderRegistry::clientOpenForActionId($aid);
+            $isNative = is_array($clientOpen) && ($clientOpen['kind'] ?? '') === 'native';
+            $tab = [
+                'id' => 'default',
+                'label' => 'Elegir',
+                'action_id' => $aid,
+                'route' => $isNative ? '' : self::routeForActionId($aid),
+                'params' => self::normalizedParamsMap($direct['params'] ?? null),
+                'requires_client' => [],
+            ];
+            if (is_array($clientOpen)) {
+                $tab['client_open'] = $clientOpen;
+            }
             $step['ui'] = [
                 'default_tab' => 'default',
-                'tabs' => [
-                    [
-                        'id' => 'default',
-                        'label' => 'Elegir',
-                        'action_id' => $aid,
-                        'route' => self::routeForActionId($aid),
-                        'params' => self::normalizedParamsMap($direct['params'] ?? null),
-                        'requires_client' => [],
-                    ],
-                ],
+                'tabs' => [$tab],
             ];
         } else {
             $step['ui'] = [

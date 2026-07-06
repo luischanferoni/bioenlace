@@ -24,12 +24,6 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
             return self::$definitions;
         }
 
-        $hubNative = [
-            'kind' => 'native',
-            'mobile' => ['screen_id' => 'person_representation_hub'],
-            'web' => ['path' => '/configuracion#representacion'],
-        ];
-
         self::$definitions = [
             self::def(
                 'person-representation.hub',
@@ -38,7 +32,7 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
                 '/api/person-representation/pacientes-a-cargo',
                 ['representación', 'representante', 'tutela', 'menor', 'a cargo de', 'vínculo familiar'],
                 false,
-                $hubNative
+                self::hubClientOpen()
             ),
             self::def(
                 'person-representation.solicitar-menor-como-tutor',
@@ -139,12 +133,42 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
 
     public static function httpRouteForActionId(string $actionId): string
     {
+        if (self::clientOpenForActionId($actionId) !== null) {
+            return '';
+        }
+
         $def = self::definitionByActionId($actionId);
         if ($def === null) {
             return '';
         }
 
         return ApiV1HttpRoute::normalize(trim((string) ($def['route'] ?? '')));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function clientOpenForActionId(string $actionId): ?array
+    {
+        $def = self::definitionByActionId($actionId);
+        if ($def === null) {
+            return null;
+        }
+        $co = $def['client_open'] ?? null;
+
+        return is_array($co) && trim((string) ($co['kind'] ?? '')) !== '' ? $co : null;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function hubClientOpen(): array
+    {
+        return [
+            'kind' => 'native',
+            'mobile' => ['screen_id' => 'person_representation_hub'],
+            'web' => ['path' => '/configuracion#representacion'],
+        ];
     }
 
     /**

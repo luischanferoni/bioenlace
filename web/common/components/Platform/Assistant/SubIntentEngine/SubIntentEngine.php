@@ -793,6 +793,12 @@ final class SubIntentEngine
     ): array {
         $actionId = AssistantDraftNormalizer::scalarString($openUiDef['action_id'] ?? '');
         $open = self::resolveClientOpen($actionId, $userId);
+        $explicitOpen = isset($openUiDef['client_open']) && is_array($openUiDef['client_open'])
+            ? $openUiDef['client_open']
+            : null;
+        if ($explicitOpen !== null && trim((string) ($explicitOpen['kind'] ?? '')) !== '') {
+            $open['client_open'] = $explicitOpen;
+        }
 
         // Parametrización declarativa: query del mini-UI desde open_ui.params.
         // YAML: { query_key: "draft.campo" } o literal { step: raiz }.
@@ -1090,6 +1096,14 @@ final class SubIntentEngine
             return [
                 'action_id' => $actionId,
                 'client_open' => $dataAccessOpen,
+            ];
+        }
+
+        $providerOpen = \common\components\Platform\Assistant\Catalog\UiActionCatalogProviderRegistry::clientOpenForActionId($actionId);
+        if ($providerOpen !== null) {
+            return [
+                'action_id' => $actionId,
+                'client_open' => $providerOpen,
             ];
         }
 

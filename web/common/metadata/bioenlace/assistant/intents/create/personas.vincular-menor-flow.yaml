@@ -30,6 +30,12 @@ subintents:
     next: ""
     open_ui:
       action_id: person-representation.hub
+      client_open:
+        kind: native
+        mobile:
+          screen_id: person_representation_hub
+        web:
+          path: /configuracion#representacion
 
 flow_submit:
   action_id: person-representation.solicitar-menor-como-tutor

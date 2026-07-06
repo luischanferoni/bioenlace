@@ -78,6 +78,29 @@ final class UiActionCatalogProviderRegistry
         return '';
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function clientOpenForActionId(string $actionId): ?array
+    {
+        $actionId = trim($actionId);
+        if ($actionId === '') {
+            return null;
+        }
+
+        foreach (self::allProviderClasses() as $class) {
+            if (!method_exists($class, 'clientOpenForActionId')) {
+                continue;
+            }
+            $co = $class::clientOpenForActionId($actionId);
+            if (is_array($co) && trim((string) ($co['kind'] ?? '')) !== '') {
+                return $co;
+            }
+        }
+
+        return null;
+    }
+
     public static function resetForTests(): void
     {
         ProductRegistryConfig::resetForTests();

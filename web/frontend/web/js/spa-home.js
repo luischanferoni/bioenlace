@@ -2304,11 +2304,23 @@
                 // (puede incluir tabs del paso anterior); no implica que siempre haya que abrir URL en este turno.
                 const hasOpenUi = !!(openUi && openUi.action_id);
                 const okUiJson = co && String(co.kind || '') === 'ui_json' && co.api && co.api.route;
-                const serverAskedForUi = hasOpenUi || !!okUiJson;
+                const okNative = co && String(co.kind || '') === 'native';
+                const serverAskedForUi = hasOpenUi || !!okUiJson || !!okNative;
 
                 function flowSubmitClearState() {
                     clearFlowState();
                     removeFlowPlanStrip();
+                }
+
+                if (okNative) {
+                    const webPath = co.web && typeof co.web.path === 'string' ? String(co.web.path).trim() : '';
+                    if (webPath) {
+                        window.location.assign(webPath);
+                    } else if (flowSectionInner) {
+                        flowSectionInner.innerHTML = '<div class="alert alert-info mb-0 mt-2">Abrí Representación desde Configuración.</div>';
+                    }
+                    setTimeout(scrollChatToBottom, 20);
+                    return;
                 }
 
                 // Resolver URL: primero `client_open` ui_json del payload; si hay `flow_submit` adjunto,

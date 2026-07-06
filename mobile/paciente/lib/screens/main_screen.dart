@@ -325,6 +325,10 @@ class _MainScreenState extends State<MainScreen> {
           setState(() => _selectedIndex = index);
           if (index == 0) {
             _refreshAlertasCount();
+          } else if (index == 2) {
+            PacienteContextScope.instance.refresh(
+              authToken: widget.authToken,
+            );
           }
         },
         items: const [

@@ -34,6 +34,7 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
   void initState() {
     super.initState();
     PacienteContextScope.instance.bindAuthToken(widget.authToken);
+    PacienteContextScope.instance.refresh(authToken: widget.authToken);
   }
 
   void _abrirProvinciaContexto() {
@@ -138,6 +139,21 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
                     subtitle: provinciaLabel,
                     onTap: _abrirProvinciaContexto,
                   ),
+                  if (ctx.muestraBannerVerificando) ...[
+                    BioDivider.subtle(),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        BioSpacing.md,
+                        BioSpacing.sm,
+                        BioSpacing.md,
+                        BioSpacing.md,
+                      ),
+                      child: BioAlert.info(
+                        message: ctx.banner?['message']?.toString() ??
+                            'Estamos verificando tu domicilio, te avisaremos cuando esté listo.',
+                      ),
+                    ),
+                  ],
                 ],
               );
             },

@@ -2684,6 +2684,7 @@ class ChatScreenState extends State<ChatScreen> {
         children: [
           PacienteContextBanner(
             onConfigurarProvincia: widget.onConfigurarProvincia,
+            hiddenKinds: const {'domicilio_pendiente'},
           ),
           Expanded(
             child: _showWelcomeShortcutGrid

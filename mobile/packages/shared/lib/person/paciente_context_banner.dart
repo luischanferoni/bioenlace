@@ -5,9 +5,13 @@ import 'package:shared/shared.dart';
 class PacienteContextBanner extends StatelessWidget {
   final VoidCallback? onConfigurarProvincia;
 
+  /// Kinds de `banner.kind` que no se muestran en esta superficie (p. ej. en chat).
+  final Set<String> hiddenKinds;
+
   const PacienteContextBanner({
     super.key,
     this.onConfigurarProvincia,
+    this.hiddenKinds = const {},
   });
 
   @override
@@ -20,6 +24,7 @@ class PacienteContextBanner extends StatelessWidget {
         if (banner == null) return const SizedBox.shrink();
 
         final kind = banner['kind']?.toString() ?? '';
+        if (hiddenKinds.contains(kind)) return const SizedBox.shrink();
         final message = banner['message']?.toString() ?? '';
         if (message.isEmpty) return const SizedBox.shrink();
 

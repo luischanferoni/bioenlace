@@ -33,14 +33,14 @@ class PacienteContextState {
       sectorSalud: (json['sector_salud'] ?? 'publico').toString(),
       idProvinciaContexto: json['id_provincia_contexto'] as int?,
       provinciaNombre: nombre,
-      domicilioEstado: (json['domicilio_estado'] ?? 'pendiente').toString(),
+      domicilioEstado:
+          (json['domicilio_estado'] ?? 'pendiente').toString().toLowerCase(),
       puedeOperar: json['puede_operar'] == true,
-      banner: banner is Map<String, dynamic> ? banner : null,
+      banner: banner is Map ? Map<String, dynamic>.from(banner) : null,
     );
   }
 
-  bool get muestraBannerVerificando =>
-      domicilioEstado == 'pendiente' && !puedeOperar;
+  bool get muestraBannerVerificando => domicilioEstado == 'pendiente';
 
   bool get requiereProvinciaManual =>
       domicilioEstado == 'requiere_provincia_manual' && !puedeOperar;
@@ -95,8 +95,10 @@ class PacienteContextScope extends ChangeNotifier {
       if (res['success'] == true) {
         final data = res['data'];
         final ctx = data is Map ? data['contexto'] : null;
-        if (ctx is Map<String, dynamic>) {
-          _state = PacienteContextState.fromJson(ctx);
+        if (ctx is Map) {
+          _state = PacienteContextState.fromJson(
+            Map<String, dynamic>.from(ctx),
+          );
         }
       }
     } finally {
@@ -121,8 +123,10 @@ class PacienteContextScope extends ChangeNotifier {
     final res = await api.actualizarContexto(idProvinciaContexto: idProvincia);
     if (res['success'] == true) {
       final ctx = res['data']?['contexto'];
-      if (ctx is Map<String, dynamic>) {
-        _state = PacienteContextState.fromJson(ctx);
+      if (ctx is Map) {
+        _state = PacienteContextState.fromJson(
+          Map<String, dynamic>.from(ctx),
+        );
         _notifyListenersSafely();
         return null;
       }
@@ -137,8 +141,10 @@ class PacienteContextScope extends ChangeNotifier {
     final res = await api.actualizarContexto(sectorSalud: sector);
     if (res['success'] == true) {
       final ctx = res['data']?['contexto'];
-      if (ctx is Map<String, dynamic>) {
-        _state = PacienteContextState.fromJson(ctx);
+      if (ctx is Map) {
+        _state = PacienteContextState.fromJson(
+          Map<String, dynamic>.from(ctx),
+        );
         _notifyListenersSafely();
         return true;
       }

@@ -31,9 +31,13 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
   bool _savingPrefs = false;
 
   final _docMenorCtrl = TextEditingController();
+  final _nombreMenorCtrl = TextEditingController();
+  final _apellidoMenorCtrl = TextEditingController();
   final _docRepresentanteCtrl = TextEditingController();
   String _parentescoMenor = 'padre';
   String _parentescoRepresentante = 'otro';
+  int _sexoMenor = 1;
+  DateTime? _fechaNacimientoMenor;
 
   @override
   void initState() {
@@ -45,6 +49,8 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
   @override
   void dispose() {
     _docMenorCtrl.dispose();
+    _nombreMenorCtrl.dispose();
+    _apellidoMenorCtrl.dispose();
     _docRepresentanteCtrl.dispose();
     super.dispose();
   }
@@ -109,22 +115,61 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
 
   Future<void> _solicitarMenor() async {
     final doc = _docMenorCtrl.text.trim();
+    final nombre = _nombreMenorCtrl.text.trim();
+    final apellido = _apellidoMenorCtrl.text.trim();
     if (doc.isEmpty) {
       _snack('Ingresá el documento del menor.');
       return;
     }
+    if (nombre.isEmpty || apellido.isEmpty || _fechaNacimientoMenor == null) {
+      _snack('Completá nombre, apellido y fecha de nacimiento del menor.');
+      return;
+    }
+    final fecha = _fechaNacimientoMenor!;
+    final fechaYmd =
+        '${fecha.year.toString().padLeft(4, '0')}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
     final r = await _api.solicitarMenorComoTutor({
       'relationship_type_code': _parentescoMenor,
       'documento': doc,
+      'nombre': nombre,
+      'apellido': apellido,
+      'fecha_nacimiento': fechaYmd,
+      'sexo_biologico': _sexoMenor,
+      'sexo': _sexoMenor == 2 ? 'F' : 'M',
     });
     if (!mounted) return;
     if (r['success'] == true) {
       _docMenorCtrl.clear();
+      _nombreMenorCtrl.clear();
+      _apellidoMenorCtrl.clear();
+      setState(() => _fechaNacimientoMenor = null);
       _snack(r['data'] is Map ? (r['data']['mensaje']?.toString() ?? 'Solicitud enviada') : 'Solicitud enviada');
       await _cargar();
     } else {
       _snack(r['message']?.toString() ?? 'No se pudo solicitar la tutela');
     }
+  }
+
+  Future<void> _elegirFechaNacimientoMenor() async {
+    final now = DateTime.now();
+    final initial = _fechaNacimientoMenor ?? DateTime(now.year - 10, now.month, now.day);
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: initial.isAfter(now) ? now : initial,
+      firstDate: DateTime(now.year - 120),
+      lastDate: now,
+      locale: const Locale('es'),
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _fechaNacimientoMenor = picked);
+  }
+
+  String get _fechaNacimientoMenorLabel {
+    final d = _fechaNacimientoMenor;
+    if (d == null) return 'Seleccionar fecha';
+    final dd = d.day.toString().padLeft(2, '0');
+    final mm = d.month.toString().padLeft(2, '0');
+    return '$dd/$mm/${d.year}';
   }
 
   Future<void> _designarRepresentante() async {
@@ -315,6 +360,52 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
             controller: _docMenorCtrl,
             decoration: const InputDecoration(labelText: 'Documento del menor'),
             keyboardType: TextInputType.number,
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          TextField(
+            controller: _nombreMenorCtrl,
+            decoration: const InputDecoration(labelText: 'Nombre del menor'),
+            textCapitalization: TextCapitalization.words,
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          TextField(
+            controller: _apellidoMenorCtrl,
+            decoration: const InputDecoration(labelText: 'Apellido del menor'),
+            textCapitalization: TextCapitalization.words,
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          DropdownButtonFormField<int>(
+            value: _sexoMenor,
+            decoration: const InputDecoration(labelText: 'Sexo registrado (RENAPER)'),
+            items: const [
+              DropdownMenuItem(value: 1, child: Text('Masculino')),
+              DropdownMenuItem(value: 2, child: Text('Femenino')),
+            ],
+            onChanged: (v) => setState(() => _sexoMenor = v ?? 1),
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          InkWell(
+            onTap: _elegirFechaNacimientoMenor,
+            borderRadius: BorderRadius.circular(BioRadius.xs),
+            child: InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Fecha de nacimiento',
+                suffixIcon: Icon(Icons.calendar_today_outlined),
+              ),
+              child: Text(
+                _fechaNacimientoMenorLabel,
+                style: BioTypography.body.copyWith(
+                  color: _fechaNacimientoMenor == null
+                      ? context.bio.textMuted
+                      : context.bio.textBody,
+                ),
+              ),
+            ),
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            'Si el documento no está en el sistema, usamos estos datos para dar de alta al menor.',
+            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.md),
           BioButton(

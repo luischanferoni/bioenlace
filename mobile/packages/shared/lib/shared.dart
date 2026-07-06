@@ -64,6 +64,8 @@ export 'home/home_panel_api.dart';
 export 'home/home_panel_kpi_widgets.dart';
 export 'person/person_representation_api.dart';
 export 'person/person_representation_context.dart';
+export 'person/person_representation_active_banner.dart';
+export 'person/person_representation_picker.dart';
 export 'person/person_representation_subject_chip.dart';
 export 'person/paciente_context_api.dart';
 export 'person/paciente_context_scope.dart';

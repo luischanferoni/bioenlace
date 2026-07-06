@@ -2682,6 +2682,9 @@ class ChatScreenState extends State<ChatScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          PersonRepresentationActiveBanner(
+            authToken: widget.chatService.authToken,
+          ),
           PacienteContextBanner(
             onConfigurarProvincia: widget.onConfigurarProvincia,
             hiddenKinds: const {'domicilio_pendiente'},

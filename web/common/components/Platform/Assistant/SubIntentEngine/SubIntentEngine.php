@@ -1093,6 +1093,32 @@ final class SubIntentEngine
             ];
         }
 
+        $catalog = UiActionCatalog::forUser($userId);
+        $item = $catalog->byActionId[$actionId] ?? null;
+        if ($item !== null) {
+            $action = [
+                'action_id' => $item->action_id,
+                'display_name' => $item->display_name,
+                'description' => $item->description,
+                'entity' => $item->entity,
+                'route' => $item->route,
+                'parameters' => $item->parameters,
+            ];
+            if ($item->client_open !== null) {
+                $action['client_open'] = $item->client_open;
+            }
+            $action = AssistantClientOpenEnricher::enrich($action);
+            $clientOpen = $action['client_open'] ?? null;
+            if (!is_array($clientOpen) || AssistantDraftNormalizer::scalarString($clientOpen['kind'] ?? '') === '') {
+                $clientOpen = self::clientOpenFromHttpRoute($item->route, $actionId);
+            }
+
+            return [
+                'action_id' => $actionId,
+                'client_open' => $clientOpen,
+            ];
+        }
+
         $route = self::apiRouteForActionId($actionId);
         if ($route !== '') {
             $clientOpen = self::clientOpenFromHttpRoute($route, $actionId);
@@ -1112,36 +1138,11 @@ final class SubIntentEngine
             }
         }
 
-        $catalog = UiActionCatalog::forUser($userId);
-        $item = $catalog->byActionId[$actionId] ?? null;
-        if ($item === null) {
-            $route = self::apiRouteForActionId($actionId);
-            if ($route === '' && preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
-                $route = '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);
-            }
-            $clientOpen = $route !== '' ? self::clientOpenFromHttpRoute($route, $actionId) : null;
-
-            return [
-                'action_id' => $actionId,
-                'client_open' => $clientOpen,
-            ];
+        $route = self::apiRouteForActionId($actionId);
+        if ($route === '' && preg_match('#^([\w-]+)\.([\w-]+)$#', $actionId, $m) === 1) {
+            $route = '/api/v1/' . rawurlencode((string) $m[1]) . '/' . rawurlencode((string) $m[2]);
         }
-        $action = [
-            'action_id' => $item->action_id,
-            'display_name' => $item->display_name,
-            'description' => $item->description,
-            'entity' => $item->entity,
-            'route' => $item->route,
-            'parameters' => $item->parameters,
-        ];
-        if ($item->client_open !== null) {
-            $action['client_open'] = $item->client_open;
-        }
-        $action = AssistantClientOpenEnricher::enrich($action);
-        $clientOpen = $action['client_open'] ?? null;
-        if (!is_array($clientOpen) || AssistantDraftNormalizer::scalarString($clientOpen['kind'] ?? '') === '') {
-            $clientOpen = self::clientOpenFromHttpRoute($item->route, $actionId);
-        }
+        $clientOpen = $route !== '' ? self::clientOpenFromHttpRoute($route, $actionId) : null;
 
         return [
             'action_id' => $actionId,

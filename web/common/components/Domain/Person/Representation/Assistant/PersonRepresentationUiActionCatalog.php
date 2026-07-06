@@ -4,6 +4,7 @@ namespace common\components\Domain\Person\Representation\Assistant;
 
 use common\components\Platform\Assistant\Catalog\UiActionCatalogProviderInterface;
 use common\components\Platform\Assistant\Catalog\YamlIntentCatalogService;
+use common\components\Platform\Assistant\UiActions\ActionMappingService;
 use common\components\Platform\Ui\ApiV1HttpRoute;
 
 /**
@@ -107,7 +108,79 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
      */
     public static function forUser(int $userId): array
     {
-        return YamlIntentCatalogService::filterByRbac(self::discoverAll(), $userId);
+        $out = [];
+        foreach (self::discoverAll() as $def) {
+            if (!is_array($def) || !self::userCanAccessDefinition($userId, $def)) {
+                continue;
+            }
+            $out[] = $def;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function definitionByActionId(string $actionId): ?array
+    {
+        $actionId = trim($actionId);
+        if ($actionId === '') {
+            return null;
+        }
+        foreach (self::discoverAll() as $def) {
+            if (trim((string) ($def['action_id'] ?? '')) === $actionId) {
+                return $def;
+            }
+        }
+
+        return null;
+    }
+
+    public static function httpRouteForActionId(string $actionId): string
+    {
+        $def = self::definitionByActionId($actionId);
+        if ($def === null) {
+            return '';
+        }
+
+        return ApiV1HttpRoute::normalize(trim((string) ($def['route'] ?? '')));
+    }
+
+    /**
+     * @param array<string, mixed> $def
+     */
+    private static function userCanAccessDefinition(int $userId, array $def): bool
+    {
+        $actionId = trim((string) ($def['action_id'] ?? ''));
+        if ($actionId === 'person-representation.hub') {
+            return self::userCanAccessHub($userId);
+        }
+
+        $rbacRoute = trim((string) ($def['rbac_route'] ?? ''));
+        if ($rbacRoute !== '' && ActionMappingService::userIdCanAccessRoute($userId, $rbacRoute)) {
+            return true;
+        }
+
+        return $actionId !== '' && YamlIntentCatalogService::userIdCanPermissionKey($userId, $actionId);
+    }
+
+    private static function userCanAccessHub(int $userId): bool
+    {
+        foreach ([
+            '/api/person-representation/designar-representante',
+            '/api/person-representation/mis-representantes',
+            '/api/person-representation/solicitar-menor-como-tutor',
+            '/api/person-representation/mis-vinculos-como-tutor',
+            '/api/person-representation/preferencias-como-paciente',
+            '/api/person-representation/pacientes-a-cargo',
+        ] as $route) {
+            if (ActionMappingService::userIdCanAccessRoute($userId, $route)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

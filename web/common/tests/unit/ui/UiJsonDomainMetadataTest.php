@@ -65,6 +65,24 @@ class UiJsonDomainMetadataTest extends Unit
         ));
     }
 
+    public function testPersonRepresentationStaffTutelaTemplate(): void
+    {
+        $this->assertSame('persona', UiJsonDomainMetadata::domainForEntity('person-representation'));
+
+        $path = UiJsonDomain::resolveActionIdTemplatePath(
+            'person-representation.solicitudes-tutela-pendientes-para-staff'
+        );
+        $this->assertNotNull($path);
+        $this->assertStringContainsString(
+            'person-representation/solicitudes-tutela-pendientes-para-staff.json',
+            str_replace('\\', '/', $path)
+        );
+
+        $this->assertTrue(\common\components\Platform\Ui\UiDefinitionTemplateManager::hasTemplateForApiRoute(
+            '/api/v1/person-representation/solicitudes-tutela-pendientes-para-staff'
+        ));
+    }
+
     public function testConsultasSeguimientoPasoResolvesSchedulingTemplate(): void
     {
         $this->assertSame('scheduling', UiJsonDomainMetadata::domainForEntity('consultas-seguimiento'));

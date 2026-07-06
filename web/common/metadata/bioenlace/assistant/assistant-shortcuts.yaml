@@ -84,6 +84,11 @@ categories:
     intent_ids:
       - paciente-contexto.recurso-provincial-como-paciente-flow
 
+  - id: representacion_staff
+    titulo: Representación
+    intent_ids:
+      - personas.verificar-tutela-staff-flow
+
   - id: plataforma
     titulo: Ayuda y plataforma
     intent_ids:

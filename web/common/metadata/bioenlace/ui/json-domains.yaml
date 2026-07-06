@@ -24,6 +24,7 @@ entity_domains:
   data-access: core
   queja-paciente: core
   paciente-contexto: persona
+  person-representation: persona
 
 action_id_parse:
   clinical_prefix: clinical

@@ -314,6 +314,35 @@ final class VerifiedGuardianshipService
         return ['success' => true, 'data' => ['vinculos' => $rows]];
     }
 
+    /**
+     * Solicitudes de tutela (régimen A) pendientes de verificación staff.
+     *
+     * @return array{success: true, data: array{solicitudes: list<array<string, mixed>>, total: int}}
+     */
+    public function listarSolicitudesTutelaPendientesParaStaff(): array
+    {
+        $query = PersonRelated::find()
+            ->where([
+                'regime' => RepresentationRegime::VERIFIED_GUARDIANSHIP,
+                'status' => PersonRelatedStatus::PENDING,
+            ])
+            ->with('relationshipType')
+            ->orderBy(['created_at' => SORT_ASC]);
+
+        $rows = [];
+        foreach ($query->all() as $link) {
+            $rows[] = $this->presenter->linkToArray($link, true, true);
+        }
+
+        return [
+            'success' => true,
+            'data' => [
+                'solicitudes' => $rows,
+                'total' => count($rows),
+            ],
+        ];
+    }
+
     private function requireGuardianshipLink(int $personRelatedId): PersonRelated
     {
         $link = $this->requireLink($personRelatedId);

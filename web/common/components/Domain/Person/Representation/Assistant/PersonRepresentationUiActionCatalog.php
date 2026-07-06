@@ -98,6 +98,13 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
                 ['verificar tutela', 'aprobar tutela', 'solicitud tutela', 'vínculo pendiente menor']
             ),
             self::def(
+                'person-representation.solicitudes-tutela-pendientes-para-staff',
+                'Solicitudes de tutela pendientes',
+                'Bandeja staff: solicitudes de tutela (régimen A) en estado pending.',
+                '/api/person-representation/solicitudes-tutela-pendientes-para-staff',
+                ['solicitudes tutela', 'tutela pendiente', 'aprobar tutela', 'verificar tutela']
+            ),
+            self::def(
                 'person-representation.vinculos-paciente-para-staff',
                 'Vínculos de representación (staff)',
                 'Listar solicitudes y vínculos de tutela/delegación de un paciente para gestión operativa.',

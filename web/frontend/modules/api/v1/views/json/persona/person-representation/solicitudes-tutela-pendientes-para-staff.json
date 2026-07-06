@@ -1,0 +1,44 @@
+{
+  "ui_type": "ui_json",
+  "title": "Solicitudes de tutela pendientes",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "resumen",
+      "title": "Bandeja",
+      "text_field": "resumen_texto",
+      "text": ""
+    },
+    {
+      "kind": "list",
+      "id": "solicitudes",
+      "title": "Solicitudes a verificar",
+      "draft_field": "person_related_id",
+      "empty_message": "No hay solicitudes de tutela pendientes de verificación.",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": false },
+      "items": []
+    },
+    {
+      "kind": "fields",
+      "id": "nota_staff",
+      "title": "Nota de verificación (opcional)",
+      "fields": [
+        {
+          "name": "nota",
+          "label": "Nota interna",
+          "type": "textarea",
+          "required": false,
+          "include_in_submit": true
+        }
+      ]
+    }
+  ]
+}

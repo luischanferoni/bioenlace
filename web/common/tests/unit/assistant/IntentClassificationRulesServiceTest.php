@@ -201,6 +201,31 @@ class IntentClassificationRulesServiceTest extends Unit
         $this->assertSame('personas.vincular-menor-flow', $fbTutela['item']->action_id);
     }
 
+    public function testStaffVerificarTutelaOperationalFallback(): void
+    {
+        $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'personas.verificar-tutela-staff-flow',
+                    'Verificar tutela de menor',
+                    '',
+                    null,
+                    '/api/person-representation/verificar-vinculo-para-staff',
+                    ['verificar tutela'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['personas.verificar-tutela-staff-flow'] = $catalog->items[0];
+        $fb = IntentClassificationRulesService::resolveOperationalFallback(
+            'Aprobar solicitudes de tutela pendientes',
+            $catalog
+        );
+        $this->assertNotNull($fb);
+        $this->assertSame('personas.verificar-tutela-staff-flow', $fb['item']->action_id);
+    }
+
     public function testDelegarRepresentacionScoresAboveTurnosCrear(): void
     {
         $msg = 'Delegar gestión de turnos';

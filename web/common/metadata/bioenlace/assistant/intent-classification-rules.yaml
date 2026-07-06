@@ -72,6 +72,15 @@ vocab:
     - solicitar tutela
     - menor sin cuenta
 
+  staff_tutela_phrases:
+    - verificar tutela
+    - aprobar tutela
+    - solicitud tutela
+    - solicitudes tutela
+    - tutela pendiente
+    - confirmar vínculo menor
+    - vinculo pendiente menor
+
 match_rules:
   staff_agenda_config_edit:
     require_all: [edit_verbs, agenda_targets]
@@ -150,6 +159,12 @@ match_rules:
     ai_hint: >-
       Si un padre/madre/tutor pide vincular o solicitar tutela sobre un menor sin cuenta (régimen A),
       priorizá personas.vincular-menor-flow. La solicitud queda pending hasta verificación del staff.
+
+  staff_verificar_tutela:
+    require_phrase_any: staff_tutela_phrases
+    ai_hint: >-
+      Si el staff pide verificar o aprobar solicitudes de tutela de menores (régimen A),
+      priorizá personas.verificar-tutela-staff-flow.
 
   consultas_seguimiento_followup:
     require_any: [consultas_seguimiento_topics]
@@ -257,6 +272,13 @@ score_adjustments:
       - intent_id: personas.designar-representante-flow
         delta: -40
 
+  - when_rule: staff_verificar_tutela
+    apply:
+      - intent_id: personas.verificar-tutela-staff-flow
+        delta: 55
+      - intent_id: personas.vincular-menor-flow
+        delta: -35
+
   - when_rule: consultas_seguimiento_followup
     apply:
       - intent_id: atencion.consultas-seguimiento-flow
@@ -308,6 +330,12 @@ operational_fallbacks:
   - id: paciente_solicitar_tutela_nl
     when_any_rule: [paciente_solicitar_tutela]
     intent_id: personas.vincular-menor-flow
+    confidence: 0.9
+    method: rules_declarative_fallback
+
+  - id: staff_verificar_tutela_nl
+    when_any_rule: [staff_verificar_tutela]
+    intent_id: personas.verificar-tutela-staff-flow
     confidence: 0.9
     method: rules_declarative_fallback
 
@@ -368,7 +396,7 @@ chat_preprocess:
       goal: operational
     - when_rule: paciente_provincial_resource
       goal: operational
-    - when_any_rule: [paciente_delegar_representacion, paciente_solicitar_tutela]
+    - when_any_rule: [paciente_delegar_representacion, paciente_solicitar_tutela, staff_verificar_tutela]
       goal: operational
     - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit]
       goal: operational

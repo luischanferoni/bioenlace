@@ -1,0 +1,40 @@
+intent_id: personas.verificar-tutela-staff-flow
+version: 1
+
+action_name: "Verificar tutela de menor"
+description: "El staff del centro aprueba solicitudes de tutela (padre/madre/tutor sobre menor sin cuenta)."
+rbac_route: "/api/person-representation/verificar-vinculo-para-staff"
+keywords:
+  - verificar tutela
+  - aprobar tutela
+  - solicitud tutela
+  - solicitudes tutela
+  - tutela pendiente
+  - confirmar vínculo menor
+  - vinculo pendiente menor
+
+intent_semantics:
+  goal: >-
+    Revisar y aprobar solicitudes de tutela verificada (régimen A) iniciadas desde la app paciente.
+  how: >-
+    Listar solicitudes pending → elegir una → confirmar verificación (POST verificar-vinculo-para-staff).
+  preconditions:
+    - Usuario staff con permiso de verificación en el centro.
+  outcome:
+    - El vínculo pasa a active; el tutor puede operar por el menor.
+
+subintents:
+  - id: seleccionar_solicitud
+    assistant_text: "Solicitudes de tutela pendientes"
+    provides:
+      - draft.person_related_id
+      - draft.nota
+    next: ""
+    open_ui:
+      action_id: person-representation.solicitudes-tutela-pendientes-para-staff
+
+flow_submit:
+  action_id: person-representation.verificar-vinculo-para-staff
+  params:
+    person_related_id: "draft.person_related_id"
+    nota: "draft.nota"

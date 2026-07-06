@@ -7,6 +7,7 @@ use yii\web\BadRequestHttpException;
 use yii\web\MethodNotAllowedHttpException;
 use common\components\Domain\Person\Representation\Service\PatientDelegationService;
 use common\components\Domain\Person\Representation\Service\VerifiedGuardianshipService;
+use common\components\Platform\Ui\UiScreenService;
 
 /**
  * Representación operativa paciente — régimen A (tutela), régimen B (delegación) y staff.
@@ -155,6 +156,75 @@ class PersonRepresentationController extends BaseController
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
+    }
+
+    /**
+     * GET|POST /api/v1/person-representation/solicitudes-tutela-pendientes-para-staff
+     *
+     * UI JSON: bandeja de solicitudes de tutela (régimen A) en estado pending.
+     *
+     * @action_name Solicitudes de tutela pendientes (staff)
+     * @entity PersonRepresentation
+     * @tags staff, tutela, ui_json
+     */
+    public function actionSolicitudesTutelaPendientesParaStaff(): array
+    {
+        $payload = (new VerifiedGuardianshipService())->listarSolicitudesTutelaPendientesParaStaff();
+        $solicitudes = is_array($payload['data']['solicitudes'] ?? null) ? $payload['data']['solicitudes'] : [];
+        $total = (int) ($payload['data']['total'] ?? count($solicitudes));
+
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post(), [
+            'resumen_texto' => $total === 0
+                ? 'No hay solicitudes de tutela pendientes de verificación.'
+                : $total . ($total === 1 ? ' solicitud pendiente de verificación.' : ' solicitudes pendientes de verificación.'),
+        ]);
+
+        $out = UiScreenService::renderUiDefinition(
+            'person-representation',
+            'solicitudes-tutela-pendientes-para-staff',
+            $params,
+            null
+        );
+
+        $items = [];
+        foreach ($solicitudes as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $id = (int) ($row['id'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+            $actor = is_array($row['actor'] ?? null) ? $row['actor'] : [];
+            $subject = is_array($row['subject'] ?? null) ? $row['subject'] : [];
+            $rel = is_array($row['relationship_type'] ?? null) ? $row['relationship_type'] : [];
+            $actorLabel = trim(((string) ($actor['apellido'] ?? '')) . ', ' . ((string) ($actor['nombre'] ?? '')));
+            $subjectLabel = trim(((string) ($subject['apellido'] ?? '')) . ', ' . ((string) ($subject['nombre'] ?? '')));
+            $doc = trim((string) ($subject['documento'] ?? ''));
+            $relLabel = trim((string) ($rel['label'] ?? $rel['code'] ?? 'Tutela'));
+            $name = $actorLabel !== ', ' ? $actorLabel : 'Solicitante';
+            $subtitle = ($subjectLabel !== ', ' ? $subjectLabel : 'Menor')
+                . ($doc !== '' ? ' · DNI ' . $doc : '')
+                . ' · ' . $relLabel;
+
+            $items[] = [
+                'id' => (string) $id,
+                'name' => $name,
+                'label' => $name,
+                'subtitle' => $subtitle,
+                'meta' => [
+                    'person_related_id' => $id,
+                    'status' => (string) ($row['status'] ?? 'pending'),
+                    'created_at' => $row['created_at'] ?? null,
+                ],
+            ];
+        }
+
+        $out['success'] = true;
+        $out['data'] = $payload['data'];
+
+        return UiScreenService::withListBlockItems($out, $items, 'solicitudes');
     }
 
     /**

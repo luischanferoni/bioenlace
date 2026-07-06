@@ -43,11 +43,15 @@ class ClientContextMetadataTest extends Unit
         $this->assertNotContains('STAFF_ALERT', $tipos);
     }
 
-    public function testPacienteOnlyFlowByPersonRepresentationRoute(): void
+    public function testPacienteOnlyFlowByRepresentationIntentId(): void
     {
         $this->assertTrue(ClientContextMetadata::isPacienteOnlyFlow([
-            'action_id' => 'personas.designar-representante-flow',
-            'rbac_route' => '/api/person-representation/designar-representante',
+            'action_id' => 'personas.vincular-menor-flow',
+            'rbac_route' => '/api/person-representation/solicitar-menor-como-tutor',
+        ]));
+        $this->assertFalse(ClientContextMetadata::isPacienteOnlyFlow([
+            'action_id' => 'personas.verificar-tutela-staff-flow',
+            'rbac_route' => '/api/person-representation/verificar-vinculo-para-staff',
         ]));
     }
 

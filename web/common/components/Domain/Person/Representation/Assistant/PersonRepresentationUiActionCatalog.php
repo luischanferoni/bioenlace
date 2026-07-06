@@ -58,7 +58,16 @@ final class PersonRepresentationUiActionCatalog implements UiActionCatalogProvid
                 'Designar representante',
                 'El paciente delega operación a otra persona con cuenta.',
                 '/api/person-representation/designar-representante',
-                ['designar representante', 'delegar cuenta', 'autorizar familiar', 'representante']
+                [
+                    'designar representante',
+                    'delegar cuenta',
+                    'delegar gestión',
+                    'delegar gestión de turnos',
+                    'delegar turnos',
+                    'gestión de turnos',
+                    'autorizar familiar',
+                    'representante',
+                ]
             ),
             self::def(
                 'person-representation.mis-representantes',

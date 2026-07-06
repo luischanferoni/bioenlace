@@ -146,4 +146,65 @@ class IntentClassificationRulesServiceTest extends Unit
         $this->assertNotNull($fb);
         $this->assertSame('atencion.consultas-seguimiento-flow', $fb['item']->action_id);
     }
+
+    public function testDelegarRepresentacionRuleMatchesGestionTurnos(): void
+    {
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'paciente_delegar_representacion',
+            'Delegar gestión de turnos'
+        ));
+    }
+
+    public function testDelegarRepresentacionOperationalFallback(): void
+    {
+        $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'personas.designar-representante-flow',
+                    'Designar representante',
+                    '',
+                    null,
+                    '/api/person-representation/designar-representante',
+                    ['delegar gestión de turnos'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['personas.designar-representante-flow'] = $catalog->items[0];
+        $fb = IntentClassificationRulesService::resolveOperationalFallback(
+            'Delegar gestión de turnos',
+            $catalog
+        );
+        $this->assertNotNull($fb);
+        $this->assertSame('personas.designar-representante-flow', $fb['item']->action_id);
+    }
+
+    public function testDelegarRepresentacionScoresAboveTurnosCrear(): void
+    {
+        $msg = 'Delegar gestión de turnos';
+        $designar = new UiActionCatalogItem(
+            'personas.designar-representante-flow',
+            'Designar representante',
+            '',
+            null,
+            '/api/person-representation/designar-representante',
+            ['delegar gestión de turnos', 'delegar gestión', 'delegar'],
+            []
+        );
+        $turno = new UiActionCatalogItem(
+            'turnos.crear-como-paciente',
+            'Reservar turno',
+            '',
+            null,
+            '/api/turnos/crear-como-paciente',
+            ['turno', 'reservar turno'],
+            []
+        );
+        $lower = mb_strtolower($msg, 'UTF-8');
+        $this->assertGreaterThan(
+            IntentClassifier::scoreItemPublic($lower, $turno),
+            IntentClassifier::scoreItemPublic($lower, $designar)
+        );
+    }
 }

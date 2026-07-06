@@ -38,6 +38,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
   String _parentescoRepresentante = 'otro';
   int _sexoMenor = 1;
   DateTime? _fechaNacimientoMenor;
+  bool _solicitarMenorEnviando = false;
 
   @override
   void initState() {
@@ -113,12 +114,81 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
     return '$n $a'.trim();
   }
 
+  String _subjectDocumento(Map<String, dynamic> link) {
+    final subject = link['subject'];
+    if (subject is! Map) return '';
+    return subject['documento']?.toString().trim() ?? '';
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'pending':
+        return 'Verificación pendiente';
+      case 'active':
+        return 'Activo';
+      case 'blocked':
+        return 'Bloqueado';
+      case 'revoked':
+        return 'Revocado';
+      default:
+        return status;
+    }
+  }
+
+  Map<String, dynamic>? _vinculoTutorPorDocumento(String doc) {
+    final normalized = doc.trim();
+    if (normalized.isEmpty) return null;
+    for (final link in _vinculosTutor) {
+      final status = link['status']?.toString() ?? '';
+      if (!{'pending', 'active', 'blocked'}.contains(status)) continue;
+      if (_subjectDocumento(link) == normalized) return link;
+    }
+    return null;
+  }
+
+  List<Map<String, dynamic>> get _itemsPacientesACargo {
+    final items = <Map<String, dynamic>>[];
+    final seenSubjects = <int>{};
+
+    for (final link in _pacientesACargo) {
+      if (link['status']?.toString() != 'active') continue;
+      final id = int.tryParse('${link['subject_persona_id']}');
+      if (id != null && id > 0) seenSubjects.add(id);
+      items.add(link);
+    }
+
+    for (final link in _vinculosTutor) {
+      final status = link['status']?.toString() ?? '';
+      if (status == 'revoked' || status.isEmpty) continue;
+      final id = int.tryParse('${link['subject_persona_id']}');
+      if (id != null && id > 0 && seenSubjects.contains(id)) continue;
+      if (id != null && id > 0) seenSubjects.add(id);
+      items.add(link);
+    }
+
+    return items;
+  }
+
+  bool get _haySolicitudesTutelaPendientes =>
+      _vinculosTutor.any((l) => l['status']?.toString() == 'pending');
+
   Future<void> _solicitarMenor() async {
+    if (_solicitarMenorEnviando) return;
     final doc = _docMenorCtrl.text.trim();
     final nombre = _nombreMenorCtrl.text.trim();
     final apellido = _apellidoMenorCtrl.text.trim();
     if (doc.isEmpty) {
       _snack('Ingresá el documento del menor.');
+      return;
+    }
+    final existente = _vinculoTutorPorDocumento(doc);
+    if (existente != null) {
+      final status = existente['status']?.toString() ?? '';
+      _snack(
+        status == 'pending'
+            ? 'Ya hay una solicitud de tutela en verificación para este documento.'
+            : 'Ya existe un vínculo de tutela (${_statusLabel(status)}) para este documento.',
+      );
       return;
     }
     if (nombre.isEmpty || apellido.isEmpty || _fechaNacimientoMenor == null) {
@@ -128,6 +198,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
     final fecha = _fechaNacimientoMenor!;
     final fechaYmd =
         '${fecha.year.toString().padLeft(4, '0')}-${fecha.month.toString().padLeft(2, '0')}-${fecha.day.toString().padLeft(2, '0')}';
+    setState(() => _solicitarMenorEnviando = true);
     final r = await _api.solicitarMenorComoTutor({
       'relationship_type_code': _parentescoMenor,
       'documento': doc,
@@ -138,6 +209,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       'sexo': _sexoMenor == 2 ? 'F' : 'M',
     });
     if (!mounted) return;
+    setState(() => _solicitarMenorEnviando = false);
     if (r['success'] == true) {
       _docMenorCtrl.clear();
       _nombreMenorCtrl.clear();
@@ -146,7 +218,8 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       _snack(r['data'] is Map ? (r['data']['mensaje']?.toString() ?? 'Solicitud enviada') : 'Solicitud enviada');
       await _cargar();
     } else {
-      _snack(r['message']?.toString() ?? 'No se pudo solicitar la tutela');
+      final msg = r['message']?.toString() ?? 'No se pudo solicitar la tutela';
+      _snack(msg.contains('Ya existe') ? 'Ya hay una solicitud o vínculo en curso para este menor.' : msg);
     }
   }
 
@@ -158,7 +231,6 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
       initialDate: initial.isAfter(now) ? now : initial,
       firstDate: DateTime(now.year - 120),
       lastDate: now,
-      locale: const Locale('es'),
     );
     if (picked == null || !mounted) return;
     setState(() => _fechaNacimientoMenor = picked);
@@ -259,13 +331,22 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
                     BioSpacing.gapH(BioSpacing.md),
                   ],
                   _sectionTitle('Pacientes a mi cargo'),
-                  if (_pacientesACargo.isEmpty)
-                    Text('Nadie a cargo por delegación activa.', style: BioTypography.bodySm)
+                  if (_haySolicitudesTutelaPendientes) ...[
+                    BioAlert.info(
+                      message:
+                          'Hay solicitudes de tutela en verificación. Un operador del centro debe confirmar el vínculo antes de que puedas operar por el menor.',
+                    ),
+                    BioSpacing.gapH(BioSpacing.sm),
+                  ],
+                  if (_itemsPacientesACargo.isEmpty)
+                    Text(
+                      'Nadie a cargo todavía. Las delegaciones activas y las solicitudes de tutela aparecerán acá.',
+                      style: BioTypography.bodySm,
+                    )
                   else
-                    ..._pacientesACargo.where((l) => l['status'] == 'active').map(_linkTileOperar),
+                    ..._itemsPacientesACargo.map(_cargoTile),
                   BioSpacing.gapH(BioSpacing.lg),
                   _sectionTitle('Mis hijos (tutela)'),
-                  ..._vinculosTutor.map(_vinculoTutorTile),
                   BioSpacing.gapH(BioSpacing.sm),
                   _buildSolicitarMenorCard(),
                   BioSpacing.gapH(BioSpacing.lg),
@@ -293,31 +374,33 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
     );
   }
 
-  Widget _linkTileOperar(Map<String, dynamic> link) {
-    final subject = link['subject'] is Map ? Map<String, dynamic>.from(link['subject'] as Map) : null;
-    final nombre = _personaNombre(subject);
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(nombre.isNotEmpty ? nombre : 'Paciente'),
-      subtitle: Text(link['regime']?.toString() ?? ''),
-      trailing: TextButton(
-        onPressed: () => _operarPor(link),
-        child: const Text('Operar'),
-      ),
-    );
-  }
-
-  Widget _vinculoTutorTile(Map<String, dynamic> link) {
+  Widget _cargoTile(Map<String, dynamic> link) {
     final subject = link['subject'] is Map ? Map<String, dynamic>.from(link['subject'] as Map) : null;
     final nombre = _personaNombre(subject);
     final status = link['status']?.toString() ?? '';
+    final regime = link['regime']?.toString() ?? '';
+    final relationship = link['relationship_type'];
+    final parentesco = relationship is Map ? relationship['label']?.toString() : null;
+    final regimeLabel = regime == 'verified_guardianship'
+        ? 'Tutela'
+        : regime == 'patient_delegation'
+            ? 'Delegación'
+            : regime;
+    final subtitleParts = <String>[
+      if (regimeLabel.isNotEmpty) regimeLabel,
+      if (parentesco != null && parentesco.isNotEmpty) parentesco,
+      _statusLabel(status),
+    ];
+
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(nombre.isNotEmpty ? nombre : 'Menor'),
-      subtitle: Text('Estado: $status'),
+      title: Text(nombre.isNotEmpty ? nombre : 'Paciente'),
+      subtitle: Text(subtitleParts.join(' · ')),
       trailing: status == 'active'
           ? TextButton(onPressed: () => _operarPor(link), child: const Text('Operar'))
-          : null,
+          : status == 'pending'
+              ? Text('En revisión', style: BioTypography.caption.copyWith(color: context.bio.textMuted))
+              : null,
     );
   }
 
@@ -339,11 +422,21 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
   }
 
   Widget _buildSolicitarMenorCard() {
+    final doc = _docMenorCtrl.text.trim();
+    final vinculoDoc = doc.isNotEmpty ? _vinculoTutorPorDocumento(doc) : null;
     return BioCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text('Solicitar tutela de menor', style: BioTypography.body.copyWith(fontWeight: FontWeight.w600)),
+          if (vinculoDoc != null) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            BioAlert.warning(
+              message: vinculoDoc['status']?.toString() == 'pending'
+                  ? 'Ya enviaste una solicitud para este documento. Revisá el estado arriba en Pacientes a mi cargo.'
+                  : 'Ya existe un vínculo de tutela para este documento.',
+            ),
+          ],
           BioSpacing.gapH(BioSpacing.sm),
           DropdownButtonFormField<String>(
             value: _parentescoMenor,
@@ -360,6 +453,7 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
             controller: _docMenorCtrl,
             decoration: const InputDecoration(labelText: 'Documento del menor'),
             keyboardType: TextInputType.number,
+            onChanged: (_) => setState(() {}),
           ),
           BioSpacing.gapH(BioSpacing.sm),
           TextField(
@@ -409,8 +503,8 @@ class _PersonRepresentationHubScreenState extends State<PersonRepresentationHubS
           ),
           BioSpacing.gapH(BioSpacing.md),
           BioButton(
-            label: 'Solicitar verificación',
-            onPressed: _solicitarMenor,
+            label: _solicitarMenorEnviando ? 'Enviando…' : 'Solicitar verificación',
+            onPressed: (_solicitarMenorEnviando || vinculoDoc != null) ? null : _solicitarMenor,
           ),
         ],
       ),

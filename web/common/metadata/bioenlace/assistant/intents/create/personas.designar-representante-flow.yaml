@@ -7,10 +7,18 @@ rbac_route: "/api/person-representation/designar-representante"
 keywords:
   - designar representante
   - delegar cuenta
+  - delegar gestión
+  - delegar gestion
+  - delegar gestión de turnos
+  - delegar gestion de turnos
+  - delegar turnos
+  - gestión de turnos
+  - gestion de turnos
   - autorizar familiar
   - quien opera por mí
   - representante
   - paciente a cargo
+  - delegar
 
 intent_semantics:
   goal: >-
@@ -21,6 +29,12 @@ intent_semantics:
     - Paciente autenticado con cuenta propia.
   outcome:
     - Representante activo con permisos v1 (turnos, motivos, pre-consulta, tratamiento, HC).
+  keyphrases:
+    - delegar gestión de turnos
+    - delegar la gestión de turnos
+    - que otra persona gestione mis turnos
+    - autorizar a un familiar para turnos
+    - designar quién opera por mí
 
 subintents:
   - id: gestionar_delegacion

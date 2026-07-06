@@ -52,6 +52,17 @@ vocab:
   own_licencia: '\b(mi|mis)\s+(licencia|permiso|ausencia|vacaciones|condicion laboral|condición laboral)\b'
   staff_licencia_third: '\b(licencia|permiso|ausencia|condicion laboral|condición laboral)\s+(del|de un|de la|de otro|profesional|medico|médico|colega)\b'
   provincial_resource: '\b(ministerio\s+(de\s+)?salud|organismo\s+de\s+salud|direcci[oó]n\s+del\s+ministerio|d[oó]nde\s+est[aá]\s+el\s+ministerio|ubicaci[oó]n\s+ministerio|tel[eé]fono\s+ministerio)\b'
+  delegacion_repr_phrases:
+    - delegar gestión
+    - delegar gestion
+    - delegar gestión de turnos
+    - delegar gestion de turnos
+    - delegar turnos
+    - gestión de turnos
+    - gestion de turnos
+    - designar representante
+    - autorizar familiar
+    - quien opera por mí
 
 match_rules:
   staff_agenda_config_edit:
@@ -119,6 +130,12 @@ match_rules:
 
   paciente_provincial_resource:
     require_any: [provincial_resource]
+
+  paciente_delegar_representacion:
+    require_phrase_any: delegacion_repr_phrases
+    ai_hint: >-
+      Si el paciente pide delegar la gestión de turnos o designar a otra persona con cuenta
+      para operar en su nombre, priorizá el intent de designar representante (régimen B).
 
   consultas_seguimiento_followup:
     require_any: [consultas_seguimiento_topics]
@@ -210,6 +227,13 @@ score_adjustments:
       - intent_id: paciente-contexto.recurso-provincial-como-paciente-flow
         delta: 45
 
+  - when_rule: paciente_delegar_representacion
+    apply:
+      - intent_id: personas.designar-representante-flow
+        delta: 55
+      - intent_id_prefix: turnos.
+        delta: -30
+
   - when_rule: consultas_seguimiento_followup
     apply:
       - intent_id: atencion.consultas-seguimiento-flow
@@ -250,6 +274,12 @@ operational_fallbacks:
     when_any_rule: [paciente_provincial_resource]
     intent_id: paciente-contexto.recurso-provincial-como-paciente-flow
     confidence: 0.88
+    method: rules_declarative_fallback
+
+  - id: paciente_delegar_representante_nl
+    when_any_rule: [paciente_delegar_representacion]
+    intent_id: personas.designar-representante-flow
+    confidence: 0.9
     method: rules_declarative_fallback
 
   - id: consultas_seguimiento_nl
@@ -308,6 +338,8 @@ chat_preprocess:
     - when_any_rule: [consultas_seguimiento_followup, consultas_seguimiento_topics_only]
       goal: operational
     - when_rule: paciente_provincial_resource
+      goal: operational
+    - when_any_rule: [paciente_delegar_representacion]
       goal: operational
     - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit]
       goal: operational

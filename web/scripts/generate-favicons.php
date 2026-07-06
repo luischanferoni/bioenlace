@@ -14,7 +14,7 @@ $sourcePng = $root . '/docs/logo/logo_icono_2.png';
 $targets = [
     $root . '/frontend/web',
     $root . '/admin/web',
-    dirname($root) . '/../institucional/images',
+    dirname($root) . '/../public_html/institucional/images',
 ];
 
 if (!is_file($sourceSvg) && !is_file($sourcePng)) {

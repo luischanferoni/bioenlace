@@ -84,6 +84,12 @@ categories:
     intent_ids:
       - paciente-contexto.recurso-provincial-como-paciente-flow
 
+  - id: representacion
+    titulo: Representación
+    intent_ids:
+      - personas.designar-representante-flow
+      - personas.vincular-menor-flow
+
   - id: plataforma
     titulo: Ayuda y plataforma
     intent_ids:

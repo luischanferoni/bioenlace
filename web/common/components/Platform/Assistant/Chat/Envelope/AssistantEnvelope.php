@@ -524,7 +524,7 @@ final class AssistantEnvelope
             $queryOut[$key] = trim((string) $qv);
         }
 
-        return [
+        $out = [
             'kind' => $kind,
             'api' => [
                 'route' => $route,
@@ -532,6 +532,70 @@ final class AssistantEnvelope
                 'query' => $queryOut === [] ? (object) [] : $queryOut,
             ],
         ];
+
+        $web = self::normalizeClientOpenWeb(isset($co['web']) && is_array($co['web']) ? $co['web'] : null);
+        if ($web !== null) {
+            $out['web'] = $web;
+        }
+        $mobile = self::normalizeClientOpenMobile(isset($co['mobile']) && is_array($co['mobile']) ? $co['mobile'] : null);
+        if ($mobile !== null) {
+            $out['mobile'] = $mobile;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed>|null $web
+     * @return array<string, mixed>|null
+     */
+    private static function normalizeClientOpenWeb(?array $web): ?array
+    {
+        if ($web === null) {
+            return null;
+        }
+        $path = AssistantDraftNormalizer::scalarString($web['path'] ?? '');
+        if ($path === '') {
+            return null;
+        }
+        $query = isset($web['query']) && is_array($web['query']) ? $web['query'] : [];
+        $queryOut = [];
+        foreach ($query as $qk => $qv) {
+            $key = is_string($qk) ? trim($qk) : '';
+            if ($key === '' || is_array($qv) || is_object($qv)) {
+                continue;
+            }
+            if (is_bool($qv)) {
+                $queryOut[$key] = $qv ? '1' : '0';
+                continue;
+            }
+            if (!is_string($qv) && !is_int($qv) && !is_float($qv)) {
+                continue;
+            }
+            $queryOut[$key] = trim((string) $qv);
+        }
+
+        return [
+            'path' => $path,
+            'query' => $queryOut === [] ? (object) [] : $queryOut,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed>|null $mobile
+     * @return array<string, mixed>|null
+     */
+    private static function normalizeClientOpenMobile(?array $mobile): ?array
+    {
+        if ($mobile === null) {
+            return null;
+        }
+        $screenId = AssistantDraftNormalizer::scalarString($mobile['screen_id'] ?? '');
+        if ($screenId === '') {
+            return null;
+        }
+
+        return ['screen_id' => $screenId];
     }
 
     /**

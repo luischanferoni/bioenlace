@@ -94,6 +94,41 @@ class AssistantEnvelopeFlowTest extends Unit
         $this->assertSame([], $envelope['step']['pending_fields']);
     }
 
+    public function testFlowFromMotorPreservesNativeClientOpenTargets(): void
+    {
+        $motor = [
+            'success' => true,
+            'text' => 'Representantes',
+            'intent_id' => 'personas.designar-representante-flow',
+            'subintent_id' => 'gestionar_delegacion',
+            'open_ui' => [
+                'action_id' => 'person-representation.hub',
+                'client_open' => [
+                    'kind' => 'native',
+                    'mobile' => [
+                        'screen_id' => 'person_representation_hub',
+                    ],
+                    'web' => [
+                        'path' => '/configuracion#representacion',
+                    ],
+                ],
+            ],
+            'draft_delta' => (object) [],
+        ];
+
+        $envelope = AssistantEnvelope::fromMotorResponse($motor);
+
+        $this->assertSame('native', $envelope['step']['client_open']['kind']);
+        $this->assertSame(
+            'person_representation_hub',
+            $envelope['step']['client_open']['mobile']['screen_id']
+        );
+        $this->assertSame(
+            '/configuracion#representacion',
+            $envelope['step']['client_open']['web']['path']
+        );
+    }
+
     public function testFlowFromMotorComposerCaptureStep(): void
     {
         $motor = [

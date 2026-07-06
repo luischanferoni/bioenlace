@@ -2,6 +2,7 @@
 
 /**
  * Genera favicon.svg / PNG / ICO para frontend y admin desde docs/logo/logo_icono_2.*
+ * También actualiza íconos del sitio institucional (images/logo-icon.*).
  *
  * Uso: php web/scripts/generate-favicons.php
  */
@@ -14,7 +15,7 @@ $sourcePng = $root . '/docs/logo/logo_icono_2.png';
 $targets = [
     $root . '/frontend/web',
     $root . '/admin/web',
-    dirname($root) . '/../public_html/images',
+    dirname($root) . '/institucional/images',
 ];
 
 if (!is_file($sourceSvg) && !is_file($sourcePng)) {
@@ -63,10 +64,11 @@ function writeIco(Imagick $image, string $path): void
 
 $base = new Imagick();
 $base->setBackgroundColor(new ImagickPixel('transparent'));
-if (is_file($sourceSvg)) {
-    $base->readImage($sourceSvg);
-} else {
+// PNG como fuente raster (más fiel que renderizar SVG con ImageMagick).
+if (is_file($sourcePng)) {
     $base->readImage($sourcePng);
+} elseif (is_file($sourceSvg)) {
+    $base->readImage($sourceSvg);
 }
 $base->setImageFormat('png32');
 

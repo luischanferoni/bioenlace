@@ -164,9 +164,6 @@ final class CommonActionsService
             }
             $actions[] = self::flowToActionRow($byId[$intentId], $display);
         }
-        usort($actions, static function (array $a, array $b): int {
-            return strcasecmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
-        });
 
         return $actions;
     }

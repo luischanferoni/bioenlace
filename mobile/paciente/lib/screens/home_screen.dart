@@ -589,22 +589,6 @@ class HomeScreenState extends State<HomeScreen> {
     return t;
   }
 
-  Widget _leyenda(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: BioSpacing.sm, bottom: BioSpacing.xs),
-      child: Wrap(
-        spacing: BioSpacing.sm,
-        runSpacing: BioSpacing.xs,
-        children: const [
-          BioBadge(label: 'Hoy', intent: UiIntent.danger),
-          BioBadge(label: 'Mañana', intent: UiIntent.info),
-          BioBadge(label: 'Próximamente', intent: UiIntent.success),
-          BioBadge(label: 'En resolución', intent: UiIntent.warning),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
@@ -669,8 +653,7 @@ class HomeScreenState extends State<HomeScreen> {
         ],
         _buildSelectorTab(context),
         if (_tabTurnos == 0) ...[
-          _leyenda(context),
-          BioSpacing.gapH(BioSpacing.sm),
+          BioSpacing.gapH(BioSpacing.md),
           if (_refrescandoTabActivo && _proximosVisibles.isEmpty)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: BioSpacing.xl),

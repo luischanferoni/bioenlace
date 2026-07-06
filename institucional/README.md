@@ -12,7 +12,7 @@ institucional/
 ├── js/main.js
 ├── images/
 │   ├── logo.svg        # Logo horizontal (fuente: web/frontend/web/images/)
-│   └── logo-icon.svg   # Ícono / favicon (fuente: web/docs/logo/)
+│   └── logo-icon.svg   # Ícono / favicon (fuente: web/docs/logo/logo_icono_2.svg)
 └── README.md
 ```
 
@@ -43,6 +43,6 @@ Abrir `http://localhost:8000`.
 ## Personalización
 
 - **Colores**: variables CSS en `css/styles.css` (`:root`), alineadas al logo (`#093e4d`, `#ff6b6b`, `#38be7f`).
-- **Logo**: reemplazar `images/logo.svg` y `images/logo-icon.svg` (mantener sincronía con `web/docs/logo/`).
+- **Logo**: reemplazar `images/logo.svg` y `images/logo-icon.svg` (mantener sincronía con `web/docs/logo/logo_icono_2.*`). Regenerar con `php web/scripts/generate-favicons.php`.
 - **Contenido**: editar textos en `index.html`.
 - **Formulario**: envío vía [Web3Forms](https://web3forms.com) a `info@bioenlace.io` (configurar el destino en el panel de Web3Forms con la misma `access_key`). Lógica en `js/main.js`.

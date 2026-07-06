@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Genera favicon.svg / PNG / ICO para frontend y admin desde docs/logo/logo_icono.*
+ * Genera favicon.svg / PNG / ICO para frontend y admin desde docs/logo/logo_icono_2.*
  *
  * Uso: php web/scripts/generate-favicons.php
  */
@@ -9,15 +9,16 @@
 declare(strict_types=1);
 
 $root = dirname(__DIR__);
-$sourceSvg = $root . '/docs/logo/logo_icono.svg';
-$sourcePng = $root . '/docs/logo/logo_icono.png';
+$sourceSvg = $root . '/docs/logo/logo_icono_2.svg';
+$sourcePng = $root . '/docs/logo/logo_icono_2.png';
 $targets = [
     $root . '/frontend/web',
     $root . '/admin/web',
+    dirname($root) . '/institucional/images',
 ];
 
-if (!is_file($sourceSvg)) {
-    fwrite(STDERR, "No se encontró {$sourceSvg}\n");
+if (!is_file($sourceSvg) && !is_file($sourcePng)) {
+    fwrite(STDERR, "No se encontró {$sourceSvg} ni {$sourcePng}\n");
     exit(1);
 }
 
@@ -62,16 +63,29 @@ function writeIco(Imagick $image, string $path): void
 
 $base = new Imagick();
 $base->setBackgroundColor(new ImagickPixel('transparent'));
-$base->readImage($sourceSvg);
+if (is_file($sourceSvg)) {
+    $base->readImage($sourceSvg);
+} else {
+    $base->readImage($sourcePng);
+}
 $base->setImageFormat('png32');
 
 foreach ($targets as $dir) {
-    copy($sourceSvg, $dir . '/favicon.svg');
+    $isInstitucionalImages = substr($dir, -7) === '/images';
+    $svgDest = $dir . ($isInstitucionalImages ? '/logo-icon.svg' : '/favicon.svg');
+    if (is_file($sourceSvg)) {
+        copy($sourceSvg, $svgDest);
+    }
 
-    writePng($base, $dir . '/favicon-32x32.png', 32);
-    writePng($base, $dir . '/favicon-16x16.png', 16);
-    writePng($base, $dir . '/apple-touch-icon.png', 180);
-    writeIco($base, $dir . '/favicon.ico');
+    if (!$isInstitucionalImages) {
+        writePng($base, $dir . '/favicon-32x32.png', 32);
+        writePng($base, $dir . '/favicon-16x16.png', 16);
+        writePng($base, $dir . '/apple-touch-icon.png', 180);
+        writeIco($base, $dir . '/favicon.ico');
+    } else {
+        writePng($base, $dir . '/logo-icon.png', 192);
+        writePng($base, $dir . '/logo-icon-32.png', 32);
+    }
 
     echo "OK {$dir}\n";
 }

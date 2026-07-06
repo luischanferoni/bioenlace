@@ -98,6 +98,8 @@ class TurnoLifecycleService
             Yii::warning('Waitlist fill: ' . $e->getMessage(), 'turno-waitlist');
         }
 
+        \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+
         return true;
     }
 }

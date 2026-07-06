@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
+use common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaIntervaloMinutos;
@@ -69,6 +70,7 @@ final class TurnoResolucionService
         $turno->estado = Turno::ESTADO_EN_RESOLUCION;
         $turno->save(false);
         TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
+        TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return $row;
     }
@@ -296,6 +298,7 @@ final class TurnoResolucionService
         $res->save(false);
 
         self::reprogramarNotificaciones($turno);
+        TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return [
             'message' => 'Turno reprogramado a las ' . $horaNorm . '.',
@@ -376,6 +379,7 @@ final class TurnoResolucionService
         $res->save(false);
 
         self::reprogramarNotificaciones($turno);
+        TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return [
             'success' => true,

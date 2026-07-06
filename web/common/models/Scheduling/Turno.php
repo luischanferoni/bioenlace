@@ -2,6 +2,7 @@
 
 namespace common\models\Scheduling;
 
+use common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier;
 use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaAtencionesEnfermeria;
@@ -602,6 +603,8 @@ class Turno extends \yii\db\ActiveRecord
                 'id_turnos = ' . $id_turno
             )
             ->execute();
+
+        TurnoFhirOutboundNotifier::afterEstadoChangedById((int) $id_turno);
     }
 
     public static function cambiarCampoAtendido($id_turnos, $estado)
@@ -617,6 +620,8 @@ class Turno extends \yii\db\ActiveRecord
                 'id_turnos = ' . $id_turnos
             )
             ->execute();
+
+        TurnoFhirOutboundNotifier::afterEstadoChangedById((int) $id_turnos);
     }
 
     public static function sincronizarProfesionalEfectorServicioDesdeSesion(int $id_turnos, $id_servicio_asignado): void

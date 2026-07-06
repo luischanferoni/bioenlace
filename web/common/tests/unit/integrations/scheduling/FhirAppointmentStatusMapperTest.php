@@ -26,4 +26,28 @@ class FhirAppointmentStatusMapperTest extends Unit
         $mapped = FhirAppointmentStatusMapper::mapToTurnoEstado('fulfilled');
         $this->assertSame(Turno::ESTADO_ATENDIDO, $mapped['estado']);
     }
+
+    public function testCanceladoMapsToCancelled(): void
+    {
+        $this->assertSame(
+            'cancelled',
+            FhirAppointmentStatusMapper::mapTurnoEstadoToFhir(Turno::ESTADO_CANCELADO)
+        );
+    }
+
+    public function testEnResolucionMapsToBooked(): void
+    {
+        $this->assertSame(
+            'booked',
+            FhirAppointmentStatusMapper::mapTurnoEstadoToFhir(Turno::ESTADO_EN_RESOLUCION)
+        );
+    }
+
+    public function testSinAtenderMapsToNoshow(): void
+    {
+        $this->assertSame(
+            'noshow',
+            FhirAppointmentStatusMapper::mapTurnoEstadoToFhir(Turno::ESTADO_SIN_ATENDER)
+        );
+    }
 }

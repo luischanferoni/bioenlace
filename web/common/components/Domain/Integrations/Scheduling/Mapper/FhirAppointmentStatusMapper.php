@@ -43,4 +43,40 @@ final class FhirAppointmentStatusMapper
             ],
         };
     }
+
+    /**
+     * Estado interno → FHIR Appointment.status (saliente).
+     * Devuelve null si el estado no debe publicarse al servidor externo.
+     */
+    public static function mapTurnoEstadoToFhir(string $estado, ?string $estadoMotivo = null): ?string
+    {
+        $estado = strtoupper(trim($estado));
+
+        return match ($estado) {
+            Turno::ESTADO_PENDIENTE, Turno::ESTADO_EN_RESOLUCION => 'booked',
+            Turno::ESTADO_EN_ATENCION => 'arrived',
+            Turno::ESTADO_ATENDIDO => 'fulfilled',
+            Turno::ESTADO_CANCELADO => 'cancelled',
+            Turno::ESTADO_SIN_ATENDER => 'noshow',
+            default => null,
+        };
+    }
+
+    public static function turnoNeedsOutboundSync(Turno $turno): bool
+    {
+        $externalId = trim((string) ($turno->external_appointment_id ?? ''));
+        $source = trim((string) ($turno->appointment_source_system ?? ''));
+        if ($externalId === '' || $source === '') {
+            return false;
+        }
+
+        $target = self::mapTurnoEstadoToFhir((string) $turno->estado, $turno->estado_motivo);
+        if ($target === null) {
+            return false;
+        }
+
+        $current = strtolower(trim((string) ($turno->fhir_status ?? '')));
+
+        return $current !== strtolower($target);
+    }
 }

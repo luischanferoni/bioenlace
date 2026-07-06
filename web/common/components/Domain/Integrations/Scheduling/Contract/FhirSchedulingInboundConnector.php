@@ -35,4 +35,11 @@ interface FhirSchedulingInboundConnector
      * @return array<string, mixed>
      */
     public function readResource(string $resourceType, string $id): array;
+
+    /**
+     * Actualiza Appointment.status en el servidor FHIR (PUT recurso completo).
+     *
+     * @return array<string, mixed> recurso Appointment actualizado
+     */
+    public function updateAppointmentStatus(string $appointmentId, string $fhirStatus): array;
 }

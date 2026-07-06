@@ -8,6 +8,7 @@ use yii\db\Expression;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use common\models\EfectorTurnosConfig;
+use common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier;
 use common\models\TurnoEventoAudit;
 use common\models\TurnoNotificacionProgramada;
 
@@ -71,6 +72,7 @@ class BulkCancelDayService
                 TurnoEventoAudit::registrar($turno->id_turnos, TurnoEventoAudit::TIPO_BULK_DAY_CANCEL, $idUser, [
                     'fecha' => $fecha,
                 ]);
+                TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
                 $push = new PushNotificationSender();
                 if ($turno->paciente) {
                     $push->sendToPersona(

@@ -218,6 +218,9 @@ return [
             'batch_limit' => 50,
             'reconcile_schedule_limit' => 100,
         ],
+        'outbound' => [
+            'enabled' => false,
+        ],
         'connectors' => [
             'msal-nis' => [
                 'class' => \common\components\Domain\Integrations\Scheduling\Connector\MsalNisFhirSchedulingConnector::class,

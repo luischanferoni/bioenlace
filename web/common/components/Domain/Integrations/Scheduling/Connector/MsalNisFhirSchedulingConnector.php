@@ -4,6 +4,7 @@ namespace common\components\Domain\Integrations\Scheduling\Connector;
 
 use common\components\Domain\Integrations\Scheduling\Contract\FhirSchedulingInboundConnector;
 use common\components\Domain\Integrations\Scheduling\Exception\FhirSchedulingConnectorException;
+use common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper;
 use Yii;
 use yii\base\Component;
 use yii\httpclient\Client;
@@ -68,11 +69,36 @@ class MsalNisFhirSchedulingConnector extends Component implements FhirScheduling
         return $this->request('GET', rawurlencode($resourceType) . '/' . rawurlencode($id));
     }
 
+    public function updateAppointmentStatus(string $appointmentId, string $fhirStatus): array
+    {
+        $appointmentId = trim($appointmentId);
+        if ($appointmentId === '') {
+            throw new FhirSchedulingConnectorException('Appointment id vacío para actualización saliente.');
+        }
+
+        $raw = $this->readAppointment($appointmentId);
+        $resources = FhirBundleHelper::collectResources($raw, 'Appointment');
+        $appointment = $resources[0] ?? null;
+        if ($appointment === null || ($appointment['resourceType'] ?? '') !== 'Appointment') {
+            throw new FhirSchedulingConnectorException("Appointment {$appointmentId} no encontrado en NIS FHIR.");
+        }
+
+        $appointment['status'] = strtolower(trim($fhirStatus));
+
+        return $this->request(
+            'PUT',
+            'Appointment/' . rawurlencode($appointmentId),
+            [],
+            $appointment
+        );
+    }
+
     /**
      * @param array<string, scalar|null> $query
+     * @param array<string, mixed>|null $jsonBody
      * @return array<string, mixed>
      */
-    private function request(string $method, string $relativePath, array $query = []): array
+    private function request(string $method, string $relativePath, array $query = [], ?array $jsonBody = null): array
     {
         $url = rtrim($this->baseUrl, '/') . '/' . ltrim($relativePath, '/');
         if ($query !== []) {
@@ -87,6 +113,12 @@ class MsalNisFhirSchedulingConnector extends Component implements FhirScheduling
                 'Accept' => 'application/fhir+json, application/json',
             ])
             ->setOptions(['timeout' => $this->timeoutSeconds]);
+
+        if ($jsonBody !== null) {
+            $request->setFormat(Client::FORMAT_JSON)
+                ->addHeaders(['Content-Type' => 'application/fhir+json'])
+                ->setData($jsonBody);
+        }
 
         if ($this->usesOAuth()) {
             $request->addHeaders(['Authorization' => 'Bearer ' . $this->getAccessToken()]);

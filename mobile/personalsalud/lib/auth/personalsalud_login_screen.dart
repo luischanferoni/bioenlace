@@ -61,9 +61,21 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     final established =
         prefs.getBool(PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey) ??
             false;
-    final hasToken = (prefs.getString('auth_token') ?? '').isNotEmpty;
+    var hasToken = (prefs.getString('auth_token') ?? '').isNotEmpty;
     final bioAvailable = await _biometricAuth.isAvailable();
     final bioType = await _biometricAuth.getBiometricType();
+
+    if (hasToken) {
+      final check = await StaffSessionAuth.checkBearerToken(
+        prefs.getString('auth_token')!,
+      );
+      if (check == StaffSessionCheckResult.invalid) {
+        await PersonalsaludSessionPrefs.clearInvalidAuthSession();
+        hasToken = false;
+      }
+    } else if (prefs.getBool('is_logged_in') ?? false) {
+      await PersonalsaludSessionPrefs.clearInvalidAuthSession();
+    }
 
     if (!mounted) return;
     setState(() {
@@ -186,6 +198,25 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       if (token == null || token.isEmpty) {
         setState(() => _useBiometricLogin = false);
         _snack('Volvé a ingresar con usuario y contraseña.', UiIntent.warning);
+        return;
+      }
+
+      final sessionCheck = await StaffSessionAuth.checkBearerToken(token);
+      if (sessionCheck == StaffSessionCheckResult.invalid) {
+        await PersonalsaludSessionPrefs.clearInvalidAuthSession();
+        if (!mounted) return;
+        setState(() => _useBiometricLogin = false);
+        _snack(
+          'Tu sesión expiró. Ingresá de nuevo con usuario y contraseña.',
+          UiIntent.warning,
+        );
+        return;
+      }
+      if (sessionCheck == StaffSessionCheckResult.networkError) {
+        _snack(
+          'No pudimos verificar tu sesión. Revisá la conexión e intentá de nuevo.',
+          UiIntent.warning,
+        );
         return;
       }
 

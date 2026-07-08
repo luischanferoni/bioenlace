@@ -9,6 +9,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'auth/personalsalud_authenticated_shell.dart';
 import 'auth/personalsalud_login_screen.dart';
 import 'auth/personalsalud_post_login.dart';
+import 'auth/personalsalud_session_prefs.dart';
 import 'firebase/firebase_bootstrap.dart';
 import 'screens/main_screen.dart';
 import 'screens/config_wizard_screen.dart';
@@ -66,9 +67,22 @@ void main() {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      isLoggedIn = prefs.getBool('is_logged_in') ?? false;
+      await PersonalsaludSessionPrefs.reconcileStaleSessionOnLaunch();
+
+      isLoggedIn = await PersonalsaludSessionPrefs.hasRestorableSession();
       userId = prefs.getString('user_id') ?? '';
       userName = prefs.getString('user_name') ?? 'Usuario';
+
+      if (isLoggedIn) {
+        final token = prefs.getString('auth_token')!;
+        final check = await StaffSessionAuth.checkBearerToken(token);
+        if (check == StaffSessionCheckResult.invalid) {
+          await PersonalsaludSessionPrefs.clearInvalidAuthSession();
+          isLoggedIn = false;
+          userId = '';
+          userName = 'Usuario';
+        }
+      }
     } catch (e, st) {
       unawaited(CrashlyticsBootstrap.recordError(e, st, reason: 'main_prefs'));
     }

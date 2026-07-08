@@ -15,6 +15,7 @@ export 'scheduling/turno_inicio.dart';
 export 'assistant/flow_submit_resolver.dart';
 export 'assistant/flow_licencia_impact.dart';
 export 'auth/staff_credential_auth.dart';
+export 'auth/staff_session_auth.dart';
 export 'auth/staff_account_activation.dart';
 export 'auth/biometric_auth.dart';
 export 'auth/biometric_session_prefs.dart';

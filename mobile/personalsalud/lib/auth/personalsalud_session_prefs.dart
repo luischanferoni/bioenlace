@@ -48,6 +48,44 @@ abstract final class PersonalsaludSessionPrefs {
     }
   }
 
+  static Future<bool> hasRestorableSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('is_logged_in') ?? false)) {
+      return false;
+    }
+    final token = (prefs.getString('auth_token') ?? '').trim();
+    final userId = (prefs.getString('user_id') ?? '').trim();
+    return token.isNotEmpty && userId.isNotEmpty;
+  }
+
+  /// Limpia banderas si quedó `is_logged_in` sin JWT (p. ej. hot restart).
+  static Future<void> reconcileStaleSessionOnLaunch() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('is_logged_in') ?? false)) {
+      return;
+    }
+    final token = (prefs.getString('auth_token') ?? '').trim();
+    if (token.isNotEmpty) {
+      return;
+    }
+    await clearInvalidAuthSession();
+  }
+
+  /// Quita JWT y contexto operativo; conserva preferencia de huella para el próximo login.
+  static Future<void> clearInvalidAuthSession() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('is_logged_in', false);
+    await prefs.remove('user_id');
+    await prefs.remove('user_name');
+    for (final key in operationalKeys) {
+      await prefs.remove(key);
+    }
+    ClientDiagnosticApi.bindSession(
+      authToken: null,
+      appClient: 'bioenlace-personalsalud',
+    );
+  }
+
   static Future<bool> hasCompleteOperationalContext() async {
     final prefs = await SharedPreferences.getInstance();
     return (prefs.getBool('config_completed') ?? false) &&

@@ -92,12 +92,34 @@ Future<bool> requirePersonalsaludBiometricEnrollment(
 }
 
 Future<void> _returnToLoginAfterEnrollmentFailure() async {
-  await PersonalsaludSessionPrefs.clearOnLogout();
-  navigatorKey.currentState?.pushAndRemoveUntil(
+  await returnPersonalsaludToLogin();
+}
+
+/// Cierra sesión local y vuelve a la pantalla de login.
+Future<void> returnPersonalsaludToLogin({String? message}) async {
+  await PersonalsaludSessionPrefs.clearInvalidAuthSession();
+  final nav = navigatorKey.currentState;
+  if (nav == null) {
+    return;
+  }
+  nav.pushAndRemoveUntil(
     MaterialPageRoute<void>(
-      builder: (_) => buildPersonalsaludLoginScreen(
-        onLoginSuccess: navigatePersonalsaludAfterLogin,
-      ),
+      builder: (loginContext) {
+        if (message != null && message.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!loginContext.mounted) return;
+            ScaffoldMessenger.of(loginContext).showSnackBar(
+              SnackBar(
+                content: Text(message),
+                backgroundColor: IntentPalette.of(UiIntent.danger).base,
+              ),
+            );
+          });
+        }
+        return buildPersonalsaludLoginScreen(
+          onLoginSuccess: navigatePersonalsaludAfterLogin,
+        );
+      },
     ),
     (route) => false,
   );

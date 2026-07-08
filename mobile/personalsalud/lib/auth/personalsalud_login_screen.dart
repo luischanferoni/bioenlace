@@ -66,10 +66,10 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     final bioType = await _biometricAuth.getBiometricType();
 
     if (hasToken) {
-      final check = await StaffSessionAuth.checkBearerToken(
+      final check = await BearerSessionAuth.checkBearerToken(
         prefs.getString('auth_token')!,
       );
-      if (check == StaffSessionCheckResult.invalid) {
+      if (check == BearerSessionCheckResult.invalid) {
         await PersonalsaludSessionPrefs.clearInvalidAuthSession();
         hasToken = false;
       }
@@ -201,8 +201,8 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
         return;
       }
 
-      final sessionCheck = await StaffSessionAuth.checkBearerToken(token);
-      if (sessionCheck == StaffSessionCheckResult.invalid) {
+      final sessionCheck = await BearerSessionAuth.checkBearerToken(token);
+      if (sessionCheck == BearerSessionCheckResult.invalid) {
         await PersonalsaludSessionPrefs.clearInvalidAuthSession();
         if (!mounted) return;
         setState(() => _useBiometricLogin = false);
@@ -212,7 +212,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
         );
         return;
       }
-      if (sessionCheck == StaffSessionCheckResult.networkError) {
+      if (sessionCheck == BearerSessionCheckResult.networkError) {
         _snack(
           'No pudimos verificar tu sesión. Revisá la conexión e intentá de nuevo.',
           UiIntent.warning,

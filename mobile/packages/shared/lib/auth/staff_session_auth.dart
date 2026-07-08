@@ -5,25 +5,29 @@ import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
 
-/// Resultado de comprobar el JWT de staff contra la API.
-enum StaffSessionCheckResult {
+/// Resultado de comprobar el JWT contra la API.
+enum BearerSessionCheckResult {
   valid,
   invalid,
   networkError,
 }
 
-/// Validación de sesión staff (Personal de Salud).
-abstract final class StaffSessionAuth {
-  static const _appClient = 'bioenlace-personalsalud';
+@Deprecated('Use BearerSessionCheckResult')
+typedef StaffSessionCheckResult = BearerSessionCheckResult;
+
+/// Validación de sesión JWT (GET /auth/yo).
+abstract final class BearerSessionAuth {
+  static const appClientPersonalsalud = 'bioenlace-personalsalud';
+  static const appClientPaciente = 'paciente-flutter';
 
   /// GET /auth/yo — confirma que el Bearer sigue siendo aceptado.
-  static Future<StaffSessionCheckResult> checkBearerToken(
+  static Future<BearerSessionCheckResult> checkBearerToken(
     String token, {
-    String appClient = _appClient,
+    String appClient = appClientPersonalsalud,
   }) async {
     final bearer = token.trim();
     if (bearer.isEmpty) {
-      return StaffSessionCheckResult.invalid;
+      return BearerSessionCheckResult.invalid;
     }
 
     try {
@@ -39,34 +43,34 @@ abstract final class StaffSessionAuth {
           .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
 
       if (response.statusCode == 401 || response.statusCode == 403) {
-        return StaffSessionCheckResult.invalid;
+        return BearerSessionCheckResult.invalid;
       }
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final decoded = jsonDecode(response.body);
         if (decoded is Map && decoded['success'] == true) {
-          return StaffSessionCheckResult.valid;
+          return BearerSessionCheckResult.valid;
         }
-        return StaffSessionCheckResult.invalid;
+        return BearerSessionCheckResult.invalid;
       }
 
       if (response.statusCode >= 500) {
-        return StaffSessionCheckResult.networkError;
+        return BearerSessionCheckResult.networkError;
       }
 
-      return StaffSessionCheckResult.invalid;
+      return BearerSessionCheckResult.invalid;
     } on SocketException {
-      return StaffSessionCheckResult.networkError;
+      return BearerSessionCheckResult.networkError;
     } on http.ClientException {
-      return StaffSessionCheckResult.networkError;
+      return BearerSessionCheckResult.networkError;
     } on FormatException {
-      return StaffSessionCheckResult.invalid;
+      return BearerSessionCheckResult.invalid;
     } catch (_) {
-      return StaffSessionCheckResult.networkError;
+      return BearerSessionCheckResult.networkError;
     }
   }
 
-  /// Detecta errores HTTP de sesión expirada / token inválido en respuestas de la app.
+  /// Detecta errores HTTP de sesión expirada / token inválido.
   static bool isAuthSessionError(Object error) {
     final lower = error.toString().toLowerCase();
     return lower.contains('credenciales inválidas') ||
@@ -79,3 +83,6 @@ abstract final class StaffSessionAuth {
         lower.contains('http 403');
   }
 }
+
+@Deprecated('Use BearerSessionAuth')
+typedef StaffSessionAuth = BearerSessionAuth;

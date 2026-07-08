@@ -9,6 +9,7 @@ import 'package:didit_sdk/sdk_flutter.dart';
 
 import '../auth/biometric_auth.dart';
 import '../auth/biometric_session_prefs.dart';
+import '../auth/staff_session_auth.dart';
 import '../auth/person_display_name.dart';
 import '../config/api_config.dart';
 import '../config/didit_config_resolver.dart';
@@ -152,6 +153,36 @@ class _LoginScreenState extends State<LoginScreen> {
 
         if (localResult['success'] == true) {
           final prefs = await SharedPreferences.getInstance();
+          final token = (prefs.getString('auth_token') ?? '').trim();
+          if (token.isEmpty) {
+            _snack(
+              'Volvé a ingresar con tu cuenta.',
+              UiIntent.warning,
+            );
+            return;
+          }
+
+          final sessionCheck = await BearerSessionAuth.checkBearerToken(
+            token,
+            appClient: widget.appClient,
+          );
+          if (sessionCheck == BearerSessionCheckResult.invalid) {
+            await prefs.setBool('is_logged_in', false);
+            await prefs.remove('auth_token');
+            _snack(
+              'Tu sesión expiró. Ingresá de nuevo.',
+              UiIntent.warning,
+            );
+            return;
+          }
+          if (sessionCheck == BearerSessionCheckResult.networkError) {
+            _snack(
+              'No pudimos verificar tu sesión. Revisá la conexión e intentá de nuevo.',
+              UiIntent.warning,
+            );
+            return;
+          }
+
           final userId = prefs.getString('user_id') ??
               'user_${DateTime.now().millisecondsSinceEpoch}';
           final userName = prefs.getString('user_name') ?? 'Usuario';

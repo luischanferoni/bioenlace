@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared/shared.dart';
 
 /// Sesión JWT del paciente persistida en el dispositivo.
 abstract final class PacienteSessionPrefs {
@@ -22,8 +23,19 @@ abstract final class PacienteSessionPrefs {
     if (token.isNotEmpty) {
       return;
     }
+    await clearInvalidAuthSession();
+  }
+
+  /// Quita JWT e identidad local; conserva `device_id` y preferencias de huella.
+  static Future<void> clearInvalidAuthSession() async {
+    final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('is_logged_in', false);
     await prefs.remove('user_id');
     await prefs.remove('user_name');
+    await prefs.remove('auth_token');
+    ClientDiagnosticApi.bindSession(
+      authToken: null,
+      appClient: BearerSessionAuth.appClientPaciente,
+    );
   }
 }

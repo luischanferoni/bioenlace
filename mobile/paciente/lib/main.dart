@@ -11,7 +11,8 @@ import 'auth/paciente_post_login.dart';
 import 'auth/paciente_session_prefs.dart';
 import 'services/chat_service.dart';
 import 'screens/main_screen.dart';
-import 'screens/signup_screen.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() {
   runZonedGuarded(() async {
@@ -21,17 +22,32 @@ void main() {
 
     final prefs = await SharedPreferences.getInstance();
     await PacienteSessionPrefs.reconcileStaleSessionOnLaunch();
-    final isLoggedIn = await PacienteSessionPrefs.hasRestorableSession();
-    final userId = prefs.getString('user_id') ?? '';
-    final userName = prefs.getString('user_name') ?? '';
-    final authToken = prefs.getString('auth_token');
+
+    var isLoggedIn = await PacienteSessionPrefs.hasRestorableSession();
+    var userId = prefs.getString('user_id') ?? '';
+    var userName = prefs.getString('user_name') ?? '';
+    var authToken = prefs.getString('auth_token');
+
+    if (isLoggedIn && authToken != null && authToken.isNotEmpty) {
+      final check = await BearerSessionAuth.checkBearerToken(
+        authToken,
+        appClient: BearerSessionAuth.appClientPaciente,
+      );
+      if (check == BearerSessionCheckResult.invalid) {
+        await PacienteSessionPrefs.clearInvalidAuthSession();
+        isLoggedIn = false;
+        userId = '';
+        userName = '';
+        authToken = null;
+      }
+    }
 
     if (isLoggedIn && userId.isNotEmpty) {
       await CrashlyticsBootstrap.setUserId(userId);
     }
     ClientDiagnosticApi.bindSession(
       authToken: authToken,
-      appClient: 'paciente-flutter',
+      appClient: BearerSessionAuth.appClientPaciente,
     );
 
     ChatService? chatService;
@@ -66,6 +82,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'BioEnlace Paciente',
       theme: AppTheme.lightTheme,
+      navigatorKey: navigatorKey,
       home: isLoggedIn
           ? PacienteBiometricGate(
               child: wrapPacienteAuthenticatedShell(
@@ -75,49 +92,8 @@ class MyApp extends StatelessWidget {
                 ),
               ),
             )
-          : LoginScreen(
-              appTitle: 'Bienvenido a BioEnlace',
-              appSubtitle: 'Tu asistente de salud personal',
-              // Textos personalizados para la app del paciente
-              welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
-              signupButtonText: '¿No tienes cuenta? Regístrate aquí',
-              diditRemoteLoginAfterLogout: true,
-              appClient: 'paciente-flutter',
-              onLoginSuccess: (userId, userName, loginContext) async {
-                await CrashlyticsBootstrap.setUserId(userId);
-                final prefs = await SharedPreferences.getInstance();
-                final token = prefs.getString('auth_token');
-                ClientDiagnosticApi.bindSession(
-                  authToken: token,
-                  appClient: 'paciente-flutter',
-                );
-                final newChatService = ChatService(
-                  currentUserId: userId,
-                  currentUserName: userName,
-                  authToken: token,
-                );
-                if (!loginContext.mounted) return;
-                final enrolled =
-                    await requirePacienteBiometricEnrollment(loginContext);
-                if (!enrolled || !loginContext.mounted) return;
-                Navigator.pushReplacement(
-                  loginContext,
-                  MaterialPageRoute(
-                    builder: (_) => wrapPacienteAuthenticatedShell(
-                      child: MainScreen(
-                        chatService: newChatService,
-                        authToken: token,
-                      ),
-                    ),
-                  ),
-                );
-              },
-              onNavigateToSignup: (loginContext) {
-                Navigator.push(
-                  loginContext,
-                  MaterialPageRoute(builder: (_) => SignupScreen()),
-                );
-              },
+          : buildPacienteLoginScreen(
+              onLoginSuccess: navigatePacienteAfterLogin,
             ),
     );
   }

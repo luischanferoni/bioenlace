@@ -6,6 +6,7 @@ import 'package:shared/shared.dart';
 import '../services/turnos_service.dart';
 import '../utils/turno_resolucion_utils.dart';
 import '../config/paciente_intents.dart';
+import '../auth/paciente_post_login.dart';
 import 'care_plan_detail_screen.dart';
 import 'care_plans_list_screen.dart';
 import 'chat_motivos_screen.dart';
@@ -149,6 +150,10 @@ class HomeScreenState extends State<HomeScreen> {
       offset += batch.length;
       if (batch.length < _proximosPageSize) break;
     }
+    if (error != null && BearerSessionAuth.isAuthSessionError(error)) {
+      await _redirectIfSessionExpired(error);
+      return (turnos: <Map<String, dynamic>>[], error: error);
+    }
     return (turnos: all, error: error);
   }
 
@@ -242,6 +247,16 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<bool> _redirectIfSessionExpired(Object? error) async {
+    if (error == null || !BearerSessionAuth.isAuthSessionError(error)) {
+      return false;
+    }
+    await returnPacienteToLogin(
+      message: 'Tu sesión expiró. Ingresá de nuevo.',
+    );
+    return true;
+  }
+
   Future<void> _cargarInicial() async {
     setState(() {
       _refrescandoTabActivo = true;
@@ -255,6 +270,7 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       await _applyUpcomingFromPanel();
     } catch (e) {
+      if (await _redirectIfSessionExpired(e)) return;
       final pendientesFuture = _fetchAllPorAlcance('pendientes');
       await _cargarEnResolucion();
       await _cargarCarePlans();

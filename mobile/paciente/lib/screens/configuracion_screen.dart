@@ -2,13 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
-import '../auth/paciente_authenticated_shell.dart';
 import '../auth/paciente_post_login.dart';
-import '../services/chat_service.dart';
-import 'main_screen.dart';
 import 'person_representation_hub_screen.dart';
 import 'paciente_provincia_context_screen.dart';
-import 'signup_screen.dart';
 
 /// Pantalla de configuración del paciente (perfil, preferencias, cerrar sesión).
 class ConfiguracionScreen extends StatefulWidget {
@@ -285,57 +281,11 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(
-        builder: (_) => _buildLoginScreen(context),
+        builder: (_) => buildPacienteLoginScreen(
+          onLoginSuccess: navigatePacienteAfterLogin,
+        ),
       ),
       (route) => false,
-    );
-  }
-
-  Widget _buildLoginScreen(BuildContext context) {
-    return LoginScreen(
-      appTitle: 'Bienvenido a BioEnlace',
-      appSubtitle: 'Tu asistente de salud personal',
-      welcomeMessage: '¡Bienvenido de vuelta, {userName}!',
-      signupButtonText: '¿No tienes cuenta? Regístrate aquí',
-      diditRemoteLoginAfterLogout: true,
-      appClient: 'paciente-flutter',
-      onLoginSuccess: (userId, userName, loginContext) async {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('is_logged_in', true);
-        await prefs.setString('user_id', userId);
-        await prefs.setString('user_name', userName);
-        await CrashlyticsBootstrap.setUserId(userId);
-        ClientDiagnosticApi.bindSession(
-          authToken: prefs.getString('auth_token'),
-          appClient: 'paciente-flutter',
-        );
-        if (!loginContext.mounted) return;
-        final enrolled =
-            await requirePacienteBiometricEnrollment(loginContext);
-        if (!enrolled || !loginContext.mounted) return;
-        final newChatService = ChatService(
-          currentUserId: userId,
-          currentUserName: userName,
-          authToken: prefs.getString('auth_token'),
-        );
-        Navigator.pushReplacement(
-          loginContext,
-          MaterialPageRoute(
-            builder: (_) => wrapPacienteAuthenticatedShell(
-              child: MainScreen(
-                chatService: newChatService,
-                authToken: prefs.getString('auth_token'),
-              ),
-            ),
-          ),
-        );
-      },
-      onNavigateToSignup: (loginContext) {
-        Navigator.push(
-          loginContext,
-          MaterialPageRoute(builder: (_) => SignupScreen()),
-        );
-      },
     );
   }
 }

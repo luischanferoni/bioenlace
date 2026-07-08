@@ -75,8 +75,8 @@ void main() {
 
       if (isLoggedIn) {
         final token = prefs.getString('auth_token')!;
-        final check = await StaffSessionAuth.checkBearerToken(token);
-        if (check == StaffSessionCheckResult.invalid) {
+        final check = await BearerSessionAuth.checkBearerToken(token);
+        if (check == BearerSessionCheckResult.invalid) {
           await PersonalsaludSessionPrefs.clearInvalidAuthSession();
           isLoggedIn = false;
           userId = '';

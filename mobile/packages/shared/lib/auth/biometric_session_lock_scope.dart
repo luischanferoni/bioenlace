@@ -18,12 +18,19 @@ class BiometricSessionLockScope extends StatefulWidget {
   /// Si retorna `false`, no se aplica bloqueo (p. ej. sin JWT persistido).
   final Future<bool> Function()? canApplyLock;
 
+  /// Tras desbloquear con huella, valida JWT. Si devuelve `false`, se llama [onSessionExpired].
+  final Future<bool> Function()? validateSessionOnUnlock;
+
+  final Future<void> Function()? onSessionExpired;
+
   const BiometricSessionLockScope({
     super.key,
     required this.child,
     required this.appTitle,
     this.requireUnlockEnabled = false,
     this.canApplyLock,
+    this.validateSessionOnUnlock,
+    this.onSessionExpired,
   });
 
   @override
@@ -116,6 +123,14 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
       if (!mounted) return;
 
       if (result['success'] == true) {
+        if (widget.validateSessionOnUnlock != null) {
+          final sessionOk = await widget.validateSessionOnUnlock!();
+          if (!sessionOk) {
+            setState(() => _authenticating = false);
+            await widget.onSessionExpired?.call();
+            return;
+          }
+        }
         await BiometricSessionPrefs.touchActivity();
         setState(() {
           _locked = false;

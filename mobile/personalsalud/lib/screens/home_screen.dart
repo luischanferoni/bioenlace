@@ -153,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
         );
         return;
       }
-      if (StaffSessionAuth.isAuthSessionError(e)) {
+      if (BearerSessionAuth.isAuthSessionError(e)) {
         await returnPersonalsaludToLogin(
           message: 'Tu sesión expiró. Ingresá de nuevo.',
         );

@@ -54,7 +54,11 @@ class _HomeScreenState extends State<HomeScreen> {
   String _lastListKind = '';
   bool _isLoading = true;
   String _errorMessage = '';
-  DateTime _fechaSeleccionada = DateTime.now();
+  DateTime _fechaSeleccionada = DateTime(
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
 
   String _encounterClass = 'AMB';
 
@@ -284,22 +288,25 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _cambiarFecha(int dias) {
     setState(() {
-      _fechaSeleccionada = _fechaSeleccionada.add(Duration(days: dias));
+      _fechaSeleccionada = _soloFecha(_fechaSeleccionada).add(Duration(days: dias));
     });
     _cargarListadoPacientes();
   }
 
   void _irAHoy() {
     setState(() {
-      _fechaSeleccionada = DateTime.now();
+      _fechaSeleccionada = _soloFecha(DateTime.now());
     });
     _cargarListadoPacientes();
   }
 
+  DateTime _soloFecha(DateTime fecha) =>
+      DateTime(fecha.year, fecha.month, fecha.day);
+
   String _formatearFechaAmigable(DateTime fecha) {
-    final hoy = DateTime.now();
-    final diferencia =
-        fecha.difference(DateTime(hoy.year, hoy.month, hoy.day)).inDays;
+    final hoy = _soloFecha(DateTime.now());
+    final f = _soloFecha(fecha);
+    final diferencia = f.difference(hoy).inDays;
     if (diferencia == 0) return 'Hoy';
     if (diferencia == 1) return 'Mañana';
     if (diferencia == -1) return 'Ayer';

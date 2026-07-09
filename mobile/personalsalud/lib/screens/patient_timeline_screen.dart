@@ -693,13 +693,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           if (result.text.trim().isNotEmpty) {
             _chatController.text = result.text.trim();
           }
-          final ok = DeviceSttLocalQuality.isAcceptable(
-            _chatController.text,
-            result,
-          );
-          _sttStatus = ok
-              ? 'Dictado listo. Revise y analice.'
-              : 'Calidad baja: use «Servidor» o corrija el texto.';
+          _sttStatus = _dictationStatusMessage(result, _chatController.text);
         });
       }
       return;
@@ -845,6 +839,58 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return msg;
   }
 
+  String _dictationStatusMessage(DeviceDictationResult result, String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      return 'No se detectó voz. Intente de nuevo o escriba la consulta.';
+    }
+    if (DeviceSttLocalQuality.isAcceptable(trimmed, result)) {
+      return 'Dictado listo. Revise y envíe.';
+    }
+    if (_sttConfig.serverEnabled) {
+      return 'Calidad baja. Corrija el texto, use «Transcribir en servidor» o envíe para reintentar con audio.';
+    }
+    return 'Calidad baja. Corrija el texto si hace falta y envíe.';
+  }
+
+  /// Solo envía metadatos STT cuando aportan; evita bloquear texto tipeado o corregido.
+  Future<({
+    Map<String, dynamic>? stt,
+    String? audioBase64,
+    bool sttForceServer,
+  })> _resolveSpeechPayloadForAnalyze(String text) async {
+    final last = _lastDictation;
+    if (last == null) {
+      return (stt: null, audioBase64: null, sttForceServer: false);
+    }
+
+    final dictationText = last.text.trim();
+    if (text != dictationText) {
+      return (stt: null, audioBase64: null, sttForceServer: false);
+    }
+
+    if (DeviceSttLocalQuality.isAcceptable(text, last)) {
+      return (
+        stt: last.toSttPayload(),
+        audioBase64: null,
+        sttForceServer: false,
+      );
+    }
+
+    if (_sttConfig.serverEnabled && _pendingAudioPath != null) {
+      final audioB64 = await _audioPathToBase64(_pendingAudioPath!);
+      if (audioB64 != null && audioB64.isNotEmpty) {
+        return (
+          stt: null,
+          audioBase64: audioB64,
+          sttForceServer: true,
+        );
+      }
+    }
+
+    return (stt: null, audioBase64: null, sttForceServer: false);
+  }
+
   Future<void> _analizarConsulta() async {
     final text = _chatController.text.trim();
     if (text.isEmpty) {
@@ -860,22 +906,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _sttStatus = 'Analizando…';
     });
     try {
-      Map<String, dynamic>? stt;
-      String? audioB64;
-      if (_lastDictation != null) {
-        stt = _lastDictation!.toSttPayload();
-        if (!DeviceSttLocalQuality.isAcceptable(text, _lastDictation!) &&
-            _pendingAudioPath != null) {
-          audioB64 = await _audioPathToBase64(_pendingAudioPath!);
-        }
-      }
+      final speech = await _resolveSpeechPayloadForAnalyze(text);
       final res = await _encounterApi.analizar(
         consulta: text,
         idPersona: widget.personaId,
         parent: widget.consultParent,
         parentId: widget.consultParentId,
-        stt: stt,
-        audioBase64: audioB64,
+        stt: speech.stt,
+        audioBase64: speech.audioBase64,
+        sttForceServer: speech.sttForceServer,
         userPerTabConfig: await _operationalContextForCapture(),
       );
       if (!mounted) return;

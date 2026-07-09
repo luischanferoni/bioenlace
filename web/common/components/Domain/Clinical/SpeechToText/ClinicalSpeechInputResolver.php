@@ -41,6 +41,12 @@ final class ClinicalSpeechInputResolver
             return self::fail('Falta el texto de la consulta o audio para transcribir.');
         }
 
+        if ($primaryText !== '' && !$forceServer && self::shouldEvaluateDevice($stt)) {
+            if ($consulta !== '' && $deviceText !== '' && $consulta !== $deviceText) {
+                return self::ok($primaryText, self::PROVENANCE_TEXT_ONLY, false, null);
+            }
+        }
+
         if ($primaryText !== '' && !$forceServer && !self::shouldEvaluateDevice($stt)) {
             return self::ok($primaryText, self::PROVENANCE_TEXT_ONLY, false, null);
         }
@@ -76,10 +82,13 @@ final class ClinicalSpeechInputResolver
                 );
             }
 
-            return self::fail(
-                'La transcripción del dispositivo no es confiable. Grabá de nuevo o use «Transcribir en servidor».',
-                $quality
-            );
+            Yii::info([
+                'provenance' => self::PROVENANCE_TEXT_ONLY,
+                'stt_quality_bypass' => true,
+                'quality' => $quality,
+            ], 'stt-routing');
+
+            return self::ok($primaryText, self::PROVENANCE_TEXT_ONLY, false, $quality);
         }
 
         if ($forceServer || ($primaryText === '' && !empty($audio))) {

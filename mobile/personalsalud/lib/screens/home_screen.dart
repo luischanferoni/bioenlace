@@ -316,7 +316,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Turno? _obtenerSiguienteTurno() {
     if (_turnos.isEmpty) return null;
     final ahora = nowProducto();
-    final turnosReales = _turnos.where((turno) => turno.id != 999999).toList();
+    final turnosReales = _turnos
+        .where((turno) => turno.id != 999999 && turno.estado == 'PENDIENTE')
+        .toList();
     if (turnosReales.isEmpty) return null;
     for (final turno in turnosReales) {
       final inicio = parseTurnoInicioProducto({

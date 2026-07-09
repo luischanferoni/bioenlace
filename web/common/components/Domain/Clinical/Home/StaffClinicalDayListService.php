@@ -19,6 +19,8 @@ use common\models\Scheduling\Turno;
 final class StaffClinicalDayListService
 {
     /**
+     * Turnos del día para agenda ambulatoria del profesional: pendientes y ya atendidos/en atención.
+     *
      * @return array{turnos: array<int, array<string, mixed>>, fecha: string, total: int}
      */
     public function turnosAmbulatorioMedico(
@@ -63,21 +65,23 @@ final class StaffClinicalDayListService
 
         $turnosQuery = Turno::findActive()
             ->andWhere(['fecha' => $fecha])
-            ->andWhere(['estado' => Turno::ESTADO_PENDIENTE])
-            ->andWhere(['is', 'atendido', null])
+            ->andWhere([
+                'or',
+                [
+                    'and',
+                    ['estado' => Turno::ESTADO_PENDIENTE],
+                    ['is', 'atendido', null],
+                ],
+                ['estado' => [Turno::ESTADO_ATENDIDO, Turno::ESTADO_EN_ATENCION]],
+            ])
             ->orderBy('hora');
 
-        if ($pesId > 0 && $idContextoProfesional > 0) {
-            $turnosQuery->andWhere([
-                'or',
-                ['id_profesional_efector_servicio' => $pesId],
-                ['id_profesional_efector_servicio' => $idContextoProfesional],
-            ]);
-        } elseif ($pesId > 0) {
-            $turnosQuery->andWhere(['id_profesional_efector_servicio' => $pesId]);
-        } elseif ($idContextoProfesional > 0 && $contextoProfesionalOk) {
-            $turnosQuery->andWhere(['id_profesional_efector_servicio' => $idContextoProfesional]);
-        }
+        $this->applyAmbulatorioProfesionalScope(
+            $turnosQuery,
+            $pesId,
+            $idContextoProfesional,
+            $contextoProfesionalOk
+        );
 
         $turnos = $turnosQuery->all();
         $motivosLookup = new EncounterAppointmentReasonLookupService();
@@ -85,39 +89,11 @@ final class StaffClinicalDayListService
 
         $formattedTurnos = [];
         foreach ($turnos as $turno) {
-            $paciente = $turno->paciente;
-            $servicioNombre = $turno->getNombreServicioParaDisplay();
-            $servicioObj = $turno->getServicioEmbebidoParaApi();
-            $encounterId = $motivosLookup->encounterIdParaTurno((int) $turno->id_turnos);
-            $pesTurno = (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null;
-            $row = [
-                'id' => $turno->id_turnos,
-                'id_persona' => $turno->id_persona,
-                'id_profesional_efector_servicio' => $pesTurno,
-                'paciente' => [
-                    'id' => $paciente ? $paciente->id_persona : null,
-                    'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
-                    'documento' => $paciente ? $paciente->documento : null,
-                ],
-                'fecha' => $turno->fecha,
-                'hora' => $turno->hora,
-                'servicio' => $servicioNombre,
-                'servicio_detalle' => $servicioObj,
-                'id_servicio_asignado' => $turno->id_servicio_asignado,
-                'estado' => $turno->estado,
-                'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
-                'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
-                'encounter_id' => $encounterId,
-                'id_consulta' => $encounterId,
-                'atendido' => $turno->atendido,
-                'created_at' => $turno->created_at,
-                'observaciones' => $turno->hasAttribute('observaciones') ? $turno->observaciones : null,
-            ];
-            $insight = $modalidadInsight->insightParaTurno($turno);
-            if ($insight !== null) {
-                $row['modalidad_insight'] = $insight;
-            }
-            $formattedTurnos[] = $row;
+            $formattedTurnos[] = $this->formatTurnoAmbulatorioRow(
+                $turno,
+                $motivosLookup,
+                $modalidadInsight
+            );
         }
 
         if ($agregarTurnoPruebaSiHoy && $fecha === date('Y-m-d')) {
@@ -232,5 +208,77 @@ final class StaffClinicalDayListService
         }
 
         return $out;
+    }
+
+    /**
+     * @param \yii\db\ActiveQuery $query
+     */
+    private function applyAmbulatorioProfesionalScope(
+        $query,
+        int $pesId,
+        int $idContextoProfesional,
+        bool $contextoProfesionalOk
+    ): void {
+        if ($pesId > 0 && $idContextoProfesional > 0) {
+            $query->andWhere([
+                'or',
+                ['id_profesional_efector_servicio' => $pesId],
+                ['id_profesional_efector_servicio' => $idContextoProfesional],
+            ]);
+
+            return;
+        }
+        if ($pesId > 0) {
+            $query->andWhere(['id_profesional_efector_servicio' => $pesId]);
+
+            return;
+        }
+        if ($idContextoProfesional > 0 && $contextoProfesionalOk) {
+            $query->andWhere(['id_profesional_efector_servicio' => $idContextoProfesional]);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function formatTurnoAmbulatorioRow(
+        Turno $turno,
+        EncounterAppointmentReasonLookupService $motivosLookup,
+        StaffTurnoModalidadInsightService $modalidadInsight
+    ): array {
+        $paciente = $turno->paciente;
+        $servicioNombre = $turno->getNombreServicioParaDisplay();
+        $servicioObj = $turno->getServicioEmbebidoParaApi();
+        $encounterId = $motivosLookup->encounterIdParaTurno((int) $turno->id_turnos);
+        $pesTurno = (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null;
+        $row = [
+            'id' => $turno->id_turnos,
+            'id_persona' => $turno->id_persona,
+            'id_profesional_efector_servicio' => $pesTurno,
+            'paciente' => [
+                'id' => $paciente ? $paciente->id_persona : null,
+                'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
+                'documento' => $paciente ? $paciente->documento : null,
+            ],
+            'fecha' => $turno->fecha,
+            'hora' => $turno->hora,
+            'servicio' => $servicioNombre,
+            'servicio_detalle' => $servicioObj,
+            'id_servicio_asignado' => $turno->id_servicio_asignado,
+            'estado' => $turno->estado,
+            'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+            'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
+            'encounter_id' => $encounterId,
+            'id_consulta' => $encounterId,
+            'atendido' => $turno->atendido,
+            'created_at' => $turno->created_at,
+            'observaciones' => $turno->hasAttribute('observaciones') ? $turno->observaciones : null,
+        ];
+        $insight = $modalidadInsight->insightParaTurno($turno);
+        if ($insight !== null) {
+            $row['modalidad_insight'] = $insight;
+        }
+
+        return $row;
     }
 }

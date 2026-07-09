@@ -10,7 +10,9 @@ use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresent
 use common\components\Domain\Clinical\Workflow\ClinicalOperationalContextResolver;
 use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapService;
 use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
+use common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessor;
 use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
+use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
  * Análisis IA y persistencia de consultas (agnóstico de capa HTTP).
@@ -323,7 +325,13 @@ HTML;
             $resultado = $this->intentarAnalisisConIA($promptData['prompt'], $texto, $categorias);
 
             if ($resultado && !isset($resultado['error'])) {
-                return $resultado;
+                $normalizado = self::normalizeResultadoIa($resultado);
+
+                return (new EncounterCaptureExtractionPostProcessor())->apply(
+                    $normalizado,
+                    is_array($categorias) ? $categorias : [],
+                    (string) $texto
+                );
             }
 
             return [
@@ -511,7 +519,6 @@ HTML;
 
     private function generarPromptEspecializado($texto, $servicio, $categorias, ?int $subjectPersonaId = null)
     {
-        $categoriasTexto = $this->construirCategoriasTexto($categorias);
         $jsonEjemplo = $this->generarJsonEjemplo($categorias);
 
         if ($jsonEjemplo === false) {
@@ -526,20 +533,11 @@ HTML;
             );
         }
 
-        $prompt = "Extrae datos en JSON. Categorías: " . $categoriasTexto . ". Sin datos: [].
-
-IMPORTANTE: Genera un JSON completo y válido. Asegúrate de cerrar todas las llaves, corchetes y comillas.
-
-Formato:
-{\"datosExtraidos\":{\"categoria\":[\"valor\"]}}";
-
-        if ($patientBlock !== '') {
-            $prompt .= "\n\n" . $patientBlock;
-        }
-
-        $prompt .= "\n\nTexto: \"" . $texto . "\"
-
-Responde SOLO con el JSON, sin texto adicional antes o después.";
+        $prompt = ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt(
+            (string) $texto,
+            is_array($categorias) ? $categorias : [],
+            $patientBlock
+        );
 
         return [
             'prompt' => $prompt,
@@ -569,21 +567,5 @@ Responde SOLO con el JSON, sin texto adicional antes o después.";
         }
 
         return $jsonString;
-    }
-
-    private function construirCategoriasTexto($categorias)
-    {
-        $texto = '';
-        foreach ($categorias as $categoria) {
-            $camposRequeridos = '';
-
-            if (!empty($categoria['campos_requeridos'])) {
-                $camposRequeridos = ' con los siguientes subdatos: (' . implode(', ', $categoria['campos_requeridos']) . ')';
-            }
-
-            $texto .= "{$categoria['titulo']}$camposRequeridos, ";
-        }
-
-        return substr($texto, 0, -2);
     }
 }

@@ -62,3 +62,62 @@ llm_correction_confidence:
     - síntoma
     - enfermedad
   context_term_boost: 0.1
+
+# Léxico clínico reutilizable (patrones RE2/PCRE). Mantener alineado con
+# assistant/intent-classification-rules.yaml → vocab cuando aplique.
+clinical_lexicon:
+  narrative_framing: '(?iu)\b(refiere|vengo\s+por|consulta\s+por|desde\s+hace|presenta|paciente\s+con|me\s+siento|hace\s+\d+|desde\s+ayer|desde\s+hoy)\b'
+  subjective_complaint: '(?iu)\b(problema|dolor|duele|sintoma|síntoma|malestar|enfermo|fiebre|tos|nausea|náusea|vomito|vómito|mareo|hinchazon|hinchazón|presion|presión|chichon|chichón|golpe|hematoma|moreton|moretón|bulto|hinchado|inflamado|herida|sangra|sangrado|cefalea|astenia|disnea|prurito|cansancio|diarrea)\b'
+
+# Extracción IA en captura clínica (analizar encounter).
+# {@see ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt}
+# {@see EncounterCaptureExtractionPostProcessor}
+encounter_capture_extraction:
+  prompt_template: |
+    Extraé datos clínicos en JSON válido y completo (cerrá todas las llaves, corchetes y comillas).
+
+    {classification_rules}
+
+    Categorías (usá exactamente estos nombres como claves dentro de datosExtraidos):
+    {categories_block}
+
+    Reglas de formato:
+    - Sin datos para una categoría: [].
+    - No repitas el mismo dato en más de una categoría.
+    - Formato: {"datosExtraidos":{"nombre_categoria":["valor"]}}
+
+    {patient_context}
+
+    Texto clínico: "{clinical_text}"
+
+    Respondé SOLO con el JSON, sin texto adicional antes o después.
+  classification_rules_template: |
+    Reglas de clasificación (obligatorias):
+    - No dupliques un mismo dato en más de una categoría.
+    - Clasificá cada fragmento según la semántica de su categoría:
+    {category_semantics}
+    - Si el texto es un término o frase muy corta sin narrativa del paciente, aplicá esa semántica (diagnóstico/evolución ≠ queja/síntoma referido).
+  category_hints:
+    ConsultaMotivos: queja o síntoma referido por el paciente como motivo de la consulta
+    DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
+    ConsultaMedicamentos: medicación indicada o registrada en la consulta
+    ConsultaPracticas: prácticas, estudios o indicaciones solicitadas
+    ConsultaDerivaciones: derivación a otro servicio o profesional
+    ConsultaPracticasOftalmologia: práctica o procedimiento oftalmológico
+    ConsultaPracticasOftalmologiaEstudios: estudio oftalmológico solicitado o realizado
+    ConsultasRecetaLentes: receta o indicación de lentes
+    ConsultaOdontologiaPracticas: práctica odontológica
+    ConsultaOdontologiaDiagnosticos: diagnóstico odontológico
+    ConsultaOdontologiaEstados: estado dental o pieza
+    ConsultaRegimen: régimen o indicación de internación
+    ConsultaBalanceHidrico: balance hídrico
+  post_process:
+    motivo_model: ConsultaMotivos
+    diagnosis_models:
+      - DiagnosticoConsulta
+    relocate_isolated_terms:
+      enabled: true
+      max_words: 5
+      retain_if_lexicon_keys:
+        - narrative_framing
+        - subjective_complaint

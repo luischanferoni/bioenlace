@@ -84,6 +84,182 @@ final class ClinicalTextIaMetadata
         return $max > 0 ? $max : 8;
     }
 
+    /**
+     * @param list<array<string, mixed>> $categorias
+     */
+    public static function buildEncounterCaptureExtractionPrompt(
+        string $clinicalText,
+        array $categorias,
+        string $patientContext = ''
+    ): string {
+        $section = self::loadConfig()['encounter_capture_extraction'] ?? [];
+        if (!is_array($section)) {
+            $section = [];
+        }
+
+        $template = (string) ($section['prompt_template'] ?? '');
+        if ($template === '') {
+            return $clinicalText;
+        }
+
+        $rulesTemplate = (string) ($section['classification_rules_template'] ?? '');
+        if ($rulesTemplate === '') {
+            $rulesTemplate = (string) ($section['classification_rules'] ?? '');
+        }
+        $classificationRules = trim(str_replace(
+            '{category_semantics}',
+            self::buildEncounterCaptureCategorySemantics($categorias, $section),
+            $rulesTemplate
+        ));
+        $patientBlock = trim($patientContext) !== '' ? trim($patientContext) : '';
+
+        return str_replace(
+            ['{classification_rules}', '{categories_block}', '{patient_context}', '{clinical_text}'],
+            [
+                $classificationRules,
+                self::buildEncounterCaptureCategoriesBlock($categorias, $section),
+                $patientBlock,
+                trim($clinicalText),
+            ],
+            $template
+        );
+    }
+
+    /**
+     * @param list<array<string, mixed>> $categorias
+     * @param array<string, mixed> $section
+     */
+    public static function buildEncounterCaptureCategorySemantics(array $categorias, array $section): string
+    {
+        $hints = $section['category_hints'] ?? [];
+        if (!is_array($hints)) {
+            $hints = [];
+        }
+
+        $lines = [];
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            $titulo = trim((string) ($categoria['titulo'] ?? ''));
+            if ($titulo === '' || $titulo === 'Error') {
+                continue;
+            }
+            $modelo = (string) ($categoria['modelo'] ?? '');
+            $hint = isset($hints[$modelo]) && is_string($hints[$modelo]) ? trim($hints[$modelo]) : '';
+            if ($hint === '') {
+                continue;
+            }
+            $lines[] = '- "' . $titulo . '": ' . $hint;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @param list<array<string, mixed>> $categorias
+     * @param array<string, mixed> $section
+     */
+    public static function buildEncounterCaptureCategoriesBlock(array $categorias, array $section): string
+    {
+        $hints = $section['category_hints'] ?? [];
+        if (!is_array($hints)) {
+            $hints = [];
+        }
+
+        $lines = [];
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            $titulo = trim((string) ($categoria['titulo'] ?? ''));
+            if ($titulo === '' || $titulo === 'Error') {
+                continue;
+            }
+
+            $modelo = (string) ($categoria['modelo'] ?? '');
+            $hint = is_array($hints) && isset($hints[$modelo]) && is_string($hints[$modelo])
+                ? trim($hints[$modelo])
+                : '';
+
+            $campos = $categoria['campos_requeridos'] ?? [];
+            $subdatos = '';
+            if (is_array($campos) && $campos !== []) {
+                $subdatos = ' (subdatos: ' . implode(', ', $campos) . ')';
+            }
+
+            $line = '- "' . $titulo . '"';
+            if ($hint !== '') {
+                $line .= ': ' . $hint;
+            }
+            $line .= $subdatos;
+            $lines[] = $line;
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function encounterCaptureRelocateConfig(): array
+    {
+        $postProcess = self::encounterCapturePostProcessConfig();
+        $relocate = $postProcess['relocate_isolated_terms'] ?? [];
+        if (!is_array($relocate)) {
+            $relocate = [];
+        }
+
+        $defaults = [
+            'enabled' => ($postProcess['prefer_diagnosis_when_isolated_term'] ?? false) === true,
+            'motivo_model' => (string) ($postProcess['motivo_model'] ?? 'ConsultaMotivos'),
+            'diagnosis_models' => $postProcess['diagnosis_models'] ?? ['DiagnosticoConsulta'],
+            'max_words' => 5,
+            'retain_if_lexicon_keys' => ['narrative_framing', 'subjective_complaint'],
+        ];
+
+        return array_merge($defaults, $relocate);
+    }
+
+    public static function clinicalLexiconPattern(string $key): ?string
+    {
+        $lexicon = self::loadConfig()['clinical_lexicon'] ?? [];
+        if (!is_array($lexicon)) {
+            return null;
+        }
+
+        $pattern = $lexicon[$key] ?? null;
+
+        return is_string($pattern) && trim($pattern) !== '' ? trim($pattern) : null;
+    }
+
+    public static function textMatchesClinicalLexiconPattern(string $text, string $key): bool
+    {
+        $pattern = self::clinicalLexiconPattern($key);
+        if ($pattern === null || trim($text) === '') {
+            return false;
+        }
+
+        $result = @preg_match($pattern, $text);
+
+        return $result === 1;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function encounterCapturePostProcessConfig(): array
+    {
+        $section = self::loadConfig()['encounter_capture_extraction'] ?? [];
+        if (!is_array($section)) {
+            return [];
+        }
+
+        $postProcess = $section['post_process'] ?? [];
+
+        return is_array($postProcess) ? $postProcess : [];
+    }
+
     public static function llmConfidenceContextTerms(): array
     {
         $section = self::loadConfig()['llm_correction_confidence'] ?? [];

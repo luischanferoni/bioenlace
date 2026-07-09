@@ -32,4 +32,34 @@ class ClinicalTextIaMetadataTest extends Unit
     {
         $this->assertSame(0.0, MedicalLlmConfidenceService::contextBoost('texto neutro sin vocabulario'));
     }
+
+    public function testEncounterCapturePromptUsesDynamicCategorySemantics(): void
+    {
+        $categorias = [
+            ['titulo' => 'Motivos de consulta', 'modelo' => 'ConsultaMotivos'],
+            ['titulo' => 'Diagnóstico', 'modelo' => 'DiagnosticoConsulta'],
+        ];
+
+        $prompt = ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt('gripe', $categorias);
+
+        $this->assertStringContainsString('gripe', $prompt);
+        $this->assertStringContainsString('Motivos de consulta', $prompt);
+        $this->assertStringContainsString('Diagnóstico', $prompt);
+        $this->assertStringContainsString('queja o síntoma referido', $prompt);
+        $this->assertStringContainsString('diagnóstico, evolución o enfermedad', $prompt);
+        $this->assertStringNotContainsString('NO uses esta categoría para nombres de enfermedades', $prompt);
+    }
+
+    public function testClinicalLexiconMatchesNarrativeFraming(): void
+    {
+        $this->assertTrue(
+            ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern(
+                'Paciente refiere fiebre',
+                'narrative_framing'
+            )
+        );
+        $this->assertFalse(
+            ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern('gripe', 'narrative_framing')
+        );
+    }
 }

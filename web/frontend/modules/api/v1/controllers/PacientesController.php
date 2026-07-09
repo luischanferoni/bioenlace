@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackConfig;
 use common\components\Domain\Clinical\CareCohort\Service\CarePackEncounterStaffService;
+use common\components\Domain\Clinical\Presentation\EncounterStaffDocumentationViewService;
 use common\components\Domain\Clinical\Service\AppointmentReasonBatchService;
 use common\components\Domain\Clinical\Service\AppointmentReasonClinicalInsightsService;
 use common\components\Domain\Clinical\Service\AppointmentReasonWindowService;
@@ -140,6 +141,7 @@ class PacientesController extends BaseController
             'care_pack_cohorte' => $carePackCohorte,
             'care_cohort_habilitado' => CarePackConfig::isEnabled(),
             'turnos_con_encounter' => $motivosCtx['turnos_con_encounter'],
+            'documentacion_medico' => $motivosCtx['documentacion_medico'] ?? null,
             'historia_clinica' => [],
             'total_historia_clinica' => 0,
         ], 'OK');
@@ -341,6 +343,7 @@ class PacientesController extends BaseController
             'motivos_consulta' => $reason !== '' ? $reason : null,
             'motivos_consulta_paciente' => $motivosPaciente,
             'turnos_con_encounter' => $turnosConEncounter,
+            'documentacion_medico' => (new EncounterStaffDocumentationViewService())->buildForEncounter($encounter),
             'http_error' => null,
         ];
     }

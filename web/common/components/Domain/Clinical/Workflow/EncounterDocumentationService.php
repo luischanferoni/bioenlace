@@ -153,6 +153,7 @@ class EncounterDocumentationService extends Component
                 $encounter = $this->resolveEncounter($encounterId, $body, $paciente, $configuracion);
                 $this->persistExtractedData($encounter, $configuracion, $datosExtraidos);
                 EncounterAutomaticCodingService::codeAndPersistForEncounter($encounter, $datosExtraidos, $configuracion);
+                $encounter = $this->lifecycle->onCaptureDocumented($encounter);
 
                 $tx->commit();
 

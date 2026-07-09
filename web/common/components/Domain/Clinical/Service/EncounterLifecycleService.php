@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\CareCohort\Service\CareEncounterOrchestrat
 use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundEnqueueService;
 use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryPublishService;
 use common\components\Domain\Clinical\Workflow\ClinicalOperationalContextResolver;
+use common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
@@ -82,6 +83,53 @@ final class EncounterLifecycleService
         (new CarePlanLifecycleService(null, $this))->onEncounterClose($encounter, $carePlanOptions);
 
         return $encounter;
+    }
+
+    /**
+     * Tras guardar documentación clínica: finaliza encounter y marca turno atendido si aplica.
+     */
+    public function onCaptureDocumented(Encounter $encounter): Encounter
+    {
+        if (trim((string) ($encounter->status ?? '')) !== EncounterStatus::FINISHED) {
+            $encounter = $this->finalize($encounter);
+        }
+
+        $this->syncAppointmentAttendedFromEncounter($encounter);
+
+        return $encounter;
+    }
+
+    private function syncAppointmentAttendedFromEncounter(Encounter $encounter): void
+    {
+        $turnoId = (int) ($encounter->appointment_id ?? 0);
+        if ($turnoId <= 0 && strtoupper(trim((string) ($encounter->parent_type ?? ''))) === Encounter::PARENT_TURNO) {
+            $turnoId = (int) ($encounter->parent_id ?? 0);
+        }
+        if ($turnoId <= 0) {
+            return;
+        }
+
+        $turno = Turno::findOne($turnoId);
+        if ($turno === null) {
+            return;
+        }
+
+        if ($turno->estado === Turno::ESTADO_ATENDIDO) {
+            return;
+        }
+
+        $turno->estado = Turno::ESTADO_ATENDIDO;
+        $turno->atendido = Turno::ATENDIDO_SI;
+        if (!$turno->save(false, ['estado', 'atendido', 'updated_at', 'updated_by'])) {
+            Yii::warning(
+                'No se pudo marcar turno ' . $turnoId . ' como atendido: ' . json_encode($turno->getErrors()),
+                __METHOD__
+            );
+
+            return;
+        }
+
+        TurnoFhirOutboundNotifier::afterEstadoChangedById($turnoId);
     }
 
     public function resolveSubjectPersonaId(array $body): ?int

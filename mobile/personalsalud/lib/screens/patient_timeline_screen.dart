@@ -19,6 +19,9 @@ class PatientTimelineScreen extends StatefulWidget {
   /// true = solo ver historia clínica (sin formulario); false = barra para escribir notas
   final bool soloVer;
 
+  /// Vista mínima para consultas ya cargadas (solo paciente + datos del médico).
+  final bool resumenConsultaCargada;
+
   /// Contexto de consulta (ej. `CIRUGIA`, `TURNO`) alineado con web / `validarPermisoAtencion`.
   final String? consultParent;
   final int? consultParentId;
@@ -28,6 +31,7 @@ class PatientTimelineScreen extends StatefulWidget {
     required this.personaId,
     this.authToken,
     this.soloVer = true,
+    this.resumenConsultaCargada = false,
     this.consultParent,
     this.consultParentId,
   }) : super(key: key);
@@ -66,10 +70,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   bool get _enRevisionCaptura => _captureReview != null;
   bool get _mostrarBarraConsulta =>
-      !widget.soloVer ||
-      (widget.consultParent != null &&
-          widget.consultParent!.isNotEmpty &&
-          widget.consultParentId != null);
+      !widget.resumenConsultaCargada &&
+      (!widget.soloVer ||
+          (widget.consultParent != null &&
+              widget.consultParent!.isNotEmpty &&
+              widget.consultParentId != null));
 
   @override
   void initState() {
@@ -148,7 +153,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final tokens = context.bio;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: const BioAppBar(title: 'Historia clínica'),
+      appBar: BioAppBar(
+        title: widget.resumenConsultaCargada
+            ? 'Consulta cargada'
+            : 'Historia clínica',
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _errorMessage.isNotEmpty
@@ -188,39 +197,46 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               children: [
                                 _buildPacienteHeader(
                                     _historiaClinicaData!.persona),
-                                BioSpacing.gapH(BioSpacing.md),
-                                _buildInformacionMedica(
-                                    _historiaClinicaData!.informacionMedica),
-                                BioSpacing.gapH(BioSpacing.md),
-                                _buildSignosVitales(
-                                    _historiaClinicaData!.signosVitales),
-                                BioSpacing.gapH(BioSpacing.md),
-                                if (_historiaClinicaData!
-                                        .motivosConsultaPaciente.motivosIntake
-                                        ?.tieneContenido ==
-                                    true) ...[
-                                  _buildMotivosIntake(
-                                    _historiaClinicaData!
-                                        .motivosConsultaPaciente.motivosIntake!,
+                                if (widget.resumenConsultaCargada) ...[
+                                  BioSpacing.gapH(BioSpacing.md),
+                                  _buildDocumentacionMedico(
+                                    _historiaClinicaData!.documentacionMedico,
                                   ),
+                                ] else ...[
                                   BioSpacing.gapH(BioSpacing.md),
-                                ],
-                                _buildMotivosConsulta(_historiaClinicaData!),
-                                if (_historiaClinicaData!.carePackCohorte
-                                        ?.tieneContenido ==
-                                    true) ...[
+                                  _buildInformacionMedica(
+                                      _historiaClinicaData!.informacionMedica),
                                   BioSpacing.gapH(BioSpacing.md),
-                                  _buildCarePackCohorte(
-                                    _historiaClinicaData!.carePackCohorte!,
-                                  ),
-                                ],
-                                if (_isAnalyzing) ...[
+                                  _buildSignosVitales(
+                                      _historiaClinicaData!.signosVitales),
                                   BioSpacing.gapH(BioSpacing.md),
-                                  _buildAnalyzingCard(),
-                                ],
-                                if (_captureReview != null) ...[
-                                  BioSpacing.gapH(BioSpacing.md),
-                                  _buildCaptureReviewPanel(_captureReview!),
+                                  if (_historiaClinicaData!
+                                          .motivosConsultaPaciente.motivosIntake
+                                          ?.tieneContenido ==
+                                      true) ...[
+                                    _buildMotivosIntake(
+                                      _historiaClinicaData!
+                                          .motivosConsultaPaciente.motivosIntake!,
+                                    ),
+                                    BioSpacing.gapH(BioSpacing.md),
+                                  ],
+                                  _buildMotivosConsulta(_historiaClinicaData!),
+                                  if (_historiaClinicaData!.carePackCohorte
+                                          ?.tieneContenido ==
+                                      true) ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildCarePackCohorte(
+                                      _historiaClinicaData!.carePackCohorte!,
+                                    ),
+                                  ],
+                                  if (_isAnalyzing) ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildAnalyzingCard(),
+                                  ],
+                                  if (_captureReview != null) ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildCaptureReviewPanel(_captureReview!),
+                                  ],
                                 ],
                               ],
                             ),
@@ -243,8 +259,42 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           Expanded(
             child: Text(persona.nombreCompleto, style: BioTypography.h3),
           ),
-          if (persona.edad != null)
+          if (!widget.resumenConsultaCargada && persona.edad != null)
             Text('${persona.edad} años', style: BioTypography.title),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentacionMedico(DocumentacionMedico doc) {
+    return BioCard.intent(
+      intent: UiIntent.success,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Datos cargados', style: BioTypography.title),
+          BioSpacing.gapH(BioSpacing.md),
+          if (!doc.tieneDatos || doc.secciones.isEmpty)
+            Text('Sin datos registrados en esta consulta.', style: BioTypography.bodySm)
+          else
+            ...doc.secciones.map(
+              (seccion) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(seccion.titulo, style: BioTypography.overline),
+                    BioSpacing.gapH(BioSpacing.xs),
+                    ...seccion.items.map(
+                      (item) => Padding(
+                        padding: const EdgeInsets.only(bottom: BioSpacing.xs),
+                        child: Text(item, style: BioTypography.body),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -1047,8 +1097,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       if (!mounted) return;
       _snack('Consulta guardada', UiIntent.success);
       _clearCaptureDraft();
-      _chatFocusNode.unfocus();
-      await _cargarHistoriaClinica();
+      Navigator.of(context).pop(true);
     } catch (e) {
       _snack('Error al guardar: ${_mensajeErrorCaptura(e)}', UiIntent.danger);
     } finally {

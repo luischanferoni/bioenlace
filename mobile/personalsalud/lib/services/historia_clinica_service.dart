@@ -557,6 +557,62 @@ class CarePackCohorteStaff {
   }
 }
 
+class DocumentacionMedicoSeccion {
+  final String titulo;
+  final List<String> items;
+
+  const DocumentacionMedicoSeccion({
+    required this.titulo,
+    required this.items,
+  });
+
+  factory DocumentacionMedicoSeccion.fromJson(Map<String, dynamic> json) {
+    final raw = json['items'];
+    return DocumentacionMedicoSeccion(
+      titulo: json['titulo']?.toString() ?? '',
+      items: raw is List
+          ? raw.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList()
+          : const [],
+    );
+  }
+}
+
+class DocumentacionMedico {
+  final int encounterId;
+  final bool tieneDatos;
+  final List<DocumentacionMedicoSeccion> secciones;
+
+  const DocumentacionMedico({
+    required this.encounterId,
+    required this.tieneDatos,
+    required this.secciones,
+  });
+
+  factory DocumentacionMedico.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return const DocumentacionMedico(
+        encounterId: 0,
+        tieneDatos: false,
+        secciones: [],
+      );
+    }
+    final raw = json['secciones'];
+    return DocumentacionMedico(
+      encounterId: int.tryParse(json['encounter_id']?.toString() ?? '') ?? 0,
+      tieneDatos: json['tiene_datos'] == true,
+      secciones: raw is List
+          ? raw
+              .whereType<Map>()
+              .map((e) => DocumentacionMedicoSeccion.fromJson(
+                    Map<String, dynamic>.from(e),
+                  ))
+              .where((s) => s.titulo.isNotEmpty && s.items.isNotEmpty)
+              .toList()
+          : const [],
+    );
+  }
+}
+
 class HistoriaClinicaResponse {
   final PersonaData persona;
   final InformacionMedica informacionMedica;
@@ -564,6 +620,7 @@ class HistoriaClinicaResponse {
   final MotivosConsultaPaciente motivosConsultaPaciente;
   final CarePackCohorteStaff? carePackCohorte;
   final bool careCohortHabilitado;
+  final DocumentacionMedico documentacionMedico;
   final List<TimelineEvent> historiaClinica;
   final int totalHistoriaClinica;
 
@@ -574,6 +631,7 @@ class HistoriaClinicaResponse {
     required this.motivosConsultaPaciente,
     this.carePackCohorte,
     this.careCohortHabilitado = false,
+    required this.documentacionMedico,
     required this.historiaClinica,
     required this.totalHistoriaClinica,
   });
@@ -608,6 +666,9 @@ class HistoriaClinicaResponse {
             )
           : null,
       careCohortHabilitado: json['care_cohort_habilitado'] == true,
+      documentacionMedico: DocumentacionMedico.fromJson(
+        json['documentacion_medico'] as Map<String, dynamic>?,
+      ),
       historiaClinica: rawList
               ?.map((e) => TimelineEvent.fromJson(e as Map<String, dynamic>))
               .toList() ??

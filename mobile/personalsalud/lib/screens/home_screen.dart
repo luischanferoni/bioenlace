@@ -569,7 +569,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: maxCardWidth),
-                    child: _buildTurnoCard(t),
+                    child: _buildTurnoCard(t, resumenConsultaCargada: false),
                   ),
                 ),
               )),
@@ -584,7 +584,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: maxCardWidth),
-                    child: _buildTurnoCard(t),
+                    child: _buildTurnoCard(t, resumenConsultaCargada: true),
                   ),
                 ),
               )),
@@ -903,8 +903,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final primary = IntentPalette.of(UiIntent.primary).base;
     return BioCard.intent(
       intent: UiIntent.primary,
-      onTap: () =>
-          _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
+      onTap: () => _verHistoriaClinica(
+        turno.idPersona,
+        parent: 'TURNO',
+        parentId: turno.id,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -943,13 +946,18 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTurnoCard(Turno turno) {
+  Widget _buildTurnoCard(Turno turno, {bool resumenConsultaCargada = false}) {
     final tokens = context.bio;
     final primary = IntentPalette.of(UiIntent.primary).base;
     final estadoIntent = _intentEstado(turno.estado);
+    void openTimeline() => _verHistoriaClinica(
+          turno.idPersona,
+          parent: 'TURNO',
+          parentId: turno.id,
+          resumenConsultaCargada: resumenConsultaCargada,
+        );
     return BioCard(
-      onTap: () =>
-          _verHistoriaClinica(turno.idPersona, parent: 'TURNO', parentId: turno.id),
+      onTap: openTimeline,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -985,14 +993,10 @@ class _HomeScreenState extends State<HomeScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: BioButton.outlinePrimary(
-              label: 'Historia clínica',
+              label: resumenConsultaCargada ? 'Ver consulta' : 'Historia clínica',
               icon: Icons.medical_services_outlined,
               size: BioButtonSize.sm,
-              onPressed: () => _verHistoriaClinica(
-                turno.idPersona,
-                parent: 'TURNO',
-                parentId: turno.id,
-              ),
+              onPressed: openTimeline,
             ),
           ),
           // tokens used for layout consistency
@@ -1027,19 +1031,28 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _verHistoriaClinica(int personaId, {String? parent, int? parentId}) {
-    Navigator.push(
+  Future<void> _verHistoriaClinica(
+    int personaId, {
+    String? parent,
+    int? parentId,
+    bool resumenConsultaCargada = false,
+  }) async {
+    final refreshed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => PatientTimelineScreen(
           personaId: personaId,
           authToken: widget.authToken,
-          soloVer: parent == null,
+          soloVer: resumenConsultaCargada || parent == null,
+          resumenConsultaCargada: resumenConsultaCargada,
           consultParent: parent,
           consultParentId: parentId,
         ),
       ),
     );
+    if (refreshed == true && mounted) {
+      await _cargarListadoPacientes(silent: true);
+    }
   }
 
   void _verHistoriaClinicaCirugia(CirugiaAgendaItem c) {

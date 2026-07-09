@@ -97,6 +97,9 @@ class EncounterDocumentationService extends Component
     {
         try {
             $idConfiguracion = $body['id_configuracion'] ?? null;
+            if (is_string($idConfiguracion) && trim($idConfiguracion) !== '') {
+                $idConfiguracion = (int) $idConfiguracion;
+            }
             $idPersona = $this->lifecycle->resolveSubjectPersonaId($body);
             $datosExtraidos = $body['datosExtraidos'] ?? [];
             if (is_string($datosExtraidos)) {
@@ -118,18 +121,17 @@ class EncounterDocumentationService extends Component
             }
 
             if (!$idConfiguracion) {
-                [$idPes, $idServicio, $encounterClass] = ClinicalOperationalContextResolver::resolve($body);
-                if ($idServicio && $encounterClass) {
-                    [, , , $idConfiguracion] = EncounterDefinition::getUrlPorServicioYEncounterClass(
-                        $idServicio,
-                        $encounterClass
-                    );
+                $definition = (new EncounterDefinitionBootstrapService())->resolveFromCaptureBody(
+                    $body,
+                    $idPersona
+                );
+                if ($definition !== null) {
+                    $idConfiguracion = $definition->id;
                 }
-                unset($idPes);
             }
 
             if (!$idConfiguracion || !$idPersona) {
-                return $this->error(400, 'Faltan id_configuracion e id_persona (o subject_persona_id).', [
+                return $this->error(400, $this->missingCaptureContextMessage($idConfiguracion, $idPersona), [
                     'id_configuracion' => $idConfiguracion ? 'ok' : 'falta',
                     'id_persona' => $idPersona ? 'ok' : 'falta',
                 ]);
@@ -415,5 +417,21 @@ class EncounterDocumentationService extends Component
             'message' => $message,
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * @param int|string|null $idConfiguracion
+     */
+    private function missingCaptureContextMessage($idConfiguracion, ?int $idPersona): string
+    {
+        $parts = [];
+        if (!$idConfiguracion) {
+            $parts[] = 'id_configuracion (definición de encounter para el servicio)';
+        }
+        if (!$idPersona) {
+            $parts[] = 'id_persona o subject_persona_id';
+        }
+
+        return 'Faltan datos de contexto para guardar: ' . implode(' y ', $parts) . '.';
     }
 }

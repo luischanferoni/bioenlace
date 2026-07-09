@@ -8,6 +8,7 @@ use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Workflow\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapService;
 use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
 
@@ -26,6 +27,15 @@ class ConsultaProcesamientoService extends Component
                 2
             );
             $idConfiguracion = $body['id_configuracion'] ?? null;
+            if (!$idConfiguracion) {
+                $bootstrapped = (new EncounterDefinitionBootstrapService())->resolveFromCaptureBody(
+                    $body,
+                    PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body)
+                );
+                if ($bootstrapped !== null) {
+                    $idConfiguracion = $bootstrapped->id;
+                }
+            }
 
             $speech = ClinicalSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
             if (empty($speech['ok'])) {
@@ -207,6 +217,12 @@ HTML;
                 $tieneDatosFaltantes
             );
 
+            $subjectPersonaId = PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body);
+            $definition = (new EncounterDefinitionBootstrapService())->resolveFromCaptureBody(
+                $body,
+                $subjectPersonaId
+            );
+
             $resultado = [
                 'success' => true,
                 'datos' => $datos,
@@ -223,6 +239,12 @@ HTML;
                 'tiene_datos_faltantes' => $tieneDatosFaltantes,
                 'categorias' => $categorias,
             ];
+            if ($definition !== null) {
+                $resultado['id_configuracion'] = $definition->id;
+            }
+            if ($subjectPersonaId !== null && $subjectPersonaId > 0) {
+                $resultado['id_persona'] = $subjectPersonaId;
+            }
 
             $logger->finalizar($resultado);
 

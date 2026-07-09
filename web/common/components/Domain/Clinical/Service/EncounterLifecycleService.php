@@ -86,11 +86,18 @@ final class EncounterLifecycleService
 
     public function resolveSubjectPersonaId(array $body): ?int
     {
-        if (!empty($body['id_persona'])) {
-            return (int) $body['id_persona'];
-        }
-        if (!empty($body['subject_persona_id'])) {
-            return (int) $body['subject_persona_id'];
+        foreach (['id_persona', 'subject_persona_id'] as $key) {
+            if (!array_key_exists($key, $body)) {
+                continue;
+            }
+            $raw = $body[$key];
+            if ($raw === null || $raw === '') {
+                continue;
+            }
+            $id = (int) $raw;
+            if ($id > 0) {
+                return $id;
+            }
         }
 
         $fromParent = ClinicalOperationalContextResolver::resolveSubjectPersonaIdFromParent($body);
@@ -98,9 +105,42 @@ final class EncounterLifecycleService
             return $fromParent;
         }
 
+        $fromEncounter = $this->resolveSubjectPersonaIdFromLinkedEncounter($body);
+        if ($fromEncounter !== null && $fromEncounter > 0) {
+            return $fromEncounter;
+        }
+
         $idPersona = Yii::$app->user->getIdPersona();
         if ($idPersona) {
             return (int) $idPersona;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function resolveSubjectPersonaIdFromLinkedEncounter(array $body): ?int
+    {
+        $encounterId = (int) ($body['encounter_id'] ?? $body['id_consulta'] ?? 0);
+        if ($encounterId > 0) {
+            $encounter = Encounter::findOne($encounterId);
+            if ($encounter !== null && (int) $encounter->subject_persona_id > 0) {
+                return (int) $encounter->subject_persona_id;
+            }
+        }
+
+        $parent = strtoupper(trim((string) ($body['parent'] ?? '')));
+        $parentId = (int) ($body['parent_id'] ?? 0);
+        if ($parent === Encounter::PARENT_TURNO && $parentId > 0) {
+            $encounter = Encounter::find()
+                ->where(['appointment_id' => $parentId, 'deleted_at' => null])
+                ->orderBy(['id' => SORT_DESC])
+                ->one();
+            if ($encounter !== null && (int) $encounter->subject_persona_id > 0) {
+                return (int) $encounter->subject_persona_id;
+            }
         }
 
         return null;

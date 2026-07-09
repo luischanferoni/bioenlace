@@ -7,6 +7,7 @@ use common\components\Platform\Core\Db\BioenlaceDb;
 use yii\httpclient\Client;
 use common\components\Domain\Clinical\Legacy\ConsultaLogger;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
+use common\components\Platform\Infra\Requests\RequestDeduplicator;
 use common\components\Domain\Clinical\Text\MedicalLlmConfidenceService;
 use common\components\Domain\Terminology\Snomed\SnomedContextualPromptBuilder;
 

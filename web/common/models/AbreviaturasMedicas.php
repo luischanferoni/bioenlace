@@ -115,7 +115,7 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
         }
         
         // Logging usando ConsultaLogger si está disponible
-        $logger = \common\components\Logging\ConsultaLogger::obtenerInstancia();
+        $logger = \common\components\Domain\Clinical\Legacy\ConsultaLogger::obtenerInstancia();
         
         // Listar abreviaturas cargadas para debugging
         $listaAbreviaturas = [];
@@ -266,7 +266,7 @@ class AbreviaturasMedicas extends \yii\db\ActiveRecord
         }
         
         // Logging usando ConsultaLogger si está disponible
-        $logger = \common\components\Logging\ConsultaLogger::obtenerInstancia();
+        $logger = \common\components\Domain\Clinical\Legacy\ConsultaLogger::obtenerInstancia();
         
         // Listar abreviaturas cargadas para debugging
         $listaAbreviaturas = [];

@@ -8,7 +8,6 @@ use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
-use common\components\Logging\ConsultaLogger;
 
 /**
  * AnÃ¡lisis IA y persistencia de consultas (agnÃ³stico de capa HTTP).

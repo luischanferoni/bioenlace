@@ -5,7 +5,7 @@ namespace common\components\Ai;
 use Yii;
 use common\components\Platform\Core\Db\BioenlaceDb;
 use yii\httpclient\Client;
-use common\components\Logging\ConsultaLogger;
+use common\components\Domain\Clinical\Legacy\ConsultaLogger;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
 use common\components\Domain\Clinical\Text\MedicalLlmConfidenceService;
 use common\components\Domain\Terminology\Snomed\SnomedContextualPromptBuilder;

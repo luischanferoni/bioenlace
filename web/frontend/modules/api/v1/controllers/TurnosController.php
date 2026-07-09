@@ -2015,6 +2015,8 @@ class TurnosController extends BaseController
             }
         }
 
+        $model->hydrateLegacyIdsFromProfesionalEfectorServicioIfNeeded();
+
         if (!$model->save()) {
             throw new BadRequestHttpException('No se pudo guardar el turno.');
         }

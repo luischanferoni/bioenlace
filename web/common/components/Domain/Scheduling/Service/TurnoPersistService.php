@@ -62,7 +62,11 @@ class TurnoPersistService
 
         $this->assertTeleconsultaNuevoTurno($model);
 
-        if (!$model->id_efector && $ctx->idEfectorSesion) {
+        if (
+            !$model->id_efector
+            && $ctx->idEfectorSesion
+            && (int) ($model->id_profesional_efector_servicio ?? 0) <= 0
+        ) {
             $model->id_efector = $ctx->idEfectorSesion;
         }
 

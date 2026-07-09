@@ -211,10 +211,31 @@ class Turno extends \yii\db\ActiveRecord
     }
 
     /**
-     * Reservado; las columnas antiguas en `turnos` fueron retiradas (solo PES).
+     * Sincroniza id_efector e id_servicio desde el PES (fuente de verdad operativa).
      */
     public function hydrateLegacyIdsFromProfesionalEfectorServicioIfNeeded(): void
     {
+        $idPes = (int) ($this->id_profesional_efector_servicio ?? 0);
+        if ($idPes <= 0) {
+            return;
+        }
+
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+        if ($pes === null) {
+            return;
+        }
+
+        if ((int) $pes->id_efector > 0) {
+            $this->id_efector = (int) $pes->id_efector;
+        }
+        if ((int) $pes->id_servicio > 0) {
+            if ((int) ($this->id_servicio_asignado ?? 0) <= 0) {
+                $this->id_servicio_asignado = (int) $pes->id_servicio;
+            }
+            if ((int) ($this->id_servicio ?? 0) <= 0) {
+                $this->id_servicio = (int) $pes->id_servicio;
+            }
+        }
     }
 
     /**

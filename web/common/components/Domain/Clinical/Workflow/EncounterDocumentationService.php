@@ -12,6 +12,7 @@ use common\components\Domain\Clinical\Specialty\Inpatient\InpatientEncounterAuxS
 use common\components\Domain\Clinical\Specialty\Odontology\OdontologyEncounterService;
 use common\components\Domain\Clinical\Specialty\Ophthalmology\OphthalmologyEncounterService;
 use common\components\Domain\Clinical\Legacy\ConsultaProcesamientoService;
+use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\Condition;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
@@ -98,7 +99,23 @@ class EncounterDocumentationService extends Component
             $idConfiguracion = $body['id_configuracion'] ?? null;
             $idPersona = $this->lifecycle->resolveSubjectPersonaId($body);
             $datosExtraidos = $body['datosExtraidos'] ?? [];
+            if (is_string($datosExtraidos)) {
+                $decoded = json_decode($datosExtraidos, true);
+                $datosExtraidos = is_array($decoded) ? $decoded : [];
+            }
             $encounterId = $body['encounter_id'] ?? $body['id_consulta'] ?? null;
+
+            $blockingError = EncounterCaptureReviewPresenter::blockingErrorFromExtraidos($datosExtraidos);
+            if ($blockingError !== null) {
+                $message = trim((string) ($blockingError['texto'] ?? ''));
+                if ($message === '') {
+                    $message = 'No se puede guardar: el análisis tiene errores.';
+                }
+
+                return $this->error(400, $message, [
+                    'tipo' => $blockingError['tipo'] ?? 'error_sistema',
+                ]);
+            }
 
             if (!$idConfiguracion) {
                 $idServicio = Yii::$app->user->getServicioActual();

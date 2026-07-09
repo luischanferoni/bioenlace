@@ -13,15 +13,20 @@ use yii\helpers\Html;
 <div class="analysis-results">
     <h6 class="text-dark mb-3">Análisis de la Consulta:</h6>
     
-    <?php if (isset($datos['datosExtraidos']['Error']) && $datos['datosExtraidos']['Error']['tipo'] === 'error_sistema'): ?>
-        <!-- Mostrar error del sistema -->
+    <?php
+    $errorAnalisis = $datos['Error'] ?? ($datos['datosExtraidos']['Error'] ?? null);
+    $tiposErrorBloqueantes = ['error_sistema', 'error_ia', 'error_configuracion'];
+    $tipoError = is_array($errorAnalisis) ? (string) ($errorAnalisis['tipo'] ?? '') : '';
+    ?>
+    <?php if (is_array($errorAnalisis) && in_array($tipoError, $tiposErrorBloqueantes, true)): ?>
+        <!-- Mostrar error del sistema / IA -->
         <div class="alert alert-danger" role="alert">
             <h6 class="alert-heading">
                 <i class="bi bi-exclamation-triangle-fill"></i> Error en el Procesamiento
             </h6>
-            <p class="mb-0"><?= Html::encode($datos['datosExtraidos']['Error']['texto']) ?></p>
+            <p class="mb-0"><?= Html::encode($errorAnalisis['texto'] ?? '') ?></p>
             <hr>
-            <p class="mb-0"><strong>Recomendación:</strong> <?= Html::encode($datos['datosExtraidos']['Error']['detalle']) ?></p>
+            <p class="mb-0"><strong>Recomendación:</strong> <?= Html::encode($errorAnalisis['detalle'] ?? '') ?></p>
         </div>
 
     <?php elseif (!empty($categorias)): ?>

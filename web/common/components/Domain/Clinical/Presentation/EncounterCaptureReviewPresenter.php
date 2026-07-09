@@ -30,14 +30,42 @@ final class EncounterCaptureReviewPresenter
             }
         }
 
+        $puedeConfirmar = $systemError === null
+            && trim($textoOriginal) !== ''
+            && !($tieneDatosFaltantes && $defaultStaged === []);
+
         return [
             'version' => 1,
             'texto_original' => $textoOriginal,
             'texto_procesado' => $textoProcesado,
             'tiene_datos_faltantes' => $tieneDatosFaltantes,
             'system_error' => $systemError,
+            'puede_confirmar' => $puedeConfirmar,
             'categories' => $categories,
             'default_staged_item_ids' => $defaultStaged,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $extraidos
+     * @return array{texto: string, detalle: string, tipo: string}|null
+     */
+    public static function blockingErrorFromExtraidos(array $extraidos): ?array
+    {
+        $err = $extraidos['Error'] ?? null;
+        if (!is_array($err)) {
+            return null;
+        }
+
+        $tipo = (string) ($err['tipo'] ?? '');
+        if (!in_array($tipo, ['error_sistema', 'error_ia', 'error_configuracion'], true)) {
+            return null;
+        }
+
+        return [
+            'texto' => (string) ($err['texto'] ?? ''),
+            'detalle' => (string) ($err['detalle'] ?? ''),
+            'tipo' => $tipo,
         ];
     }
 

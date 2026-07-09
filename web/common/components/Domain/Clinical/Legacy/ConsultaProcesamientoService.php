@@ -11,8 +11,8 @@ use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
 
 /**
- * AnÃ¡lisis IA y persistencia de consultas (agnÃ³stico de capa HTTP).
- * El controller API arma el body, llama aquÃ­ y aplica statusCode segÃºn __statusCode en la respuesta.
+ * Análisis IA y persistencia de consultas (agnóstico de capa HTTP).
+ * El controller API arma el body, llama aquí y aplica statusCode según __statusCode en la respuesta.
  */
 class ConsultaProcesamientoService extends Component
 {
@@ -52,7 +52,7 @@ class ConsultaProcesamientoService extends Component
                 return [
                     '__statusCode' => 400,
                     'success' => false,
-                    'message' => 'Servicio no encontrado. Por favor, verifique la configuraciÃ³n.',
+                    'message' => 'Servicio no encontrado. Por favor, verifique la configuración.',
                     'errors' => null,
                 ];
             }
@@ -115,7 +115,7 @@ class ConsultaProcesamientoService extends Component
             // } else {
 
             $logger->registrar(
-                'ANÃLISIS IA',
+                'ANÁLISIS IA',
                 $textoProcesado,
                 null,
                 ['metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA']
@@ -129,9 +129,9 @@ class ConsultaProcesamientoService extends Component
             );
 
             $logger->registrar(
-                'ANÃLISIS IA',
+                'ANÁLISIS IA',
                 null,
-                $resultadoIA ? 'AnÃ¡lisis completado' : 'Error en anÃ¡lisis',
+                $resultadoIA ? 'Análisis completado' : 'Error en análisis',
                 [
                     'metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA',
                     'categorias_extraidas' => $resultadoIA && isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0,
@@ -176,7 +176,7 @@ class ConsultaProcesamientoService extends Component
                     <div class="mt-2">
                         <small class="text-muted">
                             <i class="bi bi-info-circle me-1"></i>
-                            Las palabras subrayadas han sido corregidas automÃ¡ticamente
+                            Las palabras subrayadas han sido corregidas automáticamente
                         </small>
                     </div>
                 </div>
@@ -192,17 +192,20 @@ HTML;
                 $tieneDatosFaltantes = true;
             }
 
+            $captureReview = (new EncounterCaptureReviewPresenter())->build(
+                $datos,
+                $categorias,
+                $textoConsulta,
+                $textoProcesado,
+                $tieneDatosFaltantes
+            );
+
             $resultado = [
                 'success' => true,
                 'datos' => $datos,
                 'html' => $html,
-                'capture_review' => (new EncounterCaptureReviewPresenter())->build(
-                    $datos,
-                    $categorias,
-                    $textoConsulta,
-                    $textoProcesado,
-                    $tieneDatosFaltantes
-                ),
+                'capture_review' => $captureReview,
+                'puede_confirmar' => $captureReview['puede_confirmar'] ?? false,
                 'stt_provenance' => $speech['provenance'] ?? ClinicalSpeechInputResolver::PROVENANCE_TEXT_ONLY,
                 'stt_used_server' => !empty($speech['used_server_stt']),
                 'texto_original' => $textoConsulta,
@@ -233,7 +236,7 @@ HTML;
             return [
                 '__statusCode' => 500,
                 'success' => false,
-                'message' => 'OcurriÃ³ un error al procesar la consulta. Por favor, intente nuevamente en unos momentos. Si el problema persiste, contacte al soporte tÃ©cnico.',
+                'message' => 'Ocurrió un error al procesar la consulta. Por favor, intente nuevamente en unos momentos. Si el problema persiste, contacte al soporte técnico.',
                 'errors' => YII_DEBUG ? [
                     'error' => $e->getMessage(),
                     'file' => $e->getFile(),
@@ -255,7 +258,7 @@ HTML;
             return [
                 '__statusCode' => 500,
                 'success' => false,
-                'message' => 'OcurriÃ³ un error al guardar el encounter. Por favor, intente nuevamente.',
+                'message' => 'Ocurrió un error al guardar el encounter. Por favor, intente nuevamente.',
                 'errors' => YII_DEBUG ? [
                     'error' => $e->getMessage(),
                     'file' => $e->getFile(),
@@ -275,8 +278,8 @@ HTML;
                 return [
                     'datosExtraidos' => [
                         'Error' => [
-                            'texto' => 'Error en la configuraciÃ³n del sistema. Por favor, contacte al administrador.',
-                            'detalle' => 'No se pudo procesar la consulta debido a un error en la configuraciÃ³n.',
+                            'texto' => 'Error en la configuración del sistema. Por favor, contacte al administrador.',
+                            'detalle' => 'No se pudo procesar la consulta debido a un error en la configuración.',
                             'tipo' => 'error_configuracion',
                         ],
                     ],
@@ -303,8 +306,8 @@ HTML;
             return [
                 'datosExtraidos' => [
                     'Error' => [
-                        'texto' => 'OcurriÃ³ un error al procesar la consulta.',
-                        'detalle' => 'Por favor, intente nuevamente. Si el problema persiste, contacte al soporte tÃ©cnico.',
+                        'texto' => 'Ocurrió un error al procesar la consulta.',
+                        'detalle' => 'Por favor, intente nuevamente. Si el problema persiste, contacte al soporte técnico.',
                         'tipo' => 'error_sistema',
                     ],
                 ],
@@ -336,9 +339,9 @@ HTML;
 
                         if ($logger) {
                             $logger->registrar(
-                                'VALIDACIÃ“N',
+                                'VALIDACIÓN',
                                 null,
-                                "CategorÃ­a requerida faltante: {$categoria['titulo']}",
+                                "Categoría requerida faltante: {$categoria['titulo']}",
                                 [
                                     'metodo' => 'ConsultaProcesamientoService::generateAnalysisHtml',
                                     'tipo' => 'categoria_requerida_faltante',
@@ -355,9 +358,9 @@ HTML;
 
             if ($logger) {
                 $logger->registrar(
-                    'VALIDACIÃ“N',
+                    'VALIDACIÓN',
                     null,
-                    $tieneDatosFaltantes ? 'Se detectaron datos faltantes' : 'ValidaciÃ³n completada sin datos faltantes',
+                    $tieneDatosFaltantes ? 'Se detectaron datos faltantes' : 'Validación completada sin datos faltantes',
                     [
                         'metodo' => 'ConsultaProcesamientoService::generateAnalysisHtml',
                         'tiene_datos_faltantes' => $tieneDatosFaltantes,
@@ -412,9 +415,9 @@ HTML;
             );
         }
 
-        $prompt = "Extrae datos en JSON. CategorÃ­as: " . $categoriasTexto . ". Sin datos: [].
+        $prompt = "Extrae datos en JSON. Categorías: " . $categoriasTexto . ". Sin datos: [].
 
-IMPORTANTE: Genera un JSON completo y vÃ¡lido. AsegÃºrate de cerrar todas las llaves, corchetes y comillas.
+IMPORTANTE: Genera un JSON completo y válido. Asegúrate de cerrar todas las llaves, corchetes y comillas.
 
 Formato:
 {\"datosExtraidos\":{\"categoria\":[\"valor\"]}}";
@@ -425,7 +428,7 @@ Formato:
 
         $prompt .= "\n\nTexto: \"" . $texto . "\"
 
-Responde SOLO con el JSON, sin texto adicional antes o despuÃ©s.";
+Responde SOLO con el JSON, sin texto adicional antes o después.";
 
         return [
             'prompt' => $prompt,

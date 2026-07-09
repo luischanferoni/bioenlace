@@ -48,6 +48,7 @@ class EncounterCaptureReviewPresenterTest extends Unit
             ['Diagnósticos::0', 'Motivos de Consulta::0'],
             $review['default_staged_item_ids']
         );
+        $this->assertTrue($review['puede_confirmar']);
     }
 
     public function testBuildCaptureReviewWithSystemError(): void
@@ -69,6 +70,7 @@ class EncounterCaptureReviewPresenterTest extends Unit
             true
         );
 
+        $this->assertFalse($review['puede_confirmar']);
         $this->assertNotNull($review['system_error']);
         $this->assertSame('error_ia', $review['system_error']['tipo']);
         $this->assertSame([], $review['categories']);

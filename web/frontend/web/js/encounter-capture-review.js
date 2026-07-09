@@ -66,6 +66,12 @@
         if (!review) {
             return false;
         }
+        if (review.system_error) {
+            return false;
+        }
+        if (review.puede_confirmar === false) {
+            return false;
+        }
         var texto = (review.texto_original || '').trim();
         if (!texto) {
             return false;

@@ -1001,6 +1001,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _snack('Analizá la consulta antes de confirmar.', UiIntent.warning);
       return;
     }
+    if (review.systemError != null || !review.puedeConfirmar) {
+      _snack('No se puede guardar: el análisis tiene errores.', UiIntent.warning);
+      return;
+    }
     if (review.tieneDatosFaltantes && _stagedItemIds.isEmpty) {
       _snack('Faltan datos obligatorios en el análisis.', UiIntent.warning);
       return;
@@ -1181,6 +1185,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final review = _captureReview;
     final canConfirm = !_isSaving &&
         review != null &&
+        review.puedeConfirmar &&
+        review.systemError == null &&
         review.textoOriginal.trim().isNotEmpty &&
         !(review.tieneDatosFaltantes && _stagedItemIds.isEmpty);
 

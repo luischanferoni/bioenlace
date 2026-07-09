@@ -169,7 +169,14 @@
     };
 
     EncounterCaptureForm.prototype.updateConfirmState = function () {
-        if (!this.confirmBtn || !window.EncounterCaptureReview) {
+        if (!this.confirmBtn) {
+            return;
+        }
+        if (this.lastAnalysisPayload && this.lastAnalysisPayload.puede_confirmar === false) {
+            this.confirmBtn.disabled = true;
+            return;
+        }
+        if (!window.EncounterCaptureReview) {
             return;
         }
         var staged = window.EncounterCaptureReview.collectStagedIds(this.reviewRoot);
@@ -578,7 +585,8 @@
                         self.discardBtn.style.display = 'none';
                     }
                     if (self.confirmBtn) {
-                        self.confirmBtn.disabled = !!res.data.tiene_datos_faltantes;
+                        self.confirmBtn.disabled =
+                            res.data.puede_confirmar === false || !!res.data.tiene_datos_faltantes;
                     }
                 } else {
                     if (self.editBtn) {
@@ -669,6 +677,13 @@
         var datos = this.resolveDatosExtraidos();
         if (!this.lastAnalysisPayload || datos == null) {
             this.setStatus('Analice la consulta antes de confirmar.', 'warning');
+            return;
+        }
+        if (
+            this.lastAnalysisPayload &&
+            this.lastAnalysisPayload.puede_confirmar === false
+        ) {
+            this.setStatus('No se puede guardar: el análisis tiene errores.', 'warning');
             return;
         }
         if (

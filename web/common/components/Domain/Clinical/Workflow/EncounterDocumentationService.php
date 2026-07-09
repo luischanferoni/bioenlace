@@ -347,13 +347,16 @@ class EncounterDocumentationService extends Component
 
         foreach ($categorias as $categoria) {
             $modelo = $categoria['modelo'] ?? null;
-            if (!$modelo || !isset($datosExtraidos[$modelo])) {
+            if (!$modelo) {
+                continue;
+            }
+            $payload = $this->resolvePayloadForCategoria($datosExtraidos, $categoria);
+            if ($payload === null) {
                 continue;
             }
             if (!$this->specialtyRegistry->isModelAllowed($configuracion, $modelo)) {
                 continue;
             }
-            $payload = $datosExtraidos[$modelo];
 
             switch ($modelo) {
                 case 'DiagnosticoConsulta':
@@ -397,6 +400,25 @@ class EncounterDocumentationService extends Component
                     break;
             }
         }
+    }
+
+    /**
+     * @param array<string, mixed> $datosExtraidos
+     * @param array<string, mixed> $categoria
+     * @return mixed|null
+     */
+    private function resolvePayloadForCategoria(array $datosExtraidos, array $categoria)
+    {
+        $modelo = (string) ($categoria['modelo'] ?? '');
+        if ($modelo !== '' && array_key_exists($modelo, $datosExtraidos)) {
+            return $datosExtraidos[$modelo];
+        }
+        $titulo = trim((string) ($categoria['titulo'] ?? ''));
+        if ($titulo !== '' && array_key_exists($titulo, $datosExtraidos)) {
+            return $datosExtraidos[$titulo];
+        }
+
+        return null;
     }
 
     /**

@@ -23,6 +23,14 @@ class DiagnosticoPrevio extends DiagnosticoConsulta
     public $resolve;
     public $new_cclinical_status;
     public $new_cverification_status;
+
+    /**
+     * Lecturas vía {@see view_encounter_diagnostico} (legacy `diagnostico_consultas` o `clinical_condition`).
+     */
+    public static function tableName()
+    {
+        return 'view_encounter_diagnostico';
+    }
     
     
     public function attributeLabels()

@@ -143,7 +143,7 @@ class ConsultaProcesamientoService extends Component
             // Codificación CIE-10/SNOMED: al guardar encounter vía EncounterAutomaticCodingService (IA + persistencia).
 
             if ($resultadoIA) {
-                $datos = $resultadoIA;
+                $datos = self::normalizeResultadoIa($resultadoIA);
             } else {
                 $datos = [
                     'datosExtraidos' => [
@@ -158,7 +158,9 @@ class ConsultaProcesamientoService extends Component
 
             $sugerencias = [];
 
-            $htmlResult = $this->generateAnalysisHtml($datos['datosExtraidos'], $sugerencias, $categorias);
+            $extraidos = self::resolveDatosExtraidos($datos);
+
+            $htmlResult = $this->generateAnalysisHtml($extraidos, $sugerencias, $categorias);
             $html = $htmlResult['html'];
             $tieneDatosFaltantesHTML = $htmlResult['tieneDatosFaltantes'];
 
@@ -313,6 +315,83 @@ HTML;
                 ],
             ];
         }
+    }
+
+    private static function normalizeResultadoIa(mixed $resultadoIA): array
+    {
+        if (is_string($resultadoIA)) {
+            $decoded = json_decode(trim($resultadoIA), true);
+            if (is_array($decoded)) {
+                $resultadoIA = $decoded;
+            } else {
+                return [
+                    'datosExtraidos' => [
+                        'Error' => [
+                            'texto' => 'La IA devolvió una respuesta no estructurada.',
+                            'detalle' => 'Intente analizar nuevamente o revise el texto manualmente.',
+                            'tipo' => 'error_ia',
+                        ],
+                    ],
+                ];
+            }
+        }
+
+        if (!is_array($resultadoIA)) {
+            return [
+                'datosExtraidos' => [
+                    'Error' => [
+                        'texto' => 'No se pudo procesar la consulta con IA',
+                        'detalle' => 'Revisar manualmente la consulta',
+                        'tipo' => 'error_sistema',
+                    ],
+                ],
+            ];
+        }
+
+        if (isset($resultadoIA['datosExtraidos']) && is_array($resultadoIA['datosExtraidos'])) {
+            return $resultadoIA;
+        }
+
+        if (self::looksLikeExtraidosMap($resultadoIA)) {
+            return ['datosExtraidos' => $resultadoIA];
+        }
+
+        return $resultadoIA;
+    }
+
+    /**
+     * @param array<string, mixed> $datos
+     * @return array<string, mixed>
+     */
+    private static function resolveDatosExtraidos(array $datos): array
+    {
+        $extraidos = $datos['datosExtraidos'] ?? null;
+        if (is_array($extraidos)) {
+            return $extraidos;
+        }
+        if (is_string($extraidos)) {
+            $decoded = json_decode($extraidos, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return self::looksLikeExtraidosMap($datos) ? $datos : [];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function looksLikeExtraidosMap(array $data): bool
+    {
+        foreach (array_keys($data) as $key) {
+            if ($key === 'informacionFaltante' || $key === 'error') {
+                continue;
+            }
+            return true;
+        }
+
+        return false;
     }
 
     private function intentarAnalisisConIA($prompt, $texto, $categorias = [])

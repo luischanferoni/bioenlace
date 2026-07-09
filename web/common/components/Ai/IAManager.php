@@ -935,13 +935,15 @@ class IAManager
 
     /**
      * Método de instancia que delega a la implementación estática para compatibilidad.
+     *
      * @param string $prompt
      * @param string $contexto
-     * @return array|null
+     * @param string $tipoModelo text-generation | text-correction | analysis
+     * @return array|string|null
      */
-    public function consultar($prompt, $contexto = 'consulta-general')
+    public function consultar($prompt, $contexto = 'consulta-general', $tipoModelo = 'text-generation')
     {
-        return self::consultarIA($prompt, $contexto);
+        return self::consultarIA($prompt, $contexto, $tipoModelo);
     }
 
     /**

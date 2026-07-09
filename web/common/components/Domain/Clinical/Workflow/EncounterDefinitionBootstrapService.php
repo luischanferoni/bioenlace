@@ -63,9 +63,16 @@ final class EncounterDefinitionBootstrapService
      */
     public function resolveFromCaptureBody(array $body, ?int $subjectPersonaId): ?EncounterDefinition
     {
-        $fromEncounter = $this->resolveFromLinkedEncounter($body);
-        if ($fromEncounter !== null) {
-            return $fromEncounter;
+        $linkedEncounter = $this->findLinkedEncounter($body);
+        if (
+            $linkedEncounter !== null
+            && (int) $linkedEncounter->service_id > 0
+            && trim((string) $linkedEncounter->encounter_class) !== ''
+        ) {
+            return $this->ensureForServiceAndClass(
+                (int) $linkedEncounter->service_id,
+                (string) $linkedEncounter->encounter_class
+            );
         }
 
         $idServicio = null;
@@ -107,15 +114,20 @@ final class EncounterDefinitionBootstrapService
      */
     public function resolveLinkedEncounterFromBody(array $body): ?Encounter
     {
-        return $this->resolveFromLinkedEncounter($body);
+        return $this->findLinkedEncounter($body);
     }
 
     /**
      * @param array<string, mixed> $body
      */
-    private function resolveFromLinkedEncounter(array $body): ?EncounterDefinition
+    private function findLinkedEncounter(array $body): ?Encounter
     {
+        $idConfiguracion = (int) ($body['id_configuracion'] ?? 0);
         $encounterId = (int) ($body['encounter_id'] ?? $body['id_consulta'] ?? 0);
+        if ($encounterId > 0 && $idConfiguracion > 0 && $encounterId === $idConfiguracion) {
+            $encounterId = 0;
+        }
+
         $encounter = $encounterId > 0 ? Encounter::findOne($encounterId) : null;
 
         if ($encounter === null) {
@@ -129,17 +141,6 @@ final class EncounterDefinitionBootstrapService
             }
         }
 
-        if (
-            $encounter === null
-            || (int) $encounter->service_id <= 0
-            || trim((string) $encounter->encounter_class) === ''
-        ) {
-            return null;
-        }
-
-        return $this->ensureForServiceAndClass(
-            (int) $encounter->service_id,
-            (string) $encounter->encounter_class
-        );
+        return $encounter instanceof Encounter ? $encounter : null;
     }
 }

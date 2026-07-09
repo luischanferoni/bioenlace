@@ -10,40 +10,41 @@ final class GoogleAuth
     /**
      * Obtener token de acceso de Google Cloud (OAuth2).
      * Si hay API key configurada, no se requiere token.
-     *
-     * @return string
      */
-    public static function getAccessToken()
+    public static function getAccessToken(): string
     {
-        if (!empty(Yii::$app->params['google_cloud_api_key'] ?? '')) {
+        if (GoogleCloudConfigResolver::apiKey() !== '') {
             return '';
         }
 
-        $credentialsPath = Yii::$app->params['google_cloud_credentials_path'] ?? '';
-        if (empty($credentialsPath) || !file_exists($credentialsPath)) {
+        $credentialsPath = GoogleCloudConfigResolver::credentialsPath();
+        if ($credentialsPath === null) {
             Yii::warning(
-                'Google Cloud credentials no encontradas. Configure google_cloud_credentials_path o google_cloud_api_key en frontend/config/params-local.php',
+                'Google Cloud credentials no encontradas. Configure google_cloud_credentials_path o google_cloud_api_key en '
+                . GoogleCloudConfigResolver::PARAMS_HINT,
                 'ia-manager'
             );
             return '';
         }
 
-        $credentialsJson = file_get_contents($credentialsPath);
-        $credentials = json_decode($credentialsJson, true);
-        if (json_last_error() !== JSON_ERROR_NONE || !isset($credentials['private_key'])) {
-            Yii::error('Error leyendo credenciales de Google Cloud: ' . json_last_error_msg(), 'ia-manager');
+        $credentials = GoogleCloudConfigResolver::readCredentials();
+        if ($credentials === null || !isset($credentials['private_key'])) {
+            Yii::error(
+                'Error leyendo credenciales de Google Cloud en: ' . $credentialsPath,
+                'ia-manager'
+            );
             return '';
         }
 
         $cacheKey = 'google_oauth_token_' . md5($credentialsPath);
         $cachedToken = Yii::$app->cache->get($cacheKey);
         if ($cachedToken !== false) {
-            return $cachedToken;
+            return (string) $cachedToken;
         }
 
         $now = time();
         $jwt = self::createJwt($credentials, $now);
-        if (empty($jwt)) {
+        if ($jwt === '') {
             Yii::error('Error creando JWT para Google Cloud', 'ia-manager');
             return '';
         }
@@ -65,7 +66,7 @@ final class GoogleAuth
             if ($response->isOk) {
                 $tokenData = json_decode($response->content, true);
                 $accessToken = $tokenData['access_token'] ?? '';
-                if (!empty($accessToken)) {
+                if ($accessToken !== '') {
                     $expiresIn = ($tokenData['expires_in'] ?? 3600) - 600;
                     Yii::$app->cache->set($cacheKey, $accessToken, $expiresIn);
                     return $accessToken;
@@ -84,11 +85,9 @@ final class GoogleAuth
     }
 
     /**
-     * @param array $credentials
-     * @param int $now
-     * @return string
+     * @param array<string, mixed> $credentials
      */
-    private static function createJwt($credentials, $now)
+    private static function createJwt(array $credentials, int $now): string
     {
         if (!isset($credentials['private_key'], $credentials['client_email'])) {
             return '';
@@ -125,13 +124,8 @@ final class GoogleAuth
         return $signatureInput . '.' . $signatureEncoded;
     }
 
-    /**
-     * @param string $data
-     * @return string
-     */
-    private static function base64UrlEncode($data)
+    private static function base64UrlEncode(string $data): string
     {
         return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
     }
 }
-

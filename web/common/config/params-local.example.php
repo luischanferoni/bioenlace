@@ -8,7 +8,7 @@
  * Merge web/admin:
  *   common/params.php → ESTE → {frontend|admin}/params.php → {frontend|admin}/params-local.php
  *
- * Consola/cron NO lee este archivo → console/config/params-local.example.php
+ * Consola: common/params.php → ESTE → console/params.php → console/params-local.php
  */
 return [
     // --- API keys (IA, embeddings, STT servidor Groq/HF) ---

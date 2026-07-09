@@ -4,6 +4,7 @@ namespace common\components\Platform\Ai\Providers;
 
 use Yii;
 use common\components\Platform\Ai\Providers\Google\GoogleAuth;
+use common\components\Platform\Ai\Providers\Google\GoogleCloudConfigResolver;
 
 final class ProviderConfigFactory
 {
@@ -123,12 +124,12 @@ final class ProviderConfigFactory
 
     public static function google()
     {
-        $projectId = Yii::$app->params['google_cloud_project_id'] ?? '';
-        $location = Yii::$app->params['google_cloud_region'] ?? 'us-central1';
+        $projectId = GoogleCloudConfigResolver::projectId();
+        $location = GoogleCloudConfigResolver::region();
         $model = Yii::$app->params['vertex_ai_model'] ?? 'gemini-2.5-flash-lite';
 
-        $apiKey = Yii::$app->params['google_cloud_api_key'] ?? '';
-        $useGenerativeAi = !empty($apiKey);
+        $apiKey = GoogleCloudConfigResolver::apiKey();
+        $useGenerativeAi = $apiKey !== '';
 
         if ($useGenerativeAi) {
             $endpoint = "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent";
@@ -142,10 +143,11 @@ final class ProviderConfigFactory
             $endpoint .= "?key={$apiKey}";
         } else {
             $token = GoogleAuth::getAccessToken();
-            if (empty($token)) {
+            if ($token === '') {
                 Yii::error('No se pudo obtener token de Google Cloud. Verifique las credenciales configuradas.', 'ia-manager');
                 throw new \Exception(
-                    'Error de autenticación con Google Cloud: No se pudo obtener token OAuth2. Configure google_cloud_credentials_path o google_cloud_api_key en frontend/config/params-local.php'
+                    'Error de autenticación con Google Cloud: No se pudo obtener token OAuth2. Configure google_cloud_credentials_path o google_cloud_api_key en '
+                    . GoogleCloudConfigResolver::PARAMS_HINT
                 );
             }
             $headers['Authorization'] = 'Bearer ' . $token;

@@ -3,8 +3,8 @@
  * Secretos y overrides para consola/cron (yii …).
  *
  * Copiar a params-local.php (no commitear).
- * La consola NO mergea common/config ni frontend/config — repetir aquí
- * todo lo que usen los comandos (Vertex, clinical-history-exchange, etc.).
+ * La consola también mergea common/config/params-local.php (secretos compartidos).
+ * Repetir en ESTE archivo solo overrides exclusivos de cron.
  *
  * BD y componentes: console/config/main-local.php
  *

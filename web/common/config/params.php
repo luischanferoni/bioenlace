@@ -256,4 +256,14 @@ return [
      * {@see \common\components\Domain\Integrations\Mpi\MpiCapability}
      */
     'mpiCapabilities' => ['renaper', 'coberturas', 'domicilio'],
+
+    /**
+     * Vertex / Google Cloud — valores no secretos.
+     * API keys y JSON de cuenta de servicio: common/config/params-local.php
+     * (override opcional en frontend/config/params-local.php).
+     */
+    'google_cloud_project_id' => null,
+    'google_cloud_region' => 'us-central1',
+    'google_cloud_credentials_path' => null,
+    'google_cloud_api_key' => null,
 ];

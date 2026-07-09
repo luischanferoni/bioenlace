@@ -8,6 +8,8 @@ use yii\httpclient\Client;
 use common\components\Domain\Clinical\Legacy\ConsultaLogger;
 use common\components\Platform\Ai\HuggingFace\HuggingFaceRateLimiter;
 use common\components\Platform\Infra\Requests\RequestDeduplicator;
+use common\components\Platform\Ai\Providers\Google\GoogleAuth;
+use common\components\Platform\Ai\Providers\Google\GoogleCloudConfigResolver;
 use common\components\Domain\Clinical\Text\MedicalLlmConfidenceService;
 use common\components\Domain\Terminology\Snomed\SnomedContextualPromptBuilder;
 
@@ -225,13 +227,12 @@ class IAManager
      */
     private static function getConfiguracionGoogle()
     {
-        $projectId = Yii::$app->params['google_cloud_project_id'] ?? '';
-        $location = Yii::$app->params['google_cloud_region'] ?? 'us-central1';
+        $projectId = GoogleCloudConfigResolver::projectId();
+        $location = GoogleCloudConfigResolver::region();
         $model = Yii::$app->params['vertex_ai_model'] ?? 'gemini-2.5-flash-lite';
         
-        // Alternativa: usar Generative AI API (más simple, requiere API key)
-        $apiKey = Yii::$app->params['google_cloud_api_key'] ?? '';
-        $usarGenerativeAI = !empty($apiKey);
+        $apiKey = GoogleCloudConfigResolver::apiKey();
+        $usarGenerativeAI = $apiKey !== '';
         
         if ($usarGenerativeAI) {
             // Generative AI API (con API key) - endpoint público
@@ -250,10 +251,13 @@ class IAManager
             $endpoint .= "?key={$apiKey}";
         } else {
             // Para autenticación con cuenta de servicio, se requiere OAuth2 token
-            $token = self::obtenerTokenGoogle();
-            if (empty($token)) {
+            $token = GoogleAuth::getAccessToken();
+            if ($token === '') {
                 \Yii::error('No se pudo obtener token de Google Cloud. Verifique las credenciales configuradas.', 'ia-manager');
-                throw new \Exception('Error de autenticación con Google Cloud: No se pudo obtener token OAuth2. Configure google_cloud_credentials_path o google_cloud_api_key en frontend/config/params-local.php');
+                throw new \Exception(
+                    'Error de autenticación con Google Cloud: No se pudo obtener token OAuth2. Configure google_cloud_credentials_path o google_cloud_api_key en '
+                    . GoogleCloudConfigResolver::PARAMS_HINT
+                );
             }
             $headers['Authorization'] = 'Bearer ' . $token;
         }

@@ -3,8 +3,11 @@
 use yii\helpers\ArrayHelper;
 
 $paramsLocal = __DIR__ . '/params-local.php';
+$commonParamsLocal = __DIR__ . '/../../common/config/params-local.php';
 
 $params = ArrayHelper::merge(
+    require __DIR__ . '/../../common/config/params.php',
+    is_file($commonParamsLocal) ? require $commonParamsLocal : [],
     require __DIR__ . '/params.php',
     is_file($paramsLocal) ? require $paramsLocal : []
 );

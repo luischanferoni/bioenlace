@@ -120,10 +120,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Error al cargar historia clínica: ${e.toString()}';
+        _errorMessage = _mensajeErrorHistoriaClinica(e);
         _isLoading = false;
       });
     }
+  }
+
+  String _mensajeErrorHistoriaClinica(Object e) {
+    final raw = e is Exception ? e.toString() : '$e';
+    final msg = raw.startsWith('Exception: ')
+        ? raw.substring('Exception: '.length)
+        : raw;
+    return 'Error al cargar historia clínica: $msg';
   }
 
   @override

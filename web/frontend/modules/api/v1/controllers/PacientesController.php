@@ -200,19 +200,6 @@ class PacientesController extends BaseController
             )
             : [];
 
-        if ($idEfector > 0 && $turnosConEncounter === [] && $contextoExplicito) {
-            return [
-                'motivos_consulta' => null,
-                'motivos_consulta_paciente' => $emptyPaciente,
-                'turnos_con_encounter' => [],
-                'http_error' => $this->error(
-                    'No hay turnos con consulta asociada para este paciente en su efector.',
-                    null,
-                    403
-                ),
-            ];
-        }
-
         $encounter = null;
         $turno = null;
 
@@ -228,17 +215,28 @@ class PacientesController extends BaseController
                     'http_error' => $this->error('Turno no encontrado para este paciente.', null, 404),
                 ];
             }
-            $encounterId = $motivosLookup->encounterIdParaTurno($turnoIdParam);
-            if ($encounterId === null) {
+            if ($idEfector > 0 && (int) ($turno->id_efector ?? 0) > 0 && (int) $turno->id_efector !== $idEfector) {
                 return [
                     'motivos_consulta' => null,
                     'motivos_consulta_paciente' => $emptyPaciente,
                     'turnos_con_encounter' => $turnosConEncounter,
                     'http_error' => $this->error(
-                        'El turno no tiene encounter clínico asociado.',
+                        'El turno no pertenece al efector de su sesión.',
                         null,
-                        404
+                        403
                     ),
+                ];
+            }
+            $encounterId = $motivosLookup->encounterIdParaTurno($turnoIdParam);
+            if ($encounterId === null) {
+                return [
+                    'motivos_consulta' => null,
+                    'motivos_consulta_paciente' => array_merge($emptyPaciente, [
+                        'turno_id' => $turnoIdParam,
+                        'turno' => $this->formatTurnoMotivosContext($turno),
+                    ]),
+                    'turnos_con_encounter' => $turnosConEncounter,
+                    'http_error' => null,
                 ];
             }
             $encounter = Encounter::findOne($encounterId);

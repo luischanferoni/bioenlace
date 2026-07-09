@@ -3,7 +3,6 @@
 namespace common\components\Domain\Clinical\Workflow;
 
 use common\models\Clinical\Encounter;
-use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Servicio;
 use Yii;

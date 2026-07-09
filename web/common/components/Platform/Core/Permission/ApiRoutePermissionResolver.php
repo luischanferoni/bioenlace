@@ -8,6 +8,19 @@ namespace common\components\Platform\Core\Permission;
 final class ApiRoutePermissionResolver
 {
     /**
+     * Permisos RBAC alternativos para una ruta solicitada (mismo flujo de producto).
+     *
+     * @var array<string, list<string>>
+     */
+    private const ROUTE_ALTERNATE_PERMISSIONS = [
+        '/api/clinical/encounter/guardar' => [
+            '/api/clinical/encounter/analizar',
+            '/api/consulta/guardar',
+            '/api/consulta/analizar',
+        ],
+    ];
+
+    /**
      * Path HTTP de la petición (pathInfo) → ruta RBAC `/api/...` (sin segmento de versión).
      */
     public static function permissionRouteFromHttpPath(string $pathInfo): string
@@ -81,6 +94,12 @@ final class ApiRoutePermissionResolver
         foreach ($out as $c) {
             if (is_string($c) && $c !== '') {
                 $uniq[$c] = true;
+            }
+        }
+
+        foreach (self::ROUTE_ALTERNATE_PERMISSIONS[$route] ?? [] as $alternate) {
+            if ($alternate !== '') {
+                $uniq[$alternate] = true;
             }
         }
 

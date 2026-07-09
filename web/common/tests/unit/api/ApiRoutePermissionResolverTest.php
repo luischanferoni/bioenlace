@@ -60,4 +60,14 @@ final class ApiRoutePermissionResolverTest extends Unit
         $candidates = ApiRoutePermissionResolver::candidates('/api/listar/index');
         $this->assertSame(['/api/listar/index', '/api/listar'], $candidates);
     }
+
+    public function testCandidatesIncludeEncounterGuardarAlternates(): void
+    {
+        $candidates = ApiRoutePermissionResolver::candidates('/api/clinical/encounter/guardar');
+
+        $this->assertContains('/api/clinical/encounter/guardar', $candidates);
+        $this->assertContains('/api/clinical/encounter/analizar', $candidates);
+        $this->assertContains('/api/consulta/guardar', $candidates);
+        $this->assertContains('/api/consulta/analizar', $candidates);
+    }
 }

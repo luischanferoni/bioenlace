@@ -18,6 +18,7 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\DiagnosticoConsulta;
 use common\models\Person\Persona;
+use common\models\Scheduling\Turno;
 use Yii;
 use yii\base\Component;
 
@@ -106,7 +107,7 @@ class EncounterDocumentationService extends Component
                 $decoded = json_decode($datosExtraidos, true);
                 $datosExtraidos = is_array($decoded) ? $decoded : [];
             }
-            $encounterId = $body['encounter_id'] ?? $body['id_consulta'] ?? null;
+            $encounterId = $this->normalizeEncounterIdFromBody($body, $idConfiguracion);
 
             $blockingError = EncounterCaptureReviewPresenter::blockingErrorFromExtraidos($datosExtraidos);
             if ($blockingError !== null) {
@@ -182,22 +183,70 @@ class EncounterDocumentationService extends Component
         Persona $paciente,
         EncounterDefinition $configuracion
     ): Encounter {
-        if ($encounterId) {
+        $encounter = null;
+        if ($encounterId !== null && $encounterId > 0) {
             $encounter = Encounter::findOne($encounterId);
-            if (!$encounter) {
-                throw new \RuntimeException('Encounter no encontrado');
-            }
-            if (isset($body['texto_procesado']) || isset($body['observacion'])) {
-                $encounter->note = $body['texto_procesado'] ?? $body['observacion'];
-            }
-            if (isset($body['motivo_consulta'])) {
-                $encounter->reason_text = $body['motivo_consulta'];
-            }
-            $encounter->save(false);
-
-            return $encounter;
+        }
+        if ($encounter === null) {
+            $encounter = $this->resolveEncounterForParent($body, $paciente);
+        }
+        if ($encounter === null) {
+            $encounter = $this->createEncounterForCapture($body, $paciente);
         }
 
+        $this->applyCaptureTextToEncounter($encounter, $body);
+        if (!$encounter->save(false)) {
+            throw new \RuntimeException('No se pudo actualizar el encounter: ' . json_encode($encounter->getErrors()));
+        }
+
+        $this->assertEncounterPersisted($encounter);
+
+        return $encounter;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function resolveEncounterForParent(array $body, Persona $paciente): ?Encounter
+    {
+        $parent = strtoupper(trim((string) ($body['parent'] ?? '')));
+        $parentId = (int) ($body['parent_id'] ?? 0);
+        if ($parentId <= 0) {
+            return null;
+        }
+
+        if ($parent === Encounter::PARENT_TURNO) {
+            $turno = Turno::findOne($parentId);
+            if (
+                $turno !== null
+                && (int) $turno->id_persona === (int) $paciente->id_persona
+            ) {
+                return $this->lifecycle->ensureFromTurno($turno);
+            }
+        }
+
+        $existing = Encounter::find()
+            ->where([
+                'parent_id' => $parentId,
+                'subject_persona_id' => (int) $paciente->id_persona,
+                'deleted_at' => null,
+            ])
+            ->andWhere([
+                'or',
+                ['parent_type' => $parent],
+                ['parent_type' => Encounter::PARENT_CLASSES[$parent] ?? '__none__'],
+            ])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+
+        return $existing instanceof Encounter ? $existing : null;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function createEncounterForCapture(array $body, Persona $paciente): Encounter
+    {
         $encounterClass = ClinicalOperationalContextResolver::resolveEncounterClass($body);
         [$idPes, $idServicio] = array_slice(ClinicalOperationalContextResolver::resolve($body), 0, 2);
         $efectorId = Yii::$app->user->getIdEfector();
@@ -207,14 +256,12 @@ class EncounterDocumentationService extends Component
                 $efectorId = (int) $pes->id_efector;
             }
         }
-        $parentType = null;
-        $parentId = null;
-        if (!empty($body['parent']) && !empty($body['parent_id'])) {
-            $parentKey = $body['parent'];
-            if (!empty(Encounter::PARENT_CLASSES[$parentKey] ?? null)) {
-                $parentType = Encounter::PARENT_CLASSES[$parentKey];
-                $parentId = (int) $body['parent_id'];
-            }
+
+        $parentKey = strtoupper(trim((string) ($body['parent'] ?? '')));
+        $parentId = (int) ($body['parent_id'] ?? 0);
+        $appointmentId = null;
+        if ($parentKey === Encounter::PARENT_TURNO && $parentId > 0) {
+            $appointmentId = $parentId;
         }
 
         return $this->lifecycle->start([
@@ -222,13 +269,68 @@ class EncounterDocumentationService extends Component
             'encounter_class' => $encounterClass,
             'service_id' => $idServicio ?: Yii::$app->user->getServicioActual(),
             'efector_id' => $efectorId ?: null,
+            'appointment_id' => $appointmentId,
             'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : Yii::$app->user->getIdProfesionalEfectorServicio(),
-            'parent_type' => $parentType,
-            'parent_id' => $parentId,
+            'parent_type' => $parentKey !== '' ? $parentKey : null,
+            'parent_id' => $parentId > 0 ? $parentId : null,
             'reason_text' => $body['motivo_consulta'] ?? $body['consulta_inicial'] ?? $body['texto_original'] ?? null,
             'note' => $body['texto_procesado'] ?? $body['observacion'] ?? null,
             'workflow_step' => 0,
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function applyCaptureTextToEncounter(Encounter $encounter, array $body): void
+    {
+        if (isset($body['texto_procesado']) || isset($body['observacion'])) {
+            $encounter->note = $body['texto_procesado'] ?? $body['observacion'];
+        }
+        if (isset($body['motivo_consulta'])) {
+            $encounter->reason_text = $body['motivo_consulta'];
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function normalizeEncounterIdFromBody(array $body, $idConfiguracion): ?int
+    {
+        $candidates = [];
+        foreach (['encounter_id', 'id_consulta'] as $key) {
+            if (!array_key_exists($key, $body)) {
+                continue;
+            }
+            $raw = $body[$key];
+            if ($raw === null || $raw === '') {
+                continue;
+            }
+            $id = (int) $raw;
+            if ($id <= 0) {
+                continue;
+            }
+            if ($idConfiguracion !== null && (int) $idConfiguracion === $id) {
+                continue;
+            }
+            $candidates[] = $id;
+        }
+
+        foreach ($candidates as $id) {
+            if (Encounter::find()->where(['id' => $id])->exists()) {
+                return $id;
+            }
+        }
+
+        return null;
+    }
+
+    private function assertEncounterPersisted(Encounter $encounter): void
+    {
+        $id = (int) ($encounter->id ?? 0);
+        if ($id <= 0 || !Encounter::find()->where(['id' => $id])->exists()) {
+            throw new \RuntimeException('Encounter no persistido antes de guardar datos clínicos.');
+        }
     }
 
     /**
@@ -239,6 +341,7 @@ class EncounterDocumentationService extends Component
         EncounterDefinition $configuracion,
         array $datosExtraidos
     ): void {
+        $this->assertEncounterPersisted($encounter);
         $categorias = EncounterDefinition::getCategoriasParaPrompt($configuracion);
         $carePlan = null;
 

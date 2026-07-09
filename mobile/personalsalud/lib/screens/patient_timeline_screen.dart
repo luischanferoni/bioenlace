@@ -1019,6 +1019,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final idConfiguracion = _lastAnalysis!['id_configuracion'] is int
         ? _lastAnalysis!['id_configuracion'] as int
         : int.tryParse('${_lastAnalysis!['id_configuracion']}');
+    final encounterId = _lastAnalysis!['encounter_id'] is int
+        ? _lastAnalysis!['encounter_id'] as int
+        : int.tryParse(
+            '${_lastAnalysis!['encounter_id'] ?? _lastAnalysis!['id_consulta']}',
+          );
 
     setState(() => _isSaving = true);
     try {
@@ -1030,6 +1035,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         textoOriginal: textoOriginal,
         textoProcesado: textoProcesado,
         idConfiguracion: idConfiguracion,
+        encounterId: encounterId,
         userPerTabConfig: await _operationalContextForCapture(),
       );
       if (!mounted) return;

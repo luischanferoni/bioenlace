@@ -359,6 +359,15 @@ final class EncounterAutomaticCodingService
             return 0;
         }
 
+        if ($encounter->id <= 0 || !Encounter::find()->where(['id' => $encounter->id])->exists()) {
+            Yii::warning(
+                'EncounterAutomaticCodingService: encounter inexistente id=' . ($encounter->id ?? 'null'),
+                'encounter-codificacion-automatica'
+            );
+
+            return 0;
+        }
+
         $condition = new Condition();
         $condition->encounter_id = $encounter->id;
         $condition->subject_persona_id = $encounter->subject_persona_id;

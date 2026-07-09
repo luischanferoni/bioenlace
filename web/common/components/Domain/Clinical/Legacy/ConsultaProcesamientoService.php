@@ -245,6 +245,11 @@ HTML;
             if ($subjectPersonaId !== null && $subjectPersonaId > 0) {
                 $resultado['id_persona'] = $subjectPersonaId;
             }
+            $linkedEncounter = (new EncounterDefinitionBootstrapService())->resolveLinkedEncounterFromBody($body);
+            if ($linkedEncounter !== null) {
+                $resultado['encounter_id'] = $linkedEncounter->id;
+                $resultado['id_consulta'] = $linkedEncounter->id;
+            }
 
             $logger->finalizar($resultado);
 

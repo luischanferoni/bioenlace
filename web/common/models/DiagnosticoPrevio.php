@@ -31,6 +31,16 @@ class DiagnosticoPrevio extends DiagnosticoConsulta
     {
         return 'view_encounter_diagnostico';
     }
+
+    /**
+     * La vista no expone PK al schema de Yii; columna `id` viene de legacy o `clinical_condition.id`.
+     *
+     * @return list<string>
+     */
+    public static function primaryKey()
+    {
+        return ['id'];
+    }
     
     
     public function attributeLabels()

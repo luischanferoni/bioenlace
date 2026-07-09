@@ -6,12 +6,16 @@ use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
  * Ajusta la clasificación IA de captura clínica según reglas declarativas en metadata.
- *
- * Reubicación motivo → diagnóstico: solo término aislado estructuralmente equivalente al texto,
- * sin framing narrativo ni léxico de queja subjetiva ({@see ClinicalTextIaMetadata::clinicalLexiconPattern}).
  */
 final class EncounterCaptureExtractionPostProcessor
 {
+    private EncounterCaptureClinicalTermValidator $termValidator;
+
+    public function __construct(?EncounterCaptureClinicalTermValidator $termValidator = null)
+    {
+        $this->termValidator = $termValidator ?? new EncounterCaptureClinicalTermValidator();
+    }
+
     /**
      * @param array<string, mixed> $resultadoIA Respuesta normalizada con clave datosExtraidos
      * @param list<array<string, mixed>> $categorias
@@ -24,8 +28,76 @@ final class EncounterCaptureExtractionPostProcessor
             return $resultadoIA;
         }
 
-        $config = ClinicalTextIaMetadata::encounterCaptureRelocateConfig();
+        $resultadoIA['datosExtraidos'] = $this->filterNonClinicalExtractions(
+            $extraidos,
+            $categorias,
+            $clinicalText
+        );
+
+        $relocateConfig = ClinicalTextIaMetadata::encounterCaptureRelocateConfig();
+        if (($relocateConfig['enabled'] ?? false) !== true) {
+            return $resultadoIA;
+        }
+
+        return $this->relocateIsolatedDiagnosisTerms($resultadoIA, $categorias, $clinicalText, $relocateConfig);
+    }
+
+    /**
+     * @param array<string, mixed> $extraidos
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    private function filterNonClinicalExtractions(array $extraidos, array $categorias, string $clinicalText): array
+    {
+        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
         if (($config['enabled'] ?? false) !== true) {
+            return $extraidos;
+        }
+
+        $models = $config['category_models'] ?? ['ConsultaMotivos', 'DiagnosticoConsulta'];
+        if (!is_array($models)) {
+            $models = ['ConsultaMotivos', 'DiagnosticoConsulta'];
+        }
+
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            $modelo = (string) ($categoria['modelo'] ?? '');
+            if ($modelo === '' || !in_array($modelo, $models, true)) {
+                continue;
+            }
+            $titulo = trim((string) ($categoria['titulo'] ?? ''));
+            if ($titulo === '' || !isset($extraidos[$titulo]) || !is_array($extraidos[$titulo])) {
+                continue;
+            }
+
+            $filtered = [];
+            foreach ($extraidos[$titulo] as $item) {
+                if ($this->termValidator->isPlausibleExtraction($item, $clinicalText, $config)) {
+                    $filtered[] = $item;
+                }
+            }
+            $extraidos[$titulo] = $filtered;
+        }
+
+        return $extraidos;
+    }
+
+    /**
+     * @param array<string, mixed> $resultadoIA
+     * @param list<array<string, mixed>> $categorias
+     * @param array<string, mixed> $config
+     * @return array<string, mixed>
+     */
+    private function relocateIsolatedDiagnosisTerms(
+        array $resultadoIA,
+        array $categorias,
+        string $clinicalText,
+        array $config
+    ): array {
+        $extraidos = $resultadoIA['datosExtraidos'] ?? null;
+        if (!is_array($extraidos)) {
             return $resultadoIA;
         }
 
@@ -67,7 +139,13 @@ final class EncounterCaptureExtractionPostProcessor
      */
     private function shouldRelocateIsolatedTerm(string $clinicalText, array $motivoItems, array $config): bool
     {
-        if (!$this->clinicalTextMatchesSingleMotivoItem($clinicalText, $motivoItems)) {
+        if (count($motivoItems) !== 1) {
+            return false;
+        }
+
+        $item = $motivoItems[0];
+        $label = $this->itemLabel($item);
+        if ($label === '' || $this->normalizeText($clinicalText) !== $this->normalizeText($label)) {
             return false;
         }
 
@@ -76,38 +154,9 @@ final class EncounterCaptureExtractionPostProcessor
             return false;
         }
 
-        $retainKeys = $config['retain_if_lexicon_keys'] ?? [];
-        if (!is_array($retainKeys)) {
-            $retainKeys = [];
-        }
+        $filterConfig = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
 
-        foreach ($retainKeys as $key) {
-            if (!is_string($key) || trim($key) === '') {
-                continue;
-            }
-            if (ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern($clinicalText, trim($key))) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * @param list<string|array<string, mixed>> $motivoItems
-     */
-    private function clinicalTextMatchesSingleMotivoItem(string $clinicalText, array $motivoItems): bool
-    {
-        if (count($motivoItems) !== 1) {
-            return false;
-        }
-
-        $label = $this->itemLabel($motivoItems[0]);
-        if ($label === '') {
-            return false;
-        }
-
-        return $this->normalizeText($clinicalText) === $this->normalizeText($label);
+        return $this->termValidator->isPlausibleIsolatedDiagnosisCandidate($item, $clinicalText, $filterConfig);
     }
 
     private function normalizeText(string $text): string
@@ -122,12 +171,7 @@ final class EncounterCaptureExtractionPostProcessor
 
     private function wordCount(string $text): int
     {
-        $normalized = trim($text);
-        if ($normalized === '') {
-            return 0;
-        }
-
-        $words = preg_split('/\s+/u', $normalized, -1, PREG_SPLIT_NO_EMPTY);
+        $words = preg_split('/\s+/u', trim($text), -1, PREG_SPLIT_NO_EMPTY);
 
         return is_array($words) ? count($words) : 0;
     }

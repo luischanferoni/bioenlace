@@ -211,14 +211,34 @@ final class ClinicalTextIaMetadata
         }
 
         $defaults = [
-            'enabled' => ($postProcess['prefer_diagnosis_when_isolated_term'] ?? false) === true,
+            'enabled' => false,
             'motivo_model' => (string) ($postProcess['motivo_model'] ?? 'ConsultaMotivos'),
             'diagnosis_models' => $postProcess['diagnosis_models'] ?? ['DiagnosticoConsulta'],
             'max_words' => 5,
-            'retain_if_lexicon_keys' => ['narrative_framing', 'subjective_complaint'],
         ];
 
         return array_merge($defaults, $relocate);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public static function encounterCaptureFilterConfig(): array
+    {
+        $postProcess = self::encounterCapturePostProcessConfig();
+        $filter = $postProcess['filter_non_clinical_extractions'] ?? [];
+        if (!is_array($filter)) {
+            $filter = [];
+        }
+
+        $defaults = [
+            'enabled' => true,
+            'category_models' => ['ConsultaMotivos', 'DiagnosticoConsulta'],
+            'retain_if_lexicon_keys' => ['narrative_framing', 'subjective_complaint'],
+            'validate_terminology' => true,
+        ];
+
+        return array_merge($defaults, $filter);
     }
 
     public static function clinicalLexiconPattern(string $key): ?string

@@ -96,7 +96,8 @@ encounter_capture_extraction:
     - No dupliques un mismo dato en más de una categoría.
     - Clasificá cada fragmento según la semántica de su categoría:
     {category_semantics}
-    - Si el texto es un término o frase muy corta sin narrativa del paciente, aplicá esa semántica (diagnóstico/evolución ≠ queja/síntoma referido).
+    - Si el texto no tiene interpretación clínica (objetos cotidianos, palabras sin sentido médico, bromas, etc.), dejá todas las categorías en [].
+    - No inventes motivos de consulta ni diagnósticos que el texto no sustente clínicamente.
   category_hints:
     ConsultaMotivos: queja o síntoma referido por el paciente como motivo de la consulta
     DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
@@ -115,9 +116,15 @@ encounter_capture_extraction:
     motivo_model: ConsultaMotivos
     diagnosis_models:
       - DiagnosticoConsulta
-    relocate_isolated_terms:
+    filter_non_clinical_extractions:
       enabled: true
-      max_words: 5
+      category_models:
+        - ConsultaMotivos
+        - DiagnosticoConsulta
       retain_if_lexicon_keys:
         - narrative_framing
         - subjective_complaint
+      validate_terminology: true
+    relocate_isolated_terms:
+      enabled: true
+      max_words: 5

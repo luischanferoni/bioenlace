@@ -3,6 +3,7 @@
 namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
+use common\components\Domain\Clinical\Text\EncounterCaptureClinicalTermValidator;
 use common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessor;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
@@ -18,9 +19,33 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
         ClinicalTextIaMetadata::resetCacheForTests();
     }
 
+    public function testDiscardsNonClinicalIsolatedTerm(): void
+    {
+        $validator = $this->createMock(EncounterCaptureClinicalTermValidator::class);
+        $validator->method('isPlausibleExtraction')->willReturn(false);
+        $validator->method('isPlausibleIsolatedDiagnosisCandidate')->willReturn(false);
+
+        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $input = [
+            'datosExtraidos' => [
+                'Motivos de consulta' => ['pelota'],
+                'Diagnóstico' => [],
+            ],
+        ];
+
+        $out = $processor->apply($input, self::CATEGORIAS_AMB, 'pelota');
+
+        $this->assertSame([], $out['datosExtraidos']['Motivos de consulta']);
+        $this->assertSame([], $out['datosExtraidos']['Diagnóstico']);
+    }
+
     public function testMovesIsolatedDiseaseTermFromMotivoToDiagnostico(): void
     {
-        $processor = new EncounterCaptureExtractionPostProcessor();
+        $validator = $this->createMock(EncounterCaptureClinicalTermValidator::class);
+        $validator->method('isPlausibleExtraction')->willReturn(true);
+        $validator->method('isPlausibleIsolatedDiagnosisCandidate')->willReturn(true);
+
+        $processor = new EncounterCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['gripe'],
@@ -36,7 +61,11 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
 
     public function testKeepsMotivoWhenNarrativeFramingPresent(): void
     {
-        $processor = new EncounterCaptureExtractionPostProcessor();
+        $validator = $this->createMock(EncounterCaptureClinicalTermValidator::class);
+        $validator->method('isPlausibleExtraction')->willReturn(true);
+        $validator->method('isPlausibleIsolatedDiagnosisCandidate')->willReturn(false);
+
+        $processor = new EncounterCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['fiebre'],
@@ -56,7 +85,11 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
 
     public function testKeepsIsolatedSubjectiveComplaintInMotivo(): void
     {
-        $processor = new EncounterCaptureExtractionPostProcessor();
+        $validator = $this->createMock(EncounterCaptureClinicalTermValidator::class);
+        $validator->method('isPlausibleExtraction')->willReturn(true);
+        $validator->method('isPlausibleIsolatedDiagnosisCandidate')->willReturn(false);
+
+        $processor = new EncounterCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['fiebre'],
@@ -72,7 +105,11 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
 
     public function testDoesNotRelocateWhenTextExceedsMaxWords(): void
     {
-        $processor = new EncounterCaptureExtractionPostProcessor();
+        $validator = $this->createMock(EncounterCaptureClinicalTermValidator::class);
+        $validator->method('isPlausibleExtraction')->willReturn(true);
+        $validator->method('isPlausibleIsolatedDiagnosisCandidate')->willReturn(false);
+
+        $processor = new EncounterCaptureExtractionPostProcessor($validator);
         $clinicalText = 'cuadro compatible con gripe estacional sin complicaciones respiratorias';
         $input = [
             'datosExtraidos' => [
@@ -89,7 +126,11 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
 
     public function testDoesNotMoveWhenDiagnosticoAlreadyHasItems(): void
     {
-        $processor = new EncounterCaptureExtractionPostProcessor();
+        $validator = $this->createMock(EncounterCaptureClinicalTermValidator::class);
+        $validator->method('isPlausibleExtraction')->willReturn(true);
+        $validator->method('isPlausibleIsolatedDiagnosisCandidate')->willReturn(true);
+
+        $processor = new EncounterCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['gripe'],
@@ -105,7 +146,11 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
 
     public function testDoesNotRelocateMultipleMotivoItems(): void
     {
-        $processor = new EncounterCaptureExtractionPostProcessor();
+        $validator = $this->createMock(EncounterCaptureClinicalTermValidator::class);
+        $validator->method('isPlausibleExtraction')->willReturn(true);
+        $validator->method('isPlausibleIsolatedDiagnosisCandidate')->willReturn(true);
+
+        $processor = new EncounterCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
                 'Motivos de consulta' => ['gripe', 'fiebre'],

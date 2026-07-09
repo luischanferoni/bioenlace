@@ -68,11 +68,15 @@
         this.sttConfig = parseSttConfig(formEl);
         this.textarea = formEl.querySelector('#chat-input');
         this.analyzeBtn = formEl.querySelector('#analyze-consultation');
+        this.chatFormSection = formEl.querySelector('#chat-form');
+        this.analyzeSection = formEl.querySelector('#analyze-btn');
         this.responseEl = formEl.querySelector('#agent-response');
+        this.reviewRoot = formEl.querySelector('#capture-review-root');
         this.responseContent = formEl.querySelector('#response-content');
+        this.reviewActions = formEl.querySelector('#capture-review-actions');
+        this.editBtn = formEl.querySelector('#capture-edit-btn');
+        this.discardBtn = formEl.querySelector('#capture-discard-btn');
         this.confirmBtn = formEl.querySelector('#send-message');
-        this.confirmSection = formEl.querySelector('#confirm-section');
-        this.statusEl = formEl.querySelector('#encounter-stt-status');
 
         this.recognition = null;
         this.mediaRecorder = null;
@@ -82,6 +86,9 @@
         this.lastSttMeta = null;
         this.pendingAudioBlob = null;
         this.lastAnalysisPayload = null;
+        this.captureReview = null;
+        this.draftText = '';
+        this.inReview = false;
         this.initialTextOnListen = '';
         this.audioOnlyRecording = false;
 
@@ -103,6 +110,7 @@
 
     EncounterCaptureForm.prototype.bind = function () {
         var self = this;
+        this.statusEl = this.form.querySelector('#encounter-stt-status');
         var micBtn = this.form.querySelector('#encounter-dictate-btn');
         var serverBtn = this.form.querySelector('#encounter-stt-server-btn');
 
@@ -126,6 +134,16 @@
                 self.save();
             });
         }
+        if (this.editBtn) {
+            this.editBtn.addEventListener('click', function () {
+                self.editDraft();
+            });
+        }
+        if (this.discardBtn) {
+            this.discardBtn.addEventListener('click', function () {
+                self.discardDraft();
+            });
+        }
         if (this.textarea) {
             this.textarea.addEventListener('input', function () {
                 self.onTextEdited();
@@ -135,6 +153,119 @@
             this.setupRecognition();
         }
         this.applySttUiPolicy();
+    };
+
+    EncounterCaptureForm.prototype.setCaptureMode = function (reviewing) {
+        this.inReview = !!reviewing;
+        if (this.chatFormSection) {
+            this.chatFormSection.style.display = reviewing ? 'none' : '';
+        }
+        if (this.analyzeSection) {
+            this.analyzeSection.style.display = reviewing ? 'none' : '';
+        }
+        if (this.reviewActions) {
+            this.reviewActions.style.display = reviewing ? '' : 'none';
+        }
+    };
+
+    EncounterCaptureForm.prototype.updateConfirmState = function () {
+        if (!this.confirmBtn || !window.EncounterCaptureReview) {
+            return;
+        }
+        var staged = window.EncounterCaptureReview.collectStagedIds(this.reviewRoot);
+        var can =
+            this.captureReview &&
+            window.EncounterCaptureReview.canConfirm(this.captureReview, staged);
+        this.confirmBtn.disabled = !can;
+    };
+
+    EncounterCaptureForm.prototype.renderCaptureReview = function (data) {
+        var review = data.capture_review;
+        if (!review || !window.EncounterCaptureReview || !this.reviewRoot) {
+            return false;
+        }
+
+        this.captureReview = review;
+        var rendered = window.EncounterCaptureReview.render(review, {
+            textoFormateado: data.texto_formateado || null,
+        });
+        this.reviewRoot.innerHTML = rendered.html;
+        window.EncounterCaptureReview.bindItemToggles(
+            this.reviewRoot,
+            this.updateConfirmState.bind(this)
+        );
+
+        if (this.responseContent) {
+            this.responseContent.innerHTML = '';
+            this.responseContent.classList.add('d-none');
+            this.responseContent.setAttribute('aria-hidden', 'true');
+        }
+
+        this.updateConfirmState();
+        return true;
+    };
+
+    EncounterCaptureForm.prototype.renderLegacyHtml = function (html) {
+        if (!this.responseContent) {
+            return;
+        }
+        if (this.reviewRoot) {
+            this.reviewRoot.innerHTML = '';
+        }
+        this.captureReview = null;
+        this.responseContent.innerHTML = html || '';
+        this.responseContent.classList.remove('d-none');
+        this.responseContent.removeAttribute('aria-hidden');
+        if (this.confirmBtn) {
+            this.confirmBtn.disabled = false;
+        }
+    };
+
+    EncounterCaptureForm.prototype.discardDraft = function () {
+        this.lastAnalysisPayload = null;
+        this.captureReview = null;
+        this.draftText = '';
+        if (this.reviewRoot) {
+            this.reviewRoot.innerHTML = '';
+        }
+        if (this.responseContent) {
+            this.responseContent.innerHTML = '';
+            this.responseContent.classList.add('d-none');
+        }
+        if (this.responseEl) {
+            this.responseEl.style.display = 'none';
+        }
+        if (this.reviewActions) {
+            this.reviewActions.style.display = 'none';
+        }
+        if (this.editBtn) {
+            this.editBtn.style.display = '';
+        }
+        if (this.discardBtn) {
+            this.discardBtn.style.display = '';
+        }
+        if (this.textarea) {
+            this.textarea.value = '';
+        }
+        this.setCaptureMode(false);
+        this.setStatus('', 'muted');
+    };
+
+    EncounterCaptureForm.prototype.editDraft = function () {
+        if (this.textarea) {
+            this.textarea.value = this.draftText || '';
+            this.textarea.focus();
+        }
+        this.lastAnalysisPayload = null;
+        this.captureReview = null;
+        if (this.reviewRoot) {
+            this.reviewRoot.innerHTML = '';
+        }
+        if (this.responseEl) {
+            this.responseEl.style.display = 'none';
+        }
+        this.setCaptureMode(false);
+        this.setStatus('Editá el texto y volvé a analizar.', 'info');
     };
 
     EncounterCaptureForm.prototype.applySttUiPolicy = function () {
@@ -374,6 +505,9 @@
 
     EncounterCaptureForm.prototype.analyze = function () {
         var self = this;
+        if (this.inReview) {
+            return;
+        }
         var consulta = (this.textarea && this.textarea.value) ? this.textarea.value.trim() : '';
         if (!consulta) {
             this.setStatus('Escriba o dicte la consulta antes de analizar.', 'warning');
@@ -426,23 +560,37 @@
                     return;
                 }
                 self.lastAnalysisPayload = res.data;
+                self.draftText = consulta;
                 if (self.responseEl) {
                     self.responseEl.style.display = 'block';
                 }
-                if (self.responseContent) {
-                    self.responseContent.innerHTML = res.data.html || '';
+
+                var usedReview = self.renderCaptureReview(res.data);
+                if (!usedReview) {
+                    self.renderLegacyHtml(res.data.html || '');
+                    if (self.reviewActions) {
+                        self.reviewActions.style.display = '';
+                    }
+                    if (self.editBtn) {
+                        self.editBtn.style.display = 'none';
+                    }
+                    if (self.discardBtn) {
+                        self.discardBtn.style.display = 'none';
+                    }
+                    if (self.confirmBtn) {
+                        self.confirmBtn.disabled = !!res.data.tiene_datos_faltantes;
+                    }
+                } else {
+                    if (self.editBtn) {
+                        self.editBtn.style.display = '';
+                    }
+                    if (self.discardBtn) {
+                        self.discardBtn.style.display = '';
+                    }
+                    self.setCaptureMode(true);
                 }
-                if (self.confirmSection) {
-                    self.confirmSection.style.display = 'block';
-                }
-                if (self.confirmBtn) {
-                    self.confirmBtn.disabled = !!res.data.tiene_datos_faltantes;
-                }
-                var prov = res.data.stt_provenance || 'text_only';
-                self.setStatus(
-                    'Análisis listo (transcripción: ' + prov + '). Revise y confirme.',
-                    'success'
-                );
+
+                self.setStatus('Análisis listo. Revise y confirme el guardado.', 'success');
             })
             .catch(function () {
                 self.setStatus('Error de conexión al analizar.', 'danger');
@@ -503,22 +651,56 @@
             });
     };
 
+    EncounterCaptureForm.prototype.resolveDatosExtraidos = function () {
+        if (this.captureReview && window.EncounterCaptureReview && this.reviewRoot) {
+            var staged = window.EncounterCaptureReview.collectStagedIds(this.reviewRoot);
+            return window.EncounterCaptureReview.buildDatosExtraidos(this.captureReview, staged);
+        }
+        if (!this.lastAnalysisPayload || !this.lastAnalysisPayload.datos) {
+            return null;
+        }
+        return (
+            this.lastAnalysisPayload.datos.datosExtraidos || this.lastAnalysisPayload.datos
+        );
+    };
+
     EncounterCaptureForm.prototype.save = function () {
         var self = this;
-        if (!this.lastAnalysisPayload || !this.lastAnalysisPayload.datos) {
+        var datos = this.resolveDatosExtraidos();
+        if (!this.lastAnalysisPayload || datos == null) {
             this.setStatus('Analice la consulta antes de confirmar.', 'warning');
             return;
         }
+        if (
+            this.captureReview &&
+            window.EncounterCaptureReview &&
+            !window.EncounterCaptureReview.canConfirm(
+                this.captureReview,
+                window.EncounterCaptureReview.collectStagedIds(this.reviewRoot)
+            )
+        ) {
+            this.setStatus('Faltan datos obligatorios en el análisis.', 'warning');
+            return;
+        }
+
         var formData = new FormData(this.form);
-        var datos = this.lastAnalysisPayload.datos.datosExtraidos || this.lastAnalysisPayload.datos;
         formData.set('datosExtraidos', JSON.stringify(datos));
-        formData.set('texto_original', this.lastAnalysisPayload.texto_original || this.textarea.value);
-        formData.set('texto_procesado', this.lastAnalysisPayload.texto_procesado || this.textarea.value);
+        formData.set(
+            'texto_original',
+            this.lastAnalysisPayload.texto_original || this.draftText || this.textarea.value
+        );
+        formData.set(
+            'texto_procesado',
+            this.lastAnalysisPayload.texto_procesado ||
+                (this.captureReview && this.captureReview.texto_procesado) ||
+                this.textarea.value
+        );
         if (typeof window.appendPerTabToForm === 'function') {
             window.appendPerTabToForm(this.form);
         }
 
         this.confirmBtn.disabled = true;
+        this.setStatus('Guardando consulta…', 'primary');
         fetch(this.form.action, {
             method: 'POST',
             headers: window.BioenlaceApiClient.mergeHeaders({
@@ -534,14 +716,15 @@
             .then(function (data) {
                 if (data.success) {
                     self.setStatus(data.message || 'Consulta guardada.', 'success');
+                    self.discardDraft();
                 } else {
                     self.setStatus(data.message || 'Error al guardar.', 'danger');
-                    self.confirmBtn.disabled = false;
+                    self.updateConfirmState();
                 }
             })
             .catch(function () {
                 self.setStatus('Error de conexión al guardar.', 'danger');
-                self.confirmBtn.disabled = false;
+                self.updateConfirmState();
             });
     };
 

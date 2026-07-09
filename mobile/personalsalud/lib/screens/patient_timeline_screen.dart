@@ -7,6 +7,7 @@ import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/encounter_capture_analysis.dart';
 import '../models/timeline_event.dart';
 import '../services/historia_clinica_service.dart';
 import '../services/consulta_guardar_service.dart';
@@ -45,11 +46,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   HistoriaClinicaResponse? _historiaClinicaData;
   bool _isLoading = true;
   String _errorMessage = '';
-  bool _guardandoConsulta = false;
+  bool _isAnalyzing = false;
+  bool _isSaving = false;
   bool _dictating = false;
   String? _pendingAudioPath;
   DeviceDictationResult? _lastDictation;
   Map<String, dynamic>? _lastAnalysis;
+  EncounterCaptureAnalysis? _captureReview;
+  String? _draftText;
+  Set<String> _stagedItemIds = {};
   String _sttStatus = '';
   SttClientConfig _sttConfig = SttClientConfig.defaults;
   bool _audioOnlyRecording = false;
@@ -57,6 +62,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   final TextEditingController _chatController = TextEditingController();
   final FocusNode _chatFocusNode = FocusNode();
 
+  bool get _captureBusy => _isAnalyzing || _isSaving;
+
+  bool get _enRevisionCaptura => _captureReview != null;
   bool get _mostrarBarraConsulta =>
       !widget.soloVer ||
       (widget.consultParent != null &&
@@ -206,11 +214,21 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                     _historiaClinicaData!.carePackCohorte!,
                                   ),
                                 ],
+                                if (_isAnalyzing) ...[
+                                  BioSpacing.gapH(BioSpacing.md),
+                                  _buildAnalyzingCard(),
+                                ],
+                                if (_captureReview != null) ...[
+                                  BioSpacing.gapH(BioSpacing.md),
+                                  _buildCaptureReviewPanel(_captureReview!),
+                                ],
                               ],
                             ),
                           ),
                         ),
-                        if (_mostrarBarraConsulta) _buildChatInputBar(context),
+                        if (_enRevisionCaptura) _buildCaptureActionsBar(),
+                        if (_mostrarBarraConsulta && !_enRevisionCaptura)
+                          _buildChatInputBar(context),
                       ],
                     ),
     );
@@ -517,7 +535,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ),
           if (sugerencias != null && sugerencias.tieneContenido) ...[
             BioSpacing.gapH(BioSpacing.lg),
-            Text('Orientación preliminar', style: BioTypography.overline),
+            Text(
+              'Orientación según motivos del paciente',
+              style: BioTypography.overline,
+            ),
             if (sugerencias.diagnosticos.isNotEmpty) ...[
               BioSpacing.gapH(BioSpacing.sm),
               Text('Diagnósticos a considerar', style: BioTypography.bodySm),
@@ -679,7 +700,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       widget.consultParentId != null;
 
   Future<void> _toggleDictation() async {
-    if (_guardandoConsulta) return;
+    if (_captureBusy) return;
     if (_dictating || _audioOnlyRecording) {
       if (_audioOnlyRecording) {
         await _stopAudioOnlyRecording();
@@ -796,7 +817,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _snack('Grabe con el micrófono antes de usar servidor.', UiIntent.warning);
       return;
     }
-    setState(() => _guardandoConsulta = true);
+    setState(() => _isAnalyzing = true);
     try {
       final b64 = await _audioPathToBase64(_pendingAudioPath!);
       if (b64 == null) throw Exception('No se pudo leer el audio');
@@ -816,7 +837,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     } catch (e) {
       _snack('Error STT servidor: $e', UiIntent.danger);
     } finally {
-      if (mounted) setState(() => _guardandoConsulta = false);
+      if (mounted) setState(() => _isAnalyzing = false);
     }
   }
 
@@ -891,6 +912,40 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return (stt: null, audioBase64: null, sttForceServer: false);
   }
 
+  void _clearCaptureDraft() {
+    setState(() {
+      _captureReview = null;
+      _lastAnalysis = null;
+      _draftText = null;
+      _stagedItemIds = {};
+      _lastDictation = null;
+      _sttStatus = '';
+      _chatController.clear();
+    });
+  }
+
+  void _editCaptureDraft() {
+    final draft = _draftText ?? '';
+    setState(() {
+      _captureReview = null;
+      _lastAnalysis = null;
+      _stagedItemIds = {};
+      _sttStatus = '';
+      _chatController.text = draft;
+    });
+    _chatFocusNode.requestFocus();
+  }
+
+  void _toggleStagedItem(String id, bool selected) {
+    setState(() {
+      if (selected) {
+        _stagedItemIds.add(id);
+      } else {
+        _stagedItemIds.remove(id);
+      }
+    });
+  }
+
   Future<void> _analizarConsulta() async {
     final text = _chatController.text.trim();
     if (text.isEmpty) {
@@ -902,8 +957,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return;
     }
     setState(() {
-      _guardandoConsulta = true;
-      _sttStatus = 'Analizando…';
+      _isAnalyzing = true;
+      _sttStatus = '';
+      _captureReview = null;
+      _lastAnalysis = null;
+      _draftText = null;
+      _stagedItemIds = {};
     });
     try {
       final speech = await _resolveSpeechPayloadForAnalyze(text);
@@ -918,76 +977,259 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         userPerTabConfig: await _operationalContextForCapture(),
       );
       if (!mounted) return;
+      final review = EncounterCaptureAnalysis.fromApiResponse(res);
       setState(() {
         _lastAnalysis = res;
-        _sttStatus =
-            'Análisis listo (${res['stt_provenance'] ?? 'texto'}). Confirme para guardar.';
+        _draftText = text;
+        _captureReview = review;
+        _stagedItemIds = review.defaultStagedItemIds.isNotEmpty
+            ? review.defaultStagedItemIds.toSet()
+            : review.allItems.map((e) => e.id).toSet();
+        _chatController.clear();
+        _sttStatus = '';
       });
     } catch (e) {
       _snack('Error al analizar: ${_mensajeErrorCaptura(e)}', UiIntent.danger);
-      if (mounted) setState(() => _sttStatus = '');
     } finally {
-      if (mounted) setState(() => _guardandoConsulta = false);
+      if (mounted) setState(() => _isAnalyzing = false);
     }
   }
 
   Future<void> _confirmarGuardado() async {
-    if (_lastAnalysis == null) {
-      await _analizarConsulta();
+    final review = _captureReview;
+    if (review == null || _lastAnalysis == null) {
+      _snack('Analizá la consulta antes de confirmar.', UiIntent.warning);
       return;
     }
-    final text = _chatController.text.trim();
-    final datos = _lastAnalysis!['datos'];
-    Map<String, dynamic> extraidos = {};
-    if (datos is Map<String, dynamic>) {
-      final inner = datos['datosExtraidos'];
-      if (inner is Map<String, dynamic>) {
-        extraidos = inner;
-      } else {
-        extraidos = datos;
-      }
+    if (review.tieneDatosFaltantes && _stagedItemIds.isEmpty) {
+      _snack('Faltan datos obligatorios en el análisis.', UiIntent.warning);
+      return;
     }
-    setState(() => _guardandoConsulta = true);
+    final extraidos = review.toDatosExtraidos(_stagedItemIds);
+    final textoOriginal =
+        (_lastAnalysis!['texto_original'] ?? review.textoOriginal).toString();
+    final textoProcesado = (_lastAnalysis!['texto_procesado'] ??
+            review.textoProcesado ??
+            textoOriginal)
+        .toString();
+
+    setState(() => _isSaving = true);
     try {
       await _encounterApi.guardar(
         idPersona: widget.personaId,
         parent: widget.consultParent,
         parentId: widget.consultParentId,
         datosExtraidos: extraidos,
-        textoOriginal: (_lastAnalysis!['texto_original'] ?? text).toString(),
-        textoProcesado: (_lastAnalysis!['texto_procesado'] ?? text).toString(),
+        textoOriginal: textoOriginal,
+        textoProcesado: textoProcesado,
       );
       if (!mounted) return;
       _snack('Consulta guardada', UiIntent.success);
-      setState(() {
-        _chatController.clear();
-        _lastAnalysis = null;
-        _lastDictation = null;
-        _sttStatus = '';
-      });
+      _clearCaptureDraft();
       _chatFocusNode.unfocus();
+      await _cargarHistoriaClinica();
     } catch (e) {
-      _snack('Error al guardar: $e', UiIntent.danger);
+      _snack('Error al guardar: ${_mensajeErrorCaptura(e)}', UiIntent.danger);
     } finally {
-      if (mounted) setState(() => _guardandoConsulta = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
   Future<void> _enviarConsulta() async {
-    if (_tieneContextoCaptura) {
-      if (_lastAnalysis != null) {
-        await _confirmarGuardado();
-      } else {
-        await _analizarConsulta();
+    if (!_tieneContextoCaptura) {
+      if (!widget.soloVer) {
+        _snack(
+          'Defina contexto de consulta (parent) para captura con IA.',
+          UiIntent.warning,
+        );
       }
       return;
     }
-    if (!widget.soloVer) {
-      _snack(
-        'Defina contexto de consulta (parent) para captura con IA.',
-        UiIntent.warning,
-      );
-    }
+    if (_enRevisionCaptura) return;
+    await _analizarConsulta();
+  }
+
+  Widget _buildAnalyzingCard() {
+    return BioCard.intent(
+      intent: UiIntent.info,
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 22,
+            height: 22,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          BioSpacing.gapW(BioSpacing.md),
+          Expanded(
+            child: Text(
+              'Analizando la consulta…',
+              style: BioTypography.body,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCaptureReviewPanel(EncounterCaptureAnalysis review) {
+    return BioCard.intent(
+      intent: UiIntent.primary,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Nota de esta atención', style: BioTypography.title),
+          BioSpacing.gapH(BioSpacing.sm),
+          Text(
+            'Revisá lo registrado y las sugerencias antes de confirmar.',
+            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+          ),
+          BioSpacing.gapH(BioSpacing.md),
+          Text('Texto registrado', style: BioTypography.overline),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            (_draftText ?? review.textoOriginal).trim().isNotEmpty
+                ? (_draftText ?? review.textoOriginal)
+                : review.textoOriginal,
+            style: BioTypography.body,
+          ),
+          if (review.textoProcesado != null &&
+              review.textoProcesado!.trim().isNotEmpty &&
+              review.textoProcesado!.trim() != review.textoOriginal.trim()) ...[
+            BioSpacing.gapH(BioSpacing.md),
+            Text('Texto procesado', style: BioTypography.overline),
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(review.textoProcesado!, style: BioTypography.bodySm),
+          ],
+          if (review.systemError != null) ...[
+            BioSpacing.gapH(BioSpacing.md),
+            BioAlert.danger(message: review.systemError!),
+          ] else if (!review.hasExtractedContent) ...[
+            BioSpacing.gapH(BioSpacing.md),
+            BioAlert.info(
+              message:
+                  'La IA no extrajo datos estructurados. Podés confirmar igual con el texto registrado.',
+            ),
+          ] else ...[
+            BioSpacing.gapH(BioSpacing.lg),
+            Text('Sugerencias de la IA', style: BioTypography.overline),
+            BioSpacing.gapH(BioSpacing.sm),
+            ...review.categories.map((cat) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(cat.title, style: BioTypography.title),
+                        ),
+                        if (cat.required)
+                          BioBadge.danger('Requerido'),
+                      ],
+                    ),
+                    BioSpacing.gapH(BioSpacing.sm),
+                    if (cat.items.isEmpty)
+                      Text(
+                        cat.required
+                            ? 'Falta información en esta categoría.'
+                            : 'Sin datos en esta categoría.',
+                        style: BioTypography.bodySm.copyWith(
+                          color: cat.required
+                              ? IntentPalette.of(UiIntent.danger).base
+                              : context.bio.textMuted,
+                        ),
+                      )
+                    else
+                      Wrap(
+                        spacing: BioSpacing.sm,
+                        runSpacing: BioSpacing.sm,
+                        children: cat.items.map((item) {
+                          final selected = _stagedItemIds.contains(item.id);
+                          return FilterChip(
+                            label: Text(
+                              item.subtitle != null && item.subtitle!.isNotEmpty
+                                  ? '${item.label} (${item.subtitle})'
+                                  : item.label,
+                            ),
+                            selected: selected,
+                            onSelected: _isSaving
+                                ? null
+                                : (v) => _toggleStagedItem(item.id, v),
+                            showCheckmark: true,
+                          );
+                        }).toList(),
+                      ),
+                  ],
+                ),
+              );
+            }),
+          ],
+          if (review.tieneDatosFaltantes) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            BioAlert.warning(
+              message:
+                  'Faltan datos obligatorios. Incluí al menos un ítem requerido antes de confirmar.',
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCaptureActionsBar() {
+    final review = _captureReview;
+    final canConfirm = !_isSaving &&
+        review != null &&
+        review.textoOriginal.trim().isNotEmpty &&
+        !(review.tieneDatosFaltantes && _stagedItemIds.isEmpty);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(
+        BioSpacing.md,
+        BioSpacing.sm,
+        BioSpacing.md,
+        BioSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: context.bio.paperSurface,
+        border: Border(
+          top: BorderSide(color: context.bio.paperBorderDefault),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: BioButton(
+                  label: 'Editar',
+                  intent: UiIntent.neutral,
+                  variant: BioButtonVariant.soft,
+                  onPressed: _isSaving ? null : _editCaptureDraft,
+                ),
+              ),
+              BioSpacing.gapW(BioSpacing.sm),
+              Expanded(
+                child: BioButton(
+                  label: 'Descartar',
+                  intent: UiIntent.danger,
+                  variant: BioButtonVariant.soft,
+                  onPressed: _isSaving ? null : _clearCaptureDraft,
+                ),
+              ),
+            ],
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          BioButton.primary(
+            label: _isSaving ? 'Guardando…' : 'Confirmar y guardar',
+            icon: _isSaving ? null : Icons.check,
+            onPressed: canConfirm ? _confirmarGuardado : null,
+          ),
+        ],
+      ),
+    );
   }
 
   void _snack(String msg, UiIntent intent) {
@@ -1025,8 +1267,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                     !_audioOnlyRecording) ...[
                   if (_sttStatus.isNotEmpty) BioSpacing.gapH(BioSpacing.xs),
                   TextButton.icon(
-                    onPressed:
-                        _guardandoConsulta ? null : _transcribirEnServidor,
+                    onPressed: _captureBusy ? null : _transcribirEnServidor,
                     icon: const Icon(Icons.cloud_upload_outlined, size: 18),
                     label: const Text('Transcribir en servidor'),
                   ),
@@ -1038,11 +1279,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           controller: _chatController,
           focusNode: _chatFocusNode,
           onSend: _enviarConsulta,
-          isSending: _guardandoConsulta,
+          isSending: _captureBusy,
+          sendIcon: Icons.fact_check_outlined,
           hintText: canCapture
-              ? (_lastAnalysis != null
-                  ? 'Confirmar consulta…'
-                  : 'Dictar o escribir la consulta…')
+              ? 'Dictar o escribir la consulta…'
               : 'Escribir consulta…',
           maxLines: 6,
           onVoice: canCapture &&

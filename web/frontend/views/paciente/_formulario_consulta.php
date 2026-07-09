@@ -67,23 +67,28 @@ use yii\helpers\Html;
 
     <!-- Boton analysis de consulta -->
     <div class="float-end mb-3" id="analyze-btn">
-        <button class="btn btn-outline-primary" type="button" id="analyze-consultation">
-            <i class="bi bi-search"></i>&nbsp;&nbsp;Analizar Consulta
+        <button class="btn btn-outline-primary" type="button" id="analyze-consultation" title="Analizar la consulta con IA">
+            <i class="bi bi-clipboard2-check"></i>&nbsp;&nbsp;Analizar consulta
         </button>
     </div>
 
-    <!-- Área de respuesta del agente -->
+    <!-- Área de revisión tras analizar -->
     <div id="agent-response" class="mt-3" style="display: none;">
         <div class="card border-0">
             <div class="card-body m-1">
-                <!-- Contenido de la respuesta -->
-                <div id="response-content"></div>
+                <div id="capture-review-root"></div>
+                <div id="response-content" class="d-none" aria-hidden="true"></div>
             </div>
         </div>
-        <!-- Confirmacion de consulta -->
-        <div class="float-end mb-3" id="confirm-section" style="display: none;">
-            <button class="btn btn-primary" type="button" id="send-message" disabled>
-                <i class="bi bi-check-circle"></i>&nbsp;&nbsp;Confirmar Consulta
+        <div class="d-flex flex-wrap gap-2 justify-content-end mb-3" id="capture-review-actions" style="display: none;">
+            <button class="btn btn-outline-secondary" type="button" id="capture-edit-btn">
+                <i class="bi bi-pencil"></i>&nbsp;Editar
+            </button>
+            <button class="btn btn-outline-danger" type="button" id="capture-discard-btn">
+                <i class="bi bi-x-circle"></i>&nbsp;Descartar
+            </button>
+            <button class="btn btn-primary" type="button" id="send-message" disabled title="Confirmar y guardar en la historia clínica">
+                <i class="bi bi-check-circle"></i>&nbsp;Confirmar y guardar
             </button>
         </div>
     </div>

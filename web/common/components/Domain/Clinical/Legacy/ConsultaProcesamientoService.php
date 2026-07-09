@@ -6,6 +6,7 @@ use Yii;
 use yii\base\Component;
 use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
+use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
 
@@ -195,6 +196,13 @@ HTML;
                 'success' => true,
                 'datos' => $datos,
                 'html' => $html,
+                'capture_review' => (new EncounterCaptureReviewPresenter())->build(
+                    $datos,
+                    $categorias,
+                    $textoConsulta,
+                    $textoProcesado,
+                    $tieneDatosFaltantes
+                ),
                 'stt_provenance' => $speech['provenance'] ?? ClinicalSpeechInputResolver::PROVENANCE_TEXT_ONLY,
                 'stt_used_server' => !empty($speech['used_server_stt']),
                 'texto_original' => $textoConsulta,

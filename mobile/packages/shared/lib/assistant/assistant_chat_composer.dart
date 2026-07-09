@@ -15,6 +15,7 @@ class AssistantChatComposerBar extends StatefulWidget {
     this.focusNode,
     this.onVoice,
     this.voiceActive = false,
+    this.sendIcon = Icons.send,
   });
 
   final TextEditingController controller;
@@ -28,6 +29,7 @@ class AssistantChatComposerBar extends StatefulWidget {
   /// Si se define, el botón derecho muestra micrófono con el campo vacío y envío al escribir.
   final VoidCallback? onVoice;
   final bool voiceActive;
+  final IconData sendIcon;
 
   @override
   State<AssistantChatComposerBar> createState() => _AssistantChatComposerBarState();
@@ -89,7 +91,7 @@ class _AssistantChatComposerBarState extends State<AssistantChatComposerBar> {
       background = widget.voiceActive ? cs.error : cs.primary;
       foreground = widget.voiceActive ? cs.onError : cs.onPrimary;
     } else {
-      icon = Icons.send;
+      icon = widget.sendIcon;
       onPressed = widget.onSend;
       background = cs.primary;
       foreground = cs.onPrimary;
@@ -175,7 +177,12 @@ class _AssistantChatComposerBarState extends State<AssistantChatComposerBar> {
             ),
           ),
           const SizedBox(width: 8),
-          _buildTrailingAction(cs),
+          Tooltip(
+            message: widget.sendIcon == Icons.fact_check_outlined
+                ? 'Analizar consulta'
+                : 'Enviar',
+            child: _buildTrailingAction(cs),
+          ),
         ],
       ),
     );

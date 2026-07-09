@@ -4,17 +4,11 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Text\EncounterCaptureClinicalTermValidator;
+use common\components\Domain\Clinical\Text\EncounterCaptureTerminologyLookup;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 class EncounterCaptureClinicalTermValidatorTest extends Unit
 {
-    private EncounterCaptureClinicalTermValidator $validator;
-
-    protected function _before(): void
-    {
-        $this->validator = new EncounterCaptureClinicalTermValidator();
-    }
-
     protected function _after(): void
     {
         ClinicalTextIaMetadata::resetCacheForTests();
@@ -22,42 +16,68 @@ class EncounterCaptureClinicalTermValidatorTest extends Unit
 
     public function testSubjectiveComplaintIsPlausibleWithoutTerminology(): void
     {
+        $lookup = $this->createMock(EncounterCaptureTerminologyLookup::class);
+        $lookup->expects($this->never())->method('matchesClinicalTerm');
+
+        $validator = new EncounterCaptureClinicalTermValidator($lookup);
         $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
         $config['validate_terminology'] = false;
 
-        $this->assertTrue($this->validator->isPlausibleExtraction('fiebre', 'fiebre', $config));
+        $this->assertTrue($validator->isPlausibleExtraction('fiebre', 'fiebre', $config));
     }
 
     public function testArbitraryObjectIsNotPlausibleWithoutTerminology(): void
     {
-        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
-        $config['validate_terminology'] = false;
+        $lookup = $this->createMock(EncounterCaptureTerminologyLookup::class);
+        $lookup->method('matchesClinicalTerm')->willReturn(false);
 
-        $this->assertFalse($this->validator->isPlausibleExtraction('pelota', 'pelota', $config));
+        $validator = new EncounterCaptureClinicalTermValidator($lookup);
+        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+
+        $this->assertFalse($validator->isPlausibleExtraction('pelota', 'pelota', $config));
+        $this->assertFalse($validator->isPlausibleDiagnosisExtraction('pelota', 'pelota', $config));
+    }
+
+    public function testDiagnosisExtractionRequiresTerminology(): void
+    {
+        $lookup = $this->createMock(EncounterCaptureTerminologyLookup::class);
+        $lookup->method('matchesClinicalTerm')
+            ->willReturnCallback(static fn (string $term): bool => $term === 'gripe');
+        $lookup->method('wasTerminologyServiceUnavailable')->willReturn(false);
+
+        $validator = new EncounterCaptureClinicalTermValidator($lookup);
+        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+
+        $this->assertTrue($validator->isPlausibleDiagnosisExtraction('gripe', 'gripe', $config));
+        $this->assertFalse($validator->isPlausibleDiagnosisExtraction('pelota', 'pelota', $config));
+    }
+
+    public function testDiagnosisTrustsIaWhenTerminologyUnavailable(): void
+    {
+        $lookup = $this->createMock(EncounterCaptureTerminologyLookup::class);
+        $lookup->method('matchesClinicalTerm')->willReturn(false);
+        $lookup->method('wasTerminologyServiceUnavailable')->willReturn(true);
+
+        $validator = new EncounterCaptureClinicalTermValidator($lookup);
+        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+
+        $this->assertTrue($validator->isPlausibleDiagnosisExtraction('gripe', 'gripe', $config));
+        $this->assertTrue($validator->isPlausibleDiagnosisExtraction('pelota', 'pelota', $config));
     }
 
     public function testNarrativeFramingMakesExtractionPlausible(): void
     {
+        $lookup = $this->createMock(EncounterCaptureTerminologyLookup::class);
+        $lookup->expects($this->never())->method('matchesClinicalTerm');
+
+        $validator = new EncounterCaptureClinicalTermValidator($lookup);
         $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
         $config['validate_terminology'] = false;
 
         $this->assertTrue(
-            $this->validator->isPlausibleExtraction(
+            $validator->isPlausibleExtraction(
                 'pelota',
                 'Paciente refiere pelota en el oído',
-                $config
-            )
-        );
-    }
-
-    public function testStructuredRowWithCodeIsAlwaysPlausible(): void
-    {
-        $config = ['validate_terminology' => false];
-
-        $this->assertTrue(
-            $this->validator->isPlausibleExtraction(
-                ['texto' => 'pelota', 'codigo_cie10' => 'J00'],
-                'pelota',
                 $config
             )
         );

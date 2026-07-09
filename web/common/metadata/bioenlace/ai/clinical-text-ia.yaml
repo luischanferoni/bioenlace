@@ -98,6 +98,7 @@ encounter_capture_extraction:
     {category_semantics}
     - Si el texto no tiene interpretación clínica (objetos cotidianos, palabras sin sentido médico, bromas, etc.), dejá todas las categorías en [].
     - No inventes motivos de consulta ni diagnósticos que el texto no sustente clínicamente.
+    - Un término aislado que nombra una enfermedad o condición médica va en diagnóstico, no en motivos de consulta.
   category_hints:
     ConsultaMotivos: queja o síntoma referido por el paciente como motivo de la consulta
     DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
@@ -118,13 +119,20 @@ encounter_capture_extraction:
       - DiagnosticoConsulta
     filter_non_clinical_extractions:
       enabled: true
-      category_models:
+      strict_category_models:
         - ConsultaMotivos
+      terminology_guard_category_models:
         - DiagnosticoConsulta
       retain_if_lexicon_keys:
         - narrative_framing
         - subjective_complaint
       validate_terminology: true
+      trust_ia_diagnosis_when_terminology_unavailable: true
+      snowstorm_fallback: true
+      snowstorm_profiles:
+        - problemas
+        - motivos_consulta
+        - sintomas
     relocate_isolated_terms:
       enabled: true
       max_words: 5

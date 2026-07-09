@@ -28,18 +28,23 @@ final class EncounterCaptureExtractionPostProcessor
             return $resultadoIA;
         }
 
+        $relocateConfig = ClinicalTextIaMetadata::encounterCaptureRelocateConfig();
+        if (($relocateConfig['enabled'] ?? false) === true) {
+            $resultadoIA = $this->relocateIsolatedDiagnosisTerms(
+                $resultadoIA,
+                $categorias,
+                $clinicalText,
+                $relocateConfig
+            );
+        }
+
         $resultadoIA['datosExtraidos'] = $this->filterNonClinicalExtractions(
-            $extraidos,
+            $resultadoIA['datosExtraidos'] ?? [],
             $categorias,
             $clinicalText
         );
 
-        $relocateConfig = ClinicalTextIaMetadata::encounterCaptureRelocateConfig();
-        if (($relocateConfig['enabled'] ?? false) !== true) {
-            return $resultadoIA;
-        }
-
-        return $this->relocateIsolatedDiagnosisTerms($resultadoIA, $categorias, $clinicalText, $relocateConfig);
+        return $resultadoIA;
     }
 
     /**
@@ -54,9 +59,14 @@ final class EncounterCaptureExtractionPostProcessor
             return $extraidos;
         }
 
-        $models = $config['category_models'] ?? ['ConsultaMotivos', 'DiagnosticoConsulta'];
-        if (!is_array($models)) {
-            $models = ['ConsultaMotivos', 'DiagnosticoConsulta'];
+        $strictModels = $config['strict_category_models'] ?? $config['category_models'] ?? ['ConsultaMotivos'];
+        if (!is_array($strictModels)) {
+            $strictModels = ['ConsultaMotivos'];
+        }
+
+        $terminologyGuardModels = $config['terminology_guard_category_models'] ?? ['DiagnosticoConsulta'];
+        if (!is_array($terminologyGuardModels)) {
+            $terminologyGuardModels = ['DiagnosticoConsulta'];
         }
 
         foreach ($categorias as $categoria) {
@@ -64,17 +74,23 @@ final class EncounterCaptureExtractionPostProcessor
                 continue;
             }
             $modelo = (string) ($categoria['modelo'] ?? '');
-            if ($modelo === '' || !in_array($modelo, $models, true)) {
-                continue;
-            }
             $titulo = trim((string) ($categoria['titulo'] ?? ''));
-            if ($titulo === '' || !isset($extraidos[$titulo]) || !is_array($extraidos[$titulo])) {
+            if ($modelo === '' || $titulo === '' || !isset($extraidos[$titulo]) || !is_array($extraidos[$titulo])) {
                 continue;
             }
 
             $filtered = [];
             foreach ($extraidos[$titulo] as $item) {
-                if ($this->termValidator->isPlausibleExtraction($item, $clinicalText, $config)) {
+                $keep = false;
+                if (in_array($modelo, $strictModels, true)) {
+                    $keep = $this->termValidator->isPlausibleExtraction($item, $clinicalText, $config);
+                } elseif (in_array($modelo, $terminologyGuardModels, true)) {
+                    $keep = $this->termValidator->isPlausibleDiagnosisExtraction($item, $clinicalText, $config);
+                } else {
+                    $keep = true;
+                }
+
+                if ($keep) {
                     $filtered[] = $item;
                 }
             }

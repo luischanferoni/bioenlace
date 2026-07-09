@@ -41,19 +41,19 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
         $this->assertSame([], $out['datosExtraidos']['Diagnóstico']);
     }
 
-    public function testKeepsGripeInDiagnosticoAfterRelocate(): void
+    public function testKeepsGripeInDiagnostico(): void
     {
         $validator = $this->validatorMock(
-            plausibleExtraction: true,
+            plausibleExtraction: false,
             plausibleDiagnosis: true,
-            isolatedDiagnosis: true
+            isolatedDiagnosis: false
         );
 
         $processor = new EncounterCaptureExtractionPostProcessor($validator);
         $input = [
             'datosExtraidos' => [
-                'Motivos de consulta' => ['gripe'],
-                'Diagnóstico' => [],
+                'Motivos de consulta' => [],
+                'Diagnóstico' => ['gripe'],
             ],
         ];
 

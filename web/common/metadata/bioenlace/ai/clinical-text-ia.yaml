@@ -97,6 +97,7 @@ encounter_capture_extraction:
     - Clasificá cada fragmento según la semántica de su categoría:
     {category_semantics}
     - Si el texto no tiene interpretación clínica (objetos cotidianos, palabras sin sentido médico, bromas, etc.), dejá todas las categorías en [].
+    - Objetos cotidianos sin relación clínica (pelota, auto, mesa, etc.) no van en ninguna categoría.
     - No inventes motivos de consulta ni diagnósticos que el texto no sustente clínicamente.
     - Un término aislado que nombra una enfermedad o condición médica va en diagnóstico, no en motivos de consulta.
   category_hints:
@@ -121,18 +122,12 @@ encounter_capture_extraction:
       enabled: true
       strict_category_models:
         - ConsultaMotivos
-      terminology_guard_category_models:
-        - DiagnosticoConsulta
+      terminology_guard_category_models: []
       retain_if_lexicon_keys:
         - narrative_framing
         - subjective_complaint
-      validate_terminology: true
-      trust_ia_diagnosis_when_terminology_unavailable: true
-      snowstorm_fallback: true
-      snowstorm_profiles:
-        - problemas
-        - motivos_consulta
-        - sintomas
+      validate_terminology: false
+      snowstorm_fallback: false
     relocate_isolated_terms:
-      enabled: true
+      enabled: false
       max_words: 5

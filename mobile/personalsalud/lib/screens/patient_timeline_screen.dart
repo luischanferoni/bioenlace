@@ -345,25 +345,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final secciones = <({String titulo, List<String> items})>[
       (
         titulo: 'Diagnósticos recientes',
-        items: info.condicionesActivas
-            .map((c) => c.termino ?? 'Sin término')
-            .toList(),
-      ),
-      (
-        titulo: 'Condiciones activas',
-        items: info.condicionesActivas
-            .map((c) => c.termino ?? 'Sin término')
-            .toList(),
+        items: _labelsFromCondiciones(info.condicionesActivas),
       ),
       (
         titulo: 'Condiciones crónicas',
-        items: info.condicionesCronicas
-            .map((c) => c.termino ?? 'Sin término')
-            .toList(),
+        items: _labelsFromCondiciones(info.condicionesCronicas),
       ),
       (
-        titulo: 'Hallazgos',
-        items: info.hallazgos.map((h) => h.termino ?? 'Sin término').toList(),
+        titulo: 'Alergias',
+        items: _labelsFromHallazgos(info.hallazgos),
       ),
     ];
 
@@ -402,6 +392,22 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         ],
       ),
     );
+  }
+
+  List<String> _labelsFromCondiciones(List<Condicion> items) {
+    return items
+        .map((c) => c.termino?.trim())
+        .whereType<String>()
+        .where((t) => t.isNotEmpty)
+        .toList();
+  }
+
+  List<String> _labelsFromHallazgos(List<Hallazgo> items) {
+    return items
+        .map((h) => h.termino?.trim())
+        .whereType<String>()
+        .where((t) => t.isNotEmpty)
+        .toList();
   }
 
   Widget _buildSeccionInfo(String titulo, List<String> items) {

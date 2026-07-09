@@ -52,11 +52,10 @@ class EncounterCaptureClinicalTermValidatorTest extends Unit
         $this->assertFalse($validator->isPlausibleDiagnosisExtraction('pelota', 'pelota', $config));
     }
 
-    public function testDiagnosisTrustsIaWhenTerminologyUnavailable(): void
+    public function testDiagnosisTrustsIaWhenTerminologyDisabled(): void
     {
         $lookup = $this->createMock(EncounterCaptureTerminologyLookup::class);
-        $lookup->method('matchesClinicalTerm')->willReturn(false);
-        $lookup->method('wasTerminologyServiceUnavailable')->willReturn(true);
+        $lookup->expects($this->never())->method('matchesClinicalTerm');
 
         $validator = new EncounterCaptureClinicalTermValidator($lookup);
         $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();

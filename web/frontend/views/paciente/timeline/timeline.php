@@ -243,10 +243,11 @@ Modal::end();
             el.innerHTML = '<span class="ms-2">Sin datos</span>';
             return;
         }
-        el.innerHTML = items
+        var badges = items
             .filter(function (x) { return x && x.termino; })
             .map(function (x) { return '<span class="badge ' + badgeClass + ' me-1">' + String(x.termino).toUpperCase() + '</span>'; })
             .join('');
+        el.innerHTML = badges || '<span class="ms-2">Sin datos</span>';
     }
 
     function renderMotivos(texto, mp) {

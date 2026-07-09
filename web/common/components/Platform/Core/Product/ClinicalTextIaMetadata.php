@@ -234,12 +234,10 @@ final class ClinicalTextIaMetadata
         $defaults = [
             'enabled' => true,
             'strict_category_models' => ['ConsultaMotivos'],
-            'terminology_guard_category_models' => ['DiagnosticoConsulta'],
+            'terminology_guard_category_models' => [],
             'retain_if_lexicon_keys' => ['narrative_framing', 'subjective_complaint'],
-            'validate_terminology' => true,
-            'trust_ia_diagnosis_when_terminology_unavailable' => true,
-            'snowstorm_fallback' => true,
-            'snowstorm_profiles' => ['problemas', 'motivos_consulta', 'sintomas'],
+            'validate_terminology' => false,
+            'snowstorm_fallback' => false,
         ];
 
         return array_merge($defaults, $filter);

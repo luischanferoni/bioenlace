@@ -1,6 +1,7 @@
 <?php
 namespace common\models;
 
+use common\models\Person\Persona;
 use Yii;
 use yii\helpers\ArrayHelper;
 use yii\db\Query;

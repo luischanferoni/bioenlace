@@ -215,18 +215,6 @@ class PacientesController extends BaseController
                     'http_error' => $this->error('Turno no encontrado para este paciente.', null, 404),
                 ];
             }
-            if ($idEfector > 0 && (int) ($turno->id_efector ?? 0) > 0 && (int) $turno->id_efector !== $idEfector) {
-                return [
-                    'motivos_consulta' => null,
-                    'motivos_consulta_paciente' => $emptyPaciente,
-                    'turnos_con_encounter' => $turnosConEncounter,
-                    'http_error' => $this->error(
-                        'El turno no pertenece al efector de su sesión.',
-                        null,
-                        403
-                    ),
-                ];
-            }
             $encounterId = $motivosLookup->encounterIdParaTurno($turnoIdParam);
             if ($encounterId === null) {
                 return [
@@ -280,7 +268,7 @@ class PacientesController extends BaseController
             ];
         }
 
-        if (!$this->canAccessEncounterDomain($encounter, 'Atencion.view_mine')) {
+        if (!$this->canAccessEncounterDomain($encounter, 'Encounter.access')) {
             return [
                 'motivos_consulta' => null,
                 'motivos_consulta_paciente' => $emptyPaciente,
@@ -391,7 +379,7 @@ class PacientesController extends BaseController
         $out = [];
         foreach ($rows as $row) {
             $encounter = Encounter::findOne((int) $row['encounter_id']);
-            if ($encounter === null || !$this->canAccessEncounterDomain($encounter, 'Atencion.view_mine')) {
+            if ($encounter === null || !$this->canAccessEncounterDomain($encounter, 'Encounter.access')) {
                 continue;
             }
             $out[] = $row;

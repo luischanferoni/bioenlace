@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\components\Domain\Clinical\CareCohort\Service\CareEncounterOrchestrator;
 use common\components\Domain\Clinical\HistoryExchange\ClinicalHistoryOutboundEnqueueService;
 use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryPublishService;
+use common\components\Domain\Clinical\Workflow\ClinicalOperationalContextResolver;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
@@ -91,6 +92,12 @@ final class EncounterLifecycleService
         if (!empty($body['subject_persona_id'])) {
             return (int) $body['subject_persona_id'];
         }
+
+        $fromParent = ClinicalOperationalContextResolver::resolveSubjectPersonaIdFromParent($body);
+        if ($fromParent !== null && $fromParent > 0) {
+            return $fromParent;
+        }
+
         $idPersona = Yii::$app->user->getIdPersona();
         if ($idPersona) {
             return (int) $idPersona;

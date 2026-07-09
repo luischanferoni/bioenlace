@@ -1026,6 +1026,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         datosExtraidos: extraidos,
         textoOriginal: textoOriginal,
         textoProcesado: textoProcesado,
+        userPerTabConfig: await _operationalContextForCapture(),
       );
       if (!mounted) return;
       _snack('Consulta guardada', UiIntent.success);

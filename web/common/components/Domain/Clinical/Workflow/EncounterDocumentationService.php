@@ -118,11 +118,14 @@ class EncounterDocumentationService extends Component
             }
 
             if (!$idConfiguracion) {
-                $idServicio = Yii::$app->user->getServicioActual();
-                $encounterClass = Yii::$app->user->getEncounterClass();
+                [$idPes, $idServicio, $encounterClass] = ClinicalOperationalContextResolver::resolve($body);
                 if ($idServicio && $encounterClass) {
-                    [, , , $idConfiguracion] = EncounterDefinition::getUrlPorServicioYEncounterClass($idServicio, $encounterClass);
+                    [, , , $idConfiguracion] = EncounterDefinition::getUrlPorServicioYEncounterClass(
+                        $idServicio,
+                        $encounterClass
+                    );
                 }
+                unset($idPes);
             }
 
             if (!$idConfiguracion || !$idPersona) {
@@ -193,7 +196,15 @@ class EncounterDocumentationService extends Component
             return $encounter;
         }
 
-        $encounterClass = Yii::$app->user->getEncounterClass() ?: Encounter::ENCOUNTER_CLASS_AMB;
+        $encounterClass = ClinicalOperationalContextResolver::resolveEncounterClass($body);
+        [$idPes, $idServicio] = array_slice(ClinicalOperationalContextResolver::resolve($body), 0, 2);
+        $efectorId = Yii::$app->user->getIdEfector();
+        if (($efectorId === null || $efectorId === '' || (int) $efectorId <= 0) && $idPes > 0) {
+            $pes = \common\models\ProfesionalEfectorServicio::findOne($idPes);
+            if ($pes !== null && (int) $pes->id_efector > 0) {
+                $efectorId = (int) $pes->id_efector;
+            }
+        }
         $parentType = null;
         $parentId = null;
         if (!empty($body['parent']) && !empty($body['parent_id'])) {
@@ -207,8 +218,9 @@ class EncounterDocumentationService extends Component
         return $this->lifecycle->start([
             'subject_persona_id' => $paciente->id_persona,
             'encounter_class' => $encounterClass,
-            'service_id' => Yii::$app->user->getServicioActual(),
-            'efector_id' => Yii::$app->user->getIdEfector(),
+            'service_id' => $idServicio ?: Yii::$app->user->getServicioActual(),
+            'efector_id' => $efectorId ?: null,
+            'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : Yii::$app->user->getIdProfesionalEfectorServicio(),
             'parent_type' => $parentType,
             'parent_id' => $parentId,
             'reason_text' => $body['motivo_consulta'] ?? $body['consulta_inicial'] ?? $body['texto_original'] ?? null,

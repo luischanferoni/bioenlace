@@ -124,23 +124,28 @@ class EncounterCaptureApi {
     int? encounterId,
     required String textoOriginal,
     required String textoProcesado,
+    Map<String, dynamic>? userPerTabConfig,
   }) async {
-    final body = <String, String>{
-      'id_persona': '$idPersona',
+    final body = <String, dynamic>{
+      'id_persona': idPersona,
+      'subject_persona_id': idPersona,
       'texto_original': textoOriginal,
       'texto_procesado': textoProcesado,
-      'datosExtraidos': json.encode(datosExtraidos),
+      'datosExtraidos': datosExtraidos,
       if (parent != null) 'parent': parent,
-      if (parentId != null) 'parent_id': '$parentId',
-      if (idConfiguracion != null) 'id_configuracion': '$idConfiguracion',
-      if (encounterId != null) 'id_consulta': '$encounterId',
+      if (parentId != null) 'parent_id': parentId,
+      if (idConfiguracion != null) 'id_configuracion': idConfiguracion,
+      if (encounterId != null) 'id_consulta': encounterId,
+      if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
+        'userPerTabConfig': userPerTabConfig,
     };
 
     final uri = Uri.parse('${AppConfig.apiUrl}/clinical/encounter/guardar');
-    final response = await http.post(uri, headers: {
-      ..._jsonHeaders,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    }, body: body);
+    final response = await http.post(
+      uri,
+      headers: _jsonHeaders,
+      body: json.encode(body),
+    );
 
     final decoded = json.decode(response.body);
     if (decoded is! Map<String, dynamic>) {

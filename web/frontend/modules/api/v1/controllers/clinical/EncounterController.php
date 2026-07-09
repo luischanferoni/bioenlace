@@ -35,7 +35,7 @@ class EncounterController extends BaseController
 
     public function actionAnalizar()
     {
-        $out = ClinicalEncounterEntry::analizar(Yii::$app->request->getBodyParams());
+        $out = ClinicalEncounterEntry::analizar($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }

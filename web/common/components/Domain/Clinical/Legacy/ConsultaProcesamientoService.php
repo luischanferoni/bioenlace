@@ -19,11 +19,7 @@ class ConsultaProcesamientoService extends Component
     public function analizar(array $body): array
     {
         try {
-            $userPerTabConfig = $body['userPerTabConfig'] ?? [];
-            $idPesTab = $userPerTabConfig['id_profesional_efector_servicio']
-                ?? $userPerTabConfig['idProfesionalEfectorServicio'] ?? null;
-            $idProfesionalEfectorServicio = (int) ($idPesTab ?: 0);
-            $idServicio = $userPerTabConfig['servicio_actual'] ?? null;
+            [$idProfesionalEfectorServicio, $idServicio] = self::resolveOperationalContext($body);
             $idConfiguracion = $body['id_configuracion'] ?? null;
 
             $speech = ClinicalSpeechInputResolver::resolveFromBody($body, 'captura_clinica');
@@ -468,5 +464,44 @@ Responde SOLO con el JSON, sin texto adicional antes o despuÃ©s.";
         }
 
         return substr($texto, 0, -2);
+    }
+
+    /**
+     * PES y servicio desde userPerTabConfig (web), campos planos del body (móvil) o sesión/JWT.
+     *
+     * @param array<string, mixed> $body
+     * @return array{0: int, 1: int|null}
+     */
+    private static function resolveOperationalContext(array $body): array
+    {
+        $userPerTabConfig = $body['userPerTabConfig'] ?? [];
+        if (!is_array($userPerTabConfig)) {
+            $userPerTabConfig = [];
+        }
+
+        $idPesTab = $userPerTabConfig['id_profesional_efector_servicio']
+            ?? $userPerTabConfig['idProfesionalEfectorServicio']
+            ?? $body['id_profesional_efector_servicio']
+            ?? null;
+        $idPes = (int) ($idPesTab ?: 0);
+        if ($idPes <= 0) {
+            $sessionPes = Yii::$app->user->getIdProfesionalEfectorServicio();
+            if ($sessionPes !== null && $sessionPes !== '') {
+                $idPes = (int) $sessionPes;
+            }
+        }
+
+        $idServicioRaw = $userPerTabConfig['servicio_actual']
+            ?? $body['servicio_actual']
+            ?? $body['servicio_id']
+            ?? null;
+        if ($idServicioRaw === null || $idServicioRaw === '') {
+            $sessionSvc = Yii::$app->user->getServicioActual();
+            $idServicio = ($sessionSvc !== null && $sessionSvc !== '') ? (int) $sessionSvc : null;
+        } else {
+            $idServicio = (int) $idServicioRaw;
+        }
+
+        return [$idPes, $idServicio];
     }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared/shared.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/timeline_event.dart';
 import '../services/historia_clinica_service.dart';
@@ -323,6 +324,31 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildInformacionMedica(InformacionMedica info) {
+    final secciones = <({String titulo, List<String> items})>[
+      (
+        titulo: 'Diagnósticos recientes',
+        items: info.condicionesActivas
+            .map((c) => c.termino ?? 'Sin término')
+            .toList(),
+      ),
+      (
+        titulo: 'Condiciones activas',
+        items: info.condicionesActivas
+            .map((c) => c.termino ?? 'Sin término')
+            .toList(),
+      ),
+      (
+        titulo: 'Condiciones crónicas',
+        items: info.condicionesCronicas
+            .map((c) => c.termino ?? 'Sin término')
+            .toList(),
+      ),
+      (
+        titulo: 'Hallazgos',
+        items: info.hallazgos.map((h) => h.termino ?? 'Sin término').toList(),
+      ),
+    ];
+
     return BioCard.intent(
       intent: UiIntent.warning,
       child: Column(
@@ -330,30 +356,30 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         children: [
           Text('Condición actual', style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.lg),
-          _buildSeccionInfo(
-            'Diagnósticos recientes',
-            info.condicionesActivas
-                .map((c) => c.termino ?? 'Sin término')
-                .toList(),
-          ),
-          BioSpacing.gapH(BioSpacing.lg),
-          _buildSeccionInfo(
-            'Condiciones activas',
-            info.condicionesActivas
-                .map((c) => c.termino ?? 'Sin término')
-                .toList(),
-          ),
-          BioSpacing.gapH(BioSpacing.lg),
-          _buildSeccionInfo(
-            'Condiciones crónicas',
-            info.condicionesCronicas
-                .map((c) => c.termino ?? 'Sin término')
-                .toList(),
-          ),
-          BioSpacing.gapH(BioSpacing.lg),
-          _buildSeccionInfo(
-            'Hallazgos',
-            info.hallazgos.map((h) => h.termino ?? 'Sin término').toList(),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const spacing = BioSpacing.md;
+              const minCardWidth = 148.0;
+              final maxColumns =
+                  ((constraints.maxWidth + spacing) / (minCardWidth + spacing))
+                      .floor()
+                      .clamp(1, 4);
+              final cardWidth =
+                  (constraints.maxWidth - spacing * (maxColumns - 1)) /
+                      maxColumns;
+
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: [
+                  for (final seccion in secciones)
+                    SizedBox(
+                      width: cardWidth,
+                      child: _buildSeccionInfo(seccion.titulo, seccion.items),
+                    ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -361,22 +387,34 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildSeccionInfo(String titulo, List<String> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(titulo, style: BioTypography.overline),
-        BioSpacing.gapH(BioSpacing.sm),
-        if (items.isEmpty)
-          Text('Sin datos', style: BioTypography.bodySm)
-        else
-          Wrap(
-            spacing: BioSpacing.sm,
-            runSpacing: BioSpacing.sm,
-            children: items
-                .map((item) => BioBadge.info(item.toUpperCase()))
-                .toList(),
-          ),
-      ],
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(BioSpacing.sm),
+      decoration: BoxDecoration(
+        color: context.bio.paperSurfaceSunken,
+        borderRadius: BorderRadius.circular(BioRadius.sm),
+        border: Border.all(
+          color: context.bio.paperBorderDefault,
+          width: BorderWidth.thin,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(titulo, style: BioTypography.overline),
+          BioSpacing.gapH(BioSpacing.sm),
+          if (items.isEmpty)
+            Text('Sin datos', style: BioTypography.bodySm)
+          else
+            Wrap(
+              spacing: BioSpacing.xs,
+              runSpacing: BioSpacing.xs,
+              children: items
+                  .map((item) => BioBadge.info(item.toUpperCase()))
+                  .toList(),
+            ),
+        ],
+      ),
     );
   }
 
@@ -788,6 +826,25 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
   }
 
+  Future<Map<String, dynamic>?> _operationalContextForCapture() async {
+    final prefs = await SharedPreferences.getInstance();
+    final pes = prefs.getInt('id_profesional_efector_servicio') ?? 0;
+    if (pes <= 0) return null;
+    final servicio = prefs.getInt('servicio_id');
+    return {
+      'id_profesional_efector_servicio': pes,
+      if (servicio != null && servicio > 0) 'servicio_actual': servicio,
+    };
+  }
+
+  String _mensajeErrorCaptura(Object e) {
+    final raw = e is Exception ? e.toString() : '$e';
+    final msg = raw.startsWith('Exception: ')
+        ? raw.substring('Exception: '.length)
+        : raw;
+    return msg;
+  }
+
   Future<void> _analizarConsulta() async {
     final text = _chatController.text.trim();
     if (text.isEmpty) {
@@ -819,6 +876,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         parentId: widget.consultParentId,
         stt: stt,
         audioBase64: audioB64,
+        userPerTabConfig: await _operationalContextForCapture(),
       );
       if (!mounted) return;
       setState(() {
@@ -827,7 +885,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             'Análisis listo (${res['stt_provenance'] ?? 'texto'}). Confirme para guardar.';
       });
     } catch (e) {
-      _snack('Error al analizar: $e', UiIntent.danger);
+      _snack('Error al analizar: ${_mensajeErrorCaptura(e)}', UiIntent.danger);
       if (mounted) setState(() => _sttStatus = '');
     } finally {
       if (mounted) setState(() => _guardandoConsulta = false);
@@ -906,19 +964,35 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (_sttStatus.isNotEmpty)
+        if (_sttStatus.isNotEmpty ||
+            (_sttConfig.serverEnabled && _pendingAudioPath != null))
           Padding(
             padding: const EdgeInsets.only(
               left: BioSpacing.sm,
               right: BioSpacing.sm,
               bottom: BioSpacing.xs,
             ),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                _sttStatus,
-                style: BioTypography.caption.copyWith(color: cs.primary),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (_sttStatus.isNotEmpty)
+                  Text(
+                    _sttStatus,
+                    style: BioTypography.caption.copyWith(color: cs.primary),
+                  ),
+                if (_sttConfig.serverEnabled &&
+                    _pendingAudioPath != null &&
+                    !_dictating &&
+                    !_audioOnlyRecording) ...[
+                  if (_sttStatus.isNotEmpty) BioSpacing.gapH(BioSpacing.xs),
+                  TextButton.icon(
+                    onPressed:
+                        _guardandoConsulta ? null : _transcribirEnServidor,
+                    icon: const Icon(Icons.cloud_upload_outlined, size: 18),
+                    label: const Text('Transcribir en servidor'),
+                  ),
+                ],
+              ],
             ),
           ),
         AssistantChatComposerBar(
@@ -929,47 +1003,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           hintText: canCapture
               ? (_lastAnalysis != null
                   ? 'Confirmar consulta…'
-                  : 'Dictar o escribir y analizar…')
+                  : 'Dictar o escribir la consulta…')
               : 'Escribir consulta…',
           maxLines: 6,
-          leading: canCapture
-              ? [
-                  if (_sttConfig.deviceEnabled || _sttConfig.serverEnabled)
-                    IconButton(
-                      icon: Icon(
-                        (_dictating || _audioOnlyRecording)
-                            ? Icons.stop_circle
-                            : Icons.mic_none,
-                      ),
-                      color: (_dictating || _audioOnlyRecording)
-                          ? IntentPalette.of(UiIntent.danger).base
-                          : cs.onSurfaceVariant,
-                      onPressed: _guardandoConsulta ? null : _toggleDictation,
-                      tooltip: _sttConfig.deviceEnabled
-                          ? 'Dictar'
-                          : 'Grabar audio',
-                    ),
-                  if (_sttConfig.serverEnabled)
-                    IconButton(
-                      icon: const Icon(Icons.cloud_upload_outlined),
-                      color: cs.onSurfaceVariant,
-                      onPressed:
-                          _guardandoConsulta ? null : _transcribirEnServidor,
-                      tooltip: 'Transcribir en servidor',
-                    ),
-                ]
-              : [
-                  IconButton(
-                    icon: const Icon(Icons.mic_none),
-                    color: cs.onSurfaceVariant,
-                    onPressed: _guardandoConsulta
-                        ? null
-                        : () => _snack(
-                              'Defina contexto de atención para captura con IA.',
-                              UiIntent.info,
-                            ),
-                  ),
-                ],
+          onVoice: canCapture &&
+                  (_sttConfig.deviceEnabled || _sttConfig.serverEnabled)
+              ? _toggleDictation
+              : null,
+          voiceActive: _dictating || _audioOnlyRecording,
         ),
       ],
     );

@@ -122,7 +122,7 @@ class PacientesController extends BaseController
         return $this->success([
             'persona' => [
                 'id' => (int) $persona->id_persona,
-                'nombre_completo' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
+                'nombre_completo' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N),
                 'documento' => $persona->documento,
                 'edad' => $persona->edad,
                 'fecha_nacimiento' => $persona->fecha_nacimiento,

@@ -56,6 +56,7 @@ class EncounterCaptureApi {
     Map<String, dynamic>? stt,
     String? audioBase64,
     bool sttForceServer = false,
+    Map<String, dynamic>? userPerTabConfig,
   }) async {
     final body = <String, dynamic>{
       'consulta': consulta,
@@ -67,6 +68,8 @@ class EncounterCaptureApi {
       if (stt != null) 'stt': stt,
       if (audioBase64 != null && audioBase64.isNotEmpty) 'audio': audioBase64,
       if (sttForceServer) 'stt_force_server': true,
+      if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
+        'userPerTabConfig': userPerTabConfig,
     };
 
     final uri = Uri.parse('${AppConfig.apiUrl}/clinical/encounter/analizar');

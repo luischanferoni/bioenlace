@@ -13,6 +13,8 @@ class AssistantChatComposerBar extends StatefulWidget {
     this.maxLines = 6,
     this.leading,
     this.focusNode,
+    this.onVoice,
+    this.voiceActive = false,
   });
 
   final TextEditingController controller;
@@ -23,6 +25,9 @@ class AssistantChatComposerBar extends StatefulWidget {
   /// Acciones opcionales a la izquierda del campo (p. ej. imagen / audio en motivos).
   final List<Widget>? leading;
   final FocusNode? focusNode;
+  /// Si se define, el botón derecho muestra micrófono con el campo vacío y envío al escribir.
+  final VoidCallback? onVoice;
+  final bool voiceActive;
 
   @override
   State<AssistantChatComposerBar> createState() => _AssistantChatComposerBarState();
@@ -30,11 +35,76 @@ class AssistantChatComposerBar extends StatefulWidget {
 
 class _AssistantChatComposerBarState extends State<AssistantChatComposerBar> {
   @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onTextChanged);
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
   void didUpdateWidget(covariant AssistantChatComposerBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.hintText != widget.hintText) {
+    if (oldWidget.controller != widget.controller) {
+      oldWidget.controller.removeListener(_onTextChanged);
+      widget.controller.addListener(_onTextChanged);
+    }
+    if (oldWidget.hintText != widget.hintText ||
+        oldWidget.voiceActive != widget.voiceActive) {
       setState(() {});
     }
+  }
+
+  Widget _buildTrailingAction(ColorScheme cs) {
+    if (widget.isSending) {
+      return Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          color: cs.primary,
+        ),
+      );
+    }
+
+    final hasText = widget.controller.text.trim().isNotEmpty;
+    final useVoice = widget.onVoice != null &&
+        (widget.voiceActive || !hasText);
+
+    final IconData icon;
+    final VoidCallback? onPressed;
+    Color background;
+    Color foreground;
+
+    if (useVoice) {
+      icon = widget.voiceActive ? Icons.stop_circle : Icons.mic_none;
+      onPressed = widget.onVoice;
+      background = widget.voiceActive ? cs.error : cs.primary;
+      foreground = widget.voiceActive ? cs.onError : cs.onPrimary;
+    } else {
+      icon = Icons.send;
+      onPressed = widget.onSend;
+      background = cs.primary;
+      foreground = cs.onPrimary;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: background,
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        icon: Icon(icon, color: foreground),
+        onPressed: onPressed,
+      ),
+    );
   }
 
   @override
@@ -93,31 +163,19 @@ class _AssistantChatComposerBarState extends State<AssistantChatComposerBar> {
                   horizontal: 20,
                   vertical: 12,
                 ),
-                suffixIcon: widget.isSending
-                    ? Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: cs.primary,
-                        ),
-                      )
-                    : null,
               ),
-              onSubmitted: (_) => widget.onSend(),
+              onSubmitted: (_) {
+                if (widget.controller.text.trim().isNotEmpty) {
+                  widget.onSend();
+                } else if (widget.onVoice != null) {
+                  widget.onVoice!();
+                }
+              },
               enabled: !widget.isSending,
             ),
           ),
           const SizedBox(width: 8),
-          Container(
-            decoration: BoxDecoration(
-              color: cs.primary,
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: Icon(Icons.send, color: cs.onPrimary),
-              onPressed: widget.isSending ? null : widget.onSend,
-            ),
-          ),
+          _buildTrailingAction(cs),
         ],
       ),
     );

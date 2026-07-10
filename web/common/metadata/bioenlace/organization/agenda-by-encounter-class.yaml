@@ -41,3 +41,9 @@ patient_exposure:
   slot_finder_encounter_classes:
     - AMB
   forbid_cobertura_in_turnos: true
+
+operational:
+  # Asignar / tomar caso en guardia exige cobertura EMER vigente de esa persona en el efector.
+  emer_assign_requires_cobertura: true
+  # Si no hay nadie con cobertura, permitir asignar igual (piloto / onboarding).
+  emer_assign_allow_without_any_plantel: false

@@ -101,4 +101,18 @@ final class AgendaByEncounterClassMetadata
 
         return (bool) ($conflicts['cobertura_overlap_same_persona_efector'] ?? true);
     }
+
+    public static function emerAssignRequiresCobertura(): bool
+    {
+        $ops = self::loadConfig()['operational'] ?? [];
+
+        return (bool) ($ops['emer_assign_requires_cobertura'] ?? true);
+    }
+
+    public static function emerAssignAllowWithoutAnyPlantel(): bool
+    {
+        $ops = self::loadConfig()['operational'] ?? [];
+
+        return (bool) ($ops['emer_assign_allow_without_any_plantel'] ?? false);
+    }
 }

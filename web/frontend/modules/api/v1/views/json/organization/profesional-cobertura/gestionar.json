@@ -55,11 +55,19 @@
             "source": "servicios",
             "filter": "efector_servicios"
           },
-          "hint": "Vacío = cobertura general del efector.",
+          "hint": "Si elegiste asignación PES, se completa solo. Vacío = cobertura general del efector.",
           "include_in_submit": true,
           "layout": { "col": 6, "breakpoint": "md" }
         },
         {
+          "name": "servicio_nombre",
+          "label": "Asignación",
+          "type": "text",
+          "required": false,
+          "readonly": true,
+          "include_in_submit": false,
+          "layout": { "col": 6, "breakpoint": "md" }
+        },        {
           "name": "fecha_inicio",
           "label": "Fecha de entrada",
           "type": "date",

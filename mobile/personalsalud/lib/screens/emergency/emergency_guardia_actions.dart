@@ -19,6 +19,7 @@ class EmergencyGuardiaActions {
     required EmergencyBoardItem item,
     required EmergencyGuardiaApi api,
     required VoidCallback onChanged,
+    bool sessionTieneCobertura = true,
   }) async {
     if (episodioCerrado(item)) return;
 
@@ -32,7 +33,13 @@ class EmergencyGuardiaActions {
       actions.add(_ActionDef(
         label: 'Tomar caso',
         icon: Icons.person_add_alt_1_outlined,
-        onTap: () => _tomarCaso(context, item, api, onChanged),
+        onTap: () => _tomarCaso(
+          context,
+          item,
+          api,
+          onChanged,
+          sessionTieneCobertura: sessionTieneCobertura,
+        ),
       ));
       actions.add(_ActionDef(
         label: 'Pedidos / laboratorio',
@@ -236,8 +243,33 @@ class EmergencyGuardiaActions {
     BuildContext context,
     EmergencyBoardItem item,
     EmergencyGuardiaApi api,
-    VoidCallback onChanged,
-  ) async {
+    VoidCallback onChanged, {
+    bool sessionTieneCobertura = true,
+  }) async {
+    if (!sessionTieneCobertura) {
+      final cont = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Sin cobertura de guardia'),
+          content: const Text(
+            'No tenés cobertura vigente en el plantel. '
+            'Podés intentar igual, pero el servidor puede rechazar la asignación. '
+            'Cargá tu cobertura (entrada/salida) antes de tomar casos.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Intentar igual'),
+            ),
+          ],
+        ),
+      );
+      if (cont != true) return;
+    }
     try {
       await api.asignar(guardiaId: item.id);
       if (context.mounted) {
@@ -249,7 +281,7 @@ class EmergencyGuardiaActions {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo asignar: $e')),
+          SnackBar(content: Text(userFriendlyErrorMessage(e))),
         );
       }
     }

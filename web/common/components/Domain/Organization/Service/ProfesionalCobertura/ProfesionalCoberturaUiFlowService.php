@@ -107,6 +107,18 @@ final class ProfesionalCoberturaUiFlowService
             'encounter_class' => (string) ($query['encounter_class'] ?? 'EMER'),
         ];
 
+        if ($idPes > 0) {
+            $pes = ProfesionalEfectorServicio::find()
+                ->where(['id' => $idPes, 'deleted_at' => null])
+                ->with('servicio')
+                ->one();
+            if ($pes !== null && (int) $pes->id_efector === $idEfector) {
+                $defaults['id_servicio'] = (int) $pes->id_servicio;
+                $defaults['servicio_nombre'] = $pes->servicio !== null
+                    ? (string) $pes->servicio->nombre
+                    : ('Servicio #' . $pes->id_servicio);
+            }
+        }
         $inicio = trim((string) ($query['inicio'] ?? ''));
         $fin = trim((string) ($query['fin'] ?? ''));
         if ($inicio !== '' && empty($query['fecha_inicio'])) {

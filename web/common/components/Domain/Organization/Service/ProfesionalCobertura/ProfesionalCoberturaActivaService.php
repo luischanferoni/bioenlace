@@ -66,7 +66,7 @@ final class ProfesionalCoberturaActivaService
     }
 
     /**
-     * @return array{items: list<array<string, mixed>>, total: int, encounter_class: string, at: string}
+     * @return array{items: list<array<string, mixed>>, total: int, encounter_class: string, at: string, session?: array<string, mixed>}
      */
     public static function panelPayload(int $idEfector, string $encounterClass, ?string $atDateTime = null): array
     {
@@ -74,6 +74,20 @@ final class ProfesionalCoberturaActivaService
             ? date('Y-m-d H:i:s', strtotime($atDateTime) ?: time())
             : date('Y-m-d H:i:s');
         $items = self::listarActivas($idEfector, $encounterClass, $at);
+
+        $idPersonaSesion = 0;
+        if (\Yii::$app->has('user', true)) {
+            $idPersonaSesion = (int) (\Yii::$app->user->getIdPersona() ?? 0);
+        }
+        $sessionTiene = false;
+        if ($idPersonaSesion > 0) {
+            foreach ($items as $it) {
+                if ((int) ($it['id_persona'] ?? 0) === $idPersonaSesion) {
+                    $sessionTiene = true;
+                    break;
+                }
+            }
+        }
 
         return [
             'title' => $encounterClass === Encounter::ENCOUNTER_CLASS_EMER
@@ -86,7 +100,62 @@ final class ProfesionalCoberturaActivaService
             'empty_message' => count($items) === 0
                 ? 'Nadie con cobertura cargada en este momento.'
                 : null,
+            'session' => [
+                'id_persona' => $idPersonaSesion > 0 ? $idPersonaSesion : null,
+                'tiene_cobertura' => $sessionTiene,
+            ],
         ];
+    }
+
+    /**
+     * ¿La persona tiene cobertura activa de la clase en el efector?
+     */
+    public static function personaTieneCoberturaActiva(
+        int $idPersona,
+        int $idEfector,
+        string $encounterClass,
+        ?string $atDateTime = null
+    ): bool {
+        if ($idPersona <= 0 || $idEfector <= 0) {
+            return false;
+        }
+        foreach (self::listarActivas($idEfector, $encounterClass, $atDateTime) as $row) {
+            if ((int) ($row['id_persona'] ?? 0) === $idPersona) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Valida PES para tomar/asignar caso EMER según metadata operativa.
+     *
+     * @throws \InvalidArgumentException
+     */
+    public static function assertPesPuedeAsignarEmer(int $idPes, int $idEfector): void
+    {
+        if (!AgendaByEncounterClassMetadata::emerAssignRequiresCobertura()) {
+            return;
+        }
+
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+        if ($pes === null || (int) $pes->id_efector !== $idEfector) {
+            throw new \InvalidArgumentException('La asignación profesional no pertenece al efector.');
+        }
+
+        $idPersona = (int) $pes->id_persona;
+        $plantel = self::listarActivas($idEfector, Encounter::ENCOUNTER_CLASS_EMER);
+        if ($plantel === [] && AgendaByEncounterClassMetadata::emerAssignAllowWithoutAnyPlantel()) {
+            return;
+        }
+
+        if (!self::personaTieneCoberturaActiva($idPersona, $idEfector, Encounter::ENCOUNTER_CLASS_EMER)) {
+            throw new \InvalidArgumentException(
+                'Para tomar o asignar el caso hace falta cobertura de guardia vigente. '
+                . 'Cargá el plantel (entrada/salida) antes de asignar.'
+            );
+        }
     }
 
     /**

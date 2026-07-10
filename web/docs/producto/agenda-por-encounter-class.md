@@ -25,10 +25,11 @@ Metadata: [`agenda-by-encounter-class.yaml`](../../common/metadata/bioenlace/org
 
 - Tabla `profesional_cobertura`: persona, efector, clase, `inicio`/`fin`, servicio opcional, PES opcional, rol/notas.
 - Conflictos: solape de intervalos misma persona + mismo efector; y solape con cupos AMB (`cobertura_vs_amb_slots`).
-- API: `/api/v1/profesional-cobertura/*` (propio vs `*-para-recurso`); `listar-activas` para plantel vigente.
-- UI JSON: `profesional-cobertura/gestionar` (fecha/hora + selector de servicio).
+- API: `/api/v1/profesional-cobertura/*` (propio vs `*-para-recurso`); `listar-activas`; `elegir-pes`.
+- UI JSON: `elegir-pes` (asignación) → `gestionar` (fecha/hora + clase).
 - Intents: `profesional-cobertura.gestionar-propio` | `gestionar-staff`.
-- Panel inicio: sección `staff_cobertura_activa` en EMER e IMP piso.
+- Panel inicio: sección `staff_cobertura_activa` en EMER e IMP piso (`session.tiene_cobertura`).
+- **Tomar/asignar caso EMER** exige cobertura vigente (`operational.emer_assign_requires_cobertura`).
 
 No crea filas en `turnos` ni slots públicos.
 
@@ -43,6 +44,7 @@ No crea filas en `turnos` ni slots públicos.
 1. `m260710_100000_agenda_tipada_por_encounter_class`
 2. `m260710_100001_api_profesional_cobertura_rbac`
 3. `m260710_120000_api_profesional_cobertura_listar_activas_rbac`
+4. `m260710_130000_api_profesional_cobertura_elegir_pes_rbac`
 
 ## Relacionado
 

@@ -90,7 +90,7 @@ php yii emergency-guardia/materialize-metrics
 
 ## Cobertura de plantel (agenda EMER)
 
-El tablero clínico no es agenda de cupos. La disponibilidad del personal de guardia se declara como **cobertura** (`profesional_cobertura`, `encounter_class = EMER`): entrada/salida, servicio opcional. El panel de inicio muestra la sección `staff_cobertura_activa` (plantel vigente). Ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
+El tablero clínico no es agenda de cupos. La disponibilidad del personal de guardia se declara como **cobertura** (`profesional_cobertura`, `encounter_class = EMER`): entrada/salida, servicio opcional. El panel de inicio muestra la sección `staff_cobertura_activa` (plantel vigente). **Asignar / tomar caso** exige cobertura vigente (metadata `emer_assign_requires_cobertura`). Ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
 
 ## Referencias
 

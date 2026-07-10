@@ -1,0 +1,23 @@
+{
+  "ui_type": "ui_json",
+  "title": "Elegir servicio / asignación",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "default",
+      "title": "Asignación para la cobertura",
+      "empty_message": "No tenés asignaciones PES en este efector.",
+      "selection": { "mode": "single" },
+      "draft_field": "id_profesional_efector_servicio",
+      "item": { "kind": "servicio", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "medium", "shape": "wide" },
+      "items": []
+    }
+  ]
+}

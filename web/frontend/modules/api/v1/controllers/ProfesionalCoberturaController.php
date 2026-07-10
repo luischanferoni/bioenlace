@@ -16,11 +16,85 @@ use common\models\ProfesionalEfectorServicio;
  * Cobertura / roster EMER e IMP (entrada–salida). No expone cupos a pacientes.
  *
  * **RBAC** `/api/profesional-cobertura/...` (sin v1):
- * - propio: listar, crear, actualizar, eliminar, gestionar
+ * - propio: listar, crear, actualizar, eliminar, gestionar, elegir-pes, listar-activas
  * - staff: *-para-recurso (+ id_efector / id_persona o PES)
  */
 class ProfesionalCoberturaController extends BaseController
 {
+    /**
+     * GET|POST /api/v1/profesional-cobertura/elegir-pes
+     *
+     * Lista PES del profesional (propio o staff) para asociar cobertura a un servicio.
+     *
+     * @action_name Elegir asignación PES para cobertura
+     * @entity Coberturas
+     * @tags cobertura,pes,servicio
+     * @spa_presentation fullscreen
+     */
+    public function actionElegirPes(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = $this->requireEfectorId();
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        $modoStaff = ((string) ($fromClient['modo'] ?? '') === 'staff');
+
+        $ui = \common\components\Platform\Ui\UiScreenService::handleScreen(
+            'profesional-cobertura',
+            'elegir-pes',
+            $fromClient,
+            $req->isPost ? $req->post() : [],
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (($ui['kind'] ?? '') === 'ui_definition' && ($ui['ui_type'] ?? '') === 'ui_json') {
+            $idPersona = 0;
+            if ($modoStaff) {
+                $idPesCtx = ProfesionalEfectorServicio::staffContextIdFromRequestParams($fromClient);
+                if ($idPesCtx > 0) {
+                    $pes = ProfesionalEfectorServicio::findOne(['id' => $idPesCtx, 'deleted_at' => null]);
+                    if ($pes !== null && (int) $pes->id_efector === $idEfector) {
+                        $idPersona = (int) $pes->id_persona;
+                    }
+                }
+            } else {
+                $idPersona = (int) Yii::$app->user->getIdPersona();
+            }
+            if ($idPersona <= 0) {
+                throw new BadRequestHttpException('No se pudo resolver el profesional para listar asignaciones.');
+            }
+
+            $pesRows = ProfesionalEfectorServicio::find()
+                ->where([
+                    'id_persona' => $idPersona,
+                    'id_efector' => $idEfector,
+                    'deleted_at' => null,
+                ])
+                ->with('servicio')
+                ->orderBy(['id_servicio' => SORT_ASC])
+                ->all();
+            $uiItems = [];
+            foreach ($pesRows as $pes) {
+                $nombre = $pes->servicio !== null
+                    ? (string) $pes->servicio->nombre
+                    : ('Servicio #' . $pes->id_servicio);
+                $uiItems[] = [
+                    'id' => (string) (int) $pes->id,
+                    'name' => $nombre,
+                    'meta' => [
+                        'id_servicio' => (int) $pes->id_servicio,
+                        'id_profesional_efector_servicio' => (int) $pes->id,
+                    ],
+                ];
+            }
+            $ui = \common\components\Platform\Ui\UiScreenService::withListBlockItems($ui, $uiItems);
+            $ui['action_id'] = 'profesional-cobertura.elegir-pes';
+        }
+
+        return $ui;
+    }
+
     /**
      * GET|POST /api/v1/profesional-cobertura/gestionar
      *

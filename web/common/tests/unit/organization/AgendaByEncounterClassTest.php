@@ -61,4 +61,10 @@ class AgendaByEncounterClassTest extends Unit
         $conflicts = AgendaByEncounterClassMetadata::loadConfig()['conflicts'] ?? [];
         $this->assertTrue((bool) ($conflicts['cobertura_vs_amb_slots'] ?? false));
     }
+
+    public function testEmerAssignRequiresCobertura(): void
+    {
+        $this->assertTrue(AgendaByEncounterClassMetadata::emerAssignRequiresCobertura());
+        $this->assertFalse(AgendaByEncounterClassMetadata::emerAssignAllowWithoutAnyPlantel());
+    }
 }

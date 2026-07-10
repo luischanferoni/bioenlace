@@ -19,14 +19,26 @@ keywords:
 
 intent_semantics:
   goal: Declarar cobertura propia de urgencia o internación (entrada/salida).
-  how: Indicás clase EMER o IMP, horario de entrada/salida y opcionalmente servicio.
+  how: Elegís la asignación (servicio) y luego entrada/salida y clase EMER o IMP.
   constraints:
     - No genera turnos reservables para pacientes.
     - La agenda de cupos ambulatorios se configura aparte (profesional-agenda).
 
 subintents:
+  - id: select_pes
+    assistant_text: "Elegí el servicio / asignación"
+    provides:
+      - draft.id_profesional_efector_servicio
+    next: gestionar_cobertura
+    open_ui:
+      action_id: profesional-cobertura.elegir-pes
+      params:
+        modo: propio
+
   - id: gestionar_cobertura
     assistant_text: "Completá entrada, salida y tipo de cobertura"
+    requires:
+      - draft.id_profesional_efector_servicio
     provides:
       - draft.cobertura_ui_completed
     next: ""
@@ -34,3 +46,4 @@ subintents:
       action_id: profesional-cobertura.gestionar
       params:
         modo: propio
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"

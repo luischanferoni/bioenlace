@@ -52,6 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<HomePanelKpiGroup> _kpiGroups = [];
   List<Map<String, dynamic>> _coberturaActiva = [];
   String? _coberturaTitle;
+  bool _sessionTieneCobertura = false;
   Map<String, dynamic>? _staffContext;
   String _lastListKind = '';
   bool _isLoading = true;
@@ -195,6 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _cirugias = [];
         _coberturaActiva = [];
         _coberturaTitle = null;
+        _sessionTieneCobertura = false;
         _lastListKind = '';
         _staffContext = null;
       }
@@ -219,9 +221,12 @@ class _HomeScreenState extends State<HomeScreen> {
             .map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
         _coberturaTitle = cobertura.data['title'] as String?;
+        final session = cobertura.data['session'];
+        _sessionTieneCobertura = session is Map && session['tiene_cobertura'] == true;
       } else if (!partial) {
         _coberturaActiva = [];
         _coberturaTitle = null;
+        _sessionTieneCobertura = false;
       }
 
       final board = panel.sectionByKind('emergency_board');
@@ -915,6 +920,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       item: g,
                       api: _emergencyApi,
                       onChanged: () => _cargarListadoPacientes(silent: true),
+                      sessionTieneCobertura: _sessionTieneCobertura,
                     );
                   },
                 ),

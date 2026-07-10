@@ -923,6 +923,18 @@
       title.className = 'fw-semibold small mb-1';
       title.textContent = coberturaData.title || 'Cobertura';
       box.appendChild(title);
+      var session = coberturaData.session || {};
+      if (session.tiene_cobertura === false) {
+        var warn = document.createElement('div');
+        warn.className = 'text-warning small mb-1';
+        warn.textContent = 'No tenés cobertura vigente: no podrás tomar casos hasta cargarla.';
+        box.appendChild(warn);
+      } else if (session.tiene_cobertura === true) {
+        var ok = document.createElement('div');
+        ok.className = 'text-success small mb-1';
+        ok.textContent = 'Estás en el plantel activo.';
+        box.appendChild(ok);
+      }
       if (!items.length) {
         var empty = document.createElement('div');
         empty.className = 'text-muted small';

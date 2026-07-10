@@ -18,7 +18,7 @@ keywords:
 
 intent_semantics:
   goal: Cargar cobertura EMER/IMP de un profesional del efector.
-  how: Elegís el profesional (PES) y cargás entrada/salida por clase.
+  how: Elegís el profesional, la asignación (servicio) y cargás entrada/salida por clase.
   constraints:
     - Solo staff del efector.
     - No expone slots a pacientes.
@@ -28,9 +28,22 @@ subintents:
     assistant_text: "Elegí el profesional"
     provides:
       - draft.id_profesional_efector_servicio
-    next: gestionar_cobertura
+    next: select_pes
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector
+
+  - id: select_pes
+    assistant_text: "Elegí el servicio / asignación"
+    requires:
+      - draft.id_profesional_efector_servicio
+    provides:
+      - draft.id_profesional_efector_servicio
+    next: gestionar_cobertura
+    open_ui:
+      action_id: profesional-cobertura.elegir-pes
+      params:
+        modo: staff
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
 
   - id: gestionar_cobertura
     assistant_text: "Completá la cobertura"

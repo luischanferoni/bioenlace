@@ -1,0 +1,36 @@
+intent_id: profesional-cobertura.gestionar-propio
+version: 1
+
+operation: edit
+intent_family: profesional-cobertura.gestionar
+domain_operation: DataAccess.edit
+
+action_name: "Cargar mi cobertura (guardia / internación)"
+description: "Registrar o editar turnos de plantel EMER/IMP con entrada y salida. No es agenda de cupos ambulatorios."
+rbac_route: "/api/profesional-cobertura/gestionar"
+
+keywords:
+  - mi cobertura
+  - mi guardia
+  - turno de guardia
+  - cobertura internación
+  - horario de guardia
+  - plantel
+
+intent_semantics:
+  goal: Declarar cobertura propia de urgencia o internación (entrada/salida).
+  how: Indicás clase EMER o IMP, horario de entrada/salida y opcionalmente servicio.
+  constraints:
+    - No genera turnos reservables para pacientes.
+    - La agenda de cupos ambulatorios se configura aparte (profesional-agenda).
+
+subintents:
+  - id: gestionar_cobertura
+    assistant_text: "Completá entrada, salida y tipo de cobertura"
+    provides:
+      - draft.cobertura_ui_completed
+    next: ""
+    open_ui:
+      action_id: profesional-cobertura.gestionar
+      params:
+        modo: propio

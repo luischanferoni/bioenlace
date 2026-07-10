@@ -94,6 +94,10 @@ Intents YAML (UI JSON descubierta, sin hardcode de pantalla):
 
 **Mantenido temporalmente:** `InternacionController` (index, view administrativo, create ingreso, ronda), historial `InternacionHcamaController` (index), ABM plantillas. Cambio de cama vía API + `#cambio-cama` en view.
 
+## Cobertura de plantel (agenda IMP)
+
+El mapa de camas no es agenda de citas. La disponibilidad del personal de piso se declara como **cobertura** (`profesional_cobertura`, `encounter_class = IMP`). Ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
+
 ## Fuera de alcance actual
 
 - Firma digital del responsable del alta  
@@ -106,4 +110,5 @@ Intents YAML (UI JSON descubierta, sin hardcode de pantalla):
 - Guardia e ingreso: [urgencias-guardia.md](./urgencias-guardia.md)  
 - Captura clínica: [captura-clinica.md](./captura-clinica.md)  
 - Motores asistente: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md)
+- Agenda tipada: [agenda-por-encounter-class.md](./agenda-por-encounter-class.md)
 - QA por escenario: [../qa/escenarios/internacion/README.md](../qa/escenarios/internacion/README.md)

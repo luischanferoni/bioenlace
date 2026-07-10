@@ -145,6 +145,7 @@ final class ProfesionalEfectorServicioAgendaVersionService
         $agenda->intervalo_minutos = $version->getIntervaloMinutosEfectivo();
         $agenda->duracion_slot_minutos = null;
         $agenda->acepta_consultas_online = (bool) $version->acepta_consultas_online;
+        $agenda->encounter_class = \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB;
         foreach (['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'] as $col) {
             $agenda->{$col} = $version->{$col};
         }
@@ -172,6 +173,7 @@ final class ProfesionalEfectorServicioAgendaVersionService
         $version->id_profesional_efector_servicio = $idPes;
         $version->id_efector = $idEfector;
         $version->vigente_desde = $vigenteDesde;
+        $version->encounter_class = \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB;
 
         return $version;
     }

@@ -1,4 +1,5 @@
-# Edición de agenda PES — un bloque edit por archivo (flow id = entity).
+# Edición de agenda PES AMB (cupos) — un bloque edit por archivo (flow id = entity).
+# EMER/IMP: profesional_cobertura / intents profesional-cobertura.*
 entity: ProfesionalEfectorServicioAgenda
 model: common\models\ProfesionalEfectorServicioAgenda
 version_model: common\models\ProfesionalEfectorServicioAgendaVersion

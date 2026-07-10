@@ -18,9 +18,9 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 
 /**
- * Agenda profesional (día operativo) y CRUD de agendas laborales por servicio ({@see ProfesionalEfectorServicioAgenda}).
+ * Agenda profesional AMB (día operativo / cupos) y CRUD de agendas laborales por servicio ({@see ProfesionalEfectorServicioAgenda}).
  *
- * **Modelo:** 1 efector → PES (`profesional_efector_servicio`) → **1 agenda** por asignación.
+ * **Modelo:** 1 efector → PES → **1 agenda AMB** por asignación. EMER/IMP: {@see ProfesionalCoberturaController}.
  *
  * **Listado siempre:** el detalle por ítem viene en cada fila del listado; no hay acciones `ver-*`.
  *
@@ -347,6 +347,7 @@ class ProfesionalAgendaController extends BaseController
         $model->load($body, '');
         $model->id_profesional_efector_servicio = (int) $pes->id;
         $model->id_efector = $idEfector;
+        $model->encounter_class = \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB;
 
         if (!$model->validate()) {
             return $this->error('Validación fallida.', $model->errors, 422);
@@ -387,6 +388,7 @@ class ProfesionalAgendaController extends BaseController
         $model->load($body, '');
         $model->id_efector = $lockedEfector;
         $model->id_profesional_efector_servicio = $lockedPes;
+        $model->encounter_class = \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB;
 
         if (!$model->validate()) {
             return $this->error('Validación fallida.', $model->errors, 422);

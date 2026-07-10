@@ -10,7 +10,8 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [sesion-paciente-app.md](./sesion-paciente-app.md) | Sesión, bloqueo local y reingreso Didit tras cerrar sesión (app paciente) |
 | [registro-paciente.md](./registro-paciente.md) | Alta paciente (app y staff), MPI reducido, contexto y RENAPER |
 | [representacion-paciente.md](./representacion-paciente.md) | Tutela de menor y delegación (operar por otro paciente) |
-| [turnos.md](./turnos.md) | Agenda, reserva, cancelación, notificaciones |
+| [turnos.md](./turnos.md) | Agenda AMB, reserva, cancelación, notificaciones |
+| [agenda-por-encounter-class.md](./agenda-por-encounter-class.md) | Agenda tipada: AMB cupos vs EMER/IMP cobertura |
 | [interoperabilidad-agendamiento-fhir.md](./interoperabilidad-agendamiento-fhir.md) | Espejo de citas NIS HAPI ↔ turnos (entrante/saliente) |
 | [triage-reserva-turno.md](./triage-reserva-turno.md) | Motivo y alarmas antes de reservar (catálogo + bandas A–D) |
 | [atencion-remota-async.md](./atencion-remota-async.md) | Atención remota y consulta async (adopción gradual) |

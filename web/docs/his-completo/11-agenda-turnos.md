@@ -4,9 +4,10 @@
 
 ## Lo que tenemos
 
-- [x] Agenda por profesional–efector–servicio (PES) y cupos reservables.
-- [x] Autogestión del paciente: reservar, cancelar, reprogramar según política del efector.
-- [x] Turnos en conflicto / en resolución tras cambios de agenda (staff y paciente).
+- [x] Agenda **AMB** por profesional–efector–servicio (PES) y cupos reservables (única expuesta a pacientes).
+- [x] **Cobertura EMER/IMP** (`profesional_cobertura`): roster entrada/salida; conflictos por solape; no genera turnos paciente. Ver [agenda-por-encounter-class.md](../producto/agenda-por-encounter-class.md).
+- [x] Autogestión del paciente: reservar, cancelar, reprogramar según política del efector (**solo AMB**).
+- [x] Turnos en conflicto / en resolución tras cambios de agenda AMB (staff y paciente).
 - [x] Sobreturno y cancelación masiva de día (staff).
 - [x] Notificaciones push (recordatorios, cambios, resumen de atención listo, etc.).
 - [x] Alta de turno por staff para terceros.
@@ -17,6 +18,7 @@
 ## Lo que falta
 
 - [x] **Teleconsulta en reserva:** política por servicio, elegibilidad por triage, modalidad condicional en `atencion.necesito-atencion`, `acepta_consultas_online` en agenda PES, badge en app Personal de Salud. Ver [teleconsulta-elegibilidad.md](../producto/teleconsulta-elegibilidad.md).
+- [ ] Cruce de conflictos cobertura vs grilla AMB (licencias / indisponibilidad unificada).
 - [ ] Lista de espera nacional entre efectores con priorización clínica.
 - [ ] Integración con obras sociales / autorizaciones en el mismo flujo de reserva.
 - [ ] Piloto en producción NIS MSAL (datos reales + cron habilitado).
@@ -25,6 +27,7 @@
 
 ## En producto hoy
 
-- API: `GET /api/v1/turnos/indicadores-agenda`
-- Asistente: intent `turnos.indicadores-agenda-flow`
-- Historia de producto: [turnos.md](../producto/turnos.md)
+- API cupos: `GET /api/v1/turnos/indicadores-agenda`
+- API cobertura: `/api/v1/profesional-cobertura/*`
+- Asistente: `turnos.indicadores-agenda-flow`, `profesional-cobertura.gestionar-*`
+- Historia: [turnos.md](../producto/turnos.md), [agenda-por-encounter-class.md](../producto/agenda-por-encounter-class.md)

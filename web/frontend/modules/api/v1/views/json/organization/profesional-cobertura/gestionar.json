@@ -1,0 +1,103 @@
+{
+  "ui_type": "ui_json",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "datos",
+      "title": "Cobertura (guardia / internación)",
+      "fields": [
+        {
+          "name": "id",
+          "label": "",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_efector",
+          "label": "",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_profesional_efector_servicio",
+          "label": "",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "encounter_class",
+          "label": "Tipo de cobertura",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "EMER", "label": "Urgencia / guardia" },
+            { "value": "IMP", "label": "Internación" }
+          ],
+          "include_in_submit": true,
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "id_servicio",
+          "label": "Servicio (opcional)",
+          "type": "number",
+          "required": false,
+          "include_in_submit": true,
+          "hint": "Filtra el ámbito (p. ej. guardia pediátrica). Vacío = cobertura general del efector.",
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "inicio",
+          "label": "Entrada",
+          "type": "text",
+          "required": true,
+          "placeholder": "YYYY-MM-DD HH:MM",
+          "include_in_submit": true,
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "fin",
+          "label": "Salida",
+          "type": "text",
+          "required": true,
+          "placeholder": "YYYY-MM-DD HH:MM",
+          "include_in_submit": true,
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "rol",
+          "label": "Rol en el turno",
+          "type": "text",
+          "required": false,
+          "placeholder": "Médico, triage, piso…",
+          "include_in_submit": true,
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "notas",
+          "label": "Notas",
+          "type": "text",
+          "required": false,
+          "include_in_submit": true,
+          "layout": { "col": 6, "breakpoint": "md" }
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "guardar",
+      "label": "Guardar cobertura",
+      "type": "submit",
+      "primary": true
+    }
+  ]
+}

@@ -142,4 +142,14 @@ final class ProductMetadataPaths
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-terminology.yaml';
     }
+
+    public static function organizationDir(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'organization';
+    }
+
+    public static function agendaByEncounterClassFile(): string
+    {
+        return self::organizationDir() . DIRECTORY_SEPARATOR . 'agenda-by-encounter-class.yaml';
+    }
 }

@@ -10,6 +10,7 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property int $id_profesional_efector_servicio
  * @property int $id_efector
+ * @property string $encounter_class
  * @property string $vigente_desde
  * @property int $intervalo_minutos
  * @property string $formas_atencion
@@ -41,6 +42,9 @@ class ProfesionalEfectorServicioAgendaVersion extends ActiveRecord
             [['acepta_consultas_online'], 'boolean'],
             [['vigente_desde', 'created_at'], 'safe'],
             [['formas_atencion'], 'string', 'max' => 32],
+            [['encounter_class'], 'string', 'max' => 10],
+            [['encounter_class'], 'default', 'value' => \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB],
+            [['encounter_class'], 'compare', 'compareValue' => \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB],
             [['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'], 'safe'],
             ['intervalo_minutos', 'validateIntervalo'],
         ];
@@ -71,6 +75,7 @@ class ProfesionalEfectorServicioAgendaVersion extends ActiveRecord
         $row = static::findOne([
             'id_profesional_efector_servicio' => $idPes,
             'vigente_desde' => $vigenteDesdeYmd,
+            'encounter_class' => \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB,
         ]);
 
         return $row;
@@ -86,7 +91,10 @@ class ProfesionalEfectorServicioAgendaVersion extends ActiveRecord
         }
         /** @var self|null $row */
         $row = static::find()
-            ->where(['id_profesional_efector_servicio' => $idPes])
+            ->where([
+                'id_profesional_efector_servicio' => $idPes,
+                'encounter_class' => \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB,
+            ])
             ->andWhere(['<=', 'vigente_desde', $fechaYmd])
             ->orderBy(['vigente_desde' => SORT_DESC, 'id' => SORT_DESC])
             ->one();
@@ -100,7 +108,10 @@ class ProfesionalEfectorServicioAgendaVersion extends ActiveRecord
     public static function findAllPorPes(int $idPes): array
     {
         return static::find()
-            ->where(['id_profesional_efector_servicio' => $idPes])
+            ->where([
+                'id_profesional_efector_servicio' => $idPes,
+                'encounter_class' => \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB,
+            ])
             ->orderBy(['vigente_desde' => SORT_ASC])
             ->all();
     }

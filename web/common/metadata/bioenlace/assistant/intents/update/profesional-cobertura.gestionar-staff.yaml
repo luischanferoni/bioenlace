@@ -1,0 +1,46 @@
+intent_id: profesional-cobertura.gestionar-staff
+version: 1
+
+operation: edit
+intent_family: profesional-cobertura.gestionar
+domain_operation: DataAccess.edit
+
+action_name: "Cargar cobertura de un profesional (staff)"
+description: "Registrar turnos de plantel EMER/IMP (entrada/salida) para un profesional del efector. No mezcla con cupos AMB."
+rbac_route: "/api/profesional-cobertura/gestionar"
+
+keywords:
+  - cobertura profesional
+  - asignar guardia
+  - plantel guardia
+  - cobertura piso
+  - roster internación
+
+intent_semantics:
+  goal: Cargar cobertura EMER/IMP de un profesional del efector.
+  how: Elegís el profesional (PES) y cargás entrada/salida por clase.
+  constraints:
+    - Solo staff del efector.
+    - No expone slots a pacientes.
+
+subintents:
+  - id: select_profesional
+    assistant_text: "Elegí el profesional"
+    provides:
+      - draft.id_profesional_efector_servicio
+    next: gestionar_cobertura
+    open_ui:
+      action_id: profesional-efector-servicio.listar-por-efector
+
+  - id: gestionar_cobertura
+    assistant_text: "Completá la cobertura"
+    requires:
+      - draft.id_profesional_efector_servicio
+    provides:
+      - draft.cobertura_ui_completed
+    next: ""
+    open_ui:
+      action_id: profesional-cobertura.gestionar
+      params:
+        modo: staff
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"

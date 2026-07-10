@@ -10,7 +10,10 @@ use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ProfesionalEfectorServicioAgendaVersion;
 
 /**
- * Servicio de búsqueda de slots de turnos a partir de parámetros ya NORMALIZADOS.
+ * Servicio de búsqueda de slots de turnos AMB a partir de parámetros ya NORMALIZADOS.
+ *
+ * Solo lee agendas con encounter_class AMB ({@see AgendaByEncounterClassMetadata}).
+ * EMER/IMP no generan cupos aquí.
  *
  * Esta clase NO interpreta lenguaje natural ni corrige texto.
  * Solo acepta valores ya normalizados (ej. dia_semana = LUNES, operador = ANY/NOT, etc.)

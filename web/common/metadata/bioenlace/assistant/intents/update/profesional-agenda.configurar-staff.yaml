@@ -6,8 +6,8 @@ intent_family: profesional-agenda.configurar
 domain_operation: DataAccess.edit
 edit_surface_id: ProfesionalEfectorServicioAgenda
 
-action_name: "Agenda de un profesional"
-description: "Modificar horarios y configuración de agenda de un profesional del efector."
+action_name: "Agenda ambulatoria de un profesional"
+description: "Modificar cupos AMB (horarios/intervalo) de un profesional del efector. Guardia e internación van por cobertura."
 rbac_route: "/api/profesional-agenda/configurar-agenda"
 
 keywords:
@@ -17,12 +17,14 @@ keywords:
   - modificar horarios del medico
   - editar horarios del profesional
   - configurar agenda profesional
+  - agenda ambulatoria profesional
 
 intent_semantics:
-  goal: Configurar agenda de un profesional del efector (staff).
+  goal: Configurar agenda AMB (cupos) de un profesional del efector (staff).
   how: Elegís profesional y servicio, luego editás horarios e intervalo.
   constraints:
     - Solo profesionales con PES en el efector de sesión.
+    - Solo encounter_class AMB; no mezclar con roster EMER/IMP.
 
 fields:
   - name: vigente_desde

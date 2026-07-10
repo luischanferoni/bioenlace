@@ -1,0 +1,43 @@
+# Agenda tipada por encounter_class (FHIR).
+# AMB = cupos reservables (paciente). EMER/IMP = cobertura/roster (solo staff).
+version: 1
+
+kinds:
+  AMB:
+    storage: pes_slot_agenda
+    capacity_model: weekly_slots
+    patient_booking: true
+    label: Ambulatorio (cupos)
+    description: >
+      Grilla semanal por PES con intervalo fijo. Única agenda expuesta a pacientes
+      para solicitar turnos.
+  EMER:
+    storage: cobertura_interval
+    capacity_model: shift_roster
+    patient_booking: false
+    service_filter: optional
+    label: Urgencia / guardia (cobertura)
+    description: >
+      Turnos de plantel con entrada y salida. Servicio opcional como filtro de ámbito.
+      No genera cupos ni filas en turnos de paciente.
+  IMP:
+    storage: cobertura_interval
+    capacity_model: shift_roster
+    patient_booking: false
+    service_filter: optional
+    label: Internación (cobertura)
+    description: >
+      Cobertura de piso/episodio con entrada y salida. Servicio o ámbito opcional.
+      No genera cupos ni filas en turnos de paciente.
+
+conflicts:
+  # Solape de intervalos de cobertura (EMER/IMP) misma persona + mismo efector.
+  cobertura_overlap_same_persona_efector: true
+  # Cruce cobertura vs grilla AMB: fase posterior (licencias / indisponibilidad).
+  cobertura_vs_amb_slots: false
+
+patient_exposure:
+  # Solo agendas AMB (y servicios con acepta_turnos) entran al funnel de reserva.
+  slot_finder_encounter_classes:
+    - AMB
+  forbid_cobertura_in_turnos: true

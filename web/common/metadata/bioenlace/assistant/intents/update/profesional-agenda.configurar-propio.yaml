@@ -6,8 +6,8 @@ intent_family: profesional-agenda.configurar
 domain_operation: DataAccess.edit
 edit_surface_id: ProfesionalEfectorServicioAgenda
 
-action_name: "Configurar mi agenda"
-description: "Modificar horarios, intervalo y formas de atención de tus servicios en el efector."
+action_name: "Configurar mi agenda ambulatoria"
+description: "Modificar horarios, intervalo y formas de atención de tus cupos AMB. No incluye guardia ni internación (ver cobertura)."
 rbac_route: "/api/profesional-agenda/configurar-agenda"
 
 keywords:
@@ -17,12 +17,15 @@ keywords:
   - mis horarios
   - configurar mi agenda
   - modificar horarios propios
+  - agenda ambulatoria
 
 intent_semantics:
-  goal: Configurar la agenda de uno de tus servicios asignados en el efector de sesión.
+  goal: Configurar la agenda AMB (cupos) de uno de tus servicios asignados en el efector de sesión.
   how: Elegís el servicio y editás horarios, intervalo y si aceptás videollamada en tus cupos (opcional).
   constraints:
     - Solo sobre tus propias asignaciones PES.
+    - Solo encounter_class AMB; pacientes reservan sobre esta grilla.
+    - Guardia/internación se cargan como cobertura (profesional-cobertura), no aquí.
     - La consulta por mensaje para pacientes no requiere activar videollamada.
 
 fields:

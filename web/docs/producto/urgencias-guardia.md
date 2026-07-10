@@ -88,8 +88,13 @@ php yii emergency-guardia/materialize-metrics
 - Vista web dedicada solo de indicadores (el resumen en inicio basta)  
 - Sonido automático en tablero al violar SLA (solo alerta visual por ahora)
 
+## Cobertura de plantel (agenda EMER)
+
+El tablero clínico no es agenda de cupos. La disponibilidad del personal de guardia se declara como **cobertura** (`profesional_cobertura`, `encounter_class = EMER`): entrada/salida, servicio opcional. Ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
+
 ## Referencias
 
 - Madurez HIS: [his-completo/02-urgencias.md](../his-completo/02-urgencias.md)
 - Motores asistente: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md)
 - Captura clínica en guardia: [captura-clinica.md](./captura-clinica.md)
+- Agenda tipada: [agenda-por-encounter-class.md](./agenda-por-encounter-class.md)

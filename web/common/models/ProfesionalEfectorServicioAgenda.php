@@ -6,13 +6,15 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Agenda por asignación profesional–efector–servicio.
+ * Agenda AMB por asignación profesional–efector–servicio (cupos reservables).
  *
  * Tabla: `profesional_efector_servicio_agenda`
+ * Solo `encounter_class = AMB`. EMER/IMP usan {@see ProfesionalCobertura}.
  *
  * @property int $id
  * @property int $id_profesional_efector_servicio
  * @property int $id_efector
+ * @property string $encounter_class AMB — única agenda de cupos (paciente)
  * @property string $formas_atencion
  * @property int|null $duracion_slot_minutos
  * @property int|null $intervalo_minutos
@@ -65,6 +67,9 @@ class ProfesionalEfectorServicioAgenda extends ActiveRecord
             [['acepta_consultas_online'], 'boolean'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['formas_atencion'], 'string', 'max' => 32],
+            [['encounter_class'], 'string', 'max' => 10],
+            [['encounter_class'], 'default', 'value' => \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB],
+            [['encounter_class'], 'compare', 'compareValue' => \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB],
             [['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'], 'safe'],
             [['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'], 'validarAlmenosUnDiaHorario', 'skipOnEmpty' => false],
         ];
@@ -113,6 +118,7 @@ class ProfesionalEfectorServicioAgenda extends ActiveRecord
         return static::find()
             ->andWhere(['in', 'id_profesional_efector_servicio', $idsProfesionalEfectorServicio])
             ->andWhere(['deleted_at' => null])
+            ->andWhere(['encounter_class' => \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB])
             ->indexBy('id_profesional_efector_servicio')
             ->all();
     }
@@ -121,7 +127,11 @@ class ProfesionalEfectorServicioAgenda extends ActiveRecord
     {
         /** @var self|null $row */
         $row = static::find()
-            ->where(['id_profesional_efector_servicio' => $idPes, 'deleted_at' => null])
+            ->where([
+                'id_profesional_efector_servicio' => $idPes,
+                'deleted_at' => null,
+                'encounter_class' => \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB,
+            ])
             ->one();
 
         return $row;

@@ -1,7 +1,8 @@
-# Precio orientativo por PES × encounter_class (USD / mes, sin IVA).
-# Fuente comercial para cotizador institucional y entitlements de producto.
+# Precio orientativo por profesional × encounter_class (USD / mes, sin IVA).
+# Fórmula: precio_unitario = COGS × (1 + margin_on_cost_percent/100)
+# COGS: web/docs/costos/costos-api.md (sin context caching; Gemini + Groq; Twilio §6).
 # Actualizar también institucional/js/pricing-config.json al cambiar cifras.
-version: 1
+version: 2
 currency: USD
 billing_period: month
 tax_note: No incluye IVA ni IIBB.
@@ -11,12 +12,36 @@ tax_note: No incluye IVA ni IIBB.
 # deny_unlisted = solo lo contratado (usar cuando todos los clientes tengan filas).
 default_when_empty: allow_all
 
-# Clases vendibles en el calculador / contrato.
+# COGS variable por profesional/mes (supuesto 400 encounters; ver costos-api.md).
+# base = Apartado 1 motivos solo texto (~USD 1,24).
+# audio = delta motivos con audio (~USD 0,31 → total Apartado 1 ~1,55).
+# videollamada = Twilio Video §6 (~USD 11,52).
+cogs_usd_per_professional_month:
+  base: 1.24
+  audio: 0.31
+  videollamada: 11.52
+
+# Markup sobre COGS. 233 % ≈ margen bruto ~70 % (objetivo software; impuestos-argentina.md).
+# precio = cogs × (1 + margin_on_cost_percent/100)
+margin_on_cost_percent: 233
+
+cogs_source: web/docs/costos/costos-api.md — COGS base sin context caching
+
+addons:
+  audio:
+    label: Audio (motivos del paciente con voz)
+    description: Transcripción de audios del paciente en motivos de consulta
+    default: false
+  videollamada:
+    label: Videollamada
+    description: Teleconsulta paciente–profesional (referencia Twilio)
+    default: false
+
+# Clases vendibles: habilitan producto; el precio unitario es el mismo (COGS + add-ons + margen).
 sellable_classes:
   AMB:
     label: Ambulatorio
     short: Consultorios y turnos
-    price_per_pes: 18
     includes:
       - Agenda de cupos y reserva paciente
       - Captura clínica AMB
@@ -28,7 +53,6 @@ sellable_classes:
   EMER:
     label: Urgencia / guardia
     short: Tablero y plantel de guardia
-    price_per_pes: 55
     includes:
       - Cobertura / roster EMER
       - Tablero de guardia
@@ -40,7 +64,6 @@ sellable_classes:
   IMP:
     label: Internación
     short: Piso, camas y evoluciones
-    price_per_pes: 42
     includes:
       - Cobertura / roster IMP
       - Mapa de camas
@@ -50,16 +73,14 @@ sellable_classes:
       - imp_cobertura
       - imp_mapa
 
-# Otras clases FHIR: no se cotizan aparte; se habilitan solo si el contrato lo declara
-# o quedan fuera hasta que se agreguen a sellable_classes.
 non_sellable_default: disabled
 
 simulator:
   title: Calculá tu licencia
-  subtitle: Elegí los tipos de atención y cuántas asignaciones profesionales (PES) necesitás en cada uno.
+  subtitle: Elegí los tipos de atención, cuántos profesionales necesitás en cada uno, y si sumás audio o videollamada.
   cta_label: Pedir cotización
   cta_href: "#contacto"
   footnotes:
-    - Precios orientativos en USD por mes. La cotización final depende del efector y del alcance de implementación.
-    - PES = profesional–efector–servicio (una asignación operativa).
+    - Precios orientativos en USD por mes = costo variable documentado (IA, transcripción, videollamada) más nuestro margen. La cotización final depende del efector y del alcance.
+    - El precio por profesional es el mismo en cada tipo de atención; lo que cambia es qué módulos habilitás.
     - Lo no contratado no aparece en la sesión operativa ni en tableros de esa clase.

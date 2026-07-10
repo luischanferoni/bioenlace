@@ -6,7 +6,7 @@ use Symfony\Component\Yaml\Yaml;
 use Yii;
 
 /**
- * Metadata comercial: precio por PES × encounter_class.
+ * Metadata comercial: precio por profesional × encounter_class (COGS + margen + add-ons).
  *
  * @see ProductMetadataPaths::pricingPesByEncounterClassFile()
  */
@@ -61,14 +61,53 @@ final class PricingPesByEncounterClassMetadata
         return in_array($encounterClass, self::sellableClassCodes(), true);
     }
 
+    /**
+     * COGS unitario USD/profesional/mes según add-ons.
+     */
+    public static function unitCogs(bool $audio = false, bool $videollamada = false): float
+    {
+        $cogs = self::loadConfig()['cogs_usd_per_professional_month'] ?? [];
+        if (!is_array($cogs)) {
+            return 0.0;
+        }
+        $total = (float) ($cogs['base'] ?? 0);
+        if ($audio) {
+            $total += (float) ($cogs['audio'] ?? 0);
+        }
+        if ($videollamada) {
+            $total += (float) ($cogs['videollamada'] ?? 0);
+        }
+
+        return round($total, 4);
+    }
+
+    public static function marginOnCostPercent(): float
+    {
+        return (float) (self::loadConfig()['margin_on_cost_percent'] ?? 0);
+    }
+
+    /**
+     * Precio de lista USD/profesional/mes = COGS × (1 + margen%).
+     */
+    public static function unitPrice(bool $audio = false, bool $videollamada = false): float
+    {
+        $cogs = self::unitCogs($audio, $videollamada);
+        $margin = self::marginOnCostPercent();
+
+        return round($cogs * (1 + $margin / 100), 2);
+    }
+
+    /**
+     * Precio unitario sin add-ons (compatibilidad con callers que pedían price_per_pes).
+     * El precio ya no varía por encounter_class: el COGS es el mismo.
+     */
     public static function pricePerPes(string $encounterClass): ?float
     {
-        $row = self::loadConfig()['sellable_classes'][$encounterClass] ?? null;
-        if (!is_array($row) || !isset($row['price_per_pes'])) {
+        if (!self::isSellableClass($encounterClass)) {
             return null;
         }
 
-        return (float) $row['price_per_pes'];
+        return self::unitPrice(false, false);
     }
 
     public static function defaultWhenEmptyAllowAll(): bool
@@ -79,17 +118,20 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
-     * @param array<string, int> $pesByClass code => cantidad PES
+     * @param array<string, int> $professionalsByClass code => cantidad de profesionales
      */
-    public static function estimateMonthlyTotal(array $pesByClass): float
-    {
+    public static function estimateMonthlyTotal(
+        array $professionalsByClass,
+        bool $audio = false,
+        bool $videollamada = false
+    ): float {
+        $unit = self::unitPrice($audio, $videollamada);
         $total = 0.0;
-        foreach ($pesByClass as $code => $qty) {
-            $price = self::pricePerPes((string) $code);
-            if ($price === null || (int) $qty <= 0) {
+        foreach ($professionalsByClass as $code => $qty) {
+            if (!self::isSellableClass((string) $code) || (int) $qty <= 0) {
                 continue;
             }
-            $total += $price * (int) $qty;
+            $total += $unit * (int) $qty;
         }
 
         return round($total, 2);

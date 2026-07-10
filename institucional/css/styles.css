@@ -1537,6 +1537,50 @@ section {
     color: var(--text-muted);
 }
 
+.pricing-calc__addons {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.pricing-calc__addons-title {
+    margin: 0 0 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+.pricing-calc__addon {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    cursor: pointer;
+}
+
+.pricing-calc__addon input {
+    margin-top: 0.35rem;
+    flex-shrink: 0;
+}
+
+.pricing-calc__addon-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.pricing-calc__line--meta {
+    opacity: 0.75;
+    font-size: 0.9em;
+    margin-bottom: 0.5rem;
+}
+
+.pricing-calc__cogs {
+    opacity: 0.8;
+}
+
 .pricing-calc__summary {
     background: var(--brand-dark);
     color: #fff;

@@ -1,13 +1,14 @@
-# Matriz Argentina — precio por PES × encounter_class
+# Matriz Argentina — precio por profesional × encounter_class
 
 **Tipo:** business plan · go-to-market Argentina  
 **Última actualización:** 2026-07-10  
 **Alcance:** solo Argentina por ahora; otros países cuando haya validación local.
 
-Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentina.md](../../costos/impuestos-argentina.md).
+Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentina.md](../../costos/impuestos-argentina.md).  
+COGS de referencia: [costos-api.md](../../costos/costos-api.md) (sin context caching).
 
-**Modelo vigente:** licencia = **Σ (PES contratados × precio de la clase de encounter)**.  
-El cliente elige qué `encounter_class` contrata (AMB / EMER / IMP) y cuántas asignaciones PES por cada una. Lo no contratado **se deshabilita** en sesión operativa y tableros.
+**Modelo vigente:** licencia = **Σ (profesionales contratados × precio unitario)**.  
+El precio unitario = **COGS × (1 + margen sobre costo)**. El cliente elige qué `encounter_class` contrata (AMB / EMER / IMP), cuántos profesionales por cada una, y si suma **audio** y/o **videollamada**. Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
 Metadata producto: [`pricing-pes-by-encounter-class.yaml`](../../../common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml).  
 Calculador público: sitio [`institucional/#precios`](../../../../institucional/index.html).  
@@ -20,16 +21,40 @@ Entitlements BD: `efector_encounter_entitlement`.
 ## Fórmula
 
 ```
-USD/mes ≈ Σ_clase ( cantidad_PES[clase] × price_per_pes[clase] )
+COGS = base + (audio ? delta_audio : 0) + (videollamada ? cogs_video : 0)
+precio_unitario = COGS × (1 + margin_on_cost_percent/100)
+USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario )
 ```
 
-| Clase | Label | USD / PES / mes (orientativo) | Qué habilita |
-|-------|-------|-------------------------------|--------------|
-| **AMB** | Ambulatorio | **18** | Agenda cupos, turnos paciente, captura AMB |
-| **EMER** | Urgencia / guardia | **55** | Cobertura roster, tablero guardia, captura EMER |
-| **IMP** | Internación | **42** | Cobertura piso, mapa camas, captura IMP |
+| Componente COGS | USD / profesional / mes | Fuente |
+|-----------------|-------------------------|--------|
+| **Base** (IA + STT captura; motivos paciente solo texto) | **1,24** | costos-api Apartado 1 motivos texto |
+| **+ Audio** (motivos paciente con voz) | **+0,31** | delta → Apartado 1 ~1,55 |
+| **+ Videollamada** (Twilio, 30 % × 12 min × 2) | **+11,52** | costos-api §6 |
 
-Ejemplo: 10 PES AMB + 4 PES EMER → `(10×18) + (4×55) = 180 + 220 = **USD 400/mes**`.
+**Margen sobre costo:** **233 %** ≈ margen bruto ~70 % (objetivo software; ver [impuestos-argentina.md](../../costos/impuestos-argentina.md)).
+
+| Configuración | COGS | Precio lista / profesional / mes |
+|---------------|------|----------------------------------|
+| Solo base | 1,24 | **~4,13** |
+| Base + audio | 1,55 | **~5,16** |
+| Base + videollamada | 12,76 | **~42,49** |
+| Base + audio + videollamada | 13,07 | **~43,52** |
+
+El precio unitario es **igual** en AMB, EMER e IMP: lo que cambia al elegir clase es qué módulos de producto se habilitan.
+
+Ejemplo: 10 profesionales AMB + 4 EMER, sin add-ons → `14 × 4,13 = **USD 57,82/mes**`.  
+Mismo plantel con videollamada → `14 × 42,49 = **USD 594,86/mes**`.
+
+---
+
+## Clases vendibles (gates de producto)
+
+| Clase | Label | Qué habilita |
+|-------|-------|--------------|
+| **AMB** | Ambulatorio | Agenda cupos, turnos paciente, captura AMB |
+| **EMER** | Urgencia / guardia | Cobertura roster, tablero guardia, captura EMER |
+| **IMP** | Internación | Cobertura piso, mapa camas, captura IMP |
 
 ---
 
@@ -49,19 +74,20 @@ Tope `max_pes` por clase: declarado en contrato; enforcement estricto de conteo 
 
 | Comprador | Selección típica en el calculador |
 |-----------|-----------------------------------|
-| Clínica ambulatoria | Solo AMB × N PES |
+| Clínica ambulatoria | Solo AMB × N profesionales |
 | Sanatorio con guardia | AMB + EMER |
 | Sanatorio con camas | AMB + EMER + IMP |
+| Teleconsulta | Misma selección + add-on videollamada |
 
 ---
 
-## Add-ons / fuera de la fórmula PES
+## Add-ons / fuera de la fórmula
 
 | Ítem | Notas | Precio orientativo |
 |------|-------|-------------------|
+| Audio / videollamada | En la fórmula (COGS + margen) | Ver tabla arriba |
 | Implementación + capacitación | One-shot | USD 3–40k según tamaño |
 | Integración LIS | One-shot + mant. | USD 2–8k + 200–800/mes |
-| IA captura premium (fair use excedido) | Variable | A cotizar / cuota |
 | Autorización OS / prepaga | Otro ciclo | USD 2–15k/mes |
 | API / white-label | Volumen API | USD 10–40k/mes |
 
@@ -69,15 +95,15 @@ Tope `max_pes` por clase: declarado en contrato; enforcement estricto de conteo 
 
 ## Priorización comercial
 
-1. Publicar calculador institucional y cotizar con fórmula PES × clase.  
+1. Publicar calculador institucional (COGS + margen + add-ons).  
 2. Cargar entitlements por efector al firmar.  
-3. Usage report (encounters / PES activos) para renovación.  
+3. Usage report (encounters / profesionales activos) para renovación.  
 4. Pasarela / seña (fase posterior).
 
 ---
 
 ## Referencias
 
-- [Agenda por encounter class](../../producto/agenda-por-encounter-class.md)
-- [Mapa vías × Bioenlace](./mapa-vias-ingreso-bioenlace.md)
-- [Modelos de pricing](./modelos-pricing-diferenciados.md)
+- [costos-api.md](../../costos/costos-api.md)
+- [impuestos-argentina.md](../../costos/impuestos-argentina.md)
+- [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md)

@@ -4,23 +4,35 @@ const navLinks = document.querySelectorAll('.nav-link');
 const navbar = document.getElementById('navbar');
 const contactForm = document.getElementById('contactForm');
 
-hamburger.addEventListener('click', () => {
-    const isOpen = navMenu.classList.toggle('active');
-    hamburger.classList.toggle('active');
-    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-});
+if (hamburger && navMenu) {
+    hamburger.addEventListener('click', () => {
+        const isOpen = navMenu.classList.toggle('active');
+        hamburger.classList.toggle('active');
+        hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+}
 
 navLinks.forEach(link => {
     link.addEventListener('click', () => {
+        if (!navMenu || !hamburger) return;
         navMenu.classList.remove('active');
         hamburger.classList.remove('active');
         hamburger.setAttribute('aria-expanded', 'false');
     });
 });
 
-window.addEventListener('scroll', () => {
-    navbar.classList.toggle('scrolled', window.pageYOffset > 80);
-});
+if (navbar) {
+    if (!document.getElementById('inicio')) {
+        navbar.classList.add('scrolled');
+    }
+    window.addEventListener('scroll', () => {
+        if (document.getElementById('inicio')) {
+            navbar.classList.toggle('scrolled', window.pageYOffset > 80);
+        } else {
+            navbar.classList.add('scrolled');
+        }
+    });
+}
 
 const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
@@ -48,47 +60,49 @@ function setContactFormStatus(message, type) {
     }
 }
 
-contactForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+if (contactForm && contactFormSubmit) {
+    contactForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    if (!contactForm.reportValidity()) {
-        return;
-    }
+        if (!contactForm.reportValidity()) {
+            return;
+        }
 
-    setContactFormStatus('', null);
-    contactFormSubmit.disabled = true;
-    contactFormSubmit.textContent = 'Enviando…';
+        setContactFormStatus('', null);
+        contactFormSubmit.disabled = true;
+        contactFormSubmit.textContent = 'Enviando…';
 
-    try {
-        const response = await fetch(contactForm.action, {
-            method: 'POST',
-            body: new FormData(contactForm),
-            headers: { Accept: 'application/json' },
-        });
-        const data = await response.json();
+        try {
+            const response = await fetch(contactForm.action, {
+                method: 'POST',
+                body: new FormData(contactForm),
+                headers: { Accept: 'application/json' },
+            });
+            const data = await response.json();
 
-        if (response.ok && data.success) {
-            contactForm.reset();
+            if (response.ok && data.success) {
+                contactForm.reset();
+                setContactFormStatus(
+                    '¡Gracias por tu mensaje! Nos pondremos en contacto a la brevedad en info@bioenlace.io.',
+                    'success'
+                );
+            } else {
+                setContactFormStatus(
+                    data.message || 'No pudimos enviar el mensaje. Probá de nuevo o escribinos a info@bioenlace.io.',
+                    'error'
+                );
+            }
+        } catch (err) {
             setContactFormStatus(
-                '¡Gracias por tu mensaje! Nos pondremos en contacto a la brevedad en info@bioenlace.io.',
-                'success'
-            );
-        } else {
-            setContactFormStatus(
-                data.message || 'No pudimos enviar el mensaje. Probá de nuevo o escribinos a info@bioenlace.io.',
+                'Error de conexión. Probá de nuevo o escribinos a info@bioenlace.io.',
                 'error'
             );
+        } finally {
+            contactFormSubmit.disabled = false;
+            contactFormSubmit.textContent = 'Enviar mensaje';
         }
-    } catch (err) {
-        setContactFormStatus(
-            'Error de conexión. Probá de nuevo o escribinos a info@bioenlace.io.',
-            'error'
-        );
-    } finally {
-        contactFormSubmit.disabled = false;
-        contactFormSubmit.textContent = 'Enviar mensaje';
-    }
-});
+    });
+}
 
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
@@ -107,6 +121,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 const sections = document.querySelectorAll('section[id]');
 
 function activateNavLink() {
+    if (!sections.length) return;
     const scrollY = window.pageYOffset;
 
     sections.forEach(section => {

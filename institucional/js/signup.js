@@ -82,6 +82,19 @@
     if (payFs) payFs.hidden = covered;
     if (form.card_number) form.card_number.required = !covered;
     if (form.card_holder) form.card_holder.required = !covered;
+    if (form.sim_token) form.sim_token.required = !covered;
+    if (form.sim_titular) form.sim_titular.required = !covered;
+  }
+
+  function resolveSimPan(token) {
+    var t = String(token || '').trim().toUpperCase().replace(/\s+/g, '');
+    if (t === '' || t === 'SIM-OK' || t === 'OK') {
+      return '4242424242424242';
+    }
+    if (t === 'SIM-FAIL' || t === 'FAIL') {
+      return '4000000000000002';
+    }
+    return String(token || '').replace(/\D+/g, '') || '4242424242424242';
   }
 
   function buildPlanFromForm(form) {
@@ -149,8 +162,14 @@
         },
         plan: buildPlanFromForm(form),
         payment: {
-          card_number: form.card_number.value.trim(),
-          card_holder: form.card_holder.value.trim(),
+          card_number: resolveSimPan(
+            (form.sim_token && form.sim_token.value)
+              || (form.card_number && form.card_number.value)
+              || ''
+          ),
+          card_holder: (form.sim_titular && form.sim_titular.value.trim())
+            || (form.card_holder && form.card_holder.value.trim())
+            || '',
         },
       };
 

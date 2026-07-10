@@ -33,6 +33,16 @@ class ProfesionalEfectorServicio extends ActiveRecord
         return 'profesional_efector_servicio';
     }
 
+    public function afterSoftDelete()
+    {
+        $idEfector = (int) $this->id_efector;
+        if ($idEfector > 0) {
+            \common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService::syncPendingDowngradeForEfector(
+                $idEfector
+            );
+        }
+    }
+
     public function behaviors()
     {
         return [

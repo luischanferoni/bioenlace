@@ -12,6 +12,8 @@ use yii\db\ActiveRecord;
  * @property int $id_efector
  * @property string $encounter_class
  * @property int|null $max_pes
+ * @property int|null $pending_max_pes
+ * @property string|null $pending_effective_on
  * @property int $activo
  * @property string $created_at
  * @property string|null $updated_at
@@ -56,9 +58,9 @@ class EfectorEncounterEntitlement extends ActiveRecord
     {
         return [
             [['id_efector', 'encounter_class'], 'required'],
-            [['id_efector', 'max_pes', 'activo'], 'integer'],
+            [['id_efector', 'max_pes', 'pending_max_pes', 'activo'], 'integer'],
             [['encounter_class'], 'string', 'max' => 10],
-            [['created_at', 'updated_at', 'deleted_at'], 'safe'],
+            [['pending_effective_on', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['activo'], 'default', 'value' => 1],
         ];
     }

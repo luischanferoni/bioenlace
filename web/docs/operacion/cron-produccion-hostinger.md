@@ -109,6 +109,14 @@ Si falla `php`, probá la versión del panel (`which php`, o `/usr/bin/php82`).
 
 ## Nocturnos (si aplican)
 
+### 00:15 diario (`15 0 * * *`) — downgrade de cupos (entitlements)
+
+Aplica `pending_max_pes` cuando llega el nuevo período (baja de profesionales diferida al mes siguiente):
+
+```bash
+/usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii entitlement/apply-pending-downgrades >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/entitlement-downgrade-cron.log 2>&1
+```
+
 ### 02:00 diario (`0 2 * * *`) — laboratorio LIS
 
 ```bash
@@ -149,6 +157,7 @@ Si falla `php`, probá la versión del panel (`which php`, o `/usr/bin/php82`).
 | Cada 5 min | `turno-waitlist/expire-offers` | `waitlist-cron.log` |
 | Cada 5 min | `care-pack/run-jobs` | `care-pack-cron.log` |
 | Cada 30 min | `paciente-domicilio/run` | `domicilio-cron.log` |
+| 00:15 diario | `entitlement/apply-pending-downgrades` | `entitlement-downgrade-cron.log` |
 
 Ruta base logs: `/home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/`
 

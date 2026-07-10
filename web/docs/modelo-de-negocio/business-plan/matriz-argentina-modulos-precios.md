@@ -76,8 +76,18 @@ Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×3,20 + 4×3,61 = **USD 46,44/
 | Wizard / opciones sesión | Solo clases en `efector_encounter_entitlement` (si no hay filas: `default_when_empty: allow_all`) |
 | `set-session` | Rechaza `encounter_class` no contratada |
 | Agenda AMB / cobertura EMER·IMP | Operan solo si la clase está contratada (vía sesión) |
+| Alta PES | Si hay contrato con `max_pes`, no se puede superar el tope de la clase primaria del servicio (personas distintas; excluye AdminEfector) |
+| Baja PES | Operativa inmediata; el mes en curso se cobra con el `max_pes` vigente. Se agenda `pending_max_pes` = uso actual, efectivo el **1º del mes siguiente** (`php yii entitlement/apply-pending-downgrades`). Si vuelven a completar el tope en el mismo mes, se cancela el pending. |
 
-Tope `max_pes` por clase: declarado en contrato; enforcement estricto de conteo = fase siguiente.
+### Ciclo de facturación (cupos)
+
+```
+Quitar profesional → max_pes no baja aún → pending_max_pes = N en uso, pending_effective_on = 1º mes siguiente
+Agregar en el mismo mes → permitido hasta max_pes (ya pagado); si uso vuelve al tope, se limpia el pending
+Corte (cron diario) → aplica pending → max_pes := pending_max_pes
+```
+
+Ampliación de licencia (subir `max_pes`): cambio de contrato (operación Bioenlace); no es self-service del admin efector.
 
 ---
 
@@ -107,9 +117,9 @@ Tope `max_pes` por clase: declarado en contrato; enforcement estricto de conteo 
 ## Priorización comercial
 
 1. Publicar calculador institucional (COGS + margen + add-ons).  
-2. Cargar entitlements por efector al firmar.  
-3. Usage report (encounters / profesionales activos) para renovación.  
-4. Pasarela / seña (fase posterior).
+2. Cargar entitlements por efector al firmar (`max_pes` + clases).  
+3. Enforce alta PES + downgrade diferido (`entitlement/apply-pending-downgrades`).  
+4. Usage report para renovación; pasarela / seña (fase posterior).
 
 ---
 

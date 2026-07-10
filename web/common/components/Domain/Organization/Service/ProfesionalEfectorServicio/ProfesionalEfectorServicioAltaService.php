@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService;
 use common\components\Domain\Organization\Service\Seed\ActiveRecordConsoleBlame;
 use common\components\Domain\Person\Service\PersonCuilService;
 use common\models\Person\Persona;
@@ -70,7 +71,9 @@ final class ProfesionalEfectorServicioAltaService
                     'id_servicio' => $idServicio,
                 ])
                 ->one();
-            if ($pes === null) {
+            $isNew = $pes === null;
+            if ($isNew) {
+                EfectorEncounterEntitlementService::assertCanAddPes($idEfector, $idPersona, $idServicio);
                 $pes = new ProfesionalEfectorServicioModel();
                 $pes->id_persona = $idPersona;
                 $pes->id_efector = $idEfector;
@@ -84,6 +87,10 @@ final class ProfesionalEfectorServicioAltaService
                 );
             } elseif (!$pes->save()) {
                 throw new \RuntimeException('No se pudo registrar la asignación profesional–efector–servicio: ' . json_encode($pes->getErrors()));
+            }
+
+            if ($isNew) {
+                EfectorEncounterEntitlementService::syncPendingDowngradeForEfector($idEfector);
             }
 
             $transaction->commit();

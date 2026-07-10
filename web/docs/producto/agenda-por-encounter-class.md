@@ -48,7 +48,7 @@ No crea filas en `turnos` ni slots públicos.
 
 ## Relacionado
 
-- Comercial / entitlements por clase: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) (`efector_encounter_entitlement`)
+- Comercial / entitlements por clase: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) (`efector_encounter_entitlement`, `max_pes`, downgrade diferido)
 - [turnos.md](./turnos.md)
 - [urgencias-guardia.md](./urgencias-guardia.md)
 - [internacion.md](./internacion.md)

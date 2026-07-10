@@ -25,6 +25,12 @@ final class InstitutionalEfectorSignupService
 
     public const SECTOR_PRIVADO = 'PRIVADO';
 
+    /** Clínica / centro (N profesionales). */
+    public const PERFIL_CLINICA = 'CLINICA';
+
+    /** Profesional independiente = efector unipersonal (mismo modelo, default max_pes=1). */
+    public const PERFIL_CONSULTORIO = 'CONSULTORIO';
+
     public const ITEM_NAME_ADMIN_EFECTOR = 'AdminEfector';
 
     /**
@@ -33,6 +39,11 @@ final class InstitutionalEfectorSignupService
      */
     public static function register(array $payload): array
     {
+        $perfil = strtoupper(trim((string) ($payload['perfil'] ?? self::PERFIL_CLINICA)));
+        if (!in_array($perfil, [self::PERFIL_CLINICA, self::PERFIL_CONSULTORIO], true)) {
+            throw new \InvalidArgumentException('Perfil de alta inválido (CLINICA o CONSULTORIO).');
+        }
+
         $sector = strtoupper(trim((string) ($payload['sector'] ?? '')));
         if (!in_array($sector, [self::SECTOR_PUBLICO, self::SECTOR_PRIVADO], true)) {
             throw new \InvalidArgumentException('Indicá si el efector es PUBLICO o PRIVADO.');
@@ -62,8 +73,8 @@ final class InstitutionalEfectorSignupService
         }
 
         $admin = self::normalizeAdmin($payload['admin'] ?? []);
-        $efectorData = self::normalizeEfector($payload['efector'] ?? [], $sector);
-        $plan = self::normalizePlan($payload['plan'] ?? []);
+        $efectorData = self::normalizeEfector($payload['efector'] ?? [], $sector, $perfil);
+        $plan = self::normalizePlan($payload['plan'] ?? [], $perfil);
         $paymentIn = is_array($payload['payment'] ?? null) ? $payload['payment'] : [];
 
         $tx = Yii::$app->db->beginTransaction();
@@ -76,7 +87,9 @@ final class InstitutionalEfectorSignupService
             $account = BillingAccountService::createAccount([
                 'nombre' => 'Licencia — ' . $efector->nombre,
                 'tipo' => BillingAccount::TIPO_EFECTOR,
-                'notas' => 'Alta self-service institucional',
+                'notas' => $perfil === self::PERFIL_CONSULTORIO
+                    ? 'Alta self-service consultorio unipersonal'
+                    : 'Alta self-service institucional',
                 'activo' => $pagoPorMinisterio ? 0 : 1,
             ]);
             $account->owner_user_id = (int) $user->id;
@@ -109,10 +122,6 @@ final class InstitutionalEfectorSignupService
                     $idEfector,
                     BillingAccountEfector::ROL_AFILIADO
                 );
-                if ($pagoPorMinisterio) {
-                    // Solicitud de cobertura: queda AFILIADO; el pool ministerial lo aprueba ops/admin.
-                    // No attach POOL automático (consume cupo ajeno).
-                }
             }
 
             self::ensureAdminEfectorPes((int) $persona->id_persona, $idEfector, (int) $user->id);
@@ -130,15 +139,14 @@ final class InstitutionalEfectorSignupService
             $log->contacto_email = $admin['email'];
             $log->contacto_telefono = $admin['telefono'];
             $log->contacto_documento = $admin['documento'];
-            $log->notas = $pagoPorMinisterio
-                ? 'Solicita cobertura de pago del ministerio; pendiente de aprobación operativa.'
-                : 'Alta self-service con pago simulado.';
+            $log->notas = ($perfil === self::PERFIL_CONSULTORIO ? '[CONSULTORIO] ' : '')
+                . ($pagoPorMinisterio
+                    ? 'Solicita cobertura de pago del ministerio; pendiente de aprobación operativa.'
+                    : 'Alta self-service con pago simulado.');
             $log->id_user = (int) $user->id;
             $log->id_billing_account = (int) $account->id;
             $log->id_efector = $idEfector;
-            if ($pagoPorMinisterio) {
-                // pending
-            } else {
+            if (!$pagoPorMinisterio) {
                 $log->reviewed_at = date('Y-m-d H:i:s');
             }
             $log->save(false);
@@ -150,6 +158,7 @@ final class InstitutionalEfectorSignupService
                 'id_persona' => (int) $persona->id_persona,
                 'id_efector' => $idEfector,
                 'id_billing_account' => (int) $account->id,
+                'perfil' => $perfil,
                 'sector' => $sector,
                 'pago_cubierto_por_ministerio' => $pagoPorMinisterio,
                 'amount_usd_charged' => $payment !== null ? (float) $payment->amount_usd : 0.0,
@@ -157,11 +166,31 @@ final class InstitutionalEfectorSignupService
                 'username' => (string) $user->username,
                 'email' => (string) $user->email,
                 'login_hint' => 'Ingresá en la web clínica con tu e-mail/usuario y la contraseña elegida.',
+                'next_steps' => self::nextStepsForPerfil($perfil),
             ];
         } catch (\Throwable $e) {
             $tx->rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function nextStepsForPerfil(string $perfil): array
+    {
+        if ($perfil === self::PERFIL_CONSULTORIO) {
+            return [
+                'Ingresá a la web clínica con tu usuario y contraseña.',
+                'En el asistente o en la gestión del centro, asignate a vos mismo en un servicio clínico (por ejemplo medicina general / ambulatorio) para poder atender.',
+                'La administración del consultorio ya está habilitada; el paso clínico es el que te permite agenda y captura.',
+            ];
+        }
+
+        return [
+            'Ingresá a la web clínica con tu usuario y contraseña.',
+            'Desde administración del centro podés invitar profesionales y habilitar servicios.',
+        ];
     }
 
     /**
@@ -245,7 +274,7 @@ final class InstitutionalEfectorSignupService
      * @param array<string, mixed> $efector
      * @return array{nombre: string, domicilio: string, telefono: ?string, id_localidad: int, origen_financiamiento: string, dependencia: string, tipologia: string, codigo_sisa: string}
      */
-    private static function normalizeEfector(array $efector, string $sector): array
+    private static function normalizeEfector(array $efector, string $sector, string $perfil = self::PERFIL_CLINICA): array
     {
         $nombre = trim((string) ($efector['nombre'] ?? ''));
         $domicilio = trim((string) ($efector['domicilio'] ?? ''));
@@ -262,6 +291,9 @@ final class InstitutionalEfectorSignupService
         }
 
         $publico = $sector === self::SECTOR_PUBLICO;
+        $tipologia = $perfil === self::PERFIL_CONSULTORIO
+            ? 'CLIN'
+            : ($publico ? 'CAP' : 'CLIN');
 
         return [
             'nombre' => $nombre,
@@ -270,7 +302,7 @@ final class InstitutionalEfectorSignupService
             'id_localidad' => $idLocalidad,
             'origen_financiamiento' => $publico ? 'Provincial' : 'Privado',
             'dependencia' => $publico ? 'Provincial' : 'Privado',
-            'tipologia' => $publico ? 'CAP' : 'CLIN',
+            'tipologia' => $tipologia,
             'codigo_sisa' => self::generateCodigoSisa(),
         ];
     }
@@ -279,13 +311,14 @@ final class InstitutionalEfectorSignupService
      * @param array<string, mixed> $plan
      * @return array{classes: array<string, array{max_pes: int, dictado_incluido: bool, videollamada_permitida: bool}>}
      */
-    private static function normalizePlan(array $plan): array
+    private static function normalizePlan(array $plan, string $perfil = self::PERFIL_CLINICA): array
     {
         $raw = $plan['classes'] ?? null;
         if (!is_array($raw) || $raw === []) {
+            $defaultAmb = $perfil === self::PERFIL_CONSULTORIO ? 1 : 5;
             $raw = [
                 'AMB' => [
-                    'max_pes' => max(1, (int) ($plan['max_pes_amb'] ?? 5)),
+                    'max_pes' => max(1, (int) ($plan['max_pes_amb'] ?? $defaultAmb)),
                     'dictado_incluido' => !empty($plan['audio']),
                     'videollamada_permitida' => !empty($plan['videollamada']),
                 ],

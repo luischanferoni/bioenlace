@@ -25,6 +25,7 @@ export 'auth/play_review_auth.dart';
 export 'auth/person_display_name.dart';
 export 'widgets/login_screen.dart';
 export 'widgets/privacy_policy_link.dart';
+export 'widgets/institutional_signup_link.dart';
 export 'widgets/play_review_login_sheet.dart';
 export 'ui_json/ui_json_screen.dart';
 export 'ui_json/ui_json_list_auto_advance.dart';

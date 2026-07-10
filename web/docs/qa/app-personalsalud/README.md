@@ -6,8 +6,8 @@ Pruebas de humo en **`mobile/personalsalud`** (Android). Misma API y sesión ope
 
 ## Prerrequisitos
 
-- Usuario Yii creado por **AdminEfector** (ver [admin_efector/gestion-efector.md](../admin_efector/gestion-efector.md) § Usuarios del efector).
-- La app **no** ofrece alta: sin botón de registro.
+- Usuario Yii creado por **AdminEfector** (ver [admin_efector/gestion-efector.md](../admin_efector/gestion-efector.md) § Usuarios del efector), o alta de consultorio propio en institucional.
+- La app **no** ofrece alta comercial in-app: hay CTA a `alta.html?perfil=consultorio` en el login.
 - `google-services.json` con `com.bioenlace.personalsalud` si probás push.
 
 ## Checklist rápido
@@ -21,6 +21,7 @@ Pruebas de humo en **`mobile/personalsalud`** (Android). Misma API y sesión ope
 | APS-05 | Cerrar sesión en Configuración | Vuelve a login; no queda contexto operativo |
 | APS-06 | Usuario sin asignación a efector | Mensaje claro (no crash) |
 | APS-07 | Timeline paciente con turno — motivos cargados | Resumen del chat de motivos visible cuando el paciente envió mensajes y cerró la ventana de carga |
+| APS-08 | Tap en CTA consultorio del login | Abre el alta web con `perfil=consultorio` |
 
 ## Cruzar con web
 

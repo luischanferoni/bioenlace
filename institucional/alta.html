@@ -134,6 +134,25 @@
             font-size: 0.8rem;
             color: #607d8b;
         }
+        .signup-next {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 10px;
+            background: #eef7f4;
+            border: 1px solid #c5e4d8;
+        }
+        .signup-next h3 {
+            margin: 0 0 0.5rem;
+            font-size: 1rem;
+            color: #093e4d;
+        }
+        .signup-next ol {
+            margin: 0;
+            padding-left: 1.2rem;
+            color: #37474f;
+            font-size: 0.95rem;
+        }
+        .signup-next li { margin-bottom: 0.35rem; }
         @media (max-width: 640px) {
             .signup-grid { grid-template-columns: 1fr; }
         }
@@ -168,17 +187,19 @@
     <main class="signup-page">
         <div class="container">
             <h1 class="section-title">Crear cuenta</h1>
-            <p class="section-subtitle">Registrá tu clínica o centro de salud online. Si sos un ministerio, dejá una solicitud y te contactamos para activarla.</p>
+            <p class="section-subtitle">Registrá tu clínica, tu consultorio profesional o solicitá acceso como ministerio.</p>
 
             <div class="signup-tabs" role="tablist">
-                <button type="button" class="is-active" role="tab" aria-selected="true" data-signup-tab="efector">Soy clínica / centro</button>
+                <button type="button" class="is-active" role="tab" aria-selected="true" data-signup-tab="efector" data-perfil="CLINICA">Soy clínica / centro</button>
+                <button type="button" role="tab" aria-selected="false" data-signup-tab="efector" data-perfil="CONSULTORIO">Soy profesional / consultorio</button>
                 <button type="button" role="tab" aria-selected="false" data-signup-tab="ministerio">Soy ministerio</button>
             </div>
 
             <section class="signup-panel" data-signup-panel="efector">
-                <h2>Registrar mi clínica o centro</h2>
-                <p class="signup-hint">Vas a crear tu usuario administrador, el centro y la licencia. El cobro de esta demo es simulado (no se debita una tarjeta real).</p>
+                <h2 id="efector-panel-title">Registrar mi clínica o centro</h2>
+                <p class="signup-hint" id="efector-panel-hint">Vas a crear tu usuario administrador, el centro y la licencia. El cobro de esta demo es simulado (no se debita una tarjeta real).</p>
                 <form id="form-efector" autocomplete="off" novalidate>
+                    <input type="hidden" name="perfil" id="signup-perfil" value="CLINICA">
                     <fieldset class="signup-fieldset">
                         <legend>Sector</legend>
                         <div class="signup-sector">
@@ -198,7 +219,7 @@
                     </fieldset>
 
                     <fieldset class="signup-fieldset">
-                        <legend>Administrador</legend>
+                        <legend id="admin-legend">Administrador</legend>
                         <div class="signup-grid">
                             <div class="signup-field"><label for="admin_nombre">Nombre</label><input id="admin_nombre" name="admin_nombre" type="text" autocomplete="off" required></div>
                             <div class="signup-field"><label for="admin_apellido">Apellido</label><input id="admin_apellido" name="admin_apellido" type="text" autocomplete="off" required></div>
@@ -211,31 +232,31 @@
                     </fieldset>
 
                     <fieldset class="signup-fieldset">
-                        <legend>Centro de salud</legend>
+                        <legend id="centro-legend">Centro de salud</legend>
                         <div class="signup-grid">
-                            <div class="signup-field full"><label for="efector_nombre">Nombre del centro</label><input id="efector_nombre" name="efector_nombre" type="text" autocomplete="off" required></div>
+                            <div class="signup-field full"><label for="efector_nombre" id="efector_nombre_label">Nombre del centro</label><input id="efector_nombre" name="efector_nombre" type="text" autocomplete="off" required></div>
                             <div class="signup-field full"><label for="efector_domicilio">Domicilio</label><input id="efector_domicilio" name="efector_domicilio" type="text" autocomplete="off" required></div>
-                            <div class="signup-field full"><label for="efector_telefono">Teléfono del centro</label><input id="efector_telefono" name="efector_telefono" type="tel" autocomplete="off"></div>
+                            <div class="signup-field full"><label for="efector_telefono">Teléfono</label><input id="efector_telefono" name="efector_telefono" type="tel" autocomplete="off"></div>
                         </div>
                     </fieldset>
 
                     <fieldset class="signup-fieldset">
                         <legend>Plan</legend>
-                        <p class="signup-hint">Indicá cuántos profesionales contratás por tipo de atención. El estimado se actualiza al cambiar las cantidades.</p>
+                        <p class="signup-hint" id="plan-hint">Indicá cuántos profesionales contratás por tipo de atención. El estimado se actualiza al cambiar las cantidades.</p>
                         <div class="signup-grid">
                             <div class="signup-field">
-                                <label for="max_pes_amb">Ambulatorio (profesionales)</label>
+                                <label for="max_pes_amb" id="max_pes_amb_label">Ambulatorio (profesionales)</label>
                                 <input id="max_pes_amb" name="max_pes_amb" type="number" min="1" value="5" data-plan-input>
                             </div>
                             <div class="signup-addons">
                                 <label class="signup-check"><input type="checkbox" name="audio" data-plan-input> <span>Dictado</span></label>
                                 <label class="signup-check"><input type="checkbox" name="videollamada" data-plan-input> <span>Videollamada</span></label>
                             </div>
-                            <div class="full signup-check-row">
+                            <div class="full signup-check-row" id="row-emer">
                                 <label class="signup-check"><input type="checkbox" name="incluir_emer" data-plan-input> <span>Incluir urgencia / guardia</span></label>
                                 <input class="signup-qty" name="max_pes_emer" type="number" min="1" value="2" aria-label="Profesionales de urgencia" data-plan-input>
                             </div>
-                            <div class="full signup-check-row">
+                            <div class="full signup-check-row" id="row-imp">
                                 <label class="signup-check"><input type="checkbox" name="incluir_imp" data-plan-input> <span>Incluir internación</span></label>
                                 <input class="signup-qty" name="max_pes_imp" type="number" min="1" value="2" aria-label="Profesionales de internación" data-plan-input>
                             </div>
@@ -265,6 +286,7 @@
 
                     <button type="submit" class="btn btn-primary">Crear cuenta y continuar</button>
                     <p id="efector-status" class="signup-status" hidden></p>
+                    <div id="efector-next-steps" class="signup-next" hidden></div>
                     <p><a id="login-link" href="#" hidden>Ir al login de la plataforma</a></p>
                 </form>
             </section>

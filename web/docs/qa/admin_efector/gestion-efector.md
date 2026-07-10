@@ -87,7 +87,7 @@ Permisos: `crearUsuarioEfector`, `assignRolesToUsers`, `borrarUserEfector`, `asi
 | Persona **que ya tiene usuario** y pasa a otro efector | **Asigna** al nuevo efector (mismo login); no hace falta crear otro usuario |
 | Personal que abre la **app Personal de Salud** | Solo **login**; si no tiene usuario, debe pedirlo a administración del centro |
 
-La app móvil **no** tiene registro. Ver humo en [app-personalsalud/README.md](../app-personalsalud/README.md).
+La app móvil **no** tiene registro comercial in-app (sí CTA al alta web de consultorio). Ver humo en [app-personalsalud/README.md](../app-personalsalud/README.md).
 
 1. **Vos** creás o vinculás usuario al efector.
 2. **Vos** asignás roles (p. ej. `Medico`, `Administrativo`).

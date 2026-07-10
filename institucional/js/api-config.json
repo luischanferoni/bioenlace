@@ -1,5 +1,6 @@
 {
   "apiBaseUrl": "http://localhost/api/v1",
   "loginUrl": "http://localhost/site/login",
-  "notes": "Ajustar apiBaseUrl al frontend Yii en cada entorno (prod: https://app.bioenlace.io/api/v1)."
+  "signupUrl": "alta.html",
+  "notes": "Ajustar apiBaseUrl al frontend Yii en cada entorno (prod: https://app.bioenlace.io/api/v1). Deep-link consultorio: alta.html?perfil=consultorio."
 }

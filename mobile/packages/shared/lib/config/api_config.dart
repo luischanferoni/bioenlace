@@ -16,6 +16,13 @@ class AppConfig {
     defaultValue: 'https://bioenlace.io/privacidad.html',
   );
 
+  /// Alta institucional de consultorio unipersonal (opción A).
+  /// Override: `--dart-define=INSTITUTIONAL_SIGNUP_URL=https://...`
+  static const String institutionalSignupUrl = String.fromEnvironment(
+    'INSTITUTIONAL_SIGNUP_URL',
+    defaultValue: 'https://bioenlace.io/alta.html?perfil=consultorio',
+  );
+
   /// `/api/clinical/...` (RBAC) → `/api/v1/clinical/...` para fetch HTTP.
   static String normalizeApiV1Path(String path) {
     var p = path.trim();

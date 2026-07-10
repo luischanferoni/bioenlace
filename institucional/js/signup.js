@@ -218,6 +218,7 @@
       e.preventDefault();
       var sector = (form.querySelector('input[name="sector"]:checked') || {}).value;
       var body = {
+        perfil: (form.perfil && form.perfil.value) || 'CLINICA',
         sector: sector,
         id_billing_account_ministerio: sector === 'PUBLICO'
           ? parseInt(form.id_billing_account_ministerio.value, 10) || 0
@@ -258,6 +259,8 @@
 
       showStatus(status, 'Procesando alta y pago simulado…', true);
       form.querySelector('[type="submit"]').disabled = true;
+      var nextBox = $('#efector-next-steps');
+      if (nextBox) nextBox.hidden = true;
 
       api('/licencia/registrar-efector', { method: 'POST', body: body })
         .then(function (r) {
@@ -276,6 +279,7 @@
           }
           msg += 'Podés ingresar en la plataforma.';
           showStatus(status, msg, true);
+          renderNextSteps(d.next_steps || []);
           var link = $('#login-link');
           if (link) {
             link.href = loginUrl;
@@ -287,6 +291,78 @@
           showStatus(status, 'Error de red. Verificá apiBaseUrl en js/api-config.json.', false);
         });
     });
+  }
+
+  function renderNextSteps(steps) {
+    var box = $('#efector-next-steps');
+    if (!box) return;
+    if (!steps || !steps.length) {
+      box.hidden = true;
+      box.innerHTML = '';
+      return;
+    }
+    var items = steps.map(function (s) {
+      return '<li>' + String(s) + '</li>';
+    }).join('');
+    box.innerHTML = '<h3>Próximos pasos</h3><ol>' + items + '</ol>';
+    box.hidden = false;
+  }
+
+  function applyPerfilUi(perfil) {
+    var form = $('#form-efector');
+    var perfilInput = $('#signup-perfil');
+    if (perfilInput) perfilInput.value = perfil;
+    var isConsultorio = perfil === 'CONSULTORIO';
+
+    var title = $('#efector-panel-title');
+    var hint = $('#efector-panel-hint');
+    var adminLegend = $('#admin-legend');
+    var centroLegend = $('#centro-legend');
+    var nombreLabel = $('#efector_nombre_label');
+    var planHint = $('#plan-hint');
+    var ambLabel = $('#max_pes_amb_label');
+    var rowEmer = $('#row-emer');
+    var rowImp = $('#row-imp');
+
+    if (title) {
+      title.textContent = isConsultorio
+        ? 'Registrar mi consultorio'
+        : 'Registrar mi clínica o centro';
+    }
+    if (hint) {
+      hint.textContent = isConsultorio
+        ? 'Creás tu usuario, tu consultorio y la licencia (1 profesional por defecto). Después te guiamos para asignarte a vos mismo en un servicio clínico y poder atender.'
+        : 'Vas a crear tu usuario administrador, el centro y la licencia. El cobro de esta demo es simulado (no se debita una tarjeta real).';
+    }
+    if (adminLegend) adminLegend.textContent = isConsultorio ? 'Tus datos' : 'Administrador';
+    if (centroLegend) centroLegend.textContent = isConsultorio ? 'Consultorio' : 'Centro de salud';
+    if (nombreLabel) nombreLabel.textContent = isConsultorio ? 'Nombre del consultorio' : 'Nombre del centro';
+    if (planHint) {
+      planHint.textContent = isConsultorio
+        ? 'Por defecto contratás 1 profesional en ambulatorio. Podés sumar opcionales; el estimado se actualiza al instante.'
+        : 'Indicá cuántos profesionales contratás por tipo de atención. El estimado se actualiza al cambiar las cantidades.';
+    }
+    if (ambLabel) {
+      ambLabel.textContent = isConsultorio
+        ? 'Ambulatorio (vos / profesionales)'
+        : 'Ambulatorio (profesionales)';
+    }
+    if (rowEmer) rowEmer.hidden = isConsultorio;
+    if (rowImp) rowImp.hidden = isConsultorio;
+
+    if (form) {
+      if (isConsultorio) {
+        form.max_pes_amb.value = '1';
+        if (form.incluir_emer) form.incluir_emer.checked = false;
+        if (form.incluir_imp) form.incluir_imp.checked = false;
+        var privado = form.querySelector('input[name="sector"][value="PRIVADO"]');
+        if (privado) privado.checked = true;
+        syncSectorUi();
+      } else if (parseInt(form.max_pes_amb.value, 10) === 1) {
+        form.max_pes_amb.value = '5';
+      }
+      updatePriceIndicator(form);
+    }
   }
 
   function initMinisterioForm() {
@@ -326,6 +402,7 @@
     tabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
         var id = tab.getAttribute('data-signup-tab');
+        var perfil = tab.getAttribute('data-perfil') || 'CLINICA';
         tabs.forEach(function (t) {
           t.classList.toggle('is-active', t === tab);
           t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
@@ -333,8 +410,21 @@
         panels.forEach(function (p) {
           p.hidden = p.getAttribute('data-signup-panel') !== id;
         });
+        if (id === 'efector') {
+          applyPerfilUi(perfil);
+        }
       });
     });
+
+    // Deep-link: alta.html?perfil=consultorio
+    var params = new URLSearchParams(window.location.search || '');
+    var q = String(params.get('perfil') || '').toUpperCase();
+    if (q === 'CONSULTORIO' || q === 'PROFESIONAL') {
+      var consultorioTab = document.querySelector('[data-signup-tab="efector"][data-perfil="CONSULTORIO"]');
+      if (consultorioTab) consultorioTab.click();
+    } else {
+      applyPerfilUi('CLINICA');
+    }
   }
 
   Promise.all([loadApiConfig(), loadPricingConfig()]).then(function () {

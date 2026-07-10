@@ -16,7 +16,8 @@ Bioenlace Personal de Salud es la app móvil para el **equipo del centro de salu
 
 **Para quién**
 - Personal con usuario asignado por administración del efector.
-- No incluye registro en la app: el administrador del centro crea tu acceso la primera vez.
+- Profesionales con consultorio propio: el alta comercial se hace en la web (`https://bioenlace.io/alta.html?perfil=consultorio`); la app es para operar después.
+- No incluye registro comercial dentro de la app.
 
 **Qué podés hacer**
 - Inicio según tu rol y área de trabajo (ambulatorio, guardia, internación).

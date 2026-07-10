@@ -6,7 +6,7 @@ Flujos clínicos del profesional en **web y app Personal de Salud**: captura, at
 
 **Pruebas integrales por caso clínico:** [escenarios/](../escenarios/README.md).
 
-**Acceso:** usuario asignado por AdminEfector del efector; la app no tiene registro. Humo móvil: [app-personalsalud/README.md](../app-personalsalud/README.md).
+**Acceso:** usuario asignado por AdminEfector del efector, o alta de consultorio propio en institucional; la app no tiene registro comercial in-app (sí CTA a la web). Humo móvil: [app-personalsalud/README.md](../app-personalsalud/README.md).
 
 ## Flujos paso a paso
 

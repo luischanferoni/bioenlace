@@ -97,30 +97,14 @@
     return String(token || '').replace(/\D+/g, '') || '4242424242424242';
   }
 
-  function buildPlanFromForm(form) {
-    var maxAmb = Math.max(1, parseInt(form.max_pes_amb.value, 10) || 5);
-    var classes = {
-      AMB: {
-        max_pes: maxAmb,
-        dictado_incluido: !!form.audio.checked,
-        videollamada_permitida: !!form.videollamada.checked,
-      },
-    };
-    if (form.incluir_emer && form.incluir_emer.checked) {
-      classes.EMER = {
-        max_pes: Math.max(1, parseInt(form.max_pes_emer.value, 10) || 2),
-        dictado_incluido: true,
-        videollamada_permitida: false,
-      };
+  function buildPlanFromForm() {
+    if (window.BioenlacePricingCalculator && window.BioenlacePricingCalculator.isReady()) {
+      var plan = window.BioenlacePricingCalculator.getPlan();
+      if (plan && plan.classes && Object.keys(plan.classes).length) {
+        return plan;
+      }
     }
-    if (form.incluir_imp && form.incluir_imp.checked) {
-      classes.IMP = {
-        max_pes: Math.max(1, parseInt(form.max_pes_imp.value, 10) || 2),
-        dictado_incluido: true,
-        videollamada_permitida: false,
-      };
-    }
-    return { classes: classes };
+    throw new Error('Elegí al menos un tipo de atención con profesionales en el calculador.');
   }
 
   function initEfectorForm() {
@@ -160,7 +144,6 @@
           domicilio: form.efector_domicilio.value.trim(),
           telefono: form.efector_telefono.value.trim(),
         },
-        plan: buildPlanFromForm(form),
         payment: {
           card_number: resolveSimPan(
             (form.sim_token && form.sim_token.value)
@@ -172,6 +155,13 @@
             || '',
         },
       };
+
+      try {
+        body.plan = buildPlanFromForm();
+      } catch (err) {
+        showStatus(status, err.message || 'Revisá el plan elegido.', false);
+        return;
+      }
 
       showStatus(status, 'Procesando alta y pago simulado…', true);
       form.querySelector('[type="submit"]').disabled = true;

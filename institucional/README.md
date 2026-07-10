@@ -30,9 +30,9 @@ institucional/
 Configurar `js/api-config.json` (`apiBaseUrl` → frontend Yii `/api/v1`).  
 Doc producto: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
 
-## Calculador (`js/pricing-calculator.js`)
+## Calculador (`js/pricing-core.js` + `js/pricing-calculator.js`)
 
-Lee `js/pricing-config.json` (mantener alineado a `web/common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml`).
+Núcleo compartido en `pricing-core.js`. El calculador de `#precios` y el de `alta.html` (`data-mode="signup"`) usan la misma fórmula y `pricing-config.json`.
 
 **Fórmula:** `precio_unitario = COGS × (1 + margin_on_cost_percent/100)`.  
 COGS: base ± audio ± videollamada, columna **con context caching** ([costos-api.md](../web/docs/costos/costos-api.md)).  

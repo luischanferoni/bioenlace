@@ -30,7 +30,7 @@
             border-color: transparent;
         }
         .signup-panel {
-            max-width: 720px;
+            max-width: 960px;
             background: rgba(255,255,255,0.92);
             border-radius: 12px;
             padding: 1.5rem;
@@ -183,24 +183,23 @@
                         </div>
                     </fieldset>
 
-                    <fieldset class="signup-fieldset">
-                        <legend>Plan (profesionales / mes)</legend>
-                        <div class="signup-grid">
-                            <div class="signup-field">
-                                <label for="max_pes_amb">Ambulatorio</label>
-                                <input id="max_pes_amb" name="max_pes_amb" type="number" min="1" value="5">
-                            </div>
-                            <div class="signup-addons">
-                                <label class="signup-check"><input type="checkbox" name="audio"> <span>Dictado</span></label>
-                                <label class="signup-check"><input type="checkbox" name="videollamada"> <span>Videollamada</span></label>
-                            </div>
-                            <div class="full signup-check-row">
-                                <label class="signup-check"><input type="checkbox" name="incluir_emer"> <span>Incluir urgencia / guardia</span></label>
-                                <input class="signup-qty" name="max_pes_emer" type="number" min="1" value="2" aria-label="Profesionales de urgencia">
-                            </div>
-                            <div class="full signup-check-row">
-                                <label class="signup-check"><input type="checkbox" name="incluir_imp"> <span>Incluir internación</span></label>
-                                <input class="signup-qty" name="max_pes_imp" type="number" min="1" value="2" aria-label="Profesionales de internación">
+                    <fieldset class="signup-fieldset signup-fieldset--pricing">
+                        <legend>Plan y estimado</legend>
+                        <p class="signup-hint">Elegí tipos de atención y cantidad de profesionales. El total se actualiza al instante (orientativo, sin IVA).</p>
+                        <div class="pricing-calc pricing-calc--signup" id="pricing-calculator" data-mode="signup" aria-live="polite">
+                            <div class="pricing-calc__grid">
+                                <div class="pricing-calc__controls">
+                                    <div id="pricing-rows" class="pricing-calc__rows"></div>
+                                    <div id="pricing-addons" class="pricing-calc__addons" hidden></div>
+                                    <p class="pricing-calc__tax" id="pricing-tax-note"></p>
+                                </div>
+                                <div class="pricing-calc__summary">
+                                    <p class="pricing-calc__summary-label">Estimado orientativo</p>
+                                    <p class="pricing-calc__total" id="pricing-total">—</p>
+                                    <div class="pricing-calc__breakdown" id="pricing-breakdown"></div>
+                                    <a href="#" class="btn btn-primary" id="pricing-cta" hidden>Crear cuenta</a>
+                                    <ul class="pricing-calc__footnotes" id="pricing-footnotes"></ul>
+                                </div>
                             </div>
                         </div>
                     </fieldset>
@@ -247,6 +246,8 @@
     </main>
 
     <script src="js/main.js"></script>
+    <script src="js/pricing-core.js"></script>
+    <script src="js/pricing-calculator.js"></script>
     <script src="js/signup.js"></script>
 </body>
 </html>

@@ -1678,8 +1678,24 @@ section {
     color: var(--text-muted);
 }
 
+.pricing-calc--signup {
+    margin-top: 0.35rem;
+    padding: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
+.signup-panel .pricing-calc__summary {
+    position: sticky;
+    top: 5.5rem;
+}
+
 @media (max-width: 768px) {
     .pricing-calc__grid {
         grid-template-columns: 1fr;
+    }
+
+    .signup-panel .pricing-calc__summary {
+        position: static;
     }
 }

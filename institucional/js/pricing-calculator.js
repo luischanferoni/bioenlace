@@ -1,103 +1,28 @@
 /**
  * Calculador: profesionales × clase + dictado/videollamada solo en AMB.
  * EMER/IMP: dictado fijo incluido, sin videollamada.
+ * Requiere pricing-core.js (window.BioenlacePricing).
  */
 (function () {
   const root = document.getElementById('pricing-calculator');
-  if (!root) return;
+  if (!root || !window.BioenlacePricing) return;
 
+  const Pricing = window.BioenlacePricing;
   const totalEl = document.getElementById('pricing-total');
   const breakdownEl = document.getElementById('pricing-breakdown');
   const ctaEl = document.getElementById('pricing-cta');
   const rowsEl = document.getElementById('pricing-rows');
   const addonsEl = document.getElementById('pricing-addons');
+  const mode = (root.getAttribute('data-mode') || 'page').toLowerCase();
 
   let config = null;
-
-  function formatMoney(n, currency) {
-    try {
-      return new Intl.NumberFormat('es-AR', {
-        style: 'currency',
-        currency: currency || 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 2,
-      }).format(n);
-    } catch (e) {
-      return (currency || 'USD') + ' ' + Math.round(n * 100) / 100;
-    }
-  }
-
-  function referenceEncounters() {
-    const n = Number((config && config.reference_encounters_per_professional_month) || 400);
-    return n > 0 ? n : 400;
-  }
-
-  function classRow(code) {
-    return (config.sellable_classes || {})[code] || {};
-  }
-
-  function volumeScale(code) {
-    const enc = Number(classRow(code).encounters_per_professional_month) || referenceEncounters();
-    return enc / referenceEncounters();
-  }
-
-  function classIncludesAudio(code) {
-    return !!classRow(code).audio_included;
-  }
-
-  function classAllowsVideollamada(code) {
-    const row = classRow(code);
-    if (Object.prototype.hasOwnProperty.call(row, 'videollamada_allowed')) {
-      return !!row.videollamada_allowed;
-    }
-    return true;
-  }
 
   function ambRow() {
     return rowsEl ? rowsEl.querySelector('[data-class="AMB"]') : null;
   }
 
-  function ambAddonEnabled(key) {
-    const row = ambRow();
-    if (!row) return false;
-    const classOn = row.querySelector('input[name="class_AMB"]');
-    if (!classOn || !classOn.checked) return false;
-    const input = row.querySelector('input[data-addon="' + key + '"]');
-    return !!(input && input.checked);
-  }
-
-  function referenceUnitCogs(audio, videollamada) {
-    const cogs = (config && config.cogs_usd_per_professional_month) || {};
-    let total = Number(cogs.base) || 0;
-    if (audio) total += Number(cogs.audio) || 0;
-    if (videollamada) total += Number(cogs.videollamada) || 0;
-    return total;
-  }
-
-  function unitCogsForClass(code) {
-    const audio = classIncludesAudio(code) || (code === 'AMB' && ambAddonEnabled('audio'));
-    const video = classAllowsVideollamada(code) && ambAddonEnabled('videollamada');
-    return referenceUnitCogs(audio, video) * volumeScale(code);
-  }
-
-  function unitPriceForClass(code) {
-    const margin = Number((config && config.margin_on_cost_percent) || 0);
-    return Math.round(unitCogsForClass(code) * (1 + margin / 100) * 100) / 100;
-  }
-
-  function readSelection() {
-    const sel = {};
-    if (!rowsEl) return sel;
-    rowsEl.querySelectorAll('[data-class]').forEach((row) => {
-      const code = row.getAttribute('data-class');
-      const enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
-      const qty = row.querySelector('input[type="number"]');
-      if (!code || !enabled || !qty) return;
-      if (!enabled.checked) return;
-      const n = Math.max(0, parseInt(qty.value, 10) || 0);
-      if (n > 0) sel[code] = n;
-    });
-    return sel;
+  function currentSelection() {
+    return Pricing.readDomSelection(rowsEl);
   }
 
   function syncAmbOptions(row) {
@@ -122,43 +47,25 @@
 
   function recalc() {
     if (!config) return;
-    const sel = readSelection();
-    let total = 0;
-    const lines = [];
-    Object.keys(config.sellable_classes || {}).forEach((code) => {
-      const cls = config.sellable_classes[code];
-      const qty = sel[code] || 0;
-      if (qty <= 0) return;
-      const unit = unitPriceForClass(code);
-      const line = qty * unit;
-      total += line;
-      lines.push({
-        code,
-        label: cls.label,
-        qty,
-        unit,
-        line,
-      });
-    });
+    const selection = currentSelection();
+    const result = Pricing.estimate(config, selection);
 
     if (totalEl) {
-      totalEl.textContent = formatMoney(total, config.currency) + ' / mes';
+      totalEl.textContent = result.formattedTotal + ' / mes';
     }
     if (breakdownEl) {
-      if (!lines.length) {
+      if (!result.lines.length) {
         breakdownEl.innerHTML =
           '<p class="pricing-calc__hint">Activá al menos un tipo de atención e indicá la cantidad de profesionales.</p>';
       } else {
-        breakdownEl.innerHTML = lines
+        breakdownEl.innerHTML = result.lines
           .map((l) => {
             let note = '';
             if (l.code === 'AMB') {
               const bits = [];
-              if (ambAddonEnabled('audio')) bits.push('con dictado');
-              if (ambAddonEnabled('videollamada')) bits.push('con videollamada');
+              if (selection.addons.audio) bits.push('con dictado');
+              if (selection.addons.videollamada) bits.push('con videollamada');
               note = bits.length ? ' · ' + bits.join(' · ') : '';
-            } else {
-              note = '';
             }
             return (
               '<div class="pricing-calc__line"><span>' +
@@ -169,23 +76,31 @@
               l.label +
               note +
               ' (' +
-              formatMoney(l.unit, config.currency) +
+              Pricing.formatMoney(l.unit, result.currency) +
               '/mes)</span><strong>' +
-              formatMoney(l.line, config.currency) +
+              Pricing.formatMoney(l.line, result.currency) +
               '</strong></div>'
             );
           })
           .join('');
       }
     }
-    if (ctaEl) {
-      const summary = lines
+
+    root.dispatchEvent(
+      new CustomEvent('bioenlace:pricing-change', {
+        bubbles: true,
+        detail: { selection: selection, estimate: result },
+      })
+    );
+
+    if (ctaEl && mode !== 'signup') {
+      const summary = result.lines
         .map((l) => {
           let extra = '';
           if (l.code === 'AMB') {
             const bits = [];
-            if (ambAddonEnabled('audio')) bits.push('dictado');
-            if (ambAddonEnabled('videollamada')) bits.push('videollamada');
+            if (selection.addons.audio) bits.push('dictado');
+            if (selection.addons.videollamada) bits.push('videollamada');
             if (bits.length) extra = ' con ' + bits.join(' y ');
           }
           return l.qty + ' profesional' + (l.qty === 1 ? '' : 'es') + ' ' + l.label + extra;
@@ -195,7 +110,7 @@
         'Hola, quiero cotizar Bioenlace: ' +
         (summary || 'sin selección') +
         '. Estimado orientativo ' +
-        formatMoney(total, config.currency) +
+        result.formattedTotal +
         '/mes.';
       const href = (config.simulator && config.simulator.cta_href) || '#contacto';
       ctaEl.setAttribute('href', href);
@@ -205,11 +120,14 @@
 
   function refreshUnitLabels() {
     if (!rowsEl || !config) return;
+    const addons = currentSelection().addons;
     rowsEl.querySelectorAll('[data-class]').forEach((row) => {
       const code = row.getAttribute('data-class');
       const unitEl = row.querySelector('.pricing-calc__unit');
       if (unitEl && code) {
-        unitEl.textContent = formatMoney(unitPriceForClass(code), config.currency) + ' / profesional / mes';
+        unitEl.textContent =
+          Pricing.formatMoney(Pricing.unitPriceForClass(config, code, addons), config.currency) +
+          ' / profesional / mes';
       }
     });
   }
@@ -235,10 +153,8 @@
   }
 
   function buildFixedPolicyHtml(code) {
-    if (classIncludesAudio(code) && !classAllowsVideollamada(code)) {
-      return (
-        '<p class="pricing-calc__policy">Dictado incluido · Sin videollamada</p>'
-      );
+    if (Pricing.classIncludesAudio(config, code) && !Pricing.classAllowsVideollamada(config, code)) {
+      return '<p class="pricing-calc__policy">Dictado incluido · Sin videollamada</p>';
     }
     return '';
   }
@@ -253,12 +169,11 @@
     rowsEl.innerHTML = '';
     Object.keys(classes).forEach((code) => {
       const cls = classes[code];
-      const unit = unitPriceForClass(code);
+      const unit = Pricing.unitPriceForClass(config, code, {});
       const row = document.createElement('div');
       row.className = 'pricing-calc__row';
       row.setAttribute('data-class', code);
-      const optionsHtml =
-        code === 'AMB' ? buildAmbOptionsHtml() : buildFixedPolicyHtml(code);
+      const optionsHtml = code === 'AMB' ? buildAmbOptionsHtml() : buildFixedPolicyHtml(code);
       row.innerHTML =
         '<div class="pricing-calc__main">' +
         '<label class="pricing-calc__check">' +
@@ -273,7 +188,7 @@
         (cls.short || '') +
         '</span>' +
         '<span class="pricing-calc__unit">' +
-        formatMoney(unit, config.currency) +
+        Pricing.formatMoney(unit, config.currency) +
         ' / profesional / mes</span>' +
         '</span></label>' +
         optionsHtml +
@@ -300,6 +215,18 @@
         });
       });
     });
+
+    // Defaults útiles en alta: ambulatorio con 5 profesionales
+    if (mode === 'signup') {
+      const amb = rowsEl.querySelector('[data-class="AMB"]');
+      if (amb) {
+        const cb = amb.querySelector('input[name="class_AMB"]');
+        const qty = amb.querySelector('input[type="number"]');
+        if (cb) cb.checked = true;
+        if (qty) qty.value = '5';
+        syncQtyDisabled(amb);
+      }
+    }
   }
 
   function fillStaticCopy() {
@@ -307,9 +234,9 @@
     const subtitle = document.getElementById('pricing-subtitle');
     const footnotes = document.getElementById('pricing-footnotes');
     const sim = config.simulator || {};
-    if (title && sim.title) title.textContent = sim.title;
-    if (subtitle && sim.subtitle) subtitle.textContent = sim.subtitle;
-    if (ctaEl && sim.cta_label) ctaEl.textContent = sim.cta_label;
+    if (title && sim.title && mode !== 'signup') title.textContent = sim.title;
+    if (subtitle && sim.subtitle && mode !== 'signup') subtitle.textContent = sim.subtitle;
+    if (ctaEl && sim.cta_label && mode !== 'signup') ctaEl.textContent = sim.cta_label;
     if (footnotes && Array.isArray(sim.footnotes)) {
       footnotes.innerHTML = sim.footnotes.map((f) => '<li>' + f + '</li>').join('');
     }
@@ -318,14 +245,31 @@
   }
 
   if (ctaEl) {
-    ctaEl.addEventListener('click', () => {
-      const msg = ctaEl.dataset.quoteMessage;
-      const contactMsg = document.getElementById('message');
-      if (msg && contactMsg) {
-        contactMsg.value = msg;
-      }
-    });
+    if (mode === 'signup') {
+      ctaEl.hidden = true;
+    } else {
+      ctaEl.addEventListener('click', () => {
+        const msg = ctaEl.dataset.quoteMessage;
+        const contactMsg = document.getElementById('message');
+        if (msg && contactMsg) {
+          contactMsg.value = msg;
+        }
+      });
+    }
   }
+
+  window.BioenlacePricingCalculator = {
+    getSelection: currentSelection,
+    getPlan: function () {
+      return Pricing.toSignupPlan(currentSelection());
+    },
+    getEstimate: function () {
+      return config ? Pricing.estimate(config, currentSelection()) : null;
+    },
+    isReady: function () {
+      return !!config;
+    },
+  };
 
   fetch('js/pricing-config.json', { cache: 'no-cache' })
     .then((r) => {
@@ -336,6 +280,7 @@
       config = data;
       fillStaticCopy();
       buildRows();
+      refreshUnitLabels();
       recalc();
       root.classList.add('is-ready');
     })

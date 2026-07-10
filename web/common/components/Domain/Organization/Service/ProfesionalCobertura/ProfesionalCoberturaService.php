@@ -52,7 +52,11 @@ final class ProfesionalCoberturaService
         self::applyPayload($model, $data);
         $conflicts = self::detectConflicts($model);
         if ($conflicts !== []) {
-            return ['ok' => false, 'errors' => ['_conflicto' => ['Hay solapes de cobertura.']], 'conflicts' => $conflicts];
+            return [
+                'ok' => false,
+                'errors' => ['_conflicto' => ['Hay conflictos de cobertura o con agenda ambulatoria.']],
+                'conflicts' => $conflicts,
+            ];
         }
         if (!$model->validate()) {
             return ['ok' => false, 'errors' => $model->errors];
@@ -73,7 +77,11 @@ final class ProfesionalCoberturaService
         self::applyPayload($model, $data, true);
         $conflicts = self::detectConflicts($model);
         if ($conflicts !== []) {
-            return ['ok' => false, 'errors' => ['_conflicto' => ['Hay solapes de cobertura.']], 'conflicts' => $conflicts];
+            return [
+                'ok' => false,
+                'errors' => ['_conflicto' => ['Hay conflictos de cobertura o con agenda ambulatoria.']],
+                'conflicts' => $conflicts,
+            ];
         }
         if (!$model->validate()) {
             return ['ok' => false, 'errors' => $model->errors];
@@ -90,21 +98,22 @@ final class ProfesionalCoberturaService
      */
     public static function detectConflicts(ProfesionalCobertura $model): array
     {
-        if (!AgendaByEncounterClassMetadata::coberturaOverlapSamePersonaEfector()) {
-            return [];
+        $out = [];
+        if (AgendaByEncounterClassMetadata::coberturaOverlapSamePersonaEfector()) {
+            $rows = ProfesionalCobertura::findSolapes(
+                (int) $model->id_persona,
+                (int) $model->id_efector,
+                (string) $model->inicio,
+                (string) $model->fin,
+                $model->isNewRecord ? null : (int) $model->id
+            );
+            foreach ($rows as $row) {
+                $out[] = array_merge(self::toApiArray($row), ['kind' => 'cobertura_overlap']);
+            }
         }
 
-        $rows = ProfesionalCobertura::findSolapes(
-            (int) $model->id_persona,
-            (int) $model->id_efector,
-            (string) $model->inicio,
-            (string) $model->fin,
-            $model->isNewRecord ? null : (int) $model->id
-        );
-
-        $out = [];
-        foreach ($rows as $row) {
-            $out[] = self::toApiArray($row);
+        foreach (ProfesionalCoberturaActivaService::detectAmbSlotConflicts($model) as $amb) {
+            $out[] = $amb;
         }
 
         return $out;

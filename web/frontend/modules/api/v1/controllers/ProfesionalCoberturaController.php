@@ -6,6 +6,7 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
+use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaActivaService;
 use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaService;
 use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaUiFlowService;
 use common\models\ProfesionalCobertura;
@@ -40,6 +41,24 @@ class ProfesionalCoberturaController extends BaseController
         }
 
         return ProfesionalCoberturaUiFlowService::renderForm($idEfector, $fromClient, $allowOwn);
+    }
+
+    /**
+     * GET /api/v1/profesional-cobertura/listar-activas
+     *
+     * Query: encounter_class=EMER|IMP, opcional at=YYYY-MM-DD HH:MM:SS
+     */
+    public function actionListarActivas(): array
+    {
+        $idEfector = $this->requireEfectorId();
+        $params = Yii::$app->request->get();
+        $class = strtoupper(trim((string) ($params['encounter_class'] ?? 'EMER')));
+        $at = isset($params['at']) ? (string) $params['at'] : null;
+
+        return [
+            'success' => true,
+            'data' => ProfesionalCoberturaActivaService::panelPayload($idEfector, $class, $at),
+        ];
     }
 
     /**

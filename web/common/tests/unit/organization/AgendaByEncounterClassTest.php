@@ -55,4 +55,10 @@ class AgendaByEncounterClassTest extends Unit
         $this->assertFalse($model->validate(['fin']));
         $this->assertArrayHasKey('fin', $model->errors);
     }
+
+    public function testCoberturaVsAmbSlotsEnabled(): void
+    {
+        $conflicts = AgendaByEncounterClassMetadata::loadConfig()['conflicts'] ?? [];
+        $this->assertTrue((bool) ($conflicts['cobertura_vs_amb_slots'] ?? false));
+    }
 }

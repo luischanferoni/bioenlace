@@ -48,27 +48,48 @@
         {
           "name": "id_servicio",
           "label": "Servicio (opcional)",
-          "type": "number",
+          "type": "select",
           "required": false,
-          "include_in_submit": true,
-          "hint": "Filtra el ámbito (p. ej. guardia pediátrica). Vacío = cobertura general del efector.",
-          "layout": { "col": 6, "breakpoint": "md" }
-        },
-        {
-          "name": "inicio",
-          "label": "Entrada",
-          "type": "text",
-          "required": true,
-          "placeholder": "YYYY-MM-DD HH:MM",
+          "options": "{{options}}",
+          "option_config": {
+            "source": "servicios",
+            "filter": "efector_servicios"
+          },
+          "hint": "Vacío = cobertura general del efector.",
           "include_in_submit": true,
           "layout": { "col": 6, "breakpoint": "md" }
         },
         {
-          "name": "fin",
-          "label": "Salida",
+          "name": "fecha_inicio",
+          "label": "Fecha de entrada",
+          "type": "date",
+          "required": true,
+          "include_in_submit": true,
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "hora_inicio",
+          "label": "Hora de entrada",
           "type": "text",
           "required": true,
-          "placeholder": "YYYY-MM-DD HH:MM",
+          "placeholder": "HH:MM",
+          "include_in_submit": true,
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "fecha_fin",
+          "label": "Fecha de salida",
+          "type": "date",
+          "required": true,
+          "include_in_submit": true,
+          "layout": { "col": 6, "breakpoint": "md" }
+        },
+        {
+          "name": "hora_fin",
+          "label": "Hora de salida",
+          "type": "text",
+          "required": true,
+          "placeholder": "HH:MM",
           "include_in_submit": true,
           "layout": { "col": 6, "breakpoint": "md" }
         },

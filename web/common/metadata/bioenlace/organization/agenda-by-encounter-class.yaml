@@ -33,8 +33,8 @@ kinds:
 conflicts:
   # Solape de intervalos de cobertura (EMER/IMP) misma persona + mismo efector.
   cobertura_overlap_same_persona_efector: true
-  # Cruce cobertura vs grilla AMB: fase posterior (licencias / indisponibilidad).
-  cobertura_vs_amb_slots: false
+  # Cruce cobertura vs grilla AMB: avisa si hay cupos AMB en el intervalo.
+  cobertura_vs_amb_slots: true
 
 patient_exposure:
   # Solo agendas AMB (y servicios con acepta_turnos) entran al funnel de reserva.

@@ -19,6 +19,8 @@
 
 - [x] **Teleconsulta en reserva:** política por servicio, elegibilidad por triage, modalidad condicional en `atencion.necesito-atencion`, `acepta_consultas_online` en agenda PES, badge en app Personal de Salud. Ver [teleconsulta-elegibilidad.md](../producto/teleconsulta-elegibilidad.md).
 - [ ] Cruce de conflictos cobertura vs grilla AMB (licencias / indisponibilidad unificada).
+- [x] Conflicto cobertura vs cupos AMB al guardar roster (`cobertura_vs_amb_slots`).
+- [x] Plantel activo en panel EMER/IMP (`staff_cobertura_activa`).
 - [ ] Lista de espera nacional entre efectores con priorización clínica.
 - [ ] Integración con obras sociales / autorizaciones en el mismo flujo de reserva.
 - [ ] Piloto en producción NIS MSAL (datos reales + cron habilitado).

@@ -100,12 +100,31 @@ final class ProfesionalCoberturaUiFlowService
             $idPes = (int) (\Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
         }
 
-        return array_merge($query, [
+        $defaults = [
             'id_efector' => $idEfector,
             'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : ($query['id_profesional_efector_servicio'] ?? ''),
             'encounter_class_options' => $classes,
             'encounter_class' => (string) ($query['encounter_class'] ?? 'EMER'),
-        ]);
+        ];
+
+        $inicio = trim((string) ($query['inicio'] ?? ''));
+        $fin = trim((string) ($query['fin'] ?? ''));
+        if ($inicio !== '' && empty($query['fecha_inicio'])) {
+            $parts = self::splitDateTime($inicio);
+            $defaults['fecha_inicio'] = $parts['fecha'];
+            $defaults['hora_inicio'] = $parts['hora'];
+        }
+        if ($fin !== '' && empty($query['fecha_fin'])) {
+            $parts = self::splitDateTime($fin);
+            $defaults['fecha_fin'] = $parts['fecha'];
+            $defaults['hora_fin'] = $parts['hora'];
+        }
+        if (empty($query['fecha_inicio']) && empty($defaults['fecha_inicio'])) {
+            $defaults['fecha_inicio'] = date('Y-m-d');
+            $defaults['fecha_fin'] = date('Y-m-d');
+        }
+
+        return array_merge($query, $defaults);
     }
 
     /**
@@ -134,10 +153,10 @@ final class ProfesionalCoberturaUiFlowService
             throw new BadRequestHttpException('id_persona o id_profesional_efector_servicio es requerido.');
         }
 
-        $inicio = self::normalizeDateTime((string) ($post['inicio'] ?? ''));
-        $fin = self::normalizeDateTime((string) ($post['fin'] ?? ''));
+        $inicio = self::resolveIntervalBound($post, 'inicio', 'fecha_inicio', 'hora_inicio');
+        $fin = self::resolveIntervalBound($post, 'fin', 'fecha_fin', 'hora_fin');
         if ($inicio === '' || $fin === '') {
-            throw new BadRequestHttpException('inicio y fin son obligatorios (YYYY-MM-DD HH:MM).');
+            throw new BadRequestHttpException('Entrada y salida son obligatorias (fecha + hora).');
         }
 
         $idServicio = $post['id_servicio'] ?? null;
@@ -157,6 +176,47 @@ final class ProfesionalCoberturaUiFlowService
             'fin' => $fin,
             'rol' => isset($post['rol']) ? trim((string) $post['rol']) : null,
             'notas' => isset($post['notas']) ? trim((string) $post['notas']) : null,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     */
+    private static function resolveIntervalBound(array $post, string $fullKey, string $fechaKey, string $horaKey): string
+    {
+        $full = self::normalizeDateTime((string) ($post[$fullKey] ?? ''));
+        if ($full !== '') {
+            return $full;
+        }
+        $fecha = trim((string) ($post[$fechaKey] ?? ''));
+        $hora = trim((string) ($post[$horaKey] ?? ''));
+        if ($fecha === '' || $hora === '') {
+            return '';
+        }
+        if (preg_match('/^\d{1,2}:\d{2}$/', $hora)) {
+            $hora .= ':00';
+        }
+
+        return self::normalizeDateTime($fecha . ' ' . $hora);
+    }
+
+    /**
+     * @return array{fecha: string, hora: string}
+     */
+    private static function splitDateTime(string $raw): array
+    {
+        $norm = self::normalizeDateTime($raw);
+        if ($norm === '') {
+            return ['fecha' => '', 'hora' => ''];
+        }
+        $ts = strtotime($norm);
+        if ($ts === false) {
+            return ['fecha' => '', 'hora' => ''];
+        }
+
+        return [
+            'fecha' => date('Y-m-d', $ts),
+            'hora' => date('H:i', $ts),
         ];
     }
 

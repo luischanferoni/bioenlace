@@ -914,9 +914,45 @@
       }
     }
 
-    function renderGuardiaTablero(items, indicatorsData) {
+    function renderCoberturaActivaBanner(coberturaData, parentEl) {
+      if (!coberturaData || !parentEl) return;
+      var items = coberturaData.items || [];
+      var box = document.createElement('div');
+      box.className = 'alert alert-light border mb-3 py-2';
+      var title = document.createElement('div');
+      title.className = 'fw-semibold small mb-1';
+      title.textContent = coberturaData.title || 'Cobertura';
+      box.appendChild(title);
+      if (!items.length) {
+        var empty = document.createElement('div');
+        empty.className = 'text-muted small';
+        empty.textContent = coberturaData.empty_message || 'Sin cobertura cargada.';
+        box.appendChild(empty);
+      } else {
+        var row = document.createElement('div');
+        row.className = 'd-flex flex-wrap gap-2';
+        items.forEach(function (c) {
+          var chip = document.createElement('span');
+          chip.className = 'badge text-bg-secondary';
+          var nombre = (c.persona && c.persona.nombre_completo) ? c.persona.nombre_completo : 'Profesional';
+          var rol = c.rol ? ' · ' + c.rol : '';
+          var ini = (c.inicio || '').toString().substring(11, 16);
+          var fin = (c.fin || '').toString().substring(11, 16);
+          var horas = (ini || fin) ? ' · ' + ini + '–' + fin : '';
+          chip.textContent = nombre + rol + horas;
+          row.appendChild(chip);
+        });
+        box.appendChild(row);
+      }
+      parentEl.insertBefore(box, parentEl.firstChild);
+    }
+
+    function renderGuardiaTablero(items, indicatorsData, coberturaData) {
       if (!items || !items.length) {
         showListadoEmpty(msgEmptyGuardias);
+        if (coberturaData) {
+          renderCoberturaActivaBanner(coberturaData, container);
+        }
         return;
       }
       clearNode(container);
@@ -925,6 +961,9 @@
       var rowsSlot = wrapFrag.querySelector('[data-slot="guardias-rows"]');
       var wrapRoot = wrapFrag.querySelector('[data-role="guardias-wrap"]');
       container.appendChild(wrapFrag);
+      if (coberturaData) {
+        renderCoberturaActivaBanner(coberturaData, wrapRoot || container);
+      }
       bindTableroRefresh(wrapRoot);
       if (indicatorsData) {
         applyTableroResumenFromData(wrapRoot, indicatorsData);
@@ -1735,9 +1774,10 @@
       var kpiSections = (panel.sections || []).filter(function (sec) {
         return sec.kind === 'staff_kpi_group' && sec.data && Array.isArray(sec.data.items) && sec.data.items.length;
       });
+      var coberturaSec = findPanelSection(panel, 'staff_cobertura_activa');
       var asyncSec = findPanelSection(panel, 'async_consultations_queue');
       var hasAsync = asyncSec && asyncSec.data && asyncSec.data.items && asyncSec.data.items.length;
-      if (!kpiSections.length && !hasAsync) {
+      if (!kpiSections.length && !hasAsync && !coberturaSec) {
         return { listTarget: container, asyncSlot: null };
       }
       clearNode(container);
@@ -1752,6 +1792,9 @@
       kpiSections.forEach(function (sec) {
         renderStaffKpiGroup(kpiSlot, sec.data);
       });
+      if (coberturaSec && coberturaSec.data) {
+        renderCoberturaActivaBanner(coberturaSec.data, listSlot || container);
+      }
       return {
         listTarget: listSlot || container,
         asyncSlot: asyncSlot,
@@ -1767,10 +1810,11 @@
         return;
       }
       if (layout === 'clinical_board') {
+        var coberturaSec = findPanelSection(panel, 'staff_cobertura_activa');
         var boardSec = findPanelSection(panel, 'emergency_board');
         var items = boardSec && boardSec.data ? boardSec.data.items || [] : [];
         var indicatorsSec = findPanelSection(panel, 'emergency_indicators');
-        renderGuardiaTablero(items, indicatorsSec ? indicatorsSec.data : null);
+        renderGuardiaTablero(items, indicatorsSec ? indicatorsSec.data : null, coberturaSec ? coberturaSec.data : null);
         applyPanelChrome(panel);
         return;
       }
@@ -1843,15 +1887,19 @@
 
         var panel = json.data || {};
         if (options.sections) {
-          var boardSec = findPanelSection(panel, 'emergency_board');
-          if (boardSec) {
-            var items = boardSec.data ? boardSec.data.items || [] : [];
-            renderGuardiaTablero(items);
-          }
-          var indSec = findPanelSection(panel, 'emergency_indicators');
-          if (indSec) {
-            var wrapRoot = container.querySelector('[data-role="guardias-wrap"]');
-            applyTableroResumenFromData(wrapRoot, indSec.data);
+          var coberturaSecPoll = findPanelSection(panel, 'staff_cobertura_activa');
+          var boardSecPoll = findPanelSection(panel, 'emergency_board');
+          var indSecPoll = findPanelSection(panel, 'emergency_indicators');
+          if (boardSecPoll) {
+            var itemsPoll = boardSecPoll.data ? boardSecPoll.data.items || [] : [];
+            renderGuardiaTablero(
+              itemsPoll,
+              indSecPoll ? indSecPoll.data : null,
+              coberturaSecPoll ? coberturaSecPoll.data : null
+            );
+          } else if (indSecPoll) {
+            var wrapRootPoll = container.querySelector('[data-role="guardias-wrap"]');
+            applyTableroResumenFromData(wrapRootPoll, indSecPoll.data);
           }
         } else {
           renderFromPanel(panel);
@@ -1868,7 +1916,7 @@
     async function loadGuardiaTablero(showSpinner) {
       await loadPanel({
         showSpinner: showSpinner,
-        sections: 'emergency_board,emergency_indicators',
+        sections: 'staff_cobertura_activa,emergency_board,emergency_indicators',
       });
     }
 

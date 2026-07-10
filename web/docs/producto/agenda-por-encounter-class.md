@@ -24,10 +24,11 @@ Metadata: [`agenda-by-encounter-class.yaml`](../../common/metadata/bioenlace/org
 ## EMER / IMP — cobertura
 
 - Tabla `profesional_cobertura`: persona, efector, clase, `inicio`/`fin`, servicio opcional, PES opcional, rol/notas.
-- Conflictos: solape de intervalos misma persona + mismo efector (configurable en metadata).
-- API: `/api/v1/profesional-cobertura/*` (propio vs `*-para-recurso`).
-- UI JSON: `profesional-cobertura/gestionar`.
+- Conflictos: solape de intervalos misma persona + mismo efector; y solape con cupos AMB (`cobertura_vs_amb_slots`).
+- API: `/api/v1/profesional-cobertura/*` (propio vs `*-para-recurso`); `listar-activas` para plantel vigente.
+- UI JSON: `profesional-cobertura/gestionar` (fecha/hora + selector de servicio).
 - Intents: `profesional-cobertura.gestionar-propio` | `gestionar-staff`.
+- Panel inicio: sección `staff_cobertura_activa` en EMER e IMP piso.
 
 No crea filas en `turnos` ni slots públicos.
 
@@ -41,6 +42,7 @@ No crea filas en `turnos` ni slots públicos.
 
 1. `m260710_100000_agenda_tipada_por_encounter_class`
 2. `m260710_100001_api_profesional_cobertura_rbac`
+3. `m260710_120000_api_profesional_cobertura_listar_activas_rbac`
 
 ## Relacionado
 

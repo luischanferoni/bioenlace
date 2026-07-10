@@ -442,6 +442,8 @@ return [
                 'OPTIONS api/<version:\w+>/profesional-cobertura/gestionar' => '<version>/profesional-cobertura/gestionar',
                 'GET api/<version:\w+>/profesional-cobertura/listar' => '<version>/profesional-cobertura/listar',
                 'OPTIONS api/<version:\w+>/profesional-cobertura/listar' => '<version>/profesional-cobertura/listar',
+                'GET api/<version:\w+>/profesional-cobertura/listar-activas' => '<version>/profesional-cobertura/listar-activas',
+                'OPTIONS api/<version:\w+>/profesional-cobertura/listar-activas' => '<version>/profesional-cobertura/listar-activas',
                 'GET api/<version:\w+>/profesional-cobertura/listar-para-recurso' => '<version>/profesional-cobertura/listar-para-recurso',
                 'OPTIONS api/<version:\w+>/profesional-cobertura/listar-para-recurso' => '<version>/profesional-cobertura/listar-para-recurso',
                 'POST api/<version:\w+>/profesional-cobertura/crear' => '<version>/profesional-cobertura/crear',

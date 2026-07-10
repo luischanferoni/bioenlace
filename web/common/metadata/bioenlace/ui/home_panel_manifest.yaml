@@ -17,6 +17,10 @@ panels:
       layout: clinical_board
       title: Tablero de guardia
       sections:
+        - id: staff_cobertura_activa
+          provider: staff_cobertura_activa
+          kind: staff_cobertura_activa
+          poll_interval_seconds: 60
         - id: emergency_board
           provider: emergency_board
           kind: emergency_board
@@ -50,6 +54,10 @@ panels:
             kind: surgeries_day
       imp_floor:
         sections:
+          - id: staff_cobertura_activa
+            provider: staff_cobertura_activa
+            kind: staff_cobertura_activa
+            poll_interval_seconds: 60
           - id: staff_internacion_kpis
             provider: staff_internacion_kpis
             kind: staff_kpi_group

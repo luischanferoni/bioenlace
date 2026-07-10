@@ -50,6 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
   List<EmergencyBoardItem> _guardiaTablero = [];
   List<CirugiaAgendaItem> _cirugias = [];
   List<HomePanelKpiGroup> _kpiGroups = [];
+  List<Map<String, dynamic>> _coberturaActiva = [];
+  String? _coberturaTitle;
   Map<String, dynamic>? _staffContext;
   String _lastListKind = '';
   bool _isLoading = true;
@@ -134,7 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final panel = await _homePanelApi.getPanel(
         fecha: fechaStr,
         sections: silent && _encounterClass == 'EMER'
-            ? 'emergency_board,emergency_indicators'
+            ? 'staff_cobertura_activa,emergency_board,emergency_indicators'
             : null,
       );
       if (!mounted) return;
@@ -191,6 +193,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _internados = [];
         _guardiaTablero = [];
         _cirugias = [];
+        _coberturaActiva = [];
+        _coberturaTitle = null;
         _lastListKind = '';
         _staffContext = null;
       }
@@ -206,6 +210,18 @@ class _HomeScreenState extends State<HomeScreen> {
         _staffContext = Map<String, dynamic>.from(ctx.data);
       } else if (!partial) {
         _staffContext = null;
+      }
+
+      final cobertura = panel.sectionByKind('staff_cobertura_activa');
+      if (cobertura != null) {
+        final items = cobertura.data['items'] as List<dynamic>? ?? [];
+        _coberturaActiva = items
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+        _coberturaTitle = cobertura.data['title'] as String?;
+      } else if (!partial) {
+        _coberturaActiva = [];
+        _coberturaTitle = null;
       }
 
       final board = panel.sectionByKind('emergency_board');
@@ -253,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _wrapWithPanelKpis(Widget child) {
-    if (_kpiGroups.isEmpty && _staffContext == null) {
+    if (_kpiGroups.isEmpty && _staffContext == null && _coberturaActiva.isEmpty) {
       return child;
     }
     return Column(
@@ -265,8 +281,54 @@ class _HomeScreenState extends State<HomeScreen> {
           HomePanelKpiGroupsList(groups: _kpiGroups),
           const SizedBox(height: BioSpacing.sm),
         ],
+        if (_coberturaActiva.isNotEmpty) ...[
+          _buildCoberturaActivaStrip(),
+          const SizedBox(height: BioSpacing.sm),
+        ],
         Expanded(child: child),
       ],
+    );
+  }
+
+  Widget _buildCoberturaActivaStrip() {
+    final title = _coberturaTitle ?? 'Cobertura';
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: BioTypography.caption),
+          const SizedBox(height: BioSpacing.xs),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: _coberturaActiva.map((c) {
+                final persona = c['persona'] is Map
+                    ? Map<String, dynamic>.from(c['persona'] as Map)
+                    : <String, dynamic>{};
+                final nombre = (persona['nombre_completo'] as String?)?.trim();
+                final rol = (c['rol'] as String?)?.trim();
+                final inicio = (c['inicio'] as String?) ?? '';
+                final fin = (c['fin'] as String?) ?? '';
+                final horaIni = inicio.length >= 16 ? inicio.substring(11, 16) : inicio;
+                final horaFin = fin.length >= 16 ? fin.substring(11, 16) : fin;
+                final label = [
+                  if (nombre != null && nombre.isNotEmpty) nombre,
+                  if (rol != null && rol.isNotEmpty) rol,
+                  if (horaIni.isNotEmpty || horaFin.isNotEmpty) '$horaIni–$horaFin',
+                ].join(' · ');
+                return Padding(
+                  padding: const EdgeInsets.only(right: BioSpacing.xs),
+                  child: Chip(
+                    label: Text(label.isEmpty ? 'Cobertura' : label),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

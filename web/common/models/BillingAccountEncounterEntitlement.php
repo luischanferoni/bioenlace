@@ -6,29 +6,25 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Clases de encounter contratadas por efector (legacy).
- *
- * @deprecated Preferir {@see BillingAccountEncounterEntitlement} (pool por cuenta).
- *             Esta tabla se conserva por backfill histórico; el enforce usa billing_account_*.
+ * Entitlement por clase en una cuenta (pool compartido).
  *
  * @property int $id
- * @property int $id_efector
+ * @property int $id_billing_account
  * @property string $encounter_class
  * @property int|null $max_pes
  * @property int|null $pending_max_pes
  * @property string|null $pending_effective_on
+ * @property int $dictado_incluido
+ * @property int $videollamada_permitida
  * @property int $activo
- * @property string $created_at
- * @property string|null $updated_at
- * @property string|null $deleted_at
  */
-class EfectorEncounterEntitlement extends ActiveRecord
+class BillingAccountEncounterEntitlement extends ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
 
     public static function tableName()
     {
-        return 'efector_encounter_entitlement';
+        return 'billing_account_encounter_entitlement';
     }
 
     public function behaviors()
@@ -60,33 +56,49 @@ class EfectorEncounterEntitlement extends ActiveRecord
     public function rules()
     {
         return [
-            [['id_efector', 'encounter_class'], 'required'],
-            [['id_efector', 'max_pes', 'pending_max_pes', 'activo'], 'integer'],
+            [['id_billing_account', 'encounter_class'], 'required'],
+            [['id_billing_account', 'max_pes', 'pending_max_pes', 'dictado_incluido', 'videollamada_permitida', 'activo'], 'integer'],
             [['encounter_class'], 'string', 'max' => 10],
             [['pending_effective_on', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
+            [['dictado_incluido', 'videollamada_permitida'], 'default', 'value' => 0],
             [['activo'], 'default', 'value' => 1],
         ];
+    }
+
+    public function attributeLabels()
+    {
+        return [
+            'encounter_class' => 'Clase',
+            'max_pes' => 'Máx. profesionales',
+            'pending_max_pes' => 'Pending máx.',
+            'pending_effective_on' => 'Pending desde',
+            'dictado_incluido' => 'Dictado incluido',
+            'videollamada_permitida' => 'Videollamada permitida',
+            'activo' => 'Activo',
+        ];
+    }
+
+    public function getAccount()
+    {
+        return $this->hasOne(BillingAccount::class, ['id' => 'id_billing_account']);
     }
 
     /**
      * @return list<self>
      */
-    public static function findActivasPorEfector(int $idEfector): array
+    public static function findActivasPorAccount(int $idBillingAccount): array
     {
-        if ($idEfector <= 0) {
+        if ($idBillingAccount <= 0) {
             return [];
         }
 
-        /** @var list<self> $rows */
-        $rows = static::find()
+        return static::find()
             ->where([
-                'id_efector' => $idEfector,
+                'id_billing_account' => $idBillingAccount,
                 'activo' => 1,
                 'deleted_at' => null,
             ])
             ->orderBy(['encounter_class' => SORT_ASC])
             ->all();
-
-        return $rows;
     }
 }

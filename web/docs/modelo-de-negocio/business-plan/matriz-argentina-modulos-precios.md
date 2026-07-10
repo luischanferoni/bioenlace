@@ -12,7 +12,8 @@ El precio unitario = **COGS × (1 + margen sobre costo)**. El cliente elige qué
 
 Metadata producto: [`pricing-pes-by-encounter-class.yaml`](../../../common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml).  
 Calculador público: sitio [`institucional/#precios`](../../../../institucional/index.html).  
-Entitlements BD: `efector_encounter_entitlement`.
+Entitlements BD: `billing_account` + `billing_account_encounter_entitlement` (pool). Legacy: `efector_encounter_entitlement` (backfill).  
+Admin: Licencias / Contratos.
 
 **Fuera de este modelo (siguen cotizándose aparte):** pathway fees / PMPM al financiador, integraciones one-shot, autorización OS enterprise, proyectos farmacia/quirófano. Ver [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).
 
@@ -73,21 +74,22 @@ Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×3,20 + 4×3,61 = **USD 46,44/
 
 | Capa | Comportamiento |
 |------|----------------|
-| Wizard / opciones sesión | Solo clases en `efector_encounter_entitlement` (si no hay filas: `default_when_empty: allow_all`) |
+| Wizard / opciones sesión | Solo clases contratadas en la **cuenta** del efector (`billing_account_encounter_entitlement`; si no hay cuenta/filas: `default_when_empty: allow_all`) |
 | `set-session` | Rechaza `encounter_class` no contratada |
 | Agenda AMB / cobertura EMER·IMP | Operan solo si la clase está contratada (vía sesión) |
-| Alta PES | Si hay contrato con `max_pes`, no se puede superar el tope de la clase primaria del servicio (personas distintas; excluye AdminEfector) |
-| Baja PES | Operativa inmediata; el mes en curso se cobra con el `max_pes` vigente. Se agenda `pending_max_pes` = uso actual, efectivo el **1º del mes siguiente** (`php yii entitlement/apply-pending-downgrades`). Si vuelven a completar el tope en el mismo mes, se cancela el pending. |
+| Alta PES | Tope `max_pes` del **pool de la cuenta** (personas distintas en todos los efectores miembros; excluye AdminEfector) |
+| Baja PES | Operativa inmediata; el mes en curso se cobra con el `max_pes` vigente. Pending a nivel cuenta, efectivo el **1º del mes siguiente** (`php yii entitlement/apply-pending-downgrades`). |
+| Admin | [`/billing-account`](../../../../admin/) — cuentas Ministerio/Red/Efector, miembros, editar `max_pes` / dictado / videollamada por clase. Tab **Licencia** en ficha de efector. |
 
-### Ciclo de facturación (cupos)
+### Cuentas y pool
 
 ```
-Quitar profesional → max_pes no baja aún → pending_max_pes = N en uso, pending_effective_on = 1º mes siguiente
-Agregar en el mismo mes → permitido hasta max_pes (ya pagado); si uso vuelve al tope, se limpia el pending
-Corte (cron diario) → aplica pending → max_pes := pending_max_pes
+billing_account (MINISTERIO | RED | EFECTOR)
+  ├── billing_account_efector (N efectores; un efector ∈ una cuenta)
+  └── billing_account_encounter_entitlement (AMB/EMER/IMP + max_pes + pending + flags)
 ```
 
-Ampliación de licencia (subir `max_pes`): cambio de contrato (operación Bioenlace); no es self-service del admin efector.
+Un efector sin cuenta: sin tope (compat). Cupo compartido: el uso suma profesionales billable de todos los miembros.
 
 ---
 
@@ -117,9 +119,10 @@ Ampliación de licencia (subir `max_pes`): cambio de contrato (operación Bioenl
 ## Priorización comercial
 
 1. Publicar calculador institucional (COGS + margen + add-ons).  
-2. Cargar entitlements por efector al firmar (`max_pes` + clases).  
+2. Cargar cuentas (`billing_account`) y entitlements de pool al firmar; asociar efectores.  
 3. Enforce alta PES + downgrade diferido (`entitlement/apply-pending-downgrades`).  
-4. Usage report para renovación; pasarela / seña (fase posterior).
+4. Admin Licencias / Contratos para editar `max_pes` y miembros.  
+5. Usage report para renovación; pasarela / seña (fase posterior).
 
 ---
 

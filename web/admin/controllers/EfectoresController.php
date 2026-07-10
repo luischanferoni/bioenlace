@@ -89,6 +89,28 @@ class EfectoresController extends Controller
     }
 
     /**
+     * Resumen de licencia / cuenta de billing del efector.
+     *
+     * @param integer $id id_efector
+     * @return mixed
+     */
+    public function actionLicencia($id)
+    {
+        $model = $this->findModel($id);
+        $accountId = \common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService::resolveAccountIdForEfector((int) $id);
+        $account = $accountId
+            ? \common\models\BillingAccount::findOne(['id' => $accountId, 'deleted_at' => null])
+            : null;
+        $summary = \common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService::contractSummary((int) $id);
+
+        return $this->render('view_licencia', [
+            'model' => $model,
+            'account' => $account,
+            'summary' => $summary,
+        ]);
+    }
+
+    /**
      * Updates an existing Efector model.
      * If update is successful, the browser will be redirected to the 'view' page.
      * @param integer $id

@@ -3,24 +3,53 @@
 namespace common\components\Domain\Organization\Service\Entitlement;
 
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
+use common\models\BillingAccountEncounterEntitlement;
+use common\models\BillingAccountEfector;
 use common\models\Clinical\EncounterDefinition;
-use common\models\EfectorEncounterEntitlement;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use Yii;
 use yii\db\Query;
 
 /**
- * Contrato comercial por efector: clases, tope de profesionales (PES) y downgrade diferido.
+ * Licencia por cuenta (pool): clases, max_pes y downgrade diferido.
  *
- * Política:
- * - Alta: no superar max_pes de la clase primaria del servicio (mes en curso).
- * - Baja: no baja max_pes al instante; agenda pending_max_pes = uso actual, efectivo el 1º del mes siguiente.
- * - Si el uso vuelve al tope en el mismo mes, se cancela el pending.
+ * El efector resuelve su billing_account; el cupo se comparte entre todos los miembros.
  */
 final class EfectorEncounterEntitlementService
 {
     private const CLASS_PRIORITY = ['AMB', 'EMER', 'IMP'];
+
+    public static function resolveAccountIdForEfector(int $idEfector): ?int
+    {
+        if ($idEfector <= 0) {
+            return null;
+        }
+        $id = (new Query())
+            ->select(['id_billing_account'])
+            ->from(BillingAccountEfector::tableName())
+            ->where(['id_efector' => $idEfector, 'deleted_at' => null])
+            ->scalar();
+
+        return $id !== false && $id !== null ? (int) $id : null;
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function memberEfectorIds(int $idBillingAccount): array
+    {
+        if ($idBillingAccount <= 0) {
+            return [];
+        }
+        $ids = (new Query())
+            ->select(['id_efector'])
+            ->from(BillingAccountEfector::tableName())
+            ->where(['id_billing_account' => $idBillingAccount, 'deleted_at' => null])
+            ->column();
+
+        return array_map('intval', $ids);
+    }
 
     /**
      * @return list<string>
@@ -32,7 +61,14 @@ final class EfectorEncounterEntitlementService
             return $all;
         }
 
-        $rows = EfectorEncounterEntitlement::findActivasPorEfector($idEfector);
+        $accountId = self::resolveAccountIdForEfector($idEfector);
+        if ($accountId === null) {
+            return PricingPesByEncounterClassMetadata::defaultWhenEmptyAllowAll()
+                ? $all
+                : [];
+        }
+
+        $rows = BillingAccountEncounterEntitlement::findActivasPorAccount($accountId);
         if ($rows === []) {
             return PricingPesByEncounterClassMetadata::defaultWhenEmptyAllowAll()
                 ? $all
@@ -77,7 +113,17 @@ final class EfectorEncounterEntitlementService
 
     public static function maxPesForClass(int $idEfector, string $encounterClass): ?int
     {
-        foreach (EfectorEncounterEntitlement::findActivasPorEfector($idEfector) as $row) {
+        $accountId = self::resolveAccountIdForEfector($idEfector);
+        if ($accountId === null) {
+            return null;
+        }
+
+        return self::maxPesForAccountClass($accountId, $encounterClass);
+    }
+
+    public static function maxPesForAccountClass(int $idBillingAccount, string $encounterClass): ?int
+    {
+        foreach (BillingAccountEncounterEntitlement::findActivasPorAccount($idBillingAccount) as $row) {
             if ((string) $row->encounter_class === $encounterClass) {
                 return $row->max_pes !== null ? (int) $row->max_pes : null;
             }
@@ -87,12 +133,25 @@ final class EfectorEncounterEntitlementService
     }
 
     /**
-     * @return list<array{code: string, label: string, max_pes: int|null, pending_max_pes: int|null, pending_effective_on: string|null}>
+     * @return list<array{code: string, label: string, max_pes: int|null, pending_max_pes: int|null, pending_effective_on: string|null, used: int, dictado_incluido: bool, videollamada_permitida: bool}>
      */
     public static function contractSummary(int $idEfector): array
     {
+        $accountId = self::resolveAccountIdForEfector($idEfector);
+        if ($accountId === null) {
+            return [];
+        }
+
+        return self::contractSummaryForAccount($accountId);
+    }
+
+    /**
+     * @return list<array{code: string, label: string, max_pes: int|null, pending_max_pes: int|null, pending_effective_on: string|null, used: int, dictado_incluido: bool, videollamada_permitida: bool}>
+     */
+    public static function contractSummaryForAccount(int $idBillingAccount): array
+    {
         $out = [];
-        foreach (EfectorEncounterEntitlement::findActivasPorEfector($idEfector) as $row) {
+        foreach (BillingAccountEncounterEntitlement::findActivasPorAccount($idBillingAccount) as $row) {
             $code = (string) $row->encounter_class;
             $out[] = [
                 'code' => $code,
@@ -102,6 +161,9 @@ final class EfectorEncounterEntitlementService
                 'pending_effective_on' => $row->pending_effective_on !== null
                     ? (string) $row->pending_effective_on
                     : null,
+                'used' => self::countBillablePersonasForAccount($idBillingAccount, $code),
+                'dictado_incluido' => (bool) $row->dictado_incluido,
+                'videollamada_permitida' => (bool) $row->videollamada_permitida,
             ];
         }
 
@@ -122,9 +184,6 @@ final class EfectorEncounterEntitlementService
         return is_string($item) && strcasecmp(trim($item), 'AdminEfector') === 0;
     }
 
-    /**
-     * Clase comercial primaria del servicio (AMB → EMER → IMP según defs / turnos).
-     */
     public static function primaryClassForServicio(int $idServicio): ?string
     {
         if ($idServicio <= 0 || self::isAdminEfectorServicio($idServicio)) {
@@ -161,40 +220,46 @@ final class EfectorEncounterEntitlementService
     }
 
     /**
-     * Profesionales (personas distintas) con PES clínico activo atribuibles a la clase.
+     * Uso en un efector (sin pool). Preferir countBillablePersonasForAccount para cupos.
      */
     public static function countBillablePersonas(int $idEfector, string $encounterClass): int
     {
-        if ($idEfector <= 0 || $encounterClass === '') {
-            return 0;
-        }
+        return count(self::billablePersonaIdsForEfectores([$idEfector], $encounterClass));
+    }
 
-        $personas = self::billablePersonaIds($idEfector, $encounterClass);
-
-        return count($personas);
+    public static function countBillablePersonasForAccount(int $idBillingAccount, string $encounterClass): int
+    {
+        return count(self::billablePersonaIdsForEfectores(
+            self::memberEfectorIds($idBillingAccount),
+            $encounterClass
+        ));
     }
 
     public static function personaIsBillableForClass(int $idEfector, int $idPersona, string $encounterClass): bool
     {
-        if ($idEfector <= 0 || $idPersona <= 0 || $encounterClass === '') {
-            return false;
-        }
+        $accountId = self::resolveAccountIdForEfector($idEfector);
+        $efectorIds = $accountId !== null
+            ? self::memberEfectorIds($accountId)
+            : [$idEfector];
 
-        return in_array($idPersona, self::billablePersonaIds($idEfector, $encounterClass), true);
+        return in_array($idPersona, self::billablePersonaIdsForEfectores($efectorIds, $encounterClass), true);
     }
 
     /**
+     * @param list<int> $efectorIds
      * @return list<int>
      */
-    private static function billablePersonaIds(int $idEfector, string $encounterClass): array
+    private static function billablePersonaIdsForEfectores(array $efectorIds, string $encounterClass): array
     {
+        $efectorIds = array_values(array_filter(array_map('intval', $efectorIds)));
+        if ($efectorIds === [] || $encounterClass === '') {
+            return [];
+        }
+
         $rows = (new Query())
             ->select(['pes.id_persona', 'pes.id_servicio'])
             ->from(['pes' => ProfesionalEfectorServicio::tableName()])
-            ->where([
-                'pes.id_efector' => $idEfector,
-                'pes.deleted_at' => null,
-            ])
+            ->where(['pes.id_efector' => $efectorIds, 'pes.deleted_at' => null])
             ->all();
 
         $ids = [];
@@ -216,8 +281,6 @@ final class EfectorEncounterEntitlementService
     }
 
     /**
-     * Bloquea alta de PES si el efector ya alcanzó max_pes de la clase primaria del servicio.
-     *
      * @throws \InvalidArgumentException
      */
     public static function assertCanAddPes(int $idEfector, int $idPersona, int $idServicio): void
@@ -229,9 +292,13 @@ final class EfectorEncounterEntitlementService
             return;
         }
 
-        $rows = EfectorEncounterEntitlement::findActivasPorEfector($idEfector);
+        $accountId = self::resolveAccountIdForEfector($idEfector);
+        if ($accountId === null) {
+            return;
+        }
+
+        $rows = BillingAccountEncounterEntitlement::findActivasPorAccount($accountId);
         if ($rows === []) {
-            // Sin contrato cargado: allow_all / sin tope.
             return;
         }
 
@@ -247,7 +314,7 @@ final class EfectorEncounterEntitlementService
             );
         }
 
-        $max = self::maxPesForClass($idEfector, $class);
+        $max = self::maxPesForAccountClass($accountId, $class);
         if ($max === null) {
             return;
         }
@@ -256,7 +323,7 @@ final class EfectorEncounterEntitlementService
             return;
         }
 
-        $used = self::countBillablePersonas($idEfector, $class);
+        $used = self::countBillablePersonasForAccount($accountId, $class);
         if ($used >= $max) {
             $label = EncounterDefinition::ENCOUNTER_CLASS[$class] ?? $class;
             throw new \InvalidArgumentException(
@@ -266,18 +333,23 @@ final class EfectorEncounterEntitlementService
         }
     }
 
-    /**
-     * Tras baja de PES: si el uso bajó bajo max_pes, agenda downgrade al 1º del mes siguiente.
-     * Si el uso volvió al tope, cancela el pending.
-     */
     public static function syncPendingDowngradeForEfector(int $idEfector): void
     {
-        if ($idEfector <= 0) {
+        $accountId = self::resolveAccountIdForEfector($idEfector);
+        if ($accountId === null) {
+            return;
+        }
+        self::syncPendingDowngradeForAccount($accountId);
+    }
+
+    public static function syncPendingDowngradeForAccount(int $idBillingAccount): void
+    {
+        if ($idBillingAccount <= 0) {
             return;
         }
 
         $nextPeriod = self::firstDayOfNextMonth();
-        foreach (EfectorEncounterEntitlement::findActivasPorEfector($idEfector) as $row) {
+        foreach (BillingAccountEncounterEntitlement::findActivasPorAccount($idBillingAccount) as $row) {
             $class = (string) $row->encounter_class;
             $max = $row->max_pes !== null ? (int) $row->max_pes : null;
             if ($max === null) {
@@ -285,7 +357,7 @@ final class EfectorEncounterEntitlementService
                 continue;
             }
 
-            $used = self::countBillablePersonas($idEfector, $class);
+            $used = self::countBillablePersonasForAccount($idBillingAccount, $class);
             if ($used < $max) {
                 $row->pending_max_pes = $used;
                 $row->pending_effective_on = $nextPeriod;
@@ -296,7 +368,7 @@ final class EfectorEncounterEntitlementService
         }
     }
 
-    private static function clearPending(EfectorEncounterEntitlement $row): void
+    private static function clearPending(BillingAccountEncounterEntitlement $row): void
     {
         if ($row->pending_max_pes === null && $row->pending_effective_on === null) {
             return;
@@ -314,14 +386,12 @@ final class EfectorEncounterEntitlementService
     }
 
     /**
-     * Aplica pending_max_pes cuando pending_effective_on <= $onDate.
-     *
      * @return int filas actualizadas
      */
     public static function applyPendingDowngrades(?string $onDate = null): int
     {
         $onDate = $onDate ?: (new \DateTimeImmutable('today'))->format('Y-m-d');
-        $rows = EfectorEncounterEntitlement::find()
+        $rows = BillingAccountEncounterEntitlement::find()
             ->where(['activo' => 1, 'deleted_at' => null])
             ->andWhere(['not', ['pending_max_pes' => null]])
             ->andWhere(['not', ['pending_effective_on' => null]])
@@ -337,8 +407,8 @@ final class EfectorEncounterEntitlementService
                 $n++;
                 Yii::info(
                     sprintf(
-                        'Entitlement downgrade aplicado efector=%d class=%s max_pes=%d',
-                        (int) $row->id_efector,
+                        'Entitlement downgrade aplicado account=%d class=%s max_pes=%d',
+                        (int) $row->id_billing_account,
                         (string) $row->encounter_class,
                         (int) $row->max_pes
                     ),

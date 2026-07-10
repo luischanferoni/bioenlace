@@ -46,6 +46,7 @@ $home = Yii::$app->getHomeUrl();
                                     'label' => 'Efectores',
                                     'items' => [
                                         ['label' => 'Listado', 'url' => ['/efectores/index']],
+                                        ['label' => 'Licencias / Contratos', 'url' => ['/billing-account/index']],
                                         ['label' => 'Pisos', 'url' => ['/infraestructura-piso/index']],
                                         ['label' => 'Salas', 'url' => ['/infraestructura-sala/index']],
                                         ['label' => 'Camas', 'url' => ['/infraestructura-cama/index']],

@@ -1,12 +1,13 @@
 /**
  * Alta self-service de clínica / solicitud ministerio (sitio institucional).
- * Depende de js/api-config.json y endpoints /api/v1/licencia/*.
+ * Depende de js/api-config.json, pricing-core.js y endpoints /api/v1/licencia/*.
  */
 (function () {
   'use strict';
 
   var apiBase = 'http://localhost/api/v1';
   var loginUrl = 'http://localhost/site/login';
+  var pricingConfig = null;
 
   function $(sel, root) {
     return (root || document).querySelector(sel);
@@ -19,7 +20,7 @@
     el.className = 'signup-status ' + (ok ? 'signup-status--ok' : 'signup-status--err');
   }
 
-  function loadConfig() {
+  function loadApiConfig() {
     return fetch('js/api-config.json', { cache: 'no-store' })
       .then(function (r) { return r.json(); })
       .then(function (cfg) {
@@ -27,6 +28,20 @@
         if (cfg.loginUrl) loginUrl = String(cfg.loginUrl);
       })
       .catch(function () { /* defaults */ });
+  }
+
+  function loadPricingConfig() {
+    return fetch('js/pricing-config.json', { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('pricing');
+        return r.json();
+      })
+      .then(function (cfg) {
+        pricingConfig = cfg;
+      })
+      .catch(function () {
+        pricingConfig = null;
+      });
   }
 
   function api(path, opts) {
@@ -80,8 +95,6 @@
     var covered = !!(form.pago_cubierto_por_ministerio && form.pago_cubierto_por_ministerio.checked);
     var payFs = $('#payment-fieldset');
     if (payFs) payFs.hidden = covered;
-    if (form.card_number) form.card_number.required = !covered;
-    if (form.card_holder) form.card_holder.required = !covered;
     if (form.sim_token) form.sim_token.required = !covered;
     if (form.sim_titular) form.sim_titular.required = !covered;
   }
@@ -97,14 +110,93 @@
     return String(token || '').replace(/\D+/g, '') || '4242424242424242';
   }
 
-  function buildPlanFromForm() {
-    if (window.BioenlacePricingCalculator && window.BioenlacePricingCalculator.isReady()) {
-      var plan = window.BioenlacePricingCalculator.getPlan();
-      if (plan && plan.classes && Object.keys(plan.classes).length) {
-        return plan;
-      }
+  function readSelectionFromForm(form) {
+    var classes = {};
+    var amb = Math.max(0, parseInt(form.max_pes_amb.value, 10) || 0);
+    if (amb > 0) classes.AMB = amb;
+    if (form.incluir_emer && form.incluir_emer.checked) {
+      classes.EMER = Math.max(1, parseInt(form.max_pes_emer.value, 10) || 1);
     }
-    throw new Error('Elegí al menos un tipo de atención con profesionales en el calculador.');
+    if (form.incluir_imp && form.incluir_imp.checked) {
+      classes.IMP = Math.max(1, parseInt(form.max_pes_imp.value, 10) || 1);
+    }
+    return {
+      classes: classes,
+      addons: {
+        audio: !!(form.audio && form.audio.checked),
+        videollamada: !!(form.videollamada && form.videollamada.checked),
+      },
+    };
+  }
+
+  function buildPlanFromForm(form) {
+    var selection = readSelectionFromForm(form);
+    if (!selection.classes.AMB && !selection.classes.EMER && !selection.classes.IMP) {
+      throw new Error('Indicá al menos un tipo de atención con profesionales.');
+    }
+    if (window.BioenlacePricing && window.BioenlacePricing.toSignupPlan) {
+      return window.BioenlacePricing.toSignupPlan(selection);
+    }
+    // Fallback sin pricing-core
+    var plan = { classes: {} };
+    Object.keys(selection.classes).forEach(function (code) {
+      plan.classes[code] = {
+        max_pes: selection.classes[code],
+        dictado_incluido: code === 'AMB' ? selection.addons.audio : true,
+        videollamada_permitida: code === 'AMB' ? selection.addons.videollamada : false,
+      };
+    });
+    return plan;
+  }
+
+  function updatePriceIndicator(form) {
+    var totalEl = $('#signup-price-total');
+    var linesEl = $('#signup-price-lines');
+    var noteEl = $('#signup-price-note');
+    if (!totalEl || !linesEl) return;
+
+    if (!pricingConfig || !window.BioenlacePricing) {
+      totalEl.textContent = '—';
+      linesEl.innerHTML = '';
+      if (noteEl) noteEl.textContent = 'No se pudo cargar el estimado de precios.';
+      return;
+    }
+
+    var selection = readSelectionFromForm(form);
+    var result = window.BioenlacePricing.estimate(pricingConfig, selection);
+    if (!result.lines.length) {
+      totalEl.textContent = '—';
+      linesEl.innerHTML = '<div class="signup-price__line"><span>Activá al menos un tipo de atención.</span></div>';
+      if (noteEl) noteEl.textContent = pricingConfig.tax_note || '';
+      return;
+    }
+
+    totalEl.textContent = result.formattedTotal + ' / mes';
+    linesEl.innerHTML = result.lines.map(function (l) {
+      var note = '';
+      if (l.code === 'AMB') {
+        var bits = [];
+        if (selection.addons.audio) bits.push('dictado');
+        if (selection.addons.videollamada) bits.push('videollamada');
+        if (bits.length) note = ' · ' + bits.join(' · ');
+      }
+      return (
+        '<div class="signup-price__line"><span>' +
+        l.qty + ' × ' + l.label + note +
+        '</span><strong>' +
+        window.BioenlacePricing.formatMoney(l.line, result.currency) +
+        '</strong></div>'
+      );
+    }).join('');
+    if (noteEl) noteEl.textContent = pricingConfig.tax_note || 'Orientativo; no incluye IVA ni IIBB.';
+  }
+
+  function initPriceIndicator(form) {
+    form.querySelectorAll('[data-plan-input]').forEach(function (el) {
+      el.addEventListener('input', function () { updatePriceIndicator(form); });
+      el.addEventListener('change', function () { updatePriceIndicator(form); });
+    });
+    updatePriceIndicator(form);
   }
 
   function initEfectorForm() {
@@ -119,6 +211,7 @@
       form.pago_cubierto_por_ministerio.addEventListener('change', syncPaymentUi);
     }
     syncSectorUi();
+    initPriceIndicator(form);
     if (minSelect) fillMinisterios(minSelect);
 
     form.addEventListener('submit', function (e) {
@@ -157,7 +250,7 @@
       };
 
       try {
-        body.plan = buildPlanFromForm();
+        body.plan = buildPlanFromForm(form);
       } catch (err) {
         showStatus(status, err.message || 'Revisá el plan elegido.', false);
         return;
@@ -244,7 +337,7 @@
     });
   }
 
-  loadConfig().then(function () {
+  Promise.all([loadApiConfig(), loadPricingConfig()]).then(function () {
     initTabs();
     initEfectorForm();
     initMinisterioForm();

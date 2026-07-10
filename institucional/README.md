@@ -32,7 +32,7 @@ Doc producto: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licenci
 
 ## Calculador (`js/pricing-core.js` + `js/pricing-calculator.js`)
 
-Núcleo compartido en `pricing-core.js`. El calculador de `#precios` y el de `alta.html` (`data-mode="signup"`) usan la misma fórmula y `pricing-config.json`.
+Núcleo compartido en `pricing-core.js`. En `#precios` se muestra el calculador completo; en `alta.html` solo un **indicador de precio** que se actualiza al cambiar cantidades/opcionales.
 
 **Fórmula:** `precio_unitario = COGS × (1 + margin_on_cost_percent/100)`.  
 COGS: base ± audio ± videollamada, columna **con context caching** ([costos-api.md](../web/docs/costos/costos-api.md)).  

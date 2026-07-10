@@ -90,6 +90,4 @@ simulator:
   cta_label: Pedir cotización
   cta_href: "#contacto"
   footnotes:
-    - Volúmenes de referencia por profesional/mes (época normal): ambulatorio 400, urgencia 350, internación 300.
-    - Dictado: opcional en ambulatorio; obligatorio en urgencia e internación. Videollamada: solo ambulatorio.
-    - Lo no contratado no aparece en la sesión operativa ni en tableros de esa clase.
+    - Importes orientativos en USD por mes. La cotización final se confirma según el alcance de cada efector.

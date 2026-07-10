@@ -154,11 +154,11 @@
             let note = '';
             if (l.code === 'AMB') {
               const bits = [];
-              if (ambAddonEnabled('audio')) bits.push('dictado');
-              if (ambAddonEnabled('videollamada')) bits.push('videollamada');
-              note = bits.length ? ' · ' + bits.join(' + ') : ' · sin dictado ni videollamada';
+              if (ambAddonEnabled('audio')) bits.push('con dictado');
+              if (ambAddonEnabled('videollamada')) bits.push('con videollamada');
+              note = bits.length ? ' · ' + bits.join(' · ') : '';
             } else {
-              note = ' · dictado incluido · sin videollamada';
+              note = '';
             }
             return (
               '<div class="pricing-calc__line"><span>' +

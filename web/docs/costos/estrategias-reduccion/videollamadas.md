@@ -2,6 +2,8 @@
 
 Referencia Twilio en [costos-api.md §6](../costos-api.md): **~$11,52/prof/mes** (30 % consultas × 12 min × 2 participantes).
 
+En precio de lista ese COGS se suma al base y se aplica el margen (`margin_on_cost_percent`): ver [matriz-argentina-modulos-precios.md](../../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). En el calculador institucional es un add-on opcional.
+
 ## Palancas
 
 - Plan por asiento (Daily.co, etc.) vs pago por minuto: **20–50 %**.

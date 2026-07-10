@@ -9,7 +9,7 @@ No es proyección financiera ni compromiso de roadmap; son **hipótesis orientat
 | Archivo | Contenido |
 |---------|-----------|
 | [mapa-vias-ingreso-bioenlace.md](./mapa-vias-ingreso-bioenlace.md) | Vías de ingreso del sector privado (casos país) × encaje con Bioenlace, con detalle por vía |
-| [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md) | Módulos Bioenlace × comprador AR × precio orientativo × build faltante |
+| [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md) | Licencia = COGS × margen; clases AMB/EMER/IMP; add-ons audio/videollamada; calculador institucional |
 | [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md) | Modelos A–D; pathway fees al financiador; sin cobro al efector por fidelizar o captar pacientes |
 
 ## Convenciones

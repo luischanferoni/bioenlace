@@ -21,30 +21,41 @@ Entitlements BD: `efector_encounter_entitlement`.
 ## Fórmula
 
 ```
-COGS = base + (audio ? delta_audio : 0) + (videollamada ? cogs_video : 0)
-precio_unitario = COGS × (1 + margin_on_cost_percent/100)
-USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario )
+COGS_ref = base + (audio ? stt_profesional : 0) + (videollamada ? cogs_video : 0)
+COGS_clase = COGS_ref × (encounters_clase / 400)
+precio_unitario_clase = COGS_clase × (1 + margin_on_cost_percent/100)
+USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 ```
 
-| Componente COGS | USD / profesional / mes | Fuente |
-|-----------------|-------------------------|--------|
-| **Base** (IA + STT captura; motivos paciente solo texto) | **1,24** | costos-api Apartado 1 motivos texto |
-| **+ Audio** (motivos paciente con voz) | **+0,31** | delta → Apartado 1 ~1,55 |
-| **+ Videollamada** (Twilio, 30 % × 12 min × 2) | **+11,52** | costos-api §6 |
+| Componente COGS (a 400 encounters/mes) | USD / profesional / mes | Fuente |
+|---------------------------------------|-------------------------|--------|
+| **Base** (IA + captura texto; motivos paciente texto; **sin** STT del profesional) | **0,96** | Apartado 1 motivos texto − STT §4 (~0,28) |
+| **+ Audio** (dictado del profesional → Groq STT) | **+0,28** | costos-api §4 STT |
+| **+ Videollamada** (Twilio; solo AMB) | **+11,52** | costos-api §6 |
 
 **Margen sobre costo:** **233 %** ≈ margen bruto ~70 % (objetivo software; ver [impuestos-argentina.md](../../costos/impuestos-argentina.md)).
 
-| Configuración | COGS | Precio lista / profesional / mes |
-|---------------|------|----------------------------------|
-| Solo base | 1,24 | **~4,13** |
-| Base + audio | 1,55 | **~5,16** |
-| Base + videollamada | 12,76 | **~42,49** |
-| Base + audio + videollamada | 13,07 | **~43,52** |
 
-El precio unitario es **igual** en AMB, EMER e IMP: lo que cambia al elegir clase es qué módulos de producto se habilitan.
+### Volumen por clase (por profesional / mes, época normal)
 
-Ejemplo: 10 profesionales AMB + 4 EMER, sin add-ons → `14 × 4,13 = **USD 57,82/mes**`.  
-Mismo plantel con videollamada → `14 × 42,49 = **USD 594,86/mes**`.
+| Clase | Volumen lista | Rango de estimación (orientativo) | Mix |
+|-------|---------------|-----------------------------------|-----|
+| **AMB** | **400** | costos-api (20×20) | Audio y videollamada opcionales |
+| **EMER** | **350** | Normal ~195–455; pico ~455–780+ | Audio **incluido**; sin videollamada |
+| **IMP** | **300** | Típico chico–mediano ~100–960; grandes 960–2400+ | Audio **incluido**; sin videollamada |
+
+No hay SKU chico/mediano/grande: el tamaño se refleja en **cantidad de profesionales**. Picos y outliers → más N o cotización.
+
+| Configuración | COGS (a vol. de la clase) | Precio lista / profesional / mes |
+|---------------|---------------------------|----------------------------------|
+| AMB solo base | 0,96 | **~3,20** |
+| AMB + audio | 1,24 | **~4,13** |
+| AMB + videollamada | 12,48 | **~41,56** |
+| AMB + audio + videollamada | 12,76 | **~42,49** |
+| EMER (audio incluido, vol 350) | 1,085 | **~3,61** |
+| IMP (audio incluido, vol 300) | 0,93 | **~3,10** |
+
+Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×3,20 + 4×3,61 = **USD 46,44/mes**`.
 
 ---
 

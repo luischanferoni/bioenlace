@@ -28,6 +28,12 @@ institucional/
 
 Lee `js/pricing-config.json` (mantener alineado a `web/common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml`).
 
+**Fórmula:** `precio_unitario = COGS × (1 + margin_on_cost_percent/100)`.  
+COGS: base ± audio ± videollamada ([costos-api.md](../web/docs/costos/costos-api.md)).  
+El usuario elige clases (AMB / EMER / IMP), cantidad de **profesionales** por clase, y opcionales audio/videollamada. En copy público **no** usar el término PES.
+
+Doc comercial: [matriz-argentina-modulos-precios.md](../web/docs/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
+
 ## Demo del asistente (`js/assistant-demo.js`)
 
 Mock animado alineado a `spa.css` (burbujas, flow header, tabla, formulario, composer). Tres pestañas con datos ficticios (lorem). Arranca al hacer scroll a la sección; rota automáticamente salvo hover o foco en la demo.

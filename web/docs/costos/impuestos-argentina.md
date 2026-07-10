@@ -1,10 +1,10 @@
 # Impuestos — Argentina (referencia para costos y pricing)
 
 **Tipo:** costos · fiscal (orientativo)  
-**Última actualización:** 2026-05-28  
+**Última actualización:** 2026-07-10  
 **Alcance:** impacto fiscal al **operar** Bioenlace en Argentina y al **cotizar** B2B (efector, financiador, Estado). **No es asesoramiento legal ni contable** — validar con contador según forma societaria, provincia y tipo de factura.
 
-Los precios de la [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) están en USD y **no incluyen IVA**.
+Los precios de la [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) están en USD y **no incluyen IVA**. Fórmula de lista: COGS × (1 + margen sobre costo).
 
 ---
 
@@ -109,38 +109,57 @@ Base: filas **IA + STT** de la tabla A (~**7.750** sin caché · ~**7.050** con 
 
 **Resumen fiscal (compras):** App/BD *[pendiente]*.
 
-### C) Cotización orientativa — solo variable IA (5.000 prof., uso intensivo)
+### C) Cotización orientativa — variable IA (5.000 prof., uso intensivo)
 
-Precios de licencia: [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — **fuera de esta tabla**. COGS variable: tabla A.
+**Lista comercial vigente:** [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — `precio = COGS × (1 + margin_on_cost_percent/100)` con margen **233 %** (~70 % bruto). COGS de esta sección = tabla A / [costos-api](./costos-api.md).
 
 #### Qué es cada margen (importante)
 
 | Métrica | Fórmula | ¿Incluye ganancias? |
 |---------|---------|---------------------|
-| **Margen bruto (*gross margin*)** | `(Precio neto − costo IA) / Precio neto` | **No.** Solo resta el costo directo documentado (IA+STT). Es la métrica del business plan (~70 % objetivo en software). |
+| **Margen bruto (*gross margin*)** | `(Precio neto − costo IA) / Precio neto` | **No.** Solo resta el costo directo documentado (IA+STT±video). Es la métrica del business plan (~70 % objetivo en software). |
+| **Margen sobre costo (*markup*)** | `(Precio − COGS) / COGS` | **No.** En metadata: `margin_on_cost_percent` (233 % → bruto ~70 %). |
 | **Margen después IIBB + ganancias** | `(Precio − IIBB − costo IA − ganancias) / Precio` | **Sí.** IIBB **4 %** s/ facturación neta; ganancias **25 %** s/ utilidad antes de imp. a las ganancias (`utilidad = precio − IIBB − costo IA`). |
 | **IVA 21 %** | Sobre factura al cliente | **No entra** en ningún margen: se discrimina; el cliente lo usa como crédito fiscal (B2B). |
 
 #### Tabla — solo IA + STT (sin videollamada)
 
-| Escenario | ~USD por prof sin caché | ~USD por prof con caché | Precio **neto** por mes sin caché | Precio **neto** por mes con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto | Margen después IIBB + ganancias |
-|-----------|-------------------------|-------------------------|-----------------------------------|-----------------------------------|----------------------------------|----------------------------------|--------------|--------------------------------|
+| Escenario | ~USD por prof sin caché | ~USD por prof con caché | Precio **neto** 5.000 prof sin caché | Precio **neto** 5.000 prof con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto | Margen después IIBB + ganancias |
+|-----------|-------------------------|-------------------------|--------------------------------------|--------------------------------------|----------------------------------|----------------------------------|--------------|--------------------------------|
 | **Solo costo (sin margen)** * | **~1,55** | **~1,41** | **~7.750** | **~7.050** | **~9.378** | **~8.531** | **0 %** · **0 %** | **Pérdida** |
-| **Variable IA, margen mínimo** | **1,8 – 2,0** | **1,8 – 2,0** | **9.000 – 10.000** | **9.000 – 10.000** | **10.890 – 12.100** | **10.890 – 12.100** | **~42 – 48 %** · **~56 – 61 %** * | **~28 – 33 %** · **~40 – 43 %** * |
+| **Lista matriz (~70 % bruto)** † | **~5,16** | **~4,70** | **~25.800** | **~23.500** | **~31.218** | **~28.435** | **~70 %** | Ver IIBB+ganancias sobre ese neto |
+| **Variable IA, margen mínimo (histórico)** | **1,8 – 2,0** | **1,8 – 2,0** | **9.000 – 10.000** | **9.000 – 10.000** | **10.890 – 12.100** | **10.890 – 12.100** | **~42 – 48 %** · **~56 – 61 %** * | **~28 – 33 %** · **~40 – 43 %** * |
 
-\* COGS sin caché **~7.750** · favorable con caché **~7.050** (tabla A). Por prof: [costos-api resumen](./costos-api.md#resumen-costo-real-por-api-por-médico-por-mes), motivos con audio (§2 batch + insights; §4 siempre IA+STT).
+\* COGS sin caché **~7.750** · favorable con caché **~7.050** (tabla A). Por prof: [costos-api resumen](./costos-api.md#resumen-costo-real-por-api-por-médico-por-mes), motivos con audio (§2 batch + insights; §4 siempre IA+STT).  
+† `1,55 × 3,33 ≈ 5,16` (margen sobre costo 233 %). Con caché favorable: `1,41 × 3,33 ≈ 4,70` (orientativo; la metadata usa COGS sin caché).
 
 #### Tabla — IA + STT + videollamada (Twilio)
 
-| Escenario | ~USD por prof sin caché | ~USD por prof con caché | Precio **neto** por mes sin caché | Precio **neto** por mes con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto | Margen después IIBB + ganancias |
-|-----------|-------------------------|-------------------------|-----------------------------------|-----------------------------------|----------------------------------|----------------------------------|--------------|--------------------------------|
-| **Solo costo (sin margen)** * | **~12,97** | **~12,84** | **~64.850** | **~64.200** | **~78.469** | **~77.682** | **0 %** · **0 %** | **Pérdida** |
+| Escenario | ~USD por prof sin caché | ~USD por prof con caché | Precio **neto** 5.000 prof sin caché | Precio **neto** 5.000 prof con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto |
+|-----------|-------------------------|-------------------------|--------------------------------------|--------------------------------------|----------------------------------|----------------------------------|--------------|
+| **Solo costo (sin margen)** * | **~12,97** | **~12,84** | **~64.850** | **~64.200** | **~78.469** | **~77.682** | **0 %** |
+| **Lista matriz (~70 % bruto)** † | **~43,19** | **~42,76** | **~215.950** | **~213.800** | **~261.300** | **~258.698** | **~70 %** |
 
-\* Tabla A + videollamada ([costos-api §6](./costos-api.md#6-videollamadas-pacientemédico)).
+\* Tabla A + videollamada ([costos-api §6](./costos-api.md#6-videollamadas-pacientemédico)). En matriz comercial el COGS de referencia con audio+video es **13,07** → lista **~43,52**/prof/mes.  
+† `12,97 × 3,33 ≈ 43,19` (escala 5.000 con COGS tabla A+video).
 
-La fila «margen mínimo» (1,8–2 por prof) de la tabla **solo IA + STT** **no cubre** videollamada.
+La fila «margen mínimo» histórico (1,8–2 por prof) **no cubre** videollamada ni el objetivo de ~70 % bruto; la **lista matriz** sí incluye video como add-on opcional.
 
-#### Detalle aritmético — ejemplo USD 10.000 por mes neto (2 por prof)
+#### Detalle aritmético — ejemplo lista matriz, 5.000 prof, solo IA+STT (~5,16/prof)
+
+| Concepto | USD por mes |
+|----------|---------|
+| Facturación neta | 25.800 |
+| IVA 21 % (discriminado en factura) | +5.418 (no es ingreso) |
+| Ingresos brutos (4 %) | −1.032 |
+| Costo IA + STT | −7.750 |
+| Utilidad antes ganancias | 17.018 |
+| Ganancias (25 %) | −4.255 |
+| **Resultado variable** (antes de fijos) | **12.763** |
+| **Margen bruto** | **~70 %** (= (25.800 − 7.750) / 25.800) |
+| **Margen después IIBB + ganancias** | **~49 %** (= 12.763 / 25.800) |
+
+#### Detalle aritmético — ejemplo histórico USD 10.000 por mes neto (2 por prof)
 
 | Concepto | USD por mes |
 |----------|---------|
@@ -158,14 +177,17 @@ La fila «margen mínimo» (1,8–2 por prof) de la tabla **solo IA + STT** **no
 
 ## Cómo usar esto en pricing
 
-1. **Costo directo** (tabla A o B) → piso variable por escala de usuarios/profesionales.  
-2. **+ Gastos fijos** (sueldos, ventas, implementación) → no están en `docs/costos/` de APIs.  
-3. **+ IIBB** sobre precio de venta estimado.  
-4. **+ Margen objetivo** (ej. gross margin ~70% en software, ver business plan).  
-5. **IVA** en factura al cliente local (**+21%** discriminado).  
-6. **Ganancias** sobre utilidad anual (reserva en plan financiero, no siempre en precio mensual).
+1. **Costo directo** (tabla A o B / [costos-api](./costos-api.md)) → COGS por profesional (base ± audio ± videollamada).  
+2. **Aplicar margen sobre costo** (`margin_on_cost_percent` en metadata; hoy **233 %** ≈ 70 % bruto) → precio lista unitario.  
+3. **× cantidad de profesionales** por clase contratada (AMB / EMER / IMP).  
+4. **+ Gastos fijos** (sueldos, ventas, implementación) → no están en `docs/costos/` de APIs; ajustar margen o fee one-shot si hace falta.  
+5. **+ IIBB** sobre precio de venta estimado (o incluirlo en el margen deseado).  
+6. **IVA** en factura al cliente local (**+21%** discriminado).  
+7. **Ganancias** sobre utilidad anual (reserva en plan financiero, no siempre en precio mensual).
 
 Para **licitación provincial**: sumar retenciones y plazos de pago que exija el pliego (no modelados acá).
+
+Fuente de verdad de cifras de lista: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) y `pricing-pes-by-encounter-class.yaml`.
 
 ---
 

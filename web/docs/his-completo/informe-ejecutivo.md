@@ -314,7 +314,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor operación ambu
 - Intercambio estándar con otras redes de salud (mensajería clínica entre sistemas).
 - Retiro completo de pantallas administrativas que aún hablan de “consulta” en lugar de “atención”.
 
-**Implicación de producto:** este es el **core** actual; diferenciación frente a agenda suelta y captura fragmentada. **Comercial:** licencia por efector/profesional ([matriz AR](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md)).
+**Implicación de producto:** este es el **core** actual; diferenciación frente a agenda suelta y captura fragmentada. **Comercial:** licencia por profesional = COGS × margen, con clases AMB/EMER/IMP y add-ons audio/videollamada ([matriz AR](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md)).
 
 ---
 

@@ -17,5 +17,6 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 
 ## Relacionado
 
+- [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — de COGS a precio lista (margen + add-ons)
 - [producto/asistente-y-chat.md](../producto/asistente-y-chat.md)
 - [producto/apps-paciente-personalsalud.md](../producto/apps-paciente-personalsalud.md)

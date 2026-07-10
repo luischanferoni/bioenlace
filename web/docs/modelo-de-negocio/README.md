@@ -6,7 +6,7 @@ Documentación de **referencia comparativa**: cómo distintos países organizan 
 
 - [comparativa-mundial.md](./comparativa-mundial.md) — casos globales atípicos
 - [comparativa-latinoamerica.md](./comparativa-latinoamerica.md) — casos LA particulares
-- [business-plan/](./business-plan/README.md) — mapa vías de ingreso × Bioenlace; matriz Argentina (módulos, precios, build)
+- [business-plan/](./business-plan/README.md) — mapa vías de ingreso × Bioenlace; matriz Argentina (COGS × margen, clases, add-ons)
 
 ## Casos por país
 

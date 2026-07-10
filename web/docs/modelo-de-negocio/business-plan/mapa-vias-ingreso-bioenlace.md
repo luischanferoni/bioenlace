@@ -96,20 +96,22 @@ Al leer la tabla y el detalle, conviene distinguir cuatro líneas que se repiten
 
 #### Licencia base y add-ons por módulo (vía 1)
 
-- **Licencia base:** ambulatorio + agenda + captura (Encounter) — lo que casi todo efector necesita para operar.
-- **Add-on:** módulo adicional con precio propio, sumado al fee mensual. No es otro producto: es el mismo Bioenlace, facturado por capacidades activadas.
+- **Licencia:** por profesional y mes = **COGS × (1 + margen sobre costo)**. El COGS sale de [costos-api.md](../../costos/costos-api.md); el margen y la lista comercial en [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md).
+- **Clases de encounter (AMB / EMER / IMP):** el cliente contrata qué tipos de atención habilita y cuántos profesionales por cada uno. Mismo precio unitario; lo no contratado se deshabilita en producto.
+- **Add-ons variables de costo:** audio (dictado del profesional) y videollamada — suman COGS y suben el precio unitario.
 
 
-| Add-on típico (AR)  | Para qué                       | Orden de magnitud  |
-| ------------------- | ------------------------------ | ------------------ |
-| Guardia / urgencias | Tablero EMER, triage, circuito | +USD 3–8k/mes      |
-| Internación         | Mapa, ingreso, alta, ronda     | +USD 2–6k/mes      |
-| Planes + adherencia | Crónicos, recordatorios        | +USD 1–3k/mes      |
-| Receta electrónica  | Si no va en base               | +USD 500–2k/mes    |
-| Captura IA premium  | Asistente / voz ampliada       | +USD 3–10/prof/mes |
+| Add-on / alcance (AR) | Para qué | Orden de magnitud (lista, vol. 400) |
+| --------------------- | -------- | ----------------------------------- |
+| Base (sin audio ni video) | IA + captura texto | ~**USD 3,20**/prof/mes |
+| + Audio | Dictado del profesional (STT) | ~**USD 4,13**/prof/mes |
+| + Videollamada | Teleconsulta (Twilio §6) | ~**USD 41,56**/prof/mes |
+| + Audio + videollamada | Ambos | ~**USD 42,49**/prof/mes |
+| Clase EMER / IMP | Tablero guardia / internación | Escala si el volumen/mes difiere del de AMB |
+| Receta electrónica / pack OS | Vías 2 y 5 | Cotización aparte (no en fórmula COGS) |
 
 
-Ver [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md).
+Ver [matriz-argentina-modulos-precios.md](./matriz-argentina-modulos-precios.md). Calculador: sitio institucional `#precios` (término público: **profesional**, no PES).
 
 #### Fuera de la fórmula de ingreso
 

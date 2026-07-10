@@ -62,9 +62,64 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
-     * COGS unitario USD/profesional/mes según add-ons.
+     * @return array<string, mixed>|null
      */
-    public static function unitCogs(bool $audio = false, bool $videollamada = false): float
+    private static function classRow(string $encounterClass): ?array
+    {
+        $row = self::loadConfig()['sellable_classes'][$encounterClass] ?? null;
+
+        return is_array($row) ? $row : null;
+    }
+
+    public static function referenceEncountersPerMonth(): float
+    {
+        $ref = (float) (self::loadConfig()['reference_encounters_per_professional_month'] ?? 400);
+
+        return $ref > 0 ? $ref : 400.0;
+    }
+
+    public static function encountersPerMonth(string $encounterClass): float
+    {
+        $row = self::classRow($encounterClass);
+        if ($row !== null && isset($row['encounters_per_professional_month'])) {
+            $n = (float) $row['encounters_per_professional_month'];
+            if ($n > 0) {
+                return $n;
+            }
+        }
+
+        return self::referenceEncountersPerMonth();
+    }
+
+    public static function volumeScale(string $encounterClass): float
+    {
+        return self::encountersPerMonth($encounterClass) / self::referenceEncountersPerMonth();
+    }
+
+    public static function classIncludesAudio(string $encounterClass): bool
+    {
+        $row = self::classRow($encounterClass);
+
+        return $row !== null && !empty($row['audio_included']);
+    }
+
+    public static function classAllowsVideollamada(string $encounterClass): bool
+    {
+        $row = self::classRow($encounterClass);
+        if ($row === null) {
+            return false;
+        }
+        if (array_key_exists('videollamada_allowed', $row)) {
+            return (bool) $row['videollamada_allowed'];
+        }
+
+        return true;
+    }
+
+    /**
+     * COGS de referencia (volumen reference) según add-ons, sin escalar por clase.
+     */
+    public static function referenceUnitCogs(bool $audio = false, bool $videollamada = false): float
     {
         $cogs = self::loadConfig()['cogs_usd_per_professional_month'] ?? [];
         if (!is_array($cogs)) {
@@ -81,6 +136,41 @@ final class PricingPesByEncounterClassMetadata
         return round($total, 4);
     }
 
+    /**
+     * Resuelve add-ons efectivos para una clase (audio incluido / video no permitido).
+     *
+     * @return array{0: bool, 1: bool} [audio, videollamada]
+     */
+    public static function effectiveAddons(
+        string $encounterClass,
+        bool $audio = false,
+        bool $videollamada = false
+    ): array {
+        $audioEff = $audio || self::classIncludesAudio($encounterClass);
+        $videoEff = $videollamada && self::classAllowsVideollamada($encounterClass);
+
+        return [$audioEff, $videoEff];
+    }
+
+    /**
+     * COGS unitario USD/profesional/mes según add-ons y volumen de la clase.
+     */
+    public static function unitCogs(
+        bool $audio = false,
+        bool $videollamada = false,
+        ?string $encounterClass = null
+    ): float {
+        if ($encounterClass !== null) {
+            [$audio, $videollamada] = self::effectiveAddons($encounterClass, $audio, $videollamada);
+        }
+        $base = self::referenceUnitCogs($audio, $videollamada);
+        if ($encounterClass === null) {
+            return $base;
+        }
+
+        return round($base * self::volumeScale($encounterClass), 4);
+    }
+
     public static function marginOnCostPercent(): float
     {
         return (float) (self::loadConfig()['margin_on_cost_percent'] ?? 0);
@@ -89,17 +179,19 @@ final class PricingPesByEncounterClassMetadata
     /**
      * Precio de lista USD/profesional/mes = COGS × (1 + margen%).
      */
-    public static function unitPrice(bool $audio = false, bool $videollamada = false): float
-    {
-        $cogs = self::unitCogs($audio, $videollamada);
+    public static function unitPrice(
+        bool $audio = false,
+        bool $videollamada = false,
+        ?string $encounterClass = null
+    ): float {
+        $cogs = self::unitCogs($audio, $videollamada, $encounterClass);
         $margin = self::marginOnCostPercent();
 
         return round($cogs * (1 + $margin / 100), 2);
     }
 
     /**
-     * Precio unitario sin add-ons (compatibilidad con callers que pedían price_per_pes).
-     * El precio ya no varía por encounter_class: el COGS es el mismo.
+     * Precio unitario de lista para la clase (respeta audio incluido / video permitido).
      */
     public static function pricePerPes(string $encounterClass): ?float
     {
@@ -107,7 +199,7 @@ final class PricingPesByEncounterClassMetadata
             return null;
         }
 
-        return self::unitPrice(false, false);
+        return self::unitPrice(false, false, $encounterClass);
     }
 
     public static function defaultWhenEmptyAllowAll(): bool
@@ -125,13 +217,13 @@ final class PricingPesByEncounterClassMetadata
         bool $audio = false,
         bool $videollamada = false
     ): float {
-        $unit = self::unitPrice($audio, $videollamada);
         $total = 0.0;
         foreach ($professionalsByClass as $code => $qty) {
-            if (!self::isSellableClass((string) $code) || (int) $qty <= 0) {
+            $code = (string) $code;
+            if (!self::isSellableClass($code) || (int) $qty <= 0) {
                 continue;
             }
-            $total += $unit * (int) $qty;
+            $total += self::unitPrice($audio, $videollamada, $code) * (int) $qty;
         }
 
         return round($total, 2);

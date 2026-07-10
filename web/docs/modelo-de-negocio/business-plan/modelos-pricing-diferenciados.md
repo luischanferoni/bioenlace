@@ -149,19 +149,22 @@ Ingreso Bioenlace (AR) ≈
 
 ### Modelo A — Licencia modular (efector)
 
-**Idea:** pricing estándar según [matriz Argentina](./matriz-argentina-modulos-precios.md): base ambulatorio + agenda + add-ons (guardia, internación, receta, IA).
+**Idea:** pricing según [matriz Argentina](./matriz-argentina-modulos-precios.md): **COGS documentado × (1 + margen sobre costo)**, por profesional y mes. El cliente elige qué `encounter_class` contrata (AMB / EMER / IMP), cuántos profesionales por cada una, y add-ons **audio** / **videollamada**.
 
 | Componente | Descripción |
 |------------|-------------|
-| **Licencia** | USD 8–25/prof/mes o pack por efector (clínica / sanatorio) |
-| **Add-ons** | Módulos activados con fee mensual propio |
-| **Rev share Rx (opcional)** | USD 0,5–2 por receta enrutada a farmacia partner (vía 5) |
+| **Licencia** | `precio = COGS_ref × (vol_clase/400) × (1 + margen%)` — margen **233 %** ≈ ~70 % bruto; base ~**USD 3,20**/prof/mes; con audio ~**4,13**; con video ~**USD 41–43**/prof/mes |
+| **Clases** | AMB / EMER / IMP habilitan módulos; el precio escala con `encounters_per_professional_month` por clase |
+| **Add-ons variables** | Audio (dictado del profesional) y/o videollamada (Twilio) — suman COGS y se reflejan en el precio |
+| **Rev share Rx (opcional)** | USD 0,5–2 por receta enrutada a farmacia partner (vía 5; fuera de la fórmula COGS) |
 
 **Quién paga:** director médico / COO / IT del efector.
 
 **ROI comercial (operativo):** menos tiempo de documentación, menos no-shows (KPIs agenda), guardia con SLA — argumentos de eficiencia, no de retención de paciente.
 
 **Encaje producto:** ambulatorio (~75%), agenda (~81%), guardia (~95%), internación (~82%), receta (~75%). Ver [informe ejecutivo](../../his-completo/informe-ejecutivo.md).
+
+**Calculador público:** [`institucional/#precios`](../../../../institucional/index.html) (copy: «profesional», no PES).
 
 ---
 
@@ -213,9 +216,9 @@ Para clínicas 5–15 profesionales:
 | Tier | Incluye | Precio |
 |------|---------|--------|
 | **Gratis** | Hasta N encounters/mes: ambulatorio básico | USD 0 |
-| **Pago** | Superar umbral; guardia; pack OS; IA ilimitada | Según [matriz](./matriz-argentina-modulos-precios.md) |
+| **Pago** | Superar umbral; más clases (EMER/IMP); audio; videollamada | Según [matriz](./matriz-argentina-modulos-precios.md) (COGS + margen) |
 
-Compite con «HIS caro y complejo» sin regalar consultas al paciente final. Costo marginal bajo en clínicas chicas (IA ~USD 1–3/prof/mes en uso moderado; ver [estrategias de reducción](../../costos/estrategias-reduccion/README.md)).
+Compite con «HIS caro y complejo» sin regalar consultas al paciente final. COGS variable ~USD 1,2–1,6/prof/mes sin video (ver [costos-api](../../costos/costos-api.md)); precio lista base ~USD 4/prof/mes con margen ~70 % bruto.
 
 ---
 
@@ -225,13 +228,15 @@ Supuestos: **clínica 20 profesionales**, ~8.000 encounters/año, ~670/mes.
 
 | Concepto | Orden de magnitud (USD/mes) |
 |----------|----------------------------|
-| Costo IA (20 prof, uso medio) | 100–200 |
+| COGS IA+STT (20 prof, base sin video) | ~25–31 (1,24–1,55 × 20; [costos-api](../../costos/costos-api.md)) |
+| COGS + videollamada (20 prof) | ~255–261 |
 | Infra + soporte | 200–500 |
 | Costo equipo (amortizado por cliente) | Variable según headcount; meta **gross margin ~70%** |
-| **Precio tradicional** (matriz, pack ambulatorio + add-ons) | 1.500–3.000 |
+| **Precio lista** (20 prof, solo base, margen 233 %) | ~**64** (20 × 3,20) |
+| **Precio lista** (20 prof + videollamada) | ~**831** (20 × 41,56) |
 | **Ingreso incremental Rx** (opcional) | 200 recetas/mes × USD 1 fee = **USD 200/mes**; rev share farmacia aparte |
 
-El ingreso incremental por receta enrutada es **puente a fulfillment** (vía 5), no margen retail propio.
+El ingreso incremental por receta enrutada es **puente a fulfillment** (vía 5), no margen retail propio. Cifras de lista: [matriz Argentina](./matriz-argentina-modulos-precios.md).
 
 ---
 
@@ -239,10 +244,11 @@ El ingreso incremental por receta enrutada es **puente a fulfillment** (vía 5),
 
 | Escenario | Modelo sugerido | Ticket orientativo/mes | Build prioritario |
 |-----------|-----------------|------------------------|-------------------|
-| Clínica 10 prof | D → A | 500–1.500 (matriz) | Receta nacional |
-| Sanatorio 80 camas | A + C | 5–12k + rev share Rx | Autorización OS; partner farmacia |
+| Clínica 10 prof (solo base) | D → A | ~32–41 (matriz; ± audio) | Receta nacional |
+| Clínica 10 prof + videollamada | A | ~416–425 | Teleconsulta estable |
+| Sanatorio 80 camas (plantel mixto AMB+EMER+IMP) | A + C | Centenas–bajos miles según N profesionales y video; + rev share Rx | Autorización OS; partner farmacia |
 | Prepaga piloto 50k afiliados | B | 25–75k PMPM + pack OS + pathway fees | White-label; API; autorización; reglas pathway |
-| Red ambulatoria 5 sedes | A | 3–8k por red | Autorización OS; receta nacional |
+| Red ambulatoria 5 sedes | A | Según Σ profesionales × precio unitario | Autorización OS; receta nacional |
 
 ---
 

@@ -1,121 +1,83 @@
-# Matriz Argentina — módulos × precio × build faltante
+# Matriz Argentina — precio por PES × encounter_class
 
 **Tipo:** business plan · go-to-market Argentina  
-**Última actualización:** 2026-05-27  
+**Última actualización:** 2026-07-10  
 **Alcance:** solo Argentina por ahora; otros países cuando haya validación local.
 
-Precios **orientativos** en USD; no incluyen IVA. Validar con tamaño de efector y cantidad de profesionales. Impuestos (IVA, IIBB, ganancias): [impuestos-argentina.md](../../costos/impuestos-argentina.md).
+Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentina.md](../../costos/impuestos-argentina.md).
 
-**Referencia de madurez:** [`../../his-completo/informe-ejecutivo.md`](../../his-completo/informe-ejecutivo.md) (niveles 0–4).
+**Modelo vigente:** licencia = **Σ (PES contratados × precio de la clase de encounter)**.  
+El cliente elige qué `encounter_class` contrata (AMB / EMER / IMP) y cuántas asignaciones PES por cada una. Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
-**Alcance comercial:** precios por **licencia y add-ons** al comprador institucional. **Pathway fees** y PMPM se cotizan al **financiador** (vía 7), no al sanatorio por fidelizar o captar pacientes. No se cotiza al efector por resumen abierto, adherencia u otros hitos de «continuidad» post-consulta. Ver [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md) y [mapa de vías](./mapa-vias-ingreso-bioenlace.md).
+Metadata producto: [`pricing-pes-by-encounter-class.yaml`](../../../common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml).  
+Calculador público: sitio [`institucional/#precios`](../../../../institucional/index.html).  
+Entitlements BD: `efector_encounter_entitlement`.
 
----
-
-## Compradores típicos en Argentina
-
-| Comprador | Motivación de compra | Ciclo de venta |
-|-----------|----------------------|----------------|
-| **Sanatorio privado mediano** | Operación ambulatoria + guardia; OS en red; eficiencia y cobro a financiador | 3–6 meses |
-| **Clínica / policlínica ambulatoria** | Agenda, atención, receta; poco internación | 1–3 meses |
-| **Grupo sanitario / prepaga** | Canal digital paciente; autorización; no reemplazar liquidación legacy de golpe | 6–12 meses |
-| **Obra social mediana** | Autorizaciones; auditoría; portal prestadores | 6–12 meses |
-| **Hospital público provincial** | Licitación; módulos acotados | 12–24 meses |
+**Fuera de este modelo (siguen cotizándose aparte):** pathway fees / PMPM al financiador, integraciones one-shot, autorización OS enterprise, proyectos farmacia/quirófano. Ver [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).
 
 ---
 
-## Matriz principal
+## Fórmula
 
-| Módulo Bioenlace | Madurez actual | Comprador AR típico | Precio orientativo | Build faltante (principal) | Plazo venta |
-|------------------|----------------|---------------------|--------------------|----------------------------|-------------|
-| **Ambulatorio + Encounter** | ~75% | Sanatorio, clínica | **USD 8–25/prof./mes** o **USD 1.5–4k/mes** por efector chico | HC longitudinal médica; derivaciones estructuradas; retiro UI legacy «consulta» | Corto |
-| **Agenda y turnos** | ~81% | Todos los efectores | Incluido en base o **USD 2–6k/mes** standalone grande | Autorización OS en reserva; teleconsulta nativa; lista espera inter-servicio | Corto |
-| **Paciente digital** (app + resumen post-atención) | ~75% | Sanatorio, prepaga white-label | **USD 1–3k/mes** o **USD 0.5–1.5/afiliado activo/mes** (prepaga) | Más acciones self-service; integración medios de pago (opcional) | Corto |
-| **Guardia / urgencias** | ~95% | Sanatorio con guardia | **USD 3–8k/mes** add-on | SLA admin UI; aviso sonoro; catálogo LIS en pedidos guardia | Corto |
-| **Internación** | ~82% | Sanatorio con camas | **USD 2–6k/mes** add-on | Firma digital alta; facturación episodio; handoff post-alta ambulatorio | Mediano |
-| **Planes de tratamiento + adherencia** | ~75% | Sanatorio crónicos; prepaga | **USD 1–3k/mes** | Adherencia → outcomes (labs); IA sugerencias con aprobación médica | Corto–mediano |
-| **Receta electrónica** | ~75% | Todos | Incluido o **USD 500–2k/mes** | **Homologación receta nacional**; integración redes farmacia | Corto (bloqueante mercado) |
-| **Laboratorio** (integración externa) | ~63% | Sanatorio, clínica | **USD 2–8k** one-shot + **USD 200–800/mes** mant. | Lab propio in-house (fuera de scope); más conectores LIS | Corto |
-| **Captura asistida / asistente** | Alto (diferenciador) | Todos | Incluido o **USD 3–10/prof./mes** premium IA | Costos IA acotados por institución; más intents operativos | Corto |
-| **Autorización OS / prepaga** | ~0–25% (gap) | Sanatorio, prepaga, OS | **USD 5–15k/mes** prepaga; **USD 2–5k/mes** sanatorio | Reglas PMO/cartilla; flujo en agenda y Encounter; conectores por financiador | Mediano |
-| **Facturación / liquidación OS** | ~38% | Sanatorio alto volumen OS | **USD 3–10k/mes** + posible fee transaccional | Ciclo factura–cobro; nomenclador completo; glosas y conciliación | Mediano–largo |
-| **Analytics financiador** (utilización, glosas) | Gap | OS, prepaga grande | **USD 8–25k/mes** o **USD 0.1–0.3/afiliado/mes** | Data pipeline; reglas auditoría; anonimización | Largo |
-| **Farmacia + dispensación** | ~38% | Sanatorio con farmacia propia | Proyecto **USD 30–80k** + **USD 2–5k/mes** | Stock, dispensación, validación, cierre con receta nacional | Largo (bajo demanda) |
-| **Quirófano enterprise** | ~50% | Sanatorio quirúrgico | Proyecto **USD 40–100k** | Partes formales, checklist OMS, tablero salas, stock pabellón | Largo (bajo demanda) |
-| **API / white-label prepaga** | API v1 existente | Prepaga, grupo sanitario | **USD 10–40k/mes** según volumen API | SLAs; sandbox; documentación comercial; acuerdos de datos | Mediano |
+```
+USD/mes ≈ Σ_clase ( cantidad_PES[clase] × price_per_pes[clase] )
+```
+
+| Clase | Label | USD / PES / mes (orientativo) | Qué habilita |
+|-------|-------|-------------------------------|--------------|
+| **AMB** | Ambulatorio | **18** | Agenda cupos, turnos paciente, captura AMB |
+| **EMER** | Urgencia / guardia | **55** | Cobertura roster, tablero guardia, captura EMER |
+| **IMP** | Internación | **42** | Cobertura piso, mapa camas, captura IMP |
+
+Ejemplo: 10 PES AMB + 4 PES EMER → `(10×18) + (4×55) = 180 + 220 = **USD 400/mes**`.
 
 ---
 
-## Paquetes sugeridos (Argentina)
+## Deshabilitado de lo no contratado
 
-### Pack «Ambulatorio digital» — clínica / consultorio
+| Capa | Comportamiento |
+|------|----------------|
+| Wizard / opciones sesión | Solo clases en `efector_encounter_entitlement` (si no hay filas: `default_when_empty: allow_all`) |
+| `set-session` | Rechaza `encounter_class` no contratada |
+| Agenda AMB / cobertura EMER·IMP | Operan solo si la clase está contratada (vía sesión) |
 
-**Para:** clínica 5–30 profesionales, sin guardia.
-
-| Incluye | Precio orientativo |
-|---------|-------------------|
-| Encounter ambulatorio, agenda, receta (PDF), resumen paciente, app paciente básica | **USD 1.5–3k/mes** |
-| Implementación + capacitación | **USD 3–8k** one-shot |
-| Integración 1 laboratorio externo | **USD 2–5k** one-shot |
-
-**Build crítico antes de escalar:** receta nacional homologada.
+Tope `max_pes` por clase: declarado en contrato; enforcement estricto de conteo = fase siguiente.
 
 ---
 
-### Pack «Sanatorio operativo» — ambulatorio + guardia
+## Compradores típicos (lectura rápida)
 
-**Para:** sanatorio 50–200 camas, guardia activa, mix OS/prepaga/particular.
-
-| Incluye | Precio orientativo |
-|---------|-------------------|
-| Pack ambulatorio + guardia + internación básica + KPIs agenda + adherencia | **USD 8–20k/mes** |
-| Implementación | **USD 15–40k** one-shot |
-| Add-on captura IA premium | **+USD 500–2k/mes** |
-
-**Build crítico:** autorización OS en agenda (upsell); firma alta internación.
+| Comprador | Selección típica en el calculador |
+|-----------|-----------------------------------|
+| Clínica ambulatoria | Solo AMB × N PES |
+| Sanatorio con guardia | AMB + EMER |
+| Sanatorio con camas | AMB + EMER + IMP |
 
 ---
 
-### Pack «Financiador digital» — prepaga / OS mediana
+## Add-ons / fuera de la fórmula PES
 
-**Para:** prepaga u OS que quiere canal paciente + autorización sin reemplazar liquidación core.
-
-| Incluye | Precio orientativo |
-|---------|-------------------|
-| Portal/API autorización, reglas cartilla, app paciente white-label, reporting utilización | **USD 10–30k/mes** |
-| Integración con sistema liquidación legacy (batch/API) | **USD 20–60k** one-shot |
-
-**Build crítico:** módulo autorización (vía #2 del mapa); acuerdos de datos por financiador.
-
----
-
-## Priorización comercial (Argentina)
-
-Orden alineado al [informe ejecutivo](../../his-completo/informe-ejecutivo.md) y al [mapa de vías](./mapa-vias-ingreso-bioenlace.md):
-
-| Orden | Iniciativa comercial | Módulo | Efecto en ticket |
-|-------|----------------------|--------|------------------|
-| 1 | Vender **Pack ambulatorio** a clínicas y sanatorios | Ambulatorio + agenda + paciente | Base recurrente |
-| 2 | **Receta nacional** como requisito y add-on regulatorio | Receta electrónica | Desbloquea LATAM; habilita receta enrutada (vía 5) |
-| 3 | Add-on **guardia** donde ya hay cliente ambulatorio | Guardia | +USD 3–8k/mes |
-| 4 | **Autorización OS** a sanatorios con dolor de glosas | Autorización | +USD 2–5k/mes; puerta a prepaga |
-| 5 | **Pack financiador** a 1 prepaga piloto | API + autorización + app | Ticket alto, pocas cuentas |
-| 6 | Facturación integrada bajo demanda enterprise | Facturación | Proyecto, no volumen |
+| Ítem | Notas | Precio orientativo |
+|------|-------|-------------------|
+| Implementación + capacitación | One-shot | USD 3–40k según tamaño |
+| Integración LIS | One-shot + mant. | USD 2–8k + 200–800/mes |
+| IA captura premium (fair use excedido) | Variable | A cotizar / cuota |
+| Autorización OS / prepaga | Otro ciclo | USD 2–15k/mes |
+| API / white-label | Volumen API | USD 10–40k/mes |
 
 ---
 
-## Supuestos y límites
+## Priorización comercial
 
-- No incluye **comisiones por acto médico** ni modelo «% del cobro OS» salvo acuerdo explícito en RCM.
-- **Hospital público provincial:** usar rangos de licitación solo como referencia; precio final muy variable; ciclo >12 meses.
-- **PAMI** y **fuerzas:** segmento institucional aparte; requisitos específicos `[pendiente]`.
-- Cifras en USD; para ARS aplicar tipo de cambio y ajuste inflacionario al cotizar.
+1. Publicar calculador institucional y cotizar con fórmula PES × clase.  
+2. Cargar entitlements por efector al firmar.  
+3. Usage report (encounters / PES activos) para renovación.  
+4. Pasarela / seña (fase posterior).
 
 ---
 
 ## Referencias
 
-- [Argentina — vías de ingreso privado](../argentina/sistema-salud-publico-y-sector-privado.md)
-- [Mapa vías × Bioenlace](./mapa-vias-ingreso-bioenlace.md) (siete vías)
+- [Agenda por encounter class](../../producto/agenda-por-encounter-class.md)
+- [Mapa vías × Bioenlace](./mapa-vias-ingreso-bioenlace.md)
 - [Modelos de pricing](./modelos-pricing-diferenciados.md)
-- [Informe ejecutivo madurez](../../his-completo/informe-ejecutivo.md)

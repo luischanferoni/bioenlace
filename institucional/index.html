@@ -29,6 +29,7 @@
                     <li><a href="#personalsalud" class="nav-link">Personal de salud</a></li>
                     <li><a href="#pacientes" class="nav-link">Pacientes</a></li>
                     <li><a href="#funcionalidades" class="nav-link">Funcionalidades</a></li>
+                    <li><a href="#precios" class="nav-link">Precios</a></li>
                     <li><a href="#contacto" class="nav-link nav-link--cta">Contacto</a></li>
                 </ul>
                 <button type="button" class="hamburger" id="hamburger" aria-label="Abrir menú" aria-expanded="false">
@@ -471,6 +472,30 @@
         </div>
     </section>
 
+    <section id="precios" class="pricing">
+        <div class="container">
+            <div class="section-header reveal">
+                <h2 class="section-title" id="pricing-title">Calculá tu licencia</h2>
+                <p class="section-subtitle" id="pricing-subtitle">Elegí los tipos de atención y cuántas asignaciones profesionales (PES) necesitás en cada uno.</p>
+            </div>
+            <div class="pricing-calc reveal" id="pricing-calculator" aria-live="polite">
+                <div class="pricing-calc__grid">
+                    <div class="pricing-calc__controls">
+                        <div id="pricing-rows" class="pricing-calc__rows"></div>
+                        <p class="pricing-calc__tax" id="pricing-tax-note"></p>
+                    </div>
+                    <div class="pricing-calc__summary">
+                        <p class="pricing-calc__summary-label">Estimado orientativo</p>
+                        <p class="pricing-calc__total" id="pricing-total">—</p>
+                        <div class="pricing-calc__breakdown" id="pricing-breakdown"></div>
+                        <a href="#contacto" class="btn btn-primary" id="pricing-cta">Pedir cotización</a>
+                        <ul class="pricing-calc__footnotes" id="pricing-footnotes"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <section id="contacto" class="contact">
         <div class="container">
             <div class="section-header reveal">
@@ -545,6 +570,7 @@
                         <li><a href="#personalsalud">Personal de salud</a></li>
                         <li><a href="#pacientes">Pacientes</a></li>
                         <li><a href="#funcionalidades">Funcionalidades</a></li>
+                        <li><a href="#precios">Precios</a></li>
                         <li><a href="#contacto">Contacto</a></li>
                     </ul>
                 </div>
@@ -574,6 +600,7 @@
     <script src="js/assistant-demo.js"></script>
     <script src="js/encounter-demo.js"></script>
     <script src="js/patient-demo.js"></script>
+    <script src="js/pricing-calculator.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>

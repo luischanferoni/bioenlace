@@ -21,7 +21,12 @@ institucional/
 1. **Hero** — Propuesta de valor principal
 2. **Asistente** — Demo del asistente conversacional (listar / editar / crear)
 3. **Personal de salud** — Captura clínica web y app; **Pacientes** — App paciente; **Funcionalidades** — Por audiencia
-4. **Contacto** — Formulario e información
+4. **Precios** — Calculador PES × tipo de atención (AMB / EMER / IMP)
+5. **Contacto** — Formulario e información
+
+## Calculador (`js/pricing-calculator.js`)
+
+Lee `js/pricing-config.json` (mantener alineado a `web/common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml`).
 
 ## Demo del asistente (`js/assistant-demo.js`)
 

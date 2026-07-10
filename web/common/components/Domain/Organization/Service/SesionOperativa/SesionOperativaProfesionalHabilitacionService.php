@@ -10,6 +10,7 @@ use common\models\Person\Persona;
 use common\models\Efector;
 use common\models\Servicio;
 use common\models\ServiciosEfector;
+use common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService;
 use Yii;
 use yii\base\Component;
 
@@ -32,9 +33,9 @@ class SesionOperativaProfesionalHabilitacionService extends Component
      */
     public function buildOpcionesIniciales(int $idPersona): array
     {
-        $encounterClasses = [];
+        $encounterClassesCatalog = [];
         foreach (EncounterDefinition::ENCOUNTER_CLASS as $code => $label) {
-            $encounterClasses[] = [
+            $encounterClassesCatalog[] = [
                 'code' => (string) $code,
                 'label' => (string) $label,
             ];
@@ -48,7 +49,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
 
         if ($idEfectoresPes === []) {
             return [
-                'encounter_classes' => $encounterClasses,
+                'encounter_classes' => $encounterClassesCatalog,
                 'efectores' => [],
                 'efectores_con_problemas' => [[
                     'id_efector' => null,
@@ -61,9 +62,11 @@ class SesionOperativaProfesionalHabilitacionService extends Component
 
         $efectoresOk = [];
         $problemas = [];
+        $allowedByEfector = [];
 
         foreach ($idEfectoresPes as $idEfectorRaw) {
             $idEfector = (int) $idEfectorRaw;
+            $allowedByEfector[$idEfector] = EfectorEncounterEntitlementService::allowedEncounterClasses($idEfector);
             $efectorRow = Efector::findOne($idEfector);
             $nombreEfector = $efectorRow !== null ? (string) $efectorRow->nombre : '';
             $contact = $this->formatContactList($this->getContactosAdministradorEfector($idEfector));
@@ -174,7 +177,36 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                 'id' => $idEfector,
                 'nombre' => $nombreEfector,
                 'servicios' => $serviciosPayload,
+                'encounter_classes' => array_values(array_map(
+                    static function (string $code): array {
+                        return [
+                            'code' => $code,
+                            'label' => (string) (EncounterDefinition::ENCOUNTER_CLASS[$code] ?? $code),
+                        ];
+                    },
+                    $allowedByEfector[$idEfector] ?? array_keys(EncounterDefinition::ENCOUNTER_CLASS)
+                )),
             ];
+        }
+
+        // Unión de clases permitidas en algún efector del usuario (wizard).
+        $unionCodes = [];
+        foreach ($allowedByEfector as $codes) {
+            foreach ($codes as $c) {
+                $unionCodes[$c] = true;
+            }
+        }
+        $encounterClasses = [];
+        foreach (array_keys(EncounterDefinition::ENCOUNTER_CLASS) as $code) {
+            if ($unionCodes === [] || isset($unionCodes[$code])) {
+                $encounterClasses[] = [
+                    'code' => (string) $code,
+                    'label' => (string) EncounterDefinition::ENCOUNTER_CLASS[$code],
+                ];
+            }
+        }
+        if ($encounterClasses === []) {
+            $encounterClasses = $encounterClassesCatalog;
         }
 
         return [

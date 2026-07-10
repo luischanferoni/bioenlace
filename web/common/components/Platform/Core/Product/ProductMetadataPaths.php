@@ -152,4 +152,9 @@ final class ProductMetadataPaths
     {
         return self::organizationDir() . DIRECTORY_SEPARATOR . 'agenda-by-encounter-class.yaml';
     }
+
+    public static function pricingPesByEncounterClassFile(): string
+    {
+        return self::organizationDir() . DIRECTORY_SEPARATOR . 'pricing-pes-by-encounter-class.yaml';
+    }
 }

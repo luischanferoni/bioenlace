@@ -1,0 +1,65 @@
+# Precio orientativo por PES × encounter_class (USD / mes, sin IVA).
+# Fuente comercial para cotizador institucional y entitlements de producto.
+# Actualizar también institucional/js/pricing-config.json al cambiar cifras.
+version: 1
+currency: USD
+billing_period: month
+tax_note: No incluye IVA ni IIBB.
+
+# Si el efector no tiene filas de contrato, ¿qué clases habilitar?
+# allow_all = compatibilidad con efectores aún no contratados en BD.
+# deny_unlisted = solo lo contratado (usar cuando todos los clientes tengan filas).
+default_when_empty: allow_all
+
+# Clases vendibles en el calculador / contrato.
+sellable_classes:
+  AMB:
+    label: Ambulatorio
+    short: Consultorios y turnos
+    price_per_pes: 18
+    includes:
+      - Agenda de cupos y reserva paciente
+      - Captura clínica AMB
+      - App paciente (turnos)
+    product_gates:
+      - session_encounter_class
+      - amb_agenda
+      - patient_booking
+  EMER:
+    label: Urgencia / guardia
+    short: Tablero y plantel de guardia
+    price_per_pes: 55
+    includes:
+      - Cobertura / roster EMER
+      - Tablero de guardia
+      - Captura clínica EMER
+    product_gates:
+      - session_encounter_class
+      - emer_cobertura
+      - emer_tablero
+  IMP:
+    label: Internación
+    short: Piso, camas y evoluciones
+    price_per_pes: 42
+    includes:
+      - Cobertura / roster IMP
+      - Mapa de camas
+      - Captura clínica IMP
+    product_gates:
+      - session_encounter_class
+      - imp_cobertura
+      - imp_mapa
+
+# Otras clases FHIR: no se cotizan aparte; se habilitan solo si el contrato lo declara
+# o quedan fuera hasta que se agreguen a sellable_classes.
+non_sellable_default: disabled
+
+simulator:
+  title: Calculá tu licencia
+  subtitle: Elegí los tipos de atención y cuántas asignaciones profesionales (PES) necesitás en cada uno.
+  cta_label: Pedir cotización
+  cta_href: "#contacto"
+  footnotes:
+    - Precios orientativos en USD por mes. La cotización final depende del efector y del alcance de implementación.
+    - PES = profesional–efector–servicio (una asignación operativa).
+    - Lo no contratado no aparece en la sesión operativa ni en tableros de esa clase.

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "currency": "USD",
+  "billing_period": "month",
+  "tax_note": "No incluye IVA ni IIBB.",
+  "sellable_classes": {
+    "AMB": {
+      "label": "Ambulatorio",
+      "short": "Consultorios y turnos",
+      "price_per_pes": 18,
+      "includes": [
+        "Agenda de cupos y reserva paciente",
+        "Captura clínica AMB",
+        "App paciente (turnos)"
+      ]
+    },
+    "EMER": {
+      "label": "Urgencia / guardia",
+      "short": "Tablero y plantel de guardia",
+      "price_per_pes": 55,
+      "includes": [
+        "Cobertura / roster EMER",
+        "Tablero de guardia",
+        "Captura clínica EMER"
+      ]
+    },
+    "IMP": {
+      "label": "Internación",
+      "short": "Piso, camas y evoluciones",
+      "price_per_pes": 42,
+      "includes": [
+        "Cobertura / roster IMP",
+        "Mapa de camas",
+        "Captura clínica IMP"
+      ]
+    }
+  },
+  "simulator": {
+    "title": "Calculá tu licencia",
+    "subtitle": "Elegí los tipos de atención y cuántas asignaciones profesionales (PES) necesitás en cada uno.",
+    "cta_label": "Pedir cotización",
+    "cta_href": "#contacto",
+    "footnotes": [
+      "Precios orientativos en USD por mes. La cotización final depende del efector y del alcance de implementación.",
+      "PES = profesional–efector–servicio (una asignación operativa).",
+      "Lo no contratado no aparece en la sesión operativa ni en tableros de esa clase."
+    ]
+  }
+}

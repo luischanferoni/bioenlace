@@ -8,6 +8,7 @@ use yii\helpers\ArrayHelper;
 use common\models\Clinical\EncounterDefinition;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
+use common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\models\Servicio;
 use common\models\User;
@@ -98,7 +99,11 @@ class SesionOperativaService extends Component
 
         $validEncounterClasses = array_keys(EncounterDefinition::ENCOUNTER_CLASS);
         if ($encounterClass !== '' && !in_array($encounterClass, $validEncounterClasses, true)) {
-            throw new \InvalidArgumentException('Encounter class inv?lido');
+            throw new \InvalidArgumentException('Encounter class inválido');
+        }
+
+        if ($encounterClass !== '' && !$omiteEncounter) {
+            EfectorEncounterEntitlementService::assertEncounterClassAllowed($efectorId, $encounterClass);
         }
 
         $idPersona = (int) Yii::$app->user->getIdPersona();

@@ -1,6 +1,6 @@
 /**
- * Calculador de licencia: profesionales × encounter_class + add-ons.
- * Precio = COGS_ref × (vol_clase/ref) × (1 + margin%). Audio/video según clase.
+ * Calculador: profesionales × clase + dictado/videollamada solo en AMB.
+ * EMER/IMP: dictado fijo incluido, sin videollamada.
  */
 (function () {
   const root = document.getElementById('pricing-calculator');
@@ -53,9 +53,16 @@
     return true;
   }
 
-  function addonEnabled(key) {
-    if (!addonsEl) return false;
-    const input = addonsEl.querySelector('input[data-addon="' + key + '"]');
+  function ambRow() {
+    return rowsEl ? rowsEl.querySelector('[data-class="AMB"]') : null;
+  }
+
+  function ambAddonEnabled(key) {
+    const row = ambRow();
+    if (!row) return false;
+    const classOn = row.querySelector('input[name="class_AMB"]');
+    if (!classOn || !classOn.checked) return false;
+    const input = row.querySelector('input[data-addon="' + key + '"]');
     return !!(input && input.checked);
   }
 
@@ -68,8 +75,8 @@
   }
 
   function unitCogsForClass(code) {
-    const audio = addonEnabled('audio') || classIncludesAudio(code);
-    const video = addonEnabled('videollamada') && classAllowsVideollamada(code);
+    const audio = classIncludesAudio(code) || (code === 'AMB' && ambAddonEnabled('audio'));
+    const video = classAllowsVideollamada(code) && ambAddonEnabled('videollamada');
     return referenceUnitCogs(audio, video) * volumeScale(code);
   }
 
@@ -83,7 +90,7 @@
     if (!rowsEl) return sel;
     rowsEl.querySelectorAll('[data-class]').forEach((row) => {
       const code = row.getAttribute('data-class');
-      const enabled = row.querySelector('input[type="checkbox"]');
+      const enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
       const qty = row.querySelector('input[type="number"]');
       if (!code || !enabled || !qty) return;
       if (!enabled.checked) return;
@@ -91,6 +98,26 @@
       if (n > 0) sel[code] = n;
     });
     return sel;
+  }
+
+  function syncAmbOptions(row) {
+    if (!row || row.getAttribute('data-class') !== 'AMB') return;
+    const enabled = row.querySelector('input[name="class_AMB"]');
+    const on = !!(enabled && enabled.checked);
+    row.querySelectorAll('input[data-addon]').forEach((input) => {
+      input.disabled = !on;
+      if (!on) input.checked = false;
+    });
+  }
+
+  function syncQtyDisabled(row) {
+    const enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
+    const qty = row.querySelector('input[type="number"]');
+    if (!enabled || !qty) return;
+    qty.disabled = !enabled.checked;
+    if (!enabled.checked) qty.value = '0';
+    else if ((parseInt(qty.value, 10) || 0) < 1) qty.value = '1';
+    syncAmbOptions(row);
   }
 
   function recalc() {
@@ -123,35 +150,50 @@
           '<p class="pricing-calc__hint">Activá al menos un tipo de atención e indicá la cantidad de profesionales.</p>';
       } else {
         breakdownEl.innerHTML = lines
-          .map(
-            (l) =>
+          .map((l) => {
+            let note = '';
+            if (l.code === 'AMB') {
+              const bits = [];
+              if (ambAddonEnabled('audio')) bits.push('dictado');
+              if (ambAddonEnabled('videollamada')) bits.push('videollamada');
+              note = bits.length ? ' · ' + bits.join(' + ') : ' · sin dictado ni videollamada';
+            } else {
+              note = ' · dictado incluido · sin videollamada';
+            }
+            return (
               '<div class="pricing-calc__line"><span>' +
               l.qty +
               ' profesional' +
               (l.qty === 1 ? '' : 'es') +
               ' × ' +
               l.label +
+              note +
               ' (' +
               formatMoney(l.unit, config.currency) +
               '/mes)</span><strong>' +
               formatMoney(l.line, config.currency) +
               '</strong></div>'
-          )
+            );
+          })
           .join('');
       }
     }
     if (ctaEl) {
       const summary = lines
-        .map((l) => l.qty + ' profesional' + (l.qty === 1 ? '' : 'es') + ' ' + l.label)
+        .map((l) => {
+          let extra = '';
+          if (l.code === 'AMB') {
+            const bits = [];
+            if (ambAddonEnabled('audio')) bits.push('dictado');
+            if (ambAddonEnabled('videollamada')) bits.push('videollamada');
+            if (bits.length) extra = ' con ' + bits.join(' y ');
+          }
+          return l.qty + ' profesional' + (l.qty === 1 ? '' : 'es') + ' ' + l.label + extra;
+        })
         .join(', ');
-      const extras = [];
-      if (addonEnabled('audio')) extras.push('con audio (ambulatorio)');
-      if (addonEnabled('videollamada')) extras.push('con videollamada (ambulatorio)');
-      const extrasTxt = extras.length ? ' (' + extras.join(', ') + ')' : '';
       const msg =
         'Hola, quiero cotizar Bioenlace: ' +
         (summary || 'sin selección') +
-        extrasTxt +
         '. Estimado orientativo ' +
         formatMoney(total, config.currency) +
         '/mes.';
@@ -159,50 +201,6 @@
       ctaEl.setAttribute('href', href);
       ctaEl.dataset.quoteMessage = msg;
     }
-  }
-
-  function syncQtyDisabled(row) {
-    const enabled = row.querySelector('input[type="checkbox"]');
-    const qty = row.querySelector('input[type="number"]');
-    if (!enabled || !qty) return;
-    qty.disabled = !enabled.checked;
-    if (!enabled.checked) qty.value = '0';
-    else if ((parseInt(qty.value, 10) || 0) < 1) qty.value = '1';
-  }
-
-  function buildAddons() {
-    if (!addonsEl || !config) return;
-    const addons = config.addons || {};
-    addonsEl.innerHTML = '';
-    const title = document.createElement('p');
-    title.className = 'pricing-calc__addons-title';
-    title.textContent = 'Opcionales (ambulatorio)';
-    addonsEl.appendChild(title);
-
-    Object.keys(addons).forEach((key) => {
-      const addon = addons[key];
-      const label = document.createElement('label');
-      label.className = 'pricing-calc__addon';
-      const checked = addon.default ? ' checked' : '';
-      label.innerHTML =
-        '<input type="checkbox" data-addon="' +
-        key +
-        '"' +
-        checked +
-        ' />' +
-        '<span class="pricing-calc__addon-body">' +
-        '<strong>' +
-        (addon.label || key) +
-        '</strong>' +
-        '<span class="pricing-calc__short">' +
-        (addon.description || '') +
-        '</span></span>';
-      addonsEl.appendChild(label);
-      label.querySelector('input').addEventListener('change', () => {
-        refreshUnitLabels();
-        recalc();
-      });
-    });
   }
 
   function refreshUnitLabels() {
@@ -216,8 +214,41 @@
     });
   }
 
+  function buildAmbOptionsHtml() {
+    const addons = config.addons || {};
+    const audio = addons.audio || {};
+    const video = addons.videollamada || {};
+    return (
+      '<div class="pricing-calc__amb-options">' +
+      '<label class="pricing-calc__option">' +
+      '<input type="checkbox" data-addon="audio" disabled />' +
+      '<span><strong>' +
+      (audio.label || 'Dictado') +
+      '</strong> <em>(opcional)</em></span></label>' +
+      '<label class="pricing-calc__option">' +
+      '<input type="checkbox" data-addon="videollamada" disabled />' +
+      '<span><strong>' +
+      (video.label || 'Videollamada') +
+      '</strong> <em>(opcional)</em></span></label>' +
+      '</div>'
+    );
+  }
+
+  function buildFixedPolicyHtml(code) {
+    if (classIncludesAudio(code) && !classAllowsVideollamada(code)) {
+      return (
+        '<p class="pricing-calc__policy">Dictado incluido · Sin videollamada</p>'
+      );
+    }
+    return '';
+  }
+
   function buildRows() {
     if (!rowsEl || !config) return;
+    if (addonsEl) {
+      addonsEl.innerHTML = '';
+      addonsEl.hidden = true;
+    }
     const classes = config.sellable_classes || {};
     rowsEl.innerHTML = '';
     Object.keys(classes).forEach((code) => {
@@ -226,7 +257,10 @@
       const row = document.createElement('div');
       row.className = 'pricing-calc__row';
       row.setAttribute('data-class', code);
+      const optionsHtml =
+        code === 'AMB' ? buildAmbOptionsHtml() : buildFixedPolicyHtml(code);
       row.innerHTML =
+        '<div class="pricing-calc__main">' +
         '<label class="pricing-calc__check">' +
         '<input type="checkbox" name="class_' +
         code +
@@ -242,20 +276,29 @@
         formatMoney(unit, config.currency) +
         ' / profesional / mes</span>' +
         '</span></label>' +
+        optionsHtml +
+        '</div>' +
         '<label class="pricing-calc__qty">Profesionales' +
         '<input type="number" min="0" max="500" step="1" value="0" inputmode="numeric" aria-label="Cantidad de profesionales ' +
         cls.label +
         '" />' +
         '</label>';
       rowsEl.appendChild(row);
-      const checkbox = row.querySelector('input[type="checkbox"]');
+      const checkbox = row.querySelector('input[name="class_' + code + '"]');
       const number = row.querySelector('input[type="number"]');
       syncQtyDisabled(row);
       checkbox.addEventListener('change', () => {
         syncQtyDisabled(row);
+        refreshUnitLabels();
         recalc();
       });
       number.addEventListener('input', recalc);
+      row.querySelectorAll('input[data-addon]').forEach((input) => {
+        input.addEventListener('change', () => {
+          refreshUnitLabels();
+          recalc();
+        });
+      });
     });
   }
 
@@ -292,7 +335,6 @@
     .then((data) => {
       config = data;
       fillStaticCopy();
-      buildAddons();
       buildRows();
       recalc();
       root.classList.add('is-ready');

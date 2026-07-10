@@ -38,11 +38,11 @@ USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 
 ### Volumen por clase (por profesional / mes, época normal)
 
-| Clase | Volumen lista | Rango de estimación (orientativo) | Mix |
-|-------|---------------|-----------------------------------|-----|
-| **AMB** | **400** | costos-api (20×20) | Audio y videollamada opcionales |
-| **EMER** | **350** | Normal ~195–455; pico ~455–780+ | Audio **incluido**; sin videollamada |
-| **IMP** | **300** | Típico chico–mediano ~100–960; grandes 960–2400+ | Audio **incluido**; sin videollamada |
+| Clase | Volumen lista | Rango de estimación (orientativo) | Dictado | Videollamada |
+|-------|---------------|-----------------------------------|---------|--------------|
+| **AMB** | **400** | costos-api (20×20) | Opcional | Opcional |
+| **EMER** | **350** | Normal ~195–455; pico ~455–780+ | **Obligatorio** (incluido) | **No** |
+| **IMP** | **300** | Típico chico–mediano ~100–960; grandes 960–2400+ | **Obligatorio** (incluido) | **No** |
 
 No hay SKU chico/mediano/grande: el tamaño se refleja en **cantidad de profesionales**. Picos y outliers → más N o cotización.
 

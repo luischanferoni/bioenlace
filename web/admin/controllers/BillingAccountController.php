@@ -32,6 +32,7 @@ class BillingAccountController extends Controller
                     'delete' => ['POST'],
                     'detach-efector' => ['POST'],
                     'deactivate-entitlement' => ['POST'],
+                    'update-membership-role' => ['POST'],
                 ],
             ],
         ];
@@ -118,9 +119,24 @@ class BillingAccountController extends Controller
     {
         $model = $this->findModel($id);
         $idEfector = (int) Yii::$app->request->post('id_efector', 0);
+        $rol = (string) Yii::$app->request->post('rol_membresia', BillingAccountEfector::ROL_POOL);
         try {
-            BillingAccountService::attachEfector((int) $model->id, $idEfector);
+            BillingAccountService::attachEfector((int) $model->id, $idEfector, $rol);
             Yii::$app->session->setFlash('success', 'Efector asociado.');
+        } catch (\InvalidArgumentException $e) {
+            Yii::$app->session->setFlash('error', $e->getMessage());
+        }
+
+        return $this->redirect(['view', 'id' => $model->id]);
+    }
+
+    public function actionUpdateMembershipRole($id, $id_efector)
+    {
+        $model = $this->findModel($id);
+        $rol = (string) Yii::$app->request->post('rol_membresia', BillingAccountEfector::ROL_POOL);
+        try {
+            BillingAccountService::updateMembershipRole((int) $model->id, (int) $id_efector, $rol);
+            Yii::$app->session->setFlash('success', 'Rol actualizado.');
         } catch (\InvalidArgumentException $e) {
             Yii::$app->session->setFlash('error', $e->getMessage());
         }
@@ -168,25 +184,36 @@ class BillingAccountController extends Controller
     }
 
     /**
-     * Autocomplete efectores libres (JSON).
+     * Autocomplete efectores (JSON). Con rol=POOL excluye quienes ya tienen pool.
      */
-    public function actionEfectorOptions($q = '')
+    public function actionEfectorOptions($q = '', $rol = 'POOL')
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
         $q = trim((string) $q);
-        $assigned = BillingAccountEfector::find()
-            ->select(['id_efector'])
-            ->where(['deleted_at' => null])
-            ->column();
+        $rol = strtoupper(trim((string) $rol));
+        if ($rol !== BillingAccountEfector::ROL_AFILIADO) {
+            $rol = BillingAccountEfector::ROL_POOL;
+        }
 
         $query = Efector::find()
             ->select(['id_efector', 'nombre'])
             ->where(['estado' => 'ACTIVO'])
             ->orderBy(['nombre' => SORT_ASC])
             ->limit(30);
-        if ($assigned !== []) {
-            $query->andWhere(['not in', 'id_efector', $assigned]);
+
+        if ($rol === BillingAccountEfector::ROL_POOL) {
+            $withPool = BillingAccountEfector::find()
+                ->select(['id_efector'])
+                ->where([
+                    'deleted_at' => null,
+                    'rol_membresia' => BillingAccountEfector::ROL_POOL,
+                ])
+                ->column();
+            if ($withPool !== []) {
+                $query->andWhere(['not in', 'id_efector', $withPool]);
+            }
         }
+
         if ($q !== '') {
             $query->andWhere(['like', 'nombre', $q]);
         }

@@ -97,16 +97,19 @@ class EfectoresController extends Controller
     public function actionLicencia($id)
     {
         $model = $this->findModel($id);
-        $accountId = \common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService::resolveAccountIdForEfector((int) $id);
+        $svc = \common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService::class;
+        $accountId = $svc::resolveAccountIdForEfector((int) $id);
         $account = $accountId
             ? \common\models\BillingAccount::findOne(['id' => $accountId, 'deleted_at' => null])
             : null;
-        $summary = \common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService::contractSummary((int) $id);
+        $summary = $svc::contractSummary((int) $id);
+        $affiliations = $svc::affiliationAccountsForEfector((int) $id);
 
         return $this->render('view_licencia', [
             'model' => $model,
             'account' => $account,
             'summary' => $summary,
+            'affiliations' => $affiliations,
         ]);
     }
 

@@ -77,19 +77,24 @@ Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×3,20 + 4×3,61 = **USD 46,44/
 | Wizard / opciones sesión | Solo clases contratadas en la **cuenta** del efector (`billing_account_encounter_entitlement`; si no hay cuenta/filas: `default_when_empty: allow_all`) |
 | `set-session` | Rechaza `encounter_class` no contratada |
 | Agenda AMB / cobertura EMER·IMP | Operan solo si la clase está contratada (vía sesión) |
-| Alta PES | Tope `max_pes` del **pool de la cuenta** (personas distintas en todos los efectores miembros; excluye AdminEfector) |
+| Alta PES | Tope `max_pes` del **pool de la cuenta de facturación** (personas distintas en efectores con rol **POOL**; excluye AdminEfector) |
 | Baja PES | Operativa inmediata; el mes en curso se cobra con el `max_pes` vigente. Pending a nivel cuenta, efectivo el **1º del mes siguiente** (`php yii entitlement/apply-pending-downgrades`). |
-| Admin | [`/billing-account`](../../../../admin/) — cuentas Ministerio/Red/Efector, miembros, editar `max_pes` / dictado / videollamada por clase. Tab **Licencia** en ficha de efector. |
+| Admin | [`/billing-account`](../../../../admin/) — cuentas Ministerio/Red/Efector, miembros con rol, editar `max_pes` / dictado / videollamada por clase. Tab **Licencia** en ficha de efector. |
 
 ### Cuentas y pool
 
 ```
 billing_account (MINISTERIO | RED | EFECTOR)
-  ├── billing_account_efector (N efectores; un efector ∈ una cuenta)
+  ├── billing_account_efector (rol_membresia: POOL | AFILIADO)
   └── billing_account_encounter_entitlement (AMB/EMER/IMP + max_pes + pending + flags)
 ```
 
-Un efector sin cuenta: sin tope (compat). Cupo compartido: el uso suma profesionales billable de todos los miembros.
+| Rol | Significado |
+|-----|-------------|
+| **POOL** | Consume `max_pes` de esa cuenta (facturación). Máx. **una** membresía POOL por efector. |
+| **AFILIADO** | Solo jerarquía (ministerio/red). No consume cupo. Compatible con POOL en otra cuenta (efector autárquico). |
+
+Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma profesionales billable solo de miembros **POOL**.
 
 ---
 
@@ -119,7 +124,7 @@ Un efector sin cuenta: sin tope (compat). Cupo compartido: el uso suma profesion
 ## Priorización comercial
 
 1. Publicar calculador institucional (COGS + margen + add-ons).  
-2. Cargar cuentas (`billing_account`) y entitlements de pool al firmar; asociar efectores.  
+2. Cargar cuentas (`billing_account`) y entitlements de pool al firmar; asociar efectores como **POOL** o **AFILIADO** (autárquicos: afiliados al ministerio + pool en cuenta propia).  
 3. Enforce alta PES + downgrade diferido (`entitlement/apply-pending-downgrades`).  
 4. Admin Licencias / Contratos para editar `max_pes` y miembros.  
 5. Usage report para renovación; pasarela / seña (fase posterior).

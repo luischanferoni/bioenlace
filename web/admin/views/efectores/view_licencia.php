@@ -7,9 +7,11 @@ use yii\helpers\Html;
 /* @var $model common\models\Efector */
 /* @var $account common\models\BillingAccount|null */
 /* @var $summary array */
+/* @var $affiliations list<array{id: int, nombre: string, tipo: string}> */
 
 $this->title = $model->nombre;
 $this->params['breadcrumbs'][] = $this->title;
+$affiliations = $affiliations ?? [];
 ?>
 <div class="card">
     <div class="card-header">
@@ -18,8 +20,9 @@ $this->params['breadcrumbs'][] = $this->title;
     <div class="card-body">
         <?= $this->render('_view_tabs', ['model' => $model, 'tab' => 'licencia']) ?>
 
+        <h5 class="mt-3">Cuenta de facturación (pool)</h5>
         <?php if ($account === null): ?>
-            <p class="text-muted">Este efector no está asociado a ninguna cuenta de licencia.</p>
+            <p class="text-muted">Este efector no consume cupo de ninguna cuenta (sin membresía Pool).</p>
             <p><?= Html::a('Ir a Licencias / Contratos', ['/billing-account/index'], ['class' => 'btn btn-primary']) ?></p>
         <?php else: ?>
             <p>
@@ -30,7 +33,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 ) ?>
                 (<?= Html::encode(BillingAccount::tipoOptions()[$account->tipo] ?? $account->tipo) ?>)
             </p>
-            <p class="text-muted small">El cupo es compartido con los demás efectores de la misma cuenta.</p>
+            <p class="text-muted small">El cupo es compartido con los demás efectores Pool de la misma cuenta.</p>
             <table class="table table-bordered table-sm">
                 <thead>
                 <tr>
@@ -65,6 +68,25 @@ $this->params['breadcrumbs'][] = $this->title;
                 </tbody>
             </table>
             <?= Html::a('Editar contrato', ['/billing-account/view', 'id' => $account->id], ['class' => 'btn btn-primary']) ?>
+        <?php endif; ?>
+
+        <h5 class="mt-4">Afiliaciones (sin cupo)</h5>
+        <?php if ($affiliations === []): ?>
+            <p class="text-muted small">No está afiliado a ninguna cuenta ministerio/red.</p>
+        <?php else: ?>
+            <ul class="list-unstyled">
+                <?php foreach ($affiliations as $aff): ?>
+                    <li class="mb-1">
+                        <?= Html::a(
+                            Html::encode($aff['nombre']),
+                            ['/billing-account/view', 'id' => $aff['id']]
+                        ) ?>
+                        <span class="text-muted">
+                            (<?= Html::encode(BillingAccount::tipoOptions()[$aff['tipo']] ?? $aff['tipo']) ?>)
+                        </span>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
         <?php endif; ?>
     </div>
 </div>

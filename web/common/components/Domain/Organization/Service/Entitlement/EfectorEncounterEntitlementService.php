@@ -14,12 +14,15 @@ use yii\db\Query;
 /**
  * Licencia por cuenta (pool): clases, max_pes y downgrade diferido.
  *
- * El efector resuelve su billing_account; el cupo se comparte entre todos los miembros.
+ * Facturación = membresía POOL del efector. AFILIADO = solo jerarquía (ministerio/red).
  */
 final class EfectorEncounterEntitlementService
 {
     private const CLASS_PRIORITY = ['AMB', 'EMER', 'IMP'];
 
+    /**
+     * Cuenta de facturación (membresía POOL). Ignora afiliaciones.
+     */
     public static function resolveAccountIdForEfector(int $idEfector): ?int
     {
         if ($idEfector <= 0) {
@@ -28,16 +31,38 @@ final class EfectorEncounterEntitlementService
         $id = (new Query())
             ->select(['id_billing_account'])
             ->from(BillingAccountEfector::tableName())
-            ->where(['id_efector' => $idEfector, 'deleted_at' => null])
+            ->where([
+                'id_efector' => $idEfector,
+                'rol_membresia' => BillingAccountEfector::ROL_POOL,
+                'deleted_at' => null,
+            ])
             ->scalar();
 
         return $id !== false && $id !== null ? (int) $id : null;
     }
 
     /**
+     * Efectores que consumen el pool de la cuenta (solo rol POOL).
+     *
      * @return list<int>
      */
     public static function memberEfectorIds(int $idBillingAccount): array
+    {
+        return self::memberEfectorIdsByRol($idBillingAccount, BillingAccountEfector::ROL_POOL);
+    }
+
+    /**
+     * @return list<int>
+     */
+    public static function affiliateEfectorIds(int $idBillingAccount): array
+    {
+        return self::memberEfectorIdsByRol($idBillingAccount, BillingAccountEfector::ROL_AFILIADO);
+    }
+
+    /**
+     * @return list<int>
+     */
+    private static function memberEfectorIdsByRol(int $idBillingAccount, string $rol): array
     {
         if ($idBillingAccount <= 0) {
             return [];
@@ -45,10 +70,48 @@ final class EfectorEncounterEntitlementService
         $ids = (new Query())
             ->select(['id_efector'])
             ->from(BillingAccountEfector::tableName())
-            ->where(['id_billing_account' => $idBillingAccount, 'deleted_at' => null])
+            ->where([
+                'id_billing_account' => $idBillingAccount,
+                'rol_membresia' => $rol,
+                'deleted_at' => null,
+            ])
             ->column();
 
         return array_map('intval', $ids);
+    }
+
+    /**
+     * Cuentas donde el efector es solo afiliado (ministerio/red).
+     *
+     * @return list<array{id: int, nombre: string, tipo: string}>
+     */
+    public static function affiliationAccountsForEfector(int $idEfector): array
+    {
+        if ($idEfector <= 0) {
+            return [];
+        }
+        $rows = (new Query())
+            ->select(['a.id', 'a.nombre', 'a.tipo'])
+            ->from(['m' => BillingAccountEfector::tableName()])
+            ->innerJoin(['a' => '{{%billing_account}}'], 'a.id = m.id_billing_account')
+            ->where([
+                'm.id_efector' => $idEfector,
+                'm.rol_membresia' => BillingAccountEfector::ROL_AFILIADO,
+                'm.deleted_at' => null,
+                'a.deleted_at' => null,
+            ])
+            ->all();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $out[] = [
+                'id' => (int) $row['id'],
+                'nombre' => (string) $row['nombre'],
+                'tipo' => (string) $row['tipo'],
+            ];
+        }
+
+        return $out;
     }
 
     /**

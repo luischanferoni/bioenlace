@@ -54,10 +54,20 @@ final class BillingAccountService
         return $model;
     }
 
-    public static function attachEfector(int $idBillingAccount, int $idEfector): BillingAccountEfector
-    {
+    /**
+     * @param string $rol BillingAccountEfector::ROL_POOL|ROL_AFILIADO
+     */
+    public static function attachEfector(
+        int $idBillingAccount,
+        int $idEfector,
+        string $rol = BillingAccountEfector::ROL_POOL
+    ): BillingAccountEfector {
         if ($idBillingAccount <= 0 || $idEfector <= 0) {
             throw new \InvalidArgumentException('Cuenta o efector inválido.');
+        }
+        $rol = strtoupper(trim($rol));
+        if (!isset(BillingAccountEfector::rolOptions()[$rol])) {
+            throw new \InvalidArgumentException('Rol de membresía inválido.');
         }
         if (Efector::findOne(['id_efector' => $idEfector]) === null) {
             throw new \InvalidArgumentException('Efector inexistente.');
@@ -66,14 +76,22 @@ final class BillingAccountService
             throw new \InvalidArgumentException('Cuenta inexistente.');
         }
 
-        $other = BillingAccountEfector::find()
-            ->where(['id_efector' => $idEfector, 'deleted_at' => null])
-            ->andWhere(['!=', 'id_billing_account', $idBillingAccount])
-            ->one();
-        if ($other !== null) {
-            throw new \InvalidArgumentException(
-                'El efector ya pertenece a otra cuenta de licencia (#' . (int) $other->id_billing_account . ').'
-            );
+        if ($rol === BillingAccountEfector::ROL_POOL) {
+            $otherPool = BillingAccountEfector::find()
+                ->where([
+                    'id_efector' => $idEfector,
+                    'rol_membresia' => BillingAccountEfector::ROL_POOL,
+                    'deleted_at' => null,
+                ])
+                ->andWhere(['!=', 'id_billing_account', $idBillingAccount])
+                ->one();
+            if ($otherPool !== null) {
+                throw new \InvalidArgumentException(
+                    'El efector ya tiene una cuenta de facturación (pool) en la cuenta #'
+                    . (int) $otherPool->id_billing_account
+                    . '. Quitá ese vínculo POOL o usá rol Afiliado en esta cuenta.'
+                );
+            }
         }
 
         $existing = BillingAccountEfector::find()
@@ -84,14 +102,64 @@ final class BillingAccountService
             ])
             ->one();
         if ($existing !== null) {
+            if ((string) $existing->rol_membresia !== $rol) {
+                return self::updateMembershipRole($idBillingAccount, $idEfector, $rol);
+            }
+
             return $existing;
         }
 
         $row = new BillingAccountEfector();
         $row->id_billing_account = $idBillingAccount;
         $row->id_efector = $idEfector;
+        $row->rol_membresia = $rol;
         if (!$row->save()) {
             throw new \InvalidArgumentException('No se pudo asociar el efector: ' . json_encode($row->getErrors()));
+        }
+
+        return $row;
+    }
+
+    public static function updateMembershipRole(
+        int $idBillingAccount,
+        int $idEfector,
+        string $rol
+    ): BillingAccountEfector {
+        $rol = strtoupper(trim($rol));
+        if (!isset(BillingAccountEfector::rolOptions()[$rol])) {
+            throw new \InvalidArgumentException('Rol de membresía inválido.');
+        }
+
+        $row = BillingAccountEfector::find()
+            ->where([
+                'id_billing_account' => $idBillingAccount,
+                'id_efector' => $idEfector,
+                'deleted_at' => null,
+            ])
+            ->one();
+        if ($row === null) {
+            throw new \InvalidArgumentException('Membresía inexistente.');
+        }
+
+        if ($rol === BillingAccountEfector::ROL_POOL) {
+            $otherPool = BillingAccountEfector::find()
+                ->where([
+                    'id_efector' => $idEfector,
+                    'rol_membresia' => BillingAccountEfector::ROL_POOL,
+                    'deleted_at' => null,
+                ])
+                ->andWhere(['!=', 'id', $row->id])
+                ->one();
+            if ($otherPool !== null) {
+                throw new \InvalidArgumentException(
+                    'El efector ya consume pool en otra cuenta (#' . (int) $otherPool->id_billing_account . ').'
+                );
+            }
+        }
+
+        $row->rol_membresia = $rol;
+        if (!$row->save(false, ['rol_membresia', 'updated_at'])) {
+            throw new \InvalidArgumentException('No se pudo cambiar el rol.');
         }
 
         return $row;
@@ -113,8 +181,6 @@ final class BillingAccountService
     }
 
     /**
-     * Upsert fila de clase (activa). Defaults de dictado/video según clase.
-     *
      * @param array{max_pes?: int|null, dictado_incluido?: int|bool, videollamada_permitida?: int|bool, activo?: int} $data
      */
     public static function upsertEntitlement(int $idBillingAccount, string $encounterClass, array $data): BillingAccountEncounterEntitlement
@@ -136,7 +202,7 @@ final class BillingAccountService
             $row->id_billing_account = $idBillingAccount;
             $row->encounter_class = $encounterClass;
             $row->dictado_incluido = in_array($encounterClass, ['EMER', 'IMP'], true) ? 1 : 0;
-            $row->videollamada_permitida = $encounterClass === 'AMB' ? 0 : 0;
+            $row->videollamada_permitida = 0;
         }
 
         if (array_key_exists('max_pes', $data)) {

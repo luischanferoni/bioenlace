@@ -5,6 +5,7 @@ namespace common\tests\unit\organization;
 use Codeception\Test\Unit;
 use common\components\Domain\Organization\Service\Entitlement\EfectorEncounterEntitlementService;
 use common\models\BillingAccount;
+use common\models\BillingAccountEfector;
 
 class BillingAccountEntitlementPoolTest extends Unit
 {
@@ -21,6 +22,8 @@ class BillingAccountEntitlementPoolTest extends Unit
     {
         $this->assertNull(EfectorEncounterEntitlementService::resolveAccountIdForEfector(0));
         $this->assertSame([], EfectorEncounterEntitlementService::memberEfectorIds(0));
+        $this->assertSame([], EfectorEncounterEntitlementService::affiliateEfectorIds(0));
+        $this->assertSame([], EfectorEncounterEntitlementService::affiliationAccountsForEfector(0));
         $this->assertSame([], EfectorEncounterEntitlementService::contractSummary(0));
     }
 
@@ -30,6 +33,13 @@ class BillingAccountEntitlementPoolTest extends Unit
         $this->assertArrayHasKey(BillingAccount::TIPO_MINISTERIO, $opts);
         $this->assertArrayHasKey(BillingAccount::TIPO_RED, $opts);
         $this->assertArrayHasKey(BillingAccount::TIPO_EFECTOR, $opts);
+    }
+
+    public function testRolMembresiaOptions(): void
+    {
+        $opts = BillingAccountEfector::rolOptions();
+        $this->assertArrayHasKey(BillingAccountEfector::ROL_POOL, $opts);
+        $this->assertArrayHasKey(BillingAccountEfector::ROL_AFILIADO, $opts);
     }
 
     public function testAssertCanAddPesNoopWithoutAccount(): void

@@ -11,14 +11,29 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property int $id_billing_account
  * @property int $id_efector
+ * @property string $rol_membresia POOL|AFILIADO
  */
 class BillingAccountEfector extends ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
 
+    /** Consume max_pes de la cuenta (facturación / pool). */
+    public const ROL_POOL = 'POOL';
+
+    /** Solo afiliación organizacional (p. ej. ministerio); no consume cupo. */
+    public const ROL_AFILIADO = 'AFILIADO';
+
     public static function tableName()
     {
         return 'billing_account_efector';
+    }
+
+    public static function rolOptions(): array
+    {
+        return [
+            self::ROL_POOL => 'Pool (consume cupo)',
+            self::ROL_AFILIADO => 'Afiliado (sin cupo)',
+        ];
     }
 
     public function behaviors()
@@ -52,7 +67,17 @@ class BillingAccountEfector extends ActiveRecord
         return [
             [['id_billing_account', 'id_efector'], 'required'],
             [['id_billing_account', 'id_efector'], 'integer'],
+            [['rol_membresia'], 'default', 'value' => self::ROL_POOL],
+            [['rol_membresia'], 'in', 'range' => [self::ROL_POOL, self::ROL_AFILIADO]],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
+        ];
+    }
+
+    public function attributeLabels()
+    {
+        return [
+            'id_efector' => 'Efector',
+            'rol_membresia' => 'Rol',
         ];
     }
 

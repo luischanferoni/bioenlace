@@ -1,6 +1,7 @@
 <?php
 
 use common\models\BillingAccount;
+use common\models\BillingAccountEfector;
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
@@ -18,6 +19,7 @@ $byCode = [];
 foreach ($summary as $row) {
     $byCode[$row['code']] = $row;
 }
+$rolOptions = BillingAccountEfector::rolOptions();
 ?>
 <div class="billing-account-view">
     <div class="card mb-3">
@@ -42,7 +44,10 @@ foreach ($summary as $row) {
     <div class="card mb-3">
         <div class="card-header"><h2 class="h5 mb-0">Clases contratadas (pool)</h2></div>
         <div class="card-body">
-            <p class="text-muted small">El cupo es compartido por todos los efectores de esta cuenta.</p>
+            <p class="text-muted small">
+                El cupo lo consumen solo los efectores con rol <strong>Pool</strong>.
+                Los <strong>Afiliados</strong> pertenecen a la cuenta (p. ej. ministerio) pero no usan este cupo.
+            </p>
             <table class="table table-bordered table-sm">
                 <thead>
                 <tr>
@@ -119,10 +124,11 @@ foreach ($summary as $row) {
         <div class="card-body">
             <table class="table table-sm">
                 <thead>
-                <tr><th>ID</th><th>Nombre</th><th></th></tr>
+                <tr><th>ID</th><th>Nombre</th><th>Rol</th><th></th></tr>
                 </thead>
                 <tbody>
                 <?php foreach ($members as $m): ?>
+                    <?php $rol = (string) ($m->rol_membresia ?: BillingAccountEfector::ROL_POOL); ?>
                     <tr>
                         <td><?= (int) $m->id_efector ?></td>
                         <td>
@@ -131,6 +137,19 @@ foreach ($summary as $row) {
                             <?php else: ?>
                                 #<?= (int) $m->id_efector ?>
                             <?php endif; ?>
+                        </td>
+                        <td>
+                            <?= Html::beginForm(
+                                ['update-membership-role', 'id' => $model->id, 'id_efector' => $m->id_efector],
+                                'post',
+                                ['class' => 'd-flex gap-1 align-items-center']
+                            ) ?>
+                            <?= Html::dropDownList('rol_membresia', $rol, $rolOptions, [
+                                'class' => 'form-select form-select-sm',
+                                'style' => 'min-width: 11rem',
+                            ]) ?>
+                            <?= Html::submitButton('Cambiar', ['class' => 'btn btn-sm btn-outline-secondary']) ?>
+                            <?= Html::endForm() ?>
                         </td>
                         <td>
                             <?= Html::beginForm(['detach-efector', 'id' => $model->id, 'id_efector' => $m->id_efector], 'post') ?>
@@ -143,13 +162,13 @@ foreach ($summary as $row) {
                     </tr>
                 <?php endforeach; ?>
                 <?php if ($members === []): ?>
-                    <tr><td colspan="3" class="text-muted">Sin efectores asociados.</td></tr>
+                    <tr><td colspan="4" class="text-muted">Sin efectores asociados.</td></tr>
                 <?php endif; ?>
                 </tbody>
             </table>
 
             <?= Html::beginForm(['attach-efector', 'id' => $model->id], 'post', ['class' => 'row g-2 align-items-end']) ?>
-            <div class="col-md-6">
+            <div class="col-md-4">
                 <label class="form-label">Agregar efector (ID)</label>
                 <?= Html::textInput('id_efector', '', [
                     'class' => 'form-control',
@@ -158,7 +177,16 @@ foreach ($summary as $row) {
                     'required' => true,
                     'placeholder' => 'id_efector',
                 ]) ?>
-                <div class="form-text">Efectores ya asignados a otra cuenta no se pueden asociar.</div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Rol</label>
+                <?= Html::dropDownList('rol_membresia', BillingAccountEfector::ROL_POOL, $rolOptions, [
+                    'class' => 'form-select',
+                ]) ?>
+                <div class="form-text">
+                    Pool: consume cupo (máx. una cuenta pool por efector).
+                    Afiliado: solo jerarquía; puede tener pool en otra cuenta.
+                </div>
             </div>
             <div class="col-md-2">
                 <?= Html::submitButton('Asociar', ['class' => 'btn btn-success']) ?>

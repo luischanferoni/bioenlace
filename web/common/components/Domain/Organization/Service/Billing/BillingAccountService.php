@@ -14,7 +14,7 @@ use common\models\Efector;
 final class BillingAccountService
 {
     /**
-     * @param array{nombre: string, tipo: string, notas?: string|null, activo?: int} $data
+     * @param array{nombre: string, tipo: string, notas?: string|null, activo?: int, owner_user_id?: int|null} $data
      */
     public static function createAccount(array $data): BillingAccount
     {
@@ -23,6 +23,9 @@ final class BillingAccountService
         $model->tipo = (string) ($data['tipo'] ?? BillingAccount::TIPO_EFECTOR);
         $model->notas = isset($data['notas']) ? (string) $data['notas'] : null;
         $model->activo = isset($data['activo']) ? (int) $data['activo'] : 1;
+        if (array_key_exists('owner_user_id', $data)) {
+            $model->owner_user_id = $data['owner_user_id'] !== null ? (int) $data['owner_user_id'] : null;
+        }
         if (!$model->save()) {
             throw new \InvalidArgumentException('No se pudo crear la cuenta: ' . json_encode($model->getErrors()));
         }

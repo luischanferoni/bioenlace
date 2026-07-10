@@ -127,7 +127,8 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 2. Cargar cuentas (`billing_account`) y entitlements de pool al firmar; asociar efectores como **POOL** o **AFILIADO** (autárquicos: afiliados al ministerio + pool en cuenta propia).  
 3. Enforce alta PES + downgrade diferido (`entitlement/apply-pending-downgrades`).  
 4. Admin Licencias / Contratos para editar `max_pes` y miembros.  
-5. Usage report para renovación; pasarela / seña (fase posterior).
+5. **Self-service institucional** (AdminEfector + pasarela **simulada**) y solicitud asistida AdminMinisterio — ver [alta-cuenta-licencia.md](../../producto/alta-cuenta-licencia.md).  
+6. Usage report para renovación; pasarela real (Mercado Pago / Stripe) sustituyendo el gateway simulado.
 
 ---
 

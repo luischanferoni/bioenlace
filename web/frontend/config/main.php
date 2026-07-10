@@ -48,7 +48,7 @@ return [
         'authManager' => [
             'class' => 'common\models\BioenlaceDbManager',
             'efectorAssignmentTable' => 'profesional_efector_servicio',
-            'rolesEspeciales' => ['_x_efector_', '_sin_efector_'],
+            'rolesEspeciales' => ['_x_efector_', '_sin_efector_', 'AdminMinisterio'],
         ],
         'user' => [
             'class' => 'frontend\components\UserConfig',
@@ -107,6 +107,15 @@ return [
                 'OPTIONS api/<version:\w+>/asistente/estado' => '<version>/chat/estado',
                 'POST api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
                 'OPTIONS api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
+
+                // Licencia / onboarding comercial (institucional)
+                'GET api/<version:\w+>/licencia/catalogo-ministerios' => '<version>/licencia/catalogo-ministerios',
+                'GET api/<version:\w+>/licencia/planes' => '<version>/licencia/planes',
+                'POST api/<version:\w+>/licencia/registrar-efector' => '<version>/licencia/registrar-efector',
+                'POST api/<version:\w+>/licencia/solicitar-ministerio' => '<version>/licencia/solicitar-ministerio',
+                'GET api/<version:\w+>/licencia/mi-licencia' => '<version>/licencia/mi-licencia',
+                'POST api/<version:\w+>/licencia/desvincular-pago-ministerio' => '<version>/licencia/desvincular-pago-ministerio',
+                'POST api/<version:\w+>/licencia/asociar-pago-ministerio' => '<version>/licencia/asociar-pago-ministerio',
 
                 // Preflight CORS genérico (evita declarar OPTIONS por endpoint)
                 'OPTIONS api/<version:\w+>/<controller:[\\w-]+>' => '<version>/<controller>/options',

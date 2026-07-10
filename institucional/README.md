@@ -18,11 +18,17 @@ institucional/
 
 ## Secciones
 
-1. **Hero** — Propuesta de valor principal
+1. **Hero** — Propuesta de valor + CTA **Crear cuenta**
 2. **Asistente** — Demo del asistente conversacional (listar / editar / crear)
 3. **Personal de salud** — Captura clínica web y app; **Pacientes** — App paciente; **Funcionalidades** — Por audiencia
 4. **Precios** — Calculador por profesionales × tipo de atención (AMB / EMER / IMP) + opcionales audio / videollamada (COGS + margen)
 5. **Contacto** — Formulario e información
+6. **Alta** (`alta.html`) — Wizard self-service clínica/efector (pago simulado) y solicitud ministerio
+
+## Alta de cuenta (`alta.html` + `js/signup.js`)
+
+Configurar `js/api-config.json` (`apiBaseUrl` → frontend Yii `/api/v1`).  
+Doc producto: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
 
 ## Calculador (`js/pricing-calculator.js`)
 

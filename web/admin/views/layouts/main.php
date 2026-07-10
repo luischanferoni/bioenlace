@@ -47,6 +47,7 @@ $home = Yii::$app->getHomeUrl();
                                     'items' => [
                                         ['label' => 'Listado', 'url' => ['/efectores/index']],
                                         ['label' => 'Licencias / Contratos', 'url' => ['/billing-account/index']],
+                                        ['label' => 'Solicitudes alta licencia', 'url' => ['/billing-signup-request/index']],
                                         ['label' => 'Pisos', 'url' => ['/infraestructura-piso/index']],
                                         ['label' => 'Salas', 'url' => ['/infraestructura-sala/index']],
                                         ['label' => 'Camas', 'url' => ['/infraestructura-cama/index']],

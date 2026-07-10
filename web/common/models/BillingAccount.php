@@ -13,6 +13,7 @@ use yii\db\ActiveRecord;
  * @property string $tipo
  * @property string|null $notas
  * @property int $activo
+ * @property int|null $owner_user_id Titular comercial (usuario que firmó / administra la cuenta).
  */
 class BillingAccount extends ActiveRecord
 {
@@ -69,7 +70,7 @@ class BillingAccount extends ActiveRecord
             [['nombre'], 'string', 'max' => 255],
             [['tipo'], 'in', 'range' => array_keys(self::tipoOptions())],
             [['notas'], 'string'],
-            [['activo'], 'integer'],
+            [['activo', 'owner_user_id'], 'integer'],
             [['activo'], 'default', 'value' => 1],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
         ];
@@ -83,6 +84,7 @@ class BillingAccount extends ActiveRecord
             'tipo' => 'Tipo',
             'notas' => 'Notas',
             'activo' => 'Activo',
+            'owner_user_id' => 'Titular',
         ];
     }
 

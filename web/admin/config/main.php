@@ -43,7 +43,7 @@ return [
         'authManager' => [
             'class' => 'common\models\BioenlaceDbManager',
             'efectorAssignmentTable' => 'profesional_efector_servicio',
-            'rolesEspeciales' => ['_x_efector_', '_sin_efector_'],
+            'rolesEspeciales' => ['_x_efector_', '_sin_efector_', 'AdminMinisterio'],
         ],        
         'user' => [
             'class' => 'admin\components\UserConfig',

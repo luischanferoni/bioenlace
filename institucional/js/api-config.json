@@ -1,0 +1,5 @@
+{
+  "apiBaseUrl": "http://localhost/api/v1",
+  "loginUrl": "http://localhost/site/login",
+  "notes": "Ajustar apiBaseUrl al frontend Yii en cada entorno (prod: https://app.bioenlace.io/api/v1)."
+}

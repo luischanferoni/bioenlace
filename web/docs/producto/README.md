@@ -29,6 +29,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [urgencias-guardia.md](./urgencias-guardia.md) | Triage, tablero operativo, circuito EMER |
 | [internacion.md](./internacion.md) | Mapa de camas, alta estructurada, plantillas de epicrisis (ABM) |
 | [superficies-ui.md](./superficies-ui.md) | Inicio vs captura encounter vs flows (web = móvil) |
+| [alta-cuenta-licencia.md](./alta-cuenta-licencia.md) | Self-service clínica/efector, solicitud ministerio, pago simulado |
 
 ## Ideas a futuro
 

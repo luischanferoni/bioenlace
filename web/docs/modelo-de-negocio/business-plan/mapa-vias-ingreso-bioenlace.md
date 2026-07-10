@@ -103,8 +103,8 @@ Al leer la tabla y el detalle, conviene distinguir cuatro líneas que se repiten
 
 | Add-on / alcance (AR) | Para qué | Orden de magnitud (lista, vol. 400) |
 | --------------------- | -------- | ----------------------------------- |
-| Base (sin audio ni video) | IA + captura texto | ~**USD 3,20**/prof/mes |
-| + Audio | Dictado del profesional (STT) | ~**USD 4,13**/prof/mes |
+| Base (sin audio ni video) | IA + captura texto (COGS con caché) | ~**USD 2,76**/prof/mes |
+| + Audio | Dictado del profesional (STT) | ~**USD 3,70**/prof/mes |
 | + Videollamada | Teleconsulta (Twilio §6) | ~**USD 41,56**/prof/mes |
 | + Audio + videollamada | Ambos | ~**USD 42,49**/prof/mes |
 | Clase EMER / IMP | Tablero guardia / internación | Escala si el volumen/mes difiere del de AMB |

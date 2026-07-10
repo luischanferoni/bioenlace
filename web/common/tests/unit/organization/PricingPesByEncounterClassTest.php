@@ -35,16 +35,16 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testUnitPrices(): void
     {
-        // AMB sin add-ons: 0.96 × 3.33 = 3.20
-        $this->assertSame(3.2, PricingPesByEncounterClassMetadata::unitPrice(false, false, 'AMB'));
-        // AMB + audio: 1.24 × 3.33 = 4.13
-        $this->assertSame(4.13, PricingPesByEncounterClassMetadata::unitPrice(true, false, 'AMB'));
-        // EMER (audio incluido, vol 350/400): 1.24 × 0.875 × 3.33 = 3.61
-        $this->assertSame(3.61, PricingPesByEncounterClassMetadata::pricePerPes('EMER'));
-        // IMP (audio incluido, vol 300/400): 1.24 × 0.75 × 3.33 = 3.10
-        $this->assertSame(3.1, PricingPesByEncounterClassMetadata::pricePerPes('IMP'));
+        // AMB sin add-ons: 0.83 × 3.33 = 2.76 (COGS con context caching)
+        $this->assertSame(2.76, PricingPesByEncounterClassMetadata::unitPrice(false, false, 'AMB'));
+        // AMB + audio: 1.11 × 3.33 = 3.70
+        $this->assertSame(3.7, PricingPesByEncounterClassMetadata::unitPrice(true, false, 'AMB'));
+        // EMER (audio incluido, vol 350/400): 1.11 × 0.875 × 3.33 = 3.23
+        $this->assertSame(3.23, PricingPesByEncounterClassMetadata::pricePerPes('EMER'));
+        // IMP (audio incluido, vol 300/400): 1.11 × 0.75 × 3.33 = 2.77
+        $this->assertSame(2.77, PricingPesByEncounterClassMetadata::pricePerPes('IMP'));
         // Video no aplica a EMER aunque se pida
-        $this->assertSame(3.61, PricingPesByEncounterClassMetadata::unitPrice(false, true, 'EMER'));
+        $this->assertSame(3.23, PricingPesByEncounterClassMetadata::unitPrice(false, true, 'EMER'));
         $this->assertNull(PricingPesByEncounterClassMetadata::pricePerPes('HH'));
     }
 
@@ -54,16 +54,16 @@ class PricingPesByEncounterClassTest extends Unit
             'AMB' => 10,
             'EMER' => 4,
         ]);
-        // 10 × 3.20 + 4 × 3.61 = 32 + 14.44 = 46.44
-        $this->assertSame(46.44, $total);
+        // 10 × 2.76 + 4 × 3.23 = 27.6 + 12.92 = 40.52
+        $this->assertSame(40.52, $total);
 
         $withVideo = PricingPesByEncounterClassMetadata::estimateMonthlyTotal(
             ['AMB' => 10, 'IMP' => 2],
             false,
             true
         );
-        // AMB+video: 12.48 × 3.33 = 41.56 × 10; IMP: 3.10 × 2
-        $this->assertSame(421.8, $withVideo);
+        // AMB+video: 12.35 × 3.33 = 41.13 × 10; IMP: 2.77 × 2
+        $this->assertSame(416.84, $withVideo);
     }
 
     public function testDefaultWhenEmptyAllowAll(): void

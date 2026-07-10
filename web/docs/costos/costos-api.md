@@ -430,7 +430,7 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 **Orden de magnitud uso intensivo (todo incluido, Twilio):** **~USD 12–13 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,5–1,6 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 con insights + §3 + §4).
 
-**De COGS a precio de lista:** estos totales alimentan la licencia comercial — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Detalle y add-ons audio/videollamada: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml`.
+**De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Detalle y add-ons audio/videollamada: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
 
 **Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 sigue siendo coste de proveedor de video salvo stack propio.
 

@@ -3,10 +3,10 @@
   "currency": "USD",
   "billing_period": "month",
   "tax_note": "No incluye IVA ni IIBB.",
-  "cogs_source": "costos-api.md — COGS base sin context caching (Gemini + Groq STT captura profesional; Twilio Video §6 solo AMB)",
+  "cogs_source": "costos-api.md — columna con context caching (Gemini + Groq STT captura profesional; Twilio Video §6 solo AMB)",
   "reference_encounters_per_professional_month": 400,
   "cogs_usd_per_professional_month": {
-    "base": 0.96,
+    "base": 0.83,
     "audio": 0.28,
     "videollamada": 11.52
   },

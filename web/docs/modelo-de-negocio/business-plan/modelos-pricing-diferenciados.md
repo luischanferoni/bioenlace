@@ -153,7 +153,7 @@ Ingreso Bioenlace (AR) ≈
 
 | Componente | Descripción |
 |------------|-------------|
-| **Licencia** | `precio = COGS_ref × (vol_clase/400) × (1 + margen%)` — margen **233 %** ≈ ~70 % bruto; base ~**USD 3,20**/prof/mes; con audio ~**4,13**; con video ~**USD 41–43**/prof/mes |
+| **Licencia** | `precio = COGS_ref × (vol_clase/400) × (1 + margen%)` — margen **233 %** ≈ ~70 % bruto; COGS **con context caching**; base ~**USD 2,76**/prof/mes; con audio ~**3,70**; con video ~**USD 41–42**/prof/mes |
 | **Clases** | AMB / EMER / IMP habilitan módulos; el precio escala con `encounters_per_professional_month` por clase |
 | **Add-ons variables** | Audio (dictado del profesional) y/o videollamada (Twilio) — suman COGS y se reflejan en el precio |
 | **Rev share Rx (opcional)** | USD 0,5–2 por receta enrutada a farmacia partner (vía 5; fuera de la fórmula COGS) |
@@ -218,7 +218,7 @@ Para clínicas 5–15 profesionales:
 | **Gratis** | Hasta N encounters/mes: ambulatorio básico | USD 0 |
 | **Pago** | Superar umbral; más clases (EMER/IMP); audio; videollamada | Según [matriz](./matriz-argentina-modulos-precios.md) (COGS + margen) |
 
-Compite con «HIS caro y complejo» sin regalar consultas al paciente final. COGS variable ~USD 1,2–1,6/prof/mes sin video (ver [costos-api](../../costos/costos-api.md)); precio lista base ~USD 4/prof/mes con margen ~70 % bruto.
+Compite con «HIS caro y complejo» sin regalar consultas al paciente final. COGS variable ~USD 0,8–1,4/prof/mes sin video (con caché; ver [costos-api](../../costos/costos-api.md)); precio lista base ~USD 2,8/prof/mes con margen ~70 % bruto.
 
 ---
 
@@ -228,11 +228,11 @@ Supuestos: **clínica 20 profesionales**, ~8.000 encounters/año, ~670/mes.
 
 | Concepto | Orden de magnitud (USD/mes) |
 |----------|----------------------------|
-| COGS IA+STT (20 prof, base sin video) | ~25–31 (1,24–1,55 × 20; [costos-api](../../costos/costos-api.md)) |
+| COGS IA+STT (20 prof, base sin video) | ~17–28 (0,83–1,41 × 20; [costos-api](../../costos/costos-api.md) con caché) |
 | COGS + videollamada (20 prof) | ~255–261 |
 | Infra + soporte | 200–500 |
 | Costo equipo (amortizado por cliente) | Variable según headcount; meta **gross margin ~70%** |
-| **Precio lista** (20 prof, solo base, margen 233 %) | ~**64** (20 × 3,20) |
+| **Precio lista** (20 prof, solo base, margen 233 %) | ~**55** (20 × 2,76) |
 | **Precio lista** (20 prof + videollamada) | ~**831** (20 × 41,56) |
 | **Ingreso incremental Rx** (opcional) | 200 recetas/mes × USD 1 fee = **USD 200/mes**; rev share farmacia aparte |
 

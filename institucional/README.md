@@ -29,7 +29,7 @@ institucional/
 Lee `js/pricing-config.json` (mantener alineado a `web/common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml`).
 
 **Fórmula:** `precio_unitario = COGS × (1 + margin_on_cost_percent/100)`.  
-COGS: base ± audio ± videollamada ([costos-api.md](../web/docs/costos/costos-api.md)).  
+COGS: base ± audio ± videollamada, columna **con context caching** ([costos-api.md](../web/docs/costos/costos-api.md)).  
 El usuario elige clases (AMB / EMER / IMP), cantidad de **profesionales** por clase, y opcionales audio/videollamada. En copy público **no** usar el término PES.
 
 Doc comercial: [matriz-argentina-modulos-precios.md](../web/docs/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).

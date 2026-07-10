@@ -131,7 +131,7 @@ Base: filas **IA + STT** de la tabla A (~**7.750** sin caché · ~**7.050** con 
 | **Variable IA, margen mínimo (histórico)** | **1,8 – 2,0** | **1,8 – 2,0** | **9.000 – 10.000** | **9.000 – 10.000** | **10.890 – 12.100** | **10.890 – 12.100** | **~42 – 48 %** · **~56 – 61 %** * | **~28 – 33 %** · **~40 – 43 %** * |
 
 \* COGS sin caché **~7.750** · favorable con caché **~7.050** (tabla A). Por prof: [costos-api resumen](./costos-api.md#resumen-costo-real-por-api-por-médico-por-mes), motivos con audio (§2 batch + insights; §4 siempre IA+STT).  
-† `1,55 × 3,33 ≈ 5,16` (margen sobre costo 233 %). Con caché favorable: `1,41 × 3,33 ≈ 4,70` (orientativo; la metadata usa COGS sin caché).
+† `1,55 × 3,33 ≈ 5,16` (margen sobre costo 233 %). Lista comercial / metadata usa COGS **con caché**: `1,41 × 3,33 ≈ 4,70` (motivos con audio) o base `0,83 × 3,33 ≈ 2,76`.
 
 #### Tabla — IA + STT + videollamada (Twilio)
 

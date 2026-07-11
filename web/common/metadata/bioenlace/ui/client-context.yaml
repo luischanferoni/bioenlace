@@ -9,6 +9,14 @@ mobile_paciente:
   shortcut_display:
     omit_subgroups: true
 
+# Canal WhatsApp (MVP): mismo rol paciente, catálogo de atajos reducido.
+whatsapp_paciente:
+  app_client_ids:
+    - whatsapp-paciente
+  shortcuts_catalog: assistant-shortcuts-whatsapp-paciente.yaml
+  shortcut_display:
+    omit_subgroups: true
+
 web_staff:
   hide_paciente_flows:
     intent_ids:

@@ -81,6 +81,18 @@ return [
         'app_deep_link' => '/',
         'signing_key' => null,
     ],
+    /**
+     * WhatsApp Cloud API (asistente paciente). Secretos en params-local.php.
+     * {@see \common\components\Platform\Assistant\WhatsApp\WhatsAppConfig}
+     */
+    'whatsapp' => [
+        'phoneNumberId' => null,
+        'accessToken' => null,
+        'verifyToken' => null,
+        'appSecret' => null,
+        'apiVersion' => 'v21.0',
+        'appDeepLinkBase' => 'https://app.bioenlace.io/',
+    ],
     'autonomous_agent_resolucion_multicanal_enabled' => true,
     'autonomous_agent_resolucion_loop_close_enabled' => true,
     'autonomous_agent_antinoshow_enabled' => true,

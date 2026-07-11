@@ -12,10 +12,12 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 | `assistant/globals/` | Piezas reutilizables entre flows |
 | `assistant/intent-classification-rules.yaml` | Vocabulario NL, score, fallbacks operativos |
 | `assistant/assistant-shortcuts.yaml` | Atajos visibles del asistente |
+| `assistant/assistant-shortcuts-paciente.yaml` | Atajos app paciente |
+| `assistant/assistant-shortcuts-whatsapp-paciente.yaml` | Atajos MVP canal WhatsApp paciente |
 | `assistant/hint-resolution.yaml` | Intents/prefixes de hints por entidad (scheduling, organization, person) |
 | `permission/domain-operation-policies.yaml` | Operaciones RBAC → políticas de recurso |
 | `ui/home_panel_manifest.yaml` | Layout del panel de inicio staff/paciente |
-| `ui/client-context.yaml` | Flows/notificaciones paciente ocultos en web staff |
+| `ui/client-context.yaml` | Contextos por cliente (`mobile_paciente`, `whatsapp_paciente`) y ocultamiento staff |
 | `ui/json-domains.yaml` | Entidad API → carpeta `views/json/{dominio}/` |
 | `ui/screen-params.yaml` | Expansión de params UI (p. ej. `slot_id` turnos) |
 | `ui/select-option-sources.yaml` | Fuentes `option_config.source` → provider de dominio |

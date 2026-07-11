@@ -35,6 +35,16 @@ return [
     // para reingreso tras cerrar sesión en app paciente. Si se omite, config-movil devuelve el KYC.
     // 'didit_paciente_biometric_workflow_id' => '…',
 
+    // --- WhatsApp Cloud API (asistente paciente; webhook GET/POST /api/v1/whatsapp/webhook) ---
+    // 'whatsapp' => [
+    //     'phoneNumberId' => '…',
+    //     'accessToken' => '…',
+    //     'verifyToken' => '…', // el mismo que configures en Meta
+    //     'appSecret' => '…',   // App Secret para X-Hub-Signature-256
+    //     'apiVersion' => 'v21.0',
+    //     'appDeepLinkBase' => 'https://app.bioenlace.io/',
+    // ],
+
     // --- Push FCM plataforma (proyecto Firebase distinto de Vertex) ---
     'fcmPush' => [
         'projectId' => 'august-cirrus-482714-f4',

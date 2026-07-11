@@ -71,12 +71,9 @@ final class CommonActionsService
      */
     private static function resolveDisplayOptions(?string $appClient): array
     {
-        if (ClientContextMetadata::isPacienteMobileClient($appClient)) {
-            return [
-                'catalog_basename' => ClientContextMetadata::pacienteMobileShortcutsCatalogBasename(),
-                'use_yaml_action_name' => ClientContextMetadata::pacienteMobileShortcutUseYamlActionName(),
-                'omit_subgroups' => ClientContextMetadata::pacienteMobileShortcutOmitSubgroups(),
-            ];
+        $fromClient = ClientContextMetadata::shortcutsDisplayForAppClient($appClient);
+        if ($fromClient !== null) {
+            return $fromClient;
         }
 
         return [

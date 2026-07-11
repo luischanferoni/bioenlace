@@ -45,6 +45,10 @@ Comparten ideas de borrador y permisos; no siempre pasan por el mismo clasificad
 
 Web staff y app Personal de Salud comparten API; tres tipos de UI: **inicio** (tableros), **captura encounter** (timeline + formulario), **flows** (asistente). Detalle: [superficies-ui.md](./superficies-ui.md).
 
+WhatsApp es otra superficie del **mismo** asistente paciente (Meta Cloud API): el usuario escribe o elige opciones en el chat; el sistema usa el mismo motor de intents. La presentación se adapta al canal (texto, botones o listas); si un paso necesita una pantalla rica de la app, se invita a abrir Bioenlace. Antes de operar, se vincula el número de WhatsApp a la cuenta paciente (confirmación explícita).
+
+Checklist manual de smoke: [qa/paciente/asistente-whatsapp.md](../qa/paciente/asistente-whatsapp.md).
+
 ## Intents de dominio (referencia mayo 2026)
 
 Ejemplos de flujos conversacionales con UI JSON (YAML en `SubIntentEngine/schemas/intents/`):

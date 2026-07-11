@@ -108,6 +108,8 @@ sequenceDiagram
 
 ## Otros entrypoints (mismo stack, otro canal)
 
+WhatsApp Cloud API (paciente) entra por `whatsapp/webhook`, resuelve identidad y llama al **mismo** `ChatOrchestrator`; solo cambia el transporte y el render (texto/botones/listas). Smoke: [qa/paciente/asistente-whatsapp.md](../qa/paciente/asistente-whatsapp.md).
+
 No todo pasa por el chat genérico:
 
 | Canal | Entry | Uso |

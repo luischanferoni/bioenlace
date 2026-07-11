@@ -12,6 +12,7 @@
 | [turnos.md](./turnos.md) | Sacar, cancelar, reprogramar, lista de espera, **motivos pre-turno** |
 | [laboratorio-receta-planes.md](./laboratorio-receta-planes.md) | Resultados, recetas, tratamientos, resúmenes |
 | [asistente.md](./asistente.md) | Frases y atajos del chat |
+| [asistente-whatsapp.md](./asistente-whatsapp.md) | Smoke MVP canal WhatsApp (Cloud API) |
 
 ## Checklist
 

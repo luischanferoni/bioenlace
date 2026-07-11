@@ -59,6 +59,7 @@ class ClientContextMetadataTest extends Unit
     {
         $this->assertTrue(ClientContextMetadata::isPacienteMobileClient('paciente-flutter'));
         $this->assertFalse(ClientContextMetadata::isPacienteMobileClient('bioenlace-personalsalud'));
+        $this->assertFalse(ClientContextMetadata::isPacienteMobileClient('whatsapp-paciente'));
     }
 
     public function testPacienteMobileShortcutDisplayFlags(): void
@@ -69,5 +70,14 @@ class ClientContextMetadataTest extends Unit
             'assistant-shortcuts-paciente.yaml',
             ClientContextMetadata::pacienteMobileShortcutsCatalogBasename()
         );
+    }
+
+    public function testWhatsappPacienteShortcutsFromMetadata(): void
+    {
+        $display = ClientContextMetadata::shortcutsDisplayForAppClient('whatsapp-paciente');
+        $this->assertNotNull($display);
+        $this->assertSame('assistant-shortcuts-whatsapp-paciente.yaml', $display['catalog_basename']);
+        $this->assertTrue($display['omit_subgroups']);
+        $this->assertNull(ClientContextMetadata::shortcutsDisplayForAppClient('web-frontend'));
     }
 }

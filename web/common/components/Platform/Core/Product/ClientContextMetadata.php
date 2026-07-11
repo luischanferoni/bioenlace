@@ -55,17 +55,36 @@ final class ClientContextMetadata
 
     public static function isPacienteMobileClient(?string $appClientId): bool
     {
-        $id = trim((string) $appClientId);
-        if ($id === '') {
-            return false;
-        }
-        foreach (self::mobilePacienteSection()['app_client_ids'] ?? [] as $candidate) {
-            if (is_string($candidate) && trim($candidate) !== '' && trim($candidate) === $id) {
-                return true;
-            }
+        return self::sectionHasAppClient(self::mobilePacienteSection(), $appClientId);
+    }
+
+    /**
+     * Perfil de atajos para un X-App-Client (mobile_paciente, whatsapp_paciente, …).
+     *
+     * @return array{catalog_basename: string, use_yaml_action_name: bool, omit_subgroups: bool}|null
+     */
+    public static function shortcutsDisplayForAppClient(?string $appClientId): ?array
+    {
+        $section = self::profileSectionForAppClient($appClientId);
+        if ($section === null) {
+            return null;
         }
 
-        return false;
+        $file = trim((string) ($section['shortcuts_catalog'] ?? ''));
+        if ($file === '') {
+            return null;
+        }
+
+        $display = $section['shortcut_display'] ?? [];
+        if (!is_array($display)) {
+            $display = [];
+        }
+
+        return [
+            'catalog_basename' => $file,
+            'use_yaml_action_name' => ($display['use_yaml_action_name'] ?? false) === true,
+            'omit_subgroups' => ($display['omit_subgroups'] ?? false) === true,
+        ];
     }
 
     public static function pacienteMobileShortcutsCatalogBasename(): string
@@ -145,11 +164,23 @@ final class ClientContextMetadata
             return self::$config;
         }
 
-        if (is_array($data) && isset($data['web_staff']) && is_array($data['web_staff'])) {
-            self::$config['web_staff'] = $data['web_staff'];
+        if (!is_array($data)) {
+            return self::$config;
         }
-        if (is_array($data) && isset($data['mobile_paciente']) && is_array($data['mobile_paciente'])) {
-            self::$config['mobile_paciente'] = $data['mobile_paciente'];
+
+        self::$config = [];
+        foreach ($data as $key => $section) {
+            if (!is_string($key) || $key === 'version' || !is_array($section)) {
+                continue;
+            }
+            self::$config[$key] = $section;
+        }
+
+        if (!isset(self::$config['web_staff'])) {
+            self::$config['web_staff'] = [];
+        }
+        if (!isset(self::$config['mobile_paciente'])) {
+            self::$config['mobile_paciente'] = [];
         }
 
         return self::$config;
@@ -163,6 +194,46 @@ final class ClientContextMetadata
         $section = self::loadConfig()['mobile_paciente'] ?? [];
 
         return is_array($section) ? $section : [];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private static function profileSectionForAppClient(?string $appClientId): ?array
+    {
+        $id = trim((string) $appClientId);
+        if ($id === '') {
+            return null;
+        }
+
+        foreach (self::loadConfig() as $key => $section) {
+            if ($key === 'web_staff' || !is_array($section)) {
+                continue;
+            }
+            if (self::sectionHasAppClient($section, $id)) {
+                return $section;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $section
+     */
+    private static function sectionHasAppClient(array $section, ?string $appClientId): bool
+    {
+        $id = trim((string) $appClientId);
+        if ($id === '') {
+            return false;
+        }
+        foreach ($section['app_client_ids'] ?? [] as $candidate) {
+            if (is_string($candidate) && trim($candidate) !== '' && trim($candidate) === $id) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function resetCacheForTests(): void

@@ -1,0 +1,24 @@
+# Atajos MVP del asistente por WhatsApp (subconjunto paciente).
+# {@see client-context.yaml} → whatsapp_paciente.shortcuts_catalog
+version: 1
+categories:
+  - id: turnos
+    titulo: Mis turnos
+    intent_ids:
+      - turnos.cancelar-como-paciente-flow
+      - turnos.modificar-como-paciente-flow
+
+  - id: laboratorio
+    titulo: Laboratorio
+    intent_ids:
+      - laboratorio.ver-resultados-como-paciente
+
+  - id: recetas
+    titulo: Recetas
+    intent_ids:
+      - receta.ver-recetas-como-paciente
+
+  - id: ayuda
+    titulo: Ayuda
+    intent_ids:
+      - plataforma.enviar-queja-como-paciente-flow

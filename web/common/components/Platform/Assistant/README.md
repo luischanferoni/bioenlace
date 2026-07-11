@@ -7,6 +7,7 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 - `IntentEngine/`: entrypoint para clasificar y devolver una acción UI (o arrancar un flow conversacional).
 - `Catalog/`: catálogo de UIs sugeribles (hoy basado en YAML).
 - `Chat/`: `asistente/enviar` — preprocess, routing, canales, sobre (`message` | `interactive` | `flow`).
+- `WhatsApp/`: transporte Meta Cloud API (webhook → identidad → mismo orquestador → render texto/botones/listas).
 - Entrypoints de dominio clínico: `Clinical/Assistant/` (`ClinicalEncounterEntry`, `AppointmentReasonEntry`).
 - `Catalog/UiActionCatalogProviderRegistry.php`: resuelve providers declarados en `common/config/product-registries.php`.
 - `Catalog/DataAccessUiActionCatalog.php`: acciones API genéricas staff (`/api/info`, `/api/listar`, `/api/editar`).
@@ -33,6 +34,7 @@ Los intents YAML pueden declarar `intent_semantics` (`goal/how/preconditions/con
 ## Entrypoints importantes
 
 - API chat: `ChatController` → `asistente/enviar`
+- WhatsApp: `WhatsAppWebhookController` → `whatsapp/webhook` (público; firma Meta)
 - Motivos consulta: `MotivosConsultaController` → `Clinical/Assistant/AppointmentReasonEntry`
 - Captura clínica: `clinical/EncounterController` → `Clinical/Assistant/ClinicalEncounterEntry`
  

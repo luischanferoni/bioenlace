@@ -108,6 +108,10 @@ return [
                 'POST api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
                 'OPTIONS api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
 
+                // WhatsApp Cloud API (webhook público; firma Meta)
+                'GET api/<version:\w+>/whatsapp/webhook' => '<version>/whatsapp-webhook/webhook',
+                'POST api/<version:\w+>/whatsapp/webhook' => '<version>/whatsapp-webhook/webhook',
+
                 // Licencia / onboarding comercial (institucional)
                 'GET api/<version:\w+>/licencia/catalogo-ministerios' => '<version>/licencia/catalogo-ministerios',
                 'GET api/<version:\w+>/licencia/planes' => '<version>/licencia/planes',

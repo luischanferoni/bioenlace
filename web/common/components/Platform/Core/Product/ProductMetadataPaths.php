@@ -73,6 +73,11 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . $file;
     }
 
+    public static function assistantChannelCopyFile(): string
+    {
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'channel-copy.yaml';
+    }
+
     public static function domainOperationPoliciesFile(): string
     {
         return self::permissionDir() . DIRECTORY_SEPARATOR . 'domain-operation-policies.yaml';

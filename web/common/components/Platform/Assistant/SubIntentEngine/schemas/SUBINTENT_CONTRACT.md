@@ -36,6 +36,8 @@ draft_hydrator:
 
 Handlers viven en **servicios de dominio** (`common/components/{Domain}/Service/…`); el motor solo mapea ID → callable vía `common/config/product-registries.php` (`flowDraftHydrators`). **No** agregar un handler nuevo sin documentarlo aquí y registrarlo en ese archivo.
 
+Si el hydrator escribe `draft.assistant_text`, el motor lo usa como texto del paso (prioridad sobre `assistant_text` del YAML). Sirve para resúmenes canal-agnósticos (p. ej. listado de turnos en chat).
+
 ## Nodo `subintents[]` — claves soportadas
 
 Solo deben usarse las siguientes propiedades en cada ítem. Cualquier otra clave es **no portátil** (el motor la ignora hoy).

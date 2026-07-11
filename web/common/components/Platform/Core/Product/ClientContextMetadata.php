@@ -59,6 +59,28 @@ final class ClientContextMetadata
     }
 
     /**
+     * Clave de sección en client-context (p. ej. whatsapp_paciente) para un X-App-Client.
+     */
+    public static function profileSectionKeyForAppClient(?string $appClientId): ?string
+    {
+        $id = trim((string) $appClientId);
+        if ($id === '') {
+            return null;
+        }
+
+        foreach (self::loadConfig() as $key => $section) {
+            if ($key === 'web_staff' || !is_array($section)) {
+                continue;
+            }
+            if (self::sectionHasAppClient($section, $id)) {
+                return is_string($key) ? $key : null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Perfil de atajos para un X-App-Client (mobile_paciente, whatsapp_paciente, …).
      *
      * @return array{catalog_basename: string, use_yaml_action_name: bool, omit_subgroups: bool}|null

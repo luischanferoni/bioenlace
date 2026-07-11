@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\FlowManifest;
 
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Core\Permission\IntentManifestIndex;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
@@ -104,7 +105,7 @@ final class FlowManifest
             $operation,
             self::requestAppClientId()
         );
-        $text = $label !== '' ? $label : 'Abrir pantalla';
+        $text = $label !== '' ? $label : AssistantChannelCopy::t('open_ui_button');
 
         $actionId = AssistantDraftNormalizer::scalarString($openUiDef['action_id'] ?? '');
         if ($actionId === '') {

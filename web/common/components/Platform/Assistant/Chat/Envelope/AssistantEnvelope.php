@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Envelope;
 
+use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Assistant\FlowManifest\FlowManifest;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Assistant\UiActions\AssistantClientOpenEnricher;
@@ -114,8 +115,8 @@ final class AssistantEnvelope
         }
 
         $suffix = $buttonCount === 1
-            ? ' O tocar el botón de abajo.'
-            : ' O tocar los botones de abajo.';
+            ? AssistantChannelCopy::t('interactive_buttons_hint_one')
+            : AssistantChannelCopy::t('interactive_buttons_hint_many');
 
         return $text . $suffix;
     }
@@ -127,13 +128,13 @@ final class AssistantEnvelope
     {
         $text = self::resolvePrimaryText($motor);
         if ($text === '' && isset($motor['total_actions_available'])) {
-            $text = 'Estas son algunas pantallas disponibles para vos.';
+            $text = AssistantChannelCopy::t('available_options_intro');
         }
         if ($text === '' && isset($motor['actions']) && is_array($motor['actions']) && $motor['actions'] !== []) {
-            $text = 'No encontré una pantalla que encaje claramente con tu pedido.';
+            $text = AssistantChannelCopy::t('no_intent_match');
         }
         if ($text === '') {
-            $text = 'Elegí una opción';
+            $text = AssistantChannelCopy::t('interactive_pick_one');
         }
 
         $buttons = [];

@@ -1,0 +1,38 @@
+intent_id: turnos.ver-mis-turnos-como-paciente
+version: 1
+
+action_name: "Ver mis turnos"
+description: "Consultar tus próximos turnos pendientes."
+rbac_route: "/api/turnos/listar-como-paciente"
+keywords:
+  - mis turnos
+  - qué turnos tengo
+  - que turnos tengo
+  - decime los turnos
+  - decime mis turnos
+  - ver mis turnos
+  - listar mis turnos
+  - mis citas
+  - próximos turnos
+  - proximos turnos
+  - turnos pendientes
+
+intent_semantics:
+  goal: >-
+    Mostrar al paciente sus turnos pendientes (próximos) sin cancelar ni reprogramar.
+  how: >-
+    Resume en el chat y, si el cliente lo permite, abre el listado de turnos.
+  outcome:
+    - El paciente ve fecha, servicio y profesional de sus próximos turnos.
+
+draft_hydrator:
+  handler: scheduling.turnos_listar_como_paciente
+  limit: 10
+
+subintents:
+  - id: ver_listado
+    assistant_text: "Tus próximos turnos"
+    provides: []
+    next: ""
+    open_ui:
+      action_id: turnos.listar-como-paciente

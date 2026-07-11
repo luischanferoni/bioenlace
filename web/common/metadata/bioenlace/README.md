@@ -14,6 +14,7 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 | `assistant/assistant-shortcuts.yaml` | Atajos visibles del asistente |
 | `assistant/assistant-shortcuts-paciente.yaml` | Atajos app paciente |
 | `assistant/assistant-shortcuts-whatsapp-paciente.yaml` | Atajos MVP canal WhatsApp paciente |
+| `assistant/channel-copy.yaml` | Textos UX del asistente por perfil de cliente (sin «pantalla» hardcode) |
 | `assistant/hint-resolution.yaml` | Intents/prefixes de hints por entidad (scheduling, organization, person) |
 | `permission/domain-operation-policies.yaml` | Operaciones RBAC → políticas de recurso |
 | `ui/home_panel_manifest.yaml` | Layout del panel de inicio staff/paciente |

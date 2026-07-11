@@ -333,7 +333,7 @@ class TurnosController extends BaseController
     public function actionListarComoPaciente()
     {
         $req = Yii::$app->request;
-        return UiScreenService::handleScreen(
+        $out = UiScreenService::handleScreen(
             'turnos',
             'listar-como-paciente',
             $req->get(),
@@ -344,6 +344,59 @@ class TurnosController extends BaseController
                 return ['data' => $this->listarComoPacienteData($params)];
             }
         );
+
+        if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
+            $params = array_merge($req->get(), $req->post());
+            if (!isset($params['alcance']) || $params['alcance'] === '') {
+                $params['alcance'] = 'pendientes';
+            }
+            if (!isset($params['limit']) || $params['limit'] === '') {
+                $params['limit'] = 50;
+            }
+            if (!isset($params['offset']) || $params['offset'] === '') {
+                $params['offset'] = 0;
+            }
+            $data = $this->listarComoPacienteData($params);
+            $items = [];
+            foreach ($data['turnos'] ?? [] as $t) {
+                if (!is_array($t)) {
+                    continue;
+                }
+                $id = isset($t['id']) ? (int) $t['id'] : 0;
+                if ($id <= 0) {
+                    continue;
+                }
+                $fecha = isset($t['fecha']) ? (string) $t['fecha'] : '';
+                $hora = isset($t['hora']) ? (string) $t['hora'] : '';
+                $svc = isset($t['servicio']) ? (string) $t['servicio'] : '';
+                $prof = isset($t['profesional']) ? (string) $t['profesional'] : '';
+                $fechaAmigable = $fecha !== '' ? TurnoSlotOfferUiPresenter::friendlyDayHeading($fecha) : '';
+                $horaCorta = $this->formatHoraTurnoPacienteCorta($hora);
+                $cuando = '';
+                if ($fechaAmigable !== '' && $horaCorta !== '') {
+                    $cuando = $fechaAmigable . ' · ' . $horaCorta;
+                } elseif ($fechaAmigable !== '') {
+                    $cuando = $fechaAmigable;
+                } elseif ($horaCorta !== '') {
+                    $cuando = $horaCorta;
+                }
+                $parts = array_filter([$cuando, $svc, $prof]);
+                $label = implode(' · ', $parts);
+                if ($label === '') {
+                    $label = 'Turno #' . $id;
+                }
+                if (!empty($t['en_resolucion'])) {
+                    $label = '⚠ ' . $label;
+                }
+                $items[] = [
+                    'id' => (string) $id,
+                    'name' => $label,
+                ];
+            }
+            $out = UiScreenService::withListBlockItems($out, $items);
+        }
+
+        return $out;
     }
 
     /**

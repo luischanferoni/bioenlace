@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Assistant\WhatsApp;
 
+use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
+
 /**
  * Traduce el sobre público del asistente a mensajes Cloud API (sin conocer intents de dominio).
  */
@@ -112,8 +114,11 @@ final class WhatsAppEnvelopeRenderer
 
         if ($clientOpen !== null && $clientOpen !== []) {
             $deepLink = rtrim(WhatsAppConfig::get()['appDeepLinkBase'], '/') . '/';
-            $msg = $text !== '' ? $text : 'Para continuar necesitás la app Bioenlace.';
-            $msg .= "\n\nAbrí la app: " . $deepLink;
+            $msg = $text !== '' ? $text : AssistantChannelCopy::t('open_ui_button');
+            $suffix = AssistantChannelCopy::t('open_ui_deep_link_suffix', ['url' => $deepLink]);
+            if ($suffix !== '') {
+                $msg .= $suffix;
+            }
             $this->client->sendText($toWaId, $msg);
 
             return;
@@ -121,18 +126,30 @@ final class WhatsAppEnvelopeRenderer
 
         $options = $this->flowActionOptions($envelope);
         if ($options === []) {
-            $this->client->sendText($toWaId, $text !== '' ? $text : 'Continuá escribiendo tu respuesta.');
+            $this->client->sendText(
+                $toWaId,
+                $text !== '' ? $text : AssistantChannelCopy::t('interactive_pick_one')
+            );
 
             return;
         }
 
         if (count($options) <= 3) {
-            $this->client->sendReplyButtons($toWaId, $text !== '' ? $text : 'Elegí una opción', $options);
+            $this->client->sendReplyButtons(
+                $toWaId,
+                $text !== '' ? $text : AssistantChannelCopy::t('interactive_pick_one'),
+                $options
+            );
 
             return;
         }
 
-        $this->client->sendList($toWaId, $text !== '' ? $text : 'Elegí una opción', 'Opciones', $options);
+        $this->client->sendList(
+            $toWaId,
+            $text !== '' ? $text : AssistantChannelCopy::t('interactive_pick_one'),
+            'Opciones',
+            $options
+        );
     }
 
     /**

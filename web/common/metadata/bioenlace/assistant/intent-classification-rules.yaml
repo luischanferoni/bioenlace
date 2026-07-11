@@ -22,6 +22,19 @@ vocab:
     - medicos del centro
   clinical_symptoms: '\b(problema|dolor|duele|sintoma|síntoma|malestar|enfermo|fiebre|tos|nausea|náusea|vomito|vómito|mareo|hinchazon|hinchazón|presion|presión|diabetes|hipertension|hipertensión|chichon|chichón|golpe|hematoma|moreton|moretón|bulto|hinchado|inflamado|cabeza|manos|pies|brazo|pierna|herida|sangra|sangrado)\b'
   scheduling_ops: '\b(turno|turnos|reservar|sacar turno|cancelar turno|cancelar|agenda|cita|reprogramar|sobreturno)\b'
+  paciente_mis_turnos_phrases:
+    - mis turnos
+    - qué turnos tengo
+    - que turnos tengo
+    - decime los turnos
+    - decime mis turnos
+    - ver mis turnos
+    - listar mis turnos
+    - mis citas
+    - próximos turnos
+    - proximos turnos
+    - turnos que tengo
+    - turnos pendientes
   consultas_seguimiento_phrases:
     - renovar medicacion
     - renovar medicación
@@ -128,6 +141,13 @@ match_rules:
   scheduling_operational:
     require_any: [scheduling_ops]
 
+  paciente_listar_turnos:
+    require_phrase_any: paciente_mis_turnos_phrases
+    forbid_any: []
+    ai_hint: >-
+      Si el paciente pregunta qué turnos tiene o pide ver/listar sus citas (sin cancelar ni sacar uno nuevo),
+      priorizá turnos.ver-mis-turnos-como-paciente.
+
   help_menu_query:
     require_any: [help_menu]
 
@@ -176,6 +196,19 @@ match_rules:
     forbid_any: [acute_new_symptom, clinical_symptoms]
 
 score_adjustments:
+  - when_rule: paciente_listar_turnos
+    apply:
+      - intent_id: turnos.ver-mis-turnos-como-paciente
+        delta: 55
+      - intent_id: turnos.crear-como-paciente
+        delta: -35
+      - intent_id: atencion.necesito-atencion
+        delta: -35
+      - intent_id: turnos.cancelar-como-paciente-flow
+        delta: -20
+      - intent_id: turnos.modificar-como-paciente-flow
+        delta: -20
+
   - when_rule: staff_condicion_laboral
     apply:
       - intent_id: condicion-laboral.editar-staff
@@ -344,6 +377,12 @@ operational_fallbacks:
     when_not_rule: scheduling_operational
     intent_id: atencion.consultas-seguimiento-flow
     confidence: 0.88
+    method: rules_declarative_fallback
+
+  - id: paciente_listar_turnos_nl
+    when_any_rule: [paciente_listar_turnos]
+    intent_id: turnos.ver-mis-turnos-como-paciente
+    confidence: 0.9
     method: rules_declarative_fallback
 
 chat_preprocess:

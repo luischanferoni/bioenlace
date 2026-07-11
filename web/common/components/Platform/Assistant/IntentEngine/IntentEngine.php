@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\IntentEngine;
 
 use Yii;
+use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Assistant\Catalog\IntentCatalogService;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
@@ -75,7 +76,7 @@ final class IntentEngine
 
             return [
                 'success' => true,
-                'text' => 'Estas son algunas pantallas disponibles para vos.',
+                'text' => AssistantChannelCopy::t('available_options_intro'),
                 'actions' => $out,
                 'total_actions_available' => count($catalog->items),
             ];
@@ -155,7 +156,7 @@ final class IntentEngine
 
         return [
             'success' => true,
-            'text' => 'No encontré una pantalla que encaje claramente con tu pedido.',
+            'text' => AssistantChannelCopy::t('no_intent_match'),
             'actions' => $suggest,
         ];
     }

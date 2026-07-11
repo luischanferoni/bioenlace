@@ -1,28 +1,19 @@
 {
   "ui_type": "ui_json",
+  "title": "Mis turnos",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
   },
   "blocks": [
     {
-      "kind": "fields",
+      "kind": "list",
       "id": "default",
-      "title": "Mis turnos pendientes",
-      "fields": [
-        {
-          "name": "fecha_desde",
-          "label": "Desde",
-          "type": "date",
-          "required": false
-        },
-        {
-          "name": "fecha_hasta",
-          "label": "Hasta",
-          "type": "date",
-          "required": false
-        }
-      ]
+      "selection": { "mode": "none" },
+      "empty_message": "No tienes turnos pendientes en este momento.",
+      "item": { "kind": "turno", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "large", "shape": "wide" },
+      "items": []
     }
   ]
 }

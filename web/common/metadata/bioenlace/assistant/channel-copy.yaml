@@ -1,0 +1,37 @@
+# Copy del asistente por canal/perfil de cliente.
+# {@see AssistantChannelCopy} — no hardcodear «pantalla», «wizard», etc. en motores.
+#
+# profile_id = clave de sección en client-context.yaml que matchea X-App-Client
+# (mobile_paciente, whatsapp_paciente, …) o `default`.
+#
+# Placeholders opcionales entre llaves: {url}, {label}
+version: 1
+
+messages:
+  no_intent_match:
+    default: "No encontré una opción que encaje claramente con tu pedido."
+    whatsapp_paciente: "No entendí del todo tu pedido. Escribí menú o algo como: mis turnos, cancelar un turno, ver laboratorio."
+
+  available_options_intro:
+    default: "Estas son algunas opciones disponibles para vos."
+    whatsapp_paciente: "Estas son algunas opciones:"
+
+  open_ui_button:
+    default: "Abrir"
+    whatsapp_paciente: "Ver en la app"
+    mobile_paciente: "Abrir"
+
+  open_ui_deep_link_suffix:
+    default: ""
+    whatsapp_paciente: "\n\nTambién podés verlo en la app: {url}"
+
+  interactive_pick_one:
+    default: "Elegí una opción"
+
+  interactive_buttons_hint_one:
+    default: " O tocá la opción de abajo."
+    whatsapp_paciente: " O elegí la opción de abajo."
+
+  interactive_buttons_hint_many:
+    default: " O tocá las opciones de abajo."
+    whatsapp_paciente: " O elegí una de las opciones de abajo."

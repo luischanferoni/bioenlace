@@ -8,9 +8,10 @@ categories:
       - atencion.necesito-atencion
       - atencion.consultas-seguimiento-flow
 
-  - id: turnos
+    - id: turnos
     titulo: Mis turnos
     intent_ids:
+      - turnos.ver-mis-turnos-como-paciente
       - turnos.cancelar-como-paciente-flow
       - turnos.modificar-como-paciente-flow
 

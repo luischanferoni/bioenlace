@@ -6,6 +6,7 @@ use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\IntentMetricCatalogSupport;
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
+use common\components\Platform\Assistant\Copy\AssistantChannelCopy;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Assistant\FlowManifest\FlowManifest;
 use common\components\Platform\Assistant\Service\FlowHintService;
@@ -143,7 +144,7 @@ final class SubIntentEngine
                         $intentId,
                         $currentId,
                         $current,
-                        self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.'),
+                        self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.', $draft),
                         $composer,
                         $missing,
                         $hints
@@ -156,7 +157,7 @@ final class SubIntentEngine
                         $intentId,
                         $currentId,
                         $current,
-                        self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.'),
+                        self::assistantTextForPrompt($current, 'Necesito un dato más para continuar.', $draft),
                         $userId,
                         $open,
                         $content,
@@ -187,7 +188,7 @@ final class SubIntentEngine
                         $intentId,
                         $currentId,
                         $current,
-                        self::assistantTextForPrompt($current, 'Listo.'),
+                        self::assistantTextForPrompt($current, 'Listo.', $draft),
                         $userId,
                         $openWhenComplete,
                         $content,
@@ -214,7 +215,7 @@ final class SubIntentEngine
             return self::buildTerminalSubmitOnlyResponse(
                 $intentId,
                 $currentId,
-                self::assistantTextForPrompt($current, 'Confirmemos y enviemos.'),
+                self::assistantTextForPrompt($current, 'Confirmemos y enviemos.', $draft),
                 $flowSubmitBlock,
                 $hints
             );
@@ -222,7 +223,7 @@ final class SubIntentEngine
 
         return self::withFlowManifest(self::attachHints([
             'success' => true,
-            'text' => self::assistantTextForPrompt($current, 'Listo.'),
+            'text' => self::assistantTextForPrompt($current, 'Listo.', $draft),
             'intent_id' => $intentId,
             'subintent_id' => $currentId,
             'draft_delta' => (object) [],
@@ -550,7 +551,7 @@ final class SubIntentEngine
 
         $openUiDef['__draft'] = $draft;
         $label = \common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport::displayLabelForIntent($intentId);
-        $text = $label !== '' ? $label : 'Abrir pantalla';
+        $text = $label !== '' ? $label : AssistantChannelCopy::t('open_ui_button');
 
         return self::buildOpenUiResponse(
             $intentId,
@@ -592,7 +593,7 @@ final class SubIntentEngine
 
         $openUiDef['__draft'] = $draft;
         $label = IntentMetricCatalogSupport::displayLabelForIntent($intentId);
-        $text = $label !== '' ? $label : 'Abrir pantalla';
+        $text = $label !== '' ? $label : AssistantChannelCopy::t('open_ui_button');
 
         return self::buildOpenUiResponse(
             $intentId,
@@ -1071,12 +1072,18 @@ final class SubIntentEngine
     }
 
     /**
-     * Texto corto para el chat. Preferimos metadata YAML (`assistant_text`) para evitar hardcode por pantalla.
+     * Texto corto para el chat. Preferimos `draft.assistant_text` (hydrator) y luego YAML `assistant_text`.
      *
      * @param array<string, mixed> $subintent
+     * @param array<string, mixed> $draft
      */
-    private static function assistantTextForPrompt(array $subintent, string $fallback): string
+    private static function assistantTextForPrompt(array $subintent, string $fallback, array $draft = []): string
     {
+        $fromDraft = trim((string) ($draft['assistant_text'] ?? ''));
+        if ($fromDraft !== '') {
+            return $fromDraft;
+        }
+
         $t = isset($subintent['assistant_text']) ? trim((string) $subintent['assistant_text']) : '';
         if ($t !== '') {
             return $t;

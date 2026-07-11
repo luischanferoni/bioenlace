@@ -21,8 +21,9 @@ Checklist manual del MVP (Meta Cloud API). Requiere `whatsapp.*` en params-local
 
 1. Escribir `menú` / `hola` con vínculo activo → lista o botones de atajos (turnos, lab, recetas, queja).
 2. Elegir un atajo → respuesta del motor (texto/botones) o deep link si el paso pide UI rica.
-3. Escribir en castellano p. ej. «quiero cancelar un turno» → respuesta útil o degradación a app.
-4. Reenviar el mismo `wamid` (o duplicar el webhook) → no duplica efecto (idempotencia).
+3. Escribir `mis turnos` → resumen de turnos pendientes (requiere migración RBAC `m260711_180000_turnos_ver_mis_turnos_paciente_intent_rbac` y YAML del intent en el deploy).
+4. Escribir en castellano p. ej. «quiero cancelar un turno» → respuesta útil o degradación a app.
+5. Reenviar el mismo `wamid` (o duplicar el webhook) → no duplica efecto (idempotencia).
 
 ## Fuera de alcance (no fallar el smoke)
 

@@ -27,13 +27,7 @@ final class YamlIntentCatalogService
     {
         $cache = Yii::$app->cache;
         // Cache key debe cambiar cuando cambian los YAML (keywords/rules/etc.).
-        $cacheKeyBase = 'yaml_intents_catalog_v6';
-        if ($useCache && $cache) {
-            $hit = $cache->get($cacheKeyBase);
-            if (is_array($hit)) {
-                return $hit;
-            }
-        }
+        $cacheKeyBase = 'yaml_intents_catalog_v7';
 
         $base = IntentSchemaPaths::baseDir();
         $files = IntentSchemaPaths::discoverYamlFiles();
@@ -196,9 +190,7 @@ final class YamlIntentCatalogService
         );
 
         if ($useCache && $cache) {
-            // Guardar por firma actual y también el último “base” para warm hits.
             $cache->set($cacheKey, $out, 300);
-            $cache->set($cacheKeyBase, $out, 60);
         }
 
         return $out;

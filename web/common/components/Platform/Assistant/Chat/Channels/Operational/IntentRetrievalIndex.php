@@ -2,7 +2,6 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Operational;
 
-use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Platform\Assistant\IntentEngine\IntentClassifier;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
@@ -58,9 +57,7 @@ final class IntentRetrievalIndex
         array $items,
         int $k
     ): array {
-        if (!ChatPreprocessService::isStaffDataAccessOperationalQuery($message)) {
-            return $items;
-        }
+        // Incluir fallbacks operativos declarativos (paciente y staff) en el top-K.
         $fallback = IntentClassificationRulesService::resolveOperationalFallback($message, $catalog);
         if ($fallback === null || !$fallback['item'] instanceof UiActionCatalogItem) {
             return $items;

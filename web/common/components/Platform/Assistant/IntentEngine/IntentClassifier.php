@@ -140,6 +140,11 @@ final class IntentClassifier
                 continue;
             }
             $keywordFolded = self::foldAccents($keywordLower);
+            if ($messageLower === $keywordLower || $messageFolded === $keywordFolded) {
+                // Frase exacta (p. ej. «mis turnos»): supera RULES_MIN_SCORE sin depender solo del delta YAML.
+                $score += 50;
+                continue;
+            }
             if (mb_stripos($messageLower, $keywordLower) !== false
                 || mb_stripos($messageFolded, $keywordFolded) !== false) {
                 $score += 20;

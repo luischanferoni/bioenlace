@@ -10,7 +10,7 @@ version: 1
 messages:
   no_intent_match:
     default: "No encontré una opción que encaje claramente con tu pedido."
-    whatsapp_paciente: "No entendí del todo tu pedido. Escribí menú o algo como: mis turnos, cancelar un turno, ver laboratorio."
+    whatsapp_paciente: "No entendí del todo tu pedido. Escribí menú o probá con: cancelar un turno, ver laboratorio, ver recetas."
 
   available_options_intro:
     default: "Estas son algunas opciones disponibles para vos."

@@ -531,17 +531,19 @@ final class IntentClassificationRulesService
         $phrases = $rule['require_phrase_any'] ?? null;
         if (is_string($phrases) && $phrases !== '') {
             $phraseList = self::vocab()[$phrases] ?? [];
-            if (is_array($phraseList) && $phraseList !== []) {
-                $hit = false;
-                foreach ($phraseList as $phrase) {
-                    if (is_string($phrase) && $phrase !== '' && str_contains($folded, self::foldAccents(mb_strtolower($phrase, 'UTF-8')))) {
-                        $hit = true;
-                        break;
-                    }
+            if (!is_array($phraseList) || $phraseList === []) {
+                // Vocab ausente: no matchear en vacío (evita falsos positivos).
+                return false;
+            }
+            $hit = false;
+            foreach ($phraseList as $phrase) {
+                if (is_string($phrase) && $phrase !== '' && str_contains($folded, self::foldAccents(mb_strtolower($phrase, 'UTF-8')))) {
+                    $hit = true;
+                    break;
                 }
-                if (!$hit) {
-                    return false;
-                }
+            }
+            if (!$hit) {
+                return false;
             }
         }
 

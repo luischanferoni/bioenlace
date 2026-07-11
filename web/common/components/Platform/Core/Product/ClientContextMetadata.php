@@ -59,6 +59,15 @@ final class ClientContextMetadata
     }
 
     /**
+     * App client de un perfil paciente en client-context (móvil, WhatsApp, …).
+     * No incluye web staff.
+     */
+    public static function isPacienteFacingAppClient(?string $appClientId): bool
+    {
+        return self::profileSectionKeyForAppClient($appClientId) !== null;
+    }
+
+    /**
      * Clave de sección en client-context (p. ej. whatsapp_paciente) para un X-App-Client.
      */
     public static function profileSectionKeyForAppClient(?string $appClientId): ?string

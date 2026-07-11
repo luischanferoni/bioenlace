@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
-use common\components\Platform\Ai\IAManager;
+use common\components\Ai\IAManager;
 use common\models\Clinical\Encounter;
 use Yii;
 

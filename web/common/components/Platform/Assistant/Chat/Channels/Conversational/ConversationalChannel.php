@@ -2,7 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Conversational;
 
-use common\components\Platform\Ai\IAManager;
+use common\components\Ai\IAManager;
 use common\components\Platform\Assistant\Chat\Conversational\ConversationalChannelProviderRegistry;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;

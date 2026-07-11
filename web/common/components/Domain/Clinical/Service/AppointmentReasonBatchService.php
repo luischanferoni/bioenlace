@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
-use common\components\Platform\Ai\IAManager;
+use common\components\Ai\IAManager;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\models\Clinical\Encounter;

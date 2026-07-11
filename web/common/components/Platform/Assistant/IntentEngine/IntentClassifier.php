@@ -3,7 +3,7 @@
 namespace common\components\Platform\Assistant\IntentEngine;
 
 use Yii;
-use common\components\Platform\Ai\IAManager;
+use common\components\Ai\IAManager;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 
 /**

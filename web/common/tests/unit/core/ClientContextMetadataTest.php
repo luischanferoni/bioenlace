@@ -62,6 +62,14 @@ class ClientContextMetadataTest extends Unit
         $this->assertFalse(ClientContextMetadata::isPacienteMobileClient('whatsapp-paciente'));
     }
 
+    public function testPacienteFacingAppClientIncludesWhatsapp(): void
+    {
+        $this->assertTrue(ClientContextMetadata::isPacienteFacingAppClient('paciente-flutter'));
+        $this->assertTrue(ClientContextMetadata::isPacienteFacingAppClient('whatsapp-paciente'));
+        $this->assertFalse(ClientContextMetadata::isPacienteFacingAppClient('web-frontend'));
+        $this->assertFalse(ClientContextMetadata::isPacienteFacingAppClient('bioenlace-personalsalud'));
+    }
+
     public function testPacienteMobileShortcutDisplayFlags(): void
     {
         $this->assertFalse(ClientContextMetadata::pacienteMobileShortcutUseYamlActionName());

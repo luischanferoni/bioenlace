@@ -335,7 +335,9 @@ final class WhatsAppInboundService
             if (!$request instanceof Request) {
                 return;
             }
+            // Canal paciente: no defaulting a X-Client=web (oculta intents como-paciente y mezcla PES).
             $request->headers->set('X-App-Client', WhatsAppConfig::APP_CLIENT_ID);
+            $request->headers->set('X-Client', 'mobile');
         } catch (\Throwable $e) {
             Yii::debug('WhatsAppInboundService header: ' . $e->getMessage(), WhatsAppConfig::LOG_CATEGORY);
         }

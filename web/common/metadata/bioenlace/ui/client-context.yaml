@@ -10,6 +10,7 @@ mobile_paciente:
     omit_subgroups: true
 
 # Canal WhatsApp (MVP): mismo rol paciente, catálogo de atajos reducido.
+# Impplica contexto no-web ({@see ClientContextService::isWebClient}): no omitir rol paciente ni filtrar flows como-paciente.
 whatsapp_paciente:
   app_client_ids:
     - whatsapp-paciente

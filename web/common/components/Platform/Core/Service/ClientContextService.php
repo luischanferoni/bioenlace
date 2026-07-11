@@ -10,10 +10,15 @@ use Yii;
  *
  * En web el rol `paciente` se omite: el staff opera con roles PES / especiales.
  * Reglas de flows/notificaciones paciente: {@see ClientContextMetadata} (metadata producto).
+ *
+ * Canales paciente declarados en client-context (`mobile_paciente`, `whatsapp_paciente`, …)
+ * nunca se tratan como web staff, aunque falte `X-Client` (default histórico = web).
  */
 final class ClientContextService
 {
     public const HEADER_CLIENT = 'X-Client';
+
+    public const HEADER_APP_CLIENT = 'X-App-Client';
 
     public const CLIENT_WEB = 'web';
 
@@ -36,6 +41,12 @@ final class ClientContextService
         if (!$req instanceof \yii\web\Request) {
             return false;
         }
+
+        $appClient = trim((string) $req->headers->get(self::HEADER_APP_CLIENT, ''));
+        if (ClientContextMetadata::isPacienteFacingAppClient($appClient !== '' ? $appClient : null)) {
+            return false;
+        }
+
         $client = strtolower(trim((string) $req->headers->get(self::HEADER_CLIENT, self::CLIENT_WEB)));
 
         return $client === self::CLIENT_WEB;

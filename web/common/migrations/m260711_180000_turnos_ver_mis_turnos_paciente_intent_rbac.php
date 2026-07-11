@@ -42,8 +42,11 @@ class m260711_180000_turnos_ver_mis_turnos_paciente_intent_rbac extends Migratio
         $this->inheritFrom($childTable, self::LISTAR_ROUTE, self::INTENT_ID);
         $this->inheritFrom($childTable, self::LISTAR_PERM, self::INTENT_ID);
         $this->ensureChild($childTable, self::ROLE_PACIENTE, self::INTENT_ID);
+        // Intent → ruta (mismo patrón que cancelar/modificar).
+        $this->ensureChild($childTable, self::INTENT_ID, self::LISTAR_ROUTE);
 
         $this->flushIntentCatalogCache();
+        $this->bumpRbacRevision();
     }
 
     public function safeDown()
@@ -59,9 +62,14 @@ class m260711_180000_turnos_ver_mis_turnos_paciente_intent_rbac extends Migratio
             return;
         }
 
-        $this->db->createCommand()->delete($childTable, ['child' => self::INTENT_ID])->execute();
+        $this->db->createCommand()->delete($childTable, [
+            'or',
+            ['child' => self::INTENT_ID],
+            ['parent' => self::INTENT_ID, 'child' => self::LISTAR_ROUTE],
+        ])->execute();
         $this->db->createCommand()->delete($authItem, ['name' => self::INTENT_ID])->execute();
         $this->flushIntentCatalogCache();
+        $this->bumpRbacRevision();
     }
 
     private function ensurePermission(string $authItem, string $intentId, int $now): void
@@ -122,12 +130,21 @@ class m260711_180000_turnos_ver_mis_turnos_paciente_intent_rbac extends Migratio
                 return;
             }
             $cache->delete('yaml_intents_catalog_v6');
-            // Prefijos firmados: borrar lo que podamos sin conocer el md5.
-            if (method_exists($cache, 'flush')) {
-                // No flush global (demasiado amplio en shared cache); solo keys conocidas.
-            }
+            $cache->delete('yaml_intents_catalog_v7');
         } catch (\Throwable $e) {
             // Migración no debe fallar por cache.
+        }
+    }
+
+    private function bumpRbacRevision(): void
+    {
+        try {
+            if (class_exists(\common\components\Platform\Core\Permission\BioenlaceRbacRevision::class, false)
+                || class_exists(\common\components\Platform\Core\Permission\BioenlaceRbacRevision::class)) {
+                \common\components\Platform\Core\Permission\BioenlaceRbacRevision::bump();
+            }
+        } catch (\Throwable $e) {
+            // Migración no debe fallar por cache de revisión.
         }
     }
 }

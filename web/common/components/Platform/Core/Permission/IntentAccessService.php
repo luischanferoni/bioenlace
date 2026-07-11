@@ -2,10 +2,15 @@
 
 namespace common\components\Platform\Core\Permission;
 
+use Yii;
+
 /**
  * Autorización unificada para intents del asistente: listado de atajos y ejecución.
  *
- * La clave RBAC es siempre el {@see intent_id} (sin fallback a `rbac_route` legacy).
+ * Clave assignable: siempre {@see intent_id}.
+ * Si el manifiesto declara `rbac_route` y el usuario ya puede esa ruta API, también se permite:
+ * el intent es la fachada conversacional de la misma capacidad HTTP (evita catálogo vacío
+ * tras deploy de YAML antes de `catalog-permission/sync` / migración de grants).
  */
 final class IntentAccessService
 {
@@ -21,7 +26,29 @@ final class IntentAccessService
         }
 
         $permissionKey = IntentPermissionResolver::resolve($intentId);
+        if (BioenlaceAccessChecker::userCanPermissionKey($userId, $permissionKey)) {
+            return true;
+        }
 
-        return BioenlaceAccessChecker::userCanPermissionKey($userId, $permissionKey);
+        $meta = IntentManifestIndex::get($intentId);
+        if ($meta === null) {
+            return false;
+        }
+        $route = trim((string) ($meta['rbac_route'] ?? ''));
+        if ($route === '') {
+            return false;
+        }
+
+        $route = BioenlaceSessionPermissions::unifyRoute($route);
+        if (BioenlaceAccessChecker::userCanApiRoute($userId, $route)) {
+            return true;
+        }
+
+        // Fallback directo a Yii RBAC (por si la sesión aún no materializó el mapa de rutas).
+        if (Yii::$app->has('authManager') && Yii::$app->authManager->checkAccess($userId, $route)) {
+            return true;
+        }
+
+        return false;
     }
 }

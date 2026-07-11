@@ -9,6 +9,7 @@ use common\components\Platform\Core\Permission\IntentPermissionResolver;
 
 /**
  * Listado de intents y ejecución comparten {@see IntentAccessService}.
+ * Sin permiso de intent ni ruta API del manifiesto → excluido del catálogo.
  */
 final class IntentAccessServiceTest extends Unit
 {
@@ -20,7 +21,7 @@ final class IntentAccessServiceTest extends Unit
         );
     }
 
-    public function testFilterByRbacUsesIntentAccessOnly(): void
+    public function testFilterByRbacExcludesWhenUserHasNeitherIntentNorRoute(): void
     {
         $items = [
             [

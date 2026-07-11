@@ -4,6 +4,7 @@ Checklist manual del MVP (Meta Cloud API). Requiere `whatsapp.*` en params-local
 
 ## Setup Meta
 
+0. Smoke de deploy (sin token): `GET /api/v1/whatsapp/ping` → JSON `{"ok":true,"service":"whatsapp-webhook"}`.
 1. Verify challenge: Meta recibe 200 y el `hub.challenge` cuando el verify token coincide.
 2. Un POST con firma `X-Hub-Signature-256` inválida responde 401.
 3. Un POST firmado correctamente responde 200 aunque el cuerpo esté vacío.

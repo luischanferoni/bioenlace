@@ -108,9 +108,11 @@ return [
                 'POST api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
                 'OPTIONS api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
 
-                // WhatsApp Cloud API (webhook público; firma Meta)
-                'GET api/<version:\w+>/whatsapp/webhook' => '<version>/whatsapp-webhook/webhook',
-                'POST api/<version:\w+>/whatsapp/webhook' => '<version>/whatsapp-webhook/webhook',
+                // WhatsApp Cloud API (webhook público; firma Meta).
+                // controllerMap id = whatsapp (WhatsAppWebhookController → whats-app-webhook nativo).
+                'GET api/<version:\w+>/whatsapp/ping' => '<version>/whatsapp/ping',
+                'GET api/<version:\w+>/whatsapp/webhook' => '<version>/whatsapp/webhook',
+                'POST api/<version:\w+>/whatsapp/webhook' => '<version>/whatsapp/webhook',
 
                 // Licencia / onboarding comercial (institucional)
                 'GET api/<version:\w+>/licencia/catalogo-ministerios' => '<version>/licencia/catalogo-ministerios',
@@ -713,6 +715,8 @@ return [
             'controllerNamespace' => 'frontend\modules\api\v1\controllers',
             'controllerMap' => [
                 'servicio-teleconsulta' => \frontend\modules\api\v1\controllers\ServicioTeleconsultaPoliticaController::class,
+                // Evita ID nativo whats-app-webhook (Inflector sobre WhatsApp*).
+                'whatsapp' => \frontend\modules\api\v1\controllers\WhatsAppWebhookController::class,
             ],
         ],           
     ],

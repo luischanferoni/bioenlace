@@ -15,7 +15,7 @@ use yii\web\Response;
  */
 class WhatsAppWebhookController extends BaseController
 {
-    public static $authenticatorExcept = ['webhook'];
+    public static $authenticatorExcept = ['webhook', 'ping'];
 
     public function beforeAction($action)
     {
@@ -24,11 +24,25 @@ class WhatsAppWebhookController extends BaseController
             return false;
         }
 
-        if (Yii::$app->request->isGet) {
+        // Solo el challenge de Meta debe ser texto plano; ping/POST siguen JSON.
+        if ($action->id === 'webhook' && Yii::$app->request->isGet) {
             Yii::$app->response->format = Response::FORMAT_RAW;
         }
 
         return true;
+    }
+
+    /**
+     * Smoke público: confirmar que la ruta está desplegada (sin auth).
+     *
+     * @return array{ok: bool, service: string}
+     */
+    public function actionPing(): array
+    {
+        return [
+            'ok' => true,
+            'service' => 'whatsapp-webhook',
+        ];
     }
 
     /**

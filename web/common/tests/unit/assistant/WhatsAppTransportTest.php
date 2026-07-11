@@ -29,6 +29,7 @@ class WhatsAppTransportTest extends Unit
     {
         $this->assertTrue(WhatsAppIdentityService::phonesMatch('5491112345678', '01112345678'));
         $this->assertTrue(WhatsAppIdentityService::phonesMatch('5491112345678', '5491112345678'));
+        $this->assertTrue(WhatsAppIdentityService::phonesMatch('5493854336246', '543854336246'));
         $this->assertFalse(WhatsAppIdentityService::phonesMatch('5491112345678', '5491199999999'));
         $this->assertSame('5491112345678', WhatsAppIdentityService::digitsOnly('+54 9 11 1234-5678'));
     }

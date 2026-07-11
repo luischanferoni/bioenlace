@@ -27,6 +27,35 @@ final class WhatsAppCloudApiClient
             return false;
         }
 
+        $candidates = [$to];
+        // AR móvil: webhook suele traer 549…; Graph a veces acepta mejor 54… (sin 9).
+        if (preg_match('/^549(\d{10})$/', $to, $m)) {
+            $candidates[] = '54' . $m[1];
+        }
+
+        $lastError = '';
+        foreach (array_unique($candidates) as $candidate) {
+            $result = $this->postMessage($cfg, $candidate, $message);
+            if ($result['ok']) {
+                return true;
+            }
+            $lastError = $result['error'];
+        }
+
+        if ($lastError !== '') {
+            Yii::error('WhatsApp send failed: ' . $lastError, WhatsAppConfig::LOG_CATEGORY);
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array{phoneNumberId: string, accessToken: string, apiVersion: string, ...} $cfg
+     * @param array<string, mixed> $message
+     * @return array{ok: bool, error: string}
+     */
+    private function postMessage(array $cfg, string $to, array $message): array
+    {
         $url = sprintf(
             'https://graph.facebook.com/%s/%s/messages',
             rawurlencode($cfg['apiVersion']),
@@ -56,18 +85,16 @@ final class WhatsAppCloudApiClient
                 ->send();
 
             if ($response->isOk) {
-                return true;
+                return ['ok' => true, 'error' => ''];
             }
 
-            Yii::error(
-                'WhatsApp send: ' . ($response->statusCode ?? '?') . ' ' . ($response->content ?? ''),
-                WhatsAppConfig::LOG_CATEGORY
-            );
-        } catch (\Throwable $e) {
-            Yii::error('WhatsApp send: ' . $e->getMessage(), WhatsAppConfig::LOG_CATEGORY);
-        }
+            $err = 'to=' . $to . ' status=' . ($response->statusCode ?? '?')
+                . ' body=' . ($response->content ?? '');
 
-        return false;
+            return ['ok' => false, 'error' => $err];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'error' => 'to=' . $to . ' ex=' . $e->getMessage()];
+        }
     }
 
     public function sendText(string $toWaId, string $body): bool

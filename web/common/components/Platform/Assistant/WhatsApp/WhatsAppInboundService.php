@@ -84,7 +84,14 @@ final class WhatsAppInboundService
         if ($status !== 'linked' && $status !== 'just_linked') {
             $msg = trim((string) ($identityResult['message'] ?? ''));
             if ($msg !== '') {
-                $this->api->sendText($waId, $msg);
+                $sent = $this->api->sendText($waId, $msg);
+                if (!$sent) {
+                    Yii::error(
+                        'WhatsAppInboundService: no se pudo enviar reply de identidad status='
+                        . $status . ' wa_id=' . $waId,
+                        WhatsAppConfig::LOG_CATEGORY
+                    );
+                }
             }
 
             return;

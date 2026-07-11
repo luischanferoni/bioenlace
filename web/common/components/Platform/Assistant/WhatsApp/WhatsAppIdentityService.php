@@ -80,6 +80,23 @@ final class WhatsAppIdentityService
             ];
         }
 
+        // Ya pedimos confirmación: reenviar el prompt (sin re-matchear).
+        if ($vinculo->estado === AsistenteWhatsappVinculo::ESTADO_PENDIENTE_CONFIRMACION
+            && (int) $vinculo->pending_user_id > 0
+            && (int) $vinculo->pending_id_persona > 0
+        ) {
+            $persona = Persona::findOne((int) $vinculo->pending_id_persona);
+            $nombre = $persona
+                ? trim((string) $persona->nombre . ' ' . (string) $persona->apellido)
+                : 'vos';
+
+            return [
+                'status' => 'confirm_required',
+                'vinculo' => $vinculo,
+                'message' => '¿Sos ' . $nombre . '? Respondé SI para vincular este WhatsApp a tu cuenta Bioenlace, o NO si no sos vos.',
+            ];
+        }
+
         $match = $this->findUniquePatientByPhone($waPhone !== '' ? $waPhone : $waId);
         if ($match === null) {
             $vinculo->estado = AsistenteWhatsappVinculo::ESTADO_PENDIENTE_CONFIRMACION;

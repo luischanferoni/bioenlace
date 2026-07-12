@@ -12,7 +12,7 @@ La grilla de cupos es solo `encounter_class = AMB`. Guardia e internación usan 
 - **Tutor o representante:** puede reservar y gestionar turnos **de otro paciente** (menor sin cuenta o adulto que delegó), fijando `subject_persona_id` o el contexto «A cargo de» en móvil. Ver [representacion-paciente.md](./representacion-paciente.md).
 - **Profesional y administración del efector:** calendario, alta para terceros, sobreturnos, cancelación masiva de un día.
 - **Staff (admisión / enfermería):** alta de persona vía asistente (lector DNI / Didit); no implica fijar paciente en la sesión operativa del staff — ver [registro-paciente.md](./registro-paciente.md).
-- **Sistema:** recordatorios y avisos cuando cambia la agenda o el turno entra en conflicto.
+- **Sistema:** recordatorios y avisos cuando cambia la agenda o el turno entra en conflicto (**push**; WhatsApp utility **no** habilitado — ver [notificaciones](#notificaciones-push-y-whatsapp)).
 
 ## Cómo funciona (reserva paciente)
 
@@ -97,6 +97,17 @@ Al crear o reprogramar un turno pendiente, el agente `turno-antinoshow` programa
 3. **T−2 h:** recordatorio adicional para riesgo medio/alto.
 
 Flag: `autonomous_agent_antinoshow_enabled`. Desactivar liberación automática: `release_slot.enabled: false` en el YAML.
+
+## Notificaciones: push y WhatsApp
+
+Hoy los agentes de turno despachan **push** (FCM). WhatsApp Cloud API en producto:
+
+| Canal | Rol | Estado |
+|-------|-----|--------|
+| Chat asistente (paciente escribe) | Misma capacidad que app | **Habilitado** (Meta service ≈ $0) |
+| Avisos proactivos (recordatorio, anti no-show, resolución, waitlist, etc.) | Equivalente al push | **No** por WhatsApp (utility **no habilitada**); siguen push / escalada email-SMS |
+
+Detalle de COGS: [costos-api §7](../costos/costos-api.md#7-whatsapp-cloud-api-paciente). Escalada multicanal v1: [§ Escalada](#escalada-multicanal-agente-a02-v1).
 
 ## Shortlist en resolución (agente A01 v1 D1)
 

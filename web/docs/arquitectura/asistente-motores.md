@@ -108,7 +108,7 @@ sequenceDiagram
 
 ## Otros entrypoints (mismo stack, otro canal)
 
-WhatsApp Cloud API (paciente) entra por `whatsapp/webhook`, resuelve identidad y llama al **mismo** `ChatOrchestrator`; solo cambia el transporte y el render (texto/botones/listas). Smoke: [qa/paciente/asistente-whatsapp.md](../qa/paciente/asistente-whatsapp.md).
+WhatsApp Cloud API (paciente) entra por `whatsapp/webhook`, resuelve identidad y llama al **mismo** `ChatOrchestrator`; solo cambia el transporte y el render (texto/botones/listas). **Alcance:** mensajes iniciados por el paciente; utility proactiva **no** habilitada — [costos-api §7](../costos/costos-api.md#7-whatsapp-cloud-api-paciente). Smoke: [qa/paciente/asistente-whatsapp.md](../qa/paciente/asistente-whatsapp.md).
 
 No todo pasa por el chat genérico:
 

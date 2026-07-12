@@ -1,6 +1,8 @@
 # Smoke — asistente WhatsApp (paciente)
 
-Checklist manual del MVP (Meta Cloud API). Requiere `whatsapp.*` en params-local, migración aplicada y webhook HTTPS apuntando a `GET|POST /api/v1/whatsapp/webhook`.
+Checklist manual del MVP (Meta Cloud API). **Alcance de producto:** solo mensajes **iniciados por el paciente** (asistente reactivo). Plantillas utility proactivas **no** habilitadas.
+
+Requiere `whatsapp.*` en params-local, migración aplicada y webhook HTTPS apuntando a `GET|POST /api/v1/whatsapp/webhook`.
 
 ## Setup Meta
 
@@ -27,4 +29,4 @@ Checklist manual del MVP (Meta Cloud API). Requiere `whatsapp.*` en params-local
 
 ## Fuera de alcance (no fallar el smoke)
 
-Media/audio entrante, templates proactivos, paridad de todos los atajos de la app móvil.
+Media/audio entrante, **templates utility/marketing proactivos** (no habilitados en producto), paridad de todos los atajos de la app móvil.

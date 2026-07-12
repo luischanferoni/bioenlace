@@ -93,6 +93,8 @@ Tarifas y supuestos por profesional: [costos-api.md](./costos-api.md). Aquí sol
 
 **Infra app:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500 por mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); **no escala lineal** a 5.000 usuarios.
 
+**WhatsApp:** solo asistente **iniciado por el paciente** (Meta service ≈ $0; utility **no habilitada**). Detalle: [costos-api §7](./costos-api.md#7-whatsapp-cloud-api-paciente).
+
 **`infra-costos.md`** modela **GPU propia para inferencia**, no hosting Yii/API. Con IA por API (tabla de arriba), **no sumar** GPU de ese doc salvo inferencia on-prem.
 
 ### B) Carga fiscal sobre compras (estimación conservadora)

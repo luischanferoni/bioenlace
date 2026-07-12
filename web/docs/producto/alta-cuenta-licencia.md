@@ -28,8 +28,8 @@ flowchart LR
 
 1. **Privado:** cuenta propia, cobro simulado, entitlements según plan.
 2. **Público (solo clínica/centro):** elige ministerio (AFILIADO). Por defecto paga en cuenta propia; si marca cobertura ministerial, queda pendiente hasta que ops mueva el POOL.
-3. **Consultorio:** mismos pasos que clínica privada; **sin** opción público; plan **solo ambulatorio** (default 1 profesional; sin EMER/IMP); tipología de consultorio; tras el alta, `next_steps` indica asignarse a un servicio clínico (no se crea PES clínico automáticamente).
-4. **Plan clínica/centro:** AMB / EMER / IMP opcionales (al menos uno), alineado al calculador del inicio; dictado/videollamada solo si hay ambulatorio.
+3. **Consultorio:** mismos pasos que clínica privada; **sin** opción público; plan **solo ambulatorio con 1 profesional fijo** (unipersonal; sin EMER/IMP); tipología de consultorio; tras el alta, `next_steps` indica asignarse a un servicio clínico (no se crea PES clínico automáticamente).
+4. **Plan clínica/centro:** AMB / EMER / IMP opcionales (al menos uno), con cantidad de profesionales editable; dictado/videollamada solo si hay ambulatorio.
 5. **Desvincular pago ministerio / asociar:** AdminEfector autenticado vía API `desvincular-pago-ministerio` / `asociar-pago-ministerio` (esta última genera solicitud).
 
 ## Relación con el resto

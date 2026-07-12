@@ -325,7 +325,7 @@ final class InstitutionalEfectorSignupService
             if ($perfil === self::PERFIL_CONSULTORIO) {
                 $raw = [
                     'AMB' => [
-                        'max_pes' => max(1, (int) ($plan['max_pes_amb'] ?? 1)),
+                        'max_pes' => 1,
                         'dictado_incluido' => !empty($plan['audio']),
                         'videollamada_permitida' => !empty($plan['videollamada']),
                     ],
@@ -366,6 +366,8 @@ final class InstitutionalEfectorSignupService
                     'El consultorio profesional solo admite ambulatorio. Para urgencia o internación usá el alta de clínica / centro.'
                 );
             }
+            // Unipersonal: cupo fijo en 1 (ignora max_pes del payload).
+            $classes['AMB']['max_pes'] = 1;
         }
 
         return ['classes' => $classes];

@@ -7,7 +7,7 @@ Hacía falta un funnel desde el sitio institucional para vender licencia a clín
 ## Decisión
 
 1. **AdminEfector (clínica / efector):** alta self-service (usuario + persona + efector + `billing_account` EFECTOR + entitlements + PES AdminEfector) con **pasarela simulada**.
-2. **Profesional independiente = opción A (consultorio unipersonal):** mismo flujo cuenta → efector → pool, con perfil `CONSULTORIO` (solo AMB, default `max_pes` = 1), **solo sector PRIVADO**. **No** alta pública self-service para profesional (si trabaja en un centro público, lo suma AdminEfector). **No** licencia sin efector ni PES clínico sin efector. Urgencia/internación van por el alta de clínica/centro.
+2. **Profesional independiente = opción A (consultorio unipersonal):** mismo flujo cuenta → efector → pool, con perfil `CONSULTORIO` (solo AMB, **`max_pes` fijo = 1**), **solo sector PRIVADO**. **No** alta pública self-service para profesional (si trabaja en un centro público, lo suma AdminEfector). **No** licencia sin efector ni PES clínico sin efector. Urgencia/internación o más de un profesional van por el alta de clínica/centro.
 3. **Plan clínica (`CLINICA`):** clases AMB / EMER / IMP opcionales (mínimo una); no se fuerza ambulatorio.
 4. **Post-alta clínica:** no auto-crear PES clínico; se **guía** al usuario para asignarse a sí mismo en un servicio clínico (agenda/captura).
 5. **AdminMinisterio:** solo por **solicitud + aprobación humana** en admin; rol RBAC `AdminMinisterio` (incluido en `rolesEspeciales`).

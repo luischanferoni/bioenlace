@@ -166,9 +166,16 @@
       if (isConsultorio) ambCb.checked = true;
     }
     if (ambQty) {
-      ambQty.disabled = !ambOn;
-      if (ambOn && (parseInt(ambQty.value, 10) || 0) < 1) {
+      if (isConsultorio) {
         ambQty.value = '1';
+        ambQty.disabled = true;
+        ambQty.readOnly = true;
+      } else {
+        ambQty.readOnly = false;
+        ambQty.disabled = !ambOn;
+        if (ambOn && (parseInt(ambQty.value, 10) || 0) < 1) {
+          ambQty.value = '1';
+        }
       }
     }
     [planInput(form, 'audio'), planInput(form, 'videollamada')].forEach(function (input) {
@@ -199,7 +206,7 @@
     var ambQty = planInput(form, 'max_pes_amb');
     var ambOn = isConsultorio || !!(ambCb && ambCb.checked);
     if (ambOn && ambQty) {
-      var amb = Math.max(0, parseInt(ambQty.value, 10) || 0);
+      var amb = isConsultorio ? 1 : Math.max(0, parseInt(ambQty.value, 10) || 0);
       if (amb > 0) classes.AMB = amb;
     }
     var emerCb = planInput(form, 'incluir_emer');
@@ -447,12 +454,12 @@
     if (nombreLabel) nombreLabel.textContent = isConsultorio ? 'Nombre del consultorio' : 'Nombre del centro';
     if (planHint) {
       planHint.textContent = isConsultorio
-        ? 'El consultorio profesional es ambulatorio (1 profesional por defecto). Podés sumar dictado y/o videollamada.'
+        ? 'Licencia unipersonal: 1 profesional en ambulatorio. Podés sumar dictado y/o videollamada. Si necesitás más profesionales u otros tipos de atención, usá el alta de clínica / centro.'
         : 'Elegí ambulatorio, urgencia y/o internación (al menos uno). En ambulatorio podés sumar dictado y/o videollamada.';
     }
     if (ambLabel) {
       ambLabel.textContent = isConsultorio
-        ? 'Ambulatorio (vos / profesionales)'
+        ? 'Ambulatorio (1 profesional)'
         : 'Incluir ambulatorio';
     }
 

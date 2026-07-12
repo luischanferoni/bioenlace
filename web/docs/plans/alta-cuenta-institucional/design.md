@@ -18,8 +18,8 @@ flowchart TD
 
 | Perfil | Defaults | Post-alta |
 |--------|----------|-----------|
-| `CLINICA` | Plan típico multi-profesional | Invitar staff / habilitar servicios |
-| `CONSULTORIO` | `max_pes` AMB = 1; tipología consultorio | Guiar autoasignación a servicio clínico |
+| `CLINICA` | AMB / EMER / IMP opcionales (mín. 1 clase) | Invitar staff / habilitar servicios |
+| `CONSULTORIO` | Solo AMB, `max_pes` = 1; tipología consultorio; sin EMER/IMP ni sector público | Guiar autoasignación a servicio clínico |
 
 ## Sector vs pago
 

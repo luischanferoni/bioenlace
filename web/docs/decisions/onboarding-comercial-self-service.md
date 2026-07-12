@@ -7,11 +7,12 @@ Hacía falta un funnel desde el sitio institucional para vender licencia a clín
 ## Decisión
 
 1. **AdminEfector (clínica / efector):** alta self-service (usuario + persona + efector + `billing_account` EFECTOR + entitlements + PES AdminEfector) con **pasarela simulada**.
-2. **Profesional independiente = opción A (consultorio unipersonal):** mismo flujo cuenta → efector → pool, con perfil `CONSULTORIO` (defaults `max_pes` ambulatorio = 1), **solo sector PRIVADO**. **No** alta pública self-service para profesional (si trabaja en un centro público, lo suma AdminEfector). **No** licencia sin efector ni PES clínico sin efector.
-3. **Post-alta clínica:** no auto-crear PES clínico; se **guía** al usuario para asignarse a sí mismo en un servicio clínico (agenda/captura).
-4. **AdminMinisterio:** solo por **solicitud + aprobación humana** en admin; rol RBAC `AdminMinisterio` (incluido en `rolesEspeciales`).
-5. Separar **afiliación** (`AFILIADO` a cuenta MINISTERIO) de **quién paga** (`POOL` en cuenta propia o ministerial).
-6. Público exige ministerio; privado no. Cambios de pool ministerial requieren aprobación (no unilateral si consume cupo ajeno). **Consultorio (`CONSULTORIO`) no ofrece sector público** en institucional ni en API.
+2. **Profesional independiente = opción A (consultorio unipersonal):** mismo flujo cuenta → efector → pool, con perfil `CONSULTORIO` (solo AMB, default `max_pes` = 1), **solo sector PRIVADO**. **No** alta pública self-service para profesional (si trabaja en un centro público, lo suma AdminEfector). **No** licencia sin efector ni PES clínico sin efector. Urgencia/internación van por el alta de clínica/centro.
+3. **Plan clínica (`CLINICA`):** clases AMB / EMER / IMP opcionales (mínimo una); no se fuerza ambulatorio.
+4. **Post-alta clínica:** no auto-crear PES clínico; se **guía** al usuario para asignarse a sí mismo en un servicio clínico (agenda/captura).
+5. **AdminMinisterio:** solo por **solicitud + aprobación humana** en admin; rol RBAC `AdminMinisterio` (incluido en `rolesEspeciales`).
+6. Separar **afiliación** (`AFILIADO` a cuenta MINISTERIO) de **quién paga** (`POOL` en cuenta propia o ministerial).
+7. Público exige ministerio; privado no. Cambios de pool ministerial requieren aprobación (no unilateral si consume cupo ajeno). **Consultorio (`CONSULTORIO`) no ofrece sector público** en institucional ni en API.
 
 ## Alternativas descartadas
 

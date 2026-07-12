@@ -321,14 +321,18 @@ final class InstitutionalEfectorSignupService
     {
         $raw = $plan['classes'] ?? null;
         if (!is_array($raw) || $raw === []) {
-            $defaultAmb = $perfil === self::PERFIL_CONSULTORIO ? 1 : 5;
-            $raw = [
-                'AMB' => [
-                    'max_pes' => max(1, (int) ($plan['max_pes_amb'] ?? $defaultAmb)),
-                    'dictado_incluido' => !empty($plan['audio']),
-                    'videollamada_permitida' => !empty($plan['videollamada']),
-                ],
-            ];
+            // Legacy / vacío: consultorio → AMB×1; clínica sin classes → error (no forzar AMB).
+            if ($perfil === self::PERFIL_CONSULTORIO) {
+                $raw = [
+                    'AMB' => [
+                        'max_pes' => max(1, (int) ($plan['max_pes_amb'] ?? 1)),
+                        'dictado_incluido' => !empty($plan['audio']),
+                        'videollamada_permitida' => !empty($plan['videollamada']),
+                    ],
+                ];
+            } else {
+                throw new \InvalidArgumentException('Elegí al menos un tipo de atención (AMB / EMER / IMP).');
+            }
         }
 
         $classes = [];
@@ -351,6 +355,17 @@ final class InstitutionalEfectorSignupService
         }
         if ($classes === []) {
             throw new \InvalidArgumentException('Elegí al menos un tipo de atención (AMB / EMER / IMP).');
+        }
+
+        if ($perfil === self::PERFIL_CONSULTORIO) {
+            if (!isset($classes['AMB'])) {
+                throw new \InvalidArgumentException('El consultorio profesional requiere ambulatorio.');
+            }
+            if (isset($classes['EMER']) || isset($classes['IMP'])) {
+                throw new \InvalidArgumentException(
+                    'El consultorio profesional solo admite ambulatorio. Para urgencia o internación usá el alta de clínica / centro.'
+                );
+            }
         }
 
         return ['classes' => $classes];

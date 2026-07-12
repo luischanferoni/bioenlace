@@ -243,23 +243,26 @@
 
                     <fieldset class="signup-fieldset">
                         <legend>Plan</legend>
-                        <p class="signup-hint" id="plan-hint">Indicá cuántos profesionales contratás por tipo de atención. El estimado se actualiza al cambiar las cantidades.</p>
+                        <p class="signup-hint" id="plan-hint">Elegí al menos un tipo de atención e indicá cuántos profesionales. El estimado se actualiza al instante.</p>
                         <div class="signup-grid">
-                            <div class="signup-field">
-                                <label for="max_pes_amb" id="max_pes_amb_label">Ambulatorio (profesionales)</label>
-                                <input id="max_pes_amb" name="max_pes_amb" type="number" min="1" value="5" data-plan-input>
+                            <div class="full signup-check-row" id="row-amb">
+                                <label class="signup-check">
+                                    <input type="checkbox" name="incluir_amb" id="incluir_amb" data-plan-input checked>
+                                    <span id="max_pes_amb_label">Incluir ambulatorio</span>
+                                </label>
+                                <input class="signup-qty" id="max_pes_amb" name="max_pes_amb" type="number" min="1" value="5" aria-label="Profesionales de ambulatorio" data-plan-input>
                             </div>
-                            <div class="signup-addons">
-                                <label class="signup-check"><input type="checkbox" name="audio" data-plan-input> <span>Dictado</span></label>
-                                <label class="signup-check"><input type="checkbox" name="videollamada" data-plan-input> <span>Videollamada</span></label>
+                            <div class="full signup-addons" id="amb-addons">
+                                <label class="signup-check"><input type="checkbox" name="audio" data-plan-input> <span>Dictado (solo ambulatorio)</span></label>
+                                <label class="signup-check"><input type="checkbox" name="videollamada" data-plan-input> <span>Videollamada (solo ambulatorio)</span></label>
                             </div>
                             <div class="full signup-check-row" id="row-emer">
                                 <label class="signup-check"><input type="checkbox" name="incluir_emer" data-plan-input> <span>Incluir urgencia / guardia</span></label>
-                                <input class="signup-qty" name="max_pes_emer" type="number" min="1" value="2" aria-label="Profesionales de urgencia" data-plan-input>
+                                <input class="signup-qty" name="max_pes_emer" type="number" min="1" value="2" aria-label="Profesionales de urgencia" data-plan-input disabled>
                             </div>
                             <div class="full signup-check-row" id="row-imp">
                                 <label class="signup-check"><input type="checkbox" name="incluir_imp" data-plan-input> <span>Incluir internación</span></label>
-                                <input class="signup-qty" name="max_pes_imp" type="number" min="1" value="2" aria-label="Profesionales de internación" data-plan-input>
+                                <input class="signup-qty" name="max_pes_imp" type="number" min="1" value="2" aria-label="Profesionales de internación" data-plan-input disabled>
                             </div>
                         </div>
                         <div class="signup-price" id="signup-price" aria-live="polite">

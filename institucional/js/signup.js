@@ -127,29 +127,74 @@
     return String(token || '').replace(/\D+/g, '') || '4242424242424242';
   }
 
+  function currentPerfil(form) {
+    return (form && form.perfil && form.perfil.value) || 'CLINICA';
+  }
+
+  function syncPlanRowUi(form) {
+    if (!form) return;
+    var isConsultorio = currentPerfil(form) === 'CONSULTORIO';
+    var ambCb = form.incluir_amb;
+    var ambQty = form.max_pes_amb;
+    var ambOn = isConsultorio || !!(ambCb && ambCb.checked);
+
+    if (ambCb) {
+      ambCb.disabled = isConsultorio;
+      if (isConsultorio) ambCb.checked = true;
+    }
+    if (ambQty) {
+      ambQty.disabled = !ambOn;
+      if (ambOn && (parseInt(ambQty.value, 10) || 0) < 1) {
+        ambQty.value = '1';
+      }
+    }
+    [form.audio, form.videollamada].forEach(function (input) {
+      if (!input) return;
+      input.disabled = !ambOn;
+      if (!ambOn) input.checked = false;
+    });
+
+    function syncOptional(cb, qty) {
+      if (!cb || !qty) return;
+      var on = !isConsultorio && cb.checked;
+      qty.disabled = !on;
+      if (on && (parseInt(qty.value, 10) || 0) < 1) qty.value = '1';
+    }
+    syncOptional(form.incluir_emer, form.max_pes_emer);
+    syncOptional(form.incluir_imp, form.max_pes_imp);
+  }
+
   function readSelectionFromForm(form) {
     var classes = {};
-    var amb = Math.max(0, parseInt(form.max_pes_amb.value, 10) || 0);
-    if (amb > 0) classes.AMB = amb;
-    if (form.incluir_emer && form.incluir_emer.checked) {
+    var isConsultorio = currentPerfil(form) === 'CONSULTORIO';
+    var ambOn = isConsultorio || !!(form.incluir_amb && form.incluir_amb.checked);
+    if (ambOn) {
+      var amb = Math.max(0, parseInt(form.max_pes_amb.value, 10) || 0);
+      if (amb > 0) classes.AMB = amb;
+    }
+    if (!isConsultorio && form.incluir_emer && form.incluir_emer.checked) {
       classes.EMER = Math.max(1, parseInt(form.max_pes_emer.value, 10) || 1);
     }
-    if (form.incluir_imp && form.incluir_imp.checked) {
+    if (!isConsultorio && form.incluir_imp && form.incluir_imp.checked) {
       classes.IMP = Math.max(1, parseInt(form.max_pes_imp.value, 10) || 1);
     }
     return {
       classes: classes,
       addons: {
-        audio: !!(form.audio && form.audio.checked),
-        videollamada: !!(form.videollamada && form.videollamada.checked),
+        audio: !!(ambOn && form.audio && form.audio.checked),
+        videollamada: !!(ambOn && form.videollamada && form.videollamada.checked),
       },
     };
   }
 
   function buildPlanFromForm(form) {
     var selection = readSelectionFromForm(form);
+    var isConsultorio = currentPerfil(form) === 'CONSULTORIO';
+    if (isConsultorio && !selection.classes.AMB) {
+      throw new Error('El consultorio profesional requiere ambulatorio.');
+    }
     if (!selection.classes.AMB && !selection.classes.EMER && !selection.classes.IMP) {
-      throw new Error('Indicá al menos un tipo de atención con profesionales.');
+      throw new Error('Elegí al menos un tipo de atención (ambulatorio, urgencia o internación).');
     }
     if (window.BioenlacePricing && window.BioenlacePricing.toSignupPlan) {
       return window.BioenlacePricing.toSignupPlan(selection);
@@ -210,9 +255,16 @@
 
   function initPriceIndicator(form) {
     form.querySelectorAll('[data-plan-input]').forEach(function (el) {
-      el.addEventListener('input', function () { updatePriceIndicator(form); });
-      el.addEventListener('change', function () { updatePriceIndicator(form); });
+      el.addEventListener('input', function () {
+        syncPlanRowUi(form);
+        updatePriceIndicator(form);
+      });
+      el.addEventListener('change', function () {
+        syncPlanRowUi(form);
+        updatePriceIndicator(form);
+      });
     });
+    syncPlanRowUi(form);
     updatePriceIndicator(form);
   }
 
@@ -353,7 +405,7 @@
     }
     if (hint) {
       hint.textContent = isConsultorio
-        ? 'Creás tu usuario, tu consultorio privado y la licencia (1 profesional por defecto). Si trabajás en un hospital o clínica pública que ya usa Bioenlace, no uses este alta: pedí que administración del centro te sume. Después te guiamos para asignarte a un servicio clínico.'
+        ? 'Creás tu usuario, tu consultorio privado y la licencia (1 profesional ambulatorio). Si trabajás en un hospital o clínica pública que ya usa Bioenlace, no uses este alta: pedí que administración del centro te sume. Después te guiamos para asignarte a un servicio clínico.'
         : 'Vas a crear tu usuario administrador, el centro y la licencia. El cobro de esta demo es simulado (no se debita una tarjeta real).';
     }
     if (adminLegend) adminLegend.textContent = isConsultorio ? 'Tus datos' : 'Administrador';
@@ -361,32 +413,38 @@
     if (nombreLabel) nombreLabel.textContent = isConsultorio ? 'Nombre del consultorio' : 'Nombre del centro';
     if (planHint) {
       planHint.textContent = isConsultorio
-        ? 'Por defecto contratás 1 profesional en ambulatorio. Podés sumar opcionales; el estimado se actualiza al instante.'
-        : 'Indicá cuántos profesionales contratás por tipo de atención. El estimado se actualiza al cambiar las cantidades.';
+        ? 'El consultorio profesional es ambulatorio (1 profesional por defecto). Podés sumar dictado y/o videollamada.'
+        : 'Elegí ambulatorio, urgencia y/o internación (al menos uno). En ambulatorio podés sumar dictado y/o videollamada.';
     }
     if (ambLabel) {
       ambLabel.textContent = isConsultorio
         ? 'Ambulatorio (vos / profesionales)'
-        : 'Ambulatorio (profesionales)';
+        : 'Incluir ambulatorio';
     }
     if (rowEmer) rowEmer.hidden = isConsultorio;
     if (rowImp) rowImp.hidden = isConsultorio;
 
     if (form) {
       if (isConsultorio) {
+        if (form.incluir_amb) form.incluir_amb.checked = true;
         form.max_pes_amb.value = '1';
         if (form.incluir_emer) form.incluir_emer.checked = false;
         if (form.incluir_imp) form.incluir_imp.checked = false;
         var privado = form.querySelector('input[name="sector"][value="PRIVADO"]');
         if (privado) privado.checked = true;
         if (form.pago_cubierto_por_ministerio) form.pago_cubierto_por_ministerio.checked = false;
-        syncSectorUi();
-      } else if (parseInt(form.max_pes_amb.value, 10) === 1) {
-        form.max_pes_amb.value = '5';
-        syncSectorUi();
       } else {
-        syncSectorUi();
+        if (form.incluir_amb && !form.incluir_amb.checked
+            && !form.incluir_emer.checked && !form.incluir_imp.checked) {
+          form.incluir_amb.checked = true;
+        }
+        if (form.incluir_amb && form.incluir_amb.checked
+            && parseInt(form.max_pes_amb.value, 10) === 1) {
+          form.max_pes_amb.value = '5';
+        }
       }
+      syncSectorUi();
+      syncPlanRowUi(form);
       updatePriceIndicator(form);
     }
   }

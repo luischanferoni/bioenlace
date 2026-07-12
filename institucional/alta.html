@@ -81,9 +81,16 @@
             align-items: center;
             gap: 0.75rem 1.25rem;
         }
+        /* display:flex/grid del autor pisa [hidden] sin !important */
+        [hidden] { display: none !important; }
+        .signup-plan-row.is-off { display: none !important; }
         .signup-check-row .signup-qty {
             width: 5.5rem;
             max-width: 5.5rem;
+        }
+        .signup-check-row .signup-qty:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
         }
         .signup-addons {
             display: flex;
@@ -256,11 +263,11 @@
                                 <label class="signup-check"><input type="checkbox" name="audio" data-plan-input> <span>Dictado (solo ambulatorio)</span></label>
                                 <label class="signup-check"><input type="checkbox" name="videollamada" data-plan-input> <span>Videollamada (solo ambulatorio)</span></label>
                             </div>
-                            <div class="full signup-check-row" id="row-emer">
+                            <div class="full signup-check-row" id="row-emer" data-plan-row="EMER">
                                 <label class="signup-check"><input type="checkbox" name="incluir_emer" data-plan-input> <span>Incluir urgencia / guardia</span></label>
                                 <input class="signup-qty" name="max_pes_emer" type="number" min="1" value="2" aria-label="Profesionales de urgencia" data-plan-input disabled>
                             </div>
-                            <div class="full signup-check-row" id="row-imp">
+                            <div class="full signup-check-row" id="row-imp" data-plan-row="IMP">
                                 <label class="signup-check"><input type="checkbox" name="incluir_imp" data-plan-input> <span>Incluir internación</span></label>
                                 <input class="signup-qty" name="max_pes_imp" type="number" min="1" value="2" aria-label="Profesionales de internación" data-plan-input disabled>
                             </div>
@@ -317,6 +324,6 @@
 
     <script src="js/main.js"></script>
     <script src="js/pricing-core.js"></script>
-    <script src="js/signup.js"></script>
+    <script src="js/signup.js?v=20260712b"></script>
 </body>
 </html>

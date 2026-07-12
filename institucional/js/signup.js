@@ -131,12 +131,35 @@
     return (form && form.perfil && form.perfil.value) || 'CLINICA';
   }
 
+  function planInput(form, name) {
+    return form ? form.querySelector('[name="' + name + '"]') : null;
+  }
+
+  function setClinicaOnlyRowsVisible(visible) {
+    ['row-emer', 'row-imp'].forEach(function (id) {
+      var row = document.getElementById(id);
+      if (!row) return;
+      row.classList.toggle('is-off', !visible);
+      row.hidden = !visible;
+      row.style.display = visible ? '' : 'none';
+      row.setAttribute('aria-hidden', visible ? 'false' : 'true');
+      row.querySelectorAll('input').forEach(function (input) {
+        if (!visible) {
+          if (input.type === 'checkbox') input.checked = false;
+          input.disabled = true;
+        }
+      });
+    });
+  }
+
   function syncPlanRowUi(form) {
     if (!form) return;
     var isConsultorio = currentPerfil(form) === 'CONSULTORIO';
-    var ambCb = form.incluir_amb;
-    var ambQty = form.max_pes_amb;
+    var ambCb = planInput(form, 'incluir_amb');
+    var ambQty = planInput(form, 'max_pes_amb');
     var ambOn = isConsultorio || !!(ambCb && ambCb.checked);
+
+    setClinicaOnlyRowsVisible(!isConsultorio);
 
     if (ambCb) {
       ambCb.disabled = isConsultorio;
@@ -148,41 +171,54 @@
         ambQty.value = '1';
       }
     }
-    [form.audio, form.videollamada].forEach(function (input) {
+    [planInput(form, 'audio'), planInput(form, 'videollamada')].forEach(function (input) {
       if (!input) return;
       input.disabled = !ambOn;
       if (!ambOn) input.checked = false;
     });
 
-    function syncOptional(cb, qty) {
+    if (isConsultorio) return;
+
+    function syncOptional(cbName, qtyName) {
+      var cb = planInput(form, cbName);
+      var qty = planInput(form, qtyName);
       if (!cb || !qty) return;
-      var on = !isConsultorio && cb.checked;
+      cb.disabled = false;
+      var on = !!cb.checked;
       qty.disabled = !on;
       if (on && (parseInt(qty.value, 10) || 0) < 1) qty.value = '1';
     }
-    syncOptional(form.incluir_emer, form.max_pes_emer);
-    syncOptional(form.incluir_imp, form.max_pes_imp);
+    syncOptional('incluir_emer', 'max_pes_emer');
+    syncOptional('incluir_imp', 'max_pes_imp');
   }
 
   function readSelectionFromForm(form) {
     var classes = {};
     var isConsultorio = currentPerfil(form) === 'CONSULTORIO';
-    var ambOn = isConsultorio || !!(form.incluir_amb && form.incluir_amb.checked);
-    if (ambOn) {
-      var amb = Math.max(0, parseInt(form.max_pes_amb.value, 10) || 0);
+    var ambCb = planInput(form, 'incluir_amb');
+    var ambQty = planInput(form, 'max_pes_amb');
+    var ambOn = isConsultorio || !!(ambCb && ambCb.checked);
+    if (ambOn && ambQty) {
+      var amb = Math.max(0, parseInt(ambQty.value, 10) || 0);
       if (amb > 0) classes.AMB = amb;
     }
-    if (!isConsultorio && form.incluir_emer && form.incluir_emer.checked) {
-      classes.EMER = Math.max(1, parseInt(form.max_pes_emer.value, 10) || 1);
+    var emerCb = planInput(form, 'incluir_emer');
+    var emerQty = planInput(form, 'max_pes_emer');
+    if (!isConsultorio && emerCb && emerCb.checked && emerQty) {
+      classes.EMER = Math.max(1, parseInt(emerQty.value, 10) || 1);
     }
-    if (!isConsultorio && form.incluir_imp && form.incluir_imp.checked) {
-      classes.IMP = Math.max(1, parseInt(form.max_pes_imp.value, 10) || 1);
+    var impCb = planInput(form, 'incluir_imp');
+    var impQty = planInput(form, 'max_pes_imp');
+    if (!isConsultorio && impCb && impCb.checked && impQty) {
+      classes.IMP = Math.max(1, parseInt(impQty.value, 10) || 1);
     }
+    var audio = planInput(form, 'audio');
+    var video = planInput(form, 'videollamada');
     return {
       classes: classes,
       addons: {
-        audio: !!(ambOn && form.audio && form.audio.checked),
-        videollamada: !!(ambOn && form.videollamada && form.videollamada.checked),
+        audio: !!(ambOn && audio && audio.checked),
+        videollamada: !!(ambOn && video && video.checked),
       },
     };
   }
@@ -395,8 +431,6 @@
     var nombreLabel = $('#efector_nombre_label');
     var planHint = $('#plan-hint');
     var ambLabel = $('#max_pes_amb_label');
-    var rowEmer = $('#row-emer');
-    var rowImp = $('#row-imp');
 
     if (title) {
       title.textContent = isConsultorio
@@ -421,26 +455,28 @@
         ? 'Ambulatorio (vos / profesionales)'
         : 'Incluir ambulatorio';
     }
-    if (rowEmer) rowEmer.hidden = isConsultorio;
-    if (rowImp) rowImp.hidden = isConsultorio;
 
     if (form) {
       if (isConsultorio) {
-        if (form.incluir_amb) form.incluir_amb.checked = true;
-        form.max_pes_amb.value = '1';
-        if (form.incluir_emer) form.incluir_emer.checked = false;
-        if (form.incluir_imp) form.incluir_imp.checked = false;
+        var incluirAmb = planInput(form, 'incluir_amb');
+        var maxAmb = planInput(form, 'max_pes_amb');
+        if (incluirAmb) incluirAmb.checked = true;
+        if (maxAmb) maxAmb.value = '1';
         var privado = form.querySelector('input[name="sector"][value="PRIVADO"]');
         if (privado) privado.checked = true;
         if (form.pago_cubierto_por_ministerio) form.pago_cubierto_por_ministerio.checked = false;
       } else {
-        if (form.incluir_amb && !form.incluir_amb.checked
-            && !form.incluir_emer.checked && !form.incluir_imp.checked) {
-          form.incluir_amb.checked = true;
+        var ambCb = planInput(form, 'incluir_amb');
+        var emerCb = planInput(form, 'incluir_emer');
+        var impCb = planInput(form, 'incluir_imp');
+        var maxAmbClin = planInput(form, 'max_pes_amb');
+        if (ambCb && !ambCb.checked
+            && !(emerCb && emerCb.checked) && !(impCb && impCb.checked)) {
+          ambCb.checked = true;
         }
-        if (form.incluir_amb && form.incluir_amb.checked
-            && parseInt(form.max_pes_amb.value, 10) === 1) {
-          form.max_pes_amb.value = '5';
+        if (ambCb && ambCb.checked && maxAmbClin
+            && parseInt(maxAmbClin.value, 10) === 1) {
+          maxAmbClin.value = '5';
         }
       }
       syncSectorUi();

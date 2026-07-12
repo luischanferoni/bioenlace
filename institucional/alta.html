@@ -200,12 +200,13 @@
                 <p class="signup-hint" id="efector-panel-hint">Vas a crear tu usuario administrador, el centro y la licencia. El cobro de esta demo es simulado (no se debita una tarjeta real).</p>
                 <form id="form-efector" autocomplete="off" novalidate>
                     <input type="hidden" name="perfil" id="signup-perfil" value="CLINICA">
-                    <fieldset class="signup-fieldset">
+                    <fieldset class="signup-fieldset" id="sector-fieldset">
                         <legend>Sector</legend>
                         <div class="signup-sector">
                             <label class="signup-check"><input type="radio" name="sector" value="PRIVADO" checked> Privado</label>
-                            <label class="signup-check"><input type="radio" name="sector" value="PUBLICO"> Público</label>
+                            <label class="signup-check" id="sector-publico-label"><input type="radio" name="sector" value="PUBLICO"> Público</label>
                         </div>
+                        <p class="signup-hint" id="sector-consultorio-hint" hidden>El alta de consultorio profesional es solo para el sector <strong>privado</strong>. Si trabajás en un centro público, pedí que administración del centro te sume a Bioenlace.</p>
                         <div id="ministerio-wrap" class="signup-field full" hidden style="margin-top:0.75rem">
                             <label for="id_billing_account_ministerio">Ministerio</label>
                             <select id="id_billing_account_ministerio" name="id_billing_account_ministerio"></select>

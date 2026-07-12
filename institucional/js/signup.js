@@ -77,13 +77,30 @@
   }
 
   function syncSectorUi() {
+    var form = $('#form-efector');
+    var perfil = (form && form.perfil && form.perfil.value) || 'CLINICA';
+    var isConsultorio = perfil === 'CONSULTORIO';
+    var sectorPrivado = form && form.querySelector('input[name="sector"][value="PRIVADO"]');
+    var publicoLabel = $('#sector-publico-label');
+    var consultorioHint = $('#sector-consultorio-hint');
+    if (publicoLabel) publicoLabel.hidden = isConsultorio;
+    if (consultorioHint) consultorioHint.hidden = !isConsultorio;
+    if (isConsultorio && sectorPrivado) {
+      sectorPrivado.checked = true;
+    }
+
     var sector = ($('input[name="sector"]:checked') || {}).value;
     var wrap = $('#ministerio-wrap');
     var pagoMin = $('#pago-ministerio-wrap');
     if (!wrap) return;
-    var isPublic = sector === 'PUBLICO';
+    var isPublic = !isConsultorio && sector === 'PUBLICO';
     wrap.hidden = !isPublic;
-    if (pagoMin) pagoMin.hidden = !isPublic;
+    if (pagoMin) {
+      pagoMin.hidden = !isPublic;
+      if (!isPublic && form && form.pago_cubierto_por_ministerio) {
+        form.pago_cubierto_por_ministerio.checked = false;
+      }
+    }
     var sel = $('#id_billing_account_ministerio');
     if (sel) sel.required = isPublic;
     syncPaymentUi();
@@ -216,14 +233,19 @@
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
+      var perfil = (form.perfil && form.perfil.value) || 'CLINICA';
       var sector = (form.querySelector('input[name="sector"]:checked') || {}).value;
+      if (perfil === 'CONSULTORIO') {
+        sector = 'PRIVADO';
+      }
       var body = {
-        perfil: (form.perfil && form.perfil.value) || 'CLINICA',
+        perfil: perfil,
         sector: sector,
         id_billing_account_ministerio: sector === 'PUBLICO'
           ? parseInt(form.id_billing_account_ministerio.value, 10) || 0
           : null,
-        pago_cubierto_por_ministerio: !!(form.pago_cubierto_por_ministerio && form.pago_cubierto_por_ministerio.checked),
+        pago_cubierto_por_ministerio: sector === 'PUBLICO'
+          && !!(form.pago_cubierto_por_ministerio && form.pago_cubierto_por_ministerio.checked),
         admin: {
           nombre: form.admin_nombre.value.trim(),
           apellido: form.admin_apellido.value.trim(),
@@ -331,7 +353,7 @@
     }
     if (hint) {
       hint.textContent = isConsultorio
-        ? 'Creás tu usuario, tu consultorio y la licencia (1 profesional por defecto). Después te guiamos para asignarte a vos mismo en un servicio clínico y poder atender.'
+        ? 'Creás tu usuario, tu consultorio privado y la licencia (1 profesional por defecto). Si trabajás en un hospital o clínica pública que ya usa Bioenlace, no uses este alta: pedí que administración del centro te sume. Después te guiamos para asignarte a un servicio clínico.'
         : 'Vas a crear tu usuario administrador, el centro y la licencia. El cobro de esta demo es simulado (no se debita una tarjeta real).';
     }
     if (adminLegend) adminLegend.textContent = isConsultorio ? 'Tus datos' : 'Administrador';
@@ -357,9 +379,13 @@
         if (form.incluir_imp) form.incluir_imp.checked = false;
         var privado = form.querySelector('input[name="sector"][value="PRIVADO"]');
         if (privado) privado.checked = true;
+        if (form.pago_cubierto_por_ministerio) form.pago_cubierto_por_ministerio.checked = false;
         syncSectorUi();
       } else if (parseInt(form.max_pes_amb.value, 10) === 1) {
         form.max_pes_amb.value = '5';
+        syncSectorUi();
+      } else {
+        syncSectorUi();
       }
       updatePriceIndicator(form);
     }

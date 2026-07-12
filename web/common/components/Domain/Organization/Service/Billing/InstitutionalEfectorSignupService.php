@@ -68,6 +68,12 @@ final class InstitutionalEfectorSignupService
         }
 
         $pagoPorMinisterio = !empty($payload['pago_cubierto_por_ministerio']);
+        if ($perfil === self::PERFIL_CONSULTORIO && $sector === self::SECTOR_PUBLICO) {
+            throw new \InvalidArgumentException(
+                'El alta de consultorio profesional solo admite sector privado. '
+                . 'Si trabajás en un centro público, pedí que administración del centro te sume a Bioenlace.'
+            );
+        }
         if ($pagoPorMinisterio && ($sector !== self::SECTOR_PUBLICO || $ministerio === null)) {
             throw new \InvalidArgumentException('La cobertura ministerial solo aplica a efectores públicos con ministerio.');
         }

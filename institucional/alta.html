@@ -94,9 +94,66 @@
         }
         .signup-addons {
             display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.55rem 1rem;
+            margin: -0.15rem 0 0.35rem 1.65rem;
+            padding: 0.65rem 0.85rem;
+            border-left: 3px solid rgba(9, 62, 77, 0.18);
+            border-radius: 0 8px 8px 0;
+            background: rgba(9, 62, 77, 0.04);
+        }
+        .signup-addons[aria-disabled="true"],
+        .signup-addons.is-disabled {
+            opacity: 0.55;
+        }
+        .signup-addon {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin: 0;
+            padding: 0.35rem 0.7rem;
+            border: 1px solid rgba(9, 62, 77, 0.16);
+            border-radius: 999px;
+            background: #fff;
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #37474f;
+            cursor: pointer;
+            user-select: none;
+            transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        }
+        .signup-addon:hover:not(:has(input:disabled)) {
+            border-color: rgba(9, 62, 77, 0.35);
+            box-shadow: 0 1px 4px rgba(9, 62, 77, 0.08);
+        }
+        .signup-addon:has(input:checked) {
+            border-color: #093e4d;
+            background: rgba(9, 62, 77, 0.08);
+            color: #093e4d;
+        }
+        .signup-addon:has(input:disabled) {
+            cursor: not-allowed;
+            background: #f5f7f8;
+            color: #90a4ae;
+        }
+        .signup-addon input {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            accent-color: #093e4d;
+            flex: 0 0 auto;
+        }
+        .signup-addon__label {
+            white-space: nowrap;
+        }
+        .signup-addon__hint {
+            font-style: normal;
+            font-weight: 400;
+            font-size: 0.82em;
+            color: #78909c;
+        }
+        .signup-addon:has(input:checked) .signup-addon__hint {
+            color: rgba(9, 62, 77, 0.65);
         }
         .signup-sector { display: flex; gap: 1rem; flex-wrap: wrap; }
         .signup-hint { font-size: 0.85rem; color: #546e7a; margin: 0.25rem 0 1rem; }
@@ -260,8 +317,14 @@
                                 <input class="signup-qty" id="max_pes_amb" name="max_pes_amb" type="number" min="1" value="5" aria-label="Profesionales de ambulatorio" data-plan-input>
                             </div>
                             <div class="full signup-addons" id="amb-addons">
-                                <label class="signup-check"><input type="checkbox" name="audio" data-plan-input> <span>Dictado (solo ambulatorio)</span></label>
-                                <label class="signup-check"><input type="checkbox" name="videollamada" data-plan-input> <span>Videollamada (solo ambulatorio)</span></label>
+                                <label class="signup-addon">
+                                    <input type="checkbox" name="audio" data-plan-input>
+                                    <span class="signup-addon__label">Dictado <em class="signup-addon__hint">(opcional)</em></span>
+                                </label>
+                                <label class="signup-addon">
+                                    <input type="checkbox" name="videollamada" data-plan-input>
+                                    <span class="signup-addon__label">Videollamada <em class="signup-addon__hint">(opcional)</em></span>
+                                </label>
                             </div>
                             <div class="full signup-check-row" id="row-emer" data-plan-row="EMER">
                                 <label class="signup-check"><input type="checkbox" name="incluir_emer" data-plan-input> <span>Incluir urgencia / guardia</span></label>
@@ -324,6 +387,6 @@
 
     <script src="js/main.js"></script>
     <script src="js/pricing-core.js"></script>
-    <script src="js/signup.js?v=20260712c"></script>
+    <script src="js/signup.js?v=20260713a"></script>
 </body>
 </html>

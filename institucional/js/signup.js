@@ -178,6 +178,11 @@
         }
       }
     }
+    var addonsWrap = document.getElementById('amb-addons');
+    if (addonsWrap) {
+      addonsWrap.classList.toggle('is-disabled', !ambOn);
+      addonsWrap.setAttribute('aria-disabled', ambOn ? 'false' : 'true');
+    }
     [planInput(form, 'audio'), planInput(form, 'videollamada')].forEach(function (input) {
       if (!input) return;
       input.disabled = !ambOn;

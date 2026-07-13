@@ -207,7 +207,7 @@ class PersonaMpi extends \yii\db\ActiveRecord
      */
     public function getDomicilios()
     {
-        return $this->hasMany(Domicilios::className(), ['id_domicilio' => 'id_domicilio'])->viaTable('personas_domicilios', ['id_persona' => 'id_persona']);
+        return $this->hasMany(Domicilios::className(), ['id_domicilio' => 'id_domicilio'])->viaTable(Persona_domicilio::tableName(), ['id_persona' => 'id_persona']);
     }
 
     /**

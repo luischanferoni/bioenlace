@@ -6,7 +6,7 @@ use Yii;
 
 
 /**
- * This is the model class for table "personas_hc".
+ * This is the model class for table "persona_hc".
  *
  * @property integer $id_persona
  * @property integer $id_efector
@@ -21,7 +21,7 @@ class Persona_hc extends \yii\db\ActiveRecord
   
     public static function tableName()
     {
-        return 'personas_hc';
+        return 'persona_hc';
     }
 
     /**
@@ -53,7 +53,7 @@ class Persona_hc extends \yii\db\ActiveRecord
     // Este metodo no está funcionando
         $query = new yii\db\Query;
         $query->select("numero_hc")
-            ->from('personas_hc')
+            ->from('persona_hc')
             ->where("id_persona = ".$id_persona)
             ->where("id_efector = ".Yii::$app->user->getIdEfector())
             ->limit(1);
@@ -70,7 +70,7 @@ class Persona_hc extends \yii\db\ActiveRecord
 
         $query = new yii\db\Query;
         $query->select(['COUNT(*) AS cnt'])
-            ->from('personas_hc')
+            ->from('persona_hc')
             ->where("id_efector = ".Yii::$app->user->getIdEfector())
             ->andWhere("numero_hc = ".$this->numero_hc)
             ->limit(1);

@@ -6,7 +6,7 @@ use common\models\Clinical\Encounter;
 use common\traits\EncounterIdLegacyConsultaColumnTrait;
 
 /**
- * Antecedentes de persona — tabla `personas_antecedentes`.
+ * Antecedentes de persona — tabla `persona_antecedentes`.
  *
  * La columna `encounter_id` (legacy `id_consulta`) almacena el id de {@see Encounter}.
  *
@@ -31,7 +31,7 @@ class PersonasAntecedente extends \yii\db\ActiveRecord
 
     public static function tableName()
     {
-        return 'personas_antecedentes';
+        return 'persona_antecedentes';
     }
 
     public function rules()

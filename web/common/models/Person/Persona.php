@@ -489,7 +489,7 @@ class Persona extends \yii\db\ActiveRecord
             ->orwhere(['like', 'nombre', '%' . $q . '%', false])
             ->orwhere(['like', 'apellido', $q . '%', false])
             ->orWhere(['like', 'documento', $q . '%', false])
-            ->leftJoin('personas_hc', '`personas_hc`.`id_persona` = `personas`.`id_persona` AND `personas_hc`.id_efector = ' . Yii::$app->user->idEfector)
+            ->leftJoin('persona_hc', '`persona_hc`.`id_persona` = `personas`.`id_persona` AND `persona_hc`.id_efector = ' . Yii::$app->user->idEfector)
             ->limit(20);
         $command = $query->createCommand();
         $data = $command->queryAll();
@@ -534,7 +534,7 @@ class Persona extends \yii\db\ActiveRecord
     {
         $query = new yii\db\Query;
         $query->select("numero_hc")
-            ->from('personas_hc')
+            ->from('persona_hc')
             ->where("id_efector = " . Yii::$app->user->getIdEfector())
             ->orderBy('numero_hc DESC')
             ->limit(1);
@@ -552,7 +552,7 @@ class Persona extends \yii\db\ActiveRecord
     {
         $query = new yii\db\Query;
         $query->select(['numero_hc'])
-            ->from('personas_hc')
+            ->from('persona_hc')
             ->where("id_efector = " . $id_efector)
             ->andWhere("id_persona = " . $this->id_persona)
             ->limit(1);
@@ -565,7 +565,7 @@ class Persona extends \yii\db\ActiveRecord
 
     public function generarNHistoriaClinica($id_persona, $nro_hc)
     {
-        $sql = 'INSERT INTO personas_hc (id_persona, id_efector, numero_hc) VALUES (' . $id_persona . ', ' . Yii::$app->user->getIdEfector() . ',' . $nro_hc . ')';
+        $sql = 'INSERT INTO persona_hc (id_persona, id_efector, numero_hc) VALUES (' . $id_persona . ', ' . Yii::$app->user->getIdEfector() . ',' . $nro_hc . ')';
 
         \Yii::$app->db->createCommand($sql)->execute();
     }
@@ -589,7 +589,7 @@ class Persona extends \yii\db\ActiveRecord
     {
         $query = new yii\db\Query;
         $query->select(['COUNT(*) AS cnt'])
-            ->from('personas_hc')
+            ->from('persona_hc')
             ->where("id_efector = " . Yii::$app->user->idEfector)
             ->andWhere("numero_hc = " . $numero_hc)
             ->limit(1);

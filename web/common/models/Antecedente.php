@@ -72,7 +72,7 @@ class Antecedente extends \yii\db\ActiveRecord
      */
     public function getPersonas()
     {
-        return $this->hasMany(Persona::className(), ['id_persona' => 'id_persona'])->viaTable('personas_antecedentes', ['id_antecedente' => 'id_antecedente']);
+        return $this->hasMany(Persona::className(), ['id_persona' => 'id_persona'])->viaTable(PersonasAntecedente::tableName(), ['id_antecedente' => 'id_antecedente']);
     }
     
     public function getAntecedente_personal($edad,$sexo) {

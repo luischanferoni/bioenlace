@@ -6,7 +6,7 @@ use common\models\Clinical\Encounter;
 use common\traits\EncounterIdLegacyConsultaColumnTrait;
 
 /**
- * Antecedentes familiares — misma tabla `personas_antecedentes`.
+ * Antecedentes familiares — misma tabla `persona_antecedentes`.
  *
  * @property int|null $encounter_id
  * @property int|null $id_consulta Alias deprecated de {@see $encounter_id}.
@@ -21,7 +21,7 @@ class PersonasAntecedenteFamiliar extends \yii\db\ActiveRecord
 
     public static function tableName()
     {
-        return 'personas_antecedentes';
+        return 'persona_antecedentes';
     }
 
     public function rules()

@@ -5,7 +5,7 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "domicilios".
+ * This is the model class for table "persona_domicilios".
  *
  * @property string $id_domicilio
  * @property string $calle
@@ -35,7 +35,7 @@ class Domicilio extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'domicilios';
+        return 'persona_domicilios';
     }
 
     /**
@@ -115,14 +115,14 @@ class Domicilio extends \yii\db\ActiveRecord
     public function getPersonas()
     {
         return $this->hasMany(Persona::className(), ['id_persona' => 'id_persona'])
-                ->viaTable('personas_domicilios', ['id_domicilio' => 'id_domicilio']);
+                ->viaTable(Persona_domicilio::tableName(), ['id_domicilio' => 'id_domicilio']);
     }
     
     public function getDomiciliosPorPersona($id_persona)
     {
-        $sql = 'SELECT * FROM `domicilios` INNER JOIN `personas_domicilios` ON '
-                . 'domicilios.id_domicilio = personas_domicilios.id_domicilio '
-                . 'WHERE personas_domicilios.id_persona='.$id_persona;
+        $sql = 'SELECT * FROM `persona_domicilios` INNER JOIN `persona_domicilios_vinculo` ON '
+                . 'persona_domicilios.id_domicilio = persona_domicilios_vinculo.id_domicilio '
+                . 'WHERE persona_domicilios_vinculo.id_persona='.$id_persona;
         $domicilios = PersonaTelefono::findBySql($sql)->asArray()->all();
         return $domicilios;
     }

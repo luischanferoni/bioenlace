@@ -13,6 +13,7 @@ import '../auth/staff_session_auth.dart';
 import '../auth/person_display_name.dart';
 import '../config/api_config.dart';
 import '../config/didit_config_resolver.dart';
+import '../http/bioenlace_http_trace.dart';
 import '../platform/didit_platform.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/ui.dart';
@@ -259,6 +260,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 }),
               )
               .timeout(const Duration(seconds: AppConfig.httpTimeoutSeconds));
+
+          BioenlaceHttpTrace.logResponse('auth/login-biometrico', response);
 
           final data = jsonDecode(response.body);
 

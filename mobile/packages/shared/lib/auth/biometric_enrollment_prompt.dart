@@ -26,6 +26,7 @@ abstract final class BiometricEnrollmentPrompt {
 
     final accept = await showDialog<bool>(
       context: context,
+      useRootNavigator: true,
       barrierDismissible: false,
       builder: (ctx) {
         final tokens = ctx.bio;

@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shared/shared.dart';
 
-import '../auth/paciente_authenticated_shell.dart';
 import '../auth/paciente_post_login.dart';
-import '../services/chat_service.dart';
 import '../services/registration_service.dart';
-import 'main_screen.dart';
 
 /// Registro del paciente: dispara el flujo de verificación de identidad.
 class SignupScreen extends StatefulWidget {
@@ -40,53 +37,42 @@ class _SignupScreenState extends State<SignupScreen> {
             'paciente_${persona['id_persona'] ?? DateTime.now().millisecondsSinceEpoch}';
         final fullName =
             '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
+        final token = registroInner['token']?.toString();
+        final ctxJson = registroInner['paciente_contexto'];
+
+        debugPrint(
+          'SignupScreen: registro OK userId=$userId — enrolando huella…',
+        );
+
+        // Independiente de mounted: Didit puede haber desmontado esta ruta.
+        final ok = await enterPacienteAuthenticatedApp(
+          userId: userId,
+          userName: fullName.isNotEmpty ? fullName : 'Usuario',
+          authToken: token,
+          pacienteContexto:
+              ctxJson is Map<String, dynamic> ? ctxJson : null,
+          fallbackContext: mounted ? context : null,
+          forceBiometricEnrollment: true,
+          waitForNativeReturn: true,
+        );
+
+        if (!ok) {
+          debugPrint('SignupScreen: no se completó enrolamiento/navegación');
+          if (mounted) {
+            _snack(
+              'Registramos tu cuenta, pero falta activar la huella del dispositivo.',
+              UiIntent.warning,
+            );
+          }
+          return;
+        }
 
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('is_logged_in', true);
-        await prefs.setString('user_id', userId);
-        await prefs.setString('user_name', fullName);
-        await prefs.setString('dni_detected', persona['documento']?.toString() ?? '');
+        await prefs.setString(
+          'dni_detected',
+          persona['documento']?.toString() ?? '',
+        );
         await prefs.setString('name_detected', fullName);
-        await BiometricSessionPrefs.touchActivity();
-
-        final ctxJson = registroInner['paciente_contexto'];
-        if (registroInner['token'] != null) {
-          final token = registroInner['token'].toString();
-          await prefs.setString('auth_token', token);
-          PacienteContextScope.instance.bindAuthToken(token);
-          ClientDiagnosticApi.bindSession(
-            authToken: token,
-            appClient: 'paciente-flutter',
-          );
-        }
-        if (ctxJson is Map<String, dynamic>) {
-          PacienteContextScope.instance.applyFromRegistration(ctxJson);
-        }
-
-        if (!mounted) return;
-        _snack('Registro completado exitosamente', UiIntent.success);
-
-        final chatService = ChatService(
-          currentUserId: userId,
-          currentUserName: prefs.getString('user_name') ?? 'Usuario',
-          authToken: prefs.getString('auth_token'),
-        );
-
-        if (!mounted) return;
-        final enrolled = await requirePacienteBiometricEnrollment(context);
-        if (!enrolled || !mounted) return;
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => wrapPacienteAuthenticatedShell(
-              child: MainScreen(
-                chatService: chatService,
-                authToken: prefs.getString('auth_token'),
-              ),
-            ),
-          ),
-        );
       } else {
         if (!mounted) return;
         final errors = result['errors'];
@@ -94,9 +80,11 @@ class _SignupScreenState extends State<SignupScreen> {
         if (errors is Map && errors.isNotEmpty) {
           message = '$message\n${errors.toString()}';
         }
+        debugPrint('SignupScreen: registro falló — $message');
         _snack(message, UiIntent.danger);
       }
     } catch (e) {
+      debugPrint('SignupScreen: error $e');
       if (!mounted) return;
       _snack('Error inesperado: ${e.toString()}', UiIntent.danger);
     } finally {

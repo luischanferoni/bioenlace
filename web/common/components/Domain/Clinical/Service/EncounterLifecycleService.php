@@ -215,6 +215,11 @@ final class EncounterLifecycleService
             ->orderBy(['id' => SORT_DESC])
             ->one();
         if ($existing instanceof Encounter) {
+            $pesTurno = (int) ($turno->id_profesional_efector_servicio ?? 0);
+            if ($pesTurno > 0 && (int) ($existing->id_profesional_efector_servicio ?? 0) <= 0) {
+                $existing->updateAttributes(['id_profesional_efector_servicio' => $pesTurno]);
+            }
+
             return $existing;
         }
 

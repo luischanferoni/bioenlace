@@ -7,6 +7,7 @@ use common\components\Domain\Scheduling\Service\ConsultaAsyncAccessService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
+use common\models\Scheduling\Turno;
 use Yii;
 
 /**
@@ -29,21 +30,13 @@ final class EncounterAccessService
             }
         }
 
-        $idPesEncounter = (int) ($encounter->id_profesional_efector_servicio ?? 0);
         $idPesSesionRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
         $idPesSesion = $idPesSesionRaw !== null && $idPesSesionRaw !== '' ? (int) $idPesSesionRaw : 0;
-
-        if ($idPesEncounter > 0 && $idPesSesion > 0 && $idPesEncounter === $idPesSesion) {
-            return true;
-        }
-        if ($idPesSesion > 0 && $idPesEncounter > 0) {
-            $pesS = ProfesionalEfectorServicio::findOne(['id' => $idPesSesion, 'deleted_at' => null]);
-            $pesE = ProfesionalEfectorServicio::findOne(['id' => $idPesEncounter, 'deleted_at' => null]);
-            if (
-                $pesS !== null && $pesE !== null
-                && (int) $pesS->id_persona === (int) $pesE->id_persona
-            ) {
-                return true;
+        if ($idPesSesion > 0) {
+            foreach (self::staffPesCandidatesForEncounter($encounter) as $idPesResource) {
+                if (self::staffPesMatchesSession($idPesSesion, $idPesResource)) {
+                    return true;
+                }
             }
         }
 
@@ -52,6 +45,53 @@ final class EncounterAccessService
         }
 
         return false;
+    }
+
+    /**
+     * PES del encounter y, si hay turno vinculado, el del appointment (motivos suelen crearse
+     * con encounter sin PES o con PES desfasado respecto del turno de agenda).
+     *
+     * @return list<int>
+     */
+    private static function staffPesCandidatesForEncounter(Encounter $encounter): array
+    {
+        $out = [];
+        $idPesEncounter = (int) ($encounter->id_profesional_efector_servicio ?? 0);
+        if ($idPesEncounter > 0) {
+            $out[] = $idPesEncounter;
+        }
+
+        $appointmentId = (int) ($encounter->appointment_id ?? 0);
+        if ($appointmentId <= 0 && strtoupper(trim((string) ($encounter->parent_type ?? ''))) === Encounter::PARENT_TURNO) {
+            $appointmentId = (int) ($encounter->parent_id ?? 0);
+        }
+        if ($appointmentId > 0) {
+            $turno = Turno::find()
+                ->andWhere(['id_turnos' => $appointmentId])
+                ->one();
+            $idPesTurno = $turno !== null ? (int) ($turno->id_profesional_efector_servicio ?? 0) : 0;
+            if ($idPesTurno > 0 && !in_array($idPesTurno, $out, true)) {
+                $out[] = $idPesTurno;
+            }
+        }
+
+        return $out;
+    }
+
+    private static function staffPesMatchesSession(int $idPesSesion, int $idPesResource): bool
+    {
+        if ($idPesSesion <= 0 || $idPesResource <= 0) {
+            return false;
+        }
+        if ($idPesSesion === $idPesResource) {
+            return true;
+        }
+        $pesS = ProfesionalEfectorServicio::findOne(['id' => $idPesSesion, 'deleted_at' => null]);
+        $pesR = ProfesionalEfectorServicio::findOne(['id' => $idPesResource, 'deleted_at' => null]);
+
+        return $pesS !== null
+            && $pesR !== null
+            && (int) $pesS->id_persona === (int) $pesR->id_persona;
     }
 
     public static function userCanAccessEncounterWeb(Encounter $encounter): bool

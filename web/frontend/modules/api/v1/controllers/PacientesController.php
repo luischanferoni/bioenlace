@@ -271,15 +271,21 @@ class PacientesController extends BaseController
         }
 
         if (!$this->canAccessEncounterDomain($encounter, 'Encounter.access')) {
+            // Con turno/encounter explícito: 403. En auto-selección (p. ej. abrir HC sin turno_id)
+            // no bloquear toda la HC por un encounter ajeno: omitir motivos.
+            $explicitTarget = $turnoIdParam > 0 || $encounterIdParam > 0;
+
             return [
                 'motivos_consulta' => null,
                 'motivos_consulta_paciente' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
-                'http_error' => $this->error(
-                    'No tiene permiso para ver los motivos de consulta de este encounter.',
-                    null,
-                    403
-                ),
+                'http_error' => $explicitTarget
+                    ? $this->error(
+                        'No tiene permiso para ver los motivos de consulta de este encounter.',
+                        null,
+                        403
+                    )
+                    : null,
             ];
         }
 

@@ -14,7 +14,7 @@
       "selection": { "mode": "single" },
       "draft_field": "fecha_turno",
       "item": { "kind": "day", "id_field": "id", "label_field": "label" },
-      "presentation": { "tile": "large", "shape": "wide" },
+      "presentation": { "tile": "medium", "shape": "wide" },
       "items": []
     }
   ]

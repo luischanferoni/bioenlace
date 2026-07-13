@@ -61,4 +61,48 @@ class AgendaConfigImpactProfileTest extends Unit
             'id_servicio' => '7',
         ], $filtered);
     }
+
+    public function testEmptyDayKeyCountsAsGridTouch(): void
+    {
+        $this->assertTrue(AgendaConfigImpactProfile::postTouchesGridFields([
+            'lunes_2' => '',
+        ]));
+    }
+
+    public function testMergeClearsOmittedDaysWhenAnyDayPresent(): void
+    {
+        $defaults = [
+            'intervalo_minutos' => '15',
+            'lunes_2' => '8,9',
+            'martes_2' => '10',
+            'viernes_2' => '8',
+            'sabado_2' => '10,11',
+        ];
+        $merged = AgendaConfigImpactProfile::mergePostWithAgendaDefaults([
+            'viernes_2' => '10',
+            'intervalo_minutos' => '15',
+        ], $defaults);
+
+        $this->assertSame('10', $merged['viernes_2']);
+        $this->assertSame('', $merged['lunes_2']);
+        $this->assertSame('', $merged['martes_2']);
+        $this->assertSame('', $merged['sabado_2']);
+        $this->assertSame('15', $merged['intervalo_minutos']);
+    }
+
+    public function testMergePreservesDaysWhenNoDayFieldInPost(): void
+    {
+        $defaults = [
+            'lunes_2' => '8,9',
+            'sabado_2' => '10,11',
+            'formas_atencion' => 'TURNO',
+        ];
+        $merged = AgendaConfigImpactProfile::mergePostWithAgendaDefaults([
+            'acepta_consultas_online' => '1',
+        ], $defaults);
+
+        $this->assertSame('8,9', $merged['lunes_2']);
+        $this->assertSame('10,11', $merged['sabado_2']);
+        $this->assertSame('1', $merged['acepta_consultas_online']);
+    }
 }

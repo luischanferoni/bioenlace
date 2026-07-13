@@ -86,7 +86,8 @@ final class ProfesionalEfectorServicioAgendaVersionService
         $intervaloNuevo = (int) $preview['intervalo_nuevo'];
         $confirmar = !empty($post['confirmar_cambios']) && (string) $post['confirmar_cambios'] !== '0';
 
-        if (AgendaConfigImpactProfile::isModalityOnlySubmit($post)) {
+        if (!empty($post['forzar_sin_confirmacion'])
+            || AgendaConfigImpactProfile::isModalityOnlySubmit($post)) {
             $confirmar = true;
         }
 

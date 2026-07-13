@@ -41,6 +41,8 @@ final class AgendaConfigUiFlowService
     public static function handlePost(int $idEfector, array $post): array
     {
         $step = self::normalizeStep((string) ($post['ui_step'] ?? self::STEP_DATOS));
+        // Clasificar intención con el POST crudo: el merge no debe convertir un submit de modalidad en "tocó grilla".
+        $modalityOnly = AgendaConfigImpactProfile::isModalityOnlySubmit($post);
         $post = self::mergeWithAgendaDefaults($idEfector, $post);
 
         if ($step === self::STEP_IMPACTO) {
@@ -63,21 +65,20 @@ final class AgendaConfigUiFlowService
 
         $idPes = ProfesionalEfectorServicioAgendaUiService::resolvePesIdForAgendaSubmitPublic($idEfector, $post);
         $preview = ProfesionalEfectorServicioAgendaVersionService::previewImpacto($idPes, $idEfector, $post);
+        $needsConfirm = !$modalityOnly
+            && AgendaConfigImpactProfile::previewRequiresUserConfirmation($preview, $post);
 
-        if (self::mustRouteThroughImpactStep($idPes, $post)
-            || AgendaConfigImpactProfile::previewRequiresUserConfirmation($preview, $post)) {
+        if (self::mustRouteThroughImpactStep($idPes, $post) || $needsConfirm) {
             $impactParams = array_merge($post, [
                 'ui_step' => self::STEP_IMPACTO,
                 'preview_message' => (string) ($preview['mensaje'] ?? ''),
-                'requiere_confirmacion' => AgendaConfigImpactProfile::previewRequiresUserConfirmation($preview, $post)
-                    ? '1'
-                    : '0',
+                'requiere_confirmacion' => $needsConfirm ? '1' : '0',
             ]);
 
             return self::renderImpactoStep($impactParams);
         }
 
-        if (AgendaConfigImpactProfile::isModalityOnlySubmit($post)) {
+        if ($modalityOnly) {
             $post['forzar_sin_confirmacion'] = '1';
         }
 
@@ -172,19 +173,12 @@ final class AgendaConfigUiFlowService
     private static function mergeWithAgendaDefaults(int $idEfector, array $post): array
     {
         $defaults = ProfesionalEfectorServicioAgendaUiService::buildFieldValuesForGet($idEfector, $post);
-        $merged = array_merge($defaults, $post);
-        $onlyFields = self::parseFieldsFilter($post);
-        if ($onlyFields !== null) {
-            foreach ($defaults as $key => $value) {
-                if (!in_array($key, $onlyFields, true) && !in_array($key, ['id_efector', 'id_profesional_efector_servicio', 'id_servicio'], true)) {
-                    if (!array_key_exists($key, $post)) {
-                        $merged[$key] = $value;
-                    }
-                }
-            }
-        }
 
-        return $merged;
+        return AgendaConfigImpactProfile::mergePostWithAgendaDefaults(
+            $post,
+            $defaults,
+            self::parseFieldsFilter($post)
+        );
     }
 
     /**

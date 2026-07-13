@@ -35,17 +35,112 @@ final class AgendaConfigImpactProfile
     }
 
     /**
+     * @return list<string>
+     */
+    public static function dayFieldNames(): array
+    {
+        return [
+            'lunes_2',
+            'martes_2',
+            'miercoles_2',
+            'jueves_2',
+            'viernes_2',
+            'sabado_2',
+            'domingo_2',
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $post
      */
     public static function postTouchesGridFields(array $post): bool
     {
         foreach (self::GRID_FIELD_NAMES as $name) {
-            if (array_key_exists($name, $post) && trim((string) $post[$name]) !== '') {
+            if (!array_key_exists($name, $post)) {
+                continue;
+            }
+            // Día presente (aunque vacío) = intención de tocar la grilla / limpiar ese día.
+            if (in_array($name, self::dayFieldNames(), true)) {
+                return true;
+            }
+            if (trim((string) $post[$name]) !== '') {
                 return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * Completa el POST con defaults de agenda sin reintroducir días omitidos.
+     *
+     * - Si el submit trae al menos un campo de día: los días ausentes se limpian ('').
+     * - Si no trae días (modalidad / intervalo): se conservan los días de la agenda actual.
+     * - Con `fields` parcial: solo se limpian los días listados y ausentes; el resto se conserva.
+     *
+     * @param array<string, mixed> $post
+     * @param array<string, mixed> $defaults Valores actuales (GET) de la agenda
+     * @param list<string>|null $onlyFields
+     * @return array<string, mixed>
+     */
+    public static function mergePostWithAgendaDefaults(array $post, array $defaults, ?array $onlyFields = null): array
+    {
+        $dayFields = self::dayFieldNames();
+        $merged = $post;
+
+        foreach ($defaults as $key => $value) {
+            if (in_array($key, $dayFields, true)) {
+                continue;
+            }
+            if (!array_key_exists($key, $merged)) {
+                $merged[$key] = $value;
+            }
+        }
+
+        $touchesAnyDay = false;
+        foreach ($dayFields as $day) {
+            if (array_key_exists($day, $post)) {
+                $touchesAnyDay = true;
+                break;
+            }
+        }
+
+        if ($onlyFields !== null) {
+            $editingDays = array_values(array_intersect($dayFields, $onlyFields)) !== [];
+            foreach ($dayFields as $day) {
+                if (array_key_exists($day, $post)) {
+                    $merged[$day] = $post[$day];
+                    continue;
+                }
+                if ($editingDays && in_array($day, $onlyFields, true)) {
+                    $merged[$day] = '';
+                    continue;
+                }
+                if (array_key_exists($day, $defaults)) {
+                    $merged[$day] = $defaults[$day];
+                }
+            }
+
+            return $merged;
+        }
+
+        if ($touchesAnyDay) {
+            foreach ($dayFields as $day) {
+                if (!array_key_exists($day, $post)) {
+                    $merged[$day] = '';
+                }
+            }
+
+            return $merged;
+        }
+
+        foreach ($dayFields as $day) {
+            if (array_key_exists($day, $defaults)) {
+                $merged[$day] = $defaults[$day];
+            }
+        }
+
+        return $merged;
     }
 
     /**

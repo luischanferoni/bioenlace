@@ -1,6 +1,7 @@
 version: 1
 # Opciones de atributos de efector (admin / formularios).
-# Valores alineados a SISA observados + usos de app (signup/seeds/contexto paciente).
+# origen_financiamiento = sector (Público|Privado) para filtro paciente.
+# dependencia = jurisdicción / dependencia administrativa SISA.
 atributos:
   dependencia:
     - value: Nacional
@@ -21,16 +22,8 @@ atributos:
       label: Otros
 
   origen_financiamiento:
-    - value: Nacional
-      label: Nacional
-    - value: Provincial
-      label: Provincial
-    - value: Municipal
-      label: Municipal
     - value: Público
       label: Público
-    - value: Publico
-      label: Publico (legacy)
     - value: Privado
       label: Privado
 

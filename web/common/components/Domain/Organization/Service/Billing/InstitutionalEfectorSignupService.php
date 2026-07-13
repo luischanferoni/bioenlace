@@ -306,7 +306,7 @@ final class InstitutionalEfectorSignupService
             'domicilio' => $domicilio,
             'telefono' => ($t = trim((string) ($efector['telefono'] ?? ''))) !== '' ? $t : null,
             'id_localidad' => $idLocalidad,
-            'origen_financiamiento' => $publico ? 'Provincial' : 'Privado',
+            'origen_financiamiento' => $publico ? 'Público' : 'Privado',
             'dependencia' => $publico ? 'Provincial' : 'Privado',
             'tipologia' => $tipologia,
             'codigo_sisa' => self::generateCodigoSisa(),

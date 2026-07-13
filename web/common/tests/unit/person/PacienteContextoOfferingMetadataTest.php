@@ -13,14 +13,16 @@ class PacienteContextoOfferingMetadataTest extends Unit
         PacienteContextoOfferingMetadata::resetCacheForTests();
     }
 
-    public function testSectorPublicoExcluyePrivado(): void
+    public function testSectorPublicoIncluyeSoloPublico(): void
     {
         $rules = PacienteContextoOfferingMetadata::origenFinanciamientoRulesForSector(
             PersonaPacienteContexto::SECTOR_SALUD_PUBLICO
         );
 
         $this->assertContains('Privado', $rules['exclude']);
-        $this->assertNotEmpty($rules['include']);
+        $this->assertContains('Público', $rules['include']);
+        $this->assertNotContains('Provincial', $rules['include']);
+        $this->assertNotContains('Nacional', $rules['include']);
     }
 
     public function testSectorPrivadoSoloIncluyePrivado(): void

@@ -78,7 +78,7 @@ final class EfectorDemoSeedService
             'Provincial',
             'CAP',
             'Av. San Martín 100',
-            'Provincial',
+            'Público',
             '0342-4000000',
             (int) $localidad->id_localidad,
             $provinciaNombre

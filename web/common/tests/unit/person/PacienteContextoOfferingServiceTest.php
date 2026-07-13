@@ -16,10 +16,10 @@ class PacienteContextoOfferingServiceTest extends Unit
         $this->service = new PacienteContextoOfferingService();
     }
 
-    public function testEfectorPublicoProvincialCoincideConSectorPublico(): void
+    public function testEfectorPublicoCoincideConSectorPublico(): void
     {
         $efector = new Efector();
-        $efector->origen_financiamiento = 'Provincial';
+        $efector->origen_financiamiento = 'Público';
 
         $ctx = $this->contexto(PersonaPacienteContexto::SECTOR_SALUD_PUBLICO, null);
 
@@ -49,9 +49,19 @@ class PacienteContextoOfferingServiceTest extends Unit
     public function testEfectorPublicoNoCoincideConSectorPrivado(): void
     {
         $efector = new Efector();
-        $efector->origen_financiamiento = 'Nacional';
+        $efector->origen_financiamiento = 'Público';
 
         $ctx = $this->contexto(PersonaPacienteContexto::SECTOR_SALUD_PRIVADO, null);
+
+        $this->assertFalse($this->service->efectorMatchesContext($efector, $ctx));
+    }
+
+    public function testEfectorOrigenJurisdiccionalYaNoCoincideConSectorPublico(): void
+    {
+        $efector = new Efector();
+        $efector->origen_financiamiento = 'Provincial';
+
+        $ctx = $this->contexto(PersonaPacienteContexto::SECTOR_SALUD_PUBLICO, null);
 
         $this->assertFalse($this->service->efectorMatchesContext($efector, $ctx));
     }

@@ -1,5 +1,7 @@
 version: 1
 # Reglas de oferta y visibilidad según contexto paciente (sector + provincia).
+# Sector paciente PUBLICO|PRIVADO se mapea solo a efectores.origen_financiamiento (Público|Privado).
+# dependencia (Nacional/Provincial/Municipal/…) es administrativa y no filtra sector.
 # {@see PacienteContextoOfferingMetadata}
 
 requires_operative_context:
@@ -13,9 +15,6 @@ requires_operative_context:
 sector_salud:
   PUBLICO:
     origen_financiamiento_include:
-      - Nacional
-      - Provincial
-      - Municipal
       - Público
       - Publico
     origen_financiamiento_exclude:

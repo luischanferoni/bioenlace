@@ -7,12 +7,10 @@ use common\components\Platform\Core\Product\EfectorAtributosMetadata;
 
 class EfectorAtributosMetadataTest extends Unit
 {
-    public function testOrigenFinanciamientoIncluyePublicoYPrivado(): void
+    public function testOrigenFinanciamientoSoloPublicoYPrivado(): void
     {
         $opts = EfectorAtributosMetadata::optionsFor(EfectorAtributosMetadata::ATTR_ORIGEN_FINANCIAMIENTO);
-        $this->assertArrayHasKey('Público', $opts);
-        $this->assertArrayHasKey('Privado', $opts);
-        $this->assertArrayHasKey('Provincial', $opts);
+        $this->assertSame(['Público', 'Privado'], array_keys($opts));
     }
 
     public function testPreservaValorActualFueraDeCatalogo(): void

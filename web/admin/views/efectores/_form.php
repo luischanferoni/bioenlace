@@ -55,29 +55,21 @@ $origenOptions = EfectorAtributosMetadata::optionsFor(
         'prompt' => 'Seleccione tipología',
     ]) ?>
 
+    <?= $form->field($model, 'origen_financiamiento')->dropDownList($origenOptions, [
+        'prompt' => 'Seleccione sector (Público / Privado)',
+    ]) ?>
+
     <?= $form->field($model, 'domicilio')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'grupo')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'formas_acceso')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'telefono')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'telefono2')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'telefono3')->textInput(['maxlength' => true]) ?>
-
     <?= $form->field($model, 'mail1')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'mail2')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'mail3')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'dias_horario')->textInput(['maxlength' => true]) ?>
-
-    <?= $form->field($model, 'origen_financiamiento')->dropDownList($origenOptions, [
-        'prompt' => 'Seleccione origen del financiamiento',
-    ]) ?>
 
     <div class="form-group field-efector-id_provincia">
         <label class="control-label" for="efector-id_provincia">Provincia</label>

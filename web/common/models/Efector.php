@@ -80,7 +80,7 @@ class Efector extends \yii\db\ActiveRecord
             'mail1' => 'Correo Electronico',
             'mail2' => 'Correo Electronico 2',
             'mail3' => 'Correo Electronico 3',
-            'origen_financiamiento' => 'Origen del financiamiento',
+            'origen_financiamiento' => 'Sector (Público / Privado)',
             'id_localidad' => 'Localidad',            
             'id_departamento'=>'Departamento',
             'estado' => 'Estado: Activo o Inactivo',

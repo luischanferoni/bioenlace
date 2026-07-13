@@ -41,6 +41,10 @@ operations:
     policies:
       - organization.efector_sesion
 
+  ProfesionalEfectorServicio.delete:
+    policies:
+      - organization.efector_sesion
+
   ProfesionalEfectorServicio.flow_closure_staff:
     policies:
       - organization.pes_efector

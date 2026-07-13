@@ -5,6 +5,7 @@ version: 1
 vocab:
   edit_verbs: '\b(editar|modificar|actualizar|cambiar|corregir|ajustar|configurar)\b'
   alta_verbs: '\b(crear|agregar|nuevo|nueva|alta|asociar|dar de alta)\b'
+  baja_verbs: '\b(quitar|sacar|desasignar|eliminar|dar de baja|baja)\b'
   agenda_targets: '\b(agenda|horario|horarios|disponibilidad|cupo|formas?\s+de\s+atencion|forma\s+de\s+atencion|teleconsulta|intervalo|modalidad)\b'
   own_scope: '\b(mi|mis)\s+(agenda|horario|horarios|formas?\s+de\s+atencion)\b'
   staff_third_party: '\b(profesional|medico|doctor|personal)\b'
@@ -97,16 +98,24 @@ vocab:
 match_rules:
   staff_agenda_config_edit:
     require_all: [edit_verbs, agenda_targets]
-    forbid_any: [alta_verbs, own_scope]
+    forbid_any: [alta_verbs, own_scope, baja_verbs]
     require_any: [staff_third_party, agenda_de_uno, config_topics]
     ai_hint: >-
       Si el mensaje pide modificar/editar agenda, horarios, formas de atención, teleconsulta,
       intervalo entre turnos de un profesional (sin crear/alta), priorizá el intent de edición dispersa
       staff cuyo goal/how describa modificar datos por superficie o aspectos autorizados.
 
+  staff_pes_baja:
+    require_all: [baja_verbs]
+    require_any: [staff_third_party]
+    forbid_any: [scheduling_ops, agenda_targets]
+    ai_hint: >-
+      Si el mensaje pide quitar, desasignar o dar de baja a un profesional de un servicio/efector
+      (sin cancelar turnos ni editar agenda), priorizá profesional-efector-servicio.baja-flow.
+
   own_agenda_config_edit:
     require_all: [edit_verbs, own_scope, agenda_targets]
-    forbid_any: [alta_verbs]
+    forbid_any: [alta_verbs, baja_verbs]
     ai_hint: >-
       Si el mensaje pide modificar la agenda u horarios propios (mi/mis), priorizá el intent
       de edición dispersa cuyo catálogo cubra edición de agenda del profesional autenticado.
@@ -231,7 +240,20 @@ score_adjustments:
         delta: 15
       - intent_id: profesional-efector-servicio.crear-flow
         delta: -30
+      - intent_id: profesional-efector-servicio.baja-flow
+        delta: -25
       - intent_id_prefix: licencia.cargar
+        delta: -35
+
+  - when_rule: staff_pes_baja
+    apply:
+      - intent_id: profesional-efector-servicio.baja-flow
+        delta: 50
+      - intent_id: profesional-efector-servicio.crear-flow
+        delta: -40
+      - intent_id: profesional-agenda.configurar-staff
+        delta: -30
+      - intent_id_prefix: turnos.cancelar
         delta: -35
 
   - when_rule: own_agenda_config_edit
@@ -338,6 +360,13 @@ operational_fallbacks:
     requires_staff_data_access: true
     when_any_rule: [staff_agenda_config_edit]
     intent_id: profesional-agenda.configurar-staff
+    confidence: 0.9
+    method: rules_declarative_fallback
+
+  - id: staff_pes_baja_nl
+    requires_staff_data_access: true
+    when_any_rule: [staff_pes_baja]
+    intent_id: profesional-efector-servicio.baja-flow
     confidence: 0.9
     method: rules_declarative_fallback
 

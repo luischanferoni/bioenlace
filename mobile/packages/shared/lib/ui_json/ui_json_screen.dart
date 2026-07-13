@@ -1245,6 +1245,14 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       final delta = <String, dynamic>{draftField: id};
       if (item != null && item.isNotEmpty) {
         delta['_flow_item_$draftField'] = item;
+        final meta = item['meta'];
+        if (draftField == 'id_servicio' && meta is Map) {
+          final pesRaw = meta['id_profesional_efector_servicio'];
+          final pesId = pesRaw?.toString().trim() ?? '';
+          if (pesId.isNotEmpty) {
+            delta['id_profesional_efector_servicio'] = pesId;
+          }
+        }
       }
       await cb(delta);
     }

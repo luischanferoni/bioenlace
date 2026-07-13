@@ -20,6 +20,7 @@ categories:
         titulo: Para el personal
         intent_ids:
           - profesional-efector-servicio.crear-flow
+          - profesional-efector-servicio.baja-flow
           - condicion-laboral.editar-staff
           - profesional-agenda.configurar-staff
           - profesional-identidad.editar-staff

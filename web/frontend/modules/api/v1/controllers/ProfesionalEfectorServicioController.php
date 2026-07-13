@@ -12,6 +12,7 @@ use yii\web\MethodNotAllowedHttpException;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\FhirScheduleOnboardingUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\FhirServiceCodeCatalogUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\LicenciaUiFlowService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioBajaService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioCuilUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEnEfectorListadoUiService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAgendaUiService;
@@ -403,8 +404,12 @@ class ProfesionalEfectorServicioController extends BaseController
         if (isset($ui['kind']) && $ui['kind'] === 'ui_definition' && isset($ui['ui_type']) && $ui['ui_type'] === 'ui_json') {
             $idEfector = $this->requireIdEfectorFromSession();
             [$idPersonaProf] = $this->resolvePersonaYEfectorParaServiciosProfesional($idEfector);
+            $incluirSinAgenda = filter_var(
+                $req->get('incluir_sin_agenda', $req->post('incluir_sin_agenda', false)),
+                FILTER_VALIDATE_BOOLEAN
+            );
 
-            $items = $this->serviciosAsignadosItemsForPersonaEfector($idPersonaProf, $idEfector);
+            $items = $this->serviciosAsignadosItemsForPersonaEfector($idPersonaProf, $idEfector, $incluirSinAgenda);
             $uiItems = [];
             foreach ($items as $it) {
                 $uiItems[] = [
@@ -648,6 +653,54 @@ class ProfesionalEfectorServicioController extends BaseController
             'data' => [
                 'success' => true,
                 'message' => 'Flujo de alta completado.',
+            ],
+            'errors' => null,
+        ];
+    }
+
+    /**
+     * Baja (soft-delete) de una asignación PES en el efector de sesión (flujo asistente).
+     * Permiso RBAC: `/api/profesional-efector-servicio/baja-flow`
+     *
+     * POST /api/v1/profesional-efector-servicio/baja-flow
+     *
+     * @action_name Dar de baja profesional en servicio del efector (asistente)
+     * @entity ProfesionalEfectorServicio
+     * @tags profesional, asistente, flow, baja
+     */
+    public function actionBajaFlow(): array
+    {
+        $req = Yii::$app->request;
+        if (!$req->isPost) {
+            throw new MethodNotAllowedHttpException(['POST'], 'Este endpoint solo acepta POST (cierre del flujo del asistente).');
+        }
+        $post = $req->post();
+        ApiDomainOperationBridge::assertOrForbidden(
+            'ProfesionalEfectorServicio.delete',
+            $post,
+            array_merge($req->get(), $post)
+        );
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        try {
+            $result = ProfesionalEfectorServicioBajaService::bajaDesdeParams($idEfector, $post);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+
+        return [
+            'success' => true,
+            'kind' => 'ui_submit_result',
+            'action_id' => 'profesional-efector-servicio.baja-flow',
+            'data' => [
+                'success' => true,
+                'message' => $result['message'],
+                'id_profesional_efector_servicio' => $result['id_profesional_efector_servicio'],
+                'id_persona' => $result['id_persona'],
+                'id_servicio' => $result['id_servicio'],
             ],
             'errors' => null,
         ];

@@ -38,6 +38,12 @@ role_grant_sources:
       - profesional-agenda.configurar-propio
       - profesional-agenda.configurar-staff
       - profesional-identidad.editar-staff
+  - source_permission: profesional-efector-servicio.crear-flow
+    intent_targets:
+      - profesional-efector-servicio.baja-flow
+  - source_permission: ProfesionalEfectorServicio.create
+    intent_targets:
+      - profesional-efector-servicio.baja-flow
 
 # Futuro: Entidad.atributo.read|info|edit → intents concretos (fase 6).
 attribute_grant_sources: []

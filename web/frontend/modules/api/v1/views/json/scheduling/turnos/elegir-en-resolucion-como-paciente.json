@@ -8,7 +8,7 @@
     {
       "kind": "list",
       "id": "turnos",
-      "title": "Turno a reubicar",
+      "title": "",
       "selection": { "mode": "single" },
       "draft_field": "id",
       "item": { "kind": "turno", "id_field": "id", "label_field": "name" },

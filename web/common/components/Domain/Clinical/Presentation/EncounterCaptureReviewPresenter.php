@@ -126,8 +126,12 @@ final class EncounterCaptureReviewPresenter
                 $out[] = [
                     'key' => $this->categoryKey($title),
                     'title' => $title,
+                    'model' => (string) ($categoria['modelo'] ?? ''),
                     'required' => ($categoria['requerido'] ?? false) === true,
-                    'items' => $this->parseCategoryItems($title, $extraidos[$title] ?? null),
+                    'items' => $this->parseCategoryItems(
+                        $title,
+                        $this->resolveCategoryRaw($extraidos, $title, (string) ($categoria['modelo'] ?? ''))
+                    ),
                 ];
             }
 
@@ -151,6 +155,42 @@ final class EncounterCaptureReviewPresenter
         }
 
         return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $extraidos
+     */
+    private function resolveCategoryRaw(array $extraidos, string $title, string $modelo): mixed
+    {
+        foreach ([$title, $modelo] as $key) {
+            if ($key !== '' && array_key_exists($key, $extraidos)) {
+                return $extraidos[$key];
+            }
+        }
+
+        $want = [];
+        foreach ([$title, $modelo] as $key) {
+            if ($key === '') {
+                continue;
+            }
+            $want[$this->normalizeExtractionKey($key)] = true;
+        }
+        foreach ($extraidos as $k => $value) {
+            if (is_string($k) && isset($want[$this->normalizeExtractionKey($k)])) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeExtractionKey(string $key): string
+    {
+        $folded = strtr(mb_strtolower(trim($key), 'UTF-8'), [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
+        ]);
+
+        return preg_replace('/\s+/', '', $folded) ?? $folded;
     }
 
     /**
@@ -228,7 +268,7 @@ final class EncounterCaptureReviewPresenter
      */
     private function labelFromMap(array $map): string
     {
-        foreach (['termino', 'descripcion', 'texto', 'nombre', 'display'] as $key) {
+        foreach (['termino', 'descripcion', 'texto', 'nombre', 'display', 'Nombre del medicamento', 'medicamento', 'label'] as $key) {
             $value = trim((string) ($map[$key] ?? ''));
             if ($value !== '') {
                 return $value;

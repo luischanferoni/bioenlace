@@ -630,28 +630,28 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildErrorEstado(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: BioSpacing.pageAll,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            BioAlert.danger(message: _error!),
-            BioSpacing.gapH(BioSpacing.lg),
-            BioButton.primary(
-              label: 'Reintentar',
-              onPressed: _cargarInicial,
-              icon: Icons.refresh,
-            ),
-          ],
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: BioSpacing.pageAll,
+      children: [
+        SizedBox(height: MediaQuery.sizeOf(context).height * 0.2),
+        BioAlert.danger(message: _error!),
+        BioSpacing.gapH(BioSpacing.lg),
+        Center(
+          child: BioButton.primary(
+            label: 'Reintentar',
+            onPressed: _cargarInicial,
+            icon: Icons.refresh,
+          ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildContenido(BuildContext context) {
     return ListView(
       controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(
         horizontal: BioSpacing.lg,
         vertical: BioSpacing.xl,

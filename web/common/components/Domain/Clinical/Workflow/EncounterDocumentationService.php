@@ -286,10 +286,19 @@ class EncounterDocumentationService extends Component
     private function applyCaptureTextToEncounter(Encounter $encounter, array $body): void
     {
         if (isset($body['texto_procesado']) || isset($body['observacion'])) {
-            $encounter->note = $body['texto_procesado'] ?? $body['observacion'];
+            $note = $body['texto_procesado'] ?? $body['observacion'];
+            $encounter->note = is_string($note) ? $note : (string) $note;
+        } elseif (isset($body['texto_original']) && trim((string) $body['texto_original']) !== '') {
+            $encounter->note = (string) $body['texto_original'];
         }
-        if (isset($body['motivo_consulta'])) {
-            $encounter->reason_text = $body['motivo_consulta'];
+        if (isset($body['motivo_consulta']) && trim((string) $body['motivo_consulta']) !== '') {
+            $encounter->reason_text = (string) $body['motivo_consulta'];
+        } elseif (
+            (trim((string) ($encounter->reason_text ?? '')) === '')
+            && isset($body['texto_original'])
+            && trim((string) $body['texto_original']) !== ''
+        ) {
+            $encounter->reason_text = (string) $body['texto_original'];
         }
     }
 
@@ -364,11 +373,15 @@ class EncounterDocumentationService extends Component
                     $this->persistConditions($encounter, $payload);
                     break;
                 case 'ConsultaMedicamentos':
+                    $medicationRows = MedicationRequestService::normalizeExtractedMedicationPayload($payload);
+                    if ($medicationRows === []) {
+                        break;
+                    }
                     $carePlan = $carePlan ?? $this->carePlans->createAcutePlanForEncounter(
                         (int) $encounter->subject_persona_id,
                         (int) $encounter->id
                     );
-                    $this->persistMedications($encounter, $carePlan, $payload);
+                    $this->persistMedications($encounter, $carePlan, $medicationRows);
                     break;
                 case 'ConsultaPracticas':
                 case 'ConsultaDerivaciones':
@@ -410,16 +423,44 @@ class EncounterDocumentationService extends Component
      */
     private function resolvePayloadForCategoria(array $datosExtraidos, array $categoria)
     {
-        $modelo = (string) ($categoria['modelo'] ?? '');
-        if ($modelo !== '' && array_key_exists($modelo, $datosExtraidos)) {
-            return $datosExtraidos[$modelo];
-        }
+        $modelo = trim((string) ($categoria['modelo'] ?? ''));
         $titulo = trim((string) ($categoria['titulo'] ?? ''));
-        if ($titulo !== '' && array_key_exists($titulo, $datosExtraidos)) {
-            return $datosExtraidos[$titulo];
+        foreach ([$titulo, $modelo] as $key) {
+            if ($key !== '' && array_key_exists($key, $datosExtraidos)) {
+                return $datosExtraidos[$key];
+            }
+        }
+
+        // Alias sin acentos / case (p. ej. Medicacion vs Medicación).
+        $candidates = array_values(array_filter([$titulo, $modelo], static function ($k) {
+            return $k !== '';
+        }));
+        if ($candidates === []) {
+            return null;
+        }
+        $normalizedKeys = [];
+        foreach ($candidates as $key) {
+            $normalizedKeys[$this->normalizeExtractionKey($key)] = true;
+        }
+        foreach ($datosExtraidos as $k => $value) {
+            if (!is_string($k)) {
+                continue;
+            }
+            if (isset($normalizedKeys[$this->normalizeExtractionKey($k)])) {
+                return $value;
+            }
         }
 
         return null;
+    }
+
+    private function normalizeExtractionKey(string $key): string
+    {
+        $folded = strtr(mb_strtolower(trim($key), 'UTF-8'), [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
+        ]);
+
+        return preg_replace('/\s+/', '', $folded) ?? $folded;
     }
 
     /**
@@ -459,13 +500,8 @@ class EncounterDocumentationService extends Component
      */
     private function persistMedications(Encounter $encounter, \common\models\Clinical\CarePlan $carePlan, $payload): void
     {
-        if (!is_array($payload)) {
-            return;
-        }
-        foreach ($payload as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
+        $rows = MedicationRequestService::normalizeExtractedMedicationPayload($payload);
+        foreach ($rows as $row) {
             $this->medications->createFromExtractedRow($encounter, $carePlan, $row);
         }
     }

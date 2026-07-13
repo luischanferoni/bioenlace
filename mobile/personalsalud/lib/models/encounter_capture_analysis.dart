@@ -244,10 +244,21 @@ class EncounterCaptureAnalysis {
       final rows = <dynamic>[];
       for (final item in cat.items) {
         if (!stagedIds.contains(item.id)) continue;
-        rows.add(item.raw);
+        final payload = item.raw.isNotEmpty
+            ? Map<String, dynamic>.from(item.raw)
+            : <String, dynamic>{'texto': item.label};
+        if ((payload['texto']?.toString().trim().isEmpty ?? true) &&
+            item.label.trim().isNotEmpty &&
+            !payload.values.any((v) => v != null && v.toString().trim().isNotEmpty)) {
+          payload['texto'] = item.label;
+        }
+        rows.add(payload);
       }
-      if (rows.isNotEmpty) {
-        out[cat.title] = rows;
+      if (rows.isEmpty) continue;
+      out[cat.title] = rows;
+      final model = cat.model.trim();
+      if (model.isNotEmpty && model != cat.title) {
+        out[model] = rows;
       }
     }
     return out;
@@ -259,9 +270,11 @@ class EncounterCaptureCategory {
     required this.title,
     required this.required,
     required this.items,
+    this.model = '',
   });
 
   final String title;
+  final String model;
   final bool required;
   final List<EncounterCaptureItem> items;
 
@@ -280,6 +293,7 @@ class EncounterCaptureCategory {
 
     return EncounterCaptureCategory(
       title: title,
+      model: cat['model']?.toString() ?? '',
       required: cat['required'] == true,
       items: items,
     );

@@ -77,6 +77,29 @@ final class TurnoIndisponibilidadImpactService
     }
 
     /**
+     * Marca turnos pendientes (desde hoy) en resolución por baja de PES y notifica pacientes.
+     *
+     * @return int cantidad de turnos marcados
+     */
+    public static function aplicarPorBajaPes(int $idPes, array $meta = []): int
+    {
+        if ($idPes <= 0) {
+            return 0;
+        }
+        $hoy = date('Y-m-d');
+        $turnos = self::findTurnosAfectados($idPes, $hoy, null, [Turno::ESTADO_PENDIENTE]);
+        if ($turnos === []) {
+            return 0;
+        }
+
+        TurnoResolucionService::crearDesdeBajaPes($turnos, array_merge($meta, [
+            'id_profesional_efector_servicio' => $idPes,
+        ]));
+
+        return count($turnos);
+    }
+
+    /**
      * @param list<string> $estados
      * @return Turno[]
      */

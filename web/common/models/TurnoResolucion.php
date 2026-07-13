@@ -27,6 +27,7 @@ class TurnoResolucion extends ActiveRecord
     public const ORIGEN_CAMBIO_AGENDA = 'cambio_agenda';
     public const ORIGEN_GESTION_STAFF = 'gestion_staff';
     public const ORIGEN_LICENCIA = 'licencia';
+    public const ORIGEN_BAJA_PES = 'baja_pes';
 
     public const ESTADO_PENDIENTE = 'pendiente';
     public const ESTADO_REUBICADO = 'reubicado';
@@ -48,6 +49,7 @@ class TurnoResolucion extends ActiveRecord
                 self::ORIGEN_CAMBIO_AGENDA,
                 self::ORIGEN_GESTION_STAFF,
                 self::ORIGEN_LICENCIA,
+                self::ORIGEN_BAJA_PES,
             ]],
             [['estado'], 'in', 'range' => [
                 self::ESTADO_PENDIENTE,

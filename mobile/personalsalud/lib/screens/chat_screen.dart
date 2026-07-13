@@ -105,6 +105,35 @@ class ChatScreenState extends State<ChatScreen> {
     return message['flow_submit'] is Map;
   }
 
+  /// UI JSON con `data.requiere_confirmacion` (p. ej. baja PES con turnos afectados).
+  bool _uiDefinitionRequiereConfirmacion(Map<String, dynamic>? def) {
+    if (def == null) return false;
+    final data = def['data'];
+    if (data is! Map) return false;
+    final v = data['requiere_confirmacion'];
+    return v == true || v == 1 || v == '1';
+  }
+
+  bool _draftAckImpactoBaja() {
+    final ack =
+        (_draft['impacto_baja_revisado']?.toString() ?? '').trim().toLowerCase();
+    return ack == '1' || ack == 'true' || ack == 'si' || ack == 'sí';
+  }
+
+  /// Con impacto: Confirmar queda oculto hasta «Entendí el impacto».
+  void _applyTerminalSubmitReadyAfterImpactGate({
+    required int messageIndex,
+    required Map<String, dynamic> message,
+  }) {
+    if (messageIndex < 0 || messageIndex >= _chatHistory.length) return;
+    final requiere = message['_flow_requiere_confirmacion'] == true;
+    if (requiere && !_draftAckImpactoBaja()) {
+      _chatHistory[messageIndex]['_flow_submit_ready'] = false;
+      return;
+    }
+    _chatHistory[messageIndex]['_flow_submit_ready'] = true;
+  }
+
   void _applyInlineUiQueryToDraft(Map<String, dynamic> inlineUi) {
     final absRaw = inlineUi['api_absolute_url']?.toString() ?? '';
     final routeRaw = inlineUi['route']?.toString() ?? '';
@@ -2634,6 +2663,8 @@ class ChatScreenState extends State<ChatScreen> {
                                   : (def) {
                                       if (inlineUi is! Map) return;
                                       inlineUi['ui_definition'] = def;
+                                      message['_flow_requiere_confirmacion'] =
+                                          _uiDefinitionRequiereConfirmacion(def);
                                       WidgetsBinding.instance.addPostFrameCallback((_) {
                                         if (!mounted) return;
                                         final activeIid = _intentId;
@@ -2661,8 +2692,11 @@ class ChatScreenState extends State<ChatScreen> {
                                         return;
                                       }
                                       setState(() {
-                                        _chatHistory[index]['_flow_submit_ready'] = true;
                                         _chatHistory[index]['_flow_dismiss_ready'] = true;
+                                        _applyTerminalSubmitReadyAfterImpactGate(
+                                          messageIndex: index,
+                                          message: message,
+                                        );
                                       });
                                     },
                               enableFlowChainAutoAdvance: false,
@@ -2700,12 +2734,13 @@ class ChatScreenState extends State<ChatScreen> {
                                 // Step terminal (último del flow): el tap mergeó local; NO postear al motor.
                                 // El submit lo dispara el botón "Confirmar y enviar" del mismo mensaje.
                                 if (_messageIsTerminalFlowStep(message)) {
-                                  // Si había un aviso previo de "falta X" y ahora X está en el draft, limpiarlo.
-                                  if (message['_flow_submit_missing'] is List) {
-                                    setState(() {
-                                      message.remove('_flow_submit_missing');
-                                    });
-                                  }
+                                  setState(() {
+                                    message.remove('_flow_submit_missing');
+                                    _applyTerminalSubmitReadyAfterImpactGate(
+                                      messageIndex: index,
+                                      message: message,
+                                    );
+                                  });
                                   return;
                                 }
 
@@ -2769,11 +2804,13 @@ class ChatScreenState extends State<ChatScreen> {
                                   });
                                 }
                                 if (_messageIsTerminalFlowStep(message)) {
-                                  if (message['_flow_submit_missing'] is List) {
-                                    setState(() {
-                                      message.remove('_flow_submit_missing');
-                                    });
-                                  }
+                                  setState(() {
+                                    message.remove('_flow_submit_missing');
+                                    _applyTerminalSubmitReadyAfterImpactGate(
+                                      messageIndex: index,
+                                      message: message,
+                                    );
+                                  });
                                   return;
                                 }
                                 // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.

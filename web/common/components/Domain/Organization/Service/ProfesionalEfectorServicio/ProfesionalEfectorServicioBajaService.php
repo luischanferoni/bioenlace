@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Domain\Scheduling\Service\TurnoIndisponibilidadImpactService;
 use common\models\ProfesionalEfectorServicio as ProfesionalEfectorServicioModel;
 use common\models\Turno;
 use Yii;
@@ -23,7 +24,7 @@ final class ProfesionalEfectorServicioBajaService
      *   turnos_pendientes_futuros: int,
      *   turnos_en_resolucion_futuros: int,
      *   afecta_turnos: bool,
-     *   puede_continuar: bool,
+     *   requiere_confirmacion: bool,
      *   preview_message: string,
      *   mensaje: string
      * }
@@ -40,33 +41,32 @@ final class ProfesionalEfectorServicioBajaService
         $counts = self::contarTurnosFuturosPorPes($idPes);
         $pendientes = $counts['pendientes'];
         $enResolucion = $counts['en_resolucion'];
-        $afecta = $pendientes > 0 || $enResolucion > 0;
-        $puedeContinuar = $pendientes === 0;
-
+        $afecta = $pendientes > 0;
         $servicioNombre = $pes->servicio !== null
             ? (string) $pes->servicio->nombre
             : ('servicio #' . $idServicio);
 
         if ($pendientes > 0) {
             $msg = $pendientes === 1
-                ? "Esta baja afectaría 1 turno pendiente a futuro en «{$servicioNombre}». "
-                    . 'Cancelalo o reubicá antes de quitar la asignación; no se puede confirmar mientras exista.'
-                : "Esta baja afectaría {$pendientes} turnos pendientes a futuro en «{$servicioNombre}». "
-                    . 'Cancelalos o reubicá antes de quitar la asignación; no se puede confirmar mientras existan.';
+                ? "Esta baja afecta 1 turno pendiente a futuro en «{$servicioNombre}». "
+                    . 'Al confirmar, ese turno pasará a resolución y se notificará al paciente '
+                    . 'para que reubique o cancele.'
+                : "Esta baja afecta {$pendientes} turnos pendientes a futuro en «{$servicioNombre}». "
+                    . 'Al confirmar, esos turnos pasarán a resolución y se notificará a los pacientes '
+                    . 'para que reubiquen o cancelen.';
             if ($enResolucion > 0) {
                 $msg .= $enResolucion === 1
-                    ? ' Además hay 1 turno en resolución.'
-                    : " Además hay {$enResolucion} turnos en resolución.";
+                    ? ' Además hay 1 turno ya en resolución.'
+                    : " Además hay {$enResolucion} turnos ya en resolución.";
             }
-        } elseif ($enResolucion > 0) {
-            $msg = $enResolucion === 1
-                ? "No hay turnos pendientes, pero hay 1 turno en resolución en «{$servicioNombre}». "
-                    . 'Podés continuar con la baja; ese turno seguirá asociado al historial del vínculo.'
-                : "No hay turnos pendientes, pero hay {$enResolucion} turnos en resolución en «{$servicioNombre}». "
-                    . 'Podés continuar con la baja; esos turnos seguirán asociados al historial del vínculo.';
         } else {
-            $msg = "Esta baja no afecta turnos a futuro: no hay turnos pendientes ni en resolución "
+            $msg = 'Esta baja no afecta turnos a futuro: no hay turnos pendientes '
                 . "en «{$servicioNombre}» para esta asignación.";
+            if ($enResolucion > 0) {
+                $msg .= $enResolucion === 1
+                    ? ' Hay 1 turno en resolución que no se modifica.'
+                    : " Hay {$enResolucion} turnos en resolución que no se modifican.";
+            }
         }
 
         return [
@@ -75,17 +75,22 @@ final class ProfesionalEfectorServicioBajaService
             'turnos_pendientes_futuros' => $pendientes,
             'turnos_en_resolucion_futuros' => $enResolucion,
             'afecta_turnos' => $afecta,
-            'puede_continuar' => $puedeContinuar,
+            'requiere_confirmacion' => $afecta,
             'preview_message' => $msg,
             'mensaje' => $msg,
         ];
     }
 
     /**
-     * Resuelve el PES a dar de baja y aplica soft-delete.
-     *
-     * @param array<string, mixed> $params draft / POST (id_profesional_efector_servicio ancla o real, id_servicio)
-     * @return array{id_profesional_efector_servicio: int, id_persona: int, id_servicio: int, id_efector: int, message: string}
+     * @param array<string, mixed> $params
+     * @return array{
+     *   id_profesional_efector_servicio: int,
+     *   id_persona: int,
+     *   id_servicio: int,
+     *   id_efector: int,
+     *   turnos_reorganizados: int,
+     *   message: string
+     * }
      */
     public static function bajaDesdeParams(int $idEfector, array $params): array
     {
@@ -97,12 +102,11 @@ final class ProfesionalEfectorServicioBajaService
         $idPes = (int) $pes->id;
         $idPersona = (int) $pes->id_persona;
         $idServicio = (int) $pes->id_servicio;
-
         $pendientes = self::contarTurnosFuturosPorPes($idPes)['pendientes'];
-        if ($pendientes > 0) {
+
+        if ($pendientes > 0 && !self::ackImpactoOk($params)) {
             throw new \InvalidArgumentException(
-                "No se puede quitar la asignación: hay {$pendientes} turno(s) pendiente(s) a futuro. "
-                . 'Cancelalos o reubicá antes de dar de baja el vínculo con el servicio.'
+                'Confirmá que entendiste el impacto en turnos (Entendí el impacto) antes de continuar.'
             );
         }
 
@@ -112,7 +116,14 @@ final class ProfesionalEfectorServicioBajaService
 
         $db = Yii::$app->db;
         $transaction = $db->beginTransaction();
+        $marcados = 0;
         try {
+            if ($pendientes > 0) {
+                $marcados = TurnoIndisponibilidadImpactService::aplicarPorBajaPes($idPes, [
+                    'id_servicio' => $idServicio,
+                ]);
+            }
+
             /** @var ProfesionalEfectorServicioModel|null $fresh */
             $fresh = ProfesionalEfectorServicioModel::findOne(['id' => $idPes, 'deleted_at' => null]);
             if ($fresh === null) {
@@ -129,13 +140,31 @@ final class ProfesionalEfectorServicioBajaService
             throw $e;
         }
 
+        $message = 'Se quitó la asignación del profesional al servicio «' . $servicioNombre . '».';
+        if ($marcados > 0) {
+            $message .= $marcados === 1
+                ? ' 1 turno pasó a resolución; el paciente fue notificado.'
+                : " {$marcados} turnos pasaron a resolución; los pacientes fueron notificados.";
+        }
+
         return [
             'id_profesional_efector_servicio' => $idPes,
             'id_persona' => $idPersona,
             'id_servicio' => $idServicio,
             'id_efector' => $idEfector,
-            'message' => 'Se quitó la asignación del profesional al servicio «' . $servicioNombre . '».',
+            'turnos_reorganizados' => $marcados,
+            'message' => $message,
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private static function ackImpactoOk(array $params): bool
+    {
+        $ack = strtolower(trim((string) ($params['impacto_baja_revisado'] ?? '')));
+
+        return $ack === '1' || $ack === 'si' || $ack === 'sí' || $ack === 'true';
     }
 
     /**

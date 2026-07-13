@@ -967,7 +967,16 @@
                     clearFlowState();
                     removeFlowPlanStrip();
                 }, { deferReveal: true });
-                scheduleRevealFlowInlineSubmit(mountEl);
+                var impactData = json && json.data && typeof json.data === 'object' ? json.data : null;
+                var requiereAck = !!(impactData && (
+                    impactData.requiere_confirmacion === true
+                    || impactData.requiere_confirmacion === 1
+                    || impactData.requiere_confirmacion === '1'
+                ));
+                // Baja PES con impacto: el botón Confirmar queda oculto hasta «Entendí el impacto».
+                if (!requiereAck) {
+                    scheduleRevealFlowInlineSubmit(mountEl);
+                }
             } else if (flowDismissOpt) {
                 appendFlowDismissFooter(mountEl, flowDismissOpt, function () {
                     clearFlowState();

@@ -31,6 +31,7 @@ final class TurnoResolucionService
             TurnoResolucion::ORIGEN_CAMBIO_AGENDA,
             TurnoResolucion::ORIGEN_GESTION_STAFF,
             TurnoResolucion::ORIGEN_LICENCIA,
+            TurnoResolucion::ORIGEN_BAJA_PES,
         ], true)) {
             throw new \InvalidArgumentException('origen de resolución inválido');
         }
@@ -167,6 +168,53 @@ final class TurnoResolucionService
                 $turno,
                 'Tu turno requiere una nueva cita',
                 'El profesional registró una licencia. Elegí otro horario para el ' . $fechaDisplay . '.'
+            );
+        }
+    }
+
+    /**
+     * Baja de asignación PES: turnos pendientes a futuro → EN_RESOLUCION + aviso al paciente.
+     *
+     * @param list<Turno> $turnos
+     * @param array<string, mixed> $meta
+     */
+    public static function crearDesdeBajaPes(array $turnos, array $meta = []): void
+    {
+        $metaJson = [
+            'id_profesional_efector_servicio' => isset($meta['id_profesional_efector_servicio'])
+                ? (int) $meta['id_profesional_efector_servicio']
+                : null,
+            'id_servicio' => isset($meta['id_servicio']) ? (int) $meta['id_servicio'] : null,
+            'motivo' => 'baja_pes',
+        ];
+
+        foreach ($turnos as $turno) {
+            if (!$turno instanceof Turno) {
+                continue;
+            }
+            if ($turno->estado !== Turno::ESTADO_PENDIENTE) {
+                continue;
+            }
+            $idTurno = (int) $turno->id_turnos;
+            if ($idTurno <= 0) {
+                continue;
+            }
+            $existente = TurnoResolucion::findPendientePorTurno($idTurno);
+            if ($existente !== null) {
+                continue;
+            }
+
+            self::marcarTurnoEnResolucion($turno, TurnoResolucion::ORIGEN_BAJA_PES, [
+                'permitir_otro_efector' => true,
+                'permitir_otro_pes' => true,
+                'meta_json' => $metaJson,
+            ]);
+
+            $fechaDisplay = self::formatFechaEsParaAviso((string) $turno->fecha);
+            self::notificarPacienteRequiereReubicacion(
+                $turno,
+                'Tu turno requiere una nueva cita',
+                'El profesional ya no atiende en ese servicio. Elegí otro horario para el ' . $fechaDisplay . '.'
             );
         }
     }

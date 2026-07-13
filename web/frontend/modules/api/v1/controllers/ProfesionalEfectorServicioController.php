@@ -701,6 +701,7 @@ class ProfesionalEfectorServicioController extends BaseController
                 'id_profesional_efector_servicio' => $result['id_profesional_efector_servicio'],
                 'id_persona' => $result['id_persona'],
                 'id_servicio' => $result['id_servicio'],
+                'turnos_reorganizados' => $result['turnos_reorganizados'],
             ],
             'errors' => null,
         ];
@@ -768,24 +769,24 @@ class ProfesionalEfectorServicioController extends BaseController
         $out['success'] = true;
         $out['data'] = [
             'afecta_turnos' => $preview['afecta_turnos'],
-            'puede_continuar' => $preview['puede_continuar'],
+            'requiere_confirmacion' => $preview['requiere_confirmacion'],
             'turnos_pendientes_futuros' => $preview['turnos_pendientes_futuros'],
             'turnos_en_resolucion_futuros' => $preview['turnos_en_resolucion_futuros'],
             'preview_message' => $preview['preview_message'],
         ];
 
-        if (!$preview['puede_continuar']) {
-            $out = $this->stripImpactoBajaConfirmField($out);
-        }
+        $out = $this->configureImpactoBajaUi($out, (bool) $preview['requiere_confirmacion']);
 
         return $out;
     }
 
     /**
+     * Sin impacto: solo mensaje (+ hidden ack). Con impacto: mensaje + chip «Entendí el impacto».
+     *
      * @param array<string, mixed> $ui
      * @return array<string, mixed>
      */
-    private function stripImpactoBajaConfirmField(array $ui): array
+    private function configureImpactoBajaUi(array $ui, bool $requiereConfirmacion): array
     {
         $blocks = $ui['blocks'] ?? null;
         if (!is_array($blocks)) {
@@ -800,17 +801,46 @@ class ProfesionalEfectorServicioController extends BaseController
                 continue;
             }
             $filtered = [];
+            $hasAckHidden = false;
             foreach ($fields as $f) {
                 if (!is_array($f)) {
                     continue;
                 }
-                if (($f['name'] ?? '') === 'impacto_baja_revisado') {
+                $name = (string) ($f['name'] ?? '');
+                if ($name === 'impacto_baja_revisado') {
+                    if ($requiereConfirmacion) {
+                        // Chip obligatorio antes de Confirmar y Enviar.
+                        $filtered[] = $f;
+                    } else {
+                        // Sin impacto: ack automático (no mostrar chip).
+                        $filtered[] = [
+                            'name' => 'impacto_baja_revisado',
+                            'label' => '',
+                            'type' => 'hidden',
+                            'value' => '1',
+                            'include_in_submit' => true,
+                        ];
+                        $hasAckHidden = true;
+                    }
                     continue;
                 }
                 $filtered[] = $f;
             }
+            if (!$requiereConfirmacion && !$hasAckHidden) {
+                $filtered[] = [
+                    'name' => 'impacto_baja_revisado',
+                    'label' => '',
+                    'type' => 'hidden',
+                    'value' => '1',
+                    'include_in_submit' => true,
+                ];
+            }
             $blocks[$i]['fields'] = $filtered;
-            $blocks[$i]['title'] = 'No se puede continuar';
+            if ($requiereConfirmacion) {
+                $blocks[$i]['title'] = 'Confirmación del impacto';
+            } else {
+                unset($blocks[$i]['title']);
+            }
         }
         $ui['blocks'] = $blocks;
 

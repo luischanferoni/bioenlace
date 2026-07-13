@@ -4544,12 +4544,12 @@
         if (!queryInput) {
             return;
         }
-        // Auto-resize textarea (1 línea inicial; crece hasta max-height en CSS)
+        // Auto-resize textarea: crece hasta ~2 líneas (alineado con CSS max-height).
         queryInput.style.height = 'auto';
-        const maxPx = Math.min(
-            (window.innerHeight || document.documentElement.clientHeight || 600) * 0.4,
-            192
-        );
+        const styles = window.getComputedStyle(queryInput);
+        const lineHeight = parseFloat(styles.lineHeight) || (parseFloat(styles.fontSize) || 16) * 1.45;
+        const padY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
+        const maxPx = Math.ceil(lineHeight * 2 + padY);
         const next = Math.min(queryInput.scrollHeight, maxPx);
         queryInput.style.height = next + 'px';
         queryInput.style.overflowY = queryInput.scrollHeight > maxPx ? 'auto' : 'hidden';

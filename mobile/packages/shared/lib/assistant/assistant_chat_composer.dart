@@ -10,7 +10,7 @@ class AssistantChatComposerBar extends StatefulWidget {
     required this.onSend,
     required this.isSending,
     this.hintText = kAssistantComposerDefaultHint,
-    this.maxLines = 6,
+    this.maxLines = 2,
     this.leading,
     this.focusNode,
     this.onVoice,

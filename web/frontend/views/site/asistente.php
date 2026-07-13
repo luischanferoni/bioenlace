@@ -52,7 +52,7 @@ $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAs
                             id="spa-query-input"
                             class="spa-chat-input"
                             rows="2"
-                            placeholder="Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”."
+                            placeholder="Escribí tu consulta… Ej.: Necesito buscar una persona"
                         ></textarea>
                         <button type="button" id="spa-send-btn" class="spa-chat-send-btn" aria-label="Enviar mensaje">
                             <span class="spa-send-text" aria-hidden="true">→</span>

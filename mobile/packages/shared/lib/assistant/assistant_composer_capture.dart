@@ -1,6 +1,7 @@
 /// Placeholder por defecto del composer del asistente (sin paso `composer_capture` activo).
+/// Corto: cabe en ~2 líneas del input.
 const String kAssistantComposerDefaultHint =
-    'Escribe tu consulta aquí... Ejemplo: "Necesito ver mis consultas" o "Quiero agendar un turno"';
+    'Escribí tu consulta… Ej.: Quiero agendar un turno';
 
 bool isComposerCaptureActive(dynamic active) {
   if (active == true || active == 1) return true;

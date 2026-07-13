@@ -486,7 +486,8 @@ html:has(.spa-asistente-root) {
     resize: none;
     overflow-y: hidden;
     min-height: var(--spa-chat-input-min-height);
-    max-height: min(40vh, 12rem);
+    /* Máximo ~2 líneas (line-height 1.45 + padding vertical). */
+    max-height: calc(1.45em * 2 + 1rem);
     padding: 0.5rem 0.35rem 0.5rem 1rem;
     font: inherit;
     font-size: 1rem;

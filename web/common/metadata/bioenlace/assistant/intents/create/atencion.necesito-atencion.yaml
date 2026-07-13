@@ -1,7 +1,7 @@
 intent_id: atencion.necesito-atencion
 version: 1
 
-action_name: "Necesito atención"
+action_name: "Asistencia guiada"
 description: "Contanos qué te pasa; te guiamos a turno ambulatorio, teleconsulta o derivación según el caso."
 rbac_route: "/api/turnos/crear-como-paciente"
 keywords:

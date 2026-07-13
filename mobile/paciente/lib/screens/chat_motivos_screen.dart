@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,7 +9,8 @@ import 'package:shared/shared.dart';
 
 import '../services/motivos_consulta_service.dart';
 
-/// Chat para cargar motivos de consulta: texto, fotos y audio.
+/// Chat para cargar motivos de consulta: texto y audio.
+/// Mismo patrón de composer que la captura clínica staff (enviar ↔ micrófono).
 /// El médico verá luego un resumen estructurado (proceso aparte en backend).
 class ChatMotivosScreen extends StatefulWidget {
   final int consultaId;
@@ -41,7 +44,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   bool _isRecording = false;
 
   static const String _fallbackWelcomeMessage =
-      'Contanos en pocas palabras por qué pediste este turno. Podés escribir, enviar audios o fotos hasta poco antes del horario del turno; después armamos un resumen para el médico.';
+      'Contanos en pocas palabras por qué pediste este turno. Podés escribir o enviar audios hasta poco antes del horario del turno; después armamos un resumen para el médico.';
   bool _inputAbierto = true;
   String? _motivosResumen;
   String? _chatGuideMessage;
@@ -62,6 +65,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
+    unawaited(_recorder.dispose());
     super.dispose();
   }
 
@@ -128,18 +132,8 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     }
   }
 
-  Future<void> _pickImage() async {
-    if (!_inputAbierto) {
-      _showError('El plazo para cargar motivos ya finalizó.');
-      return;
-    }
-    final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
-    if (file == null || !mounted) return;
-    await _uploadFile(file, 'imagen');
-  }
-
   Future<void> _recordAndSendAudio() async {
+    if (_sending) return;
     if (!_inputAbierto && !_isRecording) {
       _showError('El plazo para cargar motivos ya finalizó.');
       return;
@@ -148,7 +142,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       final path = await _recorder.stop();
       setState(() => _isRecording = false);
       if (path != null && path.isNotEmpty) {
-        await _uploadFile(XFile(path), 'audio');
+        await _uploadAudio(XFile(path));
       }
       return;
     }
@@ -168,7 +162,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     setState(() => _isRecording = true);
   }
 
-  Future<void> _uploadFile(XFile file, String messageType) async {
+  Future<void> _uploadAudio(XFile file) async {
     if (_sending) return;
     if (!kIsWeb) {
       try {
@@ -181,49 +175,18 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
         return;
       }
     }
-    final showLocalPreview = messageType == 'imagen';
-    if (showLocalPreview) {
-      setState(() {
-        _messages = [
-          ..._messages,
-          <String, dynamic>{
-            'message_type': 'imagen',
-            'content': file.path,
-            '_local_preview': true,
-            'user_id': widget.userId,
-            'user_name': widget.userName,
-            'created_at': DateTime.now().toIso8601String(),
-          },
-        ];
-      });
-      _scrollToBottom();
-    }
     setState(() => _sending = true);
     final result = await _service.uploadFile(
       widget.consultaId,
       file,
-      messageType: messageType,
+      messageType: 'audio',
     );
     if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
-      setState(() {
-        final withoutPreview = showLocalPreview
-            ? _messages
-                .where((m) => (m as Map)['_local_preview'] != true)
-                .toList()
-            : _messages;
-        _messages = [...withoutPreview, result['data']];
-      });
+      setState(() => _messages = [..._messages, result['data']]);
       _scrollToBottom();
     } else {
-      if (showLocalPreview) {
-        setState(() {
-          _messages = _messages
-              .where((m) => (m as Map)['_local_preview'] != true)
-              .toList();
-        });
-      }
       _showError(result['message']?.toString() ?? 'Error');
     }
   }
@@ -404,24 +367,14 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     if (!_inputAbierto) {
       return const SizedBox.shrink();
     }
-    final cs = Theme.of(context).colorScheme;
     return AssistantChatComposerBar(
       controller: _textController,
       onSend: _sendText,
       isSending: _sending,
-      hintText: 'Escribí el motivo o enviá audio/foto…',
-      leading: [
-        IconButton(
-          icon: const Icon(Icons.image_outlined),
-          color: cs.onSurfaceVariant,
-          onPressed: _sending ? null : _pickImage,
-        ),
-        IconButton(
-          icon: Icon(_isRecording ? Icons.stop_circle : Icons.mic_none),
-          color: _isRecording ? cs.error : cs.onSurfaceVariant,
-          onPressed: _sending ? null : _recordAndSendAudio,
-        ),
-      ],
+      hintText: 'Escribí el motivo o enviá un audio…',
+      maxLines: 2,
+      onVoice: _recordAndSendAudio,
+      voiceActive: _isRecording,
     );
   }
 }

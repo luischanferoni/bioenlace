@@ -36,6 +36,17 @@ vocab:
     - proximos turnos
     - turnos que tengo
     - turnos pendientes
+  paciente_reservar_turno_phrases:
+    - necesito un turno
+    - necesito turno
+    - quiero un turno
+    - quiero turno
+    - sacar un turno
+    - pedir un turno
+    - pedir turno
+    - reservar un turno
+    - agendar un turno
+    - agendar turno
   consultas_seguimiento_phrases:
     - renovar medicacion
     - renovar medicación
@@ -157,6 +168,14 @@ match_rules:
       Si el paciente pregunta qué turnos tiene o pide ver/listar sus citas (sin cancelar ni sacar uno nuevo),
       priorizá turnos.ver-mis-turnos-como-paciente.
 
+  paciente_reservar_turno:
+    require_phrase_any: paciente_reservar_turno_phrases
+    forbid_any: []
+    ai_hint: >-
+      Si el paciente pide sacar, pedir, reservar o agendar un turno de forma genérica (sin especialidad ni síntomas),
+      priorizá turnos.crear-como-paciente: el flow desambigua entre reserva directa y asistencia guiada (triage).
+      No confundir con «mis turnos» ni con síntomas sin pedido de turno.
+
   help_menu_query:
     require_any: [help_menu]
 
@@ -217,6 +236,21 @@ score_adjustments:
         delta: -20
       - intent_id: turnos.modificar-como-paciente-flow
         delta: -20
+
+  - when_rule: paciente_reservar_turno
+    apply:
+      - intent_id: turnos.crear-como-paciente
+        delta: 55
+      - intent_id: turnos.ver-mis-turnos-como-paciente
+        delta: -35
+      - intent_id: atencion.necesito-atencion
+        delta: -40
+      - intent_id: turnos.cancelar-como-paciente-flow
+        delta: -25
+      - intent_id: turnos.modificar-como-paciente-flow
+        delta: -25
+      - intent_id: turnos.reubicar-como-paciente-flow
+        delta: -25
 
   - when_rule: staff_condicion_laboral
     apply:
@@ -353,6 +387,12 @@ operational_fallbacks:
   - id: paciente_listar_turnos_nl
     when_any_rule: [paciente_listar_turnos]
     intent_id: turnos.ver-mis-turnos-como-paciente
+    confidence: 0.92
+    method: rules_declarative_fallback
+
+  - id: paciente_reservar_turno_nl
+    when_any_rule: [paciente_reservar_turno]
+    intent_id: turnos.crear-como-paciente
     confidence: 0.92
     method: rules_declarative_fallback
 
@@ -504,6 +544,6 @@ conversational_channel:
     intent_prefix_fallback: turnos.crear
     labels:
       atencion.consultas-seguimiento-flow: Consultas y seguimiento
-      atencion.necesito-atencion: Necesito atención
-      turnos.crear-como-paciente: Reservar turno
+      atencion.necesito-atencion: Asistencia guiada
+      turnos.crear-como-paciente: Turno con un especialista
       turnos.crear-para-paciente: Reservar turno

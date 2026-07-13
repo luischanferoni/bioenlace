@@ -100,6 +100,77 @@ class IntentClassificationRulesServiceTest extends Unit
         $this->assertFalse(IntentClassificationRulesService::isClinicalSymptomContent('quiero un turno'));
     }
 
+    public function testOperationalFallbackRoutesNecesitoUnTurnoToCrearComoPaciente(): void
+    {
+        $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'turnos.crear-como-paciente',
+                    'Reservar turno',
+                    '',
+                    null,
+                    '/api/turnos/crear-como-paciente',
+                    ['turno', 'reservar turno'],
+                    []
+                ),
+                new UiActionCatalogItem(
+                    'turnos.ver-mis-turnos-como-paciente',
+                    'Mis turnos',
+                    '',
+                    null,
+                    '/api/turnos/ver-mis-turnos',
+                    ['mis turnos'],
+                    []
+                ),
+                new UiActionCatalogItem(
+                    'atencion.necesito-atencion',
+                    'Necesito atención',
+                    '',
+                    null,
+                    '/api/turnos/crear-como-paciente',
+                    ['necesito atención'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['turnos.crear-como-paciente'] = $catalog->items[0];
+        $catalog->byActionId['turnos.ver-mis-turnos-como-paciente'] = $catalog->items[1];
+        $catalog->byActionId['atencion.necesito-atencion'] = $catalog->items[2];
+
+        $fb = IntentClassificationRulesService::resolveOperationalFallback('necesito un turno', $catalog);
+
+        $this->assertNotNull($fb);
+        $this->assertSame('turnos.crear-como-paciente', $fb['item']->action_id);
+        $this->assertSame('rules_declarative_fallback', $fb['method']);
+
+        $lower = mb_strtolower('necesito un turno', 'UTF-8');
+        $this->assertGreaterThan(
+            IntentClassifier::scoreItemPublic($lower, $catalog->items[1]),
+            IntentClassifier::scoreItemPublic($lower, $catalog->items[0])
+        );
+        $this->assertGreaterThan(
+            IntentClassifier::scoreItemPublic($lower, $catalog->items[2]),
+            IntentClassifier::scoreItemPublic($lower, $catalog->items[0])
+        );
+    }
+
+    public function testPacienteReservarTurnoRuleMatches(): void
+    {
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'paciente_reservar_turno',
+            'necesito un turno'
+        ));
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'paciente_reservar_turno',
+            'Quiero un turno'
+        ));
+        $this->assertFalse(IntentClassificationRulesService::ruleMatches(
+            'paciente_reservar_turno',
+            'ver mis turnos'
+        ));
+    }
+
     public function testStaffDataAccessEditExcludesScheduling(): void
     {
         $this->assertTrue(IntentClassificationRulesService::isStaffDataAccessEditQuery('modificar agenda del personal'));

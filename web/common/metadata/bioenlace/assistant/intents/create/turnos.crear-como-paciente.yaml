@@ -1,14 +1,23 @@
 intent_id: turnos.crear-como-paciente
 version: 3
 
-action_name: "Reservar turno"
+action_name: "Turno con un especialista"
 description: "Elegir servicio, centro de salud, profesional y horario (sin repreguntar motivo clínico)."
 rbac_route: "/api/turnos/crear-como-paciente"
 keywords:
   - turno
   - sacar turno
+  - sacar un turno
   - reservar turno
+  - reservar un turno
   - pedir turno
+  - pedir un turno
+  - necesito un turno
+  - necesito turno
+  - quiero un turno
+  - quiero turno
+  - agendar turno
+  - agendar un turno
   - autogestión
   - agendar cita
 
@@ -28,11 +37,37 @@ intent_semantics:
   keyphrases:
     - reservar una cita
     - sacar turno en un centro de salud
+    - necesito un turno
+    - quiero un turno
     - elegir servicio y horario disponible
 
 draft_keys_extra:
   - tipo_atencion
   - fecha_turno
+
+# Pedido genérico («necesito un turno»): desambiguar vs asistencia guiada (triage).
+# Al elegir botón el cliente reenvía content vacío → esta regla no vuelve a disparar.
+business_rules:
+  - id: reserva_directa_vs_asistencia_guiada
+    when: pre_flow
+    checker: content_regex
+    require_any:
+      - "^(necesito|quiero|pedir|pido|sacar|reservar|agendar)(\\s+un)?\\s+turno\\b"
+      - "^turno(\\s+por\\s+favor)?\\.?$"
+    forbid_any:
+      - "\\b(con|de)\\s+\\S+"
+      - "\\b(cancelar|reprogramar|reubicar|modificar|ver|listar|mis)\\b"
+    user_message: >-
+      ¿Sabés con qué especialista o servicio querés el turno, o preferís que te guiemos según lo que te pasa?
+    remediation:
+      - id: turno_especialista
+        label: "Turno con un especialista"
+        intent_id: turnos.crear-como-paciente
+        reset_flow: true
+      - id: asistencia_guiada
+        label: "Asistencia guiada"
+        intent_id: atencion.necesito-atencion
+        reset_flow: true
 
 subintents:
   - id: select_servicio

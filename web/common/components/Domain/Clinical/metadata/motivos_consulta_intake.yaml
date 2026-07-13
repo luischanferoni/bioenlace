@@ -14,7 +14,7 @@ chat_guide:
     - "¿Empeoró, mejoró o sigue igual?"
     - "¿Tomás alguna medicación o tenés alguna enfermedad conocida?"
     - "¿Hay algo que te preocupe especialmente (fiebre, dolor fuerte, falta de aire)?"
-  footer: "Podés responder todo en un solo mensaje, por audio o con fotos si hace falta. Hasta poco antes del horario del turno armamos un resumen para el médico."
+  footer: "Podés responder todo en un solo mensaje o por audio. Hasta poco antes del horario del turno armamos un resumen para el médico."
 
 variants:
   - match:

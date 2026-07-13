@@ -167,6 +167,17 @@ final class AgendaConfigUiFlowService
     }
 
     /**
+     * Aplica semántica de merge/limpieza de días (misma que al guardar).
+     *
+     * @param array<string, mixed> $post
+     * @return array<string, mixed>
+     */
+    public static function preparePostForAgendaConfig(int $idEfector, array $post): array
+    {
+        return self::mergeWithAgendaDefaults($idEfector, $post);
+    }
+
+    /**
      * @param array<string, mixed> $post
      * @return array<string, mixed>
      */

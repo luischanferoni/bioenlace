@@ -89,14 +89,17 @@
             btn.disabled = true;
         }
         panel.innerHTML = '<div class="text-muted small">Calculando impacto…</div>';
-        fetch('/api/v1/profesional-agenda/preview-configurar-agenda', {
+        // Misma ruta RBAC que el guardado (`configurar-agenda` + preview=1).
+        var body = collectBody(form);
+        body.set('preview', '1');
+        fetch('/api/v1/profesional-agenda/configurar-agenda', {
             method: 'POST',
             headers: global.BioenlaceApiClient.mergeHeaders({
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             }),
             credentials: 'same-origin',
-            body: collectBody(form)
+            body: body
         })
             .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, json: j }; }); })
             .then(function (res) {

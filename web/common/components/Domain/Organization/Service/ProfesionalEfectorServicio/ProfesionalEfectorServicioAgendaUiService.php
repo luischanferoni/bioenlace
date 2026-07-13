@@ -148,6 +148,7 @@ final class ProfesionalEfectorServicioAgendaUiService
      */
     public static function previewAgendaConfig(int $idEfector, array $post): array
     {
+        $post = AgendaConfigUiFlowService::preparePostForAgendaConfig($idEfector, $post);
         $idPes = self::resolvePesIdForAgendaSubmit($idEfector, $post);
 
         return ProfesionalEfectorServicioAgendaVersionService::previewImpacto($idPes, $idEfector, $post);

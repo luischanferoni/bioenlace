@@ -5,7 +5,7 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "profesiones".
+ * This is the model class for table "cat_profesiones".
  *
  * @property integer $id_profesion
  * @property string $nombre
@@ -17,7 +17,7 @@ class Profesiones extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'profesiones';
+        return 'cat_profesiones';
     }
 
     /**

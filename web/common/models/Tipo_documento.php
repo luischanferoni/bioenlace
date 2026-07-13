@@ -5,7 +5,7 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "tipos_documentos".
+ * This is the model class for table "cat_tipos_documentos".
  *
  * @property integer $id_tipodoc
  * @property string $nombre
@@ -21,7 +21,7 @@ class Tipo_documento extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'tipos_documentos';
+        return 'cat_tipos_documentos';
     }
 
     /**

@@ -712,7 +712,7 @@ class Persona extends \yii\db\ActiveRecord
         /*
         $command = $connection->createCommand("SELECT id_persona as id, apellido, p.nombre,td.nombre as tipo_doc, documento, sexo_biologico as sexo, fecha_nacimiento
             FROM personas p
-            LEFT JOIN tipos_documentos td USING (id_tipodoc)
+            LEFT JOIN cat_tipos_documentos td USING (id_tipodoc)
             WHERE (soundex(apellido) = soundex('$apellido') AND soundex(p.nombre) = soundex('$nombre')) 
             ");
             */
@@ -720,7 +720,7 @@ class Persona extends \yii\db\ActiveRecord
         $command = $connection->createCommand(
             "SELECT id_persona as id, apellido, p.nombre,td.nombre as tipo_doc, documento, sexo_biologico as sexo, fecha_nacimiento
                 FROM personas p
-                LEFT JOIN tipos_documentos td USING (id_tipodoc)
+                LEFT JOIN cat_tipos_documentos td USING (id_tipodoc)
                 WHERE (p.apellido LIKE '%$apellido%' AND p.nombre LIKE '%$nombre%') 
                    OR (p.apellido LIKE '%$apellido%' AND p.otro_nombre LIKE '%$nombre%')
                    OR (p.otro_apellido LIKE '%$apellido%' AND p.nombre LIKE '%$nombre%')

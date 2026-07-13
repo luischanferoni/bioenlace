@@ -5,7 +5,7 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "estado_solicitud".
+ * This is the model class for table "cat_estado_solicitud".
  *
  * @property string $id_estado
  * @property string $nombre
@@ -17,7 +17,7 @@ class Estado_solicitud extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'estado_solicitud';
+        return 'cat_estado_solicitud';
     }
 
     /**

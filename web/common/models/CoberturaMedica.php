@@ -5,7 +5,7 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "cobertura_medica".
+ * This is the model class for table "cat_cobertura_medica".
  *
  * @property int $codigo
  * @property int|null $rnos
@@ -18,7 +18,7 @@ class CoberturaMedica extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'cobertura_medica';
+        return 'cat_cobertura_medica';
     }
 
     /**

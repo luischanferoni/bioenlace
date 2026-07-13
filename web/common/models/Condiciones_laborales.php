@@ -5,7 +5,7 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "condiciones_laborales".
+ * This is the model class for table "cat_condiciones_laborales".
  *
  * @property string $id_condicion_laboral
  * @property string $nombre
@@ -19,7 +19,7 @@ class Condiciones_laborales extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'condiciones_laborales';
+        return 'cat_condiciones_laborales';
     }
 
     /**

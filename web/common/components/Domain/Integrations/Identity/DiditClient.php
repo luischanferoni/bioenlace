@@ -572,7 +572,7 @@ class DiditClient extends Component
 
     /**
      * Mapeo Didit document_type (string) → id_tipodoc del nomenclador.
-     * Ajustar IDs según la tabla tipos_documentos del proyecto.
+     * Ajustar IDs según la tabla cat_tipos_documentos del proyecto.
      *
      * @param string|null $documentType
      * @return int
@@ -596,7 +596,7 @@ class DiditClient extends Component
     /**
      * Mapeo Didit marital_status (string) → id_estado_civil del nomenclador.
      * Nunca devuelve null: id_estado_civil no acepta null en Persona.
-     * Ajustar IDs según la tabla estado_civil del proyecto.
+     * Ajustar IDs según la tabla cat_estado_civil del proyecto.
      *
      * @param string|null $maritalStatus Didit: SINGLE, MARRIED, DIVORCED, WIDOWED, UNKNOWN (o "Single" etc.)
      * @return int

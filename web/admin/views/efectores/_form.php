@@ -33,9 +33,9 @@ if ($model->id_localidad && $localidad !== null) {
 
     <?= $form->field($model, 'nombre')->textInput(['maxlength' => true, 'readonly' => true]) ?>
 
-    <?= $form->field($model, 'dependencia')->textInput(['maxlength' => true, 'readonly' => true]) ?>
+    <?= $form->field($model, 'dependencia')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'tipologia')->textInput(['maxlength' => true, 'readonly' => true]) ?>
+    <?= $form->field($model, 'tipologia')->textInput(['maxlength' => true]) ?>
 
     <?= $form->field($model, 'domicilio')->textInput(['maxlength' => true]) ?>
 
@@ -57,7 +57,7 @@ if ($model->id_localidad && $localidad !== null) {
 
     <?= $form->field($model, 'dias_horario')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'origen_financiamiento')->textInput(['maxlength' => true, 'readonly' => true]) ?>
+    <?= $form->field($model, 'origen_financiamiento')->textInput(['maxlength' => true]) ?>
 
     <div class="form-group field-efector-id_provincia">
         <label class="control-label" for="efector-id_provincia">Provincia</label>

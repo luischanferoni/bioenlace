@@ -916,10 +916,6 @@ class HomeScreenState extends State<HomeScreen> {
           onSubjectChanged: _cargarInicial,
           margin: const EdgeInsets.only(top: BioSpacing.sm),
         ),
-        PersonRepresentationSubjectChip(
-          authToken: widget.authToken,
-          onSubjectChanged: _cargarInicial,
-        ),
       ],
     );
   }

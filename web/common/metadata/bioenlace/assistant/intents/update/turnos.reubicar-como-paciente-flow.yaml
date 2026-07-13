@@ -14,7 +14,7 @@ intent_semantics:
   goal: >-
     Reubicar un turno propio marcado EN_RESOLUCION (impacto de agenda, gestión del consultorio, etc.).
   how: >-
-    Elegir turno en resolución → servicio → centro → profesional → horario → confirmación POST reubicar.
+    Elegir turno en resolución → servicio → centro → profesional → día → horario (mañana/tarde) → confirmación POST reubicar.
   preconditions:
     - Turno en estado EN_RESOLUCION con fila pendiente en turno_resolucion.
   outcome:
@@ -24,10 +24,11 @@ draft_keys_extra:
   - id_servicio_asignado
   - id_efector
   - id_profesional_efector_servicio
+  - fecha_turno
 
 subintents:
   - id: select_turno
-    assistant_text: ""
+    assistant_text: "Turno a reubicar"
     provides:
       - draft.id
     next: select_servicio
@@ -68,18 +69,36 @@ subintents:
       - draft.id_servicio_asignado
     provides:
       - draft.id_profesional_efector_servicio
-    next: select_slot
+    next: select_dia
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
       params:
         id_efector: "draft.id_efector"
         id_servicio: "draft.id_servicio_asignado"
 
-  - id: select_slot
-    assistant_text: "Nuevo horario"
+  - id: select_dia
+    assistant_text: "Día"
     requires:
       - draft.id
       - draft.id_profesional_efector_servicio
+    provides:
+      - draft.fecha_turno
+    next: select_slot
+    open_ui:
+      action_id: turnos.slots-dias-reubicar-como-paciente
+      params:
+        id: "draft.id"
+        id_efector: "draft.id_efector"
+        id_servicio_asignado: "draft.id_servicio_asignado"
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        mismo_profesional: "0"
+
+  - id: select_slot
+    assistant_text: "Horario"
+    requires:
+      - draft.id
+      - draft.id_profesional_efector_servicio
+      - draft.fecha_turno
     provides:
       - draft.slot_id
     next: ""
@@ -90,6 +109,7 @@ subintents:
         id_efector: "draft.id_efector"
         id_servicio_asignado: "draft.id_servicio_asignado"
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        fecha: "draft.fecha_turno"
         mismo_profesional: "0"
 
 flow_submit:

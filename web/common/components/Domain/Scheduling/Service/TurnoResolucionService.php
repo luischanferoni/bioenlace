@@ -629,7 +629,7 @@ final class TurnoResolucionService
         $res = TurnoResolucion::findPendientePorTurno((int) $turno->id_turnos);
         $profPersona = $turno->getProfesionalPersonaParaDisplay();
         $profesional = $profPersona
-            ? $profPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+            ? $profPersona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
             : null;
 
         return [

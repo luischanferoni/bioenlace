@@ -1120,13 +1120,33 @@ class TurnosController extends BaseController
      * Horarios para reubicar un turno EN_RESOLUCION (puede cambiar PES/efector vía query).
      *
      * GET|POST /api/v1/turnos/slots-reubicar-como-paciente
+     * Opcional: `fecha` (Y-m-d) para un solo día (paso 2 tras elegir día).
      */
     public function actionSlotsReubicarComoPaciente(): array
     {
+        return $this->renderSlotsReubicarComoPacienteUi(false);
+    }
+
+    /**
+     * Paso 1 reubicar: días con al menos un horario libre (misma UX que crear turno).
+     *
+     * GET|POST /api/v1/turnos/slots-dias-reubicar-como-paciente
+     */
+    public function actionSlotsDiasReubicarComoPaciente(): array
+    {
+        return $this->renderSlotsReubicarComoPacienteUi(true);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function renderSlotsReubicarComoPacienteUi(bool $soloDias): array
+    {
         $req = Yii::$app->request;
+        $screen = $soloDias ? 'slots-dias-reubicar-como-paciente' : 'slots-reubicar-como-paciente';
         $out = UiScreenService::handleScreen(
             'turnos',
-            'slots-reubicar-como-paciente',
+            $screen,
             $req->get(),
             $req->post(),
             static function (array $post): array {
@@ -1139,6 +1159,9 @@ class TurnosController extends BaseController
 
         if (isset($out['kind']) && $out['kind'] === 'ui_definition' && ($out['ui_type'] ?? '') === 'ui_json') {
             $params = array_merge($req->get(), $req->post());
+            if ($soloDias) {
+                $params['ampliar_limite_dias'] = '1';
+            }
             $tid = $this->resolveTurnoId(null, $params, $req);
             if (!$tid) {
                 throw new BadRequestHttpException('id del turno requerido');
@@ -1157,6 +1180,9 @@ class TurnosController extends BaseController
             $limiteRaw = $req->get('limite') ?: $req->post('limite');
             $limite = $limiteRaw !== null && $limiteRaw !== '' ? (int) $limiteRaw : $defaults['limite'];
             $limite = max(1, min($maxCliente, $limite));
+            if ($soloDias) {
+                $limite = min($maxCliente, max($limite, (int) $defaults['max_dias'] * 24));
+            }
             $franjaRaw = $req->get('franja_tarde_desde') ?: $req->post('franja_tarde_desde');
             $franja = $franjaRaw !== null && $franjaRaw !== '' ? (string) $franjaRaw : $defaults['franja_tarde_desde'];
             if (!preg_match('/^\d{2}:\d{2}$/', $franja)) {
@@ -1164,7 +1190,9 @@ class TurnosController extends BaseController
             }
             $plano = isset($payload['slots']) && is_array($payload['slots']) ? $payload['slots'] : [];
             $grouped = TurnoSlotOfferService::buildOfferFromPlano($plano, $franja, $limite, (int) $defaults['max_dias']);
-            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, $idServicio);
+            $blocks = $soloDias
+                ? TurnoSlotOfferUiPresenter::buildDayPickerBlocks($grouped)
+                : TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, $idServicio);
             if ($blocks !== []) {
                 $out['blocks'] = $blocks;
             } else {
@@ -1851,13 +1879,25 @@ class TurnosController extends BaseController
                 : $defaultsSlots['max_dias'],
             'min_minutos_desde_ahora' => $defaultsSlots['min_minutos_desde_ahora'],
         ];
+        $fechaFiltro = isset($params['fecha']) ? trim((string) $params['fecha']) : '';
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaFiltro) === 1) {
+            $criteria['fecha_desde'] = $fechaFiltro;
+            $criteria['max_dias'] = 1;
+        }
         $idPesParam = isset($params['id_profesional_efector_servicio']) ? (int) $params['id_profesional_efector_servicio'] : 0;
         if ($idPesParam > 0) {
             $criteria['id_profesional_efector_servicio'] = $idPesParam;
         } elseif ($mismoProf && (int) $turno->id_profesional_efector_servicio > 0) {
             $criteria['id_profesional_efector_servicio'] = (int) $turno->id_profesional_efector_servicio;
         }
-        $slots = TurnoSlotFinder::findAvailableSlots($criteria, max(1, $limit));
+        $limit = max(1, $limit);
+        if (!empty($params['ampliar_limite_dias'])) {
+            $p = Yii::$app->params['turnosPaciente'] ?? [];
+            $maxCliente = max(1, (int) ($p['slots_oferta_max_cliente'] ?? 60));
+            $maxDias = max(1, (int) $criteria['max_dias']);
+            $limit = min($maxCliente, max($limit, $maxDias * 24));
+        }
+        $slots = TurnoSlotFinder::findAvailableSlots($criteria, $limit);
         return ['success' => true, 'slots' => $slots];
     }
 

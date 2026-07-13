@@ -22,6 +22,7 @@ final class ProvinciasArgentinaSeedService
     public function upsertAll(): array
     {
         $rows = $this->loadDefinition();
+        $this->realignCodIndecByCanonicalNombre($rows);
         $inserted = 0;
         $updated = 0;
         $codigos = [];
@@ -36,6 +37,9 @@ final class ProvinciasArgentinaSeedService
                     $existing = $legacy;
                 }
             }
+            if ($existing === null) {
+                $existing = $this->findByCanonicalNombre($row['nombre']);
+            }
 
             if ($existing instanceof Provincia) {
                 $existing->nombre = $row['nombre'];
@@ -43,6 +47,8 @@ final class ProvinciasArgentinaSeedService
                 $existing->superficie = $row['superficie'];
                 if ($existing->cod_indec === '00' && $codIndec === '02') {
                     $existing->cod_indec = '02';
+                } elseif ((string) $existing->cod_indec !== $codIndec) {
+                    $existing->cod_indec = $codIndec;
                 }
                 if (!$existing->save()) {
                     throw new \RuntimeException(
@@ -138,5 +144,74 @@ final class ProvinciasArgentinaSeedService
             ->max('id_provincia', Yii::$app->db);
 
         return max(1, (int) $max + 1);
+    }
+
+    /**
+     * Corrige swaps históricos de cod_indec (p. ej. 82/86) alineando por nombre canónico.
+     *
+     * @param list<array{cod_indec: string, nombre: string, region_pais: string, superficie: int}> $rows
+     */
+    private function realignCodIndecByCanonicalNombre(array $rows): void
+    {
+        $byNombre = [];
+        foreach ($rows as $row) {
+            $byNombre[$this->normalizeNombre($row['nombre'])] = $row['cod_indec'];
+        }
+
+        $pending = [];
+        foreach (Provincia::find()->all() as $provincia) {
+            $key = $this->normalizeNombre((string) $provincia->nombre);
+            if (!isset($byNombre[$key])) {
+                continue;
+            }
+            $target = $byNombre[$key];
+            if ((string) $provincia->cod_indec === $target) {
+                continue;
+            }
+            $pending[] = [$provincia, $target];
+        }
+
+        if ($pending === []) {
+            return;
+        }
+
+        foreach ($pending as $i => [$provincia]) {
+            // cod_indec es varchar(2): temporales fuera del rango INDEC oficial.
+            $provincia->cod_indec = chr(ord('a') + intdiv($i, 10)) . (string) ($i % 10);
+            if (!$provincia->save(false, ['cod_indec'])) {
+                throw new \RuntimeException(
+                    'No se pudo liberar cod_indec temporal de provincia ' . $provincia->id_provincia
+                );
+            }
+        }
+
+        foreach ($pending as [$provincia, $target]) {
+            $provincia->cod_indec = $target;
+            if (!$provincia->save(false, ['cod_indec'])) {
+                throw new \RuntimeException(
+                    'No se pudo realinear cod_indec=' . $target . ' en provincia ' . $provincia->id_provincia
+                );
+            }
+        }
+    }
+
+    private function findByCanonicalNombre(string $nombre): ?Provincia
+    {
+        $target = $this->normalizeNombre($nombre);
+        foreach (Provincia::find()->all() as $provincia) {
+            if ($this->normalizeNombre((string) $provincia->nombre) === $target) {
+                return $provincia;
+            }
+        }
+
+        return null;
+    }
+
+    private function normalizeNombre(string $nombre): string
+    {
+        $nombre = mb_strtolower(trim($nombre), 'UTF-8');
+        $repl = ['á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n'];
+
+        return strtr($nombre, $repl);
     }
 }

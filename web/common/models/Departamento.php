@@ -34,7 +34,7 @@ class Departamento extends \yii\db\ActiveRecord
             [['id_departamento', 'nombre', 'cod_indec', 'id_provincia'], 'required'],
             [['id_departamento', 'id_provincia'], 'integer'],
             [['nombre'], 'string', 'max' => 40],
-            [['cod_indec'], 'string', 'max' => 3]
+            [['cod_indec'], 'string', 'max' => 5]
         ];
     }
 

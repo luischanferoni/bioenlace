@@ -83,13 +83,13 @@ provincias:
     region_pais: "Patagonia"
     superficie: 243943
   - cod_indec: "82"
-    nombre: "Santiago del Estero"
-    region_pais: "Norte"
-    superficie: 136351
-  - cod_indec: "86"
     nombre: "Santa Fe"
     region_pais: "Centro"
     superficie: 133007
+  - cod_indec: "86"
+    nombre: "Santiago del Estero"
+    region_pais: "Norte"
+    superficie: 136351
   - cod_indec: "90"
     nombre: "Tucumán"
     region_pais: "Norte"

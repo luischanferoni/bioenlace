@@ -304,17 +304,9 @@ Future<void> returnPacienteToLogin({String? message}) async {
 Future<bool> validatePacienteBearerOnUnlock() async {
   final prefs = await SharedPreferences.getInstance();
   final token = (prefs.getString('auth_token') ?? '').trim();
-  if (token.isEmpty) {
-    return false;
-  }
-  final check = await BearerSessionAuth.checkBearerToken(
-    token,
-    appClient: BearerSessionAuth.appClientPaciente,
-  );
-  if (check == BearerSessionCheckResult.invalid) {
-    return false;
-  }
-  return true;
+  // Solo presencia local del JWT. No llamar a /auth/yo acá: un 4xx/parse
+  // transitorio disparaba clearInvalidAuthSession y perdía el token.
+  return token.isNotEmpty;
 }
 
 /// Bloquea el contenido hasta completar enrolamiento biométrico local (arranque con sesión).

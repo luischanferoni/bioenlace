@@ -85,11 +85,21 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // No re-evaluar mientras el prompt biométrico está activo: el sistema
+      // pausa la app al mostrar BiometricPrompt y un resume intermedio
+      // disparaba otro unlock / validaciones en paralelo.
+      if (_authenticating) {
+        return;
+      }
       unawaited(_evaluateLock());
     }
   }
 
   Future<void> _evaluateLock() async {
+    if (_authenticating) {
+      return;
+    }
+
     final sessionOk =
         widget.canApplyLock == null || await widget.canApplyLock!();
     final bioAvailable = await _biometricAuth.isAvailable();
@@ -99,7 +109,7 @@ class _BiometricSessionLockScopeState extends State<BiometricSessionLockScope>
           requireUnlockEnabled: widget.requireUnlockEnabled,
         );
 
-    if (!mounted) return;
+    if (!mounted || _authenticating) return;
     setState(() {
       _biometricAvailable = bioAvailable;
       _biometricType = bioType;

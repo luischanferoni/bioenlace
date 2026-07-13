@@ -74,7 +74,8 @@ class BiometricAuth {
           errorMessage = 'La autenticación biométrica está bloqueada permanentemente';
           break;
         case 'UserCancel':
-          errorMessage = null; // El usuario canceló, no es un error
+        case '10': // BiometricPrompt.ERROR_USER_CANCELED
+          errorMessage = null;
           isUserCancel = true;
           break;
         default:

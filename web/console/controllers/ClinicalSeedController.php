@@ -267,6 +267,64 @@ class ClinicalSeedController extends Controller
     }
 
     /**
+     * Seed departamentos + localidades (Georef) y reasigna efectores a capitales SDE / Santa Fe demo.
+     *
+     * php yii clinical-seed/departamentos-localidades-argentina
+     * php yii clinical-seed/departamentos-localidades-argentina --reasignarEfectores=0
+     */
+    public function actionDepartamentosLocalidadesArgentina(int $reasignarEfectores = 1): int
+    {
+        try {
+            $provincias = (new \common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService())->upsertAll();
+            $this->stdout(
+                sprintf(
+                    "Provincias: %d catálogo, %d insertadas, %d actualizadas.\n",
+                    $provincias['total'],
+                    $provincias['inserted'],
+                    $provincias['updated']
+                ),
+                Console::FG_GREEN
+            );
+
+            $geo = new \common\components\Domain\Person\Service\Seed\DepartamentosLocalidadesArgentinaSeedService();
+            $result = $geo->upsertAll();
+            $this->stdout(
+                sprintf(
+                    "Departamentos: %d (%d ins / %d upd). Localidades: %d (%d ins / %d upd).\n",
+                    $result['total_departamentos'],
+                    $result['departamentos_inserted'],
+                    $result['departamentos_updated'],
+                    $result['total_localidades'],
+                    $result['localidades_inserted'],
+                    $result['localidades_updated']
+                ),
+                Console::FG_GREEN
+            );
+
+            if ($reasignarEfectores) {
+                $ef = $geo->reassignEfectoresToCapitales();
+                $this->stdout(
+                    sprintf(
+                        "Efectores: %d → SDE (loc %d); efector %d → Santa Fe (loc %d, filas %d).\n",
+                        $ef['actualizados_sde'],
+                        $ef['santiago_localidad'],
+                        \common\components\Domain\Person\Service\Seed\DepartamentosLocalidadesArgentinaSeedService::EFECTOR_SANTA_FE_DEMO_ID,
+                        $ef['santa_fe_localidad'],
+                        $ef['actualizados_sf']
+                    ),
+                    Console::FG_CYAN
+                );
+            }
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        return ExitCode::OK;
+    }
+
+    /**
      * Crea médico de prueba en MED GENERAL para el efector indicado (default 863).
      *
      * php yii clinical-seed/medico-med-general

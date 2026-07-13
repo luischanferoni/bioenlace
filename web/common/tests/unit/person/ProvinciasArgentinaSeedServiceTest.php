@@ -30,4 +30,16 @@ class ProvinciasArgentinaSeedServiceTest extends Unit
         }
         $this->assertCount(ProvinciasArgentinaSeedService::EXPECTED_COUNT, $codigos);
     }
+
+    public function testCodigosIndecOficialesSantaFeYSantiago(): void
+    {
+        $path = Yii::getAlias('@common/metadata/bioenlace/geo/provincias-argentina.yaml');
+        $parsed = Yaml::parseFile($path);
+        $byCod = [];
+        foreach ($parsed['provincias'] as $row) {
+            $byCod[str_pad(trim((string) $row['cod_indec']), 2, '0', STR_PAD_LEFT)] = (string) $row['nombre'];
+        }
+        $this->assertSame('Santa Fe', $byCod['82']);
+        $this->assertSame('Santiago del Estero', $byCod['86']);
+    }
 }

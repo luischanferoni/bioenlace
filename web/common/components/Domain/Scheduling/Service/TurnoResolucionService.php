@@ -69,7 +69,20 @@ final class TurnoResolucionService
         $row->save(false);
 
         $turno->estado = Turno::ESTADO_EN_RESOLUCION;
-        $turno->save(false);
+        if (!$turno->save(false)) {
+            throw new \RuntimeException(
+                'No se pudo marcar el turno en resolución: ' . json_encode($turno->getErrors())
+            );
+        }
+        $turno->refresh();
+        if ($turno->estado !== Turno::ESTADO_EN_RESOLUCION) {
+            // Típico: ENUM de turnos.estado sin valor EN_RESOLUCION (MySQL guarda '').
+            throw new \RuntimeException(
+                'No se persistió EN_RESOLUCION en turnos.id_turnos=' . (int) $turno->id_turnos
+                . ' (estado leído: ' . json_encode((string) $turno->estado) . '). '
+                . 'Verificar que el ENUM turnos.estado incluya EN_RESOLUCION.'
+            );
+        }
         TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
         TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 

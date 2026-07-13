@@ -41,8 +41,18 @@ final class TurnoPacienteListadoService
             if ($alcance === 'en_resolucion') {
                 $turnosQ = Turno::findActive()->alias('t')
                     ->where(['t.id_persona' => $idPersona])
-                    ->andWhere(['t.estado' => Turno::ESTADO_EN_RESOLUCION])
                     ->andWhere(['>=', 't.fecha', $hoyProducto])
+                    ->andWhere([
+                        'or',
+                        ['t.estado' => Turno::ESTADO_EN_RESOLUCION],
+                        [
+                            'exists',
+                            (new \yii\db\Query())
+                                ->from(['r' => TurnoResolucion::tableName()])
+                                ->where('r.id_turno = t.id_turnos')
+                                ->andWhere(['r.estado' => TurnoResolucion::ESTADO_PENDIENTE]),
+                        ],
+                    ])
                     ->orderBy(['t.fecha' => SORT_ASC, 't.hora' => SORT_ASC]);
             } elseif ($alcance === 'pendientes') {
                 $turnosQ = Turno::findActive()->alias('t')
@@ -88,7 +98,10 @@ final class TurnoPacienteListadoService
                 $row = $this->formatTurnoPacienteListadoRow($turno);
                 if (
                     ($alcance === 'pendientes' && $turno->estado === Turno::ESTADO_PENDIENTE)
-                    || ($alcance === 'en_resolucion' && $turno->estado === Turno::ESTADO_EN_RESOLUCION)
+                    || ($alcance === 'en_resolucion' && (
+                        $turno->estado === Turno::ESTADO_EN_RESOLUCION
+                        || !empty($row['en_resolucion'])
+                    ))
                 ) {
                     if ($alcance === 'en_resolucion') {
                         $row['puede_cancelar_autogestion_app'] = true;
@@ -237,7 +250,9 @@ final class TurnoPacienteListadoService
             'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : null,
             'id_efector' => $idEf,
             'estado' => $turno->estado,
-            'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
+            'estado_label' => $resolucion !== null
+                ? (Turno::ESTADOS[Turno::ESTADO_EN_RESOLUCION] ?? 'En resolución')
+                : (Turno::ESTADOS[$turno->estado] ?? 'Sin estado'),
             'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
             'encounter_id' => $encounterId,
             'id_consulta' => $encounterId,
@@ -247,7 +262,7 @@ final class TurnoPacienteListadoService
             'journey' => $journey,
             'profesional' => $profesional,
             'created_at' => $turno->created_at,
-            'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION,
+            'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION || $resolucion !== null,
             'turno_resolucion' => $resolucion !== null ? $resolucion->toPacienteApiArray() : null,
         ];
     }

@@ -752,6 +752,7 @@ class HomeScreenState extends State<HomeScreen> {
     final turno = _enResolucion.first;
     final fecha = _fechaAmigable(turno['fecha']?.toString());
     final hora = _horaSinSegundos(turno['hora']?.toString());
+    final varios = _enResolucion.length > 1;
 
     return BioCard.intent(
       intent: UiIntent.warning,
@@ -765,16 +766,21 @@ class HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Turno en resolución', style: BioTypography.title),
+                Text(
+                  varios ? 'Tenés turnos en resolución' : 'Turno en resolución',
+                  style: BioTypography.title,
+                ),
                 BioSpacing.gapH(BioSpacing.xs),
                 Text(
-                  '$fecha · $hora',
+                  varios
+                      ? 'Hay ${_enResolucion.length} turnos que necesitan un nuevo horario. El más próximo: $fecha · $hora.'
+                      : 'Tu turno del $fecha a las $hora está en resolución: necesitás elegir un nuevo horario.',
                   style: BioTypography.bodySm,
                 ),
                 if (widget.onResolverTurno != null) ...[
                   BioSpacing.gapH(BioSpacing.sm),
                   Text(
-                    'Tocá para continuar',
+                    'Tocá para resolver',
                     style: BioTypography.caption.copyWith(color: context.bio.textMuted),
                   ),
                 ],
@@ -1071,6 +1077,15 @@ class HomeScreenState extends State<HomeScreen> {
           BioSpacing.gapH(BioSpacing.xs),
           profesional,
         ],
+        if (enResolucion) ...[
+          BioSpacing.gapH(BioSpacing.sm),
+          Text(
+            'Este turno está en resolución: no podés preparar la consulta hasta elegir un nuevo horario.',
+            style: BioTypography.bodySm.copyWith(
+              color: IntentPalette.of(UiIntent.warning).base,
+            ),
+          ),
+        ],
         if (acciones.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.sm),
           Wrap(
@@ -1089,6 +1104,7 @@ class HomeScreenState extends State<HomeScreen> {
           horizontal: BioSpacing.md,
           vertical: BioSpacing.md,
         ),
+        onTap: widget.onResolverTurno != null ? () => widget.onResolverTurno!(t) : null,
         child: contenido,
       );
     }

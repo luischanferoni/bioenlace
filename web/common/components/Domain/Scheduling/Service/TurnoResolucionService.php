@@ -131,7 +131,10 @@ final class TurnoResolucionService
         self::notificarPacienteRequiereReubicacion(
             $turno,
             'Tu turno requiere una nueva cita',
-            'El consultorio modificó tu turno del ' . $turno->fecha . '. Elegí otro horario o profesional desde la app.'
+            self::buildBodyRequiereReubicacion(
+                'El consultorio modificó tu turno',
+                $turno
+            )
         );
 
         return [
@@ -176,11 +179,13 @@ final class TurnoResolucionService
                 'meta_json' => $metaJson,
             ]);
 
-            $fechaDisplay = self::formatFechaEsParaAviso((string) $turno->fecha);
             self::notificarPacienteRequiereReubicacion(
                 $turno,
                 'Tu turno requiere una nueva cita',
-                'El profesional registró una licencia. Elegí otro horario para el ' . $fechaDisplay . '.'
+                self::buildBodyRequiereReubicacion(
+                    'El profesional registró una licencia',
+                    $turno
+                )
             );
         }
     }
@@ -223,13 +228,32 @@ final class TurnoResolucionService
                 'meta_json' => $metaJson,
             ]);
 
-            $fechaDisplay = self::formatFechaEsParaAviso((string) $turno->fecha);
             self::notificarPacienteRequiereReubicacion(
                 $turno,
                 'Tu turno requiere una nueva cita',
-                'El profesional ya no atiende en ese servicio. Elegí otro horario para el ' . $fechaDisplay . '.'
+                self::buildBodyRequiereReubicacion(
+                    'El profesional ya no atiende en ese servicio',
+                    $turno
+                )
             );
         }
+    }
+
+    /**
+     * Copy de push/inbox: motivo + CTA a tocar la notificación (sin opciones sugeridas).
+     */
+    public static function buildBodyRequiereReubicacion(string $motivo, Turno $turno): string
+    {
+        $motivo = trim($motivo);
+        if ($motivo !== '' && !str_ends_with($motivo, '.')) {
+            $motivo .= '.';
+        }
+        $fecha = self::formatFechaEsParaAviso((string) $turno->fecha);
+        $hora = self::formatHoraCortaParaAviso((string) $turno->hora);
+
+        return $motivo
+            . ' Tocá esta notificación para cambiar el horario del turno '
+            . $fecha . ' a las ' . $hora . '.';
     }
 
     private static function formatFechaEsParaAviso(string $fecha): string
@@ -239,6 +263,19 @@ final class TurnoResolucionService
         } catch (\Throwable $e) {
             return $fecha;
         }
+    }
+
+    private static function formatHoraCortaParaAviso(string $hora): string
+    {
+        $hora = trim($hora);
+        if ($hora === '') {
+            return '';
+        }
+        if (preg_match('/^(\d{1,2}):(\d{2})/', $hora, $m) === 1) {
+            return sprintf('%02d:%02d', (int) $m[1], (int) $m[2]);
+        }
+
+        return $hora;
     }
 
     /**
@@ -273,8 +310,11 @@ final class TurnoResolucionService
 
             self::notificarPacienteRequiereReubicacion(
                 $turno,
-                'Cambio de horario de tu turno',
-                'Tu profesional actualizó la agenda. Elegí un nuevo horario para el ' . $turno->fecha . '.'
+                'Tu turno requiere una nueva cita',
+                self::buildBodyRequiereReubicacion(
+                    'Tu profesional actualizó la agenda',
+                    $turno
+                )
             );
         }
     }
@@ -466,11 +506,13 @@ final class TurnoResolucionService
                 'r.id_turno = t.id_turnos AND r.estado = :estRes',
                 [':estRes' => TurnoResolucion::ESTADO_PENDIENTE]
             )
-            ->where([
-                't.id_persona' => $idPersona,
-                't.estado' => Turno::ESTADO_EN_RESOLUCION,
-            ])
+            ->where(['t.id_persona' => $idPersona])
             ->andWhere(['>=', 't.fecha', date('Y-m-d')])
+            ->andWhere([
+                'or',
+                ['t.estado' => Turno::ESTADO_EN_RESOLUCION],
+                ['t.estado' => ''],
+            ])
             ->orderBy(['t.fecha' => SORT_ASC, 't.hora' => SORT_ASC]);
 
         if ($origen !== null && $origen !== '') {
@@ -598,7 +640,7 @@ final class TurnoResolucionService
             'profesional' => $profesional,
             'id_profesional_efector_servicio' => (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null,
             'estado' => $turno->estado,
-            'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION,
+            'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION || $res !== null,
             'turno_resolucion' => $res !== null ? $res->toPacienteApiArray() : null,
         ];
     }
@@ -643,31 +685,22 @@ final class TurnoResolucionService
             return;
         }
 
-        $shortlist = [];
-        $agent = new TurnoResolucionShortlistAgent();
+        // Shortlist se persiste para agentes/API internos; no se sugiere en el aviso al paciente.
         try {
-            $shortlist = $agent->buildAndPersist($turno);
+            (new TurnoResolucionShortlistAgent())->buildAndPersist($turno);
         } catch (\Throwable $e) {
             Yii::warning('Shortlist resolución: ' . $e->getMessage(), 'turno-resolucion-shortlist');
-        }
-
-        if ($shortlist !== []) {
-            $body .= $agent->formatPushBodySuffix($shortlist);
-        }
-
-        $pushData = [
-            'type' => PushNotificationTypes::TURNO_REQUIERE_REUBICACION,
-            'id_turno' => (string) $turno->id_turnos,
-        ];
-        if ($shortlist !== []) {
-            $pushData['has_shortlist'] = '1';
-            $pushData['shortlist'] = json_encode($shortlist, JSON_UNESCAPED_UNICODE);
         }
 
         $push = new PushNotificationSender();
         $push->sendToPersona(
             (int) $turno->id_persona,
-            $pushData,
+            [
+                'type' => PushNotificationTypes::TURNO_REQUIERE_REUBICACION,
+                'id_turno' => (string) $turno->id_turnos,
+                'fecha' => (string) $turno->fecha,
+                'hora' => self::formatHoraCortaParaAviso((string) $turno->hora),
+            ],
             $title,
             $body
         );

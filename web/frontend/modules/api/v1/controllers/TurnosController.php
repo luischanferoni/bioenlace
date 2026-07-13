@@ -1143,7 +1143,7 @@ class TurnosController extends BaseController
             if (!$tid) {
                 throw new BadRequestHttpException('id del turno requerido');
             }
-            $payload = $this->buildSlotsAlternativosPayload($tid, $params);
+            $payload = $this->buildSlotsAlternativosPayload($tid, $params, true);
             if ($wantsRaw) {
                 return array_merge(['success' => true], $payload);
             }
@@ -1786,22 +1786,44 @@ class TurnosController extends BaseController
 
     /**
      * @param array<string, mixed> $params
+     * @param bool $soloEnResolucion si true (reubicar), exige EN_RESOLUCION; si false, admite PENDIENTE o EN_RESOLUCION
      * @return array{success: bool, slots: mixed}
      */
-    protected function buildSlotsAlternativosPayload($id, array $params)
+    protected function buildSlotsAlternativosPayload($id, array $params, bool $soloEnResolucion = false)
     {
         $turno = Turno::findActive()->andWhere(['id_turnos' => $id])->one();
         if (!$turno) {
             throw new NotFoundHttpException('Turno no encontrado');
         }
         $this->assertTurnoDomain('Turno.reprogramar', $turno);
-        if (
-            $turno->estado !== Turno::ESTADO_PENDIENTE
-            && $turno->estado !== Turno::ESTADO_EN_RESOLUCION
+        $estadoActual = trim((string) ($turno->estado ?? ''));
+        if ($soloEnResolucion) {
+            if ($estadoActual !== Turno::ESTADO_EN_RESOLUCION) {
+                Yii::warning([
+                    'slots_reubicar_estado_invalido' => true,
+                    'id_turno' => (int) $id,
+                    'estado' => $estadoActual,
+                ], 'turno-resolucion');
+                throw new BadRequestHttpException(
+                    'El turno no está en resolución (id=' . (int) $id
+                    . ', estado=' . ($estadoActual !== '' ? $estadoActual : 'vacío') . ').'
+                );
+            }
+        } elseif (
+            $estadoActual !== Turno::ESTADO_PENDIENTE
+            && $estadoActual !== Turno::ESTADO_EN_RESOLUCION
         ) {
-            throw new BadRequestHttpException('El turno no admite cambio de horario.');
+            Yii::warning([
+                'slots_alternativos_estado_invalido' => true,
+                'id_turno' => (int) $id,
+                'estado' => $estadoActual,
+            ], 'turno-resolucion');
+            throw new BadRequestHttpException(
+                'El turno no admite cambio de horario (id=' . (int) $id
+                . ', estado=' . ($estadoActual !== '' ? $estadoActual : 'vacío') . ').'
+            );
         }
-        $enResolucion = $turno->estado === Turno::ESTADO_EN_RESOLUCION;
+        $enResolucion = $estadoActual === Turno::ESTADO_EN_RESOLUCION;
         if (!$enResolucion) {
             try {
                 (new TurnoAutogestionAnticipacionService())->assertPuedeReprogramarPorApp($turno);

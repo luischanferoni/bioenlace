@@ -1,0 +1,50 @@
+{
+  "ui_type": "ui_json",
+  "title": "Impacto de la baja",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "intro",
+      "text_field": "preview_message",
+      "text": "Revisá si esta baja afecta turnos a futuro de la asignación."
+    },
+    {
+      "kind": "fields",
+      "id": "confirmacion",
+      "title": "Confirmación",
+      "hide_submit": true,
+      "fields": [
+        {
+          "name": "id_profesional_efector_servicio",
+          "label": "",
+          "type": "hidden",
+          "include_in_submit": true
+        },
+        {
+          "name": "id_servicio",
+          "label": "",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "impacto_baja_revisado",
+          "label": "Para continuar",
+          "type": "chips",
+          "required": true,
+          "include_in_submit": true,
+          "options": [
+            { "value": "1", "label": "Entendí el impacto" }
+          ],
+          "layout": { "col": 12, "breakpoint": "md" }
+        }
+      ]
+    }
+  ]
+}

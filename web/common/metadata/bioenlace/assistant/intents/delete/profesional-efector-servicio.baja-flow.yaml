@@ -18,19 +18,25 @@ intent_semantics:
     Quitar (soft-delete) la asignación persona–efector–servicio de un profesional
     en el efector de sesión.
   how: >-
-    Elegís el profesional y el servicio en el que está asignado; al confirmar se da de baja el vínculo.
+    Elegís el profesional y el servicio; se muestra el impacto en turnos a futuro;
+    si no hay pendientes, confirmás la baja.
   preconditions:
     - Efector operativo en sesión.
     - Permisos para dar de baja asignaciones en el efector.
   constraints:
     - Solo asignaciones activas del efector de sesión.
-    - No se puede dar de baja si hay turnos pendientes a futuro en ese vínculo.
+    - No se puede dar de baja si hay turnos pendientes a futuro en ese vínculo
+      (hay que cancelarlos o reubicarlos antes).
+    - La baja no cancela ni reubica turnos automáticamente.
   outcome:
     - Asignación PES marcada como eliminada (soft-delete).
   keyphrases:
     - quitar profesional de un servicio
     - desasignar médico del servicio
     - dar de baja asignación en el efector
+
+draft_keys_extra:
+  - impacto_baja_revisado
 
 subintents:
   - id: select_profesional
@@ -47,15 +53,30 @@ subintents:
       - draft.id_profesional_efector_servicio
     provides:
       - draft.id_servicio
-    next: ""
+    next: revisar_impacto
     open_ui:
       action_id: profesional-efector-servicio.listar-servicios-en-efector
       params:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
         incluir_sin_agenda: "1"
 
+  - id: revisar_impacto
+    assistant_text: "Impacto en turnos"
+    requires:
+      - draft.id_profesional_efector_servicio
+      - draft.id_servicio
+    provides:
+      - draft.impacto_baja_revisado
+    next: ""
+    open_ui:
+      action_id: profesional-efector-servicio.preview-impacto-baja
+      params:
+        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        id_servicio: "draft.id_servicio"
+
 flow_submit:
   action_id: profesional-efector-servicio.baja-flow
   params:
     id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
     id_servicio: "draft.id_servicio"
+    impacto_baja_revisado: "draft.impacto_baja_revisado"

@@ -19,6 +19,7 @@ class m260713_180000_api_profesional_efector_servicio_baja_flow_rbac extends Mig
     private const UI_ROUTES = [
         '/api/profesional-efector-servicio/listar-por-efector',
         '/api/profesional-efector-servicio/listar-servicios-en-efector',
+        '/api/profesional-efector-servicio/preview-impacto-baja',
     ];
 
     public function safeUp()
@@ -41,7 +42,18 @@ class m260713_180000_api_profesional_efector_servicio_baja_flow_rbac extends Mig
         $now = time();
         $this->ensurePermission($authItem, self::INTENT_ID, $now);
         $this->ensureRoute($authItem, self::ROUTE, self::SOURCE_ROUTE, $now);
+        $this->ensureRoute(
+            $authItem,
+            '/api/profesional-efector-servicio/preview-impacto-baja',
+            self::ROUTE,
+            $now
+        );
         $this->inheritFrom($childTable, self::SOURCE_ROUTE, self::ROUTE);
+        $this->inheritFrom(
+            $childTable,
+            self::ROUTE,
+            '/api/profesional-efector-servicio/preview-impacto-baja'
+        );
         $this->migrateRoleGrants($childTable, self::SOURCE_INTENT, self::INTENT_ID);
         $this->linkPermissionToRoute($childTable, self::INTENT_ID, self::ROUTE);
         foreach (self::UI_ROUTES as $uiRoute) {

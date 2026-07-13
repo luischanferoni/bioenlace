@@ -707,6 +707,117 @@ class ProfesionalEfectorServicioController extends BaseController
     }
 
     /**
+     * Preview de impacto en turnos al dar de baja un PES (GET UI; POST chips → merge draft).
+     * Permiso RBAC: `/api/profesional-efector-servicio/preview-impacto-baja`
+     *
+     * GET|POST /api/v1/profesional-efector-servicio/preview-impacto-baja
+     *
+     * @action_name Revisar impacto de baja PES en turnos
+     * @entity ProfesionalEfectorServicio
+     * @tags profesional, asistente, baja, impacto
+     */
+    public function actionPreviewImpactoBaja(): array
+    {
+        $req = Yii::$app->request;
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector <= 0) {
+            throw new BadRequestHttpException('Se requiere efector en sesión.');
+        }
+
+        $params = array_merge($req->get(), $req->isPost ? $req->post() : []);
+        ApiDomainOperationBridge::assertOrForbidden(
+            'ProfesionalEfectorServicio.delete',
+            $params,
+            $params
+        );
+
+        if ($req->isPost) {
+            return [
+                'success' => true,
+                'kind' => 'ui_submit_result',
+                'action_id' => 'profesional-efector-servicio.preview-impacto-baja',
+                'data' => [
+                    'success' => true,
+                    'impacto_baja_revisado' => (string) ($params['impacto_baja_revisado'] ?? '1'),
+                    'id_profesional_efector_servicio' => (int) ($params['id_profesional_efector_servicio'] ?? 0),
+                    'id_servicio' => (int) ($params['id_servicio'] ?? 0),
+                ],
+                'errors' => null,
+            ];
+        }
+
+        try {
+            $preview = ProfesionalEfectorServicioBajaService::previewImpacto($idEfector, $params);
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
+        }
+
+        $uiParams = array_merge($params, [
+            'preview_message' => $preview['preview_message'],
+            'id_profesional_efector_servicio' => (string) $preview['id_profesional_efector_servicio'],
+            'id_servicio' => (string) $preview['id_servicio'],
+        ]);
+        $out = UiScreenService::renderUiDefinition(
+            'profesional-efector-servicio',
+            'preview-impacto-baja',
+            $uiParams,
+            null
+        );
+        $out['action_id'] = 'profesional-efector-servicio.preview-impacto-baja';
+        $out['kind'] = 'ui_definition';
+        $out['success'] = true;
+        $out['data'] = [
+            'afecta_turnos' => $preview['afecta_turnos'],
+            'puede_continuar' => $preview['puede_continuar'],
+            'turnos_pendientes_futuros' => $preview['turnos_pendientes_futuros'],
+            'turnos_en_resolucion_futuros' => $preview['turnos_en_resolucion_futuros'],
+            'preview_message' => $preview['preview_message'],
+        ];
+
+        if (!$preview['puede_continuar']) {
+            $out = $this->stripImpactoBajaConfirmField($out);
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $ui
+     * @return array<string, mixed>
+     */
+    private function stripImpactoBajaConfirmField(array $ui): array
+    {
+        $blocks = $ui['blocks'] ?? null;
+        if (!is_array($blocks)) {
+            return $ui;
+        }
+        foreach ($blocks as $i => $block) {
+            if (!is_array($block) || ($block['kind'] ?? '') !== 'fields') {
+                continue;
+            }
+            $fields = $block['fields'] ?? null;
+            if (!is_array($fields)) {
+                continue;
+            }
+            $filtered = [];
+            foreach ($fields as $f) {
+                if (!is_array($f)) {
+                    continue;
+                }
+                if (($f['name'] ?? '') === 'impacto_baja_revisado') {
+                    continue;
+                }
+                $filtered[] = $f;
+            }
+            $blocks[$i]['fields'] = $filtered;
+            $blocks[$i]['title'] = 'No se puede continuar';
+        }
+        $ui['blocks'] = $blocks;
+
+        return $ui;
+    }
+
+    /**
      * Cierre declarativo del flujo asistente «cargar licencia como profesional» (solo POST).
      * Permiso RBAC: `/api/profesional-efector-servicio/cargar-licencia-como-profesional-flow`
      *

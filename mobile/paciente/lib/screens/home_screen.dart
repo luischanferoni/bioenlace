@@ -658,10 +658,6 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       children: [
         _buildHeaderSaludo(context),
-        if (_enResolucion.isNotEmpty) ...[
-          BioSpacing.gapH(BioSpacing.lg),
-          _buildEnResolucionBanner(context),
-        ],
         if (_carePlansActivos.isNotEmpty || _loadingCarePlans) ...[
           BioSpacing.gapH(BioSpacing.lg),
           _buildTratamientoCard(context),
@@ -744,52 +740,6 @@ class HomeScreenState extends State<HomeScreen> {
           plans: List<Map<String, dynamic>>.from(_carePlansActivos),
           authToken: widget.authToken,
         ),
-      ),
-    );
-  }
-
-  Widget _buildEnResolucionBanner(BuildContext context) {
-    final turno = _enResolucion.first;
-    final fecha = _fechaAmigable(turno['fecha']?.toString());
-    final hora = _horaSinSegundos(turno['hora']?.toString());
-    final varios = _enResolucion.length > 1;
-
-    return BioCard.intent(
-      intent: UiIntent.warning,
-      onTap: widget.onResolverTurno != null ? () => widget.onResolverTurno!(turno) : null,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.warning_amber_outlined, color: IntentPalette.of(UiIntent.warning).base),
-          BioSpacing.gapW(BioSpacing.sm),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  varios ? 'Tenés turnos en resolución' : 'Turno en resolución',
-                  style: BioTypography.title,
-                ),
-                BioSpacing.gapH(BioSpacing.xs),
-                Text(
-                  varios
-                      ? 'Hay ${_enResolucion.length} turnos que necesitan un nuevo horario. El más próximo: $fecha · $hora.'
-                      : 'Tu turno del $fecha a las $hora está en resolución: necesitás elegir un nuevo horario.',
-                  style: BioTypography.bodySm,
-                ),
-                if (widget.onResolverTurno != null) ...[
-                  BioSpacing.gapH(BioSpacing.sm),
-                  Text(
-                    'Tocá para resolver',
-                    style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          if (widget.onResolverTurno != null)
-            Icon(Icons.chevron_right, color: context.bio.textMuted),
-        ],
       ),
     );
   }

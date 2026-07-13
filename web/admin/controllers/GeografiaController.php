@@ -4,20 +4,30 @@ namespace admin\controllers;
 
 use common\components\Domain\Organization\Service\GeografiaDepdropService;
 use Yii;
+use yii\filters\AccessControl;
 use yii\filters\VerbFilter;
 use yii\web\Controller;
 use yii\web\Response;
 
 /**
- * DepDrops geográficos para formularios admin (sin depender de rutas API del frontend).
+ * DepDrops geográficos para formularios admin (sin rutas API del frontend).
+ *
+ * Solo exige usuario autenticado en admin: son catálogos de soporte de UI,
+ * no operaciones de negocio sensibles.
  */
 class GeografiaController extends Controller
 {
     public function behaviors()
     {
         return [
-            'ghost-access' => [
-                'class' => \frontend\components\BioenlaceAdminAccessControl::class,
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                ],
             ],
             'verbs' => [
                 'class' => VerbFilter::class,

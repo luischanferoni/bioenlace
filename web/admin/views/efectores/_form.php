@@ -2,7 +2,6 @@
 
 use common\models\Provincia;
 use kartik\depdrop\DepDrop;
-use kartik\select2\Select2;
 use yii\helpers\ArrayHelper;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -30,13 +29,13 @@ if ($model->id_localidad && $localidad !== null) {
 
     <?php $form = ActiveForm::begin(); ?>
 
-    <?= $form->field($model, 'codigo_sisa')->textInput(['maxlength' => true,'readonly' =>true ]) ?>
+    <?= $form->field($model, 'codigo_sisa')->textInput(['maxlength' => true, 'readonly' => true]) ?>
 
-    <?= $form->field($model, 'nombre')->textInput(['maxlength' => true,'readonly' =>true]) ?>
+    <?= $form->field($model, 'nombre')->textInput(['maxlength' => true, 'readonly' => true]) ?>
 
-    <?= $form->field($model, 'dependencia')->textInput(['maxlength' => true,'readonly' =>true]) ?>
+    <?= $form->field($model, 'dependencia')->textInput(['maxlength' => true, 'readonly' => true]) ?>
 
-    <?= $form->field($model, 'tipologia')->textInput(['maxlength' => true,'readonly' =>true]) ?>
+    <?= $form->field($model, 'tipologia')->textInput(['maxlength' => true, 'readonly' => true]) ?>
 
     <?= $form->field($model, 'domicilio')->textInput(['maxlength' => true]) ?>
 
@@ -58,53 +57,52 @@ if ($model->id_localidad && $localidad !== null) {
 
     <?= $form->field($model, 'dias_horario')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'origen_financiamiento')->textInput(['maxlength' => true,'readonly' =>true]) ?>
+    <?= $form->field($model, 'origen_financiamiento')->textInput(['maxlength' => true, 'readonly' => true]) ?>
 
-    <div class="form-group">
+    <div class="form-group field-efector-id_provincia">
         <label class="control-label" for="efector-id_provincia">Provincia</label>
-        <?= Select2::widget([
-            'name' => 'id_provincia',
-            'id' => 'efector-id_provincia',
-            'value' => $idProvinciaActual,
-            'data' => $provincias,
-            'theme' => Select2::THEME_DEFAULT,
-            'options' => [
-                'placeholder' => 'Seleccione provincia',
-            ],
-            'pluginOptions' => [
-                'allowClear' => true,
-                'width' => '100%',
-            ],
-        ]) ?>
+        <?= Html::dropDownList(
+            'id_provincia',
+            $idProvinciaActual,
+            $provincias,
+            [
+                'id' => 'efector-id_provincia',
+                'class' => 'form-control',
+                'prompt' => 'Seleccione provincia',
+            ]
+        ) ?>
     </div>
 
     <?= $form->field($model, 'id_localidad')->widget(DepDrop::classname(), [
-        'type' => DepDrop::TYPE_SELECT2,
         'data' => $localidadData,
         'options' => [
             'id' => 'efector-id_localidad',
-            'placeholder' => 'Seleccione localidad',
-        ],
-        'select2Options' => [
-            'theme' => Select2::THEME_DEFAULT,
-            'pluginOptions' => ['width' => '100%'],
+            'class' => 'form-control',
+            'prompt' => 'Seleccione localidad',
         ],
         'pluginOptions' => [
             'depends' => ['efector-id_provincia'],
             'placeholder' => 'Seleccione localidad',
             'url' => Url::to(['/geografia/localidades-por-provincia-depdrop']),
-            'initialize' => $idProvinciaActual !== null,
+            'initialize' => $idProvinciaActual !== null && $idProvinciaActual !== '',
+            'loadingText' => 'Cargando localidades…',
             'params' => ['efector-id_localidad-selected'],
         ],
     ]) ?>
-    <?= Html::hiddenInput('efector-id_localidad-selected', $model->id_localidad, [
+    <?= Html::hiddenInput('efector-id_localidad-selected', (string) ($model->id_localidad ?? ''), [
         'id' => 'efector-id_localidad-selected',
     ]) ?>
 
-    <?= $form->field($model, 'estado')->dropDownList([ 'ACTIVO' => 'ACTIVO', 'INACTIVO' => 'INACTIVO', ], ['prompt' => '','readonly' =>true]) ?>
+    <?= $form->field($model, 'estado')->dropDownList(
+        ['ACTIVO' => 'ACTIVO', 'INACTIVO' => 'INACTIVO'],
+        ['prompt' => '', 'readonly' => true]
+    ) ?>
 
     <div class="form-group">
-        <?= Html::submitButton($model->isNewRecord ? 'Guardar' : 'Modificar', ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']) ?>
+        <?= Html::submitButton(
+            $model->isNewRecord ? 'Guardar' : 'Modificar',
+            ['class' => $model->isNewRecord ? 'btn btn-success' : 'btn btn-primary']
+        ) ?>
     </div>
 
     <?php ActiveForm::end(); ?>

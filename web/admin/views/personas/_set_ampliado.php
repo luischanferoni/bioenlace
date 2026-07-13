@@ -10,7 +10,6 @@ use yii\helpers\Url;
 use common\models\Provincia;
 use common\models\Departamento;
 use common\models\Barrios;
-use common\components\Domain\Organization\Service\GeografiaDepdropService;
 use kartik\depdrop\DepDrop;
 use wbraganca\dynamicform\DynamicFormWidget;
 use kartik\select2\Select2;
@@ -310,7 +309,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                     'pluginOptions' => [
                         'depends' => ['provincia-id_provincia'],
                         'placeholder' => 'Seleccione Departamento',
-                        'url' => GeografiaDepdropService::URL_DEPARTAMENTOS,
+                        'url' => Url::to(['/geografia/departamentos-depdrop']),
 
                     ]
                 ]);
@@ -327,7 +326,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                     'pluginOptions' => [
                         'depends' => ['id_departamento'],
                         'placeholder' => 'Seleccione Localidad',
-                        'url' => GeografiaDepdropService::URL_LOCALIDADES
+                        'url' => Url::to(['/geografia/localidades-depdrop'])
                     ]
                 ]);
                 ?>
@@ -349,7 +348,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                     'pluginOptions' => [
                         'depends' => ['domicilio-id_localidad'],
                         'placeholder' => 'Seleccione un Barrio',
-                        'url' => GeografiaDepdropService::URL_BARRIOS
+                        'url' => Url::to(['/geografia/barrios-depdrop'])
                     ],
                     'data' => $data
                 ]);

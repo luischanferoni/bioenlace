@@ -10,7 +10,6 @@ use yii\helpers\Url;
 use common\models\Provincia;
 use common\models\Departamento;
 use common\models\Barrios;
-use common\components\Domain\Organization\Service\GeografiaDepdropService;
 use kartik\depdrop\DepDrop;
 
 // se agregan las librerias google-maps para obtener las coordenadas
@@ -568,7 +567,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                     'pluginOptions' => [
                         'depends' => ['id_provincia'],
                         'placeholder' => 'Seleccione Departamento',
-                        'url' => GeografiaDepdropService::URL_DEPARTAMENTOS
+                        'url' => Url::to(['/geografia/departamentos-depdrop'])
                     ]
                 ]);
                 ?>  
@@ -589,7 +588,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                     'pluginOptions' => [
                         'depends' => ['id_departamento'],
                         'placeholder' => 'Seleccione Localidad',
-                        'url' => GeografiaDepdropService::URL_LOCALIDADES
+                        'url' => Url::to(['/geografia/localidades-depdrop'])
                     ]
                 ]);
                 ?>
@@ -614,7 +613,7 @@ $lista_localidades = \yii\helpers\ArrayHelper::map($localidades, 'id_localidad',
                     'pluginOptions' => [
                         'depends' => ['localidad-id_localidad'],
                         'placeholder' => 'Seleccione Barrio',
-                        'url' => GeografiaDepdropService::URL_BARRIOS
+                        'url' => Url::to(['/geografia/barrios-depdrop'])
                     ]
                 ]);
                 ?>                

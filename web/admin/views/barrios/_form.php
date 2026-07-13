@@ -9,7 +9,6 @@ use common\models\Localidad;
 use kartik\select2\Select2;
 
 
-use common\components\Domain\Organization\Service\GeografiaDepdropService;
 use kartik\depdrop\DepDrop;
 use yii\helpers\Url;
 
@@ -68,7 +67,7 @@ use yii\helpers\Url;
 					'pluginOptions' => [
 						'depends'  => ['w1'],
 						'placeholder' => 'Seleccione Departamento',
-						'url' => GeografiaDepdropService::URL_DEPARTAMENTOS
+						'url' => Url::to(['/geografia/departamentos-depdrop'])
 					]
 				]);  
 			?>
@@ -84,7 +83,7 @@ use yii\helpers\Url;
                     'pluginOptions' => [
                         'depends' => ['id_departamento'],
                         'placeholder' => 'Seleccione Localidad',
-                        'url' => GeografiaDepdropService::URL_LOCALIDADES
+                        'url' => Url::to(['/geografia/localidades-depdrop'])
                     ]
                 ])->label(false);
                 ?>

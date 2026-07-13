@@ -81,6 +81,48 @@ final class GeografiaDepdropService
     }
 
     /**
+     * DepDrop: parent = id_provincia → todas las localidades de esa provincia.
+     *
+     * @param array<string, mixed> $post
+     * @return array{output: list<array{id: int|string, name: string}>|string, selected: string|int}
+     */
+    public static function localidadesPorProvinciaResponse(array $post): array
+    {
+        if (isset($post['depdrop_parents'])) {
+            $parents = $post['depdrop_parents'];
+            $parentId = empty($parents[0]) ? null : $parents[0];
+            if ($parentId !== null && $parentId !== '') {
+                $selected = '';
+                if (!empty($post['depdrop_params'][0])) {
+                    $selected = $post['depdrop_params'][0];
+                }
+
+                return [
+                    'output' => self::localidadesPorProvincia((int) $parentId),
+                    'selected' => $selected,
+                ];
+            }
+        }
+
+        return ['output' => '', 'selected' => ''];
+    }
+
+    /**
+     * @return list<array{id: int|string, name: string}>
+     */
+    public static function localidadesPorProvincia(int $idProvincia): array
+    {
+        return Localidad::find()
+            ->alias('l')
+            ->innerJoin(['d' => Departamento::tableName()], 'd.id_departamento = l.id_departamento')
+            ->asArray()
+            ->select(['id' => 'l.id_localidad', 'name' => 'l.nombre'])
+            ->where(['d.id_provincia' => $idProvincia])
+            ->orderBy(['l.nombre' => SORT_ASC])
+            ->all();
+    }
+
+    /**
      * @param array<string, mixed> $post
      * @return array{output: list<array{id: int|string, name: string}>, selected: string|int}
      */

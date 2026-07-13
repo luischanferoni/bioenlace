@@ -45,10 +45,15 @@ class m260713_180000_api_profesional_efector_servicio_baja_flow_rbac extends Mig
         $this->ensureRoute(
             $authItem,
             '/api/profesional-efector-servicio/preview-impacto-baja',
-            self::ROUTE,
+            self::SOURCE_ROUTE,
             $now
         );
         $this->inheritFrom($childTable, self::SOURCE_ROUTE, self::ROUTE);
+        $this->inheritFrom(
+            $childTable,
+            self::SOURCE_ROUTE,
+            '/api/profesional-efector-servicio/preview-impacto-baja'
+        );
         $this->inheritFrom(
             $childTable,
             self::ROUTE,

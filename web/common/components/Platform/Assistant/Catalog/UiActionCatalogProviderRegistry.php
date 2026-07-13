@@ -75,6 +75,17 @@ final class UiActionCatalogProviderRegistry
             }
         }
 
+        // Convención UI JSON / API: entity.action → /api/v1/entity/action
+        // (p. ej. profesional-efector-servicio.preview-impacto-baja).
+        // Necesario para FlowStepAccessService sin listar cada acción en un catálogo PHP.
+        if (preg_match('#^([\w-]+)\.(.+)$#', $actionId, $m) === 1) {
+            $entity = (string) $m[1];
+            $action = (string) $m[2];
+            if ($entity !== '' && $action !== '' && !str_contains($entity, '.')) {
+                return '/api/v1/' . rawurlencode($entity) . '/' . rawurlencode($action);
+            }
+        }
+
         return '';
     }
 

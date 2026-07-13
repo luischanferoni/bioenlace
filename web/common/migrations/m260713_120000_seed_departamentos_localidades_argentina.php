@@ -14,8 +14,8 @@ class m260713_120000_seed_departamentos_localidades_argentina extends Migration
 {
     public function safeUp()
     {
-        if ($this->db->schema->getTableSchema('{{%departamentos}}', true) === null
-            || $this->db->schema->getTableSchema('{{%localidades}}', true) === null
+        if ($this->db->schema->getTableSchema('{{%geo_departamentos}}', true) === null
+            || $this->db->schema->getTableSchema('{{%geo_localidades}}', true) === null
         ) {
             echo "    > Tablas geográficas incompletas; omitir seed.\n";
 
@@ -25,7 +25,7 @@ class m260713_120000_seed_departamentos_localidades_argentina extends Migration
         $this->widenDepartamentoCodIndec();
         $this->ensureLocalidadCodBahra();
 
-        if ($this->db->schema->getTableSchema('{{%provincias}}', true) !== null) {
+        if ($this->db->schema->getTableSchema('{{%geo_provincias}}', true) !== null) {
             $provincias = (new ProvinciasArgentinaSeedService())->upsertAll();
             echo sprintf(
                 "    > Provincias: %d catálogo, %d insertadas, %d actualizadas.\n",
@@ -70,28 +70,28 @@ class m260713_120000_seed_departamentos_localidades_argentina extends Migration
 
     private function widenDepartamentoCodIndec(): void
     {
-        $schema = $this->db->schema->getTableSchema('{{%departamentos}}', true);
+        $schema = $this->db->schema->getTableSchema('{{%geo_departamentos}}', true);
         if ($schema === null || !isset($schema->columns['cod_indec'])) {
             return;
         }
         $size = (int) ($schema->columns['cod_indec']->size ?? 0);
         if ($size > 0 && $size < 5) {
-            $this->alterColumn('{{%departamentos}}', 'cod_indec', $this->string(5)->notNull());
-            echo "    > departamentos.cod_indec ampliado a varchar(5).\n";
+            $this->alterColumn('{{%geo_departamentos}}', 'cod_indec', $this->string(5)->notNull());
+            echo "    > geo_departamentos.cod_indec ampliado a varchar(5).\n";
         }
     }
 
     private function ensureLocalidadCodBahra(): void
     {
-        $schema = $this->db->schema->getTableSchema('{{%localidades}}', true);
+        $schema = $this->db->schema->getTableSchema('{{%geo_localidades}}', true);
         if ($schema === null) {
             return;
         }
         if (!isset($schema->columns['cod_bahra'])) {
-            $this->addColumn('{{%localidades}}', 'cod_bahra', $this->string(15)->null());
-            echo "    > localidades.cod_bahra agregada.\n";
+            $this->addColumn('{{%geo_localidades}}', 'cod_bahra', $this->string(15)->null());
+            echo "    > geo_localidades.cod_bahra agregada.\n";
         }
-        $this->createIndexIfMissing('{{%localidades}}', 'idx_localidades_cod_bahra', ['cod_bahra']);
+        $this->createIndexIfMissing('{{%geo_localidades}}', 'idx_geo_localidades_cod_bahra', ['cod_bahra']);
     }
 
     /**

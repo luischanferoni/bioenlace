@@ -4,7 +4,7 @@ use common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService;
 use yii\db\Migration;
 
 /**
- * Seed idempotente: 24 jurisdicciones argentinas en {{%provincias}} (contexto paciente).
+ * Seed idempotente: 24 jurisdicciones argentinas en {{%geo_provincias}} (contexto paciente).
  *
  * Fuente: common/metadata/bioenlace/geo/provincias-argentina.yaml
  */
@@ -12,8 +12,10 @@ class m260629_120000_seed_provincias_argentina extends Migration
 {
     public function safeUp()
     {
-        if ($this->db->schema->getTableSchema('{{%provincias}}', true) === null) {
-            echo "    > Tabla provincias no existe; omitir seed.\n";
+        if ($this->db->schema->getTableSchema('{{%geo_provincias}}', true) === null
+            && $this->db->schema->getTableSchema('{{%provincias}}', true) === null
+        ) {
+            echo "    > Tabla geo_provincias/provincias no existe; omitir seed.\n";
 
             return true;
         }

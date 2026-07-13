@@ -239,7 +239,7 @@ class ClinicalSeedController extends Controller
     }
 
     /**
-     * Carga las 24 jurisdicciones argentinas en {{%provincias}} (idempotente).
+     * Carga las 24 jurisdicciones argentinas en {{%geo_provincias}} (idempotente).
      *
      * php yii clinical-seed/provincias-argentina
      */

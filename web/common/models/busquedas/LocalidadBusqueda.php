@@ -61,13 +61,13 @@ class LocalidadBusqueda extends Localidad
                 'nombre',
                 'cod_postal',
                 'departamentoName' => [
-                    'asc' => ['departamentos.nombre' => SORT_ASC],
-                    'desc' => ['departamentos.nombre' => SORT_DESC],
+                    'asc' => ['geo_departamentos.nombre' => SORT_ASC],
+                    'desc' => ['geo_departamentos.nombre' => SORT_DESC],
                     'label' => 'Departamento'
                 ],
                 'departamento.provinciaName' => [
-                    'asc' => ['provincias.nombre' => SORT_ASC],
-                    'desc' => ['provincias.nombre' => SORT_DESC],
+                    'asc' => ['geo_provincias.nombre' => SORT_ASC],
+                    'desc' => ['geo_provincias.nombre' => SORT_DESC],
                     'label' => 'Provincia'
                 ]
             ]
@@ -90,25 +90,25 @@ class LocalidadBusqueda extends Localidad
 
         $query->andFilterWhere(['like', 'cod_sisa', $this->cod_sisa])
               ->andFilterWhere(['like', 'cod_bahra', $this->cod_bahra])
-              ->andFilterWhere(['like', 'localidades.nombre', $this->nombre])
+              ->andFilterWhere(['like', 'geo_localidades.nombre', $this->nombre])
               ->andFilterWhere(['like', 'cod_postal', $this->cod_postal]);
-             // ->andFilterWhere(['like', 'departamentos.nombre', $this->id_departamento]);
+             // ->andFilterWhere(['like', 'geo_departamentos.nombre', $this->id_departamento]);
         
         
         //esto se agrego, para filtrar por departamento en el listado
         $query->joinWith(['departamento' => function($q) {
-            $q->andFilterWhere(['like', 'departamentos.nombre', $this->departamentoName]);
+            $q->andFilterWhere(['like', 'geo_departamentos.nombre', $this->departamentoName]);
         }]);
         
         
         //esto se agrego, para filtrar por provincia en el listado
         $query->joinWith(['departamento.provincia' => function($q) {
             $q->andFilterWhere([
-                'provincias.id_provincia' => $this->provinciaId
+                'geo_provincias.id_provincia' => $this->provinciaId
             ]);
         }]);
         /*$query->joinWith(['departamento.provincia' => function($q) {
-            $q->andFilterWhere(['like', 'provincias.nombre', $this->provinciaName]);
+            $q->andFilterWhere(['like', 'geo_provincias.nombre', $this->provinciaName]);
         }]);*/
         
         return $dataProvider;

@@ -73,18 +73,18 @@ class EfectorBusqueda extends Efector
                 'nombre',
                 'origen_financiamiento',
                 'localidadNombre' => [
-                    'asc' => ['localidades.nombre' => SORT_ASC],
-                    'desc' => ['localidades.nombre' => SORT_DESC],
+                    'asc' => ['geo_localidades.nombre' => SORT_ASC],
+                    'desc' => ['geo_localidades.nombre' => SORT_DESC],
                     'label' => 'Localidad'
                 ],
                 'idLocalidad.departamentoNombre' => [
-                    'asc' => ['departamentos.nombre' => SORT_ASC],
-                    'desc' => ['departamentos.nombre' => SORT_DESC],
+                    'asc' => ['geo_departamentos.nombre' => SORT_ASC],
+                    'desc' => ['geo_departamentos.nombre' => SORT_DESC],
                     'label' => 'Departamento'
                 ],
                 'localidad.departamento.provincia.nombre' => [
-                    'asc' => ['provincias.nombre' => SORT_ASC],
-                    'desc' => ['provincias.nombre' => SORT_DESC],
+                    'asc' => ['geo_provincias.nombre' => SORT_ASC],
+                    'desc' => ['geo_provincias.nombre' => SORT_DESC],
                     'label' => 'Provincia'
                 ],
             ]
@@ -139,18 +139,18 @@ class EfectorBusqueda extends Efector
     private function applyGeoJoins($query): void
     {
         $query->joinWith(['localidad' => function ($q) {
-            $q->andFilterWhere(['like', 'localidades.nombre', $this->localidadNombre]);
+            $q->andFilterWhere(['like', 'geo_localidades.nombre', $this->localidadNombre]);
         }]);
 
         $query->joinWith(['localidad.departamento' => function ($q) {
             $q->andFilterWhere([
-                'departamentos.id_departamento' => $this->departamentoId,
+                'geo_departamentos.id_departamento' => $this->departamentoId,
             ]);
         }]);
 
         $query->joinWith(['localidad.departamento.provincia' => function ($q) {
             $q->andFilterWhere([
-                'provincias.id_provincia' => $this->provinciaId,
+                'geo_provincias.id_provincia' => $this->provinciaId,
             ]);
         }]);
     }

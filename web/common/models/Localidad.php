@@ -6,7 +6,7 @@ use Yii;
 use common\traits\ParameterQuestionsTrait;
 
 /**
- * This is the model class for table "localidades".
+ * This is the model class for table "geo_localidades".
  *
  * @property integer $id_localidad
  * @property string $cod_sisa
@@ -28,7 +28,7 @@ class Localidad extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'localidades';
+        return 'geo_localidades';
     }
 
     public $id_provincia;//ESTA PROPIEDAD FUE AGREGADA
@@ -112,7 +112,7 @@ class Localidad extends \yii\db\ActiveRecord
         
     public static function getLocalidadesCercanas($idLocalidad)
     {
-        $sql = 'SELECT id_localidad, nombre, X(coordenadas) as latitud, Y(coordenadas) as longitud FROM localidades WHERE id_localidad = '.$idLocalidad;        
+        $sql = 'SELECT id_localidad, nombre, X(coordenadas) as latitud, Y(coordenadas) as longitud FROM geo_localidades WHERE id_localidad = '.$idLocalidad;        
         $localidad = Yii::$app->db->createCommand($sql)->queryOne();
         
         if ($localidad['latitud'] == NULL) {
@@ -120,7 +120,7 @@ class Localidad extends \yii\db\ActiveRecord
         }
 
         $sql = 'SELECT id_localidad, nombre, ST_DISTANCE(coordenadas, POINT('.$localidad['latitud'].','.$localidad['longitud'].')) AS dist                     
-                    FROM localidades 
+                    FROM geo_localidades 
                     WHERE ST_AsText(coordenadas) IS NOT NULL 
                     ORDER BY dist ASC LIMIT 5';
 

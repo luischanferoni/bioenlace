@@ -208,7 +208,7 @@ class Efector extends \yii\db\ActiveRecord
         // Filtro por provincia (vía localidad → departamento)
         if (!empty($filters['id_provincia'])) {
             $query->joinWith(['localidad.departamento'])
-                  ->andWhere(['departamentos.id_provincia' => (int) $filters['id_provincia']]);
+                  ->andWhere(['geo_departamentos.id_provincia' => (int) $filters['id_provincia']]);
         }
 
         // Sector salud paciente (origen_financiamiento)
@@ -224,7 +224,7 @@ class Efector extends \yii\db\ActiveRecord
         // Filtro por departamento
         if (!empty($filters['id_departamento'])) {
             $query->joinWith(['localidad.departamento'])
-                  ->andWhere(['departamentos.id_departamento' => $filters['id_departamento']]);
+                  ->andWhere(['geo_departamentos.id_departamento' => $filters['id_departamento']]);
         }
         
         // Filtro por servicio
@@ -256,10 +256,10 @@ class Efector extends \yii\db\ActiveRecord
             
             // Usar fórmula de Haversine para calcular distancia
             $query->joinWith(['localidad'])
-                  ->andWhere('localidades.coordenadas IS NOT NULL')
+                  ->andWhere('geo_localidades.coordenadas IS NOT NULL')
                   ->andWhere("(
                     ST_DISTANCE_SPHERE(
-                        localidades.coordenadas, 
+                        geo_localidades.coordenadas, 
                         POINT({$lng}, {$lat})
                     ) / 1000
                   ) <= {$radio}");
@@ -268,13 +268,13 @@ class Efector extends \yii\db\ActiveRecord
         // Filtro por nombre de localidad
         if (!empty($filters['localidad_nombre'])) {
             $query->joinWith(['localidad'])
-                  ->andWhere(['like', 'localidades.nombre', '%'.$filters['localidad_nombre'].'%', false]);
+                  ->andWhere(['like', 'geo_localidades.nombre', '%'.$filters['localidad_nombre'].'%', false]);
         }
         
         // Filtro por nombre de departamento
         if (!empty($filters['departamento_nombre'])) {
             $query->joinWith(['localidad.departamento'])
-                  ->andWhere(['like', 'departamentos.nombre', '%'.$filters['departamento_nombre'].'%', false]);
+                  ->andWhere(['like', 'geo_departamentos.nombre', '%'.$filters['departamento_nombre'].'%', false]);
         }
         
         // Ordenamiento
@@ -284,11 +284,11 @@ class Efector extends \yii\db\ActiveRecord
         switch ($sortBy) {
             case 'localidad':
                 $query->joinWith(['localidad']); // Yii2 maneja joins duplicados automáticamente
-                $orderBy = ['localidades.nombre' => $sortOrder];
+                $orderBy = ['geo_localidades.nombre' => $sortOrder];
                 break;
             case 'departamento':
                 $query->joinWith(['localidad.departamento']); // Yii2 maneja joins duplicados automáticamente
-                $orderBy = ['departamentos.nombre' => $sortOrder];
+                $orderBy = ['geo_departamentos.nombre' => $sortOrder];
                 break;
             case 'dependencia':
                 $orderBy = ['efectores.dependencia' => $sortOrder, 'efectores.nombre' => SORT_ASC];
@@ -308,7 +308,7 @@ class Efector extends \yii\db\ActiveRecord
                     $query->addSelect([
                         'distancia' => new \yii\db\Expression("(
                             ST_DISTANCE_SPHERE(
-                                localidades.coordenadas, 
+                                geo_localidades.coordenadas, 
                                 POINT({$lng}, {$lat})
                             ) / 1000
                         )")

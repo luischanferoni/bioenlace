@@ -8,7 +8,7 @@ use Yii;
 use yii\db\Query;
 
 /**
- * Carga idempotente las 24 jurisdicciones argentinas en {{%provincias}}.
+ * Carga idempotente las 24 jurisdicciones argentinas en {{%geo_provincias}}.
  *
  * Fuente: @common/metadata/bioenlace/geo/provincias-argentina.yaml
  */
@@ -140,7 +140,7 @@ final class ProvinciasArgentinaSeedService
         }
 
         $max = (new Query())
-            ->from('{{%provincias}}')
+            ->from('{{%geo_provincias}}')
             ->max('id_provincia', Yii::$app->db);
 
         return max(1, (int) $max + 1);

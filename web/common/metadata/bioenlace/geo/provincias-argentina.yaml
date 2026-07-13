@@ -1,6 +1,6 @@
 version: 1
 # Jurisdicciones argentinas (24) con código INDEC de 2 dígitos.
-# Fuente de verdad para seed de {{%provincias}} y contexto paciente.
+# Fuente de verdad para seed de {{%geo_provincias}} y contexto paciente.
 provincias:
   - cod_indec: "02"
     nombre: "CABA"

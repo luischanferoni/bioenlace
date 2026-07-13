@@ -316,8 +316,8 @@ final class EfectorDemoSeedService
 
         $idProvincia = (new Query())
             ->select('d.id_provincia')
-            ->from(['l' => '{{%localidades}}'])
-            ->innerJoin(['d' => '{{%departamentos}}'], 'd.id_departamento = l.id_departamento')
+            ->from(['l' => '{{%geo_localidades}}'])
+            ->innerJoin(['d' => '{{%geo_departamentos}}'], 'd.id_departamento = l.id_departamento')
             ->where(['l.id_localidad' => (int) $localidad->id_localidad])
             ->scalar();
 
@@ -374,7 +374,7 @@ final class EfectorDemoSeedService
 
         if ($departamento === null) {
             $departamento = new Departamento();
-            $departamento->id_departamento = $this->nextTableId('{{%departamentos}}', 'id_departamento');
+            $departamento->id_departamento = $this->nextTableId('{{%geo_departamentos}}', 'id_departamento');
             $departamento->nombre = 'La Capital';
             $departamento->cod_indec = '001';
             $departamento->id_provincia = $idProvincia;
@@ -386,7 +386,7 @@ final class EfectorDemoSeedService
         }
 
         $localidad = new Localidad();
-        $localidad->id_localidad = $this->nextTableId('{{%localidades}}', 'id_localidad');
+        $localidad->id_localidad = $this->nextTableId('{{%geo_localidades}}', 'id_localidad');
         $localidad->nombre = $nombreLocalidad;
         $localidad->cod_postal = $codPostal;
         $localidad->id_departamento = (int) $departamento->id_departamento;
@@ -434,7 +434,7 @@ final class EfectorDemoSeedService
         }
 
         $provincia = new Provincia();
-        $provincia->id_provincia = $this->nextTableId('{{%provincias}}', 'id_provincia');
+        $provincia->id_provincia = $this->nextTableId('{{%geo_provincias}}', 'id_provincia');
         $provincia->nombre = $nombreProvincia;
         $provincia->region_pais = $nombreProvincia === self::HOME_PROVINCIA_NOMBRE ? 'Norte' : 'Centro';
         $provincia->superficie = $nombreProvincia === self::HOME_PROVINCIA_NOMBRE ? 136351 : 133007;

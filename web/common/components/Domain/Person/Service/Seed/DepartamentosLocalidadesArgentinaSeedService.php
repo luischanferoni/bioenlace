@@ -67,18 +67,18 @@ final class DepartamentosLocalidadesArgentinaSeedService
             $nombre = mb_substr(trim((string) $row['nombre']), 0, 40, 'UTF-8');
 
             $existingId = (new Query())
-                ->from('{{%departamentos}}')
+                ->from('{{%geo_departamentos}}')
                 ->select('id_departamento')
                 ->where(['cod_indec' => $codIndec])
                 ->scalar();
 
             if ($existingId === false) {
                 $byPk = (new Query())
-                    ->from('{{%departamentos}}')
+                    ->from('{{%geo_departamentos}}')
                     ->where(['id_departamento' => $idDepartamento])
                     ->exists();
                 if ($byPk) {
-                    Yii::$app->db->createCommand()->update('{{%departamentos}}', [
+                    Yii::$app->db->createCommand()->update('{{%geo_departamentos}}', [
                         'nombre' => $nombre,
                         'cod_indec' => $codIndec,
                         'id_provincia' => $idProvincia,
@@ -86,7 +86,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
                     $deptUpdated++;
                     $deptIdByCod[$codIndec] = $idDepartamento;
                 } else {
-                    Yii::$app->db->createCommand()->insert('{{%departamentos}}', [
+                    Yii::$app->db->createCommand()->insert('{{%geo_departamentos}}', [
                         'id_departamento' => $idDepartamento,
                         'nombre' => $nombre,
                         'cod_indec' => $codIndec,
@@ -97,7 +97,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
                 }
             } else {
                 $idDepartamento = (int) $existingId;
-                Yii::$app->db->createCommand()->update('{{%departamentos}}', [
+                Yii::$app->db->createCommand()->update('{{%geo_departamentos}}', [
                     'nombre' => $nombre,
                     'id_provincia' => $idProvincia,
                 ], ['id_departamento' => $idDepartamento])->execute();
@@ -107,18 +107,18 @@ final class DepartamentosLocalidadesArgentinaSeedService
         }
 
         // Recargar mapa por si había departamentos previos solo por PK.
-        foreach ((new Query())->from('{{%departamentos}}')->select(['id_departamento', 'cod_indec'])->all() as $d) {
+        foreach ((new Query())->from('{{%geo_departamentos}}')->select(['id_departamento', 'cod_indec'])->all() as $d) {
             $deptIdByCod[(string) $d['cod_indec']] = (int) $d['id_departamento'];
         }
 
         $locInserted = 0;
         $locUpdated = 0;
-        $nextId = (int) (new Query())->from('{{%localidades}}')->max('id_localidad') + 1;
+        $nextId = (int) (new Query())->from('{{%geo_localidades}}')->max('id_localidad') + 1;
         if ($nextId < 1) {
             $nextId = 1;
         }
         $usedPostal = [];
-        foreach ((new Query())->from('{{%localidades}}')->select('cod_postal')->column() as $cp) {
+        foreach ((new Query())->from('{{%geo_localidades}}')->select('cod_postal')->column() as $cp) {
             $usedPostal[(string) $cp] = true;
         }
         $postalSeq = 1;
@@ -142,7 +142,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
             $existing = null;
             if ($hasCodBahra) {
                 $existing = (new Query())
-                    ->from('{{%localidades}}')
+                    ->from('{{%geo_localidades}}')
                     ->where(['cod_bahra' => $codBahra])
                     ->one();
             }
@@ -156,7 +156,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
                     // keep postal
                 }
                 Yii::$app->db->createCommand()->update(
-                    '{{%localidades}}',
+                    '{{%geo_localidades}}',
                     $update,
                     ['id_localidad' => (int) $existing['id_localidad']]
                 )->execute();
@@ -186,7 +186,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
                 $insert['cod_sisa'] = substr($codBahra, 0, 15);
             }
 
-            Yii::$app->db->createCommand()->insert('{{%localidades}}', $insert)->execute();
+            Yii::$app->db->createCommand()->insert('{{%geo_localidades}}', $insert)->execute();
             $nextId++;
             $locInserted++;
         }
@@ -287,7 +287,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
     private function mapProvinciaIdByCodIndec(): array
     {
         $map = [];
-        foreach ((new Query())->from('{{%provincias}}')->select(['id_provincia', 'cod_indec'])->all() as $row) {
+        foreach ((new Query())->from('{{%geo_provincias}}')->select(['id_provincia', 'cod_indec'])->all() as $row) {
             $cod = str_pad(trim((string) $row['cod_indec']), 2, '0', STR_PAD_LEFT);
             $map[$cod] = (int) $row['id_provincia'];
         }
@@ -303,7 +303,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
 
     private function localidadesHasColumn(string $column): bool
     {
-        $schema = Yii::$app->db->schema->getTableSchema('{{%localidades}}', true);
+        $schema = Yii::$app->db->schema->getTableSchema('{{%geo_localidades}}', true);
 
         return $schema !== null && isset($schema->columns[$column]);
     }
@@ -314,7 +314,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
             throw new \RuntimeException('La tabla localidades no tiene columna cod_bahra.');
         }
         $id = (new Query())
-            ->from('{{%localidades}}')
+            ->from('{{%geo_localidades}}')
             ->select('id_localidad')
             ->where(['cod_bahra' => $codBahra])
             ->scalar();
@@ -333,8 +333,8 @@ final class DepartamentosLocalidadesArgentinaSeedService
     ): void {
         $idProvincia = (new Query())
             ->select('d.id_provincia')
-            ->from(['l' => '{{%localidades}}'])
-            ->innerJoin(['d' => '{{%departamentos}}'], 'd.id_departamento = l.id_departamento')
+            ->from(['l' => '{{%geo_localidades}}'])
+            ->innerJoin(['d' => '{{%geo_departamentos}}'], 'd.id_departamento = l.id_departamento')
             ->where(['l.id_localidad' => $idLocalidad])
             ->scalar();
 

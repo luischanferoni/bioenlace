@@ -5,7 +5,7 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "provincias".
+ * This is the model class for table "geo_provincias".
  *
  * @property integer $id_provincia
  * @property string $nombre
@@ -22,7 +22,7 @@ class Provincia extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'provincias';
+        return 'geo_provincias';
     }
 
     /**

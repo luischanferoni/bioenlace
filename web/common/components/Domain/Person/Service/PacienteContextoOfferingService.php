@@ -182,8 +182,8 @@ final class PacienteContextoOfferingService
     {
         $row = Efector::find()
             ->alias('e')
-            ->innerJoin(['l' => 'localidades'], 'l.id_localidad = e.id_localidad')
-            ->innerJoin(['d' => 'departamentos'], 'd.id_departamento = l.id_departamento')
+            ->innerJoin(['l' => 'geo_localidades'], 'l.id_localidad = e.id_localidad')
+            ->innerJoin(['d' => 'geo_departamentos'], 'd.id_departamento = l.id_departamento')
             ->where(['e.id_efector' => (int) $efector->id_efector])
             ->select(['d.id_provincia'])
             ->asArray()

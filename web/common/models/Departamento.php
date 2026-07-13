@@ -5,7 +5,7 @@ namespace common\models;
 use Yii;
 
 /**
- * This is the model class for table "departamentos".
+ * This is the model class for table "geo_departamentos".
  *
  * @property integer $id_departamento
  * @property string $nombre
@@ -22,7 +22,7 @@ class Departamento extends \yii\db\ActiveRecord
      */
     public static function tableName()
     {
-        return 'departamentos';
+        return 'geo_departamentos';
     }
 
     /**

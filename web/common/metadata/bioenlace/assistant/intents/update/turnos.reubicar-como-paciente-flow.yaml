@@ -28,7 +28,7 @@ draft_keys_extra:
 
 subintents:
   - id: select_turno
-    assistant_text: "Turno a reubicar"
+    assistant_text: ""
     provides:
       - draft.id
     next: select_servicio

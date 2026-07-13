@@ -1315,11 +1315,13 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     }
 
     Widget embeddedLoading() => const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-          child: SizedBox(
-            height: 28,
-            width: 28,
-            child: CircularProgressIndicator(strokeWidth: 2),
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: Center(
+            child: SizedBox(
+              height: 28,
+              width: 28,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
           ),
         );
 
@@ -1456,7 +1458,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 final tokens = context.bio;
                 final primary = IntentPalette.of(UiIntent.primary);
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8),
+                  padding: EdgeInsets.only(left: idx == 0 ? 0 : 8),
                   child: SizedBox(
                     width: cardWidth,
                     child: Material(
@@ -1650,7 +1652,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                         ),
                       );
                     }
-                    if (sum < 12) {
+                    if (sum < 12 && !widget.embedded) {
                       rowChildren.add(Expanded(flex: 12 - sum, child: const SizedBox.shrink()));
                     }
                     return Padding(
@@ -1687,8 +1689,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       );
     }
 
-    /// Padding del bloque embebido en chat; reducir aquí el aire alrededor de listas/forms.
-    const blocksPadding = EdgeInsets.fromLTRB(8, 0, 8, 0);
+    /// En chat el padding horizontal lo pone el contenedor padre (simétrico).
+    /// Fuera de chat mantenemos un poco de aire propio.
+    final blocksPadding = widget.embedded
+        ? EdgeInsets.zero
+        : const EdgeInsets.fromLTRB(8, 0, 8, 0);
     final blocksColumn = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,

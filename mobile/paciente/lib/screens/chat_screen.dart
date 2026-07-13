@@ -2817,11 +2817,9 @@ class ChatScreenState extends State<ChatScreen> {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Container(
-                            margin: const EdgeInsets.fromLTRB(
-                              16.0,
-                              4.0,
-                              0,
-                              0.0,
+                            margin: const EdgeInsets.symmetric(
+                              vertical: 4.0,
+                              horizontal: 16.0,
                             ),
                             padding: const EdgeInsets.all(16.0),
                             decoration: BoxDecoration(
@@ -2959,14 +2957,8 @@ class ChatScreenState extends State<ChatScreen> {
                         const SizedBox(height: 4),
                       ],
                       Padding(
-                        padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 0.0, bottom: 0),
-                        child: Align(
-                          alignment: Alignment.topLeft,
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: MediaQuery.of(context).size.width - 32,
-                            ),
-                            child: AnimatedSize(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: AnimatedSize(
                               duration: const Duration(milliseconds: 180),
                               curve: Curves.easeOut,
                               alignment: Alignment.center,
@@ -3194,8 +3186,6 @@ class ChatScreenState extends State<ChatScreen> {
                                 ),
                               ),
                             ),
-                          ),
-                        ),
                       ),
                           ],
                         ),

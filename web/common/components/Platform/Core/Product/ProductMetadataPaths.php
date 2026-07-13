@@ -162,4 +162,9 @@ final class ProductMetadataPaths
     {
         return self::organizationDir() . DIRECTORY_SEPARATOR . 'pricing-pes-by-encounter-class.yaml';
     }
+
+    public static function efectorAtributosFile(): string
+    {
+        return self::organizationDir() . DIRECTORY_SEPARATOR . 'efector-atributos.yaml';
+    }
 }

@@ -1,0 +1,67 @@
+version: 1
+# Opciones de atributos de efector (admin / formularios).
+# Valores alineados a SISA observados + usos de app (signup/seeds/contexto paciente).
+atributos:
+  dependencia:
+    - value: Nacional
+      label: Nacional
+    - value: Provincial
+      label: Provincial
+    - value: Municipal
+      label: Municipal
+    - value: Privado
+      label: Privado
+    - value: Obra social
+      label: Obra social
+    - value: FFAA/Seguridad
+      label: FFAA/Seguridad
+    - value: Servicio Penitenciario Federal
+      label: Servicio Penitenciario Federal
+    - value: Otros
+      label: Otros
+
+  origen_financiamiento:
+    - value: Nacional
+      label: Nacional
+    - value: Provincial
+      label: Provincial
+    - value: Municipal
+      label: Municipal
+    - value: Público
+      label: Público
+    - value: Publico
+      label: Publico (legacy)
+    - value: Privado
+      label: Privado
+
+  tipologia:
+    - value: CAP
+      label: CAP (centro de atención primaria)
+    - value: CLIN
+      label: CLIN (consultorio / clínica)
+    - value: ESSIDT
+      label: ESSIDT
+    - value: ESCIG
+      label: ESCIG
+    - value: ESSID
+      label: ESSID
+    - value: ESCL
+      label: ESCL
+    - value: ESSIT
+      label: ESSIT
+    - value: ESCIE
+      label: ESCIE
+    - value: ESCIESM
+      label: ESCIESM
+    - value: ESCIEM
+      label: ESCIEM
+    - value: ESCIEP
+      label: ESCIEP
+    - value: ENA
+      label: ENA
+    - value: ESC
+      label: ESC
+    - value: ESIG
+      label: ESIG
+    - value: ESNOASIST
+      label: ESNOASIST

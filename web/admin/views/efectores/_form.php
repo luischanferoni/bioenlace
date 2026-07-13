@@ -1,5 +1,6 @@
 <?php
 
+use common\components\Platform\Core\Product\EfectorAtributosMetadata;
 use common\models\Provincia;
 use kartik\depdrop\DepDrop;
 use yii\helpers\ArrayHelper;
@@ -23,6 +24,19 @@ $localidadData = [];
 if ($model->id_localidad && $localidad !== null) {
     $localidadData = [(int) $model->id_localidad => (string) $localidad->nombre];
 }
+
+$dependenciaOptions = EfectorAtributosMetadata::optionsFor(
+    EfectorAtributosMetadata::ATTR_DEPENDENCIA,
+    $model->dependencia
+);
+$tipologiaOptions = EfectorAtributosMetadata::optionsFor(
+    EfectorAtributosMetadata::ATTR_TIPOLOGIA,
+    $model->tipologia
+);
+$origenOptions = EfectorAtributosMetadata::optionsFor(
+    EfectorAtributosMetadata::ATTR_ORIGEN_FINANCIAMIENTO,
+    $model->origen_financiamiento
+);
 ?>
 
 <div class="efector-form">
@@ -33,9 +47,13 @@ if ($model->id_localidad && $localidad !== null) {
 
     <?= $form->field($model, 'nombre')->textInput(['maxlength' => true, 'readonly' => true]) ?>
 
-    <?= $form->field($model, 'dependencia')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'dependencia')->dropDownList($dependenciaOptions, [
+        'prompt' => 'Seleccione dependencia',
+    ]) ?>
 
-    <?= $form->field($model, 'tipologia')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'tipologia')->dropDownList($tipologiaOptions, [
+        'prompt' => 'Seleccione tipología',
+    ]) ?>
 
     <?= $form->field($model, 'domicilio')->textInput(['maxlength' => true]) ?>
 
@@ -57,7 +75,9 @@ if ($model->id_localidad && $localidad !== null) {
 
     <?= $form->field($model, 'dias_horario')->textInput(['maxlength' => true]) ?>
 
-    <?= $form->field($model, 'origen_financiamiento')->textInput(['maxlength' => true]) ?>
+    <?= $form->field($model, 'origen_financiamiento')->dropDownList($origenOptions, [
+        'prompt' => 'Seleccione origen del financiamiento',
+    ]) ?>
 
     <div class="form-group field-efector-id_provincia">
         <label class="control-label" for="efector-id_provincia">Provincia</label>
@@ -95,7 +115,7 @@ if ($model->id_localidad && $localidad !== null) {
 
     <?= $form->field($model, 'estado')->dropDownList(
         ['ACTIVO' => 'ACTIVO', 'INACTIVO' => 'INACTIVO'],
-        ['prompt' => '', 'readonly' => true]
+        ['prompt' => '']
     ) ?>
 
     <div class="form-group">

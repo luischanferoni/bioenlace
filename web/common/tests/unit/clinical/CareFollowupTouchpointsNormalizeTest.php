@@ -5,7 +5,7 @@ namespace common\tests\unit\clinical;
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\CareCohort\Service\CareFollowupSchedulerService;
 use common\components\Domain\Clinical\Service\ServiceRequestService;
-use common\models\ConsultaPracticas;
+use common\models\ConsultaIndicaciones;
 
 class CareFollowupTouchpointsNormalizeTest extends Unit
 {
@@ -31,7 +31,7 @@ class CareFollowupTouchpointsNormalizeTest extends Unit
 
     public function testResolvePlazoDiasFromPromptCampos(): void
     {
-        $campos = (new ConsultaPracticas())->requeridosPrompt();
+        $campos = (new ConsultaIndicaciones())->requeridosPrompt();
         $this->assertNotEmpty($campos);
         $row = [
             $campos[0] => 'Control en consultorio',

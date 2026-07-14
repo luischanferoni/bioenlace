@@ -98,8 +98,8 @@ class ConsultaPracticas extends \yii\db\ActiveRecord
     public function requeridosPrompt()
     {
         return [
-            'Indicacion',
-            'Plazo dias',
+            'Practica',
+            'Resultado',
             'Codigo',
         ];
     }

@@ -384,19 +384,18 @@ class EncounterDocumentationService extends Component
                     $this->persistMedications($encounter, $carePlan, $medicationRows);
                     break;
                 case 'ConsultaPracticas':
-                case 'ConsultaDerivaciones':
-                    if ($modelo === 'ConsultaPracticas') {
-                        $rows = is_array($payload) ? $payload : [];
-                        if ($rows !== []) {
-                            $carePlan = $carePlan ?? $this->carePlans->createAcutePlanForEncounter(
-                                (int) $encounter->subject_persona_id,
-                                (int) $encounter->id
-                            );
-                        }
-                        $this->persistServiceRequests($encounter, $payload, $modelo, $carePlan);
-                    } else {
-                        $this->persistServiceRequests($encounter, $payload, $modelo, null);
+                case 'ConsultaIndicaciones':
+                    $rows = is_array($payload) ? $payload : [];
+                    if ($rows !== []) {
+                        $carePlan = $carePlan ?? $this->carePlans->createAcutePlanForEncounter(
+                            (int) $encounter->subject_persona_id,
+                            (int) $encounter->id
+                        );
                     }
+                    $this->persistServiceRequests($encounter, $payload, $modelo, $carePlan);
+                    break;
+                case 'ConsultaDerivaciones':
+                    $this->persistServiceRequests($encounter, $payload, $modelo, null);
                     break;
                 case 'ConsultaOdontologiaPracticas':
                     $carePlan = $this->odontology->persistPractices($encounter, $payload, $carePlan);

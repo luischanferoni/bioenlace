@@ -1204,11 +1204,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 ),
               ],
             ),
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              'Del texto clínico viene tildado; podés destildarlo. Lo de la IA se agrega al tildarlo.',
-              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-            ),
             BioSpacing.gapH(BioSpacing.sm),
             ...review.categories.map((cat) {
               return Padding(

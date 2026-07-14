@@ -76,6 +76,9 @@ encounter_capture_extraction:
   prompt_template: |
     Extraé datos clínicos en JSON válido y completo (cerrá todas las llaves, corchetes y comillas).
 
+    OBLIGATORIO: la respuesta debe incluir SIEMPRE la clave raíz "texto_procesado" (string) además de "datosExtraidos".
+    Sin "texto_procesado" la respuesta es inválida.
+
     {classification_rules}
 
     Categorías (usá exactamente estos nombres como claves dentro de datosExtraidos):
@@ -84,23 +87,21 @@ encounter_capture_extraction:
     Reglas de formato:
     - Sin datos para una categoría: [].
     - No repitas el mismo dato en más de una categoría.
-    - Formato JSON exacto (texto_procesado es OBLIGATORIO en la raíz, no solo datosExtraidos):
+    - Formato JSON exacto:
       {
         "texto_procesado": "nota clínica corregida…",
-        "datosExtraidos": {"nombre_categoria": []}
+        "datosExtraidos": {"Motivos de consulta": ["…"], "Diagnóstico": ["…"]}
       }
     - Categorías SIN subdatos: array de strings cortos y específicos (no copies párrafos enteros).
-      Motivos = síntoma/queja (ej. cefalea tensional); Diagnóstico = enfermedad nombrada por el profesional (pueden coexistir).
     - Categorías CON subdatos: array de OBJETOS usando exactamente las claves listadas en subdatos. NO uses un string único que mezcle toda la indicación.
     {structured_examples_block}
     - Tipos de frecuencia admitidos: {frecuencia_tipos}.
     - Tipos de duración admitidos: {duracion_tipos}.
-    - Indicaciones de control: Indicacion descriptiva (ej. "control en consultorio") y Plazo dias numérico cuando el texto lo diga.
 
     Reglas para texto_procesado:
     - Reescribí la misma nota del profesional, más clara y correcta; no es un copy-paste del original.
     - Restaurá/correjí ortografía y tildes en español.
-    - Expandí abreviaturas médicas habituales cuando aporte claridad.
+    - Expandí abreviaturas médicas habituales cuando aporte claridad (TA→tensión arterial).
     - Mejorá puntuación y mayúsculas; mantené cifras y dosis exactas del original.
     - Sin agregar hallazgos, fármacos, dosis ni indicaciones que no estén en el texto.
     - Sin markdown.
@@ -109,7 +110,7 @@ encounter_capture_extraction:
 
     Texto clínico: "{clinical_text}"
 
-    Respondé SOLO con el JSON, sin texto adicional antes o después.
+    Respondé SOLO con el JSON (con texto_procesado Y datosExtraidos), sin texto adicional antes o después.
   classification_rules_template: |
     Reglas de clasificación (obligatorias):
     - No dupliques un mismo dato en más de una categoría.
@@ -124,7 +125,8 @@ encounter_capture_extraction:
     ConsultaMotivos: queja o síntoma referido (cefalea, dolor, malestar, etc.); no lo dejes vacío si el texto lo menciona
     DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
     ConsultaMedicamentos: medicación indicada o registrada; objetos con las claves de subdatos (no un solo string)
-    ConsultaPracticas: prácticas, estudios o indicaciones (reposo, dieta, control); objetos con Indicacion, Plazo dias si hay control/seguimiento, y Codigo si hay práctica codificada
+    ConsultaPracticas: mediciones o prácticas realizadas en la consulta (tensión arterial / TA con Resultado 138/88, ECG, etc.); objetos Practica+Resultado+Codigo — nunca reposo/dieta/control
+    ConsultaIndicaciones: instrucciones al paciente (reposo, baja de sal, control); objetos Indicacion+Plazo dias — nunca signos vitales ni TA
     ConsultaDerivaciones: derivación a otro servicio o profesional
     ConsultaPracticasOftalmologia: práctica o procedimiento oftalmológico
     ConsultaPracticasOftalmologiaEstudios: estudio oftalmológico solicitado o realizado
@@ -151,3 +153,14 @@ encounter_capture_extraction:
     relocate_isolated_terms:
       enabled: false
       max_words: 5
+    # Si la IA deja Motivos vacío pero el texto tiene queja/síntoma (léxico), rellenar.
+    backfill_empty_motivos:
+      enabled: true
+      require_lexicon_key: subjective_complaint
+      max_chars: 140
+      split_before_patterns:
+        - '(?iu)\bdiagn[oó]stico\s*:'
+        - '(?iu)\bindico\b'
+        - '(?iu)\bindicaci[oó]n\b'
+        - '(?iu)\breposo\b'
+        - '(?iu)\bcontrol\b'

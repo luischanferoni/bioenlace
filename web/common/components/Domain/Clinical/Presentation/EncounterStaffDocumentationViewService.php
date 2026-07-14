@@ -66,19 +66,32 @@ final class EncounterStaffDocumentationViewService
         }
 
         $practicas = [];
+        $indicaciones = [];
         foreach ($encounter->getServiceRequests()->andWhere(['deleted_at' => null])->all() as $request) {
             $label = trim((string) ($request->display ?? ''));
             if ($label === '') {
                 $label = trim((string) ($request->code ?? ''));
             }
-            if ($label !== '') {
+            if ($label === '') {
+                continue;
+            }
+            $category = mb_strtolower(trim((string) ($request->category ?? '')));
+            if (in_array($category, ['counseling', 'follow-up'], true)) {
+                $indicaciones[] = $label;
+            } elseif ($category !== 'referral') {
                 $practicas[] = $label;
             }
         }
         if ($practicas !== []) {
             $secciones[] = [
-                'titulo' => 'Prácticas e indicaciones',
+                'titulo' => 'Prácticas realizadas',
                 'items' => $practicas,
+            ];
+        }
+        if ($indicaciones !== []) {
+            $secciones[] = [
+                'titulo' => 'Indicaciones',
+                'items' => $indicaciones,
             ];
         }
 

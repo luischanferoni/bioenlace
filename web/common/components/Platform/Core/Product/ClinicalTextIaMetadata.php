@@ -326,6 +326,27 @@ final class ClinicalTextIaMetadata
         return array_merge($defaults, $filter);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    public static function encounterCaptureBackfillMotivosConfig(): array
+    {
+        $postProcess = self::encounterCapturePostProcessConfig();
+        $backfill = $postProcess['backfill_empty_motivos'] ?? [];
+        if (!is_array($backfill)) {
+            $backfill = [];
+        }
+
+        $defaults = [
+            'enabled' => false,
+            'require_lexicon_key' => 'subjective_complaint',
+            'max_chars' => 140,
+            'split_before_patterns' => [],
+        ];
+
+        return array_merge($defaults, $backfill);
+    }
+
     public static function clinicalLexiconPattern(string $key): ?string
     {
         $lexicon = self::loadConfig()['clinical_lexicon'] ?? [];

@@ -25,7 +25,8 @@ final class EncounterDefinitionWorkflowCatalog
                 self::step('Motivos de consulta', 'ConsultaMotivos', false),
                 self::step('Diagnóstico', 'DiagnosticoConsulta', false),
                 self::step('Medicación', 'ConsultaMedicamentos', false),
-                self::step('Prácticas e indicaciones', 'ConsultaPracticas', false),
+                self::step('Prácticas realizadas', 'ConsultaPracticas', false),
+                self::step('Indicaciones', 'ConsultaIndicaciones', false),
                 self::step('Derivaciones', 'ConsultaDerivaciones', false),
             ],
             self::TEMPLATE_AMB_OPHTHALMOLOGY => [
@@ -44,18 +45,19 @@ final class EncounterDefinitionWorkflowCatalog
                 self::step('Estado dental', 'ConsultaOdontologiaEstados', false),
                 self::step('Medicación', 'ConsultaMedicamentos', false),
             ],
-            self::TEMPLATE_IMP_STANDARD => [
-                self::step('Evolución', 'DiagnosticoConsulta', false),
-                self::step('Medicación', 'ConsultaMedicamentos', false),
-                self::step('Indicaciones', 'ConsultaPracticas', false),
-                self::step('Régimen', 'ConsultaRegimen', false),
-                self::step('Balance hídrico', 'ConsultaBalanceHidrico', false),
-            ],
             self::TEMPLATE_EMER_STANDARD => [
                 self::step('Motivos de consulta', 'ConsultaMotivos', false),
                 self::step('Diagnóstico', 'DiagnosticoConsulta', false),
                 self::step('Medicación', 'ConsultaMedicamentos', false),
-                self::step('Prácticas e indicaciones', 'ConsultaPracticas', false),
+                self::step('Prácticas realizadas', 'ConsultaPracticas', false),
+                self::step('Indicaciones', 'ConsultaIndicaciones', false),
+            ],
+            self::TEMPLATE_IMP_STANDARD => [
+                self::step('Evolución', 'DiagnosticoConsulta', false),
+                self::step('Medicación', 'ConsultaMedicamentos', false),
+                self::step('Indicaciones', 'ConsultaIndicaciones', false),
+                self::step('Régimen', 'ConsultaRegimen', false),
+                self::step('Balance hídrico', 'ConsultaBalanceHidrico', false),
             ],
         ];
     }

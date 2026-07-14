@@ -33,7 +33,17 @@
     {
       "kind": "list",
       "id": "practicas",
-      "title": "Prácticas e indicaciones",
+      "title": "Prácticas realizadas",
+      "draft_field": "service_request_id",
+      "item": { "kind": "service_request" },
+      "presentation": { "tile": "medium", "shape": "wide" },
+      "selection": { "mode": "single", "requires_confirmation": false },
+      "items": []
+    },
+    {
+      "kind": "list",
+      "id": "indicaciones",
+      "title": "Indicaciones",
       "draft_field": "service_request_id",
       "item": { "kind": "service_request" },
       "presentation": { "tile": "medium", "shape": "wide" },

@@ -44,7 +44,107 @@ final class EncounterCaptureExtractionPostProcessor
             $clinicalText
         );
 
+        return $this->backfillEmptyMotivos($resultadoIA, $categorias, $clinicalText);
+    }
+
+    /**
+     * Si Motivos quedó vacío pero el texto clínico tiene queja/síntoma (léxico metadata), lo completa.
+     *
+     * @param array<string, mixed> $resultadoIA
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    private function backfillEmptyMotivos(array $resultadoIA, array $categorias, string $clinicalText): array
+    {
+        $config = ClinicalTextIaMetadata::encounterCaptureBackfillMotivosConfig();
+        if (($config['enabled'] ?? false) !== true) {
+            return $resultadoIA;
+        }
+
+        $extraidos = $resultadoIA['datosExtraidos'] ?? null;
+        if (!is_array($extraidos)) {
+            return $resultadoIA;
+        }
+
+        $motivoModel = (string) (ClinicalTextIaMetadata::encounterCaptureRelocateConfig()['motivo_model'] ?? 'ConsultaMotivos');
+
+        $motivoTitle = null;
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            if ((string) ($categoria['modelo'] ?? '') === $motivoModel) {
+                $motivoTitle = trim((string) ($categoria['titulo'] ?? ''));
+                break;
+            }
+        }
+        if ($motivoTitle === null || $motivoTitle === '') {
+            return $resultadoIA;
+        }
+
+        $current = $extraidos[$motivoTitle] ?? [];
+        if (is_array($current) && $current !== []) {
+            return $resultadoIA;
+        }
+
+        $lexiconKey = (string) ($config['require_lexicon_key'] ?? 'subjective_complaint');
+        if ($lexiconKey !== '' && !ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern($clinicalText, $lexiconKey)) {
+            return $resultadoIA;
+        }
+
+        $candidate = $this->extractMotivoCandidateFromText($clinicalText, $config);
+        if ($candidate === '') {
+            return $resultadoIA;
+        }
+
+        $extraidos[$motivoTitle] = [$candidate];
+        $resultadoIA['datosExtraidos'] = $extraidos;
+
         return $resultadoIA;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function extractMotivoCandidateFromText(string $clinicalText, array $config): string
+    {
+        $text = trim(preg_replace('/\s+/u', ' ', $clinicalText) ?? $clinicalText);
+        if ($text === '') {
+            return '';
+        }
+
+        $patterns = $config['split_before_patterns'] ?? [];
+        if (!is_array($patterns)) {
+            $patterns = [];
+        }
+        $cutAt = null;
+        foreach ($patterns as $pattern) {
+            if (!is_string($pattern) || $pattern === '') {
+                continue;
+            }
+            if (@preg_match($pattern, $text, $m, PREG_OFFSET_CAPTURE) === 1) {
+                $pos = (int) ($m[0][1] ?? -1);
+                if ($pos > 0 && ($cutAt === null || $pos < $cutAt)) {
+                    $cutAt = $pos;
+                }
+            }
+        }
+        if ($cutAt !== null) {
+            $text = trim(substr($text, 0, $cutAt));
+        }
+
+        // Primera oración / cláusula.
+        if (preg_match('/^(.+?[.!?])(?:\s|$)/u', $text, $m)) {
+            $text = trim($m[1]);
+        }
+
+        $text = rtrim($text, " \t\n\r\0\x0B.,;");
+        $max = max(20, (int) ($config['max_chars'] ?? 140));
+        if (mb_strlen($text) > $max) {
+            $text = rtrim(mb_substr($text, 0, $max), " \t.,;") . '…';
+        }
+
+        return $text;
     }
 
     /**

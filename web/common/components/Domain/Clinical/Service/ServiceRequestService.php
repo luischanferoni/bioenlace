@@ -45,37 +45,54 @@ final class ServiceRequestService
         }
 
         if (is_string($row)) {
-            $row = ['Indicacion' => trim($row)];
+            $row = $legacyModelo === 'ConsultaIndicaciones'
+                ? ['Indicacion' => trim($row)]
+                : ['Practica' => trim($row)];
         }
         if (!is_array($row)) {
             throw new \InvalidArgumentException('Fila de práctica/indicación inválida.');
         }
 
-        $campos = class_exists(\common\models\ConsultaPracticas::class)
-            ? (new \common\models\ConsultaPracticas())->requeridosPrompt()
-            : [];
-        $indicacionKey = $campos[0] ?? 'Indicacion';
-        $plazoKey = $campos[1] ?? 'Plazo dias';
-        $codigoKey = $campos[2] ?? 'Codigo';
+        $campos = self::promptFieldsForModelo($legacyModelo);
+        $primaryKey = $campos[0] ?? 'Practica';
+        $secondaryKey = $campos[1] ?? null;
+        $codigoKey = null;
+        foreach ($campos as $campo) {
+            if (mb_stripos($campo, 'codigo') !== false || mb_stripos($campo, 'código') !== false) {
+                $codigoKey = $campo;
+                break;
+            }
+        }
 
-        $display = trim((string) (
-            $row[$indicacionKey]
+        $primary = trim((string) (
+            $row[$primaryKey]
             ?? $row['termino']
             ?? $row['texto']
             ?? $row['display']
+            ?? $row['Indicacion']
+            ?? $row['Practica']
             ?? ''
         ));
+        $secondary = $secondaryKey !== null
+            ? trim((string) ($row[$secondaryKey] ?? $row['Resultado'] ?? $row['Plazo dias'] ?? ''))
+            : '';
         $code = trim((string) (
-            $row[$codigoKey]
-            ?? $row['codigo']
-            ?? $row['conceptId']
-            ?? $row['Codigo']
-            ?? ''
+            ($codigoKey !== null ? ($row[$codigoKey] ?? '') : '')
+            ?: ($row['codigo'] ?? $row['conceptId'] ?? $row['Codigo'] ?? '')
         ));
-        $plazoDias = self::resolvePlazoDias($row, $plazoKey);
 
+        $isIndicacion = $legacyModelo === 'ConsultaIndicaciones'
+            || mb_stripos($primaryKey, 'Indicacion') !== false;
+        $plazoDias = $isIndicacion
+            ? self::resolvePlazoDias($row, $secondaryKey)
+            : null;
+
+        $display = $primary;
+        if (!$isIndicacion && $secondary !== '') {
+            $display = trim($primary . ' ' . $secondary);
+        }
         if ($display === '' && $code === '') {
-            throw new \InvalidArgumentException('Fila de práctica/indicación sin Indicacion ni Codigo.');
+            throw new \InvalidArgumentException('Fila sin práctica/indicación ni código.');
         }
 
         $sr = new ServiceRequest();
@@ -83,9 +100,16 @@ final class ServiceRequestService
         $sr->subject_persona_id = $encounter->subject_persona_id;
         $sr->status = RequestStatus::ACTIVE;
         $sr->intent = 'order';
-        $sr->category = $plazoDias !== null ? 'follow-up' : 'procedure';
+        if ($isIndicacion) {
+            $sr->category = $plazoDias !== null ? 'follow-up' : 'counseling';
+        } else {
+            $sr->category = 'observation';
+        }
         $sr->code = $code !== '' ? $code : null;
-        $sr->display = $display !== '' ? $display : ($code !== '' ? $code : null);
+        $sr->display = $display !== '' ? $display : $code;
+        if ($secondary !== '' && !$isIndicacion) {
+            $sr->note = $secondary;
+        }
         if ($plazoDias !== null) {
             $sr->reminder_json = json_encode([
                 'delay_days' => $plazoDias,
@@ -104,6 +128,27 @@ final class ServiceRequestService
         }
 
         return $sr;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function promptFieldsForModelo(string $legacyModelo): array
+    {
+        if ($legacyModelo === '' || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $legacyModelo)) {
+            return [];
+        }
+        $class = '\\common\\models\\' . $legacyModelo;
+        if (!class_exists($class)) {
+            return [];
+        }
+        $model = new $class();
+        if (!method_exists($model, 'requeridosPrompt')) {
+            return [];
+        }
+        $campos = $model->requeridosPrompt();
+
+        return is_array($campos) ? array_values(array_map('strval', $campos)) : [];
     }
 
     /**

@@ -48,7 +48,7 @@ class EncounterController extends BaseController
     }
 
     /**
-     * UI JSON: medicación y prácticas activas de un encounter (staff).
+     * UI JSON: medicación, prácticas realizadas e indicaciones activas de un encounter (staff).
      *
      * GET /api/v1/clinical/encounter/listar-ordenes-activas?encounter_id=
      */
@@ -93,18 +93,26 @@ class EncounterController extends BaseController
         }
 
         $practItems = [];
+        $indicacionItems = [];
         foreach ((new ServiceRequestService())->listForEncounter($encounter->id) as $sr) {
             $dto = ServiceRequestDto::fromModel($sr)->toArray();
-            $practItems[] = [
+            $category = mb_strtolower(trim((string) ($dto['category'] ?? '')));
+            $item = [
                 'id' => (string) $sr->id,
-                'name' => (string) ($dto['display'] ?? $dto['code'] ?? 'Indicación'),
+                'name' => (string) ($dto['display'] ?? $dto['code'] ?? 'Orden'),
                 'subtitle' => (string) ($dto['category'] ?? ''),
             ];
+            if (in_array($category, ['counseling', 'follow-up'], true)) {
+                $indicacionItems[] = $item;
+            } elseif ($category !== 'referral') {
+                $practItems[] = $item;
+            }
         }
 
         $out = UiScreenService::withListBlockItems($out, $medItems, 'medicaciones');
+        $out = UiScreenService::withListBlockItems($out, $practItems, 'practicas');
 
-        return UiScreenService::withListBlockItems($out, $practItems, 'practicas');
+        return UiScreenService::withListBlockItems($out, $indicacionItems, 'indicaciones');
     }
 
     /**

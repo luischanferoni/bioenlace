@@ -296,10 +296,13 @@ final class EncounterCaptureReviewPresenter
         if ($clinicalHaystack === '') {
             return 'clinical';
         }
+        $haystack = $this->expandClinicalAbbreviations($clinicalHaystack);
         $candidates = [$label];
         foreach ($payload as $value) {
             if (is_string($value) && trim($value) !== '') {
                 $candidates[] = trim($value);
+            } elseif (is_numeric($value)) {
+                $candidates[] = (string) $value;
             }
         }
         foreach ($candidates as $candidate) {
@@ -307,18 +310,22 @@ final class EncounterCaptureReviewPresenter
             if ($folded === '') {
                 continue;
             }
-            if (mb_strlen($folded) >= 4 && mb_strpos($clinicalHaystack, $folded) !== false) {
+            if (mb_strlen($folded) >= 4 && mb_strpos($haystack, $folded) !== false) {
+                return 'clinical';
+            }
+            // Cifras / signos vitales cortos (p. ej. 138/88).
+            if (preg_match('/\d/', $folded) === 1 && mb_strpos($haystack, $folded) !== false) {
                 return 'clinical';
             }
             $tokens = preg_split('/\s+/u', $folded) ?: [];
             $hits = 0;
             $significant = 0;
             foreach ($tokens as $token) {
-                if (mb_strlen($token) < 4) {
+                if (mb_strlen($token) < 4 && !preg_match('/\d/', $token)) {
                     continue;
                 }
                 $significant++;
-                if (mb_strpos($clinicalHaystack, $token) !== false) {
+                if (mb_strpos($haystack, $token) !== false) {
                     $hits++;
                 }
             }
@@ -328,6 +335,24 @@ final class EncounterCaptureReviewPresenter
         }
 
         return 'ai';
+    }
+
+    /** Expande abreviaturas clínicas frecuentes para anclar ítems al texto del profesional. */
+    private function expandClinicalAbbreviations(string $foldedHaystack): string
+    {
+        $out = $foldedHaystack;
+        $map = [
+            '/\bta\b/u' => 'ta tension arterial',
+            '/\bfc\b/u' => 'fc frecuencia cardiaca',
+            '/\bfr\b/u' => 'fr frecuencia respiratoria',
+            '/\btemp\b/u' => 'temp temperatura',
+            '/\bsat\b/u' => 'sat saturacion',
+        ];
+        foreach ($map as $pattern => $replacement) {
+            $out = preg_replace($pattern, $replacement, $out) ?? $out;
+        }
+
+        return $out;
     }
 
     private function foldClinicalText(string $text): string

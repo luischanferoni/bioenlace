@@ -121,6 +121,19 @@ class EncounterDocumentationService extends Component
                 ]);
             }
 
+            // Defensa: no perder categories si el cliente envió mapas anidados o string.
+            if ($datosExtraidos !== [] && !self::datosExtraidosLooksLikeCategories($datosExtraidos)) {
+                $inner = $datosExtraidos['datosExtraidos'] ?? null;
+                if (is_array($inner)) {
+                    $datosExtraidos = $inner;
+                }
+            }
+
+            Yii::info(
+                'encounter.guardar categorias=' . implode(',', array_keys($datosExtraidos)),
+                'encounter-doc'
+            );
+
             if (!$idConfiguracion) {
                 $definition = (new EncounterDefinitionBootstrapService())->resolveFromCaptureBody(
                     $body,
@@ -173,6 +186,23 @@ class EncounterDocumentationService extends Component
 
             return $this->error(500, 'Error al guardar encounter: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * @param array<string, mixed> $datosExtraidos
+     */
+    private static function datosExtraidosLooksLikeCategories(array $datosExtraidos): bool
+    {
+        foreach ($datosExtraidos as $key => $value) {
+            if (!is_string($key) || $key === '' || $key === 'Error') {
+                continue;
+            }
+            if (is_array($value)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -287,18 +317,16 @@ class EncounterDocumentationService extends Component
     {
         if (isset($body['texto_procesado']) || isset($body['observacion'])) {
             $note = $body['texto_procesado'] ?? $body['observacion'];
-            $encounter->note = is_string($note) ? $note : (string) $note;
+            if ($note !== null && trim((string) $note) !== '') {
+                $encounter->note = is_string($note) ? $note : (string) $note;
+            }
         } elseif (isset($body['texto_original']) && trim((string) $body['texto_original']) !== '') {
             $encounter->note = (string) $body['texto_original'];
         }
+        // Motivos: solo cuerpo tipado (motivo_consulta) o lo que persista ConsultaMotivos.
+        // No volcar el texto clínico completo en reason_text (confunde con Motivos).
         if (isset($body['motivo_consulta']) && trim((string) $body['motivo_consulta']) !== '') {
             $encounter->reason_text = (string) $body['motivo_consulta'];
-        } elseif (
-            (trim((string) ($encounter->reason_text ?? '')) === '')
-            && isset($body['texto_original'])
-            && trim((string) $body['texto_original']) !== ''
-        ) {
-            $encounter->reason_text = (string) $body['texto_original'];
         }
     }
 
@@ -369,6 +397,9 @@ class EncounterDocumentationService extends Component
             }
 
             switch ($modelo) {
+                case 'ConsultaMotivos':
+                    $this->persistMotivos($encounter, $payload);
+                    break;
                 case 'DiagnosticoConsulta':
                     $this->persistConditions($encounter, $payload);
                     break;
@@ -377,20 +408,28 @@ class EncounterDocumentationService extends Component
                     if ($medicationRows === []) {
                         break;
                     }
-                    $carePlan = $carePlan ?? $this->carePlans->createAcutePlanForEncounter(
-                        (int) $encounter->subject_persona_id,
-                        (int) $encounter->id
-                    );
+                    try {
+                        $carePlan = $carePlan ?? $this->carePlans->createAcutePlanForEncounter(
+                            (int) $encounter->subject_persona_id,
+                            (int) $encounter->id
+                        );
+                    } catch (\Throwable $e) {
+                        Yii::error('CarePlan acute no creado: ' . $e->getMessage(), 'encounter-doc');
+                    }
                     $this->persistMedications($encounter, $carePlan, $medicationRows);
                     break;
                 case 'ConsultaPracticas':
                 case 'ConsultaIndicaciones':
                     $rows = is_array($payload) ? $payload : [];
                     if ($rows !== []) {
-                        $carePlan = $carePlan ?? $this->carePlans->createAcutePlanForEncounter(
-                            (int) $encounter->subject_persona_id,
-                            (int) $encounter->id
-                        );
+                        try {
+                            $carePlan = $carePlan ?? $this->carePlans->createAcutePlanForEncounter(
+                                (int) $encounter->subject_persona_id,
+                                (int) $encounter->id
+                            );
+                        } catch (\Throwable $e) {
+                            Yii::error('CarePlan acute no creado: ' . $e->getMessage(), 'encounter-doc');
+                        }
                     }
                     $this->persistServiceRequests($encounter, $payload, $modelo, $carePlan);
                     break;
@@ -476,6 +515,43 @@ class EncounterDocumentationService extends Component
     /**
      * @param mixed $payload
      */
+    private function persistMotivos(Encounter $encounter, $payload): void
+    {
+        if (!is_array($payload)) {
+            return;
+        }
+        $parts = [];
+        foreach ($payload as $row) {
+            if (is_string($row)) {
+                $text = trim($row);
+            } elseif (is_array($row)) {
+                $text = trim((string) (
+                    $row['texto']
+                    ?? $row['termino']
+                    ?? $row['descripcion']
+                    ?? $row['label']
+                    ?? $row['display']
+                    ?? ''
+                ));
+            } else {
+                continue;
+            }
+            if ($text !== '') {
+                $parts[] = $text;
+            }
+        }
+        if ($parts === []) {
+            return;
+        }
+        $joined = implode('; ', $parts);
+        $current = trim((string) ($encounter->reason_text ?? ''));
+        $encounter->reason_text = $current === '' ? $joined : ($current . "\n" . $joined);
+        $encounter->save(false, ['reason_text', 'updated_at', 'updated_by']);
+    }
+
+    /**
+     * @param mixed $payload
+     */
     private function persistConditions(Encounter $encounter, $payload): void
     {
         if (!is_array($payload)) {
@@ -487,18 +563,28 @@ class EncounterDocumentationService extends Component
             $condition->subject_persona_id = $encounter->subject_persona_id;
             if (is_array($row)) {
                 $condition->code = (string) ($row['codigo'] ?? $row['codigo_cie10'] ?? $row['cie10'] ?? '');
-                $condition->display = $row['termino'] ?? $row['descripcion'] ?? null;
+                $condition->display = $row['termino']
+                    ?? $row['descripcion']
+                    ?? $row['texto']
+                    ?? $row['label']
+                    ?? $row['display']
+                    ?? null;
                 $condition->clinical_status = $row['condition_clinical_status']
                     ?? DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE;
                 $condition->verification_status = $row['condition_verification_status']
                     ?? DiagnosticoConsulta::VERIFICATION_STATUS_CONFIRMED;
             } else {
-                $condition->code = (string) $row;
+                $condition->code = '';
+                $condition->display = trim((string) $row);
                 $condition->clinical_status = DiagnosticoConsulta::CLINICAL_STATUS_ACTIVE;
                 $condition->verification_status = DiagnosticoConsulta::VERIFICATION_STATUS_CONFIRMED;
             }
+            // Sin código: la codificación automática completa Condition; no persistimos fila huérfana.
             if ($condition->code === '') {
                 continue;
+            }
+            if ($condition->display === null || trim((string) $condition->display) === '') {
+                $condition->display = $condition->code;
             }
             $condition->recorded_date = date('Y-m-d H:i:s');
             $condition->save(false);
@@ -508,11 +594,15 @@ class EncounterDocumentationService extends Component
     /**
      * @param mixed $payload
      */
-    private function persistMedications(Encounter $encounter, \common\models\Clinical\CarePlan $carePlan, $payload): void
+    private function persistMedications(Encounter $encounter, ?\common\models\Clinical\CarePlan $carePlan, $payload): void
     {
         $rows = MedicationRequestService::normalizeExtractedMedicationPayload($payload);
         foreach ($rows as $row) {
-            $this->medications->createFromExtractedRow($encounter, $carePlan, $row);
+            try {
+                $this->medications->createFromExtractedRow($encounter, $carePlan, $row);
+            } catch (\InvalidArgumentException $e) {
+                Yii::info('Skip medication vacío: ' . $e->getMessage(), 'encounter-doc');
+            }
         }
     }
 

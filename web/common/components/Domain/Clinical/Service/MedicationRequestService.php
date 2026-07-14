@@ -36,7 +36,7 @@ final class MedicationRequestService
      *
      * @param array<string, mixed> $row
      */
-    public function createFromExtractedRow(Encounter $encounter, CarePlan $carePlan, array $row): MedicationRequest
+    public function createFromExtractedRow(Encounter $encounter, ?CarePlan $carePlan, array $row): MedicationRequest
     {
         $row = self::normalizeExtractedMedicationRow($row);
         $display = self::resolveMedicationDisplay($row);
@@ -47,7 +47,7 @@ final class MedicationRequestService
         $mr = new MedicationRequest();
         $mr->encounter_id = $encounter->id;
         $mr->subject_persona_id = $encounter->subject_persona_id;
-        $mr->care_plan_id = $carePlan->id;
+        $mr->care_plan_id = $carePlan?->id;
         $mr->status = RequestStatus::ACTIVE;
         $mr->intent = 'order';
         $code = trim((string) (
@@ -61,7 +61,9 @@ final class MedicationRequestService
         if (!$mr->save()) {
             throw new \RuntimeException('MedicationRequest: ' . json_encode($mr->getErrors()));
         }
-        $this->carePlans->addMedicationActivity($carePlan, $mr);
+        if ($carePlan !== null) {
+            $this->carePlans->addMedicationActivity($carePlan, $mr);
+        }
 
         return $mr;
     }

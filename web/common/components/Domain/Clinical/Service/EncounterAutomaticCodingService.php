@@ -59,17 +59,25 @@ final class EncounterAutomaticCodingService
         array $datosExtraidos,
         ?EncounterDefinition $configuracion = null
     ): string {
-        $parts = [];
-        if (trim((string) ($encounter->reason_text ?? '')) !== '') {
-            $parts[] = 'Motivo: ' . trim((string) $encounter->reason_text);
-        }
-        if (trim((string) ($encounter->note ?? '')) !== '') {
-            $parts[] = trim((string) $encounter->note);
+        $dxTerms = self::extractDiagnosisTerms($datosExtraidos, $configuracion);
+        if ($dxTerms === []) {
+            return '';
         }
 
-        $dxTerms = self::extractDiagnosisTerms($datosExtraidos, $configuracion);
-        foreach ($dxTerms as $term) {
-            $parts[] = 'Diagnóstico mencionado: ' . $term;
+        $parts = [];
+        $parts[] = "Diagnósticos a codificar:\n- " . implode("\n- ", $dxTerms);
+
+        // Contexto libre solo como apoyo; el prompt prohíbe codificar síntomas/motivos extras.
+        $contexto = [];
+        if (trim((string) ($encounter->note ?? '')) !== '') {
+            $contexto[] = trim((string) $encounter->note);
+        }
+        if (trim((string) ($encounter->reason_text ?? '')) !== '') {
+            $contexto[] = 'Motivo: ' . trim((string) $encounter->reason_text);
+        }
+        if ($contexto !== []) {
+            $parts[] = "Contexto clínico (no codificar motivos/síntomas como diagnóstico):\n"
+                . implode("\n\n", $contexto);
         }
 
         return implode("\n\n", $parts);
@@ -84,7 +92,7 @@ final class EncounterAutomaticCodingService
     ): string {
         $lines = [];
         foreach (self::extractDiagnosisRows($datosExtraidos, $configuracion) as $row) {
-            $term = trim((string) ($row['termino'] ?? $row['descripcion'] ?? ''));
+            $term = self::rowTerm($row);
             if ($term === '') {
                 continue;
             }
@@ -109,13 +117,35 @@ final class EncounterAutomaticCodingService
     ): array {
         $terms = [];
         foreach (self::extractDiagnosisRows($datosExtraidos, $configuracion) as $row) {
-            $term = trim((string) ($row['termino'] ?? $row['descripcion'] ?? ''));
+            $term = self::rowTerm($row);
             if ($term !== '') {
                 $terms[] = $term;
             }
         }
 
         return array_values(array_unique($terms));
+    }
+
+    /**
+     * @param array<string, mixed>|string $row
+     */
+    private static function rowTerm($row): string
+    {
+        if (is_string($row)) {
+            return trim($row);
+        }
+        if (!is_array($row)) {
+            return '';
+        }
+
+        foreach (['termino', 'descripcion', 'texto', 'label', 'display', 'diagnostico'] as $key) {
+            $term = trim((string) ($row[$key] ?? ''));
+            if ($term !== '') {
+                return $term;
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -135,6 +165,8 @@ final class EncounterAutomaticCodingService
             foreach ($payload as $row) {
                 if (is_array($row)) {
                     $rows[] = $row;
+                } elseif (is_string($row) && trim($row) !== '') {
+                    $rows[] = ['texto' => trim($row)];
                 }
             }
         }

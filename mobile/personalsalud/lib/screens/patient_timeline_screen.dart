@@ -1045,6 +1045,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         if (_stagedItemIds.isEmpty && review.defaultStagedItemIds.isNotEmpty) {
           _stagedItemIds = review.defaultStagedItemIds.toSet();
         }
+        // Si quedó vacío pero hay extracción, incluir todo (mejor de más que de menos).
+        if (_stagedItemIds.isEmpty && review.hasExtractedContent) {
+          _stagedItemIds = review.allItems.map((e) => e.id).toSet();
+        }
         _chatController.clear();
         _sttStatus = '';
       });
@@ -1067,6 +1071,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
     if (review.tieneDatosFaltantes && _stagedItemIds.isEmpty) {
       _snack('Faltan datos obligatorios en el análisis.', UiIntent.warning);
+      return;
+    }
+    // Si la IA extrajo ítems, exigir al menos uno tildado (evita guardar solo texto
+    // y perder medicación/prácticas/indicaciones).
+    if (review.hasExtractedContent && _stagedItemIds.isEmpty) {
+      _snack(
+        'Seleccioná al menos un ítem del análisis antes de confirmar.',
+        UiIntent.warning,
+      );
       return;
     }
     final extraidos = review.toDatosExtraidos(_stagedItemIds);
@@ -1279,7 +1292,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         review.puedeConfirmar &&
         review.systemError == null &&
         review.textoOriginal.trim().isNotEmpty &&
-        !(review.tieneDatosFaltantes && _stagedItemIds.isEmpty);
+        !(review.tieneDatosFaltantes && _stagedItemIds.isEmpty) &&
+        !(review.hasExtractedContent && _stagedItemIds.isEmpty);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(

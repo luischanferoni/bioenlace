@@ -45,7 +45,9 @@ encounter_automatic_coding:
     }
 
     Reglas:
-    - Incluí al menos un diagnóstico principal si el texto lo permite.
+    - Codificá SOLO los ítems listados en «Diagnósticos a codificar». No agregues síntomas, motivos de consulta ni signos vitales como diagnóstico.
+    - Si la lista de diagnósticos a codificar está vacía, devolvé {"diagnosticos":[]}.
+    - Incluí al menos un diagnóstico principal cuando la lista lo permita.
     - Usá CIE-10-ES cuando corresponda a facturación/epidemiología en Argentina; SNOMED CT para interoperabilidad clínica.
     - Al menos uno de codigo_cie10 o codigo_snomed debe estar presente por ítem.
     - Máximo {max_diagnosticos} diagnósticos.

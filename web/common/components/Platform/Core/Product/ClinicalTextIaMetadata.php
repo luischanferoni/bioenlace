@@ -361,7 +361,7 @@ final class ClinicalTextIaMetadata
 
     public static function textMatchesClinicalLexiconPattern(string $text, string $key): bool
     {
-        $pattern = self::clinicalLexiconPattern($key);
+        $pattern = self::normalizePregPattern(self::clinicalLexiconPattern($key));
         if ($pattern === null || trim($text) === '') {
             return false;
         }
@@ -369,6 +369,38 @@ final class ClinicalTextIaMetadata
         $result = @preg_match($pattern, $text);
 
         return $result === 1;
+    }
+
+    /**
+     * Normaliza patrones PCRE del metadata.
+     * Rechaza el inline inválido `(?iu)` (en PCRE `u` no es opción inline; usar `/…/iu`).
+     */
+    public static function normalizePregPattern(?string $pattern): ?string
+    {
+        if ($pattern === null) {
+            return null;
+        }
+        $pattern = trim($pattern);
+        if ($pattern === '') {
+            return null;
+        }
+
+        if ($pattern[0] === '/') {
+            return $pattern;
+        }
+
+        // Legacy: (?iu)body o (?i)body → /body/iu
+        if (preg_match('/^\(\?([a-zA-Z]+)\)(.*)$/s', $pattern, $m) === 1) {
+            $flags = strtolower(str_replace('u', '', $m[1]));
+            if (strpos($flags, 'i') === false) {
+                $flags .= 'i';
+            }
+            $body = $m[2];
+
+            return '/' . str_replace('/', '\\/', $body) . '/' . $flags . 'u';
+        }
+
+        return '/' . str_replace('/', '\\/', $pattern) . '/iu';
     }
 
     /**

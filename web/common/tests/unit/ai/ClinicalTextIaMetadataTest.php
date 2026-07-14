@@ -62,4 +62,21 @@ class ClinicalTextIaMetadataTest extends Unit
             ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern('gripe', 'narrative_framing')
         );
     }
+
+    public function testClinicalLexiconMatchesSubjectiveComplaintCefalea(): void
+    {
+        $this->assertTrue(
+            ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern(
+                'Cefalea tensional de una semana, sin signos de alarma.',
+                'subjective_complaint'
+            )
+        );
+    }
+
+    public function testNormalizePregPatternRewritesInvalidInlineUnicodeFlag(): void
+    {
+        $normalized = ClinicalTextIaMetadata::normalizePregPattern('(?iu)\bcefalea\b');
+        $this->assertSame('/\bcefalea\b/iu', $normalized);
+        $this->assertSame(1, preg_match($normalized, 'Cefalea'));
+    }
 }

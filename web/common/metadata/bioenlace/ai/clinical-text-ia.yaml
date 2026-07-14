@@ -66,8 +66,9 @@ llm_correction_confidence:
 # Léxico clínico reutilizable (patrones RE2/PCRE). Mantener alineado con
 # assistant/intent-classification-rules.yaml → vocab cuando aplique.
 clinical_lexicon:
-  narrative_framing: '(?iu)\b(refiere|vengo\s+por|consulta\s+por|desde\s+hace|presenta|paciente\s+con|me\s+siento|hace\s+\d+|desde\s+ayer|desde\s+hoy)\b'
-  subjective_complaint: '(?iu)\b(problema|dolor|duele|sintoma|síntoma|malestar|enfermo|fiebre|tos|nausea|náusea|vomito|vómito|mareo|hinchazon|hinchazón|presion|presión|chichon|chichón|golpe|hematoma|moreton|moretón|bulto|hinchado|inflamado|herida|sangra|sangrado|cefalea|astenia|disnea|prurito|cansancio|diarrea)\b'
+  # Delimitadores PCRE `/…/iu` (no usar `(?iu)`: en PCRE `u` no es opción inline).
+  narrative_framing: '/\b(refiere|vengo\s+por|consulta\s+por|desde\s+hace|presenta|paciente\s+con|me\s+siento|hace\s+\d+|desde\s+ayer|desde\s+hoy)\b/iu'
+  subjective_complaint: '/\b(problema|dolor|duele|sintoma|síntoma|malestar|enfermo|fiebre|tos|nausea|náusea|vomito|vómito|mareo|hinchazon|hinchazón|presion|presión|chichon|chichón|golpe|hematoma|moreton|moretón|bulto|hinchado|inflamado|herida|sangra|sangrado|cefalea|astenia|disnea|prurito|cansancio|diarrea)\b/iu'
 
 # Extracción IA en captura clínica (analizar encounter).
 # {@see ClinicalTextIaMetadata::buildEncounterCaptureExtractionPrompt}
@@ -159,8 +160,8 @@ encounter_capture_extraction:
       require_lexicon_key: subjective_complaint
       max_chars: 140
       split_before_patterns:
-        - '(?iu)\bdiagn[oó]stico\s*:'
-        - '(?iu)\bindico\b'
-        - '(?iu)\bindicaci[oó]n\b'
-        - '(?iu)\breposo\b'
-        - '(?iu)\bcontrol\b'
+        - '/\bdiagn[oó]stico\s*:/iu'
+        - '/\bindico\b/iu'
+        - '/\bindicaci[oó]n\b/iu'
+        - '/\breposo\b/iu'
+        - '/\bcontrol\b/iu'

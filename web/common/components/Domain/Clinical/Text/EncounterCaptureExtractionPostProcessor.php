@@ -122,7 +122,11 @@ final class EncounterCaptureExtractionPostProcessor
             if (!is_string($pattern) || $pattern === '') {
                 continue;
             }
-            if (@preg_match($pattern, $text, $m, PREG_OFFSET_CAPTURE) === 1) {
+            $normalized = ClinicalTextIaMetadata::normalizePregPattern($pattern);
+            if ($normalized === null) {
+                continue;
+            }
+            if (@preg_match($normalized, $text, $m, PREG_OFFSET_CAPTURE) === 1) {
                 $pos = (int) ($m[0][1] ?? -1);
                 if ($pos > 0 && ($cutAt === null || $pos < $cutAt)) {
                     $cutAt = $pos;

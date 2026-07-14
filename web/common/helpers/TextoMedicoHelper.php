@@ -54,8 +54,8 @@ class TextoMedicoHelper
         $texto = preg_replace('/[.]{2,}/', '.', $texto);
         $texto = preg_replace('/[,]{2,}/', ',', $texto);
 
-        // Normalizar acentos y caracteres especiales
-        $texto = self::normalizarAcentos($texto);
+        // Preservar tildes: la extracción IA necesita español correcto para
+        // texto_procesado y para no degradar términos clínicos antes del modelo.
 
         return trim($texto);
     }

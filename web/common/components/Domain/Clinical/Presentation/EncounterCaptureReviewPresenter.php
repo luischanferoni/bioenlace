@@ -305,7 +305,32 @@ final class EncounterCaptureReviewPresenter
             }
         }
 
-        return null;
+        $parts = [];
+        foreach (
+            [
+                'Cantidad',
+                'cantidad',
+                'Via de administracion',
+                'vía de administración',
+                'via',
+                'Frecuencia de administracion',
+                'frecuencia',
+                'Duracion del tratamiento',
+                'duracion',
+                'durante',
+            ] as $key
+        ) {
+            $value = trim((string) ($map[$key] ?? ''));
+            if ($value === '') {
+                continue;
+            }
+            $parts[] = $value;
+            if (count($parts) >= 4) {
+                break;
+            }
+        }
+
+        return $parts !== [] ? implode(' · ', $parts) : null;
     }
 
     private function categoryKey(string $title): string

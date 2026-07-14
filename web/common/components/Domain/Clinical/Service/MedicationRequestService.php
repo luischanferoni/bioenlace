@@ -55,10 +55,25 @@ final class MedicationRequestService
         $mr->medication_code = $code !== '' ? $code : null;
         $mr->medication_display = $display;
         $parts = array_filter([
-            isset($row['cantidad']) ? 'cant: ' . $row['cantidad'] : null,
-            $row['Frecuencia de administracion'] ?? $row['frecuencia'] ?? $row['posologia'] ?? null,
-            $row['Duracion del tratamiento'] ?? $row['durante'] ?? $row['duracion'] ?? null,
-            $row['indicaciones'] ?? null,
+            isset($row['Cantidad']) ? 'cant: ' . $row['Cantidad'] : (isset($row['cantidad']) ? 'cant: ' . $row['cantidad'] : null),
+            self::firstNonEmptyString($row, [
+                'Via de administracion',
+                'vía de administración',
+                'via',
+                'vía',
+                'route',
+            ], 'vía: '),
+            self::firstNonEmptyString($row, [
+                'Frecuencia de administracion',
+                'frecuencia',
+                'posologia',
+            ]),
+            self::firstNonEmptyString($row, [
+                'Duracion del tratamiento',
+                'durante',
+                'duracion',
+            ]),
+            self::firstNonEmptyString($row, ['indicaciones']),
         ]);
         $mr->dosage_text = $parts !== [] ? implode('; ', $parts) : ($row['dosage_text'] ?? null);
         if ($mr->dosage_text === null && isset($row['texto']) && trim((string) $row['texto']) !== $display) {
@@ -118,6 +133,25 @@ final class MedicationRequestService
         }
 
         return '';
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @param list<string> $keys
+     */
+    private static function firstNonEmptyString(array $row, array $keys, string $prefix = ''): ?string
+    {
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $row)) {
+                continue;
+            }
+            $value = trim((string) $row[$key]);
+            if ($value !== '') {
+                return $prefix !== '' ? $prefix . $value : $value;
+            }
+        }
+
+        return null;
     }
 
     /**

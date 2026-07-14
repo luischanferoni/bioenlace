@@ -215,7 +215,16 @@ class EncounterCaptureAnalysis {
   }
 
   static String _labelFromMap(Map<String, dynamic> m) {
-    for (final key in ['termino', 'descripcion', 'texto', 'nombre', 'display']) {
+    for (final key in [
+      'termino',
+      'descripcion',
+      'texto',
+      'nombre',
+      'display',
+      'Nombre del medicamento',
+      'medicamento',
+      'label',
+    ]) {
       final v = m[key]?.toString().trim();
       if (v != null && v.isNotEmpty) return v;
     }
@@ -234,7 +243,26 @@ class EncounterCaptureAnalysis {
       final v = m[key]?.toString().trim();
       if (v != null && v.isNotEmpty) return v;
     }
-    return null;
+    final parts = <String>[];
+    for (final key in [
+      'Cantidad',
+      'cantidad',
+      'Via de administracion',
+      'vía de administración',
+      'via',
+      'Frecuencia de administracion',
+      'frecuencia',
+      'Duracion del tratamiento',
+      'duracion',
+      'durante',
+    ]) {
+      final v = m[key]?.toString().trim();
+      if (v == null || v.isEmpty) continue;
+      parts.add(v);
+      if (parts.length >= 4) break;
+    }
+    if (parts.isEmpty) return null;
+    return parts.join(' · ');
   }
 
   /// Reconstruye `datosExtraidos` solo con ítems incluidos en el guardado.

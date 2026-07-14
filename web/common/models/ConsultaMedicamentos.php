@@ -82,6 +82,7 @@ class ConsultaMedicamentos extends \yii\db\ActiveRecord
         return [
             "Nombre del medicamento",
             "Cantidad",
+            "Via de administracion",
             "Frecuencia de administracion",
             "Tipo de frecuencia",
             "Duracion del tratamiento",

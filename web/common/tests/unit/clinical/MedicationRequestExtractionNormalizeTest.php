@@ -36,12 +36,18 @@ class MedicationRequestExtractionNormalizeTest extends Unit
         $rows = MedicationRequestService::normalizeExtractedMedicationPayload([
             [
                 'Nombre del medicamento' => 'Enalapril',
-                'Frecuencia de administracion' => '1 vez al día',
-                'Duracion del tratamiento' => '30 días',
+                'Cantidad' => '10 mg',
+                'Via de administracion' => 'vía oral',
+                'Frecuencia de administracion' => '1',
+                'Tipo de frecuencia' => 'DIA',
+                'Duracion del tratamiento' => '30',
+                'Tipo de duracion' => 'DIA',
             ],
         ]);
         $this->assertCount(1, $rows);
         $this->assertSame('Enalapril', MedicationRequestService::resolveMedicationDisplay($rows[0]));
+        $this->assertSame('10 mg', $rows[0]['Cantidad']);
+        $this->assertSame('vía oral', $rows[0]['Via de administracion']);
     }
 
     public function testEmptyPayload(): void

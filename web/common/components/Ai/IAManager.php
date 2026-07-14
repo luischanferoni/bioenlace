@@ -694,20 +694,6 @@ class IAManager
             
             // No está en cache, hacer llamada real a la IA
             \Yii::info("🔄 ESTRUCTURACIÓN: Realizando llamada a IA para contexto: {$contexto}", 'ia-manager');
-            if ($logger) {
-                $logger->registrar(
-                    'IA',
-                    'Realizando análisis con IA',
-                    'Llamada a proveedor de IA',
-                    [
-                        'metodo' => 'IAManager::consultarIA',
-                        'fuente' => 'ia',
-                        'contexto' => $contexto,
-                        'tipo_modelo' => $tipoModelo,
-                        'prompt_preview' => substr($prompt, 0, 100)
-                    ]
-                );
-            }
             
             // Verificar rate limiter
             $endpoint = '';

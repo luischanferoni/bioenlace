@@ -1038,9 +1038,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _lastAnalysis = res;
         _draftText = text;
         _captureReview = review;
-        _stagedItemIds = review.defaultStagedItemIds.isNotEmpty
-            ? review.defaultStagedItemIds.toSet()
-            : review.allItems.map((e) => e.id).toSet();
+        _stagedItemIds = review.allItems
+            .where((e) => e.isFromClinicalText)
+            .map((e) => e.id)
+            .toSet();
+        if (_stagedItemIds.isEmpty && review.defaultStagedItemIds.isNotEmpty) {
+          _stagedItemIds = review.defaultStagedItemIds.toSet();
+        }
         _chatController.clear();
         _sttStatus = '';
       });
@@ -1200,6 +1204,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 ),
               ],
             ),
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              'Del texto clínico viene tildado; podés destildarlo. Lo de la IA se agrega al tildarlo.',
+              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+            ),
             BioSpacing.gapH(BioSpacing.sm),
             ...review.categories.map((cat) {
               return Padding(
@@ -1241,6 +1250,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                           return BioChip(
                             label: chipLabel,
                             selected: selected,
+                            icon: selected ? Icons.check : null,
                             intent: item.source == EncounterCaptureItemSource.ai
                                 ? UiIntent.secondary
                                 : UiIntent.neutral,

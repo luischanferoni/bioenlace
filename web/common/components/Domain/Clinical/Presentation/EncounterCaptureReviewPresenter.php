@@ -26,6 +26,10 @@ final class EncounterCaptureReviewPresenter
 
         foreach ($categories as $category) {
             foreach ($category['items'] as $item) {
+                // Solo lo anclado al texto del profesional viene tildado por defecto.
+                if (($item['source'] ?? 'clinical') === 'ai') {
+                    continue;
+                }
                 $defaultStaged[] = $item['id'];
             }
         }

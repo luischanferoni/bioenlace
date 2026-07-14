@@ -84,16 +84,18 @@ encounter_capture_extraction:
     Reglas de formato:
     - Sin datos para una categoría: [].
     - No repitas el mismo dato en más de una categoría.
-    - Formato JSON exacto:
+    - Formato JSON exacto (texto_procesado es OBLIGATORIO en la raíz, no solo datosExtraidos):
       {
         "texto_procesado": "nota clínica corregida…",
         "datosExtraidos": {"nombre_categoria": []}
       }
     - Categorías SIN subdatos: array de strings cortos y específicos (no copies párrafos enteros).
+      Motivos = síntoma/queja (ej. cefalea tensional); Diagnóstico = enfermedad nombrada por el profesional (pueden coexistir).
     - Categorías CON subdatos: array de OBJETOS usando exactamente las claves listadas en subdatos. NO uses un string único que mezcle toda la indicación.
     {structured_examples_block}
     - Tipos de frecuencia admitidos: {frecuencia_tipos}.
     - Tipos de duración admitidos: {duracion_tipos}.
+    - Indicaciones de control: Indicacion descriptiva (ej. "control en consultorio") y Plazo dias numérico cuando el texto lo diga.
 
     Reglas para texto_procesado:
     - Reescribí la misma nota del profesional, más clara y correcta; no es un copy-paste del original.
@@ -117,8 +119,9 @@ encounter_capture_extraction:
     - Objetos cotidianos sin relación clínica (pelota, auto, mesa, etc.) no van en ninguna categoría.
     - No inventes motivos de consulta ni diagnósticos que el texto no sustente clínicamente.
     - Un término aislado que nombra una enfermedad o condición médica va en diagnóstico, no en motivos de consulta.
+    - Si el texto narra un síntoma o queja (dolor, cefalea, tos, etc.) y además un diagnóstico, el síntoma va en Motivos y el diagnóstico en Diagnóstico (no omitas el Motivo).
   category_hints:
-    ConsultaMotivos: queja o síntoma referido por el paciente como motivo de la consulta
+    ConsultaMotivos: queja o síntoma referido (cefalea, dolor, malestar, etc.); no lo dejes vacío si el texto lo menciona
     DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
     ConsultaMedicamentos: medicación indicada o registrada; objetos con las claves de subdatos (no un solo string)
     ConsultaPracticas: prácticas, estudios o indicaciones (reposo, dieta, control); objetos con Indicacion, Plazo dias si hay control/seguimiento, y Codigo si hay práctica codificada

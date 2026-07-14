@@ -385,7 +385,18 @@ class EncounterDocumentationService extends Component
                     break;
                 case 'ConsultaPracticas':
                 case 'ConsultaDerivaciones':
-                    $this->persistServiceRequests($encounter, $payload, $modelo);
+                    if ($modelo === 'ConsultaPracticas') {
+                        $rows = is_array($payload) ? $payload : [];
+                        if ($rows !== []) {
+                            $carePlan = $carePlan ?? $this->carePlans->createAcutePlanForEncounter(
+                                (int) $encounter->subject_persona_id,
+                                (int) $encounter->id
+                            );
+                        }
+                        $this->persistServiceRequests($encounter, $payload, $modelo, $carePlan);
+                    } else {
+                        $this->persistServiceRequests($encounter, $payload, $modelo, null);
+                    }
                     break;
                 case 'ConsultaOdontologiaPracticas':
                     $carePlan = $this->odontology->persistPractices($encounter, $payload, $carePlan);
@@ -557,13 +568,21 @@ class EncounterDocumentationService extends Component
     /**
      * @param mixed $payload
      */
-    private function persistServiceRequests(Encounter $encounter, $payload, string $modelo): void
-    {
+    private function persistServiceRequests(
+        Encounter $encounter,
+        $payload,
+        string $modelo,
+        ?\common\models\Clinical\CarePlan $carePlan = null
+    ): void {
         if (!is_array($payload)) {
             return;
         }
         foreach ($payload as $row) {
-            $this->serviceRequests->createFromExtractedRow($encounter, $row, $modelo);
+            try {
+                $this->serviceRequests->createFromExtractedRow($encounter, $row, $modelo, $carePlan);
+            } catch (\InvalidArgumentException $e) {
+                Yii::info('Skip service request vacío: ' . $e->getMessage(), 'encounter-doc');
+            }
         }
     }
 

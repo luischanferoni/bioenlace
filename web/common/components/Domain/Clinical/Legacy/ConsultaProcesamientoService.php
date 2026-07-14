@@ -81,40 +81,23 @@ class ConsultaProcesamientoService extends Component
             ];
             $logger = ConsultaLogger::iniciar($textoConsulta, $contextoLogger);
 
-            $logger->registrar(
-                'PROCESAMIENTO',
-                $textoConsulta,
-                null,
-                ['metodo' => 'ProcesadorTextoMedico::prepararParaIAConFormato']
-            );
-
             $resultadoFormato = ProcesadorTextoMedico::prepararParaIAConFormato(
                 $textoConsulta,
                 $servicio->nombre,
                 $tabId,
                 $idProfesionalEfectorServicio
             );
-            // Pre-IA: solo limpieza local. La nota corregida la devolvió la extracción.
             $textoLimpio = $resultadoFormato['texto_procesado'];
-
-            $logger->registrar(
-                'PROCESAMIENTO',
-                null,
-                $textoLimpio,
-                [
-                    'metodo' => 'ProcesadorTextoMedico::prepararParaIAConFormato',
-                    'total_cambios' => 0,
-                ]
-            );
+            if (trim($textoLimpio) !== trim($textoConsulta)) {
+                $logger->registrar(
+                    'PRE-IA',
+                    null,
+                    $textoLimpio,
+                    ['metodo' => 'ProcesadorTextoMedico::limpiarTexto']
+                );
+            }
 
             $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
-
-            $logger->registrar(
-                'ANÁLISIS IA',
-                $textoLimpio,
-                null,
-                ['metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA']
-            );
 
             $resultadoIA = $this->analizarConsultaConIA(
                 $textoLimpio,
@@ -122,18 +105,6 @@ class ConsultaProcesamientoService extends Component
                 $categorias,
                 PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body)
             );
-
-            $logger->registrar(
-                'ANÁLISIS IA',
-                null,
-                $resultadoIA ? 'Análisis completado' : 'Error en análisis',
-                [
-                    'metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA',
-                    'categorias_extraidas' => $resultadoIA && isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0,
-                ]
-            );
-
-            // Codificación CIE-10/SNOMED: al guardar encounter vía EncounterAutomaticCodingService (IA + persistencia).
 
             if ($resultadoIA) {
                 $datos = self::normalizeResultadoIa($resultadoIA);
@@ -148,6 +119,8 @@ class ConsultaProcesamientoService extends Component
                     ],
                 ];
             }
+
+            $logger->registrarJsonIa($datos, 'ConsultaProcesamientoService::analizarConsultaConIA');
 
             $textoProcesado = self::resolveTextoProcesadoFromIa($datos, $textoLimpio);
             $textoFormateado = htmlspecialchars($textoProcesado, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
@@ -445,52 +418,17 @@ class ConsultaProcesamientoService extends Component
     private function generateAnalysisHtml($datos, $sugerencias = [], $categorias = [])
     {
         $tieneDatosFaltantes = false;
-        $logger = ConsultaLogger::obtenerInstancia();
 
         if (!empty($categorias)) {
-            $categoriasFaltantes = [];
-            $camposFaltantes = [];
-
             foreach ($categorias as $categoria) {
                 $esRequerida = $categoria['requerido'] ?? false;
 
                 if ($esRequerida) {
                     if (!isset($datos[$categoria['titulo']]) || empty($datos[$categoria['titulo']])) {
                         $tieneDatosFaltantes = true;
-                        $categoriasFaltantes[] = $categoria['titulo'];
-
-                        if ($logger) {
-                            $logger->registrar(
-                                'VALIDACIÓN',
-                                null,
-                                "Categoría requerida faltante: {$categoria['titulo']}",
-                                [
-                                    'metodo' => 'ConsultaProcesamientoService::generateAnalysisHtml',
-                                    'tipo' => 'categoria_requerida_faltante',
-                                    'categoria' => $categoria['titulo'],
-                                ]
-                            );
-                        }
                         break;
                     }
                 }
-
-                continue;
-            }
-
-            if ($logger) {
-                $logger->registrar(
-                    'VALIDACIÓN',
-                    null,
-                    $tieneDatosFaltantes ? 'Se detectaron datos faltantes' : 'Validación completada sin datos faltantes',
-                    [
-                        'metodo' => 'ConsultaProcesamientoService::generateAnalysisHtml',
-                        'tiene_datos_faltantes' => $tieneDatosFaltantes,
-                        'categorias_faltantes' => $categoriasFaltantes,
-                        'campos_faltantes' => $camposFaltantes ?? [],
-                        'total_categorias' => count($categorias),
-                    ]
-                );
             }
         }
 

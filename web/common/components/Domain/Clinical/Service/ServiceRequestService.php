@@ -44,17 +44,58 @@ final class ServiceRequestService
             return ReferralRequestService::createFromExtractedRow($encounter, $row);
         }
 
+        if (is_string($row)) {
+            $row = ['Indicacion' => trim($row)];
+        }
+        if (!is_array($row)) {
+            throw new \InvalidArgumentException('Fila de práctica/indicación inválida.');
+        }
+
+        $campos = class_exists(\common\models\ConsultaPracticas::class)
+            ? (new \common\models\ConsultaPracticas())->requeridosPrompt()
+            : [];
+        $indicacionKey = $campos[0] ?? 'Indicacion';
+        $plazoKey = $campos[1] ?? 'Plazo dias';
+        $codigoKey = $campos[2] ?? 'Codigo';
+
+        $display = trim((string) (
+            $row[$indicacionKey]
+            ?? $row['termino']
+            ?? $row['texto']
+            ?? $row['display']
+            ?? ''
+        ));
+        $code = trim((string) (
+            $row[$codigoKey]
+            ?? $row['codigo']
+            ?? $row['conceptId']
+            ?? $row['Codigo']
+            ?? ''
+        ));
+        $plazoDias = self::resolvePlazoDias($row, $plazoKey);
+
+        if ($display === '' && $code === '') {
+            throw new \InvalidArgumentException('Fila de práctica/indicación sin Indicacion ni Codigo.');
+        }
+
         $sr = new ServiceRequest();
         $sr->encounter_id = $encounter->id;
         $sr->subject_persona_id = $encounter->subject_persona_id;
         $sr->status = RequestStatus::ACTIVE;
         $sr->intent = 'order';
-        $sr->category = 'procedure';
-        if (is_array($row)) {
-            $sr->code = (string) ($row['codigo'] ?? $row['conceptId'] ?? '');
-            $sr->display = $row['termino'] ?? $row['texto'] ?? null;
+        $sr->category = $plazoDias !== null ? 'follow-up' : 'procedure';
+        $sr->code = $code !== '' ? $code : null;
+        $sr->display = $display !== '' ? $display : ($code !== '' ? $code : null);
+        if ($plazoDias !== null) {
+            $sr->reminder_json = json_encode([
+                'delay_days' => $plazoDias,
+                'kind' => 'control',
+            ], JSON_UNESCAPED_UNICODE);
         }
         $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
+        if ($carePlan !== null) {
+            $sr->care_plan_id = $carePlan->id;
+        }
         if (!$sr->save()) {
             throw new \RuntimeException('ServiceRequest: ' . json_encode($sr->getErrors()));
         }
@@ -63,6 +104,31 @@ final class ServiceRequestService
         }
 
         return $sr;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    public static function resolvePlazoDias(array $row, ?string $plazoKey = null): ?int
+    {
+        $candidates = [];
+        if ($plazoKey !== null && $plazoKey !== '') {
+            $candidates[] = $plazoKey;
+        }
+        $candidates = array_merge($candidates, ['Plazo dias', 'plazo_dias', 'delay_days', 'dias']);
+        foreach ($candidates as $key) {
+            if (!array_key_exists($key, $row)) {
+                continue;
+            }
+            if (preg_match('/(\d+)/', (string) $row[$key], $m)) {
+                $n = (int) $m[1];
+                if ($n > 0) {
+                    return $n;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

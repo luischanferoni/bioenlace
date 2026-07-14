@@ -5,8 +5,7 @@ namespace common\components\Domain\Clinical\Legacy;
 use Yii;
 
 /**
- * Logger específico para análisis de consultas médicas
- * Crea un archivo de log individual por cada request de análisis
+ * Logger de análisis de captura clínica (un archivo por request).
  */
 class ConsultaLogger
 {
@@ -17,7 +16,6 @@ class ConsultaLogger
     private $contexto = [];
 
     /**
-     * Inicializar logger para una nueva consulta
      * @param string $textoConsulta
      * @param array $contexto
      * @return ConsultaLogger
@@ -33,37 +31,28 @@ class ConsultaLogger
         self::$instancia->inicioTiempo = microtime(true);
         self::$instancia->contexto = $contexto;
 
-        // Crear directorio si no existe
         $directorioLogs = Yii::getAlias('@frontend/runtime/logs/analisis-consultas');
         if (!is_dir($directorioLogs)) {
             mkdir($directorioLogs, 0755, true);
         }
 
-        // Crear archivo de log
         $timestamp = date('Ymd_His');
         $nombreArchivo = "consulta_{$timestamp}_{" . self::$instancia->idConsulta . "}.log";
         self::$instancia->archivoLog = $directorioLogs . '/' . $nombreArchivo;
-
-        // Escribir encabezado
         self::$instancia->escribirEncabezado($textoConsulta);
 
         return self::$instancia;
     }
 
-    /**
-     * Obtener instancia activa del logger
-     * @return ConsultaLogger|null
-     */
     public static function obtenerInstancia()
     {
         return self::$instancia;
     }
 
     /**
-     * Registrar un paso del procesamiento
      * @param string $paso
-     * @param string $entrada
-     * @param string $salida
+     * @param string|array|null $entrada
+     * @param string|array|null $salida
      * @param array $metadata
      */
     public function registrar($paso, $entrada, $salida, $metadata = [])
@@ -72,109 +61,42 @@ class ConsultaLogger
             return;
         }
 
-        $timestamp = $this->obtenerTimestamp();
         $metodo = $metadata['metodo'] ?? 'Desconocido';
-
         $linea = sprintf(
             "[%s] %s - %s\n",
-            $timestamp,
+            $this->obtenerTimestamp(),
             $paso,
             $metodo
         );
 
-        // Entrada completa
-        if ($entrada) {
-            $linea .= "→ Entrada:\n" . $this->formatearTexto($entrada) . "\n";
+        if ($entrada !== null && $entrada !== '') {
+            $linea .= "→ Entrada:\n" . $this->formatearValor($entrada) . "\n";
+        }
+        if ($salida !== null && $salida !== '') {
+            $linea .= "→ Salida:\n" . $this->formatearValor($salida) . "\n";
         }
 
-        // Salida completa
-        if ($salida) {
-            $linea .= "→ Salida:\n" . $this->formatearTexto($salida) . "\n";
-        }
-
-        // Metadata adicional
-        if (!empty($metadata['cambios'])) {
-            $linea .= "  Cambios: " . $metadata['cambios'] . "\n";
-        }
-        if (!empty($metadata['confianza'])) {
-            $linea .= "  Confianza: " . $metadata['confianza'] . "\n";
-        }
-        if (!empty($metadata['total_cambios'])) {
-            $linea .= "  Total cambios: " . $metadata['total_cambios'] . "\n";
-        }
-        if (!empty($metadata['abreviaturas_encontradas'])) {
-            $linea .= "  Abreviaturas encontradas: " . count($metadata['abreviaturas_encontradas']) . "\n";
-        }
-        if (!empty($metadata['categorias_extraidas'])) {
-            $linea .= "  Categorías extraídas: " . $metadata['categorias_extraidas'] . "\n";
-        }
-        if (!empty($metadata['cambios_detallados'])) {
-            $linea .= "  Cambios detallados:\n";
-
-            // Manejar tanto arrays como JSON strings
-            $cambiosDetallados = $metadata['cambios_detallados'];
-            if (is_string($cambiosDetallados)) {
-                // Si es JSON string, decodificar
-                $cambiosArray = json_decode($cambiosDetallados, true);
-                if (json_last_error() === JSON_ERROR_NONE && is_array($cambiosArray)) {
-                    foreach ($cambiosArray as $cambio) {
-                        if (is_array($cambio)) {
-                            // Si es un array complejo, mostrar información estructurada
-                            $linea .= "    - " . ($cambio['original'] ?? '') . " → " . ($cambio['corrected'] ?? '') .
-                                " (confianza: " . ($cambio['confidence'] ?? 'N/A') . ")\n";
-                        } else {
-                            $linea .= "    - " . $cambio . "\n";
-                        }
-                    }
-                } else {
-                    // Si no se puede decodificar, mostrar como string
-                    $linea .= "    - " . $cambiosDetallados . "\n";
-                }
-            } elseif (is_array($cambiosDetallados)) {
-                // Si es array, procesar normalmente
-                foreach ($cambiosDetallados as $cambio) {
-                    $linea .= "    - " . $cambio . "\n";
-                }
+        foreach (['proveedor', 'status_code', 'categorias_extraidas', 'error'] as $key) {
+            if (!array_key_exists($key, $metadata) || $metadata[$key] === null || $metadata[$key] === '') {
+                continue;
             }
-        }
-        if (!empty($metadata['abreviaturas_detalladas'])) {
-            $linea .= "  Abreviaturas detalladas:\n";
-            foreach ($metadata['abreviaturas_detalladas'] as $abreviatura) {
-                $linea .= "    - " . $abreviatura . "\n";
-            }
-        }
-
-        // Metadata adicional para corrección IA
-        if (!empty($metadata['proveedor'])) {
-            $linea .= "  Proveedor: " . $metadata['proveedor'] . "\n";
-        }
-        if (!empty($metadata['modelo'])) {
-            $linea .= "  Modelo: " . $metadata['modelo'] . "\n";
-        }
-        if (isset($metadata['longitud_texto'])) {
-            $linea .= "  Longitud texto: " . $metadata['longitud_texto'] . " caracteres\n";
-        }
-        if (!empty($metadata['especialidad'])) {
-            $linea .= "  Especialidad: " . $metadata['especialidad'] . "\n";
-        }
-        if (isset($metadata['confidence'])) {
-            $linea .= "  Confianza: " . $metadata['confidence'] . "\n";
-        }
-        if (isset($metadata['tiempo'])) {
-            $linea .= "  Tiempo procesamiento: " . $metadata['tiempo'] . " segundos\n";
-        }
-        if (isset($metadata['status_code'])) {
-            $linea .= "  Status code: " . $metadata['status_code'] . "\n";
-        }
-        if (isset($metadata['respuesta_length'])) {
-            $linea .= "  Longitud respuesta: " . $metadata['respuesta_length'] . " caracteres\n";
+            $linea .= '  ' . $key . ': ' . $metadata[$key] . "\n";
         }
 
         $this->escribir($linea . "\n");
     }
 
     /**
-     * Finalizar el log con el resultado
+     * Registra el JSON estructurado devuelto por la extracción IA.
+     *
+     * @param array|string $payload
+     */
+    public function registrarJsonIa($payload, string $metodo = 'IA extracción'): void
+    {
+        $this->registrar('IA JSON', null, $payload, ['metodo' => $metodo]);
+    }
+
+    /**
      * @param array $resultado
      */
     public function finalizar($resultado)
@@ -184,41 +106,50 @@ class ConsultaLogger
         }
 
         $tiempoTotal = microtime(true) - $this->inicioTiempo;
-        $timestamp = $this->obtenerTimestamp();
-
         $linea = sprintf(
-            "[%s] FINALIZACIÓN - ConsultaController::actionAnalizar\n",
-            $timestamp
+            "[%s] FINALIZACIÓN\n",
+            $this->obtenerTimestamp()
         );
-
-        $linea .= "Estado: " . ($resultado['success'] ? 'SUCCESS' : 'ERROR') . "\n";
+        $linea .= 'Estado: ' . (!empty($resultado['success']) ? 'SUCCESS' : 'ERROR') . "\n";
 
         if (isset($resultado['tiene_datos_faltantes'])) {
-            $linea .= "Datos faltantes: " . ($resultado['tiene_datos_faltantes'] ? 'SÍ' : 'NO') . "\n";
+            $linea .= 'Datos faltantes: ' . ($resultado['tiene_datos_faltantes'] ? 'SÍ' : 'NO') . "\n";
         }
-
-        if (isset($resultado['requiere_validacion'])) {
-            $linea .= "Requiere validación: " . ($resultado['requiere_validacion'] ? 'SÍ' : 'NO') . "\n";
+        if (!empty($resultado['texto_procesado']) && is_string($resultado['texto_procesado'])) {
+            $tp = $resultado['texto_procesado'];
+            if (mb_strlen($tp) > 280) {
+                $tp = mb_substr($tp, 0, 280) . '…';
+            }
+            $linea .= "texto_procesado:\n" . $this->formatearTexto($tp) . "\n";
+        }
+        $extraidos = $resultado['datos']['datosExtraidos']
+            ?? $resultado['datosExtraidos']
+            ?? null;
+        if (is_array($extraidos)) {
+            $counts = [];
+            foreach ($extraidos as $cat => $rows) {
+                if ($cat === 'Error') {
+                    continue;
+                }
+                $n = is_array($rows) ? count($rows) : (trim((string) $rows) !== '' ? 1 : 0);
+                if ($n > 0) {
+                    $counts[] = $cat . '=' . $n;
+                }
+            }
+            if ($counts !== []) {
+                $linea .= 'Categorías: ' . implode(', ', $counts) . "\n";
+            }
         }
 
         $this->escribir($linea . "\n");
-
-        // Pie del log
         $this->escribirPie($tiempoTotal);
 
-        // Cerrar archivo
         if (is_resource($this->archivoLog)) {
             fclose($this->archivoLog);
         }
-
-        // Limpiar instancia
         self::$instancia = null;
     }
 
-    /**
-     * Escribir encabezado del log
-     * @param string $textoConsulta
-     */
     private function escribirEncabezado($textoConsulta)
     {
         $timestamp = date('Y-m-d H:i:s');
@@ -233,37 +164,26 @@ class ConsultaLogger
         $encabezado .= "Médico ID: {$medicoId}\n";
         $encabezado .= "Servicio: {$servicio}\n";
         $encabezado .= str_repeat('=', 80) . "\n\n";
-
-        $encabezado .= "[{$this->obtenerTimestamp()}] INICIO - ConsultaController::actionAnalizar\n";
-        $encabezado .= "Texto Original:\n";
+        $encabezado .= "[{$this->obtenerTimestamp()}] INICIO\n";
+        $encabezado .= "Texto original:\n";
         $encabezado .= $this->formatearTexto($textoConsulta) . "\n\n";
 
         $this->escribir($encabezado);
     }
 
-    /**
-     * Escribir pie del log
-     * @param float $tiempoTotal
-     */
     private function escribirPie($tiempoTotal)
     {
         $pie = "\n" . str_repeat('=', 80) . "\n";
-        $pie .= "DURACIÓN TOTAL: " . round($tiempoTotal * 1000) . "ms\n";
+        $pie .= 'DURACIÓN TOTAL: ' . round($tiempoTotal * 1000) . "ms\n";
         $pie .= str_repeat('=', 80) . "\n";
-
         $this->escribir($pie);
     }
 
-    /**
-     * Escribir línea al archivo
-     * @param string $linea
-     */
     private function escribir($linea)
     {
         if (!$this->archivoLog) {
             return;
         }
-
         $archivo = fopen($this->archivoLog, 'a');
         if ($archivo) {
             fwrite($archivo, $linea);
@@ -271,10 +191,6 @@ class ConsultaLogger
         }
     }
 
-    /**
-     * Obtener timestamp con milisegundos
-     * @return string
-     */
     private function obtenerTimestamp()
     {
         $tiempo = microtime(true);
@@ -285,52 +201,45 @@ class ConsultaLogger
     }
 
     /**
-     * Formatear texto para el log con indentación
-     * @param string $texto
-     * @return string
+     * @param mixed $valor
      */
-    private function formatearTexto($texto)
+    private function formatearValor($valor): string
     {
-        if (empty($texto)) {
-            return '  (vacío)';
+        if (is_array($valor)) {
+            $json = json_encode($valor, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+
+            return $this->formatearTexto($json !== false ? $json : '(json inválido)');
         }
 
-        // Agregar indentación a cada línea
-        $lineas = explode("\n", $texto);
-        $lineasFormateadas = [];
-
-        foreach ($lineas as $linea) {
-            $lineasFormateadas[] = '  ' . $linea;
-        }
-
-        return implode("\n", $lineasFormateadas);
+        return $this->formatearTexto((string) $valor);
     }
 
-    /**
-     * Generar ID único para la consulta
-     * @return string
-     */
+    private function formatearTexto($texto)
+    {
+        if ($texto === null || $texto === '') {
+            return '  (vacío)';
+        }
+        $lineas = explode("\n", (string) $texto);
+        $out = [];
+        foreach ($lineas as $linea) {
+            $out[] = '  ' . $linea;
+        }
+
+        return implode("\n", $out);
+    }
+
     private static function generarIdUnico()
     {
         return substr(uniqid(), -12);
     }
 
-    /**
-     * Obtener ruta del archivo de log actual
-     * @return string|null
-     */
     public function getArchivoLog()
     {
         return $this->archivoLog;
     }
 
-    /**
-     * Obtener ID de la consulta actual
-     * @return string|null
-     */
     public function getIdConsulta()
     {
         return $this->idConsulta;
     }
 }
-

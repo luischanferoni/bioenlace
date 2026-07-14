@@ -21,7 +21,7 @@ final class EncounterCaptureReviewPresenter
     ): array {
         $extraidos = $this->resolveExtraidos($datosResultado);
         $systemError = $this->resolveSystemError($extraidos);
-        $categories = $this->buildCategories($extraidos, $categorias);
+        $categories = $this->buildCategories($extraidos, $categorias, $textoOriginal);
         $defaultStaged = [];
 
         foreach ($categories as $category) {
@@ -110,9 +110,10 @@ final class EncounterCaptureReviewPresenter
      * @param list<array<string, mixed>> $categorias
      * @return list<array<string, mixed>>
      */
-    private function buildCategories(array $extraidos, array $categorias): array
+    private function buildCategories(array $extraidos, array $categorias, string $textoClinico = ''): array
     {
         $out = [];
+        $haystack = $this->foldClinicalText($textoClinico);
 
         if ($categorias !== []) {
             foreach ($categorias as $categoria) {
@@ -132,7 +133,8 @@ final class EncounterCaptureReviewPresenter
                     'items' => $this->parseCategoryItems(
                         $title,
                         $this->resolveCategoryRaw($extraidos, $title, (string) ($categoria['modelo'] ?? '')),
-                        is_array($campos) ? $campos : []
+                        is_array($campos) ? $campos : [],
+                        $haystack
                     ),
                 ];
             }
@@ -144,7 +146,7 @@ final class EncounterCaptureReviewPresenter
             if ($key === 'Error' || !is_string($key) || $key === '') {
                 continue;
             }
-            $items = $this->parseCategoryItems($key, $raw, []);
+            $items = $this->parseCategoryItems($key, $raw, [], $haystack);
             if ($items === []) {
                 continue;
             }
@@ -199,15 +201,19 @@ final class EncounterCaptureReviewPresenter
      * @param list<string> $camposRequeridos
      * @return list<array<string, mixed>>
      */
-    private function parseCategoryItems(string $categoryTitle, mixed $raw, array $camposRequeridos = []): array
-    {
+    private function parseCategoryItems(
+        string $categoryTitle,
+        mixed $raw,
+        array $camposRequeridos = [],
+        string $clinicalHaystack = ''
+    ): array {
         if ($raw === null) {
             return [];
         }
 
         if (is_string($raw) && trim($raw) !== '') {
             return [
-                $this->makeItem($categoryTitle, 0, trim($raw), ['texto' => trim($raw)]),
+                $this->makeItem($categoryTitle, 0, trim($raw), ['texto' => trim($raw)], null, $clinicalHaystack),
             ];
         }
 
@@ -219,7 +225,14 @@ final class EncounterCaptureReviewPresenter
         $index = 0;
         foreach ($raw as $row) {
             if (is_string($row) && trim($row) !== '') {
-                $out[] = $this->makeItem($categoryTitle, $index, trim($row), ['texto' => trim($row)]);
+                $out[] = $this->makeItem(
+                    $categoryTitle,
+                    $index,
+                    trim($row),
+                    ['texto' => trim($row)],
+                    null,
+                    $clinicalHaystack
+                );
                 $index++;
                 continue;
             }
@@ -235,7 +248,8 @@ final class EncounterCaptureReviewPresenter
                 $index,
                 $label,
                 $row,
-                $this->subtitleFromMap($row, $camposRequeridos, $label)
+                $this->subtitleFromMap($row, $camposRequeridos, $label),
+                $clinicalHaystack
             );
             $index++;
         }
@@ -252,18 +266,73 @@ final class EncounterCaptureReviewPresenter
         int $index,
         string $label,
         array $payload,
-        ?string $subtitle = null
+        ?string $subtitle = null,
+        string $clinicalHaystack = ''
     ): array {
         $item = [
             'id' => $categoryTitle . '::' . $index,
             'label' => $label,
             'payload' => $payload,
+            'source' => $this->resolveItemSource($label, $payload, $clinicalHaystack),
         ];
         if ($subtitle !== null && $subtitle !== '') {
             $item['subtitle'] = $subtitle;
         }
 
         return $item;
+    }
+
+    /**
+     * clinical = anclado en el texto del profesional; ai = aporte / enriquecimiento de la IA.
+     *
+     * @param array<string, mixed> $payload
+     */
+    private function resolveItemSource(string $label, array $payload, string $clinicalHaystack): string
+    {
+        if ($clinicalHaystack === '') {
+            return 'clinical';
+        }
+        $candidates = [$label];
+        foreach ($payload as $value) {
+            if (is_string($value) && trim($value) !== '') {
+                $candidates[] = trim($value);
+            }
+        }
+        foreach ($candidates as $candidate) {
+            $folded = $this->foldClinicalText($candidate);
+            if ($folded === '') {
+                continue;
+            }
+            if (mb_strlen($folded) >= 4 && mb_strpos($clinicalHaystack, $folded) !== false) {
+                return 'clinical';
+            }
+            $tokens = preg_split('/\s+/u', $folded) ?: [];
+            $hits = 0;
+            $significant = 0;
+            foreach ($tokens as $token) {
+                if (mb_strlen($token) < 4) {
+                    continue;
+                }
+                $significant++;
+                if (mb_strpos($clinicalHaystack, $token) !== false) {
+                    $hits++;
+                }
+            }
+            if ($significant > 0 && $hits >= max(1, (int) ceil($significant * 0.5))) {
+                return 'clinical';
+            }
+        }
+
+        return 'ai';
+    }
+
+    private function foldClinicalText(string $text): string
+    {
+        $folded = strtr(mb_strtolower(trim($text), 'UTF-8'), [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
+        ]);
+
+        return preg_replace('/\s+/u', ' ', $folded) ?? $folded;
     }
 
     /**

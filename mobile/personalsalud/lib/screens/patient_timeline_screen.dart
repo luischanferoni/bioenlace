@@ -1181,7 +1181,25 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ),
           ] else ...[
             BioSpacing.gapH(BioSpacing.lg),
-            Text('Sugerencias de la IA', style: BioTypography.overline),
+            Text(
+              'Análisis y Sugerencias de la IA',
+              style: BioTypography.overline,
+            ),
+            BioSpacing.gapH(BioSpacing.xs),
+            const Wrap(
+              spacing: BioSpacing.md,
+              runSpacing: BioSpacing.xs,
+              children: [
+                _CaptureSourceLegend(
+                  intent: UiIntent.neutral,
+                  label: 'Del texto clínico',
+                ),
+                _CaptureSourceLegend(
+                  intent: UiIntent.secondary,
+                  label: 'Aporte de la IA',
+                ),
+              ],
+            ),
             BioSpacing.gapH(BioSpacing.sm),
             ...review.categories.map((cat) {
               return Padding(
@@ -1216,17 +1234,19 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                         runSpacing: BioSpacing.sm,
                         children: cat.items.map((item) {
                           final selected = _stagedItemIds.contains(item.id);
-                          return FilterChip(
-                            label: Text(
+                          final chipLabel =
                               item.subtitle != null && item.subtitle!.isNotEmpty
                                   ? '${item.label} (${item.subtitle})'
-                                  : item.label,
-                            ),
+                                  : item.label;
+                          return BioChip(
+                            label: chipLabel,
                             selected: selected,
-                            onSelected: _isSaving
+                            intent: item.isFromClinicalText
+                                ? UiIntent.neutral
+                                : UiIntent.secondary,
+                            onTap: _isSaving
                                 ? null
-                                : (v) => _toggleStagedItem(item.id, v),
-                            showCheckmark: true,
+                                : () => _toggleStagedItem(item.id, !selected),
                           );
                         }).toList(),
                       ),
@@ -1362,6 +1382,40 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               ? _toggleDictation
               : null,
           voiceActive: _dictating || _audioOnlyRecording,
+        ),
+      ],
+    );
+  }
+}
+
+class _CaptureSourceLegend extends StatelessWidget {
+  const _CaptureSourceLegend({
+    required this.intent,
+    required this.label,
+  });
+
+  final UiIntent intent;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = IntentPalette.of(intent);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: palette.softBg,
+            border: Border.all(color: palette.border),
+            borderRadius: BorderRadius.circular(BioRadius.xs),
+          ),
+        ),
+        const SizedBox(width: BioSpacing.xs),
+        Text(
+          label,
+          style: BioTypography.caption.copyWith(color: context.bio.textMuted),
         ),
       ],
     );

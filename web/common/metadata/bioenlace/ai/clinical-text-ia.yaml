@@ -121,7 +121,7 @@ encounter_capture_extraction:
     ConsultaMotivos: queja o síntoma referido por el paciente como motivo de la consulta
     DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
     ConsultaMedicamentos: medicación indicada o registrada; objetos con las claves de subdatos (no un solo string)
-    ConsultaPracticas: prácticas, estudios o indicaciones solicitadas
+    ConsultaPracticas: prácticas, estudios o indicaciones (reposo, dieta, control); objetos con Indicacion, Plazo dias si hay control/seguimiento, y Codigo si hay práctica codificada
     ConsultaDerivaciones: derivación a otro servicio o profesional
     ConsultaPracticasOftalmologia: práctica o procedimiento oftalmológico
     ConsultaPracticasOftalmologiaEstudios: estudio oftalmológico solicitado o realizado

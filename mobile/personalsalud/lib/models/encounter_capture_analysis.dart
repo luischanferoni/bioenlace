@@ -354,6 +354,7 @@ class EncounterCaptureItem {
     required this.label,
     required this.raw,
     this.subtitle,
+    this.source = EncounterCaptureItemSource.clinical,
   });
 
   final String id;
@@ -361,6 +362,11 @@ class EncounterCaptureItem {
   final String label;
   final String? subtitle;
   final Map<String, dynamic> raw;
+
+  /// clinical: anclado en el texto del médico; ai: aporte/enriquecimiento de la IA.
+  final EncounterCaptureItemSource source;
+
+  bool get isFromClinicalText => source == EncounterCaptureItemSource.clinical;
 
   factory EncounterCaptureItem.fromCaptureReview(
     String categoryTitle,
@@ -370,6 +376,7 @@ class EncounterCaptureItem {
     final raw = payload is Map
         ? Map<String, dynamic>.from(payload)
         : <String, dynamic>{};
+    final sourceRaw = item['source']?.toString().trim().toLowerCase();
 
     return EncounterCaptureItem(
       id: item['id']?.toString() ?? '$categoryTitle::0',
@@ -377,7 +384,12 @@ class EncounterCaptureItem {
       label: item['label']?.toString() ?? '',
       subtitle: item['subtitle']?.toString(),
       raw: raw,
+      source: sourceRaw == 'ai'
+          ? EncounterCaptureItemSource.ai
+          : EncounterCaptureItemSource.clinical,
     );
   }
 }
+
+enum EncounterCaptureItemSource { clinical, ai }
 

@@ -9,10 +9,12 @@ use common\models\Clinical\CareEncounterPack;
 use common\models\Clinical\CareFollowupTouchpointQueue;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterPatientSummary;
+use common\models\Clinical\ServiceRequest;
 use Yii;
 
 /**
  * Programa touchpoints de followup_program al publicar resumen o al completar el pack.
+ * Garantiza mínimo de touchpoints (pregunta/recordatorio) vía params care_cohort.followup.
  */
 final class CareFollowupSchedulerService
 {
@@ -52,11 +54,18 @@ final class CareFollowupSchedulerService
 
         $content = $followupPack->getContentArray();
         if ($content === null) {
-            return false;
+            $content = ['touchpoints' => []];
         }
 
         $touchpoints = $content['touchpoints'] ?? [];
-        if (!is_array($touchpoints) || $touchpoints === []) {
+        if (!is_array($touchpoints)) {
+            $touchpoints = [];
+        }
+
+        $controlDelay = $this->resolveControlDelayDaysFromEncounter($encounterId);
+        $touchpoints = $this->ensureMinTouchpoints($touchpoints, $controlDelay);
+
+        if ($touchpoints === []) {
             $this->markScheduled($binding);
 
             return true;
@@ -109,6 +118,66 @@ final class CareFollowupSchedulerService
         $this->markScheduled($binding);
 
         return true;
+    }
+
+    /**
+     * Completa hasta min_touchpoints con defaults; aplica delay de control clínico si existe.
+     *
+     * @param list<mixed> $touchpoints
+     * @return list<array<string, mixed>>
+     */
+    public function ensureMinTouchpoints(array $touchpoints, ?int $controlDelayDays = null): array
+    {
+        $normalized = [];
+        foreach ($touchpoints as $tp) {
+            if (is_array($tp)) {
+                $normalized[] = $tp;
+            }
+        }
+
+        $defaults = CarePackConfig::followupDefaultTouchpoints();
+        $min = CarePackConfig::followupMinTouchpoints();
+        $i = 0;
+        while (count($normalized) < $min && $i < count($defaults)) {
+            $normalized[] = $defaults[$i];
+            $i++;
+        }
+
+        if ($controlDelayDays !== null && $controlDelayDays > 0 && $normalized !== []) {
+            $idx = count($normalized) - 1;
+            $normalized[$idx]['delay_days'] = $controlDelayDays;
+            if (empty($normalized[$idx]['title'])) {
+                $normalized[$idx]['title'] = 'Control de evolución';
+            }
+            if (empty($normalized[$idx]['form_kind'])) {
+                $normalized[$idx]['form_kind'] = 'symptoms';
+            }
+        }
+
+        return $normalized;
+    }
+
+    public function resolveControlDelayDaysFromEncounter(int $encounterId): ?int
+    {
+        $rows = ServiceRequest::find()
+            ->where(['encounter_id' => $encounterId, 'deleted_at' => null])
+            ->andWhere(['not', ['reminder_json' => null]])
+            ->andWhere(['<>', 'reminder_json', ''])
+            ->all();
+
+        $max = null;
+        foreach ($rows as $sr) {
+            $json = json_decode((string) $sr->reminder_json, true);
+            if (!is_array($json)) {
+                continue;
+            }
+            $d = (int) ($json['delay_days'] ?? 0);
+            if ($d > 0 && ($max === null || $d > $max)) {
+                $max = $d;
+            }
+        }
+
+        return $max;
     }
 
     public function trySchedulePendingForPack(int $followupPackId): int

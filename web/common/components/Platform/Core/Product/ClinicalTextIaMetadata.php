@@ -201,9 +201,8 @@ final class ClinicalTextIaMetadata
             if ($ejemplo === []) {
                 continue;
             }
-            $lines[] = '- Ejemplo "' . $titulo . '": ['
-                . json_encode([$ejemplo], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-                . ']';
+            $lines[] = '- Ejemplo "' . $titulo . '": '
+                . json_encode([$ejemplo], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         }
 
         return $lines === [] ? '' : implode("\n", $lines);

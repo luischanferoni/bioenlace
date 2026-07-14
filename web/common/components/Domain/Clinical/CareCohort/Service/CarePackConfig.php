@@ -51,6 +51,33 @@ final class CarePackConfig
         return max(0, (int) (self::vertexBatch()['max_wait_minutes'] ?? 120));
     }
 
+    public static function followupMinTouchpoints(): int
+    {
+        $cfg = Yii::$app->params['care_cohort']['followup'] ?? [];
+
+        return max(1, (int) ($cfg['min_touchpoints'] ?? 2));
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public static function followupDefaultTouchpoints(): array
+    {
+        $cfg = Yii::$app->params['care_cohort']['followup'] ?? [];
+        $defaults = $cfg['default_touchpoints'] ?? [];
+        if (!is_array($defaults)) {
+            return [];
+        }
+        $out = [];
+        foreach ($defaults as $tp) {
+            if (is_array($tp)) {
+                $out[] = $tp;
+            }
+        }
+
+        return $out;
+    }
+
     public static function gcsBucket(): string
     {
         return trim((string) (self::vertexBatch()['gcs_bucket'] ?? ''));

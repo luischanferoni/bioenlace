@@ -770,21 +770,18 @@ class IAManager
                 self::asignarPromptAConfiguracion($proveedorIA, $prompt);
             }
             
-            // Registrar prompt enviado
             if ($logger) {
                 $logger->registrar(
-                    'ANÁLISIS IA',
-                    $prompt,
+                    'IA',
                     null,
+                    'Llamada a proveedor',
                     [
                         'metodo' => 'IAManager::consultarIA',
-                        'proveedor' => $proveedorIA['tipo'] ?? 'desconocido'
+                        'proveedor' => $proveedorIA['tipo'] ?? 'desconocido',
                     ]
                 );
             }
             
-            // Los logs detallados ya se manejan en ConsultaLogger
-
             // Preparar payload JSON
             $payloadJson = json_encode($proveedorIA['payload']);
             
@@ -874,16 +871,14 @@ class IAManager
                         RequestDeduplicator::guardar($prompt, $resultado, $contexto);
                     }
                     
-                    // Registrar respuesta recibida
                     if ($logger) {
                         $logger->registrar(
-                            'ANÁLISIS IA',
+                            'IA',
                             null,
-                            $resultado ? 'Respuesta procesada exitosamente' : 'Error procesando respuesta',
+                            $resultado ? 'OK' : 'Error procesando respuesta',
                             [
                                 'metodo' => 'IAManager::consultarIA',
                                 'status_code' => $response->getStatusCode(),
-                                'respuesta_length' => $responseData ? strlen($responseData) : 0
                             ]
                         );
                     }

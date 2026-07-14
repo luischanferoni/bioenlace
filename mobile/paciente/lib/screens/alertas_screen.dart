@@ -8,11 +8,15 @@ import '../services/push_notification_service.dart';
 class AlertasScreen extends StatefulWidget {
   final String? authToken;
   final void Function(Map<String, dynamic> turnoStub)? onAbrirResolver;
+  final void Function(int encounterId)? onAbrirResumen;
+  final void Function(int touchpointId)? onAbrirFollowup;
 
   const AlertasScreen({
     Key? key,
     this.authToken,
     this.onAbrirResolver,
+    this.onAbrirResumen,
+    this.onAbrirFollowup,
   }) : super(key: key);
 
   @override
@@ -67,12 +71,27 @@ class _AlertasScreenState extends State<AlertasScreen> {
     _marcarLeida(item);
     final data = item['data'];
     if (data is! Map) return;
-    final stub = PushNotificationService.turnoStubDesdePush(
-      Map<String, dynamic>.from(data),
-    );
-    if (stub != null && widget.onAbrirResolver != null) {
-      widget.onAbrirResolver!(stub);
+    final map = Map<String, dynamic>.from(data);
+
+    final encounterId = PushNotificationService.encounterIdDesdePush(map);
+    if (encounterId != null && widget.onAbrirResumen != null) {
       Navigator.pop(context);
+      widget.onAbrirResumen!(encounterId);
+      return;
+    }
+
+    final touchpointId =
+        PushNotificationService.followupTouchpointIdDesdePush(map);
+    if (touchpointId != null && widget.onAbrirFollowup != null) {
+      Navigator.pop(context);
+      widget.onAbrirFollowup!(touchpointId);
+      return;
+    }
+
+    final stub = PushNotificationService.turnoStubDesdePush(map);
+    if (stub != null && widget.onAbrirResolver != null) {
+      Navigator.pop(context);
+      widget.onAbrirResolver!(stub);
     }
   }
 

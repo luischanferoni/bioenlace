@@ -266,6 +266,8 @@ class _MainScreenState extends State<MainScreen> {
         builder: (_) => AlertasScreen(
           authToken: widget.authToken,
           onAbrirResolver: _abrirResolverTurno,
+          onAbrirResumen: _abrirResumenAtencion,
+          onAbrirFollowup: _abrirFollowupTouchpoint,
         ),
       ),
     ).then((_) => _refreshAlertasCount());

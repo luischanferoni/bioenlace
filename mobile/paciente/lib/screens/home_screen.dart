@@ -10,6 +10,7 @@ import '../auth/paciente_post_login.dart';
 import 'care_plan_detail_screen.dart';
 import 'care_plans_list_screen.dart';
 import 'chat_motivos_screen.dart';
+import 'encounter_summary_detail_screen.dart';
 
 /// Proximidad de un turno respecto al día actual (sólo fecha, sin hora).
 enum _ProximidadPendiente { hoy, manana, masAdelante }
@@ -572,6 +573,18 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _abrirResumenAtencion(BuildContext context, int encounterId) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EncounterSummaryDetailScreen(
+          encounterId: encounterId,
+          authToken: widget.authToken,
+        ),
+      ),
+    );
+  }
+
   void _onOpenMotivosConsulta(
     BuildContext context, {
     required int consultaId,
@@ -926,6 +939,7 @@ class HomeScreenState extends State<HomeScreen> {
         !enResolucion &&
         turnoAsistenciaCohorteDisponibleEnProducto(t);
     final idConsulta = puedeMotivos ? _encounterIdDesdeTurno(t) : null;
+    final encounterIdPasado = !futuro ? _encounterIdDesdeTurno(t) : null;
     final turnoId = turnoIdDesdePayloadProducto(t);
 
     final cabecera = Text(
@@ -1003,6 +1017,14 @@ class HomeScreenState extends State<HomeScreen> {
             subjectPersonaId: _subjectPersonaId,
           );
         },
+      ));
+    }
+    if (!enResolucion && encounterIdPasado != null) {
+      acciones.add(BioButton.outlinePrimary(
+        label: 'Ver resumen',
+        size: BioButtonSize.sm,
+        icon: Icons.description_outlined,
+        onPressed: () => _abrirResumenAtencion(context, encounterIdPasado),
       ));
     }
 

@@ -347,6 +347,9 @@ class EncounterCaptureCategory {
   }
 }
 
+/// clinical: anclado en el texto del médico; ai: aporte/enriquecimiento de la IA.
+enum EncounterCaptureItemSource { clinical, ai }
+
 class EncounterCaptureItem {
   const EncounterCaptureItem({
     required this.id,
@@ -354,7 +357,7 @@ class EncounterCaptureItem {
     required this.label,
     required this.raw,
     this.subtitle,
-    this.source = EncounterCaptureItemSource.clinical,
+    this.source,
   });
 
   final String id;
@@ -363,10 +366,10 @@ class EncounterCaptureItem {
   final String? subtitle;
   final Map<String, dynamic> raw;
 
-  /// clinical: anclado en el texto del médico; ai: aporte/enriquecimiento de la IA.
-  final EncounterCaptureItemSource source;
+  /// null = legacy / sin dato → se trata como texto clínico.
+  final EncounterCaptureItemSource? source;
 
-  bool get isFromClinicalText => source == EncounterCaptureItemSource.clinical;
+  bool get isFromClinicalText => source != EncounterCaptureItemSource.ai;
 
   factory EncounterCaptureItem.fromCaptureReview(
     String categoryTitle,
@@ -390,6 +393,4 @@ class EncounterCaptureItem {
     );
   }
 }
-
-enum EncounterCaptureItemSource { clinical, ai }
 

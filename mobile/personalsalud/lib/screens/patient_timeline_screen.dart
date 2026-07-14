@@ -1241,9 +1241,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                           return BioChip(
                             label: chipLabel,
                             selected: selected,
-                            intent: item.isFromClinicalText
-                                ? UiIntent.neutral
-                                : UiIntent.secondary,
+                            intent: item.source == EncounterCaptureItemSource.ai
+                                ? UiIntent.secondary
+                                : UiIntent.neutral,
                             onTap: _isSaving
                                 ? null
                                 : () => _toggleStagedItem(item.id, !selected),

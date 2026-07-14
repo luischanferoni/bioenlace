@@ -74,19 +74,41 @@ class ConsultaMedicamentos extends \yii\db\ActiveRecord
     }
 
     /**
-     * Retorna los campos requeridos en lenguaje natural para prompts de IA
-     * @return array
+     * Campos en lenguaje natural para prompts de extracción IA (única fuente de nombres).
+     *
+     * @return list<string>
      */
     public function requeridosPrompt()
     {
         return [
-            "Nombre del medicamento",
-            "Cantidad",
-            "Via de administracion",
-            "Frecuencia de administracion",
-            "Tipo de frecuencia",
-            "Duracion del tratamiento",
-            "Tipo de duracion"
+            'Nombre del medicamento',
+            'Cantidad',
+            'Via de administracion',
+            'Frecuencia de administracion',
+            'Tipo de frecuencia',
+            'Duracion del tratamiento',
+            'Tipo de duracion',
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function camposPromptExtraccion(): array
+    {
+        return (new self())->requeridosPrompt();
+    }
+
+    /**
+     * Valores admitidos de tipo frecuencia / duración en prompts.
+     *
+     * @return array{frecuencia: list<string>, duracion: list<string>}
+     */
+    public static function tiposPromptExtraccion(): array
+    {
+        return [
+            'frecuencia' => array_keys(self::FRECUENCIAS),
+            'duracion' => array_keys(self::DURANTES),
         ];
     }
 

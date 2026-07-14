@@ -8,6 +8,7 @@ use common\components\Domain\Clinical\Enum\RequestStatus;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
+use common\models\ConsultaMedicamentos;
 
 final class MedicationRequestService
 {
@@ -54,31 +55,7 @@ final class MedicationRequestService
         ));
         $mr->medication_code = $code !== '' ? $code : null;
         $mr->medication_display = $display;
-        $parts = array_filter([
-            isset($row['Cantidad']) ? 'cant: ' . $row['Cantidad'] : (isset($row['cantidad']) ? 'cant: ' . $row['cantidad'] : null),
-            self::firstNonEmptyString($row, [
-                'Via de administracion',
-                'vía de administración',
-                'via',
-                'vía',
-                'route',
-            ], 'vía: '),
-            self::firstNonEmptyString($row, [
-                'Frecuencia de administracion',
-                'frecuencia',
-                'posologia',
-            ]),
-            self::firstNonEmptyString($row, [
-                'Duracion del tratamiento',
-                'durante',
-                'duracion',
-            ]),
-            self::firstNonEmptyString($row, ['indicaciones']),
-        ]);
-        $mr->dosage_text = $parts !== [] ? implode('; ', $parts) : ($row['dosage_text'] ?? null);
-        if ($mr->dosage_text === null && isset($row['texto']) && trim((string) $row['texto']) !== $display) {
-            $mr->dosage_text = trim((string) $row['texto']);
-        }
+        $mr->dosage_text = self::resolveDosageTextFromRow($row, $display);
         $mr->authored_on = date('Y-m-d H:i:s');
         $mr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
         if (!$mr->save()) {
@@ -114,18 +91,7 @@ final class MedicationRequestService
      */
     public static function resolveMedicationDisplay(array $row): string
     {
-        foreach ([
-            'Nombre del medicamento',
-            'nombre_del_medicamento',
-            'medication_display',
-            'medicamento',
-            'termino',
-            'nombre',
-            'display',
-            'label',
-            'texto',
-            'descripcion',
-        ] as $key) {
+        foreach (self::displayKeyCandidates() as $key) {
             $value = trim((string) ($row[$key] ?? ''));
             if ($value !== '') {
                 return $value;
@@ -137,21 +103,52 @@ final class MedicationRequestService
 
     /**
      * @param array<string, mixed> $row
-     * @param list<string> $keys
      */
-    private static function firstNonEmptyString(array $row, array $keys, string $prefix = ''): ?string
+    private static function resolveDosageTextFromRow(array $row, string $display): ?string
     {
-        foreach ($keys as $key) {
-            if (!array_key_exists($key, $row)) {
-                continue;
-            }
-            $value = trim((string) $row[$key]);
+        $campos = ConsultaMedicamentos::camposPromptExtraccion();
+        $parts = [];
+        foreach (array_slice($campos, 1) as $campo) {
+            $value = trim((string) ($row[$campo] ?? ''));
             if ($value !== '') {
-                return $prefix !== '' ? $prefix . $value : $value;
+                $parts[] = $value;
             }
+        }
+        if ($parts !== []) {
+            return implode('; ', $parts);
+        }
+        if (isset($row['dosage_text']) && trim((string) $row['dosage_text']) !== '') {
+            return trim((string) $row['dosage_text']);
+        }
+        if (isset($row['texto']) && trim((string) $row['texto']) !== $display) {
+            return trim((string) $row['texto']);
         }
 
         return null;
+    }
+
+    /**
+     * Primer campo de requeridosPrompt + alias técnicos genéricos.
+     *
+     * @return list<string>
+     */
+    private static function displayKeyCandidates(): array
+    {
+        $campos = ConsultaMedicamentos::camposPromptExtraccion();
+        $primary = isset($campos[0]) && is_string($campos[0]) && $campos[0] !== ''
+            ? [$campos[0]]
+            : [];
+
+        return array_values(array_unique(array_merge($primary, [
+            'medication_display',
+            'medicamento',
+            'termino',
+            'nombre',
+            'display',
+            'label',
+            'texto',
+            'descripcion',
+        ])));
     }
 
     /**

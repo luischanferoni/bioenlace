@@ -115,6 +115,7 @@ class EncounterCaptureAnalysis {
         final items = _parseCategoryItems(
           categoryTitle: title,
           raw: extraidos[title],
+          camposRequeridos: _camposRequeridosFromCat(cat),
         );
         categories.add(
           EncounterCaptureCategory(
@@ -165,9 +166,16 @@ class EncounterCaptureAnalysis {
     return map;
   }
 
+  static List<String> _camposRequeridosFromCat(Map<String, dynamic> cat) {
+    final raw = cat['campos_requeridos'];
+    if (raw is! List) return const [];
+    return raw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList();
+  }
+
   static List<EncounterCaptureItem> _parseCategoryItems({
     required String categoryTitle,
     required dynamic raw,
+    List<String> camposRequeridos = const [],
   }) {
     if (raw == null) return [];
     if (raw is String && raw.trim().isNotEmpty) {
@@ -198,14 +206,14 @@ class EncounterCaptureAnalysis {
       }
       if (row is Map) {
         final m = Map<String, dynamic>.from(row);
-        final label = _labelFromMap(m);
+        final label = _labelFromMap(m, camposRequeridos);
         if (label.isEmpty) continue;
         out.add(
           EncounterCaptureItem(
             id: '$categoryTitle::$i',
             categoryTitle: categoryTitle,
             label: label,
-            subtitle: _subtitleFromMap(m),
+            subtitle: _subtitleFromMap(m, camposRequeridos, label),
             raw: m,
           ),
         );
@@ -214,14 +222,20 @@ class EncounterCaptureAnalysis {
     return out;
   }
 
-  static String _labelFromMap(Map<String, dynamic> m) {
+  static String _labelFromMap(
+    Map<String, dynamic> m, [
+    List<String> camposRequeridos = const [],
+  ]) {
+    for (final key in camposRequeridos) {
+      final v = m[key]?.toString().trim();
+      if (v != null && v.isNotEmpty) return v;
+    }
     for (final key in [
       'termino',
       'descripcion',
       'texto',
       'nombre',
       'display',
-      'Nombre del medicamento',
       'medicamento',
       'label',
     ]) {
@@ -238,28 +252,33 @@ class EncounterCaptureAnalysis {
     return parts.take(3).join(' · ');
   }
 
-  static String? _subtitleFromMap(Map<String, dynamic> m) {
+  static String? _subtitleFromMap(
+    Map<String, dynamic> m, [
+    List<String> camposRequeridos = const [],
+    String label = '',
+  ]) {
     for (final key in ['codigo', 'codigo_cie10', 'cie10', 'conceptId']) {
       final v = m[key]?.toString().trim();
       if (v != null && v.isNotEmpty) return v;
     }
     final parts = <String>[];
-    for (final key in [
-      'Cantidad',
-      'cantidad',
-      'Via de administracion',
-      'vía de administración',
-      'via',
-      'Frecuencia de administracion',
-      'frecuencia',
-      'Duracion del tratamiento',
-      'duracion',
-      'durante',
-    ]) {
-      final v = m[key]?.toString().trim();
-      if (v == null || v.isEmpty) continue;
-      parts.add(v);
-      if (parts.length >= 4) break;
+    final remaining = camposRequeridos.length > 1
+        ? camposRequeridos.sublist(1)
+        : <String>[];
+    if (remaining.isEmpty) {
+      for (final entry in m.entries) {
+        final s = entry.value?.toString().trim() ?? '';
+        if (s.isEmpty || s == label) continue;
+        parts.add(s);
+        if (parts.length >= 4) break;
+      }
+    } else {
+      for (final key in remaining) {
+        final v = m[key]?.toString().trim();
+        if (v == null || v.isEmpty || v == label) continue;
+        parts.add(v);
+        if (parts.length >= 4) break;
+      }
     }
     if (parts.isEmpty) return null;
     return parts.join(' · ');

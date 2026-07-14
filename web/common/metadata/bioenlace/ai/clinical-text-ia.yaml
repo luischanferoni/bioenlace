@@ -89,18 +89,16 @@ encounter_capture_extraction:
         "texto_procesado": "nota clínica corregida…",
         "datosExtraidos": {"nombre_categoria": []}
       }
-    - Categorías SIN subdatos (Motivos, Diagnóstico, etc.): array de strings cortos y específicos (no copies párrafos enteros).
-    - Categorías CON subdatos (Medicación, Prácticas, Derivaciones): array de OBJETOS con esas claves. NO uses un string único que mezcle toda la indicación.
-    - Ejemplo Medicación (obligatorio si el texto indica fármaco):
-      [{"Nombre del medicamento":"enalapril","Cantidad":"10","Via de administracion":"vía oral","Frecuencia de administracion":"1","Tipo de frecuencia":"DIA","Duracion del tratamiento":"30","Tipo de duracion":"DIA"}]
-    - Cantidad = dosis numérica (sin unidad si va en el texto por separado; podés incluir unidad en el valor, p. ej. "10 mg").
-    - Via de administracion = vía oral / VO / intravenosa / etc. cuando el texto la menciona.
-    - Tipo de frecuencia / Tipo de duracion: usá DIA, HORA, SEMANA, MES o CRONICO según corresponda.
+    - Categorías SIN subdatos: array de strings cortos y específicos (no copies párrafos enteros).
+    - Categorías CON subdatos: array de OBJETOS usando exactamente las claves listadas en subdatos. NO uses un string único que mezcle toda la indicación.
+    {structured_examples_block}
+    - Tipos de frecuencia admitidos: {frecuencia_tipos}.
+    - Tipos de duración admitidos: {duracion_tipos}.
 
     Reglas para texto_procesado:
     - Reescribí la misma nota del profesional, más clara y correcta; no es un copy-paste del original.
-    - Restaurá/correjí ortografía y tildes en español (hipertensión, diagnóstico, vía, día, presión).
-    - Expandí abreviaturas habituales cuando aporte claridad (TA→tensión arterial, VO→vía oral, OD/OI, etc.).
+    - Restaurá/correjí ortografía y tildes en español.
+    - Expandí abreviaturas médicas habituales cuando aporte claridad.
     - Mejorá puntuación y mayúsculas; mantené cifras y dosis exactas del original.
     - Sin agregar hallazgos, fármacos, dosis ni indicaciones que no estén en el texto.
     - Sin markdown.
@@ -122,7 +120,7 @@ encounter_capture_extraction:
   category_hints:
     ConsultaMotivos: queja o síntoma referido por el paciente como motivo de la consulta
     DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
-    ConsultaMedicamentos: medicación indicada o registrada; devolver objetos con Nombre del medicamento, Cantidad (dosis), Via de administracion, frecuencia y duración (no un solo string)
+    ConsultaMedicamentos: medicación indicada o registrada; objetos con las claves de subdatos (no un solo string)
     ConsultaPracticas: prácticas, estudios o indicaciones solicitadas
     ConsultaDerivaciones: derivación a otro servicio o profesional
     ConsultaPracticasOftalmologia: práctica o procedimiento oftalmológico

@@ -123,6 +123,7 @@ final class EncounterCaptureReviewPresenter
                 if ($title === '' || $title === 'Error') {
                     continue;
                 }
+                $campos = $categoria['campos_requeridos'] ?? [];
                 $out[] = [
                     'key' => $this->categoryKey($title),
                     'title' => $title,
@@ -130,7 +131,8 @@ final class EncounterCaptureReviewPresenter
                     'required' => ($categoria['requerido'] ?? false) === true,
                     'items' => $this->parseCategoryItems(
                         $title,
-                        $this->resolveCategoryRaw($extraidos, $title, (string) ($categoria['modelo'] ?? ''))
+                        $this->resolveCategoryRaw($extraidos, $title, (string) ($categoria['modelo'] ?? '')),
+                        is_array($campos) ? $campos : []
                     ),
                 ];
             }
@@ -142,7 +144,7 @@ final class EncounterCaptureReviewPresenter
             if ($key === 'Error' || !is_string($key) || $key === '') {
                 continue;
             }
-            $items = $this->parseCategoryItems($key, $raw);
+            $items = $this->parseCategoryItems($key, $raw, []);
             if ($items === []) {
                 continue;
             }
@@ -194,9 +196,10 @@ final class EncounterCaptureReviewPresenter
     }
 
     /**
+     * @param list<string> $camposRequeridos
      * @return list<array<string, mixed>>
      */
-    private function parseCategoryItems(string $categoryTitle, mixed $raw): array
+    private function parseCategoryItems(string $categoryTitle, mixed $raw, array $camposRequeridos = []): array
     {
         if ($raw === null) {
             return [];
@@ -223,7 +226,7 @@ final class EncounterCaptureReviewPresenter
             if (!is_array($row)) {
                 continue;
             }
-            $label = $this->labelFromMap($row);
+            $label = $this->labelFromMap($row, $camposRequeridos);
             if ($label === '') {
                 continue;
             }
@@ -232,7 +235,7 @@ final class EncounterCaptureReviewPresenter
                 $index,
                 $label,
                 $row,
-                $this->subtitleFromMap($row)
+                $this->subtitleFromMap($row, $camposRequeridos, $label)
             );
             $index++;
         }
@@ -265,10 +268,21 @@ final class EncounterCaptureReviewPresenter
 
     /**
      * @param array<string, mixed> $map
+     * @param list<string> $camposRequeridos
      */
-    private function labelFromMap(array $map): string
+    private function labelFromMap(array $map, array $camposRequeridos = []): string
     {
-        foreach (['termino', 'descripcion', 'texto', 'nombre', 'display', 'Nombre del medicamento', 'medicamento', 'label'] as $key) {
+        foreach ($camposRequeridos as $key) {
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+            $value = trim((string) ($map[$key] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        foreach (['termino', 'descripcion', 'texto', 'nombre', 'display', 'medicamento', 'label'] as $key) {
             $value = trim((string) ($map[$key] ?? ''));
             if ($value !== '') {
                 return $value;
@@ -295,8 +309,9 @@ final class EncounterCaptureReviewPresenter
 
     /**
      * @param array<string, mixed> $map
+     * @param list<string> $camposRequeridos
      */
-    private function subtitleFromMap(array $map): ?string
+    private function subtitleFromMap(array $map, array $camposRequeridos = [], string $label = ''): ?string
     {
         foreach (['codigo', 'codigo_cie10', 'cie10', 'conceptId'] as $key) {
             $value = trim((string) ($map[$key] ?? ''));
@@ -306,27 +321,34 @@ final class EncounterCaptureReviewPresenter
         }
 
         $parts = [];
-        foreach (
-            [
-                'Cantidad',
-                'cantidad',
-                'Via de administracion',
-                'vía de administración',
-                'via',
-                'Frecuencia de administracion',
-                'frecuencia',
-                'Duracion del tratamiento',
-                'duracion',
-                'durante',
-            ] as $key
-        ) {
-            $value = trim((string) ($map[$key] ?? ''));
-            if ($value === '') {
-                continue;
+        $remaining = array_slice($camposRequeridos, 1);
+        if ($remaining === []) {
+            foreach ($map as $key => $value) {
+                if (!is_string($key) || $key === '') {
+                    continue;
+                }
+                $text = trim((string) $value);
+                if ($text === '' || $text === $label) {
+                    continue;
+                }
+                $parts[] = $text;
+                if (count($parts) >= 4) {
+                    break;
+                }
             }
-            $parts[] = $value;
-            if (count($parts) >= 4) {
-                break;
+        } else {
+            foreach ($remaining as $key) {
+                if (!is_string($key) || $key === '') {
+                    continue;
+                }
+                $value = trim((string) ($map[$key] ?? ''));
+                if ($value === '' || $value === $label) {
+                    continue;
+                }
+                $parts[] = $value;
+                if (count($parts) >= 4) {
+                    break;
+                }
             }
         }
 

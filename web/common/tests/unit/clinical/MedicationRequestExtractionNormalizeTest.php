@@ -4,6 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
+use common\models\ConsultaMedicamentos;
 
 class MedicationRequestExtractionNormalizeTest extends Unit
 {
@@ -31,23 +32,30 @@ class MedicationRequestExtractionNormalizeTest extends Unit
         );
     }
 
-    public function testNormalizeLegacyFieldName(): void
+    public function testNormalizeUsingCamposPromptExtraccion(): void
     {
-        $rows = MedicationRequestService::normalizeExtractedMedicationPayload([
-            [
-                'Nombre del medicamento' => 'Enalapril',
-                'Cantidad' => '10 mg',
-                'Via de administracion' => 'vía oral',
-                'Frecuencia de administracion' => '1',
-                'Tipo de frecuencia' => 'DIA',
-                'Duracion del tratamiento' => '30',
-                'Tipo de duracion' => 'DIA',
-            ],
-        ]);
+        $campos = ConsultaMedicamentos::camposPromptExtraccion();
+        $this->assertNotEmpty($campos);
+
+        $valores = [
+            'Enalapril',
+            '10 mg',
+            'vía oral',
+            '1',
+            ConsultaMedicamentos::FRECUENCIA_TIPO_DIA,
+            '30',
+            ConsultaMedicamentos::DURANTE_TIPO_DIA,
+        ];
+        $this->assertCount(count($campos), $valores, 'Fixture alineado a camposPromptExtraccion()');
+
+        $row = array_combine($campos, $valores);
+        $this->assertIsArray($row);
+
+        $rows = MedicationRequestService::normalizeExtractedMedicationPayload([$row]);
         $this->assertCount(1, $rows);
-        $this->assertSame('Enalapril', MedicationRequestService::resolveMedicationDisplay($rows[0]));
-        $this->assertSame('10 mg', $rows[0]['Cantidad']);
-        $this->assertSame('vía oral', $rows[0]['Via de administracion']);
+        $this->assertSame($valores[0], MedicationRequestService::resolveMedicationDisplay($rows[0]));
+        $this->assertSame($valores[1], $rows[0][$campos[1]]);
+        $this->assertSame($valores[2], $rows[0][$campos[2]]);
     }
 
     public function testEmptyPayload(): void

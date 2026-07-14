@@ -112,17 +112,101 @@ final class ClinicalTextIaMetadata
             $rulesTemplate
         ));
         $patientBlock = trim($patientContext) !== '' ? trim($patientContext) : '';
+        $tipos = self::resolveTiposPromptFromCategorias($categorias);
 
         return str_replace(
-            ['{classification_rules}', '{categories_block}', '{patient_context}', '{clinical_text}'],
+            [
+                '{classification_rules}',
+                '{categories_block}',
+                '{structured_examples_block}',
+                '{frecuencia_tipos}',
+                '{duracion_tipos}',
+                '{patient_context}',
+                '{clinical_text}',
+            ],
             [
                 $classificationRules,
                 self::buildEncounterCaptureCategoriesBlock($categorias, $section),
+                self::buildEncounterCaptureStructuredExamplesBlock($categorias),
+                implode(', ', $tipos['frecuencia']),
+                implode(', ', $tipos['duracion']),
                 $patientBlock,
                 trim($clinicalText),
             ],
             $template
         );
+    }
+
+    /**
+     * Si algún modelo de categoría declara tiposPromptExtraccion(), se inyectan en el prompt.
+     *
+     * @param list<array<string, mixed>> $categorias
+     * @return array{frecuencia: list<string>, duracion: list<string>}
+     */
+    private static function resolveTiposPromptFromCategorias(array $categorias): array
+    {
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            $modelo = trim((string) ($categoria['modelo'] ?? ''));
+            if ($modelo === '' || !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $modelo)) {
+                continue;
+            }
+            $class = '\\common\\models\\' . $modelo;
+            if (!class_exists($class) || !method_exists($class, 'tiposPromptExtraccion')) {
+                continue;
+            }
+            $tipos = $class::tiposPromptExtraccion();
+            if (!is_array($tipos)) {
+                continue;
+            }
+            $frecuencia = $tipos['frecuencia'] ?? [];
+            $duracion = $tipos['duracion'] ?? [];
+
+            return [
+                'frecuencia' => is_array($frecuencia) ? array_values(array_map('strval', $frecuencia)) : [],
+                'duracion' => is_array($duracion) ? array_values(array_map('strval', $duracion)) : [],
+            ];
+        }
+
+        return ['frecuencia' => [], 'duracion' => []];
+    }
+
+    /**
+     * @param list<array<string, mixed>> $categorias
+     */
+    public static function buildEncounterCaptureStructuredExamplesBlock(array $categorias): string
+    {
+        $lines = [];
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            $titulo = trim((string) ($categoria['titulo'] ?? ''));
+            if ($titulo === '' || $titulo === 'Error') {
+                continue;
+            }
+            $campos = $categoria['campos_requeridos'] ?? [];
+            if (!is_array($campos) || $campos === []) {
+                continue;
+            }
+            $ejemplo = [];
+            foreach ($campos as $campo) {
+                if (!is_string($campo) || $campo === '') {
+                    continue;
+                }
+                $ejemplo[$campo] = '…';
+            }
+            if ($ejemplo === []) {
+                continue;
+            }
+            $lines[] = '- Ejemplo "' . $titulo . '": ['
+                . json_encode([$ejemplo], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+                . ']';
+        }
+
+        return $lines === [] ? '' : implode("\n", $lines);
     }
 
     /**

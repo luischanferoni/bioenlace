@@ -84,7 +84,18 @@ encounter_capture_extraction:
     Reglas de formato:
     - Sin datos para una categoría: [].
     - No repitas el mismo dato en más de una categoría.
-    - Formato: {"datosExtraidos":{"nombre_categoria":["valor"]}}
+    - Formato JSON exacto:
+      {
+        "texto_procesado": "nota clínica corregida…",
+        "datosExtraidos": {"nombre_categoria": ["valor"]}
+      }
+
+    Reglas para texto_procesado:
+    - Partí del texto clínico enviado (misma nota del profesional).
+    - Corregí ortografía y puntuación.
+    - Expandí abreviaturas médicas habituales cuando aporte claridad.
+    - Mejorá formato (mayúsculas, puntos) sin agregar hallazgos, dosis, indicaciones ni datos clínicos que no estén en el original.
+    - Sin markdown ni texto fuera del valor string.
 
     {patient_context}
 

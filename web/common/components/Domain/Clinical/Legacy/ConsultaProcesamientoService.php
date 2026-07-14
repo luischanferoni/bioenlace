@@ -94,52 +94,30 @@ class ConsultaProcesamientoService extends Component
                 $tabId,
                 $idProfesionalEfectorServicio
             );
-            $textoProcesado = $resultadoFormato['texto_procesado'];
-            $textoFormateado = $resultadoFormato['texto_formateado'];
-            $totalCambios = $resultadoFormato['total_cambios'];
+            // Pre-IA: solo limpieza local. La nota corregida la devolvió la extracción.
+            $textoLimpio = $resultadoFormato['texto_procesado'];
 
             $logger->registrar(
                 'PROCESAMIENTO',
                 null,
-                $textoProcesado,
+                $textoLimpio,
                 [
                     'metodo' => 'ProcesadorTextoMedico::prepararParaIAConFormato',
-                    'total_cambios' => $totalCambios,
+                    'total_cambios' => 0,
                 ]
             );
 
             $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
 
-            // Camino "consulta simple" (CPU, sin GPU) desactivado: siempre modelo IA. Revisar ConsultaClassifier::esConsultaSimple antes de reactivar.
-            // $esSimple = ConsultaClassifier::esConsultaSimple($textoProcesado);
-            // if ($esSimple) {
-            //     $logger->registrar(
-            //         'ANÃLISIS SIMPLE',
-            //         $textoProcesado,
-            //         null,
-            //         ['metodo' => 'ConsultaClassifier::procesarConsultaSimple']
-            //     );
-            //     $resultadoIA = ConsultaClassifier::procesarConsultaSimple($textoProcesado, $servicio->nombre, $categorias);
-            //     $logger->registrar(
-            //         'ANÃLISIS SIMPLE',
-            //         null,
-            //         'Consulta simple procesada sin GPU',
-            //         [
-            //             'metodo' => 'ConsultaClassifier::procesarConsultaSimple',
-            //             'categorias_extraidas' => isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0,
-            //         ]
-            //     );
-            // } else {
-
             $logger->registrar(
                 'ANÁLISIS IA',
-                $textoProcesado,
+                $textoLimpio,
                 null,
                 ['metodo' => 'ConsultaProcesamientoService::analizarConsultaConIA']
             );
 
             $resultadoIA = $this->analizarConsultaConIA(
-                $textoProcesado,
+                $textoLimpio,
                 $servicio->nombre,
                 $categorias,
                 PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body)
@@ -154,8 +132,6 @@ class ConsultaProcesamientoService extends Component
                     'categorias_extraidas' => $resultadoIA && isset($resultadoIA['datosExtraidos']) ? count($resultadoIA['datosExtraidos']) : 0,
                 ]
             );
-
-            // } // al reactivar if ($esSimple) â€¦ else { â€¦ }, descomentar este cierre antes de $datosConSnomed
 
             // Codificación CIE-10/SNOMED: al guardar encounter vía EncounterAutomaticCodingService (IA + persistencia).
 
@@ -173,6 +149,9 @@ class ConsultaProcesamientoService extends Component
                 ];
             }
 
+            $textoProcesado = self::resolveTextoProcesadoFromIa($datos, $textoLimpio);
+            $textoFormateado = htmlspecialchars($textoProcesado, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+
             $sugerencias = [];
 
             $extraidos = self::resolveDatosExtraidos($datos);
@@ -180,28 +159,6 @@ class ConsultaProcesamientoService extends Component
             $htmlResult = $this->generateAnalysisHtml($extraidos, $sugerencias, $categorias);
             $html = $htmlResult['html'];
             $tieneDatosFaltantesHTML = $htmlResult['tieneDatosFaltantes'];
-
-            if ($totalCambios > 0) {
-                $textoFormateadoHtml = <<<HTML
-                <div class="alert alert-light border mt-3">
-                    <h6><i class="bi bi-file-text me-2"></i>Texto Formateado</h6>
-                    <div class="mt-3">
-                        <div class="bg-light p-3 rounded border">
-                            <div class="texto-formateado">
-                                {$textoFormateado}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-2">
-                        <small class="text-muted">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Las palabras subrayadas han sido corregidas automáticamente
-                        </small>
-                    </div>
-                </div>
-HTML;
-                $html = $textoFormateadoHtml . $html;
-            }
 
             $tieneDatosFaltantes = false;
             if ($resultadoIA && isset($resultadoIA['informacionFaltante'])) {
@@ -393,10 +350,51 @@ HTML;
         }
 
         if (self::looksLikeExtraidosMap($resultadoIA)) {
-            return ['datosExtraidos' => $resultadoIA];
+            $textoProcesado = self::pluckTextoProcesadoCandidate($resultadoIA);
+            $extraidos = $resultadoIA;
+            unset($extraidos['texto_procesado'], $extraidos['texto_corregido']);
+            $out = ['datosExtraidos' => $extraidos];
+            if ($textoProcesado !== null) {
+                $out['texto_procesado'] = $textoProcesado;
+            }
+
+            return $out;
         }
 
         return $resultadoIA;
+    }
+
+    /**
+     * Nota clínica corregida por la extracción IA; fallback al texto limpio pre-IA.
+     *
+     * @param array<string, mixed> $datos
+     */
+    private static function resolveTextoProcesadoFromIa(array $datos, string $fallback): string
+    {
+        $fromIa = self::pluckTextoProcesadoCandidate($datos);
+        if ($fromIa !== null) {
+            return $fromIa;
+        }
+
+        return $fallback;
+    }
+
+    /**
+     * @param array<string, mixed> $datos
+     */
+    private static function pluckTextoProcesadoCandidate(array $datos): ?string
+    {
+        foreach (['texto_procesado', 'texto_corregido'] as $key) {
+            if (!isset($datos[$key]) || !is_string($datos[$key])) {
+                continue;
+            }
+            $trimmed = trim($datos[$key]);
+            if ($trimmed !== '') {
+                return $trimmed;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -425,7 +423,12 @@ HTML;
     private static function looksLikeExtraidosMap(array $data): bool
     {
         foreach (array_keys($data) as $key) {
-            if ($key === 'informacionFaltante' || $key === 'error') {
+            if (
+                $key === 'informacionFaltante'
+                || $key === 'error'
+                || $key === 'texto_procesado'
+                || $key === 'texto_corregido'
+            ) {
                 continue;
             }
             return true;

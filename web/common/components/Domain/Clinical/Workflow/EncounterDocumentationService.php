@@ -234,68 +234,81 @@ class EncounterDocumentationService extends Component
                 return $out;
             }
 
-            $tx = Yii::$app->db->beginTransaction();
-            try {
+            // No mantener una sola TX abierta durante la IA de codificación (~1–2s+):
+            // en hosting compartido la conexión MySQL suele cortarse/reconectar y se pierde
+            // lo persistido antes (motivos/MR/SR/care_plan) mientras note/conditions
+            // reescritos después del reconnect sí quedan.
+            $encounter = $this->runInDbTransaction(function () use (
+                $encounterId,
+                $body,
+                $paciente,
+                $configuracion,
+                &$diagnostico,
+                $datosExtraidos,
+                $logger
+            ) {
                 $encounter = $this->resolveEncounter($encounterId, $body, $paciente, $configuracion);
-                $diagnostico['por_modelo'] = $this->persistExtractedData($encounter, $configuracion, $datosExtraidos, $logger);
-                EncounterAutomaticCodingService::codeAndPersistForEncounter($encounter, $datosExtraidos, $configuracion);
+                $diagnostico['por_modelo'] = $this->persistExtractedData(
+                    $encounter,
+                    $configuracion,
+                    $datosExtraidos,
+                    $logger
+                );
+
+                return $encounter;
+            });
+
+            $logger->registrar('CHECKPOINT', null, $this->snapshotPersistido($encounter), [
+                'metodo' => 'tras persistExtractedData (commit)',
+            ]);
+
+            EncounterAutomaticCodingService::codeAndPersistForEncounter(
+                $encounter,
+                $datosExtraidos,
+                $configuracion
+            );
+            $logger->registrar('CHECKPOINT', null, $this->snapshotPersistido($encounter), [
+                'metodo' => 'tras codeAndPersistForEncounter',
+            ]);
+
+            $encounter = $this->runInDbTransaction(function () use ($encounter, $body) {
                 $encounter = $this->lifecycle->onCaptureDocumented($encounter);
                 // finalize() solo toca status/period_end; reasegurar note tras el ciclo.
                 $this->forcePersistCaptureNote($encounter, $body);
 
-                $tx->commit();
+                return $encounter;
+            });
 
-                $encounter->refresh();
+            $encounter->refresh();
+            $persistido = $this->snapshotPersistido($encounter);
+            $persistido['categorias'] = array_keys($datosExtraidos);
 
-                $persistido = [
-                    'note' => trim((string) ($encounter->note ?? '')) !== '',
-                    'reason_text' => trim((string) ($encounter->reason_text ?? '')) !== '',
-                    'reason_text_value' => mb_substr(trim((string) ($encounter->reason_text ?? '')), 0, 120),
-                    'categorias' => array_keys($datosExtraidos),
-                    'conditions' => (int) \common\models\Clinical\Condition::find()
-                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
-                        ->count(),
-                    'medication_requests' => (int) \common\models\Clinical\MedicationRequest::find()
-                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
-                        ->count(),
-                    'service_requests' => (int) \common\models\Clinical\ServiceRequest::find()
-                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
-                        ->count(),
-                    'care_plans' => (int) \common\models\Clinical\CarePlan::find()
-                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
-                        ->count(),
-                ];
-
-                $out = [
-                    '__statusCode' => 200,
-                    'success' => true,
-                    'message' => 'Encounter guardado correctamente.',
-                    'encounter_id' => $encounter->id,
-                    'id_consulta' => $encounter->id,
-                    'persistido' => $persistido,
-                    'diagnostico_guardar' => $diagnostico,
-                    'log_id' => $logger->getId(),
-                    'log_archivo' => $logger->getArchivoLog(),
-                    'persist_incomplete' => empty($persistido['note'])
-                        || (
-                            (int) ($persistido['medication_requests'] ?? 0) <= 0
-                            && !empty($diagnostico['final_counts']['Medicación'])
-                        )
-                        || (
-                            empty($persistido['reason_text'])
-                            && !empty($diagnostico['final_counts']['Motivos de consulta'])
-                        ),
-                ];
-                if (!empty($out['persist_incomplete'])) {
-                    $out['message'] = 'Encounter guardado con datos incompletos. Revisá medicación/motivos/indicaciones.';
-                }
-                $logger->finalizar($out);
-
-                return $out;
-            } catch (\Throwable $e) {
-                $tx->rollBack();
-                throw $e;
+            $out = [
+                '__statusCode' => 200,
+                'success' => true,
+                'message' => 'Encounter guardado correctamente.',
+                'encounter_id' => $encounter->id,
+                'id_consulta' => $encounter->id,
+                'persistido' => $persistido,
+                'diagnostico_guardar' => $diagnostico,
+                'log_id' => $logger->getId(),
+                'log_archivo' => $logger->getArchivoLog(),
+                'persist_incomplete' => empty($persistido['note'])
+                    || (
+                        (int) ($persistido['medication_requests'] ?? 0) <= 0
+                        && !empty($diagnostico['final_counts']['Medicación'])
+                    )
+                    || (
+                        empty($persistido['reason_text'])
+                        && !empty($diagnostico['final_counts']['Motivos de consulta'])
+                    ),
+            ];
+            if (!empty($out['persist_incomplete'])) {
+                $out['message'] = 'Encounter guardado con datos incompletos. Revisá medicación/motivos/indicaciones.';
             }
+            $logger->finalizar($out);
+
+            return $out;
         } catch (\Throwable $e) {
             Yii::error($e->getMessage(), __METHOD__);
             $out = $this->error(500, 'Error al guardar encounter: ' . $e->getMessage());
@@ -784,6 +797,68 @@ class EncounterDocumentationService extends Component
         if ($id <= 0 || !Encounter::find()->where(['id' => $id])->exists()) {
             throw new \RuntimeException('Encounter no persistido antes de guardar datos clínicos.');
         }
+    }
+
+    /**
+     * @template T
+     * @param callable(): T $fn
+     * @return T
+     */
+    private function runInDbTransaction(callable $fn)
+    {
+        $tx = Yii::$app->db->beginTransaction();
+        try {
+            $result = $fn();
+            $tx->commit();
+
+            return $result;
+        } catch (\Throwable $e) {
+            if ($tx->isActive) {
+                $tx->rollBack();
+            }
+            throw $e;
+        }
+    }
+
+    /**
+     * @return array{
+     *   note: bool,
+     *   reason_text: bool,
+     *   reason_text_value: string,
+     *   conditions: int,
+     *   medication_requests: int,
+     *   service_requests: int,
+     *   care_plans: int
+     * }
+     */
+    private function snapshotPersistido(Encounter $encounter): array
+    {
+        $id = (int) $encounter->id;
+        $row = Encounter::find()
+            ->select(['note', 'reason_text'])
+            ->where(['id' => $id])
+            ->asArray()
+            ->one();
+        $note = is_array($row) ? trim((string) ($row['note'] ?? '')) : '';
+        $reason = is_array($row) ? trim((string) ($row['reason_text'] ?? '')) : '';
+
+        return [
+            'note' => $note !== '',
+            'reason_text' => $reason !== '',
+            'reason_text_value' => mb_substr($reason, 0, 120),
+            'conditions' => (int) \common\models\Clinical\Condition::find()
+                ->where(['encounter_id' => $id, 'deleted_at' => null])
+                ->count(),
+            'medication_requests' => (int) \common\models\Clinical\MedicationRequest::find()
+                ->where(['encounter_id' => $id, 'deleted_at' => null])
+                ->count(),
+            'service_requests' => (int) \common\models\Clinical\ServiceRequest::find()
+                ->where(['encounter_id' => $id, 'deleted_at' => null])
+                ->count(),
+            'care_plans' => (int) \common\models\Clinical\CarePlan::find()
+                ->where(['encounter_id' => $id, 'deleted_at' => null])
+                ->count(),
+        ];
     }
 
     /**

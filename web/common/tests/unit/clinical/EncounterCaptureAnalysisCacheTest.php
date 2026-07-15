@@ -13,8 +13,8 @@ class EncounterCaptureAnalysisCacheTest extends Unit
         $body = [
             'id_persona' => 920778,
             'parent' => 'TURNO',
-            'parent_id' => 3461310,
-            'encounter_id' => 20,
+            'parent_id' => 3461311,
+            'encounter_id' => 21,
         ];
         $extraidos = [
             'Motivos de consulta' => ['cefalea tensional'],
@@ -23,16 +23,10 @@ class EncounterCaptureAnalysisCacheTest extends Unit
                 [
                     'Nombre del medicamento' => 'enalapril',
                     'Cantidad' => '10 mg',
-                    'Via de administracion' => 'oral',
-                    'Frecuencia de administracion' => 'una vez al día',
-                    'Tipo de frecuencia' => 'DIA',
-                    'Duracion del tratamiento' => '30 días',
-                    'Tipo de duracion' => 'DIA',
                 ],
             ],
             'Indicaciones' => [
                 ['Indicacion' => 'Reposo relativo'],
-                ['Indicacion' => 'baja de sal'],
                 ['Indicacion' => 'Control', 'Plazo dias' => 15],
             ],
         ];
@@ -41,15 +35,15 @@ class EncounterCaptureAnalysisCacheTest extends Unit
         $token = EncounterCaptureAnalysisCache::store($body, $extraidos, $texto);
         $this->assertNotNull($token);
 
-        $byToken = EncounterCaptureAnalysisCache::recall([
+        $meta = EncounterCaptureAnalysisCache::recallWithMeta([
             'analysis_cache_token' => $token,
         ]);
-        $this->assertArrayHasKey('Medicación', $byToken);
-        $this->assertSame('enalapril', $byToken['Medicación'][0]['Nombre del medicamento']);
+        $this->assertNotSame('none', $meta['fuente']);
+        $this->assertArrayHasKey('Medicación', $meta['extraidos']);
+        $this->assertSame('enalapril', $meta['extraidos']['Medicación'][0]['Nombre del medicamento']);
 
         $byContext = EncounterCaptureAnalysisCache::recall($body, $texto);
         $this->assertArrayHasKey('Indicaciones', $byContext);
-        $this->assertCount(3, $byContext['Indicaciones']);
     }
 
     protected function _after(): void

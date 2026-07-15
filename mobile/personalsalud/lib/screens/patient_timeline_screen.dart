@@ -1143,10 +1143,21 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final meds = persistido['medication_requests'];
     final medCount = meds is int ? meds : int.tryParse('$meds') ?? 0;
     if (expectedMeds && medCount <= 0) {
-      return 'Consulta guardada, pero la medicación no quedó persistida. Revisá el deploy del API.';
+      final diag = guardado['diagnostico_guardar'];
+      final fuente = diag is Map ? diag['backup_fuentes'] : null;
+      final staged = diag is Map ? diag['staged_counts'] : null;
+      final finalCounts = diag is Map ? diag['final_counts'] : null;
+      return 'Consulta guardada, pero la medicación no quedó persistida. '
+          'staged=$staged final=$finalCounts backup=$fuente '
+          '(log_id=${guardado['log_id'] ?? '-'}).';
     }
     if (persistido['note'] != true) {
       return 'Consulta guardada, pero la nota clínica no quedó en el encounter.';
+    }
+    if (persistido['reason_text'] != true &&
+        _categoryHasRows(extraidos, const ['Motivos de consulta', 'ConsultaMotivos'])) {
+      return 'Consulta guardada, pero los motivos no quedaron en reason_text '
+          '(log_id=${guardado['log_id'] ?? '-'}).';
     }
     return null;
   }

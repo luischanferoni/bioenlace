@@ -96,6 +96,16 @@ class EncounterDocumentationService extends Component
      */
     public function guardar(array $body): array
     {
+        $logger = null;
+        $diagnostico = [
+            'staged_keys' => [],
+            'staged_counts' => [],
+            'backup_fuentes' => [],
+            'final_keys' => [],
+            'final_counts' => [],
+            'por_modelo' => [],
+            'cache' => null,
+        ];
         try {
             $idConfiguracion = $body['id_configuracion'] ?? null;
             if (is_string($idConfiguracion) && trim($idConfiguracion) !== '') {
@@ -109,16 +119,34 @@ class EncounterDocumentationService extends Component
             }
             $encounterId = $this->normalizeEncounterIdFromBody($body, $idConfiguracion);
 
+            $notePreview = $this->resolveCaptureNote($body) ?? '';
+            $logger = EncounterGuardarLogger::iniciar($notePreview !== '' ? $notePreview : '(sin nota)', [
+                'id_persona' => $idPersona,
+                'encounter_id' => $encounterId,
+                'parent' => $body['parent'] ?? null,
+                'parent_id' => $body['parent_id'] ?? null,
+                'id_configuracion' => $idConfiguracion,
+            ]);
+            $logger->registrar('REQUEST', null, [
+                'body_keys' => array_keys($body),
+                'has_analisis_datos_extraidos' => array_key_exists('analisis_datos_extraidos', $body)
+                    || array_key_exists('analisisDatosExtraidos', $body),
+                'has_analysis_cache_token' => trim((string) ($body['analysis_cache_token'] ?? $body['analisis_cache_token'] ?? '')) !== '',
+                'datosExtraidos_type' => gettype($body['datosExtraidos'] ?? null),
+            ], ['metodo' => 'EncounterDocumentationService::guardar']);
+
             $blockingError = EncounterCaptureReviewPresenter::blockingErrorFromExtraidos($datosExtraidos);
             if ($blockingError !== null) {
                 $message = trim((string) ($blockingError['texto'] ?? ''));
                 if ($message === '') {
                     $message = 'No se puede guardar: el análisis tiene errores.';
                 }
-
-                return $this->error(400, $message, [
+                $out = $this->error(400, $message, [
                     'tipo' => $blockingError['tipo'] ?? 'error_sistema',
                 ]);
+                $logger->finalizar($out);
+
+                return $out;
             }
 
             // Defensa: no perder categories si el cliente envió mapas anidados o string.
@@ -129,16 +157,41 @@ class EncounterDocumentationService extends Component
                 }
             }
 
+            $diagnostico['staged_keys'] = array_keys($datosExtraidos);
+            $diagnostico['staged_counts'] = self::countCategories($datosExtraidos);
+            $logger->registrar('STAGE', null, [
+                'keys' => $diagnostico['staged_keys'],
+                'counts' => $diagnostico['staged_counts'],
+            ], ['metodo' => 'datosExtraidos staged']);
+
             // Si el stage quedó incompleto, completar con el análisis completo (backup cliente + cache servidor).
-            $fullExtraidos = $this->resolveFullAnalysisExtraidos($body);
+            $fullMeta = $this->resolveFullAnalysisExtraidosWithMeta($body);
+            $fullExtraidos = $fullMeta['extraidos'];
+            $diagnostico['backup_fuentes'] = $fullMeta['fuentes'];
+            $diagnostico['cache'] = $fullMeta['cache'];
+            $logger->registrar('BACKUP', null, [
+                'fuentes' => $fullMeta['fuentes'],
+                'cache' => $fullMeta['cache'],
+                'counts' => self::countCategories($fullExtraidos),
+            ], ['metodo' => 'resolveFullAnalysisExtraidos']);
+
             if ($fullExtraidos !== []) {
                 $datosExtraidos = self::enrichExtraidosFromFullAnalysis($datosExtraidos, $fullExtraidos);
             }
 
+            $diagnostico['final_keys'] = array_keys($datosExtraidos);
+            $diagnostico['final_counts'] = self::countCategories($datosExtraidos);
+            $logger->registrar('FINAL_EXTRAIDOS', null, [
+                'keys' => $diagnostico['final_keys'],
+                'counts' => $diagnostico['final_counts'],
+                'payload_preview' => self::previewExtraidos($datosExtraidos),
+            ], ['metodo' => 'tras enrich']);
+
             Yii::info(
                 'encounter.guardar categorias=' . implode(',', array_keys($datosExtraidos))
                 . ' note_body=' . ($this->resolveCaptureNote($body) !== null ? 'si' : 'no')
-                . ' full_backup=' . ($fullExtraidos !== [] ? 'si' : 'no'),
+                . ' full_backup=' . ($fullExtraidos !== [] ? 'si' : 'no')
+                . ' fuentes=' . implode(',', $fullMeta['fuentes']),
                 'encounter-doc'
             );
 
@@ -153,26 +206,38 @@ class EncounterDocumentationService extends Component
             }
 
             if (!$idConfiguracion || !$idPersona) {
-                return $this->error(400, $this->missingCaptureContextMessage($idConfiguracion, $idPersona), [
+                $out = $this->error(400, $this->missingCaptureContextMessage($idConfiguracion, $idPersona), [
                     'id_configuracion' => $idConfiguracion ? 'ok' : 'falta',
                     'id_persona' => $idPersona ? 'ok' : 'falta',
                 ]);
+                $out['diagnostico_guardar'] = $diagnostico;
+                $logger->finalizar($out);
+
+                return $out;
             }
 
             $configuracion = EncounterDefinition::findOne($idConfiguracion);
             if (!$configuracion) {
-                return $this->error(400, 'Configuración de encounter no encontrada.');
+                $out = $this->error(400, 'Configuración de encounter no encontrada.');
+                $out['diagnostico_guardar'] = $diagnostico;
+                $logger->finalizar($out);
+
+                return $out;
             }
 
             $paciente = $this->lifecycle->findSubject((int) $idPersona);
             if (!$paciente) {
-                return $this->error(400, 'Paciente no encontrado.');
+                $out = $this->error(400, 'Paciente no encontrado.');
+                $out['diagnostico_guardar'] = $diagnostico;
+                $logger->finalizar($out);
+
+                return $out;
             }
 
             $tx = Yii::$app->db->beginTransaction();
             try {
                 $encounter = $this->resolveEncounter($encounterId, $body, $paciente, $configuracion);
-                $this->persistExtractedData($encounter, $configuracion, $datosExtraidos);
+                $diagnostico['por_modelo'] = $this->persistExtractedData($encounter, $configuracion, $datosExtraidos, $logger);
                 EncounterAutomaticCodingService::codeAndPersistForEncounter($encounter, $datosExtraidos, $configuracion);
                 $encounter = $this->lifecycle->onCaptureDocumented($encounter);
                 // finalize() solo toca status/period_end; reasegurar note tras el ciclo.
@@ -182,35 +247,54 @@ class EncounterDocumentationService extends Component
 
                 $encounter->refresh();
 
-                return [
+                $persistido = [
+                    'note' => trim((string) ($encounter->note ?? '')) !== '',
+                    'reason_text' => trim((string) ($encounter->reason_text ?? '')) !== '',
+                    'reason_text_value' => mb_substr(trim((string) ($encounter->reason_text ?? '')), 0, 120),
+                    'categorias' => array_keys($datosExtraidos),
+                    'conditions' => (int) \common\models\Clinical\Condition::find()
+                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                        ->count(),
+                    'medication_requests' => (int) \common\models\Clinical\MedicationRequest::find()
+                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                        ->count(),
+                    'service_requests' => (int) \common\models\Clinical\ServiceRequest::find()
+                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                        ->count(),
+                    'care_plans' => (int) \common\models\Clinical\CarePlan::find()
+                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                        ->count(),
+                ];
+
+                $out = [
                     '__statusCode' => 200,
                     'success' => true,
                     'message' => 'Encounter guardado correctamente.',
                     'encounter_id' => $encounter->id,
                     'id_consulta' => $encounter->id,
-                    'persistido' => [
-                        'note' => trim((string) ($encounter->note ?? '')) !== '',
-                        'reason_text' => trim((string) ($encounter->reason_text ?? '')) !== '',
-                        'categorias' => array_keys($datosExtraidos),
-                        'conditions' => (int) \common\models\Clinical\Condition::find()
-                            ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
-                            ->count(),
-                        'medication_requests' => (int) \common\models\Clinical\MedicationRequest::find()
-                            ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
-                            ->count(),
-                        'service_requests' => (int) \common\models\Clinical\ServiceRequest::find()
-                            ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
-                            ->count(),
-                    ],
+                    'persistido' => $persistido,
+                    'diagnostico_guardar' => $diagnostico,
+                    'log_id' => $logger->getId(),
                 ];
+                $logger->finalizar($out);
+
+                return $out;
             } catch (\Throwable $e) {
                 $tx->rollBack();
                 throw $e;
             }
         } catch (\Throwable $e) {
             Yii::error($e->getMessage(), __METHOD__);
+            $out = $this->error(500, 'Error al guardar encounter: ' . $e->getMessage());
+            $out['diagnostico_guardar'] = $diagnostico;
+            if ($logger !== null) {
+                $logger->registrar('ERROR', null, $e->getMessage() . "\n" . $e->getTraceAsString(), [
+                    'metodo' => __METHOD__,
+                ]);
+                $logger->finalizar($out);
+            }
 
-            return $this->error(500, 'Error al guardar encounter: ' . $e->getMessage());
+            return $out;
         }
     }
 
@@ -232,32 +316,51 @@ class EncounterDocumentationService extends Component
     }
 
     /**
-     * Análisis completo enviado por el cliente (backup si el stage omitió categorías).
-     *
      * @param array<string, mixed> $body
-     * @return array<string, mixed>
+     * @return array{
+     *   extraidos: array<string, mixed>,
+     *   fuentes: list<string>,
+     *   cache: array<string, mixed>|null
+     * }
      */
-    private function resolveFullAnalysisExtraidos(array $body): array
+    private function resolveFullAnalysisExtraidosWithMeta(array $body): array
     {
         $merged = [];
-        $candidates = [
-            $body['analisis_datos_extraidos'] ?? null,
-            $body['analisisDatosExtraidos'] ?? null,
-        ];
+        $fuentes = [];
+        $candidates = [];
+        $cacheMeta = null;
+
+        if (array_key_exists('analisis_datos_extraidos', $body) || array_key_exists('analisisDatosExtraidos', $body)) {
+            $candidates[] = [
+                'fuente' => 'client_analisis_datos_extraidos',
+                'raw' => $body['analisis_datos_extraidos'] ?? $body['analisisDatosExtraidos'] ?? null,
+            ];
+        }
         $datos = $body['datos'] ?? null;
         if (is_array($datos)) {
-            $candidates[] = $datos['datosExtraidos'] ?? $datos;
+            $candidates[] = [
+                'fuente' => 'client_datos',
+                'raw' => $datos['datosExtraidos'] ?? $datos,
+            ];
         }
 
         $note = $this->resolveCaptureNote($body) ?? '';
-        $cached = EncounterCaptureAnalysisCache::recall($body, $note !== '' ? $note : null);
-        if ($cached !== []) {
-            // Preferir cache servidor al inicio: el backup del cliente puede venir truncado.
-            $candidates = array_merge([$cached], $candidates);
-            Yii::info('encounter.guardar analysis cache servidor disponible', 'encounter-doc');
+        $cacheHit = EncounterCaptureAnalysisCache::recallWithMeta($body, $note !== '' ? $note : null);
+        $cacheMeta = [
+            'fuente' => $cacheHit['fuente'] ?? 'none',
+            'token' => $cacheHit['token'] ?? null,
+            'counts' => self::countCategories($cacheHit['extraidos'] ?? []),
+        ];
+        if (($cacheHit['extraidos'] ?? []) !== []) {
+            // Preferir cache/DB servidor al inicio: el backup del cliente puede venir truncado.
+            array_unshift($candidates, [
+                'fuente' => 'server_' . ($cacheHit['fuente'] ?? 'cache'),
+                'raw' => $cacheHit['extraidos'],
+            ]);
         }
 
-        foreach ($candidates as $raw) {
+        foreach ($candidates as $candidate) {
+            $raw = $candidate['raw'];
             if (is_string($raw)) {
                 $decoded = json_decode($raw, true);
                 $raw = is_array($decoded) ? $decoded : null;
@@ -271,10 +374,70 @@ class EncounterDocumentationService extends Component
             if (!self::datosExtraidosLooksLikeCategories($raw)) {
                 continue;
             }
+            $before = self::countCategories($merged);
             $merged = self::enrichExtraidosFromFullAnalysis($merged, $raw);
+            $after = self::countCategories($merged);
+            if ($after !== $before) {
+                $fuentes[] = (string) $candidate['fuente'];
+            }
         }
 
-        return $merged;
+        return [
+            'extraidos' => $merged,
+            'fuentes' => array_values(array_unique($fuentes)),
+            'cache' => $cacheMeta,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return array<string, mixed>
+     */
+    private function resolveFullAnalysisExtraidos(array $body): array
+    {
+        return $this->resolveFullAnalysisExtraidosWithMeta($body)['extraidos'];
+    }
+
+    /**
+     * @param array<string, mixed> $extraidos
+     * @return array<string, int>
+     */
+    private static function countCategories(array $extraidos): array
+    {
+        $counts = [];
+        foreach ($extraidos as $key => $rows) {
+            if (!is_string($key) || $key === '' || $key === 'Error') {
+                continue;
+            }
+            $counts[$key] = self::countExtractionRows($rows);
+        }
+
+        return $counts;
+    }
+
+    /**
+     * @param array<string, mixed> $extraidos
+     * @return array<string, mixed>
+     */
+    private static function previewExtraidos(array $extraidos): array
+    {
+        $out = [];
+        foreach ($extraidos as $key => $rows) {
+            if (!is_string($key) || $key === 'Error') {
+                continue;
+            }
+            if (!is_array($rows)) {
+                $out[$key] = $rows;
+                continue;
+            }
+            if (self::isListArray($rows)) {
+                $out[$key] = array_slice($rows, 0, 3);
+            } else {
+                $out[$key] = $rows;
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -612,45 +775,70 @@ class EncounterDocumentationService extends Component
 
     /**
      * @param array<string, mixed> $datosExtraidos
+     * @return array<string, array<string, mixed>>
      */
     private function persistExtractedData(
         Encounter $encounter,
         EncounterDefinition $configuracion,
-        array $datosExtraidos
-    ): void {
+        array $datosExtraidos,
+        ?EncounterGuardarLogger $logger = null
+    ): array {
         $this->assertEncounterPersisted($encounter);
         $categorias = EncounterDefinition::getCategoriasParaPrompt($configuracion);
         $carePlan = null;
+        $stats = [];
 
         foreach ($categorias as $categoria) {
-            $modelo = $categoria['modelo'] ?? null;
-            if (!$modelo) {
+            $modelo = (string) ($categoria['modelo'] ?? '');
+            $titulo = (string) ($categoria['titulo'] ?? '');
+            if ($modelo === '') {
                 continue;
             }
+            $stat = [
+                'titulo' => $titulo,
+                'payload' => false,
+                'rows' => 0,
+                'accion' => 'skip',
+                'detalle' => null,
+            ];
             $payload = $this->resolvePayloadForCategoria($datosExtraidos, $categoria);
             if ($payload === null) {
+                $stat['detalle'] = 'sin payload (keys=' . implode(',', array_keys($datosExtraidos)) . ')';
+                $stats[$modelo] = $stat;
+                $logger?->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
                 Yii::info(
                     'encounter.guardar sin payload para modelo=' . $modelo
-                    . ' titulo=' . ($categoria['titulo'] ?? '')
+                    . ' titulo=' . $titulo
                     . ' keys=' . implode(',', array_keys($datosExtraidos)),
                     'encounter-doc'
                 );
                 continue;
             }
+            $stat['payload'] = true;
+            $stat['rows'] = self::countExtractionRows($payload);
             if (!$this->specialtyRegistry->isModelAllowed($configuracion, $modelo)) {
+                $stat['accion'] = 'blocked_specialty';
+                $stats[$modelo] = $stat;
+                $logger?->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
                 continue;
             }
 
             switch ($modelo) {
                 case 'ConsultaMotivos':
                     $this->persistMotivos($encounter, $payload);
+                    $stat['accion'] = 'motivos';
+                    $stat['detalle'] = 'reason_text=' . mb_substr(trim((string) ($encounter->reason_text ?? '')), 0, 80);
                     break;
                 case 'DiagnosticoConsulta':
                     $this->persistConditions($encounter, $payload);
+                    $stat['accion'] = 'conditions_sin_codigo_omitidas_coding_auto';
                     break;
                 case 'ConsultaMedicamentos':
                     $medicationRows = MedicationRequestService::normalizeExtractedMedicationPayload($payload);
+                    $stat['rows'] = count($medicationRows);
                     if ($medicationRows === []) {
+                        $stat['accion'] = 'medicacion_sin_filas';
+                        $stat['detalle'] = 'payload_type=' . gettype($payload);
                         Yii::warning(
                             'encounter.guardar Medicación/ConsultaMedicamentos sin filas normalizables. payload_type='
                             . gettype($payload),
@@ -663,10 +851,20 @@ class EncounterDocumentationService extends Component
                             (int) $encounter->subject_persona_id,
                             (int) $encounter->id
                         );
+                        $stat['care_plan_id'] = $carePlan->id ?? null;
                     } catch (\Throwable $e) {
+                        $stat['detalle'] = 'care_plan_error=' . $e->getMessage();
                         Yii::error('CarePlan acute no creado: ' . $e->getMessage(), 'encounter-doc');
                     }
+                    $before = (int) \common\models\Clinical\MedicationRequest::find()
+                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                        ->count();
                     $this->persistMedications($encounter, $carePlan, $medicationRows);
+                    $after = (int) \common\models\Clinical\MedicationRequest::find()
+                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                        ->count();
+                    $stat['accion'] = 'medicacion';
+                    $stat['created'] = max(0, $after - $before);
                     break;
                 case 'ConsultaPracticas':
                 case 'ConsultaIndicaciones':
@@ -677,42 +875,69 @@ class EncounterDocumentationService extends Component
                                 (int) $encounter->subject_persona_id,
                                 (int) $encounter->id
                             );
+                            $stat['care_plan_id'] = $carePlan->id ?? null;
                         } catch (\Throwable $e) {
+                            $stat['detalle'] = 'care_plan_error=' . $e->getMessage();
                             Yii::error('CarePlan acute no creado: ' . $e->getMessage(), 'encounter-doc');
                         }
                     }
+                    $before = (int) \common\models\Clinical\ServiceRequest::find()
+                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                        ->count();
                     $this->persistServiceRequests($encounter, $payload, $modelo, $carePlan);
+                    $after = (int) \common\models\Clinical\ServiceRequest::find()
+                        ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                        ->count();
+                    $stat['accion'] = $modelo === 'ConsultaIndicaciones' ? 'indicaciones' : 'practicas';
+                    $stat['created'] = max(0, $after - $before);
                     break;
                 case 'ConsultaDerivaciones':
                     $this->persistServiceRequests($encounter, $payload, $modelo, null);
+                    $stat['accion'] = 'derivaciones';
                     break;
                 case 'ConsultaOdontologiaPracticas':
                     $carePlan = $this->odontology->persistPractices($encounter, $payload, $carePlan);
+                    $stat['accion'] = 'odontologia_practicas';
                     break;
                 case 'ConsultaOdontologiaDiagnosticos':
                     $this->odontology->persistDiagnostics($encounter, $payload);
+                    $stat['accion'] = 'odontologia_dx';
                     break;
                 case 'ConsultaOdontologiaEstados':
                     $this->odontology->persistToothStates($encounter, $payload);
+                    $stat['accion'] = 'odontologia_estados';
                     break;
                 case 'ConsultaPracticasOftalmologia':
                 case 'ConsultaPracticasOftalmologiaEstudios':
                     $this->ophthalmology->persistPractices($encounter, $payload);
+                    $stat['accion'] = 'oftalmologia';
                     break;
                 case 'ConsultasRecetaLentes':
                     $this->ophthalmology->persistLensPrescription($encounter, $payload);
+                    $stat['accion'] = 'receta_lentes';
                     break;
                 case 'ConsultaBalanceHidrico':
                     $this->persistFluidBalances($encounter, $payload);
+                    $stat['accion'] = 'balance_hidrico';
                     break;
                 case 'ConsultaRegimen':
                     $this->persistRegimens($encounter, $payload);
+                    $stat['accion'] = 'regimen';
                     break;
                 case 'ConsultaSuministroMedicamento':
                     $this->persistMedicationSupplies($encounter, $payload);
+                    $stat['accion'] = 'suministro';
+                    break;
+                default:
+                    $stat['accion'] = 'modelo_no_manejado';
                     break;
             }
+
+            $stats[$modelo] = $stat;
+            $logger?->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
         }
+
+        return $stats;
     }
 
     /**

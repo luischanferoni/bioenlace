@@ -205,6 +205,16 @@ class ConsultaProcesamientoService extends Component
             }
             if ($analysisCacheToken !== null) {
                 $resultado['analysis_cache_token'] = $analysisCacheToken;
+                $logger->registrar('CACHE', null, [
+                    'analysis_cache_token' => $analysisCacheToken,
+                    'categorias' => array_keys($extraidosForCache),
+                    'counts' => array_map(
+                        static function ($rows) {
+                            return is_array($rows) ? count($rows) : 0;
+                        },
+                        $extraidosForCache
+                    ),
+                ], ['metodo' => 'EncounterCaptureAnalysisCache::store']);
             }
 
             $logger->finalizar($resultado);

@@ -3,7 +3,8 @@ version: 1
 
 action_name: "Ver mis atenciones"
 description: "Ver tus atenciones y sus resúmenes."
-# Permiso base del paciente (API listar); las UIs hijas heredan vía migración RBAC.
+# Permiso base (listar). Detalle/última/UI/HTTP se otorgan al paciente en migración RBAC
+# (m260715_120000…): el push móvil llama ver-resumen sin X-Flow-Intent-Id.
 rbac_route: "/api/clinical/encounter-patient-summary/listar-atenciones-como-paciente"
 keywords:
   - mis atenciones

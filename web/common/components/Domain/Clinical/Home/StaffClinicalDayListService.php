@@ -128,11 +128,7 @@ final class StaffClinicalDayListService
                 array_unshift($formattedTurnos, [
                     'id' => 999999,
                     'id_persona' => 920779,
-                    'paciente' => [
-                        'id' => $pacientePrueba->id_persona,
-                        'nombre_completo' => $pacientePrueba->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D),
-                        'documento' => $pacientePrueba->documento,
-                    ],
+                    'paciente' => self::formatPacienteCardPayload($pacientePrueba),
                     'fecha' => $fecha,
                     'hora' => '10:00',
                     'servicio' => $servicioPrueba,
@@ -255,13 +251,9 @@ final class StaffClinicalDayListService
             'id' => $turno->id_turnos,
             'id_persona' => $turno->id_persona,
             'id_profesional_efector_servicio' => $pesTurno,
-            'paciente' => [
-                'id' => $paciente ? $paciente->id_persona : null,
-                'nombre_completo' => $paciente ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin paciente',
-                'documento' => $paciente ? $paciente->documento : null,
-            ],
+            'paciente' => self::formatPacienteCardPayload($paciente instanceof Persona ? $paciente : null),
             'fecha' => $turno->fecha,
-            'hora' => $turno->hora,
+            'hora' => self::formatHoraSinSegundos((string) ($turno->hora ?? '')),
             'servicio' => $servicioNombre,
             'servicio_detalle' => $servicioObj,
             'id_servicio_asignado' => $turno->id_servicio_asignado,
@@ -280,5 +272,61 @@ final class StaffClinicalDayListService
         }
 
         return $row;
+    }
+
+    /**
+     * Nombre sin DNI; edad en campo dedicado y en el display (p. ej. "Pérez, Ana · 45 años").
+     *
+     * @return array{id: int|null, nombre_completo: string, documento: string|null, edad: int|null}
+     */
+    private static function formatPacienteCardPayload(?Persona $paciente): array
+    {
+        if ($paciente === null) {
+            return [
+                'id' => null,
+                'nombre_completo' => 'Sin paciente',
+                'documento' => null,
+                'edad' => null,
+            ];
+        }
+
+        $edad = self::resolveEdadSegura($paciente);
+        $nombre = $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N);
+        if ($edad !== null) {
+            $nombre .= ' · ' . $edad . ' años';
+        }
+
+        return [
+            'id' => $paciente->id_persona,
+            'nombre_completo' => $nombre,
+            'documento' => $paciente->documento,
+            'edad' => $edad,
+        ];
+    }
+
+    private static function resolveEdadSegura(Persona $paciente): ?int
+    {
+        $fn = trim((string) ($paciente->fecha_nacimiento ?? ''));
+        if ($fn === '' || !preg_match('/^\d{4}-\d{2}-\d{2}/', $fn)) {
+            return null;
+        }
+        try {
+            return (int) $paciente->getEdad();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private static function formatHoraSinSegundos(string $hora): string
+    {
+        $hora = trim($hora);
+        if ($hora === '') {
+            return '';
+        }
+        if (preg_match('/^(\d{1,2}:\d{2})/', $hora, $m)) {
+            return $m[1];
+        }
+
+        return $hora;
     }
 }

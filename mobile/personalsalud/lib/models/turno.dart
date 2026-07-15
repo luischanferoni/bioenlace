@@ -38,6 +38,13 @@ class Turno {
     return int.tryParse('$v') ?? 0;
   }
 
+  static String _horaSinSegundos(String hora) {
+    final trimmed = hora.trim();
+    if (trimmed.isEmpty) return '';
+    final match = RegExp(r'^(\d{1,2}:\d{2})').firstMatch(trimmed);
+    return match?.group(1) ?? trimmed;
+  }
+
   // Crear desde JSON de la API
   factory Turno.fromJson(Map<String, dynamic> json) {
     final idVal = json['id'] ?? json['id_turnos'];
@@ -48,7 +55,7 @@ class Turno {
           ? Paciente.fromJson(json['paciente'] as Map<String, dynamic>)
           : null,
       fecha: json['fecha'] as String,
-      hora: json['hora'] as String,
+      hora: _horaSinSegundos(json['hora'] as String? ?? ''),
       servicio: json['servicio'] as String?,
       idServicioAsignado: json['id_servicio_asignado'] != null
           ? _asInt(json['id_servicio_asignado'])
@@ -107,18 +114,28 @@ class Paciente {
   final int? id;
   final String nombreCompleto;
   final String? documento;
+  final int? edad;
 
   Paciente({
     this.id,
     required this.nombreCompleto,
     this.documento,
+    this.edad,
   });
 
   factory Paciente.fromJson(Map<String, dynamic> json) {
+    final edadRaw = json['edad'];
+    int? edad;
+    if (edadRaw is int) {
+      edad = edadRaw;
+    } else if (edadRaw != null) {
+      edad = int.tryParse('$edadRaw');
+    }
     return Paciente(
       id: json['id'] as int?,
       nombreCompleto: json['nombre_completo'] as String? ?? 'Sin paciente',
       documento: json['documento'] as String?,
+      edad: edad,
     );
   }
 
@@ -126,6 +143,7 @@ class Paciente {
         'id': id,
         'nombre_completo': nombreCompleto,
         'documento': documento,
+        'edad': edad,
       };
 }
 

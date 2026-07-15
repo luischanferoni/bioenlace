@@ -17,6 +17,13 @@
     while (el && el.firstChild) el.removeChild(el.firstChild);
   }
 
+  function formatHoraSinSegundos(hora) {
+    var s = String(hora || '').trim();
+    if (!s) return '';
+    var m = s.match(/^(\d{1,2}:\d{2})/);
+    return m ? m[1] : s;
+  }
+
   function showError(errorEl, msg) {
     if (!errorEl) return;
     errorEl.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + String(msg || 'Error');
@@ -151,7 +158,7 @@
     function fillTurnoCard(colEl, t) {
       colEl.querySelector('[data-field="nombre"]').textContent =
         (t.paciente && t.paciente.nombre_completo) ? t.paciente.nombre_completo : 'Sin paciente';
-      colEl.querySelector('[data-field="hora"]').textContent = t.hora || '';
+      colEl.querySelector('[data-field="hora"]').textContent = formatHoraSinSegundos(t.hora || '');
       colEl.querySelector('[data-field="servicio"]').textContent = t.servicio || 'Sin servicio';
 
       var badge = colEl.querySelector('[data-field="estado-badge"]');

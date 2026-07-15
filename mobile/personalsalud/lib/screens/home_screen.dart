@@ -1000,8 +1000,6 @@ class _HomeScreenState extends State<HomeScreen> {
             style: BioTypography.title,
           ),
           BioSpacing.gapH(BioSpacing.xs),
-          Text('Fecha: ${turno.fecha}', style: BioTypography.bodySm),
-          BioSpacing.gapH(BioSpacing.xs),
           Text('Hora: ${turno.hora}', style: BioTypography.bodySm),
           BioSpacing.gapH(BioSpacing.sm),
           Text(

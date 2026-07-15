@@ -127,12 +127,24 @@ foreach ($turnos as $turno) { ?>
           <span>
             <h4>#<?php echo $i; ?></h4>
           </span>
-          <div style="font-size: 17px"><i class="bi bi-clock"></i></i> <?= $turno->hora ?></div>
+          <div style="font-size: 17px"><i class="bi bi-clock"></i></i> <?= htmlspecialchars(substr((string) $turno->hora, 0, 5), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') ?></div>
         </div>
 
         <div class="<?php echo ($profesional != '') ? 'col-4' : 'col-7' ?>">
           <h4 class="mb-2"><?php echo $turno->paciente->apellido . ', ' . $turno->paciente->nombre; ?></h4>
-          <h4 class="mb-2">DNI: <?php echo $turno->paciente->documento; ?></h4>
+          <?php
+            $edadEspera = null;
+            if (!empty($turno->paciente->fecha_nacimiento)) {
+              try {
+                $edadEspera = (int) $turno->paciente->getEdad();
+              } catch (\Throwable $e) {
+                $edadEspera = null;
+              }
+            }
+          ?>
+          <?php if ($edadEspera !== null): ?>
+          <h4 class="mb-2">Edad: <?php echo $edadEspera; ?> años</h4>
+          <?php endif; ?>
           <?php 
               if($turno->id_consulta_referencia != 0):
                 echo '<h4 class="mb-2"><span class="badge bg-info">Referencia</span></h4>';
@@ -146,7 +158,11 @@ foreach ($turnos as $turno) { ?>
         <div class="col-3">
         <?php if($profesional != ''){?>
           <div class="col-xs-4">
-            <h4>DNI: <?php echo $turno->paciente->documento;?> - HC: <?php echo $turno->paciente->obtenerNHistoriaClinica(Yii::$app->user->getIdEfector());?></h4>
+            <h4><?php
+              if ($edadEspera !== null) {
+                echo 'Edad: ' . (int) $edadEspera . ' años - ';
+              }
+            ?>HC: <?php echo $turno->paciente->obtenerNHistoriaClinica(Yii::$app->user->getIdEfector());?></h4>
           </div>
         <?php } else { ?>
             <?php echo Html::a(

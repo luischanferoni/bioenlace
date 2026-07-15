@@ -378,7 +378,7 @@ final class EncounterCaptureReviewPresenter
             }
         }
 
-        foreach (['termino', 'descripcion', 'texto', 'nombre', 'display', 'medicamento', 'label'] as $key) {
+        foreach (['termino', 'descripcion', 'texto', 'nombre', 'display', 'medicamento', 'label', 'Nombre del medicamento', 'Indicacion', 'Practica'] as $key) {
             $value = trim((string) ($map[$key] ?? ''));
             if ($value !== '') {
                 return $value;

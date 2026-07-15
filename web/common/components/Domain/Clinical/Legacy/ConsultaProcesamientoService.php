@@ -8,6 +8,7 @@ use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Workflow\ClinicalOperationalContextResolver;
+use common\components\Domain\Clinical\Workflow\EncounterCaptureAnalysisCache;
 use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapService;
 use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessor;
@@ -181,6 +182,29 @@ class ConsultaProcesamientoService extends Component
             if ($linkedEncounter !== null) {
                 $resultado['encounter_id'] = $linkedEncounter->id;
                 $resultado['id_consulta'] = $linkedEncounter->id;
+            }
+
+            $cacheBody = $body;
+            if ($subjectPersonaId !== null && $subjectPersonaId > 0) {
+                $cacheBody['id_persona'] = $subjectPersonaId;
+                $cacheBody['subject_persona_id'] = $subjectPersonaId;
+            }
+            if ($linkedEncounter !== null) {
+                $cacheBody['encounter_id'] = (int) $linkedEncounter->id;
+                $cacheBody['id_consulta'] = (int) $linkedEncounter->id;
+            }
+            $extraidosForCache = self::resolveDatosExtraidos($datos);
+            $analysisCacheToken = EncounterCaptureAnalysisCache::store(
+                $cacheBody,
+                $extraidosForCache,
+                $textoProcesado !== '' ? $textoProcesado : $textoConsulta
+            );
+            // También indexar por texto original tipado (el guardar a veces no reenvía el procesado).
+            if ($textoConsulta !== '' && $textoConsulta !== $textoProcesado) {
+                EncounterCaptureAnalysisCache::store($cacheBody, $extraidosForCache, $textoConsulta);
+            }
+            if ($analysisCacheToken !== null) {
+                $resultado['analysis_cache_token'] = $analysisCacheToken;
             }
 
             $logger->finalizar($resultado);

@@ -129,7 +129,7 @@ class EncounterDocumentationService extends Component
                 }
             }
 
-            // Si el stage quedó incompleto, completar con el análisis completo (backup).
+            // Si el stage quedó incompleto, completar con el análisis completo (backup cliente + cache servidor).
             $fullExtraidos = $this->resolveFullAnalysisExtraidos($body);
             if ($fullExtraidos !== []) {
                 $datosExtraidos = self::enrichExtraidosFromFullAnalysis($datosExtraidos, $fullExtraidos);
@@ -137,7 +137,8 @@ class EncounterDocumentationService extends Component
 
             Yii::info(
                 'encounter.guardar categorias=' . implode(',', array_keys($datosExtraidos))
-                . ' note_body=' . ($this->resolveCaptureNote($body) !== null ? 'si' : 'no'),
+                . ' note_body=' . ($this->resolveCaptureNote($body) !== null ? 'si' : 'no')
+                . ' full_backup=' . ($fullExtraidos !== [] ? 'si' : 'no'),
                 'encounter-doc'
             );
 
@@ -238,6 +239,7 @@ class EncounterDocumentationService extends Component
      */
     private function resolveFullAnalysisExtraidos(array $body): array
     {
+        $merged = [];
         $candidates = [
             $body['analisis_datos_extraidos'] ?? null,
             $body['analisisDatosExtraidos'] ?? null,
@@ -246,6 +248,15 @@ class EncounterDocumentationService extends Component
         if (is_array($datos)) {
             $candidates[] = $datos['datosExtraidos'] ?? $datos;
         }
+
+        $note = $this->resolveCaptureNote($body) ?? '';
+        $cached = EncounterCaptureAnalysisCache::recall($body, $note !== '' ? $note : null);
+        if ($cached !== []) {
+            // Preferir cache servidor al inicio: el backup del cliente puede venir truncado.
+            $candidates = array_merge([$cached], $candidates);
+            Yii::info('encounter.guardar analysis cache servidor disponible', 'encounter-doc');
+        }
+
         foreach ($candidates as $raw) {
             if (is_string($raw)) {
                 $decoded = json_decode($raw, true);
@@ -257,16 +268,17 @@ class EncounterDocumentationService extends Component
             if (isset($raw['datosExtraidos']) && is_array($raw['datosExtraidos'])) {
                 $raw = $raw['datosExtraidos'];
             }
-            if (self::datosExtraidosLooksLikeCategories($raw)) {
-                return $raw;
+            if (!self::datosExtraidosLooksLikeCategories($raw)) {
+                continue;
             }
+            $merged = self::enrichExtraidosFromFullAnalysis($merged, $raw);
         }
 
-        return [];
+        return $merged;
     }
 
     /**
-     * Completa categorías ausentes/vacías del stage con el análisis completo.
+     * Completa categorías ausentes/vacías/truncadas del stage con el análisis completo.
      *
      * @param array<string, mixed> $staged
      * @param array<string, mixed> $full
@@ -274,6 +286,13 @@ class EncounterDocumentationService extends Component
      */
     private static function enrichExtraidosFromFullAnalysis(array $staged, array $full): array
     {
+        $stagedByNorm = [];
+        foreach ($staged as $key => $_) {
+            if (is_string($key) && $key !== '') {
+                $stagedByNorm[self::normalizeExtractionKeyStatic($key)] = $key;
+            }
+        }
+
         foreach ($full as $key => $value) {
             if (!is_string($key) || $key === '' || $key === 'Error') {
                 continue;
@@ -281,13 +300,68 @@ class EncounterDocumentationService extends Component
             if (!is_array($value) || $value === []) {
                 continue;
             }
-            $current = $staged[$key] ?? null;
+            $norm = self::normalizeExtractionKeyStatic($key);
+            $stagedKey = $stagedByNorm[$norm] ?? $key;
+            $current = $staged[$stagedKey] ?? $staged[$key] ?? null;
             if ($current === null || $current === [] || $current === '') {
+                $staged[$key] = $value;
+                continue;
+            }
+            // Stage truncado (solo diagnóstico) vs análisis completo: preferir el más rico.
+            if (self::countExtractionRows($value) > self::countExtractionRows($current)) {
                 $staged[$key] = $value;
             }
         }
 
         return $staged;
+    }
+
+    /**
+     * @param mixed $payload
+     */
+    private static function countExtractionRows($payload): int
+    {
+        if (!is_array($payload) || $payload === []) {
+            return 0;
+        }
+        if (self::isListArray($payload)) {
+            return count($payload);
+        }
+
+        return 1;
+    }
+
+    /**
+     * @param array<mixed> $arr
+     */
+    private static function isListArray(array $arr): bool
+    {
+        if (function_exists('array_is_list')) {
+            return array_is_list($arr);
+        }
+        $i = 0;
+        foreach ($arr as $k => $_) {
+            if ($k !== $i) {
+                return false;
+            }
+            $i++;
+        }
+
+        return true;
+    }
+
+    private function normalizeExtractionKey(string $key): string
+    {
+        return self::normalizeExtractionKeyStatic($key);
+    }
+
+    private static function normalizeExtractionKeyStatic(string $key): string
+    {
+        $folded = strtr(mb_strtolower(trim($key), 'UTF-8'), [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
+        ]);
+
+        return preg_replace('/\s+/', '', $folded) ?? $folded;
     }
 
     /**
@@ -555,6 +629,12 @@ class EncounterDocumentationService extends Component
             }
             $payload = $this->resolvePayloadForCategoria($datosExtraidos, $categoria);
             if ($payload === null) {
+                Yii::info(
+                    'encounter.guardar sin payload para modelo=' . $modelo
+                    . ' titulo=' . ($categoria['titulo'] ?? '')
+                    . ' keys=' . implode(',', array_keys($datosExtraidos)),
+                    'encounter-doc'
+                );
                 continue;
             }
             if (!$this->specialtyRegistry->isModelAllowed($configuracion, $modelo)) {
@@ -671,15 +751,6 @@ class EncounterDocumentationService extends Component
         }
 
         return null;
-    }
-
-    private function normalizeExtractionKey(string $key): string
-    {
-        $folded = strtr(mb_strtolower(trim($key), 'UTF-8'), [
-            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
-        ]);
-
-        return preg_replace('/\s+/', '', $folded) ?? $folded;
     }
 
     /**

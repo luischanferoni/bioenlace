@@ -46,8 +46,8 @@
                 if (!item || !item.id) {
                     return;
                 }
-                var clinical = !item.source || item.source === 'clinical';
-                if (stagedIdSet.has(item.id) || clinical) {
+                // Incluir si está tildado. source=ai/clinical es solo señal UI.
+                if (stagedIdSet.has(item.id)) {
                     rows.push(
                         item.payload && typeof item.payload === 'object'
                             ? item.payload
@@ -216,7 +216,7 @@
         } else {
             parts.push('<div class="text-uppercase small text-muted mb-2">Análisis y sugerencias de la IA</div>');
             parts.push(
-                '<p class="small text-muted mb-2">Los ítems del texto clínico vienen tildados. Los aportes de la IA quedan opt-in.</p>'
+                '<p class="small text-muted mb-2">Los ítems vienen tildados por defecto. Clic para incluirlos o quitarlos del guardado.</p>'
             );
             review.categories.forEach(function (cat) {
                 parts.push('<div class="mb-3">');

@@ -1106,6 +1106,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         parentId: widget.consultParentId,
         datosExtraidos: extraidos,
         analisisDatosExtraidos: analisisBackup,
+        analysisCacheToken: _lastAnalysis!['analysis_cache_token']?.toString(),
         textoOriginal: textoOriginal,
         textoProcesado: textoProcesado,
         idConfiguracion: idConfiguracion,

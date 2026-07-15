@@ -119,6 +119,7 @@ class EncounterCaptureApi {
     required int idPersona,
     required Map<String, dynamic> datosExtraidos,
     Map<String, dynamic>? analisisDatosExtraidos,
+    String? analysisCacheToken,
     String? parent,
     int? parentId,
     int? idConfiguracion,
@@ -135,6 +136,8 @@ class EncounterCaptureApi {
       'datosExtraidos': datosExtraidos,
       if (analisisDatosExtraidos != null && analisisDatosExtraidos.isNotEmpty)
         'analisis_datos_extraidos': analisisDatosExtraidos,
+      if (analysisCacheToken != null && analysisCacheToken.isNotEmpty)
+        'analysis_cache_token': analysisCacheToken,
       if (parent != null) 'parent': parent,
       if (parentId != null) 'parent_id': parentId,
       if (idConfiguracion != null) 'id_configuracion': idConfiguracion,

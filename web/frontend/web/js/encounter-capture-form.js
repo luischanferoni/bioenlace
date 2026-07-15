@@ -711,14 +711,8 @@
 
         var formData = new FormData(this.form);
         formData.set('datosExtraidos', JSON.stringify(datos));
-        if (this.captureReview && window.EncounterCaptureReview) {
-            formData.set(
-                'analisis_datos_extraidos',
-                JSON.stringify(
-                    window.EncounterCaptureReview.buildFullAnalisisExtraidos(this.captureReview)
-                )
-            );
-        } else if (
+        // Preferir extracción IA completa (no el stage del capture_review).
+        if (
             this.lastAnalysisPayload &&
             this.lastAnalysisPayload.datos &&
             this.lastAnalysisPayload.datos.datosExtraidos
@@ -726,6 +720,19 @@
             formData.set(
                 'analisis_datos_extraidos',
                 JSON.stringify(this.lastAnalysisPayload.datos.datosExtraidos)
+            );
+        } else if (this.captureReview && window.EncounterCaptureReview) {
+            formData.set(
+                'analisis_datos_extraidos',
+                JSON.stringify(
+                    window.EncounterCaptureReview.buildFullAnalisisExtraidos(this.captureReview)
+                )
+            );
+        }
+        if (this.lastAnalysisPayload && this.lastAnalysisPayload.analysis_cache_token) {
+            formData.set(
+                'analysis_cache_token',
+                this.lastAnalysisPayload.analysis_cache_token
             );
         }
         formData.set(

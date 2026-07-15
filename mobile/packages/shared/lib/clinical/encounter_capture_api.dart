@@ -118,6 +118,7 @@ class EncounterCaptureApi {
   Future<Map<String, dynamic>> guardar({
     required int idPersona,
     required Map<String, dynamic> datosExtraidos,
+    Map<String, dynamic>? analisisDatosExtraidos,
     String? parent,
     int? parentId,
     int? idConfiguracion,
@@ -132,6 +133,8 @@ class EncounterCaptureApi {
       'texto_original': textoOriginal,
       'texto_procesado': textoProcesado,
       'datosExtraidos': datosExtraidos,
+      if (analisisDatosExtraidos != null && analisisDatosExtraidos.isNotEmpty)
+        'analisis_datos_extraidos': analisisDatosExtraidos,
       if (parent != null) 'parent': parent,
       if (parentId != null) 'parent_id': parentId,
       if (idConfiguracion != null) 'id_configuracion': idConfiguracion,

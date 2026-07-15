@@ -46,7 +46,8 @@
                 if (!item || !item.id) {
                     return;
                 }
-                if (stagedIdSet.has(item.id)) {
+                var clinical = !item.source || item.source === 'clinical';
+                if (stagedIdSet.has(item.id) || clinical) {
                     rows.push(
                         item.payload && typeof item.payload === 'object'
                             ? item.payload
@@ -62,6 +63,21 @@
             }
         });
         return out;
+    }
+
+    function buildFullAnalisisExtraidos(review) {
+        var all = new Set();
+        if (!review || !review.categories) {
+            return {};
+        }
+        review.categories.forEach(function (cat) {
+            (cat.items || []).forEach(function (item) {
+                if (item && item.id) {
+                    all.add(item.id);
+                }
+            });
+        });
+        return buildDatosExtraidos(review, all);
     }
 
     function collectStagedIds(root) {
@@ -274,6 +290,7 @@
         bindItemToggles: bindItemToggles,
         collectStagedIds: collectStagedIds,
         buildDatosExtraidos: buildDatosExtraidos,
+        buildFullAnalisisExtraidos: buildFullAnalisisExtraidos,
         canConfirm: canConfirm,
         defaultStagedIds: defaultStagedIds,
         hasExtractedContent: hasExtractedContent,

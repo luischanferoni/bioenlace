@@ -310,6 +310,18 @@ class EncounterCaptureAnalysis {
     }
     return out;
   }
+
+  /// Ítems anclados al texto clínico: siempre deben persistirse (no depender solo del stage UI).
+  Set<String> get clinicalItemIds => allItems
+      .where((e) => e.isFromClinicalText)
+      .map((e) => e.id)
+      .toSet();
+
+  /// Stage efectivo = selección del usuario + todo lo clínico del texto.
+  Set<String> effectiveSaveItemIds(Set<String> stagedIds) => {
+        ...stagedIds,
+        ...clinicalItemIds,
+      };
 }
 
 class EncounterCaptureCategory {

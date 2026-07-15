@@ -1082,11 +1082,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
       return;
     }
-    final extraidos = review.toDatosExtraidos(_stagedItemIds);
+    final saveIds = review.effectiveSaveItemIds(_stagedItemIds);
+    final extraidos = review.toDatosExtraidos(saveIds);
+    // Backup: extracción completa del analizar (el backend completa categorías omitidas).
+    final analisisBackup = _resolveAnalisisDatosExtraidos(_lastAnalysis!);
     final textoOriginal =
         (_lastAnalysis!['texto_original'] ?? review.textoOriginal).toString();
     final textoProcesado = (_lastAnalysis!['texto_procesado'] ??
             review.textoProcesado ??
+            _draftText ??
             textoOriginal)
         .toString();
     final idConfiguracion = _lastAnalysis!['id_configuracion'] is int
@@ -1105,6 +1109,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         parent: widget.consultParent,
         parentId: widget.consultParentId,
         datosExtraidos: extraidos,
+        analisisDatosExtraidos: analisisBackup,
         textoOriginal: textoOriginal,
         textoProcesado: textoProcesado,
         idConfiguracion: idConfiguracion,
@@ -1120,6 +1125,27 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  Map<String, dynamic>? _resolveAnalisisDatosExtraidos(Map<String, dynamic> analysis) {
+    final datos = analysis['datos'];
+    if (datos is Map) {
+      final map = Map<String, dynamic>.from(datos);
+      final inner = map['datosExtraidos'];
+      if (inner is Map) {
+        return Map<String, dynamic>.from(inner);
+      }
+      if (map.keys.any((k) => k != 'Error')) {
+        return map;
+      }
+    }
+    final review = _captureReview;
+    if (review != null && review.hasExtractedContent) {
+      return review.toDatosExtraidos(
+        review.allItems.map((e) => e.id).toSet(),
+      );
+    }
+    return null;
   }
 
   Future<void> _enviarConsulta() async {

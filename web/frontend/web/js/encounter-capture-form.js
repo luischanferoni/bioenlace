@@ -711,6 +711,23 @@
 
         var formData = new FormData(this.form);
         formData.set('datosExtraidos', JSON.stringify(datos));
+        if (this.captureReview && window.EncounterCaptureReview) {
+            formData.set(
+                'analisis_datos_extraidos',
+                JSON.stringify(
+                    window.EncounterCaptureReview.buildFullAnalisisExtraidos(this.captureReview)
+                )
+            );
+        } else if (
+            this.lastAnalysisPayload &&
+            this.lastAnalysisPayload.datos &&
+            this.lastAnalysisPayload.datos.datosExtraidos
+        ) {
+            formData.set(
+                'analisis_datos_extraidos',
+                JSON.stringify(this.lastAnalysisPayload.datos.datosExtraidos)
+            );
+        }
         formData.set(
             'texto_original',
             this.lastAnalysisPayload.texto_original || this.draftText || this.textarea.value
@@ -719,6 +736,7 @@
             'texto_procesado',
             this.lastAnalysisPayload.texto_procesado ||
                 (this.captureReview && this.captureReview.texto_procesado) ||
+                this.draftText ||
                 this.textarea.value
         );
         if (typeof window.appendPerTabToForm === 'function') {

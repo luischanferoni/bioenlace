@@ -129,6 +129,12 @@ class EncounterDocumentationService extends Component
                 }
             }
 
+            // Si el stage quedó incompleto, completar con el análisis completo (backup).
+            $fullExtraidos = $this->resolveFullAnalysisExtraidos($body);
+            if ($fullExtraidos !== []) {
+                $datosExtraidos = self::enrichExtraidosFromFullAnalysis($datosExtraidos, $fullExtraidos);
+            }
+
             Yii::info(
                 'encounter.guardar categorias=' . implode(',', array_keys($datosExtraidos))
                 . ' note_body=' . ($this->resolveNonEmptyBodyText($body, ['texto_procesado', 'observacion', 'texto_original']) !== null ? 'si' : 'no'),
@@ -171,12 +177,28 @@ class EncounterDocumentationService extends Component
 
                 $tx->commit();
 
+                $encounter->refresh();
+
                 return [
                     '__statusCode' => 200,
                     'success' => true,
                     'message' => 'Encounter guardado correctamente.',
                     'encounter_id' => $encounter->id,
                     'id_consulta' => $encounter->id,
+                    'persistido' => [
+                        'note' => trim((string) ($encounter->note ?? '')) !== '',
+                        'reason_text' => trim((string) ($encounter->reason_text ?? '')) !== '',
+                        'categorias' => array_keys($datosExtraidos),
+                        'conditions' => (int) \common\models\Clinical\Condition::find()
+                            ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                            ->count(),
+                        'medication_requests' => (int) \common\models\Clinical\MedicationRequest::find()
+                            ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                            ->count(),
+                        'service_requests' => (int) \common\models\Clinical\ServiceRequest::find()
+                            ->where(['encounter_id' => $encounter->id, 'deleted_at' => null])
+                            ->count(),
+                    ],
                 ];
             } catch (\Throwable $e) {
                 $tx->rollBack();
@@ -204,6 +226,66 @@ class EncounterDocumentationService extends Component
         }
 
         return false;
+    }
+
+    /**
+     * Análisis completo enviado por el cliente (backup si el stage omitió categorías).
+     *
+     * @param array<string, mixed> $body
+     * @return array<string, mixed>
+     */
+    private function resolveFullAnalysisExtraidos(array $body): array
+    {
+        $candidates = [
+            $body['analisis_datos_extraidos'] ?? null,
+            $body['analisisDatosExtraidos'] ?? null,
+        ];
+        $datos = $body['datos'] ?? null;
+        if (is_array($datos)) {
+            $candidates[] = $datos['datosExtraidos'] ?? $datos;
+        }
+        foreach ($candidates as $raw) {
+            if (is_string($raw)) {
+                $decoded = json_decode($raw, true);
+                $raw = is_array($decoded) ? $decoded : null;
+            }
+            if (!is_array($raw) || $raw === []) {
+                continue;
+            }
+            if (isset($raw['datosExtraidos']) && is_array($raw['datosExtraidos'])) {
+                $raw = $raw['datosExtraidos'];
+            }
+            if (self::datosExtraidosLooksLikeCategories($raw)) {
+                return $raw;
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Completa categorías ausentes/vacías del stage con el análisis completo.
+     *
+     * @param array<string, mixed> $staged
+     * @param array<string, mixed> $full
+     * @return array<string, mixed>
+     */
+    private static function enrichExtraidosFromFullAnalysis(array $staged, array $full): array
+    {
+        foreach ($full as $key => $value) {
+            if (!is_string($key) || $key === '' || $key === 'Error') {
+                continue;
+            }
+            if (!is_array($value) || $value === []) {
+                continue;
+            }
+            $current = $staged[$key] ?? null;
+            if ($current === null || $current === [] || $current === '') {
+                $staged[$key] = $value;
+            }
+        }
+
+        return $staged;
     }
 
     /**

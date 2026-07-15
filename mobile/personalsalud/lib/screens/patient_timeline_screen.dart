@@ -1038,16 +1038,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _lastAnalysis = res;
         _draftText = text;
         _captureReview = review;
-        _stagedItemIds = review.allItems
-            .where((e) => e.isFromClinicalText)
-            .map((e) => e.id)
-            .toSet();
+        // Incluir TODO lo extraído (medicación, indicaciones, etc.). Filtrar solo
+        // `isFromClinicalText` dejaba ítems source=ai destildados y el guardar
+        // persistía apenas diagnóstico (codificación automática) sin note/meds.
+        _stagedItemIds = review.allItems.map((e) => e.id).toSet();
         if (_stagedItemIds.isEmpty && review.defaultStagedItemIds.isNotEmpty) {
           _stagedItemIds = review.defaultStagedItemIds.toSet();
-        }
-        // Si quedó vacío pero hay extracción, incluir todo (mejor de más que de menos).
-        if (_stagedItemIds.isEmpty && review.hasExtractedContent) {
-          _stagedItemIds = review.allItems.map((e) => e.id).toSet();
         }
         _chatController.clear();
         _sttStatus = '';
@@ -1104,7 +1100,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
     setState(() => _isSaving = true);
     try {
-      await _encounterApi.guardar(
+      final guardado = await _encounterApi.guardar(
         idPersona: widget.personaId,
         parent: widget.consultParent,
         parentId: widget.consultParentId,
@@ -1117,7 +1113,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         userPerTabConfig: await _operationalContextForCapture(),
       );
       if (!mounted) return;
-      _snack('Consulta guardada', UiIntent.success);
+      final aviso = _mensajePersistidoIncompleto(extraidos, guardado);
+      _snack(
+        aviso ?? 'Consulta guardada',
+        aviso != null ? UiIntent.warning : UiIntent.success,
+      );
       _clearCaptureDraft();
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -1125,6 +1125,39 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
+  }
+
+  /// Si el cliente mandó medicación y el backend no creó filas, avisar (deploy/stage).
+  String? _mensajePersistidoIncompleto(
+    Map<String, dynamic> extraidos,
+    Map<String, dynamic> guardado,
+  ) {
+    final persistido = guardado['persistido'];
+    if (persistido is! Map) return null;
+    final expectedMeds = _categoryHasRows(extraidos, const [
+      'Medicación',
+      'Medicacion',
+      'ConsultaMedicamentos',
+    ]);
+    final meds = persistido['medication_requests'];
+    final medCount = meds is int ? meds : int.tryParse('$meds') ?? 0;
+    if (expectedMeds && medCount <= 0) {
+      return 'Consulta guardada, pero la medicación no quedó persistida. Revisá el deploy del API.';
+    }
+    if (persistido['note'] != true) {
+      return 'Consulta guardada, pero la nota clínica no quedó en el encounter.';
+    }
+    return null;
+  }
+
+  bool _categoryHasRows(Map<String, dynamic> extraidos, List<String> keys) {
+    for (final key in keys) {
+      final v = extraidos[key];
+      if (v is List && v.isNotEmpty) return true;
+      if (v is Map && v.isNotEmpty) return true;
+      if (v is String && v.trim().isNotEmpty) return true;
+    }
+    return false;
   }
 
   Map<String, dynamic>? _resolveAnalisisDatosExtraidos(Map<String, dynamic> analysis) {

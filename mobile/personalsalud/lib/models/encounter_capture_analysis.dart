@@ -311,13 +311,12 @@ class EncounterCaptureAnalysis {
     return out;
   }
 
-  /// Ítems anclados al texto clínico: siempre deben persistirse (no depender solo del stage UI).
-  Set<String> get clinicalItemIds => allItems
-      .where((e) => e.isFromClinicalText)
-      .map((e) => e.id)
-      .toSet();
+  /// Ítems a forzar en el guardado además del stage UI.
+  /// Incluye extracción completa: source=ai excluía medicación/indicaciones y el
+  /// backend solo terminaba codificando el diagnóstico.
+  Set<String> get clinicalItemIds => allItems.map((e) => e.id).toSet();
 
-  /// Stage efectivo = selección del usuario + todo lo clínico del texto.
+  /// Stage efectivo = selección del usuario ∪ extracción completa.
   Set<String> effectiveSaveItemIds(Set<String> stagedIds) => {
         ...stagedIds,
         ...clinicalItemIds,

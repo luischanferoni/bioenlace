@@ -75,4 +75,43 @@ class EncounterCaptureReviewPresenterTest extends Unit
         $this->assertSame('error_ia', $review['system_error']['tipo']);
         $this->assertSame([], $review['categories']);
     }
+
+    public function testDefaultStagedIncludesAiSourcedItems(): void
+    {
+        $presenter = new EncounterCaptureReviewPresenter();
+        $review = $presenter->build(
+            [
+                'datosExtraidos' => [
+                    'Medicación' => [
+                        [
+                            'Nombre del medicamento' => 'enalapril',
+                            'Cantidad' => '10 mg',
+                        ],
+                    ],
+                    'Diagnóstico' => ['hipertensión arterial esencial'],
+                ],
+            ],
+            [
+                [
+                    'titulo' => 'Medicación',
+                    'modelo' => 'ConsultaMedicamentos',
+                    'requerido' => false,
+                    'campos_requeridos' => ['Nombre del medicamento', 'Cantidad'],
+                ],
+                [
+                    'titulo' => 'Diagnóstico',
+                    'modelo' => 'DiagnosticoConsulta',
+                    'requerido' => false,
+                    'campos_requeridos' => [],
+                ],
+            ],
+            // Haystack sin el fármaco → Medicación queda source=ai; igual debe stagerse.
+            'Consulta por cefalea. Diagnóstico: hipertensión arterial esencial.',
+            null,
+            false
+        );
+
+        $this->assertContains('Medicación::0', $review['default_staged_item_ids']);
+        $this->assertContains('Diagnóstico::0', $review['default_staged_item_ids']);
+    }
 }

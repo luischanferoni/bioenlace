@@ -137,7 +137,7 @@ class EncounterDocumentationService extends Component
 
             Yii::info(
                 'encounter.guardar categorias=' . implode(',', array_keys($datosExtraidos))
-                . ' note_body=' . ($this->resolveNonEmptyBodyText($body, ['texto_procesado', 'observacion', 'texto_original']) !== null ? 'si' : 'no'),
+                . ' note_body=' . ($this->resolveCaptureNote($body) !== null ? 'si' : 'no'),
                 'encounter-doc'
             );
 
@@ -174,6 +174,8 @@ class EncounterDocumentationService extends Component
                 $this->persistExtractedData($encounter, $configuracion, $datosExtraidos);
                 EncounterAutomaticCodingService::codeAndPersistForEncounter($encounter, $datosExtraidos, $configuracion);
                 $encounter = $this->lifecycle->onCaptureDocumented($encounter);
+                // finalize() solo toca status/period_end; reasegurar note tras el ciclo.
+                $this->forcePersistCaptureNote($encounter, $body);
 
                 $tx->commit();
 
@@ -401,7 +403,7 @@ class EncounterDocumentationService extends Component
     private function applyCaptureTextToEncounter(Encounter $encounter, array $body): void
     {
         // Preferir texto procesado; si viene vacío (FormData con clave presente), caer a original.
-        $note = $this->resolveNonEmptyBodyText($body, ['texto_procesado', 'observacion', 'texto_original']);
+        $note = $this->resolveCaptureNote($body);
         if ($note !== null) {
             $encounter->note = $note;
         }
@@ -435,11 +437,43 @@ class EncounterDocumentationService extends Component
     }
 
     /**
+     * Nota clínica del guardar: claves top-level + capture_review anidado.
+     *
+     * @param array<string, mixed> $body
+     */
+    private function resolveCaptureNote(array $body): ?string
+    {
+        $direct = $this->resolveNonEmptyBodyText($body, [
+            'texto_procesado',
+            'observacion',
+            'texto_original',
+            'consulta',
+            'note',
+        ]);
+        if ($direct !== null) {
+            return $direct;
+        }
+
+        $review = $body['capture_review'] ?? null;
+        if (is_array($review)) {
+            $fromReview = $this->resolveNonEmptyBodyText($review, [
+                'texto_procesado',
+                'texto_original',
+            ]);
+            if ($fromReview !== null) {
+                return $fromReview;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * @param array<string, mixed> $body
      */
     private function forcePersistCaptureNote(Encounter $encounter, array $body): void
     {
-        $note = $this->resolveNonEmptyBodyText($body, ['texto_procesado', 'observacion', 'texto_original']);
+        $note = $this->resolveCaptureNote($body);
         if ($note === null) {
             return;
         }
@@ -537,6 +571,11 @@ class EncounterDocumentationService extends Component
                 case 'ConsultaMedicamentos':
                     $medicationRows = MedicationRequestService::normalizeExtractedMedicationPayload($payload);
                     if ($medicationRows === []) {
+                        Yii::warning(
+                            'encounter.guardar Medicación/ConsultaMedicamentos sin filas normalizables. payload_type='
+                            . gettype($payload),
+                            'encounter-doc'
+                        );
                         break;
                     }
                     try {

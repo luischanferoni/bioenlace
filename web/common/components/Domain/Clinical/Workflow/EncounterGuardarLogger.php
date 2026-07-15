@@ -13,6 +13,8 @@ final class EncounterGuardarLogger
     private ?string $archivoLog = null;
     private $inicioTiempo = null;
     private string $id = '';
+    /** @var list<string> */
+    private array $lineBuffer = [];
 
     /**
      * @param array<string, mixed> $contexto
@@ -22,15 +24,44 @@ final class EncounterGuardarLogger
         $logger = new self();
         $logger->id = substr(uniqid('', true), -12);
         $logger->inicioTiempo = microtime(true);
-
-        $directorio = Yii::getAlias('@frontend/runtime/logs/guardar-encounters');
-        if (!is_dir($directorio)) {
-            mkdir($directorio, 0755, true);
-        }
-        $logger->archivoLog = $directorio . '/guardar_' . date('Ymd_His') . '_' . $logger->id . '.log';
+        $logger->archivoLog = self::resolveLogPath($logger->id);
         $logger->escribirEncabezado($textoNota, $contexto);
 
         return $logger;
+    }
+
+    private static function resolveLogPath(string $id): ?string
+    {
+        $candidates = [];
+        try {
+            $candidates[] = Yii::getAlias('@frontend/runtime/logs/guardar-encounters');
+        } catch (\Throwable $e) {
+            // ignore
+        }
+        try {
+            $candidates[] = Yii::getAlias('@runtime/logs/guardar-encounters');
+        } catch (\Throwable $e) {
+            // ignore
+        }
+        $candidates[] = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'bioenlace-guardar-encounters';
+
+        foreach ($candidates as $dir) {
+            if ($dir === '' || $dir === false) {
+                continue;
+            }
+            if (!is_dir($dir) && !@mkdir($dir, 0755, true) && !is_dir($dir)) {
+                continue;
+            }
+            if (!is_writable($dir)) {
+                continue;
+            }
+
+            return $dir . DIRECTORY_SEPARATOR . 'guardar_' . date('Ymd_His') . '_' . $id . '.log';
+        }
+
+        Yii::error('EncounterGuardarLogger: no se pudo crear directorio de logs', 'encounter-doc');
+
+        return null;
     }
 
     /**
@@ -40,9 +71,6 @@ final class EncounterGuardarLogger
      */
     public function registrar(string $paso, $entrada = null, $salida = null, array $metadata = []): void
     {
-        if ($this->archivoLog === null) {
-            return;
-        }
         $metodo = (string) ($metadata['metodo'] ?? '');
         $linea = sprintf("[%s] %s%s\n", $this->ts(), $paso, $metodo !== '' ? ' - ' . $metodo : '');
         if ($entrada !== null && $entrada !== '') {
@@ -61,6 +89,8 @@ final class EncounterGuardarLogger
             $linea .= '  ' . $key . ': ' . $value . "\n";
         }
         $this->escribir($linea . "\n");
+        // También a Yii runtime.log para no depender solo del archivo dedicado.
+        Yii::info(trim(preg_replace('/\s+/', ' ', $linea) ?? $linea), 'encounter-guardar');
     }
 
     /**
@@ -68,9 +98,6 @@ final class EncounterGuardarLogger
      */
     public function finalizar(array $resultado): void
     {
-        if ($this->archivoLog === null) {
-            return;
-        }
         $linea = sprintf("[%s] FINALIZACIÓN\n", $this->ts());
         $linea .= 'Estado: ' . (!empty($resultado['success']) ? 'SUCCESS' : 'ERROR') . "\n";
         if (!empty($resultado['message'])) {
@@ -80,10 +107,29 @@ final class EncounterGuardarLogger
             $linea .= 'encounter_id: ' . $resultado['encounter_id'] . "\n";
         }
         if (isset($resultado['persistido']) && is_array($resultado['persistido'])) {
-            $linea .= "persistido:\n" . $this->format($resultado['persistido']) . "\n";
+            $p = $resultado['persistido'];
+            $linea .= sprintf(
+                "Resumen persistido: note=%s reason=%s conditions=%s meds=%s srs=%s care_plans=%s\n",
+                !empty($p['note']) ? 'SI' : 'NO',
+                !empty($p['reason_text']) ? 'SI' : 'NO',
+                (string) ($p['conditions'] ?? 0),
+                (string) ($p['medication_requests'] ?? 0),
+                (string) ($p['service_requests'] ?? 0),
+                (string) ($p['care_plans'] ?? 0)
+            );
+            $linea .= "persistido:\n" . $this->format($p) . "\n";
+            $incompleto = empty($p['note'])
+                || ((int) ($p['medication_requests'] ?? 0) <= 0 && !empty($resultado['diagnostico_guardar']['final_counts']['Medicación']))
+                || (empty($p['reason_text']) && !empty($resultado['diagnostico_guardar']['final_counts']['Motivos de consulta']));
+            if ($incompleto) {
+                $linea .= "⚠ PERSISTENCIA INCOMPLETA — revisar staged/final/por_modelo abajo\n";
+            }
         }
         if (isset($resultado['diagnostico_guardar']) && is_array($resultado['diagnostico_guardar'])) {
             $linea .= "diagnostico_guardar:\n" . $this->format($resultado['diagnostico_guardar']) . "\n";
+        }
+        if ($this->archivoLog !== null) {
+            $linea .= 'archivo_log: ' . $this->archivoLog . "\n";
         }
         $this->escribir($linea . "\n");
 
@@ -92,6 +138,15 @@ final class EncounterGuardarLogger
             "\n" . str_repeat('=', 80) . "\n"
             . 'DURACIÓN TOTAL: ' . round($elapsed * 1000) . "ms\n"
             . str_repeat('=', 80) . "\n"
+        );
+
+        Yii::warning(
+            'encounter.guardar fin log_id=' . $this->id
+            . ' success=' . (!empty($resultado['success']) ? '1' : '0')
+            . ' encounter=' . ($resultado['encounter_id'] ?? '-')
+            . ' meds=' . ($resultado['persistido']['medication_requests'] ?? '-')
+            . ' archivo=' . ($this->archivoLog ?? 'none'),
+            'encounter-guardar'
         );
     }
 
@@ -156,10 +211,11 @@ final class EncounterGuardarLogger
 
     private function escribir(string $linea): void
     {
+        $this->lineBuffer[] = $linea;
         if ($this->archivoLog === null) {
             return;
         }
-        $fh = fopen($this->archivoLog, 'a');
+        $fh = @fopen($this->archivoLog, 'a');
         if ($fh) {
             fwrite($fh, $linea);
             fclose($fh);

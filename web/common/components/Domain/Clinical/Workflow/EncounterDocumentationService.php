@@ -275,7 +275,20 @@ class EncounterDocumentationService extends Component
                     'persistido' => $persistido,
                     'diagnostico_guardar' => $diagnostico,
                     'log_id' => $logger->getId(),
+                    'log_archivo' => $logger->getArchivoLog(),
+                    'persist_incomplete' => empty($persistido['note'])
+                        || (
+                            (int) ($persistido['medication_requests'] ?? 0) <= 0
+                            && !empty($diagnostico['final_counts']['Medicación'])
+                        )
+                        || (
+                            empty($persistido['reason_text'])
+                            && !empty($diagnostico['final_counts']['Motivos de consulta'])
+                        ),
                 ];
+                if (!empty($out['persist_incomplete'])) {
+                    $out['message'] = 'Encounter guardado con datos incompletos. Revisá medicación/motivos/indicaciones.';
+                }
                 $logger->finalizar($out);
 
                 return $out;

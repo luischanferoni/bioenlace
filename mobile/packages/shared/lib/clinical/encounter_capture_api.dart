@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../config/api_config.dart';
+import '../http/bioenlace_http_trace.dart';
 import 'stt_client_config.dart';
 
 /// API captura clínica: analizar y guardar encounter.
@@ -11,29 +13,18 @@ class EncounterCaptureApi {
 
   String? authToken;
 
-  Map<String, String> get _jsonHeaders {
-    final h = <String, String>{
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-    };
-    if (authToken != null && authToken!.isNotEmpty) {
-      h['Authorization'] = 'Bearer $authToken';
-    }
-    return h;
-  }
+  Map<String, String> get _jsonHeaders => AppConfig.jsonHeaders(
+        bearerToken: authToken,
+        appClient: 'personalsalud-flutter',
+      );
 
   /// GET /api/v1/audio/stt-config
   Future<SttClientConfig> fetchSttConfig() async {
     final uri = Uri.parse('${AppConfig.apiUrl}/audio/stt-config');
     final response = await http
-        .get(
-          uri,
-          headers: AppConfig.jsonHeaders(
-            bearerToken: authToken,
-            appClient: 'personalsalud-flutter',
-          ),
-        )
+        .get(uri, headers: _jsonHeaders)
         .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    BioenlaceHttpTrace.logResponse('audio/stt-config', response);
     final decoded = json.decode(response.body);
     if (decoded is! Map<String, dynamic> || decoded['success'] != true) {
       return SttClientConfig.defaults;
@@ -73,11 +64,15 @@ class EncounterCaptureApi {
     };
 
     final uri = Uri.parse('${AppConfig.apiUrl}/clinical/encounter/analizar');
-    final response = await http.post(
-      uri,
-      headers: _jsonHeaders,
-      body: json.encode(body),
+    debugPrint(
+      '[HTTP encounter/analizar] POST $uri id_persona=$idPersona '
+      'parent=$parent/$parentId consulta_len=${consulta.length}',
     );
+    final response = await http
+        .post(uri, headers: _jsonHeaders, body: json.encode(body))
+        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    BioenlaceHttpTrace.logResponse('encounter/analizar', response);
+
     final decoded = json.decode(response.body);
     if (decoded is! Map<String, dynamic>) {
       throw Exception('Respuesta inválida al analizar');
@@ -96,14 +91,17 @@ class EncounterCaptureApi {
     bool forceServer = true,
   }) async {
     final uri = Uri.parse('${AppConfig.apiUrl}/audio/transcribir');
-    final response = await http.post(
-      uri,
-      headers: _jsonHeaders,
-      body: json.encode({
-        'audio': audioBase64,
-        'stt': {'force_server': forceServer, 'provenance': 'device'},
-      }),
-    );
+    final response = await http
+        .post(
+          uri,
+          headers: _jsonHeaders,
+          body: json.encode({
+            'audio': audioBase64,
+            'stt': {'force_server': forceServer, 'provenance': 'device'},
+          }),
+        )
+        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    BioenlaceHttpTrace.logResponse('audio/transcribir', response);
     final decoded = json.decode(response.body);
     if (decoded is! Map<String, dynamic>) {
       throw Exception('Respuesta inválida al transcribir');
@@ -147,19 +145,45 @@ class EncounterCaptureApi {
     };
 
     final uri = Uri.parse('${AppConfig.apiUrl}/clinical/encounter/guardar');
-    final response = await http.post(
-      uri,
-      headers: _jsonHeaders,
-      body: json.encode(body),
+    debugPrint(
+      '[HTTP encounter/guardar] POST $uri id_persona=$idPersona '
+      'encounter_id=$encounterId parent=$parent/$parentId '
+      'staged_keys=${datosExtraidos.keys.toList()} '
+      'backup_keys=${analisisDatosExtraidos?.keys.toList() ?? []} '
+      'cache_token=${analysisCacheToken != null && analysisCacheToken.isNotEmpty ? 'si' : 'no'}',
     );
+    final response = await http
+        .post(uri, headers: _jsonHeaders, body: json.encode(body))
+        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    BioenlaceHttpTrace.logResponse('encounter/guardar', response, maxBodyChars: 8000);
 
-    final decoded = json.decode(response.body);
-    if (decoded is! Map<String, dynamic>) {
-      throw Exception('Respuesta inválida al guardar');
+    Map<String, dynamic>? decoded;
+    try {
+      final raw = json.decode(response.body);
+      if (raw is Map<String, dynamic>) {
+        decoded = raw;
+      } else if (raw is Map) {
+        decoded = Map<String, dynamic>.from(raw);
+      }
+    } catch (_) {
+      decoded = null;
+    }
+    if (decoded == null) {
+      throw Exception(
+        'Respuesta inválida al guardar (HTTP ${response.statusCode})',
+      );
     }
     if (response.statusCode >= 400 || decoded['success'] != true) {
+      final diag = decoded['diagnostico_guardar'];
+      debugPrint('[HTTP encounter/guardar FAIL] diagnostico=$diag');
       throw Exception(decoded['message']?.toString() ?? 'Error al guardar');
     }
+    debugPrint(
+      '[HTTP encounter/guardar OK] encounter_id=${decoded['encounter_id']} '
+      'persistido=${decoded['persistido']} '
+      'diagnostico_guardar=${decoded['diagnostico_guardar']} '
+      'log_id=${decoded['log_id']}',
+    );
     return decoded;
   }
 }

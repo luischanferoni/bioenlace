@@ -1114,15 +1114,43 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         userPerTabConfig: await _operationalContextForCapture(),
       );
       if (!mounted) return;
-      final aviso = _mensajePersistidoIncompleto(extraidos, guardado);
-      _snack(
-        aviso ?? 'Consulta guardada',
-        aviso != null ? UiIntent.warning : UiIntent.success,
+      final aviso = _mensajePersistidoIncompleto(
+            extraidos,
+            guardado,
+            analisisBackup: analisisBackup,
+          ) ??
+          (guardado['persist_incomplete'] == true
+              ? (guardado['message']?.toString() ??
+                  'Encounter guardado con datos incompletos.')
+              : null);
+      debugPrint(
+        '[captura] guardar resultado aviso=${aviso ?? 'ok'} '
+        'persistido=${guardado['persistido']} '
+        'diagnostico=${guardado['diagnostico_guardar']} '
+        'log_id=${guardado['log_id']}',
       );
+      if (aviso != null) {
+        // No hacer pop inmediato: el SnackBar se pierde al cerrar la pantalla.
+        await _mostrarResultadoGuardado(
+          titulo: 'Guardado incompleto',
+          mensaje: aviso,
+          intent: UiIntent.warning,
+          detalle: _detalleDiagnosticoGuardado(guardado),
+        );
+      } else {
+        _snack('Consulta guardada', UiIntent.success);
+      }
       _clearCaptureDraft();
+      if (!mounted) return;
       Navigator.of(context).pop(true);
-    } catch (e) {
-      _snack('Error al guardar: ${_mensajeErrorCaptura(e)}', UiIntent.danger);
+    } catch (e, st) {
+      debugPrint('[captura] Error al guardar: $e\n$st');
+      if (!mounted) return;
+      await _mostrarResultadoGuardado(
+        titulo: 'Error al guardar',
+        mensaje: _mensajeErrorCaptura(e),
+        intent: UiIntent.danger,
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -1131,35 +1159,133 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   /// Si el cliente mandó medicación y el backend no creó filas, avisar (deploy/stage).
   String? _mensajePersistidoIncompleto(
     Map<String, dynamic> extraidos,
-    Map<String, dynamic> guardado,
-  ) {
+    Map<String, dynamic> guardado, {
+    Map<String, dynamic>? analisisBackup,
+  }) {
     final persistido = guardado['persistido'];
     if (persistido is! Map) return null;
-    final expectedMeds = _categoryHasRows(extraidos, const [
+    const medKeys = [
       'Medicación',
       'Medicacion',
       'ConsultaMedicamentos',
-    ]);
+    ];
+    const motivoKeys = [
+      'Motivos de consulta',
+      'ConsultaMotivos',
+    ];
+    final expectedMeds = _categoryHasRows(extraidos, medKeys) ||
+        _categoryHasRows(analisisBackup ?? const {}, medKeys) ||
+        (_captureReview?.categories.any(
+              (c) =>
+                  (c.title.toLowerCase().contains('medic') ||
+                      c.model == 'ConsultaMedicamentos') &&
+                  c.items.isNotEmpty,
+            ) ??
+            false);
+    final expectedMotivos = _categoryHasRows(extraidos, motivoKeys) ||
+        _categoryHasRows(analisisBackup ?? const {}, motivoKeys);
     final meds = persistido['medication_requests'];
     final medCount = meds is int ? meds : int.tryParse('$meds') ?? 0;
+    final srs = persistido['service_requests'];
+    final srCount = srs is int ? srs : int.tryParse('$srs') ?? 0;
     if (expectedMeds && medCount <= 0) {
       final diag = guardado['diagnostico_guardar'];
       final fuente = diag is Map ? diag['backup_fuentes'] : null;
       final staged = diag is Map ? diag['staged_counts'] : null;
       final finalCounts = diag is Map ? diag['final_counts'] : null;
-      return 'Consulta guardada, pero la medicación no quedó persistida. '
-          'staged=$staged final=$finalCounts backup=$fuente '
-          '(log_id=${guardado['log_id'] ?? '-'}).';
+      return 'La medicación no quedó persistida.\n'
+          'staged=$staged\nfinal=$finalCounts\nbackup=$fuente\n'
+          'log_id=${guardado['log_id'] ?? '-'}';
     }
     if (persistido['note'] != true) {
-      return 'Consulta guardada, pero la nota clínica no quedó en el encounter.';
+      return 'La nota clínica no quedó en el encounter.';
     }
-    if (persistido['reason_text'] != true &&
-        _categoryHasRows(extraidos, const ['Motivos de consulta', 'ConsultaMotivos'])) {
-      return 'Consulta guardada, pero los motivos no quedaron en reason_text '
+    if (persistido['reason_text'] != true && expectedMotivos) {
+      return 'Los motivos no quedaron en reason_text '
           '(log_id=${guardado['log_id'] ?? '-'}).';
     }
+    // Prácticas/indicaciones esperadas en el análisis pero sin service_request.
+    final expectedSr = _categoryHasRows(extraidos, const [
+          'Indicaciones',
+          'ConsultaIndicaciones',
+          'Prácticas realizadas',
+          'Practicas realizadas',
+          'ConsultaPracticas',
+        ]) ||
+        _categoryHasRows(analisisBackup ?? const {}, const [
+          'Indicaciones',
+          'ConsultaIndicaciones',
+          'Prácticas realizadas',
+          'Practicas realizadas',
+          'ConsultaPracticas',
+        ]);
+    if (expectedSr && srCount <= 0) {
+      return 'Indicaciones/prácticas no quedaron persistidas '
+          '(service_requests=0, log_id=${guardado['log_id'] ?? '-'}).';
+    }
     return null;
+  }
+
+  String _detalleDiagnosticoGuardado(Map<String, dynamic> guardado) {
+    final parts = <String>[];
+    final persistido = guardado['persistido'];
+    if (persistido is Map) {
+      parts.add('persistido: $persistido');
+    }
+    final diag = guardado['diagnostico_guardar'];
+    if (diag is Map) {
+      parts.add('staged: ${diag['staged_counts']}');
+      parts.add('final: ${diag['final_counts']}');
+      parts.add('backup: ${diag['backup_fuentes']}');
+      parts.add('cache: ${diag['cache']}');
+      parts.add('por_modelo: ${diag['por_modelo']}');
+    }
+    if (guardado['log_id'] != null) {
+      parts.add('log_id: ${guardado['log_id']}');
+    }
+    return parts.join('\n');
+  }
+
+  Future<void> _mostrarResultadoGuardado({
+    required String titulo,
+    required String mensaje,
+    required UiIntent intent,
+    String? detalle,
+  }) async {
+    if (!mounted) return;
+    final palette = IntentPalette.of(intent);
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: Text(titulo),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(mensaje),
+                if (detalle != null && detalle.trim().isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    detalle,
+                    style: Theme.of(ctx).textTheme.bodySmall,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              style: TextButton.styleFrom(foregroundColor: palette.base),
+              child: const Text('Entendido'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   bool _categoryHasRows(Map<String, dynamic> extraidos, List<String> keys) {

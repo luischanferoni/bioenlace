@@ -234,10 +234,10 @@ class EncounterDocumentationService extends Component
                 return $out;
             }
 
-            // No mantener una sola TX abierta durante la IA de codificación (~1–2s+):
-            // en hosting compartido la conexión MySQL suele cortarse/reconectar y se pierde
-            // lo persistido antes (motivos/MR/SR/care_plan) mientras note/conditions
-            // reescritos después del reconnect sí quedan.
+            // Toda la escritura clínica (nota/motivos/MR/SR/care_plan/finalize) va en una
+            // TX corta y se commitea ANTES de cualquier llamada IA. En hosting compartido
+            // una TX abierta durante codificación (~1–2s) corre riesgo de reconnect y
+            // se pierde lo no committeado; la nota/conditions post-IA sí quedaban.
             $encounter = $this->runInDbTransaction(function () use (
                 $encounterId,
                 $body,
@@ -254,30 +254,50 @@ class EncounterDocumentationService extends Component
                     $datosExtraidos,
                     $logger
                 );
-
-                return $encounter;
-            });
-
-            $logger->registrar('CHECKPOINT', null, $this->snapshotPersistido($encounter), [
-                'metodo' => 'tras persistExtractedData (commit)',
-            ]);
-
-            EncounterAutomaticCodingService::codeAndPersistForEncounter(
-                $encounter,
-                $datosExtraidos,
-                $configuracion
-            );
-            $logger->registrar('CHECKPOINT', null, $this->snapshotPersistido($encounter), [
-                'metodo' => 'tras codeAndPersistForEncounter',
-            ]);
-
-            $encounter = $this->runInDbTransaction(function () use ($encounter, $body) {
                 $encounter = $this->lifecycle->onCaptureDocumented($encounter);
-                // finalize() solo toca status/period_end; reasegurar note tras el ciclo.
                 $this->forcePersistCaptureNote($encounter, $body);
 
                 return $encounter;
             });
+
+            $logger->registrar('CHECKPOINT', null, $this->snapshotPersistido($encounter), [
+                'metodo' => 'tras persist+finalize (commit)',
+            ]);
+
+            // Forzar conexión nueva antes de la IA (evita "MySQL server has gone away"
+            // sobre el handle idle y commits fantasmas).
+            try {
+                Yii::$app->db->close();
+            } catch (\Throwable $e) {
+                Yii::warning('encounter.guardar db close pre-coding: ' . $e->getMessage(), 'encounter-doc');
+            }
+
+            $diagnostico['coding'] = ['ok' => true, 'saved' => 0, 'error' => null];
+            try {
+                $savedCoding = EncounterAutomaticCodingService::codeAndPersistForEncounter(
+                    $encounter,
+                    $datosExtraidos,
+                    $configuracion
+                );
+                $diagnostico['coding']['saved'] = (int) $savedCoding;
+            } catch (\Throwable $e) {
+                // La documentación clínica ya está committeada; no tumbar el guardar.
+                $diagnostico['coding'] = [
+                    'ok' => false,
+                    'saved' => 0,
+                    'error' => $e->getMessage(),
+                ];
+                Yii::error(
+                    'encounter.guardar coding falló (docs ya persistidas): ' . $e->getMessage(),
+                    'encounter-doc'
+                );
+                $logger->registrar('CODING_ERROR', null, $e->getMessage(), [
+                    'metodo' => 'codeAndPersistForEncounter',
+                ]);
+            }
+            $logger->registrar('CHECKPOINT', null, $this->snapshotPersistido($encounter), [
+                'metodo' => 'tras codeAndPersistForEncounter',
+            ]);
 
             $encounter->refresh();
             $persistido = $this->snapshotPersistido($encounter);

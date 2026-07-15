@@ -971,42 +971,50 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSiguienteTurnoCard(Turno turno) {
     final primary = IntentPalette.of(UiIntent.primary).base;
+    void openTimeline() => _verHistoriaClinica(
+          turno.idPersona,
+          parent: 'TURNO',
+          parentId: turno.id,
+        );
     return BioCard.intent(
       intent: UiIntent.primary,
-      onTap: () => _verHistoriaClinica(
-        turno.idPersona,
-        parent: 'TURNO',
-        parentId: turno.id,
-      ),
+      onTap: openTimeline,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.calendar_today_outlined, color: primary, size: 22),
+              Icon(Icons.person_outline, color: primary, size: 22),
               BioSpacing.gapW(BioSpacing.sm),
-              Text(
-                'Siguiente turno',
-                style: BioTypography.h3.copyWith(
-                  color: primary,
-                  fontWeight: FontWeight.w700,
+              Expanded(
+                child: Text(
+                  turno.paciente?.nombreCompleto ?? 'Sin paciente',
+                  style: BioTypography.h3,
                 ),
               ),
             ],
           ),
           BioSpacing.gapH(BioSpacing.md),
-          Text(
-            'Paciente: ${turno.paciente?.nombreCompleto ?? "Sin paciente"}',
-            style: BioTypography.title,
+          _filaInfo(
+            Icons.access_time,
+            'Hora: ${turno.hora}',
+            textStyle: BioTypography.body,
           ),
-          BioSpacing.gapH(BioSpacing.xs),
-          Text('Hora: ${turno.hora}', style: BioTypography.bodySm),
-          BioSpacing.gapH(BioSpacing.sm),
-          Text(
-            'Tocá para ver la historia clínica',
-            style: BioTypography.caption.copyWith(
-              color: context.bio.textMuted,
-              fontStyle: FontStyle.italic,
+          if (turno.servicio != null && turno.servicio!.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            _filaInfo(
+              Icons.local_hospital_outlined,
+              'Servicio: ${turno.servicio}',
+            ),
+          ],
+          BioSpacing.gapH(BioSpacing.md),
+          Align(
+            alignment: Alignment.centerRight,
+            child: BioButton.outlinePrimary(
+              label: 'Historia clínica',
+              icon: Icons.medical_services_outlined,
+              size: BioButtonSize.sm,
+              onPressed: openTimeline,
             ),
           ),
         ],
@@ -1074,7 +1082,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _filaInfo(IconData icon, String text, {bool small = false}) {
+  Widget _filaInfo(IconData icon, String text, {bool small = false, TextStyle? textStyle}) {
     final tokens = context.bio;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1084,7 +1092,8 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(
           child: Text(
             text,
-            style: (small ? BioTypography.caption : BioTypography.bodySm),
+            style: textStyle ??
+                (small ? BioTypography.caption : BioTypography.bodySm),
           ),
         ),
       ],

@@ -29,6 +29,11 @@ void main() {
     var authToken = prefs.getString('auth_token');
 
     if (isLoggedIn && authToken != null && authToken.isNotEmpty) {
+      // Renovación preventiva si el JWT está cerca de expirar.
+      authToken = await BearerSessionAuth.ensureFreshBearerToken(
+        authToken,
+        appClient: BearerSessionAuth.appClientPaciente,
+      );
       final check = await BearerSessionAuth.checkBearerToken(
         authToken,
         appClient: BearerSessionAuth.appClientPaciente,
@@ -40,6 +45,7 @@ void main() {
         userName = '';
         authToken = null;
       }
+      // networkError: conservar sesión local; el próximo request real decidirá.
     }
 
     if (isLoggedIn && userId.isNotEmpty) {

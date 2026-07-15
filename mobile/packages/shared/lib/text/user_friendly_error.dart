@@ -178,8 +178,11 @@ String userFriendlyHttpStatusMessage(int statusCode, {String? bodyMessage}) {
   if (statusCode >= 500) {
     return 'El servidor no está disponible en este momento. Intentá de nuevo más tarde.';
   }
-  if (statusCode == 401 || statusCode == 403) {
-    return 'Tu sesión expiró o no tenés permiso. Volvé a iniciar sesión.';
+  if (statusCode == 401) {
+    return 'Tu sesión expiró. Volvé a iniciar sesión.';
+  }
+  if (statusCode == 403) {
+    return 'No tenés permiso para esta acción.';
   }
   if (statusCode == 404) {
     return 'No encontramos la información solicitada.';

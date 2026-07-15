@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/turnos_service.dart';
 import '../utils/turno_resolucion_utils.dart';
@@ -251,6 +252,26 @@ class HomeScreenState extends State<HomeScreen> {
   Future<bool> _redirectIfSessionExpired(Object? error) async {
     if (error == null || !BearerSessionAuth.isAuthSessionError(error)) {
       return false;
+    }
+    // Un 401 puntual: intentar renovar JWT antes de desalojar.
+    final prefs = await SharedPreferences.getInstance();
+    final token = (prefs.getString('auth_token') ?? '').trim();
+    if (token.isNotEmpty) {
+      final refreshed = await BearerSessionAuth.refreshBearerToken(
+        token,
+        appClient: BearerSessionAuth.appClientPaciente,
+      );
+      if (refreshed != null && refreshed.isNotEmpty) {
+        await prefs.setString('auth_token', refreshed);
+        _homePanelApi.authToken = refreshed;
+        _turnosService = TurnosService(authToken: refreshed);
+        _carePlanService = CarePlanService(authToken: refreshed);
+        ClientDiagnosticApi.bindSession(
+          authToken: refreshed,
+          appClient: BearerSessionAuth.appClientPaciente,
+        );
+        return false;
+      }
     }
     await returnPacienteToLogin(
       message: 'Tu sesión expiró. Ingresá de nuevo.',

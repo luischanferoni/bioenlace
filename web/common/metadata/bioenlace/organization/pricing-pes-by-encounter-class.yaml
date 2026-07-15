@@ -1,6 +1,6 @@
 # Precio orientativo por profesional × encounter_class (USD / mes, sin IVA).
 # Fórmula: precio_clase = COGS_ref × (vol_clase/ref) × (1 + margin_on_cost_percent/100)
-# COGS: web/docs/costos/costos-api.md (columna con context caching; Gemini + Groq; Twilio §6).
+# COGS: web/docs/costos/costos-api.md (columna con context caching; Gemini + Groq; video §6).
 # Actualizar también institucional/js/pricing-config.json al cambiar cifras.
 version: 2
 currency: USD
@@ -15,11 +15,11 @@ reference_encounters_per_professional_month: 400
 # COGS variable por profesional/mes a volumen reference (400), escenario con context caching.
 # base = Apartado 1 motivos texto con caché SIN STT del profesional (~1,11 − 0,28).
 # audio = STT Groq del dictado del profesional (§4; no cambia con caché Gemini).
-# videollamada = Twilio Video §6 (solo AMB si se elige).
+# videollamada = COGS planificado §6 (Daily pay-as-you-go → self-host; TURN + grabación).
 cogs_usd_per_professional_month:
   base: 0.83
   audio: 0.28
-  videollamada: 11.52
+  videollamada: 3.00
 
 margin_on_cost_percent: 233
 
@@ -35,7 +35,7 @@ addons:
     default: false
   videollamada:
     label: Videollamada
-    description: Teleconsulta paciente–profesional (referencia Twilio)
+    description: Teleconsulta paciente–profesional (sala + TURN + grabación; Daily → self-host)
     default: false
 
 sellable_classes:

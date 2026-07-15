@@ -4,7 +4,7 @@ Costos de referencia cuando usamos **APIs externas** (IA, STT, Vision, videollam
 
 ## COGS (abreviatura)
 
-**COGS** = *Cost of Goods Sold* (costo de bienes vendidos). En esta documentación: **costo variable directo** de prestar el servicio — lo que Bioenlace paga a terceros **por uso** (tokens Gemini, minutos Groq, minutos Twilio, etc.) atribuible a cada profesional/mes.
+**COGS** = *Cost of Goods Sold* (costo de bienes vendidos). En esta documentación: **costo variable directo** de prestar el servicio — lo que Bioenlace paga a terceros **por uso** (tokens Gemini, minutos Groq, minutos de video, etc.) atribuible a cada profesional/mes.
 
 | Incluye | No incluye |
 |---------|------------|
@@ -49,7 +49,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 | **WhatsApp Cloud API** — service (ventana 24 h) | **$0** por mensaje no-plantilla / utility dentro de CSW | Asistente reactivo §7 (alcance actual) | [Meta WhatsApp pricing](https://developers.facebook.com/docs/whatsapp/pricing/) |
 | **WhatsApp Cloud API** — utility (Argentina) | **~$0,026** por plantilla entregada (list rate USD; Oct 2025) | **Fuera de alcance** (no habilitado) | Idem + rate card USD |
 
-Para **Vertex AI / Gemini** y **videollamadas** (Twilio, Daily.co) conviene revisar el [Calculador de precios de Google Cloud](https://cloud.google.com/products/calculator) y la [tabla de precios de Gemini en Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/pricing) (revisar cada 6–12 meses). Las tarifas WhatsApp por país/categoría cambian con los rate cards de Meta (revisar cada actualización trimestral).
+Para **Vertex AI / Gemini** conviene revisar el [Calculador de precios de Google Cloud](https://cloud.google.com/products/calculator) y la [tabla de precios de Gemini en Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/pricing) (revisar cada 6–12 meses). Videollamadas: [Daily pricing](https://www.daily.co/pricing/video-sdk/) y roadmap en [estrategias-reduccion/videollamadas.md](./estrategias-reduccion/videollamadas.md). Las tarifas WhatsApp por país/categoría cambian con los rate cards de Meta (revisar cada actualización trimestral).
 
 ---
 
@@ -337,11 +337,16 @@ Flujo: audio dictado → STT → transcripción → **1 llamada** `analisis-cons
 
 ### 6. Videollamadas paciente–médico
 
-| Concepto | Supuesto | Costo real mensual (por médico) |
-|----------|----------|----------------------------------|
-| Minutos totales por mes | 120 x 12 | **1.440 min** |
-| **Twilio Video** (2 participantes, $0.004 por min por participante) | 1.440 x 2 x $0.004 | **~$11.52 por médico por mes** |
-| **Plan por asiento** (ej. Daily.co repartido entre 10 médicos) | — | **~$10 por médico por mes** (orden de magnitud) |
+Supuesto de uso: **120 teleconsultas × 12 min × 2 participantes** = **1.440 participant-minutes / médico / mes**.
+
+| Concepto | Notas | USD / médico / mes |
+|----------|-------|--------------------|
+| **COGS de planificación (matriz / calculador)** | Techo estable 100→5.000+ prof; incluye buffer TURN + grabación + ops | **3,00** |
+| Daily.co pay-as-you-go (corto / mediano) | 10k pax-min gratis/mes por cuenta; luego ~$0,004/pax-min | Variable; cupo free ≈ ~7 prof a carga llena |
+| Self-host (mediano / largo) | LiveKit + TURN dedicado + grabación; VPS escala con concurrencia | ~0,6–1,5 a escala (real); planificamos **3,00** |
+| Twilio Video (legado / no usar en lista) | 1.440 × 2 × $0,004 | ~11,52 |
+
+Detalle de fases y alertas: [estrategias-reduccion/videollamadas.md](./estrategias-reduccion/videollamadas.md).
 
 ---
 
@@ -432,10 +437,9 @@ Proyección por escala (altas, pacientes activos, reingresos tras logout, escena
 
 Ver totales en [§6](#6-videollamadas-pacientemédico).
 
-| Concepto | Costo real (USD por médico por mes) |
-|----------|-----------------------------|
-| **Twilio Video** ($0.004 por min por participante) | **~$11.52** |
-| **Plan por asiento** (ej. Daily.co entre 10 médicos) | **~$10** (orden de magnitud) |
+| Concepto | Costo (USD por médico por mes) |
+|----------|-------------------------------|
+| **COGS planificación** (Daily→self-host; lista comercial) | **3,00** |
 
 ### Apartado 4 – WhatsApp (§7)
 
@@ -449,18 +453,17 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 |-----------|----------------------------|----------------------------|-------------------|
 | Apartados 1 + 2 (motivos **solo texto**) | **~$1.24** | **~$1.11** | **~$1.16 / ~$1.04** |
 | Apartados 1 + 2 (motivos **con audio**) | **~$1.55** | **~$1.41** | **~$1.46 / ~$1.34** |
-| + Apartado 3 (**Twilio Video**) | **+$11.52** | **+$11.52** | **+$11.52** |
-| **Total con videollamada (Twilio)** — motivos texto | **~$12.76** | **~$12.63** | **~$12.68 / ~$12.56** |
-| **Total con videollamada (Twilio)** — motivos audio | **~$13.07** | **~$12.93** | **~$12.98 / ~$12.86** |
-| **Total con videollamada (Daily ~$10)** — motivos audio | **~$11.55** | **~$11.41** | **~$11.46 / ~$11.34** |
+| + Apartado 3 (**videollamada, COGS planificado**) | **+$3,00** | **+$3,00** | **+$3,00** |
+| **Total con videollamada** — motivos texto | **~$4,24** | **~$4,11** | **~$4,16 / ~$4,04** |
+| **Total con videollamada** — motivos audio | **~$4,55** | **~$4,41** | **~$4,46 / ~$4,34** |
 
-**Orden de magnitud uso intensivo (todo incluido, Twilio):** **~USD 12–13 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,5–1,6 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 con insights + §3 + §4).
+**Orden de magnitud uso intensivo (todo incluido, video con COGS 3,00):** **~USD 4–5 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,5–1,6 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 con insights + §3 + §4).
 
 **WhatsApp (§7, alcance actual):** Meta **~$0** (sin utility). La IA del chat sigue en §1.
 
 **De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Detalle y add-ons audio/videollamada: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
 
-**Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 sigue siendo coste de proveedor de video salvo stack propio.
+**Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **3,00** (Daily corto/mediano → self-host); ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
 
 ---
 

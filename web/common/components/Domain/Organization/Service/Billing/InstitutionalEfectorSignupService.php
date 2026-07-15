@@ -382,7 +382,7 @@ final class InstitutionalEfectorSignupService
             $plan = ['classes' => $plan];
         }
         $catalog = self::planesCatalog();
-        $cogs = $catalog['cogs_usd_per_professional_month'] ?? ['base' => 0.83, 'audio' => 0.28, 'videollamada' => 11.52];
+        $cogs = $catalog['cogs_usd_per_professional_month'] ?? ['base' => 0.83, 'audio' => 0.28, 'videollamada' => 3.00];
         $margin = (float) ($catalog['margin_on_cost_percent'] ?? 233);
         $ref = (float) ($catalog['reference_encounters_per_professional_month'] ?? 400);
         $sellable = $catalog['sellable_classes'] ?? [];
@@ -393,7 +393,7 @@ final class InstitutionalEfectorSignupService
             $vol = (float) ($meta['encounters_per_professional_month'] ?? $ref);
             $base = (float) ($cogs['base'] ?? 0.83);
             $audio = !empty($cfg['dictado_incluido']) ? (float) ($cogs['audio'] ?? 0.28) : 0.0;
-            $video = !empty($cfg['videollamada_permitida']) ? (float) ($cogs['videollamada'] ?? 11.52) : 0.0;
+            $video = !empty($cfg['videollamada_permitida']) ? (float) ($cogs['videollamada'] ?? 3.00) : 0.0;
             $cogsRef = $base + $audio + $video;
             $cogsClass = $cogsRef * ($vol / max(1.0, $ref));
             $unit = $cogsClass * (1 + $margin / 100);

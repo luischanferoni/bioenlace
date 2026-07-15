@@ -36,10 +36,13 @@ Doc producto: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licenci
 Núcleo compartido en `pricing-core.js`. En `#precios` se muestra el calculador completo; en `alta.html` solo un **indicador de precio** que se actualiza al cambiar cantidades/opcionales.
 
 **Fórmula:** `precio_unitario = COGS × (1 + margin_on_cost_percent/100)`.  
-COGS: base ± audio ± videollamada, columna **con context caching** ([costos-api.md](../web/docs/costos/costos-api.md)).  
+COGS: base ± audio ± videollamada (**3,00** USD/prof — Daily pay-as-you-go → self-host), columna **con context caching** ([costos-api.md](../web/docs/costos/costos-api.md)).  
 El usuario elige clases (AMB / EMER / IMP), cantidad de **profesionales** por clase, y opcionales audio/videollamada. En copy público **no** usar el término PES.
 
-Doc comercial: [matriz-argentina-modulos-precios.md](../web/docs/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).
+Fuente de cifras del calculador: `js/pricing-config.json` (mantener alineado con `pricing-pes-by-encounter-class.yaml`).
+
+Doc comercial: [matriz-argentina-modulos-precios.md](../web/docs/modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md).  
+Roadmap video: [videollamadas.md](../web/docs/costos/estrategias-reduccion/videollamadas.md).
 
 ## Demo del asistente (`js/assistant-demo.js`)
 

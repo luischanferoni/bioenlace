@@ -15,7 +15,7 @@ Resumen de palancas para quedar **por debajo** de [costos-api.md](../costos-api.
 | Conversación paciente / onboarding | ~$0,47 + ~$0,14 (§1–3 costos-api) | 30–60 % | [pre-consulta-onboarding.md](./pre-consulta-onboarding.md) |
 | STT / **Edge-Cloud Routing** | ~$0,28 (Groq ref., COGS servidor) | Dispositivo primero, servidor solo fallback; evolución: modelo fit on-device | [stt.md](./stt.md#edge-cloud-routing-stt) |
 | Vision | $0 en ref. | 50–100 % | [vision.md](./vision.md) |
-| Videollamadas | ~$11,52 Twilio | 20–50 % | [videollamadas.md](./videollamadas.md) |
+| Videollamadas | COGS planificado **$3,00** (Daily→self-host) | Límite duración; scale SFU | [videollamadas.md](./videollamadas.md) |
 | Monitoreo | — | — | [monitoreo.md](./monitoreo.md) |
 
 ## Infra propia

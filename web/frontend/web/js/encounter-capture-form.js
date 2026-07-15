@@ -694,7 +694,18 @@
                 window.EncounterCaptureReview.collectStagedIds(this.reviewRoot)
             )
         ) {
-            this.setStatus('Faltan datos obligatorios en el análisis.', 'warning');
+            var stagedNow = window.EncounterCaptureReview.collectStagedIds(this.reviewRoot);
+            if (
+                window.EncounterCaptureReview.hasExtractedContent(this.captureReview) &&
+                stagedNow.size === 0
+            ) {
+                this.setStatus(
+                    'Seleccioná al menos un ítem del análisis antes de confirmar.',
+                    'warning'
+                );
+            } else {
+                this.setStatus('Faltan datos obligatorios en el análisis.', 'warning');
+            }
             return;
         }
 

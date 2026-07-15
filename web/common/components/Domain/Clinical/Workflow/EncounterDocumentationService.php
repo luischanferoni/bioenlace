@@ -130,7 +130,8 @@ class EncounterDocumentationService extends Component
             }
 
             Yii::info(
-                'encounter.guardar categorias=' . implode(',', array_keys($datosExtraidos)),
+                'encounter.guardar categorias=' . implode(',', array_keys($datosExtraidos))
+                . ' note_body=' . ($this->resolveNonEmptyBodyText($body, ['texto_procesado', 'observacion', 'texto_original']) !== null ? 'si' : 'no'),
                 'encounter-doc'
             );
 
@@ -229,6 +230,8 @@ class EncounterDocumentationService extends Component
         if (!$encounter->save(false)) {
             throw new \RuntimeException('No se pudo actualizar el encounter: ' . json_encode($encounter->getErrors()));
         }
+        // Defensa: si save(false) no escribió la nota (p. ej. dirty attrs), forzar UPDATE.
+        $this->forcePersistCaptureNote($encounter, $body);
 
         $this->assertEncounterPersisted($encounter);
 
@@ -315,19 +318,65 @@ class EncounterDocumentationService extends Component
      */
     private function applyCaptureTextToEncounter(Encounter $encounter, array $body): void
     {
-        if (isset($body['texto_procesado']) || isset($body['observacion'])) {
-            $note = $body['texto_procesado'] ?? $body['observacion'];
-            if ($note !== null && trim((string) $note) !== '') {
-                $encounter->note = is_string($note) ? $note : (string) $note;
-            }
-        } elseif (isset($body['texto_original']) && trim((string) $body['texto_original']) !== '') {
-            $encounter->note = (string) $body['texto_original'];
+        // Preferir texto procesado; si viene vacío (FormData con clave presente), caer a original.
+        $note = $this->resolveNonEmptyBodyText($body, ['texto_procesado', 'observacion', 'texto_original']);
+        if ($note !== null) {
+            $encounter->note = $note;
         }
         // Motivos: solo cuerpo tipado (motivo_consulta) o lo que persista ConsultaMotivos.
         // No volcar el texto clínico completo en reason_text (confunde con Motivos).
-        if (isset($body['motivo_consulta']) && trim((string) $body['motivo_consulta']) !== '') {
-            $encounter->reason_text = (string) $body['motivo_consulta'];
+        $motivo = $this->resolveNonEmptyBodyText($body, ['motivo_consulta']);
+        if ($motivo !== null) {
+            $encounter->reason_text = $motivo;
         }
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @param list<string> $keys
+     */
+    private function resolveNonEmptyBodyText(array $body, array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            if (!array_key_exists($key, $body) || $body[$key] === null) {
+                continue;
+            }
+            $text = trim(is_string($body[$key]) ? $body[$key] : (string) $body[$key]);
+            if ($text === '' || strcasecmp($text, 'null') === 0) {
+                continue;
+            }
+
+            return $text;
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     */
+    private function forcePersistCaptureNote(Encounter $encounter, array $body): void
+    {
+        $note = $this->resolveNonEmptyBodyText($body, ['texto_procesado', 'observacion', 'texto_original']);
+        if ($note === null) {
+            return;
+        }
+        $current = trim((string) ($encounter->note ?? ''));
+        if ($current === $note) {
+            // Confirmar en BD por si el AR no flusheó el atributo.
+            $dbNote = Encounter::find()
+                ->select(['note'])
+                ->where(['id' => (int) $encounter->id])
+                ->scalar();
+            if (is_string($dbNote) && trim($dbNote) === $note) {
+                return;
+            }
+        }
+        Encounter::updateAll(
+            ['note' => $note, 'updated_at' => date('Y-m-d H:i:s')],
+            ['id' => (int) $encounter->id]
+        );
+        $encounter->note = $note;
     }
 
     /**

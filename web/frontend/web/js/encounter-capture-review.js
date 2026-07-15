@@ -26,6 +26,15 @@
         return out;
     }
 
+    function hasExtractedContent(review) {
+        if (!review || review.system_error) {
+            return false;
+        }
+        return (review.categories || []).some(function (c) {
+            return c.items && c.items.length;
+        });
+    }
+
     function buildDatosExtraidos(review, stagedIdSet) {
         var out = {};
         if (!review || !review.categories) {
@@ -38,11 +47,18 @@
                     return;
                 }
                 if (stagedIdSet.has(item.id)) {
-                    rows.push(item.payload || {});
+                    rows.push(
+                        item.payload && typeof item.payload === 'object'
+                            ? item.payload
+                            : { texto: item.label || '' }
+                    );
                 }
             });
             if (rows.length) {
                 out[cat.title] = rows;
+                if (cat.model && cat.model !== cat.title) {
+                    out[cat.model] = rows;
+                }
             }
         });
         return out;
@@ -79,20 +95,33 @@
         if (review.tiene_datos_faltantes && stagedIdSet.size === 0) {
             return false;
         }
+        if (hasExtractedContent(review) && stagedIdSet.size === 0) {
+            return false;
+        }
         return true;
     }
 
-    function renderItemChip(item) {
+    function renderItemChip(item, isActive) {
         var label = item.label || '';
         if (item.subtitle) {
             label += ' (' + item.subtitle + ')';
         }
+        var active = isActive !== false;
+        var btnClass = active
+            ? 'btn btn-sm btn-outline-primary capture-review-item active me-1 mb-1'
+            : 'btn btn-sm btn-outline-secondary capture-review-item me-1 mb-1';
+        var iconClass = active ? 'bi bi-check-circle me-1' : 'bi bi-plus-circle me-1';
         return (
-            '<button type="button" class="btn btn-sm btn-outline-primary capture-review-item active me-1 mb-1" ' +
-            'data-capture-item-id="' +
+            '<button type="button" class="' +
+            btnClass +
+            '" data-capture-item-id="' +
             escapeHtml(item.id) +
-            '" aria-pressed="true">' +
-            '<i class="bi bi-check-circle me-1"></i>' +
+            '" aria-pressed="' +
+            (active ? 'true' : 'false') +
+            '">' +
+            '<i class="' +
+            iconClass +
+            '"></i>' +
             escapeHtml(label) +
             '</button>'
         );
@@ -105,6 +134,20 @@
         }
 
         var stagedIds = defaultStagedIds(review);
+        if ((!stagedIds || !stagedIds.length) && hasExtractedContent(review)) {
+            stagedIds = [];
+            (review.categories || []).forEach(function (cat) {
+                (cat.items || []).forEach(function (item) {
+                    if (item && item.id) {
+                        stagedIds.push(item.id);
+                    }
+                });
+            });
+        }
+        var stagedSet = {};
+        stagedIds.forEach(function (id) {
+            stagedSet[id] = true;
+        });
         var parts = [];
 
         parts.push('<div class="capture-review-panel">');
@@ -150,12 +193,15 @@
                 parts.push('<hr><p class="mb-0"><strong>Recomendación:</strong> ' + escapeHtml(err.detalle) + '</p>');
             }
             parts.push('</div>');
-        } else if (!review.categories || !review.categories.some(function (c) { return c.items && c.items.length; })) {
+        } else if (!hasExtractedContent(review)) {
             parts.push(
                 '<div class="alert alert-info" role="status">La IA no extrajo datos estructurados. Podés confirmar igual con el texto registrado.</div>'
             );
         } else {
-            parts.push('<div class="text-uppercase small text-muted mb-2">Sugerencias de la IA</div>');
+            parts.push('<div class="text-uppercase small text-muted mb-2">Análisis y sugerencias de la IA</div>');
+            parts.push(
+                '<p class="small text-muted mb-2">Los ítems del texto clínico vienen tildados. Los aportes de la IA quedan opt-in.</p>'
+            );
             review.categories.forEach(function (cat) {
                 parts.push('<div class="mb-3">');
                 parts.push('<h6 class="border-bottom border-2 border-dark pb-2">');
@@ -174,7 +220,7 @@
                 } else {
                     parts.push('<div class="d-flex flex-wrap gap-1">');
                     cat.items.forEach(function (item) {
-                        parts.push(renderItemChip(item));
+                        parts.push(renderItemChip(item, !!stagedSet[item.id]));
                     });
                     parts.push('</div>');
                     parts.push(
@@ -205,14 +251,16 @@
         }
         root.querySelectorAll('.capture-review-item').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                var active = btn.classList.contains('active');
-                btn.classList.toggle('active', !active);
-                btn.classList.toggle('btn-outline-primary', active);
-                btn.classList.toggle('btn-outline-secondary', !active);
-                btn.setAttribute('aria-pressed', active ? 'false' : 'true');
+                var willActivate = !btn.classList.contains('active');
+                btn.classList.toggle('active', willActivate);
+                btn.classList.toggle('btn-outline-primary', willActivate);
+                btn.classList.toggle('btn-outline-secondary', !willActivate);
+                btn.setAttribute('aria-pressed', willActivate ? 'true' : 'false');
                 var icon = btn.querySelector('i');
                 if (icon) {
-                    icon.className = active ? 'bi bi-plus-circle me-1' : 'bi bi-check-circle me-1';
+                    icon.className = willActivate
+                        ? 'bi bi-check-circle me-1'
+                        : 'bi bi-plus-circle me-1';
                 }
                 if (typeof onChange === 'function') {
                     onChange(collectStagedIds(root));
@@ -228,5 +276,6 @@
         buildDatosExtraidos: buildDatosExtraidos,
         canConfirm: canConfirm,
         defaultStagedIds: defaultStagedIds,
+        hasExtractedContent: hasExtractedContent,
     };
 })(window);

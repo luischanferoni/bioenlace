@@ -11,6 +11,7 @@ use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
 use common\models\Efector;
+use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 
@@ -76,8 +77,8 @@ final class PatientEncounterSummaryBuilder
             return ['id' => $pesId, 'display' => null];
         }
         $persona = $pes->persona ?? null;
-        $display = $persona && method_exists($persona, 'getNombreCompleto')
-            ? $persona->getNombreCompleto()
+        $display = $persona instanceof Persona
+            ? $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
             : null;
 
         return ['id' => $pesId, 'display' => $display];

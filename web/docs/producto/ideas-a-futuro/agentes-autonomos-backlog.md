@@ -313,7 +313,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 **Casos de uso**
 
-1. **Renovación crónica:** Triage `control_cronico` + sin slots. El agente ofrece consulta async o tele con clínico del hub en 72 h en lugar de lista de 4 meses con especialista.
+1. **Renovación crónica:** Triage `control_cronico` + sin slots. El agente ofrece consulta clínica por mensaje (async) o tele con clínico del hub en 72 h en lugar de lista de 4 meses con especialista.
 2. **Trámite administrativo:** `tramite_admin` → deriva a flujo sin médico (certificado, duplicado receta) si el efector lo habilita.
 3. **Banda B sin especialista:** Ofrece turno clínica general con nota «derivación a especialista si corresponde» y pre-carga motivos para el médico.
 

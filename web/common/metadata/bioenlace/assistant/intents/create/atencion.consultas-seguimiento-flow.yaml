@@ -2,26 +2,34 @@ intent_id: atencion.consultas-seguimiento-flow
 version: 1
 
 action_name: "Consultas y seguimiento"
-description: "Consulta general por mensaje o seguimiento de tu tratamiento activo."
+description: >-
+  Consulta clínica por mensaje (general, seguimiento de tratamiento o de una
+  consulta previa) y, si hace falta, turno de control.
 rbac_route: "/api/turnos/crear-como-paciente"
 keywords:
   - consultas y seguimiento
   - consulta general
   - seguimiento tratamiento
+  - seguimiento consulta previa
+  - consulta previa
   - renovar medicacion
+  - solicitar ajuste
   - duda tratamiento
   - contar evolucion
   - consulta por mensaje
+  - consulta clinica por mensaje
 
 intent_semantics:
   goal: >-
-    Separar consulta general libre de seguimiento sobre un plan de tratamiento:
-    mensaje async o reserva de turno según la necesidad elegida.
+    Separar consulta general libre de seguimiento sobre un plan de tratamiento
+    o una atención previa: consulta clínica por mensaje (async) o reserva de turno
+    según la necesidad elegida.
   how: >-
-    Tipo (consulta general / seguimiento) → plan activo si aplica → necesidad típica
-    → mensaje o preferencia de turno → slots si corresponde.
+    Tipo (consulta general / tratamiento activo / consulta previa) → plan o atención
+    si aplica → necesidad típica → medicación/motivo o preferencia de turno → slots si corresponde.
   outcome:
-    - Solicitud async o turno con contexto de care plan cuando aplica.
+    - Consulta clínica por mensaje (SOLICITUD_ASYNC) o turno con contexto de care plan
+      o atención previa cuando aplica.
 
 draft_hydrator:
   handler: scheduling.consultas_seguimiento_intake
@@ -31,7 +39,11 @@ draft_keys_extra:
   - seguimiento_necesidad
   - preferencia_profesional_turno
   - care_plan_id
+  - encounter_id
   - mensaje
+  - medication_request_ids
+  - medicacion_operacion
+  - ajuste_motivo
   - triage_raiz
   - tipo_atencion
   - id_servicio_asignado
@@ -51,12 +63,50 @@ subintents:
             intake_tipo: consulta_general
         next: captura_consulta_general
       - when:
+          draft_equals:
+            intake_tipo: seguimiento_consulta_previa
+        next: select_encounter_previa
+      - when:
+          draft_equals:
+            intake_tipo: seguimiento
+        next: select_care_plan
+      - when:
           default: true
         next: select_care_plan
     open_ui:
       action_id: consultas-seguimiento.paso
       params:
         step: tipo
+
+  - id: select_encounter_previa
+    assistant_text: "¿Sobre qué atención?"
+    requires:
+      - draft.intake_tipo
+    provides:
+      - draft.encounter_id
+    next: captura_consulta_previa
+    open_ui:
+      action_id: clinical.encounter.mis-atenciones-como-paciente
+
+  - id: captura_consulta_previa
+    assistant_text: "Contanos en el campo de abajo"
+    requires:
+      - draft.intake_tipo
+      - draft.encounter_id
+    provides:
+      - draft.mensaje
+    next: ""
+    terminal_without_submit: true
+    composer_capture:
+      draft_field: mensaje
+      placeholder: "Contanos tu consulta o evolución respecto de esa atención."
+      min_length: 10
+      submit_action_id: consulta-async.solicitar-como-paciente
+      params:
+        intake_tipo: "draft.intake_tipo"
+        encounter_id: "draft.encounter_id"
+        triage_raiz: "draft.triage_raiz"
+        mensaje: "draft.mensaje"
 
   - id: select_care_plan
     assistant_text: "Tu tratamiento"
@@ -77,6 +127,14 @@ subintents:
     next_routing:
       - when:
           draft_equals:
+            seguimiento_necesidad: renovar_medicacion
+        next: select_medicamentos_renovacion
+      - when:
+          draft_equals:
+            seguimiento_necesidad: solicitar_ajuste
+        next: select_medicamentos_ajuste
+      - when:
+          draft_equals:
             seguimiento_necesidad: solicitar_turno
         next: select_preferencia_turno
       - when:
@@ -86,6 +144,74 @@ subintents:
       action_id: consultas-seguimiento.paso
       params:
         step: necesidad
+
+  - id: select_medicamentos_renovacion
+    assistant_text: "Medicación a renovar"
+    requires:
+      - draft.care_plan_id
+      - draft.seguimiento_necesidad
+    provides:
+      - draft.medication_request_ids
+    next: confirmar_renovacion
+    open_ui:
+      action_id: clinical.care-plan.medicamentos-como-paciente
+      params:
+        care_plan_id: "draft.care_plan_id"
+
+  - id: confirmar_renovacion
+    assistant_text: "Confirmar renovación"
+    requires:
+      - draft.care_plan_id
+      - draft.medication_request_ids
+    provides: []
+    next: ""
+    terminal_without_submit: true
+    open_ui:
+      action_id: clinical.care-plan.confirmar-renovacion-como-paciente
+      params:
+        care_plan_id: "draft.care_plan_id"
+        medication_request_ids: "draft.medication_request_ids"
+        intake_tipo: "draft.intake_tipo"
+        seguimiento_necesidad: "draft.seguimiento_necesidad"
+        medicacion_operacion: "draft.medicacion_operacion"
+        triage_raiz: "draft.triage_raiz"
+
+  - id: select_medicamentos_ajuste
+    assistant_text: "Medicación a ajustar"
+    requires:
+      - draft.care_plan_id
+      - draft.seguimiento_necesidad
+    provides:
+      - draft.medication_request_ids
+    next: captura_ajuste_motivo
+    open_ui:
+      action_id: clinical.care-plan.medicamentos-como-paciente
+      params:
+        care_plan_id: "draft.care_plan_id"
+
+  - id: captura_ajuste_motivo
+    assistant_text: "¿Qué cambio necesitás?"
+    requires:
+      - draft.care_plan_id
+      - draft.medication_request_ids
+      - draft.seguimiento_necesidad
+    provides:
+      - draft.ajuste_motivo
+    next: ""
+    terminal_without_submit: true
+    composer_capture:
+      draft_field: ajuste_motivo
+      placeholder: "Indicá qué cambio necesitás y por qué (síntomas, horarios, etc.)."
+      min_length: 10
+      submit_action_id: consulta-async.solicitar-como-paciente
+      params:
+        intake_tipo: "draft.intake_tipo"
+        seguimiento_necesidad: "draft.seguimiento_necesidad"
+        care_plan_id: "draft.care_plan_id"
+        medication_request_ids: "draft.medication_request_ids"
+        medicacion_operacion: "draft.medicacion_operacion"
+        triage_raiz: "draft.triage_raiz"
+        ajuste_motivo: "draft.ajuste_motivo"
 
   - id: captura_consulta_general
     assistant_text: "Escribí tu consulta en el campo de abajo"

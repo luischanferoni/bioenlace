@@ -3284,7 +3284,9 @@
         const items = Array.isArray(block.items) ? block.items : [];
         const draftField = block.draft_field ? String(block.draft_field) : '';
         const selection = block.selection && typeof block.selection === 'object' ? block.selection : {};
-        const requiresConfirmation = selection.requires_confirmation === true;
+        const selectionMode = selection.mode != null ? String(selection.mode).trim().toLowerCase() : 'single';
+        const isMultiple = selectionMode === 'multiple';
+        const requiresConfirmation = isMultiple ? true : selection.requires_confirmation === true;
         const emptyMsg = block.empty_message ? String(block.empty_message) : '';
         const itemKind = block.item && block.item.kind ? String(block.item.kind) : '';
         const blockId = block.id != null ? String(block.id) : '';
@@ -3293,6 +3295,7 @@
 
         let listLockEl = container;
         let selectedId = '';
+        let selectedIds = {};
         let itemsById = {};
 
         function rebuildItemsById(listItems) {
@@ -3347,7 +3350,9 @@
         html += '<div class="bio-ui-json-list-items" data-bio-list-items="1">';
         html += buildPickButtonsHtml(items);
         html += '</div>';
-        const effectiveRequiresConfirmation = requiresConfirmation && options.isTerminalFlowStep !== true;
+        const effectiveRequiresConfirmation = isMultiple
+            ? true
+            : (requiresConfirmation && options.isTerminalFlowStep !== true);
         if (effectiveRequiresConfirmation) {
             html += '<div class="spa-flow-submit-inline">';
             html += '<button type="button" class="btn btn-success" data-embed-confirm="1" disabled>' + escapeHtml(FLOW_SUBMIT_BUTTON_LABEL) + '</button>';
@@ -3368,7 +3373,31 @@
             return Array.from(container.querySelectorAll('button[data-embed-pick="1"]'));
         }
 
+        function syncMultiSelectedUi() {
+            allPickButtons().forEach(b => {
+                const id = b.getAttribute('data-embed-id') || '';
+                const on = id && selectedIds[id] === true;
+                b.classList.toggle('border', on);
+                b.classList.toggle('border-3', on);
+                const ck = b.querySelector('.bio-ui-pick-check');
+                if (ck) ck.classList.toggle('d-none', !on);
+            });
+            const ids = Object.keys(selectedIds).filter(function (k) { return selectedIds[k]; }).sort();
+            selectedId = ids.join(',');
+            if (confirmBtn) confirmBtn.disabled = ids.length < 1;
+        }
+
         function setSelected(btn, id) {
+            if (isMultiple) {
+                if (!id) return;
+                if (selectedIds[id]) {
+                    delete selectedIds[id];
+                } else {
+                    selectedIds[id] = true;
+                }
+                syncMultiSelectedUi();
+                return;
+            }
             selectedId = id || '';
             allPickButtons().forEach(b => {
                 b.classList.remove('border', 'border-3');
@@ -3390,13 +3419,17 @@
         function confirmSelection() {
             if (isListPickLocked()) return;
             if (!draftField) return;
+            if (isMultiple) {
+                const ids = Object.keys(selectedIds).filter(function (k) { return selectedIds[k]; }).sort();
+                selectedId = ids.join(',');
+            }
             if (!selectedId) return;
 
             const isTerminalFlowStep = options.isTerminalFlowStep === true;
             const editSparse = options.editSparse && typeof options.editSparse === 'object'
                 ? options.editSparse
                 : null;
-            const item = itemsById[selectedId];
+            const item = isMultiple ? null : itemsById[selectedId];
 
             const flowRow = container.closest('.spa-chat-flow-row');
             const stepLi = container.closest('.spa-flow-step-item');
@@ -3575,7 +3608,15 @@
 
         if (draftField && draft && draft[draftField] != null) {
             const preId = String(draft[draftField]).trim();
-            if (preId !== '' && itemsById[preId]) {
+            if (isMultiple && preId !== '') {
+                preId.split(',').forEach(function (part) {
+                    const id = String(part || '').trim();
+                    if (id && itemsById[id]) {
+                        selectedIds[id] = true;
+                    }
+                });
+                syncMultiSelectedUi();
+            } else if (preId !== '' && itemsById[preId]) {
                 const sel = 'button[data-embed-pick="1"][data-embed-id="' + (typeof CSS !== 'undefined' && CSS.escape
                     ? CSS.escape(preId)
                     : preId.replace(/\\/g, '\\\\').replace(/"/g, '\\"')) + '"]';

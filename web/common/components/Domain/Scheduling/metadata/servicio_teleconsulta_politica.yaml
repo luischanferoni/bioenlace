@@ -5,7 +5,7 @@ ui:
   title: Política de teleconsulta por servicio
   info_message: >-
     Define si los pacientes pueden elegir videollamada al reservar en cada servicio del efector.
-    La consulta por mensaje sigue las reglas clínicas de triage y no depende de esta política.
+    La consulta clínica por mensaje sigue las reglas clínicas de triage y no depende de esta política.
   caso_codigos_hint: >-
     Un código de triage por línea (solo si elegís «Algunos motivos»). Usá códigos del catálogo de reserva.
 

@@ -2,7 +2,7 @@
 
 [← Seguimiento](./README.md)
 
-Paciente con **plan de tratamiento activo**: renovar medicación, contar evolución o pedir turno de control con el mismo equipo.
+Paciente con **plan de tratamiento activo** (CarePlan): renovar medicación (varios medicamentos, sin texto libre), solicitar ajuste (medicamentos + motivo), contar evolución o pedir turno de control.
 
 ## Consulta de ejemplo
 
@@ -23,14 +23,18 @@ Paciente con **plan de tratamiento activo**: renovar medicación, contar evoluci
 ## Paciente — desde el plan de tratamiento
 
 1. **Vos** entrás al **detalle de tu plan** en la app o desde el asistente (**Consultas y seguimiento**).
-2. **Vos** elegís el plan activo y qué necesitás: renovar medicación, una duda, contar evolución o pedir turno.
-3. Si elegís **mensaje**, escribís (guion de renovación o evolución) y esperás respuesta — ver [consulta por mensaje](./consulta-por-mensaje.md).
-4. Si elegís **turno**, elegís presencial o videollamada (si aparece) y un horario.
-5. **El sistema** confirma el turno o la consulta por mensaje.
+2. **Vos** elegís el plan activo (si no venís del detalle) y qué necesitás: renovar medicación, solicitar ajuste, duda, contar evolución o pedir turno.
+3. Si elegís **renovar medicación**, marcás uno o más medicamentos del plan y confirmás **sin** escribir texto.
+4. Si elegís **solicitar ajuste**, marcás medicamentos y escribís el motivo del cambio.
+5. Si elegís **duda** o **evolución**, escribís el mensaje — ver [consulta clínica por mensaje](./consulta-por-mensaje.md).
+6. Si elegís **turno**, elegís presencial o videollamada (si aparece) y un horario.
+7. **El sistema** confirma el turno o la consulta clínica por mensaje.
 
 **Qué verificar**
 
-- El plan activo se lista solo si el médico lo indicó previamente.
+- El plan activo/on-hold se lista solo si el médico lo indicó previamente; sin planes, el flujo se corta con mensaje claro.
+- En renovación/ajuste solo aparecen medicamentos activos del CarePlan elegido.
+- En la bandeja staff, la solicitud muestra operación (renovación/ajuste) y nombres de medicamentos.
 - Recordatorios de medicación o controles aparecen si el centro los activó.
 
 ---
@@ -43,9 +47,9 @@ Paciente con **plan de tratamiento activo**: renovar medicación, contar evoluci
 
 ---
 
-## Personal de salud — consulta por mensaje del plan
+## Personal de salud — consulta clínica por mensaje del plan
 
-1. Igual que [consulta por mensaje](./consulta-por-mensaje.md), pero el caso puede mostrar contexto del **plan** en la bandeja.
+1. Igual que [consulta clínica por mensaje](./consulta-por-mensaje.md), pero el caso puede mostrar contexto del **plan** en la bandeja.
 2. **Vos** respondés o derivás a turno presencial si hace falta.
 
 ---
@@ -68,11 +72,11 @@ Paciente con **plan de tratamiento activo**: renovar medicación, contar evoluci
 | Cuándo | Quién | Qué debería pasar |
 |--------|-------|-------------------|
 | Recordatorios del plan | Paciente | Medicación o controles, si están activos |
-| Consulta por mensaje enviada | Paciente | Visible en Inicio |
+| Consulta clínica por mensaje enviada | Paciente | Visible en Inicio |
 | Respuesta del médico | Paciente | Aviso de mensaje nuevo |
 | Turno de seguimiento reservado | Paciente | Confirmación como en ambulatorio |
 | Cuatro horas antes del turno | Paciente | Preparar consulta (motivos con guía) |
 
 ---
 
-[Consulta por mensaje](./consulta-por-mensaje.md) · [Medicina general](../ambulatorio/medicina-general.md)
+[Consulta clínica por mensaje](./consulta-por-mensaje.md) · [Medicina general](../ambulatorio/medicina-general.md)

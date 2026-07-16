@@ -1,0 +1,24 @@
+{
+  "ui_type": "ui_json",
+  "title": "Medicación del tratamiento",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "medicamentos",
+      "title": "Elegí uno o más medicamentos",
+      "empty_message": "Este plan no tiene medicación activa para renovar o ajustar.",
+      "draft_field": "medication_request_ids",
+      "item": { "kind": "option", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "medium", "shape": "wide" },
+      "selection": { "mode": "multiple", "requires_confirmation": true },
+      "items": []
+    }
+  ]
+}

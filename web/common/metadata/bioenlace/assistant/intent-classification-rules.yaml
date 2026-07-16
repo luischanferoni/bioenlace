@@ -64,11 +64,13 @@ vocab:
     - como me fue con el tratamiento
     - consulta general
     - consulta por mensaje
+    - consulta clinica por mensaje
+    - consulta clínica por mensaje
     - escribir al medico
     - escribir al médico
     - preguntarle al medico
     - preguntarle al médico
-  consultas_seguimiento_topics: '\b(renovar|repetir|receta|medicacion|medicación|tratamiento|seguimiento|evolucion|evolución|consulta\s+por\s+mensaje)\b'
+  consultas_seguimiento_topics: '\b(renovar|repetir|receta|medicacion|medicación|tratamiento|seguimiento|evolucion|evolución|consulta\s+(clinica\s+|clínica\s+)?por\s+mensaje)\b'
   acute_new_symptom: '\b(me\s+siento\s+mal|malestar\s+nuevo|sintoma\s+nuevo|síntoma\s+nuevo|me\s+empeoro|empeoré|urgencia|107)\b'
   help_menu: '\b(ayuda|qué puedo|que puedo|menu|menú|opciones|qué hace|que hace|qué se puede|que se puede|mostrar acciones)\b'
   greeting: '\b(hola|buenos|gracias|qué tal|que tal|como estas|cómo estás)\b'

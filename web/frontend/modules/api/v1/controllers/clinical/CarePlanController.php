@@ -10,9 +10,11 @@ use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderPreferen
 use common\components\Domain\Clinical\CarePlan\Reminder\CarePlanReminderScheduleBuilder;
 use common\components\Domain\Clinical\Dto\CarePlanDto;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\Service\CarePlanMedicationListService;
 use common\components\Domain\Clinical\Service\CarePlanPresentationService;
 use common\components\Domain\Clinical\CarePlan\CarePlanAdherenceStaffService;
 use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
+use common\components\Domain\Scheduling\Service\ConsultaAsyncSolicitudService;
 use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
 
@@ -22,6 +24,8 @@ use frontend\modules\api\v1\controllers\BaseController;
  * GET  /api/v1/clinical/care-plans/active
  * GET  /api/v1/clinical/care-plans/<id>
  * GET|POST /api/v1/clinical/care-plan/ver-tratamiento-paciente (UI JSON)
+ * GET|POST /api/v1/clinical/care-plan/medicamentos-como-paciente (UI JSON)
+ * GET|POST /api/v1/clinical/care-plan/confirmar-renovacion-como-paciente (UI JSON)
  * POST /api/v1/clinical/care-plans/<id>/complete
  * POST /api/v1/clinical/care-plans/<id>/revoke
  * POST /api/v1/clinical/care-plans/<id>/hold
@@ -125,10 +129,144 @@ class CarePlanController extends BaseController
                 ];
             }
 
-            return UiScreenService::withListBlockItems($out, $items, 'planes');
+            $out = UiScreenService::withListBlockItems($out, $items, 'planes');
+            if ($items === [] && isset($out['blocks']) && is_array($out['blocks'])) {
+                foreach ($out['blocks'] as $i => $block) {
+                    if (!is_array($block) || ($block['id'] ?? '') !== 'planes') {
+                        continue;
+                    }
+                    $block['selection'] = ['mode' => 'none'];
+                    $out['blocks'][$i] = $block;
+                    break;
+                }
+            }
+
+            return $out;
         }
 
         return $out;
+    }
+
+    /**
+     * UI JSON: medicación activa del CarePlan (paciente) para renovar / ajustar.
+     *
+     * GET|POST /api/v1/clinical/care-plan/medicamentos-como-paciente?care_plan_id=
+     *
+     * @tags clinical, care-plan, paciente, ui_json, medicacion
+     */
+    public function actionMedicamentosComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        try {
+            $subjectSvc = new PersonRepresentationSubjectService();
+            $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::CLINICAL_CARE_PLAN);
+            $subjectSvc->auditDelegatedAction(PersonRelatedAuditLog::ACTION_CARE_PLAN_ACCESSED, $idPersona, []);
+        } catch (\InvalidArgumentException $e) {
+            return $this->clinicalError($e->getMessage(), null, 400);
+        } catch (\yii\web\ForbiddenHttpException $e) {
+            return $this->clinicalError($e->getMessage(), null, 403);
+        }
+
+        $carePlanId = (int) ($params['care_plan_id'] ?? 0);
+        if ($carePlanId <= 0) {
+            return $this->clinicalError('Seleccioná un plan de tratamiento.', null, 400);
+        }
+
+        $medSvc = new CarePlanMedicationListService();
+        $plan = $medSvc->findActivePlanForPersona($carePlanId, $idPersona);
+        if ($plan === null) {
+            return $this->clinicalError('Plan no encontrado o no activo.', null, 404);
+        }
+
+        $out = UiScreenService::handleScreen(
+            'care-plan',
+            'medicamentos-como-paciente',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                $raw = $post['medication_request_ids'] ?? '';
+                if (is_array($raw)) {
+                    $ids = array_values(array_filter(array_map('intval', $raw)));
+                } else {
+                    $ids = array_values(array_filter(array_map(
+                        'intval',
+                        preg_split('/\s*,\s*/', trim((string) $raw)) ?: []
+                    )));
+                }
+                if ($ids === []) {
+                    throw new \InvalidArgumentException('Seleccioná al menos un medicamento.');
+                }
+
+                return [
+                    'data' => [
+                        'medication_request_ids' => implode(',', $ids),
+                        'care_plan_id' => (string) (int) ($post['care_plan_id'] ?? 0),
+                    ],
+                ];
+            }
+        );
+
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->isGet) {
+            $items = $medSvc->listItemsForPlan($plan);
+            $out = UiScreenService::withListBlockItems($out, $items, 'medicamentos');
+            if ($items === [] && isset($out['blocks']) && is_array($out['blocks'])) {
+                foreach ($out['blocks'] as $i => $block) {
+                    if (!is_array($block) || ($block['id'] ?? '') !== 'medicamentos') {
+                        continue;
+                    }
+                    $block['selection'] = ['mode' => 'none'];
+                    $out['blocks'][$i] = $block;
+                    break;
+                }
+            }
+
+            return $out;
+        }
+
+        return $out;
+    }
+
+    /**
+     * UI JSON: confirmar renovación de medicación (sin texto libre).
+     *
+     * GET|POST /api/v1/clinical/care-plan/confirmar-renovacion-como-paciente
+     *
+     * @tags clinical, care-plan, paciente, ui_json, medicacion
+     */
+    public function actionConfirmarRenovacionComoPaciente(): array
+    {
+        $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+
+        return UiScreenService::handleScreen(
+            'care-plan',
+            'confirmar-renovacion-como-paciente',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($params): array {
+                try {
+                    $subjectSvc = new PersonRepresentationSubjectService();
+                    $idPersona = $subjectSvc->resolveAndAuthorize(
+                        array_merge($params, $post),
+                        RepresentationPermission::CLINICAL_CARE_PLAN
+                    );
+                } catch (\InvalidArgumentException $e) {
+                    throw new \InvalidArgumentException($e->getMessage());
+                } catch (\yii\web\ForbiddenHttpException $e) {
+                    throw new \InvalidArgumentException($e->getMessage());
+                }
+
+                $merged = array_merge($params, $post, [
+                    'intake_tipo' => 'seguimiento',
+                    'seguimiento_necesidad' => 'renovar_medicacion',
+                    'medicacion_operacion' => 'renovacion',
+                ]);
+
+                return (new ConsultaAsyncSolicitudService())
+                    ->solicitarComoPaciente($idPersona, $merged);
+            }
+        );
     }
 
     /**

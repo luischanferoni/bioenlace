@@ -1,8 +1,10 @@
-# Seguimiento — consulta por mensaje (sin turno)
+# Seguimiento — consulta clínica por mensaje (sin turno)
 
 [← Seguimiento](./README.md)
 
 Para dudas sobre tratamiento, renovación de recetas o evolución **sin** un malestar nuevo agudo. Si el paciente tiene dolor fuerte o síntomas de alarma, debe usar **Atención** / necesito atención, no este camino.
+
+Nombre de producto: **consulta clínica por mensaje** (técnico: consulta async / `SOLICITUD_ASYNC`). Flujo del asistente: **Consultas y seguimiento** (`atencion.consultas-seguimiento-flow`).
 
 ## Consulta de ejemplo
 
@@ -20,7 +22,7 @@ Para dudas sobre tratamiento, renovación de recetas o evolución **sin** un mal
 
 1. **Vos** abrís el **Asistente** y elegís **Consultas y seguimiento** (atajo o frase parecida).
 2. **Vos** elegís **Consulta general** y escribís tu mensaje (guion de arriba).
-3. **El sistema** crea la consulta **sin turno** ni fecha de videollamada.
+3. **El sistema** crea la **consulta clínica por mensaje** (sin turno ni fecha de videollamada).
 4. **El sistema** la muestra en **Inicio** con acceso al **chat**.
 5. **Vos** esperás la respuesta del equipo.
 6. Cuando el médico contesta, **vos** recibís un **aviso** y leés el mensaje en el chat.
@@ -35,7 +37,7 @@ Para dudas sobre tratamiento, renovación de recetas o evolución **sin** un mal
 ## Personal de salud
 
 1. **Vos** abrís **Pacientes del día** (web o app Personal de Salud).
-2. **El sistema** muestra arriba **Consultas por mensaje** con las solicitudes pendientes.
+2. **El sistema** muestra arriba **Consultas clínicas por mensaje** con las solicitudes pendientes.
 3. **Vos** elegís la del paciente de prueba y tocás **Tomar y responder**.
 4. **El sistema** abre el chat con el mensaje del paciente.
 5. **Vos** escribís la respuesta (guion del médico).

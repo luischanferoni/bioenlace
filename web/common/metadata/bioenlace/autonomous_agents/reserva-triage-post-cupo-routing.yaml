@@ -39,7 +39,7 @@ rules:
           in: [C, D]
     action: recommend
     channel: async
-    mensaje: "No hay turnos pronto; podés enviar tu consulta por mensaje y el equipo te responderá."
+    mensaje: "No hay turnos pronto; podés enviar una consulta clínica por mensaje y el equipo te responderá."
     commit_async: false
 
   - id: tele_hub_sin_especialista

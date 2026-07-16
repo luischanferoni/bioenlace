@@ -15,6 +15,8 @@ final class ConsultasSeguimientoIntakeCatalogService
 
     public const INTAKE_SEGUIMIENTO = 'seguimiento';
 
+    public const INTAKE_SEGUIMIENTO_CONSULTA_PREVIA = 'seguimiento_consulta_previa';
+
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -90,6 +92,12 @@ final class ConsultasSeguimientoIntakeCatalogService
 
             return trim((string) (is_array($def) ? ($def['composer_placeholder'] ?? '') : ''))
                 ?: 'Contanos tu consulta con el mayor detalle posible.';
+        }
+        if ($intakeTipo === self::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA) {
+            $def = self::load()['intake_tipos'][self::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA] ?? [];
+
+            return trim((string) (is_array($def) ? ($def['composer_placeholder'] ?? '') : ''))
+                ?: 'Contanos tu consulta o evolución respecto de esa atención.';
         }
         if ($necesidadCode !== null && $necesidadCode !== '') {
             $n = $this->necesidad($necesidadCode);

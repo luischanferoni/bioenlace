@@ -108,11 +108,16 @@ $this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' :
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="asyncChatModalLabel">Consulta por mensaje</h5>
+                <h5 class="modal-title" id="asyncChatModalLabel">Consulta clínica por mensaje</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body d-flex flex-column" style="min-height: 320px;">
                 <p class="text-muted small mb-2" id="async-chat-subtitle"></p>
+                <div id="async-chat-intake-context" class="alert alert-light border small py-2 px-3 mb-2 d-none" data-role="async-chat-intake-context">
+                    <div class="fw-semibold mb-1" data-field="intake-title">Contexto</div>
+                    <div data-field="intake-summary"></div>
+                    <div class="mt-1" data-slot="intake-links"></div>
+                </div>
                 <div id="async-chat-loading" class="text-muted small">Cargando mensajes…</div>
                 <div id="async-chat-messages" class="flex-grow-1 overflow-auto mb-3 d-none" style="max-height: 360px;"></div>
                 <div id="async-chat-compose" class="d-none">

@@ -1,0 +1,67 @@
+<?php
+
+namespace common\tests\unit\scheduling;
+
+use Codeception\Test\Unit;
+use Symfony\Component\Yaml\Yaml;
+
+/**
+ * Contrato del flow consultas-seguimiento: routing por necesidad y draft keys.
+ */
+class ConsultasSeguimientoFlowYamlTest extends Unit
+{
+    public function testRoutingPorNecesidadYDraftKeys(): void
+    {
+        $path = dirname(__DIR__, 3)
+            . '/metadata/bioenlace/assistant/intents/create/atencion.consultas-seguimiento-flow.yaml';
+        $this->assertFileExists($path);
+        $yaml = Yaml::parseFile($path);
+        $this->assertIsArray($yaml);
+
+        $extra = $yaml['draft_keys_extra'] ?? [];
+        $this->assertContains('medication_request_ids', $extra);
+        $this->assertContains('medicacion_operacion', $extra);
+        $this->assertContains('ajuste_motivo', $extra);
+
+        $byId = [];
+        foreach ($yaml['subintents'] ?? [] as $si) {
+            if (is_array($si) && isset($si['id'])) {
+                $byId[(string) $si['id']] = $si;
+            }
+        }
+
+        $this->assertArrayHasKey('select_necesidad', $byId);
+        $routes = [];
+        foreach ($byId['select_necesidad']['next_routing'] ?? [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $when = $row['when']['draft_equals']['seguimiento_necesidad'] ?? null;
+            if (is_string($when) && $when !== '') {
+                $routes[$when] = (string) ($row['next'] ?? '');
+            }
+        }
+        $this->assertSame('select_medicamentos_renovacion', $routes['renovar_medicacion'] ?? null);
+        $this->assertSame('select_medicamentos_ajuste', $routes['solicitar_ajuste'] ?? null);
+        $this->assertSame('select_preferencia_turno', $routes['solicitar_turno'] ?? null);
+
+        $this->assertArrayHasKey('select_medicamentos_renovacion', $byId);
+        $this->assertArrayHasKey('confirmar_renovacion', $byId);
+        $this->assertArrayHasKey('select_medicamentos_ajuste', $byId);
+        $this->assertArrayHasKey('captura_ajuste_motivo', $byId);
+
+        $this->assertSame(
+            'clinical.care-plan.medicamentos-como-paciente',
+            $byId['select_medicamentos_renovacion']['open_ui']['action_id'] ?? null
+        );
+        $this->assertSame(
+            'clinical.care-plan.confirmar-renovacion-como-paciente',
+            $byId['confirmar_renovacion']['open_ui']['action_id'] ?? null
+        );
+        $this->assertArrayNotHasKey('composer_capture', $byId['confirmar_renovacion']);
+        $this->assertSame(
+            'ajuste_motivo',
+            $byId['captura_ajuste_motivo']['composer_capture']['draft_field'] ?? null
+        );
+    }
+}

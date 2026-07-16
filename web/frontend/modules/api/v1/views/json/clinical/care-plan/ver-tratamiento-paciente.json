@@ -13,7 +13,7 @@
       "kind": "list",
       "id": "planes",
       "title": "Planes de tratamiento activos",
-      "empty_message": "No tenés planes de tratamiento activos en este momento. Si deberías tener seguimiento, contactá a tu centro de salud.",
+      "empty_message": "No tenés un plan de tratamiento activo para hacer seguimiento. No se puede continuar por este camino. Si necesitás consultar algo, elegí «Consulta general» desde Consultas y seguimiento, o contactá a tu centro de salud.",
       "draft_field": "care_plan_id",
       "item": { "kind": "care_plan" },
       "presentation": { "tile": "large", "shape": "wide" },

@@ -1210,15 +1210,13 @@ class ChatScreenState extends State<ChatScreen> {
   Future<void> _runPendingIntent(String intentId) async {
     widget.onPendingIntentHandled?.call();
     final pendingDraft = Map<String, dynamic>.from(widget.pendingFlowDraft);
-    await _onRemediationChoice({
-      'intent_id': intentId,
-      'reset_flow': true,
-    });
-    if (pendingDraft.isNotEmpty) {
-      _applyDraftDelta(pendingDraft);
-    }
-    if (!mounted) return;
-    await _asistenteService.procesarInteraccion('');
+    await _onRemediationChoice(
+      {
+        'intent_id': intentId,
+        'reset_flow': true,
+      },
+      prefillDraft: pendingDraft.isNotEmpty ? pendingDraft : null,
+    );
   }
 
   /// Desde Inicio (Resolver) o push: inicia el flow y salta la elección del turno.
@@ -1641,7 +1639,10 @@ class ChatScreenState extends State<ChatScreen> {
     return [];
   }
 
-  Future<void> _onRemediationChoice(Map<String, dynamic> opt) async {
+  Future<void> _onRemediationChoice(
+    Map<String, dynamic> opt, {
+    Map<String, dynamic>? prefillDraft,
+  }) async {
     final intentId = opt['intent_id']?.toString() ?? '';
     if (intentId.isEmpty) return;
     final resetFlow = opt['reset_flow'] == true;
@@ -1663,6 +1664,11 @@ class ChatScreenState extends State<ChatScreen> {
     try {
       _intentId = intentId;
       _asistenteService.currentIntentId = intentId;
+
+      if (prefillDraft != null && prefillDraft.isNotEmpty) {
+        _applyDraftDelta(prefillDraft);
+        _asistenteService.draft = Map<String, dynamic>.from(_draft);
+      }
 
       final result = await _postFlowAdvanceWithRetry();
       if (!mounted) return;

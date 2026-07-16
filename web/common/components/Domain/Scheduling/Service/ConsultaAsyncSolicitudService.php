@@ -3,6 +3,7 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Clinical\Enum\EncounterStatus;
+use common\components\Domain\Clinical\Service\CarePlanMedicationListService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\models\Clinical\Encounter;
 use Yii;
@@ -20,11 +21,6 @@ final class ConsultaAsyncSolicitudService
     {
         if ($idPersona <= 0) {
             throw new \InvalidArgumentException('Sesión sin persona.');
-        }
-
-        $mensaje = trim((string) ($input['mensaje'] ?? $input['async_mensaje'] ?? ''));
-        if (mb_strlen($mensaje) < 10) {
-            throw new \InvalidArgumentException('Contanos tu consulta con al menos 10 caracteres.');
         }
 
         $draft = $this->draftDesdeInput($input);
@@ -48,12 +44,14 @@ final class ConsultaAsyncSolicitudService
             ];
         }
 
+        $mensaje = $this->resolverMensajeSolicitud($input, $draft);
+
         $modalidadService = new ReservaModalidadAtencionService();
         $opciones = $modalidadService->opcionesParaDraft($draft);
         $codes = array_column($opciones, 'code');
         if (!in_array(ReservaModalidadAtencionCatalogService::CODE_ASYNC, $codes, true)) {
             throw new \InvalidArgumentException(
-                'La consulta por mensaje no está disponible para este caso. Elegí otro tipo de atención.'
+                'La consulta clínica por mensaje no está disponible para este caso. Elegí otro tipo de atención.'
             );
         }
 
@@ -90,8 +88,58 @@ final class ConsultaAsyncSolicitudService
             'data' => [
                 'encounter_id' => (int) $encounter->id,
             ],
-            'message' => 'Recibimos tu consulta. El equipo de salud te responderá por mensaje cuando pueda.',
+            'message' => 'Recibimos tu consulta clínica por mensaje. El equipo de salud te responderá cuando pueda.',
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $input
+     * @param array<string, mixed> $draft
+     */
+    private function resolverMensajeSolicitud(array $input, array $draft): string
+    {
+        $mensajeLibre = trim((string) ($input['mensaje'] ?? $input['async_mensaje'] ?? $draft['mensaje'] ?? ''));
+        $operacion = trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICACION_OPERACION] ?? ''));
+        $ids = CarePlanMedicationListService::parseIds(
+            $draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICATION_REQUEST_IDS]
+                ?? $input['medication_request_ids']
+                ?? ''
+        );
+
+        if ($operacion === ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
+            if ($ids === []) {
+                throw new \InvalidArgumentException('Seleccioná al menos un medicamento para renovar.');
+            }
+            $labels = (new CarePlanMedicationListService())->labelsForIds($ids);
+            $lines = $labels !== [] ? $labels : array_map(static fn (int $id): string => 'Medicación #' . $id, $ids);
+
+            return "Solicitud de renovación de medicación:\n- " . implode("\n- ", $lines);
+        }
+
+        if ($operacion === ConsultasSeguimientoIntakeService::MEDICACION_OP_AJUSTE) {
+            if ($ids === []) {
+                throw new \InvalidArgumentException('Seleccioná al menos un medicamento para ajustar.');
+            }
+            $motivo = trim((string) (
+                $input[ConsultasSeguimientoIntakeService::DRAFT_AJUSTE_MOTIVO]
+                    ?? $draft[ConsultasSeguimientoIntakeService::DRAFT_AJUSTE_MOTIVO]
+                    ?? $mensajeLibre
+            ));
+            if (mb_strlen($motivo) < 10) {
+                throw new \InvalidArgumentException('Indicá el cambio solicitado con al menos 10 caracteres.');
+            }
+            $labels = (new CarePlanMedicationListService())->labelsForIds($ids);
+            $lines = $labels !== [] ? $labels : array_map(static fn (int $id): string => 'Medicación #' . $id, $ids);
+
+            return "Solicitud de ajuste de medicación:\n- " . implode("\n- ", $lines)
+                . "\n\nMotivo: " . $motivo;
+        }
+
+        if (mb_strlen($mensajeLibre) < 10) {
+            throw new \InvalidArgumentException('Contanos tu consulta con al menos 10 caracteres.');
+        }
+
+        return $mensajeLibre;
     }
 
     /**
@@ -109,12 +157,24 @@ final class ConsultaAsyncSolicitudService
             'triage_evolucion',
             'triage_nota',
             'care_plan_id',
+            'encounter_id',
             'intake_tipo',
             'seguimiento_necesidad',
+            'medicacion_operacion',
+            'ajuste_motivo',
+            'mensaje',
         ] as $key) {
             $v = trim((string) ($input[$key] ?? ''));
             if ($v !== '') {
                 $draft[$key] = $v;
+            }
+        }
+
+        $mrRaw = $input['medication_request_ids'] ?? null;
+        if ($mrRaw !== null && $mrRaw !== '') {
+            $ids = CarePlanMedicationListService::parseIds($mrRaw);
+            if ($ids !== []) {
+                $draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICATION_REQUEST_IDS] = implode(',', $ids);
             }
         }
 
@@ -126,6 +186,11 @@ final class ConsultaAsyncSolicitudService
      */
     private function resolverIdServicio(array $draft): int
     {
+        $assigned = (int) ($draft['id_servicio_asignado'] ?? 0);
+        if ($assigned > 0) {
+            return $assigned;
+        }
+
         $carePlanSvc = new ReservaTriageCarePlanServicioService();
         $carePlanId = (int) ($draft['care_plan_id'] ?? 0);
         if ($carePlanId > 0) {

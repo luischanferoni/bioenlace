@@ -52,7 +52,24 @@ final class ClinicalUiActionCatalog implements UiActionCatalogProviderInterface
                 'Ver mi tratamiento (UI)',
                 'Descriptor UI JSON con planes activos del paciente.',
                 '/api/clinical/care-plan/ver-tratamiento-paciente',
-                ['ver mi tratamiento', 'plan de tratamiento', 'ui tratamiento']
+                ['ver mi tratamiento', 'plan de tratamiento', 'ui tratamiento'],
+                true
+            ),
+            self::def(
+                'clinical.care-plan.medicamentos-como-paciente',
+                'Medicación del tratamiento (UI)',
+                'Listado multi-selección de MedicationRequest del CarePlan.',
+                '/api/clinical/care-plan/medicamentos-como-paciente',
+                ['medicación', 'renovar', 'ajustar', 'medicamentos del plan'],
+                true
+            ),
+            self::def(
+                'clinical.care-plan.confirmar-renovacion-como-paciente',
+                'Confirmar renovación de medicación (UI)',
+                'Confirmación sin texto libre para solicitar renovación async.',
+                '/api/clinical/care-plan/confirmar-renovacion-como-paciente',
+                ['renovar medicación', 'confirmar renovación'],
+                true
             ),
             self::def(
                 'clinical.care-plan.gestionar-recordatorios-como-paciente',

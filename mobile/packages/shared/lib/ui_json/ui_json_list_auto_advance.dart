@@ -29,6 +29,8 @@ class UiJsonSingleListPick {
           ? Map<String, dynamic>.from(b['selection'] as Map)
           : const <String, dynamic>{};
       if (selection['requires_confirmation'] == true) continue;
+      final mode = selection['mode']?.toString().trim().toLowerCase() ?? '';
+      if (mode == 'multiple' || mode == 'none') continue;
 
       final draftField = b['draft_field']?.toString() ?? '';
       if (draftField.isEmpty) continue;

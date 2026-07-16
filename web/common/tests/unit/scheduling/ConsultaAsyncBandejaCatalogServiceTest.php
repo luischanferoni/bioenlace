@@ -17,13 +17,13 @@ class ConsultaAsyncBandejaCatalogServiceTest extends Unit
         $svc = new ConsultaAsyncBandejaCatalogService();
         $this->assertSame(4, $svc->horasSlaRespuesta('A'));
         $this->assertSame(24, $svc->horasSlaRespuesta('C'));
-        $this->assertSame(48, $svc->horasSlaRespuesta(null);
+        $this->assertSame(48, $svc->horasSlaRespuesta(null));
     }
 
-    public function testEtiquetasEstado(): void
+    public function testTitulosSeccionUsanConsultaClinicaPorMensaje(): void
     {
         $svc = new ConsultaAsyncBandejaCatalogService();
-        $this->assertSame('Pendiente de respuesta', $svc->etiquetaEstado('planned'));
-        $this->assertSame('En curso', $svc->etiquetaEstado('in-progress'));
+        $this->assertSame('Consultas clínicas por mensaje', $svc->tituloSeccionStaff());
+        $this->assertSame('Consultas clínicas por mensaje', $svc->tituloSeccionPaciente());
     }
 }

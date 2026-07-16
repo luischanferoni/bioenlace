@@ -2,9 +2,10 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
+use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryQueryService;
+use common\components\Domain\Clinical\Service\CarePlanMedicationListService;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
-use Yii;
 
 /**
  * Reglas de intake consultas / seguimiento (sin turno async y preparación de draft).
@@ -17,6 +18,16 @@ final class ConsultasSeguimientoIntakeService
 
     public const DRAFT_PREFERENCIA_TURNO = 'preferencia_profesional_turno';
 
+    public const DRAFT_MEDICATION_REQUEST_IDS = 'medication_request_ids';
+
+    public const DRAFT_MEDICACION_OPERACION = 'medicacion_operacion';
+
+    public const DRAFT_AJUSTE_MOTIVO = 'ajuste_motivo';
+
+    public const MEDICACION_OP_RENOVACION = 'renovacion';
+
+    public const MEDICACION_OP_AJUSTE = 'ajuste';
+
     /**
      * @param array<string, mixed> $draft
      */
@@ -27,6 +38,7 @@ final class ConsultasSeguimientoIntakeService
         return in_array($tipo, [
             ConsultasSeguimientoIntakeCatalogService::INTAKE_CONSULTA_GENERAL,
             ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO,
+            ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA,
         ], true);
     }
 
@@ -39,6 +51,9 @@ final class ConsultasSeguimientoIntakeService
         if ($tipo === ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO) {
             $draft['triage_raiz'] = 'seguimiento_cronico';
             $this->aplicarCarePlanEnDraft($draft, $idPersona);
+        } elseif ($tipo === ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA) {
+            $draft['triage_raiz'] = 'seguimiento_cronico';
+            $this->aplicarEncounterReferenciaEnDraft($draft, $idPersona);
         } elseif ($tipo === ConsultasSeguimientoIntakeCatalogService::INTAKE_CONSULTA_GENERAL) {
             $draft['triage_raiz'] = 'seguimiento_cronico';
         }
@@ -55,6 +70,30 @@ final class ConsultasSeguimientoIntakeService
         }
         if ($necesidad === 'solicitar_turno' && $pref === 'teleconsulta') {
             $draft['tipo_atencion'] = 'teleconsulta';
+        }
+
+        $this->aplicarMedicacionOperacionEnDraft($draft);
+
+        $mrIds = CarePlanMedicationListService::parseIds($draft[self::DRAFT_MEDICATION_REQUEST_IDS] ?? '');
+        if ($mrIds !== []) {
+            $draft[self::DRAFT_MEDICATION_REQUEST_IDS] = implode(',', $mrIds);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $draft mutado in-place
+     */
+    private function aplicarMedicacionOperacionEnDraft(array &$draft): void
+    {
+        $necesidad = trim((string) ($draft[self::DRAFT_SEGUIMIENTO_NECESIDAD] ?? ''));
+        $op = trim((string) ($draft[self::DRAFT_MEDICACION_OPERACION] ?? ''));
+        if ($op !== '') {
+            return;
+        }
+        if ($necesidad === 'renovar_medicacion') {
+            $draft[self::DRAFT_MEDICACION_OPERACION] = self::MEDICACION_OP_RENOVACION;
+        } elseif ($necesidad === 'solicitar_ajuste') {
+            $draft[self::DRAFT_MEDICACION_OPERACION] = self::MEDICACION_OP_AJUSTE;
         }
     }
 
@@ -87,6 +126,16 @@ final class ConsultasSeguimientoIntakeService
                     throw new \InvalidArgumentException('Para pedir turno usá la opción Solicitar turno.');
                 }
             }
+            $this->assertMedicationRequestsDelPlan($draft, $idPersona, $carePlanId);
+        } elseif ($tipo === ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA) {
+            $encounterId = (int) ($draft['encounter_id'] ?? 0);
+            if ($encounterId <= 0) {
+                throw new \InvalidArgumentException('Elegí la atención previa sobre la que querés consultar.');
+            }
+            $detail = (new PatientEncounterSummaryQueryService())->getDetailForPersona($idPersona, $encounterId);
+            if ($detail === null) {
+                throw new \InvalidArgumentException('La atención elegida no está disponible.');
+            }
         }
     }
 
@@ -98,16 +147,105 @@ final class ConsultasSeguimientoIntakeService
     {
         $catalog = new ReservaTurnoTriageCatalogService();
         $compiled = $catalog->compileSelections($draft);
+        $mrIds = CarePlanMedicationListService::parseIds($draft[self::DRAFT_MEDICATION_REQUEST_IDS] ?? '');
+        $labels = $mrIds !== []
+            ? (new CarePlanMedicationListService())->labelsForIds($mrIds)
+            : [];
 
         return [
             'tipo' => 'consulta_async_solicitud',
             'intake_tipo' => trim((string) ($draft[self::DRAFT_INTAKE_TIPO] ?? '')),
             'seguimiento_necesidad' => trim((string) ($draft[self::DRAFT_SEGUIMIENTO_NECESIDAD] ?? '')) ?: null,
+            'medicacion_operacion' => trim((string) ($draft[self::DRAFT_MEDICACION_OPERACION] ?? '')) ?: null,
+            'medication_request_ids' => $mrIds !== [] ? $mrIds : null,
+            'medication_labels' => $labels !== [] ? $labels : null,
+            'ajuste_motivo' => trim((string) ($draft[self::DRAFT_AJUSTE_MOTIVO] ?? '')) ?: null,
             'care_plan_id' => (int) ($draft['care_plan_id'] ?? 0) ?: null,
+            'reference_encounter_id' => $this->referenceEncounterIdParaMeta($draft),
             'reserva_triage_code' => $compiled['reserva_triage_code'],
             'urgency_band' => $compiled['urgency_band'],
             'reserva_triage_meta_json' => $compiled['reserva_triage_meta_json'],
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    private function assertMedicationRequestsDelPlan(array $draft, int $idPersona, int $carePlanId): void
+    {
+        $op = trim((string) ($draft[self::DRAFT_MEDICACION_OPERACION] ?? ''));
+        $mrIds = CarePlanMedicationListService::parseIds($draft[self::DRAFT_MEDICATION_REQUEST_IDS] ?? '');
+        if ($op === '' && $mrIds === []) {
+            return;
+        }
+        if (
+            !in_array($op, [self::MEDICACION_OP_RENOVACION, self::MEDICACION_OP_AJUSTE], true)
+            && $mrIds === []
+        ) {
+            return;
+        }
+        if ($mrIds === []) {
+            throw new \InvalidArgumentException('Seleccioná al menos un medicamento.');
+        }
+        $medSvc = new CarePlanMedicationListService();
+        $plan = $medSvc->findActivePlanForPersona($carePlanId, $idPersona);
+        if ($plan === null) {
+            throw new \InvalidArgumentException('El plan de tratamiento no está disponible.');
+        }
+        $owned = $medSvc->filterOwnedIds($plan, $mrIds);
+        if (count($owned) !== count($mrIds)) {
+            throw new \InvalidArgumentException(
+                'Uno o más medicamentos no pertenecen a tu plan de tratamiento activo.'
+            );
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    private function referenceEncounterIdParaMeta(array $draft): ?int
+    {
+        $tipo = trim((string) ($draft[self::DRAFT_INTAKE_TIPO] ?? ''));
+        if ($tipo !== ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA) {
+            return null;
+        }
+        $id = (int) ($draft['encounter_id'] ?? 0);
+
+        return $id > 0 ? $id : null;
+    }
+
+    /**
+     * @param array<string, mixed> $draft mutado in-place
+     */
+    private function aplicarEncounterReferenciaEnDraft(array &$draft, int $idPersona): void
+    {
+        $encounterId = (int) ($draft['encounter_id'] ?? 0);
+        if ($encounterId <= 0 || $idPersona <= 0) {
+            return;
+        }
+
+        $detail = (new PatientEncounterSummaryQueryService())->getDetailForPersona($idPersona, $encounterId);
+        if ($detail === null) {
+            return;
+        }
+
+        $encounter = Encounter::findOne(['id' => $encounterId, 'deleted_at' => null]);
+        if ($encounter === null) {
+            return;
+        }
+
+        $idPes = (int) ($encounter->id_profesional_efector_servicio ?? 0);
+        $idEfector = (int) ($encounter->efector_id ?? 0);
+        $serviceId = (int) ($encounter->service_id ?? 0);
+        if ($idPes > 0) {
+            $draft['id_profesional_efector_servicio'] = (string) $idPes;
+        }
+        if ($idEfector > 0) {
+            $draft['id_efector'] = (string) $idEfector;
+        }
+        if ($serviceId > 0 && (int) ($draft['id_servicio_asignado'] ?? 0) <= 0) {
+            $draft['id_servicio_asignado'] = (string) $serviceId;
+        }
     }
 
     /**

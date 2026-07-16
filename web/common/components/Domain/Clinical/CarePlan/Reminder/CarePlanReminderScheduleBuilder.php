@@ -15,15 +15,18 @@ final class CarePlanReminderScheduleBuilder
     private PatientActiveCarePlanQuery $activeQuery;
     private MedicationDosageTimingParser $medicationTimingParser;
     private ActivityReminderTimingParser $activityTimingParser;
+    private MedicationReminderFrequencyResolver $frequencyResolver;
 
     public function __construct(
         ?PatientActiveCarePlanQuery $activeQuery = null,
         ?MedicationDosageTimingParser $medicationTimingParser = null,
-        ?ActivityReminderTimingParser $activityTimingParser = null
+        ?ActivityReminderTimingParser $activityTimingParser = null,
+        ?MedicationReminderFrequencyResolver $frequencyResolver = null
     ) {
         $this->activeQuery = $activeQuery ?? new PatientActiveCarePlanQuery();
         $this->medicationTimingParser = $medicationTimingParser ?? new MedicationDosageTimingParser();
         $this->activityTimingParser = $activityTimingParser ?? new ActivityReminderTimingParser();
+        $this->frequencyResolver = $frequencyResolver ?? new MedicationReminderFrequencyResolver();
     }
 
     /**
@@ -98,7 +101,10 @@ final class CarePlanReminderScheduleBuilder
         $parsed = $this->medicationTimingParser->parse($mr->dosage_json);
         if ($parsed === null) {
             $dto->requiresPatientSetup = true;
-            $dto->schedule = null;
+            $dto->schedule = $this->scheduleTemplateForPatientSetup(
+                $this->frequencyResolver->resolveFromDosageText($mr->dosage_text),
+                $plan
+            );
 
             return $dto;
         }
@@ -136,7 +142,10 @@ final class CarePlanReminderScheduleBuilder
         $parsed = $this->activityTimingParser->parse($reminderJson);
         if ($parsed === null) {
             $dto->requiresPatientSetup = true;
-            $dto->schedule = null;
+            $dto->schedule = $this->scheduleTemplateForPatientSetup(
+                ['dosesPerDay' => 1, 'intervalHours' => 24, 'period' => 1, 'periodUnit' => 'd'],
+                $plan
+            );
 
             return $dto;
         }
@@ -145,6 +154,24 @@ final class CarePlanReminderScheduleBuilder
         $dto->schedule = $this->scheduleFromParsed($parsed, $plan);
 
         return $dto;
+    }
+
+    /**
+     * @param array{dosesPerDay: int, intervalHours: int, period: int, periodUnit: string} $frequency
+     * @return array<string, mixed>
+     */
+    private function scheduleTemplateForPatientSetup(array $frequency, CarePlan $plan): array
+    {
+        return [
+            'timeOfDay' => [],
+            'dosesPerDay' => (int) ($frequency['dosesPerDay'] ?? 1),
+            'intervalHours' => (int) ($frequency['intervalHours'] ?? 24),
+            'period' => (int) ($frequency['period'] ?? 1),
+            'periodUnit' => (string) ($frequency['periodUnit'] ?? 'd'),
+            'anchorTimeRequired' => true,
+            'validFrom' => $plan->period_start,
+            'validUntil' => $plan->period_end,
+        ];
     }
 
     /**

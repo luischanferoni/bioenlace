@@ -1,23 +1,33 @@
-# Intake paciente: consultas generales y seguimiento de plan de tratamiento.
+# Intake paciente: consultas clínicas por mensaje y seguimiento de plan / atención previa.
 version: "1"
 
 intake_tipos:
   consulta_general:
     code: consulta_general
     label: Consulta general
-    description: Escribí tu consulta con el mayor detalle posible.
+    description: Mensaje libre, sin vincular a un tratamiento en curso. Se resuelve como consulta clínica por mensaje.
     composer_placeholder: "Contanos tu consulta. Un profesional te responderá por mensaje."
   seguimiento:
     code: seguimiento
-    label: Seguimiento
-    description: Sobre un tratamiento o plan de salud que ya tenés activo.
+    label: Seguimiento de tratamiento activo
+    description: Dudas, renovación o evolución sobre un plan de salud que ya tenés.
+  seguimiento_consulta_previa:
+    code: seguimiento_consulta_previa
+    label: Seguimiento de una consulta previa
+    description: Consultá sobre una atención que ya tuviste y tiene resumen publicado.
+    composer_placeholder: "Contanos tu consulta o evolución respecto de esa atención."
 
 seguimiento_necesidades:
   renovar_medicacion:
     code: renovar_medicacion
-    label: Renovar o ajustar medicación
-    description: Pedí renovación o cambios en tu tratamiento habitual.
-    composer_placeholder: "Indicá qué medicación necesitás renovar o ajustar y cualquier detalle útil."
+    label: Renovar medicación
+    description: Pedí renovación de uno o más medicamentos de tu plan (sin escribir texto).
+    permite_async: true
+  solicitar_ajuste:
+    code: solicitar_ajuste
+    label: Solicitar ajuste de medicación
+    description: Pedí un cambio en dosis, horario u otro aspecto; un profesional lo evaluará.
+    composer_placeholder: "Indicá qué cambio necesitás y por qué (síntomas, horarios, etc.)."
     permite_async: true
   duda:
     code: duda

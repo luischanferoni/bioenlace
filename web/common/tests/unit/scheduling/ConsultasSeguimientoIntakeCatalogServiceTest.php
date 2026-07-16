@@ -13,6 +13,7 @@ class ConsultasSeguimientoIntakeCatalogServiceTest extends Unit
         $codes = array_column($svc->opcionesTipo(), 'code');
         $this->assertContains('consulta_general', $codes);
         $this->assertContains('seguimiento', $codes);
+        $this->assertContains('seguimiento_consulta_previa', $codes);
     }
 
     public function testNecesidadesIncluyenSolicitarTurno(): void
@@ -21,6 +22,23 @@ class ConsultasSeguimientoIntakeCatalogServiceTest extends Unit
         $nec = $svc->necesidad('solicitar_turno');
         $this->assertNotNull($nec);
         $this->assertFalse($nec['permite_async']);
+    }
+
+    public function testNecesidadesSeparanRenovarYAjuste(): void
+    {
+        $svc = new ConsultasSeguimientoIntakeCatalogService();
+        $codes = array_column($svc->opcionesNecesidad(), 'code');
+        $this->assertContains('renovar_medicacion', $codes);
+        $this->assertContains('solicitar_ajuste', $codes);
+
+        $renovar = $svc->necesidad('renovar_medicacion');
+        $ajuste = $svc->necesidad('solicitar_ajuste');
+        $this->assertNotNull($renovar);
+        $this->assertNotNull($ajuste);
+        $this->assertTrue($renovar['permite_async']);
+        $this->assertTrue($ajuste['permite_async']);
+        $this->assertSame('', $renovar['composer_placeholder']);
+        $this->assertNotSame('', $ajuste['composer_placeholder']);
     }
 
     public function testAccionesCarePlanTienenIntakeSeguimiento(): void

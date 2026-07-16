@@ -15,7 +15,7 @@ El paciente opera desde la **app móvil**; el **personal de salud** consume moti
 | `asistencia_pre_consulta` | Flow / UI JSON care pack | Antes del turno, si hay pack de cohorte |
 | `post_consulta` | Touchpoints del pack followup | Tras encounter finalizado |
 
-**No confundir** con `atencion.consultas-seguimiento-flow` (seguimiento de tratamiento / care plan), que es un canal distinto.
+**No confundir** con `atencion.consultas-seguimiento-flow` (**Consultas y seguimiento** / consulta clínica por mensaje y care plan), que es un canal distinto.
 
 ## Principios
 
@@ -122,7 +122,7 @@ Los touchpoints del pack followup (`care-pack process-followups`) incluyen `id_t
 - [turnos.md](./turnos.md) — reserva y listado.
 - QA integrado ambulatorio: [../qa/escenarios/ambulatorio/medicina-general.md](../qa/escenarios/ambulatorio/medicina-general.md)
 - [asistencia-cohortes.md](./asistencia-cohortes.md) — generación de packs.
-- [consultas-seguimiento.md](./consultas-seguimiento.md) — seguimiento de tratamiento (care plan).
+- [consultas-seguimiento.md](./consultas-seguimiento.md) — consulta clínica por mensaje y seguimiento de tratamiento (care plan).
 - [triage-reserva-turno.md](./triage-reserva-turno.md) — triage al reservar (no sustituye motivos).
 
 ## Próximos pasos (producto)

@@ -282,6 +282,8 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   Map<String, dynamic>? _root;
   /// Selección pendiente en listados `ui_json` embebidos (antes de Confirmar).
   String? _listEmbedSelectedId;
+  /// Selección múltiple pendiente (`selection.mode: multiple`).
+  final Set<String> _listEmbedSelectedIds = <String>{};
   /// Bloqueo transitorio mientras se está aplicando el delta al padre. Se libera tras el
   /// await para permitir cambiar la elección (Cambio 1: re-tap del list).
   bool _listEmbedLocked = false;
@@ -329,6 +331,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     final presetId = widget.initialListEmbedSelectedId?.trim();
     if (presetId != null && presetId.isNotEmpty) {
       _listEmbedSelectedId = presetId;
+      _listEmbedSelectedIds
+        ..clear()
+        ..addAll(presetId.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
     }
     final cached = widget.initialDefinition;
     if (cached != null && cached['kind']?.toString() == 'ui_definition') {
@@ -359,7 +364,12 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         presetId.isNotEmpty &&
         presetId != oldWidget.initialListEmbedSelectedId &&
         _listEmbedSelectedId != presetId) {
-      setState(() => _listEmbedSelectedId = presetId);
+      setState(() {
+        _listEmbedSelectedId = presetId;
+        _listEmbedSelectedIds
+          ..clear()
+          ..addAll(presetId.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
+      });
     }
   }
 
@@ -496,6 +506,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       _root = m;
       if (fromNetwork) {
         _listEmbedSelectedId = null;
+        _listEmbedSelectedIds.clear();
         _listEmbedLocked = false;
         _formSubmitted = false;
       }
@@ -1212,6 +1223,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         setState(() {
           _root = m;
           _listEmbedSelectedId = null;
+          _listEmbedSelectedIds.clear();
           _loading = false;
           _formSubmitted = false;
         });
@@ -1409,8 +1421,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         );
       }
       final selection = b['selection'] is Map ? Map<String, dynamic>.from(b['selection'] as Map) : const <String, dynamic>{};
-      final requiresConfirmation = selection['requires_confirmation'] == true &&
-          !widget.isTerminalFlowStep;
+      final selectionMode = selection['mode']?.toString().trim().toLowerCase() ?? 'single';
+      final isMultiple = selectionMode == 'multiple';
+      final requiresConfirmation = isMultiple
+          ? true
+          : (selection['requires_confirmation'] == true && !widget.isTerminalFlowStep);
       final draftField = b['draft_field']?.toString() ?? '';
       final title = b['title']?.toString();
       final emptyMessage = (b['empty_message'] ?? b['list_empty_message'])?.toString().trim();
@@ -1462,7 +1477,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 final id = UiJsonSingleListPick.itemIdFromBlock(b, m) ?? '';
                 final name = (m['name'] ?? m['label'] ?? id)?.toString() ?? id;
                 if (id.isEmpty) return const SizedBox.shrink();
-                final selected = _listEmbedSelectedId == id;
+                final selected = isMultiple
+                    ? _listEmbedSelectedIds.contains(id)
+                    : _listEmbedSelectedId == id;
                 final tokens = context.bio;
                 final primary = IntentPalette.of(UiIntent.primary);
                 return Padding(
@@ -1477,6 +1494,19 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                         borderRadius: BorderRadius.circular(BioRadius.sm),
                         onTap: () async {
                           if (_listEmbedLocked) return;
+                          if (isMultiple) {
+                            setState(() {
+                              if (_listEmbedSelectedIds.contains(id)) {
+                                _listEmbedSelectedIds.remove(id);
+                              } else {
+                                _listEmbedSelectedIds.add(id);
+                              }
+                              _listEmbedSelectedId = _listEmbedSelectedIds.isEmpty
+                                  ? null
+                                  : (_listEmbedSelectedIds.toList()..sort()).join(',');
+                            });
+                            return;
+                          }
                           // Ya elegido: no re-aplicar draft ni avanzar el flow.
                           if (_listEmbedSelectedId == id) return;
                           if (requiresConfirmation) {
@@ -1540,9 +1570,28 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
               children: [
                 const Spacer(),
                 FilledButton(
-                  onPressed: (_listEmbedLocked || _listEmbedSelectedId == null)
+                  onPressed: (_listEmbedLocked ||
+                          (isMultiple
+                              ? _listEmbedSelectedIds.isEmpty
+                              : _listEmbedSelectedId == null))
                       ? null
                       : () async {
+                          if (isMultiple) {
+                            final ids = _listEmbedSelectedIds.toList()..sort();
+                            final joined = ids.join(',');
+                            setState(() {
+                              _listEmbedSelectedId = joined;
+                              _listEmbedLocked = true;
+                            });
+                            try {
+                              await _applyListEmbedDraft(draftField, joined);
+                            } finally {
+                              if (mounted) {
+                                setState(() => _listEmbedLocked = false);
+                              }
+                            }
+                            return;
+                          }
                           final id = _listEmbedSelectedId!;
                           Map<String, dynamic>? picked;
                           for (final it in items) {

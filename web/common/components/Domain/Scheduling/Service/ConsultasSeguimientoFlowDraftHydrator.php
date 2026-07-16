@@ -21,6 +21,11 @@ final class ConsultasSeguimientoFlowDraftHydrator
             'seguimiento_necesidad',
             'preferencia_profesional_turno',
             'care_plan_id',
+            'encounter_id',
+            'medication_request_ids',
+            'medicacion_operacion',
+            'ajuste_motivo',
+            'mensaje',
         ] as $key) {
             $v = trim((string) ($draft[$key] ?? ''));
             if ($v !== '') {
@@ -30,6 +35,14 @@ final class ConsultasSeguimientoFlowDraftHydrator
             if ($fromBody !== '') {
                 $draft[$key] = $fromBody;
             }
+        }
+
+        if (
+            trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO] ?? '')) === ''
+            && (int) ($draft['encounter_id'] ?? 0) > 0
+        ) {
+            $draft[ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO]
+                = ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA;
         }
 
         if (

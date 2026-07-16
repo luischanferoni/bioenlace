@@ -14,11 +14,11 @@ opciones:
     requires_teleconsulta_visible: true
   async:
     code: async
-    label: Consulta por mensaje (sin turno ni videollamada)
+    label: Consulta clínica por mensaje (sin turno ni videollamada)
     requires_elegibilidad:
       - sugerido
       - permitido
 
 teleconsulta_hub_sin_cupos:
   summary: No hay horarios de videollamada disponibles en este momento.
-  hint: Podés elegir consulta por mensaje en el paso anterior o intentar un turno presencial.
+  hint: Podés elegir consulta clínica por mensaje en el paso anterior o intentar un turno presencial.

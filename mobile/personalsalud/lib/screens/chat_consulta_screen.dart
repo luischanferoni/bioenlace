@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/consulta_chat_service.dart';
+import 'patient_timeline_screen.dart';
 
 /// Pantalla de chat con el paciente para una consulta (app Personal de Salud).
 class ChatConsultaScreen extends StatefulWidget {
@@ -30,6 +31,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _messages = [];
+  Map<String, dynamic>? _intakeContext;
   bool _loading = true;
   bool _sending = false;
   String? _error;
@@ -55,6 +57,13 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     setState(() {
       _loading = false;
       _messages = result['messages'] ?? [];
+      final data = result['data'];
+      if (data is Map) {
+        final ctx = data['intake_context'];
+        _intakeContext = ctx is Map ? Map<String, dynamic>.from(ctx) : null;
+      } else {
+        _intakeContext = null;
+      }
       if (result['success'] != true) _error = result['message'] as String?;
     });
     _scrollToBottom();
@@ -173,6 +182,8 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       appBar: BioAppBar(title: widget.titulo),
       body: Column(
         children: [
+          if (_intakeContext != null && (_intakeContext!['summary']?.toString().isNotEmpty ?? false))
+            _buildIntakeContextBanner(context),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -198,6 +209,68 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
           ),
           _buildInputBar(context),
         ],
+      ),
+    );
+  }
+
+  Widget _buildIntakeContextBanner(BuildContext context) {
+    final summary = _intakeContext?['summary']?.toString() ?? '';
+    final references = _intakeContext?['references'];
+    final refButtons = <Widget>[];
+    if (references is List) {
+      for (final ref in references) {
+        if (ref is! Map) continue;
+        if (ref['kind']?.toString() != 'reference_encounter') continue;
+        final personaId = int.tryParse(ref['subject_persona_id']?.toString() ?? '');
+        if (personaId == null || personaId <= 0) continue;
+        final label = ref['label']?.toString() ?? 'Ver atención de referencia';
+        refButtons.add(
+          BioButton.outlinePrimary(
+            label: label,
+            onPressed: () => _abrirAtencionReferencia(personaId),
+          ),
+        );
+      }
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        BioSpacing.md,
+        BioSpacing.sm,
+        BioSpacing.md,
+        0,
+      ),
+      child: BioCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Contexto de la solicitud',
+              style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
+            ),
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(summary, style: BioTypography.bodySm),
+            if (refButtons.isNotEmpty) ...[
+              BioSpacing.gapH(BioSpacing.sm),
+              Wrap(
+                spacing: BioSpacing.sm,
+                runSpacing: BioSpacing.xs,
+                children: refButtons,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _abrirAtencionReferencia(int personaId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PatientTimelineScreen(
+          personaId: personaId,
+          authToken: widget.authToken,
+          soloVer: true,
+        ),
       ),
     );
   }

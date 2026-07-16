@@ -8,7 +8,7 @@ configurar_agenda:
     label: Acepto videollamada en esta agenda
     hint: >-
       Los pacientes podrán reservar turnos remotos por video en tus horarios publicados.
-      No cambia turnos ya confirmados. La consulta por mensaje funciona aunque dejes esto en No.
+      No cambia turnos ya confirmados. La consulta clínica por mensaje funciona aunque dejes esto en No.
 
 insight_agenda_config:
   action_id: profesional-agenda.configurar-propio

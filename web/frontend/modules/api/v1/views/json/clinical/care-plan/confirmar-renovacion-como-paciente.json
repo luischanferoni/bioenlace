@@ -1,0 +1,31 @@
+{
+  "ui_type": "ui_json",
+  "title": "Confirmar renovación",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "paciente-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "intro",
+      "text": "Vas a solicitar la renovación de la medicación seleccionada. Un profesional revisará tu pedido y te responderá por mensaje."
+    },
+    {
+      "kind": "fields",
+      "id": "confirm-renovacion",
+      "submit_label": "Solicitar renovación",
+      "fields": [
+        { "name": "intake_tipo", "type": "hidden", "required": true },
+        { "name": "care_plan_id", "type": "hidden", "required": true },
+        { "name": "seguimiento_necesidad", "type": "hidden", "required": true },
+        { "name": "medication_request_ids", "type": "hidden", "required": true },
+        { "name": "medicacion_operacion", "type": "hidden", "required": true },
+        { "name": "triage_raiz", "type": "hidden", "required": false }
+      ]
+    }
+  ]
+}

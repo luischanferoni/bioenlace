@@ -699,7 +699,11 @@ final class SubIntentEngine
             if ($field === '') {
                 continue;
             }
-            if (!isset($draft[$field]) || $draft[$field] === null || $draft[$field] === '') {
+            if (!array_key_exists($field, $draft) || $draft[$field] === null || $draft[$field] === '') {
+                $missing[] = $k;
+                continue;
+            }
+            if (is_array($draft[$field]) && $draft[$field] === []) {
                 $missing[] = $k;
             }
         }

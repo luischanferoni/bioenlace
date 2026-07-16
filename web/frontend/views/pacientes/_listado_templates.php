@@ -317,7 +317,7 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
         <div class="card h-100 shadow-sm border-start border-4 border-info" data-role="async-card">
             <div class="card-body d-flex flex-column">
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-1 mb-2">
-                    <span class="badge bg-info text-dark">Por mensaje</span>
+                    <span class="badge bg-info text-dark">Consulta clínica por mensaje</span>
                     <div class="d-flex flex-wrap gap-1">
                         <span class="badge bg-danger d-none" data-field="prioridad-badge"></span>
                         <span class="badge" data-field="estado-badge"></span>
@@ -326,6 +326,10 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
                 <h5 class="card-title h6 mb-1" data-field="paciente"></h5>
                 <div class="small text-muted mb-2" data-field="servicio"></div>
                 <div class="small mb-2"><strong>Solicitado:</strong> <span data-field="created-at"></span></div>
+                <div class="small mb-2 d-none" data-slot="intake-context">
+                    <div class="text-muted mb-1" data-field="intake-summary"></div>
+                    <div data-slot="intake-links"></div>
+                </div>
                 <p class="small mb-2 flex-grow-1" data-field="preview"></p>
                 <div class="small mb-2 d-none" data-slot="sla-alerta">
                     <span class="badge bg-danger" data-field="sla-badge"></span>
@@ -341,7 +345,7 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
         <div class="card h-100 shadow-sm" data-role="patient-async-card">
             <div class="card-body d-flex flex-column">
                 <div class="d-flex flex-wrap justify-content-between gap-1 mb-2">
-                    <span class="badge bg-info text-dark">Consulta por mensaje</span>
+                    <span class="badge bg-info text-dark">Consulta clínica por mensaje</span>
                     <span class="badge" data-field="estado-badge"></span>
                 </div>
                 <h5 class="card-title h6 mb-2" data-field="servicio"></h5>

@@ -206,6 +206,8 @@ final class ConsultaAsyncBandejaService
         $meta = $this->parseNote($encounter->note);
         $urgencyBand = isset($meta['urgency_band']) ? (string) $meta['urgency_band'] : null;
         $sla = $this->buildSla($encounter, $urgencyBand, $catalog);
+        $idPersona = (int) ($encounter->subject_persona_id ?? 0);
+        $intakeContext = (new ConsultaAsyncIntakeContextService())->buildFromMeta($meta, $idPersona);
 
         $serviceId = (int) ($encounter->service_id ?? 0);
         $servicio = $serviceId > 0 ? Servicio::findOne($serviceId) : null;
@@ -239,6 +241,7 @@ final class ConsultaAsyncBandejaService
             'created_at' => (string) $encounter->created_at,
             'reason_preview' => $this->previewText((string) ($encounter->reason_text ?? '')),
             'urgency_band' => $urgencyBand,
+            'intake_context' => $intakeContext,
             'sla' => $sla,
             'asignacion' => [
                 'id_pes' => $idPes > 0 ? $idPes : null,

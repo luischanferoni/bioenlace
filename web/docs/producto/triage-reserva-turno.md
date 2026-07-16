@@ -14,7 +14,7 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 ## Intent del asistente
 
 - **`atencion.necesito-atencion`** — malestar nuevo o urgencia (atajo en el chat): triage + reserva ambulatoria.
-- **`atencion.consultas-seguimiento-flow`** — consulta general o seguimiento de tratamiento (app paciente); ver [consultas-seguimiento.md](./consultas-seguimiento.md).
+- **`atencion.consultas-seguimiento-flow`** — flujo **Consultas y seguimiento** (consulta clínica por mensaje y seguimiento de tratamiento; app paciente); ver [consultas-seguimiento.md](./consultas-seguimiento.md).
 - **`turnos.crear-como-paciente`** — solo agenda (sin triage); clasificación por frases tipo “sacar turno”.
 
 ## Pasos del flujo (asistente / SPA)
@@ -36,7 +36,7 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 - `malestar_nuevo` → zona → modalidad → servicio.
 - `urgencia` → categoría → pantalla de derivación (sin reserva).
 
-El código `seguimiento_cronico` permanece en el catálogo para persistencia y el flow **Consultas y seguimiento** (`ui_selectable: false` en raíz).
+El código `seguimiento_cronico` permanece en el catálogo para persistencia y el flow **Consultas y seguimiento** / consulta clínica por mensaje (`ui_selectable: false` en raíz).
 
 **Servicio (Medicina clínica hub):**
 

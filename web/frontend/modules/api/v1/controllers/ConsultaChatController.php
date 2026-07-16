@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use common\models\ConsultaChatMessage;
 use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaPrioridadAgent;
+use common\components\Domain\Scheduling\Service\ConsultaAsyncIntakeContextService;
 use common\models\Clinical\Encounter;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 use Yii;
@@ -60,6 +61,9 @@ class ConsultaChatController extends BaseController
         }
 
         $subject = $encounter->subject;
+        $meta = $this->parseEncounterNote($encounter->note);
+        $idPersona = (int) ($encounter->subject_persona_id ?? 0);
+        $intakeContext = (new ConsultaAsyncIntakeContextService())->buildFromMeta($meta, $idPersona);
 
         return [
             'success' => true,
@@ -68,12 +72,26 @@ class ConsultaChatController extends BaseController
                 'messages' => $formattedMessages,
                 'encounter_id' => (int) $encounter->id,
                 'consulta_id' => (int) $encounter->id,
+                'intake_context' => $intakeContext,
                 'encounter' => [
                     'id' => (int) $encounter->id,
                     'paciente' => $subject ? $subject->getNombreCompleto() : 'Paciente',
                 ],
             ],
         ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function parseEncounterNote(?string $note): array
+    {
+        if ($note === null || trim($note) === '') {
+            return [];
+        }
+        $decoded = json_decode($note, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     public function actionEnviar()

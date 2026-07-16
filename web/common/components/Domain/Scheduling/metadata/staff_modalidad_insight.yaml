@@ -14,8 +14,8 @@ modalidades:
     description: El paciente reserva un horario y se atiende por video desde su casa o el consultorio.
   async:
     code: async
-    label: Consulta por mensaje
-    description: Sin turno ni videollamada; el paciente escribe y el equipo responde en un plazo acordado.
+    label: Consulta clínica por mensaje
+    description: Sin turno ni videollamada; el paciente escribe y un profesional real responde en un plazo acordado.
 
 elegibilidad_modalidades:
   sugerido:

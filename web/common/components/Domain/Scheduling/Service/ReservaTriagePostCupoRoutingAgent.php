@@ -107,7 +107,7 @@ final class ReservaTriagePostCupoRoutingAgent
     {
         $mensaje = trim((string) ($params['async_mensaje'] ?? $params['motivo'] ?? ''));
         if (mb_strlen($mensaje) < 10) {
-            $mensaje = 'Solicitud de consulta por mensaje tras triage sin cupos disponibles.';
+            $mensaje = 'Solicitud de consulta clínica por mensaje tras triage sin cupos disponibles.';
         }
 
         try {

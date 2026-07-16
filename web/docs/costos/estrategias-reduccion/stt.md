@@ -4,6 +4,8 @@ No usa `IAManager`; en el [catálogo de IA](../../producto/catalogo-usos-ia.md) 
 
 Baseline en [costos-api.md](../costos-api.md): **Groq Whisper** ~**$0,0007/min** ⇒ **~$0,28/médico/mes** (400 min intensivas). El código usa **Hugging Face** por defecto (`SpeechToTextManager`, `hf_stt_model`); Groq aplica cuando se externaliza STT.
 
+**Videollamada post-call:** incluida en el COGS video (**~$6,19** Deepgram vía Daily sobre 1.440 min). Palanca: mismo STT Groq (~**$1,01**/prof/mes) → video tendería a **~4,01**. Detalle: [videollamadas.md](./videollamadas.md).
+
 Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v1/audio/transcribir`, lote de motivos en `AppointmentReasonBatchService`). En web existe dictado parcial vía `frontend/web/js/speech-input.js` (`webkitSpeechRecognition`), aún no unificado con captura clínica ni motivos móviles.
 
 ## Escalera de proveedores (servidor)

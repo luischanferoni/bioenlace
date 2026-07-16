@@ -86,9 +86,9 @@ Tarifas y supuestos por profesional: [costos-api.md](./costos-api.md). Aquí sol
 |----------|---------|-------------|
 | IA + STT — sin context caching (COGS) | 5.000 x ~1,55 por prof | **~7.750** |
 | IA + STT — con context caching (favorable) | 5.000 x ~1,41 por prof | **~7.050** |
-| Videollamada §6 (COGS planificado) | 5.000 x 3,00 por prof | **~15.000** |
-| **IA + STT + videollamada** — sin caché | suma filas anteriores | **~22.750** |
-| **IA + STT + videollamada** — con caché | 7.050 + 15.000 | **~22.050** |
+| Videollamada §6 (COGS planificado) | 5.000 x 9,19 por prof | **~45.950** |
+| **IA + STT + videollamada** — sin caché | suma filas anteriores | **~53.700** |
+| **IA + STT + videollamada** — con caché | 7.050 + 45.950 | **~53.000** |
 | Aplicación + BD + hosting | *[pendiente presupuesto]* | — |
 
 **Infra app:** clínica de **20 profesionales** → «Infra + soporte» **USD 200–500 por mes** en unit economics ([modelos-pricing](../modelo-de-negocio/business-plan/modelos-pricing-diferenciados.md)); **no escala lineal** a 5.000 usuarios.
@@ -139,11 +139,11 @@ Base: filas **IA + STT** de la tabla A (~**7.750** sin caché · ~**7.050** con 
 
 | Escenario | ~USD por prof sin caché | ~USD por prof con caché | Precio **neto** 5.000 prof sin caché | Precio **neto** 5.000 prof con caché | Factura **+ IVA 21 %** sin caché | Factura **+ IVA 21 %** con caché | Margen bruto |
 |-----------|-------------------------|-------------------------|--------------------------------------|--------------------------------------|----------------------------------|----------------------------------|--------------|
-| **Solo costo (sin margen)** * | **~4,55** | **~4,41** | **~22.750** | **~22.050** | **~27.528** | **~26.681** | **0 %** |
-| **Lista matriz (~70 % bruto)** † | **~15,15** | **~14,69** | **~75.750** | **~73.450** | **~91.658** | **~88.875** | **~70 %** |
+| **Solo costo (sin margen)** * | **~10,74** | **~10,60** | **~53.700** | **~53.000** | **~64.977** | **~64.130** | **0 %** |
+| **Lista matriz (~70 % bruto)** † | **~35,76** | **~35,30** | **~178.800** | **~176.500** | **~216.348** | **~213.565** | **~70 %** |
 
-\* Tabla A + videollamada ([costos-api §6](./costos-api.md#6-videollamadas-pacientemédico)). En matriz comercial el COGS de referencia con audio+video es **4,11** → lista **~13,69**/prof/mes.  
-† `4,55 × 3,33 ≈ 15,15` (escala 5.000 con COGS tabla A+video).
+\* Tabla A + videollamada ([costos-api §6](./costos-api.md#6-videollamadas-pacientemédico), **9,19** = sala + Deepgram post-call). En matriz comercial el COGS de referencia con audio+video es **10,30** → lista **~34,30**/prof/mes.  
+† `10,74 × 3,33 ≈ 35,76` (escala 5.000 con COGS tabla A+video).
 
 La fila «margen mínimo» histórico (1,8–2 por prof) **no cubre** videollamada ni el objetivo de ~70 % bruto; la **lista matriz** sí incluye video como add-on opcional.
 

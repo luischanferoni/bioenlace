@@ -3,12 +3,12 @@
   "currency": "USD",
   "billing_period": "month",
   "tax_note": "No incluye IVA ni IIBB.",
-  "cogs_source": "costos-api.md — columna con context caching (Gemini + Groq STT captura profesional; videollamada §6 Daily→self-host solo AMB)",
+  "cogs_source": "costos-api.md — columna con context caching (Gemini + Groq STT captura profesional; videollamada §6 = sala 3,00 + Deepgram post-call ~6,19)",
   "reference_encounters_per_professional_month": 400,
   "cogs_usd_per_professional_month": {
     "base": 0.83,
     "audio": 0.28,
-    "videollamada": 3.00
+    "videollamada": 9.19
   },
   "margin_on_cost_percent": 233,
   "addons": {
@@ -19,7 +19,7 @@
     },
     "videollamada": {
       "label": "Videollamada",
-      "description": "Teleconsulta paciente–profesional (sala + TURN + grabación)",
+      "description": "Teleconsulta paciente–profesional (sala + TURN + grabación + transcript post-call Deepgram)",
       "default": false
     }
   },

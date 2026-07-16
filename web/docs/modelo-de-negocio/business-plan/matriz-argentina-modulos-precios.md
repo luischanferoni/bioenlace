@@ -1,7 +1,7 @@
 # Matriz Argentina — precio por profesional × encounter_class
 
 **Tipo:** business plan · go-to-market Argentina  
-**Última actualización:** 2026-07-15  
+**Última actualización:** 2026-07-16  
 **Alcance:** solo Argentina por ahora; otros países cuando haya validación local.
 
 Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentina.md](../../costos/impuestos-argentina.md).  
@@ -32,7 +32,7 @@ USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 |----------------------------------------------------------------|-------------------------|--------|
 | **Base** (IA + captura texto; motivos paciente texto; **sin** STT del profesional) | **0,83** | Apartado 1 motivos texto con caché − STT §4 (~0,28) |
 | **+ Audio** (dictado del profesional → Groq STT) | **+0,28** | costos-api §4 STT |
-| **+ Videollamada** (Daily→self-host; solo AMB) | **+3,00** | costos-api §6 |
+| **+ Videollamada** (Daily→self-host + Deepgram post-call; solo AMB) | **+9,19** | costos-api §6 (3,00 sala + ~6,19 STT) |
 
 **Margen sobre costo:** **233 %** ≈ margen bruto ~70 % (objetivo software; ver [impuestos-argentina.md](../../costos/impuestos-argentina.md)).
 
@@ -51,8 +51,8 @@ No hay SKU chico/mediano/grande: el tamaño se refleja en **cantidad de profesio
 |---------------|---------------------------|----------------------------------|
 | AMB solo base | 0,83 | **~2,76** |
 | AMB + audio | 1,11 | **~3,70** |
-| AMB + videollamada | 3,83 | **~12,75** |
-| AMB + audio + videollamada | 4,11 | **~13,69** |
+| AMB + videollamada | 10,02 | **~33,37** |
+| AMB + audio + videollamada | 10,30 | **~34,30** |
 | EMER (audio incluido, vol 350) | 0,971 | **~3,23** |
 | IMP (audio incluido, vol 300) | 0,833 | **~2,77** |
 

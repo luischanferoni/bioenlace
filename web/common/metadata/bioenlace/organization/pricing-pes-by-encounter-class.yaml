@@ -15,11 +15,11 @@ reference_encounters_per_professional_month: 400
 # COGS variable por profesional/mes a volumen reference (400), escenario con context caching.
 # base = Apartado 1 motivos texto con caché SIN STT del profesional (~1,11 − 0,28).
 # audio = STT Groq del dictado del profesional (§4; no cambia con caché Gemini).
-# videollamada = COGS planificado §6 (Daily pay-as-you-go → self-host; TURN + grabación).
+# videollamada = COGS planificado §6 (sala/TURN/ops 3,00 + Deepgram post-call ~6,19).
 cogs_usd_per_professional_month:
   base: 0.83
   audio: 0.28
-  videollamada: 3.00
+  videollamada: 9.19
 
 margin_on_cost_percent: 233
 
@@ -35,7 +35,7 @@ addons:
     default: false
   videollamada:
     label: Videollamada
-    description: Teleconsulta paciente–profesional (sala + TURN + grabación; Daily → self-host)
+    description: Teleconsulta paciente–profesional (sala + TURN + grabación + transcript post-call Deepgram; Daily → self-host)
     default: false
 
 sellable_classes:

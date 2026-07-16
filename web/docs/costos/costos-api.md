@@ -32,7 +32,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 - **§3 Onboarding y día a día:** 400 llamadas a la IA por mes (`asistente-onboarding` en metadata; en código reutiliza preprocess/conversacional)
 - **§4 Captura clínica (encounter):** **siempre** audio dictado por consulta — 400 min STT (1 dictado ≈ 1 min por encounter) + **400** llamadas `analisis-consulta` + **400** llamadas `encounter-codificacion-automatica` al guardar. Sin variante solo texto en el modelo de costos.
 - **§5 Medios (fotos, etc.):** 2 fotos por encounter (Vision)
-- **§6 Videollamada:** 30 % de encounters; 12 min; 2 participantes
+- **§6 Videollamada:** 30 % de encounters; 12 min; 2 participantes; COGS planificado **9,19** = sala/TURN/ops (**3,00**) + Deepgram post-call (**~6,19** sobre 1.440 recorded-min). Ver [§6](#6-videollamadas-pacientemédico).
 - **§7 WhatsApp (alcance actual):** solo respuestas a mensajes **iniciados por el paciente** (service window Meta ≈ $0; IA = §1). **Utility / plantillas proactivas: no habilitadas** — ver [§7](#7-whatsapp-cloud-api-paciente).
 
 ---
@@ -43,13 +43,15 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 |----------|--------------|-----------------|--------|
 | **Didit** — Full KYC bundle | **~$0.33** por sesión exitosa; **500 gratis/mes** | Registro / alta paciente (identidad) | [didit.me/pricing](https://didit.me/pricing); detalle [costos-didit.md](./costos-didit.md) |
 | **Didit** — Biometric Authentication | **~$0.10** por sesión exitosa | Reingreso tras logout (previsto) | Ídem |
-| **Groq** — Whisper Large v3 Turbo | **~$0.0007 por min** ($0.04 por h); **mín. 10 s por request** | STT (§2 caso B, §4) | [groq.com/pricing](https://groq.com/pricing), [GroqDocs STT](https://console.groq.com/docs/speech-to-text) |
+| **Groq** — Whisper Large v3 Turbo | **~$0.0007 por min** ($0.04 por h); **mín. 10 s por request** | STT (§2 caso B, §4); opción B post-call video (§6) | [groq.com/pricing](https://groq.com/pricing), [GroqDocs STT](https://console.groq.com/docs/speech-to-text) |
+| **Daily** — post-call transcription (Deepgram) | **~$0.0043 por recorded-min** | Incluida en COGS §6 (~6,19/prof) | [Daily pricing](https://www.daily.co/pricing/video-sdk/), [Transcription](https://docs.daily.co/docs/guides/features/transcription) |
+| **Daily** — real-time transcription (Deepgram) | **~$0.0059 por unmuted pax-min** | Fuera de alcance (no planificado) | Ídem |
 | **Vision API** (Label, Text, Face, etc.) | 1.000 unidades por mes gratis; luego $1.50 por 1.000 | Fotos §5 | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) |
 | **DeepSeek** — V4 Flash (API) | **$0.14 / $0.0028 / $0.28** por 1M (input miss / cache hit / output) | Comparativa IA | [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing) |
 | **WhatsApp Cloud API** — service (ventana 24 h) | **$0** por mensaje no-plantilla / utility dentro de CSW | Asistente reactivo §7 (alcance actual) | [Meta WhatsApp pricing](https://developers.facebook.com/docs/whatsapp/pricing/) |
 | **WhatsApp Cloud API** — utility (Argentina) | **~$0,026** por plantilla entregada (list rate USD; Oct 2025) | **Fuera de alcance** (no habilitado) | Idem + rate card USD |
 
-Para **Vertex AI / Gemini** conviene revisar el [Calculador de precios de Google Cloud](https://cloud.google.com/products/calculator) y la [tabla de precios de Gemini en Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/pricing) (revisar cada 6–12 meses). Videollamadas: [Daily pricing](https://www.daily.co/pricing/video-sdk/) y roadmap en [estrategias-reduccion/videollamadas.md](./estrategias-reduccion/videollamadas.md). Las tarifas WhatsApp por país/categoría cambian con los rate cards de Meta (revisar cada actualización trimestral).
+Para **Vertex AI / Gemini** conviene revisar el [Calculador de precios de Google Cloud](https://cloud.google.com/products/calculator) y la [tabla de precios de Gemini en Vertex AI](https://cloud.google.com/vertex-ai/generative-ai/pricing) (revisar cada 6–12 meses). Videollamadas y post-call STT: [Daily pricing](https://www.daily.co/pricing/video-sdk/) y [estrategias-reduccion/videollamadas.md](./estrategias-reduccion/videollamadas.md). Las tarifas WhatsApp por país/categoría cambian con los rate cards de Meta (revisar cada actualización trimestral).
 
 ---
 
@@ -337,15 +339,21 @@ Flujo: audio dictado → STT → transcripción → **1 llamada** `analisis-cons
 
 ### 6. Videollamadas paciente–médico
 
-Supuesto de uso: **120 teleconsultas × 12 min × 2 participantes** = **1.440 participant-minutes / médico / mes**.
+Supuesto de uso: **120 teleconsultas × 12 min × 2 participantes** = **1.440 participant-minutes / médico / mes**.  
+STT post-call: **120 × 12 min grabados** = **1.440 recorded-minutes / médico / mes**.
 
 | Concepto | Notas | USD / médico / mes |
 |----------|-------|--------------------|
-| **COGS de planificación (matriz / calculador)** | Techo estable 100→5.000+ prof; incluye buffer TURN + grabación + ops | **3,00** |
-| Daily.co pay-as-you-go (corto / mediano) | 10k pax-min gratis/mes por cuenta; luego ~$0,004/pax-min | Variable; cupo free ≈ ~7 prof a carga llena |
-| Self-host (mediano / largo) | LiveKit + TURN dedicado + grabación; VPS escala con concurrencia | ~0,6–1,5 a escala (real); planificamos **3,00** |
+| Sala + TURN + grabación + ops (buffer Daily→self-host) | Techo estable 100→5.000+ prof | **3,00** |
+| Transcripción post-call **Deepgram** (vía Daily Batch Processor) | ~$0,0043 × 1.440 recorded-min | **~6,19** |
+| **COGS de planificación (matriz / calculador)** | Suma de las filas anteriores | **9,19** |
+| Daily.co pay-as-you-go (pax-min) | 10k pax-min gratis/mes por cuenta; luego ~$0,004/pax-min | Variable; cupo free ≈ ~7 prof a carga llena |
+| Palanca STT Groq (mismo modelo § STT) | ~$0,0007 × 1.440 → ~1,01; COGS video tendería a **~4,01** | No baja el 9,19 hasta telemetría |
+| Self-host video (mediano / largo) | LiveKit + TURN + grabación | ~0,6–1,5 sala a escala (real) |
 
-Detalle de fases y alertas: [estrategias-reduccion/videollamadas.md](./estrategias-reduccion/videollamadas.md).
+Real-time Deepgram (~$0,0059/unmuted pax-min): **fuera de alcance**.
+
+Detalle: [estrategias-reduccion/videollamadas.md](./estrategias-reduccion/videollamadas.md).
 
 ---
 
@@ -438,7 +446,10 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 | Concepto | Costo (USD por médico por mes) |
 |----------|-------------------------------|
-| **COGS planificación** (Daily→self-host; lista comercial) | **3,00** |
+| Sala / TURN / ops | **3,00** |
+| Post-call Deepgram | **~6,19** |
+| **COGS planificación (lista comercial)** | **9,19** |
+| Palanca Groq (no en lista hasta migrar) | ~1,01 STT → video ~**4,01** |
 
 ### Apartado 4 – WhatsApp (§7)
 
@@ -452,17 +463,17 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 |-----------|----------------------------|----------------------------|-------------------|
 | Apartados 1 + 2 (motivos **solo texto**) | **~$1.24** | **~$1.11** | **~$1.16 / ~$1.04** |
 | Apartados 1 + 2 (motivos **con audio**) | **~$1.55** | **~$1.41** | **~$1.46 / ~$1.34** |
-| + Apartado 3 (**videollamada, COGS planificado**) | **+$3,00** | **+$3,00** | **+$3,00** |
-| **Total con videollamada** — motivos texto | **~$4,24** | **~$4,11** | **~$4,16 / ~$4,04** |
-| **Total con videollamada** — motivos audio | **~$4,55** | **~$4,41** | **~$4,46 / ~$4,34** |
+| + Apartado 3 (**videollamada, COGS planificado**) | **+$9,19** | **+$9,19** | **+$9,19** |
+| **Total con videollamada** — motivos texto | **~$10,43** | **~$10,30** | **~$10,35 / ~$10,23** |
+| **Total con videollamada** — motivos audio | **~$10,74** | **~$10,60** | **~$10,65 / ~$10,53** |
 
-**Orden de magnitud uso intensivo (todo incluido, video con COGS 3,00):** **~USD 4–5 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,5–1,6 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 con insights + §3 + §4).
+**Orden de magnitud uso intensivo (todo incluido, video con COGS 9,19):** **~USD 10–11 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,5–1,6 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 con insights + §3 + §4).
 
 **WhatsApp (§7, alcance actual):** Meta **~$0** (sin utility). La IA del chat sigue en §1.
 
 **De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Detalle y add-ons audio/videollamada: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
 
-**Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **3,00** (Daily corto/mediano → self-host); ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
+**Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **9,19** (sala 3,00 + Deepgram post-call ~6,19) — ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
 
 ---
 

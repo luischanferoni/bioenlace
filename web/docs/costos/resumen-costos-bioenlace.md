@@ -89,7 +89,7 @@ Durante o después de la consulta el médico **dicta en voz alta** lo que atendi
 ### 4. Fotos y videollamada (referencia)
 
 - **Fotos:** compartir imágenes clínicas; costo presupuestado **cero** hoy.
-- **Videollamada:** add-on con COGS planificado **USD 3,00**/prof/mes (Daily pay-as-you-go → self-host). Detalle: [costos-api §6](./costos-api.md#6-videollamadas-pacientemédico), [videollamadas.md](./estrategias-reduccion/videollamadas.md). No incluido en los totales de IA de abajo.
+- **Videollamada:** add-on con COGS planificado **USD 9,19**/prof/mes (sala/TURN/ops **3,00** + Deepgram post-call **~6,19**). Detalle: [costos-api §6](./costos-api.md#6-videollamadas-pacientemédico), [videollamadas.md](./estrategias-reduccion/videollamadas.md). No incluido en los totales de IA de abajo.
 
 ---
 

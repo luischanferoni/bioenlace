@@ -344,7 +344,6 @@ Supuesto de uso: **120 teleconsultas × 12 min × 2 participantes** = **1.440 pa
 | **COGS de planificación (matriz / calculador)** | Techo estable 100→5.000+ prof; incluye buffer TURN + grabación + ops | **3,00** |
 | Daily.co pay-as-you-go (corto / mediano) | 10k pax-min gratis/mes por cuenta; luego ~$0,004/pax-min | Variable; cupo free ≈ ~7 prof a carga llena |
 | Self-host (mediano / largo) | LiveKit + TURN dedicado + grabación; VPS escala con concurrencia | ~0,6–1,5 a escala (real); planificamos **3,00** |
-| Twilio Video (legado / no usar en lista) | 1.440 × 2 × $0,004 | ~11,52 |
 
 Detalle de fases y alertas: [estrategias-reduccion/videollamadas.md](./estrategias-reduccion/videollamadas.md).
 

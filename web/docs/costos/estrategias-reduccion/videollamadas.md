@@ -13,8 +13,6 @@ Supuesto de uso: 30 % de las consultas × 12 min × 2 participantes ≈ **1.440 
 
 El COGS **3,00** ya incluye buffer para sala + TURN + grabación y ops mínimo (100 → 5.000+ profesionales con video). No bajar el número de metadata solo porque el gasto real sea menor a escala: eso aumenta margen.
 
-Comparativa histórica (mismo supuesto de minutos): Twilio Video ~**11,52**/prof/mes — descartado como referencia comercial.
-
 ## Palancas operativas
 
 - Límite de duración (aviso 15–20 min): **10–25 %** sobre minutos reales.

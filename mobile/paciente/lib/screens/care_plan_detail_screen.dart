@@ -194,16 +194,14 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
             style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
           ),
           BioSpacing.gapH(BioSpacing.md),
-          ...actions.map((action) {
+            ...actions.map((action) {
             final code = action['seguimiento_necesidad']?.toString() ?? '';
             final label = action['label']?.toString() ?? code;
             return Padding(
               padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-              child: BioButton(
+              child: BioButton.outlinePrimary(
                 label: label,
-                intent: UiIntent.info,
-                variant: BioButtonVariant.soft,
-                size: BioButtonSize.sm,
+                fullWidth: true,
                 onPressed: code.isEmpty
                     ? null
                     : () {

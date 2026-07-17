@@ -30,8 +30,8 @@ USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 
 | Componente COGS (a 400 encounters/mes, **con context caching**) | USD / profesional / mes | Fuente |
 |----------------------------------------------------------------|-------------------------|--------|
-| **Base** (IA + captura texto; motivos paciente texto; **sin** STT del profesional) | **0,95** | Apartado 1 motivos texto con caché − STT §4 (~1,40) |
-| **+ Audio** (audio del profesional → Groq STT, ~5 min voz/consulta) | **+1,40** | costos-api §4 STT |
+| **Base** (IA + captura texto; motivos paciente texto; **sin** STT del profesional) | **0,95** | Apartado 1 motivos texto con caché − STT §4 bruto (~1,40) |
+| **+ Audio** (STT profesional ~5 min, **−30 % on-device**) | **+0,98** | costos-api § STT / [stt.md](../../costos/estrategias-reduccion/stt.md) |
 | **+ Videollamada** (self-host SFU + TURN + storage; solo AMB) | **+5,00** | costos-api §6 (STT de la llamada ya en §2/§4) |
 
 **Margen sobre costo:** **233 %** ≈ margen bruto ~70 % (objetivo software; ver [impuestos-argentina.md](../../costos/impuestos-argentina.md)).
@@ -50,13 +50,13 @@ No hay SKU chico/mediano/grande: el tamaño se refleja en **cantidad de profesio
 | Configuración | COGS (a vol. de la clase) | Precio lista / profesional / mes |
 |---------------|---------------------------|----------------------------------|
 | AMB solo base | 0,95 | **~3,16** |
-| AMB + audio | 2,35 | **~7,83** |
+| AMB + audio | 1,93 | **~6,43** |
 | AMB + videollamada | 5,95 | **~19,81** |
-| AMB + audio + videollamada | 7,35 | **~24,48** |
-| EMER (audio incluido, vol 350) | 2,056 | **~6,85** |
-| IMP (audio incluido, vol 300) | 1,763 | **~5,87** |
+| AMB + audio + videollamada | 6,93 | **~23,08** |
+| EMER (audio incluido, vol 350) | 1,689 | **~5,62** |
+| IMP (audio incluido, vol 300) | 1,448 | **~4,82** |
 
-Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×3,16 + 4×6,85 = **USD 59,00/mes**`.
+Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×3,16 + 4×5,62 = **USD 54,08/mes**`.
 
 ---
 

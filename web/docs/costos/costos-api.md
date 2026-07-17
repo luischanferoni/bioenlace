@@ -201,14 +201,24 @@ Las tablas §2 (caso B) y §4 asumen **400 consultas/médico/mes** y, cuando el 
 
 Origen del supuesto: en ~12 min de consulta, ~65–75 % es habla; el médico habla ~55–60 % de esa voz (~5 min) y el paciente ~40–45 % (~4 min). En teleconsulta, esas pistas pueden salir de la videollamada (tracks + VAD) y **reemplazan** dictado corto / notas de voz sueltas — no duplicar. Detalle: [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
 
+### COGS de planificación (lista comercial) — −30 % on-device
+
+Decisión de producto: el dispositivo intenta STT local primero; Groq es fallback. Para **matriz / calculador** se aplica **−30 %** sobre el STT bruto (orden de magnitud conservador; no el 50–80 % aspiracional). Ver [stt.md](./estrategias-reduccion/stt.md).
+
+| Flujo | Bruto (todo servidor) | Planificación (−30 %) |
+|-------|----------------------|------------------------|
+| §4 médico (add-on **audio**) | **1,40** | **0,98** |
+| §2 paciente (caso B, en intensivo) | **1,12** | **0,78** |
+| Total voz | **2,52** | **1,76** |
+
+Escala **5.000+** profesionales: todo servidor ~**USD 12.600/mes** Groq; con planificación −30 % ~**USD 8.800/mes**.
+
 | Flujo | Qué pasa en producto | Nota de facturación |
 |-------|----------------------|---------------------|
-| **§4 Captura clínica** | Audio del médico (dictado o pista de videollamada) → Groq si no hay STT en dispositivo. | Un archivo concatenado por encounter evita el mínimo de **10 s** por fragmento. |
-| **§2 Motivos de consulta** (caso B) | Audio del paciente (notas de voz o pista de videollamada). Varias notas cortas a Groq por separado pueden **superar** los ~4 min modelados por el mínimo de 10 s/request. | **STT en dispositivo** al grabar evita esas llamadas. |
+| **§4 Captura clínica** | Audio del médico (dictado o pista de videollamada) → dispositivo primero; Groq si falla calidad. | Un archivo concatenado por encounter evita el mínimo de **10 s** por fragmento. |
+| **§2 Motivos de consulta** (caso B) | El paciente puede mandar **varias** notas de voz; hoy cada una puede ir a Groq en **un request aparte** (mínimo **10 s** por request). | **STT en dispositivo** al grabar evita esas llamadas. |
 
-Escala **5.000+** profesionales con todo el STT en servidor → orden de magnitud **~USD 12.600/mes** solo Groq (3.600 min/prof × 5.000 × $0,0007).
-
-**Palancas de costo:** [STT en dispositivo](./estrategias-reduccion/stt.md) + fallback Groq por calidad (fuera del COGS base hasta telemetría). Evolución prevista: [modelo fit on-device](./estrategias-reduccion/stt.md#modelo-fit-on-device-base-clínica-nacional--lora-provincia--lora-speaker) (base clínica + LoRA provincia + LoRA speaker).
+**Palancas adicionales:** telemetría `stt_fallback_rate`; modelo fit on-device ([stt.md](./estrategias-reduccion/stt.md#modelo-fit-on-device-base-clínica-nacional--lora-provincia--lora-speaker)). Calibrar el −30 % cuando haya datos reales.
 
 Detalle de estrategia, calidad y fallback: [estrategias-reduccion/stt.md](./estrategias-reduccion/stt.md).
 
@@ -475,11 +485,11 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 | **Total con videollamada** — motivos texto | **~$7,50** | **~$7,35** | **~$7,39 / ~$7,27** |
 | **Total con videollamada** — motivos audio | **~$8,65** | **~$8,49** | **~$8,53 / ~$8,41** |
 
-**Orden de magnitud uso intensivo (todo incluido, video con COGS 5,00):** **~USD 8–9 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 3,5–3,7 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 con insights + §3 + §4; STT médico ~5 min + paciente ~4 min).
+**Orden de magnitud uso intensivo (todo incluido, video con COGS 5,00):** bruto todo-servidor **~USD 8–9**/prof/mes; con **−30 % STT on-device** en planificación **~USD 7,5–8**/prof/mes. Solo IA + STT + Vision (sin §6): bruto **~USD 3,5–3,7**; planificación **~USD 2,7–2,9** (motivos en audio).
 
 **WhatsApp (§7, alcance actual):** Meta **~$0** (sin utility). La IA del chat sigue en §1.
 
-**De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Detalle y add-ons audio/videollamada: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
+**De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** y el STT de planificación (**audio 0,98**) — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Detalle y add-ons audio/videollamada: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
 
 **Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **5,00** (self-host; STT en §2/§4) — ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
 

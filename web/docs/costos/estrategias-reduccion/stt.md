@@ -2,7 +2,9 @@
 
 No usa `IAManager`; en el [catálogo de IA](../../producto/catalogo-usos-ia.md) figura como capacidad aparte (captura §4, motivos §2, `audio/transcribir`).
 
-Baseline en [costos-api.md](../costos-api.md): **Groq Whisper** ~**$0,0007/min** ⇒ **~$1,40**/médico/mes en §4 (**5 min** × 400) y **~$1,12** en §2 caso B (**4 min** × 400). `SpeechToTextManager` usa **Groq por defecto** (`whisper-large-v3-turbo`) para el fallback servidor; Hugging Face queda disponible solo mediante selección explícita en configuración.
+Baseline en [costos-api.md](../costos-api.md): **Groq Whisper** ~**$0,0007/min** ⇒ bruto **~$1,40**/médico/mes en §4 (**5 min** × 400) y **~$1,12** en §2 caso B (**4 min** × 400). `SpeechToTextManager` usa **Groq por defecto** (`whisper-large-v3-turbo`) para el fallback servidor; Hugging Face queda disponible solo mediante selección explícita en configuración.
+
+**Lista comercial:** se aplica **−30 %** al STT bruto por probabilidad on-device → add-on **audio = 0,98** (matriz / calculador). Total voz planificación **~$1,76**/prof/mes. Ver [costos-api § STT — COGS de planificación](../costos-api.md#cogs-de-planificación-lista-comercial--30--on-device).
 
 **Videollamada post-call:** STT de la llamada está en §2/§4 (~5+~4 min con VAD), no en el add-on video (**$5,00** self-host). Histórico Deepgram vía Daily (~$6,19 @ 30 %) ya no es lista. Detalle: [videollamadas.md](./videollamadas.md), [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md).
 
@@ -40,7 +42,7 @@ Fuente: [groq.com/pricing](https://groq.com/pricing), [Speech to Text – GroqDo
 | Regla | Detalle | Impacto en Bioenlace |
 |-------|---------|----------------------|
 | Modelo COGS | **Whisper Large v3 Turbo** (`whisper-large-v3-turbo`) | Alineado a [costos-api § Precios](../costos-api.md#precios-de-referencia-mayo-2026) |
-| Tarifa | **USD 0,04 por hora** de audio transcrito (~**USD 0,00067/min**; redondeo doc **~0,0007**) | §2 ~4 min + §4 ~5 min → **~$2,52**/médico/mes |
+| Tarifa | **USD 0,04 por hora** de audio transcrito (~**USD 0,00067/min**; redondeo doc **~0,0007**) | §2 ~4 min + §4 ~5 min → bruto **~$2,52**/médico/mes; planificación **−30 %** → **~$1,76** |
 | Unidad de cobro | Duración del audio **enviado en cada request** (no tokens) | Un archivo de 45 s factura ~45 s (salvo mínimo) |
 | **Mínimo por request** | **10 s** facturados aunque el clip sea más corto | Varios audios cortos en motivos = **una llamada STT por mensaje** → cada uno cuenta ≥10 s si va a Groq |
 | Tamaño máx. | Hasta **25 MB** por archivo (~30 min de audio según Groq) | Por encima del uso clínico típico (dictados cortos) |
@@ -52,8 +54,8 @@ El [COGS](../costos-api.md#cogs-abreviatura) supone **400 consultas/médico/mes*
 
 | Flujo | Minutos / encounter | Minutos / mes | USD / mes |
 |-------|---------------------|---------------|-----------|
-| **§4 Captura clínica** (médico) | **~5** | 2.000 | **~$1,40** |
-| **§2 Motivos** caso B (paciente) | **~4** | 1.600 | **~$1,12** |
+| **§4 Captura clínica** (médico) | **~5** | 2.000 | Bruto **~$1,40** · lista **~$0,98** (−30 %) |
+| **§2 Motivos** caso B (paciente) | **~4** | 1.600 | Bruto **~$1,12** · planificación **~$0,78** |
 
 Eso encaja distinto según el flujo (misma tabla en [costos-api § STT](../costos-api.md#supuesto-del-cogs-por-flujo)):
 
@@ -83,9 +85,15 @@ El micrófono produce **texto en el cliente**; el backend recibe `texto` (y meta
 - Metadatos útiles para decisión y telemetría: `confidence`, `engine` (p. ej. `web_speech`, `android_speech`, `ios_speech`), `locale`, `duration_ms`, `client_edit_ratio` (si el usuario editó antes de enviar).
 - Reglas de negocio en **servicio de dominio** + umbrales en **`params.php`** / catálogo — no `if` por pantalla en orquestadores.
 
-### Escenario de costo (no en COGS base hasta validar)
+### Escenario de costo (planificación vs aspiracional)
 
-Si **≥80 %** de los minutos de §2 y §4 llegan ya como texto desde dispositivo, el STT servidor del escenario intensivo (**~$2,52/prof/mes** en [costos-api](../costos-api.md)) puede bajar a **~20 %** de ese valor (solo fallbacks y audios sin transcripción). Calibrar con telemetría (§ Monitoreo).
+| Escenario | % minutos que no van a Groq | STT efectivo vs bruto **$2,52** | Estado |
+|-----------|----------------------------|--------------------------------|--------|
+| **Lista comercial (vigente)** | **~30 %** on-device | **~$1,76** (−30 %); audio matriz **0,98** | En matriz / calculador |
+| Conservador validado | ~50 % | ~$1,26 | Tras telemetría |
+| Objetivo maduro | ~70–80 % | ~$0,50–0,76 | Modelo fit / calidad estable |
+
+Si **≥80 %** de los minutos de §2 y §4 llegan ya como texto desde dispositivo, el STT servidor del escenario intensivo puede bajar a **~20 %** del bruto (solo fallbacks). Calibrar con telemetría (§ Monitoreo); **no** bajar el −30 % de lista hasta tener datos.
 
 La implementación actual usa motores del **SO / Web Speech** (ver § Implementación). La evolución prevista para maximizar calidad y minimizar fallback Groq es un **modelo fit on-device** entrenado para Bioenlace (§ siguiente).
 

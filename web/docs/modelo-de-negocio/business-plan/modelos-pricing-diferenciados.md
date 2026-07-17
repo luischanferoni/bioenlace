@@ -153,9 +153,9 @@ Ingreso Bioenlace (AR) ≈
 
 | Componente | Descripción |
 |------------|-------------|
-| **Licencia** | `precio = COGS_ref × (vol_clase/400) × (1 + margen%)` — margen **233 %** ≈ ~70 % bruto; COGS **con context caching**; base ~**USD 3,16**/prof/mes; con audio ~**7,83**; con audio+video ~**USD 24,48**/prof/mes |
+| **Licencia** | `precio = COGS_ref × (vol_clase/400) × (1 + margen%)` — margen **233 %** ≈ ~70 % bruto; COGS **con context caching**; base ~**USD 3,16**/prof/mes; con audio ~**6,43**; con audio+video ~**USD 23,08**/prof/mes |
 | **Clases** | AMB / EMER / IMP habilitan módulos; el precio escala con `encounters_per_professional_month` por clase |
-| **Add-ons variables** | Audio (STT profesional ~5 min) y/o videollamada (self-host, COGS **5,00**) — suman COGS y se reflejan en el precio |
+| **Add-ons variables** | Audio (STT profesional ~5 min con **−30 % on-device** → COGS **0,98**) y/o videollamada (self-host, COGS **5,00**) — suman COGS y se reflejan en el precio |
 | **Rev share Rx (opcional)** | USD 0,5–2 por receta enrutada a farmacia partner (vía 5; fuera de la fórmula COGS) |
 
 **Quién paga:** director médico / COO / IT del efector.
@@ -228,12 +228,12 @@ Supuestos: **clínica 20 profesionales**, ~8.000 encounters/año, ~670/mes.
 
 | Concepto | Orden de magnitud (USD/mes) |
 |----------|----------------------------|
-| COGS IA+STT (20 prof, base sin video) | ~19–70 (0,95–3,49 × 20; [costos-api](../../costos/costos-api.md) con caché) |
-| COGS + videollamada (20 prof, audio+video) | ~147 (7,35 × 20) |
+| COGS IA+STT (20 prof, base sin video) | ~19–55 (0,95–2,73 × 20; [costos-api](../../costos/costos-api.md) con caché y −30 % STT) |
+| COGS + videollamada (20 prof, audio+video) | ~139 (6,93 × 20) |
 | Infra + soporte | 200–500 |
 | Costo equipo (amortizado por cliente) | Variable según headcount; meta **gross margin ~70%** |
 | **Precio lista** (20 prof, solo base, margen 233 %) | ~**63** (20 × 3,16) |
-| **Precio lista** (20 prof + audio + videollamada) | ~**490** (20 × 24,48) |
+| **Precio lista** (20 prof + audio + videollamada) | ~**462** (20 × 23,08) |
 | **Ingreso incremental Rx** (opcional) | 200 recetas/mes × USD 1 fee = **USD 200/mes**; rev share farmacia aparte |
 
 El ingreso incremental por receta enrutada es **puente a fulfillment** (vía 5), no margen retail propio. Cifras de lista: [matriz Argentina](./matriz-argentina-modulos-precios.md).
@@ -244,8 +244,8 @@ El ingreso incremental por receta enrutada es **puente a fulfillment** (vía 5),
 
 | Escenario | Modelo sugerido | Ticket orientativo/mes | Build prioritario |
 |-----------|-----------------|------------------------|-------------------|
-| Clínica 10 prof (solo base) | D → A | ~32–41 (matriz; ± audio) | Receta nacional |
-| Clínica 10 prof + videollamada | A | ~334–343 | Teleconsulta (Daily + Deepgram post-call) |
+| Clínica 10 prof (solo base) | D → A | ~32–64 (matriz; ± audio) | Receta nacional |
+| Clínica 10 prof + audio + videollamada | A | ~231 | Teleconsulta self-host |
 | Sanatorio 80 camas (plantel mixto AMB+EMER+IMP) | A + C | Centenas–bajos miles según N profesionales y video; + rev share Rx | Autorización OS; partner farmacia |
 | Prepaga piloto 50k afiliados | B | 25–75k PMPM + pack OS + pathway fees | White-label; API; autorización; reglas pathway |
 | Red ambulatoria 5 sedes | A | Según Σ profesionales × precio unitario | Autorización OS; receta nacional |

@@ -15,7 +15,7 @@ Comparar escenarios **GPU propia** vs **API managed** y registrar estrategias pa
 | Eje | Pregunta |
 |-----|----------|
 | Infra | ¿Cuánto cuesta correr modelos en nuestra GPU? |
-| API | ¿Cuánto cuesta Vertex/STT/Vision + videollamada? IA/medios **~$3,5–3,7/prof**; con video §6 **~$8–9/prof** ([costos-api.md](./costos-api.md)) |
+| API | ¿Cuánto cuesta Vertex/STT/Vision + videollamada? IA/medios planificación **~$2,7–2,9/prof** (−30 % STT); con video §6 **~$7,5–8/prof** ([costos-api.md](./costos-api.md)) |
 | WhatsApp (§7) | ¿Costo Meta del asistente reactivo? **~$0** (utility **no habilitada**) — [costos-api §7](./costos-api.md#7-whatsapp-cloud-api-paciente) |
 | Identidad (Didit) | ¿Cuánto cuesta KYC y reingreso biométrico? → [costos-didit.md](./costos-didit.md) (500 gratis/mes; luego ~0,33 KYC / ~0,10 reingreso) |
 | Fiscal (AR) | ¿Qué sumar de IVA, IIBB y ganancias al costo y al precio? → [impuestos-argentina.md](./impuestos-argentina.md) |

@@ -1,20 +1,20 @@
 {
-  "version": 3,
+  "version": 4,
   "currency": "USD",
   "billing_period": "month",
   "tax_note": "No incluye IVA.",
-  "cogs_source": "costos-api.md — columna con context caching (Gemini + Groq STT ~5 min profesional; videollamada §6 = self-host sala/TURN/storage ~5,00; STT de la llamada ya en §2/§4)",
+  "cogs_source": "costos-api.md — columna con context caching (Gemini + Groq STT profesional −30 % on-device → 0,98; videollamada §6 = self-host ~5,00; STT de la llamada ya en §2/§4)",
   "reference_encounters_per_professional_month": 400,
   "cogs_usd_per_professional_month": {
     "base": 0.95,
-    "audio": 1.4,
+    "audio": 0.98,
     "videollamada": 5.0
   },
   "margin_on_cost_percent": 233,
   "addons": {
     "audio": {
       "label": "Dictado",
-      "description": "Transcripción del audio que envía el profesional en la captura clínica (~5 min voz/consulta)",
+      "description": "Transcripción del audio del profesional (~5 min voz/consulta; incluye −30 % STT on-device)",
       "default": false
     },
     "videollamada": {

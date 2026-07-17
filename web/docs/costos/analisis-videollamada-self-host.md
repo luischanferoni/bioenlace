@@ -6,9 +6,9 @@
 
 **COGS video vigente:** [videollamadas.md](./estrategias-reduccion/videollamadas.md), [costos-api.md §6](./costos-api.md#6-videollamadas-pacientemédico) — **USD 5,00** = sala/TURN/ops + storage (STT **no** incluido). Histórico Daily+Deepgram: **9,19**.
 
-**STT base:** [costos-api.md § STT](./costos-api.md#stt) — médico **~5 min** + paciente **~4 min** por encounter → **~$2,52**/prof/mes en servidor. La videollamada **alimenta** esos minutos (no los duplica) cuando el transcript reemplaza dictado / notas de voz.
+**STT base:** [costos-api.md § STT](./costos-api.md#stt) — médico **~5 min** + paciente **~4 min** por encounter → bruto **~$2,52**/prof/mes en servidor; planificación **−30 % on-device → ~$1,76**. La videollamada **alimenta** esos minutos (no los duplica) cuando el transcript reemplaza dictado / notas de voz.
 
-**Lista comercial:** base **0,95** + audio **1,40** + video **5,00** → AMB audio+video **~24,48**/prof/mes ([matriz](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md), [`pricing-config.json`](../../../institucional/js/pricing-config.json)).
+**Lista comercial:** base **0,95** + audio **0,98** (−30 % on-device) + video **5,00** → AMB audio+video **~23,08**/prof/mes ([matriz](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md), [`pricing-config.json`](../../../institucional/js/pricing-config.json)).
 
 ---
 

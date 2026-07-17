@@ -2,7 +2,16 @@ import 'dart:async';
 
 import 'package:speech_to_text/speech_to_text.dart';
 
-/// Dictado en dispositivo para captura clínica (STT local).
+/// Modo de escucha (evita que apps cliente importen speech_to_text).
+enum DeviceListenMode {
+  /// Frases cortas / confirmación (captura clínica).
+  confirmation,
+
+  /// Frases más largas (motivos de consulta).
+  dictation,
+}
+
+/// Dictado en dispositivo (STT local / motor del SO).
 class DeviceSpeechDictation {
   DeviceSpeechDictation() : _speech = SpeechToText();
 
@@ -14,6 +23,7 @@ class DeviceSpeechDictation {
   double _lastConfidence = 0;
 
   bool get isListening => _speech.isListening;
+  bool get isAvailable => _available;
 
   Future<bool> initialize({String localeId = 'es_AR'}) async {
     _localeId = localeId;
@@ -24,8 +34,11 @@ class DeviceSpeechDictation {
     return _available;
   }
 
+  /// [preferOnDevice]: pide motor offline si el SO lo permite; si falla, reintenta sin forzar.
   Future<void> start({
     required void Function(String text, double confidence) onPartial,
+    DeviceListenMode listenMode = DeviceListenMode.confirmation,
+    bool preferOnDevice = false,
   }) async {
     if (!_available) {
       final ok = await initialize(localeId: _localeId);
@@ -36,15 +49,37 @@ class DeviceSpeechDictation {
     _startedAt = DateTime.now();
     _lastText = '';
     _lastConfidence = 0;
-    await _speech.listen(
-      localeId: _localeId,
-      listenMode: ListenMode.confirmation,
-      onResult: (result) {
-        _lastText = result.recognizedWords;
-        _lastConfidence = result.confidence;
-        onPartial(_lastText, _lastConfidence);
-      },
-    );
+
+    final mode = listenMode == DeviceListenMode.dictation
+        ? ListenMode.dictation
+        : ListenMode.confirmation;
+
+    Future<void> listen({required bool onDevice}) {
+      return _speech.listen(
+        listenOptions: SpeechListenOptions(
+          localeId: _localeId,
+          listenMode: mode,
+          onDevice: onDevice,
+          cancelOnError: true,
+          partialResults: true,
+        ),
+        onResult: (result) {
+          _lastText = result.recognizedWords;
+          _lastConfidence = result.confidence;
+          onPartial(_lastText, _lastConfidence);
+        },
+      );
+    }
+
+    try {
+      await listen(onDevice: preferOnDevice);
+    } catch (_) {
+      if (preferOnDevice) {
+        await listen(onDevice: false);
+      } else {
+        rethrow;
+      }
+    }
   }
 
   Future<DeviceDictationResult> stop() async {
@@ -97,11 +132,16 @@ class DeviceDictationResult {
 /// Heurísticas locales alineadas con DeviceSttQualityAssessor (PHP).
 class DeviceSttLocalQuality {
   static const double capturaMinConfidence = 0.85;
+  static const double motivosMinConfidence = 0.75;
 
-  static bool isAcceptable(String text, DeviceDictationResult meta) {
+  static bool isAcceptable(
+    String text,
+    DeviceDictationResult meta, {
+    double minConfidence = capturaMinConfidence,
+  }) {
     final t = text.trim();
     if (t.length < 3) return false;
-    if (meta.confidence > 0 && meta.confidence < capturaMinConfidence) {
+    if (meta.confidence > 0 && meta.confidence < minConfidence) {
       return false;
     }
     if (meta.durationMs > 0) {

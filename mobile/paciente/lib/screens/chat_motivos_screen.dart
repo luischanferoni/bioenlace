@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,8 @@ import '../services/motivos_consulta_service.dart';
 import '../services/pending_motivo_message_store.dart';
 
 /// Chat para cargar motivos de consulta: texto y audio.
-/// Texto/audio se guardan en el teléfono antes de subir (reintento / eliminar).
+/// Intenta STT on-device; si la calidad alcanza, envía texto (sin Groq).
+/// Si no, guarda el audio y lo sube para el lote de cierre.
 class ChatMotivosScreen extends StatefulWidget {
   final int consultaId;
   final String? authToken;
@@ -38,6 +40,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   final ScrollController _scrollController = ScrollController();
   final PendingMotivoMessageStore _pendingStore =
       PendingMotivoMessageStore.instance;
+  final DeviceSpeechDictation _dictation = DeviceSpeechDictation();
   List<dynamic> _messages = [];
   List<PendingMotivoMessage> _pending = [];
   bool _loading = true;
@@ -45,6 +48,9 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   String? _error;
   final AudioRecorder _recorder = AudioRecorder();
   bool _isRecording = false;
+  bool _dictating = false;
+  SttClientConfig _sttConfig = SttClientConfig.defaults;
+  String? _voiceHint;
 
   static const String _fallbackWelcomeMessage =
       'Contanos en pocas palabras por qué pediste este turno. Podés escribir o enviar audios hasta poco antes del horario del turno; después armamos un resumen para el médico.';
@@ -52,6 +58,9 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   String? _motivosResumen;
   String? _chatGuideMessage;
   String? _chatGuideTitle;
+
+  double get _motivosMinConfidence =>
+      _sttConfig.minConfidenceForProfile('motivos_consulta');
 
   @override
   void initState() {
@@ -63,14 +72,25 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     );
     _loadMessages();
     _loadPending();
+    unawaited(_loadSttConfig());
   }
 
   @override
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
+    unawaited(_dictation.cancel());
     unawaited(_recorder.dispose());
     super.dispose();
+  }
+
+  Future<void> _loadSttConfig() async {
+    final cfg = await _service.fetchSttConfig();
+    if (!mounted) return;
+    setState(() => _sttConfig = cfg);
+    if (cfg.deviceEnabled) {
+      await _dictation.initialize();
+    }
   }
 
   Future<void> _loadPending() async {
@@ -129,20 +149,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     final text = _textController.text.trim();
     if (text.isEmpty || _sending) return;
     _textController.clear();
-
-    final now = DateTime.now();
-    final pending = PendingMotivoMessage(
-      id: _pendingStore.newId(),
-      consultaId: widget.consultaId,
-      type: PendingMotivoMessageType.texto,
-      status: PendingMotivoMessageStatus.pendingUpload,
-      createdAt: now,
-      updatedAt: now,
-      texto: text,
-    );
-    await _pendingStore.upsert(pending);
-    await _loadPending();
-    await _uploadPending(pending);
+    await _persistAndUploadTexto(text);
   }
 
   Future<void> _recordAndSendAudio() async {
@@ -152,27 +159,149 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       return;
     }
     if (_isRecording) {
-      final path = await _recorder.stop();
-      setState(() => _isRecording = false);
-      if (path != null && path.isNotEmpty) {
-        await _persistAndUploadAudio(path);
-      }
+      await _finishVoiceCapture();
       return;
     }
+    await _startVoiceCapture();
+  }
+
+  Future<void> _startVoiceCapture() async {
     if (!await _recorder.hasPermission()) {
       if (mounted) {
         _showError('Se necesita permiso de micrófono');
       }
       return;
     }
+
     final dir = await getTemporaryDirectory();
     final path =
         '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+
+    // Siempre grabamos audio de respaldo (fallback Groq en el lote si el STT local falla).
     await _recorder.start(
       const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100),
       path: path,
     );
-    setState(() => _isRecording = true);
+
+    var dictating = false;
+    if (_sttConfig.deviceEnabled) {
+      try {
+        await _dictation.start(
+          listenMode: DeviceListenMode.dictation,
+          preferOnDevice: true,
+          onPartial: (text, _) {
+            if (!mounted) return;
+            setState(() {
+              _voiceHint = text.trim().isEmpty ? 'Escuchando…' : text.trim();
+            });
+          },
+        );
+        dictating = true;
+      } catch (_) {
+        // Sin dictado local: queda solo la grabación de audio.
+        dictating = false;
+      }
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isRecording = true;
+      _dictating = dictating;
+      _voiceHint = dictating
+          ? 'Escuchando… tocá el micrófono para enviar'
+          : 'Grabando audio… tocá el micrófono para enviar';
+    });
+  }
+
+  Future<void> _finishVoiceCapture() async {
+    DeviceDictationResult? dictation;
+    if (_dictating) {
+      try {
+        dictation = await _dictation.stop();
+      } catch (_) {
+        dictation = null;
+      }
+    }
+
+    String? path;
+    if (await _recorder.isRecording()) {
+      path = await _recorder.stop();
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isRecording = false;
+      _dictating = false;
+      _voiceHint = null;
+    });
+
+    final text = dictation?.text.trim() ?? '';
+    final deviceOk = _sttConfig.deviceEnabled &&
+        dictation != null &&
+        DeviceSttLocalQuality.isAcceptable(
+          text,
+          dictation,
+          minConfidence: _motivosMinConfidence,
+        );
+
+    if (deviceOk) {
+      if (path != null && path.isNotEmpty) {
+        try {
+          await File(path).delete();
+        } catch (_) {}
+      }
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Texto reconocido en el teléfono. Enviando…'),
+            backgroundColor: IntentPalette.of(UiIntent.success).base,
+          ),
+        );
+      }
+      await _persistAndUploadTexto(text);
+      return;
+    }
+
+    if (path != null && path.isNotEmpty) {
+      if (mounted && text.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+              'Calidad baja del dictado. Subimos el audio para el resumen.',
+            ),
+            backgroundColor: IntentPalette.of(UiIntent.info).base,
+          ),
+        );
+      }
+      await _persistAndUploadAudio(path);
+      return;
+    }
+
+    if (text.isNotEmpty) {
+      await _persistAndUploadTexto(text);
+      return;
+    }
+
+    _showError('No se capturó voz. Probá de nuevo o escribí el motivo.');
+  }
+
+  Future<void> _persistAndUploadTexto(String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+
+    final now = DateTime.now();
+    final pending = PendingMotivoMessage(
+      id: _pendingStore.newId(),
+      consultaId: widget.consultaId,
+      type: PendingMotivoMessageType.texto,
+      status: PendingMotivoMessageStatus.pendingUpload,
+      createdAt: now,
+      updatedAt: now,
+      texto: trimmed,
+    );
+    await _pendingStore.upsert(pending);
+    await _loadPending();
+    await _uploadPending(pending);
   }
 
   Future<void> _persistAndUploadAudio(String tempPath) async {
@@ -585,14 +714,39 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     if (!_inputAbierto) {
       return const SizedBox.shrink();
     }
-    return AssistantChatComposerBar(
-      controller: _textController,
-      onSend: _sendText,
-      isSending: _sending,
-      hintText: 'Escribí el motivo o enviá un audio…',
-      maxLines: 2,
-      onVoice: _recordAndSendAudio,
-      voiceActive: _isRecording,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_voiceHint != null && _voiceHint!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              BioSpacing.md,
+              BioSpacing.xs,
+              BioSpacing.md,
+              0,
+            ),
+            child: Text(
+              _voiceHint!,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: BioTypography.caption.copyWith(
+                color: context.bio.textMuted,
+              ),
+            ),
+          ),
+        AssistantChatComposerBar(
+          controller: _textController,
+          onSend: _sendText,
+          isSending: _sending,
+          hintText: _sttConfig.deviceEnabled
+              ? 'Escribí el motivo o dictá con el micrófono…'
+              : 'Escribí el motivo o enviá un audio…',
+          maxLines: 2,
+          onVoice: _recordAndSendAudio,
+          voiceActive: _isRecording,
+        ),
+      ],
     );
   }
 }

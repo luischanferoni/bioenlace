@@ -28,7 +28,7 @@ El paciente opera desde la **app móvil**; el **personal de salud** consume moti
 
 | Fase | Apertura | Cierre |
 |------|----------|--------|
-| Motivos / intake / pre-consulta | `encounter_journey_preparar_minutos_antes` antes del turno (default **4 h**) | `motivos_consulta_cierre_minutos` antes (params, default 2 min) |
+| Motivos / intake / pre-consulta | `encounter_journey_preparar_minutos_antes` antes del turno (default **4 h**) | `motivos_consulta_cierre_minutos` antes (params, default **10 min**) |
 | Post-consulta | Al finalizar encounter | +30 días |
 
 Offsets en `encounter_phase_windows.yaml` (`param:encounter_journey_preparar_minutos_antes`, `param:motivos_consulta_cierre_minutos`, etc.).

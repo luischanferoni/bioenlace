@@ -60,7 +60,7 @@ final class EncounterJourneyService
 
         return [
             'motivos_input_abierto' => !empty($motivos['enabled']),
-            'motivos_cierre_minutos' => (int) ($motivos['window']['minutos_antes_cierre'] ?? 2),
+            'motivos_cierre_minutos' => (int) ($motivos['window']['minutos_antes_cierre'] ?? 10),
             'asistencia_cohorte_disponible' => !empty($asistencia['enabled']),
         ];
     }

@@ -81,7 +81,7 @@ bool turnoInicioEsPasadoEnProducto(Map<String, dynamic> turno) {
 /// Ventana de motivos de consulta: abierta hasta [minutosAntesCierre] antes del inicio del turno.
 bool turnoMotivosInputAbiertoEnProducto(
   Map<String, dynamic> turno, {
-  int minutosAntesCierre = 2,
+  int minutosAntesCierre = 10,
 }) {
   final journeyEnabled = journeyPhaseEnabled(turno, 'motivos_consulta');
   if (journeyEnabled != null) return journeyEnabled;

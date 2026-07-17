@@ -62,7 +62,7 @@ Eso encaja distinto según el flujo (misma tabla en [costos-api § STT](../costo
 | Flujo | Qué pasa en producto | ¿Cuadra con el supuesto? |
 |-------|----------------------|--------------------------|
 | **§4 Captura clínica** | Audio del médico (dictado o pista de videollamada con VAD); si falla el STT local, va a Groq (~5 min de voz). | **Sí** como techo de planificación. Dictados muy cortos quedan por debajo. |
-| **§2 Motivos de consulta** (caso B) | El paciente puede mandar **varias** notas de voz; hoy cada una puede ir a Groq en **un request aparte** (mínimo **10 s** por request). | **Puede superar** los ~4 min si hay muchas notas cortas. **STT en dispositivo** al grabar evita esas llamadas. |
+| **§2 Motivos de consulta** (caso B) | El paciente puede mandar **varias** notas de voz; el lote concatena y hace **una** llamada Groq (`transcribirLote`). | **Sí** como techo de planificación. Notas cortas ya no multiplican el mínimo de 10 s. **STT en dispositivo** evita la llamada. |
 
 - **FFmpeg** (silencios, compresión): puede acortar el archivo enviado; Groq cobra por **duración transcrita del audio recibido**. No reemplaza el mínimo de 10 s por request.
 
@@ -77,7 +77,7 @@ El micrófono produce **texto en el cliente**; el backend recibe `texto` (y meta
 | Flujo | § costos-api | Prioridad dispositivo | Notas |
 |-------|--------------|----------------------|--------|
 | Captura clínica (dictado médico) | §4 | Alta | Implementado: dictado local + fallback servidor; ver § Implementación |
-| Motivos de consulta (audio paciente) | §2 caso B | Alta (futuro) | Mismo patrón: texto en dispositivo al grabar; el lote no llama STT si el mensaje ya es texto |
+| Motivos de consulta (audio paciente) | §2 caso B | Alta | Implementado en app paciente: dictado local al grabar; si calidad OK → `TYPE_TEXTO` (sin Groq). Si no → audio al lote (`transcribirLote`). |
 
 ### Contrato API (orientativo, sin implementar aquí)
 
@@ -289,9 +289,10 @@ Misma [escalera de proveedores](#escalera-de-proveedores-servidor): Groq es el f
 | Capa | Componente |
 |------|------------|
 | Servidor | `DeviceSttQualityAssessor`, `ClinicalSpeechInputResolver`; integrado en `ConsultaProcesamientoService::analizar` y `AudioController::actionTranscribir` |
-| Config | `stt_device` en `frontend/config/params.php` |
+| Config | `stt_device` en `frontend/config/params.php` (perfiles `captura_clinica`, `motivos_consulta`) |
 | Web | `frontend/web/js/encounter-capture-form.js`, `_formulario_consulta.php` (dictado + analizar + fallback) |
 | Móvil médico | `shared`: `DeviceSpeechDictation`, `EncounterCaptureApi`; `PatientTimelineScreen` |
+| Móvil paciente | `ChatMotivosScreen`: dictado local + audio de respaldo; texto OK → `/enviar`; si no → `/subir` audio |
 
 No requiere migración de BD: metadatos STT viajan en el body del request (`stt`, `audio` opcional).
 

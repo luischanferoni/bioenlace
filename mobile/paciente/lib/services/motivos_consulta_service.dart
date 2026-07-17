@@ -28,6 +28,27 @@ class MotivosConsultaService {
     return h;
   }
 
+  Future<SttClientConfig> fetchSttConfig() async {
+    try {
+      final uri = Uri.parse('${AppConfig.apiUrl}/audio/stt-config');
+      final response = await http
+          .get(uri, headers: _headers)
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      if (response.statusCode != 200) {
+        return SttClientConfig.defaults;
+      }
+      final data = json.decode(response.body);
+      if (data is! Map || data['success'] != true) {
+        return SttClientConfig.defaults;
+      }
+      final stt = data['stt'];
+      if (stt is Map) {
+        return SttClientConfig.fromJson(Map<String, dynamic>.from(stt));
+      }
+    } catch (_) {}
+    return SttClientConfig.defaults;
+  }
+
   Future<Map<String, dynamic>> getMessages(int consultaId) async {
     try {
       final uri = Uri.parse('${AppConfig.apiUrl}/motivos-consulta/mensajes/$consultaId');

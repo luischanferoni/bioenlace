@@ -12,8 +12,8 @@ Flujo de producto (mayo 2026):
 
 0. **Opcional:** preguntas declarativas previas al chat (`motivos_intake`) — sin costo IA; ver [recorrido-pre-post-consulta.md](../producto/recorrido-pre-post-consulta.md).
 1. El paciente envía mensajes (texto, audio, imagen) **sin IA por mensaje** — solo persistencia (`motivos-consulta/enviar|subir`).
-2. **Hasta 1 minuto antes del turno** puede seguir cargando (`motivos_consulta_cierre_minutos` en `params.php`).
-3. Al cerrar la ventana, el cron `turno-notificacion/run` ejecuta **`MOTIVOS_IA_BATCH`**: una inferencia con todo el hilo (STT de audios + resumen) → `encounter.reason_text`.
+2. **Hasta 10 minutos antes del turno** puede seguir cargando (`motivos_consulta_cierre_minutos` en `params.php`).
+3. Al cerrar la ventana, el cron `turno-notificacion/run` ejecuta **`MOTIVOS_IA_BATCH`**: concatena los audios del hilo en **una** STT (Groq) + resume textos (escritos u on-device) → `encounter.reason_text`.
 4. El médico ve intake (si hubo), resumen y cohorte en timeline / app Personal de Salud antes de la captura.
 
 Coste modelado: **400 llamadas IA/mes** (1 por consulta), no 4× por mensaje. Código: `AppointmentReasonWindowService`, `AppointmentReasonBatchService`.

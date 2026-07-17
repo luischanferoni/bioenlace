@@ -138,9 +138,13 @@ final class AppointmentReasonBatchService
         $textos = [];
         $imagenes = [];
         $imgIndex = 0;
+        /** @var list<string> $audioPaths */
+        $audioPaths = [];
+        $audioPlaceholderIndex = null;
 
         foreach ($messages as $msg) {
             if ($msg->message_type === ConsultaMotivosMessage::TYPE_TEXTO) {
+                // Texto escrito o transcript on-device ya persistido como mensaje de texto.
                 $t = trim((string) $msg->texto);
                 if ($t !== '') {
                     $textos[] = $t;
@@ -152,15 +156,14 @@ final class AppointmentReasonBatchService
             if ($msg->message_type === ConsultaMotivosMessage::TYPE_AUDIO) {
                 $path = self::resolveLocalPath((string) $msg->texto, $webRoot);
                 if ($path !== null && is_file($path)) {
-                    $stt = SpeechToTextManager::transcribir($path, 'economico');
-                    $texto = trim((string) ($stt['texto'] ?? ''));
-                    if ($texto !== '') {
-                        $textos[] = $texto;
-                        $lines[] = "(audio transcrito) {$texto}";
-                        continue;
+                    if ($audioPlaceholderIndex === null) {
+                        $audioPlaceholderIndex = count($lines);
+                        $lines[] = '';
                     }
+                    $audioPaths[] = $path;
+                } else {
+                    $lines[] = '(audio sin transcripción)';
                 }
-                $lines[] = '(audio sin transcripción)';
                 continue;
             }
 
@@ -173,8 +176,23 @@ final class AppointmentReasonBatchService
             }
         }
 
+        if ($audioPaths !== [] && $audioPlaceholderIndex !== null) {
+            // Una sola llamada STT (Groq) con todos los audios del hilo concatenados.
+            $stt = SpeechToTextManager::transcribirLote($audioPaths, 'economico');
+            $texto = trim((string) ($stt['texto'] ?? ''));
+            if ($texto !== '') {
+                $textos[] = $texto;
+                $lines[$audioPlaceholderIndex] = '(audio transcrito) ' . $texto;
+            } else {
+                $lines[$audioPlaceholderIndex] = '(audio sin transcripción)';
+            }
+        }
+
         return [
-            'transcript' => implode("\n", $lines),
+            'transcript' => implode("\n", array_values(array_filter(
+                $lines,
+                static fn ($line): bool => $line !== null && $line !== ''
+            ))),
             'textos' => $textos,
             'imagenes' => $imagenes,
         ];

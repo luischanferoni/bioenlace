@@ -107,11 +107,32 @@ final class SttConfigService
      */
     public static function clientSnapshot(): array
     {
+        $device = Yii::$app->params['stt_device'] ?? [];
+        if (!is_array($device)) {
+            $device = [];
+        }
+        $profilesOut = [];
+        $profiles = $device['profiles'] ?? [];
+        if (is_array($profiles)) {
+            foreach ($profiles as $id => $cfg) {
+                if (!is_array($cfg)) {
+                    continue;
+                }
+                $profilesOut[(string) $id] = [
+                    'min_confidence' => isset($cfg['min_confidence'])
+                        ? (float) $cfg['min_confidence']
+                        : (float) ($device['min_confidence'] ?? 0.75),
+                ];
+            }
+        }
+
         return [
             'device_enabled' => self::isDeviceEnabled(),
             'server_enabled' => self::isServerEnabled(),
             'proveedor_servidor' => self::serverProvider(),
             'server_configured' => self::isServerProviderConfigured(),
+            'min_confidence' => (float) ($device['min_confidence'] ?? 0.75),
+            'profiles' => $profilesOut,
         ];
     }
 }

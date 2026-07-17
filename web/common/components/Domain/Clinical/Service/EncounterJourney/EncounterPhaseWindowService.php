@@ -79,7 +79,7 @@ final class EncounterPhaseWindowService
             ? $this->resolver->phaseDefinition($phaseId, $context)
             : $this->catalog->phase($phaseId);
         if ($def === null) {
-            return 2;
+            return 10;
         }
         $closeOffset = trim((string) ($def['close_offset'] ?? ''));
         $sec = $closeOffset !== '' ? $this->catalog->offsetSeconds($closeOffset) : null;

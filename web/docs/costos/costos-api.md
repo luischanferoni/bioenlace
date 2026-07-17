@@ -187,7 +187,7 @@ Tarifa unitaria: [Precios de referencia](#precios-de-referencia-mayo-2026) (**Gr
 | **Mínimo facturado** | **10 segundos por request**, aunque el audio sea más corto |
 | Cobro por | Duración del audio en **cada** llamada a la API |
 
-Ejemplo del mínimo por request: tres notas de voz de 4 s transcritas en **tres** llamadas Groq → se facturan **30 s** (3 × 10 s), no 12 s.
+Ejemplo del mínimo por request: tres notas de 4 s en **tres** llamadas → **30 s** facturados. Con **`transcribirLote`** (motivos) se concatenan → **una** llamada de ~12 s (mínimo 10 s una sola vez).
 
 ### Supuesto del COGS por flujo
 
@@ -216,7 +216,7 @@ Escala **5.000+** profesionales: todo servidor ~**USD 12.600/mes** Groq; con pla
 | Flujo | Qué pasa en producto | Nota de facturación |
 |-------|----------------------|---------------------|
 | **§4 Captura clínica** | Audio del médico (dictado o pista de videollamada) → dispositivo primero; Groq si falla calidad. | Un archivo concatenado por encounter evita el mínimo de **10 s** por fragmento. |
-| **§2 Motivos de consulta** (caso B) | El paciente puede mandar **varias** notas de voz; hoy cada una puede ir a Groq en **un request aparte** (mínimo **10 s** por request). | **STT en dispositivo** al grabar evita esas llamadas. |
+| **§2 Motivos de consulta** (caso B) | El paciente puede mandar **varias** notas de voz; el lote **concatena** los audios y hace **una** llamada Groq (`transcribirLote`). | Notas cortas ya no pagan el mínimo de **10 s** por mensaje. **STT en dispositivo** al grabar evita la llamada por completo. |
 
 **Palancas adicionales:** telemetría `stt_fallback_rate`; modelo fit on-device ([stt.md](./estrategias-reduccion/stt.md#modelo-fit-on-device-base-clínica-nacional--lora-provincia--lora-speaker)). Calibrar el −30 % cuando haya datos reales.
 
@@ -292,7 +292,7 @@ Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](./estrat
 
 ### 2. Motivos de consulta (chat dedicado, antes de la atención)
 
-Tras el chat del asistente (§1), el paciente puede cargar en el chat de **motivos** texto, audio e imágenes hasta **1 minuto antes del turno** (sin IA en cada mensaje). Al cerrar la ventana:
+Tras el chat del asistente (§1), el paciente puede cargar en el chat de **motivos** texto, audio e imágenes hasta **10 minutos antes del turno** (sin IA en cada mensaje). Al cerrar la ventana:
 
 1. **`motivos-consulta-batch`** — resume el hilo en `encounter.reason_text` (contexto clínico acotado).
 2. **`motivos-consulta-insights`** — sugerencias orientativas para el médico (hipótesis / prácticas preliminares), si hay resumen.
@@ -310,7 +310,7 @@ Implementación: `AppointmentReasonBatchService`, `AppointmentReasonClinicalInsi
 
 #### Caso B — con audio en el hilo
 
-STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llamada: ~1.350 in + 500 out ref.). El COGS modela **~4 min de STT Groq por encounter** (voz paciente; fila siguiente); si cada nota de voz va a Groq por separado, el costo real puede ser **mayor** — ver [§ STT](#stt).
+STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llamada: ~1.350 in + 500 out ref.). El COGS modela **~4 min de STT Groq por encounter** (voz paciente; fila siguiente). El lote **concatena** los audios del hilo en una sola llamada (`transcribirLote`) — ver [§ STT](#stt).
 
 | Concepto | Supuesto | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
 |----------|----------|----------------------------|----------------------------|-------------------|

@@ -112,11 +112,14 @@ return [
             'captura_clinica' => [
                 'min_confidence' => 0.85,
             ],
+            'motivos_consulta' => [
+                'min_confidence' => 0.75,
+            ],
         ],
     ],
 
     /** Minutos antes del turno en que se cierra el chat de motivos y corre el lote IA (cron turno-notificacion). */
-    'motivos_consulta_cierre_minutos' => 2,
+    'motivos_consulta_cierre_minutos' => 10,
     /** Minutos antes del turno en que abre «Preparar tu consulta» (motivos, intake, pre-consulta). Default 240 = 4 h. */
     'encounter_journey_preparar_minutos_antes' => 240,
     /** Minutos antes del turno en que el médico puede abrir historia clínica (motivos resumidos por IA). */

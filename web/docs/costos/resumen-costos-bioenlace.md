@@ -43,7 +43,7 @@ El paciente escribe en el chat de la app: turnos, síntomas, dudas o saludos.
 
 ### 2. Motivos de consulta (antes de la atención)
 
-Chat aparte donde el paciente deja **por qué viene**, en texto, audio o fotos, hasta un minuto antes del turno. **No** se analiza cada mensaje al instante; al cerrar el plazo se genera **un solo resumen** para el médico.
+Chat aparte donde el paciente deja **por qué viene**, en texto, audio o fotos, hasta **10 minutos** antes del turno. **No** se analiza cada mensaje al instante; al cerrar el plazo se genera **un solo resumen** para el médico.
 
 **Paso a paso**
 

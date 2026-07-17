@@ -17,7 +17,7 @@ class EncounterJourneyServiceTest extends Unit
     {
         if (class_exists(\Yii::class) && \Yii::$app !== null) {
             \Yii::$app->params['encounter_journey_preparar_minutos_antes'] = 240;
-            \Yii::$app->params['motivos_consulta_cierre_minutos'] = 2;
+            \Yii::$app->params['motivos_consulta_cierre_minutos'] = 10;
         }
     }
 
@@ -80,6 +80,15 @@ class EncounterJourneyServiceTest extends Unit
         $context = ['turno_starts_at' => $turnoAt];
         $window = (new EncounterPhaseWindowService())->state('motivos_consulta', $context);
         $this->assertTrue($window['input_abierto']);
+    }
+
+    public function testWindowClosedWithinTenMinutesBeforeTurno(): void
+    {
+        $turnoAt = time() + 5 * 60;
+        $context = ['turno_starts_at' => $turnoAt];
+        $window = (new EncounterPhaseWindowService())->state('motivos_consulta', $context);
+        $this->assertFalse($window['input_abierto']);
+        $this->assertSame(10, $window['minutos_antes_cierre']);
     }
 
     public function testPostConsultaSkipWhenEncounterNotFinished(): void

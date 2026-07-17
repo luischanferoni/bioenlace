@@ -15,6 +15,94 @@ class SpeechToTextManager
     private const MAX_AUDIO_SIZE = 25 * 1024 * 1024; // 25MB máximo
 
     /**
+     * Transcribe varios archivos en **una** llamada al proveedor (concatena con FFmpeg).
+     * Reduce el mínimo facturable por request (p. ej. Groq 10 s) al unir notas cortas.
+     *
+     * @param list<string> $audioPaths Rutas absolutas
+     * @return array{texto: string, confidence?: float, error?: string, lote?: bool, archivos?: int}
+     */
+    public static function transcribirLote(array $audioPaths, $modelo = 'economico', $opciones = [])
+    {
+        $paths = [];
+        foreach ($audioPaths as $p) {
+            $p = (string) $p;
+            if ($p !== '' && is_file($p) && filesize($p) > 0) {
+                $paths[] = $p;
+            }
+        }
+        if ($paths === []) {
+            return [
+                'texto' => '',
+                'confidence' => 0,
+                'error' => 'Sin archivos de audio utilizables',
+                'lote' => true,
+                'archivos' => 0,
+            ];
+        }
+        if (count($paths) === 1) {
+            $one = self::transcribir($paths[0], $modelo, $opciones);
+            $one['lote'] = true;
+            $one['archivos'] = 1;
+
+            return $one;
+        }
+
+        $fingerprint = AudioBatchAssembler::contentFingerprint($paths);
+        $cacheKey = 'stt_lote_' . md5($fingerprint . $modelo);
+        $yiiCache = Yii::$app->cache;
+        if ($yiiCache) {
+            $cached = $yiiCache->get($cacheKey);
+            if ($cached !== false && is_array($cached)) {
+                Yii::info('Transcripción de lote obtenida desde cache', 'speech-to-text');
+
+                return $cached;
+            }
+        }
+
+        $assembled = AudioBatchAssembler::assembleToTempFile($paths);
+        if ($assembled === null) {
+            // Fallback: una llamada por archivo (peor costo; mejor que perder texto)
+            $parts = [];
+            foreach ($paths as $path) {
+                $r = self::transcribir($path, $modelo, $opciones);
+                $t = trim((string) ($r['texto'] ?? ''));
+                if ($t !== '') {
+                    $parts[] = $t;
+                }
+            }
+            $merged = [
+                'texto' => implode("\n", $parts),
+                'confidence' => 0,
+                'error' => $parts === [] ? 'No se pudo ensamblar ni transcribir el lote' : null,
+                'lote' => true,
+                'archivos' => count($paths),
+                'lote_fallback' => true,
+            ];
+            if ($merged['error'] === null) {
+                unset($merged['error']);
+            }
+
+            return $merged;
+        }
+
+        $deleteAssembled = !in_array($assembled, $paths, true);
+        try {
+            $resultado = self::transcribir($assembled, $modelo, $opciones);
+            $resultado['lote'] = true;
+            $resultado['archivos'] = count($paths);
+            if ($yiiCache && !empty($resultado['texto'])) {
+                $yiiCache->set($cacheKey, $resultado, self::CACHE_TTL);
+            }
+
+            return $resultado;
+        } finally {
+            if ($deleteAssembled && is_file($assembled)) {
+                @unlink($assembled);
+            }
+        }
+    }
+
+    /**
      * Convertir audio a texto
      */
     public static function transcribir($audioPath, $modelo = 'economico', $opciones = [])

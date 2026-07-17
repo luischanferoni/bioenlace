@@ -262,6 +262,14 @@ return [
     'productRegistries' => require __DIR__ . '/product-registries.php',
 
     /**
+     * Ventanas del recorrido pre-consulta (también usados por cron console vía merge de common).
+     * El YAML `encounter_phase_windows.yaml` resuelve `param:motivos_consulta_cierre_minutos`.
+     */
+    'motivos_consulta_cierre_minutos' => 10,
+    'encounter_journey_preparar_minutos_antes' => 240,
+    'historia_clinica_apertura_medico_minutos' => 1,
+
+    /**
      * Metadata declarativa del producto (intents, reglas NL, permisos dominio, panel home).
      * Para otro rubro: apuntar a otra carpeta bajo common/metadata/.
      * Default: @common/metadata/bioenlace (resuelto en {@see \common\components\Platform\Core\Product\ProductMetadataPaths}).

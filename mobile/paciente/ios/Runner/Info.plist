@@ -50,7 +50,9 @@
 	<key>NSCameraUsageDescription</key>
 	<string>La cámara es necesaria para verificar tu identidad con Didit.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>El micrófono es necesario para la verificación de identidad con Didit.</string>
+	<string>El micrófono se usa para dictar motivos de consulta y para la verificación de identidad.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>El reconocimiento de voz convierte tu dictado de motivos en texto en el teléfono, sin enviar el audio si la calidad es suficiente.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Podés subir fotos del documento desde tu galería durante la verificación de identidad.</string>
 	<key>UIBackgroundModes</key>

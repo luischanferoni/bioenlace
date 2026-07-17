@@ -1,25 +1,25 @@
 {
-  "version": 2,
+  "version": 3,
   "currency": "USD",
   "billing_period": "month",
   "tax_note": "No incluye IVA ni IIBB.",
-  "cogs_source": "costos-api.md — columna con context caching (Gemini + Groq STT captura profesional; videollamada §6 = sala 3,00 + Deepgram post-call ~6,19)",
+  "cogs_source": "costos-api.md — columna con context caching (Gemini + Groq STT ~5 min profesional; videollamada §6 = self-host sala/TURN/storage ~5,00; STT de la llamada ya en §2/§4)",
   "reference_encounters_per_professional_month": 400,
   "cogs_usd_per_professional_month": {
-    "base": 0.83,
-    "audio": 0.28,
-    "videollamada": 9.19
+    "base": 0.95,
+    "audio": 1.4,
+    "videollamada": 5.0
   },
   "margin_on_cost_percent": 233,
   "addons": {
     "audio": {
       "label": "Dictado",
-      "description": "Transcripción del audio que envía el profesional en la captura clínica",
+      "description": "Transcripción del audio que envía el profesional en la captura clínica (~5 min voz/consulta)",
       "default": false
     },
     "videollamada": {
       "label": "Videollamada",
-      "description": "Teleconsulta paciente–profesional (sala + TURN + grabación + transcript post-call Deepgram)",
+      "description": "Teleconsulta paciente–profesional (self-host SFU + TURN + grabación; transcript post-call ya cubierto por dictado/motivos)",
       "default": false
     }
   },

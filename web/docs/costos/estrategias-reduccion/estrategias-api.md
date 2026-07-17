@@ -13,9 +13,9 @@ Resumen de palancas para quedar **por debajo** de [costos-api.md](../costos-api.
 | IA – proveedor / tokens | Comparativa DeepSeek en costos-api; **modelo por contexto** (subir solo `motivos-consulta-insights`) | 5–15 % / variable | [proveedor-modelo-tokens.md](./proveedor-modelo-tokens.md) |
 | Motivos consulta | ~$0,42/prof (audio) | Variable | [motivos-consulta.md](./motivos-consulta.md) |
 | Conversación paciente / onboarding | ~$0,47 + ~$0,14 (§1–3 costos-api) | 30–60 % | [pre-consulta-onboarding.md](./pre-consulta-onboarding.md) |
-| STT / **Edge-Cloud Routing** | ~$0,28 (Groq ref., COGS servidor) | Dispositivo primero, servidor solo fallback; evolución: modelo fit on-device | [stt.md](./stt.md#edge-cloud-routing-stt) |
+| STT / **Edge-Cloud Routing** | ~$2,52 (Groq ref., §2 ~4 min + §4 ~5 min) | Dispositivo primero, servidor solo fallback; evolución: modelo fit on-device | [stt.md](./stt.md#edge-cloud-routing-stt) |
 | Vision | $0 en ref. | 50–100 % | [vision.md](./vision.md) |
-| Videollamadas | COGS planificado **$9,19** (sala 3,00 + Deepgram post-call ~6,19) | Límite duración; Groq STT; scale SFU | [videollamadas.md](./videollamadas.md) |
+| Videollamadas | COGS planificado **$5,00** (self-host; STT en §2/§4) | Límite duración; autoescalado SFU; retención storage | [videollamadas.md](./videollamadas.md) |
 | Monitoreo | — | — | [monitoreo.md](./monitoreo.md) |
 
 ## Infra propia

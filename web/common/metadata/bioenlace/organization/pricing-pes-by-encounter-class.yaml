@@ -2,7 +2,7 @@
 # Fórmula: precio_clase = COGS_ref × (vol_clase/ref) × (1 + margin_on_cost_percent/100)
 # COGS: web/docs/costos/costos-api.md (columna con context caching; Gemini + Groq; video §6).
 # Actualizar también institucional/js/pricing-config.json al cambiar cifras.
-version: 2
+version: 3
 currency: USD
 billing_period: month
 tax_note: No incluye IVA ni IIBB.
@@ -13,13 +13,13 @@ default_when_empty: allow_all
 reference_encounters_per_professional_month: 400
 
 # COGS variable por profesional/mes a volumen reference (400), escenario con context caching.
-# base = Apartado 1 motivos texto con caché SIN STT del profesional (~1,11 − 0,28).
-# audio = STT Groq del dictado del profesional (§4; no cambia con caché Gemini).
-# videollamada = COGS planificado §6 (sala/TURN/ops 3,00 + Deepgram post-call ~6,19).
+# base = Apartado 1 motivos texto con caché SIN STT del profesional (~2,35 − 1,40).
+# audio = STT Groq del audio del profesional (§4; ~5 min voz/consulta; no cambia con caché Gemini).
+# videollamada = COGS planificado §6 self-host (sala/TURN/ops + storage; STT de la llamada ya en §2/§4).
 cogs_usd_per_professional_month:
-  base: 0.83
-  audio: 0.28
-  videollamada: 9.19
+  base: 0.95
+  audio: 1.40
+  videollamada: 5.00
 
 margin_on_cost_percent: 233
 
@@ -31,11 +31,11 @@ cogs_source: web/docs/costos/costos-api.md — columna con context caching
 addons:
   audio:
     label: Dictado
-    description: Transcripción del audio que envía el profesional en la captura clínica
+    description: Transcripción del audio que envía el profesional en la captura clínica (~5 min voz/consulta)
     default: false
   videollamada:
     label: Videollamada
-    description: Teleconsulta paciente–profesional (sala + TURN + grabación + transcript post-call Deepgram; Daily → self-host)
+    description: Teleconsulta paciente–profesional (self-host SFU + TURN + grabación; transcript post-call cubierto por §2/§4)
     default: false
 
 sellable_classes:

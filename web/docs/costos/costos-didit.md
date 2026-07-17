@@ -190,7 +190,7 @@ Escala mal frente a huella local (0 USD). Documentado solo como **techo** si el 
 
 ## Comparación con COGS IA (referencia)
 
-[resumen-costos-bioenlace.md](./resumen-costos-bioenlace.md): **~USD 5.400–6.900 / mes** para **5.000 profesionales** (IA + STT, sin videollamada).
+[resumen-costos-bioenlace.md](./resumen-costos-bioenlace.md): **~USD 11.800–18.250 / mes** para **5.000 profesionales** (IA + STT, sin videollamada).
 
 | Métrica | IA (5.000 prof.) | Didit (ejemplo) |
 |---------|------------------|-----------------|

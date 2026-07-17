@@ -1,7 +1,7 @@
 # Matriz Argentina — precio por profesional × encounter_class
 
 **Tipo:** business plan · go-to-market Argentina  
-**Última actualización:** 2026-07-16  
+**Última actualización:** 2026-07-17  
 **Alcance:** solo Argentina por ahora; otros países cuando haya validación local.
 
 Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentina.md](../../costos/impuestos-argentina.md).  
@@ -30,9 +30,9 @@ USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 
 | Componente COGS (a 400 encounters/mes, **con context caching**) | USD / profesional / mes | Fuente |
 |----------------------------------------------------------------|-------------------------|--------|
-| **Base** (IA + captura texto; motivos paciente texto; **sin** STT del profesional) | **0,83** | Apartado 1 motivos texto con caché − STT §4 (~0,28) |
-| **+ Audio** (dictado del profesional → Groq STT) | **+0,28** | costos-api §4 STT |
-| **+ Videollamada** (Daily→self-host + Deepgram post-call; solo AMB) | **+9,19** | costos-api §6 (3,00 sala + ~6,19 STT) |
+| **Base** (IA + captura texto; motivos paciente texto; **sin** STT del profesional) | **0,95** | Apartado 1 motivos texto con caché − STT §4 (~1,40) |
+| **+ Audio** (audio del profesional → Groq STT, ~5 min voz/consulta) | **+1,40** | costos-api §4 STT |
+| **+ Videollamada** (self-host SFU + TURN + storage; solo AMB) | **+5,00** | costos-api §6 (STT de la llamada ya en §2/§4) |
 
 **Margen sobre costo:** **233 %** ≈ margen bruto ~70 % (objetivo software; ver [impuestos-argentina.md](../../costos/impuestos-argentina.md)).
 
@@ -49,14 +49,14 @@ No hay SKU chico/mediano/grande: el tamaño se refleja en **cantidad de profesio
 
 | Configuración | COGS (a vol. de la clase) | Precio lista / profesional / mes |
 |---------------|---------------------------|----------------------------------|
-| AMB solo base | 0,83 | **~2,76** |
-| AMB + audio | 1,11 | **~3,70** |
-| AMB + videollamada | 10,02 | **~33,37** |
-| AMB + audio + videollamada | 10,30 | **~34,30** |
-| EMER (audio incluido, vol 350) | 0,971 | **~3,23** |
-| IMP (audio incluido, vol 300) | 0,833 | **~2,77** |
+| AMB solo base | 0,95 | **~3,16** |
+| AMB + audio | 2,35 | **~7,83** |
+| AMB + videollamada | 5,95 | **~19,81** |
+| AMB + audio + videollamada | 7,35 | **~24,48** |
+| EMER (audio incluido, vol 350) | 2,056 | **~6,85** |
+| IMP (audio incluido, vol 300) | 1,763 | **~5,87** |
 
-Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×2,76 + 4×3,23 = **USD 40,52/mes**`.
+Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×3,16 + 4×6,85 = **USD 59,00/mes**`.
 
 ---
 

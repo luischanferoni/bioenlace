@@ -19,7 +19,7 @@ Cuando un doc dice «fuera del COGS» o «no en COGS base», significa que **aú
 - **IA:** Google **Vertex / Gemini** con modelo **`gemini-2.5-flash-lite`** (`vertex_ai_model` en `params.php`). Columna **DeepSeek** = comparativa con **`deepseek-v4-flash`** (API directa); no es producción hoy.
 - **Columnas Google:** **sin context caching** = **COGS base seguro**; **con context caching** = **escenario favorable**, no costo esperado (tokens repetidos a tarifa reducida de Vertex; ver abajo). No incluyen caché de aplicación ni otras tácticas de producto.
 - **Contexto clínico del paciente:** bloque acotado (`PatientAiContextBuilder`) en §1 conversacional, §2 motivos y §4 captura — ver [§ Contexto clínico en prompts](#contexto-clínico-en-prompts-ia).
-- **Escenario intensivo (COGS):** volumen de STT según supuestos §2 y §4 (p. ej. 1 min de audio por encounter en §4).
+- **Escenario intensivo (COGS):** volumen de STT según supuestos §2 y §4 (paciente ~**4 min**, médico ~**5 min** de voz por encounter).
 
 Otras reducciones (caché Yii, STT en dispositivo, context caching explícito, etc.) están en [estrategias-reduccion/](./estrategias-reduccion/README.md) y **no** se suman a las tablas de [impuestos-argentina.md](./impuestos-argentina.md) hasta validarlas. Precios unitarios de proveedores: [Precios de referencia](#precios-de-referencia-mayo-2026).
 
@@ -28,11 +28,11 @@ Otras reducciones (caché Yii, STT en dispositivo, context caching explícito, e
 Por médico por mes, en orden del recorrido del paciente (detalle y costes en §1–6). Escala común **400 encounters por mes** (20 por día x 20 días) donde aplica §1, §2, §4, §5 y §6 — [infra-costos.md](./infra-costos.md).
 
 - **§1 Conversación con el paciente:** 5 mensajes por encounter (~2.660 llamadas Vertex por mes). Misma cifra si el canal es app móvil o WhatsApp (paridad de uso; no duplicar).
-- **§2 Motivos de consulta:** 1 llamada `motivos-consulta-batch` + **1** `motivos-consulta-insights` por encounter (si hay resumen); caso B (audio): COGS modela **~1 min de STT Groq por encounter** (400 min/mes) — ver [§ STT](#stt).
+- **§2 Motivos de consulta:** 1 llamada `motivos-consulta-batch` + **1** `motivos-consulta-insights` por encounter (si hay resumen); caso B (audio): COGS modela **~4 min de STT Groq por encounter** (voz paciente; 1.600 min/mes) — ver [§ STT](#stt).
 - **§3 Onboarding y día a día:** 400 llamadas a la IA por mes (`asistente-onboarding` en metadata; en código reutiliza preprocess/conversacional)
-- **§4 Captura clínica (encounter):** **siempre** audio dictado por consulta — 400 min STT (1 dictado ≈ 1 min por encounter) + **400** llamadas `analisis-consulta` + **400** llamadas `encounter-codificacion-automatica` al guardar. Sin variante solo texto en el modelo de costos.
+- **§4 Captura clínica (encounter):** **siempre** audio del médico por consulta — **~5 min** STT (2.000 min/mes) + **400** llamadas `analisis-consulta` + **400** llamadas `encounter-codificacion-automatica` al guardar. Sin variante solo texto en el modelo de costos. Alineado a voz típica en consulta (~12 min de reloj → ~5 min de habla del profesional).
 - **§5 Medios (fotos, etc.):** 2 fotos por encounter (Vision)
-- **§6 Videollamada:** 30 % de encounters; 12 min; 2 participantes; COGS planificado **9,19** = sala/TURN/ops (**3,00**) + Deepgram post-call (**~6,19** sobre 1.440 recorded-min). Ver [§6](#6-videollamadas-pacientemédico).
+- **§6 Videollamada:** self-host; COGS planificado **5,00** = sala/TURN/ops + storage (**sin** STT: ya en §2/§4 con ~5+~4 min voz). Uso agresivo **80 %** tele — ver [§6](#6-videollamadas-pacientemédico) y [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
 - **§7 WhatsApp (alcance actual):** solo respuestas a mensajes **iniciados por el paciente** (service window Meta ≈ $0; IA = §1). **Utility / plantillas proactivas: no habilitadas** — ver [§7](#7-whatsapp-cloud-api-paciente).
 
 ---
@@ -44,7 +44,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 | **Didit** — Full KYC bundle | **~$0.33** por sesión exitosa; **500 gratis/mes** | Registro / alta paciente (identidad) | [didit.me/pricing](https://didit.me/pricing); detalle [costos-didit.md](./costos-didit.md) |
 | **Didit** — Biometric Authentication | **~$0.10** por sesión exitosa | Reingreso tras logout (previsto) | Ídem |
 | **Groq** — Whisper Large v3 Turbo | **~$0.0007 por min** ($0.04 por h); **mín. 10 s por request** | STT (§2 caso B, §4); opción B post-call video (§6) | [groq.com/pricing](https://groq.com/pricing), [GroqDocs STT](https://console.groq.com/docs/speech-to-text) |
-| **Daily** — post-call transcription (Deepgram) | **~$0.0043 por recorded-min** | Incluida en COGS §6 (~6,19/prof) | [Daily pricing](https://www.daily.co/pricing/video-sdk/), [Transcription](https://docs.daily.co/docs/guides/features/transcription) |
+| **Daily** — post-call transcription (Deepgram) | **~$0.0043 por recorded-min** | Histórico; **no** en COGS §6 vigente | [Daily pricing](https://www.daily.co/pricing/video-sdk/), [Transcription](https://docs.daily.co/docs/guides/features/transcription) |
 | **Daily** — real-time transcription (Deepgram) | **~$0.0059 por unmuted pax-min** | Fuera de alcance (no planificado) | Ídem |
 | **Vision API** (Label, Text, Face, etc.) | 1.000 unidades por mes gratis; luego $1.50 por 1.000 | Fotos §5 | [cloud.google.com/vision/pricing](https://cloud.google.com/vision/pricing) |
 | **DeepSeek** — V4 Flash (API) | **$0.14 / $0.0028 / $0.28** por 1M (input miss / cache hit / output) | Comparativa IA | [DeepSeek API pricing](https://api-docs.deepseek.com/quick_start/pricing) |
@@ -191,14 +191,22 @@ Ejemplo del mínimo por request: tres notas de voz de 4 s transcritas en **tres*
 
 ### Supuesto del COGS por flujo
 
-Las tablas §2 (caso B) y §4 asumen **400 consultas/médico/mes** y, cuando el audio va a Groq, **~1 minuto de STT por consulta** (400 min/mes → ~**USD 0,28** por médico). Eso encaja distinto según el flujo:
+Las tablas §2 (caso B) y §4 asumen **400 consultas/médico/mes** y, cuando el audio va a Groq, voz típica de una consulta de ~12 min de reloj (tras recorte de silencios / VAD):
 
-| Flujo | Qué pasa en producto | ¿Cuadra con «1 min/consulta»? |
-|-------|----------------------|-------------------------------|
-| **§4 Captura clínica** | El médico dicta **una vez** por consulta; si falla el STT local, **un** audio va a Groq (~1 min). | **Sí.** 400 consultas ≈ 400 requests ≈ ~400 min facturables. |
-| **§2 Motivos de consulta** (caso B) | El paciente puede mandar **varias** notas de voz en el chat; hoy cada una puede ir a Groq en **un request aparte** (mínimo **10 s** por request aunque el audio dure 3 s). | **Puede quedar corto.** Ejemplo: 3 audios de 4 s → Groq factura **30 s** (3 × 10 s), no 12 s; y si hay muchas notas por chat, el total supera fácil el minuto modelado. **STT en dispositivo** al grabar evita esas llamadas: el mensaje llega como texto y el lote no transcribe en servidor. |
+| Flujo | Minutos STT / encounter | Minutos / mes | USD / médico / mes (~$0,0007/min) |
+|-------|-------------------------|---------------|-----------------------------------|
+| **§4 Captura clínica** (médico) | **~5** | **2.000** | **~$1,40** |
+| **§2 Motivos** caso B (paciente) | **~4** | **1.600** | **~$1,12** |
+| **Total voz (médico + paciente)** | **~9** | **3.600** | **~$2,52** |
 
-Escala **5.000+** profesionales con todo el STT en servidor → orden de magnitud **~USD 1.400/mes** solo Groq (400 min/prof × 5.000).
+Origen del supuesto: en ~12 min de consulta, ~65–75 % es habla; el médico habla ~55–60 % de esa voz (~5 min) y el paciente ~40–45 % (~4 min). En teleconsulta, esas pistas pueden salir de la videollamada (tracks + VAD) y **reemplazan** dictado corto / notas de voz sueltas — no duplicar. Detalle: [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
+
+| Flujo | Qué pasa en producto | Nota de facturación |
+|-------|----------------------|---------------------|
+| **§4 Captura clínica** | Audio del médico (dictado o pista de videollamada) → Groq si no hay STT en dispositivo. | Un archivo concatenado por encounter evita el mínimo de **10 s** por fragmento. |
+| **§2 Motivos de consulta** (caso B) | Audio del paciente (notas de voz o pista de videollamada). Varias notas cortas a Groq por separado pueden **superar** los ~4 min modelados por el mínimo de 10 s/request. | **STT en dispositivo** al grabar evita esas llamadas. |
+
+Escala **5.000+** profesionales con todo el STT en servidor → orden de magnitud **~USD 12.600/mes** solo Groq (3.600 min/prof × 5.000 × $0,0007).
 
 **Palancas de costo:** [STT en dispositivo](./estrategias-reduccion/stt.md) + fallback Groq por calidad (fuera del COGS base hasta telemetría). Evolución prevista: [modelo fit on-device](./estrategias-reduccion/stt.md#modelo-fit-on-device-base-clínica-nacional--lora-provincia--lora-speaker) (base clínica + LoRA provincia + LoRA speaker).
 
@@ -292,14 +300,14 @@ Implementación: `AppointmentReasonBatchService`, `AppointmentReasonClinicalInsi
 
 #### Caso B — con audio en el hilo
 
-STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llamada: ~1.350 in + 500 out ref.). El COGS modela **~1 min de STT Groq por encounter** (fila siguiente); si cada nota de voz va a Groq por separado, el costo real puede ser **mayor** — ver [§ STT](#stt).
+STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llamada: ~1.350 in + 500 out ref.). El COGS modela **~4 min de STT Groq por encounter** (voz paciente; fila siguiente); si cada nota de voz va a Groq por separado, el costo real puede ser **mayor** — ver [§ STT](#stt).
 
 | Concepto | Supuesto | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
 |----------|----------|----------------------------|----------------------------|-------------------|
 | IA (`motivos-consulta-batch`) | 400 x tarifa IA | **~$0.15** | **~$0.13** | **~$0.12** |
 | IA (`motivos-consulta-insights`) | 400 x tarifa IA | **~$0.10** | **~$0.09** | **~$0.08** |
-| STT (Groq, ~1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
-| **Total caso B** | | **~$0.53** | **~$0.50** | **~$0.48** |
+| STT (Groq, ~4 min por encounter) | 1.600 min x tarifa STT | **~$1.12** | **~$1.12** | **~$1.12** |
+| **Total caso B** | | **~$1.37** | **~$1.34** | **~$1.32** |
 
 ---
 
@@ -313,16 +321,16 @@ STT antes del lote; volumen IA con contexto clínico (~**1.850 tokens** por llam
 
 ### 4. Captura clínica (encounter)
 
-Cada consulta incluye **dictado en audio** del médico: no hay variante de costo «solo texto» ni «solo IA» — 1 e inferencia van **siempre** juntos.
+Cada consulta incluye **audio del médico**: no hay variante de costo «solo texto» ni «solo IA» — STT e inferencia van **siempre** juntos.
 
-Flujo: audio dictado → STT → transcripción → **1 llamada** `analisis-consulta` (extracción a campos) → al guardar, **1 llamada** `encounter-codificacion-automatica` (CIE-10/SNOMED en `clinical_condition`). Supuesto STT: **un dictado (~1 min) por consulta** si va a Groq — alineado con [§ STT](#stt).
+Flujo: audio (dictado o pista de videollamada) → STT → transcripción → **1 llamada** `analisis-consulta` (extracción a campos) → al guardar, **1 llamada** `encounter-codificacion-automatica` (CIE-10/SNOMED en `clinical_condition`). Supuesto STT: **~5 min de voz del profesional por consulta** si va a Groq — alineado con [§ STT](#stt).
 
 | Concepto | Supuesto | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
 |----------|----------|----------------------------|----------------------------|-------------------|
-| STT (Groq, ~1 min por encounter) | 400 min x tarifa STT | **~$0.28** | **~$0.28** | **~$0.28** |
+| STT (Groq, ~5 min por encounter) | 2.000 min x tarifa STT | **~$1.40** | **~$1.40** | **~$1.40** |
 | IA (análisis `analisis-consulta`) | 400 x tarifa IA (~1.200 in + 600 out ref.) | **~$0.15** | **~$0.13** | **~$0.12** |
 | IA (codificación `encounter-codificacion-automatica`) | 400 x tarifa IA (~1.000 in + 400 out ref.) | **~$0.14** | **~$0.12** | **~$0.11** |
-| **Total §4 (IA + STT)** | | **~$0.57** | **~$0.53** | **~$0.51** |
+| **Total §4 (IA + STT)** | | **~$1.69** | **~$1.65** | **~$1.63** |
 
 ---
 
@@ -339,17 +347,18 @@ Flujo: audio dictado → STT → transcripción → **1 llamada** `analisis-cons
 
 ### 6. Videollamadas paciente–médico
 
-Supuesto de uso: **120 teleconsultas × 12 min × 2 participantes** = **1.440 participant-minutes / médico / mes**.  
-STT post-call: **120 × 12 min grabados** = **1.440 recorded-minutes / médico / mes**.
+Arquitectura: **self-host** (LiveKit + TURN + tracks + workers batch + storage frío). Autoescalado agresivo. Detalle: [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
+
+Supuesto de uso agresivo: **320 teleconsultas × 12 min × 2 participantes** = **7.680 participant-minutes / médico / mes** (80 % de 400 encounters).  
+STT post-call: **~9 min de voz** (médico ~5 + paciente ~4, con VAD) → ya modelado en **§2/§4**; **no** se suma otra vez aquí.
 
 | Concepto | Notas | USD / médico / mes |
 |----------|-------|--------------------|
-| Sala + TURN + grabación + ops (buffer Daily→self-host) | Techo estable 100→5.000+ prof | **3,00** |
-| Transcripción post-call **Deepgram** (vía Daily Batch Processor) | ~$0,0043 × 1.440 recorded-min | **~6,19** |
-| **COGS de planificación (matriz / calculador)** | Suma de las filas anteriores | **9,19** |
-| Daily.co pay-as-you-go (pax-min) | 10k pax-min gratis/mes por cuenta; luego ~$0,004/pax-min | Variable; cupo free ≈ ~7 prof a carga llena |
-| Palanca STT Groq (mismo modelo § STT) | ~$0,0007 × 1.440 → ~1,01; COGS video tendería a **~4,01** | No baja el 9,19 hasta telemetría |
-| Self-host video (mediano / largo) | LiveKit + TURN + grabación | ~0,6–1,5 sala a escala (real) |
+| Sala + TURN + grabación + ops (self-host + autoescalado) | Buffer a 5.000+ prof | **~3,00** |
+| Storage + backup (frío / retención) | Buffer hasta cerrar A vs B | **~2,00** |
+| Transcripción post-call | Cubierta por §2/§4 | **0** |
+| **COGS de planificación (matriz / calculador)** | Suma de las filas anteriores | **5,00** |
+| Histórico Daily + Deepgram | 30 % tele; ya no es lista | Era **9,19** |
 
 Real-time Deepgram (~$0,0059/unmuted pax-min): **fuera de alcance**.
 
@@ -427,11 +436,11 @@ Proyección por escala (altas, pacientes activos, reingresos tras logout, escena
 |----------|----------------------------|----------------------------|-------------------|
 | Conversación con el paciente (§1) | ~$0.45 | ~$0.38 | ~$0.41 / ~$0.35 |
 | Motivos — solo texto (§2 caso A, batch + insights) | ~$0.22 | ~$0.20 | ~$0.20 / ~$0.18 |
-| Motivos — con audio (§2 caso B, IA+STT) | ~$0.53 | ~$0.50 | ~$0.50 / ~$0.48 |
+| Motivos — con audio (§2 caso B, IA+STT ~4 min) | ~$1.37 | ~$1.34 | ~$1.34 / ~$1.32 |
 | Agente onboarding (§3) | ~$0.14 | ~$0.12 | ~$0.13 / ~$0.11 |
-| Captura clínica (§4, **IA + STT**) | ~$0.57 | ~$0.53 | ~$0.52 / ~$0.49 |
-| **Total Apartado 1 — motivos solo texto** | **~$1.24** | **~$1.11** | **~$1.16 / ~$1.04** |
-| **Total Apartado 1 — motivos con audio** | **~$1.55** | **~$1.41** | **~$1.46 / ~$1.34** |
+| Captura clínica (§4, **IA + STT ~5 min**) | ~$1.69 | ~$1.65 | ~$1.65 / ~$1.63 |
+| **Total Apartado 1 — motivos solo texto** | **~$2.50** | **~$2.35** | **~$2.39 / ~$2.27** |
+| **Total Apartado 1 — motivos con audio** | **~$3.65** | **~$3.49** | **~$3.53 / ~$3.41** |
 
 ### Apartado 2 – Medios (Vision §5)
 
@@ -446,10 +455,9 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 | Concepto | Costo (USD por médico por mes) |
 |----------|-------------------------------|
-| Sala / TURN / ops | **3,00** |
-| Post-call Deepgram | **~6,19** |
-| **COGS planificación (lista comercial)** | **9,19** |
-| Palanca Groq (no en lista hasta migrar) | ~1,01 STT → video ~**4,01** |
+| Sala / TURN / ops + storage | **5,00** |
+| Post-call STT | **0** (en §2/§4) |
+| **COGS planificación (lista comercial)** | **5,00** |
 
 ### Apartado 4 – WhatsApp (§7)
 
@@ -457,23 +465,23 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 ### Total general (Apartados 1 + 2 + 3)
 
-§4 lleva STT **dentro** del total de apartado 1 (no fila aparte). En §2, no sumar dos veces el STT del caso B de motivos con el de §4: son audios distintos (paciente vs. médico).
+§4 lleva STT **dentro** del total de apartado 1 (no fila aparte). En §2, no sumar dos veces el STT del caso B de motivos con el de §4: son audios distintos (paciente ~4 min vs. médico ~5 min). Si la videollamada alimenta ambos, ver [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
 
 | Escenario | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
 |-----------|----------------------------|----------------------------|-------------------|
-| Apartados 1 + 2 (motivos **solo texto**) | **~$1.24** | **~$1.11** | **~$1.16 / ~$1.04** |
-| Apartados 1 + 2 (motivos **con audio**) | **~$1.55** | **~$1.41** | **~$1.46 / ~$1.34** |
-| + Apartado 3 (**videollamada, COGS planificado**) | **+$9,19** | **+$9,19** | **+$9,19** |
-| **Total con videollamada** — motivos texto | **~$10,43** | **~$10,30** | **~$10,35 / ~$10,23** |
-| **Total con videollamada** — motivos audio | **~$10,74** | **~$10,60** | **~$10,65 / ~$10,53** |
+| Apartados 1 + 2 (motivos **solo texto**) | **~$2.50** | **~$2.35** | **~$2.39 / ~$2.27** |
+| Apartados 1 + 2 (motivos **con audio**) | **~$3.65** | **~$3.49** | **~$3.53 / ~$3.41** |
+| + Apartado 3 (**videollamada, COGS planificado**) | **+$5,00** | **+$5,00** | **+$5,00** |
+| **Total con videollamada** — motivos texto | **~$7,50** | **~$7,35** | **~$7,39 / ~$7,27** |
+| **Total con videollamada** — motivos audio | **~$8,65** | **~$8,49** | **~$8,53 / ~$8,41** |
 
-**Orden de magnitud uso intensivo (todo incluido, video con COGS 9,19):** **~USD 10–11 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 1,5–1,6 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 con insights + §3 + §4).
+**Orden de magnitud uso intensivo (todo incluido, video con COGS 5,00):** **~USD 8–9 por prof por mes**. Solo IA + STT + Vision (sin §6): **~USD 3,5–3,7 por prof por mes** con motivos en audio (COGS base sin caché; §1 + §2 con insights + §3 + §4; STT médico ~5 min + paciente ~4 min).
 
 **WhatsApp (§7, alcance actual):** Meta **~$0** (sin utility). La IA del chat sigue en §1.
 
 **De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Detalle y add-ons audio/videollamada: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
 
-**Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **9,19** (sala 3,00 + Deepgram post-call ~6,19) — ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
+**Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **5,00** (self-host; STT en §2/§4) — ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
 
 ---
 

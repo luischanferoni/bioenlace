@@ -103,10 +103,10 @@ Al leer la tabla y el detalle, conviene distinguir cuatro líneas que se repiten
 
 | Add-on / alcance (AR) | Para qué | Orden de magnitud (lista, vol. 400) |
 | --------------------- | -------- | ----------------------------------- |
-| Base (sin audio ni video) | IA + captura texto (COGS con caché) | ~**USD 2,76**/prof/mes |
-| + Audio | Dictado del profesional (STT) | ~**USD 3,70**/prof/mes |
-| + Videollamada | Teleconsulta (Daily + Deepgram post-call, §6) | ~**USD 33,37**/prof/mes |
-| + Audio + videollamada | Ambos | ~**USD 34,30**/prof/mes |
+| Base (sin audio ni video) | IA + captura texto (COGS con caché) | ~**USD 3,16**/prof/mes |
+| + Audio | Dictado del profesional (STT ~5 min) | ~**USD 7,83**/prof/mes |
+| + Videollamada | Teleconsulta self-host (§6) | ~**USD 19,81**/prof/mes |
+| + Audio + videollamada | Ambos | ~**USD 24,48**/prof/mes |
 | Clase EMER / IMP | Tablero guardia / internación | Escala si el volumen/mes difiere del de AMB |
 | Receta electrónica / pack OS | Vías 2 y 5 | Cotización aparte (no en fórmula COGS) |
 

@@ -11,10 +11,10 @@ Todo se expresa **por profesional y por mes**, siguiendo el recorrido del pacien
 | Consultas atendidas     | **400 por mes** cada uno (20 días x 20 consultas por día)                       |
 | Conversaciones con el paciente    | **5 mensajes** por consulta                                                     |
 | Motivos de consulta (solo texto): El paciente cuenta los motivos de la consulta antes de la consulta ya reservada | **1 resumen automático** por consulta
-| Motivos de consulta (con la posibilidad de audio)       | **1 minuto de audio** por consulta, solo si el paciente grabó audio en ese chat |
-| Captura del médico      | **Siempre dictado en audio** — **1 minuto** por consulta + análisis del texto   |
+| Motivos de consulta (con la posibilidad de audio)       | **~4 minutos de audio** (voz paciente) por consulta, solo si hay audio en ese chat o pista de videollamada |
+| Captura del médico      | **Siempre audio** — **~5 minutos** de voz del profesional por consulta + análisis del texto   |
 | Fotos clínicas          | **2 por consulta** — hoy **sin costo** en el presupuesto (dentro de franquicia) |
-| Videollamada            | **30 %** de las consultas, **12 minutos**, paciente y médico                    |
+| Videollamada            | **80 %** de las consultas (planificación agresiva), **12 minutos**, paciente y médico; COGS add-on **5,00** |
 
 
 ---
@@ -55,15 +55,15 @@ Chat aparte donde el paciente deja **por qué viene**, en texto, audio o fotos, 
 **Ejemplo**
 
 - Solo texto: *«Dolor de pecho al subir escaleras»* + *«Ya tuve algo parecido el año pasado»* → resumen en un párrafo.
-- Con audio: el paciente graba 40 segundos → primero se transcribe el audio → luego el mismo resumen único.
+- Con audio: el paciente habla ~4 minutos (notas de voz o pista de videollamada) → primero se transcribe → luego el mismo resumen único.
 
 **Costo mensual (5.000 profesionales)**
 
 
 | Variante                                   | USD       |
 | ------------------------------------------ | --------- |
-| Motivos **solo texto** (batch + insights)      | **1.000** |
-| Motivos **con audio** (1 min por consulta)   | **2.500** |
+| Motivos **solo texto** (batch + insights)      | **1.100** |
+| Motivos **con audio** (~4 min por consulta)  | **6.850** |
 
 
 ---
@@ -74,22 +74,22 @@ Durante o después de la consulta el médico **dicta en voz alta** lo que atendi
 
 **Paso a paso**
 
-1. El médico graba el dictado (supuesto: **1 minuto** por consulta).
+1. El médico graba el audio (supuesto: **~5 minutos** de voz por consulta; en teleconsulta puede salir de la pista del profesional).
 2. El audio se convierte en texto.
 3. **Una** pasada automática estructura signos, diagnósticos, indicaciones según el tipo de consulta (con **contexto clínico acotado** del paciente: alergias, condiciones previas, medicación activa).
 
 **Ejemplo**
 
-- Dictado: *«Paciente con hipertensión controlada, ajusto enalapril, control en 30 días»* → texto transcrito → campos clínicos rellenados o sugeridos.
+- Dictado / consulta: *«Paciente con hipertensión controlada, ajusto enalapril, control en 30 días»* → texto transcrito → campos clínicos rellenados o sugeridos.
 
-**Costo mensual (5.000 profesionales):** **USD 2.150**
+**Costo mensual (5.000 profesionales):** **USD 8.450**
 
 ---
 
 ### 4. Fotos y videollamada (referencia)
 
 - **Fotos:** compartir imágenes clínicas; costo presupuestado **cero** hoy.
-- **Videollamada:** add-on con COGS planificado **USD 9,19**/prof/mes (sala/TURN/ops **3,00** + Deepgram post-call **~6,19**). Detalle: [costos-api §6](./costos-api.md#6-videollamadas-pacientemédico), [videollamadas.md](./estrategias-reduccion/videollamadas.md). No incluido en los totales de IA de abajo.
+- **Videollamada:** add-on con COGS planificado **USD 5,00**/prof/mes (self-host sala/TURN/storage; STT ya en §2/§4). Detalle: [costos-api §6](./costos-api.md#6-videollamadas-pacientemédico), [videollamadas.md](./estrategias-reduccion/videollamadas.md). No incluido en los totales de IA de abajo.
 
 ---
 
@@ -103,9 +103,9 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
 | Conversación con el paciente                   | 2.250     |
-| Motivos de consulta (sin audio, batch + insights) | 1.000     |
-| Captura clínica del médico (siempre con audio)      | 2.150     |
-| **Subtotal**                                        | **5.400** |
+| Motivos de consulta (sin audio, batch + insights) | 1.100     |
+| Captura clínica del médico (siempre con audio)      | 8.450     |
+| **Subtotal**                                        | **11.800** |
 
 
 ### Escenario intensivo (motivos con audio + onboarding)
@@ -114,16 +114,17 @@ Solo costos de **inteligencia artificial y transcripción de voz** (sin videolla
 | Concepto                                       | USD       |
 | ---------------------------------------------- | --------- |
 | Conversación con el paciente                   | 2.250     |
-| Motivos de consulta (con audio)                | 2.500     |
-| Captura clínica del médico (siempre con audio) | 2.150     |
-| **Total**                                      | **6.900** |
+| Motivos de consulta (con audio, ~4 min)        | 6.850     |
+| Captura clínica del médico (~5 min + IA)       | 8.450     |
+| Onboarding (§3)                                | 700       |
+| **Total**                                      | **18.250** |
 
 
 ---
 
 ## Notas
 
-- Por profesional y mes (escenario intensivo, COGS base sin caché): **~USD 1,38** (incluye `motivos-consulta-insights` y contexto clínico en prompts). Detalle y comparativa DeepSeek: [costos-api.md](./costos-api.md).
+- Por profesional y mes (escenario intensivo, COGS base sin caché): **~USD 3,65** (incluye `motivos-consulta-insights`, STT médico ~5 min + paciente ~4 min, y contexto clínico en prompts). Detalle y comparativa DeepSeek: [costos-api.md](./costos-api.md).
 - **Identidad (Didit):** costo aparte por verificación, no por profesional. Con &lt; 500 altas/mes suele ser **USD 0**; proyección: [costos-didit.md](./costos-didit.md).
 - **WhatsApp:** asistente solo si el **paciente inicia** el mensaje (Meta ≈ $0). Plantillas utility **no habilitadas**. IA del chat = misma del §1 / app. Ver [costos-api §7](./costos-api.md#7-whatsapp-cloud-api-paciente).
 - No incluye videollamada ni impuestos.

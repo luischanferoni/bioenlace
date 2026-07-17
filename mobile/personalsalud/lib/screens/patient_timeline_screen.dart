@@ -8,9 +8,11 @@ import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/encounter_capture_analysis.dart';
+import '../models/pending_encounter_capture.dart';
 import '../models/timeline_event.dart';
 import '../services/historia_clinica_service.dart';
 import '../services/consulta_guardar_service.dart';
+import '../services/pending_encounter_capture_store.dart';
 
 class PatientTimelineScreen extends StatefulWidget {
   final int personaId;
@@ -62,6 +64,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   String _sttStatus = '';
   SttClientConfig _sttConfig = SttClientConfig.defaults;
   bool _audioOnlyRecording = false;
+  final PendingEncounterCaptureStore _pendingStore =
+      PendingEncounterCaptureStore.instance;
+  List<PendingEncounterCapture> _pendingCaptures = [];
+  String? _activePendingId;
 
   final TextEditingController _chatController = TextEditingController();
   final FocusNode _chatFocusNode = FocusNode();
@@ -87,6 +93,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     _dictation.initialize();
     _loadSttConfig();
     _cargarHistoriaClinica();
+    _loadPendingCaptures();
+  }
+
+  Future<void> _loadPendingCaptures() async {
+    if (!_tieneContextoCaptura) return;
+    final list = await _pendingStore.listForContext(
+      personaId: widget.personaId,
+      parent: widget.consultParent!,
+      parentId: widget.consultParentId!,
+    );
+    if (!mounted) return;
+    setState(() => _pendingCaptures = list);
   }
 
   Future<void> _loadSttConfig() async {
@@ -221,6 +239,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                     BioSpacing.gapH(BioSpacing.md),
                                   ],
                                   _buildMotivosConsulta(_historiaClinicaData!),
+                                  if (_pendingCaptures.isNotEmpty) ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildPendingCapturesPanel(),
+                                  ],
                                   if (_historiaClinicaData!.carePackCohorte
                                           ?.tieneContenido ==
                                       true) ...[
@@ -772,6 +794,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           }
           _sttStatus = _dictationStatusMessage(result, _chatController.text);
         });
+        if (_tieneContextoCaptura &&
+            (_chatController.text.trim().isNotEmpty ||
+                _pendingAudioPath != null)) {
+          await _persistLocalDraft(
+            texto: _chatController.text.trim().isEmpty
+                ? '(audio pendiente de transcribir)'
+                : _chatController.text.trim(),
+            status: PendingEncounterCaptureStatus.draft,
+            clearError: true,
+          );
+        }
       }
       return;
     }
@@ -830,10 +863,19 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       await _audioRecorder.stop();
     }
     if (!mounted) return;
+    final text = _chatController.text.trim();
+    if (_tieneContextoCaptura && _pendingAudioPath != null) {
+      await _persistLocalDraft(
+        texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
+        status: PendingEncounterCaptureStatus.draft,
+        clearError: true,
+      );
+    }
+    if (!mounted) return;
     setState(() {
       _audioOnlyRecording = false;
       _sttStatus = _pendingAudioPath != null
-          ? 'Audio grabado. Pulse «Servidor» para transcribir.'
+          ? 'Audio guardado en el teléfono. Pulse «Servidor» para transcribir o escriba y envíe.'
           : 'No se capturó audio.';
     });
   }
@@ -968,7 +1010,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return (stt: null, audioBase64: null, sttForceServer: false);
   }
 
-  void _clearCaptureDraft() {
+  void _clearCaptureDraft({bool deleteLocalPending = true}) {
+    final pendingId = _activePendingId;
     setState(() {
       _captureReview = null;
       _lastAnalysis = null;
@@ -976,8 +1019,153 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _stagedItemIds = {};
       _lastDictation = null;
       _sttStatus = '';
+      _pendingAudioPath = null;
+      _activePendingId = null;
       _chatController.clear();
     });
+    if (deleteLocalPending && pendingId != null) {
+      _pendingStore.delete(pendingId).then((_) => _loadPendingCaptures());
+    }
+  }
+
+  Future<PendingEncounterCapture?> _persistLocalDraft({
+    required String texto,
+    PendingEncounterCaptureStatus status =
+        PendingEncounterCaptureStatus.draft,
+    String? error,
+    Map<String, dynamic>? analysisResponse,
+    List<String>? stagedItemIds,
+    bool clearError = false,
+    bool clearAnalysis = false,
+  }) async {
+    if (!_tieneContextoCaptura) return null;
+    final now = DateTime.now();
+    final id = _activePendingId ?? _pendingStore.newId();
+    String? audioName;
+    final existing = await _pendingStore.getById(id);
+    audioName = existing?.audioFileName;
+
+    final tempAudio = _pendingAudioPath;
+    if (tempAudio != null &&
+        tempAudio.isNotEmpty &&
+        !tempAudio.contains('/pending-encounters/')) {
+      final imported = await _pendingStore.importAudioFile(
+        captureId: id,
+        sourcePath: tempAudio,
+      );
+      if (imported != null) {
+        audioName = imported;
+        final durable = await _pendingStore.absoluteAudioPath(
+          PendingEncounterCapture(
+            id: id,
+            personaId: widget.personaId,
+            parent: widget.consultParent!,
+            parentId: widget.consultParentId!,
+            texto: texto,
+            status: status,
+            createdAt: now,
+            updatedAt: now,
+            audioFileName: imported,
+          ),
+        );
+        if (durable != null) {
+          _pendingAudioPath = durable;
+        }
+      }
+    }
+
+    Map<String, dynamic>? sttPayload;
+    final last = _lastDictation;
+    if (last != null && texto.trim() == last.text.trim()) {
+      sttPayload = last.toSttPayload();
+    }
+
+    final item = PendingEncounterCapture(
+      id: id,
+      personaId: widget.personaId,
+      parent: widget.consultParent!,
+      parentId: widget.consultParentId!,
+      texto: texto,
+      status: status,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+      audioFileName: audioName,
+      stt: sttPayload ?? existing?.stt,
+      lastError: clearError ? null : (error ?? existing?.lastError),
+      analysisResponse: clearAnalysis
+          ? null
+          : (analysisResponse ?? existing?.analysisResponse),
+      stagedItemIds: stagedItemIds ?? existing?.stagedItemIds ?? const [],
+    );
+    await _pendingStore.upsert(item);
+    _activePendingId = id;
+    await _loadPendingCaptures();
+    return item;
+  }
+
+  Future<void> _deletePendingCapture(String id) async {
+    await _pendingStore.delete(id);
+    if (_activePendingId == id) {
+      _clearCaptureDraft(deleteLocalPending: false);
+    }
+    await _loadPendingCaptures();
+    if (mounted) {
+      _snack('Nota pendiente eliminada.', UiIntent.neutral);
+    }
+  }
+
+  Future<void> _resumePendingCapture(PendingEncounterCapture item) async {
+    if (_captureBusy) return;
+    final audioPath = await _pendingStore.absoluteAudioPath(item);
+    if (!mounted) return;
+
+    if (item.status == PendingEncounterCaptureStatus.pendingSave &&
+        item.analysisResponse != null) {
+      final review =
+          EncounterCaptureAnalysis.fromApiResponse(item.analysisResponse!);
+      setState(() {
+        _activePendingId = item.id;
+        _pendingAudioPath = audioPath;
+        _lastAnalysis = item.analysisResponse;
+        _draftText = item.texto;
+        _captureReview = review;
+        _stagedItemIds = item.stagedItemIds.isNotEmpty
+            ? item.stagedItemIds.toSet()
+            : review.allItems.map((e) => e.id).toSet();
+        _chatController.clear();
+        _sttStatus = 'Pendiente de confirmar en servidor.';
+      });
+      return;
+    }
+
+    setState(() {
+      _activePendingId = item.id;
+      _pendingAudioPath = audioPath;
+      _captureReview = null;
+      _lastAnalysis = null;
+      _draftText = null;
+      _stagedItemIds = {};
+      _chatController.text = item.texto;
+      _sttStatus = item.lastError != null && item.lastError!.isNotEmpty
+          ? 'Error anterior: ${item.lastError}'
+          : (item.hasAudio
+              ? 'Borrador local con audio. Revisá y enviá de nuevo.'
+              : 'Borrador local. Revisá y enviá de nuevo.');
+    });
+  }
+
+  Future<void> _retryPendingCapture(PendingEncounterCapture item) async {
+    if (_captureBusy) return;
+    await _resumePendingCapture(item);
+    if (!mounted) return;
+    if (item.status == PendingEncounterCaptureStatus.pendingSave ||
+        item.status == PendingEncounterCaptureStatus.failedSave) {
+      if (_captureReview != null) {
+        await _confirmarGuardado();
+      }
+      return;
+    }
+    await _analizarConsulta();
   }
 
   void _editCaptureDraft() {
@@ -990,6 +1178,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _chatController.text = draft;
     });
     _chatFocusNode.requestFocus();
+    if (draft.trim().isNotEmpty && _tieneContextoCaptura) {
+      _persistLocalDraft(
+        texto: draft.trim(),
+        status: PendingEncounterCaptureStatus.draft,
+        clearAnalysis: true,
+        clearError: true,
+      );
+    }
   }
 
   void _toggleStagedItem(String id, bool selected) {
@@ -1004,8 +1200,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _analizarConsulta() async {
     final text = _chatController.text.trim();
-    if (text.isEmpty) {
+    if (text.isEmpty && _pendingAudioPath == null) {
       _snack('Escriba o dicte la consulta.', UiIntent.warning);
+      return;
+    }
+    if (text.isEmpty) {
+      _snack(
+        'Hay audio local. Transcribí o escribí el texto antes de analizar.',
+        UiIntent.warning,
+      );
       return;
     }
     if (!_tieneContextoCaptura) {
@@ -1020,6 +1223,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _draftText = null;
       _stagedItemIds = {};
     });
+
+    // Primero persistir en el dispositivo (texto + audio); luego intentar servidor.
+    await _persistLocalDraft(
+      texto: text,
+      status: PendingEncounterCaptureStatus.pendingAnalyze,
+      clearError: true,
+      clearAnalysis: true,
+    );
+
     try {
       final speech = await _resolveSpeechPayloadForAnalyze(text);
       final res = await _encounterApi.analizar(
@@ -1034,22 +1246,36 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
       if (!mounted) return;
       final review = EncounterCaptureAnalysis.fromApiResponse(res);
+      final staged = review.allItems.map((e) => e.id).toSet();
+      if (staged.isEmpty && review.defaultStagedItemIds.isNotEmpty) {
+        staged.addAll(review.defaultStagedItemIds);
+      }
+      await _persistLocalDraft(
+        texto: text,
+        status: PendingEncounterCaptureStatus.pendingSave,
+        analysisResponse: res,
+        stagedItemIds: staged.toList(),
+        clearError: true,
+      );
       setState(() {
         _lastAnalysis = res;
         _draftText = text;
         _captureReview = review;
-        // Incluir TODO lo extraído (medicación, indicaciones, etc.). Filtrar solo
-        // `isFromClinicalText` dejaba ítems source=ai destildados y el guardar
-        // persistía apenas diagnóstico (codificación automática) sin note/meds.
-        _stagedItemIds = review.allItems.map((e) => e.id).toSet();
-        if (_stagedItemIds.isEmpty && review.defaultStagedItemIds.isNotEmpty) {
-          _stagedItemIds = review.defaultStagedItemIds.toSet();
-        }
+        _stagedItemIds = staged;
         _chatController.clear();
         _sttStatus = '';
       });
     } catch (e) {
-      _snack('Error al analizar: ${_mensajeErrorCaptura(e)}', UiIntent.danger);
+      await _persistLocalDraft(
+        texto: text,
+        status: PendingEncounterCaptureStatus.pendingAnalyze,
+        error: _mensajeErrorCaptura(e),
+      );
+      if (!mounted) return;
+      _snack(
+        'Quedó guardado en el teléfono. ${_mensajeErrorCaptura(e)}',
+        UiIntent.danger,
+      );
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
     }
@@ -1100,6 +1326,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
     setState(() => _isSaving = true);
     try {
+      // Persistir payload localmente antes de subir (reintento si falla la red).
+      await _persistLocalDraft(
+        texto: textoOriginal,
+        status: PendingEncounterCaptureStatus.pendingSave,
+        analysisResponse: _lastAnalysis,
+        stagedItemIds: _stagedItemIds.toList(),
+        clearError: true,
+      );
+
       final guardado = await _encounterApi.guardar(
         idPersona: widget.personaId,
         parent: widget.consultParent,
@@ -1140,15 +1375,28 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       } else {
         _snack('Consulta guardada', UiIntent.success);
       }
-      _clearCaptureDraft();
+      final doneId = _activePendingId;
+      _clearCaptureDraft(deleteLocalPending: false);
+      if (doneId != null) {
+        await _pendingStore.delete(doneId);
+        await _loadPendingCaptures();
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e, st) {
       debugPrint('[captura] Error al guardar: $e\n$st');
+      await _persistLocalDraft(
+        texto: textoOriginal,
+        status: PendingEncounterCaptureStatus.failedSave,
+        analysisResponse: _lastAnalysis,
+        stagedItemIds: _stagedItemIds.toList(),
+        error: _mensajeErrorCaptura(e),
+      );
       if (!mounted) return;
       await _mostrarResultadoGuardado(
         titulo: 'Error al guardar',
-        mensaje: _mensajeErrorCaptura(e),
+        mensaje:
+            'La nota quedó en el teléfono. Podés reintentar cuando haya conexión.\n\n${_mensajeErrorCaptura(e)}',
         intent: UiIntent.danger,
       );
     } finally {
@@ -1331,6 +1579,122 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
     if (_enRevisionCaptura) return;
     await _analizarConsulta();
+  }
+
+  Widget _buildPendingCapturesPanel() {
+    return BioCard.intent(
+      intent: UiIntent.warning,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Notas pendientes en el teléfono',
+            style: BioTypography.title,
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            'Se guardaron localmente por si falla la conexión. Podés reintentar o eliminar.',
+            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+          ),
+          BioSpacing.gapH(BioSpacing.md),
+          for (final item in _pendingCaptures) ...[
+            _buildPendingCaptureRow(item),
+            if (item != _pendingCaptures.last) BioSpacing.gapH(BioSpacing.sm),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _pendingStatusLabel(PendingEncounterCaptureStatus status) {
+    switch (status) {
+      case PendingEncounterCaptureStatus.draft:
+        return 'Borrador local';
+      case PendingEncounterCaptureStatus.pendingAnalyze:
+        return 'Pendiente de analizar';
+      case PendingEncounterCaptureStatus.pendingSave:
+        return 'Pendiente de confirmar';
+      case PendingEncounterCaptureStatus.failedSave:
+        return 'Error al guardar';
+    }
+  }
+
+  Widget _buildPendingCaptureRow(PendingEncounterCapture item) {
+    final preview = item.texto.trim().isEmpty
+        ? '(sin texto)'
+        : (item.texto.length > 80
+            ? '${item.texto.substring(0, 80)}…'
+            : item.texto);
+    return Container(
+      padding: const EdgeInsets.all(BioSpacing.sm),
+      decoration: BoxDecoration(
+        color: context.bio.paperSurface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: context.bio.paperBorderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _pendingStatusLabel(item.status),
+            style: BioTypography.overline,
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(preview, style: BioTypography.body),
+          if (item.hasAudio) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              'Incluye audio',
+              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+            ),
+          ],
+          if (item.lastError != null && item.lastError!.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              item.lastError!,
+              style: BioTypography.caption.copyWith(
+                color: IntentPalette.of(UiIntent.danger).base,
+              ),
+            ),
+          ],
+          BioSpacing.gapH(BioSpacing.sm),
+          Row(
+            children: [
+              Expanded(
+                child: BioButton(
+                  label: 'Abrir',
+                  intent: UiIntent.neutral,
+                  variant: BioButtonVariant.soft,
+                  onPressed: _captureBusy
+                      ? null
+                      : () => _resumePendingCapture(item),
+                ),
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              Expanded(
+                child: BioButton(
+                  label: 'Reintentar',
+                  intent: UiIntent.primary,
+                  variant: BioButtonVariant.soft,
+                  onPressed:
+                      _captureBusy ? null : () => _retryPendingCapture(item),
+                ),
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              Expanded(
+                child: BioButton(
+                  label: 'Eliminar',
+                  intent: UiIntent.danger,
+                  variant: BioButtonVariant.soft,
+                  onPressed:
+                      _captureBusy ? null : () => _deletePendingCapture(item.id),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildAnalyzingCard() {

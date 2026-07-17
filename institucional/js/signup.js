@@ -298,7 +298,7 @@
         '</strong></div>'
       );
     }).join('');
-    if (noteEl) noteEl.textContent = pricingConfig.tax_note || 'Orientativo; no incluye IVA ni IIBB.';
+    if (noteEl) noteEl.textContent = pricingConfig.tax_note || 'Orientativo; no incluye IVA.';
   }
 
   function initPriceIndicator(form) {

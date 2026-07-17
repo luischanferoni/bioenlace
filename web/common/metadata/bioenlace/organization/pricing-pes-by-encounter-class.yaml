@@ -5,7 +5,7 @@
 version: 3
 currency: USD
 billing_period: month
-tax_note: No incluye IVA ni IIBB.
+tax_note: No incluye IVA.
 
 default_when_empty: allow_all
 

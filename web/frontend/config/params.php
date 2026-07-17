@@ -15,7 +15,7 @@ return [
     'hf_model_correction' => 'deepseek-ai/DeepSeek-R1:hyperbolic', // Modelo para corrección
     'hf_model_analysis' => 'deepseek-ai/DeepSeek-R1:hyperbolic', // Modelo para análisis (DeepSeek R1)
     'hf_embedding_model' => 'sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2', // Modelo de embeddings
-    'hf_stt_model' => 'jonatasgrosman/wav2vec2-xlsr-53-spanish', // Modelo Speech-to-Text (economico por defecto)
+    'hf_stt_model' => 'jonatasgrosman/wav2vec2-xlsr-53-spanish', // Modelo STT alternativo si se selecciona Hugging Face explícitamente
     
     // Parámetros de optimización de costos
     'hf_max_length' => 1000, // Longitud máxima de respuesta (aumentado para DeepSeek R1)
@@ -91,7 +91,7 @@ return [
         /** groq | huggingface */
         'proveedor_servidor' => 'groq',
         'device_enabled' => true,
-        'server_enabled' => false,
+        'server_enabled' => true,
         'groq_model' => 'whisper-large-v3-turbo',
         'groq_language' => 'es',
     ],

@@ -176,7 +176,7 @@ Para otras palancas (STT en dispositivo, caché de aplicación, context caching,
 
 ## STT
 
-Tarifa unitaria: [Precios de referencia](#precios-de-referencia-mayo-2026) (**Groq** `whisper-large-v3-turbo`). **Implementación en código:** `SpeechToTextManager` usa **Hugging Face** por defecto (`hf_stt_model`); Groq aplica en fallback servidor según configuración.
+Tarifa unitaria: [Precios de referencia](#precios-de-referencia-mayo-2026) (**Groq** `whisper-large-v3-turbo`). **Implementación en código:** el dispositivo es el camino inicial cuando está disponible y `SpeechToTextManager` usa **Groq por defecto** para el fallback servidor. Hugging Face queda como proveedor alternativo opt-in.
 
 ### Reglas Groq ASR (referencia COGS)
 

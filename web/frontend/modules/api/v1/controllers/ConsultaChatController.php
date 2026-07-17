@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaPrioridadAgent;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncIntakeContextService;
 use common\models\Clinical\Encounter;
+use common\models\Persona;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 use Yii;
 use yii\web\UploadedFile;
@@ -75,7 +76,7 @@ class ConsultaChatController extends BaseController
                 'intake_context' => $intakeContext,
                 'encounter' => [
                     'id' => (int) $encounter->id,
-                    'paciente' => $subject ? $subject->getNombreCompleto() : 'Paciente',
+                    'paciente' => $subject ? $subject->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Paciente',
                 ],
             ],
         ];

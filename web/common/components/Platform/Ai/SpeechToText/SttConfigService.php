@@ -25,7 +25,7 @@ final class SttConfigService
         }
 
         $defaults = [
-            'proveedor_servidor' => self::PROVIDER_HUGGINGFACE,
+            'proveedor_servidor' => self::PROVIDER_GROQ,
             'device_enabled' => true,
             'server_enabled' => true,
             'groq_model' => 'whisper-large-v3-turbo',
@@ -52,13 +52,13 @@ final class SttConfigService
 
     public static function serverProvider(): string
     {
-        $provider = strtolower(trim((string) (self::config()['proveedor_servidor'] ?? self::PROVIDER_HUGGINGFACE)));
+        $provider = strtolower(trim((string) (self::config()['proveedor_servidor'] ?? self::PROVIDER_GROQ)));
 
-        if ($provider === self::PROVIDER_GROQ) {
-            return self::PROVIDER_GROQ;
+        if ($provider === self::PROVIDER_HUGGINGFACE) {
+            return self::PROVIDER_HUGGINGFACE;
         }
 
-        return self::PROVIDER_HUGGINGFACE;
+        return self::PROVIDER_GROQ;
     }
 
     public static function groqModel(): string

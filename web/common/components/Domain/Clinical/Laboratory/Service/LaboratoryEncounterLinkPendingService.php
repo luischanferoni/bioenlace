@@ -74,7 +74,7 @@ final class LaboratoryEncounterLinkPendingService
             'issued_at' => (string) ($report->issued_at ?? ''),
             'paciente' => [
                 'id_persona' => (int) $report->subject_persona_id,
-                'nombre_completo' => $persona ? $persona->getNombreCompleto() : 'Paciente',
+                'nombre_completo' => $persona ? $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Paciente',
             ],
             'candidates' => $candidates,
             'pending_since' => (string) $row->created_at,

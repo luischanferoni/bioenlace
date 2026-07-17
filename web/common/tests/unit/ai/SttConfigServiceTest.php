@@ -27,6 +27,21 @@ class SttConfigServiceTest extends \Codeception\Test\Unit
         verify(SttConfigService::groqModel())->equals('whisper-large-v3-turbo');
     }
 
+    public function testProveedorGroqPorDefectoSinConfiguracionExplicita(): void
+    {
+        unset(\Yii::$app->params['stt']);
+
+        verify(SttConfigService::serverProvider())->equals(SttConfigService::PROVIDER_GROQ);
+        verify(SttConfigService::isServerEnabled())->true();
+    }
+
+    public function testProveedorDesconocidoNoCaeEnHuggingFace(): void
+    {
+        \Yii::$app->params['stt']['proveedor_servidor'] = 'desconocido';
+
+        verify(SttConfigService::serverProvider())->equals(SttConfigService::PROVIDER_GROQ);
+    }
+
     public function testClientSnapshotSinSecretos(): void
     {
         $snap = SttConfigService::clientSnapshot();

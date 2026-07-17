@@ -5,7 +5,7 @@ namespace common\components\Platform\Ai\SpeechToText;
 use Yii;
 
 /**
- * Gestor de conversión de audio a texto (Groq / Hugging Face según params).
+ * Gestor de conversión de audio a texto (Groq por defecto; Hugging Face opt-in).
  * Optimizado para reducir costos mediante pre-procesamiento y selección de modelos.
  */
 class SpeechToTextManager

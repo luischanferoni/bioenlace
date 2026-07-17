@@ -2,7 +2,7 @@
 
 No usa `IAManager`; en el [catálogo de IA](../../producto/catalogo-usos-ia.md) figura como capacidad aparte (captura §4, motivos §2, `audio/transcribir`).
 
-Baseline en [costos-api.md](../costos-api.md): **Groq Whisper** ~**$0,0007/min** ⇒ **~$1,40**/médico/mes en §4 (**5 min** × 400) y **~$1,12** en §2 caso B (**4 min** × 400). El código usa **Hugging Face** por defecto (`SpeechToTextManager`, `hf_stt_model`); Groq aplica cuando se externaliza STT.
+Baseline en [costos-api.md](../costos-api.md): **Groq Whisper** ~**$0,0007/min** ⇒ **~$1,40**/médico/mes en §4 (**5 min** × 400) y **~$1,12** en §2 caso B (**4 min** × 400). `SpeechToTextManager` usa **Groq por defecto** (`whisper-large-v3-turbo`) para el fallback servidor; Hugging Face queda disponible solo mediante selección explícita en configuración.
 
 **Videollamada post-call:** STT de la llamada está en §2/§4 (~5+~4 min con VAD), no en el add-on video (**$5,00** self-host). Histórico Deepgram vía Daily (~$6,19 @ 30 %) ya no es lista. Detalle: [videollamadas.md](./videollamadas.md), [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md).
 
@@ -13,8 +13,8 @@ Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v
 | Orden | Proveedor | Cuándo | Coste orientativo |
 |-------|-----------|--------|-------------------|
 | 0 | **Dispositivo** (SO / Web Speech / [modelo fit on-device](./stt.md#modelo-fit-on-device-base-clínica-nacional--lora-provincia--lora-speaker)) | Camino feliz; ver § STT en dispositivo | **$0** minutos facturables en Bioenlace |
-| 1 | Hugging Face | Fallback servidor; volumen bajo–medio | Plan HF |
-| 2 | Groq Whisper | Fallback batch, &lt; 25 MB/archivo | ~$0,0007/min |
+| 1 | **Groq Whisper** | Fallback servidor predeterminado, &lt; 25 MB/archivo | ~$0,0007/min |
+| 2 | Hugging Face | Alternativa opt-in por configuración | Plan HF |
 
 A **5.000+ profesionales**, Groq en servidor puede costar del orden de **~$12.600/mes** (3.600 min/prof × 5.000 en el COGS de referencia: 5 min médico + 4 min paciente). El piso de costo es **no transcribir en servidor** cuando el dispositivo entrega texto usable (§ STT en dispositivo).
 
@@ -272,7 +272,7 @@ flowchart TD
 
 ### Prioridad de proveedor en fallback
 
-Misma [escalera de proveedores](#escalera-de-proveedores-servidor): HF/Groq según `params.php`; para §4 (médico) preferir **modelo con mejor español clínico** en servidor aunque cueste más por minuto, porque ese volumen será **minoritario** si el dispositivo funciona bien.
+Misma [escalera de proveedores](#escalera-de-proveedores-servidor): Groq es el fallback predeterminado; Hugging Face requiere selección explícita en `params.php`.
 
 ---
 

@@ -31,7 +31,7 @@ final class ConsultaAsyncInitialChatService
 
         $userName = 'Paciente';
         if ($persona !== null) {
-            $userName = $persona->getNombreCompleto() ?: $userName;
+            $userName = $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) ?: $userName;
         } elseif (Yii::$app->user->identity !== null) {
             $userName = (string) (Yii::$app->user->identity->username ?? $userName);
         }

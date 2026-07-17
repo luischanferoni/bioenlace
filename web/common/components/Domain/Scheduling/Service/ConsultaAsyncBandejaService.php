@@ -217,7 +217,7 @@ final class ConsultaAsyncBandejaService
         if ($idPes > 0) {
             $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
             if ($pes !== null && $pes->persona) {
-                $profesionalNombre = $pes->persona->getNombreCompleto();
+                $profesionalNombre = $pes->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N);
             }
         }
 
@@ -232,7 +232,7 @@ final class ConsultaAsyncBandejaService
             'encounter_id' => (int) $encounter->id,
             'paciente' => [
                 'id_persona' => (int) $encounter->subject_persona_id,
-                'nombre_completo' => $subject ? $subject->getNombreCompleto() : 'Paciente',
+                'nombre_completo' => $subject ? $subject->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Paciente',
             ],
             'servicio' => $servicio ? (string) $servicio->nombre : 'Servicio',
             'servicio_id' => $serviceId,

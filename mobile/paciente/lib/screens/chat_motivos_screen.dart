@@ -2,16 +2,16 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 
+import '../models/pending_motivo_message.dart';
 import '../services/motivos_consulta_service.dart';
+import '../services/pending_motivo_message_store.dart';
 
 /// Chat para cargar motivos de consulta: texto y audio.
-/// Mismo patrón de composer que la captura clínica staff (enviar ↔ micrófono).
-/// El médico verá luego un resumen estructurado (proceso aparte en backend).
+/// Texto/audio se guardan en el teléfono antes de subir (reintento / eliminar).
 class ChatMotivosScreen extends StatefulWidget {
   final int consultaId;
   final String? authToken;
@@ -36,7 +36,10 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
   late MotivosConsultaService _service;
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final PendingMotivoMessageStore _pendingStore =
+      PendingMotivoMessageStore.instance;
   List<dynamic> _messages = [];
+  List<PendingMotivoMessage> _pending = [];
   bool _loading = true;
   bool _sending = false;
   String? _error;
@@ -59,6 +62,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       userName: widget.userName,
     );
     _loadMessages();
+    _loadPending();
   }
 
   @override
@@ -67,6 +71,12 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     _scrollController.dispose();
     unawaited(_recorder.dispose());
     super.dispose();
+  }
+
+  Future<void> _loadPending() async {
+    final list = await _pendingStore.listForConsulta(widget.consultaId);
+    if (!mounted) return;
+    setState(() => _pending = list);
   }
 
   Future<void> _loadMessages() async {
@@ -119,17 +129,20 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     final text = _textController.text.trim();
     if (text.isEmpty || _sending) return;
     _textController.clear();
-    setState(() => _sending = true);
 
-    final result = await _service.sendMessage(widget.consultaId, text);
-    if (!mounted) return;
-    setState(() => _sending = false);
-    if (result['success'] == true && result['data'] != null) {
-      setState(() => _messages = [..._messages, result['data']]);
-      _scrollToBottom();
-    } else {
-      _showError(result['message']?.toString() ?? 'Error');
-    }
+    final now = DateTime.now();
+    final pending = PendingMotivoMessage(
+      id: _pendingStore.newId(),
+      consultaId: widget.consultaId,
+      type: PendingMotivoMessageType.texto,
+      status: PendingMotivoMessageStatus.pendingUpload,
+      createdAt: now,
+      updatedAt: now,
+      texto: text,
+    );
+    await _pendingStore.upsert(pending);
+    await _loadPending();
+    await _uploadPending(pending);
   }
 
   Future<void> _recordAndSendAudio() async {
@@ -142,7 +155,7 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
       final path = await _recorder.stop();
       setState(() => _isRecording = false);
       if (path != null && path.isNotEmpty) {
-        await _uploadAudio(XFile(path));
+        await _persistAndUploadAudio(path);
       }
       return;
     }
@@ -162,10 +175,10 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
     setState(() => _isRecording = true);
   }
 
-  Future<void> _uploadAudio(XFile file) async {
-    if (_sending) return;
+  Future<void> _persistAndUploadAudio(String tempPath) async {
     if (!kIsWeb) {
       try {
+        final file = XFile(tempPath);
         if (await file.length() <= 0) {
           _showError('No se pudo leer el archivo');
           return;
@@ -175,19 +188,117 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
         return;
       }
     }
-    setState(() => _sending = true);
-    final result = await _service.uploadFile(
-      widget.consultaId,
-      file,
-      messageType: 'audio',
+
+    final id = _pendingStore.newId();
+    final imported = await _pendingStore.importAudioFile(
+      messageId: id,
+      sourcePath: tempPath,
     );
-    if (!mounted) return;
-    setState(() => _sending = false);
-    if (result['success'] == true && result['data'] != null) {
-      setState(() => _messages = [..._messages, result['data']]);
-      _scrollToBottom();
-    } else {
-      _showError(result['message']?.toString() ?? 'Error');
+    if (imported == null) {
+      _showError('No se pudo guardar el audio en el teléfono');
+      return;
+    }
+
+    final now = DateTime.now();
+    final pending = PendingMotivoMessage(
+      id: id,
+      consultaId: widget.consultaId,
+      type: PendingMotivoMessageType.audio,
+      status: PendingMotivoMessageStatus.pendingUpload,
+      createdAt: now,
+      updatedAt: now,
+      audioFileName: imported,
+    );
+    await _pendingStore.upsert(pending);
+    await _loadPending();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Audio guardado en el teléfono. Subiendo…'),
+          backgroundColor: IntentPalette.of(UiIntent.info).base,
+        ),
+      );
+    }
+    await _uploadPending(pending);
+  }
+
+  Future<void> _uploadPending(PendingMotivoMessage item) async {
+    if (_sending) return;
+    if (!_inputAbierto) {
+      _showError('El plazo para cargar motivos ya finalizó.');
+      return;
+    }
+    setState(() => _sending = true);
+    try {
+      Map<String, dynamic> result;
+      if (item.type == PendingMotivoMessageType.texto) {
+        final text = item.texto?.trim() ?? '';
+        if (text.isEmpty) {
+          await _pendingStore.delete(item.id);
+          await _loadPending();
+          return;
+        }
+        result = await _service.sendMessage(widget.consultaId, text);
+      } else {
+        final path = await _pendingStore.absoluteAudioPath(item);
+        if (path == null) {
+          await _markFailed(item, 'No se encontró el audio en el teléfono');
+          return;
+        }
+        result = await _service.uploadFile(
+          widget.consultaId,
+          XFile(path),
+          messageType: 'audio',
+        );
+      }
+
+      if (!mounted) return;
+      if (result['success'] == true && result['data'] != null) {
+        await _pendingStore.delete(item.id);
+        setState(() {
+          _messages = [..._messages, result['data']];
+        });
+        await _loadPending();
+        _scrollToBottom();
+      } else {
+        await _markFailed(
+          item,
+          result['message']?.toString() ?? 'Error al subir',
+        );
+      }
+    } catch (e) {
+      await _markFailed(item, e.toString());
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  Future<void> _markFailed(PendingMotivoMessage item, String error) async {
+    await _pendingStore.upsert(
+      item.copyWith(
+        status: PendingMotivoMessageStatus.failedUpload,
+        updatedAt: DateTime.now(),
+        lastError: error,
+      ),
+    );
+    await _loadPending();
+    if (mounted) {
+      _showError(
+        'Quedó guardado en el teléfono. Podés reintentar.\n$error',
+      );
+    }
+  }
+
+  Future<void> _deletePending(String id) async {
+    await _pendingStore.delete(id);
+    await _loadPending();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Mensaje pendiente eliminado'),
+          backgroundColor: IntentPalette.of(UiIntent.neutral).base,
+        ),
+      );
     }
   }
 
@@ -232,7 +343,113 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
                       )
                     : _buildLista(context),
           ),
+          if (_pending.isNotEmpty) _buildPendingPanel(context),
           _buildInputBar(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingPanel(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(
+        BioSpacing.md,
+        BioSpacing.sm,
+        BioSpacing.md,
+        BioSpacing.sm,
+      ),
+      decoration: BoxDecoration(
+        color: context.bio.paperSurface,
+        border: Border(
+          top: BorderSide(color: context.bio.paperBorderDefault),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Pendientes en el teléfono (${_pending.length})',
+            style: BioTypography.overline,
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            'Se guardaron localmente por si falla la conexión.',
+            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          for (final item in _pending) ...[
+            _buildPendingRow(item),
+            if (item != _pending.last) BioSpacing.gapH(BioSpacing.xs),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingRow(PendingMotivoMessage item) {
+    final label = item.type == PendingMotivoMessageType.audio
+        ? 'Audio pendiente'
+        : (item.texto != null && item.texto!.length > 60
+            ? '${item.texto!.substring(0, 60)}…'
+            : (item.texto ?? 'Texto pendiente'));
+    return Container(
+      padding: const EdgeInsets.all(BioSpacing.sm),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(BioRadius.sm),
+        border: Border.all(color: context.bio.paperBorderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                item.type == PendingMotivoMessageType.audio
+                    ? Icons.mic
+                    : Icons.chat_bubble_outline,
+                size: 16,
+                color: context.bio.textMuted,
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              Expanded(
+                child: Text(label, style: BioTypography.bodySm),
+              ),
+            ],
+          ),
+          if (item.lastError != null && item.lastError!.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              item.lastError!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: BioTypography.caption.copyWith(
+                color: IntentPalette.of(UiIntent.danger).base,
+              ),
+            ),
+          ],
+          BioSpacing.gapH(BioSpacing.xs),
+          Row(
+            children: [
+              Expanded(
+                child: BioButton(
+                  label: 'Reintentar',
+                  intent: UiIntent.primary,
+                  variant: BioButtonVariant.soft,
+                  onPressed: _sending ? null : () => _uploadPending(item),
+                ),
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              Expanded(
+                child: BioButton(
+                  label: 'Eliminar',
+                  intent: UiIntent.danger,
+                  variant: BioButtonVariant.soft,
+                  onPressed: _sending ? null : () => _deletePending(item.id),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -277,7 +494,8 @@ class _ChatMotivosScreenState extends State<ChatMotivosScreen> {
                     _motivosResumen!.trim().isNotEmpty) ...[
                   BioSpacing.gapH(BioSpacing.sm),
                   BioAlert.success(
-                    message: 'Resumen para el médico:\n${_motivosResumen!.trim()}',
+                    message:
+                        'Resumen para el médico:\n${_motivosResumen!.trim()}',
                     icon: Icons.summarize_outlined,
                   ),
                 ],

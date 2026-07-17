@@ -9,6 +9,7 @@ use common\components\Domain\Clinical\Prescription\Mapper\FhirRecetaDigitalBundl
 use common\components\Domain\Clinical\Prescription\Support\PrescriptionDocumentSupport;
 use common\components\Domain\Clinical\Prescription\Service\PrescriptionRdiPreSubmitValidationAgent;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
+use common\components\Domain\Terminology\Snomed\SnomedCodeSystem;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionEvent;
 use common\models\Clinical\ElectronicPrescriptionItem;
@@ -227,7 +228,7 @@ final class ElectronicPrescriptionService
         $item->line_number = $lineNumber;
         $item->medication_request_id = (int) $mr->id;
         $item->medication_code = $mr->medication_code;
-        $item->medication_code_system = 'http://snomed.info/sct';
+        $item->medication_code_system = $mr->medication_code_system ?: SnomedCodeSystem::URI;
         $item->medication_display = $mr->medication_display;
         $item->dosage_text = $mr->dosage_text;
         if (!$item->save()) {

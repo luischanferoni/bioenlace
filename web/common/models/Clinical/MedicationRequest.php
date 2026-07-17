@@ -22,6 +22,7 @@ class MedicationRequest extends ActiveRecord
             [['status'], 'string', 'max' => 32],
             [['intent'], 'string', 'max' => 16],
             [['medication_code'], 'string', 'max' => 64],
+            [['medication_code_system'], 'string', 'max' => 128],
             [['medication_display'], 'string', 'max' => 512],
             [['dosage_text', 'dosage_json'], 'string'],
             [['authored_on'], 'safe'],

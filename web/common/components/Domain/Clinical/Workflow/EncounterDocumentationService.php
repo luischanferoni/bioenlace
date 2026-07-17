@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\Service\EncounterAutomaticCodingService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
 use common\components\Domain\Clinical\Service\ServiceRequestService;
+use common\components\Domain\Clinical\Service\TreatmentRequestSnomedCodingService;
 use common\components\Domain\Clinical\Specialty\EncounterDefinitionSpecialtyRegistry;
 use common\components\Domain\Clinical\Specialty\Inpatient\InpatientEncounterAuxService;
 use common\components\Domain\Clinical\Specialty\Odontology\OdontologyEncounterService;
@@ -279,7 +280,11 @@ class EncounterDocumentationService extends Component
                     $datosExtraidos,
                     $configuracion
                 );
-                $diagnostico['coding']['saved'] = (int) $savedCoding;
+                $savedTreatmentCoding = (new TreatmentRequestSnomedCodingService())
+                    ->codeAndPersistForEncounter($encounter);
+                $diagnostico['coding']['diagnosis_saved'] = (int) $savedCoding;
+                $diagnostico['coding']['treatment_request_saved'] = (int) $savedTreatmentCoding;
+                $diagnostico['coding']['saved'] = (int) $savedCoding + (int) $savedTreatmentCoding;
             } catch (\Throwable $e) {
                 // La documentación clínica ya está committeada; no tumbar el guardar.
                 $diagnostico['coding'] = [

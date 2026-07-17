@@ -5,6 +5,7 @@ namespace common\components\Domain\Clinical\Service;
 use common\components\Domain\Clinical\CarePlan\Reminder\ActivityReminderTimingParser;
 use common\components\Domain\Clinical\CarePlan\Reminder\ReminderTimingJsonBuilder;
 use common\components\Domain\Clinical\Enum\RequestStatus;
+use common\components\Domain\Terminology\Snomed\SnomedCodeSystem;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
@@ -54,6 +55,7 @@ final class MedicationRequestService
             $row['id_snomed_medicamento'] ?? $row['snomed_code'] ?? $row['conceptId'] ?? $row['codigo'] ?? ''
         ));
         $mr->medication_code = $code !== '' ? $code : null;
+        $mr->medication_code_system = $code !== '' ? SnomedCodeSystem::URI : null;
         $mr->medication_display = $display;
         $mr->dosage_text = self::resolveDosageTextFromRow($row, $display);
         $mr->authored_on = date('Y-m-d H:i:s');
@@ -230,6 +232,8 @@ final class MedicationRequestService
         $mr->status = (string) ($body['status'] ?? RequestStatus::ACTIVE);
         $mr->intent = (string) ($body['intent'] ?? 'order');
         $mr->medication_code = isset($body['medication_code']) ? (string) $body['medication_code'] : null;
+        $mr->medication_code_system = trim((string) ($body['medication_code_system'] ?? ''))
+            ?: ($mr->medication_code !== null && trim($mr->medication_code) !== '' ? SnomedCodeSystem::URI : null);
         $mr->medication_display = $body['medication_display'] ?? $body['display'] ?? null;
         $mr->dosage_text = $body['dosage_text'] ?? null;
         $mr->dosage_json = $this->resolveDosageJson($body);

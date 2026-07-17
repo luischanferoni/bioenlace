@@ -14,6 +14,12 @@ use yii\db\ActiveRecord;
 final class EncounterCaptureTerminologyLookup
 {
     private bool $terminologyServiceUnavailable = false;
+    private ?SnowstormClient $snowstorm;
+
+    public function __construct(?SnowstormClient $snowstorm = null)
+    {
+        $this->snowstorm = $snowstorm;
+    }
 
     public function wasTerminologyServiceUnavailable(): bool
     {
@@ -69,7 +75,8 @@ final class EncounterCaptureTerminologyLookup
     private function matchesSnowstorm(string $term, array $profiles): bool
     {
         try {
-            $client = new SnowstormClient();
+            $client = $this->snowstorm
+                ?? (Yii::$app->has('snowstorm') ? Yii::$app->get('snowstorm') : new SnowstormClient());
             foreach ($profiles as $profile) {
                 if (!is_string($profile) || trim($profile) === '') {
                     continue;

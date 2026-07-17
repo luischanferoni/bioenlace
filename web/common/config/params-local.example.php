@@ -35,6 +35,16 @@ return [
     // para reingreso tras cerrar sesión en app paciente. Si se omite, config-movil devuelve el KYC.
     // 'didit_paciente_biometric_workflow_id' => '…',
 
+    // --- Snowstorm / SNOMED CT ---
+    // Para una instancia propia, reemplazar baseUrl por su endpoint de branch (por ejemplo /MAIN/).
+    // El token es opcional cuando Snowstorm no requiere autenticación.
+    'snowstorm' => [
+        'baseUrl' => 'https://snowstorm.example.org/MAIN/',
+        'token' => '…',
+        'timeoutSeconds' => 30,
+        'connectTimeoutSeconds' => 5,
+    ],
+
     // --- WhatsApp Cloud API (asistente paciente; webhook GET/POST /api/v1/whatsapp/webhook) ---
     // 'whatsapp' => [
     //     'phoneNumberId' => '…',

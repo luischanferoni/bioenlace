@@ -11,7 +11,7 @@ final class CarePlanReminderItemDto
     public string $title;
     public string $subtitle;
     public string $planStatus;
-    /** Texto corto para notificación local (ej. "Medicación", "Recordatorio de estudio"). */
+    /** Texto corto para la notificación local de medicación. */
     public string $notificationLabel = 'Medicación';
     public bool $requiresPatientSetup = false;
 

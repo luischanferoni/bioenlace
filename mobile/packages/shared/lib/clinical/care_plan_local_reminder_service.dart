@@ -14,7 +14,7 @@ typedef CarePlanReminderTapCallback = void Function({
   required int activityId,
 });
 
-/// Programa recordatorios locales a partir de la agenda API de care plans.
+/// Programa recordatorios locales de medicación a partir de la agenda API.
 class CarePlanLocalReminderService {
   CarePlanLocalReminderService._();
   static final CarePlanLocalReminderService instance = CarePlanLocalReminderService._();
@@ -26,7 +26,7 @@ class CarePlanLocalReminderService {
   static CarePlanReminderTapCallback? onNotificationTap;
 
   static const String channelId = 'care_plan_reminders';
-  static const String channelName = 'Recordatorios de tratamiento';
+  static const String channelName = 'Recordatorios de medicación';
 
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
   bool _initialized = false;
@@ -52,7 +52,7 @@ class CarePlanLocalReminderService {
       const AndroidNotificationChannel(
         channelId,
         channelName,
-        description: 'Recordatorios de medicación y tratamiento',
+        description: 'Horarios de medicamentos del plan de tratamiento',
         importance: Importance.high,
       ),
     );

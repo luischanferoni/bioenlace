@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\CarePlan\Reminder\ActivityReminderTimingPa
 use common\components\Domain\Clinical\Service\ReferralRequestService;
 use common\components\Domain\Clinical\CarePlan\Reminder\ReminderTimingJsonBuilder;
 use common\components\Domain\Clinical\Enum\RequestStatus;
+use common\components\Domain\Terminology\Snomed\SnomedCodeSystem;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
@@ -106,6 +107,7 @@ final class ServiceRequestService
             $sr->category = 'observation';
         }
         $sr->code = $code !== '' ? $code : null;
+        $sr->code_system = $code !== '' ? SnomedCodeSystem::URI : null;
         $sr->display = $display !== '' ? $display : $code;
         if ($secondary !== '' && !$isIndicacion) {
             $sr->note = $secondary;
@@ -189,6 +191,8 @@ final class ServiceRequestService
         $sr->intent = (string) ($body['intent'] ?? 'order');
         $sr->category = (string) ($body['category'] ?? 'procedure');
         $sr->code = isset($body['code']) ? (string) $body['code'] : null;
+        $sr->code_system = trim((string) ($body['code_system'] ?? ''))
+            ?: ($sr->code !== null && trim($sr->code) !== '' ? SnomedCodeSystem::URI : null);
         $sr->display = $body['display'] ?? null;
         $sr->reminder_json = $this->resolveReminderJson($body);
         $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;

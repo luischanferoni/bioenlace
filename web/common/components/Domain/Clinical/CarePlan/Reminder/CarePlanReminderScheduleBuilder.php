@@ -8,24 +8,22 @@ use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\CarePlanActivity;
 use common\models\Clinical\MedicationRequest;
-use common\models\Clinical\ServiceRequest;
 
 final class CarePlanReminderScheduleBuilder
 {
     private PatientActiveCarePlanQuery $activeQuery;
     private MedicationDosageTimingParser $medicationTimingParser;
-    private ActivityReminderTimingParser $activityTimingParser;
     private MedicationReminderFrequencyResolver $frequencyResolver;
 
     public function __construct(
         ?PatientActiveCarePlanQuery $activeQuery = null,
         ?MedicationDosageTimingParser $medicationTimingParser = null,
-        ?ActivityReminderTimingParser $activityTimingParser = null,
+        ?ActivityReminderTimingParser $unusedActivityTimingParser = null,
         ?MedicationReminderFrequencyResolver $frequencyResolver = null
     ) {
+        // Tercer argumento conservado para compatibilidad; ServiceRequest ya no genera recordatorios.
         $this->activeQuery = $activeQuery ?? new PatientActiveCarePlanQuery();
         $this->medicationTimingParser = $medicationTimingParser ?? new MedicationDosageTimingParser();
-        $this->activityTimingParser = $activityTimingParser ?? new ActivityReminderTimingParser();
         $this->frequencyResolver = $frequencyResolver ?? new MedicationReminderFrequencyResolver();
     }
 
@@ -46,7 +44,7 @@ final class CarePlanReminderScheduleBuilder
 
         return [
             'generatedAt' => gmdate('c'),
-            'version' => 2,
+            'version' => 3,
             'items' => $items,
         ];
     }
@@ -63,11 +61,9 @@ final class CarePlanReminderScheduleBuilder
 
         $out = [];
         foreach ($activities as $activity) {
-            $item = match ($activity->kind) {
-                CarePlanActivityKind::MEDICATION_REQUEST => $this->itemFromMedicationActivity($plan, $activity),
-                CarePlanActivityKind::SERVICE_REQUEST => $this->itemFromServiceActivity($plan, $activity),
-                default => null,
-            };
+            $item = $activity->kind === CarePlanActivityKind::MEDICATION_REQUEST
+                ? $this->itemFromMedicationActivity($plan, $activity)
+                : null;
             if ($item !== null) {
                 $out[] = $item;
             }
@@ -103,47 +99,6 @@ final class CarePlanReminderScheduleBuilder
             $dto->requiresPatientSetup = true;
             $dto->schedule = $this->scheduleTemplateForPatientSetup(
                 $this->frequencyResolver->resolveFromDosageText($mr->dosage_text),
-                $plan
-            );
-
-            return $dto;
-        }
-
-        $dto->requiresPatientSetup = false;
-        $dto->schedule = $this->scheduleFromParsed($parsed, $plan);
-
-        return $dto;
-    }
-
-    private function itemFromServiceActivity(CarePlan $plan, CarePlanActivity $activity): ?CarePlanReminderItemDto
-    {
-        $sr = ServiceRequest::findOne([
-            'id' => (int) $activity->resource_id,
-            'deleted_at' => null,
-        ]);
-        if ($sr === null || $sr->status !== RequestStatus::ACTIVE) {
-            return null;
-        }
-
-        $reminderJson = $sr->getAttribute('reminder_json');
-
-        $dto = new CarePlanReminderItemDto();
-        $dto->carePlanId = (int) $plan->id;
-        $dto->activityId = (int) $activity->id;
-        $dto->kind = CarePlanActivityKind::SERVICE_REQUEST;
-        $dto->resourceId = (int) $sr->id;
-        $dto->notificationLabel = 'Recordatorio de estudio';
-        $dto->title = trim((string) ($sr->display ?? '')) !== ''
-            ? (string) $sr->display
-            : 'Estudio o práctica';
-        $dto->subtitle = trim((string) ($sr->note ?? ''));
-        $dto->planStatus = (string) $plan->status;
-
-        $parsed = $this->activityTimingParser->parse($reminderJson);
-        if ($parsed === null) {
-            $dto->requiresPatientSetup = true;
-            $dto->schedule = $this->scheduleTemplateForPatientSetup(
-                ['dosesPerDay' => 1, 'intervalHours' => 24, 'period' => 1, 'periodUnit' => 'd'],
                 $plan
             );
 

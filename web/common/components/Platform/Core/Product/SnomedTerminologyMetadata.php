@@ -75,6 +75,7 @@ final class SnomedTerminologyMetadata
         self::$config = [
             'ecl_definitions' => [],
             'semantic_matching' => [],
+            'request_coding' => [],
             'codification' => [],
             'search' => [],
         ];
@@ -96,7 +97,7 @@ final class SnomedTerminologyMetadata
             return self::$config;
         }
 
-        foreach (['ecl_definitions', 'semantic_matching', 'codification', 'search'] as $key) {
+        foreach (['ecl_definitions', 'semantic_matching', 'request_coding', 'codification', 'search'] as $key) {
             if (isset($data[$key]) && is_array($data[$key])) {
                 self::$config[$key] = $data[$key];
             }

@@ -2,44 +2,103 @@
 
 namespace common\components\Domain\Terminology\Snomed;
 
+use RuntimeException;
+use Yii;
 use yii\base\Component;
 
 class SnowstormClient extends Component
 {
-    const URL = 'https://snowstorm.msal.gob.ar/MAIN/';
-    const URL_TEST = 'https://snowstorm.msal.gob.ar/MAIN/';
-    const URL_LOCAL = 'http://snowstorm.ciidse.ar/api/snowstorm/MAIN/';
-    //const URL_TEST = 'https://snowstorm-test.msal.gob.ar/MAIN/';
+    public ?string $baseUrl = null;
+    public ?string $token = null;
+    public int $timeoutSeconds = 30;
+    public int $connectTimeoutSeconds = 5;
 
-	function caller($metodo, $json, $verb="GET") 
-    { 
-        //  $headers  =  array(    
-        //  	'Accept-Language: es', 
-        //  	'app_id: 66844980',        
-        //  	'app_key: 07e137b2603035574877a423e6389616',
-        //  );
+    public function init(): void
+    {
+        parent::init();
 
-        //  $ch = curl_init(YII_ENV_PROD ? self::URL : self::URL_TEST.$metodo);
-    
-        $token = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiI2IiwianRpIjoiY2YzNmVlZDQyOTExMDhiMmNkNzk1ZTAzYjVkMjVlMzIwOGVkOGE3YTkzMTg0ZjFlYzI2YmJiMmU0YzVlMGUxNTM0NTI4MTQwNjQzZDYxOGYiLCJpYXQiOjE3MjQzNDk2NDAuMTM4NzEzLCJuYmYiOjE3MjQzNDk2NDAuMTM4NzE1LCJleHAiOjE3NTU4ODU2NDAuMTI5MTgsInN1YiI6IjQiLCJzY29wZXMiOlsiKiJdfQ.D0MitZqG8hBo3CojGiQbAiAqaDoP6-YmstOtncIm2GKA1aakwdrsW4Y2q-w3i6o3yDGuhF-ngbjPbv_atZt9DsG2dv0JqgtTHuFHkXo6RmCm43XCAQHF1qObnm_8DAs4w2ZqRmphzD7aqRsddGYwwsX5B0eYkMSegQh_dvsriI85rrs6nbYWDaSq0HkBjO-ztdP--AJptSZGlAfE6TZjOCZrOcCMVICj249iOcIJM4idl23c-zDej9QUfadz-rfaOqBgM7UnriijbF78NcMB949mvySr0Yp9ODSLIFyhX-ewxIhDDlvAXSKCYAemtAsCPSMP28l2gXVTBn2asYBRw85tbEPDrzHFmG9mm_bA5er2zFEqsd8m4DZquzT9Pi6AG-qwwOJ-s4i1TRFyfpND-xyqphA-KozoTLvwiNtzBudWBnJDtsFX-L5W7BUMInJzDNO6ilW51fTIusqz17gFOIBiP4obvmr201zzJAJ4DVDc_P0I6pisAJCrlc4KXKMvh7xYB3Dsjqybp425PTyTE6ePcHqVFoGfLjWlkn3iqTIcNkzzWUokd3AmlUYRDtQQCNz2j6zb4m2M-jgrXX7aGUrDjlSqsQKXlUYr_8gfL0PV2aum_VtHvocNGuQIW_J3Ph0t-CdqKEuAeMyqrZwvh0Sm9W4BDGsSubK32Uz5SSw";
+        $config = Yii::$app !== null ? (Yii::$app->params['snowstorm'] ?? []) : [];
+        if (!is_array($config)) {
+            throw new RuntimeException('La configuración de Snowstorm debe ser un arreglo.');
+        }
+
+        $this->baseUrl = $this->baseUrl ?? ($config['baseUrl'] ?? null);
+        $this->token = $this->token ?? ($config['token'] ?? null);
+        $this->timeoutSeconds = (int) ($config['timeoutSeconds'] ?? $this->timeoutSeconds);
+        $this->connectTimeoutSeconds = (int) ($config['connectTimeoutSeconds'] ?? $this->connectTimeoutSeconds);
+    }
+
+    /**
+     * @param mixed $json Conservado por compatibilidad; los endpoints actuales usan query string.
+     * @return array<string, mixed>
+     */
+    public function caller($metodo, $json = null, $verb = 'GET'): array
+    {
+        $baseUrl = rtrim(trim((string) $this->baseUrl), '/') . '/';
+        if ($baseUrl === '/') {
+            throw new RuntimeException('Snowstorm no tiene baseUrl configurada.');
+        }
 
         $headers = [
-        	'Authorization: Bearer '.$token,         
-        	'Content-Type: application/json',
+            'Accept' => 'application/json',
+            'Accept-Language' => 'es',
         ];
-        
-        $ch = curl_init(self::URL_LOCAL.$metodo);
-        
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $verb);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-     
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);      
-        $resp = curl_exec($ch);        
-        $respuesta = json_decode($resp, true);
+        $token = trim((string) $this->token);
+        if ($token !== '') {
+            $headers['Authorization'] = 'Bearer ' . $token;
+        }
 
-        return $respuesta;
+        return $this->request(
+            $baseUrl . ltrim((string) $metodo, '/'),
+            strtoupper((string) $verb),
+            $headers
+        );
+    }
+
+    /**
+     * @param array<string, string> $headers
+     * @return array<string, mixed>
+     */
+    protected function request(string $url, string $verb, array $headers): array
+    {
+        $handle = curl_init($url);
+        if ($handle === false) {
+            throw new RuntimeException('No fue posible inicializar la conexión con Snowstorm.');
+        }
+
+        $headerLines = [];
+        foreach ($headers as $name => $value) {
+            $headerLines[] = $name . ': ' . $value;
+        }
+
+        curl_setopt_array($handle, [
+            CURLOPT_CUSTOMREQUEST => $verb,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => max(1, $this->connectTimeoutSeconds),
+            CURLOPT_TIMEOUT => max(1, $this->timeoutSeconds),
+            CURLOPT_HTTPHEADER => $headerLines,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_SSL_VERIFYPEER => true,
+        ]);
+
+        $content = curl_exec($handle);
+        $errorNumber = curl_errno($handle);
+        $statusCode = (int) curl_getinfo($handle, CURLINFO_RESPONSE_CODE);
+        curl_close($handle);
+
+        if ($content === false || $errorNumber !== 0) {
+            throw new RuntimeException('No fue posible conectar con Snowstorm.');
+        }
+        if ($statusCode < 200 || $statusCode >= 300) {
+            throw new RuntimeException('Snowstorm respondió con HTTP ' . $statusCode . '.');
+        }
+
+        $data = json_decode($content, true);
+        if (!is_array($data) || json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException('Snowstorm devolvió una respuesta JSON inválida.');
+        }
+
+        return $data;
     }
 
     function busquedaPorConceptId($conceptId) 

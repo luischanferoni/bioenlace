@@ -33,6 +33,21 @@ semantic_matching:
   confidence_threshold: 0.7
   candidate_limit: 20
 
+# Codificación posterior al guardado de actividades del plan.
+request_coding:
+  resources:
+    medication_request:
+      enabled: true
+      snomed_category: medicamentos
+    service_request:
+      enabled: true
+      snomed_category: procedimientos
+      allowed_categories:
+        - observation
+        - procedure
+        - laboratory
+        - imaging
+
 # Codificación semántica post-extracción IA ({@see SnomedCategoryMetadata}).
 codification:
   categories:

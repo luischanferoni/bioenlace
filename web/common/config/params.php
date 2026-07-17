@@ -53,6 +53,17 @@ return [
     'didit_paciente_biometric_workflow_id' => null,
     'didit_timeout' => 30,
 
+    /**
+     * Snowstorm — servidor de terminología SNOMED CT.
+     * El token, si el servidor lo exige, se configura en params-local.php.
+     */
+    'snowstorm' => [
+        'baseUrl' => 'https://snowstorm.msal.gob.ar/MAIN/',
+        'token' => null,
+        'timeoutSeconds' => 30,
+        'connectTimeoutSeconds' => 5,
+    ],
+
     /** Autogestión paciente: oferta de próximos slots (endpoint slots-disponibles-como-paciente en API v1). */
     /**
      * Defaults de {@see \common\models\EfectorTurnosConfig} cuando el campo en BD es NULL.

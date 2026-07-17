@@ -12,13 +12,14 @@ use common\components\Platform\Ai\Embeddings\EmbeddingsManager;
  */
 class CodificadorSnomedIA
 {
-    private $snowstorm;
+    private SnowstormClient $snowstorm;
     private $cache;
     private $estadisticas;
 
-    public function __construct()
+    public function __construct(?SnowstormClient $snowstorm = null)
     {
-        $this->snowstorm = new SnowstormClient();
+        $this->snowstorm = $snowstorm
+            ?? (Yii::$app->has('snowstorm') ? Yii::$app->get('snowstorm') : new SnowstormClient());
         $this->cache = Yii::$app->cache;
         $this->estadisticas = [
             'total_conceptos' => 0,

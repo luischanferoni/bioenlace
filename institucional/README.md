@@ -36,7 +36,7 @@ Doc producto: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licenci
 Núcleo compartido en `pricing-core.js`. En `#precios` se muestra el calculador completo; en `alta.html` solo un **indicador de precio** que se actualiza al cambiar cantidades/opcionales.
 
 **Fórmula:** `precio_unitario = COGS × (1 + margin_on_cost_percent/100)`.  
-COGS: base **0,95** ± audio **0,98** (STT profesional ~5 min con **−30 % on-device**) ± videollamada **5,00** (self-host sala/TURN/storage; transcript ya en §2/§4), columna **con context caching** ([costos-api.md](../web/docs/costos/costos-api.md)).  
+COGS: base **0,95** ± audio **0,98** (STT profesional ~5 min con **−30 % on-device**) ± videollamada **3,50** (self-host sala/TURN/Track Egress/storage; STT de la llamada = mismo audio, **una sola vez**), columna **con context caching** ([costos-api.md](../web/docs/costos/costos-api.md)).  
 El usuario elige clases (AMB / EMER / IMP), cantidad de **profesionales** por clase, y opcionales audio/videollamada. En copy público **no** usar el término PES.
 
 Fuente de cifras del calculador: `js/pricing-config.json` (mantener alineado con `pricing-pes-by-encounter-class.yaml`).

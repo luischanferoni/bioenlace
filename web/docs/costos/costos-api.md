@@ -32,7 +32,7 @@ Por médico por mes, en orden del recorrido del paciente (detalle y costes en §
 - **§3 Onboarding y día a día:** 400 llamadas a la IA por mes (`asistente-onboarding` en metadata; en código reutiliza preprocess/conversacional)
 - **§4 Captura clínica (encounter):** **siempre** audio del médico por consulta — **~5 min** STT (2.000 min/mes) + **400** llamadas `analisis-consulta` + **400** llamadas `encounter-codificacion-automatica` al guardar. Sin variante solo texto en el modelo de costos. Alineado a voz típica en consulta (~12 min de reloj → ~5 min de habla del profesional).
 - **§5 Medios (fotos, etc.):** 2 fotos por encounter (Vision)
-- **§6 Videollamada:** self-host; COGS planificado **5,00** = sala/TURN/ops + storage (**sin** STT: ya en §2/§4 con ~5+~4 min voz). Uso agresivo **80 %** tele — ver [§6](#6-videollamadas-pacientemédico) y [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
+- **§6 Videollamada:** self-host; COGS planificado **3,50** = sala/TURN/Track Egress + storage (**sin** STT duplicado: mismo que dictado, una vez en el calculador). Uso agresivo **80 %** tele — ver [§6](#6-videollamadas-pacientemédico) y [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
 - **§7 WhatsApp (alcance actual):** solo respuestas a mensajes **iniciados por el paciente** (service window Meta ≈ $0; IA = §1). **Utility / plantillas proactivas: no habilitadas** — ver [§7](#7-whatsapp-cloud-api-paciente).
 
 ---
@@ -357,18 +357,18 @@ Flujo: audio (dictado o pista de videollamada) → STT → transcripción → **
 
 ### 6. Videollamadas paciente–médico
 
-Arquitectura: **self-host** (LiveKit + TURN + tracks + workers batch + storage frío). Autoescalado agresivo. Detalle: [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
+Arquitectura: **self-host** (LiveKit + TURN + **Track Egress** muxing + batch VAD/STT + storage frío). Autoescalado agresivo (grabación min 1 / base 4 / max 12). Detalle: [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md).
 
 Supuesto de uso agresivo: **320 teleconsultas × 12 min × 2 participantes** = **7.680 participant-minutes / médico / mes** (80 % de 400 encounters).  
 STT post-call: **~9 min de voz** (médico ~5 + paciente ~4, con VAD) → ya modelado en **§2/§4**; **no** se suma otra vez aquí.
 
 | Concepto | Notas | USD / médico / mes |
 |----------|-------|--------------------|
-| Sala + TURN + grabación + ops (self-host + autoescalado) | Buffer a 5.000+ prof | **~3,00** |
-| Storage + backup (frío / retención) | Buffer hasta cerrar A vs B | **~2,00** |
-| Transcripción post-call | Cubierta por §2/§4 | **0** |
-| **COGS de planificación (matriz / calculador)** | Suma de las filas anteriores | **5,00** |
-| Histórico Daily + Deepgram | 30 % tele; ya no es lista | Era **9,19** |
+| Sala + TURN + Track Egress + ops (self-host + autoescalado) | Techo; real ~0,5–0,8 con muxing | **~1,50** |
+| Storage (14 d caliente → Deep Archive; 1 copia) | Buffer (~1,3–2,5/prof @ 5 años) | **~2,00** |
+| Transcripción post-call | Mismo STT que dictado (calculador: una sola vez) | **0** aquí |
+| **COGS de planificación (matriz / calculador)** | Suma de las filas anteriores | **3,50** |
+| Histórico Daily + Deepgram / techo 5,00 | Ya no es lista | Era **9,19** / **5,00** |
 
 Real-time Deepgram (~$0,0059/unmuted pax-min): **fuera de alcance**.
 
@@ -465,9 +465,9 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 | Concepto | Costo (USD por médico por mes) |
 |----------|-------------------------------|
-| Sala / TURN / ops + storage | **5,00** |
-| Post-call STT | **0** (en §2/§4) |
-| **COGS planificación (lista comercial)** | **5,00** |
+| Sala / TURN / ops + storage | **3,50** |
+| Post-call STT | **0** aquí (mismo que dictado; una vez en calculador) |
+| **COGS planificación (lista comercial)** | **3,50** |
 
 ### Apartado 4 – WhatsApp (§7)
 
@@ -481,17 +481,17 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 |-----------|----------------------------|----------------------------|-------------------|
 | Apartados 1 + 2 (motivos **solo texto**) | **~$2.50** | **~$2.35** | **~$2.39 / ~$2.27** |
 | Apartados 1 + 2 (motivos **con audio**) | **~$3.65** | **~$3.49** | **~$3.53 / ~$3.41** |
-| + Apartado 3 (**videollamada, COGS planificado**) | **+$5,00** | **+$5,00** | **+$5,00** |
-| **Total con videollamada** — motivos texto | **~$7,50** | **~$7,35** | **~$7,39 / ~$7,27** |
-| **Total con videollamada** — motivos audio | **~$8,65** | **~$8,49** | **~$8,53 / ~$8,41** |
+| + Apartado 3 (**videollamada, COGS planificado**) | **+$3,50** | **+$3,50** | **+$3,50** |
+| **Total con videollamada** — motivos texto | **~$6,00** | **~$5,85** | **~$5,89 / ~$5,77** |
+| **Total con videollamada** — motivos audio | **~$7,15** | **~$6,99** | **~$7,03 / ~$6,91** |
 
-**Orden de magnitud uso intensivo (todo incluido, video con COGS 5,00):** bruto todo-servidor **~USD 8–9**/prof/mes; con **−30 % STT on-device** en planificación **~USD 7,5–8**/prof/mes. Solo IA + STT + Vision (sin §6): bruto **~USD 3,5–3,7**; planificación **~USD 2,7–2,9** (motivos en audio).
+**Orden de magnitud uso intensivo (todo incluido, video con COGS 3,50):** bruto todo-servidor **~USD 7–7,5**/prof/mes; con **−30 % STT on-device** en planificación **~USD 6–6,5**/prof/mes. Solo IA + STT + Vision (sin §6): bruto **~USD 3,5–3,7**; planificación **~USD 2,7–2,9** (motivos en audio).
 
 **WhatsApp (§7, alcance actual):** Meta **~$0** (sin utility). La IA del chat sigue en §1.
 
-**De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** y el STT de planificación (**audio 0,98**) — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Detalle y add-ons audio/videollamada: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
+**De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** y el STT de planificación (**audio 0,98**) — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Videollamada **incluye** STT profesional una vez (no duplicar dictado). Detalle: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
 
-**Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **5,00** (self-host; STT en §2/§4) — ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
+**Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **3,50** (self-host; STT no duplicado) — ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
 
 ---
 

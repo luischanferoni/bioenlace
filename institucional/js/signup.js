@@ -188,6 +188,12 @@
       input.disabled = !ambOn;
       if (!ambOn) input.checked = false;
     });
+    var audio = planInput(form, 'audio');
+    var video = planInput(form, 'videollamada');
+    if (ambOn && audio && video && video.checked) {
+      audio.checked = true;
+      audio.disabled = true;
+    }
 
     if (isConsultorio) return;
 
@@ -226,11 +232,12 @@
     }
     var audio = planInput(form, 'audio');
     var video = planInput(form, 'videollamada');
+    var videoOn = !!(ambOn && video && video.checked);
     return {
       classes: classes,
       addons: {
-        audio: !!(ambOn && audio && audio.checked),
-        videollamada: !!(ambOn && video && video.checked),
+        audio: !!(ambOn && audio && audio.checked) || videoOn,
+        videollamada: videoOn,
       },
     };
   }
@@ -252,7 +259,7 @@
     Object.keys(selection.classes).forEach(function (code) {
       plan.classes[code] = {
         max_pes: selection.classes[code],
-        dictado_incluido: code === 'AMB' ? selection.addons.audio : true,
+        dictado_incluido: code === 'AMB' ? !!(selection.addons.audio || selection.addons.videollamada) : true,
         videollamada_permitida: code === 'AMB' ? selection.addons.videollamada : false,
       };
     });
@@ -286,8 +293,8 @@
       var note = '';
       if (l.code === 'AMB') {
         var bits = [];
-        if (selection.addons.audio) bits.push('dictado');
-        if (selection.addons.videollamada) bits.push('videollamada');
+        if (selection.addons.videollamada) bits.push('videollamada (transcripción incluida)');
+        else if (selection.addons.audio) bits.push('dictado');
         if (bits.length) note = ' · ' + bits.join(' · ');
       }
       return (

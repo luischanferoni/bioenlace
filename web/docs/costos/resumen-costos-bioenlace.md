@@ -14,7 +14,7 @@ Todo se expresa **por profesional y por mes**, siguiendo el recorrido del pacien
 | Motivos de consulta (con la posibilidad de audio)       | **~4 minutos de audio** (voz paciente) por consulta, solo si hay audio en ese chat o pista de videollamada |
 | Captura del médico      | **Siempre audio** — **~5 minutos** de voz del profesional por consulta + análisis del texto   |
 | Fotos clínicas          | **2 por consulta** — hoy **sin costo** en el presupuesto (dentro de franquicia) |
-| Videollamada            | **80 %** de las consultas (planificación agresiva), **12 minutos**, paciente y médico; COGS add-on **5,00** |
+| Videollamada            | **80 %** de las consultas (planificación agresiva), **12 minutos**, paciente y médico; COGS add-on **3,50** |
 
 
 ---
@@ -89,7 +89,7 @@ Durante o después de la consulta el médico **dicta en voz alta** lo que atendi
 ### 4. Fotos y videollamada (referencia)
 
 - **Fotos:** compartir imágenes clínicas; costo presupuestado **cero** hoy.
-- **Videollamada:** add-on con COGS planificado **USD 5,00**/prof/mes (self-host sala/TURN/storage; STT ya en §2/§4). Detalle: [costos-api §6](./costos-api.md#6-videollamadas-pacientemédico), [videollamadas.md](./estrategias-reduccion/videollamadas.md). No incluido en los totales de IA de abajo.
+- **Videollamada:** add-on con COGS planificado **USD 3,50**/prof/mes (self-host sala/TURN/Track Egress/storage; STT una vez, mismo que dictado). Detalle: [costos-api §6](./costos-api.md#6-videollamadas-pacientemédico), [videollamadas.md](./estrategias-reduccion/videollamadas.md). No incluido en los totales de IA de abajo.
 
 ---
 

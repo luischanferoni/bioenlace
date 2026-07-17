@@ -22,7 +22,9 @@ Admin: Licencias / Contratos.
 ## Fórmula
 
 ```
-COGS_ref = base + (audio ? stt_profesional : 0) + (videollamada ? cogs_video : 0)
+COGS_ref = base
+         + ((audio || videollamada) ? stt_profesional : 0)   # STT una sola vez
+         + (videollamada ? cogs_video : 0)
 COGS_clase = COGS_ref × (encounters_clase / 400)
 precio_unitario_clase = COGS_clase × (1 + margin_on_cost_percent/100)
 USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
@@ -31,17 +33,19 @@ USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 | Componente COGS (a 400 encounters/mes, **con context caching**) | USD / profesional / mes | Fuente |
 |----------------------------------------------------------------|-------------------------|--------|
 | **Base** (IA + captura texto; motivos paciente texto; **sin** STT del profesional) | **0,95** | Apartado 1 motivos texto con caché − STT §4 bruto (~1,40) |
-| **+ Audio** (STT profesional ~5 min, **−30 % on-device**) | **+0,98** | costos-api § STT / [stt.md](../../costos/estrategias-reduccion/stt.md) |
-| **+ Videollamada** (self-host SFU + TURN + storage; solo AMB) | **+5,00** | costos-api §6 (STT de la llamada ya en §2/§4) |
+| **+ Audio / STT** (profesional ~5 min, **−30 % on-device**) | **+0,98** | costos-api § STT; **incluido** si hay videollamada |
+| **+ Videollamada** (self-host Track Egress + storage; solo AMB) | **+3,50** | costos-api §6 (**sin** STT duplicado) |
 
 **Margen sobre costo:** **233 %** ≈ margen bruto ~70 % (objetivo software; ver [impuestos-argentina.md](../../costos/impuestos-argentina.md)).
+
+**Regla comercial:** videollamada **incluye** la transcripción de la llamada (= mismo COGS `audio` una vez). No se suma dictado + video como dos STT.
 
 
 ### Volumen por clase (por profesional / mes, época normal)
 
 | Clase | Volumen lista | Rango de estimación (orientativo) | Dictado | Videollamada |
 |-------|---------------|-----------------------------------|---------|--------------|
-| **AMB** | **400** | costos-api (20×20) | Opcional | Opcional |
+| **AMB** | **400** | costos-api (20×20) | Opcional (auto si hay video) | Opcional |
 | **EMER** | **350** | Normal ~195–455; pico ~455–780+ | **Obligatorio** (incluido) | **No** |
 | **IMP** | **300** | Típico chico–mediano ~100–960; grandes 960–2400+ | **Obligatorio** (incluido) | **No** |
 
@@ -50,13 +54,14 @@ No hay SKU chico/mediano/grande: el tamaño se refleja en **cantidad de profesio
 | Configuración | COGS (a vol. de la clase) | Precio lista / profesional / mes |
 |---------------|---------------------------|----------------------------------|
 | AMB solo base | 0,95 | **~3,16** |
-| AMB + audio | 1,93 | **~6,43** |
-| AMB + videollamada | 5,95 | **~19,81** |
-| AMB + audio + videollamada | 6,93 | **~23,08** |
+| AMB + audio (sin video) | 1,93 | **~6,43** |
+| AMB + videollamada (incluye STT) | 5,43 | **~18,08** |
+| AMB + audio + videollamada | **5,43** (igual; STT no se duplica) | **~18,08** |
 | EMER (audio incluido, vol 350) | 1,689 | **~5,62** |
 | IMP (audio incluido, vol 300) | 1,448 | **~4,82** |
 
 Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×3,16 + 4×5,62 = **USD 54,08/mes**`.
+Ejemplo tele: 10 AMB con videollamada → `10×18,08 = **USD 180,80/mes**`.
 
 ---
 

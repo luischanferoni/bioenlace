@@ -1,48 +1,44 @@
 # Videollamadas
 
-**COGS de planificación (matriz / calculador):** **USD 5,00 / prof / mes** — ver [costos-api.md §6](../costos-api.md#6-videollamadas-pacientemédico).
+**COGS de planificación (matriz / calculador):** **USD 3,50 / prof / mes** — ver [costos-api.md §6](../costos-api.md#6-videollamadas-pacientemédico).
 
 Desglose planificado:
 
 | Componente | USD / prof / mes |
 |------------|------------------|
-| Sala + TURN + grabación + ops (self-host + autoescalado) | **~3,00** |
-| Storage + backup (buffer frío / retención) | **~2,00** |
-| Transcripción post-call | **0** (ya en §2/§4: ~5 min médico + ~4 min paciente) |
-| **Total COGS videollamada** | **5,00** |
+| Sala + TURN + Track Egress + ops (self-host + autoescalado) | **~1,50** (real ~0,5–0,8 con muxing) |
+| Storage + Deep Archive (14 d caliente → frío; 1 copia) | Buffer (~1,3–2,5/prof @ 5 años) → **~2,00** |
+| Transcripción post-call | **0** en este add-on (mismo STT que dictado / §2–§4; se cobra **una sola vez** en el calculador) |
+| **Total COGS videollamada** | **3,50** |
 
 Supuesto de uso de planificación agresiva: **80 %** de las consultas × 12 min × 2 participantes ≈ **7.680 participant-minutes / prof / mes** (ver [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md)).  
-El COGS publicado histórico a **30 %** + Deepgram era **9,19**; se reemplazó al pasar STT a la base y self-host.
+Histórico Daily + Deepgram @ 30 %: **9,19**. Techo intermedio self-host: **5,00**. Vigente: **3,50**.
+
+**Track Egress (muxing):** el cliente publica a 480p/720p @ 15 fps; el servidor **no** re-encodea. Autoescala grabación **min 1 / base 4 / max 12**.
+
+**Calculador institucional:** si se tilda videollamada, el STT profesional (`audio` **0,98**) se incluye **una sola vez** (no se suma dictado + video como dos transcripciones).
 
 ## Roadmap de proveedor
 
 | Fase | Proveedor | Rol |
 |------|-----------|-----|
-| **Objetivo** | Self-host (LiveKit u equivalente) + TURN + grabación tracks; STT Groq vía §2/§4 | Camino principal |
-| **Histórico** | Daily.co pay-as-you-go + Deepgram post-call | Integración rápida; ya no es COGS lista |
+| **Objetivo** | Self-host (LiveKit) + TURN + **Track Egress**; STT Groq vía §2/§4 | Camino principal |
+| **Histórico** | Daily.co + Deepgram; techo **5,00** | Ya no es lista |
 
-No bajar el número de metadata solo porque el gasto real de cómputo sea menor a escala: eso aumenta margen. Sí bajar cuando el modelo de costo cambia (p. ej. STT sale del add-on).
+## Transcripción post-call (fuera del add-on video en USD de infra)
 
-## Transcripción post-call (fuera del add-on video)
-
-Producto: al terminar la videollamada, transcript del audio (tracks + VAD) → motivos (§2) y note del encounter → `analizarTextoProcesado` / revisión → `clinical/encounter/guardar`. **No** se usa real-time en la planificación.
+Producto: tracks + VAD → motivos (§2) y note → análisis. El costo Groq está en el add-on **Dictado** / §2–§4, no otra vez en videollamada.
 
 | Opción | Motor | Minutos / teleconsulta | Rol en COGS |
 |--------|-------|------------------------|-------------|
-| **Acordado** | Groq Whisper + VAD (pista médico ~5 + paciente ~4) | **~9** | En **§2/§4**, no en add-on video |
+| **Acordado** | Groq Whisper + VAD (~5 + ~4) | **~9** | En **audio / §2–§4**, una vez |
 | Histórico | Daily → Deepgram | 12 recorded-min | Ya no en lista |
 
-Si el transcript **reemplaza** el dictado del §4 y los motivos del §2, no sumar dos veces el STT (~5 min médico + ~4 min paciente en COGS base); el análisis IA sigue en §4. Con VAD sobre tracks de videollamada la voz facturable es ~9 min/teleconsulta — ver [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md).
-
-Detalle de tarifas: [costos-api §6](../costos-api.md#6-videollamadas-pacientemédico), [stt.md](./stt.md).
+Detalle: [costos-api §6](../costos-api.md#6-videollamadas-pacientemédico), [stt.md](./stt.md), [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md).
 
 ## Palancas operativas
 
-- Límite de duración (aviso 15–20 min): **10–25 %** sobre minutos de video **y** recorded-minutes de STT.
-- Calidad adaptable / fallback audio.
-- Post-call solo con consentimiento y grabación habilitada.
-- Autoescalado agresivo del SFU (cloud por hora + banda incluida).
-- Retención video A vs B (años vs 30–90 d) — ver análisis self-host.
-- Alertar cuando `(gasto_video_infra + storage) / N_video > 5,00` varios meses → revisar retención, duración o bitrate.
-
-El context caching de Gemini **no** afecta videollamadas ni el STT post-call (sí el análisis IA posterior).
+- Límite de duración; publish a resolución de archivo desde el cliente.
+- Autoescalado SFU + Track Egress (min 1 / base 4 / max 12).
+- Lifecycle: 14 d caliente → Deep Archive (mín. 180 d); **sin** 2.ª copia.
+- Alertar cuando `(gasto_video_infra + storage) / N_video > 3,50` varios meses.

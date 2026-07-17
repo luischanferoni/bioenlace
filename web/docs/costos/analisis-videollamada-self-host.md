@@ -1,14 +1,14 @@
 # Análisis — Videollamada self-host (COGS y producto)
 
-**Estado:** cifras de planificación **publicadas** en matriz / calculador (COGS video **5,00**; STT en §2/§4). Pendiente de producto: retención video A vs B y 1 vs 2 pistas.  
-**Fecha de captura:** 2026-07-17 (actualizado arquitectura + minutos de voz + lista comercial)  
+**Estado:** cifras de planificación **publicadas** (COGS video **3,50**; STT en §2/§4, una sola vez en calculador). Retención: **14 d caliente → Deep Archive** (años; mín. 180 d); **sin 2.ª copia**. Grabación: **Track Egress (muxing)** autoescala 1/4/12. Pendiente: 1 vs 2 pistas de video.  
+**Fecha de captura:** 2026-07-17 (actualizado arquitectura + minutos de voz + lista 3,50 + lifecycle + Track Egress)  
 **Contexto:** self-host sin Daily/Deepgram; pipeline post-call; arquitectura mínima + autoescalado; STT alineado a voz real de consulta.
 
-**COGS video vigente:** [videollamadas.md](./estrategias-reduccion/videollamadas.md), [costos-api.md §6](./costos-api.md#6-videollamadas-pacientemédico) — **USD 5,00** = sala/TURN/ops + storage (STT **no** incluido). Histórico Daily+Deepgram: **9,19**.
+**COGS video vigente:** [videollamadas.md](./estrategias-reduccion/videollamadas.md), [costos-api.md §6](./costos-api.md#6-videollamadas-pacientemédico) — **USD 3,50** = sala/TURN/Track Egress/ops (~1,50) + storage (~2,00); STT **no** duplicado (mismo que dictado). Histórico Daily+Deepgram: **9,19**. Techo intermedio: **5,00**.
 
 **STT base:** [costos-api.md § STT](./costos-api.md#stt) — médico **~5 min** + paciente **~4 min** por encounter → bruto **~$2,52**/prof/mes en servidor; planificación **−30 % on-device → ~$1,76**. La videollamada **alimenta** esos minutos (no los duplica) cuando el transcript reemplaza dictado / notas de voz.
 
-**Lista comercial:** base **0,95** + audio **0,98** (−30 % on-device) + video **5,00** → AMB audio+video **~23,08**/prof/mes ([matriz](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md), [`pricing-config.json`](../../../institucional/js/pricing-config.json)).
+**Lista comercial:** base **0,95** + audio **0,98** (−30 % on-device) + video **3,50** → AMB con videollamada (STT incluido) **~18,08**/prof/mes ([matriz](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md), [`pricing-config.json`](../../../institucional/js/pricing-config.json)).
 
 ---
 
@@ -18,10 +18,10 @@ Solo **self-host** para telemedicina. Sin Daily.co ni Deepgram en el modelo obje
 
 | Paso | Qué |
 |------|-----|
-| 1 | SFU self-host (LiveKit u equivalente) + **TURN** |
-| 2 | **Persistir** grabaciones (tracks separados) |
-| 3 | Extraer audio + **VAD / recorte de silencios** (FFmpeg / worker post-call) |
-| 4 | **STT Whisper** (Groq `whisper-large-v3-turbo`) sobre voz real (~5 + ~4 min) |
+| 1 | SFU self-host (LiveKit) + **TURN** |
+| 2 | **Track Egress** (muxing de pistas; sin re-encode en vivo) |
+| 3 | Extraer audio + **VAD / recorte de silencios** (worker post-call) |
+| 4 | **STT Whisper** (Groq) sobre voz real (~5 + ~4 min) |
 | 5 | Texto → note del encounter → flujo existente (`analisis-consulta` / revisión / `guardar`) |
 
 ### Principio de escala
@@ -44,25 +44,29 @@ Clientes (paciente / médico)
 └───────────┬───────────────┘
             ▼
 ┌───────────────────────────┐
-│ Pool Egress / grabación   │  tracks raw en vivo (liviano)
-│ (autoescala / a cero)     │
+│ Pool Track Egress         │  muxing (sin re-encode); autoescala 1/4/12
+│ (grabación por pistas)    │
 └───────────┬───────────────┘
             ▼
 ┌───────────────────────────┐
-│ Workers batch post-call   │  FFmpeg + VAD + transcode 480p/720p
-│ (cola; escala a cero)     │  → STT Groq → object storage frío
+│ Workers batch post-call   │  VAD + STT Groq + lifecycle
+│ (cola; escala a cero)     │  → object storage
 └───────────────────────────┘
+            │
+            ▼
+   14 días caliente (R2/B2) → Deep Archive (años)
 ```
 
 | Componente | Rol | Escala |
 |------------|-----|--------|
 | **Plano de control** | LB ×2, Redis, orquestador API, 1 SFU mínimo, monitoreo | Fijo (piso) |
 | **Media en vivo** | Nodos SFU + TURN | Por **concurrencia** (autoescala) |
-| **Grabación / egress** | Pool de workers que capturan tracks | Por salas activas (autoescala) |
-| **Batch post-call** | Transcode + VAD + subida a frío | Por cola (escala a **cero** de noche) |
-| **Object storage frío** | Video + backup | Por **GB acumulados** (no autoescala) |
+| **Grabación / Track Egress** | Muxing de pistas (CPU baja) | min 1 / base 4 / max 12; CPU+RAM >75 % |
+| **Batch post-call** | VAD + STT + subida a caliente | Por cola (escala a **cero** de noche) |
+| **Object storage** | 14 d caliente → Deep Archive (1 copia) | Por **GB acumulados** (no autoescala) |
 
-**Proveedor:** cloud con **facturación por hora** y **banda incluida / barata** (p. ej. Hetzner Cloud, OVH Public Cloud). En hyperscalers (AWS/GCP) el egress de WebRTC (~$0,05–0,09/GB) invalida el ahorro del autoescalado.
+**Proveedor cómputo/SFU:** cloud con **facturación por hora** y **banda incluida / barata** (DigitalOcean, Linode/Akamai, Hetzner, OVH). En hyperscalers (AWS/GCP) el egress de WebRTC (~$0,05–0,09/GB) invalida el ahorro del autoescalado.  
+**Proveedor storage:** caliente R2/B2; frío **solo** AWS S3 Glacier **Deep Archive** (~$0,001/GB-mes; permanencia mínima **180 d** OK).
 
 ### Flujo clínico post-call
 
@@ -78,8 +82,37 @@ Clientes (paciente / médico)
 - **TURN:** obligatorio en producción.
 - **Worker post-call:** cola OK; no preocupa latencia del transcript.
 - Escala de planificación: **5.000 profesionales**.
-- **Backup** de grabaciones: sí (2.ª copia).
-- Captura en vivo = tracks raw; transcode a calidad médica (480p/720p) en batch.
+- **Backup / 2.ª copia:** **no** (una sola copia: caliente → Deep Archive).
+- **Grabación en vivo:** **Track Egress** (muxing; sin re-encode). Clientes publican ya a 480p/720p @ 15 fps.
+- **Batch post-call:** VAD + STT + lifecycle a frío; **no** compositing de pantalla salvo que producto lo pida.
+- **Lifecycle:** 14 días en caliente (reclamos inmediatos) → Deep Archive (años; mín. 180 d).
+
+### Grabación: Track Egress + muxing (acordado)
+
+No usar Room Composite / Jibri (Chrome por sala) en vivo: eso satura CPU. Con LiveKit **Track Egress**:
+
+| Regla | Detalle |
+|-------|---------|
+| Qué hace el servidor | Toma paquetes ya listos (Opus + VP8/H.264) y los **muxea** a WebM/MP4 **sin alterar píxeles** |
+| Qué no hace | Transcodificar, renderizar layout, PiP en vivo |
+| Origen de calidad | El **cliente** publica a la resolución de archivo (480p/720p @ 15 fps) |
+| Unidad de capacidad | **Pistas**, no llamadas (1 tele ≈ hasta 4 pistas: 2 video + 2 audio) |
+| Post-call | VAD + STT por pista; unir audio+video del **mismo** participante = remux barato. Componer médico+paciente en un solo video = re-encode batch (**evitar** si nadie re-ve la pantalla) |
+
+**Autoescalado del pool de grabación** (referencia a 1.000 PES; escala lineal):
+
+| Parámetro | Valor |
+|-----------|--------|
+| Mínimo | **1** instancia (madrugada) |
+| Base hora pico | **4** instancias (~8 vCPU c/u) |
+| Máximo | **12** instancias |
+| Disparo | CPU **o** memoria del clúster > **75 %** → clonar (< 60 s) |
+| Admisión | Calibrar `track_cpu_cost` con load test; el default de LiveKit es conservador |
+| Pico antes de clonado | Retry / cola a nivel app si Egress responde 503 |
+
+Con muxing puro, 4 instancias base son el **punto de partida** (no un techo fijo). El techo 12 cubre picos. Validar ratio pistas/vCPU y RAM por sesión antes de fijar capacidad en producción.
+
+**Códec / contenedor:** WebRTC suele usar VP8 → grabar **WebM** o publicar **H.264** si el entregable debe ser MP4 sin re-encode. Si hace falta MP4 desde VP8, el remux a MP4 va en **batch**, no en vivo.
 
 ---
 
@@ -114,12 +147,13 @@ El **80 %** es hipótesis de planificación (no telemetría).
 
 ## 3. Glosario
 
-### Composite vs tracks
+### Composite vs tracks vs muxing
 
-- **Composite:** un solo video “como la pantalla”. Más pesado.
-- **Tracks (raw):** una pista por participante. Más barato; STT sin diarización.
+- **Composite (Room Composite / Jibri):** un solo video “como la pantalla”. Requiere Chrome/GStreamer por sala; **CPU alta**; no usar en vivo a escala.
+- **Tracks + Track Egress (muxing):** una pista por participante; el servidor **solo empaqueta** paquetes RTP ya codificados. CPU baja.
+- **Batch post-call:** VAD / STT; compositing opcional y caro — solo si producto lo exige.
 
-**Preferencia:** tracks + VAD.
+**Preferencia:** tracks + Track Egress (muxing) + VAD. Sin compositing en el camino feliz.
 
 ### TURN
 
@@ -141,20 +175,21 @@ Retransmite A/V cuando falla el camino directo (NAT/firewall). Obligatorio; se p
 |------|--------|
 | Plano de control (LB, Redis, 1 SFU mínimo) | Piso ~**$350–450**/mes siempre |
 | SFU LiveKit + TURN | Nodos por concurrencia; duty cycle ~40 % |
-| Worker egress / grabación | Autoescala; captura raw |
-| Worker batch FFmpeg | On-demand / a cero |
+| Worker egress / grabación (**Track Egress**) | Autoescala min 1 / base 4 / max 12; muxing (CPU baja) |
+| Worker batch post-call | VAD + STT + lifecycle; a cero de noche |
 | TLS / dominio / observabilidad | Bajo |
 | Ops humano | Parches, incidentes WebRTC |
 
-A 5.000 PES, cómputo media + batch con autoescalado: orden **~$3.000–3.500**/mes flotilla (~**$0,60–0,70**/prof). Buffer histórico sala **3,00** sigue como techo publicado.
+A 5.000 PES, cómputo media + grabación + batch con autoescalado: orden **~$2.500–3.500**/mes flotilla (~**$0,50–0,70**/prof). El Track Egress **abarata** el tier de grabación vs composite; el buffer infra **~1,50** del COGS **3,50** deja margen operativo.
 
 ### 4.2 Variables
 
 | Ítem | Driver | ¿En add-on video? |
 |------|--------|-------------------|
 | Egress SFU / TURN | Minutos × bitrate × % relay | Sí (casi $0 con banda incluida) |
-| Storage + backup | GB-mes × retención × ~2 copias | Sí |
-| CPU FFmpeg | Minutos de media | Sí (batch) |
+| Storage (1 copia) | 14 d caliente + Deep Archive acumulado | Sí |
+| CPU Track Egress (muxing) | Pistas concurrentes (muy bajo vs composite) | Sí (dentro de infra) |
+| CPU batch (VAD / STT prep) | Post-call; a cero de noche | Sí (dentro de infra) |
 | STT Whisper (Groq) | ~9 min voz / teleconsulta | **No** — ya en §2/§4 |
 | IA motivos + análisis | Tokens | **No** — ya en §2/§4 |
 
@@ -170,75 +205,91 @@ Esos **~$2,0**/prof/mes @ 80 % tele están **parte** del STT base (~$2,52 a 400 
 
 ---
 
-## 5. Storage multi-año — el punto crítico
+## 5. Storage — lifecycle acordado (caliente + Deep Archive, 1 copia)
 
-Con ~0,7 Mbps y 3.840 min de video/mes (1 pista) ≈ **~20 GB nuevos / prof / mes**. Con **2 pistas de video** ≈ **~40 GB**. Preferencia de producto pendiente: 1 vs 2 pistas en archivo.
+**Decisión cerrada:**
 
-| Política | GB acumulados / prof (orden) | Frío Deep Archive (~$0,001/GB × 2 copias) | Caliente (~$0,007/GB) |
-|----------|------------------------------|------------------------------------------|------------------------|
-| Video 30–90 días | ~20–60 (1 pista) | **~$0,04–0,12** | **~$0,3–0,8** |
-| Audio años (~0,7 MB/min) | ~160 @ 5 años | **~$0,3** | — |
-| **Video 5 años (1 pista)** | **~1.200** | **~$2,4** | **~$11** |
-| **Video 5 años (2 pistas)** | **~2.400** | **~$4,8** | **~$22** |
+| Regla | Valor |
+|-------|--------|
+| Caliente (R2/B2) | **14 días** (reclamos inmediatos) |
+| Frío | **S3 Glacier Deep Archive** (~$0,00099/GB-mes) |
+| Permanencia mínima Deep Archive | **180 días** — aceptada |
+| Copias | **1** (sin 2.ª copia / backup) |
+| Retención total video | **Años** (acumula en frío) |
 
-**Pendiente de producto (bloquear COGS video hasta decidir):**
+Con ~0,7 Mbps y 3.840 min de video/mes (1 pista) ≈ **~20 GB nuevos / prof / mes**. Con **2 pistas** ≈ **~40 GB**. Pendiente: 1 vs 2 pistas en archivo.
 
-| Opción | Efecto en storage del add-on |
-|--------|------------------------------|
-| A — Video años + backup | Frío ~**2,4–4,8**/prof → total add-on infra+storage **~4–8** |
-| B — Video corto (30–90 d) + audio/transcript años | Storage **~$0,5–2** → total add-on **~2–4** |
+Stock en régimen (por profesional):
 
-El transcript (texto) para siempre cuesta centavos.
+| Capa | 1 pista (~20 GB/mes nuevos) | 2 pistas (~40 GB/mes) |
+|------|----------------------------:|----------------------:|
+| Caliente estable (~14/30 del mes) | ~9–10 GB → **~$0,07**/mes | ~18–20 GB → **~$0,14**/mes |
+| Frío @ 1 año | ~220–240 GB → **~$0,22–0,24** | ~440–480 GB → **~$0,44–0,48** |
+| Frío @ 5 años | ~1.200 GB → **~$1,20** | ~2.400 GB → **~$2,40** |
+| **Total storage @ 5 años** | **~$1,3**/prof/mes | **~$2,5**/prof/mes |
+
+El frío **sí se acumula** (no es estable): mes 1 ≈ solo caliente + poco frío; a 5 años el frío domina. Sin 2.ª copia, el buffer **~2,00** del COGS video **3,50** cubre 1 pista a 5 años y deja margen corto para 2 pistas.
+
+El transcript (texto) para siempre cuesta centavos; la note clínica sale del transcript, no del MP4.
 
 ---
 
 ## 6. Estimación por etapa (infra video + storage; sin STT duplicado)
 
-Supuestos: cloud por hora + banda incluida; autoescalado; tracks + VAD; STT en §2/§4; storage frío con 2 copias. Concurrencia pico ≈ 2× promedio (22 días × 10 h).
+Supuestos: cloud por hora + banda incluida; autoescalado; tracks + VAD; STT en §2/§4; **14 d caliente → Deep Archive; 1 copia**. Concurrencia pico ≈ 2× promedio (22 días × 10 h).
 
-| Etapa | PES | Pico llamadas | Arquitectura | Infra + batch (mes) | Storage mes 1 | Storage estabilizado 5 años* | **Total etapa (mes 1)** | **Total estabilizado*** |
-|-------|----:|--------------:|--------------|--------------------:|--------------:|-----------------------------:|------------------------:|------------------------:|
+| Etapa | PES | Pico llamadas | Arquitectura | Infra + batch (mes) | Storage mes 1* | Storage @ 5 años* | **Total etapa (mes 1)** | **Total @ 5 años*** |
+|-------|----:|--------------:|--------------|--------------------:|---------------:|------------------:|------------------------:|--------------------:|
 | 0 | 0 (dev) | 0 | 1 caja unificada; sin HA | **$20–30** | ~0 | ~0 | **$20–30** | **$20–30** |
-| 1 | 100 | ~60 | Plano control + 1 SFU + 1 batch | **~$450–550** | **~$40–80** | **~$240–480** | **~$500–630** | **~$700–1.000** |
-| 2 | 500 | ~290 | Autoescala 3–4 SFU pico → 1 noche | **~$700–900** | **~$200–400** | **~$1.200–2.400** | **~$900–1.300** | **~$1.900–3.300** |
-| 3 | 1.000 | ~580 | ~7 SFU pico → 1 noche; batch pool | **~$1.000–1.400** | **~$400–800** | **~$2.400–4.800** | **~$1.400–2.200** | **~$3.400–6.200** |
-| 4 | 5.000 | ~2.900 | Cluster; ~30 nodos pico; duty ~40 % | **~$3.200–4.000** | **~$2.000–4.000** | **~$12.000–24.000** | **~$5.200–8.000** | **~$15.000–28.000** |
+| 1 | 100 | ~60 | Plano control + 1 SFU + 1 batch | **~$450–550** | **~$15–30** | **~$130–250** | **~$465–580** | **~$580–800** |
+| 2 | 500 | ~290 | Autoescala 3–4 SFU pico → 1 noche | **~$700–900** | **~$70–140** | **~$650–1.250** | **~$770–1.040** | **~$1.350–2.150** |
+| 3 | 1.000 | ~580 | ~7 SFU pico → 1 noche; batch pool | **~$1.000–1.400** | **~$140–280** | **~$1.300–2.500** | **~$1.140–1.680** | **~$2.300–3.900** |
+| 4 | 5.000 | ~2.900 | Cluster; ~30 nodos pico; duty ~40 % | **~$3.200–4.000** | **~$700–1.400** | **~$6.500–12.500** | **~$3.900–5.400** | **~$9.700–16.500** |
 
-\* Rango bajo = 1 pista video a frío; alto = 2 pistas. Sin telemetría de bitrate real.
+\* Rango bajo = 1 pista; alto = 2 pistas. Mes 1 ≈ casi todo caliente + poco frío; a 5 años domina Deep Archive.
 
-**Por PES a 5.000 (estabilizado, frío):**
+**Por PES a 5.000 (@ 5 años):**
 
 | Componente | USD / PES / mes |
 |------------|----------------:|
 | Infra SFU+TURN+batch+ops (autoescalado) | **~0,60–0,80** |
-| Storage + backup (opción A, frío) | **~2,4–4,8** |
+| Storage 14 d caliente + Deep Archive (1 copia) | **~1,3–2,5** |
 | STT (ya en §2/§4) | **0 aquí** |
-| **Add-on video orientativo** | **~3–6** (B) / **~5–8** (A frío) |
+| **Add-on video orientativo** | **~2–3,5** |
 
-Comparación con histórico **9,19** (@ 30 % + Deepgram): el camino self-host + STT en base + storage frío queda en **5,00** de add-on; el salto de uso al **80 %** y los minutos de voz se absorbieron al subir §2/§4.
+El COGS publicado **3,50** = infra buffer **~1,50** + storage buffer **~2,00**. Con Track Egress el gasto real de cómputo baja (~0,5–0,8); el **3,50** deja margen vs real ~1,8–3,3. Comparación con histórico **9,19** (@ 30 % + Deepgram) y techo intermedio **5,00**: self-host + STT en base + lifecycle queda por debajo; el salto al **80 %** tele se absorbió en §2/§4.
 
 ---
 
-## 7. Escenarios de COGS add-on (propuestos, no publicados)
+## 7. Escenarios de COGS add-on (alineados a decisión)
 
-Supuestos: 5.000 prof, **80 %** tele, TURN sí, VAD, STT **fuera** del add-on (en §2/§4), worker on-demand, banda incluida.
+Supuestos: 5.000 prof, **80 %** tele, TURN sí, **Track Egress (muxing)**, VAD, STT **fuera** del add-on (una vez en calculador), banda incluida, **14 d caliente → Deep Archive, 1 copia**.
 
-| Componente | Camino barato (B) | Video 5 años frío (A, 1 pista) | Video 5 años frío (A, 2 pistas) |
-|------------|-------------------|-------------------------------|--------------------------------|
-| SFU + TURN + workers + ops | ~0,6–1,0 | ~0,6–1,0 | ~0,6–1,0 |
-| STT Whisper | 0 aquí | 0 aquí | 0 aquí |
-| Storage + backup | ~0,5–2,0 | ~2,4 | ~4,8 |
-| **Total orientativo add-on** | **~1,5–3** | **~3–4** | **~5–6** |
+| Componente | 1 pista @ 5 años | 2 pistas @ 5 años |
+|------------|-----------------:|------------------:|
+| SFU + TURN + Track Egress + ops | ~0,5–0,8 | ~0,5–0,8 |
+| STT Whisper | 0 aquí | 0 aquí |
+| Storage (caliente + Deep Archive, 1 copia) | **~1,3** | **~2,5** |
+| **Total orientativo add-on (real)** | **~1,8–2,1** | **~3,0–3,3** |
 
-Cifra de planificación sugerida (hasta cerrar retención): **~4,00–6,00** USD/prof/mes (add-on video), dejando STT en el COGS base §2/§4.
+### ¿Afecta el COGS video publicado (sin STT duplicado)?
+
+| Pregunta | Respuesta |
+|----------|-----------|
+| ¿Baja el gasto **real** de cómputo? | **Sí.** Muxing + autoescalado 1/4/12 deja el tier de grabación en centavos–dólares por prof. |
+| ¿Cambia storage? | **No** (sigue 14 d → Deep Archive; 1 vs 2 pistas). |
+| ¿Cambia STT del add-on? | **No** (sigue en §2/§4; calculador: una sola vez con videollamada). |
+| ¿Bajamos el **5,00** de lista / metadata? | **Sí → 3,50.** Recomendado: infra ~1,50 + storage ~2,00. El techo **5,00** queda como histórico intermedio. |
+
+**COGS lista vigente:** **3,50** USD/prof/mes = infra buffer **~1,50** + storage buffer **~2,00**.
 
 Precio lista (margen 233 % sobre COGS):
 
 | COGS video | Delta lista aprox. |
 |------------|--------------------|
 | 9,19 (histórico Daily+Deepgram) | ~+30,6 |
-| **5,00 (vigente self-host)** | **~+16,7** |
-| ~4–6 (rango A/B frío) | ~+13–20 |
+| 5,00 (techo intermedio self-host) | ~+16,7 |
+| **3,50 (vigente)** | **~+11,7** |
 
 ---
 
@@ -246,24 +297,29 @@ Precio lista (margen 233 % sobre COGS):
 
 | # | Tema | Estado |
 |---|------|--------|
-| 1 | Retención video | Usuario: **años**. Análisis: frío ~$2–5; falta **confirmar A vs B** y 1 vs 2 pistas |
-| 2 | Composite vs tracks | **Tracks** + VAD |
+| 1 | Lifecycle storage | **Cerrado:** 14 d caliente → **Deep Archive** (años; mín. 180 d OK) |
+| 2 | Composite vs tracks | **Tracks + Track Egress (muxing)**; sin Room Composite en vivo |
 | 3 | TURN | **Sí** |
 | 4 | STT | Groq; **~5 min médico + ~4 min paciente**; ya en §2/§4 |
 | 5 | Arquitectura | Mínimo + **autoescalado agresivo**; cloud hora + banda barata |
-| 6 | Worker | On-demand / a cero |
-| 7 | Backup | **Sí** (2.ª copia) |
+| 6 | Grabación | Track Egress; autoescala **min 1 / base 4 / max 12**; disparo CPU+RAM >75 % |
+| 7 | Backup / 2.ª copia | **No** (1 copia) |
 | 8 | IA en add-on video | **No sumar** |
 | 9 | % teleconsulta | **80 %** (antes 30 %) |
+| 10 | 1 vs 2 pistas de video en archivo | **Abierto** (mueve storage ~1,3 vs ~2,5/prof @ 5 años) |
+| 11 | COGS video lista | **3,50** vigente; real orientativo **~1,8–3,3** |
 
 ### Glosario de errores a no repetir
 
 1. El **3,00** publicado nombraba “grabación” pero **no** modelaba storage multi-año.
-2. Storage de video **no** se prorratea entre 5.000; **se acumula** con la retención.
-3. No mezclar **GB** con **USD** sin tarifa $/GB/mes (caliente ≠ frío).
-4. No duplicar STT de §2/§4 si el transcript de video **reemplaza** dictado/motivos.
+2. Storage de video **no** se prorratea entre 5.000; **se acumula** en Deep Archive.
+3. No mezclar **GB** con **USD** sin tarifa $/GB/mes (caliente ≠ Deep Archive).
+4. No duplicar STT de §2/§4 si el transcript de video **reemplaza** dictado/motivos (calculador: una sola vez).
 5. No modelar 12×2 = 24 min STT sin VAD: la voz real es ~9 min.
 6. Autoescalar en AWS/GCP sin controlar egress destruye el ahorro de cómputo.
+7. No contar storage como “estable el primer año”: el frío crece mes a mes.
+8. No dimensionar grabación como “llamadas”: son **pistas**; no usar Room Composite a escala.
+9. El techo **5,00** fue intermedio; vigente **3,50** (= ~1,50 infra + ~2,00 storage).
 
 ---
 
@@ -276,13 +332,16 @@ Precio lista (margen 233 % sobre COGS):
 | Institucional | `institucional/js/pricing-config.json`, `institucional/README.md` |
 | Negocio | `matriz-argentina-modulos-precios.md`, `mapa-vias-ingreso-bioenlace.md`, `modelos-pricing-diferenciados.md` |
 
-**Pendiente:** retención A vs B y 1 vs 2 pistas de video (puede mover el **~2,00** de storage dentro del 5,00).
+**Cerrado en storage:** caliente 14 d + Deep Archive + sin 2.ª copia.  
+**Cerrado en grabación:** Track Egress (muxing) + autoescala 1/4/12.  
+**Cerrado en lista:** COGS video **3,50**; calculador no duplica STT con dictado+videollamada. Real orientativo ~1,8–3,3.  
+**Pendiente:** 1 vs 2 pistas de video en archivo.
 
 ## 10. Próxima conversación — agenda sugerida
 
-1. **Cerrar retención:** ¿video 5 años (A) o corto + audio/transcript (B)? ¿1 o 2 pistas de video?
-2. Ajustar el **~2,00** de storage dentro del 5,00 si hace falta.
-3. (Opcional) Doc técnico LiveKit: rooms, tokens, webhooks `meeting.ended`, worker, Encounter.
+1. **Cerrar 1 vs 2 pistas** de video en archivo (storage @ 5 años ~1,3 vs ~2,5/prof).
+2. Load test: calibrar `track_cpu_cost`, RAM por sesión y ratio pistas/vCPU.
+3. (Opcional) Doc técnico LiveKit: rooms, tokens, webhooks `meeting.ended`, Track Egress, worker.
 
 ---
 

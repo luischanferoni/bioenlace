@@ -10,7 +10,7 @@ Estimación y estrategias de ahorro en dos ejes: **infra propia (GPU)** y **APIs
 | [infra-estrategias.md](./infra-estrategias.md) | Estrategias infra |
 | [costos-api.md](./costos-api.md) | Costos APIs (Gemini Flash Lite, comparativa DeepSeek, Groq STT, Vision, WhatsApp reactivo §7; catálogo de contextos) |
 | [costos-didit.md](./costos-didit.md) | Didit — KYC y biometría remota (proyección por altas y reingresos) |
-| [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md) | Self-host + autoescalado; STT ~5+4 min; COGS video **5,00** (pendiente retención A/B) |
+| [analisis-videollamada-self-host.md](./analisis-videollamada-self-host.md) | Self-host; Track Egress muxing 1/4/12; 14 d → Deep Archive; COGS video **3,50** |
 | [resumen-costos-bioenlace.md](./resumen-costos-bioenlace.md) | Resumen de costos APIs (5.000 prof., sin jerga técnica) |
 | [estrategias-reduccion/](./estrategias-reduccion/README.md) | Palancas de ahorro (context caching, STT, caché app, …) |
 | [impuestos-argentina.md](./impuestos-argentina.md) | IVA, IIBB, ganancias — referencia AR (pricing y costo efectivo) |

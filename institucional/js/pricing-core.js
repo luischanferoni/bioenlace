@@ -47,15 +47,19 @@
   function referenceUnitCogs(config, audio, videollamada) {
     var cogs = (config && config.cogs_usd_per_professional_month) || {};
     var total = Number(cogs.base) || 0;
-    if (audio) total += Number(cogs.audio) || 0;
+    // Videollamada: el transcript de la llamada alimenta §2/§4 → STT profesional una sola vez
+    // (no sumar dictado + video como dos STT).
+    if (audio || videollamada) total += Number(cogs.audio) || 0;
     if (videollamada) total += Number(cogs.videollamada) || 0;
     return total;
   }
 
   function unitCogsForClass(config, code, addons) {
     addons = addons || {};
-    var audio = classIncludesAudio(config, code) || (code === 'AMB' && !!addons.audio);
     var video = classAllowsVideollamada(config, code) && !!addons.videollamada;
+    var audio =
+      classIncludesAudio(config, code) ||
+      (code === 'AMB' && (!!addons.audio || video));
     return referenceUnitCogs(config, audio, video) * volumeScale(config, code);
   }
 
@@ -112,8 +116,9 @@
       if (code === 'AMB') {
         var audio = row.querySelector('input[data-addon="audio"]');
         var video = row.querySelector('input[data-addon="videollamada"]');
-        sel.addons.audio = !!(audio && audio.checked);
-        sel.addons.videollamada = !!(video && video.checked);
+        var videoOn = !!(video && video.checked);
+        sel.addons.videollamada = videoOn;
+        sel.addons.audio = !!(audio && audio.checked) || videoOn;
       }
     });
     return sel;
@@ -130,7 +135,7 @@
       plan.classes[code] = {
         max_pes: qty,
         dictado_incluido: code === 'AMB'
-          ? !!(selection.addons && selection.addons.audio)
+          ? !!(selection.addons && (selection.addons.audio || selection.addons.videollamada))
           : true,
         videollamada_permitida: code === 'AMB'
           ? !!(selection.addons && selection.addons.videollamada)

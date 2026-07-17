@@ -29,10 +29,23 @@
     if (!row || row.getAttribute('data-class') !== 'AMB') return;
     const enabled = row.querySelector('input[name="class_AMB"]');
     const on = !!(enabled && enabled.checked);
-    row.querySelectorAll('input[data-addon]').forEach((input) => {
-      input.disabled = !on;
-      if (!on) input.checked = false;
-    });
+    const audio = row.querySelector('input[data-addon="audio"]');
+    const video = row.querySelector('input[data-addon="videollamada"]');
+    if (video) video.disabled = !on;
+    if (audio) {
+      if (!on) {
+        audio.disabled = true;
+        audio.checked = false;
+        if (video) video.checked = false;
+      } else if (video && video.checked) {
+        // Videollamada incluye transcripción de la llamada (= dictado una sola vez)
+        audio.checked = true;
+        audio.disabled = true;
+      } else {
+        audio.disabled = false;
+      }
+    }
+    if (!on && video) video.checked = false;
   }
 
   function syncQtyDisabled(row) {
@@ -63,8 +76,11 @@
             let note = '';
             if (l.code === 'AMB') {
               const bits = [];
-              if (selection.addons.audio) bits.push('con dictado');
-              if (selection.addons.videollamada) bits.push('con videollamada');
+              if (selection.addons.videollamada) {
+                bits.push('con videollamada (transcripción incluida)');
+              } else if (selection.addons.audio) {
+                bits.push('con dictado');
+              }
               note = bits.length ? ' · ' + bits.join(' · ') : '';
             }
             return (
@@ -97,10 +113,10 @@
       const summary = result.lines
         .map((l) => {
           let extra = '';
-          if (l.code === 'AMB') {
+            if (l.code === 'AMB') {
             const bits = [];
-            if (selection.addons.audio) bits.push('dictado');
             if (selection.addons.videollamada) bits.push('videollamada');
+            else if (selection.addons.audio) bits.push('dictado');
             if (bits.length) extra = ' con ' + bits.join(' y ');
           }
           return l.qty + ' profesional' + (l.qty === 1 ? '' : 'es') + ' ' + l.label + extra;
@@ -142,12 +158,12 @@
       '<input type="checkbox" data-addon="audio" disabled />' +
       '<span><strong>' +
       (audio.label || 'Dictado') +
-      '</strong> <em>(opcional)</em></span></label>' +
+      '</strong> <em>(opcional; incluido si hay videollamada)</em></span></label>' +
       '<label class="pricing-calc__option">' +
       '<input type="checkbox" data-addon="videollamada" disabled />' +
       '<span><strong>' +
       (video.label || 'Videollamada') +
-      '</strong> <em>(opcional)</em></span></label>' +
+      '</strong> <em>(opcional; incluye transcripción de la llamada)</em></span></label>' +
       '</div>'
     );
   }
@@ -210,6 +226,7 @@
       number.addEventListener('input', recalc);
       row.querySelectorAll('input[data-addon]').forEach((input) => {
         input.addEventListener('change', () => {
+          syncAmbOptions(row);
           refreshUnitLabels();
           recalc();
         });

@@ -15,7 +15,7 @@ Resumen de palancas para quedar **por debajo** de [costos-api.md](../costos-api.
 | Conversación paciente / onboarding | ~$0,47 + ~$0,14 (§1–3 costos-api) | 30–60 % | [pre-consulta-onboarding.md](./pre-consulta-onboarding.md) |
 | STT / **Edge-Cloud Routing** | Bruto ~$2,52; **lista −30 % → ~$1,76** (audio **0,98**) | Dispositivo primero; Groq fallback | [stt.md](./stt.md#edge-cloud-routing-stt) |
 | Vision | $0 en ref. | 50–100 % | [vision.md](./vision.md) |
-| Videollamadas | COGS planificado **$5,00** (self-host; STT en §2/§4) | Límite duración; autoescalado SFU; retención storage | [videollamadas.md](./videollamadas.md) |
+| Videollamadas | COGS planificado **$3,50** (self-host; STT una vez con dictado) | Track Egress muxing; autoescala 1/4/12; 14 d → Deep Archive | [videollamadas.md](./videollamadas.md) |
 | Monitoreo | — | — | [monitoreo.md](./monitoreo.md) |
 
 ## Infra propia

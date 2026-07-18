@@ -71,21 +71,21 @@ Requiere `care_cohort.enabled`. Ver [asistencia-cohortes.md](./asistencia-cohort
 
 Ver [laboratorio.md](./laboratorio.md).
 
-### A03 — Lista de espera / relleno de huecos (agente D2–D3, v1 FIFO)
+### A03 — Adelantamiento por cancelación (agente D2–D3)
 
 | Campo | Valor |
 |-------|--------|
 | **Tipo** | Agente (reglas) |
-| **Trigger** | Cancelación de turno con hueco liberado (`TurnoLifecycleService::cancelar`) |
-| **Política** | `autonomous_agents/turno-waitlist-fill.yaml` (FIFO, TTL 15 min, no ofertar banda A) |
-| **Decisiones** | Primer inscripto en cola; si no acepta en TTL → siguiente |
-| **Efecto** | Push `TURNO_WAITLIST_OFFER`; al aceptar, crea turno en el slot liberado |
-| **API paciente** | `lista-espera-inscribir/cancelar/estado/aceptar-oferta-como-paciente` |
-| **Cron** | `yii turno-waitlist/expire-offers` (cada 1–5 min junto a notificaciones) |
-| **Auditoría** | `agent_run` (`agent_id`: `turno-waitlist-fill`) |
-| **Flag** | `autonomous_agent_waitlist_enabled` |
+| **Trigger** | Cancelación con slot libre ≥ T−24 h (`TurnoLifecycleService::cancelar`, masiva, FHIR inbound) |
+| **Política** | `autonomous_agents/turno-advance-offer.yaml` (nearest_first, step 2 h, corte T−6 h, sin hold) |
+| **Decisiones** | Oferta secuencial a turnos posteriores compatibles con push activo; una aceptación y fin |
+| **Efecto** | Push `TURNO_ADVANCE_OFFER`; al aceptar, **reprograma** el turno existente bajo lock de slot |
+| **API paciente** | `adelantar-oferta-como-paciente` |
+| **Cron** | `yii turno-advance-offer/run` (cada 5 min); `yii turno-advance-offer/repair` (reparación) |
+| **Auditoría** | `agent_run` (`agent_id`: `turno-advance-offer`) + eventos `APPOINTMENT_ADVANCE_*` |
+| **Flag** | `autonomous_agent_advance_offer_enabled` |
 
-Ver [turnos.md](./turnos.md).
+El perfil conductual **no** ordena ni excluye candidatos; sólo puede mejorar textos de notificación de bajo impacto. Ver [turnos.md](./turnos.md).
 
 ### A02 — Negociación multicanal (agente D3, v1)
 
@@ -110,7 +110,7 @@ Ver [turnos.md](./turnos.md).
 | **Trigger** | Timeout tras push/multicanal (72 h por defecto) con resolución aún pendiente |
 | **Política** | `autonomous_agents/turno-resolucion-loop-close.yaml` |
 | **Decisiones** | Banda C/D → escalar staff; default → cancelar turno y liberar cupo |
-| **Efecto** | Push `TURNO_RESOLUCION_SIN_RESPUESTA` o `TURNO_RESOLUCION_STAFF_ESCALATE`; waitlist A03 si cancela |
+| **Efecto** | Push `TURNO_RESOLUCION_SIN_RESPUESTA` o `TURNO_RESOLUCION_STAFF_ESCALATE`; adelantamiento A03 si cancela |
 | **Cron** | `yii turno-notificacion/run` (`TIPO_RESOLUCION_LOOP_CLOSE`) |
 | **Auditoría** | `agent_run` (`agent_id`: `turno-resolucion-loop-close`) |
 | **Flag** | `autonomous_agent_resolucion_loop_close_enabled` |
@@ -125,7 +125,7 @@ Ver [turnos.md](./turnos.md).
 | **Trigger** | Checkpoints T−48 h y T−2 h (`programarNotificaciones` al crear/reprogramar turno) |
 | **Política** | `autonomous_agents/turno-antinoshow.yaml` |
 | **Decisiones** | Nivel low/medium/high calculado al vuelo; confirmación extra; liberar cupo T−24 h si alto riesgo sin confirmar |
-| **Efecto** | Push `TURNO_ANTINOSHOW_CONFIRM` / recordatorio; `TURNO_ANTINOSHOW_LIBERADO` + waitlist A03 |
+| **Efecto** | Push `TURNO_ANTINOSHOW_CONFIRM` / recordatorio; `TURNO_ANTINOSHOW_LIBERADO` + adelantamiento A03 si aplica |
 | **Cron** | `yii turno-notificacion/run` |
 | **Auditoría** | `agent_run` (`agent_id`: `turno-antinoshow`) |
 | **Flag** | `autonomous_agent_antinoshow_enabled` |

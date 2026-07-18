@@ -17,7 +17,6 @@ class ReservaTriagePostCupoRoutingServiceTest extends DbTestCase
             'tele_hub_available' => 'false',
             'primaria_available' => 'false',
             'especialista_sin_cupo' => 'false',
-            'lista_espera_habilitada' => 'false',
             'slots_empty' => true,
         ];
 

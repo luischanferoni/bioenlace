@@ -70,16 +70,16 @@ Todavía no existe un perfil longitudinal persistido que unifique esas definicio
 
 El perfil describe hechos; las políticas deciden recordatorios o intervenciones. No representa reputación, prioridad clínica ni autorización para atenderse. La falta de historial se considera información insuficiente, no una conducta de riesgo.
 
-## Lista de espera (agente A03, v1 FIFO)
+## Adelantamiento por cancelación (agente A03)
 
-Cuando un turno se **cancela** y queda un hueco en agenda, el sistema puede ofrecerlo al primer paciente inscripto en lista de espera para ese efector y servicio.
+Cuando un turno se **cancela** y el slot queda libre con al menos **24 h** de anticipación, el sistema puede ofrecer **adelantar** turnos posteriores compatibles (mismo efector, servicio, PES y modalidad). El slot permanece **público** (sin hold); la reserva normal compite con la aceptación.
 
-1. El paciente se **inscribe** vía API (`POST …/lista-espera-inscribir-como-paciente`) indicando efector, servicio y opcionalmente PES o banda de urgencia.
-2. Tras una cancelación, el agente `turno-waitlist-fill` elige el candidato FIFO (excluye banda A de ofertas), envía push `TURNO_WAITLIST_OFFER` con token de oferta y TTL configurable (15 min por defecto).
-3. El paciente **acepta** con `POST …/lista-espera-aceptar-oferta-como-paciente` (`offer_token`); se crea el turno en el slot si sigue libre.
-4. Si expira el TTL, el cron `yii turno-waitlist/expire-offers` marca la oferta vencida y ofrece al siguiente en cola.
+1. Tras la cancelación, el agente `turno-advance-offer` crea una campaña y elige candidatos `nearest_first` hasta fin del día siguiente, sólo con push activo.
+2. Envía una oferta secuencial (`TURNO_ADVANCE_OFFER`, acción `adelantar_turno`) con texto “sujeto a disponibilidad”; espera **2 h** por candidato y no envía nuevas ofertas desde **T−6 h**.
+3. El paciente **acepta** con `POST …/adelantar-oferta-como-paciente` (`offer_token`); se **reprograma** el turno existente (no se crea uno nuevo). Una aceptación cierra la campaña; el horario que deja libre no dispara otra campaña.
+4. El cron `yii turno-advance-offer/run` avanza campañas vencidas; `yii turno-advance-offer/repair` recupera cancelaciones elegibles sin campaña.
 
-Parámetros: `turnosWaitlist` en `params.php`. Flag: `autonomous_agent_waitlist_enabled`. Detalle técnico: [agentes-autonomos.md](./agentes-autonomos.md).
+Flag: `autonomous_agent_advance_offer_enabled`. Metadata: `autonomous_agents/turno-advance-offer.yaml`. Detalle: [agentes-autonomos.md](./agentes-autonomos.md).
 
 ## Escalada multicanal (agente A02, v1)
 
@@ -96,7 +96,7 @@ Parámetros: `turnoResolucionMulticanal` (`public_base_url`, `app_deep_link`, `s
 Si tras **72 h** (configurable) el turno sigue en `EN_RESOLUCION` sin reubicar:
 
 1. El agente `turno-resolucion-loop-close` evalúa reglas YAML.
-2. **Default:** cancela el turno, notifica al paciente (`TURNO_RESOLUCION_SIN_RESPUESTA`) y libera el cupo (dispara waitlist A03 si aplica).
+2. **Default:** cancela el turno, notifica al paciente (`TURNO_RESOLUCION_SIN_RESPUESTA`) y libera el cupo (puede disparar adelantamiento A03 si aplica).
 3. **Banda C/D:** escala a staff del PES (`TURNO_RESOLUCION_STAFF_ESCALATE`) y mantiene la resolución abierta.
 
 Flag: `autonomous_agent_resolucion_loop_close_enabled`.
@@ -106,7 +106,7 @@ Flag: `autonomous_agent_resolucion_loop_close_enabled`.
 Al crear o reprogramar un turno pendiente, el agente `turno-antinoshow` calcula el riesgo en ese momento mediante reglas sobre BD —ausencias previas, anticipación reserva→cita y primera visita—. El resultado no es todavía un perfil persistido:
 
 1. **T−48 h:** riesgo alto → push de confirmación explícita (`TURNO_ANTINOSHOW_CONFIRM`).
-2. **Alto riesgo sin confirmar:** a **T−24 h** cancela el turno y libera el cupo (`TURNO_ANTINOSHOW_LIBERADO` → waitlist A03).
+2. **Alto riesgo sin confirmar:** a **T−24 h** cancela el turno y libera el cupo (`TURNO_ANTINOSHOW_LIBERADO` → adelantamiento A03 si el slot aún cumple T−24 h de lead).
 3. **T−2 h:** recordatorio adicional para riesgo medio/alto.
 
 Flag: `autonomous_agent_antinoshow_enabled`. Desactivar liberación automática: `release_slot.enabled: false` en el YAML.
@@ -120,7 +120,7 @@ Hoy los agentes de turno despachan **push** (FCM). WhatsApp Cloud API en product
 | Canal | Rol | Estado |
 |-------|-----|--------|
 | Chat asistente (paciente escribe) | Misma capacidad que app | **Habilitado** (Meta service ≈ $0) |
-| Avisos proactivos (recordatorio, anti no-show, resolución, waitlist, etc.) | Equivalente al push | **No** por WhatsApp (utility **no habilitada**); siguen push / escalada email-SMS |
+| Avisos proactivos (recordatorio, anti no-show, resolución, adelantamiento, etc.) | Equivalente al push | **No** por WhatsApp (utility **no habilitada**); siguen push / escalada email-SMS |
 
 Detalle de COGS: [costos-api §7](../costos/costos-api.md#7-whatsapp-cloud-api-paciente). Escalada multicanal v1: [§ Escalada](#escalada-multicanal-agente-a02-v1).
 

@@ -85,12 +85,8 @@ return [
         /** Oferta de slots de hoy: solo desde ahora + N minutos (autogestión / reprogramar). */
         'slots_min_minutos_desde_ahora' => 15,
     ],
-    /** Lista de espera (agente A03): TTL de oferta y mínimo antes del slot. */
-    'turnosWaitlist' => [
-        'offer_ttl_minutes' => 15,
-        'min_minutes_before_slot' => 15,
-    ],
-    'autonomous_agent_waitlist_enabled' => true,
+    /** Adelantamiento por cancelación (metadata: turno-advance-offer.yaml). */
+    'autonomous_agent_advance_offer_enabled' => true,
     /** Escalada multicanal reubicación (agente A02). */
     'turnoResolucionMulticanal' => [
         'public_base_url' => null,

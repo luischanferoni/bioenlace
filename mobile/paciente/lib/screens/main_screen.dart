@@ -91,8 +91,9 @@ class _MainScreenState extends State<MainScreen> {
           _abrirResumenAtencion(encounterId);
           return;
         }
-        // Confirmación: abrir bandeja (botón Confirmar asistencia ahí).
-        if (PushNotificationService.confirmacionDesdeData(data) != null) {
+        // Confirmación / adelantamiento: abrir bandeja (botón de acción ahí).
+        if (PushNotificationService.confirmacionDesdeData(data) != null ||
+            PushNotificationService.adelantamientoDesdeData(data) != null) {
           _openAlertas();
           return;
         }

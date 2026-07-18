@@ -66,9 +66,17 @@ events:
     legacy_tipos: [NO_SHOW]
   NO_SHOW_CORRECTED:
     legacy_tipos: []
-  WAITLIST_OFFERED:
+  APPOINTMENT_ADVANCE_OFFERED:
     legacy_tipos: []
-  WAITLIST_ACCEPTED:
+  APPOINTMENT_ADVANCE_DELIVERED:
+    legacy_tipos: []
+  APPOINTMENT_ADVANCE_OPENED:
+    legacy_tipos: []
+  APPOINTMENT_ADVANCE_ACCEPTED:
+    legacy_tipos: []
+  APPOINTMENT_ADVANCE_UNAVAILABLE:
+    legacy_tipos: []
+  APPOINTMENT_ADVANCE_EXPIRED:
     legacy_tipos: []
   SYSTEM_SLOT_RELEASED:
     legacy_tipos: []

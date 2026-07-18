@@ -138,7 +138,7 @@ Priorizar **agente** (reglas) antes que **agente IA** cuando alcanza: más barat
 | Touchpoint cohorte + `care-followup-branching` | **Agente** D2 | Reglas YAML → push staff / educativo — **implementado** |
 | Pull LIS / export FHIR | Proceso | Sin paso decisorio |
 | Post-lab + `post-lab-classification` | **Agente** D2 | LOINC + umbrales → push — **implementado** |
-| Cancelación turno + `turno-waitlist-fill` | **Agente** D2–D3 | FIFO + cascada TTL → reserva — **implementado (v1)** |
+| Cancelación turno + `turno-advance-offer` | **Agente** D2–D3 | Ofertas secuenciales nearest_first → reprogramar — **implementado** |
 | Resolución sin respuesta + `turno-resolucion-multicanal` | **Agente** D3 | push → email/SMS + link firmado — **implementado (v1)** |
 | Timeout reubicación + `turno-resolucion-loop-close` | **Agente** D2 | cancelar / escalar staff — **implementado (v1)** |
 | Turno pendiente + `turno-antinoshow` | **Agente** D2 | score riesgo → confirmar / liberar cupo — **implementado (v1)** |
@@ -152,7 +152,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 | ID | Flujo | Tipo | Paso de decisión | Grado | Prioridad |
 |----|-------|------|------------------|-------|-----------|
-| A03 | Relleno de huecos / lista de espera | **Agente** | A quién ofrecer; cascada y reserva | D2–D3 | ~~P0~~ **Hecho (v1 FIFO)** |
+| A03 | Adelantamiento por cancelación | **Agente** | A quién ofrecer; secuencia sin hold; reprogramar | D2–D3 | ~~P0~~ **Hecho** |
 | B03 | Post-lab: clasificar y notificar | **Agente** | Crítico vs normal; tarea staff (LOINC) | D2 | ~~P0~~ **Hecho** |
 | B01 | Touchpoints cohorte / plan | **Agente** | Respuesta estructurada → rama | D2 | ~~P0~~ **Hecho** |
 | A02 | Negociación multicanal + cierre | **Agente** | Canal, escalar, timeout | D3 | ~~P0~~ **Hecho (v1)** |
@@ -255,23 +255,23 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 ---
 
-### A03 — Relleno de huecos / lista de espera
+### A03 — Adelantamiento por cancelación
 
-> **Estado:** **implementado (v1 FIFO)** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md). Cascada por TTL; score multi-criterio pendiente.
+> **Estado:** **implementado** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md). Sin lista de espera ni hold; ofertas secuenciales a turnos posteriores compatibles.
 
 | Campo | Valor |
 |-------|--------|
-| **Decisión del sistema** | Qué paciente de la lista de espera contactar primero; reservar al confirmar en cascada |
+| **Decisión del sistema** | Qué turno posterior compatible ofertar primero (`nearest_first`); reprogramar al aceptar |
 | **Grado** | D2–D3 |
-| **Política** | Cola por score: banda triage, crónico, distancia lead time, fairness (no saltear urgencias) |
-| **Efecto** | Oferta en cascada al primer «sí»; actualiza turno y notifica al que perdió la carrera |
-| **Métricas** | % huecos rellenados, lead time reducido, quejas por «me cortaron» |
+| **Política** | T−24 h para iniciar, +2 h por candidato, corte T−6 h; slot público; requiere push activo |
+| **Efecto** | Push `TURNO_ADVANCE_OFFER`; aceptación reprograma el turno existente; sin cascada sobre el hueco liberado |
+| **Métricas** | % huecos reocupados por adelantamiento, lead time reducido, carreras perdidas vs reserva normal |
 
 **Casos de uso**
 
-1. **Cancelación de último momento:** Cancelación 8:00, turno 9:00. El sistema elige el primer candidato en lista de espera (score en BD), le ofrece el hueco; si no confirma en 15 min, pasa al siguiente hasta reservar o agotar cola.
-2. **Sobreturno ético:** Lista de espera solo para controles crónicos banda C; el agente no ofrece huecos de urgencia banda A a la lista (regla dura).
-3. **Profesional con agenda hueca:** Viernes tarde con 2 slots vacíos; el agente agrupa ofertas a pacientes con `control_cronico` del servicio que llevan &gt; 90 días sin control.
+1. **Cancelación con lead suficiente:** Cancelación con ≥ 24 h. Se ofrece al turno pendiente más cercano compatible; si no acepta en 2 h, al siguiente hasta T−6 h o agotar candidatos.
+2. **Carrera con reserva pública:** Mientras la oferta está abierta, otro paciente reserva el slot; la aceptación responde «ya no disponible» y la campaña se cierra.
+3. **Sin push:** El candidato sin token activo se salta; no se reserva el cupo por notificación.
 
 ---
 
@@ -281,7 +281,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 | Campo | Valor |
 |-------|--------|
-| **Decisión del sistema** | Liberar slot a lista de espera si no confirma (rama D2, política estricta) |
+| **Decisión del sistema** | Liberar slot (puede disparar adelantamiento A03) si no confirma (rama D2, política estricta) |
 | **Grado** | D2 |
 | **Trigger** | T−48 h, T−2 h (configurable); score de riesgo alto |
 | **Política** | V1: historial no-show + anticipación reserva→cita + primera visita; evolución: perfil factual versionado y política separada |
@@ -291,7 +291,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 **Casos de uso**
 
-1. **Paciente rezagado:** Historial de 2 ausencias en 6 meses. A las 48 h el agente pide «Confirmá con un toque»; si no confirma a las 24 h, libera slot a lista de espera (política estricta del efector).
+1. **Paciente rezagado:** Historial de 2 ausencias en 6 meses. A las 48 h el agente pide «Confirmá con un toque»; si no confirma a las 24 h, libera slot (posible adelantamiento A03 si aún cumple T−24 h).
 2. **Primera consulta:** La v1 interpreta falta de historial como riesgo medio. La evolución debe tratarla como muestra insuficiente y aplicar una intervención conservadora sin atribuir conducta negativa.
 3. **Teleconsulta:** Riesgo alto: a las 2 h envía link de video + test de conectividad; si no abre el link, staff recibe alerta opcional.
 

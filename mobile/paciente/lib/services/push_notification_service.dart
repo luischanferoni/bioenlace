@@ -255,6 +255,31 @@ class PushNotificationService {
     };
   }
 
+  /// Payload de oferta de adelantamiento desde push/bandeja.
+  static Map<String, dynamic>? adelantamientoDesdeData(Map<String, dynamic> data) {
+    final type = data['type']?.toString() ?? '';
+    final action = data['action']?.toString() ?? '';
+    final isAdvance =
+        type == 'TURNO_ADVANCE_OFFER' || action == 'adelantar_turno';
+    if (!isAdvance) {
+      return null;
+    }
+    final token = data['offer_token']?.toString().trim() ?? '';
+    if (token.isEmpty) {
+      return null;
+    }
+    final idTurnoRaw = data['id_turno']?.toString() ?? '';
+    final idTurno = int.tryParse(idTurnoRaw);
+    return {
+      'offer_token': token,
+      'id_turno': idTurno != null && idTurno > 0 ? idTurno : null,
+      'fecha': data['fecha']?.toString(),
+      'hora': data['hora']?.toString(),
+      'notification_ref': data['notification_ref']?.toString(),
+      'action_label': data['action_label']?.toString() ?? 'Adelantar mi turno',
+    };
+  }
+
   /// Abre el flow adecuado según payload push (desde MainScreen).
   static Map<String, dynamic>? turnoStubDesdePush(Map<String, dynamic> data) {
     final type = data['type']?.toString() ?? '';

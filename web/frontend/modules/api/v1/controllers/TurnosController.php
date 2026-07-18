@@ -46,8 +46,7 @@ use common\components\Domain\Scheduling\Service\TurnoPacienteListadoService;
 use common\components\Domain\Scheduling\Service\TurnoResolucionService;
 use common\components\Domain\Scheduling\Service\TurnoResolucionElecciones;
 use common\components\Domain\Scheduling\Service\TurnoCalendarioOcupacionDiaService;
-use common\components\Domain\Scheduling\Service\TurnoWaitlistOfferAcceptService;
-use common\components\Domain\Scheduling\Service\TurnoWaitlistService;
+use common\components\Domain\Scheduling\Service\TurnoAdvanceOfferAcceptService;
 use common\components\Domain\Scheduling\Service\TurnoResolucionShortlistAgent;
 use common\components\Domain\Scheduling\Service\PersonaAgendaPreferenciasService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalContextResolver;
@@ -2285,75 +2284,15 @@ class TurnosController extends BaseController
     }
 
     /**
-     * POST /api/v1/turnos/lista-espera-inscribir-como-paciente
+     * POST /api/v1/turnos/adelantar-oferta-como-paciente
+     * Body: offer_token, subject_persona_id?
      *
-     * @action_name Inscribirse en lista de espera
+     * Acepta adelantar el turno propio/representado al slot liberado (sujeto a disponibilidad).
+     *
+     * @action_name Adelantar turno por oferta
      * @entity Turnos
      */
-    public function actionListaEsperaInscribirComoPaciente(): array
-    {
-        $req = Yii::$app->request;
-        if (!$req->isPost) {
-            throw new MethodNotAllowedHttpException(['POST'], 'Solo POST.');
-        }
-        $post = array_merge($req->get(), $req->post());
-        $idEfector = (int) ($post['id_efector'] ?? 0);
-        $this->assertPacienteOfferingForTurnos($idEfector > 0 ? $idEfector : null);
-        $subjectSvc = new PersonRepresentationSubjectService();
-        $idPersona = $subjectSvc->resolveAndAuthorize($post, RepresentationPermission::SCHEDULING_TURNO);
-
-        $result = (new TurnoWaitlistService())->enroll(
-            $idPersona,
-            $idEfector,
-            (int) ($post['id_servicio'] ?? 0),
-            isset($post['id_profesional_efector_servicio']) ? (int) $post['id_profesional_efector_servicio'] : null,
-            isset($post['urgency_band']) ? (string) $post['urgency_band'] : null
-        );
-
-        return ['success' => true, 'data' => $result];
-    }
-
-    /**
-     * POST /api/v1/turnos/lista-espera-cancelar-como-paciente
-     */
-    public function actionListaEsperaCancelarComoPaciente(): array
-    {
-        $req = Yii::$app->request;
-        if (!$req->isPost) {
-            throw new MethodNotAllowedHttpException(['POST'], 'Solo POST.');
-        }
-        $post = array_merge($req->get(), $req->post());
-        $subjectSvc = new PersonRepresentationSubjectService();
-        $idPersona = $subjectSvc->resolveAndAuthorize($post, RepresentationPermission::SCHEDULING_TURNO);
-        $entryId = (int) ($post['entry_id'] ?? $post['id'] ?? 0);
-
-        (new TurnoWaitlistService())->cancelEnrollment($entryId, $idPersona);
-
-        return ['success' => true];
-    }
-
-    /**
-     * GET /api/v1/turnos/lista-espera-estado-como-paciente
-     */
-    public function actionListaEsperaEstadoComoPaciente(): array
-    {
-        $req = Yii::$app->request;
-        $params = array_merge($req->get(), $req->post());
-        $idEfector = (int) ($params['id_efector'] ?? 0);
-        $idServicio = (int) ($params['id_servicio'] ?? 0);
-        $this->assertPacienteOfferingForTurnos($idEfector > 0 ? $idEfector : null);
-        $subjectSvc = new PersonRepresentationSubjectService();
-        $idPersona = $subjectSvc->resolveAndAuthorize($params, RepresentationPermission::SCHEDULING_TURNO);
-
-        $entry = (new TurnoWaitlistService())->getActiveEnrollmentForPersona($idPersona, $idEfector, $idServicio);
-
-        return ['success' => true, 'data' => ['entry' => $entry]];
-    }
-
-    /**
-     * POST /api/v1/turnos/lista-espera-aceptar-oferta-como-paciente
-     */
-    public function actionListaEsperaAceptarOfertaComoPaciente(): array
+    public function actionAdelantarOfertaComoPaciente(): array
     {
         $req = Yii::$app->request;
         if (!$req->isPost) {
@@ -2369,7 +2308,7 @@ class TurnosController extends BaseController
             : \common\models\TurnoEventoAudit::ACTOR_PACIENTE;
 
         try {
-            $data = (new TurnoWaitlistOfferAcceptService())->accept($token, $idPersona, $actorType);
+            $data = (new TurnoAdvanceOfferAcceptService())->accept($token, $idPersona, $actorType);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }

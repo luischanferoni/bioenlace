@@ -224,6 +224,12 @@ final class TurnoBehaviorProfileContract
                 TurnoEventoAudit::EVENT_CONFIRMATION_DELIVERY_CONFIRMED => ['legacy_tipos' => []],
                 TurnoEventoAudit::EVENT_CONFIRMATION_OPENED => ['legacy_tipos' => []],
                 TurnoEventoAudit::EVENT_SYSTEM_SLOT_RELEASED => ['legacy_tipos' => []],
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_OFFERED => ['legacy_tipos' => []],
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_DELIVERED => ['legacy_tipos' => []],
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_OPENED => ['legacy_tipos' => []],
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_ACCEPTED => ['legacy_tipos' => []],
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_UNAVAILABLE => ['legacy_tipos' => []],
+                TurnoEventoAudit::EVENT_APPOINTMENT_ADVANCE_EXPIRED => ['legacy_tipos' => []],
             ],
             'metrics' => [
                 ['code' => 'CLOSED_ELIGIBLE', 'kind' => 'count'],

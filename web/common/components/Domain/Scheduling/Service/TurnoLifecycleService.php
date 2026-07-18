@@ -102,6 +102,8 @@ class TurnoLifecycleService
                 return false;
             }
 
+            TurnoSlotClaimService::releaseForTurno((int) $turno->id_turnos);
+
             TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
 
             $resPend = TurnoResolucion::findPendientePorTurno((int) $turno->id_turnos);
@@ -161,9 +163,9 @@ class TurnoLifecycleService
         }
 
         try {
-            (new \common\components\Domain\Scheduling\Service\TurnoWaitlistFillAgent())->onTurnoCancelled($turno);
+            (new \common\components\Domain\Scheduling\Service\TurnoAdvanceOfferAgent())->onTurnoCancelled($turno);
         } catch (\Throwable $e) {
-            Yii::warning('Waitlist fill: ' . $e->getMessage(), 'turno-waitlist');
+            Yii::warning('Advance offer: ' . $e->getMessage(), 'turno-advance');
         }
 
         \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
@@ -307,20 +309,30 @@ class TurnoLifecycleService
      *
      * @param array<string, mixed> $before
      */
+    /**
+     * @param bool $manageTransaction si false, el llamador ya abrió la transacción propietaria
+     * @param bool $notifyOutbound si false, el llamador dispara FHIR/notificaciones tras su commit
+     */
     public function reprogramar(
         Turno $turno,
         array $before,
         string $actorType,
         string $channel,
-        ?int $idUser = null
+        ?int $idUser = null,
+        bool $manageTransaction = true,
+        bool $notifyOutbound = true
     ): void {
         $after = self::scheduleSnapshot($turno);
         $fingerprint = hash('sha256', json_encode([$before, $after], JSON_UNESCAPED_UNICODE) ?: '');
-        $tx = Turno::getDb()->beginTransaction();
+        $tx = null;
+        if ($manageTransaction) {
+            $tx = Turno::getDb()->beginTransaction();
+        }
         try {
             if (!$turno->save()) {
                 throw new \InvalidArgumentException(implode(', ', $turno->getErrorSummary(true)));
             }
+            $this->syncSlotClaimAfterReschedule($before, $after, (int) $turno->id_turnos);
             $this->canonicalEvents->record(TurnoCanonicalEventCommand::create(
                 (int) $turno->id_turnos,
                 (int) $turno->id_persona,
@@ -336,14 +348,43 @@ class TurnoLifecycleService
                 null,
                 ['before' => $before, 'after' => $after]
             ));
-            $tx->commit();
+            if ($tx !== null) {
+                $tx->commit();
+            }
         } catch (\Throwable $e) {
-            if ($tx->isActive) {
+            if ($tx !== null && $tx->isActive) {
                 $tx->rollBack();
             }
             throw $e;
         }
-        \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        if ($notifyOutbound) {
+            \common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $before
+     * @param array<string, mixed> $after
+     */
+    private function syncSlotClaimAfterReschedule(array $before, array $after, int $idTurno): void
+    {
+        $beforePes = (int) ($before['id_profesional_efector_servicio'] ?? 0);
+        $afterPes = (int) ($after['id_profesional_efector_servicio'] ?? 0);
+        $beforeFecha = trim((string) ($before['fecha'] ?? ''));
+        $afterFecha = trim((string) ($after['fecha'] ?? ''));
+        $beforeHora = substr(\common\models\TurnoResolucion::normalizarHora((string) ($before['hora'] ?? '')), 0, 5);
+        $afterHora = substr(\common\models\TurnoResolucion::normalizarHora((string) ($after['hora'] ?? '')), 0, 5);
+
+        if ($beforePes === $afterPes && $beforeFecha === $afterFecha && $beforeHora === $afterHora) {
+            return;
+        }
+        if ($afterPes > 0 && $afterFecha !== '' && $afterHora !== '') {
+            if (!TurnoSlotClaimService::moveClaim($idTurno, $afterPes, $afterFecha, $afterHora)) {
+                throw new \InvalidArgumentException('El horario ya no está disponible.');
+            }
+            return;
+        }
+        TurnoSlotClaimService::releaseForTurno($idTurno);
     }
 
     public function entrarEnResolucion(

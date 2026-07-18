@@ -64,6 +64,7 @@ use common\components\Domain\Scheduling\Service\ConsultasSeguimientoFlowDraftHyd
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\TurnosVerMisTurnosFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoConfirmationPushReceiptProjector;
+use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoAdvancePushReceiptProjector;
 use common\components\Platform\Ui\Home\Service\Sections\ActionCardsSectionProvider;
 
 return [
@@ -160,6 +161,7 @@ return [
 
     'pushNotificationReceiptProjectors' => [
         TurnoConfirmationPushReceiptProjector::HANDLER_ID => TurnoConfirmationPushReceiptProjector::class,
+        TurnoAdvancePushReceiptProjector::HANDLER_ID => TurnoAdvancePushReceiptProjector::class,
     ],
 
     'homePanelSectionProviders' => [

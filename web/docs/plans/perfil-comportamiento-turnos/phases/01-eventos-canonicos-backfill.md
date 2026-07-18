@@ -1,6 +1,6 @@
 # Fase 1 — Eventos canónicos
 
-**Estado:** casi completa. Create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación (solicitada/entregada/abierta)/waitlist implementados. Sin backfill ni `LEGACY_INFERRED` (sin retrocompatibilidad). Faltan reportes de cobertura/anomalías.
+**Estado:** casi completa. Create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación (solicitada/entregada/abierta)/adelantamiento (`OFFERED`/`DELIVERED`/`OPENED`/`ACCEPTED`/`UNAVAILABLE`/`EXPIRED`) implementados. Sin backfill ni `LEGACY_INFERRED` (sin retrocompatibilidad). Faltan reportes de cobertura/anomalías.
 
 ## Objetivo
 

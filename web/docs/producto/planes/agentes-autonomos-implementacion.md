@@ -9,7 +9,7 @@ Plan operativo derivado de [ideas-a-futuro/agentes-autonomos-backlog.md](../idea
 | Fase | Alcance | Estado |
 |------|---------|--------|
 | **0** | Infra: `agent_run`, metadata `autonomous_agents/`, `AgentRunRecorder`, motor de reglas | **Hecho** |
-| **1** | P0 reglas: ~~**B01**~~, ~~**B03**~~, ~~**A03**~~ waitlist FIFO, ~~**A02**~~ escalada mínima | **Completada** |
+| **1** | P0 reglas: ~~**B01**~~, ~~**B03**~~, ~~**A03**~~ adelantamiento, ~~**A02**~~ escalada mínima | **Completada** |
 | **2** | P1 agenda: ~~A01 shortlist~~, ~~A01 auto-reserva~~, ~~H01~~; ~~A04~~; ~~A06~~ | **Completa** |
 | **3** | P1 integración: ~~E01~~, ~~E02~~; agentes IA (C03/D02) diferidos | Parcial (E01/E02 v1) |
 | **4** | P2: ~~A05~~ ~~B02~~ ~~E03~~ ~~F02~~; redacción IA en pushes diferida | **Completa (v1 reglas)** |
@@ -70,16 +70,16 @@ Plan operativo derivado de [ideas-a-futuro/agentes-autonomos-backlog.md](../idea
 
 **Complejidad:** M — hecho.
 
-### A03 — Lista de espera (v1 FIFO)
+### A03 — Adelantamiento por cancelación
 
 | Paso | Detalle |
 |------|---------|
-| Modelo | `turno_waitlist_entry`, `turno_waitlist_slot_offer` |
-| Trigger | Cancelación de turno con hueco liberado |
-| Decisión v1 | Primer inscripto FIFO + push confirmación |
-| Sin score multi-criterio en v1 |
+| Modelo | `turno_advance_campaign`, `turno_advance_offer`, `turno_slot_claim` |
+| Trigger | Cancelación con slot libre ≥ T−24 h |
+| Decisión | Ofertas secuenciales `nearest_first` (+2 h / corte T−6 h); aceptación = reprogramar |
+| Sin hold del slot; sin lista de espera |
 
-**Estado:** **implementado (v1)**.
+**Estado:** **implementado**.
 
 **Complejidad:** L — hecho.
 
@@ -104,7 +104,7 @@ flowchart LR
   F0[Fase 0 infra]
   B01[B01 branching]
   B03[B03 post-lab]
-  A03[A03 waitlist]
+  A03[A03 adelantamiento]
   A02[A02 multicanal]
   F0 --> B01
   F0 --> B03

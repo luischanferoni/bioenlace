@@ -2,15 +2,11 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use Yii;
-use yii\db\Expression;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use common\models\EfectorTurnosConfig;
-use common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier;
 use common\models\TurnoEventoAudit;
-use common\models\TurnoNotificacionProgramada;
 
 class BulkCancelDayService
 {
@@ -61,30 +57,31 @@ class BulkCancelDayService
         }
 
         $models = $q->all();
+        $lifecycle = new TurnoLifecycleService();
         $n = 0;
         foreach ($models as $turno) {
-            $turno->estado = Turno::ESTADO_CANCELADO;
-            $turno->estado_motivo = Turno::ESTADO_MOTIVO_CANCELADO_EFECTOR;
-            $turno->deleted_by = $idUser ?: (Yii::$app->user->id ?? null);
-            $turno->deleted_at = new Expression('NOW()');
-            if ($turno->save(false)) {
-                TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
-                TurnoEventoAudit::registrar($turno->id_turnos, TurnoEventoAudit::TIPO_BULK_DAY_CANCEL, $idUser, [
-                    'fecha' => $fecha,
-                    'canal' => 'admin',
-                    'actor_type' => TurnoEventoAudit::ACTOR_EFECTOR,
-                ]);
-                TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
-                $push = new PushNotificationSender();
-                if ($turno->paciente) {
-                    $push->sendToPersona(
-                        (int) $turno->id_persona,
-                        ['type' => 'TURNO_CANCELADO_EFECTOR', 'id_turno' => (string) $turno->id_turnos],
-                        'Turno cancelado',
-                        'El efector canceló los turnos del día ' . $fecha . '. Contactá para reprogramar.'
-                    );
+            try {
+                $ok = $lifecycle->cancelar(
+                    $turno,
+                    Turno::ESTADO_MOTIVO_CANCELADO_EFECTOR,
+                    'admin',
+                    $idUser ?: (Yii::$app->user->id ?? null),
+                    [
+                        'fecha' => $fecha,
+                        'bulk_day_cancel' => true,
+                        'razon_cancelacion' => TurnoEventoAudit::TIPO_BULK_DAY_CANCEL,
+                    ],
+                    true,
+                    TurnoEventoAudit::ACTOR_EFECTOR
+                );
+                if ($ok) {
+                    $n++;
                 }
-                $n++;
+            } catch (\Throwable $e) {
+                Yii::warning(
+                    'BulkCancelDay: turno=' . (int) $turno->id_turnos . ' ' . $e->getMessage(),
+                    'turno-bulk-cancel'
+                );
             }
         }
         return $n;

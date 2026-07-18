@@ -1,0 +1,35 @@
+# Ofertas secuenciales de adelantamiento ante cancelación (sin hold del slot).
+# {@see TurnoAdvanceOfferAgent}
+version: 1
+agent_id: turno-advance-offer
+
+# Solo iniciar campaña si el slot cancelado está al menos N minutos en el futuro.
+min_lead_minutes_to_offer: 1440
+
+# Tiempo entre una oferta y la siguiente (el slot sigue público).
+offer_step_minutes: 120
+
+# No enviar nuevas ofertas cuando falten menos de N minutos para el slot.
+stop_new_offers_minutes_before_slot: 360
+
+# Horizonte de candidatos: hasta fin del día siguiente al slot cancelado.
+candidate_horizon: next_day_end
+
+# Orden de candidatos.
+order: nearest_first
+
+compatibility:
+  same_efector: true
+  same_servicio: true
+  same_pes: true
+  same_modalidad: true
+
+require_active_push: true
+
+texts:
+  title: Se liberó un turno más temprano
+  body: 'Hay un horario el {fecha} a las {hora}. Podés adelantar tu consulta si todavía está disponible.'
+  action_label: Adelantar mi turno
+
+push_type: TURNO_ADVANCE_OFFER
+action: adelantar_turno

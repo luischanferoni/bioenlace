@@ -43,7 +43,7 @@ Las fases 0 y 1 son bloqueantes. No se habilita ninguna decisión nueva sobre pa
 
 ## Estado de implementación (2026-07-18)
 
-- Implementado: contrato V1 (sólo `NATIVE`), stream canónico, materializador, create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación (solicitada/entregada/abierta)/waitlist.
+- Implementado: contrato V1 (sólo `NATIVE`), stream canónico, materializador, create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación (solicitada/entregada/abierta)/adelantamiento (`APPOINTMENT_ADVANCE_*`). El perfil no prioriza reocupación; sólo puede mejorar notificaciones.
 - Sin backfill histórico: el perfil empieza en el corte de eventos nativos.
 - Cancelación tardía: definición **global** del contrato (`hours_before_appointment`), no por efector.
 - KPIs de agenda desde eventos canónicos nativos.

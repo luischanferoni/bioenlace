@@ -12,7 +12,6 @@ deep_links:
   tele_hub: "/asistente?intent=turnos.crear-como-paciente&modo=teleconsulta_hub"
   presencial_primaria: "/asistente?intent=turnos.crear-como-paciente"
   administrativo: "/asistente?intent=atencion.tramite-admin-flow"
-  lista_espera: "/asistente?intent=turnos.lista-espera-flow"
 
 rules:
   - id: banda_a_halt
@@ -61,10 +60,9 @@ rules:
     channel: presencial_primaria
     mensaje: "No hay cupo en el servicio elegido; podés reservar con clínica general con nota de derivación si corresponde."
 
-  - id: lista_espera_fallback
+  - id: sin_cupo_halt
     when:
-      field: lista_espera_habilitada
+      field: slots_empty
       equals: "true"
-    action: recommend
-    channel: lista_espera
-    mensaje: "No hay horarios disponibles ahora. Podés inscribirte en lista de espera y te avisamos si se libera un cupo."
+    action: halt
+    mensaje: "No hay horarios disponibles ahora. Probá más tarde; si se libera un cupo compatible con un turno tuyo posterior, te podemos avisar para adelantarlo."

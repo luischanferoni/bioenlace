@@ -35,6 +35,8 @@ class _AlertasScreenState extends State<AlertasScreen> {
   int _noLeidas = 0;
   final Set<String> _confirmando = {};
   final Set<String> _confirmados = {};
+  final Set<String> _adelantando = {};
+  final Set<String> _adelantados = {};
 
   @override
   void initState() {
@@ -117,14 +119,55 @@ class _AlertasScreenState extends State<AlertasScreen> {
     }
   }
 
+  Future<void> _adelantarTurno(
+    Map<String, dynamic> item,
+    Map<String, dynamic> oferta,
+  ) async {
+    final key = _itemKey(item);
+    if (_adelantando.contains(key) || _adelantados.contains(key)) {
+      return;
+    }
+    setState(() => _adelantando.add(key));
+    final token = oferta['offer_token']?.toString() ?? '';
+    final r = await _turnosSvc.acceptAdvanceOffer(
+      offerToken: token,
+      subjectPersonaId: widget.subjectPersonaId,
+    );
+    if (!mounted) return;
+    setState(() => _adelantando.remove(key));
+    if (r['success'] == true) {
+      setState(() => _adelantados.add(key));
+      await _marcarLeida(item);
+      if (!mounted) return;
+      final data = r['data'];
+      final fecha = data is Map ? data['fecha']?.toString() ?? '' : '';
+      final hora = data is Map ? data['hora']?.toString() ?? '' : '';
+      final detalle = (fecha.isNotEmpty && hora.isNotEmpty)
+          ? ' Nuevo horario: $fecha $hora.'
+          : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Turno adelantado.$detalle')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            r['message']?.toString() ?? 'El horario ya no está disponible',
+          ),
+        ),
+      );
+    }
+  }
+
   void _onTapItem(Map<String, dynamic> item) {
     _marcarLeida(item);
     final data = item['data'];
     if (data is! Map) return;
     final map = Map<String, dynamic>.from(data);
 
-    // Confirmación: el botón dedicado maneja la acción; el tap sólo marca leída.
-    if (PushNotificationService.confirmacionDesdeData(map) != null) {
+    // Confirmación / adelantamiento: el botón dedicado maneja la acción.
+    if (PushNotificationService.confirmacionDesdeData(map) != null ||
+        PushNotificationService.adelantamientoDesdeData(map) != null) {
       return;
     }
 
@@ -234,14 +277,17 @@ class _AlertasScreenState extends State<AlertasScreen> {
     final cuerpo = item['cuerpo']?.toString() ?? '';
     final fechaLabel = formatNotificacionFecha(item['created_at']);
     final data = item['data'];
-    final confirmacion = data is Map
-        ? PushNotificationService.confirmacionDesdeData(
-            Map<String, dynamic>.from(data),
-          )
-        : null;
+    final dataMap =
+        data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+    final confirmacion =
+        PushNotificationService.confirmacionDesdeData(dataMap);
+    final adelantamiento =
+        PushNotificationService.adelantamientoDesdeData(dataMap);
     final key = _itemKey(item);
     final confirmado = _confirmados.contains(key);
     final confirmando = _confirmando.contains(key);
+    final adelantado = _adelantados.contains(key);
+    final adelantando = _adelantando.contains(key);
 
     final contenido = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,6 +336,23 @@ class _AlertasScreenState extends State<AlertasScreen> {
               onPressed: confirmando
                   ? null
                   : () => _confirmarAsistencia(item, confirmacion),
+            ),
+        ],
+        if (adelantamiento != null) ...[
+          BioSpacing.gapH(BioSpacing.sm),
+          if (adelantado)
+            BioBadge(label: 'Adelantado', intent: UiIntent.success)
+          else
+            BioButton(
+              label: adelantamiento['action_label']?.toString() ??
+                  'Adelantar mi turno',
+              intent: UiIntent.primary,
+              variant: BioButtonVariant.filled,
+              size: BioButtonSize.sm,
+              icon: Icons.schedule,
+              onPressed: adelantando
+                  ? null
+                  : () => _adelantarTurno(item, adelantamiento),
             ),
         ],
       ],

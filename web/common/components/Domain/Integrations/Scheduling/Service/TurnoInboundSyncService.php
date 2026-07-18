@@ -9,9 +9,12 @@ use common\components\Domain\Integrations\Scheduling\FhirSchedulePesResolver;
 use common\components\Domain\Integrations\Scheduling\Mapper\FhirAppointmentInboundMapper;
 use common\components\Domain\Integrations\Scheduling\Mapper\FhirAppointmentStatusMapper;
 use common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper;
+use common\components\Domain\Scheduling\Service\TurnoAdvanceOfferAgent;
 use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
+use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
+use common\models\TurnoResolucion;
 use Yii;
 
 /**
@@ -103,6 +106,7 @@ final class TurnoInboundSyncService
                 $beforeFhirStatus,
                 $beforeSnapshot
             );
+            $this->syncSlotClaimForInbound($turno, $beforeEstado, $isNew);
             $tx->commit();
         } catch (\Throwable $e) {
             if ($tx->isActive) {
@@ -111,11 +115,49 @@ final class TurnoInboundSyncService
             throw $e;
         }
 
+        if ($beforeEstado !== Turno::ESTADO_CANCELADO
+            && (string) $turno->estado === Turno::ESTADO_CANCELADO
+        ) {
+            try {
+                (new TurnoAdvanceOfferAgent())->onTurnoCancelled($turno);
+            } catch (\Throwable $e) {
+                Yii::warning('Advance offer FHIR: ' . $e->getMessage(), 'turno-advance');
+            }
+        }
+
         return [
             'action' => $isNew ? 'created' : 'updated',
             'id_turnos' => (int) $turno->id_turnos,
             'trust' => $trust,
         ];
+    }
+
+    private function syncSlotClaimForInbound(Turno $turno, ?string $beforeEstado, bool $isNew): void
+    {
+        $idTurno = (int) $turno->id_turnos;
+        if ((string) $turno->estado === Turno::ESTADO_CANCELADO
+            || (string) $turno->estado === Turno::ESTADO_ATENDIDO
+            || (string) $turno->estado === Turno::ESTADO_SIN_ATENDER
+        ) {
+            TurnoSlotClaimService::releaseForTurno($idTurno);
+            return;
+        }
+        if ((string) $turno->estado !== Turno::ESTADO_PENDIENTE
+            && (string) $turno->estado !== Turno::ESTADO_EN_RESOLUCION
+        ) {
+            return;
+        }
+        $idPes = (int) ($turno->id_profesional_efector_servicio ?? 0);
+        $fecha = trim((string) ($turno->fecha ?? ''));
+        $hora = substr(TurnoResolucion::normalizarHora((string) ($turno->hora ?? '')), 0, 5);
+        if ($idPes <= 0 || $fecha === '' || $hora === '') {
+            return;
+        }
+        if ($isNew || $beforeEstado === Turno::ESTADO_CANCELADO) {
+            TurnoSlotClaimService::tryClaim($idPes, $fecha, $hora, $idTurno);
+            return;
+        }
+        TurnoSlotClaimService::moveClaim($idTurno, $idPes, $fecha, $hora);
     }
 
     private function applyDtoToTurno(

@@ -32,8 +32,12 @@ Se amplía `turno_evento_audit` como registro canónico, evitando un segundo str
 | `ATTENDED` | Turno cerrado como atendido |
 | `NO_SHOW_RECORDED` | Staff registró inasistencia |
 | `NO_SHOW_CORRECTED` | Se rectificó una inasistencia |
-| `WAITLIST_OFFERED` | Se ofreció un cupo |
-| `WAITLIST_ACCEPTED` | Se aceptó el cupo |
+| `APPOINTMENT_ADVANCE_OFFERED` | Se ofreció adelantar a un slot liberado |
+| `APPOINTMENT_ADVANCE_DELIVERED` | La oferta de adelantamiento se entregó (ACK push) |
+| `APPOINTMENT_ADVANCE_OPENED` | El paciente abrió la oferta (tap push) |
+| `APPOINTMENT_ADVANCE_ACCEPTED` | Aceptó y se reprogramó el turno |
+| `APPOINTMENT_ADVANCE_UNAVAILABLE` | El horario ya no estaba disponible |
+| `APPOINTMENT_ADVANCE_EXPIRED` | La oferta secuencial venció sin aceptación |
 | `SYSTEM_SLOT_RELEASED` | El sistema liberó el turno |
 
 ### Atributos obligatorios

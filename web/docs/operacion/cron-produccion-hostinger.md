@@ -67,10 +67,16 @@ Si falla `php`, probá la versión del panel (`which php`, o `/usr/bin/php82`).
 
 ### Cada 5 minutos (`*/5 * * * *`)
 
-**Lista de espera — expirar ofertas:**
+**Adelantamiento por cancelación — avanzar campañas:**
 
 ```bash
-/usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii turno-waitlist/expire-offers >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/waitlist-cron.log 2>&1
+/usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii turno-advance-offer/run >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/advance-offer-cron.log 2>&1
+```
+
+**Adelantamiento — reparar campañas faltantes** (opcional, junto al run o cada 15–30 min):
+
+```bash
+/usr/bin/php /home/u257309594/domains/bioenlace.io/repo/web/yii turno-advance-offer/repair >> /home/u257309594/domains/bioenlace.io/repo/web/console/runtime/logs/advance-offer-cron.log 2>&1
 ```
 
 **Cohortes / care-pack:**
@@ -154,7 +160,8 @@ Aplica `pending_max_pes` cuando llega el nuevo período (baja de profesionales d
 | Cada minuto | `turno-notificacion/run` | `turno-notif-cron.log` |
 | Cada minuto | `encounter-patient-summary/run` | `encounter-summary-cron.log` |
 | Cada minuto | `legal-record-export/run` | `legal-export-cron.log` |
-| Cada 5 min | `turno-waitlist/expire-offers` | `waitlist-cron.log` |
+| Cada 5 min | `turno-advance-offer/run` | `advance-offer-cron.log` |
+| Cada 15–30 min (opc.) | `turno-advance-offer/repair` | `advance-offer-cron.log` |
 | Cada 5 min | `care-pack/run-jobs` | `care-pack-cron.log` |
 | Cada 30 min | `paciente-domicilio/run` | `domicilio-cron.log` |
 | 00:15 diario | `entitlement/apply-pending-downgrades` | `entitlement-downgrade-cron.log` |

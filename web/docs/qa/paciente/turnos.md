@@ -54,14 +54,13 @@ Escenario completo: [medicina general](../escenarios/ambulatorio/medicina-genera
 
 ---
 
-## App — Lista de espera (sin cupo)
+## App — Adelantamiento tras cancelación
 
-**Intent:** `turnos.lista-espera-flow` (desde el flujo de reserva)
-
-1. **Vos** llegás al paso sin cupos disponibles.
-2. **El sistema** ofrece inscribirte en lista de espera del servicio.
-3. **Vos** confirmás.
-4. **El sistema** confirma la inscripción; si se libera un turno, podés recibir aviso (push).
+1. **Otro paciente** cancela un turno compatible con el tuyo posterior (≥ 24 h).
+2. **El sistema** te envía push/alerta “Se liberó un turno más temprano” (sujeto a disponibilidad).
+3. **Vos** en **Alertas** tocás **Adelantar mi turno**.
+4. **El sistema** reprograma tu turno al horario liberado si sigue libre; si no, informa que ya no está disponible.
+5. El cupo que dejás libre queda abierto para reserva normal (sin segunda campaña).
 
 ---
 

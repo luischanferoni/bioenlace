@@ -5,7 +5,6 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Platform\Agent\AutonomousAgentRuleEngine;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Platform\AgentRun;
-use Yii;
 
 /**
  * Construye hechos y resuelve canal alternativo cuando no hay cupos tras triage (agente A05).
@@ -45,7 +44,6 @@ final class ReservaTriagePostCupoRoutingService
             'tele_hub_available' => $hub['id_servicios'] !== [] || $esModoHub,
             'primaria_available' => $this->tieneServiciosPrimaria($draft),
             'especialista_sin_cupo' => $idServicioReq > 0 && $especialista['id_servicios'] !== [],
-            'lista_espera_habilitada' => (bool) (Yii::$app->params['autonomous_agent_waitlist_enabled'] ?? true),
             'modo_tele_hub' => $esModoHub,
             'slots_empty' => true,
         ];

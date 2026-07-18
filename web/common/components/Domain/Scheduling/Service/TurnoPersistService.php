@@ -123,6 +123,14 @@ class TurnoPersistService
             if (!$model->save()) {
                 throw new \InvalidArgumentException(implode(', ', $model->getErrorSummary(true)));
             }
+            $idPes = (int) ($model->id_profesional_efector_servicio ?? 0);
+            $fecha = (string) ($model->fecha ?? '');
+            $hora = substr(\common\models\TurnoResolucion::normalizarHora((string) ($model->hora ?? '')), 0, 5);
+            if ($idPes > 0 && $fecha !== '' && $hora !== ''
+                && !TurnoSlotClaimService::tryClaim($idPes, $fecha, $hora, (int) $model->id_turnos)
+            ) {
+                throw new \InvalidArgumentException('El horario ya no está disponible.');
+            }
             $esPaciente = $ctx->esReservaParaSiMismo($model);
             (new TurnoLifecycleService())->afterTurnoCreado(
                 $model,
@@ -137,6 +145,12 @@ class TurnoPersistService
                 $tx->rollBack();
             }
             throw $e;
+        }
+
+        try {
+            (new TurnoAdvanceOfferAgent())->notifySlotTakenByReservation($model);
+        } catch (\Throwable $e) {
+            Yii::warning('AdvanceOffer slot taken: ' . $e->getMessage(), 'turno-advance');
         }
 
         try {

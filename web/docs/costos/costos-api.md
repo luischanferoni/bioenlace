@@ -386,7 +386,7 @@ Misma superficie de asistente que la **app móvil paciente**: mismo `ChatOrchest
 |------|----------------|----------------|-------------------|
 | **Service** (texto / botones / listas en ventana **24 h** tras mensaje del usuario) | **Sí** | **$0** | **~$0** |
 | **IA §1** (preprocess ± conversacional) | **Sí** | Vertex (igual que app) | **~$0** |
-| **Utility** (recordatorios, resolución, waitlist, anti no-show, etc.) | **No habilitado** | ~$0,026 AR / msg (list USD) si se usara | **N/A — fuera de alcance** |
+| **Utility** (recordatorios, resolución, adelantamiento, anti no-show, etc.) | **No habilitado** | ~$0,026 AR / msg (list USD) si se usara | **N/A — fuera de alcance** |
 | Marketing / authentication | **No habilitado** | Rate card Meta | **N/A** |
 
 **COGS Meta del alcance actual:** **~$0**/prof/mes (solo service window). El costo variable sigue siendo el §1 de IA, atribuido al volumen de chat (app o WhatsApp), no un add-on Meta.

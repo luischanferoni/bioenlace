@@ -1,0 +1,46 @@
+{
+  "ui_type": "ui_json",
+  "title": "Resolver corrección",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "resolucion",
+      "title": "Resolución",
+      "fields": [
+        {
+          "name": "correction_ref",
+          "label": "Referencia de solicitud",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "decision",
+          "label": "Decisión",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "accepted", "label": "Aceptar" },
+            { "value": "rejected", "label": "Rechazar" }
+          ]
+        },
+        {
+          "name": "replacement_outcome",
+          "label": "Resultado si se acepta (ATTENDED / PENDING / UNKNOWN)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "kind": "message",
+      "id": "resultado",
+      "title": "Resultado",
+      "text_field": "status_text",
+      "text": "Completá la resolución y confirmá."
+    }
+  ]
+}

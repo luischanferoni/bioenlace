@@ -1,6 +1,6 @@
 # Fase 4 — API, UI y transparencia
 
-**Estado:** V1 API disponible (propio, representado, explicación propia, agregado staff con supresión). Faltan UI JSON compartida, explicación staff y circuito de solicitud/resolución de corrección.
+**Estado:** V1 completa a nivel API/UI JSON (propio, representado, explicación, agregado, solicitud y resolución de corrección). La entrega/apertura de push queda explícitamente fuera hasta evidencia de canal.
 
 ## Objetivo
 

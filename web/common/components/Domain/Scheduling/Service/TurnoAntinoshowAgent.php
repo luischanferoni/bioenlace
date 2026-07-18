@@ -98,6 +98,93 @@ final class TurnoAntinoshowAgent
         return 'sent';
     }
 
+    /**
+     * Evalúa el checkpoint T−48 sobre el CONFIRM_REQUEST ya enviado (sin reenviar push).
+     */
+    public function evaluateSharedConfirmationCheckpoint(Turno $turno, int $hoursBefore = 48): void
+    {
+        if (!(Yii::$app->params['autonomous_agent_antinoshow_enabled'] ?? true)) {
+            return;
+        }
+        if ($this->isAlreadyConfirmed($turno)) {
+            return;
+        }
+        $config = AutonomousAgentMetadata::loadAgent(self::AGENT_ID);
+        if ($config === null) {
+            return;
+        }
+        if (!$this->checkpointIsShared($config, $hoursBefore)) {
+            return;
+        }
+
+        $checkpointRules = $this->rulesForCheckpoint($config, $hoursBefore);
+        $facts = $this->risk->assess($turno);
+        if (!empty($facts['confirmed'])) {
+            return;
+        }
+
+        $matched = AutonomousAgentRuleEngine::matchAll($checkpointRules, $facts, null);
+        if ($matched === []) {
+            AgentRunRecorder::record(
+                self::AGENT_ID,
+                self::TRIGGER_CHECKPOINT,
+                'skip_low_risk',
+                (int) $turno->id_turnos,
+                null,
+                (int) $turno->id_persona,
+                null,
+                array_merge($facts, ['hours_before' => $hoursBefore, 'shared_confirmation' => true]),
+                null,
+                $this->auditContext($config, $facts, 'skip_low_risk')
+            );
+
+            return;
+        }
+
+        foreach ($matched as $rule) {
+            $action = (string) ($rule['action'] ?? '');
+            $ruleId = (string) ($rule['id'] ?? '');
+            if ($action === 'shared_confirm_evaluate' || $action === 'extra_confirm_push') {
+                $releaseHours = (int) ($rule['schedule_release_hours_before'] ?? 0);
+                if ($releaseHours > 0 && $this->shouldScheduleRelease($config, (string) $facts['risk_level'])) {
+                    $this->scheduler->scheduleRelease($turno, $releaseHours);
+                }
+                AgentRunRecorder::record(
+                    self::AGENT_ID,
+                    self::TRIGGER_CHECKPOINT,
+                    'shared_confirm_evaluate',
+                    (int) $turno->id_turnos,
+                    null,
+                    (int) $turno->id_persona,
+                    $ruleId,
+                    array_merge($facts, ['hours_before' => $hoursBefore, 'shared_confirmation' => true]),
+                    null,
+                    $this->auditContext($config, $facts, 'shared_confirm_evaluate')
+                );
+            }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    private function checkpointIsShared(array $config, int $hoursBefore): bool
+    {
+        $checkpoints = is_array($config['checkpoints'] ?? null) ? $config['checkpoints'] : [];
+        foreach ($checkpoints as $checkpoint) {
+            if (!is_array($checkpoint)) {
+                continue;
+            }
+            if ((int) ($checkpoint['hours_before'] ?? 0) !== $hoursBefore) {
+                continue;
+            }
+
+            return !empty($checkpoint['shared_confirmation_request']);
+        }
+
+        return false;
+    }
+
     public function processRelease(TurnoNotificacionProgramada $row, Turno $turno): string
     {
         if (!(Yii::$app->params['autonomous_agent_antinoshow_enabled'] ?? true)) {

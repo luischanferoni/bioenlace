@@ -1,0 +1,46 @@
+{
+  "ui_type": "ui_json",
+  "title": "Agregado de turnos por centro",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "filtros",
+      "title": "Filtros",
+      "fields": [
+        {
+          "name": "id_efector",
+          "label": "Centro (si no hay sesión operativa)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "window_days",
+          "label": "Ventana (90, 180 o 365)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "kind": "message",
+      "id": "estado",
+      "title": "Resultado",
+      "text_field": "status_text",
+      "text": "Confirmá para calcular el agregado."
+    },
+    {
+      "kind": "list",
+      "id": "metricas",
+      "title": "Métricas",
+      "selection": { "mode": "none" },
+      "empty_message": "Sin métricas publicables.",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "compact", "shape": "wide" },
+      "items": []
+    }
+  ]
+}

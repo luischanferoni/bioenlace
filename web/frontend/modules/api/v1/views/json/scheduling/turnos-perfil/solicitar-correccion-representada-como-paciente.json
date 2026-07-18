@@ -1,0 +1,49 @@
+{
+  "ui_type": "ui_json",
+  "title": "Solicitar corrección (representado)",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "solicitud",
+      "title": "Datos de la solicitud",
+      "fields": [
+        {
+          "name": "subject_persona_id",
+          "label": "Persona representada",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "id_turno",
+          "label": "ID del turno",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "claim_code",
+          "label": "Motivo",
+          "type": "select",
+          "required": true,
+          "options": [
+            { "value": "attendance_was_recorded_incorrectly", "label": "La inasistencia se registró incorrectamente" },
+            { "value": "cancellation_actor_incorrect", "label": "Quién canceló quedó mal atribuido" },
+            { "value": "confirmation_delivery_incorrect", "label": "Hubo un problema con la confirmación" },
+            { "value": "appointment_not_recognized", "label": "No reconozco este turno" },
+            { "value": "other_requires_contact", "label": "Otro (requiere contacto con el centro)" }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "message",
+      "id": "resultado",
+      "title": "Resultado",
+      "text_field": "message",
+      "text": "Completá los datos y enviá la solicitud."
+    }
+  ]
+}

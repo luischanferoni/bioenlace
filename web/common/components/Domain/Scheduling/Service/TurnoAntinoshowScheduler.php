@@ -36,6 +36,10 @@ final class TurnoAntinoshowScheduler
             if ($hoursBefore <= 0) {
                 continue;
             }
+            // T−48 compartido con CONFIRM_REQUEST: se evalúa al enviar esa notificación.
+            if (!empty($checkpoint['shared_confirmation_request'])) {
+                continue;
+            }
             $runAt = $turnoTimestamp - $hoursBefore * 3600;
             if ($runAt <= time()) {
                 continue;

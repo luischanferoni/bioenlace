@@ -1,0 +1,34 @@
+{
+  "ui_type": "ui_json",
+  "title": "Historial de turnos",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "disclaimer",
+      "title": "Sobre estos datos",
+      "text_field": "disclaimer",
+      "text": "Estos datos describen hechos registrados y no son una calificación personal."
+    },
+    {
+      "kind": "message",
+      "id": "estado",
+      "title": "Estado del historial",
+      "text_field": "status_text",
+      "text": "Consultando historial…"
+    },
+    {
+      "kind": "list",
+      "id": "metricas",
+      "title": "Resumen",
+      "selection": { "mode": "none" },
+      "empty_message": "Todavía no hay métricas para mostrar.",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "compact", "shape": "wide" },
+      "items": []
+    }
+  ]
+}

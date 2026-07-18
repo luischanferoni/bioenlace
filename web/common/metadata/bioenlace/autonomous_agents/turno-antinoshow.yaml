@@ -16,12 +16,14 @@ risk:
 
 checkpoints:
   - hours_before: 48
+    # Comparte el CONFIRM_REQUEST general: no crea ANTINOSHOW_CHECKPOINT ni reenvía push.
+    shared_confirmation_request: true
     rules:
       - id: high_extra_confirm
         when:
           field: risk_level
           equals: high
-        action: extra_confirm_push
+        action: shared_confirm_evaluate
         schedule_release_hours_before: 24
   - hours_before: 2
     rules:

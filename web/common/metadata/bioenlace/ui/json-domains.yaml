@@ -4,6 +4,7 @@ version: 1
 
 entity_domains:
   turnos: scheduling
+  turnos-perfil: scheduling
   consultas-seguimiento: scheduling
   profesional-agenda: scheduling
   profesional-cobertura: organization

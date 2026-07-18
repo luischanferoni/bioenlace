@@ -1,0 +1,33 @@
+{
+  "ui_type": "ui_json",
+  "title": "Correcciones pendientes",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "filtros",
+      "title": "Centro",
+      "fields": [
+        {
+          "name": "id_efector",
+          "label": "Centro (si no hay sesión operativa)",
+          "type": "text",
+          "required": false
+        }
+      ]
+    },
+    {
+      "kind": "list",
+      "id": "correcciones",
+      "title": "Pendientes",
+      "selection": { "mode": "none" },
+      "empty_message": "No hay solicitudes pendientes.",
+      "item": { "kind": "generic", "id_field": "correction_ref", "label_field": "name" },
+      "presentation": { "tile": "compact", "shape": "wide" },
+      "items": []
+    }
+  ]
+}

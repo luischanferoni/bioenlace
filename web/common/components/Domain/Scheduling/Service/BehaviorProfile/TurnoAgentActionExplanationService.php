@@ -101,6 +101,7 @@ final class TurnoAgentActionExplanationService
     {
         return match ($code) {
             'extra_confirm_push' => 'Pedido adicional de confirmación',
+            'shared_confirm_evaluate' => 'Evaluación sobre pedido de confirmación',
             'reminder_push' => 'Recordatorio de turno',
             'release_slot' => 'Liberación de cupo',
             'skip_low_risk' => 'Sin acción adicional',
@@ -112,6 +113,7 @@ final class TurnoAgentActionExplanationService
     {
         $base = match ($actionCode) {
             'extra_confirm_push' => 'Se envió un pedido adicional para confirmar la asistencia al turno.',
+            'shared_confirm_evaluate' => 'Se evaluó el pedido de confirmación ya enviado según el historial del turno.',
             'reminder_push' => 'Se envió un recordatorio próximo a la cita.',
             'release_slot' => 'Se evaluó la liberación del cupo según la política vigente.',
             'skip_low_risk' => 'No se aplicó una acción adicional sobre este turno.',

@@ -1,6 +1,6 @@
 # Fase 3 — Políticas y migración
 
-**Estado:** parcial en shadow. A04 y cancelación adjuntan candidato factual; KPIs de agenda ya leen eventos canónicos; liberación automática deshabilitada. Faltan unificación de checkpoints y promoción controlada de políticas.
+**Estado:** parcial en shadow. A04 y cancelación adjuntan candidato factual; KPIs leen eventos; T−48 unificado con confirmación base; liberación deshabilitada. Falta promoción controlada a enforce y piloto.
 
 ## Objetivo
 

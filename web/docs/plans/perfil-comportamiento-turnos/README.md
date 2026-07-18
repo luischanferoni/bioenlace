@@ -43,13 +43,12 @@ Las fases 0 y 1 son bloqueantes. No se habilita ninguna decisión nueva sobre pa
 
 ## Estado de implementación (2026-07-18)
 
-- Implementado: contrato V1 declarativo, stream canónico idempotente, snapshots de cita, backfill y materializador versionado.
-- Integrado: creación, cancelación, reprogramación, resolución, atención, no-show, corrección, FHIR inbound, confirmación solicitada y waitlist offered/accepted.
-- KPIs: `TurnoAgendaMetricsService` consume eventos canónicos (compatibilidad de respuesta preservada + cobertura).
-- Seguridad inmediata: A04/A06 atribuyen cancelaciones automáticas al sistema; liberación A04 deshabilitada y limitada a `enforce`.
-- Shadow: anti no-show y cancelación calculan evidencia candidata desde el perfil sin cambiar todavía la decisión legacy.
-- Transparencia: historial propio/representado, explicación de acción propia y agregado de efector con supresión de cohortes pequeñas.
-- Pendiente: entrega real de confirmación (`CONFIRMATION_DELIVERY_CONFIRMED`), circuito de solicitud de corrección, UI JSON compartida, unificación de checkpoints y piloto.
+- Implementado: contrato V1, stream canónico, backfill, materializador, create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación solicitada/waitlist.
+- KPIs de agenda desde eventos canónicos.
+- Checkpoints: T−48 unificado con `CONFIRM_REQUEST` (`shared_confirmation_request`); T−2 sigue como checkpoint propio.
+- Shadow A04/cancelación; liberación deshabilitada.
+- API + UI JSON: historial propio/representado, explicación, agregado staff, solicitud y resolución de corrección.
+- Fuera de alcance operativo: `CONFIRMATION_DELIVERY_CONFIRMED` / `OPENED` (sin evidencia real de canal) y piloto formal de fase 5.
 
 ## Cierre del plan
 

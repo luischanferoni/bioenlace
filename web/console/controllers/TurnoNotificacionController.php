@@ -59,6 +59,12 @@ class TurnoNotificacionController extends Controller
                         'Confirmá asistencia al turno del ' . $turno->fecha . ' ' . $turno->hora
                     );
                     $confirmation->recordConfirmationRequested($turno, (int) $row->id);
+                    try {
+                        (new \common\components\Domain\Scheduling\Service\TurnoAntinoshowAgent())
+                            ->evaluateSharedConfirmationCheckpoint($turno, 48);
+                    } catch (\Throwable $e) {
+                        Yii::warning('Antinoshow shared checkpoint: ' . $e->getMessage(), 'turno-antinoshow');
+                    }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_MOTIVOS_IA_BATCH) {
                     $meta = $row->payload_json ? json_decode($row->payload_json, true) : [];
                     $encounterId = is_array($meta) ? (int) ($meta['encounter_id'] ?? 0) : 0;

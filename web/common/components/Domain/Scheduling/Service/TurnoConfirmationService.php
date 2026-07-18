@@ -26,6 +26,14 @@ class TurnoConfirmationService
         if ($cfg->confirmacion_requerida) {
             $runConfirm = $dt - 48 * 3600;
             if ($runConfirm > time()) {
+                TurnoNotificacionProgramada::updateAll(
+                    ['estado' => TurnoNotificacionProgramada::ESTADO_CANCELADA],
+                    [
+                        'id_turno' => (int) $turno->id_turnos,
+                        'tipo' => TurnoNotificacionProgramada::TIPO_CONFIRM_REQUEST,
+                        'estado' => TurnoNotificacionProgramada::ESTADO_PENDIENTE,
+                    ]
+                );
                 $this->insertProgramada($turno, TurnoNotificacionProgramada::TIPO_CONFIRM_REQUEST, date('Y-m-d H:i:s', $runConfirm));
             }
         }

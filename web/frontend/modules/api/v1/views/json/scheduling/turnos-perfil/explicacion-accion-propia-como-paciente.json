@@ -1,0 +1,37 @@
+{
+  "ui_type": "ui_json",
+  "title": "Explicación de acción",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": { "*": { "min_app_version": "1.0.0" } }
+  },
+  "blocks": [
+    {
+      "kind": "fields",
+      "id": "consulta",
+      "title": "Turno",
+      "fields": [
+        {
+          "name": "id_turno",
+          "label": "ID del turno",
+          "type": "text",
+          "required": true
+        }
+      ]
+    },
+    {
+      "kind": "message",
+      "id": "explicacion",
+      "title": "Qué ocurrió",
+      "text_field": "explanation_text",
+      "text": "Indicá el turno para ver la explicación."
+    },
+    {
+      "kind": "message",
+      "id": "disclaimer",
+      "title": "Aviso",
+      "text_field": "disclaimer",
+      "text": "Esta explicación describe hechos registrados y la acción aplicada."
+    }
+  ]
+}

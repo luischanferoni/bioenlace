@@ -17,6 +17,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Urgencias — triage + tablero | `urgencias-triage-tablero/` | Fase 1 (API dominio) en curso; fases 2–5 pendientes |
 | Agendamiento FHIR entrante | `fhir-scheduling-inbound/` | Doc producto: [interoperabilidad-agendamiento-fhir.md](../producto/interoperabilidad-agendamiento-fhir.md) |
 | Alta cuenta institucional | `alta-cuenta-institucional/` | Self-service AdminEfector + solicitud ministerio + pasarela simulada |
+| Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | Perfil factual persistido; eventos, materialización, políticas y transparencia |
 
 ## Planes archivados (carpeta eliminada)
 

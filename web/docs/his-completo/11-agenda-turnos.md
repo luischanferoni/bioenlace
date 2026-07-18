@@ -13,6 +13,7 @@
 - [x] Alta de turno por staff para terceros.
 - [x] Acciones guiadas por conversación para flujos de turnos.
 - [x] **Métricas de acceso (staff):** no-show (`SIN_ATENDER` por paciente), tasa sobre cerrados y mediana/promedio de días reserva → cita (`/api/v1/turnos/indicadores-agenda`, intent `turnos.indicadores-agenda-flow`).
+- [x] Anti no-show v1 basado en reglas históricas calculadas al vuelo.
 - [x] **Espejo NIS FHIR (v1):** pull `Appointment` → `turnos`, onboarding Schedule → PES, push de estados salientes — desactivado por defecto; ver [interoperabilidad-agendamiento-fhir.md](../producto/interoperabilidad-agendamiento-fhir.md).
 
 ## Lo que falta
@@ -26,6 +27,11 @@
 - [ ] Piloto en producción NIS MSAL (datos reales + cron habilitado).
 - [ ] Slots diferenciados presencial/remoto (hoy comparten grilla).
 - [ ] Panel histórico exportable (CSV/PDF) y benchmarks entre servicios del efector.
+- [ ] Eventos canónicos completos para atención, no-show, corrección, cancelación y reprogramación, con actor y origen.
+- [ ] Perfil factual persistido y versionado por persona, ventana y alcance.
+- [ ] Separación formal entre perfil, preferencias y políticas de intervención.
+- [ ] Explicabilidad y corrección del historial para paciente o representante.
+- [ ] Evaluación de equidad y shadow mode antes de acciones anti no-show de alto impacto.
 
 ## En producto hoy
 

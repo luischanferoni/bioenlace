@@ -117,7 +117,7 @@ final class TurnoResolucionLoopCloseAgent
         $life = new TurnoLifecycleService();
         $life->cancelar(
             $turno,
-            Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE,
+            Turno::ESTADO_MOTIVO_CANCELADO_SISTEMA,
             'sistema',
             null,
             [
@@ -125,7 +125,8 @@ final class TurnoResolucionLoopCloseAgent
                 'razon_cancelacion_label' => 'Sin respuesta tras reubicación',
                 'agent_id' => self::AGENT_ID,
             ],
-            false
+            false,
+            \common\models\TurnoEventoAudit::ACTOR_SISTEMA
         );
 
         $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];

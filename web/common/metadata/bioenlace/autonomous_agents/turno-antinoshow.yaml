@@ -1,10 +1,14 @@
-# Anti no-show predictivo (agente A04 v1).
+# Política anti no-show basada en reglas. La política candidata opera en shadow
+# hasta contar con cobertura suficiente del perfil factual persistido.
 # {@see TurnoAntinoshowAgent}
-version: 1
+version: 2
 agent_id: turno-antinoshow
+execution_mode: shadow
+required_profile_contract_version: 1
 
 risk:
   lookback_months: 6
+  profile_window_days: 180
   high_min_no_shows: 2
   medium_min_no_shows: 1
   long_lead_days: 21
@@ -33,14 +37,15 @@ checkpoints:
         action: reminder_push
 
 release_slot:
-  enabled: true
+  # Acción de alto impacto deshabilitada durante shadow/piloto.
+  enabled: false
   hours_before_appointment: 24
   only_risk_levels: [high]
 
 patient_messages:
   extra_confirm:
     title: "Confirmá tu turno"
-    body: "Confirmá asistencia al turno del {{fecha}} {{hora}}. Si no confirmás a tiempo, el cupo puede liberarse."
+    body: "Confirmá asistencia al turno del {{fecha}} {{hora}}."
   reminder:
     title: "Tu turno es pronto"
     body: "Recordá tu turno del {{fecha}} a las {{hora}}."

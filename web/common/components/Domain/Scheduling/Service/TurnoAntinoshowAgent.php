@@ -72,7 +72,9 @@ final class TurnoAntinoshowAgent
                 null,
                 (int) $turno->id_persona,
                 null,
-                array_merge($facts, ['hours_before' => $hoursBefore])
+                array_merge($facts, ['hours_before' => $hoursBefore]),
+                null,
+                $this->auditContext($config, $facts, 'skip_low_risk')
             );
 
             return 'sent';
@@ -110,6 +112,9 @@ final class TurnoAntinoshowAgent
         if ($config === null) {
             return 'cancelled';
         }
+        if ((string) ($config['execution_mode'] ?? 'shadow') !== 'enforce') {
+            return 'cancelled';
+        }
 
         $releaseCfg = is_array($config['release_slot'] ?? null) ? $config['release_slot'] : [];
         if (!($releaseCfg['enabled'] ?? false)) {
@@ -125,7 +130,7 @@ final class TurnoAntinoshowAgent
         $life = new TurnoLifecycleService();
         $life->cancelar(
             $turno,
-            Turno::ESTADO_MOTIVO_CANCELADO_PACIENTE,
+            Turno::ESTADO_MOTIVO_CANCELADO_SISTEMA,
             'sistema',
             null,
             [
@@ -133,7 +138,8 @@ final class TurnoAntinoshowAgent
                 'razon_cancelacion_label' => 'Sin confirmación — liberación por política anti no-show',
                 'agent_id' => self::AGENT_ID,
             ],
-            false
+            false,
+            \common\models\TurnoEventoAudit::ACTOR_SISTEMA
         );
 
         $msgs = is_array($config['patient_messages'] ?? null) ? $config['patient_messages'] : [];
@@ -161,7 +167,9 @@ final class TurnoAntinoshowAgent
             null,
             (int) $turno->id_persona,
             'release_slot',
-            $facts
+            $facts,
+            null,
+            $this->auditContext($config, $facts, 'release_slot')
         );
 
         return 'sent';
@@ -244,7 +252,9 @@ final class TurnoAntinoshowAgent
             null,
             (int) $turno->id_persona,
             $ruleId,
-            $facts
+            $facts,
+            null,
+            $this->auditContext($config, $facts, 'extra_confirm_push')
         );
     }
 
@@ -278,8 +288,56 @@ final class TurnoAntinoshowAgent
             null,
             (int) $turno->id_persona,
             $ruleId,
-            $facts
+            $facts,
+            null,
+            $this->auditContext($config, $facts, 'reminder_push')
         );
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     * @param array<string, mixed> $facts
+     * @return array<string, mixed>
+     */
+    private function auditContext(array $config, array $facts, string $action): array
+    {
+        $canonical = $config;
+        $this->sortRecursive($canonical);
+        $candidate = is_array($facts['profile_candidate'] ?? null)
+            ? $facts['profile_candidate']
+            : [];
+        $mode = strtoupper((string) ($config['execution_mode'] ?? 'shadow'));
+        if (!in_array($mode, ['SHADOW', 'LOW_IMPACT', 'ENFORCE'], true)) {
+            $mode = 'SHADOW';
+        }
+
+        return [
+            'profile_id' => $candidate['profile_id'] ?? null,
+            'profile_contract_version' => $candidate['profile_contract_version'] ?? null,
+            'policy_id' => self::AGENT_ID,
+            'policy_version' => (string) ($config['version'] ?? '1'),
+            'policy_hash' => hash('sha256', json_encode($canonical, JSON_UNESCAPED_UNICODE) ?: ''),
+            'execution_mode' => $mode,
+            'evidence' => $candidate,
+            'action' => ['code' => $action],
+            'result' => ['legacy_outcome' => $action, 'candidate_mode' => strtolower($mode)],
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $value
+     */
+    private function sortRecursive(array &$value): void
+    {
+        foreach ($value as &$item) {
+            if (is_array($item)) {
+                $this->sortRecursive($item);
+            }
+        }
+        unset($item);
+        if (!array_is_list($value)) {
+            ksort($value);
+        }
     }
 
     private function isAlreadyConfirmed(Turno $turno): bool

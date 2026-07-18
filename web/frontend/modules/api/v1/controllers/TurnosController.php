@@ -2011,6 +2011,7 @@ class TurnosController extends BaseController
         ) {
             throw new BadRequestHttpException('id_profesional_efector_servicio inválido para este turno');
         }
+        $before = TurnoLifecycleService::scheduleSnapshot($turno);
         $turno->id_profesional_efector_servicio = $idPesPost;
         $turno->fecha = $fecha;
         $turno->hora = $hora;
@@ -2019,8 +2020,16 @@ class TurnosController extends BaseController
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }
-        if (!$turno->save()) {
-            throw new BadRequestHttpException('No se pudo guardar el turno.');
+        try {
+            (new TurnoLifecycleService())->reprogramar(
+                $turno,
+                $before,
+                \common\models\TurnoEventoAudit::ACTOR_PACIENTE,
+                'app',
+                Yii::$app->user->id ?? null
+            );
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
         }
         \common\models\TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
         try {

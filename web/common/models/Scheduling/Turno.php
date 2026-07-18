@@ -2,7 +2,6 @@
 
 namespace common\models\Scheduling;
 
-use common\components\Domain\Integrations\Scheduling\Service\TurnoFhirOutboundNotifier;
 use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaAtencionesEnfermeria;
@@ -138,6 +137,8 @@ class Turno extends \yii\db\ActiveRecord
     const ESTADO_MOTIVO_ERROR_CARGA = 'ERROR_CARGA';
     const ESTADO_MOTIVO_CANCELADO_PACIENTE = 'CANCELADO_X_PACIENTE';
     const ESTADO_MOTIVO_CANCELADO_MEDICO = 'CANCELADO_X_MEDICO';
+    const ESTADO_MOTIVO_CANCELADO_SISTEMA = 'CANCELADO_X_SISTEMA';
+    const ESTADO_MOTIVO_CANCELADO_EFECTOR = 'CANCELADO_X_EFECTOR';
     const ESTADO_MOTIVO_SIN_ATENDER_PACIENTE = 'SIN_ATENDER_X_PACIENTE';
     const ESTADO_MOTIVO_SIN_ATENDER_MEDICO = 'SIN_ATENDER_X_MEDICO';
 
@@ -166,6 +167,8 @@ class Turno extends \yii\db\ActiveRecord
         self::ESTADO_MOTIVO_ERROR_CARGA => 'ERROR DE CARGA',
         self::ESTADO_MOTIVO_CANCELADO_PACIENTE => 'CANCELADO POR PACIENTE',
         self::ESTADO_MOTIVO_CANCELADO_MEDICO => 'CANCELADO POR MEDICO',
+        self::ESTADO_MOTIVO_CANCELADO_SISTEMA => 'CANCELADO POR SISTEMA',
+        self::ESTADO_MOTIVO_CANCELADO_EFECTOR => 'CANCELADO POR EFECTOR',
         self::ESTADO_MOTIVO_SIN_ATENDER_PACIENTE => 'SIN ATENDER POR PACIENTE',
         self::ESTADO_MOTIVO_SIN_ATENDER_MEDICO => 'SIN ATENDER POR MEDICO'
     ];
@@ -174,9 +177,20 @@ class Turno extends \yii\db\ActiveRecord
     const ATENDIDO_NO = 'NO';
     const ATENDIDO_EN_ATENCION = 'EN ATENCION';
 
+    /** @return list<string> */
+    public static function estadoMotivoValues(): array
+    {
+        return array_keys(self::ESTADO_MOTIVO);
+    }
+
     public static function getMotivosCancelacion()
     {
-        $motivos_cancel = [self::ESTADO_MOTIVO_ERROR_CARGA, self::ESTADO_MOTIVO_CANCELADO_PACIENTE,  self::ESTADO_MOTIVO_CANCELADO_MEDICO];
+        // UI de cancelación operativa: sin SISTEMA/EFECTOR (esos van por lifecycle/agentes).
+        $motivos_cancel = [
+            self::ESTADO_MOTIVO_ERROR_CARGA,
+            self::ESTADO_MOTIVO_CANCELADO_PACIENTE,
+            self::ESTADO_MOTIVO_CANCELADO_MEDICO,
+        ];
         $motivos = [];
         foreach ($motivos_cancel as $key) {
             $motivos[$key] = Turno::ESTADO_MOTIVO[$key];
@@ -612,37 +626,22 @@ class Turno extends \yii\db\ActiveRecord
 
     public static function NoSePresento($id_turno)
     {
-        $connection = new \yii\db\Query;
-        $connection->createCommand()
-            ->update(
-                'turnos',
-                [
-                    'atendido' => 'NO',
-                    'estado' => 'SIN_ATENDER',
-                    'estado_motivo' => 'SIN_ATENDER_X_PACIENTE'
-                ],
-                'id_turnos = ' . $id_turno
-            )
-            ->execute();
-
-        TurnoFhirOutboundNotifier::afterEstadoChangedById((int) $id_turno);
+        $turno = self::findOne(['id_turnos' => (int) $id_turno]);
+        if ($turno === null) {
+            throw new \InvalidArgumentException('Turno inexistente');
+        }
+        (new \common\components\Domain\Scheduling\Service\TurnoLifecycleService())
+            ->registrarNoShow($turno, Yii::$app->user->id ?? null);
     }
 
     public static function cambiarCampoAtendido($id_turnos, $estado)
     {
-
-        Yii::$app->db->createCommand()
-            ->update(
-                'turnos',
-                [
-                    'atendido' => $estado,
-                    'estado' => 'ATENDIDO'
-                ],
-                'id_turnos = ' . $id_turnos
-            )
-            ->execute();
-
-        TurnoFhirOutboundNotifier::afterEstadoChangedById((int) $id_turnos);
+        $turno = self::findOne(['id_turnos' => (int) $id_turnos]);
+        if ($turno === null) {
+            throw new \InvalidArgumentException('Turno inexistente');
+        }
+        (new \common\components\Domain\Scheduling\Service\TurnoLifecycleService())
+            ->marcarAtendido($turno, Yii::$app->user->id ?? null);
     }
 
     public static function sincronizarProfesionalEfectorServicioDesdeSesion(int $id_turnos, $id_servicio_asignado): void

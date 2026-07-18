@@ -1,0 +1,141 @@
+# Contrato factual de eventos y métricas de comportamiento en turnos (V1).
+# Consumido por TurnoBehaviorProfileContract / materializador.
+# No incluye risk_level ni umbrales de política anti no-show.
+version: 1
+contract_id: turno-behavior-profile
+
+windows_days:
+  - 90
+  - 180
+  - 365
+
+scopes:
+  - GLOBAL
+  - EFECTOR
+  - SERVICIO
+  - MODALIDAD
+
+actors:
+  - PACIENTE
+  - REPRESENTANTE
+  - STAFF
+  - EFECTOR
+  - SISTEMA
+  - EXTERNO
+
+# Actores cuyo comportamiento se atribuye a la persona sujeto del perfil.
+patient_attributed_actors:
+  - PACIENTE
+  - REPRESENTANTE
+
+attribution_qualities:
+  - NATIVE
+  - LEGACY_INFERRED
+
+min_sample_size: 5
+
+late_cancellation:
+  # Cancelación del paciente/representante con menos de N horas antes de la cita.
+  hours_before_appointment: 24
+
+events:
+  APPOINTMENT_CREATED:
+    legacy_tipos: [CREATE]
+  APPOINTMENT_RESCHEDULED:
+    legacy_tipos: []
+  APPOINTMENT_CANCELLED:
+    legacy_tipos: [CANCEL_PAC, CANCEL_MED, BULK_DAY_CANCEL]
+  APPOINTMENT_ENTERED_RESOLUTION:
+    legacy_tipos: []
+  CONFIRMATION_REQUESTED:
+    legacy_tipos: []
+  CONFIRMATION_DELIVERY_CONFIRMED:
+    legacy_tipos: []
+  CONFIRMATION_OPENED:
+    legacy_tipos: []
+  CONFIRMED:
+    legacy_tipos: [CONFIRMED]
+  ATTENTION_STARTED:
+    legacy_tipos: []
+  ATTENDED:
+    legacy_tipos: []
+  NO_SHOW_RECORDED:
+    legacy_tipos: [NO_SHOW]
+  NO_SHOW_CORRECTED:
+    legacy_tipos: []
+  WAITLIST_OFFERED:
+    legacy_tipos: []
+  WAITLIST_ACCEPTED:
+    legacy_tipos: []
+  SYSTEM_SLOT_RELEASED:
+    legacy_tipos: []
+  MODALITY_CHANGED:
+    legacy_tipos: [MODALITY_CHANGE]
+  OVERBOOK_CREATED:
+    legacy_tipos: [SOBRETURNO]
+
+# Métricas V1: el materializador calcula numerador/denominador/value según metric_code.
+# Las tasas no se emiten con denominador 0; sample_size < min_sample_size → insufficient_data.
+metrics:
+  - code: CLOSED_ELIGIBLE
+    kind: count
+    description: Turnos cerrados elegibles (atendidos + no-show atribuibles)
+  - code: ATTENDED
+    kind: count
+    description: Turnos atendidos
+  - code: NO_SHOW_ATTRIBUTABLE
+    kind: count
+    description: No-show atribuibles a la persona
+  - code: NO_SHOW_RATE
+    kind: rate
+    numerator: NO_SHOW_ATTRIBUTABLE
+    denominator: CLOSED_ELIGIBLE
+    description: Tasa de no-show atribuible
+  - code: CANCEL_PATIENT
+    kind: count
+    description: Cancelaciones iniciadas por paciente o representante
+  - code: CANCEL_EARLY
+    kind: count
+    description: Cancelaciones paciente fuera de la ventana tardía
+  - code: CANCEL_LATE
+    kind: count
+    description: Cancelaciones paciente dentro de la ventana tardía
+  - code: RESCHEDULED
+    kind: count
+    description: Reprogramaciones con vínculo anterior/nuevo
+  - code: CONFIRMATION_REQUESTED
+    kind: count
+    description: Solicitudes de confirmación
+  - code: CONFIRMATION_DELIVERED
+    kind: count
+    description: Confirmaciones con entrega del canal
+  - code: CONFIRMATION_RESPONDED
+    kind: count
+    description: Confirmaciones respondidas por la persona
+  - code: CONFIRMATION_RATE
+    kind: rate
+    numerator: CONFIRMATION_RESPONDED
+    denominator: CONFIRMATION_DELIVERED
+    description: Tasa de confirmación sobre entregas
+  - code: ATTENDED_AFTER_CONFIRM
+    kind: count
+    description: Atendidos entre turnos previamente confirmados
+  - code: CONFIRMED_CLOSED
+    kind: count
+    description: Turnos confirmados que cerraron (atendido o no-show)
+  - code: ATTENDED_AFTER_CONFIRM_RATE
+    kind: rate
+    numerator: ATTENDED_AFTER_CONFIRM
+    denominator: CONFIRMED_CLOSED
+    description: Asistencia posterior a confirmación
+  - code: COVERAGE_NATIVE
+    kind: count
+    description: Outcomes con evento nativo y atribución suficiente
+  - code: COVERAGE_INFERRED
+    kind: count
+    description: Outcomes solo inferidos por backfill
+  - code: COVERAGE_RATE
+    kind: rate
+    numerator: COVERAGE_NATIVE
+    denominator: CLOSED_ELIGIBLE
+    description: Cobertura de outcomes nativos sobre cerrados elegibles

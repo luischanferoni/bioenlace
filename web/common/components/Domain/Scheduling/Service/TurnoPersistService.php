@@ -118,19 +118,31 @@ class TurnoPersistService
             }
         }
 
-        if (!$model->save()) {
-            throw new \InvalidArgumentException(implode(', ', $model->getErrorSummary(true)));
+        $tx = Turno::getDb()->beginTransaction();
+        try {
+            if (!$model->save()) {
+                throw new \InvalidArgumentException(implode(', ', $model->getErrorSummary(true)));
+            }
+            $esPaciente = $ctx->esReservaParaSiMismo($model);
+            (new TurnoLifecycleService())->afterTurnoCreado(
+                $model,
+                $esPaciente
+                    ? \common\models\TurnoEventoAudit::ACTOR_PACIENTE
+                    : \common\models\TurnoEventoAudit::ACTOR_STAFF,
+                $esPaciente ? 'app' : 'admin'
+            );
+            $tx->commit();
+        } catch (\Throwable $e) {
+            if ($tx->isActive) {
+                $tx->rollBack();
+            }
+            throw $e;
         }
 
         try {
             (new EncounterLifecycleService())->ensureFromTurno($model);
         } catch (\Throwable $e) {
             Yii::warning('ensureFromTurno: ' . $e->getMessage(), 'api-turnos');
-        }
-        try {
-            (new TurnoLifecycleService())->afterTurnoCreado($model);
-        } catch (\Throwable $e) {
-            Yii::warning('afterTurnoCreado: ' . $e->getMessage(), 'api-turnos');
         }
 
         return $this->formatCrearResult($model);

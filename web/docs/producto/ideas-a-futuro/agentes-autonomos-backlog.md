@@ -158,7 +158,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | A02 | Negociación multicanal + cierre | **Agente** | Canal, escalar, timeout | D3 | ~~P0~~ **Hecho (v1)** |
 | A01 | Auto-reserva en resolución (opt-out) | **Agente** | Slot por score + preferencias en BD | D2 | ~~P1~~ **Hecho (v1)** |
 | A06 | Cierre de loop (sin respuesta) | **Agente** | Cancelar / mantener / escalar | D2 | ~~P1~~ **Hecho (v1)** |
-| A04 | Anti no-show predictivo | **Agente** | Liberar slot vs recordatorio | D2 | ~~P1~~ **Hecho (v1)** |
+| A04 | Anti no-show basado en reglas | **Agente** | Liberar slot vs recordatorio | D2 | ~~P1~~ **Hecho (v1); perfil persistido pendiente** |
 | A05 | Ruteo post-triage sin cupo | **Agente** | Canal por triage + cupos (reglas) | D1–D2 | ~~P1~~ **Hecho (v1)** |
 | H01 | Bandeja async priorizada | **Agente** | Orden por SLA + triage en BD | D1 | ~~P1~~ **Hecho (v1)** |
 | E01 | Asociar lab a encounter | **Agente** | Match fecha/pedido/PES | D2 | ~~P1~~ **Hecho (v1)** |
@@ -275,25 +275,34 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 ---
 
-### A04 — Anti no-show predictivo
+### A04 — Anti no-show basado en reglas y perfil factual
 
-> **Estado:** **implementado (v1)** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md). ML y teleconsulta avanzada pendientes.
+> **Estado:** agente basado en reglas **implementado (v1)** — [turnos.md](../turnos.md), [agentes-autonomos.md](../agentes-autonomos.md). Perfil persistido, eventos completos, evaluación de equidad y ML permanecen pendientes.
 
 | Campo | Valor |
 |-------|--------|
 | **Decisión del sistema** | Liberar slot a lista de espera si no confirma (rama D2, política estricta) |
 | **Grado** | D2 |
 | **Trigger** | T−48 h, T−2 h (configurable); score de riesgo alto |
-| **Política** | Modelo simple primero: historial no-show + distancia + primera vez; luego ML |
+| **Política** | V1: historial no-show + anticipación reserva→cita + primera visita; evolución: perfil factual versionado y política separada |
 | **Efecto** | Recordatorio extra, pedido confirmación explícita, oferta reprogramar antes del día |
 | **Métricas** | Tasa no-show vs baseline, `GET turnos/indicadores-agenda` |
-| **Base hoy** | Indicadores KPI ya expuestos |
+| **Base hoy** | Indicadores KPI y riesgo calculado al vuelo; no existe todavía perfil longitudinal persistido |
 
 **Casos de uso**
 
 1. **Paciente rezagado:** Historial de 2 ausencias en 6 meses. A las 48 h el agente pide «Confirmá con un toque»; si no confirma a las 24 h, libera slot a lista de espera (política estricta del efector).
-2. **Primera consulta:** Sin historial, riesgo medio: solo recordatorio 2 h con mapa y documentación a llevar (IA redacta según servicio).
+2. **Primera consulta:** La v1 interpreta falta de historial como riesgo medio. La evolución debe tratarla como muestra insuficiente y aplicar una intervención conservadora sin atribuir conducta negativa.
 3. **Teleconsulta:** Riesgo alto: a las 2 h envía link de video + test de conectividad; si no abre el link, staff recibe alerta opcional.
+
+**Evolución requerida**
+
+1. Registrar eventos de atención, ausencia, cancelación, reprogramación, confirmación y corrección con actor y origen.
+2. Materializar métricas por persona, período y alcance; no persistir una etiqueta `risk_level`.
+3. Registrar en cada decisión el perfil, contrato y versión de política consumidos.
+4. Diferenciar notificación programada, enviada, entregada, abierta y respondida.
+5. Ejecutar shadow mode y evaluación de equidad antes de liberar cupos automáticamente.
+6. Impedir que una cancelación del sistema se compute como cancelación del paciente.
 
 ---
 
@@ -846,7 +855,7 @@ flowchart LR
   DEC --> AUD
 ```
 
-1. **Fase 0:** Preferencias de agenda en perfil paciente + política score; auditoría agente vs agente IA.
+1. **Fase 0:** Preferencias de agenda implementadas como declaración separada; pendiente perfil factual persistido, política versionada y auditoría reproducible.
 2. **Fase 1:** ~~Agentes P0~~ completada (~~B01~~ ~~B03~~ ~~A03~~ ~~A02 v1~~).
 3. **Fase 2:** ~~A01 shortlist~~ v1 hecho; ~~A01 auto-reserva~~ v1 hecho; ~~H01~~ v1 hecho; ~~A04~~ ~~A06~~ v1 hechos.
 4. **Fase 3:** ~~E01~~ ~~E02 v1 FHIR HC~~; agentes IA (C03/D02) diferidos.

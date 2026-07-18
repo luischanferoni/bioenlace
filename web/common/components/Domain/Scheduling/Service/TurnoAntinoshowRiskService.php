@@ -3,6 +3,8 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
+use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorProfileReader;
+use common\models\Scheduling\PersonaTurnosPerfilMetrica;
 use common\models\Scheduling\Turno;
 use yii\db\Query;
 
@@ -53,6 +55,23 @@ final class TurnoAntinoshowRiskService
         $firstVisit = $attendedCount === 0;
 
         $riskLevel = self::computeRiskLevel($noShowCount, $leadDays, $firstVisit, $riskCfg);
+        $profileReader = new TurnoBehaviorProfileReader();
+        $profile = $profileReader->currentProfile($idPersona);
+        $profileNoShows = $profileReader->metric(
+            $idPersona,
+            'NO_SHOW_ATTRIBUTABLE',
+            PersonaTurnosPerfilMetrica::SCOPE_GLOBAL,
+            '',
+            (int) ($riskCfg['profile_window_days'] ?? 180)
+        );
+        $profileAttended = $profileReader->metric(
+            $idPersona,
+            'ATTENDED',
+            PersonaTurnosPerfilMetrica::SCOPE_EFECTOR,
+            (string) $idEfector,
+            365
+        );
+        $candidateAvailable = $profileNoShows !== null && $profileAttended !== null;
 
         return [
             'risk_level' => $riskLevel,
@@ -60,6 +79,22 @@ final class TurnoAntinoshowRiskService
             'lead_days' => $leadDays,
             'is_first_visit' => $firstVisit,
             'confirmed' => $turno->confirmado_en !== null && $turno->confirmado_en !== '',
+            'profile_candidate' => [
+                'mode' => 'shadow',
+                'status' => $candidateAvailable ? 'available' : 'profile_missing_or_window_unsupported',
+                'profile_id' => $profile !== null ? (int) $profile->id : null,
+                'profile_contract_version' => $profile !== null ? (int) $profile->profile_contract_version : null,
+                'no_show_count' => $profileNoShows !== null ? (int) $profileNoShows->numerator : null,
+                'attended_count_efector' => $profileAttended !== null ? (int) $profileAttended->numerator : null,
+                'risk_level' => $candidateAvailable
+                    ? self::computeRiskLevel(
+                        (int) $profileNoShows->numerator,
+                        $leadDays,
+                        (int) $profileAttended->numerator === 0,
+                        $riskCfg
+                    )
+                    : null,
+            ],
         ];
     }
 

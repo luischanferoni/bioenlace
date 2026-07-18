@@ -2,19 +2,17 @@
 
 namespace common\components\Platform\Core\Product;
 
-use Yii;
-
 /**
  * Rutas de metadata declarativa del producto (intents, reglas NL, permisos de dominio).
  *
- * Para otro rubro: apuntar {@see Yii::$app->params productMetadataDir} a otra carpeta bajo common/metadata/.
+ * Para otro rubro: apuntar {@see \Yii::$app->params productMetadataDir} a otra carpeta bajo common/metadata/.
  */
 final class ProductMetadataPaths
 {
     public static function baseDir(): string
     {
-        if (Yii::$app->has('params')) {
-            $configured = Yii::$app->params['productMetadataDir'] ?? null;
+        if (class_exists(\Yii::class, false) && \Yii::$app !== null && \Yii::$app->has('params')) {
+            $configured = \Yii::$app->params['productMetadataDir'] ?? null;
             if (is_string($configured) && trim($configured) !== '') {
                 $dir = realpath(trim($configured));
 
@@ -166,5 +164,15 @@ final class ProductMetadataPaths
     public static function efectorAtributosFile(): string
     {
         return self::organizationDir() . DIRECTORY_SEPARATOR . 'efector-atributos.yaml';
+    }
+
+    public static function schedulingDir(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'scheduling';
+    }
+
+    public static function turnoBehaviorProfileContractFile(): string
+    {
+        return self::schedulingDir() . DIRECTORY_SEPARATOR . 'turno-behavior-profile-contract.yaml';
     }
 }

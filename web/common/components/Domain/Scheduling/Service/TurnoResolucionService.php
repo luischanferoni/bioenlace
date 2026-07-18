@@ -68,12 +68,11 @@ final class TurnoResolucionService
         }
         $row->save(false);
 
-        $turno->estado = Turno::ESTADO_EN_RESOLUCION;
-        if (!$turno->save(false)) {
-            throw new \RuntimeException(
-                'No se pudo marcar el turno en resolución: ' . json_encode($turno->getErrors())
-            );
-        }
+        (new TurnoLifecycleService())->entrarEnResolucion(
+            $turno,
+            \common\models\TurnoEventoAudit::ACTOR_SISTEMA,
+            Yii::$app->user->id ?? null
+        );
         $turno->refresh();
         if ($turno->estado !== Turno::ESTADO_EN_RESOLUCION) {
             // Típico: ENUM de turnos.estado sin valor EN_RESOLUCION (MySQL guarda '').
@@ -385,6 +384,7 @@ final class TurnoResolucionService
             throw new BadRequestHttpException('El horario elegido ya no está disponible.');
         }
 
+        $before = TurnoLifecycleService::scheduleSnapshot($turno);
         $turno->hora = $horaNorm . ':00';
         $turno->hora_fin = $fin;
         $turno->intervalo_minutos_reserva = $intervalo;
@@ -392,14 +392,19 @@ final class TurnoResolucionService
             $turno->id_agenda_version = (int) $version->id;
         }
         $turno->estado = Turno::ESTADO_PENDIENTE;
-        $turno->save(false);
+        (new TurnoLifecycleService())->reprogramar(
+            $turno,
+            $before,
+            \common\models\TurnoEventoAudit::ACTOR_PACIENTE,
+            'app',
+            Yii::$app->user->id ?? null
+        );
 
         $res->estado = TurnoResolucion::ESTADO_REUBICADO;
         $res->hora_elegida = $hora;
         $res->save(false);
 
         self::reprogramarNotificaciones($turno);
-        TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return [
             'message' => 'Turno reprogramado a las ' . $horaNorm . '.',
@@ -456,6 +461,7 @@ final class TurnoResolucionService
             throw new BadRequestHttpException('Este turno solo permite elegir otro horario con el mismo profesional.');
         }
 
+        $before = TurnoLifecycleService::scheduleSnapshot($turno);
         if (isset($post['id_servicio_asignado']) && (int) $post['id_servicio_asignado'] > 0) {
             $turno->id_servicio_asignado = (int) $post['id_servicio_asignado'];
         }
@@ -471,8 +477,16 @@ final class TurnoResolucionService
         }
 
         $turno->estado = Turno::ESTADO_PENDIENTE;
-        if (!$turno->save()) {
-            throw new BadRequestHttpException('No se pudo guardar el turno.');
+        try {
+            (new TurnoLifecycleService())->reprogramar(
+                $turno,
+                $before,
+                \common\models\TurnoEventoAudit::ACTOR_PACIENTE,
+                'app',
+                Yii::$app->user->id ?? null
+            );
+        } catch (\InvalidArgumentException $e) {
+            throw new BadRequestHttpException($e->getMessage());
         }
 
         $res->estado = TurnoResolucion::ESTADO_REUBICADO;
@@ -480,7 +494,6 @@ final class TurnoResolucionService
         $res->save(false);
 
         self::reprogramarNotificaciones($turno);
-        TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
 
         return [
             'success' => true,

@@ -57,6 +57,19 @@ Para **dirección y coordinación** del efector, el equipo puede consultar métr
 
 Superficies: API `GET /api/v1/turnos/indicadores-agenda` (filtros por período y PES); intent de asistente `turnos.indicadores-agenda-flow` (UI JSON embebida).
 
+## Perfil histórico de turnos
+
+Hoy Bioenlace utiliza señales históricas en capacidades separadas:
+
+- anti no-show calcula riesgo al programar checkpoints;
+- la política de cancelaciones cuenta cancelaciones atribuibles al paciente;
+- los indicadores de agenda producen métricas agregadas;
+- las preferencias de agenda registran elecciones explícitas.
+
+Todavía no existe un perfil longitudinal persistido que unifique esas definiciones. La evolución prevista materializa hechos explicables por persona, período y alcance —asistencia, no-show, cancelación, reprogramación y confirmación— y mantiene separadas las preferencias declaradas.
+
+El perfil describe hechos; las políticas deciden recordatorios o intervenciones. No representa reputación, prioridad clínica ni autorización para atenderse. La falta de historial se considera información insuficiente, no una conducta de riesgo.
+
 ## Lista de espera (agente A03, v1 FIFO)
 
 Cuando un turno se **cancela** y queda un hueco en agenda, el sistema puede ofrecerlo al primer paciente inscripto en lista de espera para ese efector y servicio.
@@ -88,15 +101,17 @@ Si tras **72 h** (configurable) el turno sigue en `EN_RESOLUCION` sin reubicar:
 
 Flag: `autonomous_agent_resolucion_loop_close_enabled`.
 
-## Anti no-show (agente A04, v1)
+## Anti no-show basado en reglas (agente A04, v1)
 
-Al crear o reprogramar un turno pendiente, el agente `turno-antinoshow` programa checkpoints según riesgo calculado en BD (ausencias previas, lead time, primera visita):
+Al crear o reprogramar un turno pendiente, el agente `turno-antinoshow` calcula el riesgo en ese momento mediante reglas sobre BD —ausencias previas, anticipación reserva→cita y primera visita—. El resultado no es todavía un perfil persistido:
 
-1. **T−48 h:** riesgo medio/alto → push de confirmación explícita (`TURNO_ANTINOSHOW_CONFIRM`).
+1. **T−48 h:** riesgo alto → push de confirmación explícita (`TURNO_ANTINOSHOW_CONFIRM`).
 2. **Alto riesgo sin confirmar:** a **T−24 h** cancela el turno y libera el cupo (`TURNO_ANTINOSHOW_LIBERADO` → waitlist A03).
 3. **T−2 h:** recordatorio adicional para riesgo medio/alto.
 
 Flag: `autonomous_agent_antinoshow_enabled`. Desactivar liberación automática: `release_slot.enabled: false` en el YAML.
+
+La liberación automática es una acción de alto impacto: debe diferenciar cancelación del sistema de cancelación del paciente, comprobar entrega de la confirmación y evitar que esa acción alimente restricciones posteriores de autogestión.
 
 ## Notificaciones: push y WhatsApp
 

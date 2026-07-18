@@ -2,7 +2,9 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
+use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorProfileReader;
 use common\models\Scheduling\Turno;
+use common\models\Scheduling\PersonaTurnosPerfilMetrica;
 use common\models\EfectorTurnosConfig;
 use common\models\PersonaEfectorAutogestionLiberacion;
 
@@ -18,7 +20,9 @@ class TurnoCancellationPolicyService
     /**
      * @param int $idPersona
      * @param int $idEfector
-     * @return array{nivel: string, mensaje: ?string, cancelaciones_en_ventana: int}
+     * La decisión legacy sigue gobernando mientras la política candidata está en shadow.
+     *
+     * @return array<string, mixed>
      */
     public function evaluarAutogestion($idPersona, $idEfector)
     {
@@ -36,33 +40,52 @@ class TurnoCancellationPolicyService
             ->andWhere(['>=', 'deleted_at', $since])
             ->count();
 
-        if (PersonaEfectorAutogestionLiberacion::tieneLiberacionVigente(
+        $liberacionVigente = PersonaEfectorAutogestionLiberacion::tieneLiberacionVigente(
             $idPersona,
             $idEfector,
             (int) $cfg->autogestion_liberacion_vigencia_dias
-        )) {
-            return ['nivel' => self::NIVEL_OK, 'mensaje' => null, 'cancelaciones_en_ventana' => (int) $n];
-        }
+        );
 
         $suave = (int) $cfg->cancel_suave_umbral;
         $mod = (int) $cfg->cancel_moderada_umbral;
 
-        if ($n < $suave) {
-            return ['nivel' => self::NIVEL_OK, 'mensaje' => null, 'cancelaciones_en_ventana' => (int) $n];
-        }
-        if ($n < $mod) {
-            return [
-                'nivel' => self::NIVEL_SUAVE,
-                'mensaje' => 'Tenés varias cancelaciones recientes. Te pedimos que confirmes asistencia con anticipación cuando reserves.',
-                'cancelaciones_en_ventana' => (int) $n,
-            ];
+        $nivel = self::NIVEL_OK;
+        $mensaje = null;
+        if (!$liberacionVigente && $n >= $mod) {
+            $nivel = self::NIVEL_MODERADA;
+            $mensaje = 'Por política del efector, gestioná turnos presencialmente o por teléfono hasta regularizar la situación.';
+        } elseif (!$liberacionVigente && $n >= $suave) {
+            $nivel = self::NIVEL_SUAVE;
+            $mensaje = 'Tenés varias cancelaciones recientes. Te pedimos que confirmes asistencia con anticipación cuando reserves.';
         }
 
-        return [
-            'nivel' => self::NIVEL_MODERADA,
-            'mensaje' => 'Por política del efector, gestioná turnos presencialmente o por teléfono hasta regularizar la situación.',
+        $result = [
+            'nivel' => $nivel,
+            'mensaje' => $mensaje,
             'cancelaciones_en_ventana' => (int) $n,
         ];
+
+        $reader = new TurnoBehaviorProfileReader();
+        $metric = $reader->metric(
+            (int) $idPersona,
+            'CANCEL_PATIENT',
+            PersonaTurnosPerfilMetrica::SCOPE_EFECTOR,
+            (string) $idEfector,
+            $ventana
+        );
+        $profile = $reader->currentProfile((int) $idPersona);
+        $result['profile_candidate'] = [
+            'mode' => 'shadow',
+            'status' => $metric === null ? 'unavailable_or_unsupported_window' : 'available',
+            'profile_id' => $profile !== null ? (int) $profile->id : null,
+            'profile_contract_version' => $profile !== null ? (int) $profile->profile_contract_version : null,
+            'cancelaciones_en_ventana' => $metric !== null ? (int) $metric->numerator : null,
+            'window_days' => $ventana,
+            'scope_type' => PersonaTurnosPerfilMetrica::SCOPE_EFECTOR,
+            'scope_id' => (string) $idEfector,
+        ];
+
+        return $result;
     }
 
     public function autogestionBloqueada($idPersona, $idEfector)

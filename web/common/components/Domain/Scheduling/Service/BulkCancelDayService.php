@@ -64,13 +64,15 @@ class BulkCancelDayService
         $n = 0;
         foreach ($models as $turno) {
             $turno->estado = Turno::ESTADO_CANCELADO;
-            $turno->estado_motivo = Turno::ESTADO_MOTIVO_CANCELADO_MEDICO;
+            $turno->estado_motivo = Turno::ESTADO_MOTIVO_CANCELADO_EFECTOR;
             $turno->deleted_by = $idUser ?: (Yii::$app->user->id ?? null);
             $turno->deleted_at = new Expression('NOW()');
             if ($turno->save(false)) {
                 TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
                 TurnoEventoAudit::registrar($turno->id_turnos, TurnoEventoAudit::TIPO_BULK_DAY_CANCEL, $idUser, [
                     'fecha' => $fecha,
+                    'canal' => 'admin',
+                    'actor_type' => TurnoEventoAudit::ACTOR_EFECTOR,
                 ]);
                 TurnoFhirOutboundNotifier::afterEstadoChanged($turno);
                 $push = new PushNotificationSender();

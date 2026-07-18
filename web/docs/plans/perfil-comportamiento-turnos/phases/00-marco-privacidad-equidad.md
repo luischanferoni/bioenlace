@@ -18,9 +18,8 @@ Cerrar definiciones y salvaguardas antes de diseñar decisiones automáticas sob
 ## Decisiones a cerrar
 
 - Qué outcomes son elegibles.
-- Qué significa cancelación tardía por efector.
+- Qué significa cancelación tardía a nivel de contrato global del perfil.
 - Tamaño mínimo de muestra.
-- Cuándo una atribución es confiable.
 - Qué información puede mostrarse a cada actor.
 - Qué continuidades o prioridades excluyen acciones automáticas.
 

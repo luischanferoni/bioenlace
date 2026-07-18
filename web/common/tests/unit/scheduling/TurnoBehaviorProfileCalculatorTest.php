@@ -130,13 +130,13 @@ class TurnoBehaviorProfileCalculatorTest extends Unit
                 'id_turno' => 1,
                 'event_code' => TurnoEventoAudit::EVENT_ATTENDED,
                 'actor_type' => TurnoEventoAudit::ACTOR_STAFF,
-                'attribution_quality' => TurnoEventoAudit::QUALITY_LEGACY_INFERRED,
+                'attribution_quality' => TurnoEventoAudit::QUALITY_NATIVE,
                 'occurred_at' => '2026-07-01 10:00:00',
                 'cita_at' => '2026-07-01 10:00:00',
             ],
         ], '2026-07-18 12:00:00');
 
-        $this->assertSame(PersonaTurnosPerfil::COMPLETENESS_PARTIAL, $result['completeness_status']);
+        $this->assertSame(PersonaTurnosPerfil::COMPLETENESS_COMPLETE, $result['completeness_status']);
         $idx = $this->indexMetrics($result['metrics']);
         $this->assertSame(
             PersonaTurnosPerfilMetrica::CONFIDENCE_INSUFFICIENT_DATA,
@@ -147,6 +147,39 @@ class TurnoBehaviorProfileCalculatorTest extends Unit
             PersonaTurnosPerfilMetrica::CONFIDENCE_NOT_APPLICABLE,
             $idx['GLOBAL|null|90|CONFIRMATION_RATE']['confidence_status']
         );
+    }
+
+    public function testNonNativeEventsAreIgnored(): void
+    {
+        $calc = new TurnoBehaviorProfileCalculator(new TurnoBehaviorProfileContract([
+            'version' => 1,
+            'windows_days' => [90],
+            'scopes' => ['GLOBAL'],
+            'min_sample_size' => 1,
+            'late_cancellation' => ['hours_before_appointment' => 24],
+            'patient_attributed_actors' => ['PACIENTE'],
+            'events' => [],
+            'metrics' => [
+                ['code' => 'CLOSED_ELIGIBLE', 'kind' => 'count'],
+                ['code' => 'ATTENDED', 'kind' => 'count'],
+            ],
+        ]));
+
+        $result = $calc->calculate([
+            [
+                'id' => 1,
+                'id_turno' => 1,
+                'event_code' => TurnoEventoAudit::EVENT_ATTENDED,
+                'actor_type' => TurnoEventoAudit::ACTOR_STAFF,
+                'attribution_quality' => 'LEGACY_INFERRED',
+                'occurred_at' => '2026-07-01 10:00:00',
+                'cita_at' => '2026-07-01 10:00:00',
+            ],
+        ], '2026-07-18 12:00:00');
+
+        $this->assertSame(PersonaTurnosPerfil::COMPLETENESS_EMPTY, $result['completeness_status']);
+        $idx = $this->indexMetrics($result['metrics']);
+        $this->assertSame(0, $idx['GLOBAL|null|90|ATTENDED']['numerator']);
     }
 
     public function testNoShowCorrectionAndStaffNoShowExcluded(): void

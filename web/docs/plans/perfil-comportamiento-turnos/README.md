@@ -20,7 +20,7 @@ Las preferencias declaradas por la persona permanecen separadas del comportamien
 | [overview.md](./overview.md) | Problema, alcance, resultados y métricas de éxito |
 | [design.md](./design.md) | Eventos, persistencia, materialización, políticas, API y seguridad |
 | [Fase 0](./phases/00-marco-privacidad-equidad.md) | Marco de producto, privacidad, equidad y glosario |
-| [Fase 1](./phases/01-eventos-canonicos-backfill.md) | Eventos canónicos, atribución y reconstrucción histórica |
+| [Fase 1](./phases/01-eventos-canonicos-backfill.md) | Eventos canónicos nativos (sin backfill) |
 | [Fase 2](./phases/02-perfil-materializado.md) | Tablas, métricas, versionado y materializador |
 | [Fase 3](./phases/03-politicas-y-migracion.md) | Migración de anti no-show, cancelaciones y KPIs |
 | [Fase 4](./phases/04-api-ui-transparencia.md) | API, permisos, UI y corrección |
@@ -39,17 +39,19 @@ Las preferencias declaradas por la persona permanecen separadas del comportamien
 
 ## Orden de ejecución
 
-Las fases 0 y 1 son bloqueantes. No se habilita ninguna decisión nueva sobre pacientes hasta completar eventos, atribución, backfill y evaluación en shadow mode. Las fases 2 y 3 pueden avanzar parcialmente en paralelo una vez cerrado el contrato de eventos.
+Las fases 0 y 1 son bloqueantes. No se habilita ninguna decisión nueva sobre pacientes hasta completar eventos nativos, atribución y evaluación en shadow mode. Las fases 2 y 3 pueden avanzar parcialmente en paralelo una vez cerrado el contrato de eventos. No hay backfill ni evidencia `LEGACY_INFERRED`.
 
 ## Estado de implementación (2026-07-18)
 
-- Implementado: contrato V1, stream canónico, backfill, materializador, create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación solicitada/waitlist.
-- KPIs de agenda desde eventos canónicos.
+- Implementado: contrato V1 (sólo `NATIVE`), stream canónico, materializador, create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación (solicitada/entregada/abierta)/waitlist.
+- Sin backfill histórico: el perfil empieza en el corte de eventos nativos.
+- Cancelación tardía: definición **global** del contrato (`hours_before_appointment`), no por efector.
+- KPIs de agenda desde eventos canónicos nativos.
 - Checkpoints: T−48 unificado con `CONFIRM_REQUEST` (`shared_confirmation_request`); T−2 sigue como checkpoint propio.
 - Shadow A04/cancelación; liberación deshabilitada.
 - API + UI JSON: historial propio/representado, explicación, agregado staff, solicitud y resolución de corrección.
+- Entrega/apertura de confirmación: ACK autenticado de app paciente; no se infiere desde HTTP FCM ni desde lectura de bandeja.
 - Fuera de alcance operativo: piloto formal de fase 5.
-- Entrega/apertura de confirmación: implementadas vía ACK autenticado de app paciente (`CONFIRMATION_DELIVERY_CONFIRMED` / `CONFIRMATION_OPENED`); no se infiere desde HTTP FCM ni desde lectura de bandeja.
 
 ## Cierre del plan
 

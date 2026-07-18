@@ -70,7 +70,6 @@ class TurnoEventoAudit extends ActiveRecord
     public const ACTOR_EXTERNO = 'EXTERNO';
 
     public const QUALITY_NATIVE = 'NATIVE';
-    public const QUALITY_LEGACY_INFERRED = 'LEGACY_INFERRED';
 
     public const RELATED_PREVIOUS = 'PREVIOUS';
     public const RELATED_NEW = 'NEW';
@@ -127,7 +126,6 @@ class TurnoEventoAudit extends ActiveRecord
     {
         return [
             self::QUALITY_NATIVE,
-            self::QUALITY_LEGACY_INFERRED,
         ];
     }
 

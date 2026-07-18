@@ -41,7 +41,6 @@ final class TurnoBehaviorAggregateService
             'CLOSED_ELIGIBLE',
             'NO_SHOW_RATE',
             'COVERAGE_NATIVE',
-            'COVERAGE_INFERRED',
             'COVERAGE_RATE',
         ];
 

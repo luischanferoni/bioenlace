@@ -62,18 +62,17 @@ Construir una proyección longitudinal de turnos que sea:
 
 ## Resultados esperados
 
-1. Eventos de turnos completos, idempotentes y atribuibles.
-2. Backfill histórico marcado como inferido.
-3. Snapshots de perfil reconstruibles.
-4. Contrato común de métricas.
-5. Políticas que registran versión, perfil y evidencia consumidos.
-6. Explicación accesible para la persona.
-7. Reportes agregados con protección de cohortes pequeñas.
+1. Eventos de turnos completos, idempotentes y atribuibles (`NATIVE`).
+2. Snapshots de perfil reconstruibles desde el stream nativo (sin backfill histórico).
+3. Contrato común de métricas con definición global de cancelación tardía.
+4. Políticas que registran versión, perfil y evidencia consumidos.
+5. Explicación accesible para la persona.
+6. Reportes agregados con protección de cohortes pequeñas.
 
 ## Métricas de éxito del programa
 
 - porcentaje de outcomes con actor y origen conocidos;
-- porcentaje del historial cubierto por eventos nativos frente a inferidos;
+- cobertura del historial nativo desde el corte canónico;
 - coincidencia entre reconstrucción completa e incremental;
 - diferencias explicadas entre servicios actuales y perfil nuevo;
 - falsos positivos de acciones anti no-show;

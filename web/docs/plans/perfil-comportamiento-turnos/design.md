@@ -99,7 +99,8 @@ Reglas:
 
 - no producir tasas con denominador cero;
 - devolver `insufficient_data` por debajo de la muestra mínima;
-- separar eventos nativos de eventos inferidos por backfill;
+- consumir únicamente eventos `NATIVE` (sin backfill ni `LEGACY_INFERRED`);
+- definir cancelación tardía de forma global en el contrato (no por efector);
 - no atribuir al paciente acciones del sistema, staff o efector;
 - usar la fecha de la cita para outcomes y la fecha del evento para tiempos de respuesta;
 - no mezclar scopes sin declararlo.
@@ -118,7 +119,7 @@ Un servicio de dominio de Scheduling:
 Habrá dos caminos:
 
 - incremental después de eventos relevantes;
-- batch periódico para reparación, cambios de contrato y backfill.
+- batch periódico para reparación y cambios de contrato (sin backfill histórico).
 
 ## Perfil y política
 

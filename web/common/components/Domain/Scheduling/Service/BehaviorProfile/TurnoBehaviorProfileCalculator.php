@@ -81,7 +81,6 @@ final class TurnoBehaviorProfileCalculator
 
         $scopeKeys = $this->buildScopeKeys($byTurno);
         $metricsOut = [];
-        $hasInferred = false;
         $hasAnyOutcome = false;
 
         foreach ($this->contract->windowsDays() as $windowDays) {
@@ -97,9 +96,6 @@ final class TurnoBehaviorProfileCalculator
                         continue;
                     }
                     $facts = $turno['facts'];
-                    if ($facts['has_inferred_event']) {
-                        $hasInferred = true;
-                    }
                     $this->accumulate($counts, $facts);
                     if ($facts['closed_eligible'] || $facts['cancel_patient'] || $facts['rescheduled']) {
                         $hasAnyOutcome = true;
@@ -111,12 +107,9 @@ final class TurnoBehaviorProfileCalculator
             }
         }
 
-        $completeness = PersonaTurnosPerfil::COMPLETENESS_EMPTY;
-        if ($hasAnyOutcome || $byTurno !== []) {
-            $completeness = $hasInferred
-                ? PersonaTurnosPerfil::COMPLETENESS_PARTIAL
-                : PersonaTurnosPerfil::COMPLETENESS_COMPLETE;
-        }
+        $completeness = ($hasAnyOutcome || $byTurno !== [])
+            ? PersonaTurnosPerfil::COMPLETENESS_COMPLETE
+            : PersonaTurnosPerfil::COMPLETENESS_EMPTY;
 
         return [
             'completeness_status' => $completeness,
@@ -138,6 +131,11 @@ final class TurnoBehaviorProfileCalculator
         if ($code === '') {
             return null;
         }
+        $quality = (string) ($raw['attribution_quality'] ?? TurnoEventoAudit::QUALITY_NATIVE);
+        // Sin retrocompatibilidad: sólo eventos nativos alimentan el perfil.
+        if ($quality !== '' && $quality !== TurnoEventoAudit::QUALITY_NATIVE) {
+            return null;
+        }
         $occurred = (string) ($raw['occurred_at'] ?? $raw['created_at'] ?? '');
         $occurredTs = $occurred !== '' ? (strtotime($occurred) ?: null) : null;
         $cita = (string) ($raw['cita_at'] ?? '');
@@ -148,7 +146,7 @@ final class TurnoBehaviorProfileCalculator
             'id_turno' => $idTurno,
             'event_code' => $code,
             'actor_type' => (string) ($raw['actor_type'] ?? ''),
-            'attribution_quality' => (string) ($raw['attribution_quality'] ?? TurnoEventoAudit::QUALITY_NATIVE),
+            'attribution_quality' => TurnoEventoAudit::QUALITY_NATIVE,
             'occurred_ts' => $occurredTs,
             'cita_ts' => $citaTs,
             'id_efector' => isset($raw['id_efector']) ? (int) $raw['id_efector'] : null,
@@ -174,16 +172,9 @@ final class TurnoBehaviorProfileCalculator
         $confirmRequested = false;
         $confirmDelivered = false;
         $confirmResponded = false;
-        $quality = TurnoEventoAudit::QUALITY_NATIVE;
-        $hasInferredEvent = false;
         $citaTs = null;
 
         foreach ($events as $e) {
-            $eventQuality = ($e['attribution_quality'] ?? '') === TurnoEventoAudit::QUALITY_LEGACY_INFERRED
-                ? TurnoEventoAudit::QUALITY_LEGACY_INFERRED
-                : TurnoEventoAudit::QUALITY_NATIVE;
-            $hasInferredEvent = $hasInferredEvent
-                || $eventQuality === TurnoEventoAudit::QUALITY_LEGACY_INFERRED;
             if ($e['cita_ts'] !== null) {
                 $citaTs = $e['cita_ts'];
             }
@@ -192,11 +183,9 @@ final class TurnoBehaviorProfileCalculator
             if ($code === TurnoEventoAudit::EVENT_ATTENDED || $code === 'ATTENDED') {
                 $attended = true;
                 $noShow = false;
-                $quality = $eventQuality;
             } elseif ($code === TurnoEventoAudit::EVENT_NO_SHOW_RECORDED || $code === TurnoEventoAudit::TIPO_NO_SHOW) {
                 if (in_array($actor, $patientActors, true)) {
                     $noShow = true;
-                    $quality = $eventQuality;
                 }
             } elseif ($code === TurnoEventoAudit::EVENT_NO_SHOW_CORRECTED) {
                 $noShowCorrected = true;
@@ -208,7 +197,6 @@ final class TurnoBehaviorProfileCalculator
             ) {
                 if (in_array($actor, $patientActors, true)) {
                     $cancelPatient = true;
-                    $quality = $eventQuality;
                     $occ = $e['occurred_ts'];
                     if ($citaTs !== null && $occ !== null && $lateHours >= 0) {
                         $hoursBefore = ($citaTs - $occ) / 3600;
@@ -247,10 +235,8 @@ final class TurnoBehaviorProfileCalculator
             'confirm_responded' => $confirmResponded,
             'confirmed_closed' => $confirmedClosed,
             'attended_after_confirm' => $attendedAfterConfirm,
-            'quality' => $quality,
-            'has_inferred_event' => $hasInferredEvent,
-            'coverage_native' => $closedEligible && $quality === TurnoEventoAudit::QUALITY_NATIVE,
-            'coverage_inferred' => $closedEligible && $quality === TurnoEventoAudit::QUALITY_LEGACY_INFERRED,
+            'quality' => TurnoEventoAudit::QUALITY_NATIVE,
+            'coverage_native' => $closedEligible,
         ];
     }
 
@@ -328,7 +314,6 @@ final class TurnoBehaviorProfileCalculator
             'ATTENDED_AFTER_CONFIRM' => 0,
             'CONFIRMED_CLOSED' => 0,
             'COVERAGE_NATIVE' => 0,
-            'COVERAGE_INFERRED' => 0,
         ];
     }
 
@@ -377,9 +362,6 @@ final class TurnoBehaviorProfileCalculator
         }
         if ($facts['coverage_native']) {
             $counts['COVERAGE_NATIVE']++;
-        }
-        if ($facts['coverage_inferred']) {
-            $counts['COVERAGE_INFERRED']++;
         }
     }
 

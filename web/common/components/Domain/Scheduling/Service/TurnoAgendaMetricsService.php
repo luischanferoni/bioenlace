@@ -38,7 +38,6 @@ final class TurnoAgendaMetricsService
         $noShow = 0;
         $atendidos = 0;
         $coverageNative = 0;
-        $coverageInferred = 0;
         $leadDays = [];
 
         foreach ($byTurno as $facts) {
@@ -48,11 +47,8 @@ final class TurnoAgendaMetricsService
             if ($facts['no_show_attributable']) {
                 $noShow++;
             }
-            if ($facts['closed_eligible'] && $facts['quality'] === TurnoEventoAudit::QUALITY_NATIVE) {
+            if ($facts['closed_eligible']) {
                 $coverageNative++;
-            }
-            if ($facts['closed_eligible'] && $facts['quality'] === TurnoEventoAudit::QUALITY_LEGACY_INFERRED) {
-                $coverageInferred++;
             }
             if ($facts['lead_days'] !== null && $facts['lead_days'] >= 0) {
                 $leadDays[] = $facts['lead_days'];
@@ -77,7 +73,6 @@ final class TurnoAgendaMetricsService
             'dias_hasta_cita_mediana' => $this->median($leadDays),
             'dias_hasta_cita_promedio' => $leadDays !== [] ? round(array_sum($leadDays) / count($leadDays), 1) : null,
             'coverage_native' => $coverageNative,
-            'coverage_inferred' => $coverageInferred,
             'coverage_rate' => $coverageRate,
             'resumen_texto' => $this->formatResumenTexto($desde, $hasta, $total, $noShow, $noShowRate, $leadDays),
         ];
@@ -159,6 +154,9 @@ final class TurnoAgendaMetricsService
             $code = (string) ($raw['event_code'] ?: $raw['tipo_evento']);
             $actor = (string) ($raw['actor_type'] ?? '');
             $quality = (string) ($raw['attribution_quality'] ?? TurnoEventoAudit::QUALITY_NATIVE);
+            if ($quality !== '' && $quality !== TurnoEventoAudit::QUALITY_NATIVE) {
+                continue;
+            }
             $occurred = (string) ($raw['occurred_at'] ?: $raw['created_at']);
             $appointment = (string) ($raw['appointment_at'] ?? '');
             $occurredTs = $occurred !== '' ? (strtotime($occurred) ?: null) : null;
@@ -166,15 +164,6 @@ final class TurnoAgendaMetricsService
 
             if ($appointmentTs !== null) {
                 $byTurno[$idTurno]['appointment_ts'] = $appointmentTs;
-            }
-            if ($quality === TurnoEventoAudit::QUALITY_LEGACY_INFERRED
-                && in_array($code, [
-                    TurnoEventoAudit::EVENT_ATTENDED,
-                    TurnoEventoAudit::EVENT_NO_SHOW_RECORDED,
-                    TurnoEventoAudit::TIPO_NO_SHOW,
-                ], true)
-            ) {
-                $byTurno[$idTurno]['quality'] = TurnoEventoAudit::QUALITY_LEGACY_INFERRED;
             }
 
             if ($code === TurnoEventoAudit::EVENT_APPOINTMENT_CREATED

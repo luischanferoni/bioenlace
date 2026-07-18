@@ -28,13 +28,14 @@ patient_attributed_actors:
   - PACIENTE
   - REPRESENTANTE
 
+# Sólo evidencia nativa. Sin backfill ni LEGACY_INFERRED (sin retrocompatibilidad).
 attribution_qualities:
   - NATIVE
-  - LEGACY_INFERRED
 
 min_sample_size: 5
 
 late_cancellation:
+  # Definición factual global del perfil (no varía por efector).
   # Cancelación del paciente/representante con menos de N horas antes de la cita.
   hours_before_appointment: 24
 
@@ -132,10 +133,7 @@ metrics:
     description: Asistencia posterior a confirmación
   - code: COVERAGE_NATIVE
     kind: count
-    description: Outcomes con evento nativo y atribución suficiente
-  - code: COVERAGE_INFERRED
-    kind: count
-    description: Outcomes solo inferidos por backfill
+    description: Outcomes cerrados con atribución nativa
   - code: COVERAGE_RATE
     kind: rate
     numerator: COVERAGE_NATIVE

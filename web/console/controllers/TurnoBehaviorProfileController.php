@@ -2,32 +2,28 @@
 
 namespace console\controllers;
 
-use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorProfileBackfillService;
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoBehaviorProfileMaterializerService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
 /**
- * Operaciones batch del perfil factual de comportamiento en turnos (fases 1–2).
+ * Operaciones batch del perfil factual de comportamiento en turnos.
+ *
+ * Sin backfill: el perfil sólo materializa eventos NATIVE del stream canónico.
  *
  * Uso:
- *   php yii turno-behavior-profile/backfill [--idPersona=] [--limit=] [--offset=]
  *   php yii turno-behavior-profile/materialize [--limitPersonas=]
  *   php yii turno-behavior-profile/rebuild [--idPersona=] [--limitPersonas=]
  */
 class TurnoBehaviorProfileController extends Controller
 {
     public $idPersona;
-    public $limit;
-    public $offset = 0;
     public $limitPersonas;
 
     public function options($actionID)
     {
         return array_merge(parent::options($actionID), [
             'idPersona',
-            'limit',
-            'offset',
             'limitPersonas',
         ]);
     }
@@ -36,26 +32,7 @@ class TurnoBehaviorProfileController extends Controller
     {
         return array_merge(parent::optionAliases(), [
             'p' => 'idPersona',
-            'l' => 'limit',
         ]);
-    }
-
-    public function actionBackfill(): int
-    {
-        $svc = new TurnoBehaviorProfileBackfillService();
-        $result = $svc->backfill(
-            $this->idPersona !== null && $this->idPersona !== '' ? (int) $this->idPersona : null,
-            $this->limit !== null && $this->limit !== '' ? (int) $this->limit : null,
-            (int) $this->offset
-        );
-        $this->stdout(sprintf(
-            "backfill processed=%d written=%d skipped=%d\n",
-            $result['processed'],
-            $result['written'],
-            $result['skipped']
-        ));
-
-        return ExitCode::OK;
     }
 
     public function actionMaterialize(): int

@@ -242,7 +242,6 @@ final class TurnoBehaviorProfileContract
                 ['code' => 'CONFIRMED_CLOSED', 'kind' => 'count'],
                 ['code' => 'ATTENDED_AFTER_CONFIRM_RATE', 'kind' => 'rate', 'numerator' => 'ATTENDED_AFTER_CONFIRM', 'denominator' => 'CONFIRMED_CLOSED'],
                 ['code' => 'COVERAGE_NATIVE', 'kind' => 'count'],
-                ['code' => 'COVERAGE_INFERRED', 'kind' => 'count'],
                 ['code' => 'COVERAGE_RATE', 'kind' => 'rate', 'numerator' => 'COVERAGE_NATIVE', 'denominator' => 'CLOSED_ELIGIBLE'],
             ],
         ];

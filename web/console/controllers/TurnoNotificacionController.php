@@ -54,9 +54,20 @@ class TurnoNotificacionController extends Controller
                             'type' => 'TURNO_CONFIRMAR',
                             'id_turno' => (string) $turno->id_turnos,
                             'token' => $token,
+                            'action' => 'confirmar_asistencia',
+                            'action_label' => 'Confirmar asistencia',
                         ],
                         'Confirmá tu turno',
-                        'Confirmá asistencia al turno del ' . $turno->fecha . ' ' . $turno->hora
+                        'Confirmá asistencia al turno del ' . $turno->fecha . ' ' . $turno->hora,
+                        true,
+                        [
+                            'idempotency_key' => 'turno-confirmation:' . (int) $row->id,
+                            'context_handler_id' => \common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoConfirmationPushReceiptProjector::HANDLER_ID,
+                            'context' => [
+                                'id_turno' => (int) $turno->id_turnos,
+                                'id_notificacion_programada' => (int) $row->id,
+                            ],
+                        ]
                     );
                     $confirmation->recordConfirmationRequested($turno, (int) $row->id);
                     try {

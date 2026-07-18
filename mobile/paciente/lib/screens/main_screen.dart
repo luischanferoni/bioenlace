@@ -91,6 +91,11 @@ class _MainScreenState extends State<MainScreen> {
           _abrirResumenAtencion(encounterId);
           return;
         }
+        // Confirmación: abrir bandeja (botón Confirmar asistencia ahí).
+        if (PushNotificationService.confirmacionDesdeData(data) != null) {
+          _openAlertas();
+          return;
+        }
         final stub = PushNotificationService.turnoStubDesdePush(data);
         if (stub != null) {
           _abrirResolverTurno(stub);

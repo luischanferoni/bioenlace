@@ -13,10 +13,17 @@ final class PersonaNotificacionService
 {
     /**
      * @param array<string, mixed> $data
+     * @param array<string, mixed> $options idempotency_key, context_handler_id, context
      */
-    public static function registrar(int $idPersona, string $tipo, string $titulo, string $cuerpo, array $data = []): PersonaNotificacion
-    {
-        return PersonaNotificacion::crear($idPersona, $tipo, $titulo, $cuerpo, $data);
+    public static function registrar(
+        int $idPersona,
+        string $tipo,
+        string $titulo,
+        string $cuerpo,
+        array $data = [],
+        array $options = []
+    ): PersonaNotificacion {
+        return PersonaNotificacion::crear($idPersona, $tipo, $titulo, $cuerpo, $data, $options);
     }
 
     /**

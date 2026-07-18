@@ -1,6 +1,6 @@
 # Fase 4 — API, UI y transparencia
 
-**Estado:** V1 completa a nivel API/UI JSON (propio, representado, explicación, agregado, solicitud y resolución de corrección). La entrega/apertura de push queda explícitamente fuera hasta evidencia de canal.
+**Estado:** V1 completa a nivel API/UI JSON (propio, representado, explicación, agregado, solicitud y resolución de corrección). Confirmación push: ACK de entrega y apertura desde app paciente; botones directos en Alertas y pendientes.
 
 ## Objetivo
 

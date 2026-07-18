@@ -156,6 +156,94 @@ class TurnoConfirmationService
             ));
     }
 
+    /**
+     * Entrega acreditada por ACK del cliente (idempotente por notification_ref).
+     *
+     * @param array<string, mixed> $meta
+     */
+    public function recordConfirmationDeliveryConfirmed(
+        Turno $turno,
+        string $notificationRef,
+        array $meta = [],
+        ?string $occurredAt = null
+    ): void {
+        $notificationRef = trim($notificationRef);
+        if ($notificationRef === '' || (int) $turno->id_persona <= 0 || (int) $turno->id_turnos <= 0) {
+            return;
+        }
+        (new \common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventService())
+            ->record(\common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventCommand::create(
+                (int) $turno->id_turnos,
+                (int) $turno->id_persona,
+                TurnoEventoAudit::EVENT_CONFIRMATION_DELIVERY_CONFIRMED,
+                TurnoEventoAudit::ACTOR_SISTEMA,
+                'confirmation-delivered:' . $notificationRef,
+                TurnoEventoAudit::QUALITY_NATIVE,
+                null,
+                'push',
+                'mobile_fcm_ack',
+                null,
+                $occurredAt,
+                $meta
+            ));
+    }
+
+    /**
+     * Apertura explícita del push de confirmación (idempotente por notification_ref).
+     *
+     * @param array<string, mixed> $meta
+     */
+    public function recordConfirmationOpened(
+        Turno $turno,
+        string $notificationRef,
+        string $actorType = TurnoEventoAudit::ACTOR_PACIENTE,
+        ?int $idUser = null,
+        array $meta = [],
+        ?string $occurredAt = null
+    ): void {
+        $notificationRef = trim($notificationRef);
+        if ($notificationRef === '' || (int) $turno->id_persona <= 0 || (int) $turno->id_turnos <= 0) {
+            return;
+        }
+        $actor = in_array($actorType, TurnoEventoAudit::actorTypeValues(), true)
+            ? $actorType
+            : TurnoEventoAudit::ACTOR_PACIENTE;
+        (new \common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventService())
+            ->record(\common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventCommand::create(
+                (int) $turno->id_turnos,
+                (int) $turno->id_persona,
+                TurnoEventoAudit::EVENT_CONFIRMATION_OPENED,
+                $actor,
+                'confirmation-opened:' . $notificationRef,
+                TurnoEventoAudit::QUALITY_NATIVE,
+                $idUser,
+                'push',
+                'mobile_push_tap',
+                null,
+                $occurredAt,
+                $meta
+            ));
+    }
+
+    /**
+     * Disponibilidad factual de confirmar asistencia desde app paciente.
+     */
+    public function puedeConfirmarAsistencia(Turno $turno): bool
+    {
+        if ($turno->estado !== Turno::ESTADO_PENDIENTE) {
+            return false;
+        }
+        if (!empty($turno->confirmado_en) || (string) ($turno->confirmado ?? '') === 'SI') {
+            return false;
+        }
+        $dt = strtotime((string) $turno->fecha . ' ' . (string) $turno->hora . ':00');
+        if ($dt === false) {
+            return false;
+        }
+
+        return $dt >= time();
+    }
+
     public function ensureConfirmacionToken(Turno $turno)
     {
         if (!empty($turno->confirmacion_token)) {

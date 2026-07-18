@@ -365,7 +365,8 @@ final class TurnoBehaviorProfileCalculator
         if ($facts['confirm_delivered']) {
             $counts['CONFIRMATION_DELIVERED']++;
         }
-        if ($facts['confirm_responded']) {
+        // Numerador de CONFIRMATION_RATE: solo respuestas con entrega acreditada.
+        if ($facts['confirm_responded'] && $facts['confirm_delivered']) {
             $counts['CONFIRMATION_RESPONDED']++;
         }
         if ($facts['attended_after_confirm']) {

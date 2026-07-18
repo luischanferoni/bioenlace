@@ -1,6 +1,6 @@
 # Fase 1 — Eventos canónicos y backfill
 
-**Estado:** casi completa. Create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación solicitada/waitlist y backfill están implementados. Faltan reportes de cobertura/anomalías y evidencia real de entrega de push.
+**Estado:** casi completa. Create/cancel/reprogram/resolución/attended/no-show/corrección/FHIR/confirmación (solicitada/entregada/abierta)/waitlist y backfill están implementados. Faltan reportes de cobertura/anomalías.
 
 ## Objetivo
 

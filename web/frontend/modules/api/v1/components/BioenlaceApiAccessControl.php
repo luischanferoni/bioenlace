@@ -28,6 +28,7 @@ class BioenlaceApiAccessControl extends ActionFilter
         '/api/media/ver',
         '/api/notificaciones/listar',
         '/api/notificaciones/marcar-leida',
+        '/api/notificaciones/registrar-interaccion-push-propia',
         '/api/device/push-token',
         '/api/devices/push-token',
         '/api/paciente-contexto/obtener-como-paciente',

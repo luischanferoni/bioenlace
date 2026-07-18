@@ -63,6 +63,7 @@ use common\components\Domain\Scheduling\Assistant\SchedulingUiScreenParamsExpand
 use common\components\Domain\Scheduling\Service\ConsultasSeguimientoFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\TurnosVerMisTurnosFlowDraftHydrator;
+use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoConfirmationPushReceiptProjector;
 use common\components\Platform\Ui\Home\Service\Sections\ActionCardsSectionProvider;
 
 return [
@@ -155,6 +156,10 @@ return [
             'label' => 'nombre',
             'orderBy' => ['nombre' => SORT_ASC],
         ],
+    ],
+
+    'pushNotificationReceiptProjectors' => [
+        TurnoConfirmationPushReceiptProjector::HANDLER_ID => TurnoConfirmationPushReceiptProjector::class,
     ],
 
     'homePanelSectionProviders' => [

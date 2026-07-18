@@ -3,6 +3,7 @@ import 'package:shared/shared.dart';
 
 import '../services/notificaciones_service.dart';
 import '../services/push_notification_service.dart';
+import '../services/turnos_service.dart';
 
 /// Bandeja de alertas in-app del paciente.
 class AlertasScreen extends StatefulWidget {
@@ -10,6 +11,7 @@ class AlertasScreen extends StatefulWidget {
   final void Function(Map<String, dynamic> turnoStub)? onAbrirResolver;
   final void Function(int encounterId)? onAbrirResumen;
   final void Function(int touchpointId)? onAbrirFollowup;
+  final int? subjectPersonaId;
 
   const AlertasScreen({
     Key? key,
@@ -17,6 +19,7 @@ class AlertasScreen extends StatefulWidget {
     this.onAbrirResolver,
     this.onAbrirResumen,
     this.onAbrirFollowup,
+    this.subjectPersonaId,
   }) : super(key: key);
 
   @override
@@ -25,15 +28,19 @@ class AlertasScreen extends StatefulWidget {
 
 class _AlertasScreenState extends State<AlertasScreen> {
   late NotificacionesService _svc;
+  late TurnosService _turnosSvc;
   final List<Map<String, dynamic>> _items = [];
   bool _loading = true;
   String? _error;
   int _noLeidas = 0;
+  final Set<String> _confirmando = {};
+  final Set<String> _confirmados = {};
 
   @override
   void initState() {
     super.initState();
     _svc = NotificacionesService(authToken: widget.authToken);
+    _turnosSvc = TurnosService(authToken: widget.authToken);
     _cargar();
   }
 
@@ -67,11 +74,59 @@ class _AlertasScreenState extends State<AlertasScreen> {
     await _cargar();
   }
 
+  String _itemKey(Map<String, dynamic> item) {
+    final id = item['id']?.toString() ?? '';
+    final ref = item['notification_ref']?.toString() ??
+        (item['data'] is Map
+            ? (item['data'] as Map)['notification_ref']?.toString() ?? ''
+            : '');
+    return '$id:$ref';
+  }
+
+  Future<void> _confirmarAsistencia(
+    Map<String, dynamic> item,
+    Map<String, dynamic> confirmacion,
+  ) async {
+    final key = _itemKey(item);
+    if (_confirmando.contains(key) || _confirmados.contains(key)) {
+      return;
+    }
+    setState(() => _confirmando.add(key));
+    final idTurno = confirmacion['id_turno'] as int;
+    final token = confirmacion['token']?.toString();
+    final r = await _turnosSvc.confirmarAsistencia(
+      idTurno: idTurno,
+      token: token,
+      subjectPersonaId: widget.subjectPersonaId,
+    );
+    if (!mounted) return;
+    setState(() => _confirmando.remove(key));
+    if (r['success'] == true) {
+      setState(() => _confirmados.add(key));
+      await _marcarLeida(item);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Asistencia confirmada')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(r['message']?.toString() ?? 'No se pudo confirmar'),
+        ),
+      );
+    }
+  }
+
   void _onTapItem(Map<String, dynamic> item) {
     _marcarLeida(item);
     final data = item['data'];
     if (data is! Map) return;
     final map = Map<String, dynamic>.from(data);
+
+    // Confirmación: el botón dedicado maneja la acción; el tap sólo marca leída.
+    if (PushNotificationService.confirmacionDesdeData(map) != null) {
+      return;
+    }
 
     final encounterId = PushNotificationService.encounterIdDesdePush(map);
     if (encounterId != null && widget.onAbrirResumen != null) {
@@ -178,6 +233,15 @@ class _AlertasScreenState extends State<AlertasScreen> {
     final titulo = item['titulo']?.toString() ?? '';
     final cuerpo = item['cuerpo']?.toString() ?? '';
     final fechaLabel = formatNotificacionFecha(item['created_at']);
+    final data = item['data'];
+    final confirmacion = data is Map
+        ? PushNotificationService.confirmacionDesdeData(
+            Map<String, dynamic>.from(data),
+          )
+        : null;
+    final key = _itemKey(item);
+    final confirmado = _confirmados.contains(key);
+    final confirmando = _confirmando.contains(key);
 
     final contenido = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,6 +274,23 @@ class _AlertasScreenState extends State<AlertasScreen> {
               color: context.bio.textMuted,
             ),
           ),
+        ],
+        if (confirmacion != null) ...[
+          BioSpacing.gapH(BioSpacing.sm),
+          if (confirmado)
+            BioBadge(label: 'Confirmado', intent: UiIntent.success)
+          else
+            BioButton(
+              label: confirmacion['action_label']?.toString() ??
+                  'Confirmar asistencia',
+              intent: UiIntent.primary,
+              variant: BioButtonVariant.filled,
+              size: BioButtonSize.sm,
+              icon: Icons.check_circle_outline,
+              onPressed: confirmando
+                  ? null
+                  : () => _confirmarAsistencia(item, confirmacion),
+            ),
         ],
       ],
     );

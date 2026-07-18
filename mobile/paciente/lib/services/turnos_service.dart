@@ -120,4 +120,43 @@ class TurnosService {
       };
     }
   }
+
+  /// Confirma asistencia a un turno pendiente.
+  Future<Map<String, dynamic>> confirmarAsistencia({
+    required int idTurno,
+    String? token,
+    int? subjectPersonaId,
+  }) async {
+    try {
+      final uri = Uri.parse(
+        '${AppConfig.apiUrl}/turnos/confirmar-asistencia-como-paciente',
+      );
+      final auth = await _getEffectiveToken();
+      final headers = AppConfig.jsonHeaders(
+        bearerToken: auth,
+        appClient: 'paciente-flutter',
+      );
+      final body = <String, dynamic>{
+        'id': idTurno,
+        if (token != null && token.isNotEmpty) 'token': token,
+        if (subjectPersonaId != null && subjectPersonaId > 0)
+          'subject_persona_id': subjectPersonaId,
+      };
+      final response = await http
+          .post(uri, headers: headers, body: json.encode(body))
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          data['success'] == true) {
+        return {'success': true, 'data': data['data']};
+      }
+      return {
+        'success': false,
+        'message': _extractErrorMessage(data, response.statusCode),
+      };
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }

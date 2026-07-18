@@ -4,6 +4,7 @@ namespace common\components\Platform\Core\Service\Push;
 
 use Yii;
 use common\models\UserDevice;
+use common\models\PersonaNotificacion;
 use common\components\Platform\Core\Service\Notificaciones\PersonaNotificacionService;
 
 /**
@@ -18,19 +19,41 @@ class PushNotificationSender
      * @param string $title
      * @param string $body
      * @param bool $persistInbox registrar en persona_notificacion
+     * @param array<string, mixed> $options idempotency_key, context_handler_id, context
+     * @return PersonaNotificacion|null sobre de bandeja si se persistió
      */
-    public function sendToPersona($idPersona, array $data, $title, $body, $persistInbox = true)
-    {
+    public function sendToPersona(
+        $idPersona,
+        array $data,
+        $title,
+        $body,
+        $persistInbox = true,
+        array $options = []
+    ) {
         $idPersona = (int) $idPersona;
         if ($idPersona <= 0) {
-            return;
+            return null;
         }
 
         $tipo = isset($data['type']) ? (string) $data['type'] : 'GENERICO';
+        $notification = null;
 
         if ($persistInbox) {
             try {
-                PersonaNotificacionService::registrar($idPersona, $tipo, (string) $title, (string) $body, $data);
+                $notification = PersonaNotificacionService::registrar(
+                    $idPersona,
+                    $tipo,
+                    (string) $title,
+                    (string) $body,
+                    $data,
+                    $options
+                );
+                if ($notification->public_ref) {
+                    $data['notification_ref'] = (string) $notification->public_ref;
+                }
+                if (!empty($notification->context_handler_id)) {
+                    $data['context_handler_id'] = (string) $notification->context_handler_id;
+                }
             } catch (\Throwable $e) {
                 Yii::warning('Inbox notif: ' . $e->getMessage(), FcmPushConfig::LOG_CATEGORY);
             }
@@ -45,6 +68,8 @@ class PushNotificationSender
         foreach ($devices as $d) {
             $this->sendToToken($d->push_token, $d->push_provider, $title, $body, $data);
         }
+
+        return $notification;
     }
 
     /**

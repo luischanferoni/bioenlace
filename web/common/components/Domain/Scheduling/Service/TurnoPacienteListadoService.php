@@ -238,6 +238,8 @@ final class TurnoPacienteListadoService
         $journeySvc = new EncounterJourneyService();
         $legacy = $journeySvc->legacyFlagsForTurno($turno, $encounter);
         $journey = $journeySvc->buildForTurno($turno, $encounter);
+        $confirmado = !empty($turno->confirmado_en) || (string) ($turno->confirmado ?? '') === 'SI';
+        $puedeConfirmar = (new TurnoConfirmationService())->puedeConfirmarAsistencia($turno);
 
         return [
             'id' => $turno->id_turnos,
@@ -264,6 +266,9 @@ final class TurnoPacienteListadoService
             'created_at' => $turno->created_at,
             'en_resolucion' => $turno->estado === Turno::ESTADO_EN_RESOLUCION || $resolucion !== null,
             'turno_resolucion' => $resolucion !== null ? $resolucion->toPacienteApiArray() : null,
+            'confirmado' => $confirmado,
+            'confirmado_en' => $turno->confirmado_en,
+            'puede_confirmar_asistencia' => $puedeConfirmar,
         ];
     }
 }

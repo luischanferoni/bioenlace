@@ -222,6 +222,7 @@ final class TurnoBehaviorProfileContract
                 TurnoEventoAudit::EVENT_APPOINTMENT_RESCHEDULED => ['legacy_tipos' => []],
                 TurnoEventoAudit::EVENT_CONFIRMATION_REQUESTED => ['legacy_tipos' => []],
                 TurnoEventoAudit::EVENT_CONFIRMATION_DELIVERY_CONFIRMED => ['legacy_tipos' => []],
+                TurnoEventoAudit::EVENT_CONFIRMATION_OPENED => ['legacy_tipos' => []],
                 TurnoEventoAudit::EVENT_SYSTEM_SLOT_RELEASED => ['legacy_tipos' => []],
             ],
             'metrics' => [

@@ -51,10 +51,10 @@ events:
     legacy_tipos: []
   CONFIRMATION_DELIVERY_CONFIRMED:
     legacy_tipos: []
-    # Reservado: no emitir hasta existir acuse real del canal (FCM no lo acredita hoy).
+    # Evidencia: ACK autenticado de la app paciente (mobile_fcm_ack). HTTP 200 de FCM no alcanza.
   CONFIRMATION_OPENED:
     legacy_tipos: []
-    # Reservado: apertura explícita del cliente; no inferir desde envío.
+    # Evidencia: tap explícito del push (onMessageOpenedApp / getInitialMessage). No inferir desde bandeja.
   CONFIRMED:
     legacy_tipos: [CONFIRMED]
   ATTENTION_STARTED:

@@ -239,6 +239,30 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     );
   }
 
+  Future<void> _confirmarAsistenciaTurno(
+    BuildContext context,
+    Map<String, dynamic> t,
+  ) async {
+    final id = turnoIdDesdePayloadProducto(t);
+    if (id == null) {
+      return;
+    }
+    final r = await _turnosService.confirmarAsistencia(idTurno: id);
+    if (!mounted) return;
+    if (r['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Asistencia confirmada')),
+      );
+      await _cargarInicial();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(r['message']?.toString() ?? 'No se pudo confirmar'),
+        ),
+      );
+    }
+  }
+
   Widget _cardTurno(
     BuildContext context,
     Map<String, dynamic> t, {
@@ -284,6 +308,15 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
     }
 
     final acciones = <Widget>[
+      if (esFuturo && t['puede_confirmar_asistencia'] == true)
+        BioButton(
+          label: 'Confirmar asistencia',
+          intent: UiIntent.primary,
+          variant: BioButtonVariant.filled,
+          size: BioButtonSize.sm,
+          icon: Icons.check_circle_outline,
+          onPressed: () => _confirmarAsistenciaTurno(context, t),
+        ),
       if (prepararPendiente)
         BioButton.outlinePrimary(
           label: 'Preparar tu consulta',

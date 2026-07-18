@@ -48,7 +48,8 @@ Las fases 0 y 1 son bloqueantes. No se habilita ninguna decisión nueva sobre pa
 - Checkpoints: T−48 unificado con `CONFIRM_REQUEST` (`shared_confirmation_request`); T−2 sigue como checkpoint propio.
 - Shadow A04/cancelación; liberación deshabilitada.
 - API + UI JSON: historial propio/representado, explicación, agregado staff, solicitud y resolución de corrección.
-- Fuera de alcance operativo: `CONFIRMATION_DELIVERY_CONFIRMED` / `OPENED` (sin evidencia real de canal) y piloto formal de fase 5.
+- Fuera de alcance operativo: piloto formal de fase 5.
+- Entrega/apertura de confirmación: implementadas vía ACK autenticado de app paciente (`CONFIRMATION_DELIVERY_CONFIRMED` / `CONFIRMATION_OPENED`); no se infiere desde HTTP FCM ni desde lectura de bandeja.
 
 ## Cierre del plan
 

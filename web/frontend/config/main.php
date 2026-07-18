@@ -625,6 +625,8 @@ return [
                 'OPTIONS api/<version:\w+>/notificaciones/listar' => '<version>/notificaciones/listar',
                 'POST api/<version:\w+>/notificaciones/marcar-leida' => '<version>/notificaciones/marcar-leida',
                 'OPTIONS api/<version:\w+>/notificaciones/marcar-leida' => '<version>/notificaciones/marcar-leida',
+                'POST api/<version:\w+>/notificaciones/registrar-interaccion-push-propia' => '<version>/notificaciones/registrar-interaccion-push-propia',
+                'OPTIONS api/<version:\w+>/notificaciones/registrar-interaccion-push-propia' => '<version>/notificaciones/registrar-interaccion-push-propia',
                 'GET api/<version:\w+>/solicitud-profesional' => '<version>/solicitud-profesional/listar',
                 'OPTIONS api/<version:\w+>/solicitud-profesional' => '<version>/solicitud-profesional/listar',
                 'POST api/<version:\w+>/solicitud-profesional' => '<version>/solicitud-profesional/crear',

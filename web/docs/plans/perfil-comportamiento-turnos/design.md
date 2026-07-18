@@ -25,8 +25,8 @@ Se amplía `turno_evento_audit` como registro canónico, evitando un segundo str
 | `APPOINTMENT_CANCELLED` | Turno cancelado con actor y motivo |
 | `APPOINTMENT_ENTERED_RESOLUTION` | Agenda cambió y requiere resolución |
 | `CONFIRMATION_REQUESTED` | Se solicitó confirmación |
-| `CONFIRMATION_DELIVERY_CONFIRMED` | El canal confirmó entrega |
-| `CONFIRMATION_OPENED` | Existe evidencia de apertura |
+| `CONFIRMATION_DELIVERY_CONFIRMED` | ACK autenticado de la app al recibir FCM (`mobile_fcm_ack`) |
+| `CONFIRMATION_OPENED` | Tap explícito del push (`mobile_push_tap`); no se infiere desde bandeja |
 | `CONFIRMED` | La persona confirmó asistencia |
 | `ATTENTION_STARTED` | Comenzó la atención |
 | `ATTENDED` | Turno cerrado como atendido |

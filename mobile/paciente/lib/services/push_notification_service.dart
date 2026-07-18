@@ -10,6 +10,7 @@ import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../firebase/firebase_bootstrap.dart';
+import 'push_receipt_queue.dart';
 
 /// Registro FCM y manejo de taps (requiere `google-services.json` / `GoogleService-Info.plist`).
 class PushNotificationService {
@@ -25,6 +26,7 @@ class PushNotificationService {
   ) async {
     await FirebaseBootstrap.ensureInitialized();
     debugPrint('FCM background: ${message.messageId}');
+    await _enqueueDelivered(message, source: 'background_handler');
   }
 
   Future<void> init({void Function(Map<String, dynamic> data)? onOpen}) async {
@@ -58,18 +60,24 @@ class PushNotificationService {
         );
       }
 
-      FirebaseMessaging.onMessage.listen((msg) {
+      FirebaseMessaging.onMessage.listen((msg) async {
         debugPrint(
           'FCM foreground: ${msg.notification?.title ?? msg.data['type']}',
         );
+        await _enqueueDelivered(msg, source: 'on_message');
+        await PushReceiptQueue.flush();
       });
 
-      FirebaseMessaging.onMessageOpenedApp.listen((msg) {
+      FirebaseMessaging.onMessageOpenedApp.listen((msg) async {
+        await _enqueueOpened(msg, source: 'on_message_opened_app');
+        await PushReceiptQueue.flush();
         _dispatchOpen(msg.data);
       });
 
       final initial = await messaging.getInitialMessage();
       if (initial != null) {
+        await _enqueueOpened(initial, source: 'get_initial_message');
+        await PushReceiptQueue.flush();
         _dispatchOpen(initial.data);
       }
 
@@ -80,6 +88,7 @@ class PushNotificationService {
         await registerTokenWithApi(token);
       }
       _initialized = true;
+      await PushReceiptQueue.flush();
     } catch (e, st) {
       debugPrint('PushNotificationService: $e\n$st');
     }
@@ -112,6 +121,7 @@ class PushNotificationService {
       if (token != null && token.isNotEmpty) {
         await registerTokenWithApi(token);
       }
+      await PushReceiptQueue.flush();
     } catch (e) {
       debugPrint('registerTokenIfLoggedIn: $e');
     }
@@ -122,11 +132,6 @@ class PushNotificationService {
       return;
     }
     final prefs = await SharedPreferences.getInstance();
-    var deviceId = prefs.getString('device_id');
-    if (deviceId == null || deviceId.isEmpty) {
-      deviceId = 'pac-${DateTime.now().millisecondsSinceEpoch}';
-      await prefs.setString('device_id', deviceId);
-    }
     final token = authToken ?? prefs.getString('auth_token');
     if (token == null || token.isEmpty) {
       return;
@@ -145,7 +150,6 @@ class PushNotificationService {
             uri,
             headers: headers,
             body: json.encode({
-              'device_id': deviceId,
               'push_token': pushToken,
               'push_provider': 'fcm',
               'platform': platform,
@@ -161,6 +165,53 @@ class PushNotificationService {
     } catch (e) {
       debugPrint('registerTokenWithApi: $e');
     }
+  }
+
+  static Future<void> _enqueueDelivered(
+    RemoteMessage message, {
+    required String source,
+  }) async {
+    final ref = _notificationRefFromData(message.data);
+    if (ref == null) {
+      return;
+    }
+    final messageId = (message.messageId ?? '').trim();
+    final clientEventId = messageId.isNotEmpty
+        ? 'delivered:$messageId'
+        : 'delivered:$ref:$source';
+    await PushReceiptQueue.enqueue(
+      notificationRef: ref,
+      interactionType: 'DELIVERED',
+      clientEventId: clientEventId,
+      source: source,
+      providerMessageId: messageId.isEmpty ? null : messageId,
+    );
+  }
+
+  static Future<void> _enqueueOpened(
+    RemoteMessage message, {
+    required String source,
+  }) async {
+    final ref = _notificationRefFromData(message.data);
+    if (ref == null) {
+      return;
+    }
+    final messageId = (message.messageId ?? '').trim();
+    final clientEventId = messageId.isNotEmpty
+        ? 'opened:$messageId'
+        : 'opened:$ref:$source';
+    await PushReceiptQueue.enqueue(
+      notificationRef: ref,
+      interactionType: 'OPENED',
+      clientEventId: clientEventId,
+      source: source,
+      providerMessageId: messageId.isEmpty ? null : messageId,
+    );
+  }
+
+  static String? _notificationRefFromData(Map<String, dynamic> data) {
+    final ref = data['notification_ref']?.toString().trim() ?? '';
+    return ref.isEmpty ? null : ref;
   }
 
   /// Resumen de atención publicado (`ENCOUNTER_SUMMARY_READY`).
@@ -181,6 +232,27 @@ class PushNotificationService {
     final raw = data['touchpoint_id']?.toString() ?? '';
     final id = int.tryParse(raw);
     return id != null && id > 0 ? id : null;
+  }
+
+  /// Payload de confirmación de asistencia desde push/bandeja.
+  static Map<String, dynamic>? confirmacionDesdeData(Map<String, dynamic> data) {
+    final type = data['type']?.toString() ?? '';
+    final action = data['action']?.toString() ?? '';
+    final isConfirm = type == 'TURNO_CONFIRMAR' || action == 'confirmar_asistencia';
+    if (!isConfirm) {
+      return null;
+    }
+    final idTurnoRaw = data['id_turno']?.toString() ?? data['id']?.toString() ?? '';
+    final idTurno = int.tryParse(idTurnoRaw);
+    if (idTurno == null || idTurno <= 0) {
+      return null;
+    }
+    return {
+      'id_turno': idTurno,
+      'token': data['token']?.toString(),
+      'notification_ref': data['notification_ref']?.toString(),
+      'action_label': data['action_label']?.toString() ?? 'Confirmar asistencia',
+    };
   }
 
   /// Abre el flow adecuado según payload push (desde MainScreen).

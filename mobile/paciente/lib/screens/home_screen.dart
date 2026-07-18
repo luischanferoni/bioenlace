@@ -554,6 +554,33 @@ class HomeScreenState extends State<HomeScreen> {
     return n != null && n > 0 ? n : null;
   }
 
+  Future<void> _confirmarAsistenciaTurno(
+    BuildContext context,
+    Map<String, dynamic> t,
+  ) async {
+    final id = turnoIdDesdePayloadProducto(t);
+    if (id == null) {
+      return;
+    }
+    final r = await _turnosService.confirmarAsistencia(
+      idTurno: id,
+      subjectPersonaId: _subjectPersonaId,
+    );
+    if (!mounted) return;
+    if (r['success'] == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Asistencia confirmada')),
+      );
+      await _recargarPendientesDesdeCero();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(r['message']?.toString() ?? 'No se pudo confirmar'),
+        ),
+      );
+    }
+  }
+
   void _abrirMotivosConsulta(
     BuildContext context,
     int consultaId,
@@ -1024,6 +1051,19 @@ class HomeScreenState extends State<HomeScreen> {
         icon: Icons.edit_note,
         onPressed: () => _abrirMotivosConsulta(context, idConsulta, t),
       ));
+    }
+    if (!enResolucion && futuro && t['puede_confirmar_asistencia'] == true) {
+      acciones.insert(
+        0,
+        BioButton(
+          label: 'Confirmar asistencia',
+          intent: UiIntent.primary,
+          variant: BioButtonVariant.filled,
+          size: BioButtonSize.sm,
+          icon: Icons.check_circle_outline,
+          onPressed: () => _confirmarAsistenciaTurno(context, t),
+        ),
+      );
     }
     if (!enResolucion && puedeAsistenciaCohorte && turnoId != null) {
       acciones.add(BioButton.outlinePrimary(

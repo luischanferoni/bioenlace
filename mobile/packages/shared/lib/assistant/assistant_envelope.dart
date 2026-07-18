@@ -60,6 +60,8 @@ class AssistantFlowView {
       flowSubmit = <String, dynamic>{
         'route': sub['route']?.toString() ?? '',
         'method': sub['method']?.toString() ?? 'POST',
+        if ((sub['label']?.toString().trim() ?? '').isNotEmpty)
+          'label': sub['label'].toString().trim(),
         if (sub['body_template'] is Map)
           'body_template': Map<String, dynamic>.from(sub['body_template'] as Map),
       };

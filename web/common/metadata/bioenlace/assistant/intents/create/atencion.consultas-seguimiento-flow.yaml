@@ -110,6 +110,7 @@ subintents:
 
   - id: select_care_plan
     assistant_text: "Tu tratamiento"
+    review_prefilled: true
     requires:
       - draft.intake_tipo
     provides:
@@ -152,22 +153,14 @@ subintents:
       - draft.seguimiento_necesidad
     provides:
       - draft.medication_request_ids
-    next: confirmar_renovacion
+    next: ""
     open_ui:
       action_id: clinical.care-plan.medicamentos-como-paciente
       params:
         care_plan_id: "draft.care_plan_id"
-
-  - id: confirmar_renovacion
-    assistant_text: "Confirmar renovación"
-    requires:
-      - draft.care_plan_id
-      - draft.medication_request_ids
-    provides: []
-    next: ""
-    terminal_without_submit: true
-    open_ui:
+    flow_submit:
       action_id: clinical.care-plan.confirmar-renovacion-como-paciente
+      label: "Solicitar renovación"
       params:
         care_plan_id: "draft.care_plan_id"
         medication_request_ids: "draft.medication_request_ids"

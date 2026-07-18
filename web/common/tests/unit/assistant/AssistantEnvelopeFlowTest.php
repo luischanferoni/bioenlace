@@ -40,6 +40,7 @@ class AssistantEnvelopeFlowTest extends Unit
                 'action_id' => 'turnos.indicadores-agenda',
                 'route' => '/api/v1/turnos/indicadores-agenda',
                 'method' => 'POST',
+                'label' => 'Consultar indicadores',
                 'body_template' => [
                     'fecha_desde' => 'draft.fecha_desde',
                     'fecha_hasta' => 'draft.fecha_hasta',
@@ -60,6 +61,7 @@ class AssistantEnvelopeFlowTest extends Unit
             $envelope['step']['client_open']['api']['route']
         );
         $this->assertTrue($envelope['submit']['active']);
+        $this->assertSame('Consultar indicadores', $envelope['submit']['label']);
     }
 
     public function testFlowFromMotorToleratesArrayLikeClientOpenFields(): void

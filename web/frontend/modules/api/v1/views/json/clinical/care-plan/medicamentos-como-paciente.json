@@ -12,7 +12,7 @@
     {
       "kind": "list",
       "id": "medicamentos",
-      "title": "Elegí uno o más medicamentos",
+      "title": "",
       "empty_message": "Este plan no tiene medicación activa para renovar o ajustar.",
       "draft_field": "medication_request_ids",
       "item": { "kind": "option", "id_field": "id", "label_field": "name" },

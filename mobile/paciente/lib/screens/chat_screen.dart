@@ -169,6 +169,33 @@ class ChatScreenState extends State<ChatScreen> {
     return message['flow_submit'] is Map;
   }
 
+  String _flowSubmitLabel(Map<String, dynamic> message) {
+    final flowSubmit = message['flow_submit'];
+    final label = flowSubmit is Map ? flowSubmit['label']?.toString().trim() ?? '' : '';
+    return label.isNotEmpty ? label : 'Confirmar y Enviar';
+  }
+
+  /// Selecci?n inicial declarativa: cruza lo que el paso provee con el draft
+  /// capturado al abrir su UI. Sirve tanto para prefill externo como para reabrir pasos.
+  String? _initialListSelectionForMessage(Map<String, dynamic> message) {
+    final inlineUi = message['inline_ui'];
+    final provided = inlineUi is Map && inlineUi['provided'] is Map
+        ? Map<String, dynamic>.from(inlineUi['provided'] as Map)
+        : const <String, dynamic>{};
+    final flowProvides = message['flow_provides'];
+    if (flowProvides is List) {
+      for (final rawField in flowProvides) {
+        final field = rawField.toString().trim();
+        final value = provided[field]?.toString().trim() ?? '';
+        if (field.isNotEmpty && value.isNotEmpty) {
+          return value;
+        }
+      }
+    }
+    final autoSelected = message['_flow_auto_selected_id']?.toString().trim() ?? '';
+    return autoSelected.isNotEmpty ? autoSelected : null;
+  }
+
   /// Copia filtros de query del descriptor GET al draft (p. ej. `id_servicio_asignado`).
   void _applyInlineUiQueryToDraft(Map<String, dynamic> inlineUi) {
     final absRaw = inlineUi['api_absolute_url']?.toString() ?? '';
@@ -498,6 +525,8 @@ class ChatScreenState extends State<ChatScreen> {
       'route': route,
       'method': method,
       'action_id': raw['action_id']?.toString() ?? '',
+      if ((raw['label']?.toString().trim() ?? '').isNotEmpty)
+        'label': raw['label'].toString().trim(),
       'body_template': raw['body_template'] is Map
           ? Map<String, dynamic>.from(raw['body_template'] as Map)
           : <String, dynamic>{},
@@ -3023,8 +3052,7 @@ class ChatScreenState extends State<ChatScreen> {
                                     },
                               enableFlowChainAutoAdvance: false,
                               isTerminalFlowStep: _messageIsTerminalFlowStep(message) || showingLicenciaImpact,
-                              initialListEmbedSelectedId:
-                                  message['_flow_auto_selected_id']?.toString(),
+                              initialListEmbedSelectedId: _initialListSelectionForMessage(message),
                               apiAbsoluteUrl: showingLicenciaImpact
                                   ? ''
                                   : ((inlineUi is Map &&
@@ -3223,7 +3251,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 const SizedBox(height: 8),
                               ],
                               BioButton.primary(
-                                label: 'Confirmar y Enviar',
+                                label: _flowSubmitLabel(message),
                                 icon: Icons.check_circle_outline,
                                 size: BioButtonSize.lg,
                                 fullWidth: true,

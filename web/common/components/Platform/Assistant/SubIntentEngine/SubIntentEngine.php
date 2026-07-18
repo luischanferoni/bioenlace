@@ -137,6 +137,7 @@ final class SubIntentEngine
 
             $missing = self::missingDraftFields($current, $draft);
             $missingRequires = self::missingRequiresFields($current, $draft);
+            $effectiveFlowSubmitBlock = self::resolveFlowSubmitBlock($current, $flowSubmitBlock);
             if ($missing !== []) {
                 $composer = self::buildComposerCaptureDescriptor($current);
                 if ($composer !== null) {
@@ -161,7 +162,7 @@ final class SubIntentEngine
                         $userId,
                         $open,
                         $content,
-                        $flowSubmitBlock,
+                        $effectiveFlowSubmitBlock,
                         $hints
                     );
                 }
@@ -174,6 +175,32 @@ final class SubIntentEngine
                     'required_draft_fields' => $missing,
                     'draft_delta' => (object) [],
                 ], $hints), $intentId, $currentId);
+            }
+
+            // Algunos pickers deben revisarse aun cuando un enlace/hydrator haya prellenado
+            // su `provides`. Al reenviar ese mismo subintent tras confirmarlo, el paso avanza.
+            if (!empty($current['review_prefilled']) && $currentId !== $subintentId) {
+                $reviewOpen = self::resolveOpenUiForSubintent($current, $content, $draft);
+                $reviewActionId = AssistantDraftNormalizer::scalarString(
+                    is_array($reviewOpen) ? ($reviewOpen['action_id'] ?? '') : ''
+                );
+                if (
+                    is_array($reviewOpen)
+                    && $reviewActionId !== ''
+                    && !self::openUiBlockedByMissingDraft($reviewOpen, $missingRequires)
+                ) {
+                    return self::buildOpenUiResponse(
+                        $intentId,
+                        $currentId,
+                        $current,
+                        self::assistantTextForPrompt($current, 'Revisá la selección para continuar.', $draft),
+                        $userId,
+                        $reviewOpen,
+                        $content,
+                        $effectiveFlowSubmitBlock,
+                        $hints
+                    );
+                }
             }
 
             // Paso completo: si es terminal y tiene UI (p. ej. detalle tras elegir ítem), mostrarla.
@@ -192,7 +219,7 @@ final class SubIntentEngine
                         $userId,
                         $openWhenComplete,
                         $content,
-                        $flowSubmitBlock,
+                        $effectiveFlowSubmitBlock,
                         $hints
                     );
                 }
@@ -211,12 +238,13 @@ final class SubIntentEngine
 
         // Salida del loop: el flow no tiene más pasos por delante (o el "siguiente" es un stub
         // sin `open_ui` ni `next`). Cierre por `flow_submit` si está declarado.
-        if ($flowSubmitBlock !== null && self::flowSubmitHasActionId($flowSubmitBlock)) {
+        $effectiveFlowSubmitBlock = self::resolveFlowSubmitBlock($current, $flowSubmitBlock);
+        if ($effectiveFlowSubmitBlock !== null && self::flowSubmitHasActionId($effectiveFlowSubmitBlock)) {
             return self::buildTerminalSubmitOnlyResponse(
                 $intentId,
                 $currentId,
                 self::assistantTextForPrompt($current, 'Confirmemos y enviemos.', $draft),
-                $flowSubmitBlock,
+                $effectiveFlowSubmitBlock,
                 $hints
             );
         }
@@ -380,6 +408,20 @@ final class SubIntentEngine
     }
 
     /**
+     * Un paso puede declarar un cierre propio para una rama; si no, hereda el cierre raíz.
+     *
+     * @param array<string, mixed> $subintent
+     * @param array<string, mixed>|null $rootFlowSubmitBlock
+     * @return array<string, mixed>|null
+     */
+    private static function resolveFlowSubmitBlock(array $subintent, ?array $rootFlowSubmitBlock): ?array
+    {
+        return isset($subintent['flow_submit']) && is_array($subintent['flow_submit'])
+            ? $subintent['flow_submit']
+            : $rootFlowSubmitBlock;
+    }
+
+    /**
      * Un subintent es "terminal" si después de él el flow ya no espera otro paso interactivo:
      * no declara `next` ni `next_routing`, y el intent expone `flow_submit` con `action_id`.
      *
@@ -412,7 +454,7 @@ final class SubIntentEngine
      * con su `_draft` local al apretar el botón "Confirmar y enviar".
      *
      * @param array<string, mixed> $flowSubmitBlock
-     * @return array{action_id: string, route: string, method: string, body_template: array<string, string>}|null
+     * @return array{action_id: string, route: string, method: string, label?: string, body_template: array<string, string>}|null
      */
     private static function buildFlowSubmitTemplate(array $flowSubmitBlock): ?array
     {
@@ -443,12 +485,18 @@ final class SubIntentEngine
             return null;
         }
 
-        return [
+        $out = [
             'action_id' => $actionId,
             'route' => $route,
             'method' => 'POST',
             'body_template' => $template,
         ];
+        $label = trim((string) ($flowSubmitBlock['label'] ?? ''));
+        if ($label !== '') {
+            $out['label'] = $label;
+        }
+
+        return $out;
     }
 
     /**

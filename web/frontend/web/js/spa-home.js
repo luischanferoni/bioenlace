@@ -808,7 +808,7 @@
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'btn btn-success';
-        btn.textContent = FLOW_SUBMIT_BUTTON_LABEL;
+        btn.textContent = fs.label ? String(fs.label) : FLOW_SUBMIT_BUTTON_LABEL;
         var errBox = document.createElement('div');
         errBox.className = 'small text-danger mt-2 d-none';
         wrap.appendChild(btn);
@@ -2059,6 +2059,7 @@
         return {
             route: sub.route != null ? String(sub.route) : '',
             method: sub.method != null ? String(sub.method) : 'POST',
+            label: sub.label != null ? String(sub.label) : '',
             body_template: sub.body_template && typeof sub.body_template === 'object' ? sub.body_template : {}
         };
     }
@@ -3351,7 +3352,7 @@
         html += buildPickButtonsHtml(items);
         html += '</div>';
         const effectiveRequiresConfirmation = isMultiple
-            ? true
+            ? options.isTerminalFlowStep !== true
             : (requiresConfirmation && options.isTerminalFlowStep !== true);
         if (effectiveRequiresConfirmation) {
             html += '<div class="spa-flow-submit-inline">';
@@ -3419,13 +3420,13 @@
         function confirmSelection() {
             if (isListPickLocked()) return;
             if (!draftField) return;
+            const isTerminalFlowStep = options.isTerminalFlowStep === true;
             if (isMultiple) {
                 const ids = Object.keys(selectedIds).filter(function (k) { return selectedIds[k]; }).sort();
                 selectedId = ids.join(',');
             }
-            if (!selectedId) return;
+            if (!selectedId && !(isMultiple && isTerminalFlowStep)) return;
 
-            const isTerminalFlowStep = options.isTerminalFlowStep === true;
             const editSparse = options.editSparse && typeof options.editSparse === 'object'
                 ? options.editSparse
                 : null;

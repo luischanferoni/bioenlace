@@ -370,11 +370,13 @@ final class AssistantEnvelope
         $template = isset($flowSubmit['body_template']) && is_array($flowSubmit['body_template'])
             ? $flowSubmit['body_template']
             : [];
+        $label = trim((string) ($flowSubmit['label'] ?? ''));
 
         return [
             'active' => true,
             'route' => $route,
             'method' => $method,
+            'label' => $label,
             'body_template' => $template === [] ? (object) [] : $template,
         ];
     }

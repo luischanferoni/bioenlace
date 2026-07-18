@@ -1424,7 +1424,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       final selectionMode = selection['mode']?.toString().trim().toLowerCase() ?? 'single';
       final isMultiple = selectionMode == 'multiple';
       final requiresConfirmation = isMultiple
-          ? true
+          ? !widget.isTerminalFlowStep
           : (selection['requires_confirmation'] == true && !widget.isTerminalFlowStep);
       final draftField = b['draft_field']?.toString() ?? '';
       final title = b['title']?.toString();
@@ -1495,16 +1495,28 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                         onTap: () async {
                           if (_listEmbedLocked) return;
                           if (isMultiple) {
+                            late String joined;
                             setState(() {
                               if (_listEmbedSelectedIds.contains(id)) {
                                 _listEmbedSelectedIds.remove(id);
                               } else {
                                 _listEmbedSelectedIds.add(id);
                               }
-                              _listEmbedSelectedId = _listEmbedSelectedIds.isEmpty
-                                  ? null
-                                  : (_listEmbedSelectedIds.toList()..sort()).join(',');
+                              joined = (_listEmbedSelectedIds.toList()..sort()).join(',');
+                              _listEmbedSelectedId = joined.isEmpty ? null : joined;
+                              if (widget.isTerminalFlowStep) {
+                                _listEmbedLocked = true;
+                              }
                             });
+                            if (widget.isTerminalFlowStep) {
+                              try {
+                                await _applyListEmbedDraft(draftField, joined);
+                              } finally {
+                                if (mounted) {
+                                  setState(() => _listEmbedLocked = false);
+                                }
+                              }
+                            }
                             return;
                           }
                           // Ya elegido: no re-aplicar draft ni avanzar el flow.

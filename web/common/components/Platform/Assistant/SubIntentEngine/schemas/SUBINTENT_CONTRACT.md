@@ -16,7 +16,7 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
 | `draft_hydrator` | Opcional: enriquecimiento del `draft` **antes** de `SubIntentEngine::process` (ver abajo). |
 | `subintents` | **Obligatorio**: lista ordenada de pasos. |
-| `flow_submit` | **Opcional.** Cierre del flujo. El motor detecta automáticamente el **paso terminal** (subintent sin `next` ni `next_routing`) y, cuando ese paso emite `open_ui`, adjunta el descriptor `flow_submit` al envelope (ver más abajo). Si el último paso no tiene `open_ui`, el envelope se emite **solo** con `flow_submit` (texto + botón "Confirmar y enviar"). **No** declarar cierre por subintent: usar solo `flow_submit` en la raíz. |
+| `flow_submit` | **Opcional.** Cierre predeterminado del flujo. El motor detecta automáticamente el **paso terminal** (subintent sin `next` ni `next_routing`) y, cuando ese paso emite `open_ui`, adjunta el descriptor `flow_submit` al envelope (ver más abajo). Si el último paso no tiene `open_ui`, el envelope se emite **solo** con `flow_submit` (texto + botón de envío). Una rama terminal puede sobrescribirlo con `subintents[].flow_submit`. |
 
 ### `draft_hydrator` (raíz del intent)
 
@@ -48,11 +48,13 @@ Solo deben usarse las siguientes propiedades en cada ítem. Cualquier otra clave
 | `assistant_text` | Texto guía para prompt / UI de pasos. |
 | `requires` | Lista de campos requeridos en el draft, forma `draft.<clave>` o `<clave>` según el YAML (el motor normaliza internamente). |
 | `provides` | Lista de claves que completa la mini-UI de este paso al confirmar selección (o que el POST de una pantalla previa escribe en `draft` vía `data` del cliente). |
+| `review_prefilled` | Si es `true`, un paso con `open_ui` se muestra una vez aunque `provides` ya venga completo por enlace o hydrator. El valor se presenta preseleccionado y la confirmación del mismo `subintent_id` permite avanzar. |
 | `next` | Id del siguiente subintent, o cadena vacía `""` si no hay siguiente paso lineal. |
 | `next_routing` | Alternativa a `next`: lista de ramas `{ when, next }` (ver motor: `draft_equals`, `default`). |
 | `open_ui` | Objeto **picker / pantalla embebible** vía catálogo: `action_id`, `params` (valores `draft.*`), `pass_content_as_query` opcional. |
 | `chooser` | Objeto con `when_user_says_nearby` / `otherwise`, cada uno con su propio `open_ui` (elección de lista vs cercanía). |
 | `hint` | Opcional: `{ entity, match_property }` para resolver menciones del preprocess → `hints[]` en el envelope (`id`, `value`, `draft_field` inferido de `provides`). |
+| `flow_submit` | Opcional en una rama terminal. Usa la misma forma que el cierre raíz y lo sobrescribe sólo para ese subintent. |
 
 ### Forma de `open_ui`
 
@@ -71,6 +73,7 @@ open_ui:
 ```yaml
 flow_submit:
   action_id: <action_id del catálogo>      # ej. "turnos.crear-como-paciente"
+  label: "Confirmar y enviar"               # opcional
   params:                                  # mapa apiKey -> "draft.<campo>" o "draft.<campo>?"
     id_efector: "draft.id_efector"
     id_servicio: "draft.id_servicio"
@@ -102,6 +105,7 @@ Cada call a `SubIntentEngine::process` devuelve un envelope. Los clientes (web Y
 | `action_id` | `<entidad>.<accion>`, para tracing y eventuales fallbacks. |
 | `route` | Ruta API canónica `/api/v1/<entidad>/<accion>`. |
 | `method` | Hoy siempre `POST`. |
+| `label` | Texto opcional del único botón de cierre; el cliente usa su texto predeterminado si falta. |
 | `body_template` | Mapa `apiKey -> "draft.<campo>"`. **No** está resuelto; el cliente lo expande con su `_draft` local al apretar el botón. |
 
 El cliente, al presionar "Confirmar y enviar", resuelve `body_template` (cualquier valor `draft.x` ausente se reporta como aviso inline) y POSTea a `route`. La respuesta esperada es `kind: ui_submit_result`. No se vuelve a llamar a `/asistente/enviar` para cerrar.
@@ -111,7 +115,7 @@ El cliente, al presionar "Confirmar y enviar", resuelve `body_template` (cualqui
 Un subintent es **terminal** si:
 
 1. No declara `next` ni `next_routing` (el YAML dice "después de este paso no hay otro paso interactivo"), y
-2. El intent tiene `flow_submit` con `action_id` válido.
+2. El intent o el propio subintent tiene `flow_submit` con `action_id` válido.
 
 Cuando el motor va a emitir el `open_ui` de un paso terminal, adjunta `flow_submit` al **mismo** envelope. El cliente entonces:
 

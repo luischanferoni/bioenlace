@@ -3,9 +3,12 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Platform\Agent\AgentRunRecorder;
+use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventCommand;
+use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventService;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoWaitlistEntry;
 use common\models\Scheduling\TurnoWaitlistSlotOffer;
+use common\models\TurnoEventoAudit;
 use Yii;
 
 /**
@@ -16,7 +19,7 @@ final class TurnoWaitlistOfferAcceptService
     /**
      * @return array<string, mixed>
      */
-    public function accept(string $offerToken, int $subjectPersonaId): array
+    public function accept(string $offerToken, int $subjectPersonaId, ?string $actorType = null): array
     {
         $token = trim($offerToken);
         if ($token === '') {
@@ -63,6 +66,10 @@ final class TurnoWaitlistOfferAcceptService
         $turno->id_servicio_asignado = (int) $offer->id_servicio;
         $turno->estado = Turno::ESTADO_PENDIENTE;
 
+        $actor = $actorType !== null && in_array($actorType, TurnoEventoAudit::actorTypeValues(), true)
+            ? $actorType
+            : TurnoEventoAudit::ACTOR_PACIENTE;
+
         $ctx = new TurnoCreacionContext($subjectPersonaId, null, null);
         $result = (new TurnoPersistService())->crear($turno, $ctx);
 
@@ -75,6 +82,25 @@ final class TurnoWaitlistOfferAcceptService
         $offer->estado = TurnoWaitlistSlotOffer::ESTADO_FILLED;
         $offer->updated_at = date('Y-m-d H:i:s');
         $offer->save(false);
+
+        (new TurnoCanonicalEventService())->record(TurnoCanonicalEventCommand::create(
+            (int) $result['id'],
+            $subjectPersonaId,
+            TurnoEventoAudit::EVENT_WAITLIST_ACCEPTED,
+            $actor,
+            'waitlist-accepted:' . (int) $entry->id . ':' . (int) $result['id'],
+            TurnoEventoAudit::QUALITY_NATIVE,
+            Yii::$app->user->id ?? null,
+            'app',
+            'waitlist_accept',
+            null,
+            null,
+            [
+                'entry_id' => (int) $entry->id,
+                'slot_offer_id' => (int) $offer->id,
+                'id_cancelled_turno' => (int) ($offer->id_cancelled_turno ?: 0) ?: null,
+            ]
+        ));
 
         AgentRunRecorder::record(
             TurnoWaitlistFillAgent::AGENT_ID,

@@ -1,6 +1,6 @@
 # Fase 4 — API, UI y transparencia
 
-**Estado:** inicial. Está disponible la consulta del perfil propio con DTO neutral y permiso de ruta; faltan representación, staff, agregados, UI compartida y circuito de corrección.
+**Estado:** V1 API disponible (propio, representado, explicación propia, agregado staff con supresión). Faltan UI JSON compartida, explicación staff y circuito de solicitud/resolución de corrección.
 
 ## Objetivo
 

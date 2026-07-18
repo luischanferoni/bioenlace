@@ -6,11 +6,10 @@ use common\components\Domain\Integrations\Scheduling\Contract\FhirSchedulingInbo
 use common\components\Domain\Integrations\Scheduling\Dto\FhirAppointmentInboundDto;
 use common\components\Domain\Integrations\Scheduling\FhirScheduleActorExtractor;
 use common\components\Domain\Integrations\Scheduling\FhirSchedulePesResolver;
-use common\components\Domain\Integrations\Scheduling\FhirSchedulingConnectorRegistry;
 use common\components\Domain\Integrations\Scheduling\Mapper\FhirAppointmentInboundMapper;
 use common\components\Domain\Integrations\Scheduling\Mapper\FhirAppointmentStatusMapper;
 use common\components\Domain\Integrations\Scheduling\Util\FhirBundleHelper;
-use common\models\Integration\IntegrationFhirSyncState;
+use common\components\Domain\Scheduling\Service\TurnoLifecycleService;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use Yii;
@@ -24,10 +23,12 @@ final class TurnoInboundSyncService
         private ?FhirAppointmentInboundMapper $mapper = null,
         private ?FhirScheduleActorExtractor $actorExtractor = null,
         private ?FhirSchedulePesResolver $pesResolver = null,
+        private ?TurnoFhirCanonicalEventEmitter $eventEmitter = null,
     ) {
         $this->mapper = $mapper ?? new FhirAppointmentInboundMapper();
         $this->actorExtractor = $actorExtractor ?? new FhirScheduleActorExtractor();
         $this->pesResolver = $pesResolver ?? new FhirSchedulePesResolver();
+        $this->eventEmitter = $eventEmitter ?? new TurnoFhirCanonicalEventEmitter();
     }
 
     /**
@@ -72,6 +73,10 @@ final class TurnoInboundSyncService
             ->one();
 
         $isNew = $turno === null;
+        $beforeEstado = $turno !== null ? (string) $turno->estado : null;
+        $beforeFhirStatus = $turno !== null ? (string) ($turno->fhir_status ?? '') : null;
+        $beforeSnapshot = $turno !== null ? TurnoLifecycleService::scheduleSnapshot($turno) : null;
+
         if ($turno === null) {
             $turno = new Turno();
             $turno->appointment_source_system = $sourceSystem;
@@ -82,10 +87,28 @@ final class TurnoInboundSyncService
             $turno->referenciado = 'NO';
         }
 
-        $this->applyDtoToTurno($turno, $dto, $scheduleId, $trust, $idPes);
+        $tx = Turno::getDb()->beginTransaction();
+        try {
+            $this->applyDtoToTurno($turno, $dto, $scheduleId, $trust, $idPes);
 
-        if (!$turno->save(false)) {
-            throw new \RuntimeException('No se pudo guardar turno espejo FHIR.');
+            if (!$turno->save(false)) {
+                throw new \RuntimeException('No se pudo guardar turno espejo FHIR.');
+            }
+
+            $this->eventEmitter->emit(
+                $turno,
+                $dto,
+                $isNew,
+                $beforeEstado,
+                $beforeFhirStatus,
+                $beforeSnapshot
+            );
+            $tx->commit();
+        } catch (\Throwable $e) {
+            if ($tx->isActive) {
+                $tx->rollBack();
+            }
+            throw $e;
         }
 
         return [

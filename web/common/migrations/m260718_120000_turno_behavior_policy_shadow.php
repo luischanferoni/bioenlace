@@ -11,7 +11,11 @@ use yii\db\Query;
 class m260718_120000_turno_behavior_policy_shadow extends Migration
 {
     private const PROFILE_ROUTE = '/api/turnos-perfil/historial-propio-como-paciente';
+    private const REPRESENTED_ROUTE = '/api/turnos-perfil/historial-representado-como-paciente';
+    private const EXPLAIN_ROUTE = '/api/turnos-perfil/explicacion-accion-propia-como-paciente';
+    private const AGGREGATE_ROUTE = '/api/turnos-perfil/agregado-efector-para-staff';
     private const LIST_ROUTE = '/api/turnos/listar-como-paciente';
+    private const INDICADORES_ROUTE = '/api/turnos/indicadores-agenda';
 
     public function safeUp()
     {
@@ -42,21 +46,29 @@ class m260718_120000_turno_behavior_policy_shadow extends Migration
                 $this->addColumn($table, $name, $definition);
             }
         }
-        $this->createIndex('ix_agent_run_profile', $table, ['profile_id']);
-        $this->createIndex('ix_agent_run_policy', $table, ['policy_id', 'policy_version']);
-        $this->ensureOwnProfileRoute();
+        if (!$this->indexExists($table, 'ix_agent_run_profile')) {
+            $this->createIndex('ix_agent_run_profile', $table, ['profile_id']);
+        }
+        if (!$this->indexExists($table, 'ix_agent_run_policy')) {
+            $this->createIndex('ix_agent_run_policy', $table, ['policy_id', 'policy_version']);
+        }
+        $this->ensureProfileRoutes();
     }
 
     public function safeDown()
     {
-        $this->removeOwnProfileRoute();
+        $this->removeProfileRoutes();
         $table = '{{%agent_run}}';
         $schema = $this->db->schema->getTableSchema($table, true);
         if ($schema === null) {
             return;
         }
-        $this->dropIndex('ix_agent_run_policy', $table);
-        $this->dropIndex('ix_agent_run_profile', $table);
+        if ($this->indexExists($table, 'ix_agent_run_policy')) {
+            $this->dropIndex('ix_agent_run_policy', $table);
+        }
+        if ($this->indexExists($table, 'ix_agent_run_profile')) {
+            $this->dropIndex('ix_agent_run_profile', $table);
+        }
         foreach ([
             'result_json',
             'action_json',
@@ -74,7 +86,7 @@ class m260718_120000_turno_behavior_policy_shadow extends Migration
         }
     }
 
-    private function ensureOwnProfileRoute(): void
+    private function ensureProfileRoutes(): void
     {
         $items = '{{%auth_item}}';
         $children = '{{%auth_item_child}}';
@@ -82,35 +94,76 @@ class m260718_120000_turno_behavior_policy_shadow extends Migration
             || $this->db->schema->getTableSchema($children, true) === null) {
             return;
         }
-        if (!(new Query())->from($items)->where(['name' => self::PROFILE_ROUTE])->exists($this->db)) {
-            $now = time();
-            $this->insert($items, [
-                'name' => self::PROFILE_ROUTE,
-                'type' => 3,
-                'description' => 'Consultar perfil factual propio de turnos',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+
+        $this->ensureRoute($items, self::PROFILE_ROUTE, 'Consultar perfil factual propio de turnos');
+        $this->ensureRoute($items, self::REPRESENTED_ROUTE, 'Consultar perfil factual representado de turnos');
+        $this->ensureRoute($items, self::EXPLAIN_ROUTE, 'Explicar acción anti no-show propia');
+        $this->ensureRoute($items, self::AGGREGATE_ROUTE, 'Agregado factual de turnos por efector');
+
+        $this->inheritParents($children, self::LIST_ROUTE, [
+            self::PROFILE_ROUTE,
+            self::REPRESENTED_ROUTE,
+            self::EXPLAIN_ROUTE,
+        ]);
+        $this->inheritParents($children, self::INDICADORES_ROUTE, [self::AGGREGATE_ROUTE]);
+    }
+
+    private function ensureRoute(string $items, string $route, string $description): void
+    {
+        if ((new Query())->from($items)->where(['name' => $route])->exists($this->db)) {
+            return;
         }
+        $now = time();
+        $this->insert($items, [
+            'name' => $route,
+            'type' => 3,
+            'description' => $description,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+    }
+
+    /**
+     * @param list<string> $newChildren
+     */
+    private function inheritParents(string $children, string $fromChild, array $newChildren): void
+    {
         $parents = (new Query())->select('parent')->from($children)
-            ->where(['child' => self::LIST_ROUTE])->column($this->db);
+            ->where(['child' => $fromChild])->column($this->db);
         foreach ($parents as $parent) {
-            if (!(new Query())->from($children)->where([
-                'parent' => $parent,
-                'child' => self::PROFILE_ROUTE,
-            ])->exists($this->db)) {
-                $this->insert($children, ['parent' => $parent, 'child' => self::PROFILE_ROUTE]);
+            foreach ($newChildren as $child) {
+                if (!(new Query())->from($children)->where([
+                    'parent' => $parent,
+                    'child' => $child,
+                ])->exists($this->db)) {
+                    $this->insert($children, ['parent' => $parent, 'child' => $child]);
+                }
             }
         }
     }
 
-    private function removeOwnProfileRoute(): void
+    private function removeProfileRoutes(): void
     {
         if ($this->db->schema->getTableSchema('{{%auth_item}}', true) === null
             || $this->db->schema->getTableSchema('{{%auth_item_child}}', true) === null) {
             return;
         }
-        $this->delete('{{%auth_item_child}}', ['child' => self::PROFILE_ROUTE]);
-        $this->delete('{{%auth_item}}', ['name' => self::PROFILE_ROUTE]);
+        foreach ([
+            self::PROFILE_ROUTE,
+            self::REPRESENTED_ROUTE,
+            self::EXPLAIN_ROUTE,
+            self::AGGREGATE_ROUTE,
+        ] as $route) {
+            $this->delete('{{%auth_item_child}}', ['child' => $route]);
+            $this->delete('{{%auth_item}}', ['name' => $route]);
+        }
+    }
+
+    private function indexExists(string $table, string $name): bool
+    {
+        $raw = $this->db->schema->getRawTableName($table);
+        $indexes = $this->db->schema->getTableIndexes($raw, true);
+
+        return isset($indexes[$name]);
     }
 }

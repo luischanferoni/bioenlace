@@ -98,8 +98,10 @@ class TurnoConfirmationService
 
     /**
      * Marca asistencia confirmada (idempotente).
+     *
+     * @param string|null $actorType {@see TurnoEventoAudit::actorTypeValues()}
      */
-    public function confirmarAsistencia(Turno $turno, $idUser = null)
+    public function confirmarAsistencia(Turno $turno, $idUser = null, ?string $actorType = null)
     {
         if ($turno->confirmado_en) {
             return true;
@@ -109,9 +111,41 @@ class TurnoConfirmationService
         if (!$turno->save(false, ['confirmado', 'confirmado_en'])) {
             return false;
         }
-        TurnoEventoAudit::registrar($turno->id_turnos, TurnoEventoAudit::TIPO_CONFIRMED, $idUser);
+        $actor = $actorType !== null && in_array($actorType, TurnoEventoAudit::actorTypeValues(), true)
+            ? $actorType
+            : TurnoEventoAudit::ACTOR_PACIENTE;
+        TurnoEventoAudit::registrar($turno->id_turnos, TurnoEventoAudit::TIPO_CONFIRMED, $idUser, [
+            'actor_type' => $actor,
+            'canal' => 'app',
+            'origin' => 'confirmation',
+        ]);
         TurnoNotificacionProgramada::cancelarPendientesPorTurno($turno->id_turnos);
         return true;
+    }
+
+    /**
+     * Registra que se intentó solicitar confirmación (no implica entrega del canal).
+     */
+    public function recordConfirmationRequested(Turno $turno, int $notificationId): void
+    {
+        if ((int) $turno->id_persona <= 0 || (int) $turno->id_turnos <= 0) {
+            return;
+        }
+        (new \common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventService())
+            ->record(\common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventCommand::create(
+                (int) $turno->id_turnos,
+                (int) $turno->id_persona,
+                TurnoEventoAudit::EVENT_CONFIRMATION_REQUESTED,
+                TurnoEventoAudit::ACTOR_SISTEMA,
+                'confirmation-request:' . $notificationId,
+                TurnoEventoAudit::QUALITY_NATIVE,
+                null,
+                'push',
+                'scheduled_confirmation',
+                null,
+                null,
+                ['id_notificacion_programada' => $notificationId]
+            ));
     }
 
     public function ensureConfirmacionToken(Turno $turno)

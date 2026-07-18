@@ -2,11 +2,11 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\models\Scheduling\Turno;
+use common\models\TurnoEventoAudit;
 use yii\db\Query;
 
 /**
- * KPIs de agenda: no-show e intervalo reserva → cita.
+ * KPIs de agenda a partir del stream canónico (misma semántica factual que el perfil).
  */
 final class TurnoAgendaMetricsService
 {
@@ -31,49 +31,40 @@ final class TurnoAgendaMetricsService
             : 0;
         $idServicio = isset($filters['id_servicio']) ? (int) $filters['id_servicio'] : 0;
 
-        $base = (new Query())
-            ->from(['t' => Turno::tableName()])
-            ->where(['t.id_efector' => $idEfector])
-            ->andWhere(['between', 't.fecha', $desde, $hasta]);
+        $events = $this->loadEvents($idEfector, $desde, $hasta, $idPes, $idServicio);
+        $byTurno = $this->reduceByTurno($events);
 
-        if ($idPes > 0) {
-            $base->andWhere(['t.id_profesional_efector_servicio' => $idPes]);
+        $total = count($byTurno);
+        $noShow = 0;
+        $atendidos = 0;
+        $coverageNative = 0;
+        $coverageInferred = 0;
+        $leadDays = [];
+
+        foreach ($byTurno as $facts) {
+            if ($facts['attended']) {
+                $atendidos++;
+            }
+            if ($facts['no_show_attributable']) {
+                $noShow++;
+            }
+            if ($facts['closed_eligible'] && $facts['quality'] === TurnoEventoAudit::QUALITY_NATIVE) {
+                $coverageNative++;
+            }
+            if ($facts['closed_eligible'] && $facts['quality'] === TurnoEventoAudit::QUALITY_LEGACY_INFERRED) {
+                $coverageInferred++;
+            }
+            if ($facts['lead_days'] !== null && $facts['lead_days'] >= 0) {
+                $leadDays[] = $facts['lead_days'];
+            }
         }
-        if ($idServicio > 0) {
-            $base->andWhere(['t.id_servicio_asignado' => $idServicio]);
-        }
-
-        $total = (int) (clone $base)->count('*', Turno::getDb());
-
-        $noShow = (int) (clone $base)
-            ->andWhere(['t.estado' => Turno::ESTADO_SIN_ATENDER])
-            ->andWhere(['t.estado_motivo' => Turno::ESTADO_MOTIVO_SIN_ATENDER_PACIENTE])
-            ->count('*', Turno::getDb());
-
-        $atendidos = (int) (clone $base)
-            ->andWhere(['t.estado' => Turno::ESTADO_ATENDIDO])
-            ->count('*', Turno::getDb());
 
         $cerrados = $noShow + $atendidos;
         $noShowRate = $cerrados > 0 ? round(100.0 * $noShow / $cerrados, 1) : null;
-
-        $leadQuery = (clone $base)
-            ->select(['t.fecha', 't.hora', 't.fecha_alta'])
-            ->andWhere(['not', ['t.fecha_alta' => null]])
-            ->andWhere(['<>', 't.fecha_alta', ''])
-            ->andWhere(['not in', 't.estado', [Turno::ESTADO_CANCELADO]]);
-
-        $leadDays = [];
-        foreach ($leadQuery->all(Turno::getDb()) as $row) {
-            $dias = $this->diasHastaCita(
-                (string) ($row['fecha'] ?? ''),
-                (string) ($row['hora'] ?? ''),
-                (string) ($row['fecha_alta'] ?? '')
-            );
-            if ($dias !== null && $dias >= 0) {
-                $leadDays[] = $dias;
-            }
-        }
+        $coverageDenom = $cerrados;
+        $coverageRate = $coverageDenom > 0
+            ? round($coverageNative / $coverageDenom, 6)
+            : null;
 
         return [
             'fecha_desde' => $desde,
@@ -85,41 +76,140 @@ final class TurnoAgendaMetricsService
             'no_show_rate_pct' => $noShowRate,
             'dias_hasta_cita_mediana' => $this->median($leadDays),
             'dias_hasta_cita_promedio' => $leadDays !== [] ? round(array_sum($leadDays) / count($leadDays), 1) : null,
+            'coverage_native' => $coverageNative,
+            'coverage_inferred' => $coverageInferred,
+            'coverage_rate' => $coverageRate,
             'resumen_texto' => $this->formatResumenTexto($desde, $hasta, $total, $noShow, $noShowRate, $leadDays),
         ];
     }
 
-    private function diasHastaCita(string $fechaTurno, string $hora, string $fechaAlta): ?int
-    {
-        $cita = $this->parseDateTime($fechaTurno, $hora);
-        $alta = $this->parseDateTime($fechaAlta, null);
-        if ($cita === null || $alta === null) {
-            return null;
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function loadEvents(
+        int $idEfector,
+        string $desde,
+        string $hasta,
+        int $idPes,
+        int $idServicio
+    ): array {
+        $q = (new Query())
+            ->from(['e' => TurnoEventoAudit::tableName()])
+            ->select([
+                'e.id',
+                'e.id_turno',
+                'e.id_persona',
+                'e.event_code',
+                'e.tipo_evento',
+                'e.actor_type',
+                'e.attribution_quality',
+                'e.occurred_at',
+                'e.created_at',
+                'e.appointment_at',
+                'e.corrected_event_id',
+                'e.id_efector',
+                'e.id_servicio',
+                'e.id_profesional_efector_servicio',
+            ])
+            ->where(['e.id_efector' => $idEfector])
+            ->andWhere(['not', ['e.appointment_at' => null]])
+            ->andWhere(['>=', 'e.appointment_at', $desde . ' 00:00:00'])
+            ->andWhere(['<=', 'e.appointment_at', $hasta . ' 23:59:59'])
+            ->orderBy(['e.id' => SORT_ASC]);
+
+        if ($idPes > 0) {
+            $q->andWhere(['e.id_profesional_efector_servicio' => $idPes]);
+        }
+        if ($idServicio > 0) {
+            $q->andWhere(['e.id_servicio' => $idServicio]);
         }
 
-        return (int) floor(($cita->getTimestamp() - $alta->getTimestamp()) / 86400);
+        return $q->all(TurnoEventoAudit::getDb());
     }
 
-    private function parseDateTime(string $date, ?string $time): ?\DateTimeImmutable
+    /**
+     * @param list<array<string, mixed>> $events
+     * @return array<int, array<string, mixed>>
+     */
+    private function reduceByTurno(array $events): array
     {
-        $date = trim($date);
-        if ($date === '') {
-            return null;
-        }
-        $time = $time !== null && trim($time) !== '' ? trim($time) : '00:00:00';
-        foreach (['Y-m-d H:i:s', 'Y-m-d H:i', 'd/m/Y H:i:s', 'd/m/Y H:i', 'Y-m-d', 'd/m/Y'] as $fmt) {
-            $raw = str_contains($fmt, 'H') ? "{$date} {$time}" : $date;
-            $dt = \DateTimeImmutable::createFromFormat($fmt, $raw);
-            if ($dt !== false) {
-                return $dt;
+        $patientActors = [
+            TurnoEventoAudit::ACTOR_PACIENTE,
+            TurnoEventoAudit::ACTOR_REPRESENTANTE,
+        ];
+        $byTurno = [];
+
+        foreach ($events as $raw) {
+            $idTurno = (int) ($raw['id_turno'] ?? 0);
+            if ($idTurno <= 0) {
+                continue;
+            }
+            if (!isset($byTurno[$idTurno])) {
+                $byTurno[$idTurno] = [
+                    'attended' => false,
+                    'no_show_attributable' => false,
+                    'closed_eligible' => false,
+                    'quality' => TurnoEventoAudit::QUALITY_NATIVE,
+                    'created_ts' => null,
+                    'appointment_ts' => null,
+                    'lead_days' => null,
+                    'corrected_no_show_ids' => [],
+                ];
+            }
+            $code = (string) ($raw['event_code'] ?: $raw['tipo_evento']);
+            $actor = (string) ($raw['actor_type'] ?? '');
+            $quality = (string) ($raw['attribution_quality'] ?? TurnoEventoAudit::QUALITY_NATIVE);
+            $occurred = (string) ($raw['occurred_at'] ?: $raw['created_at']);
+            $appointment = (string) ($raw['appointment_at'] ?? '');
+            $occurredTs = $occurred !== '' ? (strtotime($occurred) ?: null) : null;
+            $appointmentTs = $appointment !== '' ? (strtotime($appointment) ?: null) : null;
+
+            if ($appointmentTs !== null) {
+                $byTurno[$idTurno]['appointment_ts'] = $appointmentTs;
+            }
+            if ($quality === TurnoEventoAudit::QUALITY_LEGACY_INFERRED
+                && in_array($code, [
+                    TurnoEventoAudit::EVENT_ATTENDED,
+                    TurnoEventoAudit::EVENT_NO_SHOW_RECORDED,
+                    TurnoEventoAudit::TIPO_NO_SHOW,
+                ], true)
+            ) {
+                $byTurno[$idTurno]['quality'] = TurnoEventoAudit::QUALITY_LEGACY_INFERRED;
+            }
+
+            if ($code === TurnoEventoAudit::EVENT_APPOINTMENT_CREATED
+                || $code === TurnoEventoAudit::TIPO_CREATE
+            ) {
+                $byTurno[$idTurno]['created_ts'] = $occurredTs;
+            } elseif ($code === TurnoEventoAudit::EVENT_ATTENDED) {
+                $byTurno[$idTurno]['attended'] = true;
+                $byTurno[$idTurno]['no_show_attributable'] = false;
+            } elseif ($code === TurnoEventoAudit::EVENT_NO_SHOW_RECORDED
+                || $code === TurnoEventoAudit::TIPO_NO_SHOW
+            ) {
+                if (in_array($actor, $patientActors, true)) {
+                    $byTurno[$idTurno]['no_show_attributable'] = true;
+                }
+            } elseif ($code === TurnoEventoAudit::EVENT_NO_SHOW_CORRECTED) {
+                $byTurno[$idTurno]['no_show_attributable'] = false;
+                $correctedId = (int) ($raw['corrected_event_id'] ?? 0);
+                if ($correctedId > 0) {
+                    $byTurno[$idTurno]['corrected_no_show_ids'][$correctedId] = true;
+                }
             }
         }
 
-        try {
-            return new \DateTimeImmutable($date . ' ' . $time);
-        } catch (\Exception $e) {
-            return null;
+        foreach ($byTurno as &$facts) {
+            $facts['closed_eligible'] = $facts['attended'] || $facts['no_show_attributable'];
+            if ($facts['created_ts'] !== null && $facts['appointment_ts'] !== null) {
+                $facts['lead_days'] = (int) floor(
+                    ($facts['appointment_ts'] - $facts['created_ts']) / 86400
+                );
+            }
         }
+        unset($facts);
+
+        return $byTurno;
     }
 
     /**

@@ -46,7 +46,8 @@ class TurnoNotificacionController extends Controller
                         $push->sendToPersona((int) $turno->id_persona, $content['data'], $content['title'], $content['body']);
                     }
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_CONFIRM_REQUEST) {
-                    $token = (new \common\components\Domain\Scheduling\Service\TurnoConfirmationService())->ensureConfirmacionToken($turno);
+                    $confirmation = new \common\components\Domain\Scheduling\Service\TurnoConfirmationService();
+                    $token = $confirmation->ensureConfirmacionToken($turno);
                     $push->sendToPersona(
                         (int) $turno->id_persona,
                         [
@@ -57,6 +58,7 @@ class TurnoNotificacionController extends Controller
                         'Confirmá tu turno',
                         'Confirmá asistencia al turno del ' . $turno->fecha . ' ' . $turno->hora
                     );
+                    $confirmation->recordConfirmationRequested($turno, (int) $row->id);
                 } elseif ($row->tipo === TurnoNotificacionProgramada::TIPO_MOTIVOS_IA_BATCH) {
                     $meta = $row->payload_json ? json_decode($row->payload_json, true) : [];
                     $encounterId = is_array($meta) ? (int) ($meta['encounter_id'] ?? 0) : 0;

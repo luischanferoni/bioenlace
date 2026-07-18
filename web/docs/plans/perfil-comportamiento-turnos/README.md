@@ -44,11 +44,12 @@ Las fases 0 y 1 son bloqueantes. No se habilita ninguna decisión nueva sobre pa
 ## Estado de implementación (2026-07-18)
 
 - Implementado: contrato V1 declarativo, stream canónico idempotente, snapshots de cita, backfill y materializador versionado.
-- Integrado: creación, cancelación, atención, no-show y corrección de no-show.
+- Integrado: creación, cancelación, reprogramación, resolución, atención, no-show, corrección, FHIR inbound, confirmación solicitada y waitlist offered/accepted.
+- KPIs: `TurnoAgendaMetricsService` consume eventos canónicos (compatibilidad de respuesta preservada + cobertura).
 - Seguridad inmediata: A04/A06 atribuyen cancelaciones automáticas al sistema; liberación A04 deshabilitada y limitada a `enforce`.
 - Shadow: anti no-show y cancelación calculan evidencia candidata desde el perfil sin cambiar todavía la decisión legacy.
-- Transparencia inicial: endpoint autenticado/RBAC `historial-propio-como-paciente`, sin etiquetas de riesgo.
-- Pendiente: reprogramación/resolución/FHIR completos, KPIs canónicos, representación, staff, agregados, solicitudes de corrección y piloto.
+- Transparencia: historial propio/representado, explicación de acción propia y agregado de efector con supresión de cohortes pequeñas.
+- Pendiente: entrega real de confirmación (`CONFIRMATION_DELIVERY_CONFIRMED`), circuito de solicitud de corrección, UI JSON compartida, unificación de checkpoints y piloto.
 
 ## Cierre del plan
 

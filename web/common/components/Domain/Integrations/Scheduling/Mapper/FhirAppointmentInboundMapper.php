@@ -62,6 +62,10 @@ final class FhirAppointmentInboundMapper
             }
         }
 
+        $meta = is_array($appointment['meta'] ?? null) ? $appointment['meta'] : [];
+        $versionId = trim((string) ($meta['versionId'] ?? ''));
+        $lastUpdated = trim((string) ($meta['lastUpdated'] ?? ''));
+
         return new FhirAppointmentInboundDto(
             $externalId,
             $sourceSystem,
@@ -72,6 +76,8 @@ final class FhirAppointmentInboundMapper
             $idPersona,
             $patientCuil,
             $patientDni,
+            $versionId,
+            $lastUpdated !== '' ? $lastUpdated : null,
         );
     }
 }

@@ -17,6 +17,8 @@ final class FhirAppointmentInboundDto
         public readonly ?int $idPersona,
         public readonly string $patientCuil = '',
         public readonly string $patientDni = '',
+        public readonly string $versionId = '',
+        public readonly ?string $lastUpdated = null,
     ) {
     }
 }

@@ -517,6 +517,13 @@ return [
                 // Nota: los descriptores JSON viven en `modules/api/v1/views/json/...` pero se exponen como `/api/<v>/turnos/*`.
                 'GET api/<version:\w+>/turnos-perfil/historial-propio-como-paciente' => '<version>/turnos-perfil/historial-propio-como-paciente',
                 'OPTIONS api/<version:\w+>/turnos-perfil/historial-propio-como-paciente' => '<version>/turnos-perfil/options',
+                'GET api/<version:\w+>/turnos-perfil/historial-representado-como-paciente' => '<version>/turnos-perfil/historial-representado-como-paciente',
+                'OPTIONS api/<version:\w+>/turnos-perfil/historial-representado-como-paciente' => '<version>/turnos-perfil/options',
+                'GET api/<version:\w+>/turnos-perfil/explicacion-accion-propia-como-paciente' => '<version>/turnos-perfil/explicacion-accion-propia-como-paciente',
+                'OPTIONS api/<version:\w+>/turnos-perfil/explicacion-accion-propia-como-paciente' => '<version>/turnos-perfil/options',
+                'GET api/<version:\w+>/turnos-perfil/agregado-efector-para-staff' => '<version>/turnos-perfil/agregado-efector-para-staff',
+                'POST api/<version:\w+>/turnos-perfil/agregado-efector-para-staff' => '<version>/turnos-perfil/agregado-efector-para-staff',
+                'OPTIONS api/<version:\w+>/turnos-perfil/agregado-efector-para-staff' => '<version>/turnos-perfil/options',
                 'GET api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
                 'POST api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',
                 'OPTIONS api/<version:\w+>/turnos/listar-como-paciente' => '<version>/turnos/listar-como-paciente',

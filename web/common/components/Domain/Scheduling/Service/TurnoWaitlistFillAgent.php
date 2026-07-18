@@ -6,9 +6,12 @@ use common\components\Platform\Agent\AgentRunRecorder;
 use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\components\Platform\Core\Service\Push\PushNotificationSender;
 use common\components\Platform\Core\Service\Push\PushNotificationTypes;
+use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventCommand;
+use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventService;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoWaitlistEntry;
 use common\models\Scheduling\TurnoWaitlistSlotOffer;
+use common\models\TurnoEventoAudit;
 use Yii;
 
 /**
@@ -126,6 +129,28 @@ final class TurnoWaitlistFillAgent
             'Se liberó un horario el ' . $fechaFmt . ' a las ' . $horaFmt . '. Tenés ' . $ttl . ' min para confirmarlo.',
             true
         );
+
+        $anchorTurnoId = (int) ($offer->id_cancelled_turno ?: 0);
+        if ($anchorTurnoId > 0 && (int) $candidate->subject_persona_id > 0) {
+            (new TurnoCanonicalEventService())->record(TurnoCanonicalEventCommand::create(
+                $anchorTurnoId,
+                (int) $candidate->subject_persona_id,
+                TurnoEventoAudit::EVENT_WAITLIST_OFFERED,
+                TurnoEventoAudit::ACTOR_SISTEMA,
+                'waitlist-offered:' . (int) $candidate->id . ':' . (int) $offer->id,
+                TurnoEventoAudit::QUALITY_NATIVE,
+                null,
+                'push',
+                'waitlist_fill',
+                null,
+                null,
+                [
+                    'entry_id' => (int) $candidate->id,
+                    'slot_offer_id' => (int) $offer->id,
+                    'offer_expires_at' => $expiresAt,
+                ]
+            ));
+        }
 
         AgentRunRecorder::record(
             self::AGENT_ID,

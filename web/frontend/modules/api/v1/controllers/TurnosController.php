@@ -1042,7 +1042,15 @@ class TurnosController extends BaseController
                 if ($token && $turno->confirmacion_token && !hash_equals((string) $turno->confirmacion_token, (string) $token)) {
                     throw new BadRequestHttpException('Token inválido');
                 }
-                (new TurnoConfirmationService())->confirmarAsistencia($turno, Yii::$app->user->id ?? null);
+                $actorPersonaId = (int) Yii::$app->user->getIdPersona();
+                $actorType = $actorPersonaId > 0 && $actorPersonaId !== (int) $turno->id_persona
+                    ? \common\models\TurnoEventoAudit::ACTOR_REPRESENTANTE
+                    : \common\models\TurnoEventoAudit::ACTOR_PACIENTE;
+                (new TurnoConfirmationService())->confirmarAsistencia(
+                    $turno,
+                    Yii::$app->user->id ?? null,
+                    $actorType
+                );
 
                 return ['data' => ['success' => true, 'message' => 'Asistencia confirmada']];
             }
@@ -2235,13 +2243,10 @@ class TurnosController extends BaseController
         if ($req->isPost) {
             try {
                 $params = array_merge($req->get(), $req->post());
-                $idEfector = (int) Yii::$app->user->getIdEfector();
-                if ($idEfector <= 0) {
-                    $idEfector = (int) ($params['id_efector'] ?? 0);
-                }
-                if ($idEfector <= 0) {
-                    throw new \InvalidArgumentException('Se requiere id_efector (sesión operativa o parámetro).');
-                }
+                $idEfector = \common\components\Domain\Organization\Service\Authorization\EfectorAccessService::assertAndResolveIdEfector(
+                    'turnos.indicadores-agenda-flow',
+                    $params
+                );
                 $params['id_efector'] = $idEfector;
                 $data = $metrics->resumen($params);
                 $values = array_merge($params, [
@@ -2358,9 +2363,13 @@ class TurnosController extends BaseController
         $subjectSvc = new PersonRepresentationSubjectService();
         $idPersona = $subjectSvc->resolveAndAuthorize($post, RepresentationPermission::SCHEDULING_TURNO);
         $token = (string) ($post['offer_token'] ?? $post['token'] ?? '');
+        $actorPersonaId = (int) Yii::$app->user->getIdPersona();
+        $actorType = $actorPersonaId > 0 && $actorPersonaId !== $idPersona
+            ? \common\models\TurnoEventoAudit::ACTOR_REPRESENTANTE
+            : \common\models\TurnoEventoAudit::ACTOR_PACIENTE;
 
         try {
-            $data = (new TurnoWaitlistOfferAcceptService())->accept($token, $idPersona);
+            $data = (new TurnoWaitlistOfferAcceptService())->accept($token, $idPersona, $actorType);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         }

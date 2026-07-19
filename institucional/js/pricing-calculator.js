@@ -64,7 +64,9 @@
     const result = Pricing.estimate(config, selection);
 
     if (totalEl) {
-      totalEl.textContent = result.formattedTotal + ' / mes';
+      totalEl.textContent = result.lines.length
+        ? result.formattedTotal + ' / mes'
+        : '—';
     }
     if (breakdownEl) {
       if (!result.lines.length) {
@@ -261,15 +263,47 @@
     if (tax && config.tax_note) tax.textContent = config.tax_note;
   }
 
+  function persistSelectionForSignup(selection) {
+    try {
+      sessionStorage.setItem(
+        'bioenlace_pricing_selection',
+        JSON.stringify({
+          classes: selection.classes || {},
+          addons: selection.addons || {},
+          saved_at: Date.now(),
+        })
+      );
+    } catch (e) {
+      // sessionStorage puede fallar en modo privado estricto; el alta usa defaults.
+    }
+  }
+
   if (ctaEl) {
     if (mode === 'signup') {
       ctaEl.hidden = true;
     } else {
-      ctaEl.addEventListener('click', () => {
+      ctaEl.addEventListener('click', (event) => {
+        const selection = currentSelection();
+        const href = (ctaEl.getAttribute('href') || '').trim();
+        const goesToSignup = href.indexOf('alta.html') !== -1;
+
+        if (goesToSignup) {
+          persistSelectionForSignup(selection);
+          return;
+        }
+
         const msg = ctaEl.dataset.quoteMessage;
         const contactMsg = document.getElementById('message');
         if (msg && contactMsg) {
           contactMsg.value = msg;
+        }
+        if (href === '#contacto' && contactMsg) {
+          event.preventDefault();
+          contactMsg.focus();
+          const offsetTop = document.getElementById('contacto')
+            ? document.getElementById('contacto').offsetTop - 72
+            : 0;
+          window.scrollTo({ top: offsetTop, behavior: 'smooth' });
         }
       });
     }

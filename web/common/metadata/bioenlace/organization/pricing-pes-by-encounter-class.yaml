@@ -88,7 +88,8 @@ non_sellable_default: disabled
 simulator:
   title: Calculá tu licencia
   subtitle: Elegí tipos de atención y profesionales. En ambulatorio podés sumar dictado y/o videollamada (la videollamada incluye la transcripción). En urgencia e internación el dictado va incluido y no hay videollamada.
-  cta_label: Pedir cotización
-  cta_href: "#contacto"
+  cta_label: Crear cuenta
+  cta_href: alta.html
   footnotes:
     - Importes orientativos en USD por mes. La cotización final se confirma según el alcance de cada efector.
+    - El alta online usa pasarela de pago simulada; ministerios solicitan acceso con verificación asistida.

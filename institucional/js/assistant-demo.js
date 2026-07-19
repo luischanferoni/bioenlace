@@ -10,7 +10,8 @@
 
 
 
-    var demo = document.querySelector('.assistant-demo');
+    var demo = document.getElementById('assistant-demo')
+        || document.querySelector('.assistant-demo:not(.assistant-demo--patient)');
 
     if (!demo) {
 
@@ -25,6 +26,7 @@
     var composerInput = demo.querySelector('.assistant-demo__composer-input');
     var queryInputWrap = demo.querySelector('.spa-query-input');
     var tabs = demo.querySelectorAll('.assistant-demo__tab');
+    var motionToggle = demo.querySelector('[data-demo-motion-toggle]');
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     var COMPOSER_PLACEHOLDER = 'Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”.';
@@ -42,6 +44,7 @@
     var rotateTimer = null;
 
     var paused = false;
+    var userPaused = false;
 
     var started = false;
 
@@ -1222,7 +1225,7 @@
 
     function resumeDemo() {
 
-        if (!paused) {
+        if (!paused || userPaused) {
 
             return;
 
@@ -1231,6 +1234,46 @@
         paused = false;
 
         scheduleRotate();
+
+    }
+
+    function renderMotionToggle() {
+
+        if (!motionToggle) {
+
+            return;
+
+        }
+
+        motionToggle.setAttribute('aria-pressed', userPaused ? 'true' : 'false');
+        motionToggle.innerHTML = userPaused
+            ? '<i class="fas fa-play" aria-hidden="true"></i> Reanudar animación'
+            : '<i class="fas fa-pause" aria-hidden="true"></i> Pausar animación';
+
+    }
+
+    if (motionToggle) {
+
+        motionToggle.addEventListener('click', function () {
+
+            userPaused = !userPaused;
+
+            if (userPaused) {
+
+                pauseDemo();
+
+            } else {
+
+                paused = false;
+                scheduleRotate();
+
+            }
+
+            renderMotionToggle();
+
+        });
+
+        renderMotionToggle();
 
     }
 

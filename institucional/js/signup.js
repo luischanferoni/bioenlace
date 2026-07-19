@@ -437,6 +437,62 @@
     box.hidden = false;
   }
 
+  function readPricingHandoff() {
+    try {
+      var raw = sessionStorage.getItem('bioenlace_pricing_selection');
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      sessionStorage.removeItem('bioenlace_pricing_selection');
+      if (!parsed || typeof parsed !== 'object') return null;
+      if (parsed.saved_at && Date.now() - Number(parsed.saved_at) > 2 * 60 * 60 * 1000) {
+        return null;
+      }
+      return {
+        classes: parsed.classes || {},
+        addons: parsed.addons || {},
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function applyPricingHandoff(form) {
+    if (!form) return false;
+    var selection = readPricingHandoff();
+    if (!selection) return false;
+    var isConsultorio = currentPerfil(form) === 'CONSULTORIO';
+    var classes = selection.classes || {};
+    var addons = selection.addons || {};
+
+    function setClass(code, includeName, qtyName) {
+      var qty = Math.max(0, parseInt(classes[code], 10) || 0);
+      var include = planInput(form, includeName);
+      var qtyInput = planInput(form, qtyName);
+      if (!include || !qtyInput) return;
+      if (qty > 0) {
+        include.checked = true;
+        qtyInput.value = String(isConsultorio && code === 'AMB' ? 1 : qty);
+      } else if (!(isConsultorio && code === 'AMB')) {
+        include.checked = false;
+      }
+    }
+
+    setClass('AMB', 'incluir_amb', 'max_pes_amb');
+    if (!isConsultorio) {
+      setClass('EMER', 'incluir_emer', 'max_pes_emer');
+      setClass('IMP', 'incluir_imp', 'max_pes_imp');
+    }
+
+    var audio = planInput(form, 'audio');
+    var video = planInput(form, 'videollamada');
+    if (audio) audio.checked = !!addons.audio || !!addons.videollamada;
+    if (video) video.checked = !!addons.videollamada;
+
+    syncPlanRowUi(form);
+    updatePriceIndicator(form);
+    return true;
+  }
+
   function applyPerfilUi(perfil) {
     var form = $('#form-efector');
     var perfilInput = $('#signup-perfil');
@@ -570,5 +626,6 @@
     initTabs();
     initEfectorForm();
     initMinisterioForm();
+    applyPricingHandoff($('#form-efector'));
   });
 })();

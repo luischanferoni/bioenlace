@@ -16,6 +16,7 @@
     var composerInput = demo.querySelector('.assistant-demo__composer-input');
     var queryInputWrap = demo.querySelector('.spa-query-input');
     var tabs = demo.querySelectorAll('.assistant-demo__tab');
+    var motionToggle = demo.querySelector('[data-demo-motion-toggle]');
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     var COMPOSER_PLACEHOLDER = 'Escribí en lenguaje simple. Ejemplo: “Tengo dolor de cabeza” o “Necesito un turno”.';
@@ -26,9 +27,10 @@
     var runToken = 0;
     var rotateTimer = null;
     var paused = false;
+    var userPaused = false;
     var started = false;
 
-    var FLOW_ORDER = ['asistencia', 'turno', 'avisos'];
+    var FLOW_ORDER = ['asistencia', 'turno', 'seguimiento', 'avisos'];
 
     var FLOWS = {
         asistencia: {
@@ -38,10 +40,16 @@
             cardHtml: buildAsistenciaCard()
         },
         turno: {
-            userText: 'Quiero un turno con cardiología la semana que viene',
-            botText: 'Estos son los turnos disponibles en tu centro. Elegí modalidad y horario.',
+            userText: 'Necesito un turno para controlar mi presión',
+            botText: 'Por el motivo que informaste, tu centro permite atención presencial o por videollamada.',
             flowTitle: 'Reservar turno',
             cardHtml: buildTurnoCard()
+        },
+        seguimiento: {
+            userText: 'Necesito renovar la medicación de mi tratamiento',
+            botText: 'Encontré tu plan activo. Elegí qué medicamentos necesitás renovar.',
+            flowTitle: 'Seguimiento del tratamiento',
+            cardHtml: buildSeguimientoCard()
         },
         avisos: {
             userText: '¿Cuándo es mi próximo turno?',
@@ -155,6 +163,10 @@
 
     function buildTurnoCard() {
         return ''
+            + '<div class="bio-ui-json-message">'
+            + '<div class="bio-ui-json-message__title">Modalidad habilitada</div>'
+            + '<div class="bio-ui-json-message__body">Control clínico · Sin señales de alarma informadas</div>'
+            + '</div>'
             + '<div class="assistant-demo__pick-group">'
             + '<div class="assistant-demo__pick-title">Modalidad</div>'
             + '<div class="assistant-demo__pick-list">'
@@ -162,7 +174,7 @@
             + '<button type="button" class="assistant-demo__pick-btn" tabindex="-1">Videollamada</button>'
             + '</div></div>'
             + '<div class="assistant-demo__pick-group">'
-            + '<div class="assistant-demo__pick-title">Cardiología — Centro Norte</div>'
+            + '<div class="assistant-demo__pick-title">Medicina clínica — Centro Norte</div>'
             + '<div class="assistant-demo__pick-list assistant-demo__pick-list--cards">'
             + '<button type="button" class="assistant-demo__pick-btn assistant-demo__pick-btn--card is-selected" tabindex="-1">'
             + '<span class="assistant-demo__pick-card-label">Mié 14 · 10:30</span>'
@@ -173,6 +185,30 @@
             + '<span class="assistant-demo__pick-card-meta">Dra. López</span>'
             + '</button>'
             + '</div></div>';
+    }
+
+    function buildSeguimientoCard() {
+        return ''
+            + '<div class="bio-ui-json-message">'
+            + '<div class="bio-ui-json-message__title">Plan activo · Control de hipertensión</div>'
+            + '<div class="bio-ui-json-message__body">Seleccioná uno o más medicamentos. No hace falta escribir un mensaje para renovar.</div>'
+            + '</div>'
+            + '<div class="assistant-demo__pick-group">'
+            + '<div class="assistant-demo__pick-title">Medicación del tratamiento</div>'
+            + '<div class="assistant-demo__pick-list assistant-demo__pick-list--cards">'
+            + '<button type="button" class="assistant-demo__pick-btn assistant-demo__pick-btn--card is-selected" tabindex="-1">'
+            + '<span class="assistant-demo__pick-card-label">Losartán 50 mg</span>'
+            + '<span class="assistant-demo__pick-card-meta">1 comprimido por día · seleccionado</span>'
+            + '</button>'
+            + '<button type="button" class="assistant-demo__pick-btn assistant-demo__pick-btn--card is-selected" tabindex="-1">'
+            + '<span class="assistant-demo__pick-card-label">Amlodipina 5 mg</span>'
+            + '<span class="assistant-demo__pick-card-meta">1 comprimido por día · seleccionado</span>'
+            + '</button>'
+            + '</div></div>'
+            + '<div class="bio-ui-json-message bio-ui-json-message--success">'
+            + '<div class="bio-ui-json-message__title">Solicitud lista para confirmar</div>'
+            + '<div class="bio-ui-json-message__body">Se enviará como consulta clínica por mensaje para que la revise el equipo de salud.</div>'
+            + '</div>';
     }
 
     function buildAvisosCard() {
@@ -323,11 +359,35 @@
     }
 
     function resumeDemo() {
-        if (!paused) {
+        if (!paused || userPaused) {
             return;
         }
         paused = false;
         scheduleRotate();
+    }
+
+    function renderMotionToggle() {
+        if (!motionToggle) {
+            return;
+        }
+        motionToggle.setAttribute('aria-pressed', userPaused ? 'true' : 'false');
+        motionToggle.innerHTML = userPaused
+            ? '<i class="fas fa-play" aria-hidden="true"></i> Reanudar animación'
+            : '<i class="fas fa-pause" aria-hidden="true"></i> Pausar animación';
+    }
+
+    if (motionToggle) {
+        motionToggle.addEventListener('click', function () {
+            userPaused = !userPaused;
+            if (userPaused) {
+                pauseDemo();
+            } else {
+                paused = false;
+                scheduleRotate();
+            }
+            renderMotionToggle();
+        });
+        renderMotionToggle();
     }
 
     tabs.forEach(function (tab) {

@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Bioenlace — Plataforma de salud digital con asistente e IA: asiste al personal en la gestión y ofrece a los pacientes asistencia y seguimiento de turnos y atención.">
     <meta name="keywords" content="bioenlace, salud digital, salud pública, asistente IA, gestión hospitalaria, turnos, teleconsulta">
+    <link rel="canonical" href="https://bioenlace.io/">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="es_AR">
+    <meta property="og:site_name" content="Bioenlace">
+    <meta property="og:title" content="Bioenlace — Salud digital con asistente e inteligencia artificial">
+    <meta property="og:description" content="Una plataforma para gestionar atención, turnos y seguimiento clínico con IA, control humano y experiencias conectadas para pacientes y equipos de salud.">
+    <meta property="og:url" content="https://bioenlace.io/">
+    <meta property="og:image" content="https://bioenlace.io/images/logo-icon.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Bioenlace — Salud digital con asistente e IA">
+    <meta name="twitter:description" content="Atención, turnos y seguimiento clínico en un mismo ecosistema digital.">
+    <meta name="twitter:image" content="https://bioenlace.io/images/logo-icon.png">
     <title>Bioenlace — Salud digital con asistente e inteligencia artificial</title>
     <link rel="icon" href="images/logo-icon.svg" type="image/svg+xml">
     <link rel="icon" href="images/logo-icon-32.png" type="image/png" sizes="32x32">
@@ -15,6 +27,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=MuseoModerno:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Bioenlace",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Web, Android, iOS",
+      "url": "https://bioenlace.io/",
+      "description": "Plataforma de salud digital con asistente e inteligencia artificial para pacientes, profesionales e instituciones."
+    }
+    </script>
 </head>
 <body>
     <nav class="navbar" id="navbar">
@@ -71,6 +94,9 @@
                         <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="editar">Editar</button>
                         <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="crear">Crear</button>
                     </div>
+                    <button type="button" class="assistant-demo__motion-toggle" data-demo-motion-toggle aria-pressed="false">
+                        <i class="fas fa-pause" aria-hidden="true"></i> Pausar animación
+                    </button>
                     <div class="assistant-demo__body">
                         <div class="assistant-demo__messages spa-chat-messages" aria-live="polite" aria-relevant="additions">
                             <div class="assistant-demo__empty-hint" id="assistant-demo-empty-hint">
@@ -84,7 +110,7 @@
                         <div class="assistant-demo__composer spa-chat-composer">
                             <div class="spa-chat-input-wrap">
                                 <div class="spa-query-input">
-                                    <textarea class="spa-chat-input assistant-demo__composer-input" rows="2" readonly placeholder="Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”." aria-hidden="true"></textarea>
+                                    <textarea class="spa-chat-input assistant-demo__composer-input" rows="2" readonly tabindex="-1" placeholder="Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”." aria-hidden="true"></textarea>
                                     <button type="button" class="spa-chat-send-btn" tabindex="-1" aria-hidden="true">
                                         <span class="spa-send-text" aria-hidden="true">→</span>
                                     </button>
@@ -145,6 +171,9 @@
                         <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="evolucion">Evolución</button>
                         <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="guardia">Guardia</button>
                     </div>
+                    <button type="button" class="assistant-demo__motion-toggle" data-demo-motion-toggle aria-pressed="false">
+                        <i class="fas fa-pause" aria-hidden="true"></i> Pausar animación
+                    </button>
                     <div class="encounter-demo__body">
                         <header class="encounter-demo__header" id="encounter-demo-header" aria-hidden="true">
                             <div class="encounter-demo__header-main">
@@ -206,22 +235,26 @@
                     <div class="assistant-demo__tabs" role="tablist" aria-label="Ejemplos de flujo paciente">
                         <button type="button" class="assistant-demo__tab is-active" role="tab" aria-selected="true" data-flow="asistencia">Asistencia</button>
                         <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="turno">Turno</button>
+                        <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="seguimiento">Seguimiento</button>
                         <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="avisos">Avisos</button>
                     </div>
+                    <button type="button" class="assistant-demo__motion-toggle" data-demo-motion-toggle aria-pressed="false">
+                        <i class="fas fa-pause" aria-hidden="true"></i> Pausar animación
+                    </button>
                     <div class="assistant-demo__body">
                         <div class="assistant-demo__messages spa-chat-messages" aria-live="polite" aria-relevant="additions">
                             <div class="assistant-demo__empty-hint" id="patient-demo-empty-hint">
                                 <div class="assistant-demo__welcome-actions" aria-label="Ejemplos sugeridos">
-                                    <span class="assistant-demo__welcome-chip">Tengo fiebre desde ayer</span>
-                                    <span class="assistant-demo__welcome-chip">Quiero un turno con cardiología</span>
-                                    <span class="assistant-demo__welcome-chip">¿Cuándo es mi próximo turno?</span>
+                                    <span class="assistant-demo__welcome-chip">Tengo fiebre y dolor de cabeza desde ayer</span>
+                                    <span class="assistant-demo__welcome-chip">Necesito un turno para controlar mi presión</span>
+                                    <span class="assistant-demo__welcome-chip">Necesito renovar la medicación de mi tratamiento</span>
                                 </div>
                             </div>
                         </div>
                         <div class="assistant-demo__composer spa-chat-composer">
                             <div class="spa-chat-input-wrap">
                                 <div class="spa-query-input">
-                                    <textarea class="spa-chat-input assistant-demo__composer-input" rows="2" readonly placeholder="Escribí en lenguaje simple. Ejemplo: “Tengo dolor de cabeza” o “Necesito un turno”." aria-hidden="true"></textarea>
+                                    <textarea class="spa-chat-input assistant-demo__composer-input" rows="2" readonly tabindex="-1" placeholder="Escribí en lenguaje simple. Ejemplo: “Tengo dolor de cabeza” o “Necesito un turno”." aria-hidden="true"></textarea>
                                     <button type="button" class="spa-chat-send-btn" tabindex="-1" aria-hidden="true">
                                         <span class="spa-send-text" aria-hidden="true">→</span>
                                     </button>
@@ -293,7 +326,7 @@
                         </article>
                         <article class="func-card">
                             <h4>Cupo liberado, te avisamos</h4>
-                            <p>Entrás en lista de espera cuando no hay turno; el sistema te notifica si se abre un cupo por cancelación.</p>
+                            <p>Si se libera un horario compatible, el sistema puede ofrecértelo para que decidas si querés adelantar tu atención.</p>
                         </article>
                         <article class="func-card">
                             <h4>Reubicación sin llamar</h4>
@@ -313,6 +346,10 @@
                             <h4>Qué pasó en la consulta</h4>
                             <p>Resumen post-atención con indicaciones, recetas y próximos pasos claros.</p>
                         </article>
+                        <article class="func-card">
+                            <h4>Consultá sin coordinar un turno</h4>
+                            <p>Enviá una consulta clínica por mensaje para que la revise y responda un profesional real, sin videollamada.</p>
+                        </article>
                     </div>
                 </div>
 
@@ -321,7 +358,7 @@
                     <div class="func-cards">
                         <article class="func-card">
                             <h4>Seguimiento que te cuida</h4>
-                            <p>Recordatorios de turnos, tratamientos y campañas de salud cuando las habilita tu centro.</p>
+                            <p>Renová o solicitá ajustar medicación de un plan activo, contá tu evolución y recibí recordatorios cuando los habilita tu centro.</p>
                         </article>
                         <article class="func-card">
                             <h4>Un familiar puede ayudarte</h4>
@@ -344,7 +381,7 @@
                         </article>
                         <article class="func-card">
                             <h4>Menos ausencias, más ocupación</h4>
-                            <p>Lista de espera y reubicación cuando un paciente cancela; aprovechá cada lugar disponible.</p>
+                            <p>Confirmaciones, reubicación y ofertas de adelantamiento cuando se libera un horario compatible; el paciente siempre elige.</p>
                         </article>
                         <article class="func-card">
                             <h4>El paciente llega preparado</h4>
@@ -358,6 +395,10 @@
                             <h4>Políticas de turnos por efector</h4>
                             <p>Autogestión del paciente configurable centro por centro: plazos, cancelación y reubicación.</p>
                         </article>
+                        <article class="func-card">
+                            <h4>Automatizaciones con reglas auditables</h4>
+                            <p>Priorización sugerida, recordatorios y resolución de agenda bajo políticas explícitas, trazables y reversibles.</p>
+                        </article>
                     </div>
                 </div>
 
@@ -370,7 +411,11 @@
                         </article>
                         <article class="func-card">
                             <h4>Un plan, seguimiento real</h4>
-                            <p>Planes de tratamiento con adherencia visible para el equipo y el paciente en la app.</p>
+                            <p>Planes de tratamiento con adherencia visible, renovación o ajuste de medicación y consultas por mensaje priorizadas para el equipo.</p>
+                        </article>
+                        <article class="func-card">
+                            <h4>Teleconsulta que continúa en la historia</h4>
+                            <p>La modalidad remota se ofrece según el motivo, el servicio y la agenda; el audio puede convertirse en una nota para revisión profesional.</p>
                         </article>
                     </div>
                 </div>

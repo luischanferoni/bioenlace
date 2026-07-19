@@ -16,6 +16,7 @@
     var contextBadgeEl = document.getElementById('encounter-demo-context-badge');
     var stageEl = document.getElementById('encounter-demo-stage');
     var tabs = demo.querySelectorAll('.assistant-demo__tab');
+    var motionToggle = demo.querySelector('[data-demo-motion-toggle]');
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     var SPEED = 1.5;
@@ -24,6 +25,7 @@
     var runToken = 0;
     var rotateTimer = null;
     var paused = false;
+    var userPaused = false;
     var started = false;
 
     var FLOW_ORDER = ['consulta', 'evolucion', 'guardia'];
@@ -45,10 +47,12 @@
             patientMeta: '42 años',
             contextBadge: 'Turno ambulatorio',
             formLabel: 'Formulario de consulta',
+            analyzeLabel: 'Analizar consulta',
+            confirmLabel: 'Confirmar consulta',
             contextAlert: {
                 variant: 'info',
-                title: 'Motivos informados por el paciente',
-                body: 'Cefalea de varios días, sin fiebre. Hipertensión en tratamiento.'
+                title: 'Preconsulta completada por el paciente',
+                body: 'Desde la app: cefalea de varios días, sin fiebre. Hipertensión en tratamiento.'
             },
             captureText: CAPTURE_TEXT,
             analysisFields: [
@@ -63,6 +67,8 @@
             patientMeta: '42 años · encounter en curso',
             contextBadge: 'Evolución',
             formLabel: 'Formulario de evolución',
+            analyzeLabel: 'Analizar evolución',
+            confirmLabel: 'Confirmar evolución',
             contextAlert: null,
             captureText: EVOLUCION_TEXT,
             analysisFields: [
@@ -76,6 +82,8 @@
             patientMeta: '58 años',
             contextBadge: 'Guardia',
             formLabel: 'Formulario de guardia',
+            analyzeLabel: 'Analizar nota de guardia',
+            confirmLabel: 'Confirmar nota de guardia',
             contextAlert: {
                 variant: 'triage',
                 title: 'Triage amarillo · ingreso hace 25 min',
@@ -169,13 +177,13 @@
             + '</div>'
             + '<div class="encounter-demo__actions" data-part="analyze-wrap">'
             + '<button type="button" class="encounter-demo__btn encounter-demo__btn--analyze" data-part="analyze-btn" disabled>'
-            + 'Analizar consulta'
+            + escapeHtml(flow.analyzeLabel || 'Analizar')
             + '</button>'
             + '</div>'
             + '<div class="encounter-demo__analysis" data-part="analysis"></div>'
             + '<div class="encounter-demo__actions" data-part="confirm-wrap" style="display:none">'
             + '<button type="button" class="encounter-demo__btn encounter-demo__btn--confirm" data-part="confirm-btn" disabled>'
-            + 'Confirmar consulta'
+            + escapeHtml(flow.confirmLabel || 'Confirmar')
             + '</button>'
             + '</div>'
             + '<div class="encounter-demo__success" data-part="success"></div>';
@@ -344,14 +352,18 @@
             analyzeBtn.innerHTML = '<span class="encounter-demo__spinner" aria-hidden="true"></span>Analizando…';
             analyzeBtn.disabled = true;
         }
-        setSttStatus(statusEl, 'Analizando consulta…', 'is-listening');
+        setSttStatus(
+            statusEl,
+            (flow.analyzeLabel || 'Analizar').replace(/^Analizar/, 'Analizando') + '…',
+            'is-listening'
+        );
         await wait(reducedMotion ? 200 : 900);
         if (token !== runToken) {
             return;
         }
 
         if (analyzeBtn) {
-            analyzeBtn.textContent = 'Analizar consulta';
+            analyzeBtn.textContent = flow.analyzeLabel || 'Analizar';
             analyzeBtn.disabled = true;
         }
         setSttStatus(statusEl, '', '');
@@ -498,11 +510,35 @@
     }
 
     function resumeDemo() {
-        if (!paused) {
+        if (!paused || userPaused) {
             return;
         }
         paused = false;
         scheduleRotate();
+    }
+
+    function renderMotionToggle() {
+        if (!motionToggle) {
+            return;
+        }
+        motionToggle.setAttribute('aria-pressed', userPaused ? 'true' : 'false');
+        motionToggle.innerHTML = userPaused
+            ? '<i class="fas fa-play" aria-hidden="true"></i> Reanudar animación'
+            : '<i class="fas fa-pause" aria-hidden="true"></i> Pausar animación';
+    }
+
+    if (motionToggle) {
+        motionToggle.addEventListener('click', function () {
+            userPaused = !userPaused;
+            if (userPaused) {
+                pauseDemo();
+            } else {
+                paused = false;
+                scheduleRotate();
+            }
+            renderMotionToggle();
+        });
+        renderMotionToggle();
     }
 
     tabs.forEach(function (tab) {

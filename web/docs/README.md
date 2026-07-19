@@ -12,6 +12,7 @@ Documentación en **lenguaje natural**: cómo funciona cada área del producto d
 | [costos/](./costos/README.md) | Estimación de costos de IA e infraestructura |
 | [decisions/](./decisions/README.md) | Decisiones técnicas transversales cerradas |
 | [modelo-de-negocio/](./modelo-de-negocio/README.md) | Casos comparativos: salud pública, sector privado, vías de monetización y [business plan](./modelo-de-negocio/business-plan/README.md) |
+| [presentaciones/](./presentaciones/README.md) | Decks comerciales Marp y exportaciones para demos |
 
 `plans/` es carpeta **temporal de trabajo** (programas grandes en construcción). No se enlaza desde el resto de esta documentación; al terminar un programa se borra su carpeta y lo estable queda en `producto/` o `decisions/`. Ver [plans/README.md](./plans/README.md) solo si estás ejecutando un plan activo.
 

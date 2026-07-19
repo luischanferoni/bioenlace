@@ -86,6 +86,11 @@ python -m http.server 8000
 
 Abrir `http://localhost:8000`.
 
+## Presentaciones
+
+- [Demo comercial de turnos](../web/docs/presentaciones/demo-comercial-turnos.md) — deck Marp centrado en el recorrido integral de turnos.
+- [Instrucciones de exportación](../web/docs/presentaciones/README.md) — HTML, PDF y PowerPoint.
+
 ## Personalización
 
 - **Colores**: variables CSS en `css/styles.css` (`:root`), alineadas al logo (`#093e4d`, `#ff6b6b`, `#38be7f`).

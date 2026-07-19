@@ -33,11 +33,13 @@ institucional/
 ## Secciones
 
 1. **Hero** — Propuesta de valor + CTA **Crear cuenta**
-2. **Asistente** — Demo del asistente conversacional (listar / editar / crear)
-3. **Personal de salud** — Captura clínica web y app; **Pacientes** — App paciente; **Funcionalidades** — Por audiencia
-4. **Precios** — Calculador por profesionales × tipo de atención (AMB / EMER / IMP) + opcionales audio / videollamada (COGS + margen)
-5. **Contacto** — Formulario e información
-6. **Alta** (`alta.html`) — Wizard self-service clínica / consultorio (pago simulado) y solicitud ministerio; deep-link `?perfil=consultorio`
+2. **Personal de salud** — Captura clínica web y app
+3. **Pacientes** — App paciente y seguimiento
+4. **Personal** — Demo del asistente conversacional (listar / editar / crear)
+5. **Funcionalidades** — Catálogo por audiencia
+6. **Precios** — Calculador por profesionales × tipo de atención (AMB / EMER / IMP) + opcionales audio / videollamada (COGS + margen)
+7. **Contacto** — Formulario e información
+8. **Alta** (`alta.html`) — Wizard self-service clínica / consultorio (pago simulado) y solicitud ministerio; deep-link `?perfil=consultorio`
 
 ## Alta de cuenta (`alta.html` + `js/signup.js`)
 

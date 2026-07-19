@@ -48,9 +48,9 @@
                 </a>
                 <ul class="nav-menu" id="navMenu">
                     <li><a href="#inicio" class="nav-link">Inicio</a></li>
-                    <li><a href="#como-funciona" class="nav-link">Asistente</a></li>
                     <li><a href="#personalsalud" class="nav-link">Personal de salud</a></li>
                     <li><a href="#pacientes" class="nav-link">Pacientes</a></li>
+                    <li><a href="#como-funciona" class="nav-link">Personal</a></li>
                     <li><a href="#funcionalidades" class="nav-link">Funcionalidades</a></li>
                     <li><a href="#precios" class="nav-link">Precios</a></li>
                     <li><a href="alta.html" class="nav-link">Crear cuenta</a></li>
@@ -74,90 +74,12 @@
                 <p class="hero-subtitle"><b>Una sola interfaz para todo.</b> Bioenlace <b>une</b> asistente conversacional e inteligencia artificial para asistir al personal en altas, consultas y modificaciones sin perderse en menús — y acompañar a los pacientes con asistencia y seguimiento de turnos en el mismo ecosistema.</p>
                 <div class="hero-buttons">
                     <a href="alta.html" class="btn btn-primary">Crear cuenta</a>
-                    <a href="#como-funciona" class="btn btn-secondary">Conocer la plataforma</a>
+                    <a href="#personalsalud" class="btn btn-secondary">Conocer la plataforma</a>
                 </div>
             </div>
         </div>
     </section>
     
-    <section id="como-funciona" class="benefits benefits--ia">
-        <div class="container">
-            <div class="section-header reveal">
-                <h2 class="section-title">Cómo funciona el asistente</h2>
-                <p class="section-subtitle">Listás, editás y creás hablando con el sistema — en lenguaje simple, sin perderse en menús</p>
-            </div>
-            <div class="ia-layout reveal">
-                <div class="assistant-demo" id="assistant-demo" aria-label="Demostración animada del asistente web">
-
-                    <div class="assistant-demo__tabs" role="tablist" aria-label="Ejemplos de flujo">
-                        <button type="button" class="assistant-demo__tab is-active" role="tab" aria-selected="true" data-flow="listar">Listar</button>
-                        <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="editar">Editar</button>
-                        <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="crear">Crear</button>
-                    </div>
-                    <button type="button" class="assistant-demo__motion-toggle" data-demo-motion-toggle aria-pressed="false">
-                        <i class="fas fa-pause" aria-hidden="true"></i> Pausar animación
-                    </button>
-                    <div class="assistant-demo__body">
-                        <div class="assistant-demo__messages spa-chat-messages" aria-live="polite" aria-relevant="additions">
-                            <div class="assistant-demo__empty-hint" id="assistant-demo-empty-hint">
-                                <div class="assistant-demo__welcome-actions" aria-label="Ejemplos sugeridos">
-                                    <span class="assistant-demo__welcome-chip">Listar profesionales</span>
-                                    <span class="assistant-demo__welcome-chip">Modificar condición laboral</span>
-                                    <span class="assistant-demo__welcome-chip">Crear turno para paciente</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="assistant-demo__composer spa-chat-composer">
-                            <div class="spa-chat-input-wrap">
-                                <div class="spa-query-input">
-                                    <textarea class="spa-chat-input assistant-demo__composer-input" rows="2" readonly tabindex="-1" placeholder="Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”." aria-hidden="true"></textarea>
-                                    <button type="button" class="spa-chat-send-btn" tabindex="-1" aria-hidden="true">
-                                        <span class="spa-send-text" aria-hidden="true">→</span>
-                                    </button>
-                                </div>
-                            </div>
-                            <p class="spa-chat-composer-hint">Enter para enviar, Shift+Enter para salto de línea. <span class="assistant-demo__composer-note">Ejemplo ilustrado — datos ficticios</span></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="ia-diagram ia-diagram--unified" role="list" aria-label="Cómo funciona el asistente para el personal">
-                    <div class="ia-step ia-step--user" role="listitem">
-                        <i class="fas fa-user" aria-hidden="true"></i>
-                        <span class="ia-step__label">Vos escribís</span>
-                        <p class="ia-step__text">Entiende lenguaje cotidiano — no hace falta memorizar nombres de menús ni códigos.</p>
-                    </div>
-                    <div class="ia-arrow" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--ai" role="listitem">
-                        <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
-                        <span class="ia-step__label">IA interpreta</span>
-                        <p class="ia-step__text">Te asiste en cada tarea; si el pedido puede significar dos cosas, te ofrece opciones claras.</p>
-                    </div>
-                    <div class="ia-arrow" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--security" role="listitem">
-                        <i class="fas fa-shield-halved" aria-hidden="true"></i>
-                        <span class="ia-step__label">Permisos verificados</span>
-                        <p class="ia-step__text">Seguridad intacta — la IA facilita el camino y los permisos del establecimiento siguen mandando.</p>
-                    </div>
-                    <div class="ia-arrow" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--screen" role="listitem">
-                        <i class="fas fa-display" aria-hidden="true"></i>
-                        <span class="ia-step__label">Pantalla correcta</span>
-                        <p class="ia-step__text">Te lleva al formulario o listado que necesitás, sin recorrer menús.</p>
-                    </div>
-                    <div class="ia-arrow" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
-                    <div class="ia-step ia-step--confirm" role="listitem">
-                        <i class="fas fa-circle-check" aria-hidden="true"></i>
-                        <span class="ia-step__label">Vos confirmás</span>
-                        <p class="ia-step__text">Vos confirmás, no la máquina — guardar, modificar o cancelar siempre pasa por tu revisión.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="feature-more reveal">
-                <p class="feature-more__link"><a href="#funcionalidades">Ver todas las funcionalidades</a></p>
-            </div>
-        </div>
-    </section>
-
     <section id="personalsalud" class="benefits benefits--ia benefits--personalsalud">
         <div class="container">
             <div class="section-header reveal">
@@ -287,6 +209,84 @@
                         <i class="fas fa-calendar-check" aria-hidden="true"></i>
                         <span class="ia-step__label">Asistencia o turno</span>
                         <p class="ia-step__text">Turnos presencial o por videollamada, con avisos, recordatorios y campañas de salud de tu centro.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="feature-more reveal">
+                <p class="feature-more__link"><a href="#funcionalidades">Ver todas las funcionalidades</a></p>
+            </div>
+        </div>
+    </section>
+
+    <section id="como-funciona" class="benefits benefits--ia">
+        <div class="container">
+            <div class="section-header reveal">
+                <h2 class="section-title">Cómo funciona para el personal</h2>
+                <p class="section-subtitle">Listás, editás y creás hablando con el sistema — en lenguaje simple, sin perderse en menús</p>
+            </div>
+            <div class="ia-layout reveal">
+                <div class="assistant-demo" id="assistant-demo" aria-label="Demostración animada del asistente web">
+
+                    <div class="assistant-demo__tabs" role="tablist" aria-label="Ejemplos de flujo">
+                        <button type="button" class="assistant-demo__tab is-active" role="tab" aria-selected="true" data-flow="listar">Listar</button>
+                        <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="editar">Editar</button>
+                        <button type="button" class="assistant-demo__tab" role="tab" aria-selected="false" data-flow="crear">Crear</button>
+                    </div>
+                    <button type="button" class="assistant-demo__motion-toggle" data-demo-motion-toggle aria-pressed="false">
+                        <i class="fas fa-pause" aria-hidden="true"></i> Pausar animación
+                    </button>
+                    <div class="assistant-demo__body">
+                        <div class="assistant-demo__messages spa-chat-messages" aria-live="polite" aria-relevant="additions">
+                            <div class="assistant-demo__empty-hint" id="assistant-demo-empty-hint">
+                                <div class="assistant-demo__welcome-actions" aria-label="Ejemplos sugeridos">
+                                    <span class="assistant-demo__welcome-chip">Listar profesionales</span>
+                                    <span class="assistant-demo__welcome-chip">Modificar condición laboral</span>
+                                    <span class="assistant-demo__welcome-chip">Crear turno para paciente</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="assistant-demo__composer spa-chat-composer">
+                            <div class="spa-chat-input-wrap">
+                                <div class="spa-query-input">
+                                    <textarea class="spa-chat-input assistant-demo__composer-input" rows="2" readonly tabindex="-1" placeholder="Escribí una consulta para comenzar. Ejemplo: “Necesito buscar una persona” o “Quiero ver los reportes disponibles”." aria-hidden="true"></textarea>
+                                    <button type="button" class="spa-chat-send-btn" tabindex="-1" aria-hidden="true">
+                                        <span class="spa-send-text" aria-hidden="true">→</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="spa-chat-composer-hint">Enter para enviar, Shift+Enter para salto de línea. <span class="assistant-demo__composer-note">Ejemplo ilustrado — datos ficticios</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="ia-diagram ia-diagram--unified" role="list" aria-label="Cómo funciona el asistente para el personal">
+                    <div class="ia-step ia-step--user" role="listitem">
+                        <i class="fas fa-user" aria-hidden="true"></i>
+                        <span class="ia-step__label">Vos escribís</span>
+                        <p class="ia-step__text">Entiende lenguaje cotidiano — no hace falta memorizar nombres de menús ni códigos.</p>
+                    </div>
+                    <div class="ia-arrow" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
+                    <div class="ia-step ia-step--ai" role="listitem">
+                        <i class="fas fa-wand-magic-sparkles" aria-hidden="true"></i>
+                        <span class="ia-step__label">IA interpreta</span>
+                        <p class="ia-step__text">Te asiste en cada tarea; si el pedido puede significar dos cosas, te ofrece opciones claras.</p>
+                    </div>
+                    <div class="ia-arrow" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
+                    <div class="ia-step ia-step--security" role="listitem">
+                        <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                        <span class="ia-step__label">Permisos verificados</span>
+                        <p class="ia-step__text">Seguridad intacta — la IA facilita el camino y los permisos del establecimiento siguen mandando.</p>
+                    </div>
+                    <div class="ia-arrow" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
+                    <div class="ia-step ia-step--screen" role="listitem">
+                        <i class="fas fa-display" aria-hidden="true"></i>
+                        <span class="ia-step__label">Pantalla correcta</span>
+                        <p class="ia-step__text">Te lleva al formulario o listado que necesitás, sin recorrer menús.</p>
+                    </div>
+                    <div class="ia-arrow" aria-hidden="true"><i class="fas fa-arrow-down"></i></div>
+                    <div class="ia-step ia-step--confirm" role="listitem">
+                        <i class="fas fa-circle-check" aria-hidden="true"></i>
+                        <span class="ia-step__label">Vos confirmás</span>
+                        <p class="ia-step__text">Vos confirmás, no la máquina — guardar, modificar o cancelar siempre pasa por tu revisión.</p>
                     </div>
                 </div>
             </div>
@@ -614,9 +614,9 @@
                 <div class="footer-section">
                     <h4>Secciones</h4>
                     <ul>
-                        <li><a href="#como-funciona">Asistente</a></li>
                         <li><a href="#personalsalud">Personal de salud</a></li>
                         <li><a href="#pacientes">Pacientes</a></li>
+                        <li><a href="#como-funciona">Personal</a></li>
                         <li><a href="#funcionalidades">Funcionalidades</a></li>
                         <li><a href="#precios">Precios</a></li>
                         <li><a href="#contacto">Contacto</a></li>

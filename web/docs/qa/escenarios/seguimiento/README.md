@@ -2,7 +2,7 @@
 
 [← Escenarios](../README.md)
 
-Consultas **sin malestar agudo nuevo**: **consulta clínica por mensaje**, renovación de recetas y controles de un plan. Para dolor fuerte o alarmas, usar **Atención** (urgencia/turno), no estos guiones.
+Consultas **sin malestar agudo nuevo**: **consulta clínica por mensaje**, renovación de recetas y controles. Entrada: **Solicitar Atención** → **Control/Seguimiento**. Para dolor fuerte o alarmas, usar **Solicitar Atención** (urgencia/malestar), no estos guiones.
 
 | Guía | Caso |
 |------|------|

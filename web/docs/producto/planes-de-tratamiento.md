@@ -25,9 +25,11 @@ flowchart TB
 3. El dispositivo dispara avisos según horarios (con preferencias por ítem cuando existen).
 4. Al tocar el aviso, abre el detalle del plan en la app.
 
-## Consulta clínica por mensaje desde el plan
+## Acciones desde el plan (app paciente)
 
-En la **app paciente**, el detalle del plan ofrece acciones directas (renovar medicación, solicitar ajuste, duda, evolución, pedir turno) que abren el flujo `atencion.consultas-seguimiento-flow` (**Consultas y seguimiento**) con el plan ya elegido. Renovación y ajuste usan multi-selección de medicamentos del CarePlan; las necesidades que permiten async terminan en **consulta clínica por mensaje**. Detalle: [consultas-seguimiento.md](./consultas-seguimiento.md).
+El detalle del plan ofrece acciones directas (renovar medicación, solicitar ajuste, consulta/evolución, pedir turno) que abren **Solicitar Atención** (`atencion.necesito-atencion`) con el CarePlan ya elegido (hub Control/Seguimiento). Renovación y ajuste usan multi-selección de medicamentos del CarePlan; las necesidades async terminan en **consulta clínica por mensaje**.
+
+El mismo hub lista tratamientos activos junto a condiciones y controles recomendados por protocolo. Detalle: [solicitar-atencion.md](./solicitar-atencion.md), [consultas-seguimiento.md](./consultas-seguimiento.md).
 
 ## Adherencia para el equipo (staff)
 

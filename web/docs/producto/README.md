@@ -13,9 +13,10 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [turnos.md](./turnos.md) | Agenda AMB, reserva, cancelación, notificaciones |
 | [agenda-por-encounter-class.md](./agenda-por-encounter-class.md) | Agenda tipada: AMB cupos vs EMER/IMP cobertura |
 | [interoperabilidad-agendamiento-fhir.md](./interoperabilidad-agendamiento-fhir.md) | Espejo de citas NIS HAPI ↔ turnos (entrante/saliente) |
+| [solicitar-atencion.md](./solicitar-atencion.md) | Solicitar Atención: malestar, Control/Seguimiento (hub) y urgencia |
 | [triage-reserva-turno.md](./triage-reserva-turno.md) | Motivo y alarmas antes de reservar (catálogo + bandas A–D) |
 | [atencion-remota-async.md](./atencion-remota-async.md) | Atención remota y consulta clínica por mensaje (adopción gradual) |
-| [consultas-seguimiento.md](./consultas-seguimiento.md) | Consulta clínica por mensaje y seguimiento (app paciente) |
+| [consultas-seguimiento.md](./consultas-seguimiento.md) | Async y acciones de tratamiento detrás del hub Control/Seguimiento |
 | [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md) | Journey pre/post consulta: intake, motivos, cohorte, staff en HC |
 | [catalogo-usos-ia.md](./catalogo-usos-ia.md) | Catálogo de contextos y usos de IA (referencia rápida) |
 | [agentes-autonomos.md](./agentes-autonomos.md) | Agentes proactivos (decisión autónoma + auditoría) |

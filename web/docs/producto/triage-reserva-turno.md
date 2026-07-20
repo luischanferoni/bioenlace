@@ -13,15 +13,15 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 
 ## Intent del asistente
 
-- **`atencion.necesito-atencion`** — malestar nuevo o urgencia (atajo en el chat): triage + reserva ambulatoria.
-- **`atencion.consultas-seguimiento-flow`** — flujo **Consultas y seguimiento** (consulta clínica por mensaje y seguimiento de tratamiento; app paciente); ver [consultas-seguimiento.md](./consultas-seguimiento.md).
-- **`turnos.crear-como-paciente`** — solo agenda (sin triage); clasificación por frases tipo “sacar turno”.
+- **`atencion.necesito-atencion`** (**Solicitar Atención**): Malestar nuevo, **Control/Seguimiento** y Urgencia — ver [solicitar-atencion.md](./solicitar-atencion.md). Async / tratamiento: [consultas-seguimiento.md](./consultas-seguimiento.md).
+- **`turnos.crear-como-paciente`** — solo agenda (sin triage de motivos); clasificación por frases tipo “sacar turno”.
 
 ## Pasos del flujo (asistente / SPA)
 
 | Paso | Subintent | API UI |
 |------|-----------|--------|
-| Motivo (raíz) | `triage_raiz` | `GET /api/v1/turnos/reserva-triage-paso?step=raiz` — **Malestar nuevo** y **Urgencia** (sin «Seguimiento»; ese camino está en consultas-seguimiento) |
+| Motivo (raíz) | `triage_raiz` | `GET /api/v1/turnos/reserva-triage-paso?step=raiz` — **Malestar nuevo**, **Control/Seguimiento**, **Urgencia** |
+| Hub control (solo Control/Seguimiento) | `cs_hub` | `GET /api/v1/consultas-seguimiento/hub` |
 | Alarmas | `triage_alarmas` | `?step=alarmas` |
 | Urgencia (solo banda A) | `triage_urgencia` | `GET /api/v1/turnos/reserva-triage-urgencia` |
 | Zona corporal | `triage_zona` | `?step=zona&triage_raiz=…` |
@@ -31,12 +31,11 @@ Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** 
 | Modalidad (si aplica) | `select_tipo_atencion` | `?step=modalidad&id_servicio_asignado=…` + campos triage |
 | Centro → profesional → día → horario | (sin cambios) | flujo turnos existente |
 
-**Atajos por motivo raíz (necesito-atención):**
+**Atajos por motivo raíz (Solicitar Atención):**
 
-- `malestar_nuevo` → zona → modalidad → servicio.
+- `malestar_nuevo` → zona → (detalle/evolución) → servicio → modalidad si aplica.
+- `seguimiento_cronico` → hub Control/Seguimiento → ramas por ancla.
 - `urgencia` → categoría → pantalla de derivación (sin reserva).
-
-El código `seguimiento_cronico` permanece en el catálogo para persistencia y el flow **Consultas y seguimiento** / consulta clínica por mensaje (`ui_selectable: false` en raíz).
 
 **Servicio (Medicina clínica hub):**
 
@@ -89,4 +88,4 @@ Validación al crear: `TurnoPersistService` + `assertCanPersistBooking` (rechaza
 - Reutilizar el mismo catálogo en app móvil paciente sin duplicar árbol en Dart.
 - Rol `oftalmologia` en nodos oculares del catálogo cuando se agreguen ramas de triage oftalmológico.
 
-Ver también: [turnos.md](./turnos.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md), [motivos-consulta.md](./motivos-consulta.md).
+Ver también: [solicitar-atencion.md](./solicitar-atencion.md), [turnos.md](./turnos.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md), [motivos-consulta.md](./motivos-consulta.md).

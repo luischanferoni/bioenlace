@@ -4,7 +4,7 @@
 
 Para dudas sobre tratamiento, renovación de recetas o evolución **sin** un malestar nuevo agudo. Si el paciente tiene dolor fuerte o síntomas de alarma, debe usar **Atención** / necesito atención, no este camino.
 
-Nombre de producto: **consulta clínica por mensaje** (técnico: consulta async / `SOLICITUD_ASYNC`). Flujo del asistente: **Consultas y seguimiento** (`atencion.consultas-seguimiento-flow`).
+Nombre de producto: **consulta clínica por mensaje** (técnico: consulta async / `SOLICITUD_ASYNC`). Entrada: **Solicitar Atención** → **Control/Seguimiento** (`atencion.necesito-atencion`).
 
 ## Consulta de ejemplo
 
@@ -20,8 +20,8 @@ Nombre de producto: **consulta clínica por mensaje** (técnico: consulta async 
 
 ## Paciente
 
-1. **Vos** abrís el **Asistente** y elegís **Consultas y seguimiento** (atajo o frase parecida).
-2. **Vos** elegís **Consulta general** y escribís tu mensaje (guion de arriba).
+1. **Vos** abrís el **Asistente** y elegís **Solicitar Atención** (atajo o frase parecida).
+2. **Vos** elegís **Control/Seguimiento** y luego **Consulta por mensaje** (o el ítem equivalente del hub) y escribís tu mensaje (guion de arriba).
 3. **El sistema** crea la **consulta clínica por mensaje** (sin turno ni fecha de videollamada).
 4. **El sistema** la muestra en **Inicio** con acceso al **chat**.
 5. **Vos** esperás la respuesta del equipo.

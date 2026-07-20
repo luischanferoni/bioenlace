@@ -3,7 +3,7 @@
 namespace common\components\Domain\Scheduling\Service;
 
 /**
- * Enriquece el draft del flow atencion.consultas-seguimiento antes del SubIntentEngine.
+ * Enriquece el draft de Control/Seguimiento (dentro de Solicitar Atención) antes del SubIntentEngine.
  */
 final class ConsultasSeguimientoFlowDraftHydrator
 {

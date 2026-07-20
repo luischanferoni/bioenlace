@@ -15,7 +15,7 @@ El paciente opera desde la **app móvil**; el **personal de salud** consume moti
 | `asistencia_pre_consulta` | Flow / UI JSON care pack | Antes del turno, si hay pack de cohorte |
 | `post_consulta` | Touchpoints del pack followup | Tras encounter finalizado |
 
-**No confundir** con `atencion.consultas-seguimiento-flow` (**Consultas y seguimiento** / consulta clínica por mensaje y care plan), que es un canal distinto.
+**No confundir** con **Solicitar Atención → Control/Seguimiento** (consulta clínica por mensaje y CarePlan), que es un canal distinto — [solicitar-atencion.md](./solicitar-atencion.md).
 
 ## Principios
 

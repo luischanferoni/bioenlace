@@ -21,4 +21,11 @@ class YamlIntentCatalogExcludeTest extends Unit
         $this->assertFalse(YamlIntentCatalogService::intentExists('agenda.editar-agenda-flow'));
         $this->assertFalse(YamlIntentCatalogService::intentExists('agenda.editar-mi-agenda-flow'));
     }
+
+    public function testLegacyConsultasSeguimientoIntentRemoved(): void
+    {
+        $this->assertFalse(
+            YamlIntentCatalogService::intentExists('atencion.consultas-seguimiento-flow')
+        );
+    }
 }

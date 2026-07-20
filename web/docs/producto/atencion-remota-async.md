@@ -16,7 +16,7 @@ Bioenlace puede atender algunos motivos de consulta **sin que el paciente concur
 
 ## Actores
 
-- **Paciente** — reserva o solicita atención vía asistente. **Malestar nuevo y urgencia:** `atencion.necesito-atencion` (triage + modalidad). **Consulta clínica por mensaje y seguimiento:** `atencion.consultas-seguimiento-flow` en la **app paciente** — ver [consultas-seguimiento.md](./consultas-seguimiento.md).
+- **Paciente** — reserva o solicita atención vía asistente (**Solicitar Atención** / `atencion.necesito-atencion`). Malestar y urgencia: triage + modalidad. Consulta por mensaje y seguimiento: motivo **Control/Seguimiento** — ver [solicitar-atencion.md](./solicitar-atencion.md) y [consultas-seguimiento.md](./consultas-seguimiento.md).
 - **Profesional (PES)** — atiende turnos del día; puede habilitar remoto en su agenda (`acepta_consultas_online`).
 - **Admin efector** — política de teleconsulta por servicio y métricas agregadas del efector.
 

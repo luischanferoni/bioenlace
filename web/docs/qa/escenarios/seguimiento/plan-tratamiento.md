@@ -22,11 +22,11 @@ Paciente con **plan de tratamiento activo** (CarePlan): renovar medicación (var
 
 ## Paciente — desde el plan de tratamiento
 
-1. **Vos** entrás al **detalle de tu plan** en la app o desde el asistente (**Consultas y seguimiento**).
-2. **Vos** elegís el plan activo (si no venís del detalle) y qué necesitás: renovar medicación, solicitar ajuste, duda, contar evolución o pedir turno.
+1. **Vos** entrás al **detalle de tu plan** en la app o desde el asistente (**Solicitar Atención** → **Control/Seguimiento**).
+2. **Vos** elegís el plan activo (si no venís del detalle) y qué necesitás: renovar medicación, solicitar ajuste, consulta/evolución o pedir turno.
 3. Si elegís **renovar medicación**, marcás uno o más medicamentos del plan y confirmás **sin** escribir texto.
 4. Si elegís **solicitar ajuste**, marcás medicamentos y escribís el motivo del cambio.
-5. Si elegís **duda** o **evolución**, escribís el mensaje — ver [consulta clínica por mensaje](./consulta-por-mensaje.md).
+5. Si elegís **consulta/evolución**, escribís el mensaje — ver [consulta clínica por mensaje](./consulta-por-mensaje.md).
 6. Si elegís **turno**, elegís presencial o videollamada (si aparece) y un horario.
 7. **El sistema** confirma el turno o la consulta clínica por mensaje.
 

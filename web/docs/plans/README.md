@@ -18,12 +18,12 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Agendamiento FHIR entrante | `fhir-scheduling-inbound/` | Doc producto: [interoperabilidad-agendamiento-fhir.md](../producto/interoperabilidad-agendamiento-fhir.md) |
 | Alta cuenta institucional | `alta-cuenta-institucional/` | Self-service AdminEfector + solicitud ministerio + pasarela simulada |
 | Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | Perfil factual persistido; eventos, materialización, políticas y transparencia |
-| Control/Seguimiento + protocolos | `control-seguimiento-protocolos/` | Unificar entrada en Solicitar Atención; PlanDefinition-lite; retirar consultas-seguimiento |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Control/Seguimiento + protocolos | [producto/solicitar-atencion.md](../producto/solicitar-atencion.md) + [decisions/care-protocols-plandefinition-lite.md](../decisions/care-protocols-plandefinition-lite.md) |
 | Atención remota y async | [producto/atencion-remota-async.md](../producto/atencion-remota-async.md) |
 | Cohortes — asistencia + batch IA | [producto/asistencia-cohortes.md](../producto/asistencia-cohortes.md) |
 | Representación paciente (FHIR) | [producto/representacion-paciente.md](../producto/representacion-paciente.md) |

@@ -395,13 +395,21 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
                 onPressed: code.isEmpty
                     ? null
                     : () {
+                        final planTitle = plan['title']?.toString().trim();
+                        final treatmentLabel = (planTitle != null && planTitle.isNotEmpty)
+                            ? 'Tratamiento: $planTitle'
+                            : 'Tratamiento';
                         onStart(
                           PacienteIntents.solicitarAtencion,
                           draft: {
                             'triage_raiz': 'seguimiento_cronico',
                             'intake_tipo': 'seguimiento',
                             'care_plan_id': planId,
+                            'control_hub_anchor': 'cp:$planId',
                             'seguimiento_necesidad': code,
+                            '_label_care_plan': treatmentLabel,
+                            '_label_seguimiento_necesidad': label,
+                            '_prefill_walk': 'care_plan_seguimiento',
                           },
                         );
                         Navigator.of(context).pop();

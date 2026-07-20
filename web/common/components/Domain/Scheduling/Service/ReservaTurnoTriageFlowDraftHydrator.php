@@ -25,32 +25,8 @@ final class ReservaTurnoTriageFlowDraftHydrator
 
         (new TeleconsultaElegibilidadService())->aplicarFlagsEnDraft($draft);
         (new ReservaModalidadAtencionService())->aplicarFlagsEnDraft($draft);
-        self::autoSeleccionarCarePlanUnico($draft);
         (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
 
         $body['draft'] = $draft;
-    }
-
-    /**
-     * Si el paciente tiene un solo plan activo, lo preselecciona en seguimiento crónico.
-     *
-     * @param array<string, mixed> $draft
-     */
-    private static function autoSeleccionarCarePlanUnico(array &$draft): void
-    {
-        if (trim((string) ($draft['triage_raiz'] ?? '')) !== 'seguimiento_cronico') {
-            return;
-        }
-        if ((int) ($draft['care_plan_id'] ?? 0) > 0) {
-            return;
-        }
-        $idPersona = (int) (\Yii::$app->user->getIdPersona() ?? 0);
-        if ($idPersona <= 0) {
-            return;
-        }
-        $plans = (new \common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery())->listActive($idPersona);
-        if (count($plans) === 1) {
-            $draft['care_plan_id'] = (string) (int) $plans[0]->id;
-        }
     }
 }

@@ -196,7 +196,14 @@ final class ControlSeguimientoHubService
     public function applyAnchorToDraft(array &$draft): void
     {
         $anchor = trim((string) ($draft['control_hub_anchor'] ?? ''));
-        if ($anchor === '' && (int) ($draft['care_plan_id'] ?? 0) > 0) {
+        // Solo sintetizar ancla desde care_plan_id cuando ya hay camino explícito
+        // (p. ej. deep-link desde detalle del plan con necesidad). Si no, el hub
+        // «¿Sobre qué?» debe listarse aunque exista un único CarePlan activo.
+        if (
+            $anchor === ''
+            && (int) ($draft['care_plan_id'] ?? 0) > 0
+            && trim((string) ($draft['seguimiento_necesidad'] ?? '')) !== ''
+        ) {
             $anchor = self::ANCHOR_PREFIX_CARE_PLAN . (int) $draft['care_plan_id'];
             $draft['control_hub_anchor'] = $anchor;
         }

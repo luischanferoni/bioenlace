@@ -1273,6 +1273,10 @@ class ChatScreenState extends State<ChatScreen> {
   Future<void> _runPendingIntent(String intentId) async {
     widget.onPendingIntentHandled?.call();
     final pendingDraft = Map<String, dynamic>.from(widget.pendingFlowDraft);
+    if (_isCarePlanSeguimientoPrefillWalk(pendingDraft)) {
+      await _runCarePlanSeguimientoPrefillWalk(intentId, pendingDraft);
+      return;
+    }
     await _onRemediationChoice(
       {
         'intent_id': intentId,
@@ -1280,6 +1284,128 @@ class ChatScreenState extends State<ChatScreen> {
       },
       prefillDraft: pendingDraft.isNotEmpty ? pendingDraft : null,
     );
+  }
+
+  /// Prefill desde detalle de tratamiento: recorrer Motivos → hub → necesidad
+  /// para que queden visibles y preseleccionados antes de medicamentos.
+  bool _isCarePlanSeguimientoPrefillWalk(Map<String, dynamic> draft) {
+    if (draft['_prefill_walk']?.toString() == 'care_plan_seguimiento') {
+      return true;
+    }
+    final carePlanId = draft['care_plan_id']?.toString().trim() ?? '';
+    final necesidad = draft['seguimiento_necesidad']?.toString().trim() ?? '';
+    return carePlanId.isNotEmpty && necesidad.isNotEmpty;
+  }
+
+  Future<bool> _applyPrefillDeltaAndAdvance(Map<String, dynamic> delta) async {
+    _applyDraftDelta(delta);
+    _asistenteService.draft = Map<String, dynamic>.from(_draft);
+    if (mounted) {
+      setState(() {});
+    }
+    final res = await _postFlowAdvanceWithRetry();
+    if (!mounted) {
+      return false;
+    }
+    if (res['success'] != true) {
+      setState(() {
+        _flowAdvancing = false;
+        _isSending = false;
+        _addBotChatMessage(
+          res['message']?.toString() ?? 'No se pudo avanzar. Intentá de nuevo.',
+        );
+      });
+      _scrollToBottom();
+      return false;
+    }
+    final data = res['data'];
+    if (data is Map) {
+      await _handleFlowEnvelopeResponse(Map<String, dynamic>.from(data));
+    }
+    return true;
+  }
+
+  Future<void> _runCarePlanSeguimientoPrefillWalk(
+    String intentId,
+    Map<String, dynamic> pending,
+  ) async {
+    final planId = pending['care_plan_id']?.toString().trim() ?? '';
+    final necesidad = pending['seguimiento_necesidad']?.toString().trim() ?? '';
+    if (planId.isEmpty || necesidad.isEmpty) {
+      await _onRemediationChoice(
+        {'intent_id': intentId, 'reset_flow': true},
+        prefillDraft: pending,
+      );
+      return;
+    }
+
+    final planLabel = pending['_label_care_plan']?.toString().trim().isNotEmpty == true
+        ? pending['_label_care_plan'].toString().trim()
+        : 'Tratamiento';
+    final necesidadLabel =
+        pending['_label_seguimiento_necesidad']?.toString().trim().isNotEmpty == true
+            ? pending['_label_seguimiento_necesidad'].toString().trim()
+            : necesidad;
+    final anchor = pending['control_hub_anchor']?.toString().trim().isNotEmpty == true
+        ? pending['control_hub_anchor'].toString().trim()
+        : 'cp:$planId';
+
+    // 1) Abrir Solicitar Atención en Motivos (sin prefill).
+    await _onRemediationChoice({
+      'intent_id': intentId,
+      'reset_flow': true,
+    });
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isSending = true;
+      _flowAdvancing = true;
+    });
+    try {
+      // 2) Motivos → Control/Seguimiento (queda el paso visible y seleccionado).
+      if (!await _applyPrefillDeltaAndAdvance({
+        'triage_raiz': 'seguimiento_cronico',
+        '_flow_item_triage_raiz': {
+          'id': 'seguimiento_cronico',
+          'label': 'Control/Seguimiento',
+        },
+      })) {
+        return;
+      }
+
+      // 3) Hub → este tratamiento.
+      if (!await _applyPrefillDeltaAndAdvance({
+        'control_hub_anchor': anchor,
+        'care_plan_id': planId,
+        'intake_tipo': 'seguimiento',
+        '_flow_item_control_hub_anchor': {
+          'id': anchor,
+          'label': planLabel,
+        },
+      })) {
+        return;
+      }
+
+      // 4) Qué necesitás → acción elegida en el detalle del plan.
+      if (!await _applyPrefillDeltaAndAdvance({
+        'seguimiento_necesidad': necesidad,
+        '_flow_item_seguimiento_necesidad': {
+          'id': necesidad,
+          'label': necesidadLabel,
+        },
+      })) {
+        return;
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+          _flowAdvancing = false;
+        });
+      }
+    }
   }
 
   /// Desde Inicio (Resolver) o push: inicia el flow y salta la elección del turno.

@@ -37,10 +37,22 @@ class ControlSeguimientoHubServiceTest extends Unit
     public function testApplyAnchorPrefillsFromCarePlanId(): void
     {
         $svc = new ControlSeguimientoHubService();
-        $draft = ['care_plan_id' => '7'];
+        $draft = [
+            'care_plan_id' => '7',
+            'seguimiento_necesidad' => 'renovar_medicacion',
+        ];
         $svc->applyAnchorToDraft($draft);
         $this->assertSame('cp:7', $draft['control_hub_anchor'] ?? null);
         $this->assertSame('care_plan', $draft['control_hub_kind'] ?? null);
+    }
+
+    public function testApplyAnchorNoSaltaHubConSoloCarePlanId(): void
+    {
+        $svc = new ControlSeguimientoHubService();
+        $draft = ['care_plan_id' => '7'];
+        $svc->applyAnchorToDraft($draft);
+        $this->assertArrayNotHasKey('control_hub_anchor', $draft);
+        $this->assertArrayNotHasKey('control_hub_kind', $draft);
     }
 
     public function testConditionDefaultActionsDesdeMetadata(): void

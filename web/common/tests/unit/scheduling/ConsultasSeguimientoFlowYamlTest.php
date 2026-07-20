@@ -131,6 +131,23 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
         );
     }
 
+    public function testSeguimientoCronicoAbreHubSinAncla(): void
+    {
+        $response = SubIntentEngine::process([
+            'intent_id' => self::INTENT,
+            'draft' => [
+                'triage_raiz' => 'seguimiento_cronico',
+            ],
+        ], 0);
+
+        $this->assertTrue($response['success'] ?? false);
+        $this->assertSame('cs_hub', $response['subintent_id'] ?? null);
+        $this->assertSame(
+            'consultas-seguimiento.hub',
+            $response['open_ui']['action_id'] ?? null
+        );
+    }
+
     public function testCarePlanPrefilledStillOpensReviewStep(): void
     {
         $response = SubIntentEngine::process([

@@ -90,9 +90,37 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
     setState(() => _loadingSolicitudes = true);
     try {
       final panel = await _homePanelApi.getPanel(
+        sections: 'care_plans_active',
+      );
+      final careSec = panel.sectionByKind('patient_care_plans_active');
+      if (!mounted) return;
+      if (careSec == null) {
+        setState(() => _loadingSolicitudes = false);
+        return;
+      }
+      final plans = _asMapList(careSec.data['items']);
+      Map<String, dynamic>? mine;
+      for (final p in plans) {
+        final id = p['id'];
+        final planId = id is int ? id : int.tryParse(id?.toString() ?? '');
+        if (planId == widget.planId) {
+          mine = p;
+          break;
+        }
+      }
+      if (mine != null) {
+        setState(() {
+          _solicitudesActivas = _asMapList(mine!['solicitudes_activas']);
+          _solicitudesHistorial = _asMapList(mine['solicitudes_historial']);
+          _loadingSolicitudes = false;
+        });
+        return;
+      }
+      // Fallback: sección async (legacy) filtrada por plan.
+      final asyncPanel = await _homePanelApi.getPanel(
         sections: 'patient_async_consultations',
       );
-      final asyncSec = panel.sectionByKind('patient_async_consultations');
+      final asyncSec = asyncPanel.sectionByKind('patient_async_consultations');
       if (!mounted) return;
       if (asyncSec == null) {
         setState(() => _loadingSolicitudes = false);

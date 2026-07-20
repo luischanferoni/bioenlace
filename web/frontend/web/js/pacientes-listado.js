@@ -1278,6 +1278,8 @@
       var secRoot = secFrag.querySelector('[data-role="patient-section"]');
       secRoot.querySelector('[data-field="titulo"]').textContent = 'Tratamiento activo';
       var grid = secRoot.querySelector('[data-slot="items"]');
+      var solicitudesActivas = [];
+      var solicitudesHistorial = [];
       items.forEach(function (plan) {
         var itemFrag = importTemplate('tpl-patient-care-plan-card');
         if (!itemFrag) return;
@@ -1291,7 +1293,14 @@
         } else {
           catEl.classList.add('d-none');
         }
-        col.querySelector('[data-field="estado"]').textContent = plan.statusLabel || plan.status || '';
+        var estadoTxt = plan.statusLabel || plan.status || '';
+        var pendientes = Array.isArray(plan.solicitudes_activas)
+          ? plan.solicitudes_activas.length
+          : (parseInt(plan.solicitudes_pendientes_count, 10) || 0);
+        if (pendientes > 0) {
+          estadoTxt += (estadoTxt ? ' · ' : '') + pendientes + ' solicitud' + (pendientes === 1 ? '' : 'es');
+        }
+        col.querySelector('[data-field="estado"]').textContent = estadoTxt;
         var acts = Array.isArray(plan.activitySummaries) ? plan.activitySummaries : [];
         var actsSlot = col.querySelector('[data-slot="actividades"]');
         if (acts.length && actsSlot) {
@@ -1303,8 +1312,30 @@
           });
         }
         grid.appendChild(itemFrag);
+        if (Array.isArray(plan.solicitudes_activas)) {
+          solicitudesActivas = solicitudesActivas.concat(plan.solicitudes_activas);
+        }
+        if (Array.isArray(plan.solicitudes_historial)) {
+          solicitudesHistorial = solicitudesHistorial.concat(plan.solicitudes_historial);
+        }
       });
       sectionSlot.appendChild(secFrag);
+      if (solicitudesActivas.length) {
+        renderPatientAsyncItemsSection(
+          sectionSlot,
+          'Solicitudes del tratamiento',
+          solicitudesActivas,
+          false
+        );
+      }
+      if (solicitudesHistorial.length) {
+        renderPatientAsyncItemsSection(
+          sectionSlot,
+          'Solicitudes anteriores del tratamiento',
+          solicitudesHistorial,
+          true
+        );
+      }
     }
 
     function bindPatientHomeTabs(wrapRoot) {
@@ -2260,26 +2291,11 @@
 
     function renderPatientAsyncSection(sectionsSlot, data) {
       if (!sectionsSlot || !data) return;
+      // Solo consultas generales: las de tratamiento se anidan en care_plans_active.
       var activas = splitAsyncByUiGroup(data.items || []);
       var history = data.history || {};
       var hist = splitAsyncByUiGroup(history.items || []);
 
-      if (activas.tratamiento.length) {
-        renderPatientAsyncItemsSection(
-          sectionsSlot,
-          'Solicitudes del tratamiento',
-          activas.tratamiento,
-          false
-        );
-      }
-      if (hist.tratamiento.length) {
-        renderPatientAsyncItemsSection(
-          sectionsSlot,
-          'Solicitudes anteriores del tratamiento',
-          hist.tratamiento,
-          true
-        );
-      }
       renderPatientAsyncItemsSection(
         sectionsSlot,
         data.title,

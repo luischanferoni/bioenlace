@@ -256,6 +256,7 @@ class HomeScreenState extends State<HomeScreen> {
     }
     final asyncSec = panel.sectionByKind('patient_async_consultations');
     if (asyncSec != null) {
+      // Solo generales: las de tratamiento vienen anidadas en care_plans_active.
       _consultasAsync = _asMapList(asyncSec.data['items']);
       final titulo = asyncSec.data['title']?.toString().trim();
       if (titulo != null && titulo.isNotEmpty) {
@@ -963,18 +964,36 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  List<Map<String, dynamic>> get _consultasAsyncEnTratamiento => _consultasAsync
-      .where(ConsultaAsyncSolicitudCard.perteneceATratamiento)
-      .toList();
+  List<Map<String, dynamic>> get _consultasAsyncEnTratamiento {
+    final out = <Map<String, dynamic>>[];
+    for (final plan in _carePlansActivos) {
+      out.addAll(_asMapList(plan['solicitudes_activas']));
+    }
+    // Fallback legado si el panel aún no anida.
+    if (out.isEmpty) {
+      return _consultasAsync
+          .where(ConsultaAsyncSolicitudCard.perteneceATratamiento)
+          .toList();
+    }
+    return out;
+  }
 
   List<Map<String, dynamic>> get _consultasAsyncGenerales => _consultasAsync
       .where((i) => !ConsultaAsyncSolicitudCard.perteneceATratamiento(i))
       .toList();
 
-  List<Map<String, dynamic>> get _consultasAsyncHistorialEnTratamiento =>
-      _consultasAsyncHistorial
+  List<Map<String, dynamic>> get _consultasAsyncHistorialEnTratamiento {
+    final out = <Map<String, dynamic>>[];
+    for (final plan in _carePlansActivos) {
+      out.addAll(_asMapList(plan['solicitudes_historial']));
+    }
+    if (out.isEmpty) {
+      return _consultasAsyncHistorial
           .where(ConsultaAsyncSolicitudCard.perteneceATratamiento)
           .toList();
+    }
+    return out;
+  }
 
   List<Map<String, dynamic>> get _consultasAsyncHistorialGenerales =>
       _consultasAsyncHistorial

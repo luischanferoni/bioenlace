@@ -77,11 +77,21 @@ final class ConsultaAsyncBandejaService
     }
 
     /**
+     * Listado paciente de solicitudes async.
+     *
+     * @param array{
+     *   ui_group?: string|null,
+     *   care_plan_id?: int|null
+     * } $options
+     *   - ui_group: `consultas` | `tratamiento` | null (todos)
+     *   - care_plan_id: filtrar por plan
      * @return array<string, mixed>
      */
-    public function listForPaciente(int $idPersona): array
+    public function listForPaciente(int $idPersona, array $options = []): array
     {
         $catalog = new ConsultaAsyncBandejaCatalogService();
+        $uiGroupFilter = isset($options['ui_group']) ? trim((string) $options['ui_group']) : '';
+        $carePlanFilter = isset($options['care_plan_id']) ? (int) $options['care_plan_id'] : 0;
         if ($idPersona <= 0) {
             return [
                 'title' => $catalog->tituloSeccionPaciente(),
@@ -111,7 +121,7 @@ final class ConsultaAsyncBandejaService
         $items = [];
         foreach ($encounters as $encounter) {
             $item = $this->buildItem($encounter, false);
-            if ($item !== null) {
+            if ($item !== null && $this->matchesPacienteFilters($item, $uiGroupFilter, $carePlanFilter)) {
                 $items[] = $item;
             }
         }
@@ -132,7 +142,7 @@ final class ConsultaAsyncBandejaService
         $history = [];
         foreach ($historyEncounters as $encounter) {
             $item = $this->buildItem($encounter, false);
-            if ($item !== null) {
+            if ($item !== null && $this->matchesPacienteFilters($item, $uiGroupFilter, $carePlanFilter)) {
                 $history[] = $item;
             }
         }
@@ -149,6 +159,21 @@ final class ConsultaAsyncBandejaService
                 'empty_message' => $catalog->mensajeVacioHistorialPaciente(),
             ],
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $item
+     */
+    private function matchesPacienteFilters(array $item, string $uiGroupFilter, int $carePlanFilter): bool
+    {
+        if ($uiGroupFilter !== '' && (string) ($item['ui_group'] ?? '') !== $uiGroupFilter) {
+            return false;
+        }
+        if ($carePlanFilter > 0 && (int) ($item['care_plan_id'] ?? 0) !== $carePlanFilter) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -249,14 +274,13 @@ final class ConsultaAsyncBandejaService
         $urgencyBand = isset($meta['urgency_band']) ? (string) $meta['urgency_band'] : null;
         $sla = $this->buildSla($encounter, $urgencyBand, $catalog);
         $idPersona = (int) ($encounter->subject_persona_id ?? 0);
-        $intakeContext = (new ConsultaAsyncIntakeContextService())->buildFromMeta($meta, $idPersona);
 
         $serviceId = (int) ($encounter->service_id ?? 0);
         $servicio = $serviceId > 0 ? Servicio::findOne($serviceId) : null;
 
         $subject = $encounter->subject;
         $profesionalNombre = null;
-        if ($idPes > 0) {
+        if ($staffView && $idPes > 0) {
             $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
             if ($pes !== null && $pes->persona) {
                 $profesionalNombre = $pes->persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N);
@@ -287,7 +311,7 @@ final class ConsultaAsyncBandejaService
         // Con care_plan_id: la UI paciente las muestra dentro del tratamiento (no en el listado general).
         $uiGroup = $carePlanId > 0 ? 'tratamiento' : 'consultas';
 
-        return [
+        $item = [
             'encounter_id' => (int) $encounter->id,
             'solicitud_tipo' => $this->solicitudTipoFromMeta($meta, $policyCatalog),
             'conversation_mode' => $conversationMode,
@@ -305,19 +329,25 @@ final class ConsultaAsyncBandejaService
             'reason_preview' => $this->previewText((string) ($encounter->reason_text ?? '')),
             'resolution_label' => $resolutionLabel !== '' ? $resolutionLabel : null,
             'urgency_band' => $urgencyBand,
-            'intake_context' => $intakeContext,
             'sla' => $sla,
-            'asignacion' => [
-                'id_pes' => $idPes > 0 ? $idPes : null,
-                'profesional' => $profesionalNombre,
-                'es_mio' => $esMio,
-            ],
             'acciones' => [
                 'tomar' => $puedeTomar,
                 'abrir_chat' => $abrirChat,
                 'cancelar' => $cancelar,
             ],
         ];
+
+        // Staff: contexto de intake + asignación. Paciente: card liviana (preview/acciones).
+        if ($staffView) {
+            $item['intake_context'] = (new ConsultaAsyncIntakeContextService())->buildFromMeta($meta, $idPersona);
+            $item['asignacion'] = [
+                'id_pes' => $idPes > 0 ? $idPes : null,
+                'profesional' => $profesionalNombre,
+                'es_mio' => $esMio,
+            ];
+        }
+
+        return $item;
     }
 
     /**

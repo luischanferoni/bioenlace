@@ -14,6 +14,7 @@ import 'care_plans_list_screen.dart';
 import 'chat_medico_screen.dart';
 import 'chat_motivos_screen.dart';
 import 'encounter_summary_detail_screen.dart';
+import '../widgets/consulta_async_solicitud_card.dart';
 
 /// Proximidad de un turno respecto al día actual (sólo fecha, sin hora).
 enum _ProximidadPendiente { hoy, manana, masAdelante }
@@ -734,14 +735,11 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildContenido(BuildContext context) {
-    final asyncTratamiento = _consultasAsyncEnTratamiento;
-    final asyncTratamientoHist = _consultasAsyncHistorialEnTratamiento;
     final asyncConsultas = _consultasAsyncGenerales;
     final asyncConsultasHist = _consultasAsyncHistorialGenerales;
-    final mostrarTratamiento = _carePlansActivos.isNotEmpty ||
-        _loadingCarePlans ||
-        asyncTratamiento.isNotEmpty ||
-        asyncTratamientoHist.isNotEmpty;
+    final pendientesTratamiento = _consultasAsyncEnTratamiento.length;
+    final mostrarTratamiento =
+        _carePlansActivos.isNotEmpty || _loadingCarePlans;
 
     return ListView(
       controller: _scrollController,
@@ -754,10 +752,9 @@ class HomeScreenState extends State<HomeScreen> {
         _buildHeaderSaludo(context),
         if (mostrarTratamiento) ...[
           BioSpacing.gapH(BioSpacing.lg),
-          _buildTratamientoSection(
+          _buildTratamientoCard(
             context,
-            activas: asyncTratamiento,
-            historial: asyncTratamientoHist,
+            solicitudesPendientes: pendientesTratamiento,
           ),
         ],
         if (asyncConsultas.isNotEmpty) ...[
@@ -825,14 +822,28 @@ class HomeScreenState extends State<HomeScreen> {
   void _abrirDetalleCarePlan(Map<String, dynamic> plan) {
     final id = CarePlanUi.idFromMap(plan);
     if (id == null) return;
+    final activas = _consultasAsyncEnTratamiento
+        .where((i) => ConsultaAsyncSolicitudCard.carePlanIdOf(i) == id)
+        .toList();
+    final hist = _consultasAsyncHistorialEnTratamiento
+        .where((i) {
+          final cid = ConsultaAsyncSolicitudCard.carePlanIdOf(i);
+          return cid == null || cid == id;
+        })
+        .toList();
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => CarePlanDetailScreen(
           planId: id,
           authToken: widget.authToken,
+          userId: widget.userId,
+          userName: widget.userName,
           initialSummary: plan,
+          initialSolicitudesActivas: activas,
+          initialSolicitudesHistorial: hist,
           onStartAssistantFlow: widget.onStartAssistantFlow,
+          onSolicitudesChanged: _cargarInicial,
         ),
       ),
     );
@@ -845,6 +856,12 @@ class HomeScreenState extends State<HomeScreen> {
         builder: (_) => CarePlansListScreen(
           plans: List<Map<String, dynamic>>.from(_carePlansActivos),
           authToken: widget.authToken,
+          userId: widget.userId,
+          userName: widget.userName,
+          onStartAssistantFlow: widget.onStartAssistantFlow,
+          onSolicitudesChanged: _cargarInicial,
+          solicitudesActivas: _consultasAsyncEnTratamiento,
+          solicitudesHistorial: _consultasAsyncHistorialEnTratamiento,
         ),
       ),
     );
@@ -912,7 +929,11 @@ class HomeScreenState extends State<HomeScreen> {
         ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-            child: _buildConsultaAsyncCard(context, item, esHistorial: true),
+            child: ConsultaAsyncSolicitudCard(
+              item: item,
+              esHistorial: true,
+              onAbrirChat: () => _abrirChatConsultaAsync(item),
+            ),
           ),
         ),
       ],
@@ -931,180 +952,39 @@ class HomeScreenState extends State<HomeScreen> {
         ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-            child: _buildConsultaAsyncCard(context, item),
+            child: ConsultaAsyncSolicitudCard(
+              item: item,
+              onAbrirChat: () => _abrirChatConsultaAsync(item),
+              onCancelar: () => _cancelarConsultaAsync(item),
+            ),
           ),
         ),
       ],
     );
   }
 
-  /// Consultas con `care_plan_id` / `ui_group=tratamiento` van bajo el bloque de tratamiento.
-  bool _asyncPerteneceATratamiento(Map<String, dynamic> item) {
-    final group = item['ui_group']?.toString().trim();
-    if (group == 'tratamiento') return true;
-    if (group == 'consultas') return false;
-    final raw = item['care_plan_id'];
-    final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '') ?? 0;
-    return id > 0;
-  }
+  List<Map<String, dynamic>> get _consultasAsyncEnTratamiento => _consultasAsync
+      .where(ConsultaAsyncSolicitudCard.perteneceATratamiento)
+      .toList();
 
-  List<Map<String, dynamic>> get _consultasAsyncEnTratamiento =>
-      _consultasAsync.where(_asyncPerteneceATratamiento).toList();
-
-  List<Map<String, dynamic>> get _consultasAsyncGenerales =>
-      _consultasAsync.where((i) => !_asyncPerteneceATratamiento(i)).toList();
+  List<Map<String, dynamic>> get _consultasAsyncGenerales => _consultasAsync
+      .where((i) => !ConsultaAsyncSolicitudCard.perteneceATratamiento(i))
+      .toList();
 
   List<Map<String, dynamic>> get _consultasAsyncHistorialEnTratamiento =>
-      _consultasAsyncHistorial.where(_asyncPerteneceATratamiento).toList();
+      _consultasAsyncHistorial
+          .where(ConsultaAsyncSolicitudCard.perteneceATratamiento)
+          .toList();
 
   List<Map<String, dynamic>> get _consultasAsyncHistorialGenerales =>
-      _consultasAsyncHistorial.where((i) => !_asyncPerteneceATratamiento(i)).toList();
+      _consultasAsyncHistorial
+          .where((i) => !ConsultaAsyncSolicitudCard.perteneceATratamiento(i))
+          .toList();
 
-  Widget _buildTratamientoSection(
+  Widget _buildTratamientoCard(
     BuildContext context, {
-    required List<Map<String, dynamic>> activas,
-    required List<Map<String, dynamic>> historial,
+    int solicitudesPendientes = 0,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (_carePlansActivos.isNotEmpty || _loadingCarePlans)
-          _buildTratamientoCard(context),
-        if (activas.isNotEmpty) ...[
-          if (_carePlansActivos.isNotEmpty || _loadingCarePlans)
-            BioSpacing.gapH(BioSpacing.sm),
-          Text('Solicitudes del tratamiento', style: BioTypography.title),
-          BioSpacing.gapH(BioSpacing.sm),
-          ...activas.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-              child: _buildConsultaAsyncCard(context, item),
-            ),
-          ),
-        ],
-        if (historial.isNotEmpty) ...[
-          BioSpacing.gapH(BioSpacing.sm),
-          Text('Solicitudes anteriores', style: BioTypography.title),
-          BioSpacing.gapH(BioSpacing.sm),
-          ...historial.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-              child: _buildConsultaAsyncCard(context, item, esHistorial: true),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  /// Subraya títulos de solicitud ya presentes en el preview (sin badge duplicado).
-  Widget _buildConsultaPreviewText(String preview) {
-    const prefixes = [
-      'Solicitud de renovación',
-      'Solicitud de ajuste',
-    ];
-    for (final prefix in prefixes) {
-      if (preview.startsWith(prefix)) {
-        return Text.rich(
-          TextSpan(
-            style: BioTypography.bodySm,
-            children: [
-              TextSpan(
-                text: prefix,
-                style: const TextStyle(decoration: TextDecoration.underline),
-              ),
-              TextSpan(text: preview.substring(prefix.length)),
-            ],
-          ),
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        );
-      }
-    }
-    return Text(
-      preview,
-      style: BioTypography.bodySm,
-      maxLines: 3,
-      overflow: TextOverflow.ellipsis,
-    );
-  }
-
-  Widget _buildConsultaAsyncCard(
-    BuildContext context,
-    Map<String, dynamic> item, {
-    bool esHistorial = false,
-  }) {
-    final preview = item['reason_preview']?.toString().trim() ?? '';
-    final servicio = item['servicio']?.toString().trim() ?? '';
-    final resolucion = item['resolution_label']?.toString().trim() ?? '';
-    final estado = item['status_label']?.toString().trim() ??
-        item['status']?.toString().trim() ??
-        '';
-    final createdAt = item['created_at']?.toString().trim() ?? '';
-    final accionesRaw = item['acciones'];
-    final acciones = accionesRaw is Map
-        ? Map<String, dynamic>.from(accionesRaw)
-        : <String, dynamic>{};
-    final abrirChat = acciones['abrir_chat'] == true;
-    final cancelar = acciones['cancelar'] == true;
-
-    return BioCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  servicio.isNotEmpty ? servicio : 'Consulta clínica',
-                  style: BioTypography.title,
-                ),
-              ),
-              if (estado.isNotEmpty) BioBadge.neutral(estado),
-            ],
-          ),
-          if (createdAt.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(createdAt, style: BioTypography.caption),
-          ],
-          if (preview.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            _buildConsultaPreviewText(preview),
-          ],
-          if (esHistorial && resolucion.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text('Resolución: $resolucion', style: BioTypography.bodySm),
-          ],
-          if (abrirChat || cancelar) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            Wrap(
-              spacing: BioSpacing.sm,
-              runSpacing: BioSpacing.xs,
-              children: [
-                if (abrirChat)
-                  BioButton.primary(
-                    label: esHistorial ? 'Ver conversación' : 'Ver mensajes',
-                    size: BioButtonSize.sm,
-                    icon: Icons.chat_bubble_outline,
-                    onPressed: () => _abrirChatConsultaAsync(item),
-                  ),
-                if (cancelar)
-                  BioButton.outlineDanger(
-                    label: 'Retirar solicitud',
-                    size: BioButtonSize.sm,
-                    icon: Icons.delete_outline,
-                    onPressed: () => _cancelarConsultaAsync(item),
-                  ),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTratamientoCard(BuildContext context) {
     if (_loadingCarePlans && _carePlansActivos.isEmpty) {
       return const BioCard(
         child: Padding(
@@ -1159,6 +1039,14 @@ class HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
+          if (solicitudesPendientes > 0) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            BioBadge.info(
+              solicitudesPendientes == 1
+                  ? '1 solicitud pendiente'
+                  : '$solicitudesPendientes solicitudes pendientes',
+            ),
+          ],
           if (varios) ...[
             BioSpacing.gapH(BioSpacing.sm),
             Align(
@@ -1174,7 +1062,9 @@ class HomeScreenState extends State<HomeScreen> {
           ] else ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(
-              'Ver detalle',
+              solicitudesPendientes > 0
+                  ? 'Ver detalle y solicitudes'
+                  : 'Ver detalle',
               style: BioTypography.caption.copyWith(color: context.bio.textMuted),
             ),
           ],

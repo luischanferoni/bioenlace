@@ -1,29 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
+import '../widgets/consulta_async_solicitud_card.dart';
 import 'care_plan_detail_screen.dart';
 
 /// Listado de planes de tratamiento activos del paciente.
 class CarePlansListScreen extends StatelessWidget {
   final List<Map<String, dynamic>> plans;
   final String? authToken;
+  final String userId;
+  final String userName;
+  final void Function(String intentId, {Map<String, String>? draft})? onStartAssistantFlow;
+  final VoidCallback? onSolicitudesChanged;
+  final List<Map<String, dynamic>> solicitudesActivas;
+  final List<Map<String, dynamic>> solicitudesHistorial;
 
   const CarePlansListScreen({
     Key? key,
     required this.plans,
     this.authToken,
+    this.userId = '',
+    this.userName = '',
+    this.onStartAssistantFlow,
+    this.onSolicitudesChanged,
+    this.solicitudesActivas = const [],
+    this.solicitudesHistorial = const [],
   }) : super(key: key);
 
   void _abrirDetalle(BuildContext context, Map<String, dynamic> plan) {
     final id = CarePlanUi.idFromMap(plan);
     if (id == null) return;
+    final activas = solicitudesActivas
+        .where((i) => ConsultaAsyncSolicitudCard.carePlanIdOf(i) == id)
+        .toList();
+    final hist = solicitudesHistorial.where((i) {
+      final cid = ConsultaAsyncSolicitudCard.carePlanIdOf(i);
+      return cid == null || cid == id;
+    }).toList();
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => CarePlanDetailScreen(
           planId: id,
           authToken: authToken,
+          userId: userId,
+          userName: userName,
           initialSummary: plan,
+          initialSolicitudesActivas: activas,
+          initialSolicitudesHistorial: hist,
+          onStartAssistantFlow: onStartAssistantFlow,
+          onSolicitudesChanged: onSolicitudesChanged,
         ),
       ),
     );

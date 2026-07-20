@@ -73,9 +73,6 @@ final class ConsultasSeguimientoIntakeService
                 }
             }
         }
-        if ($necesidad === 'solicitar_turno' && $pref === 'teleconsulta') {
-            $draft['tipo_atencion'] = 'teleconsulta';
-        }
 
         $this->aplicarMedicacionOperacionEnDraft($draft);
 

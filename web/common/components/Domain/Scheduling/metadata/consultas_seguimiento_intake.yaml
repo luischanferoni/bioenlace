@@ -32,7 +32,7 @@ seguimiento_necesidades:
   solicitar_turno:
     code: solicitar_turno
     label: Solicitar turno
-    description: Reservá un control presencial, con el mismo médico u otro, o por videollamada.
+    description: Reservá un control presencial con el mismo médico u otro profesional.
     permite_async: false
   contar_evolucion:
     code: contar_evolucion
@@ -42,11 +42,6 @@ seguimiento_necesidades:
     permite_async: true
 
 preferencias_turno:
-  teleconsulta:
-    code: teleconsulta
-    label: Videollamada
-    description: Atención remota con turno en un horario disponible.
-    tipo_atencion: teleconsulta
   mismo_medico:
     code: mismo_medico
     label: Mismo médico

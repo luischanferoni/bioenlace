@@ -567,7 +567,7 @@ subintents:
       triage_raiz: seguimiento_cronico
       mensaje: draft.mensaje
 - id: cs_select_preferencia_turno
-  assistant_text: Turno
+  assistant_text: ¿Con quién querés el control?
   requires:
   - draft.seguimiento_necesidad
   - draft.care_plan_id
@@ -575,10 +575,6 @@ subintents:
   - draft.preferencia_profesional_turno
   - draft.tipo_atencion
   next_routing:
-  - when:
-      draft_equals:
-        preferencia_profesional_turno: teleconsulta
-    next: cs_select_dia_teleconsulta
   - when:
       draft_equals:
         preferencia_profesional_turno: mismo_medico
@@ -590,7 +586,7 @@ subintents:
     action_id: consultas-seguimiento.paso
     params:
       step: preferencia_turno
-- id: cs_select_efector
+      step_title: ¿Con quién querés el control?- id: cs_select_efector
   assistant_text: Centro de salud
   requires:
   - draft.id_servicio_asignado

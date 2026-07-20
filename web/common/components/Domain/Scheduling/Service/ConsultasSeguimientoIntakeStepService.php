@@ -29,7 +29,7 @@ final class ConsultasSeguimientoIntakeStepService
                 'draft_field' => ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD,
             ],
             self::STEP_PREFERENCIA_TURNO => [
-                'title' => '¿Cómo preferís el turno?',
+                'title' => '¿Con quién querés el control?',
                 'draft_field' => ConsultasSeguimientoIntakeService::DRAFT_PREFERENCIA_TURNO,
             ],
             default => null,

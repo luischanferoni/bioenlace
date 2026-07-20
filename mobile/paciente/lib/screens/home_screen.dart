@@ -734,6 +734,15 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildContenido(BuildContext context) {
+    final asyncTratamiento = _consultasAsyncEnTratamiento;
+    final asyncTratamientoHist = _consultasAsyncHistorialEnTratamiento;
+    final asyncConsultas = _consultasAsyncGenerales;
+    final asyncConsultasHist = _consultasAsyncHistorialGenerales;
+    final mostrarTratamiento = _carePlansActivos.isNotEmpty ||
+        _loadingCarePlans ||
+        asyncTratamiento.isNotEmpty ||
+        asyncTratamientoHist.isNotEmpty;
+
     return ListView(
       controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
@@ -743,17 +752,21 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       children: [
         _buildHeaderSaludo(context),
-        if (_carePlansActivos.isNotEmpty || _loadingCarePlans) ...[
+        if (mostrarTratamiento) ...[
           BioSpacing.gapH(BioSpacing.lg),
-          _buildTratamientoCard(context),
+          _buildTratamientoSection(
+            context,
+            activas: asyncTratamiento,
+            historial: asyncTratamientoHist,
+          ),
         ],
-        if (_consultasAsync.isNotEmpty) ...[
+        if (asyncConsultas.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.lg),
-          _buildConsultasAsyncSection(context),
+          _buildConsultasAsyncSection(context, asyncConsultas),
         ],
-        if (_consultasAsyncHistorial.isNotEmpty) ...[
+        if (asyncConsultasHist.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.lg),
-          _buildConsultasAsyncHistorialSection(context),
+          _buildConsultasAsyncHistorialSection(context, asyncConsultasHist),
         ],
         BioSpacing.gapH(BioSpacing.md),
         if (_error != null &&
@@ -887,13 +900,16 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildConsultasAsyncHistorialSection(BuildContext context) {
+  Widget _buildConsultasAsyncHistorialSection(
+    BuildContext context,
+    List<Map<String, dynamic>> items,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_tituloHistorialAsync, style: BioTypography.title),
         BioSpacing.gapH(BioSpacing.sm),
-        ..._consultasAsyncHistorial.map(
+        ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: BioSpacing.sm),
             child: _buildConsultaAsyncCard(context, item, esHistorial: true),
@@ -903,18 +919,80 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildConsultasAsyncSection(BuildContext context) {
+  Widget _buildConsultasAsyncSection(
+    BuildContext context,
+    List<Map<String, dynamic>> items,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_tituloConsultasAsync, style: BioTypography.title),
         BioSpacing.gapH(BioSpacing.sm),
-        ..._consultasAsync.map(
+        ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: BioSpacing.sm),
             child: _buildConsultaAsyncCard(context, item),
           ),
         ),
+      ],
+    );
+  }
+
+  /// Consultas con `care_plan_id` / `ui_group=tratamiento` van bajo el bloque de tratamiento.
+  bool _asyncPerteneceATratamiento(Map<String, dynamic> item) {
+    final group = item['ui_group']?.toString().trim();
+    if (group == 'tratamiento') return true;
+    if (group == 'consultas') return false;
+    final raw = item['care_plan_id'];
+    final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '') ?? 0;
+    return id > 0;
+  }
+
+  List<Map<String, dynamic>> get _consultasAsyncEnTratamiento =>
+      _consultasAsync.where(_asyncPerteneceATratamiento).toList();
+
+  List<Map<String, dynamic>> get _consultasAsyncGenerales =>
+      _consultasAsync.where((i) => !_asyncPerteneceATratamiento(i)).toList();
+
+  List<Map<String, dynamic>> get _consultasAsyncHistorialEnTratamiento =>
+      _consultasAsyncHistorial.where(_asyncPerteneceATratamiento).toList();
+
+  List<Map<String, dynamic>> get _consultasAsyncHistorialGenerales =>
+      _consultasAsyncHistorial.where((i) => !_asyncPerteneceATratamiento(i)).toList();
+
+  Widget _buildTratamientoSection(
+    BuildContext context, {
+    required List<Map<String, dynamic>> activas,
+    required List<Map<String, dynamic>> historial,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_carePlansActivos.isNotEmpty || _loadingCarePlans)
+          _buildTratamientoCard(context),
+        if (activas.isNotEmpty) ...[
+          if (_carePlansActivos.isNotEmpty || _loadingCarePlans)
+            BioSpacing.gapH(BioSpacing.sm),
+          Text('Solicitudes del tratamiento', style: BioTypography.title),
+          BioSpacing.gapH(BioSpacing.sm),
+          ...activas.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+              child: _buildConsultaAsyncCard(context, item),
+            ),
+          ),
+        ],
+        if (historial.isNotEmpty) ...[
+          BioSpacing.gapH(BioSpacing.sm),
+          Text('Solicitudes anteriores', style: BioTypography.title),
+          BioSpacing.gapH(BioSpacing.sm),
+          ...historial.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+              child: _buildConsultaAsyncCard(context, item, esHistorial: true),
+            ),
+          ),
+        ],
       ],
     );
   }

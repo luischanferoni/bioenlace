@@ -283,11 +283,16 @@ final class ConsultaAsyncBandejaService
         $resolutionLabel = is_array($resolution)
             ? trim((string) ($resolution['label'] ?? ''))
             : '';
+        $carePlanId = (new ConsultaAsyncEncounterMetaService())->carePlanId($meta);
+        // Con care_plan_id: la UI paciente las muestra dentro del tratamiento (no en el listado general).
+        $uiGroup = $carePlanId > 0 ? 'tratamiento' : 'consultas';
 
         return [
             'encounter_id' => (int) $encounter->id,
             'solicitud_tipo' => $this->solicitudTipoFromMeta($meta, $policyCatalog),
             'conversation_mode' => $conversationMode,
+            'care_plan_id' => $carePlanId > 0 ? $carePlanId : null,
+            'ui_group' => $uiGroup,
             'paciente' => [
                 'id_persona' => (int) $encounter->subject_persona_id,
                 'nombre_completo' => $subject ? $subject->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Paciente',

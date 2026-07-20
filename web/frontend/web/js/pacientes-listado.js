@@ -1442,11 +1442,11 @@
       }
 
       var sectionsSlot = wrapRoot.querySelector('[data-slot="patient-sections"]');
-      if (asyncSec && asyncSec.data) {
-        renderPatientAsyncSection(sectionsSlot, asyncSec.data);
-      }
       if (careItems.length && sectionsSlot) {
         renderPatientCarePlans(sectionsSlot, careItems);
+      }
+      if (asyncSec && asyncSec.data && sectionsSlot) {
+        renderPatientAsyncSection(sectionsSlot, asyncSec.data);
       }
 
       var proxGrid = wrapRoot.querySelector('[data-slot="proximos-grid"]');
@@ -2188,6 +2188,27 @@
       }
     }
 
+    function asyncPerteneceATratamiento(item) {
+      if (!item) return false;
+      if (item.ui_group === 'tratamiento') return true;
+      if (item.ui_group === 'consultas') return false;
+      var carePlanId = item.care_plan_id != null ? parseInt(item.care_plan_id, 10) : 0;
+      return carePlanId > 0;
+    }
+
+    function splitAsyncByUiGroup(items) {
+      var tratamiento = [];
+      var consultas = [];
+      (items || []).forEach(function (item) {
+        if (asyncPerteneceATratamiento(item)) {
+          tratamiento.push(item);
+        } else {
+          consultas.push(item);
+        }
+      });
+      return { tratamiento: tratamiento, consultas: consultas };
+    }
+
     function renderPatientAsyncItemsSection(sectionsSlot, title, items, esHistorial) {
       if (!sectionsSlot || !Array.isArray(items) || !items.length) return;
       var secFrag = importTemplate('tpl-patient-home-section');
@@ -2208,18 +2229,37 @@
 
     function renderPatientAsyncSection(sectionsSlot, data) {
       if (!sectionsSlot || !data) return;
+      var activas = splitAsyncByUiGroup(data.items || []);
+      var history = data.history || {};
+      var hist = splitAsyncByUiGroup(history.items || []);
+
+      if (activas.tratamiento.length) {
+        renderPatientAsyncItemsSection(
+          sectionsSlot,
+          'Solicitudes del tratamiento',
+          activas.tratamiento,
+          false
+        );
+      }
+      if (hist.tratamiento.length) {
+        renderPatientAsyncItemsSection(
+          sectionsSlot,
+          'Solicitudes anteriores del tratamiento',
+          hist.tratamiento,
+          true
+        );
+      }
       renderPatientAsyncItemsSection(
         sectionsSlot,
         data.title,
-        data.items,
+        activas.consultas,
         false
       );
-      var history = data.history;
-      if (history && Array.isArray(history.items) && history.items.length) {
+      if (hist.consultas.length) {
         renderPatientAsyncItemsSection(
           sectionsSlot,
-          history.title,
-          history.items,
+          history.title || 'Consultas anteriores',
+          hist.consultas,
           true
         );
       }

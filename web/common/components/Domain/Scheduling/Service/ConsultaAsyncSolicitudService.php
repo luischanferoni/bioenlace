@@ -30,6 +30,7 @@ final class ConsultaAsyncSolicitudService
         if (ConsultasSeguimientoIntakeService::esIntakeConsultasSeguimiento($draft)) {
             $intakeSvc->prepararDraft($draft, $idPersona);
             $intakeSvc->assertPuedeSolicitarAsync($draft, $idPersona);
+            $this->assertNoRenovacionAbiertaParaPlan($idPersona, $draft);
             $meta = $intakeSvc->compilarMetaAsync($draft);
         } else {
             $triageCatalog = new ReservaTurnoTriageCatalogService();
@@ -85,11 +86,133 @@ final class ConsultaAsyncSolicitudService
 
         return [
             'success' => true,
-            'data' => [
-                'encounter_id' => (int) $encounter->id,
-            ],
-            'message' => 'Recibimos tu consulta clínica por mensaje. El equipo de salud te responderá cuando pueda.',
+            'data' => $this->buildSuccessData($encounter, $meta),
+            'message' => $this->mensajeExitoParaMeta($meta),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $meta
+     * @return array<string, mixed>
+     */
+    private function buildSuccessData(Encounter $encounter, array $meta): array
+    {
+        $mensaje = $this->mensajeExitoParaMeta($meta);
+        $data = [
+            'encounter_id' => (int) $encounter->id,
+            'mensaje' => $mensaje,
+            'message' => $mensaje,
+        ];
+        $op = trim((string) ($meta['medicacion_operacion'] ?? ''));
+        if ($op !== '') {
+            $data['medicacion_operacion'] = $op;
+        }
+        $labels = $meta['medication_labels'] ?? null;
+        if (is_array($labels) && $labels !== []) {
+            $data['medication_labels'] = array_values(array_filter(array_map(
+                static fn ($l): string => trim((string) $l),
+                $labels
+            )));
+        }
+        $carePlanId = (int) ($meta['care_plan_id'] ?? 0);
+        if ($carePlanId > 0) {
+            $data['care_plan_id'] = $carePlanId;
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param array<string, mixed> $meta
+     */
+    private function mensajeExitoParaMeta(array $meta): string
+    {
+        $catalog = new ConsultaAsyncBandejaCatalogService();
+        $operacion = trim((string) ($meta['medicacion_operacion'] ?? ''));
+        if ($operacion === ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
+            $lines = [];
+            $intro = $catalog->mensajeExitoRenovacion();
+            if ($intro !== '') {
+                $lines[] = $intro;
+            }
+            $labels = $meta['medication_labels'] ?? null;
+            if (is_array($labels)) {
+                foreach ($labels as $label) {
+                    $s = trim((string) $label);
+                    if ($s !== '') {
+                        $lines[] = '• ' . $s;
+                    }
+                }
+            }
+            $cierre = $catalog->mensajeExitoRenovacionCierre();
+            if ($cierre !== '') {
+                $lines[] = $cierre;
+            }
+            if ($lines !== []) {
+                return implode("\n", $lines);
+            }
+        }
+
+        $generico = $catalog->mensajeExitoGenerico();
+        if ($generico !== '') {
+            return $generico;
+        }
+
+        return 'Recibimos tu consulta clínica por mensaje. El equipo de salud te responderá cuando pueda.';
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    private function assertNoRenovacionAbiertaParaPlan(int $idPersona, array $draft): void
+    {
+        $operacion = trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICACION_OPERACION] ?? ''));
+        if ($operacion !== ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
+            return;
+        }
+        $carePlanId = (int) ($draft['care_plan_id'] ?? 0);
+        if ($carePlanId <= 0) {
+            return;
+        }
+
+        $encounters = Encounter::find()
+            ->where([
+                'subject_persona_id' => $idPersona,
+                'parent_type' => Encounter::PARENT_SOLICITUD_ASYNC,
+                'encounter_class' => Encounter::ENCOUNTER_CLASS_VR,
+            ])
+            ->andWhere(['status' => [
+                EncounterStatus::PLANNED,
+                EncounterStatus::IN_PROGRESS,
+                EncounterStatus::ON_HOLD,
+            ]])
+            ->andWhere(['deleted_at' => null])
+            ->all();
+
+        foreach ($encounters as $encounter) {
+            $meta = $this->parseEncounterNote($encounter->note);
+            if ((int) ($meta['care_plan_id'] ?? 0) !== $carePlanId) {
+                continue;
+            }
+            if (trim((string) ($meta['medicacion_operacion'] ?? ''))
+                !== ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
+                continue;
+            }
+            throw new \InvalidArgumentException((new ConsultaAsyncBandejaCatalogService())->mensajeRenovacionDuplicada());
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function parseEncounterNote(?string $note): array
+    {
+        if ($note === null || trim($note) === '') {
+            return [];
+        }
+        $decoded = json_decode($note, true);
+
+        return is_array($decoded) ? $decoded : [];
     }
 
     /**

@@ -10,6 +10,7 @@ import '../config/paciente_intents.dart';
 import '../auth/paciente_post_login.dart';
 import 'care_plan_detail_screen.dart';
 import 'care_plans_list_screen.dart';
+import 'chat_medico_screen.dart';
 import 'chat_motivos_screen.dart';
 import 'encounter_summary_detail_screen.dart';
 
@@ -57,6 +58,8 @@ class HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
 
   List<Map<String, dynamic>> _carePlansActivos = [];
+  List<Map<String, dynamic>> _consultasAsync = [];
+  String _tituloConsultasAsync = 'Consultas clínicas por mensaje';
   bool _loadingCarePlans = false;
 
   final List<Map<String, dynamic>> _pendientes = [];
@@ -224,7 +227,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _applyUpcomingFromPanel() async {
     final panel = await _homePanelApi.getPanel(
-      sections: 'upcoming_appointments,care_plans_active',
+      sections: 'upcoming_appointments,care_plans_active,patient_async_consultations',
       subjectPersonaId: _subjectPersonaId,
     );
     final upcoming = panel.sectionByKind('patient_upcoming_appointments');
@@ -246,6 +249,14 @@ class HomeScreenState extends State<HomeScreen> {
     if (care != null) {
       _carePlansActivos = _asMapList(care.data['items']);
       _loadingCarePlans = false;
+    }
+    final asyncSec = panel.sectionByKind('patient_async_consultations');
+    if (asyncSec != null) {
+      _consultasAsync = _asMapList(asyncSec.data['items']);
+      final titulo = asyncSec.data['title']?.toString().trim();
+      if (titulo != null && titulo.isNotEmpty) {
+        _tituloConsultasAsync = titulo;
+      }
     }
   }
 
@@ -723,6 +734,10 @@ class HomeScreenState extends State<HomeScreen> {
           BioSpacing.gapH(BioSpacing.lg),
           _buildTratamientoCard(context),
         ],
+        if (_consultasAsync.isNotEmpty) ...[
+          BioSpacing.gapH(BioSpacing.lg),
+          _buildConsultasAsyncSection(context),
+        ],
         BioSpacing.gapH(BioSpacing.md),
         if (_error != null &&
             (_proximosVisibles.isNotEmpty || _pasados.isNotEmpty)) ...[
@@ -801,6 +816,84 @@ class HomeScreenState extends State<HomeScreen> {
           plans: List<Map<String, dynamic>>.from(_carePlansActivos),
           authToken: widget.authToken,
         ),
+      ),
+    );
+  }
+
+  void _abrirChatConsultaAsync(Map<String, dynamic> item) {
+    final raw = item['encounter_id'];
+    final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
+    if (id == null || id <= 0) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatMedicoScreen(
+          consultaId: id,
+          authToken: widget.authToken,
+          userId: widget.userId,
+          userName: widget.userName,
+          titulo: item['servicio']?.toString() ?? 'Consulta clínica por mensaje',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildConsultasAsyncSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(_tituloConsultasAsync, style: BioTypography.title),
+        BioSpacing.gapH(BioSpacing.sm),
+        ..._consultasAsync.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+            child: _buildConsultaAsyncCard(context, item),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConsultaAsyncCard(BuildContext context, Map<String, dynamic> item) {
+    final preview = item['reason_preview']?.toString().trim() ?? '';
+    final servicio = item['servicio']?.toString().trim() ?? '';
+    final estado = item['status_label']?.toString().trim() ??
+        item['status']?.toString().trim() ??
+        '';
+    final createdAt = item['created_at']?.toString().trim() ?? '';
+
+    return BioCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  servicio.isNotEmpty ? servicio : 'Consulta clínica',
+                  style: BioTypography.title,
+                ),
+              ),
+              if (estado.isNotEmpty) BioBadge.neutral(estado),
+            ],
+          ),
+          if (createdAt.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(createdAt, style: BioTypography.caption),
+          ],
+          if (preview.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(preview, style: BioTypography.bodySm, maxLines: 3, overflow: TextOverflow.ellipsis),
+          ],
+          BioSpacing.gapH(BioSpacing.sm),
+          BioButton.primary(
+            label: 'Ver mensajes',
+            size: BioButtonSize.sm,
+            icon: Icons.chat_bubble_outline,
+            onPressed: () => _abrirChatConsultaAsync(item),
+          ),
+        ],
       ),
     );
   }

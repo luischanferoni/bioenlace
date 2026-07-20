@@ -176,6 +176,8 @@ String formatFlowSubmitSummary({
     case 'atencion.necesito-atencion':
     case 'turnos.crear-como-paciente':
       return _summaryCrear(snap, data);
+    case 'atencion.consultas-seguimiento-flow':
+      return _summaryConsultasSeguimiento(snap, data);
     default:
       return _summaryGeneric(data);
   }
@@ -307,6 +309,29 @@ String _nuevoHorarioLinea(Map<String, dynamic> snap, Map<String, dynamic> data) 
     data['fecha']?.toString(),
     data['hora']?.toString(),
   );
+}
+
+String _summaryConsultasSeguimiento(Map<String, dynamic> snap, Map<String, dynamic> data) {
+  final msg = data['mensaje']?.toString().trim() ?? data['message']?.toString().trim();
+  if (msg != null && msg.isNotEmpty) {
+    return msg;
+  }
+  final op = data['medicacion_operacion']?.toString().trim() ?? '';
+  if (op == 'renovacion') {
+    final lines = <String>['Registramos tu solicitud de renovación de medicación.'];
+    final labels = data['medication_labels'];
+    if (labels is List) {
+      for (final label in labels) {
+        final s = label?.toString().trim() ?? '';
+        if (s.isNotEmpty) lines.add('• $s');
+      }
+    }
+    lines.add(
+      'Un profesional la revisará y te responderá por mensaje en Inicio → Consultas clínicas por mensaje.',
+    );
+    return lines.join('\n');
+  }
+  return _summaryGeneric(data);
 }
 
 String _summaryCrear(Map<String, dynamic> snap, Map<String, dynamic> data) {

@@ -9,10 +9,12 @@ import '../models/cirugia_agenda_item.dart';
 import '../auth/personalsalud_post_login.dart';
 import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
+import '../services/consulta_async_api.dart';
 import 'emergency/emergency_guardia_actions.dart';
 import 'emergency/emergency_triage_screen.dart';
 import 'patient_timeline_screen.dart';
 import 'internacion/internacion_mapa_screen.dart';
+import 'chat_consulta_screen.dart';
 
 /// Pantalla principal del médico. Contenido según encounter class:
 /// AMB/VR/OBSENC/HH = turnos; IMP = internados/cirugías; EMER = tablero operativo de guardia.
@@ -44,8 +46,16 @@ class _HomeScreenState extends State<HomeScreen> {
     authToken: widget.authToken,
     userId: widget.userId,
   );
+  late ConsultaAsyncApi _consultaAsyncApi = ConsultaAsyncApi(
+    authToken: widget.authToken,
+    userId: widget.userId,
+  );
 
   List<Turno> _turnos = [];
+  List<Map<String, dynamic>> _consultasAsync = [];
+  String _tituloConsultasAsync = 'Consultas clínicas por mensaje';
+  int _consultasAsyncSlaIncumplidos = 0;
+  final Set<int> _tomandoAsyncIds = {};
   List<InternadoItem> _internados = [];
   List<EmergencyBoardItem> _guardiaTablero = [];
   List<CirugiaAgendaItem> _cirugias = [];
@@ -92,9 +102,11 @@ class _HomeScreenState extends State<HomeScreen> {
       if (token != null && token.isNotEmpty) {
         _homePanelApi.authToken = token;
         _emergencyApi.authToken = token;
+        _consultaAsyncApi = ConsultaAsyncApi(authToken: token, userId: widget.userId);
       } else if (widget.authToken != null && widget.authToken!.isNotEmpty) {
         _homePanelApi.authToken = widget.authToken;
         _emergencyApi.authToken = widget.authToken;
+        _consultaAsyncApi = ConsultaAsyncApi(authToken: widget.authToken, userId: widget.userId);
       } else {
         _homePanelApi.userId = widget.userId;
       }
@@ -197,6 +209,8 @@ class _HomeScreenState extends State<HomeScreen> {
         _coberturaActiva = [];
         _coberturaTitle = null;
         _sessionTieneCobertura = false;
+        _consultasAsync = [];
+        _consultasAsyncSlaIncumplidos = 0;
         _lastListKind = '';
         _staffContext = null;
       }
@@ -245,6 +259,23 @@ class _HomeScreenState extends State<HomeScreen> {
             .map((e) => Turno.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
         _lastListKind = 'turnos';
+      }
+
+      final asyncSec = panel.sectionByKind('async_consultations_queue');
+      if (asyncSec != null) {
+        final items = asyncSec.data['items'] as List<dynamic>? ?? [];
+        _consultasAsync = items
+            .map((e) => Map<String, dynamic>.from(e as Map))
+            .toList();
+        final titulo = asyncSec.data['title']?.toString().trim();
+        if (titulo != null && titulo.isNotEmpty) {
+          _tituloConsultasAsync = titulo;
+        }
+        _consultasAsyncSlaIncumplidos =
+            asyncSec.data['sla_incumplidos'] as int? ?? 0;
+      } else if (!partial) {
+        _consultasAsync = [];
+        _consultasAsyncSlaIncumplidos = 0;
       }
 
       final inpat = panel.sectionByKind('inpatients');
@@ -463,15 +494,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           )
                         : _encounterClass == 'EMER'
                             ? _wrapWithPanelKpis(_buildGuardiaTableroList())
-                            : _wrapWithPanelKpis(
-                                _turnos.isEmpty
-                                    ? _buildEmpty(
-                                        icon: Icons.event_busy_outlined,
-                                        text:
-                                            'No hay turnos programados para esta fecha.',
-                                      )
-                                    : _buildTurnosPorEstado(siguienteTurno),
-                              ),
+                            : _wrapWithPanelKpis(_buildAmbHomeContent(siguienteTurno)),
           ),
         ],
       ),
@@ -606,6 +629,16 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildAmbHomeContent(Turno? siguienteTurno) {
+    if (_consultasAsync.isEmpty && _turnos.isEmpty) {
+      return _buildEmpty(
+        icon: Icons.event_busy_outlined,
+        text: 'No hay turnos programados para esta fecha.',
+      );
+    }
+    return _buildTurnosPorEstado(siguienteTurno);
+  }
+
   Widget _buildTurnosPorEstado(Turno? siguienteTurno) {
     final pendientes = _getPendientes(siguienteTurno);
     final cargadas = _getConsultasCargadas();
@@ -617,6 +650,13 @@ class _HomeScreenState extends State<HomeScreen> {
         vertical: BioSpacing.lg,
       ),
       children: [
+        if (_consultasAsync.isNotEmpty) ...[
+          _buildAsyncBandejaSection(),
+          BioSpacing.gapH(BioSpacing.xl),
+        ],
+        if (_turnos.isEmpty && _consultasAsync.isNotEmpty)
+          _emptyInline('No hay turnos programados para esta fecha.')
+        else ...[
         if (siguienteTurno != null) ...[
           _seccionSubtitulo('Siguiente turno'),
           BioSpacing.gapH(BioSpacing.sm),
@@ -657,7 +697,245 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               )),
+        ],
       ],
+    );
+  }
+
+  Widget _buildAsyncBandejaSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(
+                _tituloConsultasAsync,
+                style: BioTypography.h3.copyWith(
+                  color: IntentPalette.of(UiIntent.primary).base,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            if (_consultasAsyncSlaIncumplidos > 0)
+              BioBadge.danger('$_consultasAsyncSlaIncumplidos SLA vencido'),
+          ],
+        ),
+        BioSpacing.gapH(BioSpacing.sm),
+        ..._consultasAsync.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: BioSpacing.md),
+            child: _buildAsyncSolicitudCard(item),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAsyncSolicitudCard(Map<String, dynamic> item) {
+    final paciente = item['paciente'] is Map
+        ? Map<String, dynamic>.from(item['paciente'] as Map)
+        : <String, dynamic>{};
+    final nombrePaciente =
+        paciente['nombre_completo']?.toString().trim() ?? 'Paciente';
+    final servicio = item['servicio']?.toString().trim() ?? '';
+    final preview = item['reason_preview']?.toString().trim() ?? '';
+    final createdAt = _formatAsyncCreatedAt(item['created_at']?.toString());
+    final status = item['status']?.toString() ?? '';
+    final statusLabel =
+        item['status_label']?.toString().trim() ?? status;
+    final acciones = item['acciones'] is Map
+        ? Map<String, dynamic>.from(item['acciones'] as Map)
+        : <String, dynamic>{};
+    final puedeTomar = acciones['tomar'] == true;
+    final abrirChat = acciones['abrir_chat'] == true;
+    final encounterRaw = item['encounter_id'];
+    final encounterId = encounterRaw is int
+        ? encounterRaw
+        : int.tryParse(encounterRaw?.toString() ?? '') ?? 0;
+    final tomando = _tomandoAsyncIds.contains(encounterId);
+
+    final prioridad = item['prioridad'] is Map
+        ? Map<String, dynamic>.from(item['prioridad'] as Map)
+        : null;
+    final rank = prioridad?['rank'];
+    final prioridadRank = rank is int ? rank : int.tryParse('$rank') ?? 0;
+
+    final sla = item['sla'] is Map
+        ? Map<String, dynamic>.from(item['sla'] as Map)
+        : null;
+    final slaIncumplido = sla?['incumplido'] == true;
+    final slaHoras = sla?['horas_objetivo'];
+
+    final intakeLines = _asyncIntakeLines(item['intake_context']);
+
+    UiIntent statusIntent = UiIntent.neutral;
+    if (status == 'planned') statusIntent = UiIntent.warning;
+    if (status == 'in-progress') statusIntent = UiIntent.success;
+
+    return BioCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(nombrePaciente, style: BioTypography.title),
+              ),
+              if (statusLabel.isNotEmpty)
+                BioBadge(label: statusLabel, intent: statusIntent),
+            ],
+          ),
+          if (servicio.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(servicio, style: BioTypography.bodySm),
+          ],
+          if (createdAt.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(createdAt, style: BioTypography.caption),
+          ],
+          if (preview.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              preview,
+              style: BioTypography.bodySm,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          if (intakeLines.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            ...intakeLines.map(
+              (line) => Padding(
+                padding: const EdgeInsets.only(bottom: BioSpacing.xs),
+                child: Text(line, style: BioTypography.caption),
+              ),
+            ),
+          ],
+          if (prioridadRank > 0 && prioridadRank <= 3) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            BioBadge.warning('Prioridad $prioridadRank'),
+          ],
+          if (slaIncumplido) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            BioBadge.danger('SLA vencido${slaHoras != null ? ' ($slaHoras h)' : ''}'),
+          ],
+          if (puedeTomar || abrirChat) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Wrap(
+              spacing: BioSpacing.sm,
+              runSpacing: BioSpacing.xs,
+              children: [
+                if (puedeTomar)
+                  BioButton.primary(
+                    label: 'Tomar y responder',
+                    size: BioButtonSize.sm,
+                    icon: Icons.play_arrow_outlined,
+                    loading: tomando,
+                    onPressed: tomando || encounterId <= 0
+                        ? null
+                        : () => _tomarAsyncCaso(item),
+                  ),
+                if (abrirChat)
+                  BioButton.outlinePrimary(
+                    label: 'Ver conversación',
+                    size: BioButtonSize.sm,
+                    icon: Icons.chat_bubble_outline,
+                    onPressed: encounterId <= 0
+                        ? null
+                        : () => _abrirChatAsync(item),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<String> _asyncIntakeLines(dynamic intakeContext) {
+    if (intakeContext is! Map) return [];
+    final ctx = Map<String, dynamic>.from(intakeContext);
+    final summary = ctx['summary']?.toString().trim() ?? '';
+    if (summary.isNotEmpty) {
+      return [summary];
+    }
+    final lines = ctx['lines'];
+    if (lines is! List) return [];
+    final out = <String>[];
+    for (final line in lines) {
+      if (line is! Map) continue;
+      final label = line['label']?.toString().trim() ?? '';
+      final value = line['value']?.toString().trim() ?? '';
+      if (label.isEmpty && value.isEmpty) continue;
+      out.add(label.isNotEmpty ? '$label: $value' : value);
+    }
+    return out;
+  }
+
+  String _formatAsyncCreatedAt(String? raw) {
+    final s = raw?.trim() ?? '';
+    if (s.isEmpty) return '';
+    final dt = DateTime.tryParse(s);
+    if (dt == null) return s;
+    return DateFormat('d/M/y HH:mm', 'es').format(dt.toLocal());
+  }
+
+  Future<void> _tomarAsyncCaso(Map<String, dynamic> item) async {
+    final encounterRaw = item['encounter_id'];
+    final encounterId = encounterRaw is int
+        ? encounterRaw
+        : int.tryParse(encounterRaw?.toString() ?? '');
+    if (encounterId == null || encounterId <= 0) return;
+
+    setState(() => _tomandoAsyncIds.add(encounterId));
+    try {
+      final res = await _consultaAsyncApi.tomarComoStaff(encounterId);
+      if (res['success'] != true) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(res['message']?.toString() ?? 'No se pudo tomar la solicitud.')),
+        );
+        return;
+      }
+      await _cargarListadoPacientes(silent: true);
+      if (!mounted) return;
+      _abrirChatAsync(item);
+    } finally {
+      if (mounted) {
+        setState(() => _tomandoAsyncIds.remove(encounterId));
+      }
+    }
+  }
+
+  void _abrirChatAsync(Map<String, dynamic> item) {
+    final encounterRaw = item['encounter_id'];
+    final encounterId = encounterRaw is int
+        ? encounterRaw
+        : int.tryParse(encounterRaw?.toString() ?? '');
+    if (encounterId == null || encounterId <= 0) return;
+
+    final paciente = item['paciente'] is Map
+        ? Map<String, dynamic>.from(item['paciente'] as Map)
+        : <String, dynamic>{};
+    final nombrePaciente =
+        paciente['nombre_completo']?.toString().trim() ?? 'Paciente';
+    final servicio = item['servicio']?.toString().trim() ?? '';
+    final titulo = servicio.isNotEmpty ? '$nombrePaciente · $servicio' : nombrePaciente;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ChatConsultaScreen(
+          consultaId: encounterId,
+          authToken: _homePanelApi.authToken ?? widget.authToken,
+          userId: widget.userId,
+          userName: widget.userName,
+          titulo: titulo,
+        ),
+      ),
     );
   }
 

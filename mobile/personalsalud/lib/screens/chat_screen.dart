@@ -105,6 +105,56 @@ class ChatScreenState extends State<ChatScreen> {
     return message['flow_submit'] is Map;
   }
 
+  String? _initialListSelectionForMessage(Map<String, dynamic> message) {
+    final inlineUi = message['inline_ui'];
+    final provided = inlineUi is Map && inlineUi['provided'] is Map
+        ? Map<String, dynamic>.from(inlineUi['provided'] as Map)
+        : const <String, dynamic>{};
+    final flowProvides = message['flow_provides'];
+    if (flowProvides is List) {
+      for (final rawField in flowProvides) {
+        final field = rawField.toString().trim();
+        if (field.isEmpty) continue;
+        final fromDraft = _draft[field]?.toString().trim() ?? '';
+        if (fromDraft.isNotEmpty) return fromDraft;
+        final value = provided[field]?.toString().trim() ?? '';
+        if (value.isNotEmpty) return value;
+      }
+    }
+    final autoSelected = message['_flow_auto_selected_id']?.toString().trim() ?? '';
+    return autoSelected.isNotEmpty ? autoSelected : null;
+  }
+
+  bool _isRedundantFlowListPick(
+    Map<String, dynamic> message,
+    int messageIndex,
+    Map<String, dynamic> delta,
+  ) {
+    final provides = message['flow_provides'];
+    if (provides is! List || provides.isEmpty) return false;
+    var matched = false;
+    for (final raw in provides) {
+      final field = raw.toString().trim();
+      if (field.isEmpty || !delta.containsKey(field)) continue;
+      final next = delta[field]?.toString().trim() ?? '';
+      if (next.isEmpty) continue;
+      final cur = _draft[field]?.toString().trim() ?? '';
+      if (next != cur) return false;
+      matched = true;
+    }
+    if (!matched) return false;
+
+    final activeIid = _intentId;
+    if (activeIid != null && activeIid.isNotEmpty) {
+      final lastIdx = _lastFlowInteractiveMessageIndex(activeIid);
+      if (lastIdx != null && messageIndex < lastIdx) {
+        return true;
+      }
+    }
+    return message['_flow_single_pick_done'] == true ||
+        message['_flow_single_pick_in_flight'] == true;
+  }
+
   /// UI JSON con `data.requiere_confirmacion` (p. ej. baja PES con turnos afectados).
   bool _uiDefinitionRequiereConfirmacion(Map<String, dynamic>? def) {
     if (def == null) return false;
@@ -285,6 +335,7 @@ class ChatScreenState extends State<ChatScreen> {
     _applyDraftDelta(pick.toDraftDelta());
     _applyInlineUiQueryToDraft(inlineUi);
     _asistenteService.draft = Map<String, dynamic>.from(_draft);
+    if (mounted) setState(() {});
 
     if (_messageIsTerminalFlowStep(message)) {
       message['_flow_single_pick_done'] = true;
@@ -2701,8 +2752,7 @@ class ChatScreenState extends State<ChatScreen> {
                                     },
                               enableFlowChainAutoAdvance: false,
                               isTerminalFlowStep: _messageIsTerminalFlowStep(message) || showingLicenciaImpact,
-                              initialListEmbedSelectedId:
-                                  message['_flow_auto_selected_id']?.toString(),
+                              initialListEmbedSelectedId: _initialListSelectionForMessage(message),
                               apiAbsoluteUrl: showingLicenciaImpact
                                   ? ''
                                   : ((inlineUi is Map &&
@@ -2724,8 +2774,24 @@ class ChatScreenState extends State<ChatScreen> {
                                       ? _resetAssistantToWelcome
                                       : null),
                               onDraftDelta: flowUiDisabled ? null : (dd) async {
+                                final delta = Map<String, dynamic>.from(dd);
+                                if (_isRedundantFlowListPick(message, index, delta)) {
+                                  final provides = message['flow_provides'];
+                                  if (provides is List) {
+                                    for (final raw in provides) {
+                                      final field = raw.toString().trim();
+                                      final value = delta[field]?.toString().trim() ?? '';
+                                      if (field.isNotEmpty && value.isNotEmpty) {
+                                        message['_flow_auto_selected_id'] = value;
+                                        break;
+                                      }
+                                    }
+                                  }
+                                  if (mounted) setState(() {});
+                                  return;
+                                }
                                 _truncateFlowAfterStepIfNeeded(index);
-                                _applyDraftDelta(Map<String, dynamic>.from(dd));
+                                _applyDraftDelta(delta);
                                 if (inlineUi is Map) {
                                   _applyInlineUiQueryToDraft(Map<String, dynamic>.from(inlineUi));
                                 }

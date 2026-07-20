@@ -328,13 +328,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   @override
   void initState() {
     super.initState();
-    final presetId = widget.initialListEmbedSelectedId?.trim();
-    if (presetId != null && presetId.isNotEmpty) {
-      _listEmbedSelectedId = presetId;
-      _listEmbedSelectedIds
-        ..clear()
-        ..addAll(presetId.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
-    }
+    _seedListEmbedSelectionFromWidget();
     final cached = widget.initialDefinition;
     if (cached != null && cached['kind']?.toString() == 'ui_definition') {
       _hydrateFromDefinition(Map<String, dynamic>.from(cached), fromNetwork: false);
@@ -362,14 +356,8 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     final presetId = widget.initialListEmbedSelectedId?.trim();
     if (presetId != null &&
         presetId.isNotEmpty &&
-        presetId != oldWidget.initialListEmbedSelectedId &&
-        _listEmbedSelectedId != presetId) {
-      setState(() {
-        _listEmbedSelectedId = presetId;
-        _listEmbedSelectedIds
-          ..clear()
-          ..addAll(presetId.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
-      });
+        (_listEmbedSelectedId == null || _listEmbedSelectedId != presetId)) {
+      setState(_seedListEmbedSelectionFromWidget);
     }
   }
 
@@ -499,6 +487,15 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     });
   }
 
+  void _seedListEmbedSelectionFromWidget() {
+    final presetId = widget.initialListEmbedSelectedId?.trim();
+    if (presetId == null || presetId.isEmpty) return;
+    _listEmbedSelectedId = presetId;
+    _listEmbedSelectedIds
+      ..clear()
+      ..addAll(presetId.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty));
+  }
+
   void _hydrateFromDefinition(Map<String, dynamic> m, {required bool fromNetwork}) {
     if (!mounted) return;
     _seedAccum(m);
@@ -513,6 +510,10 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       _loading = false;
       _error = null;
     });
+    // Tras GET de ítems, no perder la selección ya auto-elegida o confirmada en el chat.
+    if (fromNetwork && widget.initialListEmbedSelectedId?.trim().isNotEmpty == true) {
+      setState(_seedListEmbedSelectionFromWidget);
+    }
     widget.onDefinitionLoaded?.call(Map<String, dynamic>.from(m));
     if (widget.enableFlowChainAutoAdvance) {
       _scheduleFlowChainSingleListPick();

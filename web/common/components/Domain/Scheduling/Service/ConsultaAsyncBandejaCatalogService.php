@@ -67,6 +67,38 @@ final class ConsultaAsyncBandejaCatalogService
         return trim((string) ($map[$key] ?? $status));
     }
 
+    public function mensajeExitoGenerico(): string
+    {
+        $block = self::load()['solicitud'] ?? [];
+
+        return trim((string) (is_array($block) ? ($block['mensaje_exito_generico'] ?? '') : ''));
+    }
+
+    public function mensajeExitoRenovacion(): string
+    {
+        $block = self::load()['solicitud'] ?? [];
+
+        return trim((string) (is_array($block) ? ($block['mensaje_exito_renovacion'] ?? '') : ''));
+    }
+
+    public function mensajeExitoRenovacionCierre(): string
+    {
+        $block = self::load()['solicitud'] ?? [];
+
+        return trim((string) (is_array($block) ? ($block['mensaje_exito_renovacion_cierre'] ?? '') : ''));
+    }
+
+    public function mensajeRenovacionDuplicada(): string
+    {
+        $block = self::load()['solicitud'] ?? [];
+        $msg = trim((string) (is_array($block) ? ($block['duplicate_renovacion_abierta'] ?? '') : ''));
+        if ($msg !== '') {
+            return $msg;
+        }
+
+        return 'Ya tenés una solicitud de renovación pendiente para este tratamiento.';
+    }
+
     /**
      * @return array<string, mixed>
      */

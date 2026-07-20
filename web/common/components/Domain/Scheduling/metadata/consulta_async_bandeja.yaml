@@ -24,5 +24,16 @@ patient_section:
   title: Consultas clínicas por mensaje
   empty_message: No tenés consultas clínicas por mensaje activas.
 
+solicitud:
+  mensaje_exito_generico: >-
+    Recibimos tu consulta clínica por mensaje. El equipo de salud te responderá cuando pueda.
+  mensaje_exito_renovacion: Registramos tu solicitud de renovación de medicación.
+  mensaje_exito_renovacion_cierre: >-
+    Un profesional la revisará y te responderá por mensaje. Podés ver el estado en Inicio
+    → Consultas clínicas por mensaje.
+  duplicate_renovacion_abierta: >-
+    Ya tenés una solicitud de renovación pendiente para este tratamiento. Revisala en Inicio
+    → Consultas clínicas por mensaje antes de enviar otra.
+
 intake_context:
   section_label: Contexto de la solicitud

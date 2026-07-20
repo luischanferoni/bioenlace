@@ -65,11 +65,21 @@ final class ConsultaAsyncChatPolicyService
         $resolution = $meta['async_resolution'] ?? null;
         $resolutionCode = is_array($resolution) ? trim((string) ($resolution['code'] ?? '')) : '';
 
+        $uploadTypes = [];
+        $uploadEnabled = false;
+        if ($composerEnabled) {
+            if (!$viewerEsPaciente || !$structured) {
+                $uploadTypes = $catalog->allowedUploadMessageTypes();
+                $uploadEnabled = $uploadTypes !== [];
+            }
+        }
+
         return [
             'conversation_mode' => $structured ? 'structured' : 'conversational',
             'composer' => [
                 'enabled' => $composerEnabled,
-                'upload_enabled' => $composerEnabled && !$structured && $viewerEsPaciente,
+                'upload_enabled' => $uploadEnabled,
+                'upload_types' => $uploadEnabled ? $uploadTypes : [],
                 'hint' => $composerHint,
             ],
             'encounter_status' => $status,

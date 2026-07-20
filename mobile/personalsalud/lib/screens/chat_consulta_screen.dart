@@ -1,7 +1,10 @@
+import 'package:cross_file/cross_file.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:record/record.dart';
 import 'package:shared/shared.dart';
-import 'package:image_picker/image_picker.dart';
 import '../services/consulta_chat_service.dart';
 import '../services/consulta_async_api.dart';
 import 'patient_timeline_screen.dart';
@@ -38,6 +41,8 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   bool _loading = true;
   bool _sending = false;
   String? _error;
+  final AudioRecorder _recorder = AudioRecorder();
+  bool _isRecording = false;
 
   @override
   void initState() {
@@ -161,11 +166,66 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     }
   }
 
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final XFile? file = await picker.pickImage(source: ImageSource.gallery);
-    if (file == null || !mounted) return;
-    await _uploadFile(file, 'imagen');
+  Future<void> _pickDocument() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: const ['pdf'],
+      withData: kIsWeb,
+    );
+    if (result == null || result.files.isEmpty || !mounted) return;
+    final picked = result.files.single;
+    if (kIsWeb) {
+      if (picked.bytes == null || picked.bytes!.isEmpty) {
+        _showError('No se pudo leer el PDF');
+        return;
+      }
+      await _uploadBytes(picked.bytes!, picked.name, 'documento');
+      return;
+    }
+    final path = picked.path;
+    if (path == null || path.isEmpty) {
+      _showError('No se pudo leer el PDF');
+      return;
+    }
+    await _uploadFile(XFile(path), 'documento');
+  }
+
+  Future<void> _uploadBytes(List<int> bytes, String name, String messageType) async {
+    if (_sending) return;
+    setState(() => _sending = true);
+    final result = await _chatService.uploadBytes(
+      widget.consultaId,
+      bytes,
+      filename: name,
+      messageType: messageType,
+    );
+    if (!mounted) return;
+    setState(() => _sending = false);
+    if (result['success'] == true && result['data'] != null) {
+      setState(() => _messages = [..._messages, result['data']]);
+      _scrollToBottom();
+    } else {
+      _showError(result['message']?.toString() ?? 'Error');
+    }
+  }
+
+  Future<void> _recordAndSendAudio() async {
+    if (_isRecording) {
+      final path = await _recorder.stop();
+      setState(() => _isRecording = false);
+      if (path != null && path.isNotEmpty) {
+        await _uploadFile(XFile(path), 'audio');
+      }
+      return;
+    }
+    if (!await _recorder.hasPermission()) return;
+    final dir = await getTemporaryDirectory();
+    final path = '${dir.path}/audio_${DateTime.now().millisecondsSinceEpoch}.m4a';
+    await _recorder.start(
+      const RecordConfig(encoder: AudioEncoder.aacLc, sampleRate: 44100),
+      path: path,
+    );
+    setState(() => _isRecording = true);
   }
 
   Future<void> _uploadFile(XFile file, String messageType) async {
@@ -181,23 +241,6 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
         return;
       }
     }
-    final showLocalPreview = messageType == 'imagen';
-    if (showLocalPreview) {
-      setState(() {
-        _messages = [
-          ..._messages,
-          <String, dynamic>{
-            'message_type': 'imagen',
-            'content': file.path,
-            '_local_preview': true,
-            'user_id': widget.userId,
-            'user_role': 'medico',
-            'created_at': DateTime.now().toIso8601String(),
-          },
-        ];
-      });
-      _scrollToBottom();
-    }
     setState(() => _sending = true);
     final result = await _chatService.uploadFile(
       widget.consultaId,
@@ -207,23 +250,9 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
-      setState(() {
-        final withoutPreview = showLocalPreview
-            ? _messages
-                .where((m) => (m as Map)['_local_preview'] != true)
-                .toList()
-            : _messages;
-        _messages = [...withoutPreview, result['data']];
-      });
+      setState(() => _messages = [..._messages, result['data']]);
       _scrollToBottom();
     } else {
-      if (showLocalPreview) {
-        setState(() {
-          _messages = _messages
-              .where((m) => (m as Map)['_local_preview'] != true)
-              .toList();
-        });
-      }
       _showError(result['message']?.toString() ?? 'Error');
     }
   }
@@ -473,37 +502,31 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
         style: BioTypography.body.copyWith(color: textColor),
       );
     }
+    if (type == 'audio' || type == 'documento') {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            type == 'audio' ? Icons.mic : Icons.picture_as_pdf_outlined,
+            color: mutedColor,
+            size: 18,
+          ),
+          BioSpacing.gapW(BioSpacing.sm),
+          Text(
+            asyncChatAttachmentLabel(type),
+            style: BioTypography.bodySm.copyWith(color: mutedColor),
+          ),
+        ],
+      );
+    }
     if (isImageMessageType(type) && content.isNotEmpty) {
-      return ChatMediaImage(
-        source: content,
-        bearerToken: widget.authToken,
-        width: 220,
-        fit: BoxFit.cover,
-        placeholderColor: mutedColor,
-      );
-    }
-    if (type == 'audio') {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.mic, color: mutedColor, size: 18),
-          BioSpacing.gapW(BioSpacing.sm),
-          Text('Audio', style: BioTypography.bodySm.copyWith(color: mutedColor)),
-        ],
-      );
-    }
-    if (type == 'video') {
-      return Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.videocam, color: mutedColor, size: 18),
-          BioSpacing.gapW(BioSpacing.sm),
-          Text('Video', style: BioTypography.bodySm.copyWith(color: mutedColor)),
-        ],
+      return Text(
+        asyncChatAttachmentLabel(type),
+        style: BioTypography.bodySm.copyWith(color: mutedColor),
       );
     }
     return Text(
-      content,
+      content.isNotEmpty ? content : asyncChatAttachmentLabel(type),
       style: BioTypography.bodySm.copyWith(color: mutedColor),
     );
   }
@@ -529,11 +552,22 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
           ),
           child: Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.image_outlined),
-                color: tokens.textBody,
-                onPressed: _sending ? null : _pickImage,
-              ),
+              if (_chatPolicy.canUploadDocument)
+                IconButton(
+                  icon: const Icon(Icons.picture_as_pdf_outlined),
+                  color: tokens.textBody,
+                  tooltip: 'Adjuntar PDF',
+                  onPressed: _sending ? null : _pickDocument,
+                ),
+              if (_chatPolicy.canUploadAudio)
+                IconButton(
+                  icon: Icon(_isRecording ? Icons.stop_circle : Icons.mic_none),
+                  color: _isRecording
+                      ? IntentPalette.of(UiIntent.danger).base
+                      : tokens.textBody,
+                  tooltip: 'Grabar audio',
+                  onPressed: _sending ? null : _recordAndSendAudio,
+                ),
               Expanded(
                 child: TextField(
                   controller: _textController,
@@ -568,6 +602,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
+    _recorder.dispose();
     super.dispose();
   }
 }

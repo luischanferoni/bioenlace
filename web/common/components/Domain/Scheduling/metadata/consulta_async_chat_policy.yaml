@@ -15,6 +15,31 @@ conversation_modes:
     patient_composer: true
     patient_upload: true
 
+attachments:
+  allowed_message_types:
+    - audio
+    - documento
+  document:
+    extensions:
+      - pdf
+    mime_types:
+      - application/pdf
+    max_bytes: 10485760
+  audio:
+    extensions:
+      - m4a
+      - mp3
+      - webm
+      - ogg
+      - wav
+    mime_types:
+      - audio/webm
+      - audio/mp4
+      - audio/mpeg
+      - audio/ogg
+      - audio/wav
+    max_bytes: 5242880
+
 limits:
   conversational:
     max_patient_messages_while_planned_without_staff: 3

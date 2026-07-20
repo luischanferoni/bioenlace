@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cross_file/cross_file.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared/shared.dart';
 
@@ -83,6 +84,50 @@ class ConsultaChatService {
       request.files.add(await multipartFileFromXFile(file));
 
       final streamed = await request.send().timeout(Duration(seconds: 60));
+      final response = await http.Response.fromStream(streamed);
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['success'] == true) {
+        final payload = data['data'];
+        if (payload is Map<String, dynamic>) {
+          normalizeChatMediaMessage(
+            payload,
+            mediaScope: 'consulta-chat',
+            encounterId: consultaId,
+          );
+        } else if (payload is Map) {
+          final copy = Map<String, dynamic>.from(payload);
+          normalizeChatMediaMessage(
+            copy,
+            mediaScope: 'consulta-chat',
+            encounterId: consultaId,
+          );
+          data['data'] = copy;
+        }
+        return {'success': true, 'data': data['data']};
+      }
+      return {'success': false, 'message': data['message'] ?? 'Error al subir archivo'};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadBytes(
+    int consultaId,
+    List<int> bytes, {
+    required String filename,
+    required String messageType,
+  }) async {
+    try {
+      final uri = Uri.parse('${AppConfig.apiUrl}/consulta-chat/subir');
+      final request = http.MultipartRequest('POST', uri);
+      request.headers.addAll(_headers);
+      request.fields['consulta_id'] = consultaId.toString();
+      request.fields['user_id'] = userId;
+      request.fields['message_type'] = messageType;
+      request.files.add(await multipartFileFromBytes(bytes, filename: filename));
+
+      final streamed = await request.send().timeout(const Duration(seconds: 60));
       final response = await http.Response.fromStream(streamed);
       final data = json.decode(response.body);
 

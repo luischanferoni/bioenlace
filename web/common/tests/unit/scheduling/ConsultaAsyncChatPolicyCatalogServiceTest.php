@@ -42,4 +42,10 @@ class ConsultaAsyncChatPolicyCatalogServiceTest extends Unit
         $msg = $svc->duplicateMessage('renovacion_con_ajuste_pendiente');
         $this->assertStringContainsString('ajuste', mb_strtolower($msg));
     }
+
+    public function testAllowedUploadTypesSonAudioYDocumento(): void
+    {
+        $svc = new ConsultaAsyncChatPolicyCatalogService();
+        $this->assertSame(['audio', 'documento'], $svc->allowedUploadMessageTypes());
+    }
 }

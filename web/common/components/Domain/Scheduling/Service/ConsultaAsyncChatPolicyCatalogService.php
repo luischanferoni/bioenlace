@@ -168,6 +168,46 @@ final class ConsultaAsyncChatPolicyCatalogService
     }
 
     /**
+     * @return list<string>
+     */
+    public function allowedUploadMessageTypes(): array
+    {
+        $types = self::cached()['attachments']['allowed_message_types'] ?? ['audio', 'documento'];
+        if (!is_array($types)) {
+            return ['audio', 'documento'];
+        }
+        $out = [];
+        foreach ($types as $t) {
+            $s = trim((string) $t);
+            if ($s !== '' && in_array($s, ['audio', 'documento'], true)) {
+                $out[] = $s;
+            }
+        }
+
+        return $out !== [] ? $out : ['audio', 'documento'];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function attachmentDocumentConfig(): array
+    {
+        $block = self::cached()['attachments']['document'] ?? [];
+
+        return is_array($block) ? $block : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function attachmentAudioConfig(): array
+    {
+        $block = self::cached()['attachments']['audio'] ?? [];
+
+        return is_array($block) ? $block : [];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function cached(): array

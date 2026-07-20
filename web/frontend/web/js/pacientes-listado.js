@@ -77,6 +77,9 @@
       chatPolicy: null,
       isStaff: false,
       item: null,
+      mediaRecorder: null,
+      mediaChunks: [],
+      isRecording: false,
     };
 
     var PASADOS_PAGE_LIMIT = 20;
@@ -1631,6 +1634,29 @@
           compose.classList.add('d-none');
         }
       }
+      var attachSlot = document.getElementById('async-chat-attach-actions');
+      if (attachSlot) {
+        clearNode(attachSlot);
+        if (p.composerEnabled && asyncChatState.canCompose && p.uploadEnabled) {
+          if (p.canUploadDocument) {
+            var pdfBtn = document.createElement('button');
+            pdfBtn.type = 'button';
+            pdfBtn.className = 'btn btn-outline-secondary btn-sm';
+            pdfBtn.textContent = 'Adjuntar PDF';
+            pdfBtn.addEventListener('click', triggerAsyncChatDocumentPick);
+            attachSlot.appendChild(pdfBtn);
+          }
+          if (p.canUploadAudio) {
+            var audioBtn = document.createElement('button');
+            audioBtn.type = 'button';
+            audioBtn.className = 'btn btn-outline-secondary btn-sm';
+            audioBtn.id = 'async-chat-audio-btn';
+            audioBtn.textContent = asyncChatState.isRecording ? 'Detener audio' : 'Grabar audio';
+            audioBtn.addEventListener('click', toggleAsyncChatAudioRecording);
+            attachSlot.appendChild(audioBtn);
+          }
+        }
+      }
       if (actionsSlot) {
         clearNode(actionsSlot);
         if (p.canCancel) {
@@ -1652,6 +1678,30 @@
       }
     }
 
+    function openAsyncChatAttachment(url, type) {
+      var api = window.BioenlaceNativePage;
+      if (!api || !url) return;
+      var headers = window.BioenlaceApiClient && window.BioenlaceApiClient.mergeHeaders
+        ? window.BioenlaceApiClient.mergeHeaders({ 'X-Requested-With': 'XMLHttpRequest' })
+        : { 'X-Requested-With': 'XMLHttpRequest' };
+      fetch(url, { method: 'GET', headers: headers, credentials: 'same-origin' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('No se pudo abrir el adjunto.');
+          return res.blob();
+        })
+        .then(function (blob) {
+          var objectUrl = URL.createObjectURL(blob);
+          window.open(objectUrl, '_blank', 'noopener');
+        })
+        .catch(function (e) {
+          var errEl = document.getElementById('async-chat-error');
+          if (errEl) {
+            errEl.textContent = e && e.message ? e.message : 'No se pudo abrir el adjunto.';
+            errEl.classList.remove('d-none');
+          }
+        });
+    }
+
     function renderAsyncChatMessages(messages) {
       var box = document.getElementById('async-chat-messages');
       var helpers = getAsyncChatHelpers();
@@ -1659,7 +1709,7 @@
       clearNode(box);
       (messages || []).forEach(function (m) {
         if (helpers && helpers.renderMessage) {
-          box.appendChild(helpers.renderMessage(m));
+          box.appendChild(helpers.renderMessage(m, openAsyncChatAttachment));
         } else {
           var row = document.createElement('div');
           row.className = 'mb-2 small';
@@ -1668,6 +1718,99 @@
         }
       });
       box.scrollTop = box.scrollHeight;
+    }
+
+    function triggerAsyncChatDocumentPick() {
+      var input = document.getElementById('async-chat-file-input');
+      if (input) input.click();
+    }
+
+    async function uploadAsyncChatFile(file, messageType) {
+      var api = window.BioenlaceNativePage;
+      var errEl = document.getElementById('async-chat-error');
+      if (!api || !asyncChatState.encounterId || !file) return;
+      if (errEl) errEl.classList.add('d-none');
+      var form = new FormData();
+      form.append('encounter_id', asyncChatState.encounterId);
+      form.append('message_type', messageType);
+      form.append('file', file);
+      try {
+        var url = api.apiV1Url('consulta-chat/subir');
+        var headers = window.BioenlaceApiClient && window.BioenlaceApiClient.mergeHeaders
+          ? window.BioenlaceApiClient.mergeHeaders({ 'X-Requested-With': 'XMLHttpRequest' })
+          : { 'X-Requested-With': 'XMLHttpRequest' };
+        var res = await fetch(url, { method: 'POST', headers: headers, body: form, credentials: 'same-origin' });
+        var json = await res.json();
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo subir el archivo.');
+        }
+        await loadAsyncChatMessages(asyncChatState.encounterId);
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'Error al subir.';
+          errEl.classList.remove('d-none');
+        }
+      }
+    }
+
+    async function onAsyncChatFileSelected(ev) {
+      var input = ev.target;
+      var file = input && input.files && input.files[0] ? input.files[0] : null;
+      if (input) input.value = '';
+      if (!file) return;
+      if (file.type && file.type !== 'application/pdf') {
+        var errEl = document.getElementById('async-chat-error');
+        if (errEl) {
+          errEl.textContent = 'Solo se permiten documentos PDF.';
+          errEl.classList.remove('d-none');
+        }
+        return;
+      }
+      await uploadAsyncChatFile(file, 'documento');
+    }
+
+    async function toggleAsyncChatAudioRecording() {
+      var errEl = document.getElementById('async-chat-error');
+      if (asyncChatState.isRecording && asyncChatState.mediaRecorder) {
+        asyncChatState.mediaRecorder.stop();
+        return;
+      }
+      if (!navigator.mediaDevices || !window.MediaRecorder) {
+        if (errEl) {
+          errEl.textContent = 'Tu navegador no permite grabar audio.';
+          errEl.classList.remove('d-none');
+        }
+        return;
+      }
+      try {
+        var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        asyncChatState.mediaChunks = [];
+        var recorder = new MediaRecorder(stream);
+        asyncChatState.mediaRecorder = recorder;
+        recorder.ondataavailable = function (ev) {
+          if (ev.data && ev.data.size > 0) asyncChatState.mediaChunks.push(ev.data);
+        };
+        recorder.onstop = async function () {
+          stream.getTracks().forEach(function (t) { t.stop(); });
+          asyncChatState.isRecording = false;
+          var btn = document.getElementById('async-chat-audio-btn');
+          if (btn) btn.textContent = 'Grabar audio';
+          var blob = new Blob(asyncChatState.mediaChunks, { type: 'audio/webm' });
+          asyncChatState.mediaChunks = [];
+          asyncChatState.mediaRecorder = null;
+          if (blob.size <= 0) return;
+          await uploadAsyncChatFile(new File([blob], 'audio.webm', { type: 'audio/webm' }), 'audio');
+        };
+        recorder.start();
+        asyncChatState.isRecording = true;
+        var btn = document.getElementById('async-chat-audio-btn');
+        if (btn) btn.textContent = 'Detener audio';
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'No se pudo acceder al micrófono.';
+          errEl.classList.remove('d-none');
+        }
+      }
     }
 
     async function loadAsyncChatMessages(encounterId) {
@@ -2248,6 +2391,10 @@
     var asyncChatCloseConfirm = document.getElementById('async-chat-close-confirm');
     if (asyncChatCloseConfirm) {
       asyncChatCloseConfirm.addEventListener('click', confirmAsyncChatClose);
+    }
+    var asyncChatFileInput = document.getElementById('async-chat-file-input');
+    if (asyncChatFileInput) {
+      asyncChatFileInput.addEventListener('change', onAsyncChatFileSelected);
     }
 
     load();

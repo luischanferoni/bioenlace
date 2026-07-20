@@ -33,6 +33,7 @@ dependencies:
   shared:
     path: ../packages/shared
   image_picker: ^1.1.1        # Para capturar imágenes
+  file_picker: ^8.1.7
   camera: ^0.10.5             # Para usar la cámara directamente
   path_provider: ^2.1.1       # Guardar imágenes temporalmente
   http: ^1.2.1                # Subir imágenes a la API

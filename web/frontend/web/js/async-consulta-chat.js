@@ -9,7 +9,8 @@
     if (!raw || typeof raw !== 'object') {
       return {
         composerEnabled: true,
-        uploadEnabled: true,
+        uploadEnabled: false,
+        uploadTypes: [],
         hint: '',
         canCancel: false,
         canClose: false,
@@ -18,6 +19,13 @@
       };
     }
     var composer = raw.composer && typeof raw.composer === 'object' ? raw.composer : {};
+    var uploadTypes = [];
+    if (composer.upload_types && Array.isArray(composer.upload_types)) {
+      composer.upload_types.forEach(function (t) {
+        var s = String(t || '').trim();
+        if (s) uploadTypes.push(s);
+      });
+    }
     var acciones = raw.acciones && typeof raw.acciones === 'object' ? raw.acciones : {};
     var resolutions = [];
     var resRaw = raw.resoluciones_disponibles;
@@ -29,13 +37,24 @@
     }
     return {
       composerEnabled: composer.enabled === true,
-      uploadEnabled: composer.upload_enabled === true,
+      uploadEnabled: composer.upload_enabled === true && uploadTypes.length > 0,
+      uploadTypes: uploadTypes,
+      canUploadAudio: composer.upload_enabled === true && uploadTypes.indexOf('audio') >= 0,
+      canUploadDocument: composer.upload_enabled === true && uploadTypes.indexOf('documento') >= 0,
       hint: composer.hint ? String(composer.hint).trim() : '',
       canCancel: acciones.cancelar === true,
       canClose: acciones.cerrar === true,
       resolutions: resolutions,
       suggestTurno: raw.suggest_turno === true,
     };
+  }
+
+  function attachmentLabel(messageType) {
+    if (messageType === 'audio') return 'Mensaje de audio';
+    if (messageType === 'documento') return 'Documento PDF';
+    if (messageType === 'imagen') return 'Imagen';
+    if (messageType === 'video') return 'Video';
+    return 'Adjunto';
   }
 
   function messageKind(m) {
@@ -54,7 +73,34 @@
     return kind === 'solicitud' || type.indexOf('solicitud_') === 0;
   }
 
-  function renderMessage(m) {
+  function renderAttachmentBody(m, openHandler) {
+    var type = String(m.message_type || '');
+    var content = m.content ? String(m.content) : '';
+    var wrap = document.createElement('div');
+    wrap.className = 'd-flex align-items-center gap-2';
+
+    var icon = document.createElement('span');
+    icon.className = 'text-muted';
+    icon.textContent = type === 'documento' ? '📄' : '🎤';
+    wrap.appendChild(icon);
+
+    var label = document.createElement('span');
+    label.textContent = attachmentLabel(type);
+    wrap.appendChild(label);
+
+    if (content && typeof openHandler === 'function') {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-link btn-sm p-0 align-baseline';
+      btn.textContent = 'Abrir';
+      btn.addEventListener('click', function () { openHandler(content, type); });
+      wrap.appendChild(btn);
+    }
+
+    return wrap;
+  }
+
+  function renderMessage(m, openHandler) {
     var row = document.createElement('div');
     row.className = 'mb-2 small';
 
@@ -74,9 +120,16 @@
       + (m.created_at ? (' · ' + formatCreatedAt(m.created_at)) : '');
     row.appendChild(who);
 
+    var type = String(m.message_type || 'texto');
     var body = document.createElement('div');
     body.className = isSolicitudMessage(m) ? 'fw-semibold' : '';
-    body.textContent = m.content || '';
+    if (type === 'audio' || type === 'documento') {
+      body.appendChild(renderAttachmentBody(m, openHandler));
+    } else if (type === 'texto' || type.indexOf('solicitud_') === 0) {
+      body.textContent = m.content || '';
+    } else {
+      body.textContent = attachmentLabel(type);
+    }
     row.appendChild(body);
 
     return row;
@@ -101,6 +154,7 @@
   global.BioenlaceAsyncConsultaChat = {
     parsePolicy: parsePolicy,
     renderMessage: renderMessage,
+    attachmentLabel: attachmentLabel,
     isSystemMessage: isSystemMessage,
     isSolicitudMessage: isSolicitudMessage,
     formatCreatedAt: formatCreatedAt,

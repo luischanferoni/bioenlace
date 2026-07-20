@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use common\models\ConsultaChatMessage;
 use common\components\Domain\Clinical\Service\SecureMediaService;
+use common\components\Domain\Scheduling\Service\ConsultaAsyncChatUploadService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncPushNotifier;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaPrioridadAgent;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncChatPolicyService;
@@ -225,14 +226,45 @@ class ConsultaChatController extends BaseController
             return $err;
         }
 
-        $messageType = Yii::$app->request->post('message_type', 'imagen');
-        if (!in_array($messageType, self::UPLOAD_MESSAGE_TYPES, true)) {
+        $messageType = Yii::$app->request->post('message_type', 'audio');
+        $isAsync = $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC;
+        if ($isAsync) {
+            if (!in_array($messageType, ['audio', 'documento'], true)) {
+                return ['success' => false, 'message' => 'Solo se permiten adjuntos de audio o documento PDF.', 'data' => null];
+            }
+        } elseif (!in_array($messageType, self::UPLOAD_MESSAGE_TYPES, true)) {
             return ['success' => false, 'message' => 'message_type debe ser: imagen, audio, video o documento', 'data' => null];
         }
 
         $file = UploadedFile::getInstanceByName('file');
         if (!$file || !$file->tempName) {
             return ['success' => false, 'message' => 'Debe enviar un archivo en el campo "file"', 'data' => null];
+        }
+
+        $userId = Yii::$app->user->id;
+        $userName = Yii::$app->user->identity->username ?? 'Usuario';
+        $user_role = (int) $encounter->subject_persona_id === (int) Yii::$app->user->getIdPersona() ? 'paciente' : 'medico';
+        $viewerEsPaciente = $user_role === 'paciente';
+
+        if ($isAsync) {
+            try {
+                if ($viewerEsPaciente) {
+                    (new ConsultaAsyncChatPolicyService())->assertPatientCanSend($encounter);
+                } else {
+                    $policy = (new ConsultaAsyncChatPolicyService())->resolveForEncounter($encounter, false);
+                    if (($policy['composer']['enabled'] ?? false) !== true) {
+                        throw new \InvalidArgumentException('No podés enviar mensajes en esta consulta.');
+                    }
+                }
+                (new ConsultaAsyncChatUploadService())->assertUploadAllowed(
+                    $encounter,
+                    $messageType,
+                    $file,
+                    $viewerEsPaciente
+                );
+            } catch (\InvalidArgumentException $e) {
+                return ['success' => false, 'message' => $e->getMessage(), 'data' => null];
+            }
         }
 
         $ext = $file->getExtension() ?: pathinfo($file->name, PATHINFO_EXTENSION);
@@ -255,18 +287,6 @@ class ConsultaChatController extends BaseController
 
         if (!$file->saveAs($fullPath)) {
             return ['success' => false, 'message' => 'Error al guardar el archivo', 'data' => null];
-        }
-
-        $userId = Yii::$app->user->id;
-        $userName = Yii::$app->user->identity->username ?? 'Usuario';
-        $user_role = (int) $encounter->subject_persona_id === (int) Yii::$app->user->getIdPersona() ? 'paciente' : 'medico';
-
-        if ($user_role === 'paciente' && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
-            try {
-                (new ConsultaAsyncChatPolicyService())->assertPatientCanSend($encounter);
-            } catch (\InvalidArgumentException $e) {
-                return ['success' => false, 'message' => $e->getMessage(), 'data' => null];
-            }
         }
 
         $chatMessage = new ConsultaChatMessage();

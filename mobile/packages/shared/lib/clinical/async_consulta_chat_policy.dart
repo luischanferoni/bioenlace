@@ -7,6 +7,7 @@ class AsyncConsultaChatPolicy {
   const AsyncConsultaChatPolicy({
     required this.composerEnabled,
     required this.uploadEnabled,
+    required this.uploadTypes,
     required this.hint,
     required this.canCancel,
     required this.canClose,
@@ -16,17 +17,23 @@ class AsyncConsultaChatPolicy {
 
   final bool composerEnabled;
   final bool uploadEnabled;
+  final List<String> uploadTypes;
   final String hint;
   final bool canCancel;
   final bool canClose;
   final List<MapEntry<String, String>> resolutions;
   final bool suggestTurno;
 
+  bool get canUploadAudio => uploadEnabled && uploadTypes.contains('audio');
+
+  bool get canUploadDocument => uploadEnabled && uploadTypes.contains('documento');
+
   factory AsyncConsultaChatPolicy.fromApi(Map<String, dynamic>? raw) {
     if (raw == null) {
       return const AsyncConsultaChatPolicy(
         composerEnabled: true,
-        uploadEnabled: true,
+        uploadEnabled: false,
+        uploadTypes: [],
         hint: '',
         canCancel: false,
         canClose: false,
@@ -36,7 +43,14 @@ class AsyncConsultaChatPolicy {
     }
     final composer = raw['composer'];
     final enabled = composer is Map && composer['enabled'] == true;
-    final upload = composer is Map && composer['upload_enabled'] == true;
+    final uploadTypes = <String>[];
+    if (composer is Map && composer['upload_types'] is List) {
+      for (final t in composer['upload_types'] as List) {
+        final s = t?.toString().trim() ?? '';
+        if (s.isNotEmpty) uploadTypes.add(s);
+      }
+    }
+    final upload = composer is Map && composer['upload_enabled'] == true && uploadTypes.isNotEmpty;
     final hint = composer is Map ? composer['hint']?.toString().trim() ?? '' : '';
     final acciones = raw['acciones'] is Map
         ? Map<String, dynamic>.from(raw['acciones'] as Map)
@@ -55,12 +69,29 @@ class AsyncConsultaChatPolicy {
     return AsyncConsultaChatPolicy(
       composerEnabled: enabled,
       uploadEnabled: upload,
+      uploadTypes: uploadTypes,
       hint: hint,
       canCancel: acciones['cancelar'] == true,
       canClose: acciones['cerrar'] == true,
       resolutions: resolutions,
       suggestTurno: raw['suggest_turno'] == true,
     );
+  }
+}
+
+/// Etiqueta de adjunto para burbujas de chat async.
+String asyncChatAttachmentLabel(String? messageType) {
+  switch (messageType) {
+    case 'audio':
+      return 'Mensaje de audio';
+    case 'documento':
+      return 'Documento PDF';
+    case 'imagen':
+      return 'Imagen';
+    case 'video':
+      return 'Video';
+    default:
+      return 'Adjunto';
   }
 }
 

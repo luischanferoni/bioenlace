@@ -20,3 +20,11 @@ Future<http.MultipartFile> multipartFileFromXFile(
 
   return http.MultipartFile.fromPath(field, xFile.path, filename: filename);
 }
+
+Future<http.MultipartFile> multipartFileFromBytes(
+  List<int> bytes, {
+  required String filename,
+  String field = 'file',
+}) async {
+  return http.MultipartFile.fromBytes(field, bytes, filename: filename);
+}

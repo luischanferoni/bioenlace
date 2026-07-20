@@ -33,5 +33,5 @@ El paciente necesita controles periódicos y acciones por diagnóstico o perfil 
 
 - Catálogo y matcher: `CareProtocolCatalogService` (lee BD), `CareProtocolMatcherService`.
 - Hub: `ControlSeguimientoHubService` (anclas `cp:`, `diag:`, `prot:`) usa jurisdicción del paciente (`id_provincia_contexto`).
-- ABM: `CareProtocolAdminService` + API `/api/v1/clinical/care-protocol/*` (solo superadmin).
+- ABM: `CareProtocolAdminService` + pantalla Yii admin (`/care-protocol`) solo superadmin; API HTTP opcional para clientes, no es el camino del admin web.
 - Producto: [solicitar-atencion.md](../producto/solicitar-atencion.md), [consultas-seguimiento.md](../producto/consultas-seguimiento.md).

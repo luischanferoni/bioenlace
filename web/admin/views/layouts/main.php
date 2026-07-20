@@ -62,6 +62,7 @@ $home = Yii::$app->getHomeUrl();
                                         ['label' => 'Novedades', 'url' => ['/novedad/index']],
                                         ['label' => 'Feriados', 'url' => ['/agenda-feriados/index']],
                                         ['label' => 'Abreviaturas', 'url' => ['/abreviaturas/index']],
+                                        ['label' => 'Protocolos de cuidado', 'url' => ['/care-protocol/index']],
                                     ]
                                 ],
                                 [

@@ -34,7 +34,7 @@ Detalle de consulta async y renovación/ajuste: [consultas-seguimiento.md](./con
 
 ## Protocolos de cuidado (PlanDefinition-lite)
 
-Catálogo en BD (`care_protocol`), no CarePacks IA ni YAML en runtime. Vacunas y preventivos los define el **superadmin** (Nación o Provincia).
+Catálogo en BD (`care_protocol`), no CarePacks IA ni YAML en runtime. Vacunas y preventivos los define el **superadmin** en la pantalla Yii **Datos → Protocolos de cuidado** (Nación o Provincia).
 
 | Nombre | Uso |
 |--------|-----|

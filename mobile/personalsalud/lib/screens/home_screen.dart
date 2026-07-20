@@ -67,6 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _lastListKind = '';
   bool _isLoading = true;
   String _errorMessage = '';
+  /// 0 = agenda (turnos), 1 = consultas por mensaje.
+  int _ambHomeTab = 0;
   DateTime _fechaSeleccionada = DateTime(
     DateTime.now().year,
     DateTime.now().month,
@@ -636,12 +638,60 @@ class _HomeScreenState extends State<HomeScreen> {
         text: 'No hay turnos programados para esta fecha.',
       );
     }
-    return _buildTurnosPorEstado(siguienteTurno);
+
+    final showTabs = _consultasAsync.isNotEmpty;
+    final tabAgenda = !showTabs || _ambHomeTab == 0;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (showTabs)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              BioSpacing.lg,
+              BioSpacing.md,
+              BioSpacing.lg,
+              0,
+            ),
+            child: BioSegmentedTabs(
+              selectedIndex: _ambHomeTab,
+              onSelected: (i) => setState(() => _ambHomeTab = i),
+              tabs: [
+                BioSegmentedTab(
+                  label: 'Agenda (${_turnos.where((t) => t.id != 999999).length})',
+                  icon: Icons.event_available_outlined,
+                ),
+                BioSegmentedTab(
+                  label: 'Por mensaje (${_consultasAsync.length})',
+                  icon: Icons.chat_bubble_outline,
+                ),
+              ],
+            ),
+          ),
+        Expanded(
+          child: tabAgenda
+              ? _buildTurnosPorEstado(siguienteTurno)
+              : ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BioSpacing.lg,
+                    vertical: BioSpacing.lg,
+                  ),
+                  children: [
+                    _buildAsyncBandejaSection(),
+                  ],
+                ),
+        ),
+      ],
+    );
   }
 
   Widget _buildTurnosPorEstado(Turno? siguienteTurno) {
     final pendientes = _getPendientes(siguienteTurno);
     final cargadas = _getConsultasCargadas();
+    final pendientesPresencial =
+        pendientes.where((t) => !t.esTeleconsulta).toList();
+    final pendientesVideo =
+        pendientes.where((t) => t.esTeleconsulta).toList();
     const maxCardWidth = 420.0;
 
     return ListView(
@@ -650,13 +700,6 @@ class _HomeScreenState extends State<HomeScreen> {
         vertical: BioSpacing.lg,
       ),
       children: [
-        if (_consultasAsync.isNotEmpty) ...[
-          _buildAsyncBandejaSection(),
-          BioSpacing.gapH(BioSpacing.xl),
-        ],
-        if (_turnos.isEmpty && _consultasAsync.isNotEmpty)
-          _emptyInline('No hay turnos programados para esta fecha.')
-        else ...[
         if (siguienteTurno != null) ...[
           _seccionSubtitulo('Siguiente turno'),
           BioSpacing.gapH(BioSpacing.sm),
@@ -668,37 +711,51 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BioSpacing.gapH(BioSpacing.xl),
         ],
-        _seccionSubtitulo('Pendientes'),
-        BioSpacing.gapH(BioSpacing.sm),
         if (pendientes.isEmpty)
           _emptyInline('No hay turnos pendientes.')
-        else
-          ...pendientes.map((t) => Padding(
-                padding: const EdgeInsets.only(bottom: BioSpacing.md),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: maxCardWidth),
-                    child: _buildTurnoCard(t, resumenConsultaCargada: false),
-                  ),
-                ),
-              )),
+        else ...[
+          if (pendientesVideo.isNotEmpty) ...[
+            _seccionSubtitulo('Videollamada (${pendientesVideo.length})'),
+            BioSpacing.gapH(BioSpacing.sm),
+            ...pendientesVideo.map((t) => _turnoCardPad(t, maxCardWidth)),
+            BioSpacing.gapH(BioSpacing.lg),
+          ],
+          if (pendientesPresencial.isNotEmpty) ...[
+            _seccionSubtitulo(
+              pendientesVideo.isEmpty
+                  ? 'Pendientes'
+                  : 'Presencial (${pendientesPresencial.length})',
+            ),
+            BioSpacing.gapH(BioSpacing.sm),
+            ...pendientesPresencial.map((t) => _turnoCardPad(t, maxCardWidth)),
+          ],
+        ],
         BioSpacing.gapH(BioSpacing.xl),
         _seccionSubtitulo('Consultas cargadas'),
         BioSpacing.gapH(BioSpacing.sm),
         if (cargadas.isEmpty)
           _emptyInline('No hay consultas cargadas.')
         else
-          ...cargadas.map((t) => Padding(
-                padding: const EdgeInsets.only(bottom: BioSpacing.md),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: maxCardWidth),
-                    child: _buildTurnoCard(t, resumenConsultaCargada: true),
-                  ),
-                ),
-              )),
-        ],
+          ...cargadas.map(
+            (t) => _turnoCardPad(t, maxCardWidth, resumen: true),
+          ),
       ],
+    );
+  }
+
+  Widget _turnoCardPad(
+    Turno t,
+    double maxCardWidth, {
+    bool resumen = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BioSpacing.md),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: maxCardWidth),
+          child: _buildTurnoCard(t, resumenConsultaCargada: resumen),
+        ),
+      ),
     );
   }
 
@@ -1283,12 +1340,21 @@ class _HomeScreenState extends State<HomeScreen> {
             'Hora: ${turno.hora}',
             textStyle: BioTypography.body,
           ),
+          BioSpacing.gapH(BioSpacing.xs),
+          _filaInfo(
+            Icons.videocam_outlined,
+            'Modalidad: ${turno.modalidadLabel}',
+          ),
           if (turno.servicio != null && turno.servicio!.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             _filaInfo(
               Icons.local_hospital_outlined,
               'Servicio: ${turno.servicio}',
             ),
+          ],
+          if (turno.modalidadInsight != null) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            _buildModalidadInsightBox(turno.modalidadInsight!),
           ],
           BioSpacing.gapH(BioSpacing.md),
           Align(
@@ -1306,7 +1372,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTurnoCard(Turno turno, {bool resumenConsultaCargada = false}) {
-    final tokens = context.bio;
     final primary = IntentPalette.of(UiIntent.primary).base;
     final estadoIntent = _intentEstado(turno.estado);
     void openTimeline() => _verHistoriaClinica(
@@ -1333,6 +1398,17 @@ class _HomeScreenState extends State<HomeScreen> {
               BioBadge(label: turno.estadoLabel, intent: estadoIntent),
             ],
           ),
+          BioSpacing.gapH(BioSpacing.sm),
+          Wrap(
+            spacing: BioSpacing.xs,
+            runSpacing: BioSpacing.xs,
+            children: [
+              BioBadge(
+                label: turno.modalidadLabel,
+                intent: turno.esTeleconsulta ? UiIntent.info : UiIntent.neutral,
+              ),
+            ],
+          ),
           BioSpacing.gapH(BioSpacing.md),
           _filaInfo(Icons.access_time, 'Hora: ${turno.hora}'),
           BioSpacing.gapH(BioSpacing.xs),
@@ -1348,6 +1424,89 @@ class _HomeScreenState extends State<HomeScreen> {
               small: true,
             ),
           ],
+          if (turno.modalidadInsight != null) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            _buildModalidadInsightBox(turno.modalidadInsight!),
+          ],
+          BioSpacing.gapH(BioSpacing.md),
+          Align(
+            alignment: Alignment.centerRight,
+            child: BioButton.outlinePrimary(
+              label: 'Historia clínica',
+              icon: Icons.medical_services_outlined,
+              size: BioButtonSize.sm,
+              onPressed: openTimeline,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModalidadInsightBox(Map<String, dynamic> insight) {
+    final tokens = context.bio;
+    final summary = insight['summary']?.toString().trim() ?? '';
+    if (summary.isEmpty) return const SizedBox.shrink();
+    final tone = insight['tone']?.toString() ?? 'info';
+    final intent = tone == 'secondary' ? UiIntent.neutral : UiIntent.info;
+    final palette = IntentPalette.of(intent);
+    final modalidades = insight['modalidades'];
+    final footer = insight['footer']?.toString().trim() ?? '';
+    final agendaCfg = insight['agenda_config'] is Map
+        ? Map<String, dynamic>.from(insight['agenda_config'] as Map)
+        : null;
+    final linkLabel = agendaCfg?['link_label']?.toString().trim() ?? '';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(BioSpacing.sm),
+      decoration: BoxDecoration(
+        color: palette.base.withValues(alpha: 0.08),
+        borderRadius: BioRadius.all(BioRadius.sm),
+        border: Border.all(color: palette.base.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            summary,
+            style: BioTypography.bodySm.copyWith(color: tokens.textPrimary),
+          ),
+          if (modalidades is List && modalidades.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            ...modalidades.whereType<Map>().map((m) {
+              final label = m['label']?.toString() ?? m['code']?.toString() ?? '';
+              final desc = m['description']?.toString().trim() ?? '';
+              return Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  desc.isEmpty ? '· $label' : '· $label: $desc',
+                  style: BioTypography.caption.copyWith(color: tokens.textMuted),
+                ),
+              );
+            }),
+          ],
+          if (footer.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              footer,
+              style: BioTypography.caption.copyWith(color: tokens.textMuted),
+            ),
+          ],
+          if (linkLabel.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              linkLabel,
+              style: BioTypography.caption.copyWith(
+                color: palette.base,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
           BioSpacing.gapH(BioSpacing.md),
           Align(
             alignment: Alignment.centerRight,

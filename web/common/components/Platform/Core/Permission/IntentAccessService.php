@@ -3,14 +3,17 @@
 namespace common\components\Platform\Core\Permission;
 
 use Yii;
+use yii\db\Query;
+use yii\rbac\Item;
 
 /**
  * Autorización unificada para intents del asistente: listado de atajos y ejecución.
  *
  * Clave assignable: siempre {@see intent_id}.
- * Si el manifiesto declara `rbac_route` y el usuario ya puede esa ruta API, también se permite:
- * el intent es la fachada conversacional de la misma capacidad HTTP (evita catálogo vacío
- * tras deploy de YAML antes de `catalog-permission/sync` / migración de grants).
+ * Si el manifiesto declara `rbac_route` y el permiso del intent **aún no** está en
+ * `auth_item`, también se permite por ruta (ventana de deploy antes del sync).
+ * Si el permiso del intent **ya existe**, hace falta el grant explícito: evita que
+ * una `rbac_route` compartida (p. ej. propio vs staff) habilite atajos de terceros.
  */
 final class IntentAccessService
 {
@@ -28,6 +31,11 @@ final class IntentAccessService
         $permissionKey = IntentPermissionResolver::resolve($intentId);
         if (BioenlaceAccessChecker::userCanPermissionKey($userId, $permissionKey)) {
             return true;
+        }
+
+        // Permiso del intent ya materializado → no promover por ruta compartida.
+        if (self::permissionKeyExistsInAuth($permissionKey)) {
+            return false;
         }
 
         $meta = IntentManifestIndex::get($intentId);
@@ -50,5 +58,22 @@ final class IntentAccessService
         }
 
         return false;
+    }
+
+    private static function permissionKeyExistsInAuth(string $permissionKey): bool
+    {
+        $permissionKey = trim($permissionKey);
+        if ($permissionKey === '') {
+            return false;
+        }
+
+        try {
+            return (new Query())
+                ->from('{{%auth_item}}')
+                ->where(['name' => $permissionKey, 'type' => Item::TYPE_PERMISSION])
+                ->exists();
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }

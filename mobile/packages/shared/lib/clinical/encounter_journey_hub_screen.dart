@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens/tokens.dart';
 import '../ui/bio_card.dart';
+import 'care_pack_navigation.dart';
+import 'encounter_journey_api.dart';
 import 'encounter_journey_navigation.dart';
 
 /// Hub de fases del recorrido encounter (pre o post consulta), leyendo solo `journey`.
-class EncounterJourneyHubScreen extends StatelessWidget {
+class EncounterJourneyHubScreen extends StatefulWidget {
   final String title;
   final String intro;
   final Map<String, dynamic> turno;
@@ -28,11 +30,67 @@ class EncounterJourneyHubScreen extends StatelessWidget {
   });
 
   @override
+  State<EncounterJourneyHubScreen> createState() =>
+      _EncounterJourneyHubScreenState();
+}
+
+class _EncounterJourneyHubScreenState extends State<EncounterJourneyHubScreen> {
+  late Map<String, dynamic> _turno;
+  bool _refreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _turno = Map<String, dynamic>.from(widget.turno);
+    _refreshEstado();
+  }
+
+  Future<void> _refreshEstado() async {
+    final turnoId = turnoIdDesdePayloadProducto(_turno);
+    if (turnoId == null) return;
+    setState(() => _refreshing = true);
+    try {
+      final estado = await EncounterJourneyApi(
+        authToken: widget.authToken,
+        appClient: widget.appClient,
+      ).fetchEstado(
+        turnoId: turnoId,
+        subjectPersonaId: widget.subjectPersonaId,
+      );
+      if (!mounted || estado == null) return;
+      setState(() {
+        _turno = turnoConJourneyDesdeEstado(_turno, estado);
+      });
+    } finally {
+      if (mounted) setState(() => _refreshing = false);
+    }
+  }
+
+  void _onEntryTap(JourneyHubEntry entry) {
+    if (!entry.enabled) {
+      final msg = entry.subtitle ?? 'No disponible por ahora';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+      return;
+    }
+    abrirJourneyHubEntry(
+      context: context,
+      turno: _turno,
+      entry: entry,
+      authToken: widget.authToken,
+      subjectPersonaId: widget.subjectPersonaId,
+      onOpenMotivos: widget.onOpenMotivos,
+      appClient: widget.appClient,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
-    final entries = journeyHubEntries(turno, phaseIds);
-    final fecha = turno['fecha']?.toString() ?? '';
-    final hora = turno['hora']?.toString() ?? '';
+    final entries = journeyHubEntries(_turno, widget.phaseIds);
+    final fecha = _turno['fecha']?.toString() ?? '';
+    final hora = _turno['hora']?.toString() ?? '';
     final horaCorta = hora.length >= 5 ? hora.substring(0, 5) : hora;
     final subtituloTurno = fecha.isNotEmpty
         ? (horaCorta.isNotEmpty ? '$fecha · $horaCorta' : fecha)
@@ -40,7 +98,20 @@ class EncounterJourneyHubScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(title),
+        title: Text(widget.title),
+        actions: [
+          if (_refreshing)
+            const Padding(
+              padding: EdgeInsets.only(right: BioSpacing.md),
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+        ],
       ),
       body: entries.isEmpty
           ? Center(
@@ -65,48 +136,48 @@ class EncounterJourneyHubScreen extends StatelessWidget {
                   ),
                   BioSpacing.gapH(BioSpacing.md),
                 ],
-                Text(intro, style: BioTypography.body),
+                Text(widget.intro, style: BioTypography.body),
                 BioSpacing.gapH(BioSpacing.md),
                 ...entries.map((entry) {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+                    // onTap en BioCard (no ListTile): en Flutter web el click de
+                    // mouse falla con frecuencia si el InkWell queda anidado.
                     child: BioCard(
-                      child: ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(
-                          _iconoFase(entry.phaseId),
-                          color: entry.enabled
-                              ? tokens.intentPalette(UiIntent.primary).base
-                              : tokens.textMuted,
-                        ),
-                        title: Text(entry.label, style: BioTypography.title),
-                        subtitle: entry.subtitle != null
-                            ? Text(
-                                entry.subtitle!,
-                                style: BioTypography.bodySm.copyWith(
-                                  color: tokens.textMuted,
-                                ),
-                              )
-                            : null,
-                        trailing: entry.enabled
-                            ? Icon(
-                                Icons.chevron_right,
-                                color: tokens.textMuted,
-                              )
-                            : null,
-                        onTap: entry.enabled
-                            ? () {
-                                abrirJourneyHubEntry(
-                                  context: context,
-                                  turno: turno,
-                                  entry: entry,
-                                  authToken: authToken,
-                                  subjectPersonaId: subjectPersonaId,
-                                  onOpenMotivos: onOpenMotivos,
-                                  appClient: appClient,
-                                );
-                              }
-                            : null,
+                      onTap: () => _onEntryTap(entry),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            _iconoFase(entry.phaseId),
+                            color: entry.enabled
+                                ? tokens.intentPalette(UiIntent.primary).base
+                                : tokens.textMuted,
+                          ),
+                          BioSpacing.gapW(BioSpacing.md),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(entry.label, style: BioTypography.title),
+                                if (entry.subtitle != null) ...[
+                                  BioSpacing.gapH(BioSpacing.xs),
+                                  Text(
+                                    entry.subtitle!,
+                                    style: BioTypography.bodySm.copyWith(
+                                      color: tokens.textMuted,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          if (entry.enabled)
+                            Icon(
+                              Icons.chevron_right,
+                              color: tokens.textMuted,
+                            ),
+                        ],
                       ),
                     ),
                   );

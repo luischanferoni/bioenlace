@@ -10,6 +10,7 @@ use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\QuirofanoSala;
 use common\models\ServiciosEfector;
+use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionCatalogService;
 use common\components\Domain\Scheduling\Service\StaffTurnoModalidadInsightService;
 use common\models\Scheduling\Turno;
 
@@ -247,6 +248,9 @@ final class StaffClinicalDayListService
         $servicioObj = $turno->getServicioEmbebidoParaApi();
         $encounterId = $motivosLookup->encounterIdParaTurno((int) $turno->id_turnos);
         $pesTurno = (int) ($turno->id_profesional_efector_servicio ?? 0) ?: null;
+        $tipoAtencion = isset($turno->tipo_atencion) && trim((string) $turno->tipo_atencion) !== ''
+            ? trim((string) $turno->tipo_atencion)
+            : Turno::TIPO_ATENCION_PRESENCIAL;
         $row = [
             'id' => $turno->id_turnos,
             'id_persona' => $turno->id_persona,
@@ -259,7 +263,8 @@ final class StaffClinicalDayListService
             'id_servicio_asignado' => $turno->id_servicio_asignado,
             'estado' => $turno->estado,
             'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
-            'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
+            'tipo_atencion' => $tipoAtencion,
+            'tipo_atencion_label' => (new ReservaModalidadAtencionCatalogService())->labelShort($tipoAtencion),
             'encounter_id' => $encounterId,
             'id_consulta' => $encounterId,
             'atendido' => $turno->atendido,

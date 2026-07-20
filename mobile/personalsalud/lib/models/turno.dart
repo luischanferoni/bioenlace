@@ -14,6 +14,8 @@ class Turno {
   final String? createdAt;
   final int? idConsulta;
   final String? tipoAtencion;
+  final String? tipoAtencionLabel;
+  final Map<String, dynamic>? modalidadInsight;
 
   Turno({
     required this.id,
@@ -30,6 +32,8 @@ class Turno {
     this.createdAt,
     this.idConsulta,
     this.tipoAtencion,
+    this.tipoAtencionLabel,
+    this.modalidadInsight,
   });
 
   static int _asInt(Object? v) {
@@ -45,9 +49,19 @@ class Turno {
     return match?.group(1) ?? trimmed;
   }
 
+  bool get esTeleconsulta =>
+      (tipoAtencion ?? 'presencial').toLowerCase() == 'teleconsulta';
+
+  String get modalidadLabel {
+    final fromApi = tipoAtencionLabel?.trim() ?? '';
+    if (fromApi.isNotEmpty) return fromApi;
+    return esTeleconsulta ? 'Videollamada' : 'Presencial';
+  }
+
   // Crear desde JSON de la API
   factory Turno.fromJson(Map<String, dynamic> json) {
     final idVal = json['id'] ?? json['id_turnos'];
+    final insightRaw = json['modalidad_insight'];
     return Turno(
       id: _asInt(idVal),
       idPersona: _asInt(json['id_persona']),
@@ -68,6 +82,10 @@ class Turno {
       idConsulta:
           json['id_consulta'] != null ? _asInt(json['id_consulta']) : null,
       tipoAtencion: json['tipo_atencion'] as String?,
+      tipoAtencionLabel: json['tipo_atencion_label'] as String?,
+      modalidadInsight: insightRaw is Map
+          ? Map<String, dynamic>.from(insightRaw)
+          : null,
     );
   }
 
@@ -85,6 +103,9 @@ class Turno {
         'observaciones': observaciones,
         'atendido': atendido,
         'created_at': createdAt,
+        'tipo_atencion': tipoAtencion,
+        'tipo_atencion_label': tipoAtencionLabel,
+        if (modalidadInsight != null) 'modalidad_insight': modalidadInsight,
       };
 
   // Obtener fecha y hora como DateTime
@@ -146,4 +167,3 @@ class Paciente {
         'edad': edad,
       };
 }
-

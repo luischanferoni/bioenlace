@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,10 @@ Future<bool> _staffBiometricEnrollmentComplete() async {
   final established =
       prefs.getBool(PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey) ??
           false;
+  // En web no hay huella: basta con haber pasado el login con credenciales.
+  if (kIsWeb) {
+    return established;
+  }
   final unlockEnabled = await BiometricSessionPrefs.isUnlockEnabled();
   if (unlockEnabled && !established) {
     await prefs.setBool(
@@ -25,10 +30,21 @@ Future<bool> _staffBiometricEnrollmentComplete() async {
 }
 
 /// Exige activar huella/Face ID inmediatamente tras el primer acceso con credenciales.
+///
+/// En Flutter web (Chrome) se omite: no hay biometría de dispositivo usable.
 Future<bool> requirePersonalsaludBiometricEnrollment(
   BuildContext context,
 ) async {
   if (await _staffBiometricEnrollmentComplete()) {
+    return true;
+  }
+
+  if (kIsWeb) {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(
+      PersonalsaludSessionPrefs.staffMobileLoginEstablishedKey,
+      true,
+    );
     return true;
   }
 

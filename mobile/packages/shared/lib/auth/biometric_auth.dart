@@ -1,11 +1,16 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 
 class BiometricAuth {
   final LocalAuthentication _auth = LocalAuthentication();
-  
+
   /// Verifica si la autenticación biométrica está disponible en el dispositivo.
   Future<bool> isAvailable() async {
+    // local_auth no cubre huella/Face ID en Flutter web (Chrome).
+    if (kIsWeb) {
+      return false;
+    }
     try {
       if (!await _auth.isDeviceSupported()) {
         return false;
@@ -22,6 +27,9 @@ class BiometricAuth {
 
   /// Obtiene el tipo de biometría disponible
   Future<String> getBiometricType() async {
+    if (kIsWeb) {
+      return '';
+    }
     try {
       final biometrics = await _auth.getAvailableBiometrics();
       if (biometrics.contains(BiometricType.fingerprint) ||
@@ -44,6 +52,13 @@ class BiometricAuth {
   /// Autentica al usuario usando biometría
   /// Retorna un mapa con 'success' (bool) y 'error' (String?) para mejor manejo de errores
   Future<Map<String, dynamic>> authenticate(String localizedReason) async {
+    if (kIsWeb) {
+      return {
+        'success': false,
+        'error':
+            'La autenticación biométrica no está disponible en el navegador',
+      };
+    }
     try {
       final didAuthenticate = await _auth.authenticate(
         localizedReason: localizedReason,
@@ -54,24 +69,28 @@ class BiometricAuth {
       );
       return {
         'success': didAuthenticate,
-        'error': didAuthenticate ? null : 'Autenticación cancelada por el usuario',
+        'error':
+            didAuthenticate ? null : 'Autenticación cancelada por el usuario',
       };
     } on PlatformException catch (e) {
       String? errorMessage;
       bool isUserCancel = false;
-      
+
       switch (e.code) {
         case 'NotAvailable':
           errorMessage = 'La autenticación biométrica no está disponible';
           break;
         case 'NotEnrolled':
-          errorMessage = 'No hay huellas digitales registradas en el dispositivo';
+          errorMessage =
+              'No hay huellas digitales registradas en el dispositivo';
           break;
         case 'LockedOut':
-          errorMessage = 'La autenticación biométrica está bloqueada temporalmente';
+          errorMessage =
+              'La autenticación biométrica está bloqueada temporalmente';
           break;
         case 'PermanentlyLockedOut':
-          errorMessage = 'La autenticación biométrica está bloqueada permanentemente';
+          errorMessage =
+              'La autenticación biométrica está bloqueada permanentemente';
           break;
         case 'UserCancel':
         case '10': // BiometricPrompt.ERROR_USER_CANCELED
@@ -79,7 +98,8 @@ class BiometricAuth {
           isUserCancel = true;
           break;
         default:
-          errorMessage = 'Error en la autenticación: ${e.message ?? "Error desconocido"}';
+          errorMessage =
+              'Error en la autenticación: ${e.message ?? "Error desconocido"}';
       }
       return {
         'success': false,
@@ -94,4 +114,3 @@ class BiometricAuth {
     }
   }
 }
-

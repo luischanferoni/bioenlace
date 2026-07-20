@@ -178,9 +178,13 @@
 
       var tipoBadge = colEl.querySelector('[data-field="tipo-atencion-badge"]');
       if (tipoBadge) {
-        if (t.tipo_atencion === 'teleconsulta') {
-          tipoBadge.className = 'badge bg-info';
-          tipoBadge.textContent = 'Teleconsulta';
+        var tipoLabel = (t.tipo_atencion_label || '').toString().trim();
+        if (!tipoLabel) {
+          tipoLabel = t.tipo_atencion === 'teleconsulta' ? 'Videollamada' : (t.tipo_atencion === 'presencial' ? 'Presencial' : '');
+        }
+        if (tipoLabel) {
+          tipoBadge.className = t.tipo_atencion === 'teleconsulta' ? 'badge bg-info' : 'badge bg-secondary';
+          tipoBadge.textContent = tipoLabel;
           tipoBadge.classList.remove('d-none');
         } else {
           tipoBadge.classList.add('d-none');

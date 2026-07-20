@@ -119,17 +119,6 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     }
   }
 
-  String? _labelTipoAtencion(String? tipo) {
-    switch (tipo) {
-      case 'teleconsulta':
-        return 'Teleconsulta';
-      case 'presencial':
-        return 'Presencial';
-      default:
-        return null;
-    }
-  }
-
   UiIntent _intentTipoAtencion(String? tipo) {
     return tipo == 'teleconsulta' ? UiIntent.info : UiIntent.neutral;
   }
@@ -349,13 +338,11 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
                   style: BioTypography.h3,
                 ),
               ),
-              if (_labelTipoAtencion(turno.tipoAtencion) != null) ...[
-                BioBadge(
-                  label: _labelTipoAtencion(turno.tipoAtencion)!,
-                  intent: _intentTipoAtencion(turno.tipoAtencion),
-                ),
-                BioSpacing.gapW(BioSpacing.xs),
-              ],
+              BioBadge(
+                label: turno.modalidadLabel,
+                intent: _intentTipoAtencion(turno.tipoAtencion),
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
               BioBadge(label: turno.estadoLabel, intent: estadoIntent),
             ],
           ),
@@ -369,6 +356,10 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
             _filaInfo(Icons.note_outlined,
                 'Observaciones: ${turno.observaciones}',
                 small: true),
+          ],
+          if (turno.modalidadInsight != null) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            _buildModalidadInsightBox(turno.modalidadInsight!),
           ],
           BioSpacing.gapH(BioSpacing.md),
           Wrap(
@@ -415,6 +406,57 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildModalidadInsightBox(Map<String, dynamic> insight) {
+    final tokens = context.bio;
+    final summary = insight['summary']?.toString().trim() ?? '';
+    if (summary.isEmpty) return const SizedBox.shrink();
+    final tone = insight['tone']?.toString() ?? 'info';
+    final intent = tone == 'secondary' ? UiIntent.neutral : UiIntent.info;
+    final palette = IntentPalette.of(intent);
+    final modalidades = insight['modalidades'];
+    final footer = insight['footer']?.toString().trim() ?? '';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(BioSpacing.sm),
+      decoration: BoxDecoration(
+        color: palette.base.withValues(alpha: 0.08),
+        borderRadius: BioRadius.all(BioRadius.sm),
+        border: Border.all(color: palette.base.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            summary,
+            style: BioTypography.bodySm.copyWith(color: tokens.textPrimary),
+          ),
+          if (modalidades is List && modalidades.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            ...modalidades.whereType<Map>().map((m) {
+              final label = m['label']?.toString() ?? m['code']?.toString() ?? '';
+              final desc = m['description']?.toString().trim() ?? '';
+              return Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  desc.isEmpty ? '· $label' : '· $label: $desc',
+                  style: BioTypography.caption.copyWith(color: tokens.textMuted),
+                ),
+              );
+            }),
+          ],
+          if (footer.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              footer,
+              style: BioTypography.caption.copyWith(color: tokens.textMuted),
+            ),
+          ],
+        ],
+      ),
     );
   }
 

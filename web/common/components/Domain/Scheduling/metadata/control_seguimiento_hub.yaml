@@ -1,5 +1,5 @@
-# Hub Control/Seguimiento (Solicitar Atención). Acciones provisionales por condición
-# hasta el catálogo PlanDefinition-lite (Fase 3).
+# Hub Control/Seguimiento (Solicitar Atención).
+# Acciones por condición: preferir care_protocols.yaml (PlanDefinition-lite); si no hay match, condition_default_actions.
 version: "1"
 
 hub:

@@ -87,6 +87,9 @@ draft_keys_extra:
 - control_hub_kind
 - condition_ref
 - condition_accion
+- condition_codigo
+- protocol_id
+- protocol_action_outcome
 subintents:
 - id: triage_raiz
   assistant_text: Motivo
@@ -155,8 +158,16 @@ subintents:
   next_routing:
   - when:
       draft_equals:
+        protocol_action_outcome: modalidad
+    next: select_tipo_atencion
+  - when:
+      draft_equals:
         condition_accion: solicitar_turno
     next: select_tipo_atencion
+  - when:
+      draft_equals:
+        protocol_action_outcome: captura_mensaje
+    next: cs_captura_consulta_general
   - when:
       draft_equals:
         condition_accion: consulta_mensaje
@@ -166,6 +177,9 @@ subintents:
     next: cs_captura_consulta_general
   open_ui:
     action_id: consultas-seguimiento.condicion-acciones
+    params:
+      condition_codigo: draft.condition_codigo
+      condition_ref: draft.condition_ref
 - id: triage_urgencia_categoria
   assistant_text: Tipo de urgencia
   requires:

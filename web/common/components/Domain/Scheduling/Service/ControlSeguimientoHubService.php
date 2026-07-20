@@ -3,6 +3,7 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Clinical\Service\CarePlanPresentationService;
+use common\components\Domain\Clinical\Service\CareProtocolMatcherService;
 use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
 use common\models\DiagnosticoConsultaRepository;
 use Symfony\Component\Yaml\Yaml;
@@ -83,7 +84,7 @@ final class ControlSeguimientoHubService
                 $nombre = $this->conditionDisplayName($diag);
                 $cronico = strtoupper(trim((string) ($diag->cronico ?? ''))) === 'SI';
                 $items[] = [
-                    'id' => self::ANCHOR_PREFIX_CONDITION . ($diagId !== '' ? $diagId : $codigo),
+                    'id' => self::ANCHOR_PREFIX_CONDITION . ($codigo !== '' ? $codigo : $diagId),
                     'label' => 'Condición: ' . $nombre,
                     'subtitle' => $cronico ? 'Crónica' : 'Activa',
                     'meta' => [
@@ -196,8 +197,14 @@ final class ControlSeguimientoHubService
         if (str_starts_with($anchor, self::ANCHOR_PREFIX_CONDITION)) {
             $ref = substr($anchor, strlen(self::ANCHOR_PREFIX_CONDITION));
             $draft['condition_ref'] = $ref;
+            $draft['condition_codigo'] = $ref;
             $draft['control_hub_kind'] = self::KIND_CONDITION;
             $draft['triage_raiz'] = 'seguimiento_cronico';
+            $protocol = (new CareProtocolMatcherService())
+                ->matchByConditionCode($ref);
+            if ($protocol !== null) {
+                $draft['protocol_id'] = $protocol['id'];
+            }
 
             return;
         }
@@ -225,23 +232,102 @@ final class ControlSeguimientoHubService
     }
 
     /**
+     * Acciones para una condición: protocolo matched o fallback del hub.
+     *
      * @return list<array{id: string, label: string, subtitle: string, meta: array<string, mixed>}>
      */
-    public function listConditionActionItems(): array
+    public function listConditionActionItems(?string $conditionCodigo = null): array
     {
+        $codigo = trim((string) $conditionCodigo);
+        if ($codigo !== '') {
+            $protocolActions = (new CareProtocolMatcherService())
+                ->actionsForConditionCode($codigo);
+            if ($protocolActions !== []) {
+                $items = [];
+                foreach ($protocolActions as $action) {
+                    $items[] = [
+                        'id' => $action['code'],
+                        'label' => $action['label'],
+                        'subtitle' => $action['description'] !== ''
+                            ? $action['description']
+                            : (string) ($action['protocol_title'] ?? ''),
+                        'meta' => [
+                            'draft' => $action['draft'],
+                            'outcome' => $action['outcome'],
+                            'protocol_id' => $action['protocol_id'],
+                            'source' => 'protocol',
+                        ],
+                    ];
+                }
+
+                return $items;
+            }
+        }
+
         $items = [];
         foreach ($this->conditionDefaultActions() as $action) {
+            $outcome = 'captura_mensaje';
+            if (($action['code'] ?? '') === 'solicitar_turno') {
+                $outcome = 'modalidad';
+            }
             $items[] = [
                 'id' => $action['code'],
                 'label' => $action['label'],
                 'subtitle' => $action['description'],
                 'meta' => [
                     'draft' => $action['draft'],
+                    'outcome' => $outcome,
+                    'source' => 'default',
                 ],
             ];
         }
 
         return $items;
+    }
+
+    /**
+     * Resuelve outcome + draft de una acción de condición (protocolo o default).
+     *
+     * @return array{outcome: string, draft: array<string, string>, protocol_id: string}|null
+     */
+    public function resolveConditionAction(?string $conditionCodigo, string $actionCode): ?array
+    {
+        $actionCode = trim($actionCode);
+        if ($actionCode === '') {
+            return null;
+        }
+        $codigo = trim((string) $conditionCodigo);
+        if ($codigo !== '') {
+            $matcher = new CareProtocolMatcherService();
+            $protocol = $matcher->matchByConditionCode($codigo);
+            if ($protocol !== null) {
+                foreach ($protocol['actions'] as $action) {
+                    if ($action['code'] !== $actionCode) {
+                        continue;
+                    }
+
+                    return [
+                        'outcome' => $action['outcome'],
+                        'draft' => $action['draft'],
+                        'protocol_id' => $protocol['id'],
+                    ];
+                }
+            }
+        }
+        foreach ($this->conditionDefaultActions() as $action) {
+            if ($action['code'] !== $actionCode) {
+                continue;
+            }
+            $outcome = $actionCode === 'solicitar_turno' ? 'modalidad' : 'captura_mensaje';
+
+            return [
+                'outcome' => $outcome,
+                'draft' => $action['draft'],
+                'protocol_id' => '',
+            ];
+        }
+
+        return null;
     }
 
     /**

@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use Yii;
 use yii\web\BadRequestHttpException;
+use common\components\Domain\Clinical\Service\CareProtocolMatcherService;
 use common\components\Domain\Scheduling\Service\ConsultasSeguimientoIntakeStepService;
 use common\components\Domain\Scheduling\Service\ControlSeguimientoHubService;
 use common\components\Platform\Ui\UiScreenService;
@@ -57,8 +58,10 @@ class ConsultasSeguimientoController extends BaseController
     public function actionCondicionAcciones(): array
     {
         $req = Yii::$app->request;
+        $params = array_merge($req->get(), $req->post());
+        $codigo = trim((string) ($params['condition_codigo'] ?? $params['condition_ref'] ?? ''));
         $hub = new ControlSeguimientoHubService();
-        $items = $hub->listConditionActionItems();
+        $items = $hub->listConditionActionItems($codigo !== '' ? $codigo : null);
 
         $out = UiScreenService::handleScreen(
             'consultas-seguimiento',
@@ -71,7 +74,15 @@ class ConsultasSeguimientoController extends BaseController
         );
 
         if (isset($out['kind'], $out['ui_type']) && $out['kind'] === 'ui_definition' && $out['ui_type'] === 'ui_json') {
-            $out['title'] = '¿Qué necesitás?';
+            $title = '¿Qué necesitás?';
+            if ($codigo !== '') {
+                $protocol = (new CareProtocolMatcherService())
+                    ->matchByConditionCode($codigo);
+                if ($protocol !== null) {
+                    $title = $protocol['title'];
+                }
+            }
+            $out['title'] = $title;
             $out = UiScreenService::withListBlockItems($out, $items, 'condicion-acciones');
         }
 

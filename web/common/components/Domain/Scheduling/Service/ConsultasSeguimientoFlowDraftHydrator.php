@@ -29,7 +29,10 @@ final class ConsultasSeguimientoFlowDraftHydrator
             'control_hub_anchor',
             'control_hub_kind',
             'condition_ref',
+            'condition_codigo',
             'condition_accion',
+            'protocol_id',
+            'protocol_action_outcome',
         ] as $key) {
             $v = trim((string) ($draft[$key] ?? ''));
             if ($v !== '') {
@@ -62,19 +65,24 @@ final class ConsultasSeguimientoFlowDraftHydrator
                 = ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO;
         }
 
-        // Acción provisional sobre condición → merge draft declarado en metadata.
+        // Acción sobre condición → draft + outcome desde protocolo o default del hub.
         $condAccion = trim((string) ($draft['condition_accion'] ?? ''));
         if ($condAccion !== '') {
-            foreach ((new ControlSeguimientoHubService())->conditionDefaultActions() as $action) {
-                if ($action['code'] !== $condAccion) {
-                    continue;
-                }
-                foreach ($action['draft'] as $k => $v) {
+            $codigo = trim((string) ($draft['condition_codigo'] ?? $draft['condition_ref'] ?? ''));
+            $resolved = (new ControlSeguimientoHubService())->resolveConditionAction(
+                $codigo !== '' ? $codigo : null,
+                $condAccion
+            );
+            if ($resolved !== null) {
+                foreach ($resolved['draft'] as $k => $v) {
                     if (trim((string) ($draft[$k] ?? '')) === '' && $v !== '') {
                         $draft[$k] = $v;
                     }
                 }
-                break;
+                $draft['protocol_action_outcome'] = $resolved['outcome'];
+                if ($resolved['protocol_id'] !== '') {
+                    $draft['protocol_id'] = $resolved['protocol_id'];
+                }
             }
         }
 

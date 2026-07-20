@@ -55,14 +55,16 @@ Registry de handlers de acción solo por `action.code` genérico (reutilizar sub
 
 ## Checklist
 
-- [ ] YAML + parser + cache reset en tests.
-- [ ] Match por código Condition (fixture I10 u otro real del entorno).
-- [ ] Hub (Fase 2) consume acciones de protocolo.
-- [ ] Ningún `if ($protocolId === '…')` en ChatOrchestrator / controllers gruesos.
-- [ ] Test de catálogo + matcher.
+- [x] YAML + parser + cache reset en tests.
+- [x] Match por código Condition (I10, E11.x, J45).
+- [x] Hub (Fase 2) consume acciones de protocolo (`listConditionActionItems` / `resolveConditionAction`).
+- [x] Ningún `if ($protocolId === '…')` en ChatOrchestrator / controllers gruesos.
+- [x] Test de catálogo + matcher.
 
-## Fuera
+## Hecho en código (Fase 3)
 
-- Editor admin de protocolos.
-- Sync FHIR PlanDefinition saliente.
-- Motor de recurrencia (cada 6 meses) — puede ser campo `schedule` documental en YAML para Fase 4.
+- `Clinical/metadata/care_protocols.yaml` (HTA, diabetes, asma de ejemplo)
+- `CareProtocolCatalogService` + `CareProtocolMatcherService`
+- Condición en hub: ancla por código CIE; acciones del protocolo o fallback
+- Flow: `protocol_action_outcome` → modalidad / captura_mensaje
+

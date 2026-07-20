@@ -10,6 +10,7 @@ class ControlSeguimientoHubServiceTest extends Unit
     protected function _before(): void
     {
         ControlSeguimientoHubService::resetCacheForTests();
+        \common\components\Domain\Clinical\Service\CareProtocolCatalogService::resetCacheForTests();
     }
 
     public function testHubSiempreIncluyeFallbackGeneral(): void
@@ -49,5 +50,23 @@ class ControlSeguimientoHubServiceTest extends Unit
         $codes = array_column($actions, 'code');
         $this->assertContains('consulta_mensaje', $codes);
         $this->assertContains('solicitar_turno', $codes);
+    }
+
+    public function testConditionActionsPrefierenProtocoloCuandoHayCodigo(): void
+    {
+        $svc = new ControlSeguimientoHubService();
+        $items = $svc->listConditionActionItems('I10');
+        $this->assertNotEmpty($items);
+        $this->assertSame('protocol', $items[0]['meta']['source'] ?? null);
+        $this->assertSame('hta_control_periodico', $items[0]['meta']['protocol_id'] ?? null);
+    }
+
+    public function testResolveConditionActionModalidad(): void
+    {
+        $svc = new ControlSeguimientoHubService();
+        $resolved = $svc->resolveConditionAction('E11', 'solicitar_turno');
+        $this->assertNotNull($resolved);
+        $this->assertSame('modalidad', $resolved['outcome']);
+        $this->assertSame('diabetes_control_periodico', $resolved['protocol_id']);
     }
 }

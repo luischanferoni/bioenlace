@@ -68,7 +68,12 @@ final class ConsultaAsyncChatPolicyService
         $uploadTypes = [];
         $uploadEnabled = false;
         if ($composerEnabled) {
-            if (!$viewerEsPaciente || !$structured) {
+            if ($viewerEsPaciente) {
+                if (!$structured) {
+                    $uploadTypes = $catalog->allowedUploadMessageTypesForPatient();
+                    $uploadEnabled = $uploadTypes !== [];
+                }
+            } else {
                 $uploadTypes = $catalog->allowedUploadMessageTypes();
                 $uploadEnabled = $uploadTypes !== [];
             }

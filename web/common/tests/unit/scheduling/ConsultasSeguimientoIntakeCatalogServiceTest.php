@@ -30,13 +30,19 @@ class ConsultasSeguimientoIntakeCatalogServiceTest extends Unit
         $codes = array_column($svc->opcionesNecesidad(), 'code');
         $this->assertContains('renovar_medicacion', $codes);
         $this->assertContains('solicitar_ajuste', $codes);
+        $this->assertContains('contar_evolucion', $codes);
+        $this->assertNotContains('duda', $codes);
 
         $renovar = $svc->necesidad('renovar_medicacion');
         $ajuste = $svc->necesidad('solicitar_ajuste');
+        $evolucion = $svc->necesidad('contar_evolucion');
         $this->assertNotNull($renovar);
         $this->assertNotNull($ajuste);
+        $this->assertNotNull($evolucion);
         $this->assertTrue($renovar['permite_async']);
         $this->assertTrue($ajuste['permite_async']);
+        $this->assertTrue($evolucion['permite_async']);
+        $this->assertSame('Consulta o evolución', $evolucion['label']);
         $this->assertSame('', $renovar['composer_placeholder']);
         $this->assertNotSame('', $ajuste['composer_placeholder']);
     }

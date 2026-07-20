@@ -372,17 +372,17 @@ score_adjustments:
 
   - when_rule: consultas_seguimiento_followup
     apply:
-      - intent_id: atencion.consultas-seguimiento-flow
-        delta: 50
       - intent_id: atencion.necesito-atencion
-        delta: -25
+        delta: 50
+      - intent_id: turnos.crear-como-paciente
+        delta: -20
 
   - when_rule: consultas_seguimiento_topics_only
     when_not_rule: scheduling_operational
     apply:
-      - intent_id: atencion.consultas-seguimiento-flow
-        delta: 35
       - intent_id: atencion.necesito-atencion
+        delta: 35
+      - intent_id: turnos.crear-como-paciente
         delta: -15
 
 operational_fallbacks:
@@ -452,7 +452,7 @@ operational_fallbacks:
   - id: consultas_seguimiento_nl
     when_any_rule: [consultas_seguimiento_followup, consultas_seguimiento_topics_only]
     when_not_rule: scheduling_operational
-    intent_id: atencion.consultas-seguimiento-flow
+    intent_id: atencion.necesito-atencion
     confidence: 0.88
     method: rules_declarative_fallback
 
@@ -540,12 +540,10 @@ conversational_channel:
     when_rule: clinical_symptom
     intent_priority:
       - atencion.necesito-atencion
-      - atencion.consultas-seguimiento-flow
       - turnos.crear-como-paciente
       - turnos.crear-para-paciente
     intent_prefix_fallback: turnos.crear
     labels:
-      atencion.consultas-seguimiento-flow: Consultas y seguimiento
-      atencion.necesito-atencion: Asistencia guiada
+      atencion.necesito-atencion: Solicitar Atención
       turnos.crear-como-paciente: Turno con un especialista
       turnos.crear-para-paciente: Reservar turno

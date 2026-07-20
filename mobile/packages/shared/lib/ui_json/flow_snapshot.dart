@@ -174,10 +174,14 @@ String formatFlowSubmitSummary({
     case 'turnos.reubicar-como-paciente-flow':
       return _summaryReubicar(snap, data);
     case 'atencion.necesito-atencion':
+      if ((data['medicacion_operacion']?.toString().trim() ?? '').isNotEmpty ||
+          (data['intake_tipo']?.toString().trim() ?? '').isNotEmpty ||
+          (data['seguimiento_necesidad']?.toString().trim() ?? '').isNotEmpty) {
+        return _summaryConsultasSeguimiento(snap, data);
+      }
+      return _summaryCrear(snap, data);
     case 'turnos.crear-como-paciente':
       return _summaryCrear(snap, data);
-    case 'atencion.consultas-seguimiento-flow':
-      return _summaryConsultasSeguimiento(snap, data);
     default:
       return _summaryGeneric(data);
   }

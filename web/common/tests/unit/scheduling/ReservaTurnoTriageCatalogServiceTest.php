@@ -50,13 +50,18 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
         ]);
     }
 
-    public function testRaizNoListaSeguimientoCronico(): void
+    public function testRaizListaControlSeguimiento(): void
     {
         $svc = new ReservaTurnoTriageCatalogService();
-        $codes = array_column($svc->getOptionsForStep('raiz'), 'code');
+        $options = $svc->getOptionsForStep('raiz');
+        $codes = array_column($options, 'code');
         $this->assertContains('malestar_nuevo', $codes);
+        $this->assertContains('seguimiento_cronico', $codes);
         $this->assertContains('urgencia', $codes);
-        $this->assertNotContains('seguimiento_cronico', $codes);
-        $this->assertNotNull($svc->findNode('seguimiento_cronico'));
+        $byCode = [];
+        foreach ($options as $row) {
+            $byCode[(string) ($row['code'] ?? '')] = $row;
+        }
+        $this->assertSame('Control/Seguimiento', $byCode['seguimiento_cronico']['label'] ?? null);
     }
 }

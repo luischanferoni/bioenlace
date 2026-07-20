@@ -41,6 +41,7 @@
       uploadTypes: uploadTypes,
       canUploadAudio: composer.upload_enabled === true && uploadTypes.indexOf('audio') >= 0,
       canUploadDocument: composer.upload_enabled === true && uploadTypes.indexOf('documento') >= 0,
+      canUploadImage: composer.upload_enabled === true && uploadTypes.indexOf('imagen') >= 0,
       hint: composer.hint ? String(composer.hint).trim() : '',
       canCancel: acciones.cancelar === true,
       canClose: acciones.cerrar === true,
@@ -81,7 +82,13 @@
 
     var icon = document.createElement('span');
     icon.className = 'text-muted';
-    icon.textContent = type === 'documento' ? '📄' : '🎤';
+    if (type === 'documento') {
+      icon.textContent = '📄';
+    } else if (type === 'imagen') {
+      icon.textContent = '🖼️';
+    } else {
+      icon.textContent = '🎤';
+    }
     wrap.appendChild(icon);
 
     var label = document.createElement('span');
@@ -123,7 +130,7 @@
     var type = String(m.message_type || 'texto');
     var body = document.createElement('div');
     body.className = isSolicitudMessage(m) ? 'fw-semibold' : '';
-    if (type === 'audio' || type === 'documento') {
+    if (type === 'audio' || type === 'documento' || type === 'imagen') {
       body.appendChild(renderAttachmentBody(m, openHandler));
     } else if (type === 'texto' || type.indexOf('solicitud_') === 0) {
       body.textContent = m.content || '';

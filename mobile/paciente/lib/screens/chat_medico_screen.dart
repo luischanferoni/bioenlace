@@ -1,7 +1,7 @@
 import 'package:cross_file/cross_file.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
 import 'package:shared/shared.dart';
@@ -9,7 +9,7 @@ import 'package:shared/shared.dart';
 import '../services/consulta_chat_service.dart';
 import '../services/consulta_async_api.dart';
 
-/// Chat con el médico: mensajes de texto, audio y documentos PDF.
+/// Chat con el médico: texto e imágenes (paciente); audio/PDF según policy.
 class ChatMedicoScreen extends StatefulWidget {
   final int consultaId;
   final String? authToken;
@@ -136,46 +136,14 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     }
   }
 
-  Future<void> _pickDocument() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: const ['pdf'],
-      withData: kIsWeb,
+  Future<void> _pickImage() async {
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 2048,
     );
-    if (result == null || result.files.isEmpty || !mounted) return;
-    final picked = result.files.single;
-    if (kIsWeb) {
-      if (picked.bytes == null || picked.bytes!.isEmpty) {
-        _showError('No se pudo leer el PDF');
-        return;
-      }
-      await _uploadBytes(picked.bytes!, picked.name, 'documento');
-      return;
-    }
-    final path = picked.path;
-    if (path == null || path.isEmpty) {
-      _showError('No se pudo leer el PDF');
-      return;
-    }
-    await _uploadFile(XFile(path), 'documento');
-  }
-
-  Future<void> _uploadBytes(List<int> bytes, String name, String messageType) async {
-    if (_sending) return;
-    setState(() => _sending = true);
-    final result = await _chatService.uploadBytes(
-      widget.consultaId,
-      bytes,
-      filename: name,
-      messageType: messageType,
-    );
-    if (!mounted) return;
-    setState(() => _sending = false);
-    if (result['success'] == true) {
-      await _loadMessages();
-    } else {
-      _showError(result['message']?.toString() ?? 'Error');
-    }
+    if (picked == null || !mounted) return;
+    await _uploadFile(picked, 'imagen');
   }
 
   Future<void> _recordAndSendAudio() async {
@@ -332,15 +300,19 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
         content,
         style: asyncChatMessageTextStyle(context, m).copyWith(color: fg),
       );
-    } else if (type == 'audio' || type == 'documento') {
+    } else if (type == 'audio' || type == 'documento' || type == 'imagen') {
+      final IconData icon;
+      if (type == 'audio') {
+        icon = Icons.mic;
+      } else if (type == 'imagen') {
+        icon = Icons.image_outlined;
+      } else {
+        icon = Icons.picture_as_pdf_outlined;
+      }
       contenido = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            type == 'audio' ? Icons.mic : Icons.picture_as_pdf_outlined,
-            color: fgMuted,
-            size: 18,
-          ),
+          Icon(icon, color: fgMuted, size: 18),
           BioSpacing.gapW(BioSpacing.sm),
           Text(
             asyncChatAttachmentLabel(type),
@@ -411,7 +383,8 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       hintText: 'Escribí un mensaje…',
       maxLines: 4,
       attachments: ChatComposerAttachments(
-        onDocument: _chatPolicy.canUploadDocument ? _pickDocument : null,
+        onImage: _chatPolicy.canUploadImage ? _pickImage : null,
+        onDocument: null,
         onAudio: _chatPolicy.canUploadAudio ? _recordAndSendAudio : null,
         audioActive: _isRecording,
       ),

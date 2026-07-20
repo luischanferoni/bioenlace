@@ -126,7 +126,7 @@ $this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' :
                     <div class="d-flex flex-wrap gap-2 mb-2" id="async-chat-attach-actions"></div>
                     <label class="form-label visually-hidden" for="async-chat-input">Mensaje</label>
                     <textarea class="form-control form-control-sm mb-2" id="async-chat-input" rows="3" placeholder="Escribí tu mensaje…"></textarea>
-                    <input type="file" id="async-chat-file-input" class="d-none" accept="application/pdf,.pdf">
+                    <input type="file" id="async-chat-file-input" class="d-none" accept="application/pdf,.pdf,image/*">
                     <button type="button" class="btn btn-primary btn-sm" id="async-chat-send">Enviar</button>
                 </div>
                 <div id="async-chat-error" class="alert alert-danger d-none mt-2 mb-0"></div>

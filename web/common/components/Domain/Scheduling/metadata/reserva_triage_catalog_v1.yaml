@@ -7,7 +7,7 @@ halt_message_band_a: >-
 
 steps:
   raiz:
-    title: "¿Por qué necesitás el turno?"
+    title: "¿Qué necesitás?"
     draft_field: triage_raiz
   urgencia_categoria:
     title: "¿Qué tipo de urgencia es?"
@@ -17,16 +17,15 @@ steps:
     draft_field: triage_zona
 
 nodes:
-  # --- Raíz (2 opciones en UI; seguimiento_cronico solo uso interno / consultas-seguimiento) ---
+  # --- Raíz (motivos de Solicitar Atención) ---
   - code: malestar_nuevo
     step: raiz
     label: "Malestar nuevo"
     urgency_band: C
   - code: seguimiento_cronico
     step: raiz
-    label: "Seguimiento"
+    label: "Control/Seguimiento"
     urgency_band: C
-    ui_selectable: false
   - code: urgencia
     step: raiz
     label: "Urgencia"

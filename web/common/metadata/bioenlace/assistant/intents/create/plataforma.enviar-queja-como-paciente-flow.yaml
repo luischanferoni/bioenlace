@@ -19,7 +19,7 @@ intent_semantics:
   how: >-
     Formulario con categoría fija y descripción libre; confirmación al enviar.
   constraints:
-    - No es para síntomas ni urgencias clínicas (usar «Asistencia guiada»).
+    - No es para síntomas ni urgencias clínicas (usar «Solicitar Atención»).
   outcome:
     - La queja queda registrada para revisión del equipo de plataforma.
 

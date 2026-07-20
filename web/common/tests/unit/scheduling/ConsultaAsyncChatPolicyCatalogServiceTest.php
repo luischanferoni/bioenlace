@@ -43,9 +43,15 @@ class ConsultaAsyncChatPolicyCatalogServiceTest extends Unit
         $this->assertStringContainsString('ajuste', mb_strtolower($msg));
     }
 
-    public function testAllowedUploadTypesSonAudioYDocumento(): void
+    public function testAllowedUploadTypesStaffAudioYDocumento(): void
     {
         $svc = new ConsultaAsyncChatPolicyCatalogService();
         $this->assertSame(['audio', 'documento'], $svc->allowedUploadMessageTypes());
+    }
+
+    public function testAllowedUploadTypesPacienteSoloImagen(): void
+    {
+        $svc = new ConsultaAsyncChatPolicyCatalogService();
+        $this->assertSame(['imagen'], $svc->allowedUploadMessageTypesForPatient());
     }
 }

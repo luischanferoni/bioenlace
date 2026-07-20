@@ -59,6 +59,11 @@ final class ConsultasSeguimientoIntakeService
         }
 
         $necesidad = trim((string) ($draft[self::DRAFT_SEGUIMIENTO_NECESIDAD] ?? ''));
+        // Alias histórico: «duda» unificada con «contar_evolucion».
+        if ($necesidad === 'duda') {
+            $necesidad = 'contar_evolucion';
+            $draft[self::DRAFT_SEGUIMIENTO_NECESIDAD] = $necesidad;
+        }
         $pref = trim((string) ($draft[self::DRAFT_PREFERENCIA_TURNO] ?? ''));
         if ($pref !== '') {
             foreach ((new ConsultasSeguimientoIntakeCatalogService())->opcionesPreferenciaTurno() as $row) {

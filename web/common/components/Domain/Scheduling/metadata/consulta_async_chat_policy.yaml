@@ -16,9 +16,26 @@ conversation_modes:
     patient_upload: true
 
 attachments:
+  # Staff (compositor habilitado).
   allowed_message_types:
     - audio
     - documento
+  # Paciente en modo conversacional: solo imágenes (no PDF ni audio).
+  patient_allowed_message_types:
+    - imagen
+  image:
+    extensions:
+      - jpg
+      - jpeg
+      - png
+      - webp
+      - heic
+    mime_types:
+      - image/jpeg
+      - image/png
+      - image/webp
+      - image/heic
+    max_bytes: 5242880
   document:
     extensions:
       - pdf
@@ -124,6 +141,7 @@ system_messages:
 solicitud_tipo_labels:
   renovacion: Renovación
   ajuste: Ajuste
-  duda: Duda tratamiento
-  contar_evolucion: Evolución
+  # Alias histórico (antes «duda» y «contar_evolucion» separados).
+  duda: Consulta o evolución
+  contar_evolucion: Consulta o evolución
   consulta_general: Consulta general

@@ -18,6 +18,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Agendamiento FHIR entrante | `fhir-scheduling-inbound/` | Doc producto: [interoperabilidad-agendamiento-fhir.md](../producto/interoperabilidad-agendamiento-fhir.md) |
 | Alta cuenta institucional | `alta-cuenta-institucional/` | Self-service AdminEfector + solicitud ministerio + pasarela simulada |
 | Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | Perfil factual persistido; eventos, materialización, políticas y transparencia |
+| Control/Seguimiento + protocolos | `control-seguimiento-protocolos/` | Unificar entrada en Solicitar Atención; PlanDefinition-lite; retirar consultas-seguimiento |
 
 ## Planes archivados (carpeta eliminada)
 

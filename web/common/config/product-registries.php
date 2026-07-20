@@ -63,6 +63,7 @@ use common\components\Domain\Scheduling\Assistant\SchedulingUiSelectOptionSource
 use common\components\Domain\Scheduling\Assistant\SchedulingUiScreenParamsExpander;
 use common\components\Domain\Scheduling\Service\ConsultasSeguimientoFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
+use common\components\Domain\Scheduling\Service\SolicitarAtencionFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\TurnosVerMisTurnosFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoConfirmationPushReceiptProjector;
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoAdvancePushReceiptProjector;
@@ -75,6 +76,7 @@ return [
         'data_access.metric_flow' => [DataAccessFlowDraftHydrator::class, 'hydrateWithOptions'],
         'data_access.edit_flow' => [DataAccessEditFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.reserva_triage' => [ReservaTurnoTriageFlowDraftHydrator::class, 'hydrateWithOptions'],
+        'scheduling.solicitar_atencion' => [SolicitarAtencionFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.consultas_seguimiento_intake' => [ConsultasSeguimientoFlowDraftHydrator::class, 'hydrateWithOptions'],
         'scheduling.turnos_listar_como_paciente' => [TurnosVerMisTurnosFlowDraftHydrator::class, 'hydrateWithOptions'],
         'person.paciente_recurso_provincial' => [PacienteRecursoProvincialFlowDraftHydrator::class, 'hydrateWithOptions'],

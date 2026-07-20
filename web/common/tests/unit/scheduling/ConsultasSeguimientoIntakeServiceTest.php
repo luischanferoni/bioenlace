@@ -71,4 +71,20 @@ class ConsultasSeguimientoIntakeServiceTest extends Unit
         $this->assertSame('Me genera mareos a la mañana', $meta['ajuste_motivo']);
         $this->assertSame(3, $meta['care_plan_id']);
     }
+
+    public function testPrepararDraftUnificaDudaEnContarEvolucion(): void
+    {
+        $svc = new ConsultasSeguimientoIntakeService();
+        $draft = [
+            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+                ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO,
+            ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD => 'duda',
+        ];
+        $svc->prepararDraft($draft, 0);
+
+        $this->assertSame(
+            'contar_evolucion',
+            $draft[ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD] ?? null
+        );
+    }
 }

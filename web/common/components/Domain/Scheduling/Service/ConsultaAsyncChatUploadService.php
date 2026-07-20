@@ -46,6 +46,8 @@ final class ConsultaAsyncChatUploadService
             $this->assertDocument($file, $catalog->attachmentDocumentConfig());
         } elseif ($messageType === 'audio') {
             $this->assertAudio($file, $catalog->attachmentAudioConfig());
+        } elseif ($messageType === 'imagen') {
+            $this->assertImage($file, $catalog->attachmentImageConfig());
         }
     }
 
@@ -83,6 +85,32 @@ final class ConsultaAsyncChatUploadService
         $allowedExt = array_map('strtolower', $cfg['extensions'] ?? ['m4a', 'mp3', 'webm', 'ogg', 'wav']);
         if ($ext !== '' && !in_array($ext, $allowedExt, true)) {
             throw new \InvalidArgumentException('Formato de audio no permitido.');
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     */
+    private function assertImage(UploadedFile $file, array $cfg): void
+    {
+        $maxBytes = max(1, (int) ($cfg['max_bytes'] ?? 5242880));
+        if ($file->size > $maxBytes) {
+            throw new \InvalidArgumentException('La imagen supera el tamaño máximo permitido.');
+        }
+        $ext = strtolower(trim($file->getExtension() ?: pathinfo($file->name, PATHINFO_EXTENSION)));
+        $allowedExt = array_map('strtolower', $cfg['extensions'] ?? ['jpg', 'jpeg', 'png', 'webp', 'heic']);
+        if ($ext === '' || !in_array($ext, $allowedExt, true)) {
+            throw new \InvalidArgumentException('Formato de imagen no permitido.');
+        }
+        $mime = strtolower(trim((string) $file->type));
+        $allowedMime = array_map('strtolower', $cfg['mime_types'] ?? [
+            'image/jpeg',
+            'image/png',
+            'image/webp',
+            'image/heic',
+        ]);
+        if ($mime !== '' && $allowedMime !== [] && !in_array($mime, $allowedMime, true)) {
+            throw new \InvalidArgumentException('Formato de imagen no permitido.');
         }
     }
 }

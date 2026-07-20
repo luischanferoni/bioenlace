@@ -172,19 +172,45 @@ final class ConsultaAsyncChatPolicyCatalogService
      */
     public function allowedUploadMessageTypes(): array
     {
-        $types = self::cached()['attachments']['allowed_message_types'] ?? ['audio', 'documento'];
+        return $this->filterUploadTypes(
+            self::cached()['attachments']['allowed_message_types'] ?? ['audio', 'documento'],
+            ['audio', 'documento']
+        );
+    }
+
+    /**
+     * Tipos permitidos para paciente (p. ej. solo imagen).
+     *
+     * @return list<string>
+     */
+    public function allowedUploadMessageTypesForPatient(): array
+    {
+        return $this->filterUploadTypes(
+            self::cached()['attachments']['patient_allowed_message_types'] ?? ['imagen'],
+            ['imagen']
+        );
+    }
+
+    /**
+     * @param mixed $types
+     * @param list<string> $fallback
+     * @return list<string>
+     */
+    private function filterUploadTypes($types, array $fallback): array
+    {
         if (!is_array($types)) {
-            return ['audio', 'documento'];
+            return $fallback;
         }
+        $whitelist = ['audio', 'documento', 'imagen'];
         $out = [];
         foreach ($types as $t) {
             $s = trim((string) $t);
-            if ($s !== '' && in_array($s, ['audio', 'documento'], true)) {
+            if ($s !== '' && in_array($s, $whitelist, true)) {
                 $out[] = $s;
             }
         }
 
-        return $out !== [] ? $out : ['audio', 'documento'];
+        return $out !== [] ? $out : $fallback;
     }
 
     /**
@@ -203,6 +229,16 @@ final class ConsultaAsyncChatPolicyCatalogService
     public function attachmentAudioConfig(): array
     {
         $block = self::cached()['attachments']['audio'] ?? [];
+
+        return is_array($block) ? $block : [];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function attachmentImageConfig(): array
+    {
+        $block = self::cached()['attachments']['image'] ?? [];
 
         return is_array($block) ? $block : [];
     }

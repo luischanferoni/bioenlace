@@ -377,7 +377,7 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Consultas y seguimiento', style: BioTypography.title),
+          Text('Control y seguimiento', style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.sm),
           Text(
             'Elegí qué necesitás sobre este tratamiento.',
@@ -396,8 +396,9 @@ class _CarePlanDetailScreenState extends State<CarePlanDetailScreen> {
                     ? null
                     : () {
                         onStart(
-                          PacienteIntents.consultasSeguimiento,
+                          PacienteIntents.solicitarAtencion,
                           draft: {
+                            'triage_raiz': 'seguimiento_cronico',
                             'intake_tipo': 'seguimiento',
                             'care_plan_id': planId,
                             'seguimiento_necesidad': code,

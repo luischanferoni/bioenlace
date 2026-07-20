@@ -198,8 +198,8 @@ class IntentClassificationRulesServiceTest extends Unit
         $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
             [
                 new UiActionCatalogItem(
-                    'atencion.consultas-seguimiento-flow',
-                    'Consultas y seguimiento',
+                    'atencion.necesito-atencion',
+                    'Solicitar Atención',
                     '',
                     null,
                     '/api/test',
@@ -209,13 +209,13 @@ class IntentClassificationRulesServiceTest extends Unit
             ],
             []
         );
-        $catalog->byActionId['atencion.consultas-seguimiento-flow'] = $catalog->items[0];
+        $catalog->byActionId['atencion.necesito-atencion'] = $catalog->items[0];
         $fb = IntentClassificationRulesService::resolveOperationalFallback(
             'tengo una duda sobre el tratamiento',
             $catalog
         );
         $this->assertNotNull($fb);
-        $this->assertSame('atencion.consultas-seguimiento-flow', $fb['item']->action_id);
+        $this->assertSame('atencion.necesito-atencion', $fb['item']->action_id);
     }
 
     public function testDelegarRepresentacionRuleMatchesGestionTurnos(): void

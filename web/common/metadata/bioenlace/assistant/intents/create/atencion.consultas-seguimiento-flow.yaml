@@ -1,35 +1,25 @@
+# DEPRECATED como entrada de producto.
+# Usar atencion.necesito-atencion → motivo Control/Seguimiento (pasos cs_* absorbidos).
+# Se mantiene el manifiesto para deep-links / tests legacy hasta Fase 5 del plan
+# control-seguimiento-protocolos.
 intent_id: atencion.consultas-seguimiento-flow
 version: 1
 
-action_name: "Consultas y seguimiento"
+action_name: "Consultas y seguimiento (legacy)"
 description: >-
-  Consulta clínica por mensaje (general, seguimiento de tratamiento o de una
-  consulta previa) y, si hace falta, turno de control.
+  Entrada deprecada. Preferí Solicitar Atención → Control/Seguimiento.
 rbac_route: "/api/turnos/crear-como-paciente"
-keywords:
-  - consultas y seguimiento
-  - consulta general
-  - seguimiento tratamiento
-  - seguimiento consulta previa
-  - consulta previa
-  - renovar medicacion
-  - solicitar ajuste
-  - duda tratamiento
-  - contar evolucion
-  - consulta por mensaje
-  - consulta clinica por mensaje
+keywords: []
 
 intent_semantics:
   goal: >-
-    Separar consulta general libre de seguimiento sobre un plan de tratamiento
-    o una atención previa: consulta clínica por mensaje (async) o reserva de turno
-    según la necesidad elegida.
+    Legacy: redirige la misma lógica vía hydrator de intake; el flow canónico está
+    en atencion.necesito-atencion.
   how: >-
-    Tipo (consulta general / tratamiento activo / consulta previa) → plan o atención
-    si aplica → necesidad típica → medicación/motivo o preferencia de turno → slots si corresponde.
+    Mantener pasos históricos sin cs_ prefix para compatibilidad de subintent_id
+    en clientes viejos.
   outcome:
-    - Consulta clínica por mensaje (SOLICITUD_ASYNC) o turno con contexto de care plan
-      o atención previa cuando aplica.
+    - Misma salida async / turno que el camino Control/Seguimiento.
 
 draft_hydrator:
   handler: scheduling.consultas_seguimiento_intake
@@ -230,7 +220,7 @@ subintents:
     terminal_without_submit: true
     composer_capture:
       draft_field: mensaje
-      placeholder: "Contanos tu consulta o evolución con el mayor detalle posible."
+      placeholder: "Contanos tu duda o cómo te sentís, con el mayor detalle posible."
       min_length: 10
       submit_action_id: consulta-async.solicitar-como-paciente
       params:

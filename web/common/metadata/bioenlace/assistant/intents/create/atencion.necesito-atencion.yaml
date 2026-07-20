@@ -1,327 +1,628 @@
 intent_id: atencion.necesito-atencion
 version: 1
-
-action_name: "Asistencia guiada"
-description: "Contanos qué te pasa; te guiamos a turno ambulatorio, teleconsulta o derivación según el caso."
-rbac_route: "/api/turnos/crear-como-paciente"
+action_name: Solicitar Atención
+description: Contanos qué necesitás; te guiamos a turno, control, teleconsulta o derivación según el caso.
+rbac_route: /api/turnos/crear-como-paciente
 keywords:
-  - necesito atención
-  - necesito atencion
-  - me siento mal
-  - me duele
-  - qué hago
-  - ayuda médica
-  - ver un médico
-  - consulta médica
-  - atención médica
-
+- solicitar atención
+- solicitar atencion
+- necesito atención
+- necesito atencion
+- me siento mal
+- me duele
+- qué hago
+- ayuda médica
+- ver un médico
+- consulta médica
+- atención médica
+- control
+- seguimiento
+- control de seguimiento
+- consultas y seguimiento
+- consulta general
+- seguimiento tratamiento
+- consulta previa
+- renovar medicacion
+- solicitar ajuste
+- consulta o evolucion
+- contar evolucion
+- consulta por mensaje
+- consulta clinica por mensaje
 intent_semantics:
-  goal: >-
-    Dos caminos: malestar nuevo (zona → servicio filtrado) o urgencia (categoría → pantalla guardia, sin reserva).
-    El seguimiento de tratamiento vive en atencion.consultas-seguimiento-flow (app paciente).
-  how: >-
-    Malestar nuevo → zona → modalidad → servicio (solo los de esa zona).
-    Urgencia → categoría clínica → derivación a guardia/emergencias.
+  goal: 'Tres caminos: malestar nuevo (zona → servicio), control/seguimiento (consulta por mensaje, tratamiento
+    activo o atención previa → acciones) o urgencia (guardia, sin reserva).'
+  how: 'Malestar nuevo → zona → modalidad → servicio.
+
+    Control/Seguimiento → tipo (general / tratamiento / consulta previa) → necesidad o mensaje → async
+    o turno.
+
+    Urgencia → categoría → derivación a guardia/emergencias.'
   preconditions:
-    - El usuario puede autogestionar turnos ambulatorios no urgentes.
+  - El usuario puede autogestionar turnos ambulatorios no urgentes.
   constraints:
-    - Urgencia (raíz o categoría banda A/B con halt): no se completa reserva.
-    - Malestar nuevo presencial: servicios filtrados por zona (p. ej. pecho no muestra oftalmología).
-    - Modalidad obligatoria salvo pantalla de urgencia terminal.
+  - Urgencia (raíz o categoría banda A/B con halt): no se completa reserva.
+  - Malestar nuevo presencial: servicios filtrados por zona (p. ej. pecho no muestra oftalmología).
+  - Modalidad obligatoria salvo pantalla de urgencia terminal.
   outcome:
-    - Turno con servicio acorde al camino; triage persistido.
+  - Turno con servicio acorde al camino; triage persistido.
   keyphrases:
-    - necesito ayuda con un síntoma
-    - quiero atención médica
-    - no sé si ir a urgencias o pedir turno
-
+  - necesito ayuda con un síntoma
+  - quiero atención médica
+  - pedir un control
+  - no sé si ir a urgencias o pedir turno
 draft_hydrator:
-  handler: scheduling.reserva_triage
-
+  handler: scheduling.solicitar_atencion
 draft_keys_extra:
-  - tipo_atencion
-  - teleconsulta_ofercible
-  - async_ofrecible
-  - modalidad_paso_requerido
-  - servicio_reserva_rol
-  - triage_servicio_rol_ideal
-  - triage_codigo_servicio_resolutor
-  - reserva_servicio_autogestion
-  - reserva_servicio_mensaje
-  - reserva_modo_hub_paciente
-  - fecha_turno
-  - care_plan_id
-  - triage_raiz
-  - triage_alarmas
-  - triage_zona
-  - triage_nota
-  - reserva_triage_halt
-  - urgency_band
-
+- tipo_atencion
+- teleconsulta_ofercible
+- async_ofrecible
+- modalidad_paso_requerido
+- servicio_reserva_rol
+- triage_servicio_rol_ideal
+- triage_codigo_servicio_resolutor
+- reserva_servicio_autogestion
+- reserva_servicio_mensaje
+- reserva_modo_hub_paciente
+- fecha_turno
+- care_plan_id
+- triage_raiz
+- triage_alarmas
+- triage_zona
+- triage_nota
+- reserva_triage_halt
+- urgency_band
+- intake_tipo
+- seguimiento_necesidad
+- preferencia_profesional_turno
+- encounter_id
+- mensaje
+- medication_request_ids
+- medicacion_operacion
+- ajuste_motivo
+- id_servicio_asignado
+- id_efector
+- id_profesional_efector_servicio
+- slot_id
 subintents:
-  - id: triage_raiz
-    assistant_text: "Motivo"
-    provides:
-      - draft.triage_raiz
-    next_routing:
-      - when:
-          draft_equals:
-            triage_raiz: urgencia
-        next: triage_urgencia_categoria
-      - when:
-          draft_equals:
-            triage_raiz: malestar_nuevo
-        next: triage_zona
-      - when:
-          draft_equals:
-            modalidad_paso_requerido: "0"
-        next: select_servicio
-      - when:
-          default: true
-        next: select_tipo_atencion
-    open_ui:
-      action_id: turnos.reserva-triage-paso
-      params:
-        step: raiz
-
-  - id: triage_urgencia_categoria
-    assistant_text: "Tipo de urgencia"
-    requires:
-      - draft.triage_raiz
-    provides:
-      - draft.triage_alarmas
-    next_routing:
-      - when:
-          draft_equals:
-            reserva_triage_halt: "1"
-        next: triage_urgencia
-      - when:
-          default: true
-        next: triage_urgencia
-    open_ui:
-      action_id: turnos.reserva-triage-paso
-      params:
-        step: urgencia_categoria
-        triage_raiz: "draft.triage_raiz"
-
-  - id: triage_zona
-    assistant_text: "Zona"
-    requires:
-      - draft.triage_raiz
-    provides:
-      - draft.triage_zona
-    next_routing:
-      - when:
-          draft_equals:
-            modalidad_paso_requerido: "0"
-        next: select_servicio
-      - when:
-          default: true
-        next: select_tipo_atencion
-    open_ui:
-      action_id: turnos.reserva-triage-paso
-      params:
-        step: zona
-        triage_raiz: "draft.triage_raiz"
-
-  - id: triage_urgencia
-    assistant_text: "Urgencia"
-    requires:
-      - draft.reserva_triage_halt
-    provides: []
-    next: ""
-    terminal_without_submit: true
-    flow_dismiss:
-      label: "Entendido"
-    flow_actions:
-      - label: "Llamar al 107"
-        href: "tel:107"
-        variant: danger
-    open_ui:
-      action_id: turnos.reserva-triage-urgencia
-
-  - id: select_tipo_atencion
-    assistant_text: "Modalidad"
-    requires:
-      - draft.triage_raiz
-    provides:
-      - draft.tipo_atencion
-    next_routing:
-      - when:
-          draft_equals:
-            tipo_atencion: async
-        next: solicitud_async
-      - when:
-          draft_equals:
-            tipo_atencion: teleconsulta
-        next: select_dia_teleconsulta
-      - when:
-          default: true
-        next: select_servicio
-    open_ui:
-      action_id: turnos.reserva-triage-paso
-      params:
-        step: modalidad
-        step_title: "¿Cómo preferís la atención?"
-        triage_raiz: "draft.triage_raiz"
-        triage_alarmas: "draft.triage_alarmas"
-        triage_zona: "draft.triage_zona"
-        care_plan_id: "draft.care_plan_id"
-
-  - id: solicitud_async
-    assistant_text: "Describí tu consulta en el campo de texto de abajo"
-    requires:
-      - draft.triage_raiz
-      - draft.tipo_atencion
-    provides:
-      - draft.mensaje
-    next: ""
-    terminal_without_submit: true
-    composer_capture:
-      draft_field: mensaje
-      placeholder: "Contanos tu consulta con el mayor detalle posible. Un profesional te responderá por mensaje."
-      min_length: 10
-      submit_action_id: consulta-async.solicitar-como-paciente
-      params:
-        triage_raiz: "draft.triage_raiz"
-        triage_alarmas: "draft.triage_alarmas?"
-        triage_zona: "draft.triage_zona?"
-        triage_evolucion: "draft.triage_evolucion?"
-        care_plan_id: "draft.care_plan_id?"
-        triage_nota: "draft.triage_nota?"
-        mensaje: "draft.mensaje"
-
-  - id: select_servicio
-    assistant_text: "Servicio"
-    requires:
-      - draft.tipo_atencion
-    provides:
-      - draft.id_servicio_asignado
-    next: select_efector
-    hint:
-      entity: servicio
-      match_property: nombre
-    open_ui:
-      action_id: servicios.elegir-acepta-turnos
-      params:
-        tipo_atencion: "draft.tipo_atencion"
-        triage_raiz: "draft.triage_raiz"
-        triage_alarmas: "draft.triage_alarmas"
-        triage_zona: "draft.triage_zona"
-        care_plan_id: "draft.care_plan_id"
-
-  - id: select_efector
-    assistant_text: "Centro de salud"
-    requires:
-      - draft.id_servicio_asignado
-      - draft.tipo_atencion
-    provides:
-      - draft.id_efector
-    next: select_profesional
-    hint:
-      entity: efector
-      match_property: nombre
-    chooser:
-      when_user_says_nearby:
-        open_ui:
-          action_id: efectores.listar-por-servicio-cercano
-          params:
-            id_servicio: "draft.id_servicio_asignado"
-      otherwise:
-        open_ui:
-          action_id: efectores.listar-por-servicio
-          params:
-            id_servicio: "draft.id_servicio_asignado"
-
-  - id: select_profesional
-    assistant_text: "Profesional"
-    requires:
-      - draft.id_efector
-      - draft.id_servicio_asignado
-    provides:
-      - draft.id_profesional_efector_servicio
-    next: select_dia
-    hint:
-      entity: profesional
-      match_property: nombre
-    open_ui:
-      action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
-      params:
-        id_efector: "draft.id_efector"
-        id_servicio: "draft.id_servicio_asignado"
-        tipo_atencion: "draft.tipo_atencion"
-
-  - id: select_dia
-    assistant_text: "Día"
-    requires:
-      - draft.id_profesional_efector_servicio
-    provides:
-      - draft.fecha_turno
-    next: select_slot
-    open_ui:
-      action_id: turnos.slots-dias-disponibles-como-paciente
-      params:
-        id_servicio: "draft.id_servicio_asignado"
-        id_efector: "draft.id_efector"
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-
-  - id: select_slot
-    assistant_text: "Horario"
-    requires:
-      - draft.id_profesional_efector_servicio
-      - draft.fecha_turno
-    provides:
-      - draft.slot_id
-    next: ""
-    open_ui:
-      action_id: turnos.slots-disponibles-como-paciente
-      params:
-        id_servicio: "draft.id_servicio_asignado"
-        id_efector: "draft.id_efector"
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        fecha: "draft.fecha_turno"
-
-  - id: select_dia_teleconsulta
-    assistant_text: "Día"
-    requires:
-      - draft.tipo_atencion
-    provides:
-      - draft.fecha_turno
-    next: select_slot_teleconsulta
-    open_ui:
-      action_id: turnos.slots-dias-disponibles-como-paciente
-      params:
-        reserva_modo: teleconsulta_hub
-        triage_raiz: "draft.triage_raiz"
-        triage_zona: "draft.triage_zona"
-        care_plan_id: "draft.care_plan_id"
-
-  - id: select_slot_teleconsulta
-    assistant_text: "Horario"
-    requires:
-      - draft.tipo_atencion
-      - draft.fecha_turno
-    provides:
-      - draft.slot_id
-    next: ""
-    open_ui:
-      action_id: turnos.slots-disponibles-como-paciente
-      params:
-        reserva_modo: teleconsulta_hub
-        triage_raiz: "draft.triage_raiz"
-        triage_zona: "draft.triage_zona"
-        care_plan_id: "draft.care_plan_id"
-        fecha: "draft.fecha_turno"
-
+- id: triage_raiz
+  assistant_text: Motivo
+  provides:
+  - draft.triage_raiz
+  next_routing:
+  - when:
+      draft_equals:
+        triage_raiz: urgencia
+    next: triage_urgencia_categoria
+  - when:
+      draft_equals:
+        triage_raiz: malestar_nuevo
+    next: triage_zona
+  - when:
+      draft_equals:
+        triage_raiz: seguimiento_cronico
+    next: cs_select_tipo
+  - when:
+      draft_equals:
+        modalidad_paso_requerido: '0'
+    next: select_servicio
+  - when:
+      default: true
+    next: select_tipo_atencion
+  open_ui:
+    action_id: turnos.reserva-triage-paso
+    params:
+      step: raiz
+- id: triage_urgencia_categoria
+  assistant_text: Tipo de urgencia
+  requires:
+  - draft.triage_raiz
+  provides:
+  - draft.triage_alarmas
+  next_routing:
+  - when:
+      draft_equals:
+        reserva_triage_halt: '1'
+    next: triage_urgencia
+  - when:
+      default: true
+    next: triage_urgencia
+  open_ui:
+    action_id: turnos.reserva-triage-paso
+    params:
+      step: urgencia_categoria
+      triage_raiz: draft.triage_raiz
+- id: triage_zona
+  assistant_text: Zona
+  requires:
+  - draft.triage_raiz
+  provides:
+  - draft.triage_zona
+  next_routing:
+  - when:
+      draft_equals:
+        modalidad_paso_requerido: '0'
+    next: select_servicio
+  - when:
+      default: true
+    next: select_tipo_atencion
+  open_ui:
+    action_id: turnos.reserva-triage-paso
+    params:
+      step: zona
+      triage_raiz: draft.triage_raiz
+- id: triage_urgencia
+  assistant_text: Urgencia
+  requires:
+  - draft.reserva_triage_halt
+  provides: []
+  next: ''
+  terminal_without_submit: true
+  flow_dismiss:
+    label: Entendido
+  flow_actions:
+  - label: Llamar al 107
+    href: tel:107
+    variant: danger
+  open_ui:
+    action_id: turnos.reserva-triage-urgencia
+- id: select_tipo_atencion
+  assistant_text: Modalidad
+  requires:
+  - draft.triage_raiz
+  provides:
+  - draft.tipo_atencion
+  next_routing:
+  - when:
+      draft_equals:
+        tipo_atencion: async
+    next: solicitud_async
+  - when:
+      draft_equals:
+        tipo_atencion: teleconsulta
+    next: select_dia_teleconsulta
+  - when:
+      default: true
+    next: select_servicio
+  open_ui:
+    action_id: turnos.reserva-triage-paso
+    params:
+      step: modalidad
+      step_title: ¿Cómo preferís la atención?
+      triage_raiz: draft.triage_raiz
+      triage_alarmas: draft.triage_alarmas
+      triage_zona: draft.triage_zona
+      care_plan_id: draft.care_plan_id
+- id: solicitud_async
+  assistant_text: Describí tu consulta en el campo de texto de abajo
+  requires:
+  - draft.triage_raiz
+  - draft.tipo_atencion
+  provides:
+  - draft.mensaje
+  next: ''
+  terminal_without_submit: true
+  composer_capture:
+    draft_field: mensaje
+    placeholder: Contanos tu consulta con el mayor detalle posible. Un profesional te responderá por mensaje.
+    min_length: 10
+    submit_action_id: consulta-async.solicitar-como-paciente
+    params:
+      triage_raiz: draft.triage_raiz
+      triage_alarmas: draft.triage_alarmas?
+      triage_zona: draft.triage_zona?
+      triage_evolucion: draft.triage_evolucion?
+      care_plan_id: draft.care_plan_id?
+      triage_nota: draft.triage_nota?
+      mensaje: draft.mensaje
+- id: select_servicio
+  assistant_text: Servicio
+  requires:
+  - draft.tipo_atencion
+  provides:
+  - draft.id_servicio_asignado
+  next: select_efector
+  hint:
+    entity: servicio
+    match_property: nombre
+  open_ui:
+    action_id: servicios.elegir-acepta-turnos
+    params:
+      tipo_atencion: draft.tipo_atencion
+      triage_raiz: draft.triage_raiz
+      triage_alarmas: draft.triage_alarmas
+      triage_zona: draft.triage_zona
+      care_plan_id: draft.care_plan_id
+- id: select_efector
+  assistant_text: Centro de salud
+  requires:
+  - draft.id_servicio_asignado
+  - draft.tipo_atencion
+  provides:
+  - draft.id_efector
+  next: select_profesional
+  hint:
+    entity: efector
+    match_property: nombre
+  chooser:
+    when_user_says_nearby:
+      open_ui:
+        action_id: efectores.listar-por-servicio-cercano
+        params:
+          id_servicio: draft.id_servicio_asignado
+    otherwise:
+      open_ui:
+        action_id: efectores.listar-por-servicio
+        params:
+          id_servicio: draft.id_servicio_asignado
+- id: select_profesional
+  assistant_text: Profesional
+  requires:
+  - draft.id_efector
+  - draft.id_servicio_asignado
+  provides:
+  - draft.id_profesional_efector_servicio
+  next: select_dia
+  hint:
+    entity: profesional
+    match_property: nombre
+  open_ui:
+    action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
+    params:
+      id_efector: draft.id_efector
+      id_servicio: draft.id_servicio_asignado
+      tipo_atencion: draft.tipo_atencion
+- id: select_dia
+  assistant_text: Día
+  requires:
+  - draft.id_profesional_efector_servicio
+  provides:
+  - draft.fecha_turno
+  next: select_slot
+  open_ui:
+    action_id: turnos.slots-dias-disponibles-como-paciente
+    params:
+      id_servicio: draft.id_servicio_asignado
+      id_efector: draft.id_efector
+      id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+- id: select_slot
+  assistant_text: Horario
+  requires:
+  - draft.id_profesional_efector_servicio
+  - draft.fecha_turno
+  provides:
+  - draft.slot_id
+  next: ''
+  open_ui:
+    action_id: turnos.slots-disponibles-como-paciente
+    params:
+      id_servicio: draft.id_servicio_asignado
+      id_efector: draft.id_efector
+      id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+      fecha: draft.fecha_turno
+- id: select_dia_teleconsulta
+  assistant_text: Día
+  requires:
+  - draft.tipo_atencion
+  provides:
+  - draft.fecha_turno
+  next: select_slot_teleconsulta
+  open_ui:
+    action_id: turnos.slots-dias-disponibles-como-paciente
+    params:
+      reserva_modo: teleconsulta_hub
+      triage_raiz: draft.triage_raiz
+      triage_zona: draft.triage_zona
+      care_plan_id: draft.care_plan_id
+- id: select_slot_teleconsulta
+  assistant_text: Horario
+  requires:
+  - draft.tipo_atencion
+  - draft.fecha_turno
+  provides:
+  - draft.slot_id
+  next: ''
+  open_ui:
+    action_id: turnos.slots-disponibles-como-paciente
+    params:
+      reserva_modo: teleconsulta_hub
+      triage_raiz: draft.triage_raiz
+      triage_zona: draft.triage_zona
+      care_plan_id: draft.care_plan_id
+      fecha: draft.fecha_turno
+- id: cs_select_tipo
+  assistant_text: ¿Sobre qué es el control o seguimiento?
+  provides:
+  - draft.intake_tipo
+  next_routing:
+  - when:
+      draft_equals:
+        intake_tipo: consulta_general
+    next: cs_captura_consulta_general
+  - when:
+      draft_equals:
+        intake_tipo: seguimiento_consulta_previa
+    next: cs_select_encounter_previa
+  - when:
+      draft_equals:
+        intake_tipo: seguimiento
+    next: cs_select_care_plan
+  - when:
+      default: true
+    next: cs_select_care_plan
+  open_ui:
+    action_id: consultas-seguimiento.paso
+    params:
+      step: tipo
+- id: cs_select_encounter_previa
+  assistant_text: ¿Sobre qué atención?
+  requires:
+  - draft.intake_tipo
+  provides:
+  - draft.encounter_id
+  next: cs_captura_consulta_previa
+  open_ui:
+    action_id: clinical.encounter.mis-atenciones-como-paciente
+- id: cs_captura_consulta_previa
+  assistant_text: Contanos en el campo de abajo
+  requires:
+  - draft.intake_tipo
+  - draft.encounter_id
+  provides:
+  - draft.mensaje
+  next: ''
+  terminal_without_submit: true
+  composer_capture:
+    draft_field: mensaje
+    placeholder: Contanos tu consulta o evolución respecto de esa atención.
+    min_length: 10
+    submit_action_id: consulta-async.solicitar-como-paciente
+    params:
+      intake_tipo: draft.intake_tipo
+      encounter_id: draft.encounter_id
+      triage_raiz: seguimiento_cronico
+      mensaje: draft.mensaje
+- id: cs_select_care_plan
+  assistant_text: Tu tratamiento
+  review_prefilled: true
+  requires:
+  - draft.intake_tipo
+  provides:
+  - draft.care_plan_id
+  next: cs_select_necesidad
+  open_ui:
+    action_id: clinical.care-plan.ver-tratamiento-paciente
+- id: cs_select_necesidad
+  assistant_text: ¿Qué necesitás?
+  requires:
+  - draft.care_plan_id
+  provides:
+  - draft.seguimiento_necesidad
+  next_routing:
+  - when:
+      draft_equals:
+        seguimiento_necesidad: renovar_medicacion
+    next: cs_select_medicamentos
+  - when:
+      draft_equals:
+        seguimiento_necesidad: solicitar_ajuste
+    next: cs_select_medicamentos
+  - when:
+      draft_equals:
+        seguimiento_necesidad: solicitar_turno
+    next: cs_select_preferencia_turno
+  - when:
+      default: true
+    next: cs_captura_seguimiento_mensaje
+  open_ui:
+    action_id: consultas-seguimiento.paso
+    params:
+      step: necesidad
+- id: cs_select_medicamentos
+  assistant_text: Medicación
+  requires:
+  - draft.care_plan_id
+  - draft.seguimiento_necesidad
+  provides:
+  - draft.medication_request_ids
+  next_routing:
+  - when:
+      draft_equals:
+        seguimiento_necesidad: solicitar_ajuste
+    next: cs_captura_ajuste_motivo
+  - when:
+      draft_equals:
+        seguimiento_necesidad: renovar_medicacion
+    next: ''
+  open_ui:
+    action_id: clinical.care-plan.medicamentos-como-paciente
+    params:
+      care_plan_id: draft.care_plan_id
+  flow_submit:
+    action_id: clinical.care-plan.confirmar-renovacion-como-paciente
+    label: Solicitar renovación
+    params:
+      care_plan_id: draft.care_plan_id
+      medication_request_ids: draft.medication_request_ids
+      intake_tipo: draft.intake_tipo
+      seguimiento_necesidad: draft.seguimiento_necesidad
+      medicacion_operacion: renovacion
+      triage_raiz: seguimiento_cronico
+- id: cs_captura_ajuste_motivo
+  assistant_text: ¿Qué cambio necesitás?
+  requires:
+  - draft.care_plan_id
+  - draft.medication_request_ids
+  - draft.seguimiento_necesidad
+  provides:
+  - draft.ajuste_motivo
+  next: ''
+  terminal_without_submit: true
+  composer_capture:
+    draft_field: ajuste_motivo
+    placeholder: Indicá qué cambio necesitás y por qué (síntomas, horarios, etc.).
+    min_length: 10
+    submit_action_id: consulta-async.solicitar-como-paciente
+    params:
+      intake_tipo: draft.intake_tipo
+      seguimiento_necesidad: draft.seguimiento_necesidad
+      care_plan_id: draft.care_plan_id
+      medication_request_ids: draft.medication_request_ids
+      medicacion_operacion: ajuste
+      triage_raiz: seguimiento_cronico
+      ajuste_motivo: draft.ajuste_motivo
+- id: cs_captura_consulta_general
+  assistant_text: Escribí tu consulta en el campo de abajo
+  requires:
+  - draft.intake_tipo
+  provides:
+  - draft.mensaje
+  next: ''
+  terminal_without_submit: true
+  composer_capture:
+    draft_field: mensaje
+    placeholder: Contanos tu consulta con el mayor detalle posible. Un profesional te responderá por mensaje.
+    min_length: 10
+    submit_action_id: consulta-async.solicitar-como-paciente
+    params:
+      intake_tipo: draft.intake_tipo
+      mensaje: draft.mensaje
+      triage_raiz: seguimiento_cronico
+- id: cs_captura_seguimiento_mensaje
+  assistant_text: Contanos en el campo de abajo
+  requires:
+  - draft.seguimiento_necesidad
+  - draft.care_plan_id
+  provides:
+  - draft.mensaje
+  next: ''
+  terminal_without_submit: true
+  composer_capture:
+    draft_field: mensaje
+    placeholder: Contanos tu duda o cómo te sentís, con el mayor detalle posible.
+    min_length: 10
+    submit_action_id: consulta-async.solicitar-como-paciente
+    params:
+      intake_tipo: draft.intake_tipo
+      seguimiento_necesidad: draft.seguimiento_necesidad
+      care_plan_id: draft.care_plan_id
+      triage_raiz: seguimiento_cronico
+      mensaje: draft.mensaje
+- id: cs_select_preferencia_turno
+  assistant_text: Turno
+  requires:
+  - draft.seguimiento_necesidad
+  - draft.care_plan_id
+  provides:
+  - draft.preferencia_profesional_turno
+  - draft.tipo_atencion
+  next_routing:
+  - when:
+      draft_equals:
+        preferencia_profesional_turno: teleconsulta
+    next: cs_select_dia_teleconsulta
+  - when:
+      draft_equals:
+        preferencia_profesional_turno: mismo_medico
+    next: cs_select_dia
+  - when:
+      default: true
+    next: cs_select_efector
+  open_ui:
+    action_id: consultas-seguimiento.paso
+    params:
+      step: preferencia_turno
+- id: cs_select_efector
+  assistant_text: Centro de salud
+  requires:
+  - draft.id_servicio_asignado
+  - draft.tipo_atencion
+  provides:
+  - draft.id_efector
+  next: cs_select_profesional
+  open_ui:
+    action_id: efectores.listar-por-servicio
+    params:
+      id_servicio: draft.id_servicio_asignado
+- id: cs_select_profesional
+  assistant_text: Profesional
+  requires:
+  - draft.id_efector
+  - draft.id_servicio_asignado
+  provides:
+  - draft.id_profesional_efector_servicio
+  next: cs_select_dia
+  open_ui:
+    action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
+    params:
+      id_efector: draft.id_efector
+      id_servicio: draft.id_servicio_asignado
+      tipo_atencion: draft.tipo_atencion
+- id: cs_select_dia
+  assistant_text: Día
+  requires:
+  - draft.id_profesional_efector_servicio
+  provides:
+  - draft.fecha_turno
+  next: cs_select_slot
+  open_ui:
+    action_id: turnos.slots-dias-disponibles-como-paciente
+    params:
+      id_servicio: draft.id_servicio_asignado
+      id_efector: draft.id_efector
+      id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+- id: cs_select_slot
+  assistant_text: Horario
+  requires:
+  - draft.id_profesional_efector_servicio
+  - draft.fecha_turno
+  provides:
+  - draft.slot_id
+  next: ''
+  open_ui:
+    action_id: turnos.slots-disponibles-como-paciente
+    params:
+      id_servicio: draft.id_servicio_asignado
+      id_efector: draft.id_efector
+      id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+      fecha: draft.fecha_turno
+- id: cs_select_dia_teleconsulta
+  assistant_text: Día
+  requires:
+  - draft.tipo_atencion
+  - draft.care_plan_id
+  provides:
+  - draft.fecha_turno
+  next: cs_select_slot_teleconsulta
+  open_ui:
+    action_id: turnos.slots-dias-disponibles-como-paciente
+    params:
+      reserva_modo: teleconsulta_hub
+      care_plan_id: draft.care_plan_id
+- id: cs_select_slot_teleconsulta
+  assistant_text: Horario
+  requires:
+  - draft.tipo_atencion
+  - draft.fecha_turno
+  provides:
+  - draft.slot_id
+  next: ''
+  open_ui:
+    action_id: turnos.slots-disponibles-como-paciente
+    params:
+      reserva_modo: teleconsulta_hub
+      care_plan_id: draft.care_plan_id
+      fecha: draft.fecha_turno
 flow_submit:
   action_id: turnos.crear-como-paciente
   params:
-    slot_id: "draft.slot_id"
-    triage_raiz: "draft.triage_raiz"
-    tipo_atencion: "draft.tipo_atencion"
-    id_servicio_asignado: "draft.id_servicio_asignado?"
-    id_efector: "draft.id_efector?"
-    triage_alarmas: "draft.triage_alarmas?"
-    triage_zona: "draft.triage_zona?"
-    care_plan_id: "draft.care_plan_id?"
-    triage_nota: "draft.triage_nota?"
+    slot_id: draft.slot_id
+    triage_raiz: draft.triage_raiz
+    tipo_atencion: draft.tipo_atencion
+    id_servicio_asignado: draft.id_servicio_asignado?
+    id_efector: draft.id_efector?
+    triage_alarmas: draft.triage_alarmas?
+    triage_zona: draft.triage_zona?
+    care_plan_id: draft.care_plan_id?
+    triage_nota: draft.triage_nota?
+    intake_tipo: draft.intake_tipo?
+    seguimiento_necesidad: draft.seguimiento_necesidad?

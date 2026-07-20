@@ -29,12 +29,6 @@ seguimiento_necesidades:
     description: Pedí un cambio en dosis, horario u otro aspecto; un profesional lo evaluará.
     composer_placeholder: "Indicá qué cambio necesitás y por qué (síntomas, horarios, etc.)."
     permite_async: true
-  duda:
-    code: duda
-    label: Duda sobre el tratamiento
-    description: Preguntas sobre medicación, indicaciones o el plan.
-    composer_placeholder: "Escribí tu duda con el mayor detalle posible."
-    permite_async: true
   solicitar_turno:
     code: solicitar_turno
     label: Solicitar turno
@@ -42,9 +36,9 @@ seguimiento_necesidades:
     permite_async: false
   contar_evolucion:
     code: contar_evolucion
-    label: Contar evolución
-    description: Contanos cómo venís con el tratamiento.
-    composer_placeholder: "Describí cómo te sentís y si notás cambios desde la última atención."
+    label: Consulta o evolución
+    description: Dudas sobre el tratamiento o cómo te está yendo.
+    composer_placeholder: "Contanos tu duda o cómo te sentís, con el mayor detalle posible."
     permite_async: true
 
 preferencias_turno:

@@ -228,12 +228,11 @@ class ConsultaChatController extends BaseController
 
         $messageType = Yii::$app->request->post('message_type', 'audio');
         $isAsync = $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC;
-        if ($isAsync) {
-            if (!in_array($messageType, ['audio', 'documento'], true)) {
-                return ['success' => false, 'message' => 'Solo se permiten adjuntos de audio o documento PDF.', 'data' => null];
-            }
-        } elseif (!in_array($messageType, self::UPLOAD_MESSAGE_TYPES, true)) {
+        if (!$isAsync && !in_array($messageType, self::UPLOAD_MESSAGE_TYPES, true)) {
             return ['success' => false, 'message' => 'message_type debe ser: imagen, audio, video o documento', 'data' => null];
+        }
+        if ($isAsync && !in_array($messageType, ['imagen', 'audio', 'documento'], true)) {
+            return ['success' => false, 'message' => 'Tipo de adjunto no permitido.', 'data' => null];
         }
 
         $file = UploadedFile::getInstanceByName('file');

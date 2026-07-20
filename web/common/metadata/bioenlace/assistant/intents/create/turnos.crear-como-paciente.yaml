@@ -65,7 +65,7 @@ business_rules:
         intent_id: turnos.crear-como-paciente
         reset_flow: true
       - id: asistencia_guiada
-        label: "Asistencia guiada"
+        label: "Solicitar Atención"
         intent_id: atencion.necesito-atencion
         reset_flow: true
 

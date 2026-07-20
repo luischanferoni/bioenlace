@@ -80,6 +80,7 @@
       mediaRecorder: null,
       mediaChunks: [],
       isRecording: false,
+      pendingUploadType: null,
     };
 
     var PASADOS_PAGE_LIMIT = 20;
@@ -1638,12 +1639,24 @@
       if (attachSlot) {
         clearNode(attachSlot);
         if (p.composerEnabled && asyncChatState.canCompose && p.uploadEnabled) {
+          if (p.canUploadImage) {
+            var imgBtn = document.createElement('button');
+            imgBtn.type = 'button';
+            imgBtn.className = 'btn btn-outline-secondary btn-sm';
+            imgBtn.textContent = 'Adjuntar imagen';
+            imgBtn.addEventListener('click', function () {
+              triggerAsyncChatFilePick('imagen');
+            });
+            attachSlot.appendChild(imgBtn);
+          }
           if (p.canUploadDocument) {
             var pdfBtn = document.createElement('button');
             pdfBtn.type = 'button';
             pdfBtn.className = 'btn btn-outline-secondary btn-sm';
             pdfBtn.textContent = 'Adjuntar PDF';
-            pdfBtn.addEventListener('click', triggerAsyncChatDocumentPick);
+            pdfBtn.addEventListener('click', function () {
+              triggerAsyncChatFilePick('documento');
+            });
             attachSlot.appendChild(pdfBtn);
           }
           if (p.canUploadAudio) {
@@ -1720,9 +1733,16 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    function triggerAsyncChatDocumentPick() {
+    function triggerAsyncChatFilePick(messageType) {
       var input = document.getElementById('async-chat-file-input');
-      if (input) input.click();
+      if (!input) return;
+      asyncChatState.pendingUploadType = messageType || 'documento';
+      if (messageType === 'imagen') {
+        input.accept = 'image/jpeg,image/png,image/webp,image/heic,.jpg,.jpeg,.png,.webp,.heic';
+      } else {
+        input.accept = 'application/pdf,.pdf';
+      }
+      input.click();
     }
 
     async function uploadAsyncChatFile(file, messageType) {
@@ -1758,15 +1778,26 @@
       var file = input && input.files && input.files[0] ? input.files[0] : null;
       if (input) input.value = '';
       if (!file) return;
-      if (file.type && file.type !== 'application/pdf') {
-        var errEl = document.getElementById('async-chat-error');
+      var messageType = asyncChatState.pendingUploadType || 'documento';
+      asyncChatState.pendingUploadType = null;
+      var errEl = document.getElementById('async-chat-error');
+      if (messageType === 'imagen') {
+        var imgOk = !file.type || file.type.indexOf('image/') === 0;
+        if (!imgOk) {
+          if (errEl) {
+            errEl.textContent = 'Solo se permiten imágenes.';
+            errEl.classList.remove('d-none');
+          }
+          return;
+        }
+      } else if (file.type && file.type !== 'application/pdf') {
         if (errEl) {
           errEl.textContent = 'Solo se permiten documentos PDF.';
           errEl.classList.remove('d-none');
         }
         return;
       }
-      await uploadAsyncChatFile(file, 'documento');
+      await uploadAsyncChatFile(file, messageType);
     }
 
     async function toggleAsyncChatAudioRecording() {

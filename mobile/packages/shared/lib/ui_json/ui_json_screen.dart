@@ -1426,8 +1426,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       final rawRequiresConfirmation = selection.containsKey('requires_confirmation')
           ? selection['requires_confirmation'] == true
           : isMultiple;
-      final requiresConfirmation =
-          rawRequiresConfirmation && !widget.isTerminalFlowStep;
+      // Chat embebido: el host muestra `flow_submit` debajo; no duplicar Confirmar en la lista.
+      final inChatFlowEmbed = widget.embedded && widget.onDraftDelta != null;
+      final requiresConfirmation = rawRequiresConfirmation &&
+          !widget.isTerminalFlowStep &&
+          !inChatFlowEmbed;
       final draftField = b['draft_field']?.toString() ?? '';
       final title = b['title']?.toString();
       final emptyMessage = (b['empty_message'] ?? b['list_empty_message'])?.toString().trim();
@@ -1780,7 +1783,8 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           if (b['hide_submit'] != true &&
               b['hide_submit'] != 1 &&
               b['hide_submit'] != '1' &&
-              !widget.isTerminalFlowStep)
+              !widget.isTerminalFlowStep &&
+              !(widget.embedded && widget.onDraftDelta != null))
             Row(
               children: [
                 if (widget.embedded && widget.onCancel != null)

@@ -5,15 +5,79 @@ namespace frontend\modules\api\v1\controllers;
 use Yii;
 use yii\web\BadRequestHttpException;
 use common\components\Domain\Scheduling\Service\ConsultasSeguimientoIntakeStepService;
+use common\components\Domain\Scheduling\Service\ControlSeguimientoHubService;
 use common\components\Platform\Ui\UiScreenService;
 
 /**
- * Intake paciente: consulta general y seguimiento de tratamiento.
+ * Intake paciente: consulta general, seguimiento y hub Control/Seguimiento.
  *
  * RBAC ApiGhost: /api/consultas-seguimiento/&lt;action&gt;
  */
 class ConsultasSeguimientoController extends BaseController
 {
+    /**
+     * GET|POST /api/v1/consultas-seguimiento/hub
+     *
+     * @action_name Hub control/seguimiento (tratamientos, condiciones, fallback)
+     * @entity ConsultasSeguimiento
+     * @tags views, ui, paciente, consulta, seguimiento
+     */
+    public function actionHub(): array
+    {
+        $req = Yii::$app->request;
+        $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
+        $hub = new ControlSeguimientoHubService();
+        $items = $hub->listHubItems($idPersona);
+
+        $out = UiScreenService::handleScreen(
+            'consultas-seguimiento',
+            'hub',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($out['kind'], $out['ui_type']) && $out['kind'] === 'ui_definition' && $out['ui_type'] === 'ui_json') {
+            $out['title'] = $hub->hubTitle();
+            $out = UiScreenService::withListBlockItems($out, $items, 'hub-anclas');
+        }
+
+        return $out;
+    }
+
+    /**
+     * GET|POST /api/v1/consultas-seguimiento/condicion-acciones
+     *
+     * @action_name Acciones provisionales sobre una condición (pre-protocolos)
+     * @entity ConsultasSeguimiento
+     * @tags views, ui, paciente, consulta, seguimiento
+     */
+    public function actionCondicionAcciones(): array
+    {
+        $req = Yii::$app->request;
+        $hub = new ControlSeguimientoHubService();
+        $items = $hub->listConditionActionItems();
+
+        $out = UiScreenService::handleScreen(
+            'consultas-seguimiento',
+            'condicion-acciones',
+            $req->get(),
+            $req->post(),
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+
+        if (isset($out['kind'], $out['ui_type']) && $out['kind'] === 'ui_definition' && $out['ui_type'] === 'ui_json') {
+            $out['title'] = '¿Qué necesitás?';
+            $out = UiScreenService::withListBlockItems($out, $items, 'condicion-acciones');
+        }
+
+        return $out;
+    }
+
     /**
      * GET|POST /api/v1/consultas-seguimiento/paso
      *

@@ -39,13 +39,15 @@ Al elegir una **condición** → acciones del protocolo (Fase 3).
 
 ## Checklist
 
-- [ ] API/ui_json devuelve secciones tipadas (`care_plans`, `conditions`, `fallback`).
-- [ ] Acciones CarePlan = las del detalle (misma metadata).
-- [ ] Sin CarePlans ni Conditions → fallback “control general” usable.
-- [ ] Tests unitarios del armado de payload (fixtures).
-- [ ] Flutter paciente + descriptor JSON.
+- [x] API/ui_json devuelve secciones tipadas (`care_plans`/`conditions`/`fallback` como ítems de lista con `meta.kind`).
+- [x] Acciones CarePlan = las del detalle (misma metadata vía `cs_select_necesidad`).
+- [x] Sin CarePlans ni Conditions → fallback “control general” + consulta mensaje/previa usable.
+- [x] Tests unitarios del armado de payload (fixtures).
+- [x] Descriptor JSON hub + condicion-acciones (Flutter consume lista genérica UiJsonScreen).
 
-## Dependencias
+## Hecho en código (Fase 2)
 
-- Fase 1 (entrada unificada) hecha o en el mismo tren.
-- Fase 3 para acciones ricas por Condition; hasta entonces Condition puede ofrecer 1–2 acciones fijas vía metadata provisional `condition_default_actions`.
+- `ControlSeguimientoHubService` + metadata `control_seguimiento_hub.yaml`
+- API `consultas-seguimiento/hub` y `condicion-acciones` + RBAC migration
+- Flow: `seguimiento_cronico` → `cs_hub` → ramas por `control_hub_kind`
+

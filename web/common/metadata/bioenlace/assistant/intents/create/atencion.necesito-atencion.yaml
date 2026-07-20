@@ -83,6 +83,10 @@ draft_keys_extra:
 - id_efector
 - id_profesional_efector_servicio
 - slot_id
+- control_hub_anchor
+- control_hub_kind
+- condition_ref
+- condition_accion
 subintents:
 - id: triage_raiz
   assistant_text: Motivo
@@ -100,7 +104,7 @@ subintents:
   - when:
       draft_equals:
         triage_raiz: seguimiento_cronico
-    next: cs_select_tipo
+    next: cs_hub
   - when:
       draft_equals:
         modalidad_paso_requerido: '0'
@@ -112,6 +116,56 @@ subintents:
     action_id: turnos.reserva-triage-paso
     params:
       step: raiz
+- id: cs_hub
+  assistant_text: ¿Sobre qué es el control o seguimiento?
+  provides:
+  - draft.control_hub_anchor
+  next_routing:
+  - when:
+      draft_equals:
+        control_hub_kind: care_plan
+    next: cs_select_necesidad
+  - when:
+      draft_equals:
+        control_hub_kind: condition
+    next: cs_condition_acciones
+  - when:
+      draft_equals:
+        control_hub_kind: consulta_general
+    next: cs_captura_consulta_general
+  - when:
+      draft_equals:
+        control_hub_kind: consulta_previa
+    next: cs_select_encounter_previa
+  - when:
+      draft_equals:
+        control_hub_kind: general
+    next: select_tipo_atencion
+  - when:
+      default: true
+    next: cs_select_tipo
+  open_ui:
+    action_id: consultas-seguimiento.hub
+- id: cs_condition_acciones
+  assistant_text: ¿Qué necesitás?
+  requires:
+  - draft.control_hub_kind
+  provides:
+  - draft.condition_accion
+  next_routing:
+  - when:
+      draft_equals:
+        condition_accion: solicitar_turno
+    next: select_tipo_atencion
+  - when:
+      draft_equals:
+        condition_accion: consulta_mensaje
+    next: cs_captura_consulta_general
+  - when:
+      default: true
+    next: cs_captura_consulta_general
+  open_ui:
+    action_id: consultas-seguimiento.condicion-acciones
 - id: triage_urgencia_categoria
   assistant_text: Tipo de urgencia
   requires:

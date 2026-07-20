@@ -1,0 +1,21 @@
+{
+  "ui_type": "ui_json",
+  "title": "¿Sobre qué es el control o seguimiento?",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "hub-anclas",
+      "selection": { "mode": "single" },
+      "draft_field": "control_hub_anchor",
+      "item": { "kind": "option", "id_field": "id", "label_field": "label" },
+      "presentation": { "tile": "medium", "shape": "wide" },
+      "items": []
+    }
+  ]
+}

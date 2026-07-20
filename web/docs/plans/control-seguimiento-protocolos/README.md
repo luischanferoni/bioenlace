@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `control-seguimiento-protocolos` |
-| Estado | Listo para ejecutar — Fase 2 (Fase 1 hecha) |
+| Estado | En ejecución — Fase 3 pendiente (Fases 1–2 hechas) |
 | Dueño | Equipo asistente / Scheduling / Clinical |
 | Entrada | Motivo **Control/Seguimiento** en `atencion.necesito-atencion` (**Solicitar Atención**) |
 

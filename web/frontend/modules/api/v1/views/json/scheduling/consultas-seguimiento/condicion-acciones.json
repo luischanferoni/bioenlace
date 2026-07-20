@@ -1,0 +1,21 @@
+{
+  "ui_type": "ui_json",
+  "title": "¿Qué necesitás?",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "condicion-acciones",
+      "selection": { "mode": "single" },
+      "draft_field": "condition_accion",
+      "item": { "kind": "option", "id_field": "id", "label_field": "label" },
+      "presentation": { "tile": "medium", "shape": "wide" },
+      "items": []
+    }
+  ]
+}

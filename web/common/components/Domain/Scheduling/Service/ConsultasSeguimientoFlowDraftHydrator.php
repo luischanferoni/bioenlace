@@ -26,6 +26,10 @@ final class ConsultasSeguimientoFlowDraftHydrator
             'medicacion_operacion',
             'ajuste_motivo',
             'mensaje',
+            'control_hub_anchor',
+            'control_hub_kind',
+            'condition_ref',
+            'condition_accion',
         ] as $key) {
             $v = trim((string) ($draft[$key] ?? ''));
             if ($v !== '') {
@@ -36,6 +40,8 @@ final class ConsultasSeguimientoFlowDraftHydrator
                 $draft[$key] = $fromBody;
             }
         }
+
+        (new ControlSeguimientoHubService())->applyAnchorToDraft($draft);
 
         if (
             trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO] ?? '')) === ''
@@ -54,6 +60,22 @@ final class ConsultasSeguimientoFlowDraftHydrator
         ) {
             $draft[ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO]
                 = ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO;
+        }
+
+        // Acción provisional sobre condición → merge draft declarado en metadata.
+        $condAccion = trim((string) ($draft['condition_accion'] ?? ''));
+        if ($condAccion !== '') {
+            foreach ((new ControlSeguimientoHubService())->conditionDefaultActions() as $action) {
+                if ($action['code'] !== $condAccion) {
+                    continue;
+                }
+                foreach ($action['draft'] as $k => $v) {
+                    if (trim((string) ($draft[$k] ?? '')) === '' && $v !== '') {
+                        $draft[$k] = $v;
+                    }
+                }
+                break;
+            }
         }
 
         (new ConsultasSeguimientoIntakeService())->prepararDraft($draft, $idPersona);

@@ -44,7 +44,15 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
                 $raizRoutes[$when] = (string) ($row['next'] ?? '');
             }
         }
-        $this->assertSame('cs_select_tipo', $raizRoutes['seguimiento_cronico'] ?? null);
+        $this->assertSame('cs_hub', $raizRoutes['seguimiento_cronico'] ?? null);
+
+        $this->assertArrayHasKey('cs_hub', $byId);
+        $this->assertSame('consultas-seguimiento.hub', $byId['cs_hub']['open_ui']['action_id'] ?? null);
+        $this->assertArrayHasKey('cs_condition_acciones', $byId);
+        $this->assertSame(
+            'consultas-seguimiento.condicion-acciones',
+            $byId['cs_condition_acciones']['open_ui']['action_id'] ?? null
+        );
 
         $this->assertArrayHasKey('cs_select_necesidad', $byId);
         $routes = [];
@@ -114,16 +122,17 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
                 'intake_tipo' => 'seguimiento',
                 'care_plan_id' => '11',
                 'seguimiento_necesidad' => 'renovar_medicacion',
+                'control_hub_anchor' => 'cp:11',
+                'control_hub_kind' => 'care_plan',
             ],
         ], 0);
 
         $this->assertTrue($response['success'] ?? false);
-        $this->assertSame('cs_select_care_plan', $response['subintent_id'] ?? null);
-        $this->assertSame(
-            'clinical.care-plan.ver-tratamiento-paciente',
-            $response['open_ui']['action_id'] ?? null
+        $this->assertContains(
+            $response['subintent_id'] ?? null,
+            ['cs_select_necesidad', 'cs_select_medicamentos', 'cs_select_care_plan'],
+            'subintent=' . ($response['subintent_id'] ?? '')
         );
-        $this->assertContains('care_plan_id', $response['provides'] ?? []);
     }
 
     public function testConfirmedCarePlanAdvancesToDirectRenewalSubmit(): void

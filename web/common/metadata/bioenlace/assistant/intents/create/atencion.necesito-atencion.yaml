@@ -238,7 +238,16 @@ subintents:
   - when:
       draft_equals:
         tipo_atencion: teleconsulta
+        seguimiento_necesidad: solicitar_turno
+    next: cs_select_dia_teleconsulta
+  - when:
+      draft_equals:
+        tipo_atencion: teleconsulta
     next: select_dia_teleconsulta
+  - when:
+      draft_equals:
+        seguimiento_necesidad: solicitar_turno
+    next: cs_select_preferencia_turno
   - when:
       default: true
     next: select_servicio
@@ -468,7 +477,12 @@ subintents:
   - when:
       draft_equals:
         seguimiento_necesidad: solicitar_turno
+        modalidad_paso_requerido: '0'
     next: cs_select_preferencia_turno
+  - when:
+      draft_equals:
+        seguimiento_necesidad: solicitar_turno
+    next: select_tipo_atencion
   - when:
       default: true
     next: cs_captura_seguimiento_mensaje
@@ -571,9 +585,9 @@ subintents:
   requires:
   - draft.seguimiento_necesidad
   - draft.care_plan_id
+  - draft.tipo_atencion
   provides:
   - draft.preferencia_profesional_turno
-  - draft.tipo_atencion
   next_routing:
   - when:
       draft_equals:

@@ -88,7 +88,43 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
         }
         $this->assertSame('cs_select_medicamentos', $routes['renovar_medicacion'] ?? null);
         $this->assertSame('cs_select_medicamentos', $routes['solicitar_ajuste'] ?? null);
-        $this->assertSame('cs_select_preferencia_turno', $routes['solicitar_turno'] ?? null);
+        // Última rama con solo seguimiento_necesidad=solicitar_turno (sin flag de skip).
+        $this->assertSame('select_tipo_atencion', $routes['solicitar_turno'] ?? null);
+
+        $necesidadSkipModalidad = null;
+        foreach ($byId['cs_select_necesidad']['next_routing'] ?? [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $eq = $row['when']['draft_equals'] ?? null;
+            if (is_array($eq)
+                && ($eq['seguimiento_necesidad'] ?? null) === 'solicitar_turno'
+                && ($eq['modalidad_paso_requerido'] ?? null) === '0') {
+                $necesidadSkipModalidad = (string) ($row['next'] ?? '');
+                break;
+            }
+        }
+        $this->assertSame('cs_select_preferencia_turno', $necesidadSkipModalidad);
+
+        $modalidadRoutes = [];
+        foreach ($byId['select_tipo_atencion']['next_routing'] ?? [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $eq = $row['when']['draft_equals'] ?? null;
+            if (!is_array($eq)) {
+                continue;
+            }
+            if (($eq['seguimiento_necesidad'] ?? null) === 'solicitar_turno'
+                && ($eq['tipo_atencion'] ?? null) === 'teleconsulta') {
+                $modalidadRoutes['teleconsulta_cp'] = (string) ($row['next'] ?? '');
+            } elseif (($eq['seguimiento_necesidad'] ?? null) === 'solicitar_turno'
+                && !isset($eq['tipo_atencion'])) {
+                $modalidadRoutes['presencial_cp'] = (string) ($row['next'] ?? '');
+            }
+        }
+        $this->assertSame('cs_select_dia_teleconsulta', $modalidadRoutes['teleconsulta_cp'] ?? null);
+        $this->assertSame('cs_select_preferencia_turno', $modalidadRoutes['presencial_cp'] ?? null);
 
         $this->assertArrayHasKey('cs_select_care_plan', $byId);
         $this->assertTrue($byId['cs_select_care_plan']['review_prefilled'] ?? false);

@@ -64,15 +64,8 @@ final class ConsultasSeguimientoIntakeService
             $necesidad = 'contar_evolucion';
             $draft[self::DRAFT_SEGUIMIENTO_NECESIDAD] = $necesidad;
         }
-        $pref = trim((string) ($draft[self::DRAFT_PREFERENCIA_TURNO] ?? ''));
-        if ($pref !== '') {
-            foreach ((new ConsultasSeguimientoIntakeCatalogService())->opcionesPreferenciaTurno() as $row) {
-                if (($row['code'] ?? '') === $pref && ($row['tipo_atencion'] ?? '') !== '') {
-                    $draft['tipo_atencion'] = (string) $row['tipo_atencion'];
-                    break;
-                }
-            }
-        }
+        // tipo_atencion lo fija el paso de modalidad (o flags si solo hay una opción).
+        // preferencia_profesional_turno solo elige quién, no la modalidad.
 
         $this->aplicarMedicacionOperacionEnDraft($draft);
 

@@ -32,7 +32,7 @@ seguimiento_necesidades:
   solicitar_turno:
     code: solicitar_turno
     label: Solicitar turno
-    description: Reservá un control presencial con el mismo médico u otro profesional.
+    description: Reservá un control (presencial o por videollamada) con el mismo médico u otro profesional.
     permite_async: false
   contar_evolucion:
     code: contar_evolucion
@@ -41,17 +41,16 @@ seguimiento_necesidades:
     composer_placeholder: "Contanos tu duda o cómo te sentís, con el mayor detalle posible."
     permite_async: true
 
+# Quién atiende el control presencial. La modalidad (presencial/teleconsulta) es un paso aparte.
 preferencias_turno:
   mismo_medico:
     code: mismo_medico
     label: Mismo médico
-    description: Turno presencial con quien te atendió en este tratamiento, si hay agenda.
-    tipo_atencion: presencial
+    description: Turno con quien te atendió en este tratamiento, si hay agenda.
   otro_medico:
     code: otro_medico
     label: Otro profesional
     description: Elegí centro, servicio y profesional disponibles.
-    tipo_atencion: presencial
 
 # Pasos UI del intake (título + draft_field + fuente de opciones). Sin hardcode en el service.
 ui_steps:

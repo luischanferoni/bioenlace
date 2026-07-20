@@ -11,7 +11,7 @@ import 'paciente_post_login.dart';
 /// User id de desarrollo para JWT rápido (solo `kDebugMode`).
 const int kPacienteDebugJwtUserId = 5748;
 
-/// Emite JWT vía `POST /auth/generar-token-prueba` (API solo con YII_DEBUG).
+/// Emite JWT vía `POST /auth/generar-token-prueba` (atajo solo en `kDebugMode` del cliente).
 class PacienteDebugJwtAuth {
   PacienteDebugJwtAuth._();
 
@@ -30,7 +30,12 @@ class PacienteDebugJwtAuth {
         )
         .timeout(const Duration(seconds: AppConfig.httpTimeoutSeconds));
 
-    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    Object? decoded;
+    try {
+      decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    } catch (_) {
+      decoded = null;
+    }
     if (response.statusCode >= 200 &&
         response.statusCode < 300 &&
         decoded is Map &&
@@ -38,10 +43,11 @@ class PacienteDebugJwtAuth {
       return Map<String, dynamic>.from(decoded);
     }
 
-    final message = decoded is Map
-        ? (decoded['message'] ?? 'No se pudo generar el JWT de prueba')
-        : 'No se pudo generar el JWT de prueba';
-    throw Exception(message.toString());
+    final apiMessage = decoded is Map ? decoded['message']?.toString().trim() : null;
+    final message = (apiMessage != null && apiMessage.isNotEmpty)
+        ? apiMessage
+        : 'No se pudo generar el JWT (${response.statusCode}) en ${uri.path}';
+    throw Exception(message);
   }
 }
 

@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
-use common\components\Home\Service\StaffClinicalDayListService;
+use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
 
 final class InpatientsSectionProvider implements HomePanelSectionProviderInterface
 {

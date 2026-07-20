@@ -7,31 +7,25 @@ use DateTimeZone;
 use Yii;
 
 /**
- * Arma bloques `ui_json` (`kind: list`) para elegir slot: agrupa por día y franja (mañana/tarde),
- * títulos amigables en español y `meta` sin duplicar el id del slot.
+ * Arma ítems/bloques de oferta de slots a partir de datos agrupados + plantilla JSON / metadata.
  */
 final class TurnoSlotOfferUiPresenter
 {
-    private const WEEKDAYS_ES = [
-        0 => 'domingo',
-        1 => 'lunes',
-        2 => 'martes',
-        3 => 'miércoles',
-        4 => 'jueves',
-        5 => 'viernes',
-        6 => 'sábado',
-    ];
-
     /**
      * @param array{
      *   por_dia?: list<array{fecha?:string, manana?:list<mixed>, tarde?:list<mixed>}>
-     * } $grouped salida de {@see TurnoSlotOfferService::buildGrouped()}
-     * @param int $idServicioCriterio id_servicio del pedido (para no repetir servicio en cada ítem)
-     * @return list<array<string, mixed>> bloques list listos para `ui_json.blocks`
+     * } $grouped
+     * @param array<string, mixed>|null $listTemplate bloque `kind: list` de la pantalla JSON (estructura UI)
+     * @return list<array<string, mixed>>
      */
-    public static function buildSlotListBlocks(array $grouped, int $idServicioCriterio): array
-    {
+    public static function buildSlotListBlocks(
+        array $grouped,
+        int $idServicioCriterio,
+        ?array $listTemplate = null
+    ): array {
         $tz = self::appTimeZone();
+        $catalog = new TurnoSlotOfferUiCatalogService();
+        $template = self::normalizeListTemplate($listTemplate, $catalog);
         $porDia = isset($grouped['por_dia']) && is_array($grouped['por_dia']) ? $grouped['por_dia'] : [];
         usort($porDia, static function ($a, $b): int {
             $fa = is_array($a) && isset($a['fecha']) ? (string) $a['fecha'] : '';
@@ -42,6 +36,10 @@ final class TurnoSlotOfferUiPresenter
 
         $blocks = [];
         $displayOrder = 0;
+        $idPrefix = trim((string) ($template['id_prefix'] ?? 'slots'));
+        if ($idPrefix === '') {
+            $idPrefix = 'slots';
+        }
         foreach ($porDia as $row) {
             if (!is_array($row)) {
                 continue;
@@ -50,17 +48,29 @@ final class TurnoSlotOfferUiPresenter
             if ($fecha === '') {
                 continue;
             }
-            $dayHead = self::friendlyDayHeadingInternal($fecha, $tz);
+            $dayHead = self::friendlyDayHeadingInternal($fecha, $tz, $catalog);
             $manana = isset($row['manana']) && is_array($row['manana']) ? $row['manana'] : [];
             $tarde = isset($row['tarde']) && is_array($row['tarde']) ? $row['tarde'] : [];
 
             $bMan = self::itemsForFranja($fecha, 'manana', $manana, $idServicioCriterio);
             if ($bMan !== []) {
-                $blocks[] = self::baseListBlock($displayOrder++, $fecha . '-manana', $dayHead . ' · por la mañana', $bMan);
+                $blocks[] = self::cloneListBlock(
+                    $template,
+                    $displayOrder++,
+                    $idPrefix . '-' . $fecha . '-manana',
+                    $catalog->tituloFranja('manana', $dayHead),
+                    $bMan
+                );
             }
             $bTar = self::itemsForFranja($fecha, 'tarde', $tarde, $idServicioCriterio);
             if ($bTar !== []) {
-                $blocks[] = self::baseListBlock($displayOrder++, $fecha . '-tarde', $dayHead . ' · por la tarde', $bTar);
+                $blocks[] = self::cloneListBlock(
+                    $template,
+                    $displayOrder++,
+                    $idPrefix . '-' . $fecha . '-tarde',
+                    $catalog->tituloFranja('tarde', $dayHead),
+                    $bTar
+                );
             }
         }
 
@@ -68,13 +78,12 @@ final class TurnoSlotOfferUiPresenter
     }
 
     /**
-     * Un solo bloque `list` para elegir día (paso previo a horarios).
-     *
      * @param array{por_dia?: list<array{fecha?:string, manana?:list<mixed>, tarde?:list<mixed>}>} $grouped
-     * @return list<array<string, mixed>>
+     * @return list<array{id: string, label: string, meta: array{fecha: string}}>
      */
-    public static function buildDayPickerBlocks(array $grouped): array
+    public static function buildDayPickerItems(array $grouped): array
     {
+        $catalog = new TurnoSlotOfferUiCatalogService();
         $porDia = isset($grouped['por_dia']) && is_array($grouped['por_dia']) ? $grouped['por_dia'] : [];
         usort($porDia, static function ($a, $b): int {
             $fa = is_array($a) && isset($a['fecha']) ? (string) $a['fecha'] : '';
@@ -99,28 +108,35 @@ final class TurnoSlotOfferUiPresenter
             }
             $items[] = [
                 'id' => $fecha,
-                'label' => self::friendlyDayHeading($fecha),
+                'label' => self::friendlyDayHeading($fecha, $catalog),
                 'meta' => ['fecha' => $fecha],
             ];
         }
 
-        if ($items === []) {
-            return [];
+        return $items;
+    }
+
+    /**
+     * Primer bloque `kind: list` de una pantalla ui_json (plantilla estructural).
+     *
+     * @param array<string, mixed> $uiDefinition
+     * @return array<string, mixed>|null
+     */
+    public static function extractListTemplateFromUi(array $uiDefinition): ?array
+    {
+        $blocks = $uiDefinition['blocks'] ?? null;
+        if (!is_array($blocks)) {
+            return null;
+        }
+        foreach ($blocks as $block) {
+            if (!is_array($block) || ($block['kind'] ?? '') !== 'list') {
+                continue;
+            }
+
+            return $block;
         }
 
-        return [
-            [
-                'kind' => 'list',
-                'id' => 'dias-disponibles',
-                'display_order' => 0,
-                'title' => 'Elegí un día',
-                'selection' => ['mode' => 'single'],
-                'draft_field' => 'fecha_turno',
-                'item' => ['kind' => 'day', 'id_field' => 'id', 'label_field' => 'label'],
-                'presentation' => ['tile' => 'large', 'shape' => 'wide'],
-                'items' => $items,
-            ],
-        ];
+        return null;
     }
 
     /**
@@ -182,30 +198,31 @@ final class TurnoSlotOfferUiPresenter
         return $hora;
     }
 
-    public static function friendlyDayHeading(string $fechaYmd): string
+    public static function friendlyDayHeading(string $fechaYmd, ?TurnoSlotOfferUiCatalogService $catalog = null): string
     {
-        return self::friendlyDayHeadingInternal($fechaYmd, self::appTimeZone());
+        return self::friendlyDayHeadingInternal($fechaYmd, self::appTimeZone(), $catalog ?? new TurnoSlotOfferUiCatalogService());
     }
 
-    private static function friendlyDayHeadingInternal(string $fechaYmd, DateTimeZone $tz): string
-    {
+    private static function friendlyDayHeadingInternal(
+        string $fechaYmd,
+        DateTimeZone $tz,
+        TurnoSlotOfferUiCatalogService $catalog
+    ): string {
         $slot = DateTimeImmutable::createFromFormat('!Y-m-d', $fechaYmd, $tz);
         if ($slot === false) {
             return $fechaYmd;
         }
         $today = new DateTimeImmutable('today', $tz);
         $diffDays = (int) floor(($slot->getTimestamp() - $today->getTimestamp()) / 86400);
-        if ($diffDays === 0) {
-            return 'Hoy';
-        }
-        if ($diffDays === 1) {
-            return 'Mañana';
-        }
-        if ($diffDays === 2) {
-            return 'Pasado mañana';
+        $relative = $catalog->labelDiaRelativo($diffDays);
+        if ($relative !== null) {
+            return $relative;
         }
         $w = (int) $slot->format('w');
-        $nombre = self::WEEKDAYS_ES[$w] ?? $slot->format('D');
+        $nombre = $catalog->nombreDiaSemana($w);
+        if ($nombre === '') {
+            $nombre = $slot->format('D');
+        }
 
         return $nombre . ' ' . $slot->format('d/m');
     }
@@ -225,24 +242,64 @@ final class TurnoSlotOfferUiPresenter
     }
 
     /**
+     * @param array<string, mixed>|null $listTemplate
+     * @return array<string, mixed>
+     */
+    private static function normalizeListTemplate(?array $listTemplate, TurnoSlotOfferUiCatalogService $catalog): array
+    {
+        $defaults = $catalog->listBlockDefaults();
+        $base = is_array($listTemplate) ? $listTemplate : [];
+        $id = trim((string) ($base['id'] ?? ''));
+
+        $out = [
+            'kind' => 'list',
+            'id_prefix' => $id !== '' && $id !== 'default' ? $id : 'slots',
+            'selection' => is_array($base['selection'] ?? null)
+                ? $base['selection']
+                : ($defaults['selection'] ?? ['mode' => 'single']),
+            'draft_field' => trim((string) ($base['draft_field'] ?? ($defaults['draft_field'] ?? 'slot_id'))) ?: 'slot_id',
+            'item' => is_array($base['item'] ?? null)
+                ? $base['item']
+                : ($defaults['item'] ?? ['kind' => 'slot', 'id_field' => 'id', 'label_field' => 'label']),
+            'presentation' => is_array($base['presentation'] ?? null)
+                ? $base['presentation']
+                : ($defaults['presentation'] ?? ['tile' => 'compact', 'shape' => 'square']),
+        ];
+        $empty = trim((string) ($base['empty_message'] ?? ($defaults['empty_message'] ?? '')));
+        if ($empty !== '') {
+            $out['empty_message'] = $empty;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $template
      * @param list<array<string, mixed>> $items
      * @return array<string, mixed>
      */
-    /**
-     * @param int $displayOrder orden global de la pantalla (mañana antes que tarde el mismo día; días en orden cronológico)
-     */
-    private static function baseListBlock(int $displayOrder, string $idSuffix, string $title, array $items): array
-    {
-        return [
+    private static function cloneListBlock(
+        array $template,
+        int $displayOrder,
+        string $blockId,
+        string $title,
+        array $items
+    ): array {
+        $block = [
             'kind' => 'list',
-            'id' => 'slots-' . $idSuffix,
+            'id' => $blockId,
             'display_order' => $displayOrder,
             'title' => $title,
-            'selection' => ['mode' => 'single'],
-            'draft_field' => 'slot_id',
-            'item' => ['kind' => 'slot', 'id_field' => 'id', 'label_field' => 'label'],
-            'presentation' => ['tile' => 'compact', 'shape' => 'square'],
+            'selection' => $template['selection'],
+            'draft_field' => $template['draft_field'],
+            'item' => $template['item'],
+            'presentation' => $template['presentation'],
             'items' => $items,
         ];
+        if (isset($template['empty_message']) && is_string($template['empty_message']) && $template['empty_message'] !== '') {
+            $block['empty_message'] = $template['empty_message'];
+        }
+
+        return $block;
     }
 }

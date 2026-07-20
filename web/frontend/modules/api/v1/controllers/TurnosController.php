@@ -712,7 +712,7 @@ class TurnosController extends BaseController
             }
             $plano = isset($payload['slots']) && is_array($payload['slots']) ? $payload['slots'] : [];
             $grouped = TurnoSlotOfferService::buildOfferFromPlano($plano, $franja, $limite, (int) $defaults['max_dias']);
-            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, $idServicio);
+            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, $idServicio, TurnoSlotOfferUiPresenter::extractListTemplateFromUi($out));
             if ($blocks !== []) {
                 $out['blocks'] = $blocks;
             } else {
@@ -1197,13 +1197,16 @@ class TurnosController extends BaseController
             }
             $plano = isset($payload['slots']) && is_array($payload['slots']) ? $payload['slots'] : [];
             $grouped = TurnoSlotOfferService::buildOfferFromPlano($plano, $franja, $limite, (int) $defaults['max_dias']);
-            $blocks = $soloDias
-                ? TurnoSlotOfferUiPresenter::buildDayPickerBlocks($grouped)
-                : TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, $idServicio);
-            if ($blocks !== []) {
-                $out['blocks'] = $blocks;
+            if ($soloDias) {
+                $dayItems = TurnoSlotOfferUiPresenter::buildDayPickerItems($grouped);
+                $out = UiScreenService::withListBlockItems($out, $dayItems, 'dias-disponibles');
             } else {
-                $out = UiScreenService::withListBlockItems($out, []);
+                $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($grouped, $idServicio, TurnoSlotOfferUiPresenter::extractListTemplateFromUi($out));
+                if ($blocks !== []) {
+                    $out['blocks'] = $blocks;
+                } else {
+                    $out = UiScreenService::withListBlockItems($out, []);
+                }
             }
         }
 
@@ -1373,7 +1376,7 @@ class TurnosController extends BaseController
                 return array_merge(['success' => true], $ctx['grouped']);
             }
 
-            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($ctx['grouped'], $ctx['id_servicio']);
+            $blocks = TurnoSlotOfferUiPresenter::buildSlotListBlocks($ctx['grouped'], $ctx['id_servicio'], TurnoSlotOfferUiPresenter::extractListTemplateFromUi($out));
             if ($blocks !== []) {
                 if ($ctx['id_efector'] > 0) {
                     $out['blocks'] = $this->appendPoliticaAutogestionDespuesDeBloques($blocks, $ctx['id_efector']);
@@ -1421,9 +1424,9 @@ class TurnosController extends BaseController
                 return array_merge(['success' => true], $ctx['grouped']);
             }
 
-            $blocks = TurnoSlotOfferUiPresenter::buildDayPickerBlocks($ctx['grouped']);
-            if ($blocks !== []) {
-                $out['blocks'] = $blocks;
+            $dayItems = TurnoSlotOfferUiPresenter::buildDayPickerItems($ctx['grouped']);
+            if ($dayItems !== []) {
+                $out = UiScreenService::withListBlockItems($out, $dayItems, 'dias-disponibles');
             } else {
                 $params = array_merge($req->get(), $req->post());
                 $routing = null;
@@ -1446,7 +1449,7 @@ class TurnosController extends BaseController
                         }
                     }
                 }
-                $out = UiScreenService::withListBlockItems($out, []);
+                $out = UiScreenService::withListBlockItems($out, [], 'dias-disponibles');
             }
         }
 

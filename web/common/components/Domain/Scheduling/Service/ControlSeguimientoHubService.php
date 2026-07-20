@@ -65,7 +65,9 @@ final class ControlSeguimientoHubService
                 }
                 $items[] = [
                     'id' => self::ANCHOR_PREFIX_CARE_PLAN . $planId,
-                    'label' => 'Tratamiento: ' . (string) ($pick['label'] ?? $pick['name'] ?? 'Plan'),
+                    'label' => $this->hubLabel('care_plan', [
+                        'name' => (string) ($pick['label'] ?? $pick['name'] ?? $this->hubLabelRaw('care_plan_fallback_name', 'Plan')),
+                    ]),
                     'subtitle' => $this->hubCarePlanSubtitle($pick, $plan),
                     'meta' => [
                         'kind' => self::KIND_CARE_PLAN,
@@ -88,7 +90,7 @@ final class ControlSeguimientoHubService
                 $items[] = [
                     'id' => self::ANCHOR_PREFIX_PROTOCOL . $protocol['id'],
                     'label' => (string) ($protocol['hub_label'] ?? $protocol['title'] ?? $protocol['id']),
-                    'subtitle' => 'Sugerido según tu perfil · Consultá con tu equipo',
+                    'subtitle' => $this->hubLabelRaw('protocol_profile_subtitle', ''),
                     'meta' => [
                         'kind' => self::KIND_PROTOCOL,
                         'protocol_id' => $protocol['id'],
@@ -103,9 +105,7 @@ final class ControlSeguimientoHubService
 
     public function hubTitle(): string
     {
-        $title = trim((string) (self::load()['hub']['title'] ?? ''));
-
-        return $title !== '' ? $title : '¿Sobre qué es el control o seguimiento?';
+        return trim((string) (self::load()['hub']['title'] ?? ''));
     }
 
     /**
@@ -456,9 +456,11 @@ final class ControlSeguimientoHubService
             if (isset($byDedupe[$dedupeKey]) && $byDedupe[$dedupeKey]['score'] >= $score) {
                 continue;
             }
-            $subtitle = 'Activa';
+            $subtitle = $this->hubLabelRaw('condition_active', 'Activa');
             if ($protocol !== null) {
-                $subtitle = 'Protocolo: ' . (string) ($protocol['title'] ?? $protocol['id']);
+                $subtitle = $this->hubLabel('condition_protocol', [
+                    'title' => (string) ($protocol['title'] ?? $protocol['id']),
+                ]);
             } elseif ($isIcdLike) {
                 $subtitle = $code;
             }
@@ -466,7 +468,7 @@ final class ControlSeguimientoHubService
                 'score' => $score,
                 'item' => [
                     'id' => self::ANCHOR_PREFIX_CONDITION . ($code !== '' ? $code : (string) $cond->id),
-                    'label' => 'Condición: ' . $labelText,
+                    'label' => $this->hubLabel('condition', ['name' => $labelText]),
                     'subtitle' => $subtitle,
                     'meta' => [
                         'kind' => self::KIND_CONDITION,
@@ -499,12 +501,40 @@ final class ControlSeguimientoHubService
         if ($periodStart !== '') {
             $ts = strtotime($periodStart);
             if ($ts !== false) {
-                return 'Desde ' . date('d/m/Y', $ts);
+                return $this->hubLabel('care_plan_since', ['date' => date('d/m/Y', $ts)]);
             }
         }
         $category = trim((string) ($pick['meta']['category'] ?? ''));
 
-        return $category !== '' ? $category : 'Plan activo';
+        return $category !== '' ? $category : $this->hubLabelRaw('care_plan_active', 'Plan activo');
+    }
+
+    /**
+     * @param array<string, string> $vars
+     */
+    private function hubLabel(string $key, array $vars = []): string
+    {
+        $tpl = $this->hubLabelRaw($key, '');
+        if ($tpl === '') {
+            return $vars['name'] ?? $vars['title'] ?? $vars['date'] ?? '';
+        }
+        $out = $tpl;
+        foreach ($vars as $k => $v) {
+            $out = str_replace('{' . $k . '}', $v, $out);
+        }
+
+        return $out;
+    }
+
+    private function hubLabelRaw(string $key, string $fallback): string
+    {
+        $labels = self::load()['hub']['labels'] ?? [];
+        if (!is_array($labels)) {
+            return $fallback;
+        }
+        $val = trim((string) ($labels[$key] ?? ''));
+
+        return $val !== '' ? $val : $fallback;
     }
 
     private function shortConditionLabel(string $label): string

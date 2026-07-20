@@ -52,3 +52,18 @@ preferencias_turno:
     label: Otro profesional
     description: Elegí centro, servicio y profesional disponibles.
     tipo_atencion: presencial
+
+# Pasos UI del intake (título + draft_field + fuente de opciones). Sin hardcode en el service.
+ui_steps:
+  tipo:
+    title: Consultas y seguimiento
+    draft_field: intake_tipo
+    opciones: intake_tipos
+  necesidad:
+    title: ¿Qué necesitás?
+    draft_field: seguimiento_necesidad
+    opciones: seguimiento_necesidades
+  preferencia_turno:
+    title: ¿Con quién querés el control?
+    draft_field: preferencia_profesional_turno
+    opciones: preferencias_turno

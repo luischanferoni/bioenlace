@@ -19,21 +19,18 @@ final class ConsultasSeguimientoIntakeStepService
     public function stepDefinition(string $stepId): ?array
     {
         $stepId = trim($stepId);
-        return match ($stepId) {
-            self::STEP_TIPO => [
-                'title' => 'Consultas y seguimiento',
-                'draft_field' => ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO,
-            ],
-            self::STEP_NECESIDAD => [
-                'title' => '¿Qué necesitás?',
-                'draft_field' => ConsultasSeguimientoIntakeService::DRAFT_SEGUIMIENTO_NECESIDAD,
-            ],
-            self::STEP_PREFERENCIA_TURNO => [
-                'title' => '¿Con quién querés el control?',
-                'draft_field' => ConsultasSeguimientoIntakeService::DRAFT_PREFERENCIA_TURNO,
-            ],
-            default => null,
-        };
+        if ($stepId === '') {
+            return null;
+        }
+        $def = (new ConsultasSeguimientoIntakeCatalogService())->uiStep($stepId);
+        if ($def === null) {
+            return null;
+        }
+
+        return [
+            'title' => $def['title'],
+            'draft_field' => $def['draft_field'],
+        ];
     }
 
     /**
@@ -42,12 +39,8 @@ final class ConsultasSeguimientoIntakeStepService
     public function opcionesParaStep(string $stepId): array
     {
         $catalog = new ConsultasSeguimientoIntakeCatalogService();
-        $rows = match (trim($stepId)) {
-            self::STEP_TIPO => $catalog->opcionesTipo(),
-            self::STEP_NECESIDAD => $catalog->opcionesNecesidad(),
-            self::STEP_PREFERENCIA_TURNO => $catalog->opcionesPreferenciaTurno(),
-            default => [],
-        };
+        $def = $catalog->uiStep(trim($stepId));
+        $rows = $def !== null ? $catalog->opcionesPorClave($def['opciones']) : [];
         $out = [];
         foreach ($rows as $row) {
             $out[] = [

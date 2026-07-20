@@ -1,43 +1,20 @@
 {
   "ui_type": "ui_json",
+  "title": "Horarios alternativos",
   "ui_meta": {
     "schema_version": "1",
     "clients": { "*": { "min_app_version": "1.0.0" } }
   },
   "blocks": [
     {
-      "kind": "fields",
+      "kind": "list",
       "id": "default",
-      "title": "Horarios alternativos",
-      "fields": [
-        {
-          "name": "id",
-          "label": "ID turno a reprogramar",
-          "type": "text",
-          "required": true
-        },
-        {
-          "name": "limit",
-          "label": "Cantidad máxima de opciones",
-          "type": "text",
-          "required": false,
-          "default": "15"
-        },
-        {
-          "name": "max_dias",
-          "label": "Días hacia adelante",
-          "type": "text",
-          "required": false,
-          "default": "45"
-        },
-        {
-          "name": "mismo_profesional",
-          "label": "Mismo profesional (1 o 0)",
-          "type": "text",
-          "required": false,
-          "default": "1"
-        }
-      ]
+      "selection": { "mode": "single" },
+      "draft_field": "slot_id",
+      "empty_message": "No hay horarios alternativos disponibles en este momento.",
+      "item": { "kind": "slot", "id_field": "id", "label_field": "label" },
+      "presentation": { "tile": "compact", "shape": "square" },
+      "items": []
     }
   ]
 }

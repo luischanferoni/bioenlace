@@ -37,6 +37,64 @@ final class ConsultasSeguimientoIntakeCatalogService
     }
 
     /**
+     * Definición de paso UI ({@see metadata/consultas_seguimiento_intake.yaml} → `ui_steps`).
+     *
+     * @return array{title: string, draft_field: string, opciones: string}|null
+     */
+    public function uiStep(string $stepId): ?array
+    {
+        $stepId = trim($stepId);
+        $defs = self::load()['ui_steps'] ?? [];
+        if (!is_array($defs) || $stepId === '') {
+            return null;
+        }
+        $def = $defs[$stepId] ?? null;
+        if (!is_array($def)) {
+            return null;
+        }
+        $title = trim((string) ($def['title'] ?? ''));
+        $draftField = trim((string) ($def['draft_field'] ?? ''));
+        $opciones = trim((string) ($def['opciones'] ?? ''));
+        if ($title === '' || $draftField === '' || $opciones === '') {
+            return null;
+        }
+
+        return [
+            'title' => $title,
+            'draft_field' => $draftField,
+            'opciones' => $opciones,
+        ];
+    }
+
+    /**
+     * Opciones de un bloque raíz del YAML (`intake_tipos`, `seguimiento_necesidades`, `preferencias_turno`, …).
+     *
+     * @return list<array{code: string, label: string, description: string}>
+     */
+    public function opcionesPorClave(string $clave): array
+    {
+        $clave = trim($clave);
+        if ($clave === '') {
+            return [];
+        }
+        if ($clave === 'preferencias_turno') {
+            $rows = $this->opcionesPreferenciaTurno();
+            $out = [];
+            foreach ($rows as $row) {
+                $out[] = [
+                    'code' => $row['code'],
+                    'label' => $row['label'],
+                    'description' => $row['description'],
+                ];
+            }
+
+            return $out;
+        }
+
+        return $this->mapOpciones(self::load()[$clave] ?? []);
+    }
+
+    /**
      * @return list<array{code: string, label: string, description: string, tipo_atencion: string}>
      */
     public function opcionesPreferenciaTurno(): array

@@ -1,0 +1,36 @@
+# Copy / plantillas UI de oferta de turnos (días y franjas). Sin hardcode en presenters.
+version: "1"
+
+# diffDays relativo a "hoy" en timezone de la app → etiqueta
+day_relative_labels:
+  "0": Hoy
+  "1": Mañana
+  "2": Pasado mañana
+
+# PHP date('w'): 0=domingo … 6=sábado
+weekdays:
+  "0": domingo
+  "1": lunes
+  "2": martes
+  "3": miércoles
+  "4": jueves
+  "5": viernes
+  "6": sábado
+
+# Título de bloque por franja. {day} = etiqueta del día (Hoy / lunes 23/07 / …)
+franja_title_templates:
+  manana: "{day} · por la mañana"
+  tarde: "{day} · por la tarde"
+
+# Fallback si la pantalla JSON no trae bloque list plantilla
+list_block_defaults:
+  selection:
+    mode: single
+  draft_field: slot_id
+  item:
+    kind: slot
+    id_field: id
+    label_field: label
+  presentation:
+    tile: compact
+    shape: square

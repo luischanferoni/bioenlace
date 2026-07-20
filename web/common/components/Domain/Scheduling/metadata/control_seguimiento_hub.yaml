@@ -5,6 +5,15 @@ version: "1"
 
 hub:
   title: "¿Sobre qué es el control o seguimiento?"
+  labels:
+    care_plan: "Tratamiento: {name}"
+    care_plan_fallback_name: Plan
+    care_plan_active: Plan activo
+    care_plan_since: "Desde {date}"
+    condition: "Condición: {name}"
+    condition_active: Activa
+    condition_protocol: "Protocolo: {title}"
+    protocol_profile_subtitle: "Sugerido según tu perfil · Consultá con tu equipo"
 
 condition_default_actions:
   - code: consulta_mensaje

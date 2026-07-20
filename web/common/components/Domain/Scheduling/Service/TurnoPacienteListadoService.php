@@ -240,6 +240,10 @@ final class TurnoPacienteListadoService
         $journey = $journeySvc->buildForTurno($turno, $encounter);
         $confirmado = !empty($turno->confirmado_en) || (string) ($turno->confirmado ?? '') === 'SI';
         $puedeConfirmar = (new TurnoConfirmationService())->puedeConfirmarAsistencia($turno);
+        $tipoAtencion = isset($turno->tipo_atencion) && trim((string) $turno->tipo_atencion) !== ''
+            ? trim((string) $turno->tipo_atencion)
+            : Turno::TIPO_ATENCION_PRESENCIAL;
+        $tipoAtencionLabel = (new ReservaModalidadAtencionCatalogService())->labelShort($tipoAtencion);
 
         return [
             'id' => $turno->id_turnos,
@@ -255,7 +259,8 @@ final class TurnoPacienteListadoService
             'estado_label' => $resolucion !== null
                 ? (Turno::ESTADOS[Turno::ESTADO_EN_RESOLUCION] ?? 'En resolución')
                 : (Turno::ESTADOS[$turno->estado] ?? 'Sin estado'),
-            'tipo_atencion' => isset($turno->tipo_atencion) ? $turno->tipo_atencion : Turno::TIPO_ATENCION_PRESENCIAL,
+            'tipo_atencion' => $tipoAtencion,
+            'tipo_atencion_label' => $tipoAtencionLabel,
             'encounter_id' => $encounterId,
             'id_consulta' => $encounterId,
             'motivos_input_abierto' => $legacy['motivos_input_abierto'],

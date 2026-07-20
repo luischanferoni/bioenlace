@@ -21,7 +21,7 @@ final class ReservaModalidadAtencionCatalogService
     private static ?array $cache = null;
 
     /**
-     * @return array{code: string, label: string}|null
+     * @return array{code: string, label: string, label_short: string}|null
      */
     public function opcion(string $code): ?array
     {
@@ -31,11 +31,24 @@ final class ReservaModalidadAtencionCatalogService
             return null;
         }
         $def = $defs[$code];
+        $label = trim((string) ($def['label'] ?? $code));
+        $short = trim((string) ($def['label_short'] ?? ''));
 
         return [
             'code' => $code,
-            'label' => trim((string) ($def['label'] ?? $code)),
+            'label' => $label,
+            'label_short' => $short !== '' ? $short : $label,
         ];
+    }
+
+    /**
+     * Etiqueta corta para cards / listados.
+     */
+    public function labelShort(string $code): string
+    {
+        $opt = $this->opcion($code);
+
+        return $opt !== null ? $opt['label_short'] : trim($code);
     }
 
     /**

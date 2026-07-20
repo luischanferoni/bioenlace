@@ -1206,6 +1206,13 @@
         colEl.querySelector('[data-field="profesional"]').textContent = t.profesional;
       }
 
+      var modSlot = colEl.querySelector('[data-slot="modalidad"]');
+      var modLabel = (t.tipo_atencion_label || '').toString().trim();
+      if (modSlot && modLabel) {
+        modSlot.classList.remove('d-none');
+        colEl.querySelector('[data-field="modalidad"]').textContent = modLabel;
+      }
+
       var enRes = t.en_resolucion === true || t.estado === 'EN_RESOLUCION';
       var proxBadge = colEl.querySelector('[data-field="proximidad-badge"]');
       if (!enRes && proxBadge) {
@@ -1264,6 +1271,17 @@
         if (sepEl) sepEl.classList.remove('d-none');
       } else if (sepEl) {
         sepEl.classList.add('d-none');
+      }
+      var modEl = rowEl.querySelector('[data-field="modalidad"]');
+      var modSep = rowEl.querySelector('[data-field="modalidad-sep"]');
+      var modLabel = (t.tipo_atencion_label || '').toString().trim();
+      if (modEl && modLabel) {
+        modEl.textContent = modLabel;
+        modEl.classList.remove('d-none');
+        if (modSep) modSep.classList.remove('d-none');
+      } else if (modEl) {
+        modEl.classList.add('d-none');
+        if (modSep) modSep.classList.add('d-none');
       }
       var badge = rowEl.querySelector('[data-field="estado-badge"]');
       if (badge) {

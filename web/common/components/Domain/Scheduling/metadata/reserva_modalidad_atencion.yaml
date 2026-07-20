@@ -7,14 +7,17 @@ opciones:
   presencial:
     code: presencial
     label: Presencial (voy al centro de salud)
+    label_short: Presencial
     always_if_not_halt: true
   teleconsulta:
     code: teleconsulta
     label: Remoto (videollamada con turno)
+    label_short: Videollamada
     requires_teleconsulta_visible: true
   async:
     code: async
     label: Consulta clínica por mensaje (sin turno ni videollamada)
+    label_short: Por mensaje
     requires_elegibilidad:
       - sugerido
       - permitido

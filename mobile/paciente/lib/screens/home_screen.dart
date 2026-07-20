@@ -1212,6 +1212,19 @@ class HomeScreenState extends State<HomeScreen> {
             style: BioTypography.bodySm,
           )
         : null;
+    final tipoAtencion = t['tipo_atencion']?.toString() ?? 'presencial';
+    final modalidadLabel = (t['tipo_atencion_label']?.toString() ?? '').trim();
+    final modalidad = modalidadLabel.isNotEmpty
+        ? Text(
+            modalidadLabel,
+            style: BioTypography.caption.copyWith(
+              color: tipoAtencion == 'teleconsulta'
+                  ? IntentPalette.of(UiIntent.primary).base
+                  : tokens.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          )
+        : null;
 
     Widget? badge;
     if (enResolucion) {
@@ -1317,6 +1330,10 @@ class HomeScreenState extends State<HomeScreen> {
         if (profesional != null) ...[
           BioSpacing.gapH(BioSpacing.xs),
           profesional,
+        ],
+        if (modalidad != null) ...[
+          BioSpacing.gapH(BioSpacing.xs),
+          modalidad,
         ],
         if (enResolucion) ...[
           BioSpacing.gapH(BioSpacing.sm),

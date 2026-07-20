@@ -231,6 +231,9 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
                 <div class="mb-2 small d-none" data-slot="profesional">
                     <strong>Profesional:</strong> <span data-field="profesional"></span>
                 </div>
+                <div class="mb-2 small d-none" data-slot="modalidad">
+                    <strong>Modalidad:</strong> <span data-field="modalidad"></span>
+                </div>
                 <div class="mt-auto pt-2 d-flex flex-wrap gap-2" data-slot="actions"></div>
             </div>
         </div>
@@ -260,6 +263,8 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
                         <span data-field="fecha"></span>
                         <span data-field="hora-sep" class="d-none"> · </span>
                         <span data-field="hora"></span>
+                        <span data-field="modalidad-sep" class="d-none"> · </span>
+                        <span data-field="modalidad" class="d-none"></span>
                     </div>
                 </div>
                 <span class="badge bg-secondary" data-field="estado-badge"></span>

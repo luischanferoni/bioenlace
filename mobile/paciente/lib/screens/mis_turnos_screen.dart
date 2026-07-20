@@ -270,6 +270,11 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
   }) {
     final tokens = context.bio;
     final tipoAtencion = t['tipo_atencion'] as String? ?? 'presencial';
+    final modalidadDisplay = () {
+      final label = (t['tipo_atencion_label']?.toString() ?? '').trim();
+      if (label.isNotEmpty) return label;
+      return tipoAtencion == 'teleconsulta' ? 'Videollamada' : 'Presencial';
+    }();
     final idConsulta = t['id_consulta'];
     final usaJourney = turnoTieneJourneyPayload(t);
     final prepararPendiente =
@@ -428,9 +433,7 @@ class _MisTurnosScreenState extends State<MisTurnosScreen> {
           ],
           BioSpacing.gapH(BioSpacing.xs),
           Text(
-            tipoAtencion == 'teleconsulta'
-                ? 'Consulta por chat'
-                : 'Presencial',
+            modalidadDisplay,
             style: BioTypography.caption.copyWith(
               color: tipoAtencion == 'teleconsulta'
                   ? IntentPalette.of(UiIntent.primary).base

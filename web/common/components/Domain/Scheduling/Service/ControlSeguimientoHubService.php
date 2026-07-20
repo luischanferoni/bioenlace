@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\Service\CarePlanPresentationService;
 use common\components\Domain\Clinical\Service\CareProtocolMatcherService;
 use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
 use common\models\DiagnosticoConsultaRepository;
+use common\models\Person\Persona;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -19,6 +20,8 @@ final class ControlSeguimientoHubService
 
     public const ANCHOR_PREFIX_CONDITION = 'diag:';
 
+    public const ANCHOR_PREFIX_PROTOCOL = 'prot:';
+
     public const ANCHOR_GENERAL = 'general';
 
     public const ANCHOR_CONSULTA_GENERAL = 'intake:consulta_general';
@@ -28,6 +31,8 @@ final class ControlSeguimientoHubService
     public const KIND_CARE_PLAN = 'care_plan';
 
     public const KIND_CONDITION = 'condition';
+
+    public const KIND_PROTOCOL = 'protocol';
 
     public const KIND_GENERAL = 'general';
 
@@ -91,6 +96,23 @@ final class ControlSeguimientoHubService
                         'kind' => self::KIND_CONDITION,
                         'condition_ref' => $diagId !== '' ? $diagId : $codigo,
                         'codigo' => $codigo,
+                    ],
+                ];
+            }
+
+            $profile = $this->resolvePersonaProfile($idPersona);
+            foreach ((new CareProtocolMatcherService())->matchByProfile(
+                $profile['age_years'],
+                $profile['sex']
+            ) as $protocol) {
+                $items[] = [
+                    'id' => self::ANCHOR_PREFIX_PROTOCOL . $protocol['id'],
+                    'label' => (string) ($protocol['hub_label'] ?? $protocol['title'] ?? $protocol['id']),
+                    'subtitle' => 'Sugerido según tu perfil · Consultá con tu equipo',
+                    'meta' => [
+                        'kind' => self::KIND_PROTOCOL,
+                        'protocol_id' => $protocol['id'],
+                        'source' => 'profile',
                     ],
                 ];
             }
@@ -209,6 +231,15 @@ final class ControlSeguimientoHubService
             return;
         }
 
+        if (str_starts_with($anchor, self::ANCHOR_PREFIX_PROTOCOL)) {
+            $protocolId = substr($anchor, strlen(self::ANCHOR_PREFIX_PROTOCOL));
+            $draft['protocol_id'] = $protocolId;
+            $draft['control_hub_kind'] = self::KIND_PROTOCOL;
+            $draft['triage_raiz'] = 'seguimiento_cronico';
+
+            return;
+        }
+
         if ($anchor === self::ANCHOR_CONSULTA_GENERAL) {
             $draft['intake_tipo'] = ConsultasSeguimientoIntakeCatalogService::INTAKE_CONSULTA_GENERAL;
             $draft['control_hub_kind'] = self::KIND_CONSULTA_GENERAL;
@@ -232,35 +263,26 @@ final class ControlSeguimientoHubService
     }
 
     /**
-     * Acciones para una condición: protocolo matched o fallback del hub.
+     * Acciones para condición o protocolo de perfil.
      *
      * @return list<array{id: string, label: string, subtitle: string, meta: array<string, mixed>}>
      */
-    public function listConditionActionItems(?string $conditionCodigo = null): array
+    public function listConditionActionItems(?string $conditionCodigo = null, ?string $protocolId = null): array
     {
+        $protocolId = trim((string) $protocolId);
+        if ($protocolId !== '') {
+            $protocolActions = (new CareProtocolMatcherService())->actionsForProtocolId($protocolId);
+            if ($protocolActions !== []) {
+                return $this->mapProtocolActionsToItems($protocolActions);
+            }
+        }
+
         $codigo = trim((string) $conditionCodigo);
         if ($codigo !== '') {
             $protocolActions = (new CareProtocolMatcherService())
                 ->actionsForConditionCode($codigo);
             if ($protocolActions !== []) {
-                $items = [];
-                foreach ($protocolActions as $action) {
-                    $items[] = [
-                        'id' => $action['code'],
-                        'label' => $action['label'],
-                        'subtitle' => $action['description'] !== ''
-                            ? $action['description']
-                            : (string) ($action['protocol_title'] ?? ''),
-                        'meta' => [
-                            'draft' => $action['draft'],
-                            'outcome' => $action['outcome'],
-                            'protocol_id' => $action['protocol_id'],
-                            'source' => 'protocol',
-                        ],
-                    ];
-                }
-
-                return $items;
+                return $this->mapProtocolActionsToItems($protocolActions);
             }
         }
 
@@ -286,19 +308,59 @@ final class ControlSeguimientoHubService
     }
 
     /**
-     * Resuelve outcome + draft de una acción de condición (protocolo o default).
+     * @param list<array{code: string, label: string, description: string, outcome: string, draft: array<string, string>, protocol_id: string, protocol_title: string}> $protocolActions
+     * @return list<array{id: string, label: string, subtitle: string, meta: array<string, mixed>}>
+     */
+    private function mapProtocolActionsToItems(array $protocolActions): array
+    {
+        $items = [];
+        foreach ($protocolActions as $action) {
+            $items[] = [
+                'id' => $action['code'],
+                'label' => $action['label'],
+                'subtitle' => $action['description'] !== ''
+                    ? $action['description']
+                    : (string) ($action['protocol_title'] ?? ''),
+                'meta' => [
+                    'draft' => $action['draft'],
+                    'outcome' => $action['outcome'],
+                    'protocol_id' => $action['protocol_id'],
+                    'source' => 'protocol',
+                ],
+            ];
+        }
+
+        return $items;
+    }
+
+    /**
+     * Resuelve outcome + draft de una acción (protocolo por id/código o default del hub).
      *
      * @return array{outcome: string, draft: array<string, string>, protocol_id: string}|null
      */
-    public function resolveConditionAction(?string $conditionCodigo, string $actionCode): ?array
-    {
+    public function resolveConditionAction(
+        ?string $conditionCodigo,
+        string $actionCode,
+        ?string $protocolId = null
+    ): ?array {
         $actionCode = trim($actionCode);
         if ($actionCode === '') {
             return null;
         }
+        $matcher = new CareProtocolMatcherService();
+        $protocolId = trim((string) $protocolId);
+        if ($protocolId !== '') {
+            $found = $matcher->findAction($protocolId, $actionCode);
+            if ($found !== null) {
+                return [
+                    'outcome' => $found['outcome'],
+                    'draft' => $found['draft'],
+                    'protocol_id' => $found['protocol_id'],
+                ];
+            }
+        }
         $codigo = trim((string) $conditionCodigo);
         if ($codigo !== '') {
-            $matcher = new CareProtocolMatcherService();
             $protocol = $matcher->matchByConditionCode($codigo);
             if ($protocol !== null) {
                 foreach ($protocol['actions'] as $action) {
@@ -328,6 +390,41 @@ final class ControlSeguimientoHubService
         }
 
         return null;
+    }
+
+    /**
+     * @return array{age_years: int|null, sex: string|null}
+     */
+    private function resolvePersonaProfile(int $idPersona): array
+    {
+        $persona = Persona::findOne($idPersona);
+        if ($persona === null) {
+            return ['age_years' => null, 'sex' => null];
+        }
+        $age = null;
+        try {
+            $raw = $persona->getEdad();
+            if (is_numeric($raw)) {
+                $age = (int) $raw;
+            } elseif (is_string($raw) && preg_match('/(\d+)/', $raw, $m)) {
+                $age = (int) $m[1];
+            }
+        } catch (\Throwable $e) {
+            $age = null;
+        }
+        $sex = null;
+        try {
+            if (method_exists($persona, 'getSexoLetra')) {
+                $sex = strtoupper(trim((string) $persona->getSexoLetra()));
+            }
+        } catch (\Throwable $e) {
+            $sex = null;
+        }
+        if ($sex === '') {
+            $sex = null;
+        }
+
+        return ['age_years' => $age, 'sex' => $sex];
     }
 
     /**

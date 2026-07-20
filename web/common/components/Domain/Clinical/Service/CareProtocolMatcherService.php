@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Service;
 
 /**
- * Resuelve protocolos aplicables a códigos de condición (CIE/SNOMED normalizados).
+ * Resuelve protocolos por código de condición y/o perfil (edad, sexo).
  */
 final class CareProtocolMatcherService
 {
@@ -15,15 +15,9 @@ final class CareProtocolMatcherService
     }
 
     /**
-     * Primer protocolo que matchea el código (prefijo CIE permitido: E11 matchea E11.9).
+     * Primer protocolo habilitado que matchea el código (prefijo CIE: E11 → E11.9).
      *
-     * @return array{
-     *   id: string,
-     *   title: string,
-     *   fhir_kind: string,
-     *   applies: array{condition_codes: list<string>, clinical_status: list<string>},
-     *   actions: list<array{code: string, label: string, description: string, outcome: string, draft: array<string, string>}>
-     * }|null
+     * @return array<string, mixed>|null
      */
     public function matchByConditionCode(string $conditionCode): ?array
     {
@@ -32,6 +26,12 @@ final class CareProtocolMatcherService
             return null;
         }
         foreach ($this->catalog->allProtocols() as $protocol) {
+            if (!($protocol['enabled'] ?? true)) {
+                continue;
+            }
+            if (($protocol['applies']['condition_codes'] ?? []) === []) {
+                continue;
+            }
             foreach ($protocol['applies']['condition_codes'] as $code) {
                 if ($this->codeMatches($needle, $code)) {
                     return $protocol;
@@ -43,8 +43,29 @@ final class CareProtocolMatcherService
     }
 
     /**
-     * Acciones UI del protocolo o lista vacía si no hay match.
+     * Protocolos preventivos aplicables solo por perfil (tienen age/sex y matchean).
      *
+     * @return list<array<string, mixed>>
+     */
+    public function matchByProfile(?int $ageYears, ?string $sex): array
+    {
+        $out = [];
+        foreach ($this->catalog->allProtocols() as $protocol) {
+            if (!($protocol['enabled'] ?? true)) {
+                continue;
+            }
+            if (!$this->hasProfileRules($protocol)) {
+                continue;
+            }
+            if ($this->profileMatches($protocol, $ageYears, $sex)) {
+                $out[] = $protocol;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * @return list<array{code: string, label: string, description: string, outcome: string, draft: array<string, string>, protocol_id: string, protocol_title: string}>
      */
     public function actionsForConditionCode(string $conditionCode): array
@@ -53,6 +74,47 @@ final class CareProtocolMatcherService
         if ($protocol === null) {
             return [];
         }
+
+        return $this->flattenActions($protocol);
+    }
+
+    /**
+     * @return list<array{code: string, label: string, description: string, outcome: string, draft: array<string, string>, protocol_id: string, protocol_title: string}>
+     */
+    public function actionsForProtocolId(string $protocolId): array
+    {
+        $protocol = $this->catalog->findById($protocolId);
+        if ($protocol === null || !($protocol['enabled'] ?? true)) {
+            return [];
+        }
+
+        return $this->flattenActions($protocol);
+    }
+
+    public function findAction(string $protocolId, string $actionCode): ?array
+    {
+        $protocol = $this->catalog->findById($protocolId);
+        if ($protocol === null || !($protocol['enabled'] ?? true)) {
+            return null;
+        }
+        foreach ($protocol['actions'] as $action) {
+            if ($action['code'] === $actionCode) {
+                return $action + [
+                    'protocol_id' => $protocol['id'],
+                    'protocol_title' => $protocol['title'],
+                ];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param array<string, mixed> $protocol
+     * @return list<array{code: string, label: string, description: string, outcome: string, draft: array<string, string>, protocol_id: string, protocol_title: string}>
+     */
+    private function flattenActions(array $protocol): array
+    {
         $out = [];
         foreach ($protocol['actions'] as $action) {
             $out[] = [
@@ -69,22 +131,45 @@ final class CareProtocolMatcherService
         return $out;
     }
 
-    public function findAction(string $protocolId, string $actionCode): ?array
+    /**
+     * @param array<string, mixed> $protocol
+     */
+    private function hasProfileRules(array $protocol): bool
     {
-        $protocol = $this->catalog->findById($protocolId);
-        if ($protocol === null) {
-            return null;
+        $age = $protocol['applies']['age_years'] ?? null;
+        $sex = $protocol['applies']['sex'] ?? [];
+
+        return (is_array($age) && ($age['min'] !== null || $age['max'] !== null))
+            || $sex !== [];
+    }
+
+    /**
+     * @param array<string, mixed> $protocol
+     */
+    private function profileMatches(array $protocol, ?int $ageYears, ?string $sex): bool
+    {
+        $applies = $protocol['applies'];
+        $ageRule = $applies['age_years'] ?? null;
+        if (is_array($ageRule) && ($ageRule['min'] !== null || $ageRule['max'] !== null)) {
+            if ($ageYears === null) {
+                return false;
+            }
+            if ($ageRule['min'] !== null && $ageYears < (int) $ageRule['min']) {
+                return false;
+            }
+            if ($ageRule['max'] !== null && $ageYears > (int) $ageRule['max']) {
+                return false;
+            }
         }
-        foreach ($protocol['actions'] as $action) {
-            if ($action['code'] === $actionCode) {
-                return $action + [
-                    'protocol_id' => $protocol['id'],
-                    'protocol_title' => $protocol['title'],
-                ];
+        $sexRule = $applies['sex'] ?? [];
+        if ($sexRule !== []) {
+            $sx = strtoupper(trim((string) $sex));
+            if ($sx === '' || !in_array($sx, $sexRule, true)) {
+                return false;
             }
         }
 
-        return null;
+        return true;
     }
 
     private function normalizeCode(string $code): string
@@ -100,9 +185,9 @@ final class CareProtocolMatcherService
         if ($needle === $catalogCode) {
             return true;
         }
-        // Prefijo CIE: catálogo "E11" matchea "E11.9" / "E119"
         if (str_starts_with($needle, $catalogCode)) {
             $rest = substr($needle, strlen($catalogCode));
+
             return $rest === '' || $rest[0] === '.' || ctype_digit($rest[0] ?? '');
         }
 

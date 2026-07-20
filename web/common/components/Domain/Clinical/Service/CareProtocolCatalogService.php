@@ -20,8 +20,15 @@ final class CareProtocolCatalogService
      * @return list<array{
      *   id: string,
      *   title: string,
+     *   hub_label: string,
      *   fhir_kind: string,
-     *   applies: array{condition_codes: list<string>, clinical_status: list<string>},
+     *   enabled: bool,
+     *   applies: array{
+     *     condition_codes: list<string>,
+     *     clinical_status: list<string>,
+     *     age_years: array{min: int|null, max: int|null}|null,
+     *     sex: list<string>
+     *   },
      *   actions: list<array{code: string, label: string, description: string, outcome: string, draft: array<string, string>}>
      * }>
      */
@@ -36,6 +43,7 @@ final class CareProtocolCatalogService
             if ($id === '') {
                 continue;
             }
+            $enabled = !array_key_exists('enabled', $row) || (bool) $row['enabled'];
             $applies = is_array($row['applies'] ?? null) ? $row['applies'] : [];
             $codes = [];
             foreach ($applies['condition_codes'] ?? [] as $c) {
@@ -50,6 +58,22 @@ final class CareProtocolCatalogService
                 if ($s !== '') {
                     $statuses[] = $s;
                 }
+            }
+            $sex = [];
+            foreach ($applies['sex'] ?? [] as $sx) {
+                $s = strtoupper(trim((string) $sx));
+                if ($s !== '') {
+                    $sex[] = $s;
+                }
+            }
+            $ageYears = null;
+            if (isset($applies['age_years']) && is_array($applies['age_years'])) {
+                $min = $applies['age_years']['min'] ?? null;
+                $max = $applies['age_years']['max'] ?? null;
+                $ageYears = [
+                    'min' => $min !== null && $min !== '' ? (int) $min : null,
+                    'max' => $max !== null && $max !== '' ? (int) $max : null,
+                ];
             }
             $actions = [];
             foreach ($row['actions'] ?? [] as $action) {
@@ -76,13 +100,19 @@ final class CareProtocolCatalogService
                     'draft' => $draft,
                 ];
             }
+            $title = trim((string) ($row['title'] ?? $id));
+            $hubLabel = trim((string) ($row['hub_label'] ?? ''));
             $out[] = [
                 'id' => $id,
-                'title' => trim((string) ($row['title'] ?? $id)),
+                'title' => $title,
+                'hub_label' => $hubLabel !== '' ? $hubLabel : $title,
                 'fhir_kind' => trim((string) ($row['fhir_kind'] ?? 'PlanDefinition')),
+                'enabled' => $enabled,
                 'applies' => [
                     'condition_codes' => $codes,
                     'clinical_status' => $statuses,
+                    'age_years' => $ageYears,
+                    'sex' => $sex,
                 ],
                 'actions' => $actions,
             ];

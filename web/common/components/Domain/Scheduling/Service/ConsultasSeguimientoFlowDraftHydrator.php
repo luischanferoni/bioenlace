@@ -69,9 +69,11 @@ final class ConsultasSeguimientoFlowDraftHydrator
         $condAccion = trim((string) ($draft['condition_accion'] ?? ''));
         if ($condAccion !== '') {
             $codigo = trim((string) ($draft['condition_codigo'] ?? $draft['condition_ref'] ?? ''));
+            $protocolId = trim((string) ($draft['protocol_id'] ?? ''));
             $resolved = (new ControlSeguimientoHubService())->resolveConditionAction(
                 $codigo !== '' ? $codigo : null,
-                $condAccion
+                $condAccion,
+                $protocolId !== '' ? $protocolId : null
             );
             if ($resolved !== null) {
                 foreach ($resolved['draft'] as $k => $v) {

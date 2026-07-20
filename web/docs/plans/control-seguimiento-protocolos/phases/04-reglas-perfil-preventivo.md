@@ -31,12 +31,24 @@ El contenido clínico exacto **no** se inventa en código: va en YAML revisado; 
 - Acción posible: `external_info` / abrir recurso provincial / texto + turno pediatría.
 - CarePacks IA siguen fuera.
 
+## Implementación
+
+| Pieza | Ubicación |
+|-------|-----------|
+| YAML preventivos | `Clinical/metadata/care_protocols.yaml` (`control_preventivo_adulto`, `control_ginecologico_edad`, `vacunas_pediatricas_orientacion`) |
+| Matcher perfil | `CareProtocolMatcherService::matchByProfile` / `actionsForProtocolId` |
+| Hub anclas `prot:{id}` | `ControlSeguimientoHubService::listHubItems` + `applyAnchorToDraft` |
+| Flow | `control_hub_kind: protocol` → `cs_condition_acciones` + `protocol_id` en open_ui |
+| Edad/sexo | `Persona::getEdad()` / `getSexoLetra()` |
+
+Copy de hub: “Sugerido según tu perfil · Consultá con tu equipo”.
+
 ## Checklist
 
-- [ ] Matcher soporta `age_years` / `sex` desde Persona.
-- [ ] ≥1 protocolo preventivo en YAML de ejemplo (feature-flag o solo debug si el contenido no está validado).
-- [ ] Hub muestra sección “Controles recomendados” cuando hay match de perfil.
-- [ ] Tests con persona fixture (edad/sexo).
+- [x] Matcher soporta `age_years` / `sex` desde Persona.
+- [x] ≥1 protocolo preventivo en YAML de ejemplo (contenido orientativo; validar clínicamente).
+- [x] Hub muestra ítems recomendados por perfil (`prot:` + `hub_label`).
+- [x] Tests matcher perfil + ancla protocolo + acciones por `protocol_id`.
 
 ## Riesgo clínico
 

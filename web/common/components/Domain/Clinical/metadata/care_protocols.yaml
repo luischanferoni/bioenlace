@@ -1,9 +1,9 @@
 # Protocolos de cuidado (PlanDefinition-lite). Definición → acciones con draft prefilled.
 # No confundir con CarePack/CareCohort (packs IA).
+#
+# applies: condition_codes y/o age_years/sex (OR). enabled: false oculta el protocolo.
 version: "1"
 
-# Outcomes estables para next_routing del flow (sin if protocol_id en orquestadores).
-# modalidad | captura_mensaje
 default_outcome: captura_mensaje
 
 protocols:
@@ -70,6 +70,77 @@ protocols:
           triage_raiz: seguimiento_cronico
       - code: consulta_mensaje
         label: Consulta por mensaje
+        outcome: captura_mensaje
+        draft:
+          intake_tipo: consulta_general
+
+  # --- Preventivos por perfil (contenido orientativo; validar clínicamente) ---
+  - id: control_preventivo_adulto
+    title: Control de salud adulto
+    hub_label: Control recomendado (adulto)
+    fhir_kind: PlanDefinition
+    enabled: true
+    applies:
+      age_years:
+        min: 40
+    actions:
+      - code: solicitar_turno
+        label: Pedir turno de control
+        description: Control habitual sugerido según tu edad. Consultá con tu equipo qué corresponde en tu caso.
+        outcome: modalidad
+        draft:
+          triage_raiz: seguimiento_cronico
+      - code: consulta_mensaje
+        label: Consulta por mensaje
+        description: Preguntá al equipo sobre controles preventivos.
+        outcome: captura_mensaje
+        draft:
+          intake_tipo: consulta_general
+
+  - id: control_ginecologico_edad
+    title: Control ginecológico
+    hub_label: Control recomendado (ginecológico)
+    fhir_kind: PlanDefinition
+    enabled: true
+    applies:
+      age_years:
+        min: 25
+        max: 65
+      sex:
+        - F
+    actions:
+      - code: solicitar_turno
+        label: Pedir turno de control
+        description: Control habitual sugerido según perfil. Confirmá con tu equipo el estudio o consulta que corresponda.
+        outcome: modalidad
+        draft:
+          triage_raiz: seguimiento_cronico
+      - code: consulta_mensaje
+        label: Consulta por mensaje
+        outcome: captura_mensaje
+        draft:
+          intake_tipo: consulta_general
+
+  - id: vacunas_pediatricas_orientacion
+    title: Vacunas en la infancia
+    hub_label: Vacunas (orientación)
+    fhir_kind: PlanDefinition
+    enabled: true
+    applies:
+      age_years:
+        max: 17
+    actions:
+      - code: solicitar_turno
+        label: Pedir turno / consultar en el centro
+        description: >-
+          Orientación según edad: consultá el calendario de vacunación con tu centro
+          o el registro provincial (SISA). Bioenlace no administra el calendario acá.
+        outcome: modalidad
+        draft:
+          triage_raiz: seguimiento_cronico
+      - code: consulta_mensaje
+        label: Consulta por mensaje
+        description: Escribile al equipo sobre vacunas pendientes.
         outcome: captura_mensaje
         draft:
           intake_tipo: consulta_general

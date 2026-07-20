@@ -69,4 +69,32 @@ class ControlSeguimientoHubServiceTest extends Unit
         $this->assertSame('modalidad', $resolved['outcome']);
         $this->assertSame('diabetes_control_periodico', $resolved['protocol_id']);
     }
+
+    public function testApplyAnchorProtocol(): void
+    {
+        $svc = new ControlSeguimientoHubService();
+        $draft = ['control_hub_anchor' => 'prot:control_preventivo_adulto'];
+        $svc->applyAnchorToDraft($draft);
+        $this->assertSame('control_preventivo_adulto', $draft['protocol_id'] ?? null);
+        $this->assertSame('protocol', $draft['control_hub_kind'] ?? null);
+        $this->assertSame('seguimiento_cronico', $draft['triage_raiz'] ?? null);
+    }
+
+    public function testConditionActionsPorProtocolId(): void
+    {
+        $svc = new ControlSeguimientoHubService();
+        $items = $svc->listConditionActionItems(null, 'control_preventivo_adulto');
+        $this->assertNotEmpty($items);
+        $this->assertSame('protocol', $items[0]['meta']['source'] ?? null);
+        $this->assertSame('control_preventivo_adulto', $items[0]['meta']['protocol_id'] ?? null);
+    }
+
+    public function testResolveConditionActionPorProtocolId(): void
+    {
+        $svc = new ControlSeguimientoHubService();
+        $resolved = $svc->resolveConditionAction(null, 'consulta_mensaje', 'vacunas_pediatricas_orientacion');
+        $this->assertNotNull($resolved);
+        $this->assertSame('captura_mensaje', $resolved['outcome']);
+        $this->assertSame('vacunas_pediatricas_orientacion', $resolved['protocol_id']);
+    }
 }

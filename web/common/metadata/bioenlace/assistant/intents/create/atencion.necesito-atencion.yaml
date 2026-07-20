@@ -134,6 +134,10 @@ subintents:
     next: cs_condition_acciones
   - when:
       draft_equals:
+        control_hub_kind: protocol
+    next: cs_condition_acciones
+  - when:
+      draft_equals:
         control_hub_kind: consulta_general
     next: cs_captura_consulta_general
   - when:
@@ -180,6 +184,7 @@ subintents:
     params:
       condition_codigo: draft.condition_codigo
       condition_ref: draft.condition_ref
+      protocol_id: draft.protocol_id
 - id: triage_urgencia_categoria
   assistant_text: Tipo de urgencia
   requires:

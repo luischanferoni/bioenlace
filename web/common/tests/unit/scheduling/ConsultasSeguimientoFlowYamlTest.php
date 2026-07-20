@@ -53,6 +53,24 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
             'consultas-seguimiento.condicion-acciones',
             $byId['cs_condition_acciones']['open_ui']['action_id'] ?? null
         );
+        $this->assertSame(
+            'draft.protocol_id',
+            $byId['cs_condition_acciones']['open_ui']['params']['protocol_id'] ?? null
+        );
+
+        $hubKindRoutes = [];
+        foreach ($byId['cs_hub']['next_routing'] ?? [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $when = $row['when']['draft_equals']['control_hub_kind'] ?? null;
+            if (is_string($when) && $when !== '') {
+                $hubKindRoutes[$when] = (string) ($row['next'] ?? '');
+            }
+        }
+        $this->assertSame('cs_condition_acciones', $hubKindRoutes['condition'] ?? null);
+        $this->assertSame('cs_condition_acciones', $hubKindRoutes['protocol'] ?? null);
+        $this->assertSame('cs_select_necesidad', $hubKindRoutes['care_plan'] ?? null);
 
         $this->assertArrayHasKey('cs_select_necesidad', $byId);
         $routes = [];

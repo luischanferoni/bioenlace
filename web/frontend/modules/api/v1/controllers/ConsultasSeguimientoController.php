@@ -51,7 +51,7 @@ class ConsultasSeguimientoController extends BaseController
     /**
      * GET|POST /api/v1/consultas-seguimiento/condicion-acciones
      *
-     * @action_name Acciones provisionales sobre una condición (pre-protocolos)
+     * @action_name Acciones sobre condición o protocolo (hub Control/Seguimiento)
      * @entity ConsultasSeguimiento
      * @tags views, ui, paciente, consulta, seguimiento
      */
@@ -60,8 +60,12 @@ class ConsultasSeguimientoController extends BaseController
         $req = Yii::$app->request;
         $params = array_merge($req->get(), $req->post());
         $codigo = trim((string) ($params['condition_codigo'] ?? $params['condition_ref'] ?? ''));
+        $protocolId = trim((string) ($params['protocol_id'] ?? ''));
         $hub = new ControlSeguimientoHubService();
-        $items = $hub->listConditionActionItems($codigo !== '' ? $codigo : null);
+        $items = $hub->listConditionActionItems(
+            $codigo !== '' ? $codigo : null,
+            $protocolId !== '' ? $protocolId : null
+        );
 
         $out = UiScreenService::handleScreen(
             'consultas-seguimiento',
@@ -75,9 +79,14 @@ class ConsultasSeguimientoController extends BaseController
 
         if (isset($out['kind'], $out['ui_type']) && $out['kind'] === 'ui_definition' && $out['ui_type'] === 'ui_json') {
             $title = '¿Qué necesitás?';
-            if ($codigo !== '') {
-                $protocol = (new CareProtocolMatcherService())
-                    ->matchByConditionCode($codigo);
+            $matcher = new CareProtocolMatcherService();
+            if ($protocolId !== '') {
+                $actions = $matcher->actionsForProtocolId($protocolId);
+                if ($actions !== []) {
+                    $title = (string) ($actions[0]['protocol_title'] ?? $title);
+                }
+            } elseif ($codigo !== '') {
+                $protocol = $matcher->matchByConditionCode($codigo);
                 if ($protocol !== null) {
                     $title = $protocol['title'];
                 }

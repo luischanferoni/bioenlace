@@ -63,4 +63,40 @@ class CareProtocolMatcherServiceTest extends Unit
         $this->assertSame('modalidad', $turno['outcome']);
         $this->assertSame('asma_control_periodico', $turno['protocol_id']);
     }
+
+    public function testMatchByProfileAdulto(): void
+    {
+        $m = new CareProtocolMatcherService();
+        $matched = $m->matchByProfile(45, 'M');
+        $ids = array_column($matched, 'id');
+        $this->assertContains('control_preventivo_adulto', $ids);
+        $this->assertNotContains('control_ginecologico_edad', $ids);
+        $this->assertNotContains('vacunas_pediatricas_orientacion', $ids);
+    }
+
+    public function testMatchByProfileGinecologico(): void
+    {
+        $m = new CareProtocolMatcherService();
+        $matched = $m->matchByProfile(30, 'F');
+        $ids = array_column($matched, 'id');
+        $this->assertContains('control_ginecologico_edad', $ids);
+        $this->assertNotContains('control_preventivo_adulto', $ids);
+    }
+
+    public function testMatchByProfilePediatrico(): void
+    {
+        $m = new CareProtocolMatcherService();
+        $matched = $m->matchByProfile(10, null);
+        $ids = array_column($matched, 'id');
+        $this->assertContains('vacunas_pediatricas_orientacion', $ids);
+        $this->assertNotContains('control_preventivo_adulto', $ids);
+    }
+
+    public function testActionsForProtocolId(): void
+    {
+        $m = new CareProtocolMatcherService();
+        $actions = $m->actionsForProtocolId('control_preventivo_adulto');
+        $this->assertNotEmpty($actions);
+        $this->assertSame('control_preventivo_adulto', $actions[0]['protocol_id']);
+    }
 }

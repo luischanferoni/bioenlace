@@ -27,6 +27,19 @@ class ReservaModalidadAtencionServiceTest extends Unit
         $this->assertContains('async', $codes);
     }
 
+    public function testAsyncNoSeOfreceFueraDeControlSeguimiento(): void
+    {
+        $svc = new ReservaModalidadAtencionService();
+        $opts = $svc->opcionesParaDraft([
+            'triage_raiz' => 'malestar_nuevo',
+            'triage_zona' => 'zona_sistemas',
+        ]);
+
+        $codes = array_column($opts, 'code');
+        $this->assertContains('presencial', $codes);
+        $this->assertNotContains('async', $codes);
+    }
+
     public function testAplicarFlagsRequierePasoConVariasModalidades(): void
     {
         $draft = [
@@ -39,10 +52,12 @@ class ReservaModalidadAtencionServiceTest extends Unit
         $this->assertSame('1', $draft['async_ofrecible'] ?? null);
     }
 
-    public function testCatalogoDeclaraAsyncElegibilidades(): void
+    public function testCatalogoDeclaraAsyncElegibilidadesYRaiz(): void
     {
-        $eleg = (new ReservaModalidadAtencionCatalogService())->elegibilidadesParaAsync();
+        $catalog = new ReservaModalidadAtencionCatalogService();
+        $eleg = $catalog->elegibilidadesParaAsync();
         $this->assertContains(TeleconsultaElegibilidadService::ELEG_SUGERIDO, $eleg);
         $this->assertContains(TeleconsultaElegibilidadService::ELEG_PERMITIDO, $eleg);
+        $this->assertContains('seguimiento_cronico', $catalog->triageRaicesParaAsync());
     }
 }

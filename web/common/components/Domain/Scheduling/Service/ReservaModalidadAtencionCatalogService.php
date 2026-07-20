@@ -63,6 +63,29 @@ final class ReservaModalidadAtencionCatalogService
     }
 
     /**
+     * Raíces de triage en las que se ofrece async (vacío = sin restricción por raíz).
+     *
+     * @return list<string>
+     */
+    public function triageRaicesParaAsync(): array
+    {
+        $def = self::load()['opciones'][self::CODE_ASYNC] ?? [];
+        $raw = is_array($def) ? ($def['requires_triage_raiz'] ?? []) : [];
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $v) {
+            $s = trim((string) $v);
+            if ($s !== '') {
+                $out[] = $s;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /**
      * @return array{summary: string, hint: string}
      */
     public function mensajeTeleconsultaHubSinCupos(): array

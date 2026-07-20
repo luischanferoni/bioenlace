@@ -42,7 +42,9 @@ final class ReservaModalidadAtencionService
             }
         }
 
-        if (in_array($elegClinica, $catalog->elegibilidadesParaAsync(), true)) {
+        if (in_array($elegClinica, $catalog->elegibilidadesParaAsync(), true)
+            && $this->asyncPermitidoParaTriageRaiz($draft, $catalog)
+        ) {
             $async = $catalog->opcion(ReservaModalidadAtencionCatalogService::CODE_ASYNC);
             if ($async !== null) {
                 $out[] = $async;
@@ -50,6 +52,22 @@ final class ReservaModalidadAtencionService
         }
 
         return $this->deduplicarPorCode($out);
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    private function asyncPermitidoParaTriageRaiz(
+        array $draft,
+        ReservaModalidadAtencionCatalogService $catalog
+    ): bool {
+        $allowed = $catalog->triageRaicesParaAsync();
+        if ($allowed === []) {
+            return true;
+        }
+        $raiz = trim((string) ($draft['triage_raiz'] ?? ''));
+
+        return $raiz !== '' && in_array($raiz, $allowed, true);
     }
 
     /**

@@ -18,6 +18,9 @@ opciones:
     code: async
     label: Consulta clínica por mensaje (sin turno ni videollamada)
     label_short: Por mensaje
+    # Solo camino Control/Seguimiento (no malestar nuevo ni urgencia).
+    requires_triage_raiz:
+      - seguimiento_cronico
     requires_elegibilidad:
       - sugerido
       - permitido

@@ -3,7 +3,6 @@
 namespace common\components\Domain\Scheduling\Service;
 
 use common\models\Clinical\Encounter;
-use common\models\ConsultaChatMessage;
 use common\models\Persona;
 use Yii;
 
@@ -12,14 +11,17 @@ use Yii;
  */
 final class ConsultaAsyncInitialChatService
 {
-    public function seedMensajePaciente(Encounter $encounter, int $idPersona, string $mensaje): void
+    /**
+     * @param array<string, mixed> $meta
+     */
+    public function seedMensajePaciente(Encounter $encounter, int $idPersona, string $mensaje, array $meta = []): void
     {
         $mensaje = trim($mensaje);
         if ($mensaje === '') {
             return;
         }
 
-        if (ConsultaChatMessage::find()->where(['encounter_id' => (int) $encounter->id])->exists()) {
+        if (\common\models\ConsultaChatMessage::find()->where(['encounter_id' => (int) $encounter->id])->exists()) {
             return;
         }
 
@@ -36,13 +38,17 @@ final class ConsultaAsyncInitialChatService
             $userName = (string) (Yii::$app->user->identity->username ?? $userName);
         }
 
-        $chatMessage = new ConsultaChatMessage();
+        $catalog = new ConsultaAsyncChatPolicyCatalogService();
+        $op = trim((string) ($meta['medicacion_operacion'] ?? ''));
+        $messageType = $catalog->solicitudMessageType($op);
+
+        $chatMessage = new \common\models\ConsultaChatMessage();
         $chatMessage->encounter_id = (int) $encounter->id;
         $chatMessage->user_id = $userId;
         $chatMessage->user_name = $userName;
         $chatMessage->user_role = 'paciente';
         $chatMessage->content = $mensaje;
-        $chatMessage->message_type = 'texto';
+        $chatMessage->message_type = $messageType;
         $chatMessage->save(false);
     }
 }

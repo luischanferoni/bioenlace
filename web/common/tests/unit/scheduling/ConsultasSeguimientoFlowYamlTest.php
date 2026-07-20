@@ -42,33 +42,46 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
                 $routes[$when] = (string) ($row['next'] ?? '');
             }
         }
-        $this->assertSame('select_medicamentos_renovacion', $routes['renovar_medicacion'] ?? null);
-        $this->assertSame('select_medicamentos_ajuste', $routes['solicitar_ajuste'] ?? null);
+        $this->assertSame('select_medicamentos', $routes['renovar_medicacion'] ?? null);
+        $this->assertSame('select_medicamentos', $routes['solicitar_ajuste'] ?? null);
         $this->assertSame('select_preferencia_turno', $routes['solicitar_turno'] ?? null);
 
         $this->assertArrayHasKey('select_care_plan', $byId);
         $this->assertTrue($byId['select_care_plan']['review_prefilled'] ?? false);
-        $this->assertArrayHasKey('select_medicamentos_renovacion', $byId);
+        $this->assertArrayHasKey('select_medicamentos', $byId);
+        $this->assertArrayNotHasKey('select_medicamentos_renovacion', $byId);
+        $this->assertArrayNotHasKey('select_medicamentos_ajuste', $byId);
         $this->assertArrayNotHasKey('confirmar_renovacion', $byId);
-        $this->assertArrayHasKey('select_medicamentos_ajuste', $byId);
         $this->assertArrayHasKey('captura_ajuste_motivo', $byId);
+
+        $medRoutes = [];
+        foreach ($byId['select_medicamentos']['next_routing'] ?? [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $when = $row['when']['draft_equals']['seguimiento_necesidad'] ?? null;
+            if (is_string($when) && $when !== '') {
+                $medRoutes[$when] = (string) ($row['next'] ?? '');
+            }
+        }
+        $this->assertSame('captura_ajuste_motivo', $medRoutes['solicitar_ajuste'] ?? null);
+        $this->assertSame('', $medRoutes['renovar_medicacion'] ?? null);
 
         $this->assertSame(
             'clinical.care-plan.medicamentos-como-paciente',
-            $byId['select_medicamentos_renovacion']['open_ui']['action_id'] ?? null
+            $byId['select_medicamentos']['open_ui']['action_id'] ?? null
         );
-        $this->assertSame('', $byId['select_medicamentos_renovacion']['next'] ?? null);
         $this->assertSame(
             'clinical.care-plan.confirmar-renovacion-como-paciente',
-            $byId['select_medicamentos_renovacion']['flow_submit']['action_id'] ?? null
+            $byId['select_medicamentos']['flow_submit']['action_id'] ?? null
         );
         $this->assertSame(
             'Solicitar renovación',
-            $byId['select_medicamentos_renovacion']['flow_submit']['label'] ?? null
+            $byId['select_medicamentos']['flow_submit']['label'] ?? null
         );
         $this->assertSame(
             'renovacion',
-            $byId['select_medicamentos_renovacion']['flow_submit']['params']['medicacion_operacion'] ?? null
+            $byId['select_medicamentos']['flow_submit']['params']['medicacion_operacion'] ?? null
         );
         $this->assertSame(
             'ajuste',
@@ -114,7 +127,7 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
         ], 0);
 
         $this->assertTrue($medicationStep['success'] ?? false);
-        $this->assertSame('select_medicamentos_renovacion', $medicationStep['subintent_id'] ?? null);
+        $this->assertSame('select_medicamentos', $medicationStep['subintent_id'] ?? null);
         $this->assertSame(
             'clinical.care-plan.medicamentos-como-paciente',
             $medicationStep['open_ui']['action_id'] ?? null
@@ -128,5 +141,43 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
             'renovacion',
             $medicationStep['flow_submit']['body_template']['medicacion_operacion'] ?? null
         );
+    }
+
+    public function testAjusteBranchDoesNotExposeRenewalSubmitOnMedicationStep(): void
+    {
+        $draft = [
+            'intake_tipo' => 'seguimiento',
+            'care_plan_id' => '11',
+            'seguimiento_necesidad' => 'solicitar_ajuste',
+        ];
+        $medicationStep = SubIntentEngine::process([
+            'intent_id' => 'atencion.consultas-seguimiento-flow',
+            'subintent_id' => 'select_medicamentos',
+            'draft' => $draft,
+        ], 0);
+
+        $this->assertTrue($medicationStep['success'] ?? false);
+        $this->assertSame('select_medicamentos', $medicationStep['subintent_id'] ?? null);
+        $this->assertArrayNotHasKey('flow_submit', $medicationStep);
+    }
+
+    public function testAjusteBranchAdvancesToComposerAfterMedicationSelection(): void
+    {
+        $draft = [
+            'intake_tipo' => 'seguimiento',
+            'care_plan_id' => '11',
+            'seguimiento_necesidad' => 'solicitar_ajuste',
+            'medication_request_ids' => ['101'],
+        ];
+        $nextStep = SubIntentEngine::process([
+            'intent_id' => 'atencion.consultas-seguimiento-flow',
+            'subintent_id' => 'select_medicamentos',
+            'draft' => $draft,
+        ], 0);
+
+        $this->assertTrue($nextStep['success'] ?? false);
+        $this->assertSame('captura_ajuste_motivo', $nextStep['subintent_id'] ?? null);
+        $this->assertArrayNotHasKey('flow_submit', $nextStep);
+        $this->assertArrayHasKey('composer_capture', $nextStep);
     }
 }

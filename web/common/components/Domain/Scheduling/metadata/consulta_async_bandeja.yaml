@@ -23,6 +23,9 @@ status_labels:
 patient_section:
   title: Consultas clínicas por mensaje
   empty_message: No tenés consultas clínicas por mensaje activas.
+  history_title: Consultas anteriores
+  history_empty_message: No tenés consultas clínicas cerradas recientes.
+  history_limit: 20
 
 solicitud:
   mensaje_exito_generico: >-

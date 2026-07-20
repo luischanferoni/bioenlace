@@ -740,6 +740,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final nombrePaciente =
         paciente['nombre_completo']?.toString().trim() ?? 'Paciente';
     final servicio = item['servicio']?.toString().trim() ?? '';
+    final solicitudTipo = item['solicitud_tipo']?.toString().trim() ?? '';
     final preview = item['reason_preview']?.toString().trim() ?? '';
     final createdAt = _formatAsyncCreatedAt(item['created_at']?.toString());
     final status = item['status']?.toString() ?? '';
@@ -791,6 +792,10 @@ class _HomeScreenState extends State<HomeScreen> {
           if (servicio.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(servicio, style: BioTypography.bodySm),
+          ],
+          if (solicitudTipo.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            BioBadge.info(solicitudTipo),
           ],
           if (createdAt.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),

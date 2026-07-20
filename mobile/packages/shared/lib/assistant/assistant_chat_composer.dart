@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/tokens/tokens.dart';
 import 'assistant_composer_capture.dart';
 
 /// Barra inferior del asistente: campo multilínea que crece con el texto.
@@ -115,7 +116,10 @@ class _AssistantChatComposerBarState extends State<AssistantChatComposerBar> {
     final tt = Theme.of(context).textTheme;
 
     return Container(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.symmetric(
+        horizontal: BioSpacing.lg,
+        vertical: BioSpacing.lg,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
@@ -143,27 +147,27 @@ class _AssistantChatComposerBarState extends State<AssistantChatComposerBar> {
                 hintText: widget.hintText,
                 hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(BioRadius.sm),
                   borderSide: BorderSide(
                     color: cs.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(BioRadius.sm),
                   borderSide: BorderSide(
                     color: cs.primary.withValues(alpha: 0.3),
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(BioRadius.sm),
                   borderSide: BorderSide(
                     color: cs.primary,
                     width: 2,
                   ),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 12,
+                  horizontal: BioSpacing.md,
+                  vertical: BioSpacing.md,
                 ),
               ),
               onSubmitted: (_) {

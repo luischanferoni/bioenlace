@@ -42,6 +42,28 @@ final class ConsultaAsyncBandejaCatalogService
         return trim((string) (is_array($block) ? ($block['empty_message'] ?? '') : ''));
     }
 
+    public function tituloHistorialPaciente(): string
+    {
+        $block = self::load()['patient_section'] ?? [];
+
+        return trim((string) (is_array($block) ? ($block['history_title'] ?? '') : ''));
+    }
+
+    public function mensajeVacioHistorialPaciente(): string
+    {
+        $block = self::load()['patient_section'] ?? [];
+
+        return trim((string) (is_array($block) ? ($block['history_empty_message'] ?? '') : ''));
+    }
+
+    public function limiteHistorialPaciente(): int
+    {
+        $block = self::load()['patient_section'] ?? [];
+        $n = is_array($block) ? ($block['history_limit'] ?? 20) : 20;
+
+        return max(1, (int) $n);
+    }
+
     public function horasSlaRespuesta(?string $urgencyBand): int
     {
         $map = self::load()['sla_horas_respuesta'] ?? [];

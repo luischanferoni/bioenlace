@@ -59,7 +59,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   List<Map<String, dynamic>> _carePlansActivos = [];
   List<Map<String, dynamic>> _consultasAsync = [];
+  List<Map<String, dynamic>> _consultasAsyncHistorial = [];
   String _tituloConsultasAsync = 'Consultas clínicas por mensaje';
+  String _tituloHistorialAsync = 'Consultas anteriores';
   bool _loadingCarePlans = false;
 
   final List<Map<String, dynamic>> _pendientes = [];
@@ -256,6 +258,16 @@ class HomeScreenState extends State<HomeScreen> {
       final titulo = asyncSec.data['title']?.toString().trim();
       if (titulo != null && titulo.isNotEmpty) {
         _tituloConsultasAsync = titulo;
+      }
+      final history = asyncSec.data['history'];
+      if (history is Map) {
+        _consultasAsyncHistorial = _asMapList(history['items']);
+        final ht = history['title']?.toString().trim();
+        if (ht != null && ht.isNotEmpty) {
+          _tituloHistorialAsync = ht;
+        }
+      } else {
+        _consultasAsyncHistorial = [];
       }
     }
   }
@@ -738,6 +750,10 @@ class HomeScreenState extends State<HomeScreen> {
           BioSpacing.gapH(BioSpacing.lg),
           _buildConsultasAsyncSection(context),
         ],
+        if (_consultasAsyncHistorial.isNotEmpty) ...[
+          BioSpacing.gapH(BioSpacing.lg),
+          _buildConsultasAsyncHistorialSection(context),
+        ],
         BioSpacing.gapH(BioSpacing.md),
         if (_error != null &&
             (_proximosVisibles.isNotEmpty || _pasados.isNotEmpty)) ...[
@@ -838,6 +854,22 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildConsultasAsyncHistorialSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(_tituloHistorialAsync, style: BioTypography.title),
+        BioSpacing.gapH(BioSpacing.sm),
+        ..._consultasAsyncHistorial.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+            child: _buildConsultaAsyncCard(context, item, esHistorial: true),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildConsultasAsyncSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -854,9 +886,15 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildConsultaAsyncCard(BuildContext context, Map<String, dynamic> item) {
+  Widget _buildConsultaAsyncCard(
+    BuildContext context,
+    Map<String, dynamic> item, {
+    bool esHistorial = false,
+  }) {
     final preview = item['reason_preview']?.toString().trim() ?? '';
     final servicio = item['servicio']?.toString().trim() ?? '';
+    final solicitudTipo = item['solicitud_tipo']?.toString().trim() ?? '';
+    final resolucion = item['resolution_label']?.toString().trim() ?? '';
     final estado = item['status_label']?.toString().trim() ??
         item['status']?.toString().trim() ??
         '';
@@ -878,6 +916,10 @@ class HomeScreenState extends State<HomeScreen> {
               if (estado.isNotEmpty) BioBadge.neutral(estado),
             ],
           ),
+          if (solicitudTipo.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            BioBadge.info(solicitudTipo),
+          ],
           if (createdAt.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(createdAt, style: BioTypography.caption),
@@ -886,9 +928,13 @@ class HomeScreenState extends State<HomeScreen> {
             BioSpacing.gapH(BioSpacing.xs),
             Text(preview, style: BioTypography.bodySm, maxLines: 3, overflow: TextOverflow.ellipsis),
           ],
+          if (esHistorial && resolucion.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text('Resolución: $resolucion', style: BioTypography.bodySm),
+          ],
           BioSpacing.gapH(BioSpacing.sm),
           BioButton.primary(
-            label: 'Ver mensajes',
+            label: esHistorial ? 'Ver conversación' : 'Ver mensajes',
             size: BioButtonSize.sm,
             icon: Icons.chat_bubble_outline,
             onPressed: () => _abrirChatConsultaAsync(item),

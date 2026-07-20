@@ -1814,32 +1814,76 @@
       });
     }
 
-    function renderPatientAsyncSection(sectionsSlot, data) {
-      if (!sectionsSlot || !data || !Array.isArray(data.items) || !data.items.length) return;
+    function fillPatientAsyncCard(col, item, esHistorial) {
+      col.querySelector('[data-field="servicio"]').textContent = item.servicio || '';
+      col.querySelector('[data-field="created-at"]').textContent = formatAsyncCreatedAt(item.created_at);
+      col.querySelector('[data-field="preview"]').textContent = item.reason_preview || '';
+      var badge = col.querySelector('[data-field="estado-badge"]');
+      if (badge) {
+        badge.textContent = item.status_label || item.status || '';
+      }
+      var tipoBadge = col.querySelector('[data-field="solicitud-tipo"]');
+      if (tipoBadge) {
+        var tipo = item.solicitud_tipo ? String(item.solicitud_tipo).trim() : '';
+        if (tipo) {
+          tipoBadge.textContent = tipo;
+          tipoBadge.classList.remove('d-none');
+        } else {
+          tipoBadge.classList.add('d-none');
+        }
+      }
+      var resolucionEl = col.querySelector('[data-field="resolucion"]');
+      if (resolucionEl) {
+        var resolucion = item.resolution_label ? String(item.resolution_label).trim() : '';
+        if (esHistorial && resolucion) {
+          resolucionEl.textContent = 'Resolución: ' + resolucion;
+          resolucionEl.classList.remove('d-none');
+        } else {
+          resolucionEl.classList.add('d-none');
+        }
+      }
+      var btn = col.querySelector('[data-role="async-chat-open"]');
+      if (btn) {
+        btn.textContent = esHistorial ? 'Ver conversación' : 'Ver mensajes';
+        btn.addEventListener('click', function () { openAsyncChat(item, true); });
+      }
+    }
+
+    function renderPatientAsyncItemsSection(sectionsSlot, title, items, esHistorial) {
+      if (!sectionsSlot || !Array.isArray(items) || !items.length) return;
       var secFrag = importTemplate('tpl-patient-home-section');
       if (!secFrag) return;
       var secRoot = secFrag.querySelector('[data-role="patient-section"]');
-      secRoot.querySelector('[data-field="titulo"]').textContent = data.title || 'Consultas clínicas por mensaje';
+      secRoot.querySelector('[data-field="titulo"]').textContent = title || 'Consultas clínicas por mensaje';
       var itemsSlot = secRoot.querySelector('[data-slot="items"]');
-      data.items.forEach(function (item) {
+      items.forEach(function (item) {
         var cardFrag = importTemplate('tpl-patient-async-card');
         if (!cardFrag) return;
         var col = cardFrag.firstElementChild;
         if (!col) return;
-        col.querySelector('[data-field="servicio"]').textContent = item.servicio || '';
-        col.querySelector('[data-field="created-at"]').textContent = formatAsyncCreatedAt(item.created_at);
-        col.querySelector('[data-field="preview"]').textContent = item.reason_preview || '';
-        var badge = col.querySelector('[data-field="estado-badge"]');
-        if (badge) {
-          badge.textContent = item.status_label || item.status || '';
-        }
-        var btn = col.querySelector('[data-role="async-chat-open"]');
-        if (btn) {
-          btn.addEventListener('click', function () { openAsyncChat(item, true); });
-        }
+        fillPatientAsyncCard(col, item, esHistorial);
         itemsSlot.appendChild(col);
       });
       sectionsSlot.appendChild(secFrag);
+    }
+
+    function renderPatientAsyncSection(sectionsSlot, data) {
+      if (!sectionsSlot || !data) return;
+      renderPatientAsyncItemsSection(
+        sectionsSlot,
+        data.title,
+        data.items,
+        false
+      );
+      var history = data.history;
+      if (history && Array.isArray(history.items) && history.items.length) {
+        renderPatientAsyncItemsSection(
+          sectionsSlot,
+          history.title,
+          history.items,
+          true
+        );
+      }
     }
 
     function beginClinicalListPanel(panel) {

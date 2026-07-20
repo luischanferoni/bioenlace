@@ -6,6 +6,7 @@ import 'package:record/record.dart';
 import 'package:shared/shared.dart';
 
 import '../services/consulta_chat_service.dart';
+import '../services/consulta_async_api.dart';
 
 /// Chat con el médico: mensajes de texto, imagen, audio y video.
 class ChatMedicoScreen extends StatefulWidget {
@@ -33,6 +34,8 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _messages = [];
+  AsyncConsultaChatPolicy _chatPolicy = AsyncConsultaChatPolicy.fromApi(null);
+  late ConsultaAsyncApi _asyncApi;
   bool _loading = true;
   bool _sending = false;
   String? _error;
@@ -47,6 +50,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       authToken: widget.authToken,
       userName: widget.userName,
     );
+    _asyncApi = ConsultaAsyncApi(authToken: widget.authToken);
     _loadMessages();
   }
 
@@ -67,9 +71,40 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     setState(() {
       _loading = false;
       _messages = result['messages'] ?? [];
+      final data = result['data'];
+      if (data is Map) {
+        final policyRaw = data['chat_policy'];
+        _chatPolicy = AsyncConsultaChatPolicy.fromApi(
+          policyRaw is Map ? Map<String, dynamic>.from(policyRaw) : null,
+        );
+      }
       if (result['success'] != true) _error = result['message'] as String?;
     });
     _scrollToBottom();
+  }
+
+  Future<void> _cancelarSolicitud() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Retirar solicitud'),
+        content: const Text(
+          '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Retirar')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final res = await _asyncApi.cancelarComoPaciente(widget.consultaId);
+    if (!mounted) return;
+    if (res['success'] == true) {
+      await _loadMessages();
+    } else {
+      _showError(res['message']?.toString() ?? 'No se pudo cancelar');
+    }
   }
 
   void _scrollToBottom() {
@@ -94,8 +129,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
-      setState(() => _messages = [..._messages, result['data']]);
-      _scrollToBottom();
+      await _loadMessages();
     } else {
       _showError(result['message']?.toString() ?? 'Error');
     }
@@ -174,15 +208,7 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     if (!mounted) return;
     setState(() => _sending = false);
     if (result['success'] == true && result['data'] != null) {
-      setState(() {
-        final withoutPreview = showLocalPreview
-            ? _messages
-                .where((m) => (m as Map)['_local_preview'] != true)
-                .toList()
-            : _messages;
-        _messages = [...withoutPreview, result['data']];
-      });
-      _scrollToBottom();
+      await _loadMessages();
     } else {
       if (showLocalPreview) {
         setState(() {
@@ -210,9 +236,24 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
     final tokens = context.bio;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: BioAppBar(title: widget.titulo),
+      appBar: BioAppBar(
+        title: widget.titulo,
+        actions: [
+          if (_chatPolicy.canCancel)
+            IconButton(
+              icon: const Icon(Icons.cancel_outlined),
+              tooltip: 'Retirar solicitud',
+              onPressed: _loading ? null : _cancelarSolicitud,
+            ),
+        ],
+      ),
       body: Column(
         children: [
+          if (_chatPolicy.hint.isNotEmpty)
+            Padding(
+              padding: BioSpacing.pageHorizontal.copyWith(top: BioSpacing.sm),
+              child: BioAlert.info(message: _chatPolicy.hint),
+            ),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -247,13 +288,26 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
                         ),
                       ),
           ),
-          _buildInputBar(context),
+          if (_chatPolicy.composerEnabled) _buildInputBar(context),
         ],
       ),
     );
   }
 
   Widget _buildBubble(BuildContext context, Map<String, dynamic> m) {
+    if (asyncChatMessageIsSystem(m)) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: BioSpacing.xs),
+        child: Center(
+          child: Text(
+            m['content']?.toString() ?? '',
+            textAlign: TextAlign.center,
+            style: asyncChatMessageTextStyle(context, m),
+          ),
+        ),
+      );
+    }
+
     final tokens = context.bio;
     final isMe =
         m['user_role'] == 'paciente' || m['user_id'].toString() == widget.userId;
@@ -268,8 +322,11 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
         : tokens.textMuted;
 
     Widget contenido;
-    if (type == 'texto') {
-      contenido = Text(content, style: BioTypography.body.copyWith(color: fg));
+    if (type == 'texto' || type.startsWith('solicitud_')) {
+      contenido = Text(
+        content,
+        style: asyncChatMessageTextStyle(context, m).copyWith(color: fg),
+      );
     } else if (isImageMessageType(type) && content.isNotEmpty) {
       contenido = ChatMediaImage(
         source: content,

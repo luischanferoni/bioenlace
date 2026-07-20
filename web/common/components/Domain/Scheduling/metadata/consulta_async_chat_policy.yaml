@@ -1,0 +1,104 @@
+# Política de chat para consultas clínicas async (SOLICITUD_ASYNC).
+version: "1"
+
+conversation_modes:
+  structured:
+    medicacion_operaciones:
+      - renovacion
+      - ajuste
+    patient_composer: false
+    patient_upload: false
+    composer_hint: >-
+      Tu solicitud ya fue registrada. El equipo te responderá por este chat; no hace falta
+      enviar más mensajes.
+  conversational:
+    patient_composer: true
+    patient_upload: true
+
+limits:
+  conversational:
+    max_patient_messages_while_planned_without_staff: 3
+    max_patient_messages_total: 20
+    window_days: 7
+    auto_close_resolution: limite_conversacion
+  rate_limit:
+    window_days: 30
+    max_solicitudes_medicacion_por_plan: 2
+
+duplicate:
+  block_open_medicacion_por_plan: true
+  block_renovacion_si_ajuste_abierto: true
+  messages:
+    open_renovacion: >-
+      Ya tenés una solicitud de renovación pendiente para este tratamiento. Revisala en Inicio
+      → Consultas clínicas por mensaje.
+    open_ajuste: >-
+      Ya tenés una solicitud de ajuste pendiente para este tratamiento. Revisala en Inicio
+      → Consultas clínicas por mensaje.
+    open_medicacion: >-
+      Ya tenés una consulta sobre medicación pendiente para este tratamiento. Esperá la respuesta
+      antes de enviar otra.
+    renovacion_con_ajuste_pendiente: >-
+      Tenés un ajuste de medicación pendiente. Cuando el profesional lo resuelva, podés solicitar
+      la renovación de la medicación actualizada.
+    rate_limit_medicacion: >-
+      Superaste el límite de solicitudes de medicación para este tratamiento en el período indicado.
+      Pedí un turno de control si necesitás atención.
+
+cancel:
+  allowed_statuses:
+    - planned
+  require_no_staff_assigned: true
+  require_no_staff_message: true
+  message_exito: Retiramos tu solicitud. Podés iniciar una nueva consulta cuando lo necesites.
+
+resolutions:
+  medicacion_renovada:
+    label: Medicación renovada
+    notify_patient: true
+    permite_renovacion_posterior: false
+  medicacion_ajustada:
+    label: Medicación ajustada
+    notify_patient: true
+    permite_renovacion_posterior: true
+  medicacion_no_indicada:
+    label: No corresponde renovación ni ajuste
+    require_note: true
+    notify_patient: true
+  requiere_control_presencial:
+    label: Requiere control presencial
+    require_note: false
+    notify_patient: true
+    suggest_turno: true
+  consulta_resuelta:
+    label: Consulta resuelta por mensaje
+    notify_patient: true
+  limite_conversacion:
+    label: Límite de mensajes alcanzado
+    notify_patient: true
+    suggest_turno: true
+  cancelada_paciente:
+    label: Cancelada por el paciente
+    notify_patient: false
+
+solicitud_message_types:
+  renovacion: solicitud_renovacion
+  ajuste: solicitud_ajuste
+  default: solicitud_consulta
+
+system_messages:
+  solicitud_tomada: >-
+    Un profesional tomó tu solicitud y te responderá por este chat.
+  solicitud_cerrada: "Cerramos esta consulta: {resolution_label}.{note_suffix}"
+  solicitud_cancelada: Retiraste esta solicitud. Podés iniciar una nueva consulta cuando lo necesites.
+  limite_conversacion: >-
+    Alcanzaste el límite de mensajes para esta consulta. Cerramos el chat; si necesitás seguir,
+    solicitá un turno presencial o de control.
+  limite_conversacion_turno: Podés reservar un turno desde el asistente o la sección Turnos.
+
+solicitud_tipo_labels:
+  renovacion: Renovación
+  ajuste: Ajuste
+  duda: Duda tratamiento
+  contar_evolucion: Evolución
+  consulta_general: Consulta general

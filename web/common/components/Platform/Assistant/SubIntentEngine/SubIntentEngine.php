@@ -343,11 +343,8 @@ final class SubIntentEngine
                 }
                 if (isset($when['draft_equals']) && is_array($when['draft_equals'])) {
                     if (self::draftMatchesEquals($draft, $when['draft_equals'])) {
-                        $n = isset($rule['next']) ? trim((string) $rule['next']) : '';
-                        if ($n !== '') {
-                            return $n;
-                        }
-                    }
+                    return isset($rule['next']) ? trim((string) $rule['next']) : '';
+                }
                 }
             }
             if ($fallback !== '') {
@@ -433,7 +430,7 @@ final class SubIntentEngine
      * @param array<string, mixed> $subintent
      * @param array<string, mixed>|null $flowSubmitBlock
      */
-    private static function isTerminalSubintent(array $subintent, ?array $flowSubmitBlock): bool
+    private static function isTerminalSubintent(array $subintent, ?array $flowSubmitBlock, array $draft = []): bool
     {
         if ($flowSubmitBlock === null || !self::flowSubmitHasActionId($flowSubmitBlock)) {
             return false;
@@ -445,6 +442,10 @@ final class SubIntentEngine
         $hasRouting = isset($subintent['next_routing'])
             && is_array($subintent['next_routing'])
             && $subintent['next_routing'] !== [];
+
+        if ($hasRouting) {
+            return self::resolveNextSubintentId($subintent, $draft) === '';
+        }
 
         return !$hasNext && !$hasRouting;
     }
@@ -925,7 +926,11 @@ final class SubIntentEngine
             'draft_delta' => (object) [],
         ];
 
-        if (self::isTerminalSubintent($subintent, $flowSubmitBlock)) {
+        if (self::isTerminalSubintent(
+            $subintent,
+            $flowSubmitBlock,
+            isset($openUiDef['__draft']) && is_array($openUiDef['__draft']) ? $openUiDef['__draft'] : []
+        )) {
             $template = self::buildFlowSubmitTemplate($flowSubmitBlock);
             if ($template !== null) {
                 $payload['flow_submit'] = $template;

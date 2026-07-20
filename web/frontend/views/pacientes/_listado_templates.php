@@ -348,9 +348,11 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
                     <span class="badge bg-info text-dark">Consulta clínica por mensaje</span>
                     <span class="badge" data-field="estado-badge"></span>
                 </div>
+                <span class="badge bg-primary mb-2 d-none align-self-start" data-field="solicitud-tipo"></span>
                 <h5 class="card-title h6 mb-2" data-field="servicio"></h5>
                 <div class="small mb-2"><strong>Enviada:</strong> <span data-field="created-at"></span></div>
-                <p class="small text-muted mb-3 flex-grow-1" data-field="preview"></p>
+                <p class="small text-muted mb-2 flex-grow-1" data-field="preview"></p>
+                <p class="small mb-3 d-none" data-field="resolucion"></p>
                 <button type="button" class="btn btn-sm btn-outline-primary mt-auto align-self-start" data-role="async-chat-open">
                     Ver conversación
                 </button>

@@ -30,7 +30,7 @@ final class ConsultaAsyncSolicitudService
         if (ConsultasSeguimientoIntakeService::esIntakeConsultasSeguimiento($draft)) {
             $intakeSvc->prepararDraft($draft, $idPersona);
             $intakeSvc->assertPuedeSolicitarAsync($draft, $idPersona);
-            $this->assertNoRenovacionAbiertaParaPlan($idPersona, $draft);
+            (new ConsultaAsyncSolicitudGuardService())->assertPuedeCrear($idPersona, $draft);
             $meta = $intakeSvc->compilarMetaAsync($draft);
         } else {
             $triageCatalog = new ReservaTurnoTriageCatalogService();
@@ -76,7 +76,7 @@ final class ConsultaAsyncSolicitudService
         $encounter->status = EncounterStatus::PLANNED;
         $encounter->save(false, ['status', 'updated_at', 'updated_by']);
 
-        (new ConsultaAsyncInitialChatService())->seedMensajePaciente($encounter, $idPersona, $mensaje);
+        (new ConsultaAsyncInitialChatService())->seedMensajePaciente($encounter, $idPersona, $mensaje, $meta);
 
         try {
             (new ConsultaAsyncBandejaPrioridadAgent())->onNuevaSolicitud($encounter);
@@ -159,60 +159,6 @@ final class ConsultaAsyncSolicitudService
         }
 
         return 'Recibimos tu consulta clínica por mensaje. El equipo de salud te responderá cuando pueda.';
-    }
-
-    /**
-     * @param array<string, mixed> $draft
-     */
-    private function assertNoRenovacionAbiertaParaPlan(int $idPersona, array $draft): void
-    {
-        $operacion = trim((string) ($draft[ConsultasSeguimientoIntakeService::DRAFT_MEDICACION_OPERACION] ?? ''));
-        if ($operacion !== ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
-            return;
-        }
-        $carePlanId = (int) ($draft['care_plan_id'] ?? 0);
-        if ($carePlanId <= 0) {
-            return;
-        }
-
-        $encounters = Encounter::find()
-            ->where([
-                'subject_persona_id' => $idPersona,
-                'parent_type' => Encounter::PARENT_SOLICITUD_ASYNC,
-                'encounter_class' => Encounter::ENCOUNTER_CLASS_VR,
-            ])
-            ->andWhere(['status' => [
-                EncounterStatus::PLANNED,
-                EncounterStatus::IN_PROGRESS,
-                EncounterStatus::ON_HOLD,
-            ]])
-            ->andWhere(['deleted_at' => null])
-            ->all();
-
-        foreach ($encounters as $encounter) {
-            $meta = $this->parseEncounterNote($encounter->note);
-            if ((int) ($meta['care_plan_id'] ?? 0) !== $carePlanId) {
-                continue;
-            }
-            if (trim((string) ($meta['medicacion_operacion'] ?? ''))
-                !== ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
-                continue;
-            }
-            throw new \InvalidArgumentException((new ConsultaAsyncBandejaCatalogService())->mensajeRenovacionDuplicada());
-        }
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function parseEncounterNote(?string $note): array
-    {
-        if ($note === null || trim($note) === '') {
-            return [];
-        }
-        $decoded = json_decode($note, true);
-
-        return is_array($decoded) ? $decoded : [];
     }
 
     /**

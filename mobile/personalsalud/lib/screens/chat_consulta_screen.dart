@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/consulta_chat_service.dart';
+import '../services/consulta_async_api.dart';
 import 'patient_timeline_screen.dart';
 
 /// Pantalla de chat con el paciente para una consulta (app Personal de Salud).
@@ -32,6 +33,8 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   final ScrollController _scrollController = ScrollController();
   List<dynamic> _messages = [];
   Map<String, dynamic>? _intakeContext;
+  AsyncConsultaChatPolicy _chatPolicy = AsyncConsultaChatPolicy.fromApi(null);
+  late ConsultaAsyncApi _asyncApi;
   bool _loading = true;
   bool _sending = false;
   String? _error;
@@ -44,6 +47,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       authToken: widget.authToken,
       userName: widget.userName,
     );
+    _asyncApi = ConsultaAsyncApi(authToken: widget.authToken, userId: widget.userId);
     _loadMessages();
   }
 
@@ -61,12 +65,72 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       if (data is Map) {
         final ctx = data['intake_context'];
         _intakeContext = ctx is Map ? Map<String, dynamic>.from(ctx) : null;
+        final policyRaw = data['chat_policy'];
+        _chatPolicy = AsyncConsultaChatPolicy.fromApi(
+          policyRaw is Map ? Map<String, dynamic>.from(policyRaw) : null,
+        );
       } else {
         _intakeContext = null;
       }
       if (result['success'] != true) _error = result['message'] as String?;
     });
     _scrollToBottom();
+  }
+
+  Future<void> _cerrarConsulta() async {
+    if (_chatPolicy.resolutions.isEmpty) return;
+    String? selected = _chatPolicy.resolutions.first.key;
+    final noteController = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Cerrar consulta'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: selected,
+                  decoration: const InputDecoration(labelText: 'Resolución'),
+                  items: _chatPolicy.resolutions
+                      .map(
+                        (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                      )
+                      .toList(),
+                  onChanged: (v) => setLocal(() => selected = v),
+                ),
+                BioSpacing.gapH(BioSpacing.sm),
+                TextField(
+                  controller: noteController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nota para el paciente (opcional)',
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Cerrar')),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || selected == null || !mounted) return;
+    final res = await _asyncApi.cerrarComoStaff(
+      widget.consultaId,
+      selected!,
+      note: noteController.text,
+    );
+    if (!mounted) return;
+    if (res['success'] == true) {
+      await _loadMessages();
+    } else {
+      _showError(res['message']?.toString() ?? 'No se pudo cerrar');
+    }
   }
 
   void _scrollToBottom() {
@@ -179,7 +243,17 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     final tokens = context.bio;
     return Scaffold(
       backgroundColor: tokens.paperBackground,
-      appBar: BioAppBar(title: widget.titulo),
+      appBar: BioAppBar(
+        title: widget.titulo,
+        actions: [
+          if (_chatPolicy.canClose)
+            IconButton(
+              icon: const Icon(Icons.check_circle_outline),
+              tooltip: 'Cerrar consulta',
+              onPressed: _loading ? null : _cerrarConsulta,
+            ),
+        ],
+      ),
       body: Column(
         children: [
           if (_intakeContext != null && (_intakeContext!['summary']?.toString().isNotEmpty ?? false))
@@ -207,7 +281,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
                       )
                     : _buildLista(context),
           ),
-          _buildInputBar(context),
+          if (_chatPolicy.composerEnabled) _buildInputBar(context),
         ],
       ),
     );

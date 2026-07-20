@@ -54,6 +54,13 @@ final class CarePlanReminderScheduleBuilder
      */
     private function itemsForPlan(CarePlan $plan): array
     {
+        $subjectPersonaId = (int) ($plan->subject_persona_id ?? 0);
+        if ($subjectPersonaId > 0
+            && (new \common\components\Domain\Scheduling\Service\ConsultaAsyncSolicitudGuardService())
+                ->tieneMedicacionAbiertaParaPlan($subjectPersonaId, (int) $plan->id)) {
+            return [];
+        }
+
         $activities = CarePlanActivity::find()
             ->where(['care_plan_id' => (int) $plan->id, 'deleted_at' => null])
             ->orderBy(['sort_order' => SORT_ASC])

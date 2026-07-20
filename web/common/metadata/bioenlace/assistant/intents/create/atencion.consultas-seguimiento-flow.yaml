@@ -129,11 +129,11 @@ subintents:
       - when:
           draft_equals:
             seguimiento_necesidad: renovar_medicacion
-        next: select_medicamentos_renovacion
+        next: select_medicamentos
       - when:
           draft_equals:
             seguimiento_necesidad: solicitar_ajuste
-        next: select_medicamentos_ajuste
+        next: select_medicamentos
       - when:
           draft_equals:
             seguimiento_necesidad: solicitar_turno
@@ -146,14 +146,22 @@ subintents:
       params:
         step: necesidad
 
-  - id: select_medicamentos_renovacion
-    assistant_text: "Medicación a renovar"
+  - id: select_medicamentos
+    assistant_text: "Medicación"
     requires:
       - draft.care_plan_id
       - draft.seguimiento_necesidad
     provides:
       - draft.medication_request_ids
-    next: ""
+    next_routing:
+      - when:
+          draft_equals:
+            seguimiento_necesidad: solicitar_ajuste
+        next: captura_ajuste_motivo
+      - when:
+          draft_equals:
+            seguimiento_necesidad: renovar_medicacion
+        next: ""
     open_ui:
       action_id: clinical.care-plan.medicamentos-como-paciente
       params:
@@ -168,19 +176,6 @@ subintents:
         seguimiento_necesidad: "draft.seguimiento_necesidad"
         medicacion_operacion: renovacion
         triage_raiz: seguimiento_cronico
-
-  - id: select_medicamentos_ajuste
-    assistant_text: "Medicación a ajustar"
-    requires:
-      - draft.care_plan_id
-      - draft.seguimiento_necesidad
-    provides:
-      - draft.medication_request_ids
-    next: captura_ajuste_motivo
-    open_ui:
-      action_id: clinical.care-plan.medicamentos-como-paciente
-      params:
-        care_plan_id: "draft.care_plan_id"
 
   - id: captura_ajuste_motivo
     assistant_text: "¿Qué cambio necesitás?"

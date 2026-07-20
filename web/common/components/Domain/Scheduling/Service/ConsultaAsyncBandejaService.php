@@ -88,6 +88,12 @@ final class ConsultaAsyncBandejaService
                 'items' => [],
                 'total' => 0,
                 'empty_message' => $catalog->mensajeVacioPaciente(),
+                'history' => [
+                    'title' => $catalog->tituloHistorialPaciente(),
+                    'items' => [],
+                    'total' => 0,
+                    'empty_message' => $catalog->mensajeVacioHistorialPaciente(),
+                ],
             ];
         }
 
@@ -110,11 +116,38 @@ final class ConsultaAsyncBandejaService
             }
         }
 
+        $historyLimit = $catalog->limiteHistorialPaciente();
+        $historyEncounters = Encounter::find()
+            ->where([
+                'subject_persona_id' => $idPersona,
+                'parent_type' => Encounter::PARENT_SOLICITUD_ASYNC,
+                'encounter_class' => Encounter::ENCOUNTER_CLASS_VR,
+            ])
+            ->andWhere(['status' => [EncounterStatus::FINISHED, EncounterStatus::CANCELLED]])
+            ->andWhere(['deleted_at' => null])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->limit($historyLimit)
+            ->all();
+
+        $history = [];
+        foreach ($historyEncounters as $encounter) {
+            $item = $this->buildItem($encounter, false);
+            if ($item !== null) {
+                $history[] = $item;
+            }
+        }
+
         return [
             'title' => $catalog->tituloSeccionPaciente(),
             'items' => $items,
             'total' => count($items),
             'empty_message' => $catalog->mensajeVacioPaciente(),
+            'history' => [
+                'title' => $catalog->tituloHistorialPaciente(),
+                'items' => $history,
+                'total' => count($history),
+                'empty_message' => $catalog->mensajeVacioHistorialPaciente(),
+            ],
         ];
     }
 
@@ -172,6 +205,8 @@ final class ConsultaAsyncBandejaService
             throw new \RuntimeException('No se pudo asignar la solicitud.');
         }
 
+        (new ConsultaAsyncSystemMessageService())->postTemplate($encounter, 'solicitud_tomada');
+
         return [
             'success' => true,
             'data' => [
@@ -203,6 +238,7 @@ final class ConsultaAsyncBandejaService
         }
 
         $catalog = new ConsultaAsyncBandejaCatalogService();
+        $policyCatalog = new ConsultaAsyncChatPolicyCatalogService();
         $meta = $this->parseNote($encounter->note);
         $urgencyBand = isset($meta['urgency_band']) ? (string) $meta['urgency_band'] : null;
         $sla = $this->buildSla($encounter, $urgencyBand, $catalog);
@@ -228,8 +264,14 @@ final class ConsultaAsyncBandejaService
         $abrirChat = !$staffView
             || ($encounter->status !== EncounterStatus::PLANNED && $esMio);
 
+        $resolution = $meta['async_resolution'] ?? null;
+        $resolutionLabel = is_array($resolution)
+            ? trim((string) ($resolution['label'] ?? ''))
+            : '';
+
         return [
             'encounter_id' => (int) $encounter->id,
+            'solicitud_tipo' => $this->solicitudTipoFromMeta($meta, $policyCatalog),
             'paciente' => [
                 'id_persona' => (int) $encounter->subject_persona_id,
                 'nombre_completo' => $subject ? $subject->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Paciente',
@@ -240,6 +282,7 @@ final class ConsultaAsyncBandejaService
             'status_label' => $catalog->etiquetaEstado((string) $encounter->status),
             'created_at' => (string) $encounter->created_at,
             'reason_preview' => $this->previewText((string) ($encounter->reason_text ?? '')),
+            'resolution_label' => $resolutionLabel !== '' ? $resolutionLabel : null,
             'urgency_band' => $urgencyBand,
             'intake_context' => $intakeContext,
             'sla' => $sla,
@@ -281,6 +324,24 @@ final class ConsultaAsyncBandejaService
             ->where(['encounter_id' => $encounterId])
             ->andWhere(['user_role' => ['medico', 'enfermeria']])
             ->exists();
+    }
+
+    /**
+     * @param array<string, mixed> $meta
+     */
+    private function solicitudTipoFromMeta(array $meta, ConsultaAsyncChatPolicyCatalogService $catalog): string
+    {
+        $op = trim((string) ($meta['medicacion_operacion'] ?? ''));
+        if ($op !== '') {
+            return $catalog->solicitudTipoLabel($op);
+        }
+        $necesidad = trim((string) ($meta['seguimiento_necesidad'] ?? ''));
+        if ($necesidad !== '') {
+            return $catalog->solicitudTipoLabel($necesidad);
+        }
+        $intake = trim((string) ($meta['intake_tipo'] ?? ''));
+
+        return $catalog->solicitudTipoLabel($intake !== '' ? $intake : 'consulta_general');
     }
 
     /**

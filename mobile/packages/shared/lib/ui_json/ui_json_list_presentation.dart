@@ -29,6 +29,15 @@ class UiJsonListPresentationMetrics {
     return allowed.contains(s) ? s : fallback;
   }
 
+  /// Altura mínima de fila para que el texto haga wrap hasta [maxLines] sin overflow.
+  static double _rowHeightFor(int maxLines, double presetHeight) {
+    // bodySmall + padding vertical del tile + borde (~18px de “chrome”).
+    const linePx = 18.0;
+    const chromePx = 18.0;
+    final needed = maxLines * linePx + chromePx;
+    return needed > presetHeight ? needed : presetHeight;
+  }
+
   static UiJsonListPresentationMetrics _metrics(String tile, String shape) {
     final (h, squareW, wideW, autoW, lines) = switch (tile) {
       'compact' => (52.0, 56.0, 96.0, 80.0, 2),
@@ -41,8 +50,9 @@ class UiJsonListPresentationMetrics {
       'auto' => autoW,
       _ => wideW,
     };
-    // large+wide/auto: mismo alto de fila que medium+wide (70).
-    final rowHeight = tile == 'large' && shape != 'square' ? 70.0 : h;
+    // large+wide/auto: preset visual compacto, pero respetar wrap hasta maxLines.
+    final presetRowHeight = tile == 'large' && shape != 'square' ? 70.0 : h;
+    final rowHeight = _rowHeightFor(lines, presetRowHeight);
     return UiJsonListPresentationMetrics(
       rowHeight: rowHeight,
       tileWidth: w,

@@ -166,7 +166,7 @@ subintents:
         medication_request_ids: "draft.medication_request_ids"
         intake_tipo: "draft.intake_tipo"
         seguimiento_necesidad: "draft.seguimiento_necesidad"
-        medicacion_operacion: "draft.medicacion_operacion"
+        medicacion_operacion: renovacion
         triage_raiz: seguimiento_cronico
 
   - id: select_medicamentos_ajuste
@@ -202,7 +202,7 @@ subintents:
         seguimiento_necesidad: "draft.seguimiento_necesidad"
         care_plan_id: "draft.care_plan_id"
         medication_request_ids: "draft.medication_request_ids"
-        medicacion_operacion: "draft.medicacion_operacion"
+        medicacion_operacion: ajuste
         triage_raiz: seguimiento_cronico
         ajuste_motivo: "draft.ajuste_motivo"
 

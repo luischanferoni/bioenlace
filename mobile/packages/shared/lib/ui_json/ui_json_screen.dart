@@ -1496,6 +1496,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                   padding: EdgeInsets.only(left: idx == 0 ? 0 : 8),
                   child: SizedBox(
                     width: cardWidth,
+                    height: listRowHeight,
                     child: Material(
                       elevation: 0,
                       borderRadius: BorderRadius.circular(BioRadius.sm),
@@ -1576,21 +1577,25 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                               horizontal: BioSpacing.sm,
                               vertical: BioSpacing.sm,
                             ),
-                            child: Center(
+                            child: Align(
+                              alignment: Alignment.center,
                               child: subtitle.isEmpty
                                   ? Text(
                                       name,
                                       textAlign: TextAlign.center,
+                                      softWrap: true,
                                       maxLines: tileMaxLines,
                                       overflow: TextOverflow.ellipsis,
                                       style: nameStyle,
                                     )
                                   : Column(
                                       mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
                                           name,
                                           textAlign: TextAlign.center,
+                                          softWrap: true,
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                           style: nameStyle,
@@ -1599,6 +1604,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                                         Text(
                                           subtitle,
                                           textAlign: TextAlign.center,
+                                          softWrap: true,
                                           maxLines: (tileMaxLines - 1).clamp(1, 3),
                                           overflow: TextOverflow.ellipsis,
                                           style: theme.textTheme.bodySmall?.copyWith(

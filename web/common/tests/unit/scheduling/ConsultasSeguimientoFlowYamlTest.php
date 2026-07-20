@@ -67,6 +67,14 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
             $byId['select_medicamentos_renovacion']['flow_submit']['label'] ?? null
         );
         $this->assertSame(
+            'renovacion',
+            $byId['select_medicamentos_renovacion']['flow_submit']['params']['medicacion_operacion'] ?? null
+        );
+        $this->assertSame(
+            'ajuste',
+            $byId['captura_ajuste_motivo']['composer_capture']['params']['medicacion_operacion'] ?? null
+        );
+        $this->assertSame(
             'ajuste_motivo',
             $byId['captura_ajuste_motivo']['composer_capture']['draft_field'] ?? null
         );
@@ -98,7 +106,6 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
             'intake_tipo' => 'seguimiento',
             'care_plan_id' => '11',
             'seguimiento_necesidad' => 'renovar_medicacion',
-            'medicacion_operacion' => 'renovacion',
         ];
         $medicationStep = SubIntentEngine::process([
             'intent_id' => 'atencion.consultas-seguimiento-flow',
@@ -117,5 +124,9 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
             $medicationStep['flow_submit']['action_id'] ?? null
         );
         $this->assertSame('Solicitar renovación', $medicationStep['flow_submit']['label'] ?? null);
+        $this->assertSame(
+            'renovacion',
+            $medicationStep['flow_submit']['body_template']['medicacion_operacion'] ?? null
+        );
     }
 }

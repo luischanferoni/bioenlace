@@ -123,6 +123,7 @@ subintents:
   assistant_text: ¿Sobre qué es el control o seguimiento?
   provides:
   - draft.control_hub_anchor
+  - draft.control_hub_kind
   next_routing:
   - when:
       draft_equals:

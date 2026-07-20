@@ -149,6 +149,29 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
             'consultas-seguimiento.hub',
             $response['open_ui']['action_id'] ?? null
         );
+        $this->assertArrayNotHasKey(
+            'flow_submit',
+            $response,
+            'cs_hub no es terminal: no debe mostrar Confirmar y Enviar'
+        );
+    }
+
+    public function testHubConAnclaCarePlanAvanzaANecesidad(): void
+    {
+        $response = SubIntentEngine::process([
+            'intent_id' => self::INTENT,
+            'subintent_id' => 'cs_hub',
+            'draft' => [
+                'triage_raiz' => 'seguimiento_cronico',
+                'control_hub_anchor' => 'cp:11',
+                'control_hub_kind' => 'care_plan',
+                'care_plan_id' => '11',
+            ],
+        ], 0);
+
+        $this->assertTrue($response['success'] ?? false);
+        $this->assertSame('cs_select_necesidad', $response['subintent_id'] ?? null);
+        $this->assertArrayNotHasKey('flow_submit', $response);
     }
 
     public function testCarePlanPrefilledStillOpensReviewStep(): void

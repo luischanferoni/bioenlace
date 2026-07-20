@@ -423,9 +423,9 @@ final class SubIntentEngine
      * no declara `next` ni `next_routing`, y el intent expone `flow_submit` con `action_id`.
      *
      * El cálculo es **declarativo** (no depende del draft del usuario) para no marcar terminal
-     * un paso cuyo `next_routing` aún no se puede resolver. Si un YAML quiere "rama de cierre"
-     * dentro de routing, debe modelar el cierre como un subintent sin `next` y dejar que el
-     * motor caiga acá.
+     * un paso cuyo `next_routing` aún no se puede resolver (p. ej. hub con listas que recién
+     * van a completar `provides`). Si un YAML quiere "rama de cierre" dentro de routing, debe
+     * modelar el cierre como un subintent sin `next`/`next_routing`.
      *
      * @param array<string, mixed> $subintent
      * @param array<string, mixed>|null $flowSubmitBlock
@@ -443,11 +443,12 @@ final class SubIntentEngine
             && is_array($subintent['next_routing'])
             && $subintent['next_routing'] !== [];
 
-        if ($hasRouting) {
-            return self::resolveNextSubintentId($subintent, $draft) === '';
+        // Con next o next_routing el paso sigue el flow; no es cierre.
+        if ($hasNext || $hasRouting) {
+            return false;
         }
 
-        return !$hasNext && !$hasRouting;
+        return true;
     }
 
     /**

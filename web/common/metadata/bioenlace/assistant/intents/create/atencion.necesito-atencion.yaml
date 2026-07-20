@@ -586,7 +586,8 @@ subintents:
     action_id: consultas-seguimiento.paso
     params:
       step: preferencia_turno
-      step_title: ¿Con quién querés el control?- id: cs_select_efector
+      step_title: ¿Con quién querés el control?
+- id: cs_select_efector
   assistant_text: Centro de salud
   requires:
   - draft.id_servicio_asignado

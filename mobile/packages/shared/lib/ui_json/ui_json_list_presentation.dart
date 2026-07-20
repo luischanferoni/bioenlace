@@ -1,4 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+
+import '../theme/tokens/bio_spacing.dart';
+import '../theme/tokens/border_width.dart';
 
 /// Presets de tamaño/forma para tiles de bloques `kind: list` (contrato `presentation`).
 @immutable
@@ -19,6 +22,75 @@ class UiJsonListPresentationMetrics {
     final tile = _norm(p['tile']?.toString(), _tiles, 'medium');
     final shape = _norm(p['shape']?.toString(), _shapes, 'wide');
     return _metrics(tile, shape);
+  }
+
+  /// Altura de fila que cubre el ítem más alto (wrap de nombre ± subtítulo).
+  static double resolveRowHeight({
+    required UiJsonListPresentationMetrics pres,
+    required List<dynamic> items,
+    required TextStyle nameStyle,
+    required TextStyle subtitleStyle,
+    required TextScaler textScaler,
+  }) {
+    final innerWidth = (pres.tileWidth - (BioSpacing.sm * 2) - (BorderWidth.medium * 2))
+        .clamp(48.0, pres.tileWidth);
+    var maxTileHeight = pres.rowHeight;
+
+    for (final raw in items) {
+      if (raw is! Map) continue;
+      final item = Map<String, dynamic>.from(raw);
+      final name = (item['name'] ?? item['label'] ?? item['id'] ?? '').toString().trim();
+      if (name.isEmpty) continue;
+      final subtitle = (item['subtitle']?.toString() ?? '').trim();
+
+      final nameLines = subtitle.isEmpty ? pres.maxLines : 2;
+      final subtitleLines =
+          subtitle.isEmpty ? 0 : (pres.maxLines - nameLines).clamp(1, 2);
+
+      var contentHeight = 0.0;
+      contentHeight += _measureTextBlock(
+        text: name,
+        style: nameStyle,
+        maxLines: nameLines,
+        maxWidth: innerWidth,
+        textScaler: textScaler,
+      );
+      if (subtitle.isNotEmpty && subtitleLines > 0) {
+        contentHeight += 2;
+        contentHeight += _measureTextBlock(
+          text: subtitle,
+          style: subtitleStyle,
+          maxLines: subtitleLines,
+          maxWidth: innerWidth,
+          textScaler: textScaler,
+        );
+      }
+
+      final tileHeight =
+          contentHeight + (BioSpacing.sm * 2) + (BorderWidth.medium * 2) + 2;
+      if (tileHeight > maxTileHeight) {
+        maxTileHeight = tileHeight;
+      }
+    }
+
+    return maxTileHeight.ceilToDouble();
+  }
+
+  static double _measureTextBlock({
+    required String text,
+    required TextStyle style,
+    required int maxLines,
+    required double maxWidth,
+    required TextScaler textScaler,
+  }) {
+    if (text.isEmpty || maxLines <= 0) return 0;
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: style),
+      textDirection: TextDirection.ltr,
+      textScaler: textScaler,
+      maxLines: maxLines,
+    )..layout(maxWidth: maxWidth);
+    return painter.height;
   }
 
   static const _tiles = {'compact', 'medium', 'large'};

@@ -1435,9 +1435,19 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       final title = b['title']?.toString();
       final emptyMessage = (b['empty_message'] ?? b['list_empty_message'])?.toString().trim();
       final pres = UiJsonListPresentationMetrics.fromBlock(b);
-      final listRowHeight = pres.rowHeight;
       final cardWidth = pres.tileWidth;
       final tileMaxLines = pres.maxLines;
+      final subtitleStyle = theme.textTheme.bodySmall?.copyWith(fontSize: 11);
+      final baseNameStyle = theme.textTheme.bodySmall?.copyWith(
+        fontWeight: FontWeight.w500,
+      );
+      final resolvedListRowHeight = UiJsonListPresentationMetrics.resolveRowHeight(
+        pres: pres,
+        items: items,
+        nameStyle: baseNameStyle ?? const TextStyle(fontSize: 12),
+        subtitleStyle: subtitleStyle ?? const TextStyle(fontSize: 11),
+        textScaler: MediaQuery.textScalerOf(context),
+      );
       if (draftField.isEmpty) {
         return const Text('UI inválida: falta draft_field');
       }
@@ -1467,7 +1477,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
             const SizedBox(height: 4),
           ],
           _HorizontalScrollInteraction(
-            height: listRowHeight,
+            height: resolvedListRowHeight,
             builder: (ctx, scrollController) => ListView.builder(
               controller: scrollController,
               scrollDirection: Axis.horizontal,
@@ -1488,15 +1498,19 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                     : _listEmbedSelectedId == id;
                 final tokens = context.bio;
                 final primary = IntentPalette.of(UiIntent.primary);
-                final nameStyle = theme.textTheme.bodySmall?.copyWith(
+                final nameStyle = baseNameStyle?.copyWith(
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   color: selected ? primary.softFg : tokens.textBody,
                 );
+                final nameLineLimit = subtitle.isEmpty ? tileMaxLines : 2;
+                final subtitleLineLimit = subtitle.isEmpty
+                    ? 0
+                    : (tileMaxLines - nameLineLimit).clamp(1, 2);
                 return Padding(
                   padding: EdgeInsets.only(left: idx == 0 ? 0 : 8),
                   child: SizedBox(
                     width: cardWidth,
-                    height: listRowHeight,
+                    height: resolvedListRowHeight,
                     child: Material(
                       elevation: 0,
                       borderRadius: BorderRadius.circular(BioRadius.sm),
@@ -1584,7 +1598,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                                       name,
                                       textAlign: TextAlign.center,
                                       softWrap: true,
-                                      maxLines: tileMaxLines,
+                                      maxLines: nameLineLimit,
                                       overflow: TextOverflow.ellipsis,
                                       style: nameStyle,
                                     )
@@ -1596,7 +1610,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                                           name,
                                           textAlign: TextAlign.center,
                                           softWrap: true,
-                                          maxLines: 2,
+                                          maxLines: nameLineLimit,
                                           overflow: TextOverflow.ellipsis,
                                           style: nameStyle,
                                         ),
@@ -1605,10 +1619,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                                           subtitle,
                                           textAlign: TextAlign.center,
                                           softWrap: true,
-                                          maxLines: (tileMaxLines - 1).clamp(1, 3),
+                                          maxLines: subtitleLineLimit,
                                           overflow: TextOverflow.ellipsis,
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            fontSize: 11,
+                                          style: subtitleStyle?.copyWith(
                                             color: selected
                                                 ? primary.softFg.withValues(alpha: 0.85)
                                                 : tokens.textMuted,

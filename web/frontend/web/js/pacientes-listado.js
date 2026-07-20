@@ -1605,35 +1605,153 @@
     function renderIntakeContextBlock(rootEl, intakeContext) {
       if (!rootEl) return;
       var ctx = intakeContext && typeof intakeContext === 'object' ? intakeContext : null;
-      if (!ctx || !ctx.summary) {
+      if (!ctx || (!ctx.summary && !(ctx.lines && ctx.lines.length) && !ctx.reference_encounter)) {
         rootEl.classList.add('d-none');
         return;
       }
       rootEl.classList.remove('d-none');
+
+      var titleEl = rootEl.querySelector('[data-field="intake-title"]');
+      if (titleEl) {
+        titleEl.textContent = ctx.section_label || 'Contexto de la solicitud';
+      }
+
+      var tipoEl = rootEl.querySelector('[data-field="intake-tipo"]');
+      if (tipoEl) {
+        if (ctx.tipo_label) {
+          tipoEl.textContent = ctx.tipo_label;
+          tipoEl.classList.remove('d-none');
+        } else {
+          tipoEl.classList.add('d-none');
+        }
+      }
+
+      var linesSlot = rootEl.querySelector('[data-slot="intake-lines"]');
+      if (linesSlot) {
+        clearNode(linesSlot);
+        var lines = Array.isArray(ctx.lines) ? ctx.lines : [];
+        var rendered = 0;
+        lines.forEach(function (line) {
+          if (!line || line.code === 'reference_encounter') return;
+          var label = String(line.label || '').trim();
+          var value = String(line.value || '').trim();
+          if (!label || !value) return;
+          var row = document.createElement('div');
+          row.innerHTML =
+            '<strong>' +
+            escapeHtml(label) +
+            ':</strong> ' +
+            escapeHtml(value);
+          linesSlot.appendChild(row);
+          rendered += 1;
+        });
+        if (!rendered && ctx.summary) {
+          var summaryFallback = document.createElement('div');
+          summaryFallback.textContent = ctx.summary;
+          linesSlot.appendChild(summaryFallback);
+        }
+      }
+
       var summaryEl = rootEl.querySelector('[data-field="intake-summary"]');
       if (summaryEl) {
-        summaryEl.textContent = ctx.summary;
+        var hasLines = linesSlot && linesSlot.childNodes.length > 0;
+        if (hasLines) {
+          summaryEl.classList.add('d-none');
+        } else if (ctx.summary) {
+          summaryEl.textContent = ctx.summary;
+          summaryEl.classList.remove('d-none');
+        } else {
+          summaryEl.classList.add('d-none');
+        }
       }
+
+      var detailSlot = rootEl.querySelector('[data-slot="intake-encounter-detail"]');
+      if (detailSlot) {
+        clearNode(detailSlot);
+        var refEnc = ctx.reference_encounter && typeof ctx.reference_encounter === 'object'
+          ? ctx.reference_encounter
+          : null;
+        var detail = refEnc && refEnc.detail && typeof refEnc.detail === 'object' ? refEnc.detail : null;
+        if (detail) {
+          detailSlot.classList.remove('d-none');
+          var detailTitle = document.createElement('div');
+          detailTitle.className = 'fw-semibold';
+          detailTitle.textContent = detail.title || 'Atención de referencia';
+          detailSlot.appendChild(detailTitle);
+          if (detail.headline) {
+            var hl = document.createElement('div');
+            hl.className = 'text-muted';
+            hl.textContent = detail.headline;
+            detailSlot.appendChild(hl);
+          }
+          var efectorNombre =
+            detail.efector && detail.efector.nombre ? String(detail.efector.nombre) : '';
+          if (efectorNombre) {
+            var ef = document.createElement('div');
+            ef.textContent = efectorNombre;
+            detailSlot.appendChild(ef);
+          }
+          var profDisplay =
+            detail.profesional && detail.profesional.display
+              ? String(detail.profesional.display)
+              : '';
+          if (profDisplay) {
+            var pr = document.createElement('div');
+            pr.textContent = 'Profesional: ' + profDisplay;
+            detailSlot.appendChild(pr);
+          }
+          var narrative = String(detail.narrativeText || '').trim();
+          if (narrative) {
+            var nar = document.createElement('div');
+            nar.className = 'mt-1';
+            nar.textContent =
+              narrative.length > 600 ? narrative.slice(0, 600) + '…' : narrative;
+            detailSlot.appendChild(nar);
+          }
+        } else {
+          detailSlot.classList.add('d-none');
+        }
+      }
+
       var linksSlot = rootEl.querySelector('[data-slot="intake-links"]');
       if (!linksSlot) return;
       clearNode(linksSlot);
       var references = Array.isArray(ctx.references) ? ctx.references : [];
       references.forEach(function (ref) {
-        if (!ref || ref.kind !== 'reference_encounter') return;
+        if (!ref || !ref.kind) return;
         var personaId = ref.subject_persona_id;
-        var encounterId = ref.encounter_id;
-        if (!personaId || !encounterId) return;
+        if (!personaId) return;
         var href = historiaConContexto(personaId, {});
         if (!href) return;
-        href += (href.indexOf('?') >= 0 ? '&' : '?') + 'id_consulta=' + encodeURIComponent(encounterId);
+        if (ref.kind === 'reference_encounter' && ref.encounter_id) {
+          href +=
+            (href.indexOf('?') >= 0 ? '&' : '?') +
+            'id_consulta=' +
+            encodeURIComponent(ref.encounter_id);
+        }
         var a = document.createElement('a');
         a.href = href;
-        a.className = 'link-primary small me-2';
-        a.textContent = ref.label || 'Ver atención de referencia';
+        a.className =
+          ref.kind === 'clinical_history'
+            ? 'btn btn-primary btn-sm me-2 mb-1'
+            : 'btn btn-outline-secondary btn-sm me-2 mb-1';
+        a.textContent =
+          ref.label ||
+          (ref.kind === 'clinical_history'
+            ? 'Ver historia clínica'
+            : 'Ver atención de referencia');
         a.setAttribute('data-spa-nav', '1');
-        a.setAttribute('data-spa-title', ref.label || 'Atención de referencia');
+        a.setAttribute('data-spa-title', a.textContent);
         linksSlot.appendChild(a);
       });
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
     }
 
     function fillAsyncIntakeContext(colEl, item) {
@@ -1668,6 +1786,7 @@
 
     function applyAsyncChatPolicyUI(policy) {
       var compose = document.getElementById('async-chat-compose');
+      var resolveSlot = document.getElementById('async-chat-resolve-actions');
       var hintEl = document.getElementById('async-chat-policy-hint');
       var actionsSlot = document.getElementById('async-chat-header-actions');
       var p = policy || asyncChatState.chatPolicy;
@@ -1686,6 +1805,24 @@
           compose.classList.remove('d-none');
         } else {
           compose.classList.add('d-none');
+        }
+      }
+      if (resolveSlot) {
+        clearNode(resolveSlot);
+        if (p.showResolutionActions) {
+          resolveSlot.classList.remove('d-none');
+          p.resolutions.forEach(function (r, idx) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = idx === 0 ? 'btn btn-primary btn-sm me-2 mb-2' : 'btn btn-outline-secondary btn-sm me-2 mb-2';
+            btn.textContent = r.label;
+            btn.addEventListener('click', function () {
+              resolveAsyncChatWithCode(r);
+            });
+            resolveSlot.appendChild(btn);
+          });
+        } else {
+          resolveSlot.classList.add('d-none');
         }
       }
       var attachSlot = document.getElementById('async-chat-attach-actions');
@@ -1733,13 +1870,65 @@
           cancelBtn.addEventListener('click', cancelAsyncChatComoPaciente);
           actionsSlot.appendChild(cancelBtn);
         }
-        if (p.canClose) {
+        if (p.canClose && !p.showResolutionActions) {
           var closeBtn = document.createElement('button');
           closeBtn.type = 'button';
           closeBtn.className = 'btn btn-outline-secondary btn-sm';
           closeBtn.textContent = 'Cerrar consulta';
           closeBtn.addEventListener('click', openAsyncChatCloseModal);
           actionsSlot.appendChild(closeBtn);
+        }
+      }
+    }
+
+    function resolveAsyncChatWithCode(resolution) {
+      if (!resolution || !resolution.code) return;
+      var note = '';
+      if (resolution.requireNote) {
+        note = window.prompt('Nota para el paciente (obligatoria):', '') || '';
+        note = String(note).trim();
+        if (!note) {
+          window.alert('Indicá una nota para el paciente.');
+          return;
+        }
+      } else if (!window.confirm('¿Confirmás: ' + resolution.label + '?')) {
+        return;
+      }
+      confirmAsyncChatCloseWith(resolution.code, note);
+    }
+
+    async function confirmAsyncChatCloseWith(resolutionCode, note) {
+      var api = window.BioenlaceNativePage;
+      var errEl =
+        document.getElementById('async-chat-close-error') ||
+        document.getElementById('async-chat-error');
+      if (!api || !asyncChatState.encounterId || !resolutionCode) return;
+      if (errEl) errEl.classList.add('d-none');
+      try {
+        var url = api.apiV1Url('consulta-async/cerrar-como-staff');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({
+            encounter_id: asyncChatState.encounterId,
+            resolution_code: resolutionCode,
+            note: note ? String(note).trim() : '',
+          }),
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo cerrar la consulta.');
+        }
+        var closeModal = getAsyncChatCloseModal();
+        if (closeModal) closeModal.hide();
+        await loadAsyncChatMessages(asyncChatState.encounterId);
+        await loadPanel({ showSpinner: false });
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'Error al cerrar.';
+          errEl.classList.remove('d-none');
         }
       }
     }
@@ -2027,39 +2216,13 @@
     }
 
     async function confirmAsyncChatClose() {
-      var api = window.BioenlaceNativePage;
       var select = document.getElementById('async-chat-close-resolution');
       var note = document.getElementById('async-chat-close-note');
-      var errEl = document.getElementById('async-chat-close-error');
-      if (!api || !asyncChatState.encounterId || !select) return;
-      if (errEl) errEl.classList.add('d-none');
-      try {
-        var url = api.apiV1Url('consulta-async/cerrar-como-staff');
-        var json = await api.fetchJson(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          body: JSON.stringify({
-            encounter_id: asyncChatState.encounterId,
-            resolution_code: select.value,
-            note: note ? String(note.value || '').trim() : '',
-          }),
-        });
-        if (json.success === false) {
-          throw new Error(json.message || 'No se pudo cerrar la consulta.');
-        }
-        var closeModal = getAsyncChatCloseModal();
-        if (closeModal) closeModal.hide();
-        await loadAsyncChatMessages(asyncChatState.encounterId);
-        await loadPanel({ showSpinner: false });
-      } catch (e) {
-        if (errEl) {
-          errEl.textContent = e && e.message ? e.message : 'Error al cerrar.';
-          errEl.classList.remove('d-none');
-        }
-      }
+      if (!select) return;
+      await confirmAsyncChatCloseWith(
+        select.value,
+        note ? String(note.value || '').trim() : ''
+      );
     }
 
     function openAsyncChat(item, canCompose) {

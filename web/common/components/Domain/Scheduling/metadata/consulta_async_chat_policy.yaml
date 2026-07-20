@@ -8,12 +8,17 @@ conversation_modes:
       - ajuste
     patient_composer: false
     patient_upload: false
+    # Sin chat libre: el staff resuelve con CTAs (aceptar / no corresponde / control).
+    staff_composer: false
     composer_hint: >-
-      Tu solicitud ya fue registrada. El equipo te responderá por este chat; no hace falta
+      Tu solicitud ya fue registrada. Esperá la resolución del profesional; no hace falta
       enviar más mensajes.
+    staff_composer_hint: >-
+      Resolvé la solicitud con una de las opciones. En renovación o ajuste no hay chat libre.
   conversational:
     patient_composer: true
     patient_upload: true
+    staff_composer: true
 
 attachments:
   # Staff (compositor habilitado).
@@ -131,12 +136,18 @@ solicitud_message_types:
 system_messages:
   solicitud_tomada: >-
     Un profesional tomó tu solicitud y te responderá por este chat.
+  solicitud_tomada_structured: >-
+    Un profesional está revisando tu solicitud y la resolverá en breve.
   solicitud_cerrada: "Cerramos esta consulta: {resolution_label}.{note_suffix}"
   solicitud_cancelada: Retiraste esta solicitud. Podés iniciar una nueva consulta cuando lo necesites.
   limite_conversacion: >-
     Alcanzaste el límite de mensajes para esta consulta. Cerramos el chat; si necesitás seguir,
     solicitá un turno presencial o de control.
   limite_conversacion_turno: Podés reservar un turno desde el asistente o la sección Turnos.
+
+staff_messages:
+  tomada_conversational: Solicitud asignada. Podés responder por mensaje.
+  tomada_structured: Solicitud asignada. Elegí una resolución para el paciente.
 
 solicitud_tipo_labels:
   renovacion: Renovación

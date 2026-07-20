@@ -31,7 +31,11 @@ final class ConsultaAsyncChatPolicyService
         $status = strtolower(trim((string) $encounter->status));
         $cerrada = in_array($status, [EncounterStatus::FINISHED, EncounterStatus::CANCELLED], true);
         $structured = $metaSvc->isStructuredMedicacion($meta);
-        $composerHint = $structured ? $catalog->composerHintStructured() : '';
+        $composerHint = $structured
+            ? ($viewerEsPaciente
+                ? $catalog->composerHintStructured()
+                : $catalog->staffComposerHintStructured())
+            : '';
 
         $patientCount = $sys->countMensajesPaciente((int) $encounter->id);
         $staffResponded = $sys->tieneRespuestaStaff((int) $encounter->id);
@@ -54,6 +58,16 @@ final class ConsultaAsyncChatPolicyService
                 if ($patientCount >= $maxTotal) {
                     $composerEnabled = false;
                     $composerHint = $catalog->systemMessage('limite_conversacion');
+                }
+            }
+        } elseif ($composerEnabled && !$viewerEsPaciente) {
+            $staffComposerOk = $structured
+                ? $catalog->staffComposerStructured()
+                : $catalog->staffComposerConversational();
+            if (!$staffComposerOk) {
+                $composerEnabled = false;
+                if ($composerHint === '') {
+                    $composerHint = $catalog->staffComposerHintStructured();
                 }
             }
         }
@@ -104,7 +118,17 @@ final class ConsultaAsyncChatPolicyService
 
     public function assertPatientCanSend(Encounter $encounter): void
     {
-        $policy = $this->resolveForEncounter($encounter, true);
+        $this->assertComposerCanSend($encounter, true);
+    }
+
+    public function assertStaffCanSend(Encounter $encounter): void
+    {
+        $this->assertComposerCanSend($encounter, false);
+    }
+
+    private function assertComposerCanSend(Encounter $encounter, bool $viewerEsPaciente): void
+    {
+        $policy = $this->resolveForEncounter($encounter, $viewerEsPaciente);
         if ($policy['composer']['enabled'] === true) {
             return;
         }
@@ -195,31 +219,40 @@ final class ConsultaAsyncChatPolicyService
     }
 
     /**
+     * Map code => { label, require_note } para CTAs de cierre staff.
+     *
      * @param array<string, mixed> $meta
-     * @return array<string, string>
+     * @return array<string, array{label: string, require_note: bool}>
      */
     private function resolucionesStaff(array $meta, ConsultaAsyncChatPolicyCatalogService $catalog): array
     {
-        $all = $catalog->resolutionOptions();
-        unset($all['cancelada_paciente'], $all['limite_conversacion']);
+        $codes = [];
         $op = trim((string) ($meta['medicacion_operacion'] ?? ''));
         if ($op === ConsultasSeguimientoIntakeService::MEDICACION_OP_RENOVACION) {
-            return array_intersect_key(
-                $all,
-                array_flip(['medicacion_renovada', 'medicacion_no_indicada', 'requiere_control_presencial'])
-            );
-        }
-        if ($op === ConsultasSeguimientoIntakeService::MEDICACION_OP_AJUSTE) {
-            return array_intersect_key(
-                $all,
-                array_flip(['medicacion_ajustada', 'medicacion_no_indicada', 'requiere_control_presencial'])
-            );
+            $codes = ['medicacion_renovada', 'medicacion_no_indicada', 'requiere_control_presencial'];
+        } elseif ($op === ConsultasSeguimientoIntakeService::MEDICACION_OP_AJUSTE) {
+            $codes = ['medicacion_ajustada', 'medicacion_no_indicada', 'requiere_control_presencial'];
+        } else {
+            $codes = ['consulta_resuelta', 'requiere_control_presencial'];
         }
 
-        return array_intersect_key(
-            $all,
-            array_flip(['consulta_resuelta', 'requiere_control_presencial'])
-        );
+        $out = [];
+        foreach ($codes as $code) {
+            $def = $catalog->resolution($code);
+            if ($def === null) {
+                continue;
+            }
+            $label = trim((string) ($def['label'] ?? $code));
+            if ($label === '') {
+                continue;
+            }
+            $out[$code] = [
+                'label' => $label,
+                'require_note' => ($def['require_note'] ?? false) === true,
+            ];
+        }
+
+        return $out;
     }
 
     /**

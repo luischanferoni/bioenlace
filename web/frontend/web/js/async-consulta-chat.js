@@ -31,8 +31,18 @@
     var resRaw = raw.resoluciones_disponibles;
     if (resRaw && typeof resRaw === 'object') {
       Object.keys(resRaw).forEach(function (code) {
-        var label = String(resRaw[code] || '').trim();
-        if (label) resolutions.push({ code: code, label: label });
+        var entry = resRaw[code];
+        var label = '';
+        var requireNote = false;
+        if (entry && typeof entry === 'object') {
+          label = String(entry.label || '').trim();
+          requireNote = entry.require_note === true;
+        } else {
+          label = String(entry || '').trim();
+        }
+        if (label) {
+          resolutions.push({ code: code, label: label, requireNote: requireNote });
+        }
       });
     }
     return {
@@ -47,6 +57,11 @@
       canClose: acciones.cerrar === true,
       resolutions: resolutions,
       suggestTurno: raw.suggest_turno === true,
+      conversationMode: raw.conversation_mode ? String(raw.conversation_mode).trim() : 'conversational',
+      showResolutionActions:
+        acciones.cerrar === true &&
+        composer.enabled !== true &&
+        resolutions.length > 0,
     };
   }
 

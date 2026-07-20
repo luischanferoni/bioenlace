@@ -432,7 +432,7 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         children: [
           Text(
             summary,
-            style: BioTypography.bodySm.copyWith(color: tokens.textPrimary),
+            style: BioTypography.bodySm.copyWith(color: tokens.textBody),
           ),
           if (modalidades is List && modalidades.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),

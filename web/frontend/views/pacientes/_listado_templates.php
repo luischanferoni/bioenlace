@@ -332,7 +332,11 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
                 <div class="small text-muted mb-2" data-field="servicio"></div>
                 <div class="small mb-2"><strong>Solicitado:</strong> <span data-field="created-at"></span></div>
                 <div class="small mb-2 d-none" data-slot="intake-context">
-                    <div class="text-muted mb-1" data-field="intake-summary"></div>
+                    <div class="fw-semibold mb-1" data-field="intake-title">Contexto</div>
+                    <div data-field="intake-tipo" class="text-muted mb-1 d-none"></div>
+                    <div data-slot="intake-lines" class="mb-1"></div>
+                    <div class="text-muted mb-1 d-none" data-field="intake-summary"></div>
+                    <div data-slot="intake-encounter-detail" class="border rounded bg-white p-2 mb-2 d-none"></div>
                     <div data-slot="intake-links"></div>
                 </div>
                 <p class="small mb-2 flex-grow-1" data-field="preview"></p>

@@ -37,6 +37,38 @@ final class ConsultaAsyncChatPolicyCatalogService
         return trim((string) (self::cached()['conversation_modes']['structured']['composer_hint'] ?? ''));
     }
 
+    public function staffComposerHintStructured(): string
+    {
+        return trim((string) (self::cached()['conversation_modes']['structured']['staff_composer_hint'] ?? ''));
+    }
+
+    /**
+     * Si el staff puede usar composer de texto/adjuntos en modo structured.
+     * Por defecto false (resolución por CTAs).
+     */
+    public function staffComposerStructured(): bool
+    {
+        return (self::cached()['conversation_modes']['structured']['staff_composer'] ?? false) === true;
+    }
+
+    /**
+     * Si el staff puede usar composer en modo conversational (default true).
+     */
+    public function staffComposerConversational(): bool
+    {
+        return (self::cached()['conversation_modes']['conversational']['staff_composer'] ?? true) === true;
+    }
+
+    public function staffMessage(string $key): string
+    {
+        $map = self::cached()['staff_messages'] ?? [];
+        if (!is_array($map)) {
+            return '';
+        }
+
+        return trim((string) ($map[$key] ?? ''));
+    }
+
     /**
      * @return array<string, mixed>
      */

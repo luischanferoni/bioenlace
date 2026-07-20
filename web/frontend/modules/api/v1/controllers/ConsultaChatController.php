@@ -137,9 +137,14 @@ class ConsultaChatController extends BaseController
             $user_role = (int) $encounter->subject_persona_id === (int) Yii::$app->user->getIdPersona() ? 'paciente' : 'medico';
         }
 
-        if ($user_role === 'paciente' && $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
+        if ($encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC) {
             try {
-                (new ConsultaAsyncChatPolicyService())->assertPatientCanSend($encounter);
+                $policySvc = new ConsultaAsyncChatPolicyService();
+                if ($user_role === 'paciente') {
+                    $policySvc->assertPatientCanSend($encounter);
+                } else {
+                    $policySvc->assertStaffCanSend($encounter);
+                }
             } catch (\InvalidArgumentException $e) {
                 return ['success' => false, 'message' => $e->getMessage(), 'data' => null];
             }
@@ -247,13 +252,11 @@ class ConsultaChatController extends BaseController
 
         if ($isAsync) {
             try {
+                $policySvc = new ConsultaAsyncChatPolicyService();
                 if ($viewerEsPaciente) {
-                    (new ConsultaAsyncChatPolicyService())->assertPatientCanSend($encounter);
+                    $policySvc->assertPatientCanSend($encounter);
                 } else {
-                    $policy = (new ConsultaAsyncChatPolicyService())->resolveForEncounter($encounter, false);
-                    if (($policy['composer']['enabled'] ?? false) !== true) {
-                        throw new \InvalidArgumentException('No podés enviar mensajes en esta consulta.');
-                    }
+                    $policySvc->assertStaffCanSend($encounter);
                 }
                 (new ConsultaAsyncChatUploadService())->assertUploadAllowed(
                     $encounter,

@@ -385,9 +385,9 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
       attachments: ChatComposerAttachments(
         onImage: _chatPolicy.canUploadImage ? _pickImage : null,
         onDocument: null,
-        onAudio: _chatPolicy.canUploadAudio ? _recordAndSendAudio : null,
-        audioActive: _isRecording,
       ),
+      onVoice: _chatPolicy.canUploadAudio ? _recordAndSendAudio : null,
+      voiceActive: _isRecording,
     );
   }
 }

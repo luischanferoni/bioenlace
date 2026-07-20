@@ -24,7 +24,10 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         $this->assertNotNull($ctx);
         $this->assertSame('consulta_general', $ctx['intake_tipo']);
         $this->assertStringContainsString('Consulta general', $ctx['summary']);
-        $this->assertSame([], $ctx['references']);
+        $this->assertCount(1, $ctx['references']);
+        $this->assertSame('clinical_history', $ctx['references'][0]['kind']);
+        $this->assertSame(1, $ctx['references'][0]['subject_persona_id']);
+        $this->assertNull($ctx['reference_encounter']);
     }
 
     public function testRenovacionIncluyeOperacionYMedicamentosEnLines(): void
@@ -44,9 +47,10 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         $this->assertContains('medication_request_ids', $codes);
         $this->assertStringContainsString('Renovación', $ctx['summary']);
         $this->assertStringContainsString('Enalapril', $ctx['summary']);
+        $this->assertSame('clinical_history', $ctx['references'][0]['kind']);
     }
 
-    public function testSeguimientoConsultaPreviaIncluyeReferencia(): void
+    public function testSeguimientoConsultaPreviaIncluyeReferenciaYDetalle(): void
     {
         $svc = new ConsultaAsyncIntakeContextService();
         $ctx = $svc->buildFromMeta([
@@ -59,9 +63,21 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         $this->assertNotEmpty($ctx['lines']);
         $this->assertSame('reference_encounter', $ctx['lines'][0]['code']);
         $this->assertSame(12, $ctx['subject_persona_id']);
-        $this->assertCount(1, $ctx['references']);
-        $this->assertSame('reference_encounter', $ctx['references'][0]['kind']);
-        $this->assertSame(55, $ctx['references'][0]['encounter_id']);
-        $this->assertSame(12, $ctx['references'][0]['subject_persona_id']);
+        $this->assertIsArray($ctx['reference_encounter']);
+        $this->assertSame(55, $ctx['reference_encounter']['encounter_id']);
+        $this->assertIsArray($ctx['reference_encounter']['detail']);
+        $kinds = array_column($ctx['references'], 'kind');
+        $this->assertContains('reference_encounter', $kinds);
+        $this->assertContains('clinical_history', $kinds);
+        $refEnc = null;
+        foreach ($ctx['references'] as $ref) {
+            if (($ref['kind'] ?? '') === 'reference_encounter') {
+                $refEnc = $ref;
+                break;
+            }
+        }
+        $this->assertNotNull($refEnc);
+        $this->assertSame(55, $refEnc['encounter_id']);
+        $this->assertSame(12, $refEnc['subject_persona_id']);
     }
 }

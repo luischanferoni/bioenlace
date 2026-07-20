@@ -84,7 +84,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
 
   Future<void> _cerrarConsulta() async {
     if (_chatPolicy.resolutions.isEmpty) return;
-    String? selected = _chatPolicy.resolutions.first.key;
+    String? selected = _chatPolicy.resolutions.first.code;
     final noteController = TextEditingController();
     final ok = await showDialog<bool>(
       context: context,
@@ -101,7 +101,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
                   decoration: const InputDecoration(labelText: 'Resolución'),
                   items: _chatPolicy.resolutions
                       .map(
-                        (e) => DropdownMenuItem(value: e.key, child: Text(e.value)),
+                        (e) => DropdownMenuItem(value: e.code, child: Text(e.label)),
                       )
                       .toList(),
                   onChanged: (v) => setLocal(() => selected = v),
@@ -125,12 +125,64 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       ),
     );
     if (ok != true || selected == null || !mounted) return;
+    await _aplicarResolucion(selected!, note: noteController.text);
+  }
+
+  Future<void> _resolverConCodigo(AsyncConsultaResolution resolution) async {
+    if (_sending) return;
+    String note = '';
+    if (resolution.requireNote) {
+      final noteController = TextEditingController();
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(resolution.label),
+          content: TextField(
+            controller: noteController,
+            decoration: const InputDecoration(
+              labelText: 'Nota para el paciente (obligatoria)',
+            ),
+            maxLines: 3,
+            autofocus: true,
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Volver')),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirmar')),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+      note = noteController.text.trim();
+      if (note.isEmpty) {
+        _showError('Indicá una nota para el paciente.');
+        return;
+      }
+    } else {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(resolution.label),
+          content: const Text('¿Confirmás esta resolución?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Volver')),
+            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirmar')),
+          ],
+        ),
+      );
+      if (ok != true || !mounted) return;
+    }
+    await _aplicarResolucion(resolution.code, note: note);
+  }
+
+  Future<void> _aplicarResolucion(String code, {String note = ''}) async {
+    setState(() => _sending = true);
     final res = await _asyncApi.cerrarComoStaff(
       widget.consultaId,
-      selected!,
-      note: noteController.text,
+      code,
+      note: note,
     );
     if (!mounted) return;
+    setState(() => _sending = false);
     if (res['success'] == true) {
       await _loadMessages();
     } else {
@@ -285,8 +337,7 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       ),
       body: Column(
         children: [
-          if (_intakeContext != null && (_intakeContext!['summary']?.toString().isNotEmpty ?? false))
-            _buildIntakeContextBanner(context),
+          if (_intakeContext != null) _buildIntakeContextBanner(context),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
@@ -311,30 +362,60 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
                     : _buildLista(context),
           ),
           if (_chatPolicy.composerEnabled) _buildInputBar(context),
+          if (_chatPolicy.showResolutionActions) _buildResolutionActions(context),
         ],
       ),
     );
   }
 
-  Widget _buildIntakeContextBanner(BuildContext context) {
-    final summary = _intakeContext?['summary']?.toString() ?? '';
-    final references = _intakeContext?['references'];
-    final refButtons = <Widget>[];
-    if (references is List) {
-      for (final ref in references) {
-        if (ref is! Map) continue;
-        if (ref['kind']?.toString() != 'reference_encounter') continue;
-        final personaId = int.tryParse(ref['subject_persona_id']?.toString() ?? '');
-        if (personaId == null || personaId <= 0) continue;
-        final label = ref['label']?.toString() ?? 'Ver atención de referencia';
-        refButtons.add(
-          BioButton.outlinePrimary(
-            label: label,
-            onPressed: () => _abrirAtencionReferencia(personaId),
+  Widget _buildResolutionActions(BuildContext context) {
+    final hint = _chatPolicy.hint;
+    final resolutions = _chatPolicy.resolutions;
+    return Material(
+      elevation: 4,
+      color: context.bio.paperBackground,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            BioSpacing.md,
+            BioSpacing.sm,
+            BioSpacing.md,
+            BioSpacing.md,
           ),
-        );
-      }
-    }
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (hint.isNotEmpty) ...[
+                Text(
+                  hint,
+                  style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+                ),
+                BioSpacing.gapH(BioSpacing.sm),
+              ],
+              for (var i = 0; i < resolutions.length; i++) ...[
+                if (i > 0) BioSpacing.gapH(BioSpacing.xs),
+                i == 0
+                    ? BioButton.primary(
+                        label: resolutions[i].label,
+                        onPressed: _sending ? null : () => _resolverConCodigo(resolutions[i]),
+                      )
+                    : BioButton.outlinePrimary(
+                        label: resolutions[i].label,
+                        onPressed: _sending ? null : () => _resolverConCodigo(resolutions[i]),
+                      ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntakeContextBanner(BuildContext context) {
+    final ctx = _intakeContext;
+    if (ctx == null) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         BioSpacing.md,
@@ -342,40 +423,55 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
         BioSpacing.md,
         0,
       ),
-      child: BioCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Contexto de la solicitud',
-              style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
-            ),
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(summary, style: BioTypography.bodySm),
-            if (refButtons.isNotEmpty) ...[
-              BioSpacing.gapH(BioSpacing.sm),
-              Wrap(
-                spacing: BioSpacing.sm,
-                runSpacing: BioSpacing.xs,
-                children: refButtons,
-              ),
-            ],
-          ],
-        ),
+      child: AsyncIntakeContextPanel(
+        intakeContext: ctx,
+        compact: true,
+        onReference: _onIntakeReference,
       ),
     );
   }
 
-  void _abrirAtencionReferencia(int personaId) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => PatientTimelineScreen(
-          personaId: personaId,
-          authToken: widget.authToken,
-          soloVer: true,
+  void _onIntakeReference(Map<String, dynamic> reference) {
+    final kind = reference['kind']?.toString().trim() ?? '';
+    final personaId = int.tryParse(reference['subject_persona_id']?.toString() ?? '');
+    if (kind == 'clinical_history') {
+      if (personaId == null || personaId <= 0) return;
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PatientTimelineScreen(
+            personaId: personaId,
+            authToken: widget.authToken,
+            soloVer: true,
+          ),
         ),
-      ),
-    );
+      );
+      return;
+    }
+    if (kind == 'reference_encounter') {
+      final refEnc = _intakeContext?['reference_encounter'];
+      final detail = refEnc is Map ? refEnc['detail'] : null;
+      if (detail is Map) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => AsyncReferenceEncounterDetailScreen(
+              detail: Map<String, dynamic>.from(detail),
+            ),
+          ),
+        );
+        return;
+      }
+      if (personaId != null && personaId > 0) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => PatientTimelineScreen(
+              personaId: personaId,
+              authToken: widget.authToken,
+              soloVer: true,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildLista(BuildContext context) {
@@ -545,9 +641,9 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       maxLines: 4,
       attachments: ChatComposerAttachments(
         onDocument: _chatPolicy.canUploadDocument ? _pickDocument : null,
-        onAudio: _chatPolicy.canUploadAudio ? _recordAndSendAudio : null,
-        audioActive: _isRecording,
       ),
+      onVoice: _chatPolicy.canUploadAudio ? _recordAndSendAudio : null,
+      voiceActive: _isRecording,
     );
   }
 

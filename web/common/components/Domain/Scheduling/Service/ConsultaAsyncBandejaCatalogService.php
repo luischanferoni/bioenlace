@@ -122,6 +122,35 @@ final class ConsultaAsyncBandejaCatalogService
     }
 
     /**
+     * Labels del bloque de contexto de intake (chat / bandeja).
+     *
+     * @return array{
+     *   section_label: string,
+     *   reference_encounter_line_label: string,
+     *   reference_encounter_action: string,
+     *   clinical_history_action: string,
+     *   encounter_detail_title: string,
+     *   encounter_detail_empty: string
+     * }
+     */
+    public function intakeContextLabels(): array
+    {
+        $block = self::load()['intake_context'] ?? [];
+        if (!is_array($block)) {
+            $block = [];
+        }
+
+        return [
+            'section_label' => trim((string) ($block['section_label'] ?? 'Contexto de la solicitud')),
+            'reference_encounter_line_label' => trim((string) ($block['reference_encounter_line_label'] ?? 'Atención previa')),
+            'reference_encounter_action' => trim((string) ($block['reference_encounter_action'] ?? 'Ver atención de referencia')),
+            'clinical_history_action' => trim((string) ($block['clinical_history_action'] ?? 'Ver historia clínica')),
+            'encounter_detail_title' => trim((string) ($block['encounter_detail_title'] ?? 'Atención de referencia')),
+            'encounter_detail_empty' => trim((string) ($block['encounter_detail_empty'] ?? 'No hay un resumen publicado de esa atención.')),
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private static function load(): array

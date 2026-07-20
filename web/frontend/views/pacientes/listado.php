@@ -117,7 +117,10 @@ $this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' :
                 <div id="async-chat-policy-hint" class="alert alert-info py-2 px-3 small mb-2 d-none"></div>
                 <div id="async-chat-intake-context" class="alert alert-light border small py-2 px-3 mb-2 d-none" data-role="async-chat-intake-context">
                     <div class="fw-semibold mb-1" data-field="intake-title">Contexto</div>
-                    <div data-field="intake-summary"></div>
+                    <div data-field="intake-tipo" class="text-muted mb-1 d-none"></div>
+                    <div data-slot="intake-lines" class="mb-1"></div>
+                    <div data-field="intake-summary" class="d-none"></div>
+                    <div data-slot="intake-encounter-detail" class="border rounded bg-white p-2 mb-2 d-none"></div>
                     <div class="mt-1" data-slot="intake-links"></div>
                 </div>
                 <div id="async-chat-loading" class="text-muted small">Cargando mensajes…</div>
@@ -129,6 +132,7 @@ $this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' :
                     <input type="file" id="async-chat-file-input" class="d-none" accept="application/pdf,.pdf,image/*">
                     <button type="button" class="btn btn-primary btn-sm" id="async-chat-send">Enviar</button>
                 </div>
+                <div id="async-chat-resolve-actions" class="d-none"></div>
                 <div id="async-chat-error" class="alert alert-danger d-none mt-2 mb-0"></div>
             </div>
         </div>

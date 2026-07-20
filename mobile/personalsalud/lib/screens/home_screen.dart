@@ -1432,7 +1432,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Align(
             alignment: Alignment.centerRight,
             child: BioButton.outlinePrimary(
-              label: 'Historia clínica',
+              label: resumenConsultaCargada ? 'Ver consulta' : 'Historia clínica',
               icon: Icons.medical_services_outlined,
               size: BioButtonSize.sm,
               onPressed: openTimeline,
@@ -1470,7 +1470,7 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             summary,
-            style: BioTypography.bodySm.copyWith(color: tokens.textPrimary),
+            style: BioTypography.bodySm.copyWith(color: tokens.textBody),
           ),
           if (modalidades is List && modalidades.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
@@ -1503,22 +1503,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-          BioSpacing.gapH(BioSpacing.md),
-          Align(
-            alignment: Alignment.centerRight,
-            child: BioButton.outlinePrimary(
-              label: resumenConsultaCargada ? 'Ver consulta' : 'Historia clínica',
-              icon: Icons.medical_services_outlined,
-              size: BioButtonSize.sm,
-              onPressed: openTimeline,
-            ),
-          ),
-          // tokens used for layout consistency
-          if (tokens.textMuted == Colors.transparent) const SizedBox.shrink(),
         ],
       ),
     );

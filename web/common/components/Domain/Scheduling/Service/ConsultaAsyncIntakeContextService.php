@@ -10,6 +10,9 @@ use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryQuer
  * Contrato agnóstico de cliente: no incluye URLs ni rutas web. Las referencias de
  * navegación se entregan como datos estructurados (`subject_persona_id`, `encounter_id`)
  * y cada cliente (web SPA, app nativa) resuelve la navegación por su cuenta.
+ *
+ * `reference_encounter.detail`: resumen lean del encounter de origen (si hay).
+ * `references`: CTAs tipados (`clinical_history`, `reference_encounter`).
  */
 final class ConsultaAsyncIntakeContextService
 {
@@ -25,9 +28,11 @@ final class ConsultaAsyncIntakeContextService
         }
 
         $catalog = new ConsultasSeguimientoIntakeCatalogService();
+        $labels = (new ConsultaAsyncBandejaCatalogService())->intakeContextLabels();
         $tipoLabel = $this->labelTipo($catalog, $intakeTipo);
         $lines = [];
         $references = [];
+        $referenceEncounter = null;
 
         $necesidad = trim((string) ($meta['seguimiento_necesidad'] ?? ''));
         if ($necesidad !== '') {
@@ -53,18 +58,18 @@ final class ConsultaAsyncIntakeContextService
 
         $medLabels = $meta['medication_labels'] ?? null;
         if (is_array($medLabels) && $medLabels !== []) {
-            $labels = [];
+            $labelsMed = [];
             foreach ($medLabels as $label) {
                 $s = trim((string) $label);
                 if ($s !== '') {
-                    $labels[] = $s;
+                    $labelsMed[] = $s;
                 }
             }
-            if ($labels !== []) {
+            if ($labelsMed !== []) {
                 $lines[] = [
                     'code' => 'medication_request_ids',
                     'label' => 'Medicamentos',
-                    'value' => implode('; ', $labels),
+                    'value' => implode('; ', $labelsMed),
                 ];
             }
         }
@@ -95,27 +100,48 @@ final class ConsultaAsyncIntakeContextService
         $refId = (int) ($meta['reference_encounter_id'] ?? 0);
         if ($refId > 0 && $idPersona > 0) {
             $detail = (new PatientEncounterSummaryQueryService())->getDetailForPersona($idPersona, $refId);
-            $label = $this->formatEncounterLabel($detail, $refId);
+            $lean = $this->leanEncounterDetail($detail, $refId, $labels);
+            $lineLabel = $labels['reference_encounter_line_label'];
             $lines[] = [
                 'code' => 'reference_encounter',
-                'label' => 'Atención previa',
-                'value' => $label,
+                'label' => $lineLabel !== '' ? $lineLabel : 'Atención previa',
+                'value' => $lean['headline'],
                 'encounter_id' => $refId,
+            ];
+            $referenceEncounter = [
+                'encounter_id' => $refId,
+                'detail' => $lean,
             ];
             $references[] = [
                 'kind' => 'reference_encounter',
-                'label' => 'Ver atención de referencia',
+                'label' => $labels['reference_encounter_action'] !== ''
+                    ? $labels['reference_encounter_action']
+                    : 'Ver atención de referencia',
                 'subject_persona_id' => $idPersona,
                 'encounter_id' => $refId,
+            ];
+        }
+
+        if ($idPersona > 0) {
+            $references[] = [
+                'kind' => 'clinical_history',
+                'label' => $labels['clinical_history_action'] !== ''
+                    ? $labels['clinical_history_action']
+                    : 'Ver historia clínica',
+                'subject_persona_id' => $idPersona,
             ];
         }
 
         return [
             'intake_tipo' => $intakeTipo,
             'tipo_label' => $tipoLabel,
+            'section_label' => $labels['section_label'] !== ''
+                ? $labels['section_label']
+                : 'Contexto de la solicitud',
             'summary' => $this->buildSummary($tipoLabel, $lines),
             'subject_persona_id' => $idPersona > 0 ? $idPersona : null,
             'lines' => $lines,
+            'reference_encounter' => $referenceEncounter,
             'references' => $references,
         ];
     }
@@ -129,6 +155,53 @@ final class ConsultaAsyncIntakeContextService
         }
 
         return $code;
+    }
+
+    /**
+     * Resumen lean para embutir en bandeja/chat (sin payload enorme).
+     *
+     * @param array<string, mixed>|null $detail
+     * @param array<string, string> $labels
+     * @return array<string, mixed>
+     */
+    private function leanEncounterDetail(?array $detail, int $encounterId, array $labels): array
+    {
+        if ($detail === null) {
+            $empty = $labels['encounter_detail_empty'] ?? '';
+
+            return [
+                'encounterId' => $encounterId,
+                'published' => false,
+                'headline' => 'Atención #' . $encounterId,
+                'title' => $labels['encounter_detail_title'] ?? 'Atención de referencia',
+                'narrativeText' => $empty !== '' ? $empty : 'No hay un resumen publicado de esa atención.',
+                'publishedAt' => null,
+                'periodEnd' => null,
+                'efector' => null,
+                'profesional' => null,
+            ];
+        }
+
+        $headline = $this->formatEncounterLabel($detail, $encounterId);
+        $narrative = trim((string) ($detail['narrativeText'] ?? ''));
+        if (mb_strlen($narrative) > 2500) {
+            $narrative = mb_substr($narrative, 0, 2500) . '…';
+        }
+
+        $efectorNombre = trim((string) ($detail['efector']['nombre'] ?? ''));
+        $profDisplay = trim((string) ($detail['profesional']['display'] ?? ''));
+
+        return [
+            'encounterId' => (int) ($detail['encounterId'] ?? $encounterId),
+            'published' => true,
+            'headline' => $headline,
+            'title' => $labels['encounter_detail_title'] ?? 'Atención de referencia',
+            'narrativeText' => $narrative,
+            'publishedAt' => $detail['publishedAt'] ?? null,
+            'periodEnd' => $detail['periodEnd'] ?? null,
+            'efector' => $efectorNombre !== '' ? ['nombre' => $efectorNombre] : null,
+            'profesional' => $profDisplay !== '' ? ['display' => $profDisplay] : null,
+        ];
     }
 
     /**

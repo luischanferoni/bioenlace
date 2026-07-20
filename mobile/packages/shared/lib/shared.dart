@@ -60,6 +60,7 @@ export 'clinical/care_plan_reminder_settings_tile.dart';
 export 'clinical/care_plan_reminder_plan_panel.dart';
 export 'clinical/care_plan_reminder_time_calculator.dart';
 export 'clinical/async_consulta_chat_policy.dart';
+export 'clinical/async_intake_context_panel.dart';
 export 'clinical/encounter_patient_summary_api.dart';
 export 'clinical/device_speech_dictation.dart';
 export 'clinical/encounter_capture_api.dart';

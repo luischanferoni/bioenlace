@@ -2,6 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../theme/tokens/tokens.dart';
 
+/// Resolución disponible para cierre staff (desde chat_policy.resoluciones_disponibles).
+class AsyncConsultaResolution {
+  const AsyncConsultaResolution({
+    required this.code,
+    required this.label,
+    this.requireNote = false,
+  });
+
+  final String code;
+  final String label;
+  final bool requireNote;
+}
+
 /// Política de chat async devuelta por GET consulta-chat/mensajes → data.chat_policy.
 class AsyncConsultaChatPolicy {
   const AsyncConsultaChatPolicy({
@@ -13,6 +26,7 @@ class AsyncConsultaChatPolicy {
     required this.canClose,
     required this.resolutions,
     required this.suggestTurno,
+    this.conversationMode = 'conversational',
   });
 
   final bool composerEnabled;
@@ -21,14 +35,19 @@ class AsyncConsultaChatPolicy {
   final String hint;
   final bool canCancel;
   final bool canClose;
-  final List<MapEntry<String, String>> resolutions;
+  final List<AsyncConsultaResolution> resolutions;
   final bool suggestTurno;
+  final String conversationMode;
 
   bool get canUploadAudio => uploadEnabled && uploadTypes.contains('audio');
 
   bool get canUploadDocument => uploadEnabled && uploadTypes.contains('documento');
 
   bool get canUploadImage => uploadEnabled && uploadTypes.contains('imagen');
+
+  /// CTAs de resolución en lugar del composer (p. ej. renovación/ajuste structured).
+  bool get showResolutionActions =>
+      canClose && !composerEnabled && resolutions.isNotEmpty;
 
   factory AsyncConsultaChatPolicy.fromApi(Map<String, dynamic>? raw) {
     if (raw == null) {
@@ -57,16 +76,8 @@ class AsyncConsultaChatPolicy {
     final acciones = raw['acciones'] is Map
         ? Map<String, dynamic>.from(raw['acciones'] as Map)
         : <String, dynamic>{};
-    final resRaw = raw['resoluciones_disponibles'];
-    final resolutions = <MapEntry<String, String>>[];
-    if (resRaw is Map) {
-      resRaw.forEach((k, v) {
-        final label = v?.toString().trim() ?? '';
-        if (label.isNotEmpty) {
-          resolutions.add(MapEntry(k.toString(), label));
-        }
-      });
-    }
+    final resolutions = _parseResolutions(raw['resoluciones_disponibles']);
+    final mode = raw['conversation_mode']?.toString().trim() ?? 'conversational';
 
     return AsyncConsultaChatPolicy(
       composerEnabled: enabled,
@@ -77,7 +88,34 @@ class AsyncConsultaChatPolicy {
       canClose: acciones['cerrar'] == true,
       resolutions: resolutions,
       suggestTurno: raw['suggest_turno'] == true,
+      conversationMode: mode.isEmpty ? 'conversational' : mode,
     );
+  }
+
+  static List<AsyncConsultaResolution> _parseResolutions(dynamic resRaw) {
+    final resolutions = <AsyncConsultaResolution>[];
+    if (resRaw is! Map) return resolutions;
+    resRaw.forEach((k, v) {
+      final code = k.toString().trim();
+      if (code.isEmpty) return;
+      if (v is Map) {
+        final label = v['label']?.toString().trim() ?? '';
+        if (label.isEmpty) return;
+        resolutions.add(
+          AsyncConsultaResolution(
+            code: code,
+            label: label,
+            requireNote: v['require_note'] == true,
+          ),
+        );
+        return;
+      }
+      final label = v?.toString().trim() ?? '';
+      if (label.isNotEmpty) {
+        resolutions.add(AsyncConsultaResolution(code: code, label: label));
+      }
+    });
+    return resolutions;
   }
 }
 

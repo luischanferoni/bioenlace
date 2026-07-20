@@ -230,7 +230,14 @@ final class ConsultaAsyncBandejaService
             throw new \RuntimeException('No se pudo asignar la solicitud.');
         }
 
-        (new ConsultaAsyncSystemMessageService())->postTemplate($encounter, 'solicitud_tomada');
+        $metaSvc = new ConsultaAsyncEncounterMetaService();
+        $meta = $metaSvc->fromEncounter($encounter);
+        $structured = $metaSvc->isStructuredMedicacion($meta);
+        $policyCatalog = new ConsultaAsyncChatPolicyCatalogService();
+        (new ConsultaAsyncSystemMessageService())->postTemplate(
+            $encounter,
+            $structured ? 'solicitud_tomada_structured' : 'solicitud_tomada'
+        );
 
         try {
             (new ConsultaAsyncPushNotifier())->notifyTomadaPatient($encounter);
@@ -238,13 +245,20 @@ final class ConsultaAsyncBandejaService
             Yii::warning('Push async tomada: ' . $e->getMessage(), 'consulta-async-push');
         }
 
+        $staffMsgKey = $structured ? 'tomada_structured' : 'tomada_conversational';
+        $staffMsg = $policyCatalog->staffMessage($staffMsgKey);
+
         return [
             'success' => true,
             'data' => [
                 'encounter_id' => (int) $encounter->id,
                 'id_profesional_efector_servicio' => $idPes,
             ],
-            'message' => 'Solicitud asignada. Podés responder por mensaje.',
+            'message' => $staffMsg !== ''
+                ? $staffMsg
+                : ($structured
+                    ? 'Solicitud asignada. Elegí una resolución para el paciente.'
+                    : 'Solicitud asignada. Podés responder por mensaje.'),
         ];
     }
 

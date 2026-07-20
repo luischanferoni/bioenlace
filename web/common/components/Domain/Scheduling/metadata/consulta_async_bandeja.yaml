@@ -40,3 +40,8 @@ solicitud:
 
 intake_context:
   section_label: Contexto de la solicitud
+  reference_encounter_line_label: Atención previa
+  reference_encounter_action: Ver atención de referencia
+  clinical_history_action: Ver historia clínica
+  encounter_detail_title: Atención de referencia
+  encounter_detail_empty: No hay un resumen publicado de esa atención.

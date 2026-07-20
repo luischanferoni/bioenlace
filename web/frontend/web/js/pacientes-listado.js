@@ -2143,10 +2143,48 @@
           resolucionEl.classList.add('d-none');
         }
       }
-      var btn = col.querySelector('[data-role="async-chat-open"]');
-      if (btn) {
-        btn.textContent = esHistorial ? 'Ver conversación' : 'Ver mensajes';
-        btn.addEventListener('click', function () { openAsyncChat(item, !esHistorial); });
+      var actions = col.querySelector('[data-slot="actions"]');
+      if (!actions) return;
+      clearNode(actions);
+      if (item.acciones && item.acciones.abrir_chat) {
+        var chat = document.createElement('button');
+        chat.type = 'button';
+        chat.className = 'btn btn-sm btn-outline-primary';
+        chat.textContent = esHistorial ? 'Ver conversación' : 'Ver mensajes';
+        chat.addEventListener('click', function () { openAsyncChat(item, !esHistorial); });
+        actions.appendChild(chat);
+      }
+      if (item.acciones && item.acciones.cancelar) {
+        var cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.className = 'btn btn-sm btn-outline-danger';
+        cancel.textContent = 'Retirar solicitud';
+        cancel.addEventListener('click', function () { cancelAsyncSolicitudDesdeCard(item); });
+        actions.appendChild(cancel);
+      }
+    }
+
+    async function cancelAsyncSolicitudDesdeCard(item) {
+      var api = window.BioenlaceNativePage;
+      var encounterId = item && item.encounter_id ? parseInt(item.encounter_id, 10) : 0;
+      if (!api || !(encounterId > 0)) return;
+      if (!window.confirm('¿Retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.')) return;
+      try {
+        var url = api.apiV1Url('consulta-async/cancelar-como-paciente');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ encounter_id: encounterId }),
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo retirar la solicitud.');
+        }
+        await loadPanel({ showSpinner: false });
+      } catch (e) {
+        window.alert(e && e.message ? e.message : 'Error al retirar la solicitud.');
       }
     }
 

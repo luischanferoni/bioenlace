@@ -28,6 +28,8 @@ class AsyncConsultaChatPolicy {
 
   bool get canUploadDocument => uploadEnabled && uploadTypes.contains('documento');
 
+  bool get canUploadImage => uploadEnabled && uploadTypes.contains('imagen');
+
   factory AsyncConsultaChatPolicy.fromApi(Map<String, dynamic>? raw) {
     if (raw == null) {
       return const AsyncConsultaChatPolicy(

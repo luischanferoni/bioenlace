@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,6 +60,9 @@ class LoginScreen extends StatefulWidget {
   /// Cabecera X-App-Client para llamadas API desde esta pantalla.
   final String appClient;
 
+  /// Slot solo visible en `kDebugMode` (p. ej. atajo JWT de desarrollo).
+  final Widget? debugExtras;
+
   const LoginScreen({
     super.key,
     this.appTitle = 'Bienvenido a BioEnlace',
@@ -74,6 +78,7 @@ class LoginScreen extends StatefulWidget {
     this.diditBiometricWorkflowId,
     this.diditRemoteLoginAfterLogout = false,
     this.appClient = 'bioenlace-flutter',
+    this.debugExtras,
   });
 
   @override
@@ -414,6 +419,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   loading: _isAuthenticating,
                   onPressed: _canAttemptLogin ? _loginWithBiometrics : null,
                 ),
+                if (kDebugMode && widget.debugExtras != null) ...[
+                  BioSpacing.gapH(BioSpacing.lg),
+                  widget.debugExtras!,
+                ],
                 if (widget.onNavigateToSignup != null) ...[
                   BioSpacing.gapH(BioSpacing.lg),
                   BioButton.softPrimary(

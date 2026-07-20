@@ -5,6 +5,7 @@ import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../services/turnos_service.dart';
+import '../services/consulta_async_api.dart';
 import '../utils/turno_resolucion_utils.dart';
 import '../config/paciente_intents.dart';
 import '../auth/paciente_post_login.dart';
@@ -854,6 +855,38 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> _cancelarConsultaAsync(Map<String, dynamic> item) async {
+    final raw = item['encounter_id'];
+    final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
+    if (id == null || id <= 0) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Retirar solicitud'),
+        content: const Text(
+          '¿Querés retirar esta solicitud? Solo podés hacerlo mientras el equipo aún no la atiende.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Retirar')),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    final res = await ConsultaAsyncApi(authToken: widget.authToken).cancelarComoPaciente(id);
+    if (!mounted) return;
+    if (res['success'] == true) {
+      await _cargarInicial();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(res['message']?.toString() ?? 'No se pudo retirar la solicitud'),
+          backgroundColor: IntentPalette.of(UiIntent.danger).base,
+        ),
+      );
+    }
+  }
+
   Widget _buildConsultasAsyncHistorialSection(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -886,6 +919,38 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Subraya títulos de solicitud ya presentes en el preview (sin badge duplicado).
+  Widget _buildConsultaPreviewText(String preview) {
+    const prefixes = [
+      'Solicitud de renovación',
+      'Solicitud de ajuste',
+    ];
+    for (final prefix in prefixes) {
+      if (preview.startsWith(prefix)) {
+        return Text.rich(
+          TextSpan(
+            style: BioTypography.bodySm,
+            children: [
+              TextSpan(
+                text: prefix,
+                style: const TextStyle(decoration: TextDecoration.underline),
+              ),
+              TextSpan(text: preview.substring(prefix.length)),
+            ],
+          ),
+          maxLines: 3,
+          overflow: TextOverflow.ellipsis,
+        );
+      }
+    }
+    return Text(
+      preview,
+      style: BioTypography.bodySm,
+      maxLines: 3,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
   Widget _buildConsultaAsyncCard(
     BuildContext context,
     Map<String, dynamic> item, {
@@ -893,12 +958,17 @@ class HomeScreenState extends State<HomeScreen> {
   }) {
     final preview = item['reason_preview']?.toString().trim() ?? '';
     final servicio = item['servicio']?.toString().trim() ?? '';
-    final solicitudTipo = item['solicitud_tipo']?.toString().trim() ?? '';
     final resolucion = item['resolution_label']?.toString().trim() ?? '';
     final estado = item['status_label']?.toString().trim() ??
         item['status']?.toString().trim() ??
         '';
     final createdAt = item['created_at']?.toString().trim() ?? '';
+    final accionesRaw = item['acciones'];
+    final acciones = accionesRaw is Map
+        ? Map<String, dynamic>.from(accionesRaw)
+        : <String, dynamic>{};
+    final abrirChat = acciones['abrir_chat'] == true;
+    final cancelar = acciones['cancelar'] == true;
 
     return BioCard(
       child: Column(
@@ -916,29 +986,41 @@ class HomeScreenState extends State<HomeScreen> {
               if (estado.isNotEmpty) BioBadge.neutral(estado),
             ],
           ),
-          if (solicitudTipo.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            BioBadge.info(solicitudTipo),
-          ],
           if (createdAt.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(createdAt, style: BioTypography.caption),
           ],
           if (preview.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
-            Text(preview, style: BioTypography.bodySm, maxLines: 3, overflow: TextOverflow.ellipsis),
+            _buildConsultaPreviewText(preview),
           ],
           if (esHistorial && resolucion.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text('Resolución: $resolucion', style: BioTypography.bodySm),
           ],
-          BioSpacing.gapH(BioSpacing.sm),
-          BioButton.primary(
-            label: esHistorial ? 'Ver conversación' : 'Ver mensajes',
-            size: BioButtonSize.sm,
-            icon: Icons.chat_bubble_outline,
-            onPressed: () => _abrirChatConsultaAsync(item),
-          ),
+          if (abrirChat || cancelar) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Wrap(
+              spacing: BioSpacing.sm,
+              runSpacing: BioSpacing.xs,
+              children: [
+                if (abrirChat)
+                  BioButton.primary(
+                    label: esHistorial ? 'Ver conversación' : 'Ver mensajes',
+                    size: BioButtonSize.sm,
+                    icon: Icons.chat_bubble_outline,
+                    onPressed: () => _abrirChatConsultaAsync(item),
+                  ),
+                if (cancelar)
+                  BioButton.outlineDanger(
+                    label: 'Retirar solicitud',
+                    size: BioButtonSize.sm,
+                    icon: Icons.delete_outline,
+                    onPressed: () => _cancelarConsultaAsync(item),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );

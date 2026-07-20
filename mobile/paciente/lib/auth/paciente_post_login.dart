@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,7 @@ import '../screens/main_screen.dart';
 import '../screens/signup_screen.dart';
 import '../services/chat_service.dart';
 import 'paciente_authenticated_shell.dart';
+import 'paciente_debug_jwt_login.dart';
 import 'paciente_session_prefs.dart';
 
 /// Tras cerrar una Activity nativa (Didit), el overlay Flutter puede no estar listo.
@@ -168,6 +170,7 @@ Widget buildPacienteLoginScreen({
     diditRemoteLoginAfterLogout: true,
     appClient: BearerSessionAuth.appClientPaciente,
     onLoginSuccess: onLoginSuccess,
+    debugExtras: kDebugMode ? const PacienteDebugJwtLoginButton() : null,
     onNavigateToSignup: (loginContext) {
       Navigator.push(
         loginContext,

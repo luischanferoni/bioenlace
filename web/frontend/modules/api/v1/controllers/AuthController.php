@@ -609,13 +609,17 @@ class AuthController extends BaseController
 
     /**
      * Endpoint de prueba: Generar token para paciente por DNI o por user_id.
-     * Solo para desarrollo/pruebas. Identidad: user_id, id_persona o dni (uno alcanza).
+     * Solo con YII_DEBUG=true. Identidad: user_id, id_persona o dni (uno alcanza).
      * PES/efector/servicio: auto_pes=1 intenta resolver el primer PES; si no hay asignación,
      * emite token solo con identidad (p. ej. paciente). Falla solo si se pidió id_pes/id_efector
      * concretos y no existen. Opcional: encounter_class, auto_pes=0.
      */
     public function actionGenerarTokenPrueba()
     {
+        if (!defined('YII_DEBUG') || YII_DEBUG !== true) {
+            return $this->error('Endpoint solo disponible en modo debug', null, 404);
+        }
+
         $request = Yii::$app->request;
         $dni = $request->post('dni') ?? $request->get('dni');
         $userId = $request->post('user_id') ?? $request->get('user_id');

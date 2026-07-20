@@ -353,9 +353,7 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
                 <div class="small mb-2"><strong>Enviada:</strong> <span data-field="created-at"></span></div>
                 <p class="small text-muted mb-2 flex-grow-1" data-field="preview"></p>
                 <p class="small mb-3 d-none" data-field="resolucion"></p>
-                <button type="button" class="btn btn-sm btn-outline-primary mt-auto align-self-start" data-role="async-chat-open">
-                    Ver conversación
-                </button>
+                <div class="d-flex flex-wrap gap-2 mt-auto" data-slot="actions"></div>
             </div>
         </div>
     </div>

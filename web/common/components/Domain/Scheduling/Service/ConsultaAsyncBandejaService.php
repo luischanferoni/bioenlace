@@ -267,8 +267,17 @@ final class ConsultaAsyncBandejaService
             && $encounter->status === EncounterStatus::PLANNED
             && $idPes === 0
             && ConsultaAsyncAccessService::staffPuedeTomar($encounter);
-        $abrirChat = !$staffView
-            || ($encounter->status !== EncounterStatus::PLANNED && $esMio);
+
+        $chatPolicy = (new ConsultaAsyncChatPolicyService())->resolveForEncounter($encounter, !$staffView);
+        $conversationMode = (string) ($chatPolicy['conversation_mode'] ?? 'conversational');
+        // Paciente: chat solo en modo conversacional (renovación/ajuste structured no escriben ni abren chat).
+        // Staff: abrir tras tomar / cuando ya no está planned sin asignación.
+        if ($staffView) {
+            $abrirChat = $encounter->status !== EncounterStatus::PLANNED && $esMio;
+        } else {
+            $abrirChat = $conversationMode === 'conversational';
+        }
+        $cancelar = !$staffView && (($chatPolicy['acciones']['cancelar'] ?? false) === true);
 
         $resolution = $meta['async_resolution'] ?? null;
         $resolutionLabel = is_array($resolution)
@@ -278,6 +287,7 @@ final class ConsultaAsyncBandejaService
         return [
             'encounter_id' => (int) $encounter->id,
             'solicitud_tipo' => $this->solicitudTipoFromMeta($meta, $policyCatalog),
+            'conversation_mode' => $conversationMode,
             'paciente' => [
                 'id_persona' => (int) $encounter->subject_persona_id,
                 'nombre_completo' => $subject ? $subject->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Paciente',
@@ -300,6 +310,7 @@ final class ConsultaAsyncBandejaService
             'acciones' => [
                 'tomar' => $puedeTomar,
                 'abrir_chat' => $abrirChat,
+                'cancelar' => $cancelar,
             ],
         ];
     }

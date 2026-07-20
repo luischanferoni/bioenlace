@@ -404,63 +404,16 @@ class _ChatMedicoScreenState extends State<ChatMedicoScreen> {
   }
 
   Widget _buildInputBar(BuildContext context) {
-    final tokens = context.bio;
-    return Container(
-      decoration: BoxDecoration(
-        color: tokens.paperSurface,
-        border: BioBorder.top(BorderWidth.thin, tokens.paperBorderDefault),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: BioSpacing.sm,
-            vertical: BioSpacing.sm,
-          ),
-          child: Row(
-            children: [
-              if (_chatPolicy.canUploadDocument)
-                IconButton(
-                  icon: const Icon(Icons.picture_as_pdf_outlined),
-                  color: tokens.textBody,
-                  tooltip: 'Adjuntar PDF',
-                  onPressed: _sending ? null : _pickDocument,
-                ),
-              if (_chatPolicy.canUploadAudio)
-                IconButton(
-                  icon: Icon(_isRecording ? Icons.stop_circle : Icons.mic_none),
-                  color: _isRecording
-                      ? IntentPalette.of(UiIntent.danger).base
-                      : tokens.textBody,
-                  tooltip: 'Grabar audio',
-                  onPressed: _sending ? null : _recordAndSendAudio,
-                ),
-              Expanded(
-                child: TextField(
-                  controller: _textController,
-                  enabled: !_sending,
-                  decoration: const InputDecoration(
-                    hintText: 'Escribí un mensaje…',
-                    isDense: true,
-                  ),
-                  onSubmitted: (_) => _sendText(),
-                ),
-              ),
-              BioSpacing.gapW(BioSpacing.xs),
-              IconButton(
-                icon: _sending
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
-                color: IntentPalette.of(UiIntent.primary).base,
-                onPressed: _sending ? null : _sendText,
-              ),
-            ],
-          ),
-        ),
+    return AssistantChatComposerBar(
+      controller: _textController,
+      onSend: _sendText,
+      isSending: _sending,
+      hintText: 'Escribí un mensaje…',
+      maxLines: 4,
+      attachments: ChatComposerAttachments(
+        onDocument: _chatPolicy.canUploadDocument ? _pickDocument : null,
+        onAudio: _chatPolicy.canUploadAudio ? _recordAndSendAudio : null,
+        audioActive: _isRecording,
       ),
     );
   }

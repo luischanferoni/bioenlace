@@ -9,95 +9,6 @@ title: "Bioenlace — Turnos que conectan toda la atención"
 description: "Presentación comercial centrada en el recorrido integral de turnos de Bioenlace."
 ---
 
-<!-- _class: cover -->
-<!-- _paginate: false -->
-<!-- _footer: "" -->
-
-<div class="wordmark" aria-label="Bioenlace">bio<span>enlace</span></div>
-
-<p class="eyebrow">Demo comercial · Gestión de turnos</p>
-
-# Turnos que conectan toda la atención
-
-<p class="lead">Bioenlace transforma una cita aislada en un recorrido seguro, asistido y continuo para pacientes, profesionales e instituciones.</p>
-
-<!--
-Abrir con el problema de negocio: la agenda no termina cuando alguien elige una hora.
-Bioenlace conecta orientación, reserva, preparación, atención, seguimiento y mejora operativa.
--->
-
----
-
-## El problema no es solamente “dar un turno”
-
-<div class="grid-3">
-  <div class="card card--accent">
-    <h3>Antes</h3>
-    <p>El paciente no sabe dónde atenderse, repite información y puede reservar una modalidad inadecuada.</p>
-  </div>
-  <div class="card card--blue">
-    <h3>Durante</h3>
-    <p>El equipo abre la historia sin contexto suficiente y dedica tiempo clínico a reconstruir el motivo.</p>
-  </div>
-  <div class="card card--green">
-    <h3>Después</h3>
-    <p>Cancelaciones, cambios de agenda y seguimientos quedan repartidos entre llamadas, mensajes y planillas.</p>
-  </div>
-</div>
-
-<div class="callout">Una grilla resuelve disponibilidad. <span class="accent">Bioenlace resuelve el recorrido completo.</span></div>
-
----
-
-## Nuestro diferencial
-
-<div class="grid-4">
-  <div class="card card--accent">
-    <h3>Conversación + pantallas</h3>
-    <p>El paciente puede hablar en lenguaje simple o entrar directamente a una acción.</p>
-  </div>
-  <div class="card card--green">
-    <h3>Seguridad antes de reservar</h3>
-    <p>Un triage breve detecta alarmas y orienta sin diagnosticar.</p>
-  </div>
-  <div class="card card--blue">
-    <h3>Un mismo contexto clínico</h3>
-    <p>Motivos y preparación llegan a la historia antes de la consulta.</p>
-  </div>
-  <div class="card">
-    <h3>Automatización auditable</h3>
-    <p>Reglas declarativas, permisos y confirmación humana donde corresponde.</p>
-  </div>
-</div>
-
-<p class="small">La experiencia se implementa en web y aplicaciones nativas sobre la misma API y metadata de producto.</p>
-
----
-
-## Del pedido a la continuidad
-
-<div class="flow">
-  <div class="flow-step">1<br>Orientar</div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-step">2<br>Reservar</div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-step">3<br>Preparar</div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-step">4<br>Atender</div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-step">5<br>Seguir</div>
-  <div class="flow-arrow">→</div>
-  <div class="flow-step">6<br>Mejorar</div>
-</div>
-
-<div class="grid-3" style="margin-top: 34px">
-  <div class="card"><span class="status status--ready">Implementado</span><p>Reserva, cancelación, reprogramación, representación y avisos.</p></div>
-  <div class="card"><span class="status status--config">Configurable</span><p>Políticas por efector, servicio, modalidad y ventanas operativas.</p></div>
-  <div class="card"><span class="status status--pilot">Piloto / shadow</span><p>Acciones de alto impacto sobre historial requieren evaluación previa.</p></div>
-</div>
-
----
-
 ## 1. El paciente cuenta qué necesita
 
 <div class="grid-2">
@@ -109,6 +20,7 @@ Bioenlace conecta orientación, reserva, preparación, atención, seguimiento y 
       <li>Zona y evolución cuando corresponde.</li>
       <li>Servicio sugerido por reglas clínicas declarativas.</li>
       <li>Reserva desde conversación o pantalla directa.</li>
+      <li>Consulta por mensaje y seguimiento de tratamiento en un flujo dedicado.</li>
     </ul>
     <div class="callout callout--green">No diagnostica: organiza el acceso y protege el circuito.</div>
   </div>
@@ -162,7 +74,7 @@ Bioenlace conecta orientación, reserva, preparación, atención, seguimiento y 
 
 <div class="callout callout--green">Si solo aplica presencial, Bioenlace omite el paso de modalidad: menos decisiones innecesarias.</div>
 
-<p class="small"><span class="status status--config">Gobernado</span> Política por servicio + elegibilidad de triage + agenda que acepta remoto.</p>
+<p class="small"><span class="status status--config">Gobernado</span> Política por servicio + elegibilidad de triage + agenda que acepta remoto. Especialistas con derivación vigente del clínico.</p>
 
 ---
 
@@ -213,19 +125,19 @@ Bioenlace conecta orientación, reserva, preparación, atención, seguimiento y 
 <div class="grid-3">
   <div class="card card--accent">
     <h3>Opciones concretas</h3>
-    <p>Bioenlace puede adjuntar hasta tres horarios vecinos y compatibles.</p>
+    <p>Bioenlace puede adjuntar hasta tres horarios vecinos y compatibles en el aviso.</p>
   </div>
   <div class="card card--blue">
     <h3>Escalada</h3>
-    <p>Push y, si no hay respuesta, canales alternativos configurados.</p>
+    <p>Aviso en la app y, si no hay respuesta, email y SMS con enlace seguro.</p>
   </div>
   <div class="card card--green">
     <h3>Preferencias</h3>
-    <p>Con opt-in, puede auto-reubicar si existe una alternativa inequívoca.</p>
+    <p>Si el paciente lo autorizó, puede reubicarse automáticamente cuando hay una alternativa inequívoca.</p>
   </div>
 </div>
 
-<p class="small"><span class="status status--ready">Implementado v1</span> Shortlist, resolución y auditoría. <span class="status status--config">Opt-in</span> Auto-reserva configurable por paciente y efector.</p>
+<p class="small"><span class="status status--ready">Implementado v1</span> Reubicación, opciones alternativas, escalada multicanal y auditoría. <span class="status status--config">Configurable</span> Reubicación automática por paciente y efector. Tras 72 h sin respuesta: cierre con cancelación o escalada a staff según reglas.</p>
 
 ---
 
@@ -260,12 +172,12 @@ Bioenlace conecta orientación, reserva, preparación, atención, seguimiento y 
 
 <div class="grid-3">
   <div class="card">
-    <span class="metric">No-show</span>
+    <span class="metric">Inasistencias</span>
     <p>Ausencias atribuibles al paciente sobre turnos cerrados.</p>
   </div>
   <div class="card">
-    <span class="metric">Lead time</span>
-    <p>Días entre reserva y cita: promedio y mediana.</p>
+    <span class="metric">Tiempo hasta la cita</span>
+    <p>Días entre reserva y consulta: promedio y mediana.</p>
   </div>
   <div class="card">
     <span class="metric">Remoto</span>
@@ -273,7 +185,7 @@ Bioenlace conecta orientación, reserva, preparación, atención, seguimiento y 
   </div>
 </div>
 
-<div class="callout callout--green">La dirección consulta indicadores desde Bioenlace, con filtros por período y recurso.</div>
+<div class="callout callout--green">La dirección consulta indicadores desde Bioenlace, con filtros por período y recurso. Recordatorios y confirmación proactiva antes de liberar cupos en casos de alto riesgo.</div>
 
 ---
 
@@ -330,7 +242,7 @@ Bioenlace conecta orientación, reserva, preparación, atención, seguimiento y 
   <div><strong>Reserva:</strong> mostrar cuándo aparece modalidad, elegir centro y horario.</div>
   <div><strong>Preparación:</strong> abrir el journey y cargar motivos previos.</div>
   <div><strong>Personal:</strong> abrir la historia con contexto y simular captura clínica.</div>
-  <div><strong>Operación:</strong> mostrar reprogramación, shortlist u oferta de adelantamiento.</div>
+  <div><strong>Operación:</strong> mostrar reprogramación, opciones de reubicación u oferta de adelantamiento.</div>
   <div><strong>Dirección:</strong> cerrar con indicadores de agenda y políticas configurables.</div>
 </div>
 
@@ -373,4 +285,3 @@ Bioenlace conecta orientación, reserva, preparación, atención, seguimiento y 
 <p class="lead">Orientar, reservar, preparar, atender y seguir — en un único ecosistema, con reglas claras y control humano.</p>
 
 <div style="margin-top: 30px"><strong class="accent">bioenlace.io</strong> · info@bioenlace.io</div>
-

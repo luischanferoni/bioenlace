@@ -1,0 +1,25 @@
+# Plantillas push FCM para lifecycle de consulta async.
+version: "1"
+
+events:
+  tomada_patient:
+    title: Tu consulta fue tomada
+    body: "{{servicio}} — un profesional ya está revisando tu solicitud."
+  cerrada_patient:
+    title: Consulta cerrada
+    body: "{{servicio}} — {{resolution_label}}"
+  limite_conversacion_patient:
+    title: Consulta cerrada
+    body: "{{servicio}} — alcanzaste el límite de mensajes. Podés solicitar un turno presencial."
+  respuesta_staff_patient:
+    title: Respuesta del equipo de salud
+    body: "{{servicio}} — tenés un nuevo mensaje."
+  nueva_solicitud_staff:
+    title: Nueva consulta clínica por mensaje
+    body: "{{paciente}} — {{servicio}}"
+  mensaje_paciente_staff:
+    title: Mensaje del paciente
+    body: "{{paciente}} — {{servicio}}"
+  cancelada_staff:
+    title: Solicitud cancelada
+    body: "{{paciente}} retiró la solicitud de {{servicio}}."

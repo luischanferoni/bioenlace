@@ -12,6 +12,7 @@ import 'home_screen.dart';
 import 'chat_screen.dart';
 import 'care_plan_detail_screen.dart';
 import 'configuracion_screen.dart';
+import 'chat_medico_screen.dart';
 import 'encounter_summary_detail_screen.dart';
 import 'chat_motivos_screen.dart';
 import 'paciente_provincia_context_screen.dart';
@@ -91,6 +92,12 @@ class _MainScreenState extends State<MainScreen> {
           _abrirResumenAtencion(encounterId);
           return;
         }
+        final asyncConsultaId =
+            PushNotificationService.asyncConsultaIdDesdePush(data);
+        if (asyncConsultaId != null) {
+          _abrirChatAsyncConsulta(asyncConsultaId);
+          return;
+        }
         // Confirmación / adelantamiento: abrir bandeja (botón de acción ahí).
         if (PushNotificationService.confirmacionDesdeData(data) != null ||
             PushNotificationService.adelantamientoDesdeData(data) != null) {
@@ -130,6 +137,21 @@ class _MainScreenState extends State<MainScreen> {
         builder: (_) => EncounterSummaryDetailScreen(
           encounterId: encounterId,
           authToken: widget.authToken,
+        ),
+      ),
+    );
+  }
+
+  void _abrirChatAsyncConsulta(int consultaId) {
+    setState(() => _selectedIndex = 0);
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChatMedicoScreen(
+          consultaId: consultaId,
+          authToken: widget.authToken,
+          userId: widget.chatService.currentUserId,
+          userName: widget.chatService.currentUserName,
+          titulo: 'Consulta clínica por mensaje',
         ),
       ),
     );

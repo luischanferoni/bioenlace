@@ -224,6 +224,22 @@ class PushNotificationService {
     return id != null && id > 0 ? id : null;
   }
 
+  /// Consulta async — lifecycle paciente (`CONSULTA_ASYNC_*_PATIENT`).
+  static int? asyncConsultaIdDesdePush(Map<String, dynamic> data) {
+    const types = {
+      'CONSULTA_ASYNC_TOMADA_PATIENT',
+      'CONSULTA_ASYNC_CERRADA_PATIENT',
+      'CONSULTA_ASYNC_LIMITE_CONVERSACION_PATIENT',
+      'CONSULTA_ASYNC_RESPUESTA_STAFF_PATIENT',
+    };
+    if (!types.contains(data['type']?.toString())) {
+      return null;
+    }
+    final raw = data['encounter_id']?.toString() ?? '';
+    final id = int.tryParse(raw);
+    return id != null && id > 0 ? id : null;
+  }
+
   /// Touchpoint de seguimiento post-consulta (`CARE_FOLLOWUP_TOUCHPOINT`).
   static int? followupTouchpointIdDesdePush(Map<String, dynamic> data) {
     if (data['type']?.toString() != 'CARE_FOLLOWUP_TOUCHPOINT') {

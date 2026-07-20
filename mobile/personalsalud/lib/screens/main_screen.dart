@@ -4,6 +4,7 @@ import 'package:shared/shared.dart';
 
 import '../services/push_notification_service.dart';
 import '../services/chat_service.dart';
+import 'chat_consulta_screen.dart';
 import 'home_screen.dart';
 import 'chat_screen.dart';
 import 'configuracion_screen.dart';
@@ -45,6 +46,22 @@ class _MainScreenState extends State<MainScreen> {
             _selectedIndex = 0;
             _homeRefreshKey++;
           });
+          return;
+        }
+        final asyncId = PushNotificationService.asyncConsultaIdDesdePush(data);
+        if (asyncId != null && mounted) {
+          setState(() => _selectedIndex = 0);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => ChatConsultaScreen(
+                consultaId: asyncId,
+                authToken: widget.authToken,
+                userId: widget.userId,
+                userName: widget.userName,
+                titulo: 'Consulta clínica por mensaje',
+              ),
+            ),
+          );
         }
       },
     );

@@ -36,6 +36,27 @@ final class PushNotificationTypes
     /** Consulta async: SLA vencido — aviso staff (agente H01). */
     public const CONSULTA_ASYNC_SLA_ESCALATE_STAFF = 'CONSULTA_ASYNC_SLA_ESCALATE_STAFF';
 
+    /** Consulta async: solicitud tomada por staff — aviso paciente. */
+    public const CONSULTA_ASYNC_TOMADA_PATIENT = 'CONSULTA_ASYNC_TOMADA_PATIENT';
+
+    /** Consulta async: consulta cerrada — aviso paciente. */
+    public const CONSULTA_ASYNC_CERRADA_PATIENT = 'CONSULTA_ASYNC_CERRADA_PATIENT';
+
+    /** Consulta async: límite conversacional — aviso paciente. */
+    public const CONSULTA_ASYNC_LIMITE_CONVERSACION_PATIENT = 'CONSULTA_ASYNC_LIMITE_CONVERSACION_PATIENT';
+
+    /** Consulta async: respuesta staff — aviso paciente. */
+    public const CONSULTA_ASYNC_RESPUESTA_STAFF_PATIENT = 'CONSULTA_ASYNC_RESPUESTA_STAFF_PATIENT';
+
+    /** Consulta async: nueva solicitud — aviso staff bandeja. */
+    public const CONSULTA_ASYNC_NUEVA_SOLICITUD_STAFF = 'CONSULTA_ASYNC_NUEVA_SOLICITUD_STAFF';
+
+    /** Consulta async: mensaje paciente — aviso staff. */
+    public const CONSULTA_ASYNC_MENSAJE_PACIENTE_STAFF = 'CONSULTA_ASYNC_MENSAJE_PACIENTE_STAFF';
+
+    /** Consulta async: cancelada por paciente — aviso staff. */
+    public const CONSULTA_ASYNC_CANCELADA_STAFF = 'CONSULTA_ASYNC_CANCELADA_STAFF';
+
     /** Reserva triage: canal alternativo sin cupos (agente A05). */
     public const RESERVA_TRIAGE_CANAL_ALTERNATIVO = 'RESERVA_TRIAGE_CANAL_ALTERNATIVO';
 

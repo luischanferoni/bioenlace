@@ -1,0 +1,14 @@
+# KPIs agregados de consultas clínicas por mensaje (staff / AdminEfector).
+version: "1"
+
+section:
+  title: Consultas por mensaje
+  ventana_dias: 30
+
+kpi_labels:
+  pendientes: Pendientes
+  sla_incumplidos: SLA vencidos (activos)
+  cerradas_periodo: Cerradas (30 días)
+  tasa_resolucion: Tasa resolución
+  cumplimiento_sla: Cumplimiento SLA
+  mediana_respuesta: Mediana 1.ª respuesta

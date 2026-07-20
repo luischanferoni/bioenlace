@@ -207,6 +207,12 @@ final class ConsultaAsyncBandejaService
 
         (new ConsultaAsyncSystemMessageService())->postTemplate($encounter, 'solicitud_tomada');
 
+        try {
+            (new ConsultaAsyncPushNotifier())->notifyTomadaPatient($encounter);
+        } catch (\Throwable $e) {
+            Yii::warning('Push async tomada: ' . $e->getMessage(), 'consulta-async-push');
+        }
+
         return [
             'success' => true,
             'data' => [

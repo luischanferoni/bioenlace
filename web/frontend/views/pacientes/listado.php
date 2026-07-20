@@ -109,10 +109,12 @@ $this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' :
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="asyncChatModalLabel">Consulta clínica por mensaje</h5>
+                <div class="d-flex align-items-center gap-2 ms-auto me-2" id="async-chat-header-actions"></div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body d-flex flex-column" style="min-height: 320px;">
                 <p class="text-muted small mb-2" id="async-chat-subtitle"></p>
+                <div id="async-chat-policy-hint" class="alert alert-info py-2 px-3 small mb-2 d-none"></div>
                 <div id="async-chat-intake-context" class="alert alert-light border small py-2 px-3 mb-2 d-none" data-role="async-chat-intake-context">
                     <div class="fw-semibold mb-1" data-field="intake-title">Contexto</div>
                     <div data-field="intake-summary"></div>
@@ -126,6 +128,28 @@ $this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' :
                     <button type="button" class="btn btn-primary btn-sm" id="async-chat-send">Enviar</button>
                 </div>
                 <div id="async-chat-error" class="alert alert-danger d-none mt-2 mb-0"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="async-chat-close-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cerrar consulta</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label" for="async-chat-close-resolution">Resolución</label>
+                <select class="form-select form-select-sm mb-3" id="async-chat-close-resolution"></select>
+                <label class="form-label" for="async-chat-close-note">Nota para el paciente (opcional)</label>
+                <textarea class="form-control form-control-sm" id="async-chat-close-note" rows="3"></textarea>
+                <div id="async-chat-close-error" class="alert alert-danger d-none mt-3 mb-0"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary btn-sm" id="async-chat-close-confirm">Cerrar consulta</button>
             </div>
         </div>
     </div>
@@ -260,5 +284,6 @@ if ($esGuardia) {
     GuardiaTableroAsset::register($this);
     $jsDepends[] = GuardiaTableroAsset::class;
 }
+$this->registerJsFile('@web/js/async-consulta-chat.js', ['depends' => $jsDepends]);
 $this->registerJsFile('@web/js/pacientes-listado.js', ['depends' => $jsDepends]);
 ?>

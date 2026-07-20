@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers;
 
 use common\models\ConsultaChatMessage;
 use common\components\Domain\Clinical\Service\SecureMediaService;
+use common\components\Domain\Scheduling\Service\ConsultaAsyncPushNotifier;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaPrioridadAgent;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncChatPolicyService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncEncounterMetaService;
@@ -175,6 +176,24 @@ class ConsultaChatController extends BaseController
                 (new ConsultaAsyncChatPolicyService())->maybeAutoCloseAfterPatientMessage($encounter);
             } catch (\Throwable $e) {
                 Yii::warning('Auto-cierre async: ' . $e->getMessage(), 'consulta-async-lifecycle');
+            }
+        }
+
+        if (
+            $encounter->parent_type === Encounter::PARENT_SOLICITUD_ASYNC
+            && in_array($user_role, ['medico', 'enfermeria'], true)
+        ) {
+            $prevStaffCount = ConsultaChatMessage::find()
+                ->where(['encounter_id' => $encounterId])
+                ->andWhere(['user_role' => ['medico', 'enfermeria']])
+                ->andWhere(['<', 'id', (int) $chatMessage->id])
+                ->count();
+            if ($prevStaffCount === 0) {
+                try {
+                    (new ConsultaAsyncPushNotifier())->notifyRespuestaStaffPatient($encounter);
+                } catch (\Throwable $e) {
+                    Yii::warning('Push async respuesta staff: ' . $e->getMessage(), 'consulta-async-push');
+                }
             }
         }
 

@@ -54,6 +54,12 @@ final class ConsultaAsyncBandejaPrioridadAgent
                 'urgency_band' => $this->urgencyBandFromEncounter($encounter),
             ]
         );
+
+        try {
+            (new ConsultaAsyncPushNotifier())->notifyNuevaSolicitudStaff($encounter);
+        } catch (\Throwable $e) {
+            Yii::warning('Push async nueva solicitud: ' . $e->getMessage(), 'consulta-async-push');
+        }
     }
 
     public function onPacienteMensaje(Encounter $encounter): void
@@ -78,6 +84,14 @@ final class ConsultaAsyncBandejaPrioridadAgent
                 'paciente_sin_respuesta_staff' => $this->prioridad->pacienteTieneMensajeSinRespuestaStaff((int) $encounter->id),
             ]
         );
+
+        if ($this->prioridad->pacienteTieneMensajeSinRespuestaStaff((int) $encounter->id)) {
+            try {
+                (new ConsultaAsyncPushNotifier())->notifyMensajePacienteStaff($encounter);
+            } catch (\Throwable $e) {
+                Yii::warning('Push async mensaje paciente: ' . $e->getMessage(), 'consulta-async-push');
+            }
+        }
     }
 
     /**

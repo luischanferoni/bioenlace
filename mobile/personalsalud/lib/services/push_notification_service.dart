@@ -154,4 +154,20 @@ class PushNotificationService {
     final id = int.tryParse(raw);
     return id != null && id > 0 ? id : null;
   }
+
+  /// Consulta async — bandeja / chat staff (`CONSULTA_ASYNC_*_STAFF`).
+  static int? asyncConsultaIdDesdePush(Map<String, dynamic> data) {
+    const types = {
+      'CONSULTA_ASYNC_SLA_ESCALATE_STAFF',
+      'CONSULTA_ASYNC_NUEVA_SOLICITUD_STAFF',
+      'CONSULTA_ASYNC_MENSAJE_PACIENTE_STAFF',
+      'CONSULTA_ASYNC_CANCELADA_STAFF',
+    };
+    if (!types.contains(data['type']?.toString())) {
+      return null;
+    }
+    final raw = data['encounter_id']?.toString() ?? '';
+    final id = int.tryParse(raw);
+    return id != null && id > 0 ? id : null;
+  }
 }

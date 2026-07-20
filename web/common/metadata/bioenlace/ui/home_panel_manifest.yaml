@@ -35,6 +35,9 @@ panels:
         - id: staff_agenda_kpis
           provider: staff_agenda_kpis
           kind: staff_kpi_group
+        - id: staff_async_kpis
+          provider: staff_async_kpis
+          kind: staff_kpi_group
         - id: async_consultations_queue
           provider: async_consultations_queue
           kind: async_consultations_queue
@@ -77,6 +80,9 @@ panels:
         kind: staff_session_context
       - id: staff_efector_modalidad_kpis
         provider: staff_efector_modalidad_kpis
+        kind: staff_kpi_group
+      - id: staff_async_kpis
+        provider: staff_async_kpis
         kind: staff_kpi_group
       - id: staff_agenda_kpis
         provider: staff_agenda_kpis

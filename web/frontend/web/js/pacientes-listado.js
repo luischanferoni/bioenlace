@@ -73,6 +73,10 @@
       encounterId: null,
       canCompose: true,
       modal: null,
+      closeModal: null,
+      chatPolicy: null,
+      isStaff: false,
+      item: null,
     };
 
     var PASADOS_PAGE_LIMIT = 20;
@@ -1591,22 +1595,77 @@
       return asyncChatState.modal;
     }
 
+    function getAsyncChatHelpers() {
+      return window.BioenlaceAsyncConsultaChat || null;
+    }
+
+    function getAsyncChatCloseModal() {
+      if (!asyncChatState.closeModal) {
+        var el = document.getElementById('async-chat-close-modal');
+        if (el && window.bootstrap && window.bootstrap.Modal) {
+          asyncChatState.closeModal = new window.bootstrap.Modal(el);
+        }
+      }
+      return asyncChatState.closeModal;
+    }
+
+    function applyAsyncChatPolicyUI(policy) {
+      var compose = document.getElementById('async-chat-compose');
+      var hintEl = document.getElementById('async-chat-policy-hint');
+      var actionsSlot = document.getElementById('async-chat-header-actions');
+      var p = policy || asyncChatState.chatPolicy;
+      if (!p) return;
+
+      if (hintEl) {
+        if (p.hint) {
+          hintEl.textContent = p.hint;
+          hintEl.classList.remove('d-none');
+        } else {
+          hintEl.classList.add('d-none');
+        }
+      }
+      if (compose) {
+        if (p.composerEnabled && asyncChatState.canCompose) {
+          compose.classList.remove('d-none');
+        } else {
+          compose.classList.add('d-none');
+        }
+      }
+      if (actionsSlot) {
+        clearNode(actionsSlot);
+        if (p.canCancel) {
+          var cancelBtn = document.createElement('button');
+          cancelBtn.type = 'button';
+          cancelBtn.className = 'btn btn-outline-danger btn-sm';
+          cancelBtn.textContent = 'Retirar solicitud';
+          cancelBtn.addEventListener('click', cancelAsyncChatComoPaciente);
+          actionsSlot.appendChild(cancelBtn);
+        }
+        if (p.canClose) {
+          var closeBtn = document.createElement('button');
+          closeBtn.type = 'button';
+          closeBtn.className = 'btn btn-outline-secondary btn-sm';
+          closeBtn.textContent = 'Cerrar consulta';
+          closeBtn.addEventListener('click', openAsyncChatCloseModal);
+          actionsSlot.appendChild(closeBtn);
+        }
+      }
+    }
+
     function renderAsyncChatMessages(messages) {
       var box = document.getElementById('async-chat-messages');
+      var helpers = getAsyncChatHelpers();
       if (!box) return;
       clearNode(box);
       (messages || []).forEach(function (m) {
-        var row = document.createElement('div');
-        row.className = 'mb-2 small';
-        var who = document.createElement('div');
-        who.className = 'fw-semibold text-muted';
-        who.textContent = (m.user_name || m.user_role || 'Usuario')
-          + (m.created_at ? (' · ' + formatAsyncCreatedAt(m.created_at)) : '');
-        row.appendChild(who);
-        var body = document.createElement('div');
-        body.textContent = m.content || '';
-        row.appendChild(body);
-        box.appendChild(row);
+        if (helpers && helpers.renderMessage) {
+          box.appendChild(helpers.renderMessage(m));
+        } else {
+          var row = document.createElement('div');
+          row.className = 'mb-2 small';
+          row.textContent = m.content || '';
+          box.appendChild(row);
+        }
       });
       box.scrollTop = box.scrollHeight;
     }
@@ -1632,6 +1691,10 @@
           throw new Error(json.message || 'No se pudieron cargar los mensajes.');
         }
         var messages = json.data && json.data.messages ? json.data.messages : [];
+        var helpers = getAsyncChatHelpers();
+        asyncChatState.chatPolicy = helpers && helpers.parsePolicy
+          ? helpers.parsePolicy(json.data && json.data.chat_policy)
+          : null;
         renderAsyncChatMessages(messages);
         if (json.data && json.data.intake_context) {
           asyncChatState.intakeContext = json.data.intake_context;
@@ -1642,7 +1705,7 @@
         }
         if (loading) loading.classList.add('d-none');
         if (box) box.classList.remove('d-none');
-        if (compose && asyncChatState.canCompose) compose.classList.remove('d-none');
+        applyAsyncChatPolicyUI(asyncChatState.chatPolicy);
       } catch (e) {
         if (loading) loading.classList.add('d-none');
         if (errEl) {
@@ -1686,10 +1749,99 @@
       }
     }
 
+    async function cancelAsyncChatComoPaciente() {
+      var api = window.BioenlaceNativePage;
+      if (!api || !asyncChatState.encounterId) return;
+      if (!window.confirm('¿Retirar esta solicitud? Podés iniciar otra más adelante.')) return;
+      var errEl = document.getElementById('async-chat-error');
+      if (errEl) errEl.classList.add('d-none');
+      try {
+        var url = api.apiV1Url('consulta-async/cancelar-como-paciente');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ encounter_id: asyncChatState.encounterId }),
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo retirar la solicitud.');
+        }
+        var modal = getAsyncChatModal();
+        if (modal) modal.hide();
+        await loadPanel({ showSpinner: false });
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'Error al retirar.';
+          errEl.classList.remove('d-none');
+        }
+      }
+    }
+
+    function openAsyncChatCloseModal() {
+      var policy = asyncChatState.chatPolicy;
+      if (!policy || !policy.resolutions || !policy.resolutions.length) return;
+      var select = document.getElementById('async-chat-close-resolution');
+      var note = document.getElementById('async-chat-close-note');
+      var errEl = document.getElementById('async-chat-close-error');
+      if (!select) return;
+      clearNode(select);
+      policy.resolutions.forEach(function (r) {
+        var opt = document.createElement('option');
+        opt.value = r.code;
+        opt.textContent = r.label;
+        select.appendChild(opt);
+      });
+      if (note) note.value = '';
+      if (errEl) errEl.classList.add('d-none');
+      var modal = getAsyncChatCloseModal();
+      if (modal) modal.show();
+    }
+
+    async function confirmAsyncChatClose() {
+      var api = window.BioenlaceNativePage;
+      var select = document.getElementById('async-chat-close-resolution');
+      var note = document.getElementById('async-chat-close-note');
+      var errEl = document.getElementById('async-chat-close-error');
+      if (!api || !asyncChatState.encounterId || !select) return;
+      if (errEl) errEl.classList.add('d-none');
+      try {
+        var url = api.apiV1Url('consulta-async/cerrar-como-staff');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({
+            encounter_id: asyncChatState.encounterId,
+            resolution_code: select.value,
+            note: note ? String(note.value || '').trim() : '',
+          }),
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo cerrar la consulta.');
+        }
+        var closeModal = getAsyncChatCloseModal();
+        if (closeModal) closeModal.hide();
+        await loadAsyncChatMessages(asyncChatState.encounterId);
+        await loadPanel({ showSpinner: false });
+      } catch (e) {
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'Error al cerrar.';
+          errEl.classList.remove('d-none');
+        }
+      }
+    }
+
     function openAsyncChat(item, canCompose) {
       if (!item || !item.encounter_id) return;
       asyncChatState.encounterId = item.encounter_id;
+      asyncChatState.item = item;
+      asyncChatState.isStaff = !!(item.paciente && item.paciente.nombre_completo);
       asyncChatState.canCompose = canCompose !== false;
+      asyncChatState.chatPolicy = null;
       asyncChatState.intakeContext = item.intake_context || null;
       var subtitle = document.getElementById('async-chat-subtitle');
       if (subtitle) {
@@ -1704,6 +1856,12 @@
       );
       var input = document.getElementById('async-chat-input');
       if (input) input.value = '';
+      var headerActions = document.getElementById('async-chat-header-actions');
+      if (headerActions) clearNode(headerActions);
+      var hintEl = document.getElementById('async-chat-policy-hint');
+      if (hintEl) hintEl.classList.add('d-none');
+      var compose = document.getElementById('async-chat-compose');
+      if (compose) compose.classList.add('d-none');
       var modal = getAsyncChatModal();
       if (modal) modal.show();
       loadAsyncChatMessages(item.encounter_id);
@@ -1845,7 +2003,7 @@
       var btn = col.querySelector('[data-role="async-chat-open"]');
       if (btn) {
         btn.textContent = esHistorial ? 'Ver conversación' : 'Ver mensajes';
-        btn.addEventListener('click', function () { openAsyncChat(item, true); });
+        btn.addEventListener('click', function () { openAsyncChat(item, !esHistorial); });
       }
     }
 
@@ -2086,6 +2244,10 @@
     var asyncChatSend = document.getElementById('async-chat-send');
     if (asyncChatSend) {
       asyncChatSend.addEventListener('click', sendAsyncChatMessage);
+    }
+    var asyncChatCloseConfirm = document.getElementById('async-chat-close-confirm');
+    if (asyncChatCloseConfirm) {
+      asyncChatCloseConfirm.addEventListener('click', confirmAsyncChatClose);
     }
 
     load();

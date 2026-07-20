@@ -121,6 +121,19 @@ final class ConsultaAsyncLifecycleService
             ]);
         }
 
+        try {
+            $notifier = new ConsultaAsyncPushNotifier();
+            if ($resolutionCode === 'cancelada_paciente') {
+                $notifier->notifyCanceladaStaff($encounter);
+            } elseif ($resolutionCode === 'limite_conversacion') {
+                $notifier->notifyLimiteConversacionPatient($encounter);
+            } elseif (($def['notify_patient'] ?? true) === true && $resolutionCode !== 'cancelada_paciente') {
+                $notifier->notifyCerradaPatient($encounter, $label);
+            }
+        } catch (\Throwable $e) {
+            Yii::warning('Push async cierre: ' . $e->getMessage(), 'consulta-async-push');
+        }
+
         return [
             'success' => true,
             'data' => [

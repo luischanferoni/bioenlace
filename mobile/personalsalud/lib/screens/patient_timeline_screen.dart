@@ -1291,8 +1291,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _snack('No se puede guardar: el análisis tiene errores.', UiIntent.warning);
       return;
     }
-    if (review.tieneDatosFaltantes && _stagedItemIds.isEmpty) {
-      _snack('Faltan datos obligatorios en el análisis.', UiIntent.warning);
+    if (review.tieneDatosFaltantes) {
+      _snack(
+        review.datosFaltantesMensaje?.trim().isNotEmpty == true
+            ? review.datosFaltantesMensaje!
+            : 'Faltan categorías o campos obligatorios. Completá el texto y volvé a analizar.',
+        UiIntent.warning,
+      );
       return;
     }
     // Si la IA extrajo ítems, exigir al menos uno tildado (evita guardar solo texto
@@ -1837,8 +1842,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           if (review.tieneDatosFaltantes) ...[
             BioSpacing.gapH(BioSpacing.sm),
             BioAlert.warning(
-              message:
-                  'Faltan datos obligatorios. Incluí al menos un ítem requerido antes de confirmar.',
+              message: review.datosFaltantesMensaje?.trim().isNotEmpty == true
+                  ? review.datosFaltantesMensaje!
+                  : 'Faltan categorías o campos obligatorios. Completá el dictado/texto (dosis, frecuencia, etc.) y volvé a analizar. No se puede confirmar hasta completarlos.',
             ),
           ],
         ],
@@ -1853,7 +1859,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         review.puedeConfirmar &&
         review.systemError == null &&
         review.textoOriginal.trim().isNotEmpty &&
-        !(review.tieneDatosFaltantes && _stagedItemIds.isEmpty) &&
+        !review.tieneDatosFaltantes &&
         !(review.hasExtractedContent && _stagedItemIds.isEmpty);
 
     return Container(

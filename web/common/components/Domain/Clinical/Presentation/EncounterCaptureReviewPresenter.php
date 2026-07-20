@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Clinical\Presentation;
 
+use common\components\Domain\Clinical\Workflow\EncounterCaptureCompletenessValidator;
+
 /**
  * Construye el bloque declarativo `capture_review` para clientes móvil / JSON
  * a partir del resultado de análisis IA y la configuración de categorías.
@@ -11,13 +13,15 @@ final class EncounterCaptureReviewPresenter
     /**
      * @param array<string, mixed> $datosResultado Respuesta IA (`datosExtraidos`, etc.) o mapa plano de extraídos
      * @param list<array<string, mixed>> $categorias Configuración de categorías del encounter
+     * @param array<string, mixed>|null $completenessResult salida de {@see EncounterCaptureCompletenessValidator::validate}
      */
     public function build(
         array $datosResultado,
         array $categorias,
         string $textoOriginal,
         ?string $textoProcesado,
-        bool $tieneDatosFaltantes
+        bool $tieneDatosFaltantes,
+        ?array $completenessResult = null
     ): array {
         $extraidos = $this->resolveExtraidos($datosResultado);
         $systemError = $this->resolveSystemError($extraidos);
@@ -32,11 +36,20 @@ final class EncounterCaptureReviewPresenter
             }
         }
 
+        if ($completenessResult === null && $categorias !== []) {
+            $completenessResult = (new EncounterCaptureCompletenessValidator())->validate($extraidos, $categorias);
+        }
+        if (is_array($completenessResult)) {
+            $tieneDatosFaltantes = ($completenessResult['tiene_datos_faltantes'] ?? false) === true
+                || $tieneDatosFaltantes;
+        }
+
+        // Hard stop: sin confirmar si faltan categorías/campos requeridos o hay error de sistema.
         $puedeConfirmar = $systemError === null
             && trim($textoOriginal) !== ''
-            && !($tieneDatosFaltantes && $defaultStaged === []);
+            && !$tieneDatosFaltantes;
 
-        return [
+        $out = [
             'version' => 1,
             'texto_original' => $textoOriginal,
             'texto_procesado' => $textoProcesado,
@@ -46,6 +59,15 @@ final class EncounterCaptureReviewPresenter
             'categories' => $categories,
             'default_staged_item_ids' => $defaultStaged,
         ];
+        if (is_array($completenessResult)) {
+            $out['datos_faltantes_detalle'] = [
+                'missing_categories' => $completenessResult['missing_categories'] ?? [],
+                'incomplete_items' => $completenessResult['incomplete_items'] ?? [],
+                'message' => $completenessResult['message'] ?? '',
+            ];
+        }
+
+        return $out;
     }
 
     /**

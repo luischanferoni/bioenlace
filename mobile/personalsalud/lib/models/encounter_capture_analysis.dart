@@ -8,6 +8,7 @@ class EncounterCaptureAnalysis {
     this.systemError,
     this.defaultStagedItemIds = const [],
     this.puedeConfirmar = true,
+    this.datosFaltantesMensaje,
   });
 
   final String textoOriginal;
@@ -17,6 +18,8 @@ class EncounterCaptureAnalysis {
   final String? systemError;
   final List<String> defaultStagedItemIds;
   final bool puedeConfirmar;
+  /// Mensaje del backend con categorías/campos faltantes.
+  final String? datosFaltantesMensaje;
 
   bool get hasExtractedContent =>
       categories.any((c) => c.items.isNotEmpty) && systemError == null;
@@ -24,7 +27,8 @@ class EncounterCaptureAnalysis {
   bool get canConfirmSave {
     if (!puedeConfirmar || systemError != null) return false;
     if (textoOriginal.trim().isEmpty) return false;
-    if (tieneDatosFaltantes && defaultStagedItemIds.isEmpty) return false;
+    // Hard stop: categorías/campos requeridos incompletos.
+    if (tieneDatosFaltantes) return false;
     return true;
   }
 
@@ -70,6 +74,13 @@ class EncounterCaptureAnalysis {
         ? defaultIdsRaw.map((e) => e.toString()).toList()
         : categories.expand((c) => c.items.map((i) => i.id)).toList();
 
+    String? faltantesMsg;
+    final detalle = review['datos_faltantes_detalle'];
+    if (detalle is Map) {
+      final m = detalle['message']?.toString().trim();
+      if (m != null && m.isNotEmpty) faltantesMsg = m;
+    }
+
     return EncounterCaptureAnalysis(
       textoOriginal: (review['texto_original'] ?? '').toString(),
       textoProcesado: review['texto_procesado']?.toString(),
@@ -78,6 +89,7 @@ class EncounterCaptureAnalysis {
       systemError: systemError,
       defaultStagedItemIds: defaultIds,
       puedeConfirmar: review['puede_confirmar'] != false,
+      datosFaltantesMensaje: faltantesMsg,
     );
   }
 
@@ -145,6 +157,13 @@ class EncounterCaptureAnalysis {
 
     final defaultIds = categories.expand((c) => c.items.map((i) => i.id)).toList();
 
+    String? faltantesMsg;
+    final detalle = res['datos_faltantes_detalle'];
+    if (detalle is Map) {
+      final m = detalle['message']?.toString().trim();
+      if (m != null && m.isNotEmpty) faltantesMsg = m;
+    }
+
     return EncounterCaptureAnalysis(
       textoOriginal: (res['texto_original'] ?? '').toString(),
       textoProcesado: res['texto_procesado']?.toString(),
@@ -153,6 +172,7 @@ class EncounterCaptureAnalysis {
       systemError: systemError,
       defaultStagedItemIds: defaultIds,
       puedeConfirmar: res['puede_confirmar'] != false && systemError == null,
+      datosFaltantesMensaje: faltantesMsg,
     );
   }
 

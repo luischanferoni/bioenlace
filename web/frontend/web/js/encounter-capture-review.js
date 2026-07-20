@@ -108,7 +108,7 @@
         if (!texto) {
             return false;
         }
-        if (review.tiene_datos_faltantes && stagedIdSet.size === 0) {
+        if (review.tiene_datos_faltantes) {
             return false;
         }
         if (hasExtractedContent(review) && stagedIdSet.size === 0) {
@@ -248,8 +248,18 @@
         }
 
         if (review.tiene_datos_faltantes) {
+            var faltantesMsg = '';
+            if (review.datos_faltantes_detalle && review.datos_faltantes_detalle.message) {
+                faltantesMsg = String(review.datos_faltantes_detalle.message).trim();
+            }
+            if (!faltantesMsg) {
+                faltantesMsg =
+                    'Faltan categorías o campos obligatorios. Completá el texto y volvé a analizar. No se puede confirmar hasta completarlos.';
+            }
             parts.push(
-                '<div class="alert alert-warning" role="status">Faltan datos obligatorios. Incluí al menos un ítem requerido antes de confirmar.</div>'
+                '<div class="alert alert-warning" role="status">' +
+                    faltantesMsg.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
+                    '</div>'
             );
         }
 

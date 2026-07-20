@@ -13,6 +13,7 @@ use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapServi
 use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 use common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessor;
 use common\components\Domain\Clinical\Text\ProcesadorTextoMedico;
+use common\components\Domain\Clinical\Workflow\EncounterCaptureCompletenessValidator;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
@@ -134,9 +135,15 @@ class ConsultaProcesamientoService extends Component
             $html = $htmlResult['html'];
             $tieneDatosFaltantesHTML = $htmlResult['tieneDatosFaltantes'];
 
-            $tieneDatosFaltantes = false;
+            $completeness = (new EncounterCaptureCompletenessValidator())->validate(
+                $extraidos,
+                is_array($categorias) ? $categorias : []
+            );
+
+            $tieneDatosFaltantes = $completeness['tiene_datos_faltantes'] === true;
             if ($resultadoIA && isset($resultadoIA['informacionFaltante'])) {
-                $tieneDatosFaltantes = $resultadoIA['informacionFaltante']['tieneDatosFaltantes'] ?? false;
+                $tieneDatosFaltantes = $tieneDatosFaltantes
+                    || (($resultadoIA['informacionFaltante']['tieneDatosFaltantes'] ?? false) === true);
             }
             if ($tieneDatosFaltantesHTML) {
                 $tieneDatosFaltantes = true;
@@ -147,7 +154,8 @@ class ConsultaProcesamientoService extends Component
                 $categorias,
                 $textoConsulta,
                 $textoProcesado,
-                $tieneDatosFaltantes
+                $tieneDatosFaltantes,
+                $completeness
             );
 
             $subjectPersonaId = PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body);
@@ -170,6 +178,11 @@ class ConsultaProcesamientoService extends Component
                 'tab_id' => $tabId,
                 'sugerencias' => $sugerencias,
                 'tiene_datos_faltantes' => $tieneDatosFaltantes,
+                'datos_faltantes_detalle' => $captureReview['datos_faltantes_detalle'] ?? [
+                    'missing_categories' => $completeness['missing_categories'],
+                    'incomplete_items' => $completeness['incomplete_items'],
+                    'message' => $completeness['message'],
+                ],
                 'categorias' => $categorias,
             ];
             if ($definition !== null) {

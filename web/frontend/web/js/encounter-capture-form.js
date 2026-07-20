@@ -687,6 +687,27 @@
             return;
         }
         if (
+            (this.lastAnalysisPayload && this.lastAnalysisPayload.tiene_datos_faltantes) ||
+            (this.captureReview && this.captureReview.tiene_datos_faltantes)
+        ) {
+            var msgFaltantes = '';
+            var detalle =
+                (this.captureReview && this.captureReview.datos_faltantes_detalle) ||
+                (this.lastAnalysisPayload && this.lastAnalysisPayload.datos_faltantes_detalle) ||
+                (this.lastAnalysisPayload &&
+                    this.lastAnalysisPayload.capture_review &&
+                    this.lastAnalysisPayload.capture_review.datos_faltantes_detalle);
+            if (detalle && detalle.message) {
+                msgFaltantes = String(detalle.message).trim();
+            }
+            this.setStatus(
+                msgFaltantes ||
+                    'Faltan categorías o campos obligatorios. Completá el texto y volvé a analizar.',
+                'warning'
+            );
+            return;
+        }
+        if (
             this.captureReview &&
             window.EncounterCaptureReview &&
             !window.EncounterCaptureReview.canConfirm(

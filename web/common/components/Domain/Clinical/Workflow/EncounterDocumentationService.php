@@ -217,9 +217,33 @@ class EncounterDocumentationService extends Component
                 return $out;
             }
 
-            $configuracion = EncounterDefinition::findOne($idConfiguracion);
+            $configuracion = EncounterDefinition::findOne((int) $idConfiguracion);
             if (!$configuracion) {
                 $out = $this->error(400, 'Configuración de encounter no encontrada.');
+                $out['diagnostico_guardar'] = $diagnostico;
+                $logger->finalizar($out);
+
+                return $out;
+            }
+
+            $categorias = EncounterDefinition::getCategoriasParaPrompt($configuracion);
+            $completeness = (new EncounterCaptureCompletenessValidator())->validate(
+                $datosExtraidos,
+                $categorias
+            );
+            if ($completeness['tiene_datos_faltantes'] === true) {
+                $message = trim((string) ($completeness['message'] ?? ''));
+                if ($message === '') {
+                    $message = 'Faltan categorías u obligatorios de captura. Completá el texto y volvé a analizar.';
+                }
+                $out = $this->error(400, $message, [
+                    'datos_faltantes_detalle' => [
+                        'missing_categories' => $completeness['missing_categories'],
+                        'incomplete_items' => $completeness['incomplete_items'],
+                        'message' => $completeness['message'],
+                    ],
+                ]);
+                $out['tiene_datos_faltantes'] = true;
                 $out['diagnostico_guardar'] = $diagnostico;
                 $logger->finalizar($out);
 
@@ -918,7 +942,9 @@ class EncounterDocumentationService extends Component
             if ($payload === null) {
                 $stat['detalle'] = 'sin payload (keys=' . implode(',', array_keys($datosExtraidos)) . ')';
                 $stats[$modelo] = $stat;
-                $logger?->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
+                if ($logger !== null) {
+                    $logger->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
+                }
                 Yii::info(
                     'encounter.guardar sin payload para modelo=' . $modelo
                     . ' titulo=' . $titulo
@@ -932,7 +958,9 @@ class EncounterDocumentationService extends Component
             if (!$this->specialtyRegistry->isModelAllowed($configuracion, $modelo)) {
                 $stat['accion'] = 'blocked_specialty';
                 $stats[$modelo] = $stat;
-                $logger?->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
+                if ($logger !== null) {
+                    $logger->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
+                }
                 continue;
             }
 
@@ -1047,7 +1075,9 @@ class EncounterDocumentationService extends Component
             }
 
             $stats[$modelo] = $stat;
-            $logger?->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
+            if ($logger !== null) {
+                $logger->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
+            }
         }
 
         return $stats;

@@ -12,11 +12,16 @@ offer_step_minutes: 120
 # No enviar nuevas ofertas cuando falten menos de N minutos para el slot.
 stop_new_offers_minutes_before_slot: 360
 
-# Horizonte de candidatos: hasta fin del día siguiente al slot cancelado.
-candidate_horizon: next_day_end
+# Horizonte: candidatos solo en D+1 y D+2, misma franja (mañana/tarde) que el slot.
+candidate_horizon: d2_same_halfday
 
-# Orden de candidatos.
-order: nearest_first
+# Orden: primero D+2 (horario asc), luego D+1 (horario asc). Sin mismo día.
+# Conteo de días: calendario (fines de semana incluidos; si no hay agenda, no hay candidatos).
+order: d2_then_d1_same_halfday
+day_counting: calendar
+
+# Corte de franja: mañana < split, tarde >= split (hora local 24h).
+halfday_split_hour: 13
 
 compatibility:
   same_efector: true

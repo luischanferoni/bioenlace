@@ -74,7 +74,7 @@ El perfil describe hechos; las políticas deciden recordatorios o intervenciones
 
 Cuando un turno se **cancela** y el slot queda libre con al menos **24 h** de anticipación, el sistema puede ofrecer **adelantar** turnos posteriores compatibles (mismo efector, servicio, PES y modalidad). El slot permanece **público** (sin hold); la reserva normal compite con la aceptación.
 
-1. Tras la cancelación, el agente `turno-advance-offer` crea una campaña y elige candidatos `nearest_first` hasta fin del día siguiente, sólo con push activo.
+1. Tras la cancelación, el agente `turno-advance-offer` elige candidatos en la **misma franja** (mañana &lt; 13:00 / tarde ≥ 13:00): primero **D+2** en orden horario, luego **D+1**; no ofertado el mismo día. Días calendario (si no hay agenda el finde, no hay candidatos). Sólo con push activo.
 2. Envía una oferta secuencial (`TURNO_ADVANCE_OFFER`, acción `adelantar_turno`) con texto “sujeto a disponibilidad”; espera **2 h** por candidato y no envía nuevas ofertas desde **T−6 h**.
 3. El paciente **acepta** con `POST …/adelantar-oferta-como-paciente` (`offer_token`); se **reprograma** el turno existente (no se crea uno nuevo). Una aceptación cierra la campaña; el horario que deja libre no dispara otra campaña.
 4. El cron `yii turno-advance-offer/run` avanza campañas vencidas; `yii turno-advance-offer/repair` recupera cancelaciones elegibles sin campaña.

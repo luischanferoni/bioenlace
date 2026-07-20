@@ -76,7 +76,7 @@ Plan operativo derivado de [ideas-a-futuro/agentes-autonomos-backlog.md](../idea
 |------|---------|
 | Modelo | `turno_advance_campaign`, `turno_advance_offer`, `turno_slot_claim` |
 | Trigger | Cancelación con slot libre ≥ T−24 h |
-| Decisión | Ofertas secuenciales `nearest_first` (+2 h / corte T−6 h); aceptación = reprogramar |
+| Decisión | Ofertas secuenciales D+2→D+1 misma franja (+2 h / corte T−6 h); aceptación = reprogramar |
 | Sin hold del slot; sin lista de espera |
 
 **Estado:** **implementado**.

@@ -417,7 +417,7 @@ final class TurnoAdvanceOfferAgent
             (int) $campaign->id,
             null,
             (int) $candidate->id_persona,
-            'nearest_first',
+            (string) ($config['order'] ?? 'd2_then_d1_same_halfday'),
             [
                 'campaign_id' => (int) $campaign->id,
                 'offer_id' => (int) $offer->id,

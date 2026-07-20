@@ -5,6 +5,7 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventCommand;
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoCanonicalEventService;
 use common\components\Platform\Agent\AgentRunRecorder;
+use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Scheduling\Turno;
 use common\models\Scheduling\TurnoAdvanceCampaign;
 use common\models\Scheduling\TurnoAdvanceOffer;
@@ -196,7 +197,8 @@ final class TurnoAdvanceOfferAcceptService
                 (int) $campaign->id,
                 null,
                 $idPersona,
-                'nearest_first',
+                (string) ((AutonomousAgentMetadata::loadAgent(TurnoAdvanceOfferAgent::AGENT_ID) ?? [])['order']
+                    ?? 'd2_then_d1_same_halfday'),
                 [
                     'offer_id' => (int) $offer->id,
                     'id_turno' => (int) $turno->id_turnos,

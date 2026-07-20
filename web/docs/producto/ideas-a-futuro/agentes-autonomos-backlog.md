@@ -138,7 +138,7 @@ Priorizar **agente** (reglas) antes que **agente IA** cuando alcanza: más barat
 | Touchpoint cohorte + `care-followup-branching` | **Agente** D2 | Reglas YAML → push staff / educativo — **implementado** |
 | Pull LIS / export FHIR | Proceso | Sin paso decisorio |
 | Post-lab + `post-lab-classification` | **Agente** D2 | LOINC + umbrales → push — **implementado** |
-| Cancelación turno + `turno-advance-offer` | **Agente** D2–D3 | Ofertas secuenciales nearest_first → reprogramar — **implementado** |
+| Cancelación turno + `turno-advance-offer` | **Agente** D2–D3 | Ofertas D+2→D+1 misma franja → reprogramar — **implementado** |
 | Resolución sin respuesta + `turno-resolucion-multicanal` | **Agente** D3 | push → email/SMS + link firmado — **implementado (v1)** |
 | Timeout reubicación + `turno-resolucion-loop-close` | **Agente** D2 | cancelar / escalar staff — **implementado (v1)** |
 | Turno pendiente + `turno-antinoshow` | **Agente** D2 | score riesgo → confirmar / liberar cupo — **implementado (v1)** |
@@ -261,7 +261,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 | Campo | Valor |
 |-------|--------|
-| **Decisión del sistema** | Qué turno posterior compatible ofertar primero (`nearest_first`); reprogramar al aceptar |
+| **Decisión del sistema** | Qué turno posterior compatible ofertar primero (D+2→D+1, misma franja); reprogramar al aceptar |
 | **Grado** | D2–D3 |
 | **Política** | T−24 h para iniciar, +2 h por candidato, corte T−6 h; slot público; requiere push activo |
 | **Efecto** | Push `TURNO_ADVANCE_OFFER`; aceptación reprograma el turno existente; sin cascada sobre el hueco liberado |
@@ -269,7 +269,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 
 **Casos de uso**
 
-1. **Cancelación con lead suficiente:** Cancelación con ≥ 24 h. Se ofrece al turno pendiente más cercano compatible; si no acepta en 2 h, al siguiente hasta T−6 h o agotar candidatos.
+1. **Cancelación con lead suficiente:** Cancelación con ≥ 24 h. Se ofrece primero a turnos de D+2 en la misma mañana/tarde (orden horario); si no aceptan, a D+1; el mismo día no se oferto. El slot sigue público para reserva nueva.
 2. **Carrera con reserva pública:** Mientras la oferta está abierta, otro paciente reserva el slot; la aceptación responde «ya no disponible» y la campaña se cierra.
 3. **Sin push:** El candidato sin token activo se salta; no se reserva el cupo por notificación.
 

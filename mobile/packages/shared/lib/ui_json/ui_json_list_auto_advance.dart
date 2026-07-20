@@ -28,9 +28,13 @@ class UiJsonSingleListPick {
       final selection = b['selection'] is Map
           ? Map<String, dynamic>.from(b['selection'] as Map)
           : const <String, dynamic>{};
-      if (selection['requires_confirmation'] == true) continue;
       final mode = selection['mode']?.toString().trim().toLowerCase() ?? '';
-      if (mode == 'multiple' || mode == 'none') continue;
+      if (mode == 'none') continue;
+      final isMultiple = mode == 'multiple';
+      final rawRequires = selection.containsKey('requires_confirmation')
+          ? selection['requires_confirmation'] == true
+          : isMultiple;
+      if (rawRequires) continue;
 
       final draftField = b['draft_field']?.toString() ?? '';
       if (draftField.isEmpty) continue;

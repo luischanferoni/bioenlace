@@ -114,19 +114,7 @@ class CarePlanController extends BaseController
         if (($out['kind'] ?? '') === 'ui_definition' && $req->isGet) {
             $items = [];
             foreach ($this->activeQuery->listActive($idPersona) as $plan) {
-                $summary = $this->presentation->toPatientSummary($plan, true);
-                $lines = $summary['activitySummaries'] ?? [];
-                $subtitle = is_array($lines) && $lines !== [] ? implode(' · ', array_slice($lines, 0, 2)) : '';
-                $items[] = [
-                    'id' => (string) $plan->id,
-                    'name' => (string) ($summary['categoryLabel'] ?? $summary['category'] ?? 'Tratamiento'),
-                    'label' => (string) ($summary['categoryLabel'] ?? 'Tratamiento'),
-                    'subtitle' => $subtitle,
-                    'meta' => [
-                        'status' => $plan->status,
-                        'category' => $plan->category,
-                    ],
-                ];
+                $items[] = $this->presentation->toPatientListPickItem($plan);
             }
 
             $out = UiScreenService::withListBlockItems($out, $items, 'planes');

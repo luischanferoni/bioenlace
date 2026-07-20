@@ -17,7 +17,7 @@
       "draft_field": "care_plan_id",
       "item": { "kind": "care_plan" },
       "presentation": { "tile": "large", "shape": "wide" },
-      "selection": { "mode": "single", "requires_confirmation": true },
+      "selection": { "mode": "single", "requires_confirmation": false },
       "items": []
     }
   ]

@@ -1423,9 +1423,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       final selection = b['selection'] is Map ? Map<String, dynamic>.from(b['selection'] as Map) : const <String, dynamic>{};
       final selectionMode = selection['mode']?.toString().trim().toLowerCase() ?? 'single';
       final isMultiple = selectionMode == 'multiple';
-      final requiresConfirmation = isMultiple
-          ? !widget.isTerminalFlowStep
-          : (selection['requires_confirmation'] == true && !widget.isTerminalFlowStep);
+      final rawRequiresConfirmation = selection.containsKey('requires_confirmation')
+          ? selection['requires_confirmation'] == true
+          : isMultiple;
+      final requiresConfirmation =
+          rawRequiresConfirmation && !widget.isTerminalFlowStep;
       final draftField = b['draft_field']?.toString() ?? '';
       final title = b['title']?.toString();
       final emptyMessage = (b['empty_message'] ?? b['list_empty_message'])?.toString().trim();
@@ -1476,12 +1478,17 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 final m = Map<String, dynamic>.from(it);
                 final id = UiJsonSingleListPick.itemIdFromBlock(b, m) ?? '';
                 final name = (m['name'] ?? m['label'] ?? id)?.toString() ?? id;
+                final subtitle = (m['subtitle']?.toString() ?? '').trim();
                 if (id.isEmpty) return const SizedBox.shrink();
                 final selected = isMultiple
                     ? _listEmbedSelectedIds.contains(id)
                     : _listEmbedSelectedId == id;
                 final tokens = context.bio;
                 final primary = IntentPalette.of(UiIntent.primary);
+                final nameStyle = theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? primary.softFg : tokens.textBody,
+                );
                 return Padding(
                   padding: EdgeInsets.only(left: idx == 0 ? 0 : 8),
                   child: SizedBox(
@@ -1504,12 +1511,24 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                               }
                               joined = (_listEmbedSelectedIds.toList()..sort()).join(',');
                               _listEmbedSelectedId = joined.isEmpty ? null : joined;
-                              if (widget.isTerminalFlowStep) {
+                              if (widget.isTerminalFlowStep || !requiresConfirmation) {
                                 _listEmbedLocked = true;
                               }
                             });
-                            if (widget.isTerminalFlowStep) {
+                            if (widget.isTerminalFlowStep || !requiresConfirmation) {
+                              if (joined.isEmpty) {
+                                if (mounted) {
+                                  setState(() => _listEmbedLocked = false);
+                                }
+                                return;
+                              }
                               try {
+                                if (!widget.isTerminalFlowStep && items.length == 1) {
+                                  await Future<void>.delayed(
+                                    const Duration(milliseconds: 480),
+                                  );
+                                  if (!mounted) return;
+                                }
                                 await _applyListEmbedDraft(draftField, joined);
                               } finally {
                                 if (mounted) {
@@ -1555,17 +1574,39 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                               vertical: BioSpacing.sm,
                             ),
                             child: Center(
-                              child: Text(
-                                name,
-                                textAlign: TextAlign.center,
-                                maxLines: tileMaxLines,
-                                overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontWeight:
-                                      selected ? FontWeight.w700 : FontWeight.w500,
-                                  color: selected ? primary.softFg : tokens.textBody,
-                                ),
-                              ),
+                              child: subtitle.isEmpty
+                                  ? Text(
+                                      name,
+                                      textAlign: TextAlign.center,
+                                      maxLines: tileMaxLines,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: nameStyle,
+                                    )
+                                  : Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          name,
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: nameStyle,
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          subtitle,
+                                          textAlign: TextAlign.center,
+                                          maxLines: (tileMaxLines - 1).clamp(1, 3),
+                                          overflow: TextOverflow.ellipsis,
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            fontSize: 11,
+                                            color: selected
+                                                ? primary.softFg.withValues(alpha: 0.85)
+                                                : tokens.textMuted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                             ),
                           ),
                         ),

@@ -105,7 +105,7 @@ subintents:
       params:
         intake_tipo: "draft.intake_tipo"
         encounter_id: "draft.encounter_id"
-        triage_raiz: "draft.triage_raiz"
+        triage_raiz: seguimiento_cronico
         mensaje: "draft.mensaje"
 
   - id: select_care_plan
@@ -167,7 +167,7 @@ subintents:
         intake_tipo: "draft.intake_tipo"
         seguimiento_necesidad: "draft.seguimiento_necesidad"
         medicacion_operacion: "draft.medicacion_operacion"
-        triage_raiz: "draft.triage_raiz"
+        triage_raiz: seguimiento_cronico
 
   - id: select_medicamentos_ajuste
     assistant_text: "Medicación a ajustar"
@@ -203,7 +203,7 @@ subintents:
         care_plan_id: "draft.care_plan_id"
         medication_request_ids: "draft.medication_request_ids"
         medicacion_operacion: "draft.medicacion_operacion"
-        triage_raiz: "draft.triage_raiz"
+        triage_raiz: seguimiento_cronico
         ajuste_motivo: "draft.ajuste_motivo"
 
   - id: captura_consulta_general
@@ -222,6 +222,7 @@ subintents:
       params:
         intake_tipo: "draft.intake_tipo"
         mensaje: "draft.mensaje"
+        triage_raiz: seguimiento_cronico
 
   - id: captura_seguimiento_mensaje
     assistant_text: "Contanos en el campo de abajo"
@@ -241,7 +242,7 @@ subintents:
         intake_tipo: "draft.intake_tipo"
         seguimiento_necesidad: "draft.seguimiento_necesidad"
         care_plan_id: "draft.care_plan_id"
-        triage_raiz: "draft.triage_raiz"
+        triage_raiz: seguimiento_cronico
         mensaje: "draft.mensaje"
 
   - id: select_preferencia_turno
@@ -360,7 +361,7 @@ flow_submit:
   action_id: turnos.crear-como-paciente
   params:
     slot_id: "draft.slot_id"
-    triage_raiz: "draft.triage_raiz"
+    triage_raiz: seguimiento_cronico
     tipo_atencion: "draft.tipo_atencion"
     care_plan_id: "draft.care_plan_id?"
     intake_tipo: "draft.intake_tipo?"

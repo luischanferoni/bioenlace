@@ -56,9 +56,9 @@ flowchart TD
 ```
 
 1. **Tipo** — consulta general, seguimiento de tratamiento activo o seguimiento de consulta previa.
-2. **CarePlan** — si hay varios planes activos/on-hold, elige uno; sin planes, mensaje y fin. Entrada desde el detalle del plan ya trae `care_plan_id`.
+2. **CarePlan** — si hay varios planes activos/on-hold, elige uno (tap avanza; un solo plan se auto-selecciona). La tarjeta muestra título (o categoría), fecha de inicio y medicación/actividades para distinguirlos. Sin planes, mensaje y fin. Entrada desde el detalle del plan ya trae `care_plan_id`.
 3. **Necesidad** — renovar medicación, solicitar ajuste, duda, contar evolución o solicitar turno.
-4. **Medicación (renovar / ajustar)** — multi-selección de `MedicationRequest` del plan; renovación confirma sin composer; ajuste pide motivo corto.
+4. **Medicación (renovar / ajustar)** — multi-selección de `MedicationRequest` del plan sin botón Confirmar intermedio; un solo medicamento se auto-selecciona. Renovación termina con «Solicitar renovación»; ajuste pide motivo corto.
 5. **Mensaje** — texto libre para duda, evolución, consulta general o consulta previa.
 6. **Consulta async** — encounter VR planificado; el staff ve operación y medicamentos en el contexto de bandeja/chat.
 

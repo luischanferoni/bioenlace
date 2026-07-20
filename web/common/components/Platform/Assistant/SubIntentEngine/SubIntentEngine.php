@@ -476,9 +476,10 @@ final class SubIntentEngine
                 continue;
             }
             $vv = is_string($v) ? trim($v) : '';
-            if ($vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
+            if ($vv === '') {
                 continue;
             }
+            // Placeholders `draft.x` / `draft.x?` o literales constantes del intent.
             $template[$key] = $vv;
         }
         if ($template === [] && $paramsMap !== []) {
@@ -971,9 +972,10 @@ final class SubIntentEngine
         foreach ($paramsMap as $k => $v) {
             $key = is_string($k) ? trim($k) : '';
             $vv = is_string($v) ? trim($v) : '';
-            if ($key === '' || $vv === '' || strncmp($vv, 'draft.', 6) !== 0) {
+            if ($key === '' || $vv === '') {
                 continue;
             }
+            // Placeholders `draft.x` / `draft.x?` o literales (p. ej. triage fijo del flow).
             $bodyTemplate[$key] = $vv;
         }
         if (!isset($bodyTemplate[$field])) {

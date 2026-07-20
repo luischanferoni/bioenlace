@@ -17,7 +17,7 @@
       "draft_field": "medication_request_ids",
       "item": { "kind": "option", "id_field": "id", "label_field": "name" },
       "presentation": { "tile": "medium", "shape": "wide" },
-      "selection": { "mode": "multiple", "requires_confirmation": true },
+      "selection": { "mode": "multiple", "requires_confirmation": false },
       "items": []
     }
   ]

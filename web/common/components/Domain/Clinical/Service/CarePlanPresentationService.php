@@ -45,6 +45,53 @@ final class CarePlanPresentationService
     ];
 
     /**
+     * Ítem de lista UI JSON para elegir entre varios CarePlan activos.
+     *
+     * @return array{id: string, name: string, label: string, subtitle: string, meta: array<string, mixed>}
+     */
+    public function toPatientListPickItem(CarePlan $plan): array
+    {
+        $summary = $this->toPatientSummary($plan, true, 3);
+        $categoryLabel = trim((string) ($summary['categoryLabel'] ?? $summary['category'] ?? 'Tratamiento'));
+        $title = trim((string) ($summary['title'] ?? ''));
+        $name = $title !== '' ? $title : ($categoryLabel !== '' ? $categoryLabel : 'Tratamiento');
+
+        $subtitleParts = [];
+        if ($title !== '' && $categoryLabel !== '' && strcasecmp($title, $categoryLabel) !== 0) {
+            $subtitleParts[] = $categoryLabel;
+        }
+        $periodStart = trim((string) ($summary['periodStart'] ?? $plan->period_start ?? ''));
+        if ($periodStart !== '') {
+            $ts = strtotime($periodStart);
+            if ($ts !== false) {
+                $subtitleParts[] = 'Desde ' . date('d/m/Y', $ts);
+            }
+        }
+        $lines = $summary['activitySummaries'] ?? [];
+        if (is_array($lines)) {
+            foreach (array_slice($lines, 0, 2) as $line) {
+                $line = trim((string) $line);
+                if ($line !== '') {
+                    $subtitleParts[] = $line;
+                }
+            }
+        }
+
+        return [
+            'id' => (string) $plan->id,
+            'name' => $name,
+            'label' => $name,
+            'subtitle' => implode(' · ', $subtitleParts),
+            'meta' => [
+                'status' => $plan->status,
+                'category' => $plan->category,
+                'title' => $title !== '' ? $title : null,
+                'period_start' => $periodStart !== '' ? $periodStart : null,
+            ],
+        ];
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toPatientSummary(CarePlan $plan, bool $withActivities = true, ?int $activityLimit = 5): array

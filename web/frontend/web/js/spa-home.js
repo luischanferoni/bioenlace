@@ -3287,7 +3287,9 @@
         const selection = block.selection && typeof block.selection === 'object' ? block.selection : {};
         const selectionMode = selection.mode != null ? String(selection.mode).trim().toLowerCase() : 'single';
         const isMultiple = selectionMode === 'multiple';
-        const requiresConfirmation = isMultiple ? true : selection.requires_confirmation === true;
+        const requiresConfirmation = Object.prototype.hasOwnProperty.call(selection, 'requires_confirmation')
+            ? selection.requires_confirmation === true
+            : isMultiple;
         const emptyMsg = block.empty_message ? String(block.empty_message) : '';
         const itemKind = block.item && block.item.kind ? String(block.item.kind) : '';
         const blockId = block.id != null ? String(block.id) : '';
@@ -3351,9 +3353,7 @@
         html += '<div class="bio-ui-json-list-items" data-bio-list-items="1">';
         html += buildPickButtonsHtml(items);
         html += '</div>';
-        const effectiveRequiresConfirmation = isMultiple
-            ? options.isTerminalFlowStep !== true
-            : (requiresConfirmation && options.isTerminalFlowStep !== true);
+        const effectiveRequiresConfirmation = requiresConfirmation && options.isTerminalFlowStep !== true;
         if (effectiveRequiresConfirmation) {
             html += '<div class="spa-flow-submit-inline">';
             html += '<button type="button" class="btn btn-success" data-embed-confirm="1" disabled>' + escapeHtml(FLOW_SUBMIT_BUTTON_LABEL) + '</button>';
@@ -3630,7 +3630,6 @@
 
         const pickButtons = allPickButtons();
         if (options.enableFlowChainAutoAdvance === true
-            && !options.isTerminalFlowStep
             && pickButtons.length === 1
             && !requiresConfirmation
             && draftField) {

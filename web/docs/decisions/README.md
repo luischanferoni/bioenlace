@@ -5,7 +5,7 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | ID | Título | Ubicación |
 |----|--------|-----------|
 | Dominio clínico FHIR | Producto, modelo, API clínica, greenfield | [fhir-clinical.md](./fhir-clinical.md) |
-| Protocolos de cuidado | PlanDefinition-lite en metadata; CarePack fuera | [care-protocols-plandefinition-lite.md](./care-protocols-plandefinition-lite.md) |
+| Protocolos de cuidado | PlanDefinition-lite en BD (Nación/Provincia); ABM superadmin | [care-protocols-plandefinition-lite.md](./care-protocols-plandefinition-lite.md) |
 | Autorización solo por intents | RBAC assignable = intent_id; retiro grants atributo | [autorizacion-solo-por-intents.md](./autorizacion-solo-por-intents.md) |
 | Onboarding comercial | Self-service AdminEfector; ministerio asistido; sector vs pago | [onboarding-comercial-self-service.md](./onboarding-comercial-self-service.md) |
 

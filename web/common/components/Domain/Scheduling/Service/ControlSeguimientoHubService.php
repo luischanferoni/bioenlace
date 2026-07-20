@@ -5,12 +5,13 @@ namespace common\components\Domain\Scheduling\Service;
 use common\components\Domain\Clinical\Service\CarePlanPresentationService;
 use common\components\Domain\Clinical\Service\CareProtocolMatcherService;
 use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
-use common\models\DiagnosticoConsultaRepository;
+use common\components\Domain\Person\Service\PacienteContextoService;
+use common\models\Clinical\Condition;
 use common\models\Person\Persona;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Arma el hub Control/Seguimiento (anclas + fallback) desde metadata y dominio.
+ * Arma el hub Control/Seguimiento: tratamientos, condiciones y controles recomendados.
  */
 final class ControlSeguimientoHubService
 {
@@ -40,6 +41,9 @@ final class ControlSeguimientoHubService
 
     public const KIND_CONSULTA_PREVIA = 'consulta_previa';
 
+    /** Máximo de condiciones en el hub (tras dedupe). */
+    private const HUB_CONDITION_LIMIT = 8;
+
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -62,7 +66,7 @@ final class ControlSeguimientoHubService
                 $items[] = [
                     'id' => self::ANCHOR_PREFIX_CARE_PLAN . $planId,
                     'label' => 'Tratamiento: ' . (string) ($pick['label'] ?? $pick['name'] ?? 'Plan'),
-                    'subtitle' => (string) ($pick['subtitle'] ?? ''),
+                    'subtitle' => $this->hubCarePlanSubtitle($pick, $plan),
                     'meta' => [
                         'kind' => self::KIND_CARE_PLAN,
                         'care_plan_id' => $planId,
@@ -70,40 +74,16 @@ final class ControlSeguimientoHubService
                 ];
             }
 
-            [$activas, $cronicas] = DiagnosticoConsultaRepository::getCondicionesPaciente($idPersona);
-            $seenCodes = [];
-            foreach (array_merge(array_values($cronicas), array_values($activas)) as $diag) {
-                if (!is_object($diag)) {
-                    continue;
-                }
-                $codigo = trim((string) ($diag->codigo ?? ''));
-                $diagId = (string) ($diag->id ?? '');
-                if ($diagId === '' && $codigo === '') {
-                    continue;
-                }
-                $dedupe = $codigo !== '' ? $codigo : $diagId;
-                if (isset($seenCodes[$dedupe])) {
-                    continue;
-                }
-                $seenCodes[$dedupe] = true;
-                $nombre = $this->conditionDisplayName($diag);
-                $cronico = strtoupper(trim((string) ($diag->cronico ?? ''))) === 'SI';
-                $items[] = [
-                    'id' => self::ANCHOR_PREFIX_CONDITION . ($codigo !== '' ? $codigo : $diagId),
-                    'label' => 'Condición: ' . $nombre,
-                    'subtitle' => $cronico ? 'Crónica' : 'Activa',
-                    'meta' => [
-                        'kind' => self::KIND_CONDITION,
-                        'condition_ref' => $diagId !== '' ? $diagId : $codigo,
-                        'codigo' => $codigo,
-                    ],
-                ];
+            foreach ($this->listConditionHubItems($idPersona) as $condItem) {
+                $items[] = $condItem;
             }
 
+            $idProvincia = $this->resolveIdProvinciaContexto($idPersona);
             $profile = $this->resolvePersonaProfile($idPersona);
             foreach ((new CareProtocolMatcherService())->matchByProfile(
                 $profile['age_years'],
-                $profile['sex']
+                $profile['sex'],
+                $idProvincia
             ) as $protocol) {
                 $items[] = [
                     'id' => self::ANCHOR_PREFIX_PROTOCOL . $protocol['id'],
@@ -117,37 +97,6 @@ final class ControlSeguimientoHubService
                 ];
             }
         }
-
-        $cfg = self::load();
-        foreach ($cfg['hub']['extras'] ?? [] as $extra) {
-            if (!is_array($extra)) {
-                continue;
-            }
-            $code = trim((string) ($extra['code'] ?? ''));
-            if ($code === 'consulta_general') {
-                $items[] = [
-                    'id' => self::ANCHOR_CONSULTA_GENERAL,
-                    'label' => trim((string) ($extra['label'] ?? 'Consulta por mensaje')),
-                    'subtitle' => trim((string) ($extra['description'] ?? '')),
-                    'meta' => ['kind' => self::KIND_CONSULTA_GENERAL],
-                ];
-            } elseif ($code === 'consulta_previa') {
-                $items[] = [
-                    'id' => self::ANCHOR_CONSULTA_PREVIA,
-                    'label' => trim((string) ($extra['label'] ?? 'Sobre una atención previa')),
-                    'subtitle' => trim((string) ($extra['description'] ?? '')),
-                    'meta' => ['kind' => self::KIND_CONSULTA_PREVIA],
-                ];
-            }
-        }
-
-        $fb = $cfg['hub']['fallback_general'] ?? [];
-        $items[] = [
-            'id' => self::ANCHOR_GENERAL,
-            'label' => trim((string) ($fb['label'] ?? 'Pedir un control (turno)')),
-            'subtitle' => trim((string) ($fb['description'] ?? '')),
-            'meta' => ['kind' => self::KIND_GENERAL],
-        ];
 
         return $items;
     }
@@ -229,8 +178,10 @@ final class ControlSeguimientoHubService
             $draft['condition_codigo'] = $ref;
             $draft['control_hub_kind'] = self::KIND_CONDITION;
             $draft['triage_raiz'] = 'seguimiento_cronico';
+            $idPersona = (int) ($draft['id_persona'] ?? 0);
+            $idProvincia = $idPersona > 0 ? $this->resolveIdProvinciaContexto($idPersona) : null;
             $protocol = (new CareProtocolMatcherService())
-                ->matchByConditionCode($ref);
+                ->matchByConditionCode($ref, $idProvincia, null, $idPersona > 0 ? $idPersona : null);
             if ($protocol !== null) {
                 $draft['protocol_id'] = $protocol['id'];
             }
@@ -434,24 +385,145 @@ final class ControlSeguimientoHubService
         return ['age_years' => $age, 'sex' => $sex];
     }
 
-    /**
-     * @param object $diag
-     */
-    private function conditionDisplayName(object $diag): string
+    private function resolveIdProvinciaContexto(int $idPersona): ?int
     {
-        if (isset($diag->codigoSnomed) && is_object($diag->codigoSnomed)) {
-            $term = trim((string) ($diag->codigoSnomed->term ?? ''));
-            if ($term !== '') {
-                return $term;
+        if ($idPersona <= 0) {
+            return null;
+        }
+        try {
+            $ctx = (new PacienteContextoService())->getOrCreate($idPersona);
+            $id = $ctx->id_provincia_contexto !== null ? (int) $ctx->id_provincia_contexto : 0;
+
+            return $id > 0 ? $id : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Condiciones útiles para el hub: display legible, sin duplicar CIE+SNOMED
+     * del mismo diagnóstico (codificación IA), priorizando match de protocolo / CIE.
+     *
+     * @return list<array{id: string, label: string, subtitle: string, meta: array<string, mixed>}>
+     */
+    private function listConditionHubItems(int $idPersona): array
+    {
+        /** @var list<Condition> $rows */
+        $rows = Condition::find()
+            ->where([
+                'subject_persona_id' => $idPersona,
+                'deleted_at' => null,
+            ])
+            ->andWhere(['clinical_status' => ['ACTIVE', 'RECURRENCE', 'RELAPSE']])
+            ->andWhere(['not in', 'verification_status', ['REFUTED', 'ENTERED_IN_ERROR']])
+            ->orderBy(['recorded_date' => SORT_DESC, 'id' => SORT_DESC])
+            ->limit(100)
+            ->all();
+
+        $matcher = new CareProtocolMatcherService();
+        $idProvincia = $this->resolveIdProvinciaContexto($idPersona);
+        /** @var array<string, array{score: int, item: array<string, mixed>}> $byDedupe */
+        $byDedupe = [];
+
+        foreach ($rows as $cond) {
+            $code = trim((string) ($cond->code ?? ''));
+            $display = trim((string) ($cond->display ?? ''));
+            if ($code === '' && $display === '') {
+                continue;
+            }
+            $labelText = $this->shortConditionLabel($display !== '' ? $display : $code);
+            if ($labelText === '' || $labelText === '?') {
+                continue;
+            }
+            $dedupeKey = mb_strtolower(preg_replace('/\s+/u', ' ', $labelText) ?? $labelText);
+            $protocol = $code !== ''
+                ? $matcher->matchByConditionCode($code, $idProvincia, [
+                    'clinical_status' => (string) $cond->clinical_status,
+                    'note' => $cond->note !== null ? (string) $cond->note : null,
+                ])
+                : null;
+            $isIcdLike = $code !== '' && (bool) preg_match('/^[A-Za-z]/', $code);
+            $score = 0;
+            if ($protocol !== null) {
+                $score += 100;
+            }
+            if ($isIcdLike) {
+                $score += 10;
+            }
+            if ($display !== '') {
+                $score += 1;
+            }
+            if (isset($byDedupe[$dedupeKey]) && $byDedupe[$dedupeKey]['score'] >= $score) {
+                continue;
+            }
+            $subtitle = 'Activa';
+            if ($protocol !== null) {
+                $subtitle = 'Protocolo: ' . (string) ($protocol['title'] ?? $protocol['id']);
+            } elseif ($isIcdLike) {
+                $subtitle = $code;
+            }
+            $byDedupe[$dedupeKey] = [
+                'score' => $score,
+                'item' => [
+                    'id' => self::ANCHOR_PREFIX_CONDITION . ($code !== '' ? $code : (string) $cond->id),
+                    'label' => 'Condición: ' . $labelText,
+                    'subtitle' => $subtitle,
+                    'meta' => [
+                        'kind' => self::KIND_CONDITION,
+                        'condition_ref' => (string) $cond->id,
+                        'codigo' => $code,
+                    ],
+                ],
+            ];
+        }
+
+        $ranked = array_values($byDedupe);
+        usort($ranked, static function (array $a, array $b): int {
+            return $b['score'] <=> $a['score'];
+        });
+        $out = [];
+        foreach (array_slice($ranked, 0, self::HUB_CONDITION_LIMIT) as $row) {
+            $out[] = $row['item'];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $pick
+     * @param object $plan
+     */
+    private function hubCarePlanSubtitle(array $pick, object $plan): string
+    {
+        $periodStart = trim((string) ($pick['meta']['period_start'] ?? $plan->period_start ?? ''));
+        if ($periodStart !== '') {
+            $ts = strtotime($periodStart);
+            if ($ts !== false) {
+                return 'Desde ' . date('d/m/Y', $ts);
             }
         }
-        $diagText = trim((string) ($diag->diagnostico ?? ''));
-        if ($diagText !== '') {
-            return $diagText;
-        }
-        $codigo = trim((string) ($diag->codigo ?? ''));
+        $category = trim((string) ($pick['meta']['category'] ?? ''));
 
-        return $codigo !== '' ? $codigo : 'Diagnóstico';
+        return $category !== '' ? $category : 'Plan activo';
+    }
+
+    private function shortConditionLabel(string $label): string
+    {
+        $label = trim($label);
+        if ($label === '') {
+            return '';
+        }
+        foreach ([' en seguimiento', ' en Seguimiento', ' | '] as $cut) {
+            $pos = mb_stripos($label, $cut);
+            if ($pos !== false && $pos > 8) {
+                $label = trim(mb_substr($label, 0, $pos));
+            }
+        }
+        if (mb_strlen($label) > 64) {
+            return mb_substr($label, 0, 61) . '…';
+        }
+
+        return $label;
     }
 
     /**

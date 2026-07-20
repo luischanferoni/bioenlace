@@ -136,21 +136,6 @@ subintents:
       draft_equals:
         control_hub_kind: protocol
     next: cs_condition_acciones
-  - when:
-      draft_equals:
-        control_hub_kind: consulta_general
-    next: cs_captura_consulta_general
-  - when:
-      draft_equals:
-        control_hub_kind: consulta_previa
-    next: cs_select_encounter_previa
-  - when:
-      draft_equals:
-        control_hub_kind: general
-    next: select_tipo_atencion
-  - when:
-      default: true
-    next: cs_select_tipo
   open_ui:
     action_id: consultas-seguimiento.hub
 - id: cs_condition_acciones

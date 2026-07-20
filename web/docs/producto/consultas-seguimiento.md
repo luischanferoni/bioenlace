@@ -9,7 +9,7 @@
 |---------|-----|
 | **Consulta clínica por mensaje** | Nombre de producto: solicitud no urgente que un profesional **real** revisa y responde de forma asincrónica (sin turno ni videollamada). |
 | **Consulta async** | Sinónimo técnico (`SOLICITUD_ASYNC`, encounter VR planificado, bandeja staff). |
-| **Control/Seguimiento** | Motivo de Solicitar Atención que abre el hub (tratamientos, condiciones, protocolos, consulta general/previa). |
+| **Control/Seguimiento** | Motivo de Solicitar Atención que abre el hub (tratamientos, condiciones, controles recomendados). |
 
 No confundir con «consulta rápida»: no promete respuesta inmediata. La IA puede clasificar y priorizar; la confirmación clínica la hace una persona.
 
@@ -17,12 +17,11 @@ No confundir con «consulta rápida»: no promete respuesta inmediata. La IA pue
 
 Capacidades del paciente **sin mezclarlas** con malestar nuevo o urgencia:
 
-- **Consulta general** — mensaje libre → **consulta clínica por mensaje**.
-- **Seguimiento** de un **plan de tratamiento activo** — renovar medicación (multi-medicamento, sin texto libre), solicitar ajuste (medicamentos + motivo), consulta/evolución o pedir turno.
-- **Seguimiento de una consulta previa** — mensaje vinculado a una atención ya publicada.
-- **Condición / protocolo** — acciones derivadas del catálogo PlanDefinition-lite (turno o mensaje).
+- **Seguimiento de un plan de tratamiento activo** — renovar medicación, solicitar ajuste, consulta/evolución o pedir turno.
+- **Condición / control recomendado** — acciones del protocolo o defaults (mensaje / turno vinculados al ancla).
+- **Controles recomendados por perfil** — p. ej. orientación de vacunas (edad/sexo).
 
-Sin plan activo u on-hold, el camino anclado solo a tratamiento muestra vacío o no ofrece esa ancla; el hub sigue ofreciendo consulta general, control general y (si aplica) protocolos de perfil.
+Sin plan activo u on-hold, esa ancla no aparece; el hub solo lista condiciones y controles recomendados aplicables (sin consulta suelta, atención previa ni turno genérico).
 
 **Canal:** solo la **app móvil paciente**. El personal opera la bandeja de consultas clínicas por mensaje y los turnos en web o app Personal de Salud.
 
@@ -41,23 +40,21 @@ flowchart TD
   HUB[Hub Control/Seguimiento]
   HUB -->|CarePlan| NEC[Necesidad]
   HUB -->|condición / protocolo| ACC[Acciones protocolo o default]
-  HUB -->|consulta general / previa| MSG[Mensaje libre]
-  HUB -->|control general| TURN[Modalidad y turno]
   NEC -->|renovar_medicacion| MEDR[Multi-select medicamentos]
   MEDR --> CONFR[Confirmar sin texto]
   NEC -->|solicitar_ajuste| MEDA[Multi-select medicamentos]
   MEDA --> MOT[Motivo del ajuste]
-  NEC -->|consulta o evolución| MSG
+  NEC -->|consulta o evolución| MSG[Mensaje libre]
   NEC -->|turno| MOD[Preferencia profesional]
   MOD --> SLOTS[Slots y reserva]
-  ACC -->|modalidad| TURN
+  ACC -->|modalidad| TURN[Modalidad y turno]
   ACC -->|captura_mensaje| MSG
   CONFR --> ASYNC[Consulta clínica por mensaje]
   MOT --> ASYNC
   MSG --> ASYNC
 ```
 
-1. **Hub** — ancla (tratamiento, condición, protocolo, extras, fallback).
+1. **Hub** — ancla (tratamiento, condición o control recomendado).
 2. **CarePlan** — si hay varios, elige uno (entrada desde el detalle del plan ya trae `care_plan_id`).
 3. **Necesidad / acción** — renovar, ajustar, consulta/evolución, turno, u outcomes del protocolo.
 4. **Medicación** — multi-selección de `MedicationRequest` del plan.

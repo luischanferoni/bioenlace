@@ -71,6 +71,9 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
         $this->assertSame('cs_condition_acciones', $hubKindRoutes['condition'] ?? null);
         $this->assertSame('cs_condition_acciones', $hubKindRoutes['protocol'] ?? null);
         $this->assertSame('cs_select_necesidad', $hubKindRoutes['care_plan'] ?? null);
+        $this->assertArrayNotHasKey('consulta_general', $hubKindRoutes);
+        $this->assertArrayNotHasKey('consulta_previa', $hubKindRoutes);
+        $this->assertArrayNotHasKey('general', $hubKindRoutes);
 
         $this->assertArrayHasKey('cs_select_necesidad', $byId);
         $routes = [];

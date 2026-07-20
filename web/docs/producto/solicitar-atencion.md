@@ -25,8 +25,8 @@ Tras elegir Control/Seguimiento, la UI lista anclas (API `consultas-seguimiento/
 | Tratamiento | CarePlan activo | Necesidad (renovar, ajuste, consulta/evolución, turno, …) |
 | Condición | Diagnóstico activo/crónico | Acciones del **protocolo** match (CIE) o defaults del hub |
 | Control recomendado | Protocolo preventivo por **edad/sexo** | Mismas clases de acción (`prot:{id}`) |
-| Consulta por mensaje / atención previa | Extras del hub | Captura de mensaje o elegir encounter |
-| Pedir un control (turno) | Fallback | Modalidad / reserva como turno de control |
+
+No incluye consulta suelta, atención previa ni “pedir turno” genérico: eso queda fuera de este paso.
 
 Copy de recomendaciones de perfil: sugerencia según perfil, **no** indicación médica firme — «Consultá con tu equipo».
 
@@ -34,9 +34,15 @@ Detalle de consulta async y renovación/ajuste: [consultas-seguimiento.md](./con
 
 ## Protocolos de cuidado (PlanDefinition-lite)
 
-Plantillas en metadata (`Clinical/metadata/care_protocols.yaml`), no CarePacks IA.
+Catálogo en BD (`care_protocol`), no CarePacks IA ni YAML en runtime. Vacunas y preventivos los define el **superadmin** (Nación o Provincia).
 
-- Match por **código de condición** y/o **perfil** (edad, sexo).
+| Nombre | Uso |
+|--------|-----|
+| **Control recomendado** | Texto en el hub para el paciente (`hub_label`), p. ej. vacunas por edad/jurisdicción |
+| **Protocolo de cuidado** | Nombre técnico (fila `care_protocol` / FHIR PlanDefinition-lite) |
+| **Tratamiento** | CarePlan ya activo del paciente |
+
+- Match por **código de condición** (`condition_match` activo/crónico) y/o **perfil** (edad, sexo), filtrado por jurisdicción del paciente.
 - Acciones declarativas (`outcome` + `draft`); el motor genérico no enumera protocolos.
 - CarePack / CareCohort = packs de asistencia IA; **otro dominio** ([asistencia-cohortes.md](./asistencia-cohortes.md)).
 

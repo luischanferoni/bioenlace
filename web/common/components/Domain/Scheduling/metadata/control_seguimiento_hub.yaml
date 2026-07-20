@@ -1,20 +1,10 @@
 # Hub Control/Seguimiento (Solicitar Atención).
-# Acciones por condición: preferir care_protocols.yaml (PlanDefinition-lite); si no hay match, condition_default_actions.
+# Solo anclas de dominio: tratamientos, condiciones y controles recomendados (protocolos).
+# Acciones por condición: preferir catálogo care_protocol (BD); si no hay match, condition_default_actions.
 version: "1"
 
 hub:
   title: "¿Sobre qué es el control o seguimiento?"
-  fallback_general:
-    code: general
-    label: Pedir un control (turno)
-    description: Reservá un turno sin vincularlo a un tratamiento concreto.
-  extras:
-    - code: consulta_general
-      label: Consulta por mensaje
-      description: Escribile al equipo sin asociar a un plan.
-    - code: consulta_previa
-      label: Sobre una atención previa
-      description: Consultá por una atención que ya tuviste.
 
 condition_default_actions:
   - code: consulta_mensaje
@@ -26,4 +16,4 @@ condition_default_actions:
     label: Pedir turno
     description: Reservá un control presencial o por videollamada.
     draft:
-      control_hub_kind: general
+      triage_raiz: seguimiento_cronico

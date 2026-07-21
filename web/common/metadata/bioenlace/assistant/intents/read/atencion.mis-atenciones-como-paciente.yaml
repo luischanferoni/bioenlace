@@ -14,6 +14,10 @@ keywords:
   - resumen de atención
 
 intent_semantics:
+  summary: >-
+    Revisá tus atenciones ambulatorias finalizadas y el resumen de cada una.
+  capabilities:
+    - ver_atenciones
   goal: >-
     Mostrar atenciones ambulatorias ya finalizadas con resumen publicado (texto IA).
   how: >-

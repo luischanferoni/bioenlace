@@ -14,6 +14,10 @@ keywords:
   - menor a cargo
 
 intent_semantics:
+  summary: >-
+    Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.
+  capabilities:
+    - vincular_menor
   goal: >-
     El tutor (padre, madre o tutor legal) inicia una solicitud de tutela sobre un menor sin cuenta.
   how: >-

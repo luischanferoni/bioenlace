@@ -12,6 +12,10 @@ keywords:
   - mi última consulta
 
 intent_semantics:
+  summary: >-
+    Abrí el resumen de tu última atención ambulatoria finalizada.
+  capabilities:
+    - ver_ultima_atencion
   goal: >-
     Mostrar el resumen de la última atención ambulatoria finalizada.
   how: >-

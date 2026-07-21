@@ -15,6 +15,10 @@ keywords:
   - paciente a cargo
 
 intent_semantics:
+  summary: >-
+    Autorizá a otra persona con cuenta para gestionar turnos y gestiones en tu nombre.
+  capabilities:
+    - designar_representante
   goal: >-
     El paciente designa a otra persona con cuenta para operar en su nombre (régimen B).
   how: >-

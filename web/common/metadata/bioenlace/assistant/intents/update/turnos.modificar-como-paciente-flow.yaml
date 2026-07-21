@@ -12,6 +12,12 @@ keywords:
   - otro horario
 
 intent_semantics:
+  summary: >-
+    Cambiá la fecha u horario de un turno pendiente propio eligiendo un nuevo slot disponible.
+  capabilities:
+    - ver_turnos_propios
+    - elige_horario
+    - reprogramar_turno_propio
   goal: >-
     Reprogramar un turno propio a otra fecha/hora (y profesional PES) disponible.
   how: >-

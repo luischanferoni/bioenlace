@@ -26,10 +26,11 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 
 ## Clasificación IA (señal semántica)
 
-Los intents YAML pueden declarar `intent_semantics` (`goal/how/preconditions/constraints/outcome/keyphrases`) para mejorar:
+Los intents YAML pueden declarar `intent_semantics` (`summary`/`capabilities` + `goal/how/preconditions/constraints/outcome/keyphrases`) para mejorar:
 
-- la clasificación por IA (cuando el texto no matchea keywords literales), y
-- la explicación (`match.ai.why`) y desambiguación (`kind=intent_remediation`, `rule_id=ai_disambiguation`).
+- la clasificación por IA (cuando el texto no matchea keywords literales),
+- la explicación (`match.ai.why`) y desambiguación (`kind=intent_remediation`, `rule_id=ai_disambiguation`), y
+- la oferta conversacional (texto alineado al botón: solo prometer `capabilities` declaradas; ver `SUBINTENT_CONTRACT.md`).
 
 ## Entrypoints importantes
 

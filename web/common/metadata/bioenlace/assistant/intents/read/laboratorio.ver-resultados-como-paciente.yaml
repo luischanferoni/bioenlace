@@ -13,6 +13,10 @@ keywords:
   - ver análisis
 
 intent_semantics:
+  summary: >-
+    Consultá tus informes de laboratorio sincronizados, con detalle y descarga PDF.
+  capabilities:
+    - ver_resultados_lab
   goal: >-
     Mostrar los informes de laboratorio ya sincronizados en Bioenlace, con detalle y PDF.
   how: >-

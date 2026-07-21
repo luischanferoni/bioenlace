@@ -12,6 +12,10 @@ keywords:
   - ver recetas
 
 intent_semantics:
+  summary: >-
+    Consultá tus recetas electrónicas emitidas, con detalle y descarga PDF.
+  capabilities:
+    - ver_recetas
   goal: >-
     Mostrar las recetas electrónicas ya emitidas en Bioenlace, con detalle y PDF.
   how: >-

@@ -11,6 +11,11 @@ keywords:
   - asistiré al turno
 
 intent_semantics:
+  summary: >-
+    Confirmá que vas a asistir a un turno pendiente propio.
+  capabilities:
+    - ver_turnos_propios
+    - confirmar_asistencia
   goal: >-
     Confirmar asistencia a un turno propio pendiente.
   how: >-

@@ -11,6 +11,14 @@ keywords:
   - nuevo turno consultorio
 
 intent_semantics:
+  summary: >-
+    Si tu turno quedó en reubicación, elegí de nuevo servicio, centro, profesional y horario.
+  capabilities:
+    - reubicar_turno_propio
+    - elige_servicio
+    - elige_centro
+    - elige_profesional
+    - elige_horario
   goal: >-
     Reubicar un turno propio marcado EN_RESOLUCION (impacto de agenda, gestión del consultorio, etc.).
   how: >-

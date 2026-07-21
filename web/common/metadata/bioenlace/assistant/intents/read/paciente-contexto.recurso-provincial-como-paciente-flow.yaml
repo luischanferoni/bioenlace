@@ -17,6 +17,10 @@ draft_hydrator:
   handler: person.paciente_recurso_provincial
 
 intent_semantics:
+  summary: >-
+    Obtené nombre, dirección y teléfono de recursos de salud de tu provincia (p. ej. ministerio).
+  capabilities:
+    - recurso_provincial_contacto
   goal: >-
     Obtener datos de contacto de instituciones de salud según la provincia de contexto del paciente.
   how: >-

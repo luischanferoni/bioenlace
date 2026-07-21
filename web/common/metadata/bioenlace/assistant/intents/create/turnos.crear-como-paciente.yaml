@@ -22,6 +22,15 @@ keywords:
   - agendar cita
 
 intent_semantics:
+  summary: >-
+    Reservá un turno eligiendo servicio, centro (podés buscar cercanos en mapa), profesional y horario disponible.
+  capabilities:
+    - elige_servicio
+    - elige_centro
+    - mapa_centros_cercanos
+    - elige_profesional
+    - elige_horario
+    - reserva_turno
   goal: >-
     Reservar un turno de atención seleccionando servicio, centro de salud, profesional y un horario disponible.
   how: >-

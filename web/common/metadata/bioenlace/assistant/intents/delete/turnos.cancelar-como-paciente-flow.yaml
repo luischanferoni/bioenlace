@@ -11,6 +11,11 @@ keywords:
   - no puedo ir al turno
 
 intent_semantics:
+  summary: >-
+    Cancelá un turno pendiente propio eligiendo el turno y el motivo.
+  capabilities:
+    - ver_turnos_propios
+    - cancelar_turno_propio
   goal: >-
     Cancelar un turno propio que siga pendiente.
   how: >-

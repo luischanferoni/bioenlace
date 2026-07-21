@@ -11,12 +11,54 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 | `version` | Entero legible para humanos; el motor no lo valida hoy. |
 | `action_name`, `description`, `keywords` | Metadatos / descubrimiento. |
 | `rbac_route` | Ruta HTTP del **permiso API base** que se asigna al rol (sin `v1`), no una ruta UI/ghost heredada por migración. Ej.: `listar-atenciones-como-paciente`, no `mis-atenciones-como-paciente`. Las rutas hijas se heredan vía `auth_item_child` al migrate; si el rol recibe el padre después, ejecutar la migración de resync correspondiente. |
-| `intent_semantics` | Opcional: señal para IA (`goal`, `how`, `preconditions`, etc.). |
+| `intent_semantics` | Opcional: señal para IA y oferta conversacional (ver abajo). |
 | `draft_keys_extra` | Opcional: claves de draft adicionales reconocidas por el producto. |
 | `business_rules` | Opcional: reglas `pre_flow` (vía `IntentBusinessRules`). |
 | `draft_hydrator` | Opcional: enriquecimiento del `draft` **antes** de `SubIntentEngine::process` (ver abajo). |
 | `subintents` | **Obligatorio**: lista ordenada de pasos. |
 | `flow_submit` | **Opcional.** Cierre predeterminado del flujo. El motor detecta automáticamente el **paso terminal** (subintent sin `next` ni `next_routing`) y, cuando ese paso emite `open_ui`, adjunta el descriptor `flow_submit` al envelope (ver más abajo). Si el último paso no tiene `open_ui`, el envelope se emite **solo** con `flow_submit` (texto + botón de envío). Una rama terminal puede sobrescribirlo con `subintents[].flow_submit`. |
+
+### `intent_semantics` (raíz del intent)
+
+Señal para clasificación IA y, cuando exista, para el canal conversacional (texto alineado al botón real).
+
+| Clave | Uso |
+|--------|-----|
+| `summary` | Texto corto orientado al paciente: qué logra al abrir este intent (sin inventar pasos que el flow no tenga). |
+| `capabilities` | Lista de IDs estables de lo que el flow **sí** ofrece. El canal conversacional solo debe prometer IDs presentes aquí. |
+| `goal` / `how` / `preconditions` / `constraints` / `outcome` / `keyphrases` | Señal de clasificación (como hasta ahora). |
+
+Vocabulario inicial de `capabilities` (ampliar solo documentando acá):
+
+| ID | Significado |
+|----|-------------|
+| `triage_malestar` | Guía por síntoma/zona hacia un servicio adecuado. |
+| `control_seguimiento` | Camino de control, tratamiento o consulta previa. |
+| `urgencia_guardia_info` | Orientación a guardia/urgencia sin completar reserva ambulatoria. |
+| `elige_servicio` | Elegir servicio clínico. |
+| `elige_modalidad` | Presencial / teleconsulta / async cuando aplica. |
+| `elige_centro` | Elegir efector/centro. |
+| `mapa_centros_cercanos` | Listar centros cercanos (mapa/geo) para un servicio. |
+| `elige_profesional` | Elegir profesional/PES. |
+| `elige_horario` | Elegir día/slot. |
+| `reserva_turno` | Confirmar creación de turno. |
+| `consulta_por_mensaje` | Consulta clínica asíncrona por mensaje. |
+| `teleconsulta` | Modalidad teleconsulta en el flow. |
+| `ver_turnos_propios` | Listar turnos del paciente. |
+| `cancelar_turno_propio` | Cancelar turno propio. |
+| `reprogramar_turno_propio` | Cambiar fecha/hora de turno propio. |
+| `reubicar_turno_propio` | Reubicar turno en resolución. |
+| `confirmar_asistencia` | Confirmar asistencia a turno. |
+| `ver_atenciones` | Listar/ver atenciones finalizadas. |
+| `ver_ultima_atencion` | Resumen de la última atención. |
+| `ver_resultados_lab` | Informes de laboratorio. |
+| `ver_recetas` | Recetas electrónicas. |
+| `recordatorios_tratamiento` | Configurar recordatorios de medicación/estudios. |
+| `recurso_provincial_contacto` | Datos de contacto de recursos provinciales. |
+| `enviar_queja` | Queja operativa (no clínica). |
+| `asistencia_pre_consulta` | Cuestionario pre-consulta. |
+| `designar_representante` | Delegar gestión a otra persona con cuenta. |
+| `vincular_menor` | Solicitud de tutela sobre menor. |
 
 ### `draft_hydrator` (raíz del intent)
 

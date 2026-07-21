@@ -12,6 +12,11 @@ keywords:
   - cuestionario pre consulta
 
 intent_semantics:
+  summary: >-
+    Completá el cuestionario de asistencia antes de un turno pendiente propio.
+  capabilities:
+    - asistencia_pre_consulta
+    - ver_turnos_propios
   goal: >-
     Completar el cuestionario de asistencia pre-consulta para un turno propio.
   how: >-

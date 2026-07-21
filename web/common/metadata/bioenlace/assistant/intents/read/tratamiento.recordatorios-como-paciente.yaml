@@ -13,6 +13,10 @@ keywords:
   - horarios de tratamiento
 
 intent_semantics:
+  summary: >-
+    Activá o ajustá recordatorios locales de medicación y preparación de estudios de tu tratamiento.
+  capabilities:
+    - recordatorios_tratamiento
   goal: >-
     Configurar recordatorios locales de medicación y preparación de estudios del care plan activo.
   how: >-

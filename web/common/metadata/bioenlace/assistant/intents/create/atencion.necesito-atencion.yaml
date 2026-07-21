@@ -29,6 +29,22 @@ keywords:
 - consulta por mensaje
 - consulta clinica por mensaje
 intent_semantics:
+  summary: >-
+    Te guía según lo que necesitás: malestar nuevo (elegís servicio y centro, inclusive cercanos en mapa),
+    control o seguimiento, o orientación a guardia. Podés terminar en turno, teleconsulta o consulta por mensaje.
+  capabilities:
+  - triage_malestar
+  - control_seguimiento
+  - urgencia_guardia_info
+  - elige_servicio
+  - elige_modalidad
+  - elige_centro
+  - mapa_centros_cercanos
+  - elige_profesional
+  - elige_horario
+  - reserva_turno
+  - consulta_por_mensaje
+  - teleconsulta
   goal: 'Tres caminos: malestar nuevo (zona → servicio), control/seguimiento (consulta por mensaje, tratamiento
     activo o atención previa → acciones) o urgencia (guardia, sin reserva).'
   how: 'Malestar nuevo → zona → modalidad → servicio.

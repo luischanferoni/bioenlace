@@ -18,6 +18,10 @@ keywords:
   - turnos pendientes
 
 intent_semantics:
+  summary: >-
+    Consultá tus próximos turnos pendientes (fecha, servicio y profesional).
+  capabilities:
+    - ver_turnos_propios
   goal: >-
     Mostrar al paciente sus turnos pendientes (próximos) sin cancelar ni reprogramar.
   how: >-

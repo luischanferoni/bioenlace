@@ -30,7 +30,7 @@ Los intents YAML pueden declarar `intent_semantics` (`summary`/`capabilities` + 
 
 - la clasificación por IA (cuando el texto no matchea keywords literales),
 - la explicación (`match.ai.why`) y desambiguación (`kind=intent_remediation`, `rule_id=ai_disambiguation`), y
-- la oferta conversacional (texto alineado al botón: solo prometer `capabilities` declaradas; ver `SUBINTENT_CONTRACT.md`).
+- la oferta conversacional: `ConversationalChannel` inyecta `summary`/`capabilities` del intent del botón en el prompt (ver `Chat/Channels/Conversational/README.md`).
 
 ## Entrypoints importantes
 

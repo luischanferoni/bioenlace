@@ -525,17 +525,46 @@ conversational_channel:
     No inventes datos clínicos, diagnósticos ni confirmes turnos ya hechos.
 
     Cuando describan síntomas, lesiones o malestar:
-    1) Mostrá empatía y orientación prudente (no reemplazás la consulta médica).
-    2) Indicá qué tipo de profesional o servicio suele ser apropiado para evaluar ese cuadro (ej. clínica médica o medicina general, traumatología por golpe o chichón, pediatría si es un niño). No inventes nombres de médicos ni centros concretos salvo que aparezcan en el contexto clínico del paciente.
-    3) Conectá con Bioenlace: explicá que pueden reservar un turno acá mismo escribiendo qué necesitan (ej. "Quiero turno con clínica médica" o "Sacar turno de traumatología").
-    4) Si preguntan cómo contactar al profesional, aclaré que el contacto es agendando una consulta por la app; no des teléfonos, emails ni direcciones inventadas.
+    1) Empatía breve y orientación prudente (no reemplazás la consulta médica).
+    2) Indicá qué tipo de profesional o servicio suele ser apropiado (ej. clínica médica / medicina general, traumatología, pediatría). No inventes nombres de médicos ni centros concretos salvo que aparezcan en el contexto del paciente.
+    3) Si hay un bloque "Oferta disponible", conectá con Bioenlace usando SOLO ese resumen y esas capacidades: explicá qué permite el botón de abajo. No digas que escriban "Quiero turno…" si ya hay botón. No prometas mapa, cercanía, teleconsulta ni otros pasos si no están en capacidades.
+    4) Si no hay "Oferta disponible", no prometas botones ni caminos concretos de la app; invitá a describir la necesidad con sus palabras.
+    5) Si preguntan cómo contactar al profesional, aclará que el contacto es agendando una consulta por la app; no des teléfonos, emails ni direcciones inventadas.
 
-    Si piden una acción operativa concreta (turno, cancelar, ver agenda), invitalos a decirlo con sus palabras; no hace falta listar menús largos.
+    Si piden una acción operativa concreta (turno, cancelar, ver agenda) y no hay oferta, invitalos a decirlo con sus palabras; no hace falta listar menús largos.
 
     Si hay historial reciente, continuá la charla sin repetir lo ya respondido.
   empty_response_fallback: >-
     Entiendo tu consulta. Te recomiendo que un profesional te evalúe en persona.
-    En Bioenlace podés reservar un turno escribiendo, por ejemplo, "Quiero turno con clínica médica".
+    Si ves una opción abajo, podés usarla para continuar en Bioenlace.
+  capability_labels:
+    triage_malestar: guía por síntoma hacia un servicio adecuado
+    control_seguimiento: control, tratamiento o consulta previa
+    urgencia_guardia_info: orientación a guardia sin reserva ambulatoria
+    elige_servicio: elegir el servicio clínico
+    elige_modalidad: elegir presencial, teleconsulta u otra modalidad
+    elige_centro: elegir centro de salud
+    mapa_centros_cercanos: buscar centros cercanos en un mapa
+    elige_profesional: elegir profesional
+    elige_horario: elegir día y horario
+    reserva_turno: confirmar el turno
+    consulta_por_mensaje: consulta clínica por mensaje
+    teleconsulta: modalidad teleconsulta
+    ver_turnos_propios: ver turnos propios
+    cancelar_turno_propio: cancelar un turno propio
+    reprogramar_turno_propio: cambiar fecha u horario de un turno
+    reubicar_turno_propio: reubicar un turno en resolución
+    confirmar_asistencia: confirmar asistencia a un turno
+    ver_atenciones: ver atenciones finalizadas
+    ver_ultima_atencion: ver la última atención
+    ver_resultados_lab: ver resultados de laboratorio
+    ver_recetas: ver recetas electrónicas
+    recordatorios_tratamiento: configurar recordatorios de tratamiento
+    recurso_provincial_contacto: datos de contacto de recursos provinciales
+    enviar_queja: enviar una queja operativa
+    asistencia_pre_consulta: completar cuestionario pre-consulta
+    designar_representante: designar un representante
+    vincular_menor: solicitar tutela de un menor
   booking_button:
     when_rule: clinical_symptom
     intent_priority:

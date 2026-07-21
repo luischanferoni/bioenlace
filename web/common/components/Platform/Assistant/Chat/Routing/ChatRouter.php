@@ -7,7 +7,7 @@ use common\components\Platform\Assistant\Chat\Channels\Informational\Information
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
-use common\components\Platform\Assistant\IntentEngine\IntentEngine;
+use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 
 /**
  * Enruta por user_goal tras preprocess.
@@ -40,6 +40,9 @@ final class ChatRouter
         if ($queryText === '') {
             $queryText = $content;
         }
+
+        // Cinturón de seguridad: síntomas → conversational aunque el preprocess IA diga operational.
+        $goal = IntentClassificationRulesService::applyChatPreprocessGoalOverrides($queryText, $goal, $content);
 
         if (ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
             return OperationalChannel::handle($content, null, $userId);

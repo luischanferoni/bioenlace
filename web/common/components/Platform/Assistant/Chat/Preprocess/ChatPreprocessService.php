@@ -158,7 +158,11 @@ final class ChatPreprocessService
             }
         }
 
-        $goal = IntentClassificationRulesService::applyChatPreprocessGoalOverrides($normalized, $goal);
+        $goal = IntentClassificationRulesService::applyChatPreprocessGoalOverrides(
+            $normalized,
+            $goal,
+            $fallbackContent
+        );
 
         return [
             'normalized_text' => $normalized,

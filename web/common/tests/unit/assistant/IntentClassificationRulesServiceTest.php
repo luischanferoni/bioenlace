@@ -100,6 +100,33 @@ class IntentClassificationRulesServiceTest extends Unit
         $this->assertFalse(IntentClassificationRulesService::isClinicalSymptomContent('quiero un turno'));
     }
 
+    public function testGoalOverrideSymptomPlusHospitalNearGoesConversational(): void
+    {
+        $msg = 'estoy con dolor de cabeza de hace varios dias, me gustaría saber que hospital tengo cerca que este atendiendo';
+        $this->assertSame(
+            'conversational',
+            IntentClassificationRulesService::applyChatPreprocessGoalOverrides($msg, 'operational')
+        );
+        // Si la IA “limpia” el normalized y deja solo la parte de hospital, el original aún desvía.
+        $this->assertSame(
+            'conversational',
+            IntentClassificationRulesService::applyChatPreprocessGoalOverrides(
+                'quiero saber que hospital tengo cerca',
+                'operational',
+                $msg
+            )
+        );
+    }
+
+    public function testGoalOverrideSymptomPlusExplicitTurnoStaysOperational(): void
+    {
+        $msg = 'me duele la cabeza y quiero un turno';
+        $this->assertSame(
+            'operational',
+            IntentClassificationRulesService::applyChatPreprocessGoalOverrides($msg, 'operational')
+        );
+    }
+
     public function testOperationalFallbackRoutesNecesitoUnTurnoToCrearComoPaciente(): void
     {
         $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(

@@ -151,12 +151,22 @@ final class IntentClassificationRulesService
         return implode("\n", $lines);
     }
 
-    public static function applyChatPreprocessGoalOverrides(string $normalized, string $goal): string
-    {
+    /**
+     * Aplica overrides declarativos de user_goal.
+     * `$alsoMatchText` (p. ej. mensaje original) evita que un normalized_text de la IA
+     * sin síntomas saltee el desvío a conversational.
+     */
+    public static function applyChatPreprocessGoalOverrides(
+        string $normalized,
+        string $goal,
+        ?string $alsoMatchText = null
+    ): string {
         $overrides = self::chatPreprocessSection()['goal_overrides'] ?? [];
         if (!is_array($overrides)) {
             return $goal;
         }
+
+        $texts = self::goalOverrideMatchTexts($normalized, $alsoMatchText);
 
         foreach ($overrides as $block) {
             if (!is_array($block)) {
@@ -170,9 +180,9 @@ final class IntentClassificationRulesService
             $whenRule = trim((string) ($block['when_rule'] ?? ''));
             $whenAny = $block['when_any_rule'] ?? [];
             $matches = false;
-            if ($whenRule !== '' && self::ruleMatches($whenRule, $normalized)) {
+            if ($whenRule !== '' && self::anyTextMatchesRule($whenRule, $texts)) {
                 $matches = true;
-            } elseif (is_array($whenAny) && $whenAny !== [] && self::matchesAnyRule($normalized, $whenAny)) {
+            } elseif (is_array($whenAny) && $whenAny !== [] && self::anyTextMatchesAnyRule($texts, $whenAny)) {
                 $matches = true;
             }
             if (!$matches) {
@@ -192,7 +202,11 @@ final class IntentClassificationRulesService
             }
 
             $whenNot = trim((string) ($block['when_not_rule'] ?? ''));
-            if ($whenNot !== '' && self::ruleMatches($whenNot, $normalized)) {
+            if ($whenNot !== '' && self::anyTextMatchesRule($whenNot, $texts)) {
+                continue;
+            }
+            $whenNotAny = $block['when_not_any_rule'] ?? [];
+            if (is_array($whenNotAny) && $whenNotAny !== [] && self::anyTextMatchesAnyRule($texts, $whenNotAny)) {
                 continue;
             }
 
@@ -200,6 +214,53 @@ final class IntentClassificationRulesService
         }
 
         return $goal;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function goalOverrideMatchTexts(string $normalized, ?string $alsoMatchText): array
+    {
+        $out = [];
+        $n = trim($normalized);
+        if ($n !== '') {
+            $out[] = $n;
+        }
+        $o = $alsoMatchText !== null ? trim($alsoMatchText) : '';
+        if ($o !== '' && ($out === [] || $o !== $out[0])) {
+            $out[] = $o;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<string> $texts
+     */
+    private static function anyTextMatchesRule(string $ruleId, array $texts): bool
+    {
+        foreach ($texts as $text) {
+            if (self::ruleMatches($ruleId, $text)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param list<string> $texts
+     * @param list<mixed> $ruleIds
+     */
+    private static function anyTextMatchesAnyRule(array $texts, array $ruleIds): bool
+    {
+        foreach ($texts as $text) {
+            if (self::matchesAnyRule($text, $ruleIds)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function resolveHeuristicUserGoal(string $content): string

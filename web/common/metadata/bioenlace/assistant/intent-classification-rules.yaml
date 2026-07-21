@@ -479,22 +479,20 @@ chat_preprocess:
   prompt:
     intro: 'Analizá el mensaje del usuario para un asistente de salud.'
     rules:
-      - 'user_goal operational si pide hacer algo en el sistema (turno, agenda, cancelar), consulta datos operativos del centro (cuántos profesionales hay, planta profesional, listar médicos del efector) o modificar datos del personal (editar nombre, cambiar horarios de agenda del centro).'
-      - 'conversational si es saludo, consulta de salud/síntomas, lesiones (golpe, chichón, bulto), malestar o charla sin pedir una acción del sistema (no confundir con informational).'
+      - 'user_goal operational solo si pide una acción explícita del sistema (sacar/reservar/cancelar/reprogramar turno, agenda) o consulta/modifica datos operativos del centro/personal (conteo, listado, editar agenda del staff).'
+      - 'conversational si hay saludo, síntomas, lesiones, malestar o charla clínica — aunque también pregunten hospital cerca, dónde atenderse o qué servicio conviene. Eso NO es operational: primero orientación + oferta; no abras un flow.'
       - 'informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas, quejas clínicas ni consultas de plantilla/conteo de profesionales del efector.'
       - 'No uses category servicio para síntomas, partes del cuerpo ni malestar; esas menciones van solo en normalized_text.'
       - 'meta: preguntas sobre el asistente o la app (no operativas).'
-      - 'normalized_text: corregí ortografía y expandí abreviaturas clínicas comunes; conservá el sentido del mensaje.'
+      - 'normalized_text: corregí ortografía y expandí abreviaturas clínicas comunes; conservá síntomas y el sentido completo del mensaje (no borres el malestar si también pide cercanía).'
       - 'extractions: solo menciones de entidades del mundo (servicio, centro, persona), no verbos ni la acción.'
       - 'synonyms: máximo 2 strings por extracción.'
 
   goal_overrides:
+    # Síntomas → charla con oferta (botón). Solo queda operational si pide turno/agenda explícito.
     - when_rule: clinical_symptom
-      from_goals: [informational, unclear]
-      to_goal: conversational
-    - when_rule: clinical_symptom
-      from_goal: operational
-      when_not_rule: scheduling_operational
+      from_goals: [informational, unclear, operational, in_flow_question]
+      when_not_any_rule: [scheduling_operational, paciente_reservar_turno]
       to_goal: conversational
     - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit]
       to_goal: operational

@@ -123,7 +123,7 @@ return [
     /** Minutos antes del turno en que abre «Preparar tu consulta» (motivos, intake, pre-consulta). Default 240 = 4 h. */
     'encounter_journey_preparar_minutos_antes' => 240,
     /** Minutos antes del turno en que el médico puede abrir historia clínica (motivos resumidos por IA). */
-    'historia_clinica_apertura_medico_minutos' => 1,
+    'historia_clinica_apertura_medico_minutos' => 30,
 
     /**
      * Login usuario/contraseña para revisores de Google Play / App Store (apps móviles).

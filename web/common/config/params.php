@@ -274,7 +274,7 @@ return [
      */
     'motivos_consulta_cierre_minutos' => 10,
     'encounter_journey_preparar_minutos_antes' => 240,
-    'historia_clinica_apertura_medico_minutos' => 1,
+    'historia_clinica_apertura_medico_minutos' => 30,
 
     /**
      * Metadata declarativa del producto (intents, reglas NL, permisos dominio, panel home).

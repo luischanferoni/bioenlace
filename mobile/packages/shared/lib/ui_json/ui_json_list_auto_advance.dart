@@ -72,10 +72,31 @@ class UiJsonSingleListPick {
   }
 
   Map<String, dynamic> toDraftDelta() {
-    return {
+    final delta = <String, dynamic>{
       draftField: itemId,
       '_flow_item_$draftField': item,
     };
+    final meta = item['meta'];
+    if (meta is Map) {
+      final metaDraft = meta['draft'];
+      if (metaDraft is Map) {
+        metaDraft.forEach((k, v) {
+          final key = k?.toString().trim() ?? '';
+          final sv = v?.toString().trim() ?? '';
+          if (key.isEmpty || sv.isEmpty) return;
+          delta[key] = sv;
+        });
+      }
+      final outcome = meta['outcome']?.toString().trim() ?? '';
+      if (outcome.isNotEmpty) {
+        delta['protocol_action_outcome'] = outcome;
+      }
+      final protocolId = meta['protocol_id']?.toString().trim() ?? '';
+      if (protocolId.isNotEmpty) {
+        delta['protocol_id'] = protocolId;
+      }
+    }
+    return delta;
   }
 
   /// Id estable del ítem de un bloque `kind: list` (respeta `item.id_field`).

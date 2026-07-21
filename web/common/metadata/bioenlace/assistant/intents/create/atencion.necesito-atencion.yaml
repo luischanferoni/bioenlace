@@ -445,7 +445,7 @@ subintents:
     min_length: 10
     submit_action_id: consulta-async.solicitar-como-paciente
     params:
-      intake_tipo: draft.intake_tipo
+      intake_tipo: seguimiento_consulta_previa
       encounter_id: draft.encounter_id
       triage_raiz: seguimiento_cronico
       mensaje: draft.mensaje
@@ -516,7 +516,7 @@ subintents:
     params:
       care_plan_id: draft.care_plan_id
       medication_request_ids: draft.medication_request_ids
-      intake_tipo: draft.intake_tipo
+      intake_tipo: seguimiento
       seguimiento_necesidad: draft.seguimiento_necesidad
       medicacion_operacion: renovacion
       triage_raiz: seguimiento_cronico
@@ -536,7 +536,7 @@ subintents:
     min_length: 10
     submit_action_id: consulta-async.solicitar-como-paciente
     params:
-      intake_tipo: draft.intake_tipo
+      intake_tipo: seguimiento
       seguimiento_necesidad: draft.seguimiento_necesidad
       care_plan_id: draft.care_plan_id
       medication_request_ids: draft.medication_request_ids
@@ -557,7 +557,7 @@ subintents:
     min_length: 10
     submit_action_id: consulta-async.solicitar-como-paciente
     params:
-      intake_tipo: draft.intake_tipo
+      intake_tipo: consulta_general
       mensaje: draft.mensaje
       triage_raiz: seguimiento_cronico
 - id: cs_captura_seguimiento_mensaje
@@ -575,7 +575,7 @@ subintents:
     min_length: 10
     submit_action_id: consulta-async.solicitar-como-paciente
     params:
-      intake_tipo: draft.intake_tipo
+      intake_tipo: seguimiento
       seguimiento_necesidad: draft.seguimiento_necesidad
       care_plan_id: draft.care_plan_id
       triage_raiz: seguimiento_cronico

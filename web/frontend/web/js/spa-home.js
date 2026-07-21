@@ -3491,6 +3491,23 @@
                             delta.id_profesional_efector_servicio = pesId;
                         }
                     }
+                    // Acciones de hub/protocolo: meta.draft aporta claves (p. ej. intake_tipo).
+                    const metaDraft = meta.draft && typeof meta.draft === 'object' ? meta.draft : null;
+                    if (metaDraft) {
+                        Object.keys(metaDraft).forEach(function (mk) {
+                            const mv = metaDraft[mk];
+                            if (mv == null) return;
+                            const sv = String(mv).trim();
+                            if (sv === '') return;
+                            delta[mk] = sv;
+                        });
+                    }
+                    if (meta.outcome != null && String(meta.outcome).trim() !== '') {
+                        delta.protocol_action_outcome = String(meta.outcome).trim();
+                    }
+                    if (meta.protocol_id != null && String(meta.protocol_id).trim() !== '') {
+                        delta.protocol_id = String(meta.protocol_id).trim();
+                    }
                 }
                 applyDraftDelta(delta);
                 writeFlowState();

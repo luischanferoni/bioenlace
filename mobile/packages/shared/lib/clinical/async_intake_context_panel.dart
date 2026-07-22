@@ -26,7 +26,6 @@ class AsyncIntakeContextPanel extends StatelessWidget {
             ? intakeContext['section_label'].toString().trim()
             : 'Contexto de la solicitud';
     final tipoLabel = intakeContext['tipo_label']?.toString().trim() ?? '';
-    final summary = intakeContext['summary']?.toString().trim() ?? '';
     final lines = intakeContext['lines'];
     final refEnc = intakeContext['reference_encounter'];
     final detail = refEnc is Map ? refEnc['detail'] : null;
@@ -104,9 +103,6 @@ class AsyncIntakeContextPanel extends StatelessWidget {
           if (lineWidgets.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
             ...lineWidgets,
-          ] else if (summary.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(summary, style: BioTypography.bodySm),
           ],
           if (detail is Map) ...[
             BioSpacing.gapH(BioSpacing.sm),

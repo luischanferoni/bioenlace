@@ -826,8 +826,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final slaIncumplido = sla?['incumplido'] == true;
     final slaHoras = sla?['horas_objetivo'];
 
-    final intakeLines = _asyncIntakeLines(item['intake_context']);
-
     UiIntent statusIntent = UiIntent.neutral;
     if (status == 'planned') statusIntent = UiIntent.warning;
     if (status == 'in-progress') statusIntent = UiIntent.success;
@@ -865,15 +863,6 @@ class _HomeScreenState extends State<HomeScreen> {
               style: BioTypography.bodySm,
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
-            ),
-          ],
-          if (intakeLines.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            ...intakeLines.map(
-              (line) => Padding(
-                padding: const EdgeInsets.only(bottom: BioSpacing.xs),
-                child: Text(line, style: BioTypography.caption),
-              ),
             ),
           ],
           if (prioridadRank > 0 && prioridadRank <= 3) ...[
@@ -915,26 +904,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
-  }
-
-  List<String> _asyncIntakeLines(dynamic intakeContext) {
-    if (intakeContext is! Map) return [];
-    final ctx = Map<String, dynamic>.from(intakeContext);
-    final summary = ctx['summary']?.toString().trim() ?? '';
-    if (summary.isNotEmpty) {
-      return [summary];
-    }
-    final lines = ctx['lines'];
-    if (lines is! List) return [];
-    final out = <String>[];
-    for (final line in lines) {
-      if (line is! Map) continue;
-      final label = line['label']?.toString().trim() ?? '';
-      final value = line['value']?.toString().trim() ?? '';
-      if (label.isEmpty && value.isEmpty) continue;
-      out.add(label.isNotEmpty ? '$label: $value' : value);
-    }
-    return out;
   }
 
   String _formatAsyncCreatedAt(String? raw) {

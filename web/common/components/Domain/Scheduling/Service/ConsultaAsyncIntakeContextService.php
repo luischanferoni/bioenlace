@@ -11,21 +11,26 @@ use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryQuer
  * navegación se entregan como datos estructurados (`subject_persona_id`, `encounter_id`)
  * y cada cliente (web SPA, app nativa) resuelve la navegación por su cuenta.
  *
- * `reference_encounter.detail`: resumen lean del encounter de origen (si hay).
+ * `reference_encounter.detail`: resumen lean del encounter de origen (solo si se pide).
  * `references`: CTAs tipados (`clinical_history`, `reference_encounter`).
  */
 final class ConsultaAsyncIntakeContextService
 {
     /**
      * @param array<string, mixed> $meta JSON del campo note del encounter async
+     * @param array{include_reference_detail?: bool} $options
+     *   - include_reference_detail: true (default) carga resumen de atención previa (chat).
+     *     false deja solo encounter_id + línea liviana (bandeja staff).
      * @return array<string, mixed>|null null si no hay intake de consultas-seguimiento
      */
-    public function buildFromMeta(array $meta, int $idPersona): ?array
+    public function buildFromMeta(array $meta, int $idPersona, array $options = []): ?array
     {
         $intakeTipo = trim((string) ($meta['intake_tipo'] ?? ''));
         if ($intakeTipo === '') {
             return null;
         }
+        $includeRefDetail = !array_key_exists('include_reference_detail', $options)
+            || (bool) $options['include_reference_detail'];
 
         $catalog = new ConsultasSeguimientoIntakeCatalogService();
         $labels = (new ConsultaAsyncBandejaCatalogService())->intakeContextLabels();
@@ -99,19 +104,32 @@ final class ConsultaAsyncIntakeContextService
 
         $refId = (int) ($meta['reference_encounter_id'] ?? 0);
         if ($refId > 0 && $idPersona > 0) {
-            $detail = (new PatientEncounterSummaryQueryService())->getDetailForPersona($idPersona, $refId);
-            $lean = $this->leanEncounterDetail($detail, $refId, $labels);
             $lineLabel = $labels['reference_encounter_line_label'];
-            $lines[] = [
-                'code' => 'reference_encounter',
-                'label' => $lineLabel !== '' ? $lineLabel : 'Atención previa',
-                'value' => $lean['headline'],
-                'encounter_id' => $refId,
-            ];
-            $referenceEncounter = [
-                'encounter_id' => $refId,
-                'detail' => $lean,
-            ];
+            $lineLabel = $lineLabel !== '' ? $lineLabel : 'Atención previa';
+            if ($includeRefDetail) {
+                $detail = (new PatientEncounterSummaryQueryService())->getDetailForPersona($idPersona, $refId);
+                $lean = $this->leanEncounterDetail($detail, $refId, $labels);
+                $lines[] = [
+                    'code' => 'reference_encounter',
+                    'label' => $lineLabel,
+                    'value' => $lean['headline'],
+                    'encounter_id' => $refId,
+                ];
+                $referenceEncounter = [
+                    'encounter_id' => $refId,
+                    'detail' => $lean,
+                ];
+            } else {
+                $lines[] = [
+                    'code' => 'reference_encounter',
+                    'label' => $lineLabel,
+                    'value' => 'Atención #' . $refId,
+                    'encounter_id' => $refId,
+                ];
+                $referenceEncounter = [
+                    'encounter_id' => $refId,
+                ];
+            }
             $references[] = [
                 'kind' => 'reference_encounter',
                 'label' => $labels['reference_encounter_action'] !== ''
@@ -138,7 +156,6 @@ final class ConsultaAsyncIntakeContextService
             'section_label' => $labels['section_label'] !== ''
                 ? $labels['section_label']
                 : 'Contexto de la solicitud',
-            'summary' => $this->buildSummary($tipoLabel, $lines),
             'subject_persona_id' => $idPersona > 0 ? $idPersona : null,
             'lines' => $lines,
             'reference_encounter' => $referenceEncounter,
@@ -230,21 +247,5 @@ final class ConsultaAsyncIntakeContextService
         }
 
         return implode(' · ', $parts);
-    }
-
-    /**
-     * @param list<array{label: string, value: string}> $lines
-     */
-    private function buildSummary(string $tipoLabel, array $lines): string
-    {
-        $chunks = [$tipoLabel];
-        foreach ($lines as $line) {
-            $value = trim((string) ($line['value'] ?? ''));
-            if ($value !== '') {
-                $chunks[] = $value;
-            }
-        }
-
-        return implode(' · ', $chunks);
     }
 }

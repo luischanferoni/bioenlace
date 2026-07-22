@@ -14,7 +14,7 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         $this->assertNull($svc->buildFromMeta(['urgency_band' => 'C'], 1));
     }
 
-    public function testConsultaGeneralResumeTipo(): void
+    public function testConsultaGeneralIncluyeTipoLabelYReferencia(): void
     {
         $svc = new ConsultaAsyncIntakeContextService();
         $ctx = $svc->buildFromMeta([
@@ -23,7 +23,8 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
 
         $this->assertNotNull($ctx);
         $this->assertSame('consulta_general', $ctx['intake_tipo']);
-        $this->assertStringContainsString('Consulta general', $ctx['summary']);
+        $this->assertStringContainsString('Consulta general', (string) ($ctx['tipo_label'] ?? ''));
+        $this->assertArrayNotHasKey('summary', $ctx);
         $this->assertCount(1, $ctx['references']);
         $this->assertSame('clinical_history', $ctx['references'][0]['kind']);
         $this->assertSame(1, $ctx['references'][0]['subject_persona_id']);
@@ -41,12 +42,15 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         ], 1);
 
         $this->assertNotNull($ctx);
+        $this->assertArrayNotHasKey('summary', $ctx);
         $codes = array_column($ctx['lines'], 'code');
         $this->assertContains('seguimiento_necesidad', $codes);
         $this->assertContains('medicacion_operacion', $codes);
         $this->assertContains('medication_request_ids', $codes);
-        $this->assertStringContainsString('Renovación', $ctx['summary']);
-        $this->assertStringContainsString('Enalapril', $ctx['summary']);
+        $values = array_column($ctx['lines'], 'value');
+        $joined = implode(' ', $values);
+        $this->assertStringContainsString('Renovación', $joined);
+        $this->assertStringContainsString('Enalapril', $joined);
         $this->assertSame('clinical_history', $ctx['references'][0]['kind']);
     }
 
@@ -59,7 +63,8 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         ], 12);
 
         $this->assertNotNull($ctx);
-        $this->assertStringContainsString('consulta previa', strtolower($ctx['summary']));
+        $this->assertArrayNotHasKey('summary', $ctx);
+        $this->assertStringContainsString('consulta previa', strtolower((string) ($ctx['tipo_label'] ?? '')));
         $this->assertNotEmpty($ctx['lines']);
         $this->assertSame('reference_encounter', $ctx['lines'][0]['code']);
         $this->assertSame(12, $ctx['subject_persona_id']);
@@ -79,5 +84,19 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         $this->assertNotNull($refEnc);
         $this->assertSame(55, $refEnc['encounter_id']);
         $this->assertSame(12, $refEnc['subject_persona_id']);
+    }
+
+    public function testBandejaOmiteDetailDeEncounterReferencia(): void
+    {
+        $svc = new ConsultaAsyncIntakeContextService();
+        $ctx = $svc->buildFromMeta([
+            'intake_tipo' => ConsultasSeguimientoIntakeCatalogService::INTAKE_SEGUIMIENTO_CONSULTA_PREVIA,
+            'reference_encounter_id' => 55,
+        ], 12, ['include_reference_detail' => false]);
+
+        $this->assertNotNull($ctx);
+        $this->assertSame(55, $ctx['reference_encounter']['encounter_id']);
+        $this->assertArrayNotHasKey('detail', $ctx['reference_encounter']);
+        $this->assertSame('Atención #55', $ctx['lines'][0]['value']);
     }
 }

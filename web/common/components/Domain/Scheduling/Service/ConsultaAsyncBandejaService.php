@@ -331,54 +331,36 @@ final class ConsultaAsyncBandejaService
             && $idPes === 0
             && ConsultaAsyncAccessService::staffPuedeTomar($encounter);
 
-        $chatPolicy = (new ConsultaAsyncChatPolicyService())->resolveForEncounter($encounter, !$staffView);
-        $conversationMode = (string) ($chatPolicy['conversation_mode'] ?? 'conversational');
         // Paciente: chat solo en modo conversacional (renovación/ajuste structured no escriben ni abren chat).
         // Staff: abrir tras tomar / cuando ya no está planned sin asignación.
         if ($staffView) {
             $abrirChat = $encounter->status !== EncounterStatus::PLANNED && $esMio;
+            $cancelar = false;
         } else {
+            $chatPolicy = (new ConsultaAsyncChatPolicyService())->resolveForEncounter($encounter, true);
+            $conversationMode = (string) ($chatPolicy['conversation_mode'] ?? 'conversational');
             $abrirChat = $conversationMode === 'conversational';
+            $cancelar = (($chatPolicy['acciones']['cancelar'] ?? false) === true);
         }
-        $cancelar = !$staffView && (($chatPolicy['acciones']['cancelar'] ?? false) === true);
 
         $resolution = $meta['async_resolution'] ?? null;
         $resolutionLabel = is_array($resolution)
             ? trim((string) ($resolution['label'] ?? ''))
             : '';
-        $metaSvc = new ConsultaAsyncEncounterMetaService();
-        $carePlanId = $metaSvc->carePlanId($meta);
-        $conditionCodigo = $metaSvc->conditionCodigo($meta);
-        $conditionRef = $metaSvc->conditionRef($meta);
-        // Anclas: tratamiento > condición > listado general de consultas.
-        if ($carePlanId > 0) {
-            $uiGroup = 'tratamiento';
-        } elseif ($conditionCodigo !== '' || $conditionRef !== '') {
-            $uiGroup = 'condicion';
-        } else {
-            $uiGroup = 'consultas';
-        }
 
         $item = [
             'encounter_id' => (int) $encounter->id,
             'solicitud_tipo' => $this->solicitudTipoFromMeta($meta, $policyCatalog),
-            'conversation_mode' => $conversationMode,
-            'care_plan_id' => $carePlanId > 0 ? $carePlanId : null,
-            'condition_codigo' => $conditionCodigo !== '' ? $conditionCodigo : null,
-            'condition_ref' => $conditionRef !== '' ? $conditionRef : null,
-            'ui_group' => $uiGroup,
             'paciente' => [
                 'id_persona' => (int) $encounter->subject_persona_id,
                 'nombre_completo' => $subject ? $subject->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N) : 'Paciente',
             ],
             'servicio' => $servicio ? (string) $servicio->nombre : 'Servicio',
-            'servicio_id' => $serviceId,
             'status' => (string) $encounter->status,
             'status_label' => $catalog->etiquetaEstado((string) $encounter->status),
             'created_at' => (string) $encounter->created_at,
             'reason_preview' => $this->previewText((string) ($encounter->reason_text ?? '')),
             'resolution_label' => $resolutionLabel !== '' ? $resolutionLabel : null,
-            'urgency_band' => $urgencyBand,
             'sla' => $sla,
             'acciones' => [
                 'tomar' => $puedeTomar,
@@ -387,9 +369,36 @@ final class ConsultaAsyncBandejaService
             ],
         ];
 
-        // Staff: contexto de intake + asignación. Paciente: card liviana (preview/acciones).
+        // Paciente: anclas para agrupar en home + modo de conversación del card.
+        if (!$staffView) {
+            $metaSvc = new ConsultaAsyncEncounterMetaService();
+            $carePlanId = $metaSvc->carePlanId($meta);
+            $conditionCodigo = $metaSvc->conditionCodigo($meta);
+            $conditionRef = $metaSvc->conditionRef($meta);
+            // Anclas: tratamiento > condición > listado general de consultas.
+            if ($carePlanId > 0) {
+                $uiGroup = 'tratamiento';
+            } elseif ($conditionCodigo !== '' || $conditionRef !== '') {
+                $uiGroup = 'condicion';
+            } else {
+                $uiGroup = 'consultas';
+            }
+            $item['conversation_mode'] = $conversationMode;
+            $item['care_plan_id'] = $carePlanId > 0 ? $carePlanId : null;
+            $item['condition_codigo'] = $conditionCodigo !== '' ? $conditionCodigo : null;
+            $item['condition_ref'] = $conditionRef !== '' ? $conditionRef : null;
+            $item['ui_group'] = $uiGroup;
+        }
+
+        // Staff: contexto de intake liviano + asignación.
+        // urgency_band queda solo para el agente de prioridad (se quita antes de responder).
         if ($staffView) {
-            $item['intake_context'] = (new ConsultaAsyncIntakeContextService())->buildFromMeta($meta, $idPersona);
+            $item['urgency_band'] = $urgencyBand;
+            $item['intake_context'] = (new ConsultaAsyncIntakeContextService())->buildFromMeta(
+                $meta,
+                $idPersona,
+                ['include_reference_detail' => false]
+            );
             $item['asignacion'] = [
                 'id_pes' => $idPes > 0 ? $idPes : null,
                 'profesional' => $profesionalNombre,

@@ -1605,7 +1605,7 @@
     function renderIntakeContextBlock(rootEl, intakeContext) {
       if (!rootEl) return;
       var ctx = intakeContext && typeof intakeContext === 'object' ? intakeContext : null;
-      if (!ctx || (!ctx.summary && !(ctx.lines && ctx.lines.length) && !ctx.reference_encounter)) {
+      if (!ctx || (!(ctx.lines && ctx.lines.length) && !ctx.reference_encounter && !ctx.tipo_label)) {
         rootEl.classList.add('d-none');
         return;
       }
@@ -1630,7 +1630,6 @@
       if (linesSlot) {
         clearNode(linesSlot);
         var lines = Array.isArray(ctx.lines) ? ctx.lines : [];
-        var rendered = 0;
         lines.forEach(function (line) {
           if (!line || line.code === 'reference_encounter') return;
           var label = String(line.label || '').trim();
@@ -1643,26 +1642,13 @@
             ':</strong> ' +
             escapeHtml(value);
           linesSlot.appendChild(row);
-          rendered += 1;
         });
-        if (!rendered && ctx.summary) {
-          var summaryFallback = document.createElement('div');
-          summaryFallback.textContent = ctx.summary;
-          linesSlot.appendChild(summaryFallback);
-        }
       }
 
       var summaryEl = rootEl.querySelector('[data-field="intake-summary"]');
       if (summaryEl) {
-        var hasLines = linesSlot && linesSlot.childNodes.length > 0;
-        if (hasLines) {
-          summaryEl.classList.add('d-none');
-        } else if (ctx.summary) {
-          summaryEl.textContent = ctx.summary;
-          summaryEl.classList.remove('d-none');
-        } else {
-          summaryEl.classList.add('d-none');
-        }
+        summaryEl.classList.add('d-none');
+        summaryEl.textContent = '';
       }
 
       var detailSlot = rootEl.querySelector('[data-slot="intake-encounter-detail"]');

@@ -101,17 +101,21 @@ final class ConsultaAsyncBandejaPrioridadAgent
      */
     public function applyToStaffBandeja(array $bandeja, array $encounterById): array
     {
+        $items = is_array($bandeja['items'] ?? null) ? $bandeja['items'] : [];
+        if ($items === []) {
+            return $bandeja;
+        }
+
         if (!$this->isEnabled()) {
+            $bandeja['items'] = $this->slimStaffItemsForClient($items);
+
             return $bandeja;
         }
 
         $config = AutonomousAgentMetadata::loadAgent(self::AGENT_ID);
         if ($config === null) {
-            return $bandeja;
-        }
+            $bandeja['items'] = $this->slimStaffItemsForClient($items);
 
-        $items = is_array($bandeja['items'] ?? null) ? $bandeja['items'] : [];
-        if ($items === []) {
             return $bandeja;
         }
 
@@ -127,6 +131,7 @@ final class ConsultaAsyncBandejaPrioridadAgent
         $items = $this->prioridad->sortItems($items);
         $this->processSlaEscalations($items, $encounterById, $config);
         $this->recordBandejaRanking($items);
+        $items = $this->slimStaffItemsForClient($items);
 
         $bandeja['items'] = $items;
         $bandeja['prioridad_agent'] = [
@@ -135,6 +140,28 @@ final class ConsultaAsyncBandejaPrioridadAgent
         ];
 
         return $bandeja;
+    }
+
+    /**
+     * Quita campos internos / de debug del payload staff al cliente.
+     *
+     * @param list<array<string, mixed>> $items
+     * @return list<array<string, mixed>>
+     */
+    private function slimStaffItemsForClient(array $items): array
+    {
+        foreach ($items as &$item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            unset($item['urgency_band'], $item['conversation_mode'], $item['servicio_id']);
+            if (isset($item['prioridad']) && is_array($item['prioridad'])) {
+                unset($item['prioridad']['factors'], $item['prioridad']['score']);
+            }
+        }
+        unset($item);
+
+        return $items;
     }
 
     /**

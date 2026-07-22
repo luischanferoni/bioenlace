@@ -153,7 +153,7 @@ Ingreso Bioenlace (AR) ≈
 
 | Componente | Descripción |
 |------------|-------------|
-| **Licencia** | `precio = COGS_ref × (vol_clase/400) × (1 + margen%)` — margen **233 %** ≈ ~70 % bruto; COGS **con context caching**; base ~**USD 3,16**/prof/mes; con audio ~**6,43**; con videollamada (STT incluido) ~**USD 18,08**/prof/mes |
+| **Licencia** | `precio = COGS_ref × (vol_clase/400) × (1 + margen%)` — margen de lista **233 %** ≈ ~70 % bruto ≈ ~49 % después IIBB+ganancias; tramos por PES totales (20–49 → 163 %, 50–149 → 134 %, 150+ → 117 %); COGS **con context caching**; base ~**USD 3,16**/prof/mes; con audio ~**6,43**; con videollamada (STT incluido) ~**USD 18,08**/prof/mes |
 | **Clases** | AMB / EMER / IMP habilitan módulos; el precio escala con `encounters_per_professional_month` por clase |
 | **Add-ons variables** | Audio (STT profesional ~5 min con **−30 % on-device** → COGS **0,98**) y/o videollamada (self-host, COGS **3,50**; incluye STT una vez) — suman COGS y se reflejan en el precio |
 | **Rev share Rx (opcional)** | USD 0,5–2 por receta enrutada a farmacia partner (vía 5; fuera de la fórmula COGS) |

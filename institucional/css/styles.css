@@ -1607,9 +1607,10 @@ section {
 }
 
 .pricing-calc__line--meta {
-    opacity: 0.75;
-    font-size: 0.9em;
-    margin-bottom: 0.5rem;
+    color: #546e7a;
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0.35rem;
 }
 
 .pricing-calc__cogs {

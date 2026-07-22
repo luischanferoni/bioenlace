@@ -37,7 +37,7 @@ institucional/
 3. **Pacientes** — App paciente y seguimiento
 4. **Personal** — Demo del asistente conversacional (listar / editar / crear)
 5. **Funcionalidades** — Catálogo por audiencia
-6. **Precios** — Calculador por profesionales × tipo de atención (AMB / EMER / IMP) + opcionales audio / videollamada (COGS + margen)
+6. **Precios** — Calculador por profesionales × tipo de atención (AMB / EMER / IMP) + opcionales audio / videollamada (COGS + margen por tramo de volumen)
 7. **Contacto** — Formulario e información
 8. **Alta** (`alta.html`) — Wizard self-service clínica / consultorio (pago simulado) y solicitud ministerio; deep-link `?perfil=consultorio`
 
@@ -53,7 +53,7 @@ El CTA del calculador (`Crear cuenta` → `alta.html`) guarda la selección en `
 
 Núcleo compartido en `pricing-core.js`. En `#precios` se muestra el calculador completo; en `alta.html` solo un **indicador de precio** que se actualiza al cambiar cantidades/opcionales.
 
-**Fórmula:** `precio_unitario = COGS × (1 + margin_on_cost_percent/100)`.  
+**Fórmula:** `precio_unitario = COGS × (1 + margen%/100)`, donde `margen%` sale de `volume_discount_tiers` según la **suma de profesionales** contratados (cualquier tipo). Lista: `margin_on_cost_percent` **233**.  
 COGS: base **0,95** ± audio **0,98** (STT profesional ~5 min con **−30 % on-device**) ± videollamada **3,50** (self-host sala/TURN/Track Egress/storage; STT de la llamada = mismo audio, **una sola vez**), columna **con context caching** ([costos-api.md](../web/docs/costos/costos-api.md)).  
 El usuario elige clases (AMB / EMER / IMP), cantidad de **profesionales** por clase, y opcionales audio/videollamada. En copy público **no** usar el término PES.
 

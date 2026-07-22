@@ -113,7 +113,7 @@ Base: filas **IA + STT** de la tabla A (~**14.450** sin caché · ~**13.650** co
 
 ### C) Cotización orientativa — variable IA (5.000 prof., uso intensivo)
 
-**Lista comercial vigente:** [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — `precio = COGS × (1 + margin_on_cost_percent/100)` con margen **233 %** (~70 % bruto). COGS de esta sección = tabla A / [costos-api](./costos-api.md).
+**Lista comercial vigente:** [matriz Argentina](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md) — `precio = COGS × (1 + margen%/100)` con margen de lista **233 %** (~70 % bruto ≈ ~49 % después IIBB + ganancias) y tramos por volumen de PES. COGS de esta sección = tabla A / [costos-api](./costos-api.md).
 
 #### Qué es cada margen (importante)
 
@@ -179,7 +179,7 @@ La fila «margen mínimo» histórico (1,8–2 por prof) **no cubre** STT ni vid
 ## Cómo usar esto en pricing
 
 1. **Costo directo** (tabla A o B / [costos-api](./costos-api.md)) → COGS por profesional (base ± audio ± videollamada).  
-2. **Aplicar margen sobre costo** (`margin_on_cost_percent` en metadata; hoy **233 %** ≈ 70 % bruto) → precio lista unitario.  
+2. **Aplicar margen sobre costo** (`volume_discount_tiers` / `margin_on_cost_percent` en metadata; lista **233 %** ≈ 70 % bruto ≈ 49 % después IIBB + ganancias) → precio unitario según PES totales.  
 3. **× cantidad de profesionales** por clase contratada (AMB / EMER / IMP).  
 4. **+ Gastos fijos** (sueldos, ventas, implementación) → no están en `docs/costos/` de APIs; ajustar margen o fee one-shot si hace falta.  
 5. **+ IIBB** sobre precio de venta estimado (o incluirlo en el margen deseado).  

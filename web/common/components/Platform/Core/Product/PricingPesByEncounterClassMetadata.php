@@ -118,6 +118,7 @@ final class PricingPesByEncounterClassMetadata
 
     /**
      * COGS de referencia (volumen reference) según add-ons, sin escalar por clase.
+     * Videollamada incluye STT una sola vez (mismo COGS audio).
      */
     public static function referenceUnitCogs(bool $audio = false, bool $videollamada = false): float
     {
@@ -126,7 +127,7 @@ final class PricingPesByEncounterClassMetadata
             return 0.0;
         }
         $total = (float) ($cogs['base'] ?? 0);
-        if ($audio) {
+        if ($audio || $videollamada) {
             $total += (float) ($cogs['audio'] ?? 0);
         }
         if ($videollamada) {
@@ -177,15 +178,79 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
+     * @return list<array<string, mixed>>
+     */
+    public static function volumeDiscountTiers(): array
+    {
+        $tiers = self::loadConfig()['volume_discount_tiers'] ?? [];
+        if (!is_array($tiers)) {
+            return [];
+        }
+
+        return array_values(array_filter($tiers, static fn ($t) => is_array($t)));
+    }
+
+    /**
+     * Tramo según PES totales contratados (suma de todas las clases).
+     *
+     * @return array<string, mixed>
+     */
+    public static function tierForTotalPes(int $totalPes): array
+    {
+        $n = max(0, $totalPes);
+        $tiers = self::volumeDiscountTiers();
+        if ($tiers === []) {
+            return [
+                'id' => 'lista',
+                'label' => 'Lista',
+                'min_pes' => 1,
+                'max_pes' => null,
+                'margin_on_cost_percent' => self::marginOnCostPercent(),
+                'margin_after_iibb_ganancias_percent' => null,
+            ];
+        }
+
+        $fallback = $tiers[0];
+        foreach ($tiers as $tier) {
+            $min = (int) ($tier['min_pes'] ?? 0);
+            $maxRaw = $tier['max_pes'] ?? null;
+            $max = $maxRaw === null || $maxRaw === '' ? null : (int) $maxRaw;
+            if ($n >= $min && ($max === null || $n <= $max)) {
+                return $tier;
+            }
+            if ($n >= $min) {
+                $fallback = $tier;
+            }
+        }
+
+        return $fallback;
+    }
+
+    public static function marginOnCostPercentForTotalPes(int $totalPes): float
+    {
+        $tier = self::tierForTotalPes($totalPes);
+        if (isset($tier['margin_on_cost_percent'])) {
+            return (float) $tier['margin_on_cost_percent'];
+        }
+
+        return self::marginOnCostPercent();
+    }
+
+    /**
      * Precio de lista USD/profesional/mes = COGS × (1 + margen%).
+     *
+     * @param int|null $totalPes PES totales del contrato; null = margen de lista.
      */
     public static function unitPrice(
         bool $audio = false,
         bool $videollamada = false,
-        ?string $encounterClass = null
+        ?string $encounterClass = null,
+        ?int $totalPes = null
     ): float {
         $cogs = self::unitCogs($audio, $videollamada, $encounterClass);
-        $margin = self::marginOnCostPercent();
+        $margin = $totalPes === null
+            ? self::marginOnCostPercent()
+            : self::marginOnCostPercentForTotalPes($totalPes);
 
         return round($cogs * (1 + $margin / 100), 2);
     }
@@ -193,13 +258,13 @@ final class PricingPesByEncounterClassMetadata
     /**
      * Precio unitario de lista para la clase (respeta audio incluido / video permitido).
      */
-    public static function pricePerPes(string $encounterClass): ?float
+    public static function pricePerPes(string $encounterClass, ?int $totalPes = null): ?float
     {
         if (!self::isSellableClass($encounterClass)) {
             return null;
         }
 
-        return self::unitPrice(false, false, $encounterClass);
+        return self::unitPrice(false, false, $encounterClass, $totalPes);
     }
 
     public static function defaultWhenEmptyAllowAll(): bool
@@ -217,13 +282,18 @@ final class PricingPesByEncounterClassMetadata
         bool $audio = false,
         bool $videollamada = false
     ): float {
+        $totalPes = 0;
+        foreach ($professionalsByClass as $qty) {
+            $totalPes += max(0, (int) $qty);
+        }
+
         $total = 0.0;
         foreach ($professionalsByClass as $code => $qty) {
             $code = (string) $code;
             if (!self::isSellableClass($code) || (int) $qty <= 0) {
                 continue;
             }
-            $total += self::unitPrice($audio, $videollamada, $code) * (int) $qty;
+            $total += self::unitPrice($audio, $videollamada, $code, $totalPes) * (int) $qty;
         }
 
         return round($total, 2);

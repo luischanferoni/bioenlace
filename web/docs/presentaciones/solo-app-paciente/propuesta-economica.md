@@ -39,9 +39,10 @@ Esta propuesta cubre **únicamente el uso de la app móvil del paciente** de Bio
 
 ## 3. Inversión
 
-Moneda: **USD**. Los importes se indican **sin IVA** (u otros impuestos aplicables en Argentina).
+Moneda: **USD**. Los importes se indican **sin IVA**.
 
 El costo de esta propuesta es **solo por el canal app paciente**, no por cantidad de profesionales clínicos.
+
 
 ### 3.1 Licencia mensual — app paciente
 

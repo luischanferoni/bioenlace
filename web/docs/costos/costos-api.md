@@ -489,7 +489,7 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 **WhatsApp (§7, alcance actual):** Meta **~$0** (sin utility). La IA del chat sigue en §1.
 
-**De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** y el STT de planificación (**audio 0,98**) — `precio = COGS × (1 + margin_on_cost_percent/100)` (hoy margen **233 %** ≈ 70 % bruto). Videollamada **incluye** STT profesional una vez (no duplicar dictado). Detalle: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
+**De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** y el STT de planificación (**audio 0,98**) — `precio = COGS × (1 + margen%/100)` (lista **233 %** ≈ 70 % bruto; tramos por PES en metadata). Videollamada **incluye** STT profesional una vez (no duplicar dictado). Detalle: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
 
 **Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **3,50** (self-host; STT no duplicado) — ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
 

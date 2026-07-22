@@ -62,6 +62,7 @@
     if (!config) return;
     const selection = currentSelection();
     const result = Pricing.estimate(config, selection);
+    refreshUnitLabels();
 
     if (totalEl) {
       totalEl.textContent = result.lines.length
@@ -73,34 +74,59 @@
         breakdownEl.innerHTML =
           '<p class="pricing-calc__hint">Activá al menos un tipo de atención e indicá la cantidad de profesionales.</p>';
       } else {
-        breakdownEl.innerHTML = result.lines
-          .map((l) => {
-            let note = '';
-            if (l.code === 'AMB') {
-              const bits = [];
-              if (selection.addons.videollamada) {
-                bits.push('con videollamada (transcripción incluida)');
-              } else if (selection.addons.audio) {
-                bits.push('con dictado');
+        const tier = result.tier || {};
+        const tierRange =
+          tier.max_pes == null
+            ? (tier.min_pes || 150) + '+ profesionales'
+            : (tier.min_pes || 1) + '–' + tier.max_pes + ' profesionales';
+        let meta =
+          '<div class="pricing-calc__line pricing-calc__line--meta"><span>Tramo ' +
+          (tier.label || 'Lista') +
+          ' (' +
+          tierRange +
+          '; ' +
+          result.totalPes +
+          ' contratado' +
+          (result.totalPes === 1 ? '' : 's') +
+          ')</span></div>';
+        if (result.discountPercent > 0) {
+          meta +=
+            '<div class="pricing-calc__line pricing-calc__line--meta"><span>Descuento por volumen −' +
+            result.discountPercent +
+            '% vs lista (' +
+            result.formattedListTotal +
+            '/mes)</span></div>';
+        }
+        breakdownEl.innerHTML =
+          meta +
+          result.lines
+            .map((l) => {
+              let note = '';
+              if (l.code === 'AMB') {
+                const bits = [];
+                if (selection.addons.videollamada) {
+                  bits.push('con videollamada (transcripción incluida)');
+                } else if (selection.addons.audio) {
+                  bits.push('con dictado');
+                }
+                note = bits.length ? ' · ' + bits.join(' · ') : '';
               }
-              note = bits.length ? ' · ' + bits.join(' · ') : '';
-            }
-            return (
-              '<div class="pricing-calc__line"><span>' +
-              l.qty +
-              ' profesional' +
-              (l.qty === 1 ? '' : 'es') +
-              ' × ' +
-              l.label +
-              note +
-              ' (' +
-              Pricing.formatMoney(l.unit, result.currency) +
-              '/mes)</span><strong>' +
-              Pricing.formatMoney(l.line, result.currency) +
-              '</strong></div>'
-            );
-          })
-          .join('');
+              return (
+                '<div class="pricing-calc__line"><span>' +
+                l.qty +
+                ' profesional' +
+                (l.qty === 1 ? '' : 'es') +
+                ' × ' +
+                l.label +
+                note +
+                ' (' +
+                Pricing.formatMoney(l.unit, result.currency) +
+                '/mes)</span><strong>' +
+                Pricing.formatMoney(l.line, result.currency) +
+                '</strong></div>'
+              );
+            })
+            .join('');
       }
     }
 
@@ -138,14 +164,18 @@
 
   function refreshUnitLabels() {
     if (!rowsEl || !config) return;
-    const addons = currentSelection().addons;
+    const selection = currentSelection();
+    const addons = selection.addons;
+    const totalPes = Pricing.totalPesFromSelection(selection);
     rowsEl.querySelectorAll('[data-class]').forEach((row) => {
       const code = row.getAttribute('data-class');
       const unitEl = row.querySelector('.pricing-calc__unit');
       if (unitEl && code) {
         unitEl.textContent =
-          Pricing.formatMoney(Pricing.unitPriceForClass(config, code, addons), config.currency) +
-          ' / profesional / mes';
+          Pricing.formatMoney(
+            Pricing.unitPriceForClass(config, code, addons, totalPes > 0 ? totalPes : null),
+            config.currency
+          ) + ' / profesional / mes';
       }
     });
   }
@@ -225,7 +255,10 @@
         refreshUnitLabels();
         recalc();
       });
-      number.addEventListener('input', recalc);
+      number.addEventListener('input', () => {
+        refreshUnitLabels();
+        recalc();
+      });
       row.querySelectorAll('input[data-addon]').forEach((input) => {
         input.addEventListener('change', () => {
           syncAmbOptions(row);

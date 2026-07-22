@@ -1,14 +1,14 @@
 # Matriz Argentina — precio por profesional × encounter_class
 
 **Tipo:** business plan · go-to-market Argentina  
-**Última actualización:** 2026-07-17  
+**Última actualización:** 2026-07-22  
 **Alcance:** solo Argentina por ahora; otros países cuando haya validación local.
 
 Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentina.md](../../costos/impuestos-argentina.md).  
 COGS de referencia: [costos-api.md](../../costos/costos-api.md) (**columna con context caching**).
 
 **Modelo vigente:** licencia = **Σ (profesionales contratados × precio unitario)**.  
-El precio unitario = **COGS × (1 + margen sobre costo)**. El cliente elige qué `encounter_class` contrata (AMB / EMER / IMP), cuántos profesionales por cada una, y si suma **audio** y/o **videollamada**. Lo no contratado **se deshabilita** en sesión operativa y tableros.
+El precio unitario = **COGS × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **PES totales** contratados (suma AMB+EMER+IMP), baja el margen según tramos de volumen. El cliente elige qué `encounter_class` contrata (AMB / EMER / IMP), cuántos profesionales por cada una, y si suma **audio** y/o **videollamada**. Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
 Metadata producto: [`pricing-pes-by-encounter-class.yaml`](../../../common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml).  
 Calculador público: sitio [`institucional/#precios`](../../../../institucional/index.html).  
@@ -26,7 +26,9 @@ COGS_ref = base
          + ((audio || videollamada) ? stt_profesional : 0)   # STT una sola vez
          + (videollamada ? cogs_video : 0)
 COGS_clase = COGS_ref × (encounters_clase / 400)
-precio_unitario_clase = COGS_clase × (1 + margin_on_cost_percent/100)
+PES_totales = Σ cantidad_profesionales[clase]
+margen% = tramo(PES_totales).margin_on_cost_percent   # ver tabla abajo; lista = 233
+precio_unitario_clase = COGS_clase × (1 + margen%/100)
 USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 ```
 
@@ -36,7 +38,20 @@ USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 | **+ Audio / STT** (profesional ~5 min, **−30 % on-device**) | **+0,98** | costos-api § STT; **incluido** si hay videollamada |
 | **+ Videollamada** (self-host Track Egress + storage; solo AMB) | **+3,50** | costos-api §6 (**sin** STT duplicado) |
 
-**Margen sobre costo:** **233 %** ≈ margen bruto ~70 % (objetivo software; ver [impuestos-argentina.md](../../costos/impuestos-argentina.md)).
+**Margen sobre costo (lista):** **233 %** ≈ margen bruto ~70 % ≈ ~49 % después de IIBB + ganancias (objetivo software; ver [impuestos-argentina.md](../../costos/impuestos-argentina.md)).
+
+### Descuento por volumen (PES totales)
+
+El tramo se elige con la **suma de profesionales contratados** (cualquier clase). No pondera AMB vs EMER vs IMP.
+
+| Tramo | PES totales | Margen sobre costo | Margen después IIBB + ganancias (orientativo) |
+|-------|-------------|--------------------|-----------------------------------------------|
+| Lista | 1–19 | **233 %** | ~49 % |
+| Mediano | 20–49 | **163 %** | ~43,5 % |
+| Grande | 50–149 | **134 %** | ~40 % |
+| Enterprise | 150+ | **117 %** | ~37,5 % |
+
+Metadata: `volume_discount_tiers` en `pricing-pes-by-encounter-class.yaml` / `institucional/js/pricing-config.json`.
 
 **Regla comercial:** videollamada **incluye** la transcripción de la llamada (= mismo COGS `audio` una vez). No se suma dictado + video como dos STT.
 
@@ -49,10 +64,10 @@ USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 | **EMER** | **350** | Normal ~195–455; pico ~455–780+ | **Obligatorio** (incluido) | **No** |
 | **IMP** | **300** | Típico chico–mediano ~100–960; grandes 960–2400+ | **Obligatorio** (incluido) | **No** |
 
-No hay SKU chico/mediano/grande: el tamaño se refleja en **cantidad de profesionales**. Picos y outliers → más N o cotización.
+No hay SKU chico/mediano/grande aparte del descuento por PES: el tamaño se refleja en **cantidad de profesionales**. Picos y outliers → más N o cotización.
 
-| Configuración | COGS (a vol. de la clase) | Precio lista / profesional / mes |
-|---------------|---------------------------|----------------------------------|
+| Configuración | COGS (a vol. de la clase) | Precio lista / profesional / mes (1–19 PES) |
+|---------------|---------------------------|---------------------------------------------|
 | AMB solo base | 0,95 | **~3,16** |
 | AMB + audio (sin video) | 1,93 | **~6,43** |
 | AMB + videollamada (incluye STT) | 5,43 | **~18,08** |
@@ -60,9 +75,9 @@ No hay SKU chico/mediano/grande: el tamaño se refleja en **cantidad de profesio
 | EMER (audio incluido, vol 350) | 1,689 | **~5,62** |
 | IMP (audio incluido, vol 300) | 1,448 | **~4,82** |
 
-Ejemplo: 10 AMB + 4 EMER, sin add-ons AMB → `10×3,16 + 4×5,62 = **USD 54,08/mes**`.
-Ejemplo tele: 10 AMB con videollamada → `10×18,08 = **USD 180,80/mes**`.
-
+Ejemplo lista: 10 AMB + 4 EMER (14 PES), sin add-ons AMB → `10×3,16 + 4×5,62 = **USD 54,08/mes**`.  
+Ejemplo mediano: 20 AMB solo base → markup 163 % → `20×2,50 = **USD 50,00/mes**` (lista habría sido `20×3,16 = 63,20`).  
+Ejemplo tele lista: 10 AMB con videollamada → `10×18,08 = **USD 180,80/mes**`.
 ---
 
 ## Clases vendibles (gates de producto)

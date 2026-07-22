@@ -13,6 +13,7 @@ use common\models\Servicio;
 use common\models\ServiciosEfector;
 use common\models\User;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
+use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -381,26 +382,27 @@ final class InstitutionalEfectorSignupService
         if (!isset($plan['classes']) || !is_array($plan['classes'])) {
             $plan = ['classes' => $plan];
         }
-        $catalog = self::planesCatalog();
-        $cogs = $catalog['cogs_usd_per_professional_month'] ?? ['base' => 0.95, 'audio' => 0.98, 'videollamada' => 5.00];
-        $margin = (float) ($catalog['margin_on_cost_percent'] ?? 233);
-        $ref = (float) ($catalog['reference_encounters_per_professional_month'] ?? 400);
-        $sellable = $catalog['sellable_classes'] ?? [];
 
-        $total = 0.0;
+        $byClass = [];
+        $audio = false;
+        $video = false;
         foreach ($plan['classes'] as $class => $cfg) {
-            $meta = $sellable[$class] ?? [];
-            $vol = (float) ($meta['encounters_per_professional_month'] ?? $ref);
-            $base = (float) ($cogs['base'] ?? 0.95);
-            $audio = !empty($cfg['dictado_incluido']) ? (float) ($cogs['audio'] ?? 0.98) : 0.0;
-            $video = !empty($cfg['videollamada_permitida']) ? (float) ($cogs['videollamada'] ?? 5.00) : 0.0;
-            $cogsRef = $base + $audio + $video;
-            $cogsClass = $cogsRef * ($vol / max(1.0, $ref));
-            $unit = $cogsClass * (1 + $margin / 100);
-            $total += $unit * (int) $cfg['max_pes'];
+            if (!is_array($cfg)) {
+                continue;
+            }
+            $qty = (int) ($cfg['max_pes'] ?? 0);
+            if ($qty <= 0) {
+                continue;
+            }
+            $code = (string) $class;
+            $byClass[$code] = $qty;
+            if ($code === 'AMB') {
+                $audio = $audio || !empty($cfg['dictado_incluido']);
+                $video = $video || !empty($cfg['videollamada_permitida']);
+            }
         }
 
-        return round($total, 2);
+        return PricingPesByEncounterClassMetadata::estimateMonthlyTotal($byClass, $audio, $video);
     }
 
     /**

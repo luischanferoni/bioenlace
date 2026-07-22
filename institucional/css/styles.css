@@ -1606,11 +1606,83 @@ section {
     gap: 0.15rem;
 }
 
+.pricing-calc__volume {
+    border: 1px solid rgba(15, 45, 70, 0.12);
+    border-radius: 12px;
+    padding: 1rem 1.1rem;
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.pricing-calc__volume-title {
+    margin: 0 0 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--brand-dark, #0f2d46);
+}
+
+.pricing-calc__volume-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.pricing-calc__volume-item {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid rgba(15, 45, 70, 0.08);
+    font-size: 0.9rem;
+    color: #455a64;
+}
+
+.pricing-calc__volume-item:last-child {
+    border-bottom: 0;
+}
+
+.pricing-calc__volume-item strong {
+    color: var(--brand-dark, #0f2d46);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.pricing-calc__volume-item.is-active {
+    color: var(--brand-dark, #0f2d46);
+    font-weight: 600;
+}
+
+.pricing-calc__volume-item.is-active strong {
+    color: #0b7a4b;
+}
+
+.pricing-calc__volume-nudge {
+    margin: 0.85rem 0 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(15, 45, 70, 0.08);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: #37474f;
+}
+
+.pricing-calc__volume-nudge strong {
+    color: var(--brand-dark, #0f2d46);
+}
+
 .pricing-calc__line--meta {
     color: #546e7a;
     font-size: 0.9rem;
     opacity: 0.9;
     margin-bottom: 0.35rem;
+}
+
+.pricing-calc__line--savings {
+    color: #b9f6ca;
+    margin-bottom: 0.35rem;
+}
+
+.pricing-calc__line--savings strong {
+    font-weight: 700;
 }
 
 .pricing-calc__cogs {

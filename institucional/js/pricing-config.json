@@ -2,7 +2,7 @@
   "version": 6,
   "currency": "USD",
   "billing_period": "month",
-  "tax_note": "No incluye IVA.",
+  "tax_note": "Precios en USD. No incluyen IVA.",
   "cogs_source": "costos-api.md — columna con context caching (Gemini + Groq STT profesional −30 % on-device → 0,98; videollamada §6 = self-host 3,50; STT de la llamada = mismo audio una sola vez)",
   "reference_encounters_per_professional_month": 400,
   "cogs_usd_per_professional_month": {
@@ -14,10 +14,11 @@
   "volume_discount_tiers": [
     {
       "id": "lista",
-      "label": "Lista",
+      "label": "Precio base",
       "min_pes": 1,
       "max_pes": 19,
       "margin_on_cost_percent": 233,
+      "discount_vs_list_percent": 0,
       "margin_after_iibb_ganancias_percent": 49
     },
     {
@@ -26,6 +27,7 @@
       "min_pes": 20,
       "max_pes": 49,
       "margin_on_cost_percent": 163,
+      "discount_vs_list_percent": 21,
       "margin_after_iibb_ganancias_percent": 43.5
     },
     {
@@ -34,6 +36,7 @@
       "min_pes": 50,
       "max_pes": 149,
       "margin_on_cost_percent": 134,
+      "discount_vs_list_percent": 30,
       "margin_after_iibb_ganancias_percent": 40
     },
     {
@@ -42,6 +45,7 @@
       "min_pes": 150,
       "max_pes": null,
       "margin_on_cost_percent": 117,
+      "discount_vs_list_percent": 35,
       "margin_after_iibb_ganancias_percent": 37.5
     }
   ],
@@ -97,13 +101,9 @@
   },
   "simulator": {
     "title": "Calculá tu licencia",
-    "subtitle": "Elegí tipos de atención y profesionales. A más profesionales contratados (suma de todos los tipos), baja el margen y el precio unitario. En ambulatorio podés sumar dictado y/o videollamada (la videollamada incluye la transcripción). En urgencia e internación el dictado va incluido y no hay videollamada.",
+    "subtitle": "Elegí tipos de atención y cuántos profesionales. A más profesionales, más descuento.",
     "cta_label": "Crear cuenta",
     "cta_href": "alta.html",
-    "footnotes": [
-      "Importes orientativos en USD por mes. La cotización final se confirma según el alcance de cada efector.",
-      "El descuento por volumen se calcula con el total de profesionales contratados (AMB + urgencia + internación), sin importar el tipo.",
-      "El alta online usa pasarela de pago simulada; ministerios solicitan acceso con verificación asistida."
-    ]
+    "footnotes": []
   }
 }

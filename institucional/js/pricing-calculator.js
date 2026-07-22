@@ -58,11 +58,82 @@
     syncAmbOptions(row);
   }
 
+  function tierRangeLabel(tier) {
+    if (!tier) return '';
+    if (tier.max_pes == null || tier.max_pes === '') {
+      return (tier.min_pes || 150) + '+ profesionales';
+    }
+    if (Number(tier.min_pes) === 1) {
+      return '1–' + tier.max_pes + ' profesionales';
+    }
+    return tier.min_pes + '–' + tier.max_pes + ' profesionales';
+  }
+
+  function buildVolumeDiscountPanel(activeTierId) {
+    if (!addonsEl || !config) return;
+    const tiers = Pricing.volumeDiscountTiers(config);
+    if (!tiers.length) {
+      addonsEl.innerHTML = '';
+      addonsEl.hidden = true;
+      return;
+    }
+    addonsEl.hidden = false;
+    const rows = tiers
+      .map((tier) => {
+        const pct = Pricing.discountVsListPercent(config, tier);
+        const benefit =
+          pct > 0 ? '−' + pct + '%' : 'Precio base';
+        const active = tier.id === activeTierId ? ' is-active' : '';
+        return (
+          '<li class="pricing-calc__volume-item' +
+          active +
+          '"><span>' +
+          tierRangeLabel(tier) +
+          '</span><strong>' +
+          benefit +
+          '</strong></li>'
+        );
+      })
+      .join('');
+    addonsEl.innerHTML =
+      '<div class="pricing-calc__volume">' +
+      '<p class="pricing-calc__volume-title">Descuentos por volumen</p>' +
+      '<ul class="pricing-calc__volume-list">' +
+      rows +
+      '</ul>' +
+      '<p class="pricing-calc__volume-nudge" id="pricing-volume-nudge" hidden></p>' +
+      '</div>';
+  }
+
+  function updateVolumeNudge(result) {
+    const nudgeEl = document.getElementById('pricing-volume-nudge');
+    if (!nudgeEl) return;
+    const next = result && result.nextStep;
+    const hasSelection = result && result.lines && result.lines.length;
+    if (!hasSelection || !next || !(next.professionalsNeeded > 0) || !(next.discountPercent > 0)) {
+      nudgeEl.hidden = true;
+      nudgeEl.innerHTML = '';
+      return;
+    }
+    const n = next.professionalsNeeded;
+    nudgeEl.hidden = false;
+    nudgeEl.innerHTML =
+      'Sumá <strong>' +
+      n +
+      ' profesional' +
+      (n === 1 ? '' : 'es') +
+      ' más</strong> y obtené <strong>' +
+      next.discountPercent +
+      '% de descuento</strong>';
+  }
+
   function recalc() {
     if (!config) return;
     const selection = currentSelection();
     const result = Pricing.estimate(config, selection);
     refreshUnitLabels();
+    buildVolumeDiscountPanel(result.tier && result.tier.id);
+    updateVolumeNudge(result);
 
     if (totalEl) {
       totalEl.textContent = result.lines.length
@@ -74,28 +145,16 @@
         breakdownEl.innerHTML =
           '<p class="pricing-calc__hint">Activá al menos un tipo de atención e indicá la cantidad de profesionales.</p>';
       } else {
-        const tier = result.tier || {};
-        const tierRange =
-          tier.max_pes == null
-            ? (tier.min_pes || 150) + '+ profesionales'
-            : (tier.min_pes || 1) + '–' + tier.max_pes + ' profesionales';
-        let meta =
-          '<div class="pricing-calc__line pricing-calc__line--meta"><span>Tramo ' +
-          (tier.label || 'Lista') +
-          ' (' +
-          tierRange +
-          '; ' +
-          result.totalPes +
-          ' contratado' +
-          (result.totalPes === 1 ? '' : 's') +
-          ')</span></div>';
+        let meta = '';
         if (result.discountPercent > 0) {
-          meta +=
-            '<div class="pricing-calc__line pricing-calc__line--meta"><span>Descuento por volumen −' +
-            result.discountPercent +
-            '% vs lista (' +
-            result.formattedListTotal +
-            '/mes)</span></div>';
+          meta =
+            '<div class="pricing-calc__line pricing-calc__line--savings">' +
+            '<span>Incluye <strong>' +
+            Math.round(result.discountPercent) +
+            '% de descuento</strong> por volumen</span>' +
+            '<strong>−' +
+            Pricing.formatMoney(result.listTotal - result.total, result.currency) +
+            '</strong></div>';
         }
         breakdownEl.innerHTML =
           meta +
@@ -105,7 +164,7 @@
               if (l.code === 'AMB') {
                 const bits = [];
                 if (selection.addons.videollamada) {
-                  bits.push('con videollamada (transcripción incluida)');
+                  bits.push('con videollamada');
                 } else if (selection.addons.audio) {
                   bits.push('con dictado');
                 }
@@ -209,10 +268,6 @@
 
   function buildRows() {
     if (!rowsEl || !config) return;
-    if (addonsEl) {
-      addonsEl.innerHTML = '';
-      addonsEl.hidden = true;
-    }
     const classes = config.sellable_classes || {};
     rowsEl.innerHTML = '';
     Object.keys(classes).forEach((code) => {
@@ -289,8 +344,15 @@
     if (title && sim.title && mode !== 'signup') title.textContent = sim.title;
     if (subtitle && sim.subtitle && mode !== 'signup') subtitle.textContent = sim.subtitle;
     if (ctaEl && sim.cta_label && mode !== 'signup') ctaEl.textContent = sim.cta_label;
-    if (footnotes && Array.isArray(sim.footnotes)) {
-      footnotes.innerHTML = sim.footnotes.map((f) => '<li>' + f + '</li>').join('');
+    if (footnotes) {
+      const items = Array.isArray(sim.footnotes) ? sim.footnotes.filter(Boolean) : [];
+      if (!items.length) {
+        footnotes.innerHTML = '';
+        footnotes.hidden = true;
+      } else {
+        footnotes.hidden = false;
+        footnotes.innerHTML = items.map((f) => '<li>' + f + '</li>').join('');
+      }
     }
     const tax = document.getElementById('pricing-tax-note');
     if (tax && config.tax_note) tax.textContent = config.tax_note;

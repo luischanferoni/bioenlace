@@ -44,12 +44,12 @@ USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
 
 El tramo se elige con la **suma de profesionales contratados** (cualquier clase). No pondera AMB vs EMER vs IMP.
 
-| Tramo | PES totales | Margen sobre costo | Margen después IIBB + ganancias (orientativo) |
-|-------|-------------|--------------------|-----------------------------------------------|
-| Lista | 1–19 | **233 %** | ~49 % |
-| Mediano | 20–49 | **163 %** | ~43,5 % |
-| Grande | 50–149 | **134 %** | ~40 % |
-| Enterprise | 150+ | **117 %** | ~37,5 % |
+| Tramo | PES totales | Margen sobre costo | Descuento vs lista | Margen después IIBB + ganancias (orientativo) |
+|-------|-------------|--------------------|--------------------|-----------------------------------------------|
+| Precio base | 1–19 | **233 %** | 0 % | ~49 % |
+| Mediano | 20–49 | **163 %** | **−21 %** | ~43,5 % |
+| Grande | 50–149 | **134 %** | **−30 %** | ~40 % |
+| Enterprise | 150+ | **117 %** | **−35 %** | ~37,5 % |
 
 Metadata: `volume_discount_tiers` en `pricing-pes-by-encounter-class.yaml` / `institucional/js/pricing-config.json`.
 

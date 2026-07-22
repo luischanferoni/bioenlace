@@ -84,6 +84,43 @@
     return fallback;
   }
 
+  function discountVsListPercent(config, tier) {
+    if (!tier) return 0;
+    if (tier.discount_vs_list_percent != null && tier.discount_vs_list_percent !== '') {
+      return Number(tier.discount_vs_list_percent) || 0;
+    }
+    var listMargin = listMarginOnCostPercent(config);
+    var tierMargin = Number(tier.margin_on_cost_percent);
+    if (!(listMargin > 0) || !(tierMargin >= 0)) return 0;
+    var listFactor = 1 + listMargin / 100;
+    var tierFactor = 1 + tierMargin / 100;
+    if (listFactor <= 0 || tierFactor >= listFactor) return 0;
+    return Math.round((1 - tierFactor / listFactor) * 100);
+  }
+
+  /**
+   * Próximo tramo de descuento (para el aviso “sumá N y obtené X%”).
+   * @returns {{professionalsNeeded: number, discountPercent: number, tier: object}|null}
+   */
+  function nextVolumeStep(config, totalPes) {
+    var n = Math.max(0, parseInt(totalPes, 10) || 0);
+    var tiers = volumeDiscountTiers(config);
+    var i;
+    var tier;
+    for (i = 0; i < tiers.length; i++) {
+      tier = tiers[i];
+      var min = Number(tier.min_pes) || 0;
+      if (min > n) {
+        return {
+          professionalsNeeded: min - n,
+          discountPercent: discountVsListPercent(config, tier),
+          tier: tier,
+        };
+      }
+    }
+    return null;
+  }
+
   function marginOnCostPercentForTotalPes(config, totalPes) {
     var tier = tierForTotalPes(config, totalPes);
     if (tier && tier.margin_on_cost_percent != null) {
@@ -168,7 +205,8 @@
     var discountPercent =
       listTotal > 0 && total < listTotal
         ? Math.round(((listTotal - total) / listTotal) * 1000) / 10
-        : 0;
+        : discountVsListPercent(config, tier);
+    var nextStep = nextVolumeStep(config, totalPes);
     return {
       total: Math.round(total * 100) / 100,
       listTotal: Math.round(listTotal * 100) / 100,
@@ -179,6 +217,7 @@
       marginOnCostPercent: margin,
       listMarginOnCostPercent: listMargin,
       discountPercent: discountPercent,
+      nextStep: nextStep,
       formattedTotal: formatMoney(total, (config && config.currency) || 'USD'),
       formattedListTotal: formatMoney(listTotal, (config && config.currency) || 'USD'),
     };
@@ -241,5 +280,7 @@
     tierForTotalPes: tierForTotalPes,
     marginOnCostPercentForTotalPes: marginOnCostPercentForTotalPes,
     volumeDiscountTiers: volumeDiscountTiers,
+    discountVsListPercent: discountVsListPercent,
+    nextVolumeStep: nextVolumeStep,
   };
 })(typeof window !== 'undefined' ? window : this);

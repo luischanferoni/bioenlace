@@ -65,7 +65,9 @@ Metadata intake: `Scheduling/metadata/consultas_seguimiento_intake.yaml`. Hub: `
 ## Accesos en la app
 
 - Atajo **Solicitar Atención** → **Control/Seguimiento**.
+- **Inicio** — card **Tus condiciones** (todas las ACTIVE deduplicadas) y card de tratamiento; las consultas por mensaje con ancla van anidadas bajo la condición o el plan (sin historial en el card; el historial queda para un intent futuro).
 - **Detalle del plan de tratamiento** — acciones con plan (y a menudo necesidad) ya cargados → mismo intent `atencion.necesito-atencion`.
+- **Detalle de condición** — acciones de protocolo o defaults del hub con ancla `diag:…` → mismo intent.
 - Frases NL de renovación / seguimiento / consulta por mensaje → mismo intent.
 
 ## Relación con otros documentos

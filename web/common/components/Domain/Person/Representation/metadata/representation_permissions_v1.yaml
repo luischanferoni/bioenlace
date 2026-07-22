@@ -10,7 +10,7 @@ permissions:
   clinical.care_pack_assistance:
     label: "Pre y post consulta de cohorte (asistencia y seguimiento)"
   clinical.care_plan:
-    label: "Tratamientos y recetas delegadas"
+    label: "Tratamientos, condiciones y recetas delegadas"
   clinical.historia_resumen:
     label: "Historia clínica (alcance paciente)"
 

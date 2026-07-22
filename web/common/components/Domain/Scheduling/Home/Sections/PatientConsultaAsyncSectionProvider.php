@@ -7,8 +7,8 @@ use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaService;
 use Yii;
 
 /**
- * Sección home: solo consultas async generales (sin las ligadas a tratamiento).
- * Las de tratamiento van anidadas en care_plans_active.
+ * Sección home: solo consultas async generales (sin ancla de tratamiento ni condición).
+ * Las de tratamiento/condición van anidadas en care_plans_active / conditions_active.
  */
 final class PatientConsultaAsyncSectionProvider implements HomePanelSectionProviderInterface
 {

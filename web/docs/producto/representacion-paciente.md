@@ -26,7 +26,7 @@ Alineación conceptual FHIR: `Patient` → `personas`; vínculo → `RelatedPers
 
 - **A:** padre, madre y tutor legal; ambos padres pueden operar si están verificados; el vínculo **no** corta solo a los 18 años.
 - **B:** sin aceptación del representante; varios representantes simultáneos; cualquier persona con cuenta.
-- **Permisos v1:** turnos, motivos, pre-consulta, care plan/recetas, resumen de HC (alcance paciente).
+- **Permisos v1:** turnos, motivos, pre-consulta, care plan/condiciones/recetas, resumen de HC (alcance paciente).
 - **Staff** puede bloquear; notificación al paciente solo si activa la preferencia **N9**.
 
 ## Cómo opera el representante (API)
@@ -120,7 +120,7 @@ Endpoints bajo `/api/v1/person-representation/` (RBAC ApiGhost):
 | `scheduling.turno` | Reservar y gestionar turnos |
 | `clinical.motivos` | Motivos de consulta |
 | `clinical.care_pack_assistance` | Pre y post consulta por cohorte (asistencia + seguimiento) |
-| `clinical.care_plan` | Tratamientos y recetas (vista paciente) |
+| `clinical.care_plan` | Tratamientos, condiciones y recetas (vista paciente) |
 | `clinical.historia_resumen` | Resúmenes de atención / HC resumida |
 
 Plantilla: `representation_permissions_v1.yaml` (metadata, no hardcode en orquestadores).

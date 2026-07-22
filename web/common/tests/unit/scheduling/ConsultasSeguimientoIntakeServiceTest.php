@@ -72,6 +72,38 @@ class ConsultasSeguimientoIntakeServiceTest extends Unit
         $this->assertSame(3, $meta['care_plan_id']);
     }
 
+    public function testCompilarMetaAsyncIncluyeConditionAncla(): void
+    {
+        $svc = new ConsultasSeguimientoIntakeService();
+        $meta = $svc->compilarMetaAsync([
+            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+                ConsultasSeguimientoIntakeCatalogService::INTAKE_CONSULTA_GENERAL,
+            'condition_ref' => '8',
+            'condition_codigo' => 'J11.1',
+            'control_hub_kind' => 'condition',
+            'triage_raiz' => 'seguimiento_cronico',
+        ]);
+
+        $this->assertSame('J11.1', $meta['condition_codigo']);
+        $this->assertSame('8', $meta['condition_ref']);
+        $this->assertSame('condition', $meta['control_hub_kind']);
+        $this->assertNull($meta['care_plan_id']);
+    }
+
+    public function testCompilarMetaAsyncNoUsaRefNumericoComoCodigo(): void
+    {
+        $svc = new ConsultasSeguimientoIntakeService();
+        $meta = $svc->compilarMetaAsync([
+            ConsultasSeguimientoIntakeService::DRAFT_INTAKE_TIPO =>
+                ConsultasSeguimientoIntakeCatalogService::INTAKE_CONSULTA_GENERAL,
+            'condition_ref' => '8',
+            'triage_raiz' => 'seguimiento_cronico',
+        ]);
+
+        $this->assertSame('8', $meta['condition_ref']);
+        $this->assertNull($meta['condition_codigo']);
+    }
+
     public function testPrepararDraftUnificaDudaEnContarEvolucion(): void
     {
         $svc = new ConsultasSeguimientoIntakeService();

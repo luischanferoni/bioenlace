@@ -19,10 +19,19 @@ class ConsultaAsyncSolicitudCard extends StatelessWidget {
   static bool perteneceATratamiento(Map<String, dynamic> item) {
     final group = item['ui_group']?.toString().trim();
     if (group == 'tratamiento') return true;
-    if (group == 'consultas') return false;
+    if (group == 'consultas' || group == 'condicion') return false;
     final raw = item['care_plan_id'];
     final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '') ?? 0;
     return id > 0;
+  }
+
+  static bool perteneceACondicion(Map<String, dynamic> item) {
+    final group = item['ui_group']?.toString().trim();
+    if (group == 'condicion') return true;
+    if (group == 'consultas' || group == 'tratamiento') return false;
+    final codigo = item['condition_codigo']?.toString().trim() ?? '';
+    final ref = item['condition_ref']?.toString().trim() ?? '';
+    return codigo.isNotEmpty || ref.isNotEmpty;
   }
 
   static int? carePlanIdOf(Map<String, dynamic> item) {
@@ -30,6 +39,11 @@ class ConsultaAsyncSolicitudCard extends StatelessWidget {
     if (raw is int) return raw > 0 ? raw : null;
     final id = int.tryParse(raw?.toString() ?? '') ?? 0;
     return id > 0 ? id : null;
+  }
+
+  static String? conditionCodigoOf(Map<String, dynamic> item) {
+    final c = item['condition_codigo']?.toString().trim();
+    return (c != null && c.isNotEmpty) ? c : null;
   }
 
   static Widget previewText(String preview) {

@@ -156,11 +156,51 @@ final class ConsultasSeguimientoIntakeService
             'medication_labels' => $labels !== [] ? $labels : null,
             'ajuste_motivo' => trim((string) ($draft[self::DRAFT_AJUSTE_MOTIVO] ?? '')) ?: null,
             'care_plan_id' => (int) ($draft['care_plan_id'] ?? 0) ?: null,
+            'condition_ref' => $this->conditionRefParaMeta($draft),
+            'condition_codigo' => $this->conditionCodigoParaMeta($draft),
+            'control_hub_kind' => $this->controlHubKindParaMeta($draft),
             'reference_encounter_id' => $this->referenceEncounterIdParaMeta($draft),
             'reserva_triage_code' => $compiled['reserva_triage_code'],
             'urgency_band' => $compiled['urgency_band'],
             'reserva_triage_meta_json' => $compiled['reserva_triage_meta_json'],
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    private function conditionRefParaMeta(array $draft): ?string
+    {
+        $ref = trim((string) ($draft['condition_ref'] ?? ''));
+
+        return $ref !== '' ? $ref : null;
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    private function conditionCodigoParaMeta(array $draft): ?string
+    {
+        $codigo = trim((string) ($draft['condition_codigo'] ?? $draft['condition_ref'] ?? ''));
+        if ($codigo === '') {
+            return null;
+        }
+        // Si condition_ref es solo id numérico de fila, no usarlo como código CIE.
+        if (ctype_digit($codigo) && trim((string) ($draft['condition_codigo'] ?? '')) === '') {
+            return null;
+        }
+
+        return $codigo;
+    }
+
+    /**
+     * @param array<string, mixed> $draft
+     */
+    private function controlHubKindParaMeta(array $draft): ?string
+    {
+        $kind = trim((string) ($draft['control_hub_kind'] ?? ''));
+
+        return $kind !== '' ? $kind : null;
     }
 
     /**

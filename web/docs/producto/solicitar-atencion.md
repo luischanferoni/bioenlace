@@ -26,6 +26,8 @@ Tras elegir Control/Seguimiento, la UI lista anclas (API `consultas-seguimiento/
 | Condición | Diagnóstico activo/crónico | Acciones del **protocolo** match (CIE) o defaults del hub |
 | Control recomendado | Protocolo preventivo por **edad/sexo** | Mismas clases de acción (`prot:{id}`) |
 
+Las mismas condiciones ACTIVE (deduplicadas) se listan en el **inicio** del paciente (`patient_conditions_active`); el detalle liviano reutiliza las acciones del hub. Las consultas por mensaje creadas con ancla de condición guardan `condition_codigo` / `condition_ref` en meta y se anidan bajo esa condición.
+
 No incluye consulta suelta, atención previa ni “pedir turno” genérico: eso queda fuera de este paso.
 
 Copy de recomendaciones de perfil: sugerencia según perfil, **no** indicación médica firme — «Consultá con tu equipo».

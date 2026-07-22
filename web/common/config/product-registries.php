@@ -18,6 +18,7 @@ use common\components\Domain\Clinical\Home\Sections\EmergencyIndicatorsSectionPr
 use common\components\Domain\Clinical\Home\Sections\StaffCoberturaActivaSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\InpatientsSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\PatientCarePlansActiveSectionProvider;
+use common\components\Domain\Clinical\Home\Sections\PatientConditionsActiveSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\StaffGuardiaKpiSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\StaffInternacionKpiSectionProvider;
 use common\components\Domain\Clinical\Inpatient\Service\Authorization\ClinicalInternacionStaffAccessPolicy;
@@ -180,6 +181,7 @@ return [
         'patient_upcoming_appointments' => PatientUpcomingAppointmentsSectionProvider::class,
         'patient_async_consultations' => PatientConsultaAsyncSectionProvider::class,
         'patient_care_plans_active' => PatientCarePlansActiveSectionProvider::class,
+        'patient_conditions_active' => PatientConditionsActiveSectionProvider::class,
         'staff_session_context' => StaffSessionContextSectionProvider::class,
         'staff_agenda_kpis' => StaffAgendaKpiSectionProvider::class,
         'staff_efector_modalidad_kpis' => StaffEfectorModalidadKpiSectionProvider::class,

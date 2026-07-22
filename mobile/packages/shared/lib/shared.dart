@@ -51,6 +51,7 @@ export 'clinical/encounter_journey_hub_screen.dart';
 export 'clinical/motivos_consulta_guide_bubble.dart';
 export 'clinical/care_plan_service.dart';
 export 'clinical/care_plan_ui.dart';
+export 'clinical/condition_ui.dart';
 export 'clinical/care_plan_reminder_api.dart';
 export 'clinical/care_plan_reminder_pref_sync.dart';
 export 'clinical/care_plan_reminder_bootstrap.dart';

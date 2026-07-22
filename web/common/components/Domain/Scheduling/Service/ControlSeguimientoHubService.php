@@ -4,9 +4,9 @@ namespace common\components\Domain\Scheduling\Service;
 
 use common\components\Domain\Clinical\Service\CarePlanPresentationService;
 use common\components\Domain\Clinical\Service\CareProtocolMatcherService;
+use common\components\Domain\Clinical\Service\ConditionPresentationService;
 use common\components\Domain\Clinical\Service\PatientActiveCarePlanQuery;
 use common\components\Domain\Person\Service\PacienteContextoService;
-use common\models\Clinical\Condition;
 use common\models\Person\Persona;
 use Symfony\Component\Yaml\Yaml;
 
@@ -40,9 +40,6 @@ final class ControlSeguimientoHubService
     public const KIND_CONSULTA_GENERAL = 'consulta_general';
 
     public const KIND_CONSULTA_PREVIA = 'consulta_previa';
-
-    /** Máximo de condiciones en el hub (tras dedupe). */
-    private const HUB_CONDITION_LIMIT = 8;
 
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
@@ -401,91 +398,34 @@ final class ControlSeguimientoHubService
     }
 
     /**
-     * Condiciones útiles para el hub: display legible, sin duplicar CIE+SNOMED
-     * del mismo diagnóstico (codificación IA), priorizando match de protocolo / CIE.
+     * Condiciones activas del paciente para el hub (misma dedupe que home).
      *
      * @return list<array{id: string, label: string, subtitle: string, meta: array<string, mixed>}>
      */
     private function listConditionHubItems(int $idPersona): array
     {
-        /** @var list<Condition> $rows */
-        $rows = Condition::find()
-            ->where([
-                'subject_persona_id' => $idPersona,
-                'deleted_at' => null,
-            ])
-            ->andWhere(['clinical_status' => ['ACTIVE', 'RECURRENCE', 'RELAPSE']])
-            ->andWhere(['not in', 'verification_status', ['REFUTED', 'ENTERED_IN_ERROR']])
-            ->orderBy(['recorded_date' => SORT_DESC, 'id' => SORT_DESC])
-            ->limit(100)
-            ->all();
-
-        $matcher = new CareProtocolMatcherService();
-        $idProvincia = $this->resolveIdProvinciaContexto($idPersona);
-        /** @var array<string, array{score: int, item: array<string, mixed>}> $byDedupe */
-        $byDedupe = [];
-
-        foreach ($rows as $cond) {
-            $code = trim((string) ($cond->code ?? ''));
-            $display = trim((string) ($cond->display ?? ''));
-            if ($code === '' && $display === '') {
-                continue;
-            }
-            $labelText = $this->shortConditionLabel($display !== '' ? $display : $code);
-            if ($labelText === '' || $labelText === '?') {
-                continue;
-            }
-            $dedupeKey = mb_strtolower(preg_replace('/\s+/u', ' ', $labelText) ?? $labelText);
-            $protocol = $code !== ''
-                ? $matcher->matchByConditionCode($code, $idProvincia, [
-                    'clinical_status' => (string) $cond->clinical_status,
-                    'note' => $cond->note !== null ? (string) $cond->note : null,
-                ])
-                : null;
-            $isIcdLike = $code !== '' && (bool) preg_match('/^[A-Za-z]/', $code);
-            $score = 0;
-            if ($protocol !== null) {
-                $score += 100;
-            }
-            if ($isIcdLike) {
-                $score += 10;
-            }
-            if ($display !== '') {
-                $score += 1;
-            }
-            if (isset($byDedupe[$dedupeKey]) && $byDedupe[$dedupeKey]['score'] >= $score) {
-                continue;
-            }
+        $out = [];
+        foreach ((new ConditionPresentationService())->listPatientSummaries($idPersona) as $summary) {
+            $code = trim((string) ($summary['codigo'] ?? ''));
+            $labelText = trim((string) ($summary['label'] ?? ''));
+            $protocolTitle = trim((string) ($summary['protocol_title'] ?? ''));
             $subtitle = $this->hubLabelRaw('condition_active', 'Activa');
-            if ($protocol !== null) {
-                $subtitle = $this->hubLabel('condition_protocol', [
-                    'title' => (string) ($protocol['title'] ?? $protocol['id']),
-                ]);
-            } elseif ($isIcdLike) {
+            if ($protocolTitle !== '') {
+                $subtitle = $this->hubLabel('condition_protocol', ['title' => $protocolTitle]);
+            } elseif ($code !== '' && (bool) preg_match('/^[A-Za-z]/', $code)) {
                 $subtitle = $code;
             }
-            $byDedupe[$dedupeKey] = [
-                'score' => $score,
-                'item' => [
-                    'id' => self::ANCHOR_PREFIX_CONDITION . ($code !== '' ? $code : (string) $cond->id),
-                    'label' => $this->hubLabel('condition', ['name' => $labelText]),
-                    'subtitle' => $subtitle,
-                    'meta' => [
-                        'kind' => self::KIND_CONDITION,
-                        'condition_ref' => (string) $cond->id,
-                        'codigo' => $code,
-                    ],
+            $out[] = [
+                'id' => (string) ($summary['control_hub_anchor']
+                    ?? (self::ANCHOR_PREFIX_CONDITION . ($code !== '' ? $code : (string) ($summary['id'] ?? '')))),
+                'label' => $this->hubLabel('condition', ['name' => $labelText !== '' ? $labelText : 'Condición']),
+                'subtitle' => $subtitle,
+                'meta' => [
+                    'kind' => self::KIND_CONDITION,
+                    'condition_ref' => (string) ($summary['id'] ?? ''),
+                    'codigo' => $code,
                 ],
             ];
-        }
-
-        $ranked = array_values($byDedupe);
-        usort($ranked, static function (array $a, array $b): int {
-            return $b['score'] <=> $a['score'];
-        });
-        $out = [];
-        foreach (array_slice($ranked, 0, self::HUB_CONDITION_LIMIT) as $row) {
-            $out[] = $row['item'];
         }
 
         return $out;
@@ -535,25 +475,6 @@ final class ControlSeguimientoHubService
         $val = trim((string) ($labels[$key] ?? ''));
 
         return $val !== '' ? $val : $fallback;
-    }
-
-    private function shortConditionLabel(string $label): string
-    {
-        $label = trim($label);
-        if ($label === '') {
-            return '';
-        }
-        foreach ([' en seguimiento', ' en Seguimiento', ' | '] as $cut) {
-            $pos = mb_stripos($label, $cut);
-            if ($pos !== false && $pos > 8) {
-                $label = trim(mb_substr($label, 0, $pos));
-            }
-        }
-        if (mb_strlen($label) > 64) {
-            return mb_substr($label, 0, 61) . '…';
-        }
-
-        return $label;
     }
 
     /**

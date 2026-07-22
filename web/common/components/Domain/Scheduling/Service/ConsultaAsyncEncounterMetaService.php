@@ -57,6 +57,16 @@ final class ConsultaAsyncEncounterMetaService
         return (int) ($meta['care_plan_id'] ?? 0);
     }
 
+    public function conditionCodigo(array $meta): string
+    {
+        return trim((string) ($meta['condition_codigo'] ?? ''));
+    }
+
+    public function conditionRef(array $meta): string
+    {
+        return trim((string) ($meta['condition_ref'] ?? ''));
+    }
+
     public function isStructuredMedicacion(array $meta): bool
     {
         $op = $this->medicacionOperacion($meta);

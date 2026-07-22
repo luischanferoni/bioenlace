@@ -81,10 +81,12 @@ final class ConsultaAsyncBandejaService
      *
      * @param array{
      *   ui_group?: string|null,
-     *   care_plan_id?: int|null
+     *   care_plan_id?: int|null,
+     *   condition_codigo?: string|null
      * } $options
-     *   - ui_group: `consultas` | `tratamiento` | null (todos)
+     *   - ui_group: `consultas` | `tratamiento` | `condicion` | null (todos)
      *   - care_plan_id: filtrar por plan
+     *   - condition_codigo: filtrar por código de condición
      * @return array<string, mixed>
      */
     public function listForPaciente(int $idPersona, array $options = []): array
@@ -92,6 +94,9 @@ final class ConsultaAsyncBandejaService
         $catalog = new ConsultaAsyncBandejaCatalogService();
         $uiGroupFilter = isset($options['ui_group']) ? trim((string) $options['ui_group']) : '';
         $carePlanFilter = isset($options['care_plan_id']) ? (int) $options['care_plan_id'] : 0;
+        $conditionCodigoFilter = isset($options['condition_codigo'])
+            ? strtoupper(trim((string) $options['condition_codigo']))
+            : '';
         if ($idPersona <= 0) {
             return [
                 'title' => $catalog->tituloSeccionPaciente(),
@@ -121,7 +126,12 @@ final class ConsultaAsyncBandejaService
         $items = [];
         foreach ($encounters as $encounter) {
             $item = $this->buildItem($encounter, false);
-            if ($item !== null && $this->matchesPacienteFilters($item, $uiGroupFilter, $carePlanFilter)) {
+            if ($item !== null && $this->matchesPacienteFilters(
+                $item,
+                $uiGroupFilter,
+                $carePlanFilter,
+                $conditionCodigoFilter
+            )) {
                 $items[] = $item;
             }
         }
@@ -142,7 +152,12 @@ final class ConsultaAsyncBandejaService
         $history = [];
         foreach ($historyEncounters as $encounter) {
             $item = $this->buildItem($encounter, false);
-            if ($item !== null && $this->matchesPacienteFilters($item, $uiGroupFilter, $carePlanFilter)) {
+            if ($item !== null && $this->matchesPacienteFilters(
+                $item,
+                $uiGroupFilter,
+                $carePlanFilter,
+                $conditionCodigoFilter
+            )) {
                 $history[] = $item;
             }
         }
@@ -164,12 +179,22 @@ final class ConsultaAsyncBandejaService
     /**
      * @param array<string, mixed> $item
      */
-    private function matchesPacienteFilters(array $item, string $uiGroupFilter, int $carePlanFilter): bool
-    {
+    private function matchesPacienteFilters(
+        array $item,
+        string $uiGroupFilter,
+        int $carePlanFilter,
+        string $conditionCodigoFilter = ''
+    ): bool {
         if ($uiGroupFilter !== '' && (string) ($item['ui_group'] ?? '') !== $uiGroupFilter) {
             return false;
         }
         if ($carePlanFilter > 0 && (int) ($item['care_plan_id'] ?? 0) !== $carePlanFilter) {
+            return false;
+        }
+        if (
+            $conditionCodigoFilter !== ''
+            && strtoupper(trim((string) ($item['condition_codigo'] ?? ''))) !== $conditionCodigoFilter
+        ) {
             return false;
         }
 
@@ -321,15 +346,26 @@ final class ConsultaAsyncBandejaService
         $resolutionLabel = is_array($resolution)
             ? trim((string) ($resolution['label'] ?? ''))
             : '';
-        $carePlanId = (new ConsultaAsyncEncounterMetaService())->carePlanId($meta);
-        // Con care_plan_id: la UI paciente las muestra dentro del tratamiento (no en el listado general).
-        $uiGroup = $carePlanId > 0 ? 'tratamiento' : 'consultas';
+        $metaSvc = new ConsultaAsyncEncounterMetaService();
+        $carePlanId = $metaSvc->carePlanId($meta);
+        $conditionCodigo = $metaSvc->conditionCodigo($meta);
+        $conditionRef = $metaSvc->conditionRef($meta);
+        // Anclas: tratamiento > condición > listado general de consultas.
+        if ($carePlanId > 0) {
+            $uiGroup = 'tratamiento';
+        } elseif ($conditionCodigo !== '' || $conditionRef !== '') {
+            $uiGroup = 'condicion';
+        } else {
+            $uiGroup = 'consultas';
+        }
 
         $item = [
             'encounter_id' => (int) $encounter->id,
             'solicitud_tipo' => $this->solicitudTipoFromMeta($meta, $policyCatalog),
             'conversation_mode' => $conversationMode,
             'care_plan_id' => $carePlanId > 0 ? $carePlanId : null,
+            'condition_codigo' => $conditionCodigo !== '' ? $conditionCodigo : null,
+            'condition_ref' => $conditionRef !== '' ? $conditionRef : null,
             'ui_group' => $uiGroup,
             'paciente' => [
                 'id_persona' => (int) $encounter->subject_persona_id,

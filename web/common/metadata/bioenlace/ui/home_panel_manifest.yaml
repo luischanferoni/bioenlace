@@ -97,6 +97,9 @@ panels:
       - id: upcoming_appointments
         provider: patient_upcoming_appointments
         kind: patient_upcoming_appointments
+      - id: conditions_active
+        provider: patient_conditions_active
+        kind: patient_conditions_active
       - id: care_plans_active
         provider: patient_care_plans_active
         kind: patient_care_plans_active

@@ -11,6 +11,8 @@ import '../config/paciente_intents.dart';
 import '../auth/paciente_post_login.dart';
 import 'care_plan_detail_screen.dart';
 import 'care_plans_list_screen.dart';
+import 'condition_detail_screen.dart';
+import 'conditions_list_screen.dart';
 import 'chat_medico_screen.dart';
 import 'chat_motivos_screen.dart';
 import 'encounter_summary_detail_screen.dart';
@@ -60,11 +62,13 @@ class HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
 
   List<Map<String, dynamic>> _carePlansActivos = [];
+  List<Map<String, dynamic>> _conditionsActivas = [];
   List<Map<String, dynamic>> _consultasAsync = [];
   List<Map<String, dynamic>> _consultasAsyncHistorial = [];
   String _tituloConsultasAsync = 'Consultas clínicas por mensaje';
   String _tituloHistorialAsync = 'Consultas anteriores';
   bool _loadingCarePlans = false;
+  bool _loadingConditions = false;
 
   final List<Map<String, dynamic>> _pendientes = [];
   final List<Map<String, dynamic>> _enResolucion = [];
@@ -229,9 +233,31 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _cargarConditions() async {
+    setState(() => _loadingConditions = true);
+    try {
+      final panel = await _homePanelApi.getPanel(
+        sections: 'conditions_active',
+        subjectPersonaId: _subjectPersonaId,
+      );
+      if (!mounted) return;
+      final sec = panel.sectionByKind('patient_conditions_active');
+      setState(() {
+        _loadingConditions = false;
+        if (sec != null) {
+          _conditionsActivas = _asMapList(sec.data['items']);
+        }
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _loadingConditions = false);
+    }
+  }
+
   Future<void> _applyUpcomingFromPanel() async {
     final panel = await _homePanelApi.getPanel(
-      sections: 'upcoming_appointments,care_plans_active,patient_async_consultations',
+      sections:
+          'upcoming_appointments,care_plans_active,conditions_active,patient_async_consultations',
       subjectPersonaId: _subjectPersonaId,
     );
     final upcoming = panel.sectionByKind('patient_upcoming_appointments');
@@ -254,9 +280,14 @@ class HomeScreenState extends State<HomeScreen> {
       _carePlansActivos = _asMapList(care.data['items']);
       _loadingCarePlans = false;
     }
+    final conditions = panel.sectionByKind('patient_conditions_active');
+    if (conditions != null) {
+      _conditionsActivas = _asMapList(conditions.data['items']);
+      _loadingConditions = false;
+    }
     final asyncSec = panel.sectionByKind('patient_async_consultations');
     if (asyncSec != null) {
-      // Solo generales: las de tratamiento vienen anidadas en care_plans_active.
+      // Solo generales: tratamiento/condición van anidadas en sus secciones.
       _consultasAsync = _asMapList(asyncSec.data['items']);
       final titulo = asyncSec.data['title']?.toString().trim();
       if (titulo != null && titulo.isNotEmpty) {
@@ -309,6 +340,7 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() {
       _refrescandoTabActivo = true;
       _loadingCarePlans = true;
+      _loadingConditions = true;
       _error = null;
       _pendientes.clear();
       _enResolucion.clear();
@@ -321,7 +353,7 @@ class HomeScreenState extends State<HomeScreen> {
       if (await _redirectIfSessionExpired(e)) return;
       final pendientesFuture = _fetchAllPorAlcance('pendientes');
       await _cargarEnResolucion();
-      await _cargarCarePlans();
+      await Future.wait([_cargarCarePlans(), _cargarConditions()]);
       final pendientesR = await pendientesFuture;
       if (!mounted) return;
       setState(() {
@@ -337,6 +369,7 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() {
       _refrescandoTabActivo = false;
       _loadingCarePlans = false;
+      _loadingConditions = false;
     });
   }
 
@@ -352,7 +385,7 @@ class HomeScreenState extends State<HomeScreen> {
     } catch (_) {
       final pendientesFuture = _fetchAllPorAlcance('pendientes');
       await _cargarEnResolucion();
-      await _cargarCarePlans();
+      await Future.wait([_cargarCarePlans(), _cargarConditions()]);
       final pendientesR = await pendientesFuture;
       if (!mounted) return;
       setState(() {
@@ -739,8 +772,11 @@ class HomeScreenState extends State<HomeScreen> {
     final asyncConsultas = _consultasAsyncGenerales;
     final asyncConsultasHist = _consultasAsyncHistorialGenerales;
     final pendientesTratamiento = _consultasAsyncEnTratamiento.length;
+    final pendientesCondiciones = _consultasAsyncEnCondiciones.length;
     final mostrarTratamiento =
         _carePlansActivos.isNotEmpty || _loadingCarePlans;
+    final mostrarCondiciones =
+        _conditionsActivas.isNotEmpty || _loadingConditions;
 
     return ListView(
       controller: _scrollController,
@@ -751,6 +787,13 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       children: [
         _buildHeaderSaludo(context),
+        if (mostrarCondiciones) ...[
+          BioSpacing.gapH(BioSpacing.lg),
+          _buildCondicionesCard(
+            context,
+            solicitudesPendientes: pendientesCondiciones,
+          ),
+        ],
         if (mostrarTratamiento) ...[
           BioSpacing.gapH(BioSpacing.lg),
           _buildTratamientoCard(
@@ -868,6 +911,49 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _abrirDetalleCondicion(Map<String, dynamic> condition) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ConditionDetailScreen(
+          condition: condition,
+          authToken: widget.authToken,
+          userId: widget.userId,
+          userName: widget.userName,
+          subjectPersonaId: _subjectPersonaId,
+          initialSolicitudesActivas: _asMapList(condition['solicitudes_activas']),
+          onStartAssistantFlow: widget.onStartAssistantFlow,
+          onSolicitudesChanged: _cargarInicial,
+        ),
+      ),
+    );
+  }
+
+  void _abrirListaCondiciones() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ConditionsListScreen(
+          conditions: List<Map<String, dynamic>>.from(_conditionsActivas),
+          authToken: widget.authToken,
+          userId: widget.userId,
+          userName: widget.userName,
+          subjectPersonaId: _subjectPersonaId,
+          onStartAssistantFlow: widget.onStartAssistantFlow,
+          onSolicitudesChanged: _cargarInicial,
+        ),
+      ),
+    );
+  }
+
+  void _abrirCondicionesDesdeCard() {
+    if (_conditionsActivas.length == 1) {
+      _abrirDetalleCondicion(_conditionsActivas.first);
+      return;
+    }
+    _abrirListaCondiciones();
+  }
+
   void _abrirChatConsultaAsync(Map<String, dynamic> item) {
     final raw = item['encounter_id'];
     final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
@@ -978,8 +1064,25 @@ class HomeScreenState extends State<HomeScreen> {
     return out;
   }
 
+  List<Map<String, dynamic>> get _consultasAsyncEnCondiciones {
+    final out = <Map<String, dynamic>>[];
+    for (final condition in _conditionsActivas) {
+      out.addAll(_asMapList(condition['solicitudes_activas']));
+    }
+    if (out.isEmpty) {
+      return _consultasAsync
+          .where(ConsultaAsyncSolicitudCard.perteneceACondicion)
+          .toList();
+    }
+    return out;
+  }
+
   List<Map<String, dynamic>> get _consultasAsyncGenerales => _consultasAsync
-      .where((i) => !ConsultaAsyncSolicitudCard.perteneceATratamiento(i))
+      .where(
+        (i) =>
+            !ConsultaAsyncSolicitudCard.perteneceATratamiento(i) &&
+            !ConsultaAsyncSolicitudCard.perteneceACondicion(i),
+      )
       .toList();
 
   List<Map<String, dynamic>> get _consultasAsyncHistorialEnTratamiento {
@@ -997,8 +1100,92 @@ class HomeScreenState extends State<HomeScreen> {
 
   List<Map<String, dynamic>> get _consultasAsyncHistorialGenerales =>
       _consultasAsyncHistorial
-          .where((i) => !ConsultaAsyncSolicitudCard.perteneceATratamiento(i))
+          .where(
+            (i) =>
+                !ConsultaAsyncSolicitudCard.perteneceATratamiento(i) &&
+                !ConsultaAsyncSolicitudCard.perteneceACondicion(i),
+          )
           .toList();
+
+  Widget _buildCondicionesCard(
+    BuildContext context, {
+    int solicitudesPendientes = 0,
+  }) {
+    if (_loadingConditions && _conditionsActivas.isEmpty) {
+      return const BioCard(
+        child: Padding(
+          padding: EdgeInsets.all(BioSpacing.md),
+          child: Center(
+            child: SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final names = _conditionsActivas
+        .map(ConditionUi.label)
+        .where((s) => s.isNotEmpty)
+        .take(3)
+        .toList();
+    final varios = _conditionsActivas.length > 1;
+    final preview = names.isEmpty
+        ? 'Condiciones activas'
+        : names.join(' · ') +
+            (_conditionsActivas.length > names.length
+                ? ' · +${_conditionsActivas.length - names.length}'
+                : '');
+
+    return BioCard.intent(
+      intent: UiIntent.info,
+      onTap: _abrirCondicionesDesdeCard,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.healing_outlined, color: context.bio.textMuted, size: 22),
+              BioSpacing.gapW(BioSpacing.sm),
+              Expanded(
+                child: Text('Tus condiciones', style: BioTypography.h3),
+              ),
+              BioBadge(
+                label: _conditionsActivas.length == 1
+                    ? '1 activa'
+                    : '${_conditionsActivas.length} activas',
+                intent: UiIntent.info,
+              ),
+              BioSpacing.gapW(BioSpacing.xs),
+              Icon(Icons.chevron_right, color: context.bio.textMuted, size: 22),
+            ],
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(preview, style: BioTypography.title),
+          if (solicitudesPendientes > 0) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            BioBadge.info(
+              solicitudesPendientes == 1
+                  ? '1 solicitud pendiente'
+                  : '$solicitudesPendientes solicitudes pendientes',
+            ),
+          ],
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            varios
+                ? 'Ver listado y solicitudes'
+                : (solicitudesPendientes > 0
+                    ? 'Ver detalle y solicitudes'
+                    : 'Ver detalle'),
+            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildTratamientoCard(
     BuildContext context, {

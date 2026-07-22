@@ -51,13 +51,11 @@ final class ConsultaAsyncIntakeContextService
 
         $operacion = trim((string) ($meta['medicacion_operacion'] ?? ''));
         if ($operacion !== '') {
-            $opLabel = $operacion === 'renovacion'
-                ? 'Renovación'
-                : ($operacion === 'ajuste' ? 'Ajuste' : $operacion);
+            $policyCatalog = new ConsultaAsyncChatPolicyCatalogService();
             $lines[] = [
                 'code' => 'medicacion_operacion',
                 'label' => 'Operación',
-                'value' => $opLabel,
+                'value' => $policyCatalog->solicitudCategoriaLabel($operacion),
             ];
         }
 

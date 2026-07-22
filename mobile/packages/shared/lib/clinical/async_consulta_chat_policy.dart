@@ -139,6 +139,7 @@ String asyncChatAttachmentLabel(String? messageType) {
 TextStyle asyncChatMessageTextStyle(BuildContext context, Map<String, dynamic> message) {
   final kind = message['message_kind']?.toString() ?? '';
   final type = message['message_type']?.toString() ?? '';
+  final categoria = message['solicitud_categoria']?.toString().trim() ?? '';
   final base = BioTypography.bodySm.copyWith(color: context.bio.textBody);
   if (kind == 'sistema' || type == 'sistema') {
     return base.copyWith(
@@ -147,6 +148,7 @@ TextStyle asyncChatMessageTextStyle(BuildContext context, Map<String, dynamic> m
     );
   }
   if (kind == 'solicitud' ||
+      categoria.isNotEmpty ||
       type.startsWith('solicitud_')) {
     return base.copyWith(fontWeight: FontWeight.w600);
   }
@@ -157,7 +159,10 @@ TextStyle asyncChatMessageTextStyle(BuildContext context, Map<String, dynamic> m
 Decoration? asyncChatMessageDecoration(BuildContext context, Map<String, dynamic> message) {
   final kind = message['message_kind']?.toString() ?? '';
   final type = message['message_type']?.toString() ?? '';
-  if (kind == 'solicitud' || type.startsWith('solicitud_')) {
+  final categoria = message['solicitud_categoria']?.toString().trim() ?? '';
+  if (kind == 'solicitud' ||
+      categoria.isNotEmpty ||
+      type.startsWith('solicitud_')) {
     return BoxDecoration(
       border: Border(
         left: BorderSide(

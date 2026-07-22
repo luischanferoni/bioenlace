@@ -86,7 +86,8 @@
   function isSolicitudMessage(m) {
     var kind = messageKind(m);
     var type = String(m.message_type || '');
-    return kind === 'solicitud' || type.indexOf('solicitud_') === 0;
+    var categoria = m.solicitud_categoria ? String(m.solicitud_categoria).trim() : '';
+    return kind === 'solicitud' || categoria !== '' || type.indexOf('solicitud_') === 0;
   }
 
   function renderAttachmentBody(m, openHandler) {
@@ -147,7 +148,7 @@
     body.className = isSolicitudMessage(m) ? 'fw-semibold' : '';
     if (type === 'audio' || type === 'documento' || type === 'imagen') {
       body.appendChild(renderAttachmentBody(m, openHandler));
-    } else if (type === 'texto' || type.indexOf('solicitud_') === 0) {
+    } else if (type === 'texto' || type.indexOf('solicitud_') === 0 || (m.solicitud_categoria && String(m.solicitud_categoria).trim())) {
       body.textContent = m.content || '';
     } else {
       body.textContent = attachmentLabel(type);

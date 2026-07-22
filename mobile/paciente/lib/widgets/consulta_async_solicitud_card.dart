@@ -47,28 +47,6 @@ class ConsultaAsyncSolicitudCard extends StatelessWidget {
   }
 
   static Widget previewText(String preview) {
-    const prefixes = [
-      'Solicitud de renovación',
-      'Solicitud de ajuste',
-    ];
-    for (final prefix in prefixes) {
-      if (preview.startsWith(prefix)) {
-        return Text.rich(
-          TextSpan(
-            style: BioTypography.bodySm,
-            children: [
-              TextSpan(
-                text: prefix,
-                style: const TextStyle(decoration: TextDecoration.underline),
-              ),
-              TextSpan(text: preview.substring(prefix.length)),
-            ],
-          ),
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-        );
-      }
-    }
     return Text(
       preview,
       style: BioTypography.bodySm,
@@ -80,6 +58,7 @@ class ConsultaAsyncSolicitudCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final preview = item['reason_preview']?.toString().trim() ?? '';
+    final solicitudTipo = item['solicitud_tipo']?.toString().trim() ?? '';
     final servicio = item['servicio']?.toString().trim() ?? '';
     final resolucion = item['resolution_label']?.toString().trim() ?? '';
     final estado = item['status_label']?.toString().trim() ??
@@ -112,6 +91,10 @@ class ConsultaAsyncSolicitudCard extends StatelessWidget {
           if (createdAt.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(createdAt, style: BioTypography.caption),
+          ],
+          if (solicitudTipo.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            BioBadge.info(solicitudTipo),
           ],
           if (preview.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),

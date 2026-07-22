@@ -11,6 +11,19 @@ final class ConsultaAsyncChatPolicyCatalogService
 {
     private const CATALOG_FILE = 'consulta_async_chat_policy.yaml';
 
+    public const CATEGORIA_RENOVACION_MEDICACION = 'renovacion_medicacion';
+
+    public const CATEGORIA_AJUSTE_MEDICACION = 'ajuste_medicacion';
+
+    public const CATEGORIA_CONSULTA_EVOLUCION = 'consulta_evolucion';
+
+    /** @var list<string> */
+    public const SOLICITUD_CATEGORIA_CODES = [
+        self::CATEGORIA_RENOVACION_MEDICACION,
+        self::CATEGORIA_AJUSTE_MEDICACION,
+        self::CATEGORIA_CONSULTA_EVOLUCION,
+    ];
+
     /** @var array<string, mixed>|null */
     private static ?array $cache = null;
 
@@ -164,6 +177,138 @@ final class ConsultaAsyncChatPolicyCatalogService
         return $out;
     }
 
+    /**
+     * Códigos canónicos de categoría de solicitud.
+     *
+     * @return list<string>
+     */
+    public function allowedSolicitudCategorias(): array
+    {
+        $map = self::cached()['solicitud_categorias'] ?? [];
+        if (!is_array($map) || $map === []) {
+            return self::SOLICITUD_CATEGORIA_CODES;
+        }
+        $out = [];
+        foreach (array_keys($map) as $code) {
+            $s = trim((string) $code);
+            if ($s !== '') {
+                $out[] = $s;
+            }
+        }
+
+        return $out !== [] ? $out : self::SOLICITUD_CATEGORIA_CODES;
+    }
+
+    /**
+     * Resuelve código canónico desde alias de flujo/meta o categoría directa.
+     */
+    public function resolveSolicitudCategoria(string $codeOrAlias): string
+    {
+        $aliases = self::cached()['solicitud_categoria_aliases'] ?? [];
+        if (!is_array($aliases)) {
+            $aliases = [];
+        }
+        $key = trim($codeOrAlias);
+        if ($key !== '' && isset($aliases[$key])) {
+            $resolved = trim((string) $aliases[$key]);
+            if ($resolved !== '') {
+                return $resolved;
+            }
+        }
+        if ($key !== '' && in_array($key, $this->allowedSolicitudCategorias(), true)) {
+            return $key;
+        }
+        $default = trim((string) ($aliases['default'] ?? self::CATEGORIA_CONSULTA_EVOLUCION));
+
+        return $default !== '' ? $default : self::CATEGORIA_CONSULTA_EVOLUCION;
+    }
+
+    /**
+     * Categoría canónica desde meta del encounter async.
+     *
+     * @param array<string, mixed> $meta
+     */
+    public function solicitudCategoriaFromMeta(array $meta): string
+    {
+        $op = trim((string) ($meta['medicacion_operacion'] ?? ''));
+        if ($op !== '') {
+            return $this->resolveSolicitudCategoria($op);
+        }
+        $necesidad = trim((string) ($meta['seguimiento_necesidad'] ?? ''));
+        if ($necesidad !== '') {
+            return $this->resolveSolicitudCategoria($necesidad);
+        }
+        $intake = trim((string) ($meta['intake_tipo'] ?? ''));
+
+        return $this->resolveSolicitudCategoria($intake !== '' ? $intake : 'default');
+    }
+
+    public function solicitudCategoriaLabel(string $categoriaOrAlias): string
+    {
+        $categoria = $this->resolveSolicitudCategoria($categoriaOrAlias);
+        $map = self::cached()['solicitud_categorias'] ?? [];
+        if (is_array($map) && isset($map[$categoria]) && is_array($map[$categoria])) {
+            $label = trim((string) ($map[$categoria]['label'] ?? ''));
+            if ($label !== '') {
+                return $label;
+            }
+        }
+        $fallbacks = [
+            self::CATEGORIA_RENOVACION_MEDICACION => 'Solicitud de renovación de medicación',
+            self::CATEGORIA_AJUSTE_MEDICACION => 'Solicitud de ajuste de medicación',
+            self::CATEGORIA_CONSULTA_EVOLUCION => 'Consulta o evolución',
+        ];
+
+        return $fallbacks[$categoria] ?? $categoria;
+    }
+
+    /**
+     * Labels canónicos (para strip de prefijos históricos en reason_text).
+     *
+     * @return list<string>
+     */
+    public function solicitudCategoriaLabels(): array
+    {
+        $out = [];
+        foreach ($this->allowedSolicitudCategorias() as $code) {
+            $label = $this->solicitudCategoriaLabel($code);
+            if ($label !== '') {
+                $out[] = $label;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Map message_type legacy → categoría (migración / filas antiguas).
+     */
+    public function solicitudCategoriaFromLegacyMessageType(string $messageType): ?string
+    {
+        $type = trim($messageType);
+        if ($type === '') {
+            return null;
+        }
+        $map = self::cached()['solicitud_categorias'] ?? [];
+        if (!is_array($map)) {
+            return null;
+        }
+        foreach ($map as $code => $def) {
+            if (!is_array($def)) {
+                continue;
+            }
+            if (trim((string) ($def['message_type_legacy'] ?? '')) === $type) {
+                return trim((string) $code);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @deprecated Usar resolveSolicitudCategoria / solicitudCategoriaFromMeta.
+     * Conservado para compat con tests y callers legacy.
+     */
     public function solicitudMessageType(string $operacion): string
     {
         $map = self::cached()['solicitud_message_types'] ?? [];
@@ -188,15 +333,12 @@ final class ConsultaAsyncChatPolicyCatalogService
         return trim((string) ($map[$key] ?? ''));
     }
 
+    /**
+     * Label de categoría para bandeja (`solicitud_tipo`). Acepta alias de flujo o código canónico.
+     */
     public function solicitudTipoLabel(string $code): string
     {
-        $map = self::cached()['solicitud_tipo_labels'] ?? [];
-        if (!is_array($map)) {
-            return $code;
-        }
-        $key = trim($code);
-
-        return trim((string) ($map[$key] ?? $key));
+        return $this->solicitudCategoriaLabel($code);
     }
 
     /**

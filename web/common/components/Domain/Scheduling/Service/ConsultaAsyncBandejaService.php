@@ -358,7 +358,12 @@ final class ConsultaAsyncBandejaService
             'status' => (string) $encounter->status,
             'status_label' => $catalog->etiquetaEstado((string) $encounter->status),
             'created_at' => (string) $encounter->created_at,
-            'reason_preview' => $this->previewText((string) ($encounter->reason_text ?? '')),
+            'reason_preview' => $this->previewText(
+                $this->stripSolicitudLabelPrefix(
+                    (string) ($encounter->reason_text ?? ''),
+                    $policyCatalog
+                )
+            ),
             'resolution_label' => $resolutionLabel !== '' ? $resolutionLabel : null,
             'sla' => $sla,
             'acciones' => [
@@ -436,17 +441,31 @@ final class ConsultaAsyncBandejaService
      */
     private function solicitudTipoFromMeta(array $meta, ConsultaAsyncChatPolicyCatalogService $catalog): string
     {
-        $op = trim((string) ($meta['medicacion_operacion'] ?? ''));
-        if ($op !== '') {
-            return $catalog->solicitudTipoLabel($op);
-        }
-        $necesidad = trim((string) ($meta['seguimiento_necesidad'] ?? ''));
-        if ($necesidad !== '') {
-            return $catalog->solicitudTipoLabel($necesidad);
-        }
-        $intake = trim((string) ($meta['intake_tipo'] ?? ''));
+        return $catalog->solicitudCategoriaLabel($catalog->solicitudCategoriaFromMeta($meta));
+    }
 
-        return $catalog->solicitudTipoLabel($intake !== '' ? $intake : 'consulta_general');
+    /**
+     * Quita prefijos históricos de label en reason_text (filas creadas antes de separar label/cuerpo).
+     */
+    private function stripSolicitudLabelPrefix(string $text, ConsultaAsyncChatPolicyCatalogService $catalog): string
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return $text;
+        }
+        foreach ($catalog->solicitudCategoriaLabels() as $label) {
+            if ($label === '') {
+                continue;
+            }
+            if (mb_stripos($text, $label) === 0) {
+                $rest = trim(mb_substr($text, mb_strlen($label)));
+                $rest = ltrim($rest, ":\n\r\t ");
+
+                return $rest !== '' ? $rest : $text;
+            }
+        }
+
+        return $text;
     }
 
     /**

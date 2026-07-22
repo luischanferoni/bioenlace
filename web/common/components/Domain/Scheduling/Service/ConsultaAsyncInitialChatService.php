@@ -39,8 +39,7 @@ final class ConsultaAsyncInitialChatService
         }
 
         $catalog = new ConsultaAsyncChatPolicyCatalogService();
-        $op = trim((string) ($meta['medicacion_operacion'] ?? ''));
-        $messageType = $catalog->solicitudMessageType($op);
+        $categoria = $catalog->solicitudCategoriaFromMeta($meta);
 
         $chatMessage = new \common\models\ConsultaChatMessage();
         $chatMessage->encounter_id = (int) $encounter->id;
@@ -48,7 +47,8 @@ final class ConsultaAsyncInitialChatService
         $chatMessage->user_name = $userName;
         $chatMessage->user_role = 'paciente';
         $chatMessage->content = $mensaje;
-        $chatMessage->message_type = $messageType;
+        $chatMessage->message_type = 'texto';
+        $chatMessage->solicitud_categoria = $categoria;
         $chatMessage->save(false);
     }
 }

@@ -49,7 +49,7 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         $this->assertContains('medication_request_ids', $codes);
         $values = array_column($ctx['lines'], 'value');
         $joined = implode(' ', $values);
-        $this->assertStringContainsString('Renovación', $joined);
+        $this->assertStringContainsString('Solicitud de renovación de medicación', $joined);
         $this->assertStringContainsString('Enalapril', $joined);
         $this->assertSame('clinical_history', $ctx['references'][0]['kind']);
     }

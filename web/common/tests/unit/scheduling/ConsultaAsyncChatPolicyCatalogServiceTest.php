@@ -27,6 +27,57 @@ class ConsultaAsyncChatPolicyCatalogServiceTest extends Unit
         $this->assertSame('solicitud_ajuste', $svc->solicitudMessageType('ajuste'));
     }
 
+    public function testSolicitudCategoriasCanonicaYLabels(): void
+    {
+        $svc = new ConsultaAsyncChatPolicyCatalogService();
+        $this->assertSame(
+            ConsultaAsyncChatPolicyCatalogService::CATEGORIA_RENOVACION_MEDICACION,
+            $svc->resolveSolicitudCategoria('renovacion')
+        );
+        $this->assertSame(
+            ConsultaAsyncChatPolicyCatalogService::CATEGORIA_AJUSTE_MEDICACION,
+            $svc->resolveSolicitudCategoria('solicitar_ajuste')
+        );
+        $this->assertSame(
+            ConsultaAsyncChatPolicyCatalogService::CATEGORIA_CONSULTA_EVOLUCION,
+            $svc->resolveSolicitudCategoria('consulta_general')
+        );
+        $this->assertSame(
+            'Solicitud de renovación de medicación',
+            $svc->solicitudCategoriaLabel('renovacion')
+        );
+        $this->assertSame(
+            'Solicitud de ajuste de medicación',
+            $svc->solicitudTipoLabel('ajuste')
+        );
+        $this->assertSame(
+            'Consulta o evolución',
+            $svc->solicitudTipoLabel('contar_evolucion')
+        );
+    }
+
+    public function testSolicitudCategoriaFromMeta(): void
+    {
+        $svc = new ConsultaAsyncChatPolicyCatalogService();
+        $this->assertSame(
+            ConsultaAsyncChatPolicyCatalogService::CATEGORIA_RENOVACION_MEDICACION,
+            $svc->solicitudCategoriaFromMeta(['medicacion_operacion' => 'renovacion'])
+        );
+        $this->assertSame(
+            ConsultaAsyncChatPolicyCatalogService::CATEGORIA_CONSULTA_EVOLUCION,
+            $svc->solicitudCategoriaFromMeta(['intake_tipo' => 'consulta_general'])
+        );
+    }
+
+    public function testSolicitudCategoriaFromLegacyMessageType(): void
+    {
+        $svc = new ConsultaAsyncChatPolicyCatalogService();
+        $this->assertSame(
+            ConsultaAsyncChatPolicyCatalogService::CATEGORIA_AJUSTE_MEDICACION,
+            $svc->solicitudCategoriaFromLegacyMessageType('solicitud_ajuste')
+        );
+    }
+
     public function testResolucionesIncluyenCierreStaff(): void
     {
         $svc = new ConsultaAsyncChatPolicyCatalogService();

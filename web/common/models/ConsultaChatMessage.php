@@ -15,7 +15,8 @@ use yii\db\ActiveRecord;
  * @property string $user_name
  * @property string $user_role
  * @property string $texto
- * @property string $message_type
+ * @property string $message_type texto|imagen|audio|video|documento|sistema
+ * @property string|null $solicitud_categoria renovacion_medicacion|ajuste_medicacion|consulta_evolucion
  * @property bool $is_read
  * @property string $created_at
  * @property string $updated_at
@@ -45,10 +46,10 @@ class ConsultaChatMessage extends ActiveRecord
                 'video',
                 'documento',
                 'sistema',
-                'solicitud_renovacion',
-                'solicitud_ajuste',
-                'solicitud_consulta',
             ]],
+            [['solicitud_categoria'], 'string', 'max' => 40],
+            [['solicitud_categoria'], 'default', 'value' => null],
+            [['solicitud_categoria'], 'in', 'range' => \common\components\Domain\Scheduling\Service\ConsultaAsyncChatPolicyCatalogService::SOLICITUD_CATEGORIA_CODES, 'skipOnEmpty' => true],
             [['user_role'], 'in', 'range' => ['medico', 'paciente', 'enfermeria', 'administrador', 'sistema']],
             [['encounter_id'], 'exist', 'skipOnError' => true, 'targetClass' => Encounter::class, 'targetAttribute' => ['encounter_id' => 'id']],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => User::class, 'targetAttribute' => ['user_id' => 'id']],
@@ -70,6 +71,7 @@ class ConsultaChatMessage extends ActiveRecord
             'user_role' => 'User Role',
             'texto' => 'Texto',
             'message_type' => 'Message Type',
+            'solicitud_categoria' => 'Solicitud categoría',
             'is_read' => 'Is Read',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
@@ -104,6 +106,9 @@ class ConsultaChatMessage extends ActiveRecord
                 $this->created_at = date('Y-m-d H:i:s');
                 $this->message_type = $this->message_type ?: 'texto';
                 $this->is_read = $this->is_read ?: false;
+            }
+            if ($this->solicitud_categoria === '') {
+                $this->solicitud_categoria = null;
             }
             $this->updated_at = date('Y-m-d H:i:s');
 

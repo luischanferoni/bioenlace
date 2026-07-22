@@ -182,7 +182,7 @@ final class ConsultaAsyncSolicitudService
             $labels = (new CarePlanMedicationListService())->labelsForIds($ids);
             $lines = $labels !== [] ? $labels : array_map(static fn (int $id): string => 'Medicación #' . $id, $ids);
 
-            return "Solicitud de renovación de medicación:\n- " . implode("\n- ", $lines);
+            return implode("\n", array_map(static fn (string $l): string => '- ' . $l, $lines));
         }
 
         if ($operacion === ConsultasSeguimientoIntakeService::MEDICACION_OP_AJUSTE) {
@@ -200,7 +200,7 @@ final class ConsultaAsyncSolicitudService
             $labels = (new CarePlanMedicationListService())->labelsForIds($ids);
             $lines = $labels !== [] ? $labels : array_map(static fn (int $id): string => 'Medicación #' . $id, $ids);
 
-            return "Solicitud de ajuste de medicación:\n- " . implode("\n- ", $lines)
+            return implode("\n", array_map(static fn (string $l): string => '- ' . $l, $lines))
                 . "\n\nMotivo: " . $motivo;
         }
 

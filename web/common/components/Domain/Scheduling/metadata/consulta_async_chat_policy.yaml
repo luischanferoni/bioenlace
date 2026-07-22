@@ -128,6 +128,36 @@ resolutions:
     label: Cancelada por el paciente
     notify_patient: false
 
+# Categorías canónicas de solicitud async (sistema completo).
+# message_type_legacy: valores históricos en interaccion_chat_clinico.message_type (migración).
+solicitud_categorias:
+  renovacion_medicacion:
+    label: Solicitud de renovación de medicación
+    message_type_legacy: solicitud_renovacion
+  ajuste_medicacion:
+    label: Solicitud de ajuste de medicación
+    message_type_legacy: solicitud_ajuste
+  consulta_evolucion:
+    label: Consulta o evolución
+    message_type_legacy: solicitud_consulta
+
+# Alias de flujo/meta (medicacion_operacion, seguimiento_necesidad, intake_tipo) → categoría.
+solicitud_categoria_aliases:
+  renovacion: renovacion_medicacion
+  renovacion_medicacion: renovacion_medicacion
+  ajuste: ajuste_medicacion
+  ajuste_medicacion: ajuste_medicacion
+  renovar_medicacion: renovacion_medicacion
+  solicitar_ajuste: ajuste_medicacion
+  contar_evolucion: consulta_evolucion
+  duda: consulta_evolucion
+  consulta_general: consulta_evolucion
+  consulta_evolucion: consulta_evolucion
+  seguimiento: consulta_evolucion
+  seguimiento_consulta_previa: consulta_evolucion
+  default: consulta_evolucion
+
+# Compat: map op → message_type legacy (solo lectura / backfill).
 solicitud_message_types:
   renovacion: solicitud_renovacion
   ajuste: solicitud_ajuste
@@ -149,10 +179,4 @@ staff_messages:
   tomada_conversational: Solicitud asignada. Podés responder por mensaje.
   tomada_structured: Solicitud asignada. Elegí una resolución para el paciente.
 
-solicitud_tipo_labels:
-  renovacion: Renovación
-  ajuste: Ajuste
-  # Alias histórico (antes «duda» y «contar_evolucion» separados).
-  duda: Consulta o evolución
-  contar_evolucion: Consulta o evolución
-  consulta_general: Consulta general
+# Labels cortos históricos eliminados: usar solicitud_categorias.*.label vía catalog.

@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\Service\SecureMediaService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncChatUploadService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncPushNotifier;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncBandejaPrioridadAgent;
+use common\components\Domain\Scheduling\Service\ConsultaAsyncChatPolicyCatalogService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncChatPolicyService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncEncounterMetaService;
 use common\components\Domain\Scheduling\Service\ConsultaAsyncIntakeContextService;
@@ -60,7 +61,9 @@ class ConsultaChatController extends BaseController
                 'user_name' => $message->user_name,
                 'user_role' => $message->user_role,
                 'message_type' => $message->message_type ?: 'texto',
-                'message_kind' => $this->messageKindFromType((string) ($message->message_type ?: 'texto')),
+                'message_kind' => $this->messageKindFromMessage($message),
+                'solicitud_categoria' => $this->solicitudCategoriaForApi($message),
+                'solicitud_categoria_label' => $this->solicitudCategoriaLabelForApi($message),
                 'created_at' => $message->created_at,
                 'is_read' => $message->is_read,
             ];
@@ -92,16 +95,40 @@ class ConsultaChatController extends BaseController
         ];
     }
 
-    private function messageKindFromType(string $messageType): string
+    private function messageKindFromMessage(ConsultaChatMessage $message): string
     {
-        if (in_array($messageType, ['solicitud_renovacion', 'solicitud_ajuste', 'solicitud_consulta'], true)) {
+        $categoria = $this->solicitudCategoriaForApi($message);
+        if ($categoria !== null) {
             return 'solicitud';
         }
+        $messageType = (string) ($message->message_type ?: 'texto');
         if ($messageType === 'sistema') {
             return 'sistema';
         }
 
         return 'chat';
+    }
+
+    private function solicitudCategoriaForApi(ConsultaChatMessage $message): ?string
+    {
+        $raw = trim((string) ($message->solicitud_categoria ?? ''));
+        if ($raw !== '') {
+            return $raw;
+        }
+        $legacy = (new ConsultaAsyncChatPolicyCatalogService())
+            ->solicitudCategoriaFromLegacyMessageType((string) ($message->message_type ?: ''));
+
+        return $legacy;
+    }
+
+    private function solicitudCategoriaLabelForApi(ConsultaChatMessage $message): ?string
+    {
+        $categoria = $this->solicitudCategoriaForApi($message);
+        if ($categoria === null) {
+            return null;
+        }
+
+        return (new ConsultaAsyncChatPolicyCatalogService())->solicitudCategoriaLabel($categoria);
     }
 
     /**

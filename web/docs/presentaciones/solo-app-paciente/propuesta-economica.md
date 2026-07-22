@@ -37,6 +37,8 @@ Esta propuesta cubre **únicamente el uso de la app móvil del paciente** de Bio
 
 ---
 
+<div style="page-break-before: always;"></div>
+
 ## 3. Inversión
 
 Moneda: **USD**. Los importes se indican **sin IVA**.
@@ -48,25 +50,21 @@ El costo de esta propuesta es **solo por el canal app paciente**, no por cantida
 
 | Concepto | Detalle | Monto (USD) |
 |----------|---------|------------:|
-| Licencia de uso de la app móvil del paciente | Acceso de los pacientes de CIS Banda al canal móvil Bioenlace | *[XXXX]* / mes |
+| Licencia de uso de la app móvil del paciente | Acceso de los pacientes de CIS Banda al canal móvil Bioenlace | *200* / mes (sin IVA)|
 
 
 ### 3.3 Totales
 
 | Concepto | Monto (USD) |
 |----------|------------:|
-| Puesta en marcha (único) | *[XXXX]* |
-| Licencia app paciente × *[12]* meses | *[XXXX]* |
-| **Inversión total año 1** | **USD *[XXXX]*** |
+| Licencia app paciente × *[12]* meses | *200* |
+| **Inversión total año 1** | **USD *2.400*** |
 
 ---
 
 ## 4. Condiciones de pago
 
-- **Setup:** *[50 %]* al aceptar la propuesta · *[50 %]* al go-live (o en una sola cuota al inicio).
-- **Licencia app paciente:** pago *[mensual / trimestral / anual]* por adelantado.
-- **Pago anual:** descuento de *[X %]* sobre el total de licencia del período.
-- Facturación y medios de pago: *[detalle a definir]*.
+- **Licencia app paciente:** pago *[mensual / trimestral / anual]*.
 
 ---
 
@@ -74,9 +72,9 @@ El costo de esta propuesta es **solo por el canal app paciente**, no por cantida
 
 | Hito | Fecha estimada |
 |------|----------------|
-| Aceptación / kick-off | *[…]* |
-| Configuración y onboarding | *[…]* |
-| Go-live (app paciente operativa para CIS Banda) | *[…]* |
+| Aceptación | *30 de Julio de 2026* |
+| Configuración y onboarding | *03 de Agosto de 2026* |
+| Aplicación paciente operativa para CIS Banda | *07 de Agosto de 2026* |
 
 Los plazos finales se confirman al firmar, según disponibilidad de la institución.
 
@@ -90,7 +88,7 @@ Para aceptar esta propuesta, responder a este documento por escrito (email o ord
 2. Confirmación del alcance: **solo app móvil del paciente**  
 3. Modalidad de pago elegida  
 
-Quedamos a disposición para ajustar montos o plazos antes del vencimiento de la oferta.
+Quedamos a disposición para ajustar plazos antes del vencimiento de la oferta.
 
 ---
 

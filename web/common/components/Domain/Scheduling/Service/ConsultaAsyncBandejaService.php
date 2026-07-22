@@ -312,7 +312,6 @@ final class ConsultaAsyncBandejaService
         $meta = $this->parseNote($encounter->note);
         $urgencyBand = isset($meta['urgency_band']) ? (string) $meta['urgency_band'] : null;
         $sla = $this->buildSla($encounter, $urgencyBand, $catalog);
-        $idPersona = (int) ($encounter->subject_persona_id ?? 0);
 
         $serviceId = (int) ($encounter->service_id ?? 0);
         $servicio = $serviceId > 0 ? Servicio::findOne($serviceId) : null;
@@ -390,15 +389,10 @@ final class ConsultaAsyncBandejaService
             $item['ui_group'] = $uiGroup;
         }
 
-        // Staff: contexto de intake liviano + asignación.
-        // urgency_band queda solo para el agente de prioridad (se quita antes de responder).
+        // Staff: asignación. urgency_band solo para el agente de prioridad (se quita antes de responder).
+        // intake_context no va en bandeja: basta reason_preview; el chat lo carga al abrir.
         if ($staffView) {
             $item['urgency_band'] = $urgencyBand;
-            $item['intake_context'] = (new ConsultaAsyncIntakeContextService())->buildFromMeta(
-                $meta,
-                $idPersona,
-                ['include_reference_detail' => false]
-            );
             $item['asignacion'] = [
                 'id_pes' => $idPes > 0 ? $idPes : null,
                 'profesional' => $profesionalNombre,

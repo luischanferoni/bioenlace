@@ -1743,7 +1743,9 @@
     function fillAsyncIntakeContext(colEl, item) {
       var slot = colEl.querySelector('[data-slot="intake-context"]');
       if (!slot) return;
-      renderIntakeContextBlock(slot, item.intake_context);
+      // Bandeja staff: sin intake_context (reason_preview alcanza); el chat lo carga al abrir.
+      clearNode(slot);
+      slot.classList.add('d-none');
     }
 
     function getAsyncChatModal() {
@@ -2218,7 +2220,7 @@
       asyncChatState.isStaff = !!(item.paciente && item.paciente.nombre_completo);
       asyncChatState.canCompose = canCompose !== false;
       asyncChatState.chatPolicy = null;
-      asyncChatState.intakeContext = item.intake_context || null;
+      asyncChatState.intakeContext = null;
       var subtitle = document.getElementById('async-chat-subtitle');
       if (subtitle) {
         var parts = [];
@@ -2228,7 +2230,7 @@
       }
       renderIntakeContextBlock(
         document.getElementById('async-chat-intake-context'),
-        asyncChatState.intakeContext
+        null
       );
       var input = document.getElementById('async-chat-input');
       if (input) input.value = '';

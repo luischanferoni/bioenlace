@@ -350,7 +350,7 @@ class TurnosController extends BaseController
                 $params['alcance'] = 'pendientes';
             }
             if (!isset($params['limit']) || $params['limit'] === '') {
-                $params['limit'] = 50;
+                $params['limit'] = ($params['alcance'] === 'pasados') ? 5 : 50;
             }
             if (!isset($params['offset']) || $params['offset'] === '') {
                 $params['offset'] = 0;
@@ -393,6 +393,19 @@ class TurnosController extends BaseController
                 ];
             }
             $out = UiScreenService::withListBlockItems($out, $items);
+            if (($params['alcance'] ?? '') === 'pasados') {
+                $out['title'] = 'Turnos anteriores';
+                if (isset($out['blocks']) && is_array($out['blocks'])) {
+                    foreach ($out['blocks'] as $idx => $block) {
+                        if (!is_array($block) || ($block['kind'] ?? '') !== 'list') {
+                            continue;
+                        }
+                        $out['blocks'][$idx]['empty_message'] =
+                            'No tenés turnos anteriores para mostrar.';
+                        break;
+                    }
+                }
+            }
         }
 
         return $out;

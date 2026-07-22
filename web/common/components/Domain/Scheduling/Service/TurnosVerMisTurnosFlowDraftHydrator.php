@@ -2,12 +2,13 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Domain\Scheduling\Service\TurnoSlotOfferUiPresenter;
 use Yii;
 
 /**
- * Resumen textual de turnos pendientes para el asistente (todos los canales).
+ * Resumen textual de turnos del paciente para el asistente (todos los canales).
  * Declared as draft_hydrator.handler: scheduling.turnos_listar_como_paciente
+ *
+ * Options YAML: `alcance` (pendientes|pasados), `limit` (1–20; pasados tope 10).
  */
 final class TurnosVerMisTurnosFlowDraftHydrator
 {
@@ -18,11 +19,16 @@ final class TurnosVerMisTurnosFlowDraftHydrator
     public static function hydrateWithOptions(array &$body, array $options = []): void
     {
         $draft = isset($body['draft']) && is_array($body['draft']) ? $body['draft'] : [];
-        $limit = isset($options['limit']) ? (int) $options['limit'] : 10;
-        $limit = max(1, min(20, $limit));
+        $alcance = trim((string) ($options['alcance'] ?? 'pendientes'));
+        if (!in_array($alcance, ['pendientes', 'pasados'], true)) {
+            $alcance = 'pendientes';
+        }
+        $limit = isset($options['limit']) ? (int) $options['limit'] : ($alcance === 'pasados' ? 5 : 10);
+        $maxLimit = $alcance === 'pasados' ? 10 : 20;
+        $limit = max(1, min($maxLimit, $limit));
 
         $params = [
-            'alcance' => 'pendientes',
+            'alcance' => $alcance,
             'limit' => $limit,
             'offset' => 0,
         ];
@@ -52,13 +58,22 @@ final class TurnosVerMisTurnosFlowDraftHydrator
             }
         }
 
+        $esPasados = $alcance === 'pasados';
         if ($lines === []) {
-            $draft['assistant_text'] = 'No tenés turnos pendientes por ahora.';
+            $draft['assistant_text'] = $esPasados
+                ? 'No tenés turnos anteriores para mostrar.'
+                : 'No tenés turnos pendientes por ahora.';
         } else {
             $total = isset($data['total']) ? (int) $data['total'] : count($lines);
-            $header = $total > count($lines)
-                ? 'Tus próximos turnos (mostrando ' . count($lines) . ' de ' . $total . '):'
-                : 'Tus próximos turnos:';
+            if ($esPasados) {
+                $header = $total > count($lines)
+                    ? 'Tus turnos anteriores (últimos ' . count($lines) . ' de ' . $total . '):'
+                    : 'Tus turnos anteriores:';
+            } else {
+                $header = $total > count($lines)
+                    ? 'Tus próximos turnos (mostrando ' . count($lines) . ' de ' . $total . '):'
+                    : 'Tus próximos turnos:';
+            }
             $draft['assistant_text'] = $header . "\n" . implode("\n", $lines);
         }
 

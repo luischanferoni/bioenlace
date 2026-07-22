@@ -21,8 +21,8 @@ import '../widgets/consulta_async_solicitud_card.dart';
 /// Proximidad de un turno respecto al día actual (sólo fecha, sin hora).
 enum _ProximidadPendiente { hoy, manana, masAdelante }
 
-/// Pantalla de inicio del paciente: saludo + listado de próximos turnos
-/// (con `EN_RESOLUCION` priorizado) y, en otra pestaña, el historial.
+/// Pantalla de inicio del paciente: saludo + próximos turnos
+/// (con `EN_RESOLUCION` priorizado). El historial de turnos va por el asistente.
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
@@ -50,8 +50,6 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   /// Tamaño de página API (máx. 100) para traer todos los próximos en una o pocas requests.
   static const int _proximosPageSize = 100;
-  /// Historial: páginas pequeñas cargadas al hacer scroll.
-  static const int _pasadosPageLimit = 12;
 
   late TurnosService _turnosService;
   late CarePlanService _carePlanService;
@@ -72,15 +70,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   final List<Map<String, dynamic>> _pendientes = [];
   final List<Map<String, dynamic>> _enResolucion = [];
-  final List<Map<String, dynamic>> _pasados = [];
 
-  int _totalPasados = 0;
-  bool _loadingMasPasados = false;
   bool _refrescandoTabActivo = true;
   String? _error;
-
-  /// 0 = próximos turnos, 1 = historial.
-  int _tabTurnos = 0;
 
   String _displayName = '';
 
@@ -89,7 +81,6 @@ class HomeScreenState extends State<HomeScreen> {
     super.initState();
     _turnosService = TurnosService(authToken: widget.authToken);
     _carePlanService = CarePlanService(authToken: widget.authToken);
-    _scrollController.addListener(_onScroll);
     unawaited(_bootstrap());
   }
 
@@ -121,21 +112,9 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-    final pos = _scrollController.position;
-    if (_tabTurnos != 1) return;
-    if (pos.maxScrollExtent - pos.pixels < 400) {
-      _cargarMasPasados();
-    }
-  }
-
-  bool get _hayMasPasados => _pasados.length < _totalPasados;
 
   /// Trae el listado completo de un alcance (paginando en el servidor si hace falta).
   Future<({List<Map<String, dynamic>> turnos, String? error})> _fetchAllPorAlcance(
@@ -344,8 +323,6 @@ class HomeScreenState extends State<HomeScreen> {
       _error = null;
       _pendientes.clear();
       _enResolucion.clear();
-      _pasados.clear();
-      _totalPasados = 0;
     });
     try {
       await _applyUpcomingFromPanel();
@@ -378,7 +355,6 @@ class HomeScreenState extends State<HomeScreen> {
       _error = null;
       _pendientes.clear();
       _enResolucion.clear();
-      _pasados.clear();
     });
     try {
       await _applyUpcomingFromPanel();
@@ -394,48 +370,15 @@ class HomeScreenState extends State<HomeScreen> {
           ..addAll(pendientesR.turnos);
       });
     }
-    final r2 = await _turnosService.getMisTurnos(
-      alcance: 'pasados',
-      limit: _pasadosPageLimit,
-      offset: 0,
-      subjectPersonaId: _subjectPersonaId,
-    );
     if (!mounted) return;
     setState(() {
-      if (r2['success'] == true) {
-        _pasados
-          ..clear()
-          ..addAll(_asMapList(r2['turnos']));
-        _totalPasados = r2['total'] as int? ?? _pasados.length;
-        _error = null;
-      } else {
-        _error = r2['message'] as String?;
-      }
+      _error = null;
     });
   }
 
   List<Map<String, dynamic>> _asMapList(dynamic raw) {
     if (raw is! List) return [];
     return raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-  }
-
-  Future<void> _cargarMasPasados() async {
-    if (_loadingMasPasados || !_hayMasPasados) return;
-    setState(() => _loadingMasPasados = true);
-    final r = await _turnosService.getMisTurnos(
-      alcance: 'pasados',
-      limit: _pasadosPageLimit,
-      offset: _pasados.length,
-      subjectPersonaId: _subjectPersonaId,
-    );
-    if (!mounted) return;
-    setState(() {
-      _loadingMasPasados = false;
-      if (r['success'] == true) {
-        _pasados.addAll(_asMapList(r['turnos']));
-        _totalPasados = r['total'] as int? ?? _pasados.length;
-      }
-    });
   }
 
   Future<void> _recargarPendientesDesdeCero() async {
@@ -462,49 +405,6 @@ class HomeScreenState extends State<HomeScreen> {
         }
       });
     }
-  }
-
-  Future<void> _recargarPasadosDesdeCero() async {
-    setState(() {
-      _pasados.clear();
-      _totalPasados = 0;
-    });
-    final r = await _turnosService.getMisTurnos(
-      alcance: 'pasados',
-      limit: _pasadosPageLimit,
-      offset: 0,
-      subjectPersonaId: _subjectPersonaId,
-    );
-    if (!mounted) return;
-    if (r['success'] == true) {
-      setState(() {
-        _pasados
-          ..clear()
-          ..addAll(_asMapList(r['turnos']));
-        _totalPasados = r['total'] as int? ?? _pasados.length;
-        _error = null;
-      });
-    } else {
-      setState(() => _error = r['message'] as String?);
-    }
-  }
-
-  Future<void> _alCambiarTab(int nuevoTab) async {
-    if (nuevoTab == _tabTurnos) return;
-    setState(() {
-      _tabTurnos = nuevoTab;
-      _refrescandoTabActivo = true;
-      if (_scrollController.hasClients) {
-        _scrollController.jumpTo(0);
-      }
-    });
-    if (nuevoTab == 0) {
-      await _recargarPendientesDesdeCero();
-    } else {
-      await _recargarPasadosDesdeCero();
-    }
-    if (!mounted) return;
-    setState(() => _refrescandoTabActivo = false);
   }
 
   DateTime? _fechaTurnoSoloDia(Map<String, dynamic> t) {
@@ -740,8 +640,7 @@ class HomeScreenState extends State<HomeScreen> {
           onRefresh: _refrescoPullCompleto,
           child: _error != null &&
                 !_refrescandoTabActivo &&
-                _proximosVisibles.isEmpty &&
-                _pasados.isEmpty
+                _proximosVisibles.isEmpty
             ? _buildErrorEstado(context)
             : _buildContenido(context),
         ),
@@ -769,6 +668,12 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildContenido(BuildContext context) {
+    // Hot reload (web): campos nuevos pueden quedar no-iterables hasta cold restart.
+    _conditionsActivas = _asMapList(_conditionsActivas);
+    _carePlansActivos = _asMapList(_carePlansActivos);
+    _consultasAsync = _asMapList(_consultasAsync);
+    _consultasAsyncHistorial = _asMapList(_consultasAsyncHistorial);
+
     final asyncConsultas = _consultasAsyncGenerales;
     final asyncConsultasHist = _consultasAsyncHistorialGenerales;
     final pendientesTratamiento = _consultasAsyncEnTratamiento.length;
@@ -810,53 +715,36 @@ class HomeScreenState extends State<HomeScreen> {
           _buildConsultasAsyncHistorialSection(context, asyncConsultasHist),
         ],
         BioSpacing.gapH(BioSpacing.md),
-        if (_error != null &&
-            (_proximosVisibles.isNotEmpty || _pasados.isNotEmpty)) ...[
+        if (_error != null && _proximosVisibles.isNotEmpty) ...[
           BioAlert.danger(message: _error!),
           BioSpacing.gapH(BioSpacing.md),
         ],
-        _buildSelectorTab(context),
-        if (_tabTurnos == 0) ...[
-          BioSpacing.gapH(BioSpacing.md),
-          if (_refrescandoTabActivo && _proximosVisibles.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: BioSpacing.xl),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (_proximosVisibles.isEmpty)
-            _buildEmptyProximos(context)
-          else ...[
-            ..._proximosVisibles.map((t) {
-              final enRes = TurnoResolucionUtils.esEnResolucion(t);
-              final prox = enRes ? null : _proximidadPendiente(t);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-                child: _buildTurnoCard(
-                  context,
-                  t,
-                  futuro: true,
-                  proximidad: prox,
-                  enResolucion: enRes,
-                ),
-              );
-            }),
-          ],
-        ] else ...[
-          BioSpacing.gapH(BioSpacing.md),
-          if (_refrescandoTabActivo && _pasados.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: BioSpacing.xl),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          if (!_refrescandoTabActivo && _pasados.isEmpty) ...[
-            _buildEmptyPasados(context),
-            BioSpacing.gapH(BioSpacing.sm),
-          ],
-          ..._pasados.map((t) => Padding(
-                padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-                child: _buildTurnoCard(context, t, futuro: false),
-              )),
-          if (_loadingMasPasados && _hayMasPasados) _buildLoaderInline(),
+        Center(
+          child: Text('Próximos turnos', style: BioTypography.h3),
+        ),
+        BioSpacing.gapH(BioSpacing.md),
+        if (_refrescandoTabActivo && _proximosVisibles.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: BioSpacing.xl),
+            child: Center(child: CircularProgressIndicator()),
+          )
+        else if (_proximosVisibles.isEmpty)
+          _buildEmptyProximos(context)
+        else ...[
+          ..._proximosVisibles.map((t) {
+            final enRes = TurnoResolucionUtils.esEnResolucion(t);
+            final prox = enRes ? null : _proximidadPendiente(t);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+              child: _buildTurnoCard(
+                context,
+                t,
+                futuro: true,
+                proximidad: prox,
+                enResolucion: enRes,
+              ),
+            );
+          }),
         ],
         BioSpacing.gapH(BioSpacing.xl),
       ],
@@ -1066,11 +954,11 @@ class HomeScreenState extends State<HomeScreen> {
 
   List<Map<String, dynamic>> get _consultasAsyncEnCondiciones {
     final out = <Map<String, dynamic>>[];
-    for (final condition in _conditionsActivas) {
+    for (final condition in _asMapList(_conditionsActivas)) {
       out.addAll(_asMapList(condition['solicitudes_activas']));
     }
     if (out.isEmpty) {
-      return _consultasAsync
+      return _asMapList(_consultasAsync)
           .where(ConsultaAsyncSolicitudCard.perteneceACondicion)
           .toList();
     }
@@ -1332,30 +1220,6 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSelectorTab(BuildContext context) {
-    return BioSegmentedTabs(
-      selectedIndex: _tabTurnos,
-      onSelected: _alCambiarTab,
-      tabs: const [
-        BioSegmentedTab(label: 'Próximos', icon: Icons.event_outlined),
-        BioSegmentedTab(label: 'Anteriores', icon: Icons.history),
-      ],
-    );
-  }
-
-  Widget _buildLoaderInline() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: BioSpacing.sm),
-      child: Center(
-        child: SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-    );
-  }
-
   Widget _buildTurnoCard(
     BuildContext context,
     Map<String, dynamic> t, {
@@ -1587,16 +1451,6 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyPasados(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: BioSpacing.sm),
-      child: Text(
-        'No hay turnos anteriores en tu historial.',
-        style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
       ),
     );
   }

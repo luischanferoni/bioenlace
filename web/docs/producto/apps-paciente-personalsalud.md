@@ -52,7 +52,7 @@ flowchart TB
 
 ## Paciente en el día a día
 
-- Inicio: próximos turnos, **condiciones activas**, tratamientos activos, consultas por mensaje.
+- Inicio: próximos turnos (sin pestaña de historial), **condiciones activas**, tratamientos activos, consultas por mensaje. Turnos anteriores vía asistente (`turnos.ver-turnos-anteriores-como-paciente`).
 - **Representación:** chip «A cargo de» en inicio (yo u otro paciente con tutela o delegación activa); gestión en Configuración → Representación. Detalle: [representacion-paciente.md](./representacion-paciente.md).
 - Resolver turnos en conflicto o pedir acciones desde la conversación o desde accesos directos en inicio.
 - Configuración: alertas, recordatorios de planes de tratamiento, preferencia de aviso cuando un representante actúa (N9).

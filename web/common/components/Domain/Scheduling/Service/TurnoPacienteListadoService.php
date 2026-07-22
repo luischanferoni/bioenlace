@@ -30,8 +30,10 @@ final class TurnoPacienteListadoService
         $alcance = isset($params['alcance']) ? (string) $params['alcance'] : '';
 
         if ($alcance === 'pendientes' || $alcance === 'pasados' || $alcance === 'en_resolucion') {
-            $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : 20;
-            $limit = max(1, min(100, $limit));
+            $defaultLimit = $alcance === 'pasados' ? 5 : 20;
+            $maxLimit = $alcance === 'pasados' ? 10 : 100;
+            $limit = isset($params['limit']) && $params['limit'] !== '' ? (int) $params['limit'] : $defaultLimit;
+            $limit = max(1, min($maxLimit, $limit));
             $offset = isset($params['offset']) && $params['offset'] !== '' ? (int) $params['offset'] : 0;
             $offset = max(0, $offset);
 

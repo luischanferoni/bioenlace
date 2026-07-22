@@ -23,6 +23,7 @@ vocab:
     - medicos del centro
   clinical_symptoms: '\b(problema|dolor|duele|sintoma|síntoma|malestar|enfermo|fiebre|tos|nausea|náusea|vomito|vómito|mareo|hinchazon|hinchazón|presion|presión|diabetes|hipertension|hipertensión|chichon|chichón|golpe|hematoma|moreton|moretón|bulto|hinchado|inflamado|cabeza|manos|pies|brazo|pierna|herida|sangra|sangrado)\b'
   scheduling_ops: '\b(turno|turnos|reservar|sacar turno|cancelar turno|cancelar|agenda|cita|reprogramar|sobreturno)\b'
+  turnos_anteriores_topics: '\b(turnos?\s+anteriores|turnos?\s+pasados|historial\s+de\s+turnos|citas?\s+anteriores|citas?\s+pasadas|turnos?\s+que\s+tuve|mis\s+turnos\s+pasados)\b'
   paciente_mis_turnos_phrases:
     - mis turnos
     - qué turnos tengo
@@ -36,6 +37,16 @@ vocab:
     - proximos turnos
     - turnos que tengo
     - turnos pendientes
+  paciente_turnos_anteriores_phrases:
+    - turnos anteriores
+    - historial de turnos
+    - turnos pasados
+    - turnos que tuve
+    - mis turnos pasados
+    - citas anteriores
+    - citas pasadas
+    - ver turnos anteriores
+    - listar turnos anteriores
   paciente_reservar_turno_phrases:
     - necesito un turno
     - necesito turno
@@ -165,10 +176,16 @@ match_rules:
 
   paciente_listar_turnos:
     require_phrase_any: paciente_mis_turnos_phrases
-    forbid_any: []
+    forbid_any: [turnos_anteriores_topics]
     ai_hint: >-
       Si el paciente pregunta qué turnos tiene o pide ver/listar sus citas (sin cancelar ni sacar uno nuevo),
       priorizá turnos.ver-mis-turnos-como-paciente.
+
+  paciente_turnos_anteriores:
+    require_phrase_any: paciente_turnos_anteriores_phrases
+    ai_hint: >-
+      Si el paciente pide ver turnos anteriores, pasados o el historial de citas (no los próximos),
+      priorizá turnos.ver-turnos-anteriores-como-paciente.
 
   paciente_reservar_turno:
     require_phrase_any: paciente_reservar_turno_phrases
@@ -230,6 +247,8 @@ score_adjustments:
     apply:
       - intent_id: turnos.ver-mis-turnos-como-paciente
         delta: 55
+      - intent_id: turnos.ver-turnos-anteriores-como-paciente
+        delta: -40
       - intent_id: turnos.crear-como-paciente
         delta: -35
       - intent_id: atencion.necesito-atencion
@@ -238,6 +257,17 @@ score_adjustments:
         delta: -20
       - intent_id: turnos.modificar-como-paciente-flow
         delta: -20
+
+  - when_rule: paciente_turnos_anteriores
+    apply:
+      - intent_id: turnos.ver-turnos-anteriores-como-paciente
+        delta: 60
+      - intent_id: turnos.ver-mis-turnos-como-paciente
+        delta: -45
+      - intent_id: turnos.crear-como-paciente
+        delta: -35
+      - intent_id: atencion.necesito-atencion
+        delta: -35
 
   - when_rule: paciente_reservar_turno
     apply:
@@ -386,6 +416,12 @@ score_adjustments:
         delta: -15
 
 operational_fallbacks:
+  - id: paciente_turnos_anteriores_nl
+    when_any_rule: [paciente_turnos_anteriores]
+    intent_id: turnos.ver-turnos-anteriores-como-paciente
+    confidence: 0.92
+    method: rules_declarative_fallback
+
   - id: paciente_listar_turnos_nl
     when_any_rule: [paciente_listar_turnos]
     intent_id: turnos.ver-mis-turnos-como-paciente

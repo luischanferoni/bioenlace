@@ -360,7 +360,7 @@
       btn.className = 'signup-volume__chip' + (String(p.attentions) === selected ? ' is-selected' : '');
       btn.setAttribute('data-value', String(p.attentions));
       if (p.hint) btn.title = p.hint;
-      btn.innerHTML = '<strong>' + p.label + '</strong><span>' + Pricing.formatAttentions(p.attentions) + '/mes</span>';
+      btn.innerHTML = '<strong>' + Pricing.formatAttentions(p.attentions) + '/mes</strong>';
       btn.addEventListener('click', function () {
         if (btn.disabled) return;
         input.value = String(p.attentions);

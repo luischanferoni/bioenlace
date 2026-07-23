@@ -1,14 +1,14 @@
 # Análisis — Videollamada self-host (COGS y producto)
 
-**Estado:** cifras de planificación **publicadas** (COGS video **3,50**; STT en §2/§4, una sola vez en calculador). Retención: **14 d caliente → Deep Archive** (años; mín. 180 d); **sin 2.ª copia**. Grabación: **Track Egress (muxing)** autoescala 1/4/12. Pendiente: 1 vs 2 pistas de video.  
-**Fecha de captura:** 2026-07-17 (actualizado arquitectura + minutos de voz + lista 3,50 + lifecycle + Track Egress)  
+**Estado:** cifras de planificación **publicadas** (COGS video **1,75** @ **40 %** tele; STT en §2/§4, una sola vez en calculador). Retención: **14 d caliente → Deep Archive** (años; mín. 180 d); **sin 2.ª copia**. Grabación: **Track Egress (muxing)** autoescala 1/4/12. Pendiente: 1 vs 2 pistas de video.  
+**Fecha de captura:** 2026-07-17 (actualizado arquitectura + minutos de voz); **2026-07-23:** share tele **40 %** → COGS **1,75** / **0,0044** por atención.  
 **Contexto:** self-host sin Daily/Deepgram; pipeline post-call; arquitectura mínima + autoescalado; STT alineado a voz real de consulta.
 
-**COGS video vigente:** [videollamadas.md](./estrategias-reduccion/videollamadas.md), [costos-api.md §6](./costos-api.md#6-videollamadas-pacientemédico) — **USD 3,50** = sala/TURN/Track Egress/ops (~1,50) + storage (~2,00); STT **no** duplicado (mismo que dictado). Histórico Daily+Deepgram: **9,19**. Techo intermedio: **5,00**.
+**COGS video vigente:** [videollamadas.md](./estrategias-reduccion/videollamadas.md), [costos-api.md §6](./costos-api.md#6-videollamadas-pacientemédico) — **USD 1,75** @ **40 %** tele = sala/TURN/Track Egress/ops (~0,75) + storage (~1,00); STT **no** duplicado (mismo que dictado). Histórico techo @ 80 %: **3,50**. Daily+Deepgram: **9,19**. Techo intermedio: **5,00**.
 
 **STT base:** [costos-api.md § STT](./costos-api.md#stt) — médico **~5 min** + paciente **~4 min** por encounter → bruto **~$2,52**/prof/mes en servidor; planificación **−30 % on-device → ~$1,76**. La videollamada **alimenta** esos minutos (no los duplica) cuando el transcript reemplaza dictado / notas de voz.
 
-**Lista comercial:** base **0,95** + audio **0,98** (−30 % on-device) + video **3,50** → AMB con videollamada (STT incluido) **~18,08**/prof/mes ([matriz](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md), [`pricing-config.json`](../../../institucional/js/pricing-config.json)).
+**Lista comercial:** base **0,95** + audio **0,98** (−30 % on-device) + video **1,75** → AMB con videollamada (STT incluido) **~12,25**/prof/mes @ 400 encounters ([matriz](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md), [`pricing-config.json`](../../../institucional/js/pricing-config.json)).
 
 ---
 
@@ -118,17 +118,17 @@ Con muxing puro, 4 instancias base son el **punto de partida** (no un techo fijo
 
 ## 2. Supuestos de uso
 
-| Parámetro | Publicado hoy (§6) | Acordado en este análisis |
-|-----------|-------------------|---------------------------|
-| % teleconsulta | **30 %** | **80 %** (agresivo) |
-| Encounters / prof / mes | 400 | 400 |
-| Teleconsultas / mes | 120 | **320** |
-| Minutos de reloj / teleconsulta | 12 | 12 |
-| **Voz médico (STT)** | (antes 1 min dictado) | **~5 min** |
-| **Voz paciente (STT)** | (antes 1 min motivos) | **~4 min** |
-| Minutos STT facturables / teleconsulta | 12 (pista cruda) | **~9** (VAD, 2 pistas) |
-| Minutos STT / mes @ 80 % | 1.440 | **~2.880** (320 × 9) |
-| Participantes (pax-min sala) | 2 × 12 × 120 | 2 × 12 × 320 = **7.680** |
+| Parámetro | Histórico §6 | Techo análisis @ 80 % | **Vigente lista @ 40 %** |
+|-----------|-------------|----------------------|-------------------------|
+| % teleconsulta | **30 %** | **80 %** | **40 %** |
+| Encounters / prof / mes | 400 | 400 | 400 |
+| Teleconsultas / mes | 120 | **320** | **160** |
+| Minutos de reloj / teleconsulta | 12 | 12 | 12 |
+| **Voz médico (STT)** | (antes 1 min dictado) | **~5 min** | **~5 min** |
+| **Voz paciente (STT)** | (antes 1 min motivos) | **~4 min** | **~4 min** |
+| Minutos STT facturables / teleconsulta | 12 (pista cruda) | **~9** (VAD, 2 pistas) | **~9** |
+| Minutos STT / mes (tele) | 1.440 | **~2.880** (320 × 9) | **~1.440** (160 × 9) |
+| Participantes (pax-min sala) | 2 × 12 × 120 | 2 × 12 × 320 = **7.680** | 2 × 12 × 160 = **3.840** |
 
 ### Desglose de 12 min de videollamada (planificación)
 
@@ -141,7 +141,7 @@ Con muxing puro, 4 instancias base son el **punto de partida** (no un techo fijo
 
 Groq cobra por **duración del audio enviado**. Sin VAD, 2 pistas crudas = 24 min/llamada; con VAD ≈ 9 min. Mandar **un archivo concatenado por pista** evita el mínimo de 10 s/request.
 
-El **80 %** es hipótesis de planificación (no telemetría).
+El **40 %** es el supuesto de lista comercial (no telemetría). El **80 %** queda como techo de dimensionamiento de infra.
 
 ---
 
@@ -180,7 +180,7 @@ Retransmite A/V cuando falla el camino directo (NAT/firewall). Obligatorio; se p
 | TLS / dominio / observabilidad | Bajo |
 | Ops humano | Parches, incidentes WebRTC |
 
-A 5.000 PES, cómputo media + grabación + batch con autoescalado: orden **~$2.500–3.500**/mes flotilla (~**$0,50–0,70**/prof). El Track Egress **abarata** el tier de grabación vs composite; el buffer infra **~1,50** del COGS **3,50** deja margen operativo.
+A 5.000 PES, cómputo media + grabación + batch con autoescalado: orden **~$2.500–3.500**/mes flotilla (~**$0,50–0,70**/prof). El Track Egress **abarata** el tier de grabación vs composite; el buffer infra **~0,75** del COGS **1,75** (@ 40 %) deja margen operativo.
 
 ### 4.2 Variables
 
@@ -228,7 +228,7 @@ Stock en régimen (por profesional):
 | Frío @ 5 años | ~1.200 GB → **~$1,20** | ~2.400 GB → **~$2,40** |
 | **Total storage @ 5 años** | **~$1,3**/prof/mes | **~$2,5**/prof/mes |
 
-El frío **sí se acumula** (no es estable): mes 1 ≈ solo caliente + poco frío; a 5 años el frío domina. Sin 2.ª copia, el buffer **~2,00** del COGS video **3,50** cubre 1 pista a 5 años y deja margen corto para 2 pistas.
+El frío **sí se acumula** (no es estable): mes 1 ≈ solo caliente + poco frío; a 5 años el frío domina. Sin 2.ª copia, el buffer **~1,00** del COGS video **1,75** (@ 40 %) cubre 1 pista a 5 años y deja margen corto para 2 pistas.
 
 El transcript (texto) para siempre cuesta centavos; la note clínica sale del transcript, no del MP4.
 
@@ -257,7 +257,7 @@ Supuestos: cloud por hora + banda incluida; autoescalado; tracks + VAD; STT en �
 | STT (ya en §2/§4) | **0 aquí** |
 | **Add-on video orientativo** | **~2–3,5** |
 
-El COGS publicado **3,50** = infra buffer **~1,50** + storage buffer **~2,00**. Con Track Egress el gasto real de cómputo baja (~0,5–0,8); el **3,50** deja margen vs real ~1,8–3,3. Comparación con histórico **9,19** (@ 30 % + Deepgram) y techo intermedio **5,00**: self-host + STT en base + lifecycle queda por debajo; el salto al **80 %** tele se absorbió en §2/§4.
+El COGS publicado **1,75** (@ **40 %** tele) = infra buffer **~0,75** + storage buffer **~1,00**. Con Track Egress el gasto real de cómputo baja (~0,5–0,8); el **1,75** deja margen vs real escalado a ~40 %. Comparación con histórico **9,19** (@ 30 % + Deepgram), techo intermedio **5,00** y techo @ 80 % **3,50**: self-host + STT en base + lifecycle queda por debajo.
 
 ---
 
@@ -279,9 +279,9 @@ Supuestos: 5.000 prof, **80 %** tele, TURN sí, **Track Egress (muxing)**, VAD, 
 | ¿Baja el gasto **real** de cómputo? | **Sí.** Muxing + autoescalado 1/4/12 deja el tier de grabación en centavos–dólares por prof. |
 | ¿Cambia storage? | **No** (sigue 14 d → Deep Archive; 1 vs 2 pistas). |
 | ¿Cambia STT del add-on? | **No** (sigue en §2/§4; calculador: una sola vez con videollamada). |
-| ¿Bajamos el **5,00** de lista / metadata? | **Sí → 3,50.** Recomendado: infra ~1,50 + storage ~2,00. El techo **5,00** queda como histórico intermedio. |
+| ¿Bajamos el **5,00** de lista / metadata? | **Sí → 1,75** @ **40 %** tele. Recomendado: infra ~0,75 + storage ~1,00. Techos históricos: **5,00** intermedio; **3,50** @ 80 %. |
 
-**COGS lista vigente:** **3,50** USD/prof/mes = infra buffer **~1,50** + storage buffer **~2,00**.
+**COGS lista vigente:** **1,75** USD/prof/mes @ **40 %** tele = infra buffer **~0,75** + storage buffer **~1,00**.
 
 Precio lista (margen 233 % sobre COGS):
 
@@ -289,7 +289,8 @@ Precio lista (margen 233 % sobre COGS):
 |------------|--------------------|
 | 9,19 (histórico Daily+Deepgram) | ~+30,6 |
 | 5,00 (techo intermedio self-host) | ~+16,7 |
-| **3,50 (vigente)** | **~+11,7** |
+| **1,75 (vigente @ 40 %)** | **~+5,8** |
+| 3,50 (techo @ 80 %) | ~+11,7 |
 
 ---
 
@@ -305,9 +306,9 @@ Precio lista (margen 233 % sobre COGS):
 | 6 | Grabación | Track Egress; autoescala **min 1 / base 4 / max 12**; disparo CPU+RAM >75 % |
 | 7 | Backup / 2.ª copia | **No** (1 copia) |
 | 8 | IA en add-on video | **No sumar** |
-| 9 | % teleconsulta | **80 %** (antes 30 %) |
+| 9 | % teleconsulta | **40 %** vigente lista (techo histórico análisis **80 %**; antes 30 %) |
 | 10 | 1 vs 2 pistas de video en archivo | **Abierto** (mueve storage ~1,3 vs ~2,5/prof @ 5 años) |
-| 11 | COGS video lista | **3,50** vigente; real orientativo **~1,8–3,3** |
+| 11 | COGS video lista | **1,75** vigente @ 40 % (**0,0044**/atención); techo @ 80 % era **3,50** |
 
 ### Glosario de errores a no repetir
 
@@ -319,7 +320,7 @@ Precio lista (margen 233 % sobre COGS):
 6. Autoescalar en AWS/GCP sin controlar egress destruye el ahorro de cómputo.
 7. No contar storage como “estable el primer año”: el frío crece mes a mes.
 8. No dimensionar grabación como “llamadas”: son **pistas**; no usar Room Composite a escala.
-9. El techo **5,00** fue intermedio; vigente **3,50** (= ~1,50 infra + ~2,00 storage).
+9. El techo **5,00** fue intermedio; techo @ 80 % **3,50**; vigente @ **40 %** **1,75** (= ~0,75 infra + ~1,00 storage).
 
 ---
 
@@ -334,7 +335,7 @@ Precio lista (margen 233 % sobre COGS):
 
 **Cerrado en storage:** caliente 14 d + Deep Archive + sin 2.ª copia.  
 **Cerrado en grabación:** Track Egress (muxing) + autoescala 1/4/12.  
-**Cerrado en lista:** COGS video **3,50**; calculador no duplica STT con dictado+videollamada. Real orientativo ~1,8–3,3.  
+**Cerrado en lista:** COGS video **1,75** @ **40 %** tele; calculador no duplica STT con dictado+videollamada. Techo @ 80 % era **3,50**.  
 **Pendiente:** 1 vs 2 pistas de video en archivo.
 
 ## 10. Próxima conversación — agenda sugerida

@@ -4,8 +4,8 @@
 
 | Carpeta | Alcance |
 |---------|---------|
-| [`solo-app-paciente/`](./solo-app-paciente/) | Solo app móvil del paciente |
-| [`plataforma-clinica/`](./plataforma-clinica/) | Web clínica, app Personal de Salud, captura clínica, tableros ambulatorios + app paciente |
+| [`solo-app-paciente/`](./solo-app-paciente/) | Solo app móvil del paciente (CIS Banda: **9.000** AMB / mes) |
+| [`plataforma-clinica/`](./plataforma-clinica/) | Web clínica, app Personal de Salud, captura, tableros AMB+EMER + app paciente (CIS Banda: **9.000** AMB + **19.000** EMER / mes) |
 
 ## Demo comercial de turnos
 

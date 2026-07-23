@@ -1,70 +1,45 @@
 {
-  "version": 9,
+  "version": 11,
   "currency": "USD",
   "billing_period": "month",
-  "tax_note": "Precios en USD. No incluyen IVA.",
-  "cogs_source": "costos-api.md — context caching; chat 10 msgs (capacidad); motivos audio al 30% de encounters; dictado incluido",
+  "tax_note": "",
+  "cogs_source": "costos-api.md — context caching; chat 10 msgs; motivos audio por clase (AMB 30% / EMER 45% / IMP 50%); videollamada 40% teleconsulta; dictado incluido",
   "reference_encounters_per_professional_month": 200,
   "cogs_assumptions": {
     "patient_chat_messages_budget": 10,
     "patient_chat_note": "Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.",
-    "motivos_audio_share": 0.3,
-    "motivos_audio_note": "Solo ~30% de atenciones usan audio en motivos (resto texto). No todas las especialidades lo usan igual."
+    "motivos_audio_share_by_class": {
+      "AMB": 0.3,
+      "EMER": 0.45,
+      "IMP": 0.5
+    },
+    "motivos_audio_note": "Share de atenciones con audio en motivos/notas de voz. AMB ~30%; EMER ~45% (triaje y pases); IMP ~50% (enfermería y otros roles). Resto texto.",
+    "videollamada_share": 0.4,
+    "videollamada_note": "Planificación: ~40% de atenciones ambulatorias por videollamada cuando el add-on está contratado (12 min, 2 participantes). COGS infra+storage escalado desde el techo @ 80%."
   },
   "cogs_usd_per_encounter": {
     "patient_chat_amb": 0.0019,
     "motivos_audio": 0.0014,
+    "motivos_audio_by_class": {
+      "AMB": 0.0014,
+      "EMER": 0.0018,
+      "IMP": 0.0019
+    },
     "captura_ia": 0.0006,
     "dictado_stt": 0.0025,
-    "videollamada": 0.0088
+    "videollamada": 0.0044
   },
   "margin_on_cost_percent": 233,
   "attention_volume_presets": [
-    {
-      "attentions": 200,
-      "label": "1 profesional",
-      "hint": null
-    },
-    {
-      "attentions": 400,
-      "label": "2 profesionales",
-      "hint": null
-    },
-    {
-      "attentions": 800,
-      "label": "4 profesionales",
-      "hint": null
-    },
-    {
-      "attentions": 2000,
-      "label": "Clínica chica",
-      "hint": null
-    },
-    {
-      "attentions": 5000,
-      "label": "Clínica",
-      "hint": null
-    },
-    {
-      "attentions": 10000,
-      "label": "Centro",
-      "hint": null
-    },
-    {
-      "attentions": 20000,
-      "label": "Centro grande",
-      "hint": null
-    },
-    {
-      "attentions": 50000,
-      "label": "Enterprise",
-      "hint": null
-    },
-    {
-      "attentions": 100000,
-      "label": "Enterprise+",
-      "hint": null
-    }
+    { "attentions": 200 },
+    { "attentions": 400 },
+    { "attentions": 800 },
+    { "attentions": 2000 },
+    { "attentions": 5000 },
+    { "attentions": 10000 },
+    { "attentions": 20000 },
+    { "attentions": 50000 },
+    { "attentions": 100000 }
   ],
   "attention_volume_scale": [200, 400, 800, 2000, 5000, 10000, 20000, 50000, 100000],
   "defaults": {
@@ -116,53 +91,57 @@
       "default": false
     }
   },
+  "included_features": [    
+    "Agenda del profesional con cupos y horarios",
+    "App movil para el personal de salud con asistente conversacional para altas, consultas y cambios",
+    "App movil para el paciente para con asistente conversacional para autogestionarse y hacerle seguimiento a su tratamiento",    
+    "El paciente puede contar el motivo de consulta por texto o audio para que el profesional lo pueda ver y atender",
+    "Asistente IA para el profesional para resumir y analizar los motivos de consulta",
+    "Asistente IA para el profesional para sugerir estudios y medicaciones",
+    "Captura clínica con dictado",
+    "Estructuracion y asociacion de la captura clinica con codificacion SNOMED y CIE10",
+    "Recetas e indicaciones desde la misma consulta",
+    "Pedido de estudios de laboratorio y seguimiento de resultados",
+    "Asistente conversacional para el personal (altas, consultas y cambios)",    
+    "Tablero de guardia para ver quién está y qué hay pendiente",    
+    "Mapa de camas y seguimiento de internados",
+    "Evoluciones diarias en internación con dictado",
+    "Renovación o ajuste de medicación desde el plan de tratamiento",
+    "Atenciones clínicas por mensaje cuando el paciente necesita controles rapidos, modificaciones de tratamiento y seguimiento"
+  ],
   "sellable_classes": {
     "AMB": {
       "label": "Ambulatorio",
-      "short": "Consultorios y turnos",
+      "short": "",
       "includes_patient_chat": true,
       "audio_included": true,
-      "videollamada_allowed": true,
-      "includes": [
-        "Agenda de cupos y reserva paciente",
-        "Captura clínica AMB con dictado",
-        "App paciente (turnos)",
-        "Chat paciente alrededor del turno (hasta 10 mensajes)",
-        "Motivos de consulta (audio según uso real)"
-      ]
+      "videollamada_allowed": true
     },
     "EMER": {
       "label": "Urgencia / guardia",
-      "short": "Tablero y plantel de guardia",
+      "short": "",
       "includes_patient_chat": false,
       "audio_included": true,
-      "videollamada_allowed": false,
-      "includes": [
-        "Cobertura / roster EMER",
-        "Tablero de guardia",
-        "Captura clínica EMER (dictado incluido)",
-        "Motivos de consulta (audio según uso real)"
-      ]
+      "videollamada_allowed": false
     },
     "IMP": {
       "label": "Internación",
-      "short": "Piso, camas y evoluciones",
+      "short": "",
       "includes_patient_chat": false,
       "audio_included": true,
-      "videollamada_allowed": false,
-      "includes": [
-        "Cobertura / roster IMP",
-        "Mapa de camas",
-        "Captura / evoluciones (dictado incluido)",
-        "Motivos de consulta (audio según uso real)"
-      ]
+      "videollamada_allowed": false
     }
   },
   "simulator": {
-    "title": "Calculá tu licencia",
-    "subtitle": "Elegí tipos de atención y el volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.",
     "cta_label": "Crear cuenta",
     "cta_href": "alta.html",
-    "footnotes": []
+    "footnotes": [
+      "Montos en USD sin IVA."
+    ]
+  },
+  "plans_page": {
+    "teaser_title": "Precios por tipo de atención",
+    "teaser_subtitle": "Ambulatorio, urgencia e internación según tu volumen. Mirá qué incluye y calculá el total.",
+    "teaser_cta": "Ver planes y calculadora"
   }
 }

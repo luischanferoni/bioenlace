@@ -135,6 +135,23 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
+     * COGS §2 motivos (blend audio/texto) por encounter_class.
+     */
+    public static function motivosAudioCogsPerEncounter(?string $encounterClass = null): float
+    {
+        $cogs = self::loadConfig()['cogs_usd_per_encounter'] ?? [];
+        if (!is_array($cogs)) {
+            return 0.0;
+        }
+        $byClass = $cogs['motivos_audio_by_class'] ?? null;
+        if (is_array($byClass) && $encounterClass !== null && array_key_exists($encounterClass, $byClass)) {
+            return (float) $byClass[$encounterClass];
+        }
+
+        return (float) ($cogs['motivos_audio'] ?? 0);
+    }
+
+    /**
      * COGS USD por atención según add-ons y clase.
      */
     public static function unitCogsPerEncounter(
@@ -149,7 +166,7 @@ final class PricingPesByEncounterClassMetadata
         if (!is_array($cogs)) {
             return 0.0;
         }
-        $total = (float) ($cogs['motivos_audio'] ?? 0) + (float) ($cogs['captura_ia'] ?? 0);
+        $total = self::motivosAudioCogsPerEncounter($encounterClass) + (float) ($cogs['captura_ia'] ?? 0);
         if ($encounterClass !== null && self::classIncludesPatientChat($encounterClass)) {
             $total += (float) ($cogs['patient_chat_amb'] ?? 0);
         }

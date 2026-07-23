@@ -7,6 +7,7 @@ Sitio institucional estático para presentar Bioenlace: asistente conversacional
 ```
 institucional/
 ├── index.html
+├── precios.html           # Planes: qué incluye + calculadora
 ├── alta.html              # Wizard self-service clínica / consultorio / ministerio
 ├── privacidad.html        # Política de privacidad (apps móviles)
 ├── css/
@@ -37,7 +38,7 @@ institucional/
 3. **Pacientes** — App paciente y seguimiento
 4. **Personal** — Demo del asistente conversacional (listar / editar / crear)
 5. **Funcionalidades** — Catálogo por audiencia
-6. **Precios** — Calculador por volumen de atenciones × tipo (ambulatorio / urgencia / internación) + opcionales dictado / videollamada
+6. **Precios** — Teaser en el index; detalle + calculadora en [`precios.html`](precios.html) (qué incluye / no incluye por clase AMB·EMER·IMP)
 7. **Contacto** — Formulario e información
 8. **Alta** (`alta.html`) — Wizard self-service clínica / consultorio (pago simulado) y solicitud ministerio; deep-link `?perfil=consultorio`
 
@@ -51,10 +52,10 @@ El CTA del calculador (`Crear cuenta` → `alta.html`) guarda la selección en `
 
 ## Calculador (`js/pricing-core.js` + `js/pricing-calculator.js`)
 
-Núcleo compartido en `pricing-core.js`. En `#precios` se muestra el calculador completo; en `alta.html` solo un **indicador de precio** que se actualiza al cambiar cantidades/opcionales.
+Núcleo compartido en `pricing-core.js`. En [`precios.html`](precios.html) está el calculador y, debajo, el listado único de **qué incluye** (`included_features` en el JSON). En `alta.html` solo un **indicador de precio**. El index enlaza al teaser → `precios.html`. Los chips de volumen muestran solo atenciones/mes (sin labels de “1 profesional”, etc.).
 
 **Fórmula:** `precio = atenciones_mes × COGS_por_atención × (1 + margen%/100)`, donde `margen%` sale de `volume_discount_tiers` según la **suma de atenciones** contratadas. Lista: `margin_on_cost_percent` **233**.  
-COGS por atención: chat paciente AMB **0,0019** (10 msgs) + motivos audio **0,0034** + captura IA **0,0006** ± dictado **0,0025** ± videollamada **0,0088** ([costos-api.md](../web/docs/costos/costos-api.md)).  
+COGS por atención: chat paciente AMB **0,0019** (10 msgs) + motivos audio **0,0014** + captura IA **0,0006** ± dictado **0,0025** ± videollamada **0,0044** (@ **40 %** teleconsulta) ([costos-api.md](../web/docs/costos/costos-api.md)).  
 El usuario elige clases (ambulatorio / urgencia / internación), **volumen mensual** de atenciones y opcionales audio/videollamada.
 
 Fuente de cifras del calculador: `js/pricing-config.json` (mantener alineado con `pricing-pes-by-encounter-class.yaml`).

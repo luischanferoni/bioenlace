@@ -164,9 +164,9 @@
               if (l.code === 'AMB') {
                 note = selection.addons.videollamada
                   ? ' · con videollamada'
-                  : ' · dictado incluido';
+                  : ' · sin videollamada';
               } else {
-                note = ' · dictado incluido';
+                note = ' · sin videollamada';
               }
               return (
                 '<div class="pricing-calc__line"><span>' +
@@ -174,9 +174,7 @@
                 ' · ' +
                 l.label +
                 note +
-                ' (' +
-                Pricing.formatMoney(l.unit, result.currency) +
-                '/atención)</span><strong>' +
+                '</span><strong>' +
                 Pricing.formatMoney(l.line, result.currency) +
                 '</strong></div>'
               );
@@ -195,7 +193,12 @@
     if (ctaEl && mode !== 'signup') {
       const summary = result.lines
         .map((l) => {
-          let extra = l.code === 'AMB' && selection.addons.videollamada ? ' con videollamada' : '';
+          let extra = '';
+          if (l.code === 'AMB' && selection.addons.videollamada) {
+            extra = ' con videollamada';
+          } else {
+            extra = ' sin videollamada';
+          }
           return Pricing.formatVolumeChoice(config, l.qty) + ' ' + l.label + extra;
         })
         .join(', ');
@@ -212,28 +215,15 @@
   }
 
   function refreshUnitLabels() {
-    if (!rowsEl || !config) return;
-    const selection = currentSelection();
-    const addons = selection.addons;
-    const totalAtt = Pricing.totalAttentionsFromSelection(selection);
-    rowsEl.querySelectorAll('[data-class]').forEach((row) => {
-      const code = row.getAttribute('data-class');
-      const unitEl = row.querySelector('.pricing-calc__unit');
-      if (unitEl && code) {
-        unitEl.textContent =
-          Pricing.formatMoney(
-            Pricing.unitPriceForClass(config, code, addons, totalAtt > 0 ? totalAtt : null),
-            config.currency
-          ) + ' / atención';
-      }
-    });
+    // Precio unitario no se muestra en la UI; el total y el breakdown alcanzan.
   }
 
   function buildAmbOptionsHtml() {
     const video = (config.addons && config.addons.videollamada) || {};
+    const onPlansPage = document.body.classList.contains('pricing-page');
     return (
       '<div class="pricing-calc__amb-options">' +
-      '<span class="pricing-calc__policy">Dictado incluido</span>' +
+      (onPlansPage ? '' : '<span class="pricing-calc__policy">Dictado incluido</span>') +
       '<label class="pricing-calc__option">' +
       '<input type="checkbox" data-addon="videollamada" disabled />' +
       '<span><strong>' +
@@ -244,6 +234,9 @@
   }
 
   function buildFixedPolicyHtml(code) {
+    if (document.body.classList.contains('pricing-page')) {
+      return '';
+    }
     if (Pricing.classIncludesAudio(config, code) && !Pricing.classAllowsVideollamada(config, code)) {
       return '<p class="pricing-calc__policy">Dictado incluido · Sin videollamada</p>';
     }
@@ -265,19 +258,16 @@
           title +
           ' disabled>' +
           '<strong>' +
-          p.label +
-          '</strong>' +
-          '<span>' +
           Pricing.formatAttentions(p.attentions) +
-          '/mes</span>' +
+          '/mes</strong>' +
           '</button>'
         );
       })
       .join('');
     return (
       '<div class="pricing-calc__qty">' +
-      '<span class="pricing-calc__qty-label">Volumen mensual</span>' +
-      '<div class="pricing-calc__chips" role="group" aria-label="Volumen mensual ' +
+      '<span class="pricing-calc__qty-label">Volumen de atenciones mensual</span>' +
+      '<div class="pricing-calc__chips" role="group" aria-label="Volumen de atenciones mensual ' +
       code +
       '">' +
       chips +
@@ -296,7 +286,6 @@
     rowsEl.innerHTML = '';
     Object.keys(classes).forEach((code) => {
       const cls = classes[code];
-      const unit = Pricing.unitPriceForClass(config, code, { audio: true });
       const row = document.createElement('div');
       row.className = 'pricing-calc__row';
       row.setAttribute('data-class', code);
@@ -314,9 +303,6 @@
         '<span class="pricing-calc__short">' +
         (cls.short || '') +
         '</span>' +
-        '<span class="pricing-calc__unit">' +
-        Pricing.formatMoney(unit, config.currency) +
-        ' / atención</span>' +
         '</span></label>' +
         optionsHtml +
         '</div>' +
@@ -357,14 +343,43 @@
     }
   }
 
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function fillPlansPageCopy() {
+    const listEl = document.getElementById('pricing-includes-list');
+    if (!listEl || !config) return;
+    const items = Array.isArray(config.included_features)
+      ? config.included_features.filter(Boolean)
+      : [];
+    if (!items.length) {
+      listEl.innerHTML = '';
+      const section = document.getElementById('incluye');
+      if (section) section.hidden = true;
+      return;
+    }
+    listEl.innerHTML = items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
+  }
+
   function fillStaticCopy() {
-    const title = document.getElementById('pricing-title');
-    const subtitle = document.getElementById('pricing-subtitle');
     const footnotes = document.getElementById('pricing-footnotes');
     const sim = config.simulator || {};
-    if (title && sim.title && mode !== 'signup') title.textContent = sim.title;
-    if (subtitle && sim.subtitle && mode !== 'signup') subtitle.textContent = sim.subtitle;
+    // En precios.html títulos/subtítulos están en el HTML (fuente de verdad).
+    // simulator.title/subtitle solo aplican si no hay copy ya en el DOM (otros embeds).
+    const onPlansPage = document.body.classList.contains('pricing-page');
+    if (!onPlansPage && mode !== 'signup') {
+      const title = document.getElementById('pricing-title');
+      const subtitle = document.getElementById('pricing-subtitle');
+      if (title && sim.title) title.textContent = sim.title;
+      if (subtitle && sim.subtitle) subtitle.textContent = sim.subtitle;
+    }
     if (ctaEl && sim.cta_label && mode !== 'signup') ctaEl.textContent = sim.cta_label;
+    if (ctaEl && sim.cta_href && mode !== 'signup') ctaEl.setAttribute('href', sim.cta_href);
     if (footnotes) {
       const items = Array.isArray(sim.footnotes) ? sim.footnotes.filter(Boolean) : [];
       if (!items.length) {
@@ -372,11 +387,12 @@
         footnotes.hidden = true;
       } else {
         footnotes.hidden = false;
-        footnotes.innerHTML = items.map((f) => '<li>' + f + '</li>').join('');
+        footnotes.innerHTML = items.map((f) => '<li>' + escapeHtml(f) + '</li>').join('');
       }
     }
     const tax = document.getElementById('pricing-tax-note');
     if (tax && config.tax_note) tax.textContent = config.tax_note;
+    fillPlansPageCopy();
   }
 
   function persistSelectionForSignup(selection) {

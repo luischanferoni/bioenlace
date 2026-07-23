@@ -6,7 +6,7 @@ Baseline en [costos-api.md](../costos-api.md): **Groq Whisper** ~**$0,0007/min**
 
 **Lista comercial:** se aplica **−30 %** al STT bruto por probabilidad on-device → add-on **audio = 0,98** (matriz / calculador). Total voz planificación **~$1,76**/prof/mes. Ver [costos-api § STT — COGS de planificación](../costos-api.md#cogs-de-planificación-lista-comercial--30--on-device).
 
-**Videollamada post-call:** STT de la llamada está en §2/§4 (~5+~4 min con VAD), no en el add-on video (**$3,50** self-host sala/storage). En el calculador institucional se cobra **una sola vez** (dictado no se suma encima de videollamada). Histórico Deepgram vía Daily (~$6,19 @ 30 %) ya no es lista. Detalle: [videollamadas.md](./videollamadas.md), [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md).
+**Videollamada post-call:** STT de la llamada está en §2/§4 (~5+~4 min con VAD), no en el add-on video (**$1,75** self-host sala/storage @ **40 %** tele). En el calculador institucional se cobra **una sola vez** (dictado no se suma encima de videollamada). Histórico Deepgram vía Daily (~$6,19 @ 30 %) ya no es lista; techo @ 80 % era **$3,50**. Detalle: [videollamadas.md](./videollamadas.md), [analisis-videollamada-self-host.md](../analisis-videollamada-self-host.md).
 
 Hoy el flujo dominante es **audio en cliente → STT en servidor** (`POST /api/v1/audio/transcribir`, lote de motivos en `AppointmentReasonBatchService`). En web existe dictado parcial vía `frontend/web/js/speech-input.js` (`webkitSpeechRecognition`), aún no unificado con captura clínica ni motivos móviles.
 

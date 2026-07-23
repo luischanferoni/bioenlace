@@ -3,7 +3,7 @@
 # El margen baja por tramo según atenciones totales contratadas (suma AMB+EMER+IMP).
 # COGS: web/docs/costos/costos-api.md (columna con context caching; Gemini + Groq; video §6).
 # Actualizar también institucional/js/pricing-config.json al cambiar cifras.
-version: 9
+version: 11
 currency: USD
 billing_period: month
 tax_note: Precios en USD. No incluyen IVA.
@@ -18,22 +18,37 @@ reference_encounters_per_professional_month: 200
 cogs_assumptions:
   patient_chat_messages_budget: 10
   patient_chat_note: Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.
-  motivos_audio_share: 0.3
-  motivos_audio_note: Solo ~30% de atenciones usan audio en motivos (resto texto). No todas las especialidades lo usan igual.
+  # Blend §2 caso B (audio) vs caso A (texto), por encounter_class.
+  # AMB: consultorio; EMER: triaje/notas rápidas; IMP: enfermería/evoluciones multi-rol.
+  motivos_audio_share_by_class:
+    AMB: 0.3
+    EMER: 0.45
+    IMP: 0.5
+  motivos_audio_note: >-
+    Share de atenciones con audio en motivos/notas de voz. AMB ~30%; EMER ~45% (triaje y pases);
+    IMP ~50% (enfermería y otros roles además del médico). Resto texto.
+  videollamada_share: 0.4
+  videollamada_note: >-
+    Planificación: ~40% de atenciones ambulatorias por videollamada cuando el add-on está contratado
+    (12 min, 2 participantes). COGS infra+storage escalado desde el techo @ 80%.
 
 # COGS variable USD por atención (encounter), escenario con context caching.
 # patient_chat_amb: §1 con cupo 10 mensajes (capacidad / headroom).
-# motivos_audio: blend comercial 30% caso B + 70% caso A ≈ 0,0014.
+# motivos_audio_by_class: blend caso B×share + caso A×(1−share); ref. costos-api §2 con caching
+#   (caso A ≈0,0005; caso B ≈0,00335 / atención). Fallback motivos_audio = AMB.
 # captura_ia: §4 sin STT del profesional.
 # dictado_stt: STT profesional §4 con −30 % on-device. Incluido en todas las clases.
-# videollamada: infra teleconsulta por atención contratada (STT = mismo dictado_stt, una sola vez).
+# videollamada: infra teleconsulta por atención contratada @ 40% share (STT = mismo dictado_stt, una sola vez).
 cogs_usd_per_encounter:
   patient_chat_amb: 0.0019
   motivos_audio: 0.0014
+  motivos_audio_by_class:
+    AMB: 0.0014
+    EMER: 0.0018
+    IMP: 0.0019
   captura_ia: 0.0006
   dictado_stt: 0.0025
-  videollamada: 0.0088
-
+  videollamada: 0.0044
 # Margen de lista (tramo precio base). Ver volume_discount_tiers.
 margin_on_cost_percent: 233
 
@@ -113,12 +128,12 @@ volume_discount_tiers:
     discount_vs_list_percent: 35
     margin_after_iibb_ganancias_percent: 37.5
 
-cogs_source: web/docs/costos/costos-api.md — context caching; chat 10 msgs (capacidad); motivos audio al 30%; dictado incluido
+cogs_source: web/docs/costos/costos-api.md — context caching; chat 10 msgs (capacidad); motivos audio por clase (AMB 30% / EMER 45% / IMP 50%); dictado incluido
 
 # Política de capacidades:
 # - AMB: dictado incluido; videollamada opcional (STT de la llamada no se cobra dos veces).
 # - EMER / IMP: dictado incluido; videollamada no disponible.
-# - Motivos: capacidad de audio disponible; COGS comercial asume ~30% de uso.
+# - Motivos: capacidad de audio disponible; COGS comercial por clase (ver motivos_audio_share_by_class).
 # - Chat paciente (§1, cupo 10 msgs): solo AMB.
 addons:
   videollamada:

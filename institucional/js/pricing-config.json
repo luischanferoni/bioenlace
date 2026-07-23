@@ -80,26 +80,23 @@
       "default": false
     }
   },
-  "included_features": [
-    "Turnos online para que el paciente reserve sin llamar",
+  "included_features": [    
     "Agenda del profesional con cupos y horarios",
-    "Recordatorios y avisos al paciente sobre su atención",
-    "App del paciente para ver turnos y hacer el seguimiento",
-    "Chat con el paciente alrededor del turno (hasta 10 mensajes)",
-    "El paciente puede contar el motivo de consulta por texto o audio",
-    "Consulta por videollamada (opcional)",
-    "Historia clínica: el profesional dicta y el sistema ayuda a completar",
+    "App movil para el personal de salud con asistente conversacional para altas, consultas y cambios",
+    "App movil para el paciente para con asistente conversacional para autogestionarse y hacerle seguimiento a su tratamiento",    
+    "El paciente puede contar el motivo de consulta por texto o audio para que el profesional lo pueda ver y atender",
+    "Asistente IA para el profesional para resumir y analizar los motivos de consulta",
+    "Asistente IA para el profesional para sugerir estudios y medicaciones",
+    "Captura clínica con dictado",
+    "Estructuracion y asociacion de la captura clinica con codificacion SNOMED y CIE10",
     "Recetas e indicaciones desde la misma consulta",
     "Pedido de estudios de laboratorio y seguimiento de resultados",
-    "Asistente conversacional para el personal (altas, consultas y cambios)",
-    "App para el personal de salud en el celular",
-    "Tablero de guardia para ver quién está y qué hay pendiente",
-    "Armado del plantel de cobertura en urgencia e internación",
+    "Asistente conversacional para el personal (altas, consultas y cambios)",    
+    "Tablero de guardia para ver quién está y qué hay pendiente",    
     "Mapa de camas y seguimiento de internados",
     "Evoluciones diarias en internación con dictado",
     "Renovación o ajuste de medicación desde el plan de tratamiento",
-    "Consultas clínicas por mensaje cuando el paciente necesita control",
-    "Soporte estándar durante el uso de la plataforma"
+    "Atenciones clínicas por mensaje cuando el paciente necesita controles rapidos, modificaciones de tratamiento y seguimiento"
   ],
   "sellable_classes": {
     "AMB": {

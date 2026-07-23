@@ -164,9 +164,9 @@
               if (l.code === 'AMB') {
                 note = selection.addons.videollamada
                   ? ' · con videollamada'
-                  : ' · dictado incluido';
+                  : ' · sin videollamada';
               } else {
-                note = ' · dictado incluido';
+                note = ' · sin videollamada';
               }
               return (
                 '<div class="pricing-calc__line"><span>' +
@@ -195,7 +195,12 @@
     if (ctaEl && mode !== 'signup') {
       const summary = result.lines
         .map((l) => {
-          let extra = l.code === 'AMB' && selection.addons.videollamada ? ' con videollamada' : '';
+          let extra = '';
+          if (l.code === 'AMB' && selection.addons.videollamada) {
+            extra = ' con videollamada';
+          } else {
+            extra = ' sin videollamada';
+          }
           return Pricing.formatVolumeChoice(config, l.qty) + ' ' + l.label + extra;
         })
         .join(', ');

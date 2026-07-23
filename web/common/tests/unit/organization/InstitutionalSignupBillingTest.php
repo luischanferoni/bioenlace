@@ -19,9 +19,9 @@ class InstitutionalSignupBillingTest extends Unit
                 ],
             ],
         ]);
-        // 5000 × 0.0084 × 2.63 (tramo mediano) ≈ 110.46
-        $this->assertGreaterThan(100.0, $usd);
-        $this->assertLessThan(120.0, $usd);
+        // 5000 × 0.0064 × 2.63 (tramo mediano) ≈ 84.16
+        $this->assertGreaterThan(80.0, $usd);
+        $this->assertLessThan(90.0, $usd);
     }
 
     public function testSimFailPanConstant(): void

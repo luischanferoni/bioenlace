@@ -43,21 +43,21 @@ Esta propuesta cubre **únicamente el uso de la app móvil del paciente** de Bio
 
 Moneda: **USD**. Los importes se indican **sin IVA**.
 
-El monto es **solo por el canal app paciente** (chat alrededor del turno + motivos con audio; sin captura clínica del personal). Se cotiza con volumen de referencia de **20.000 atenciones / mes** de atención ambulatoria (descuento por volumen −30 %).
+El monto es **solo por el canal app paciente** (chat alrededor del turno + motivos con audio según uso real; sin captura clínica del personal). Se cotiza con volumen de referencia de **20.000 atenciones / mes** de atención ambulatoria (descuento por volumen −30 %).
 
 ### 3.1 Licencia mensual — app paciente
 
 | Concepto | Detalle | Monto (USD) |
 |----------|---------|------------:|
-| Licencia de uso de la app móvil del paciente | Acceso de los pacientes de CIS Banda al canal móvil Bioenlace. Volumen de referencia: **20.000 atenciones / mes** (ambulatorio). | *250* / mes (sin IVA) |
+| Licencia de uso de la app móvil del paciente | Acceso de los pacientes de CIS Banda al canal móvil Bioenlace. Volumen de referencia: **20.000 atenciones / mes** (ambulatorio). | *154* / mes (sin IVA) |
 
 
 ### 3.3 Totales
 
 | Concepto | Monto (USD) |
 |----------|------------:|
-| Licencia app paciente × 12 meses | *3.000* |
-| **Inversión total año 1** | **USD *3.000*** |
+| Licencia app paciente × 12 meses | *1.848* |
+| **Inversión total año 1** | **USD *1.848*** |
 
 ---
 

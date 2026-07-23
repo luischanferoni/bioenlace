@@ -233,7 +233,7 @@
     const video = (config.addons && config.addons.videollamada) || {};
     return (
       '<div class="pricing-calc__amb-options">' +
-      '<p class="pricing-calc__policy">Dictado incluido</p>' +
+      '<span class="pricing-calc__policy">Dictado incluido</span>' +
       '<label class="pricing-calc__option">' +
       '<input type="checkbox" data-addon="videollamada" disabled />' +
       '<span><strong>' +

@@ -288,7 +288,7 @@ Tarifas Gemini: ver [§ Gemini Flash](#gemini-flash-tarifas-actuales-y-context-c
 
 Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](./estrategias-reduccion/matriz-casos-uso.md).
 
-> **Nota comercial:** el COGS §1 entra en el precio **solo para ambulatorio** (`patient_chat_amb` ≈ **USD 0,0019** por atención = 0,76 / 400).
+> **Nota comercial (pricing):** el COGS §2 que entra al calculador **no** asume audio en el 100 % de las atenciones. Blend orientativo **~30 % caso B + ~70 % caso A** → **≈ USD 0,0014 / atención** (`motivos_audio` en metadata). El cupo de **10 mensajes** en §1 es capacidad / headroom (prompts más largos o varias llamadas IA), no un supuesto de uso pleno en cada mensaje.
 ---
 
 ### 2. Motivos de consulta (chat dedicado, antes de la atención)

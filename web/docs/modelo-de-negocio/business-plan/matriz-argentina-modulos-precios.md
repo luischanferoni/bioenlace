@@ -8,7 +8,7 @@ Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentin
 COGS de referencia: [costos-api.md](../../costos/costos-api.md) (**columna con context caching**).
 
 **Modelo vigente:** licencia = **Σ (atenciones_mes[clase] × precio por atención)**.  
-El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets etiquetados). El **dictado está incluido** en todas las clases; en ambulatorio la **videollamada** es el único add-on opcional. Motivos de consulta se presupuestan **siempre con audio**. El chat paciente (§1, **10 mensajes** alrededor del turno) entra solo en **ambulatorio**. Lo no contratado **se deshabilita** en sesión operativa y tableros.
+El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets). **1 profesional = 200 atenciones / mes**. El **dictado está incluido**; en ambulatorio la **videollamada** es el único add-on opcional. Motivos con audio se presupuestan al **~30 %** de las atenciones (resto texto). El chat paciente (§1) tiene **cupo de 10 mensajes** alrededor del turno (capacidad / headroom para prompts más largos o varias llamadas IA). Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
 Metadata producto: [`pricing-pes-by-encounter-class.yaml`](../../../common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml).  
 Calculador público: sitio [`institucional/#precios`](../../../../institucional/index.html).  
@@ -22,8 +22,8 @@ Admin: Licencias / Contratos.
 ## Fórmula
 
 ```
-COGS_atención = motivos_audio + captura_ia + dictado_stt
-              + (AMB ? patient_chat_amb : 0)          # 10 msgs solo ambulatorio
+COGS_atención = motivos_blend + captura_ia + dictado_stt
+              + (AMB ? patient_chat_amb : 0)          # cupo 10 msgs (capacidad)
               + (videollamada ? videollamada : 0)
 atenciones_totales = Σ atenciones_mes[clase]
 margen% = tramo(atenciones_totales).margin_on_cost_percent
@@ -33,8 +33,8 @@ USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 
 | Componente COGS (USD / atención, **con context caching**) | USD | Notas |
 |-----------------------------------------------------------|----:|-------|
-| Chat paciente AMB (10 mensajes) | **0,0019** | Solo ambulatorio |
-| Motivos con audio (batch + insights + ~4 min STT) | **0,0034** | Siempre |
+| Chat paciente AMB (cupo 10 mensajes) | **0,0019** | Solo ambulatorio · capacidad / headroom |
+| Motivos (blend 30 % audio + 70 % texto) | **0,0014** | No todas las especialidades usan audio igual |
 | Captura IA (sin STT profesional) | **0,0006** | Siempre |
 | Dictado / STT profesional (−30 % on-device) | **0,0025** | **Incluido** en todas las clases |
 | Videollamada | **+0,0088** | Solo ambulatorio (opcional) |
@@ -50,25 +50,25 @@ USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 | Grande | 15.000–39.999 | **134 %** | **−30 %** | ~40 % |
 | Enterprise | 40.000+ | **117 %** | **−35 %** | ~37,5 % |
 
-Presets del calculador: **Consultorio (200)** · 1 profesional (400) · Pequeño (800) · … hasta Enterprise+ (100.000).
+Presets: **1 profesional (200)** · 2 (400) · 4 (800) · Clínica chica (2.000) · … · Enterprise+ (100.000).
 
 ### Precio por atención (lista, sin descuento de tramo)
 
 | Configuración | COGS / atención | Precio lista / atención |
 |---------------|----------------:|------------------------:|
-| Ambulatorio (chat + motivos audio + captura + **dictado**) | 0,0084 | **~0,0280** |
-| Ambulatorio + videollamada | 0,0172 | **~0,0573** |
-| Urgencia / internación (motivos audio + dictado) | 0,0065 | **~0,0216** |
+| Ambulatorio (chat + motivos blend + captura + **dictado**) | 0,0064 | **~0,0213** |
+| Ambulatorio + videollamada | 0,0152 | **~0,0506** |
+| Urgencia / internación (motivos blend + dictado) | 0,0045 | **~0,0150** |
 
-### Lectura rápida vs modelo anterior (por profesional)
+### Lectura rápida
 
-| Perfil | Volumen | USD / mes (orientativo) | Nota |
-|--------|---------|------------------------:|------|
-| Independiente / consultorio | **200** | **~5,60** | Comparable al ~USD 6 de 1 PES |
-| 1 profesional a ritmo pleno | **400** | **~11,20** | Sube vs ~6 por producto más completo (dictado + 10 msgs + motivos audio) |
-| Piso viejo de 1.000 (demasiado alto) | 1.000 | **~28** | 2,5× el volumen de 1 PES a ritmo pleno |
+| Perfil | Volumen | USD / mes (orientativo) |
+|--------|---------|------------------------:|
+| **1 profesional** | **200** | **~4,26** |
+| 2 profesionales | 400 | **~8,52** |
+| CIS ejemplo | 20.000 | **~300** (tramo Grande) |
 
-Ejemplo CIS: **20.000** atenciones ambulatorio (dictado incluido) → tramo Grande (−30 %) → **~USD 394 / mes**.
+Ejemplo CIS: **20.000** atenciones ambulatorio (dictado incluido) → tramo Grande (−30 %) → **~USD 300 / mes**.
 
 **Regla comercial:** videollamada no duplica el STT (el dictado ya está en el COGS base).
 
@@ -116,7 +116,7 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 
 | Comprador | Selección típica en el calculador |
 |-----------|-----------------------------------|
-| Independiente | Ambulatorio · preset **Consultorio (200)** |
+| Independiente | Ambulatorio · preset **1 profesional (200)** |
 | Clínica ambulatoria | Ambulatorio × volumen mensual |
 | Sanatorio con guardia | Ambulatorio + urgencia |
 | Sanatorio con camas | Ambulatorio + urgencia + internación |

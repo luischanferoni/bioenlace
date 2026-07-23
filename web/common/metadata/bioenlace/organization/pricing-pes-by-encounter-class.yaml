@@ -3,25 +3,33 @@
 # El margen baja por tramo según atenciones totales contratadas (suma AMB+EMER+IMP).
 # COGS: web/docs/costos/costos-api.md (columna con context caching; Gemini + Groq; video §6).
 # Actualizar también institucional/js/pricing-config.json al cambiar cifras.
-version: 8
+version: 9
 currency: USD
 billing_period: month
 tax_note: Precios en USD. No incluyen IVA.
 
 default_when_empty: allow_all
 
-# Referencia histórica costos-api (para derivar cupo de profesionales en alta).
-reference_encounters_per_professional_month: 400
+# Definición comercial: 1 profesional ≈ 200 atenciones / mes.
+# (La referencia histórica de costos-api de 400 = ritmo pleno agresivo; no es la unidad de venta.)
+reference_encounters_per_professional_month: 200
+
+# Supuestos de COGS comercial (no = uso 100 % de cada capacidad).
+cogs_assumptions:
+  patient_chat_messages_budget: 10
+  patient_chat_note: Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.
+  motivos_audio_share: 0.3
+  motivos_audio_note: Solo ~30% de atenciones usan audio en motivos (resto texto). No todas las especialidades lo usan igual.
 
 # COGS variable USD por atención (encounter), escenario con context caching.
-# patient_chat_amb: §1 con 10 mensajes alrededor del turno (solo AMB).
-# motivos_audio: §2 caso B siempre (~4 min audio paciente + batch + insights).
+# patient_chat_amb: §1 con cupo 10 mensajes (capacidad / headroom).
+# motivos_audio: blend comercial 30% caso B + 70% caso A ≈ 0,0014.
 # captura_ia: §4 sin STT del profesional.
-# dictado_stt: STT profesional §4 con −30 % on-device (bruto ~1,40 → 0,98 @ 400 → 0,0025). Incluido en todas las clases.
-# videollamada: §6 / 400 (STT de la llamada = mismo dictado_stt, una sola vez).
+# dictado_stt: STT profesional §4 con −30 % on-device. Incluido en todas las clases.
+# videollamada: infra teleconsulta por atención contratada (STT = mismo dictado_stt, una sola vez).
 cogs_usd_per_encounter:
   patient_chat_amb: 0.0019
-  motivos_audio: 0.0034
+  motivos_audio: 0.0014
   captura_ia: 0.0006
   dictado_stt: 0.0025
   videollamada: 0.0088
@@ -32,18 +40,15 @@ margin_on_cost_percent: 233
 # Presets de volumen (atenciones / mes) para calculador e alta.
 attention_volume_presets:
   - attentions: 200
-    label: Consultorio
-    hint: Independiente · ~10 atenciones/día
-  - attentions: 400
     label: 1 profesional
-    hint: ~20 atenciones/día hábil
+    hint: null
+  - attentions: 400
+    label: 2 profesionales
+    hint: null
   - attentions: 800
-    label: Pequeño
-    hint: 2 profesionales a ritmo medio
-  - attentions: 1500
-    label: Consultorio grupal
-    hint: 3–4 profesionales
-  - attentions: 3000
+    label: 4 profesionales
+    hint: null
+  - attentions: 2000
     label: Clínica chica
     hint: null
   - attentions: 5000
@@ -54,9 +59,6 @@ attention_volume_presets:
     hint: null
   - attentions: 20000
     label: Centro grande
-    hint: null
-  - attentions: 35000
-    label: Red
     hint: null
   - attentions: 50000
     label: Enterprise
@@ -69,12 +71,10 @@ attention_volume_scale:
   - 200
   - 400
   - 800
-  - 1500
-  - 3000
+  - 2000
   - 5000
   - 10000
   - 20000
-  - 35000
   - 50000
   - 100000
 
@@ -113,13 +113,13 @@ volume_discount_tiers:
     discount_vs_list_percent: 35
     margin_after_iibb_ganancias_percent: 37.5
 
-cogs_source: web/docs/costos/costos-api.md — columna con context caching; motivos siempre con audio; chat paciente 10 msgs solo AMB; dictado incluido
+cogs_source: web/docs/costos/costos-api.md — context caching; chat 10 msgs (capacidad); motivos audio al 30%; dictado incluido
 
 # Política de capacidades:
 # - AMB: dictado incluido; videollamada opcional (STT de la llamada no se cobra dos veces).
 # - EMER / IMP: dictado incluido; videollamada no disponible.
-# - Motivos con audio: siempre en el COGS de todas las clases.
-# - Chat paciente (§1, 10 msgs): solo AMB.
+# - Motivos: capacidad de audio disponible; COGS comercial asume ~30% de uso.
+# - Chat paciente (§1, cupo 10 msgs): solo AMB.
 addons:
   videollamada:
     label: Videollamada
@@ -137,8 +137,8 @@ sellable_classes:
       - Agenda de cupos y reserva paciente
       - Captura clínica AMB con dictado
       - App paciente (turnos)
-      - Chat paciente alrededor del turno (10 mensajes)
-      - Motivos de consulta con audio
+      - Chat paciente alrededor del turno (hasta 10 mensajes)
+      - Motivos de consulta (audio según uso real)
     product_gates:
       - session_encounter_class
       - amb_agenda
@@ -153,7 +153,7 @@ sellable_classes:
       - Cobertura / roster EMER
       - Tablero de guardia
       - Captura clínica EMER (dictado incluido)
-      - Motivos de consulta con audio
+      - Motivos de consulta (audio según uso real)
     product_gates:
       - session_encounter_class
       - emer_cobertura
@@ -168,7 +168,7 @@ sellable_classes:
       - Cobertura / roster IMP
       - Mapa de camas
       - Captura / evoluciones (dictado incluido)
-      - Motivos de consulta con audio
+      - Motivos de consulta (audio según uso real)
     product_gates:
       - session_encounter_class
       - imp_cobertura
@@ -178,9 +178,7 @@ non_sellable_default: disabled
 
 simulator:
   title: Calculá tu licencia
-  subtitle: Elegí tipos de atención y un volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.
+  subtitle: Elegí tipos de atención y el volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.
   cta_label: Crear cuenta
   cta_href: alta.html
-  footnotes:
-    - 200 atenciones / mes ≈ consultorio independiente a ritmo medio (~10/día).
-    - 400 atenciones / mes ≈ 1 profesional a ritmo pleno (~20/día hábil).
+  footnotes: []

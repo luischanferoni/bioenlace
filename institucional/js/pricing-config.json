@@ -1,13 +1,19 @@
 {
-  "version": 8,
+  "version": 9,
   "currency": "USD",
   "billing_period": "month",
   "tax_note": "Precios en USD. No incluyen IVA.",
-  "cogs_source": "costos-api.md — context caching; motivos siempre con audio; chat paciente 10 msgs solo AMB; dictado incluido",
-  "reference_encounters_per_professional_month": 400,
+  "cogs_source": "costos-api.md — context caching; chat 10 msgs (capacidad); motivos audio al 30% de encounters; dictado incluido",
+  "reference_encounters_per_professional_month": 200,
+  "cogs_assumptions": {
+    "patient_chat_messages_budget": 10,
+    "patient_chat_note": "Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.",
+    "motivos_audio_share": 0.3,
+    "motivos_audio_note": "Solo ~30% de atenciones usan audio en motivos (resto texto). No todas las especialidades lo usan igual."
+  },
   "cogs_usd_per_encounter": {
     "patient_chat_amb": 0.0019,
-    "motivos_audio": 0.0034,
+    "motivos_audio": 0.0014,
     "captura_ia": 0.0006,
     "dictado_stt": 0.0025,
     "videollamada": 0.0088
@@ -16,26 +22,21 @@
   "attention_volume_presets": [
     {
       "attentions": 200,
-      "label": "Consultorio",
-      "hint": "Independiente · ~10 atenciones/día"
+      "label": "1 profesional",
+      "hint": null
     },
     {
       "attentions": 400,
-      "label": "1 profesional",
-      "hint": "~20 atenciones/día hábil"
+      "label": "2 profesionales",
+      "hint": null
     },
     {
       "attentions": 800,
-      "label": "Pequeño",
-      "hint": "2 profesionales a ritmo medio"
+      "label": "4 profesionales",
+      "hint": null
     },
     {
-      "attentions": 1500,
-      "label": "Consultorio grupal",
-      "hint": "3–4 profesionales"
-    },
-    {
-      "attentions": 3000,
+      "attentions": 2000,
       "label": "Clínica chica",
       "hint": null
     },
@@ -55,11 +56,6 @@
       "hint": null
     },
     {
-      "attentions": 35000,
-      "label": "Red",
-      "hint": null
-    },
-    {
       "attentions": 50000,
       "label": "Enterprise",
       "hint": null
@@ -70,7 +66,7 @@
       "hint": null
     }
   ],
-  "attention_volume_scale": [200, 400, 800, 1500, 3000, 5000, 10000, 20000, 35000, 50000, 100000],
+  "attention_volume_scale": [200, 400, 800, 2000, 5000, 10000, 20000, 50000, 100000],
   "defaults": {
     "consultorio_attentions": 200,
     "clinica_attentions": 5000
@@ -131,8 +127,8 @@
         "Agenda de cupos y reserva paciente",
         "Captura clínica AMB con dictado",
         "App paciente (turnos)",
-        "Chat paciente alrededor del turno (10 mensajes)",
-        "Motivos de consulta con audio"
+        "Chat paciente alrededor del turno (hasta 10 mensajes)",
+        "Motivos de consulta (audio según uso real)"
       ]
     },
     "EMER": {
@@ -145,7 +141,7 @@
         "Cobertura / roster EMER",
         "Tablero de guardia",
         "Captura clínica EMER (dictado incluido)",
-        "Motivos de consulta con audio"
+        "Motivos de consulta (audio según uso real)"
       ]
     },
     "IMP": {
@@ -158,18 +154,15 @@
         "Cobertura / roster IMP",
         "Mapa de camas",
         "Captura / evoluciones (dictado incluido)",
-        "Motivos de consulta con audio"
+        "Motivos de consulta (audio según uso real)"
       ]
     }
   },
   "simulator": {
     "title": "Calculá tu licencia",
-    "subtitle": "Elegí tipos de atención y un volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.",
+    "subtitle": "Elegí tipos de atención y el volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.",
     "cta_label": "Crear cuenta",
     "cta_href": "alta.html",
-    "footnotes": [
-      "200 atenciones / mes ≈ consultorio independiente a ritmo medio (~10/día).",
-      "400 atenciones / mes ≈ 1 profesional a ritmo pleno (~20/día hábil)."
-    ]
+    "footnotes": []
   }
 }

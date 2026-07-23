@@ -51,22 +51,22 @@ Cotización con **20.000 atenciones / mes** de atención ambulatoria e incluye *
 
 | Concepto | Detalle | Monto (USD) |
 |----------|---------|------------:|
-| Licencia plataforma clínica ambulatoria | Web clínica, app Personal de Salud, captura clínica con dictado, tableros ambulatorios y app paciente. Volumen: **20.000 atenciones / mes**. | *394* / mes (sin IVA) |
+| Licencia plataforma clínica ambulatoria | Web clínica, app Personal de Salud, captura clínica con dictado, tableros ambulatorios y app paciente. Volumen: **20.000 atenciones / mes**. | *300* / mes (sin IVA) |
 
 ### 3.2 Opcional — videollamada
 
 | Concepto | Detalle | Monto (USD) |
 |----------|---------|------------:|
-| Add-on videollamada | Teleconsulta (incluye transcripción de la llamada; no duplica el dictado). Mismo volumen: **20.000 atenciones / mes**. | *+410* / mes (sin IVA) |
+| Add-on videollamada | Teleconsulta (incluye transcripción de la llamada; no duplica el dictado). Mismo volumen: **20.000 atenciones / mes**. | *+412* / mes (sin IVA) |
 
-*Si se contrata videollamada, el total mensual pasa a **USD 804** (sin IVA).*
+*Si se contrata videollamada, el total mensual pasa a **USD 712** (sin IVA).*
 
 ### 3.3 Totales (sin videollamada)
 
 | Concepto | Monto (USD) |
 |----------|------------:|
-| Licencia plataforma clínica × 12 meses | *4.728* |
-| **Inversión total año 1** | **USD *4.728*** |
+| Licencia plataforma clínica × 12 meses | *3.600* |
+| **Inversión total año 1** | **USD *3.600*** |
 
 ---
 

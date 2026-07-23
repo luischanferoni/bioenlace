@@ -28,10 +28,11 @@ messages:
   interactive_pick_one:
     default: "Elegí una opción"
 
+  # Vacío a propósito: el texto del offer ya menciona el botón; el hint era redundante.
   interactive_buttons_hint_one:
-    default: " O tocá la opción de abajo."
-    whatsapp_paciente: " O elegí la opción de abajo."
+    default: ""
+    whatsapp_paciente: ""
 
   interactive_buttons_hint_many:
-    default: " O tocá las opciones de abajo."
-    whatsapp_paciente: " O elegí una de las opciones de abajo."
+    default: ""
+    whatsapp_paciente: ""

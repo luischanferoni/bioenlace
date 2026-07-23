@@ -43,27 +43,104 @@ def rounded_rect_mask(size: tuple[int, int], radius: int) -> Image.Image:
     return mask
 
 
+def trim_uniform_margins(
+    im: Image.Image,
+    tol: int = 18,
+    ref: tuple[int, int, int] = (253, 252, 251),
+    empty_ratio: float = 0.92,
+) -> Image.Image:
+    """Recorta franjas laterales/verticales casi vacías del capture."""
+    rgb = im.convert("RGB")
+    w, h = rgb.size
+    px = rgb.load()
+
+    def near_ref(c: tuple[int, int, int]) -> bool:
+        # fondos papel / blanco del capture
+        if c[0] >= 240 and c[1] >= 238 and c[2] >= 232:
+            return True
+        return (
+            abs(c[0] - ref[0]) <= tol
+            and abs(c[1] - ref[1]) <= tol
+            and abs(c[2] - ref[2]) <= tol
+        )
+
+    def col_is_margin(x: int) -> bool:
+        step = max(1, h // 80)
+        samples = [px[x, y] for y in range(0, h, step)]
+        empty = sum(1 for c in samples if near_ref(c))
+        return empty / len(samples) >= empty_ratio
+
+    def row_is_margin(y: int) -> bool:
+        step = max(1, w // 80)
+        samples = [px[x, y] for x in range(0, w, step)]
+        empty = sum(1 for c in samples if near_ref(c))
+        return empty / len(samples) >= empty_ratio
+
+    left = 0
+    while left < w - 1 and col_is_margin(left):
+        left += 1
+    right = w - 1
+    while right > left and col_is_margin(right):
+        right -= 1
+    top = 0
+    while top < h - 1 and row_is_margin(top):
+        top += 1
+    bottom = h - 1
+    while bottom > top and row_is_margin(bottom):
+        bottom -= 1
+
+    if right - left < w * 0.7 or bottom - top < h * 0.7:
+        return im
+    return im.crop((left, top, right + 1, bottom + 1))
+
+
 def phone_frame(
     screenshot: Image.Image,
     phone_h: int,
     phone_w: int | None = None,
     bezel: int = 10,
     radius: int = 28,
+    fit: str = "contain",
 ) -> Image.Image:
-    """Fit entire screenshot inside a phone (contain + paper letterbox)."""
+    """Place screenshot in a phone frame.
+
+    fit:
+      - contain: whole shot visible (paper letterbox)
+      - width: scale to content width; crop height from top if taller
+      - cover: fill entire phone (may crop sides/top)
+    """
     if phone_w is None:
         phone_w = int(phone_h * 9 / 16)
 
     content_w = phone_w
     content_h = phone_h
     sw, sh = screenshot.size
-    scale = min(content_w / sw, content_h / sh)
-    nw, nh = max(1, int(sw * scale)), max(1, int(sh * scale))
-    shot = screenshot.resize((nw, nh), Image.Resampling.LANCZOS)
+
+    if fit == "cover":
+        scale = max(content_w / sw, content_h / sh)
+        nw, nh = max(1, int(sw * scale)), max(1, int(sh * scale))
+        shot = screenshot.resize((nw, nh), Image.Resampling.LANCZOS)
+        left = max(0, (nw - content_w) // 2)
+        top = 0 if nh >= content_h else max(0, (nh - content_h) // 2)
+        shot = shot.crop((left, top, left + content_w, top + content_h))
+        ox, oy = 0, 0
+    elif fit == "width":
+        scale = content_w / sw
+        nw, nh = content_w, max(1, int(sh * scale))
+        shot = screenshot.resize((nw, nh), Image.Resampling.LANCZOS)
+        if nh >= content_h:
+            shot = shot.crop((0, 0, content_w, content_h))
+            ox, oy = 0, 0
+        else:
+            ox, oy = 0, (content_h - nh) // 2
+    else:
+        scale = min(content_w / sw, content_h / sh)
+        nw, nh = max(1, int(sw * scale)), max(1, int(sh * scale))
+        shot = screenshot.resize((nw, nh), Image.Resampling.LANCZOS)
+        ox = (content_w - nw) // 2
+        oy = (content_h - nh) // 2
 
     screen = Image.new("RGBA", (content_w, content_h), (250, 248, 243, 255))
-    ox = (content_w - nw) // 2
-    oy = (content_h - nh) // 2
     screen.paste(shot, (ox, oy), shot if shot.mode == "RGBA" else None)
     screen.putalpha(rounded_rect_mask((content_w, content_h), max(12, radius - 8)))
 
@@ -122,6 +199,11 @@ def main() -> None:
     asistente = Image.open(
         os.path.join(DOCS, "screenshot paciente asistente.png")
     ).convert("RGBA")
+    asistente = trim_uniform_margins(asistente)
+    # Zoom horizontal leve: el chat deja padding visual; acercamos al contenido
+    aw, ah = asistente.size
+    inset = max(1, int(aw * 0.04))
+    asistente = asistente.crop((inset, 0, aw - inset, ah))
     preparar = Image.open(
         os.path.join(DOCS, "screenshot paciente preparar consulta.png")
     ).convert("RGBA")
@@ -137,8 +219,17 @@ def main() -> None:
         blur=16,
         opacity=70,
     )
+    # Teléfono 3 (asistente): mismo ancho de marco que el otro lateral;
+    # fit=width para que el PNG (más angosto) ocupe todo el ancho.
     p_asi = drop_shadow(
-        phone_frame(asistente, phone_h_side, phone_w_side, bezel=9, radius=26),
+        phone_frame(
+            asistente,
+            phone_h_side,
+            phone_w_side,
+            bezel=9,
+            radius=26,
+            fit="width",
+        ),
         blur=16,
         opacity=70,
     )
@@ -155,9 +246,9 @@ def main() -> None:
         layer.paste(img, (x, y), img)
 
     # Back: preparar | asistente — Front: inicio
-    paste_y(phones, p_prep, 285)
-    paste_y(phones, p_asi, 640)
-    paste_y(phones, p_ini, 450)
+    paste_y(phones, p_prep, 270)
+    paste_y(phones, p_asi, 680)  # más a la derecha para que se vea el ancho lleno
+    paste_y(phones, p_ini, 420)
     canvas = Image.alpha_composite(canvas, phones)
 
     logo = Image.open(LOGO).convert("RGBA")

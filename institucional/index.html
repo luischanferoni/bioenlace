@@ -52,7 +52,7 @@
                     <li><a href="#pacientes" class="nav-link">Pacientes</a></li>
                     <li><a href="#como-funciona" class="nav-link">Personal</a></li>
                     <li><a href="#funcionalidades" class="nav-link">Funcionalidades</a></li>
-                    <li><a href="#precios" class="nav-link">Precios</a></li>
+                    <li><a href="precios.html" class="nav-link">Precios</a></li>
                     <li><a href="alta.html" class="nav-link">Crear cuenta</a></li>
                     <li><a href="#contacto" class="nav-link nav-link--cta">Contacto</a></li>
                 </ul>
@@ -519,26 +519,16 @@
         </div>
     </section>
 
-    <section id="precios" class="pricing">
+    <section id="precios" class="pricing pricing--teaser">
         <div class="container">
             <div class="section-header reveal">
-                <h2 class="section-title" id="pricing-title">Calculá tu licencia</h2>
-                <p class="section-subtitle" id="pricing-subtitle">Elegí tipos de atención y el volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.</p>
+                <h2 class="section-title" id="pricing-teaser-title">Precios por tipo de atención</h2>
+                <p class="section-subtitle" id="pricing-teaser-subtitle">Dictado incluido. Ambulatorio, urgencia e internación según tu volumen. Mirá el detalle de lo incluido y calculá el total.</p>
             </div>
-            <div class="pricing-calc reveal" id="pricing-calculator" aria-live="polite">
-                <div class="pricing-calc__grid">
-                    <div class="pricing-calc__controls">
-                        <div id="pricing-rows" class="pricing-calc__rows"></div>
-                        <div id="pricing-addons" class="pricing-calc__addons"></div>
-                        <p class="pricing-calc__tax" id="pricing-tax-note"></p>
-                    </div>
-                    <div class="pricing-calc__summary">
-                        <p class="pricing-calc__summary-label">Total mensual</p>
-                        <p class="pricing-calc__total" id="pricing-total">—</p>
-                        <div class="pricing-calc__breakdown" id="pricing-breakdown"></div>
-                        <a href="alta.html" class="btn btn-primary" id="pricing-cta">Crear cuenta</a>
-                        <ul class="pricing-calc__footnotes" id="pricing-footnotes" hidden></ul>
-                    </div>
+            <div class="pricing-teaser reveal">
+                <div class="pricing-teaser__actions">
+                    <a href="precios.html" class="btn btn-primary" id="pricing-teaser-cta">Ver planes y calculadora</a>
+                    <a href="alta.html" class="btn btn-secondary">Crear cuenta</a>
                 </div>
             </div>
         </div>
@@ -618,7 +608,7 @@
                         <li><a href="#pacientes">Pacientes</a></li>
                         <li><a href="#como-funciona">Personal</a></li>
                         <li><a href="#funcionalidades">Funcionalidades</a></li>
-                        <li><a href="#precios">Precios</a></li>
+                        <li><a href="precios.html">Precios</a></li>
                         <li><a href="#contacto">Contacto</a></li>
                     </ul>
                 </div>
@@ -649,7 +639,23 @@
     <script src="js/encounter-demo.js"></script>
     <script src="js/patient-demo.js"></script>
     <script src="js/pricing-core.js"></script>
-    <script src="js/pricing-calculator.js"></script>
     <script src="js/main.js"></script>
+    <script>
+      (function () {
+        fetch('js/pricing-config.json', { cache: 'no-cache' })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (cfg) {
+            if (!cfg || !cfg.plans_page) return;
+            var p = cfg.plans_page;
+            var title = document.getElementById('pricing-teaser-title');
+            var subtitle = document.getElementById('pricing-teaser-subtitle');
+            var cta = document.getElementById('pricing-teaser-cta');
+            if (title && p.teaser_title) title.textContent = p.teaser_title;
+            if (subtitle && p.teaser_subtitle) subtitle.textContent = p.teaser_subtitle;
+            if (cta && p.teaser_cta) cta.textContent = p.teaser_cta;
+          })
+          .catch(function () {});
+      })();
+    </script>
 </body>
 </html>

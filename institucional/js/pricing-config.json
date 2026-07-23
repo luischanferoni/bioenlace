@@ -160,9 +160,30 @@
   },
   "simulator": {
     "title": "Calculá tu licencia",
-    "subtitle": "Elegí tipos de atención y el volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.",
+    "subtitle": "Marcá los tipos de atención y el volumen mensual aproximado. El dictado está incluido en todas las clases; la videollamada es opcional solo en ambulatorio.",
     "cta_label": "Crear cuenta",
     "cta_href": "alta.html",
-    "footnotes": []
+    "footnotes": [
+      "El precio se calcula por atenciones/mes × clase. A mayor volumen, mejor margen (descuento por escala).",
+      "La app paciente (turnos, chat alrededor del turno y motivos) forma parte del módulo ambulatorio cuando lo contratás.",
+      "Montos en USD sin IVA. Cotización orientativa; la factura se confirma al crear la cuenta o con el equipo comercial."
+    ]
+  },
+  "plans_page": {
+    "title": "Planes y precios",
+    "subtitle": "Una licencia por tipo de atención (ambulatorio, urgencia e internación). Elegí lo que necesitás y calculá el total según tu volumen mensual.",
+    "includes_heading": "Qué incluye cada tipo de atención",
+    "includes_lead": "El dictado clínico está incluido. La videollamada es un opcional solo en ambulatorio.",
+    "excludes_heading": "Qué no incluye",
+    "excludes": [
+      "Integraciones a medida con HIS, LIS, facturación u obras sociales",
+      "Desarrollos a medida, marca white-label o personalizaciones fuera del producto estándar",
+      "Hardware, conectividad o dispositivos de la institución o de los pacientes",
+      "Capacitación presencial o servicios profesionales fuera del soporte estándar"
+    ],
+    "calc_heading": "Simulá tu licencia",
+    "teaser_title": "Precios por tipo de atención",
+    "teaser_subtitle": "Dictado incluido. Ambulatorio, urgencia e internación según tu volumen. Mirá el detalle de lo incluido y calculá el total.",
+    "teaser_cta": "Ver planes y calculadora"
   }
 }

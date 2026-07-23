@@ -318,6 +318,7 @@
         Pricing.formatMoney(unit, config.currency) +
         ' / atención</span>' +
         '</span></label>' +
+        includesListHtml(cls) +
         optionsHtml +
         '</div>' +
         buildVolumeChipsHtml(code, '');
@@ -357,6 +358,92 @@
     }
   }
 
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function includesListHtml(cls) {
+    // En precios.html el detalle ya está en las cards; no repetir en cada fila.
+    if (document.getElementById('pricing-includes-grid')) return '';
+    const items = Array.isArray(cls.includes) ? cls.includes.filter(Boolean) : [];
+    if (!items.length) return '';
+    return (
+      '<ul class="pricing-calc__includes">' +
+      items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') +
+      '</ul>'
+    );
+  }
+
+  function fillPlansPageCopy() {
+    const page = config.plans_page || {};
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el && value) el.textContent = value;
+    };
+    setText('plans-page-title', page.title);
+    setText('plans-page-subtitle', page.subtitle);
+    setText('plans-includes-heading', page.includes_heading);
+    setText('plans-includes-lead', page.includes_lead);
+    setText('plans-excludes-heading', page.excludes_heading);
+    if (page.calc_heading) {
+      const calcTitle = document.getElementById('pricing-title');
+      if (calcTitle && document.body.classList.contains('pricing-page')) {
+        calcTitle.textContent = page.calc_heading;
+      }
+    }
+
+    const grid = document.getElementById('pricing-includes-grid');
+    if (grid) {
+      const classes = config.sellable_classes || {};
+      grid.innerHTML = Object.keys(classes)
+        .map((code) => {
+          const cls = classes[code] || {};
+          const unit = Pricing.unitPriceForClass(config, code, { audio: true });
+          const items = Array.isArray(cls.includes) ? cls.includes.filter(Boolean) : [];
+          return (
+            '<article class="pricing-includes__card" data-class="' +
+            escapeHtml(code) +
+            '">' +
+            '<header class="pricing-includes__card-head">' +
+            '<h3>' +
+            escapeHtml(cls.label || code) +
+            '</h3>' +
+            '<p class="pricing-includes__short">' +
+            escapeHtml(cls.short || '') +
+            '</p>' +
+            '<p class="pricing-includes__unit">' +
+            escapeHtml(Pricing.formatMoney(unit, config.currency)) +
+            ' / atención</p>' +
+            '</header>' +
+            (items.length
+              ? '<ul class="pricing-includes__list">' +
+                items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') +
+                '</ul>'
+              : '') +
+            '</article>'
+          );
+        })
+        .join('');
+    }
+
+    const excludesSection = document.getElementById('no-incluye');
+    const excludesList = document.getElementById('pricing-excludes-list');
+    const excludes = Array.isArray(page.excludes) ? page.excludes.filter(Boolean) : [];
+    if (excludesSection && excludesList) {
+      if (!excludes.length) {
+        excludesSection.hidden = true;
+        excludesList.innerHTML = '';
+      } else {
+        excludesSection.hidden = false;
+        excludesList.innerHTML = excludes.map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
+      }
+    }
+  }
+
   function fillStaticCopy() {
     const title = document.getElementById('pricing-title');
     const subtitle = document.getElementById('pricing-subtitle');
@@ -365,6 +452,7 @@
     if (title && sim.title && mode !== 'signup') title.textContent = sim.title;
     if (subtitle && sim.subtitle && mode !== 'signup') subtitle.textContent = sim.subtitle;
     if (ctaEl && sim.cta_label && mode !== 'signup') ctaEl.textContent = sim.cta_label;
+    if (ctaEl && sim.cta_href && mode !== 'signup') ctaEl.setAttribute('href', sim.cta_href);
     if (footnotes) {
       const items = Array.isArray(sim.footnotes) ? sim.footnotes.filter(Boolean) : [];
       if (!items.length) {
@@ -372,11 +460,12 @@
         footnotes.hidden = true;
       } else {
         footnotes.hidden = false;
-        footnotes.innerHTML = items.map((f) => '<li>' + f + '</li>').join('');
+        footnotes.innerHTML = items.map((f) => '<li>' + escapeHtml(f) + '</li>').join('');
       }
     }
     const tax = document.getElementById('pricing-tax-note');
     if (tax && config.tax_note) tax.textContent = config.tax_note;
+    fillPlansPageCopy();
   }
 
   function persistSelectionForSignup(selection) {

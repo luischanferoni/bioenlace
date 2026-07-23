@@ -245,26 +245,26 @@ Los **pasos de un flujo operativo** (elegir profesional, completar formulario, e
 
 **Historial en charla clínica:** la 2.ª IA conversacional incluye una **ventana acotada** del hilo (implementación: `ConversationalHistoryWindow` — máx. **5 turnos**, **3.200 caracteres** de historial; corte si hubo un trámite operativo). El primer mensaje de un tema va casi solo con instrucciones; los siguientes arrastran contexto. Techo de input por llamada conversacional acotado en la tabla de tokens.
 
-Supuesto de actividad: **2.000 mensajes por mes** (5 por encounter x 400 encounters). Varios ida y vuelta conversacionales cuentan como **varios mensajes** dentro de esos 5.
+Supuesto de actividad (AMB): **4.000 mensajes por mes** (10 por encounter × 400 encounters). Varios ida y vuelta conversacionales cuentan como **varios mensajes** dentro de esos 10.
 
 #### Tras el preprocess: reparto por intención (escenario central — ajustar con telemetría)
 
-La 1.ª IA ya corrió; la tabla indica **si hace falta una 2.ª** y cuántas llamadas IA suma ese mensaje en total. Los % suman 100 % de los 2.000 mensajes.
+La 1.ª IA ya corrió; la tabla indica **si hace falta una 2.ª** y cuántas llamadas IA suma ese mensaje en total. Los % suman 100 % de los **4.000** mensajes (10 × 400 encounters, solo AMB en el modelo comercial).
 
 | Intención (`user_goal`) | Qué escribe el paciente (ejemplos) | Mensajes por mes | ¿2.ª IA? | Total llamadas IA por mensaje |
 |-------------------------|-----------------------------------|------------------|----------|-------------------------------|
-| `conversational` | Síntomas, malestar, charla clínica | **600** (30 %) | **Sí**, siempre | **2** |
-| `operational` | «Quiero un turno», «cancelar mi cita» | **900** (45 %) | **No** (match PHP con `normalized_text`) | **1** |
-| `informational` | «¿Qué puedo hacer acá?» | **300** (15 %) | **Sí** en ~60 (~20 % de estos, deriva conversacional); **no** en ~240 (menú) | **1** o **2** |
-| `unclear` | Mensaje ambiguo o muy corto | **200** (10 %) | **No** (solo pide aclaración) | **1** |
+| `conversational` | Síntomas, malestar, charla clínica | **1.200** (30 %) | **Sí**, siempre | **2** |
+| `operational` | «Quiero un turno», «cancelar mi cita» | **1.800** (45 %) | **No** (match PHP con `normalized_text`) | **1** |
+| `informational` | «¿Qué puedo hacer acá?» | **600** (15 %) | **Sí** en ~120 (~20 % de estos, deriva conversacional); **no** en ~480 (menú) | **1** o **2** |
+| `unclear` | Mensaje ambiguo o muy corto | **400** (10 %) | **No** (solo pide aclaración) | **1** |
 
 **Cómo se traduce en volumen mensual:**
 
-| Tipo de llamada | Cálculo (sobre 2.000 mensajes) | Llamadas por mes |
+| Tipo de llamada | Cálculo (sobre 4.000 mensajes) | Llamadas por mes |
 |-----------------|--------------------------------|------------------|
-| 1.ª IA — preprocess (todos) | 2.000 | **2.000** |
-| 2.ª IA — conversacional | 600 + 60 (deriva desde informational) | **660** |
-| **Total Vertex** | 2.000 + 660 | **~2.660** |
+| 1.ª IA — preprocess (todos) | 4.000 | **4.000** |
+| 2.ª IA — conversacional | 1.200 + 120 (deriva desde informational) | **1.320** |
+| **Total Vertex** | 4.000 + 1.320 | **~5.320** |
 
 #### Tokens y context caching por tipo de llamada
 
@@ -275,19 +275,20 @@ La 1.ª IA ya corrió; la tabla indica **si hace falta una 2.ª** y cuántas lla
 
 Tarifas Gemini: ver [§ Gemini Flash](#gemini-flash-tarifas-actuales-y-context-caching).
 
-#### Coste mensual — conversación con el paciente (Google, escenario central)
+#### Coste mensual — conversación con el paciente (Google, escenario central, 10 msgs/encounter)
 
 | Concepto | Sin context caching (COGS) | Con context caching (favorable) |
 |----------|----------------------------|----------------------------------|
-| 2.000 x preprocess | ~$0,34 | ~$0,29 |
-| 660 x conversacional | ~$0,11 | ~$0,09 |
-| **Total §1** | **~$0,45** | **~$0,38** |
-| DeepSeek V4 Flash (orden de magnitud) | **~$0,36** | **~$0,32** |
+| 4.000 x preprocess | ~$0,68 | ~$0,58 |
+| 1.320 x conversacional | ~$0,22 | ~$0,18 |
+| **Total §1** | **~$0,90** | **~$0,76** |
+| DeepSeek V4 Flash (orden de magnitud) | **~$0,72** | **~$0,64** |
 
-**Escenario alternativo (más conversacional, 45 % `conversational`):** sube a **~$0,49** sin caché · **~$0,41** con caché (~3.000 llamadas Vertex). **Escenario operativo fuerte (55 % operational):** baja a **~$0,41** · **~$0,35** (menos 2.ª IA conversacional).
+**Escenario alternativo (más conversacional, 45 % `conversational`):** sube a **~$0,98** sin caché · **~$0,82** con caché. **Escenario operativo fuerte (55 % operational):** baja a **~$0,82** · **~$0,70**.
 
 Detalle de flujos y caché: [estrategias-reduccion/matriz-casos-uso.md](./estrategias-reduccion/matriz-casos-uso.md).
 
+> **Nota comercial:** el COGS §1 entra en el precio **solo para ambulatorio** (`patient_chat_amb` ≈ **USD 0,0019** por atención = 0,76 / 400).
 ---
 
 ### 2. Motivos de consulta (chat dedicado, antes de la atención)
@@ -444,13 +445,13 @@ Proyección por escala (altas, pacientes activos, reingresos tras logout, escena
 
 | Concepto | Google sin context caching | Google con context caching | DeepSeek V4 Flash |
 |----------|----------------------------|----------------------------|-------------------|
-| Conversación con el paciente (§1) | ~$0.45 | ~$0.38 | ~$0.41 / ~$0.35 |
+| Conversación con el paciente (§1, **10 msgs**) | ~$0.90 | ~$0.76 | ~$0.72 / ~$0.64 |
 | Motivos — solo texto (§2 caso A, batch + insights) | ~$0.22 | ~$0.20 | ~$0.20 / ~$0.18 |
-| Motivos — con audio (§2 caso B, IA+STT ~4 min) | ~$1.37 | ~$1.34 | ~$1.34 / ~$1.32 |
+| Motivos — con audio (§2 caso B, IA+STT ~4 min) — **planificación comercial** | ~$1.37 | ~$1.34 | ~$1.34 / ~$1.32 |
 | Agente onboarding (§3) | ~$0.14 | ~$0.12 | ~$0.13 / ~$0.11 |
 | Captura clínica (§4, **IA + STT ~5 min**) | ~$1.69 | ~$1.65 | ~$1.65 / ~$1.63 |
-| **Total Apartado 1 — motivos solo texto** | **~$2.50** | **~$2.35** | **~$2.39 / ~$2.27** |
-| **Total Apartado 1 — motivos con audio** | **~$3.65** | **~$3.49** | **~$3.53 / ~$3.41** |
+| **Total Apartado 1 — motivos con audio + chat 10 msgs** | **~$4.10** | **~$3.87** | **~$3.84 / ~$3.72** |
+| **Total Apartado 1 — motivos solo texto + chat 10 msgs** (referencia) | **~$2.95** | **~$2.73** | **~$2.70 / ~$2.58** |
 
 ### Apartado 2 – Medios (Vision §5)
 
@@ -489,7 +490,7 @@ Ver totales en [§6](#6-videollamadas-pacientemédico).
 
 **WhatsApp (§7, alcance actual):** Meta **~$0** (sin utility). La IA del chat sigue en §1.
 
-**De COGS a precio de lista:** la licencia comercial usa la columna **con context caching** y el STT de planificación (**audio 0,98**) — `precio = COGS × (1 + margen%/100)` (lista **233 %** ≈ 70 % bruto; tramos por PES en metadata). Videollamada **incluye** STT profesional una vez (no duplicar dictado). Detalle: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
+**De COGS a precio de lista:** la licencia comercial usa **USD por atención** (`cogs_usd_per_encounter`) × volumen mensual × margen (lista **233 %**; tramos por atenciones totales). Motivos **siempre con audio**; chat paciente **10 msgs solo ambulatorio**. Videollamada **incluye** STT profesional una vez. Detalle: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md). Metadata: `pricing-pes-by-encounter-class.yaml` (+ `institucional/js/pricing-config.json`).
 
 **Nota:** Si la IA corre en **nuestra infra**, los ítems del apartado 1 figuran en [infra-costos.md](./infra-costos.md) y no se duplican aquí. El apartado 3 usa COGS planificado **3,50** (self-host; STT no duplicado) — ver [videollamadas.md](./estrategias-reduccion/videollamadas.md).
 

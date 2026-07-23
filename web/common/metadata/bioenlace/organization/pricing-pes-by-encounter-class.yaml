@@ -1,70 +1,83 @@
-# Precio orientativo por profesional × encounter_class (USD / mes, sin IVA).
-# Fórmula: precio_clase = COGS_ref × (vol_clase/ref) × (1 + margin_on_cost_percent/100)
-# El margen sobre costo baja por tramo según PES totales contratados (suma AMB+EMER+IMP).
+# Precio orientativo por volumen de atenciones × encounter_class (USD / mes, sin IVA).
+# Fórmula: precio = atenciones_mes × COGS_por_atención × (1 + margin_on_cost_percent/100)
+# El margen baja por tramo según atenciones totales contratadas (suma AMB+EMER+IMP).
 # COGS: web/docs/costos/costos-api.md (columna con context caching; Gemini + Groq; video §6).
 # Actualizar también institucional/js/pricing-config.json al cambiar cifras.
-version: 6
+version: 7
 currency: USD
 billing_period: month
 tax_note: Precios en USD. No incluyen IVA.
 
 default_when_empty: allow_all
 
-# Volumen de referencia costos-api (AMB): 400 encounters/prof/mes.
+# Referencia histórica costos-api (para derivar cupo de profesionales en alta).
 reference_encounters_per_professional_month: 400
 
-# COGS variable por profesional/mes a volumen reference (400), escenario con context caching.
-# base = Apartado 1 motivos texto con caché SIN STT del profesional (~2,35 − 1,40 bruto).
-# audio = STT profesional §4 con −30 % on-device (bruto ~1,40 → 0,98).
-# videollamada = COGS §6 self-host Track Egress + storage (3,50). El STT de la llamada
-#   es el mismo que audio: se cobra una sola vez (audio || videollamada).
-cogs_usd_per_professional_month:
-  base: 0.95
-  audio: 0.98
-  videollamada: 3.50
+# COGS variable USD por atención (encounter), escenario con context caching.
+# patient_chat_amb: §1 con 10 mensajes alrededor del turno (solo AMB).
+# motivos_audio: §2 caso B siempre (~4 min audio paciente + batch + insights).
+# captura_ia: §4 sin STT del profesional.
+# dictado_stt: STT profesional §4 con −30 % on-device (bruto ~1,40 → 0,98 @ 400 → 0,0025).
+# videollamada: §6 / 400 (STT de la llamada = mismo dictado_stt, una sola vez).
+cogs_usd_per_encounter:
+  patient_chat_amb: 0.0019
+  motivos_audio: 0.0034
+  captura_ia: 0.0006
+  dictado_stt: 0.0025
+  videollamada: 0.0088
 
-# Margen de lista (1–19 PES). Ver volume_discount_tiers para tramos.
+# Margen de lista (tramo precio base). Ver volume_discount_tiers.
 margin_on_cost_percent: 233
 
-# Descuento por volumen: PES totales = suma de profesionales contratados (cualquier clase).
-# discount_vs_list_percent: % de baja del precio unitario vs lista (copy del calculador).
-# margin_after_iibb_ganancias_percent: objetivo interno.
-# margin_on_cost_percent: markup aplicado en la fórmula de precio.
+# Escala de volumen (atenciones / mes) para el calculador institucional.
+attention_volume_scale:
+  - 1000
+  - 2500
+  - 5000
+  - 10000
+  - 20000
+  - 35000
+  - 50000
+  - 100000
+
+# Descuento por volumen: atenciones totales = suma contratada (cualquier clase).
 volume_discount_tiers:
   - id: lista
     label: Precio base
-    min_pes: 1
-    max_pes: 19
+    min_attentions: 1
+    max_attentions: 4999
     margin_on_cost_percent: 233
     discount_vs_list_percent: 0
     margin_after_iibb_ganancias_percent: 49
   - id: mediano
     label: Mediano
-    min_pes: 20
-    max_pes: 49
+    min_attentions: 5000
+    max_attentions: 14999
     margin_on_cost_percent: 163
     discount_vs_list_percent: 21
     margin_after_iibb_ganancias_percent: 43.5
   - id: grande
     label: Grande
-    min_pes: 50
-    max_pes: 149
+    min_attentions: 15000
+    max_attentions: 39999
     margin_on_cost_percent: 134
     discount_vs_list_percent: 30
     margin_after_iibb_ganancias_percent: 40
   - id: enterprise
     label: Enterprise
-    min_pes: 150
-    max_pes: null
+    min_attentions: 40000
+    max_attentions: null
     margin_on_cost_percent: 117
     discount_vs_list_percent: 35
     margin_after_iibb_ganancias_percent: 37.5
 
-cogs_source: web/docs/costos/costos-api.md — columna con context caching
+cogs_source: web/docs/costos/costos-api.md — columna con context caching; motivos siempre con audio; chat paciente 10 msgs solo AMB
 
 # Política de capacidades:
 # - AMB: dictado y videollamada opcionales. Si hay videollamada, dictado/STT queda incluido (una vez).
 # - EMER / IMP: dictado obligatorio (audio_included); videollamada no disponible.
+# - Motivos con audio: siempre en el COGS de todas las clases.
+# - Chat paciente (§1, 10 msgs): solo AMB.
 addons:
   audio:
     label: Dictado
@@ -79,13 +92,15 @@ sellable_classes:
   AMB:
     label: Ambulatorio
     short: Consultorios y turnos
-    encounters_per_professional_month: 400
+    includes_patient_chat: true
     audio_included: false
     videollamada_allowed: true
     includes:
       - Agenda de cupos y reserva paciente
       - Captura clínica AMB
       - App paciente (turnos)
+      - Chat paciente alrededor del turno (10 mensajes)
+      - Motivos de consulta con audio
     product_gates:
       - session_encounter_class
       - amb_agenda
@@ -93,13 +108,14 @@ sellable_classes:
   EMER:
     label: Urgencia / guardia
     short: Tablero y plantel de guardia
-    encounters_per_professional_month: 350
+    includes_patient_chat: false
     audio_included: true
     videollamada_allowed: false
     includes:
       - Cobertura / roster EMER
       - Tablero de guardia
       - Captura clínica EMER (dictado incluido)
+      - Motivos de consulta con audio
     product_gates:
       - session_encounter_class
       - emer_cobertura
@@ -107,13 +123,14 @@ sellable_classes:
   IMP:
     label: Internación
     short: Piso, camas y evoluciones
-    encounters_per_professional_month: 300
+    includes_patient_chat: false
     audio_included: true
     videollamada_allowed: false
     includes:
       - Cobertura / roster IMP
       - Mapa de camas
       - Captura / evoluciones (dictado incluido)
+      - Motivos de consulta con audio
     product_gates:
       - session_encounter_class
       - imp_cobertura
@@ -123,7 +140,7 @@ non_sellable_default: disabled
 
 simulator:
   title: Calculá tu licencia
-  subtitle: Elegí tipos de atención y cuántos profesionales. A más profesionales, más descuento.
+  subtitle: Elegí tipos de atención y el volumen mensual de atenciones. A más atenciones, más descuento.
   cta_label: Crear cuenta
   cta_href: alta.html
   footnotes: []

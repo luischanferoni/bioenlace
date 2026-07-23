@@ -345,11 +345,23 @@ final class InstitutionalEfectorSignupService
             if (!is_array($cfg)) {
                 continue;
             }
-            $max = max(1, (int) ($cfg['max_pes'] ?? 1));
+            $attentions = max(0, (int) ($cfg['attentions_per_month'] ?? 0));
+            $max = (int) ($cfg['max_pes'] ?? 0);
+            if ($attentions <= 0 && $max > 0) {
+                $attentions = $max * (int) PricingPesByEncounterClassMetadata::referenceEncountersPerMonth();
+            }
+            if ($attentions <= 0) {
+                continue;
+            }
+            if ($max <= 0) {
+                $max = PricingPesByEncounterClassMetadata::deriveMaxPesFromAttentions($attentions);
+            }
+            $max = max(1, $max);
             $dictado = !empty($cfg['dictado_incluido']) || in_array($class, ['EMER', 'IMP'], true);
             $video = $class === 'AMB' && !empty($cfg['videollamada_permitida']);
             $classes[$class] = [
                 'max_pes' => $max,
+                'attentions_per_month' => $attentions,
                 'dictado_incluido' => $dictado,
                 'videollamada_permitida' => $video,
             ];
@@ -369,13 +381,16 @@ final class InstitutionalEfectorSignupService
             }
             // Unipersonal: cupo fijo en 1 (ignora max_pes del payload).
             $classes['AMB']['max_pes'] = 1;
+            if (($classes['AMB']['attentions_per_month'] ?? 0) <= 0) {
+                $classes['AMB']['attentions_per_month'] = (int) PricingPesByEncounterClassMetadata::referenceEncountersPerMonth();
+            }
         }
 
         return ['classes' => $classes];
     }
 
     /**
-     * @param array{classes: array<string, array{max_pes: int, dictado_incluido: bool, videollamada_permitida: bool}>}|array<string, array{max_pes: int, dictado_incluido: bool, videollamada_permitida: bool}> $plan
+     * @param array{classes: array<string, array{max_pes?: int, attentions_per_month?: int, dictado_incluido: bool, videollamada_permitida: bool}>}|array<string, array{max_pes?: int, attentions_per_month?: int, dictado_incluido: bool, videollamada_permitida: bool}> $plan
      */
     public static function estimateMonthlyUsd(array $plan): float
     {
@@ -386,16 +401,21 @@ final class InstitutionalEfectorSignupService
         $byClass = [];
         $audio = false;
         $video = false;
+        $ref = (int) PricingPesByEncounterClassMetadata::referenceEncountersPerMonth();
         foreach ($plan['classes'] as $class => $cfg) {
             if (!is_array($cfg)) {
                 continue;
             }
-            $qty = (int) ($cfg['max_pes'] ?? 0);
-            if ($qty <= 0) {
+            $attentions = (int) ($cfg['attentions_per_month'] ?? 0);
+            if ($attentions <= 0) {
+                $maxPes = (int) ($cfg['max_pes'] ?? 0);
+                $attentions = $maxPes > 0 ? $maxPes * $ref : 0;
+            }
+            if ($attentions <= 0) {
                 continue;
             }
             $code = (string) $class;
-            $byClass[$code] = $qty;
+            $byClass[$code] = $attentions;
             if ($code === 'AMB') {
                 $audio = $audio || !empty($cfg['dictado_incluido']);
                 $video = $video || !empty($cfg['videollamada_permitida']);

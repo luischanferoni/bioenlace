@@ -1,5 +1,5 @@
 /**
- * Calculador: profesionales × clase + dictado/videollamada solo en AMB.
+ * Calculador: atenciones/mes × clase + dictado/videollamada solo en AMB.
  * EMER/IMP: dictado fijo incluido, sin videollamada.
  * Requiere pricing-core.js (window.BioenlacePricing).
  */
@@ -16,10 +16,6 @@
   const mode = (root.getAttribute('data-mode') || 'page').toLowerCase();
 
   let config = null;
-
-  function ambRow() {
-    return rowsEl ? rowsEl.querySelector('[data-class="AMB"]') : null;
-  }
 
   function currentSelection() {
     return Pricing.readDomSelection(rowsEl);
@@ -38,7 +34,6 @@
         audio.checked = false;
         if (video) video.checked = false;
       } else if (video && video.checked) {
-        // Videollamada incluye transcripción de la llamada (= dictado una sola vez)
         audio.checked = true;
         audio.disabled = true;
       } else {
@@ -50,23 +45,26 @@
 
   function syncQtyDisabled(row) {
     const enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
-    const qty = row.querySelector('input[type="number"]');
+    const qty = row.querySelector('[data-attentions]');
     if (!enabled || !qty) return;
     qty.disabled = !enabled.checked;
-    if (!enabled.checked) qty.value = '0';
-    else if ((parseInt(qty.value, 10) || 0) < 1) qty.value = '1';
+    if (!enabled.checked) {
+      qty.value = '';
+    } else if (!qty.value) {
+      const scale = Pricing.attentionVolumeScale(config);
+      qty.value = String(scale[0] || 1000);
+    }
     syncAmbOptions(row);
   }
 
   function tierRangeLabel(tier) {
     if (!tier) return '';
-    if (tier.max_pes == null || tier.max_pes === '') {
-      return (tier.min_pes || 150) + '+ profesionales';
+    const min = Number(tier.min_attentions != null ? tier.min_attentions : tier.min_pes) || 1;
+    const maxRaw = tier.max_attentions != null ? tier.max_attentions : tier.max_pes;
+    if (maxRaw == null || maxRaw === '') {
+      return Pricing.formatAttentions(min) + '+ atenciones / mes';
     }
-    if (Number(tier.min_pes) === 1) {
-      return '1–' + tier.max_pes + ' profesionales';
-    }
-    return tier.min_pes + '–' + tier.max_pes + ' profesionales';
+    return Pricing.formatAttentions(min) + '–' + Pricing.formatAttentions(maxRaw) + ' / mes';
   }
 
   function buildVolumeDiscountPanel(activeTierId) {
@@ -81,8 +79,7 @@
     const rows = tiers
       .map((tier) => {
         const pct = Pricing.discountVsListPercent(config, tier);
-        const benefit =
-          pct > 0 ? '−' + pct + '%' : 'Precio base';
+        const benefit = pct > 0 ? '−' + pct + '%' : 'Precio base';
         const active = tier.id === activeTierId ? ' is-active' : '';
         return (
           '<li class="pricing-calc__volume-item' +
@@ -110,19 +107,17 @@
     if (!nudgeEl) return;
     const next = result && result.nextStep;
     const hasSelection = result && result.lines && result.lines.length;
-    if (!hasSelection || !next || !(next.professionalsNeeded > 0) || !(next.discountPercent > 0)) {
+    const needed = next && (next.attentionsNeeded || next.professionalsNeeded);
+    if (!hasSelection || !next || !(needed > 0) || !(next.discountPercent > 0)) {
       nudgeEl.hidden = true;
       nudgeEl.innerHTML = '';
       return;
     }
-    const n = next.professionalsNeeded;
     nudgeEl.hidden = false;
     nudgeEl.innerHTML =
       'Sumá <strong>' +
-      n +
-      ' profesional' +
-      (n === 1 ? '' : 'es') +
-      ' más</strong> y obtené <strong>' +
+      Pricing.formatAttentions(needed) +
+      ' atenciones / mes más</strong> y obtené <strong>' +
       next.discountPercent +
       '% de descuento</strong>';
   }
@@ -143,7 +138,7 @@
     if (breakdownEl) {
       if (!result.lines.length) {
         breakdownEl.innerHTML =
-          '<p class="pricing-calc__hint">Activá al menos un tipo de atención e indicá la cantidad de profesionales.</p>';
+          '<p class="pricing-calc__hint">Activá al menos un tipo de atención e indicá el volumen mensual.</p>';
       } else {
         let meta = '';
         if (result.discountPercent > 0) {
@@ -163,24 +158,19 @@
               let note = '';
               if (l.code === 'AMB') {
                 const bits = [];
-                if (selection.addons.videollamada) {
-                  bits.push('con videollamada');
-                } else if (selection.addons.audio) {
-                  bits.push('con dictado');
-                }
+                if (selection.addons.videollamada) bits.push('con videollamada');
+                else if (selection.addons.audio) bits.push('con dictado');
                 note = bits.length ? ' · ' + bits.join(' · ') : '';
               }
               return (
                 '<div class="pricing-calc__line"><span>' +
-                l.qty +
-                ' profesional' +
-                (l.qty === 1 ? '' : 'es') +
-                ' × ' +
+                Pricing.formatAttentions(l.qty) +
+                ' atenciones × ' +
                 l.label +
                 note +
                 ' (' +
                 Pricing.formatMoney(l.unit, result.currency) +
-                '/mes)</span><strong>' +
+                '/atención)</span><strong>' +
                 Pricing.formatMoney(l.line, result.currency) +
                 '</strong></div>'
               );
@@ -200,13 +190,13 @@
       const summary = result.lines
         .map((l) => {
           let extra = '';
-            if (l.code === 'AMB') {
+          if (l.code === 'AMB') {
             const bits = [];
             if (selection.addons.videollamada) bits.push('videollamada');
             else if (selection.addons.audio) bits.push('dictado');
             if (bits.length) extra = ' con ' + bits.join(' y ');
           }
-          return l.qty + ' profesional' + (l.qty === 1 ? '' : 'es') + ' ' + l.label + extra;
+          return Pricing.formatAttentions(l.qty) + ' atenciones ' + l.label + extra;
         })
         .join(', ');
       const msg =
@@ -225,16 +215,16 @@
     if (!rowsEl || !config) return;
     const selection = currentSelection();
     const addons = selection.addons;
-    const totalPes = Pricing.totalPesFromSelection(selection);
+    const totalAtt = Pricing.totalAttentionsFromSelection(selection);
     rowsEl.querySelectorAll('[data-class]').forEach((row) => {
       const code = row.getAttribute('data-class');
       const unitEl = row.querySelector('.pricing-calc__unit');
       if (unitEl && code) {
         unitEl.textContent =
           Pricing.formatMoney(
-            Pricing.unitPriceForClass(config, code, addons, totalPes > 0 ? totalPes : null),
+            Pricing.unitPriceForClass(config, code, addons, totalAtt > 0 ? totalAtt : null),
             config.currency
-          ) + ' / profesional / mes';
+          ) + ' / atención';
       }
     });
   }
@@ -266,9 +256,38 @@
     return '';
   }
 
+  function buildAttentionsSelectHtml(code, selected) {
+    const scale = Pricing.attentionVolumeScale(config);
+    const opts = scale
+      .map((n) => {
+        const sel = String(n) === String(selected) ? ' selected' : '';
+        return (
+          '<option value="' +
+          n +
+          '"' +
+          sel +
+          '>' +
+          Pricing.formatAttentions(n) +
+          ' / mes</option>'
+        );
+      })
+      .join('');
+    return (
+      '<label class="pricing-calc__qty">Atenciones / mes' +
+      '<select data-attentions aria-label="Atenciones mensuales ' +
+      code +
+      '">' +
+      '<option value="">Elegí un volumen</option>' +
+      opts +
+      '</select></label>'
+    );
+  }
+
   function buildRows() {
     if (!rowsEl || !config) return;
     const classes = config.sellable_classes || {};
+    const scale = Pricing.attentionVolumeScale(config);
+    const defaultVol = scale[2] || scale[0] || 5000;
     rowsEl.innerHTML = '';
     Object.keys(classes).forEach((code) => {
       const cls = classes[code];
@@ -292,25 +311,21 @@
         '</span>' +
         '<span class="pricing-calc__unit">' +
         Pricing.formatMoney(unit, config.currency) +
-        ' / profesional / mes</span>' +
+        ' / atención</span>' +
         '</span></label>' +
         optionsHtml +
         '</div>' +
-        '<label class="pricing-calc__qty">Profesionales' +
-        '<input type="number" min="0" max="500" step="1" value="0" inputmode="numeric" aria-label="Cantidad de profesionales ' +
-        cls.label +
-        '" />' +
-        '</label>';
+        buildAttentionsSelectHtml(code, '');
       rowsEl.appendChild(row);
       const checkbox = row.querySelector('input[name="class_' + code + '"]');
-      const number = row.querySelector('input[type="number"]');
+      const select = row.querySelector('[data-attentions]');
       syncQtyDisabled(row);
       checkbox.addEventListener('change', () => {
         syncQtyDisabled(row);
         refreshUnitLabels();
         recalc();
       });
-      number.addEventListener('input', () => {
+      select.addEventListener('change', () => {
         refreshUnitLabels();
         recalc();
       });
@@ -323,14 +338,13 @@
       });
     });
 
-    // Defaults útiles en alta: ambulatorio con 5 profesionales
     if (mode === 'signup') {
       const amb = rowsEl.querySelector('[data-class="AMB"]');
       if (amb) {
         const cb = amb.querySelector('input[name="class_AMB"]');
-        const qty = amb.querySelector('input[type="number"]');
+        const qty = amb.querySelector('[data-attentions]');
         if (cb) cb.checked = true;
-        if (qty) qty.value = '5';
+        if (qty) qty.value = String(defaultVol);
         syncQtyDisabled(amb);
       }
     }
@@ -407,7 +421,7 @@
   window.BioenlacePricingCalculator = {
     getSelection: currentSelection,
     getPlan: function () {
-      return Pricing.toSignupPlan(currentSelection());
+      return Pricing.toSignupPlan(currentSelection(), config);
     },
     getEstimate: function () {
       return config ? Pricing.estimate(config, currentSelection()) : null;

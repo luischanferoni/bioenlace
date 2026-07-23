@@ -9,9 +9,8 @@ Todo se expresa **por profesional y por mes**, siguiendo el recorrido del pacien
 | ----------------------- | ------------------------------------------------------------------------------- |
 | Escala de referencia    | **5.000 profesionales**                                                         |
 | Consultas atendidas     | **400 por mes** cada uno (20 días x 20 consultas por día)                       |
-| Conversaciones con el paciente    | **5 mensajes** por consulta                                                     |
-| Motivos de consulta (solo texto): El paciente cuenta los motivos de la consulta antes de la consulta ya reservada | **1 resumen automático** por consulta
-| Motivos de consulta (con la posibilidad de audio)       | **~4 minutos de audio** (voz paciente) por consulta, solo si hay audio en ese chat o pista de videollamada |
+| Conversaciones con el paciente    | **10 mensajes** por consulta ambulatoria (alrededor del turno) |
+| Motivos de consulta | **Siempre con audio** (~4 min voz paciente) + **1 resumen automático** + insights por consulta |
 | Captura del médico      | **Siempre audio** — **~5 minutos** de voz del profesional por consulta + análisis del texto   |
 | Fotos clínicas          | **2 por consulta** — hoy **sin costo** en el presupuesto (dentro de franquicia) |
 | Videollamada            | **80 %** de las consultas (planificación agresiva), **12 minutos**, paciente y médico; COGS add-on **3,50** |

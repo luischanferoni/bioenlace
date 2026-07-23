@@ -307,14 +307,23 @@
 
                     <fieldset class="signup-fieldset">
                         <legend>Plan</legend>
-                        <p class="signup-hint" id="plan-hint">Elegí al menos un tipo de atención e indicá cuántos profesionales. El estimado se actualiza al instante.</p>
+                        <p class="signup-hint" id="plan-hint">Elegí al menos un tipo de atención y el volumen mensual de atenciones. El estimado se actualiza al instante.</p>
                         <div class="signup-grid">
                             <div class="full signup-check-row" id="row-amb">
                                 <label class="signup-check">
                                     <input type="checkbox" name="incluir_amb" id="incluir_amb" data-plan-input checked>
                                     <span id="max_pes_amb_label">Incluir ambulatorio</span>
                                 </label>
-                                <input class="signup-qty" id="max_pes_amb" name="max_pes_amb" type="number" min="1" value="5" aria-label="Profesionales de ambulatorio" data-plan-input>
+                                <select class="signup-qty" id="max_pes_amb" name="attentions_amb" aria-label="Atenciones mensuales de ambulatorio" data-plan-input data-attentions>
+                                    <option value="1000">1.000 / mes</option>
+                                    <option value="2500">2.500 / mes</option>
+                                    <option value="5000" selected>5.000 / mes</option>
+                                    <option value="10000">10.000 / mes</option>
+                                    <option value="20000">20.000 / mes</option>
+                                    <option value="35000">35.000 / mes</option>
+                                    <option value="50000">50.000 / mes</option>
+                                    <option value="100000">100.000 / mes</option>
+                                </select>
                             </div>
                             <div class="full signup-addons" id="amb-addons">
                                 <label class="signup-addon">
@@ -328,11 +337,29 @@
                             </div>
                             <div class="full signup-check-row" id="row-emer" data-plan-row="EMER">
                                 <label class="signup-check"><input type="checkbox" name="incluir_emer" data-plan-input> <span>Incluir urgencia / guardia</span></label>
-                                <input class="signup-qty" name="max_pes_emer" type="number" min="1" value="2" aria-label="Profesionales de urgencia" data-plan-input disabled>
+                                <select class="signup-qty" name="attentions_emer" aria-label="Atenciones mensuales de urgencia" data-plan-input data-attentions disabled>
+                                    <option value="1000" selected>1.000 / mes</option>
+                                    <option value="2500">2.500 / mes</option>
+                                    <option value="5000">5.000 / mes</option>
+                                    <option value="10000">10.000 / mes</option>
+                                    <option value="20000">20.000 / mes</option>
+                                    <option value="35000">35.000 / mes</option>
+                                    <option value="50000">50.000 / mes</option>
+                                    <option value="100000">100.000 / mes</option>
+                                </select>
                             </div>
                             <div class="full signup-check-row" id="row-imp" data-plan-row="IMP">
                                 <label class="signup-check"><input type="checkbox" name="incluir_imp" data-plan-input> <span>Incluir internación</span></label>
-                                <input class="signup-qty" name="max_pes_imp" type="number" min="1" value="2" aria-label="Profesionales de internación" data-plan-input disabled>
+                                <select class="signup-qty" name="attentions_imp" aria-label="Atenciones mensuales de internación" data-plan-input data-attentions disabled>
+                                    <option value="1000" selected>1.000 / mes</option>
+                                    <option value="2500">2.500 / mes</option>
+                                    <option value="5000">5.000 / mes</option>
+                                    <option value="10000">10.000 / mes</option>
+                                    <option value="20000">20.000 / mes</option>
+                                    <option value="35000">35.000 / mes</option>
+                                    <option value="50000">50.000 / mes</option>
+                                    <option value="100000">100.000 / mes</option>
+                                </select>
                             </div>
                         </div>
                         <div class="signup-price" id="signup-price" aria-live="polite">

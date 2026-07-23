@@ -1,5 +1,12 @@
 # Presentaciones comerciales
 
+## Propuestas económicas (CIS Banda)
+
+| Carpeta | Alcance |
+|---------|---------|
+| [`solo-app-paciente/`](./solo-app-paciente/) | Solo app móvil del paciente |
+| [`plataforma-clinica/`](./plataforma-clinica/) | Web clínica, app Personal de Salud, captura clínica, tableros ambulatorios + app paciente |
+
 ## Demo comercial de turnos
 
 - Fuente Marp: [`demo-comercial-turnos.md`](./demo-comercial-turnos.md)

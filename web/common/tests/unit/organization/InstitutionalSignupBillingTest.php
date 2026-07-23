@@ -13,14 +13,15 @@ class InstitutionalSignupBillingTest extends Unit
         $usd = InstitutionalEfectorSignupService::estimateMonthlyUsd([
             'classes' => [
                 'AMB' => [
-                    'max_pes' => 10,
+                    'attentions_per_month' => 5000,
                     'dictado_incluido' => false,
                     'videollamada_permitida' => false,
                 ],
             ],
         ]);
-        $this->assertGreaterThan(20.0, $usd);
-        $this->assertLessThan(40.0, $usd);
+        // 5000 × 0.0059 × 2.63 (tramo mediano) ≈ 77.59
+        $this->assertGreaterThan(70.0, $usd);
+        $this->assertLessThan(90.0, $usd);
     }
 
     public function testSimFailPanConstant(): void
@@ -33,5 +34,6 @@ class InstitutionalSignupBillingTest extends Unit
         $catalog = InstitutionalEfectorSignupService::planesCatalog();
         $this->assertArrayHasKey('sellable_classes', $catalog);
         $this->assertArrayHasKey('AMB', $catalog['sellable_classes']);
+        $this->assertArrayHasKey('cogs_usd_per_encounter', $catalog);
     }
 }

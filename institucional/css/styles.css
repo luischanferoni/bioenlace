@@ -1558,16 +1558,20 @@ section {
     letter-spacing: 0.04em;
 }
 
-.pricing-calc__qty input {
-    width: 5.5rem;
+.pricing-calc__qty input,
+.pricing-calc__qty select {
+    width: 100%;
+    min-width: 9rem;
     padding: 0.5rem 0.6rem;
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     font-size: 1rem;
     color: var(--text-dark);
+    background: #fff;
 }
 
-.pricing-calc__qty input:disabled {
+.pricing-calc__qty input:disabled,
+.pricing-calc__qty select:disabled {
     background: var(--bg-light);
     color: var(--text-muted);
 }

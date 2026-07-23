@@ -53,9 +53,9 @@ El CTA del calculador (`Crear cuenta` → `alta.html`) guarda la selección en `
 
 Núcleo compartido en `pricing-core.js`. En `#precios` se muestra el calculador completo; en `alta.html` solo un **indicador de precio** que se actualiza al cambiar cantidades/opcionales.
 
-**Fórmula:** `precio_unitario = COGS × (1 + margen%/100)`, donde `margen%` sale de `volume_discount_tiers` según la **suma de profesionales** contratados (cualquier tipo). Lista: `margin_on_cost_percent` **233**.  
-COGS: base **0,95** ± audio **0,98** (STT profesional ~5 min con **−30 % on-device**) ± videollamada **3,50** (self-host sala/TURN/Track Egress/storage; STT de la llamada = mismo audio, **una sola vez**), columna **con context caching** ([costos-api.md](../web/docs/costos/costos-api.md)).  
-El usuario elige clases (AMB / EMER / IMP), cantidad de **profesionales** por clase, y opcionales audio/videollamada. En copy público **no** usar el término PES.
+**Fórmula:** `precio = atenciones_mes × COGS_por_atención × (1 + margen%/100)`, donde `margen%` sale de `volume_discount_tiers` según la **suma de atenciones** contratadas. Lista: `margin_on_cost_percent` **233**.  
+COGS por atención: chat paciente AMB **0,0019** (10 msgs) + motivos audio **0,0034** + captura IA **0,0006** ± dictado **0,0025** ± videollamada **0,0088** ([costos-api.md](../web/docs/costos/costos-api.md)).  
+El usuario elige clases (ambulatorio / urgencia / internación), **volumen mensual** de atenciones y opcionales audio/videollamada.
 
 Fuente de cifras del calculador: `js/pricing-config.json` (mantener alineado con `pricing-pes-by-encounter-class.yaml`).
 CTA del simulador: `Crear cuenta` → `alta.html` (misma fuente en YAML y JSON).

@@ -1,22 +1,25 @@
 {
-  "version": 6,
+  "version": 7,
   "currency": "USD",
   "billing_period": "month",
   "tax_note": "Precios en USD. No incluyen IVA.",
-  "cogs_source": "costos-api.md — columna con context caching (Gemini + Groq STT profesional −30 % on-device → 0,98; videollamada §6 = self-host 3,50; STT de la llamada = mismo audio una sola vez)",
+  "cogs_source": "costos-api.md — context caching; motivos siempre con audio; chat paciente 10 msgs solo AMB",
   "reference_encounters_per_professional_month": 400,
-  "cogs_usd_per_professional_month": {
-    "base": 0.95,
-    "audio": 0.98,
-    "videollamada": 3.5
+  "cogs_usd_per_encounter": {
+    "patient_chat_amb": 0.0019,
+    "motivos_audio": 0.0034,
+    "captura_ia": 0.0006,
+    "dictado_stt": 0.0025,
+    "videollamada": 0.0088
   },
   "margin_on_cost_percent": 233,
+  "attention_volume_scale": [1000, 2500, 5000, 10000, 20000, 35000, 50000, 100000],
   "volume_discount_tiers": [
     {
       "id": "lista",
       "label": "Precio base",
-      "min_pes": 1,
-      "max_pes": 19,
+      "min_attentions": 1,
+      "max_attentions": 4999,
       "margin_on_cost_percent": 233,
       "discount_vs_list_percent": 0,
       "margin_after_iibb_ganancias_percent": 49
@@ -24,8 +27,8 @@
     {
       "id": "mediano",
       "label": "Mediano",
-      "min_pes": 20,
-      "max_pes": 49,
+      "min_attentions": 5000,
+      "max_attentions": 14999,
       "margin_on_cost_percent": 163,
       "discount_vs_list_percent": 21,
       "margin_after_iibb_ganancias_percent": 43.5
@@ -33,8 +36,8 @@
     {
       "id": "grande",
       "label": "Grande",
-      "min_pes": 50,
-      "max_pes": 149,
+      "min_attentions": 15000,
+      "max_attentions": 39999,
       "margin_on_cost_percent": 134,
       "discount_vs_list_percent": 30,
       "margin_after_iibb_ganancias_percent": 40
@@ -42,8 +45,8 @@
     {
       "id": "enterprise",
       "label": "Enterprise",
-      "min_pes": 150,
-      "max_pes": null,
+      "min_attentions": 40000,
+      "max_attentions": null,
       "margin_on_cost_percent": 117,
       "discount_vs_list_percent": 35,
       "margin_after_iibb_ganancias_percent": 37.5
@@ -52,7 +55,7 @@
   "addons": {
     "audio": {
       "label": "Dictado",
-      "description": "Transcripción del audio del profesional (~5 min voz/consulta; −30 % STT on-device). Incluido automáticamente si contratás videollamada.",
+      "description": "Transcripción del audio del profesional (~5 min; −30 % on-device). Incluido automáticamente si contratás videollamada.",
       "default": false
     },
     "videollamada": {
@@ -65,43 +68,47 @@
     "AMB": {
       "label": "Ambulatorio",
       "short": "Consultorios y turnos",
-      "encounters_per_professional_month": 400,
+      "includes_patient_chat": true,
       "audio_included": false,
       "videollamada_allowed": true,
       "includes": [
         "Agenda de cupos y reserva paciente",
         "Captura clínica AMB",
-        "App paciente (turnos)"
+        "App paciente (turnos)",
+        "Chat paciente alrededor del turno (10 mensajes)",
+        "Motivos de consulta con audio"
       ]
     },
     "EMER": {
       "label": "Urgencia / guardia",
       "short": "Tablero y plantel de guardia",
-      "encounters_per_professional_month": 350,
+      "includes_patient_chat": false,
       "audio_included": true,
       "videollamada_allowed": false,
       "includes": [
         "Cobertura / roster EMER",
         "Tablero de guardia",
-        "Captura clínica EMER (dictado incluido)"
+        "Captura clínica EMER (dictado incluido)",
+        "Motivos de consulta con audio"
       ]
     },
     "IMP": {
       "label": "Internación",
       "short": "Piso, camas y evoluciones",
-      "encounters_per_professional_month": 300,
+      "includes_patient_chat": false,
       "audio_included": true,
       "videollamada_allowed": false,
       "includes": [
         "Cobertura / roster IMP",
         "Mapa de camas",
-        "Captura / evoluciones (dictado incluido)"
+        "Captura / evoluciones (dictado incluido)",
+        "Motivos de consulta con audio"
       ]
     }
   },
   "simulator": {
     "title": "Calculá tu licencia",
-    "subtitle": "Elegí tipos de atención y cuántos profesionales. A más profesionales, más descuento.",
+    "subtitle": "Elegí tipos de atención y el volumen mensual de atenciones. A más atenciones, más descuento.",
     "cta_label": "Crear cuenta",
     "cta_href": "alta.html",
     "footnotes": []

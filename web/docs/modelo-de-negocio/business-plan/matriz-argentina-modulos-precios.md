@@ -1,18 +1,18 @@
-# Matriz Argentina — precio por profesional × encounter_class
+# Matriz Argentina — precio por volumen de atenciones × encounter_class
 
 **Tipo:** business plan · go-to-market Argentina  
-**Última actualización:** 2026-07-22  
+**Última actualización:** 2026-07-23  
 **Alcance:** solo Argentina por ahora; otros países cuando haya validación local.
 
 Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentina.md](../../costos/impuestos-argentina.md).  
 COGS de referencia: [costos-api.md](../../costos/costos-api.md) (**columna con context caching**).
 
-**Modelo vigente:** licencia = **Σ (profesionales contratados × precio unitario)**.  
-El precio unitario = **COGS × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **PES totales** contratados (suma AMB+EMER+IMP), baja el margen según tramos de volumen. El cliente elige qué `encounter_class` contrata (AMB / EMER / IMP), cuántos profesionales por cada una, y si suma **audio** y/o **videollamada**. Lo no contratado **se deshabilita** en sesión operativa y tableros.
+**Modelo vigente:** licencia = **Σ (atenciones_mes[clase] × precio por atención)**.  
+El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención, el **volumen mensual** (escala del calculador) y, en ambulatorio, si suma **dictado** y/o **videollamada**. Motivos de consulta se presupuestan **siempre con audio**. El chat paciente (§1, **10 mensajes** alrededor del turno) entra solo en **ambulatorio**. Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
 Metadata producto: [`pricing-pes-by-encounter-class.yaml`](../../../common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml).  
 Calculador público: sitio [`institucional/#precios`](../../../../institucional/index.html).  
-Entitlements BD: `billing_account` + `billing_account_encounter_entitlement` (pool). Legacy: `efector_encounter_entitlement` (backfill).  
+Entitlements BD: `billing_account` + `billing_account_encounter_entitlement` (pool de profesionales derivados del volumen). Legacy: `efector_encounter_entitlement` (backfill).  
 Admin: Licencias / Contratos.
 
 **Fuera de este modelo (siguen cotizándose aparte):** pathway fees / PMPM al financiador, integraciones one-shot, autorización OS enterprise, proyectos farmacia/quirófano. Ver [modelos-pricing-diferenciados.md](./modelos-pricing-diferenciados.md).
@@ -22,62 +22,50 @@ Admin: Licencias / Contratos.
 ## Fórmula
 
 ```
-COGS_ref = base
-         + ((audio || videollamada) ? stt_profesional : 0)   # STT una sola vez
-         + (videollamada ? cogs_video : 0)
-COGS_clase = COGS_ref × (encounters_clase / 400)
-PES_totales = Σ cantidad_profesionales[clase]
-margen% = tramo(PES_totales).margin_on_cost_percent   # ver tabla abajo; lista = 233
-precio_unitario_clase = COGS_clase × (1 + margen%/100)
-USD/mes ≈ Σ_clase ( cantidad_profesionales[clase] × precio_unitario_clase )
+COGS_atención = motivos_audio + captura_ia
+              + (AMB ? patient_chat_amb : 0)          # 10 msgs solo ambulatorio
+              + ((dictado || videollamada) ? dictado_stt : 0)
+              + (videollamada ? videollamada : 0)
+atenciones_totales = Σ atenciones_mes[clase]
+margen% = tramo(atenciones_totales).margin_on_cost_percent
+precio_por_atención = COGS_atención × (1 + margen%/100)
+USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 ```
 
-| Componente COGS (a 400 encounters/mes, **con context caching**) | USD / profesional / mes | Fuente |
-|----------------------------------------------------------------|-------------------------|--------|
-| **Base** (IA + captura texto; motivos paciente texto; **sin** STT del profesional) | **0,95** | Apartado 1 motivos texto con caché − STT §4 bruto (~1,40) |
-| **+ Audio / STT** (profesional ~5 min, **−30 % on-device**) | **+0,98** | costos-api § STT; **incluido** si hay videollamada |
-| **+ Videollamada** (self-host Track Egress + storage; solo AMB) | **+3,50** | costos-api §6 (**sin** STT duplicado) |
+| Componente COGS (USD / atención, **con context caching**) | USD | Notas |
+|-----------------------------------------------------------|----:|-------|
+| Chat paciente AMB (10 mensajes) | **0,0019** | Solo ambulatorio |
+| Motivos con audio (batch + insights + ~4 min STT) | **0,0034** | Siempre |
+| Captura IA (sin STT profesional) | **0,0006** | Siempre |
+| Dictado / STT profesional (−30 % on-device) | **+0,0025** | Opcional AMB; incluido urgencia/internación y si hay videollamada |
+| Videollamada | **+0,0088** | Solo ambulatorio |
 
-**Margen sobre costo (lista):** **233 %** ≈ margen bruto ~70 % ≈ ~49 % después de IIBB + ganancias (objetivo software; ver [impuestos-argentina.md](../../costos/impuestos-argentina.md)).
+**Margen sobre costo (lista):** **233 %**.
 
-### Descuento por volumen (PES totales)
+### Descuento por volumen (atenciones / mes)
 
-El tramo se elige con la **suma de profesionales contratados** (cualquier clase). No pondera AMB vs EMER vs IMP.
+| Tramo | Atenciones / mes | Margen sobre costo | Descuento vs lista | Margen después IIBB + ganancias (orientativo) |
+|-------|------------------|--------------------|--------------------|-----------------------------------------------|
+| Precio base | 1–4.999 | **233 %** | 0 % | ~49 % |
+| Mediano | 5.000–14.999 | **163 %** | **−21 %** | ~43,5 % |
+| Grande | 15.000–39.999 | **134 %** | **−30 %** | ~40 % |
+| Enterprise | 40.000+ | **117 %** | **−35 %** | ~37,5 % |
 
-| Tramo | PES totales | Margen sobre costo | Descuento vs lista | Margen después IIBB + ganancias (orientativo) |
-|-------|-------------|--------------------|--------------------|-----------------------------------------------|
-| Precio base | 1–19 | **233 %** | 0 % | ~49 % |
-| Mediano | 20–49 | **163 %** | **−21 %** | ~43,5 % |
-| Grande | 50–149 | **134 %** | **−30 %** | ~40 % |
-| Enterprise | 150+ | **117 %** | **−35 %** | ~37,5 % |
+Escala del calculador: 1.000 · 2.500 · 5.000 · 10.000 · 20.000 · 35.000 · 50.000 · 100.000.
 
-Metadata: `volume_discount_tiers` en `pricing-pes-by-encounter-class.yaml` / `institucional/js/pricing-config.json`.
+### Precio por atención (lista, sin descuento de tramo)
 
-**Regla comercial:** videollamada **incluye** la transcripción de la llamada (= mismo COGS `audio` una vez). No se suma dictado + video como dos STT.
+| Configuración | COGS / atención | Precio lista / atención |
+|---------------|----------------:|------------------------:|
+| Ambulatorio (chat + motivos audio + captura IA) | 0,0059 | **~0,0196** |
+| Ambulatorio + dictado | 0,0084 | **~0,0280** |
+| Ambulatorio + videollamada | 0,0172 | **~0,0573** |
+| Urgencia / internación (motivos audio + dictado) | 0,0065 | **~0,0216** |
 
+Ejemplo: **20.000** atenciones ambulatorio + dictado → tramo Grande (−30 %) → **~USD 394 / mes**.
 
-### Volumen por clase (por profesional / mes, época normal)
+**Regla comercial:** videollamada **incluye** la transcripción de la llamada (= mismo STT de dictado una vez).
 
-| Clase | Volumen lista | Rango de estimación (orientativo) | Dictado | Videollamada |
-|-------|---------------|-----------------------------------|---------|--------------|
-| **AMB** | **400** | costos-api (20×20) | Opcional (auto si hay video) | Opcional |
-| **EMER** | **350** | Normal ~195–455; pico ~455–780+ | **Obligatorio** (incluido) | **No** |
-| **IMP** | **300** | Típico chico–mediano ~100–960; grandes 960–2400+ | **Obligatorio** (incluido) | **No** |
-
-No hay SKU chico/mediano/grande aparte del descuento por PES: el tamaño se refleja en **cantidad de profesionales**. Picos y outliers → más N o cotización.
-
-| Configuración | COGS (a vol. de la clase) | Precio lista / profesional / mes (1–19 PES) |
-|---------------|---------------------------|---------------------------------------------|
-| AMB solo base | 0,95 | **~3,16** |
-| AMB + audio (sin video) | 1,93 | **~6,43** |
-| AMB + videollamada (incluye STT) | 5,43 | **~18,08** |
-| AMB + audio + videollamada | **5,43** (igual; STT no se duplica) | **~18,08** |
-| EMER (audio incluido, vol 350) | 1,689 | **~5,62** |
-| IMP (audio incluido, vol 300) | 1,448 | **~4,82** |
-
-Ejemplo lista: 10 AMB + 4 EMER (14 PES), sin add-ons AMB → `10×3,16 + 4×5,62 = **USD 54,08/mes**`.  
-Ejemplo mediano: 20 AMB solo base → markup 163 % → `20×2,50 = **USD 50,00/mes**` (lista habría sido `20×3,16 = 63,20`).  
-Ejemplo tele lista: 10 AMB con videollamada → `10×18,08 = **USD 180,80/mes**`.
 ---
 
 ## Clases vendibles (gates de producto)
@@ -122,9 +110,9 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 
 | Comprador | Selección típica en el calculador |
 |-----------|-----------------------------------|
-| Clínica ambulatoria | Solo AMB × N profesionales |
-| Sanatorio con guardia | AMB + EMER |
-| Sanatorio con camas | AMB + EMER + IMP |
+| Clínica ambulatoria | Ambulatorio × volumen mensual |
+| Sanatorio con guardia | Ambulatorio + urgencia |
+| Sanatorio con camas | Ambulatorio + urgencia + internación |
 | Teleconsulta | Misma selección + add-on videollamada |
 
 ---

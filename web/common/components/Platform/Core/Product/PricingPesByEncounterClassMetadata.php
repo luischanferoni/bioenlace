@@ -6,7 +6,7 @@ use Symfony\Component\Yaml\Yaml;
 use Yii;
 
 /**
- * Metadata comercial: precio por profesional × encounter_class (COGS + margen + add-ons).
+ * Metadata comercial: precio por volumen de atenciones × encounter_class (COGS + margen + add-ons).
  *
  * @see ProductMetadataPaths::pricingPesByEncounterClassFile()
  */
@@ -78,22 +78,16 @@ final class PricingPesByEncounterClassMetadata
         return $ref > 0 ? $ref : 400.0;
     }
 
+    /** @deprecated Usar referenceEncountersPerMonth; se mantiene por compatibilidad. */
     public static function encountersPerMonth(string $encounterClass): float
     {
-        $row = self::classRow($encounterClass);
-        if ($row !== null && isset($row['encounters_per_professional_month'])) {
-            $n = (float) $row['encounters_per_professional_month'];
-            if ($n > 0) {
-                return $n;
-            }
-        }
-
         return self::referenceEncountersPerMonth();
     }
 
+    /** @deprecated El precio ya no escala por encounters_per_professional_month. */
     public static function volumeScale(string $encounterClass): float
     {
-        return self::encountersPerMonth($encounterClass) / self::referenceEncountersPerMonth();
+        return 1.0;
     }
 
     public static function classIncludesAudio(string $encounterClass): bool
@@ -101,6 +95,16 @@ final class PricingPesByEncounterClassMetadata
         $row = self::classRow($encounterClass);
 
         return $row !== null && !empty($row['audio_included']);
+    }
+
+    public static function classIncludesPatientChat(string $encounterClass): bool
+    {
+        $row = self::classRow($encounterClass);
+        if ($row !== null && array_key_exists('includes_patient_chat', $row)) {
+            return (bool) $row['includes_patient_chat'];
+        }
+
+        return $encounterClass === 'AMB';
     }
 
     public static function classAllowsVideollamada(string $encounterClass): bool
@@ -117,29 +121,6 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
-     * COGS de referencia (volumen reference) según add-ons, sin escalar por clase.
-     * Videollamada incluye STT una sola vez (mismo COGS audio).
-     */
-    public static function referenceUnitCogs(bool $audio = false, bool $videollamada = false): float
-    {
-        $cogs = self::loadConfig()['cogs_usd_per_professional_month'] ?? [];
-        if (!is_array($cogs)) {
-            return 0.0;
-        }
-        $total = (float) ($cogs['base'] ?? 0);
-        if ($audio || $videollamada) {
-            $total += (float) ($cogs['audio'] ?? 0);
-        }
-        if ($videollamada) {
-            $total += (float) ($cogs['videollamada'] ?? 0);
-        }
-
-        return round($total, 4);
-    }
-
-    /**
-     * Resuelve add-ons efectivos para una clase (audio incluido / video no permitido).
-     *
      * @return array{0: bool, 1: bool} [audio, videollamada]
      */
     public static function effectiveAddons(
@@ -154,9 +135,9 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
-     * COGS unitario USD/profesional/mes según add-ons y volumen de la clase.
+     * COGS USD por atención según add-ons y clase.
      */
-    public static function unitCogs(
+    public static function unitCogsPerEncounter(
         bool $audio = false,
         bool $videollamada = false,
         ?string $encounterClass = null
@@ -164,12 +145,41 @@ final class PricingPesByEncounterClassMetadata
         if ($encounterClass !== null) {
             [$audio, $videollamada] = self::effectiveAddons($encounterClass, $audio, $videollamada);
         }
-        $base = self::referenceUnitCogs($audio, $videollamada);
-        if ($encounterClass === null) {
-            return $base;
+        $cogs = self::loadConfig()['cogs_usd_per_encounter'] ?? [];
+        if (!is_array($cogs)) {
+            return 0.0;
+        }
+        $total = (float) ($cogs['motivos_audio'] ?? 0) + (float) ($cogs['captura_ia'] ?? 0);
+        if ($encounterClass !== null && self::classIncludesPatientChat($encounterClass)) {
+            $total += (float) ($cogs['patient_chat_amb'] ?? 0);
+        }
+        if ($audio || $videollamada) {
+            $total += (float) ($cogs['dictado_stt'] ?? 0);
+        }
+        if ($videollamada) {
+            $total += (float) ($cogs['videollamada'] ?? 0);
         }
 
-        return round($base * self::volumeScale($encounterClass), 4);
+        return round($total, 4);
+    }
+
+    /**
+     * @deprecated Preferir unitCogsPerEncounter. Compat: COGS × 400 (ref. histórica).
+     */
+    public static function referenceUnitCogs(bool $audio = false, bool $videollamada = false): float
+    {
+        return round(self::unitCogsPerEncounter($audio, $videollamada, 'AMB') * self::referenceEncountersPerMonth(), 4);
+    }
+
+    /**
+     * @deprecated Preferir unitCogsPerEncounter.
+     */
+    public static function unitCogs(
+        bool $audio = false,
+        bool $videollamada = false,
+        ?string $encounterClass = null
+    ): float {
+        return self::unitCogsPerEncounter($audio, $videollamada, $encounterClass);
     }
 
     public static function marginOnCostPercent(): float
@@ -191,29 +201,40 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
-     * Tramo según PES totales contratados (suma de todas las clases).
-     *
+     * @return list<int>
+     */
+    public static function attentionVolumeScale(): array
+    {
+        $scale = self::loadConfig()['attention_volume_scale'] ?? [];
+        if (!is_array($scale)) {
+            return [];
+        }
+
+        return array_values(array_map('intval', array_filter($scale, static fn ($n) => (int) $n > 0)));
+    }
+
+    /**
      * @return array<string, mixed>
      */
-    public static function tierForTotalPes(int $totalPes): array
+    public static function tierForTotalAttentions(int $totalAttentions): array
     {
-        $n = max(0, $totalPes);
+        $n = max(0, $totalAttentions);
         $tiers = self::volumeDiscountTiers();
         if ($tiers === []) {
             return [
                 'id' => 'lista',
-                'label' => 'Lista',
-                'min_pes' => 1,
-                'max_pes' => null,
+                'label' => 'Precio base',
+                'min_attentions' => 1,
+                'max_attentions' => null,
                 'margin_on_cost_percent' => self::marginOnCostPercent(),
-                'margin_after_iibb_ganancias_percent' => null,
+                'discount_vs_list_percent' => 0,
             ];
         }
 
         $fallback = $tiers[0];
         foreach ($tiers as $tier) {
-            $min = (int) ($tier['min_pes'] ?? 0);
-            $maxRaw = $tier['max_pes'] ?? null;
+            $min = (int) ($tier['min_attentions'] ?? $tier['min_pes'] ?? 0);
+            $maxRaw = $tier['max_attentions'] ?? $tier['max_pes'] ?? null;
             $max = $maxRaw === null || $maxRaw === '' ? null : (int) $maxRaw;
             if ($n >= $min && ($max === null || $n <= $max)) {
                 return $tier;
@@ -226,9 +247,15 @@ final class PricingPesByEncounterClassMetadata
         return $fallback;
     }
 
-    public static function marginOnCostPercentForTotalPes(int $totalPes): float
+    /** @deprecated Usar tierForTotalAttentions */
+    public static function tierForTotalPes(int $totalPes): array
     {
-        $tier = self::tierForTotalPes($totalPes);
+        return self::tierForTotalAttentions($totalPes);
+    }
+
+    public static function marginOnCostPercentForTotalAttentions(int $totalAttentions): float
+    {
+        $tier = self::tierForTotalAttentions($totalAttentions);
         if (isset($tier['margin_on_cost_percent'])) {
             return (float) $tier['margin_on_cost_percent'];
         }
@@ -236,35 +263,48 @@ final class PricingPesByEncounterClassMetadata
         return self::marginOnCostPercent();
     }
 
+    /** @deprecated Usar marginOnCostPercentForTotalAttentions */
+    public static function marginOnCostPercentForTotalPes(int $totalPes): float
+    {
+        return self::marginOnCostPercentForTotalAttentions($totalPes);
+    }
+
+    public static function deriveMaxPesFromAttentions(int $attentions): int
+    {
+        $qty = max(0, $attentions);
+        if ($qty <= 0) {
+            return 0;
+        }
+
+        return max(1, (int) ceil($qty / self::referenceEncountersPerMonth()));
+    }
+
     /**
-     * Precio de lista USD/profesional/mes = COGS × (1 + margen%).
+     * Precio USD / atención = COGS × (1 + margen%).
      *
-     * @param int|null $totalPes PES totales del contrato; null = margen de lista.
+     * @param int|null $totalAttentions atenciones totales del contrato; null = margen de lista.
      */
     public static function unitPrice(
         bool $audio = false,
         bool $videollamada = false,
         ?string $encounterClass = null,
-        ?int $totalPes = null
+        ?int $totalAttentions = null
     ): float {
-        $cogs = self::unitCogs($audio, $videollamada, $encounterClass);
-        $margin = $totalPes === null
+        $cogs = self::unitCogsPerEncounter($audio, $videollamada, $encounterClass);
+        $margin = $totalAttentions === null
             ? self::marginOnCostPercent()
-            : self::marginOnCostPercentForTotalPes($totalPes);
+            : self::marginOnCostPercentForTotalAttentions($totalAttentions);
 
-        return round($cogs * (1 + $margin / 100), 2);
+        return round($cogs * (1 + $margin / 100), 4);
     }
 
-    /**
-     * Precio unitario de lista para la clase (respeta audio incluido / video permitido).
-     */
-    public static function pricePerPes(string $encounterClass, ?int $totalPes = null): ?float
+    public static function pricePerPes(string $encounterClass, ?int $totalAttentions = null): ?float
     {
         if (!self::isSellableClass($encounterClass)) {
             return null;
         }
 
-        return self::unitPrice(false, false, $encounterClass, $totalPes);
+        return self::unitPrice(false, false, $encounterClass, $totalAttentions);
     }
 
     public static function defaultWhenEmptyAllowAll(): bool
@@ -275,25 +315,25 @@ final class PricingPesByEncounterClassMetadata
     }
 
     /**
-     * @param array<string, int> $professionalsByClass code => cantidad de profesionales
+     * @param array<string, int> $attentionsByClass code => atenciones / mes
      */
     public static function estimateMonthlyTotal(
-        array $professionalsByClass,
+        array $attentionsByClass,
         bool $audio = false,
         bool $videollamada = false
     ): float {
-        $totalPes = 0;
-        foreach ($professionalsByClass as $qty) {
-            $totalPes += max(0, (int) $qty);
+        $totalAttentions = 0;
+        foreach ($attentionsByClass as $qty) {
+            $totalAttentions += max(0, (int) $qty);
         }
 
         $total = 0.0;
-        foreach ($professionalsByClass as $code => $qty) {
+        foreach ($attentionsByClass as $code => $qty) {
             $code = (string) $code;
             if (!self::isSellableClass($code) || (int) $qty <= 0) {
                 continue;
             }
-            $total += self::unitPrice($audio, $videollamada, $code, $totalPes) * (int) $qty;
+            $total += self::unitPrice($audio, $videollamada, $code, $totalAttentions) * (int) $qty;
         }
 
         return round($total, 2);

@@ -28,13 +28,18 @@ class PricingPesByEncounterClassTest extends Unit
 
     public function testUnitCogsPerEncounter(): void
     {
-        // AMB: chat 0.0019 + motivos blend 0.0014 + captura 0.0006 + dictado 0.0025 = 0.0064
+        // AMB: chat 0.0019 + motivos 0.0014 + captura 0.0006 + dictado 0.0025 = 0.0064
         $this->assertSame(0.0064, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'AMB'));
         $this->assertSame(0.0064, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(true, false, 'AMB'));
         // AMB + video @ 40% tele: 0.0064 + 0.0044 = 0.0108
         $this->assertSame(0.0108, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, true, 'AMB'));
-        // EMER: motivos 0.0014 + captura 0.0006 + dictado 0.0025 = 0.0045
-        $this->assertSame(0.0045, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'EMER'));
+        // EMER: motivos 0.0018 (45%) + captura 0.0006 + dictado 0.0025 = 0.0049
+        $this->assertSame(0.0049, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'EMER'));
+        // IMP: motivos 0.0019 (50%) + captura 0.0006 + dictado 0.0025 = 0.0050
+        $this->assertSame(0.0050, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'IMP'));
+        $this->assertSame(0.0014, PricingPesByEncounterClassMetadata::motivosAudioCogsPerEncounter('AMB'));
+        $this->assertSame(0.0018, PricingPesByEncounterClassMetadata::motivosAudioCogsPerEncounter('EMER'));
+        $this->assertSame(0.0019, PricingPesByEncounterClassMetadata::motivosAudioCogsPerEncounter('IMP'));
     }
 
     public function testVolumeDiscountTiersByAttentions(): void

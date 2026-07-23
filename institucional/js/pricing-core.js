@@ -189,13 +189,22 @@
     return total;
   }
 
+  function motivosAudioCogsForClass(config, code) {
+    var cogs = (config && config.cogs_usd_per_encounter) || {};
+    var byClass = cogs.motivos_audio_by_class;
+    if (byClass && code && Object.prototype.hasOwnProperty.call(byClass, code)) {
+      return Number(byClass[code]) || 0;
+    }
+    return Number(cogs.motivos_audio) || 0;
+  }
+
   function unitCogsForClass(config, code, addons) {
     addons = addons || {};
     var cogs = (config && config.cogs_usd_per_encounter) || {};
     var video = classAllowsVideollamada(config, code) && !!addons.videollamada;
     // Dictado incluido en todas las clases vendibles (audio_included).
     var audio = classIncludesAudio(config, code) || video;
-    var total = Number(cogs.motivos_audio) || 0;
+    var total = motivosAudioCogsForClass(config, code);
     total += Number(cogs.captura_ia) || 0;
     if (classIncludesPatientChat(config, code)) {
       total += Number(cogs.patient_chat_amb) || 0;
@@ -330,6 +339,7 @@
     formatVolumeChoice: formatVolumeChoice,
     unitPriceForClass: unitPriceForClass,
     unitCogsForClass: unitCogsForClass,
+    motivosAudioCogsForClass: motivosAudioCogsForClass,
     estimate: estimate,
     readDomSelection: readDomSelection,
     toSignupPlan: toSignupPlan,

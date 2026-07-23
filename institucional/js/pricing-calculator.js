@@ -266,8 +266,8 @@
       .join('');
     return (
       '<div class="pricing-calc__qty">' +
-      '<span class="pricing-calc__qty-label">Volumen mensual</span>' +
-      '<div class="pricing-calc__chips" role="group" aria-label="Volumen mensual ' +
+      '<span class="pricing-calc__qty-label">Volumen de atenciones mensual</span>' +
+      '<div class="pricing-calc__chips" role="group" aria-label="Volumen de atenciones mensual ' +
       code +
       '">' +
       chips +

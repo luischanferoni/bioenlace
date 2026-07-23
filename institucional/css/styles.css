@@ -1551,11 +1551,72 @@ section {
 .pricing-calc__qty {
     display: flex;
     flex-direction: column;
-    gap: 0.25rem;
+    gap: 0.4rem;
     font-size: 0.75rem;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
+}
+
+.pricing-calc__qty-label {
+    font-weight: 600;
+}
+
+.pricing-calc__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.pricing-calc__chip {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.12rem;
+    margin: 0;
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.65rem;
+    background: #fff;
+    color: var(--text-dark);
+    font: inherit;
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pricing-calc__chip strong {
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.pricing-calc__chip span {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.pricing-calc__chip:hover:not(:disabled) {
+    border-color: rgba(9, 62, 77, 0.45);
+    box-shadow: 0 1px 4px rgba(9, 62, 77, 0.08);
+}
+
+.pricing-calc__chip.is-selected {
+    border-color: #093e4d;
+    background: rgba(9, 62, 77, 0.08);
+    color: #093e4d;
+}
+
+.pricing-calc__chip.is-selected span {
+    color: rgba(9, 62, 77, 0.72);
+}
+
+.pricing-calc__chip:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    box-shadow: none;
 }
 
 .pricing-calc__qty input,

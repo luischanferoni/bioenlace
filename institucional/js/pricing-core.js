@@ -54,9 +54,59 @@
     return Number((config && config.margin_on_cost_percent) || 0);
   }
 
-  function attentionVolumeScale(config) {
+  function attentionVolumePresets(config) {
+    var presets = (config && config.attention_volume_presets) || [];
+    if (Array.isArray(presets) && presets.length) {
+      return presets
+        .map(function (p) {
+          var n = Number(p && p.attentions);
+          if (!(n > 0)) return null;
+          return {
+            attentions: n,
+            label: (p && p.label) || formatAttentions(n),
+            hint: (p && p.hint) || '',
+          };
+        })
+        .filter(Boolean);
+    }
     var scale = (config && config.attention_volume_scale) || [];
-    return Array.isArray(scale) ? scale.map(Number).filter(function (n) { return n > 0; }) : [];
+    return (Array.isArray(scale) ? scale : [])
+      .map(Number)
+      .filter(function (n) { return n > 0; })
+      .map(function (n) {
+        return { attentions: n, label: formatAttentions(n) + ' / mes', hint: '' };
+      });
+  }
+
+  function attentionVolumeScale(config) {
+    return attentionVolumePresets(config).map(function (p) { return p.attentions; });
+  }
+
+  function defaultAttentions(config, perfil) {
+    var defaults = (config && config.defaults) || {};
+    var scale = attentionVolumeScale(config);
+    if (perfil === 'CONSULTORIO') {
+      return Number(defaults.consultorio_attentions) || scale[0] || 200;
+    }
+    return Number(defaults.clinica_attentions) || scale[5] || scale[scale.length - 1] || 5000;
+  }
+
+  function findVolumePreset(config, attentions) {
+    var n = Math.max(0, parseInt(attentions, 10) || 0);
+    var presets = attentionVolumePresets(config);
+    var i;
+    for (i = 0; i < presets.length; i++) {
+      if (presets[i].attentions === n) return presets[i];
+    }
+    return null;
+  }
+
+  function formatVolumeChoice(config, attentions) {
+    var preset = findVolumePreset(config, attentions);
+    if (preset) {
+      return preset.label + ' · ' + formatAttentions(preset.attentions) + '/mes';
+    }
+    return formatAttentions(attentions) + ' / mes';
   }
 
   function volumeDiscountTiers(config) {
@@ -148,9 +198,8 @@
     addons = addons || {};
     var cogs = (config && config.cogs_usd_per_encounter) || {};
     var video = classAllowsVideollamada(config, code) && !!addons.videollamada;
-    var audio =
-      classIncludesAudio(config, code) ||
-      (code === 'AMB' && (!!addons.audio || video));
+    // Dictado incluido en todas las clases vendibles (audio_included).
+    var audio = classIncludesAudio(config, code) || video;
     var total = Number(cogs.motivos_audio) || 0;
     total += Number(cogs.captura_ia) || 0;
     if (classIncludesPatientChat(config, code)) {
@@ -244,21 +293,20 @@
   }
 
   function readDomSelection(rowsRoot) {
-    var sel = { classes: {}, addons: { audio: false, videollamada: false } };
+    var sel = { classes: {}, addons: { audio: true, videollamada: false } };
     if (!rowsRoot) return sel;
     rowsRoot.querySelectorAll('[data-class]').forEach(function (row) {
       var code = row.getAttribute('data-class');
       var enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
-      var qty = row.querySelector('[data-attentions]');
+      var qty = row.querySelector('input[data-attentions], select[data-attentions]');
       if (!code || !enabled || !qty || !enabled.checked) return;
       var n = Math.max(0, parseInt(qty.value, 10) || 0);
       if (n > 0) sel.classes[code] = n;
       if (code === 'AMB') {
-        var audio = row.querySelector('input[data-addon="audio"]');
         var video = row.querySelector('input[data-addon="videollamada"]');
         var videoOn = !!(video && video.checked);
         sel.addons.videollamada = videoOn;
-        sel.addons.audio = !!(audio && audio.checked) || videoOn;
+        sel.addons.audio = true;
       }
     });
     return sel;
@@ -272,9 +320,7 @@
       plan.classes[code] = {
         attentions_per_month: attentions,
         max_pes: deriveMaxPesFromAttentions(config, attentions),
-        dictado_incluido: code === 'AMB'
-          ? !!(selection.addons && (selection.addons.audio || selection.addons.videollamada))
-          : true,
+        dictado_incluido: true,
         videollamada_permitida: code === 'AMB'
           ? !!(selection.addons && selection.addons.videollamada)
           : false,
@@ -286,6 +332,7 @@
   global.BioenlacePricing = {
     formatMoney: formatMoney,
     formatAttentions: formatAttentions,
+    formatVolumeChoice: formatVolumeChoice,
     unitPriceForClass: unitPriceForClass,
     unitCogsForClass: unitCogsForClass,
     estimate: estimate,
@@ -302,6 +349,9 @@
     marginOnCostPercentForTotalPes: marginOnCostPercentForTotalAttentions,
     volumeDiscountTiers: volumeDiscountTiers,
     attentionVolumeScale: attentionVolumeScale,
+    attentionVolumePresets: attentionVolumePresets,
+    defaultAttentions: defaultAttentions,
+    findVolumePreset: findVolumePreset,
     discountVsListPercent: discountVsListPercent,
     nextVolumeStep: nextVolumeStep,
     deriveMaxPesFromAttentions: deriveMaxPesFromAttentions,

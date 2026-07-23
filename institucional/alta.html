@@ -77,21 +77,78 @@
         }
         .signup-check-row {
             display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.65rem;
+        }
+        .signup-volume {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+        .signup-volume__label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #78909c;
+            font-weight: 600;
+        }
+        .signup-volume__chips {
+            display: flex;
             flex-wrap: wrap;
-            align-items: center;
-            gap: 0.75rem 1.25rem;
+            gap: 0.4rem;
+        }
+        .signup-volume__chip {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.1rem;
+            margin: 0;
+            padding: 0.45rem 0.7rem;
+            border: 1px solid rgba(9, 62, 77, 0.18);
+            border-radius: 10px;
+            background: #fff;
+            color: #37474f;
+            font: inherit;
+            cursor: pointer;
+            text-align: left;
+            transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+        }
+        .signup-volume__chip strong {
+            font-size: 0.86rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .signup-volume__chip span {
+            font-size: 0.75rem;
+            color: #78909c;
+        }
+        .signup-volume__chip:hover:not(:disabled) {
+            border-color: rgba(9, 62, 77, 0.4);
+            box-shadow: 0 1px 4px rgba(9, 62, 77, 0.08);
+        }
+        .signup-volume__chip.is-selected {
+            border-color: #093e4d;
+            background: rgba(9, 62, 77, 0.08);
+            color: #093e4d;
+        }
+        .signup-volume__chip.is-selected span {
+            color: rgba(9, 62, 77, 0.7);
+        }
+        .signup-volume__chip:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .signup-policy {
+            margin: 0;
+            font-size: 0.88rem;
+            color: #546e7a;
+            font-weight: 500;
         }
         /* display:flex/grid del autor pisa [hidden] sin !important */
         [hidden] { display: none !important; }
         .signup-plan-row.is-off { display: none !important; }
-        .signup-check-row .signup-qty {
-            width: 5.5rem;
-            max-width: 5.5rem;
-        }
-        .signup-check-row .signup-qty:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-        }
         .signup-addons {
             display: flex;
             flex-wrap: wrap;
@@ -307,29 +364,21 @@
 
                     <fieldset class="signup-fieldset">
                         <legend>Plan</legend>
-                        <p class="signup-hint" id="plan-hint">Elegí al menos un tipo de atención y el volumen mensual de atenciones. El estimado se actualiza al instante.</p>
+                        <p class="signup-hint" id="plan-hint">Elegí tipos de atención y un volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.</p>
                         <div class="signup-grid">
                             <div class="full signup-check-row" id="row-amb">
                                 <label class="signup-check">
                                     <input type="checkbox" name="incluir_amb" id="incluir_amb" data-plan-input checked>
                                     <span id="max_pes_amb_label">Incluir ambulatorio</span>
                                 </label>
-                                <select class="signup-qty" id="max_pes_amb" name="attentions_amb" aria-label="Atenciones mensuales de ambulatorio" data-plan-input data-attentions>
-                                    <option value="1000">1.000 / mes</option>
-                                    <option value="2500">2.500 / mes</option>
-                                    <option value="5000" selected>5.000 / mes</option>
-                                    <option value="10000">10.000 / mes</option>
-                                    <option value="20000">20.000 / mes</option>
-                                    <option value="35000">35.000 / mes</option>
-                                    <option value="50000">50.000 / mes</option>
-                                    <option value="100000">100.000 / mes</option>
-                                </select>
+                                <div class="signup-volume" data-volume-for="attentions_amb">
+                                    <span class="signup-volume__label">Volumen mensual</span>
+                                    <div class="signup-volume__chips" id="chips-amb" role="group" aria-label="Volumen ambulatorio"></div>
+                                    <input type="hidden" class="signup-qty" id="max_pes_amb" name="attentions_amb" value="5000" data-plan-input data-attentions>
+                                </div>
                             </div>
                             <div class="full signup-addons" id="amb-addons">
-                                <label class="signup-addon">
-                                    <input type="checkbox" name="audio" data-plan-input>
-                                    <span class="signup-addon__label">Dictado <em class="signup-addon__hint">(opcional)</em></span>
-                                </label>
+                                <p class="signup-policy">Dictado incluido</p>
                                 <label class="signup-addon">
                                     <input type="checkbox" name="videollamada" data-plan-input>
                                     <span class="signup-addon__label">Videollamada <em class="signup-addon__hint">(opcional)</em></span>
@@ -337,29 +386,19 @@
                             </div>
                             <div class="full signup-check-row" id="row-emer" data-plan-row="EMER">
                                 <label class="signup-check"><input type="checkbox" name="incluir_emer" data-plan-input> <span>Incluir urgencia / guardia</span></label>
-                                <select class="signup-qty" name="attentions_emer" aria-label="Atenciones mensuales de urgencia" data-plan-input data-attentions disabled>
-                                    <option value="1000" selected>1.000 / mes</option>
-                                    <option value="2500">2.500 / mes</option>
-                                    <option value="5000">5.000 / mes</option>
-                                    <option value="10000">10.000 / mes</option>
-                                    <option value="20000">20.000 / mes</option>
-                                    <option value="35000">35.000 / mes</option>
-                                    <option value="50000">50.000 / mes</option>
-                                    <option value="100000">100.000 / mes</option>
-                                </select>
+                                <div class="signup-volume" data-volume-for="attentions_emer">
+                                    <span class="signup-volume__label">Volumen mensual</span>
+                                    <div class="signup-volume__chips" id="chips-emer" role="group" aria-label="Volumen urgencia"></div>
+                                    <input type="hidden" class="signup-qty" name="attentions_emer" value="200" data-plan-input data-attentions disabled>
+                                </div>
                             </div>
                             <div class="full signup-check-row" id="row-imp" data-plan-row="IMP">
                                 <label class="signup-check"><input type="checkbox" name="incluir_imp" data-plan-input> <span>Incluir internación</span></label>
-                                <select class="signup-qty" name="attentions_imp" aria-label="Atenciones mensuales de internación" data-plan-input data-attentions disabled>
-                                    <option value="1000" selected>1.000 / mes</option>
-                                    <option value="2500">2.500 / mes</option>
-                                    <option value="5000">5.000 / mes</option>
-                                    <option value="10000">10.000 / mes</option>
-                                    <option value="20000">20.000 / mes</option>
-                                    <option value="35000">35.000 / mes</option>
-                                    <option value="50000">50.000 / mes</option>
-                                    <option value="100000">100.000 / mes</option>
-                                </select>
+                                <div class="signup-volume" data-volume-for="attentions_imp">
+                                    <span class="signup-volume__label">Volumen mensual</span>
+                                    <div class="signup-volume__chips" id="chips-imp" role="group" aria-label="Volumen internación"></div>
+                                    <input type="hidden" class="signup-qty" name="attentions_imp" value="200" data-plan-input data-attentions disabled>
+                                </div>
                             </div>
                         </div>
                         <div class="signup-price" id="signup-price" aria-live="polite">

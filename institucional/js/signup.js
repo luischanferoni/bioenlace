@@ -155,9 +155,19 @@
   function syncPlanRowUi(form) {
     if (!form) return;
     var isConsultorio = currentPerfil(form) === 'CONSULTORIO';
+    var Pricing = window.BioenlacePricing;
     var ambCb = planInput(form, 'incluir_amb');
     var ambQty = planInput(form, 'attentions_amb') || document.getElementById('max_pes_amb');
     var ambOn = isConsultorio || !!(ambCb && ambCb.checked);
+    var consultorioDefault = Pricing && pricingConfig
+      ? Pricing.defaultAttentions(pricingConfig, 'CONSULTORIO')
+      : 200;
+    var clinicaDefault = Pricing && pricingConfig
+      ? Pricing.defaultAttentions(pricingConfig, 'CLINICA')
+      : 5000;
+    var smallDefault = Pricing && pricingConfig
+      ? (Pricing.attentionVolumeScale(pricingConfig)[0] || 200)
+      : 200;
 
     setClinicaOnlyRowsVisible(!isConsultorio);
 
@@ -166,31 +176,21 @@
       if (isConsultorio) ambCb.checked = true;
     }
     if (ambQty) {
-      if (isConsultorio) {
-        ambQty.value = '1000';
-        ambQty.disabled = true;
-      } else {
-        ambQty.disabled = !ambOn;
-        if (ambOn && !(parseInt(ambQty.value, 10) > 0)) {
-          ambQty.value = '5000';
-        }
+      ambQty.disabled = !ambOn;
+      if (ambOn && !(parseInt(ambQty.value, 10) > 0)) {
+        ambQty.value = String(isConsultorio ? consultorioDefault : clinicaDefault);
       }
+      syncVolumeChips(form, 'attentions_amb', ambOn);
     }
     var addonsWrap = document.getElementById('amb-addons');
     if (addonsWrap) {
       addonsWrap.classList.toggle('is-disabled', !ambOn);
       addonsWrap.setAttribute('aria-disabled', ambOn ? 'false' : 'true');
     }
-    [planInput(form, 'audio'), planInput(form, 'videollamada')].forEach(function (input) {
-      if (!input) return;
-      input.disabled = !ambOn;
-      if (!ambOn) input.checked = false;
-    });
-    var audio = planInput(form, 'audio');
     var video = planInput(form, 'videollamada');
-    if (ambOn && audio && video && video.checked) {
-      audio.checked = true;
-      audio.disabled = true;
+    if (video) {
+      video.disabled = !ambOn;
+      if (!ambOn) video.checked = false;
     }
 
     if (isConsultorio) return;
@@ -202,7 +202,8 @@
       cb.disabled = false;
       var on = !!cb.checked;
       qty.disabled = !on;
-      if (on && !(parseInt(qty.value, 10) > 0)) qty.value = '1000';
+      if (on && !(parseInt(qty.value, 10) > 0)) qty.value = String(smallDefault);
+      syncVolumeChips(form, qtyName, on);
     }
     syncOptional('incluir_emer', 'attentions_emer');
     syncOptional('incluir_imp', 'attentions_imp');
@@ -214,28 +215,31 @@
     var ambCb = planInput(form, 'incluir_amb');
     var ambQty = planInput(form, 'attentions_amb') || document.getElementById('max_pes_amb');
     var ambOn = isConsultorio || !!(ambCb && ambCb.checked);
+    var Pricing = window.BioenlacePricing;
+    var minVol = Pricing && pricingConfig
+      ? (Pricing.attentionVolumeScale(pricingConfig)[0] || 200)
+      : 200;
     if (ambOn && ambQty) {
       var amb = Math.max(0, parseInt(ambQty.value, 10) || 0);
-      if (isConsultorio) amb = Math.max(amb, 1000);
+      if (isConsultorio && amb < minVol) amb = minVol;
       if (amb > 0) classes.AMB = amb;
     }
     var emerCb = planInput(form, 'incluir_emer');
     var emerQty = planInput(form, 'attentions_emer');
     if (!isConsultorio && emerCb && emerCb.checked && emerQty) {
-      classes.EMER = Math.max(1000, parseInt(emerQty.value, 10) || 1000);
+      classes.EMER = Math.max(minVol, parseInt(emerQty.value, 10) || minVol);
     }
     var impCb = planInput(form, 'incluir_imp');
     var impQty = planInput(form, 'attentions_imp');
     if (!isConsultorio && impCb && impCb.checked && impQty) {
-      classes.IMP = Math.max(1000, parseInt(impQty.value, 10) || 1000);
+      classes.IMP = Math.max(minVol, parseInt(impQty.value, 10) || minVol);
     }
-    var audio = planInput(form, 'audio');
     var video = planInput(form, 'videollamada');
     var videoOn = !!(ambOn && video && video.checked);
     return {
       classes: classes,
       addons: {
-        audio: !!(ambOn && audio && audio.checked) || videoOn,
+        audio: true,
         videollamada: videoOn,
       },
     };
@@ -259,7 +263,7 @@
       plan.classes[code] = {
         attentions_per_month: attentions,
         max_pes: Math.max(1, Math.ceil(attentions / 400)),
-        dictado_incluido: code === 'AMB' ? !!(selection.addons.audio || selection.addons.videollamada) : true,
+        dictado_incluido: true,
         videollamada_permitida: code === 'AMB' ? selection.addons.videollamada : false,
       };
     });
@@ -291,18 +295,17 @@
     totalEl.textContent = result.formattedTotal + ' / mes';
     linesEl.innerHTML = result.lines.map(function (l) {
       var note = '';
-      if (l.code === 'AMB') {
-        var bits = [];
-        if (selection.addons.videollamada) bits.push('videollamada');
-        else if (selection.addons.audio) bits.push('dictado');
-        if (bits.length) note = ' · ' + bits.join(' · ');
+      if (l.code === 'AMB' && selection.addons.videollamada) {
+        note = ' · videollamada';
+      } else {
+        note = ' · dictado incluido';
       }
-      var qtyLabel = window.BioenlacePricing.formatAttentions
-        ? window.BioenlacePricing.formatAttentions(l.qty)
-        : String(l.qty);
+      var qtyLabel = window.BioenlacePricing.formatVolumeChoice
+        ? window.BioenlacePricing.formatVolumeChoice(pricingConfig, l.qty)
+        : (String(l.qty) + ' atenciones');
       return (
         '<div class="signup-price__line"><span>' +
-        qtyLabel + ' atenciones × ' + l.label + note +
+        qtyLabel + ' · ' + l.label + note +
         '</span><strong>' +
         window.BioenlacePricing.formatMoney(l.line, result.currency) +
         '</strong></div>'
@@ -312,6 +315,7 @@
   }
 
   function initPriceIndicator(form) {
+    buildAllVolumeChips(form);
     form.querySelectorAll('[data-plan-input]').forEach(function (el) {
       el.addEventListener('input', function () {
         syncPlanRowUi(form);
@@ -324,6 +328,53 @@
     });
     syncPlanRowUi(form);
     updatePriceIndicator(form);
+  }
+
+  function syncVolumeChips(form, qtyName, enabled) {
+    var wrap = form.querySelector('[data-volume-for="' + qtyName + '"]');
+    if (!wrap) return;
+    var input = planInput(form, qtyName) || (qtyName === 'attentions_amb' ? document.getElementById('max_pes_amb') : null);
+    var chips = wrap.querySelectorAll('.signup-volume__chip');
+    var value = input ? String(input.value || '') : '';
+    chips.forEach(function (chip) {
+      chip.disabled = !enabled;
+      chip.classList.toggle('is-selected', enabled && chip.getAttribute('data-value') === value);
+    });
+  }
+
+  function buildVolumeChips(form, qtyName, chipsId) {
+    var Pricing = window.BioenlacePricing;
+    var host = document.getElementById(chipsId);
+    var input = planInput(form, qtyName) || (qtyName === 'attentions_amb' ? document.getElementById('max_pes_amb') : null);
+    if (!host || !input || !Pricing || !pricingConfig) return;
+    var presets = Pricing.attentionVolumePresets(pricingConfig);
+    var selected = String(input.value || '');
+    if (!selected && presets.length) {
+      selected = String(presets[0].attentions);
+      input.value = selected;
+    }
+    host.innerHTML = '';
+    presets.forEach(function (p) {
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'signup-volume__chip' + (String(p.attentions) === selected ? ' is-selected' : '');
+      btn.setAttribute('data-value', String(p.attentions));
+      if (p.hint) btn.title = p.hint;
+      btn.innerHTML = '<strong>' + p.label + '</strong><span>' + Pricing.formatAttentions(p.attentions) + '/mes</span>';
+      btn.addEventListener('click', function () {
+        if (btn.disabled) return;
+        input.value = String(p.attentions);
+        syncPlanRowUi(form);
+        updatePriceIndicator(form);
+      });
+      host.appendChild(btn);
+    });
+  }
+
+  function buildAllVolumeChips(form) {
+    buildVolumeChips(form, 'attentions_amb', 'chips-amb');
+    buildVolumeChips(form, 'attentions_emer', 'chips-emer');
+    buildVolumeChips(form, 'attentions_imp', 'chips-imp');
   }
 
   function initEfectorForm() {
@@ -463,18 +514,34 @@
     if (!form) return false;
     var selection = readPricingHandoff();
     if (!selection) return false;
+    var Pricing = window.BioenlacePricing;
     var isConsultorio = currentPerfil(form) === 'CONSULTORIO';
     var classes = selection.classes || {};
     var addons = selection.addons || {};
+    var consultorioDefault = Pricing && pricingConfig
+      ? Pricing.defaultAttentions(pricingConfig, 'CONSULTORIO')
+      : 200;
+    var clinicaDefault = Pricing && pricingConfig
+      ? Pricing.defaultAttentions(pricingConfig, 'CLINICA')
+      : 5000;
 
     function setClass(code, includeName, qtyName) {
       var qty = Math.max(0, parseInt(classes[code], 10) || 0);
       var include = planInput(form, includeName);
-      var qtyInput = planInput(form, qtyName);
+      var qtyInput = planInput(form, qtyName) || (qtyName === 'attentions_amb' ? document.getElementById('max_pes_amb') : null);
       if (!include || !qtyInput) return;
       if (qty > 0) {
         include.checked = true;
-        qtyInput.value = String(isConsultorio && code === 'AMB' ? 1 : qty);
+        // Handoff viejo con max_pes (<100): mapear a default de clínica.
+        if (!isConsultorio && qty < 100) {
+          qty = clinicaDefault;
+        }
+        if (isConsultorio && code === 'AMB') {
+          qty = Pricing && pricingConfig && Pricing.findVolumePreset(pricingConfig, qty)
+            ? qty
+            : consultorioDefault;
+        }
+        qtyInput.value = String(qty);
       } else if (!(isConsultorio && code === 'AMB')) {
         include.checked = false;
       }
@@ -486,14 +553,7 @@
       setClass('IMP', 'incluir_imp', 'attentions_imp');
     }
 
-    // Compat: handoff viejo usaba max_pes_* / ids legacy
-    if (!planInput(form, 'attentions_amb') && document.getElementById('max_pes_amb')) {
-      setClass('AMB', 'incluir_amb', 'max_pes_amb');
-    }
-
-    var audio = planInput(form, 'audio');
     var video = planInput(form, 'videollamada');
-    if (audio) audio.checked = !!addons.audio || !!addons.videollamada;
     if (video) video.checked = !!addons.videollamada;
 
     syncPlanRowUi(form);
@@ -506,6 +566,13 @@
     var perfilInput = $('#signup-perfil');
     if (perfilInput) perfilInput.value = perfil;
     var isConsultorio = perfil === 'CONSULTORIO';
+    var Pricing = window.BioenlacePricing;
+    var consultorioDefault = Pricing && pricingConfig
+      ? Pricing.defaultAttentions(pricingConfig, 'CONSULTORIO')
+      : 200;
+    var clinicaDefault = Pricing && pricingConfig
+      ? Pricing.defaultAttentions(pricingConfig, 'CLINICA')
+      : 5000;
 
     var title = $('#efector-panel-title');
     var hint = $('#efector-panel-hint');
@@ -522,7 +589,7 @@
     }
     if (hint) {
       hint.textContent = isConsultorio
-        ? 'Creás tu usuario, tu consultorio privado y la licencia (1 profesional ambulatorio). Si trabajás en un hospital o clínica pública que ya usa Bioenlace, no uses este alta: pedí que administración del centro te sume. Después te guiamos para asignarte a un servicio clínico.'
+        ? 'Creás tu usuario, tu consultorio privado y la licencia (ambulatorio con dictado incluido). Si trabajás en un hospital o clínica pública que ya usa Bioenlace, no uses este alta: pedí que administración del centro te sume. Después te guiamos para asignarte a un servicio clínico.'
         : 'Vas a crear tu usuario administrador, el centro y la licencia. El cobro de esta demo es simulado (no se debita una tarjeta real).';
     }
     if (adminLegend) adminLegend.textContent = isConsultorio ? 'Tus datos' : 'Administrador';
@@ -530,8 +597,8 @@
     if (nombreLabel) nombreLabel.textContent = isConsultorio ? 'Nombre del consultorio' : 'Nombre del centro';
     if (planHint) {
       planHint.textContent = isConsultorio
-        ? 'Licencia unipersonal de consultorio: volumen de atenciones ambulatorias. Podés sumar dictado y/o videollamada. Si necesitás más tipos de atención, usá el alta de clínica / centro.'
-        : 'Elegí ambulatorio, urgencia y/o internación (al menos uno) y el volumen mensual de atenciones. En ambulatorio podés sumar dictado y/o videollamada.';
+        ? 'Licencia unipersonal: elegí el volumen aproximado de atenciones ambulatorias. El dictado está incluido; la videollamada es opcional. Si necesitás urgencia o internación, usá el alta de clínica / centro.'
+        : 'Elegí ambulatorio, urgencia y/o internación (al menos uno) y un volumen aproximado. El dictado está incluido; en ambulatorio podés sumar videollamada.';
     }
     if (ambLabel) {
       ambLabel.textContent = isConsultorio
@@ -544,7 +611,7 @@
         var incluirAmb = planInput(form, 'incluir_amb');
         var maxAmb = planInput(form, 'attentions_amb') || document.getElementById('max_pes_amb');
         if (incluirAmb) incluirAmb.checked = true;
-        if (maxAmb) maxAmb.value = '1000';
+        if (maxAmb) maxAmb.value = String(consultorioDefault);
         var privado = form.querySelector('input[name="sector"][value="PRIVADO"]');
         if (privado) privado.checked = true;
         if (form.pago_cubierto_por_ministerio) form.pago_cubierto_por_ministerio.checked = false;
@@ -558,7 +625,7 @@
           ambCb.checked = true;
         }
         if (ambCb && ambCb.checked && maxAmbClin && !(parseInt(maxAmbClin.value, 10) > 0)) {
-          maxAmbClin.value = '5000';
+          maxAmbClin.value = String(clinicaDefault);
         }
       }
       syncSectorUi();

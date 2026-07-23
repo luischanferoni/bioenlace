@@ -8,7 +8,7 @@ Precios **orientativos** en USD; no incluyen IVA. Impuestos: [impuestos-argentin
 COGS de referencia: [costos-api.md](../../costos/costos-api.md) (**columna con context caching**).
 
 **Modelo vigente:** licencia = **Σ (atenciones_mes[clase] × precio por atención)**.  
-El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención, el **volumen mensual** (escala del calculador) y, en ambulatorio, si suma **dictado** y/o **videollamada**. Motivos de consulta se presupuestan **siempre con audio**. El chat paciente (§1, **10 mensajes** alrededor del turno) entra solo en **ambulatorio**. Lo no contratado **se deshabilita** en sesión operativa y tableros.
+El precio por atención = **COGS_por_atención × (1 + margen sobre costo)**. El margen de lista es **233 %** (~70 % bruto ≈ ~49 % después de IIBB + ganancias). A más **atenciones totales** contratadas (suma ambulatorio + urgencia + internación), baja el margen según tramos. El cliente elige tipos de atención y un **volumen aproximado** (presets etiquetados). El **dictado está incluido** en todas las clases; en ambulatorio la **videollamada** es el único add-on opcional. Motivos de consulta se presupuestan **siempre con audio**. El chat paciente (§1, **10 mensajes** alrededor del turno) entra solo en **ambulatorio**. Lo no contratado **se deshabilita** en sesión operativa y tableros.
 
 Metadata producto: [`pricing-pes-by-encounter-class.yaml`](../../../common/metadata/bioenlace/organization/pricing-pes-by-encounter-class.yaml).  
 Calculador público: sitio [`institucional/#precios`](../../../../institucional/index.html).  
@@ -22,9 +22,8 @@ Admin: Licencias / Contratos.
 ## Fórmula
 
 ```
-COGS_atención = motivos_audio + captura_ia
+COGS_atención = motivos_audio + captura_ia + dictado_stt
               + (AMB ? patient_chat_amb : 0)          # 10 msgs solo ambulatorio
-              + ((dictado || videollamada) ? dictado_stt : 0)
               + (videollamada ? videollamada : 0)
 atenciones_totales = Σ atenciones_mes[clase]
 margen% = tramo(atenciones_totales).margin_on_cost_percent
@@ -37,8 +36,8 @@ USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 | Chat paciente AMB (10 mensajes) | **0,0019** | Solo ambulatorio |
 | Motivos con audio (batch + insights + ~4 min STT) | **0,0034** | Siempre |
 | Captura IA (sin STT profesional) | **0,0006** | Siempre |
-| Dictado / STT profesional (−30 % on-device) | **+0,0025** | Opcional AMB; incluido urgencia/internación y si hay videollamada |
-| Videollamada | **+0,0088** | Solo ambulatorio |
+| Dictado / STT profesional (−30 % on-device) | **0,0025** | **Incluido** en todas las clases |
+| Videollamada | **+0,0088** | Solo ambulatorio (opcional) |
 
 **Margen sobre costo (lista):** **233 %**.
 
@@ -51,20 +50,27 @@ USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 | Grande | 15.000–39.999 | **134 %** | **−30 %** | ~40 % |
 | Enterprise | 40.000+ | **117 %** | **−35 %** | ~37,5 % |
 
-Escala del calculador: 1.000 · 2.500 · 5.000 · 10.000 · 20.000 · 35.000 · 50.000 · 100.000.
+Presets del calculador: **Consultorio (200)** · 1 profesional (400) · Pequeño (800) · … hasta Enterprise+ (100.000).
 
 ### Precio por atención (lista, sin descuento de tramo)
 
 | Configuración | COGS / atención | Precio lista / atención |
 |---------------|----------------:|------------------------:|
-| Ambulatorio (chat + motivos audio + captura IA) | 0,0059 | **~0,0196** |
-| Ambulatorio + dictado | 0,0084 | **~0,0280** |
+| Ambulatorio (chat + motivos audio + captura + **dictado**) | 0,0084 | **~0,0280** |
 | Ambulatorio + videollamada | 0,0172 | **~0,0573** |
 | Urgencia / internación (motivos audio + dictado) | 0,0065 | **~0,0216** |
 
-Ejemplo: **20.000** atenciones ambulatorio + dictado → tramo Grande (−30 %) → **~USD 394 / mes**.
+### Lectura rápida vs modelo anterior (por profesional)
 
-**Regla comercial:** videollamada **incluye** la transcripción de la llamada (= mismo STT de dictado una vez).
+| Perfil | Volumen | USD / mes (orientativo) | Nota |
+|--------|---------|------------------------:|------|
+| Independiente / consultorio | **200** | **~5,60** | Comparable al ~USD 6 de 1 PES |
+| 1 profesional a ritmo pleno | **400** | **~11,20** | Sube vs ~6 por producto más completo (dictado + 10 msgs + motivos audio) |
+| Piso viejo de 1.000 (demasiado alto) | 1.000 | **~28** | 2,5× el volumen de 1 PES a ritmo pleno |
+
+Ejemplo CIS: **20.000** atenciones ambulatorio (dictado incluido) → tramo Grande (−30 %) → **~USD 394 / mes**.
+
+**Regla comercial:** videollamada no duplica el STT (el dictado ya está en el COGS base).
 
 ---
 
@@ -110,6 +116,7 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 
 | Comprador | Selección típica en el calculador |
 |-----------|-----------------------------------|
+| Independiente | Ambulatorio · preset **Consultorio (200)** |
 | Clínica ambulatoria | Ambulatorio × volumen mensual |
 | Sanatorio con guardia | Ambulatorio + urgencia |
 | Sanatorio con camas | Ambulatorio + urgencia + internación |
@@ -121,7 +128,7 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 
 | Ítem | Notas | Precio orientativo |
 |------|-------|-------------------|
-| Audio / videollamada | En la fórmula (COGS + margen) | Ver tabla arriba |
+| Videollamada | En la fórmula (COGS + margen) | Ver tabla arriba |
 | Implementación + capacitación | One-shot | USD 3–40k según tamaño |
 | Integración LIS | One-shot + mant. | USD 2–8k + 200–800/mes |
 | Autorización OS / prepaga | Otro ciclo | USD 2–15k/mes |
@@ -131,7 +138,7 @@ Un efector sin membresía POOL: sin tope (compat). Cupo compartido: el uso suma 
 
 ## Priorización comercial
 
-1. Publicar calculador institucional (COGS + margen + add-ons).  
+1. Publicar calculador institucional (COGS + margen + presets de volumen).  
 2. Cargar cuentas (`billing_account`) y entitlements de pool al firmar; asociar efectores como **POOL** o **AFILIADO** (autárquicos: afiliados al ministerio + pool en cuenta propia).  
 3. Enforce alta PES + downgrade diferido (`entitlement/apply-pending-downgrades`).  
 4. Admin Licencias / Contratos para editar `max_pes` y miembros.  

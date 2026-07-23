@@ -1,6 +1,5 @@
 /**
- * Calculador: atenciones/mes × clase + dictado/videollamada solo en AMB.
- * EMER/IMP: dictado fijo incluido, sin videollamada.
+ * Calculador: atenciones/mes × clase. Dictado incluido; videollamada opcional solo en AMB.
  * Requiere pricing-core.js (window.BioenlacePricing).
  */
 (function () {
@@ -25,36 +24,42 @@
     if (!row || row.getAttribute('data-class') !== 'AMB') return;
     const enabled = row.querySelector('input[name="class_AMB"]');
     const on = !!(enabled && enabled.checked);
-    const audio = row.querySelector('input[data-addon="audio"]');
     const video = row.querySelector('input[data-addon="videollamada"]');
-    if (video) video.disabled = !on;
-    if (audio) {
-      if (!on) {
-        audio.disabled = true;
-        audio.checked = false;
-        if (video) video.checked = false;
-      } else if (video && video.checked) {
-        audio.checked = true;
-        audio.disabled = true;
-      } else {
-        audio.disabled = false;
-      }
+    if (video) {
+      video.disabled = !on;
+      if (!on) video.checked = false;
     }
-    if (!on && video) video.checked = false;
   }
 
   function syncQtyDisabled(row) {
     const enabled = row.querySelector('input[type="checkbox"][name^="class_"]');
-    const qty = row.querySelector('[data-attentions]');
-    if (!enabled || !qty) return;
-    qty.disabled = !enabled.checked;
-    if (!enabled.checked) {
-      qty.value = '';
-    } else if (!qty.value) {
-      const scale = Pricing.attentionVolumeScale(config);
-      qty.value = String(scale[0] || 1000);
+    const hidden = row.querySelector('input[data-attentions]');
+    const chips = row.querySelectorAll('.pricing-calc__chip');
+    if (!enabled || !hidden) return;
+    const on = !!enabled.checked;
+    chips.forEach((chip) => {
+      chip.disabled = !on;
+      chip.setAttribute('aria-disabled', on ? 'false' : 'true');
+    });
+    if (!on) {
+      hidden.value = '';
+      chips.forEach((chip) => chip.classList.remove('is-selected'));
+    } else if (!hidden.value) {
+      const def = Pricing.defaultAttentions(config, 'CLINICA');
+      setVolume(row, def);
     }
     syncAmbOptions(row);
+  }
+
+  function setVolume(row, attentions) {
+    const hidden = row.querySelector('input[data-attentions]');
+    const chips = row.querySelectorAll('.pricing-calc__chip');
+    if (!hidden) return;
+    const n = String(attentions);
+    hidden.value = n;
+    chips.forEach((chip) => {
+      chip.classList.toggle('is-selected', chip.getAttribute('data-value') === n);
+    });
   }
 
   function tierRangeLabel(tier) {
@@ -138,7 +143,7 @@
     if (breakdownEl) {
       if (!result.lines.length) {
         breakdownEl.innerHTML =
-          '<p class="pricing-calc__hint">Activá al menos un tipo de atención e indicá el volumen mensual.</p>';
+          '<p class="pricing-calc__hint">Activá al menos un tipo de atención y elegí un volumen.</p>';
       } else {
         let meta = '';
         if (result.discountPercent > 0) {
@@ -157,15 +162,16 @@
             .map((l) => {
               let note = '';
               if (l.code === 'AMB') {
-                const bits = [];
-                if (selection.addons.videollamada) bits.push('con videollamada');
-                else if (selection.addons.audio) bits.push('con dictado');
-                note = bits.length ? ' · ' + bits.join(' · ') : '';
+                note = selection.addons.videollamada
+                  ? ' · con videollamada'
+                  : ' · dictado incluido';
+              } else {
+                note = ' · dictado incluido';
               }
               return (
                 '<div class="pricing-calc__line"><span>' +
-                Pricing.formatAttentions(l.qty) +
-                ' atenciones × ' +
+                Pricing.formatVolumeChoice(config, l.qty) +
+                ' · ' +
                 l.label +
                 note +
                 ' (' +
@@ -189,14 +195,8 @@
     if (ctaEl && mode !== 'signup') {
       const summary = result.lines
         .map((l) => {
-          let extra = '';
-          if (l.code === 'AMB') {
-            const bits = [];
-            if (selection.addons.videollamada) bits.push('videollamada');
-            else if (selection.addons.audio) bits.push('dictado');
-            if (bits.length) extra = ' con ' + bits.join(' y ');
-          }
-          return Pricing.formatAttentions(l.qty) + ' atenciones ' + l.label + extra;
+          let extra = l.code === 'AMB' && selection.addons.videollamada ? ' con videollamada' : '';
+          return Pricing.formatVolumeChoice(config, l.qty) + ' ' + l.label + extra;
         })
         .join(', ');
       const msg =
@@ -230,21 +230,15 @@
   }
 
   function buildAmbOptionsHtml() {
-    const addons = config.addons || {};
-    const audio = addons.audio || {};
-    const video = addons.videollamada || {};
+    const video = (config.addons && config.addons.videollamada) || {};
     return (
       '<div class="pricing-calc__amb-options">' +
-      '<label class="pricing-calc__option">' +
-      '<input type="checkbox" data-addon="audio" disabled />' +
-      '<span><strong>' +
-      (audio.label || 'Dictado') +
-      '</strong> <em>(opcional; incluido si hay videollamada)</em></span></label>' +
+      '<p class="pricing-calc__policy">Dictado incluido</p>' +
       '<label class="pricing-calc__option">' +
       '<input type="checkbox" data-addon="videollamada" disabled />' +
       '<span><strong>' +
       (video.label || 'Videollamada') +
-      '</strong> <em>(opcional; incluye transcripción de la llamada)</em></span></label>' +
+      '</strong> <em>(opcional)</em></span></label>' +
       '</div>'
     );
   }
@@ -253,45 +247,56 @@
     if (Pricing.classIncludesAudio(config, code) && !Pricing.classAllowsVideollamada(config, code)) {
       return '<p class="pricing-calc__policy">Dictado incluido · Sin videollamada</p>';
     }
-    return '';
+    return '<p class="pricing-calc__policy">Dictado incluido</p>';
   }
 
-  function buildAttentionsSelectHtml(code, selected) {
-    const scale = Pricing.attentionVolumeScale(config);
-    const opts = scale
-      .map((n) => {
-        const sel = String(n) === String(selected) ? ' selected' : '';
+  function buildVolumeChipsHtml(code, selected) {
+    const presets = Pricing.attentionVolumePresets(config);
+    const chips = presets
+      .map((p) => {
+        const sel = String(p.attentions) === String(selected) ? ' is-selected' : '';
+        const title = p.hint ? ' title="' + String(p.hint).replace(/"/g, '&quot;') + '"' : '';
         return (
-          '<option value="' +
-          n +
-          '"' +
+          '<button type="button" class="pricing-calc__chip' +
           sel +
-          '>' +
-          Pricing.formatAttentions(n) +
-          ' / mes</option>'
+          '" data-value="' +
+          p.attentions +
+          '"' +
+          title +
+          ' disabled>' +
+          '<strong>' +
+          p.label +
+          '</strong>' +
+          '<span>' +
+          Pricing.formatAttentions(p.attentions) +
+          '/mes</span>' +
+          '</button>'
         );
       })
       .join('');
     return (
-      '<label class="pricing-calc__qty">Atenciones / mes' +
-      '<select data-attentions aria-label="Atenciones mensuales ' +
+      '<div class="pricing-calc__qty">' +
+      '<span class="pricing-calc__qty-label">Volumen mensual</span>' +
+      '<div class="pricing-calc__chips" role="group" aria-label="Volumen mensual ' +
       code +
       '">' +
-      '<option value="">Elegí un volumen</option>' +
-      opts +
-      '</select></label>'
+      chips +
+      '</div>' +
+      '<input type="hidden" data-attentions value="' +
+      (selected || '') +
+      '" />' +
+      '</div>'
     );
   }
 
   function buildRows() {
     if (!rowsEl || !config) return;
     const classes = config.sellable_classes || {};
-    const scale = Pricing.attentionVolumeScale(config);
-    const defaultVol = scale[2] || scale[0] || 5000;
+    const defaultVol = Pricing.defaultAttentions(config, 'CLINICA');
     rowsEl.innerHTML = '';
     Object.keys(classes).forEach((code) => {
       const cls = classes[code];
-      const unit = Pricing.unitPriceForClass(config, code, {});
+      const unit = Pricing.unitPriceForClass(config, code, { audio: true });
       const row = document.createElement('div');
       row.className = 'pricing-calc__row';
       row.setAttribute('data-class', code);
@@ -315,19 +320,22 @@
         '</span></label>' +
         optionsHtml +
         '</div>' +
-        buildAttentionsSelectHtml(code, '');
+        buildVolumeChipsHtml(code, '');
       rowsEl.appendChild(row);
       const checkbox = row.querySelector('input[name="class_' + code + '"]');
-      const select = row.querySelector('[data-attentions]');
       syncQtyDisabled(row);
       checkbox.addEventListener('change', () => {
         syncQtyDisabled(row);
         refreshUnitLabels();
         recalc();
       });
-      select.addEventListener('change', () => {
-        refreshUnitLabels();
-        recalc();
+      row.querySelectorAll('.pricing-calc__chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          if (chip.disabled) return;
+          setVolume(row, chip.getAttribute('data-value'));
+          refreshUnitLabels();
+          recalc();
+        });
       });
       row.querySelectorAll('input[data-addon]').forEach((input) => {
         input.addEventListener('change', () => {
@@ -342,9 +350,8 @@
       const amb = rowsEl.querySelector('[data-class="AMB"]');
       if (amb) {
         const cb = amb.querySelector('input[name="class_AMB"]');
-        const qty = amb.querySelector('[data-attentions]');
         if (cb) cb.checked = true;
-        if (qty) qty.value = String(defaultVol);
+        setVolume(amb, defaultVol);
         syncQtyDisabled(amb);
       }
     }

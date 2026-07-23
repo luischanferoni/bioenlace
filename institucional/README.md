@@ -37,7 +37,7 @@ institucional/
 3. **Pacientes** — App paciente y seguimiento
 4. **Personal** — Demo del asistente conversacional (listar / editar / crear)
 5. **Funcionalidades** — Catálogo por audiencia
-6. **Precios** — Calculador por profesionales × tipo de atención (AMB / EMER / IMP) + opcionales audio / videollamada (COGS + margen por tramo de volumen)
+6. **Precios** — Calculador por volumen de atenciones × tipo (ambulatorio / urgencia / internación) + opcionales dictado / videollamada
 7. **Contacto** — Formulario e información
 8. **Alta** (`alta.html`) — Wizard self-service clínica / consultorio (pago simulado) y solicitud ministerio; deep-link `?perfil=consultorio`
 

@@ -8,20 +8,20 @@ use Codeception\Test\Unit;
 
 class InstitutionalSignupBillingTest extends Unit
 {
-    public function testEstimateMonthlyUsdAmbBasePositive(): void
+    public function testEstimateMonthlyUsdAmbWithDictadoIncluded(): void
     {
         $usd = InstitutionalEfectorSignupService::estimateMonthlyUsd([
             'classes' => [
                 'AMB' => [
                     'attentions_per_month' => 5000,
-                    'dictado_incluido' => false,
+                    'dictado_incluido' => false, // se ignora: dictado siempre incluido
                     'videollamada_permitida' => false,
                 ],
             ],
         ]);
-        // 5000 × 0.0059 × 2.63 (tramo mediano) ≈ 77.59
-        $this->assertGreaterThan(70.0, $usd);
-        $this->assertLessThan(90.0, $usd);
+        // 5000 × 0.0084 × 2.63 (tramo mediano) ≈ 110.46
+        $this->assertGreaterThan(100.0, $usd);
+        $this->assertLessThan(120.0, $usd);
     }
 
     public function testSimFailPanConstant(): void

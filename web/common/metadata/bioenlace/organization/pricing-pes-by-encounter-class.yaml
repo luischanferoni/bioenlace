@@ -3,7 +3,7 @@
 # El margen baja por tramo según atenciones totales contratadas (suma AMB+EMER+IMP).
 # COGS: web/docs/costos/costos-api.md (columna con context caching; Gemini + Groq; video §6).
 # Actualizar también institucional/js/pricing-config.json al cambiar cifras.
-version: 7
+version: 8
 currency: USD
 billing_period: month
 tax_note: Precios en USD. No incluyen IVA.
@@ -17,7 +17,7 @@ reference_encounters_per_professional_month: 400
 # patient_chat_amb: §1 con 10 mensajes alrededor del turno (solo AMB).
 # motivos_audio: §2 caso B siempre (~4 min audio paciente + batch + insights).
 # captura_ia: §4 sin STT del profesional.
-# dictado_stt: STT profesional §4 con −30 % on-device (bruto ~1,40 → 0,98 @ 400 → 0,0025).
+# dictado_stt: STT profesional §4 con −30 % on-device (bruto ~1,40 → 0,98 @ 400 → 0,0025). Incluido en todas las clases.
 # videollamada: §6 / 400 (STT de la llamada = mismo dictado_stt, una sola vez).
 cogs_usd_per_encounter:
   patient_chat_amb: 0.0019
@@ -29,16 +29,58 @@ cogs_usd_per_encounter:
 # Margen de lista (tramo precio base). Ver volume_discount_tiers.
 margin_on_cost_percent: 233
 
-# Escala de volumen (atenciones / mes) para el calculador institucional.
+# Presets de volumen (atenciones / mes) para calculador e alta.
+attention_volume_presets:
+  - attentions: 200
+    label: Consultorio
+    hint: Independiente · ~10 atenciones/día
+  - attentions: 400
+    label: 1 profesional
+    hint: ~20 atenciones/día hábil
+  - attentions: 800
+    label: Pequeño
+    hint: 2 profesionales a ritmo medio
+  - attentions: 1500
+    label: Consultorio grupal
+    hint: 3–4 profesionales
+  - attentions: 3000
+    label: Clínica chica
+    hint: null
+  - attentions: 5000
+    label: Clínica
+    hint: null
+  - attentions: 10000
+    label: Centro
+    hint: null
+  - attentions: 20000
+    label: Centro grande
+    hint: null
+  - attentions: 35000
+    label: Red
+    hint: null
+  - attentions: 50000
+    label: Enterprise
+    hint: null
+  - attentions: 100000
+    label: Enterprise+
+    hint: null
+
 attention_volume_scale:
-  - 1000
-  - 2500
+  - 200
+  - 400
+  - 800
+  - 1500
+  - 3000
   - 5000
   - 10000
   - 20000
   - 35000
   - 50000
   - 100000
+
+defaults:
+  consultorio_attentions: 200
+  clinica_attentions: 5000
 
 # Descuento por volumen: atenciones totales = suma contratada (cualquier clase).
 volume_discount_tiers:
@@ -71,21 +113,17 @@ volume_discount_tiers:
     discount_vs_list_percent: 35
     margin_after_iibb_ganancias_percent: 37.5
 
-cogs_source: web/docs/costos/costos-api.md — columna con context caching; motivos siempre con audio; chat paciente 10 msgs solo AMB
+cogs_source: web/docs/costos/costos-api.md — columna con context caching; motivos siempre con audio; chat paciente 10 msgs solo AMB; dictado incluido
 
 # Política de capacidades:
-# - AMB: dictado y videollamada opcionales. Si hay videollamada, dictado/STT queda incluido (una vez).
-# - EMER / IMP: dictado obligatorio (audio_included); videollamada no disponible.
+# - AMB: dictado incluido; videollamada opcional (STT de la llamada no se cobra dos veces).
+# - EMER / IMP: dictado incluido; videollamada no disponible.
 # - Motivos con audio: siempre en el COGS de todas las clases.
 # - Chat paciente (§1, 10 msgs): solo AMB.
 addons:
-  audio:
-    label: Dictado
-    description: Transcripción del audio del profesional (~5 min; −30 % on-device). Incluido si hay videollamada.
-    default: false
   videollamada:
     label: Videollamada
-    description: Teleconsulta self-host (SFU + TURN + Track Egress + storage). Incluye transcripción de la llamada (mismo STT que dictado).
+    description: Teleconsulta self-host (SFU + TURN + Track Egress + storage). La transcripción ya está cubierta por el dictado incluido.
     default: false
 
 sellable_classes:
@@ -93,11 +131,11 @@ sellable_classes:
     label: Ambulatorio
     short: Consultorios y turnos
     includes_patient_chat: true
-    audio_included: false
+    audio_included: true
     videollamada_allowed: true
     includes:
       - Agenda de cupos y reserva paciente
-      - Captura clínica AMB
+      - Captura clínica AMB con dictado
       - App paciente (turnos)
       - Chat paciente alrededor del turno (10 mensajes)
       - Motivos de consulta con audio
@@ -140,7 +178,9 @@ non_sellable_default: disabled
 
 simulator:
   title: Calculá tu licencia
-  subtitle: Elegí tipos de atención y el volumen mensual de atenciones. A más atenciones, más descuento.
+  subtitle: Elegí tipos de atención y un volumen aproximado. El dictado está incluido; la videollamada es opcional en ambulatorio.
   cta_label: Crear cuenta
   cta_href: alta.html
-  footnotes: []
+  footnotes:
+    - 200 atenciones / mes ≈ consultorio independiente a ritmo medio (~10/día).
+    - 400 atenciones / mes ≈ 1 profesional a ritmo pleno (~20/día hábil).

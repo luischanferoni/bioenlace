@@ -1,22 +1,24 @@
 {
-  "version": 9,
+  "version": 10,
   "currency": "USD",
   "billing_period": "month",
   "tax_note": "",
-  "cogs_source": "costos-api.md — context caching; chat 10 msgs (capacidad); motivos audio al 30% de encounters; dictado incluido",
+  "cogs_source": "costos-api.md — context caching; chat 10 msgs; motivos audio 30%; videollamada 40% teleconsulta; dictado incluido",
   "reference_encounters_per_professional_month": 200,
   "cogs_assumptions": {
     "patient_chat_messages_budget": 10,
     "patient_chat_note": "Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.",
     "motivos_audio_share": 0.3,
-    "motivos_audio_note": "Solo ~30% de atenciones usan audio en motivos (resto texto). No todas las especialidades lo usan igual."
+    "motivos_audio_note": "Solo ~30% de atenciones usan audio en motivos (resto texto). No todas las especialidades lo usan igual.",
+    "videollamada_share": 0.4,
+    "videollamada_note": "Planificación: ~40% de atenciones ambulatorias por videollamada cuando el add-on está contratado (12 min, 2 participantes). COGS infra+storage escalado desde el techo @ 80%."
   },
   "cogs_usd_per_encounter": {
     "patient_chat_amb": 0.0019,
     "motivos_audio": 0.0014,
     "captura_ia": 0.0006,
     "dictado_stt": 0.0025,
-    "videollamada": 0.0088
+    "videollamada": 0.0044
   },
   "margin_on_cost_percent": 233,
   "attention_volume_presets": [

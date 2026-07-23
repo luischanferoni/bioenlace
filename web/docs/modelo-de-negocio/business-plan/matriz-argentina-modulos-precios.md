@@ -37,7 +37,7 @@ USD/mes ≈ Σ_clase ( atenciones_mes[clase] × precio_por_atención )
 | Motivos (blend 30 % audio + 70 % texto) | **0,0014** | No todas las especialidades usan audio igual |
 | Captura IA (sin STT profesional) | **0,0006** | Siempre |
 | Dictado / STT profesional (−30 % on-device) | **0,0025** | **Incluido** en todas las clases |
-| Videollamada | **+0,0088** | Solo ambulatorio (opcional) |
+| Videollamada | **+0,0044** | Solo ambulatorio (opcional) · **40 %** teleconsulta |
 
 **Margen sobre costo (lista):** **233 %**.
 
@@ -57,7 +57,7 @@ Presets: **1 profesional (200)** · 2 (400) · 4 (800) · Clínica chica (2.000)
 | Configuración | COGS / atención | Precio lista / atención |
 |---------------|----------------:|------------------------:|
 | Ambulatorio (chat + motivos blend + captura + **dictado**) | 0,0064 | **~0,0213** |
-| Ambulatorio + videollamada | 0,0152 | **~0,0506** |
+| Ambulatorio + videollamada | 0,0108 | **~0,0360** |
 | Urgencia / internación (motivos blend + dictado) | 0,0045 | **~0,0150** |
 
 ### Lectura rápida

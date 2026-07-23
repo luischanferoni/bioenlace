@@ -31,8 +31,8 @@ class PricingPesByEncounterClassTest extends Unit
         // AMB: chat 0.0019 + motivos blend 0.0014 + captura 0.0006 + dictado 0.0025 = 0.0064
         $this->assertSame(0.0064, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'AMB'));
         $this->assertSame(0.0064, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(true, false, 'AMB'));
-        // AMB + video: 0.0064 + 0.0088 = 0.0152
-        $this->assertSame(0.0152, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, true, 'AMB'));
+        // AMB + video @ 40% tele: 0.0064 + 0.0044 = 0.0108
+        $this->assertSame(0.0108, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, true, 'AMB'));
         // EMER: motivos 0.0014 + captura 0.0006 + dictado 0.0025 = 0.0045
         $this->assertSame(0.0045, PricingPesByEncounterClassMetadata::unitCogsPerEncounter(false, false, 'EMER'));
     }

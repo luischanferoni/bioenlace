@@ -3,7 +3,7 @@
 # El margen baja por tramo según atenciones totales contratadas (suma AMB+EMER+IMP).
 # COGS: web/docs/costos/costos-api.md (columna con context caching; Gemini + Groq; video §6).
 # Actualizar también institucional/js/pricing-config.json al cambiar cifras.
-version: 9
+version: 10
 currency: USD
 billing_period: month
 tax_note: Precios en USD. No incluyen IVA.
@@ -20,20 +20,23 @@ cogs_assumptions:
   patient_chat_note: Cupo de 10 msgs alrededor del turno para prompts más largos y posibles múltiples llamadas IA; no implica uso pleno en cada mensaje.
   motivos_audio_share: 0.3
   motivos_audio_note: Solo ~30% de atenciones usan audio en motivos (resto texto). No todas las especialidades lo usan igual.
+  videollamada_share: 0.4
+  videollamada_note: >-
+    Planificación: ~40% de atenciones ambulatorias por videollamada cuando el add-on está contratado
+    (12 min, 2 participantes). COGS infra+storage escalado desde el techo @ 80%.
 
 # COGS variable USD por atención (encounter), escenario con context caching.
 # patient_chat_amb: §1 con cupo 10 mensajes (capacidad / headroom).
 # motivos_audio: blend comercial 30% caso B + 70% caso A ≈ 0,0014.
 # captura_ia: §4 sin STT del profesional.
 # dictado_stt: STT profesional §4 con −30 % on-device. Incluido en todas las clases.
-# videollamada: infra teleconsulta por atención contratada (STT = mismo dictado_stt, una sola vez).
+# videollamada: infra teleconsulta por atención contratada @ 40% share (STT = mismo dictado_stt, una sola vez).
 cogs_usd_per_encounter:
   patient_chat_amb: 0.0019
   motivos_audio: 0.0014
   captura_ia: 0.0006
   dictado_stt: 0.0025
-  videollamada: 0.0088
-
+  videollamada: 0.0044
 # Margen de lista (tramo precio base). Ver volume_discount_tiers.
 margin_on_cost_percent: 233
 

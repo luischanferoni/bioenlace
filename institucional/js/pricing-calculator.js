@@ -174,9 +174,7 @@
                 ' · ' +
                 l.label +
                 note +
-                ' (' +
-                Pricing.formatMoney(l.unit, result.currency) +
-                '/atención)</span><strong>' +
+                '</span><strong>' +
                 Pricing.formatMoney(l.line, result.currency) +
                 '</strong></div>'
               );

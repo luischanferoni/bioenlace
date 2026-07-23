@@ -63,7 +63,6 @@
           if (!(n > 0)) return null;
           return {
             attentions: n,
-            label: (p && p.label) || formatAttentions(n),
             hint: (p && p.hint) || '',
           };
         })
@@ -74,7 +73,7 @@
       .map(Number)
       .filter(function (n) { return n > 0; })
       .map(function (n) {
-        return { attentions: n, label: formatAttentions(n) + ' / mes', hint: '' };
+        return { attentions: n, hint: '' };
       });
   }
 
@@ -102,10 +101,6 @@
   }
 
   function formatVolumeChoice(config, attentions) {
-    var preset = findVolumePreset(config, attentions);
-    if (preset) {
-      return preset.label + ' · ' + formatAttentions(preset.attentions) + '/mes';
-    }
     return formatAttentions(attentions) + ' / mes';
   }
 

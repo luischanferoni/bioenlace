@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Planes y precios Bioenlace: qué incluye ambulatorio, urgencia e internación, y calculá tu licencia según el volumen de atenciones.">
+    <meta name="description" content="Planes y precios Bioenlace: simulá tu licencia por tipo de atención y volumen, y mirá qué incluye.">
     <link rel="canonical" href="https://bioenlace.io/precios.html">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="es_AR">
     <meta property="og:site_name" content="Bioenlace">
     <meta property="og:title" content="Planes y precios — Bioenlace">
-    <meta property="og:description" content="Detalle de lo incluido por tipo de atención y calculadora de licencia mensual.">
+    <meta property="og:description" content="Calculadora de licencia mensual y listado de lo incluido.">
     <meta property="og:url" content="https://bioenlace.io/precios.html">
     <meta property="og:image" content="https://bioenlace.io/images/logo-icon.png">
     <title>Planes y precios — Bioenlace</title>
@@ -52,10 +52,30 @@
             <div class="container">
                 <p class="pricing-page-hero__eyebrow">Licencia institucional</p>
                 <h1 class="section-title" id="plans-page-title">Planes y precios</h1>
-                <p class="section-subtitle" id="plans-page-subtitle">Una licencia por tipo de atención. Elegí lo que necesitás y calculá el total según tu volumen mensual.</p>
-                <div class="pricing-page-hero__actions">
-                    <a href="#calculadora" class="btn btn-primary">Ir a la calculadora</a>
-                    <a href="alta.html" class="btn btn-secondary">Crear cuenta</a>
+            </div>
+        </section>
+
+        <section id="calculadora" class="pricing pricing--page">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title" id="pricing-title">Simulá tu licencia</h2>
+                    <p class="section-subtitle" id="pricing-subtitle">Marcá los tipos de atención y el volumen de atenciones mensual aproximado.</p>
+                </div>
+                <div class="pricing-calc" id="pricing-calculator" aria-live="polite">
+                    <div class="pricing-calc__grid">
+                        <div class="pricing-calc__controls">
+                            <div id="pricing-rows" class="pricing-calc__rows"></div>
+                            <div id="pricing-addons" class="pricing-calc__addons"></div>
+                        </div>
+                        <div class="pricing-calc__summary">
+                            <p class="pricing-calc__summary-label">Total mensual</p>
+                            <p class="pricing-calc__total" id="pricing-total">—</p>
+                            <div class="pricing-calc__breakdown" id="pricing-breakdown"></div>
+                            <p class="pricing-calc__tax" id="pricing-tax-note"></p>
+                            <a href="alta.html" class="btn btn-primary" id="pricing-cta">Crear cuenta</a>
+                            <ul class="pricing-calc__footnotes" id="pricing-footnotes" hidden></ul>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -63,42 +83,9 @@
         <section class="pricing-includes" id="incluye" aria-labelledby="plans-includes-heading">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title" id="plans-includes-heading">Qué incluye cada tipo de atención</h2>
-                    <p class="section-subtitle" id="plans-includes-lead">El dictado clínico está incluido. La videollamada es un opcional solo en ambulatorio.</p>
+                    <h2 class="section-title" id="plans-includes-heading">Qué incluye</h2>
                 </div>
-                <div class="pricing-includes__grid" id="pricing-includes-grid"></div>
-            </div>
-        </section>
-
-        <section class="pricing-excludes" id="no-incluye" aria-labelledby="plans-excludes-heading" hidden>
-            <div class="container">
-                <h2 class="pricing-excludes__title" id="plans-excludes-heading">Qué no incluye</h2>
-                <ul class="pricing-excludes__list" id="pricing-excludes-list"></ul>
-            </div>
-        </section>
-
-        <section id="calculadora" class="pricing pricing--page">
-            <div class="container">
-                <div class="section-header">
-                    <h2 class="section-title" id="pricing-title">Calculá tu licencia</h2>
-                    <p class="section-subtitle" id="pricing-subtitle">Marcá los tipos de atención y el volumen mensual aproximado.</p>
-                </div>
-                <div class="pricing-calc" id="pricing-calculator" aria-live="polite">
-                    <div class="pricing-calc__grid">
-                        <div class="pricing-calc__controls">
-                            <div id="pricing-rows" class="pricing-calc__rows"></div>
-                            <div id="pricing-addons" class="pricing-calc__addons"></div>
-                            <p class="pricing-calc__tax" id="pricing-tax-note"></p>
-                        </div>
-                        <div class="pricing-calc__summary">
-                            <p class="pricing-calc__summary-label">Total mensual</p>
-                            <p class="pricing-calc__total" id="pricing-total">—</p>
-                            <div class="pricing-calc__breakdown" id="pricing-breakdown"></div>
-                            <a href="alta.html" class="btn btn-primary" id="pricing-cta">Crear cuenta</a>
-                            <ul class="pricing-calc__footnotes" id="pricing-footnotes" hidden></ul>
-                        </div>
-                    </div>
-                </div>
+                <ul class="pricing-includes__flat" id="pricing-includes-list"></ul>
             </div>
         </section>
     </main>

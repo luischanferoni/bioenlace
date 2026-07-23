@@ -2,7 +2,7 @@
   "version": 9,
   "currency": "USD",
   "billing_period": "month",
-  "tax_note": "Precios en USD. No incluyen IVA.",
+  "tax_note": "",
   "cogs_source": "costos-api.md — context caching; chat 10 msgs (capacidad); motivos audio al 30% de encounters; dictado incluido",
   "reference_encounters_per_professional_month": 200,
   "cogs_assumptions": {
@@ -20,51 +20,15 @@
   },
   "margin_on_cost_percent": 233,
   "attention_volume_presets": [
-    {
-      "attentions": 200,
-      "label": "1 profesional",
-      "hint": null
-    },
-    {
-      "attentions": 400,
-      "label": "2 profesionales",
-      "hint": null
-    },
-    {
-      "attentions": 800,
-      "label": "4 profesionales",
-      "hint": null
-    },
-    {
-      "attentions": 2000,
-      "label": "Clínica chica",
-      "hint": null
-    },
-    {
-      "attentions": 5000,
-      "label": "Clínica",
-      "hint": null
-    },
-    {
-      "attentions": 10000,
-      "label": "Centro",
-      "hint": null
-    },
-    {
-      "attentions": 20000,
-      "label": "Centro grande",
-      "hint": null
-    },
-    {
-      "attentions": 50000,
-      "label": "Enterprise",
-      "hint": null
-    },
-    {
-      "attentions": 100000,
-      "label": "Enterprise+",
-      "hint": null
-    }
+    { "attentions": 200 },
+    { "attentions": 400 },
+    { "attentions": 800 },
+    { "attentions": 2000 },
+    { "attentions": 5000 },
+    { "attentions": 10000 },
+    { "attentions": 20000 },
+    { "attentions": 50000 },
+    { "attentions": 100000 }
   ],
   "attention_volume_scale": [200, 400, 800, 2000, 5000, 10000, 20000, 50000, 100000],
   "defaults": {
@@ -116,74 +80,60 @@
       "default": false
     }
   },
+  "included_features": [
+    "Turnos online para que el paciente reserve sin llamar",
+    "Agenda del profesional con cupos y horarios",
+    "Recordatorios y avisos al paciente sobre su atención",
+    "App del paciente para ver turnos y hacer el seguimiento",
+    "Chat con el paciente alrededor del turno (hasta 10 mensajes)",
+    "El paciente puede contar el motivo de consulta por texto o audio",
+    "Consulta por videollamada (opcional)",
+    "Historia clínica: el profesional dicta y el sistema ayuda a completar",
+    "Recetas e indicaciones desde la misma consulta",
+    "Pedido de estudios de laboratorio y seguimiento de resultados",
+    "Asistente conversacional para el personal (altas, consultas y cambios)",
+    "App para el personal de salud en el celular",
+    "Tablero de guardia para ver quién está y qué hay pendiente",
+    "Armado del plantel de cobertura en urgencia e internación",
+    "Mapa de camas y seguimiento de internados",
+    "Evoluciones diarias en internación con dictado",
+    "Renovación o ajuste de medicación desde el plan de tratamiento",
+    "Consultas clínicas por mensaje cuando el paciente necesita control",
+    "Soporte estándar durante el uso de la plataforma"
+  ],
   "sellable_classes": {
     "AMB": {
       "label": "Ambulatorio",
-      "short": "Consultorios y turnos",
+      "short": "",
       "includes_patient_chat": true,
       "audio_included": true,
-      "videollamada_allowed": true,
-      "includes": [
-        "Agenda de cupos y reserva paciente",
-        "Captura clínica AMB con dictado",
-        "App paciente (turnos)",
-        "Chat paciente alrededor del turno (hasta 10 mensajes)",
-        "Motivos de consulta (audio según uso real)"
-      ]
+      "videollamada_allowed": true
     },
     "EMER": {
       "label": "Urgencia / guardia",
-      "short": "Tablero y plantel de guardia",
+      "short": "",
       "includes_patient_chat": false,
       "audio_included": true,
-      "videollamada_allowed": false,
-      "includes": [
-        "Cobertura / roster EMER",
-        "Tablero de guardia",
-        "Captura clínica EMER (dictado incluido)",
-        "Motivos de consulta (audio según uso real)"
-      ]
+      "videollamada_allowed": false
     },
     "IMP": {
       "label": "Internación",
-      "short": "Piso, camas y evoluciones",
+      "short": "",
       "includes_patient_chat": false,
       "audio_included": true,
-      "videollamada_allowed": false,
-      "includes": [
-        "Cobertura / roster IMP",
-        "Mapa de camas",
-        "Captura / evoluciones (dictado incluido)",
-        "Motivos de consulta (audio según uso real)"
-      ]
+      "videollamada_allowed": false
     }
   },
   "simulator": {
-    "title": "Calculá tu licencia",
-    "subtitle": "Marcá los tipos de atención y el volumen mensual aproximado. El dictado está incluido en todas las clases; la videollamada es opcional solo en ambulatorio.",
     "cta_label": "Crear cuenta",
     "cta_href": "alta.html",
     "footnotes": [
-      "El precio se calcula por atenciones/mes × clase. A mayor volumen, mejor margen (descuento por escala).",
-      "La app paciente (turnos, chat alrededor del turno y motivos) forma parte del módulo ambulatorio cuando lo contratás.",
-      "Montos en USD sin IVA. Cotización orientativa; la factura se confirma al crear la cuenta o con el equipo comercial."
+      "Montos en USD sin IVA."
     ]
   },
   "plans_page": {
-    "title": "Planes y precios",
-    "subtitle": "Una licencia por tipo de atención (ambulatorio, urgencia e internación). Elegí lo que necesitás y calculá el total según tu volumen mensual.",
-    "includes_heading": "Qué incluye cada tipo de atención",
-    "includes_lead": "El dictado clínico está incluido. La videollamada es un opcional solo en ambulatorio.",
-    "excludes_heading": "Qué no incluye",
-    "excludes": [
-      "Integraciones a medida con HIS, LIS, facturación u obras sociales",
-      "Desarrollos a medida, marca white-label o personalizaciones fuera del producto estándar",
-      "Hardware, conectividad o dispositivos de la institución o de los pacientes",
-      "Capacitación presencial o servicios profesionales fuera del soporte estándar"
-    ],
-    "calc_heading": "Simulá tu licencia",
     "teaser_title": "Precios por tipo de atención",
-    "teaser_subtitle": "Dictado incluido. Ambulatorio, urgencia e internación según tu volumen. Mirá el detalle de lo incluido y calculá el total.",
+    "teaser_subtitle": "Ambulatorio, urgencia e internación según tu volumen. Mirá qué incluye y calculá el total.",
     "teaser_cta": "Ver planes y calculadora"
   }
 }

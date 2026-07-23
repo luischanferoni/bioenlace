@@ -212,28 +212,15 @@
   }
 
   function refreshUnitLabels() {
-    if (!rowsEl || !config) return;
-    const selection = currentSelection();
-    const addons = selection.addons;
-    const totalAtt = Pricing.totalAttentionsFromSelection(selection);
-    rowsEl.querySelectorAll('[data-class]').forEach((row) => {
-      const code = row.getAttribute('data-class');
-      const unitEl = row.querySelector('.pricing-calc__unit');
-      if (unitEl && code) {
-        unitEl.textContent =
-          Pricing.formatMoney(
-            Pricing.unitPriceForClass(config, code, addons, totalAtt > 0 ? totalAtt : null),
-            config.currency
-          ) + ' / atención';
-      }
-    });
+    // Precio unitario no se muestra en la UI; el total y el breakdown alcanzan.
   }
 
   function buildAmbOptionsHtml() {
     const video = (config.addons && config.addons.videollamada) || {};
+    const onPlansPage = document.body.classList.contains('pricing-page');
     return (
       '<div class="pricing-calc__amb-options">' +
-      '<span class="pricing-calc__policy">Dictado incluido</span>' +
+      (onPlansPage ? '' : '<span class="pricing-calc__policy">Dictado incluido</span>') +
       '<label class="pricing-calc__option">' +
       '<input type="checkbox" data-addon="videollamada" disabled />' +
       '<span><strong>' +
@@ -244,6 +231,9 @@
   }
 
   function buildFixedPolicyHtml(code) {
+    if (document.body.classList.contains('pricing-page')) {
+      return '';
+    }
     if (Pricing.classIncludesAudio(config, code) && !Pricing.classAllowsVideollamada(config, code)) {
       return '<p class="pricing-calc__policy">Dictado incluido · Sin videollamada</p>';
     }
@@ -265,11 +255,8 @@
           title +
           ' disabled>' +
           '<strong>' +
-          p.label +
-          '</strong>' +
-          '<span>' +
           Pricing.formatAttentions(p.attentions) +
-          '/mes</span>' +
+          '/mes</strong>' +
           '</button>'
         );
       })
@@ -296,7 +283,6 @@
     rowsEl.innerHTML = '';
     Object.keys(classes).forEach((code) => {
       const cls = classes[code];
-      const unit = Pricing.unitPriceForClass(config, code, { audio: true });
       const row = document.createElement('div');
       row.className = 'pricing-calc__row';
       row.setAttribute('data-class', code);
@@ -314,11 +300,7 @@
         '<span class="pricing-calc__short">' +
         (cls.short || '') +
         '</span>' +
-        '<span class="pricing-calc__unit">' +
-        Pricing.formatMoney(unit, config.currency) +
-        ' / atención</span>' +
         '</span></label>' +
-        includesListHtml(cls) +
         optionsHtml +
         '</div>' +
         buildVolumeChipsHtml(code, '');
@@ -366,91 +348,33 @@
       .replace(/"/g, '&quot;');
   }
 
-  function includesListHtml(cls) {
-    // En precios.html el detalle ya está en las cards; no repetir en cada fila.
-    if (document.getElementById('pricing-includes-grid')) return '';
-    const items = Array.isArray(cls.includes) ? cls.includes.filter(Boolean) : [];
-    if (!items.length) return '';
-    return (
-      '<ul class="pricing-calc__includes">' +
-      items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') +
-      '</ul>'
-    );
-  }
-
   function fillPlansPageCopy() {
-    const page = config.plans_page || {};
-    const setText = (id, value) => {
-      const el = document.getElementById(id);
-      if (el && value) el.textContent = value;
-    };
-    setText('plans-page-title', page.title);
-    setText('plans-page-subtitle', page.subtitle);
-    setText('plans-includes-heading', page.includes_heading);
-    setText('plans-includes-lead', page.includes_lead);
-    setText('plans-excludes-heading', page.excludes_heading);
-    if (page.calc_heading) {
-      const calcTitle = document.getElementById('pricing-title');
-      if (calcTitle && document.body.classList.contains('pricing-page')) {
-        calcTitle.textContent = page.calc_heading;
-      }
+    const listEl = document.getElementById('pricing-includes-list');
+    if (!listEl || !config) return;
+    const items = Array.isArray(config.included_features)
+      ? config.included_features.filter(Boolean)
+      : [];
+    if (!items.length) {
+      listEl.innerHTML = '';
+      const section = document.getElementById('incluye');
+      if (section) section.hidden = true;
+      return;
     }
-
-    const grid = document.getElementById('pricing-includes-grid');
-    if (grid) {
-      const classes = config.sellable_classes || {};
-      grid.innerHTML = Object.keys(classes)
-        .map((code) => {
-          const cls = classes[code] || {};
-          const unit = Pricing.unitPriceForClass(config, code, { audio: true });
-          const items = Array.isArray(cls.includes) ? cls.includes.filter(Boolean) : [];
-          return (
-            '<article class="pricing-includes__card" data-class="' +
-            escapeHtml(code) +
-            '">' +
-            '<header class="pricing-includes__card-head">' +
-            '<h3>' +
-            escapeHtml(cls.label || code) +
-            '</h3>' +
-            '<p class="pricing-includes__short">' +
-            escapeHtml(cls.short || '') +
-            '</p>' +
-            '<p class="pricing-includes__unit">' +
-            escapeHtml(Pricing.formatMoney(unit, config.currency)) +
-            ' / atención</p>' +
-            '</header>' +
-            (items.length
-              ? '<ul class="pricing-includes__list">' +
-                items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('') +
-                '</ul>'
-              : '') +
-            '</article>'
-          );
-        })
-        .join('');
-    }
-
-    const excludesSection = document.getElementById('no-incluye');
-    const excludesList = document.getElementById('pricing-excludes-list');
-    const excludes = Array.isArray(page.excludes) ? page.excludes.filter(Boolean) : [];
-    if (excludesSection && excludesList) {
-      if (!excludes.length) {
-        excludesSection.hidden = true;
-        excludesList.innerHTML = '';
-      } else {
-        excludesSection.hidden = false;
-        excludesList.innerHTML = excludes.map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
-      }
-    }
+    listEl.innerHTML = items.map((item) => '<li>' + escapeHtml(item) + '</li>').join('');
   }
 
   function fillStaticCopy() {
-    const title = document.getElementById('pricing-title');
-    const subtitle = document.getElementById('pricing-subtitle');
     const footnotes = document.getElementById('pricing-footnotes');
     const sim = config.simulator || {};
-    if (title && sim.title && mode !== 'signup') title.textContent = sim.title;
-    if (subtitle && sim.subtitle && mode !== 'signup') subtitle.textContent = sim.subtitle;
+    // En precios.html títulos/subtítulos están en el HTML (fuente de verdad).
+    // simulator.title/subtitle solo aplican si no hay copy ya en el DOM (otros embeds).
+    const onPlansPage = document.body.classList.contains('pricing-page');
+    if (!onPlansPage && mode !== 'signup') {
+      const title = document.getElementById('pricing-title');
+      const subtitle = document.getElementById('pricing-subtitle');
+      if (title && sim.title) title.textContent = sim.title;
+      if (subtitle && sim.subtitle) subtitle.textContent = sim.subtitle;
+    }
     if (ctaEl && sim.cta_label && mode !== 'signup') ctaEl.textContent = sim.cta_label;
     if (ctaEl && sim.cta_href && mode !== 'signup') ctaEl.setAttribute('href', sim.cta_href);
     if (footnotes) {

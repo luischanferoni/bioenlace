@@ -98,11 +98,35 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
   Future<void> _loadPendingCaptures() async {
     if (!_tieneContextoCaptura) return;
-    final list = await _pendingStore.listForContext(
+    final local = await _pendingStore.listForContext(
       personaId: widget.personaId,
       parent: widget.consultParent!,
       parentId: widget.consultParentId!,
     );
+    final byId = <String, PendingEncounterCapture>{
+      for (final item in local) item.id: item,
+    };
+    try {
+      final remote = await _encounterApi.capturaListar(
+        idPersona: widget.personaId,
+        parent: widget.consultParent,
+        parentId: widget.consultParentId,
+      );
+      for (final row in remote) {
+        final clientId = row['client_capture_id']?.toString() ?? '';
+        if (clientId.isEmpty) continue;
+        final merged = PendingEncounterCapture.fromServerCapture(
+          row,
+          local: byId[clientId],
+        );
+        byId[clientId] = merged;
+        await _pendingStore.upsert(merged);
+      }
+    } catch (_) {
+      // Sin red: solo locales.
+    }
+    final list = byId.values.toList()
+      ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     if (!mounted) return;
     setState(() => _pendingCaptures = list);
   }
@@ -1035,6 +1059,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     String? error,
     Map<String, dynamic>? analysisResponse,
     List<String>? stagedItemIds,
+    int? serverCaptureId,
+    String? serverStage,
+    bool? audioUploaded,
     bool clearError = false,
     bool clearAnalysis = false,
   }) async {
@@ -1089,6 +1116,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       status: status,
       createdAt: existing?.createdAt ?? now,
       updatedAt: now,
+      serverCaptureId: serverCaptureId ?? existing?.serverCaptureId,
+      serverStage: serverStage ?? existing?.serverStage,
       audioFileName: audioName,
       stt: sttPayload ?? existing?.stt,
       lastError: clearError ? null : (error ?? existing?.lastError),
@@ -1096,6 +1125,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ? null
           : (analysisResponse ?? existing?.analysisResponse),
       stagedItemIds: stagedItemIds ?? existing?.stagedItemIds ?? const [],
+      audioUploaded: audioUploaded ?? existing?.audioUploaded ?? false,
     );
     await _pendingStore.upsert(item);
     _activePendingId = id;
@@ -1104,6 +1134,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Future<void> _deletePendingCapture(String id) async {
+    final existing = await _pendingStore.getById(id);
+    try {
+      if (existing?.serverCaptureId != null ||
+          (existing?.id.isNotEmpty ?? false)) {
+        await _encounterApi.capturaDescartar(
+          clientCaptureId: id,
+          captureId: existing?.serverCaptureId,
+        );
+      }
+    } catch (_) {
+      // Si no hay red, igual borramos local.
+    }
     await _pendingStore.delete(id);
     if (_activePendingId == id) {
       _clearCaptureDraft(deleteLocalPending: false);
@@ -1119,7 +1161,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final audioPath = await _pendingStore.absoluteAudioPath(item);
     if (!mounted) return;
 
-    if (item.status == PendingEncounterCaptureStatus.pendingSave &&
+    if ((item.status == PendingEncounterCaptureStatus.pendingSave ||
+            item.status == PendingEncounterCaptureStatus.failedSave) &&
         item.analysisResponse != null) {
       final review =
           EncounterCaptureAnalysis.fromApiResponse(item.analysisResponse!);
@@ -1133,7 +1176,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ? item.stagedItemIds.toSet()
             : review.allItems.map((e) => e.id).toSet();
         _chatController.clear();
-        _sttStatus = 'Pendiente de confirmar en servidor.';
+        _sttStatus = item.status == PendingEncounterCaptureStatus.failedSave
+            ? 'Error al guardar. Revisá y reintentá.'
+            : 'Pendiente de confirmar en servidor.';
       });
       return;
     }
@@ -1145,13 +1190,32 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _lastAnalysis = null;
       _draftText = null;
       _stagedItemIds = {};
-      _chatController.text = item.texto;
+      _chatController.text = item.texto.startsWith('(audio')
+          ? ''
+          : item.texto;
       _sttStatus = item.lastError != null && item.lastError!.isNotEmpty
           ? 'Error anterior: ${item.lastError}'
-          : (item.hasAudio
-              ? 'Borrador local con audio. Revisá y enviá de nuevo.'
-              : 'Borrador local. Revisá y enviá de nuevo.');
+          : _pendingStatusHint(item);
     });
+  }
+
+  String _pendingStatusHint(PendingEncounterCapture item) {
+    switch (item.status) {
+      case PendingEncounterCaptureStatus.pendingUpload:
+        return 'Audio en el teléfono. Reintentá la subida.';
+      case PendingEncounterCaptureStatus.pendingStt:
+        return 'Audio en servidor. Falta transcribir.';
+      case PendingEncounterCaptureStatus.pendingAnalyze:
+        return 'Texto listo. Falta analizar.';
+      case PendingEncounterCaptureStatus.pendingSave:
+        return 'Análisis listo. Confirmá para guardar.';
+      case PendingEncounterCaptureStatus.failedSave:
+        return 'Falló el guardado. Podés reintentar.';
+      case PendingEncounterCaptureStatus.draft:
+        return item.hasAudio
+            ? 'Borrador local con audio. Revisá y enviá.'
+            : 'Borrador local. Revisá y enviá.';
+    }
   }
 
   Future<void> _retryPendingCapture(PendingEncounterCapture item) async {
@@ -1165,7 +1229,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       }
       return;
     }
-    await _analizarConsulta();
+    await _analizarConsulta(
+      fromStatus: item.status,
+      forcePipeline: true,
+    );
   }
 
   void _editCaptureDraft() {
@@ -1198,17 +1265,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     });
   }
 
-  Future<void> _analizarConsulta() async {
+  Future<void> _analizarConsulta({
+    PendingEncounterCaptureStatus? fromStatus,
+    bool forcePipeline = false,
+  }) async {
     final text = _chatController.text.trim();
     if (text.isEmpty && _pendingAudioPath == null) {
       _snack('Escriba o dicte la consulta.', UiIntent.warning);
-      return;
-    }
-    if (text.isEmpty) {
-      _snack(
-        'Hay audio local. Transcribí o escribí el texto antes de analizar.',
-        UiIntent.warning,
-      );
       return;
     }
     if (!_tieneContextoCaptura) {
@@ -1224,42 +1287,227 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _stagedItemIds = {};
     });
 
-    // Primero persistir en el dispositivo (texto + audio); luego intentar servidor.
-    await _persistLocalDraft(
-      texto: text,
-      status: PendingEncounterCaptureStatus.pendingAnalyze,
+    final startStatus = fromStatus ??
+        (text.isEmpty
+            ? PendingEncounterCaptureStatus.pendingUpload
+            : PendingEncounterCaptureStatus.pendingAnalyze);
+
+    // Primero persistir en el dispositivo (texto + audio); luego pipeline servidor.
+    final draft = await _persistLocalDraft(
+      texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
+      status: startStatus,
       clearError: true,
       clearAnalysis: true,
     );
+    if (draft == null) {
+      if (mounted) setState(() => _isAnalyzing = false);
+      return;
+    }
 
     try {
-      final speech = await _resolveSpeechPayloadForAnalyze(text);
-      final res = await _encounterApi.analizar(
-        consulta: text,
-        idPersona: widget.personaId,
-        parent: widget.consultParent,
-        parentId: widget.consultParentId,
-        stt: speech.stt,
-        audioBase64: speech.audioBase64,
-        sttForceServer: speech.sttForceServer,
-        userPerTabConfig: await _operationalContextForCapture(),
+      final ctx = await _operationalContextForCapture();
+      final last = _lastDictation;
+      Map<String, dynamic>? sttMeta;
+      var needsServerStt = text.isEmpty;
+      if (last != null && text.isNotEmpty && text == last.text.trim()) {
+        sttMeta = last.toSttPayload();
+        needsServerStt = !DeviceSttLocalQuality.isAcceptable(text, last);
+      } else if (text.isEmpty) {
+        needsServerStt = true;
+      }
+
+      var stage = draft.serverStage;
+      var serverId = draft.serverCaptureId;
+      var audioUploaded = draft.audioUploaded;
+      var transcript = text;
+
+      final skipUpload = forcePipeline &&
+          (fromStatus == PendingEncounterCaptureStatus.pendingStt ||
+              fromStatus == PendingEncounterCaptureStatus.pendingAnalyze) &&
+          (draft.serverCaptureId != null || draft.audioUploaded);
+
+      if (!skipUpload) {
+        final audioPath = await _pendingStore.absoluteAudioPath(draft) ??
+            _pendingAudioPath;
+        try {
+          final created = await _encounterApi.capturaCrearOSubir(
+            clientCaptureId: draft.id,
+            idPersona: widget.personaId,
+            parent: widget.consultParent,
+            parentId: widget.consultParentId,
+            texto: text.isEmpty ? null : text,
+            stt: sttMeta,
+            audioPath: audioPath,
+            sttForceServer: needsServerStt && (audioPath != null),
+            userPerTabConfig: ctx,
+          );
+          final capture = created['capture'];
+          if (capture is Map) {
+            final map = Map<String, dynamic>.from(capture);
+            stage = map['stage']?.toString();
+            serverId = map['id'] is int
+                ? map['id'] as int
+                : int.tryParse('${map['id']}');
+            audioUploaded = map['has_audio'] == true;
+            final t = map['transcript']?.toString() ?? '';
+            if (t.isNotEmpty) transcript = t;
+          }
+          await _persistLocalDraft(
+            texto: transcript.isEmpty
+                ? '(audio pendiente de transcribir)'
+                : transcript,
+            status: PendingEncounterCapture.statusFromServerStage(
+              stage ?? 'UPLOADED',
+            ),
+            serverCaptureId: serverId,
+            serverStage: stage,
+            audioUploaded: audioUploaded,
+            clearError: true,
+          );
+        } catch (e) {
+          await _persistLocalDraft(
+            texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
+            status: PendingEncounterCaptureStatus.pendingUpload,
+            error: _mensajeErrorCaptura(e),
+          );
+          if (!mounted) return;
+          _snack(
+            'Quedó en el teléfono. ${_mensajeErrorCaptura(e)}',
+            UiIntent.danger,
+          );
+          return;
+        }
+      }
+
+      final needsStt = stage == 'UPLOADED' ||
+          stage == 'STT_FAILED' ||
+          (needsServerStt && transcript.isEmpty) ||
+          fromStatus == PendingEncounterCaptureStatus.pendingStt;
+
+      if (needsStt &&
+          fromStatus != PendingEncounterCaptureStatus.pendingAnalyze) {
+        try {
+          final sttRes = await _encounterApi.capturaTranscribir(
+            clientCaptureId: draft.id,
+            captureId: serverId,
+            force: stage == 'STT_FAILED',
+            userPerTabConfig: ctx,
+          );
+          final capture = sttRes['capture'];
+          if (capture is Map) {
+            final map = Map<String, dynamic>.from(capture);
+            stage = map['stage']?.toString();
+            serverId = map['id'] is int
+                ? map['id'] as int
+                : int.tryParse('${map['id']}');
+            final t = map['transcript']?.toString() ?? '';
+            if (t.isNotEmpty) {
+              transcript = t;
+              if (mounted) {
+                setState(() => _chatController.text = t);
+              }
+            }
+          }
+          await _persistLocalDraft(
+            texto: transcript,
+            status: PendingEncounterCapture.statusFromServerStage(
+              stage ?? 'TRANSCRIBED',
+            ),
+            serverCaptureId: serverId,
+            serverStage: stage,
+            audioUploaded: true,
+            clearError: true,
+          );
+        } catch (e) {
+          await _persistLocalDraft(
+            texto: transcript.isEmpty
+                ? '(audio pendiente de transcribir)'
+                : transcript,
+            status: PendingEncounterCaptureStatus.pendingStt,
+            serverCaptureId: serverId,
+            serverStage: stage ?? 'STT_FAILED',
+            audioUploaded: audioUploaded,
+            error: _mensajeErrorCaptura(e),
+          );
+          if (!mounted) return;
+          _snack(
+            'Audio en servidor. Falló la transcripción. ${_mensajeErrorCaptura(e)}',
+            UiIntent.danger,
+          );
+          return;
+        }
+      }
+
+      if (transcript.trim().isEmpty) {
+        await _persistLocalDraft(
+          texto: '(audio pendiente de transcribir)',
+          status: PendingEncounterCaptureStatus.pendingStt,
+          serverCaptureId: serverId,
+          serverStage: stage,
+          error: 'Sin texto para analizar.',
+        );
+        if (!mounted) return;
+        _snack('No hay texto para analizar.', UiIntent.warning);
+        return;
+      }
+
+      final analyzed = await _encounterApi.capturaAnalizar(
+        clientCaptureId: draft.id,
+        captureId: serverId,
+        consulta: transcript,
+        force: fromStatus == PendingEncounterCaptureStatus.pendingAnalyze,
+        userPerTabConfig: ctx,
       );
+      final capture = analyzed['capture'];
+      Map<String, dynamic> analysisPayload = analyzed;
+      if (capture is Map) {
+        final map = Map<String, dynamic>.from(capture);
+        stage = map['stage']?.toString();
+        serverId = map['id'] is int
+            ? map['id'] as int
+            : int.tryParse('${map['id']}');
+        if (map['analysis'] is Map) {
+          analysisPayload = Map<String, dynamic>.from(map['analysis'] as Map);
+        } else {
+          analysisPayload = {
+            ...analyzed,
+            if (map['datosExtraidos'] != null)
+              'datosExtraidos': map['datosExtraidos'],
+            if (map['capture_review'] != null)
+              'capture_review': map['capture_review'],
+            if (map['texto_procesado'] != null)
+              'texto_procesado': map['texto_procesado'],
+            if (map['texto_original'] != null)
+              'texto_original': map['texto_original'],
+            if (map['analysis_cache_token'] != null)
+              'analysis_cache_token': map['analysis_cache_token'],
+            if (map['id_configuracion'] != null)
+              'id_configuracion': map['id_configuracion'],
+            if (map['encounter_id'] != null)
+              'encounter_id': map['encounter_id'],
+          };
+        }
+      }
+
       if (!mounted) return;
-      final review = EncounterCaptureAnalysis.fromApiResponse(res);
+      final review = EncounterCaptureAnalysis.fromApiResponse(analysisPayload);
       final staged = review.allItems.map((e) => e.id).toSet();
       if (staged.isEmpty && review.defaultStagedItemIds.isNotEmpty) {
         staged.addAll(review.defaultStagedItemIds);
       }
       await _persistLocalDraft(
-        texto: text,
+        texto: transcript,
         status: PendingEncounterCaptureStatus.pendingSave,
-        analysisResponse: res,
+        analysisResponse: analysisPayload,
         stagedItemIds: staged.toList(),
+        serverCaptureId: serverId,
+        serverStage: stage ?? 'READY_FOR_REVIEW',
+        audioUploaded: audioUploaded,
         clearError: true,
       );
       setState(() {
-        _lastAnalysis = res;
-        _draftText = text;
+        _lastAnalysis = analysisPayload;
+        _draftText = transcript;
         _captureReview = review;
         _stagedItemIds = staged;
         _chatController.clear();
@@ -1267,13 +1515,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       });
     } catch (e) {
       await _persistLocalDraft(
-        texto: text,
+        texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
         status: PendingEncounterCaptureStatus.pendingAnalyze,
         error: _mensajeErrorCaptura(e),
       );
       if (!mounted) return;
       _snack(
-        'Quedó guardado en el teléfono. ${_mensajeErrorCaptura(e)}',
+        'Quedó guardado. ${_mensajeErrorCaptura(e)}',
         UiIntent.danger,
       );
     } finally {
@@ -1340,19 +1588,37 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         clearError: true,
       );
 
-      final guardado = await _encounterApi.guardar(
-        idPersona: widget.personaId,
-        parent: widget.consultParent,
-        parentId: widget.consultParentId,
-        datosExtraidos: extraidos,
-        analisisDatosExtraidos: analisisBackup,
-        analysisCacheToken: _lastAnalysis!['analysis_cache_token']?.toString(),
-        textoOriginal: textoOriginal,
-        textoProcesado: textoProcesado,
-        idConfiguracion: idConfiguracion,
-        encounterId: encounterId,
-        userPerTabConfig: await _operationalContextForCapture(),
-      );
+      final clientId = _activePendingId;
+      Map<String, dynamic> guardado;
+      if (clientId != null && clientId.isNotEmpty) {
+        final out = await _encounterApi.capturaGuardar(
+          clientCaptureId: clientId,
+          datosExtraidos: extraidos,
+          analisisDatosExtraidos: analisisBackup,
+          stagedItemIds: _stagedItemIds.toList(),
+          textoOriginal: textoOriginal,
+          textoProcesado: textoProcesado,
+          userPerTabConfig: await _operationalContextForCapture(),
+        );
+        final nested = out['guardar'];
+        guardado = nested is Map
+            ? Map<String, dynamic>.from(nested)
+            : out;
+      } else {
+        guardado = await _encounterApi.guardar(
+          idPersona: widget.personaId,
+          parent: widget.consultParent,
+          parentId: widget.consultParentId,
+          datosExtraidos: extraidos,
+          analisisDatosExtraidos: analisisBackup,
+          analysisCacheToken: _lastAnalysis!['analysis_cache_token']?.toString(),
+          textoOriginal: textoOriginal,
+          textoProcesado: textoProcesado,
+          idConfiguracion: idConfiguracion,
+          encounterId: encounterId,
+          userPerTabConfig: await _operationalContextForCapture(),
+        );
+      }
       if (!mounted) return;
       final aviso = _mensajePersistidoIncompleto(
             extraidos,
@@ -1615,6 +1881,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     switch (status) {
       case PendingEncounterCaptureStatus.draft:
         return 'Borrador local';
+      case PendingEncounterCaptureStatus.pendingUpload:
+        return 'Pendiente de subir audio';
+      case PendingEncounterCaptureStatus.pendingStt:
+        return 'Pendiente de transcribir';
       case PendingEncounterCaptureStatus.pendingAnalyze:
         return 'Pendiente de analizar';
       case PendingEncounterCaptureStatus.pendingSave:

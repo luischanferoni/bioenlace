@@ -10,12 +10,17 @@ use common\components\Domain\Clinical\Service\MedicationRequestService;
 use common\components\Domain\Clinical\Service\ServiceRequestService;
 use common\components\Platform\Ui\UiScreenService;
 use frontend\modules\api\v1\controllers\BaseController;
+use yii\web\UploadedFile;
 
 /**
  * API clínica — Encounter (documentación, análisis IA).
  *
  * POST /api/v1/clinical/encounter/analizar
  * POST /api/v1/clinical/encounter/guardar
+ *
+ * Pipeline por etapas (síncrono, sin jobs):
+ * POST …/captura/crear-o-subir | …/transcribir | …/analizar | …/guardar | …/descartar
+ * GET  …/captura/listar | …/ver | …/audio
  *
  * Especialidades (lectura): GET …/encounter/<id>/odontology | …/ophthalmology
  */
@@ -45,6 +50,90 @@ class EncounterController extends BaseController
         $out = ClinicalEncounterEntry::guardar($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
+    }
+
+    /**
+     * POST multipart/json: crea captura y opcionalmente sube audio + transcript dispositivo.
+     */
+    public function actionCapturaCrearOSubir()
+    {
+        $body = $this->mergeRequestBody();
+        $file = UploadedFile::getInstanceByName('file');
+        $out = ClinicalEncounterEntry::capturaCrearOSubir($body, $file);
+
+        return $this->applyServiceHttpStatus($out);
+    }
+
+    /** POST: STT síncrono desde audio ya subido. */
+    public function actionCapturaTranscribir()
+    {
+        $out = ClinicalEncounterEntry::capturaTranscribir($this->mergeRequestBody());
+
+        return $this->applyServiceHttpStatus($out);
+    }
+
+    /** POST: análisis IA síncrono desde transcript persistido. */
+    public function actionCapturaAnalizar()
+    {
+        $out = ClinicalEncounterEntry::capturaAnalizar($this->mergeRequestBody());
+
+        return $this->applyServiceHttpStatus($out);
+    }
+
+    /** POST: guardar clínico síncrono desde draft de análisis. */
+    public function actionCapturaGuardar()
+    {
+        $out = ClinicalEncounterEntry::capturaGuardar($this->mergeRequestBody());
+
+        return $this->applyServiceHttpStatus($out);
+    }
+
+    /** GET: listar capturas abiertas (cross-device). */
+    public function actionCapturaListar()
+    {
+        $out = ClinicalEncounterEntry::capturaListar(Yii::$app->request->get());
+
+        return $this->applyServiceHttpStatus($out);
+    }
+
+    /** GET: ver una captura (por id o client_capture_id). */
+    public function actionCapturaVer()
+    {
+        $params = array_merge(Yii::$app->request->get(), $this->mergeRequestBody());
+        $out = ClinicalEncounterEntry::capturaVer($params);
+
+        return $this->applyServiceHttpStatus($out);
+    }
+
+    /** POST: descartar captura y borrar audio. */
+    public function actionCapturaDescartar()
+    {
+        $out = ClinicalEncounterEntry::capturaDescartar($this->mergeRequestBody());
+
+        return $this->applyServiceHttpStatus($out);
+    }
+
+    /** GET: descargar audio de una captura abierta. */
+    public function actionCapturaAudio()
+    {
+        $out = ClinicalEncounterEntry::capturaAudio(Yii::$app->request->get());
+        if (isset($out['success']) && $out['success'] === false) {
+            return $this->applyServiceHttpStatus($out);
+        }
+
+        $path = (string) ($out['path'] ?? '');
+        $mime = (string) ($out['mime'] ?? 'application/octet-stream');
+        $filename = (string) ($out['filename'] ?? 'audio.m4a');
+        if ($path === '' || !is_file($path)) {
+            Yii::$app->response->statusCode = 404;
+
+            return ['success' => false, 'message' => 'Archivo no encontrado'];
+        }
+
+        return Yii::$app->response->sendFile($path, $filename, [
+            'mimeType' => $mime,
+            'inline' => false,
+        ]);
     }
 
     /**

@@ -1,5 +1,5 @@
 /**
- * Captura clínica: dictado en dispositivo (Web Speech) + análisis encounter/analizar + fallback STT servidor.
+ * Captura clínica: pipeline por etapas (subir → STT → analizar → guardar), sync sin jobs.
  */
 (function (window) {
     'use strict';
@@ -91,6 +91,9 @@
         this.inReview = false;
         this.initialTextOnListen = '';
         this.audioOnlyRecording = false;
+        this.clientCaptureId = null;
+        this.serverCaptureId = null;
+        this.serverStage = null;
 
         if (SpeechRecognitionCtor && this.textarea && this.sttConfig.device_enabled) {
             this.recognition = new SpeechRecognitionCtor();
@@ -153,6 +156,102 @@
             this.setupRecognition();
         }
         this.applySttUiPolicy();
+        this.loadOpenCaptures();
+    };
+
+    EncounterCaptureForm.prototype.newClientCaptureId = function () {
+        return 'cap_web_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    };
+
+    EncounterCaptureForm.prototype.ensureClientCaptureId = function () {
+        if (!this.clientCaptureId) {
+            this.clientCaptureId = this.newClientCaptureId();
+        }
+        return this.clientCaptureId;
+    };
+
+    EncounterCaptureForm.prototype.apiHeadersJson = function () {
+        return window.BioenlaceApiClient.mergeHeaders({
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        });
+    };
+
+    EncounterCaptureForm.prototype.apiHeadersMultipart = function () {
+        return window.BioenlaceApiClient.mergeHeaders({
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        });
+    };
+
+    EncounterCaptureForm.prototype.readFormContext = function () {
+        var formData = new FormData(this.form);
+        return {
+            id_persona: formData.get('id_persona'),
+            parent: formData.get('parent'),
+            parent_id: formData.get('parent_id'),
+        };
+    };
+
+    EncounterCaptureForm.prototype.loadOpenCaptures = function () {
+        var self = this;
+        var ctx = this.readFormContext();
+        if (!ctx.id_persona) {
+            return;
+        }
+        var qs = new URLSearchParams();
+        qs.set('id_persona', String(ctx.id_persona));
+        if (ctx.parent) qs.set('parent', String(ctx.parent));
+        if (ctx.parent_id) qs.set('parent_id', String(ctx.parent_id));
+        fetch('/api/v1/clinical/encounter/captura/listar?' + qs.toString(), {
+            method: 'GET',
+            headers: this.apiHeadersJson(),
+            credentials: 'same-origin',
+        })
+            .then(function (r) {
+                return r.json();
+            })
+            .then(function (data) {
+                if (!data || !data.success || !Array.isArray(data.items) || !data.items.length) {
+                    return;
+                }
+                var item = data.items[0];
+                self.clientCaptureId = item.client_capture_id || self.clientCaptureId;
+                self.serverCaptureId = item.id || null;
+                self.serverStage = item.stage || null;
+                var hint = 'Hay una captura pendiente (' + (item.stage || '') + ').';
+                if (item.stage === 'READY_FOR_REVIEW' || item.stage === 'SAVE_FAILED') {
+                    hint += ' Reanalizá o continuá desde el texto.';
+                } else if (item.stage === 'UPLOADED' || item.stage === 'STT_FAILED') {
+                    hint += ' Reintentá analizar para continuar la transcripción.';
+                } else if (item.transcript) {
+                    hint += ' Texto recuperado del servidor.';
+                    if (self.textarea && !self.textarea.value.trim()) {
+                        self.textarea.value = item.transcript;
+                    }
+                }
+                self.setStatus(hint, 'info');
+            })
+            .catch(function () {
+                /* sin red: ok */
+            });
+    };
+
+    EncounterCaptureForm.prototype.applyCaptureResponse = function (capture, analysisPayload) {
+        if (!capture) {
+            return analysisPayload || null;
+        }
+        this.clientCaptureId = capture.client_capture_id || this.clientCaptureId;
+        this.serverCaptureId = capture.id || this.serverCaptureId;
+        this.serverStage = capture.stage || this.serverStage;
+        if (analysisPayload) {
+            return analysisPayload;
+        }
+        if (capture.analysis && typeof capture.analysis === 'object') {
+            return capture.analysis;
+        }
+        return capture;
     };
 
     EncounterCaptureForm.prototype.setCaptureMode = function (reviewing) {
@@ -229,6 +328,22 @@
     };
 
     EncounterCaptureForm.prototype.discardDraft = function () {
+        var self = this;
+        var clientId = this.clientCaptureId;
+        if (clientId) {
+            fetch('/api/v1/clinical/encounter/captura/descartar', {
+                method: 'POST',
+                headers: this.apiHeadersJson(),
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    client_capture_id: clientId,
+                    capture_id: this.serverCaptureId || undefined,
+                }),
+            }).catch(function () {});
+        }
+        this.clientCaptureId = null;
+        this.serverCaptureId = null;
+        this.serverStage = null;
         this.lastAnalysisPayload = null;
         this.captureReview = null;
         this.draftText = '';
@@ -516,92 +631,174 @@
             return;
         }
         var consulta = (this.textarea && this.textarea.value) ? this.textarea.value.trim() : '';
-        if (!consulta) {
-            this.setStatus('Escriba o dicte la consulta antes de analizar.', 'warning');
+        if (!consulta && !this.pendingAudioBlob) {
+            this.setStatus('Escriba, dicte o grabe la consulta antes de analizar.', 'warning');
             return;
         }
 
-        this.setStatus('Analizando consulta…', 'primary');
+        this.setStatus('Subiendo / procesando captura…', 'primary');
         this.analyzeBtn.disabled = true;
+        var clientId = this.ensureClientCaptureId();
+        var ctx = this.readFormContext();
+        var needsServerStt =
+            !consulta ||
+            (this.lastSttMeta &&
+                this.lastSttMeta.local_quality &&
+                !this.lastSttMeta.local_quality.ok);
 
-        var send = function (payload) {
-            return fetch('/api/v1/clinical/encounter/analizar', {
-                method: 'POST',
-                headers: window.BioenlaceApiClient.mergeHeaders({
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                }),
-                credentials: 'same-origin',
-                body: JSON.stringify(payload),
-            }).then(function (r) {
-                return r.json().then(function (data) {
-                    return { ok: r.ok, data: data, status: r.status };
-                });
-            });
+        var showAnalysis = function (payload) {
+            self.lastAnalysisPayload = payload;
+            self.draftText = consulta || (payload.texto_original || payload.transcript || '');
+            if (self.responseEl) {
+                self.responseEl.style.display = 'block';
+            }
+            var usedReview = self.renderCaptureReview(payload);
+            if (!usedReview) {
+                self.renderLegacyHtml(payload.html || '');
+                if (self.reviewActions) {
+                    self.reviewActions.style.display = '';
+                }
+                if (self.editBtn) {
+                    self.editBtn.style.display = 'none';
+                }
+                if (self.discardBtn) {
+                    self.discardBtn.style.display = 'none';
+                }
+                if (self.confirmBtn) {
+                    self.confirmBtn.disabled =
+                        payload.puede_confirmar === false || !!payload.tiene_datos_faltantes;
+                }
+            } else {
+                if (self.editBtn) {
+                    self.editBtn.style.display = '';
+                }
+                if (self.discardBtn) {
+                    self.discardBtn.style.display = '';
+                }
+                self.setCaptureMode(true);
+            }
+            self.setStatus('Análisis listo. Revise y confirme el guardado.', 'success');
         };
 
-        var payload = this.buildAnalyzePayload();
-        var maybeAudio = Promise.resolve(payload);
+        var fail = function (msg) {
+            self.setStatus(msg || 'No se pudo completar la captura.', 'danger');
+        };
 
-        if (
-            this.lastSttMeta &&
-            this.lastSttMeta.local_quality &&
-            !this.lastSttMeta.local_quality.ok &&
-            this.pendingAudioBlob
-        ) {
-            maybeAudio = blobToBase64(this.pendingAudioBlob).then(function (b64) {
-                payload.audio = b64;
-                return payload;
+        var crearFd = new FormData();
+        crearFd.set('client_capture_id', clientId);
+        if (ctx.id_persona) crearFd.set('id_persona', String(ctx.id_persona));
+        if (ctx.parent) crearFd.set('parent', String(ctx.parent));
+        if (ctx.parent_id) crearFd.set('parent_id', String(ctx.parent_id));
+        if (consulta) crearFd.set('consulta', consulta);
+        if (needsServerStt) crearFd.set('stt_force_server', '1');
+        if (this.lastSttMeta) {
+            crearFd.set('stt', JSON.stringify(this.lastSttMeta));
+        }
+        if (typeof window.userPerTabConfig === 'object' && window.userPerTabConfig) {
+            crearFd.set('userPerTabConfig', JSON.stringify(window.userPerTabConfig));
+        }
+
+        var uploadPromise = Promise.resolve();
+        if (this.pendingAudioBlob) {
+            uploadPromise = Promise.resolve(
+                new File([this.pendingAudioBlob], 'encounter-capture.webm', {
+                    type: this.pendingAudioBlob.type || 'audio/webm',
+                })
+            ).then(function (file) {
+                crearFd.set('file', file);
             });
         }
 
-        maybeAudio
-            .then(send)
+        uploadPromise
+            .then(function () {
+                return fetch('/api/v1/clinical/encounter/captura/crear-o-subir', {
+                    method: 'POST',
+                    headers: self.apiHeadersMultipart(),
+                    credentials: 'same-origin',
+                    body: crearFd,
+                });
+            })
+            .then(function (r) {
+                return r.json().then(function (data) {
+                    return { ok: r.ok, data: data };
+                });
+            })
             .then(function (res) {
                 if (!res.ok || !res.data || !res.data.success) {
-                    var msg =
-                        (res.data && (res.data.message || res.data.error)) ||
-                        'No se pudo analizar la consulta.';
-                    self.setStatus(msg, 'danger');
-                    return;
+                    throw new Error(
+                        (res.data && res.data.message) || 'Error al subir la captura.'
+                    );
                 }
-                self.lastAnalysisPayload = res.data;
-                self.draftText = consulta;
-                if (self.responseEl) {
-                    self.responseEl.style.display = 'block';
+                var capture = res.data.capture || {};
+                self.applyCaptureResponse(capture);
+                var stage = capture.stage || '';
+                if (stage === 'UPLOADED' || stage === 'STT_FAILED') {
+                    self.setStatus('Transcribiendo en servidor…', 'primary');
+                    return fetch('/api/v1/clinical/encounter/captura/transcribir', {
+                        method: 'POST',
+                        headers: self.apiHeadersJson(),
+                        credentials: 'same-origin',
+                        body: JSON.stringify(
+                            mergeApiPayload({
+                                client_capture_id: clientId,
+                                capture_id: self.serverCaptureId,
+                                force: stage === 'STT_FAILED',
+                            })
+                        ),
+                    }).then(function (r) {
+                        return r.json().then(function (data) {
+                            if (!r.ok || !data.success) {
+                                throw new Error(
+                                    (data && data.message) || 'Error al transcribir.'
+                                );
+                            }
+                            var c = data.capture || {};
+                            self.applyCaptureResponse(c);
+                            if (c.transcript && self.textarea) {
+                                self.textarea.value = c.transcript;
+                                consulta = c.transcript;
+                            }
+                            return c;
+                        });
+                    });
                 }
-
-                var usedReview = self.renderCaptureReview(res.data);
-                if (!usedReview) {
-                    self.renderLegacyHtml(res.data.html || '');
-                    if (self.reviewActions) {
-                        self.reviewActions.style.display = '';
-                    }
-                    if (self.editBtn) {
-                        self.editBtn.style.display = 'none';
-                    }
-                    if (self.discardBtn) {
-                        self.discardBtn.style.display = 'none';
-                    }
-                    if (self.confirmBtn) {
-                        self.confirmBtn.disabled =
-                            res.data.puede_confirmar === false || !!res.data.tiene_datos_faltantes;
-                    }
-                } else {
-                    if (self.editBtn) {
-                        self.editBtn.style.display = '';
-                    }
-                    if (self.discardBtn) {
-                        self.discardBtn.style.display = '';
-                    }
-                    self.setCaptureMode(true);
+                if (capture.transcript) {
+                    consulta = capture.transcript;
                 }
-
-                self.setStatus('Análisis listo. Revise y confirme el guardado.', 'success');
+                return capture;
             })
-            .catch(function () {
-                self.setStatus('Error de conexión al analizar.', 'danger');
+            .then(function () {
+                self.setStatus('Analizando consulta…', 'primary');
+                return fetch('/api/v1/clinical/encounter/captura/analizar', {
+                    method: 'POST',
+                    headers: self.apiHeadersJson(),
+                    credentials: 'same-origin',
+                    body: JSON.stringify(
+                        mergeApiPayload({
+                            client_capture_id: clientId,
+                            capture_id: self.serverCaptureId,
+                            consulta: consulta || undefined,
+                        })
+                    ),
+                });
+            })
+            .then(function (r) {
+                return r.json().then(function (data) {
+                    return { ok: r.ok, data: data };
+                });
+            })
+            .then(function (res) {
+                if (!res.ok || !res.data || !res.data.success) {
+                    throw new Error(
+                        (res.data && res.data.message) || 'No se pudo analizar la consulta.'
+                    );
+                }
+                var capture = res.data.capture || {};
+                var payload = self.applyCaptureResponse(capture, capture.analysis || res.data);
+                showAnalysis(payload);
+            })
+            .catch(function (err) {
+                fail(err && err.message ? err.message : 'Error de conexión al analizar.');
             })
             .finally(function () {
                 self.analyzeBtn.disabled = false;
@@ -731,66 +928,88 @@
         }
 
         var formData = new FormData(this.form);
-        formData.set('datosExtraidos', JSON.stringify(datos));
-        // Preferir extracción IA completa (no el stage del capture_review).
+        var stagedIds = [];
+        if (this.captureReview && window.EncounterCaptureReview && this.reviewRoot) {
+            stagedIds = Array.from(
+                window.EncounterCaptureReview.collectStagedIds(this.reviewRoot)
+            );
+        }
+
+        var analisisBackup = null;
         if (
             this.lastAnalysisPayload &&
             this.lastAnalysisPayload.datos &&
             this.lastAnalysisPayload.datos.datosExtraidos
         ) {
-            formData.set(
-                'analisis_datos_extraidos',
-                JSON.stringify(this.lastAnalysisPayload.datos.datosExtraidos)
-            );
+            analisisBackup = this.lastAnalysisPayload.datos.datosExtraidos;
         } else if (this.captureReview && window.EncounterCaptureReview) {
-            formData.set(
-                'analisis_datos_extraidos',
-                JSON.stringify(
-                    window.EncounterCaptureReview.buildFullAnalisisExtraidos(this.captureReview)
-                )
+            analisisBackup = window.EncounterCaptureReview.buildFullAnalisisExtraidos(
+                this.captureReview
             );
         }
-        if (this.lastAnalysisPayload && this.lastAnalysisPayload.analysis_cache_token) {
-            formData.set(
-                'analysis_cache_token',
-                this.lastAnalysisPayload.analysis_cache_token
-            );
-        }
-        formData.set(
-            'texto_original',
-            this.lastAnalysisPayload.texto_original || this.draftText || this.textarea.value
-        );
-        formData.set(
-            'texto_procesado',
-            this.lastAnalysisPayload.texto_procesado ||
+
+        var payload = mergeApiPayload({
+            client_capture_id: this.ensureClientCaptureId(),
+            capture_id: this.serverCaptureId || undefined,
+            datosExtraidos: datos,
+            analisis_datos_extraidos: analisisBackup || undefined,
+            staged_item_ids: stagedIds,
+            analysis_cache_token:
+                (this.lastAnalysisPayload && this.lastAnalysisPayload.analysis_cache_token) ||
+                undefined,
+            texto_original:
+                this.lastAnalysisPayload.texto_original || this.draftText || this.textarea.value,
+            texto_procesado:
+                this.lastAnalysisPayload.texto_procesado ||
                 (this.captureReview && this.captureReview.texto_procesado) ||
                 this.draftText ||
-                this.textarea.value
-        );
-        if (typeof window.appendPerTabToForm === 'function') {
-            window.appendPerTabToForm(this.form);
-        }
+                this.textarea.value,
+            id_persona: formData.get('id_persona'),
+            parent: formData.get('parent'),
+            parent_id: formData.get('parent_id'),
+        });
 
         this.confirmBtn.disabled = true;
         this.setStatus('Guardando consulta…', 'primary');
-        fetch(this.form.action, {
+        fetch('/api/v1/clinical/encounter/captura/guardar', {
             method: 'POST',
-            headers: window.BioenlaceApiClient.mergeHeaders({
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            }),
+            headers: this.apiHeadersJson(),
             credentials: 'same-origin',
-            body: formData,
+            body: JSON.stringify(payload),
         })
             .then(function (r) {
                 return r.json();
             })
             .then(function (data) {
-                if (data.success) {
-                    self.setStatus(data.message || 'Consulta guardada.', 'success');
-                    self.discardDraft();
+                var ok = data && data.success;
+                var msg =
+                    (data && data.guardar && data.guardar.message) ||
+                    (data && data.message) ||
+                    '';
+                if (ok) {
+                    self.clientCaptureId = null;
+                    self.serverCaptureId = null;
+                    self.serverStage = null;
+                    self.lastAnalysisPayload = null;
+                    self.captureReview = null;
+                    self.draftText = '';
+                    if (self.reviewRoot) {
+                        self.reviewRoot.innerHTML = '';
+                    }
+                    if (self.responseContent) {
+                        self.responseContent.innerHTML = '';
+                        self.responseContent.classList.add('d-none');
+                    }
+                    if (self.responseEl) {
+                        self.responseEl.style.display = 'none';
+                    }
+                    if (self.textarea) {
+                        self.textarea.value = '';
+                    }
+                    self.setCaptureMode(false);
+                    self.setStatus(msg || 'Consulta guardada.', 'success');
                 } else {
-                    self.setStatus(data.message || 'Error al guardar.', 'danger');
+                    self.setStatus(msg || 'Error al guardar.', 'danger');
                     self.updateConfirmState();
                 }
             })

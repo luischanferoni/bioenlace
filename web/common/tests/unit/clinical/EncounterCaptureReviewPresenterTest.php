@@ -76,7 +76,7 @@ class EncounterCaptureReviewPresenterTest extends Unit
         $this->assertSame([], $review['categories']);
     }
 
-    public function testDefaultStagedIncludesAiSourcedItems(): void
+    public function testDefaultStagedExcludesAiSourcedItems(): void
     {
         $presenter = new EncounterCaptureReviewPresenter();
         $review = $presenter->build(
@@ -105,13 +105,13 @@ class EncounterCaptureReviewPresenterTest extends Unit
                     'campos_requeridos' => [],
                 ],
             ],
-            // Haystack sin el fármaco → Medicación queda source=ai; igual debe stagerse.
+            // Haystack sin el fármaco → Medicación queda source=ai: sugerencia sin tildar.
             'Consulta por cefalea. Diagnóstico: hipertensión arterial esencial.',
             null,
             false
         );
 
-        $this->assertContains('Medicación::0', $review['default_staged_item_ids']);
+        $this->assertNotContains('Medicación::0', $review['default_staged_item_ids']);
         $this->assertContains('Diagnóstico::0', $review['default_staged_item_ids']);
     }
 }

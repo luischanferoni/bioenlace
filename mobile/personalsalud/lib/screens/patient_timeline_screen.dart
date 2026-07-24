@@ -1613,9 +1613,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
       return;
     }
-    // Si la IA extrajo ítems, exigir al menos uno tildado (evita guardar solo texto
-    // y perder medicación/prácticas/indicaciones).
-    if (review.hasExtractedContent && _stagedItemIds.isEmpty) {
+    // Si se extrajeron ítems del texto, exigir al menos uno tildado (evita guardar solo
+    // texto y perder medicación/prácticas/indicaciones).
+    if (review.hasClinicalItems && _stagedItemIds.isEmpty) {
       _snack(
         'Seleccioná al menos un ítem del análisis antes de confirmar.',
         UiIntent.warning,
@@ -2096,23 +2096,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         ] else ...[
           BioSpacing.gapH(BioSpacing.lg),
           Text('Resultado del procesamiento', style: sectionTitleStyle),
-          BioSpacing.gapH(BioSpacing.xs),
-          const Wrap(
-            spacing: BioSpacing.md,
-            runSpacing: BioSpacing.xs,
-            children: [
-              _CaptureSourceLegend(
-                intent: UiIntent.neutral,
-                label: 'Del texto clínico',
-              ),
-              _CaptureSourceLegend(
-                intent: UiIntent.secondary,
-                label: 'Aporte de la IA',
-              ),
-            ],
-          ),
           BioSpacing.gapH(BioSpacing.sm),
           ...review.categories.map((cat) {
+            final delTexto =
+                cat.items.where((i) => i.isFromClinicalText).toList();
+            final sugeridos =
+                cat.items.where((i) => !i.isFromClinicalText).toList();
+
             return Padding(
               padding: const EdgeInsets.only(bottom: BioSpacing.md),
               child: Column(
@@ -2137,30 +2127,40 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                             ? IntentPalette.of(UiIntent.danger).base
                             : context.bio.textMuted,
                       ),
-                    )
-                  else
+                    ),
+                  if (delTexto.isNotEmpty)
                     Wrap(
                       spacing: BioSpacing.sm,
                       runSpacing: BioSpacing.sm,
-                      children: cat.items.map((item) {
-                        final selected = _stagedItemIds.contains(item.id);
-                        final chipLabel =
-                            item.subtitle != null && item.subtitle!.isNotEmpty
-                                ? '${item.label} (${item.subtitle})'
-                                : item.label;
-                        return BioChip(
-                          label: chipLabel,
-                          selected: selected,
-                          icon: selected ? Icons.check : null,
-                          intent: item.source == EncounterCaptureItemSource.ai
-                              ? UiIntent.secondary
-                              : UiIntent.neutral,
-                          onTap: _isSaving
-                              ? null
-                              : () => _toggleStagedItem(item.id, !selected),
-                        );
-                      }).toList(),
+                      children: delTexto
+                          .map((item) => _buildCaptureItemChip(item))
+                          .toList(),
                     ),
+                  if (sugeridos.isNotEmpty) ...[
+                    if (delTexto.isNotEmpty) BioSpacing.gapH(BioSpacing.sm),
+                    Wrap(
+                      spacing: BioSpacing.sm,
+                      runSpacing: BioSpacing.sm,
+                      children: sugeridos
+                          .map(
+                            (item) => Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildCaptureItemChip(item),
+                                Text(
+                                  'Sugerido por IA',
+                                  style: BioTypography.caption.copyWith(
+                                    color: IntentPalette.of(UiIntent.secondary)
+                                        .base,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -2178,6 +2178,21 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
+  Widget _buildCaptureItemChip(EncounterCaptureItem item) {
+    final selected = _stagedItemIds.contains(item.id);
+    final label = item.subtitle != null && item.subtitle!.isNotEmpty
+        ? '${item.label} (${item.subtitle})'
+        : item.label;
+
+    return BioChip(
+      label: label,
+      selected: selected,
+      icon: selected ? Icons.check : null,
+      intent: item.isFromClinicalText ? UiIntent.neutral : UiIntent.secondary,
+      onTap: _isSaving ? null : () => _toggleStagedItem(item.id, !selected),
+    );
+  }
+
   Widget _buildCaptureActionsBar() {
     final review = _captureReview;
     final canConfirm = !_isSaving &&
@@ -2186,7 +2201,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         review.systemError == null &&
         review.textoOriginal.trim().isNotEmpty &&
         !review.tieneDatosFaltantes &&
-        !(review.hasExtractedContent && _stagedItemIds.isEmpty);
+        !(review.hasClinicalItems && _stagedItemIds.isEmpty);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(
@@ -2294,40 +2309,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               ? _toggleDictation
               : null,
           voiceActive: _dictating || _audioOnlyRecording,
-        ),
-      ],
-    );
-  }
-}
-
-class _CaptureSourceLegend extends StatelessWidget {
-  const _CaptureSourceLegend({
-    required this.intent,
-    required this.label,
-  });
-
-  final UiIntent intent;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = IntentPalette.of(intent);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: palette.softBg,
-            border: Border.all(color: palette.border),
-            borderRadius: BorderRadius.circular(BioRadius.xs),
-          ),
-        ),
-        const SizedBox(width: BioSpacing.xs),
-        Text(
-          label,
-          style: BioTypography.caption.copyWith(color: context.bio.textMuted),
         ),
       ],
     );

@@ -26,12 +26,14 @@ final class EncounterCaptureReviewPresenter
         $extraidos = $this->resolveExtraidos($datosResultado);
         $systemError = $this->resolveSystemError($extraidos);
         $categories = $this->buildCategories($extraidos, $categorias, $textoOriginal);
-        // Todo lo extraído se tilda por defecto. `source` (clinical|ai) es solo señal UI:
-        // filtrar por clinical hacía que Medicación/Indicaciones no entraran al guardar
-        // (el encounter quedaba con diagnósticos vía codificación automática y sin note/meds).
+        // Lo anclado en el texto del profesional se tilda por defecto; los aportes de la IA
+        // se ofrecen como sugerencias sin tildar y requieren confirmación explícita.
         $defaultStaged = [];
         foreach ($categories as $category) {
             foreach ($category['items'] as $item) {
+                if (($item['source'] ?? 'clinical') === 'ai') {
+                    continue;
+                }
                 $defaultStaged[] = $item['id'];
             }
         }

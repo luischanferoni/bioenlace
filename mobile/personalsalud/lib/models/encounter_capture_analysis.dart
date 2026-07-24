@@ -24,6 +24,12 @@ class EncounterCaptureAnalysis {
   bool get hasExtractedContent =>
       categories.any((c) => c.items.isNotEmpty) && systemError == null;
 
+  /// Ítems anclados en el texto del profesional (los sugeridos por IA no cuentan:
+  /// vienen sin tildar y confirmarlos es opcional).
+  bool get hasClinicalItems =>
+      categories.any((c) => c.items.any((i) => i.isFromClinicalText)) &&
+      systemError == null;
+
   bool get canConfirmSave {
     if (!puedeConfirmar || systemError != null) return false;
     if (textoOriginal.trim().isEmpty) return false;

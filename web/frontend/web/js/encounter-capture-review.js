@@ -18,7 +18,7 @@
         var out = [];
         (review.categories || []).forEach(function (cat) {
             (cat.items || []).forEach(function (item) {
-                if (item && item.id) {
+                if (item && item.id && !isAiSuggestion(item)) {
                     out.push(item.id);
                 }
             });
@@ -32,6 +32,25 @@
         }
         return (review.categories || []).some(function (c) {
             return c.items && c.items.length;
+        });
+    }
+
+    function isAiSuggestion(item) {
+        return !!item && item.source === 'ai';
+    }
+
+    /**
+     * Ítems anclados en el texto del profesional: los sugeridos por IA vienen sin tildar
+     * y confirmarlos es opcional, así que no pueden bloquear el guardado.
+     */
+    function hasClinicalItems(review) {
+        if (!review || review.system_error) {
+            return false;
+        }
+        return (review.categories || []).some(function (c) {
+            return (c.items || []).some(function (item) {
+                return !isAiSuggestion(item);
+            });
         });
     }
 
@@ -111,7 +130,7 @@
         if (review.tiene_datos_faltantes) {
             return false;
         }
-        if (hasExtractedContent(review) && stagedIdSet.size === 0) {
+        if (hasClinicalItems(review) && stagedIdSet.size === 0) {
             return false;
         }
         return true;
@@ -123,9 +142,10 @@
             label += ' (' + item.subtitle + ')';
         }
         var active = isActive !== false;
+        var baseClass = isAiSuggestion(item) ? 'btn-outline-info' : 'btn-outline-secondary';
         var btnClass = active
             ? 'btn btn-sm btn-outline-primary capture-review-item active me-1 mb-1'
-            : 'btn btn-sm btn-outline-secondary capture-review-item me-1 mb-1';
+            : 'btn btn-sm ' + baseClass + ' capture-review-item me-1 mb-1';
         var iconClass = active ? 'bi bi-check-circle me-1' : 'bi bi-plus-circle me-1';
         return (
             '<button type="button" class="' +
@@ -150,11 +170,11 @@
         }
 
         var stagedIds = defaultStagedIds(review);
-        if ((!stagedIds || !stagedIds.length) && hasExtractedContent(review)) {
+        if ((!stagedIds || !stagedIds.length) && hasClinicalItems(review)) {
             stagedIds = [];
             (review.categories || []).forEach(function (cat) {
                 (cat.items || []).forEach(function (item) {
-                    if (item && item.id) {
+                    if (item && item.id && !isAiSuggestion(item)) {
                         stagedIds.push(item.id);
                     }
                 });
@@ -225,11 +245,28 @@
                         : 'Sin datos en esta categoría.';
                     parts.push('<p class="' + emptyClass + '">' + escapeHtml(emptyMsg) + '</p>');
                 } else {
-                    parts.push('<div class="d-flex flex-wrap gap-1">');
-                    cat.items.forEach(function (item) {
-                        parts.push(renderItemChip(item, !!stagedSet[item.id]));
+                    var delTexto = cat.items.filter(function (item) {
+                        return !isAiSuggestion(item);
                     });
-                    parts.push('</div>');
+                    var sugeridos = cat.items.filter(isAiSuggestion);
+
+                    if (delTexto.length) {
+                        parts.push('<div class="d-flex flex-wrap gap-1">');
+                        delTexto.forEach(function (item) {
+                            parts.push(renderItemChip(item, !!stagedSet[item.id]));
+                        });
+                        parts.push('</div>');
+                    }
+                    if (sugeridos.length) {
+                        parts.push('<div class="d-flex flex-wrap gap-2 mt-1">');
+                        sugeridos.forEach(function (item) {
+                            parts.push('<div class="d-flex flex-column">');
+                            parts.push(renderItemChip(item, !!stagedSet[item.id]));
+                            parts.push('<span class="text-info small">Sugerido por IA</span>');
+                            parts.push('</div>');
+                        });
+                        parts.push('</div>');
+                    }
                 }
                 parts.push('</div>');
             });

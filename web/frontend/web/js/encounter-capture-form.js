@@ -404,6 +404,9 @@
         if (!this.responseContent) {
             return;
         }
+        if (!html) {
+            this.setStatus('No se pudo mostrar el análisis.', 'danger');
+        }
         if (this.reviewRoot) {
             this.reviewRoot.innerHTML = '';
         }
@@ -766,7 +769,7 @@
                 }
                 self.setCaptureMode(true);
             }
-            self.setStatus('Análisis listo. Revise y confirme el guardado.', 'success');
+            self.setStatus('', 'muted');
         };
 
         var fail = function (msg) {

@@ -167,27 +167,21 @@
         var parts = [];
 
         parts.push('<div class="capture-review-panel">');
-        parts.push('<h6 class="text-dark mb-2">Nota de esta atención</h6>');
         parts.push(
-            '<p class="small text-muted mb-3">Revisá lo registrado y las sugerencias antes de confirmar.</p>'
+            '<div class="text-center mb-3">' +
+                '<span class="fw-semibold text-decoration-underline">Nota de esta atención</span>' +
+                '</div>'
         );
 
         parts.push('<div class="mb-3">');
-        parts.push('<div class="text-uppercase small text-muted mb-1">Texto registrado</div>');
-        parts.push('<div class="bg-light p-3 rounded border">' + escapeHtml(review.texto_original || '') + '</div>');
+        parts.push('<div class="fw-semibold mb-1">Texto registrado</div>');
+        parts.push('<div>' + escapeHtml(review.texto_original || '') + '</div>');
         parts.push('</div>');
 
         if (options.textoFormateado) {
             parts.push('<div class="mb-3">');
-            parts.push('<div class="text-uppercase small text-muted mb-1">Texto formateado</div>');
-            parts.push(
-                '<div class="bg-light p-3 rounded border texto-formateado">' +
-                    options.textoFormateado +
-                    '</div>'
-            );
-            parts.push(
-                '<div class="small text-muted mt-1"><i class="bi bi-info-circle me-1"></i>Las palabras subrayadas fueron corregidas automáticamente</div>'
-            );
+            parts.push('<div class="fw-semibold mb-1">Texto formateado</div>');
+            parts.push('<div class="texto-formateado">' + options.textoFormateado + '</div>');
             parts.push('</div>');
         } else if (
             review.texto_procesado &&
@@ -195,7 +189,7 @@
             review.texto_procesado.trim() !== (review.texto_original || '').trim()
         ) {
             parts.push('<div class="mb-3">');
-            parts.push('<div class="text-uppercase small text-muted mb-1">Texto procesado</div>');
+            parts.push('<div class="fw-semibold mb-1">Texto procesado</div>');
             parts.push('<div class="small">' + escapeHtml(review.texto_procesado) + '</div>');
             parts.push('</div>');
         }
@@ -214,21 +208,18 @@
                 '<div class="alert alert-info" role="status">La IA no extrajo datos estructurados. Podés confirmar igual con el texto registrado.</div>'
             );
         } else {
-            parts.push('<div class="text-uppercase small text-muted mb-2">Análisis y sugerencias de la IA</div>');
-            parts.push(
-                '<p class="small text-muted mb-2">Los ítems vienen tildados por defecto. Clic para incluirlos o quitarlos del guardado.</p>'
-            );
+            parts.push('<div class="fw-semibold mb-2">Resultado del procesamiento</div>');
             review.categories.forEach(function (cat) {
                 parts.push('<div class="mb-3">');
-                parts.push('<h6 class="border-bottom border-2 border-dark pb-2">');
+                parts.push('<div class="small fw-semibold mb-1">');
                 parts.push(escapeHtml(cat.title || ''));
                 if (cat.required) {
                     parts.push(' <span class="badge bg-danger">Requerido</span>');
                 }
-                parts.push('</h6>');
+                parts.push('</div>');
 
                 if (!cat.items || !cat.items.length) {
-                    var emptyClass = cat.required ? 'text-danger fw-bolder' : 'text-warning fw-bolder ps-3';
+                    var emptyClass = cat.required ? 'text-danger fw-bolder small' : 'text-warning fw-bolder small ps-3';
                     var emptyMsg = cat.required
                         ? 'Falta información en esta categoría.'
                         : 'Sin datos en esta categoría.';
@@ -239,9 +230,6 @@
                         parts.push(renderItemChip(item, !!stagedSet[item.id]));
                     });
                     parts.push('</div>');
-                    parts.push(
-                        '<p class="small text-muted mt-2 mb-0">Clic en un ítem para incluirlo o quitarlo del guardado.</p>'
-                    );
                 }
                 parts.push('</div>');
             });

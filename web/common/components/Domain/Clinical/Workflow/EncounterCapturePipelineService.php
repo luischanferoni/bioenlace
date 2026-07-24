@@ -319,12 +319,16 @@ final class EncounterCapturePipelineService
         $capture->texto_procesado = isset($out['texto_procesado'])
             ? (string) $out['texto_procesado']
             : $capture->transcript;
-        $extraidos = $out['datosExtraidos'] ?? $out['datos_extraidos'] ?? [];
-        $capture->setDatosExtraidos(is_array($extraidos) ? $extraidos : []);
+        $extraidos = $this->extractDatosExtraidosFromAnalizar($out);
+        $capture->setDatosExtraidos($extraidos);
         $capture->analysis_cache_token = isset($out['analysis_cache_token'])
             ? (string) $out['analysis_cache_token']
             : null;
-        $capture->setAnalysisResponse($out);
+        // El HTML del analizador legacy no es contrato del pipeline: los clientes
+        // renderizan `capture_review`. Evita inflar el snapshot y las respuestas.
+        $snapshot = $out;
+        unset($snapshot['html']);
+        $capture->setAnalysisResponse($snapshot);
         $capture->encounter_id = isset($out['encounter_id'])
             ? (int) $out['encounter_id']
             : (isset($out['id_consulta']) ? (int) $out['id_consulta'] : $capture->encounter_id);
@@ -365,13 +369,10 @@ final class EncounterCapturePipelineService
         }
 
         $datosExtraidos = $body['datosExtraidos'] ?? null;
-        if (!is_array($datosExtraidos)) {
+        if (!is_array($datosExtraidos) || $datosExtraidos === []) {
             $datosExtraidos = $capture->getDatosExtraidos();
-            $stagedIds = $capture->getStagedItemIds();
-            if ($stagedIds !== [] && isset($analysis['capture_review']) && is_array($analysis['capture_review'])) {
-                // Si el cliente no envió filtrado, usar extracción completa del análisis;
-                // el filtrado por selección lo hace el cliente normalmente.
-                $datosExtraidos = $capture->getDatosExtraidos();
+            if ($datosExtraidos === [] && $analysis !== []) {
+                $datosExtraidos = $this->extractDatosExtraidosFromAnalizar($analysis);
             }
         }
 
@@ -791,8 +792,14 @@ final class EncounterCapturePipelineService
         ];
 
         if ($includeAnalysis) {
-            $out['datosExtraidos'] = $capture->getDatosExtraidos();
             $analysis = $capture->getAnalysisResponse();
+            $extraidos = $capture->getDatosExtraidos();
+            if ($extraidos === [] && $analysis !== []) {
+                $extraidos = $this->extractDatosExtraidosFromAnalizar($analysis);
+            }
+            if ($extraidos !== []) {
+                $out['datosExtraidos'] = $extraidos;
+            }
             if ($analysis !== []) {
                 $out['analysis'] = $analysis;
                 // Compat: campos top-level que ya consume Flutter/web.
@@ -806,6 +813,8 @@ final class EncounterCapturePipelineService
                     'encounter_id',
                     'id_consulta',
                     'success',
+                    'puede_confirmar',
+                    'tiene_datos_faltantes',
                 ] as $key) {
                     if (array_key_exists($key, $analysis) && !array_key_exists($key, $out)) {
                         $out[$key] = $analysis[$key];
@@ -815,5 +824,35 @@ final class EncounterCapturePipelineService
         }
 
         return $out;
+    }
+
+    /**
+     * El analizar legacy expone extracción en datos.datosExtraidos (no top-level).
+     *
+     * @param array<string, mixed> $out
+     * @return array<string, mixed>
+     */
+    private function extractDatosExtraidosFromAnalizar(array $out): array
+    {
+        $direct = $out['datosExtraidos'] ?? $out['datos_extraidos'] ?? null;
+        if (is_array($direct) && $direct !== []) {
+            return $direct;
+        }
+        $datos = $out['datos'] ?? null;
+        if (!is_array($datos)) {
+            return [];
+        }
+        $nested = $datos['datosExtraidos'] ?? null;
+        if (is_array($nested)) {
+            return $nested;
+        }
+        if (is_string($nested) && $nested !== '') {
+            $decoded = json_decode($nested, true);
+            if (is_array($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return [];
     }
 }

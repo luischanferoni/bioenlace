@@ -1,6 +1,7 @@
 // lib/screens/patient_timeline_screen.dart
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:record/record.dart';
@@ -1037,44 +1038,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return 'Revisá el texto';
   }
 
-  /// Solo envía metadatos STT cuando aportan; evita bloquear texto tipeado o corregido.
-  Future<({
-    Map<String, dynamic>? stt,
-    String? audioBase64,
-    bool sttForceServer,
-  })> _resolveSpeechPayloadForAnalyze(String text) async {
-    final last = _lastDictation;
-    if (last == null) {
-      return (stt: null, audioBase64: null, sttForceServer: false);
-    }
-
-    final dictationText = last.text.trim();
-    if (text != dictationText) {
-      return (stt: null, audioBase64: null, sttForceServer: false);
-    }
-
-    if (DeviceSttLocalQuality.isAcceptable(text, last)) {
-      return (
-        stt: last.toSttPayload(),
-        audioBase64: null,
-        sttForceServer: false,
-      );
-    }
-
-    if (_sttConfig.serverEnabled && _pendingAudioPath != null) {
-      final audioB64 = await _audioPathToBase64(_pendingAudioPath!);
-      if (audioB64 != null && audioB64.isNotEmpty) {
-        return (
-          stt: null,
-          audioBase64: audioB64,
-          sttForceServer: true,
-        );
-      }
-    }
-
-    return (stt: null, audioBase64: null, sttForceServer: false);
-  }
-
   void _clearCaptureDraft({bool deleteLocalPending = true}) {
     final pendingId = _activePendingId;
     setState(() {
@@ -1114,30 +1077,38 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     audioName = existing?.audioFileName;
 
     final tempAudio = _pendingAudioPath;
-    if (tempAudio != null &&
-        tempAudio.isNotEmpty &&
-        !tempAudio.contains('/pending-encounters/')) {
-      final imported = await _pendingStore.importAudioFile(
-        captureId: id,
-        sourcePath: tempAudio,
-      );
-      if (imported != null) {
-        audioName = imported;
-        final durable = await _pendingStore.absoluteAudioPath(
-          PendingEncounterCapture(
-            id: id,
-            personaId: widget.personaId,
-            parent: widget.consultParent!,
-            parentId: widget.consultParentId!,
-            texto: texto,
-            status: status,
-            createdAt: now,
-            updatedAt: now,
-            audioFileName: imported,
-          ),
-        );
-        if (durable != null) {
-          _pendingAudioPath = durable;
+    if (tempAudio != null && tempAudio.isNotEmpty) {
+      final alreadyDurable = !kIsWeb &&
+          tempAudio.contains('/pending-encounters/');
+      if (!alreadyDurable) {
+        try {
+          final imported = await _pendingStore.importAudioFile(
+            captureId: id,
+            sourcePath: tempAudio,
+          );
+          if (imported != null) {
+            audioName = imported;
+            if (!kIsWeb) {
+              final durable = await _pendingStore.absoluteAudioPath(
+                PendingEncounterCapture(
+                  id: id,
+                  personaId: widget.personaId,
+                  parent: widget.consultParent!,
+                  parentId: widget.consultParentId!,
+                  texto: texto,
+                  status: status,
+                  createdAt: now,
+                  updatedAt: now,
+                  audioFileName: imported,
+                ),
+              );
+              if (durable != null) {
+                _pendingAudioPath = durable;
+              }
+            }
+          }
+        } catch (e, st) {
+          debugPrint('[captura] importAudio omitido: $e\n$st');
         }
       }
     }
@@ -1170,7 +1141,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
     await _pendingStore.upsert(item);
     _activePendingId = id;
-    await _loadPendingCaptures();
+    // Actualizar lista local sin re-sincronizar servidor (evita cuelgues / race).
+    if (mounted) {
+      final next = List<PendingEncounterCapture>.from(_pendingCaptures);
+      final idx = next.indexWhere((e) => e.id == item.id);
+      if (idx >= 0) {
+        next[idx] = item;
+      } else {
+        next.insert(0, item);
+      }
+      setState(() => _pendingCaptures = next);
+    }
     return item;
   }
 
@@ -1376,19 +1357,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ? PendingEncounterCaptureStatus.pendingUpload
             : PendingEncounterCaptureStatus.pendingAnalyze);
 
-    // Primero persistir en el dispositivo (texto + audio); luego pipeline servidor.
-    final draft = await _persistLocalDraft(
-      texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
-      status: startStatus,
-      clearError: true,
-      clearAnalysis: true,
-    );
-    if (draft == null) {
-      if (mounted) setState(() => _isAnalyzing = false);
-      return;
-    }
-
     try {
+      // Primero persistir en el dispositivo (texto + audio); luego pipeline servidor.
+      final draft = await _persistLocalDraft(
+        texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
+        status: startStatus,
+        clearError: true,
+        clearAnalysis: true,
+      );
+      if (draft == null) {
+        return;
+      }
+
       final ctx = await _operationalContextForCapture();
       final last = _lastDictation;
       Map<String, dynamic>? sttMeta;
@@ -1511,10 +1491,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             error: _mensajeErrorCaptura(e),
           );
           if (!mounted) return;
-          _snack(
-            'Audio en servidor. Falló la transcripción. ${_mensajeErrorCaptura(e)}',
-            UiIntent.danger,
-          );
+          _snack(_mensajeErrorCaptura(e), UiIntent.danger);
           return;
         }
       }
@@ -1547,26 +1524,33 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         serverId = map['id'] is int
             ? map['id'] as int
             : int.tryParse('${map['id']}');
+        // Preferir payload completo del análisis (incluye capture_review).
         if (map['analysis'] is Map) {
           analysisPayload = Map<String, dynamic>.from(map['analysis'] as Map);
-        } else {
-          analysisPayload = {
-            ...analyzed,
-            if (map['datosExtraidos'] != null)
-              'datosExtraidos': map['datosExtraidos'],
-            if (map['capture_review'] != null)
-              'capture_review': map['capture_review'],
-            if (map['texto_procesado'] != null)
-              'texto_procesado': map['texto_procesado'],
-            if (map['texto_original'] != null)
-              'texto_original': map['texto_original'],
-            if (map['analysis_cache_token'] != null)
-              'analysis_cache_token': map['analysis_cache_token'],
-            if (map['id_configuracion'] != null)
-              'id_configuracion': map['id_configuracion'],
-            if (map['encounter_id'] != null)
-              'encounter_id': map['encounter_id'],
-          };
+        }
+        // Completar con campos top-level del capture si faltan.
+        for (final key in [
+          'capture_review',
+          'texto_original',
+          'texto_procesado',
+          'datosExtraidos',
+          'analysis_cache_token',
+          'id_configuracion',
+          'encounter_id',
+          'id_consulta',
+          'puede_confirmar',
+          'tiene_datos_faltantes',
+        ]) {
+          if (!analysisPayload.containsKey(key) && map[key] != null) {
+            analysisPayload[key] = map[key];
+          }
+        }
+        // Legacy: datos.datosExtraidos → datosExtraidos top-level.
+        final datos = analysisPayload['datos'];
+        if (datos is Map &&
+            analysisPayload['datosExtraidos'] == null &&
+            datos['datosExtraidos'] != null) {
+          analysisPayload['datosExtraidos'] = datos['datosExtraidos'];
         }
       }
 
@@ -1594,12 +1578,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _chatController.clear();
         _sttStatus = '';
       });
-    } catch (e) {
-      await _persistLocalDraft(
-        texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
-        status: PendingEncounterCaptureStatus.pendingAnalyze,
-        error: _mensajeErrorCaptura(e),
-      );
+    } catch (e, st) {
+      debugPrint('[captura] analizar falló: $e\n$st');
+      try {
+        await _persistLocalDraft(
+          texto: text.isEmpty ? '(audio pendiente de transcribir)' : text,
+          status: PendingEncounterCaptureStatus.pendingAnalyze,
+          error: _mensajeErrorCaptura(e),
+        );
+      } catch (_) {}
       if (!mounted) return;
       _snack(_mensajeErrorCaptura(e), UiIntent.danger);
     } finally {
@@ -2064,124 +2051,130 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildCaptureReviewPanel(EncounterCaptureAnalysis review) {
-    return BioCard.intent(
-      intent: UiIntent.primary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Nota de esta atención', style: BioTypography.title),
-          BioSpacing.gapH(BioSpacing.md),
-          Text('Texto registrado', style: BioTypography.overline),
-          BioSpacing.gapH(BioSpacing.xs),
-          Text(
-            (_draftText ?? review.textoOriginal).trim().isNotEmpty
-                ? (_draftText ?? review.textoOriginal)
-                : review.textoOriginal,
-            style: BioTypography.body,
+    final sectionTitleStyle = BioTypography.title;
+    final categoryTitleStyle = BioTypography.bodySm.copyWith(
+      fontWeight: FontWeight.w600,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: Text(
+            'Nota de esta atención',
+            textAlign: TextAlign.center,
+            style: BioTypography.title.copyWith(
+              decoration: TextDecoration.underline,
+            ),
           ),
-          if (review.textoProcesado != null &&
-              review.textoProcesado!.trim().isNotEmpty &&
-              review.textoProcesado!.trim() != review.textoOriginal.trim()) ...[
-            BioSpacing.gapH(BioSpacing.md),
-            Text('Texto procesado', style: BioTypography.overline),
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(review.textoProcesado!, style: BioTypography.bodySm),
-          ],
-          if (review.systemError != null) ...[
-            BioSpacing.gapH(BioSpacing.md),
-            BioAlert.danger(message: review.systemError!),
-          ] else if (!review.hasExtractedContent) ...[
-            BioSpacing.gapH(BioSpacing.md),
-            BioAlert.info(
-              message: 'Sin datos estructurados. Se guardará el texto.',
-            ),
-          ] else ...[
-            BioSpacing.gapH(BioSpacing.lg),
-            Text(
-              'Sugerencias',
-              style: BioTypography.overline,
-            ),
-            BioSpacing.gapH(BioSpacing.xs),
-            const Wrap(
-              spacing: BioSpacing.md,
-              runSpacing: BioSpacing.xs,
-              children: [
-                _CaptureSourceLegend(
-                  intent: UiIntent.neutral,
-                  label: 'Del texto clínico',
-                ),
-                _CaptureSourceLegend(
-                  intent: UiIntent.secondary,
-                  label: 'Aporte de la IA',
-                ),
-              ],
-            ),
-            BioSpacing.gapH(BioSpacing.sm),
-            ...review.categories.map((cat) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: BioSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(cat.title, style: BioTypography.title),
-                        ),
-                        if (cat.required)
-                          BioBadge.danger('Requerido'),
-                      ],
-                    ),
-                    BioSpacing.gapH(BioSpacing.sm),
-                    if (cat.items.isEmpty)
-                      Text(
-                        cat.required
-                            ? 'Falta información en esta categoría.'
-                            : 'Sin datos en esta categoría.',
-                        style: BioTypography.bodySm.copyWith(
-                          color: cat.required
-                              ? IntentPalette.of(UiIntent.danger).base
-                              : context.bio.textMuted,
-                        ),
-                      )
-                    else
-                      Wrap(
-                        spacing: BioSpacing.sm,
-                        runSpacing: BioSpacing.sm,
-                        children: cat.items.map((item) {
-                          final selected = _stagedItemIds.contains(item.id);
-                          final chipLabel =
-                              item.subtitle != null && item.subtitle!.isNotEmpty
-                                  ? '${item.label} (${item.subtitle})'
-                                  : item.label;
-                          return BioChip(
-                            label: chipLabel,
-                            selected: selected,
-                            icon: selected ? Icons.check : null,
-                            intent: item.source == EncounterCaptureItemSource.ai
-                                ? UiIntent.secondary
-                                : UiIntent.neutral,
-                            onTap: _isSaving
-                                ? null
-                                : () => _toggleStagedItem(item.id, !selected),
-                          );
-                        }).toList(),
-                      ),
-                  ],
-                ),
-              );
-            }),
-          ],
-          if (review.tieneDatosFaltantes) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            BioAlert.warning(
-              message: review.datosFaltantesMensaje?.trim().isNotEmpty == true
-                  ? review.datosFaltantesMensaje!
-                  : 'Faltan categorías o campos obligatorios. Completá el dictado/texto (dosis, frecuencia, etc.) y volvé a analizar. No se puede confirmar hasta completarlos.',
-            ),
-          ],
+        ),
+        BioSpacing.gapH(BioSpacing.md),
+        Text('Texto registrado', style: sectionTitleStyle),
+        BioSpacing.gapH(BioSpacing.xs),
+        Text(
+          (_draftText ?? review.textoOriginal).trim().isNotEmpty
+              ? (_draftText ?? review.textoOriginal)
+              : review.textoOriginal,
+          style: BioTypography.body,
+        ),
+        if (review.textoProcesado != null &&
+            review.textoProcesado!.trim().isNotEmpty &&
+            review.textoProcesado!.trim() != review.textoOriginal.trim()) ...[
+          BioSpacing.gapH(BioSpacing.md),
+          Text('Texto procesado', style: sectionTitleStyle),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(review.textoProcesado!, style: BioTypography.bodySm),
         ],
-      ),
+        if (review.systemError != null) ...[
+          BioSpacing.gapH(BioSpacing.md),
+          BioAlert.danger(message: review.systemError!),
+        ] else if (!review.hasExtractedContent) ...[
+          BioSpacing.gapH(BioSpacing.md),
+          BioAlert.info(
+            message: 'Sin datos estructurados. Se guardará el texto.',
+          ),
+        ] else ...[
+          BioSpacing.gapH(BioSpacing.lg),
+          Text('Resultado del procesamiento', style: sectionTitleStyle),
+          BioSpacing.gapH(BioSpacing.xs),
+          const Wrap(
+            spacing: BioSpacing.md,
+            runSpacing: BioSpacing.xs,
+            children: [
+              _CaptureSourceLegend(
+                intent: UiIntent.neutral,
+                label: 'Del texto clínico',
+              ),
+              _CaptureSourceLegend(
+                intent: UiIntent.secondary,
+                label: 'Aporte de la IA',
+              ),
+            ],
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          ...review.categories.map((cat) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: BioSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(cat.title, style: categoryTitleStyle),
+                      ),
+                      if (cat.required) BioBadge.danger('Requerido'),
+                    ],
+                  ),
+                  BioSpacing.gapH(BioSpacing.sm),
+                  if (cat.items.isEmpty)
+                    Text(
+                      cat.required
+                          ? 'Falta información en esta categoría.'
+                          : 'Sin datos en esta categoría.',
+                      style: BioTypography.bodySm.copyWith(
+                        color: cat.required
+                            ? IntentPalette.of(UiIntent.danger).base
+                            : context.bio.textMuted,
+                      ),
+                    )
+                  else
+                    Wrap(
+                      spacing: BioSpacing.sm,
+                      runSpacing: BioSpacing.sm,
+                      children: cat.items.map((item) {
+                        final selected = _stagedItemIds.contains(item.id);
+                        final chipLabel =
+                            item.subtitle != null && item.subtitle!.isNotEmpty
+                                ? '${item.label} (${item.subtitle})'
+                                : item.label;
+                        return BioChip(
+                          label: chipLabel,
+                          selected: selected,
+                          icon: selected ? Icons.check : null,
+                          intent: item.source == EncounterCaptureItemSource.ai
+                              ? UiIntent.secondary
+                              : UiIntent.neutral,
+                          onTap: _isSaving
+                              ? null
+                              : () => _toggleStagedItem(item.id, !selected),
+                        );
+                      }).toList(),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ],
+        if (review.tieneDatosFaltantes) ...[
+          BioSpacing.gapH(BioSpacing.sm),
+          BioAlert.warning(
+            message: review.datosFaltantesMensaje?.trim().isNotEmpty == true
+                ? review.datosFaltantesMensaje!
+                : 'Faltan categorías o campos obligatorios. Completá el dictado/texto (dosis, frecuencia, etc.) y volvé a analizar. No se puede confirmar hasta completarlos.',
+          ),
+        ],
+      ],
     );
   }
 

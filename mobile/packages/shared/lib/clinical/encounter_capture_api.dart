@@ -73,6 +73,30 @@ class EncounterCaptureApi {
   }) async {
     final uri =
         Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/crear-o-subir');
+    final hasAudio = audioPath != null && audioPath.isNotEmpty;
+
+    // Texto sin audio: JSON (más simple y fiable en web).
+    if (!hasAudio) {
+      final body = <String, dynamic>{
+        'client_capture_id': clientCaptureId,
+        'id_persona': idPersona,
+        if (parent != null) 'parent': parent,
+        if (parentId != null) 'parent_id': parentId,
+        if (texto != null && texto.isNotEmpty) 'consulta': texto,
+        if (sttForceServer) 'stt_force_server': true,
+        if (stt != null && stt.isNotEmpty) 'stt': stt,
+        if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
+          'userPerTabConfig': userPerTabConfig,
+      };
+      debugPrint(
+        '[HTTP captura/crear-o-subir] POST JSON $uri client=$clientCaptureId',
+      );
+      final response = await http
+          .post(uri, headers: _jsonHeaders, body: json.encode(body))
+          .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+      return _decodeMap(response, 'captura/crear-o-subir');
+    }
+
     final request = http.MultipartRequest('POST', uri);
     request.headers.addAll(_multipartHeaders);
     request.fields['client_capture_id'] = clientCaptureId;
@@ -89,14 +113,11 @@ class EncounterCaptureApi {
     if (userPerTabConfig != null && userPerTabConfig.isNotEmpty) {
       request.fields['userPerTabConfig'] = json.encode(userPerTabConfig);
     }
-    if (audioPath != null && audioPath.isNotEmpty) {
-      request.files.add(
-        await multipartFileFromXFile(XFile(audioPath), field: 'file'),
-      );
-    }
+    request.files.add(
+      await multipartFileFromXFile(XFile(audioPath), field: 'file'),
+    );
     debugPrint(
-      '[HTTP captura/crear-o-subir] POST $uri client=$clientCaptureId '
-      'has_audio=${audioPath != null}',
+      '[HTTP captura/crear-o-subir] POST multipart $uri client=$clientCaptureId',
     );
     final streamed = await request
         .send()

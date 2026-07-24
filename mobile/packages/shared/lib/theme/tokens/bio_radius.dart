@@ -20,6 +20,8 @@ class BioRadius {
   /// 14 — hero / banners.
   static const double lg = 14;
 
+  static const double xl = 20;
+
   /// Pill — usar con criterio (avatares, tags pequeños).
   static const double pill = 999;
 

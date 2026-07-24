@@ -119,9 +119,40 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 const sections = document.querySelectorAll('section[id]');
+const isIndexPage = Boolean(document.getElementById('inicio'));
+
+function currentPageFile() {
+    const file = (window.location.pathname.split('/').pop() || '').trim();
+    return file === '' || file === '/' ? 'index.html' : file;
+}
+
+function navLinkPageFile(href) {
+    if (!href) return '';
+    const path = href.split('#')[0].trim();
+    if (!path || path === '.' || path === './') return 'index.html';
+    return path.split('/').pop() || '';
+}
+
+function markCurrentPageNavLink() {
+    if (isIndexPage) return;
+
+    const page = currentPageFile();
+    navLinks.forEach(link => {
+        const isCurrent = navLinkPageFile(link.getAttribute('href')) === page;
+        link.classList.toggle('active', isCurrent);
+        if (isCurrent) {
+            link.setAttribute('aria-current', 'page');
+        } else {
+            link.removeAttribute('aria-current');
+        }
+    });
+}
 
 function activateNavLink() {
-    if (!sections.length) return;
+    // En páginas standalone (precios, alta, …) el ítem activo es el de la
+    // página actual; el scroll-spy solo aplica al index con anclas.
+    if (!isIndexPage || !sections.length) return;
+
     const scrollY = window.pageYOffset;
 
     sections.forEach(section => {
@@ -137,4 +168,5 @@ function activateNavLink() {
     });
 }
 
+markCurrentPageNavLink();
 window.addEventListener('scroll', activateNavLink);

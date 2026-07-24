@@ -82,13 +82,13 @@ use yii\helpers\Html;
         </div>
         <div class="d-flex flex-wrap gap-2 justify-content-end mb-3" id="capture-review-actions" style="display: none;">
             <button class="btn btn-outline-secondary" type="button" id="capture-edit-btn">
-                <i class="bi bi-pencil"></i>&nbsp;Editar
+                <i class="bi bi-pencil"></i>&nbsp;Editar texto
             </button>
             <button class="btn btn-outline-danger" type="button" id="capture-discard-btn">
-                <i class="bi bi-x-circle"></i>&nbsp;Descartar
+                <i class="bi bi-x-circle"></i>&nbsp;Eliminar
             </button>
-            <button class="btn btn-primary" type="button" id="send-message" disabled title="Confirmar y guardar en la historia clínica">
-                <i class="bi bi-check-circle"></i>&nbsp;Confirmar y guardar
+            <button class="btn btn-primary" type="button" id="send-message" disabled title="Guardar en la historia clínica">
+                <i class="bi bi-check-circle"></i>&nbsp;Guardar
             </button>
         </div>
     </div>

@@ -82,6 +82,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               widget.consultParent!.isNotEmpty &&
               widget.consultParentId != null));
 
+  bool _autoOpenedReview = false;
+
   @override
   void initState() {
     super.initState();
@@ -115,10 +117,29 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       for (final row in remote) {
         final clientId = row['client_capture_id']?.toString() ?? '';
         if (clientId.isEmpty) continue;
-        final merged = PendingEncounterCapture.fromServerCapture(
+        var merged = PendingEncounterCapture.fromServerCapture(
           row,
           local: byId[clientId],
         );
+        // Si el listado no trajo el análisis completo, pedirlo a /ver.
+        final needsReview = merged.status ==
+                PendingEncounterCaptureStatus.pendingSave ||
+            merged.status == PendingEncounterCaptureStatus.failedSave;
+        if (needsReview && merged.analysisResponse == null) {
+          try {
+            final detail = await _encounterApi.capturaVer(
+              clientCaptureId: merged.id,
+              captureId: merged.serverCaptureId,
+            );
+            final capture = detail['capture'];
+            if (capture is Map) {
+              merged = PendingEncounterCapture.fromServerCapture(
+                Map<String, dynamic>.from(capture),
+                local: merged,
+              );
+            }
+          } catch (_) {}
+        }
         byId[clientId] = merged;
         await _pendingStore.upsert(merged);
       }
@@ -129,6 +150,26 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
     if (!mounted) return;
     setState(() => _pendingCaptures = list);
+
+    if (!_autoOpenedReview &&
+        !_enRevisionCaptura &&
+        _captureReview == null &&
+        !_captureBusy) {
+      PendingEncounterCapture? ready;
+      for (final item in list) {
+        final isReady = item.status ==
+                PendingEncounterCaptureStatus.pendingSave ||
+            item.status == PendingEncounterCaptureStatus.failedSave;
+        if (isReady && item.analysisResponse != null) {
+          ready = item;
+          break;
+        }
+      }
+      if (ready != null) {
+        _autoOpenedReview = true;
+        await _resumePendingCapture(ready);
+      }
+    }
   }
 
   Future<void> _loadSttConfig() async {
@@ -852,7 +893,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       if (!mounted) return;
       setState(() {
         _dictating = true;
-        _sttStatus = 'Escuchando… pulse micrófono para detener.';
+        _sttStatus = 'Escuchando…';
       });
     } catch (e) {
       _snack('No se pudo iniciar dictado: $e', UiIntent.danger);
@@ -875,7 +916,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       if (!mounted) return;
       setState(() {
         _audioOnlyRecording = true;
-        _sttStatus = 'Grabando… pulse micrófono para detener.';
+        _sttStatus = 'Grabando…';
       });
     } catch (e) {
       _snack('No se pudo grabar audio: $e', UiIntent.danger);
@@ -899,7 +940,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     setState(() {
       _audioOnlyRecording = false;
       _sttStatus = _pendingAudioPath != null
-          ? 'Audio guardado en el teléfono. Pulse «Servidor» para transcribir o escriba y envíe.'
+          ? 'Audio listo'
           : 'No se capturó audio.';
     });
   }
@@ -985,15 +1026,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   String _dictationStatusMessage(DeviceDictationResult result, String text) {
     final trimmed = text.trim();
     if (trimmed.isEmpty) {
-      return 'No se detectó voz. Intente de nuevo o escriba la consulta.';
+      return 'Sin voz detectada';
     }
     if (DeviceSttLocalQuality.isAcceptable(trimmed, result)) {
-      return 'Dictado listo. Revise y envíe.';
+      return 'Listo';
     }
     if (_sttConfig.serverEnabled) {
-      return 'Calidad baja. Corrija el texto, use «Transcribir en servidor» o envíe para reintentar con audio.';
+      return 'Calidad baja';
     }
-    return 'Calidad baja. Corrija el texto si hace falta y envíe.';
+    return 'Revisá el texto';
   }
 
   /// Solo envía metadatos STT cuando aportan; evita bloquear texto tipeado o corregido.
@@ -1152,70 +1193,74 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
     await _loadPendingCaptures();
     if (mounted) {
-      _snack('Nota pendiente eliminada.', UiIntent.neutral);
+      _snack('Eliminada', UiIntent.neutral);
     }
   }
 
   Future<void> _resumePendingCapture(PendingEncounterCapture item) async {
     if (_captureBusy) return;
-    final audioPath = await _pendingStore.absoluteAudioPath(item);
+    var current = item;
+    final needsReview = current.status ==
+            PendingEncounterCaptureStatus.pendingSave ||
+        current.status == PendingEncounterCaptureStatus.failedSave;
+    if (needsReview && current.analysisResponse == null) {
+      try {
+        final detail = await _encounterApi.capturaVer(
+          clientCaptureId: current.id,
+          captureId: current.serverCaptureId,
+        );
+        final capture = detail['capture'];
+        if (capture is Map) {
+          current = PendingEncounterCapture.fromServerCapture(
+            Map<String, dynamic>.from(capture),
+            local: current,
+          );
+          await _pendingStore.upsert(current);
+        }
+      } catch (_) {}
+    }
+
+    final audioPath = await _pendingStore.absoluteAudioPath(current);
     if (!mounted) return;
 
-    if ((item.status == PendingEncounterCaptureStatus.pendingSave ||
-            item.status == PendingEncounterCaptureStatus.failedSave) &&
-        item.analysisResponse != null) {
+    if ((current.status == PendingEncounterCaptureStatus.pendingSave ||
+            current.status == PendingEncounterCaptureStatus.failedSave) &&
+        current.analysisResponse != null) {
       final review =
-          EncounterCaptureAnalysis.fromApiResponse(item.analysisResponse!);
+          EncounterCaptureAnalysis.fromApiResponse(current.analysisResponse!);
       setState(() {
-        _activePendingId = item.id;
+        _activePendingId = current.id;
         _pendingAudioPath = audioPath;
-        _lastAnalysis = item.analysisResponse;
-        _draftText = item.texto;
+        _lastAnalysis = current.analysisResponse;
+        _draftText = current.texto;
         _captureReview = review;
-        _stagedItemIds = item.stagedItemIds.isNotEmpty
-            ? item.stagedItemIds.toSet()
+        _stagedItemIds = current.stagedItemIds.isNotEmpty
+            ? current.stagedItemIds.toSet()
             : review.allItems.map((e) => e.id).toSet();
         _chatController.clear();
-        _sttStatus = item.status == PendingEncounterCaptureStatus.failedSave
-            ? 'Error al guardar. Revisá y reintentá.'
-            : 'Pendiente de confirmar en servidor.';
+        _sttStatus = current.status == PendingEncounterCaptureStatus.failedSave
+            ? (current.lastError?.trim().isNotEmpty == true
+                ? current.lastError!
+                : 'No se pudo guardar')
+            : '';
       });
       return;
     }
 
     setState(() {
-      _activePendingId = item.id;
+      _activePendingId = current.id;
       _pendingAudioPath = audioPath;
       _captureReview = null;
       _lastAnalysis = null;
       _draftText = null;
       _stagedItemIds = {};
-      _chatController.text = item.texto.startsWith('(audio')
+      _chatController.text = current.texto.startsWith('(audio')
           ? ''
-          : item.texto;
-      _sttStatus = item.lastError != null && item.lastError!.isNotEmpty
-          ? 'Error anterior: ${item.lastError}'
-          : _pendingStatusHint(item);
+          : current.texto;
+      _sttStatus = current.lastError != null && current.lastError!.isNotEmpty
+          ? current.lastError!
+          : '';
     });
-  }
-
-  String _pendingStatusHint(PendingEncounterCapture item) {
-    switch (item.status) {
-      case PendingEncounterCaptureStatus.pendingUpload:
-        return 'Audio en el teléfono. Reintentá la subida.';
-      case PendingEncounterCaptureStatus.pendingStt:
-        return 'Audio en servidor. Falta transcribir.';
-      case PendingEncounterCaptureStatus.pendingAnalyze:
-        return 'Texto listo. Falta analizar.';
-      case PendingEncounterCaptureStatus.pendingSave:
-        return 'Análisis listo. Confirmá para guardar.';
-      case PendingEncounterCaptureStatus.failedSave:
-        return 'Falló el guardado. Podés reintentar.';
-      case PendingEncounterCaptureStatus.draft:
-        return item.hasAudio
-            ? 'Borrador local con audio. Revisá y enviá.'
-            : 'Borrador local. Revisá y enviá.';
-    }
   }
 
   Future<void> _retryPendingCapture(PendingEncounterCapture item) async {
@@ -1225,7 +1270,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if (item.status == PendingEncounterCaptureStatus.pendingSave ||
         item.status == PendingEncounterCaptureStatus.failedSave) {
       if (_captureReview != null) {
-        await _confirmarGuardado();
+        if (item.status == PendingEncounterCaptureStatus.failedSave) {
+          await _confirmarGuardado();
+        }
+        // pendingSave: ya quedó en revisión; el usuario confirma desde la barra.
       }
       return;
     }
@@ -1233,6 +1281,42 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       fromStatus: item.status,
       forcePipeline: true,
     );
+  }
+
+  /// Acción primaria del card pendiente según checkpoint.
+  String _pendingPrimaryActionLabel(PendingEncounterCapture item) {
+    switch (item.status) {
+      case PendingEncounterCaptureStatus.draft:
+        return 'Continuar';
+      case PendingEncounterCaptureStatus.pendingUpload:
+        return 'Subir';
+      case PendingEncounterCaptureStatus.pendingStt:
+        return 'Transcribir';
+      case PendingEncounterCaptureStatus.pendingAnalyze:
+        return 'Analizar';
+      case PendingEncounterCaptureStatus.pendingSave:
+        return 'Revisar';
+      case PendingEncounterCaptureStatus.failedSave:
+        return 'Guardar';
+    }
+  }
+
+  Future<void> _onPendingPrimaryAction(PendingEncounterCapture item) async {
+    if (_captureBusy) return;
+    switch (item.status) {
+      case PendingEncounterCaptureStatus.pendingSave:
+        await _resumePendingCapture(item);
+        return;
+      case PendingEncounterCaptureStatus.failedSave:
+        await _retryPendingCapture(item);
+        return;
+      case PendingEncounterCaptureStatus.draft:
+      case PendingEncounterCaptureStatus.pendingUpload:
+      case PendingEncounterCaptureStatus.pendingStt:
+      case PendingEncounterCaptureStatus.pendingAnalyze:
+        await _retryPendingCapture(item);
+        return;
+    }
   }
 
   void _editCaptureDraft() {
@@ -1371,10 +1455,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             error: _mensajeErrorCaptura(e),
           );
           if (!mounted) return;
-          _snack(
-            'Quedó en el teléfono. ${_mensajeErrorCaptura(e)}',
-            UiIntent.danger,
-          );
+          _snack(_mensajeErrorCaptura(e), UiIntent.danger);
           return;
         }
       }
@@ -1520,10 +1601,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         error: _mensajeErrorCaptura(e),
       );
       if (!mounted) return;
-      _snack(
-        'Quedó guardado. ${_mensajeErrorCaptura(e)}',
-        UiIntent.danger,
-      );
+      _snack(_mensajeErrorCaptura(e), UiIntent.danger);
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
     }
@@ -1532,7 +1610,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   Future<void> _confirmarGuardado() async {
     final review = _captureReview;
     if (review == null || _lastAnalysis == null) {
-      _snack('Analizá la consulta antes de confirmar.', UiIntent.warning);
+      _snack('Analizá antes de guardar.', UiIntent.warning);
       return;
     }
     if (review.systemError != null || !review.puedeConfirmar) {
@@ -1665,9 +1743,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
       if (!mounted) return;
       await _mostrarResultadoGuardado(
-        titulo: 'Error al guardar',
-        mensaje:
-            'La nota quedó en el teléfono. Podés reintentar cuando haya conexión.\n\n${_mensajeErrorCaptura(e)}',
+        titulo: 'No se pudo guardar',
+        mensaje: _mensajeErrorCaptura(e),
         intent: UiIntent.danger,
       );
     } finally {
@@ -1853,83 +1930,87 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildPendingCapturesPanel() {
-    return BioCard.intent(
-      intent: UiIntent.warning,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Notas pendientes en el teléfono',
-            style: BioTypography.title,
-          ),
-          BioSpacing.gapH(BioSpacing.xs),
-          Text(
-            'Se guardaron localmente por si falla la conexión. Podés reintentar o eliminar.',
-            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-          ),
-          BioSpacing.gapH(BioSpacing.md),
-          for (final item in _pendingCaptures) ...[
-            _buildPendingCaptureRow(item),
-            if (item != _pendingCaptures.last) BioSpacing.gapH(BioSpacing.sm),
-          ],
+    // Con análisis listo: se muestra como "Nota de esta atención", no como card.
+    final items = _pendingCaptures.where((e) {
+      if (_enRevisionCaptura && e.id == _activePendingId) return false;
+      final ready = e.status == PendingEncounterCaptureStatus.pendingSave ||
+          e.status == PendingEncounterCaptureStatus.failedSave;
+      if (ready && e.analysisResponse != null) return false;
+      return true;
+    }).toList();
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final item in items) ...[
+          _buildPendingCaptureRow(item),
+          if (item != items.last) BioSpacing.gapH(BioSpacing.sm),
         ],
-      ),
+      ],
     );
   }
 
   String _pendingStatusLabel(PendingEncounterCaptureStatus status) {
     switch (status) {
       case PendingEncounterCaptureStatus.draft:
-        return 'Borrador local';
+        return 'Borrador';
       case PendingEncounterCaptureStatus.pendingUpload:
-        return 'Pendiente de subir audio';
+        return 'Sin subir';
       case PendingEncounterCaptureStatus.pendingStt:
-        return 'Pendiente de transcribir';
+        return 'Sin transcribir';
       case PendingEncounterCaptureStatus.pendingAnalyze:
-        return 'Pendiente de analizar';
+        return 'Sin analizar';
       case PendingEncounterCaptureStatus.pendingSave:
-        return 'Pendiente de confirmar';
+        return 'Para revisar';
       case PendingEncounterCaptureStatus.failedSave:
-        return 'Error al guardar';
+        return 'No guardado';
+    }
+  }
+
+  UiIntent _pendingStatusIntent(PendingEncounterCaptureStatus status) {
+    switch (status) {
+      case PendingEncounterCaptureStatus.failedSave:
+      case PendingEncounterCaptureStatus.pendingUpload:
+      case PendingEncounterCaptureStatus.pendingStt:
+      case PendingEncounterCaptureStatus.pendingAnalyze:
+        return UiIntent.warning;
+      case PendingEncounterCaptureStatus.pendingSave:
+        return UiIntent.info;
+      case PendingEncounterCaptureStatus.draft:
+        return UiIntent.neutral;
     }
   }
 
   Widget _buildPendingCaptureRow(PendingEncounterCapture item) {
-    final preview = item.texto.trim().isEmpty
-        ? '(sin texto)'
-        : (item.texto.length > 80
-            ? '${item.texto.substring(0, 80)}…'
-            : item.texto);
-    return Container(
-      padding: const EdgeInsets.all(BioSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.bio.paperSurface,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: context.bio.paperBorderDefault),
-      ),
+    final previewRaw = item.texto.trim();
+    final preview = previewRaw.isEmpty || previewRaw.startsWith('(audio')
+        ? (item.hasAudio ? 'Audio' : 'Sin texto')
+        : (previewRaw.length > 90
+            ? '${previewRaw.substring(0, 90)}…'
+            : previewRaw);
+    final intent = _pendingStatusIntent(item.status);
+    final primary = _pendingPrimaryActionLabel(item);
+
+    return BioCard.intent(
+      intent: intent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _pendingStatusLabel(item.status),
-            style: BioTypography.overline,
-          ),
+          Text(_pendingStatusLabel(item.status), style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.xs),
           Text(preview, style: BioTypography.body),
-          if (item.hasAudio) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              'Incluye audio',
-              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-            ),
-          ],
-          if (item.lastError != null && item.lastError!.isNotEmpty) ...[
+          if (item.lastError != null &&
+              item.lastError!.trim().isNotEmpty &&
+              item.status != PendingEncounterCaptureStatus.pendingSave) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(
               item.lastError!,
               style: BioTypography.caption.copyWith(
                 color: IntentPalette.of(UiIntent.danger).base,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
           BioSpacing.gapH(BioSpacing.sm),
@@ -1937,33 +2018,21 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             children: [
               Expanded(
                 child: BioButton(
-                  label: 'Abrir',
-                  intent: UiIntent.neutral,
+                  label: primary,
+                  intent: UiIntent.primary,
                   variant: BioButtonVariant.soft,
                   onPressed: _captureBusy
                       ? null
-                      : () => _resumePendingCapture(item),
+                      : () => _onPendingPrimaryAction(item),
                 ),
               ),
-              BioSpacing.gapW(BioSpacing.xs),
-              Expanded(
-                child: BioButton(
-                  label: 'Reintentar',
-                  intent: UiIntent.primary,
-                  variant: BioButtonVariant.soft,
-                  onPressed:
-                      _captureBusy ? null : () => _retryPendingCapture(item),
-                ),
-              ),
-              BioSpacing.gapW(BioSpacing.xs),
-              Expanded(
-                child: BioButton(
-                  label: 'Eliminar',
-                  intent: UiIntent.danger,
-                  variant: BioButtonVariant.soft,
-                  onPressed:
-                      _captureBusy ? null : () => _deletePendingCapture(item.id),
-                ),
+              BioSpacing.gapW(BioSpacing.sm),
+              BioButton(
+                label: 'Eliminar',
+                intent: UiIntent.danger,
+                variant: BioButtonVariant.soft,
+                onPressed:
+                    _captureBusy ? null : () => _deletePendingCapture(item.id),
               ),
             ],
           ),
@@ -1985,7 +2054,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           BioSpacing.gapW(BioSpacing.md),
           Expanded(
             child: Text(
-              'Analizando la consulta…',
+              'Analizando…',
               style: BioTypography.body,
             ),
           ),
@@ -2001,11 +2070,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Nota de esta atención', style: BioTypography.title),
-          BioSpacing.gapH(BioSpacing.sm),
-          Text(
-            'Revisá lo registrado y las sugerencias antes de confirmar.',
-            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-          ),
           BioSpacing.gapH(BioSpacing.md),
           Text('Texto registrado', style: BioTypography.overline),
           BioSpacing.gapH(BioSpacing.xs),
@@ -2029,13 +2093,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ] else if (!review.hasExtractedContent) ...[
             BioSpacing.gapH(BioSpacing.md),
             BioAlert.info(
-              message:
-                  'La IA no extrajo datos estructurados. Podés confirmar igual con el texto registrado.',
+              message: 'Sin datos estructurados. Se guardará el texto.',
             ),
           ] else ...[
             BioSpacing.gapH(BioSpacing.lg),
             Text(
-              'Análisis y Sugerencias de la IA',
+              'Sugerencias',
               style: BioTypography.overline,
             ),
             BioSpacing.gapH(BioSpacing.xs),
@@ -2148,11 +2211,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          BioButton.primary(
+            label: _isSaving ? 'Guardando…' : 'Guardar',
+            icon: _isSaving ? null : Icons.check,
+            onPressed: canConfirm ? _confirmarGuardado : null,
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
           Row(
             children: [
               Expanded(
                 child: BioButton(
-                  label: 'Editar',
+                  label: 'Editar texto',
                   intent: UiIntent.neutral,
                   variant: BioButtonVariant.soft,
                   onPressed: _isSaving ? null : _editCaptureDraft,
@@ -2161,19 +2230,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               BioSpacing.gapW(BioSpacing.sm),
               Expanded(
                 child: BioButton(
-                  label: 'Descartar',
+                  label: 'Eliminar',
                   intent: UiIntent.danger,
                   variant: BioButtonVariant.soft,
                   onPressed: _isSaving ? null : _clearCaptureDraft,
                 ),
               ),
             ],
-          ),
-          BioSpacing.gapH(BioSpacing.sm),
-          BioButton.primary(
-            label: _isSaving ? 'Guardando…' : 'Confirmar y guardar',
-            icon: _isSaving ? null : Icons.check,
-            onPressed: canConfirm ? _confirmarGuardado : null,
           ),
         ],
       ),

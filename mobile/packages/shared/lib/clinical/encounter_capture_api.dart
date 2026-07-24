@@ -207,6 +207,23 @@ class EncounterCaptureApi {
         .toList();
   }
 
+  /// GET /api/v1/clinical/encounter/captura/ver
+  Future<Map<String, dynamic>> capturaVer({
+    String? clientCaptureId,
+    int? captureId,
+  }) async {
+    final qs = <String, String>{
+      if (clientCaptureId != null) 'client_capture_id': clientCaptureId,
+      if (captureId != null) 'capture_id': captureId.toString(),
+    };
+    final uri = Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/ver')
+        .replace(queryParameters: qs);
+    final response = await http
+        .get(uri, headers: _jsonHeaders)
+        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    return _decodeMap(response, 'captura/ver');
+  }
+
   /// POST /api/v1/clinical/encounter/captura/descartar
   Future<void> capturaDescartar({
     String? clientCaptureId,

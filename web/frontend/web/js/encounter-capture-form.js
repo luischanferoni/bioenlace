@@ -216,25 +216,114 @@
                 if (!data || !data.success || !Array.isArray(data.items) || !data.items.length) {
                     return;
                 }
-                var item = data.items[0];
+                var items = data.items.slice();
+                items.sort(function (a, b) {
+                    var rank = function (stage) {
+                        if (stage === 'READY_FOR_REVIEW' || stage === 'SAVE_FAILED') return 0;
+                        if (stage === 'ANALYSIS_FAILED' || stage === 'TRANSCRIBED') return 1;
+                        return 2;
+                    };
+                    return rank(a.stage) - rank(b.stage);
+                });
+                var item = items[0];
                 self.clientCaptureId = item.client_capture_id || self.clientCaptureId;
                 self.serverCaptureId = item.id || null;
                 self.serverStage = item.stage || null;
-                var hint = 'Hay una captura pendiente (' + (item.stage || '') + ').';
+
                 if (item.stage === 'READY_FOR_REVIEW' || item.stage === 'SAVE_FAILED') {
-                    hint += ' Reanalizá o continuá desde el texto.';
-                } else if (item.stage === 'UPLOADED' || item.stage === 'STT_FAILED') {
-                    hint += ' Reintentá analizar para continuar la transcripción.';
-                } else if (item.transcript) {
-                    hint += ' Texto recuperado del servidor.';
-                    if (self.textarea && !self.textarea.value.trim()) {
-                        self.textarea.value = item.transcript;
-                    }
+                    return self.openCaptureReview(item);
                 }
-                self.setStatus(hint, 'info');
+
+                if (item.transcript && self.textarea && !self.textarea.value.trim()) {
+                    self.textarea.value = item.transcript;
+                }
+                if (item.stage === 'UPLOADED' || item.stage === 'STT_FAILED') {
+                    self.setStatus('Sin transcribir', 'warning');
+                } else if (item.stage === 'TRANSCRIBED' || item.stage === 'ANALYSIS_FAILED') {
+                    self.setStatus('Sin analizar', 'warning');
+                }
             })
             .catch(function () {
                 /* sin red: ok */
+            });
+    };
+
+    /**
+     * Abre la revisión de una captura ya analizada (cross-device / reload).
+     */
+    EncounterCaptureForm.prototype.openCaptureReview = function (item) {
+        var self = this;
+        var applyPayload = function (payload) {
+            if (!payload) {
+                return;
+            }
+            self.lastAnalysisPayload = payload;
+            self.draftText =
+                payload.texto_original ||
+                payload.transcript ||
+                (item && item.transcript) ||
+                '';
+            if (self.responseEl) {
+                self.responseEl.style.display = 'block';
+            }
+            var usedReview = self.renderCaptureReview(payload);
+            if (!usedReview) {
+                self.renderLegacyHtml(payload.html || '');
+                if (self.reviewActions) {
+                    self.reviewActions.style.display = '';
+                }
+            } else {
+                if (self.editBtn) {
+                    self.editBtn.style.display = '';
+                }
+                if (self.discardBtn) {
+                    self.discardBtn.style.display = '';
+                }
+                self.setCaptureMode(true);
+            }
+            self.setStatus('', 'muted');
+        };
+
+        var payloadFromItem = null;
+        if (item) {
+            if (item.analysis && typeof item.analysis === 'object') {
+                payloadFromItem = item.analysis;
+            } else if (item.capture_review || item.datosExtraidos) {
+                payloadFromItem = item;
+            }
+        }
+        if (payloadFromItem && payloadFromItem.capture_review) {
+            self.applyCaptureResponse(item, payloadFromItem);
+            applyPayload(payloadFromItem);
+            return Promise.resolve();
+        }
+
+        var qs = new URLSearchParams();
+        if (item && item.client_capture_id) {
+            qs.set('client_capture_id', String(item.client_capture_id));
+        }
+        if (item && item.id) {
+            qs.set('capture_id', String(item.id));
+        }
+        return fetch('/api/v1/clinical/encounter/captura/ver?' + qs.toString(), {
+            method: 'GET',
+            headers: this.apiHeadersJson(),
+            credentials: 'same-origin',
+        })
+            .then(function (r) {
+                return r.json();
+            })
+            .then(function (data) {
+                if (!data || !data.success || !data.capture) {
+                    self.setStatus((data && data.message) || 'No se pudo cargar la captura.', 'danger');
+                    return;
+                }
+                var capture = data.capture;
+                var payload = self.applyCaptureResponse(capture, capture.analysis || capture);
+                applyPayload(payload);
+            })
+            .catch(function () {
+                self.setStatus('No se pudo cargar la captura.', 'danger');
             });
     };
 

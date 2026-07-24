@@ -480,7 +480,11 @@ final class EncounterCapturePipelineService
         $items = [];
         foreach ($q->limit(50)->all() as $row) {
             /** @var EncounterCapture $row */
-            $items[] = $this->toApiArray($row, false);
+            $includeAnalysis = in_array($row->stage, [
+                EncounterCapture::STAGE_READY_FOR_REVIEW,
+                EncounterCapture::STAGE_SAVE_FAILED,
+            ], true);
+            $items[] = $this->toApiArray($row, $includeAnalysis);
         }
 
         return [

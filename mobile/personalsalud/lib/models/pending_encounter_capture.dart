@@ -174,9 +174,7 @@ class PendingEncounterCapture {
     final transcript =
         (capture['transcript'] ?? capture['texto'] ?? local?.texto ?? '')
             .toString();
-    final analysis = capture['analysis'] is Map
-        ? Map<String, dynamic>.from(capture['analysis'] as Map)
-        : (local?.analysisResponse);
+    final analysis = _analysisFromServerCapture(capture) ?? local?.analysisResponse;
     final staged = capture['staged_item_ids'];
     final now = DateTime.now();
     return PendingEncounterCapture(
@@ -204,6 +202,21 @@ class PendingEncounterCapture {
           : (local?.stagedItemIds ?? const []),
       audioUploaded: capture['has_audio'] == true || (local?.audioUploaded ?? false),
     );
+  }
+
+  static Map<String, dynamic>? _analysisFromServerCapture(
+    Map<String, dynamic> capture,
+  ) {
+    if (capture['analysis'] is Map) {
+      return Map<String, dynamic>.from(capture['analysis'] as Map);
+    }
+    // listar/ver pueden exponer el payload de análisis en el propio capture.
+    if (capture['capture_review'] != null ||
+        capture['datosExtraidos'] != null ||
+        capture['texto_procesado'] != null) {
+      return Map<String, dynamic>.from(capture);
+    }
+    return null;
   }
 
   static PendingEncounterCaptureStatus statusFromServerStage(String stage) {

@@ -64,14 +64,25 @@ class ConsultaOdontologiaDiagnosticos extends \yii\db\ActiveRecord
     }
 
     /**
-     * Retorna los campos requeridos en lenguaje natural para prompts de IA
-     * @return array
+     * @return list<string>
      */
     public function requeridosPrompt()
     {
+        return \common\models\Clinical\Input\OdontologiaItemInput::promptFieldNames();
+    }
+
+    /**
+     * @param array<string, mixed>|string $row
+     * @return array{missing_fields: list<string>, label: string, input: \common\models\Clinical\Input\OdontologiaItemInput}
+     */
+    public static function completenessForExtractedRow($row): array
+    {
+        $input = \common\models\Clinical\Input\OdontologiaItemInput::fromExtractedRow($row);
+
         return [
-            "Tipo",
-            "Codigo",
+            'missing_fields' => $input->missingFieldsForCompleteness(),
+            'label' => $input->rowLabel(),
+            'input' => $input,
         ];
     }
 

@@ -92,15 +92,28 @@ class ConsultaPracticas extends \yii\db\ActiveRecord
     }
 
     /**
-     * Retorna los campos requeridos en lenguaje natural para prompts de IA
-     * @return array
+     * Esquema NL para prompts. Integridad: {@see \common\models\Clinical\Input\PracticaInput}.
+     *
+     * @return list<string>
      */
     public function requeridosPrompt()
     {
+        return \common\models\Clinical\Input\PracticaInput::promptFieldNames();
+    }
+
+    /**
+     * @param array<string, mixed>|string $row
+     * @return array{missing_fields: list<string>, label: string, input: \common\models\Clinical\Input\PracticaInput}
+     */
+    public static function completenessForExtractedRow($row): array
+    {
+        $input = \common\models\Clinical\Input\PracticaInput::fromExtractedRow($row);
+        $label = trim((string) ($input->practica ?? ''));
+
         return [
-            'Practica',
-            'Resultado',
-            'Codigo',
+            'missing_fields' => $input->missingFieldsForCompleteness(),
+            'label' => $label !== '' ? $label : 'ítem',
+            'input' => $input,
         ];
     }
 

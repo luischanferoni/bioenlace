@@ -85,16 +85,25 @@ class ConsultaBalanceHidrico extends \yii\db\ActiveRecord
     }
 
     /**
-     * Retorna los campos requeridos en lenguaje natural para prompts de IA
-     * @return array
+     * @return list<string>
      */
-            public function requeridosPrompt()
+    public function requeridosPrompt()
     {
+        return \common\models\Clinical\Input\BalanceHidricoInput::promptFieldNames();
+    }
+
+    /**
+     * @param array<string, mixed>|string $row
+     * @return array{missing_fields: list<string>, label: string, input: \common\models\Clinical\Input\BalanceHidricoInput}
+     */
+    public static function completenessForExtractedRow($row): array
+    {
+        $input = \common\models\Clinical\Input\BalanceHidricoInput::fromExtractedRow($row);
+
         return [
-            "['id Consulta",
-            "Fecha",
-            "Tipo Registro",
-            "Cantidad",
+            'missing_fields' => $input->missingFieldsForCompleteness(),
+            'label' => $input->rowLabel(),
+            'input' => $input,
         ];
     }
 

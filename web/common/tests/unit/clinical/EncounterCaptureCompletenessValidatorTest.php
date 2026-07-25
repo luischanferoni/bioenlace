@@ -28,6 +28,7 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
     public function testMedicacionSinDosisNiFrecuencia(): void
     {
         $svc = new EncounterCaptureCompletenessValidator();
+        // Sin modelo de dominio: lista plana legacy sigue exigiendo todos los campos.
         $campos = [
             'Nombre del medicamento',
             'Cantidad',
@@ -56,6 +57,59 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
         $this->assertCount(1, $result['incomplete_items']);
         $this->assertContains('Cantidad', $result['incomplete_items'][0]['missing_fields']);
         $this->assertContains('Frecuencia de administracion', $result['incomplete_items'][0]['missing_fields']);
+    }
+
+    public function testMedicacionMencionSoloNombreConContratoDominio(): void
+    {
+        $svc = new EncounterCaptureCompletenessValidator();
+        $result = $svc->validate(
+            [
+                'Medicación' => [
+                    ['Nombre del medicamento' => 'Enalapril'],
+                ],
+            ],
+            [
+                [
+                    'titulo' => 'Medicación',
+                    'modelo' => 'ConsultaMedicamentos',
+                    'requerido' => false,
+                    'campos_requeridos' => (new \common\models\ConsultaMedicamentos())->requeridosPrompt(),
+                ],
+            ]
+        );
+
+        $this->assertTrue($result['complete'], $result['message']);
+        $this->assertSame([], $result['incomplete_items']);
+    }
+
+    public function testMedicacionOrderedSinFrecuenciaConContratoDominio(): void
+    {
+        $svc = new EncounterCaptureCompletenessValidator();
+        $result = $svc->validate(
+            [
+                'Medicación' => [
+                    [
+                        'Nombre del medicamento' => 'Enalapril',
+                        'Tipo' => 'ordered',
+                        'Cantidad' => '10 mg',
+                    ],
+                ],
+            ],
+            [
+                [
+                    'titulo' => 'Medicación',
+                    'modelo' => 'ConsultaMedicamentos',
+                    'requerido' => false,
+                    'campos_requeridos' => (new \common\models\ConsultaMedicamentos())->requeridosPrompt(),
+                ],
+            ]
+        );
+
+        $this->assertFalse($result['complete']);
+        $this->assertContains(
+            'Frecuencia de administracion',
+            $result['incomplete_items'][0]['missing_fields']
+        );
     }
 
     public function testMedicacionCompleta(): void

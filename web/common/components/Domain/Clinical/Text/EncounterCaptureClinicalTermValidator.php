@@ -2,8 +2,6 @@
 
 namespace common\components\Domain\Clinical\Text;
 
-use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
-
 /**
  * Valida si un término extraído por IA es clínicamente plausible.
  */
@@ -104,11 +102,11 @@ final class EncounterCaptureClinicalTermValidator
             return false;
         }
 
-        if (ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern($term, 'subjective_complaint')) {
+        if (EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($term, 'subjective_complaint')) {
             return false;
         }
 
-        if (ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern($clinicalText, 'narrative_framing')) {
+        if (EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($clinicalText, 'narrative_framing')) {
             return false;
         }
 
@@ -131,10 +129,10 @@ final class EncounterCaptureClinicalTermValidator
                 continue;
             }
             $lexiconKey = trim($key);
-            if (ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern($clinicalText, $lexiconKey)) {
+            if (EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($clinicalText, $lexiconKey)) {
                 return true;
             }
-            if ($term !== '' && ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern($term, $lexiconKey)) {
+            if ($term !== '' && EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($term, $lexiconKey)) {
                 return true;
             }
         }

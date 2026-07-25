@@ -7,7 +7,8 @@ use common\models\Clinical\ElectronicPrescription;
 use Yii;
 
 /**
- * Agente E03 v1: bloquea emisión si la receta no cumple validación pre-RDI.
+ * Agente E03 v1: bloquea emisión si la receta no cumple integridad RDI + política.
+ * Gates hard en modelos/servicio; YAML solo umbrales ({@see PrescriptionRdiPreSubmitValidationService}).
  */
 final class PrescriptionRdiPreSubmitValidationAgent
 {

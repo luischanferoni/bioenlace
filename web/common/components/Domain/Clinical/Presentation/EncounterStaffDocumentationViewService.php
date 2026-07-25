@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Presentation;
 
-use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
+use common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy;
 use common\models\Clinical\Encounter;
 
 /**
@@ -57,7 +57,7 @@ final class EncounterStaffDocumentationViewService
             $role = mb_strtolower(trim((string) ($condition->diagnosis_role ?? '')));
             if (
                 $role === 'secondary'
-                && ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern($label, 'subjective_complaint')
+                && EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($label, 'subjective_complaint')
             ) {
                 if (!$this->isDuplicateLabel($motivos, $label)) {
                     $motivos[] = $label;

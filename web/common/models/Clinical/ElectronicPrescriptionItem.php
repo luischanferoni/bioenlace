@@ -8,6 +8,9 @@ class ElectronicPrescriptionItem extends ActiveRecord
 {
     use ClinicalRecordTrait;
 
+    /** Emisión hacia RDI: integridad de línea (código + posología). */
+    public const SCENARIO_RDI_ISSUE = 'rdi_issue';
+
     public static function tableName(): string
     {
         return 'electronic_prescription_item';
@@ -23,6 +26,23 @@ class ElectronicPrescriptionItem extends ActiveRecord
             [['medication_display'], 'string', 'max' => 512],
             [['quantity_text'], 'string', 'max' => 128],
             [['dosage_text'], 'string'],
+            [
+                ['medication_code', 'dosage_text'],
+                'trim',
+                'on' => self::SCENARIO_RDI_ISSUE,
+            ],
+            [
+                ['medication_code'],
+                'required',
+                'on' => self::SCENARIO_RDI_ISSUE,
+                'message' => 'falta código de medicamento (nomenclador).',
+            ],
+            [
+                ['dosage_text'],
+                'required',
+                'on' => self::SCENARIO_RDI_ISSUE,
+                'message' => 'falta posología.',
+            ],
         ];
     }
 }

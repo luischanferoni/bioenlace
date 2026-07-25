@@ -9,6 +9,8 @@ use common\components\Domain\Clinical\Enum\RequestStatus;
 use common\components\Domain\Terminology\Snomed\SnomedCodeSystem;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
+use common\models\Clinical\Input\IndicacionInput;
+use common\models\Clinical\Input\PracticaInput;
 use common\models\Clinical\ServiceRequest;
 
 final class ServiceRequestService
@@ -54,6 +56,13 @@ final class ServiceRequestService
             throw new \InvalidArgumentException('Fila de práctica/indicación inválida.');
         }
 
+        if ($legacyModelo === 'ConsultaIndicaciones') {
+            return $this->createIndicacionFromExtractedRow($encounter, $row, $carePlan);
+        }
+        if ($legacyModelo === 'ConsultaPracticas') {
+            return $this->createPracticaFromExtractedRow($encounter, $row, $carePlan);
+        }
+
         $campos = self::promptFieldsForModelo($legacyModelo);
         $primaryKey = $campos[0] ?? 'Practica';
         $secondaryKey = $campos[1] ?? null;
@@ -82,14 +91,8 @@ final class ServiceRequestService
             ?: ($row['codigo'] ?? $row['conceptId'] ?? $row['Codigo'] ?? '')
         ));
 
-        $isIndicacion = $legacyModelo === 'ConsultaIndicaciones'
-            || mb_stripos($primaryKey, 'Indicacion') !== false;
-        $plazoDias = $isIndicacion
-            ? self::resolvePlazoDias($row, $secondaryKey)
-            : null;
-
         $display = $primary;
-        if (!$isIndicacion && $secondary !== '') {
+        if ($secondary !== '') {
             $display = trim($primary . ' ' . $secondary);
         }
         if ($display === '' && $code === '') {
@@ -101,22 +104,110 @@ final class ServiceRequestService
         $sr->subject_persona_id = $encounter->subject_persona_id;
         $sr->status = RequestStatus::ACTIVE;
         $sr->intent = 'order';
-        if ($isIndicacion) {
-            $sr->category = $plazoDias !== null ? 'follow-up' : 'counseling';
-        } else {
-            $sr->category = 'observation';
-        }
+        $sr->category = 'observation';
         $sr->code = $code !== '' ? $code : null;
         $sr->code_system = $code !== '' ? SnomedCodeSystem::URI : null;
         $sr->display = $display !== '' ? $display : $code;
-        if ($secondary !== '' && !$isIndicacion) {
+        if ($secondary !== '') {
             $sr->note = $secondary;
         }
-        if ($plazoDias !== null) {
+        $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
+        if ($carePlan !== null) {
+            $sr->care_plan_id = $carePlan->id;
+        }
+        if (!$sr->save()) {
+            throw new \RuntimeException('ServiceRequest: ' . json_encode($sr->getErrors()));
+        }
+        if ($carePlan !== null) {
+            $this->carePlans->addServiceRequestActivity($carePlan, $sr);
+        }
+
+        return $sr;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function createIndicacionFromExtractedRow(
+        Encounter $encounter,
+        array $row,
+        ?CarePlan $carePlan = null
+    ): ServiceRequest {
+        $input = IndicacionInput::fromExtractedRow($row);
+        if (!$input->validate()) {
+            $msgs = [];
+            foreach ($input->getFirstErrors() as $msg) {
+                $msgs[] = (string) $msg;
+            }
+            throw new \InvalidArgumentException(
+                $msgs !== [] ? implode(' ', $msgs) : 'Indicación incompleta.'
+            );
+        }
+
+        $sr = new ServiceRequest();
+        $sr->encounter_id = $encounter->id;
+        $sr->subject_persona_id = $encounter->subject_persona_id;
+        $sr->status = RequestStatus::ACTIVE;
+        $sr->intent = 'order';
+        $sr->category = $input->categoryForServiceRequest();
+        $sr->display = (string) $input->indicacion;
+        if ($input->plazoDias !== null) {
             $sr->reminder_json = json_encode([
-                'delay_days' => $plazoDias,
+                'delay_days' => $input->plazoDias,
                 'kind' => 'control',
             ], JSON_UNESCAPED_UNICODE);
+        }
+        $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
+        if ($carePlan !== null) {
+            $sr->care_plan_id = $carePlan->id;
+        }
+        if (!$sr->save()) {
+            throw new \RuntimeException('ServiceRequest: ' . json_encode($sr->getErrors()));
+        }
+        if ($carePlan !== null) {
+            $this->carePlans->addServiceRequestActivity($carePlan, $sr);
+        }
+
+        return $sr;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     */
+    private function createPracticaFromExtractedRow(
+        Encounter $encounter,
+        array $row,
+        ?CarePlan $carePlan = null
+    ): ServiceRequest {
+        $input = PracticaInput::fromExtractedRow($row);
+        if (!$input->validate()) {
+            $msgs = [];
+            foreach ($input->getFirstErrors() as $msg) {
+                $msgs[] = (string) $msg;
+            }
+            throw new \InvalidArgumentException(
+                $msgs !== [] ? implode(' ', $msgs) : 'Práctica incompleta.'
+            );
+        }
+
+        $display = trim((string) $input->practica);
+        $resultado = trim((string) ($input->resultado ?? ''));
+        $code = trim((string) ($input->codigo ?? ''));
+        if ($resultado !== '') {
+            $display = trim($display . ' ' . $resultado);
+        }
+
+        $sr = new ServiceRequest();
+        $sr->encounter_id = $encounter->id;
+        $sr->subject_persona_id = $encounter->subject_persona_id;
+        $sr->status = RequestStatus::ACTIVE;
+        $sr->intent = 'order';
+        $sr->category = 'observation';
+        $sr->code = $code !== '' ? $code : null;
+        $sr->code_system = $code !== '' ? SnomedCodeSystem::URI : null;
+        $sr->display = $display !== '' ? $display : $code;
+        if ($resultado !== '') {
+            $sr->note = $resultado;
         }
         $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
         if ($carePlan !== null) {

@@ -4,7 +4,10 @@ namespace common\components\Domain\Clinical\Workflow;
 
 /**
  * Completitud de captura clínica vs categorías del EncounterDefinition
- * (`requerido` + `campos_requeridos` / requeridosPrompt del modelo).
+ * (`requerido` + contrato de dominio por modelo / `campos_requeridos` legacy).
+ *
+ * Si el modelo declara `completenessForExtractedRow`, se usa ese contrato;
+ * si no, se aplica la lista plana `campos_requeridos`.
  */
 final class EncounterCaptureCompletenessValidator
 {
@@ -33,13 +36,30 @@ final class EncounterCaptureCompletenessValidator
                 continue;
             }
             $required = ($categoria['requerido'] ?? false) === true;
+            $modelo = (string) ($categoria['modelo'] ?? '');
             $campos = $this->normalizeCampos($categoria['campos_requeridos'] ?? []);
-            $raw = $this->resolveCategoryRaw($extraidos, $title, (string) ($categoria['modelo'] ?? ''));
+            $raw = $this->resolveCategoryRaw($extraidos, $title, $modelo);
             $rows = $this->normalizeRows($raw);
 
             if ($rows === []) {
                 if ($required) {
                     $missingCategories[] = $title;
+                }
+                continue;
+            }
+
+            if ($this->usesDomainRowContract($modelo)) {
+                foreach ($rows as $index => $row) {
+                    $check = $this->domainCompletenessForRow($modelo, $row);
+                    if ($check['missing_fields'] === []) {
+                        continue;
+                    }
+                    $incompleteItems[] = [
+                        'category' => $title,
+                        'index' => (int) $index,
+                        'label' => $check['label'],
+                        'missing_fields' => $check['missing_fields'],
+                    ];
                 }
                 continue;
             }
@@ -71,6 +91,59 @@ final class EncounterCaptureCompletenessValidator
             'incomplete_items' => $incompleteItems,
             'message' => $this->buildMessage($missingCategories, $incompleteItems),
         ];
+    }
+
+    private function usesDomainRowContract(string $modelo): bool
+    {
+        return $this->domainCompletenessHandler($modelo) !== null;
+    }
+
+    /**
+     * @param array<string, mixed>|string $row
+     * @return array{missing_fields: list<string>, label: string}
+     */
+    private function domainCompletenessForRow(string $modelo, $row): array
+    {
+        $handler = $this->domainCompletenessHandler($modelo);
+        if ($handler === null) {
+            return ['missing_fields' => [], 'label' => 'ítem'];
+        }
+        $check = $handler($row);
+
+        return [
+            'missing_fields' => $check['missing_fields'],
+            'label' => $check['label'],
+        ];
+    }
+
+    /**
+     * @return (callable(array<string, mixed>|string): array{missing_fields: list<string>, label: string, input?: object})|null
+     */
+    private function domainCompletenessHandler(string $modelo): ?callable
+    {
+        $class = $this->resolveModeloClass($modelo);
+        if ($class === null || !method_exists($class, 'completenessForExtractedRow')) {
+            return null;
+        }
+
+        return [$class, 'completenessForExtractedRow'];
+    }
+
+    private function resolveModeloClass(string $modelo): ?string
+    {
+        $modelo = trim($modelo);
+        if ($modelo === '') {
+            return null;
+        }
+        if (str_contains($modelo, '\\')) {
+            return class_exists($modelo) ? $modelo : null;
+        }
+        if (!preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $modelo)) {
+            return null;
+        }
+        $class = '\\common\\models\\' . $modelo;
+
+        return class_exists($class) ? $class : null;
     }
 
     /**

@@ -82,15 +82,25 @@ class ConsultaPracticasOftalmologiaEstudios extends ConsultaPracticasOftalmologi
     }
 
     /**
-     * Retorna los campos requeridos en lenguaje natural para prompts de IA
-     * @return array
+     * @return list<string>
      */
     public function requeridosPrompt()
     {
+        return \common\models\Clinical\Input\OftalmologiaEstudioInput::promptFieldNames();
+    }
+
+    /**
+     * @param array<string, mixed>|string $row
+     * @return array{missing_fields: list<string>, label: string, input: \common\models\Clinical\Input\OftalmologiaEstudioInput}
+     */
+    public static function completenessForExtractedRow($row): array
+    {
+        $input = \common\models\Clinical\Input\OftalmologiaEstudioInput::fromExtractedRow($row);
+
         return [
-            "Codigo",
-            "Ojo",
-            "Informe",
+            'missing_fields' => $input->missingFieldsForCompleteness(),
+            'label' => $input->rowLabel(),
+            'input' => $input,
         ];
     }
 

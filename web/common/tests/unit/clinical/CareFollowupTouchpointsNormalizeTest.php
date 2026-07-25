@@ -32,11 +32,12 @@ class CareFollowupTouchpointsNormalizeTest extends Unit
     public function testResolvePlazoDiasFromPromptCampos(): void
     {
         $campos = (new ConsultaIndicaciones())->requeridosPrompt();
-        $this->assertNotEmpty($campos);
+        $this->assertContains('Indicacion', $campos);
+        $this->assertContains('Plazo dias', $campos);
         $row = [
-            $campos[0] => 'Control en consultorio',
-            $campos[1] => '15',
+            'Indicacion' => 'Control en consultorio',
+            'Plazo dias' => '15',
         ];
-        $this->assertSame(15, ServiceRequestService::resolvePlazoDias($row, $campos[1]));
+        $this->assertSame(15, ServiceRequestService::resolvePlazoDias($row, 'Plazo dias'));
     }
 }

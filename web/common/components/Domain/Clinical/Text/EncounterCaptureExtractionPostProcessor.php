@@ -5,7 +5,8 @@ namespace common\components\Domain\Clinical\Text;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
 /**
- * Ajusta la clasificación IA de captura clínica según reglas declarativas en metadata.
+ * Ajusta la clasificación IA de captura clínica según política de dominio
+ * ({@see EncounterCaptureExtractionPostProcessPolicy}; YAML solo overrides).
  */
 final class EncounterCaptureExtractionPostProcessor
 {
@@ -28,7 +29,7 @@ final class EncounterCaptureExtractionPostProcessor
             return $resultadoIA;
         }
 
-        $relocateConfig = ClinicalTextIaMetadata::encounterCaptureRelocateConfig();
+        $relocateConfig = EncounterCaptureExtractionPostProcessPolicy::relocateConfig();
         if (($relocateConfig['enabled'] ?? false) === true) {
             $resultadoIA = $this->relocateIsolatedDiagnosisTerms(
                 $resultadoIA,
@@ -48,7 +49,7 @@ final class EncounterCaptureExtractionPostProcessor
     }
 
     /**
-     * Si Motivos quedó vacío pero el texto clínico tiene queja/síntoma (léxico metadata), lo completa.
+     * Si Motivos quedó vacío pero el texto clínico tiene queja/síntoma (léxico), lo completa.
      *
      * @param array<string, mixed> $resultadoIA
      * @param list<array<string, mixed>> $categorias
@@ -56,7 +57,7 @@ final class EncounterCaptureExtractionPostProcessor
      */
     private function backfillEmptyMotivos(array $resultadoIA, array $categorias, string $clinicalText): array
     {
-        $config = ClinicalTextIaMetadata::encounterCaptureBackfillMotivosConfig();
+        $config = EncounterCaptureExtractionPostProcessPolicy::backfillConfig();
         if (($config['enabled'] ?? false) !== true) {
             return $resultadoIA;
         }
@@ -66,7 +67,7 @@ final class EncounterCaptureExtractionPostProcessor
             return $resultadoIA;
         }
 
-        $motivoModel = (string) (ClinicalTextIaMetadata::encounterCaptureRelocateConfig()['motivo_model'] ?? 'ConsultaMotivos');
+        $motivoModel = EncounterCaptureExtractionPostProcessPolicy::motivoModel();
 
         $motivoTitle = null;
         foreach ($categorias as $categoria) {
@@ -88,7 +89,8 @@ final class EncounterCaptureExtractionPostProcessor
         }
 
         $lexiconKey = (string) ($config['require_lexicon_key'] ?? 'subjective_complaint');
-        if ($lexiconKey !== '' && !ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern($clinicalText, $lexiconKey)) {
+        if ($lexiconKey !== ''
+            && !EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($clinicalText, $lexiconKey)) {
             return $resultadoIA;
         }
 
@@ -158,7 +160,7 @@ final class EncounterCaptureExtractionPostProcessor
      */
     private function filterNonClinicalExtractions(array $extraidos, array $categorias, string $clinicalText): array
     {
-        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+        $config = EncounterCaptureExtractionPostProcessPolicy::filterConfig();
         if (($config['enabled'] ?? false) !== true) {
             return $extraidos;
         }
@@ -274,7 +276,7 @@ final class EncounterCaptureExtractionPostProcessor
             return false;
         }
 
-        $filterConfig = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+        $filterConfig = EncounterCaptureExtractionPostProcessPolicy::filterConfig();
 
         return $this->termValidator->isPlausibleIsolatedDiagnosisCandidate($item, $clinicalText, $filterConfig);
     }

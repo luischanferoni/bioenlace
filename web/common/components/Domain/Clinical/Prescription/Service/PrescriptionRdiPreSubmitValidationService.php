@@ -7,30 +7,39 @@ use common\components\Platform\Core\Product\AutonomousAgentMetadata;
 use common\models\Clinical\ElectronicPrescription;
 use common\models\Clinical\ElectronicPrescriptionItem;
 use common\models\ProfesionalEfectorServicio;
+use yii\base\Model;
 
 /**
- * Validaciones declarativas antes de emitir receta hacia RDI (agente E03).
+ * Validación pre-emisión RDI (agente E03).
+ *
+ * Integridad hard: escenarios Yii {@see ElectronicPrescription::SCENARIO_RDI_ISSUE}
+ * / {@see ElectronicPrescriptionItem::SCENARIO_RDI_ISSUE} + chequeos de dominio.
+ * YAML solo knobs de política (ventana anti-duplicado, largo mínimo de display).
  */
 final class PrescriptionRdiPreSubmitValidationService
 {
     public const AGENT_ID = 'prescription-rdi-pre-submit';
+
+    public const DEFAULT_BLOCK_DUPLICATE_MEDICATION_HOURS = 24;
+
+    public const DEFAULT_MIN_DIAGNOSIS_DISPLAY_LENGTH = 3;
 
     /**
      * @return list<string> Errores bloqueantes (vacío = OK).
      */
     public function validate(ElectronicPrescription $rx): array
     {
-        $config = AutonomousAgentMetadata::loadAgent(self::AGENT_ID);
-        if ($config === null) {
-            return [];
-        }
-
-        $checks = is_array($config['checks'] ?? null) ? $config['checks'] : [];
+        $policy = $this->loadPolicyKnobs();
         $errors = [];
 
-        if (!empty($checks['require_prescriber_pes']) && (int) ($rx->id_profesional_efector_servicio ?? 0) <= 0) {
-            $errors[] = 'Falta el profesional prescriptor (PES) en la receta.';
-        } elseif (!empty($checks['require_prescriber_pes'])) {
+        $previousScenario = $rx->scenario;
+        $rx->scenario = ElectronicPrescription::SCENARIO_RDI_ISSUE;
+        if (!$rx->validate()) {
+            $errors = array_merge($errors, $this->flattenModelErrors($rx));
+        }
+        $rx->scenario = $previousScenario;
+
+        if ((int) ($rx->id ?? 0) > 0 && (int) ($rx->id_profesional_efector_servicio ?? 0) > 0) {
             $pes = ProfesionalEfectorServicio::findOne([
                 'id' => (int) $rx->id_profesional_efector_servicio,
                 'deleted_at' => null,
@@ -40,14 +49,7 @@ final class PrescriptionRdiPreSubmitValidationService
             }
         }
 
-        if (!empty($checks['require_diagnosis_code'])) {
-            $code = trim((string) ($rx->diagnosis_code ?? ''));
-            if ($code === '') {
-                $errors[] = 'Falta el diagnóstico codificado (requerido para receta digital).';
-            }
-        }
-
-        $minDxLen = (int) ($checks['min_diagnosis_display_length'] ?? 0);
+        $minDxLen = $policy['min_diagnosis_display_length'];
         if ($minDxLen > 0) {
             $display = trim((string) ($rx->diagnosis_display ?? ''));
             if (mb_strlen($display) < $minDxLen) {
@@ -55,39 +57,114 @@ final class PrescriptionRdiPreSubmitValidationService
             }
         }
 
-        $items = ElectronicPrescriptionItem::find()
-            ->andWhere(['electronic_prescription_id' => (int) $rx->id, 'deleted_at' => null])
-            ->orderBy(['line_number' => SORT_ASC])
-            ->all();
-
+        $items = $this->resolveItems($rx);
         if ($items === []) {
             $errors[] = 'La receta no tiene medicamentos.';
 
-            return $errors;
+            return $this->uniqueErrors($errors);
         }
 
         foreach ($items as $item) {
             $line = (int) $item->line_number;
-            if (!empty($checks['require_medication_code'])) {
-                $medCode = trim((string) ($item->medication_code ?? ''));
-                if ($medCode === '') {
-                    $errors[] = "Línea {$line}: falta código de medicamento (nomenclador).";
+            $itemScenario = $item->scenario;
+            $item->scenario = ElectronicPrescriptionItem::SCENARIO_RDI_ISSUE;
+            if (!$item->validate()) {
+                foreach ($this->flattenModelErrors($item) as $msg) {
+                    $errors[] = "Línea {$line}: {$msg}";
                 }
             }
-            if (!empty($checks['require_dosage_text'])) {
-                $dosage = trim((string) ($item->dosage_text ?? ''));
-                if ($dosage === '') {
-                    $errors[] = "Línea {$line}: falta posología.";
-                }
-            }
+            $item->scenario = $itemScenario;
         }
 
-        $dupHours = (int) ($checks['block_duplicate_medication_hours'] ?? 0);
-        if ($dupHours > 0) {
+        $dupHours = $policy['block_duplicate_medication_hours'];
+        if ($dupHours > 0 && (int) ($rx->id ?? 0) > 0) {
             $errors = array_merge($errors, $this->duplicateMedicationErrors($rx, $items, $dupHours));
         }
 
-        return $errors;
+        return $this->uniqueErrors($errors);
+    }
+
+    /**
+     * Knobs operativos desde YAML; si falta el archivo o la clave, usan defaults de dominio.
+     * No gobiernan PES / códigos / posología (eso es integridad hard).
+     *
+     * @return array{block_duplicate_medication_hours: int, min_diagnosis_display_length: int}
+     */
+    public function loadPolicyKnobs(): array
+    {
+        $config = AutonomousAgentMetadata::loadAgent(self::AGENT_ID);
+        $section = [];
+        if (is_array($config)) {
+            if (is_array($config['policy'] ?? null)) {
+                $section = $config['policy'];
+            } elseif (is_array($config['checks'] ?? null)) {
+                // Compat: YAML v1 usaba `checks` también para gates hard.
+                $section = $config['checks'];
+            }
+        }
+
+        return [
+            'block_duplicate_medication_hours' => array_key_exists('block_duplicate_medication_hours', $section)
+                ? max(0, (int) $section['block_duplicate_medication_hours'])
+                : self::DEFAULT_BLOCK_DUPLICATE_MEDICATION_HOURS,
+            'min_diagnosis_display_length' => array_key_exists('min_diagnosis_display_length', $section)
+                ? max(0, (int) $section['min_diagnosis_display_length'])
+                : self::DEFAULT_MIN_DIAGNOSIS_DISPLAY_LENGTH,
+        ];
+    }
+
+    /**
+     * @return ElectronicPrescriptionItem[]
+     */
+    private function resolveItems(ElectronicPrescription $rx): array
+    {
+        if ($rx->isRelationPopulated('items')) {
+            $related = $rx->items;
+            if (!is_array($related)) {
+                return [];
+            }
+
+            return array_values(array_filter(
+                $related,
+                static fn ($item) => $item instanceof ElectronicPrescriptionItem
+            ));
+        }
+
+        if ((int) ($rx->id ?? 0) <= 0) {
+            return [];
+        }
+
+        return ElectronicPrescriptionItem::find()
+            ->andWhere(['electronic_prescription_id' => (int) $rx->id, 'deleted_at' => null])
+            ->orderBy(['line_number' => SORT_ASC])
+            ->all();
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function flattenModelErrors(Model $model): array
+    {
+        $out = [];
+        foreach ($model->getErrors() as $messages) {
+            foreach ((array) $messages as $message) {
+                $msg = trim((string) $message);
+                if ($msg !== '') {
+                    $out[] = $msg;
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param list<string> $errors
+     * @return list<string>
+     */
+    private function uniqueErrors(array $errors): array
+    {
+        return array_values(array_unique($errors));
     }
 
     /**

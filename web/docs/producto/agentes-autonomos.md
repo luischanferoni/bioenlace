@@ -233,8 +233,8 @@ Ver [internacion.md](./internacion.md).
 |-------|--------|
 | **Tipo** | Agente (reglas de validación) |
 | **Trigger** | `ElectronicPrescriptionService::issue` antes de emitir |
-| **Política** | `autonomous_agents/prescription-rdi-pre-submit.yaml` |
-| **Decisiones** | Bloquear si faltan PES, diagnóstico, código, posología o duplicado 24 h |
+| **Política** | Integridad en modelos/servicio; umbrales en `autonomous_agents/prescription-rdi-pre-submit.yaml` |
+| **Decisiones** | Bloquear si faltan PES, diagnóstico, código, posología; anti-duplicado según umbral (default 24 h) |
 | **Efecto** | `InvalidArgumentException` al prescriptor; no se emite |
 | **Auditoría** | `agent_run` (`agent_id`: `prescription-rdi-pre-submit`) |
 | **Flag** | `autonomous_agent_prescription_rdi_validation_enabled` |

@@ -18,10 +18,10 @@ class PracticasIndicacionesPromptSplitTest extends Unit
         $this->assertSame(['Practica', 'Resultado', 'Codigo'], $campos);
     }
 
-    public function testIndicacionesPromptFieldsIncludePlazo(): void
+    public function testIndicacionesPromptFieldsIncludeTipoAndPlazo(): void
     {
         $campos = (new ConsultaIndicaciones())->requeridosPrompt();
-        $this->assertSame(['Indicacion', 'Plazo dias'], $campos);
+        $this->assertSame(['Indicacion', 'Tipo', 'Plazo dias'], $campos);
     }
 
     public function testResolvePlazoFromIndicacionRow(): void

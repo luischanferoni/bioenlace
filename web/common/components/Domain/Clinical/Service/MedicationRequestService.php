@@ -40,6 +40,17 @@ final class MedicationRequestService
     public function createFromExtractedRow(Encounter $encounter, ?CarePlan $carePlan, array $row): MedicationRequest
     {
         $row = self::normalizeExtractedMedicationRow($row);
+        $input = \common\models\Clinical\Input\MedicacionInput::fromExtractedRow($row);
+        if (!$input->validate()) {
+            $msgs = [];
+            foreach ($input->getFirstErrors() as $msg) {
+                $msgs[] = (string) $msg;
+            }
+            throw new \InvalidArgumentException(
+                $msgs !== [] ? implode(' ', $msgs) : 'Medicación incompleta.'
+            );
+        }
+        $row = $input->toExtractedRow();
         $display = self::resolveMedicationDisplay($row);
         if ($display === '') {
             throw new \InvalidArgumentException('Fila de medicación sin nombre/display recognizable.');
@@ -110,9 +121,16 @@ final class MedicationRequestService
      */
     private static function resolveDosageTextFromRow(array $row, string $display): ?string
     {
+        $skip = [
+            \common\models\Clinical\Input\MedicacionInput::FIELD_NOMBRE => true,
+            \common\models\Clinical\Input\MedicacionInput::FIELD_TIPO => true,
+        ];
         $campos = ConsultaMedicamentos::camposPromptExtraccion();
         $parts = [];
-        foreach (array_slice($campos, 1) as $campo) {
+        foreach ($campos as $campo) {
+            if (isset($skip[$campo])) {
+                continue;
+            }
             $value = trim((string) ($row[$campo] ?? ''));
             if ($value !== '') {
                 $parts[] = $value;

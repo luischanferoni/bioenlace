@@ -65,8 +65,8 @@ llm_correction_confidence:
     - enfermedad
   context_term_boost: 0.1
 
-# Léxico clínico reutilizable (patrones RE2/PCRE). Mantener alineado con
-# assistant/intent-classification-rules.yaml → vocab cuando aplique.
+# Léxico clínico: overrides opcionales. Defaults de dominio en
+# EncounterCaptureExtractionPostProcessPolicy::DEFAULT_LEXICON.
 clinical_lexicon:
   # Delimitadores PCRE `/…/iu` (no usar `(?iu)`: en PCRE `u` no es opción inline).
   narrative_framing: '/\b(refiere|vengo\s+por|consulta\s+por|desde\s+hace|presenta|paciente\s+con|me\s+siento|hace\s+\d+|desde\s+ayer|desde\s+hoy)\b/iu'
@@ -127,9 +127,9 @@ encounter_capture_extraction:
   category_hints:
     ConsultaMotivos: queja o síntoma referido (cefalea, dolor, malestar, etc.); no lo dejes vacío si el texto lo menciona
     DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
-    ConsultaMedicamentos: medicación indicada o registrada; objetos con las claves de subdatos (no un solo string)
-    ConsultaPracticas: mediciones o prácticas realizadas en la consulta (tensión arterial / TA con Resultado 138/88, ECG, etc.); objetos Practica+Resultado+Codigo — nunca reposo/dieta/control
-    ConsultaIndicaciones: instrucciones al paciente (reposo, baja de sal, control); objetos Indicacion+Plazo dias — nunca signos vitales ni TA
+    ConsultaMedicamentos: medicación mencionada o indicada; objetos Nombre+Tipo(mentioned|ordered)+Cantidad+Via+Frecuencia+tipos/duración — si Tipo=ordered exigir Cantidad y Frecuencia; mentioned basta el nombre
+    ConsultaPracticas: mediciones o prácticas realizadas en la consulta (tensión arterial / TA con Resultado 138/88, ECG, etc.); objetos Practica+Resultado+Codigo — Resultado y Codigo opcionales; nunca reposo/dieta/control
+    ConsultaIndicaciones: instrucciones al paciente (reposo, hidratación, control); objetos Indicacion+Tipo(counseling|conditional|follow_up)+Plazo dias — plazo solo si Tipo=follow_up o hay días explícitos; nunca signos vitales ni TA
     ConsultaDerivaciones: derivación a otro servicio o profesional
     ConsultaPracticasOftalmologia: práctica o procedimiento oftalmológico
     ConsultaPracticasOftalmologiaEstudios: estudio oftalmológico solicitado o realizado
@@ -139,6 +139,8 @@ encounter_capture_extraction:
     ConsultaOdontologiaEstados: estado dental o pieza
     ConsultaRegimen: régimen o indicación de internación
     ConsultaBalanceHidrico: balance hídrico
+  # Overrides de política de post-proceso (defaults en EncounterCaptureExtractionPostProcessPolicy).
+  # No es fuente de verdad de integridad clínica: solo knobs operativos.
   post_process:
     motivo_model: ConsultaMotivos
     diagnosis_models:
@@ -156,7 +158,6 @@ encounter_capture_extraction:
     relocate_isolated_terms:
       enabled: false
       max_words: 5
-    # Si la IA deja Motivos vacío pero el texto tiene queja/síntoma (léxico), rellenar.
     backfill_empty_motivos:
       enabled: true
       require_lexicon_key: subjective_complaint

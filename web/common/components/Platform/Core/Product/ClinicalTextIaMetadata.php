@@ -284,91 +284,73 @@ final class ClinicalTextIaMetadata
 
     /**
      * @return array<string, mixed>
+     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::relocateConfig()}
      */
     public static function encounterCaptureRelocateConfig(): array
     {
-        $postProcess = self::encounterCapturePostProcessConfig();
-        $relocate = $postProcess['relocate_isolated_terms'] ?? [];
-        if (!is_array($relocate)) {
-            $relocate = [];
-        }
-
-        $defaults = [
-            'enabled' => false,
-            'motivo_model' => (string) ($postProcess['motivo_model'] ?? 'ConsultaMotivos'),
-            'diagnosis_models' => $postProcess['diagnosis_models'] ?? ['DiagnosticoConsulta'],
-            'max_words' => 5,
-        ];
-
-        return array_merge($defaults, $relocate);
+        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::relocateConfig();
     }
 
     /**
      * @return array<string, mixed>
+     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::filterConfig()}
      */
     public static function encounterCaptureFilterConfig(): array
     {
-        $postProcess = self::encounterCapturePostProcessConfig();
-        $filter = $postProcess['filter_non_clinical_extractions'] ?? [];
-        if (!is_array($filter)) {
-            $filter = [];
-        }
-
-        $defaults = [
-            'enabled' => true,
-            'strict_category_models' => ['ConsultaMotivos'],
-            'terminology_guard_category_models' => [],
-            'retain_if_lexicon_keys' => ['narrative_framing', 'subjective_complaint'],
-            'validate_terminology' => false,
-            'snowstorm_fallback' => false,
-        ];
-
-        return array_merge($defaults, $filter);
+        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::filterConfig();
     }
 
     /**
      * @return array<string, mixed>
+     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::backfillConfig()}
      */
     public static function encounterCaptureBackfillMotivosConfig(): array
     {
-        $postProcess = self::encounterCapturePostProcessConfig();
-        $backfill = $postProcess['backfill_empty_motivos'] ?? [];
-        if (!is_array($backfill)) {
-            $backfill = [];
-        }
-
-        $defaults = [
-            'enabled' => false,
-            'require_lexicon_key' => 'subjective_complaint',
-            'max_chars' => 140,
-            'split_before_patterns' => [],
-        ];
-
-        return array_merge($defaults, $backfill);
+        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::backfillConfig();
     }
 
+    /**
+     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::clinicalLexiconPattern()}
+     */
     public static function clinicalLexiconPattern(string $key): ?string
     {
-        $lexicon = self::loadConfig()['clinical_lexicon'] ?? [];
-        if (!is_array($lexicon)) {
-            return null;
-        }
-
-        $pattern = $lexicon[$key] ?? null;
-
-        return is_string($pattern) && trim($pattern) !== '' ? trim($pattern) : null;
+        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::clinicalLexiconPattern($key);
     }
 
+    /**
+     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern()}
+     */
     public static function textMatchesClinicalLexiconPattern(string $text, string $key): bool
     {
-        $pattern = self::normalizePregPattern(self::clinicalLexiconPattern($key));
-        if ($pattern === null || trim($text) === '') {
-            return false;
+        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($text, $key);
+    }
+
+    /**
+     * Overrides crudos de post_process desde YAML (sin defaults de dominio).
+     *
+     * @return array<string, mixed>
+     */
+    public static function rawEncounterCapturePostProcess(): array
+    {
+        $section = self::loadConfig()['encounter_capture_extraction'] ?? [];
+        if (!is_array($section)) {
+            return [];
         }
+        $postProcess = $section['post_process'] ?? [];
 
-        $result = @preg_match($pattern, $text);
+        return is_array($postProcess) ? $postProcess : [];
+    }
 
-        return $result === 1;
+    /**
+     * Overrides crudos de léxico desde YAML (sin defaults de dominio).
+     *
+     * @return array<string, mixed>
+     */
+    public static function rawClinicalLexicon(): array
+    {
+        $lexicon = self::loadConfig()['clinical_lexicon'] ?? [];
+
+        return is_array($lexicon) ? $lexicon : [];
     }
 
     /**
@@ -405,17 +387,11 @@ final class ClinicalTextIaMetadata
 
     /**
      * @return array<string, mixed>
+     * @deprecated Preferir {@see rawEncounterCapturePostProcess()}
      */
     private static function encounterCapturePostProcessConfig(): array
     {
-        $section = self::loadConfig()['encounter_capture_extraction'] ?? [];
-        if (!is_array($section)) {
-            return [];
-        }
-
-        $postProcess = $section['post_process'] ?? [];
-
-        return is_array($postProcess) ? $postProcess : [];
+        return self::rawEncounterCapturePostProcess();
     }
 
     public static function llmConfidenceContextTerms(): array
@@ -450,6 +426,7 @@ final class ClinicalTextIaMetadata
     public static function resetCacheForTests(): void
     {
         self::$config = null;
+        \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::resetCacheForTests();
     }
 
     /**

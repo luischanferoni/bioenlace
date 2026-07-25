@@ -75,19 +75,28 @@ class ConsultaMedicamentos extends \yii\db\ActiveRecord
 
     /**
      * Campos en lenguaje natural para prompts de extracción IA (única fuente de nombres).
+     * Integridad condicional: {@see \common\models\Clinical\Input\MedicacionInput}.
      *
      * @return list<string>
      */
     public function requeridosPrompt()
     {
+        return \common\models\Clinical\Input\MedicacionInput::promptFieldNames();
+    }
+
+    /**
+     * @param array<string, mixed>|string $row
+     * @return array{missing_fields: list<string>, label: string, input: \common\models\Clinical\Input\MedicacionInput}
+     */
+    public static function completenessForExtractedRow($row): array
+    {
+        $input = \common\models\Clinical\Input\MedicacionInput::fromExtractedRow($row);
+        $label = trim((string) ($input->nombre ?? ''));
+
         return [
-            'Nombre del medicamento',
-            'Cantidad',
-            'Via de administracion',
-            'Frecuencia de administracion',
-            'Tipo de frecuencia',
-            'Duracion del tratamiento',
-            'Tipo de duracion',
+            'missing_fields' => $input->missingFieldsForCompleteness(),
+            'label' => $label !== '' ? $label : 'ítem',
+            'input' => $input,
         ];
     }
 

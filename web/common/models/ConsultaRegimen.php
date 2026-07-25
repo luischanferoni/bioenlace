@@ -47,13 +47,25 @@ class ConsultaRegimen extends \yii\db\ActiveRecord
     }
 
     /**
-     * Retorna los campos requeridos en lenguaje natural para prompts de IA
-     * @return array
+     * @return list<string>
      */
     public function requeridosPrompt()
     {
+        return \common\models\Clinical\Input\RegimenInput::promptFieldNames();
+    }
+
+    /**
+     * @param array<string, mixed>|string $row
+     * @return array{missing_fields: list<string>, label: string, input: \common\models\Clinical\Input\RegimenInput}
+     */
+    public static function completenessForExtractedRow($row): array
+    {
+        $input = \common\models\Clinical\Input\RegimenInput::fromExtractedRow($row);
+
         return [
-            "Indicaciones"
+            'missing_fields' => $input->missingFieldsForCompleteness(),
+            'label' => $input->rowLabel(),
+            'input' => $input,
         ];
     }
 

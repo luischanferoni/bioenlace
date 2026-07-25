@@ -10,6 +10,9 @@ class ElectronicPrescription extends ActiveRecord
 {
     use ClinicalRecordTrait;
 
+    /** Emisión hacia RDI: integridad clínica (no knobs de política). */
+    public const SCENARIO_RDI_ISSUE = 'rdi_issue';
+
     public static function tableName(): string
     {
         return 'electronic_prescription';
@@ -31,6 +34,23 @@ class ElectronicPrescription extends ActiveRecord
             [['document_hash'], 'string', 'max' => 64],
             [['signature_provider'], 'string', 'max' => 64],
             [['signed_at'], 'safe'],
+            [
+                ['diagnosis_code'],
+                'trim',
+                'on' => self::SCENARIO_RDI_ISSUE,
+            ],
+            [
+                ['id_profesional_efector_servicio'],
+                'required',
+                'on' => self::SCENARIO_RDI_ISSUE,
+                'message' => 'Falta el profesional prescriptor (PES) en la receta.',
+            ],
+            [
+                ['diagnosis_code'],
+                'required',
+                'on' => self::SCENARIO_RDI_ISSUE,
+                'message' => 'Falta el diagnóstico codificado (requerido para receta digital).',
+            ],
         ];
     }
 

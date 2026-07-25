@@ -389,6 +389,10 @@
             this.reviewRoot,
             this.updateConfirmState.bind(this)
         );
+        window.EncounterCaptureReview.bindIssueResolutions(
+            this.reviewRoot,
+            this.applyIssueResolutions.bind(this)
+        );
 
         if (this.responseContent) {
             this.responseContent.innerHTML = '';
@@ -398,6 +402,78 @@
 
         this.updateConfirmState();
         return true;
+    };
+
+    EncounterCaptureForm.prototype.applyIssueResolutions = function (resolutions) {
+        var self = this;
+        if (!resolutions || !Object.keys(resolutions).length) {
+            this.setStatus('Elegí una opción o completá el valor.', 'warning');
+            return;
+        }
+        var expected = (this.captureReview && Array.isArray(this.captureReview.issues))
+            ? this.captureReview.issues.length
+            : 0;
+        if (expected > 0 && Object.keys(resolutions).length < expected) {
+            this.setStatus('Completá todos los datos pendientes.', 'warning');
+            return;
+        }
+        if (!this.clientCaptureId && !this.serverCaptureId) {
+            this.setStatus('No hay captura activa para resolver.', 'warning');
+            return;
+        }
+        this.setStatus('Aplicando respuestas…', 'info');
+        fetch('/api/v1/clinical/encounter/captura/aplicar-resoluciones', {
+            method: 'POST',
+            headers: this.apiHeadersJson(),
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                client_capture_id: this.clientCaptureId || undefined,
+                capture_id: this.serverCaptureId || undefined,
+                resolutions: resolutions,
+                id_configuracion:
+                    (this.lastAnalysisPayload && this.lastAnalysisPayload.id_configuracion) ||
+                    undefined,
+            }),
+        })
+            .then(function (r) {
+                return r.json().then(function (body) {
+                    return { ok: r.ok, body: body };
+                });
+            })
+            .then(function (res) {
+                if (!res.ok || !res.body || res.body.success === false) {
+                    self.setStatus(
+                        (res.body && res.body.message) || 'No se pudieron aplicar las respuestas.',
+                        'danger'
+                    );
+                    return;
+                }
+                var capture = res.body.capture || {};
+                var payload = Object.assign({}, capture, capture.analysis || {});
+                if (capture.id) {
+                    self.serverCaptureId = capture.id;
+                }
+                if (capture.stage) {
+                    self.serverStage = capture.stage;
+                }
+                self.lastAnalysisPayload = payload;
+                if (!self.renderCaptureReview(payload)) {
+                    self.setStatus('Respuestas aplicadas, pero no se pudo refrescar la revisión.', 'warning');
+                    return;
+                }
+                if (payload.tiene_datos_faltantes) {
+                    self.setStatus(
+                        (payload.datos_faltantes_detalle && payload.datos_faltantes_detalle.message) ||
+                            'Aún faltan datos.',
+                        'warning'
+                    );
+                } else {
+                    self.setStatus('Datos completados. Ya podés confirmar.', 'success');
+                }
+            })
+            .catch(function () {
+                self.setStatus('Error de red al aplicar respuestas.', 'danger');
+            });
     };
 
     EncounterCaptureForm.prototype.renderLegacyHtml = function (html) {

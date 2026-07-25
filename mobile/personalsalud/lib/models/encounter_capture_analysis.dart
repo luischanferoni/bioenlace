@@ -9,6 +9,7 @@ class EncounterCaptureAnalysis {
     this.defaultStagedItemIds = const [],
     this.puedeConfirmar = true,
     this.datosFaltantesMensaje,
+    this.issues = const [],
   });
 
   final String textoOriginal;
@@ -20,6 +21,10 @@ class EncounterCaptureAnalysis {
   final bool puedeConfirmar;
   /// Mensaje del backend con categorías/campos faltantes.
   final String? datosFaltantesMensaje;
+  /// Issues resolubles (opciones sin seleccionar por defecto).
+  final List<EncounterCaptureIssue> issues;
+
+  bool get hasUnresolvedIssues => issues.isNotEmpty;
 
   bool get hasExtractedContent =>
       categories.any((c) => c.items.isNotEmpty) && systemError == null;
@@ -87,6 +92,9 @@ class EncounterCaptureAnalysis {
       if (m != null && m.isNotEmpty) faltantesMsg = m;
     }
 
+    final issues = _parseIssues(review['issues'] ??
+        (detalle is Map ? detalle['issues'] : null));
+
     return EncounterCaptureAnalysis(
       textoOriginal: (review['texto_original'] ?? '').toString(),
       textoProcesado: review['texto_procesado']?.toString(),
@@ -96,6 +104,7 @@ class EncounterCaptureAnalysis {
       defaultStagedItemIds: defaultIds,
       puedeConfirmar: review['puede_confirmar'] != false,
       datosFaltantesMensaje: faltantesMsg,
+      issues: issues,
     );
   }
 
@@ -170,6 +179,9 @@ class EncounterCaptureAnalysis {
       if (m != null && m.isNotEmpty) faltantesMsg = m;
     }
 
+    final issues = _parseIssues(res['issues'] ??
+        (detalle is Map ? detalle['issues'] : null));
+
     return EncounterCaptureAnalysis(
       textoOriginal: (res['texto_original'] ?? '').toString(),
       textoProcesado: res['texto_procesado']?.toString(),
@@ -179,7 +191,17 @@ class EncounterCaptureAnalysis {
       defaultStagedItemIds: defaultIds,
       puedeConfirmar: res['puede_confirmar'] != false && systemError == null,
       datosFaltantesMensaje: faltantesMsg,
+      issues: issues,
     );
+  }
+
+  static List<EncounterCaptureIssue> _parseIssues(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => EncounterCaptureIssue.fromJson(Map<String, dynamic>.from(e)))
+        .where((i) => i.id.isNotEmpty)
+        .toList();
   }
 
   static Map<String, dynamic> _resolveExtraidos(dynamic datos) {
@@ -427,6 +449,59 @@ class EncounterCaptureItem {
       source: sourceRaw == 'ai'
           ? EncounterCaptureItemSource.ai
           : EncounterCaptureItemSource.clinical,
+    );
+  }
+}
+
+class EncounterCaptureIssue {
+  const EncounterCaptureIssue({
+    required this.id,
+    required this.field,
+    required this.message,
+    this.options = const [],
+    this.allowCustom = false,
+  });
+
+  final String id;
+  final String field;
+  final String message;
+  final List<EncounterCaptureIssueOption> options;
+  final bool allowCustom;
+
+  factory EncounterCaptureIssue.fromJson(Map<String, dynamic> json) {
+    final optsRaw = json['options'];
+    final options = optsRaw is List
+        ? optsRaw
+            .whereType<Map>()
+            .map((e) => EncounterCaptureIssueOption.fromJson(
+                  Map<String, dynamic>.from(e),
+                ))
+            .toList()
+        : <EncounterCaptureIssueOption>[];
+
+    return EncounterCaptureIssue(
+      id: json['id']?.toString() ?? '',
+      field: json['field']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      options: options,
+      allowCustom: json['allow_custom'] == true,
+    );
+  }
+}
+
+class EncounterCaptureIssueOption {
+  const EncounterCaptureIssueOption({
+    required this.value,
+    required this.label,
+  });
+
+  final dynamic value;
+  final String label;
+
+  factory EncounterCaptureIssueOption.fromJson(Map<String, dynamic> json) {
+    return EncounterCaptureIssueOption(
+      value: json['value'],
+      label: (json['label'] ?? json['value'] ?? '').toString(),
     );
   }
 }

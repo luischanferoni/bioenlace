@@ -67,6 +67,11 @@ final class EncounterCaptureReviewPresenter
                 'incomplete_items' => $completenessResult['incomplete_items'] ?? [],
                 'message' => $completenessResult['message'] ?? '',
             ];
+            $issues = $completenessResult['issues'] ?? [];
+            if (is_array($issues) && $issues !== []) {
+                $out['issues'] = array_values($issues);
+                $out['datos_faltantes_detalle']['issues'] = array_values($issues);
+            }
         }
 
         return $out;

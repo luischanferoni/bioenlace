@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Workflow;
 
+use common\components\Domain\Clinical\Capture\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Legacy\ConsultaProcesamientoService;
 use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
@@ -9,6 +10,7 @@ use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\models\Clinical\EncounterCapture;
+use common\models\Clinical\EncounterDefinition;
 use Yii;
 use yii\web\UploadedFile;
 
@@ -532,6 +534,109 @@ final class EncounterCapturePipelineService
         $capture->save(false);
 
         return $this->ok($capture, 'Captura descartada.');
+    }
+
+    /**
+     * Aplica resoluciones del profesional a issues pendientes y regenera capture_review.
+     *
+     * Body: capture_id|client_capture_id, resolutions = { issue_id: value }
+     *
+     * @param array<string, mixed> $body
+     * @return array<string, mixed>
+     */
+    public function aplicarResoluciones(array $body): array
+    {
+        $capture = $this->findOpenCapture($body);
+        if (is_array($capture)) {
+            return $capture;
+        }
+
+        if (!in_array($capture->stage, [
+            EncounterCapture::STAGE_READY_FOR_REVIEW,
+            EncounterCapture::STAGE_SAVE_FAILED,
+        ], true)) {
+            return $this->fail(409, 'La captura no tiene análisis para resolver.', $capture);
+        }
+
+        $resolutions = $body['resolutions'] ?? $body['resoluciones'] ?? null;
+        if (!is_array($resolutions) || $resolutions === []) {
+            return $this->fail(400, 'resolutions es obligatorio.', $capture);
+        }
+
+        $datos = $capture->getDatosExtraidos();
+        if ($datos === []) {
+            $analysis = $capture->getAnalysisResponse();
+            $datos = $this->extractDatosExtraidosFromAnalizar($analysis);
+        }
+        if ($datos === []) {
+            return $this->fail(400, 'No hay datos extraídos para resolver.', $capture);
+        }
+
+        $categorias = $this->resolveCategoriasForCapture($capture, $body);
+        $datos = (new ClinicalCaptureResolutionApplier())->apply($datos, $resolutions, $categorias);
+
+        $completeness = (new EncounterCaptureCompletenessValidator())->validate($datos, $categorias);
+        $analysis = $capture->getAnalysisResponse();
+        $textoOriginal = trim((string) ($analysis['texto_original'] ?? $capture->transcript ?? ''));
+        $textoProcesado = isset($analysis['texto_procesado'])
+            ? (string) $analysis['texto_procesado']
+            : ($capture->texto_procesado !== null ? (string) $capture->texto_procesado : null);
+        $review = (new EncounterCaptureReviewPresenter())->build(
+            $datos,
+            $categorias,
+            $textoOriginal,
+            $textoProcesado,
+            ($completeness['tiene_datos_faltantes'] ?? false) === true,
+            $completeness
+        );
+
+        $capture->setDatosExtraidos($datos);
+        if ($analysis === []) {
+            $analysis = ['success' => true];
+        }
+        if (isset($analysis['datos']) && is_array($analysis['datos'])) {
+            $analysis['datos']['datosExtraidos'] = $datos;
+        }
+        $analysis['datosExtraidos'] = $datos;
+        $analysis['capture_review'] = $review;
+        $analysis['puede_confirmar'] = $review['puede_confirmar'] ?? false;
+        $analysis['tiene_datos_faltantes'] = $review['tiene_datos_faltantes'] ?? false;
+        $analysis['datos_faltantes_detalle'] = $review['datos_faltantes_detalle'] ?? [
+            'missing_categories' => $completeness['missing_categories'] ?? [],
+            'incomplete_items' => $completeness['incomplete_items'] ?? [],
+            'issues' => $completeness['issues'] ?? [],
+            'message' => $completeness['message'] ?? '',
+        ];
+        $capture->setAnalysisResponse($analysis);
+        $capture->stage = EncounterCapture::STAGE_READY_FOR_REVIEW;
+        $capture->last_error = null;
+        $capture->updated_at = date('Y-m-d H:i:s');
+        if (!$capture->save(false)) {
+            return $this->fail(500, 'No se pudieron guardar las resoluciones.', $capture);
+        }
+
+        return $this->ok($capture, 'Resoluciones aplicadas.', true);
+    }
+
+    /**
+     * @param array<string, mixed> $body
+     * @return list<array<string, mixed>>
+     */
+    private function resolveCategoriasForCapture(EncounterCapture $capture, array $body): array
+    {
+        $analysis = $capture->getAnalysisResponse();
+        $fromAnalysis = $analysis['categorias'] ?? null;
+        if (is_array($fromAnalysis) && $fromAnalysis !== []) {
+            return array_values(array_filter($fromAnalysis, 'is_array'));
+        }
+
+        $idConfig = (int) ($body['id_configuracion'] ?? $analysis['id_configuracion'] ?? 0);
+        if ($idConfig <= 0) {
+            return [];
+        }
+        $def = EncounterDefinition::findOne($idConfig);
+
+        return $def !== null ? EncounterDefinition::getCategoriasParaPrompt($def) : [];
     }
 
     /**

@@ -36,4 +36,13 @@ class ConsultaIndicaciones extends \yii\base\Model
             'input' => $input,
         ];
     }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    public static function applyResolutionToRow(array $row, string $field, mixed $value): array
+    {
+        return IndicacionInput::applyResolutionToRow($row, $field, $value);
+    }
 }

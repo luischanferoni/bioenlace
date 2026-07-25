@@ -181,6 +181,7 @@ class ConsultaProcesamientoService extends Component
                 'datos_faltantes_detalle' => $captureReview['datos_faltantes_detalle'] ?? [
                     'missing_categories' => $completeness['missing_categories'],
                     'incomplete_items' => $completeness['incomplete_items'],
+                    'issues' => $completeness['issues'] ?? [],
                     'message' => $completeness['message'],
                 ],
                 'categorias' => $categorias,

@@ -133,6 +133,102 @@ final class IndicacionInput extends Model
         return $missing;
     }
 
+    /**
+     * Issues resolubles para el cliente (opciones sin seleccionar).
+     *
+     * @return list<array{id: string, field: string, message: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>
+     */
+    public function buildIssues(string $category, int $index): array
+    {
+        $issues = [];
+        foreach ($this->missingFieldsForCompleteness() as $field) {
+            if ($field === self::FIELD_PLAZO_DIAS) {
+                $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                    $category,
+                    $index,
+                    $field,
+                    'Indique el plazo del control.',
+                    [
+                        ['value' => 3, 'label' => '3 días'],
+                        ['value' => 7, 'label' => '7 días'],
+                        ['value' => 15, 'label' => '15 días'],
+                    ],
+                    true
+                );
+                continue;
+            }
+            if ($field === self::FIELD_TIPO) {
+                $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                    $category,
+                    $index,
+                    $field,
+                    '¿Qué tipo de indicación es?',
+                    [
+                        ['value' => self::TYPE_COUNSELING, 'label' => 'Consejo / instrucción'],
+                        ['value' => self::TYPE_CONDITIONAL, 'label' => 'Condicionado a síntomas'],
+                        ['value' => self::TYPE_FOLLOW_UP, 'label' => 'Control programado'],
+                    ],
+                    false
+                );
+                continue;
+            }
+            $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                $category,
+                $index,
+                $field,
+                'Completá «' . $field . '».',
+                [],
+                true
+            );
+        }
+
+        return $issues;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    public static function applyResolutionToRow(array $row, string $field, mixed $value): array
+    {
+        $row[$field] = $value;
+        if ($field === self::FIELD_PLAZO_DIAS) {
+            if (is_numeric($value)) {
+                $row[$field] = (int) $value;
+            } elseif (is_string($value) && preg_match('/(\d+)/', $value, $m)) {
+                $row[$field] = (int) $m[1];
+            }
+            if (empty($row[self::FIELD_TIPO])) {
+                $row[self::FIELD_TIPO] = self::TYPE_FOLLOW_UP;
+            }
+        }
+
+        return $row;
+    }
+
+    public function applyResolution(string $field, mixed $value): void
+    {
+        if ($field === self::FIELD_INDICACION) {
+            $this->indicacion = is_string($value) ? trim($value) : (string) $value;
+            return;
+        }
+        if ($field === self::FIELD_TIPO) {
+            $this->tipo = is_string($value) ? trim($value) : (string) $value;
+            $this->normalizeTipo();
+            return;
+        }
+        if ($field === self::FIELD_PLAZO_DIAS) {
+            if (is_numeric($value)) {
+                $this->plazoDias = (int) $value;
+            } elseif (is_string($value) && preg_match('/(\d+)/', $value, $m)) {
+                $this->plazoDias = (int) $m[1];
+            }
+            if ($this->tipo === null || $this->tipo === '') {
+                $this->tipo = self::TYPE_FOLLOW_UP;
+            }
+        }
+    }
+
     public function categoryForServiceRequest(): string
     {
         return $this->tipo === self::TYPE_FOLLOW_UP ? 'follow-up' : 'counseling';

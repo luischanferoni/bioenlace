@@ -245,6 +245,28 @@ class EncounterCaptureApi {
     return _decodeMap(response, 'captura/ver');
   }
 
+  /// POST /api/v1/clinical/encounter/captura/aplicar-resoluciones
+  Future<Map<String, dynamic>> capturaAplicarResoluciones({
+    String? clientCaptureId,
+    int? captureId,
+    required Map<String, dynamic> resolutions,
+    int? idConfiguracion,
+  }) async {
+    final body = <String, dynamic>{
+      if (clientCaptureId != null) 'client_capture_id': clientCaptureId,
+      if (captureId != null) 'capture_id': captureId,
+      'resolutions': resolutions,
+      if (idConfiguracion != null) 'id_configuracion': idConfiguracion,
+    };
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/encounter/captura/aplicar-resoluciones',
+    );
+    final response = await http
+        .post(uri, headers: _jsonHeaders, body: json.encode(body))
+        .timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
+    return _decodeMap(response, 'captura/aplicar-resoluciones');
+  }
+
   /// POST /api/v1/clinical/encounter/captura/descartar
   Future<void> capturaDescartar({
     String? clientCaptureId,

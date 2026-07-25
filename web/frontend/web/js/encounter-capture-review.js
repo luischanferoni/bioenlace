@@ -288,12 +288,137 @@
             );
         }
 
+        var issues = Array.isArray(review.issues) ? review.issues : [];
+        if (issues.length) {
+            parts.push('<div class="capture-review-issues mb-3">');
+            parts.push('<div class="fw-semibold mb-2">Completar datos</div>');
+            issues.forEach(function (issue) {
+                if (!issue || !issue.id) {
+                    return;
+                }
+                parts.push('<div class="mb-3" data-capture-issue-id="' + escapeHtml(issue.id) + '">');
+                parts.push('<div class="small">' + escapeHtml(issue.message || '') + '</div>');
+                if (issue.field) {
+                    parts.push(
+                        '<div class="text-muted small mb-1">' + escapeHtml(issue.field) + '</div>'
+                    );
+                }
+                var options = Array.isArray(issue.options) ? issue.options : [];
+                if (options.length) {
+                    parts.push('<div class="d-flex flex-wrap gap-1 mb-1">');
+                    options.forEach(function (opt) {
+                        if (!opt || typeof opt.value === 'undefined') {
+                            return;
+                        }
+                        parts.push(
+                            '<button type="button" class="btn btn-sm btn-outline-secondary capture-issue-option me-1 mb-1" ' +
+                                'data-issue-id="' +
+                                escapeHtml(issue.id) +
+                                '" data-issue-value="' +
+                                escapeHtml(String(opt.value)) +
+                                '" aria-pressed="false">' +
+                                escapeHtml(opt.label || String(opt.value)) +
+                                '</button>'
+                        );
+                    });
+                    parts.push('</div>');
+                }
+                if (issue.allow_custom) {
+                    parts.push(
+                        '<input type="text" class="form-control form-control-sm capture-issue-custom" ' +
+                            'data-issue-id="' +
+                            escapeHtml(issue.id) +
+                            '" placeholder="' +
+                            escapeHtml(options.length ? 'Otra opción…' : 'Completá el valor') +
+                            '">'
+                    );
+                }
+                parts.push('</div>');
+            });
+            parts.push(
+                '<button type="button" class="btn btn-sm btn-outline-primary capture-apply-resolutions">' +
+                    'Aplicar respuestas</button>'
+            );
+            parts.push('</div>');
+        }
+
         parts.push('</div>');
 
         return {
             html: parts.join(''),
             stagedIds: stagedIds,
         };
+    }
+
+    function collectResolutions(root) {
+        var out = {};
+        if (!root) {
+            return out;
+        }
+        root.querySelectorAll('[data-capture-issue-id]').forEach(function (block) {
+            var issueId = block.getAttribute('data-capture-issue-id');
+            if (!issueId) {
+                return;
+            }
+            var active = block.querySelector('.capture-issue-option.active');
+            if (active) {
+                out[issueId] = active.getAttribute('data-issue-value');
+                return;
+            }
+            var custom = block.querySelector('.capture-issue-custom');
+            if (custom && String(custom.value || '').trim() !== '') {
+                out[issueId] = String(custom.value).trim();
+            }
+        });
+        return out;
+    }
+
+    function bindIssueResolutions(root, onApply) {
+        if (!root) {
+            return;
+        }
+        root.querySelectorAll('.capture-issue-option').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var block = btn.closest('[data-capture-issue-id]');
+                if (!block) {
+                    return;
+                }
+                var willActivate = !btn.classList.contains('active');
+                block.querySelectorAll('.capture-issue-option').forEach(function (other) {
+                    other.classList.remove('active', 'btn-outline-primary');
+                    other.classList.add('btn-outline-secondary');
+                    other.setAttribute('aria-pressed', 'false');
+                });
+                if (willActivate) {
+                    btn.classList.add('active', 'btn-outline-primary');
+                    btn.classList.remove('btn-outline-secondary');
+                    btn.setAttribute('aria-pressed', 'true');
+                    var custom = block.querySelector('.capture-issue-custom');
+                    if (custom) {
+                        custom.value = '';
+                    }
+                }
+            });
+        });
+        root.querySelectorAll('.capture-issue-custom').forEach(function (input) {
+            input.addEventListener('input', function () {
+                var block = input.closest('[data-capture-issue-id]');
+                if (!block || String(input.value || '').trim() === '') {
+                    return;
+                }
+                block.querySelectorAll('.capture-issue-option').forEach(function (other) {
+                    other.classList.remove('active', 'btn-outline-primary');
+                    other.classList.add('btn-outline-secondary');
+                    other.setAttribute('aria-pressed', 'false');
+                });
+            });
+        });
+        var applyBtn = root.querySelector('.capture-apply-resolutions');
+        if (applyBtn && typeof onApply === 'function') {
+            applyBtn.addEventListener('click', function () {
+                onApply(collectResolutions(root));
+            });
+        }
     }
 
     function bindItemToggles(root, onChange) {
@@ -323,7 +448,9 @@
     window.EncounterCaptureReview = {
         render: render,
         bindItemToggles: bindItemToggles,
+        bindIssueResolutions: bindIssueResolutions,
         collectStagedIds: collectStagedIds,
+        collectResolutions: collectResolutions,
         buildDatosExtraidos: buildDatosExtraidos,
         buildFullAnalisisExtraidos: buildFullAnalisisExtraidos,
         canConfirm: canConfirm,

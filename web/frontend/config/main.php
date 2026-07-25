@@ -143,6 +143,8 @@ return [
                 'OPTIONS api/<version:\w+>/clinical/encounter/captura/listar' => '<version>/clinical/encounter/captura-listar',
                 'GET api/<version:\w+>/clinical/encounter/captura/ver' => '<version>/clinical/encounter/captura-ver',
                 'OPTIONS api/<version:\w+>/clinical/encounter/captura/ver' => '<version>/clinical/encounter/captura-ver',
+                'POST api/<version:\w+>/clinical/encounter/captura/aplicar-resoluciones' => '<version>/clinical/encounter/captura-aplicar-resoluciones',
+                'OPTIONS api/<version:\w+>/clinical/encounter/captura/aplicar-resoluciones' => '<version>/clinical/encounter/captura-aplicar-resoluciones',
                 'POST api/<version:\w+>/clinical/encounter/captura/descartar' => '<version>/clinical/encounter/captura-descartar',
                 'OPTIONS api/<version:\w+>/clinical/encounter/captura/descartar' => '<version>/clinical/encounter/captura-descartar',
                 'GET api/<version:\w+>/clinical/encounter/captura/audio' => '<version>/clinical/encounter/captura-audio',

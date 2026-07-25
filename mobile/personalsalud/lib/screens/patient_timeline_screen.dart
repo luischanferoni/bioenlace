@@ -62,6 +62,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   EncounterCaptureAnalysis? _captureReview;
   String? _draftText;
   Set<String> _stagedItemIds = {};
+  /// issue_id → valor elegido (ninguno viene preseleccionado).
+  Map<String, dynamic> _issueResolutions = {};
+  final Map<String, TextEditingController> _issueCustomControllers = {};
+  bool _isApplyingResolutions = false;
   String _sttStatus = '';
   SttClientConfig _sttConfig = SttClientConfig.defaults;
   bool _audioOnlyRecording = false;
@@ -73,7 +77,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   final TextEditingController _chatController = TextEditingController();
   final FocusNode _chatFocusNode = FocusNode();
 
-  bool get _captureBusy => _isAnalyzing || _isSaving;
+  bool get _captureBusy =>
+      _isAnalyzing || _isSaving || _isApplyingResolutions;
 
   bool get _enRevisionCaptura => _captureReview != null;
   bool get _mostrarBarraConsulta =>
@@ -187,6 +192,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   void dispose() {
     _chatController.dispose();
     _chatFocusNode.dispose();
+    for (final c in _issueCustomControllers.values) {
+      c.dispose();
+    }
+    _issueCustomControllers.clear();
     super.dispose();
   }
 
@@ -1038,6 +1047,21 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return 'Revisá el texto';
   }
 
+  void _clearIssueResolutions() {
+    for (final c in _issueCustomControllers.values) {
+      c.dispose();
+    }
+    _issueCustomControllers.clear();
+    _issueResolutions = {};
+  }
+
+  TextEditingController _issueCustomController(String issueId) {
+    return _issueCustomControllers.putIfAbsent(
+      issueId,
+      () => TextEditingController(),
+    );
+  }
+
   void _clearCaptureDraft({bool deleteLocalPending = true}) {
     final pendingId = _activePendingId;
     setState(() {
@@ -1045,6 +1069,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _lastAnalysis = null;
       _draftText = null;
       _stagedItemIds = {};
+      _clearIssueResolutions();
       _lastDictation = null;
       _sttStatus = '';
       _pendingAudioPath = null;
@@ -1215,6 +1240,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _lastAnalysis = current.analysisResponse;
         _draftText = current.texto;
         _captureReview = review;
+        _clearIssueResolutions();
         _stagedItemIds = current.stagedItemIds.isNotEmpty
             ? current.stagedItemIds.toSet()
             : review.allItems.map((e) => e.id).toSet();
@@ -1235,6 +1261,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _lastAnalysis = null;
       _draftText = null;
       _stagedItemIds = {};
+      _clearIssueResolutions();
       _chatController.text = current.texto.startsWith('(audio')
           ? ''
           : current.texto;
@@ -1306,6 +1333,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _captureReview = null;
       _lastAnalysis = null;
       _stagedItemIds = {};
+      _clearIssueResolutions();
       _sttStatus = '';
       _chatController.text = draft;
     });
@@ -1574,6 +1602,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _lastAnalysis = analysisPayload;
         _draftText = transcript;
         _captureReview = review;
+        _clearIssueResolutions();
         _stagedItemIds = staged;
         _chatController.clear();
         _sttStatus = '';
@@ -1591,6 +1620,124 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _snack(_mensajeErrorCaptura(e), UiIntent.danger);
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
+    }
+  }
+
+  Future<void> _aplicarResolucionesIssues() async {
+    final review = _captureReview;
+    if (review == null || review.issues.isEmpty || _isApplyingResolutions) {
+      return;
+    }
+    final resolutions = <String, dynamic>{};
+    for (final issue in review.issues) {
+      if (_issueResolutions.containsKey(issue.id)) {
+        resolutions[issue.id] = _issueResolutions[issue.id];
+        continue;
+      }
+      if (issue.allowCustom) {
+        final custom = _issueCustomControllers[issue.id]?.text.trim() ?? '';
+        if (custom.isNotEmpty) {
+          resolutions[issue.id] = custom;
+        }
+      }
+    }
+    if (resolutions.isEmpty) {
+      _snack('Elegí una opción o completá el valor.', UiIntent.warning);
+      return;
+    }
+    if (resolutions.length < review.issues.length) {
+      _snack('Completá todos los datos pendientes.', UiIntent.warning);
+      return;
+    }
+
+    PendingEncounterCapture? pending;
+    if (_activePendingId != null) {
+      for (final p in _pendingCaptures) {
+        if (p.id == _activePendingId) {
+          pending = p;
+          break;
+        }
+      }
+      if (pending == null) {
+        try {
+          if (_tieneContextoCaptura) {
+            final list = await _pendingStore.listForContext(
+              personaId: widget.personaId,
+              parent: widget.consultParent!,
+              parentId: widget.consultParentId!,
+            );
+            for (final p in list) {
+              if (p.id == _activePendingId) {
+                pending = p;
+                break;
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    final captureId = pending?.serverCaptureId ??
+        (_lastAnalysis?['id'] is int
+            ? _lastAnalysis!['id'] as int
+            : int.tryParse('${_lastAnalysis?['id'] ?? ''}'));
+    final clientId = _activePendingId ?? pending?.id;
+    if (clientId == null && captureId == null) {
+      _snack('No hay captura activa para resolver.', UiIntent.warning);
+      return;
+    }
+
+    setState(() => _isApplyingResolutions = true);
+    try {
+      final out = await _encounterApi.capturaAplicarResoluciones(
+        clientCaptureId: clientId,
+        captureId: captureId,
+        resolutions: resolutions,
+      );
+      if (!mounted) return;
+      final capture = out['capture'];
+      Map<String, dynamic> analysisPayload = {};
+      if (capture is Map) {
+        analysisPayload = Map<String, dynamic>.from(capture);
+        final nested = capture['analysis'];
+        if (nested is Map) {
+          analysisPayload = {
+            ...analysisPayload,
+            ...Map<String, dynamic>.from(nested),
+          };
+        }
+      }
+      final nextReview = EncounterCaptureAnalysis.fromApiResponse(analysisPayload);
+      final staged = _stagedItemIds.isNotEmpty
+          ? _stagedItemIds
+          : nextReview.defaultStagedItemIds.toSet();
+      await _persistLocalDraft(
+        texto: _draftText ?? nextReview.textoOriginal,
+        status: PendingEncounterCaptureStatus.pendingSave,
+        analysisResponse: analysisPayload,
+        stagedItemIds: staged.toList(),
+        serverCaptureId: pending?.serverCaptureId ??
+            (capture is Map ? int.tryParse('${capture['id']}') : null),
+        serverStage: capture is Map ? capture['stage']?.toString() : null,
+        clearError: true,
+      );
+      setState(() {
+        _lastAnalysis = analysisPayload;
+        _captureReview = nextReview;
+        _clearIssueResolutions();
+        _stagedItemIds = staged;
+        _sttStatus = nextReview.tieneDatosFaltantes
+            ? (nextReview.datosFaltantesMensaje ?? 'Aún faltan datos.')
+            : '';
+      });
+      if (!nextReview.tieneDatosFaltantes) {
+        _snack('Datos completados. Ya podés guardar.', UiIntent.success);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _snack(_mensajeErrorCaptura(e), UiIntent.danger);
+    } finally {
+      if (mounted) setState(() => _isApplyingResolutions = false);
     }
   }
 
@@ -2174,7 +2321,99 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 : 'Faltan categorías o campos obligatorios. Completá el dictado/texto (dosis, frecuencia, etc.) y volvé a analizar. No se puede confirmar hasta completarlos.',
           ),
         ],
+        if (review.issues.isNotEmpty) ...[
+          BioSpacing.gapH(BioSpacing.md),
+          Text('Completar datos', style: sectionTitleStyle),
+          BioSpacing.gapH(BioSpacing.sm),
+          ...review.issues.map(_buildCaptureIssueBlock),
+          BioSpacing.gapH(BioSpacing.sm),
+          BioButton(
+            label: _isApplyingResolutions ? 'Aplicando…' : 'Aplicar respuestas',
+            intent: UiIntent.secondary,
+            variant: BioButtonVariant.soft,
+            onPressed: (_isApplyingResolutions || _isSaving)
+                ? null
+                : _aplicarResolucionesIssues,
+          ),
+        ],
       ],
+    );
+  }
+
+  Widget _buildCaptureIssueBlock(EncounterCaptureIssue issue) {
+    final selected = _issueResolutions[issue.id];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BioSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(issue.message, style: BioTypography.bodySm),
+          if (issue.field.isNotEmpty)
+            Text(
+              issue.field,
+              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+            ),
+          BioSpacing.gapH(BioSpacing.sm),
+          if (issue.options.isNotEmpty)
+            Wrap(
+              spacing: BioSpacing.sm,
+              runSpacing: BioSpacing.sm,
+              children: issue.options.map((opt) {
+                final isSelected = selected != null &&
+                    selected.toString() == opt.value.toString();
+                return BioChip(
+                  label: opt.label,
+                  selected: isSelected,
+                  icon: isSelected ? Icons.check : null,
+                  intent: UiIntent.neutral,
+                  onTap: (_isSaving || _isApplyingResolutions)
+                      ? null
+                      : () {
+                          setState(() {
+                            if (isSelected) {
+                              _issueResolutions.remove(issue.id);
+                            } else {
+                              _issueResolutions[issue.id] = opt.value;
+                              _issueCustomControllers[issue.id]?.clear();
+                            }
+                          });
+                        },
+                );
+              }).toList(),
+            ),
+          if (issue.allowCustom) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            TextField(
+              controller: _issueCustomController(issue.id),
+              enabled: !_isSaving && !_isApplyingResolutions,
+              decoration: InputDecoration(
+                hintText: issue.options.isEmpty
+                    ? 'Completá el valor'
+                    : 'Otra opción…',
+                isDense: true,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                final trimmed = value.trim();
+                setState(() {
+                  if (trimmed.isEmpty) {
+                    // Solo limpia si el valor actual era custom (no chip).
+                    final current = _issueResolutions[issue.id];
+                    final matchesChip = issue.options.any(
+                      (o) => o.value.toString() == current?.toString(),
+                    );
+                    if (!matchesChip) {
+                      _issueResolutions.remove(issue.id);
+                    }
+                  } else {
+                    _issueResolutions[issue.id] = trimmed;
+                  }
+                });
+              },
+            ),
+          ],
+        ],
+      ),
     );
   }
 

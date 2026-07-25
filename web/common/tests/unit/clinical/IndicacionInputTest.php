@@ -102,5 +102,8 @@ class IndicacionInputTest extends Unit
 
         $this->assertFalse($result['complete']);
         $this->assertContains('Plazo dias', $result['incomplete_items'][0]['missing_fields']);
+        $this->assertNotEmpty($result['issues']);
+        $this->assertSame('Plazo dias', $result['issues'][0]['field']);
+        $this->assertNotEmpty($result['issues'][0]['options']);
     }
 }

@@ -19,7 +19,7 @@ use yii\web\UploadedFile;
  * POST /api/v1/clinical/encounter/guardar
  *
  * Pipeline por etapas (síncrono, sin jobs):
- * POST …/captura/crear-o-subir | …/transcribir | …/analizar | …/guardar | …/descartar
+ * POST …/captura/crear-o-subir | …/transcribir | …/analizar | …/guardar | …/aplicar-resoluciones | …/descartar
  * GET  …/captura/listar | …/ver | …/audio
  *
  * Especialidades (lectura): GET …/encounter/<id>/odontology | …/ophthalmology
@@ -101,6 +101,14 @@ class EncounterController extends BaseController
     {
         $params = array_merge(Yii::$app->request->get(), $this->mergeRequestBody());
         $out = ClinicalEncounterEntry::capturaVer($params);
+
+        return $this->applyServiceHttpStatus($out);
+    }
+
+    /** POST: aplicar resoluciones de issues pendientes y regenerar review. */
+    public function actionCapturaAplicarResoluciones()
+    {
+        $out = ClinicalEncounterEntry::capturaAplicarResoluciones($this->mergeRequestBody());
 
         return $this->applyServiceHttpStatus($out);
     }

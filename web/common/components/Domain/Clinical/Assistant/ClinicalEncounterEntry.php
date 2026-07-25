@@ -98,6 +98,15 @@ final class ClinicalEncounterEntry
     }
 
     /**
+     * @param array<string, mixed> $body
+     * @return array<string, mixed>
+     */
+    public static function capturaAplicarResoluciones(array $body): array
+    {
+        return (new EncounterCapturePipelineService())->aplicarResoluciones($body);
+    }
+
+    /**
      * @param array<string, mixed> $query
      * @return array{path: string, mime: string, filename: string}|array<string, mixed>
      */

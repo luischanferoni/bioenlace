@@ -19,6 +19,7 @@ final class EncounterCaptureCompletenessValidator
      *   tiene_datos_faltantes: bool,
      *   missing_categories: list<string>,
      *   incomplete_items: list<array{category: string, index: int, label: string, missing_fields: list<string>}>,
+     *   issues: list<array{id: string, field: string, message: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>,
      *   message: string
      * }
      */
@@ -26,6 +27,7 @@ final class EncounterCaptureCompletenessValidator
     {
         $missingCategories = [];
         $incompleteItems = [];
+        $issues = [];
 
         foreach ($categorias as $categoria) {
             if (!is_array($categoria)) {
@@ -60,6 +62,25 @@ final class EncounterCaptureCompletenessValidator
                         'label' => $check['label'],
                         'missing_fields' => $check['missing_fields'],
                     ];
+                    $input = $check['input'] ?? null;
+                    if (is_object($input) && method_exists($input, 'buildIssues')) {
+                        foreach ($input->buildIssues($title, (int) $index) as $issue) {
+                            if (is_array($issue)) {
+                                $issues[] = $issue;
+                            }
+                        }
+                    } else {
+                        foreach ($check['missing_fields'] as $field) {
+                            $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                                $title,
+                                (int) $index,
+                                (string) $field,
+                                'Completá «' . $field . '».',
+                                [],
+                                true
+                            );
+                        }
+                    }
                 }
                 continue;
             }
@@ -79,6 +100,16 @@ final class EncounterCaptureCompletenessValidator
                     'label' => $this->rowLabel($row, $campos),
                     'missing_fields' => $missingFields,
                 ];
+                foreach ($missingFields as $field) {
+                    $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                        $title,
+                        (int) $index,
+                        (string) $field,
+                        'Completá «' . $field . '».',
+                        [],
+                        true
+                    );
+                }
             }
         }
 
@@ -89,6 +120,7 @@ final class EncounterCaptureCompletenessValidator
             'tiene_datos_faltantes' => !$complete,
             'missing_categories' => $missingCategories,
             'incomplete_items' => $incompleteItems,
+            'issues' => $issues,
             'message' => $this->buildMessage($missingCategories, $incompleteItems),
         ];
     }
@@ -100,7 +132,7 @@ final class EncounterCaptureCompletenessValidator
 
     /**
      * @param array<string, mixed>|string $row
-     * @return array{missing_fields: list<string>, label: string}
+     * @return array{missing_fields: list<string>, label: string, input?: object}
      */
     private function domainCompletenessForRow(string $modelo, $row): array
     {
@@ -111,8 +143,9 @@ final class EncounterCaptureCompletenessValidator
         $check = $handler($row);
 
         return [
-            'missing_fields' => $check['missing_fields'],
-            'label' => $check['label'],
+            'missing_fields' => $check['missing_fields'] ?? [],
+            'label' => $check['label'] ?? 'ítem',
+            'input' => $check['input'] ?? null,
         ];
     }
 

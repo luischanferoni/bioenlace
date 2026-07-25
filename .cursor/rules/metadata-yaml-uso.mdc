@@ -1,0 +1,40 @@
+---
+description: Qué va en YAML vs modelos Yii / servicios de dominio (integridad y gates hard)
+alwaysApply: true
+---
+
+# Metadata YAML — uso correcto
+
+Complementa [`capas-y-metadata-sin-hardcode.mdc`](capas-y-metadata-sin-hardcode.mdc): **declarar en YAML no implica que el YAML sea la fuente de verdad de integridad clínica**.
+
+## Qué SÍ va en YAML / metadata
+
+- Composición de producto: intents, flows, UI JSON, atajos, catálogos RBAC/ABAC.
+- Esquema de extracción NL (campos que la IA *puede* devolver).
+- Knobs operativos: umbrales, timeouts, overrides de post-proceso, flags de política.
+- Manifiestos que motores genéricos interpretan (`SubIntentEngine`, `UiScreenService`, …).
+
+## Qué NO va en YAML (va en Yii / dominio)
+
+| Decisión | Dónde |
+|----------|--------|
+| ¿Puede confirmarse / emitirse / persistirse? | `rules()` en `*Input`, AR, o servicio de dominio |
+| Obligatoriedad contextual (`when`) | Modelo Yii (p. ej. plazo solo si `follow_up`) |
+| Gates hard de agentes (RDI, etc.) | Escenarios/policy en PHP; YAML solo knobs |
+| Issues resolubles (opciones sin preselección) | `buildIssues()` / `applyResolutionToRow` en `*Input` |
+
+Si falta el YAML, **los gates hard y la integridad siguen activos** con defaults de dominio.
+
+## Anti-patrones
+
+- Listas planas `campos_requeridos` / `requeridosPrompt` como hard-required de todo.
+- `required_when` / `field_schema` de integridad en YAML (duplica Yii).
+- “Si no hay YAML, el gate pasa” en agentes o post-proceso.
+- Completar silenciosamente campos clínicos faltantes con IA; sugerir opciones, confirma el profesional.
+
+## Al dudar
+
+1. ¿Es composición / knob / prompt? → metadata.
+2. ¿Es “válido / bloquea guardado”? → modelo o servicio de dominio.
+3. ADR: `web/docs/decisions/captura-clinica-contratos-yii-vs-yaml.md`
+4. Guía: `web/docs/arquitectura/metadata-yaml-uso.md`

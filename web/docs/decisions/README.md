@@ -9,6 +9,8 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Autorización solo por intents | RBAC assignable = intent_id; retiro grants atributo | [autorizacion-solo-por-intents.md](./autorizacion-solo-por-intents.md) |
 | Captura clínica: Yii vs YAML | Integridad en `*Input` / servicios; YAML = prompts y knobs | [captura-clinica-contratos-yii-vs-yaml.md](./captura-clinica-contratos-yii-vs-yaml.md) |
 
+Guía transversal (no ADR): [arquitectura/metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md).
+
 ## Formato sugerido para nuevas entradas
 
 Crear `NNNN-titulo-corto.md` en esta carpeta con:

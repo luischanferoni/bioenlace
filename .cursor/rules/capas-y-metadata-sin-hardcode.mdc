@@ -45,3 +45,5 @@ Aplica a **web, API, asistente, móvil y jobs** — no solo al asistente SPA.
 - Migraciones de datos puntuales.
 
 Cuando dudes: **¿puede declararse en metadata o moverse un nivel abajo?** Si sí, no lo dejes en el orquestador.
+
+**Límite del YAML:** composición y knobs, no integridad clínica ni gates hard. Ver [`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc) y `web/docs/arquitectura/metadata-yaml-uso.md`.

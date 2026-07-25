@@ -58,6 +58,12 @@ flowchart TB
 3. **Análisis:** extracción de conceptos a campos del workflow (el médico revisa el HTML antes de guardar).
 4. **Guardado:** `EncounterDocumentationService` persiste FHIR; **codificación CIE-10/SNOMED** vía `encounter-codificacion-automatica` (IA elige códigos y los guarda en `clinical_condition`).
 
+## Contratos vs metadata
+
+La integridad de cada ítem (p. ej. plazo solo en controles programados) vive en modelos de entrada Yii, no en listas planas del YAML. El YAML aporta composición del workflow, prompts y knobs; si faltan datos, el profesional resuelve opciones sugeridas sin preselección.
+
+Detalle: [metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md) y [captura-clinica-contratos-yii-vs-yaml.md](../decisions/captura-clinica-contratos-yii-vs-yaml.md).
+
 ## Mutación por contexto
 
 | Dimensión | Efecto |

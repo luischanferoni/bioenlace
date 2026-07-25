@@ -28,6 +28,8 @@ flowchart LR
 | Auditoría | tabla `agent_run`, `AgentRunRecorder` |
 | Acciones | Servicios de dominio (push, turnos, lab, cohortes) |
 
+El YAML aporta **knobs** (umbrales, flags). Los **gates hard** (p. ej. no emitir RDI si falta integridad) viven en dominio/modelos: si falta el YAML, el bloqueo sigue. Ver [metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md).
+
 ---
 
 ## Agentes implementados

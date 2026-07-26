@@ -86,15 +86,19 @@ final class EncounterLifecycleService
     }
 
     /**
-     * Tras guardar documentación clínica: finaliza encounter y marca turno atendido si aplica.
+     * Tras guardar documentación clínica: finaliza encounter, marca turno atendido
+     * y aplica ciclo de vida CarePlan (agudos / continuidad).
+     *
+     * @param array<string, mixed> $carePlanOptions Ver {@see CarePlanLifecycleService::onEncounterClose}
      */
-    public function onCaptureDocumented(Encounter $encounter): Encounter
+    public function onCaptureDocumented(Encounter $encounter, array $carePlanOptions = []): Encounter
     {
         if (trim((string) ($encounter->status ?? '')) !== EncounterStatus::FINISHED) {
             $encounter = $this->finalize($encounter);
         }
 
         $this->syncAppointmentAttendedFromEncounter($encounter);
+        (new CarePlanLifecycleService(null, $this))->onEncounterClose($encounter, $carePlanOptions);
 
         return $encounter;
     }

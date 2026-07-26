@@ -2,7 +2,9 @@
 
 namespace common\components\Domain\Clinical\Workflow;
 
+use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\CarePlanService;
+use common\components\Domain\Clinical\Service\ConditionLifecycleService;
 use common\components\Domain\Clinical\Service\EncounterAutomaticCodingService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
@@ -264,6 +266,16 @@ class EncounterDocumentationService extends Component
             // TX corta y se commitea ANTES de cualquier llamada IA. En hosting compartido
             // una TX abierta durante codificación (~1–2s) corre riesgo de reconnect y
             // se pierde lo no committeado; la nota/conditions post-IA sí quedaban.
+            $carePlanOptions = $this->resolveCarePlanOptionsFromBody($body);
+            $conditionResolutions = $body['condition_resolutions'] ?? $body['conditionResolutions'] ?? [];
+            $carePlanResolutions = $body['care_plan_resolutions'] ?? $body['carePlanResolutions'] ?? [];
+            if (!is_array($conditionResolutions)) {
+                $conditionResolutions = [];
+            }
+            if (!is_array($carePlanResolutions)) {
+                $carePlanResolutions = [];
+            }
+
             $encounter = $this->runInDbTransaction(function () use (
                 $encounterId,
                 $body,
@@ -271,7 +283,11 @@ class EncounterDocumentationService extends Component
                 $configuracion,
                 &$diagnostico,
                 $datosExtraidos,
-                $logger
+                $logger,
+                $carePlanOptions,
+                $conditionResolutions,
+                $carePlanResolutions,
+                $idPersona
             ) {
                 $encounter = $this->resolveEncounter($encounterId, $body, $paciente, $configuracion);
                 $diagnostico['por_modelo'] = $this->persistExtractedData(
@@ -280,7 +296,18 @@ class EncounterDocumentationService extends Component
                     $datosExtraidos,
                     $logger
                 );
-                $encounter = $this->lifecycle->onCaptureDocumented($encounter);
+                $subjectId = (int) ($encounter->subject_persona_id ?: $idPersona);
+                if ($conditionResolutions !== []) {
+                    $diagnostico['condition_resolutions'] = count(
+                        (new ConditionLifecycleService())->applyResolutions($conditionResolutions, $subjectId)
+                    );
+                }
+                if ($carePlanResolutions !== []) {
+                    $diagnostico['care_plan_resolutions'] = count(
+                        (new CarePlanLifecycleService())->applyResolutions($carePlanResolutions, $subjectId)
+                    );
+                }
+                $encounter = $this->lifecycle->onCaptureDocumented($encounter, $carePlanOptions);
                 $this->forcePersistCaptureNote($encounter, $body);
 
                 return $encounter;
@@ -359,6 +386,16 @@ class EncounterDocumentationService extends Component
             $logger->finalizar($out);
 
             return $out;
+        } catch (\InvalidArgumentException $e) {
+            Yii::warning($e->getMessage(), __METHOD__);
+            $out = $this->error(400, $e->getMessage());
+            $out['diagnostico_guardar'] = $diagnostico;
+            if ($logger !== null) {
+                $logger->registrar('ERROR', null, $e->getMessage(), ['metodo' => __METHOD__]);
+                $logger->finalizar($out);
+            }
+
+            return $out;
         } catch (\Throwable $e) {
             Yii::error($e->getMessage(), __METHOD__);
             $out = $this->error(500, 'Error al guardar encounter: ' . $e->getMessage());
@@ -372,6 +409,37 @@ class EncounterDocumentationService extends Component
 
             return $out;
         }
+    }
+
+    /**
+     * Opciones de ciclo CarePlan al cerrar la atención.
+     *
+     * Body:
+     * - continue_treatment / continueTreatment (bool)
+     * - complete_acute / completeAcute (bool, default true)
+     * - care_plan_options / carePlanOptions (mapa con las mismas claves)
+     *
+     * @param array<string, mixed> $body
+     * @return array{continue_treatment: bool, complete_acute: bool}
+     */
+    private function resolveCarePlanOptionsFromBody(array $body): array
+    {
+        $nested = $body['care_plan_options'] ?? $body['carePlanOptions'] ?? null;
+        $src = is_array($nested) ? array_merge($body, $nested) : $body;
+        $continue = !empty($src['continue_treatment']) || !empty($src['continueTreatment']);
+        $completeAcute = true;
+        if (array_key_exists('complete_acute', $src)) {
+            $completeAcute = $src['complete_acute'] !== false && $src['complete_acute'] !== 0
+                && $src['complete_acute'] !== '0' && $src['complete_acute'] !== 'false';
+        } elseif (array_key_exists('completeAcute', $src)) {
+            $completeAcute = $src['completeAcute'] !== false && $src['completeAcute'] !== 0
+                && $src['completeAcute'] !== '0' && $src['completeAcute'] !== 'false';
+        }
+
+        return [
+            'continue_treatment' => $continue,
+            'complete_acute' => $completeAcute,
+        ];
     }
 
     /**

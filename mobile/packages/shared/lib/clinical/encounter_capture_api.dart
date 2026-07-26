@@ -182,6 +182,10 @@ class EncounterCaptureApi {
     String? textoOriginal,
     String? textoProcesado,
     Map<String, dynamic>? userPerTabConfig,
+    Map<String, dynamic>? conditionResolutions,
+    Map<String, dynamic>? carePlanResolutions,
+    bool completeAcute = true,
+    bool continueTreatment = false,
   }) async {
     final body = <String, dynamic>{
       if (clientCaptureId != null) 'client_capture_id': clientCaptureId,
@@ -194,6 +198,12 @@ class EncounterCaptureApi {
       if (textoProcesado != null) 'texto_procesado': textoProcesado,
       if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
         'userPerTabConfig': userPerTabConfig,
+      if (conditionResolutions != null && conditionResolutions.isNotEmpty)
+        'condition_resolutions': conditionResolutions,
+      if (carePlanResolutions != null && carePlanResolutions.isNotEmpty)
+        'care_plan_resolutions': carePlanResolutions,
+      'complete_acute': completeAcute,
+      'continue_treatment': continueTreatment,
     };
     final uri =
         Uri.parse('${AppConfig.apiUrl}/clinical/encounter/captura/guardar');
@@ -355,6 +365,10 @@ class EncounterCaptureApi {
     required String textoOriginal,
     required String textoProcesado,
     Map<String, dynamic>? userPerTabConfig,
+    Map<String, dynamic>? conditionResolutions,
+    Map<String, dynamic>? carePlanResolutions,
+    bool completeAcute = true,
+    bool continueTreatment = false,
   }) async {
     final body = <String, dynamic>{
       'id_persona': idPersona,
@@ -372,6 +386,12 @@ class EncounterCaptureApi {
       if (encounterId != null) 'id_consulta': encounterId,
       if (userPerTabConfig != null && userPerTabConfig.isNotEmpty)
         'userPerTabConfig': userPerTabConfig,
+      if (conditionResolutions != null && conditionResolutions.isNotEmpty)
+        'condition_resolutions': conditionResolutions,
+      if (carePlanResolutions != null && carePlanResolutions.isNotEmpty)
+        'care_plan_resolutions': carePlanResolutions,
+      'complete_acute': completeAcute,
+      'continue_treatment': continueTreatment,
     };
 
     final uri = Uri.parse('${AppConfig.apiUrl}/clinical/encounter/guardar');

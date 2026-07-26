@@ -64,6 +64,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   Set<String> _stagedItemIds = {};
   /// issue_id → valor elegido (ninguno viene preseleccionado).
   Map<String, dynamic> _issueResolutions = {};
+  /// open problem key `condition:123` / `care_plan:456` → value.
+  Map<String, dynamic> _openProblemResolutions = {};
   final Map<String, TextEditingController> _issueCustomControllers = {};
   bool _isApplyingResolutions = false;
   String _sttStatus = '';
@@ -1053,6 +1055,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
     _issueCustomControllers.clear();
     _issueResolutions = {};
+    _openProblemResolutions = {};
   }
 
   TextEditingController _issueCustomController(String issueId) {
@@ -1801,6 +1804,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
 
       final clientId = _activePendingId;
+      final conditionResolutions = <String, dynamic>{};
+      final carePlanResolutions = <String, dynamic>{};
+      _openProblemResolutions.forEach((key, value) {
+        final parts = key.split(':');
+        if (parts.length != 2) return;
+        if (parts[0] == 'care_plan') {
+          carePlanResolutions[parts[1]] = value;
+        } else {
+          conditionResolutions[parts[1]] = value;
+        }
+      });
       Map<String, dynamic> guardado;
       if (clientId != null && clientId.isNotEmpty) {
         final out = await _encounterApi.capturaGuardar(
@@ -1811,6 +1825,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           textoOriginal: textoOriginal,
           textoProcesado: textoProcesado,
           userPerTabConfig: await _operationalContextForCapture(),
+          conditionResolutions: conditionResolutions,
+          carePlanResolutions: carePlanResolutions,
         );
         final nested = out['guardar'];
         guardado = nested is Map
@@ -1829,6 +1845,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           idConfiguracion: idConfiguracion,
           encounterId: encounterId,
           userPerTabConfig: await _operationalContextForCapture(),
+          conditionResolutions: conditionResolutions,
+          carePlanResolutions: carePlanResolutions,
         );
       }
       if (!mounted) return;
@@ -2336,7 +2354,69 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 : _aplicarResolucionesIssues,
           ),
         ],
+        if (review.hasOpenProblems) ...[
+          BioSpacing.gapH(BioSpacing.md),
+          Text('Problemas y tratamientos abiertos', style: sectionTitleStyle),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            'Opcional: indicá el estado al cerrar. Si no elegís, se mantienen.',
+            style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+          ...review.openProblems!.conditions
+              .map((item) => _buildOpenProblemBlock(item)),
+          ...review.openProblems!.carePlans
+              .map((item) => _buildOpenProblemBlock(item)),
+        ],
       ],
+    );
+  }
+
+  Widget _buildOpenProblemBlock(EncounterOpenProblemItem item) {
+    final key = '${item.kind}:${item.id}';
+    final selected = _openProblemResolutions[key];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BioSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            item.label,
+            style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
+          ),
+          if (item.statusLabel != null && item.statusLabel!.isNotEmpty)
+            Text(
+              item.statusLabel!,
+              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+            ),
+          BioSpacing.gapH(BioSpacing.sm),
+          Wrap(
+            spacing: BioSpacing.sm,
+            runSpacing: BioSpacing.sm,
+            children: item.options.map((opt) {
+              final isSelected =
+                  selected != null && selected.toString() == opt.value.toString();
+              return BioChip(
+                label: opt.label,
+                selected: isSelected,
+                icon: isSelected ? Icons.check : null,
+                intent: UiIntent.neutral,
+                onTap: (_isSaving || _isApplyingResolutions)
+                    ? null
+                    : () {
+                        setState(() {
+                          if (isSelected) {
+                            _openProblemResolutions.remove(key);
+                          } else {
+                            _openProblemResolutions[key] = opt.value;
+                          }
+                        });
+                      },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
     );
   }
 

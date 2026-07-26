@@ -288,6 +288,8 @@
             );
         }
 
+        parts.push(renderOpenProblems(review.open_problems));
+
         var issues = Array.isArray(review.issues) ? review.issues : [];
         if (issues.length) {
             parts.push('<div class="capture-review-issues mb-3">');
@@ -348,6 +350,99 @@
             html: parts.join(''),
             stagedIds: stagedIds,
         };
+    }
+
+    function renderOpenProblems(openProblems) {
+        if (!openProblems || typeof openProblems !== 'object') {
+            return '';
+        }
+        var conditions = Array.isArray(openProblems.conditions) ? openProblems.conditions : [];
+        var carePlans = Array.isArray(openProblems.care_plans) ? openProblems.care_plans : [];
+        if (!conditions.length && !carePlans.length) {
+            return '';
+        }
+        var parts = [];
+        parts.push('<div class="capture-open-problems mb-3">');
+        parts.push('<div class="fw-semibold mb-2">Problemas y tratamientos abiertos</div>');
+        parts.push(
+            '<p class="small text-muted mb-2">Opcional: indicá el estado al cerrar. Si no elegís, se mantienen como están.</p>'
+        );
+        conditions.forEach(function (item) {
+            parts.push(renderOpenProblemItem(item, 'condition'));
+        });
+        carePlans.forEach(function (item) {
+            parts.push(renderOpenProblemItem(item, 'care_plan'));
+        });
+        parts.push('</div>');
+        return parts.join('');
+    }
+
+    function renderOpenProblemItem(item, kind) {
+        if (!item || !item.id) {
+            return '';
+        }
+        var parts = [];
+        parts.push(
+            '<div class="mb-3" data-open-problem-kind="' +
+                escapeHtml(kind) +
+                '" data-open-problem-id="' +
+                escapeHtml(String(item.id)) +
+                '">'
+        );
+        parts.push('<div class="small fw-semibold">' + escapeHtml(item.label || '') + '</div>');
+        if (item.status_label || item.status || item.clinical_status) {
+            parts.push(
+                '<div class="text-muted small mb-1">' +
+                    escapeHtml(item.status_label || item.clinical_status || item.status || '') +
+                    '</div>'
+            );
+        }
+        var options = Array.isArray(item.options) ? item.options : [];
+        if (options.length) {
+            parts.push('<div class="d-flex flex-wrap gap-1">');
+            options.forEach(function (opt) {
+                if (!opt || typeof opt.value === 'undefined') {
+                    return;
+                }
+                parts.push(
+                    '<button type="button" class="btn btn-sm btn-outline-secondary capture-open-problem-option me-1 mb-1" ' +
+                        'data-problem-value="' +
+                        escapeHtml(String(opt.value)) +
+                        '" aria-pressed="false">' +
+                        escapeHtml(opt.label || String(opt.value)) +
+                        '</button>'
+                );
+            });
+            parts.push('</div>');
+        }
+        parts.push('</div>');
+        return parts.join('');
+    }
+
+    function collectOpenProblemResolutions(root) {
+        var conditions = {};
+        var carePlans = {};
+        if (!root) {
+            return { condition_resolutions: conditions, care_plan_resolutions: carePlans };
+        }
+        root.querySelectorAll('[data-open-problem-id]').forEach(function (block) {
+            var id = block.getAttribute('data-open-problem-id');
+            var kind = block.getAttribute('data-open-problem-kind');
+            var active = block.querySelector('.capture-open-problem-option.active');
+            if (!id || !active) {
+                return;
+            }
+            var value = active.getAttribute('data-problem-value');
+            if (value == null || value === '') {
+                return;
+            }
+            if (kind === 'care_plan') {
+                carePlans[id] = value;
+            } else {
+                conditions[id] = value;
+            }
+        });
+        return { condition_resolutions: conditions, care_plan_resolutions: carePlans };
     }
 
     function collectResolutions(root) {
@@ -419,6 +514,25 @@
                 onApply(collectResolutions(root));
             });
         }
+        root.querySelectorAll('.capture-open-problem-option').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var block = btn.closest('[data-open-problem-id]');
+                if (!block) {
+                    return;
+                }
+                var willActivate = !btn.classList.contains('active');
+                block.querySelectorAll('.capture-open-problem-option').forEach(function (other) {
+                    other.classList.remove('active', 'btn-outline-primary');
+                    other.classList.add('btn-outline-secondary');
+                    other.setAttribute('aria-pressed', 'false');
+                });
+                if (willActivate) {
+                    btn.classList.add('active', 'btn-outline-primary');
+                    btn.classList.remove('btn-outline-secondary');
+                    btn.setAttribute('aria-pressed', 'true');
+                }
+            });
+        });
     }
 
     function bindItemToggles(root, onChange) {
@@ -451,6 +565,7 @@
         bindIssueResolutions: bindIssueResolutions,
         collectStagedIds: collectStagedIds,
         collectResolutions: collectResolutions,
+        collectOpenProblemResolutions: collectOpenProblemResolutions,
         buildDatosExtraidos: buildDatosExtraidos,
         buildFullAnalisisExtraidos: buildFullAnalisisExtraidos,
         canConfirm: canConfirm,

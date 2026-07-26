@@ -1116,6 +1116,13 @@
             );
         }
 
+        var openProblemResolutions = { condition_resolutions: {}, care_plan_resolutions: {} };
+        if (this.captureReview && window.EncounterCaptureReview && this.reviewRoot) {
+            openProblemResolutions = window.EncounterCaptureReview.collectOpenProblemResolutions(
+                this.reviewRoot
+            );
+        }
+
         var payload = mergeApiPayload({
             client_capture_id: this.ensureClientCaptureId(),
             capture_id: this.serverCaptureId || undefined,
@@ -1135,6 +1142,9 @@
             id_persona: formData.get('id_persona'),
             parent: formData.get('parent'),
             parent_id: formData.get('parent_id'),
+            condition_resolutions: openProblemResolutions.condition_resolutions,
+            care_plan_resolutions: openProblemResolutions.care_plan_resolutions,
+            complete_acute: true,
         });
 
         this.confirmBtn.disabled = true;

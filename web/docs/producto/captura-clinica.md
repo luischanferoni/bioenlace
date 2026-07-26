@@ -64,6 +64,8 @@ La integridad de cada ítem (p. ej. plazo solo en controles programados) vive en
 
 Detalle: [metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md) y [captura-clinica-contratos-yii-vs-yaml.md](../decisions/captura-clinica-contratos-yii-vs-yaml.md).
 
+Al cerrar la atención, el review puede listar **problemas y tratamientos abiertos** del paciente para que el profesional confirme estado (resuelto, en pausa, etc.) sin preselección. Ver [planes-de-tratamiento.md](./planes-de-tratamiento.md).
+
 ## Mutación por contexto
 
 | Dimensión | Efecto |

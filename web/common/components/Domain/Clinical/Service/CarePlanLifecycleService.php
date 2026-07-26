@@ -157,6 +157,92 @@ final class CarePlanLifecycleService
         return $this->carePlans->revoke($plan);
     }
 
+    /**
+     * Resoluciones explícitas del profesional: mapa care_plan_id → status
+     * o lista [{id, status}].
+     *
+     * @param array<string|int, mixed>|list<array<string, mixed>> $resolutions
+     * @return list<CarePlan>
+     */
+    public function applyResolutions(array $resolutions, int $subjectPersonaId): array
+    {
+        $normalized = $this->normalizePlanResolutions($resolutions);
+        $updated = [];
+        foreach ($normalized as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            $status = strtolower(trim((string) ($row['status'] ?? '')));
+            if ($id <= 0 || $status === '') {
+                continue;
+            }
+            $plan = CarePlan::findOne($id);
+            if ($plan === null || $plan->deleted_at !== null) {
+                throw new \InvalidArgumentException("Care plan #{$id} no encontrado.");
+            }
+            if ((int) $plan->subject_persona_id !== $subjectPersonaId) {
+                throw new \InvalidArgumentException(
+                    "El care plan #{$id} no pertenece al paciente de esta atención."
+                );
+            }
+            $updated[] = $this->applyStatus($plan, $status);
+        }
+
+        return $updated;
+    }
+
+    private function applyStatus(CarePlan $plan, string $status): CarePlan
+    {
+        return match ($status) {
+            CarePlanStatus::ACTIVE, 'activate' => $this->activate($plan),
+            CarePlanStatus::ON_HOLD, 'hold' => $this->hold($plan),
+            CarePlanStatus::COMPLETED, 'complete' => $this->complete($plan),
+            CarePlanStatus::REVOKED, 'revoke' => $this->revoke($plan),
+            default => throw new \InvalidArgumentException("Estado de care plan no válido: {$status}"),
+        };
+    }
+
+    /**
+     * @param array<string|int, mixed>|list<array<string, mixed>> $resolutions
+     * @return list<array{id: int, status: string}>
+     */
+    private function normalizePlanResolutions(array $resolutions): array
+    {
+        if ($resolutions === []) {
+            return [];
+        }
+        $out = [];
+        $isList = array_keys($resolutions) === range(0, count($resolutions) - 1);
+        if ($isList) {
+            foreach ($resolutions as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+                $id = (int) ($row['id'] ?? $row['care_plan_id'] ?? 0);
+                $status = (string) ($row['status'] ?? $row['value'] ?? '');
+                if ($id > 0 && $status !== '') {
+                    $out[] = ['id' => $id, 'status' => $status];
+                }
+            }
+
+            return $out;
+        }
+        foreach ($resolutions as $idKey => $value) {
+            $id = (int) $idKey;
+            if ($id <= 0) {
+                continue;
+            }
+            if (is_array($value)) {
+                $status = (string) ($value['status'] ?? $value['value'] ?? '');
+            } else {
+                $status = (string) $value;
+            }
+            if ($status !== '') {
+                $out[] = ['id' => $id, 'status' => $status];
+            }
+        }
+
+        return $out;
+    }
+
     public function createChronicPlan(int $subjectPersonaId, bool $revokePrior = true): CarePlan
     {
         if ($revokePrior) {

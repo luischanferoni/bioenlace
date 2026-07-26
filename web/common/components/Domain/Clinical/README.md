@@ -26,7 +26,9 @@ use common\components\Domain\Clinical\Workflow\EncounterDocumentationService;
 $result = (new EncounterDocumentationService())->guardar($body);
 ```
 
-API: `clinical/EncounterController`, `clinical/CarePlanController` (ciclo de vida vía `CarePlanLifecycleService`).
+API: `clinical/EncounterController`, `clinical/CarePlanController`, `clinical/ConditionController` (ciclo vía `CarePlanLifecycleService` / `ConditionLifecycleService`).
+
+Al guardar captura: `condition_resolutions` / `care_plan_resolutions`, `complete_acute` / `continue_treatment`; el análisis expone `capture_review.open_problems`.
 
 ```php
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;

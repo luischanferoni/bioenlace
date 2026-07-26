@@ -11,6 +11,7 @@
 - [x] Presentación en detalle de plan para seguimiento.
 - [x] **Dashboard staff de adherencia** por efector: planes activos, % actividades completadas, resumen global (`/api/v1/clinical/care-plans/adherencia-resumen-staff`, intent `tratamiento.adherencia-resumen-staff`).
 - [x] **Hub Control/Seguimiento** (paciente): tratamientos + condiciones + protocolos preventivos vía Solicitar Atención. Ver [solicitar-atencion.md](../producto/solicitar-atencion.md).
+- [x] **Cierre de problemas/planes en captura:** `open_problems` en review; resoluciones en guardar; API Condition resolve/inactivate/transition; CarePlan complete al cerrar encounter (`complete_acute`).
 
 ## Lo que falta
 
@@ -19,6 +20,7 @@
 - [ ] Planes generados o ajustados por IA con validación médica explícita.
 - [ ] Versionado y auditoría de cambios del plan a nivel regulatorio.
 - [ ] Materializar CarePlan preventivo al aceptar protocolo de perfil (hoy draft efímero).
+- [ ] Sugerencia automática de cierre por outcome/adherencia (sigue siendo confirmación del profesional).
 
 ## En producto hoy
 

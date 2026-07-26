@@ -31,6 +31,18 @@ El detalle del plan ofrece acciones directas (renovar medicación, solicitar aju
 
 El mismo hub lista tratamientos activos junto a condiciones y controles recomendados por protocolo. Detalle: [solicitar-atencion.md](./solicitar-atencion.md), [consultas-seguimiento.md](./consultas-seguimiento.md).
 
+## Cierre al finalizar la atención
+
+Al analizar/guardar una captura, el review puede mostrar **problemas y tratamientos abiertos** del paciente (`open_problems` en `capture_review`): opciones sin preselección (sigue activo / resuelto / en pausa / etc.).
+
+- Resoluciones de condición: `condition_resolutions` en el body de guardar (mapa id → `clinical_status`).
+- Resoluciones de plan: `care_plan_resolutions` (mapa id → status CarePlan).
+- Automático: al guardar se completan planes agudos vinculados al encounter (`complete_acute`, default true); `continue_treatment` puede promover a plan crónico.
+
+API puntual: `POST /api/v1/clinical/conditions/<id>/resolve|inactivate|transition`. Listado de abiertos: `GET /api/v1/clinical/conditions/open-problems`.
+
+Guía de capas: [metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md).
+
 ## Adherencia para el equipo (staff)
 
 El efector puede ver **qué planes tienen baja cumplimiento** sin revisar paciente por paciente:

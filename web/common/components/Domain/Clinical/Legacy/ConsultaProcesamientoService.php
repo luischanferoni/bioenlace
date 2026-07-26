@@ -7,6 +7,7 @@ use yii\base\Component;
 use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
+use common\components\Domain\Clinical\Service\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\Workflow\ClinicalOperationalContextResolver;
 use common\components\Domain\Clinical\Workflow\EncounterCaptureAnalysisCache;
 use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapService;
@@ -149,16 +150,22 @@ class ConsultaProcesamientoService extends Component
                 $tieneDatosFaltantes = true;
             }
 
+            $subjectPersonaId = PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body);
+            $openProblems = null;
+            if ($subjectPersonaId !== null && (int) $subjectPersonaId > 0) {
+                $openProblems = (new EncounterOpenProblemsService())->forSubject((int) $subjectPersonaId);
+            }
+
             $captureReview = (new EncounterCaptureReviewPresenter())->build(
                 $datos,
                 $categorias,
                 $textoConsulta,
                 $textoProcesado,
                 $tieneDatosFaltantes,
-                $completeness
+                $completeness,
+                $openProblems
             );
 
-            $subjectPersonaId = PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body);
             $definition = (new EncounterDefinitionBootstrapService())->resolveFromCaptureBody(
                 $body,
                 $subjectPersonaId

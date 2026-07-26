@@ -10,6 +10,7 @@ class EncounterCaptureAnalysis {
     this.puedeConfirmar = true,
     this.datosFaltantesMensaje,
     this.issues = const [],
+    this.openProblems,
   });
 
   final String textoOriginal;
@@ -23,8 +24,12 @@ class EncounterCaptureAnalysis {
   final String? datosFaltantesMensaje;
   /// Issues resolubles (opciones sin seleccionar por defecto).
   final List<EncounterCaptureIssue> issues;
+  /// Problemas/planes abiertos del paciente (cierre opcional).
+  final EncounterOpenProblems? openProblems;
 
   bool get hasUnresolvedIssues => issues.isNotEmpty;
+  bool get hasOpenProblems =>
+      openProblems != null && openProblems!.isNotEmpty;
 
   bool get hasExtractedContent =>
       categories.any((c) => c.items.isNotEmpty) && systemError == null;
@@ -105,6 +110,7 @@ class EncounterCaptureAnalysis {
       puedeConfirmar: review['puede_confirmar'] != false,
       datosFaltantesMensaje: faltantesMsg,
       issues: issues,
+      openProblems: EncounterOpenProblems.fromJson(review['open_problems']),
     );
   }
 
@@ -192,6 +198,7 @@ class EncounterCaptureAnalysis {
       puedeConfirmar: res['puede_confirmar'] != false && systemError == null,
       datosFaltantesMensaje: faltantesMsg,
       issues: issues,
+      openProblems: EncounterOpenProblems.fromJson(res['open_problems']),
     );
   }
 
@@ -502,6 +509,73 @@ class EncounterCaptureIssueOption {
     return EncounterCaptureIssueOption(
       value: json['value'],
       label: (json['label'] ?? json['value'] ?? '').toString(),
+    );
+  }
+}
+
+class EncounterOpenProblems {
+  const EncounterOpenProblems({
+    this.conditions = const [],
+    this.carePlans = const [],
+  });
+
+  final List<EncounterOpenProblemItem> conditions;
+  final List<EncounterOpenProblemItem> carePlans;
+
+  bool get isNotEmpty => conditions.isNotEmpty || carePlans.isNotEmpty;
+
+  factory EncounterOpenProblems.fromJson(dynamic raw) {
+    if (raw is! Map) return const EncounterOpenProblems();
+    final map = Map<String, dynamic>.from(raw);
+    return EncounterOpenProblems(
+      conditions: _parseItems(map['conditions']),
+      carePlans: _parseItems(map['care_plans']),
+    );
+  }
+
+  static List<EncounterOpenProblemItem> _parseItems(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) => EncounterOpenProblemItem.fromJson(Map<String, dynamic>.from(e)))
+        .where((i) => i.id > 0)
+        .toList();
+  }
+}
+
+class EncounterOpenProblemItem {
+  const EncounterOpenProblemItem({
+    required this.id,
+    required this.kind,
+    required this.label,
+    this.options = const [],
+    this.statusLabel,
+  });
+
+  final int id;
+  final String kind;
+  final String label;
+  final List<EncounterCaptureIssueOption> options;
+  final String? statusLabel;
+
+  factory EncounterOpenProblemItem.fromJson(Map<String, dynamic> json) {
+    final optsRaw = json['options'];
+    final options = optsRaw is List
+        ? optsRaw
+            .whereType<Map>()
+            .map((e) => EncounterCaptureIssueOption.fromJson(
+                  Map<String, dynamic>.from(e),
+                ))
+            .toList()
+        : <EncounterCaptureIssueOption>[];
+
+    return EncounterOpenProblemItem(
+      id: int.tryParse('${json['id']}') ?? 0,
+      kind: (json['kind'] ?? 'condition').toString(),
+      label: (json['label'] ?? '').toString(),
+      options: options,
+      statusLabel: (json['status_label'] ?? json['clinical_status'] ?? json['status'])
+          ?.toString(),
     );
   }
 }

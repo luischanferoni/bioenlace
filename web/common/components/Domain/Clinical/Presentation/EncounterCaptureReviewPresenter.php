@@ -21,7 +21,8 @@ final class EncounterCaptureReviewPresenter
         string $textoOriginal,
         ?string $textoProcesado,
         bool $tieneDatosFaltantes,
-        ?array $completenessResult = null
+        ?array $completenessResult = null,
+        ?array $openProblems = null
     ): array {
         $extraidos = $this->resolveExtraidos($datosResultado);
         $systemError = $this->resolveSystemError($extraidos);
@@ -71,6 +72,16 @@ final class EncounterCaptureReviewPresenter
             if (is_array($issues) && $issues !== []) {
                 $out['issues'] = array_values($issues);
                 $out['datos_faltantes_detalle']['issues'] = array_values($issues);
+            }
+        }
+        if (is_array($openProblems)) {
+            $conditions = $openProblems['conditions'] ?? [];
+            $carePlans = $openProblems['care_plans'] ?? [];
+            if ((is_array($conditions) && $conditions !== []) || (is_array($carePlans) && $carePlans !== [])) {
+                $out['open_problems'] = [
+                    'conditions' => is_array($conditions) ? array_values($conditions) : [],
+                    'care_plans' => is_array($carePlans) ? array_values($carePlans) : [],
+                ];
             }
         }
 

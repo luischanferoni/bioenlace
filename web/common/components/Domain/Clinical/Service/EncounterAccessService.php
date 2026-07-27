@@ -30,6 +30,11 @@ final class EncounterAccessService
             }
         }
 
+        // Personal médico dueño/creador de la atención (persona del PES del encounter o del turno).
+        if ($actorId > 0 && self::actorIsStaffOwnerOfEncounter($actorId, $encounter)) {
+            return true;
+        }
+
         $idPesSesionRaw = Yii::$app->user->getIdProfesionalEfectorServicio();
         $idPesSesion = $idPesSesionRaw !== null && $idPesSesionRaw !== '' ? (int) $idPesSesionRaw : 0;
         if ($idPesSesion > 0) {
@@ -42,6 +47,21 @@ final class EncounterAccessService
 
         if (ConsultaAsyncAccessService::staffCanAccessAsyncEncounter($encounter)) {
             return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * El actor es el profesional (persona) del PES del encounter o del turno vinculado.
+     */
+    private static function actorIsStaffOwnerOfEncounter(int $actorPersonaId, Encounter $encounter): bool
+    {
+        foreach (self::staffPesCandidatesForEncounter($encounter) as $idPesResource) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPesResource, 'deleted_at' => null]);
+            if ($pes !== null && (int) $pes->id_persona === $actorPersonaId) {
+                return true;
+            }
         }
 
         return false;

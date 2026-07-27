@@ -12,6 +12,10 @@ use Yii;
  *
  * GET /api/v1/clinical/encounter/ver-consulta-como-staff?turno_id= | encounter_id=
  *
+ * Capas:
+ * 1) RBAC de ruta (ApiGhost): permiso propio o alterno `/api/pacientes/historia-clinica`.
+ * 2) Dominio: personal médico dueño/creador de la consulta (PES del encounter/turno ↔ persona del actor).
+ *
  * No usar personas/.../historia-clinica para “Ver consulta” de un turno atendido.
  */
 class EncounterStaffSummaryController extends BaseController
@@ -31,7 +35,8 @@ class EncounterStaffSummaryController extends BaseController
     /**
      * GET — detalle de lo cargado por el médico en un encounter (vía turno_id o encounter_id).
      *
-     * Ámbito: staff con acceso al encounter. No abre captura.
+     * Ámbito: usuario autenticado con permiso de ruta + staff dueño/creador de la consulta.
+     * No abre captura ni historia clínica del paciente.
      */
     public function actionVerConsultaComoStaff(): array
     {

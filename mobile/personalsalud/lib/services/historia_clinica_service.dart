@@ -23,7 +23,8 @@ class HistoriaClinicaService {
 
   /// GET /api/v1/personas/{id}/historia-clinica
   ///
-  /// [turnoId] o [encounterId]: motivos del encounter de ese turno/consulta (no el turno más reciente).
+  /// HC / captura (turno pendiente o en atención). No usar para “Ver consulta” atendida.
+  /// [turnoId] o [encounterId]: motivos del encounter de ese turno/consulta.
   Future<HistoriaClinicaResponse> getHistoriaClinica(
     int personaId, {
     int? turnoId,
@@ -68,6 +69,43 @@ class HistoriaClinicaService {
       throw Exception(data['message'] ?? 'Error al obtener historia clínica');
     } catch (e) {
       print('Error fetching historia clínica: $e');
+      rethrow;
+    }
+  }
+
+  /// GET /api/v1/clinical/encounter/ver-consulta-como-staff
+  ///
+  /// Solo lectura de lo documentado por el médico (turno atendido / “Ver consulta”).
+  Future<HistoriaClinicaResponse> getConsultaComoStaff({
+    int? turnoId,
+    int? encounterId,
+  }) async {
+    try {
+      final q = <String, String>{};
+      if (encounterId != null && encounterId > 0) {
+        q['encounter_id'] = '$encounterId';
+      } else if (turnoId != null && turnoId > 0) {
+        q['turno_id'] = '$turnoId';
+      }
+      if (q.isEmpty) {
+        throw Exception('Indicá turno_id o encounter_id');
+      }
+      final uri = Uri.parse(
+        '${AppConfig.apiUrl}/clinical/encounter/ver-consulta-como-staff',
+      ).replace(queryParameters: q);
+
+      final response = await http.get(uri, headers: _headers);
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      if (response.statusCode == 200 &&
+          data['success'] == true &&
+          data['data'] != null) {
+        return HistoriaClinicaResponse.fromStaffConsultaJson(
+          data['data'] as Map<String, dynamic>,
+        );
+      }
+      throw Exception(data['message'] ?? 'Error al obtener la consulta');
+    } catch (e) {
+      print('Error fetching consulta staff: $e');
       rethrow;
     }
   }
@@ -693,6 +731,52 @@ class HistoriaClinicaResponse {
           [],
       totalHistoriaClinica: _parseInt(total, defaultValue: 0),
       capturaPermitida: capturaPermitida,
+      capturaMotivo: capturaMotivo,
+    );
+  }
+
+  /// Payload de GET clinical/encounter/ver-consulta-como-staff.
+  factory HistoriaClinicaResponse.fromStaffConsultaJson(
+    Map<String, dynamic> json,
+  ) {
+    final captura = json['captura'];
+    bool? capturaPermitida;
+    String? capturaMotivo;
+    if (captura is Map) {
+      final p = captura['permitida'];
+      if (p is bool) {
+        capturaPermitida = p;
+      }
+      final m = captura['motivo']?.toString().trim();
+      if (m != null && m.isNotEmpty) {
+        capturaMotivo = m;
+      }
+    }
+    final motivos = json['motivos_consulta_paciente'];
+    final resumen = motivos is Map ? motivos['resumen']?.toString() : null;
+
+    return HistoriaClinicaResponse(
+      persona: PersonaData.fromJson(json['persona'] as Map<String, dynamic>),
+      informacionMedica: InformacionMedica.fromJson({
+        if (resumen != null && resumen.trim().isNotEmpty)
+          'motivos_consulta': resumen.trim(),
+      }),
+      signosVitales: SignosVitalesClinica.fromJson(null),
+      motivosConsultaPaciente: MotivosConsultaPaciente.fromJson(
+        motivos is Map ? Map<String, dynamic>.from(motivos) : null,
+      ),
+      carePackCohorte: json['care_pack_cohorte'] is Map
+          ? CarePackCohorteStaff.fromJson(
+              Map<String, dynamic>.from(json['care_pack_cohorte'] as Map),
+            )
+          : null,
+      careCohortHabilitado: json['care_cohort_habilitado'] == true,
+      documentacionMedico: DocumentacionMedico.fromJson(
+        json['documentacion_medico'] as Map<String, dynamic>?,
+      ),
+      historiaClinica: const [],
+      totalHistoriaClinica: 0,
+      capturaPermitida: capturaPermitida ?? false,
       capturaMotivo: capturaMotivo,
     );
   }

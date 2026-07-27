@@ -32,8 +32,11 @@ $this->title = $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona-
 $parentQuery = Yii::$app->request->get('parent');
 $parentIdQuery = (int) Yii::$app->request->get('parent_id', 0);
 $historiaClinicaQs = [];
+$verConsultaStaffPath = null;
 if (strtoupper((string) $parentQuery) === 'TURNO' && $parentIdQuery > 0) {
     $historiaClinicaQs['turno_id'] = $parentIdQuery;
+    $verConsultaStaffPath = '/api/v1/clinical/encounter/ver-consulta-como-staff?'
+        . http_build_query(['turno_id' => $parentIdQuery]);
 }
 $historiaClinicaPath = '/api/v1/personas/' . (int) $persona->id_persona . '/historia-clinica';
 if ($historiaClinicaQs !== []) {
@@ -132,6 +135,11 @@ $this->registerJsFile(
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_care_pack_section" style="display:none;">
                             <h6 class="mb-2 text-primary"><b>ASISTENCIA PRE-CONSULTA (COHORTE)</b></h6>
                             <div id="tl_care_pack_cohorte" class="text-body"></div>
+                        </div>
+
+                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_documentacion_medico_section" style="display:none;">
+                            <h6 class="mb-2 text-primary"><b>DOCUMENTACIÓN DEL MÉDICO</b></h6>
+                            <div id="tl_documentacion_medico" class="text-body"></div>
                         </div>
 
                         <!-- Signos Vitales Actuales -->
@@ -266,7 +274,8 @@ Modal::end();
             curvasCrecimiento: <?= ($edad !== null && (int) $edad < 14) ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
             formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>',
-            historiaClinica: <?= json_encode($historiaClinicaPath, JSON_UNESCAPED_SLASHES) ?>
+            historiaClinica: <?= json_encode($historiaClinicaPath, JSON_UNESCAPED_SLASHES) ?>,
+            verConsultaComoStaff: <?= json_encode($verConsultaStaffPath, JSON_UNESCAPED_SLASHES) ?>
         }
     };
 
@@ -506,9 +515,74 @@ Modal::end();
         }
     }
 
+    function renderDocumentacionMedico(doc) {
+        var section = document.getElementById('tl_documentacion_medico_section');
+        var el = document.getElementById('tl_documentacion_medico');
+        if (!section || !el) return;
+        if (!doc || !doc.tiene_datos || !doc.secciones || !doc.secciones.length) {
+            section.style.display = 'none';
+            el.innerHTML = '';
+            return;
+        }
+        section.style.display = '';
+        var html = '';
+        doc.secciones.forEach(function (sec) {
+            html += '<div class="mb-3"><div class="fw-semibold">' + escMotivosHtml(sec.titulo || '') + '</div><ul class="mb-0">';
+            (sec.items || []).forEach(function (item) {
+                html += '<li style="white-space:pre-wrap">' + escMotivosHtml(item) + '</li>';
+            });
+            html += '</ul></div>';
+        });
+        el.innerHTML = html;
+    }
+
+    function applyStaffConsultaSoloLectura(data) {
+        renderBadges('tl_condiciones_activas', [], 'border border-info text-info');
+        renderBadges('tl_condiciones_cronicas', [], 'border border-warning text-warning');
+        renderBadges('tl_hallazgos', [], 'border border-warning text-warning');
+        renderBadges('tl_antecedentes', [], 'border border-gray text-gray');
+        var mp = data.motivos_consulta_paciente || {};
+        renderMotivos(null, mp);
+        renderMotivosIntake(mp.motivos_intake || null);
+        renderCarePackCohorte(data.care_pack_cohorte || null);
+        renderDocumentacionMedico(data.documentacion_medico || null);
+        var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
+        if (boxMsgs) boxMsgs.innerHTML = '';
+        var signos = document.getElementById('signos-vitales-actuales-content');
+        if (signos) {
+            signos.innerHTML = '<span class="text-muted">Consulta en solo lectura</span>';
+        }
+        var formBox = document.getElementById('formulario-container');
+        if (formBox) formBox.innerHTML = '';
+        var loadingEl = document.getElementById('loading-container');
+        if (loadingEl) loadingEl.style.display = 'none';
+    }
+
     async function loadTimelineSummary() {
         try {
             var endpoints = timelineConfig.endpoints || {};
+            var staffEp = endpoints.verConsultaComoStaff;
+            if (staffEp) {
+                try {
+                    var staffResp = await fetch(staffEp, { headers: bioHeaders() });
+                    var staffPayload = await staffResp.json();
+                    if (
+                        staffResp.ok
+                        && staffPayload
+                        && staffPayload.success === true
+                        && staffPayload.data
+                    ) {
+                        var capturaStaff = staffPayload.data.captura || {};
+                        if (capturaStaff.permitida === false) {
+                            applyStaffConsultaSoloLectura(staffPayload.data);
+                            return;
+                        }
+                    }
+                } catch (staffErr) {
+                    console.warn('ver-consulta-como-staff no disponible, se usa historia-clinica', staffErr);
+                }
+            }
+
             if (!endpoints.historiaClinica) return;
             var resp = await fetch(endpoints.historiaClinica, { headers: bioHeaders() });
             var payload = await resp.json();
@@ -524,10 +598,10 @@ Modal::end();
             renderBadges('tl_hallazgos', info.hallazgos || [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [].concat(info.antecedentes_personales || [], info.antecedentes_familiares || []), 'border border-gray text-gray');
             var mp = payload.data.motivos_consulta_paciente || {};
-            var msgPac = (mp.messages && mp.messages.length) ? mp.messages.length : 0;
             renderMotivos(info.motivos_consulta || null, mp);
             renderMotivosIntake(mp.motivos_intake || null);
             renderCarePackCohorte(payload.data.care_pack_cohorte || null);
+            renderDocumentacionMedico(null);
             var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
             if (boxMsgs) boxMsgs.innerHTML = '';
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
@@ -555,6 +629,7 @@ Modal::end();
             renderMotivos(null, null);
             renderMotivosIntake(null);
             renderCarePackCohorte(null);
+            renderDocumentacionMedico(null);
             var boxMsgsErr = document.getElementById('tl_motivos_consulta_mensajes');
             if (boxMsgsErr) boxMsgsErr.innerHTML = '';
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {

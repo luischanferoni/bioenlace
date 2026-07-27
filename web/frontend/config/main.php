@@ -172,6 +172,8 @@ return [
                 'GET api/<version:\w+>/clinical/encounter/ultima-atencion-ui-como-paciente' => '<version>/clinical/encounter-patient-summary/ultima-atencion-ui-como-paciente',
                 'POST api/<version:\w+>/clinical/encounter/ultima-atencion-ui-como-paciente' => '<version>/clinical/encounter-patient-summary/ultima-atencion-ui-como-paciente',
                 'OPTIONS api/<version:\w+>/clinical/encounter/ultima-atencion-ui-como-paciente' => '<version>/clinical/encounter-patient-summary/ultima-atencion-ui-como-paciente',
+                'GET api/<version:\w+>/clinical/encounter/ver-consulta-como-staff' => '<version>/clinical/encounter-staff-summary/ver-consulta-como-staff',
+                'OPTIONS api/<version:\w+>/clinical/encounter/ver-consulta-como-staff' => '<version>/clinical/encounter-staff-summary/ver-consulta-como-staff',
                 'POST api/<version:\w+>/clinical/legal-record-export/solicitar' => '<version>/clinical/legal-record-export/solicitar',
                 'OPTIONS api/<version:\w+>/clinical/legal-record-export/solicitar' => '<version>/clinical/legal-record-export/solicitar',
                 'GET api/<version:\w+>/clinical/legal-record-export/listar-mis-solicitudes' => '<version>/clinical/legal-record-export/listar-mis-solicitudes',

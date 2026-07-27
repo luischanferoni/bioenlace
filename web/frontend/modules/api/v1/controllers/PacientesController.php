@@ -30,14 +30,16 @@ class PacientesController extends BaseController
     use ClinicalAccessTrait;
 
     /**
-     * Resumen de historia clínica (persona + información médica + signos vitales + mensajes de motivos de la app del paciente). No arma lista de eventos aquí.
+     * Resumen de historia clínica para abrir HC / preparar captura (PENDIENTE / EN_ATENCION).
      *
      * GET /api/v1/personas/{id}/historia-clinica
-     * Query: `turno_id` o `encounter_id` — contexto explícito del encuentro (recomendado staff).
-     * Sin query: auto-elige encounter con motivos recientes / último turno con encounter.
-     * Respuesta incluye `captura.permitida` (si el contexto es un turno): la UI no debe llamar
-     * a endpoints de captura cuando es false; la HC / documentación del encounter sí se devuelve.
-     * Query (solo YII_DEBUG): simular_signos=1 — misma semántica que GET .../signos-vitales.
+     * Query: `turno_id` o `encounter_id` — motivos pre-turno del encuentro (flujo captura staff).
+     * Sin query: auto-elige encounter + HC resumida del paciente.
+     * Condiciones/alergias/antecedentes: siempre del paciente (términos vacíos filtrados).
+     * Para “Ver consulta” de un turno ya atendido usar
+     * GET /api/v1/clinical/encounter/ver-consulta-como-staff.
+     * Incluye `captura.permitida` cuando hay turno: la UI no debe abrir captura si es false.
+     * Query (solo YII_DEBUG): simular_signos=1.
      * RBAC: /api/pacientes/historia-clinica
      */
     public function actionHistoriaClinica($id)
@@ -69,43 +71,49 @@ class PacientesController extends BaseController
             }
         }
 
-        // Diagnósticos recientes/crónicos
-        [$condActivas, $condCronicas] = DCRepo::getCondicionesPaciente((int) $persona->id_persona);
         $condicionesActivas = [];
-        foreach ($condActivas as $c) {
-            $term = isset($c->codigoSnomed) ? (string) $c->codigoSnomed->term : null;
-            $code = isset($c->codigoSnomed) ? (string) $c->codigoSnomed->conceptId : null;
-            $condicionesActivas[] = ['codigo' => $code, 'termino' => $term];
-        }
         $condicionesCronicas = [];
+        $hallazgos = [];
+        $antecedentesPersonales = [];
+        $antecedentesFamiliares = [];
+
+        [$condActivas, $condCronicas] = DCRepo::getCondicionesPaciente((int) $persona->id_persona);
+        foreach ($condActivas as $c) {
+            $row = $this->mapCondicionClinicaRow($c);
+            if ($row !== null) {
+                $condicionesActivas[] = $row;
+            }
+        }
         foreach ($condCronicas as $c) {
-            $term = isset($c->codigoSnomed) ? (string) $c->codigoSnomed->term : null;
-            $code = isset($c->codigoSnomed) ? (string) $c->codigoSnomed->conceptId : null;
-            $condicionesCronicas[] = ['codigo' => $code, 'termino' => $term];
+            $row = $this->mapCondicionClinicaRow($c);
+            if ($row !== null) {
+                $condicionesCronicas[] = $row;
+            }
         }
 
-        // Alergias (FHIR allergy_intolerance)
-        $hallazgos = [];
         foreach (AllergyIntolerance::findActiveBySubject((int) $persona->id_persona) as $ai) {
             $term = trim((string) ($ai->display ?? ''));
             if ($term === '' && !empty($ai->code)) {
                 $term = (string) $ai->code;
             }
+            if ($term === '') {
+                continue;
+            }
             $hallazgos[] = [
                 'id' => (int) $ai->id,
                 'codigo' => $ai->code !== null && $ai->code !== '' ? (string) $ai->code : null,
-                'termino' => $term !== '' ? $term : null,
+                'termino' => $term,
             ];
         }
 
-        // Antecedentes
-        $antecedentesPersonales = [];
-        $antecedentesFamiliares = [];
         $ants = PersonasAntecedente::find()
             ->where(['id_persona' => (int) $persona->id_persona])
             ->all();
         foreach ($ants as $ant) {
-            $term = isset($ant->snomedSituacion) ? (string) $ant->snomedSituacion->term : null;
+            $term = isset($ant->snomedSituacion) ? trim((string) $ant->snomedSituacion->term) : '';
+            if ($term === '') {
+                continue;
+            }
             $row = ['id' => (int) ($ant->id ?? 0), 'termino' => $term];
             if (($ant->tipo_antecedente ?? null) === 'Familiar') {
                 $antecedentesFamiliares[] = $row;
@@ -113,6 +121,8 @@ class PacientesController extends BaseController
                 $antecedentesPersonales[] = $row;
             }
         }
+
+        $turnosConEncounter = $motivosCtx['turnos_con_encounter'];
 
         $simularSignos = false;
         if (defined('YII_DEBUG') && YII_DEBUG) {
@@ -142,7 +152,7 @@ class PacientesController extends BaseController
             'motivos_consulta_paciente' => $motivosConsultaPaciente,
             'care_pack_cohorte' => $carePackCohorte,
             'care_cohort_habilitado' => CarePackConfig::isEnabled(),
-            'turnos_con_encounter' => $motivosCtx['turnos_con_encounter'],
+            'turnos_con_encounter' => $turnosConEncounter,
             'documentacion_medico' => $motivosCtx['documentacion_medico'] ?? null,
             'captura' => $motivosCtx['captura'] ?? [
                 'permitida' => null,
@@ -151,6 +161,29 @@ class PacientesController extends BaseController
             'historia_clinica' => [],
             'total_historia_clinica' => 0,
         ], 'OK');
+    }
+
+    /**
+     * @param object $c fila de condición clínica (relación codigoSnomed opcional)
+     * @return array{codigo: string|null, termino: string}|null
+     */
+    private function mapCondicionClinicaRow($c): ?array
+    {
+        $term = isset($c->codigoSnomed) ? trim((string) $c->codigoSnomed->term) : '';
+        $code = isset($c->codigoSnomed) ? trim((string) $c->codigoSnomed->conceptId) : '';
+        if ($term === '' && $code === '') {
+            // Fallback display en el propio registro si no hay SNOMED resuelto
+            $term = trim((string) ($c->display ?? $c->termino ?? $c->descripcion ?? ''));
+            $code = trim((string) ($c->code ?? $c->codigo ?? ''));
+        }
+        if ($term === '' && $code === '') {
+            return null;
+        }
+
+        return [
+            'codigo' => $code !== '' ? $code : null,
+            'termino' => $term !== '' ? $term : ($code !== '' ? $code : null),
+        ];
     }
 
     /**
@@ -169,11 +202,14 @@ class PacientesController extends BaseController
     }
 
     /**
-     * Motivos pre-consulta + contexto de turno/encounter para historia clínica del médico.
+     * Motivos pre-consulta + contexto de turno/encounter para abrir HC / captura.
      *
      * Query:
-     * - `turno_id` o `encounter_id`: contexto explícito (obligatorio en flujo móvil desde agenda).
+     * - `turno_id` o `encounter_id`: contexto explícito (flujo staff desde agenda pendiente).
      * - Sin query: encounter con mensajes del paciente más reciente; si no hay, último turno con encounter.
+     *
+     * La consulta ya documentada (turno atendido) se lee con
+     * GET clinical/encounter/ver-consulta-como-staff, no con este endpoint.
      *
      * @return array{
      *   motivos_consulta: string|null,

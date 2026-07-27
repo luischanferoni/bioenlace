@@ -27,7 +27,10 @@ if (is_object($persona) && is_object($persona->domicilioActivo)) {
 $barrioTexto = !empty($barrioNombre) ? $barrioNombre : 'Sin datos';
 $edad = is_object($persona) ? $persona->edad : null;
 $edadTexto = $edad !== null && $edad !== '' ? ((int) $edad) . ' años' : 'edad s/d';
-$this->title = $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $edadTexto . ' - Barrio: ' . $barrioTexto;
+$vistaConsultaCargada = strtolower((string) Yii::$app->request->get('vista', '')) === 'consulta';
+$this->title = $vistaConsultaCargada
+    ? ('Consulta cargada · ' . $persona->apellido . ', ' . $persona->nombre . ' | ' . $edadTexto)
+    : ($persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $edadTexto . ' - Barrio: ' . $barrioTexto);
 
 $parentQuery = Yii::$app->request->get('parent');
 $parentIdQuery = (int) Yii::$app->request->get('parent_id', 0);
@@ -270,11 +273,12 @@ Modal::end();
     // Configuración para el timeline (usar var para permitir redeclaración en SPA)
     var timelineConfig = {
         pacienteId: <?= $persona->id_persona ?>,
+        vistaConsultaCargada: <?= $vistaConsultaCargada ? 'true' : 'false' ?>,
         endpoints: {
             curvasCrecimiento: <?= ($edad !== null && (int) $edad < 14) ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
             formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>',
-            historiaClinica: <?= json_encode($historiaClinicaPath, JSON_UNESCAPED_SLASHES) ?>,
+            historiaClinica: <?= json_encode($vistaConsultaCargada ? null : $historiaClinicaPath, JSON_UNESCAPED_SLASHES) ?>,
             verConsultaComoStaff: <?= json_encode($verConsultaStaffPath, JSON_UNESCAPED_SLASHES) ?>
         }
     };
@@ -562,6 +566,8 @@ Modal::end();
         try {
             var endpoints = timelineConfig.endpoints || {};
             var staffEp = endpoints.verConsultaComoStaff;
+            var soloConsultaCargada = !!timelineConfig.vistaConsultaCargada;
+
             if (staffEp) {
                 try {
                     var staffResp = await fetch(staffEp, { headers: bioHeaders() });
@@ -573,14 +579,25 @@ Modal::end();
                         && staffPayload.data
                     ) {
                         var capturaStaff = staffPayload.data.captura || {};
-                        if (capturaStaff.permitida === false) {
+                        if (soloConsultaCargada || capturaStaff.permitida === false) {
                             applyStaffConsultaSoloLectura(staffPayload.data);
                             return;
                         }
+                    } else if (soloConsultaCargada) {
+                        throw new Error(
+                            (staffPayload && staffPayload.message)
+                                ? staffPayload.message
+                                : 'No se pudo cargar la consulta documentada.'
+                        );
                     }
                 } catch (staffErr) {
+                    if (soloConsultaCargada) {
+                        throw staffErr;
+                    }
                     console.warn('ver-consulta-como-staff no disponible, se usa historia-clinica', staffErr);
                 }
+            } else if (soloConsultaCargada) {
+                throw new Error('Falta contexto de turno para ver la consulta.');
             }
 
             if (!endpoints.historiaClinica) return;
@@ -635,6 +652,14 @@ Modal::end();
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(null);
             }
+            var formBoxErr = document.getElementById('formulario-container');
+            if (formBoxErr && timelineConfig.vistaConsultaCargada) {
+                formBoxErr.innerHTML = '<div class="alert alert-warning mb-0">' +
+                    (e && e.message ? String(e.message) : 'No se pudo cargar la consulta.') +
+                    '</div>';
+            }
+            var loadingErr = document.getElementById('loading-container');
+            if (loadingErr) loadingErr.style.display = 'none';
         }
     }
 

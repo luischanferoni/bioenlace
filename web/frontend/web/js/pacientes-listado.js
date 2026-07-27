@@ -107,8 +107,14 @@
       if (ctx && typeof ctx === 'object') {
         if (ctx.parent) q += '&parent=' + encodeURIComponent(ctx.parent);
         if (ctx.parent_id != null) q += '&parent_id=' + encodeURIComponent(ctx.parent_id);
+        if (ctx.vista) q += '&vista=' + encodeURIComponent(ctx.vista);
       }
       return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
+    }
+
+    /** Misma semántica que móvil: ATENDIDO = ver consulta cargada; resto = abrir HC/captura. */
+    function esTurnoConsultaCargada(t) {
+      return !!(t && String(t.estado || '').toUpperCase() === 'ATENDIDO');
     }
 
     function fillModalidadInsight(colEl, insight) {
@@ -201,9 +207,23 @@
       }
 
       var idPersona = t.id_persona || (t.paciente ? t.paciente.id : null);
-      var urlHistoria = historiaConContexto(idPersona, { parent: 'TURNO', parent_id: t.id });
+      var consultaCargada = esTurnoConsultaCargada(t);
+      var urlHistoria = historiaConContexto(idPersona, {
+        parent: 'TURNO',
+        parent_id: t.id,
+        vista: consultaCargada ? 'consulta' : null,
+      });
       var a = colEl.querySelector('[data-role="link-historia"]');
-      if (a && urlHistoria) a.href = urlHistoria;
+      if (a && urlHistoria) {
+        a.href = urlHistoria;
+        if (consultaCargada) {
+          a.setAttribute('data-spa-title', 'Consulta cargada');
+          a.setAttribute('aria-label', 'Ver consulta');
+        } else {
+          a.setAttribute('data-spa-title', 'Historia clínica');
+          a.setAttribute('aria-label', 'Ver historia clínica');
+        }
+      }
     }
 
     function renderTurnos(data, targetEl) {

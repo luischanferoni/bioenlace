@@ -15,10 +15,6 @@ Esta propuesta cubre **únicamente el uso de la app móvil del paciente** de Bio
 
 **No incluye** la licencia de la plataforma clínica para el personal de salud (web, captura clínica, app móvil del Personal de Salud ni módulos por clase de atención).
 
-**Volumen de referencia:** **9.000 atenciones / mes** de atención ambulatoria (promedio **estimativo** del efector).
-
-Para un cálculo más preciso según el volumen real, pueden usar la <a href="https://bioenlace.io/precios.html" target="_blank" rel="noopener noreferrer">calculadora de planes y precios</a> en el sitio web.
-
 ---
 
 ## 2. Alcance
@@ -66,7 +62,7 @@ Cronograma tipo Gantt (filas = actividades, columnas = semanas). Las celdas somb
       <td style="border:1px solid #cbd5e0; padding:8px; white-space:nowrap;"><strong>07 Ago</strong></td>
     </tr>
     <tr>
-      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Instalación y configuración del servidor </br>en el hospedaje de la provincia</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Instalación y configuración del servidor </br>en el datacenter de la provincia</td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#2b6cb0; color:#fff;">■■■</td>

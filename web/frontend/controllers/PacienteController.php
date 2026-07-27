@@ -46,7 +46,7 @@ class PacienteController extends Controller
     {
         $this->layout = 'blanco';
 
-        $paciente = Persona::findOne($id);        
+        $paciente = $this->findModel($id);
         // Migración: el resumen clínico se consume desde la API (GET /api/v1/personas/{id}/historia-clinica).
         // El frontend sólo renderiza la vista.
         return $this->render('timeline/timeline', [

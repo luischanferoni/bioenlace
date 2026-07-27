@@ -3,7 +3,19 @@
 namespace common\models\Person;
 
 use Yii;
+use common\models\ConsultaAtencionesEnfermeria;
+use common\models\EncuestaParchesMamarios;
+use common\models\EstadoCivil;
+use common\models\Guardia;
+use common\models\Persona_domicilio;
+use common\models\Persona_mails;
+use common\models\PersonaTelefono;
+use common\models\PersonasAntecedente;
+use common\models\ProfesionalSalud;
+use common\models\SegNivelInternacion;
+use common\models\Tipo_documento;
 use common\models\Turno;
+use common\models\User;
 
 /**
  * This is the model class for table "personas".
@@ -250,7 +262,7 @@ class Persona extends \yii\db\ActiveRecord
      */
     public function getUser()
     {
-        return $this->hasOne(\common\models\User::className(), ['id' => 'id_user']);
+        return $this->hasOne(User::className(), ['id' => 'id_user']);
     }
 
     /**
@@ -336,16 +348,20 @@ class Persona extends \yii\db\ActiveRecord
     //el parametro $fecha_prestacion se utiliza para calcular la edad de la persona al momento del que se realizo una consulta.
     public function getEdad($fecha_prestacion = "")
     {
-        list($Y, $m, $d) = explode("-", $this->fecha_nacimiento);
+        $fn = trim((string) ($this->fecha_nacimiento ?? ''));
+        if ($fn === '' || !preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $fn, $m)) {
+            return null;
+        }
+        $Y = (int) $m[1];
+        $mo = $m[2];
+        $d = $m[3];
 
         if ($fecha_prestacion == "") {
-
-            return (date("md") < $m . $d ? date("Y") - $Y - 1 : date("Y") - $Y);
-        } else {
-
-            $fecha = strtotime($fecha_prestacion);
-            return (date("md", $fecha) < $m . $d ? date("Y", $fecha) - $Y - 1 : date("Y", $fecha) - $Y);
+            return (date("md") < $mo . $d ? date("Y") - $Y - 1 : date("Y") - $Y);
         }
+
+        $fecha = strtotime($fecha_prestacion);
+        return (date("md", $fecha) < $mo . $d ? date("Y", $fecha) - $Y - 1 : date("Y", $fecha) - $Y);
     }
 
 

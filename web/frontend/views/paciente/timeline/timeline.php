@@ -24,7 +24,9 @@ if (is_object($persona) && is_object($persona->domicilioActivo)) {
 }
 
 $barrioTexto = !empty($barrioNombre) ? $barrioNombre : 'Sin datos';
-$this->title = $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $persona->edad . ' años - Barrio: ' . $barrioTexto;
+$edad = is_object($persona) ? $persona->edad : null;
+$edadTexto = $edad !== null && $edad !== '' ? ((int) $edad) . ' años' : 'edad s/d';
+$this->title = $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $edadTexto . ' - Barrio: ' . $barrioTexto;
 
 // Los archivos JS (turnos.js, chat-inteligente.js, timeline.js) se cargan automáticamente desde AppAsset
 // Solo registrar Plotly si es necesario para gráficos
@@ -138,7 +140,7 @@ $this->registerJsFile(
                         </div>
                         
                         <!-- Contenedores para el contenido -->
-                        <?php if ($persona->edad < 14) : ?>
+                        <?php if ($edad !== null && (int) $edad < 14) : ?>
                             <div id="curvas-crecimiento-content" class="mb-3" style="display: none;"></div>
                         <?php endif; ?>
                     </div>
@@ -222,7 +224,7 @@ Modal::end();
     var timelineConfig = {
         pacienteId: <?= $persona->id_persona ?>,
         endpoints: {
-            curvasCrecimiento: <?= $persona->edad < 14 ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
+            curvasCrecimiento: <?= ($edad !== null && (int) $edad < 14) ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
             formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>',
             historiaClinica: '/api/v1/personas/<?= (int) $persona->id_persona ?>/historia-clinica'

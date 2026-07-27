@@ -71,6 +71,12 @@ return [
                     'class' => 'yii\log\FileTarget',
                     'levels' => ['warning'],
                 ],
+                // Errores también a archivo: el target de BD no alcanza si solo se mira app.log.
+                [
+                    'class' => 'yii\log\FileTarget',
+                    'levels' => ['error'],
+                    'logFile' => '@runtime/logs/app-error.log',
+                ],
                 [
                     'class' => \common\components\Platform\Infra\Log\ResilientDbTarget::class,
                     'levels' => ['error'],

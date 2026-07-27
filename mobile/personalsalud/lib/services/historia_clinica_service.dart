@@ -739,28 +739,11 @@ class HistoriaClinicaResponse {
   factory HistoriaClinicaResponse.fromStaffConsultaJson(
     Map<String, dynamic> json,
   ) {
-    final captura = json['captura'];
-    bool? capturaPermitida;
-    String? capturaMotivo;
-    if (captura is Map) {
-      final p = captura['permitida'];
-      if (p is bool) {
-        capturaPermitida = p;
-      }
-      final m = captura['motivo']?.toString().trim();
-      if (m != null && m.isNotEmpty) {
-        capturaMotivo = m;
-      }
-    }
     final motivos = json['motivos_consulta_paciente'];
-    final resumen = motivos is Map ? motivos['resumen']?.toString() : null;
 
     return HistoriaClinicaResponse(
       persona: PersonaData.fromJson(json['persona'] as Map<String, dynamic>),
-      informacionMedica: InformacionMedica.fromJson({
-        if (resumen != null && resumen.trim().isNotEmpty)
-          'motivos_consulta': resumen.trim(),
-      }),
+      informacionMedica: InformacionMedica.fromJson(const {}),
       signosVitales: SignosVitalesClinica.fromJson(null),
       motivosConsultaPaciente: MotivosConsultaPaciente.fromJson(
         motivos is Map ? Map<String, dynamic>.from(motivos) : null,
@@ -770,14 +753,14 @@ class HistoriaClinicaResponse {
               Map<String, dynamic>.from(json['care_pack_cohorte'] as Map),
             )
           : null,
-      careCohortHabilitado: json['care_cohort_habilitado'] == true,
+      careCohortHabilitado: json['care_pack_cohorte'] != null,
       documentacionMedico: DocumentacionMedico.fromJson(
         json['documentacion_medico'] as Map<String, dynamic>?,
       ),
       historiaClinica: const [],
       totalHistoriaClinica: 0,
-      capturaPermitida: capturaPermitida ?? false,
-      capturaMotivo: capturaMotivo,
+      capturaPermitida: false,
+      capturaMotivo: null,
     );
   }
 }

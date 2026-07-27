@@ -578,8 +578,9 @@ Modal::end();
                         && staffPayload.success === true
                         && staffPayload.data
                     ) {
-                        var capturaStaff = staffPayload.data.captura || {};
-                        if (soloConsultaCargada || capturaStaff.permitida === false) {
+                        var turnoStaff = staffPayload.data.turno || {};
+                        var esAtendido = String(turnoStaff.estado || '').toUpperCase() === 'ATENDIDO';
+                        if (soloConsultaCargada || esAtendido) {
                             applyStaffConsultaSoloLectura(staffPayload.data);
                             return;
                         }

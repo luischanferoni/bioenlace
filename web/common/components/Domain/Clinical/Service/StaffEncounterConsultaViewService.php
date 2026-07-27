@@ -13,7 +13,7 @@ use common\models\Scheduling\Turno;
 
 /**
  * Vista de solo lectura de una consulta ya documentada (staff).
- * No es historia clínica del paciente: es el encounter + documentación del médico.
+ * Payload mínimo: sin HC/estado del paciente, sin flags de captura ni ventanas HC.
  */
 final class StaffEncounterConsultaViewService
 {
@@ -105,37 +105,40 @@ final class StaffEncounterConsultaViewService
         $encounter->refresh();
 
         $documentacion = (new EncounterStaffDocumentationViewService())->buildForEncounter($encounter);
-        $motivosPaciente = $this->buildMotivosPaciente($encounter, $turno);
-        $carePack = null;
-        if (CarePackConfig::isEnabled()) {
-            $carePack = (new CarePackEncounterStaffService())->buildForEncounter((int) $encounter->id);
+        $data = [
+            'persona' => [
+                'id' => (int) $persona->id_persona,
+                'nombre_completo' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N),
+                'documento' => $persona->documento,
+            ],
+            'turno' => $this->formatTurno($turno),
+            'encounter_id' => (int) $encounter->id,
+            'documentacion_medico' => $documentacion,
+        ];
+
+        $preconsulta = $this->buildPreconsultaSiAporta($encounter, $documentacion);
+        if ($preconsulta !== null) {
+            $data['motivos_consulta_paciente'] = $preconsulta;
+        }
+
+        $carePack = $this->buildCarePackSiAporta((int) $encounter->id);
+        if ($carePack !== null) {
+            $data['care_pack_cohorte'] = $carePack;
         }
 
         return [
             'ok' => true,
-            'data' => [
-                'persona' => [
-                    'id' => (int) $persona->id_persona,
-                    'nombre_completo' => $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N),
-                    'documento' => $persona->documento,
-                    'edad' => $persona->edad,
-                    'fecha_nacimiento' => $persona->fecha_nacimiento,
-                ],
-                'turno' => $this->formatTurno($turno),
-                'encounter_id' => (int) $encounter->id,
-                'documentacion_medico' => $documentacion,
-                'motivos_consulta_paciente' => $motivosPaciente,
-                'care_pack_cohorte' => $carePack,
-                'care_cohort_habilitado' => CarePackConfig::isEnabled(),
-                'captura' => $this->capturaFlagsForTurno($turno),
-            ],
+            'data' => $data,
         ];
     }
 
     /**
-     * @return array<string, mixed>
+     * Preconsulta solo si aporta algo que no esté ya en documentación del médico.
+     *
+     * @param array{secciones?: list<array{titulo?: string, items?: list<string>}>} $documentacion
+     * @return array<string, mixed>|null
      */
-    private function buildMotivosPaciente(Encounter $encounter, ?Turno $turno): array
+    private function buildPreconsultaSiAporta(Encounter $encounter, array $documentacion): ?array
     {
         $encounterId = (int) $encounter->id;
         $reason = trim((string) $encounter->reason_text);
@@ -143,31 +146,99 @@ final class StaffEncounterConsultaViewService
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])
             ->all();
-        $insights = AppointmentReasonClinicalInsightsService::decodeInsights(
-            $encounter->motivos_ia_insights_json ?? null
-        );
         $imagenesAdjuntas = AppointmentReasonBatchService::imagenesAdjuntasFromMessages(
             $mensajes,
             $encounterId
         );
-        $resumen = $reason !== '' ? $reason : null;
         $motivosIntake = (new EncounterMotivosIntakeStaffViewService())->buildForEncounter($encounter);
+        $intakeUtil = is_array($motivosIntake) && $this->intakeTieneContenido($motivosIntake);
+        $resumen = $reason !== '' ? $reason : null;
+        $resumenYaEnDoc = $resumen !== null && $this->textoYaEnDocumentacion($resumen, $documentacion);
+
+        if ($resumenYaEnDoc) {
+            $resumen = null;
+        }
+
+        if ($resumen === null && $imagenesAdjuntas === [] && !$intakeUtil) {
+            return null;
+        }
+
+        $out = [];
+        if ($resumen !== null) {
+            $out['resumen'] = $resumen;
+        }
+        if ($imagenesAdjuntas !== []) {
+            $out['imagenes_adjuntas'] = $imagenesAdjuntas;
+        }
+        if ($intakeUtil) {
+            $out['motivos_intake'] = $motivosIntake;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array{secciones?: list<array{titulo?: string, items?: list<string>}>} $documentacion
+     */
+    private function textoYaEnDocumentacion(string $texto, array $documentacion): bool
+    {
+        $norm = mb_strtolower(trim($texto));
+        if ($norm === '') {
+            return false;
+        }
+        foreach ($documentacion['secciones'] ?? [] as $sec) {
+            foreach ($sec['items'] ?? [] as $item) {
+                if (mb_strtolower(trim((string) $item)) === $norm) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, mixed> $intake
+     */
+    private function intakeTieneContenido(array $intake): bool
+    {
+        foreach (['respuestas', 'answers', 'items', 'preguntas'] as $key) {
+            if (!empty($intake[$key]) && is_array($intake[$key])) {
+                return true;
+            }
+        }
+
+        return !empty($intake['tiene_contenido']) || !empty($intake['tieneContenido']);
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function buildCarePackSiAporta(int $encounterId): ?array
+    {
+        if (!CarePackConfig::isEnabled()) {
+            return null;
+        }
+        $carePack = (new CarePackEncounterStaffService())->buildForEncounter($encounterId);
+        if ($carePack === null) {
+            return null;
+        }
+        $assistance = is_array($carePack['assistance'] ?? null) ? $carePack['assistance'] : [];
+        $answers = $assistance['answers'] ?? [];
+        $notes = trim((string) ($assistance['notes_for_staff'] ?? ''));
+        if ((!is_array($answers) || $answers === []) && $notes === '') {
+            return null;
+        }
 
         return [
-            'encounter_id' => $encounterId,
-            'consulta_id' => $encounterId,
-            'turno_id' => $turno !== null ? (int) $turno->id_turnos : null,
-            'turno' => $this->formatTurno($turno),
-            'contexto_explicito' => true,
-            'ventana_medico' => AppointmentReasonWindowService::apiHistoriaClinicaGateState($encounter),
-            'resumen' => $resumen,
-            'resumen_ia' => $resumen,
-            'resumen_pendiente' => $mensajes !== [] && $resumen === null,
-            'resumen_ia_pendiente' => $mensajes !== [] && $resumen === null,
-            'imagenes_adjuntas' => $imagenesAdjuntas,
-            'sugerencias_clinicas' => $insights,
-            'motivos_intake' => $motivosIntake,
-            'messages' => [],
+            'encounter_id' => (int) ($carePack['encounter_id'] ?? $encounterId),
+            'assistance' => [
+                'status' => (string) ($assistance['status'] ?? ''),
+                'notes_for_staff' => $notes !== '' ? $notes : null,
+                'submitted_at' => $assistance['submitted_at'] ?? null,
+                'delta_requested' => !empty($assistance['delta_requested']),
+                'answers' => is_array($answers) ? $answers : [],
+            ],
         ];
     }
 
@@ -192,49 +263,6 @@ final class StaffEncounterConsultaViewService
             'hora' => $hora,
             'estado' => (string) $turno->estado,
             'estado_label' => Turno::ESTADOS[$turno->estado] ?? 'Sin estado',
-        ];
-    }
-
-    /**
-     * @return array{permitida: bool|null, motivo: string|null}
-     */
-    private function capturaFlagsForTurno(?Turno $turno): array
-    {
-        if ($turno === null) {
-            return ['permitida' => null, 'motivo' => null];
-        }
-        $estado = (string) $turno->estado;
-        if ($estado === Turno::ESTADO_PENDIENTE || $estado === Turno::ESTADO_EN_ATENCION) {
-            return ['permitida' => true, 'motivo' => null];
-        }
-        if ($estado === Turno::ESTADO_ATENDIDO) {
-            return [
-                'permitida' => false,
-                'motivo' => 'Este turno ya fue atendido. Consulta en solo lectura.',
-            ];
-        }
-        if ($estado === Turno::ESTADO_CANCELADO) {
-            return [
-                'permitida' => false,
-                'motivo' => 'Este turno está cancelado.',
-            ];
-        }
-        if ($estado === Turno::ESTADO_SIN_ATENDER) {
-            return [
-                'permitida' => false,
-                'motivo' => 'Este turno quedó sin atender.',
-            ];
-        }
-        if ($estado === Turno::ESTADO_EN_RESOLUCION) {
-            return [
-                'permitida' => false,
-                'motivo' => 'Este turno está en resolución de horario.',
-            ];
-        }
-
-        return [
-            'permitida' => false,
-            'motivo' => 'Este turno no admite captura (estado: ' . $estado . ').',
         ];
     }
 }

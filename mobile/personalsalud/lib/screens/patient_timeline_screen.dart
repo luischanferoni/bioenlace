@@ -307,32 +307,72 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               children: [
                                 _buildPacienteHeader(
                                     _historiaClinicaData!.persona),
-                                if (_historiaClinicaData!
-                                    .documentacionMedico.tieneDatos) ...[
+                                if (_modoConsultaCargada) ...[
+                                  if (_historiaClinicaData!
+                                      .documentacionMedico.tieneDatos) ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildDocumentacionMedico(
+                                      _historiaClinicaData!.documentacionMedico,
+                                    ),
+                                  ],
+                                  if (_historiaClinicaData!
+                                          .motivosConsultaPaciente
+                                          .motivosIntake
+                                          ?.tieneContenido ==
+                                      true) ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildMotivosIntake(
+                                      _historiaClinicaData!
+                                          .motivosConsultaPaciente
+                                          .motivosIntake!,
+                                    ),
+                                  ],
+                                  if ((_historiaClinicaData!
+                                              .motivosConsultaPaciente
+                                              .resumen ??
+                                          '')
+                                      .trim()
+                                      .isNotEmpty) ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildMotivosConsulta(
+                                        _historiaClinicaData!),
+                                  ],
+                                  if (_historiaClinicaData!.carePackCohorte
+                                          ?.tieneContenido ==
+                                      true) ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildCarePackCohorte(
+                                      _historiaClinicaData!.carePackCohorte!,
+                                    ),
+                                  ],
+                                ] else ...[
+                                  if (_historiaClinicaData!
+                                      .documentacionMedico.tieneDatos) ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildDocumentacionMedico(
+                                      _historiaClinicaData!.documentacionMedico,
+                                    ),
+                                  ],
                                   BioSpacing.gapH(BioSpacing.md),
-                                  _buildDocumentacionMedico(
-                                    _historiaClinicaData!.documentacionMedico,
-                                  ),
-                                ],
-                                BioSpacing.gapH(BioSpacing.md),
-                                _buildInformacionMedica(
-                                    _historiaClinicaData!.informacionMedica),
-                                BioSpacing.gapH(BioSpacing.md),
-                                _buildSignosVitales(
-                                    _historiaClinicaData!.signosVitales),
-                                BioSpacing.gapH(BioSpacing.md),
-                                if (_historiaClinicaData!
-                                        .motivosConsultaPaciente.motivosIntake
-                                        ?.tieneContenido ==
-                                    true) ...[
-                                  _buildMotivosIntake(
-                                    _historiaClinicaData!
-                                        .motivosConsultaPaciente.motivosIntake!,
-                                  ),
+                                  _buildInformacionMedica(
+                                      _historiaClinicaData!.informacionMedica),
                                   BioSpacing.gapH(BioSpacing.md),
-                                ],
-                                _buildMotivosConsulta(_historiaClinicaData!),
-                                if (!_modoConsultaCargada) ...[
+                                  _buildSignosVitales(
+                                      _historiaClinicaData!.signosVitales),
+                                  BioSpacing.gapH(BioSpacing.md),
+                                  if (_historiaClinicaData!
+                                          .motivosConsultaPaciente
+                                          .motivosIntake
+                                          ?.tieneContenido ==
+                                      true) ...[
+                                    _buildMotivosIntake(
+                                      _historiaClinicaData!
+                                          .motivosConsultaPaciente
+                                          .motivosIntake!,
+                                    ),
+                                    BioSpacing.gapH(BioSpacing.md),
+                                  ],
+                                  _buildMotivosConsulta(_historiaClinicaData!),
                                   if (_pendingCaptures.isNotEmpty) ...[
                                     BioSpacing.gapH(BioSpacing.md),
                                     _buildPendingCapturesPanel(),
@@ -358,8 +398,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                             ),
                           ),
                         ),
-                        if (_enRevisionCaptura) _buildCaptureActionsBar(),
-                        if (_mostrarBarraConsulta && !_enRevisionCaptura)
+                        if (!_modoConsultaCargada && _enRevisionCaptura)
+                          _buildCaptureActionsBar(),
+                        if (!_modoConsultaCargada &&
+                            _mostrarBarraConsulta &&
+                            !_enRevisionCaptura)
                           _buildChatInputBar(context),
                       ],
                     ),

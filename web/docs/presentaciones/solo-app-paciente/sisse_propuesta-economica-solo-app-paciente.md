@@ -1,4 +1,4 @@
-# Propuesta económica — App móvil del paciente
+# Propuesta económica — SISSE - App móvil del paciente
 
 | | |
 |---|---|
@@ -13,7 +13,7 @@
 
 Esta propuesta cubre **únicamente el uso de la app móvil del paciente** de Bioenlace para CIS Banda: el canal digital donde los pacientes gestionan turnos, reciben avisos, consultan información de su atención y se comunican con SISSE según las funciones habilitadas.
 
-**No incluye** la licencia de la plataforma clínica para el personal (web, captura clínica, app móvil del Personal de Salud ni módulos por clase de atención).
+**No incluye** la licencia de la plataforma clínica para el personal de salud (web, captura clínica, app móvil del Personal de Salud ni módulos por clase de atención).
 
 **Volumen de referencia:** **9.000 atenciones / mes** de atención ambulatoria (promedio **estimativo** del efector).
 
@@ -57,7 +57,7 @@ Cronograma tipo Gantt (filas = actividades, columnas = semanas). Las celdas somb
   </thead>
   <tbody>
     <tr>
-      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Desarrollo de APIs en SISSE para la conexión con la app móvil</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Desarrollo de APIs en SISSE para la </br>conexión con la app móvil</td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#3182ce; color:#fff;">■■■</td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#3182ce; color:#fff;">■■■</td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
@@ -66,7 +66,7 @@ Cronograma tipo Gantt (filas = actividades, columnas = semanas). Las celdas somb
       <td style="border:1px solid #cbd5e0; padding:8px; white-space:nowrap;"><strong>07 Ago</strong></td>
     </tr>
     <tr>
-      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Instalación y configuración del servidor en el hospedaje de la provincia</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Instalación y configuración del servidor </br>en el hospedaje de la provincia</td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#2b6cb0; color:#fff;">■■■</td>
@@ -75,7 +75,7 @@ Cronograma tipo Gantt (filas = actividades, columnas = semanas). Las celdas somb
       <td style="border:1px solid #cbd5e0; padding:8px; white-space:nowrap;"><strong>21 Ago</strong></td>
     </tr>
     <tr>
-      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Aplicación paciente operativa para CIS Banda</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Aplicación paciente operativa para</br> CIS Banda</td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
       <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>

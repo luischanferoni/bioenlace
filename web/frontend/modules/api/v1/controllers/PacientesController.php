@@ -33,8 +33,10 @@ class PacientesController extends BaseController
      * Resumen de historia clínica (persona + información médica + signos vitales + mensajes de motivos de la app del paciente). No arma lista de eventos aquí.
      *
      * GET /api/v1/personas/{id}/historia-clinica
-     * Query: `turno_id` o `encounter_id` — motivos del turno/consulta indicado (recomendado en app Personal de Salud).
-     * Sin query: motivos del turno con mensajes más reciente en el efector (no el turno futuro vacío).
+     * Query: `turno_id` o `encounter_id` — contexto explícito del encuentro (recomendado staff).
+     * Sin query: auto-elige encounter con motivos recientes / último turno con encounter.
+     * Respuesta incluye `captura.permitida` (si el contexto es un turno): la UI no debe llamar
+     * a endpoints de captura cuando es false; la HC / documentación del encounter sí se devuelve.
      * Query (solo YII_DEBUG): simular_signos=1 — misma semántica que GET .../signos-vitales.
      * RBAC: /api/pacientes/historia-clinica
      */
@@ -142,6 +144,10 @@ class PacientesController extends BaseController
             'care_cohort_habilitado' => CarePackConfig::isEnabled(),
             'turnos_con_encounter' => $motivosCtx['turnos_con_encounter'],
             'documentacion_medico' => $motivosCtx['documentacion_medico'] ?? null,
+            'captura' => $motivosCtx['captura'] ?? [
+                'permitida' => null,
+                'motivo' => null,
+            ],
             'historia_clinica' => [],
             'total_historia_clinica' => 0,
         ], 'OK');

@@ -52,7 +52,7 @@ final class EncounterAppointmentReasonLookupService
     }
 
     /**
-     * Encounter abierto o más reciente para un turno (vía `appointment_id`).
+     * Encounter abierto o más reciente para un turno (`appointment_id` o parent TURNO).
      */
     public function encounterIdParaTurno(int $turnoId): ?int
     {
@@ -61,7 +61,15 @@ final class EncounterAppointmentReasonLookupService
         }
 
         $encounter = Encounter::findActive()
-            ->andWhere(['appointment_id' => $turnoId])
+            ->andWhere([
+                'or',
+                ['appointment_id' => $turnoId],
+                [
+                    'and',
+                    ['parent_type' => Encounter::PARENT_TURNO],
+                    ['parent_id' => $turnoId],
+                ],
+            ])
             ->orderBy(['id' => SORT_DESC])
             ->one();
 

@@ -4,7 +4,7 @@
 |---|---|
 | **Oferta** | App móvil del paciente |
 | **Para** | CIS Banda |
-| **Fecha** | 23/07/2026 |
+| **Fecha** | 27/07/2026 |
 | **Validez** | 30 días corridos desde la fecha de esta propuesta |
 
 ---
@@ -35,19 +35,62 @@ Para un cálculo más preciso según el volumen real, pueden usar la <a href="ht
 - Licencia o uso de la plataforma para **personal de salud** (web clínica, app Personal de Salud, captura clínica, tableros, etc.)
 - Atención de urgencia/guardia e internación, ni precios por profesional
 
----
-
 <div style="page-break-before: always;"></div>
 
 ---
 
 ## 3. Plazos estimados
 
-| Hito | Fecha estimada |
-|------|----------------|
-| Desarrollo de las APIs en SISSE para la conexión con la app móvil | *07 de Agosto de 2026* |
-| Instalación y configuración del servidor en el hospedaje de la provincia | *21 de Agosto de 2026* |
-| Aplicación paciente operativa para CIS Banda | *28 de Agosto de 2026* |
+Cronograma tipo Gantt (filas = actividades, columnas = semanas). Las celdas sombreadas indican el período de ejecución previsto.
+
+<table style="width:100%; border-collapse:collapse; font-size:0.95em; text-align:center;">
+  <thead>
+    <tr style="background:#1a365d; color:#fff;">
+      <th style="border:1px solid #cbd5e0; padding:8px; text-align:left; min-width:12em;">Actividad</th>
+      <th style="border:1px solid #cbd5e0; padding:8px;">27 Jul<br/>– 02 Ago</th>
+      <th style="border:1px solid #cbd5e0; padding:8px;">03 Ago<br/>– 09 Ago</th>
+      <th style="border:1px solid #cbd5e0; padding:8px;">10 Ago<br/>– 16 Ago</th>
+      <th style="border:1px solid #cbd5e0; padding:8px;">17 Ago<br/>– 23 Ago</th>
+      <th style="border:1px solid #cbd5e0; padding:8px;">24 Ago<br/>– 30 Ago</th>
+      <th style="border:1px solid #cbd5e0; padding:8px;">Hito</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Desarrollo de APIs en SISSE para la conexión con la app móvil</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#3182ce; color:#fff;">■■■</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#3182ce; color:#fff;">■■■</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; white-space:nowrap;"><strong>07 Ago</strong></td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Instalación y configuración del servidor en el hospedaje de la provincia</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#2b6cb0; color:#fff;">■■■</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#2b6cb0; color:#fff;">■■■</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; white-space:nowrap;"><strong>21 Ago</strong></td>
+    </tr>
+    <tr>
+      <td style="border:1px solid #cbd5e0; padding:8px; text-align:left;">Aplicación paciente operativa para CIS Banda</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#edf2f7;"></td>
+      <td style="border:1px solid #cbd5e0; padding:8px; background:#2c5282; color:#fff;">■■■</td>
+      <td style="border:1px solid #cbd5e0; padding:8px; white-space:nowrap;"><strong>28 Ago</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p style="font-size:0.9em; color:#4a5568; margin-top:0.75em;">
+  <span style="display:inline-block; width:1em; height:1em; background:#3182ce; vertical-align:middle; margin-right:0.35em;"></span> Ejecución prevista
+  &nbsp;&nbsp;
+  <span style="display:inline-block; width:1em; height:1em; background:#edf2f7; border:1px solid #cbd5e0; vertical-align:middle; margin-right:0.35em;"></span> Sin actividad en la semana
+</p>
 
 Los plazos finales se confirman al firmar, según disponibilidad de la institución.
 

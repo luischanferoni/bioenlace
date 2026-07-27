@@ -362,7 +362,7 @@ final class EncounterCaptureContextService
         );
 
         if ($estado === Turno::ESTADO_ATENDIDO) {
-            $msg = 'Este turno ya fue atendido. Podés consultar la historia clínica, pero no registrar una nueva captura desde este turno.';
+            $msg = 'Este turno ya fue atendido. Podés ver la consulta documentada, pero no registrar una nueva captura desde este turno.';
         } elseif ($estado === Turno::ESTADO_CANCELADO) {
             $msg = 'Este turno está cancelado. No se puede iniciar la captura clínica.';
         } elseif ($estado === Turno::ESTADO_SIN_ATENDER) {

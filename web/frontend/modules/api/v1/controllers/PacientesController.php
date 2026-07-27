@@ -35,7 +35,8 @@ class PacientesController extends BaseController
      * GET /api/v1/personas/{id}/historia-clinica
      * Query: `turno_id` o `encounter_id` — motivos pre-turno del encuentro (flujo captura staff).
      * Sin query: auto-elige encounter + HC resumida del paciente.
-     * Condiciones/alergias/antecedentes: siempre del paciente (términos vacíos filtrados).
+     * Condiciones/alergias/antecedentes: solo si hay ventana de atención (turno PENDIENTE/EN_ATENCION)
+     * o encounter no ambulatorio; no en turno ATENDIDO.
      * Para “Ver consulta” de un turno ya atendido usar
      * GET /api/v1/clinical/encounter/ver-consulta-como-staff.
      * Incluye `captura.permitida` cuando hay turno: la UI no debe abrir captura si es false.
@@ -62,12 +63,20 @@ class PacientesController extends BaseController
 
         $motivosConsulta = $motivosCtx['motivos_consulta'];
         $motivosConsultaPaciente = $motivosCtx['motivos_consulta_paciente'];
+        $capturaFlags = $motivosCtx['captura'] ?? [
+            'permitida' => null,
+            'motivo' => null,
+        ];
+
+        // Estado actual del paciente: solo en ventana de atención (captura) o encounter sin turno ambulatorio.
+        $encounterIdMotivos = (int) ($motivosConsultaPaciente['encounter_id'] ?? 0);
+        $mostrarEstadoPaciente = ($capturaFlags['permitida'] ?? null) === true
+            || (($capturaFlags['permitida'] ?? null) === null && $encounterIdMotivos > 0);
 
         $carePackCohorte = null;
-        if (CarePackConfig::isEnabled()) {
-            $encounterIdCare = (int) ($motivosConsultaPaciente['encounter_id'] ?? 0);
-            if ($encounterIdCare > 0) {
-                $carePackCohorte = (new CarePackEncounterStaffService())->buildForEncounter($encounterIdCare);
+        if (CarePackConfig::isEnabled() && $mostrarEstadoPaciente) {
+            if ($encounterIdMotivos > 0) {
+                $carePackCohorte = (new CarePackEncounterStaffService())->buildForEncounter($encounterIdMotivos);
             }
         }
 
@@ -77,48 +86,50 @@ class PacientesController extends BaseController
         $antecedentesPersonales = [];
         $antecedentesFamiliares = [];
 
-        [$condActivas, $condCronicas] = DCRepo::getCondicionesPaciente((int) $persona->id_persona);
-        foreach ($condActivas as $c) {
-            $row = $this->mapCondicionClinicaRow($c);
-            if ($row !== null) {
-                $condicionesActivas[] = $row;
+        if ($mostrarEstadoPaciente) {
+            [$condActivas, $condCronicas] = DCRepo::getCondicionesPaciente((int) $persona->id_persona);
+            foreach ($condActivas as $c) {
+                $row = $this->mapCondicionClinicaRow($c);
+                if ($row !== null) {
+                    $condicionesActivas[] = $row;
+                }
             }
-        }
-        foreach ($condCronicas as $c) {
-            $row = $this->mapCondicionClinicaRow($c);
-            if ($row !== null) {
-                $condicionesCronicas[] = $row;
+            foreach ($condCronicas as $c) {
+                $row = $this->mapCondicionClinicaRow($c);
+                if ($row !== null) {
+                    $condicionesCronicas[] = $row;
+                }
             }
-        }
 
-        foreach (AllergyIntolerance::findActiveBySubject((int) $persona->id_persona) as $ai) {
-            $term = trim((string) ($ai->display ?? ''));
-            if ($term === '' && !empty($ai->code)) {
-                $term = (string) $ai->code;
+            foreach (AllergyIntolerance::findActiveBySubject((int) $persona->id_persona) as $ai) {
+                $term = trim((string) ($ai->display ?? ''));
+                if ($term === '' && !empty($ai->code)) {
+                    $term = (string) $ai->code;
+                }
+                if ($term === '') {
+                    continue;
+                }
+                $hallazgos[] = [
+                    'id' => (int) $ai->id,
+                    'codigo' => $ai->code !== null && $ai->code !== '' ? (string) $ai->code : null,
+                    'termino' => $term,
+                ];
             }
-            if ($term === '') {
-                continue;
-            }
-            $hallazgos[] = [
-                'id' => (int) $ai->id,
-                'codigo' => $ai->code !== null && $ai->code !== '' ? (string) $ai->code : null,
-                'termino' => $term,
-            ];
-        }
 
-        $ants = PersonasAntecedente::find()
-            ->where(['id_persona' => (int) $persona->id_persona])
-            ->all();
-        foreach ($ants as $ant) {
-            $term = isset($ant->snomedSituacion) ? trim((string) $ant->snomedSituacion->term) : '';
-            if ($term === '') {
-                continue;
-            }
-            $row = ['id' => (int) ($ant->id ?? 0), 'termino' => $term];
-            if (($ant->tipo_antecedente ?? null) === 'Familiar') {
-                $antecedentesFamiliares[] = $row;
-            } else {
-                $antecedentesPersonales[] = $row;
+            $ants = PersonasAntecedente::find()
+                ->where(['id_persona' => (int) $persona->id_persona])
+                ->all();
+            foreach ($ants as $ant) {
+                $term = isset($ant->snomedSituacion) ? trim((string) $ant->snomedSituacion->term) : '';
+                if ($term === '') {
+                    continue;
+                }
+                $row = ['id' => (int) ($ant->id ?? 0), 'termino' => $term];
+                if (($ant->tipo_antecedente ?? null) === 'Familiar') {
+                    $antecedentesFamiliares[] = $row;
+                } else {
+                    $antecedentesPersonales[] = $row;
+                }
             }
         }
 
@@ -128,7 +139,15 @@ class PacientesController extends BaseController
         if (defined('YII_DEBUG') && YII_DEBUG) {
             $simularSignos = (bool) Yii::$app->request->get('simular_signos', false);
         }
-        $signosVitales = (new PersonaSignosVitalesService())->getSignosVitalesData($persona, $simularSignos);
+        $signosVitales = $mostrarEstadoPaciente
+            ? (new PersonaSignosVitalesService())->getSignosVitalesData($persona, $simularSignos)
+            : [
+                'datos_sv' => [],
+                'ultimos_sv' => null,
+                'total_sv' => 0,
+                'tiene_mas_sv' => false,
+                'fecha_titulo' => '',
+            ];
 
         // La línea de tiempo / eventos agregados no se construye aquí (otro endpoint o servicio cuando corresponda).
 
@@ -153,11 +172,10 @@ class PacientesController extends BaseController
             'care_pack_cohorte' => $carePackCohorte,
             'care_cohort_habilitado' => CarePackConfig::isEnabled(),
             'turnos_con_encounter' => $turnosConEncounter,
-            'documentacion_medico' => $motivosCtx['documentacion_medico'] ?? null,
-            'captura' => $motivosCtx['captura'] ?? [
-                'permitida' => null,
-                'motivo' => null,
-            ],
+            'documentacion_medico' => $mostrarEstadoPaciente
+                ? ($motivosCtx['documentacion_medico'] ?? null)
+                : null,
+            'captura' => $capturaFlags,
             'historia_clinica' => [],
             'total_historia_clinica' => 0,
         ], 'OK');
@@ -266,6 +284,11 @@ class PacientesController extends BaseController
             }
             $encounterId = $motivosLookup->encounterIdParaTurno($turnoIdParam);
             if ($encounterId === null) {
+                $deny = AppointmentReasonWindowService::historiaClinicaDenyKindForTurno($turno);
+                if ($deny !== null) {
+                    return $this->historiaClinicaDeniedPayload($emptyPaciente, $turnosConEncounter, $turno, $deny);
+                }
+
                 return [
                     'motivos_consulta' => null,
                     'motivos_consulta_paciente' => array_merge($emptyPaciente, [
@@ -354,24 +377,10 @@ class PacientesController extends BaseController
         }
 
         if (!AppointmentReasonWindowService::isHistoriaClinicaVisibleForEncounter($encounter)) {
-            $gate = AppointmentReasonWindowService::apiHistoriaClinicaGateState($encounter);
-            $min = (int) $gate['minutos_antes_apertura'];
+            $deny = AppointmentReasonWindowService::historiaClinicaDenyKindForTurno($turno)
+                ?? 'antes';
 
-            return [
-                'motivos_consulta' => null,
-                'motivos_consulta_paciente' => $emptyPaciente,
-                'turnos_con_encounter' => $turnosConEncounter,
-                'documentacion_medico' => null,
-                'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
-                'http_error' => $this->error(
-                    "La historia clínica estará disponible {$min} minuto(s) antes del turno.",
-                    [
-                        'codigo' => 'HC_ANTES_DE_VENTANA',
-                        'ventana_medico' => $gate,
-                    ],
-                    403
-                ),
-            ];
+            return $this->historiaClinicaDeniedPayload($emptyPaciente, $turnosConEncounter, $turno, $deny, $encounter);
         }
 
         AppointmentReasonBatchService::ensureProcessedForMedico($encounter);
@@ -418,6 +427,80 @@ class PacientesController extends BaseController
             'documentacion_medico' => (new EncounterStaffDocumentationViewService())->buildForEncounter($encounter),
             'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
             'http_error' => null,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $emptyPaciente
+     * @param list<array<string, mixed>> $turnosConEncounter
+     * @return array{
+     *   motivos_consulta: null,
+     *   motivos_consulta_paciente: array<string, mixed>,
+     *   turnos_con_encounter: list<array<string, mixed>>,
+     *   documentacion_medico: null,
+     *   captura: array{permitida: bool|null, motivo: string|null},
+     *   http_error: array<string, mixed>
+     * }
+     */
+    private function historiaClinicaDeniedPayload(
+        array $emptyPaciente,
+        array $turnosConEncounter,
+        ?Turno $turno,
+        string $denyKind,
+        ?Encounter $encounter = null
+    ): array {
+        $gate = $encounter !== null
+            ? AppointmentReasonWindowService::apiHistoriaClinicaGateState($encounter)
+            : [
+                'visible' => false,
+                'disponible_desde' => null,
+                'turno_en' => null,
+                'minutos_antes_apertura' => AppointmentReasonWindowService::minutesBeforeMedicoHistoriaClinica(),
+                'minutos_antes_cierre_paciente' => AppointmentReasonWindowService::minutesBeforeClose(),
+                'deny_kind' => $denyKind,
+            ];
+
+        if ($denyKind === 'cerrada') {
+            return [
+                'motivos_consulta' => null,
+                'motivos_consulta_paciente' => $emptyPaciente,
+                'turnos_con_encounter' => $turnosConEncounter,
+                'documentacion_medico' => null,
+                'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : [
+                    'permitida' => null,
+                    'motivo' => null,
+                ],
+                'http_error' => $this->error(
+                    'La historia clínica de este paciente ya no está disponible. '
+                    . 'Para un turno atendido usá la consulta documentada (ver consulta).',
+                    [
+                        'codigo' => 'HC_CERRADA',
+                        'ventana_medico' => $gate,
+                    ],
+                    403
+                ),
+            ];
+        }
+
+        $min = (int) ($gate['minutos_antes_apertura'] ?? AppointmentReasonWindowService::minutesBeforeMedicoHistoriaClinica());
+
+        return [
+            'motivos_consulta' => null,
+            'motivos_consulta_paciente' => $emptyPaciente,
+            'turnos_con_encounter' => $turnosConEncounter,
+            'documentacion_medico' => null,
+            'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : [
+                'permitida' => null,
+                'motivo' => null,
+            ],
+            'http_error' => $this->error(
+                "La historia clínica estará disponible {$min} minuto(s) antes del turno.",
+                [
+                    'codigo' => 'HC_ANTES_DE_VENTANA',
+                    'ventana_medico' => $gate,
+                ],
+                403
+            ),
         ];
     }
 

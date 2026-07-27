@@ -46,7 +46,16 @@ final class AppointmentReasonWindowService
     public static function turnoStartsAt(Encounter $encounter): ?int
     {
         $turno = self::resolveTurno($encounter);
-        if ($turno === null || empty($turno->fecha)) {
+        if ($turno === null) {
+            return null;
+        }
+
+        return self::turnoStartsAtFromTurno($turno);
+    }
+
+    public static function turnoStartsAtFromTurno(Turno $turno): ?int
+    {
+        if (empty($turno->fecha)) {
             return null;
         }
 
@@ -90,12 +99,32 @@ final class AppointmentReasonWindowService
     }
 
     /**
-     * Historia clínica / motivos para el médico: desde N minutos antes del turno (turno ambulatorio).
+     * Historia clínica / estado actual del paciente para el médico:
+     * solo con turno PENDIENTE o EN_ATENCION y desde N minutos antes del turno.
+     * Turno ATENDIDO / cancelado / etc. → no hay acceso a HC (usar ver-consulta-como-staff).
      * Sin turno vinculado (guardia, etc.) → visible.
      */
     public static function isHistoriaClinicaVisibleForEncounter(Encounter $encounter): bool
     {
-        $turnoAt = self::turnoStartsAt($encounter);
+        $turno = self::resolveTurno($encounter);
+        if ($turno === null) {
+            return true;
+        }
+
+        return self::isHistoriaClinicaVisibleForTurno($turno);
+    }
+
+    /**
+     * Misma regla de ventana HC operando solo sobre el turno ambulatorio.
+     */
+    public static function isHistoriaClinicaVisibleForTurno(Turno $turno): bool
+    {
+        $estado = (string) $turno->estado;
+        if ($estado !== Turno::ESTADO_PENDIENTE && $estado !== Turno::ESTADO_EN_ATENCION) {
+            return false;
+        }
+
+        $turnoAt = self::turnoStartsAtFromTurno($turno);
         if ($turnoAt === null) {
             return true;
         }
@@ -103,6 +132,25 @@ final class AppointmentReasonWindowService
         $openAt = $turnoAt - self::minutesBeforeMedicoHistoriaClinica() * 60;
 
         return self::nowTimestamp() >= $openAt;
+    }
+
+    /**
+     * @return 'antes'|'cerrada'|null null = visible / sin denegación
+     */
+    public static function historiaClinicaDenyKindForTurno(?Turno $turno): ?string
+    {
+        if ($turno === null) {
+            return null;
+        }
+        $estado = (string) $turno->estado;
+        if ($estado !== Turno::ESTADO_PENDIENTE && $estado !== Turno::ESTADO_EN_ATENCION) {
+            return 'cerrada';
+        }
+        if (self::isHistoriaClinicaVisibleForTurno($turno)) {
+            return null;
+        }
+
+        return 'antes';
     }
 
     public static function medicoHistoriaClinicaOpensAt(Encounter $encounter): ?int
@@ -121,11 +169,13 @@ final class AppointmentReasonWindowService
      *   disponible_desde: string|null,
      *   turno_en: string|null,
      *   minutos_antes_apertura: int,
-     *   minutos_antes_cierre_paciente: int
+     *   minutos_antes_cierre_paciente: int,
+     *   deny_kind: string|null
      * }
      */
     public static function apiHistoriaClinicaGateState(Encounter $encounter): array
     {
+        $turno = self::resolveTurno($encounter);
         $turnoAt = self::turnoStartsAt($encounter);
         $openAt = self::medicoHistoriaClinicaOpensAt($encounter);
 
@@ -135,6 +185,7 @@ final class AppointmentReasonWindowService
             'turno_en' => $turnoAt !== null ? date('c', $turnoAt) : null,
             'minutos_antes_apertura' => self::minutesBeforeMedicoHistoriaClinica(),
             'minutos_antes_cierre_paciente' => self::minutesBeforeClose(),
+            'deny_kind' => self::historiaClinicaDenyKindForTurno($turno),
         ];
     }
 

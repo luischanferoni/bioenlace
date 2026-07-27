@@ -43,6 +43,7 @@
     var encounter = root.getAttribute('data-encounter') || '';
     var esGuardia = root.getAttribute('data-es-guardia') === '1';
     var urlHistoriaBase = root.getAttribute('data-url-historia') || '';
+    var urlVerConsultaBase = root.getAttribute('data-url-ver-consulta') || '';
     var urlInternacionView = root.getAttribute('data-url-internacion-view') || '';
     var urlAsistente = root.getAttribute('data-url-asistente') || '';
 
@@ -107,8 +108,16 @@
       if (ctx && typeof ctx === 'object') {
         if (ctx.parent) q += '&parent=' + encodeURIComponent(ctx.parent);
         if (ctx.parent_id != null) q += '&parent_id=' + encodeURIComponent(ctx.parent_id);
-        if (ctx.vista) q += '&vista=' + encodeURIComponent(ctx.vista);
       }
+      return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
+    }
+
+    /** Turno ATENDIDO → pantalla de consulta documentada (no HC). */
+    function verConsultaUrl(personaId, turnoId) {
+      if (!turnoId || !urlVerConsultaBase) return null;
+      var base = urlVerConsultaBase;
+      var q = 'turno_id=' + encodeURIComponent(turnoId);
+      if (personaId) q += '&id=' + encodeURIComponent(personaId);
       return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
     }
 
@@ -208,18 +217,22 @@
 
       var idPersona = t.id_persona || (t.paciente ? t.paciente.id : null);
       var consultaCargada = esTurnoConsultaCargada(t);
-      var urlHistoria = historiaConContexto(idPersona, {
-        parent: 'TURNO',
-        parent_id: t.id,
-        vista: consultaCargada ? 'consulta' : null,
-      });
       var a = colEl.querySelector('[data-role="link-historia"]');
-      if (a && urlHistoria) {
-        a.href = urlHistoria;
-        if (consultaCargada) {
+      if (!a) return;
+      if (consultaCargada) {
+        var urlConsulta = verConsultaUrl(idPersona, t.id);
+        if (urlConsulta) {
+          a.href = urlConsulta;
           a.setAttribute('data-spa-title', 'Consulta cargada');
           a.setAttribute('aria-label', 'Ver consulta');
-        } else {
+        }
+      } else {
+        var urlHistoria = historiaConContexto(idPersona, {
+          parent: 'TURNO',
+          parent_id: t.id,
+        });
+        if (urlHistoria) {
+          a.href = urlHistoria;
           a.setAttribute('data-spa-title', 'Historia clínica');
           a.setAttribute('aria-label', 'Ver historia clínica');
         }

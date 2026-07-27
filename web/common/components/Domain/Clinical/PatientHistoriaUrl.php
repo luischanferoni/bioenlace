@@ -5,7 +5,8 @@ namespace common\components\Clinical;
 use yii\helpers\Url;
 
 /**
- * Enlaces a captura clínica vía timeline ({@see \frontend\controllers\PacienteController::actionHistoria}).
+ * Enlaces a captura clínica vía timeline ({@see \frontend\controllers\PacienteController::actionHistoria})
+ * o a consulta documentada ({@see \frontend\controllers\PacienteController::actionVerConsulta}).
  *
  * Parent keys: {@see \common\models\Clinical\Encounter::PARENT_*}.
  */
@@ -23,5 +24,19 @@ final class PatientHistoriaUrl
             'parent' => $parent,
             'parent_id' => $parentId,
         ], $extraParams));
+    }
+
+    /** Solo lectura de consulta ya cargada (turno atendido). */
+    public static function consultaCargada(int $turnoId, ?int $idPersona = null): string
+    {
+        $params = [
+            '/paciente/ver-consulta',
+            'turno_id' => $turnoId,
+        ];
+        if ($idPersona !== null && $idPersona > 0) {
+            $params['id'] = $idPersona;
+        }
+
+        return Url::to($params);
     }
 }

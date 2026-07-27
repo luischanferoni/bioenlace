@@ -26,14 +26,16 @@ class PacienteController extends Controller
         return [
             'access' => [
                 'class' => SisseActionFilter::className(),
-                'only' => ['historia', 'formulario-consulta'],
+                'only' => ['historia', 'formulario-consulta', 'ver-consulta'],
                 'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
         ];
     }
 
     /**
-     * Obtiene el historial de un paciente específico.
+     * Obtiene el historial de un paciente específico (HC / captura en ventana de turno).
+     *
+     * No usar para turnos ATENDIDO: {@see actionVerConsulta}.
      *
      * La vista usa timeline por API (`views/paciente/timeline/timeline.php`). Cualquier rearmado de SQL local
      * debe filtrar también por {@see \common\models\ProfesionalEfectorServicio} además de `consultas.id_profesional_efector_servicio`
@@ -48,10 +50,70 @@ class PacienteController extends Controller
         $this->layout = 'blanco';
 
         $paciente = $this->findModel($id);
+
+        $parent = Yii::$app->request->get('parent');
+        $parentId = (int) Yii::$app->request->get('parent_id', 0);
+        if (strtoupper((string) $parent) === Encounter::PARENT_TURNO && $parentId > 0) {
+            $turno = \common\models\Scheduling\Turno::findActive()
+                ->andWhere(['id_turnos' => $parentId, 'id_persona' => (int) $paciente->id_persona])
+                ->one();
+            if ($turno !== null && (string) $turno->estado === \common\models\Scheduling\Turno::ESTADO_ATENDIDO) {
+                return $this->redirect([
+                    'ver-consulta',
+                    'turno_id' => $parentId,
+                    'id' => (int) $paciente->id_persona,
+                ]);
+            }
+        }
+
         // Migración: el resumen clínico se consume desde la API (GET /api/v1/personas/{id}/historia-clinica).
         // El frontend sólo renderiza la vista.
         return $this->render('timeline/timeline', [
             'persona' => $paciente,
+        ]);
+    }
+
+    /**
+     * Solo lectura de la consulta ya documentada por el médico (turno atendido).
+     *
+     * GET /paciente/ver-consulta?turno_id=… [&id=persona]
+     * Consume GET /api/v1/clinical/encounter/ver-consulta-como-staff.
+     * No muestra historia clínica / estado actual del paciente.
+     *
+     * @no_intent_catalog
+     */
+    public function actionVerConsulta()
+    {
+        $this->layout = 'blanco';
+
+        $turnoId = (int) Yii::$app->request->get('turno_id', 0);
+        if ($turnoId <= 0) {
+            throw new NotFoundHttpException('Indicá turno_id.');
+        }
+
+        $turno = \common\models\Scheduling\Turno::findActive()
+            ->andWhere(['id_turnos' => $turnoId])
+            ->one();
+        if ($turno === null) {
+            throw new NotFoundHttpException('Turno no encontrado.');
+        }
+
+        $personaId = (int) Yii::$app->request->get('id', 0);
+        if ($personaId <= 0) {
+            $personaId = (int) $turno->id_persona;
+        }
+        if ($personaId !== (int) $turno->id_persona) {
+            throw new NotFoundHttpException('El turno no corresponde a esa persona.');
+        }
+
+        $paciente = $this->findModel($personaId);
+        $apiPath = '/api/v1/clinical/encounter/ver-consulta-como-staff?'
+            . http_build_query(['turno_id' => $turnoId]);
+
+        return $this->render('ver_consulta', [
+            'persona' => $paciente,
+            'turnoId' => $turnoId,
+            'apiPath' => $apiPath,
         ]);
     }
 

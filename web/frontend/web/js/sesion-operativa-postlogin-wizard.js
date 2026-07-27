@@ -459,17 +459,31 @@
     showWizardStep(STEP_ENCOUNTER);
   }
 
+  /** Renderiza radios de servicio y re-aplica selección (render limpia el DOM). */
+  function ensureServiciosRendered(idEfector, preferServicioId) {
+    renderServiciosForEfector(idEfector);
+    var servicios = wizardEfectorServicios[idEfector] || [];
+    var pick = preferServicioId > 0 ? preferServicioId : 0;
+    if (!pick && servicios.length === 1) {
+      pick = parseInt(servicios[0].id_servicio, 10) || 0;
+    }
+    if (pick) {
+      selectServicioById(pick);
+    }
+    return pick;
+  }
+
   function goToServicioStep() {
     var idEf = getSelectedEfectorId();
     if (!idEf) {
       mostrarAlerta('Seleccioná un efector.', true);
       return;
     }
-    renderServiciosForEfector(idEf);
+    var prev = parseInt($('input[name=servicio]:checked').val(), 10) || 0;
+    ensureServiciosRendered(idEf, prev);
     showWizardStep(STEP_SERVICIO);
     var servicios = wizardEfectorServicios[idEf] || [];
-    if (servicios.length === 1) {
-      selectServicioById(parseInt(servicios[0].id_servicio, 10));
+    if (servicios.length === 1 && getSelectedServicioMeta()) {
       afterServicioSelected(getEstablecerUrl());
     }
   }
@@ -489,7 +503,8 @@
       goToServicioStep();
       return true;
     }
-    selectServicioById(parseInt(servicios[0].id_servicio, 10));
+    // Hay que renderizar los radios antes de seleccionar: si no, Finalizar no ve servicio.
+    ensureServiciosRendered(idEf, parseInt(servicios[0].id_servicio, 10));
     if (!servicioRequiresEncounter(servicios[0])) {
       establecerSesion(url);
       return true;
@@ -595,12 +610,47 @@
 
     $('[data-wizard-action="encounter-prev"]').on('click', function (e) {
       e.preventDefault();
+      var idEf = getSelectedEfectorId();
+      var prev = parseInt($('input[name=servicio]:checked').val(), 10) || 0;
+      if (idEf) {
+        ensureServiciosRendered(idEf, prev);
+      }
       showWizardStep(STEP_SERVICIO);
     });
 
     $('[data-wizard-action="encounter-finish"]').on('click', function (e) {
       e.preventDefault();
       establecerSesion(url);
+    });
+
+    // Las "pestañas" son indicador de progreso: solo se puede volver a pasos ya hechos.
+    $('#top-tab-list').on('click', '[data-wizard-step]', function (e) {
+      e.preventDefault();
+      var li = this;
+      if (!li.classList.contains('done') && !li.classList.contains('active')) {
+        return;
+      }
+      var step = li.getAttribute('data-wizard-step');
+      if (step === 'efector') {
+        showWizardStep(STEP_EFECTOR);
+        return;
+      }
+      if (step === 'servicio') {
+        var idEf = getSelectedEfectorId();
+        if (!idEf) {
+          return;
+        }
+        var prev = parseInt($('input[name=servicio]:checked').val(), 10) || 0;
+        ensureServiciosRendered(idEf, prev);
+        showWizardStep(STEP_SERVICIO);
+        return;
+      }
+      if (step === 'encounter' && !li.classList.contains('d-none')) {
+        if (!getSelectedServicioMeta()) {
+          return;
+        }
+        showWizardStep(STEP_ENCOUNTER);
+      }
     });
 
     cargarOpcionesSesionOperativa(url);

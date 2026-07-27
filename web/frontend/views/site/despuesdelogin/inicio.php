@@ -27,17 +27,17 @@ $urlEstablecerSesionOperativa = Url::to(['/api/v1/sesion-operativa/establecer'],
 
         <ul id="top-tab-list" class="nav nav-pills nav-fill gap-2 p-0 list-unstyled mb-0" role="tablist">
             <li id="paso1" class="nav-item active" role="presentation" data-wizard-step="efector">
-                <a href="#" class="wizard_tab_link text-center" tabindex="-1" aria-disabled="true">
+                <a href="#" class="wizard_tab_link text-center">
                     <span class="visually-hidden">Paso 1:</span> Efector
                 </a>
             </li>
             <li id="paso2" class="nav-item" role="presentation" data-wizard-step="servicio">
-                <a href="#" class="wizard_tab_link text-center" tabindex="-1" aria-disabled="true">
+                <a href="#" class="wizard_tab_link text-center">
                     <span class="visually-hidden">Paso 2:</span> Servicio
                 </a>
             </li>
             <li id="paso3" class="nav-item" role="presentation" data-wizard-step="encounter">
-                <a href="#" class="wizard_tab_link text-center" tabindex="-1" aria-disabled="true">
+                <a href="#" class="wizard_tab_link text-center">
                     <span class="visually-hidden">Paso 3:</span> Área
                 </a>
             </li>

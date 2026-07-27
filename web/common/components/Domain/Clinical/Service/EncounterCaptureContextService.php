@@ -83,21 +83,15 @@ final class EncounterCaptureContextService
 
                 return [
                     'success' => false,
-                    'msg' => 'Ocurrio un error con el turno, por favor comunicarse con los administradores de SISSE',
+                    'msg' => 'No se encontró el turno indicado.',
                     'idServicio' => null,
                     'encounterClass' => null,
                 ];
             }
 
-            if ($turno->estado !== Turno::ESTADO_PENDIENTE) {
-                Yii::warning('Llamada a getModeloConsulta parentId a un Turno que no pendiente, parentId: ' . $parentId);
-
-                return [
-                    'success' => false,
-                    'msg' => 'Ocurrio un error el turno ya fue atendido, por favor comunicarse con los administradores de SISSE',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+            $bloqueoTurno = self::mensajeSiTurnoNoCapturable($turno);
+            if ($bloqueoTurno !== null) {
+                return $bloqueoTurno;
             }
 
             $idServicio = $turno->id_servicio_asignado;
@@ -295,21 +289,15 @@ final class EncounterCaptureContextService
 
                 return [
                     'success' => false,
-                    'msg' => 'Ocurrio un error con el turno, por favor comunicarse con los administradores de SISSE',
+                    'msg' => 'No se encontró el turno indicado.',
                     'idServicio' => null,
                     'encounterClass' => null,
                 ];
             }
 
-            if ($turno->estado !== Turno::ESTADO_PENDIENTE) {
-                Yii::warning('Llamada a getModeloConsulta parentId a un Turno que no pendiente, parentId: ' . $parentId);
-
-                return [
-                    'success' => false,
-                    'msg' => 'Ocurrio un error el turno ya fue atendido, por favor comunicarse con los administradores de SISSE',
-                    'idServicio' => null,
-                    'encounterClass' => null,
-                ];
+            $bloqueoTurno = self::mensajeSiTurnoNoCapturable($turno);
+            if ($bloqueoTurno !== null) {
+                return $bloqueoTurno;
             }
 
             $idServicio = $turno->id_servicio_asignado;
@@ -354,6 +342,42 @@ final class EncounterCaptureContextService
             'msg' => '',
             'idServicio' => $idServicio,
             'encounterClass' => $encounterClass,
+        ];
+    }
+
+    /**
+     * Captura permitida en PENDIENTE o EN_ATENCION. Otros estados: mensaje claro (sin formulario).
+     *
+     * @return array{success: false, msg: string, idServicio: null, encounterClass: null}|null
+     */
+    private static function mensajeSiTurnoNoCapturable(Turno $turno): ?array
+    {
+        $estado = (string) $turno->estado;
+        if ($estado === Turno::ESTADO_PENDIENTE || $estado === Turno::ESTADO_EN_ATENCION) {
+            return null;
+        }
+
+        Yii::warning(
+            'validarPermisoAtencion: turno no capturable, parentId=' . $turno->id_turnos . ' estado=' . $estado
+        );
+
+        if ($estado === Turno::ESTADO_ATENDIDO) {
+            $msg = 'Este turno ya fue atendido. Podés consultar la historia clínica, pero no registrar una nueva captura desde este turno.';
+        } elseif ($estado === Turno::ESTADO_CANCELADO) {
+            $msg = 'Este turno está cancelado. No se puede iniciar la captura clínica.';
+        } elseif ($estado === Turno::ESTADO_SIN_ATENDER) {
+            $msg = 'Este turno quedó sin atender. No se puede iniciar la captura clínica.';
+        } elseif ($estado === Turno::ESTADO_EN_RESOLUCION) {
+            $msg = 'Este turno está en resolución de horario. Completá o cancelá la resolución antes de atender.';
+        } else {
+            $msg = 'Este turno no está disponible para captura clínica (estado: ' . $estado . ').';
+        }
+
+        return [
+            'success' => false,
+            'msg' => $msg,
+            'idServicio' => null,
+            'encounterClass' => null,
         ];
     }
 }

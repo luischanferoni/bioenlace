@@ -40,6 +40,21 @@ $this->registerJsFile(
 
 ?>
 
+<div class="container-fluid py-2 px-3">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="tl-btn-volver">
+                <i class="bi bi-arrow-left"></i> Volver
+            </button>
+            <a class="btn btn-outline-primary btn-sm" href="<?= Html::encode(Url::to(['/site/index'])) ?>">
+                Inicio
+            </a>
+        </div>
+        <div class="text-body-secondary small text-truncate" title="<?= Html::encode($this->title) ?>">
+            <?= Html::encode($this->title) ?>
+        </div>
+    </div>
+
 <!-- Primera fila: Datos del paciente (compacta) -->
 <div class="row mb-3">
     <div class="col-12">
@@ -162,6 +177,7 @@ $this->registerJsFile(
         </div>
     </div>
 </div>
+</div>
 
 <?php
 
@@ -219,6 +235,17 @@ Modal::end();
 <script>
 (function() {
     'use strict';
+
+    var btnVolver = document.getElementById('tl-btn-volver');
+    if (btnVolver) {
+        btnVolver.addEventListener('click', function () {
+            if (window.history.length > 1) {
+                window.history.back();
+                return;
+            }
+            window.location.href = <?= json_encode(Url::to(['/site/index'])) ?>;
+        });
+    }
     
     // Configuración para el timeline (usar var para permitir redeclaración en SPA)
     var timelineConfig = {

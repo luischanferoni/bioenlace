@@ -3,6 +3,7 @@
 namespace frontend\controllers;
 
 use Yii;
+use yii\helpers\Html;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
@@ -101,10 +102,14 @@ class PacienteController extends Controller
             $resultadoConfiguracion = $this->obtenerConfiguracion($idConsulta, $paciente, $parent, $parentId);
 
             if (!$resultadoConfiguracion['success']) {
-                    $mensajeCondicion = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> 
-                            <strong>Error:</strong>
-                            <small class="text-muted">'.$resultadoConfiguracion['msg'].'</small></div>';
-                    $mostrarFormulario = false;
+                $msg = Html::encode((string) ($resultadoConfiguracion['msg'] ?? 'No se puede iniciar la captura.'));
+                $mensajeCondicion =
+                    '<div class="alert alert-warning alert-dismissible fade show" role="alert">'
+                    . '<i class="bi bi-info-circle me-1"></i> '
+                    . $msg
+                    . '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>'
+                    . '</div>';
+                $mostrarFormulario = false;
             }
 
             // Generar HTML del formulario

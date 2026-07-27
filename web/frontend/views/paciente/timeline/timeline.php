@@ -141,7 +141,7 @@ $this->registerJsFile(
                         </div>
 
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_documentacion_medico_section" style="display:none;">
-                            <h6 class="mb-2 text-primary"><b>DOCUMENTACIÓN DEL MÉDICO</b></h6>
+                            <h6 class="mb-2 text-primary"><b>Datos cargados</b></h6>
                             <div id="tl_documentacion_medico" class="text-body"></div>
                         </div>
 

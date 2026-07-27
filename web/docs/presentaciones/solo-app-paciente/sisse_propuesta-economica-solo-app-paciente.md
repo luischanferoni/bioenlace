@@ -37,7 +37,6 @@ Esta propuesta cubre **únicamente el uso de la app móvil del paciente** de Bio
 
 ## 3. Plazos estimados
 
-Cronograma tipo Gantt (filas = actividades, columnas = semanas). Las celdas sombreadas indican el período de ejecución previsto.
 
 <table style="width:100%; border-collapse:collapse; font-size:0.95em; text-align:center;">
   <thead>

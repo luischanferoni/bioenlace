@@ -23,14 +23,9 @@ $this->title = $persona
      data-api="<?= Html::encode($apiPath) ?>"
      data-url-inicio="<?= Html::encode(Url::to(['/site/index'])) ?>">
     <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
-        <div class="d-flex flex-wrap align-items-center gap-2">
-            <button type="button" class="btn btn-outline-secondary btn-sm" id="vc-btn-volver">
-                <i class="bi bi-arrow-left"></i> Volver
-            </button>
-            <a class="btn btn-outline-primary btn-sm" href="<?= Html::encode(Url::to(['/site/index'])) ?>">
-                Inicio
-            </a>
-        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm" id="vc-btn-volver">
+            <i class="bi bi-arrow-left"></i> Volver
+        </button>
         <div class="text-body-secondary small text-truncate" title="<?= Html::encode($this->title) ?>">
             <?= Html::encode($this->title) ?>
         </div>
@@ -48,7 +43,6 @@ $this->title = $persona
     <div id="vc-content" class="d-none">
         <div class="mb-3">
             <h1 class="h4 mb-1" id="vc-persona-nombre"></h1>
-            <p class="text-muted small mb-0" id="vc-persona-meta"></p>
             <p class="text-muted small mb-0" id="vc-turno-meta"></p>
         </div>
 
@@ -63,12 +57,12 @@ $this->title = $persona
         </div>
 
         <div class="mb-4" id="vc-doc-wrap" style="display:none;">
-            <h2 class="h6 text-primary text-uppercase">Documentación del médico</h2>
+            <h2 class="h6 text-primary">Datos cargados</h2>
             <div id="vc-doc" class="text-body"></div>
         </div>
 
         <p class="text-muted small mb-0" id="vc-empty" style="display:none;">
-            No hay documentación registrada para esta consulta.
+            Sin datos registrados en esta consulta.
         </p>
     </div>
 </div>
@@ -135,13 +129,6 @@ $js = <<<'JS'
             var t = d.turno || {};
             var nombreEl = document.getElementById('vc-persona-nombre');
             if (nombreEl) nombreEl.textContent = p.nombre_completo || 'Paciente';
-            var metaEl = document.getElementById('vc-persona-meta');
-            if (metaEl) {
-                var bits = [];
-                if (p.documento) bits.push('Doc. ' + p.documento);
-                if (p.edad != null && p.edad !== '') bits.push(p.edad + ' años');
-                metaEl.textContent = bits.join(' · ');
-            }
             var turnoEl = document.getElementById('vc-turno-meta');
             if (turnoEl) {
                 var tb = [];

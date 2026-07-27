@@ -434,7 +434,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           Text('Datos cargados', style: BioTypography.title),
           BioSpacing.gapH(BioSpacing.md),
           if (!doc.tieneDatos || doc.secciones.isEmpty)
-            Text('Sin datos registrados en esta consulta.', style: BioTypography.bodySm)
+            Text(
+              'Sin datos registrados en esta consulta.',
+              style: BioTypography.bodySm,
+            )
           else
             ...doc.secciones.map(
               (seccion) => Padding(

@@ -1,5 +1,6 @@
 <?php
 
+use Yii;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\bootstrap5\Modal;
@@ -27,6 +28,17 @@ $barrioTexto = !empty($barrioNombre) ? $barrioNombre : 'Sin datos';
 $edad = is_object($persona) ? $persona->edad : null;
 $edadTexto = $edad !== null && $edad !== '' ? ((int) $edad) . ' años' : 'edad s/d';
 $this->title = $persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $edadTexto . ' - Barrio: ' . $barrioTexto;
+
+$parentQuery = Yii::$app->request->get('parent');
+$parentIdQuery = (int) Yii::$app->request->get('parent_id', 0);
+$historiaClinicaQs = [];
+if (strtoupper((string) $parentQuery) === 'TURNO' && $parentIdQuery > 0) {
+    $historiaClinicaQs['turno_id'] = $parentIdQuery;
+}
+$historiaClinicaPath = '/api/v1/personas/' . (int) $persona->id_persona . '/historia-clinica';
+if ($historiaClinicaQs !== []) {
+    $historiaClinicaPath .= '?' . http_build_query($historiaClinicaQs);
+}
 
 // Los archivos JS (turnos.js, chat-inteligente.js, timeline.js) se cargan automáticamente desde AppAsset
 // Solo registrar Plotly si es necesario para gráficos
@@ -254,7 +266,7 @@ Modal::end();
             curvasCrecimiento: <?= ($edad !== null && (int) $edad < 14) ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
             formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>',
-            historiaClinica: '/api/v1/personas/<?= (int) $persona->id_persona ?>/historia-clinica'
+            historiaClinica: <?= json_encode($historiaClinicaPath, JSON_UNESCAPED_SLASHES) ?>
         }
     };
 
@@ -520,6 +532,20 @@ Modal::end();
             if (boxMsgs) boxMsgs.innerHTML = '';
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(payload.data.signos_vitales || null);
+            }
+            // Captura solo si el turno lo permite; no invocar formulario-consulta en solo lectura.
+            var captura = payload.data.captura || {};
+            var formBox = document.getElementById('formulario-container');
+            if (captura.permitida === false) {
+                if (formBox) {
+                    formBox.innerHTML = '';
+                }
+                var loadingEl = document.getElementById('loading-container');
+                if (loadingEl) {
+                    loadingEl.style.display = 'none';
+                }
+            } else if (window.TimelineJS && typeof window.TimelineJS.cargarFormularioConsulta === 'function') {
+                window.TimelineJS.cargarFormularioConsulta();
             }
         } catch (e) {
             renderBadges('tl_condiciones_activas', [], 'border border-info text-info');

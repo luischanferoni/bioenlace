@@ -444,9 +444,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Turno> _getConsultasCargadas() {
     return _turnos
-        .where((t) =>
-            (t.estado == 'ATENDIDO' || t.estado == 'EN_ATENCION') &&
-            t.id != 999999)
+        .where((t) => t.estado == 'ATENDIDO' && t.id != 999999)
         .toList();
   }
 

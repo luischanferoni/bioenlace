@@ -83,12 +83,19 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _isAnalyzing || _isSaving || _isApplyingResolutions;
 
   bool get _enRevisionCaptura => _captureReview != null;
-  bool get _mostrarBarraConsulta =>
-      !widget.resumenConsultaCargada &&
-      (!widget.soloVer ||
-          (widget.consultParent != null &&
-              widget.consultParent!.isNotEmpty &&
-              widget.consultParentId != null));
+  bool get _mostrarBarraConsulta {
+    if (widget.resumenConsultaCargada) return false;
+    final capturaApi = _historiaClinicaData?.capturaPermitida;
+    if (capturaApi == false) return false;
+    return !widget.soloVer ||
+        (widget.consultParent != null &&
+            widget.consultParent!.isNotEmpty &&
+            widget.consultParentId != null);
+  }
+
+  bool get _modoConsultaCargada =>
+      widget.resumenConsultaCargada ||
+      _historiaClinicaData?.capturaPermitida == false;
 
   bool _autoOpenedReview = false;
 
@@ -249,9 +256,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return Scaffold(
       backgroundColor: tokens.paperBackground,
       appBar: BioAppBar(
-        title: widget.resumenConsultaCargada
-            ? 'Consulta cargada'
-            : 'Historia clínica',
+        title: _modoConsultaCargada ? 'Consulta cargada' : 'Historia clínica',
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -292,30 +297,32 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                               children: [
                                 _buildPacienteHeader(
                                     _historiaClinicaData!.persona),
-                                if (widget.resumenConsultaCargada) ...[
+                                if (_historiaClinicaData!
+                                    .documentacionMedico.tieneDatos) ...[
                                   BioSpacing.gapH(BioSpacing.md),
                                   _buildDocumentacionMedico(
                                     _historiaClinicaData!.documentacionMedico,
                                   ),
-                                ] else ...[
+                                ],
+                                BioSpacing.gapH(BioSpacing.md),
+                                _buildInformacionMedica(
+                                    _historiaClinicaData!.informacionMedica),
+                                BioSpacing.gapH(BioSpacing.md),
+                                _buildSignosVitales(
+                                    _historiaClinicaData!.signosVitales),
+                                BioSpacing.gapH(BioSpacing.md),
+                                if (_historiaClinicaData!
+                                        .motivosConsultaPaciente.motivosIntake
+                                        ?.tieneContenido ==
+                                    true) ...[
+                                  _buildMotivosIntake(
+                                    _historiaClinicaData!
+                                        .motivosConsultaPaciente.motivosIntake!,
+                                  ),
                                   BioSpacing.gapH(BioSpacing.md),
-                                  _buildInformacionMedica(
-                                      _historiaClinicaData!.informacionMedica),
-                                  BioSpacing.gapH(BioSpacing.md),
-                                  _buildSignosVitales(
-                                      _historiaClinicaData!.signosVitales),
-                                  BioSpacing.gapH(BioSpacing.md),
-                                  if (_historiaClinicaData!
-                                          .motivosConsultaPaciente.motivosIntake
-                                          ?.tieneContenido ==
-                                      true) ...[
-                                    _buildMotivosIntake(
-                                      _historiaClinicaData!
-                                          .motivosConsultaPaciente.motivosIntake!,
-                                    ),
-                                    BioSpacing.gapH(BioSpacing.md),
-                                  ],
-                                  _buildMotivosConsulta(_historiaClinicaData!),
+                                ],
+                                _buildMotivosConsulta(_historiaClinicaData!),
+                                if (!_modoConsultaCargada) ...[
                                   if (_pendingCaptures.isNotEmpty) ...[
                                     BioSpacing.gapH(BioSpacing.md),
                                     _buildPendingCapturesPanel(),
@@ -358,7 +365,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           Expanded(
             child: Text(persona.nombreCompleto, style: BioTypography.h3),
           ),
-          if (!widget.resumenConsultaCargada && persona.edad != null)
+          if (!_modoConsultaCargada && persona.edad != null)
             Text('${persona.edad} años', style: BioTypography.title),
         ],
       ),

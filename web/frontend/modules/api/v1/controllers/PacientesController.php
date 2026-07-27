@@ -179,6 +179,8 @@ class PacientesController extends BaseController
      *   motivos_consulta: string|null,
      *   motivos_consulta_paciente: array<string, mixed>,
      *   turnos_con_encounter: list<array<string, mixed>>,
+     *   documentacion_medico: array<string, mixed>|null,
+     *   captura: array{permitida: bool|null, motivo: string|null},
      *   http_error: array<string, mixed>|null
      * }
      */
@@ -193,6 +195,7 @@ class PacientesController extends BaseController
         $encounterIdParam = (int) $req->get('encounter_id', 0);
         $contextoExplicito = $turnoIdParam > 0 || $encounterIdParam > 0;
 
+        $capturaNeutra = ['permitida' => null, 'motivo' => null];
         $emptyPaciente = [
             'encounter_id' => null,
             'consulta_id' => null,
@@ -220,6 +223,8 @@ class PacientesController extends BaseController
                     'motivos_consulta' => null,
                     'motivos_consulta_paciente' => $emptyPaciente,
                     'turnos_con_encounter' => $turnosConEncounter,
+                    'documentacion_medico' => null,
+                    'captura' => $capturaNeutra,
                     'http_error' => $this->error('Turno no encontrado para este paciente.', null, 404),
                 ];
             }
@@ -232,6 +237,8 @@ class PacientesController extends BaseController
                         'turno' => $this->formatTurnoMotivosContext($turno),
                     ]),
                     'turnos_con_encounter' => $turnosConEncounter,
+                    'documentacion_medico' => null,
+                    'captura' => $this->capturaFlagsForTurno($turno),
                     'http_error' => null,
                 ];
             }
@@ -246,12 +253,23 @@ class PacientesController extends BaseController
                     'motivos_consulta' => null,
                     'motivos_consulta_paciente' => $emptyPaciente,
                     'turnos_con_encounter' => $turnosConEncounter,
+                    'documentacion_medico' => null,
+                    'captura' => $capturaNeutra,
                     'http_error' => $this->error('Encounter no encontrado para este paciente.', null, 404),
                 ];
             }
             if ($encounter->appointment_id) {
                 $turno = Turno::findActive()
                     ->andWhere(['id_turnos' => (int) $encounter->appointment_id])
+                    ->one();
+            }
+            if (
+                $turno === null
+                && $encounter->parent_type === Encounter::PARENT_TURNO
+                && $encounter->parent_id
+            ) {
+                $turno = Turno::findActive()
+                    ->andWhere(['id_turnos' => (int) $encounter->parent_id])
                     ->one();
             }
         } elseif ($idEfector > 0) {
@@ -272,6 +290,8 @@ class PacientesController extends BaseController
                 'motivos_consulta' => null,
                 'motivos_consulta_paciente' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
+                'documentacion_medico' => null,
+                'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
                 'http_error' => null,
             ];
         }
@@ -285,6 +305,8 @@ class PacientesController extends BaseController
                 'motivos_consulta' => null,
                 'motivos_consulta_paciente' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
+                'documentacion_medico' => null,
+                'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
                 'http_error' => $explicitTarget
                     ? $this->error(
                         'No tiene permiso para ver los motivos de consulta de este encounter.',
@@ -303,6 +325,8 @@ class PacientesController extends BaseController
                 'motivos_consulta' => null,
                 'motivos_consulta_paciente' => $emptyPaciente,
                 'turnos_con_encounter' => $turnosConEncounter,
+                'documentacion_medico' => null,
+                'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
                 'http_error' => $this->error(
                     "La historia clínica estará disponible {$min} minuto(s) antes del turno.",
                     [
@@ -356,7 +380,49 @@ class PacientesController extends BaseController
             'motivos_consulta_paciente' => $motivosPaciente,
             'turnos_con_encounter' => $turnosConEncounter,
             'documentacion_medico' => (new EncounterStaffDocumentationViewService())->buildForEncounter($encounter),
+            'captura' => $turno !== null ? $this->capturaFlagsForTurno($turno) : $capturaNeutra,
             'http_error' => null,
+        ];
+    }
+
+    /**
+     * @return array{permitida: bool, motivo: string|null}
+     */
+    private function capturaFlagsForTurno(Turno $turno): array
+    {
+        $estado = (string) $turno->estado;
+        if ($estado === Turno::ESTADO_PENDIENTE || $estado === Turno::ESTADO_EN_ATENCION) {
+            return ['permitida' => true, 'motivo' => null];
+        }
+
+        if ($estado === Turno::ESTADO_ATENDIDO) {
+            return [
+                'permitida' => false,
+                'motivo' => 'Este turno ya fue atendido. Se muestra la consulta en solo lectura.',
+            ];
+        }
+        if ($estado === Turno::ESTADO_CANCELADO) {
+            return [
+                'permitida' => false,
+                'motivo' => 'Este turno está cancelado. No se puede capturar atención.',
+            ];
+        }
+        if ($estado === Turno::ESTADO_SIN_ATENDER) {
+            return [
+                'permitida' => false,
+                'motivo' => 'Este turno quedó sin atender. No se puede capturar atención.',
+            ];
+        }
+        if ($estado === Turno::ESTADO_EN_RESOLUCION) {
+            return [
+                'permitida' => false,
+                'motivo' => 'Este turno está en resolución de horario.',
+            ];
+        }
+
+        return [
+            'permitida' => false,
+            'motivo' => 'Este turno no admite captura clínica (estado: ' . $estado . ').',
         ];
     }
 

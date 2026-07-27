@@ -623,6 +623,9 @@ class HistoriaClinicaResponse {
   final DocumentacionMedico documentacionMedico;
   final List<TimelineEvent> historiaClinica;
   final int totalHistoriaClinica;
+  /// null = sin contexto de turno; true/false según estado del turno.
+  final bool? capturaPermitida;
+  final String? capturaMotivo;
 
   HistoriaClinicaResponse({
     required this.persona,
@@ -634,6 +637,8 @@ class HistoriaClinicaResponse {
     required this.documentacionMedico,
     required this.historiaClinica,
     required this.totalHistoriaClinica,
+    this.capturaPermitida,
+    this.capturaMotivo,
   });
 
   factory HistoriaClinicaResponse.fromJson(Map<String, dynamic> json) {
@@ -650,6 +655,19 @@ class HistoriaClinicaResponse {
     final rawList = json['historia_clinica'] as List<dynamic>? ??
         json['timeline'] as List<dynamic>?;
     final total = json['total_historia_clinica'] ?? json['total_eventos'];
+    final captura = json['captura'];
+    bool? capturaPermitida;
+    String? capturaMotivo;
+    if (captura is Map) {
+      final p = captura['permitida'];
+      if (p is bool) {
+        capturaPermitida = p;
+      }
+      final m = captura['motivo']?.toString().trim();
+      if (m != null && m.isNotEmpty) {
+        capturaMotivo = m;
+      }
+    }
 
     return HistoriaClinicaResponse(
       persona: PersonaData.fromJson(json['persona'] as Map<String, dynamic>),
@@ -674,6 +692,8 @@ class HistoriaClinicaResponse {
               .toList() ??
           [],
       totalHistoriaClinica: _parseInt(total, defaultValue: 0),
+      capturaPermitida: capturaPermitida,
+      capturaMotivo: capturaMotivo,
     );
   }
 }

@@ -634,9 +634,11 @@ function initTimeline(config) {
         }, 500);
     }
     
-    // Cargar formulario
-    cargarFormularioConsulta();
-    
+    // Formulario de captura: lo decide loadTimelineSummary según captura.permitida del API.
+    // Si no hay endpoint de HC, intentar captura (flujos sin turno_id).
+    if (!endpointsCfg.historiaClinica) {
+        cargarFormularioConsulta();
+    } 
     // Manejar modal de vacunas (después de clonar)
     const modalVacunasNew = document.getElementById('modal-vacunas');
     if (modalVacunasNew) {

@@ -72,18 +72,8 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         $this->assertSame(55, $ctx['reference_encounter']['encounter_id']);
         $this->assertIsArray($ctx['reference_encounter']['detail']);
         $kinds = array_column($ctx['references'], 'kind');
-        $this->assertContains('reference_encounter', $kinds);
+        $this->assertNotContains('reference_encounter', $kinds);
         $this->assertContains('clinical_history', $kinds);
-        $refEnc = null;
-        foreach ($ctx['references'] as $ref) {
-            if (($ref['kind'] ?? '') === 'reference_encounter') {
-                $refEnc = $ref;
-                break;
-            }
-        }
-        $this->assertNotNull($refEnc);
-        $this->assertSame(55, $refEnc['encounter_id']);
-        $this->assertSame(12, $refEnc['subject_persona_id']);
     }
 
     public function testBandejaOmiteDetailDeEncounterReferencia(): void

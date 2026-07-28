@@ -1688,17 +1688,18 @@
         if (detail) {
           detailSlot.classList.remove('d-none');
           var metaParts = [];
-          if (detail.headline) metaParts.push(String(detail.headline));
-          var efectorNombre =
-            detail.efector && detail.efector.nombre ? String(detail.efector.nombre) : '';
-          if (efectorNombre && metaParts.join(' ').indexOf(efectorNombre) < 0) {
-            metaParts.push(efectorNombre);
+          if (detail.headline) {
+            metaParts.push(String(detail.headline));
+          } else {
+            var efectorNombre =
+              detail.efector && detail.efector.nombre ? String(detail.efector.nombre) : '';
+            if (efectorNombre) metaParts.push(efectorNombre);
+            var profDisplay =
+              detail.profesional && detail.profesional.display
+                ? String(detail.profesional.display)
+                : '';
+            if (profDisplay) metaParts.push(profDisplay);
           }
-          var profDisplay =
-            detail.profesional && detail.profesional.display
-              ? String(detail.profesional.display)
-              : '';
-          if (profDisplay) metaParts.push(profDisplay);
           var narrative = String(detail.narrativeText || '').trim();
           if (narrative.length > 600) {
             narrative = narrative.slice(0, 600) + '…';
@@ -1729,7 +1730,7 @@
       clearNode(linksSlot);
       var references = Array.isArray(ctx.references) ? ctx.references : [];
       references.forEach(function (ref) {
-        if (!ref || !ref.kind) return;
+        if (!ref || !ref.kind || ref.kind === 'reference_encounter') return;
         var personaId = ref.subject_persona_id;
         if (!personaId) return;
         var href = historiaConContexto(personaId, {});
@@ -1843,6 +1844,16 @@
           });
         } else {
           resolveSlot.classList.add('d-none');
+        }
+      }
+      var footer = document.getElementById('async-chat-footer');
+      if (footer) {
+        var composeVisible = compose && !compose.classList.contains('d-none');
+        var resolveVisible = resolveSlot && !resolveSlot.classList.contains('d-none');
+        if (composeVisible || resolveVisible) {
+          footer.classList.remove('d-none');
+        } else {
+          footer.classList.add('d-none');
         }
       }
       var attachSlot = document.getElementById('async-chat-attach-actions');
@@ -1968,6 +1979,7 @@
 
     function renderAsyncChatMessages(messages) {
       var box = document.getElementById('async-chat-messages');
+      var scroll = document.getElementById('async-chat-scroll');
       var helpers = getAsyncChatHelpers();
       if (!box) return;
       clearNode(box);
@@ -1981,7 +1993,8 @@
           box.appendChild(row);
         }
       });
-      box.scrollTop = box.scrollHeight;
+      var target = scroll || box;
+      target.scrollTop = target.scrollHeight;
     }
 
     function triggerAsyncChatFilePick(messageType) {

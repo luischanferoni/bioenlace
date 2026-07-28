@@ -175,17 +175,12 @@ class _EncounterDetailBlock extends StatelessWidget {
         : narrative;
 
     final metaParts = <String>[];
-    if (headline.isNotEmpty) metaParts.add(headline);
-    if (efector != null && efector.isNotEmpty && !headline.contains(efector)) {
-      metaParts.add(efector);
-    }
-    if (profesional != null && profesional.isNotEmpty) {
-      metaParts.add(profesional);
-    }
-    if (fecha != null &&
-        fecha.isNotEmpty &&
-        (headline.isEmpty || !headline.contains(fecha))) {
-      metaParts.add(fecha);
+    if (headline.isNotEmpty) {
+      metaParts.add(headline);
+    } else {
+      if (efector != null && efector.isNotEmpty) metaParts.add(efector);
+      if (profesional != null && profesional.isNotEmpty) metaParts.add(profesional);
+      if (fecha != null && fecha.isNotEmpty) metaParts.add(fecha);
     }
 
     return _SectionBlock(

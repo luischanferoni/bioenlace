@@ -11,9 +11,9 @@ use common\components\Domain\Clinical\PatientSummary\PatientEncounterSummaryQuer
  * navegación se entregan como datos estructurados (`subject_persona_id`, `encounter_id`)
  * y cada cliente (web SPA, app nativa) resuelve la navegación por su cuenta.
  *
- * `reference_encounter.detail`: resumen lean del encounter de origen (solo si se pide).
- * `references`: CTAs tipados (`clinical_history`, `reference_encounter`).
- */
+     * `reference_encounter.detail`: resumen lean del encounter de origen (solo si se pide).
+     * `references`: CTAs tipados (`clinical_history`).
+     */
 final class ConsultaAsyncIntakeContextService
 {
     /**
@@ -81,13 +81,7 @@ final class ConsultaAsyncIntakeContextService
         if ($carePlanId > 0 && $idPersona > 0) {
             $plan = (new ReservaTriageCarePlanServicioService())->findPlanForPersona($carePlanId, $idPersona);
             if ($plan !== null) {
-                $title = trim((string) ($plan->title ?? ''));
-                $lines[] = [
-                    'code' => 'care_plan',
-                    'label' => $labels['tratamiento_label'] !== '' ? $labels['tratamiento_label'] : 'Tratamiento',
-                    'value' => $title !== '' ? $title : 'Plan de tratamiento',
-                    'care_plan_id' => (int) $plan->id,
-                ];
+                // Sin línea "Tratamiento": el título del plan no aporta; sí usamos encounter de origen.
                 $planOriginEncounterId = (int) ($plan->encounter_id ?? 0);
             }
         }
@@ -103,8 +97,7 @@ final class ConsultaAsyncIntakeContextService
                     ? $labels['encounter_detail_title']
                     : 'Atención de referencia',
                 true,
-                $lines,
-                $references
+                $lines
             );
         } elseif ($planOriginEncounterId > 0 && $idPersona > 0 && $includeRefDetail) {
             // Sin reference_encounter_id: resumen de la consulta que originó el plan.
@@ -117,8 +110,7 @@ final class ConsultaAsyncIntakeContextService
                     ? $labels['care_plan_origin_title']
                     : 'Consulta de origen',
                 false,
-                $lines,
-                $references
+                $lines
             );
         }
 
@@ -148,7 +140,11 @@ final class ConsultaAsyncIntakeContextService
     /**
      * @param array<string, string> $labels
      * @param list<array<string, mixed>> $lines
-     * @param list<array<string, mixed>> $references
+     * @return array<string, mixed>
+     */
+    /**
+     * @param array<string, string> $labels
+     * @param list<array<string, mixed>> $lines
      * @return array<string, mixed>
      */
     private function buildReferenceEncounter(
@@ -158,8 +154,7 @@ final class ConsultaAsyncIntakeContextService
         bool $includeDetail,
         string $detailTitle,
         bool $addLine,
-        array &$lines,
-        array &$references
+        array &$lines
     ): array {
         $lineLabel = $labels['reference_encounter_line_label'];
         $lineLabel = $lineLabel !== '' ? $lineLabel : 'Atención previa';
@@ -175,34 +170,25 @@ final class ConsultaAsyncIntakeContextService
                     'encounter_id' => $encounterId,
                 ];
             }
-            $out = [
+
+            return [
                 'encounter_id' => $encounterId,
                 'detail' => $lean,
             ];
-        } else {
-            if ($addLine) {
-                $lines[] = [
-                    'code' => 'reference_encounter',
-                    'label' => $lineLabel,
-                    'value' => 'Atención #' . $encounterId,
-                    'encounter_id' => $encounterId,
-                ];
-            }
-            $out = [
+        }
+
+        if ($addLine) {
+            $lines[] = [
+                'code' => 'reference_encounter',
+                'label' => $lineLabel,
+                'value' => 'Atención #' . $encounterId,
                 'encounter_id' => $encounterId,
             ];
         }
 
-        $references[] = [
-            'kind' => 'reference_encounter',
-            'label' => $labels['reference_encounter_action'] !== ''
-                ? $labels['reference_encounter_action']
-                : 'Ver atención de referencia',
-            'subject_persona_id' => $idPersona,
+        return [
             'encounter_id' => $encounterId,
         ];
-
-        return $out;
     }
 
     private function labelTipo(ConsultasSeguimientoIntakeCatalogService $catalog, string $code): string

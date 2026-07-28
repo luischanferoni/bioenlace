@@ -87,22 +87,16 @@
     return kind === 'solicitud' || categoria !== '' || type.indexOf('solicitud_') === 0;
   }
 
-  function renderAttachmentBody(m, openHandler) {
+  function isStaffMessage(m) {
+    var role = String(m.user_role || '').toLowerCase();
+    return role === 'medico' || role === 'enfermeria' || role === 'staff' || role === 'profesional';
+  }
+
+  function renderAttachmentBody(m, openHandler, linkClass) {
     var type = String(m.message_type || '');
     var content = m.content ? String(m.content) : '';
     var wrap = document.createElement('div');
-    wrap.className = 'd-flex align-items-center gap-2';
-
-    var icon = document.createElement('span');
-    icon.className = 'text-muted';
-    if (type === 'documento') {
-      icon.textContent = '📄';
-    } else if (type === 'imagen') {
-      icon.textContent = '🖼️';
-    } else {
-      icon.textContent = '🎤';
-    }
-    wrap.appendChild(icon);
+    wrap.className = 'd-flex align-items-center gap-2 flex-wrap';
 
     var label = document.createElement('span');
     label.textContent = attachmentLabel(type);
@@ -111,7 +105,7 @@
     if (content && typeof openHandler === 'function') {
       var btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'btn btn-link btn-sm p-0 align-baseline';
+      btn.className = linkClass || 'btn btn-link btn-sm p-0 align-baseline';
       btn.textContent = 'Abrir';
       btn.addEventListener('click', function () { openHandler(content, type); });
       wrap.appendChild(btn);
@@ -121,37 +115,61 @@
   }
 
   function renderMessage(m, openHandler) {
-    var row = document.createElement('div');
-    row.className = 'mb-2 small';
-
     if (isSystemMessage(m)) {
-      row.className += ' text-center text-muted fst-italic px-2';
-      row.textContent = m.content || '';
-      return row;
+      var sys = document.createElement('div');
+      sys.className = 'text-center text-muted fst-italic small px-3 py-2';
+      sys.textContent = m.content || '';
+      return sys;
     }
 
-    if (isSolicitudMessage(m)) {
-      row.className += ' border-start border-3 border-primary ps-2 py-1';
-    }
+    var isStaff = isStaffMessage(m);
+    var row = document.createElement('div');
+    row.className = 'd-flex mb-2 ' + (isStaff ? 'justify-content-end' : 'justify-content-start');
 
-    var who = document.createElement('div');
-    who.className = 'fw-semibold text-muted';
-    who.textContent = (m.user_name || m.user_role || 'Usuario')
-      + (m.created_at ? (' · ' + formatCreatedAt(m.created_at)) : '');
-    row.appendChild(who);
+    var bubble = document.createElement('div');
+    bubble.className =
+      'rounded-3 px-3 py-2 small ' +
+      (isStaff
+        ? 'text-white bg-primary'
+        : isSolicitudMessage(m)
+          ? 'bg-light border border-primary border-opacity-25'
+          : 'bg-light border');
+    bubble.style.maxWidth = '85%';
 
     var type = String(m.message_type || 'texto');
     var body = document.createElement('div');
-    body.className = isSolicitudMessage(m) ? 'fw-semibold' : '';
+    if (isSolicitudMessage(m) && !isStaff) {
+      body.className = 'fw-semibold';
+    }
     if (type === 'audio' || type === 'documento' || type === 'imagen') {
-      body.appendChild(renderAttachmentBody(m, openHandler));
-    } else if (type === 'texto' || type.indexOf('solicitud_') === 0 || (m.solicitud_categoria && String(m.solicitud_categoria).trim())) {
+      body.appendChild(
+        renderAttachmentBody(
+          m,
+          openHandler,
+          isStaff ? 'btn btn-link btn-sm p-0 align-baseline text-white' : undefined
+        )
+      );
+    } else if (
+      type === 'texto' ||
+      type.indexOf('solicitud_') === 0 ||
+      (m.solicitud_categoria && String(m.solicitud_categoria).trim())
+    ) {
       body.textContent = m.content || '';
     } else {
       body.textContent = attachmentLabel(type);
     }
-    row.appendChild(body);
+    bubble.appendChild(body);
 
+    var when = formatCreatedAt(m.created_at);
+    if (when) {
+      var time = document.createElement('div');
+      time.className = 'mt-1 ' + (isStaff ? 'text-white-50' : 'text-muted');
+      time.style.fontSize = '0.7rem';
+      time.textContent = when;
+      bubble.appendChild(time);
+    }
+
+    row.appendChild(bubble);
     return row;
   }
 
@@ -163,6 +181,7 @@
       return d.toLocaleString(undefined, {
         day: '2-digit',
         month: '2-digit',
+        year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
       });

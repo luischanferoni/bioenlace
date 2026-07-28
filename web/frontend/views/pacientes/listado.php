@@ -114,32 +114,36 @@ $this->title = $esGuardia
 <?= $this->render('_listado_templates') ?>
 
 <div class="modal fade" id="async-chat-modal" tabindex="-1" aria-labelledby="asyncChatModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="asyncChatModalLabel">Consulta clínica por mensaje</h5>
                 <div class="d-flex align-items-center gap-2 ms-auto me-2" id="async-chat-header-actions"></div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
-            <div class="modal-body d-flex flex-column" style="min-height: 320px;">
-                <div id="async-chat-policy-hint" class="alert alert-info py-2 px-3 small mb-2 d-none"></div>
-                <div id="async-chat-intake-context" class="mb-3 d-none" data-role="async-chat-intake-context">
-                    <div class="fw-bold mb-2" data-field="intake-title">Contexto de la solicitud</div>
-                    <div data-slot="intake-lines"></div>
-                    <div data-slot="intake-encounter-detail" class="d-none"></div>
-                    <div class="mt-2" data-slot="intake-links"></div>
+            <div class="modal-body d-flex flex-column p-0" style="height: min(70vh, 640px);">
+                <div id="async-chat-scroll" class="flex-grow-1 overflow-auto px-3 pt-3" style="min-height: 0;">
+                    <div id="async-chat-policy-hint" class="alert alert-info py-2 px-3 small mb-2 d-none"></div>
+                    <div id="async-chat-intake-context" class="mb-3 d-none" data-role="async-chat-intake-context">
+                        <div class="fw-bold mb-2" data-field="intake-title">Contexto de la solicitud</div>
+                        <div data-slot="intake-lines"></div>
+                        <div data-slot="intake-encounter-detail" class="d-none"></div>
+                        <div class="mt-2" data-slot="intake-links"></div>
+                    </div>
+                    <div id="async-chat-loading" class="text-muted small">Cargando mensajes…</div>
+                    <div id="async-chat-messages" class="d-none pb-2"></div>
                 </div>
-                <div id="async-chat-loading" class="text-muted small">Cargando mensajes…</div>
-                <div id="async-chat-messages" class="flex-grow-1 overflow-auto mb-3 d-none" style="max-height: 360px;"></div>
-                <div id="async-chat-compose" class="d-none">
-                    <div class="d-flex flex-wrap gap-2 mb-2" id="async-chat-attach-actions"></div>
-                    <label class="form-label visually-hidden" for="async-chat-input">Mensaje</label>
-                    <textarea class="form-control form-control-sm mb-2" id="async-chat-input" rows="3" placeholder="Escribí tu mensaje…"></textarea>
-                    <input type="file" id="async-chat-file-input" class="d-none" accept="application/pdf,.pdf,image/*">
-                    <button type="button" class="btn btn-primary btn-sm" id="async-chat-send">Enviar</button>
+                <div id="async-chat-footer" class="border-top bg-white px-3 py-2 flex-shrink-0">
+                    <div id="async-chat-compose" class="d-none">
+                        <div class="d-flex flex-wrap gap-2 mb-2" id="async-chat-attach-actions"></div>
+                        <label class="form-label visually-hidden" for="async-chat-input">Mensaje</label>
+                        <textarea class="form-control form-control-sm mb-2" id="async-chat-input" rows="3" placeholder="Escribí tu mensaje…"></textarea>
+                        <input type="file" id="async-chat-file-input" class="d-none" accept="application/pdf,.pdf,image/*">
+                        <button type="button" class="btn btn-primary btn-sm" id="async-chat-send">Enviar</button>
+                    </div>
+                    <div id="async-chat-resolve-actions" class="d-none d-grid gap-2"></div>
+                    <div id="async-chat-error" class="alert alert-danger d-none mt-2 mb-0"></div>
                 </div>
-                <div id="async-chat-resolve-actions" class="d-none d-grid gap-2 mt-2"></div>
-                <div id="async-chat-error" class="alert alert-danger d-none mt-2 mb-0"></div>
             </div>
         </div>
     </div>

@@ -5,9 +5,10 @@ namespace common\components\Domain\Clinical\Service;
 use common\components\Domain\Person\Service\PacienteContextoService;
 use common\components\Domain\Scheduling\Service\ControlSeguimientoHubService;
 use common\models\Clinical\Condition;
+use common\models\Terminology\Snomed\SnomedHallazgos;
 
 /**
- * Resúmenes de condiciones activas para home / hub paciente.
+ * Resúmenes de condiciones activas para home / hub paciente / HC staff.
  */
 final class ConditionPresentationService
 {
@@ -58,12 +59,37 @@ final class ConditionPresentationService
     }
 
     /**
+     * Badges compactos para historia clínica staff (`codigo` + `termino`).
+     *
+     * @return list<array{codigo: string|null, termino: string}>
+     */
+    public function listHistoriaClinicaActivas(int $subjectPersonaId, ?int $limit = null): array
+    {
+        $out = [];
+        foreach ($this->listPatientSummaries($subjectPersonaId, $limit) as $summary) {
+            $termino = trim((string) ($summary['label'] ?? ''));
+            if ($termino === '' || $termino === '?') {
+                continue;
+            }
+            $codigo = trim((string) ($summary['codigo'] ?? ''));
+            // SNOMED numérico sin término legible ya se filtra en buildCandidate; aquí solo armamos el badge.
+            $out[] = [
+                'codigo' => $codigo !== '' ? $codigo : null,
+                'termino' => $termino,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toPatientSummary(Condition $cond, ?array $protocol = null): array
     {
-        $code = trim((string) ($cond->code ?? ''));
-        $display = trim((string) ($cond->display ?? ''));
+        $resolved = $this->resolveCodeAndDisplay($cond);
+        $code = $resolved['code'];
+        $display = $resolved['display'];
         $label = $this->shortLabel($display !== '' ? $display : $code);
         $status = (string) ($cond->clinical_status ?? '');
         $hub = new ControlSeguimientoHubService();
@@ -97,13 +123,18 @@ final class ConditionPresentationService
      */
     private function buildCandidate(Condition $cond, CareProtocolMatcherService $matcher, ?int $idProvincia): ?array
     {
-        $code = trim((string) ($cond->code ?? ''));
-        $display = trim((string) ($cond->display ?? ''));
+        $resolved = $this->resolveCodeAndDisplay($cond);
+        $code = $resolved['code'];
+        $display = $resolved['display'];
         if ($code === '' && $display === '') {
             return null;
         }
         $labelText = $this->shortLabel($display !== '' ? $display : $code);
         if ($labelText === '' || $labelText === '?') {
+            return null;
+        }
+        // Código numérico (SNOMED) sin término legible: no aporta al resumen clínico.
+        if ($code !== '' && strcasecmp($labelText, $code) === 0 && ctype_digit($code)) {
             return null;
         }
         $dedupeKey = mb_strtolower(preg_replace('/\s+/u', ' ', $labelText) ?? $labelText);
@@ -114,6 +145,7 @@ final class ConditionPresentationService
             ])
             : null;
         $isIcdLike = $code !== '' && (bool) preg_match('/^[A-Za-z]/', $code);
+        $hasHumanDisplay = $display !== '' && strcasecmp($display, $code) !== 0;
         $score = 0;
         if ($protocol !== null) {
             $score += 100;
@@ -121,14 +153,38 @@ final class ConditionPresentationService
         if ($isIcdLike) {
             $score += 10;
         }
-        if ($display !== '') {
-            $score += 1;
+        if ($hasHumanDisplay) {
+            $score += 5;
         }
         $summary = $this->toPatientSummary($cond, $protocol);
         $summary['_dedupe_key'] = $dedupeKey;
         $summary['_score'] = $score;
 
         return $summary;
+    }
+
+    /**
+     * @return array{code: string, display: string}
+     */
+    private function resolveCodeAndDisplay(Condition $cond): array
+    {
+        $code = trim((string) ($cond->code ?? ''));
+        $display = trim((string) ($cond->display ?? ''));
+        if ($display !== '' && ($code === '' || strcasecmp($display, $code) !== 0)) {
+            return ['code' => $code, 'display' => $display];
+        }
+        if ($code !== '' && ctype_digit($code)) {
+            $term = SnomedHallazgos::find()
+                ->select(['term'])
+                ->where(['conceptId' => $code])
+                ->scalar();
+            $term = is_string($term) ? trim($term) : '';
+            if ($term !== '' && strcasecmp($term, $code) !== 0) {
+                return ['code' => $code, 'display' => $term];
+            }
+        }
+
+        return ['code' => $code, 'display' => $display];
     }
 
     /**

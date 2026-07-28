@@ -18,8 +18,8 @@ use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\PersonasAntecedente;
-use common\models\DiagnosticoConsultaRepository as DCRepo;
 use common\models\ConsultaMotivosMessage;
+use common\components\Domain\Clinical\Service\ConditionPresentationService;
 use common\components\Domain\Person\Service\PersonaSignosVitalesService;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 /**
@@ -87,19 +87,10 @@ class PacientesController extends BaseController
         $antecedentesFamiliares = [];
 
         if ($mostrarEstadoPaciente) {
-            [$condActivas, $condCronicas] = DCRepo::getCondicionesPaciente((int) $persona->id_persona);
-            foreach ($condActivas as $c) {
-                $row = $this->mapCondicionClinicaRow($c);
-                if ($row !== null) {
-                    $condicionesActivas[] = $row;
-                }
-            }
-            foreach ($condCronicas as $c) {
-                $row = $this->mapCondicionClinicaRow($c);
-                if ($row !== null) {
-                    $condicionesCronicas[] = $row;
-                }
-            }
+            // Mismo universo/dedupe que home y hub (clinical_condition + display), no la vista legacy.
+            $condicionesActivas = (new ConditionPresentationService())
+                ->listHistoriaClinicaActivas((int) $persona->id_persona);
+            // FHIR Condition no modela “crónico” aparte; el listado unificado va en activas.
 
             foreach (AllergyIntolerance::findActiveBySubject((int) $persona->id_persona) as $ai) {
                 $term = trim((string) ($ai->display ?? ''));
@@ -179,29 +170,6 @@ class PacientesController extends BaseController
             'historia_clinica' => [],
             'total_historia_clinica' => 0,
         ], 'OK');
-    }
-
-    /**
-     * @param object $c fila de condición clínica (relación codigoSnomed opcional)
-     * @return array{codigo: string|null, termino: string}|null
-     */
-    private function mapCondicionClinicaRow($c): ?array
-    {
-        $term = isset($c->codigoSnomed) ? trim((string) $c->codigoSnomed->term) : '';
-        $code = isset($c->codigoSnomed) ? trim((string) $c->codigoSnomed->conceptId) : '';
-        if ($term === '' && $code === '') {
-            // Fallback display en el propio registro si no hay SNOMED resuelto
-            $term = trim((string) ($c->display ?? $c->termino ?? $c->descripcion ?? ''));
-            $code = trim((string) ($c->code ?? $c->codigo ?? ''));
-        }
-        if ($term === '' && $code === '') {
-            return null;
-        }
-
-        return [
-            'codigo' => $code !== '' ? $code : null,
-            'termino' => $term !== '' ? $term : ($code !== '' ? $code : null),
-        ];
     }
 
     /**

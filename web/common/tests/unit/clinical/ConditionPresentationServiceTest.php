@@ -43,4 +43,19 @@ class ConditionPresentationServiceTest extends Unit
 
         $this->assertSame('hipertensión arterial esencial', $summary['label']);
     }
+
+    public function testToPatientSummaryNoUsaCodigoComoDisplayHumano(): void
+    {
+        $cond = new Condition();
+        $cond->id = 7;
+        $cond->code = 'I10';
+        $cond->display = 'I10';
+        $cond->clinical_status = 'ACTIVE';
+        $cond->verification_status = 'CONFIRMED';
+
+        $summary = (new ConditionPresentationService())->toPatientSummary($cond);
+
+        $this->assertSame('I10', $summary['codigo']);
+        $this->assertSame('I10', $summary['label']);
+    }
 }

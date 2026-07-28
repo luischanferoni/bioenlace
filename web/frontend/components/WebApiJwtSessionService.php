@@ -146,6 +146,24 @@ final class WebApiJwtSessionService
             'exp' => $now + self::TTL_SECONDS,
         ];
 
+        // Preservar contexto operativo de sesión al renovar (mismo criterio que SesionOperativaService).
+        $idEfector = (int) Yii::$app->user->getIdEfector();
+        if ($idEfector > 0) {
+            $payload['id_efector'] = $idEfector;
+        }
+        $idPes = (int) Yii::$app->user->getIdProfesionalEfectorServicio();
+        if ($idPes > 0) {
+            $payload['id_profesional_efector_servicio'] = $idPes;
+        }
+        $servicioActual = (int) Yii::$app->user->getServicioActual();
+        if ($servicioActual > 0) {
+            $payload['servicio_actual'] = $servicioActual;
+        }
+        $encounterClass = Yii::$app->user->getEncounterClass();
+        if (is_string($encounterClass) && $encounterClass !== '') {
+            $payload['encounter_class'] = $encounterClass;
+        }
+
         return JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
     }
 

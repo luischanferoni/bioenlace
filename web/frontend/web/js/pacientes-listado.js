@@ -2357,11 +2357,18 @@
     }
 
     function renderAsyncBandeja(data, targetEl) {
-      if (!targetEl || !data || !Array.isArray(data.items) || !data.items.length) {
-        if (targetEl) clearNode(targetEl);
+      if (!targetEl || !data) {
         return;
       }
+      var items = Array.isArray(data.items) ? data.items : [];
       clearNode(targetEl);
+      if (!items.length) {
+        showListadoEmpty(
+          data.empty_message || 'No hay consultas clínicas por mensaje pendientes.',
+          targetEl
+        );
+        return;
+      }
       var wrapFrag = importTemplate('tpl-async-bandeja-wrap');
       if (!wrapFrag) return;
       var wrapRoot = wrapFrag.querySelector('[data-role="async-bandeja-wrap"]');
@@ -2373,7 +2380,7 @@
         slaResumen.classList.remove('d-none');
       }
       var grid = wrapRoot.querySelector('[data-slot="async-grid"]');
-      data.items.forEach(function (item) {
+      items.forEach(function (item) {
         var cardFrag = importTemplate('tpl-async-solicitud-card');
         if (!cardFrag) return;
         var col = cardFrag.firstElementChild;
@@ -2524,14 +2531,13 @@
       });
       var coberturaSec = findPanelSection(panel, 'staff_cobertura_activa');
       var asyncSec = findPanelSection(panel, 'async_consultations_queue');
-      var hasAsync = asyncSec && asyncSec.data && asyncSec.data.items && asyncSec.data.items.length;
-      if (!kpiSections.length && !hasAsync && !coberturaSec) {
-        return { listTarget: container, asyncSlot: null };
+      if (!kpiSections.length && !asyncSec && !coberturaSec) {
+        return { listTarget: container, asyncSlot: null, asyncSec: null };
       }
       clearNode(container);
       var wrapFrag = importTemplate('tpl-clinical-list-panel-wrap');
       if (!wrapFrag) {
-        return { listTarget: container, asyncSlot: null };
+        return { listTarget: container, asyncSlot: null, asyncSec: asyncSec || null };
       }
       var kpiSlot = wrapFrag.querySelector('[data-slot="kpi-sections"]');
       var listSlot = wrapFrag.querySelector('[data-slot="list-content"]');

@@ -19,7 +19,6 @@ use frontend\components\WebApiJwtSessionService;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
 use common\components\Domain\Organization\Service\SesionOperativa\SesionOperativaService;
-use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 
 class SiteController extends Controller
 {    
@@ -170,9 +169,11 @@ class SiteController extends Controller
             return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
         }
 
-        Yii::$app->user->setEncounterClass($codigo);
-
-        return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
+        return $this->reestablecerContextoOperativoYRedirigir([
+            'efector_id' => (int) Yii::$app->user->getIdEfector(),
+            'servicio_id' => (int) Yii::$app->user->getServicioActual(),
+            'encounter_class' => $codigo,
+        ]);
     }
 
     /**
@@ -180,31 +181,41 @@ class SiteController extends Controller
     */
     public function actionCambiarServicio($id_servicio)
     {
-        Yii::$app->user->setServicioActual($id_servicio);
+        $encounterClass = (string) (Yii::$app->user->getEncounterClass() ?? '');
 
-        $idPersona = (int) Yii::$app->user->getIdPersona();
-        $idEfector = (int) Yii::$app->user->getIdEfector();
-        $idServicio = (int) $id_servicio;
-        $pes = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio($idPersona, $idEfector, $idServicio);
-        if ($pes !== null) {
-            Yii::$app->user->setIdProfesionalEfectorServicio((int) $pes->id);
-        } else {
-            try {
-                $out = ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
-                    $idPersona,
-                    $idEfector,
-                    $idServicio
-                );
-                Yii::$app->user->setIdProfesionalEfectorServicio((int) $out['id_profesional_efector_servicio']);
-            } catch (\Throwable $e) {
-                Yii::warning('actionCambiarServicio: no se pudo asegurar PES: ' . $e->getMessage(), __METHOD__);
-                Yii::$app->user->setIdProfesionalEfectorServicio(null);
-            }
+        return $this->reestablecerContextoOperativoYRedirigir([
+            'efector_id' => (int) Yii::$app->user->getIdEfector(),
+            'servicio_id' => (int) $id_servicio,
+            'encounter_class' => $encounterClass,
+        ]);
+    }
+
+    /**
+     * Reaplica efector/servicio/encounter vía SesionOperativaService y renueva el JWT
+     * de API (evita que JsonHttpBearerAuth pise el contexto con claims viejos).
+     *
+     * @param array{efector_id:int, servicio_id:int, encounter_class:string} $body
+     * @return \yii\web\Response
+     */
+    private function reestablecerContextoOperativoYRedirigir(array $body)
+    {
+        try {
+            $data = (new SesionOperativaService())->establecer($body);
+        } catch (\InvalidArgumentException $e) {
+            Yii::$app->session->setFlash('error', $e->getMessage());
+
+            return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
+        } catch (\RuntimeException $e) {
+            Yii::$app->session->setFlash('error', $e->getMessage());
+
+            return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
         }
 
-        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
+        if (!empty($data['context_token'])) {
+            WebApiJwtSessionService::storeRawToken((string) $data['context_token']);
+        }
 
-        return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
+        return $this->redirect($data['redirect_url'] ?? SesionOperativaService::redirectRouteForCurrentUser());
     }
 
     /**

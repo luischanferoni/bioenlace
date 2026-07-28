@@ -13,8 +13,8 @@ conversation_modes:
     composer_hint: >-
       Tu solicitud ya fue registrada. Esperá la resolución del profesional; no hace falta
       enviar más mensajes.
-    staff_composer_hint: >-
-      Resolvé la solicitud con una de las opciones. En renovación o ajuste no hay chat libre.
+    # Sin hint staff: los CTAs bastan; no mostrar banner explicativo en chat.
+    staff_composer_hint: ""
   conversational:
     patient_composer: true
     patient_upload: true

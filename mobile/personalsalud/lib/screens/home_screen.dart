@@ -655,9 +655,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildVrHomeContent() {
-    final hasGroups = _consultasAsyncGroups.isNotEmpty;
-    final hasItems = _consultasAsync.isNotEmpty;
-    if (!hasGroups && !hasItems) {
+    final groups = _resolvedAsyncStaffGroups();
+    if (groups.isEmpty) {
       return _buildEmpty(
         icon: Icons.chat_bubble_outline,
         text: 'No hay consultas clínicas por mensaje pendientes.',
@@ -677,17 +676,51 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BioSpacing.gapH(BioSpacing.sm),
         ],
-        if (hasGroups)
-          ..._consultasAsyncGroups.expand(_buildAsyncGroupSection)
-        else
-          ..._consultasAsync.map(
-            (item) => Padding(
-              padding: const EdgeInsets.only(bottom: BioSpacing.md),
-              child: _buildAsyncSolicitudCard(item),
-            ),
-          ),
+        ...groups.expand(_buildAsyncGroupSection),
       ],
     );
+  }
+
+  /// Misma organización que web: orden del API (`groups`) o fallback Las mías → Por tomar.
+  List<Map<String, dynamic>> _resolvedAsyncStaffGroups() {
+    if (_consultasAsyncGroups.isNotEmpty) {
+      return _consultasAsyncGroups;
+    }
+    if (_consultasAsync.isEmpty) {
+      return const [];
+    }
+    final mias = <Map<String, dynamic>>[];
+    final porTomar = <Map<String, dynamic>>[];
+    for (final item in _consultasAsync) {
+      final asignacion = item['asignacion'] is Map
+          ? Map<String, dynamic>.from(item['asignacion'] as Map)
+          : <String, dynamic>{};
+      final acciones = item['acciones'] is Map
+          ? Map<String, dynamic>.from(item['acciones'] as Map)
+          : <String, dynamic>{};
+      final esMio = asignacion['es_mio'] == true;
+      final puedeTomar = acciones['tomar'] == true;
+      final status = item['status']?.toString() ?? '';
+      if (esMio) {
+        mias.add(item);
+      } else if (puedeTomar || status == 'planned') {
+        porTomar.add(item);
+      }
+    }
+    return [
+      {
+        'id': 'mias',
+        'title': 'Las mías',
+        'empty_message': 'No tenés consultas tomadas en curso.',
+        'items': mias,
+      },
+      {
+        'id': 'por_tomar',
+        'title': 'Por tomar',
+        'empty_message': 'No hay solicitudes pendientes de tomar.',
+        'items': porTomar,
+      },
+    ];
   }
 
   List<Widget> _buildAsyncGroupSection(Map<String, dynamic> group) {

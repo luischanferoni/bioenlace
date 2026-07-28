@@ -29,6 +29,29 @@ class EncounterDefinition extends ActiveRecord
         'HH' => 'Visita Domiciliaria',
     ];
 
+    /**
+     * Clases ofrecidas al staff al elegir área (wizard / catálogo de sesión).
+     * OBSENC y HH quedan en el catálogo FHIR pero no en la UI de producto activa.
+     *
+     * @var list<string>
+     */
+    public const ENCOUNTER_CLASS_SESSION_SELECTABLE = ['AMB', 'EMER', 'IMP', 'VR'];
+
+    /**
+     * @return array<string, string> code => label
+     */
+    public static function sessionSelectableClasses(): array
+    {
+        $out = [];
+        foreach (self::ENCOUNTER_CLASS_SESSION_SELECTABLE as $code) {
+            if (isset(self::ENCOUNTER_CLASS[$code])) {
+                $out[$code] = self::ENCOUNTER_CLASS[$code];
+            }
+        }
+
+        return $out;
+    }
+
     public static function tableName(): string
     {
         return 'encounter_definition';

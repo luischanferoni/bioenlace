@@ -17,7 +17,7 @@ import 'internacion/internacion_mapa_screen.dart';
 import 'chat_consulta_screen.dart';
 
 /// Pantalla principal del médico. Contenido según encounter class:
-/// AMB/VR/OBSENC/HH = turnos; IMP = internados/cirugías; EMER = tablero operativo de guardia.
+/// AMB = turnos del día; VR = consultas por mensaje; IMP = internados/cirugías; EMER = tablero de guardia.
 class HomeScreen extends StatefulWidget {
   final String userId;
   final String userName;
@@ -67,8 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _lastListKind = '';
   bool _isLoading = true;
   String _errorMessage = '';
-  /// 0 = agenda (turnos), 1 = consultas por mensaje.
-  int _ambHomeTab = 0;
+
   DateTime _fechaSeleccionada = DateTime(
     DateTime.now().year,
     DateTime.now().month,
@@ -494,7 +493,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           )
                         : _encounterClass == 'EMER'
                             ? _wrapWithPanelKpis(_buildGuardiaTableroList())
-                            : _wrapWithPanelKpis(_buildAmbHomeContent(siguienteTurno)),
+                            : _encounterClass == 'VR'
+                                ? _wrapWithPanelKpis(_buildVrHomeContent())
+                                : _wrapWithPanelKpis(
+                                    _buildAmbHomeContent(siguienteTurno),
+                                  ),
           ),
         ],
       ),
@@ -524,7 +527,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         : 'Pacientes internados')
                     : _encounterClass == 'EMER'
                         ? 'Tablero de guardia'
-                        : _formatearFechaAmigable(_fechaSeleccionada),
+                        : _encounterClass == 'VR'
+                            ? _tituloConsultasAsync
+                            : _formatearFechaAmigable(_fechaSeleccionada),
                 style: BioTypography.h3,
               ),
             ),
@@ -630,55 +635,31 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildAmbHomeContent(Turno? siguienteTurno) {
-    if (_consultasAsync.isEmpty && _turnos.isEmpty) {
+    if (_turnos.isEmpty) {
       return _buildEmpty(
         icon: Icons.event_busy_outlined,
         text: 'No hay turnos programados para esta fecha.',
       );
     }
 
-    final showTabs = _consultasAsync.isNotEmpty;
-    final tabAgenda = !showTabs || _ambHomeTab == 0;
+    return _buildTurnosPorEstado(siguienteTurno);
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget _buildVrHomeContent() {
+    if (_consultasAsync.isEmpty) {
+      return _buildEmpty(
+        icon: Icons.chat_bubble_outline,
+        text: 'No hay consultas clínicas por mensaje pendientes.',
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(
+        horizontal: BioSpacing.lg,
+        vertical: BioSpacing.lg,
+      ),
       children: [
-        if (showTabs)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              BioSpacing.lg,
-              BioSpacing.md,
-              BioSpacing.lg,
-              0,
-            ),
-            child: BioSegmentedTabs(
-              selectedIndex: _ambHomeTab,
-              onSelected: (i) => setState(() => _ambHomeTab = i),
-              tabs: [
-                BioSegmentedTab(
-                  label: 'Agenda (${_turnos.where((t) => t.id != 999999).length})',
-                  icon: Icons.event_available_outlined,
-                ),
-                BioSegmentedTab(
-                  label: 'Por mensaje (${_consultasAsync.length})',
-                  icon: Icons.chat_bubble_outline,
-                ),
-              ],
-            ),
-          ),
-        Expanded(
-          child: tabAgenda
-              ? _buildTurnosPorEstado(siguienteTurno)
-              : ListView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: BioSpacing.lg,
-                    vertical: BioSpacing.lg,
-                  ),
-                  children: [
-                    _buildAsyncBandejaSection(),
-                  ],
-                ),
-        ),
+        _buildAsyncBandejaSection(),
       ],
     );
   }

@@ -35,12 +35,19 @@ panels:
         - id: staff_agenda_kpis
           provider: staff_agenda_kpis
           kind: staff_kpi_group
-        - id: async_consultations_queue
-          provider: async_consultations_queue
-          kind: async_consultations_queue
         - id: appointments_day
           provider: appointments_day
           kind: appointments_day
+    VR:
+      layout: clinical_list
+      title: Consultas clínicas por mensaje
+      sections:
+        - id: staff_async_kpis
+          provider: staff_async_kpis
+          kind: staff_kpi_group
+        - id: async_consultations_queue
+          provider: async_consultations_queue
+          kind: async_consultations_queue
     IMP:
       layout: clinical_list
       title: Internación

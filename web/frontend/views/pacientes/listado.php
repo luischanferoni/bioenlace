@@ -10,6 +10,7 @@ use common\models\Servicio;
 
 $idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
 $esAmbulatorio = ($encounter_class === Encounter::ENCOUNTER_CLASS_AMB);
+$esVirtual = ($encounter_class === Encounter::ENCOUNTER_CLASS_VR);
 $esGuardia = ($encounter_class === Encounter::ENCOUNTER_CLASS_EMER);
 $esImpQuirurgico = ($encounter_class === Encounter::ENCOUNTER_CLASS_IMP && $idServicioActual && Servicio::esServicioAgendaQuirurgica($idServicioActual));
 $esImpPiso = !empty($es_imp_piso);
@@ -28,6 +29,9 @@ $encounterMeta = [
     Encounter::ENCOUNTER_CLASS_EMER => [
         'label' => 'Guardia',
     ],
+    Encounter::ENCOUNTER_CLASS_VR => [
+        'label' => 'Virtual',
+    ],
 ];
 $metaEc = ($encounter_class && isset($encounterMeta[$encounter_class]))
     ? $encounterMeta[$encounter_class]
@@ -36,7 +40,11 @@ $metaEc = ($encounter_class && isset($encounterMeta[$encounter_class]))
 $encounterJson = Json::encode($encounter_class);
 $esPacienteHome = empty($encounter_class);
 
-$this->title = $esGuardia ? 'Tablero de guardia' : ($esPacienteHome ? 'Inicio' : 'Pacientes');
+$this->title = $esGuardia
+    ? 'Tablero de guardia'
+    : ($esVirtual
+        ? 'Consultas clínicas por mensaje'
+        : ($esPacienteHome ? 'Inicio' : 'Pacientes'));
 ?>
 
 <div class="mb-4">

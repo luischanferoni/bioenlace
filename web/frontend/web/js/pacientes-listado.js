@@ -2589,6 +2589,14 @@
           applyPanelChrome(panel);
           return;
         }
+        // Panel VR (u otro clinical_list) solo con bandeja async / KPIs.
+        if (panelParts.asyncSec) {
+          if (panelParts.listTarget) {
+            clearNode(panelParts.listTarget);
+          }
+          applyPanelChrome(panel);
+          return;
+        }
       }
       if (layout === 'cards') {
         var cardsSec = findPanelSection(panel, 'action_cards');

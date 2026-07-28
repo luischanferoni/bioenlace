@@ -35,9 +35,8 @@ class CatalogosController extends BaseController
      */
     public function actionEncounterClasses()
     {
-        $encounterClasses = EncounterDefinition::ENCOUNTER_CLASS;
         $formatted = [];
-        foreach ($encounterClasses as $code => $label) {
+        foreach (EncounterDefinition::sessionSelectableClasses() as $code => $label) {
             $formatted[] = [
                 'code' => (string) $code,
                 'label' => (string) $label,

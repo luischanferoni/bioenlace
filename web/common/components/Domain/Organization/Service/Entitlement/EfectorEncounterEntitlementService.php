@@ -18,7 +18,17 @@ use yii\db\Query;
  */
 final class EfectorEncounterEntitlementService
 {
-    private const CLASS_PRIORITY = ['AMB', 'EMER', 'IMP'];
+    private const CLASS_PRIORITY = ['AMB', 'EMER', 'IMP', 'VR'];
+
+    /**
+     * Clases de producto activas para sesión / allow_all (sin OBSENC/HH).
+     *
+     * @return list<string>
+     */
+    private static function sessionSelectableCodes(): array
+    {
+        return array_keys(EncounterDefinition::sessionSelectableClasses());
+    }
 
     /**
      * Cuenta de facturación (membresía POOL). Ignora afiliaciones.
@@ -119,34 +129,40 @@ final class EfectorEncounterEntitlementService
      */
     public static function allowedEncounterClasses(int $idEfector): array
     {
-        $all = array_keys(EncounterDefinition::ENCOUNTER_CLASS);
+        $selectable = self::sessionSelectableCodes();
         if ($idEfector <= 0) {
-            return $all;
+            return $selectable;
         }
 
         $accountId = self::resolveAccountIdForEfector($idEfector);
         if ($accountId === null) {
             return PricingPesByEncounterClassMetadata::defaultWhenEmptyAllowAll()
-                ? $all
+                ? $selectable
                 : [];
         }
 
         $rows = BillingAccountEncounterEntitlement::findActivasPorAccount($accountId);
         if ($rows === []) {
             return PricingPesByEncounterClassMetadata::defaultWhenEmptyAllowAll()
-                ? $all
+                ? $selectable
                 : [];
         }
 
         $codes = [];
         foreach ($rows as $row) {
             $code = (string) $row->encounter_class;
-            if ($code !== '' && isset(EncounterDefinition::ENCOUNTER_CLASS[$code])) {
+            if ($code !== '' && in_array($code, $selectable, true)) {
                 $codes[] = $code;
             }
         }
 
-        return array_values(array_unique($codes));
+        $codes = array_values(array_unique($codes));
+        // Virtual (mensajes) acompaña a AMB en producto activo aunque no haya fila de entitlement VR.
+        if (in_array('AMB', $codes, true) && in_array('VR', $selectable, true) && !in_array('VR', $codes, true)) {
+            $codes[] = 'VR';
+        }
+
+        return $codes;
     }
 
     public static function isEncounterClassAllowed(int $idEfector, string $encounterClass): bool

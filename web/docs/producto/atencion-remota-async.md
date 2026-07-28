@@ -63,7 +63,7 @@ En los KPI de agenda (30 días), si hubo turnos presenciales con triage `sugerid
 
 ## Cómo funciona (etapa 3 — bandeja de consultas clínicas por mensaje)
 
-Las solicitudes generan un encounter VR en estado **planificado**, sin turno. El equipo del **servicio** asignado en el efector de sesión las ve en **Consultas clínicas por mensaje**, encima del listado de turnos del día.
+Las solicitudes generan un encounter VR en estado **planificado**, sin turno. El personal las atiende en sesión operativa **Virtual** (`encounter_class = VR`): el inicio muestra la bandeja **Consultas clínicas por mensaje** (no en Ambulatorio).
 
 - **Tomar y responder** — asigna el PES de sesión, pasa a `in-progress` y abre el chat.
 - **Chat** — API `consulta-chat` existente; el primer mensaje del paciente se guarda al crear la solicitud.

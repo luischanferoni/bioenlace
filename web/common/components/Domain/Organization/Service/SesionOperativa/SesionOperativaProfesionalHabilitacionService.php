@@ -34,7 +34,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
     public function buildOpcionesIniciales(int $idPersona): array
     {
         $encounterClassesCatalog = [];
-        foreach (EncounterDefinition::ENCOUNTER_CLASS as $code => $label) {
+        foreach (EncounterDefinition::sessionSelectableClasses() as $code => $label) {
             $encounterClassesCatalog[] = [
                 'code' => (string) $code,
                 'label' => (string) $label,
@@ -197,11 +197,11 @@ class SesionOperativaProfesionalHabilitacionService extends Component
             }
         }
         $encounterClasses = [];
-        foreach (array_keys(EncounterDefinition::ENCOUNTER_CLASS) as $code) {
+        foreach (EncounterDefinition::sessionSelectableClasses() as $code => $label) {
             if ($unionCodes === [] || isset($unionCodes[$code])) {
                 $encounterClasses[] = [
                     'code' => (string) $code,
-                    'label' => (string) EncounterDefinition::ENCOUNTER_CLASS[$code],
+                    'label' => (string) $label,
                 ];
             }
         }

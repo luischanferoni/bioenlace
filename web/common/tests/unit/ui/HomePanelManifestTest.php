@@ -51,6 +51,16 @@ class HomePanelManifestTest extends Unit
         $this->assertSame(['staff_agenda_kpis', 'appointments_day'], $sectionIds);
     }
 
+    public function testVrPanelIsBandejaOnlyWithoutAsyncKpis(): void
+    {
+        $manifest = new HomePanelManifest();
+        $panel = $manifest->resolveForStaff('VR');
+        $sectionIds = array_column($panel['sections'], 'id');
+
+        $this->assertSame(['async_consultations_queue'], $sectionIds);
+        $this->assertSame('Consultas clínicas por mensaje', $panel['title']);
+    }
+
     public function testImpSurgicalManifestSliceDefinesSurgeryKpis(): void
     {
         $path = ProductMetadataPaths::homePanelManifestFile();

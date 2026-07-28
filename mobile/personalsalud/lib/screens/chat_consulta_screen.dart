@@ -82,52 +82,6 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     _scrollToBottom();
   }
 
-  Future<void> _cerrarConsulta() async {
-    if (_chatPolicy.resolutions.isEmpty) return;
-    String? selected = _chatPolicy.resolutions.first.code;
-    final noteController = TextEditingController();
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => AlertDialog(
-          title: const Text('Cerrar consulta'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                DropdownButtonFormField<String>(
-                  value: selected,
-                  decoration: const InputDecoration(labelText: 'Resolución'),
-                  items: _chatPolicy.resolutions
-                      .map(
-                        (e) => DropdownMenuItem(value: e.code, child: Text(e.label)),
-                      )
-                      .toList(),
-                  onChanged: (v) => setLocal(() => selected = v),
-                ),
-                BioSpacing.gapH(BioSpacing.sm),
-                TextField(
-                  controller: noteController,
-                  decoration: const InputDecoration(
-                    labelText: 'Nota para el paciente (opcional)',
-                  ),
-                  maxLines: 3,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-            TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Cerrar')),
-          ],
-        ),
-      ),
-    );
-    if (ok != true || selected == null || !mounted) return;
-    await _aplicarResolucion(selected!, note: noteController.text);
-  }
-
   Future<void> _resolverConCodigo(AsyncConsultaResolution resolution) async {
     if (_sending) return;
     String note = '';
@@ -326,14 +280,6 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
       backgroundColor: tokens.paperBackground,
       appBar: BioAppBar(
         title: widget.titulo,
-        actions: [
-          if (_chatPolicy.canClose)
-            IconButton(
-              icon: const Icon(Icons.check_circle_outline),
-              tooltip: 'Cerrar consulta',
-              onPressed: _loading ? null : _cerrarConsulta,
-            ),
-        ],
       ),
       body: Column(
         children: [

@@ -74,7 +74,6 @@
       encounterId: null,
       canCompose: true,
       modal: null,
-      closeModal: null,
       chatPolicy: null,
       isStaff: false,
       item: null,
@@ -1812,16 +1811,6 @@
       return window.BioenlaceAsyncConsultaChat || null;
     }
 
-    function getAsyncChatCloseModal() {
-      if (!asyncChatState.closeModal) {
-        var el = document.getElementById('async-chat-close-modal');
-        if (el && window.bootstrap && window.bootstrap.Modal) {
-          asyncChatState.closeModal = new window.bootstrap.Modal(el);
-        }
-      }
-      return asyncChatState.closeModal;
-    }
-
     function applyAsyncChatPolicyUI(policy) {
       var compose = document.getElementById('async-chat-compose');
       var resolveSlot = document.getElementById('async-chat-resolve-actions');
@@ -1908,14 +1897,6 @@
           cancelBtn.addEventListener('click', cancelAsyncChatComoPaciente);
           actionsSlot.appendChild(cancelBtn);
         }
-        if (p.canClose && !p.showResolutionActions) {
-          var closeBtn = document.createElement('button');
-          closeBtn.type = 'button';
-          closeBtn.className = 'btn btn-outline-secondary btn-sm';
-          closeBtn.textContent = 'Cerrar consulta';
-          closeBtn.addEventListener('click', openAsyncChatCloseModal);
-          actionsSlot.appendChild(closeBtn);
-        }
       }
     }
 
@@ -1938,7 +1919,6 @@
     async function confirmAsyncChatCloseWith(resolutionCode, note) {
       var api = window.BioenlaceNativePage;
       var errEl =
-        document.getElementById('async-chat-close-error') ||
         document.getElementById('async-chat-error');
       if (!api || !asyncChatState.encounterId || !resolutionCode) return;
       if (errEl) errEl.classList.add('d-none');
@@ -1959,8 +1939,6 @@
         if (json.success === false) {
           throw new Error(json.message || 'No se pudo cerrar la consulta.');
         }
-        var closeModal = getAsyncChatCloseModal();
-        if (closeModal) closeModal.hide();
         await loadAsyncChatMessages(asyncChatState.encounterId);
         await loadPanel({ showSpinner: false });
       } catch (e) {
@@ -2231,36 +2209,6 @@
           errEl.classList.remove('d-none');
         }
       }
-    }
-
-    function openAsyncChatCloseModal() {
-      var policy = asyncChatState.chatPolicy;
-      if (!policy || !policy.resolutions || !policy.resolutions.length) return;
-      var select = document.getElementById('async-chat-close-resolution');
-      var note = document.getElementById('async-chat-close-note');
-      var errEl = document.getElementById('async-chat-close-error');
-      if (!select) return;
-      clearNode(select);
-      policy.resolutions.forEach(function (r) {
-        var opt = document.createElement('option');
-        opt.value = r.code;
-        opt.textContent = r.label;
-        select.appendChild(opt);
-      });
-      if (note) note.value = '';
-      if (errEl) errEl.classList.add('d-none');
-      var modal = getAsyncChatCloseModal();
-      if (modal) modal.show();
-    }
-
-    async function confirmAsyncChatClose() {
-      var select = document.getElementById('async-chat-close-resolution');
-      var note = document.getElementById('async-chat-close-note');
-      if (!select) return;
-      await confirmAsyncChatCloseWith(
-        select.value,
-        note ? String(note.value || '').trim() : ''
-      );
     }
 
     function openAsyncChat(item, canCompose) {
@@ -2806,10 +2754,6 @@
     var asyncChatSend = document.getElementById('async-chat-send');
     if (asyncChatSend) {
       asyncChatSend.addEventListener('click', sendAsyncChatMessage);
-    }
-    var asyncChatCloseConfirm = document.getElementById('async-chat-close-confirm');
-    if (asyncChatCloseConfirm) {
-      asyncChatCloseConfirm.addEventListener('click', confirmAsyncChatClose);
     }
     var asyncChatFileInput = document.getElementById('async-chat-file-input');
     if (asyncChatFileInput) {

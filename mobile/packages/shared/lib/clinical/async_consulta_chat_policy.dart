@@ -45,9 +45,8 @@ class AsyncConsultaChatPolicy {
 
   bool get canUploadImage => uploadEnabled && uploadTypes.contains('imagen');
 
-  /// CTAs de resolución en lugar del composer (p. ej. renovación/ajuste structured).
-  bool get showResolutionActions =>
-      canClose && !composerEnabled && resolutions.isNotEmpty;
+  /// CTAs de resolución staff (structured sin composer, o conversacional junto al composer).
+  bool get showResolutionActions => canClose && resolutions.isNotEmpty;
 
   factory AsyncConsultaChatPolicy.fromApi(Map<String, dynamic>? raw) {
     if (raw == null) {

@@ -148,28 +148,6 @@ $this->title = $esGuardia
     </div>
 </div>
 
-<div class="modal fade" id="async-chat-close-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Cerrar consulta</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <label class="form-label" for="async-chat-close-resolution">Resolución</label>
-                <select class="form-select form-select-sm mb-3" id="async-chat-close-resolution"></select>
-                <label class="form-label" for="async-chat-close-note">Nota para el paciente (opcional)</label>
-                <textarea class="form-control form-control-sm" id="async-chat-close-note" rows="3"></textarea>
-                <div id="async-chat-close-error" class="alert alert-danger d-none mt-3 mb-0"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary btn-sm" id="async-chat-close-confirm">Cerrar consulta</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <?php if ($esGuardia): ?>
 <div class="modal fade" id="guardia-triage-modal" tabindex="-1" aria-labelledby="guardiaTriageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

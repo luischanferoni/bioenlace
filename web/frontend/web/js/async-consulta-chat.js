@@ -58,10 +58,7 @@
       resolutions: resolutions,
       suggestTurno: raw.suggest_turno === true,
       conversationMode: raw.conversation_mode ? String(raw.conversation_mode).trim() : 'conversational',
-      showResolutionActions:
-        acciones.cerrar === true &&
-        composer.enabled !== true &&
-        resolutions.length > 0,
+      showResolutionActions: acciones.cerrar === true && resolutions.length > 0,
     };
   }
 

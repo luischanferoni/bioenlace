@@ -1654,7 +1654,7 @@
     function renderIntakeContextBlock(rootEl, intakeContext) {
       if (!rootEl) return;
       var ctx = intakeContext && typeof intakeContext === 'object' ? intakeContext : null;
-      if (!ctx || (!(ctx.lines && ctx.lines.length) && !ctx.reference_encounter && !ctx.tipo_label)) {
+      if (!ctx || (!(ctx.lines && ctx.lines.length) && !ctx.reference_encounter && !ctx.section_label)) {
         rootEl.classList.add('d-none');
         return;
       }
@@ -1663,16 +1663,6 @@
       var titleEl = rootEl.querySelector('[data-field="intake-title"]');
       if (titleEl) {
         titleEl.textContent = ctx.section_label || 'Contexto de la solicitud';
-      }
-
-      var tipoEl = rootEl.querySelector('[data-field="intake-tipo"]');
-      if (tipoEl) {
-        if (ctx.tipo_label) {
-          tipoEl.textContent = ctx.tipo_label;
-          tipoEl.classList.remove('d-none');
-        } else {
-          tipoEl.classList.add('d-none');
-        }
       }
 
       var linesSlot = rootEl.querySelector('[data-slot="intake-lines"]');
@@ -1684,20 +1674,8 @@
           var label = String(line.label || '').trim();
           var value = String(line.value || '').trim();
           if (!label || !value) return;
-          var row = document.createElement('div');
-          row.innerHTML =
-            '<strong>' +
-            escapeHtml(label) +
-            ':</strong> ' +
-            escapeHtml(value);
-          linesSlot.appendChild(row);
+          linesSlot.appendChild(buildIntakeSection(label, escapeHtml(value)));
         });
-      }
-
-      var summaryEl = rootEl.querySelector('[data-field="intake-summary"]');
-      if (summaryEl) {
-        summaryEl.classList.add('d-none');
-        summaryEl.textContent = '';
       }
 
       var detailSlot = rootEl.querySelector('[data-slot="intake-encounter-detail"]');
@@ -1709,40 +1687,38 @@
         var detail = refEnc && refEnc.detail && typeof refEnc.detail === 'object' ? refEnc.detail : null;
         if (detail) {
           detailSlot.classList.remove('d-none');
-          var detailTitle = document.createElement('div');
-          detailTitle.className = 'fw-semibold';
-          detailTitle.textContent = detail.title || 'Atención de referencia';
-          detailSlot.appendChild(detailTitle);
-          if (detail.headline) {
-            var hl = document.createElement('div');
-            hl.className = 'text-muted';
-            hl.textContent = detail.headline;
-            detailSlot.appendChild(hl);
-          }
+          var metaParts = [];
+          if (detail.headline) metaParts.push(String(detail.headline));
           var efectorNombre =
             detail.efector && detail.efector.nombre ? String(detail.efector.nombre) : '';
-          if (efectorNombre) {
-            var ef = document.createElement('div');
-            ef.textContent = efectorNombre;
-            detailSlot.appendChild(ef);
+          if (efectorNombre && metaParts.join(' ').indexOf(efectorNombre) < 0) {
+            metaParts.push(efectorNombre);
           }
           var profDisplay =
             detail.profesional && detail.profesional.display
               ? String(detail.profesional.display)
               : '';
-          if (profDisplay) {
-            var pr = document.createElement('div');
-            pr.textContent = 'Profesional: ' + profDisplay;
-            detailSlot.appendChild(pr);
-          }
+          if (profDisplay) metaParts.push(profDisplay);
           var narrative = String(detail.narrativeText || '').trim();
-          if (narrative) {
-            var nar = document.createElement('div');
-            nar.className = 'mt-1';
-            nar.textContent =
-              narrative.length > 600 ? narrative.slice(0, 600) + '…' : narrative;
-            detailSlot.appendChild(nar);
+          if (narrative.length > 600) {
+            narrative = narrative.slice(0, 600) + '…';
           }
+          var bodyHtml = '';
+          if (metaParts.length) {
+            bodyHtml +=
+              '<div class="text-muted small mb-1">' +
+              escapeHtml(metaParts.join(' · ')) +
+              '</div>';
+          }
+          if (narrative) {
+            bodyHtml += '<div>' + escapeHtml(narrative) + '</div>';
+          }
+          detailSlot.appendChild(
+            buildIntakeSection(
+              detail.title || 'Atención de referencia',
+              bodyHtml
+            )
+          );
         } else {
           detailSlot.classList.add('d-none');
         }
@@ -1779,6 +1755,23 @@
         a.setAttribute('data-spa-title', a.textContent);
         linksSlot.appendChild(a);
       });
+    }
+
+    function buildIntakeSection(title, bodyHtml) {
+      var wrap = document.createElement('div');
+      wrap.className = 'mb-3';
+      var titleEl = document.createElement('div');
+      titleEl.className = 'fw-semibold small';
+      titleEl.textContent = title;
+      wrap.appendChild(titleEl);
+      var hr = document.createElement('hr');
+      hr.className = 'my-1';
+      wrap.appendChild(hr);
+      var body = document.createElement('div');
+      body.className = 'small';
+      body.innerHTML = bodyHtml;
+      wrap.appendChild(body);
+      return wrap;
     }
 
     function escapeHtml(s) {
@@ -2219,12 +2212,12 @@
       asyncChatState.canCompose = canCompose !== false;
       asyncChatState.chatPolicy = null;
       asyncChatState.intakeContext = null;
-      var subtitle = document.getElementById('async-chat-subtitle');
-      if (subtitle) {
+      var titleEl = document.getElementById('asyncChatModalLabel');
+      if (titleEl) {
         var parts = [];
         if (item.paciente && item.paciente.nombre_completo) parts.push(item.paciente.nombre_completo);
         if (item.servicio) parts.push(item.servicio);
-        subtitle.textContent = parts.join(' — ');
+        titleEl.textContent = parts.length ? parts.join(' · ') : 'Consulta clínica por mensaje';
       }
       renderIntakeContextBlock(
         document.getElementById('async-chat-intake-context'),

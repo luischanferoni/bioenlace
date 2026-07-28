@@ -49,8 +49,13 @@ solicitud:
 
 intake_context:
   section_label: Contexto de la solicitud
+  necesidad_label: Necesidad
+  medicamentos_label: Medicamentos
+  ajuste_motivo_label: Motivo del ajuste
+  tratamiento_label: Tratamiento
   reference_encounter_line_label: Atención previa
   reference_encounter_action: Ver atención de referencia
   clinical_history_action: Ver historia clínica
   encounter_detail_title: Atención de referencia
+  care_plan_origin_title: Consulta de origen
   encounter_detail_empty: No hay un resumen publicado de esa atención.

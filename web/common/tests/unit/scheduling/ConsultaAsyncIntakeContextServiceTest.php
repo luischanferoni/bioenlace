@@ -31,7 +31,7 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         $this->assertNull($ctx['reference_encounter']);
     }
 
-    public function testRenovacionIncluyeOperacionYMedicamentosEnLines(): void
+    public function testRenovacionIncluyeNecesidadYMedicamentosSinOperacion(): void
     {
         $svc = new ConsultaAsyncIntakeContextService();
         $ctx = $svc->buildFromMeta([
@@ -45,11 +45,11 @@ class ConsultaAsyncIntakeContextServiceTest extends Unit
         $this->assertArrayNotHasKey('summary', $ctx);
         $codes = array_column($ctx['lines'], 'code');
         $this->assertContains('seguimiento_necesidad', $codes);
-        $this->assertContains('medicacion_operacion', $codes);
+        $this->assertNotContains('medicacion_operacion', $codes);
         $this->assertContains('medication_request_ids', $codes);
         $values = array_column($ctx['lines'], 'value');
         $joined = implode(' ', $values);
-        $this->assertStringContainsString('Solicitud de renovación de medicación', $joined);
+        $this->assertStringContainsString('Renovar medicación', $joined);
         $this->assertStringContainsString('Enalapril', $joined);
         $this->assertSame('clinical_history', $ctx['references'][0]['kind']);
     }

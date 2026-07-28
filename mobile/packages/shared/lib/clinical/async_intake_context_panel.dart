@@ -25,13 +25,12 @@ class AsyncIntakeContextPanel extends StatelessWidget {
         intakeContext['section_label']?.toString().trim().isNotEmpty == true
             ? intakeContext['section_label'].toString().trim()
             : 'Contexto de la solicitud';
-    final tipoLabel = intakeContext['tipo_label']?.toString().trim() ?? '';
     final lines = intakeContext['lines'];
     final refEnc = intakeContext['reference_encounter'];
     final detail = refEnc is Map ? refEnc['detail'] : null;
     final references = intakeContext['references'];
 
-    final lineWidgets = <Widget>[];
+    final sectionWidgets = <Widget>[];
     if (lines is List) {
       for (final raw in lines) {
         if (raw is! Map) continue;
@@ -40,20 +39,10 @@ class AsyncIntakeContextPanel extends StatelessWidget {
         final label = raw['label']?.toString().trim() ?? '';
         final value = raw['value']?.toString().trim() ?? '';
         if (label.isEmpty || value.isEmpty) continue;
-        lineWidgets.add(
-          Padding(
-            padding: const EdgeInsets.only(bottom: BioSpacing.xs),
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$label: ',
-                    style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  TextSpan(text: value, style: BioTypography.bodySm),
-                ],
-              ),
-            ),
+        sectionWidgets.add(
+          _SectionBlock(
+            title: label,
+            child: Text(value, style: BioTypography.bodySm),
           ),
         );
       }
@@ -85,40 +74,69 @@ class AsyncIntakeContextPanel extends StatelessWidget {
       }
     }
 
-    return BioCard(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        BioSpacing.md,
+        BioSpacing.sm,
+        BioSpacing.md,
+        BioSpacing.sm,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             sectionLabel,
-            style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
+            style: BioTypography.body.copyWith(fontWeight: FontWeight.w700),
           ),
-          if (tipoLabel.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(
-              tipoLabel,
-              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-            ),
-          ],
-          if (lineWidgets.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            ...lineWidgets,
+          if (sectionWidgets.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.md),
+            ...sectionWidgets,
           ],
           if (detail is Map) ...[
-            BioSpacing.gapH(BioSpacing.sm),
+            BioSpacing.gapH(BioSpacing.md),
             _EncounterDetailBlock(
               detail: Map<String, dynamic>.from(detail),
               compact: compact,
             ),
           ],
           if (actionButtons.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.sm),
+            BioSpacing.gapH(BioSpacing.md),
             Wrap(
               spacing: BioSpacing.sm,
               runSpacing: BioSpacing.xs,
               children: actionButtons,
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionBlock extends StatelessWidget {
+  const _SectionBlock({
+    required this.title,
+    required this.child,
+  });
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BioSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w700),
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          const BioDivider(),
+          BioSpacing.gapH(BioSpacing.sm),
+          child,
         ],
       ),
     );
@@ -156,41 +174,32 @@ class _EncounterDetailBlock extends StatelessWidget {
         ? '${narrative.substring(0, maxChars)}…'
         : narrative;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(BioSpacing.sm),
-      decoration: BoxDecoration(
-        color: context.bio.paperSurfaceSunken,
-        borderRadius: BorderRadius.circular(BioRadius.sm),
-        border: Border.all(color: context.bio.paperBorderDefault),
-      ),
+    final metaParts = <String>[];
+    if (headline.isNotEmpty) metaParts.add(headline);
+    if (efector != null && efector.isNotEmpty && !headline.contains(efector)) {
+      metaParts.add(efector);
+    }
+    if (profesional != null && profesional.isNotEmpty) {
+      metaParts.add(profesional);
+    }
+    if (fecha != null &&
+        fecha.isNotEmpty &&
+        (headline.isEmpty || !headline.contains(fecha))) {
+      metaParts.add(fecha);
+    }
+
+    return _SectionBlock(
+      title: title,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
-          ),
-          if (headline.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
+          if (metaParts.isNotEmpty)
             Text(
-              headline,
-              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-            ),
-          ],
-          if (efector != null && efector.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            Text(efector, style: BioTypography.bodySm),
-          ],
-          if (profesional != null && profesional.isNotEmpty)
-            Text('Profesional: $profesional', style: BioTypography.bodySm),
-          if (fecha != null && fecha.isNotEmpty)
-            Text(
-              fecha,
+              metaParts.join(' · '),
               style: BioTypography.caption.copyWith(color: context.bio.textMuted),
             ),
           if (shownNarrative.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.sm),
+            if (metaParts.isNotEmpty) BioSpacing.gapH(BioSpacing.sm),
             Text(shownNarrative, style: BioTypography.bodySm),
           ],
         ],
@@ -247,13 +256,11 @@ class AsyncReferenceEncounterDetailScreen extends StatelessWidget {
             ),
           ],
           BioSpacing.gapH(BioSpacing.lg),
-          BioCard(
-            child: Text(
-              narrative.isNotEmpty
-                  ? narrative
-                  : 'Sin resumen narrativo disponible para esta atención.',
-              style: BioTypography.body,
-            ),
+          Text(
+            narrative.isNotEmpty
+                ? narrative
+                : 'Sin resumen narrativo disponible para esta atención.',
+            style: BioTypography.body,
           ),
         ],
       ),

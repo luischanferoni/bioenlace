@@ -38,24 +38,15 @@ final class ConsultaAsyncIntakeContextService
         $lines = [];
         $references = [];
         $referenceEncounter = null;
+        $planOriginEncounterId = 0;
 
         $necesidad = trim((string) ($meta['seguimiento_necesidad'] ?? ''));
         if ($necesidad !== '') {
             $def = $catalog->necesidad($necesidad);
             $lines[] = [
                 'code' => 'seguimiento_necesidad',
-                'label' => 'Necesidad',
+                'label' => $labels['necesidad_label'] !== '' ? $labels['necesidad_label'] : 'Necesidad',
                 'value' => $def !== null ? $def['label'] : $necesidad,
-            ];
-        }
-
-        $operacion = trim((string) ($meta['medicacion_operacion'] ?? ''));
-        if ($operacion !== '') {
-            $policyCatalog = new ConsultaAsyncChatPolicyCatalogService();
-            $lines[] = [
-                'code' => 'medicacion_operacion',
-                'label' => 'Operación',
-                'value' => $policyCatalog->solicitudCategoriaLabel($operacion),
             ];
         }
 
@@ -71,7 +62,7 @@ final class ConsultaAsyncIntakeContextService
             if ($labelsMed !== []) {
                 $lines[] = [
                     'code' => 'medication_request_ids',
-                    'label' => 'Medicamentos',
+                    'label' => $labels['medicamentos_label'] !== '' ? $labels['medicamentos_label'] : 'Medicamentos',
                     'value' => implode('; ', $labelsMed),
                 ];
             }
@@ -81,7 +72,7 @@ final class ConsultaAsyncIntakeContextService
         if ($ajusteMotivo !== '') {
             $lines[] = [
                 'code' => 'ajuste_motivo',
-                'label' => 'Motivo del ajuste',
+                'label' => $labels['ajuste_motivo_label'] !== '' ? $labels['ajuste_motivo_label'] : 'Motivo del ajuste',
                 'value' => $ajusteMotivo,
             ];
         }
@@ -93,49 +84,42 @@ final class ConsultaAsyncIntakeContextService
                 $title = trim((string) ($plan->title ?? ''));
                 $lines[] = [
                     'code' => 'care_plan',
-                    'label' => 'Tratamiento',
+                    'label' => $labels['tratamiento_label'] !== '' ? $labels['tratamiento_label'] : 'Tratamiento',
                     'value' => $title !== '' ? $title : 'Plan de tratamiento',
                     'care_plan_id' => (int) $plan->id,
                 ];
+                $planOriginEncounterId = (int) ($plan->encounter_id ?? 0);
             }
         }
 
         $refId = (int) ($meta['reference_encounter_id'] ?? 0);
         if ($refId > 0 && $idPersona > 0) {
-            $lineLabel = $labels['reference_encounter_line_label'];
-            $lineLabel = $lineLabel !== '' ? $lineLabel : 'Atención previa';
-            if ($includeRefDetail) {
-                $detail = (new PatientEncounterSummaryQueryService())->getDetailForPersona($idPersona, $refId);
-                $lean = $this->leanEncounterDetail($detail, $refId, $labels);
-                $lines[] = [
-                    'code' => 'reference_encounter',
-                    'label' => $lineLabel,
-                    'value' => $lean['headline'],
-                    'encounter_id' => $refId,
-                ];
-                $referenceEncounter = [
-                    'encounter_id' => $refId,
-                    'detail' => $lean,
-                ];
-            } else {
-                $lines[] = [
-                    'code' => 'reference_encounter',
-                    'label' => $lineLabel,
-                    'value' => 'Atención #' . $refId,
-                    'encounter_id' => $refId,
-                ];
-                $referenceEncounter = [
-                    'encounter_id' => $refId,
-                ];
-            }
-            $references[] = [
-                'kind' => 'reference_encounter',
-                'label' => $labels['reference_encounter_action'] !== ''
-                    ? $labels['reference_encounter_action']
-                    : 'Ver atención de referencia',
-                'subject_persona_id' => $idPersona,
-                'encounter_id' => $refId,
-            ];
+            $referenceEncounter = $this->buildReferenceEncounter(
+                $idPersona,
+                $refId,
+                $labels,
+                $includeRefDetail,
+                $labels['encounter_detail_title'] !== ''
+                    ? $labels['encounter_detail_title']
+                    : 'Atención de referencia',
+                true,
+                $lines,
+                $references
+            );
+        } elseif ($planOriginEncounterId > 0 && $idPersona > 0 && $includeRefDetail) {
+            // Sin reference_encounter_id: resumen de la consulta que originó el plan.
+            $referenceEncounter = $this->buildReferenceEncounter(
+                $idPersona,
+                $planOriginEncounterId,
+                $labels,
+                true,
+                $labels['care_plan_origin_title'] !== ''
+                    ? $labels['care_plan_origin_title']
+                    : 'Consulta de origen',
+                false,
+                $lines,
+                $references
+            );
         }
 
         if ($idPersona > 0) {
@@ -161,6 +145,66 @@ final class ConsultaAsyncIntakeContextService
         ];
     }
 
+    /**
+     * @param array<string, string> $labels
+     * @param list<array<string, mixed>> $lines
+     * @param list<array<string, mixed>> $references
+     * @return array<string, mixed>
+     */
+    private function buildReferenceEncounter(
+        int $idPersona,
+        int $encounterId,
+        array $labels,
+        bool $includeDetail,
+        string $detailTitle,
+        bool $addLine,
+        array &$lines,
+        array &$references
+    ): array {
+        $lineLabel = $labels['reference_encounter_line_label'];
+        $lineLabel = $lineLabel !== '' ? $lineLabel : 'Atención previa';
+
+        if ($includeDetail) {
+            $detail = (new PatientEncounterSummaryQueryService())->getDetailForPersona($idPersona, $encounterId);
+            $lean = $this->leanEncounterDetail($detail, $encounterId, $labels, $detailTitle);
+            if ($addLine) {
+                $lines[] = [
+                    'code' => 'reference_encounter',
+                    'label' => $lineLabel,
+                    'value' => $lean['headline'],
+                    'encounter_id' => $encounterId,
+                ];
+            }
+            $out = [
+                'encounter_id' => $encounterId,
+                'detail' => $lean,
+            ];
+        } else {
+            if ($addLine) {
+                $lines[] = [
+                    'code' => 'reference_encounter',
+                    'label' => $lineLabel,
+                    'value' => 'Atención #' . $encounterId,
+                    'encounter_id' => $encounterId,
+                ];
+            }
+            $out = [
+                'encounter_id' => $encounterId,
+            ];
+        }
+
+        $references[] = [
+            'kind' => 'reference_encounter',
+            'label' => $labels['reference_encounter_action'] !== ''
+                ? $labels['reference_encounter_action']
+                : 'Ver atención de referencia',
+            'subject_persona_id' => $idPersona,
+            'encounter_id' => $encounterId,
+        ];
+
+        return $out;
+    }
+
     private function labelTipo(ConsultasSeguimientoIntakeCatalogService $catalog, string $code): string
     {
         foreach ($catalog->opcionesTipo() as $row) {
@@ -179,8 +223,16 @@ final class ConsultaAsyncIntakeContextService
      * @param array<string, string> $labels
      * @return array<string, mixed>
      */
-    private function leanEncounterDetail(?array $detail, int $encounterId, array $labels): array
-    {
+    private function leanEncounterDetail(
+        ?array $detail,
+        int $encounterId,
+        array $labels,
+        ?string $titleOverride = null
+    ): array {
+        $title = $titleOverride !== null && trim($titleOverride) !== ''
+            ? trim($titleOverride)
+            : ($labels['encounter_detail_title'] ?? 'Atención de referencia');
+
         if ($detail === null) {
             $empty = $labels['encounter_detail_empty'] ?? '';
 
@@ -188,7 +240,7 @@ final class ConsultaAsyncIntakeContextService
                 'encounterId' => $encounterId,
                 'published' => false,
                 'headline' => 'Atención #' . $encounterId,
-                'title' => $labels['encounter_detail_title'] ?? 'Atención de referencia',
+                'title' => $title,
                 'narrativeText' => $empty !== '' ? $empty : 'No hay un resumen publicado de esa atención.',
                 'publishedAt' => null,
                 'periodEnd' => null,
@@ -210,7 +262,7 @@ final class ConsultaAsyncIntakeContextService
             'encounterId' => (int) ($detail['encounterId'] ?? $encounterId),
             'published' => true,
             'headline' => $headline,
-            'title' => $labels['encounter_detail_title'] ?? 'Atención de referencia',
+            'title' => $title,
             'narrativeText' => $narrative,
             'publishedAt' => $detail['publishedAt'] ?? null,
             'periodEnd' => $detail['periodEnd'] ?? null,

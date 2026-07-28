@@ -122,15 +122,12 @@ $this->title = $esGuardia
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body d-flex flex-column" style="min-height: 320px;">
-                <p class="text-muted small mb-2" id="async-chat-subtitle"></p>
                 <div id="async-chat-policy-hint" class="alert alert-info py-2 px-3 small mb-2 d-none"></div>
-                <div id="async-chat-intake-context" class="alert alert-light border small py-2 px-3 mb-2 d-none" data-role="async-chat-intake-context">
-                    <div class="fw-semibold mb-1" data-field="intake-title">Contexto</div>
-                    <div data-field="intake-tipo" class="text-muted mb-1 d-none"></div>
-                    <div data-slot="intake-lines" class="mb-1"></div>
-                    <div data-field="intake-summary" class="d-none"></div>
-                    <div data-slot="intake-encounter-detail" class="border rounded bg-white p-2 mb-2 d-none"></div>
-                    <div class="mt-1" data-slot="intake-links"></div>
+                <div id="async-chat-intake-context" class="mb-3 d-none" data-role="async-chat-intake-context">
+                    <div class="fw-bold mb-2" data-field="intake-title">Contexto de la solicitud</div>
+                    <div data-slot="intake-lines"></div>
+                    <div data-slot="intake-encounter-detail" class="d-none"></div>
+                    <div class="mt-2" data-slot="intake-links"></div>
                 </div>
                 <div id="async-chat-loading" class="text-muted small">Cargando mensajes…</div>
                 <div id="async-chat-messages" class="flex-grow-1 overflow-auto mb-3 d-none" style="max-height: 360px;"></div>

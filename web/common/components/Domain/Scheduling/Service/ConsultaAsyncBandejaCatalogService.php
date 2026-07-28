@@ -156,10 +156,15 @@ final class ConsultaAsyncBandejaCatalogService
      *
      * @return array{
      *   section_label: string,
+     *   necesidad_label: string,
+     *   medicamentos_label: string,
+     *   ajuste_motivo_label: string,
+     *   tratamiento_label: string,
      *   reference_encounter_line_label: string,
      *   reference_encounter_action: string,
      *   clinical_history_action: string,
      *   encounter_detail_title: string,
+     *   care_plan_origin_title: string,
      *   encounter_detail_empty: string
      * }
      */
@@ -172,10 +177,15 @@ final class ConsultaAsyncBandejaCatalogService
 
         return [
             'section_label' => trim((string) ($block['section_label'] ?? 'Contexto de la solicitud')),
+            'necesidad_label' => trim((string) ($block['necesidad_label'] ?? 'Necesidad')),
+            'medicamentos_label' => trim((string) ($block['medicamentos_label'] ?? 'Medicamentos')),
+            'ajuste_motivo_label' => trim((string) ($block['ajuste_motivo_label'] ?? 'Motivo del ajuste')),
+            'tratamiento_label' => trim((string) ($block['tratamiento_label'] ?? 'Tratamiento')),
             'reference_encounter_line_label' => trim((string) ($block['reference_encounter_line_label'] ?? 'Atención previa')),
             'reference_encounter_action' => trim((string) ($block['reference_encounter_action'] ?? 'Ver atención de referencia')),
             'clinical_history_action' => trim((string) ($block['clinical_history_action'] ?? 'Ver historia clínica')),
             'encounter_detail_title' => trim((string) ($block['encounter_detail_title'] ?? 'Atención de referencia')),
+            'care_plan_origin_title' => trim((string) ($block['care_plan_origin_title'] ?? 'Consulta de origen')),
             'encounter_detail_empty' => trim((string) ($block['encounter_detail_empty'] ?? 'No hay un resumen publicado de esa atención.')),
         ];
     }

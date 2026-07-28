@@ -357,18 +357,10 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   Widget _buildIntakeContextBanner(BuildContext context) {
     final ctx = _intakeContext;
     if (ctx == null) return const SizedBox.shrink();
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BioSpacing.md,
-        BioSpacing.sm,
-        BioSpacing.md,
-        0,
-      ),
-      child: AsyncIntakeContextPanel(
-        intakeContext: ctx,
-        compact: true,
-        onReference: _onIntakeReference,
-      ),
+    return AsyncIntakeContextPanel(
+      intakeContext: ctx,
+      compact: true,
+      onReference: _onIntakeReference,
     );
   }
 

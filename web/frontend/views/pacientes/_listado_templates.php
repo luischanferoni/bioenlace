@@ -340,7 +340,7 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
                     <span class="badge bg-danger" data-field="sla-badge"></span>
                 </div>
                 <div class="mt-auto d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <span class="badge bg-danger d-none" data-field="prioridad-badge"></span>
+                    <span class="badge d-none" data-field="prioridad-badge"></span>
                     <div class="d-flex flex-wrap gap-2 ms-auto justify-content-end" data-slot="actions"></div>
                 </div>
             </div>

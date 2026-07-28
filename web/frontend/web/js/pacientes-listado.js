@@ -1635,6 +1635,23 @@
       return d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' });
     }
 
+    function badgeClassForIntent(intent) {
+      switch (String(intent || '').toLowerCase()) {
+        case 'danger':
+          return 'bg-danger';
+        case 'warning':
+          return 'bg-warning text-dark';
+        case 'success':
+          return 'bg-success';
+        case 'info':
+          return 'bg-info text-dark';
+        case 'primary':
+          return 'bg-primary';
+        default:
+          return 'bg-secondary';
+      }
+    }
+
     function renderIntakeContextBlock(rootEl, intakeContext) {
       if (!rootEl) return;
       var ctx = intakeContext && typeof intakeContext === 'object' ? intakeContext : null;
@@ -2328,11 +2345,15 @@
       }
       var prioridadBadge = colEl.querySelector('[data-field="prioridad-badge"]');
       if (prioridadBadge) {
-        var rank = item.prioridad && item.prioridad.rank != null ? parseInt(item.prioridad.rank, 10) : 0;
-        if (rank > 0 && rank <= 3) {
-          prioridadBadge.textContent = 'Prioridad ' + rank;
+        var prio = item.prioridad && typeof item.prioridad === 'object' ? item.prioridad : null;
+        var prioLabel = prio && prio.label ? String(prio.label).trim() : '';
+        var prioIntent = prio && prio.intent ? String(prio.intent).trim() : '';
+        if (prioLabel) {
+          prioridadBadge.textContent = prioLabel;
+          prioridadBadge.className = 'badge ' + badgeClassForIntent(prioIntent || 'danger');
           prioridadBadge.classList.remove('d-none');
         } else {
+          prioridadBadge.textContent = '';
           prioridadBadge.classList.add('d-none');
         }
       }

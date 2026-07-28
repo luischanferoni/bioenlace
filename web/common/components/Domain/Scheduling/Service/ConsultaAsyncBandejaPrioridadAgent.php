@@ -128,7 +128,7 @@ final class ConsultaAsyncBandejaPrioridadAgent
             $items[$i]['prioridad'] = $this->prioridad->computePrioridad($item, $encounter, $config);
         }
 
-        $items = $this->prioridad->sortItems($items);
+        $items = $this->prioridad->sortItems($items, $config);
         $this->processSlaEscalations($items, $encounterById, $config);
         $this->recordBandejaRanking($items);
         $items = $this->slimStaffItemsForClient($items);

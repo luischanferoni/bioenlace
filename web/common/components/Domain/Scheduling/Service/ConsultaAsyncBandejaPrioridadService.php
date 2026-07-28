@@ -71,9 +71,10 @@ final class ConsultaAsyncBandejaPrioridadService
 
     /**
      * @param list<array<string, mixed>> $items
+     * @param array<string, mixed> $config Metadata del agente
      * @return list<array<string, mixed>>
      */
-    public function sortItems(array $items): array
+    public function sortItems(array $items, array $config = []): array
     {
         usort($items, static function (array $a, array $b): int {
             $sa = (int) (($a['prioridad']['score'] ?? 0));
@@ -89,11 +90,43 @@ final class ConsultaAsyncBandejaPrioridadService
             if (!isset($row['prioridad']) || !is_array($row['prioridad'])) {
                 $row['prioridad'] = ['score' => 0, 'factors' => []];
             }
-            $row['prioridad']['rank'] = $i + 1;
+            $rank = $i + 1;
+            $row['prioridad']['rank'] = $rank;
+            $presentation = $this->presentationForRank($rank, $config);
+            if ($presentation !== null) {
+                $row['prioridad']['nivel'] = $presentation['nivel'];
+                $row['prioridad']['label'] = $presentation['label'];
+                $row['prioridad']['intent'] = $presentation['intent'];
+            }
         }
         unset($row);
 
         return $items;
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     * @return array{nivel: string, label: string, intent: string}|null
+     */
+    public function presentationForRank(int $rank, array $config): ?array
+    {
+        $levels = is_array($config['ui_rank_levels'] ?? null) ? $config['ui_rank_levels'] : [];
+        $row = $levels[$rank] ?? $levels[(string) $rank] ?? null;
+        if (!is_array($row)) {
+            return null;
+        }
+        $nivel = trim((string) ($row['nivel'] ?? ''));
+        $label = trim((string) ($row['label'] ?? ''));
+        $intent = trim((string) ($row['intent'] ?? ''));
+        if ($nivel === '' || $label === '' || $intent === '') {
+            return null;
+        }
+
+        return [
+            'nivel' => $nivel,
+            'label' => $label,
+            'intent' => $intent,
+        ];
     }
 
     public function pacienteTieneMensajeSinRespuestaStaff(int $encounterId): bool

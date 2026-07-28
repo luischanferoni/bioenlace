@@ -75,9 +75,18 @@ class ConsultaAsyncBandejaPrioridadScoringTest extends Unit
             ],
         ];
 
-        $sorted = $svc->sortItems($items);
+        $sorted = $svc->sortItems($items, [
+            'ui_rank_levels' => [
+                1 => ['nivel' => 'alta', 'label' => 'Prioridad alta', 'intent' => 'danger'],
+                2 => ['nivel' => 'media', 'label' => 'Prioridad media', 'intent' => 'warning'],
+            ],
+        ]);
         $this->assertSame(11, $sorted[0]['encounter_id']);
         $this->assertSame(1, $sorted[0]['prioridad']['rank']);
+        $this->assertSame('alta', $sorted[0]['prioridad']['nivel']);
+        $this->assertSame('Prioridad alta', $sorted[0]['prioridad']['label']);
+        $this->assertSame('danger', $sorted[0]['prioridad']['intent']);
         $this->assertSame(2, $sorted[1]['prioridad']['rank']);
+        $this->assertSame('media', $sorted[1]['prioridad']['nivel']);
     }
 }

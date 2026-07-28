@@ -778,8 +778,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final prioridad = item['prioridad'] is Map
         ? Map<String, dynamic>.from(item['prioridad'] as Map)
         : null;
-    final rank = prioridad?['rank'];
-    final prioridadRank = rank is int ? rank : int.tryParse('$rank') ?? 0;
+    final prioridadLabel = prioridad?['label']?.toString().trim() ?? '';
+    final prioridadIntent = prioridad?['intent']?.toString().trim() ?? '';
+    final prioridadUiIntent = _uiIntentFromApi(prioridadIntent);
 
     final sla = item['sla'] is Map
         ? Map<String, dynamic>.from(item['sla'] as Map)
@@ -829,15 +830,13 @@ class _HomeScreenState extends State<HomeScreen> {
             BioSpacing.gapH(BioSpacing.xs),
             BioBadge.danger('SLA vencido${slaHoras != null ? ' ($slaHoras h)' : ''}'),
           ],
-          if ((prioridadRank > 0 && prioridadRank <= 3) ||
-              puedeTomar ||
-              abrirChat) ...[
+          if (prioridadLabel.isNotEmpty || puedeTomar || abrirChat) ...[
             BioSpacing.gapH(BioSpacing.sm),
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (prioridadRank > 0 && prioridadRank <= 3)
-                  BioBadge.warning('Prioridad $prioridadRank')
+                if (prioridadLabel.isNotEmpty)
+                  BioBadge(label: prioridadLabel, intent: prioridadUiIntent)
                 else
                   const SizedBox.shrink(),
                 const Spacer(),
@@ -873,6 +872,25 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  UiIntent _uiIntentFromApi(String raw) {
+    switch (raw.trim().toLowerCase()) {
+      case 'danger':
+        return UiIntent.danger;
+      case 'warning':
+        return UiIntent.warning;
+      case 'success':
+        return UiIntent.success;
+      case 'info':
+        return UiIntent.info;
+      case 'primary':
+        return UiIntent.primary;
+      case 'secondary':
+        return UiIntent.secondary;
+      default:
+        return UiIntent.neutral;
+    }
   }
 
   String _formatAsyncCreatedAt(String? raw) {

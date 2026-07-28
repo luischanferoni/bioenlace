@@ -16,6 +16,21 @@ scoring:
   paciente_sin_respuesta_staff: 15
   in_progress_asignado: 8
 
+# rank 1..3 → etiqueta UI (clients: intent → bg-* / BioBadge).
+ui_rank_levels:
+  1:
+    nivel: alta
+    label: Prioridad alta
+    intent: danger
+  2:
+    nivel: media
+    label: Prioridad media
+    intent: warning
+  3:
+    nivel: baja
+    label: Prioridad baja
+    intent: secondary
+
 sla_escalation:
   enabled: true
   urgency_bands: [A, B]

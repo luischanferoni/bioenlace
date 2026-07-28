@@ -28,12 +28,15 @@ $nombreUsuario = Yii::$app->user->getNombreUsuario();
 $listaEfectores = Yii::$app->user->getEfectores();
 
 $encounterClass = Yii::$app->user->getEncounterClass();
-$listaEncounters = EncounterDefinition::ENCOUNTER_CLASS;
+$listaEncounters = EncounterDefinition::sessionSelectableClasses();
+$labelsEncounter = EncounterDefinition::ENCOUNTER_CLASS;
 $itemsMenuEncounters = [];
-if (!is_null($listaEncounters)) {
-    foreach ($listaEncounters as $key => $value) {
-        $itemsMenuEncounters[] = ['label' => $value, 'url' => ['site/cambiar-encounter-class', 'codigo' => $key], 'linkOptions' => ['class' => 'alerta-cambio-encounter']];
-    }
+foreach ($listaEncounters as $key => $value) {
+    $itemsMenuEncounters[] = [
+        'label' => $value,
+        'url' => ['site/cambiar-encounter-class', 'codigo' => $key],
+        'linkOptions' => ['class' => 'alerta-cambio-encounter'],
+    ];
 }
 
 $listaServicios = Yii::$app->user->getServicios();
@@ -159,7 +162,7 @@ if (Yii::$app->user->username) {
                             <?php if (!empty($itemsMenuEncounters) && count($itemsMenuEncounters) > 1): ?>
                                 <div class="dropdown">
                                     <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownEncounter" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <?= Html::encode($listaEncounters[$encounterClass] ?? 'N/A') ?>
+                                        <?= Html::encode($labelsEncounter[$encounterClass] ?? $listaEncounters[$encounterClass] ?? 'N/A') ?>
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="dropdownEncounter">
                                         <?php foreach ($itemsMenuEncounters as $item): ?>
@@ -171,8 +174,8 @@ if (Yii::$app->user->username) {
                                         <?php endforeach; ?>
                                     </ul>
                                 </div>
-                            <?php elseif (!empty($encounterClass) && isset($listaEncounters[$encounterClass])): ?>
-                                <span class="text-muted small">Tipo: <?= Html::encode($listaEncounters[$encounterClass]) ?></span>
+                            <?php elseif (!empty($encounterClass) && isset($labelsEncounter[$encounterClass])): ?>
+                                <span class="text-muted small">Tipo: <?= Html::encode($labelsEncounter[$encounterClass]) ?></span>
                             <?php endif; ?>
 
                             <?= $this->render('_alertas_topmenu') ?>

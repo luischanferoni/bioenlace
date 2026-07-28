@@ -13,6 +13,7 @@ use common\models\User;
 
 use common\components\Domain\Clinical\Inpatient\Service\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;
+use common\models\Clinical\EncounterDefinition;
 use common\models\Efector;
 use frontend\components\WebApiJwtSessionService;
 use common\models\ProfesionalEfectorServicio;
@@ -158,6 +159,17 @@ class SiteController extends Controller
      */
     public function actionCambiarEncounterClass($codigo)
     {
+        $codigo = strtoupper(trim((string) $codigo));
+        $permitidas = EncounterDefinition::sessionSelectableClasses();
+        if ($codigo === '' || !isset($permitidas[$codigo])) {
+            Yii::$app->session->setFlash(
+                'error',
+                'Área de trabajo no disponible.'
+            );
+
+            return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());
+        }
+
         Yii::$app->user->setEncounterClass($codigo);
 
         return $this->redirect(SesionOperativaService::redirectRouteForCurrentUser());

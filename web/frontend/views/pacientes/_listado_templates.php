@@ -306,29 +306,28 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 </template>
 
 <template id="tpl-async-bandeja-wrap">
-    <div class="card mb-4" data-role="async-bandeja-wrap">
-        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <h4 class="mb-0" data-field="title"></h4>
+    <div data-role="async-bandeja-wrap">
+        <div class="d-flex justify-content-end mb-2">
             <small class="text-muted d-none" data-field="sla-resumen"></small>
         </div>
-        <div class="card-body">
-            <div class="row" data-slot="async-grid"></div>
-        </div>
+        <div class="row" data-slot="async-grid"></div>
     </div>
 </template>
 
 <template id="tpl-async-solicitud-card">
     <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100 shadow-sm border-start border-4 border-info" data-role="async-card">
+        <div class="card h-100 shadow-sm position-relative" data-role="async-card">
             <div class="card-body d-flex flex-column">
                 <div class="d-flex flex-wrap justify-content-between align-items-start gap-1 mb-2">
-                    <span class="badge bg-info text-dark">Consulta clínica por mensaje</span>
+                    <span class="badge bg-info text-dark d-none" data-field="solicitud-tipo"></span>
                     <div class="d-flex flex-wrap gap-1">
                         <span class="badge bg-danger d-none" data-field="prioridad-badge"></span>
                         <span class="badge" data-field="estado-badge"></span>
                     </div>
                 </div>
-                <h5 class="card-title h6 mb-1" data-field="paciente"></h5>
+                <h5 class="card-title h6 mb-1">
+                    <i class="bi bi-person-circle text-primary me-2"></i><span data-field="paciente"></span>
+                </h5>
                 <div class="small text-muted mb-2" data-field="servicio"></div>
                 <div class="small mb-2"><strong>Solicitado:</strong> <span data-field="created-at"></span></div>
                 <div class="small mb-2 d-none" data-slot="intake-context">
@@ -351,13 +350,12 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 
 <template id="tpl-patient-async-card">
     <div class="col-md-6 col-lg-4 mb-3">
-        <div class="card h-100 shadow-sm" data-role="patient-async-card">
+        <div class="card h-100 shadow-sm position-relative" data-role="patient-async-card">
             <div class="card-body d-flex flex-column">
                 <div class="d-flex flex-wrap justify-content-between gap-1 mb-2">
-                    <span class="badge bg-info text-dark">Consulta clínica por mensaje</span>
+                    <span class="badge bg-info text-dark d-none" data-field="solicitud-tipo"></span>
                     <span class="badge" data-field="estado-badge"></span>
                 </div>
-                <span class="badge bg-primary mb-2 d-none align-self-start" data-field="solicitud-tipo"></span>
                 <h5 class="card-title h6 mb-2" data-field="servicio"></h5>
                 <div class="small mb-2"><strong>Enviada:</strong> <span data-field="created-at"></span></div>
                 <p class="small text-muted mb-2 flex-grow-1" data-field="preview"></p>

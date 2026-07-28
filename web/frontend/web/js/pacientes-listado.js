@@ -2308,6 +2308,17 @@
       colEl.querySelector('[data-field="created-at"]').textContent = formatAsyncCreatedAt(item.created_at);
       colEl.querySelector('[data-field="preview"]').textContent = item.reason_preview || '';
       fillAsyncIntakeContext(colEl, item);
+      var tipoBadge = colEl.querySelector('[data-field="solicitud-tipo"]');
+      if (tipoBadge) {
+        var tipo = item.solicitud_tipo ? String(item.solicitud_tipo).trim() : '';
+        if (tipo) {
+          tipoBadge.textContent = tipo;
+          tipoBadge.classList.remove('d-none');
+        } else {
+          tipoBadge.textContent = '';
+          tipoBadge.classList.add('d-none');
+        }
+      }
       var badge = colEl.querySelector('[data-field="estado-badge"]');
       if (badge) {
         badge.className = 'badge bg-secondary';
@@ -2373,7 +2384,6 @@
       if (!wrapFrag) return;
       var wrapRoot = wrapFrag.querySelector('[data-role="async-bandeja-wrap"]');
       targetEl.appendChild(wrapFrag);
-      wrapRoot.querySelector('[data-field="title"]').textContent = data.title || 'Consultas clínicas por mensaje';
       var slaResumen = wrapRoot.querySelector('[data-field="sla-resumen"]');
       if (slaResumen && data.sla_incumplidos > 0) {
         slaResumen.textContent = data.sla_incumplidos + ' con SLA vencido';

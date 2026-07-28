@@ -742,23 +742,13 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(
-                _tituloConsultasAsync,
-                style: BioTypography.h3.copyWith(
-                  color: IntentPalette.of(UiIntent.primary).base,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-            if (_consultasAsyncSlaIncumplidos > 0)
-              BioBadge.danger('$_consultasAsyncSlaIncumplidos SLA vencido'),
-          ],
-        ),
-        BioSpacing.gapH(BioSpacing.sm),
+        if (_consultasAsyncSlaIncumplidos > 0) ...[
+          Align(
+            alignment: Alignment.centerRight,
+            child: BioBadge.danger('$_consultasAsyncSlaIncumplidos SLA vencido'),
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+        ],
         ..._consultasAsync.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: BioSpacing.md),
@@ -816,20 +806,27 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(nombrePaciente, style: BioTypography.title),
+              if (solicitudTipo.isNotEmpty)
+                Flexible(child: BioBadge.info(solicitudTipo))
+              else
+                const SizedBox.shrink(),
+              Wrap(
+                spacing: BioSpacing.xs,
+                runSpacing: BioSpacing.xs,
+                children: [
+                  if (prioridadRank > 0 && prioridadRank <= 3)
+                    BioBadge.warning('Prioridad $prioridadRank'),
+                  if (statusLabel.isNotEmpty)
+                    BioBadge(label: statusLabel, intent: statusIntent),
+                ],
               ),
-              if (statusLabel.isNotEmpty)
-                BioBadge(label: statusLabel, intent: statusIntent),
             ],
           ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(nombrePaciente, style: BioTypography.title),
           if (servicio.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(servicio, style: BioTypography.bodySm),
-          ],
-          if (solicitudTipo.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            BioBadge.info(solicitudTipo),
           ],
           if (createdAt.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
@@ -843,10 +840,6 @@ class _HomeScreenState extends State<HomeScreen> {
               maxLines: 4,
               overflow: TextOverflow.ellipsis,
             ),
-          ],
-          if (prioridadRank > 0 && prioridadRank <= 3) ...[
-            BioSpacing.gapH(BioSpacing.xs),
-            BioBadge.warning('Prioridad $prioridadRank'),
           ],
           if (slaIncumplido) ...[
             BioSpacing.gapH(BioSpacing.xs),

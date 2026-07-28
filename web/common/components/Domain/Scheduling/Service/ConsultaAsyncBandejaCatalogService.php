@@ -28,6 +28,36 @@ final class ConsultaAsyncBandejaCatalogService
         return trim((string) (is_array($block) ? ($block['empty_message'] ?? '') : ''));
     }
 
+    /**
+     * Grupos del panel staff (orden de presentación).
+     *
+     * @return list<array{id: string, title: string, empty_message: string}>
+     */
+    public function staffGroups(): array
+    {
+        $raw = self::load()['staff_groups'] ?? [];
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $id = trim((string) ($row['id'] ?? ''));
+            if ($id === '') {
+                continue;
+            }
+            $out[] = [
+                'id' => $id,
+                'title' => trim((string) ($row['title'] ?? $id)),
+                'empty_message' => trim((string) ($row['empty_message'] ?? '')),
+            ];
+        }
+
+        return $out;
+    }
+
     public function tituloSeccionPaciente(): string
     {
         $block = self::load()['patient_section'] ?? [];

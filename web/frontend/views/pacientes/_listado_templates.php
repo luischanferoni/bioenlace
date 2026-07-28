@@ -310,8 +310,16 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
         <div class="d-flex justify-content-end mb-2">
             <small class="text-muted d-none" data-field="sla-resumen"></small>
         </div>
-        <div class="row" data-slot="async-grid"></div>
+        <div data-slot="async-groups"></div>
     </div>
+</template>
+
+<template id="tpl-async-bandeja-group">
+    <section class="mb-4" data-role="async-group">
+        <h3 class="h5 mb-3" data-field="titulo"></h3>
+        <div class="row" data-slot="async-grid"></div>
+        <div class="d-none" data-slot="empty"></div>
+    </section>
 </template>
 
 <template id="tpl-async-solicitud-card">

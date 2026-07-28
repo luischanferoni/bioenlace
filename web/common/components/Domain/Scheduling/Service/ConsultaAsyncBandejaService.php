@@ -33,6 +33,7 @@ final class ConsultaAsyncBandejaService
             return [
                 'title' => $catalog->tituloSeccionStaff(),
                 'items' => [],
+                'groups' => $this->buildStaffGroups([], $catalog),
                 'total' => 0,
                 'sla_incumplidos' => 0,
                 'empty_message' => $catalog->mensajeVacioStaff(),
@@ -73,7 +74,57 @@ final class ConsultaAsyncBandejaService
             'empty_message' => $catalog->mensajeVacioStaff(),
         ];
 
-        return (new ConsultaAsyncBandejaPrioridadAgent())->applyToStaffBandeja($result, $encounterById);
+        $result = (new ConsultaAsyncBandejaPrioridadAgent())->applyToStaffBandeja($result, $encounterById);
+        $result['groups'] = $this->buildStaffGroups(
+            is_array($result['items'] ?? null) ? $result['items'] : [],
+            $catalog
+        );
+
+        return $result;
+    }
+
+    /**
+     * Separa ítems visibles en «Por tomar» vs «Las mías» (tomadas por otro médico no llegan aquí).
+     *
+     * @param list<array<string, mixed>> $items
+     * @return list<array{id: string, title: string, empty_message: string, items: list<array<string, mixed>>, total: int}>
+     */
+    private function buildStaffGroups(array $items, ConsultaAsyncBandejaCatalogService $catalog): array
+    {
+        $porTomar = [];
+        $mias = [];
+        foreach ($items as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $asignacion = is_array($item['asignacion'] ?? null) ? $item['asignacion'] : [];
+            $esMio = !empty($asignacion['es_mio']);
+            $puedeTomar = !empty($item['acciones']['tomar']);
+            if ($esMio) {
+                $mias[] = $item;
+            } elseif ($puedeTomar || ($item['status'] ?? '') === EncounterStatus::PLANNED) {
+                $porTomar[] = $item;
+            }
+        }
+
+        $buckets = [
+            'por_tomar' => $porTomar,
+            'mias' => $mias,
+        ];
+        $groups = [];
+        foreach ($catalog->staffGroups() as $def) {
+            $id = $def['id'];
+            $bucket = $buckets[$id] ?? [];
+            $groups[] = [
+                'id' => $id,
+                'title' => $def['title'],
+                'empty_message' => $def['empty_message'],
+                'items' => $bucket,
+                'total' => count($bucket),
+            ];
+        }
+
+        return $groups;
     }
 
     /**

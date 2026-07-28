@@ -34,4 +34,14 @@ class ConsultaAsyncBandejaCatalogServiceTest extends Unit
         $this->assertStringContainsString('Consultas clínicas por mensaje', $svc->mensajeExitoRenovacionCierre());
         $this->assertStringContainsString('pendiente', $svc->mensajeRenovacionDuplicada());
     }
+
+    public function testStaffGroupsPorTomarYMias(): void
+    {
+        $svc = new ConsultaAsyncBandejaCatalogService();
+        $groups = $svc->staffGroups();
+        $ids = array_column($groups, 'id');
+        $this->assertSame(['por_tomar', 'mias'], $ids);
+        $this->assertSame('Por tomar', $groups[0]['title']);
+        $this->assertSame('Las mías', $groups[1]['title']);
+    }
 }

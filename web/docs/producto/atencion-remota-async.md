@@ -65,10 +65,13 @@ En los KPI de agenda (30 días), si hubo turnos presenciales con triage `sugerid
 
 Las solicitudes generan un encounter VR en estado **planificado**, sin turno. El personal las atiende en sesión operativa **Virtual** (`encounter_class = VR`): el inicio muestra la bandeja **Consultas clínicas por mensaje** (no en Ambulatorio).
 
+- **Por tomar** — solicitudes `planned` del servicio/efector aún sin asignar; cualquier profesional con PES en ese servicio puede tomarlas.
+- **Las mías** — solicitudes ya tomadas por el profesional de la sesión (`in-progress` / en espera asignadas a su PES).
+- Las tomadas por **otro** profesional **no** aparecen en la bandeja de quien no las tomó.
 - **Tomar y responder** — asigna el PES de sesión, pasa a `in-progress` y abre el chat.
 - **Chat** — API `consulta-chat` existente; el primer mensaje del paciente se guarda al crear la solicitud.
 - **SLA** — plazo objetivo según banda de urgencia del triage (`consulta_async_bandeja.yaml`); badge si venció sin respuesta del staff.
-- **Priorización (agente H01)** — orden sugerido por score (banda triage, SLA vencido, antigüedad, mensaje paciente sin respuesta). Badge «Prioridad 1–3» en tarjetas. Escalamiento push staff en bandas A/B con SLA vencido (una vez por solicitud).
+- **Priorización (agente H01)** — orden sugerido por score (banda triage, SLA vencido, antigüedad, mensaje paciente sin respuesta). Badge de nivel (alta/media/baja) en las primeras posiciones. Escalamiento push staff en bandas A/B con SLA vencido (una vez por solicitud).
 - **Paciente** — en inicio ve condiciones activas, tratamientos y consultas async (generales o anidadas bajo ancla) con acceso al mismo chat.
 
 ## Cómo funciona (etapa 4 — política por servicio)

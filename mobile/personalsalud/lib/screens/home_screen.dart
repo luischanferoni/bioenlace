@@ -53,6 +53,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Turno> _turnos = [];
   List<Map<String, dynamic>> _consultasAsync = [];
+  List<Map<String, dynamic>> _consultasAsyncGroups = [];
   String _tituloConsultasAsync = 'Consultas clínicas por mensaje';
   int _consultasAsyncSlaIncumplidos = 0;
   final Set<int> _tomandoAsyncIds = {};
@@ -211,6 +212,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _coberturaTitle = null;
         _sessionTieneCobertura = false;
         _consultasAsync = [];
+        _consultasAsyncGroups = [];
         _consultasAsyncSlaIncumplidos = 0;
         _lastListKind = '';
         _staffContext = null;
@@ -268,6 +270,11 @@ class _HomeScreenState extends State<HomeScreen> {
         _consultasAsync = items
             .map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
+        final rawGroups = asyncSec.data['groups'] as List<dynamic>? ?? [];
+        _consultasAsyncGroups = rawGroups
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
         // Título de página: solo el del header (top nav). Preferir panel.title.
         final panelTitle = panel.title.trim();
         if (panelTitle.isNotEmpty) {
@@ -277,6 +284,7 @@ class _HomeScreenState extends State<HomeScreen> {
             asyncSec.data['sla_incumplidos'] as int? ?? 0;
       } else if (!partial) {
         _consultasAsync = [];
+        _consultasAsyncGroups = [];
         _consultasAsyncSlaIncumplidos = 0;
       }
 
@@ -647,7 +655,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildVrHomeContent() {
-    if (_consultasAsync.isEmpty) {
+    final hasGroups = _consultasAsyncGroups.isNotEmpty;
+    final hasItems = _consultasAsync.isNotEmpty;
+    if (!hasGroups && !hasItems) {
       return _buildEmpty(
         icon: Icons.chat_bubble_outline,
         text: 'No hay consultas clínicas por mensaje pendientes.',
@@ -667,14 +677,45 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           BioSpacing.gapH(BioSpacing.sm),
         ],
-        ..._consultasAsync.map(
+        if (hasGroups)
+          ..._consultasAsyncGroups.expand(_buildAsyncGroupSection)
+        else
+          ..._consultasAsync.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: BioSpacing.md),
+              child: _buildAsyncSolicitudCard(item),
+            ),
+          ),
+      ],
+    );
+  }
+
+  List<Widget> _buildAsyncGroupSection(Map<String, dynamic> group) {
+    final title = group['title']?.toString().trim() ?? '';
+    final emptyMessage = group['empty_message']?.toString().trim() ??
+        'Sin solicitudes en esta sección.';
+    final rawItems = group['items'] as List<dynamic>? ?? [];
+    final items = rawItems
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+
+    return [
+      if (title.isNotEmpty) ...[
+        _seccionSubtitulo(title),
+        BioSpacing.gapH(BioSpacing.sm),
+      ],
+      if (items.isEmpty)
+        _emptyInline(emptyMessage)
+      else
+        ...items.map(
           (item) => Padding(
             padding: const EdgeInsets.only(bottom: BioSpacing.md),
             child: _buildAsyncSolicitudCard(item),
           ),
         ),
-      ],
-    );
+      BioSpacing.gapH(BioSpacing.lg),
+    ];
   }
 
   Widget _buildTurnosPorEstado(Turno? siguienteTurno) {

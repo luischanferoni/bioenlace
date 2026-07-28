@@ -2392,15 +2392,18 @@
       if (!targetEl || !data) {
         return;
       }
+      var groups = Array.isArray(data.groups) ? data.groups : null;
       var items = Array.isArray(data.items) ? data.items : [];
       clearNode(targetEl);
-      if (!items.length) {
+
+      if ((!groups || !groups.length) && !items.length) {
         showListadoEmpty(
           data.empty_message || 'No hay consultas clínicas por mensaje pendientes.',
           targetEl
         );
         return;
       }
+
       var wrapFrag = importTemplate('tpl-async-bandeja-wrap');
       if (!wrapFrag) return;
       var wrapRoot = wrapFrag.querySelector('[data-role="async-bandeja-wrap"]');
@@ -2410,15 +2413,55 @@
         slaResumen.textContent = data.sla_incumplidos + ' con SLA vencido';
         slaResumen.classList.remove('d-none');
       }
-      var grid = wrapRoot.querySelector('[data-slot="async-grid"]');
-      items.forEach(function (item) {
-        var cardFrag = importTemplate('tpl-async-solicitud-card');
-        if (!cardFrag) return;
-        var col = cardFrag.firstElementChild;
-        if (!col) return;
-        fillAsyncSolicitudCard(col, item);
-        grid.appendChild(col);
+      var groupsSlot = wrapRoot.querySelector('[data-slot="async-groups"]');
+      if (!groupsSlot) return;
+
+      if (groups && groups.length) {
+        groups.forEach(function (group) {
+          renderAsyncBandejaGroup(groupsSlot, group);
+        });
+        return;
+      }
+
+      // Fallback: lista plana (clientes/API sin groups).
+      renderAsyncBandejaGroup(groupsSlot, {
+        title: data.title || 'Consultas clínicas por mensaje',
+        items: items,
+        empty_message: data.empty_message || '',
       });
+    }
+
+    function renderAsyncBandejaGroup(groupsSlot, group) {
+      if (!groupsSlot || !group) return;
+      var groupFrag = importTemplate('tpl-async-bandeja-group');
+      if (!groupFrag) return;
+      var groupRoot = groupFrag.querySelector('[data-role="async-group"]');
+      var titleEl = groupRoot.querySelector('[data-field="titulo"]');
+      if (titleEl) {
+        titleEl.textContent = group.title || '';
+      }
+      var grid = groupRoot.querySelector('[data-slot="async-grid"]');
+      var emptySlot = groupRoot.querySelector('[data-slot="empty"]');
+      var groupItems = Array.isArray(group.items) ? group.items : [];
+      if (!groupItems.length) {
+        if (emptySlot) {
+          emptySlot.classList.remove('d-none');
+          showListadoEmpty(
+            group.empty_message || 'Sin solicitudes en esta sección.',
+            emptySlot
+          );
+        }
+      } else if (grid) {
+        groupItems.forEach(function (item) {
+          var cardFrag = importTemplate('tpl-async-solicitud-card');
+          if (!cardFrag) return;
+          var col = cardFrag.firstElementChild;
+          if (!col) return;
+          fillAsyncSolicitudCard(col, item);
+          grid.appendChild(col);
+        });
+      }
+      groupsSlot.appendChild(groupFrag);
     }
 
     function fillPatientAsyncCard(col, item, esHistorial) {

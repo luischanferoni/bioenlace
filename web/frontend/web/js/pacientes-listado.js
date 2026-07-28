@@ -1828,6 +1828,15 @@
           compose.classList.add('d-none');
         }
       }
+      var messagesBox = document.getElementById('async-chat-messages');
+      if (messagesBox) {
+        if (p.showMessageThread) {
+          messagesBox.classList.remove('d-none');
+        } else {
+          messagesBox.classList.add('d-none');
+          clearNode(messagesBox);
+        }
+      }
       if (resolveSlot) {
         clearNode(resolveSlot);
         if (p.showResolutionActions) {
@@ -2133,7 +2142,11 @@
         asyncChatState.chatPolicy = helpers && helpers.parsePolicy
           ? helpers.parsePolicy(json.data && json.data.chat_policy)
           : null;
-        renderAsyncChatMessages(messages);
+        renderAsyncChatMessages(
+          asyncChatState.chatPolicy && asyncChatState.chatPolicy.showMessageThread === false
+            ? []
+            : messages
+        );
         if (json.data && json.data.intake_context) {
           asyncChatState.intakeContext = json.data.intake_context;
           renderIntakeContextBlock(
@@ -2142,7 +2155,16 @@
           );
         }
         if (loading) loading.classList.add('d-none');
-        if (box) box.classList.remove('d-none');
+        var showThread =
+          !asyncChatState.chatPolicy || asyncChatState.chatPolicy.showMessageThread !== false;
+        if (box) {
+          if (showThread) {
+            box.classList.remove('d-none');
+          } else {
+            box.classList.add('d-none');
+            clearNode(box);
+          }
+        }
         applyAsyncChatPolicyUI(asyncChatState.chatPolicy);
       } catch (e) {
         if (loading) loading.classList.add('d-none');

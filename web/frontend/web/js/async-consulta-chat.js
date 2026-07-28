@@ -16,6 +16,7 @@
         canClose: false,
         resolutions: [],
         suggestTurno: false,
+        showMessageThread: true,
       };
     }
     var composer = raw.composer && typeof raw.composer === 'object' ? raw.composer : {};
@@ -59,6 +60,10 @@
       suggestTurno: raw.suggest_turno === true,
       conversationMode: raw.conversation_mode ? String(raw.conversation_mode).trim() : 'conversational',
       showResolutionActions: acciones.cerrar === true && resolutions.length > 0,
+      /** Hilo de mensajes solo en modo conversacional (consulta/evolución). */
+      showMessageThread:
+        (raw.conversation_mode ? String(raw.conversation_mode).trim() : 'conversational') !==
+        'structured',
     };
   }
 

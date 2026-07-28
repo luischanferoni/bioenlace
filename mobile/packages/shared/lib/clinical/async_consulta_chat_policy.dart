@@ -48,6 +48,9 @@ class AsyncConsultaChatPolicy {
   /// CTAs de resolución staff (structured sin composer, o conversacional junto al composer).
   bool get showResolutionActions => canClose && resolutions.isNotEmpty;
 
+  /// Hilo de mensajes solo en consulta/evolución (modo conversacional).
+  bool get showMessageThread => conversationMode != 'structured';
+
   factory AsyncConsultaChatPolicy.fromApi(Map<String, dynamic>? raw) {
     if (raw == null) {
       return const AsyncConsultaChatPolicy(

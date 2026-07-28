@@ -305,7 +305,9 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
                           ),
                         ),
                       )
-                    : _buildLista(context),
+                    : _chatPolicy.showMessageThread
+                        ? _buildLista(context)
+                        : const SizedBox.expand(),
           ),
           if (_chatPolicy.composerEnabled) _buildInputBar(context),
           if (_chatPolicy.showResolutionActions) _buildResolutionActions(context),

@@ -268,9 +268,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _consultasAsync = items
             .map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
-        final titulo = asyncSec.data['title']?.toString().trim();
-        if (titulo != null && titulo.isNotEmpty) {
-          _tituloConsultasAsync = titulo;
+        // Título de página: solo el del header (top nav). Preferir panel.title.
+        final panelTitle = panel.title.trim();
+        if (panelTitle.isNotEmpty) {
+          _tituloConsultasAsync = panelTitle;
         }
         _consultasAsyncSlaIncumplidos =
             asyncSec.data['sla_incumplidos'] as int? ?? 0;
@@ -494,7 +495,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         : _encounterClass == 'EMER'
                             ? _wrapWithPanelKpis(_buildGuardiaTableroList())
                             : _encounterClass == 'VR'
-                                ? _wrapWithPanelKpis(_buildVrHomeContent())
+                                ? _buildVrHomeContent()
                                 : _wrapWithPanelKpis(
                                     _buildAmbHomeContent(siguienteTurno),
                                   ),
@@ -659,7 +660,19 @@ class _HomeScreenState extends State<HomeScreen> {
         vertical: BioSpacing.lg,
       ),
       children: [
-        _buildAsyncBandejaSection(),
+        if (_consultasAsyncSlaIncumplidos > 0) ...[
+          Align(
+            alignment: Alignment.centerRight,
+            child: BioBadge.danger('$_consultasAsyncSlaIncumplidos SLA vencido'),
+          ),
+          BioSpacing.gapH(BioSpacing.sm),
+        ],
+        ..._consultasAsync.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: BioSpacing.md),
+            child: _buildAsyncSolicitudCard(item),
+          ),
+        ),
       ],
     );
   }
@@ -738,27 +751,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildAsyncBandejaSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (_consultasAsyncSlaIncumplidos > 0) ...[
-          Align(
-            alignment: Alignment.centerRight,
-            child: BioBadge.danger('$_consultasAsyncSlaIncumplidos SLA vencido'),
-          ),
-          BioSpacing.gapH(BioSpacing.sm),
-        ],
-        ..._consultasAsync.map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(bottom: BioSpacing.md),
-            child: _buildAsyncSolicitudCard(item),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildAsyncSolicitudCard(Map<String, dynamic> item) {
     final paciente = item['paciente'] is Map
         ? Map<String, dynamic>.from(item['paciente'] as Map)
@@ -810,16 +802,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 Flexible(child: BioBadge.info(solicitudTipo))
               else
                 const SizedBox.shrink(),
-              Wrap(
-                spacing: BioSpacing.xs,
-                runSpacing: BioSpacing.xs,
-                children: [
-                  if (prioridadRank > 0 && prioridadRank <= 3)
-                    BioBadge.warning('Prioridad $prioridadRank'),
-                  if (statusLabel.isNotEmpty)
-                    BioBadge(label: statusLabel, intent: statusIntent),
-                ],
-              ),
+              if (statusLabel.isNotEmpty)
+                BioBadge(label: statusLabel, intent: statusIntent),
             ],
           ),
           BioSpacing.gapH(BioSpacing.xs),
@@ -845,31 +829,44 @@ class _HomeScreenState extends State<HomeScreen> {
             BioSpacing.gapH(BioSpacing.xs),
             BioBadge.danger('SLA vencido${slaHoras != null ? ' ($slaHoras h)' : ''}'),
           ],
-          if (puedeTomar || abrirChat) ...[
+          if ((prioridadRank > 0 && prioridadRank <= 3) ||
+              puedeTomar ||
+              abrirChat) ...[
             BioSpacing.gapH(BioSpacing.sm),
-            Wrap(
-              spacing: BioSpacing.sm,
-              runSpacing: BioSpacing.xs,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                if (puedeTomar)
-                  BioButton.primary(
-                    label: 'Tomar y responder',
-                    size: BioButtonSize.sm,
-                    icon: Icons.play_arrow_outlined,
-                    loading: tomando,
-                    onPressed: tomando || encounterId <= 0
-                        ? null
-                        : () => _tomarAsyncCaso(item),
-                  ),
-                if (abrirChat)
-                  BioButton.outlinePrimary(
-                    label: 'Ver conversación',
-                    size: BioButtonSize.sm,
-                    icon: Icons.chat_bubble_outline,
-                    onPressed: encounterId <= 0
-                        ? null
-                        : () => _abrirChatAsync(item),
-                  ),
+                if (prioridadRank > 0 && prioridadRank <= 3)
+                  BioBadge.warning('Prioridad $prioridadRank')
+                else
+                  const SizedBox.shrink(),
+                const Spacer(),
+                Wrap(
+                  spacing: BioSpacing.sm,
+                  runSpacing: BioSpacing.xs,
+                  alignment: WrapAlignment.end,
+                  children: [
+                    if (puedeTomar)
+                      BioButton.primary(
+                        label: 'Tomar y responder',
+                        size: BioButtonSize.sm,
+                        icon: Icons.play_arrow_outlined,
+                        loading: tomando,
+                        onPressed: tomando || encounterId <= 0
+                            ? null
+                            : () => _tomarAsyncCaso(item),
+                      ),
+                    if (abrirChat)
+                      BioButton.outlinePrimary(
+                        label: 'Ver conversación',
+                        size: BioButtonSize.sm,
+                        icon: Icons.chat_bubble_outline,
+                        onPressed: encounterId <= 0
+                            ? null
+                            : () => _abrirChatAsync(item),
+                      ),
+                  ],
+                ),
               ],
             ),
           ],

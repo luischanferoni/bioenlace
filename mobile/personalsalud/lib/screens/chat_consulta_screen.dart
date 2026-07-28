@@ -396,15 +396,10 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
               ],
               for (var i = 0; i < resolutions.length; i++) ...[
                 if (i > 0) BioSpacing.gapH(BioSpacing.xs),
-                i == 0
-                    ? BioButton.primary(
-                        label: resolutions[i].label,
-                        onPressed: _sending ? null : () => _resolverConCodigo(resolutions[i]),
-                      )
-                    : BioButton.outlinePrimary(
-                        label: resolutions[i].label,
-                        onPressed: _sending ? null : () => _resolverConCodigo(resolutions[i]),
-                      ),
+                BioButton.outlinePrimary(
+                  label: resolutions[i].label,
+                  onPressed: _sending ? null : () => _resolverConCodigo(resolutions[i]),
+                ),
               ],
             ],
           ),

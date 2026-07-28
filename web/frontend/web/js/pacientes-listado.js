@@ -1849,10 +1849,10 @@
         clearNode(resolveSlot);
         if (p.showResolutionActions) {
           resolveSlot.classList.remove('d-none');
-          p.resolutions.forEach(function (r, idx) {
+          p.resolutions.forEach(function (r) {
             var btn = document.createElement('button');
             btn.type = 'button';
-            btn.className = idx === 0 ? 'btn btn-primary btn-sm me-2 mb-2' : 'btn btn-outline-secondary btn-sm me-2 mb-2';
+            btn.className = 'btn btn-outline-primary w-100';
             btn.textContent = r.label;
             btn.addEventListener('click', function () {
               resolveAsyncChatWithCode(r);

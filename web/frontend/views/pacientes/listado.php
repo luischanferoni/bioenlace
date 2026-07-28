@@ -141,7 +141,7 @@ $this->title = $esGuardia
                     <input type="file" id="async-chat-file-input" class="d-none" accept="application/pdf,.pdf,image/*">
                     <button type="button" class="btn btn-primary btn-sm" id="async-chat-send">Enviar</button>
                 </div>
-                <div id="async-chat-resolve-actions" class="d-none"></div>
+                <div id="async-chat-resolve-actions" class="d-none d-grid gap-2 mt-2"></div>
                 <div id="async-chat-error" class="alert alert-danger d-none mt-2 mb-0"></div>
             </div>
         </div>

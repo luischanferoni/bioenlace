@@ -220,6 +220,7 @@ final class ConsultaAsyncChatPolicyService
 
     /**
      * Map code => { label, require_note } para CTAs de cierre staff.
+     * Preferir action_label (verbo) del catálogo; label queda para historial/paciente.
      *
      * @param array<string, mixed> $meta
      * @return array<string, array{label: string, require_note: bool}>
@@ -242,7 +243,10 @@ final class ConsultaAsyncChatPolicyService
             if ($def === null) {
                 continue;
             }
-            $label = trim((string) ($def['label'] ?? $code));
+            $actionLabel = trim((string) ($def['action_label'] ?? ''));
+            $label = $actionLabel !== ''
+                ? $actionLabel
+                : trim((string) ($def['label'] ?? $code));
             if ($label === '') {
                 continue;
             }

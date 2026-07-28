@@ -102,23 +102,28 @@ cancel:
 resolutions:
   medicacion_renovada:
     label: Medicación renovada
+    action_label: Renovar medicación
     notify_patient: true
     permite_renovacion_posterior: false
   medicacion_ajustada:
     label: Medicación ajustada
+    action_label: Ajustar medicación
     notify_patient: true
     permite_renovacion_posterior: true
   medicacion_no_indicada:
     label: No corresponde renovación ni ajuste
+    action_label: Indicar que no corresponde
     require_note: true
     notify_patient: true
   requiere_control_presencial:
     label: Requiere control presencial
+    action_label: Indicar control presencial
     require_note: false
     notify_patient: true
     suggest_turno: true
   consulta_resuelta:
     label: Consulta resuelta por mensaje
+    action_label: Resolver consulta
     notify_patient: true
   limite_conversacion:
     label: Límite de mensajes alcanzado

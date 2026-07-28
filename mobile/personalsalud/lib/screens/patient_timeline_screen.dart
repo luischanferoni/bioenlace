@@ -253,11 +253,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   String _mensajeErrorHistoriaClinica(Object e) {
-    final raw = e is Exception ? e.toString() : '$e';
-    final msg = raw.startsWith('Exception: ')
-        ? raw.substring('Exception: '.length)
-        : raw;
-    return 'Error al cargar historia clínica: $msg';
+    return 'Error al cargar historia clínica: ${userFriendlyErrorMessage(e)}';
   }
 
   @override
@@ -1091,11 +1087,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   String _mensajeErrorCaptura(Object e) {
-    final raw = e is Exception ? e.toString() : '$e';
-    final msg = raw.startsWith('Exception: ')
-        ? raw.substring('Exception: '.length)
-        : raw;
-    return msg;
+    final friendly = userFriendlyErrorMessage(e);
+    if (isRetryableNetworkError(e)) {
+      return '$friendly La nota quedó en el teléfono; reintentá cuando haya conexión.';
+    }
+    return friendly;
   }
 
   String _dictationStatusMessage(DeviceDictationResult result, String text) {
@@ -1313,7 +1309,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _chatController.clear();
         _sttStatus = current.status == PendingEncounterCaptureStatus.failedSave
             ? (current.lastError?.trim().isNotEmpty == true
-                ? current.lastError!
+                ? userFriendlyErrorMessage(current.lastError!)
                 : 'No se pudo guardar')
             : '';
       });
@@ -1332,7 +1328,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ? ''
           : current.texto;
       _sttStatus = current.lastError != null && current.lastError!.isNotEmpty
-          ? current.lastError!
+          ? userFriendlyErrorMessage(current.lastError!)
           : '';
     });
   }
@@ -2158,6 +2154,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Text(
+          'Notas pendientes en el teléfono',
+          style: BioTypography.overline.copyWith(
+            color: context.bio.textMuted,
+          ),
+        ),
+        BioSpacing.gapH(BioSpacing.sm),
         for (final item in items) ...[
           _buildPendingCaptureRow(item),
           if (item != items.last) BioSpacing.gapH(BioSpacing.sm),
@@ -2183,20 +2186,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
   }
 
-  UiIntent _pendingStatusIntent(PendingEncounterCaptureStatus status) {
-    switch (status) {
-      case PendingEncounterCaptureStatus.failedSave:
-      case PendingEncounterCaptureStatus.pendingUpload:
-      case PendingEncounterCaptureStatus.pendingStt:
-      case PendingEncounterCaptureStatus.pendingAnalyze:
-        return UiIntent.warning;
-      case PendingEncounterCaptureStatus.pendingSave:
-        return UiIntent.info;
-      case PendingEncounterCaptureStatus.draft:
-        return UiIntent.neutral;
-    }
-  }
-
   Widget _buildPendingCaptureRow(PendingEncounterCapture item) {
     final previewRaw = item.texto.trim();
     final preview = previewRaw.isEmpty || previewRaw.startsWith('(audio')
@@ -2204,27 +2193,58 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         : (previewRaw.length > 90
             ? '${previewRaw.substring(0, 90)}…'
             : previewRaw);
-    final intent = _pendingStatusIntent(item.status);
     final primary = _pendingPrimaryActionLabel(item);
+    final rawError = item.lastError?.trim() ?? '';
+    final friendlyError = rawError.isNotEmpty &&
+            item.status != PendingEncounterCaptureStatus.pendingSave
+        ? userFriendlyErrorMessage(rawError)
+        : null;
+    final warning = IntentPalette.of(UiIntent.warning);
 
-    return BioCard.intent(
-      intent: intent,
+    // Cola local: fondo hundido + borde suave, no BioCard.intent (evita
+    // confundirse con condición / signos / motivos).
+    return Container(
+      padding: const EdgeInsets.all(BioSpacing.md),
+      decoration: BoxDecoration(
+        color: PaperPalette.paper100,
+        borderRadius: BorderRadius.circular(BioRadius.sm),
+        border: Border.all(color: warning.border, width: BorderWidth.thin),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(_pendingStatusLabel(item.status), style: BioTypography.title),
+          Row(
+            children: [
+              Icon(
+                Icons.cloud_off_outlined,
+                size: 18,
+                color: warning.softFg,
+              ),
+              BioSpacing.gapW(BioSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Nota pendiente',
+                  style: BioTypography.title.copyWith(color: warning.softFg),
+                ),
+              ),
+              BioBadge.warning(_pendingStatusLabel(item.status)),
+            ],
+          ),
           BioSpacing.gapH(BioSpacing.xs),
-          Text(preview, style: BioTypography.body),
-          if (item.lastError != null &&
-              item.lastError!.trim().isNotEmpty &&
-              item.status != PendingEncounterCaptureStatus.pendingSave) ...[
+          Text(
+            preview,
+            style: BioTypography.caption.copyWith(
+              color: context.bio.textMuted,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          if (friendlyError != null) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(
-              item.lastError!,
-              style: BioTypography.caption.copyWith(
-                color: IntentPalette.of(UiIntent.danger).base,
-              ),
-              maxLines: 2,
+              friendlyError,
+              style: BioTypography.caption.copyWith(color: warning.softFg),
+              maxLines: 3,
               overflow: TextOverflow.ellipsis,
             ),
           ],

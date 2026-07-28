@@ -78,6 +78,14 @@ String userFriendlyErrorMessage(
   final raw = error.toString();
   final lower = raw.toLowerCase();
 
+  if (lower.contains('failed to fetch') ||
+      lower.contains('network request failed') ||
+      lower.contains('xmlhttprequest error') ||
+      lower.contains('networkerror') ||
+      lower.contains('failed to connect')) {
+    return 'Sin conexión a internet. Revisá la red e intentá de nuevo.';
+  }
+
   if (lower.contains('connection reset') ||
       lower.contains('connection refused') ||
       lower.contains('connection closed') ||
@@ -89,11 +97,15 @@ String userFriendlyErrorMessage(
     return 'No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.';
   }
 
-  if (lower.contains('clientexception') ||
-      lower.contains('handshake') ||
+  if (lower.contains('handshake') ||
       lower.contains('certificate') ||
-      lower.contains('tls')) {
+      lower.contains('tls') ||
+      lower.contains('ssl')) {
     return 'Hubo un problema de conexión segura. Intentá de nuevo en unos segundos.';
+  }
+
+  if (lower.contains('clientexception')) {
+    return 'No pudimos conectar con el servidor. Revisá tu conexión e intentá de nuevo.';
   }
 
   if (error is SocketException) {
@@ -124,7 +136,12 @@ bool isRetryableNetworkError(Object error) {
     return true;
   }
   final lower = error.toString().toLowerCase();
-  return lower.contains('connection reset') ||
+  return lower.contains('failed to fetch') ||
+      lower.contains('network request failed') ||
+      lower.contains('xmlhttprequest error') ||
+      lower.contains('networkerror') ||
+      lower.contains('failed to connect') ||
+      lower.contains('connection reset') ||
       lower.contains('connection refused') ||
       lower.contains('connection closed') ||
       lower.contains('broken pipe') ||

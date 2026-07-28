@@ -65,8 +65,8 @@ En los KPI de agenda (30 días), si hubo turnos presenciales con triage `sugerid
 
 Las solicitudes generan un encounter VR en estado **planificado**, sin turno. El personal las atiende en sesión operativa **Virtual** (`encounter_class = VR`): el inicio muestra la bandeja **Consultas clínicas por mensaje** (no en Ambulatorio).
 
-- **Por tomar** — solicitudes `planned` del servicio/efector aún sin asignar; cualquier profesional con PES en ese servicio puede tomarlas.
 - **Las mías** — solicitudes ya tomadas por el profesional de la sesión (`in-progress` / en espera asignadas a su PES).
+- **Por tomar** — solicitudes `planned` del servicio/efector aún sin asignar; cualquier profesional con PES en ese servicio puede tomarlas.
 - Las tomadas por **otro** profesional **no** aparecen en la bandeja de quien no las tomó.
 - **Tomar y responder** — asigna el PES de sesión, pasa a `in-progress` y abre el chat.
 - **Chat** — API `consulta-chat` existente; el primer mensaje del paciente se guarda al crear la solicitud.

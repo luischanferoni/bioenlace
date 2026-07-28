@@ -7,12 +7,12 @@ section:
 
 # Grupos del panel staff (orden de presentación).
 staff_groups:
-  - id: por_tomar
-    title: Por tomar
-    empty_message: No hay solicitudes pendientes de tomar.
   - id: mias
     title: Las mías
     empty_message: No tenés consultas tomadas en curso.
+  - id: por_tomar
+    title: Por tomar
+    empty_message: No hay solicitudes pendientes de tomar.
 
 # Horas desde created_at hasta primera respuesta del equipo (por banda de urgencia del triage).
 sla_horas_respuesta:

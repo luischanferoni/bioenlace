@@ -19,7 +19,7 @@ final class EncounterCaptureCompletenessValidator
      *   tiene_datos_faltantes: bool,
      *   missing_categories: list<string>,
      *   incomplete_items: list<array{category: string, index: int, label: string, missing_fields: list<string>}>,
-     *   issues: list<array{id: string, field: string, message: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>,
+     *   issues: list<array{id: string, field: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>,
      *   message: string
      * }
      */

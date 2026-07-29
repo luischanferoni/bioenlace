@@ -6,20 +6,19 @@ namespace common\components\Domain\Clinical\Capture;
  * Issues de completitud con opciones sugeridas (contrato resumido para clientes).
  *
  * Shape:
- * { id, field, message, options: [{value,label}], allow_custom }
+ * { id, field, options: [{value,label}], allow_custom }
  * Nada viene seleccionado: la selección es estado del cliente.
  */
 final class ClinicalCaptureIssueFactory
 {
     /**
      * @param list<array{value: mixed, label: string}> $options
-     * @return array{id: string, field: string, message: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}
+     * @return array{id: string, field: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}
      */
     public static function make(
         string $category,
         int $index,
         string $field,
-        string $message,
         array $options = [],
         bool $allowCustom = false
     ): array {
@@ -38,7 +37,6 @@ final class ClinicalCaptureIssueFactory
         return [
             'id' => self::issueId($category, $index, $field),
             'field' => $field,
-            'message' => $message,
             'options' => $normalizedOptions,
             // Solo true si el caller lo pidió explícitamente; sin catálogo no hay issue de texto libre.
             'allow_custom' => $allowCustom,

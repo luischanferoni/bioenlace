@@ -135,6 +135,19 @@ final class EncounterCaptureReviewPresenter
         }
         $review['categories'] = $categories;
 
+        $issuesIn = $review['issues'] ?? null;
+        if (is_array($issuesIn)) {
+            $issues = [];
+            foreach ($issuesIn as $issue) {
+                if (!is_array($issue)) {
+                    continue;
+                }
+                unset($issue['message']);
+                $issues[] = $issue;
+            }
+            $review['issues'] = $issues;
+        }
+
         return $review;
     }
 

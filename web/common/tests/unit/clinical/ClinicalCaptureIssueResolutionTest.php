@@ -16,7 +16,6 @@ class ClinicalCaptureIssueResolutionTest extends Unit
             'Indicaciones',
             0,
             'Plazo dias',
-            'Indique el plazo del control.',
             [
                 ['value' => 7, 'label' => '7 días'],
             ],
@@ -25,10 +24,11 @@ class ClinicalCaptureIssueResolutionTest extends Unit
 
         $this->assertSame('Indicaciones::0:Plazo dias', $issue['id']);
         $this->assertSame('Plazo dias', $issue['field']);
+        $this->assertArrayNotHasKey('message', $issue);
         $this->assertCount(1, $issue['options']);
         $this->assertFalse($issue['allow_custom']);
 
-        $emptyOpts = ClinicalCaptureIssueFactory::make('X', 0, 'Campo', 'msg', [], false);
+        $emptyOpts = ClinicalCaptureIssueFactory::make('X', 0, 'Campo', [], false);
         $this->assertFalse($emptyOpts['allow_custom']);
         $this->assertSame([], $emptyOpts['options']);
 
@@ -57,7 +57,7 @@ class ClinicalCaptureIssueResolutionTest extends Unit
         $this->assertSame('Medicación::0:Cantidad', $cantidad['id']);
         $this->assertNotEmpty($cantidad['options']);
         $this->assertFalse($cantidad['allow_custom']);
-        $this->assertSame('Elegí la cantidad / dosis.', $cantidad['message']);
+        $this->assertArrayNotHasKey('message', $cantidad);
     }
 
     public function testIndicacionFollowUpBuildsPlazoIssueWithoutSelection(): void

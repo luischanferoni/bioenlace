@@ -17,7 +17,7 @@ Eso produjo hard-stops incorrectos (p. ej. exigir «Plazo dias» en toda indicac
 3. **YAML de producto:** composición (intents, UI, ABAC, prompts, knobs). No es fuente de verdad de «¿puede emitirse / confirmarse?».
 4. **Agentes / post-proceso:** defaults y semántica en servicios/policy de dominio (`PrescriptionRdiPreSubmitValidationService`, `EncounterCaptureExtractionPostProcessPolicy`); YAML solo umbrales/overrides. Si falta el YAML, los gates hard siguen activos.
 5. **Terminología (SNOMED):** normaliza conceptos; no decide por sí sola obligatoriedad contextual (plazo, dosis).
-6. **Issues resolubles (cliente):** si falta un campo, el `*Input` expone `buildIssues()` con opciones sugeridas **sin selección por defecto**. El profesional confirma vía `POST …/captura/aplicar-resoluciones` (`resolutions: { issue_id → value }`). Contrato resumido: `{ id, field, message, options[{value,label}], allow_custom }` (`ClinicalCaptureIssueFactory`).
+6. **Issues resolubles (cliente):** si falta un campo, el `*Input` expone `buildIssues()` con opciones sugeridas **sin selección por defecto**. El profesional confirma vía `POST …/captura/aplicar-resoluciones` (`resolutions: { issue_id → value }`). Contrato resumido: `{ id, field, options[{value,label}], allow_custom }` (`ClinicalCaptureIssueFactory`).
 
 ## Alternativas descartadas
 

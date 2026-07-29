@@ -193,7 +193,7 @@ final class MedicacionInput extends Model
     /**
      * Issues resolubles solo con catálogo de dominio (sin texto libre).
      *
-     * @return list<array{id: string, field: string, message: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>
+     * @return list<array{id: string, field: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>
      */
     public function buildIssues(string $category, int $index): array
     {
@@ -211,7 +211,6 @@ final class MedicacionInput extends Model
                 $category,
                 $index,
                 $field,
-                self::messageForField($field),
                 $options,
                 false
             );
@@ -301,21 +300,6 @@ final class MedicacionInput extends Model
         }
 
         return [];
-    }
-
-    private static function messageForField(string $field): string
-    {
-        $map = [
-            self::FIELD_TIPO => '¿Cómo se registra la medicación?',
-            self::FIELD_CANTIDAD => 'Elegí la cantidad / dosis.',
-            self::FIELD_VIA => 'Elegí la vía de administración.',
-            self::FIELD_FRECUENCIA => 'Elegí cada cuánto se administra.',
-            self::FIELD_TIPO_FRECUENCIA => 'Elegí la unidad de frecuencia.',
-            self::FIELD_DURACION => 'Elegí la duración del tratamiento.',
-            self::FIELD_TIPO_DURACION => 'Elegí la unidad de duración.',
-        ];
-
-        return $map[$field] ?? ('Completá «' . $field . '».');
     }
 
     /**

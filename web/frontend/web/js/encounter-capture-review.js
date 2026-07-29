@@ -277,6 +277,11 @@
                 escapeHtml(issue.id) +
                 '">'
         );
+        if (issue.field) {
+            parts.push(
+                '<div class="small mb-1">' + escapeHtml(issue.field) + '</div>'
+            );
+        }
         var options = Array.isArray(issue.options) ? issue.options : [];
         if (options.length) {
             parts.push('<div class="d-flex flex-wrap gap-1 mb-1">');

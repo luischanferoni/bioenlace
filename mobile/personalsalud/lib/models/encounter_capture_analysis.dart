@@ -598,14 +598,12 @@ class EncounterCaptureIssue {
   const EncounterCaptureIssue({
     required this.id,
     required this.field,
-    required this.message,
     this.options = const [],
     this.allowCustom = false,
   });
 
   final String id;
   final String field;
-  final String message;
   final List<EncounterCaptureIssueOption> options;
   final bool allowCustom;
 
@@ -623,7 +621,6 @@ class EncounterCaptureIssue {
     return EncounterCaptureIssue(
       id: json['id']?.toString() ?? '',
       field: json['field']?.toString() ?? '',
-      message: json['message']?.toString() ?? '',
       options: options,
       allowCustom: json['allow_custom'] == true,
     );

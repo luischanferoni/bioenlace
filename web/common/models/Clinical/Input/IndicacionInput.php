@@ -136,7 +136,7 @@ final class IndicacionInput extends Model
     /**
      * Issues resolubles para el cliente (opciones sin seleccionar).
      *
-     * @return list<array{id: string, field: string, message: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>
+     * @return list<array{id: string, field: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>
      */
     public function buildIssues(string $category, int $index): array
     {
@@ -147,7 +147,6 @@ final class IndicacionInput extends Model
                     $category,
                     $index,
                     $field,
-                    'Indique el plazo del control.',
                     [
                         ['value' => 3, 'label' => '3 días'],
                         ['value' => 7, 'label' => '7 días'],
@@ -163,7 +162,6 @@ final class IndicacionInput extends Model
                     $category,
                     $index,
                     $field,
-                    '¿Qué tipo de indicación es?',
                     [
                         ['value' => self::TYPE_COUNSELING, 'label' => 'Consejo / instrucción'],
                         ['value' => self::TYPE_CONDITIONAL, 'label' => 'Condicionado a síntomas'],

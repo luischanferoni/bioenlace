@@ -962,7 +962,7 @@
                     );
                 }
                 var capture = res.data.capture || {};
-                var payload = self.applyCaptureResponse(capture, capture.analysis || res.data);
+                var payload = self.applyCaptureResponse(capture, capture.analysis || capture);
                 showAnalysis(payload);
             })
             .catch(function (err) {

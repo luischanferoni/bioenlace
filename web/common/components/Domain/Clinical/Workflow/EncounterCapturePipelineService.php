@@ -483,11 +483,8 @@ final class EncounterCapturePipelineService
         $items = [];
         foreach ($q->limit(50)->all() as $row) {
             /** @var EncounterCapture $row */
-            $includeAnalysis = in_array($row->stage, [
-                EncounterCapture::STAGE_READY_FOR_REVIEW,
-                EncounterCapture::STAGE_SAVE_FAILED,
-            ], true);
-            $items[] = $this->toApiArray($row, $includeAnalysis);
+            // Listado liviano: el análisis completo va en captura/ver.
+            $items[] = $this->toApiArray($row, false);
         }
 
         return [
@@ -870,10 +867,20 @@ final class EncounterCapturePipelineService
     }
 
     /**
+     * Serializa captura para API.
+     *
+     * - `$includeAnalysis = false` (listar): meta + transcript + `has_analysis`.
+     * - `$includeAnalysis = true` (ver / analizar / guardar): `capture_review` +
+     *   `datosExtraidos` una sola vez (sin reenviar el snapshot crudo del analizar).
+     *
      * @return array<string, mixed>
      */
     public function toApiArray(EncounterCapture $capture, bool $includeAnalysis = false): array
     {
+        $extraidosStored = $capture->getDatosExtraidos();
+        $analysisStored = $capture->getAnalysisResponse();
+        $hasAnalysis = $analysisStored !== [] || $extraidosStored !== [];
+
         $out = [
             'id' => (int) $capture->id,
             'client_capture_id' => $capture->client_capture_id,
@@ -883,6 +890,7 @@ final class EncounterCapturePipelineService
             'encounter_id' => $capture->encounter_id !== null ? (int) $capture->encounter_id : null,
             'stage' => $capture->stage,
             'has_audio' => $capture->hasAudio(),
+            'has_analysis' => $hasAnalysis,
             'transcript' => $capture->transcript,
             'texto_procesado' => $capture->texto_procesado,
             'stt' => $capture->getSttMeta(),
@@ -896,36 +904,44 @@ final class EncounterCapturePipelineService
             'updated_at' => $capture->updated_at,
         ];
 
-        if ($includeAnalysis) {
-            $analysis = $capture->getAnalysisResponse();
-            $extraidos = $capture->getDatosExtraidos();
-            if ($extraidos === [] && $analysis !== []) {
-                $extraidos = $this->extractDatosExtraidosFromAnalizar($analysis);
+        if (!$includeAnalysis) {
+            return $out;
+        }
+
+        $extraidos = $extraidosStored;
+        if ($extraidos === [] && $analysisStored !== []) {
+            $extraidos = $this->extractDatosExtraidosFromAnalizar($analysisStored);
+        }
+
+        $review = $analysisStored['capture_review'] ?? null;
+        if (!is_array($review)) {
+            $review = null;
+        }
+
+        if ($extraidos !== []) {
+            $out['datosExtraidos'] = $extraidos;
+        }
+        if ($review !== null) {
+            $out['capture_review'] = $review;
+        }
+
+        // Flags / ids útiles en la raíz (sin duplicar el blob completo del analizar).
+        foreach ([
+            'texto_original',
+            'id_configuracion',
+            'id_consulta',
+            'puede_confirmar',
+            'tiene_datos_faltantes',
+        ] as $key) {
+            if (array_key_exists($key, $analysisStored) && !array_key_exists($key, $out)) {
+                $out[$key] = $analysisStored[$key];
             }
-            if ($extraidos !== []) {
-                $out['datosExtraidos'] = $extraidos;
-            }
-            if ($analysis !== []) {
-                $out['analysis'] = $analysis;
-                // Compat: campos top-level que ya consume Flutter/web.
-                foreach ([
-                    'texto_original',
-                    'texto_procesado',
-                    'datosExtraidos',
-                    'capture_review',
-                    'analysis_cache_token',
-                    'id_configuracion',
-                    'encounter_id',
-                    'id_consulta',
-                    'success',
-                    'puede_confirmar',
-                    'tiene_datos_faltantes',
-                ] as $key) {
-                    if (array_key_exists($key, $analysis) && !array_key_exists($key, $out)) {
-                        $out[$key] = $analysis[$key];
-                    }
-                }
-            }
+        }
+        if (!isset($out['texto_original']) && is_string($capture->transcript) && $capture->transcript !== '') {
+            $out['texto_original'] = $capture->transcript;
+        }
+        if (isset($analysisStored['encounter_id']) && empty($out['encounter_id'])) {
+            $out['encounter_id'] = (int) $analysisStored['encounter_id'];
         }
 
         return $out;

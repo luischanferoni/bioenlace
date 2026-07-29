@@ -88,7 +88,7 @@ class EncounterController extends BaseController
         return $this->applyServiceHttpStatus($out);
     }
 
-    /** GET: listar capturas abiertas (cross-device). */
+    /** GET: listar capturas abiertas (meta liviana; análisis en captura/ver). */
     public function actionCapturaListar()
     {
         $out = ClinicalEncounterEntry::capturaListar(Yii::$app->request->get());
@@ -96,7 +96,7 @@ class EncounterController extends BaseController
         return $this->applyServiceHttpStatus($out);
     }
 
-    /** GET: ver una captura (por id o client_capture_id). */
+    /** GET: ver una captura con capture_review / datosExtraidos (por id o client_capture_id). */
     public function actionCapturaVer()
     {
         $params = array_merge(Yii::$app->request->get(), $this->mergeRequestBody());

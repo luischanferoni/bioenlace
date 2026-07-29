@@ -214,6 +214,7 @@ class EncounterCaptureApi {
   }
 
   /// GET /api/v1/clinical/encounter/captura/listar
+  /// Respuesta liviana (meta + `has_analysis`). El análisis va en [capturaVer].
   Future<List<Map<String, dynamic>>> capturaListar({
     required int idPersona,
     String? parent,

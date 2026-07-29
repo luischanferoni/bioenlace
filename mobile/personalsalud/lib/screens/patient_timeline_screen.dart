@@ -136,7 +136,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           row,
           local: byId[clientId],
         );
-        // Si el listado no trajo el análisis completo, pedirlo a /ver.
+        // listar es liviano: si hace falta revisión y no hay análisis local, pedir /ver.
         final needsReview = merged.status ==
                 PendingEncounterCaptureStatus.pendingSave ||
             merged.status == PendingEncounterCaptureStatus.failedSave;

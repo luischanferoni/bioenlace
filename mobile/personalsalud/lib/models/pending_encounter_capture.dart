@@ -204,16 +204,19 @@ class PendingEncounterCapture {
     );
   }
 
+  /// Solo acepta payload de análisis real (`capture_review` / `analysis`).
+  /// `listar` es liviano (`has_analysis` + meta): el detalle viene de `/ver`.
   static Map<String, dynamic>? _analysisFromServerCapture(
     Map<String, dynamic> capture,
   ) {
-    if (capture['analysis'] is Map) {
-      return Map<String, dynamic>.from(capture['analysis'] as Map);
+    final nested = capture['analysis'];
+    if (nested is Map) {
+      final map = Map<String, dynamic>.from(nested);
+      if (map['capture_review'] != null || map['datosExtraidos'] != null) {
+        return map;
+      }
     }
-    // listar/ver pueden exponer el payload de análisis en el propio capture.
-    if (capture['capture_review'] != null ||
-        capture['datosExtraidos'] != null ||
-        capture['texto_procesado'] != null) {
+    if (capture['capture_review'] is Map || capture['datosExtraidos'] is Map) {
       return Map<String, dynamic>.from(capture);
     }
     return null;

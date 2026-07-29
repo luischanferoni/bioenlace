@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Enum\RequestStatus;
 use common\models\Clinical\Encounter;
+use common\models\Clinical\Input\DerivacionInput;
 use common\models\Clinical\ServiceRequest;
 use common\models\ConsultaDerivaciones;
 
@@ -73,6 +74,24 @@ final class ReferralRequestService
      */
     public static function createFromExtractedRow(Encounter $encounter, array $row): ServiceRequest
     {
+        $input = DerivacionInput::fromExtractedRow($row);
+        $defaultEfector = (int) ($encounter->efector_id ?? 0);
+        $targets = $input->resolveTargets($defaultEfector > 0 ? $defaultEfector : null);
+
+        if ($targets['id_servicio'] === null) {
+            $hint = trim((string) ($input->servicio ?? ''));
+            throw new \InvalidArgumentException(
+                $hint !== ''
+                    ? 'No se pudo resolver el servicio de la derivación «' . $hint . '». Elegí un servicio de la lista o destildá la derivación.'
+                    : 'Falta el servicio de destino de la derivación.'
+            );
+        }
+        if ($targets['id_efector'] === null) {
+            throw new \InvalidArgumentException(
+                'Falta el efector de destino de la derivación (no hay efector en el encounter).'
+            );
+        }
+
         $sr = new ConsultaDerivaciones();
         $sr->encounter_id = (int) $encounter->id;
         $sr->subject_persona_id = (int) $encounter->subject_persona_id;
@@ -81,10 +100,11 @@ final class ReferralRequestService
         $sr->intent = 'order';
         $sr->referral_status = ConsultaDerivaciones::ESTADO_EN_ESPERA;
         $sr->code = isset($row['codigo']) ? (string) $row['codigo'] : null;
-        $sr->display = $row['termino'] ?? $row['texto'] ?? $row['indicaciones'] ?? null;
-        $sr->note = $row['indicaciones'] ?? null;
-        $sr->target_efector_id = isset($row['id_efector']) ? (int) $row['id_efector'] : null;
-        $sr->target_service_id = isset($row['id_servicio']) ? (int) $row['id_servicio'] : null;
+        $sr->display = $targets['display']
+            ?? ($row['termino'] ?? $row['texto'] ?? $row['indicaciones'] ?? null);
+        $sr->note = $targets['note'] ?? ($row['indicaciones'] ?? null);
+        $sr->target_efector_id = $targets['id_efector'];
+        $sr->target_service_id = $targets['id_servicio'];
         $sr->referral_kind = $row['tipo'] ?? null;
         $sr->request_kind = $row['tipo_solicitud'] ?? null;
         $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;

@@ -66,7 +66,32 @@ class ConsultaDerivaciones extends ServiceRequest
 
     public function requeridosPrompt(): array
     {
-        return ['Servicio'];
+        return \common\models\Clinical\Input\DerivacionInput::promptFieldNames();
+    }
+
+    /**
+     * @param array<string, mixed>|string $row
+     * @return array{missing_fields: list<string>, label: string, input: \common\models\Clinical\Input\DerivacionInput}
+     */
+    public static function completenessForExtractedRow($row): array
+    {
+        $input = \common\models\Clinical\Input\DerivacionInput::fromExtractedRow($row);
+        $label = trim((string) ($input->servicio ?? ''));
+
+        return [
+            'missing_fields' => $input->missingFieldsForCompleteness(),
+            'label' => $label !== '' ? $label : 'ítem',
+            'input' => $input,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    public static function applyResolutionToRow(array $row, string $field, mixed $value): array
+    {
+        return \common\models\Clinical\Input\DerivacionInput::applyResolutionToRow($row, $field, $value);
     }
 
     /** @deprecated Alias de {@see $encounter_id} */

@@ -76,7 +76,7 @@ $this->registerJsFile(
 <!-- Primera fila: Datos del paciente (compacta) -->
 <div class="row mb-3">
     <div class="col-12">
-        <div class="card border-2 mb-1">
+        <div class="card border-2 mb-1 bio-paper-card">
             <div class="card-body p-4 pb-1">
                 <div class="row">
                     

@@ -24,6 +24,12 @@
     --spa-chat-input-min-height: 3.75rem;
 }
 
+/* Card de superficie papel (HC / detalles de encounter). */
+.bio-paper-card {
+    background-color: var(--bio-paper-50);
+    border-color: var(--bio-paper-300) !important;
+}
+
 @media (max-width: 768px) {
     :root {
         --spa-chat-composer-reserve: calc(7.25rem + 88px + env(safe-area-inset-bottom, 0px));

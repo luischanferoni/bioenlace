@@ -459,10 +459,6 @@ class EncounterCaptureAnalysis {
       }
       if (rows.isEmpty) continue;
       out[cat.title] = rows;
-      final model = cat.model.trim();
-      if (model.isNotEmpty && model != cat.title) {
-        out[model] = rows;
-      }
     }
     return out;
   }
@@ -703,6 +699,7 @@ class EncounterOpenProblems {
             label: item.label,
             options: sharedOptions,
             statusLabel: item.statusLabel,
+            detail: item.detail,
           );
         })
         .where((i) => i.id > 0)
@@ -717,6 +714,7 @@ class EncounterOpenProblemItem {
     required this.label,
     this.options = const [],
     this.statusLabel,
+    this.detail,
   });
 
   final int id;
@@ -724,6 +722,7 @@ class EncounterOpenProblemItem {
   final String label;
   final List<EncounterCaptureIssueOption> options;
   final String? statusLabel;
+  final String? detail;
 
   factory EncounterOpenProblemItem.fromJson(Map<String, dynamic> json) {
     final optsRaw = json['options'];
@@ -736,6 +735,8 @@ class EncounterOpenProblemItem {
             .toList()
         : <EncounterCaptureIssueOption>[];
 
+    final detail = (json['detail'] ?? json['subtitle'])?.toString().trim();
+
     return EncounterOpenProblemItem(
       id: int.tryParse('${json['id']}') ?? 0,
       kind: (json['kind'] ?? 'condition').toString(),
@@ -743,6 +744,7 @@ class EncounterOpenProblemItem {
       options: options,
       statusLabel: (json['status_label'] ?? json['clinical_status'] ?? json['status'])
           ?.toString(),
+      detail: (detail != null && detail.isNotEmpty) ? detail : null,
     );
   }
 }

@@ -1744,6 +1744,26 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
   }
 
+  bool _allStagedIssuesResolved(EncounterCaptureAnalysis review) {
+    for (final issue in review.issues) {
+      final m = RegExp(r'^(.*)::(\d+):').firstMatch(issue.id);
+      final stagedId = m != null ? '${m.group(1)}::${m.group(2)}' : issue.id;
+      if (_stagedItemIds.isNotEmpty && !_stagedItemIds.contains(stagedId)) {
+        continue;
+      }
+      if (_issueResolutions.containsKey(issue.id)) {
+        final v = _issueResolutions[issue.id];
+        if (v != null && v.toString().trim().isNotEmpty) continue;
+      }
+      if (issue.allowCustom) {
+        final custom = _issueCustomControllers[issue.id]?.text.trim() ?? '';
+        if (custom.isNotEmpty) continue;
+      }
+      return false;
+    }
+    return true;
+  }
+
   Future<void> _confirmarGuardado() async {
     final review = _captureReview;
     if (review == null || _lastAnalysis == null) {
@@ -1759,6 +1779,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     if (review.hasClinicalItems && _stagedItemIds.isEmpty) {
       _snack(
         'Seleccioná al menos un ítem del análisis antes de confirmar.',
+        UiIntent.warning,
+      );
+      return;
+    }
+    if (!_allStagedIssuesResolved(review)) {
+      _snack(
+        'Completá los datos faltantes marcados antes de confirmar.',
         UiIntent.warning,
       );
       return;
@@ -1822,10 +1849,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       });
       Map<String, dynamic> guardado;
       if (clientId != null && clientId.isNotEmpty) {
-        final out = await _encounterApi.capturaGuardar(
+      final out = await _encounterApi.capturaGuardar(
           clientCaptureId: clientId,
           datosExtraidos: extraidos,
-          analisisDatosExtraidos: analisisBackup,
+          // Draft en servidor: el pipeline usa el análisis persistido; no reenviar backup.
           stagedItemIds: _stagedItemIds.toList(),
           textoOriginal: textoOriginal,
           textoProcesado: textoProcesado,
@@ -1844,7 +1871,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           parent: widget.consultParent,
           parentId: widget.consultParentId,
           datosExtraidos: extraidos,
-          analisisDatosExtraidos: analisisBackup,
+          // Sin draft de captura: solo token de cache (si hay), no mapa completo duplicado.
           analysisCacheToken: _lastAnalysis!['analysis_cache_token']?.toString(),
           textoOriginal: textoOriginal,
           textoProcesado: textoProcesado,
@@ -2389,6 +2416,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             item.label,
             style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
           ),
+          if (item.detail != null && item.detail!.isNotEmpty)
+            Text(
+              item.detail!,
+              style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+            ),
           if (item.statusLabel != null && item.statusLabel!.isNotEmpty)
             Text(
               item.statusLabel!,
@@ -2567,7 +2599,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         review != null &&
         review.systemError == null &&
         review.textoOriginal.trim().isNotEmpty &&
-        !(review.hasClinicalItems && _stagedItemIds.isEmpty);
+        !(review.hasClinicalItems && _stagedItemIds.isEmpty) &&
+        _allStagedIssuesResolved(review);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(

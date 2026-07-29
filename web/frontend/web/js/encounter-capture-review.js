@@ -76,9 +76,6 @@
             });
             if (rows.length) {
                 out[cat.title] = rows;
-                if (cat.model && cat.model !== cat.title) {
-                    out[cat.model] = rows;
-                }
             }
         });
         return out;
@@ -113,7 +110,7 @@
         return set;
     }
 
-    function canConfirm(review, stagedIdSet) {
+    function canConfirm(review, stagedIdSet, resolutions) {
         if (!review) {
             return false;
         }
@@ -126,6 +123,25 @@
         }
         if (hasClinicalItems(review) && stagedIdSet.size === 0) {
             return false;
+        }
+        var resMap = resolutions && typeof resolutions === 'object' ? resolutions : {};
+        var issues = Array.isArray(review.issues) ? review.issues : [];
+        for (var i = 0; i < issues.length; i++) {
+            var issue = issues[i];
+            if (!issue || !issue.id) {
+                continue;
+            }
+            var m = String(issue.id).match(/^(.*)::(\d+):/);
+            if (m) {
+                var itemId = m[1] + '::' + m[2];
+                if (stagedIdSet.size > 0 && !stagedIdSet.has(itemId)) {
+                    continue;
+                }
+            }
+            var val = resMap[issue.id];
+            if (val === undefined || val === null || String(val).trim() === '') {
+                return false;
+            }
         }
         return true;
     }
@@ -549,6 +565,11 @@
                 '">'
         );
         parts.push('<div class="small fw-semibold">' + escapeHtml(item.label || '') + '</div>');
+        if (item.detail) {
+            parts.push(
+                '<div class="text-muted small">' + escapeHtml(String(item.detail)) + '</div>'
+            );
+        }
         if (item.status_label || item.status || item.clinical_status) {
             parts.push(
                 '<div class="text-muted small mb-1">' +
@@ -631,9 +652,14 @@
         return out;
     }
 
-    function bindIssueResolutions(root) {
+    function bindIssueResolutions(root, onChange) {
         if (!root) {
             return;
+        }
+        function notify() {
+            if (typeof onChange === 'function') {
+                onChange();
+            }
         }
         root.querySelectorAll('.capture-issue-option').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -656,19 +682,23 @@
                         custom.value = '';
                     }
                 }
+                notify();
             });
         });
         root.querySelectorAll('.capture-issue-custom').forEach(function (input) {
             input.addEventListener('input', function () {
                 var block = input.closest('[data-capture-issue-id]');
-                if (!block || String(input.value || '').trim() === '') {
+                if (!block) {
                     return;
                 }
-                block.querySelectorAll('.capture-issue-option').forEach(function (other) {
-                    other.classList.remove('active', 'btn-outline-primary');
-                    other.classList.add('btn-outline-secondary');
-                    other.setAttribute('aria-pressed', 'false');
-                });
+                if (String(input.value || '').trim() !== '') {
+                    block.querySelectorAll('.capture-issue-option').forEach(function (other) {
+                        other.classList.remove('active', 'btn-outline-primary');
+                        other.classList.add('btn-outline-secondary');
+                        other.setAttribute('aria-pressed', 'false');
+                    });
+                }
+                notify();
             });
         });
         root.querySelectorAll('.capture-open-problem-option').forEach(function (btn) {

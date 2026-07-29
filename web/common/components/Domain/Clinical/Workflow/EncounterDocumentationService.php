@@ -169,7 +169,7 @@ class EncounterDocumentationService extends Component
                 ]);
                 $logger->finalizar($out);
 
-                return $out;
+                return $this->clientGuardarResponse($out);
             }
 
             // Defensa: no perder categories si el cliente envió mapas anidados o string.
@@ -236,7 +236,7 @@ class EncounterDocumentationService extends Component
                 $out['diagnostico_guardar'] = $diagnostico;
                 $logger->finalizar($out);
 
-                return $out;
+                return $this->clientGuardarResponse($out);
             }
 
             $configuracion = EncounterDefinition::findOne((int) $idConfiguracion);
@@ -245,7 +245,7 @@ class EncounterDocumentationService extends Component
                 $out['diagnostico_guardar'] = $diagnostico;
                 $logger->finalizar($out);
 
-                return $out;
+                return $this->clientGuardarResponse($out);
             }
 
             $categorias = EncounterDefinition::getCategoriasParaPrompt($configuracion);
@@ -270,7 +270,7 @@ class EncounterDocumentationService extends Component
                 $out['diagnostico_guardar'] = $diagnostico;
                 $logger->finalizar($out);
 
-                return $out;
+                return $this->clientGuardarResponse($out);
             }
 
             $paciente = $this->lifecycle->findSubject((int) $idPersona);
@@ -279,7 +279,7 @@ class EncounterDocumentationService extends Component
                 $out['diagnostico_guardar'] = $diagnostico;
                 $logger->finalizar($out);
 
-                return $out;
+                return $this->clientGuardarResponse($out);
             }
 
             // Toda la escritura clínica (nota/motivos/MR/SR/care_plan/finalize) va en una
@@ -405,7 +405,7 @@ class EncounterDocumentationService extends Component
             }
             $logger->finalizar($out);
 
-            return $out;
+            return $this->clientGuardarResponse($out);
         } catch (\InvalidArgumentException $e) {
             Yii::warning($e->getMessage(), __METHOD__);
             $out = $this->error(400, $e->getMessage());
@@ -415,7 +415,7 @@ class EncounterDocumentationService extends Component
                 $logger->finalizar($out);
             }
 
-            return $out;
+            return $this->clientGuardarResponse($out);
         } catch (\Throwable $e) {
             Yii::error($e->getMessage(), __METHOD__);
             $out = $this->error(500, 'Error al guardar encounter: ' . $e->getMessage());
@@ -427,7 +427,7 @@ class EncounterDocumentationService extends Component
                 $logger->finalizar($out);
             }
 
-            return $out;
+            return $this->clientGuardarResponse($out);
         }
     }
 
@@ -1385,6 +1385,19 @@ class EncounterDocumentationService extends Component
             'message' => $message,
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Quita telemetría interna del payload al cliente (sigue en logs de guardar).
+     *
+     * @param array<string, mixed> $out
+     * @return array<string, mixed>
+     */
+    private function clientGuardarResponse(array $out): array
+    {
+        unset($out['diagnostico_guardar']);
+
+        return $out;
     }
 
     /**

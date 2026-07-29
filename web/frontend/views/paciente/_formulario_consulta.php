@@ -76,6 +76,7 @@ use yii\helpers\Html;
     <div id="agent-response" class="mt-3" style="display: none;">
         <div id="capture-review-root"></div>
         <div id="response-content" class="d-none" aria-hidden="true"></div>
+        <div id="capture-save-alert" class="alert alert-danger d-none mb-3" role="alert" aria-live="assertive"></div>
         <div class="d-flex flex-wrap gap-2 justify-content-end mb-3" id="capture-review-actions" style="display: none;">
             <button class="btn btn-outline-secondary" type="button" id="capture-edit-btn">
                 <i class="bi bi-pencil"></i>&nbsp;Editar texto

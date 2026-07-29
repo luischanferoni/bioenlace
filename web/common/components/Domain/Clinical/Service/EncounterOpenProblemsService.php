@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Service;
 
+use common\components\Domain\Clinical\Enum\CarePlanCategory;
 use common\components\Domain\Clinical\Enum\CarePlanStatus;
 use common\components\Domain\Clinical\Enum\ConditionClinicalStatus;
 use common\models\Clinical\CarePlan;
@@ -100,22 +101,51 @@ final class EncounterOpenProblemsService
             if (!$plan instanceof CarePlan) {
                 continue;
             }
-            $presented = $this->carePlanPresentation->toPatientSummary($plan, true, 2);
-            $title = trim((string) ($presented['title'] ?? ''));
-            $categoryLabel = trim((string) ($presented['categoryLabel'] ?? $plan->category ?? ''));
-            $label = $title !== '' ? $title : ($categoryLabel !== '' ? $categoryLabel : ('Plan #' . $plan->id));
-            $dedupeKey = mb_strtolower($label . '|' . (string) ($plan->category ?? ''));
-            if (isset($seen[$dedupeKey])) {
+            $id = (int) $plan->id;
+            if ($id <= 0 || isset($seen[$id])) {
                 continue;
             }
-            $seen[$dedupeKey] = true;
-            $out[] = [
-                'id' => (int) $plan->id,
+            $presented = $this->carePlanPresentation->toPatientSummary($plan, true, 3);
+            $activities = [];
+            foreach ($presented['activitySummaries'] ?? [] as $line) {
+                $line = trim((string) $line);
+                if ($line !== '') {
+                    $activities[] = $line;
+                }
+            }
+            // Acute ambulatorio sin actividades = contenedor vacío (meds/indicaciones
+            // ya se cierran con el encounter o viven en conditions). No pedir estado.
+            if (
+                ($plan->category ?? '') === CarePlanCategory::ACUTE_AMBULATORY
+                && $activities === []
+            ) {
+                continue;
+            }
+            $title = trim((string) ($presented['title'] ?? ''));
+            $categoryLabel = trim((string) ($presented['categoryLabel'] ?? $plan->category ?? ''));
+            $detail = implode(' · ', $activities);
+            if ($title !== '') {
+                $label = $title;
+            } elseif ($detail !== '') {
+                // Sin título propio: el contenido clínico es lo que el profesional reconoce.
+                $label = $detail;
+                $detail = $categoryLabel;
+            } else {
+                $label = $categoryLabel !== '' ? $categoryLabel : ('Plan #' . $id);
+            }
+            $seen[$id] = true;
+            $item = [
+                'id' => $id,
                 'kind' => 'care_plan',
                 'label' => $label,
                 'category' => (string) ($plan->category ?? ''),
                 'status' => (string) ($plan->status ?? ''),
+                'status_label' => (string) ($presented['statusLabel'] ?? $plan->status ?? ''),
             ];
+            if ($detail !== '' && strcasecmp($detail, $label) !== 0) {
+                $item['detail'] = $detail;
+            }
+            $out[] = $item;
         }
 
         return $out;

@@ -23,6 +23,19 @@
     --bioenlace-warning-hover: #e68900;
     --bioenlace-danger-hover: #e63c3c;
 
+    /* Paleta "papel" (alineada a mobile PaperPalette) */
+    --bio-paper-25: #fdfcfb;
+    --bio-paper-50: #faf8f3;
+    --bio-paper-100: #f2efe8;
+    --bio-paper-150: #ece8e0;
+    --bio-paper-200: #e7e3da;
+    --bio-paper-300: #d5d0c6;
+    --bio-paper-400: #a8a29a;
+    --bio-paper-500: #6e6a63;
+    --bio-paper-600: #4a4742;
+    --bio-paper-700: #2e2c28;
+    --bio-paper-900: #1a1916;
+
     --bs-primary: var(--bioenlace-primary);
     --bs-secondary: var(--bioenlace-secondary);
     --bs-success: var(--bioenlace-success);
@@ -345,6 +358,14 @@
 .bg-bioenlace-warning { background-color: var(--bioenlace-warning) !important; }
 .bg-bioenlace-danger { background-color: var(--bioenlace-danger) !important; }
 
+.bg-paper-25 { background-color: var(--bio-paper-25) !important; }
+.bg-paper-50 { background-color: var(--bio-paper-50) !important; }
+.bg-paper-100 { background-color: var(--bio-paper-100) !important; }
+
+.border-paper-200 { border-color: var(--bio-paper-200) !important; }
+.border-paper-300 { border-color: var(--bio-paper-300) !important; }
+.border-paper-400 { border-color: var(--bio-paper-400) !important; }
+
 .border-bioenlace-primary { border-color: var(--bioenlace-primary) !important; }
 .border-bioenlace-secondary { border-color: var(--bioenlace-secondary) !important; }
 .border-bioenlace-success { border-color: var(--bioenlace-success) !important; }
@@ -431,11 +452,29 @@
     color: white;
 }
 
+/* overflow:hidden del tema impide position:sticky en el navbar */
+body.boxed .boxed-inner {
+    overflow: visible;
+}
+
 .navbar {
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     position: sticky;
     top: 0;
     z-index: 1030;
+}
+
+.iq-navbar.navbar {
+    background-color: var(--bio-paper-50) !important;
+    border-bottom-color: var(--bio-paper-500) !important;
+    position: sticky;
+    top: 0;
+    z-index: 10001;
+}
+
+.sidebar-menu {
+    background-color: var(--bio-paper-50) !important;
+    border-color: var(--bio-paper-500) !important;
 }
 
 .navbar .brand-logo {
@@ -471,7 +510,7 @@
 .main-content {
     width: 100%;
     min-height: 100vh;
-    background-color: var(--bio-paper-25, #fdfcfb);
+    background-color: var(--bio-paper-25);
 }
 
 .page-header {

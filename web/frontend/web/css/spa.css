@@ -1,22 +1,9 @@
 /**
- * Estilos mínimos para la SPA - Solo funcionalidades específicas
- * El resto usa clases de Bootstrap
+ * Estilos de la SPA / asistente (navegación stack, chat, flows).
+ * Tokens de marca y papel: bootstrap-custom.css (AppAsset).
  */
 
 :root {
-    /* Paleta "papel" (alineada a mobile/packages/shared/lib/theme/tokens/paper_palette.dart) */
-    --bio-paper-25: #fdfcfb;
-    --bio-paper-50: #faf8f3;
-    --bio-paper-100: #f2efe8;
-    --bio-paper-150: #ece8e0;
-    --bio-paper-200: #e7e3da;
-    --bio-paper-300: #d5d0c6;
-    --bio-paper-400: #a8a29a;
-    --bio-paper-500: #6e6a63;
-    --bio-paper-600: #4a4742;
-    --bio-paper-700: #2e2c28;
-    --bio-paper-900: #1a1916;
-
     /* Asistente: sticky toolbar y composer fijo */
     --navbar-height: 4.5rem;
     --spa-chat-toolbar-sticky-top: calc(var(--navbar-height) + 0.25rem);
@@ -24,39 +11,10 @@
     --spa-chat-input-min-height: 3.75rem;
 }
 
-/* Card de superficie papel (HC / detalles de encounter). */
-.bio-paper-card {
-    background-color: var(--bio-paper-50);
-    border-color: var(--bio-paper-300) !important;
-}
-
 @media (max-width: 768px) {
     :root {
         --spa-chat-composer-reserve: calc(7.25rem + 88px + env(safe-area-inset-bottom, 0px));
     }
-}
-
-/* Shell: navbar y menú en paper surface; área de contenido más clara */
-body.boxed .boxed-inner {
-    /* overflow:hidden del tema impide position:sticky en el navbar */
-    overflow: visible;
-}
-
-.main-content {
-    background-color: var(--bio-paper-25);
-}
-
-.iq-navbar.navbar {
-    background-color: var(--bio-paper-50) !important;
-    border-bottom-color: var(--bio-paper-500) !important;
-    position: sticky;
-    top: 0;
-    z-index: 10001;
-}
-
-.sidebar-menu {
-    background-color: var(--bio-paper-50) !important;
-    border-color: var(--bio-paper-500) !important;
 }
 
 /* Navegación Stack - Transiciones de páginas */
@@ -763,13 +721,6 @@ html:has(.spa-asistente-root) {
 .spa-chat-flow-row--superseded .spa-flow-chat-rule {
     border-bottom-color: var(--bio-paper-300, var(--bs-border-color, #dee2e6));
     opacity: 0.7;
-}
-
-/* Legacy: tira de plan / barra de progreso del composer (ya no se usa). */
-.spa-flow-plan-wrap,
-.spa-flow-progress,
-#spa-flow-progress {
-    display: none !important;
 }
 
 /* Listado de pasos del flow: `assistant_text` de todos; UI solo en el paso activo */

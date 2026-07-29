@@ -168,23 +168,83 @@
             .join(' · ');
     }
 
-    function renderItemChip(item, isActive) {
+    function incompleteItemId(inc) {
+        return String(inc.category || '') + '::' + String(inc.index);
+    }
+
+    function indexIncompleteByItemId(review) {
+        var map = {};
+        var detalle = review && review.datos_faltantes_detalle;
+        var items =
+            detalle && Array.isArray(detalle.incomplete_items)
+                ? detalle.incomplete_items
+                : [];
+        items.forEach(function (inc) {
+            if (!inc) {
+                return;
+            }
+            map[incompleteItemId(inc)] = inc;
+        });
+        return map;
+    }
+
+    function indexIssuesByItemId(issues) {
+        var map = {};
+        (Array.isArray(issues) ? issues : []).forEach(function (issue) {
+            if (!issue || !issue.id) {
+                return;
+            }
+            var m = String(issue.id).match(/^(.*)::(\d+):/);
+            if (!m) {
+                return;
+            }
+            var itemId = m[1] + '::' + m[2];
+            if (!map[itemId]) {
+                map[itemId] = [];
+            }
+            map[itemId].push(issue);
+        });
+        return map;
+    }
+
+    function incompleteItemMessage(inc) {
+        var fields = (inc.missing_fields || []).join(', ');
+        var label = String(inc.label || '').trim();
+        var cat = String(inc.category || '');
+        if (label !== '') {
+            return 'En ' + cat + ' («' + label + '») faltan: ' + fields + '.';
+        }
+        return 'En ' + cat + ' faltan: ' + fields + '.';
+    }
+
+    function renderItemChip(item, isActive, isIncomplete) {
         var label = item.label || '';
         var subtitle = cleanSubtitle(item.subtitle);
         if (subtitle) {
             label += ' (' + subtitle + ')';
         }
         var active = isActive !== false;
-        var baseClass = isAiSuggestion(item) ? 'btn-outline-info' : 'btn-outline-secondary';
-        var btnClass = active
-            ? 'btn btn-sm btn-outline-primary capture-review-item active me-1 mb-1'
-            : 'btn btn-sm ' + baseClass + ' capture-review-item me-1 mb-1';
+        var btnClass;
+        if (isIncomplete) {
+            btnClass = active
+                ? 'btn btn-sm btn-outline-danger capture-review-item active me-1 mb-1'
+                : 'btn btn-sm btn-outline-danger capture-review-item me-1 mb-1';
+        } else {
+            var baseClass = isAiSuggestion(item) ? 'btn-outline-info' : 'btn-outline-secondary';
+            btnClass = active
+                ? 'btn btn-sm btn-outline-primary capture-review-item active me-1 mb-1'
+                : 'btn btn-sm ' + baseClass + ' capture-review-item me-1 mb-1';
+        }
         var iconClass = active ? 'bi bi-check-circle me-1' : 'bi bi-plus-circle me-1';
         return (
             '<button type="button" class="' +
             btnClass +
             '" data-capture-item-id="' +
             escapeHtml(item.id) +
+            '" data-incomplete="' +
+            (isIncomplete ? '1' : '0') +
+            '" data-ai-suggestion="' +
+            (isAiSuggestion(item) ? '1' : '0') +
             '" aria-pressed="' +
             (active ? 'true' : 'false') +
             '">' +
@@ -194,6 +254,80 @@
             escapeHtml(label) +
             '</button>'
         );
+    }
+
+    function renderIssueBlock(issue) {
+        if (!issue || !issue.id) {
+            return '';
+        }
+        var parts = [];
+        parts.push('<div class="mb-2" data-capture-issue-id="' + escapeHtml(issue.id) + '">');
+        parts.push('<div class="small">' + escapeHtml(issue.message || '') + '</div>');
+        if (issue.field) {
+            parts.push(
+                '<div class="text-muted small mb-1">' + escapeHtml(issue.field) + '</div>'
+            );
+        }
+        var options = Array.isArray(issue.options) ? issue.options : [];
+        if (options.length) {
+            parts.push('<div class="d-flex flex-wrap gap-1 mb-1">');
+            options.forEach(function (opt) {
+                if (!opt || typeof opt.value === 'undefined') {
+                    return;
+                }
+                parts.push(
+                    '<button type="button" class="btn btn-sm btn-outline-secondary capture-issue-option me-1 mb-1" ' +
+                        'data-issue-id="' +
+                        escapeHtml(issue.id) +
+                        '" data-issue-value="' +
+                        escapeHtml(String(opt.value)) +
+                        '" aria-pressed="false">' +
+                        escapeHtml(opt.label || String(opt.value)) +
+                        '</button>'
+                );
+            });
+            parts.push('</div>');
+        }
+        if (issue.allow_custom) {
+            parts.push(
+                '<input type="text" class="form-control form-control-sm capture-issue-custom" ' +
+                    'data-issue-id="' +
+                    escapeHtml(issue.id) +
+                    '" placeholder="' +
+                    escapeHtml(options.length ? 'Otra opción…' : 'Completá el valor') +
+                    '">'
+            );
+        }
+        parts.push('</div>');
+        return parts.join('');
+    }
+
+    function renderItemBlock(item, isActive, incomplete, itemIssues) {
+        var parts = [];
+        var isIncomplete = !!incomplete;
+        parts.push(
+            '<div class="capture-review-item-block mb-2" data-capture-item-block="' +
+                escapeHtml(item.id) +
+                '">'
+        );
+        parts.push(renderItemChip(item, isActive, isIncomplete));
+        if (incomplete) {
+            parts.push(
+                '<div class="text-danger small mt-1">' +
+                    escapeHtml(incompleteItemMessage(incomplete)) +
+                    '</div>'
+            );
+        }
+        if (itemIssues && itemIssues.length) {
+            parts.push('<div class="capture-review-item-issues mt-2">');
+            parts.push('<div class="small fw-semibold text-danger mb-1">Completar datos</div>');
+            itemIssues.forEach(function (issue) {
+                parts.push(renderIssueBlock(issue));
+            });
+            parts.push('</div>');
+        }
+        parts.push('</div>');
+        return parts.join('');
     }
 
     function render(review, options) {
@@ -260,7 +394,24 @@
             parts.push(
                 '<div class="alert alert-info" role="status">La IA no extrajo datos estructurados. Podés confirmar igual con el texto registrado.</div>'
             );
+            var missingOnly = review.datos_faltantes_detalle &&
+                Array.isArray(review.datos_faltantes_detalle.missing_categories)
+                ? review.datos_faltantes_detalle.missing_categories
+                : [];
+            if (missingOnly.length) {
+                parts.push(
+                    '<div class="alert alert-warning" role="status">' +
+                        escapeHtml(
+                            'Faltan categorías obligatorias: ' + missingOnly.join(', ') + '.'
+                        ) +
+                        '</div>'
+                );
+            }
         } else {
+            var incompleteById = indexIncompleteByItemId(review);
+            var issuesByItemId = indexIssuesByItemId(review.issues);
+            var renderedIssueIds = {};
+
             parts.push('<div class="fw-semibold mb-2">Resultado del procesamiento</div>');
             review.categories.forEach(function (cat) {
                 parts.push('<div class="mb-3">');
@@ -284,98 +435,87 @@
                     var sugeridos = cat.items.filter(isAiSuggestion);
 
                     if (delTexto.length) {
-                        parts.push('<div class="d-flex flex-wrap gap-1">');
                         delTexto.forEach(function (item) {
-                            parts.push(renderItemChip(item, !!stagedSet[item.id]));
+                            var itemIssues = issuesByItemId[item.id] || [];
+                            itemIssues.forEach(function (iss) {
+                                if (iss && iss.id) {
+                                    renderedIssueIds[iss.id] = true;
+                                }
+                            });
+                            parts.push(
+                                renderItemBlock(
+                                    item,
+                                    !!stagedSet[item.id],
+                                    incompleteById[item.id] || null,
+                                    itemIssues
+                                )
+                            );
                         });
-                        parts.push('</div>');
                     }
                     if (sugeridos.length) {
-                        parts.push('<div class="d-flex flex-wrap gap-2 mt-1">');
                         sugeridos.forEach(function (item) {
-                            parts.push('<div class="d-flex flex-column">');
-                            parts.push(renderItemChip(item, !!stagedSet[item.id]));
+                            var itemIssues = issuesByItemId[item.id] || [];
+                            itemIssues.forEach(function (iss) {
+                                if (iss && iss.id) {
+                                    renderedIssueIds[iss.id] = true;
+                                }
+                            });
+                            parts.push('<div class="mb-2">');
+                            parts.push(
+                                renderItemBlock(
+                                    item,
+                                    !!stagedSet[item.id],
+                                    incompleteById[item.id] || null,
+                                    itemIssues
+                                )
+                            );
                             parts.push('<span class="text-info small">Sugerido por IA</span>');
                             parts.push('</div>');
                         });
-                        parts.push('</div>');
                     }
                 }
                 parts.push('</div>');
             });
-        }
 
-        if (review.tiene_datos_faltantes) {
-            var faltantesMsg = '';
-            if (review.datos_faltantes_detalle && review.datos_faltantes_detalle.message) {
-                faltantesMsg = String(review.datos_faltantes_detalle.message).trim();
+            var detalle = review.datos_faltantes_detalle || {};
+            var missingCats = Array.isArray(detalle.missing_categories)
+                ? detalle.missing_categories
+                : [];
+            if (missingCats.length) {
+                parts.push(
+                    '<div class="alert alert-warning" role="status">' +
+                        escapeHtml(
+                            'Faltan categorías obligatorias: ' + missingCats.join(', ') + '.'
+                        ) +
+                        '</div>'
+                );
             }
-            if (!faltantesMsg) {
-                faltantesMsg =
-                    'Faltan categorías o campos obligatorios. Completá el texto y volvé a analizar. No se puede confirmar hasta completarlos.';
-            }
-            parts.push(
-                '<div class="alert alert-warning" role="status">' +
-                    faltantesMsg.replace(/</g, '&lt;').replace(/>/g, '&gt;') +
-                    '</div>'
+
+            var orphanIssues = (Array.isArray(review.issues) ? review.issues : []).filter(
+                function (issue) {
+                    return issue && issue.id && !renderedIssueIds[issue.id];
+                }
             );
+            var hasAnyIssues =
+                (Array.isArray(review.issues) && review.issues.length > 0) ||
+                orphanIssues.length > 0;
+            if (orphanIssues.length) {
+                parts.push('<div class="capture-review-issues mb-3">');
+                parts.push('<div class="fw-semibold mb-2 text-danger">Completar datos</div>');
+                orphanIssues.forEach(function (issue) {
+                    parts.push(renderIssueBlock(issue));
+                });
+                parts.push('</div>');
+            }
+            if (hasAnyIssues) {
+                parts.push(
+                    '<button type="button" class="btn btn-sm btn-outline-primary capture-apply-resolutions mb-3">' +
+                        'Aplicar respuestas</button>'
+                );
+            }
         }
 
         parts.push(renderOpenProblems(review.open_problems));
-
-        var issues = Array.isArray(review.issues) ? review.issues : [];
-        if (issues.length) {
-            parts.push('<div class="capture-review-issues mb-3">');
-            parts.push('<div class="fw-semibold mb-2">Completar datos</div>');
-            issues.forEach(function (issue) {
-                if (!issue || !issue.id) {
-                    return;
-                }
-                parts.push('<div class="mb-3" data-capture-issue-id="' + escapeHtml(issue.id) + '">');
-                parts.push('<div class="small">' + escapeHtml(issue.message || '') + '</div>');
-                if (issue.field) {
-                    parts.push(
-                        '<div class="text-muted small mb-1">' + escapeHtml(issue.field) + '</div>'
-                    );
-                }
-                var options = Array.isArray(issue.options) ? issue.options : [];
-                if (options.length) {
-                    parts.push('<div class="d-flex flex-wrap gap-1 mb-1">');
-                    options.forEach(function (opt) {
-                        if (!opt || typeof opt.value === 'undefined') {
-                            return;
-                        }
-                        parts.push(
-                            '<button type="button" class="btn btn-sm btn-outline-secondary capture-issue-option me-1 mb-1" ' +
-                                'data-issue-id="' +
-                                escapeHtml(issue.id) +
-                                '" data-issue-value="' +
-                                escapeHtml(String(opt.value)) +
-                                '" aria-pressed="false">' +
-                                escapeHtml(opt.label || String(opt.value)) +
-                                '</button>'
-                        );
-                    });
-                    parts.push('</div>');
-                }
-                if (issue.allow_custom) {
-                    parts.push(
-                        '<input type="text" class="form-control form-control-sm capture-issue-custom" ' +
-                            'data-issue-id="' +
-                            escapeHtml(issue.id) +
-                            '" placeholder="' +
-                            escapeHtml(options.length ? 'Otra opción…' : 'Completá el valor') +
-                            '">'
-                    );
-                }
-                parts.push('</div>');
-            });
-            parts.push(
-                '<button type="button" class="btn btn-sm btn-outline-primary capture-apply-resolutions">' +
-                    'Aplicar respuestas</button>'
-            );
-            parts.push('</div>');
-        }
 
         parts.push('</div>');
 
@@ -579,9 +719,24 @@
         root.querySelectorAll('.capture-review-item').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var willActivate = !btn.classList.contains('active');
+                var incomplete = btn.getAttribute('data-incomplete') === '1';
+                var isAi = btn.getAttribute('data-ai-suggestion') === '1';
                 btn.classList.toggle('active', willActivate);
-                btn.classList.toggle('btn-outline-primary', willActivate);
-                btn.classList.toggle('btn-outline-secondary', !willActivate);
+                btn.classList.remove(
+                    'btn-outline-primary',
+                    'btn-outline-secondary',
+                    'btn-outline-info',
+                    'btn-outline-danger'
+                );
+                if (incomplete) {
+                    btn.classList.add('btn-outline-danger');
+                } else if (willActivate) {
+                    btn.classList.add('btn-outline-primary');
+                } else if (isAi) {
+                    btn.classList.add('btn-outline-info');
+                } else {
+                    btn.classList.add('btn-outline-secondary');
+                }
                 btn.setAttribute('aria-pressed', willActivate ? 'true' : 'false');
                 var icon = btn.querySelector('i');
                 if (icon) {

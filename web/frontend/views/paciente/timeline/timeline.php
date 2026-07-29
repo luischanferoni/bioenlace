@@ -185,7 +185,7 @@ $this->registerJsFile(
 
                     <!-- Formulario de chat inteligente -->
                     <div class="col-12">
-                        <div class="card border-0">
+                        <div class="card border-0 bg-paper-50">
                             <div class="card-body p-3">
 
                                 <!-- Contenedor para mensajes y formulario (se carga dinámicamente) -->

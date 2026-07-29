@@ -9,6 +9,8 @@ class EncounterCaptureAnalysis {
     this.defaultStagedItemIds = const [],
     this.puedeConfirmar = true,
     this.datosFaltantesMensaje,
+    this.incompleteItems = const [],
+    this.missingCategories = const [],
     this.issues = const [],
     this.openProblems,
   });
@@ -22,6 +24,8 @@ class EncounterCaptureAnalysis {
   final bool puedeConfirmar;
   /// Mensaje del backend con categorías/campos faltantes.
   final String? datosFaltantesMensaje;
+  final List<EncounterIncompleteItem> incompleteItems;
+  final List<String> missingCategories;
   /// Issues resolubles (opciones sin seleccionar por defecto).
   final List<EncounterCaptureIssue> issues;
   /// Problemas/planes abiertos del paciente (cierre opcional).
@@ -30,6 +34,30 @@ class EncounterCaptureAnalysis {
   bool get hasUnresolvedIssues => issues.isNotEmpty;
   bool get hasOpenProblems =>
       openProblems != null && openProblems!.isNotEmpty;
+
+  EncounterIncompleteItem? incompleteForItem(String itemId) {
+    for (final item in incompleteItems) {
+      if (item.itemId == itemId) return item;
+    }
+    return null;
+  }
+
+  List<EncounterCaptureIssue> issuesForItem(String itemId) {
+    final prefix = '$itemId:';
+    return issues.where((i) => i.id.startsWith(prefix)).toList();
+  }
+
+  List<EncounterCaptureIssue> get orphanIssues {
+    final claimed = <String>{};
+    for (final cat in categories) {
+      for (final item in cat.items) {
+        for (final issue in issuesForItem(item.id)) {
+          claimed.add(issue.id);
+        }
+      }
+    }
+    return issues.where((i) => !claimed.contains(i.id)).toList();
+  }
 
   bool get hasExtractedContent =>
       categories.any((c) => c.items.isNotEmpty) && systemError == null;
@@ -91,10 +119,14 @@ class EncounterCaptureAnalysis {
         : categories.expand((c) => c.items.map((i) => i.id)).toList();
 
     String? faltantesMsg;
+    var incompleteItems = const <EncounterIncompleteItem>[];
+    var missingCategories = const <String>[];
     final detalle = review['datos_faltantes_detalle'];
     if (detalle is Map) {
       final m = detalle['message']?.toString().trim();
       if (m != null && m.isNotEmpty) faltantesMsg = m;
+      incompleteItems = _parseIncompleteItems(detalle['incomplete_items']);
+      missingCategories = _parseMissingCategories(detalle['missing_categories']);
     }
 
     final issues = _parseIssues(review['issues'] ??
@@ -109,6 +141,8 @@ class EncounterCaptureAnalysis {
       defaultStagedItemIds: defaultIds,
       puedeConfirmar: review['puede_confirmar'] != false,
       datosFaltantesMensaje: faltantesMsg,
+      incompleteItems: incompleteItems,
+      missingCategories: missingCategories,
       issues: issues,
       openProblems: EncounterOpenProblems.fromJson(review['open_problems']),
     );
@@ -179,10 +213,14 @@ class EncounterCaptureAnalysis {
     final defaultIds = categories.expand((c) => c.items.map((i) => i.id)).toList();
 
     String? faltantesMsg;
+    var incompleteItems = const <EncounterIncompleteItem>[];
+    var missingCategories = const <String>[];
     final detalle = res['datos_faltantes_detalle'];
     if (detalle is Map) {
       final m = detalle['message']?.toString().trim();
       if (m != null && m.isNotEmpty) faltantesMsg = m;
+      incompleteItems = _parseIncompleteItems(detalle['incomplete_items']);
+      missingCategories = _parseMissingCategories(detalle['missing_categories']);
     }
 
     final issues = _parseIssues(res['issues'] ??
@@ -197,6 +235,8 @@ class EncounterCaptureAnalysis {
       defaultStagedItemIds: defaultIds,
       puedeConfirmar: res['puede_confirmar'] != false && systemError == null,
       datosFaltantesMensaje: faltantesMsg,
+      incompleteItems: incompleteItems,
+      missingCategories: missingCategories,
       issues: issues,
       openProblems: EncounterOpenProblems.fromJson(res['open_problems']),
     );
@@ -208,6 +248,24 @@ class EncounterCaptureAnalysis {
         .whereType<Map>()
         .map((e) => EncounterCaptureIssue.fromJson(Map<String, dynamic>.from(e)))
         .where((i) => i.id.isNotEmpty)
+        .toList();
+  }
+
+  static List<EncounterIncompleteItem> _parseIncompleteItems(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) =>
+            EncounterIncompleteItem.fromJson(Map<String, dynamic>.from(e)))
+        .where((i) => i.category.isNotEmpty)
+        .toList();
+  }
+
+  static List<String> _parseMissingCategories(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .map((e) => e.toString().trim())
+        .where((s) => s.isNotEmpty)
         .toList();
   }
 
@@ -501,6 +559,43 @@ class EncounterCaptureItem {
       source: sourceRaw == 'ai'
           ? EncounterCaptureItemSource.ai
           : EncounterCaptureItemSource.clinical,
+    );
+  }
+}
+
+class EncounterIncompleteItem {
+  const EncounterIncompleteItem({
+    required this.category,
+    required this.index,
+    required this.label,
+    required this.missingFields,
+  });
+
+  final String category;
+  final int index;
+  final String label;
+  final List<String> missingFields;
+
+  String get itemId => '$category::$index';
+
+  String get message {
+    final fields = missingFields.join(', ');
+    if (label.trim().isNotEmpty) {
+      return 'En $category («$label») faltan: $fields.';
+    }
+    return 'En $category faltan: $fields.';
+  }
+
+  factory EncounterIncompleteItem.fromJson(Map<String, dynamic> json) {
+    final fieldsRaw = json['missing_fields'];
+    final fields = fieldsRaw is List
+        ? fieldsRaw.map((e) => e.toString()).where((s) => s.isNotEmpty).toList()
+        : <String>[];
+    return EncounterIncompleteItem(
+      category: (json['category'] ?? '').toString(),
+      index: int.tryParse('${json['index'] ?? 0}') ?? 0,
+      label: (json['label'] ?? '').toString(),
+      missingFields: fields,
     );
   }
 }

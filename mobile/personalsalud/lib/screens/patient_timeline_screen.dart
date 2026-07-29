@@ -2376,37 +2376,26 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                             : context.bio.textMuted,
                       ),
                     ),
-                  if (delTexto.isNotEmpty)
-                    Wrap(
-                      spacing: BioSpacing.sm,
-                      runSpacing: BioSpacing.sm,
-                      children: delTexto
-                          .map((item) => _buildCaptureItemChip(item))
-                          .toList(),
-                    ),
+                  ...delTexto.map(
+                    (item) => _buildCaptureItemBlock(review, item),
+                  ),
                   if (sugeridos.isNotEmpty) ...[
                     if (delTexto.isNotEmpty) BioSpacing.gapH(BioSpacing.sm),
-                    Wrap(
-                      spacing: BioSpacing.sm,
-                      runSpacing: BioSpacing.sm,
-                      children: sugeridos
-                          .map(
-                            (item) => Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildCaptureItemChip(item),
-                                Text(
-                                  'Sugerido por IA',
-                                  style: BioTypography.caption.copyWith(
-                                    color: IntentPalette.of(UiIntent.secondary)
-                                        .base,
-                                  ),
-                                ),
-                              ],
+                    ...sugeridos.map(
+                      (item) => Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildCaptureItemBlock(review, item),
+                          Text(
+                            'Sugerido por IA',
+                            style: BioTypography.caption.copyWith(
+                              color:
+                                  IntentPalette.of(UiIntent.secondary).base,
                             ),
-                          )
-                          .toList(),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ],
@@ -2414,19 +2403,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             );
           }),
         ],
-        if (review.tieneDatosFaltantes) ...[
+        if (review.missingCategories.isNotEmpty) ...[
           BioSpacing.gapH(BioSpacing.sm),
           BioAlert.warning(
-            message: review.datosFaltantesMensaje?.trim().isNotEmpty == true
-                ? review.datosFaltantesMensaje!
-                : 'Faltan categorías o campos obligatorios. Completá el dictado/texto (dosis, frecuencia, etc.) y volvé a analizar. No se puede confirmar hasta completarlos.',
+            message:
+                'Faltan categorías obligatorias: ${review.missingCategories.join(', ')}.',
           ),
         ],
+        ...review.orphanIssues.map(_buildCaptureIssueBlock),
         if (review.issues.isNotEmpty) ...[
-          BioSpacing.gapH(BioSpacing.md),
-          Text('Completar datos', style: sectionTitleStyle),
-          BioSpacing.gapH(BioSpacing.sm),
-          ...review.issues.map(_buildCaptureIssueBlock),
           BioSpacing.gapH(BioSpacing.sm),
           BioButton(
             label: _isApplyingResolutions ? 'Aplicando…' : 'Aplicar respuestas',
@@ -2580,7 +2565,48 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
-  Widget _buildCaptureItemChip(EncounterCaptureItem item) {
+  Widget _buildCaptureItemBlock(
+    EncounterCaptureAnalysis review,
+    EncounterCaptureItem item,
+  ) {
+    final incomplete = review.incompleteForItem(item.id);
+    final itemIssues = review.issuesForItem(item.id);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildCaptureItemChip(item, incomplete: incomplete != null),
+          if (incomplete != null) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              incomplete.message,
+              style: BioTypography.bodySm.copyWith(
+                color: IntentPalette.of(UiIntent.danger).base,
+              ),
+            ),
+          ],
+          if (itemIssues.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Text(
+              'Completar datos',
+              style: BioTypography.bodySm.copyWith(
+                fontWeight: FontWeight.w600,
+                color: IntentPalette.of(UiIntent.danger).base,
+              ),
+            ),
+            BioSpacing.gapH(BioSpacing.xs),
+            ...itemIssues.map(_buildCaptureIssueBlock),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCaptureItemChip(
+    EncounterCaptureItem item, {
+    bool incomplete = false,
+  }) {
     final selected = _stagedItemIds.contains(item.id);
     final label = item.subtitle != null && item.subtitle!.isNotEmpty
         ? '${item.label} (${item.subtitle})'
@@ -2590,7 +2616,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       label: label,
       selected: selected,
       icon: selected ? Icons.check : null,
-      intent: item.isFromClinicalText ? UiIntent.neutral : UiIntent.secondary,
+      intent: incomplete
+          ? UiIntent.danger
+          : (item.isFromClinicalText ? UiIntent.neutral : UiIntent.secondary),
       onTap: _isSaving ? null : () => _toggleStagedItem(item.id, !selected),
     );
   }

@@ -60,7 +60,7 @@ $this->title = $esGuardia
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-4">
     <div class="text-muted small">
         <?php if ($esAmbulatorio): ?>
-        <strong>Filtrar por fecha del turno:</strong> solo se listan turnos <strong>pendientes y sin atender</strong> en la fecha elegida.
+        <strong>Filtrar por fecha del turno:</strong> se listan los turnos del día, agrupados en <strong>por atender</strong> y <strong>atendidos</strong>.
         <?php else: ?>
         <strong>Filtrar por fecha:</strong> cirugías agendadas en el efector para el día indicado.
         <?php endif; ?>
@@ -95,7 +95,7 @@ $this->title = $esGuardia
      data-url-ver-consulta="<?= Html::encode(Url::to(['/paciente/ver-consulta'], true)) ?>"
      data-url-internacion-view="<?= Html::encode(Url::to(['internacion/view'], true)) ?>"
      data-url-asistente="<?= Html::encode(Url::to(['/site/asistente'], true)) ?>"
-     data-msg-empty-turnos="<?= Html::encode('No hay pacientes con turno pendiente de atención en la fecha seleccionada.') ?>"
+     data-msg-empty-turnos="<?= Html::encode('No hay pacientes con turno en la fecha seleccionada.') ?>"
      data-msg-empty-internados="<?= Html::encode('No hay pacientes internados para mostrar.') ?>"
      data-msg-empty-guardias="<?= Html::encode('No hay pacientes en el tablero de guardia.') ?>"
      data-msg-empty-cirugias="<?= Html::encode('No hay cirugías agendadas para la fecha seleccionada.') ?>"

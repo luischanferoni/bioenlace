@@ -17,7 +17,17 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 </template>
 
 <template id="tpl-pacientes-turnos-wrap">
-    <div class="row" data-role="turnos-grid"></div>
+    <div data-role="turnos-wrap">
+        <div data-slot="turnos-groups"></div>
+    </div>
+</template>
+
+<template id="tpl-pacientes-turnos-group">
+    <section class="mb-4" data-role="turnos-group">
+        <h3 class="h5 mb-3" data-field="titulo"></h3>
+        <div class="row" data-slot="turnos-grid"></div>
+        <div class="d-none" data-slot="empty"></div>
+    </section>
 </template>
 
 <template id="tpl-paciente-turno">

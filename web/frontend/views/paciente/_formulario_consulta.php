@@ -55,7 +55,7 @@ use yii\helpers\Html;
             placeholder="Escriba o dicte los detalles de la consulta. El asistente verificará motivos, evolución, diagnóstico, prácticas, etc."
             style="border-width: 2px; resize: vertical;"><?= $motivoPacientePrefill !== '' ? Html::encode($motivoPacientePrefill) : '' ?></textarea>
         <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
-            <button type="button" class="btn btn-sm btn-outline-secondary" id="encounter-dictate-btn" title="Dictado por voz">
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="encounter-dictate-btn" title="Dictar">
                 <i class="bi bi-mic"></i> Dictar
             </button>
             <button type="button" class="btn btn-sm btn-outline-secondary" id="capture-cancel-edit-btn" style="display: none;" title="Volver a la revisión sin cambios">

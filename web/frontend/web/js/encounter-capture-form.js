@@ -94,6 +94,8 @@
         this.editSnapshot = null;
         this.initialTextOnListen = '';
         this.audioOnlyRecording = false;
+        this._deviceSttFailed = false;
+        this._micStream = null;
         this.clientCaptureId = null;
         this.serverCaptureId = null;
         this.serverStage = null;
@@ -560,26 +562,15 @@
         var micBtn = this.form.querySelector('#encounter-dictate-btn');
         var deviceOn = !!this.sttConfig.device_enabled;
         var serverOn = !!this.sttConfig.server_enabled;
+        var canMic =
+            !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
 
         if (micBtn) {
-            if (!deviceOn && serverOn) {
-                micBtn.disabled = false;
-                micBtn.title = 'Grabar audio (se transcribe automáticamente)';
-            } else if (!deviceOn) {
-                micBtn.disabled = true;
-            } else if (!this.recognition) {
-                micBtn.disabled = true;
-            }
+            micBtn.disabled = !(canMic && (deviceOn || serverOn));
+            micBtn.title = 'Dictar';
         }
         if (!deviceOn && !serverOn) {
-            this.setStatus('Dictado por voz deshabilitado. Escriba el texto manualmente.', 'warning');
-        } else if (!deviceOn && serverOn && !this.recognition) {
-            this.setStatus('Use el micrófono para grabar; la transcripción se aplica sola.', 'muted');
-        } else if (deviceOn && !this.recognition) {
-            this.setStatus(
-                'Dictado del navegador no disponible. Puede grabar audio o escribir el texto.',
-                'warning'
-            );
+            this.setStatus('Dictado por voz deshabilitado. Escribí el texto manualmente.', 'warning');
         }
     };
 
@@ -631,62 +622,89 @@
             };
         };
 
-        this.recognition.onerror = function () {
-            self.stopDictation();
-            self.setStatus('Error en el dictado. Intentando transcripción automática…', 'warning');
+        this.recognition.onerror = function (event) {
+            var err = event && event.error ? String(event.error) : '';
+            // Al detener o sin habla: no es un fallo de producto.
+            if (err === 'aborted' || err === 'no-speech') {
+                return;
+            }
+            if (err === 'not-allowed' || err === 'service-not-allowed') {
+                self.listening = false;
+                self.audioOnlyRecording = false;
+                self.stopAudioCapture();
+                self.setStatus(
+                    'Necesitamos permiso del micrófono para dictar. Activá el micrófono en el navegador y volvé a intentar.',
+                    'warning'
+                );
+                return;
+            }
+            // STT del navegador falló: seguimos con el audio (silencioso).
+            self._deviceSttFailed = true;
+            try {
+                self.recognition.stop();
+            } catch (e) {
+                /* ignore */
+            }
         };
 
         this.recognition.onend = function () {
-            if (self.listening) {
+            if (self.listening && !self._deviceSttFailed) {
                 try {
                     self.recognition.start();
                 } catch (e) {
-                    self.stopDictation();
+                    self._deviceSttFailed = true;
                 }
             }
         };
     };
 
-    EncounterCaptureForm.prototype.startAudioCapture = function () {
-        var self = this;
-        if (!navigator.mediaDevices || !window.MediaRecorder) {
-            return;
+    EncounterCaptureForm.prototype.requestMicrophone = function () {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            return Promise.reject(new Error('unsupported'));
         }
+        return navigator.mediaDevices.getUserMedia({ audio: true });
+    };
+
+    EncounterCaptureForm.prototype.beginAudioRecorder = function (stream) {
+        var self = this;
         this.audioChunks = [];
         this._audioStopResolve = null;
-        navigator.mediaDevices
-            .getUserMedia({ audio: true })
-            .then(function (stream) {
-                self.mediaRecorder = new MediaRecorder(stream);
-                self.mediaRecorder.ondataavailable = function (e) {
-                    if (e.data && e.data.size > 0) {
-                        self.audioChunks.push(e.data);
-                    }
-                };
-                self.mediaRecorder.onstop = function () {
-                    stream.getTracks().forEach(function (t) {
-                        t.stop();
-                    });
-                    if (self.audioChunks.length) {
-                        self.pendingAudioBlob = new Blob(self.audioChunks, { type: 'audio/webm' });
-                    }
-                    if (typeof self._audioStopResolve === 'function') {
-                        var resolve = self._audioStopResolve;
-                        self._audioStopResolve = null;
-                        resolve(self.pendingAudioBlob || null);
-                    }
-                };
-                self.mediaRecorder.start();
-            })
-            .catch(function () {
-                /* sin audio de respaldo */
-            });
+        this._micStream = stream;
+        this.mediaRecorder = new MediaRecorder(stream);
+        this.mediaRecorder.ondataavailable = function (e) {
+            if (e.data && e.data.size > 0) {
+                self.audioChunks.push(e.data);
+            }
+        };
+        this.mediaRecorder.onstop = function () {
+            if (self._micStream) {
+                self._micStream.getTracks().forEach(function (t) {
+                    t.stop();
+                });
+                self._micStream = null;
+            }
+            if (self.audioChunks.length) {
+                self.pendingAudioBlob = new Blob(self.audioChunks, { type: 'audio/webm' });
+            }
+            if (typeof self._audioStopResolve === 'function') {
+                var resolve = self._audioStopResolve;
+                self._audioStopResolve = null;
+                resolve(self.pendingAudioBlob || null);
+            }
+        };
+        this.mediaRecorder.start();
     };
 
     EncounterCaptureForm.prototype.stopAudioCapture = function () {
         var self = this;
         return new Promise(function (resolve) {
             if (!self.mediaRecorder || self.mediaRecorder.state === 'inactive') {
+                if (self._micStream) {
+                    self._micStream.getTracks().forEach(function (t) {
+                        t.stop();
+                    });
+                    self._micStream = null;
+                }
                 resolve(self.pendingAudioBlob || null);
                 return;
             }
@@ -695,6 +713,12 @@
                 self.mediaRecorder.stop();
             } catch (e) {
                 self._audioStopResolve = null;
+                if (self._micStream) {
+                    self._micStream.getTracks().forEach(function (t) {
+                        t.stop();
+                    });
+                    self._micStream = null;
+                }
                 resolve(self.pendingAudioBlob || null);
             }
             self.mediaRecorder = null;
@@ -706,57 +730,65 @@
             this.stopDictation();
             return;
         }
-        if (!this.sttConfig.device_enabled && this.sttConfig.server_enabled) {
-            this.toggleAudioOnlyRecording();
+        if (!this.sttConfig.device_enabled && !this.sttConfig.server_enabled) {
+            this.setStatus('Dictado por voz deshabilitado.', 'warning');
             return;
         }
-        if (!this.recognition) {
-            return;
-        }
+        this.startDictationSession();
+    };
+
+    EncounterCaptureForm.prototype.startDictationSession = function () {
+        var self = this;
         this.initialTextOnListen = this.textarea.value || '';
         this.dictationStartedAt = Date.now();
         this.pendingAudioBlob = null;
-        this.startAudioCapture();
-        try {
-            this.recognition.start();
-            this.listening = true;
-            this.setStatus('Escuchando… Haga clic de nuevo para detener.', 'primary');
-        } catch (e) {
-            this.setStatus('No se pudo iniciar el dictado.', 'danger');
-        }
-    };
+        this.lastSttMeta = null;
+        this._deviceSttFailed = false;
+        this.setStatus('Pedí permiso del micrófono…', 'muted');
 
-    EncounterCaptureForm.prototype.toggleAudioOnlyRecording = function () {
-        if (this.audioOnlyRecording) {
-            this.stopAudioOnlyRecording();
-            return;
-        }
-        this.pendingAudioBlob = null;
-        this.dictationStartedAt = Date.now();
-        this.startAudioCapture();
-        this.audioOnlyRecording = true;
-        this.setStatus('Grabando audio… pulse de nuevo para detener.', 'primary');
-    };
-
-    EncounterCaptureForm.prototype.stopAudioOnlyRecording = function () {
-        var self = this;
-        this.audioOnlyRecording = false;
-        this.stopAudioCapture().then(function (blob) {
-            if (!blob) {
-                self.setStatus('No se capturó audio.', 'warning');
-                return;
-            }
-            self.transcribeOnServer();
-        });
+        this.requestMicrophone()
+            .then(function (stream) {
+                if (!window.MediaRecorder) {
+                    stream.getTracks().forEach(function (t) {
+                        t.stop();
+                    });
+                    throw new Error('unsupported');
+                }
+                self.beginAudioRecorder(stream);
+                var useRecognition =
+                    !!self.sttConfig.device_enabled && !!self.recognition;
+                if (useRecognition) {
+                    try {
+                        self.recognition.start();
+                        self.listening = true;
+                        self.audioOnlyRecording = false;
+                    } catch (e) {
+                        self.listening = false;
+                        self.audioOnlyRecording = true;
+                        self._deviceSttFailed = true;
+                    }
+                } else {
+                    self.listening = false;
+                    self.audioOnlyRecording = true;
+                }
+                self.setStatus('Escuchando… Tocá Dictar de nuevo para detener.', 'primary');
+            })
+            .catch(function (err) {
+                self.listening = false;
+                self.audioOnlyRecording = false;
+                var msg =
+                    err && err.message === 'unsupported'
+                        ? 'Este navegador no permite grabar audio. Escribí el texto.'
+                        : 'Necesitamos permiso del micrófono para dictar. Activá el micrófono en el navegador y volvé a intentar.';
+                self.setStatus(msg, 'warning');
+            });
     };
 
     EncounterCaptureForm.prototype.stopDictation = function () {
         var self = this;
-        if (this.audioOnlyRecording) {
-            this.stopAudioOnlyRecording();
-            return;
-        }
+        var wasListening = this.listening || this.audioOnlyRecording;
         this.listening = false;
+        this.audioOnlyRecording = false;
         if (this.recognition) {
             try {
                 this.recognition.stop();
@@ -764,30 +796,37 @@
                 /* ignore */
             }
         }
-        this.stopAudioCapture().then(function () {
-            if (!self.lastSttMeta) {
-                if (self.sttConfig.server_enabled && self.pendingAudioBlob) {
-                    self.transcribeOnServer();
-                }
+        if (!wasListening) {
+            return;
+        }
+        this.stopAudioCapture().then(function (blob) {
+            if (self.lastSttMeta) {
+                self.lastSttMeta.duration_ms = Date.now() - self.dictationStartedAt;
+                var q = assessLocalQuality(self.textarea.value, {
+                    confidence: self.lastSttMeta.confidence || 0,
+                    durationMs: self.lastSttMeta.duration_ms,
+                });
+                self.lastSttMeta.local_quality = q;
+            }
+            var hasText = !!(self.textarea && String(self.textarea.value || '').trim());
+            var needServer =
+                !!self.sttConfig.server_enabled &&
+                !!blob &&
+                (!hasText ||
+                    self._deviceSttFailed ||
+                    (self.lastSttMeta &&
+                        self.lastSttMeta.local_quality &&
+                        !self.lastSttMeta.local_quality.ok));
+
+            if (!blob && !hasText) {
+                self.setStatus('No se capturó audio. Volvé a dictar.', 'warning');
                 return;
             }
-            self.lastSttMeta.duration_ms = Date.now() - self.dictationStartedAt;
-            var q = assessLocalQuality(self.textarea.value, {
-                confidence: self.lastSttMeta.confidence || 0,
-                durationMs: self.lastSttMeta.duration_ms,
-            });
-            self.lastSttMeta.local_quality = q;
-            if (!q.ok && self.sttConfig.server_enabled && self.pendingAudioBlob) {
-                self.transcribeOnServer();
-                return;
-            }
-            if (!q.ok) {
-                self.setStatus(
-                    'Transcripción preliminar con baja calidad. Revisá el texto antes de analizar.',
-                    'warning'
-                );
-            } else {
-                self.setStatus('Dictado listo. Revise el texto y pulse Analizar.', 'success');
+
+            // Al usuario: solo “listo”. STT servidor (si hace falta) es silencioso.
+            self.setStatus('Listo.', 'success');
+            if (needServer) {
+                self.transcribeOnServer({ silent: true });
             }
         });
     };
@@ -824,7 +863,7 @@
             return;
         }
 
-        this.setStatus('Subiendo / procesando captura…', 'primary');
+        this.setStatus('Procesando…', 'primary');
         this.analyzeBtn.disabled = true;
         var clientId = this.ensureClientCaptureId();
         var ctx = this.readFormContext();
@@ -923,7 +962,7 @@
                 self.applyCaptureResponse(capture);
                 var stage = capture.stage || '';
                 if (stage === 'UPLOADED' || stage === 'STT_FAILED') {
-                    self.setStatus('Transcribiendo en servidor…', 'primary');
+                    self.setStatus('Procesando…', 'primary');
                     return fetch('/api/v1/clinical/encounter/captura/transcribir', {
                         method: 'POST',
                         headers: self.apiHeadersJson(),
@@ -995,40 +1034,45 @@
             });
     };
 
-    EncounterCaptureForm.prototype.transcribeOnServer = function () {
+    EncounterCaptureForm.prototype.transcribeOnServer = function (opts) {
         var self = this;
+        opts = opts || {};
+        var silent = !!opts.silent;
         if (!this.sttConfig.server_enabled) {
-            this.setStatus('Transcripción en servidor no disponible.', 'warning');
-            return;
+            return Promise.reject(new Error('server_stt_disabled'));
         }
         if (!this.pendingAudioBlob) {
-            this.setStatus('No hay audio para transcribir.', 'warning');
-            return;
+            return Promise.reject(new Error('no_audio'));
         }
-        this.setStatus('Transcribiendo…', 'primary');
-        blobToBase64(this.pendingAudioBlob).then(function (b64) {
-            var payload = mergeApiPayload({
-                audio: b64,
-                stt: { force_server: true, provenance: 'device' },
-            });
-            return fetch('/api/v1/audio/transcribir', {
-                method: 'POST',
-                headers: window.BioenlaceApiClient.mergeHeaders({
-                    'Content-Type': 'application/json',
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                }),
-                credentials: 'same-origin',
-                body: JSON.stringify(payload),
-            });
-        })
+        if (!silent) {
+            this.setStatus('Procesando…', 'primary');
+        }
+        return blobToBase64(this.pendingAudioBlob)
+            .then(function (b64) {
+                var payload = mergeApiPayload({
+                    audio: b64,
+                    stt: { force_server: true, provenance: 'device' },
+                });
+                return fetch('/api/v1/audio/transcribir', {
+                    method: 'POST',
+                    headers: window.BioenlaceApiClient.mergeHeaders({
+                        'Content-Type': 'application/json',
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }),
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload),
+                });
+            })
             .then(function (r) {
                 return r.json();
             })
             .then(function (data) {
                 if (!data.success || !data.texto_transcrito) {
-                    self.setStatus(data.error || 'No se pudo transcribir el audio.', 'danger');
-                    return;
+                    if (!silent) {
+                        self.setStatus('No se pudo procesar el audio. Podés escribir el texto.', 'warning');
+                    }
+                    return Promise.reject(new Error(data.error || 'stt_failed'));
                 }
                 self.textarea.value = data.texto_transcrito;
                 self.lastSttMeta = {
@@ -1039,10 +1083,16 @@
                     text: data.texto_transcrito,
                     force_server: true,
                 };
-                self.setStatus('Transcripción lista. Revise y analice.', 'success');
+                if (!silent) {
+                    self.setStatus('Listo.', 'success');
+                }
+                return data;
             })
-            .catch(function () {
-                self.setStatus('Error al transcribir el audio.', 'danger');
+            .catch(function (err) {
+                if (!silent) {
+                    self.setStatus('No se pudo procesar el audio. Podés escribir el texto.', 'warning');
+                }
+                return Promise.reject(err);
             });
     };
 

@@ -185,7 +185,15 @@
 
       var badge = colEl.querySelector('[data-field="estado-badge"]');
       if (badge) {
-        var estadoClass = (t.estado === 'PENDIENTE') ? 'warning' : 'secondary';
+        var estado = String(t.estado || '').toUpperCase();
+        var estadoClass = 'secondary';
+        if (estado === 'PENDIENTE') {
+          estadoClass = 'warning';
+        } else if (estado === 'EN_ATENCION') {
+          estadoClass = 'info';
+        } else if (estado === 'ATENDIDO') {
+          estadoClass = 'success';
+        }
         badge.className = 'badge bg-' + estadoClass;
         badge.textContent = t.estado_label || t.estado || '';
       }
@@ -238,6 +246,40 @@
       }
     }
 
+    function isTurnoPorAtender(t) {
+      var estado = String((t && t.estado) || '').toUpperCase();
+      return estado !== 'ATENDIDO';
+    }
+
+    function renderTurnosGroup(groupsSlot, title, items, emptyMessage) {
+      if (!groupsSlot) return;
+      var groupFrag = importTemplate('tpl-pacientes-turnos-group');
+      if (!groupFrag) return;
+      var groupRoot = groupFrag.querySelector('[data-role="turnos-group"]');
+      var titleEl = groupRoot.querySelector('[data-field="titulo"]');
+      if (titleEl) {
+        titleEl.textContent = title;
+      }
+      var grid = groupRoot.querySelector('[data-slot="turnos-grid"]');
+      var emptySlot = groupRoot.querySelector('[data-slot="empty"]');
+      if (!items.length) {
+        if (emptySlot) {
+          emptySlot.classList.remove('d-none');
+          showListadoEmpty(emptyMessage || 'Sin turnos en esta sección.', emptySlot);
+        }
+      } else if (grid) {
+        items.forEach(function (t) {
+          var itemFrag = importTemplate('tpl-paciente-turno');
+          if (!itemFrag) return;
+          var col = itemFrag.firstElementChild;
+          if (!col) return;
+          fillTurnoCard(col, t);
+          grid.appendChild(col);
+        });
+      }
+      groupsSlot.appendChild(groupFrag);
+    }
+
     function renderTurnos(data, targetEl) {
       var target = targetEl || container;
       if (!data || !data.length) {
@@ -247,17 +289,31 @@
       clearNode(target);
       var wrapFrag = importTemplate('tpl-pacientes-turnos-wrap');
       if (!wrapFrag) return;
-      var row = wrapFrag.querySelector('[data-role="turnos-grid"]');
+      var groupsSlot = wrapFrag.querySelector('[data-slot="turnos-groups"]');
       target.appendChild(wrapFrag);
 
+      var porAtender = [];
+      var atendidos = [];
       data.forEach(function (t) {
-        var itemFrag = importTemplate('tpl-paciente-turno');
-        if (!itemFrag) return;
-        var col = itemFrag.firstElementChild;
-        if (!col) return;
-        fillTurnoCard(col, t);
-        row.appendChild(col);
+        if (isTurnoPorAtender(t)) {
+          porAtender.push(t);
+        } else {
+          atendidos.push(t);
+        }
       });
+
+      renderTurnosGroup(
+        groupsSlot,
+        'Por atender (' + porAtender.length + ')',
+        porAtender,
+        'No hay turnos pendientes de atención.'
+      );
+      renderTurnosGroup(
+        groupsSlot,
+        'Atendidos (' + atendidos.length + ')',
+        atendidos,
+        'Todavía no hay turnos atendidos en esta fecha.'
+      );
     }
 
     function fillInternadoRow(rowEl, i) {

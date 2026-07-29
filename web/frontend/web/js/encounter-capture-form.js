@@ -658,11 +658,140 @@
         };
     };
 
+    EncounterCaptureForm.prototype.queryMicrophonePermission = function () {
+        if (!navigator.permissions || !navigator.permissions.query) {
+            return Promise.resolve(null);
+        }
+        try {
+            return navigator.permissions
+                .query({ name: 'microphone' })
+                .then(function (status) {
+                    return status && status.state ? String(status.state) : null;
+                })
+                .catch(function () {
+                    return null;
+                });
+        } catch (e) {
+            return Promise.resolve(null);
+        }
+    };
+
     EncounterCaptureForm.prototype.requestMicrophone = function () {
+        if (!window.isSecureContext) {
+            return Promise.reject(Object.assign(new Error('insecure'), { name: 'SecurityError' }));
+        }
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-            return Promise.reject(new Error('unsupported'));
+            return Promise.reject(Object.assign(new Error('unsupported'), { name: 'NotSupportedError' }));
         }
         return navigator.mediaDevices.getUserMedia({ audio: true });
+    };
+
+    /**
+     * Mensaje accionable: si el sitio ya bloqueó el mic, Chrome no vuelve a mostrar el diálogo.
+     */
+    EncounterCaptureForm.prototype.microphoneErrorMessage = function (err, permState) {
+        var name = err && err.name ? String(err.name) : '';
+        var msg = err && err.message ? String(err.message) : '';
+
+        if (!window.isSecureContext || name === 'SecurityError' || msg === 'insecure') {
+            return 'El dictado requiere una conexión segura (HTTPS o localhost).';
+        }
+        if (name === 'NotFoundError' || name === 'DevicesNotFoundError') {
+            return 'No se encontró un micrófono en este equipo.';
+        }
+        if (name === 'NotReadableError' || name === 'TrackStartError') {
+            return 'El micrófono está en uso por otra aplicación. Cerrala y volvé a intentar.';
+        }
+        if (name === 'NotSupportedError' || msg === 'unsupported') {
+            return 'Este navegador no permite grabar audio. Escribí el texto.';
+        }
+        // Bloqueo previo: Chrome no muestra el popup otra vez.
+        if (
+            permState === 'denied' ||
+            name === 'NotAllowedError' ||
+            name === 'PermissionDeniedError' ||
+            name === 'PermissionDismissedError'
+        ) {
+            return (
+                'El micrófono está bloqueado para este sitio (por eso no aparece el pedido de permiso). ' +
+                'En la barra de direcciones, hacé clic en el ícono del candado o del micrófono → ' +
+                'Configuración del sitio / Permisos → Micrófono → Permitir. ' +
+                'Después tocá Dictar de nuevo.'
+            );
+        }
+        return 'No se pudo usar el micrófono. Revisá los permisos del sitio en la barra de direcciones y volvé a intentar.';
+    };
+
+    EncounterCaptureForm.prototype.startDictationSession = function () {
+        var self = this;
+        this.initialTextOnListen = this.textarea.value || '';
+        this.dictationStartedAt = Date.now();
+        this.pendingAudioBlob = null;
+        this.lastSttMeta = null;
+        this._deviceSttFailed = false;
+
+        if (!window.isSecureContext) {
+            this.setStatus(this.microphoneErrorMessage({ name: 'SecurityError' }, null), 'warning');
+            return;
+        }
+
+        this.queryMicrophonePermission().then(function (permState) {
+            // Si ya está denegado, getUserMedia falla al instante y Chrome no muestra diálogo.
+            if (permState === 'denied') {
+                self.setStatus(self.microphoneErrorMessage({ name: 'NotAllowedError' }, permState), 'warning');
+                return;
+            }
+
+            self.setStatus(
+                permState === 'granted' ? 'Escuchando…' : 'Esperando permiso del micrófono…',
+                'muted'
+            );
+
+            self.requestMicrophone()
+                .then(function (stream) {
+                    if (!window.MediaRecorder) {
+                        stream.getTracks().forEach(function (t) {
+                            t.stop();
+                        });
+                        throw Object.assign(new Error('unsupported'), { name: 'NotSupportedError' });
+                    }
+                    try {
+                        self.beginAudioRecorder(stream);
+                    } catch (recErr) {
+                        stream.getTracks().forEach(function (t) {
+                            t.stop();
+                        });
+                        throw recErr;
+                    }
+                    var useRecognition =
+                        !!self.sttConfig.device_enabled && !!self.recognition;
+                    if (useRecognition) {
+                        try {
+                            self.recognition.start();
+                            self.listening = true;
+                            self.audioOnlyRecording = false;
+                        } catch (e) {
+                            self.listening = false;
+                            self.audioOnlyRecording = true;
+                            self._deviceSttFailed = true;
+                        }
+                    } else {
+                        self.listening = false;
+                        self.audioOnlyRecording = true;
+                    }
+                    self.setStatus('Escuchando… Tocá Dictar de nuevo para detener.', 'primary');
+                })
+                .catch(function (err) {
+                    self.listening = false;
+                    self.audioOnlyRecording = false;
+                    self.queryMicrophonePermission().then(function (stateAfter) {
+                        self.setStatus(
+                            self.microphoneErrorMessage(err, stateAfter || permState),
+                            'warning'
+                        );
+                    });
+                });
+        });
     };
 
     EncounterCaptureForm.prototype.beginAudioRecorder = function (stream) {
@@ -735,53 +864,6 @@
             return;
         }
         this.startDictationSession();
-    };
-
-    EncounterCaptureForm.prototype.startDictationSession = function () {
-        var self = this;
-        this.initialTextOnListen = this.textarea.value || '';
-        this.dictationStartedAt = Date.now();
-        this.pendingAudioBlob = null;
-        this.lastSttMeta = null;
-        this._deviceSttFailed = false;
-        this.setStatus('Pedí permiso del micrófono…', 'muted');
-
-        this.requestMicrophone()
-            .then(function (stream) {
-                if (!window.MediaRecorder) {
-                    stream.getTracks().forEach(function (t) {
-                        t.stop();
-                    });
-                    throw new Error('unsupported');
-                }
-                self.beginAudioRecorder(stream);
-                var useRecognition =
-                    !!self.sttConfig.device_enabled && !!self.recognition;
-                if (useRecognition) {
-                    try {
-                        self.recognition.start();
-                        self.listening = true;
-                        self.audioOnlyRecording = false;
-                    } catch (e) {
-                        self.listening = false;
-                        self.audioOnlyRecording = true;
-                        self._deviceSttFailed = true;
-                    }
-                } else {
-                    self.listening = false;
-                    self.audioOnlyRecording = true;
-                }
-                self.setStatus('Escuchando… Tocá Dictar de nuevo para detener.', 'primary');
-            })
-            .catch(function (err) {
-                self.listening = false;
-                self.audioOnlyRecording = false;
-                var msg =
-                    err && err.message === 'unsupported'
-                        ? 'Este navegador no permite grabar audio. Escribí el texto.'
-                        : 'Necesitamos permiso del micrófono para dictar. Activá el micrófono en el navegador y volvé a intentar.';
-                self.setStatus(msg, 'warning');
-            });
     };
 
     EncounterCaptureForm.prototype.stopDictation = function () {

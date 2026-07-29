@@ -1365,27 +1365,19 @@
                     '';
                 if (ok) {
                     self.clearSaveAlert();
-                    self.clientCaptureId = null;
-                    self.serverCaptureId = null;
-                    self.serverStage = null;
-                    self.lastAnalysisPayload = null;
-                    self.captureReview = null;
-                    self.draftText = '';
-                    if (self.reviewRoot) {
-                        self.reviewRoot.innerHTML = '';
+                    var flashMsg = msg || 'Consulta guardada.';
+                    try {
+                        sessionStorage.setItem(
+                            'bioenlace_home_flash',
+                            JSON.stringify({ level: 'success', message: flashMsg })
+                        );
+                    } catch (e) {
+                        /* ignore */
                     }
-                    if (self.responseContent) {
-                        self.responseContent.innerHTML = '';
-                        self.responseContent.classList.add('d-none');
-                    }
-                    if (self.responseEl) {
-                        self.responseEl.style.display = 'none';
-                    }
-                    if (self.textarea) {
-                        self.textarea.value = '';
-                    }
-                    self.setCaptureMode(false);
-                    self.setStatus(msg || 'Consulta guardada.', 'success');
+                    var urlInicio =
+                        (self.form && self.form.getAttribute('data-url-inicio')) || '/site/index';
+                    window.location.href = urlInicio;
+                    return;
                 } else {
                     self.showSaveAlert(msg || 'Error al guardar.', 'danger');
                     self.updateConfirmState();

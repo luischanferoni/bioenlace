@@ -27,7 +27,43 @@
   function showError(errorEl, msg) {
     if (!errorEl) return;
     errorEl.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + String(msg || 'Error');
+    errorEl.className = 'alert alert-warning';
     errorEl.classList.remove('d-none');
+  }
+
+  function consumeHomeFlash(flashEl) {
+    if (!flashEl) return;
+    var raw = null;
+    try {
+      raw = sessionStorage.getItem('bioenlace_home_flash');
+      if (raw) {
+        sessionStorage.removeItem('bioenlace_home_flash');
+      }
+    } catch (e) {
+      return;
+    }
+    if (!raw) return;
+    var flash = null;
+    try {
+      flash = JSON.parse(raw);
+    } catch (e) {
+      return;
+    }
+    if (!flash || !flash.message) return;
+    var level = flash.level === 'danger' || flash.level === 'warning' ? flash.level : 'success';
+    var icon =
+      level === 'success'
+        ? 'bi-check-circle'
+        : level === 'danger'
+          ? 'bi-exclamation-triangle'
+          : 'bi-info-circle';
+    flashEl.className = 'alert alert-' + level + ' mb-3';
+    flashEl.textContent = '';
+    var i = document.createElement('i');
+    i.className = 'bi ' + icon + ' me-2';
+    flashEl.appendChild(i);
+    flashEl.appendChild(document.createTextNode(String(flash.message)));
+    flashEl.classList.remove('d-none');
   }
 
   function init() {
@@ -38,6 +74,8 @@
     var loading = document.getElementById('pacientes-listado-loading');
     var errorEl = document.getElementById('pacientes-listado-error');
     if (!container || !loading || !errorEl) return;
+
+    consumeHomeFlash(document.getElementById('pacientes-listado-flash'));
 
     var fecha = root.getAttribute('data-fecha') || '';
     var encounter = root.getAttribute('data-encounter') || '';

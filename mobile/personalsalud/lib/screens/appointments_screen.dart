@@ -460,8 +460,8 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
     );
   }
 
-  void _verHistoriaClinica(int personaId, {String? parent, int? parentId}) {
-    Navigator.push(
+  Future<void> _verHistoriaClinica(int personaId, {String? parent, int? parentId}) async {
+    final saved = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => PatientTimelineScreen(
@@ -473,6 +473,12 @@ class _AppointmentsScreenState extends State<AppointmentsScreen> {
         ),
       ),
     );
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Consulta guardada')),
+      );
+      await _cargarTurnos();
+    }
   }
 
   void _abrirChat(int consultaId, String nombrePaciente) {

@@ -1584,12 +1584,15 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (refreshed == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Consulta guardada')),
+      );
       await _cargarListadoPacientes(silent: true);
     }
   }
 
-  void _verHistoriaClinicaCirugia(CirugiaAgendaItem c) {
-    Navigator.push(
+  Future<void> _verHistoriaClinicaCirugia(CirugiaAgendaItem c) async {
+    final saved = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (context) => PatientTimelineScreen(
@@ -1601,5 +1604,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Consulta guardada')),
+      );
+      await _cargarListadoPacientes(silent: true);
+    }
   }
 }

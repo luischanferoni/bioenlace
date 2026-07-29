@@ -101,6 +101,7 @@ $this->title = $esGuardia
      data-msg-empty-cirugias="<?= Html::encode('No hay cirugías agendadas para la fecha seleccionada.') ?>"
      data-es-guardia="<?= $esGuardia ? '1' : '0' ?>"
 >
+    <div id="pacientes-listado-flash" class="d-none alert mb-3" role="status"></div>
     <div id="pacientes-listado-loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Cargando...</span>

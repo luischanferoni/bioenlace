@@ -1907,8 +1907,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           intent: UiIntent.warning,
           detalle: _detalleDiagnosticoGuardado(guardado),
         );
-      } else {
-        _snack('Consulta guardada', UiIntent.success);
       }
       final doneId = _activePendingId;
       _clearCaptureDraft(deleteLocalPending: false);
@@ -1917,6 +1915,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         await _loadPendingCaptures();
       }
       if (!mounted) return;
+      // El aviso de éxito lo muestra la pantalla anterior (home / agenda).
       Navigator.of(context).pop(true);
     } catch (e, st) {
       debugPrint('[captura] Error al guardar: $e\n$st');

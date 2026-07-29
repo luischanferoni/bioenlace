@@ -572,17 +572,46 @@ class EncounterOpenProblems {
   factory EncounterOpenProblems.fromJson(dynamic raw) {
     if (raw is! Map) return const EncounterOpenProblems();
     final map = Map<String, dynamic>.from(raw);
+    final conditionOptions = _parseOptions(map['condition_options']);
+    final carePlanOptions = _parseOptions(map['care_plan_options']);
     return EncounterOpenProblems(
-      conditions: _parseItems(map['conditions']),
-      carePlans: _parseItems(map['care_plans']),
+      conditions: _parseItems(map['conditions'], conditionOptions),
+      carePlans: _parseItems(map['care_plans'], carePlanOptions),
     );
   }
 
-  static List<EncounterOpenProblemItem> _parseItems(dynamic raw) {
+  static List<EncounterCaptureIssueOption> _parseOptions(dynamic raw) {
     if (raw is! List) return const [];
     return raw
         .whereType<Map>()
-        .map((e) => EncounterOpenProblemItem.fromJson(Map<String, dynamic>.from(e)))
+        .map((e) => EncounterCaptureIssueOption.fromJson(
+              Map<String, dynamic>.from(e),
+            ))
+        .toList();
+  }
+
+  static List<EncounterOpenProblemItem> _parseItems(
+    dynamic raw,
+    List<EncounterCaptureIssueOption> sharedOptions,
+  ) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) {
+          final item = EncounterOpenProblemItem.fromJson(
+            Map<String, dynamic>.from(e),
+          );
+          if (item.options.isNotEmpty || sharedOptions.isEmpty) {
+            return item;
+          }
+          return EncounterOpenProblemItem(
+            id: item.id,
+            kind: item.kind,
+            label: item.label,
+            options: sharedOptions,
+            statusLabel: item.statusLabel,
+          );
+        })
         .where((i) => i.id > 0)
         .toList();
   }

@@ -85,7 +85,154 @@ final class EncounterCaptureReviewPresenter
             }
         }
 
+        return self::sanitizeCaptureReview($out);
+    }
+
+    /**
+     * Quita tipologías internas (follow_up, ordered, …) de subtítulos ya persistidos.
+     *
+     * @param array<string, mixed> $review
+     * @return array<string, mixed>
+     */
+    public static function sanitizeCaptureReview(array $review): array
+    {
+        $categoriesIn = $review['categories'] ?? null;
+        if (!is_array($categoriesIn)) {
+            return $review;
+        }
+        $categories = [];
+        foreach ($categoriesIn as $cat) {
+            if (!is_array($cat)) {
+                continue;
+            }
+            $items = [];
+            foreach ($cat['items'] ?? [] as $item) {
+                if (!is_array($item)) {
+                    continue;
+                }
+                $sub = isset($item['subtitle']) ? trim((string) $item['subtitle']) : '';
+                if ($sub === '') {
+                    unset($item['subtitle']);
+                } else {
+                    $kept = [];
+                    foreach (preg_split('/\s*·\s*/u', $sub) ?: [] as $part) {
+                        $part = trim((string) $part);
+                        if ($part === '' || self::isInternalTipoToken($part)) {
+                            continue;
+                        }
+                        $kept[] = $part;
+                    }
+                    if ($kept === []) {
+                        unset($item['subtitle']);
+                    } else {
+                        $item['subtitle'] = implode(' · ', $kept);
+                    }
+                }
+                $items[] = $item;
+            }
+            $cat['items'] = $items;
+            $categories[] = $cat;
+        }
+        $review['categories'] = $categories;
+
+        return $review;
+    }
+
+    /**
+     * Compacta capture_review para API (sin basura de tipología ni issues duplicados).
+     *
+     * @param array<string, mixed> $review
+     * @return array<string, mixed>
+     */
+    public static function slimCaptureReviewForApi(array $review): array
+    {
+        $review = self::sanitizeCaptureReview($review);
+
+        $textoOriginal = trim((string) ($review['texto_original'] ?? ''));
+        $textoProcesado = trim((string) ($review['texto_procesado'] ?? ''));
+        if ($textoProcesado !== '' && $textoProcesado === $textoOriginal) {
+            unset($review['texto_procesado']);
+        }
+
+        $detalle = $review['datos_faltantes_detalle'] ?? null;
+        if (is_array($detalle)) {
+            unset($detalle['issues']);
+            if (($detalle['missing_categories'] ?? null) === []
+                && ($detalle['incomplete_items'] ?? null) === []
+                && trim((string) ($detalle['message'] ?? '')) === '') {
+                unset($review['datos_faltantes_detalle']);
+            } else {
+                $review['datos_faltantes_detalle'] = $detalle;
+            }
+        }
+
+        $categories = $review['categories'] ?? null;
+        if (is_array($categories)) {
+            foreach ($categories as $ci => $cat) {
+                if (!is_array($cat)) {
+                    continue;
+                }
+                $items = [];
+                foreach ($cat['items'] ?? [] as $item) {
+                    if (!is_array($item)) {
+                        continue;
+                    }
+                    if (isset($item['payload']) && is_array($item['payload'])) {
+                        $item['payload'] = self::compactPayload($item['payload']);
+                    }
+                    $items[] = $item;
+                }
+                $categories[$ci]['items'] = $items;
+            }
+            $review['categories'] = array_values($categories);
+        }
+
+        return $review;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    private static function compactPayload(array $payload): array
+    {
+        $out = [];
+        foreach ($payload as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+            if (is_string($key) && self::isInternalTipoKey($key)) {
+                // Tipología interna: se mantiene para guardar, pero no como subtítulo UI.
+                $out[$key] = $value;
+                continue;
+            }
+            $out[$key] = $value;
+        }
+
         return $out;
+    }
+
+    private static function isInternalTipoKey(string $key): bool
+    {
+        $folded = strtolower(preg_replace('/\s+/', '', $key) ?? $key);
+
+        return in_array($folded, ['tipo', 'type', 'category', 'kind'], true);
+    }
+
+    public static function isInternalTipoToken(string $value): bool
+    {
+        $folded = strtolower(str_replace(['-', ' '], '_', trim($value)));
+
+        return in_array($folded, [
+            'follow_up',
+            'followup',
+            'counseling',
+            'counselling',
+            'conditional',
+            'ordered',
+            'mentioned',
+            'order',
+        ], true);
     }
 
     /**
@@ -509,18 +656,7 @@ final class EncounterCaptureReviewPresenter
 
     private function isStructuralSubtitleValue(string $value): bool
     {
-        $folded = strtolower(str_replace(['-', ' '], '_', trim($value)));
-
-        return in_array($folded, [
-            'follow_up',
-            'followup',
-            'counseling',
-            'counselling',
-            'conditional',
-            'ordered',
-            'mentioned',
-            'order',
-        ], true);
+        return self::isInternalTipoToken($value);
     }
 
     /**

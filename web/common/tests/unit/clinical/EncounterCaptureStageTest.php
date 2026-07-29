@@ -89,11 +89,13 @@ class EncounterCaptureStageTest extends Unit
         $detail = $svc->toApiArray($capture, true);
         $this->assertTrue($detail['has_analysis']);
         $this->assertArrayHasKey('capture_review', $detail);
-        $this->assertArrayHasKey('datosExtraidos', $detail);
+        $this->assertArrayNotHasKey('datosExtraidos', $detail);
         $this->assertArrayNotHasKey('analysis', $detail);
         $this->assertArrayNotHasKey('html', $detail);
-        $this->assertSame(true, $detail['puede_confirmar']);
+        $this->assertArrayNotHasKey('texto_original', $detail);
+        $this->assertArrayNotHasKey('puede_confirmar', $detail);
         $this->assertSame(3, $detail['id_configuracion']);
+        $this->assertArrayNotHasKey('subtitle', $detail['capture_review']['categories'][0]['items'][0]);
         $this->assertSame(
             'Control en consultorio',
             $detail['capture_review']['categories'][0]['items'][0]['label']

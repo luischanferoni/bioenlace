@@ -136,10 +136,43 @@
         return true;
     }
 
+    function isInternalTipoToken(value) {
+        var folded = String(value || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[-\s]+/g, '_');
+        return (
+            folded === 'follow_up' ||
+            folded === 'followup' ||
+            folded === 'counseling' ||
+            folded === 'counselling' ||
+            folded === 'conditional' ||
+            folded === 'ordered' ||
+            folded === 'mentioned' ||
+            folded === 'order'
+        );
+    }
+
+    function cleanSubtitle(subtitle) {
+        if (!subtitle) {
+            return '';
+        }
+        return String(subtitle)
+            .split(/\s*·\s*/)
+            .map(function (part) {
+                return String(part || '').trim();
+            })
+            .filter(function (part) {
+                return part !== '' && !isInternalTipoToken(part);
+            })
+            .join(' · ');
+    }
+
     function renderItemChip(item, isActive) {
         var label = item.label || '';
-        if (item.subtitle) {
-            label += ' (' + item.subtitle + ')';
+        var subtitle = cleanSubtitle(item.subtitle);
+        if (subtitle) {
+            label += ' (' + subtitle + ')';
         }
         var active = isActive !== false;
         var baseClass = isAiSuggestion(item) ? 'btn-outline-info' : 'btn-outline-secondary';
@@ -368,16 +401,16 @@
             '<p class="small text-muted mb-2">Opcional: indicá el estado al cerrar. Si no elegís, se mantienen como están.</p>'
         );
         conditions.forEach(function (item) {
-            parts.push(renderOpenProblemItem(item, 'condition'));
+            parts.push(renderOpenProblemItem(item, 'condition', openProblems.condition_options));
         });
         carePlans.forEach(function (item) {
-            parts.push(renderOpenProblemItem(item, 'care_plan'));
+            parts.push(renderOpenProblemItem(item, 'care_plan', openProblems.care_plan_options));
         });
         parts.push('</div>');
         return parts.join('');
     }
 
-    function renderOpenProblemItem(item, kind) {
+    function renderOpenProblemItem(item, kind, sharedOptions) {
         if (!item || !item.id) {
             return '';
         }
@@ -397,7 +430,11 @@
                     '</div>'
             );
         }
-        var options = Array.isArray(item.options) ? item.options : [];
+        var options = Array.isArray(item.options) && item.options.length
+            ? item.options
+            : Array.isArray(sharedOptions)
+              ? sharedOptions
+              : [];
         if (options.length) {
             parts.push('<div class="d-flex flex-wrap gap-1">');
             options.forEach(function (opt) {

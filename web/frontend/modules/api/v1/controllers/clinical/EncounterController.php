@@ -197,7 +197,8 @@ class EncounterController extends BaseController
             $item = [
                 'id' => (string) $sr->id,
                 'name' => (string) ($dto['display'] ?? $dto['code'] ?? 'Orden'),
-                'subtitle' => (string) ($dto['category'] ?? ''),
+                // No exponer códigos internos (counseling / follow-up) como subtítulo.
+                'subtitle' => '',
             ];
             if (in_array($category, ['counseling', 'follow-up'], true)) {
                 $indicacionItems[] = $item;

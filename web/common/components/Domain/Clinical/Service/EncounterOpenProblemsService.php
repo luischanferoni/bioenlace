@@ -31,9 +31,13 @@ final class EncounterOpenProblemsService
     }
 
     /**
+     * Contrato API slim: ítems deduplicados + opciones compartidas (una sola vez).
+     *
      * @return array{
      *   conditions: list<array<string, mixed>>,
-     *   care_plans: list<array<string, mixed>>
+     *   care_plans: list<array<string, mixed>>,
+     *   condition_options?: list<array{value: string, label: string}>,
+     *   care_plan_options?: list<array{value: string, label: string}>
      * }
      */
     public function forSubject(int $subjectPersonaId): array
@@ -42,10 +46,20 @@ final class EncounterOpenProblemsService
             return ['conditions' => [], 'care_plans' => []];
         }
 
-        return [
-            'conditions' => $this->buildConditions($subjectPersonaId),
-            'care_plans' => $this->buildCarePlans($subjectPersonaId),
+        $conditions = $this->buildConditions($subjectPersonaId);
+        $carePlans = $this->buildCarePlans($subjectPersonaId);
+        $out = [
+            'conditions' => $conditions,
+            'care_plans' => $carePlans,
         ];
+        if ($conditions !== []) {
+            $out['condition_options'] = ConditionClinicalStatus::closureOptions();
+        }
+        if ($carePlans !== []) {
+            $out['care_plan_options'] = $this->defaultCarePlanClosureOptions();
+        }
+
+        return $out;
     }
 
     /**
@@ -53,19 +67,21 @@ final class EncounterOpenProblemsService
      */
     private function buildConditions(int $subjectPersonaId): array
     {
-        $rows = $this->conditions->listActive($subjectPersonaId, 40);
+        // Mismo dedupe/ranking que home HC (evita I10×N + SNOMED duplicados).
+        $summaries = $this->conditionPresentation->listPatientSummaries($subjectPersonaId);
         $out = [];
-        foreach ($rows as $cond) {
-            $summary = $this->conditionPresentation->toPatientSummary($cond);
+        foreach ($summaries as $summary) {
+            $id = (int) ($summary['id'] ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
             $out[] = [
-                'id' => (int) $cond->id,
+                'id' => $id,
                 'kind' => 'condition',
-                'label' => (string) ($summary['label'] ?? $cond->display ?? $cond->code ?? 'Condición'),
-                'code' => (string) ($cond->code ?? ''),
-                'clinical_status' => (string) ($cond->clinical_status ?? ''),
+                'label' => (string) ($summary['label'] ?? $summary['display'] ?? $summary['codigo'] ?? 'Condición'),
+                'code' => (string) ($summary['codigo'] ?? ''),
+                'clinical_status' => (string) ($summary['clinical_status'] ?? ''),
                 'status_label' => (string) ($summary['statusLabel'] ?? ''),
-                'options' => ConditionClinicalStatus::closureOptions(),
-                'allow_custom' => false,
             ];
         }
 
@@ -79,6 +95,7 @@ final class EncounterOpenProblemsService
     {
         $plans = $this->carePlans->listActive($subjectPersonaId);
         $out = [];
+        $seen = [];
         foreach ($plans as $plan) {
             if (!$plan instanceof CarePlan) {
                 continue;
@@ -87,14 +104,17 @@ final class EncounterOpenProblemsService
             $title = trim((string) ($presented['title'] ?? ''));
             $categoryLabel = trim((string) ($presented['categoryLabel'] ?? $plan->category ?? ''));
             $label = $title !== '' ? $title : ($categoryLabel !== '' ? $categoryLabel : ('Plan #' . $plan->id));
+            $dedupeKey = mb_strtolower($label . '|' . (string) ($plan->category ?? ''));
+            if (isset($seen[$dedupeKey])) {
+                continue;
+            }
+            $seen[$dedupeKey] = true;
             $out[] = [
                 'id' => (int) $plan->id,
                 'kind' => 'care_plan',
                 'label' => $label,
                 'category' => (string) ($plan->category ?? ''),
                 'status' => (string) ($plan->status ?? ''),
-                'options' => $this->carePlanClosureOptions((string) $plan->status),
-                'allow_custom' => false,
             ];
         }
 
@@ -104,25 +124,13 @@ final class EncounterOpenProblemsService
     /**
      * @return list<array{value: string, label: string}>
      */
-    private function carePlanClosureOptions(string $currentStatus): array
+    private function defaultCarePlanClosureOptions(): array
     {
-        $opts = [
+        return [
             ['value' => CarePlanStatus::ACTIVE, 'label' => 'Sigue activo'],
             ['value' => CarePlanStatus::COMPLETED, 'label' => 'Completado'],
             ['value' => CarePlanStatus::ON_HOLD, 'label' => 'En pausa'],
             ['value' => CarePlanStatus::REVOKED, 'label' => 'Revocado'],
         ];
-        if ($currentStatus === CarePlanStatus::ON_HOLD) {
-            return $opts;
-        }
-        if ($currentStatus === CarePlanStatus::DRAFT) {
-            return [
-                ['value' => CarePlanStatus::ACTIVE, 'label' => 'Activar'],
-                ['value' => CarePlanStatus::COMPLETED, 'label' => 'Completado'],
-                ['value' => CarePlanStatus::REVOKED, 'label' => 'Revocado'],
-            ];
-        }
-
-        return $opts;
     }
 }

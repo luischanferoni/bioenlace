@@ -5,6 +5,7 @@ namespace common\components\Domain\Clinical\Workflow;
 use common\components\Domain\Clinical\Capture\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Legacy\ConsultaProcesamientoService;
 use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
+use common\components\Domain\Clinical\Service\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
@@ -918,30 +919,44 @@ final class EncounterCapturePipelineService
             $review = null;
         }
 
-        if ($extraidos !== []) {
+        if ($review !== null) {
+            $review = EncounterCaptureReviewPresenter::slimCaptureReviewForApi($review);
+            // open_problems fresco y slim (dedupe + opciones compartidas); no el blob cacheado.
+            try {
+                $openProblems = (new EncounterOpenProblemsService())->forSubject(
+                    (int) $capture->subject_persona_id
+                );
+                $hasOps = ($openProblems['conditions'] ?? []) !== []
+                    || ($openProblems['care_plans'] ?? []) !== [];
+                if ($hasOps) {
+                    $review['open_problems'] = $openProblems;
+                } else {
+                    unset($review['open_problems']);
+                }
+            } catch (\Throwable $e) {
+                unset($review['open_problems']);
+            }
+            $out['capture_review'] = $review;
+        } elseif ($extraidos !== []) {
+            // Sin review: solo entonces exponer extracción cruda.
             $out['datosExtraidos'] = $extraidos;
         }
-        if ($review !== null) {
-            $out['capture_review'] = $review;
-        }
 
-        // Flags / ids útiles en la raíz (sin duplicar el blob completo del analizar).
-        foreach ([
-            'texto_original',
-            'id_configuracion',
-            'id_consulta',
-            'puede_confirmar',
-            'tiene_datos_faltantes',
-        ] as $key) {
-            if (array_key_exists($key, $analysisStored) && !array_key_exists($key, $out)) {
-                $out[$key] = $analysisStored[$key];
-            }
+        // id_configuracion / id_consulta: necesarios para guardar; no duplicar textos/flags del review.
+        if (array_key_exists('id_configuracion', $analysisStored) && !array_key_exists('id_configuracion', $out)) {
+            $out['id_configuracion'] = $analysisStored['id_configuracion'];
         }
-        if (!isset($out['texto_original']) && is_string($capture->transcript) && $capture->transcript !== '') {
-            $out['texto_original'] = $capture->transcript;
+        if (array_key_exists('id_consulta', $analysisStored) && !array_key_exists('id_consulta', $out)) {
+            $out['id_consulta'] = $analysisStored['id_consulta'];
         }
         if (isset($analysisStored['encounter_id']) && empty($out['encounter_id'])) {
             $out['encounter_id'] = (int) $analysisStored['encounter_id'];
+        }
+        // texto_procesado solo si aporta algo distinto al transcript.
+        $tp = trim((string) ($out['texto_procesado'] ?? ''));
+        $tr = trim((string) ($out['transcript'] ?? ''));
+        if ($tp === '' || $tp === $tr) {
+            unset($out['texto_procesado']);
         }
 
         return $out;

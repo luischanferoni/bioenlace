@@ -172,4 +172,36 @@ class EncounterCaptureReviewPresenterTest extends Unit
         $this->assertSame('10 mg · 1 vez al día', $med['subtitle']);
         $this->assertStringNotContainsString('ordered', (string) ($med['subtitle'] ?? ''));
     }
+
+    public function testSanitizeCaptureReviewLimpiaSubtitlesPersistidos(): void
+    {
+        $clean = EncounterCaptureReviewPresenter::sanitizeCaptureReview([
+            'version' => 1,
+            'categories' => [
+                [
+                    'title' => 'Indicaciones',
+                    'items' => [
+                        [
+                            'id' => 'Indicaciones::0',
+                            'label' => 'Control',
+                            'subtitle' => 'follow_up · 7 días',
+                        ],
+                    ],
+                ],
+                [
+                    'title' => 'Medicación',
+                    'items' => [
+                        [
+                            'id' => 'Medicación::0',
+                            'label' => 'Enalapril',
+                            'subtitle' => 'ordered',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
+
+        $this->assertSame('7 días', $clean['categories'][0]['items'][0]['subtitle']);
+        $this->assertArrayNotHasKey('subtitle', $clean['categories'][1]['items'][0]);
+    }
 }

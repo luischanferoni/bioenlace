@@ -272,7 +272,11 @@
             return '';
         }
         var parts = [];
-        parts.push('<div class="mb-2" data-capture-issue-id="' + escapeHtml(issue.id) + '">');
+        parts.push(
+            '<div class="col-12 col-md-6 col-lg-4 mb-2" data-capture-issue-id="' +
+                escapeHtml(issue.id) +
+                '">'
+        );
         parts.push('<div class="small">' + escapeHtml(issue.message || '') + '</div>');
         if (issue.field) {
             parts.push(
@@ -332,9 +336,11 @@
         if (itemIssues && itemIssues.length) {
             parts.push('<div class="capture-review-item-issues mt-2">');
             parts.push('<div class="small fw-semibold text-danger mb-1">Completar datos</div>');
+            parts.push('<div class="row g-2">');
             itemIssues.forEach(function (issue) {
                 parts.push(renderIssueBlock(issue));
             });
+            parts.push('</div>');
             parts.push('</div>');
         }
         parts.push('</div>');

@@ -277,12 +277,6 @@
                 escapeHtml(issue.id) +
                 '">'
         );
-        parts.push('<div class="small">' + escapeHtml(issue.message || '') + '</div>');
-        if (issue.field) {
-            parts.push(
-                '<div class="text-muted small mb-1">' + escapeHtml(issue.field) + '</div>'
-            );
-        }
         var options = Array.isArray(issue.options) ? issue.options : [];
         if (options.length) {
             parts.push('<div class="d-flex flex-wrap gap-1 mb-1">');
@@ -326,13 +320,6 @@
                 '">'
         );
         parts.push(renderItemChip(item, isActive, isIncomplete));
-        if (incomplete) {
-            parts.push(
-                '<div class="text-danger small mt-1">' +
-                    escapeHtml(incompleteItemMessage(incomplete)) +
-                    '</div>'
-            );
-        }
         if (itemIssues && itemIssues.length) {
             parts.push('<div class="capture-review-item-issues mt-2">');
             parts.push('<div class="small fw-semibold text-danger mb-1">Completar datos</div>');
@@ -342,6 +329,12 @@
             });
             parts.push('</div>');
             parts.push('</div>');
+        } else if (incomplete) {
+            parts.push(
+                '<div class="text-danger small mt-1">' +
+                    escapeHtml(incompleteItemMessage(incomplete)) +
+                    '</div>'
+            );
         }
         parts.push('</div>');
         return parts.join('');
@@ -548,12 +541,14 @@
         parts.push(
             '<p class="small text-muted mb-2">Opcional: indicá el estado al cerrar. Si no elegís, se mantienen como están.</p>'
         );
+        parts.push('<div class="row g-2">');
         conditions.forEach(function (item) {
             parts.push(renderOpenProblemItem(item, 'condition', openProblems.condition_options));
         });
         carePlans.forEach(function (item) {
             parts.push(renderOpenProblemItem(item, 'care_plan', openProblems.care_plan_options));
         });
+        parts.push('</div>');
         parts.push('</div>');
         return parts.join('');
     }
@@ -564,7 +559,7 @@
         }
         var parts = [];
         parts.push(
-            '<div class="mb-3" data-open-problem-kind="' +
+            '<div class="col-12 col-md-6 col-lg-4 mb-3" data-open-problem-kind="' +
                 escapeHtml(kind) +
                 '" data-open-problem-id="' +
                 escapeHtml(String(item.id)) +

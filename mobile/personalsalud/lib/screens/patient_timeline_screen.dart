@@ -2464,7 +2464,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(issue.message, style: BioTypography.bodySm),
           if (issue.field.isNotEmpty)
             Text(
               issue.field,

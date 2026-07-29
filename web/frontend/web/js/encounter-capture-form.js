@@ -1248,7 +1248,8 @@
             window.EncounterCaptureReview &&
             !window.EncounterCaptureReview.canConfirm(
                 this.captureReview,
-                window.EncounterCaptureReview.collectStagedIds(this.reviewRoot)
+                window.EncounterCaptureReview.collectStagedIds(this.reviewRoot),
+                window.EncounterCaptureReview.collectResolutions(this.reviewRoot)
             )
         ) {
             var stagedNow = window.EncounterCaptureReview.collectStagedIds(this.reviewRoot);

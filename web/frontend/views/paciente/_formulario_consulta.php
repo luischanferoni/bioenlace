@@ -58,8 +58,8 @@ use yii\helpers\Html;
             <button type="button" class="btn btn-sm btn-outline-secondary" id="encounter-dictate-btn" title="Dictado por voz">
                 <i class="bi bi-mic"></i> Dictar
             </button>
-            <button type="button" class="btn btn-sm btn-outline-warning" id="encounter-stt-server-btn" title="Transcribir audio con servidor">
-                <i class="bi bi-cloud-arrow-up"></i> Transcribir en servidor
+            <button type="button" class="btn btn-sm btn-outline-secondary" id="capture-cancel-edit-btn" style="display: none;" title="Volver a la revisión sin cambios">
+                <i class="bi bi-arrow-counterclockwise"></i> Cancelar edición
             </button>
         </div>
         <div id="encounter-stt-status" class="small mt-1 text-muted" role="status" aria-live="polite"></div>

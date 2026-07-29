@@ -75,6 +75,7 @@
         this.responseContent = formEl.querySelector('#response-content');
         this.reviewActions = formEl.querySelector('#capture-review-actions');
         this.editBtn = formEl.querySelector('#capture-edit-btn');
+        this.cancelEditBtn = formEl.querySelector('#capture-cancel-edit-btn');
         this.discardBtn = formEl.querySelector('#capture-discard-btn');
         this.confirmBtn = formEl.querySelector('#send-message');
 
@@ -89,6 +90,8 @@
         this.captureReview = null;
         this.draftText = '';
         this.inReview = false;
+        this.editingDraft = false;
+        this.editSnapshot = null;
         this.initialTextOnListen = '';
         this.audioOnlyRecording = false;
         this.clientCaptureId = null;
@@ -115,16 +118,10 @@
         var self = this;
         this.statusEl = this.form.querySelector('#encounter-stt-status');
         var micBtn = this.form.querySelector('#encounter-dictate-btn');
-        var serverBtn = this.form.querySelector('#encounter-stt-server-btn');
 
         if (micBtn) {
             micBtn.addEventListener('click', function () {
                 self.toggleDictation();
-            });
-        }
-        if (serverBtn) {
-            serverBtn.addEventListener('click', function () {
-                self.transcribeOnServer();
             });
         }
         if (this.analyzeBtn) {
@@ -140,6 +137,11 @@
         if (this.editBtn) {
             this.editBtn.addEventListener('click', function () {
                 self.editDraft();
+            });
+        }
+        if (this.cancelEditBtn) {
+            this.cancelEditBtn.addEventListener('click', function () {
+                self.cancelEditDraft();
             });
         }
         if (this.discardBtn) {
@@ -515,6 +517,8 @@
         this.lastAnalysisPayload = null;
         this.captureReview = null;
         this.draftText = '';
+        this.editSnapshot = null;
+        this.setEditingMode(false);
         if (this.reviewRoot) {
             this.reviewRoot.innerHTML = '';
         }
@@ -541,7 +545,26 @@
         this.setStatus('', 'muted');
     };
 
+    EncounterCaptureForm.prototype.setEditingMode = function (editing) {
+        this.editingDraft = !!editing;
+        if (this.cancelEditBtn) {
+            this.cancelEditBtn.style.display = editing ? '' : 'none';
+        }
+    };
+
     EncounterCaptureForm.prototype.editDraft = function () {
+        var stagedIds = [];
+        if (window.EncounterCaptureReview && this.reviewRoot) {
+            stagedIds = Array.from(
+                window.EncounterCaptureReview.collectStagedIds(this.reviewRoot)
+            );
+        }
+        this.editSnapshot = {
+            lastAnalysisPayload: this.lastAnalysisPayload,
+            captureReview: this.captureReview,
+            draftText: this.draftText,
+            stagedIds: stagedIds,
+        };
         if (this.textarea) {
             this.textarea.value = this.draftText || '';
             this.textarea.focus();
@@ -555,36 +578,72 @@
             this.responseEl.style.display = 'none';
         }
         this.setCaptureMode(false);
-        this.setStatus('Editá el texto y volvé a analizar.', 'info');
+        this.setEditingMode(true);
+        this.setStatus('', 'muted');
+    };
+
+    EncounterCaptureForm.prototype.cancelEditDraft = function () {
+        var snap = this.editSnapshot;
+        if (!snap) {
+            this.setEditingMode(false);
+            return;
+        }
+        this.editSnapshot = null;
+        this.lastAnalysisPayload = snap.lastAnalysisPayload || null;
+        this.captureReview = snap.captureReview || null;
+        this.draftText = snap.draftText || '';
+        if (this.textarea) {
+            this.textarea.value = this.draftText;
+        }
+        this.setEditingMode(false);
+        this.setStatus('', 'muted');
+        if (this.lastAnalysisPayload) {
+            if (
+                this.lastAnalysisPayload.capture_review &&
+                Array.isArray(snap.stagedIds)
+            ) {
+                this.lastAnalysisPayload.capture_review.default_staged_item_ids =
+                    snap.stagedIds.slice();
+            }
+            if (this.responseEl) {
+                this.responseEl.style.display = 'block';
+            }
+            var usedReview = this.renderCaptureReview(this.lastAnalysisPayload);
+            if (!usedReview && this.lastAnalysisPayload.html) {
+                this.renderLegacyHtml(this.lastAnalysisPayload.html);
+                if (this.reviewActions) {
+                    this.reviewActions.style.display = '';
+                }
+            } else {
+                this.setCaptureMode(true);
+            }
+        } else {
+            this.setCaptureMode(false);
+        }
     };
 
     EncounterCaptureForm.prototype.applySttUiPolicy = function () {
         var micBtn = this.form.querySelector('#encounter-dictate-btn');
-        var serverBtn = this.form.querySelector('#encounter-stt-server-btn');
         var deviceOn = !!this.sttConfig.device_enabled;
         var serverOn = !!this.sttConfig.server_enabled;
 
         if (micBtn) {
             if (!deviceOn && serverOn) {
                 micBtn.disabled = false;
-                micBtn.title = 'Grabar audio para transcribir en servidor';
+                micBtn.title = 'Grabar audio (se transcribe automáticamente)';
             } else if (!deviceOn) {
                 micBtn.disabled = true;
             } else if (!this.recognition) {
                 micBtn.disabled = true;
             }
         }
-        if (serverBtn) {
-            serverBtn.style.display = serverOn ? '' : 'none';
-            serverBtn.disabled = !serverOn;
-        }
         if (!deviceOn && !serverOn) {
             this.setStatus('Dictado por voz deshabilitado. Escriba el texto manualmente.', 'warning');
         } else if (!deviceOn && serverOn && !this.recognition) {
-            this.setStatus('Use el micrófono para grabar y «Transcribir en servidor».', 'muted');
+            this.setStatus('Use el micrófono para grabar; la transcripción se aplica sola.', 'muted');
         } else if (deviceOn && !this.recognition) {
             this.setStatus(
-                'Dictado del navegador no disponible. Escriba el texto o use «Transcribir en servidor».',
+                'Dictado del navegador no disponible. Puede grabar audio o escribir el texto.',
                 'warning'
             );
         }
@@ -640,7 +699,7 @@
 
         this.recognition.onerror = function () {
             self.stopDictation();
-            self.setStatus('Error en el dictado. Intente de nuevo o use transcripción en servidor.', 'danger');
+            self.setStatus('Error en el dictado. Intentando transcripción automática…', 'warning');
         };
 
         this.recognition.onend = function () {
@@ -660,6 +719,7 @@
             return;
         }
         this.audioChunks = [];
+        this._audioStopResolve = null;
         navigator.mediaDevices
             .getUserMedia({ audio: true })
             .then(function (stream) {
@@ -676,6 +736,11 @@
                     if (self.audioChunks.length) {
                         self.pendingAudioBlob = new Blob(self.audioChunks, { type: 'audio/webm' });
                     }
+                    if (typeof self._audioStopResolve === 'function') {
+                        var resolve = self._audioStopResolve;
+                        self._audioStopResolve = null;
+                        resolve(self.pendingAudioBlob || null);
+                    }
                 };
                 self.mediaRecorder.start();
             })
@@ -685,10 +750,21 @@
     };
 
     EncounterCaptureForm.prototype.stopAudioCapture = function () {
-        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-            this.mediaRecorder.stop();
-        }
-        this.mediaRecorder = null;
+        var self = this;
+        return new Promise(function (resolve) {
+            if (!self.mediaRecorder || self.mediaRecorder.state === 'inactive') {
+                resolve(self.pendingAudioBlob || null);
+                return;
+            }
+            self._audioStopResolve = resolve;
+            try {
+                self.mediaRecorder.stop();
+            } catch (e) {
+                self._audioStopResolve = null;
+                resolve(self.pendingAudioBlob || null);
+            }
+            self.mediaRecorder = null;
+        });
     };
 
     EncounterCaptureForm.prototype.toggleDictation = function () {
@@ -717,7 +793,6 @@
     };
 
     EncounterCaptureForm.prototype.toggleAudioOnlyRecording = function () {
-        var self = this;
         if (this.audioOnlyRecording) {
             this.stopAudioOnlyRecording();
             return;
@@ -726,21 +801,23 @@
         this.dictationStartedAt = Date.now();
         this.startAudioCapture();
         this.audioOnlyRecording = true;
-        this.setStatus('Grabando audio… pulse de nuevo para detener y transcribir en servidor.', 'primary');
+        this.setStatus('Grabando audio… pulse de nuevo para detener.', 'primary');
     };
 
     EncounterCaptureForm.prototype.stopAudioOnlyRecording = function () {
         var self = this;
         this.audioOnlyRecording = false;
-        this.stopAudioCapture();
-        if (!this.pendingAudioBlob) {
-            this.setStatus('No se capturó audio.', 'warning');
-            return;
-        }
-        this.setStatus('Audio grabado. Pulse «Transcribir en servidor».', 'success');
+        this.stopAudioCapture().then(function (blob) {
+            if (!blob) {
+                self.setStatus('No se capturó audio.', 'warning');
+                return;
+            }
+            self.transcribeOnServer();
+        });
     };
 
     EncounterCaptureForm.prototype.stopDictation = function () {
+        var self = this;
         if (this.audioOnlyRecording) {
             this.stopAudioOnlyRecording();
             return;
@@ -753,23 +830,32 @@
                 /* ignore */
             }
         }
-        this.stopAudioCapture();
-        if (this.lastSttMeta) {
-            this.lastSttMeta.duration_ms = Date.now() - this.dictationStartedAt;
-            var q = assessLocalQuality(this.textarea.value, {
-                confidence: this.lastSttMeta.confidence || 0,
-                durationMs: this.lastSttMeta.duration_ms,
+        this.stopAudioCapture().then(function () {
+            if (!self.lastSttMeta) {
+                if (self.sttConfig.server_enabled && self.pendingAudioBlob) {
+                    self.transcribeOnServer();
+                }
+                return;
+            }
+            self.lastSttMeta.duration_ms = Date.now() - self.dictationStartedAt;
+            var q = assessLocalQuality(self.textarea.value, {
+                confidence: self.lastSttMeta.confidence || 0,
+                durationMs: self.lastSttMeta.duration_ms,
             });
-            this.lastSttMeta.local_quality = q;
+            self.lastSttMeta.local_quality = q;
+            if (!q.ok && self.sttConfig.server_enabled && self.pendingAudioBlob) {
+                self.transcribeOnServer();
+                return;
+            }
             if (!q.ok) {
-                this.setStatus(
-                    'Transcripción preliminar con baja calidad. Use «Transcribir en servidor» si hace falta.',
+                self.setStatus(
+                    'Transcripción preliminar con baja calidad. Revisá el texto antes de analizar.',
                     'warning'
                 );
             } else {
-                this.setStatus('Dictado listo. Revise el texto y pulse Analizar.', 'success');
+                self.setStatus('Dictado listo. Revise el texto y pulse Analizar.', 'success');
             }
-        }
+        });
     };
 
     EncounterCaptureForm.prototype.buildAnalyzePayload = function (extra) {
@@ -817,6 +903,8 @@
         var showAnalysis = function (payload) {
             self.lastAnalysisPayload = payload;
             self.draftText = consulta || (payload.texto_original || payload.transcript || '');
+            self.editSnapshot = null;
+            self.setEditingMode(false);
             if (self.responseEl) {
                 self.responseEl.style.display = 'block';
             }
@@ -976,14 +1064,14 @@
     EncounterCaptureForm.prototype.transcribeOnServer = function () {
         var self = this;
         if (!this.sttConfig.server_enabled) {
-            this.setStatus('Transcripción en servidor deshabilitada por configuración.', 'warning');
+            this.setStatus('Transcripción en servidor no disponible.', 'warning');
             return;
         }
         if (!this.pendingAudioBlob) {
-            this.setStatus('Grabe con el micrófono primero para tener audio de respaldo.', 'warning');
+            this.setStatus('No hay audio para transcribir.', 'warning');
             return;
         }
-        this.setStatus('Transcribiendo en servidor…', 'primary');
+        this.setStatus('Transcribiendo…', 'primary');
         blobToBase64(this.pendingAudioBlob).then(function (b64) {
             var payload = mergeApiPayload({
                 audio: b64,
@@ -1005,7 +1093,7 @@
             })
             .then(function (data) {
                 if (!data.success || !data.texto_transcrito) {
-                    self.setStatus(data.error || 'No se pudo transcribir en servidor.', 'danger');
+                    self.setStatus(data.error || 'No se pudo transcribir el audio.', 'danger');
                     return;
                 }
                 self.textarea.value = data.texto_transcrito;
@@ -1017,10 +1105,10 @@
                     text: data.texto_transcrito,
                     force_server: true,
                 };
-                self.setStatus('Transcripción de servidor aplicada. Revise y analice.', 'success');
+                self.setStatus('Transcripción lista. Revise y analice.', 'success');
             })
             .catch(function () {
-                self.setStatus('Error al transcribir en servidor.', 'danger');
+                self.setStatus('Error al transcribir el audio.', 'danger');
             });
     };
 

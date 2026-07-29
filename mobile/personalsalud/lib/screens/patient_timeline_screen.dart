@@ -71,6 +71,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   String _sttStatus = '';
   SttClientConfig _sttConfig = SttClientConfig.defaults;
   bool _audioOnlyRecording = false;
+  bool _editingCaptureDraft = false;
+  EncounterCaptureAnalysis? _editBackupReview;
+  Map<String, dynamic>? _editBackupLastAnalysis;
+  String _editBackupDraft = '';
+  Set<String> _editBackupStagedItemIds = {};
+  Map<String, dynamic> _editBackupIssueResolutions = {};
+  Map<String, dynamic> _editBackupOpenProblemResolutions = {};
   final PendingEncounterCaptureStore _pendingStore =
       PendingEncounterCaptureStore.instance;
   List<PendingEncounterCapture> _pendingCaptures = [];
@@ -941,6 +948,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             clearError: true,
           );
         }
+        final text = _chatController.text.trim();
+        final needsServer = _sttConfig.serverEnabled &&
+            _pendingAudioPath != null &&
+            (text.isEmpty || !DeviceSttLocalQuality.isAcceptable(text, result));
+        if (needsServer) {
+          await _transcribirAudioPendiente();
+        }
       }
       return;
     }
@@ -1011,9 +1025,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     setState(() {
       _audioOnlyRecording = false;
       _sttStatus = _pendingAudioPath != null
-          ? 'Audio listo'
+          ? 'Procesando audio…'
           : 'No se capturó audio.';
     });
+    if (_pendingAudioPath != null && _sttConfig.serverEnabled) {
+      await _transcribirAudioPendiente();
+    }
   }
 
   Future<void> _startBackupRecording() async {
@@ -1042,16 +1059,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
   }
 
-  Future<void> _transcribirEnServidor() async {
-    if (!_sttConfig.serverEnabled) {
-      _snack('Transcripción en servidor deshabilitada.', UiIntent.warning);
+  Future<void> _transcribirAudioPendiente() async {
+    if (!_sttConfig.serverEnabled || _pendingAudioPath == null) {
       return;
     }
-    if (_pendingAudioPath == null) {
-      _snack('Grabe con el micrófono antes de usar servidor.', UiIntent.warning);
-      return;
-    }
-    setState(() => _isAnalyzing = true);
+    setState(() {
+      _isAnalyzing = true;
+      _sttStatus = 'Transcribiendo…';
+    });
     try {
       final b64 = await _audioPathToBase64(_pendingAudioPath!);
       if (b64 == null) throw Exception('No se pudo leer el audio');
@@ -1066,10 +1081,20 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           engine: 'server',
           locale: 'es_AR',
         );
-        _sttStatus = 'Transcripción de servidor aplicada.';
+        _sttStatus = 'Listo';
       });
+      if (_tieneContextoCaptura && text.trim().isNotEmpty) {
+        await _persistLocalDraft(
+          texto: text.trim(),
+          status: PendingEncounterCaptureStatus.draft,
+          clearError: true,
+        );
+      }
     } catch (e) {
-      _snack('Error STT servidor: $e', UiIntent.danger);
+      if (mounted) {
+        setState(() => _sttStatus = 'No se pudo transcribir el audio');
+      }
+      _snack('Error al transcribir: $e', UiIntent.danger);
     } finally {
       if (mounted) setState(() => _isAnalyzing = false);
     }
@@ -1103,7 +1128,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       return 'Listo';
     }
     if (_sttConfig.serverEnabled) {
-      return 'Calidad baja';
+      return 'Mejorando transcripción…';
     }
     return 'Revisá el texto';
   }
@@ -1132,6 +1157,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _draftText = null;
       _stagedItemIds = {};
       _clearIssueResolutions();
+      _clearEditBackup();
       _lastDictation = null;
       _sttStatus = '';
       _pendingAudioPath = null;
@@ -1389,9 +1415,29 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
   }
 
+  void _clearEditBackup() {
+    _editingCaptureDraft = false;
+    _editBackupReview = null;
+    _editBackupLastAnalysis = null;
+    _editBackupDraft = '';
+    _editBackupStagedItemIds = {};
+    _editBackupIssueResolutions = {};
+    _editBackupOpenProblemResolutions = {};
+  }
+
   void _editCaptureDraft() {
     final draft = _draftText ?? '';
+    final backupResolutions = Map<String, dynamic>.from(_issueResolutions);
+    final backupOpenProblems =
+        Map<String, dynamic>.from(_openProblemResolutions);
     setState(() {
+      _editBackupReview = _captureReview;
+      _editBackupLastAnalysis = _lastAnalysis;
+      _editBackupDraft = draft;
+      _editBackupStagedItemIds = Set<String>.from(_stagedItemIds);
+      _editBackupIssueResolutions = backupResolutions;
+      _editBackupOpenProblemResolutions = backupOpenProblems;
+      _editingCaptureDraft = true;
       _captureReview = null;
       _lastAnalysis = null;
       _stagedItemIds = {};
@@ -1400,14 +1446,27 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _chatController.text = draft;
     });
     _chatFocusNode.requestFocus();
-    if (draft.trim().isNotEmpty && _tieneContextoCaptura) {
-      _persistLocalDraft(
-        texto: draft.trim(),
-        status: PendingEncounterCaptureStatus.draft,
-        clearAnalysis: true,
-        clearError: true,
-      );
-    }
+  }
+
+  void _cancelEditCaptureDraft() {
+    final review = _editBackupReview;
+    final analysis = _editBackupLastAnalysis;
+    final draft = _editBackupDraft;
+    final staged = Set<String>.from(_editBackupStagedItemIds);
+    final issues = Map<String, dynamic>.from(_editBackupIssueResolutions);
+    final openProblems =
+        Map<String, dynamic>.from(_editBackupOpenProblemResolutions);
+    setState(() {
+      _captureReview = review;
+      _lastAnalysis = analysis;
+      _draftText = draft;
+      _stagedItemIds = staged;
+      _issueResolutions = issues;
+      _openProblemResolutions = openProblems;
+      _chatController.text = draft;
+      _sttStatus = '';
+      _clearEditBackup();
+    });
   }
 
   void _toggleStagedItem(String id, bool selected) {
@@ -1440,6 +1499,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _lastAnalysis = null;
       _draftText = null;
       _stagedItemIds = {};
+      _clearEditBackup();
     });
 
     final startStatus = fromStatus ??
@@ -1665,6 +1725,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _draftText = transcript;
         _captureReview = review;
         _clearIssueResolutions();
+        _clearEditBackup();
         _stagedItemIds = staged;
         _chatController.clear();
         _sttStatus = '';
@@ -2694,34 +2755,32 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (_sttStatus.isNotEmpty ||
-            (_sttConfig.serverEnabled && _pendingAudioPath != null))
+        if (_editingCaptureDraft)
           Padding(
             padding: const EdgeInsets.only(
               left: BioSpacing.sm,
               right: BioSpacing.sm,
               bottom: BioSpacing.xs,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (_sttStatus.isNotEmpty)
-                  Text(
-                    _sttStatus,
-                    style: BioTypography.caption.copyWith(color: cs.primary),
-                  ),
-                if (_sttConfig.serverEnabled &&
-                    _pendingAudioPath != null &&
-                    !_dictating &&
-                    !_audioOnlyRecording) ...[
-                  if (_sttStatus.isNotEmpty) BioSpacing.gapH(BioSpacing.xs),
-                  TextButton.icon(
-                    onPressed: _captureBusy ? null : _transcribirEnServidor,
-                    icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                    label: const Text('Transcribir en servidor'),
-                  ),
-                ],
-              ],
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _captureBusy ? null : _cancelEditCaptureDraft,
+                icon: const Icon(Icons.arrow_back, size: 18),
+                label: const Text('Cancelar edición'),
+              ),
+            ),
+          ),
+        if (_sttStatus.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(
+              left: BioSpacing.sm,
+              right: BioSpacing.sm,
+              bottom: BioSpacing.xs,
+            ),
+            child: Text(
+              _sttStatus,
+              style: BioTypography.caption.copyWith(color: cs.primary),
             ),
           ),
         AssistantChatComposerBar(

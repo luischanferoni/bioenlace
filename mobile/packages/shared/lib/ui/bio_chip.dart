@@ -6,6 +6,8 @@ import '../theme/tokens/tokens.dart';
 ///
 /// - Inactivo: borde paper300, fondo papel.
 /// - Activo: borde + softBg del intent.
+/// - [filled]: fondo [IntentPalette.base] con texto [IntentPalette.onBase]
+///   (p. ej. ítems incompletos en danger).
 class BioChip extends StatelessWidget {
   const BioChip({
     super.key,
@@ -14,6 +16,7 @@ class BioChip extends StatelessWidget {
     this.onTap,
     this.icon,
     this.intent = UiIntent.primary,
+    this.filled = false,
   });
 
   final String label;
@@ -21,15 +24,28 @@ class BioChip extends StatelessWidget {
   final VoidCallback? onTap;
   final IconData? icon;
   final UiIntent intent;
+  final bool filled;
 
   @override
   Widget build(BuildContext context) {
     final palette = IntentPalette.of(intent);
     final tokens = context.bio;
-    final Color bg = selected ? palette.softBg : tokens.paperSurface;
-    final Color fg = selected ? palette.softFg : tokens.textBody;
-    final Color border =
-        selected ? palette.border : tokens.paperBorderDefault;
+    final Color bg;
+    final Color fg;
+    final Color border;
+    if (filled) {
+      bg = palette.base;
+      fg = palette.onBase;
+      border = palette.base;
+    } else if (selected) {
+      bg = palette.softBg;
+      fg = palette.softFg;
+      border = palette.border;
+    } else {
+      bg = tokens.paperSurface;
+      fg = tokens.textBody;
+      border = tokens.paperBorderDefault;
+    }
 
     return Material(
       color: Colors.transparent,
@@ -62,7 +78,7 @@ class BioChip extends StatelessWidget {
                 style: BioTypography.bodySm.copyWith(
                   color: fg,
                   fontWeight:
-                      selected ? FontWeight.w600 : FontWeight.w400,
+                      (selected || filled) ? FontWeight.w600 : FontWeight.w400,
                 ),
               ),
             ],

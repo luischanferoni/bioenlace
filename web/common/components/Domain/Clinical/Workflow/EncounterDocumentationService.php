@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Workflow;
 
+use common\components\Domain\Clinical\Capture\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\CarePlanService;
 use common\components\Domain\Clinical\Service\ConditionLifecycleService;
@@ -120,6 +121,25 @@ class EncounterDocumentationService extends Component
                 $decoded = json_decode($datosExtraidos, true);
                 $datosExtraidos = is_array($decoded) ? $decoded : [];
             }
+
+            $resolutions = $body['resolutions'] ?? $body['resoluciones'] ?? null;
+            if (is_array($resolutions) && $resolutions !== [] && is_array($datosExtraidos) && $datosExtraidos !== []) {
+                $categorias = [];
+                $idCfg = is_numeric($idConfiguracion) ? (int) $idConfiguracion : 0;
+                if ($idCfg > 0) {
+                    $def = EncounterDefinition::findOne($idCfg);
+                    if ($def !== null) {
+                        $categorias = EncounterDefinition::getCategoriasParaPrompt($def);
+                    }
+                }
+                $datosExtraidos = (new ClinicalCaptureResolutionApplier())->apply(
+                    $datosExtraidos,
+                    $resolutions,
+                    $categorias
+                );
+                $body['datosExtraidos'] = $datosExtraidos;
+            }
+
             $encounterId = $this->normalizeEncounterIdFromBody($body, $idConfiguracion);
 
             $notePreview = $this->resolveCaptureNote($body) ?? '';

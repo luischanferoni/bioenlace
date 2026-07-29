@@ -362,11 +362,20 @@
         if (!this.confirmBtn) {
             return;
         }
-        if (this.lastAnalysisPayload && this.lastAnalysisPayload.puede_confirmar === false) {
+        if (
+            this.lastAnalysisPayload &&
+            this.lastAnalysisPayload.capture_review &&
+            this.lastAnalysisPayload.capture_review.system_error
+        ) {
+            this.confirmBtn.disabled = true;
+            return;
+        }
+        if (this.captureReview && this.captureReview.system_error) {
             this.confirmBtn.disabled = true;
             return;
         }
         if (!window.EncounterCaptureReview) {
+            this.confirmBtn.disabled = false;
             return;
         }
         var staged = window.EncounterCaptureReview.collectStagedIds(this.reviewRoot);
@@ -391,10 +400,7 @@
             this.reviewRoot,
             this.updateConfirmState.bind(this)
         );
-        window.EncounterCaptureReview.bindIssueResolutions(
-            this.reviewRoot,
-            this.applyIssueResolutions.bind(this)
-        );
+        window.EncounterCaptureReview.bindIssueResolutions(this.reviewRoot);
 
         if (this.responseContent) {
             this.responseContent.innerHTML = '';
@@ -404,78 +410,6 @@
 
         this.updateConfirmState();
         return true;
-    };
-
-    EncounterCaptureForm.prototype.applyIssueResolutions = function (resolutions) {
-        var self = this;
-        if (!resolutions || !Object.keys(resolutions).length) {
-            this.setStatus('Elegí una opción o completá el valor.', 'warning');
-            return;
-        }
-        var expected = (this.captureReview && Array.isArray(this.captureReview.issues))
-            ? this.captureReview.issues.length
-            : 0;
-        if (expected > 0 && Object.keys(resolutions).length < expected) {
-            this.setStatus('Completá todos los datos pendientes.', 'warning');
-            return;
-        }
-        if (!this.clientCaptureId && !this.serverCaptureId) {
-            this.setStatus('No hay captura activa para resolver.', 'warning');
-            return;
-        }
-        this.setStatus('Aplicando respuestas…', 'info');
-        fetch('/api/v1/clinical/encounter/captura/aplicar-resoluciones', {
-            method: 'POST',
-            headers: this.apiHeadersJson(),
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                client_capture_id: this.clientCaptureId || undefined,
-                capture_id: this.serverCaptureId || undefined,
-                resolutions: resolutions,
-                id_configuracion:
-                    (this.lastAnalysisPayload && this.lastAnalysisPayload.id_configuracion) ||
-                    undefined,
-            }),
-        })
-            .then(function (r) {
-                return r.json().then(function (body) {
-                    return { ok: r.ok, body: body };
-                });
-            })
-            .then(function (res) {
-                if (!res.ok || !res.body || res.body.success === false) {
-                    self.setStatus(
-                        (res.body && res.body.message) || 'No se pudieron aplicar las respuestas.',
-                        'danger'
-                    );
-                    return;
-                }
-                var capture = res.body.capture || {};
-                var payload = Object.assign({}, capture, capture.analysis || {});
-                if (capture.id) {
-                    self.serverCaptureId = capture.id;
-                }
-                if (capture.stage) {
-                    self.serverStage = capture.stage;
-                }
-                self.lastAnalysisPayload = payload;
-                if (!self.renderCaptureReview(payload)) {
-                    self.setStatus('Respuestas aplicadas, pero no se pudo refrescar la revisión.', 'warning');
-                    return;
-                }
-                if (payload.tiene_datos_faltantes) {
-                    self.setStatus(
-                        (payload.datos_faltantes_detalle && payload.datos_faltantes_detalle.message) ||
-                            'Aún faltan datos.',
-                        'warning'
-                    );
-                } else {
-                    self.setStatus('Datos completados. Ya podés confirmar.', 'success');
-                }
-            })
-            .catch(function () {
-                self.setStatus('Error de red al aplicar respuestas.', 'danger');
-            });
     };
 
     EncounterCaptureForm.prototype.renderLegacyHtml = function (html) {
@@ -921,8 +855,8 @@
                     self.discardBtn.style.display = 'none';
                 }
                 if (self.confirmBtn) {
-                    self.confirmBtn.disabled =
-                        payload.puede_confirmar === false || !!payload.tiene_datos_faltantes;
+                    self.confirmBtn.disabled = !!payload.system_error ||
+                        !!(payload.capture_review && payload.capture_review.system_error);
                 }
             } else {
                 if (self.editBtn) {
@@ -1133,31 +1067,11 @@
             return;
         }
         if (
-            this.lastAnalysisPayload &&
-            this.lastAnalysisPayload.puede_confirmar === false
+            (this.captureReview && this.captureReview.system_error) ||
+            (this.lastAnalysisPayload.capture_review &&
+                this.lastAnalysisPayload.capture_review.system_error)
         ) {
-            this.setStatus('No se puede guardar: el análisis tiene errores.', 'warning');
-            return;
-        }
-        if (
-            (this.lastAnalysisPayload && this.lastAnalysisPayload.tiene_datos_faltantes) ||
-            (this.captureReview && this.captureReview.tiene_datos_faltantes)
-        ) {
-            var msgFaltantes = '';
-            var detalle =
-                (this.captureReview && this.captureReview.datos_faltantes_detalle) ||
-                (this.lastAnalysisPayload && this.lastAnalysisPayload.datos_faltantes_detalle) ||
-                (this.lastAnalysisPayload &&
-                    this.lastAnalysisPayload.capture_review &&
-                    this.lastAnalysisPayload.capture_review.datos_faltantes_detalle);
-            if (detalle && detalle.message) {
-                msgFaltantes = String(detalle.message).trim();
-            }
-            this.setStatus(
-                msgFaltantes ||
-                    'Faltan categorías o campos obligatorios. Completá el texto y volvé a analizar.',
-                'warning'
-            );
+            this.setStatus('No se puede guardar: el análisis tiene errores de sistema.', 'warning');
             return;
         }
         if (
@@ -1178,7 +1092,7 @@
                     'warning'
                 );
             } else {
-                this.setStatus('Faltan datos obligatorios en el análisis.', 'warning');
+                this.setStatus('No se puede guardar la captura en este estado.', 'warning');
             }
             return;
         }
@@ -1211,12 +1125,18 @@
             );
         }
 
+        var resolutions = {};
+        if (window.EncounterCaptureReview && this.reviewRoot) {
+            resolutions = window.EncounterCaptureReview.collectResolutions(this.reviewRoot);
+        }
+
         var payload = mergeApiPayload({
             client_capture_id: this.ensureClientCaptureId(),
             capture_id: this.serverCaptureId || undefined,
             datosExtraidos: datos,
             analisis_datos_extraidos: analisisBackup || undefined,
             staged_item_ids: stagedIds,
+            resolutions: Object.keys(resolutions).length ? resolutions : undefined,
             analysis_cache_token:
                 (this.lastAnalysisPayload && this.lastAnalysisPayload.analysis_cache_token) ||
                 undefined,

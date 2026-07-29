@@ -120,14 +120,8 @@
         if (review.system_error) {
             return false;
         }
-        if (review.puede_confirmar === false) {
-            return false;
-        }
         var texto = (review.texto_original || '').trim();
         if (!texto) {
-            return false;
-        }
-        if (review.tiene_datos_faltantes) {
             return false;
         }
         if (hasClinicalItems(review) && stagedIdSet.size === 0) {
@@ -226,9 +220,10 @@
         var active = isActive !== false;
         var btnClass;
         if (isIncomplete) {
-            btnClass = active
-                ? 'btn btn-sm btn-outline-danger capture-review-item active me-1 mb-1'
-                : 'btn btn-sm btn-outline-danger capture-review-item me-1 mb-1';
+            btnClass = 'btn btn-sm btn-danger capture-review-item me-1 mb-1';
+            if (active) {
+                btnClass += ' active';
+            }
         } else {
             var baseClass = isAiSuggestion(item) ? 'btn-outline-info' : 'btn-outline-secondary';
             btnClass = active
@@ -496,9 +491,6 @@
                     return issue && issue.id && !renderedIssueIds[issue.id];
                 }
             );
-            var hasAnyIssues =
-                (Array.isArray(review.issues) && review.issues.length > 0) ||
-                orphanIssues.length > 0;
             if (orphanIssues.length) {
                 parts.push('<div class="capture-review-issues mb-3">');
                 parts.push('<div class="fw-semibold mb-2 text-danger">Completar datos</div>');
@@ -506,12 +498,6 @@
                     parts.push(renderIssueBlock(issue));
                 });
                 parts.push('</div>');
-            }
-            if (hasAnyIssues) {
-                parts.push(
-                    '<button type="button" class="btn btn-sm btn-outline-primary capture-apply-resolutions mb-3">' +
-                        'Aplicar respuestas</button>'
-                );
             }
         }
 
@@ -645,7 +631,7 @@
         return out;
     }
 
-    function bindIssueResolutions(root, onApply) {
+    function bindIssueResolutions(root) {
         if (!root) {
             return;
         }
@@ -685,12 +671,6 @@
                 });
             });
         });
-        var applyBtn = root.querySelector('.capture-apply-resolutions');
-        if (applyBtn && typeof onApply === 'function') {
-            applyBtn.addEventListener('click', function () {
-                onApply(collectResolutions(root));
-            });
-        }
         root.querySelectorAll('.capture-open-problem-option').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 var block = btn.closest('[data-open-problem-id]');
@@ -726,10 +706,11 @@
                     'btn-outline-primary',
                     'btn-outline-secondary',
                     'btn-outline-info',
-                    'btn-outline-danger'
+                    'btn-outline-danger',
+                    'btn-danger'
                 );
                 if (incomplete) {
-                    btn.classList.add('btn-outline-danger');
+                    btn.classList.add('btn-danger');
                 } else if (willActivate) {
                     btn.classList.add('btn-outline-primary');
                 } else if (isAi) {

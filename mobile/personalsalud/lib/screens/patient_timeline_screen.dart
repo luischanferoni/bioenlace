@@ -67,7 +67,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   /// open problem key `condition:123` / `care_plan:456` → value.
   Map<String, dynamic> _openProblemResolutions = {};
   final Map<String, TextEditingController> _issueCustomControllers = {};
-  bool _isApplyingResolutions = false;
   String _sttStatus = '';
   SttClientConfig _sttConfig = SttClientConfig.defaults;
   bool _audioOnlyRecording = false;
@@ -86,8 +85,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   final TextEditingController _chatController = TextEditingController();
   final FocusNode _chatFocusNode = FocusNode();
 
-  bool get _captureBusy =>
-      _isAnalyzing || _isSaving || _isApplyingResolutions;
+  bool get _captureBusy => _isAnalyzing || _isSaving;
 
   bool get _enRevisionCaptura => _captureReview != null;
   bool get _mostrarBarraConsulta {
@@ -1746,141 +1744,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
   }
 
-  Future<void> _aplicarResolucionesIssues() async {
-    final review = _captureReview;
-    if (review == null || review.issues.isEmpty || _isApplyingResolutions) {
-      return;
-    }
-    final resolutions = <String, dynamic>{};
-    for (final issue in review.issues) {
-      if (_issueResolutions.containsKey(issue.id)) {
-        resolutions[issue.id] = _issueResolutions[issue.id];
-        continue;
-      }
-      if (issue.allowCustom) {
-        final custom = _issueCustomControllers[issue.id]?.text.trim() ?? '';
-        if (custom.isNotEmpty) {
-          resolutions[issue.id] = custom;
-        }
-      }
-    }
-    if (resolutions.isEmpty) {
-      _snack('Elegí una opción o completá el valor.', UiIntent.warning);
-      return;
-    }
-    if (resolutions.length < review.issues.length) {
-      _snack('Completá todos los datos pendientes.', UiIntent.warning);
-      return;
-    }
-
-    PendingEncounterCapture? pending;
-    if (_activePendingId != null) {
-      for (final p in _pendingCaptures) {
-        if (p.id == _activePendingId) {
-          pending = p;
-          break;
-        }
-      }
-      if (pending == null) {
-        try {
-          if (_tieneContextoCaptura) {
-            final list = await _pendingStore.listForContext(
-              personaId: widget.personaId,
-              parent: widget.consultParent!,
-              parentId: widget.consultParentId!,
-            );
-            for (final p in list) {
-              if (p.id == _activePendingId) {
-                pending = p;
-                break;
-              }
-            }
-          }
-        } catch (_) {}
-      }
-    }
-
-    final captureId = pending?.serverCaptureId ??
-        (_lastAnalysis?['id'] is int
-            ? _lastAnalysis!['id'] as int
-            : int.tryParse('${_lastAnalysis?['id'] ?? ''}'));
-    final clientId = _activePendingId ?? pending?.id;
-    if (clientId == null && captureId == null) {
-      _snack('No hay captura activa para resolver.', UiIntent.warning);
-      return;
-    }
-
-    setState(() => _isApplyingResolutions = true);
-    try {
-      final out = await _encounterApi.capturaAplicarResoluciones(
-        clientCaptureId: clientId,
-        captureId: captureId,
-        resolutions: resolutions,
-      );
-      if (!mounted) return;
-      final capture = out['capture'];
-      Map<String, dynamic> analysisPayload = {};
-      if (capture is Map) {
-        analysisPayload = Map<String, dynamic>.from(capture);
-        final nested = capture['analysis'];
-        if (nested is Map) {
-          analysisPayload = {
-            ...analysisPayload,
-            ...Map<String, dynamic>.from(nested),
-          };
-        }
-      }
-      final nextReview = EncounterCaptureAnalysis.fromApiResponse(analysisPayload);
-      final staged = _stagedItemIds.isNotEmpty
-          ? _stagedItemIds
-          : nextReview.defaultStagedItemIds.toSet();
-      await _persistLocalDraft(
-        texto: _draftText ?? nextReview.textoOriginal,
-        status: PendingEncounterCaptureStatus.pendingSave,
-        analysisResponse: analysisPayload,
-        stagedItemIds: staged.toList(),
-        serverCaptureId: pending?.serverCaptureId ??
-            (capture is Map ? int.tryParse('${capture['id']}') : null),
-        serverStage: capture is Map ? capture['stage']?.toString() : null,
-        clearError: true,
-      );
-      setState(() {
-        _lastAnalysis = analysisPayload;
-        _captureReview = nextReview;
-        _clearIssueResolutions();
-        _stagedItemIds = staged;
-        _sttStatus = nextReview.tieneDatosFaltantes
-            ? (nextReview.datosFaltantesMensaje ?? 'Aún faltan datos.')
-            : '';
-      });
-      if (!nextReview.tieneDatosFaltantes) {
-        _snack('Datos completados. Ya podés guardar.', UiIntent.success);
-      }
-    } catch (e) {
-      if (!mounted) return;
-      _snack(_mensajeErrorCaptura(e), UiIntent.danger);
-    } finally {
-      if (mounted) setState(() => _isApplyingResolutions = false);
-    }
-  }
-
   Future<void> _confirmarGuardado() async {
     final review = _captureReview;
     if (review == null || _lastAnalysis == null) {
       _snack('Analizá antes de guardar.', UiIntent.warning);
       return;
     }
-    if (review.systemError != null || !review.puedeConfirmar) {
-      _snack('No se puede guardar: el análisis tiene errores.', UiIntent.warning);
-      return;
-    }
-    if (review.tieneDatosFaltantes) {
-      _snack(
-        review.datosFaltantesMensaje?.trim().isNotEmpty == true
-            ? review.datosFaltantesMensaje!
-            : 'Faltan categorías o campos obligatorios. Completá el texto y volvé a analizar.',
-        UiIntent.warning,
-      );
+    if (review.systemError != null) {
+      _snack('No se puede guardar: el análisis tiene errores de sistema.', UiIntent.warning);
       return;
     }
     // Si se extrajeron ítems del texto, exigir al menos uno tildado (evita guardar solo
@@ -1911,6 +1782,20 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         : int.tryParse(
             '${_lastAnalysis!['encounter_id'] ?? _lastAnalysis!['id_consulta']}',
           );
+
+    final resolutions = <String, dynamic>{};
+    for (final issue in review.issues) {
+      if (_issueResolutions.containsKey(issue.id)) {
+        resolutions[issue.id] = _issueResolutions[issue.id];
+        continue;
+      }
+      if (issue.allowCustom) {
+        final custom = _issueCustomControllers[issue.id]?.text.trim() ?? '';
+        if (custom.isNotEmpty) {
+          resolutions[issue.id] = custom;
+        }
+      }
+    }
 
     setState(() => _isSaving = true);
     try {
@@ -1947,6 +1832,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           userPerTabConfig: await _operationalContextForCapture(),
           conditionResolutions: conditionResolutions,
           carePlanResolutions: carePlanResolutions,
+          resolutions: resolutions.isEmpty ? null : resolutions,
         );
         final nested = out['guardar'];
         guardado = nested is Map
@@ -1967,6 +1853,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           userPerTabConfig: await _operationalContextForCapture(),
           conditionResolutions: conditionResolutions,
           carePlanResolutions: carePlanResolutions,
+          resolutions: resolutions.isEmpty ? null : resolutions,
         );
       }
       if (!mounted) return;
@@ -2472,17 +2359,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ),
         ],
         ...review.orphanIssues.map(_buildCaptureIssueBlock),
-        if (review.issues.isNotEmpty) ...[
-          BioSpacing.gapH(BioSpacing.sm),
-          BioButton(
-            label: _isApplyingResolutions ? 'Aplicando…' : 'Aplicar respuestas',
-            intent: UiIntent.secondary,
-            variant: BioButtonVariant.soft,
-            onPressed: (_isApplyingResolutions || _isSaving)
-                ? null
-                : _aplicarResolucionesIssues,
-          ),
-        ],
         if (review.hasOpenProblems) ...[
           BioSpacing.gapH(BioSpacing.md),
           Text('Problemas y tratamientos abiertos', style: sectionTitleStyle),
@@ -2530,7 +2406,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 selected: isSelected,
                 icon: isSelected ? Icons.check : null,
                 intent: UiIntent.neutral,
-                onTap: (_isSaving || _isApplyingResolutions)
+                onTap: _isSaving
                     ? null
                     : () {
                         setState(() {
@@ -2575,7 +2451,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                   selected: isSelected,
                   icon: isSelected ? Icons.check : null,
                   intent: UiIntent.neutral,
-                  onTap: (_isSaving || _isApplyingResolutions)
+                  onTap: _isSaving
                       ? null
                       : () {
                           setState(() {
@@ -2594,7 +2470,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             BioSpacing.gapH(BioSpacing.sm),
             TextField(
               controller: _issueCustomController(issue.id),
-              enabled: !_isSaving && !_isApplyingResolutions,
+              enabled: !_isSaving,
               decoration: InputDecoration(
                 hintText: issue.options.isEmpty
                     ? 'Completá el valor'
@@ -2676,6 +2552,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return BioChip(
       label: label,
       selected: selected,
+      filled: incomplete,
       icon: selected ? Icons.check : null,
       intent: incomplete
           ? UiIntent.danger
@@ -2688,10 +2565,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final review = _captureReview;
     final canConfirm = !_isSaving &&
         review != null &&
-        review.puedeConfirmar &&
         review.systemError == null &&
         review.textoOriginal.trim().isNotEmpty &&
-        !review.tieneDatosFaltantes &&
         !(review.hasClinicalItems && _stagedItemIds.isEmpty);
 
     return Container(

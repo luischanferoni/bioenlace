@@ -69,10 +69,8 @@ class EncounterCaptureAnalysis {
       systemError == null;
 
   bool get canConfirmSave {
-    if (!puedeConfirmar || systemError != null) return false;
+    if (systemError != null) return false;
     if (textoOriginal.trim().isEmpty) return false;
-    // Hard stop: categorías/campos requeridos incompletos.
-    if (tieneDatosFaltantes) return false;
     return true;
   }
 

@@ -184,6 +184,7 @@ class EncounterCaptureApi {
     Map<String, dynamic>? userPerTabConfig,
     Map<String, dynamic>? conditionResolutions,
     Map<String, dynamic>? carePlanResolutions,
+    Map<String, dynamic>? resolutions,
     bool completeAcute = true,
     bool continueTreatment = false,
   }) async {
@@ -202,6 +203,8 @@ class EncounterCaptureApi {
         'condition_resolutions': conditionResolutions,
       if (carePlanResolutions != null && carePlanResolutions.isNotEmpty)
         'care_plan_resolutions': carePlanResolutions,
+      if (resolutions != null && resolutions.isNotEmpty)
+        'resolutions': resolutions,
       'complete_acute': completeAcute,
       'continue_treatment': continueTreatment,
     };
@@ -368,6 +371,7 @@ class EncounterCaptureApi {
     Map<String, dynamic>? userPerTabConfig,
     Map<String, dynamic>? conditionResolutions,
     Map<String, dynamic>? carePlanResolutions,
+    Map<String, dynamic>? resolutions,
     bool completeAcute = true,
     bool continueTreatment = false,
   }) async {
@@ -391,6 +395,8 @@ class EncounterCaptureApi {
         'condition_resolutions': conditionResolutions,
       if (carePlanResolutions != null && carePlanResolutions.isNotEmpty)
         'care_plan_resolutions': carePlanResolutions,
+      if (resolutions != null && resolutions.isNotEmpty)
+        'resolutions': resolutions,
       'complete_acute': completeAcute,
       'continue_treatment': continueTreatment,
     };

@@ -35,15 +35,12 @@ final class ClinicalCaptureIssueFactory
             ];
         }
 
-        if ($normalizedOptions === [] && !$allowCustom) {
-            $allowCustom = true;
-        }
-
         return [
             'id' => self::issueId($category, $index, $field),
             'field' => $field,
             'message' => $message,
             'options' => $normalizedOptions,
+            // Solo true si el caller lo pidió explícitamente; sin catálogo no hay issue de texto libre.
             'allow_custom' => $allowCustom,
         ];
     }

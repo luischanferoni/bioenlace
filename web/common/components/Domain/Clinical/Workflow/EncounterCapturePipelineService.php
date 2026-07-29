@@ -931,6 +931,15 @@ final class EncounterCapturePipelineService
         }
 
         if ($review !== null) {
+            // Issues/completitud frescos desde el contrato de dominio (no el blob cacheado del analizar).
+            $categorias = $this->resolveCategoriasForCapture($capture, []);
+            if ($extraidos !== [] && $categorias !== []) {
+                $review = EncounterCaptureReviewPresenter::withFreshCompleteness(
+                    $review,
+                    $extraidos,
+                    $categorias
+                );
+            }
             $review = EncounterCaptureReviewPresenter::slimCaptureReviewForApi($review);
             // open_problems fresco y slim (dedupe + opciones compartidas); no el blob cacheado.
             try {

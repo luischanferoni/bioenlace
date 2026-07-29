@@ -139,6 +139,44 @@ final class EncounterCaptureReviewPresenter
     }
 
     /**
+     * Recalcula completitud/issues sobre un review ya persistido (contratos de dominio pueden evolucionar).
+     *
+     * @param array<string, mixed> $review
+     * @param array<string, mixed> $extraidos
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    public static function withFreshCompleteness(array $review, array $extraidos, array $categorias): array
+    {
+        if ($categorias === [] || $extraidos === []) {
+            return $review;
+        }
+
+        $completeness = (new EncounterCaptureCompletenessValidator())->validate($extraidos, $categorias);
+        $tieneDatosFaltantes = ($completeness['tiene_datos_faltantes'] ?? false) === true;
+        $systemError = $review['system_error'] ?? null;
+        $textoOriginal = trim((string) ($review['texto_original'] ?? ''));
+
+        $review['tiene_datos_faltantes'] = $tieneDatosFaltantes;
+        $review['puede_confirmar'] = $systemError === null
+            && $textoOriginal !== ''
+            && !$tieneDatosFaltantes;
+        $review['datos_faltantes_detalle'] = [
+            'missing_categories' => $completeness['missing_categories'] ?? [],
+            'incomplete_items' => $completeness['incomplete_items'] ?? [],
+            'message' => $completeness['message'] ?? '',
+        ];
+        $issues = $completeness['issues'] ?? [];
+        if (is_array($issues) && $issues !== []) {
+            $review['issues'] = array_values($issues);
+        } else {
+            unset($review['issues']);
+        }
+
+        return $review;
+    }
+
+    /**
      * Compacta capture_review para API (sin basura de tipología ni issues duplicados).
      *
      * @param array<string, mixed> $review

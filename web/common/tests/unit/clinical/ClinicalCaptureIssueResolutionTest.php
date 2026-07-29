@@ -20,19 +20,44 @@ class ClinicalCaptureIssueResolutionTest extends Unit
             [
                 ['value' => 7, 'label' => '7 días'],
             ],
-            true
+            false
         );
 
         $this->assertSame('Indicaciones::0:Plazo dias', $issue['id']);
         $this->assertSame('Plazo dias', $issue['field']);
         $this->assertCount(1, $issue['options']);
-        $this->assertTrue($issue['allow_custom']);
+        $this->assertFalse($issue['allow_custom']);
+
+        $emptyOpts = ClinicalCaptureIssueFactory::make('X', 0, 'Campo', 'msg', [], false);
+        $this->assertFalse($emptyOpts['allow_custom']);
+        $this->assertSame([], $emptyOpts['options']);
 
         $parsed = ClinicalCaptureIssueFactory::parseIssueId($issue['id']);
         $this->assertNotNull($parsed);
         $this->assertSame('Indicaciones', $parsed['category']);
         $this->assertSame(0, $parsed['index']);
         $this->assertSame('Plazo dias', $parsed['field']);
+    }
+
+    public function testMedicacionCantidadIssueUsesCatalogChips(): void
+    {
+        $input = \common\models\Clinical\Input\MedicacionInput::fromExtractedRow([
+            'Nombre del medicamento' => 'ibuprofeno',
+            'Tipo' => 'ordered',
+        ]);
+        $issues = $input->buildIssues('Medicación', 0);
+        $cantidad = null;
+        foreach ($issues as $issue) {
+            if (($issue['field'] ?? '') === \common\models\Clinical\Input\MedicacionInput::FIELD_CANTIDAD) {
+                $cantidad = $issue;
+                break;
+            }
+        }
+        $this->assertNotNull($cantidad);
+        $this->assertSame('Medicación::0:Cantidad', $cantidad['id']);
+        $this->assertNotEmpty($cantidad['options']);
+        $this->assertFalse($cantidad['allow_custom']);
+        $this->assertSame('Elegí la cantidad / dosis.', $cantidad['message']);
     }
 
     public function testIndicacionFollowUpBuildsPlazoIssueWithoutSelection(): void

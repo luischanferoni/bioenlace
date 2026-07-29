@@ -460,11 +460,11 @@ final class EncounterCaptureReviewPresenter
         $remaining = array_slice($camposRequeridos, 1);
         if ($remaining === []) {
             foreach ($map as $key => $value) {
-                if (!is_string($key) || $key === '') {
+                if (!is_string($key) || $key === '' || $this->isStructuralSubtitleKey($key)) {
                     continue;
                 }
-                $text = trim((string) $value);
-                if ($text === '' || $text === $label) {
+                $text = $this->formatSubtitleValue($key, $value);
+                if ($text === '' || $text === $label || $this->isStructuralSubtitleValue($text)) {
                     continue;
                 }
                 $parts[] = $text;
@@ -474,14 +474,14 @@ final class EncounterCaptureReviewPresenter
             }
         } else {
             foreach ($remaining as $key) {
-                if (!is_string($key) || $key === '') {
+                if (!is_string($key) || $key === '' || $this->isStructuralSubtitleKey($key)) {
                     continue;
                 }
-                $value = trim((string) ($map[$key] ?? ''));
-                if ($value === '' || $value === $label) {
+                $text = $this->formatSubtitleValue($key, $map[$key] ?? null);
+                if ($text === '' || $text === $label || $this->isStructuralSubtitleValue($text)) {
                     continue;
                 }
-                $parts[] = $value;
+                $parts[] = $text;
                 if (count($parts) >= 4) {
                     break;
                 }
@@ -489,6 +489,59 @@ final class EncounterCaptureReviewPresenter
         }
 
         return $parts !== [] ? implode(' · ', $parts) : null;
+    }
+
+    /**
+     * Campos de tipología interna (no deben verse en el chip: follow_up, ordered, etc.).
+     */
+    private function isStructuralSubtitleKey(string $key): bool
+    {
+        $folded = strtolower(preg_replace('/\s+/', '', $key) ?? $key);
+
+        return in_array($folded, [
+            'tipo',
+            'type',
+            'category',
+            'kind',
+            'source',
+        ], true);
+    }
+
+    private function isStructuralSubtitleValue(string $value): bool
+    {
+        $folded = strtolower(str_replace(['-', ' '], '_', trim($value)));
+
+        return in_array($folded, [
+            'follow_up',
+            'followup',
+            'counseling',
+            'counselling',
+            'conditional',
+            'ordered',
+            'mentioned',
+            'order',
+        ], true);
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private function formatSubtitleValue(string $key, $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+        $text = trim((string) $value);
+        if ($text === '') {
+            return '';
+        }
+        $foldedKey = strtolower(preg_replace('/\s+/', '', $key) ?? $key);
+        if (in_array($foldedKey, ['plazodias', 'plazo_dias', 'delaydays', 'delay_days'], true)
+            && preg_match('/^\d+$/', $text) === 1) {
+            return $text . ' días';
+        }
+
+        return $text;
     }
 
     private function categoryKey(string $title): string

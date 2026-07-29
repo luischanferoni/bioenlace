@@ -114,4 +114,62 @@ class EncounterCaptureReviewPresenterTest extends Unit
         $this->assertNotContains('Medicación::0', $review['default_staged_item_ids']);
         $this->assertContains('Diagnóstico::0', $review['default_staged_item_ids']);
     }
+
+    public function testSubtitleOmiteTipoInternoFollowUpYOrdered(): void
+    {
+        $presenter = new EncounterCaptureReviewPresenter();
+        $review = $presenter->build(
+            [
+                'datosExtraidos' => [
+                    'Indicaciones' => [
+                        [
+                            'Indicacion' => 'Control en consultorio',
+                            'Tipo' => 'follow_up',
+                            'Plazo dias' => 7,
+                        ],
+                    ],
+                    'Medicación' => [
+                        [
+                            'Nombre del medicamento' => 'Enalapril',
+                            'Tipo' => 'ordered',
+                            'Cantidad' => '10 mg',
+                            'Frecuencia de administracion' => '1 vez al día',
+                        ],
+                    ],
+                ],
+            ],
+            [
+                [
+                    'titulo' => 'Indicaciones',
+                    'modelo' => 'ConsultaIndicaciones',
+                    'requerido' => false,
+                    'campos_requeridos' => ['Indicacion', 'Tipo', 'Plazo dias'],
+                ],
+                [
+                    'titulo' => 'Medicación',
+                    'modelo' => 'ConsultaMedicamentos',
+                    'requerido' => false,
+                    'campos_requeridos' => [
+                        'Nombre del medicamento',
+                        'Tipo',
+                        'Cantidad',
+                        'Frecuencia de administracion',
+                    ],
+                ],
+            ],
+            'Control en consultorio en 7 días. Indico enalapril 10 mg 1 vez al día.',
+            null,
+            false
+        );
+
+        $ind = $review['categories'][0]['items'][0];
+        $this->assertSame('Control en consultorio', $ind['label']);
+        $this->assertSame('7 días', $ind['subtitle']);
+        $this->assertStringNotContainsString('follow_up', (string) ($ind['subtitle'] ?? ''));
+
+        $med = $review['categories'][1]['items'][0];
+        $this->assertSame('Enalapril', $med['label']);
+        $this->assertSame('10 mg · 1 vez al día', $med['subtitle']);
+        $this->assertStringNotContainsString('ordered', (string) ($med['subtitle'] ?? ''));
+    }
 }

@@ -322,21 +322,66 @@ class EncounterCaptureAnalysis {
         : <String>[];
     if (remaining.isEmpty) {
       for (final entry in m.entries) {
-        final s = entry.value?.toString().trim() ?? '';
-        if (s.isEmpty || s == label) continue;
+        if (_isStructuralSubtitleKey(entry.key)) continue;
+        final s = _formatSubtitleValue(entry.key, entry.value);
+        if (s.isEmpty || s == label || _isStructuralSubtitleValue(s)) continue;
         parts.add(s);
         if (parts.length >= 4) break;
       }
     } else {
       for (final key in remaining) {
-        final v = m[key]?.toString().trim();
-        if (v == null || v.isEmpty || v == label) continue;
-        parts.add(v);
+        if (_isStructuralSubtitleKey(key)) continue;
+        final s = _formatSubtitleValue(key, m[key]);
+        if (s.isEmpty || s == label || _isStructuralSubtitleValue(s)) continue;
+        parts.add(s);
         if (parts.length >= 4) break;
       }
     }
     if (parts.isEmpty) return null;
     return parts.join(' · ');
+  }
+
+  static bool _isStructuralSubtitleKey(String key) {
+    final folded = key.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+    return const {
+      'tipo',
+      'type',
+      'category',
+      'kind',
+      'source',
+    }.contains(folded);
+  }
+
+  static bool _isStructuralSubtitleValue(String value) {
+    final folded =
+        value.trim().toLowerCase().replaceAll('-', '_').replaceAll(' ', '_');
+    return const {
+      'follow_up',
+      'followup',
+      'counseling',
+      'counselling',
+      'conditional',
+      'ordered',
+      'mentioned',
+      'order',
+    }.contains(folded);
+  }
+
+  static String _formatSubtitleValue(String key, dynamic value) {
+    if (value == null) return '';
+    final text = value.toString().trim();
+    if (text.isEmpty) return '';
+    final foldedKey = key.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+    if (const {
+          'plazodias',
+          'plazo_dias',
+          'delaydays',
+          'delay_days',
+        }.contains(foldedKey) &&
+        RegExp(r'^\d+$').hasMatch(text)) {
+      return '$text días';
+    }
+    return text;
   }
 
   /// Reconstruye `datosExtraidos` solo con ítems incluidos en el guardado.

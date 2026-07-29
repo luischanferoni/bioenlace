@@ -101,6 +101,15 @@ class ConsultaMedicamentos extends \yii\db\ActiveRecord
     }
 
     /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    public static function applyResolutionToRow(array $row, string $field, mixed $value): array
+    {
+        return \common\models\Clinical\Input\MedicacionInput::applyResolutionToRow($row, $field, $value);
+    }
+
+    /**
      * @return list<string>
      */
     public static function camposPromptExtraccion(): array

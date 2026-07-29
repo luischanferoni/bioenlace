@@ -191,6 +191,148 @@ final class MedicacionInput extends Model
     }
 
     /**
+     * Issues resolubles solo con catálogo de dominio (sin texto libre).
+     *
+     * @return list<array{id: string, field: string, message: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>
+     */
+    public function buildIssues(string $category, int $index): array
+    {
+        $issues = [];
+        foreach ($this->missingFieldsForCompleteness() as $field) {
+            // Nombre no tiene catálogo cerrado: editar nota y reanalizar / destildar.
+            if ($field === self::FIELD_NOMBRE) {
+                continue;
+            }
+            $options = self::optionsForField($field);
+            if ($options === []) {
+                continue;
+            }
+            $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                $category,
+                $index,
+                $field,
+                self::messageForField($field),
+                $options,
+                false
+            );
+        }
+
+        return $issues;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    public static function applyResolutionToRow(array $row, string $field, mixed $value): array
+    {
+        $row[$field] = is_string($value) ? trim($value) : $value;
+        if ($field === self::FIELD_FRECUENCIA && is_numeric($value)) {
+            $row[$field] = (string) (int) $value;
+            if (empty($row[self::FIELD_TIPO_FRECUENCIA])) {
+                $row[self::FIELD_TIPO_FRECUENCIA] = ConsultaMedicamentos::FRECUENCIA_TIPO_HORA;
+            }
+        }
+        if ($field === self::FIELD_DURACION && is_numeric($value)) {
+            $row[$field] = (string) (int) $value;
+            if (empty($row[self::FIELD_TIPO_DURACION])) {
+                $row[self::FIELD_TIPO_DURACION] = ConsultaMedicamentos::DURANTE_TIPO_DIA;
+            }
+        }
+
+        return $row;
+    }
+
+    /**
+     * @return list<array{value: mixed, label: string}>
+     */
+    public static function optionsForField(string $field): array
+    {
+        if ($field === self::FIELD_TIPO) {
+            return [
+                ['value' => self::TYPE_ORDERED, 'label' => 'Indicada / prescrita'],
+                ['value' => self::TYPE_MENTIONED, 'label' => 'Solo mencionada'],
+            ];
+        }
+        if ($field === self::FIELD_TIPO_FRECUENCIA) {
+            return self::mapToOptions(ConsultaMedicamentos::FRECUENCIAS);
+        }
+        if ($field === self::FIELD_TIPO_DURACION) {
+            return self::mapToOptions(ConsultaMedicamentos::DURANTES);
+        }
+        if ($field === self::FIELD_FRECUENCIA) {
+            $out = [];
+            foreach ([1, 2, 3, 4, 6, 8, 12, 24] as $n) {
+                $out[] = ['value' => (string) $n, 'label' => 'Cada ' . $n];
+            }
+
+            return $out;
+        }
+        if ($field === self::FIELD_DURACION) {
+            $out = [];
+            foreach ([1, 3, 5, 7, 10, 14, 30] as $n) {
+                $out[] = ['value' => (string) $n, 'label' => (string) $n];
+            }
+
+            return $out;
+        }
+        if ($field === self::FIELD_VIA) {
+            return [
+                ['value' => 'oral', 'label' => 'Oral'],
+                ['value' => 'sublingual', 'label' => 'Sublingual'],
+                ['value' => 'IM', 'label' => 'Intramuscular'],
+                ['value' => 'IV', 'label' => 'Intravenosa'],
+                ['value' => 'subcutánea', 'label' => 'Subcutánea'],
+                ['value' => 'tópica', 'label' => 'Tópica'],
+                ['value' => 'inhalatoria', 'label' => 'Inhalatoria'],
+            ];
+        }
+        if ($field === self::FIELD_CANTIDAD) {
+            return [
+                ['value' => '400 mg', 'label' => '400 mg'],
+                ['value' => '500 mg', 'label' => '500 mg'],
+                ['value' => '1 g', 'label' => '1 g'],
+                ['value' => '1 comprimido', 'label' => '1 comprimido'],
+                ['value' => '2 comprimidos', 'label' => '2 comprimidos'],
+                ['value' => '5 ml', 'label' => '5 ml'],
+                ['value' => '10 ml', 'label' => '10 ml'],
+                ['value' => '1 sobre', 'label' => '1 sobre'],
+            ];
+        }
+
+        return [];
+    }
+
+    private static function messageForField(string $field): string
+    {
+        $map = [
+            self::FIELD_TIPO => '¿Cómo se registra la medicación?',
+            self::FIELD_CANTIDAD => 'Elegí la cantidad / dosis.',
+            self::FIELD_VIA => 'Elegí la vía de administración.',
+            self::FIELD_FRECUENCIA => 'Elegí cada cuánto se administra.',
+            self::FIELD_TIPO_FRECUENCIA => 'Elegí la unidad de frecuencia.',
+            self::FIELD_DURACION => 'Elegí la duración del tratamiento.',
+            self::FIELD_TIPO_DURACION => 'Elegí la unidad de duración.',
+        ];
+
+        return $map[$field] ?? ('Completá «' . $field . '».');
+    }
+
+    /**
+     * @param array<string, string> $map
+     * @return list<array{value: mixed, label: string}>
+     */
+    private static function mapToOptions(array $map): array
+    {
+        $out = [];
+        foreach ($map as $value => $label) {
+            $out[] = ['value' => $value, 'label' => $label];
+        }
+
+        return $out;
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toExtractedRow(): array

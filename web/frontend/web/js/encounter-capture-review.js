@@ -299,7 +299,7 @@
             });
             parts.push('</div>');
         }
-        if (issue.allow_custom) {
+        if (issue.allow_custom === true) {
             parts.push(
                 '<input type="text" class="form-control form-control-sm capture-issue-custom" ' +
                     'data-issue-id="' +

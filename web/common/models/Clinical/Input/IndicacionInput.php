@@ -152,8 +152,9 @@ final class IndicacionInput extends Model
                         ['value' => 3, 'label' => '3 días'],
                         ['value' => 7, 'label' => '7 días'],
                         ['value' => 15, 'label' => '15 días'],
+                        ['value' => 30, 'label' => '30 días'],
                     ],
-                    true
+                    false
                 );
                 continue;
             }
@@ -172,14 +173,7 @@ final class IndicacionInput extends Model
                 );
                 continue;
             }
-            $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
-                $category,
-                $index,
-                $field,
-                'Completá «' . $field . '».',
-                [],
-                true
-            );
+            // Texto narrativo u otros: sin input libre; editar nota y reanalizar.
         }
 
         return $issues;

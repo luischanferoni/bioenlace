@@ -53,7 +53,7 @@ class ClinicalCaptureIssueResolutionTest extends Unit
         $this->assertNotNull($plazo);
         $this->assertSame('Indicaciones::0:Plazo dias', $plazo['id']);
         $this->assertNotEmpty($plazo['options']);
-        $this->assertTrue($plazo['allow_custom']);
+        $this->assertFalse($plazo['allow_custom']);
         foreach ($plazo['options'] as $opt) {
             $this->assertArrayHasKey('value', $opt);
             $this->assertArrayHasKey('label', $opt);

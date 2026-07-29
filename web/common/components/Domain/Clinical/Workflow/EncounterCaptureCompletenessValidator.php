@@ -69,18 +69,8 @@ final class EncounterCaptureCompletenessValidator
                                 $issues[] = $issue;
                             }
                         }
-                    } else {
-                        foreach ($check['missing_fields'] as $field) {
-                            $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
-                                $title,
-                                (int) $index,
-                                (string) $field,
-                                'Completá «' . $field . '».',
-                                [],
-                                true
-                            );
-                        }
                     }
+                    // Sin buildIssues / sin catálogo: incomplete_items alcanza; no texto libre.
                 }
                 continue;
             }
@@ -100,16 +90,7 @@ final class EncounterCaptureCompletenessValidator
                     'label' => $this->rowLabel($row, $campos),
                     'missing_fields' => $missingFields,
                 ];
-                foreach ($missingFields as $field) {
-                    $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
-                        $title,
-                        (int) $index,
-                        (string) $field,
-                        'Completá «' . $field . '».',
-                        [],
-                        true
-                    );
-                }
+                // Campos legacy sin Input.buildIssues: no emitir issues de texto libre.
             }
         }
 

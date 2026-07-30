@@ -21,6 +21,10 @@ final class ReservaTurnoTriageCatalogService
             'title' => ReservaTriageModalidadStepService::TITLE,
             'draft_field' => ReservaTriageModalidadStepService::DRAFT_FIELD,
         ],
+        PedidoAtencionActoStepService::STEP_ID => [
+            'title' => PedidoAtencionActoStepService::TITLE,
+            'draft_field' => PedidoAtencionActoStepService::DRAFT_FIELD,
+        ],
     ];
 
     /** @var array<string, mixed>|null */

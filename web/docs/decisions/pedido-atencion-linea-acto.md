@@ -11,8 +11,9 @@ El catálogo `servicios` mezclaba destinos asistenciales (kinesiología, oftalmo
 1. **`servicios` es la línea asistencial** (HealthcareService): agenda, PES, sesión, EncounterDefinition. Se tipifica (`consulta` | `diagnostico` | `laboratorio` | `procedimiento` | `soporte`) y se codifica con SNOMED/FHIR (`specialty_code` + `specialty_system`). **No** rename masivo de tabla/FKs en este slice.
 2. **`actos_clinicos`** es el acto (ServiceRequest.code / Procedure): `code` + `code_system` estándar únicamente (`http://snomed.info/sct`, `http://loinc.org`, value sets FHIR oficiales). **Sin** code system local.
 3. **`linea_acto`** puente N:M (global o por efector) para resolver el slot faltante.
-4. **`PedidoAtencion`** (DTO + servicio de dominio) une línea × acto × modo; completitud = resoluble a un par agendable. Misma regla para derivación clínica y, más adelante, pedido paciente.
+4. **`PedidoAtencion`** (DTO + servicio de dominio) une línea × acto × modo; completitud = resoluble a un par agendable. Misma regla para derivación clínica y pedido paciente (hub: raíz `estudio_pedido`).
 5. Defaults de acto por modo viven en metadata YAML (`pedido-atencion.yaml`), no en orquestadores.
+6. Hub paciente: `PedidoAtencionPacienteService` + paso `pedido_acto` en triage; lista de servicios filtrada por `pedido_linea_ids`.
 
 ## Alternativas descartadas
 

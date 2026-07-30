@@ -22,6 +22,10 @@ nodes:
     step: raiz
     label: "Malestar nuevo"
     urgency_band: C
+  - code: estudio_pedido
+    step: raiz
+    label: "Estudio o práctica"
+    urgency_band: C
   - code: seguimiento_cronico
     step: raiz
     label: "Control/Seguimiento"

@@ -21,4 +21,9 @@ interface LineaActoCatalogInterface
      * @return array{code: string, system: string, display: string}|null
      */
     public function findActo(string $code, string $system): ?array;
+
+    /**
+     * @return list<array{code: string, system: string, display: string}>
+     */
+    public function listActos(): array;
 }

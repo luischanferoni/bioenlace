@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
+use common\components\Domain\Clinical\Access\PedidoAtencionPacienteService;
 use common\components\Domain\Organization\Service\Servicios\ServicioMencionLookupService;
 use common\components\Domain\Organization\Service\Servicios\ServiciosEfectorAutogestionListadoService;
 use common\models\ConsultaDerivaciones;
@@ -39,6 +40,30 @@ final class ReservaTriageServicioSugeridoService
      */
     public function resolverParaDraft(array $draft, bool $soloHubPaciente = false): array
     {
+        $pedido = new PedidoAtencionPacienteService();
+        if ($pedido->esPedidoEstudio($draft)) {
+            if ($pedido->lineaIdsDesdeDraft($draft) === []
+                && trim((string) ($draft[PedidoAtencionPacienteService::DRAFT_ACTO] ?? '')) !== ''
+            ) {
+                $pedido->aplicarFlagsEnDraft($draft);
+            }
+            $ids = $pedido->lineaIdsDesdeDraft($draft);
+            $msg = trim((string) ($draft[PedidoAtencionPacienteService::DRAFT_MENSAJE] ?? ''));
+
+            return [
+                'rol' => 'estudio',
+                'rol_label' => 'Estudio o práctica',
+                'id_servicios' => $ids,
+                'filtrado_aplicado' => true,
+                'autogestion_disponible' => $ids !== [],
+                'triage_codigo_resolutor' => PedidoAtencionPacienteService::TRIAGE_RAIZ_ESTUDIO,
+                'mensaje_orientacion' => $msg !== '' ? $msg : null,
+                'mensaje_lista' => $ids === []
+                    ? ($msg !== '' ? $msg : 'No hay servicios con agenda para ese estudio.')
+                    : 'Elegí el servicio donde realizar el estudio.',
+            ];
+        }
+
         if ($soloHubPaciente) {
             return $this->resolverSoloHub($draft);
         }
@@ -87,6 +112,20 @@ final class ReservaTriageServicioSugeridoService
     {
         if ($items === []) {
             return $items;
+        }
+        $pedido = new PedidoAtencionPacienteService();
+        if ($pedido->esPedidoEstudio($draft)) {
+            if ($pedido->lineaIdsDesdeDraft($draft) === []
+                && trim((string) ($draft[PedidoAtencionPacienteService::DRAFT_ACTO] ?? '')) !== ''
+            ) {
+                $pedido->aplicarFlagsEnDraft($draft);
+            }
+            $ids = $pedido->lineaIdsDesdeDraft($draft);
+            if ($ids === []) {
+                return [];
+            }
+
+            return $this->filtrarItemsPorIds($items, $ids);
         }
         if (!$soloHubPaciente && !$this->draftTieneTriageRelevante($draft)) {
             return $items;
@@ -193,6 +232,24 @@ final class ReservaTriageServicioSugeridoService
      */
     public function aplicarFlagsEnDraft(array &$draft): void
     {
+        $pedido = new PedidoAtencionPacienteService();
+        if ($pedido->esPedidoEstudio($draft)) {
+            $pedido->aplicarFlagsEnDraft($draft);
+            $res = $this->resolverParaDraft($draft, false);
+            $draft['servicio_reserva_rol'] = $res['rol'];
+            $draft['triage_servicio_rol_ideal'] = $res['rol'];
+            $draft['triage_codigo_servicio_resolutor'] = $res['triage_codigo_resolutor'];
+            $draft['reserva_servicio_autogestion'] = $res['autogestion_disponible'] ? '1' : '0';
+            if ($res['mensaje_orientacion'] !== null && trim($res['mensaje_orientacion']) !== '') {
+                $draft['reserva_servicio_mensaje'] = trim($res['mensaje_orientacion']);
+            } else {
+                unset($draft['reserva_servicio_mensaje']);
+            }
+            $draft['reserva_modo_hub_paciente'] = '0';
+
+            return;
+        }
+
         if (!$this->draftTieneTriageRelevante($draft)) {
             return;
         }
@@ -272,6 +329,10 @@ final class ReservaTriageServicioSugeridoService
             'triage_raiz',
             'triage_alarmas',
             'triage_zona',
+            PedidoAtencionPacienteService::DRAFT_ACTO,
+            PedidoAtencionPacienteService::DRAFT_MODO,
+            PedidoAtencionPacienteService::DRAFT_LINEA_IDS,
+            PedidoAtencionPacienteService::DRAFT_SERVICIO_RESUELTO,
         ];
         $draft = [];
         foreach ($keys as $key) {

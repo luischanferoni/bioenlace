@@ -11,10 +11,11 @@ No es diagnóstico: el árbol fija rutas seguras (turno, teleconsulta, consulta 
 | Motivo (UI) | Código | Qué sigue |
 |-------------|--------|-----------|
 | **Malestar nuevo** | `malestar_nuevo` | Zona / detalle / evolución → servicio → modalidad (si aplica) → agenda |
+| **Estudio o práctica** | `estudio_pedido` | Acto clínico (SNOMED) → modalidad → línea(s) con agenda → turno |
 | **Control/Seguimiento** | `seguimiento_cronico` | **Hub** de anclas (tratamiento, condición, protocolo, consulta general/previa, control general) |
 | **Urgencia** | `urgencia` | Categoría de alarma → si banda A, **no** reserva en app (derivación 107 / guardia) |
 
-Catálogo: `Scheduling/metadata/reserva_triage_catalog_v1.yaml`. Flujo: `intents/create/atencion.necesito-atencion.yaml`.
+Catálogo: `Scheduling/metadata/reserva_triage_catalog_v1.yaml`. Flujo: `intents/create/atencion.necesito-atencion.yaml`. Pedido línea×acto: [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
 
 ## Hub Control/Seguimiento
 
@@ -55,6 +56,7 @@ Decisión: [../decisions/care-protocols-plandefinition-lite.md](../decisions/car
 | Situación | Camino |
 |-----------|--------|
 | Malestar agudo, «necesito atención», alarmas | Solicitar Atención → Malestar / Urgencia |
+| Ecografía, laboratorio, kinesio, mamografía… | Solicitar Atención → **Estudio o práctica** (acto → línea) |
 | Renovar/ajustar medicación, control, consulta por mensaje, evolución | Solicitar Atención → **Control/Seguimiento** (hub) |
 | Solo «sacar turno» sin motivo clínico | `turnos.crear-como-paciente` (sin triage de motivos) |
 | Care pack pre/post consulta | Journey de encounter — [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md) |

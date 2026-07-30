@@ -104,4 +104,9 @@ final class InMemoryLineaActoCatalog implements LineaActoCatalogInterface
 
         return null;
     }
+
+    public function listActos(): array
+    {
+        return $this->actos;
+    }
 }

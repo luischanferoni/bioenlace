@@ -38,6 +38,7 @@ use common\components\Domain\Scheduling\Service\TurnoAgendaMetricsService;
 use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionCatalogService;
 use common\components\Domain\Scheduling\Service\ReservaModalidadAtencionService;
 use common\components\Domain\Scheduling\Service\ReservaTriageModalidadStepService;
+use common\components\Domain\Scheduling\Service\PedidoAtencionActoStepService;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageCatalogService;
 use common\components\Domain\Scheduling\Service\ReservaTriagePostCupoRoutingAgent;
 use common\components\Domain\Scheduling\Service\ReservaTriageServicioSugeridoService;
@@ -165,7 +166,7 @@ class TurnosController extends BaseController
         $step = isset($params['step']) ? trim((string) $params['step']) : '';
         if ($step === '') {
             throw new BadRequestHttpException(
-                'step es obligatorio (raiz, urgencia_categoria, zona, modalidad). '
+                'step es obligatorio (raiz, urgencia_categoria, zona, modalidad, pedido_acto). '
                 . 'En flujos del asistente debe venir en query desde open_ui.params del subintent.'
             );
         }
@@ -193,6 +194,10 @@ class TurnosController extends BaseController
                     'halts_booking' => false,
                 ];
             }
+        }
+
+        if (PedidoAtencionActoStepService::isPedidoActoStep($step)) {
+            $options = (new PedidoAtencionActoStepService())->opciones();
         }
 
         $out = UiScreenService::handleScreen(

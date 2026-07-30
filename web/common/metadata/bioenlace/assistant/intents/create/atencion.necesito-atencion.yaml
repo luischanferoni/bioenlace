@@ -28,12 +28,27 @@ keywords:
 - contar evolucion
 - consulta por mensaje
 - consulta clinica por mensaje
+- ecografia
+- ecografía
+- estudio
+- radiografia
+- radiografía
+- mamografia
+- mamografía
+- laboratorio
+- kinesio
+- kinesiologia
+- kinesiología
+- necesito un estudio
+- sacar turno para estudio
 intent_semantics:
   summary: >-
     Te guía según lo que necesitás: malestar nuevo (elegís servicio y centro, inclusive cercanos en mapa),
-    control o seguimiento, o orientación a guardia. Podés terminar en turno, teleconsulta o consulta por mensaje.
+    estudio o práctica (acto SNOMED → línea con agenda), control o seguimiento, o orientación a guardia.
+    Podés terminar en turno, teleconsulta o consulta por mensaje.
   capabilities:
   - triage_malestar
+  - pedido_estudio_acto
   - control_seguimiento
   - urgencia_guardia_info
   - elige_servicio
@@ -45,9 +60,10 @@ intent_semantics:
   - reserva_turno
   - consulta_por_mensaje
   - teleconsulta
-  goal: 'Tres caminos: malestar nuevo (zona → servicio), control/seguimiento (consulta por mensaje, tratamiento
-    activo o atención previa → acciones) o urgencia (guardia, sin reserva).'
+  goal: 'Cuatro caminos: malestar nuevo (zona → servicio), estudio/práctica (acto → línea), control/seguimiento o urgencia (guardia, sin reserva).'
   how: 'Malestar nuevo → zona → modalidad → servicio.
+
+    Estudio o práctica → acto → modalidad → servicio (líneas del puente).
 
     Control/Seguimiento → tipo (general / tratamiento / consulta previa) → necesidad o mensaje → async
     o turno.
@@ -58,6 +74,7 @@ intent_semantics:
   constraints:
   - Urgencia (raíz o categoría banda A/B con halt): no se completa reserva.
   - Malestar nuevo presencial: servicios filtrados por zona (p. ej. pecho no muestra oftalmología).
+  - Estudio: solo líneas vinculadas al acto con agenda (`acepta_turnos`).
   - Modalidad obligatoria salvo pantalla de urgencia terminal.
   outcome:
   - Turno con servicio acorde al camino; triage persistido.
@@ -65,6 +82,8 @@ intent_semantics:
   - necesito ayuda con un síntoma
   - quiero atención médica
   - pedir un control
+  - necesito una ecografía
+  - turno para laboratorio
   - no sé si ir a urgencias o pedir turno
 draft_hydrator:
   handler: scheduling.solicitar_atencion
@@ -106,6 +125,11 @@ draft_keys_extra:
 - condition_codigo
 - protocol_id
 - protocol_action_outcome
+- pedido_acto
+- pedido_modo
+- pedido_linea_ids
+- pedido_servicio_resuelto
+- pedido_mensaje
 subintents:
 - id: triage_raiz
   assistant_text: Motivo
@@ -122,6 +146,10 @@ subintents:
     next: triage_zona
   - when:
       draft_equals:
+        triage_raiz: estudio_pedido
+    next: select_pedido_acto
+  - when:
+      draft_equals:
         triage_raiz: seguimiento_cronico
     next: cs_hub
   - when:
@@ -135,6 +163,35 @@ subintents:
     action_id: turnos.reserva-triage-paso
     params:
       step: raiz
+- id: select_pedido_acto
+  assistant_text: Estudio o práctica
+  requires:
+  - draft.triage_raiz
+  provides:
+  - draft.pedido_acto
+  next_routing:
+  - when:
+      draft_equals:
+        modalidad_paso_requerido: '0'
+        pedido_servicio_resuelto: '1'
+    next: select_efector
+  - when:
+      draft_equals:
+        pedido_servicio_resuelto: '1'
+    next: select_tipo_atencion
+  - when:
+      draft_equals:
+        modalidad_paso_requerido: '0'
+    next: select_servicio
+  - when:
+      default: true
+    next: select_tipo_atencion
+  open_ui:
+    action_id: turnos.reserva-triage-paso
+    params:
+      step: pedido_acto
+      step_title: ¿Qué estudio o práctica necesitás?
+      triage_raiz: draft.triage_raiz
 - id: cs_hub
   assistant_text: ¿Sobre qué es el control o seguimiento?
   provides:
@@ -265,6 +322,10 @@ subintents:
         seguimiento_necesidad: solicitar_turno
     next: cs_select_preferencia_turno
   - when:
+      draft_equals:
+        pedido_servicio_resuelto: '1'
+    next: select_efector
+  - when:
       default: true
     next: select_servicio
   open_ui:
@@ -276,6 +337,8 @@ subintents:
       triage_alarmas: draft.triage_alarmas
       triage_zona: draft.triage_zona
       care_plan_id: draft.care_plan_id
+      pedido_acto: draft.pedido_acto
+      pedido_modo: draft.pedido_modo
 - id: solicitud_async
   assistant_text: Describí tu consulta en el campo de texto de abajo
   requires:
@@ -316,6 +379,10 @@ subintents:
       triage_alarmas: draft.triage_alarmas
       triage_zona: draft.triage_zona
       care_plan_id: draft.care_plan_id
+      pedido_acto: draft.pedido_acto
+      pedido_modo: draft.pedido_modo
+      pedido_linea_ids: draft.pedido_linea_ids
+      pedido_servicio_resuelto: draft.pedido_servicio_resuelto
 - id: select_efector
   assistant_text: Centro de salud
   requires:

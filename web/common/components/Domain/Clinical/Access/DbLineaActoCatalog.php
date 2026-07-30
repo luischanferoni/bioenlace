@@ -107,4 +107,19 @@ final class DbLineaActoCatalog implements LineaActoCatalogInterface
             'display' => (string) $acto->display,
         ];
     }
+
+    public function listActos(): array
+    {
+        $rows = ActoClinico::find()->orderBy(['display' => SORT_ASC])->all();
+        $out = [];
+        foreach ($rows as $acto) {
+            $out[] = [
+                'code' => (string) $acto->code,
+                'system' => (string) $acto->code_system,
+                'display' => (string) $acto->display,
+            ];
+        }
+
+        return $out;
+    }
 }

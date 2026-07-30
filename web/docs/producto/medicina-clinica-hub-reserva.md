@@ -38,5 +38,6 @@ Solo servicios que coinciden con rol `medicina_clinica` y tienen turnos habilita
 
 - Intent/flujo dedicado **“Tengo una derivación”** para reservar especialista con teleconsulta.
 - UI staff: marcar profesionales como generalistas vs especialistas en PES (hoy se infiere por servicio).
+- **Estudio o práctica** en Solicitar Atención: acto SNOMED → líneas vía `PedidoAtencionPacienteService` (slice hub paciente).
 
-Ver también: [triage-reserva-turno.md](./triage-reserva-turno.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md).
+Ver también: [triage-reserva-turno.md](./triage-reserva-turno.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md), [solicitar-atencion.md](./solicitar-atencion.md), [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).

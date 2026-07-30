@@ -1,0 +1,33 @@
+# Pedido de atención (línea × acto)
+
+# Systems admitidos (CodeableConcept). Sin code system local.
+allowed_systems:
+  - http://snomed.info/sct
+  - http://loinc.org
+  - http://terminology.hl7.org/CodeSystem/service-type
+  - http://terminology.hl7.org/CodeSystem/service-category
+
+# Acto por defecto cuando solo hay línea y el modo no aporta otro código.
+defaults_por_modo:
+  consulta:
+    code: "11429006"
+    code_system: http://snomed.info/sct
+    display: Consultation
+  interconsulta:
+    code: "183515008"
+    code_system: http://snomed.info/sct
+    display: Referral to physician
+  practica:
+    code: "71388002"
+    code_system: http://snomed.info/sct
+    display: Procedure
+  estudio:
+    code: "363679005"
+    code_system: http://snomed.info/sct
+    display: Imaging
+
+modos:
+  - consulta
+  - interconsulta
+  - practica
+  - estudio

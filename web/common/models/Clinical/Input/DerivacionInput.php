@@ -2,14 +2,17 @@
 
 namespace common\models\Clinical\Input;
 
+use common\components\Domain\Clinical\Access\CodingSystems;
+use common\components\Domain\Clinical\Access\PedidoAtencion;
+use common\components\Domain\Clinical\Access\PedidoAtencionService;
+use common\models\ConsultaDerivaciones;
 use common\models\Servicio;
 use yii\base\Model;
 
 /**
  * Contrato de entrada de una derivación/interconsulta (extracción IA → revisión → ServiceRequest referral).
  *
- * Integridad: hace falta un servicio destino resoluble (`id_servicio` o nombre matcheable).
- * El efector destino suele ser el del encounter solicitante si no viene en la fila.
+ * Completitud: PedidoAtencion (línea × acto). El efector destino suele ser el del encounter.
  */
 final class DerivacionInput extends Model
 {
@@ -17,6 +20,10 @@ final class DerivacionInput extends Model
     public const FIELD_ID_SERVICIO = 'id_servicio';
     public const FIELD_ID_EFECTOR = 'id_efector';
     public const FIELD_INDICACIONES = 'Indicaciones';
+    public const FIELD_ACTO_CODE = 'Acto code';
+    public const FIELD_ACTO_SYSTEM = 'Acto system';
+    public const FIELD_ACTO_DISPLAY = 'Acto';
+    public const FIELD_MODO = 'Modo';
 
     /** @var string|null texto libre del servicio (p. ej. "clínico") */
     public $servicio;
@@ -30,12 +37,24 @@ final class DerivacionInput extends Model
     /** @var string|null */
     public $indicaciones;
 
+    /** @var string|null */
+    public $actoCode;
+
+    /** @var string|null */
+    public $actoSystem;
+
+    /** @var string|null */
+    public $actoDisplay;
+
+    /** @var string */
+    public $modo = PedidoAtencion::MODO_INTERCONSULTA;
+
     /**
      * @return list<string>
      */
     public static function promptFieldNames(): array
     {
-        return [self::FIELD_SERVICIO];
+        return [self::FIELD_SERVICIO, self::FIELD_ACTO_DISPLAY];
     }
 
     /**
@@ -58,7 +77,6 @@ final class DerivacionInput extends Model
             self::FIELD_SERVICIO,
             'servicio',
             'service',
-            'display',
             'texto',
             'termino',
         ]);
@@ -78,6 +96,36 @@ final class DerivacionInput extends Model
             'note',
             'nota',
         ]);
+        $model->actoCode = self::firstNonEmptyString($row, [
+            self::FIELD_ACTO_CODE,
+            'codigo',
+            'code',
+            'acto_code',
+        ]);
+        $model->actoSystem = self::firstNonEmptyString($row, [
+            self::FIELD_ACTO_SYSTEM,
+            'code_system',
+            'acto_system',
+        ]);
+        $model->actoDisplay = self::firstNonEmptyString($row, [
+            self::FIELD_ACTO_DISPLAY,
+            'acto',
+            'acto_display',
+        ]);
+        if ($model->actoDisplay === null && $model->actoCode !== null) {
+            $model->actoDisplay = self::firstNonEmptyString($row, ['display', 'termino']);
+        }
+        if ($model->servicio === null) {
+            $model->servicio = self::firstNonEmptyString($row, ['display']);
+        }
+        $modo = self::firstNonEmptyString($row, [
+            self::FIELD_MODO,
+            'modo',
+            'tipo',
+            'referral_kind',
+            'tipo_solicitud',
+        ]);
+        $model->modo = self::normalizeModo($modo);
         $model->normalize();
 
         return $model;
@@ -86,10 +134,24 @@ final class DerivacionInput extends Model
     public function rules(): array
     {
         return [
-            [['servicio', 'indicaciones'], 'string'],
+            [['servicio', 'indicaciones', 'actoCode', 'actoSystem', 'actoDisplay', 'modo'], 'string'],
             [['idServicio', 'idEfector'], 'integer', 'min' => 1],
-            [['idServicio'], 'required', 'message' => 'Falta el servicio de destino de la derivación.'],
         ];
+    }
+
+    public function toPedido(): PedidoAtencion
+    {
+        $this->normalize();
+
+        return new PedidoAtencion(
+            $this->idServicio,
+            $this->actoCode,
+            $this->actoSystem ?? ($this->actoCode !== null ? CodingSystems::SNOMED : null),
+            $this->modo,
+            $this->indicaciones,
+            $this->idEfector,
+            $this->actoDisplay
+        );
     }
 
     /**
@@ -97,37 +159,65 @@ final class DerivacionInput extends Model
      */
     public function missingFieldsForCompleteness(): array
     {
-        $this->normalize();
-        if ($this->idServicio !== null && $this->idServicio > 0) {
-            return [];
+        $resolved = (new PedidoAtencionService())->resolve($this->toPedido());
+        $missing = [];
+        foreach ($resolved['missing'] as $slot) {
+            if ($slot === 'linea') {
+                $missing[] = self::FIELD_SERVICIO;
+            }
+            if ($slot === 'acto') {
+                $missing[] = self::FIELD_ACTO_DISPLAY;
+            }
         }
 
-        return [self::FIELD_SERVICIO];
+        return $missing;
     }
 
     /**
-     * Issues resolubles: chips de servicios con agenda (sin preselección).
+     * Issues resolubles: chips de línea y/o acto (sin texto libre).
      *
      * @return list<array{id: string, field: string, options: list<array{value: mixed, label: string}>, allow_custom: bool}>
      */
     public function buildIssues(string $category, int $index): array
     {
+        $resolved = (new PedidoAtencionService())->resolve($this->toPedido());
         $issues = [];
-        foreach ($this->missingFieldsForCompleteness() as $field) {
-            if ($field !== self::FIELD_SERVICIO) {
-                continue;
+
+        if (in_array('linea', $resolved['missing'], true)) {
+            $options = $resolved['candidates']['lineas'] !== []
+                ? array_map(
+                    static fn (array $l) => ['value' => $l['id'], 'label' => $l['label']],
+                    $resolved['candidates']['lineas']
+                )
+                : self::optionsForServicio();
+            if ($options !== []) {
+                $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                    $category,
+                    $index,
+                    self::FIELD_SERVICIO,
+                    $options,
+                    false
+                );
             }
-            $options = self::optionsForServicio();
-            if ($options === []) {
-                continue;
-            }
-            $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
-                $category,
-                $index,
-                $field,
-                $options,
-                false
+        }
+
+        if (in_array('acto', $resolved['missing'], true)) {
+            $options = array_map(
+                static fn (array $a) => [
+                    'value' => $a['system'] . '|' . $a['code'],
+                    'label' => $a['display'] !== '' ? $a['display'] : $a['code'],
+                ],
+                $resolved['candidates']['actos']
             );
+            if ($options !== []) {
+                $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                    $category,
+                    $index,
+                    self::FIELD_ACTO_DISPLAY,
+                    $options,
+                    false
+                );
+            }
         }
 
         return $issues;
@@ -156,6 +246,27 @@ final class DerivacionInput extends Model
             }
         }
 
+        if ($field === self::FIELD_ACTO_DISPLAY || $field === self::FIELD_ACTO_CODE) {
+            $raw = is_string($value) ? trim($value) : (string) $value;
+            if (str_contains($raw, '|')) {
+                [$system, $code] = explode('|', $raw, 2);
+                $row[self::FIELD_ACTO_SYSTEM] = trim($system);
+                $row[self::FIELD_ACTO_CODE] = trim($code);
+                $row['code_system'] = trim($system);
+                $row['codigo'] = trim($code);
+            } elseif (is_numeric($value)) {
+                // no-op: ids de acto no se usan como value de chip
+            } else {
+                $row[self::FIELD_ACTO_DISPLAY] = $raw;
+                $row[self::FIELD_ACTO_CODE] = $raw;
+                $row['codigo'] = $raw;
+                if (empty($row[self::FIELD_ACTO_SYSTEM]) && empty($row['code_system'])) {
+                    $row[self::FIELD_ACTO_SYSTEM] = CodingSystems::SNOMED;
+                    $row['code_system'] = CodingSystems::SNOMED;
+                }
+            }
+        }
+
         return $row;
     }
 
@@ -178,32 +289,57 @@ final class DerivacionInput extends Model
     }
 
     /**
-     * Resuelve ids de destino (servicio por nombre si hace falta; efector por default del encounter).
+     * Resuelve destino + acto tras PedidoAtencionService.
      *
-     * @return array{id_servicio: int|null, id_efector: int|null, display: string|null, note: string|null}
+     * @return array{
+     *   id_servicio: int|null,
+     *   id_efector: int|null,
+     *   display: string|null,
+     *   note: string|null,
+     *   code: string|null,
+     *   code_system: string|null,
+     *   acto_display: string|null,
+     *   referral_kind: string|null,
+     *   complete: bool
+     * }
      */
     public function resolveTargets(?int $defaultEfectorId): array
     {
         $this->normalize();
-        $idServicio = $this->idServicio;
-        $idEfector = $this->idEfector;
-        if (($idEfector === null || $idEfector <= 0) && $defaultEfectorId !== null && $defaultEfectorId > 0) {
-            $idEfector = $defaultEfectorId;
+        if (($this->idEfector === null || $this->idEfector <= 0) && $defaultEfectorId !== null && $defaultEfectorId > 0) {
+            $this->idEfector = $defaultEfectorId;
         }
+
+        $resolved = (new PedidoAtencionService())->resolve($this->toPedido());
+        $pedido = $resolved['pedido'];
+
         $display = $this->servicio;
-        if ($display === null || $display === '') {
-            if ($idServicio !== null && $idServicio > 0) {
-                $s = Servicio::findOne(['id_servicio' => $idServicio]);
-                $display = $s !== null ? (string) $s->nombre : null;
-            }
+        if (($display === null || $display === '') && $pedido->hasLinea()) {
+            $s = Servicio::findOne(['id_servicio' => $pedido->lineaId]);
+            $display = $s !== null ? (string) $s->nombre : null;
         }
 
         return [
-            'id_servicio' => $idServicio !== null && $idServicio > 0 ? $idServicio : null,
-            'id_efector' => $idEfector !== null && $idEfector > 0 ? $idEfector : null,
-            'display' => $display !== null && $display !== '' ? $display : null,
+            'id_servicio' => $pedido->hasLinea() ? $pedido->lineaId : null,
+            'id_efector' => $this->idEfector !== null && $this->idEfector > 0 ? $this->idEfector : null,
+            'display' => $display !== null && $display !== '' ? $display : ($pedido->actoDisplay ?? null),
             'note' => $this->indicaciones !== null && $this->indicaciones !== '' ? $this->indicaciones : null,
+            'code' => $pedido->hasActo() ? $pedido->actoCode : null,
+            'code_system' => $pedido->hasActo() ? $pedido->actoSystem : null,
+            'acto_display' => $pedido->actoDisplay,
+            'referral_kind' => self::referralKindForModo($pedido->modo),
+            'complete' => $resolved['complete'],
         ];
+    }
+
+    public static function referralKindForModo(string $modo): string
+    {
+        $modo = strtolower(trim($modo));
+        if (in_array($modo, [PedidoAtencion::MODO_PRACTICA, PedidoAtencion::MODO_ESTUDIO], true)) {
+            return ConsultaDerivaciones::PRACTICA;
+        }
+
+        return ConsultaDerivaciones::INTERCONSULTA;
     }
 
     private function normalize(): void
@@ -220,6 +356,39 @@ final class DerivacionInput extends Model
         if ($this->idEfector !== null && $this->idEfector <= 0) {
             $this->idEfector = null;
         }
+        if ($this->actoCode !== null && trim($this->actoCode) === '') {
+            $this->actoCode = null;
+        }
+        if ($this->actoSystem !== null && trim($this->actoSystem) === '') {
+            $this->actoSystem = null;
+        }
+        if ($this->actoCode !== null && $this->actoSystem === null) {
+            $this->actoSystem = CodingSystems::SNOMED;
+        }
+        $this->modo = self::normalizeModo($this->modo);
+    }
+
+    private static function normalizeModo(?string $modo): string
+    {
+        $raw = strtolower(trim((string) $modo));
+        if ($raw === '') {
+            return PedidoAtencion::MODO_INTERCONSULTA;
+        }
+        if (in_array($raw, PedidoAtencion::modos(), true)) {
+            return $raw;
+        }
+        if (in_array($raw, ['practica', 'práctica', ConsultaDerivaciones::PRACTICA], true)
+            || str_contains($raw, 'practic')
+            || str_contains($raw, 'estudio')
+            || str_contains($raw, 'imaging')
+        ) {
+            return PedidoAtencion::MODO_PRACTICA;
+        }
+        if (str_contains($raw, 'consult') || $raw === ConsultaDerivaciones::INTERCONSULTA) {
+            return PedidoAtencion::MODO_INTERCONSULTA;
+        }
+
+        return PedidoAtencion::MODO_INTERCONSULTA;
     }
 
     /**

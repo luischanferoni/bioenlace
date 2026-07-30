@@ -11,6 +11,9 @@ use common\traits\ParameterQuestionsTrait;
  *
  * @property string $id_servicio
  * @property string $nombre
+ * @property string|null $tipo consulta|diagnostico|laboratorio|procedimiento|soporte
+ * @property string|null $specialty_code
+ * @property string|null $specialty_system
  * @property string|null $teleconsulta_politica NINGUNA|TODAS|ALGUNAS
  * @property string $reserva_autogestion_paciente SI|NO
  *
@@ -29,6 +32,27 @@ class Servicio extends \yii\db\ActiveRecord
 
     public const RESERVA_AUTOGESTION_PACIENTE_SI = 'SI';
     public const RESERVA_AUTOGESTION_PACIENTE_NO = 'NO';
+
+    /** Línea asistencial: consulta / diagnóstico / laboratorio / procedimiento / soporte */
+    public const TIPO_CONSULTA = 'consulta';
+    public const TIPO_DIAGNOSTICO = 'diagnostico';
+    public const TIPO_LABORATORIO = 'laboratorio';
+    public const TIPO_PROCEDIMIENTO = 'procedimiento';
+    public const TIPO_SOPORTE = 'soporte';
+
+    /**
+     * @return list<string>
+     */
+    public static function tipoValues(): array
+    {
+        return [
+            self::TIPO_CONSULTA,
+            self::TIPO_DIAGNOSTICO,
+            self::TIPO_LABORATORIO,
+            self::TIPO_PROCEDIMIENTO,
+            self::TIPO_SOPORTE,
+        ];
+    }
 
     /**
      * @return list<string>
@@ -68,7 +92,11 @@ class Servicio extends \yii\db\ActiveRecord
         return [
             [['nombre'], 'required'],
             [['nombre'], 'string', 'max' => 40],
-            [['acepta_turnos', 'acepta_practicas', 'parametros', 'item_name', 'teleconsulta_politica', 'reserva_autogestion_paciente'], 'string'],
+            [['acepta_turnos', 'acepta_practicas', 'parametros', 'item_name', 'teleconsulta_politica', 'reserva_autogestion_paciente', 'tipo', 'specialty_code', 'specialty_system'], 'string'],
+            [['tipo'], 'in', 'range' => self::tipoValues()],
+            [['tipo'], 'default', 'value' => self::TIPO_CONSULTA],
+            [['specialty_code'], 'string', 'max' => 64],
+            [['specialty_system'], 'string', 'max' => 128],
             [['reserva_autogestion_paciente'], 'in', 'range' => self::reservaAutogestionPacienteValues()],
             [['reserva_autogestion_paciente'], 'default', 'value' => self::RESERVA_AUTOGESTION_PACIENTE_NO],
             [['teleconsulta_politica'], 'in', 'range' => self::teleconsultaPoliticaValues()],
@@ -84,11 +112,42 @@ class Servicio extends \yii\db\ActiveRecord
         return [
             'id_servicio' => 'Codigo de servicio',
             'nombre' => 'Nombre del serivicio',
+            'tipo' => 'Tipo de línea asistencial',
+            'specialty_code' => 'Código especialidad (SNOMED/FHIR)',
+            'specialty_system' => 'System especialidad',
             'acepta_turnos' => 'Acepta Agenda',
             'acepta_practicas' => 'Acepta Practicas',
             'teleconsulta_politica' => 'Política de teleconsulta',
             'reserva_autogestion_paciente' => 'Reserva directa paciente (hub)',
             'item_name' => 'Rol'
+        ];
+    }
+
+    public function getTipoLinea(): string
+    {
+        $tipo = trim((string) ($this->tipo ?? self::TIPO_CONSULTA));
+
+        return $tipo !== '' ? $tipo : self::TIPO_CONSULTA;
+    }
+
+    public function hasSpecialtyCoding(): bool
+    {
+        return trim((string) ($this->specialty_code ?? '')) !== ''
+            && trim((string) ($this->specialty_system ?? '')) !== '';
+    }
+
+    /**
+     * @return array{code: string, system: string}|null
+     */
+    public function specialtyCoding(): ?array
+    {
+        if (!$this->hasSpecialtyCoding()) {
+            return null;
+        }
+
+        return [
+            'code' => trim((string) $this->specialty_code),
+            'system' => trim((string) $this->specialty_system),
         ];
     }
 

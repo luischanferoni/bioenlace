@@ -91,6 +91,11 @@ final class ReferralRequestService
                 'Falta el efector de destino de la derivación (no hay efector en el encounter).'
             );
         }
+        if (($targets['complete'] ?? false) !== true && empty($targets['code'])) {
+            throw new \InvalidArgumentException(
+                'Falta el acto clínico de la derivación (código SNOMED/LOINC). Completá el pedido o destildá la derivación.'
+            );
+        }
 
         $sr = new ConsultaDerivaciones();
         $sr->encounter_id = (int) $encounter->id;
@@ -99,13 +104,16 @@ final class ReferralRequestService
         $sr->status = RequestStatus::ACTIVE;
         $sr->intent = 'order';
         $sr->referral_status = ConsultaDerivaciones::ESTADO_EN_ESPERA;
-        $sr->code = isset($row['codigo']) ? (string) $row['codigo'] : null;
-        $sr->display = $targets['display']
+        $sr->code = $targets['code'] ?? (isset($row['codigo']) ? (string) $row['codigo'] : null);
+        $sr->code_system = $targets['code_system'] ?? null;
+        $sr->display = $targets['acto_display']
+            ?? $targets['display']
             ?? ($row['termino'] ?? $row['texto'] ?? $row['indicaciones'] ?? null);
         $sr->note = $targets['note'] ?? ($row['indicaciones'] ?? null);
         $sr->target_efector_id = $targets['id_efector'];
         $sr->target_service_id = $targets['id_servicio'];
-        $sr->referral_kind = $row['tipo'] ?? null;
+        $sr->referral_kind = $targets['referral_kind']
+            ?? ($row['tipo'] ?? ConsultaDerivaciones::INTERCONSULTA);
         $sr->request_kind = $row['tipo_solicitud'] ?? null;
         $sr->id_profesional_efector_servicio = $encounter->id_profesional_efector_servicio;
 

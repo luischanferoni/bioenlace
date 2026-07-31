@@ -45,6 +45,7 @@ Efector (centro)
 | Incorrecto | Correcto |
 |------------|----------|
 | Crear `servicios` = ECOGRAFIA, MAMOGRAFIA por cada estudio | Servicio **Imágenes** (o Radiología) + acto SNOMED ultrasonido / mamografía |
+| Crear `servicios` = CORNEA, RETINA, DIABETES, VIH… | Contenedor institucional (Oftalmología / Endocrinología / Clínica) + programa o acto según el caso |
 | Pensar que el PES “tiene” especialidad = `id_servicio` | El PES está **asignado** al servicio del efector; la matrícula es otro dato |
 | Llamar “especialidad” a todo `id_servicio` en código/PRs | Decir **servicio del centro** / **área** / **línea** |
 | Mapear texto “eco” → fila de `servicios` por nombre | Codificar acto (Snowstorm) → capacidad → servicio institucional |

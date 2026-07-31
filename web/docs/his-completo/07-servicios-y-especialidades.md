@@ -15,13 +15,13 @@
 - [x] Tipología de oferta (`tipo`, `specialty_code`) y puente a actos (`actos_clinicos` / `linea_acto`).
 - [x] Capacidad ECL por tipología (`capacity_rules`) ∪ excepciones `linea_acto`.
 - [x] Catálogo limpio: actos/admin fuera de `servicios` (migración de higiene).
+- [x] Subespecialidades / patologías / programas fuera de `servicios` (córnea, diabetes, etc. → contenedor institucional; imaging unificado).
 
 ## Lo que falta
 
 - [ ] Reglas de cobertura y autorización por financiador en todos los flujos.
 - [ ] Capacidad instalada y restricciones por recurso físico (salas, equipos).
 - [ ] Reportes de producción por servicio unificados para dirección médica.
-- [ ] Unificar contenedores imaging solapados (RADIOLOGIA / DIAGNOSTICO POR IMAGENES / BIOIMAGEN) si el efector lo decide.
 
 ## Relacionado
 

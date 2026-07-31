@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
+use common\components\Domain\Clinical\Enum\ConditionClinicalStatus;
 use common\components\Ai\IAManager;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 use common\models\Clinical\Condition;
@@ -398,6 +399,26 @@ final class EncounterAutomaticCodingService
             );
 
             return 0;
+        }
+
+        // No regenerar ACTIVE si el paciente ya tiene esa tipología abierta (otro encounter).
+        $subjectId = (int) ($encounter->subject_persona_id ?? 0);
+        if ($subjectId > 0) {
+            $alreadyOpen = Condition::find()
+                ->where([
+                    'subject_persona_id' => $subjectId,
+                    'code' => $code,
+                    'code_system' => $codeSystem,
+                    'deleted_at' => null,
+                ])
+                ->andWhere(['clinical_status' => ConditionClinicalStatus::ACTIVE_LIKE])
+                ->andWhere(['not in', 'verification_status', ['REFUTED', 'ENTERED_IN_ERROR']])
+                ->exists();
+            if ($alreadyOpen) {
+                $seen[$key] = true;
+
+                return 0;
+            }
         }
 
         $condition = new Condition();

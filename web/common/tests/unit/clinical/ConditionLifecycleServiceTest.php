@@ -52,6 +52,14 @@ class ConditionLifecycleServiceTest extends Unit
         }
     }
 
+    public function testClosedLikeRecognizesResolvedAndRemission(): void
+    {
+        $this->assertTrue(ConditionClinicalStatus::isClosedLike(ConditionClinicalStatus::RESOLVED));
+        $this->assertTrue(ConditionClinicalStatus::isClosedLike(ConditionClinicalStatus::REMISSION));
+        $this->assertTrue(ConditionClinicalStatus::isClosedLike(ConditionClinicalStatus::INACTIVE));
+        $this->assertFalse(ConditionClinicalStatus::isClosedLike(ConditionClinicalStatus::ACTIVE));
+    }
+
     public function testTransitionThrowsOnInvalidPath(): void
     {
         $svc = new ConditionLifecycleService();

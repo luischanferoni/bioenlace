@@ -118,6 +118,25 @@ final class ConditionPresentationService
     }
 
     /**
+     * Clave de dedupe alineada a listPatientSummaries / open_problems.
+     */
+    public function dedupeKeyForCondition(Condition $cond): string
+    {
+        $resolved = $this->resolveCodeAndDisplay($cond);
+        $code = $resolved['code'];
+        $display = $resolved['display'];
+        $labelText = $this->shortLabel($display !== '' ? $display : $code);
+        if ($labelText === '' || $labelText === '?') {
+            return '';
+        }
+        if ($code !== '' && strcasecmp($labelText, $code) === 0 && ctype_digit($code)) {
+            return '';
+        }
+
+        return mb_strtolower(preg_replace('/\s+/u', ' ', $labelText) ?? $labelText);
+    }
+
+    /**
      * @param CareProtocolMatcherService $matcher
      * @return array<string, mixed>|null
      */
@@ -129,15 +148,10 @@ final class ConditionPresentationService
         if ($code === '' && $display === '') {
             return null;
         }
-        $labelText = $this->shortLabel($display !== '' ? $display : $code);
-        if ($labelText === '' || $labelText === '?') {
+        $dedupeKey = $this->dedupeKeyForCondition($cond);
+        if ($dedupeKey === '') {
             return null;
         }
-        // Código numérico (SNOMED) sin término legible: no aporta al resumen clínico.
-        if ($code !== '' && strcasecmp($labelText, $code) === 0 && ctype_digit($code)) {
-            return null;
-        }
-        $dedupeKey = mb_strtolower(preg_replace('/\s+/u', ' ', $labelText) ?? $labelText);
         $protocol = $code !== ''
             ? $matcher->matchByConditionCode($code, $idProvincia, [
                 'clinical_status' => (string) $cond->clinical_status,

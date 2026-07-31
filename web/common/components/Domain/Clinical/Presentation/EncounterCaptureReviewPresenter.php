@@ -78,10 +78,19 @@ final class EncounterCaptureReviewPresenter
             $conditions = $openProblems['conditions'] ?? [];
             $carePlans = $openProblems['care_plans'] ?? [];
             if ((is_array($conditions) && $conditions !== []) || (is_array($carePlans) && $carePlans !== [])) {
-                $out['open_problems'] = [
+                $block = [
                     'conditions' => is_array($conditions) ? array_values($conditions) : [],
                     'care_plans' => is_array($carePlans) ? array_values($carePlans) : [],
                 ];
+                $conditionOptions = $openProblems['condition_options'] ?? null;
+                $carePlanOptions = $openProblems['care_plan_options'] ?? null;
+                if (is_array($conditionOptions) && $conditionOptions !== []) {
+                    $block['condition_options'] = array_values($conditionOptions);
+                }
+                if (is_array($carePlanOptions) && $carePlanOptions !== []) {
+                    $block['care_plan_options'] = array_values($carePlanOptions);
+                }
+                $out['open_problems'] = $block;
             }
         }
 

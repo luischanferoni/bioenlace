@@ -79,6 +79,9 @@ final class ConditionLifecycleService
     {
         $normalized = $this->normalizeResolutions($resolutions);
         $updated = [];
+        $doneIds = [];
+        $presentation = new ConditionPresentationService();
+
         foreach ($normalized as $row) {
             $id = (int) ($row['id'] ?? 0);
             $status = strtoupper(trim((string) ($row['clinical_status'] ?? '')));
@@ -96,6 +99,28 @@ final class ConditionLifecycleService
             }
             $note = isset($row['note']) ? (string) $row['note'] : null;
             $updated[] = $this->transition($condition, $status, $note);
+            $doneIds[$id] = true;
+
+            // El review dedupea por etiqueta: al cerrar el id visible hay que cerrar
+            // gemelos ACTIVE (p. ej. misma gripe en ICD-10 y SNOMED).
+            if (!ConditionClinicalStatus::isClosedLike($status)) {
+                continue;
+            }
+            $dedupeKey = $presentation->dedupeKeyForCondition($condition);
+            if ($dedupeKey === '') {
+                continue;
+            }
+            foreach ((new PatientActiveConditionQuery())->listActive($subjectPersonaId) as $twin) {
+                $twinId = (int) ($twin->id ?? 0);
+                if ($twinId <= 0 || isset($doneIds[$twinId])) {
+                    continue;
+                }
+                if ($presentation->dedupeKeyForCondition($twin) !== $dedupeKey) {
+                    continue;
+                }
+                $updated[] = $this->transition($twin, $status, $note);
+                $doneIds[$twinId] = true;
+            }
         }
 
         return $updated;

@@ -49,6 +49,11 @@ final class ConditionClinicalStatus
         return in_array($status, self::ACTIVE_LIKE, true);
     }
 
+    public static function isClosedLike(string $status): bool
+    {
+        return in_array(strtoupper(trim($status)), self::CLOSED_LIKE, true);
+    }
+
     public static function canTransition(string $from, string $to): bool
     {
         if ($from === $to) {

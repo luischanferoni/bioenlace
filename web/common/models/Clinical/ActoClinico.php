@@ -6,7 +6,12 @@ use common\models\Servicio;
 use yii\db\ActiveRecord;
 
 /**
- * Acto clínico codificado (SNOMED / LOINC / FHIR) — ServiceRequest.code.
+ * Caché / catálogo de acto clínico codificado (SNOMED / LOINC) — ServiceRequest.code.
+ *
+ * No es un {@see \common\models\Servicio}: el servicio es la oferta del centro;
+ * el acto es qué se pide o realiza. Fuente de verdad terminológica: Snowstorm.
+ *
+ * Glosario: `docs/producto/glosario-servicio-pes-acto.md`
  *
  * @property int $id
  * @property string $code

@@ -24,7 +24,7 @@ Escala por módulo (orientativa):
 | [04 Laboratorio (LIS)](./04-lis.md) | 2,5 | 63 % |
 | [05 Farmacia](./05-farmacia.md) | 1,5 | 38 % |
 | [06 Receta electrónica](./06-receta-electronica.md) | 3 | 75 % |
-| [07 Servicios y especialidades](./07-servicios-y-especialidades.md) | 3 | 75 % |
+| [07 Servicios de salud (oferta del centro)](./07-servicios-y-especialidades.md) | 3 | 75 % |
 | [08 Materiales y logística](./08-materiales-y-logistica.md) | 1,5 | 38 % |
 | [09 Facturación y contabilidad](./09-facturacion-y-contabilidad.md) | 1,5 | 38 % |
 | [10 Atención ambulatoria (FHIR)](./10-atencion-ambulatoria.md) | 3 | 75 % |
@@ -45,7 +45,7 @@ Interpretación: Bioenlace está **fuerte en consulta ambulatoria, agenda (con K
 | Laboratorio (LIS) | [04-lis.md](./04-lis.md) |
 | Farmacia | [05-farmacia.md](./05-farmacia.md) |
 | Receta electrónica | [06-receta-electronica.md](./06-receta-electronica.md) |
-| Servicios y especialidades | [07-servicios-y-especialidades.md](./07-servicios-y-especialidades.md) |
+| Servicios de salud (oferta del centro) | [07-servicios-y-especialidades.md](./07-servicios-y-especialidades.md) |
 | Materiales y logística | [08-materiales-y-logistica.md](./08-materiales-y-logistica.md) |
 | Facturación y contabilidad | [09-facturacion-y-contabilidad.md](./09-facturacion-y-contabilidad.md) |
 | Atención ambulatoria | [10-atencion-ambulatoria.md](./10-atencion-ambulatoria.md) |

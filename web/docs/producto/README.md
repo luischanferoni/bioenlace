@@ -11,6 +11,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [registro-paciente.md](./registro-paciente.md) | Alta paciente (app y staff), MPI reducido, contexto y RENAPER |
 | [representacion-paciente.md](./representacion-paciente.md) | Tutela de menor y delegación (operar por otro paciente) |
 | [turnos.md](./turnos.md) | Agenda AMB, reserva, cancelación, notificaciones |
+| [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md) | Servicio del centro vs PES vs acto SNOMED (anti-confusión) |
 | [agenda-por-encounter-class.md](./agenda-por-encounter-class.md) | Agenda tipada: AMB cupos vs EMER/IMP cobertura |
 | [interoperabilidad-agendamiento-fhir.md](./interoperabilidad-agendamiento-fhir.md) | Espejo de citas NIS HAPI ↔ turnos (entrante/saliente) |
 | [solicitar-atencion.md](./solicitar-atencion.md) | Solicitar Atención: malestar, Control/Seguimiento (hub) y urgencia |

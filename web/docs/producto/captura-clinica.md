@@ -4,7 +4,7 @@
 
 Durante la atención, el profesional registra la evolución por **texto** o **audio**. El sistema interpreta, corrige y enriquece con IA, y persiste el encuentro clínico (encounter FHIR).
 
-La captura es **una sola superficie** para ambulatorio, guardia, internación y demás contextos: el formulario muta según encounter, rol y especialidad — igual en web y móvil. Ver [superficies-ui.md](./superficies-ui.md).
+La captura es **una sola superficie** para ambulatorio, guardia, internación y demás contextos: el formulario muta según encounter, rol y **servicio institucional del encounter** (`EncounterDefinition` por `service_id` + clase) — igual en web y móvil. Ver [superficies-ui.md](./superficies-ui.md). “Servicio” aquí es la oferta del centro, no la especialidad del título ni un acto SNOMED — [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 
 ## Superficie web (shell)
 
@@ -19,7 +19,7 @@ La captura es **una sola superficie** para ambulatorio, guardia, internación y 
 - `id_persona`
 - `parent` + `parent_id` — turno, internación, guardia, etc. (`Encounter::PARENT_*`)
 - `id_consulta` — id del encounter en curso (alias legacy; semántica = `encounter_id`)
-- `id_configuracion` — fila de `encounter_definition` (servicio + `encounter_class` + workflow por especialidad)
+- `id_configuracion` — fila de `encounter_definition` (**servicio del centro** + `encounter_class` + workflow)
 
 Entrada desde listados: `PatientHistoriaUrl::captura($idPersona, $parent, $parentId)`.
 

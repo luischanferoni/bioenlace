@@ -1,35 +1,40 @@
-# Pedido de atención: línea asistencial × acto clínico (SNOMED/FHIR)
+# Pedido de atención: servicio institucional × acto clínico (SNOMED/FHIR)
 
-Fecha de registro: 2026-07-30.
+Fecha de registro: 2026-07-30.  
+Aclaración semántica: 2026-07-31 — ver [producto/glosario-servicio-pes-acto.md](../producto/glosario-servicio-pes-acto.md).
 
 ## Contexto
 
-El catálogo `servicios` mezclaba destinos asistenciales (kinesiología, oftalmología) con prestaciones tipadas por el acto (ecografía, mamografía). Eso rompe derivaciones y pedidos del paciente: a veces llega solo el “quién”, a veces solo el “qué”.
+El catálogo `servicios` debe modelar la **oferta de salud del efector** (HealthcareService). Mezclar ahí destinos institucionales (kinesiología, oftalmología) con prestaciones tipadas por el acto (ecografía, mamografía) confunde pedidos: a veces llega solo el área, a veces solo el qué.
 
 ## Decisión
 
-1. **`servicios` es la línea asistencial** (HealthcareService): agenda, PES, sesión, EncounterDefinition. Se tipifica (`consulta` | `diagnostico` | `laboratorio` | `procedimiento` | `soporte`) y se codifica con SNOMED/FHIR (`specialty_code` + `specialty_system`). **No** rename masivo de tabla/FKs en este slice.
-2. **`actos_clinicos`** es el acto (ServiceRequest.code / Procedure): `code` + `code_system` estándar únicamente (`http://snomed.info/sct`, `http://loinc.org`, value sets FHIR oficiales). **Sin** code system local.
-3. **`linea_acto`** puente N:M (global o por efector) para resolver el slot faltante.
-4. **`PedidoAtencion`** (DTO + servicio de dominio) une línea × acto × modo; completitud = resoluble a un par agendable. Misma regla para derivación clínica y pedido paciente (hub: raíz `estudio_pedido`).
-5. Defaults de acto por modo viven en metadata YAML (`pedido-atencion.yaml`), no en orquestadores.
-6. Hub paciente: `PedidoAtencionPacienteService` + paso `pedido_acto` en triage; lista de servicios filtrada por `pedido_linea_ids`.
+1. **`servicios` = servicio de salud institucional** (oferta del centro). Agenda, PES, sesión, EncounterDefinition. Se tipifica (`consulta` | `diagnostico` | `laboratorio` | `procedimiento` | `soporte`) y puede llevar `specialty_code` / `specialty_system` como **tipología de esa oferta** (no “especialidad del PES”). **No** rename masivo de tabla/FKs en el slice inicial.
+2. **PES** = profesional asignado a ese servicio del efector; no redefine el acto clínico.
+3. **`actos_clinicos`** = caché de acto (ServiceRequest.code): `code` + `code_system` estándar (`http://snomed.info/sct`, `http://loinc.org`, value sets FHIR). **Sin** code system local. Fuente de verdad: Snowstorm.
+4. **`linea_acto`** puente N:M (global o por efector) para capacidad explícita / excepciones.
+5. **`PedidoAtencion`** (DTO + dominio) une servicio institucional × acto × modo; completitud = par resoluble. Misma regla para derivación clínica y pedido paciente (hub: raíz `estudio_pedido`).
+6. Defaults de acto por modo en metadata YAML (`pedido-atencion.yaml`), no en orquestadores.
+7. Hub paciente: `PedidoAtencionPacienteService` + paso `pedido_acto`; lista filtrada por `pedido_linea_ids` (= `id_servicio`).
 
 ## Alternativas descartadas
 
-- Rename big-bang `servicios` → `lineas_asistenciales`: blast radius ~200 archivos / `id_servicio`.
+- Rename big-bang `servicios` → `lineas_asistenciales`: blast radius alto; se aclara con glosario + COMMENT + lenguaje de producto.
 - Slugs locales (`eco_abdominal`) como código de negocio: rompe alineación SNOMED/FHIR.
-- Seguir usando solo `id_servicio` en derivaciones: no modela “te derivo para ecografía”.
+- Seguir usando solo `id_servicio` en derivaciones sin acto: no modela “te derivo para ecografía”.
+- Tratar `specialty_code` como identidad del profesional: confunde oferta del centro con matrícula.
 
 ## Consecuencias
 
-- Migración tipifica filas existentes y siembra actos/puentes mínimos.
-- `DerivacionInput` / `ReferralRequestService` delegan completitud y persistencia de `code`/`code_system` al resolver.
-- Hub paciente (`necesito-atencion`) se cablea en un slice posterior con el mismo servicio.
+- Migración tipifica filas y siembra actos/puentes mínimos; COMMENT de tablas aclara semántica.
+- `DerivacionInput` / `ReferralRequestService` delegan completitud y `code`/`code_system` al resolver.
+- Hub paciente cableado al mismo contrato de pedido.
 - Nomenclador legacy `practicas` (aranceles) no se migra aquí.
+- Docs de producto deben decir **servicio del centro** / **área**, no “especialidad” como sinónimo de `servicios`.
 
 ## Referencias
 
-- Código: `common/components/Domain/Clinical/Access/`, `common/models/Clinical/ActoClinico.php`, `common/models/Clinical/LineaActo.php`
+- Glosario: [producto/glosario-servicio-pes-acto.md](../producto/glosario-servicio-pes-acto.md)
+- Código: `common/components/Domain/Clinical/Access/`, `common/models/Clinical/ActoClinico.php`, `common/models/Clinical/LineaActo.php`, `common/models/Servicio.php`
 - Metadata: `common/metadata/bioenlace/clinical/pedido-atencion.yaml`
-- Producto: conversación de diseño línea × acto; [fhir-clinical.md](./fhir-clinical.md)
+- [fhir-clinical.md](./fhir-clinical.md)

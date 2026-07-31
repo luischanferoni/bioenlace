@@ -9,7 +9,7 @@ Modelo de superficies (web = móvil): [superficies-ui.md](./superficies-ui.md).
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
 | Staff de piso / admisión | **Inicio** — mapa de camas (`/internacion/index` o intent `internacion.mapa-camas-flow`) | Libre, ocupada, bloqueada, aislamiento; indicadores |
-| Médico / enfermería en piso | **Captura clínica** — timeline + formulario encounter | `parent=INTERNACION`, `parent_id=<id_internacion>`; workflow IMP por servicio/especialidad |
+| Médico / enfermería en piso | **Captura clínica** — timeline + formulario encounter | `parent=INTERNACION`, `parent_id=<id_internacion>`; workflow IMP por servicio del centro |
 | Médico / coordinación | **Flow** — alta estructurada (`internacion.alta-estructurada-flow`) | Epicrisis, plantilla, checklist → externación |
 | Staff | **Ficha episodio** — `/internacion/view` | Datos administrativos (cama, ingreso); enlace a historia clínica; **sin** pestañas clínicas MVC |
 | Administración clínica | Web `/internacion-epicrisis-plantilla/*` | ABM plantillas epicrisis del efector |

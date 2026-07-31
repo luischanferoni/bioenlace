@@ -9,7 +9,7 @@
 | Tipo | Qué muestra | Qué muta la UI |
 |------|-------------|----------------|
 | **Inicio / paneles** | Tableros, mapas, colas, KPIs, accesos rápidos | `encounter_class` + rol + efector/servicio en sesión |
-| **Captura clínica (encounter)** | Estado del paciente + registro del encuentro | Encounter + rol + **especialidad** (`EncounterDefinition` / `workflow_json`) |
+| **Captura clínica (encounter)** | Estado del paciente + registro del encuentro | Encounter + rol + **servicio del centro** (`EncounterDefinition` / `workflow_json`) |
 | **Flows del asistente** | Acciones puntuales con pasos | Intent YAML + UI JSON descubierta |
 
 ```mermaid
@@ -59,7 +59,7 @@ Referencias: [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md),
 
 - Shell web: `PacienteController::actionHistoria` + partial `_formulario_consulta.php`.
 - Contexto vía query/hidden: `id_persona`, `parent` (`Encounter::PARENT_*`), `parent_id`, `id_consulta` (= encounter id), `id_configuracion`.
-- La **mutación por especialidad** no va hardcodeada en la vista: la resuelve `EncounterDefinition` (`service_id` + `encounter_class` → `workflow_json`).
+- La **mutación por servicio institucional** no va hardcodeada en la vista: la resuelve `EncounterDefinition` (`service_id` + `encounter_class` → `workflow_json`). “Servicio” = oferta del centro — [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 - Persistencia: `POST /api/v1/clinical/encounter/guardar` (FHIR).
 - **Pre-turno en timeline:** intake de motivos, resumen del chat y cuestionario de cohorte vía `GET /api/v1/personas/{id}/historia-clinica` — [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md).
 - Enlaces de entrada: `PatientHistoriaUrl::captura()` desde turnos, guardia, internación, etc.

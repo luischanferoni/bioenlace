@@ -2,13 +2,14 @@
 
 ## Modelo operativo
 
-1. **Medicina clínica / generalistas** es la **única puerta** de autogestión del paciente en `atencion.necesito-atencion` (y listados con `reserva_modo=hub_paciente`).
+1. **Medicina clínica / generalistas** (servicio institucional con autogestión) es la **única puerta** de autogestión del paciente en `atencion.necesito-atencion` para consulta no urgente (y listados con `reserva_modo=hub_paciente`). Ver [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 2. Atienden **consultas no urgentes** (triage bandas B–D): síntomas nuevos, controles crónicos, trámites.
-3. Actúan como **filtro y derivador**: el especialista interviene después, cuando el clínico lo indica.
-4. **Especialistas** (oftalmología, dermatología, etc.):
-   - No aparecen en la lista de servicios del flujo de atención del paciente.
+3. Actúan como **filtro y derivador**: otras áreas del centro intervienen después, cuando el clínico lo indica (derivación).
+4. **Otras áreas / servicios del centro** que no son hub (p. ej. oftalmología, dermatología — a menudo llamados “especialistas” en UI):
+   - No aparecen en la lista de autogestión del flujo de atención del paciente.
    - Turno solo si existe **derivación vigente** (`ConsultaDerivaciones` en espera).
    - En ese caso la modalidad es **solo teleconsulta** (videollamada).
+5. **Estudio o práctica** es otro camino raíz: acto SNOMED → servicio(s) del centro con capacidad/agenda (no confundir el acto con una fila “ECOGRAFIA” en `servicios`).
 
 Urgencias (banda A / alarmas halt) siguen sin completar reserva en la app.
 
@@ -37,7 +38,7 @@ Solo servicios que coinciden con rol `medicina_clinica` y tienen turnos habilita
 ## Evolución
 
 - Intent/flujo dedicado **“Tengo una derivación”** para reservar especialista con teleconsulta.
-- UI staff: marcar profesionales como generalistas vs especialistas en PES (hoy se infiere por servicio).
-- **Estudio o práctica** en Solicitar Atención: acto SNOMED → líneas vía `PedidoAtencionPacienteService` (slice hub paciente).
+- UI staff: distinguir en PES quién opera como hub (generalista) vs otras áreas (hoy se infiere por servicio del centro).
+- **Estudio o práctica** en Solicitar Atención: acto SNOMED → servicios institucionales vía `PedidoAtencionPacienteService`.
 
-Ver también: [triage-reserva-turno.md](./triage-reserva-turno.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md), [solicitar-atencion.md](./solicitar-atencion.md), [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
+Ver también: [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md), [triage-reserva-turno.md](./triage-reserva-turno.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md), [solicitar-atencion.md](./solicitar-atencion.md), [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).

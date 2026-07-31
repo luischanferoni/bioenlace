@@ -7,12 +7,21 @@ use common\models\Efector;
 use common\traits\ParameterQuestionsTrait;
 
 /**
- * This is the model class for table "servicios".
+ * Servicio de salud **institucional**: oferta/área que un efector (centro) brinda.
+ *
+ * Tabla: `servicios` (FHIR ≈ HealthcareService).
+ *
+ * - Qué es: clínica, kinesiología, imágenes, laboratorio, etc. — catálogo de oferta del establecimiento.
+ * - Qué no es: especialidad del título del profesional (matrícula).
+ * - Qué no es: acto/práctica SNOMED (ecografía, hemograma…); eso es `actos_clinicos` / ServiceRequest.code.
+ * - Relación: {@see ProfesionalEfectorServicio} asigna un profesional a **este** servicio en un efector.
+ *
+ * Glosario: `docs/producto/glosario-servicio-pes-acto.md`
  *
  * @property string $id_servicio
  * @property string $nombre
- * @property string|null $tipo consulta|diagnostico|laboratorio|procedimiento|soporte
- * @property string|null $specialty_code
+ * @property string|null $tipo Tipología de oferta: consulta|diagnostico|laboratorio|procedimiento|soporte
+ * @property string|null $specialty_code Código SNOMED/FHIR de tipología de **esta oferta** (no “especialidad del PES”)
  * @property string|null $specialty_system
  * @property string|null $teleconsulta_politica NINGUNA|TODAS|ALGUNAS
  * @property string $reserva_autogestion_paciente SI|NO
@@ -110,11 +119,11 @@ class Servicio extends \yii\db\ActiveRecord
     public function attributeLabels()
     {
         return [
-            'id_servicio' => 'Codigo de servicio',
-            'nombre' => 'Nombre del serivicio',
-            'tipo' => 'Tipo de línea asistencial',
-            'specialty_code' => 'Código especialidad (SNOMED/FHIR)',
-            'specialty_system' => 'System especialidad',
+            'id_servicio' => 'Servicio del centro',
+            'nombre' => 'Nombre del servicio (oferta del centro)',
+            'tipo' => 'Tipo de oferta del centro',
+            'specialty_code' => 'Tipología de oferta (código SNOMED/FHIR)',
+            'specialty_system' => 'System tipología de oferta',
             'acepta_turnos' => 'Acepta Agenda',
             'acepta_practicas' => 'Acepta Practicas',
             'teleconsulta_politica' => 'Política de teleconsulta',
@@ -123,6 +132,9 @@ class Servicio extends \yii\db\ActiveRecord
         ];
     }
 
+    /**
+     * Tipología operativa de la oferta (consulta, laboratorio, …).
+     */
     public function getTipoLinea(): string
     {
         $tipo = trim((string) ($this->tipo ?? self::TIPO_CONSULTA));
@@ -137,6 +149,8 @@ class Servicio extends \yii\db\ActiveRecord
     }
 
     /**
+     * Tipología SNOMED/FHIR de esta **oferta institucional** (no especialidad del profesional).
+     *
      * @return array{code: string, system: string}|null
      */
     public function specialtyCoding(): ?array

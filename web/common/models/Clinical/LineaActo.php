@@ -6,7 +6,12 @@ use common\models\Servicio;
 use yii\db\ActiveRecord;
 
 /**
- * Puente N:M línea asistencial (`servicios`) ↔ acto clínico.
+ * Puente capacidad: servicio institucional (`servicios`) ↔ acto clínico.
+ *
+ * `id_servicio` = oferta del efector, no especialidad del profesional.
+ * Usar para vínculos explícitos / excepciones; reglas amplias pueden vivir en metadata ECL.
+ *
+ * Glosario: `docs/producto/glosario-servicio-pes-acto.md`
  *
  * @property int $id
  * @property int $id_servicio

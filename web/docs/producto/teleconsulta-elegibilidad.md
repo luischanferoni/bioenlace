@@ -4,7 +4,9 @@
 
 Decidir de forma **simple y honesta** si el paciente puede elegir **modalidad remota** (teleconsulta) o si el flujo fija **presencial** y omite el paso de elección.
 
-No es diagnóstico: combina triage de reserva, política del servicio y configuración de agenda del profesional.
+No es diagnóstico: combina triage de reserva, política del **servicio del centro** y configuración de agenda del profesional (PES).
+
+Ver [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 
 ## Capas
 

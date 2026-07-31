@@ -80,7 +80,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor operación ambu
 | Laboratorio | 2,5 | 63 % | Trae resultados de labs externos; no es lab propio |
 | Farmacia | 1,5 | 38 % | Prescripción y receta; sin dispensación ni stock |
 | Receta electrónica | 3 | 75 % | Emisión y PDF paciente; falta homologación nacional plena |
-| Servicios y especialidades | 3 | 75 % | Catálogo, profesional por institución, turnos y atenciones |
+| Servicios de salud (oferta del centro) | 3 | 75 % | Catálogo institucional, PES, turnos; acto ≠ fila de servicios |
 | Materiales y logística | 1,5 | 38 % | Consumos parciales; sin depósito ni compras |
 | Facturación y contabilidad | 1,5 | 38 % | Bases de nomenclador; sin ciclo factura–cobro pleno |
 | Atención ambulatoria | 3 | 75 % | Registro unificado de atención + resumen paciente + expediente staff |
@@ -234,23 +234,27 @@ Eso define un **wedge** claro: instituciones que quieren **mejor operación ambu
 
 ---
 
-### 5.7 Servicios y especialidades (75 %)
+### 5.7 Servicios de salud — oferta del centro (75 %)
 
-**Qué es:** qué se ofrece en cada institución (cardiología, laboratorio, etc.) y qué profesional atiende en cada servicio.
+**Qué es:** qué **ofertas asistenciales** brinda cada institución (clínica, laboratorio, imágenes, etc.) y qué profesional está **asignado** a cada oferta (PES). No es la especialidad del título del médico ni el acto SNOMED pedido.
 
 **Lo que Bioenlace cubre hoy**
 
-- Catálogo de servicios por institución (efector).
-- Profesional asignado a institución y servicio para agenda y atención.
-- Turnos y atenciones ambulatorias ligados al servicio.
+- Catálogo de servicios institucionales por efector (`servicios`).
+- Profesional asignado a efector + servicio (PES) para agenda y atención.
+- Turnos y atenciones ambulatorias ligados al servicio del centro.
 - Contexto de trabajo del staff (institución, servicio, tipo de atención).
 - Motivos de atención y captura clínica alineados al turno.
+- Puente a actos clínicos (`actos_clinicos` / `linea_acto`) para pedidos tipados.
 
 **Lo que falta**
 
 - Reglas de cobertura de obras sociales y prepagas en todos los flujos.
 - Capacidad física (consultorios, equipos) como restricción de agenda.
 - Reportes de producción por servicio para dirección médica.
+- Deprecar filas históricas que modelaban actos como si fueran áreas del catálogo.
+
+Ver [producto/glosario-servicio-pes-acto.md](../producto/glosario-servicio-pes-acto.md).
 
 ---
 

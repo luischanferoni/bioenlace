@@ -2,20 +2,22 @@
 
 ## De qué se trata
 
-Única puerta del asistente para que el **paciente** diga qué necesita: malestar nuevo, **control/seguimiento** o urgencia. El atajo se llama **Solicitar Atención** (`atencion.necesito-atencion`).
+Única puerta del asistente para que el **paciente** diga qué necesita: malestar nuevo, **estudio o práctica**, **control/seguimiento** o urgencia. El atajo se llama **Solicitar Atención** (`atencion.necesito-atencion`).
 
 No es diagnóstico: el árbol fija rutas seguras (turno, teleconsulta, consulta por mensaje, derivación a urgencias) según el motivo.
+
+En este flujo, **servicio** = oferta de salud del **centro** (área agendable), no la especialidad del profesional ni el acto SNOMED. Ver [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 
 ## Motivos raíz
 
 | Motivo (UI) | Código | Qué sigue |
 |-------------|--------|-----------|
-| **Malestar nuevo** | `malestar_nuevo` | Zona / detalle / evolución → servicio → modalidad (si aplica) → agenda |
-| **Estudio o práctica** | `estudio_pedido` | Acto clínico (SNOMED) → modalidad → línea(s) con agenda → turno |
+| **Malestar nuevo** | `malestar_nuevo` | Zona → modalidad → **servicio del centro** → agenda |
+| **Estudio o práctica** | `estudio_pedido` | **Acto** clínico (SNOMED) → modalidad → servicio(s) del centro con agenda → turno |
 | **Control/Seguimiento** | `seguimiento_cronico` | **Hub** de anclas (tratamiento, condición, protocolo, consulta general/previa, control general) |
 | **Urgencia** | `urgencia` | Categoría de alarma → si banda A, **no** reserva en app (derivación 107 / guardia) |
 
-Catálogo: `Scheduling/metadata/reserva_triage_catalog_v1.yaml`. Flujo: `intents/create/atencion.necesito-atencion.yaml`. Pedido línea×acto: [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
+Catálogo: `Scheduling/metadata/reserva_triage_catalog_v1.yaml`. Flujo: `intents/create/atencion.necesito-atencion.yaml`. Pedido servicio×acto: [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
 
 ## Hub Control/Seguimiento
 

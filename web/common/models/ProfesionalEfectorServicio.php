@@ -9,9 +9,16 @@ use yii\db\Query;
 use common\models\ProfesionalEfectorServicioAgenda;
 
 /**
- * Asignación operacional: persona/profesional en un efector brindando un servicio.
+ * PES: asignación operacional de una persona/profesional a un **servicio de salud del efector**.
  *
- * Tabla: `profesional_efector_servicio`
+ * Tabla: `profesional_efector_servicio`.
+ *
+ * - Qué es: “este profesional atiende en este centro, en esta oferta institucional” (+ agendas).
+ * - Qué no es: la especialidad del título del profesional (dato de persona/matrícula).
+ * - Qué no es: el acto clínico pedido (SNOMED); el acto no define el PES.
+ * - `id_servicio` apunta a {@see Servicio} = oferta del centro, no a una práctica suelta.
+ *
+ * Glosario: `docs/producto/glosario-servicio-pes-acto.md`
  *
  * Nota: `id_profesional_salud` es opcional por ahora (futura sincronización nacional).
  *

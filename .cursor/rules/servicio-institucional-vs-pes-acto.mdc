@@ -1,0 +1,18 @@
+---
+description: Servicio = oferta del efector; PES = asignación; acto = SNOMED
+alwaysApply: true
+---
+
+# Servicio institucional vs PES vs acto
+
+Frase canónica:
+
+> **`servicios`** = oferta de salud del **efector** (centro).  
+> **PES** = profesional **asignado a** esa oferta.  
+> **Acto** (SNOMED/LOINC) = **qué** se indica o pide.  
+> No modelar actos (ecografía, mamografía…) como filas de `servicios`.
+
+- Glosario producto: [`web/docs/producto/glosario-servicio-pes-acto.md`](web/docs/producto/glosario-servicio-pes-acto.md).
+- En docs/PRs/código nuevo: preferir **servicio del centro** / **área** / **línea**; no usar “especialidad” como sinónimo de `id_servicio`.
+- `specialty_code` en `servicios` = tipología de **esa oferta**, no identidad del profesional.
+- Turnos y PES usan `id_servicio` institucional; pedidos llevan además `code`/`code_system` del acto cuando aplica.

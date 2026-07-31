@@ -2,7 +2,9 @@
 
 ## De qué se trata
 
-Un **turno** es la cita **ambulatoria (AMB)** entre una persona y un profesional en un efector y servicio: fecha, hora, estado (pendiente, cancelado, atendido, en resolución…) y reglas de **autogestión** para el paciente (reservar, cancelar, reprogramar con anticipación mínima).
+Un **turno** es la cita **ambulatoria (AMB)** entre una persona y un profesional en un efector y un **servicio de salud del centro**: fecha, hora, estado (pendiente, cancelado, atendido, en resolución…) y reglas de **autogestión** para el paciente (reservar, cancelar, reprogramar con anticipación mínima).
+
+El `id_servicio` del turno es la **oferta institucional** (área que el efector brinda), no la especialidad del título del profesional ni un acto SNOMED. Ver [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 
 La grilla de cupos es solo `encounter_class = AMB`. Guardia e internación usan **cobertura** (roster), no turnos de paciente — ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
 
@@ -35,8 +37,8 @@ flowchart TB
 ```
 
 1. **Triage breve** (motivo, alarmas, zona/evolución según el caso): catálogo fijo + UI JSON; si hay **banda A** no se sigue con la reserva en la app. Detalle: [triage-reserva-turno.md](./triage-reserva-turno.md).
-2. El paciente elige **servicio**; si el caso y el servicio lo permiten, **modalidad** (presencial o teleconsulta); luego **centro, profesional y horario** (flujo asistente `atencion.necesito-atencion`; `turnos.crear-como-paciente` solo agenda si ya sabe que quiere turno). Elegibilidad remota: [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md).
-3. La API consulta **disponibilidad** alineada a la agenda AMB del profesional (PES).
+2. El paciente elige **servicio del centro** (área/oferta); si el caso y el servicio lo permiten, **modalidad** (presencial o teleconsulta); luego **centro, profesional y horario** (flujo asistente `atencion.necesito-atencion`; `turnos.crear-como-paciente` solo agenda si ya sabe que quiere turno). En el camino “estudio o práctica” primero elige el **acto** (SNOMED) y luego el servicio institucional que lo realiza. Elegibilidad remota: [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md). Glosario: [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
+3. La API consulta **disponibilidad** alineada a la agenda AMB del profesional (PES = asignación a ese servicio del efector).
 4. Al confirmar, se **persiste** el turno (incluye `reserva_triage_*` y `urgency_band`) y puede dispararse confirmación o recordatorio.
 5. Tras la reserva, los **motivos pre-consulta** (intake opcional, chat/IA, cohorte) enriquecen el encounter hasta el turno — ventanas, journey y **vista staff** en historia clínica: [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md).
 6. Si el efector **cambia la agenda**, los turnos afectados pueden pasar a **en resolución** y el paciente recibe **push** para reubicar o cancelar.

@@ -10,7 +10,7 @@ Bioenlace **no publica** su propia grilla (`Slot` / `Schedule`) en esta fase: la
 
 | Actor | Rol |
 |-------|-----|
-| **Administración del efector / RRHH** | Mapea códigos de servicio FHIR, vincula cada `Schedule` HAPI con un PES local (profesional + efector + servicio) |
+| **Administración del efector / RRHH** | Mapea códigos FHIR de **HealthcareService** (oferta del centro) al `id_servicio` Bioenlace; vincula cada `Schedule` HAPI con un PES local (profesional + efector + **servicio institucional**) |
 | **Profesional y staff** | Ven y gestionan turnos espejo como cualquier otro turno (cancelar, marcar atendido, etc.) |
 | **Paciente** | Puede figurar en la cita si NIS trae identificador DNI/CUIL reconocible; si no, el turno espejo puede existir sin `id_persona` hasta vincularlo |
 | **Operaciones** | Activa la integración, programa crons de pull/push, revisa logs ante fallos |
@@ -18,9 +18,9 @@ Bioenlace **no publica** su propia grilla (`Slot` / `Schedule`) en esta fase: la
 
 ## Ancla operativa: PES
 
-Cada agenda FHIR (`Schedule`) debe corresponder a un **PES** (`profesional_efector_servicio`) en Bioenlace. Sin PES confiable no se asignan cupos clínicos locales ni flujos que dependan del profesional.
+Cada agenda FHIR (`Schedule`) debe corresponder a un **PES** (`profesional_efector_servicio`) en Bioenlace: profesional asignado al **servicio de salud del efector**. Sin PES confiable no se asignan cupos clínicos locales ni flujos que dependan del profesional. El `id_servicio` del PES es la oferta institucional, no un acto SNOMED — [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 
-La confianza no se infiere “a ojo”: hay un **catálogo verificado** (`integration_schedule_link`) que el staff confirma una vez, más un resolver automático fail-closed (CUIL + SISA + código de servicio) para proponer candidatos.
+La confianza no se infiere “a ojo”: hay un **catálogo verificado** (`integration_schedule_link`) que el staff confirma una vez, más un resolver automático fail-closed (CUIL + SISA + código de servicio FHIR → `id_servicio`) para proponer candidatos.
 
 ## Cómo funciona (entrante)
 

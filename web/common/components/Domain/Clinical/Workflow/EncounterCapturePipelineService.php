@@ -958,10 +958,16 @@ final class EncounterCapturePipelineService
                 }
             }
             $review = EncounterCaptureReviewPresenter::slimCaptureReviewForApi($review);
-            // open_problems fresco y slim (dedupe + opciones compartidas); no el blob cacheado.
+            // open_problems fresco: solo previos, no diagnósticos/planes de esta captura.
             try {
-                $openProblems = (new EncounterOpenProblemsService())->forSubject(
-                    (int) $capture->subject_persona_id
+                $categoriasForOps = $categorias !== []
+                    ? $categorias
+                    : $this->resolveCategoriasForCapture($capture, []);
+                $openProblems = (new EncounterOpenProblemsService())->forCaptureReview(
+                    (int) $capture->subject_persona_id,
+                    is_array($extraidos) ? $extraidos : [],
+                    $categoriasForOps,
+                    $capture->encounter_id !== null ? (int) $capture->encounter_id : null
                 );
                 $hasOps = ($openProblems['conditions'] ?? []) !== []
                     || ($openProblems['care_plans'] ?? []) !== [];

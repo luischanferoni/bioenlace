@@ -11,9 +11,16 @@ use common\models\Clinical\CarePlan;
  * Problemas y planes abiertos del paciente para revisión al cerrar atención.
  *
  * Nada viene preseleccionado: el profesional confirma en el cliente.
+ * Solo ítems ya persistidos de atenciones previas — no lo que esta captura está abriendo.
  */
 final class EncounterOpenProblemsService
 {
+    /** Modelos de categoría cuyo contenido es diagnóstico (se abrirá al guardar). */
+    private const CURRENT_DIAGNOSIS_MODELS = [
+        'DiagnosticoConsulta',
+        'ConsultaOdontologiaDiagnosticos',
+    ];
+
     private PatientActiveConditionQuery $conditions;
     private PatientActiveCarePlanQuery $carePlans;
     private ConditionPresentationService $conditionPresentation;
@@ -43,12 +50,34 @@ final class EncounterOpenProblemsService
      */
     public function forSubject(int $subjectPersonaId): array
     {
+        return $this->forCaptureReview($subjectPersonaId);
+    }
+
+    /**
+     * Open problems para el review de una captura: excluye lo que esta atención está documentando.
+     *
+     * @param array<string, mixed> $datosExtraidos
+     * @param list<array<string, mixed>> $categorias
+     * @return array{
+     *   conditions: list<array<string, mixed>>,
+     *   care_plans: list<array<string, mixed>>,
+     *   condition_options?: list<array{value: string, label: string}>,
+     *   care_plan_options?: list<array{value: string, label: string}>
+     * }
+     */
+    public function forCaptureReview(
+        int $subjectPersonaId,
+        array $datosExtraidos = [],
+        array $categorias = [],
+        ?int $currentEncounterId = null
+    ): array {
         if ($subjectPersonaId <= 0) {
             return ['conditions' => [], 'care_plans' => []];
         }
 
-        $conditions = $this->buildConditions($subjectPersonaId);
-        $carePlans = $this->buildCarePlans($subjectPersonaId);
+        $excludeKeys = $this->diagnosisDedupeKeysFromExtraction($datosExtraidos, $categorias);
+        $conditions = $this->buildConditions($subjectPersonaId, $excludeKeys, $currentEncounterId);
+        $carePlans = $this->buildCarePlans($subjectPersonaId, $currentEncounterId);
         $out = [
             'conditions' => $conditions,
             'care_plans' => $carePlans,
@@ -64,10 +93,14 @@ final class EncounterOpenProblemsService
     }
 
     /**
+     * @param array<string, true> $excludeDedupeKeys
      * @return list<array<string, mixed>>
      */
-    private function buildConditions(int $subjectPersonaId): array
-    {
+    private function buildConditions(
+        int $subjectPersonaId,
+        array $excludeDedupeKeys = [],
+        ?int $currentEncounterId = null
+    ): array {
         // Mismo dedupe/ranking que home HC (evita I10×N + SNOMED duplicados).
         $summaries = $this->conditionPresentation->listPatientSummaries($subjectPersonaId);
         $out = [];
@@ -76,11 +109,24 @@ final class EncounterOpenProblemsService
             if ($id <= 0) {
                 continue;
             }
+            // Condiciones del encounter actual: se están abriendo/documentando ahora.
+            if ($currentEncounterId !== null && $currentEncounterId > 0) {
+                $encounterId = (int) ($summary['encounter_id'] ?? 0);
+                if ($encounterId === $currentEncounterId) {
+                    continue;
+                }
+            }
+            $label = (string) ($summary['label'] ?? $summary['display'] ?? $summary['codigo'] ?? '');
+            $code = (string) ($summary['codigo'] ?? '');
+            $key = $this->conditionPresentation->dedupeKeyForLabel($label, $code);
+            if ($key !== '' && isset($excludeDedupeKeys[$key])) {
+                continue;
+            }
             $out[] = [
                 'id' => $id,
                 'kind' => 'condition',
-                'label' => (string) ($summary['label'] ?? $summary['display'] ?? $summary['codigo'] ?? 'Condición'),
-                'code' => (string) ($summary['codigo'] ?? ''),
+                'label' => $label !== '' ? $label : 'Condición',
+                'code' => $code,
                 'clinical_status' => (string) ($summary['clinical_status'] ?? ''),
                 'status_label' => (string) ($summary['statusLabel'] ?? ''),
             ];
@@ -92,7 +138,7 @@ final class EncounterOpenProblemsService
     /**
      * @return list<array<string, mixed>>
      */
-    private function buildCarePlans(int $subjectPersonaId): array
+    private function buildCarePlans(int $subjectPersonaId, ?int $currentEncounterId = null): array
     {
         $plans = $this->carePlans->listActive($subjectPersonaId);
         $out = [];
@@ -103,6 +149,14 @@ final class EncounterOpenProblemsService
             }
             $id = (int) $plan->id;
             if ($id <= 0 || isset($seen[$id])) {
+                continue;
+            }
+            // Plan del encounter en curso: se abre al guardar, no es “tratamiento abierto” previo.
+            if (
+                $currentEncounterId !== null
+                && $currentEncounterId > 0
+                && (int) ($plan->encounter_id ?? 0) === $currentEncounterId
+            ) {
                 continue;
             }
             $presented = $this->carePlanPresentation->toPatientSummary($plan, true, 3);
@@ -149,6 +203,89 @@ final class EncounterOpenProblemsService
         }
 
         return $out;
+    }
+
+    /**
+     * Diagnósticos de la captura actual → claves de dedupe a excluir de open_problems.
+     *
+     * @param array<string, mixed> $datosExtraidos
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, true>
+     */
+    private function diagnosisDedupeKeysFromExtraction(array $datosExtraidos, array $categorias): array
+    {
+        if ($datosExtraidos === []) {
+            return [];
+        }
+        $titles = [];
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            $modelo = (string) ($categoria['modelo'] ?? '');
+            if (!in_array($modelo, self::CURRENT_DIAGNOSIS_MODELS, true)) {
+                continue;
+            }
+            $titulo = trim((string) ($categoria['titulo'] ?? ''));
+            if ($titulo !== '') {
+                $titles[$titulo] = true;
+            }
+        }
+        // Sin catálogo: heurística por título de categoría frecuente.
+        if ($titles === []) {
+            foreach (array_keys($datosExtraidos) as $key) {
+                $k = mb_strtolower(trim((string) $key));
+                if ($k === '' || (!str_contains($k, 'diagn') && !str_contains($k, 'odonto'))) {
+                    continue;
+                }
+                $titles[(string) $key] = true;
+            }
+        }
+
+        $keys = [];
+        foreach (array_keys($titles) as $titulo) {
+            $rows = $datosExtraidos[$titulo] ?? null;
+            if (!is_array($rows)) {
+                if (is_string($rows) && trim($rows) !== '') {
+                    $rows = [trim($rows)];
+                } else {
+                    continue;
+                }
+            }
+            foreach ($rows as $row) {
+                $label = $this->extractionItemLabel($row);
+                if ($label === '') {
+                    continue;
+                }
+                $key = $this->conditionPresentation->dedupeKeyForLabel($label);
+                if ($key !== '') {
+                    $keys[$key] = true;
+                }
+            }
+        }
+
+        return $keys;
+    }
+
+    /**
+     * @param mixed $row
+     */
+    private function extractionItemLabel($row): string
+    {
+        if (is_string($row)) {
+            return trim($row);
+        }
+        if (!is_array($row)) {
+            return '';
+        }
+        foreach (['termino', 'descripcion', 'texto', 'nombre', 'display', 'label', 'Diagnostico', 'diagnostico'] as $key) {
+            $value = trim((string) ($row[$key] ?? ''));
+            if ($value !== '') {
+                return $value;
+            }
+        }
+
+        return '';
     }
 
     /**

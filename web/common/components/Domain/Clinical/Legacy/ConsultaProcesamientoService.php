@@ -153,7 +153,11 @@ class ConsultaProcesamientoService extends Component
             $subjectPersonaId = PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body);
             $openProblems = null;
             if ($subjectPersonaId !== null && (int) $subjectPersonaId > 0) {
-                $openProblems = (new EncounterOpenProblemsService())->forSubject((int) $subjectPersonaId);
+                $openProblems = (new EncounterOpenProblemsService())->forCaptureReview(
+                    (int) $subjectPersonaId,
+                    $extraidos,
+                    is_array($categorias) ? $categorias : []
+                );
             }
 
             $captureReview = (new EncounterCaptureReviewPresenter())->build(

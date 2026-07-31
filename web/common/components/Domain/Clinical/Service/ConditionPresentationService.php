@@ -100,6 +100,7 @@ final class ConditionPresentationService
 
         return [
             'id' => (int) $cond->id,
+            'encounter_id' => $cond->encounter_id !== null ? (int) $cond->encounter_id : null,
             'codigo' => $code,
             'display' => $display !== '' ? $display : null,
             'label' => $label !== '' ? $label : ($code !== '' ? $code : 'Condición'),
@@ -125,7 +126,16 @@ final class ConditionPresentationService
         $resolved = $this->resolveCodeAndDisplay($cond);
         $code = $resolved['code'];
         $display = $resolved['display'];
-        $labelText = $this->shortLabel($display !== '' ? $display : $code);
+
+        return $this->dedupeKeyForLabel($display !== '' ? $display : $code, $code);
+    }
+
+    /**
+     * Normaliza etiqueta libre (extracción IA / display) a la misma clave de dedupe.
+     */
+    public function dedupeKeyForLabel(string $label, string $code = ''): string
+    {
+        $labelText = $this->shortLabel(trim($label) !== '' ? trim($label) : $code);
         if ($labelText === '' || $labelText === '?') {
             return '';
         }

@@ -128,6 +128,7 @@ final class PedidoAtencionMetadata
             'defaults_por_modo' => [],
             'modos' => [],
             'capacity_rules' => [],
+            'linea_nl_aliases' => [],
             'acto_coding' => [],
         ];
 
@@ -153,6 +154,7 @@ final class PedidoAtencionMetadata
             'defaults_por_modo',
             'modos',
             'capacity_rules',
+            'linea_nl_aliases',
             'acto_coding',
         ] as $key) {
             if (isset($data[$key]) && is_array($data[$key])) {
@@ -161,6 +163,57 @@ final class PedidoAtencionMetadata
         }
 
         return self::$config;
+    }
+
+    /**
+     * Resuelve texto NL (p. ej. "clínico") a tipología de oferta.
+     *
+     * @return array{specialty_code: string, specialty_system: string}|null
+     */
+    public static function resolveLineaSpecialtyFromNl(string $text): ?array
+    {
+        $needle = self::foldNlAlias($text);
+        if ($needle === '') {
+            return null;
+        }
+        $raw = self::load()['linea_nl_aliases'] ?? null;
+        if (!is_array($raw)) {
+            return null;
+        }
+        foreach ($raw as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $code = trim((string) ($row['specialty_code'] ?? ''));
+            $system = trim((string) ($row['specialty_system'] ?? CodingSystems::SNOMED));
+            if ($code === '' || $system === '') {
+                continue;
+            }
+            $aliases = $row['aliases'] ?? null;
+            if (!is_array($aliases)) {
+                continue;
+            }
+            foreach ($aliases as $alias) {
+                if (self::foldNlAlias((string) $alias) === $needle) {
+                    return [
+                        'specialty_code' => $code,
+                        'specialty_system' => $system,
+                    ];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static function foldNlAlias(string $text): string
+    {
+        $folded = mb_strtolower(trim($text), 'UTF-8');
+        $folded = strtr($folded, [
+            'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u', 'ü' => 'u', 'ñ' => 'n',
+        ]);
+
+        return preg_replace('/\s+/u', ' ', $folded) ?? $folded;
     }
 
     /**

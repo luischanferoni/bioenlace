@@ -5,6 +5,7 @@ namespace common\components\Domain\Clinical\Workflow;
 use common\components\Domain\Clinical\Capture\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Legacy\ConsultaProcesamientoService;
 use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
+use common\models\Clinical\Input\DerivacionInput;
 use common\components\Domain\Clinical\Service\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
@@ -934,11 +935,27 @@ final class EncounterCapturePipelineService
             // Issues/completitud frescos desde el contrato de dominio (no el blob cacheado del analizar).
             $categorias = $this->resolveCategoriasForCapture($capture, []);
             if ($extraidos !== [] && $categorias !== []) {
-                $review = EncounterCaptureReviewPresenter::withFreshCompleteness(
-                    $review,
-                    $extraidos,
-                    $categorias
-                );
+                $refined = DerivacionInput::refineDatosExtraidos($extraidos, $categorias);
+                if ($refined !== $extraidos) {
+                    $extraidos = $refined;
+                    $textoOriginal = trim((string) ($analysisStored['texto_original'] ?? $capture->transcript ?? ''));
+                    $textoProcesado = isset($analysisStored['texto_procesado'])
+                        ? (string) $analysisStored['texto_procesado']
+                        : ($capture->texto_procesado !== null ? (string) $capture->texto_procesado : null);
+                    $review = (new EncounterCaptureReviewPresenter())->build(
+                        $extraidos,
+                        $categorias,
+                        $textoOriginal,
+                        $textoProcesado,
+                        false
+                    );
+                } else {
+                    $review = EncounterCaptureReviewPresenter::withFreshCompleteness(
+                        $review,
+                        $extraidos,
+                        $categorias
+                    );
+                }
             }
             $review = EncounterCaptureReviewPresenter::slimCaptureReviewForApi($review);
             // open_problems fresco y slim (dedupe + opciones compartidas); no el blob cacheado.

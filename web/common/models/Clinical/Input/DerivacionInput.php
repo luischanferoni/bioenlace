@@ -6,6 +6,7 @@ use common\components\Domain\Clinical\Access\CodingSystems;
 use common\components\Domain\Clinical\Access\PedidoAtencion;
 use common\components\Domain\Clinical\Access\PedidoAtencionActoCoderInterface;
 use common\components\Domain\Clinical\Access\PedidoAtencionActoCodingService;
+use common\components\Domain\Clinical\Access\PedidoAtencionMetadata;
 use common\components\Domain\Clinical\Access\PedidoAtencionService;
 use common\models\ConsultaDerivaciones;
 use common\models\Servicio;
@@ -260,9 +261,9 @@ final class DerivacionInput extends Model
                 }
             } else {
                 $row[self::FIELD_SERVICIO] = is_string($value) ? trim($value) : (string) $value;
-                $resolved = Servicio::findByName((string) $row[self::FIELD_SERVICIO]);
-                if ($resolved !== null && $resolved > 0) {
-                    $row[self::FIELD_ID_SERVICIO] = $resolved;
+                $hydrated = self::hydrateExtractedRowOrNull($row);
+                if ($hydrated !== null) {
+                    return $hydrated;
                 }
             }
         }
@@ -407,6 +408,25 @@ final class DerivacionInput extends Model
                 $this->idServicio = $resolved;
             }
         }
+        if (($this->idServicio === null || $this->idServicio <= 0) && $this->servicio !== null && $this->servicio !== '') {
+            $tipologia = PedidoAtencionMetadata::resolveLineaSpecialtyFromNl($this->servicio);
+            if ($tipologia !== null) {
+                $unique = Servicio::findUniqueBySpecialtyCoding(
+                    $tipologia['specialty_code'],
+                    $tipologia['specialty_system']
+                );
+                if ($unique !== null) {
+                    $this->idServicio = (int) $unique->id_servicio;
+                    $this->servicio = (string) $unique->nombre;
+                }
+            }
+        }
+        if ($this->idServicio !== null && $this->idServicio > 0) {
+            $named = Servicio::findOne(['id_servicio' => $this->idServicio]);
+            if ($named !== null) {
+                $this->servicio = (string) $named->nombre;
+            }
+        }
         if ($this->idServicio !== null && $this->idServicio <= 0) {
             $this->idServicio = null;
         }
@@ -423,6 +443,75 @@ final class DerivacionInput extends Model
             $this->actoSystem = CodingSystems::SNOMED;
         }
         $this->modo = self::normalizeModo($this->modo);
+    }
+
+    /**
+     * Hidrata fila IA: tipología → servicio único, o null si la línea no es resoluble
+     * (no dejar ítem a medias con texto crudo tipo "clínico").
+     *
+     * @param array<string, mixed>|string $row
+     * @return array<string, mixed>|null
+     */
+    public static function hydrateExtractedRowOrNull($row): ?array
+    {
+        $input = self::fromExtractedRow($row);
+        if ($input->idServicio === null || $input->idServicio <= 0) {
+            return null;
+        }
+        $out = is_array($row) ? $row : [];
+        $out[self::FIELD_ID_SERVICIO] = $input->idServicio;
+        $out[self::FIELD_SERVICIO] = (string) ($input->servicio ?? '');
+        if ($input->indicaciones !== null && $input->indicaciones !== '') {
+            $out[self::FIELD_INDICACIONES] = $input->indicaciones;
+        }
+        if ($input->actoCode !== null) {
+            $out[self::FIELD_ACTO_CODE] = $input->actoCode;
+            $out['codigo'] = $input->actoCode;
+        }
+        if ($input->actoSystem !== null) {
+            $out[self::FIELD_ACTO_SYSTEM] = $input->actoSystem;
+            $out['code_system'] = $input->actoSystem;
+        }
+        if ($input->actoDisplay !== null) {
+            $out[self::FIELD_ACTO_DISPLAY] = $input->actoDisplay;
+        }
+        $out[self::FIELD_MODO] = $input->modo;
+        $out['modo'] = $input->modo;
+
+        return $out;
+    }
+
+    /**
+     * Post-extracción / reopen: ítems resolubles con nombre de catálogo; irresolubles se descartan.
+     *
+     * @param array<string, mixed> $extraidos
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    public static function refineDatosExtraidos(array $extraidos, array $categorias): array
+    {
+        foreach ($categorias as $categoria) {
+            if (!is_array($categoria)) {
+                continue;
+            }
+            if ((string) ($categoria['modelo'] ?? '') !== 'ConsultaDerivaciones') {
+                continue;
+            }
+            $titulo = trim((string) ($categoria['titulo'] ?? ''));
+            if ($titulo === '' || !isset($extraidos[$titulo]) || !is_array($extraidos[$titulo])) {
+                continue;
+            }
+            $refined = [];
+            foreach ($extraidos[$titulo] as $row) {
+                $hydrated = self::hydrateExtractedRowOrNull($row);
+                if ($hydrated !== null) {
+                    $refined[] = $hydrated;
+                }
+            }
+            $extraidos[$titulo] = $refined;
+        }
+
+        return $extraidos;
     }
 
     private static function normalizeModo(?string $modo): string

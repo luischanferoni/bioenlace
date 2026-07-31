@@ -225,4 +225,18 @@ class PedidoAtencionServiceTest extends Unit
         $this->assertContains(CodingSystems::SNOMED, PedidoAtencionMetadata::allowedSystems());
         $this->assertNotContains('local', PedidoAtencionMetadata::allowedSystems());
     }
+
+    public function testLineaNlAliasClinicoMapsToInternalMedicine(): void
+    {
+        $tipologia = PedidoAtencionMetadata::resolveLineaSpecialtyFromNl('clínico');
+        $this->assertNotNull($tipologia);
+        $this->assertSame('394807007', $tipologia['specialty_code']);
+        $this->assertSame(CodingSystems::SNOMED, $tipologia['specialty_system']);
+
+        $tipologia = PedidoAtencionMetadata::resolveLineaSpecialtyFromNl('medico general');
+        $this->assertNotNull($tipologia);
+        $this->assertSame('394814009', $tipologia['specialty_code']);
+
+        $this->assertNull(PedidoAtencionMetadata::resolveLineaSpecialtyFromNl('algo inventado xyz'));
+    }
 }

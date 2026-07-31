@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Text;
 
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
+use common\models\Clinical\Input\DerivacionInput;
 
 /**
  * Ajusta la clasificación IA de captura clínica según política de dominio
@@ -44,6 +45,11 @@ final class EncounterCaptureExtractionPostProcessor
             $categorias,
             $clinicalText
         );
+
+        $extraidos = $resultadoIA['datosExtraidos'] ?? [];
+        if (is_array($extraidos)) {
+            $resultadoIA['datosExtraidos'] = DerivacionInput::refineDatosExtraidos($extraidos, $categorias);
+        }
 
         return $this->backfillEmptyMotivos($resultadoIA, $categorias, $clinicalText);
     }

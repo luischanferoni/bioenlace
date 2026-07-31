@@ -172,4 +172,25 @@ class EncounterCaptureExtractionPostProcessorTest extends Unit
 
         return $validator;
     }
+
+    public function testDropsUnresolvedDerivacionStub(): void
+    {
+        $validator = $this->validatorMock(true, true, false);
+        $processor = new EncounterCaptureExtractionPostProcessor($validator);
+        $categorias = [
+            ['titulo' => 'Motivos de consulta', 'modelo' => 'ConsultaMotivos', 'requerido' => false],
+            ['titulo' => 'Derivaciones', 'modelo' => 'ConsultaDerivaciones', 'requerido' => false],
+        ];
+        $input = [
+            'datosExtraidos' => [
+                'Motivos de consulta' => [],
+                // Texto sin match de nombre ni tipología única en catálogo vacío de test → se descarta.
+                'Derivaciones' => [['Servicio' => 'especialidad inexistente xyzzy']],
+            ],
+        ];
+
+        $out = $processor->apply($input, $categorias, 'derivo a especialidad inexistente xyzzy');
+
+        $this->assertSame([], $out['datosExtraidos']['Derivaciones']);
+    }
 }

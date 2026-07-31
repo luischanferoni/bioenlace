@@ -331,11 +331,44 @@ class Servicio extends \yii\db\ActiveRecord
     }
 
     /**
+     * Ofertas con tipología SNOMED/FHIR dada. Si hay exactamente una (acepta turnos), la devuelve.
+     * 0 o N → null (sin adivinar por nombre).
+     */
+    public static function findUniqueBySpecialtyCoding(string $specialtyCode, ?string $specialtySystem = null): ?self
+    {
+        $code = trim($specialtyCode);
+        if ($code === '') {
+            return null;
+        }
+        $system = trim((string) ($specialtySystem ?? \common\components\Domain\Clinical\Access\CodingSystems::SNOMED));
+        $query = self::find()
+            ->andWhere(['specialty_code' => $code])
+            ->andWhere(['acepta_turnos' => 'SI']);
+        if ($system !== '') {
+            $query->andWhere(['specialty_system' => $system]);
+        }
+        /** @var self[] $rows */
+        $rows = $query->orderBy(['id_servicio' => SORT_ASC])->all();
+        $oferta = [];
+        foreach ($rows as $row) {
+            if ($row->esOfertaAsistencial()) {
+                $oferta[] = $row;
+            }
+        }
+        $pool = $oferta !== [] ? $oferta : $rows;
+        if (count($pool) !== 1) {
+            return null;
+        }
+
+        return $pool[0];
+    }
+
+    /**
      * Genera términos de búsqueda para matchear texto de usuario (ej. "cardiólogo", "cardiologo")
      * a partir del nombre en BD (ej. "CARDIOLOGIA"). Dinámico para cualquier servicio.
      *
-     * No inventa sinónimos coloquiales (p. ej. "clínico" ↛ "MED CLINICA"): eso es selección
-     * del profesional o alias declarativo, no morfología.
+     * No inventa sinónimos coloquiales (p. ej. "clínico" ↛ "MED CLINICA"): eso es tipología
+     * (`specialty_code` + aliases NL) o selección del profesional.
      *
      * @param string $nombreServicio Nombre del servicio en BD (ej. "CARDIOLOGIA", "ODONTOLOGIA")
      * @return string[]

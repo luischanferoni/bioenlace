@@ -45,6 +45,30 @@ capacity_rules:
   - match_tipo: procedimiento
     act_ecl: "<< 91251008 |Physical therapy procedure|"
 
+# Texto libre de la IA / dictado → tipología de oferta (specialty_*).
+# Luego se resuelve a filas `servicios` con ese código (único → ítem; 0/N → se descarta el ítem).
+# No mapear apodos a nombres de fila (MED CLINICA); el vínculo es tipológico.
+linea_nl_aliases:
+  - specialty_code: "394807007" # Internal medicine
+    specialty_system: http://snomed.info/sct
+    aliases:
+      - clinico
+      - clínico
+      - medico clinico
+      - médico clínico
+      - medicina clinica
+      - medicina clínica
+      - med clinica
+      - med clínica
+  - specialty_code: "394814009" # General practice
+    specialty_system: http://snomed.info/sct
+    aliases:
+      - medico general
+      - médico general
+      - medicina general
+      - med general
+      - generalista
+
 # Codificación de Acto display (canal staff) — categoría SnomedCategoryCatalog / search profile.
 acto_coding:
   snomed_category: procedimientos

@@ -23,6 +23,7 @@ use common\traits\ParameterQuestionsTrait;
  * @property string|null $tipo Tipología de oferta: consulta|diagnostico|laboratorio|procedimiento|soporte
  * @property string|null $specialty_code Código SNOMED/FHIR de tipología de **esta oferta** (no “especialidad del PES”)
  * @property string|null $specialty_system
+ * @property string $oferta_modelo institucional|legacy_acto
  * @property string|null $teleconsulta_politica NINGUNA|TODAS|ALGUNAS
  * @property string $reserva_autogestion_paciente SI|NO
  *
@@ -42,6 +43,11 @@ class Servicio extends \yii\db\ActiveRecord
     public const RESERVA_AUTOGESTION_PACIENTE_SI = 'SI';
     public const RESERVA_AUTOGESTION_PACIENTE_NO = 'NO';
 
+    /** Oferta real del centro (área agendable). */
+    public const OFERTA_MODELO_INSTITUCIONAL = 'institucional';
+    /** Fila histórica que modelaba un acto como si fuera área (no ofertar en hub). */
+    public const OFERTA_MODELO_LEGACY_ACTO = 'legacy_acto';
+
     /** Línea asistencial: consulta / diagnóstico / laboratorio / procedimiento / soporte */
     public const TIPO_CONSULTA = 'consulta';
     public const TIPO_DIAGNOSTICO = 'diagnostico';
@@ -60,6 +66,17 @@ class Servicio extends \yii\db\ActiveRecord
             self::TIPO_LABORATORIO,
             self::TIPO_PROCEDIMIENTO,
             self::TIPO_SOPORTE,
+        ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function ofertaModeloValues(): array
+    {
+        return [
+            self::OFERTA_MODELO_INSTITUCIONAL,
+            self::OFERTA_MODELO_LEGACY_ACTO,
         ];
     }
 
@@ -101,9 +118,11 @@ class Servicio extends \yii\db\ActiveRecord
         return [
             [['nombre'], 'required'],
             [['nombre'], 'string', 'max' => 40],
-            [['acepta_turnos', 'acepta_practicas', 'parametros', 'item_name', 'teleconsulta_politica', 'reserva_autogestion_paciente', 'tipo', 'specialty_code', 'specialty_system'], 'string'],
+            [['acepta_turnos', 'acepta_practicas', 'parametros', 'item_name', 'teleconsulta_politica', 'reserva_autogestion_paciente', 'tipo', 'specialty_code', 'specialty_system', 'oferta_modelo'], 'string'],
             [['tipo'], 'in', 'range' => self::tipoValues()],
             [['tipo'], 'default', 'value' => self::TIPO_CONSULTA],
+            [['oferta_modelo'], 'in', 'range' => self::ofertaModeloValues()],
+            [['oferta_modelo'], 'default', 'value' => self::OFERTA_MODELO_INSTITUCIONAL],
             [['specialty_code'], 'string', 'max' => 64],
             [['specialty_system'], 'string', 'max' => 128],
             [['reserva_autogestion_paciente'], 'in', 'range' => self::reservaAutogestionPacienteValues()],
@@ -124,6 +143,7 @@ class Servicio extends \yii\db\ActiveRecord
             'tipo' => 'Tipo de oferta del centro',
             'specialty_code' => 'Tipología de oferta (código SNOMED/FHIR)',
             'specialty_system' => 'System tipología de oferta',
+            'oferta_modelo' => 'Modelo de oferta (institucional vs legacy acto)',
             'acepta_turnos' => 'Acepta Agenda',
             'acepta_practicas' => 'Acepta Practicas',
             'teleconsulta_politica' => 'Política de teleconsulta',
@@ -165,8 +185,50 @@ class Servicio extends \yii\db\ActiveRecord
         ];
     }
 
+    public function esOfertaInstitucional(): bool
+    {
+        $modelo = trim((string) ($this->oferta_modelo ?? self::OFERTA_MODELO_INSTITUCIONAL));
+        if ($modelo === self::OFERTA_MODELO_LEGACY_ACTO) {
+            return false;
+        }
+        if (\common\components\Domain\Clinical\Access\PedidoAtencionMetadata::isLegacyActoServicioNombre((string) $this->nombre)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function esLegacyActo(): bool
+    {
+        return !$this->esOfertaInstitucional();
+    }
+
+    /**
+     * Scope query / ActiveQuery: solo ofertas institucionales (excluye legacy_acto).
+     *
+     * @param \yii\db\Query|\yii\db\ActiveQuery $query
+     */
+    public static function applyOfertaInstitucionalScope($query, string $alias = ''): void
+    {
+        $schema = self::getTableSchema();
+        if ($schema === null || !isset($schema->columns['oferta_modelo'])) {
+            return;
+        }
+        $col = $alias !== '' ? $alias . '.oferta_modelo' : 'oferta_modelo';
+        $query->andWhere([
+            'or',
+            [$col => null],
+            [$col => ''],
+            [$col => self::OFERTA_MODELO_INSTITUCIONAL],
+        ]);
+    }
+
     public function permiteReservaAutogestionPaciente(): bool
     {
+        if (!$this->esOfertaInstitucional()) {
+            return false;
+        }
+
         return strtoupper(trim((string) ($this->reserva_autogestion_paciente ?? self::RESERVA_AUTOGESTION_PACIENTE_NO)))
             === self::RESERVA_AUTOGESTION_PACIENTE_SI;
     }

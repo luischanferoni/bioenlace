@@ -15,4 +15,5 @@ Frase canónica:
 - Glosario producto: [`web/docs/producto/glosario-servicio-pes-acto.md`](web/docs/producto/glosario-servicio-pes-acto.md).
 - En docs/PRs/código nuevo: preferir **servicio del centro** / **área** / **línea**; no usar “especialidad” como sinónimo de `id_servicio`.
 - `specialty_code` en `servicios` = tipología de **esa oferta**, no identidad del profesional.
+- Capacidad acto→oferta: `capacity_rules` (ECL) ∪ `linea_acto`; filas `oferta_modelo=legacy_acto` no son áreas del hub.
 - Turnos y PES usan `id_servicio` institucional; pedidos llevan además `code`/`code_system` del acto cuando aplica.

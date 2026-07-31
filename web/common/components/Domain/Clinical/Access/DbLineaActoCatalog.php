@@ -24,6 +24,7 @@ final class DbLineaActoCatalog implements LineaActoCatalogInterface
             ->innerJoin(['s' => Servicio::tableName()], 's.id_servicio = la.id_servicio')
             ->select(['s.id_servicio', 's.nombre', 'la.preferente', 'la.id_efector'])
             ->where(['la.id_acto' => (int) $acto->id]);
+        Servicio::applyOfertaInstitucionalScope($q, 's');
 
         if ($efectorId !== null && $efectorId > 0) {
             $q->andWhere([

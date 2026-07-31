@@ -79,8 +79,8 @@ class PedidoAtencionServiceTest extends Unit
             ],
             [
                 [
-                    'linea_id' => 17,
-                    'linea_label' => 'ECOGRAFIA',
+                    'linea_id' => 11,
+                    'linea_label' => 'RADIOLOGIA',
                     'code' => '16310003',
                     'system' => CodingSystems::SNOMED,
                     'preferente' => true,
@@ -96,7 +96,7 @@ class PedidoAtencionServiceTest extends Unit
         ));
 
         $this->assertTrue($result['complete']);
-        $this->assertSame(17, $result['pedido']->lineaId);
+        $this->assertSame(11, $result['pedido']->lineaId);
         $this->assertSame('16310003', $result['pedido']->actoCode);
     }
 
@@ -112,8 +112,8 @@ class PedidoAtencionServiceTest extends Unit
             ],
             [
                 [
-                    'linea_id' => 17,
-                    'linea_label' => 'ECOGRAFIA',
+                    'linea_id' => 39,
+                    'linea_label' => 'DIAGNOSTICO POR IMAGENES',
                     'code' => '16310003',
                     'system' => CodingSystems::SNOMED,
                     'preferente' => false,
@@ -206,7 +206,7 @@ class PedidoAtencionServiceTest extends Unit
     public function testDerivacionInputParsesActoCode(): void
     {
         $input = DerivacionInput::fromExtractedRow([
-            'id_servicio' => 17,
+            'id_servicio' => 11,
             'codigo' => '16310003',
             'code_system' => CodingSystems::SNOMED,
             'tipo' => 'estudio',

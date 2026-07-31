@@ -1,4 +1,4 @@
-# Pedido de atención (línea × acto)
+# Pedido de atención (servicio institucional × acto)
 
 # Systems admitidos (CodeableConcept). Sin code system local.
 allowed_systems:
@@ -31,3 +31,21 @@ modos:
   - interconsulta
   - practica
   - estudio
+
+# Capacidad por tipología de oferta (specialty_* / tipo en servicios), no por nombre de fila.
+# El acto matchea act_ecl (Snowstorm); se une a linea_acto (excepciones / preferentes).
+capacity_rules:
+  - specialty_system: http://snomed.info/sct
+    specialty_code: "394914008" # Radiology
+    act_ecl: "<< 363679005 |Imaging (procedure)|"
+  - match_tipo: laboratorio
+    act_ecl: "<< 15220000 |Laboratory test|"
+  - match_tipo: consulta
+    act_ecl: "<< 11429006 |Consultation|"
+  - match_tipo: procedimiento
+    act_ecl: "<< 91251008 |Physical therapy procedure|"
+
+# Nombres legacy modelados como acto (no ofertar como área en hub)
+legacy_acto_as_servicio_names:
+  - ECOGRAFIA
+  - MAMOGRAFIA

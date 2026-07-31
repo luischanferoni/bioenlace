@@ -67,6 +67,80 @@ final class PedidoAtencionMetadata
         ];
     }
 
+    /**
+     * Reglas de capacidad ECL por tipología de oferta.
+     *
+     * @return list<array{
+     *   specialty_system: string|null,
+     *   specialty_code: string|null,
+     *   match_tipo: string|null,
+     *   act_ecl: string
+     * }>
+     */
+    public static function capacityRules(): array
+    {
+        $raw = self::load()['capacity_rules'] ?? null;
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $ecl = trim((string) ($row['act_ecl'] ?? ''));
+            if ($ecl === '') {
+                continue;
+            }
+            $specialtyCode = trim((string) ($row['specialty_code'] ?? ''));
+            $specialtySystem = trim((string) ($row['specialty_system'] ?? ''));
+            $matchTipo = strtolower(trim((string) ($row['match_tipo'] ?? '')));
+            if ($specialtyCode === '' && $matchTipo === '') {
+                continue;
+            }
+            $out[] = [
+                'specialty_system' => $specialtySystem !== '' ? $specialtySystem : null,
+                'specialty_code' => $specialtyCode !== '' ? $specialtyCode : null,
+                'match_tipo' => $matchTipo !== '' ? $matchTipo : null,
+                'act_ecl' => $ecl,
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Nombres de `servicios` legacy modelados como acto (no oferta institucional).
+     *
+     * @return list<string> upper-case
+     */
+    public static function legacyActoAsServicioNames(): array
+    {
+        $raw = self::load()['legacy_acto_as_servicio_names'] ?? null;
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $name) {
+            $n = mb_strtoupper(trim((string) $name), 'UTF-8');
+            if ($n !== '') {
+                $out[] = $n;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    public static function isLegacyActoServicioNombre(string $nombre): bool
+    {
+        $n = mb_strtoupper(trim($nombre), 'UTF-8');
+        if ($n === '') {
+            return false;
+        }
+
+        return in_array($n, self::legacyActoAsServicioNames(), true);
+    }
+
     public static function resetCacheForTests(): void
     {
         self::$config = null;
@@ -85,6 +159,8 @@ final class PedidoAtencionMetadata
             'allowed_systems' => CodingSystems::defaults(),
             'defaults_por_modo' => [],
             'modos' => [],
+            'capacity_rules' => [],
+            'legacy_acto_as_servicio_names' => [],
         ];
 
         $path = ProductMetadataPaths::pedidoAtencionFile();
@@ -104,7 +180,7 @@ final class PedidoAtencionMetadata
             return self::$config;
         }
 
-        foreach (['allowed_systems', 'defaults_por_modo', 'modos'] as $key) {
+        foreach (['allowed_systems', 'defaults_por_modo', 'modos', 'capacity_rules', 'legacy_acto_as_servicio_names'] as $key) {
             if (isset($data[$key]) && is_array($data[$key])) {
                 self::$config[$key] = $data[$key];
             }

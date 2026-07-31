@@ -41,8 +41,8 @@ class PedidoAtencionPacienteServiceTest extends Unit
             ],
             [
                 [
-                    'linea_id' => 17,
-                    'linea_label' => 'ECOGRAFIA',
+                    'linea_id' => 11,
+                    'linea_label' => 'RADIOLOGIA',
                     'code' => '16310003',
                     'system' => CodingSystems::SNOMED,
                     'preferente' => true,
@@ -56,9 +56,9 @@ class PedidoAtencionPacienteServiceTest extends Unit
         ];
         $svc->aplicarFlagsEnDraft($draft);
 
-        $this->assertSame('17', (string) $draft['id_servicio_asignado']);
+        $this->assertSame('11', (string) $draft['id_servicio_asignado']);
         $this->assertSame('1', $draft[PedidoAtencionPacienteService::DRAFT_SERVICIO_RESUELTO]);
-        $this->assertSame('17', $draft[PedidoAtencionPacienteService::DRAFT_LINEA_IDS]);
+        $this->assertSame('11', $draft[PedidoAtencionPacienteService::DRAFT_LINEA_IDS]);
         $this->assertSame(PedidoAtencion::MODO_ESTUDIO, $draft[PedidoAtencionPacienteService::DRAFT_MODO]);
     }
 
@@ -74,14 +74,14 @@ class PedidoAtencionPacienteServiceTest extends Unit
             ],
             [
                 [
-                    'linea_id' => 17,
-                    'linea_label' => 'ECO',
+                    'linea_id' => 39,
+                    'linea_label' => 'IMAGENES',
                     'code' => '16310003',
                     'system' => CodingSystems::SNOMED,
                 ],
                 [
                     'linea_id' => 11,
-                    'linea_label' => 'RX',
+                    'linea_label' => 'RADIOLOGIA',
                     'code' => '16310003',
                     'system' => CodingSystems::SNOMED,
                 ],
@@ -112,8 +112,8 @@ class PedidoAtencionPacienteServiceTest extends Unit
             ],
             [
                 [
-                    'linea_id' => 17,
-                    'linea_label' => 'ECO',
+                    'linea_id' => 11,
+                    'linea_label' => 'RADIOLOGIA',
                     'code' => '16310003',
                     'system' => CodingSystems::SNOMED,
                     'preferente' => true,
@@ -125,7 +125,7 @@ class PedidoAtencionPacienteServiceTest extends Unit
         $draft = [
             'triage_raiz' => PedidoAtencionPacienteService::TRIAGE_RAIZ_ESTUDIO,
             'pedido_acto' => CodingSystems::SNOMED . '|16310003',
-            'pedido_linea_ids' => '17',
+            'pedido_linea_ids' => '11',
             'pedido_modo' => PedidoAtencion::MODO_ESTUDIO,
         ];
         // Sin DB de actos: al resolver de nuevo puede vaciar; set flags como haría el paciente svc.
@@ -134,12 +134,12 @@ class PedidoAtencionPacienteServiceTest extends Unit
 
         $sugerido = new ReservaTriageServicioSugeridoService();
         $items = [
-            ['id' => '17', 'name' => 'ECOGRAFIA'],
+            ['id' => '11', 'name' => 'RADIOLOGIA'],
             ['id' => '7', 'name' => 'MED CLINICA'],
         ];
         $filtered = $sugerido->filtrarItemsUiJson($items, $draft, false);
         $this->assertCount(1, $filtered);
-        $this->assertSame('17', $filtered[0]['id']);
+        $this->assertSame('11', $filtered[0]['id']);
     }
 
     public function testOpcionesActoDesdeCatalogoMemoria(): void

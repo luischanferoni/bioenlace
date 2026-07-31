@@ -51,7 +51,7 @@ Efector (centro)
 
 ## Relación con pedido línea × acto
 
-El pedido une **acto** (qué) y **servicio institucional** (dónde/quién agenda). Ver [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
+El pedido une **acto** (qué) y **servicio institucional** (dónde/quién agenda). Capacidad: ECL por tipología de oferta + `linea_acto` para excepciones. Filas `oferta_modelo=legacy_acto` (p. ej. ECOGRAFIA histórica) no son áreas del hub. Ver [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
 
 ## Relacionado
 

@@ -22,7 +22,7 @@ final class PedidoAtencionPacienteService
         ?PedidoAtencionService $resolver = null,
         ?LineaActoCatalogInterface $catalog = null
     ) {
-        $this->catalog = $catalog ?? new DbLineaActoCatalog();
+        $this->catalog = $catalog ?? CompositeLineaActoCatalog::defaultCatalog();
         $this->resolver = $resolver ?? new PedidoAtencionService($this->catalog);
     }
 
@@ -51,11 +51,17 @@ final class PedidoAtencionPacienteService
      */
     public function actosReservables(): array
     {
-        if ($this->catalog instanceof DbLineaActoCatalog) {
+        if ($this->usesDatabaseCatalog()) {
             return $this->actosReservablesDesdeDb();
         }
 
         return $this->catalog->listActos();
+    }
+
+    private function usesDatabaseCatalog(): bool
+    {
+        return $this->catalog instanceof DbLineaActoCatalog
+            || $this->catalog instanceof CompositeLineaActoCatalog;
     }
 
     /**
@@ -196,15 +202,16 @@ final class PedidoAtencionPacienteService
         if ($lineas === []) {
             return [];
         }
-        if (!$this->catalog instanceof DbLineaActoCatalog) {
+        if (!$this->usesDatabaseCatalog()) {
             return $lineas;
         }
 
         $ids = array_map(static fn (array $l) => (int) $l['id'], $lineas);
-        $ok = \common\models\Servicio::find()
+        $q = \common\models\Servicio::find()
             ->select(['id_servicio'])
-            ->where(['id_servicio' => $ids, 'acepta_turnos' => 'SI'])
-            ->column();
+            ->where(['id_servicio' => $ids, 'acepta_turnos' => 'SI']);
+        \common\models\Servicio::applyOfertaInstitucionalScope($q);
+        $ok = $q->column();
         $okSet = array_fill_keys(array_map('intval', $ok), true);
 
         return array_values(array_filter(
@@ -218,16 +225,15 @@ final class PedidoAtencionPacienteService
      */
     private function actosReservablesDesdeDb(): array
     {
-        $rows = (new \yii\db\Query())
+        $q = (new \yii\db\Query())
             ->from(['a' => \common\models\Clinical\ActoClinico::tableName()])
             ->innerJoin(['la' => \common\models\Clinical\LineaActo::tableName()], 'la.id_acto = a.id')
             ->innerJoin(['s' => \common\models\Servicio::tableName()], 's.id_servicio = la.id_servicio')
             ->select(['a.code', 'a.code_system', 'a.display', 'a.fhir_category'])
             ->where(['s.acepta_turnos' => 'SI'])
-            ->andWhere(['not in', 'a.fhir_category', ['consultation', 'referral']])
-            ->distinct()
-            ->orderBy(['a.display' => SORT_ASC])
-            ->all();
+            ->andWhere(['not in', 'a.fhir_category', ['consultation', 'referral']]);
+        \common\models\Servicio::applyOfertaInstitucionalScope($q, 's');
+        $rows = $q->distinct()->orderBy(['a.display' => SORT_ASC])->all();
 
         $out = [];
         foreach ($rows as $row) {

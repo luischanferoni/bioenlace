@@ -20,7 +20,7 @@ final class PedidoAtencionService
 
     public function __construct(?LineaActoCatalogInterface $catalog = null)
     {
-        $this->catalog = $catalog ?? new DbLineaActoCatalog();
+        $this->catalog = $catalog ?? CompositeLineaActoCatalog::defaultCatalog();
     }
 
     /**

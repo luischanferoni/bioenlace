@@ -114,10 +114,11 @@ final class ReservaTriageCarePlanServicioService
      */
     private function idsServiciosPorPatronesNombre(array $patrones): array
     {
-        $rows = Servicio::find()
+        $q = Servicio::find()
             ->where(['acepta_turnos' => 'SI'])
-            ->orderBy(['nombre' => SORT_ASC])
-            ->all();
+            ->orderBy(['nombre' => SORT_ASC]);
+        Servicio::applyOfertaInstitucionalScope($q);
+        $rows = $q->all();
 
         $ids = [];
         foreach ($rows as $servicio) {

@@ -4,7 +4,8 @@ use yii\db\Migration;
 use yii\db\Query;
 
 /**
- * Soft-depreca filas-acto (ECOGRAFIA/MAMOGRAFIA) y remapea linea_acto al contenedor imaging.
+ * Remapea puentes imaging hacia contenedor institucional (sin soft-flag legacy).
+ * Tipifica RADIOLOGIA / DIAGNOSTICO POR IMAGENES / BIOIMAGEN.
  */
 class m260731_120000_servicios_legacy_acto_capacidad extends Migration
 {
@@ -18,6 +19,13 @@ class m260731_120000_servicios_legacy_acto_capacidad extends Migration
         'BIOIMAGEN',
     ];
 
+    /** @var list<string> */
+    private const IMAGING_ACT_NAMES = [
+        'ECOGRAFIA',
+        'MAMOGRAFIA',
+        'RAYOS X',
+    ];
+
     public function safeUp(): void
     {
         $servicios = '{{%servicios}}';
@@ -28,51 +36,12 @@ class m260731_120000_servicios_legacy_acto_capacidad extends Migration
             return;
         }
 
-        if (!isset($schema->columns['oferta_modelo'])) {
-            $this->addColumn(
-                $servicios,
-                'oferta_modelo',
-                $this->string(32)->notNull()->defaultValue('institucional')
-            );
-        }
-
-        $legacyNames = ['ECOGRAFIA', 'MAMOGRAFIA'];
-        $metaPath = dirname(__DIR__) . '/metadata/bioenlace/clinical/pedido-atencion.yaml';
-        if (is_file($metaPath) && class_exists(\Symfony\Component\Yaml\Yaml::class)) {
-            try {
-                $data = \Symfony\Component\Yaml\Yaml::parseFile($metaPath);
-                if (is_array($data['legacy_acto_as_servicio_names'] ?? null)) {
-                    $legacyNames = [];
-                    foreach ($data['legacy_acto_as_servicio_names'] as $n) {
-                        $u = mb_strtoupper(trim((string) $n), 'UTF-8');
-                        if ($u !== '') {
-                            $legacyNames[] = $u;
-                        }
-                    }
-                }
-            } catch (\Throwable $e) {
-                // keep defaults
-            }
-        }
-
+        // Si quedó de un intento previo con soft-flag, se elimina en m260731_160000.
         $rows = (new Query())->from($servicios)->select(['id_servicio', 'nombre'])->all($this->db);
-        $legacyIds = [];
-        foreach ($rows as $row) {
-            $nombre = mb_strtoupper(trim((string) ($row['nombre'] ?? '')), 'UTF-8');
-            if (in_array($nombre, $legacyNames, true)) {
-                $id = (int) $row['id_servicio'];
-                $legacyIds[] = $id;
-                $this->update(
-                    $servicios,
-                    ['oferta_modelo' => 'legacy_acto'],
-                    ['id_servicio' => $id]
-                );
-            }
-        }
-
-        $containerId = $this->resolveImagingContainerId($rows);
+        $byName = $this->indexByNormalizedName($rows);
+        $containerId = $this->resolveImagingContainerId($byName);
         if ($containerId === null) {
-            echo "    > sin contenedor imaging; solo marcado legacy_acto.\n";
+            echo "    > sin contenedor imaging; omitido remap.\n";
 
             return;
         }
@@ -83,19 +52,51 @@ class m260731_120000_servicios_legacy_acto_capacidad extends Migration
                 'tipo' => 'diagnostico',
                 'specialty_code' => self::RADIOLOGY,
                 'specialty_system' => self::SNOMED,
-                'oferta_modelo' => 'institucional',
             ],
             ['id_servicio' => $containerId]
         );
+        foreach (self::CONTAINER_NAMES as $name) {
+            if (!isset($byName[$name]) || $byName[$name] === $containerId) {
+                continue;
+            }
+            $this->update(
+                $servicios,
+                [
+                    'tipo' => 'diagnostico',
+                    'specialty_code' => self::RADIOLOGY,
+                    'specialty_system' => self::SNOMED,
+                ],
+                ['id_servicio' => $byName[$name]]
+            );
+        }
 
+        $fromIds = [];
+        foreach (self::IMAGING_ACT_NAMES as $name) {
+            if (isset($byName[$name])) {
+                $fromIds[] = $byName[$name];
+            }
+        }
+        $this->remapLineaActo($fromIds, $containerId);
+    }
+
+    public function safeDown(): void
+    {
+        // Irreversible (remap de puentes).
+    }
+
+    /**
+     * @param list<int> $fromIds
+     */
+    private function remapLineaActo(array $fromIds, int $containerId): void
+    {
         $lineaActo = '{{%linea_acto}}';
-        if ($this->db->schema->getTableSchema($lineaActo, true) === null || $legacyIds === []) {
+        if ($this->db->schema->getTableSchema($lineaActo, true) === null || $fromIds === []) {
             return;
         }
 
         $links = (new Query())
             ->from($lineaActo)
-            ->where(['id_servicio' => $legacyIds])
+            ->where(['id_servicio' => $fromIds])
             ->all($this->db);
 
         foreach ($links as $link) {
@@ -129,34 +130,32 @@ class m260731_120000_servicios_legacy_acto_capacidad extends Migration
                     ]
                 );
             }
-
             $this->delete($lineaActo, ['id' => (int) $link['id']]);
         }
     }
 
-    public function safeDown(): void
-    {
-        $servicios = '{{%servicios}}';
-        $schema = $this->db->schema->getTableSchema($servicios, true);
-        if ($schema === null) {
-            return;
-        }
-        if (isset($schema->columns['oferta_modelo'])) {
-            $this->dropColumn($servicios, 'oferta_modelo');
-        }
-        // No restaura puentes legacy (irreversible a propósito).
-    }
-
     /**
      * @param list<array{id_servicio: mixed, nombre: mixed}> $rows
+     * @return array<string, int>
      */
-    private function resolveImagingContainerId(array $rows): ?int
+    private function indexByNormalizedName(array $rows): array
     {
         $byName = [];
         foreach ($rows as $row) {
-            $nombre = mb_strtoupper(trim((string) ($row['nombre'] ?? '')), 'UTF-8');
-            $byName[$nombre] = (int) $row['id_servicio'];
+            $nombre = $this->normalizeName((string) ($row['nombre'] ?? ''));
+            if ($nombre !== '') {
+                $byName[$nombre] = (int) $row['id_servicio'];
+            }
         }
+
+        return $byName;
+    }
+
+    /**
+     * @param array<string, int> $byName
+     */
+    private function resolveImagingContainerId(array $byName): ?int
+    {
         foreach (self::CONTAINER_NAMES as $name) {
             if (isset($byName[$name])) {
                 return $byName[$name];
@@ -169,5 +168,12 @@ class m260731_120000_servicios_legacy_acto_capacidad extends Migration
         }
 
         return null;
+    }
+
+    private function normalizeName(string $nombre): string
+    {
+        $n = mb_strtoupper(trim($nombre), 'UTF-8');
+
+        return str_replace(['Á', 'É', 'Í', 'Ó', 'Ú', 'Ü'], ['A', 'E', 'I', 'O', 'U', 'U'], $n);
     }
 }

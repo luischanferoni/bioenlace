@@ -303,7 +303,7 @@ final class DerivacionInput extends Model
     {
         $out = [];
         foreach (Servicio::getServiciosConTurnos() as $s) {
-            if (!$s instanceof Servicio || !$s->esOfertaInstitucional()) {
+            if (!$s instanceof Servicio || !$s->esOfertaAsistencial()) {
                 continue;
             }
             $id = (int) ($s->id_servicio ?? 0);

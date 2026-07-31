@@ -258,11 +258,11 @@ final class PedidoAtencionPacienteService
         }
 
         $ids = array_map(static fn (array $l) => (int) $l['id'], $lineas);
-        $q = \common\models\Servicio::find()
+        $ok = \common\models\Servicio::find()
             ->select(['id_servicio'])
-            ->where(['id_servicio' => $ids, 'acepta_turnos' => 'SI']);
-        \common\models\Servicio::applyOfertaInstitucionalScope($q);
-        $ok = $q->column();
+            ->where(['id_servicio' => $ids, 'acepta_turnos' => 'SI'])
+            ->andWhere(['<>', 'tipo', \common\models\Servicio::TIPO_SOPORTE])
+            ->column();
         $okSet = array_fill_keys(array_map('intval', $ok), true);
 
         return array_values(array_filter(
@@ -282,8 +282,8 @@ final class PedidoAtencionPacienteService
             ->innerJoin(['s' => \common\models\Servicio::tableName()], 's.id_servicio = la.id_servicio')
             ->select(['a.code', 'a.code_system', 'a.display', 'a.fhir_category'])
             ->where(['s.acepta_turnos' => 'SI'])
+            ->andWhere(['<>', 's.tipo', \common\models\Servicio::TIPO_SOPORTE])
             ->andWhere(['not in', 'a.fhir_category', ['consultation', 'referral']]);
-        \common\models\Servicio::applyOfertaInstitucionalScope($q, 's');
         $rows = $q->distinct()->orderBy(['a.display' => SORT_ASC])->all();
 
         $out = [];

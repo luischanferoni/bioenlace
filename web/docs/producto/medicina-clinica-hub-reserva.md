@@ -9,7 +9,7 @@
    - No aparecen en la lista de autogestión del flujo de atención del paciente.
    - Turno solo si existe **derivación vigente** (`ConsultaDerivaciones` en espera).
    - En ese caso la modalidad es **solo teleconsulta** (videollamada).
-5. **Estudio o práctica** es otro camino raíz: acto SNOMED → oferta(s) del centro con capacidad ECL / `linea_acto` y agenda (no una fila “ECOGRAFIA” en `servicios`; esas quedan `legacy_acto`).
+5. **Estudio o práctica** es otro camino raíz: acto SNOMED → oferta(s) del centro con capacidad ECL / `linea_acto` y agenda (no una fila “ECOGRAFIA” en `servicios`).
 
 Urgencias (banda A / alarmas halt) siguen sin completar reserva en la app.
 

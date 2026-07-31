@@ -109,38 +109,6 @@ final class PedidoAtencionMetadata
         return $out;
     }
 
-    /**
-     * Nombres de `servicios` legacy modelados como acto (no oferta institucional).
-     *
-     * @return list<string> upper-case
-     */
-    public static function legacyActoAsServicioNames(): array
-    {
-        $raw = self::load()['legacy_acto_as_servicio_names'] ?? null;
-        if (!is_array($raw)) {
-            return [];
-        }
-        $out = [];
-        foreach ($raw as $name) {
-            $n = mb_strtoupper(trim((string) $name), 'UTF-8');
-            if ($n !== '') {
-                $out[] = $n;
-            }
-        }
-
-        return array_values(array_unique($out));
-    }
-
-    public static function isLegacyActoServicioNombre(string $nombre): bool
-    {
-        $n = mb_strtoupper(trim($nombre), 'UTF-8');
-        if ($n === '') {
-            return false;
-        }
-
-        return in_array($n, self::legacyActoAsServicioNames(), true);
-    }
-
     public static function resetCacheForTests(): void
     {
         self::$config = null;
@@ -160,7 +128,6 @@ final class PedidoAtencionMetadata
             'defaults_por_modo' => [],
             'modos' => [],
             'capacity_rules' => [],
-            'legacy_acto_as_servicio_names' => [],
             'acto_coding' => [],
         ];
 
@@ -186,7 +153,6 @@ final class PedidoAtencionMetadata
             'defaults_por_modo',
             'modos',
             'capacity_rules',
-            'legacy_acto_as_servicio_names',
             'acto_coding',
         ] as $key) {
             if (isset($data[$key]) && is_array($data[$key])) {

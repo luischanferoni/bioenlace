@@ -18,10 +18,6 @@ use yii\widgets\ActiveForm;
         <?= $form->field($model, 'acepta_turnos')->dropDownList([ 'SI' => 'SI', 'NO' => 'NO',]) ?>
         <?= $form->field($model, 'acepta_practicas')->dropDownList([ 'SI' => 'SI', 'NO' => 'NO',]) ?>
 
-        <?= $form->field($model, 'hallazgos_ecl')->textArea(); ?>
-        <?= $form->field($model, 'medicamentos_ecl')->textarea(); ?>
-        <?= $form->field($model, 'procedimientos_ecl')->textarea(); ?>
-
         <label class="control-label" for="color">Color</label>
 		<?= Html::input('color', 'color', $model->parametros['color'], ['id' => 'color']) ?>
 

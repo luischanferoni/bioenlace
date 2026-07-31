@@ -8,17 +8,17 @@ use yii\db\Query;
 /**
  * Capacidad acto → servicios institucionales por reglas ECL (metadata).
  *
- * No usa nombres de fila; tipología specialty_* / tipo. Excluye legacy_acto.
+ * No usa nombres de fila; tipología specialty_* / tipo. Excluye tipo=soporte.
  */
 final class EclCapacityCatalog
 {
     private ActoEclMembershipInterface $membership;
 
-    /** @var list<array{id: int, label: string, tipo: string, specialty_code: ?string, specialty_system: ?string, oferta_modelo: string}>|null */
+    /** @var list<array{id: int, label: string, tipo: string, specialty_code: ?string, specialty_system: ?string}>|null */
     private ?array $serviciosOverride;
 
     /**
-     * @param list<array{id: int, label: string, tipo?: string, specialty_code?: ?string, specialty_system?: ?string, oferta_modelo?: string}>|null $serviciosOverride
+     * @param list<array{id: int, label: string, tipo?: string, specialty_code?: ?string, specialty_system?: ?string}>|null $serviciosOverride
      */
     public function __construct(
         ?ActoEclMembershipInterface $membership = null,
@@ -56,7 +56,7 @@ final class EclCapacityCatalog
 
         $byId = [];
         foreach ($this->candidateServicios() as $svc) {
-            if (!$this->isInstitucional($svc)) {
+            if (($svc['tipo'] ?? '') === Servicio::TIPO_SOPORTE) {
                 continue;
             }
             foreach ($matchedEcls as $rule) {
@@ -78,8 +78,6 @@ final class EclCapacityCatalog
     }
 
     /**
-     * ECL no expande el value set completo aquí; actos vienen de puente explícito / caché.
-     *
      * @return list<array{code: string, system: string, display: string, preferente: bool}>
      */
     public function actosForLinea(int $lineaId, ?int $efectorId): array
@@ -88,7 +86,7 @@ final class EclCapacityCatalog
     }
 
     /**
-     * @return list<array{id: int, label: string, tipo: string, specialty_code: ?string, specialty_system: ?string, oferta_modelo: string}>
+     * @return list<array{id: int, label: string, tipo: string, specialty_code: ?string, specialty_system: ?string}>
      */
     private function candidateServicios(): array
     {
@@ -105,27 +103,19 @@ final class EclCapacityCatalog
                     'specialty_system' => isset($row['specialty_system']) && $row['specialty_system'] !== null
                         ? trim((string) $row['specialty_system'])
                         : null,
-                    'oferta_modelo' => trim((string) ($row['oferta_modelo'] ?? Servicio::OFERTA_MODELO_INSTITUCIONAL)),
                 ];
             }
 
             return $out;
         }
 
-        $schema = Servicio::getTableSchema();
-        if ($schema === null) {
+        if (Servicio::getTableSchema() === null) {
             return [];
-        }
-
-        $select = ['id_servicio', 'nombre', 'tipo', 'specialty_code', 'specialty_system'];
-        $hasModelo = isset($schema->columns['oferta_modelo']);
-        if ($hasModelo) {
-            $select[] = 'oferta_modelo';
         }
 
         $rows = (new Query())
             ->from(Servicio::tableName())
-            ->select($select)
+            ->select(['id_servicio', 'nombre', 'tipo', 'specialty_code', 'specialty_system'])
             ->all();
 
         $out = [];
@@ -136,9 +126,6 @@ final class EclCapacityCatalog
                 'tipo' => strtolower(trim((string) ($row['tipo'] ?? Servicio::TIPO_CONSULTA))),
                 'specialty_code' => trim((string) ($row['specialty_code'] ?? '')) ?: null,
                 'specialty_system' => trim((string) ($row['specialty_system'] ?? '')) ?: null,
-                'oferta_modelo' => $hasModelo
-                    ? trim((string) ($row['oferta_modelo'] ?? Servicio::OFERTA_MODELO_INSTITUCIONAL))
-                    : Servicio::OFERTA_MODELO_INSTITUCIONAL,
             ];
         }
 
@@ -146,7 +133,7 @@ final class EclCapacityCatalog
     }
 
     /**
-     * @param array{id: int, label: string, tipo: string, specialty_code: ?string, specialty_system: ?string, oferta_modelo: string} $svc
+     * @param array{id: int, label: string, tipo: string, specialty_code: ?string, specialty_system: ?string} $svc
      * @param array{specialty_system: string|null, specialty_code: string|null, match_tipo: string|null, act_ecl: string} $rule
      */
     private function servicioMatchesRule(array $svc, array $rule): bool
@@ -170,21 +157,5 @@ final class EclCapacityCatalog
         }
 
         return false;
-    }
-
-    /**
-     * @param array{oferta_modelo: string, label: string} $svc
-     */
-    private function isInstitucional(array $svc): bool
-    {
-        $modelo = $svc['oferta_modelo'] ?? Servicio::OFERTA_MODELO_INSTITUCIONAL;
-        if ($modelo === Servicio::OFERTA_MODELO_LEGACY_ACTO) {
-            return false;
-        }
-        if (PedidoAtencionMetadata::isLegacyActoServicioNombre((string) ($svc['label'] ?? ''))) {
-            return false;
-        }
-
-        return true;
     }
 }

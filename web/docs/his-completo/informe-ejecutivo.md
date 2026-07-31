@@ -252,7 +252,7 @@ Eso define un **wedge** claro: instituciones que quieren **mejor operación ambu
 - Reglas de cobertura de obras sociales y prepagas en todos los flujos.
 - Capacidad física (consultorios, equipos) como restricción de agenda.
 - Reportes de producción por servicio para dirección médica.
-- Capacidad por tipología (ECL) + excepciones `linea_acto`; filas `legacy_acto` no se oferten como área.
+- Capacidad por tipología (ECL) + excepciones `linea_acto`; catálogo sin filas-acto.
 
 Ver [producto/glosario-servicio-pes-acto.md](../producto/glosario-servicio-pes-acto.md).
 

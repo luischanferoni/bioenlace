@@ -32,8 +32,6 @@ class PedidoAtencionCapacityEclTest extends Unit
                 $rule['specialty_code'] !== null || $rule['match_tipo'] !== null
             );
         }
-        $this->assertContains('ECOGRAFIA', PedidoAtencionMetadata::legacyActoAsServicioNames());
-        $this->assertTrue(PedidoAtencionMetadata::isLegacyActoServicioNombre('ecografia'));
     }
 
     public function testEclCapacityResolvesUltrasoundToRadiologySpecialty(): void
@@ -48,15 +46,13 @@ class PedidoAtencionCapacityEclTest extends Unit
                 'tipo' => Servicio::TIPO_DIAGNOSTICO,
                 'specialty_code' => '394914008',
                 'specialty_system' => CodingSystems::SNOMED,
-                'oferta_modelo' => Servicio::OFERTA_MODELO_INSTITUCIONAL,
             ],
             [
-                'id' => 17,
-                'label' => 'ECOGRAFIA',
-                'tipo' => Servicio::TIPO_DIAGNOSTICO,
-                'specialty_code' => '394914008',
-                'specialty_system' => CodingSystems::SNOMED,
-                'oferta_modelo' => Servicio::OFERTA_MODELO_LEGACY_ACTO,
+                'id' => 26,
+                'label' => 'ADMINISTRACION',
+                'tipo' => Servicio::TIPO_SOPORTE,
+                'specialty_code' => null,
+                'specialty_system' => null,
             ],
         ]);
 

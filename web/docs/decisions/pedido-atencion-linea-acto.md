@@ -14,11 +14,11 @@ El catálogo `servicios` debe modelar la **oferta de salud del efector** (Health
 2. **PES** = profesional asignado a ese servicio del efector; no redefine el acto clínico.
 3. **`actos_clinicos`** = caché de acto (ServiceRequest.code): `code` + `code_system` estándar (`http://snomed.info/sct`, `http://loinc.org`, value sets FHIR). **Sin** code system local. Fuente de verdad: Snowstorm.
 4. **Capacidad acto → oferta** = **ECL por tipología** (`capacity_rules` en `pedido-atencion.yaml`, membership vía Snowstorm) **∪** puente **`linea_acto`** (excepciones / preferentes). Preferente del puente gana.
-5. **`oferta_modelo`**: `institucional` (default) | `legacy_acto` (filas históricas tipo ECOGRAFIA/MAMOGRAFIA). No se borran IDs; no se ofertan como área en hub.
-6. **`PedidoAtencion`** (DTO + dominio) une servicio institucional × acto × modo; completitud = par resoluble. Misma regla para derivación clínica y pedido paciente (hub: raíz `estudio_pedido`).
-7. **Canales** alimentan el DTO (staff: `analisis-consulta` → `DerivacionInput`; paciente: chips / match liviano). **Coding** de Acto display → SNOMED es dominio (`PedidoAtencionActoCodingService`), no otro cerebro IA. Display sin code **no** se tapa con default de modo.
-8. Defaults de acto por modo en metadata YAML (`pedido-atencion.yaml`), no en orquestadores — solo si no hay display pendiente de tipificar.
-9. Hub paciente: `PedidoAtencionPacienteService` + paso `pedido_acto`; lista filtrada por `pedido_linea_ids` (= `id_servicio` institucional).
+5. **`PedidoAtencion`** (DTO + dominio) une servicio institucional × acto × modo; completitud = par resoluble. Misma regla para derivación clínica y pedido paciente (hub: raíz `estudio_pedido`).
+6. **Canales** alimentan el DTO (staff: `analisis-consulta` → `DerivacionInput`; paciente: chips / match liviano). **Coding** de Acto display → SNOMED es dominio (`PedidoAtencionActoCodingService`), no otro cerebro IA. Display sin code **no** se tapa con default de modo.
+7. Defaults de acto por modo en metadata YAML (`pedido-atencion.yaml`), no en orquestadores — solo si no hay display pendiente de tipificar.
+8. Hub paciente: `PedidoAtencionPacienteService` + paso `pedido_acto`; lista filtrada por `pedido_linea_ids` (= `id_servicio` institucional).
+9. Catálogo `servicios`: solo ofertas del centro; actos y admin se **eliminan** del catálogo (remap FK → contenedor), sin soft-flag.
 
 ## Alternativas descartadas
 
@@ -30,10 +30,10 @@ El catálogo `servicios` debe modelar la **oferta de salud del efector** (Health
 
 ## Consecuencias
 
-- Migración tipifica filas, siembra actos/puentes, marca `legacy_acto` y remapea puentes ECO/MAMO al contenedor imaging.
+- Migración tipifica filas, siembra actos/puentes y **elimina** filas-acto/admin del catálogo (remap a contenedor imaging u oferta válida).
 - `CompositeLineaActoCatalog` = `DbLineaActoCatalog` + `EclCapacityCatalog`.
 - `DerivacionInput` / `ReferralRequestService` delegan completitud y `code`/`code_system` al resolver.
-- Hub paciente cableado al mismo contrato de pedido; no lista `legacy_acto` como área.
+- Hub paciente cableado al mismo contrato de pedido.
 - Nomenclador legacy `practicas` (aranceles) no se migra aquí.
 - Docs de producto deben decir **servicio del centro** / **área**, no “especialidad” como sinónimo de `servicios`.
 

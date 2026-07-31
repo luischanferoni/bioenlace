@@ -116,8 +116,8 @@ final class ReservaTriageCarePlanServicioService
     {
         $q = Servicio::find()
             ->where(['acepta_turnos' => 'SI'])
+            ->andWhere(['<>', 'tipo', Servicio::TIPO_SOPORTE])
             ->orderBy(['nombre' => SORT_ASC]);
-        Servicio::applyOfertaInstitucionalScope($q);
         $rows = $q->all();
 
         $ids = [];

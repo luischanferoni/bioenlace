@@ -13,14 +13,15 @@
 - [x] Sesión operativa (efector, servicio, clase de encounter) para staff.
 - [x] Motivos de consulta y captura alineados al servicio del turno.
 - [x] Tipología de oferta (`tipo`, `specialty_code`) y puente a actos (`actos_clinicos` / `linea_acto`).
-- [x] Capacidad ECL por tipología (`capacity_rules`) ∪ excepciones `linea_acto`; `oferta_modelo` soft-depreca filas-acto.
+- [x] Capacidad ECL por tipología (`capacity_rules`) ∪ excepciones `linea_acto`.
+- [x] Catálogo limpio: actos/admin fuera de `servicios` (migración de higiene).
 
 ## Lo que falta
 
 - [ ] Reglas de cobertura y autorización por financiador en todos los flujos.
 - [ ] Capacidad instalada y restricciones por recurso físico (salas, equipos).
 - [ ] Reportes de producción por servicio unificados para dirección médica.
-- [ ] Eliminar o fusionar del todo filas `legacy_acto` restantes tras remap de agendas históricas.
+- [ ] Unificar contenedores imaging solapados (RADIOLOGIA / DIAGNOSTICO POR IMAGENES / BIOIMAGEN) si el efector lo decide.
 
 ## Relacionado
 

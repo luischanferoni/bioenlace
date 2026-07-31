@@ -100,9 +100,6 @@ class ServiciosController extends Controller
 
         if ($model->load(Yii::$app->request->post())){
             $model->parametros = serialize(array("color" => Yii::$app->request->post('color')));
-            $model->hallazgos_ecl = Yii::$app->request->post("Servicio")['hallazgos_ecl'];
-            $model->medicamentos_ecl = Yii::$app->request->post("Servicio")['medicamentos_ecl'];
-            $model->procedimientos_ecl = Yii::$app->request->post("Servicio")['procedimientos_ecl'];
             $model->acepta_turnos = Yii::$app->request->post("Servicio")['acepta_turnos'];
             $model->acepta_practicas = Yii::$app->request->post("Servicio")['acepta_practicas'];
             if ($model->save()) {

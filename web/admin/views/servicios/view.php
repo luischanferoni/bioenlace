@@ -29,11 +29,12 @@ $this->params['breadcrumbs'][] = $this->title;
         'model' => $model,
         'attributes' => [
             'id_servicio',
+            'nombre',
+            'tipo',
             'acepta_turnos',
             'acepta_practicas',
-            'hallazgos_ecl',
-            'medicamentos_ecl',
-            'procedimientos_ecl',
+            'specialty_code',
+            'specialty_system',
         ],
     ]) ?>
 

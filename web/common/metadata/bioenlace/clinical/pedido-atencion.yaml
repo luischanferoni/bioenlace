@@ -50,8 +50,3 @@ acto_coding:
   snomed_category: procedimientos
   snowstorm_profile: procedimientos
   candidate_limit: 8
-
-# Nombres legacy modelados como acto (no ofertar como área en hub)
-legacy_acto_as_servicio_names:
-  - ECOGRAFIA
-  - MAMOGRAFIA

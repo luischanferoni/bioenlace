@@ -51,7 +51,7 @@ Efector (centro)
 
 ## Relación con pedido línea × acto
 
-El pedido une **acto** (qué) y **servicio institucional** (dónde/quién agenda). Capacidad: ECL por tipología de oferta + `linea_acto` para excepciones. Filas `oferta_modelo=legacy_acto` (p. ej. ECOGRAFIA histórica) no son áreas del hub. Los **canales** (nota staff / hub paciente) alimentan `PedidoAtencion`; la tipificación SNOMED del acto es **dominio**, no otro cerebro IA. Ver [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
+El pedido une **acto** (qué) y **servicio institucional** (dónde/quién agenda). Capacidad: ECL por tipología de oferta + `linea_acto` para excepciones. No modelar actos (eco, ECG, PAP…) como filas de `servicios`. Los **canales** (nota staff / hub paciente) alimentan `PedidoAtencion`; la tipificación SNOMED del acto es **dominio**, no otro cerebro IA. Ver [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
 
 ## Relacionado
 

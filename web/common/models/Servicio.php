@@ -333,6 +333,10 @@ class Servicio extends \yii\db\ActiveRecord
     /**
      * Genera términos de búsqueda para matchear texto de usuario (ej. "cardiólogo", "cardiologo")
      * a partir del nombre en BD (ej. "CARDIOLOGIA"). Dinámico para cualquier servicio.
+     *
+     * No inventa sinónimos coloquiales (p. ej. "clínico" ↛ "MED CLINICA"): eso es selección
+     * del profesional o alias declarativo, no morfología.
+     *
      * @param string $nombreServicio Nombre del servicio en BD (ej. "CARDIOLOGIA", "ODONTOLOGIA")
      * @return string[]
      */
@@ -348,13 +352,13 @@ class Servicio extends \yii\db\ActiveRecord
         // Raíz sin -ia: CARDIOLOGIA -> cardiolog (para matchear cardiólogo, cardiologo, cardiología)
         if (preg_match('/^(.+)(ia|ía)$/u', $lower, $m)) {
             $raiz = $m[1];
-            $terms[] = $raiz . 'o';   // cardiologo
-            $terms[] = $raiz . 'a';   // cardiologa
-            $terms[] = $raiz;         // cardiolog
+            $terms[] = $raiz . 'o';
+            $terms[] = $raiz . 'a';
+            $terms[] = $raiz;
         }
-        // Variantes con tildes comunes
-        $terms[] = mb_strtolower($n, 'UTF-8');
-        return array_unique($terms);
+        $terms[] = mb_strtolower(self::quitarTildes($n), 'UTF-8');
+
+        return array_values(array_unique(array_filter($terms, static fn ($t) => is_string($t) && $t !== '')));
     }
 
     /**
@@ -371,9 +375,11 @@ class Servicio extends \yii\db\ActiveRecord
 
     /**
      * Buscar servicio por nombre de forma dinámica desde la base de datos.
-     * Matchea nombre o variantes (cardiólogo, cardiologo, cardiología) contra servicios existentes.
+     * Matchea nombre o variantes morfológicas del **nombre completo** (cardiólogo ↔ CARDIOLOGIA).
+     * No resuelve apodos cortos contra nombres compuestos: si no hay match claro, null
+     * (el cliente ofrece chips / el profesional confirma).
      *
-     * @param string $nombre Nombre o mención del servicio (ej. "odontologo", "cardiología", "el oftalmologo")
+     * @param string $nombre Nombre o mención del servicio (ej. "odontologo", "cardiología")
      * @return int|null ID del servicio encontrado
      */
     public static function findByName($nombre)
@@ -383,34 +389,45 @@ class Servicio extends \yii\db\ActiveRecord
         }
         $nombre = trim($nombre);
         $nombreNorm = strtoupper(self::quitarTildes($nombre));
-        $nombreLower = mb_strtolower($nombre, 'UTF-8');
+        $nombreLower = mb_strtolower(self::quitarTildes($nombre), 'UTF-8');
 
         try {
             // 1) Búsqueda exacta en BD
             $servicio = self::find()->where(['nombre' => $nombreNorm])->one();
             if ($servicio) {
-                return (int)$servicio->id_servicio;
+                return (int) $servicio->id_servicio;
             }
 
             // 2) LIKE en BD por si el nombre en BD tiene formato distinto
             $servicio = self::find()->where(['LIKE', 'nombre', $nombreNorm])->one();
             if ($servicio) {
-                return (int)$servicio->id_servicio;
+                return (int) $servicio->id_servicio;
             }
 
-            // 3) Matchear contra términos generados desde todos los servicios (dinámico)
-            $servicios = self::getServiciosConTurnos();
-            foreach ($servicios as $s) {
-                $terms = self::getSearchTermsForNombre($s->nombre);
-                foreach ($terms as $term) {
-                    if ($term === '' || strlen($term) < 3) {
+            // 3) Términos del nombre completo: igualdad o el término aparece en el texto del usuario.
+            //    No al revés (evita "clinico" ⊆ "med clinico").
+            $bestId = null;
+            $bestLen = 0;
+            foreach (self::getServiciosConTurnos() as $s) {
+                foreach (self::getSearchTermsForNombre($s->nombre) as $term) {
+                    $termNorm = mb_strtolower(self::quitarTildes($term), 'UTF-8');
+                    if ($termNorm === '' || mb_strlen($termNorm, 'UTF-8') < 3) {
                         continue;
                     }
-                    // El usuario puede decir "el cardiologo" o "cardiologo"
-                    if ($nombreLower === $term || strpos($nombreLower, $term) !== false || strpos($term, $nombreLower) !== false) {
-                        return (int)$s->id_servicio;
+                    $hit = $nombreLower === $termNorm
+                        || mb_strpos($nombreLower, $termNorm) !== false;
+                    if (!$hit) {
+                        continue;
+                    }
+                    $len = mb_strlen($termNorm, 'UTF-8');
+                    if ($len > $bestLen) {
+                        $bestLen = $len;
+                        $bestId = (int) $s->id_servicio;
                     }
                 }
+            }
+            if ($bestId !== null) {
+                return $bestId;
             }
         } catch (\Exception $e) {
             Yii::error("Error buscando servicio por nombre '{$nombre}': " . $e->getMessage(), 'servicio-model');
@@ -431,8 +448,7 @@ class Servicio extends \yii\db\ActiveRecord
         if (empty($userQuery) || !is_string($userQuery)) {
             return null;
         }
-        $queryLower = mb_strtolower(trim($userQuery), 'UTF-8');
-        $querySinTildes = self::quitarTildes($queryLower);
+        $queryLower = mb_strtolower(self::quitarTildes(trim($userQuery)), 'UTF-8');
 
         $bestId = null;
         $bestLen = 0;
@@ -440,14 +456,15 @@ class Servicio extends \yii\db\ActiveRecord
         foreach (self::getServiciosConTurnos() as $servicio) {
             $terms = self::getSearchTermsForNombre($servicio->nombre);
             foreach ($terms as $term) {
-                if ($term === '' || strlen($term) < 3) {
+                $termSinTildes = mb_strtolower(self::quitarTildes($term), 'UTF-8');
+                if ($termSinTildes === '' || mb_strlen($termSinTildes, 'UTF-8') < 3) {
                     continue;
                 }
-                $termSinTildes = self::quitarTildes($term);
-                if (strpos($queryLower, $term) !== false || strpos($querySinTildes, $termSinTildes) !== false) {
-                    if (strlen($term) > $bestLen) {
-                        $bestLen = strlen($term);
-                        $bestId = (int)$servicio->id_servicio;
+                if (mb_strpos($queryLower, $termSinTildes) !== false) {
+                    $len = mb_strlen($termSinTildes, 'UTF-8');
+                    if ($len > $bestLen) {
+                        $bestLen = $len;
+                        $bestId = (int) $servicio->id_servicio;
                     }
                 }
             }

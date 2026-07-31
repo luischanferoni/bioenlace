@@ -45,20 +45,40 @@ final class PedidoAtencionService
         $candidates = ['lineas' => [], 'actos' => []];
 
         if ($pedido->hasLinea() && !$pedido->hasActo()) {
-            $default = PedidoAtencionMetadata::defaultActoForModo($pedido->modo);
-            if ($default !== null) {
+            // Display sin code: no aplicar default de modo (perdería el acto específico).
+            if ($pedido->hasActoDisplayWithoutCode()) {
                 $fromPuente = $this->catalog->actosForLinea((int) $pedido->lineaId, $pedido->efectorId);
-                $match = $this->pickActoMatching($fromPuente, $default['code'], $default['code_system']);
-                if ($match !== null) {
-                    $pedido = $pedido->withActo($match['code'], $match['system'], $match['display']);
-                } elseif ($fromPuente === []) {
-                    // Sin puente: aún así aplicar default de metadata (interconsulta genérica).
-                    $pedido = $pedido->withActo(
-                        $default['code'],
-                        $default['code_system'],
-                        $default['display']
-                    );
+                if ($fromPuente !== []) {
+                    $candidates['actos'] = $fromPuente;
+                }
+            } else {
+                $default = PedidoAtencionMetadata::defaultActoForModo($pedido->modo);
+                if ($default !== null) {
+                    $fromPuente = $this->catalog->actosForLinea((int) $pedido->lineaId, $pedido->efectorId);
+                    $match = $this->pickActoMatching($fromPuente, $default['code'], $default['code_system']);
+                    if ($match !== null) {
+                        $pedido = $pedido->withActo($match['code'], $match['system'], $match['display']);
+                    } elseif ($fromPuente === []) {
+                        // Sin puente: aún así aplicar default de metadata (interconsulta genérica).
+                        $pedido = $pedido->withActo(
+                            $default['code'],
+                            $default['code_system'],
+                            $default['display']
+                        );
+                    } else {
+                        $preferente = $this->pickPreferenteActo($fromPuente);
+                        if ($preferente !== null) {
+                            $pedido = $pedido->withActo(
+                                $preferente['code'],
+                                $preferente['system'],
+                                $preferente['display']
+                            );
+                        } else {
+                            $candidates['actos'] = $fromPuente;
+                        }
+                    }
                 } else {
+                    $fromPuente = $this->catalog->actosForLinea((int) $pedido->lineaId, $pedido->efectorId);
                     $preferente = $this->pickPreferenteActo($fromPuente);
                     if ($preferente !== null) {
                         $pedido = $pedido->withActo(
@@ -66,24 +86,12 @@ final class PedidoAtencionService
                             $preferente['system'],
                             $preferente['display']
                         );
+                    } elseif (count($fromPuente) === 1) {
+                        $only = $fromPuente[0];
+                        $pedido = $pedido->withActo($only['code'], $only['system'], $only['display']);
                     } else {
                         $candidates['actos'] = $fromPuente;
                     }
-                }
-            } else {
-                $fromPuente = $this->catalog->actosForLinea((int) $pedido->lineaId, $pedido->efectorId);
-                $preferente = $this->pickPreferenteActo($fromPuente);
-                if ($preferente !== null) {
-                    $pedido = $pedido->withActo(
-                        $preferente['code'],
-                        $preferente['system'],
-                        $preferente['display']
-                    );
-                } elseif (count($fromPuente) === 1) {
-                    $only = $fromPuente[0];
-                    $pedido = $pedido->withActo($only['code'], $only['system'], $only['display']);
-                } else {
-                    $candidates['actos'] = $fromPuente;
                 }
             }
         }

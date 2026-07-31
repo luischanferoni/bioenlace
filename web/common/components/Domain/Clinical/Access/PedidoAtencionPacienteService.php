@@ -108,7 +108,15 @@ final class PedidoAtencionPacienteService
             $draft[self::DRAFT_MODO] = PedidoAtencion::MODO_ESTUDIO;
         }
 
-        $parsed = self::parseActoValue(trim((string) ($draft[self::DRAFT_ACTO] ?? '')));
+        $rawActo = trim((string) ($draft[self::DRAFT_ACTO] ?? ''));
+        $parsed = self::parseActoValue($rawActo);
+        if ($parsed === null && $rawActo !== '') {
+            $matched = $this->matchActoTextoReservable($rawActo);
+            if ($matched !== null) {
+                $draft[self::DRAFT_ACTO] = $matched['system'] . '|' . $matched['code'];
+                $parsed = $matched;
+            }
+        }
         if ($parsed === null) {
             unset($draft[self::DRAFT_LINEA_IDS], $draft[self::DRAFT_SERVICIO_RESUELTO], $draft[self::DRAFT_MENSAJE]);
 
@@ -186,11 +194,54 @@ final class PedidoAtencionPacienteService
 
             return ['code' => $code, 'system' => $system];
         }
-        if (!CodingSystems::isAllowed(CodingSystems::SNOMED, PedidoAtencionMetadata::allowedSystems())) {
+        // Código numérico SNOMED suelto (no texto libre de display).
+        if (preg_match('/^\d{6,18}$/', $raw) === 1
+            && CodingSystems::isAllowed(CodingSystems::SNOMED, PedidoAtencionMetadata::allowedSystems())
+        ) {
+            return ['code' => $raw, 'system' => CodingSystems::SNOMED];
+        }
+
+        return null;
+    }
+
+    /**
+     * Match liviano de texto libre contra actos reservables (1 hit → tipado).
+     *
+     * @return array{code: string, system: string, display: string}|null
+     */
+    public function matchActoTextoReservable(string $texto): ?array
+    {
+        $norm = mb_strtolower(trim($texto), 'UTF-8');
+        if ($norm === '' || mb_strlen($norm) < 3) {
             return null;
         }
 
-        return ['code' => $raw, 'system' => CodingSystems::SNOMED];
+        $exact = [];
+        $partial = [];
+        foreach ($this->actosReservables() as $acto) {
+            $code = (string) $acto['code'];
+            $system = (string) $acto['system'];
+            $display = trim((string) $acto['display']);
+            $displayNorm = mb_strtolower($display, 'UTF-8');
+            $row = [
+                'code' => $code,
+                'system' => $system,
+                'display' => $display !== '' ? $display : $code,
+            ];
+            if ($displayNorm === $norm || $code === trim($texto)) {
+                $exact[] = $row;
+            } elseif ($displayNorm !== '' && (str_contains($displayNorm, $norm) || str_contains($norm, $displayNorm))) {
+                $partial[] = $row;
+            }
+        }
+        if (count($exact) === 1) {
+            return $exact[0];
+        }
+        if (count($exact) === 0 && count($partial) === 1) {
+            return $partial[0];
+        }
+
+        return null;
     }
 
     /**

@@ -62,6 +62,16 @@ final class PedidoAtencion
             && $this->actoSystem !== null && $this->actoSystem !== '';
     }
 
+    /**
+     * Texto de acto sin código tipado (no debe taparse con default de modo).
+     */
+    public function hasActoDisplayWithoutCode(): bool
+    {
+        return !$this->hasActo()
+            && $this->actoDisplay !== null
+            && trim($this->actoDisplay) !== '';
+    }
+
     public function withLinea(int $lineaId): self
     {
         $clone = clone $this;

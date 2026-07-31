@@ -161,6 +161,7 @@ final class PedidoAtencionMetadata
             'modos' => [],
             'capacity_rules' => [],
             'legacy_acto_as_servicio_names' => [],
+            'acto_coding' => [],
         ];
 
         $path = ProductMetadataPaths::pedidoAtencionFile();
@@ -180,12 +181,39 @@ final class PedidoAtencionMetadata
             return self::$config;
         }
 
-        foreach (['allowed_systems', 'defaults_por_modo', 'modos', 'capacity_rules', 'legacy_acto_as_servicio_names'] as $key) {
+        foreach ([
+            'allowed_systems',
+            'defaults_por_modo',
+            'modos',
+            'capacity_rules',
+            'legacy_acto_as_servicio_names',
+            'acto_coding',
+        ] as $key) {
             if (isset($data[$key]) && is_array($data[$key])) {
                 self::$config[$key] = $data[$key];
             }
         }
 
         return self::$config;
+    }
+
+    /**
+     * @return array{snomed_category: string, snowstorm_profile: string, candidate_limit: int}
+     */
+    public static function actoCodingConfig(): array
+    {
+        $raw = self::load()['acto_coding'] ?? [];
+        if (!is_array($raw)) {
+            $raw = [];
+        }
+        $category = trim((string) ($raw['snomed_category'] ?? 'procedimientos'));
+        $profile = trim((string) ($raw['snowstorm_profile'] ?? $category));
+        $limit = (int) ($raw['candidate_limit'] ?? 8);
+
+        return [
+            'snomed_category' => $category !== '' ? $category : 'procedimientos',
+            'snowstorm_profile' => $profile !== '' ? $profile : 'procedimientos',
+            'candidate_limit' => $limit > 0 ? min($limit, 20) : 8,
+        ];
     }
 }

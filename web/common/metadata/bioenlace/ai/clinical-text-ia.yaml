@@ -130,7 +130,7 @@ encounter_capture_extraction:
     ConsultaMedicamentos: medicación mencionada o indicada; objetos Nombre+Tipo(mentioned|ordered)+Cantidad+Via+Frecuencia+tipos/duración — si Tipo=ordered exigir Cantidad y Frecuencia; mentioned basta el nombre
     ConsultaPracticas: mediciones o prácticas realizadas en la consulta (tensión arterial / TA con Resultado 138/88, ECG, etc.); objetos Practica+Resultado+Codigo — Resultado y Codigo opcionales; nunca reposo/dieta/control
     ConsultaIndicaciones: instrucciones al paciente (reposo, hidratación, control); objetos Indicacion+Tipo(counseling|conditional|follow_up)+Plazo dias — plazo solo si Tipo=follow_up o hay días explícitos; nunca signos vitales ni TA
-    ConsultaDerivaciones: derivación a otro servicio o profesional
+    ConsultaDerivaciones: derivación/pedido a otro servicio del centro; campos Servicio (área institucional), Acto (práctica/estudio concreto, no el área), Modo (consulta|interconsulta|practica|estudio); si conocés SCTID numérico podés enviarlo en codigo o Acto code
     ConsultaPracticasOftalmologia: práctica o procedimiento oftalmológico
     ConsultaPracticasOftalmologiaEstudios: estudio oftalmológico solicitado o realizado
     ConsultasRecetaLentes: receta o indicación de lentes

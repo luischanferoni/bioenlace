@@ -4,6 +4,8 @@ namespace common\models\Clinical\Input;
 
 use common\components\Domain\Clinical\Access\CodingSystems;
 use common\components\Domain\Clinical\Access\PedidoAtencion;
+use common\components\Domain\Clinical\Access\PedidoAtencionActoCoderInterface;
+use common\components\Domain\Clinical\Access\PedidoAtencionActoCodingService;
 use common\components\Domain\Clinical\Access\PedidoAtencionService;
 use common\models\ConsultaDerivaciones;
 use common\models\Servicio;
@@ -13,6 +15,7 @@ use yii\base\Model;
  * Contrato de entrada de una derivación/interconsulta (extracción IA → revisión → ServiceRequest referral).
  *
  * Completitud: PedidoAtencion (línea × acto). El efector destino suele ser el del encounter.
+ * Canales alimentan este DTO; coding de Acto display es dominio ({@see PedidoAtencionActoCodingService}).
  */
 final class DerivacionInput extends Model
 {
@@ -49,12 +52,22 @@ final class DerivacionInput extends Model
     /** @var string */
     public $modo = PedidoAtencion::MODO_INTERCONSULTA;
 
+    /** @var list<array{code: string, system: string, display: string}> */
+    private array $actoCodingCandidates = [];
+
+    private static ?PedidoAtencionActoCoderInterface $actoCoderOverride = null;
+
     /**
      * @return list<string>
      */
     public static function promptFieldNames(): array
     {
-        return [self::FIELD_SERVICIO, self::FIELD_ACTO_DISPLAY];
+        return [self::FIELD_SERVICIO, self::FIELD_ACTO_DISPLAY, self::FIELD_MODO];
+    }
+
+    public static function setActoCoderForTests(?PedidoAtencionActoCoderInterface $coder): void
+    {
+        self::$actoCoderOverride = $coder;
     }
 
     /**
@@ -66,6 +79,7 @@ final class DerivacionInput extends Model
         if (is_string($row)) {
             $model->servicio = trim($row) !== '' ? trim($row) : null;
             $model->normalize();
+            $model->enrichActoCoding();
 
             return $model;
         }
@@ -127,6 +141,7 @@ final class DerivacionInput extends Model
         ]);
         $model->modo = self::normalizeModo($modo);
         $model->normalize();
+        $model->enrichActoCoding();
 
         return $model;
     }
@@ -159,6 +174,7 @@ final class DerivacionInput extends Model
      */
     public function missingFieldsForCompleteness(): array
     {
+        $this->enrichActoCoding();
         $resolved = (new PedidoAtencionService())->resolve($this->toPedido());
         $missing = [];
         foreach ($resolved['missing'] as $slot) {
@@ -180,6 +196,7 @@ final class DerivacionInput extends Model
      */
     public function buildIssues(string $category, int $index): array
     {
+        $this->enrichActoCoding();
         $resolved = (new PedidoAtencionService())->resolve($this->toPedido());
         $issues = [];
 
@@ -202,12 +219,16 @@ final class DerivacionInput extends Model
         }
 
         if (in_array('acto', $resolved['missing'], true)) {
+            $actoCandidates = $resolved['candidates']['actos'];
+            if ($actoCandidates === [] && $this->actoCodingCandidates !== []) {
+                $actoCandidates = $this->actoCodingCandidates;
+            }
             $options = array_map(
                 static fn (array $a) => [
                     'value' => $a['system'] . '|' . $a['code'],
                     'label' => $a['display'] !== '' ? $a['display'] : $a['code'],
                 ],
-                $resolved['candidates']['actos']
+                $actoCandidates
             );
             if ($options !== []) {
                 $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
@@ -267,6 +288,11 @@ final class DerivacionInput extends Model
             }
         }
 
+        if ($field === self::FIELD_MODO) {
+            $row[self::FIELD_MODO] = is_string($value) ? trim($value) : (string) $value;
+            $row['modo'] = $row[self::FIELD_MODO];
+        }
+
         return $row;
     }
 
@@ -277,6 +303,9 @@ final class DerivacionInput extends Model
     {
         $out = [];
         foreach (Servicio::getServiciosConTurnos() as $s) {
+            if (!$s instanceof Servicio || !$s->esOfertaInstitucional()) {
+                continue;
+            }
             $id = (int) ($s->id_servicio ?? 0);
             $nombre = trim((string) ($s->nombre ?? ''));
             if ($id <= 0 || $nombre === '') {
@@ -306,6 +335,7 @@ final class DerivacionInput extends Model
     public function resolveTargets(?int $defaultEfectorId): array
     {
         $this->normalize();
+        $this->enrichActoCoding();
         if (($this->idEfector === null || $this->idEfector <= 0) && $defaultEfectorId !== null && $defaultEfectorId > 0) {
             $this->idEfector = $defaultEfectorId;
         }
@@ -340,6 +370,33 @@ final class DerivacionInput extends Model
         }
 
         return ConsultaDerivaciones::INTERCONSULTA;
+    }
+
+    private function enrichActoCoding(): void
+    {
+        if ($this->actoCode !== null && trim((string) $this->actoCode) !== '') {
+            $this->actoCodingCandidates = [];
+
+            return;
+        }
+        $display = trim((string) ($this->actoDisplay ?? ''));
+        if ($display === '') {
+            $this->actoCodingCandidates = [];
+
+            return;
+        }
+
+        $coder = self::$actoCoderOverride ?? PedidoAtencionActoCodingService::defaultService();
+        $result = $coder->code($display, $this->modo);
+        if ($result['resolved'] !== null) {
+            $this->actoCode = $result['resolved']['code'];
+            $this->actoSystem = $result['resolved']['system'];
+            $this->actoDisplay = $result['resolved']['display'];
+            $this->actoCodingCandidates = [];
+
+            return;
+        }
+        $this->actoCodingCandidates = $result['candidates'];
     }
 
     private function normalize(): void

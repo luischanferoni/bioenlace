@@ -16,4 +16,5 @@ Frase canónica:
 - En docs/PRs/código nuevo: preferir **servicio del centro** / **área** / **línea**; no usar “especialidad” como sinónimo de `id_servicio`.
 - `specialty_code` en `servicios` = tipología de **esa oferta**, no identidad del profesional.
 - Capacidad acto→oferta: `capacity_rules` (ECL) ∪ `linea_acto`; filas `oferta_modelo=legacy_acto` no son áreas del hub.
+- Canales (staff extract / paciente chips) alimentan `PedidoAtencion`; coding Acto→SNOMED es dominio (`PedidoAtencionActoCodingService`), no otro cerebro.
 - Turnos y PES usan `id_servicio` institucional; pedidos llevan además `code`/`code_system` del acto cuando aplica.

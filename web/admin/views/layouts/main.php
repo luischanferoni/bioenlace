@@ -110,6 +110,7 @@ $home = Yii::$app->getHomeUrl();
                                         ['label' => 'Quejas de pacientes', 'url' => ['/queja-paciente/index']],
                                         ['label' => 'Costos de IA', 'url' => ['/costos/index']],
                                         ['label' => 'Auditoría captura clínica', 'url' => ['/captura-clinica-audit/index']],
+                                        ['label' => 'Auditoría adelantamiento (A03)', 'url' => ['/adelantamiento-audit/index']],
                                     ],
                                 ],
                                 [

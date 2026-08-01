@@ -6,12 +6,14 @@ use common\components\Domain\Clinical\Capture\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Legacy\ConsultaProcesamientoService;
 use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
 use common\models\Clinical\Input\DerivacionInput;
+use common\components\Domain\Clinical\Service\EncounterCaptureAuditService;
 use common\components\Domain\Clinical\Service\EncounterOpenProblemsService;
 use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
 use common\components\Platform\Ai\SpeechToText\SttConfigService;
 use common\models\Clinical\EncounterCapture;
+use common\models\Clinical\EncounterCaptureAudit;
 use common\models\Clinical\EncounterDefinition;
 use Yii;
 use yii\web\UploadedFile;
@@ -26,9 +28,14 @@ final class EncounterCapturePipelineService
 
     private EncounterDocumentationService $documentation;
 
-    public function __construct(?EncounterDocumentationService $documentation = null)
-    {
+    private EncounterCaptureAuditService $audit;
+
+    public function __construct(
+        ?EncounterDocumentationService $documentation = null,
+        ?EncounterCaptureAuditService $audit = null
+    ) {
         $this->documentation = $documentation ?? new EncounterDocumentationService();
+        $this->audit = $audit ?? new EncounterCaptureAuditService();
     }
 
     /**
@@ -176,6 +183,15 @@ final class EncounterCapturePipelineService
             return $this->fail(500, 'No se pudo persistir la captura: ' . implode(', ', $capture->getFirstErrors()));
         }
 
+        $sttMeta = $capture->getSttMeta();
+        $this->audit->record($capture, EncounterCaptureAudit::EVENT_UPLOADED, [
+            'stage' => $capture->stage,
+            'has_audio' => $capture->hasAudio(),
+            'has_transcript' => $capture->hasTranscript(),
+            'stt_provenance' => $sttMeta['provenance'] ?? null,
+            'pending_server_stt' => !empty($sttMeta['pending_server_stt']),
+        ]);
+
         return $this->ok($capture, 'Captura registrada.');
     }
 
@@ -215,6 +231,10 @@ final class EncounterCapturePipelineService
             $capture->attempts_stt = (int) $capture->attempts_stt + 1;
             $capture->updated_at = date('Y-m-d H:i:s');
             $capture->save(false);
+            $this->audit->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
+                'error_code' => 'audio_missing',
+                'attempts_stt' => (int) $capture->attempts_stt,
+            ]);
 
             return $this->fail(404, $capture->last_error, $capture);
         }
@@ -225,6 +245,10 @@ final class EncounterCapturePipelineService
             $capture->attempts_stt = (int) $capture->attempts_stt + 1;
             $capture->updated_at = date('Y-m-d H:i:s');
             $capture->save(false);
+            $this->audit->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
+                'error_code' => 'server_stt_disabled',
+                'attempts_stt' => (int) $capture->attempts_stt,
+            ]);
 
             return $this->fail(400, $capture->last_error, $capture);
         }
@@ -241,6 +265,11 @@ final class EncounterCapturePipelineService
             $capture->stage = EncounterCapture::STAGE_STT_FAILED;
             $capture->last_error = $err !== '' ? $err : 'No se pudo transcribir el audio.';
             $capture->save(false);
+            $this->audit->record($capture, EncounterCaptureAudit::EVENT_STT_FAILED, [
+                'error_code' => 'empty_transcript',
+                'attempts_stt' => (int) $capture->attempts_stt,
+                'modelo' => $modelo,
+            ]);
 
             return $this->fail(502, $capture->last_error, $capture);
         }
@@ -256,6 +285,12 @@ final class EncounterCapturePipelineService
         $capture->stage = EncounterCapture::STAGE_TRANSCRIBED;
         $capture->last_error = null;
         $capture->save(false);
+        $this->audit->record($capture, EncounterCaptureAudit::EVENT_STT_OK, [
+            'attempts_stt' => (int) $capture->attempts_stt,
+            'provenance' => ClinicalSpeechInputResolver::PROVENANCE_SERVER,
+            'modelo_usado' => $result['modelo_usado'] ?? null,
+            'transcript_length' => mb_strlen($texto),
+        ]);
 
         return $this->ok($capture, 'Transcripción lista.');
     }
@@ -315,6 +350,10 @@ final class EncounterCapturePipelineService
             $capture->stage = EncounterCapture::STAGE_ANALYSIS_FAILED;
             $capture->last_error = $msg !== '' ? $msg : 'Error al analizar la consulta.';
             $capture->save(false);
+            $this->audit->record($capture, EncounterCaptureAudit::EVENT_ANALYSIS_FAILED, [
+                'attempts_analysis' => (int) $capture->attempts_analysis,
+                'error_code' => 'analysis_failed',
+            ]);
             $status = (int) ($out['__statusCode'] ?? 500);
 
             return $this->fail($status > 0 ? $status : 500, $capture->last_error, $capture);
@@ -345,6 +384,14 @@ final class EncounterCapturePipelineService
         $capture->stage = EncounterCapture::STAGE_READY_FOR_REVIEW;
         $capture->last_error = null;
         $capture->save(false);
+        $this->audit->record(
+            $capture,
+            EncounterCaptureAudit::EVENT_ANALYZED,
+            array_merge(
+                ['attempts_analysis' => (int) $capture->attempts_analysis],
+                is_array($review) ? EncounterCaptureAuditService::buildAnalyzedMeta($review) : []
+            )
+        );
 
         return $this->ok($capture, 'Análisis listo.', true);
     }
@@ -436,11 +483,25 @@ final class EncounterCapturePipelineService
         $capture->updated_at = date('Y-m-d H:i:s');
         $capture->setStagedItemIds($capture->getStagedItemIds());
 
+        $reviewForAudit = is_array($analysis['capture_review'] ?? null) ? $analysis['capture_review'] : [];
+        $acceptanceMeta = EncounterCaptureAuditService::buildAcceptanceMeta(
+            $reviewForAudit,
+            $capture->getStagedItemIds(),
+            is_array($resolutions) && $resolutions !== [] ? $resolutions : null
+        );
+
         if (empty($out['success'])) {
             $msg = trim((string) ($out['message'] ?? 'Error al guardar.'));
             $capture->stage = EncounterCapture::STAGE_SAVE_FAILED;
             $capture->last_error = $msg !== '' ? $msg : 'Error al guardar.';
             $capture->save(false);
+            $this->audit->record($capture, EncounterCaptureAudit::EVENT_SAVE_FAILED, array_merge(
+                [
+                    'attempts_save' => (int) $capture->attempts_save,
+                    'error_code' => 'save_failed',
+                ],
+                $acceptanceMeta
+            ));
             $status = (int) ($out['__statusCode'] ?? 500);
 
             return $this->fail($status > 0 ? $status : 500, $capture->last_error, $capture, [
@@ -454,6 +515,10 @@ final class EncounterCapturePipelineService
             $capture->encounter_id = (int) $out['encounter_id'];
         }
         $capture->save(false);
+        $this->audit->record($capture, EncounterCaptureAudit::EVENT_SAVED, array_merge(
+            ['attempts_save' => (int) $capture->attempts_save],
+            $acceptanceMeta
+        ));
 
         // Tras completar, el audio crudo ya no es necesario para el pipeline.
         $this->deleteAudioFile($capture);
@@ -537,11 +602,17 @@ final class EncounterCapturePipelineService
         }
 
         $this->deleteAudioFile($capture);
+        $hadAnalysis = $capture->getAnalysisResponse() !== [];
+        $previousStage = $capture->stage;
         $capture->stage = EncounterCapture::STAGE_DISCARDED;
         $capture->last_error = null;
         $capture->audio_relative_path = null;
         $capture->updated_at = date('Y-m-d H:i:s');
         $capture->save(false);
+        $this->audit->record($capture, EncounterCaptureAudit::EVENT_DISCARDED, [
+            'previous_stage' => $previousStage,
+            'previous_had_analysis' => $hadAnalysis,
+        ]);
 
         return $this->ok($capture, 'Captura descartada.');
     }
@@ -624,6 +695,11 @@ final class EncounterCapturePipelineService
         if (!$capture->save(false)) {
             return $this->fail(500, 'No se pudieron guardar las resoluciones.', $capture);
         }
+
+        $this->audit->record($capture, EncounterCaptureAudit::EVENT_RESOLUTIONS_APPLIED, [
+            'issue_ids' => array_values(array_map('strval', array_keys($resolutions))),
+            'puede_confirmar' => ($review['puede_confirmar'] ?? false) === true,
+        ]);
 
         return $this->ok($capture, 'Resoluciones aplicadas.', true);
     }

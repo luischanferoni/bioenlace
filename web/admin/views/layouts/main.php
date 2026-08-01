@@ -111,6 +111,9 @@ $home = Yii::$app->getHomeUrl();
                                         ['label' => 'Costos de IA', 'url' => ['/costos/index']],
                                         ['label' => 'Auditoría captura clínica', 'url' => ['/captura-clinica-audit/index']],
                                         ['label' => 'Auditoría adelantamiento (A03)', 'url' => ['/adelantamiento-audit/index']],
+                                        ['label' => 'Auditoría agent_run', 'url' => ['/agent-run-audit/index']],
+                                        ['label' => 'Auditoría anti no-show (A04)', 'url' => ['/antinoshow-audit/index']],
+                                        ['label' => 'Auditoría resolución (A01/A02/A06)', 'url' => ['/resolucion-audit/index']],
                                     ],
                                 ],
                                 [

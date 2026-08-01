@@ -20,6 +20,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Perfil de comportamiento en turnos | `perfil-comportamiento-turnos/` | Perfil factual persistido; eventos, materialización, políticas y transparencia |
 | Auditoría captura clínica | `auditoria-captura-clinica/` | Trail pipeline + admin superadmin (Fase 1) |
 | Auditoría adelantamiento turnos (A03) | `auditoria-adelantamiento-turnos/` | Campañas/ofertas + admin superadmin (Fase 0) |
+| Auditoría agentes autónomos | `auditoria-agentes-autonomos/` | agent_run genérico + A04 + resolución |
 
 ## Planes archivados (carpeta eliminada)
 

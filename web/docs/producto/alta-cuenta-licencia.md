@@ -32,6 +32,10 @@ flowchart LR
 4. **Plan clínica/centro:** AMB / EMER / IMP opcionales (al menos uno), con cantidad de profesionales editable; dictado/videollamada solo si hay ambulatorio.
 5. **Desvincular pago ministerio / asociar:** AdminEfector autenticado vía API `desvincular-pago-ministerio` / `asociar-pago-ministerio` (esta última genera solicitud).
 
+## Demo sandbox (probar sin crear cuenta)
+
+Desde el sitio institucional, CTA **Probar demo** pide un código de un solo uso (`POST /api/v1/licencia/demo-acceso`) y redirige a la app (`/site/demo-entrar`). Usa una cuenta seed (p. ej. `medico_med_general_863`). Flag `demo_sandbox_habilitado` + cuentas en `demo_sandbox` (params).
+
 ## Relación con el resto
 
 - Modelo de pool: [matriz-argentina-modulos-precios.md](../modelo-de-negocio/business-plan/matriz-argentina-modulos-precios.md)

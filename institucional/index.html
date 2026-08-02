@@ -74,7 +74,7 @@
                 <p class="hero-subtitle"><b>Una sola interfaz para todo.</b> Bioenlace <b>une</b> asistente conversacional e inteligencia artificial para asistir al personal en altas, consultas y modificaciones sin perderse en menús — y acompañar a los pacientes con asistencia y seguimiento de turnos en el mismo ecosistema.</p>
                 <div class="hero-buttons">
                     <a href="alta.html" class="btn btn-primary">Crear cuenta</a>
-                    <a href="#personalsalud" class="btn btn-secondary">Conocer la plataforma</a>
+                    <a href="#demo-access" class="btn btn-secondary" data-demo-open>Probar demo</a>
                 </div>
             </div>
         </div>
@@ -635,10 +635,37 @@
         </div>
     </footer>
 
+    <div id="demo-access" class="demo-access" hidden aria-hidden="true" role="dialog" aria-labelledby="demo-access-title">
+        <div class="demo-access__backdrop" data-demo-close tabindex="-1" aria-hidden="true"></div>
+        <div class="demo-access__panel">
+            <button type="button" class="demo-access__close" data-demo-close aria-label="Cerrar">&times;</button>
+            <h2 id="demo-access-title" class="demo-access__title">Probar Bioenlace</h2>
+            <p class="demo-access__lead">Entrá a una cuenta de prueba con datos ficticios. El enlace vale unos minutos y es de un solo uso.</p>
+            <form data-demo-form class="demo-access__form" autocomplete="on">
+                <label class="demo-access__label">
+                    Perfil
+                    <select name="role" data-demo-role class="demo-access__input" required></select>
+                </label>
+                <label class="demo-access__label">
+                    Email (opcional, solo auditoría)
+                    <input type="email" name="email" class="demo-access__input" placeholder="tu@institucion.org" autocomplete="email">
+                </label>
+                <input type="text" name="website" class="demo-access__honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+                <p class="demo-access__status" data-demo-status hidden></p>
+                <div class="demo-access__actions">
+                    <button type="submit" class="btn btn-primary" data-demo-submit>Abrir demo</button>
+                    <button type="button" class="btn btn-secondary" data-demo-close>Cancelar</button>
+                </div>
+            </form>
+            <p class="demo-access__note">¿Querés tu propia clínica? <a href="alta.html">Crear cuenta</a></p>
+        </div>
+    </div>
+
     <script src="js/assistant-demo.js"></script>
     <script src="js/encounter-demo.js"></script>
     <script src="js/patient-demo.js"></script>
     <script src="js/pricing-core.js"></script>
+    <script src="js/demo-access.js"></script>
     <script src="js/main.js"></script>
     <script>
       (function () {

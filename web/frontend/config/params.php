@@ -126,7 +126,7 @@ return [
     'historia_clinica_apertura_medico_minutos' => 30,
 
     /**
-     * Login usuario/contraseña para revisores de Google Play / App Store (apps móviles).
+     * Login de revisión Play / App Store (cuentas allowlisted en params).
      * Habilitar solo en el entorno que revisan las tiendas. Credenciales en params-local.
      *
      * @see mobile/PLAY_APP_ACCESS.md
@@ -136,6 +136,30 @@ return [
         // Definir en params-local.php, por ejemplo:
         // ['username' => 'play_review_paciente'],
         // ['username' => 'medico_med_general_863'],
+    ],
+
+    /**
+     * Acceso demo sandbox desde el sitio institucional (código de un solo uso → /site/demo-entrar).
+     * Habilitar en staging/prod controlado; requiere usuario seed (p. ej. medico_med_general_863).
+     *
+     * @see web/docs/plans/demo-sandbox-institucional/design.md
+     */
+    'demo_sandbox_habilitado' => false,
+    'demo_sandbox' => [
+        'ttl_seconds' => 900,
+        'max_per_ip_hour' => 10,
+        /** Base absoluta de la app (sin barra final). Vacío = createAbsoluteUrl Yii. */
+        'app_base_url' => '',
+        'accounts' => [
+            'staff' => [
+                'username' => 'medico_med_general_863',
+                'label' => 'Médico demo (captura y turnos)',
+            ],
+            // 'paciente' => [
+            //     'username' => 'play_review_paciente',
+            //     'label' => 'Paciente demo',
+            // ],
+        ],
     ],
 
     // Configuración de JWT para autenticación API

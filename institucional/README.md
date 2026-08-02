@@ -33,7 +33,7 @@ institucional/
 
 ## Secciones
 
-1. **Hero** — Propuesta de valor + CTA **Crear cuenta**
+1. **Hero** — Propuesta de valor + CTA **Crear cuenta** / **Probar demo**
 2. **Personal de salud** — Captura clínica web y app
 3. **Pacientes** — App paciente y seguimiento
 4. **Personal** — Demo del asistente conversacional (listar / editar / crear)
@@ -41,6 +41,10 @@ institucional/
 6. **Precios** — Teaser en el index; detalle + calculadora en [`precios.html`](precios.html) (qué incluye / no incluye por clase AMB·EMER·IMP)
 7. **Contacto** — Formulario e información
 8. **Alta** (`alta.html`) — Wizard self-service clínica / consultorio (pago simulado) y solicitud ministerio; deep-link `?perfil=consultorio`
+
+## Demo sandbox (`js/demo-access.js`)
+
+CTA **Probar demo** → modal → `POST /api/v1/licencia/demo-acceso` → redirect a `enter_url` (app `/site/demo-entrar`). Requiere `demo_sandbox_habilitado` en params del frontend y usuario seed. Doc: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
 
 ## Alta de cuenta (`alta.html` + `js/signup.js`)
 

@@ -26,6 +26,7 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
         'site/captcha',
         'site/error',
         'site/impersonate',
+        'site/demo-entrar',
     ];
 
     public function beforeAction($action): bool

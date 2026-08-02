@@ -21,6 +21,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Auditoría captura clínica | `auditoria-captura-clinica/` | Trail pipeline + admin superadmin (Fase 1) |
 | Auditoría adelantamiento turnos (A03) | `auditoria-adelantamiento-turnos/` | Campañas/ofertas + admin superadmin (Fase 0) |
 | Auditoría agentes autónomos | `auditoria-agentes-autonomos/` | agent_run genérico + A04 + resolución |
+| Demo sandbox institucional | `demo-sandbox-institucional/` | CTA Probar demo → código un solo uso |
 
 ## Planes archivados (carpeta eliminada)
 

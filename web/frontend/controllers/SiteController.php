@@ -7,6 +7,7 @@ use yii\web\Controller;
 use yii\web\BadRequestHttpException;
 use yii\helpers\ArrayHelper;
 
+use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use common\models\User;
@@ -351,6 +352,55 @@ class SiteController extends Controller
         @file_put_contents($path, '', LOCK_EX);
 
         // Si afterLogin no terminó la respuesta (p. ej. sin evento redirect), ir a inicio (wizard o pacientes).
+        if (!Yii::$app->response->isSent) {
+            return $this->redirect(['site/sesion-operativa']);
+        }
+    }
+
+    /**
+     * Consume código demo del sitio institucional e inicia sesión en la app.
+     *
+     * GET /site/demo-entrar?code=…
+     *
+     * @no_intent_catalog
+     */
+    public function actionDemoEntrar()
+    {
+        $code = trim((string) Yii::$app->request->get('code', ''));
+        if ($code === '') {
+            Yii::$app->session->setFlash('error', 'Enlace de demo inválido.');
+
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
+
+        try {
+            $user = (new DemoSandboxAccessService())->consume($code);
+        } catch (\DomainException $e) {
+            Yii::$app->session->setFlash('error', $e->getMessage());
+
+            return $this->redirect(Yii::$app->user->loginUrl);
+        } catch (\Throwable $e) {
+            Yii::error('demo-entrar: ' . $e->getMessage(), __METHOD__);
+            Yii::$app->session->setFlash('error', 'No se pudo abrir la demo.');
+
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
+
+        if (!Yii::$app->user->isGuest) {
+            Yii::$app->user->logout(false);
+        }
+
+        try {
+            Yii::$app->user->login($user, 0);
+        } catch (\Throwable $e) {
+            Yii::error('demo-entrar login: ' . $e->getMessage(), __METHOD__);
+            Yii::$app->session->setFlash('error', 'No se pudo iniciar la sesión demo.');
+
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
+
+        Yii::$app->session->setFlash('success', 'Estás en la cuenta demo. Los datos son de prueba.');
+
         if (!Yii::$app->response->isSent) {
             return $this->redirect(['site/sesion-operativa']);
         }

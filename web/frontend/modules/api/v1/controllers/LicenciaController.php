@@ -5,6 +5,7 @@ namespace frontend\modules\api\v1\controllers;
 use common\components\Domain\Organization\Service\Billing\BillingMembershipSwitchService;
 use common\components\Domain\Organization\Service\Billing\InstitutionalEfectorSignupService;
 use common\components\Domain\Organization\Service\Billing\MinistrySignupRequestService;
+use common\components\Platform\Core\Auth\DemoSandboxAccessService;
 use common\models\User;
 use Yii;
 use yii\web\BadRequestHttpException;
@@ -13,7 +14,8 @@ use yii\web\ForbiddenHttpException;
 /**
  * Onboarding comercial de licencia (institucional + AdminEfector).
  *
- * Públicas (sin auth): catalogo-ministerios, planes, registrar-efector, solicitar-ministerio.
+ * Públicas (sin auth): catalogo-ministerios, planes, registrar-efector, solicitar-ministerio,
+ * demo-perfiles, demo-acceso.
  * Auth AdminEfector: mi-licencia, desvincular-pago-ministerio, asociar-pago-ministerio.
  */
 class LicenciaController extends BaseController
@@ -23,6 +25,8 @@ class LicenciaController extends BaseController
         'planes',
         'registrar-efector',
         'solicitar-ministerio',
+        'demo-perfiles',
+        'demo-acceso',
     ];
 
     public function actions()
@@ -40,6 +44,8 @@ class LicenciaController extends BaseController
         $verbs['planes'] = ['GET', 'OPTIONS'];
         $verbs['registrar-efector'] = ['POST', 'OPTIONS'];
         $verbs['solicitar-ministerio'] = ['POST', 'OPTIONS'];
+        $verbs['demo-perfiles'] = ['GET', 'OPTIONS'];
+        $verbs['demo-acceso'] = ['POST', 'OPTIONS'];
         $verbs['mi-licencia'] = ['GET', 'OPTIONS'];
         $verbs['desvincular-pago-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['asociar-pago-ministerio'] = ['POST', 'OPTIONS'];
@@ -107,6 +113,60 @@ class LicenciaController extends BaseController
             ], 'Solicitud recibida. Te contactaremos para verificar y activar la cuenta.');
         } catch (\InvalidArgumentException $e) {
             return $this->error($e->getMessage(), null, 400);
+        }
+    }
+
+    /**
+     * Perfiles demo disponibles (staff / paciente) según params.
+     *
+     * GET /api/v1/licencia/demo-perfiles
+     *
+     * @action_name Perfiles de acceso demo sandbox
+     */
+    public function actionDemoPerfiles()
+    {
+        if (!DemoSandboxAccessService::isEnabled()) {
+            return $this->error('Acceso demo no habilitado', null, 404);
+        }
+
+        return $this->success([
+            'enabled' => true,
+            'items' => DemoSandboxAccessService::listProfiles(),
+        ]);
+    }
+
+    /**
+     * Emite URL de un solo uso para entrar al sandbox (sitio institucional).
+     *
+     * POST /api/v1/licencia/demo-acceso
+     * Body: { "role": "staff"|"paciente", "email"?: "...", "website"?: "" }
+     *
+     * @action_name Solicitar acceso demo sandbox
+     */
+    public function actionDemoAcceso()
+    {
+        if (!DemoSandboxAccessService::isEnabled()) {
+            return $this->error('Acceso demo no habilitado', null, 404);
+        }
+
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            $body = [];
+        }
+
+        try {
+            $data = (new DemoSandboxAccessService())->issue($body);
+
+            return $this->success($data, 'Listo. Abrí el enlace para entrar a la demo.');
+        } catch (\DomainException $e) {
+            $msg = $e->getMessage();
+            $status = str_contains($msg, 'Demasiados') ? 429 : 400;
+
+            return $this->error($msg, null, $status);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'demo.sandbox');
+
+            return $this->error('No se pudo generar el acceso demo.', null, 500);
         }
     }
 

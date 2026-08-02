@@ -56,6 +56,10 @@ class Module extends \yii\base\Module
         $allowedOrigins = [
             'http://localhost',
             'http://127.0.0.1',
+            'https://bioenlace.io',
+            'http://bioenlace.io',
+            'https://www.bioenlace.io',
+            'http://www.bioenlace.io',
         ];
 
         // Si se solicita, incluir el origen de la petición actual
@@ -92,6 +96,8 @@ class Module extends \yii\base\Module
             $allowedOrigins[] = 'http://127.0.0.1:8080';
             $allowedOrigins[] = 'http://localhost:3000';
             $allowedOrigins[] = 'http://127.0.0.1:3000';
+            $allowedOrigins[] = 'http://localhost:8000';
+            $allowedOrigins[] = 'http://127.0.0.1:8000';
         }
 
         // Eliminar duplicados y valores vacíos

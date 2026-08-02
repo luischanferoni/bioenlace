@@ -48,7 +48,7 @@ CTA **Probar demo** → modal → `POST /api/v1/licencia/demo-acceso` → redire
 
 ## Alta de cuenta (`alta.html` + `js/signup.js`)
 
-Configurar `js/api-config.json` (`apiBaseUrl` → frontend Yii `/api/v1`).  
+Configurar `js/api-config.json`: en **bioenlace.io** usa `apiBaseUrl` / `loginUrl` (`https://app.bioenlace.io/...`); en **localhost** usa `apiBaseUrlLocal` / `loginUrlLocal`. El JS elige según `hostname`.  
 Tabs: clínica (privado/público; plan AMB/EMER/IMP opcionales, al menos uno), consultorio **solo privado**, **solo ambulatorio × 1 profesional** (unipersonal), ministerio. Tras el alta se muestran `next_steps` (guía para asignarse a un servicio clínico).  
 Doc producto: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
 

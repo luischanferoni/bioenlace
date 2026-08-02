@@ -24,8 +24,12 @@
     return fetch('js/api-config.json', { cache: 'no-store' })
       .then(function (r) { return r.json(); })
       .then(function (cfg) {
-        if (cfg.apiBaseUrl) apiBase = String(cfg.apiBaseUrl).replace(/\/$/, '');
-        if (cfg.loginUrl) loginUrl = String(cfg.loginUrl);
+        var host = window.location.hostname;
+        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        var base = isLocal && cfg.apiBaseUrlLocal ? cfg.apiBaseUrlLocal : cfg.apiBaseUrl;
+        var login = isLocal && cfg.loginUrlLocal ? cfg.loginUrlLocal : cfg.loginUrl;
+        if (base) apiBase = String(base).replace(/\/$/, '');
+        if (login) loginUrl = String(login);
       })
       .catch(function () { /* defaults */ });
   }

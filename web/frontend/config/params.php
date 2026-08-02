@@ -148,7 +148,7 @@ return [
     'demo_sandbox' => [
         'ttl_seconds' => 900,
         'max_per_ip_hour' => 10,
-        /** Base absoluta de la app (sin barra final). Vacío = createAbsoluteUrl Yii. */
+        /** Base absoluta de la app (sin barra final). Vacío = createAbsoluteUrl Yii. En prod: https://app.bioenlace.io */
         'app_base_url' => '',
         'accounts' => [
             'staff' => [

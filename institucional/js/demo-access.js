@@ -60,7 +60,7 @@
     return api('/licencia/demo-perfiles').then(function (r) {
       if (!roleSelect) return;
       roleSelect.innerHTML = '';
-      if (!r.ok || !r.data || !r.data.data) {
+      if (!r.ok || !r.data || !r.data.data || r.data.data.enabled === false) {
         root.hidden = true;
         return;
       }

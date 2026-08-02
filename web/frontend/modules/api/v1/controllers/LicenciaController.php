@@ -126,7 +126,10 @@ class LicenciaController extends BaseController
     public function actionDemoPerfiles()
     {
         if (!DemoSandboxAccessService::isEnabled()) {
-            return $this->error('Acceso demo no habilitado', null, 404);
+            return $this->success([
+                'enabled' => false,
+                'items' => [],
+            ], 'Acceso demo deshabilitado');
         }
 
         return $this->success([
@@ -146,7 +149,7 @@ class LicenciaController extends BaseController
     public function actionDemoAcceso()
     {
         if (!DemoSandboxAccessService::isEnabled()) {
-            return $this->error('Acceso demo no habilitado', null, 404);
+            return $this->error('Acceso demo no habilitado en este entorno', null, 403);
         }
 
         $body = Yii::$app->request->getBodyParams();

@@ -13,6 +13,20 @@ return [
     // --- JWT API (solo si distinto del default de frontend/params.php) ---
     // 'jwtSecret' => '…',
 
+    // --- Demo sandbox (sitio https://bioenlace.io → Probar demo) ---
+    // 'demo_sandbox_habilitado' => true,
+    // 'demo_sandbox' => [
+    //     'app_base_url' => 'https://app.bioenlace.io',
+    //     'ttl_seconds' => 900,
+    //     'max_per_ip_hour' => 10,
+    //     'accounts' => [
+    //         'staff' => [
+    //             'username' => 'medico_med_general_863',
+    //             'label' => 'Médico demo (captura y turnos)',
+    //         ],
+    //     ],
+    // ],
+
     // --- Sistema híbrido corrección clínica (si se reactiva en params.php) ---
     // 'hf_modelo_clinico' => 'PlanTL-GOB-ES/roberta-base-biomedical-clinical-es',
     // 'sistema_hibrido' => [ … ],

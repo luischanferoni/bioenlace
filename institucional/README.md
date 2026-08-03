@@ -44,7 +44,7 @@ institucional/
 
 ## Demo sandbox (`js/demo-access.js`)
 
-CTA **Probar demo** → modal → `POST /api/v1/licencia/demo-acceso` → redirect a `enter_url` (app `/site/demo-entrar`). Requiere `demo_sandbox_habilitado` en params del frontend y usuario seed. Doc: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
+CTA **Probar demo** (hero y sección personal de salud) → modal → `POST /api/v1/licencia/demo-acceso` → redirect a `enter_url` (app `/site/demo-entrar`). Al entrar se provisiona un médico efímero + seed en el efector plantilla. Requiere `demo_sandbox_habilitado` en params del frontend. Doc: [alta-cuenta-licencia.md](../web/docs/producto/alta-cuenta-licencia.md).
 
 ## Alta de cuenta (`alta.html` + `js/signup.js`)
 

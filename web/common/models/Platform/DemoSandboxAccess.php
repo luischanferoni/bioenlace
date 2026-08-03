@@ -10,8 +10,8 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property string $code_hash
  * @property string $role
- * @property string $username
- * @property int $id_user
+ * @property string|null $username
+ * @property int|null $id_user
  * @property string|null $email
  * @property string|null $ip
  * @property string|null $user_agent
@@ -40,7 +40,7 @@ class DemoSandboxAccess extends ActiveRecord
     public function rules(): array
     {
         return [
-            [['code_hash', 'role', 'username', 'id_user', 'expires_at', 'created_at'], 'required'],
+            [['code_hash', 'role', 'expires_at', 'created_at'], 'required'],
             [['id_user'], 'integer'],
             [['expires_at', 'used_at', 'created_at'], 'safe'],
             [['code_hash'], 'string', 'max' => 64],

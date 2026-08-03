@@ -1,0 +1,142 @@
+<?php
+
+namespace common\components\Platform\Core\Auth;
+
+use common\components\Domain\Organization\Service\Seed\DemoSandboxClinicalSeedService;
+use common\components\Domain\Organization\Service\Seed\DemoSandboxPurgeService;
+use common\components\Domain\Organization\Service\Seed\DemoSandboxStaffProvisionService;
+use common\models\Platform\DemoSandboxAccess;
+use common\models\Platform\DemoSandboxSession;
+use common\models\User;
+use Yii;
+
+/**
+ * Orquesta sesión demo efímera: provision → seed → tracking → purga.
+ *
+ * @see web/docs/plans/demo-sandbox-institucional/design.md
+ */
+final class DemoSandboxSessionService
+{
+    public const Yii_SESSION_KEY = 'demo_sandbox_session_id';
+
+    /**
+     * Crea médico temporal + seed clínico y registra la sesión.
+     *
+     * @return array{user: User, session: DemoSandboxSession}
+     */
+    public function provisionEphemeralStaff(?int $idAccess = null): array
+    {
+        $cfg = $this->config();
+        $idEfector = (int) ($cfg['id_efector'] ?? 863);
+        $servicioNombre = trim((string) ($cfg['servicio_nombre'] ?? 'MED GENERAL'));
+        if ($servicioNombre === '') {
+            $servicioNombre = 'MED GENERAL';
+        }
+        $seedCfg = is_array($cfg['seed'] ?? null) ? $cfg['seed'] : [];
+        $withAgenda = (bool) ($seedCfg['with_agenda'] ?? true);
+        $sessionTtl = max(600, (int) ($cfg['session_ttl_seconds'] ?? 14400));
+
+        $staff = (new DemoSandboxStaffProvisionService())->provision(
+            $idEfector,
+            $servicioNombre,
+            $withAgenda
+        );
+
+        $clinical = (new DemoSandboxClinicalSeedService())->seedForStaff(
+            $staff['id_efector'],
+            $staff['id_pes'],
+            $staff['id_servicio'],
+            $staff['id_user'],
+            [
+                'pacientes' => (int) ($seedCfg['pacientes'] ?? 3),
+                'turnos' => (int) ($seedCfg['turnos'] ?? 3),
+                'with_guardia' => (bool) ($seedCfg['with_guardia'] ?? false),
+            ]
+        );
+
+        $user = User::findOne($staff['id_user']);
+        if ($user === null) {
+            throw new \RuntimeException('Usuario demo recién creado no encontrado.');
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $session = new DemoSandboxSession();
+        $session->id_access = $idAccess;
+        $session->role = DemoSandboxAccess::ROLE_STAFF;
+        $session->id_efector = $staff['id_efector'];
+        $session->id_user = $staff['id_user'];
+        $session->id_persona = $staff['id_persona'];
+        $session->id_pes = $staff['id_pes'];
+        $session->id_servicio = $staff['id_servicio'];
+        $session->username = $staff['username'];
+        $session->expires_at = date('Y-m-d H:i:s', time() + $sessionTtl);
+        $session->created_at = $now;
+        $session->setSeedPayload([
+            'marker' => DemoSandboxStaffProvisionService::SEED_MARKER,
+            'documento_staff' => $staff['documento'],
+            'id_agenda' => $staff['id_agenda'],
+            'paciente_ids' => $clinical['paciente_ids'],
+            'turno_ids' => $clinical['turno_ids'],
+            'guardia_ids' => $clinical['guardia_ids'],
+            'documentos_pacientes' => $clinical['documentos_pacientes'],
+        ]);
+        if (!$session->save(false)) {
+            throw new \RuntimeException('No se pudo persistir demo_sandbox_session.');
+        }
+
+        return [
+            'user' => $user,
+            'session' => $session,
+        ];
+    }
+
+    public function bindToYiiSession(DemoSandboxSession $session): void
+    {
+        if (Yii::$app->has('session', true)) {
+            Yii::$app->session->set(self::Yii_SESSION_KEY, (int) $session->id);
+        }
+    }
+
+    /**
+     * Purga la sesión demo de la request actual (si hay).
+     *
+     * @return array{purged: bool, already: bool, errors: list<string>}|null
+     */
+    public function purgeCurrentYiiSession(): ?array
+    {
+        if (!Yii::$app->has('session', true)) {
+            return null;
+        }
+        $id = (int) Yii::$app->session->get(self::Yii_SESSION_KEY, 0);
+        Yii::$app->session->remove(self::Yii_SESSION_KEY);
+        if ($id <= 0) {
+            return null;
+        }
+
+        /** @var DemoSandboxSession|null $row */
+        $row = DemoSandboxSession::findOne($id);
+        if ($row === null) {
+            return null;
+        }
+
+        return (new DemoSandboxPurgeService())->purgeSession($row);
+    }
+
+    /**
+     * @return array{scanned: int, purged: int, errors: list<string>}
+     */
+    public function purgeExpired(): array
+    {
+        return (new DemoSandboxPurgeService())->purgeExpired();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function config(): array
+    {
+        $cfg = Yii::$app->params['demo_sandbox'] ?? [];
+
+        return is_array($cfg) ? $cfg : [];
+    }
+}

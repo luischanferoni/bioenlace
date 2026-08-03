@@ -10,27 +10,57 @@ use yii\db\Query;
 /**
  * Acceso demo sandbox desde el sitio institucional (código de un solo uso).
  *
- * Params: demo_sandbox_habilitado + demo_sandbox (accounts, ttl, rate limit).
+ * Params: demo_sandbox_habilitado + demo_sandbox (profiles/accounts, ttl, rate limit, id_efector).
+ * Staff efímero: provisiona PES + seed al consumir el código.
  *
  * @see web/docs/plans/demo-sandbox-institucional/design.md
  */
 final class DemoSandboxAccessService
 {
+    public const MODE_EPHEMERAL = 'ephemeral';
+
+    public const MODE_SHARED_ACCOUNT = 'shared_account';
+
     public static function isEnabled(): bool
     {
         return (bool) (Yii::$app->params['demo_sandbox_habilitado'] ?? false);
     }
 
     /**
-     * Perfiles ofrecidos al CTA (solo los que tienen username configurado).
+     * Perfiles ofrecidos al CTA.
      *
-     * @return list<array{role: string, label: string}>
+     * @return list<array{role: string, label: string, mode: string}>
      */
     public static function listProfiles(): array
     {
         $cfg = self::config();
-        $accounts = is_array($cfg['accounts'] ?? null) ? $cfg['accounts'] : [];
         $out = [];
+
+        $profiles = is_array($cfg['profiles'] ?? null) ? $cfg['profiles'] : [];
+        if ($profiles !== []) {
+            foreach ($profiles as $role => $row) {
+                if (!is_string($role) || !is_array($row)) {
+                    continue;
+                }
+                $mode = self::normalizeMode((string) ($row['mode'] ?? self::MODE_EPHEMERAL));
+                if ($mode === self::MODE_SHARED_ACCOUNT) {
+                    $username = trim((string) ($row['username'] ?? ''));
+                    if ($username === '') {
+                        continue;
+                    }
+                }
+                $out[] = [
+                    'role' => $role,
+                    'label' => trim((string) ($row['label'] ?? $role)),
+                    'mode' => $mode,
+                ];
+            }
+
+            return $out;
+        }
+
+        // Compat: accounts.* (shared_account implícito).
+        $accounts = is_array($cfg['accounts'] ?? null) ? $cfg['accounts'] : [];
         foreach ($accounts as $role => $row) {
             if (!is_string($role) || !is_array($row)) {
                 continue;
@@ -42,6 +72,7 @@ final class DemoSandboxAccessService
             $out[] = [
                 'role' => $role,
                 'label' => trim((string) ($row['label'] ?? $role)),
+                'mode' => self::MODE_SHARED_ACCOUNT,
             ];
         }
 
@@ -52,7 +83,7 @@ final class DemoSandboxAccessService
      * Crea un código de un solo uso y URL de entrada a la app.
      *
      * @param array<string, mixed> $input role, email?, website? (honeypot), ip?, user_agent?
-     * @return array{enter_url: string, expires_at: string, role: string, label: string}
+     * @return array{enter_url: string, expires_at: string, role: string, label: string, mode: string}
      */
     public function issue(array $input): array
     {
@@ -70,13 +101,20 @@ final class DemoSandboxAccessService
             throw new \DomainException('Rol demo inválido.');
         }
 
-        $account = $this->resolveAccount($role);
-        $username = $account['username'];
-        $user = User::findOne(['username' => $username]);
-        if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
-            throw new \DomainException(
-                'La cuenta demo no está disponible. Ejecutá el seed clínico o revisá demo_sandbox.accounts.'
-            );
+        $profile = $this->resolveProfile($role);
+        $mode = $profile['mode'];
+
+        $idUser = null;
+        $username = null;
+        if ($mode === self::MODE_SHARED_ACCOUNT) {
+            $username = $profile['username'];
+            $user = User::findOne(['username' => $username]);
+            if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
+                throw new \DomainException(
+                    'La cuenta demo no está disponible. Ejecutá el seed clínico o revisá demo_sandbox.'
+                );
+            }
+            $idUser = (int) $user->id;
         }
 
         $ip = trim((string) ($input['ip'] ?? ''));
@@ -94,7 +132,7 @@ final class DemoSandboxAccessService
         $row->code_hash = self::hashCode($plain);
         $row->role = $role;
         $row->username = $username;
-        $row->id_user = (int) $user->id;
+        $row->id_user = $idUser;
         $email = trim((string) ($input['email'] ?? ''));
         $row->email = $email !== '' ? mb_substr($email, 0, 255) : null;
         $row->ip = $ip !== '' ? mb_substr($ip, 0, 45) : null;
@@ -113,14 +151,17 @@ final class DemoSandboxAccessService
             'enter_url' => $this->buildEnterUrl($plain),
             'expires_at' => $expiresAt,
             'role' => $role,
-            'label' => $account['label'],
+            'label' => $profile['label'],
+            'mode' => $mode,
         ];
     }
 
     /**
-     * Consume el código y devuelve el usuario a loguear.
+     * Consume el código y devuelve el usuario a loguear (+ sesión efímera si aplica).
+     *
+     * @return array{user: User, session_id: int|null}
      */
-    public function consume(string $plainCode): User
+    public function consume(string $plainCode): array
     {
         if (!self::isEnabled()) {
             throw new \DomainException('El acceso demo no está habilitado en este entorno.');
@@ -141,15 +182,33 @@ final class DemoSandboxAccessService
             throw new \DomainException('Código inválido o expirado.');
         }
 
-        $user = User::findOne((int) $row->id_user);
-        if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
-            throw new \DomainException('La cuenta demo no está disponible.');
+        $profile = $this->resolveProfile($row->role);
+        $mode = $profile['mode'];
+        $sessionId = null;
+
+        if ($mode === self::MODE_EPHEMERAL) {
+            if ($row->role !== DemoSandboxAccess::ROLE_STAFF) {
+                throw new \DomainException('El perfil demo efímero solo está disponible para personal de salud.');
+            }
+            $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff((int) $row->id);
+            $user = $provisioned['user'];
+            $sessionId = (int) $provisioned['session']->id;
+            $row->id_user = (int) $user->id;
+            $row->username = (string) $user->username;
+        } else {
+            $user = User::findOne((int) $row->id_user);
+            if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
+                throw new \DomainException('La cuenta demo no está disponible.');
+            }
         }
 
         $row->used_at = date('Y-m-d H:i:s');
         $row->save(false);
 
-        return $user;
+        return [
+            'user' => $user,
+            'session_id' => $sessionId,
+        ];
     }
 
     public static function hashCode(string $plain): string
@@ -158,23 +217,58 @@ final class DemoSandboxAccessService
     }
 
     /**
-     * @return array{username: string, label: string}
+     * @return array{username: string|null, label: string, mode: string}
      */
-    private function resolveAccount(string $role): array
+    private function resolveProfile(string $role): array
     {
-        $accounts = $this->config()['accounts'] ?? [];
-        if (!is_array($accounts) || !isset($accounts[$role]) || !is_array($accounts[$role])) {
-            throw new \DomainException('No hay cuenta demo configurada para ese perfil.');
-        }
-        $username = trim((string) ($accounts[$role]['username'] ?? ''));
-        if ($username === '') {
-            throw new \DomainException('No hay cuenta demo configurada para ese perfil.');
+        $cfg = $this->config();
+        $profiles = is_array($cfg['profiles'] ?? null) ? $cfg['profiles'] : [];
+        if (isset($profiles[$role]) && is_array($profiles[$role])) {
+            $row = $profiles[$role];
+            $mode = self::normalizeMode((string) ($row['mode'] ?? self::MODE_EPHEMERAL));
+            $username = trim((string) ($row['username'] ?? ''));
+
+            return [
+                'username' => $username !== '' ? $username : null,
+                'label' => trim((string) ($row['label'] ?? $role)),
+                'mode' => $mode,
+            ];
         }
 
-        return [
-            'username' => $username,
-            'label' => trim((string) ($accounts[$role]['label'] ?? $role)),
-        ];
+        $accounts = is_array($cfg['accounts'] ?? null) ? $cfg['accounts'] : [];
+        if (isset($accounts[$role]) && is_array($accounts[$role])) {
+            $username = trim((string) ($accounts[$role]['username'] ?? ''));
+            if ($username === '') {
+                throw new \DomainException('No hay cuenta demo configurada para ese perfil.');
+            }
+
+            return [
+                'username' => $username,
+                'label' => trim((string) ($accounts[$role]['label'] ?? $role)),
+                'mode' => self::MODE_SHARED_ACCOUNT,
+            ];
+        }
+
+        // Default staff → ephemeral si no hay config explícita.
+        if ($role === DemoSandboxAccess::ROLE_STAFF) {
+            return [
+                'username' => null,
+                'label' => 'Médico demo',
+                'mode' => self::MODE_EPHEMERAL,
+            ];
+        }
+
+        throw new \DomainException('No hay perfil demo configurado para ese rol.');
+    }
+
+    private static function normalizeMode(string $mode): string
+    {
+        $mode = strtolower(trim($mode));
+        if ($mode === self::MODE_SHARED_ACCOUNT || $mode === 'shared') {
+            return self::MODE_SHARED_ACCOUNT;
+        }
+
+        return self::MODE_EPHEMERAL;
     }
 
     private function assertRateLimit(?string $ip): void

@@ -146,18 +146,36 @@ return [
      */
     'demo_sandbox_habilitado' => false,
     'demo_sandbox' => [
+        /** TTL del código de un solo uso (institucional → app). */
         'ttl_seconds' => 900,
+        /** TTL de la sesión demo efímera (médico + seed); purga por cron/logout. */
+        'session_ttl_seconds' => 14400,
         'max_per_ip_hour' => 10,
+        /** Efector plantilla compartido (scope médico = PES propio por visita). */
+        'id_efector' => 863,
+        'servicio_nombre' => 'MED GENERAL',
+        'seed' => [
+            'pacientes' => 3,
+            'turnos' => 3,
+            'with_agenda' => true,
+            /** Guardia: best-effort; requiere entitlement EMER en el efector. */
+            'with_guardia' => false,
+        ],
         /** Base absoluta de la app (sin barra final). Vacío = createAbsoluteUrl Yii. En prod: https://app.bioenlace.io */
         'app_base_url' => '',
-        'accounts' => [
+        /**
+         * Perfiles CTA. mode=ephemeral crea PES+seed al consumir el código.
+         * mode=shared_account reutiliza username (legacy / paciente).
+         */
+        'profiles' => [
             'staff' => [
-                'username' => 'medico_med_general_863',
                 'label' => 'Médico demo (captura y turnos)',
+                'mode' => 'ephemeral',
             ],
             // 'paciente' => [
-            //     'username' => 'play_review_paciente',
             //     'label' => 'Paciente demo',
+            //     'mode' => 'shared_account',
+            //     'username' => 'play_review_paciente',
             // ],
         ],
     ],

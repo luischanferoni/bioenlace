@@ -18,11 +18,20 @@ return [
     // 'demo_sandbox' => [
     //     'app_base_url' => 'https://app.bioenlace.io',
     //     'ttl_seconds' => 900,
+    //     'session_ttl_seconds' => 14400,
     //     'max_per_ip_hour' => 10,
-    //     'accounts' => [
+    //     'id_efector' => 863,
+    //     'servicio_nombre' => 'MED GENERAL',
+    //     'seed' => [
+    //         'pacientes' => 3,
+    //         'turnos' => 3,
+    //         'with_agenda' => true,
+    //         'with_guardia' => false,
+    //     ],
+    //     'profiles' => [
     //         'staff' => [
-    //             'username' => 'medico_med_general_863',
     //             'label' => 'Médico demo (captura y turnos)',
+    //             'mode' => 'ephemeral',
     //         ],
     //     ],
     // ],

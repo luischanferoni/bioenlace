@@ -2,6 +2,7 @@
 
 namespace frontend\controllers;
 
+use common\components\Platform\Core\Auth\DemoSandboxSessionService;
 use common\components\Platform\Core\Auth\StaffAccountInvitationService;
 use common\models\forms\ActivateAccountForm;
 use common\models\forms\ChangeOwnPasswordForm;
@@ -53,6 +54,12 @@ class AuthController extends Controller
 
     public function actionLogout()
     {
+        try {
+            (new DemoSandboxSessionService())->purgeCurrentYiiSession();
+        } catch (\Throwable $e) {
+            Yii::warning('demo sandbox purge on logout: ' . $e->getMessage(), __METHOD__);
+        }
+
         Yii::$app->user->logout();
 
         return $this->redirect(Yii::$app->user->loginUrl);

@@ -374,7 +374,9 @@ class SiteController extends Controller
         }
 
         try {
-            $user = (new DemoSandboxAccessService())->consume($code);
+            $consumed = (new DemoSandboxAccessService())->consume($code);
+            $user = $consumed['user'];
+            $sessionId = $consumed['session_id'];
         } catch (\DomainException $e) {
             Yii::$app->session->setFlash('error', $e->getMessage());
 
@@ -399,7 +401,17 @@ class SiteController extends Controller
             return $this->redirect(Yii::$app->user->loginUrl);
         }
 
-        Yii::$app->session->setFlash('success', 'Estás en la cuenta demo. Los datos son de prueba.');
+        if ($sessionId !== null && $sessionId > 0) {
+            Yii::$app->session->set(
+                \common\components\Platform\Core\Auth\DemoSandboxSessionService::Yii_SESSION_KEY,
+                $sessionId
+            );
+        }
+
+        Yii::$app->session->setFlash(
+            'success',
+            'Estás en una demo temporal. Los datos son de prueba y se borran al cerrar sesión o al expirar.'
+        );
 
         if (!Yii::$app->response->isSent) {
             return $this->redirect(['site/sesion-operativa']);

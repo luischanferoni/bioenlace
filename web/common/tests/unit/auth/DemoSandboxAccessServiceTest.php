@@ -21,7 +21,32 @@ class DemoSandboxAccessServiceTest extends Unit
         $this->assertContains(DemoSandboxAccess::ROLE_PACIENTE, DemoSandboxAccess::roleValues());
     }
 
-    public function testListProfilesRespectsParamsAccounts(): void
+    public function testListProfilesEphemeralFromProfilesConfig(): void
+    {
+        $prevEnabled = Yii::$app->params['demo_sandbox_habilitado'] ?? null;
+        $prevCfg = Yii::$app->params['demo_sandbox'] ?? null;
+
+        Yii::$app->params['demo_sandbox_habilitado'] = true;
+        Yii::$app->params['demo_sandbox'] = [
+            'profiles' => [
+                'staff' => [
+                    'label' => 'Médico demo',
+                    'mode' => 'ephemeral',
+                ],
+            ],
+        ];
+
+        $profiles = DemoSandboxAccessService::listProfiles();
+        $this->assertCount(1, $profiles);
+        $this->assertSame('staff', $profiles[0]['role']);
+        $this->assertSame('Médico demo', $profiles[0]['label']);
+        $this->assertSame(DemoSandboxAccessService::MODE_EPHEMERAL, $profiles[0]['mode']);
+
+        Yii::$app->params['demo_sandbox_habilitado'] = $prevEnabled;
+        Yii::$app->params['demo_sandbox'] = $prevCfg;
+    }
+
+    public function testListProfilesLegacyAccounts(): void
     {
         $prevEnabled = Yii::$app->params['demo_sandbox_habilitado'] ?? null;
         $prevCfg = Yii::$app->params['demo_sandbox'] ?? null;
@@ -43,7 +68,7 @@ class DemoSandboxAccessServiceTest extends Unit
         $profiles = DemoSandboxAccessService::listProfiles();
         $this->assertCount(1, $profiles);
         $this->assertSame('staff', $profiles[0]['role']);
-        $this->assertSame('Médico demo', $profiles[0]['label']);
+        $this->assertSame(DemoSandboxAccessService::MODE_SHARED_ACCOUNT, $profiles[0]['mode']);
 
         Yii::$app->params['demo_sandbox_habilitado'] = $prevEnabled;
         Yii::$app->params['demo_sandbox'] = $prevCfg;

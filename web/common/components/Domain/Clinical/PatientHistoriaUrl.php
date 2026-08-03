@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Clinical;
+namespace common\components\Domain\Clinical;
 
 use yii\helpers\Url;
 
@@ -39,4 +39,9 @@ final class PatientHistoriaUrl
 
         return Url::to($params);
     }
+}
+
+// Alias legacy: el archivo estuvo un tiempo con namespace sin Domain.
+if (!\class_exists('common\\components\\Clinical\\PatientHistoriaUrl', false)) {
+    \class_alias(PatientHistoriaUrl::class, 'common\\components\\Clinical\\PatientHistoriaUrl');
 }

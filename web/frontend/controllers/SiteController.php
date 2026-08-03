@@ -392,10 +392,17 @@ class SiteController extends Controller
             Yii::$app->user->logout(false);
         }
 
+        $demoTtl = max(600, (int) (Yii::$app->params['demo_sandbox']['session_ttl_seconds'] ?? 14400));
         try {
-            Yii::$app->user->login($user, 0);
+            $loggedIn = Yii::$app->user->login($user, $demoTtl);
         } catch (\Throwable $e) {
             Yii::error('demo-entrar login: ' . $e->getMessage(), __METHOD__);
+            Yii::$app->session->setFlash('error', 'No se pudo iniciar la sesión demo.');
+
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
+        if (!$loggedIn || Yii::$app->user->isGuest || (int) Yii::$app->user->id !== (int) $user->id) {
+            Yii::error('demo-entrar login: login() no dejó sesión activa para ' . $user->username, __METHOD__);
             Yii::$app->session->setFlash('error', 'No se pudo iniciar la sesión demo.');
 
             return $this->redirect(Yii::$app->user->loginUrl);
@@ -441,7 +448,8 @@ class SiteController extends Controller
                         . $seedHint
                     );
 
-                    return $this->redirect($established['redirect_url'] ?: ['site/index']);
+                    // Ruta relativa tipada: evita createUrl suelto que a veces deja mal el shell.
+                    return $this->redirect(['site/index']);
                 } catch (\Throwable $e) {
                     Yii::warning('demo-entrar sesion operativa: ' . $e->getMessage(), __METHOD__);
                 }
@@ -453,9 +461,7 @@ class SiteController extends Controller
             'Estás en una demo temporal (' . $user->username . '). Los datos son de prueba y se borran al cerrar sesión o al expirar.'
         );
 
-        if (!Yii::$app->response->isSent) {
-            return $this->redirect(['site/sesion-operativa']);
-        }
+        return $this->redirect(['site/sesion-operativa']);
     }
 
     /**

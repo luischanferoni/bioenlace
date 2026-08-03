@@ -47,24 +47,27 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
 
         if (Yii::$app->user->isGuest) {
             $this->denyAccess();
+
+            return false;
         }
 
-        if (!Yii::$app->user->isGuest && Yii::$app->user->identity === null) {
+        if (Yii::$app->user->identity === null) {
             Yii::$app->getSession()->destroy();
             $this->denyAccess();
+
+            return false;
         }
 
         $identity = Yii::$app->user->identity;
         if ($identity !== null && !BioenlaceAccessChecker::isActiveIdentity($identity)) {
             Yii::$app->user->logout();
             Yii::$app->getResponse()->redirect(Yii::$app->getHomeUrl());
+
             return false;
         }
 
-        if ($identity !== null) {
-            BioenlaceAccessChecker::ensureUpToDate();
-            WebApiJwtSessionService::ensureValidTokenInSession();
-        }
+        BioenlaceAccessChecker::ensureUpToDate();
+        WebApiJwtSessionService::ensureValidTokenInSession();
 
         return true;
     }
@@ -83,7 +86,10 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
     protected function denyAccess(): void
     {
         if (Yii::$app->user->isGuest) {
+            // loginRequired() arma el redirect a login; no lanzar 403 después o el usuario ve Forbidden.
             Yii::$app->user->loginRequired();
+
+            return;
         }
 
         throw new ForbiddenHttpException(Yii::t('yii', 'You are not allowed to perform this action.'));

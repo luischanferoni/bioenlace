@@ -155,6 +155,7 @@ return [
         'require_captcha' => true,
         'captcha_ttl_seconds' => 300,
         'captcha_length' => 4,
+        /**
          * Plantilla del sandbox: SOLO por efector_codigo_sisa DEV (default DEV99002PRIV).
          * id_efector numérico se ignora si no es esa plantilla DEV (nunca usar 863 u otro centro real).
          */

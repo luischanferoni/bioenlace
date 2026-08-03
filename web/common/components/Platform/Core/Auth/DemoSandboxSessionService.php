@@ -88,6 +88,7 @@ final class DemoSandboxSessionService
             'sala_ids' => $clinical['sala_ids'],
             'piso_ids' => $clinical['piso_ids'],
             'documentos_pacientes' => $clinical['documentos_pacientes'],
+            'fecha_turnos' => $clinical['fecha_turnos'] ?? null,
         ]);
         if (!$session->save(false)) {
             throw new \RuntimeException('No se pudo persistir demo_sandbox_session.');

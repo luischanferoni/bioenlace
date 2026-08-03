@@ -2,12 +2,13 @@
 
 namespace common\components\Domain\Organization\Service\Seed;
 
-use common\components\Domain\Clinical\Emergency\Service\GuardiaIngresoService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\components\Domain\Person\Util\CuilValidator;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\Clinical\Encounter;
+use common\models\Guardia;
 use common\models\InfraestructuraCama;
 use common\models\InfraestructuraPiso;
 use common\models\InfraestructuraSala;
@@ -72,41 +73,47 @@ final class DemoSandboxClinicalSeedService
 
         $turnoIds = [];
         $fecha = $this->nextWeekdayDate();
-        $horas = ['09:00', '09:30', '10:00', '10:30', '11:00'];
+        $horas = $this->slotHours($nTurnos);
         $limit = min($nTurnos, count($pacienteIds), count($horas));
         for ($i = 0; $i < $limit; $i++) {
-            $idTurno = $this->createTurno(
-                $pacienteIds[$i],
-                $idEfector,
-                $idPes,
-                $idServicio,
-                $fecha,
-                $horas[$i],
-                $actingUserId
-            );
-            if ($idTurno > 0) {
-                $turnoIds[] = $idTurno;
+            try {
+                $idTurno = $this->createTurno(
+                    $pacienteIds[$i],
+                    $idEfector,
+                    $idPes,
+                    $idServicio,
+                    $fecha,
+                    $horas[$i],
+                    $actingUserId
+                );
+                if ($idTurno > 0) {
+                    $turnoIds[] = $idTurno;
+                }
+            } catch (\Throwable $e) {
+                Yii::error('demo sandbox turno seed: ' . $e->getMessage(), __METHOD__);
             }
+        }
+        if ($nTurnos > 0 && $turnoIds === []) {
+            throw new \RuntimeException(
+                'Seed demo: no se pudo crear ningún turno (fecha=' . $fecha . ', pes=' . $idPes . ').'
+            );
         }
 
         $encounterIds = [];
         if ($withConsultaAmb && $turnoIds !== []) {
-            $encounterIds = $this->ensureConsultaAmbFromFirstTurno($turnoIds[0]);
+            $encounterIds = $this->ensureConsultaAmbFromFirstTurno($turnoIds[0], $actingUserId);
         }
 
         $nextIdx = $limit;
         $guardiaIds = [];
         if ($withGuardia && isset($pacienteIds[$nextIdx])) {
             try {
-                $result = (new GuardiaIngresoService())->ingresar([
-                    'id_persona' => $pacienteIds[$nextIdx],
-                    'id_profesional_efector_servicio' => $idPes,
-                    'ingresa_en' => 'deambula',
-                    'ingresa_con' => 'solo',
-                    'datos_contacto_tel' => '1111111111',
-                    'situacion_al_ingresar' => 'Ingreso demo sandbox (datos de prueba).',
-                ], $idEfector);
-                $gid = (int) ($result['id'] ?? 0);
+                $gid = $this->createGuardia(
+                    $pacienteIds[$nextIdx],
+                    $idEfector,
+                    $idPes,
+                    $actingUserId
+                );
                 if ($gid > 0) {
                     $guardiaIds[] = $gid;
                 }
@@ -141,6 +148,18 @@ final class DemoSandboxClinicalSeedService
             }
         }
 
+        Yii::info(
+            'demo sandbox seed ok efector=' . $idEfector
+            . ' pes=' . $idPes
+            . ' pacientes=' . count($pacienteIds)
+            . ' turnos=' . count($turnoIds)
+            . ' encounters=' . count($encounterIds)
+            . ' guardia=' . count($guardiaIds)
+            . ' internacion=' . count($internacionIds)
+            . ' fecha_turnos=' . $fecha,
+            __METHOD__
+        );
+
         return [
             'paciente_ids' => $pacienteIds,
             'turno_ids' => $turnoIds,
@@ -151,6 +170,7 @@ final class DemoSandboxClinicalSeedService
             'sala_ids' => $salaIds,
             'piso_ids' => $pisoIds,
             'documentos_pacientes' => $documentos,
+            'fecha_turnos' => $fecha,
         ];
     }
 
@@ -159,7 +179,7 @@ final class DemoSandboxClinicalSeedService
      *
      * @return list<int>
      */
-    private function ensureConsultaAmbFromFirstTurno(int $idTurno): array
+    private function ensureConsultaAmbFromFirstTurno(int $idTurno, int $actingUserId): array
     {
         $turno = Turno::findOne($idTurno);
         if ($turno === null) {
@@ -167,6 +187,11 @@ final class DemoSandboxClinicalSeedService
         }
 
         try {
+            $turno->estado = Turno::ESTADO_EN_ATENCION;
+            $turno->atendido = 'EN ATENCION';
+            ActiveRecordConsoleBlame::prepareForSave($turno, $actingUserId);
+            $turno->save(false);
+
             $encounter = (new EncounterLifecycleService())->ensureFromTurno($turno);
             if ($encounter !== null) {
                 return [(int) $encounter->id];
@@ -181,6 +206,39 @@ final class DemoSandboxClinicalSeedService
             ->one();
 
         return $existing !== null ? [(int) $existing->id] : [];
+    }
+
+    /**
+     * Ingreso a guardia sin depender de sesión HTTP (provision pre-login).
+     */
+    private function createGuardia(int $idPersona, int $idEfector, int $idPes, int $actingUserId): int
+    {
+        $model = new Guardia();
+        $model->scenario = Guardia::INGRESO_PACIENTE;
+        $model->id_persona = $idPersona;
+        $model->id_efector = $idEfector;
+        $model->id_profesional_efector_servicio = $idPes;
+        $model->ingresa_en = 'deambula';
+        $model->ingresa_con = 'solo';
+        $model->datos_contacto_tel = '1111111111';
+        $model->situacion_al_ingresar = 'Ingreso demo sandbox (datos de prueba).';
+        $model->fecha = date('d/m/Y');
+        $model->hora = date('H:i');
+
+        ActiveRecordConsoleBlame::prepareForSave($model, $actingUserId);
+
+        if (!$model->validate()) {
+            throw new \InvalidArgumentException(
+                'Guardia demo inválida: ' . json_encode($model->getFirstErrors(), JSON_UNESCAPED_UNICODE)
+            );
+        }
+        if (!$model->save(false)) {
+            throw new \RuntimeException('No se pudo registrar guardia demo.');
+        }
+
+        (new GuardiaCircuitoService())->afterIngreso($model);
+
+        return (int) $model->id;
     }
 
     /**
@@ -364,6 +422,10 @@ final class DemoSandboxClinicalSeedService
         string $hora,
         int $actingUserId
     ): int {
+        $horaNorm = strlen($hora) === 5 ? $hora . ':00' : $hora;
+        $horaFinTs = strtotime($fecha . ' ' . $horaNorm);
+        $horaFin = $horaFinTs !== false ? date('H:i:s', $horaFinTs + 15 * 60) : null;
+
         $turno = new Turno();
         $turno->id_persona = $idPersona;
         $turno->id_efector = $idEfector;
@@ -371,29 +433,53 @@ final class DemoSandboxClinicalSeedService
         $turno->id_servicio = $idServicio;
         $turno->id_servicio_asignado = $idServicio;
         $turno->fecha = $fecha;
-        $turno->hora = $hora;
+        $turno->hora = $horaNorm;
+        if ($horaFin !== null) {
+            $turno->hora_fin = $horaFin;
+        }
+        $turno->intervalo_minutos_reserva = 15;
         $turno->estado = Turno::ESTADO_PENDIENTE;
-        $turno->confirmado = 'NO';
-        $turno->referenciado = 'NO';
+        $turno->confirmado = null;
+        $turno->referenciado = null;
         $turno->tipo_atencion = Turno::TIPO_ATENCION_PRESENCIAL;
         $turno->usuario_alta = 'demo-sandbox';
-        $turno->fecha_alta = date('Y-m-d H:i:s');
+        $turno->fecha_alta = $fecha;
         $turno->usuario_mod = 'demo-sandbox';
-        $turno->fecha_mod = date('Y-m-d H:i:s');
+        $turno->fecha_mod = $fecha;
         $turno->appointment_source_system = 'demo-sandbox';
-        $turno->external_appointment_id = 'demo-' . $idPes . '-' . $fecha . '-' . str_replace(':', '', $hora);
+        $turno->external_appointment_id = 'demo-' . $idPes . '-' . $fecha . '-' . str_replace(':', '', substr($horaNorm, 0, 5));
 
         ActiveRecordConsoleBlame::prepareForSave($turno, $actingUserId);
-        if (!$turno->save(false)) {
-            Yii::warning('demo sandbox turno: ' . json_encode($turno->getErrors()), __METHOD__);
-
-            return 0;
+        try {
+            if (!$turno->save(false)) {
+                throw new \RuntimeException('save(false) rechazado: ' . json_encode($turno->getErrors()));
+            }
+        } catch (\Throwable $e) {
+            throw new \RuntimeException('Turno demo: ' . $e->getMessage(), 0, $e);
         }
 
         $idTurno = (int) $turno->id_turnos;
-        TurnoSlotClaimService::tryClaim($idPes, $fecha, $hora, $idTurno);
+        if ($idTurno <= 0) {
+            throw new \RuntimeException('Turno demo sin id_turnos tras save.');
+        }
+        TurnoSlotClaimService::tryClaim($idPes, $fecha, substr($horaNorm, 0, 5), $idTurno);
 
         return $idTurno;
+    }
+
+    /**
+     * @return list<string> HH:MM
+     */
+    private function slotHours(int $count): array
+    {
+        $count = max(1, $count);
+        $out = [];
+        $base = strtotime(date('Y-m-d') . ' 10:00:00') ?: time();
+        for ($i = 0; $i < $count; $i++) {
+            $out[] = date('H:i', $base + ($i * 1800));
+        }
+
+        return $out;
     }
 
     private function nextWeekdayDate(): string

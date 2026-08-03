@@ -414,17 +414,31 @@ class SiteController extends Controller
                     \common\components\Platform\Core\Auth\DemoSandboxSessionService::assertIdEfectorEsPlantillaDev(
                         (int) $demoSession->id_efector
                     );
-                    $established = (new SesionOperativaService())->establecer([
-                        'efector_id' => (int) $demoSession->id_efector,
-                        'servicio_id' => (int) $demoSession->id_servicio,
-                        'encounter_class' => Encounter::ENCOUNTER_CLASS_AMB,
-                    ]);
+                    try {
+                        $established = (new SesionOperativaService())->establecer([
+                            'efector_id' => (int) $demoSession->id_efector,
+                            'servicio_id' => (int) $demoSession->id_servicio,
+                            'encounter_class' => Encounter::ENCOUNTER_CLASS_AMB,
+                        ]);
+                    } catch (\Throwable $e) {
+                        Yii::warning('demo-entrar establecer: ' . $e->getMessage(), __METHOD__);
+                        $established = $this->bootstrapDemoSesionOperativa($demoSession);
+                    }
+                    $seed = $demoSession->getSeedPayload();
+                    $seedHint = sprintf(
+                        ' Seed: %d turnos, %d consultas, %d guardia, %d internación.',
+                        count($seed['turno_ids'] ?? []),
+                        count($seed['encounter_ids'] ?? []),
+                        count($seed['guardia_ids'] ?? []),
+                        count($seed['internacion_ids'] ?? [])
+                    );
                     Yii::$app->session->setFlash(
                         'success',
                         'Demo temporal en '
                         . ($established['efector']['nombre'] ?? 'plantilla DEV')
                         . ' (' . $user->username . ', efector #' . (int) $demoSession->id_efector . '). '
                         . 'Los datos se borran al cerrar sesión o al expirar.'
+                        . $seedHint
                     );
 
                     return $this->redirect($established['redirect_url'] ?: ['site/index']);
@@ -442,6 +456,53 @@ class SiteController extends Controller
         if (!Yii::$app->response->isSent) {
             return $this->redirect(['site/sesion-operativa']);
         }
+    }
+
+    /**
+     * Fija sesión operativa demo sin pasar por entitlement (plantilla DEV sin billing).
+     *
+     * @return array{efector: array{id:int,nombre:string}, redirect_url: string}
+     */
+    private function bootstrapDemoSesionOperativa(\common\models\Platform\DemoSandboxSession $demoSession): array
+    {
+        $idEfector = (int) $demoSession->id_efector;
+        $idServicio = (int) $demoSession->id_servicio;
+        $idPes = (int) $demoSession->id_pes;
+        $efector = Efector::findOne($idEfector);
+        $nombre = $efector !== null ? (string) $efector->nombre : 'Demo DEV';
+
+        Yii::$app->user->setIdEfector($idEfector);
+        Yii::$app->user->setNombreEfector($nombre);
+        Yii::$app->user->setIdProfesionalEfectorServicio($idPes);
+        Yii::$app->user->setServicioActual($idServicio);
+        Yii::$app->user->setEncounterClass(Encounter::ENCOUNTER_CLASS_AMB);
+
+        $pesEnEfector = ProfesionalEfectorServicio::find()
+            ->where([
+                'id_persona' => (int) $demoSession->id_persona,
+                'id_efector' => $idEfector,
+                'deleted_at' => null,
+            ])
+            ->all();
+        Yii::$app->user->setServicios(ArrayHelper::map(
+            $pesEnEfector,
+            'id_servicio',
+            static function ($p) {
+                return $p->servicio !== null ? (string) $p->servicio->nombre : '';
+            }
+        ));
+        Yii::$app->user->setEfectores([$idEfector => $nombre]);
+
+        BioenlaceAccessChecker::refreshForIdentity(Yii::$app->user->identity);
+        \common\components\Platform\Assistant\UiActions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
+        SesionOperativaService::aplicarAgendaDisponibleDesdeContextoUsuario();
+
+        $redirect = Yii::$app->urlManager->createUrl(SesionOperativaService::redirectRouteForCurrentUser());
+
+        return [
+            'efector' => ['id' => $idEfector, 'nombre' => $nombre],
+            'redirect_url' => (string) $redirect,
+        ];
     }
 
     /**

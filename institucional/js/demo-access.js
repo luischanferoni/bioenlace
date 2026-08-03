@@ -266,6 +266,7 @@
           efector_codigo_sisa: d.efector_codigo_sisa,
           efector_nombre: d.efector_nombre,
           id_pes: d.id_pes,
+          seed: d.seed,
         });
       }
       if (d.username && String(d.username).indexOf('medico_med_general_') === 0) {
@@ -274,6 +275,10 @@
       }
       if (d.id_efector && Number(d.id_efector) === 863) {
         showStatus('La API apunta al efector real 863. Revisá params-local (id_efector) en el server.', false);
+        return;
+      }
+      if (d.seed && Number(d.seed.turnos || 0) < 1) {
+        showStatus('La API creó el médico pero sin turnos (seed vacío). Revisá el log demo sandbox en app.', false);
         return;
       }
       showStatus('Redirigiendo a la app' + (d.username ? ' (' + d.username + ')' : '') + '…', true);

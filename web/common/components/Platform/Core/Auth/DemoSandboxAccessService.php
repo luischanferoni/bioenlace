@@ -150,6 +150,7 @@ final class DemoSandboxAccessService
         $sessionId = null;
         $efectorCodigoSisa = '';
         $efectorNombre = '';
+        $seedPayload = [];
 
         if ($mode === self::MODE_EPHEMERAL) {
             // Provision ANTES de persistir el código: así id_user nunca queda null/0 ni apunta al seed 863.
@@ -170,6 +171,7 @@ final class DemoSandboxAccessService
             $efectorRow = \common\models\Efector::findOne($idEfector);
             $efectorCodigoSisa = $efectorRow !== null ? trim((string) $efectorRow->codigo_sisa) : '';
             $efectorNombre = $efectorRow !== null ? trim((string) $efectorRow->nombre) : '';
+            $seedPayload = $session->getSeedPayload();
         } else {
             $sharedUsername = $profile['username'];
             $user = User::findOne(['username' => $sharedUsername]);
@@ -239,6 +241,16 @@ final class DemoSandboxAccessService
         }
         if ($idPes !== null) {
             $out['id_pes'] = $idPes;
+        }
+        if ($seedPayload !== []) {
+            $out['seed'] = [
+                'pacientes' => count($seedPayload['paciente_ids'] ?? []),
+                'turnos' => count($seedPayload['turno_ids'] ?? []),
+                'encounters' => count($seedPayload['encounter_ids'] ?? []),
+                'guardia' => count($seedPayload['guardia_ids'] ?? []),
+                'internacion' => count($seedPayload['internacion_ids'] ?? []),
+                'fecha_turnos' => (string) ($seedPayload['fecha_turnos'] ?? ''),
+            ];
         }
 
         return $out;

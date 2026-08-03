@@ -203,6 +203,7 @@ final class DemoSandboxStaffProvisionService
         $agenda = new ProfesionalEfectorServicioAgenda();
         $agenda->id_profesional_efector_servicio = $idPes;
         $agenda->id_efector = $idEfector;
+        $agenda->encounter_class = \common\models\Clinical\Encounter::ENCOUNTER_CLASS_AMB;
         $agenda->formas_atencion = 'SIN_ATENCION';
         $agenda->duracion_slot_minutos = 15;
         $agenda->intervalo_minutos = 15;

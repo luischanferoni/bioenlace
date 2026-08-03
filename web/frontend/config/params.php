@@ -178,8 +178,8 @@ return [
         /** Base absoluta de la app (sin barra final). Vacío = createAbsoluteUrl Yii. En prod: https://app.bioenlace.io */
         'app_base_url' => '',
         /**
-         * Perfiles CTA. mode=ephemeral crea PES+seed al consumir el código.
-         * mode=shared_account reutiliza username (legacy / paciente).
+         * Perfiles CTA. mode=ephemeral crea PES+seed en POST demo-acceso (issue).
+         * mode=shared_account reutiliza username (solo paciente; staff nunca usa legacy).
          */
         'profiles' => [
             'staff' => [

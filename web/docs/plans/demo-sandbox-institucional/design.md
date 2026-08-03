@@ -6,9 +6,9 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 
 ## Flujo
 
-1. Institucional: `POST /api/v1/licencia/demo-acceso` (`role`, `email` opcional, honeypot).
-2. API emite `enter_url` → `/site/demo-entrar?code=…` (TTL del código ~15 min).
-3. App: consume código → **provision** (Persona+User+PES+agenda) + **seed** (pacientes/turnos/guardia/internación) → `login` → sesión operativa (un solo PES).
+1. Institucional: captcha + `POST /api/v1/licencia/demo-acceso` (`role`, `email` opcional, honeypot).
+2. API **provisiona** médico `demo_m_*` + seed en efector DEV, persiste el código y responde `enter_url` + `username` + `id_efector`.
+3. Browser abre `/site/demo-entrar?code=…` → consume (solo login del user ya creado; rechaza `medico_med_general_*`).
 4. Logout o TTL de sesión → purga de filas de esa visita.
 
 ## Modelo de datos

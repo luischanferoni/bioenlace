@@ -46,7 +46,7 @@ class DemoSandboxAccessServiceTest extends Unit
         Yii::$app->params['demo_sandbox'] = $prevCfg;
     }
 
-    public function testListProfilesLegacyAccounts(): void
+    public function testListProfilesLegacyAccountsStillForcesStaffEphemeral(): void
     {
         $prevEnabled = Yii::$app->params['demo_sandbox_habilitado'] ?? null;
         $prevCfg = Yii::$app->params['demo_sandbox'] ?? null;
@@ -68,7 +68,8 @@ class DemoSandboxAccessServiceTest extends Unit
         $profiles = DemoSandboxAccessService::listProfiles();
         $this->assertCount(1, $profiles);
         $this->assertSame('staff', $profiles[0]['role']);
-        $this->assertSame(DemoSandboxAccessService::MODE_SHARED_ACCOUNT, $profiles[0]['mode']);
+        // Staff nunca se ofrece como shared_account (legacy), aunque exista en accounts.
+        $this->assertSame(DemoSandboxAccessService::MODE_EPHEMERAL, $profiles[0]['mode']);
 
         Yii::$app->params['demo_sandbox_habilitado'] = $prevEnabled;
         Yii::$app->params['demo_sandbox'] = $prevCfg;

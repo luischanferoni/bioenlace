@@ -239,7 +239,7 @@
     }
     showStatus('Generando acceso…', true);
     var body = {
-      role: role,
+      role: role || 'staff',
       email: String(email).trim(),
       website: String(website),
     };
@@ -257,8 +257,21 @@
         loadCaptcha();
         return;
       }
-      showStatus('Redirigiendo a la app…', true);
-      window.location.href = String(r.data.data.enter_url);
+      var d = r.data.data;
+      if (window.console && console.info) {
+        console.info('[demo-acceso]', {
+          mode: d.mode,
+          username: d.username,
+          id_efector: d.id_efector,
+          id_pes: d.id_pes,
+        });
+      }
+      if (d.username && String(d.username).indexOf('medico_med_general_') === 0) {
+        showStatus('La API devolvió la cuenta legacy. Hay que desplegar el backend nuevo en app.bioenlace.io.', false);
+        return;
+      }
+      showStatus('Redirigiendo a la app' + (d.username ? ' (' + d.username + ')' : '') + '…', true);
+      window.location.href = String(d.enter_url);
     }).catch(function () {
       showStatus('Error de red. Reintentá.', false);
       loadCaptcha();

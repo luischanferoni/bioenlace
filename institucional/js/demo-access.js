@@ -263,11 +263,17 @@
           mode: d.mode,
           username: d.username,
           id_efector: d.id_efector,
+          efector_codigo_sisa: d.efector_codigo_sisa,
+          efector_nombre: d.efector_nombre,
           id_pes: d.id_pes,
         });
       }
       if (d.username && String(d.username).indexOf('medico_med_general_') === 0) {
         showStatus('La API devolvió la cuenta legacy. Hay que desplegar el backend nuevo en app.bioenlace.io.', false);
+        return;
+      }
+      if (d.id_efector && Number(d.id_efector) === 863) {
+        showStatus('La API apunta al efector real 863. Revisá params-local (id_efector) en el server.', false);
         return;
       }
       showStatus('Redirigiendo a la app' + (d.username ? ' (' + d.username + ')' : '') + '…', true);

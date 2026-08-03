@@ -406,6 +406,32 @@ class SiteController extends Controller
                 \common\components\Platform\Core\Auth\DemoSandboxSessionService::Yii_SESSION_KEY,
                 $sessionId
             );
+
+            /** @var \common\models\Platform\DemoSandboxSession|null $demoSession */
+            $demoSession = \common\models\Platform\DemoSandboxSession::findOne($sessionId);
+            if ($demoSession !== null && !$demoSession->isPurged()) {
+                try {
+                    \common\components\Platform\Core\Auth\DemoSandboxSessionService::assertIdEfectorEsPlantillaDev(
+                        (int) $demoSession->id_efector
+                    );
+                    $established = (new SesionOperativaService())->establecer([
+                        'efector_id' => (int) $demoSession->id_efector,
+                        'servicio_id' => (int) $demoSession->id_servicio,
+                        'encounter_class' => Encounter::ENCOUNTER_CLASS_AMB,
+                    ]);
+                    Yii::$app->session->setFlash(
+                        'success',
+                        'Demo temporal en '
+                        . ($established['efector']['nombre'] ?? 'plantilla DEV')
+                        . ' (' . $user->username . ', efector #' . (int) $demoSession->id_efector . '). '
+                        . 'Los datos se borran al cerrar sesión o al expirar.'
+                    );
+
+                    return $this->redirect($established['redirect_url'] ?: ['site/index']);
+                } catch (\Throwable $e) {
+                    Yii::warning('demo-entrar sesion operativa: ' . $e->getMessage(), __METHOD__);
+                }
+            }
         }
 
         Yii::$app->session->setFlash(

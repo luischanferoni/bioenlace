@@ -148,6 +148,8 @@ final class DemoSandboxAccessService
         $idEfector = null;
         $idPes = null;
         $sessionId = null;
+        $efectorCodigoSisa = '';
+        $efectorNombre = '';
 
         if ($mode === self::MODE_EPHEMERAL) {
             // Provision ANTES de persistir el código: así id_user nunca queda null/0 ni apunta al seed 863.
@@ -162,8 +164,12 @@ final class DemoSandboxAccessService
             }
             $idUser = (int) $user->id;
             $idEfector = (int) $session->id_efector;
+            DemoSandboxSessionService::assertIdEfectorEsPlantillaDev($idEfector);
             $idPes = (int) $session->id_pes;
             $sessionId = (int) $session->id;
+            $efectorRow = \common\models\Efector::findOne($idEfector);
+            $efectorCodigoSisa = $efectorRow !== null ? trim((string) $efectorRow->codigo_sisa) : '';
+            $efectorNombre = $efectorRow !== null ? trim((string) $efectorRow->nombre) : '';
         } else {
             $sharedUsername = $profile['username'];
             $user = User::findOne(['username' => $sharedUsername]);
@@ -209,6 +215,7 @@ final class DemoSandboxAccessService
             'demo-acceso issue mode=' . $mode
             . ' user=' . (string) $username
             . ' efector=' . (int) ($idEfector ?? 0)
+            . ' sisa=' . (string) ($efectorCodigoSisa ?? '')
             . ' pes=' . (int) ($idPes ?? 0),
             'demo.sandbox'
         );
@@ -223,6 +230,12 @@ final class DemoSandboxAccessService
         ];
         if ($idEfector !== null) {
             $out['id_efector'] = $idEfector;
+            if (($efectorCodigoSisa ?? '') !== '') {
+                $out['efector_codigo_sisa'] = $efectorCodigoSisa;
+            }
+            if (($efectorNombre ?? '') !== '') {
+                $out['efector_nombre'] = $efectorNombre;
+            }
         }
         if ($idPes !== null) {
             $out['id_pes'] = $idPes;

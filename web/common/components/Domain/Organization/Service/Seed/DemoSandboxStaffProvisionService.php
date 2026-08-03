@@ -42,8 +42,16 @@ final class DemoSandboxStaffProvisionService
         if ($idEfector <= 0) {
             throw new \InvalidArgumentException('id_efector inválido.');
         }
-        if (Efector::findOne($idEfector) === null) {
+        $efector = Efector::findOne($idEfector);
+        if ($efector === null) {
             throw new \InvalidArgumentException("No existe efectores.id_efector={$idEfector}.");
+        }
+        // Nunca provisionar sandbox en un centro real (p. ej. 863).
+        $codigoSisa = trim((string) $efector->codigo_sisa);
+        if ($idEfector === EfectorDemoSeedService::DEFAULT_EFECTOR_REF || !str_starts_with($codigoSisa, 'DEV')) {
+            throw new \InvalidArgumentException(
+                "Sandbox solo en plantilla DEV (recibido id_efector={$idEfector}, codigo_sisa={$codigoSisa})."
+            );
         }
 
         $servicio = Servicio::find()->where(['nombre' => $servicioNombre])->one();

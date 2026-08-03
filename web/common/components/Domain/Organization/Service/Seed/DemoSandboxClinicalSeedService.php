@@ -15,6 +15,7 @@ use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
 use common\models\SegNivelInternacion;
 use common\models\SegNivelInternacionRepository;
+use common\models\SegNivelInternacionTipoIngreso;
 use Yii;
 
 /**
@@ -247,7 +248,7 @@ final class DemoSandboxClinicalSeedService
         $model->id_persona = $idPersona;
         $model->id_cama = $idCama;
         $model->id_profesional_efector_servicio = $idPes;
-        $model->id_tipo_ingreso = 2; // Consultorio
+        $model->id_tipo_ingreso = $this->resolveIdTipoIngreso();
         $model->ingresa_en = 'deambula';
         $model->ingresa_con = 'solo';
         $model->datos_contacto_tel = '';
@@ -281,6 +282,39 @@ final class DemoSandboxClinicalSeedService
         }
 
         return (int) $model->id;
+    }
+
+    /**
+     * id válido en seg_nivel_internacion_tipo_ingreso (no hardcodear: en prod el catálogo puede diferir).
+     */
+    private function resolveIdTipoIngreso(): int
+    {
+        $preferLabels = ['Consultorio', 'Programada', 'Programado', 'Guardia'];
+        foreach ($preferLabels as $label) {
+            $row = SegNivelInternacionTipoIngreso::find()
+                ->where(['tipo_ingreso' => $label])
+                ->orderBy(['id' => SORT_ASC])
+                ->one();
+            if ($row !== null) {
+                return (int) $row->id;
+            }
+        }
+
+        $any = SegNivelInternacionTipoIngreso::find()->orderBy(['id' => SORT_ASC])->one();
+        if ($any !== null) {
+            return (int) $any->id;
+        }
+
+        // Catálogo vacío: una fila mínima para pasar el exist validator.
+        $row = new SegNivelInternacionTipoIngreso();
+        $row->tipo_ingreso = 'Consultorio';
+        if (!$row->save(false)) {
+            throw new \RuntimeException(
+                'No se pudo crear tipo_ingreso demo: ' . json_encode($row->getErrors())
+            );
+        }
+
+        return (int) $row->id;
     }
 
     /**

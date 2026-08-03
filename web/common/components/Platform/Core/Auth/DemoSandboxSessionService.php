@@ -140,32 +140,40 @@ final class DemoSandboxSessionService
     }
 
     /**
-     * Resuelve el efector plantilla: override numérico opcional, o codigo_sisa DEV (nunca un centro real por defecto).
+     * Resuelve el efector plantilla solo por codigo_sisa DEV.
+     * Un id_efector numérico en params-local (p. ej. 863) se ignora si no es plantilla DEV.
      *
      * @param array<string, mixed> $cfg
      */
     private function resolveIdEfector(array $cfg): int
     {
-        $override = (int) ($cfg['id_efector'] ?? 0);
-        if ($override > 0) {
-            if ($override === EfectorDemoSeedService::DEFAULT_EFECTOR_REF) {
-                throw new \DomainException(
-                    'demo_sandbox.id_efector=' . $override
-                    . ' es un efector real. Usá efector_codigo_sisa=DEV99002PRIV (id_efector=0).'
-                );
-            }
-            if (Efector::findOne($override) === null) {
-                throw new \DomainException(
-                    "demo_sandbox.id_efector={$override} no existe. Usá un efector DEV o corré clinical-seed/efector-demo-contexto."
-                );
-            }
-
-            return $override;
-        }
-
         $codigo = trim((string) ($cfg['efector_codigo_sisa'] ?? EfectorDemoSeedService::COD_SISA_PRIVATE));
         if ($codigo === '') {
             $codigo = EfectorDemoSeedService::COD_SISA_PRIVATE;
+        }
+        if (!str_starts_with($codigo, 'DEV')) {
+            throw new \DomainException(
+                'demo_sandbox.efector_codigo_sisa debe ser un código DEV (p. ej. DEV99002PRIV), recibido: ' . $codigo
+            );
+        }
+
+        $override = (int) ($cfg['id_efector'] ?? 0);
+        if ($override > 0) {
+            $efOverride = Efector::findOne($override);
+            $codOverride = $efOverride !== null ? trim((string) $efOverride->codigo_sisa) : '';
+            // Solo aceptar override si YA es plantilla DEV con el mismo codigo_sisa.
+            if (
+                $efOverride !== null
+                && $override !== EfectorDemoSeedService::DEFAULT_EFECTOR_REF
+                && str_starts_with($codOverride, 'DEV')
+                && $codOverride === $codigo
+            ) {
+                return $override;
+            }
+            Yii::warning(
+                "demo_sandbox.id_efector={$override} ignorado (codigo_sisa={$codOverride}); resolviendo por {$codigo}",
+                'demo.sandbox'
+            );
         }
 
         $seed = new EfectorDemoSeedService();
@@ -174,10 +182,16 @@ final class DemoSandboxSessionService
             // Auto-crear plantilla DEV (sin médico permanente) para no caer en efectores reales.
             if ($codigo === EfectorDemoSeedService::COD_SISA_PRIVATE) {
                 $created = $seed->upsertClinicaPrivada();
-                $row = ['id_efector' => (int) ($created['id_efector'] ?? 0)];
+                $row = [
+                    'id_efector' => (int) ($created['id_efector'] ?? 0),
+                    'codigo_sisa' => $codigo,
+                ];
             } elseif ($codigo === EfectorDemoSeedService::COD_SISA_PUBLIC_OTRA_PROV) {
                 $created = $seed->upsertPublicOtraProvincia();
-                $row = ['id_efector' => (int) ($created['id_efector'] ?? 0)];
+                $row = [
+                    'id_efector' => (int) ($created['id_efector'] ?? 0),
+                    'codigo_sisa' => $codigo,
+                ];
             } else {
                 throw new \DomainException(
                     'No hay efector demo plantilla (' . $codigo . '). Ejecutá: php yii clinical-seed/efector-demo-contexto'
@@ -189,15 +203,43 @@ final class DemoSandboxSessionService
         if ($id <= 0) {
             throw new \DomainException('No se pudo resolver id_efector de la plantilla demo.');
         }
-        if ($id === EfectorDemoSeedService::DEFAULT_EFECTOR_REF) {
+
+        self::assertIdEfectorEsPlantillaDev($id, $codigo);
+
+        return $id;
+    }
+
+    /**
+     * Corta cualquier camino hacia un centro real (p. ej. 863).
+     */
+    public static function assertIdEfectorEsPlantillaDev(int $idEfector, ?string $codigoEsperado = null): void
+    {
+        if ($idEfector <= 0) {
+            throw new \DomainException('id_efector demo inválido.');
+        }
+        if ($idEfector === EfectorDemoSeedService::DEFAULT_EFECTOR_REF) {
             throw new \DomainException(
                 'La plantilla demo no puede ser el efector real '
                 . EfectorDemoSeedService::DEFAULT_EFECTOR_REF
-                . '. Usá codigo_sisa DEV (DEV99002PRIV).'
+                . '. Sacá id_efector=863 de params-local y usá efector_codigo_sisa=DEV99002PRIV.'
             );
         }
 
-        return $id;
+        $ef = Efector::findOne($idEfector);
+        if ($ef === null) {
+            throw new \DomainException("No existe efectores.id_efector={$idEfector}.");
+        }
+        $codigo = trim((string) $ef->codigo_sisa);
+        if (!str_starts_with($codigo, 'DEV')) {
+            throw new \DomainException(
+                "El efector {$idEfector} no es plantilla DEV (codigo_sisa={$codigo})."
+            );
+        }
+        if ($codigoEsperado !== null && $codigoEsperado !== '' && $codigo !== $codigoEsperado) {
+            throw new \DomainException(
+                "El efector {$idEfector} tiene codigo_sisa={$codigo}, se esperaba {$codigoEsperado}."
+            );
+        }
     }
 
     /**

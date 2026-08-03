@@ -155,11 +155,8 @@ return [
         'require_captcha' => true,
         'captcha_ttl_seconds' => 300,
         'captcha_length' => 4,
-        /**
-         * Plantilla del sandbox: efector DEV (no un centro real).
-         * Preferir efector_codigo_sisa (DEV99002PRIV vía clinical-seed/efector-demo-contexto).
-         * id_efector solo como override local de un efector DEV (0 = resolver por codigo_sisa).
-         * Nunca un centro real (p. ej. 863).
+         * Plantilla del sandbox: SOLO por efector_codigo_sisa DEV (default DEV99002PRIV).
+         * id_efector numérico se ignora si no es esa plantilla DEV (nunca usar 863 u otro centro real).
          */
         'efector_codigo_sisa' => 'DEV99002PRIV',
         'id_efector' => 0,

@@ -15,6 +15,7 @@
   var form = root.querySelector('[data-demo-form]');
   var statusEl = root.querySelector('[data-demo-status]');
   var roleSelect = root.querySelector('[data-demo-role]');
+  var roleWrap = root.querySelector('[data-demo-role-wrap]');
   var submitBtn = root.querySelector('[data-demo-submit]');
   var captchaWrap = root.querySelector('[data-demo-captcha-wrap]');
   var captchaImg = root.querySelector('[data-demo-captcha-img]');
@@ -22,12 +23,25 @@
   var captchaIdInput = root.querySelector('[data-demo-captcha-id]');
   var captchaRefresh = root.querySelector('[data-demo-captcha-refresh]');
   var requireCaptcha = false;
+  var demoReady = false;
+  var openButtons = [];
 
   function showStatus(msg, ok) {
     if (!statusEl) return;
     statusEl.hidden = false;
     statusEl.textContent = msg;
     statusEl.className = 'demo-access__status ' + (ok ? 'demo-access__status--ok' : 'demo-access__status--err');
+  }
+
+  function setOpenButtonsVisible(visible) {
+    openButtons.forEach(function (btn) {
+      btn.hidden = !visible;
+      if (visible) {
+        btn.removeAttribute('aria-hidden');
+      } else {
+        btn.setAttribute('aria-hidden', 'true');
+      }
+    });
   }
 
   function loadApiConfig() {
@@ -56,7 +70,15 @@
       body: opts.body ? JSON.stringify(opts.body) : undefined,
       credentials: 'omit',
     }).then(function (res) {
-      return res.json().then(function (data) {
+      return res.text().then(function (text) {
+        var data = null;
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            return { ok: false, status: res.status, data: { message: 'Respuesta inválida del servidor.' } };
+          }
+        }
         return { ok: res.ok && data && data.success !== false, status: res.status, data: data };
       });
     });
@@ -88,35 +110,70 @@
     });
   }
 
+  function applyProfiles(items) {
+    if (!roleSelect) {
+      return false;
+    }
+    roleSelect.innerHTML = '';
+    if (!items || items.length === 0) {
+      return false;
+    }
+    items.forEach(function (it, idx) {
+      var opt = document.createElement('option');
+      opt.value = String(it.role);
+      opt.textContent = it.label || it.role;
+      if (idx === 0) {
+        opt.selected = true;
+      }
+      roleSelect.appendChild(opt);
+    });
+    // Un solo perfil (staff): no hace falta elegir.
+    if (roleWrap) {
+      if (items.length === 1) {
+        roleWrap.hidden = true;
+        roleSelect.required = false;
+      } else {
+        roleWrap.hidden = false;
+        roleSelect.required = true;
+      }
+    }
+    return true;
+  }
+
   function fillProfiles() {
     return api('/licencia/demo-perfiles').then(function (r) {
-      if (!roleSelect) return;
-      roleSelect.innerHTML = '';
+      demoReady = false;
       if (!r.ok || !r.data || !r.data.data || r.data.data.enabled === false) {
-        root.hidden = true;
-        return;
+        setOpenButtonsVisible(false);
+        if (roleSelect) {
+          roleSelect.innerHTML = '';
+          var empty = document.createElement('option');
+          empty.value = '';
+          empty.textContent = 'Demo no disponible';
+          roleSelect.appendChild(empty);
+        }
+        return false;
       }
       var payload = r.data.data;
       requireCaptcha = !!payload.require_captcha;
       var items = payload.items || [];
-      if (items.length === 0) {
-        root.hidden = true;
-        return;
+      if (!applyProfiles(items)) {
+        setOpenButtonsVisible(false);
+        return false;
       }
-      root.hidden = false;
-      items.forEach(function (it, idx) {
-        var opt = document.createElement('option');
-        opt.value = String(it.role);
-        opt.textContent = it.label || it.role;
-        if (idx === 0) opt.selected = true;
-        roleSelect.appendChild(opt);
-      });
+      demoReady = true;
+      setOpenButtonsVisible(true);
       if (captchaWrap && !requireCaptcha) {
         captchaWrap.hidden = true;
-        if (captchaInput) captchaInput.required = false;
+        if (captchaInput) {
+          captchaInput.required = false;
+        }
       }
+      return true;
     }).catch(function () {
-      root.hidden = true;
+      demoReady = false;
+      setOpenButtonsVisible(false);
+      return false;
     });
   }
 
@@ -126,6 +183,20 @@
     if (statusEl) {
       statusEl.hidden = true;
       statusEl.textContent = '';
+    }
+    if (!demoReady) {
+      showStatus('Cargando perfiles…', true);
+      fillProfiles().then(function (ok) {
+        if (!ok) {
+          showStatus('La demo no está habilitada o no hay perfiles. Revisá demo_sandbox_habilitado y la API.', false);
+          return;
+        }
+        if (statusEl) {
+          statusEl.hidden = true;
+        }
+        loadCaptcha();
+      });
+      return;
     }
     loadCaptcha();
   }
@@ -138,9 +209,17 @@
   function onSubmit(ev) {
     ev.preventDefault();
     if (!form) return;
+    if (!demoReady) {
+      showStatus('La demo no está disponible.', false);
+      return;
+    }
     var email = (form.querySelector('[name="email"]') || {}).value || '';
     var website = (form.querySelector('[name="website"]') || {}).value || '';
     var role = roleSelect ? roleSelect.value : 'staff';
+    if (!role) {
+      showStatus('Elegí un perfil.', false);
+      return;
+    }
     var captcha = captchaInput ? String(captchaInput.value || '').trim() : '';
     var captchaChallengeId = captchaIdInput ? String(captchaIdInput.value || '') : '';
     if (requireCaptcha && (!captcha || !captchaChallengeId)) {
@@ -180,8 +259,11 @@
     });
   }
 
+  openButtons = Array.prototype.slice.call(document.querySelectorAll('[data-demo-open]'));
+  setOpenButtonsVisible(false);
+
   loadApiConfig().then(fillProfiles).then(function () {
-    document.querySelectorAll('[data-demo-open]').forEach(function (btn) {
+    openButtons.forEach(function (btn) {
       btn.addEventListener('click', function (e) {
         e.preventDefault();
         openModal();

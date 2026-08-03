@@ -144,7 +144,7 @@ return [
      *
      * @see web/docs/plans/demo-sandbox-institucional/design.md
      */
-    'demo_sandbox_habilitado' => false,
+    'demo_sandbox_habilitado' => true,
     'demo_sandbox' => [
         /** TTL del código de un solo uso (institucional → app). */
         'ttl_seconds' => 900,

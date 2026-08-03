@@ -137,6 +137,9 @@ final class DemoSandboxAccessService
         $row = new DemoSandboxAccess();
         $row->code_hash = self::hashCode($plain);
         $row->role = $role;
+        if ($row->hasAttribute('mode')) {
+            $row->mode = $mode;
+        }
         $row->username = $username;
         $row->id_user = $idUser;
         $email = trim((string) ($input['email'] ?? ''));
@@ -189,7 +192,15 @@ final class DemoSandboxAccessService
         }
 
         $profile = $this->resolveProfile($row->role);
-        $mode = $profile['mode'];
+        $mode = '';
+        if ($row->hasAttribute('mode')) {
+            $mode = trim((string) ($row->mode ?? ''));
+        }
+        if ($mode === '') {
+            $mode = $profile['mode'];
+        } else {
+            $mode = self::normalizeMode($mode);
+        }
         $sessionId = null;
 
         if ($mode === self::MODE_EPHEMERAL) {
@@ -199,8 +210,22 @@ final class DemoSandboxAccessService
             $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff((int) $row->id);
             $user = $provisioned['user'];
             $sessionId = (int) $provisioned['session']->id;
+            if (str_starts_with((string) $user->username, 'medico_med_general_')) {
+                throw new \RuntimeException(
+                    'Demo efímera resolvió cuenta seed legacy; revisá demo_sandbox.profiles.mode=ephemeral.'
+                );
+            }
             $row->id_user = (int) $user->id;
             $row->username = (string) $user->username;
+            if ($row->hasAttribute('mode')) {
+                $row->mode = self::MODE_EPHEMERAL;
+            }
+            Yii::info(
+                'demo sandbox ephemeral login user=' . $user->username
+                . ' efector=' . (int) $provisioned['session']->id_efector
+                . ' pes=' . (int) $provisioned['session']->id_pes,
+                'demo.sandbox'
+            );
         } else {
             $user = User::findOne((int) $row->id_user);
             if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
@@ -241,8 +266,10 @@ final class DemoSandboxAccessService
             ];
         }
 
+        // Compat accounts.* solo para roles no-staff (p. ej. paciente) o mode shared explícito.
+        // Staff NUNCA cae a medico_med_general_* por accounts legacy.
         $accounts = is_array($cfg['accounts'] ?? null) ? $cfg['accounts'] : [];
-        if (isset($accounts[$role]) && is_array($accounts[$role])) {
+        if (isset($accounts[$role]) && is_array($accounts[$role]) && $role !== DemoSandboxAccess::ROLE_STAFF) {
             $username = trim((string) ($accounts[$role]['username'] ?? ''));
             if ($username === '') {
                 throw new \DomainException('No hay cuenta demo configurada para ese perfil.');
@@ -255,7 +282,7 @@ final class DemoSandboxAccessService
             ];
         }
 
-        // Default staff → ephemeral si no hay config explícita.
+        // Default staff → ephemeral (nunca cuenta seed fija).
         if ($role === DemoSandboxAccess::ROLE_STAFF) {
             return [
                 'username' => null,

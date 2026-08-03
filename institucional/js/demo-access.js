@@ -49,10 +49,18 @@
       .then(function (r) { return r.json(); })
       .then(function (cfg) {
         var host = window.location.hostname;
-        var isLocal = host === 'localhost' || host === '127.0.0.1';
+        var isLocal = host === 'localhost'
+          || host === '127.0.0.1'
+          || host === '[::1]'
+          || host.endsWith('.local')
+          || host.endsWith('.test')
+          || host.endsWith('.localhost');
         var base = isLocal && cfg.apiBaseUrlLocal ? cfg.apiBaseUrlLocal : cfg.apiBaseUrl;
         if (base) {
           apiBase = String(base).replace(/\/$/, '');
+        }
+        if (window.console && console.info) {
+          console.info('[demo-access] API', apiBase, '(host=' + host + ', local=' + isLocal + ')');
         }
       })
       .catch(function () { /* defaults */ });

@@ -10,6 +10,7 @@ use yii\db\ActiveRecord;
  * @property int $id
  * @property string $code_hash
  * @property string $role
+ * @property string|null $mode
  * @property string|null $username
  * @property int|null $id_user
  * @property string|null $email
@@ -45,6 +46,7 @@ class DemoSandboxAccess extends ActiveRecord
             [['expires_at', 'used_at', 'created_at'], 'safe'],
             [['code_hash'], 'string', 'max' => 64],
             [['role'], 'string', 'max' => 32],
+            [['mode'], 'string', 'max' => 32],
             [['username'], 'string', 'max' => 64],
             [['email'], 'string', 'max' => 255],
             [['ip'], 'string', 'max' => 45],

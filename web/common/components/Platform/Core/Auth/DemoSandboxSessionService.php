@@ -162,14 +162,36 @@ final class DemoSandboxSessionService
             $codigo = EfectorDemoSeedService::COD_SISA_PRIVATE;
         }
 
-        $row = (new EfectorDemoSeedService())->findByCodigoSisa($codigo);
+        $seed = new EfectorDemoSeedService();
+        $row = $seed->findByCodigoSisa($codigo);
         if ($row === null) {
+            // Auto-crear plantilla DEV (sin médico permanente) para no caer en efectores reales.
+            if ($codigo === EfectorDemoSeedService::COD_SISA_PRIVATE) {
+                $created = $seed->upsertClinicaPrivada();
+                $row = ['id_efector' => (int) ($created['id_efector'] ?? 0)];
+            } elseif ($codigo === EfectorDemoSeedService::COD_SISA_PUBLIC_OTRA_PROV) {
+                $created = $seed->upsertPublicOtraProvincia();
+                $row = ['id_efector' => (int) ($created['id_efector'] ?? 0)];
+            } else {
+                throw new \DomainException(
+                    'No hay efector demo plantilla (' . $codigo . '). Ejecutá: php yii clinical-seed/efector-demo-contexto'
+                );
+            }
+        }
+
+        $id = (int) ($row['id_efector'] ?? 0);
+        if ($id <= 0) {
+            throw new \DomainException('No se pudo resolver id_efector de la plantilla demo.');
+        }
+        if ($id === EfectorDemoSeedService::DEFAULT_EFECTOR_REF) {
             throw new \DomainException(
-                'No hay efector demo plantilla (' . $codigo . '). Ejecutá: php yii clinical-seed/efector-demo-contexto'
+                'La plantilla demo no puede ser el efector real '
+                . EfectorDemoSeedService::DEFAULT_EFECTOR_REF
+                . '. Usá codigo_sisa DEV (DEV99002PRIV).'
             );
         }
 
-        return (int) $row['id_efector'];
+        return $id;
     }
 
     /**

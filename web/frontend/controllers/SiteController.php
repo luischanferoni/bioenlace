@@ -410,7 +410,7 @@ class SiteController extends Controller
 
         Yii::$app->session->setFlash(
             'success',
-            'Estás en una demo temporal. Los datos son de prueba y se borran al cerrar sesión o al expirar.'
+            'Estás en una demo temporal (' . $user->username . '). Los datos son de prueba y se borran al cerrar sesión o al expirar.'
         );
 
         if (!Yii::$app->response->isSent) {

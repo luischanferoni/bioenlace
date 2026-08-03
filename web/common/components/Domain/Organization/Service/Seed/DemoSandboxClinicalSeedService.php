@@ -4,8 +4,10 @@ namespace common\components\Domain\Organization\Service\Seed;
 
 use common\components\Domain\Clinical\Emergency\Service\GuardiaIngresoService;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
+use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\components\Domain\Person\Util\CuilValidator;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
+use common\models\Clinical\Encounter;
 use common\models\InfraestructuraCama;
 use common\models\InfraestructuraPiso;
 use common\models\InfraestructuraSala;
@@ -16,7 +18,7 @@ use common\models\SegNivelInternacionRepository;
 use Yii;
 
 /**
- * Seed clínico mínimo para una sesión demo (pacientes, turnos, guardia, internación).
+ * Seed clínico mínimo para una sesión demo (pacientes, turnos, consulta AMB, guardia, internación).
  */
 final class DemoSandboxClinicalSeedService
 {
@@ -26,12 +28,14 @@ final class DemoSandboxClinicalSeedService
      * @param array{
      *     pacientes?: int,
      *     turnos?: int,
+     *     with_consulta_amb?: bool,
      *     with_guardia?: bool,
      *     with_internacion?: bool
      * } $options
      * @return array{
      *     paciente_ids: list<int>,
      *     turno_ids: list<int>,
+     *     encounter_ids: list<int>,
      *     guardia_ids: list<int>,
      *     internacion_ids: list<int>,
      *     cama_ids: list<int>,
@@ -49,7 +53,11 @@ final class DemoSandboxClinicalSeedService
     ): array {
         $withGuardia = (bool) ($options['with_guardia'] ?? false);
         $withInternacion = (bool) ($options['with_internacion'] ?? false);
+        $withConsultaAmb = (bool) ($options['with_consulta_amb'] ?? true);
         $nTurnos = max(0, (int) ($options['turnos'] ?? 2));
+        if ($withConsultaAmb && $nTurnos < 1) {
+            $nTurnos = 1;
+        }
         $minPacientes = $nTurnos + ($withGuardia ? 1 : 0) + ($withInternacion ? 1 : 0);
         $nPacientes = max($minPacientes, max(1, (int) ($options['pacientes'] ?? 4)));
 
@@ -78,6 +86,11 @@ final class DemoSandboxClinicalSeedService
             if ($idTurno > 0) {
                 $turnoIds[] = $idTurno;
             }
+        }
+
+        $encounterIds = [];
+        if ($withConsultaAmb && $turnoIds !== []) {
+            $encounterIds = $this->ensureConsultaAmbFromFirstTurno($turnoIds[0]);
         }
 
         $nextIdx = $limit;
@@ -130,6 +143,7 @@ final class DemoSandboxClinicalSeedService
         return [
             'paciente_ids' => $pacienteIds,
             'turno_ids' => $turnoIds,
+            'encounter_ids' => $encounterIds,
             'guardia_ids' => $guardiaIds,
             'internacion_ids' => $internacionIds,
             'cama_ids' => $camaIds,
@@ -137,6 +151,35 @@ final class DemoSandboxClinicalSeedService
             'piso_ids' => $pisoIds,
             'documentos_pacientes' => $documentos,
         ];
+    }
+
+    /**
+     * Encounter AMB in-progress ligado al primer turno (captura clínica).
+     *
+     * @return list<int>
+     */
+    private function ensureConsultaAmbFromFirstTurno(int $idTurno): array
+    {
+        $turno = Turno::findOne($idTurno);
+        if ($turno === null) {
+            return [];
+        }
+
+        try {
+            $encounter = (new EncounterLifecycleService())->ensureFromTurno($turno);
+            if ($encounter !== null) {
+                return [(int) $encounter->id];
+            }
+        } catch (\Throwable $e) {
+            Yii::warning('demo sandbox consulta AMB seed: ' . $e->getMessage(), __METHOD__);
+        }
+
+        $existing = Encounter::find()
+            ->where(['appointment_id' => $idTurno, 'deleted_at' => null])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+
+        return $existing !== null ? [(int) $existing->id] : [];
     }
 
     /**

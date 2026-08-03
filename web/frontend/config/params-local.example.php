@@ -29,6 +29,7 @@ return [
     //         'pacientes' => 4,
     //         'turnos' => 2,
     //         'with_agenda' => true,
+    //         'with_consulta_amb' => true,
     //         'with_guardia' => true,
     //         'with_internacion' => true,
     //     ],

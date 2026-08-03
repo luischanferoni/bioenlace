@@ -3,6 +3,7 @@
 namespace common\components\Domain\Organization\Service\Seed;
 
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
+use common\models\Clinical\Encounter;
 use common\models\Guardia;
 use common\models\InfraestructuraCama;
 use common\models\InfraestructuraPiso;
@@ -57,6 +58,18 @@ final class DemoSandboxPurgeService
                         $turno->deleted_at = new Expression('NOW()');
                     }
                     $turno->save(false);
+                }
+            }
+
+            foreach ((array) ($payload['encounter_ids'] ?? []) as $idEncounter) {
+                $idEncounter = (int) $idEncounter;
+                if ($idEncounter <= 0) {
+                    continue;
+                }
+                $encounter = Encounter::findOne($idEncounter);
+                if ($encounter !== null && $encounter->deleted_at === null) {
+                    $encounter->deleted_at = $now;
+                    $encounter->save(false);
                 }
             }
 

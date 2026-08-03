@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `demo-sandbox-institucional` |
-| Estado | En ejecución — v2.2 (captcha) |
+| Estado | En ejecución — v2.3 (consulta AMB) |
 | Superficie | Institucional estático + API licencia + `/site/demo-entrar` |
 
 ## Índice

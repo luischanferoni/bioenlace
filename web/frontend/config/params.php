@@ -167,6 +167,8 @@ return [
             'pacientes' => 4,
             'turnos' => 2,
             'with_agenda' => true,
+            /** Encounter AMB in-progress sobre el 1.er turno (captura clínica). */
+            'with_consulta_amb' => true,
             /** Best-effort: no exige entitlement EMER para persistir la fila. */
             'with_guardia' => true,
             /** Crea piso/sala/cama efímeros + ingreso (sin assert HTTP). */

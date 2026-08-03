@@ -25,7 +25,8 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 | Dato | Detalle |
 |------|---------|
 | Pacientes | 4 (documentos `37xxxxxx`) |
-| Turnos | 2 (día hábil, PES propio) |
+| Turnos | 2 (día hábil, PES propio); el 1.º con encounter AMB |
+| Consulta AMB | 1 encounter `in-progress` vía `EncounterLifecycleService::ensureFromTurno` (captura clínica) |
 | Guardia | 1 episodio (`GuardiaIngresoService`, best-effort) |
 | Internación | 1 ingreso + piso/sala/cama **efímeros** (sin assert HTTP; lifecycle care plan best-effort) |
 
@@ -36,7 +37,7 @@ Pacientes distintos para turnos / guardia / internación.
 - `demo_sandbox_habilitado`
 - `efector_codigo_sisa` (default `DEV99002PRIV`), `id_efector` (0 = resolver por SISA), `servicio_nombre` (default MED GENERAL)
 - `ttl_seconds` (código), `session_ttl_seconds` (visita), `max_per_ip_hour`
-- `seed`: `pacientes`, `turnos`, `with_agenda`, `with_guardia`, `with_internacion`
+- `seed`: `pacientes`, `turnos`, `with_agenda`, `with_consulta_amb`, `with_guardia`, `with_internacion`
 - `profiles.staff.mode`: `ephemeral` (default) o `shared_account` (legacy)
 
 ## Seguridad
@@ -49,7 +50,7 @@ Knobs: `require_captcha` (default true), `captcha_ttl_seconds`, `captcha_length`
 
 - Purga al logout (`AuthController::actionLogout`).
 - Cron: `php yii demo-sandbox/purge-expired`.
-- Purga: turnos → internación (cierra + borra hcama/cama/sala/piso) → guardia → agenda/PES → pacientes/user.
+- Purga: turnos → encounters AMB → internación (cierra + borra hcama/cama/sala/piso) → guardia → agenda/PES → pacientes/user.
 
 ## Servicios
 

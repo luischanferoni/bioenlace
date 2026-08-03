@@ -150,7 +150,7 @@ return [
         'ttl_seconds' => 900,
         /** TTL de la sesión demo efímera (médico + seed); purga por cron/logout. */
         'session_ttl_seconds' => 14400,
-        'max_per_ip_hour' => 10,
+        'max_per_ip_hour' => 50,
         /** Captcha challenge en cache (sin sesión PHP; apto cross-origin institucional → API). */
         'require_captcha' => true,
         'captcha_ttl_seconds' => 300,

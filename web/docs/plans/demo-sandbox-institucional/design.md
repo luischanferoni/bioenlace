@@ -16,7 +16,7 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 | Pieza | Detalle |
 |-------|---------|
 | BD | Misma instancia; sin schema paralelo |
-| Efector | Plantilla fija (`demo_sandbox.id_efector`, default 863) |
+| Efector | Plantilla DEV por `efector_codigo_sisa` (default `DEV99002PRIV`); no usar un `id_efector` de producción |
 | Aislamiento | Un **PES + user** por visitante (scope médico); no tableros de todo el centro |
 | Tracking | `demo_sandbox_access` (código) + `demo_sandbox_session` (PES, payload seed, expires/purged) |
 
@@ -34,7 +34,7 @@ Pacientes distintos para turnos / guardia / internación.
 ## Config (`demo_sandbox`)
 
 - `demo_sandbox_habilitado`
-- `id_efector`, `servicio_nombre` (default MED GENERAL)
+- `efector_codigo_sisa` (default `DEV99002PRIV`), `id_efector` (0 = resolver por SISA), `servicio_nombre` (default MED GENERAL)
 - `ttl_seconds` (código), `session_ttl_seconds` (visita), `max_per_ip_hour`
 - `seed`: `pacientes`, `turnos`, `with_agenda`, `with_guardia`, `with_internacion`
 - `profiles.staff.mode`: `ephemeral` (default) o `shared_account` (legacy)

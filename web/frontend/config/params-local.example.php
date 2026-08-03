@@ -22,7 +22,8 @@ return [
     //     'max_per_ip_hour' => 10,
     //     'require_captcha' => true,
     //     'captcha_ttl_seconds' => 300,
-    //     'id_efector' => 863,
+    //     'efector_codigo_sisa' => 'DEV99002PRIV',
+    //     'id_efector' => 0,
     //     'servicio_nombre' => 'MED GENERAL',
     //     'seed' => [
     //         'pacientes' => 4,

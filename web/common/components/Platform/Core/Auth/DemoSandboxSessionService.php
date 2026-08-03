@@ -5,6 +5,8 @@ namespace common\components\Platform\Core\Auth;
 use common\components\Domain\Organization\Service\Seed\DemoSandboxClinicalSeedService;
 use common\components\Domain\Organization\Service\Seed\DemoSandboxPurgeService;
 use common\components\Domain\Organization\Service\Seed\DemoSandboxStaffProvisionService;
+use common\components\Domain\Organization\Service\Seed\EfectorDemoSeedService;
+use common\models\Efector;
 use common\models\Platform\DemoSandboxAccess;
 use common\models\Platform\DemoSandboxSession;
 use common\models\User;
@@ -27,7 +29,7 @@ final class DemoSandboxSessionService
     public function provisionEphemeralStaff(?int $idAccess = null): array
     {
         $cfg = $this->config();
-        $idEfector = (int) ($cfg['id_efector'] ?? 863);
+        $idEfector = $this->resolveIdEfector($cfg);
         $servicioNombre = trim((string) ($cfg['servicio_nombre'] ?? 'MED GENERAL'));
         if ($servicioNombre === '') {
             $servicioNombre = 'MED GENERAL';
@@ -133,6 +135,39 @@ final class DemoSandboxSessionService
     public function purgeExpired(): array
     {
         return (new DemoSandboxPurgeService())->purgeExpired();
+    }
+
+    /**
+     * Resuelve el efector plantilla: override numérico opcional, o codigo_sisa DEV (nunca un centro real por defecto).
+     *
+     * @param array<string, mixed> $cfg
+     */
+    private function resolveIdEfector(array $cfg): int
+    {
+        $override = (int) ($cfg['id_efector'] ?? 0);
+        if ($override > 0) {
+            if (Efector::findOne($override) === null) {
+                throw new \DomainException(
+                    "demo_sandbox.id_efector={$override} no existe. Usá un efector DEV o corré clinical-seed/efector-demo-contexto."
+                );
+            }
+
+            return $override;
+        }
+
+        $codigo = trim((string) ($cfg['efector_codigo_sisa'] ?? EfectorDemoSeedService::COD_SISA_PRIVATE));
+        if ($codigo === '') {
+            $codigo = EfectorDemoSeedService::COD_SISA_PRIVATE;
+        }
+
+        $row = (new EfectorDemoSeedService())->findByCodigoSisa($codigo);
+        if ($row === null) {
+            throw new \DomainException(
+                'No hay efector demo plantilla (' . $codigo . '). Ejecutá: php yii clinical-seed/efector-demo-contexto'
+            );
+        }
+
+        return (int) $row['id_efector'];
     }
 
     /**

@@ -148,6 +148,12 @@ final class DemoSandboxSessionService
     {
         $override = (int) ($cfg['id_efector'] ?? 0);
         if ($override > 0) {
+            if ($override === EfectorDemoSeedService::DEFAULT_EFECTOR_REF) {
+                throw new \DomainException(
+                    'demo_sandbox.id_efector=' . $override
+                    . ' es un efector real. Usá efector_codigo_sisa=DEV99002PRIV (id_efector=0).'
+                );
+            }
             if (Efector::findOne($override) === null) {
                 throw new \DomainException(
                     "demo_sandbox.id_efector={$override} no existe. Usá un efector DEV o corré clinical-seed/efector-demo-contexto."

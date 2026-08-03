@@ -140,7 +140,7 @@ return [
 
     /**
      * Acceso demo sandbox desde el sitio institucional (código de un solo uso → /site/demo-entrar).
-     * Habilitar en staging/prod controlado; requiere usuario seed (p. ej. medico_med_general_863).
+     * Habilitar en staging/prod controlado; mode ephemeral provisiona médico + seed por visita.
      *
      * @see web/docs/plans/demo-sandbox-institucional/design.md
      */
@@ -155,11 +155,13 @@ return [
         'id_efector' => 863,
         'servicio_nombre' => 'MED GENERAL',
         'seed' => [
-            'pacientes' => 3,
-            'turnos' => 3,
+            'pacientes' => 4,
+            'turnos' => 2,
             'with_agenda' => true,
-            /** Guardia: best-effort; requiere entitlement EMER en el efector. */
-            'with_guardia' => false,
+            /** Best-effort: no exige entitlement EMER para persistir la fila. */
+            'with_guardia' => true,
+            /** Crea piso/sala/cama efímeros + ingreso (sin assert HTTP). */
+            'with_internacion' => true,
         ],
         /** Base absoluta de la app (sin barra final). Vacío = createAbsoluteUrl Yii. En prod: https://app.bioenlace.io */
         'app_base_url' => '',

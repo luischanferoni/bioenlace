@@ -2,14 +2,19 @@
 
 namespace common\components\Domain\Organization\Service\Seed;
 
+use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\Guardia;
+use common\models\InfraestructuraCama;
+use common\models\InfraestructuraPiso;
+use common\models\InfraestructuraSala;
 use common\models\Person\Persona;
 use common\models\Platform\DemoSandboxSession;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\Scheduling\Turno;
+use common\models\SegNivelInternacion;
+use common\models\SegNivelInternacionHcama;
 use common\models\User;
-use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use Yii;
 use yii\db\Expression;
 
@@ -55,6 +60,56 @@ final class DemoSandboxPurgeService
                 }
             }
 
+            foreach ((array) ($payload['internacion_ids'] ?? []) as $idInternacion) {
+                $idInternacion = (int) $idInternacion;
+                if ($idInternacion <= 0) {
+                    continue;
+                }
+                $internacion = SegNivelInternacion::findOne($idInternacion);
+                if ($internacion === null) {
+                    continue;
+                }
+                if (empty($internacion->fecha_fin)) {
+                    $internacion->fecha_fin = date('d/m/Y');
+                    $internacion->hora_fin = date('H:i');
+                    $internacion->save(false);
+                }
+                SegNivelInternacionHcama::deleteAll(['id_internacion' => $idInternacion]);
+            }
+
+            foreach ((array) ($payload['cama_ids'] ?? []) as $idCama) {
+                $idCama = (int) $idCama;
+                if ($idCama <= 0) {
+                    continue;
+                }
+                $cama = InfraestructuraCama::findOne($idCama);
+                if ($cama !== null) {
+                    $cama->delete();
+                }
+            }
+
+            foreach ((array) ($payload['sala_ids'] ?? []) as $idSala) {
+                $idSala = (int) $idSala;
+                if ($idSala <= 0) {
+                    continue;
+                }
+                $sala = InfraestructuraSala::findOne($idSala);
+                if ($sala !== null) {
+                    $sala->delete();
+                }
+            }
+
+            foreach ((array) ($payload['piso_ids'] ?? []) as $idPiso) {
+                $idPiso = (int) $idPiso;
+                if ($idPiso <= 0) {
+                    continue;
+                }
+                $piso = InfraestructuraPiso::findOne($idPiso);
+                if ($piso !== null) {
+                    $piso->delete();
+                }
+            }
+
             foreach ((array) ($payload['guardia_ids'] ?? []) as $idGuardia) {
                 $idGuardia = (int) $idGuardia;
                 if ($idGuardia <= 0) {
@@ -91,7 +146,6 @@ final class DemoSandboxPurgeService
                 if ($idPaciente <= 0) {
                     continue;
                 }
-                // Pacientes demo sin user: renombrar documento para liberar unicidad.
                 $persona = Persona::findOne($idPaciente);
                 if ($persona !== null && (int) ($persona->id_user ?? 0) === 0) {
                     $persona->documento = $this->retireDocumento((string) $persona->documento, $idPaciente);
@@ -167,7 +221,7 @@ final class DemoSandboxPurgeService
     {
         $digits = preg_replace('/\D+/', '', $documento) ?? '';
         $base = substr($digits !== '' ? $digits : (string) $id, -6);
-        // 8 chars max en Persona.documento: X + 6 + último dígito de id
+
         return 'X' . str_pad($base, 6, '0', STR_PAD_LEFT) . substr((string) ($id % 10), -1);
     }
 }

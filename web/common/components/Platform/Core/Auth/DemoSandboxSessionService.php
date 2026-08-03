@@ -48,9 +48,10 @@ final class DemoSandboxSessionService
             $staff['id_servicio'],
             $staff['id_user'],
             [
-                'pacientes' => (int) ($seedCfg['pacientes'] ?? 3),
-                'turnos' => (int) ($seedCfg['turnos'] ?? 3),
-                'with_guardia' => (bool) ($seedCfg['with_guardia'] ?? false),
+                'pacientes' => (int) ($seedCfg['pacientes'] ?? 4),
+                'turnos' => (int) ($seedCfg['turnos'] ?? 2),
+                'with_guardia' => (bool) ($seedCfg['with_guardia'] ?? true),
+                'with_internacion' => (bool) ($seedCfg['with_internacion'] ?? true),
             ]
         );
 
@@ -78,6 +79,10 @@ final class DemoSandboxSessionService
             'paciente_ids' => $clinical['paciente_ids'],
             'turno_ids' => $clinical['turno_ids'],
             'guardia_ids' => $clinical['guardia_ids'],
+            'internacion_ids' => $clinical['internacion_ids'],
+            'cama_ids' => $clinical['cama_ids'],
+            'sala_ids' => $clinical['sala_ids'],
+            'piso_ids' => $clinical['piso_ids'],
             'documentos_pacientes' => $clinical['documentos_pacientes'],
         ]);
         if (!$session->save(false)) {

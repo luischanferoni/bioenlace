@@ -23,10 +23,11 @@ return [
     //     'id_efector' => 863,
     //     'servicio_nombre' => 'MED GENERAL',
     //     'seed' => [
-    //         'pacientes' => 3,
-    //         'turnos' => 3,
+    //         'pacientes' => 4,
+    //         'turnos' => 2,
     //         'with_agenda' => true,
-    //         'with_guardia' => false,
+    //         'with_guardia' => true,
+    //         'with_internacion' => true,
     //     ],
     //     'profiles' => [
     //         'staff' => [

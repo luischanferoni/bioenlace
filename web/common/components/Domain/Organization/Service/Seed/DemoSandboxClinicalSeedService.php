@@ -3,14 +3,20 @@
 namespace common\components\Domain\Organization\Service\Seed;
 
 use common\components\Domain\Clinical\Emergency\Service\GuardiaIngresoService;
+use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Person\Util\CuilValidator;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
+use common\models\InfraestructuraCama;
+use common\models\InfraestructuraPiso;
+use common\models\InfraestructuraSala;
 use common\models\Person\Persona;
 use common\models\Scheduling\Turno;
+use common\models\SegNivelInternacion;
+use common\models\SegNivelInternacionRepository;
 use Yii;
 
 /**
- * Seed clínico mínimo para una sesión demo (pacientes + turnos del día; guardia opcional).
+ * Seed clínico mínimo para una sesión demo (pacientes, turnos, guardia, internación).
  */
 final class DemoSandboxClinicalSeedService
 {
@@ -20,12 +26,17 @@ final class DemoSandboxClinicalSeedService
      * @param array{
      *     pacientes?: int,
      *     turnos?: int,
-     *     with_guardia?: bool
+     *     with_guardia?: bool,
+     *     with_internacion?: bool
      * } $options
      * @return array{
      *     paciente_ids: list<int>,
      *     turno_ids: list<int>,
      *     guardia_ids: list<int>,
+     *     internacion_ids: list<int>,
+     *     cama_ids: list<int>,
+     *     sala_ids: list<int>,
+     *     piso_ids: list<int>,
      *     documentos_pacientes: list<string>
      * }
      */
@@ -36,9 +47,11 @@ final class DemoSandboxClinicalSeedService
         int $actingUserId,
         array $options = []
     ): array {
-        $nPacientes = max(1, (int) ($options['pacientes'] ?? 3));
-        $nTurnos = max(0, (int) ($options['turnos'] ?? 3));
         $withGuardia = (bool) ($options['with_guardia'] ?? false);
+        $withInternacion = (bool) ($options['with_internacion'] ?? false);
+        $nTurnos = max(0, (int) ($options['turnos'] ?? 2));
+        $minPacientes = $nTurnos + ($withGuardia ? 1 : 0) + ($withInternacion ? 1 : 0);
+        $nPacientes = max($minPacientes, max(1, (int) ($options['pacientes'] ?? 4)));
 
         $pacienteIds = [];
         $documentos = [];
@@ -67,11 +80,12 @@ final class DemoSandboxClinicalSeedService
             }
         }
 
+        $nextIdx = $limit;
         $guardiaIds = [];
-        if ($withGuardia && $pacienteIds !== []) {
+        if ($withGuardia && isset($pacienteIds[$nextIdx])) {
             try {
                 $result = (new GuardiaIngresoService())->ingresar([
-                    'id_persona' => $pacienteIds[0],
+                    'id_persona' => $pacienteIds[$nextIdx],
                     'id_profesional_efector_servicio' => $idPes,
                     'ingresa_en' => 'deambula',
                     'ingresa_con' => 'solo',
@@ -85,14 +99,145 @@ final class DemoSandboxClinicalSeedService
             } catch (\Throwable $e) {
                 Yii::warning('demo sandbox guardia seed: ' . $e->getMessage(), __METHOD__);
             }
+            $nextIdx++;
+        }
+
+        $internacionIds = [];
+        $camaIds = [];
+        $salaIds = [];
+        $pisoIds = [];
+        if ($withInternacion && isset($pacienteIds[$nextIdx])) {
+            try {
+                $infra = $this->createBedInfra($idEfector, $idServicio);
+                $pisoIds[] = $infra['id_piso'];
+                $salaIds[] = $infra['id_sala'];
+                $camaIds[] = $infra['id_cama'];
+
+                $idInternacion = $this->createInternacion(
+                    $pacienteIds[$nextIdx],
+                    $infra['id_cama'],
+                    $idPes,
+                    $actingUserId
+                );
+                if ($idInternacion > 0) {
+                    $internacionIds[] = $idInternacion;
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('demo sandbox internacion seed: ' . $e->getMessage(), __METHOD__);
+            }
         }
 
         return [
             'paciente_ids' => $pacienteIds,
             'turno_ids' => $turnoIds,
             'guardia_ids' => $guardiaIds,
+            'internacion_ids' => $internacionIds,
+            'cama_ids' => $camaIds,
+            'sala_ids' => $salaIds,
+            'piso_ids' => $pisoIds,
             'documentos_pacientes' => $documentos,
         ];
+    }
+
+    /**
+     * Infra de cama efímera por sesión (no reutiliza camas del efector).
+     *
+     * @return array{id_piso: int, id_sala: int, id_cama: int}
+     */
+    private function createBedInfra(int $idEfector, int $idServicio): array
+    {
+        $piso = new InfraestructuraPiso();
+        $piso->nro_piso = 99;
+        $piso->descripcion = 'Demo sandbox';
+        $piso->id_efector = $idEfector;
+        if (!$piso->save(false)) {
+            throw new \RuntimeException('Piso demo: ' . json_encode($piso->getErrors()));
+        }
+
+        $sala = new InfraestructuraSala();
+        $sala->nro_sala = 1;
+        $sala->descripcion = 'Sala demo sandbox';
+        $sala->id_piso = (int) $piso->id;
+        $sala->id_servicio = $idServicio > 0 ? $idServicio : null;
+        $sala->tipo_sala = 'indistinto';
+        if (!$sala->save(false)) {
+            throw new \RuntimeException('Sala demo: ' . json_encode($sala->getErrors()));
+        }
+
+        $cama = new InfraestructuraCama();
+        $cama->nro_cama = 1;
+        $cama->id_sala = (int) $sala->id;
+        $cama->estado = 'desocupada';
+        $cama->respirador = 0;
+        $cama->monitor = 0;
+        if (!$cama->save(false)) {
+            throw new \RuntimeException('Cama demo: ' . json_encode($cama->getErrors()));
+        }
+
+        return [
+            'id_piso' => (int) $piso->id,
+            'id_sala' => (int) $sala->id,
+            'id_cama' => (int) $cama->id,
+        ];
+    }
+
+    /**
+     * Ingreso sin assert de permiso HTTP (provision pre-login).
+     */
+    private function createInternacion(
+        int $idPersona,
+        int $idCama,
+        int $idPes,
+        int $actingUserId
+    ): int {
+        if (SegNivelInternacion::personaInternada($idPersona)) {
+            throw new \InvalidArgumentException('Paciente ya internado.');
+        }
+
+        $cama = InfraestructuraCama::findOne($idCama);
+        if ($cama === null) {
+            throw new \InvalidArgumentException('Cama demo inexistente.');
+        }
+
+        $model = new SegNivelInternacion();
+        $model->scenario = SegNivelInternacion::INGRESO_PACIENTE;
+        $model->id_persona = $idPersona;
+        $model->id_cama = $idCama;
+        $model->id_profesional_efector_servicio = $idPes;
+        $model->id_tipo_ingreso = 2; // Consultorio
+        $model->ingresa_en = 'deambula';
+        $model->ingresa_con = 'solo';
+        $model->datos_contacto_tel = '';
+        $model->situacion_al_ingresar = 'Internación demo sandbox (datos de prueba).';
+        $model->fecha_inicio = date('d/m/Y');
+        $model->hora_inicio = date('H:i');
+
+        ActiveRecordConsoleBlame::prepareForSave($model, $actingUserId);
+
+        $cama->estado = 'ocupada';
+
+        if (!$model->validate()) {
+            throw new \InvalidArgumentException(
+                'Internación demo inválida: ' . json_encode($model->getFirstErrors(), JSON_UNESCAPED_UNICODE)
+            );
+        }
+
+        if (!$model->save(false)) {
+            throw new \RuntimeException('No se pudo guardar internación demo.');
+        }
+        if (!$cama->save(false)) {
+            throw new \RuntimeException('No se pudo ocupar cama demo.');
+        }
+
+        SegNivelInternacionRepository::doAgregarHistoriaCama($model);
+
+        try {
+            (new CarePlanLifecycleService())->onInternacionAdmission($model);
+        } catch (\Throwable $e) {
+            Yii::warning('demo sandbox care plan internacion: ' . $e->getMessage(), __METHOD__);
+        }
+
+        return (int) $model->id;
     }
 
     /**

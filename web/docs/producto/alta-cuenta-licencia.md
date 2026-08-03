@@ -34,7 +34,7 @@ flowchart LR
 
 ## Demo sandbox (probar sin crear cuenta)
 
-Desde el sitio institucional, CTA **Probar demo** pide un código de un solo uso (`POST /api/v1/licencia/demo-acceso`) y redirige a la app (`/site/demo-entrar`). Al consumir el código se crea un **médico temporal** (PES + agenda) en el efector plantilla, con pacientes y turnos de prueba; se borran al cerrar sesión o al vencer el TTL. Flag `demo_sandbox_habilitado` + knobs en `demo_sandbox` (params).
+Desde el sitio institucional, CTA **Probar demo** pide un código de un solo uso (`POST /api/v1/licencia/demo-acceso`) y redirige a la app (`/site/demo-entrar`). Al consumir el código se crea un **médico temporal** (PES + agenda) en el efector plantilla, con pacientes, turnos, un ingreso a guardia y una internación de prueba (cama efímera); se borran al cerrar sesión o al vencer el TTL. Flag `demo_sandbox_habilitado` + knobs en `demo_sandbox` (params).
 
 ## Relación con el resto
 

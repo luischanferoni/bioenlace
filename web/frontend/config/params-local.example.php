@@ -20,6 +20,8 @@ return [
     //     'ttl_seconds' => 900,
     //     'session_ttl_seconds' => 14400,
     //     'max_per_ip_hour' => 10,
+    //     'require_captcha' => true,
+    //     'captcha_ttl_seconds' => 300,
     //     'id_efector' => 863,
     //     'servicio_nombre' => 'MED GENERAL',
     //     'seed' => [

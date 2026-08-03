@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Core\Auth;
 
+use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\models\Platform\DemoSandboxAccess;
 use common\models\User;
 use Yii;
@@ -122,6 +123,11 @@ final class DemoSandboxAccessService
             $ip = (string) (Yii::$app->request->userIP ?? '');
         }
         $this->assertRateLimit($ip !== '' ? $ip : null);
+
+        (new DemoSandboxCaptchaService())->assertValid(
+            isset($input['captcha_challenge_id']) ? (string) $input['captcha_challenge_id'] : null,
+            isset($input['captcha']) ? (string) $input['captcha'] : (isset($input['verifyCode']) ? (string) $input['verifyCode'] : null)
+        );
 
         $ttl = max(60, (int) ($this->config()['ttl_seconds'] ?? 900));
         $now = date('Y-m-d H:i:s');

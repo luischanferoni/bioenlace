@@ -151,6 +151,10 @@ return [
         /** TTL de la sesión demo efímera (médico + seed); purga por cron/logout. */
         'session_ttl_seconds' => 14400,
         'max_per_ip_hour' => 10,
+        /** Captcha challenge en cache (sin sesión PHP; apto cross-origin institucional → API). */
+        'require_captcha' => true,
+        'captcha_ttl_seconds' => 300,
+        'captcha_length' => 4,
         /** Efector plantilla compartido (scope médico = PES propio por visita). */
         'id_efector' => 863,
         'servicio_nombre' => 'MED GENERAL',

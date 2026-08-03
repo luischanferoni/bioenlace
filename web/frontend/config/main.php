@@ -127,6 +127,8 @@ return [
                 'POST api/<version:\w+>/licencia/solicitar-ministerio' => '<version>/licencia/solicitar-ministerio',
                 'GET api/<version:\w+>/licencia/demo-perfiles' => '<version>/licencia/demo-perfiles',
                 'OPTIONS api/<version:\w+>/licencia/demo-perfiles' => '<version>/licencia/demo-perfiles',
+                'GET api/<version:\w+>/licencia/demo-captcha' => '<version>/licencia/demo-captcha',
+                'OPTIONS api/<version:\w+>/licencia/demo-captcha' => '<version>/licencia/demo-captcha',
                 'POST api/<version:\w+>/licencia/demo-acceso' => '<version>/licencia/demo-acceso',
                 'OPTIONS api/<version:\w+>/licencia/demo-acceso' => '<version>/licencia/demo-acceso',
                 'GET api/<version:\w+>/licencia/mi-licencia' => '<version>/licencia/mi-licencia',

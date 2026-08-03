@@ -41,7 +41,9 @@ Pacientes distintos para turnos / guardia / internación.
 
 ## Seguridad
 
-Flag off por defecto; rate limit por IP; honeypot; código hasheado; un solo uso; sin link mágico permanente de login. Captcha: pendiente si hay abuso.
+Flag off por defecto; rate limit por IP; honeypot; **captcha** (challenge en cache, `GET /licencia/demo-captcha`, sin sesión PHP); código hasheado; un solo uso; sin link mágico permanente de login.
+
+Knobs: `require_captcha` (default true), `captcha_ttl_seconds`, `captcha_length`.
 
 ## Operación
 

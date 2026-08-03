@@ -1,6 +1,7 @@
 /**
  * Acceso demo sandbox desde el sitio institucional.
  * POST /api/v1/licencia/demo-acceso → redirect a enter_url (app /site/demo-entrar).
+ * Captcha: GET /api/v1/licencia/demo-captcha (challenge en cache, sin cookie de sesión).
  */
 (function () {
   'use strict';
@@ -15,7 +16,12 @@
   var statusEl = root.querySelector('[data-demo-status]');
   var roleSelect = root.querySelector('[data-demo-role]');
   var submitBtn = root.querySelector('[data-demo-submit]');
-  var openBtn = root.querySelector('[data-demo-open]');
+  var captchaWrap = root.querySelector('[data-demo-captcha-wrap]');
+  var captchaImg = root.querySelector('[data-demo-captcha-img]');
+  var captchaInput = root.querySelector('[data-demo-captcha-input]');
+  var captchaIdInput = root.querySelector('[data-demo-captcha-id]');
+  var captchaRefresh = root.querySelector('[data-demo-captcha-refresh]');
+  var requireCaptcha = false;
 
   function showStatus(msg, ok) {
     if (!statusEl) return;
@@ -56,6 +62,32 @@
     });
   }
 
+  function loadCaptcha() {
+    if (!requireCaptcha || !captchaWrap) {
+      return Promise.resolve();
+    }
+    captchaWrap.hidden = false;
+    if (captchaInput) {
+      captchaInput.required = true;
+      captchaInput.value = '';
+    }
+    return api('/licencia/demo-captcha').then(function (r) {
+      if (!r.ok || !r.data || !r.data.data) {
+        showStatus('No se pudo cargar el captcha.', false);
+        return;
+      }
+      var d = r.data.data;
+      if (captchaImg && d.image_data_url) {
+        captchaImg.src = String(d.image_data_url);
+      }
+      if (captchaIdInput) {
+        captchaIdInput.value = String(d.challenge_id || '');
+      }
+    }).catch(function () {
+      showStatus('No se pudo cargar el captcha.', false);
+    });
+  }
+
   function fillProfiles() {
     return api('/licencia/demo-perfiles').then(function (r) {
       if (!roleSelect) return;
@@ -64,7 +96,9 @@
         root.hidden = true;
         return;
       }
-      var items = r.data.data.items || [];
+      var payload = r.data.data;
+      requireCaptcha = !!payload.require_captcha;
+      var items = payload.items || [];
       if (items.length === 0) {
         root.hidden = true;
         return;
@@ -77,6 +111,10 @@
         if (idx === 0) opt.selected = true;
         roleSelect.appendChild(opt);
       });
+      if (captchaWrap && !requireCaptcha) {
+        captchaWrap.hidden = true;
+        if (captchaInput) captchaInput.required = false;
+      }
     }).catch(function () {
       root.hidden = true;
     });
@@ -89,6 +127,7 @@
       statusEl.hidden = true;
       statusEl.textContent = '';
     }
+    loadCaptcha();
   }
 
   function closeModal() {
@@ -102,27 +141,40 @@
     var email = (form.querySelector('[name="email"]') || {}).value || '';
     var website = (form.querySelector('[name="website"]') || {}).value || '';
     var role = roleSelect ? roleSelect.value : 'staff';
+    var captcha = captchaInput ? String(captchaInput.value || '').trim() : '';
+    var captchaChallengeId = captchaIdInput ? String(captchaIdInput.value || '') : '';
+    if (requireCaptcha && (!captcha || !captchaChallengeId)) {
+      showStatus('Completá el captcha.', false);
+      return;
+    }
     if (submitBtn) {
       submitBtn.disabled = true;
     }
     showStatus('Generando acceso…', true);
+    var body = {
+      role: role,
+      email: String(email).trim(),
+      website: String(website),
+    };
+    if (requireCaptcha) {
+      body.captcha = captcha;
+      body.captcha_challenge_id = captchaChallengeId;
+    }
     api('/licencia/demo-acceso', {
       method: 'POST',
-      body: {
-        role: role,
-        email: String(email).trim(),
-        website: String(website),
-      },
+      body: body,
     }).then(function (r) {
       if (!r.ok || !r.data || !r.data.data || !r.data.data.enter_url) {
         var msg = (r.data && (r.data.message || (r.data.data && r.data.data.message))) || 'No se pudo abrir la demo.';
         showStatus(msg, false);
+        loadCaptcha();
         return;
       }
       showStatus('Redirigiendo a la app…', true);
       window.location.href = String(r.data.data.enter_url);
     }).catch(function () {
       showStatus('Error de red. Reintentá.', false);
+      loadCaptcha();
     }).finally(function () {
       if (submitBtn) submitBtn.disabled = false;
     });
@@ -141,6 +193,12 @@
         closeModal();
       });
     });
+    if (captchaRefresh) {
+      captchaRefresh.addEventListener('click', function (e) {
+        e.preventDefault();
+        loadCaptcha();
+      });
+    }
     if (form) {
       form.addEventListener('submit', onSubmit);
     }

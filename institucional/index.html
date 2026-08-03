@@ -653,6 +653,15 @@
                     Email (opcional, solo auditoría)
                     <input type="email" name="email" class="demo-access__input" placeholder="tu@institucion.org" autocomplete="email">
                 </label>
+                <div class="demo-access__captcha" data-demo-captcha-wrap hidden>
+                    <span class="demo-access__label">Código de verificación</span>
+                    <div class="demo-access__captcha-row">
+                        <img data-demo-captcha-img alt="Captcha" class="demo-access__captcha-img" width="140" height="48">
+                        <button type="button" class="btn btn-secondary demo-access__captcha-refresh" data-demo-captcha-refresh aria-label="Actualizar captcha">↻</button>
+                        <input type="text" name="captcha" data-demo-captcha-input class="demo-access__input demo-access__captcha-input" maxlength="6" autocomplete="off" spellcheck="false" inputmode="text" aria-label="Código captcha">
+                    </div>
+                    <input type="hidden" name="captcha_challenge_id" data-demo-captcha-id value="">
+                </div>
                 <input type="text" name="website" class="demo-access__honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
                 <p class="demo-access__status" data-demo-status hidden></p>
                 <div class="demo-access__actions">

@@ -2061,6 +2061,41 @@ section {
     width: 0;
 }
 
+.demo-access__captcha {
+    margin-top: 0.75rem;
+}
+
+.demo-access__captcha-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.35rem;
+}
+
+.demo-access__captcha-img {
+    display: block;
+    width: 140px;
+    height: 48px;
+    border-radius: 6px;
+    border: 1px solid rgba(15, 23, 42, 0.12);
+    background: #f5f7fa;
+}
+
+.demo-access__captcha-refresh {
+    padding: 0.4rem 0.65rem;
+    min-width: auto;
+    line-height: 1;
+}
+
+.demo-access__captcha-input {
+    flex: 1 1 6rem;
+    min-width: 5.5rem;
+    max-width: 8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
 .demo-access__actions {
     display: flex;
     flex-wrap: wrap;

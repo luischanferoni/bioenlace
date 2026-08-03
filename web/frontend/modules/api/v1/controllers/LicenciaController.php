@@ -6,6 +6,7 @@ use common\components\Domain\Organization\Service\Billing\BillingMembershipSwitc
 use common\components\Domain\Organization\Service\Billing\InstitutionalEfectorSignupService;
 use common\components\Domain\Organization\Service\Billing\MinistrySignupRequestService;
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
+use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
 use common\models\User;
 use Yii;
 use yii\web\BadRequestHttpException;
@@ -15,7 +16,7 @@ use yii\web\ForbiddenHttpException;
  * Onboarding comercial de licencia (institucional + AdminEfector).
  *
  * Públicas (sin auth): catalogo-ministerios, planes, registrar-efector, solicitar-ministerio,
- * demo-perfiles, demo-acceso.
+ * demo-perfiles, demo-captcha, demo-acceso.
  * Auth AdminEfector: mi-licencia, desvincular-pago-ministerio, asociar-pago-ministerio.
  */
 class LicenciaController extends BaseController
@@ -26,6 +27,7 @@ class LicenciaController extends BaseController
         'registrar-efector',
         'solicitar-ministerio',
         'demo-perfiles',
+        'demo-captcha',
         'demo-acceso',
     ];
 
@@ -45,6 +47,7 @@ class LicenciaController extends BaseController
         $verbs['registrar-efector'] = ['POST', 'OPTIONS'];
         $verbs['solicitar-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['demo-perfiles'] = ['GET', 'OPTIONS'];
+        $verbs['demo-captcha'] = ['GET', 'OPTIONS'];
         $verbs['demo-acceso'] = ['POST', 'OPTIONS'];
         $verbs['mi-licencia'] = ['GET', 'OPTIONS'];
         $verbs['desvincular-pago-ministerio'] = ['POST', 'OPTIONS'];
@@ -134,15 +137,42 @@ class LicenciaController extends BaseController
 
         return $this->success([
             'enabled' => true,
+            'require_captcha' => (new DemoSandboxCaptchaService())->isRequired(),
             'items' => DemoSandboxAccessService::listProfiles(),
         ]);
+    }
+
+    /**
+     * Emite challenge de captcha (imagen data-URI + id) para el CTA demo.
+     *
+     * GET /api/v1/licencia/demo-captcha
+     *
+     * @action_name Captcha acceso demo sandbox
+     */
+    public function actionDemoCaptcha()
+    {
+        if (!DemoSandboxAccessService::isEnabled()) {
+            return $this->error('Acceso demo no habilitado en este entorno', null, 403);
+        }
+
+        try {
+            $data = (new DemoSandboxCaptchaService())->issue();
+
+            return $this->success($data);
+        } catch (\DomainException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage(), 'demo.sandbox');
+
+            return $this->error('No se pudo generar el captcha.', null, 500);
+        }
     }
 
     /**
      * Emite URL de un solo uso para entrar al sandbox (sitio institucional).
      *
      * POST /api/v1/licencia/demo-acceso
-     * Body: { "role": "staff"|"paciente", "email"?: "...", "website"?: "" }
+     * Body: { "role": "staff"|"paciente", "email"?: "...", "website"?: "", "captcha"?: "...", "captcha_challenge_id"?: "..." }
      *
      * @action_name Solicitar acceso demo sandbox
      */

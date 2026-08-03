@@ -4,5 +4,5 @@
   "apiBaseUrlLocal": "http://localhost/api/v1",
   "loginUrlLocal": "http://localhost/site/login",
   "signupUrl": "alta.html",
-  "notes": "En bioenlace.io se usan apiBaseUrl/loginUrl (app.bioenlace.io). En localhost/127.0.0.1, apiBaseUrlLocal/loginUrlLocal. Demo: POST /licencia/demo-acceso (demo_sandbox_habilitado)."
+  "notes": "En bioenlace.io se usan apiBaseUrl/loginUrl (app.bioenlace.io). En localhost/127.0.0.1, apiBaseUrlLocal/loginUrlLocal. Demo: GET /licencia/demo-captcha + POST /licencia/demo-acceso (demo_sandbox_habilitado)."
 }

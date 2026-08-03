@@ -84,6 +84,10 @@ class SiteController extends Controller
     */
     public function actionAsistente()
     {
+        if (Yii::$app->user->isGuest) {
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
+
         return $this->render('asistente');
     }
 
@@ -518,11 +522,23 @@ class SiteController extends Controller
     {
         $exception = Yii::$app->errorHandler->exception;
 
+        // Guest + 403/401: ir al login (no alert + menú del shell).
+        if (
+            Yii::$app->user->isGuest
+            && (
+                $exception instanceof \yii\web\ForbiddenHttpException
+                || $exception instanceof \yii\web\UnauthorizedHttpException
+            )
+        ) {
+            return $this->redirect(Yii::$app->user->loginUrl);
+        }
+
         if ($exception instanceof yii\web\TooManyRequestsHttpException) {
             $this->layout = 'publico/error';
         } elseif (Yii::$app->user->isGuest) {
             $this->layout = '@frontend/views/layouts/loginLayout.php';
         }
+
         return $this->render('error', ['exception' => $exception]);
     }
 

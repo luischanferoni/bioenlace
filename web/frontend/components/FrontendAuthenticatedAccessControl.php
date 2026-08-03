@@ -3,7 +3,6 @@
 namespace frontend\components;
 
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
-use common\models\User;
 use Yii;
 use yii\base\Action;
 use yii\base\ActionFilter;
@@ -11,6 +10,8 @@ use yii\web\ForbiddenHttpException;
 
 /**
  * Rutas web staff (SPA/shell): solo autenticación. RBAC de negocio vive en API v1.
+ *
+ * Guest → redirect a login (sin página de error con menú).
  */
 class FrontendAuthenticatedAccessControl extends ActionFilter
 {
@@ -46,22 +47,22 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
         }
 
         if (Yii::$app->user->isGuest) {
-            $this->denyAccess();
-
-            return false;
-        }
-
-        if (Yii::$app->user->identity === null) {
-            Yii::$app->getSession()->destroy();
-            $this->denyAccess();
+            $this->redirectGuestToLogin();
 
             return false;
         }
 
         $identity = Yii::$app->user->identity;
-        if ($identity !== null && !BioenlaceAccessChecker::isActiveIdentity($identity)) {
-            Yii::$app->user->logout();
-            Yii::$app->getResponse()->redirect(Yii::$app->getHomeUrl());
+        if ($identity === null) {
+            Yii::$app->user->logout(false);
+            $this->redirectGuestToLogin();
+
+            return false;
+        }
+
+        if (!BioenlaceAccessChecker::isActiveIdentity($identity)) {
+            Yii::$app->user->logout(false);
+            $this->redirectGuestToLogin();
 
             return false;
         }
@@ -83,15 +84,24 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
         return is_string($raw) && trim($raw) !== '';
     }
 
-    protected function denyAccess(): void
+    /**
+     * Redirect 302 a login. No ForbiddenHttpException: evita site/error con layout + menú.
+     */
+    private function redirectGuestToLogin(): void
     {
-        if (Yii::$app->user->isGuest) {
-            // loginRequired() arma el redirect a login; no lanzar 403 después o el usuario ve Forbidden.
-            Yii::$app->user->loginRequired();
+        $user = Yii::$app->user;
+        $request = Yii::$app->request;
+        $response = Yii::$app->response;
 
-            return;
+        if (!$request->getIsAjax()) {
+            try {
+                $user->setReturnUrl($request->getAbsoluteUrl());
+            } catch (\Throwable $e) {
+                // ignore
+            }
         }
 
-        throw new ForbiddenHttpException(Yii::t('yii', 'You are not allowed to perform this action.'));
+        $loginUrl = $user->loginUrl;
+        $response->redirect($loginUrl);
     }
 }

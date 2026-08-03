@@ -295,10 +295,12 @@ final class DemoSandboxClinicalSeedService
                 continue;
             }
 
+            // apellido/nombre: solo letras (regla Persona); el ordinal va en el documento 37xxxxxx.
+            $apellidos = ['Alonso', 'Benitez', 'Castro', 'Dominguez', 'Espinoza', 'Fernandez', 'Gomez', 'Herrera'];
             $persona = new Persona();
             $persona->scenario = Persona::SCENARIOCREATEUPDATE;
             $persona->nombre = 'Paciente';
-            $persona->apellido = 'Demo ' . $ordinal;
+            $persona->apellido = $apellidos[($ordinal - 1) % count($apellidos)];
             $persona->documento = $documento;
             $persona->fecha_nacimiento = sprintf('1990-%02d-15', min(12, max(1, $ordinal)));
             $persona->id_tipodoc = 1;

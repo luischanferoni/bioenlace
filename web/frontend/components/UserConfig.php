@@ -50,7 +50,7 @@ class UserConfig extends BaseUserConfig
 
         // Refrescar permisos/rutas Bioenlace en sesión para la identidad actual.
         \common\components\Platform\Core\Permission\BioenlaceAccessChecker::refreshForIdentity($identity);
-        \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) $identity->id);
+        \common\components\Platform\Assistant\UiActions\AllowedRoutesResolver::markSessionRoutesOwner((int) $identity->id);
 
         parent::afterLogin($identity, $cookieBased, $duration);
     }

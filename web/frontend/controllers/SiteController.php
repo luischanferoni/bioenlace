@@ -286,7 +286,7 @@ class SiteController extends Controller
 
         if (count($efectoresParaSesion) == 0) {
             BioenlaceAccessChecker::refreshForIdentity(Yii::$app->user->identity);
-            \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
+            \common\components\Platform\Assistant\UiActions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
             $keys = Yii::$app->session->get(BioenlaceSessionPermissions::SESSION_PREFIX_ROLES);
 
             $x_efector = false;
@@ -311,7 +311,7 @@ class SiteController extends Controller
         Yii::$app->user->setEfectores(ArrayHelper::map($efectoresParaSesion, 'id_efector', 'nombre'));
 
         BioenlaceAccessChecker::refreshForIdentity(Yii::$app->user->identity);
-        \common\components\Actions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
+        \common\components\Platform\Assistant\UiActions\AllowedRoutesResolver::markSessionRoutesOwner((int) Yii::$app->user->id);
 
         return ['site/sesion-operativa'];
     }

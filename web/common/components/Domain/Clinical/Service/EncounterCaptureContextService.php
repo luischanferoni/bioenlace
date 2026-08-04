@@ -32,8 +32,11 @@ final class EncounterCaptureContextService
             $efectorActual = Yii::$app->user->getIdEfector();
             $efectorCoincide = false;
 
-            if ($internacionActiva && $internacionActiva->id_efector == $efectorActual) {
-                $efectorCoincide = true;
+            if ($internacionActiva) {
+                $idEfectorInternacion = $internacionActiva->resolveIdEfectorContextForPes();
+                if ($idEfectorInternacion !== null && (int) $idEfectorInternacion === (int) $efectorActual) {
+                    $efectorCoincide = true;
+                }
             }
             if ($guardiaActiva && $guardiaActiva->id_efector == $efectorActual) {
                 $efectorCoincide = true;

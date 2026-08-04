@@ -69,7 +69,7 @@ $this->title = $esGuardia
         <a href="<?= Url::to(['site/index', 'fecha' => $fechaAnterior]) ?>" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-chevron-left"></i> Fecha anterior
         </a>
-        <a href="<?= Url::to(['site/index', 'fecha' => $hoy]) ?>" class="btn btn-outline-secondary btn-sm">
+        <a href="<?= Url::to(['site/index', 'fecha' => $hoy]) ?>" class="btn btn-outline-secondary btn-sm ms-2 me-2">
             Fecha de hoy
         </a>
         <a href="<?= Url::to(['site/index', 'fecha' => $fechaSiguiente]) ?>" class="btn btn-outline-secondary btn-sm">

@@ -427,12 +427,35 @@
       });
     }
 
+    function internadosPisoKey(i) {
+      var label = String(i.piso || '').trim().toLowerCase();
+      if (label) {
+        return 'l:' + label;
+      }
+      if (i.id_piso != null && String(i.id_piso) !== '') {
+        return 'i:' + String(i.id_piso);
+      }
+      return 'x';
+    }
+
+    function internadosSalaKey(i) {
+      var label = String(i.sala || '').trim().toLowerCase();
+      if (label) {
+        return 'l:' + label;
+      }
+      if (i.id_sala != null && String(i.id_sala) !== '') {
+        return 'i:' + String(i.id_sala);
+      }
+      return 'x';
+    }
+
     function groupInternadosPorRecorrido(items) {
       var groups = [];
       var pisoMap = {};
       items.forEach(function (i) {
-        var pisoKey = i.id_piso != null ? String(i.id_piso) : String(i.piso || '');
-        var salaKey = i.id_sala != null ? String(i.id_sala) : String(i.sala || '');
+        // Agrupar por etiqueta (no solo id): en demos hay varios pisos/salas con el mismo nombre.
+        var pisoKey = internadosPisoKey(i);
+        var salaKey = internadosSalaKey(i);
         if (!pisoMap[pisoKey]) {
           pisoMap[pisoKey] = {
             key: pisoKey,
@@ -460,7 +483,9 @@
         p.salasList.sort(function (a, b) { return a.nro - b.nro; });
         p.salasList.forEach(function (s) {
           s.items.sort(function (a, b) {
-            return (Number(a.nro_cama) || 0) - (Number(b.nro_cama) || 0);
+            var byCama = (Number(a.nro_cama) || 0) - (Number(b.nro_cama) || 0);
+            if (byCama !== 0) return byCama;
+            return String(a.nombre || '').localeCompare(String(b.nombre || ''), 'es', { sensitivity: 'base' });
           });
         });
       });
@@ -505,26 +530,12 @@
       }
 
       var groups = groupInternadosPorRecorrido(internadosItemsCache);
-      var multiPiso = groups.length > 1;
       groups.forEach(function (pisoG) {
-        var multiSala = pisoG.salasList.length > 1;
-        // Encabezados solo si hay más de un piso/sala; si no, la ubicación va en la card.
-        var showPisoHeader = multiPiso;
-        var showSalaHeader = multiPiso || multiSala;
-        var showUbiOnCard = !showPisoHeader && !showSalaHeader;
-
         var appendPacientes = function (slot, items) {
           items.forEach(function (i) {
-            appendInternadoRow(slot, i, { showUbicacion: showUbiOnCard });
+            appendInternadoRow(slot, i, { showUbicacion: false });
           });
         };
-
-        if (!showPisoHeader && !showSalaHeader) {
-          pisoG.salasList.forEach(function (salaG) {
-            appendPacientes(rowsSlot, salaG.items);
-          });
-          return;
-        }
 
         var pisoFrag = importTemplate('tpl-internados-group-piso');
         if (!pisoFrag) {
@@ -535,20 +546,9 @@
         }
         var pisoRoot = pisoFrag.firstElementChild;
         var pisoLabel = pisoRoot.querySelector('[data-field="piso-label"]');
-        if (pisoLabel) {
-          if (showPisoHeader) {
-            pisoLabel.textContent = pisoG.label;
-            pisoLabel.classList.remove('d-none');
-          } else {
-            pisoLabel.classList.add('d-none');
-          }
-        }
+        if (pisoLabel) pisoLabel.textContent = pisoG.label;
         var salasSlot = pisoRoot.querySelector('[data-slot="salas"]');
         pisoG.salasList.forEach(function (salaG) {
-          if (!showSalaHeader) {
-            appendPacientes(salasSlot, salaG.items);
-            return;
-          }
           var salaFrag = importTemplate('tpl-internados-group-sala');
           if (!salaFrag) {
             appendPacientes(salasSlot, salaG.items);

@@ -1168,8 +1168,22 @@ class _HomeScreenState extends State<HomeScreen> {
     final pisoLabel = <String, String>{};
     final pisoNro = <String, int>{};
 
+    String pisoKeyOf(InternadoItem i) {
+      final label = (i.piso ?? '').trim().toLowerCase();
+      if (label.isNotEmpty) return 'l:$label';
+      if (i.idPiso != null) return 'i:${i.idPiso}';
+      return 'x';
+    }
+
+    String salaKeyOf(InternadoItem i) {
+      final label = (i.sala ?? '').trim().toLowerCase();
+      if (label.isNotEmpty) return 'l:$label';
+      if (i.idSala != null) return 'i:${i.idSala}';
+      return 'x';
+    }
+
     for (final i in items) {
-      final key = i.idPiso?.toString() ?? (i.piso ?? '');
+      final key = pisoKeyOf(i);
       if (!byPiso.containsKey(key)) {
         byPiso[key] = [];
         pisoOrder.add(key);
@@ -1180,7 +1194,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     pisoOrder.sort((a, b) => (pisoNro[a] ?? 0).compareTo(pisoNro[b] ?? 0));
 
-    final multiPiso = pisoOrder.length > 1;
     final out = <Widget>[];
     for (final pisoKey in pisoOrder) {
       final pisoItems = byPiso[pisoKey]!;
@@ -1190,7 +1203,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final salaLabel = <String, String>{};
       final salaNro = <String, int>{};
       for (final i in pisoItems) {
-        final sKey = i.idSala?.toString() ?? (i.sala ?? '');
+        final sKey = salaKeyOf(i);
         if (!bySala.containsKey(sKey)) {
           bySala[sKey] = [];
           salaOrder.add(sKey);
@@ -1201,23 +1214,18 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       salaOrder.sort((a, b) => (salaNro[a] ?? 0).compareTo(salaNro[b] ?? 0));
 
-      final multiSala = salaOrder.length > 1;
-      final showPisoHeader = multiPiso;
-      final showSalaHeader = multiPiso || multiSala;
-      final showUbiOnCard = !showPisoHeader && !showSalaHeader;
-
-      if (showPisoHeader) {
-        out.add(_internadosSectionHeader(pisoLabel[pisoKey]!, intent: UiIntent.primary));
-      }
+      out.add(_internadosSectionHeader(pisoLabel[pisoKey]!, intent: UiIntent.primary));
 
       for (final salaKey in salaOrder) {
         final salaItems = bySala[salaKey]!
-          ..sort((a, b) => a.nroCama.compareTo(b.nroCama));
-        if (showSalaHeader) {
-          out.add(_internadosSectionHeader(salaLabel[salaKey]!, intent: UiIntent.success));
-        }
+          ..sort((a, b) {
+            final byCama = a.nroCama.compareTo(b.nroCama);
+            if (byCama != 0) return byCama;
+            return a.nombreCompleto.toLowerCase().compareTo(b.nombreCompleto.toLowerCase());
+          });
+        out.add(_internadosSectionHeader(salaLabel[salaKey]!, intent: UiIntent.success));
         for (final i in salaItems) {
-          out.add(_buildInternadoCard(i, showUbicacion: showUbiOnCard));
+          out.add(_buildInternadoCard(i, showUbicacion: false));
         }
       }
     }

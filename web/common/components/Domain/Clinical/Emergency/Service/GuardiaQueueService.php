@@ -195,6 +195,7 @@ final class GuardiaQueueService
             'sla_violado' => $sla['sla_violado'],
             'sla_tipo' => $sla['sla_tipo'],
             'sla_umbral_minutos' => $sla['sla_umbral_minutos'],
+            'triage_espera_nivel' => $sla['triage_espera_nivel'],
             'internacion_pendiente' => $internacion['internacion_pendiente'],
             'internacion_ingreso_url' => $internacion['internacion_ingreso_url'],
             'clinical' => $clinical,

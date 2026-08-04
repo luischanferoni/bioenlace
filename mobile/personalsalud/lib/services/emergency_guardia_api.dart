@@ -21,6 +21,8 @@ class EmergencyBoardItem {
   final String? triageReasonText;
   final bool slaViolado;
   final String? slaTipo;
+  /// Semáforo de espera a triage: `gris` | `naranja` | `rojo` (solo si needsTriage).
+  final String? triageEsperaNivel;
   final bool internacionPendiente;
   final String? internacionIngresoUrl;
   final int ordersCount;
@@ -44,6 +46,7 @@ class EmergencyBoardItem {
     this.triageReasonText,
     this.slaViolado = false,
     this.slaTipo,
+    this.triageEsperaNivel,
     this.internacionPendiente = false,
     this.internacionIngresoUrl,
     this.ordersCount = 0,
@@ -80,6 +83,7 @@ class EmergencyBoardItem {
       triageReasonText: triage?['reason_text'] as String?,
       slaViolado: json['sla_violado'] == true,
       slaTipo: json['sla_tipo'] as String?,
+      triageEsperaNivel: json['triage_espera_nivel'] as String?,
       internacionPendiente: json['internacion_pendiente'] == true,
       internacionIngresoUrl: json['internacion_ingreso_url'] as String?,
       ordersCount: (clinical['orders_count'] as int?) ?? 0,

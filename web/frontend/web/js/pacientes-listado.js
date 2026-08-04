@@ -416,6 +416,24 @@
       return parts.length ? parts.join(' ') : '0 min';
     }
 
+    function circuitoBadgeClass(g) {
+      var sinTriage = g.circuito_estado === 'espera_triage' || g.prioridad_triage == null;
+      if (sinTriage) {
+        var nivel = g.triage_espera_nivel || '';
+        if (nivel === 'rojo' || (g.sla_violado && g.sla_tipo === 'triage')) {
+          return 'bg-danger';
+        }
+        if (nivel === 'naranja') {
+          return 'bg-warning text-dark';
+        }
+        return 'bg-secondary';
+      }
+      if (g.circuito_estado === 'en_atencion') {
+        return 'bg-info text-dark';
+      }
+      return 'bg-secondary';
+    }
+
     function nombrePacienteGuardia(g) {
       var paciente = g.paciente || {};
       return paciente.nombre_completo || g.nombre_completo || '';
@@ -449,6 +467,7 @@
       var circuitoBadge = rowEl.querySelector('[data-field="circuito-badge"]');
       if (circuitoBadge) {
         circuitoBadge.textContent = g.circuito_estado_label || g.circuito_estado || '';
+        circuitoBadge.className = 'badge ' + circuitoBadgeClass(g);
       }
 
       var esperaLine = rowEl.querySelector('[data-field="espera-line"]');
@@ -465,8 +484,9 @@
 
       var slaBadge = rowEl.querySelector('[data-field="sla-badge"]');
       if (slaBadge) {
-        if (g.sla_violado) {
-          var slaLabel = g.sla_tipo === 'triage' ? 'Plazo triage' : 'Plazo médico';
+        // El plazo de triage se comunica coloreando "Espera triage".
+        if (g.sla_violado && g.sla_tipo === 'medico') {
+          var slaLabel = 'Plazo médico';
           if (g.sla_umbral_minutos != null) {
             slaLabel += ' >' + formatDuracionMinutos(g.sla_umbral_minutos);
           }

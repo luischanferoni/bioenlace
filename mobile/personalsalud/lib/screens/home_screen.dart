@@ -1204,11 +1204,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGuardiaTableroCard(EmergencyBoardItem g) {
-    final estadoIntent = g.needsTriage
-        ? UiIntent.warning
-        : (g.circuitoEstado == 'en_atencion'
-            ? UiIntent.info
-            : UiIntent.neutral);
+    final estadoIntent = _guardiaCircuitoIntent(g);
 
     return BioCard(
       onTap: () => _onGuardiaTap(g),
@@ -1230,11 +1226,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   spacing: BioSpacing.xs,
                   runSpacing: BioSpacing.xs,
                   children: [
-                    if (g.slaViolado)
-                      BioBadge(
-                        label: g.slaTipo == 'triage'
-                            ? 'Plazo triage'
-                            : 'Plazo médico',
+                    if (g.slaViolado && g.slaTipo == 'medico')
+                      const BioBadge(
+                        label: 'Plazo médico',
                         intent: UiIntent.danger,
                       ),
                     if (g.internacionPendiente)
@@ -1297,6 +1291,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  UiIntent _guardiaCircuitoIntent(EmergencyBoardItem g) {
+    if (g.needsTriage) {
+      switch (g.triageEsperaNivel) {
+        case 'rojo':
+          return UiIntent.danger;
+        case 'naranja':
+          return UiIntent.warning;
+        default:
+          return UiIntent.neutral;
+      }
+    }
+    if (g.circuitoEstado == 'en_atencion') {
+      return UiIntent.info;
+    }
+    return UiIntent.neutral;
   }
 
   Widget _buildSimpleTile({

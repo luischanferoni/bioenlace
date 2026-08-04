@@ -24,6 +24,9 @@ use yii\helpers\ArrayHelper;
  */
 final class InternacionIngresoService
 {
+    public const MSG_SIN_CAMAS_DISPONIBLES =
+        'No hay camas desocupadas en este efector. Configure infraestructura (piso/sala/cama) o libere una cama.';
+
     /**
      * @return array<string, mixed>
      */
@@ -87,8 +90,9 @@ final class InternacionIngresoService
             'cama_label' => $camaLabel,
             'cama_sugerencias' => $camaSugerencias,
             'camas_aviso' => $camas === []
-                ? 'No hay camas desocupadas en este efector. Configure infraestructura (piso/sala/cama) o libere una cama.'
+                ? self::MSG_SIN_CAMAS_DISPONIBLES
                 : '',
+            'puede_ingresar' => $camas !== [],
             'id_guardia' => $guardiaCtx['id_guardia'],
             'id_tipo_ingreso_default' => $fromGuardia
                 ? ($guardiaCtx['id_tipo_ingreso'] ?? 1)
@@ -123,6 +127,8 @@ final class InternacionIngresoService
         if ($idPersona <= 0 || $idCama <= 0) {
             throw new \InvalidArgumentException('Paciente y cama son obligatorios.');
         }
+
+        $this->assertCamaDisponibleParaIngreso($idEfector, $idCama);
 
         $this->contextoIngreso(
             $idPersona,
@@ -369,6 +375,19 @@ final class InternacionIngresoService
     /**
      * @return list<array{value: string, label: string}>
      */
+    public function listarCamasDisponibles(int $idEfector): array
+    {
+        return $this->camasOptions($idEfector);
+    }
+
+    public function hayCamasDisponibles(int $idEfector): bool
+    {
+        return $this->camasOptions($idEfector) !== [];
+    }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
     private function camasOptions(int $idEfector): array
     {
         $camas = SegNivelInternacionHcama::getCamasDisponiblesForSelect($idEfector);
@@ -377,6 +396,28 @@ final class InternacionIngresoService
             'value' => (string) ($row['code'] ?? ''),
             'label' => (string) ($row['label'] ?? ''),
         ], $camas);
+    }
+
+    /**
+     * Gate hard: no se registra ingreso sin cama desocupada del efector.
+     */
+    private function assertCamaDisponibleParaIngreso(int $idEfector, int $idCama): void
+    {
+        $disponibles = $this->camasOptions($idEfector);
+        if ($disponibles === []) {
+            throw new \InvalidArgumentException(self::MSG_SIN_CAMAS_DISPONIBLES);
+        }
+
+        $idCamaStr = (string) $idCama;
+        foreach ($disponibles as $opt) {
+            if ((string) ($opt['value'] ?? '') === $idCamaStr) {
+                return;
+            }
+        }
+
+        throw new \InvalidArgumentException(
+            'La cama seleccionada no está disponible (ocupada o no pertenece a este efector).'
+        );
     }
 
     /**

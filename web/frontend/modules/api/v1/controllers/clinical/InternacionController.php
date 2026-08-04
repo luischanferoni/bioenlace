@@ -326,6 +326,28 @@ class InternacionController extends BaseController
             }
         );
 
+        // POST fallido: handleScreen re-renderiza el descriptor; no reponer campos si no hay camas.
+        if ($req->getIsPost()
+            && ($out['kind'] ?? '') === 'ui_definition'
+            && ($out['success'] ?? true) === false
+            && !$this->ingreso->hayCamasDisponibles($idEfector)
+        ) {
+            $out['blocks'] = $this->blocksIngresoSinCamas(
+                is_array($out['blocks'] ?? null) ? $out['blocks'] : [],
+                InternacionIngresoService::MSG_SIN_CAMAS_DISPONIBLES
+            );
+            $out['data'] = array_merge(
+                is_array($out['data'] ?? null) ? $out['data'] : [],
+                [
+                    'puede_ingresar' => false,
+                    'camas_disponibles' => [],
+                    'camas_aviso' => InternacionIngresoService::MSG_SIN_CAMAS_DISPONIBLES,
+                ]
+            );
+
+            return $out;
+        }
+
         if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
             $idPersona = (int) ($req->get('id_persona') ?? 0);
             if ($idPersona <= 0) {
@@ -362,6 +384,16 @@ class InternacionController extends BaseController
             $out = UiScreenService::renderUiDefinition('internacion', 'ingreso-formulario', $params, $params);
             $out['data'] = $ctx;
 
+            $puedeIngresar = !empty($ctx['puede_ingresar']);
+            if (!$puedeIngresar) {
+                $out['blocks'] = $this->blocksIngresoSinCamas(
+                    is_array($out['blocks'] ?? null) ? $out['blocks'] : [],
+                    (string) ($ctx['camas_aviso'] ?? InternacionIngresoService::MSG_SIN_CAMAS_DISPONIBLES)
+                );
+
+                return $out;
+            }
+
             $optionMap = [
                 'id_profesional_efector_servicio' => $ctx['profesionales'] ?? [],
                 'id_cama' => $ctx['camas_disponibles'] ?? [],
@@ -374,15 +406,17 @@ class InternacionController extends BaseController
                 if (!is_array($block)) {
                     continue;
                 }
-                // Ocultar aviso de camas si no hay mensaje.
-                if (($block['kind'] ?? '') === 'message'
-                    && (string) ($block['id'] ?? '') === 'aviso_camas'
+                $kind = (string) ($block['kind'] ?? '');
+                $blockId = (string) ($block['id'] ?? '');
+
+                if ($kind === 'message'
+                    && $blockId === 'aviso_camas'
                     && trim((string) ($ctx['camas_aviso'] ?? '')) === ''
                 ) {
                     unset($out['blocks'][$idx]);
                     continue;
                 }
-                if (($block['kind'] ?? '') !== 'fields') {
+                if ($kind !== 'fields') {
                     continue;
                 }
                 foreach ($block['fields'] ?? [] as $fIdx => $field) {
@@ -394,7 +428,7 @@ class InternacionController extends BaseController
                         $opts = $optionMap[$name];
                         if ($name === 'id_cama' && empty($params['id_cama'])) {
                             $field['options'] = array_merge(
-                                [['value' => '', 'label' => empty($opts) ? '— Sin camas disponibles —' : '— Elegir cama —']],
+                                [['value' => '', 'label' => '— Elegir cama —']],
                                 $opts
                             );
                         } elseif ($name === 'obra_social') {
@@ -414,6 +448,33 @@ class InternacionController extends BaseController
                 $out['blocks'][$idx] = $block;
             }
             $out['blocks'] = array_values($out['blocks'] ?? []);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Solo mensajes (paciente + aviso). Sin fields → sin botón Confirmar en clientes UI JSON.
+     *
+     * @param list<array<string, mixed>> $blocks
+     * @return list<array<string, mixed>>
+     */
+    private function blocksIngresoSinCamas(array $blocks, string $aviso): array
+    {
+        $out = [];
+        foreach ($blocks as $block) {
+            if (!is_array($block)) {
+                continue;
+            }
+            $kind = (string) ($block['kind'] ?? '');
+            if ($kind === 'fields') {
+                continue;
+            }
+            if ($kind === 'message' && (string) ($block['id'] ?? '') === 'aviso_camas') {
+                $block['text'] = $aviso;
+                $block['severity'] = 'warning';
+            }
+            $out[] = $block;
         }
 
         return $out;

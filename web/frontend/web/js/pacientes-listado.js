@@ -817,45 +817,11 @@
         document.getElementById('guardia-ingreso-id-persona').value = String(ctx.id_persona || idPersona);
         document.getElementById('guardia-ingreso-id-guardia').value = String(ctx.id_guardia || g.id);
         var camas = ctx.camas_disponibles || [];
-        fillSelectOptions(
-          document.getElementById('guardia-ingreso-id-cama'),
-          camas,
-          camas.length ? '— Elegir cama —' : '— Sin camas disponibles —',
-          ctx.id_cama
-        );
-        fillSelectOptions(
-          document.getElementById('guardia-ingreso-id-pes'),
-          ctx.profesionales || [],
-          '— Elegir —',
-          ctx.id_profesional_efector_servicio_default || null
-        );
-        fillSelectOptions(
-          document.getElementById('guardia-ingreso-en'),
-          ctx.ingresa_en || [],
-          '—',
-          null
-        );
-        fillSelectOptions(
-          document.getElementById('guardia-ingreso-con'),
-          ctx.ingresa_con || [],
-          '—',
-          null
-        );
-        fillSelectOptions(
-          document.getElementById('guardia-ingreso-obra'),
-          ctx.coberturas || [],
-          '—',
-          ctx.obra_social_default
-        );
-        var fechaEl = document.getElementById('guardia-ingreso-fecha');
-        var horaEl = document.getElementById('guardia-ingreso-hora');
-        var tipoEl = document.getElementById('guardia-ingreso-tipo');
-        if (fechaEl) fechaEl.value = ctx.fecha_inicio || '';
-        if (horaEl) horaEl.value = ctx.hora_inicio || '';
-        if (tipoEl) tipoEl.value = String(ctx.id_tipo_ingreso_default || 1);
+        var puedeIngresar = ctx.puede_ingresar !== false && camas.length > 0;
+        var camposEl = document.getElementById('guardia-ingreso-campos');
         var avisoEl = document.getElementById('guardia-ingreso-aviso-camas');
+        var aviso = (ctx.camas_aviso || '').toString().trim();
         if (avisoEl) {
-          var aviso = (ctx.camas_aviso || '').toString().trim();
           if (aviso) {
             avisoEl.textContent = aviso;
             avisoEl.classList.remove('d-none');
@@ -864,12 +830,65 @@
             avisoEl.classList.add('d-none');
           }
         }
-        var sitEl = document.getElementById('guardia-ingreso-situacion');
-        if (sitEl) sitEl.value = '';
+        if (camposEl) {
+          if (puedeIngresar) {
+            camposEl.classList.remove('d-none');
+          } else {
+            camposEl.classList.add('d-none');
+          }
+        }
+        if (submitBtn) {
+          if (puedeIngresar) {
+            submitBtn.classList.remove('d-none');
+          } else {
+            submitBtn.classList.add('d-none');
+          }
+          submitBtn.disabled = !puedeIngresar;
+        }
+
+        if (puedeIngresar) {
+          fillSelectOptions(
+            document.getElementById('guardia-ingreso-id-cama'),
+            camas,
+            '— Elegir cama —',
+            ctx.id_cama
+          );
+          fillSelectOptions(
+            document.getElementById('guardia-ingreso-id-pes'),
+            ctx.profesionales || [],
+            '— Elegir —',
+            ctx.id_profesional_efector_servicio_default || null
+          );
+          fillSelectOptions(
+            document.getElementById('guardia-ingreso-en'),
+            ctx.ingresa_en || [],
+            '—',
+            null
+          );
+          fillSelectOptions(
+            document.getElementById('guardia-ingreso-con'),
+            ctx.ingresa_con || [],
+            '—',
+            null
+          );
+          fillSelectOptions(
+            document.getElementById('guardia-ingreso-obra'),
+            ctx.coberturas || [],
+            '—',
+            ctx.obra_social_default
+          );
+          var fechaEl = document.getElementById('guardia-ingreso-fecha');
+          var horaEl = document.getElementById('guardia-ingreso-hora');
+          var tipoEl = document.getElementById('guardia-ingreso-tipo');
+          if (fechaEl) fechaEl.value = ctx.fecha_inicio || '';
+          if (horaEl) horaEl.value = ctx.hora_inicio || '';
+          if (tipoEl) tipoEl.value = String(ctx.id_tipo_ingreso_default || 1);
+          var sitEl = document.getElementById('guardia-ingreso-situacion');
+          if (sitEl) sitEl.value = '';
+        }
 
         if (loadingEl) loadingEl.classList.add('d-none');
         if (formEl) formEl.classList.remove('d-none');
-        if (submitBtn) submitBtn.disabled = camas.length === 0;
       } catch (e) {
         if (loadingEl) loadingEl.classList.add('d-none');
         showIngresoError(e && e.message ? e.message : 'No se pudo cargar el ingreso.');
@@ -880,6 +899,11 @@
       var api = window.BioenlaceNativePage;
       if (!api) return;
       showIngresoError(null);
+      var camposEl = document.getElementById('guardia-ingreso-campos');
+      if (camposEl && camposEl.classList.contains('d-none')) {
+        showIngresoError('No hay camas disponibles para completar el ingreso.');
+        return;
+      }
       var payload = {
         id_persona: document.getElementById('guardia-ingreso-id-persona').value,
         id_guardia: document.getElementById('guardia-ingreso-id-guardia').value,

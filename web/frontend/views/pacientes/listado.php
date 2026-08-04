@@ -292,6 +292,7 @@ $this->title = $esGuardia
                     <input type="hidden" id="guardia-ingreso-hora" value="">
                     <input type="hidden" id="guardia-ingreso-tipo" value="1">
                     <div id="guardia-ingreso-aviso-camas" class="alert alert-warning py-2 small d-none" role="status"></div>
+                    <div id="guardia-ingreso-campos">
                     <div class="mb-2">
                         <label class="form-label" for="guardia-ingreso-id-cama">Cama</label>
                         <select class="form-select form-select-sm" id="guardia-ingreso-id-cama" required></select>
@@ -317,6 +318,7 @@ $this->title = $esGuardia
                     <div class="mb-2">
                         <label class="form-label" for="guardia-ingreso-situacion">Situación al ingresar</label>
                         <textarea class="form-control form-control-sm" id="guardia-ingreso-situacion" rows="2"></textarea>
+                    </div>
                     </div>
                 </div>
                 <div id="guardia-ingreso-error" class="alert alert-danger d-none mt-3 mb-0"></div>

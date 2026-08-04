@@ -1205,89 +1205,145 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildGuardiaTableroCard(EmergencyBoardItem g) {
     final estadoIntent = _guardiaCircuitoIntent(g);
+    final cerrado = EmergencyGuardiaActions.episodioCerrado(g);
+    void refresh() => _cargarListadoPacientes(silent: true);
 
     return BioCard(
       onTap: () => _onGuardiaTap(g),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(g.nombreCompleto, style: BioTypography.title),
-                if (g.triageReasonText != null &&
-                    g.triageReasonText!.isNotEmpty) ...[
-                  BioSpacing.gapH(BioSpacing.xs),
-                  Text(g.triageReasonText!, style: BioTypography.bodySm),
-                ],
-                BioSpacing.gapH(BioSpacing.sm),
-                Wrap(
-                  spacing: BioSpacing.xs,
-                  runSpacing: BioSpacing.xs,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    if (g.slaViolado && g.slaTipo == 'medico')
-                      const BioBadge(
-                        label: 'Plazo médico',
-                        intent: UiIntent.danger,
-                      ),
-                    if (g.internacionPendiente)
-                      const BioBadge(
-                        label: 'Cama pend.',
-                        intent: UiIntent.info,
-                      ),
-                    if (g.ordersLabPending > 0)
-                      BioBadge(
-                        label: '${g.ordersLabPending} lab pend.',
-                        intent: UiIntent.warning,
-                      ),
-                    BioBadge(
-                      label: g.circuitoEstadoLabel ??
-                          g.circuitoEstado ??
-                          '—',
-                      intent: estadoIntent,
+                    Text(g.nombreCompleto, style: BioTypography.title),
+                    if (g.triageReasonText != null &&
+                        g.triageReasonText!.isNotEmpty) ...[
+                      BioSpacing.gapH(BioSpacing.xs),
+                      Text(g.triageReasonText!, style: BioTypography.bodySm),
+                    ],
+                    BioSpacing.gapH(BioSpacing.sm),
+                    Wrap(
+                      spacing: BioSpacing.xs,
+                      runSpacing: BioSpacing.xs,
+                      children: [
+                        if (g.slaViolado && g.slaTipo == 'medico')
+                          const BioBadge(
+                            label: 'Plazo médico',
+                            intent: UiIntent.danger,
+                          ),
+                        if (g.internacionPendiente)
+                          const BioBadge(
+                            label: 'Cama pend.',
+                            intent: UiIntent.info,
+                          ),
+                        if (g.ordersLabPending > 0)
+                          BioBadge(
+                            label: '${g.ordersLabPending} lab pend.',
+                            intent: UiIntent.warning,
+                          ),
+                        BioBadge(
+                          label: g.circuitoEstadoLabel ??
+                              g.circuitoEstado ??
+                              '—',
+                          intent: estadoIntent,
+                        ),
+                        Text(
+                          '${formatDuracionMinutos(g.minutosEspera)} en espera',
+                          style: BioTypography.caption,
+                        ),
+                        if (g.profesionalAsignado != null &&
+                            g.profesionalAsignado!.isNotEmpty)
+                          Text(
+                            g.profesionalAsignado!,
+                            style: BioTypography.caption,
+                          ),
+                      ],
                     ),
-                    Text(
-                      '${formatDuracionMinutos(g.minutosEspera)} en espera',
-                      style: BioTypography.caption,
-                    ),
-                    if (g.profesionalAsignado != null &&
-                        g.profesionalAsignado!.isNotEmpty)
-                      Text(
-                        g.profesionalAsignado!,
-                        style: BioTypography.caption,
-                      ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!g.needsTriage &&
-                  !EmergencyGuardiaActions.episodioCerrado(g))
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  tooltip: 'Más acciones',
-                  onPressed: () {
-                    EmergencyGuardiaActions.showActionSheet(
-                      context: context,
-                      item: g,
-                      api: _emergencyApi,
-                      onChanged: () => _cargarListadoPacientes(silent: true),
-                      sessionTieneCobertura: _sessionTieneCobertura,
-                    );
-                  },
-                ),
-              Icon(
-                g.needsTriage
-                    ? Icons.assignment_outlined
-                    : Icons.chevron_right,
-                color: context.bio.textMuted,
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!cerrado)
+                    IconButton(
+                      icon: const Icon(Icons.more_vert),
+                      tooltip: 'Más acciones',
+                      onPressed: () {
+                        EmergencyGuardiaActions.showActionSheet(
+                          context: context,
+                          item: g,
+                          api: _emergencyApi,
+                          onChanged: refresh,
+                          sessionTieneCobertura: _sessionTieneCobertura,
+                        );
+                      },
+                    ),
+                  Icon(
+                    g.needsTriage
+                        ? Icons.assignment_outlined
+                        : Icons.chevron_right,
+                    color: context.bio.textMuted,
+                  ),
+                ],
               ),
             ],
           ),
+          if (!cerrado) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Wrap(
+              spacing: BioSpacing.sm,
+              runSpacing: BioSpacing.sm,
+              children: [
+                if (g.needsTriage)
+                  BioButton.outlinePrimary(
+                    label: 'Triage',
+                    size: BioButtonSize.sm,
+                    onPressed: () {
+                      EmergencyGuardiaActions.openTriage(
+                        context: context,
+                        item: g,
+                        api: _emergencyApi,
+                        onChanged: refresh,
+                      );
+                    },
+                  ),
+                BioButton.neutral(
+                  label: 'Pedidos / Lab',
+                  size: BioButtonSize.sm,
+                  onPressed: () {
+                    EmergencyGuardiaActions.openPedidosLab(
+                      context: context,
+                      item: g,
+                      api: _emergencyApi,
+                      onChanged: refresh,
+                    );
+                  },
+                ),
+                BioButton(
+                  label: g.internacionPendiente
+                      ? 'Ingresar cama'
+                      : 'Solicitar cama',
+                  intent: UiIntent.info,
+                  variant: BioButtonVariant.outline,
+                  size: BioButtonSize.sm,
+                  onPressed: () {
+                    EmergencyGuardiaActions.openCama(
+                      context: context,
+                      item: g,
+                      api: _emergencyApi,
+                      onChanged: refresh,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

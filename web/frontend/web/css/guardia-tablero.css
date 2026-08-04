@@ -26,3 +26,70 @@
 .guardia-tablero-row--sin-triage {
     border-left-color: #adb5bd;
 }
+
+/* Selector de nivel Manchester (mismo semáforo que móvil) */
+.guardia-triage-level {
+    min-width: 2.25rem;
+    font-weight: 700;
+    background-color: transparent;
+}
+
+.guardia-triage-level--1 {
+    color: #c0392b;
+    border-color: #c0392b;
+}
+
+.guardia-triage-level--2 {
+    color: #e67e22;
+    border-color: #e67e22;
+}
+
+.guardia-triage-level--3 {
+    color: #b7950b;
+    border-color: #f1c40f;
+}
+
+.guardia-triage-level--4 {
+    color: #27ae60;
+    border-color: #27ae60;
+}
+
+.guardia-triage-level--5 {
+    color: #3498db;
+    border-color: #3498db;
+}
+
+.btn-check:checked + .guardia-triage-level--1 {
+    color: #641e16;
+    background-color: rgba(192, 57, 43, 0.35);
+    border-color: #c0392b;
+}
+
+.btn-check:checked + .guardia-triage-level--2 {
+    color: #6e2c00;
+    background-color: rgba(230, 126, 34, 0.35);
+    border-color: #e67e22;
+}
+
+.btn-check:checked + .guardia-triage-level--3 {
+    color: #7d6608;
+    background-color: rgba(241, 196, 15, 0.45);
+    border-color: #f1c40f;
+}
+
+.btn-check:checked + .guardia-triage-level--4 {
+    color: #145a32;
+    background-color: rgba(39, 174, 96, 0.35);
+    border-color: #27ae60;
+}
+
+.btn-check:checked + .guardia-triage-level--5 {
+    color: #1a5276;
+    background-color: rgba(52, 152, 219, 0.35);
+    border-color: #3498db;
+}
+
+.btn-check:focus + .guardia-triage-level,
+.guardia-triage-level:hover {
+    box-shadow: none;
+}

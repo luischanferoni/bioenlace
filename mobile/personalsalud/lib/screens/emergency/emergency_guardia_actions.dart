@@ -1,11 +1,12 @@
 // lib/screens/emergency/emergency_guardia_actions.dart
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/emergency_guardia_api.dart';
 import 'emergency_triage_screen.dart';
 
-/// Menú de acciones del tablero de guardia (derivar, egreso, tomar caso, re-triage).
+/// Menú y CTAs del tablero de guardia (paridad con web: Triage, Pedidos/Lab, cama).
 class EmergencyGuardiaActions {
   EmergencyGuardiaActions._();
 
@@ -13,6 +14,39 @@ class EmergencyGuardiaActions {
     final e = g.circuitoEstado ?? '';
     return e == 'finalizado' || e == 'derivado';
   }
+
+  static Future<void> openTriage({
+    required BuildContext context,
+    required EmergencyBoardItem item,
+    required EmergencyGuardiaApi api,
+    required VoidCallback onChanged,
+    bool isRetriage = false,
+  }) =>
+      _retriage(
+        context,
+        item,
+        api,
+        onChanged,
+        isRetriage: isRetriage,
+        initialLevel: isRetriage ? item.prioridadTriage : null,
+        initialReason: isRetriage ? item.triageReasonText : null,
+      );
+
+  static Future<void> openPedidosLab({
+    required BuildContext context,
+    required EmergencyBoardItem item,
+    required EmergencyGuardiaApi api,
+    required VoidCallback onChanged,
+  }) =>
+      _clinical(context, item, api, onChanged);
+
+  static Future<void> openCama({
+    required BuildContext context,
+    required EmergencyBoardItem item,
+    required EmergencyGuardiaApi api,
+    required VoidCallback onChanged,
+  }) =>
+      _solicitarInternacion(context, item, api, onChanged);
 
   static Future<void> showActionSheet({
     required BuildContext context,
@@ -24,11 +58,28 @@ class EmergencyGuardiaActions {
     if (episodioCerrado(item)) return;
 
     final actions = <_ActionDef>[];
-    if (!item.needsTriage) {
+    if (item.needsTriage) {
+      actions.add(_ActionDef(
+        label: 'Triage',
+        icon: Icons.assignment_outlined,
+        onTap: () => openTriage(
+          context: context,
+          item: item,
+          api: api,
+          onChanged: onChanged,
+        ),
+      ));
+    } else {
       actions.add(_ActionDef(
         label: 'Actualizar triage',
         icon: Icons.medical_information_outlined,
-        onTap: () => _retriage(context, item, api, onChanged),
+        onTap: () => openTriage(
+          context: context,
+          item: item,
+          api: api,
+          onChanged: onChanged,
+          isRetriage: true,
+        ),
       ));
       actions.add(_ActionDef(
         label: 'Tomar caso',
@@ -41,16 +92,44 @@ class EmergencyGuardiaActions {
           sessionTieneCobertura: sessionTieneCobertura,
         ),
       ));
+    }
+
+    actions.add(_ActionDef(
+      label: 'Pedidos / Lab',
+      icon: Icons.biotech_outlined,
+      onTap: () => openPedidosLab(
+        context: context,
+        item: item,
+        api: api,
+        onChanged: onChanged,
+      ),
+    ));
+
+    if (item.internacionPendiente) {
       actions.add(_ActionDef(
-        label: 'Pedidos / laboratorio',
-        icon: Icons.biotech_outlined,
-        onTap: () => _clinical(context, item, api, onChanged),
+        label: 'Ingresar cama',
+        icon: Icons.hotel_outlined,
+        onTap: () => openCama(
+          context: context,
+          item: item,
+          api: api,
+          onChanged: onChanged,
+        ),
       ));
+    } else {
       actions.add(_ActionDef(
         label: 'Solicitar cama',
         icon: Icons.hotel_outlined,
-        onTap: () => _solicitarInternacion(context, item, api, onChanged),
+        onTap: () => openCama(
+          context: context,
+          item: item,
+          api: api,
+          onChanged: onChanged,
+        ),
       ));
+    }
+
+    if (!item.needsTriage) {
       actions.add(_ActionDef(
         label: 'Derivar',
         icon: Icons.transfer_within_a_station,
@@ -62,8 +141,6 @@ class EmergencyGuardiaActions {
         onTap: () => _finalizar(context, item, api, onChanged),
       ));
     }
-
-    if (actions.isEmpty) return;
 
     await showModalBottomSheet<void>(
       context: context,
@@ -107,8 +184,11 @@ class EmergencyGuardiaActions {
     BuildContext context,
     EmergencyBoardItem item,
     EmergencyGuardiaApi api,
-    VoidCallback onChanged,
-  ) async {
+    VoidCallback onChanged, {
+    bool isRetriage = true,
+    int? initialLevel,
+    String? initialReason,
+  }) async {
     final ok = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
@@ -116,9 +196,9 @@ class EmergencyGuardiaActions {
           guardiaId: item.id,
           pacienteNombre: item.nombreCompleto,
           api: api,
-          isRetriage: true,
-          initialLevel: item.prioridadTriage,
-          initialReason: item.triageReasonText,
+          isRetriage: isRetriage,
+          initialLevel: initialLevel ?? (isRetriage ? item.prioridadTriage : null),
+          initialReason: initialReason ?? (isRetriage ? item.triageReasonText : null),
         ),
       ),
     );
@@ -213,13 +293,33 @@ class EmergencyGuardiaActions {
     EmergencyGuardiaApi api,
     VoidCallback onChanged,
   ) async {
-    if (item.internacionPendiente && item.internacionIngresoUrl != null) {
-      // En móvil abrimos URL web de ingreso si está disponible
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ingreso pendiente: ${item.internacionIngresoUrl}'),
-        ),
-      );
+    if (item.internacionPendiente) {
+      final url = item.internacionIngresoUrl?.trim();
+      if (url == null || url.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cama pendiente: abrí el mapa de internación para asignarla.'),
+            ),
+          );
+        }
+        return;
+      }
+      final uri = _resolveWebUri(url);
+      if (uri == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('URL de ingreso inválida: $url')),
+          );
+        }
+        return;
+      }
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No se pudo abrir el ingreso de cama.')),
+        );
+      }
       return;
     }
     try {
@@ -237,6 +337,21 @@ class EmergencyGuardiaActions {
         );
       }
     }
+  }
+
+  static Uri? _resolveWebUri(String pathOrUrl) {
+    final raw = pathOrUrl.trim();
+    if (raw.isEmpty) return null;
+    if (raw.startsWith('http://') || raw.startsWith('https://')) {
+      return Uri.tryParse(raw);
+    }
+    var base = AppConfig.apiUrl.trim();
+    base = base.replaceAll(RegExp(r'/api/v\d+/?$', caseSensitive: false), '');
+    while (base.endsWith('/')) {
+      base = base.substring(0, base.length - 1);
+    }
+    final path = raw.startsWith('/') ? raw : '/$raw';
+    return Uri.tryParse('$base$path');
   }
 
   static Future<void> _tomarCaso(

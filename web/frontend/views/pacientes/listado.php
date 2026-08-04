@@ -7,6 +7,7 @@ use yii\helpers\Url;
 use yii\helpers\Json;
 use common\models\Clinical\Encounter;
 use common\models\Servicio;
+use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
 
 $idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
 $esAmbulatorio = ($encounter_class === Encounter::ENCOUNTER_CLASS_AMB);
@@ -163,10 +164,14 @@ $this->title = $esGuardia
                 <div class="mb-3">
                     <label class="form-label">Prioridad (Manchester)</label>
                     <div class="d-flex flex-wrap gap-2" id="guardia-triage-levels">
-                        <?php for ($n = 1; $n <= 5; $n++): ?>
-                        <input type="radio" class="btn-check" name="guardia_triage_level" id="guardia-triage-level-<?= $n ?>" value="<?= $n ?>"<?= $n === 3 ? ' checked' : '' ?>>
-                        <label class="btn btn-outline-secondary btn-sm" for="guardia-triage-level-<?= $n ?>"><?= $n ?></label>
-                        <?php endfor; ?>
+                        <?php foreach (TriageScale::levelMeta() as $n => $meta): ?>
+                        <input type="radio" class="btn-check" name="guardia_triage_level" id="guardia-triage-level-<?= (int) $n ?>" value="<?= (int) $n ?>"<?= (int) $n === 3 ? ' checked' : '' ?>>
+                        <label
+                            class="btn btn-sm guardia-triage-level guardia-triage-level--<?= (int) $n ?>"
+                            for="guardia-triage-level-<?= (int) $n ?>"
+                            title="<?= Html::encode($meta['label']) ?>"
+                        ><?= (int) $n ?></label>
+                        <?php endforeach; ?>
                     </div>
                 </div>
                 <div class="mb-3">

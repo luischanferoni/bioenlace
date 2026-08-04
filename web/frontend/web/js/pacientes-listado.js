@@ -1010,23 +1010,18 @@
 
     function kpiGroupFromEmergencyIndicators(d) {
       if (!d) return null;
-      var tiempos = d.tiempos_hoy || {};
-      var items = [
-        { label: 'Activos', value: String(d.activos != null ? d.activos : 0) },
-        { label: 'Sin triage', value: String(d.sin_triage != null ? d.sin_triage : 0) },
-        { label: 'Ingresos hoy', value: String(d.ingresos_hoy != null ? d.ingresos_hoy : 0) },
-        {
-          label: 'Plazos incumplidos',
-          value: String(d.sla_incumplidos_tablero != null ? d.sla_incumplidos_tablero : 0),
-        },
-      ];
-      if (tiempos.minutos_a_medico != null) {
-        items.push({
-          label: 'Mediana a médico (hoy)',
-          value: formatDuracionMinutos(tiempos.minutos_a_medico),
-        });
-      }
-      return { title: '', items: items };
+      return {
+        title: '',
+        items: [
+          { label: 'Activos', value: String(d.activos != null ? d.activos : 0) },
+          { label: 'Sin triage', value: String(d.sin_triage != null ? d.sin_triage : 0) },
+          { label: 'Ingresos hoy', value: String(d.ingresos_hoy != null ? d.ingresos_hoy : 0) },
+          {
+            label: 'Plazos',
+            value: String(d.sla_incumplidos_tablero != null ? d.sla_incumplidos_tablero : 0),
+          },
+        ],
+      };
     }
 
     function findStaffKpiGroupData(panel) {

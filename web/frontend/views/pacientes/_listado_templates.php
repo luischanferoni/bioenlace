@@ -282,9 +282,9 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 </template>
 
 <template id="tpl-staff-kpi-item">
-    <div class="border rounded px-3 py-2 bg-white" style="min-width: 9.25rem; max-width: 11rem;" data-role="kpi-item">
+    <div class="border rounded px-2 py-2 bg-white" style="min-width: 4.75rem; max-width: 5.5rem; flex: 1 1 4.75rem;" data-role="kpi-item">
         <div class="text-muted small mb-1 text-truncate" data-field="label"></div>
-        <div class="fs-4 fw-semibold lh-1" data-field="value"></div>
+        <div class="fs-5 fw-semibold lh-1" data-field="value"></div>
     </div>
 </template>
 

@@ -23,8 +23,6 @@ final class StaffGuardiaKpiSectionProvider implements HomePanelSectionProviderIn
         }
 
         $d = (new GuardiaIndicadoresService())->resumen($idEfector);
-        $tiempos = is_array($d['tiempos_hoy'] ?? null) ? $d['tiempos_hoy'] : [];
-        $minMedico = $tiempos['minutos_a_medico'] ?? null;
 
         return [
             'title' => '',
@@ -42,40 +40,10 @@ final class StaffGuardiaKpiSectionProvider implements HomePanelSectionProviderIn
                     'value' => (string) ($d['ingresos_hoy'] ?? 0),
                 ],
                 [
-                    'label' => 'Plazos incumplidos',
+                    'label' => 'Plazos',
                     'value' => (string) ($d['sla_incumplidos_tablero'] ?? 0),
-                ],
-                [
-                    'label' => 'Mediana a médico (hoy)',
-                    'value' => $minMedico !== null
-                        ? self::formatDuracionMinutos((int) round((float) $minMedico))
-                        : '—',
                 ],
             ],
         ];
-    }
-
-    /** Duración amigable: `45 min`, `1 h 30 min`, `2 d 3 h`. */
-    private static function formatDuracionMinutos(int $minutos): string
-    {
-        $n = max(0, $minutos);
-        if ($n < 60) {
-            return $n . ' min';
-        }
-        $days = intdiv($n, 1440);
-        $hours = intdiv($n % 1440, 60);
-        $mins = $n % 60;
-        $parts = [];
-        if ($days > 0) {
-            $parts[] = $days . ' d';
-        }
-        if ($hours > 0) {
-            $parts[] = $hours . ' h';
-        }
-        if ($mins > 0 && $days === 0) {
-            $parts[] = $mins . ' min';
-        }
-
-        return $parts === [] ? '0 min' : implode(' ', $parts);
     }
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../format/datetime_friendly.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/bio_card.dart';
 import 'home_panel_api.dart';
@@ -62,11 +61,6 @@ List<HomePanelKpiGroup> homePanelKpiGroupsFromResponse(HomePanelResponse panel) 
 }
 
 HomePanelKpiGroup? _guardiaIndicatorsKpiGroup(Map<String, dynamic> d) {
-  final tiempos = d['tiempos_hoy'] is Map
-      ? Map<String, dynamic>.from(d['tiempos_hoy'] as Map)
-      : <String, dynamic>{};
-  final minMedico = tiempos['minutos_a_medico'];
-
   final items = <HomePanelKpiItem>[
     HomePanelKpiItem(
       label: 'Activos',
@@ -81,16 +75,9 @@ HomePanelKpiGroup? _guardiaIndicatorsKpiGroup(Map<String, dynamic> d) {
       value: '${d['ingresos_hoy'] ?? 0}',
     ),
     HomePanelKpiItem(
-      label: 'Plazos incumplidos',
+      label: 'Plazos',
       value: '${d['sla_incumplidos_tablero'] ?? 0}',
     ),
-    if (minMedico != null)
-      HomePanelKpiItem(
-        label: 'Mediana a médico (hoy)',
-        value: formatDuracionMinutos(
-          minMedico is num ? minMedico : num.tryParse(minMedico.toString()),
-        ),
-      ),
   ];
 
   if (items.isEmpty) return null;
@@ -227,9 +214,9 @@ class _KpiTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 148,
+      width: 78,
       padding: const EdgeInsets.symmetric(
-        horizontal: BioSpacing.md,
+        horizontal: BioSpacing.sm,
         vertical: BioSpacing.sm,
       ),
       decoration: BoxDecoration(

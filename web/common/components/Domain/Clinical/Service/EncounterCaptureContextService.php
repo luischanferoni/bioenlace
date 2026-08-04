@@ -2,11 +2,13 @@
 
 namespace common\components\Domain\Clinical\Service;
 
+use common\components\Domain\Clinical\Specialty\Inpatient\InpatientClinicalContext;
 use common\models\Cirugia;
 use common\models\Clinical\Encounter;
 use common\models\ConsultaDerivaciones;
 use common\models\Guardia;
 use common\models\Person\Persona;
+use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use common\models\SegNivelInternacion;
 use common\models\ServiciosEfector;
@@ -103,23 +105,47 @@ final class EncounterCaptureContextService
         }
 
         if ($parent == Encounter::PARENT_INTERNACION) {
-            $idSegNivelInternacion = SegNivelInternacion::personaInternadaEnEfector(
-                $paciente->id_persona,
-                Yii::$app->user->getIdEfector()
-            );
-
-            if (!$idSegNivelInternacion) {
-                Yii::warning('Llamada a getModeloConsulta parentId a un SegNivelInternacion que no existe, parentId: ' . $parentId);
+            $idEfector = (int) Yii::$app->user->getIdEfector();
+            $internacion = self::resolveInternacionActivaParaCaptura($paciente, $parentId, $idEfector);
+            if ($internacion === null) {
+                Yii::warning(
+                    'validarPermisoAtencion: internación no válida para captura, parentId: ' . $parentId,
+                    __METHOD__
+                );
 
                 return [
                     'success' => false,
-                    'msg' => 'Ocurrio un error con la internacion, por favor comunicarse con los administradores de SISSE',
+                    'msg' => 'No se encontró una internación activa de este paciente en el efector actual.',
                     'idServicio' => null,
                     'encounterClass' => null,
                 ];
             }
 
-            $idServicio = Yii::$app->user->getServicioActual();
+            $idServicio = self::resolveServicioParaInternacion($internacion);
+            if ($idServicio <= 0) {
+                return [
+                    'success' => false,
+                    'msg' => 'No hay servicio institucional en sesión para documentar la internación. Seleccioná el servicio de piso en el menú superior.',
+                    'idServicio' => null,
+                    'encounterClass' => null,
+                ];
+            }
+
+            // Asegura episode + care plan inpatient + encounter IMP abierto (contexto de evolución del episodio).
+            try {
+                InpatientClinicalContext::ensure($internacion);
+            } catch (\Throwable $e) {
+                try {
+                    (new CarePlanLifecycleService())->onInternacionAdmission($internacion);
+                } catch (\Throwable $e2) {
+                    Yii::warning(
+                        'No se pudo asegurar contexto clínico de internación #' . $internacion->id
+                        . ': ' . $e2->getMessage(),
+                        __METHOD__
+                    );
+                }
+            }
+
             $encounterClass = Encounter::ENCOUNTER_CLASS_IMP;
         }
 
@@ -382,5 +408,74 @@ final class EncounterCaptureContextService
             'idServicio' => null,
             'encounterClass' => null,
         ];
+    }
+
+    /**
+     * Internación activa del paciente en el efector (prioriza parent_id de la URL de captura).
+     */
+    private static function resolveInternacionActivaParaCaptura(
+        Persona $paciente,
+        $parentId,
+        int $idEfector
+    ): ?SegNivelInternacion {
+        $parentIdInt = (int) $parentId;
+        if ($parentIdInt > 0) {
+            $internacion = SegNivelInternacion::findOne($parentIdInt);
+            if (
+                !$internacion instanceof SegNivelInternacion
+                || (int) $internacion->id_persona !== (int) $paciente->id_persona
+            ) {
+                return null;
+            }
+            if ($internacion->internacionConAlta()) {
+                return null;
+            }
+            $idEfectorInternacion = $internacion->resolveIdEfectorContextForPes();
+            if ($idEfectorInternacion !== null && (int) $idEfectorInternacion !== $idEfector) {
+                return null;
+            }
+
+            return $internacion;
+        }
+
+        $idSeg = SegNivelInternacion::personaInternadaEnEfector(
+            $paciente->id_persona,
+            $idEfector
+        );
+        if (!$idSeg) {
+            return null;
+        }
+        $internacion = SegNivelInternacion::findOne((int) $idSeg);
+
+        return $internacion instanceof SegNivelInternacion ? $internacion : null;
+    }
+
+    /**
+     * Servicio institucional para documentar IMP: sesión → PES del episodio → encounter abierto.
+     */
+    private static function resolveServicioParaInternacion(SegNivelInternacion $internacion): int
+    {
+        $idServicio = (int) (Yii::$app->user->getServicioActual() ?? 0);
+        if ($idServicio > 0) {
+            return $idServicio;
+        }
+
+        $pesId = (int) ($internacion->id_profesional_efector_servicio ?? 0);
+        if ($pesId > 0) {
+            $pes = ProfesionalEfectorServicio::find()
+                ->andWhere(['id' => $pesId])
+                ->andWhere(['deleted_at' => null])
+                ->one();
+            if ($pes instanceof ProfesionalEfectorServicio && (int) $pes->id_servicio > 0) {
+                return (int) $pes->id_servicio;
+            }
+        }
+
+        $open = InpatientClinicalContext::findOpenInpatientEncounter((int) $internacion->id);
+        if ($open !== null && (int) ($open->service_id ?? 0) > 0) {
+            return (int) $open->service_id;
+        }
+
+        return 0;
     }
 }

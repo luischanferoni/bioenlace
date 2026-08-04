@@ -11,6 +11,7 @@ use common\models\Person\Persona;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\components\Domain\Clinical\Service\EncounterCaptureContextService;
+use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapService;
 use frontend\filters\SisseActionFilter;
 
 /**
@@ -246,31 +247,35 @@ class PacienteController extends Controller
      */
     private function obtenerConfiguracion($idConsulta, $paciente, $parent, $parentId)
     {
+        $idServicio = 0;
+        $encounterClass = '';
+
         if ($idConsulta) {
             $encounter = Encounter::findOne((int) $idConsulta);
             if ($encounter !== null) {
-                $configuracion = EncounterDefinition::find()
-                    ->where(['service_id' => $encounter->service_id])
-                    ->andWhere(['encounter_class' => $encounter->encounter_class])
-                    ->andWhere('deleted_at is null')
-                    ->one();
+                $idServicio = (int) ($encounter->service_id ?? 0);
+                $encounterClass = trim((string) ($encounter->encounter_class ?? ''));
             }
         } else {
-            // Determinar configuración basada en el servicio y encounter class
             $resultadoValidacion = EncounterCaptureContextService::validarPermisoAtencion($parent, $parentId, $paciente);
             if (!$resultadoValidacion['success']) {
                 return $resultadoValidacion;
             }
 
-            /** @var ?EncounterDefinition $configuracion */
-            $configuracion = EncounterDefinition::find()
-                ->where(['service_id' => $resultadoValidacion['idServicio']])
-                ->andWhere(['encounter_class' => $resultadoValidacion['encounterClass']])
-                ->andWhere('deleted_at is null')
-                ->one();
+            $idServicio = (int) ($resultadoValidacion['idServicio'] ?? 0);
+            $encounterClass = trim((string) ($resultadoValidacion['encounterClass'] ?? ''));
         }
 
-        if (!is_object($configuracion)) {
+        if ($idServicio <= 0 || $encounterClass === '') {
+            return ['success' => false, 'msg' => 'Error: Servicio sin configuración'];
+        }
+
+        // Misma política que el guardado: si falta fila IMP/AMB/EMER, bootstrap con plantilla del catálogo
+        // (IMP → evolución, medicación, indicaciones, régimen, balance hídrico).
+        $configuracion = (new EncounterDefinitionBootstrapService())
+            ->ensureForServiceAndClass($idServicio, $encounterClass);
+
+        if (!$configuracion instanceof EncounterDefinition) {
             return ['success' => false, 'msg' => 'Error: Servicio sin configuración'];
         }
 

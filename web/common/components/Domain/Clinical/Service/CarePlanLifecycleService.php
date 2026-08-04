@@ -9,7 +9,9 @@ use common\components\Domain\Clinical\Support\CarePlanProgramMeta;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EpisodeOfCare;
+use common\models\ProfesionalEfectorServicio;
 use common\models\SegNivelInternacion;
+use Yii;
 
 /**
  * Reglas de ciclo de vida CarePlan (internación, ambulatorio, crónico, programa).
@@ -79,9 +81,27 @@ final class CarePlanLifecycleService
             'parent_type' => $parentType,
             'parent_id' => (int) $internacion->id,
             'efector_id' => $episode->efector_id,
+            'service_id' => $this->resolveInpatientServiceId($internacion),
             'id_profesional_efector_servicio' => $internacion->id_profesional_efector_servicio,
             'reason_text' => 'Internación #' . $internacion->id,
         ]);
+    }
+
+    private function resolveInpatientServiceId(SegNivelInternacion $internacion): ?int
+    {
+        $pesId = (int) ($internacion->id_profesional_efector_servicio ?? 0);
+        if ($pesId > 0) {
+            $pes = ProfesionalEfectorServicio::find()
+                ->andWhere(['id' => $pesId])
+                ->andWhere(['deleted_at' => null])
+                ->one();
+            if ($pes instanceof ProfesionalEfectorServicio && (int) $pes->id_servicio > 0) {
+                return (int) $pes->id_servicio;
+            }
+        }
+        $session = (int) (Yii::$app->user->getServicioActual() ?? 0);
+
+        return $session > 0 ? $session : null;
     }
 
     /**

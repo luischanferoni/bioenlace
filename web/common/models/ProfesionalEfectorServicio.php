@@ -74,6 +74,21 @@ class ProfesionalEfectorServicio extends ActiveRecord
             [['id_persona', 'id_efector', 'id_servicio'], 'required'],
             [['id_persona', 'id_profesional_salud', 'id_efector', 'id_servicio'], 'integer'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
+            [
+                ['id_persona', 'id_efector', 'id_servicio'],
+                'unique',
+                'targetAttribute' => ['id_persona', 'id_efector', 'id_servicio'],
+                'filter' => function ($query) {
+                    $query->andWhere(['deleted_at' => null]);
+                    if (!$this->isNewRecord) {
+                        $query->andWhere(['<>', 'id', (int) $this->id]);
+                    }
+                },
+                'when' => function () {
+                    return $this->deleted_at === null || $this->deleted_at === '';
+                },
+                'message' => 'Ya existe una asignación activa de esta persona a este servicio en el efector.',
+            ],
         ];
     }
 

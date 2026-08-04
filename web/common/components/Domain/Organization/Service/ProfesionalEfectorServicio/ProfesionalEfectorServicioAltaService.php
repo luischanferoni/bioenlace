@@ -79,13 +79,26 @@ final class ProfesionalEfectorServicioAltaService
                 $pes->id_efector = $idEfector;
                 $pes->id_servicio = $idServicio;
             }
+            if (!$pes->validate()) {
+                $flat = [];
+                foreach ($pes->getErrors() as $msgs) {
+                    foreach ((array) $msgs as $m) {
+                        $flat[] = (string) $m;
+                    }
+                }
+                throw new \InvalidArgumentException(
+                    $flat !== []
+                        ? implode(' ', $flat)
+                        : 'Asignación profesional–efector–servicio inválida.'
+                );
+            }
             if ($actingUserId !== null && $actingUserId > 0) {
                 ActiveRecordConsoleBlame::save(
                     $pes,
                     $actingUserId,
                     'No se pudo registrar la asignación profesional–efector–servicio'
                 );
-            } elseif (!$pes->save()) {
+            } elseif (!$pes->save(false)) {
                 throw new \RuntimeException('No se pudo registrar la asignación profesional–efector–servicio: ' . json_encode($pes->getErrors()));
             }
 

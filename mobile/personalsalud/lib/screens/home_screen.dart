@@ -1,4 +1,6 @@
 // lib/screens/home_screen.dart
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -76,6 +78,11 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   String _encounterClass = 'AMB';
+
+  /// Poll del tablero EMER (cancelable). Antes era Future.delayed sin cancel →
+  /// cada refresh/ciclo armaba otra cadena y las requests se acumulaban.
+  Timer? _tableroPollTimer;
+  int _tableroPollSeconds = 30;
 
   @override
   void initState() {
@@ -160,7 +167,11 @@ class _HomeScreenState extends State<HomeScreen> {
         partial: silent && _encounterClass == 'EMER',
       );
       if (_encounterClass == 'EMER') {
-        _startTableroPoll();
+        _rememberTableroPollInterval(panel);
+        // Solo armar el timer en carga completa. El silent lo reprograma el callback del Timer.
+        if (!silent) {
+          _startTableroPoll();
+        }
       } else {
         _stopTableroPoll();
       }
@@ -187,18 +198,36 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  void _rememberTableroPollInterval(HomePanelResponse panel) {
+    final candidates = <int>[];
+    for (final kind in ['emergency_board', 'staff_cobertura_activa']) {
+      final sec = panel.sectionByKind(kind)?.pollIntervalSeconds;
+      if (sec != null && sec > 0) {
+        candidates.add(sec);
+      }
+    }
+    if (candidates.isEmpty) {
+      return;
+    }
+    candidates.sort();
+    // Intervalo del tablero (típicamente 30s); piso 15s para no saturar la API.
+    _tableroPollSeconds = candidates.first.clamp(15, 300);
+  }
+
   void _startTableroPoll() {
     _stopTableroPoll();
     if (_encounterClass != 'EMER') return;
-    Future.delayed(const Duration(seconds: 30), () async {
+    _tableroPollTimer = Timer(Duration(seconds: _tableroPollSeconds), () async {
       if (!mounted || _encounterClass != 'EMER') return;
       await _cargarListadoPacientes(silent: true);
+      if (!mounted || _encounterClass != 'EMER') return;
       _startTableroPoll();
     });
   }
 
   void _stopTableroPoll() {
-    // repoll encadenado; al cambiar encounter se corta por _encounterClass check
+    _tableroPollTimer?.cancel();
+    _tableroPollTimer = null;
   }
 
   void _applyHomePanel(HomePanelResponse panel, {bool partial = false}) {

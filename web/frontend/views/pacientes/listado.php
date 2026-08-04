@@ -275,6 +275,69 @@ $this->title = $esGuardia
         </div>
     </div>
 </div>
+<div class="modal fade" id="guardia-ingreso-cama-modal" tabindex="-1" aria-labelledby="guardiaIngresoCamaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="guardiaIngresoCamaModalLabel">Ingreso a internación</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-2" id="guardia-ingreso-paciente-nombre"></p>
+                <div id="guardia-ingreso-loading" class="text-muted small">Cargando formulario…</div>
+                <div id="guardia-ingreso-form" class="d-none">
+                    <input type="hidden" id="guardia-ingreso-id-persona" value="">
+                    <input type="hidden" id="guardia-ingreso-id-guardia" value="">
+                    <div class="mb-2">
+                        <label class="form-label" for="guardia-ingreso-id-cama">Cama</label>
+                        <select class="form-select form-select-sm" id="guardia-ingreso-id-cama" required></select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="guardia-ingreso-id-pes">Profesional responsable</label>
+                        <select class="form-select form-select-sm" id="guardia-ingreso-id-pes" required></select>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label" for="guardia-ingreso-fecha">Fecha</label>
+                            <input type="date" class="form-control form-control-sm" id="guardia-ingreso-fecha" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="guardia-ingreso-hora">Hora</label>
+                            <input type="time" class="form-control form-control-sm" id="guardia-ingreso-hora" required>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="guardia-ingreso-tipo">Tipo de ingreso</label>
+                        <select class="form-select form-select-sm" id="guardia-ingreso-tipo" required></select>
+                    </div>
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label" for="guardia-ingreso-en">Ingresa en</label>
+                            <select class="form-select form-select-sm" id="guardia-ingreso-en" required></select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="guardia-ingreso-con">Ingresa con</label>
+                            <select class="form-select form-select-sm" id="guardia-ingreso-con" required></select>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="guardia-ingreso-obra">Obra social</label>
+                        <select class="form-select form-select-sm" id="guardia-ingreso-obra"></select>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label" for="guardia-ingreso-situacion">Situación al ingresar</label>
+                        <textarea class="form-control form-control-sm" id="guardia-ingreso-situacion" rows="2"></textarea>
+                    </div>
+                </div>
+                <div id="guardia-ingreso-error" class="alert alert-danger d-none mt-3 mb-0"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success" id="guardia-ingreso-submit" disabled>Confirmar ingreso</button>
+            </div>
+        </div>
+    </div>
+</div>
 <?php endif; ?>
 
 <?php

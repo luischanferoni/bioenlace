@@ -589,19 +589,19 @@
 
       var ctaInternacion = rowEl.querySelector('[data-role="cta-internacion"]');
       if (ctaInternacion) {
-        var showInt = !cerrado && !g.internacion_pendiente;
-        ctaInternacion.classList.toggle('d-none', !showInt);
-        ctaInternacion.onclick = function () {
-          solicitarInternacionGuardia(g);
-        };
-      }
-      if (g.internacion_pendiente && g.internacion_ingreso_url) {
-        var linkInt = rowEl.querySelector('[data-role="cta-internacion-link"]');
-        if (!linkInt && ctaInternacion) {
+        if (cerrado) {
+          ctaInternacion.classList.add('d-none');
+        } else if (g.internacion_pendiente) {
           ctaInternacion.textContent = 'Ingresar cama';
           ctaInternacion.classList.remove('d-none');
           ctaInternacion.onclick = function () {
-            window.location.href = g.internacion_ingreso_url;
+            openIngresoCamaModal(g);
+          };
+        } else {
+          ctaInternacion.textContent = 'Solicitar cama';
+          ctaInternacion.classList.remove('d-none');
+          ctaInternacion.onclick = function () {
+            solicitarInternacionGuardia(g);
           };
         }
       }
@@ -609,6 +609,7 @@
 
     var clinicalModal = null;
     var clinicalModalGuardiaId = 0;
+    var ingresoCamaModal = null;
 
     function getClinicalModal() {
       if (!clinicalModal) {
@@ -726,6 +727,193 @@
         await loadGuardiaTablero(false);
       } catch (e) {
         showError(errorEl, e && e.message ? e.message : 'No se pudo solicitar internación.');
+      }
+    }
+
+    function fillSelectOptions(selectEl, options, emptyLabel, selectedValue) {
+      if (!selectEl) return;
+      clearNode(selectEl);
+      if (emptyLabel != null) {
+        var emptyOpt = document.createElement('option');
+        emptyOpt.value = '';
+        emptyOpt.textContent = emptyLabel;
+        selectEl.appendChild(emptyOpt);
+      }
+      (options || []).forEach(function (o) {
+        var opt = document.createElement('option');
+        opt.value = o.value != null ? String(o.value) : '';
+        opt.textContent = o.label != null ? String(o.label) : opt.value;
+        if (selectedValue != null && String(selectedValue) === opt.value) {
+          opt.selected = true;
+        }
+        selectEl.appendChild(opt);
+      });
+    }
+
+    function getIngresoCamaModal() {
+      if (!ingresoCamaModal) {
+        var el = document.getElementById('guardia-ingreso-cama-modal');
+        if (el && window.bootstrap && window.bootstrap.Modal) {
+          ingresoCamaModal = new window.bootstrap.Modal(el);
+        }
+      }
+      return ingresoCamaModal;
+    }
+
+    function showIngresoError(msg) {
+      var errEl = document.getElementById('guardia-ingreso-error');
+      if (!errEl) return;
+      if (msg) {
+        errEl.textContent = msg;
+        errEl.classList.remove('d-none');
+      } else {
+        errEl.textContent = '';
+        errEl.classList.add('d-none');
+      }
+    }
+
+    async function openIngresoCamaModal(g) {
+      var api = window.BioenlaceNativePage;
+      var modal = getIngresoCamaModal();
+      if (!api || !modal || !g) return;
+
+      var idPersona = g.id_persona || (g.paciente && g.paciente.id) || 0;
+      if (!idPersona) {
+        showError(errorEl, 'Falta el paciente para el ingreso.');
+        return;
+      }
+
+      var nameEl = document.getElementById('guardia-ingreso-paciente-nombre');
+      if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);
+      var loadingEl = document.getElementById('guardia-ingreso-loading');
+      var formEl = document.getElementById('guardia-ingreso-form');
+      var submitBtn = document.getElementById('guardia-ingreso-submit');
+      if (loadingEl) loadingEl.classList.remove('d-none');
+      if (formEl) formEl.classList.add('d-none');
+      if (submitBtn) submitBtn.disabled = true;
+      showIngresoError(null);
+      modal.show();
+
+      try {
+        var url = api.apiV1Url('clinical/internacion/ingreso-formulario');
+        var u = new URL(url, window.location.origin);
+        u.searchParams.set('id_persona', String(idPersona));
+        u.searchParams.set('id_guardia', String(g.id));
+        var json = await api.fetchJson(u.toString(), {
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        var root = json;
+        if (json && json.data && json.data.kind === 'ui_definition') {
+          root = json.data;
+        }
+        var ctx = (root && root.kind === 'ui_definition')
+          ? (root.data || {})
+          : (json && json.data && !json.kind ? json.data : (json || {}));
+        if (!ctx || !Array.isArray(ctx.camas_disponibles)) {
+          throw new Error((json && json.message) || 'No se pudo cargar el formulario de ingreso.');
+        }
+
+        document.getElementById('guardia-ingreso-id-persona').value = String(ctx.id_persona || idPersona);
+        document.getElementById('guardia-ingreso-id-guardia').value = String(ctx.id_guardia || g.id);
+        fillSelectOptions(
+          document.getElementById('guardia-ingreso-id-cama'),
+          ctx.camas_disponibles || [],
+          '— Elegir cama —',
+          ctx.id_cama
+        );
+        fillSelectOptions(
+          document.getElementById('guardia-ingreso-id-pes'),
+          ctx.profesionales || [],
+          '— Elegir —',
+          null
+        );
+        fillSelectOptions(
+          document.getElementById('guardia-ingreso-tipo'),
+          ctx.tipos_ingreso || [],
+          '— Elegir —',
+          ctx.id_tipo_ingreso_default
+        );
+        fillSelectOptions(
+          document.getElementById('guardia-ingreso-en'),
+          ctx.ingresa_en || [],
+          '—',
+          null
+        );
+        fillSelectOptions(
+          document.getElementById('guardia-ingreso-con'),
+          ctx.ingresa_con || [],
+          '—',
+          null
+        );
+        fillSelectOptions(
+          document.getElementById('guardia-ingreso-obra'),
+          ctx.coberturas || [],
+          '—',
+          ctx.obra_social_default
+        );
+        var fechaEl = document.getElementById('guardia-ingreso-fecha');
+        var horaEl = document.getElementById('guardia-ingreso-hora');
+        if (fechaEl) fechaEl.value = ctx.fecha_inicio || '';
+        if (horaEl) horaEl.value = ctx.hora_inicio || '';
+        var sitEl = document.getElementById('guardia-ingreso-situacion');
+        if (sitEl) sitEl.value = '';
+
+        if (loadingEl) loadingEl.classList.add('d-none');
+        if (formEl) formEl.classList.remove('d-none');
+        if (submitBtn) submitBtn.disabled = false;
+      } catch (e) {
+        if (loadingEl) loadingEl.classList.add('d-none');
+        showIngresoError(e && e.message ? e.message : 'No se pudo cargar el ingreso.');
+      }
+    }
+
+    async function submitIngresoCamaModal() {
+      var api = window.BioenlaceNativePage;
+      if (!api) return;
+      showIngresoError(null);
+      var payload = {
+        id_persona: document.getElementById('guardia-ingreso-id-persona').value,
+        id_guardia: document.getElementById('guardia-ingreso-id-guardia').value,
+        id_cama: document.getElementById('guardia-ingreso-id-cama').value,
+        id_profesional_efector_servicio: document.getElementById('guardia-ingreso-id-pes').value,
+        fecha_inicio: document.getElementById('guardia-ingreso-fecha').value,
+        hora_inicio: document.getElementById('guardia-ingreso-hora').value,
+        id_tipo_ingreso: document.getElementById('guardia-ingreso-tipo').value,
+        ingresa_en: document.getElementById('guardia-ingreso-en').value,
+        ingresa_con: document.getElementById('guardia-ingreso-con').value,
+        obra_social: document.getElementById('guardia-ingreso-obra').value,
+        situacion_al_ingresar: document.getElementById('guardia-ingreso-situacion').value,
+      };
+      if (!payload.id_cama || !payload.id_profesional_efector_servicio) {
+        showIngresoError('Completá cama y profesional responsable.');
+        return;
+      }
+      var submitBtn = document.getElementById('guardia-ingreso-submit');
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        var url = api.apiV1Url('clinical/internacion/ingreso-formulario');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify(payload),
+        });
+        var ok = json && (json.success === true || json.kind === 'ui_submit_result');
+        if (json && json.kind === 'ui_submit_result' && json.success === false) {
+          ok = false;
+        }
+        if (!ok && json && json.success === false) {
+          throw new Error(json.message || 'No se pudo registrar el ingreso.');
+        }
+        var modal = getIngresoCamaModal();
+        if (modal) modal.hide();
+        await loadGuardiaTablero(false);
+      } catch (e) {
+        showIngresoError(e && e.message ? e.message : 'No se pudo registrar el ingreso.');
+        if (submitBtn) submitBtn.disabled = false;
       }
     }
 
@@ -2867,6 +3055,10 @@
     var clinicalPedidoSubmit = document.getElementById('guardia-clinical-pedido-submit');
     if (clinicalPedidoSubmit) {
       clinicalPedidoSubmit.addEventListener('click', submitClinicalPedido);
+    }
+    var ingresoCamaSubmit = document.getElementById('guardia-ingreso-submit');
+    if (ingresoCamaSubmit) {
+      ingresoCamaSubmit.addEventListener('click', submitIngresoCamaModal);
     }
     var asyncChatSend = document.getElementById('async-chat-send');
     if (asyncChatSend) {

@@ -1,7 +1,6 @@
 // lib/screens/emergency/emergency_guardia_actions.dart
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../services/emergency_guardia_api.dart';
 import 'emergency_triage_screen.dart';
@@ -45,8 +44,42 @@ class EmergencyGuardiaActions {
     required EmergencyBoardItem item,
     required EmergencyGuardiaApi api,
     required VoidCallback onChanged,
-  }) =>
-      _solicitarInternacion(context, item, api, onChanged);
+  }) async {
+    if (!item.internacionPendiente) {
+      await _solicitarInternacion(context, item, api, onChanged);
+      return;
+    }
+    if (item.idPersona <= 0) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Falta el paciente para el ingreso.')),
+        );
+      }
+      return;
+    }
+    final path = AppConfig.normalizeApiV1Path(
+      '/api/v1/clinical/internacion/ingreso-formulario'
+      '?id_persona=${item.idPersona}&id_guardia=${item.id}',
+    );
+    final uri = path.startsWith('http')
+        ? Uri.parse(path)
+        : Uri.parse('${AppConfig.apiUrl}$path');
+    if (!context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UiJsonScreen(
+          apiAbsoluteUrl: uri.toString(),
+          authToken: api.authToken,
+          appClient: 'bioenlace-personalsalud',
+          title: 'Ingreso a internación',
+          onSubmitSuccess: (_) async {
+            onChanged();
+          },
+        ),
+      ),
+    );
+    onChanged();
+  }
 
   static Future<void> showActionSheet({
     required BuildContext context,
@@ -293,35 +326,6 @@ class EmergencyGuardiaActions {
     EmergencyGuardiaApi api,
     VoidCallback onChanged,
   ) async {
-    if (item.internacionPendiente) {
-      final url = item.internacionIngresoUrl?.trim();
-      if (url == null || url.isEmpty) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cama pendiente: abrí el mapa de internación para asignarla.'),
-            ),
-          );
-        }
-        return;
-      }
-      final uri = _resolveWebUri(url);
-      if (uri == null) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('URL de ingreso inválida: $url')),
-          );
-        }
-        return;
-      }
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No se pudo abrir el ingreso de cama.')),
-        );
-      }
-      return;
-    }
     try {
       await api.solicitarInternacion(item.id);
       if (context.mounted) {
@@ -337,21 +341,6 @@ class EmergencyGuardiaActions {
         );
       }
     }
-  }
-
-  static Uri? _resolveWebUri(String pathOrUrl) {
-    final raw = pathOrUrl.trim();
-    if (raw.isEmpty) return null;
-    if (raw.startsWith('http://') || raw.startsWith('https://')) {
-      return Uri.tryParse(raw);
-    }
-    var base = AppConfig.apiUrl.trim();
-    base = base.replaceAll(RegExp(r'/api/v\d+/?$', caseSensitive: false), '');
-    while (base.endsWith('/')) {
-      base = base.substring(0, base.length - 1);
-    }
-    final path = raw.startsWith('/') ? raw : '/$raw';
-    return Uri.tryParse('$base$path');
   }
 
   static Future<void> _tomarCaso(

@@ -212,11 +212,8 @@ final class GuardiaQueueService
                 $row['sla_umbral_minutos'] = (int) $sla['sla_umbral_minutos'];
             }
         }
-        if (!empty($internacion['internacion_pendiente'])) {
+            if (!empty($internacion['internacion_pendiente'])) {
             $row['internacion_pendiente'] = true;
-            if (!empty($internacion['internacion_ingreso_url'])) {
-                $row['internacion_ingreso_url'] = $internacion['internacion_ingreso_url'];
-            }
         }
         if ($clinical !== null) {
             $row['clinical'] = $clinical;

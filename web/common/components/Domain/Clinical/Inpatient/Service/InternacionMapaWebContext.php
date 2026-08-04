@@ -47,6 +47,6 @@ final class InternacionMapaWebContext
             return false;
         }
 
-        return SegNivelInternacion::personaInternada((int) $persona->id_persona);
+        return SegNivelInternacion::personaInternada((int) $persona->id_persona) !== null;
     }
 }

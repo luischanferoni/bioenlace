@@ -214,7 +214,7 @@ class _KpiTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 78,
+      width: 96,
       padding: const EdgeInsets.symmetric(
         horizontal: BioSpacing.sm,
         vertical: BioSpacing.sm,

@@ -504,35 +504,61 @@
         return;
       }
 
-      groupInternadosPorRecorrido(internadosItemsCache).forEach(function (pisoG) {
+      var groups = groupInternadosPorRecorrido(internadosItemsCache);
+      var multiPiso = groups.length > 1;
+      groups.forEach(function (pisoG) {
+        var multiSala = pisoG.salasList.length > 1;
+        // Encabezados solo si hay más de un piso/sala; si no, la ubicación va en la card.
+        var showPisoHeader = multiPiso;
+        var showSalaHeader = multiPiso || multiSala;
+        var showUbiOnCard = !showPisoHeader && !showSalaHeader;
+
+        var appendPacientes = function (slot, items) {
+          items.forEach(function (i) {
+            appendInternadoRow(slot, i, { showUbicacion: showUbiOnCard });
+          });
+        };
+
+        if (!showPisoHeader && !showSalaHeader) {
+          pisoG.salasList.forEach(function (salaG) {
+            appendPacientes(rowsSlot, salaG.items);
+          });
+          return;
+        }
+
         var pisoFrag = importTemplate('tpl-internados-group-piso');
         if (!pisoFrag) {
           pisoG.salasList.forEach(function (salaG) {
-            salaG.items.forEach(function (i) {
-              appendInternadoRow(rowsSlot, i, { showUbicacion: true });
-            });
+            appendPacientes(rowsSlot, salaG.items);
           });
           return;
         }
         var pisoRoot = pisoFrag.firstElementChild;
         var pisoLabel = pisoRoot.querySelector('[data-field="piso-label"]');
-        if (pisoLabel) pisoLabel.textContent = pisoG.label;
+        if (pisoLabel) {
+          if (showPisoHeader) {
+            pisoLabel.textContent = pisoG.label;
+            pisoLabel.classList.remove('d-none');
+          } else {
+            pisoLabel.classList.add('d-none');
+          }
+        }
         var salasSlot = pisoRoot.querySelector('[data-slot="salas"]');
         pisoG.salasList.forEach(function (salaG) {
+          if (!showSalaHeader) {
+            appendPacientes(salasSlot, salaG.items);
+            return;
+          }
           var salaFrag = importTemplate('tpl-internados-group-sala');
           if (!salaFrag) {
-            salaG.items.forEach(function (i) {
-              appendInternadoRow(salasSlot, i, { showUbicacion: false });
-            });
+            appendPacientes(salasSlot, salaG.items);
             return;
           }
           var salaRoot = salaFrag.firstElementChild;
           var salaLabel = salaRoot.querySelector('[data-field="sala-label"]');
           if (salaLabel) salaLabel.textContent = salaG.label;
           var pacSlot = salaRoot.querySelector('[data-slot="pacientes"]');
-          salaG.items.forEach(function (i) {
-            appendInternadoRow(pacSlot, i, { showUbicacion: false });
-          });
+          appendPacientes(pacSlot, salaG.items);
           salasSlot.appendChild(salaFrag);
         });
         rowsSlot.appendChild(pisoFrag);

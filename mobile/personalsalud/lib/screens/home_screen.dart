@@ -1180,10 +1180,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     pisoOrder.sort((a, b) => (pisoNro[a] ?? 0).compareTo(pisoNro[b] ?? 0));
 
+    final multiPiso = pisoOrder.length > 1;
     final out = <Widget>[];
     for (final pisoKey in pisoOrder) {
       final pisoItems = byPiso[pisoKey]!;
-      out.add(_internadosSectionHeader(pisoLabel[pisoKey]!, intent: UiIntent.primary));
 
       final bySala = <String, List<InternadoItem>>{};
       final salaOrder = <String>[];
@@ -1201,12 +1201,23 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       salaOrder.sort((a, b) => (salaNro[a] ?? 0).compareTo(salaNro[b] ?? 0));
 
+      final multiSala = salaOrder.length > 1;
+      final showPisoHeader = multiPiso;
+      final showSalaHeader = multiPiso || multiSala;
+      final showUbiOnCard = !showPisoHeader && !showSalaHeader;
+
+      if (showPisoHeader) {
+        out.add(_internadosSectionHeader(pisoLabel[pisoKey]!, intent: UiIntent.primary));
+      }
+
       for (final salaKey in salaOrder) {
         final salaItems = bySala[salaKey]!
           ..sort((a, b) => a.nroCama.compareTo(b.nroCama));
-        out.add(_internadosSectionHeader(salaLabel[salaKey]!, intent: UiIntent.success));
+        if (showSalaHeader) {
+          out.add(_internadosSectionHeader(salaLabel[salaKey]!, intent: UiIntent.success));
+        }
         for (final i in salaItems) {
-          out.add(_buildInternadoCard(i, showUbicacion: false));
+          out.add(_buildInternadoCard(i, showUbicacion: showUbiOnCard));
         }
       }
     }

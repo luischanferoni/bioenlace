@@ -99,7 +99,7 @@ class InfraestructuraPiso extends \yii\db\ActiveRecord
                         'id' => $id,
                         'id_persona' => (int) $int->id_persona,
                         'nombre' => $paciente
-                            ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+                            ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
                             : 'Sin nombre',
                         'documento' => $paciente ? (string) ($paciente->documento ?? '') : '',
                         'cama' => (string) ($cama->nro_cama ?? ''),

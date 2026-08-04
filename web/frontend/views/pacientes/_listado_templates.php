@@ -98,7 +98,7 @@
             <div class="flex-grow-1">
                 <h5 class="card-title mb-0" data-field="nombre"></h5>
                 <p class="mb-1 small text-muted d-none" data-slot="documento-line">
-                    Doc. <span data-field="documento"></span>
+                    <span data-field="documento"></span>
                 </p>
                 <p class="mb-1 small text-muted d-none" data-slot="ubicacion-line">
                     <span data-field="piso"></span>

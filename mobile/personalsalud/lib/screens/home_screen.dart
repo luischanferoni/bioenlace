@@ -1259,7 +1259,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final meta = <String>[
       if (showUbicacion && (i.piso?.isNotEmpty ?? false)) i.piso!,
       if (showUbicacion && (i.sala?.isNotEmpty ?? false)) i.sala!,
-      if (i.documento?.isNotEmpty ?? false) 'Doc. ${i.documento}',
+      if (i.documento?.isNotEmpty ?? false) i.documento!,
     ].join(' · ');
 
     void openAtender() => _verHistoriaClinica(

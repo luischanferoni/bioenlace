@@ -107,7 +107,8 @@ $this->title = $esGuardia
     <?= $this->render('//internacion/_mapa_panel', [
         'pisos_efector' => $mapaCtx['pisos_efector'] ?? [],
         'mapa' => $mapaCtx['mapa'] ?? null,
-        'pacienteInternado' => !empty($mapaCtx['paciente_internado']),
+        // Inicio IMP = ronda/mapa de consulta; no es el flujo “asignar persona de sesión a cama”.
+        'pacienteInternado' => false,
         'formAction' => Url::to(['site/index', 'fecha' => $fecha]),
     ]) ?>
 <?php endif; ?>

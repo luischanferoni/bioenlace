@@ -33,18 +33,3 @@ $urlReset = $formAction;
         </div>
     </div>
 </div>
-<?php if ($pacienteInternado): ?>
-<?php
-$this->registerJs(<<<'JS'
-$(function () {
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            title: 'La persona seleccionada ya se encuentra en internación.',
-            backdrop: 'rgba(60,60,60,0.8)',
-        });
-    }
-});
-JS
-);
-?>
-<?php endif; ?>

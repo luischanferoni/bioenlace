@@ -3,9 +3,15 @@
 namespace common\components\Platform\Core\Auth;
 
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
+use common\models\Clinical\Encounter;
+use common\models\Clinical\EncounterDefinition;
+use common\models\Efector;
+use common\models\Person\Persona;
 use common\models\Platform\DemoSandboxAccess;
 use common\models\Platform\DemoSandboxSession;
+use common\models\Servicio;
 use common\models\User;
+use Firebase\JWT\JWT;
 use Yii;
 use yii\db\Query;
 
@@ -405,6 +411,192 @@ final class DemoSandboxAccessService
         if ($count >= $max) {
             throw new \DomainException('Demasiados intentos. Probá de nuevo más tarde.');
         }
+    }
+
+    /**
+     * Acceso demo para app Personal de Salud: provisiona médico efímero + seed y emite JWT
+     * con contexto operativo (AMB en plantilla DEV). Sin password ni enter_url.
+     *
+     * Captcha: solo si demo_sandbox.require_captcha_mobile=true (default false).
+     *
+     * @param array<string, mixed> $input email?, website? (honeypot), captcha?, captcha_challenge_id?, ip?, user_agent?
+     * @return array{
+     *     token: string,
+     *     expires_at: string,
+     *     user: array{id: int, name: string, email: string, role: string},
+     *     persona: array{id_persona: int, nombre: string, apellido: string, documento: string},
+     *     session: array{
+     *         id_efector: int,
+     *         efector_nombre: string,
+     *         efector_codigo_sisa: string,
+     *         id_servicio: int,
+     *         servicio_nombre: string,
+     *         id_profesional_efector_servicio: int,
+     *         encounter_class: string,
+     *         encounter_class_label: string,
+     *         demo_sandbox_session_id: int
+     *     },
+     *     seed: array<string, mixed>,
+     *     username: string,
+     *     mode: string,
+     *     role: string,
+     *     label: string
+     * }
+     */
+    public function issueMobileStaff(array $input): array
+    {
+        if (!self::isEnabled()) {
+            throw new \DomainException('El acceso demo no está habilitado en este entorno.');
+        }
+
+        $honeypot = trim((string) ($input['website'] ?? $input['company'] ?? ''));
+        if ($honeypot !== '') {
+            throw new \DomainException('Solicitud rechazada.');
+        }
+
+        $ip = trim((string) ($input['ip'] ?? ''));
+        if ($ip === '') {
+            $ip = (string) (Yii::$app->request->userIP ?? '');
+        }
+        $this->assertRateLimit($ip !== '' ? $ip : null);
+
+        $cfg = $this->config();
+        if ((bool) ($cfg['require_captcha_mobile'] ?? false)) {
+            (new DemoSandboxCaptchaService())->assertValid(
+                isset($input['captcha_challenge_id']) ? (string) $input['captcha_challenge_id'] : null,
+                isset($input['captcha']) ? (string) $input['captcha'] : (isset($input['verifyCode']) ? (string) $input['verifyCode'] : null)
+            );
+        }
+
+        $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(null);
+        $user = $provisioned['user'];
+        /** @var DemoSandboxSession $session */
+        $session = $provisioned['session'];
+        $username = (string) $user->username;
+        if ($username === '' || str_starts_with($username, 'medico_med_general_')) {
+            throw new \RuntimeException(
+                'Provision demo devolvió usuario legacy/inválido (' . $username . ').'
+            );
+        }
+
+        $idEfector = (int) $session->id_efector;
+        DemoSandboxSessionService::assertIdEfectorEsPlantillaDev($idEfector);
+        $idPes = (int) $session->id_pes;
+        $idServicio = (int) $session->id_servicio;
+        $idPersona = (int) $session->id_persona;
+
+        $persona = Persona::findOne($idPersona);
+        if ($persona === null) {
+            throw new \RuntimeException('Persona demo no encontrada tras el provision.');
+        }
+
+        $efector = Efector::findOne($idEfector);
+        $efectorNombre = $efector !== null ? trim((string) $efector->nombre) : 'Demo DEV';
+        $efectorSisa = $efector !== null ? trim((string) $efector->codigo_sisa) : '';
+        $servicio = Servicio::findOne($idServicio);
+        $servicioNombre = $servicio !== null ? trim((string) $servicio->nombre) : 'MED GENERAL';
+
+        $sessionTtl = max(600, (int) ($cfg['session_ttl_seconds'] ?? 14400));
+        $now = date('Y-m-d H:i:s');
+        $expiresAt = date('Y-m-d H:i:s', time() + $sessionTtl);
+        $plain = bin2hex(random_bytes(24));
+
+        $row = new DemoSandboxAccess();
+        $row->code_hash = self::hashCode($plain);
+        $row->role = DemoSandboxAccess::ROLE_STAFF;
+        if ($row->hasAttribute('mode')) {
+            $row->mode = self::MODE_EPHEMERAL;
+        }
+        $row->username = $username;
+        $row->id_user = (int) $user->id;
+        $email = trim((string) ($input['email'] ?? ''));
+        $row->email = $email !== '' ? mb_substr($email, 0, 255) : null;
+        $row->ip = $ip !== '' ? mb_substr($ip, 0, 45) : null;
+        $ua = trim((string) ($input['user_agent'] ?? ''));
+        if ($ua === '' && Yii::$app->request !== null) {
+            $ua = (string) Yii::$app->request->userAgent;
+        }
+        $row->user_agent = $ua !== '' ? mb_substr($ua, 0, 512) : null;
+        $row->expires_at = $expiresAt;
+        $row->created_at = $now;
+        $row->used_at = $now;
+        if (!$row->save(false)) {
+            throw new \RuntimeException('No se pudo persistir el acceso demo móvil.');
+        }
+
+        DemoSandboxSession::updateAll(
+            ['id_access' => (int) $row->id],
+            ['id' => (int) $session->id]
+        );
+
+        $seedPayload = $session->getSeedPayload();
+        $encounterClass = Encounter::ENCOUNTER_CLASS_AMB;
+        $encounterLabel = (string) (EncounterDefinition::ENCOUNTER_CLASS[$encounterClass] ?? 'Ambulatoria');
+
+        $payload = [
+            'user_id' => (int) $user->id,
+            'email' => (string) $user->email,
+            'role' => 'medico',
+            'id_persona' => $idPersona,
+            'id_efector' => $idEfector,
+            'id_profesional_efector_servicio' => $idPes,
+            'servicio_actual' => $idServicio,
+            'encounter_class' => $encounterClass,
+            'demo_sandbox' => true,
+            'demo_sandbox_session_id' => (int) $session->id,
+            'iat' => time(),
+            'exp' => time() + $sessionTtl,
+        ];
+        $token = JWT::encode($payload, Yii::$app->params['jwtSecret'], 'HS256');
+
+        Yii::info(
+            'demo-acceso-mobile user=' . $username
+            . ' efector=' . $idEfector
+            . ' sisa=' . $efectorSisa
+            . ' pes=' . $idPes,
+            'demo.sandbox'
+        );
+
+        return [
+            'token' => $token,
+            'expires_at' => $expiresAt,
+            'user' => [
+                'id' => (int) $user->id,
+                'name' => (string) $user->username,
+                'email' => (string) $user->email,
+                'role' => 'medico',
+            ],
+            'persona' => [
+                'id_persona' => $idPersona,
+                'nombre' => (string) $persona->nombre,
+                'apellido' => (string) $persona->apellido,
+                'documento' => (string) $persona->documento,
+            ],
+            'session' => [
+                'id_efector' => $idEfector,
+                'efector_nombre' => $efectorNombre,
+                'efector_codigo_sisa' => $efectorSisa,
+                'id_servicio' => $idServicio,
+                'servicio_nombre' => $servicioNombre,
+                'id_profesional_efector_servicio' => $idPes,
+                'encounter_class' => $encounterClass,
+                'encounter_class_label' => $encounterLabel,
+                'demo_sandbox_session_id' => (int) $session->id,
+            ],
+            'seed' => [
+                'pacientes' => count($seedPayload['paciente_ids'] ?? []),
+                'turnos' => count($seedPayload['turno_ids'] ?? []),
+                'encounters' => count($seedPayload['encounter_ids'] ?? []),
+                'async_vr' => count($seedPayload['async_encounter_ids'] ?? []),
+                'guardia' => count($seedPayload['guardia_ids'] ?? []),
+                'internacion' => count($seedPayload['internacion_ids'] ?? []),
+                'fecha_turnos' => (string) ($seedPayload['fecha_turnos'] ?? ''),
+            ],
+            'username' => $username,
+            'mode' => self::MODE_EPHEMERAL,
+            'role' => DemoSandboxAccess::ROLE_STAFF,
+            'label' => 'Médico demo (captura y turnos)',
+        ];
     }
 
     private function buildEnterUrl(string $plainCode): string

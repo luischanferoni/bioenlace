@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../main.dart';
+import '../screens/main_screen.dart';
+import 'personalsalud_authenticated_shell.dart';
 import 'personalsalud_session_prefs.dart';
 import 'personalsalud_staff_activation_screen.dart';
 
@@ -42,6 +45,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
   String _biometricType = '';
   bool _obscurePassword = true;
   bool _submitting = false;
+  bool _demoAvailable = false;
 
   @override
   void initState() {
@@ -77,11 +81,14 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       await PersonalsaludSessionPrefs.clearInvalidAuthSession();
     }
 
+    final demoOn = await DemoSandboxStaffAuth.probeEnabled();
+
     if (!mounted) return;
     setState(() {
       _useBiometricLogin = established && hasToken && bioAvailable;
       _biometricAvailable = bioAvailable;
       _biometricType = bioType;
+      _demoAvailable = demoOn;
       _checkingSession = false;
     });
   }
@@ -119,6 +126,98 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     );
   }
 
+  Future<void> _enterDemo() async {
+    if (_submitting) return;
+    setState(() => _submitting = true);
+    try {
+      final data = await DemoSandboxStaffAuth.enterAsMedico();
+      final payload = data['data'] is Map
+          ? Map<String, dynamic>.from(data['data'] as Map)
+          : <String, dynamic>{};
+      final user = payload['user'] is Map
+          ? Map<String, dynamic>.from(payload['user'] as Map)
+          : <String, dynamic>{};
+      final persona = payload['persona'] is Map
+          ? Map<String, dynamic>.from(payload['persona'] as Map)
+          : <String, dynamic>{};
+      final session = payload['session'] is Map
+          ? Map<String, dynamic>.from(payload['session'] as Map)
+          : <String, dynamic>{};
+      final token = payload['token']?.toString() ?? '';
+
+      if (token.isEmpty) {
+        throw Exception('La demo no devolvió token de sesión.');
+      }
+
+      final userId = (user['id'] ?? persona['id_persona'] ?? '').toString();
+      final userName = user['name']?.toString().trim() ??
+          '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
+      final displayName = userName.isNotEmpty ? userName : 'Médico demo';
+
+      await PersonalsaludSessionPrefs.clearOnLogout();
+      await _persistLogin(
+        userId: userId,
+        userName: displayName,
+        token: token,
+        markEstablished: false,
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      final idEfector = int.tryParse('${session['id_efector'] ?? 0}') ?? 0;
+      final idServicio = int.tryParse('${session['id_servicio'] ?? 0}') ?? 0;
+      final idPes =
+          int.tryParse('${session['id_profesional_efector_servicio'] ?? 0}') ??
+              0;
+      final encounter =
+          (session['encounter_class']?.toString() ?? 'AMB').trim();
+      if (idEfector <= 0 || idServicio <= 0 || idPes <= 0) {
+        throw Exception('La demo no trajo contexto operativo completo.');
+      }
+
+      await prefs.setInt('efector_id', idEfector);
+      await prefs.setString(
+        'efector_nombre',
+        session['efector_nombre']?.toString() ?? 'Demo',
+      );
+      await prefs.setInt('servicio_id', idServicio);
+      await prefs.setString(
+        'servicio_nombre',
+        session['servicio_nombre']?.toString() ?? 'MED GENERAL',
+      );
+      await prefs.setString('encounter_class', encounter);
+      await prefs.setString(
+        'encounter_class_label',
+        session['encounter_class_label']?.toString() ?? 'Ambulatoria',
+      );
+      await prefs.setInt('id_profesional_efector_servicio', idPes);
+      await prefs.setBool('config_completed', true);
+      await prefs.setBool(PersonalsaludSessionPrefs.demoSandboxActiveKey, true);
+      await CrashlyticsBootstrap.setUserId(userId);
+
+      if (!mounted) return;
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => wrapPersonalsaludAuthenticatedShell(
+            child: MainScreen(
+              userId: userId,
+              userName: displayName,
+              authToken: token,
+              idProfesionalEfectorServicio: idPes.toString(),
+            ),
+          ),
+        ),
+        (route) => false,
+      );
+    } catch (e) {
+      _snack(
+        e.toString().replaceFirst('Exception: ', ''),
+        UiIntent.danger,
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   Future<void> _submitCredentials() async {
     if (_submitting) return;
     final username = _usernameCtrl.text.trim();
@@ -149,6 +248,9 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       final userName = user['name']?.toString().trim() ??
           '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
 
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(PersonalsaludSessionPrefs.demoSandboxActiveKey);
+
       await _persistLogin(
         userId: userId,
         userName: userName.isNotEmpty ? userName : 'Usuario',
@@ -175,7 +277,10 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
 
   Future<void> _loginWithBiometrics() async {
     if (!_biometricAvailable) {
-      _snack('La huella no está disponible en este dispositivo.', UiIntent.warning);
+      _snack(
+        'La huella no está disponible en este dispositivo.',
+        UiIntent.warning,
+      );
       return;
     }
 
@@ -224,7 +329,10 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       final userName = prefs.getString('user_name') ?? 'Usuario';
       if (userId.isEmpty) {
         setState(() => _useBiometricLogin = false);
-        _snack('Sesión incompleta. Ingresá con usuario y contraseña.', UiIntent.warning);
+        _snack(
+          'Sesión incompleta. Ingresá con usuario y contraseña.',
+          UiIntent.warning,
+        );
         return;
       }
 
@@ -297,8 +405,9 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                     size: BioButtonSize.lg,
                     fullWidth: true,
                     loading: _submitting,
-                    onPressed:
-                        _submitting || !_biometricAvailable ? null : _loginWithBiometrics,
+                    onPressed: _submitting || !_biometricAvailable
+                        ? null
+                        : _loginWithBiometrics,
                   ),
                   BioSpacing.gapH(BioSpacing.md),
                   BioButton.softPrimary(
@@ -398,6 +507,18 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                           );
                         },
                 ),
+                if (_demoAvailable) ...[
+                  BioSpacing.gapH(BioSpacing.md),
+                  BioButton(
+                    label: _submitting ? 'Abriendo demo…' : 'Probar demo',
+                    icon: Icons.science_outlined,
+                    intent: UiIntent.neutral,
+                    variant: BioButtonVariant.soft,
+                    fullWidth: true,
+                    loading: _submitting,
+                    onPressed: _submitting ? null : _enterDemo,
+                  ),
+                ],
                 BioSpacing.gapH(BioSpacing.lg),
                 const InstitutionalSignupLink(),
                 BioSpacing.gapH(BioSpacing.sm),

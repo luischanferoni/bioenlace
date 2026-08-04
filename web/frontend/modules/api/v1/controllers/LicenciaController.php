@@ -16,7 +16,7 @@ use yii\web\ForbiddenHttpException;
  * Onboarding comercial de licencia (institucional + AdminEfector).
  *
  * Públicas (sin auth): catalogo-ministerios, planes, registrar-efector, solicitar-ministerio,
- * demo-perfiles, demo-captcha, demo-acceso.
+ * demo-perfiles, demo-captcha, demo-acceso, demo-acceso-mobile.
  * Auth AdminEfector: mi-licencia, desvincular-pago-ministerio, asociar-pago-ministerio.
  */
 class LicenciaController extends BaseController
@@ -29,6 +29,7 @@ class LicenciaController extends BaseController
         'demo-perfiles',
         'demo-captcha',
         'demo-acceso',
+        'demo-acceso-mobile',
     ];
 
     public function actions()
@@ -49,6 +50,7 @@ class LicenciaController extends BaseController
         $verbs['demo-perfiles'] = ['GET', 'OPTIONS'];
         $verbs['demo-captcha'] = ['GET', 'OPTIONS'];
         $verbs['demo-acceso'] = ['POST', 'OPTIONS'];
+        $verbs['demo-acceso-mobile'] = ['POST', 'OPTIONS'];
         $verbs['mi-licencia'] = ['GET', 'OPTIONS'];
         $verbs['desvincular-pago-ministerio'] = ['POST', 'OPTIONS'];
         $verbs['asociar-pago-ministerio'] = ['POST', 'OPTIONS'];
@@ -200,6 +202,41 @@ class LicenciaController extends BaseController
             Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'demo.sandbox');
 
             return $this->error('No se pudo generar el acceso demo.', null, 500);
+        }
+    }
+
+    /**
+     * Acceso demo staff para app Personal de Salud (JWT + contexto AMB, sin password).
+     *
+     * POST /api/v1/licencia/demo-acceso-mobile
+     * Body: { "website"?: "", "email"?: "..." }  (honeypot website)
+     *
+     * @action_name Solicitar acceso demo sandbox (móvil staff)
+     */
+    public function actionDemoAccesoMobile()
+    {
+        if (!DemoSandboxAccessService::isEnabled()) {
+            return $this->error('Acceso demo no habilitado en este entorno', null, 403);
+        }
+
+        $body = Yii::$app->request->getBodyParams();
+        if (!is_array($body)) {
+            $body = [];
+        }
+
+        try {
+            $data = (new DemoSandboxAccessService())->issueMobileStaff($body);
+
+            return $this->success($data, 'Demo lista. Sesión temporal de médico.');
+        } catch (\DomainException $e) {
+            $msg = $e->getMessage();
+            $status = str_contains($msg, 'Demasiados') ? 429 : 400;
+
+            return $this->error($msg, null, $status);
+        } catch (\Throwable $e) {
+            Yii::error($e->getMessage() . "\n" . $e->getTraceAsString(), 'demo.sandbox');
+
+            return $this->error('No se pudo abrir la demo móvil.', null, 500);
         }
     }
 

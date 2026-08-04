@@ -5,6 +5,9 @@ import 'package:shared/shared.dart';
 abstract final class PersonalsaludSessionPrefs {
   static const staffMobileLoginEstablishedKey = 'staff_mobile_login_established';
 
+  /// Sesión abierta vía CTA «Probar demo» (médico efímero).
+  static const demoSandboxActiveKey = 'demo_sandbox_active';
+
   /// El usuario vio el diálogo y eligió «Ahora no» (no volver a preguntar hasta logout).
   static const staffBiometricEnrollmentDeclinedKey =
       'staff_biometric_enrollment_declined';
@@ -32,6 +35,7 @@ abstract final class PersonalsaludSessionPrefs {
     await prefs.remove('user_name');
     await prefs.remove(staffMobileLoginEstablishedKey);
     await prefs.remove(staffBiometricEnrollmentDeclinedKey);
+    await prefs.remove(demoSandboxActiveKey);
     for (final key in operationalKeys) {
       await prefs.remove(key);
     }
@@ -77,6 +81,7 @@ abstract final class PersonalsaludSessionPrefs {
     await prefs.setBool('is_logged_in', false);
     await prefs.remove('user_id');
     await prefs.remove('user_name');
+    await prefs.remove(demoSandboxActiveKey);
     for (final key in operationalKeys) {
       await prefs.remove(key);
     }

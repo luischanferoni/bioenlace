@@ -155,6 +155,8 @@ return [
         'require_captcha' => true,
         'captcha_ttl_seconds' => 300,
         'captcha_length' => 4,
+        /** Captcha en POST demo-acceso-mobile (app Personal de Salud). Default off. */
+        'require_captcha_mobile' => false,
         /**
          * Plantilla del sandbox: SOLO por efector_codigo_sisa DEV (default DEV99002PRIV).
          * id_efector numérico se ignora si no es esa plantilla DEV (nunca usar 863 u otro centro real).

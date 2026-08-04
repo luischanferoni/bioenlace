@@ -131,6 +131,8 @@ return [
                 'OPTIONS api/<version:\w+>/licencia/demo-captcha' => '<version>/licencia/demo-captcha',
                 'POST api/<version:\w+>/licencia/demo-acceso' => '<version>/licencia/demo-acceso',
                 'OPTIONS api/<version:\w+>/licencia/demo-acceso' => '<version>/licencia/demo-acceso',
+                'POST api/<version:\w+>/licencia/demo-acceso-mobile' => '<version>/licencia/demo-acceso-mobile',
+                'OPTIONS api/<version:\w+>/licencia/demo-acceso-mobile' => '<version>/licencia/demo-acceso-mobile',
                 'GET api/<version:\w+>/licencia/mi-licencia' => '<version>/licencia/mi-licencia',
                 'POST api/<version:\w+>/licencia/desvincular-pago-ministerio' => '<version>/licencia/desvincular-pago-ministerio',
                 'POST api/<version:\w+>/licencia/asociar-pago-ministerio' => '<version>/licencia/asociar-pago-ministerio',

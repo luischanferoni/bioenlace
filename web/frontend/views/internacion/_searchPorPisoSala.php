@@ -1,67 +1,102 @@
-<?php 
-use common\components\Domain\Organization\Service\InfraestructuraDepdropService;
-use kartik\depdrop\DepDrop;
+<?php
+
 use yii\bootstrap5\ActiveForm;
-use kartik\select2\Select2;
-use yii\helpers\ArrayHelper;
+use yii\helpers\Html;
+use yii\helpers\Json;
+
+/**
+ * Filtro piso/sala del mapa (selects nativos; sin Kartik Select2/DepDrop).
+ *
+ * @var iterable $pisos_efector
+ * @var string $urlReset
+ * @var string|null $formAction
+ */
 
 $formAction = $formAction ?? ($urlReset ?? '');
-$form = ActiveForm::begin([
-            'action' => $formAction !== '' ? $formAction : null,
-            'method' => 'post',
-            'options' => ['id' => 'form-internados', 'class' => 'form-horizontal'], 'layout' => 'horizontal',
-            'fieldConfig' => [
-                'template' => "{label}\n{beginWrapper}\n{input}\n{hint}\n{error}\n{endWrapper}",
-                'horizontalCssClasses' => [
-                    'label' => 'col-sm-4',
-                    'offset' => 'col-sm-offset-4',
-                    'wrapper' => 'col-sm-8',
-                ],
-            ],
-        ]);
-    ?>
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-    <div class="d-flex align-items-center flex-wrap">
-        <?php
-            $piso = ArrayHelper::map($pisos_efector, 'id', 'descripcion');
-            echo Select2::widget([
-                'name'=> 'piso',
-                'id'=> 'piso',
-                'data' => $piso,                        
-                'theme'=>'default',
-                'options' => ['placeholder' => 'Seleccione Piso...'],
-                'pluginOptions' => [
-                    'allowClear' => true,
-                    'width' => '100%',
-                    
-                ],
-            ]);
-        ?>
-</div>
-<div class="d-flex align-items-center flex-wrap">
-            <?php
-            echo DepDrop::widget([
-                'name'=> 'sala',
-                'id'=> 'sala',
-                'data' => [],                        
-                'options' => ['id' => 'descripcion', 'placeholder' => 'Seleccione Sala'],
-                'type' => DepDrop::TYPE_SELECT2,
-                'select2Options'=>['theme'=>'default','pluginOptions'=>['class'=>'col-5','width' => '100%']],
-                'pluginOptions' => [
-                    'depends' => ['piso'],
-                    'placeholder' => 'Seleccione sala...',
-                    'url' => InfraestructuraDepdropService::URL_SALAS_POR_PISO,
+$pisoSeleccionado = (string) (Yii::$app->request->post('piso') ?? '');
+$salaSeleccionada = (string) (Yii::$app->request->post('sala') ?? '');
 
-                ]
-            ]);
-            ?>
-        </div>
+$pisoOptions = ['' => 'Todos los pisos'];
+$salasByPiso = [];
+foreach ($pisos_efector as $piso) {
+    $idPiso = (string) $piso->id;
+    $labelPiso = trim((string) ($piso->descripcion ?? ''));
+    if ($labelPiso === '') {
+        $labelPiso = 'Piso ' . (string) ($piso->nro_piso ?? $idPiso);
+    }
+    $pisoOptions[$idPiso] = $labelPiso;
+    $salasByPiso[$idPiso] = [];
+    foreach ($piso->infraestructuraSalas as $sala) {
+        $labelSala = trim((string) ($sala->descripcion ?? ''));
+        if ($labelSala === '') {
+            $labelSala = 'Sala ' . (string) ($sala->nro_sala ?? $sala->id);
+        }
+        $salasByPiso[$idPiso][] = [
+            'id' => (string) $sala->id,
+            'label' => $labelSala,
+        ];
+    }
+}
+
+$form = ActiveForm::begin([
+    'action' => $formAction !== '' ? $formAction : null,
+    'method' => 'post',
+    'options' => ['id' => 'form-internados', 'class' => 'mb-0'],
+]);
+?>
+<div class="d-flex align-items-end flex-wrap gap-2">
+    <div style="min-width: 12rem; flex: 1 1 12rem;">
+        <label class="form-label small mb-1" for="piso">Piso</label>
+        <?= Html::dropDownList('piso', $pisoSeleccionado, $pisoOptions, [
+            'id' => 'piso',
+            'class' => 'form-select form-select-sm',
+        ]) ?>
     </div>
-    <?php
-    $this->registerJs(<<<'JS'
+    <div style="min-width: 12rem; flex: 1 1 12rem;">
+        <label class="form-label small mb-1" for="descripcion">Sala</label>
+        <?= Html::dropDownList('sala', $salaSeleccionada, ['' => 'Todas las salas'], [
+            'id' => 'descripcion',
+            'class' => 'form-select form-select-sm',
+            'disabled' => $pisoSeleccionado === '',
+        ]) ?>
+    </div>
+</div>
+<script type="application/json" id="internacion-salas-by-piso"><?= Json::htmlEncode($salasByPiso) ?></script>
+<?php
+$this->registerJs(<<<'JS'
 (function () {
   var form = document.getElementById('form-internados');
-  if (!form) return;
+  var pisoEl = document.getElementById('piso');
+  var salaEl = document.getElementById('descripcion');
+  var dataEl = document.getElementById('internacion-salas-by-piso');
+  if (!form || !pisoEl || !salaEl || !dataEl) return;
+
+  var salasByPiso = {};
+  try {
+    salasByPiso = JSON.parse(dataEl.textContent || '{}') || {};
+  } catch (e) {
+    salasByPiso = {};
+  }
+
+  function fillSalas(preserveValue) {
+    var idPiso = String(pisoEl.value || '');
+    var keep = preserveValue ? String(salaEl.value || '') : '';
+    var rows = idPiso && salasByPiso[idPiso] ? salasByPiso[idPiso] : [];
+    salaEl.innerHTML = '';
+    var optAll = document.createElement('option');
+    optAll.value = '';
+    optAll.textContent = idPiso ? 'Todas las salas' : 'Elegí un piso';
+    salaEl.appendChild(optAll);
+    rows.forEach(function (row) {
+      var opt = document.createElement('option');
+      opt.value = String(row.id);
+      opt.textContent = String(row.label || row.id);
+      if (keep && keep === opt.value) opt.selected = true;
+      salaEl.appendChild(opt);
+    });
+    salaEl.disabled = !idPiso;
+  }
+
   function submitFilter() {
     if (typeof form.requestSubmit === 'function') {
       form.requestSubmit();
@@ -69,12 +104,16 @@ $form = ActiveForm::begin([
       form.submit();
     }
   }
-  // Al elegir/limpiar sala (o piso sin sala) se aplica el filtro sin botones Filtrar/Reset.
-  $(document).on('change', '#descripcion', submitFilter);
-  $(document).on('select2:clear', '#piso', submitFilter);
+
+  fillSalas(true);
+
+  pisoEl.addEventListener('change', function () {
+    fillSalas(false);
+    // Cambiar piso aplica filtro; sala queda en "todas".
+    submitFilter();
+  });
+  salaEl.addEventListener('change', submitFilter);
 })();
 JS
 );
-    ?>
-    
-<?php ActiveForm::end(); ?>  
+ActiveForm::end();

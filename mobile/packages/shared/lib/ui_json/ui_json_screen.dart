@@ -10,6 +10,7 @@ import '../config/api_config.dart';
 import '../diagnostics/app_diagnostic_log.dart';
 import '../text/user_friendly_error.dart';
 import '../theme/tokens/tokens.dart';
+import '../ui/bio_button.dart';
 import '../ui/bio_chip.dart';
 import 'ui_json_list_auto_advance.dart';
 import 'ui_json_list_presentation.dart';
@@ -1719,6 +1720,9 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         return const SizedBox.shrink();
       }
       final text = b['text']?.toString() ?? b['body']?.toString() ?? '';
+      if (text.trim().isEmpty) {
+        return const SizedBox.shrink();
+      }
       final severity = b['severity']?.toString() ?? '';
       Color? bg;
       if (severity == 'warning') {
@@ -1827,15 +1831,20 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
               !(widget.embedded && widget.onDraftDelta != null))
             Row(
               children: [
-                if (widget.embedded && widget.onCancel != null)
-                  TextButton(
+                if (widget.embedded && widget.onCancel != null) ...[
+                  BioButton.neutral(
+                    label: 'Cancelar',
                     onPressed: (_loading || _formSubmitted) ? null : widget.onCancel,
-                    child: const Text('Cancelar'),
                   ),
-                const Spacer(),
-                ElevatedButton(
-                  onPressed: (_loading || _formSubmitted) ? null : _submit,
-                  child: Text(_formSubmitted ? 'Confirmado' : 'Confirmar'),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: BioButton.primary(
+                    label: _formSubmitted ? 'Confirmado' : 'Confirmar',
+                    fullWidth: true,
+                    loading: _loading,
+                    onPressed: (_loading || _formSubmitted) ? null : _submit,
+                  ),
                 ),
               ],
             ),

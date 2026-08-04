@@ -17,9 +17,10 @@
     },
     {
       "kind": "message",
-      "id": "cama",
-      "title": "Cama",
-      "text_field": "cama_label",
+      "id": "aviso_camas",
+      "title": "",
+      "severity": "warning",
+      "text_field": "camas_aviso",
       "text": ""
     },
     {
@@ -29,10 +30,33 @@
       "fields": [
         {
           "name": "id_persona",
-          "label": "ID paciente",
-          "type": "text",
+          "type": "hidden",
           "required": true,
-          "readonly": true
+          "include_in_submit": true
+        },
+        {
+          "name": "id_guardia",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
+          "name": "fecha_inicio",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "hora_inicio",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
+        },
+        {
+          "name": "id_tipo_ingreso",
+          "type": "hidden",
+          "required": true,
+          "include_in_submit": true
         },
         {
           "name": "id_cama",
@@ -42,43 +66,10 @@
           "options": []
         },
         {
-          "name": "id_guardia",
-          "label": "ID guardia",
-          "type": "text",
-          "required": false,
-          "readonly": true
-        },
-        {
           "name": "id_profesional_efector_servicio",
           "label": "Profesional responsable",
           "type": "select",
           "required": true,
-          "options": []
-        },
-        {
-          "name": "fecha_inicio",
-          "label": "Fecha de ingreso",
-          "type": "date",
-          "required": true
-        },
-        {
-          "name": "hora_inicio",
-          "label": "Hora",
-          "type": "text",
-          "required": true
-        },
-        {
-          "name": "id_tipo_ingreso",
-          "label": "Tipo de ingreso",
-          "type": "select",
-          "required": true,
-          "options": []
-        },
-        {
-          "name": "id_efector_origen",
-          "label": "Efector origen (derivación)",
-          "type": "select",
-          "required": false,
           "options": []
         },
         {
@@ -122,13 +113,6 @@
           "type": "select",
           "required": false,
           "options": []
-        },
-        {
-          "name": "condiciones_derivacion",
-          "label": "Condiciones (derivación)",
-          "type": "textarea",
-          "required": false,
-          "rows": 2
         }
       ]
     }

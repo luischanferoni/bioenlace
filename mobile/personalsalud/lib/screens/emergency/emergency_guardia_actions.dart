@@ -57,13 +57,12 @@ class EmergencyGuardiaActions {
       }
       return;
     }
-    final path = AppConfig.normalizeApiV1Path(
-      '/api/v1/clinical/internacion/ingreso-formulario'
-      '?id_persona=${item.idPersona}&id_guardia=${item.id}',
+    final uri = Uri.parse(
+      resolveApiAbsoluteUrl(
+        '/clinical/internacion/ingreso-formulario'
+        '?id_persona=${item.idPersona}&id_guardia=${item.id}',
+      ),
     );
-    final uri = path.startsWith('http')
-        ? Uri.parse(path)
-        : Uri.parse('${AppConfig.apiUrl}$path');
     if (!context.mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(

@@ -288,6 +288,10 @@ $this->title = $esGuardia
                 <div id="guardia-ingreso-form" class="d-none">
                     <input type="hidden" id="guardia-ingreso-id-persona" value="">
                     <input type="hidden" id="guardia-ingreso-id-guardia" value="">
+                    <input type="hidden" id="guardia-ingreso-fecha" value="">
+                    <input type="hidden" id="guardia-ingreso-hora" value="">
+                    <input type="hidden" id="guardia-ingreso-tipo" value="1">
+                    <div id="guardia-ingreso-aviso-camas" class="alert alert-warning py-2 small d-none" role="status"></div>
                     <div class="mb-2">
                         <label class="form-label" for="guardia-ingreso-id-cama">Cama</label>
                         <select class="form-select form-select-sm" id="guardia-ingreso-id-cama" required></select>
@@ -295,20 +299,6 @@ $this->title = $esGuardia
                     <div class="mb-2">
                         <label class="form-label" for="guardia-ingreso-id-pes">Profesional responsable</label>
                         <select class="form-select form-select-sm" id="guardia-ingreso-id-pes" required></select>
-                    </div>
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-6">
-                            <label class="form-label" for="guardia-ingreso-fecha">Fecha</label>
-                            <input type="date" class="form-control form-control-sm" id="guardia-ingreso-fecha" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="guardia-ingreso-hora">Hora</label>
-                            <input type="time" class="form-control form-control-sm" id="guardia-ingreso-hora" required>
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label" for="guardia-ingreso-tipo">Tipo de ingreso</label>
-                        <select class="form-select form-select-sm" id="guardia-ingreso-tipo" required></select>
                     </div>
                     <div class="row g-2 mb-2">
                         <div class="col-md-6">

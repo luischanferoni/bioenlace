@@ -74,6 +74,11 @@ final class InternacionIngresoService
             $guardiaCtx['id_guardia']
         );
 
+        $fromGuardia = $guardiaCtx['id_guardia'] !== null;
+        $camas = $this->camasOptions($idEfector);
+        $profesionales = $this->profesionalesOptions($idEfector);
+        $pesSesion = $this->resolvePesSesionEnLista($profesionales);
+
         return [
             'id_persona' => $idPersona,
             'paciente_nombre' => $nombre,
@@ -81,19 +86,27 @@ final class InternacionIngresoService
             'id_cama' => $idCamaResolved,
             'cama_label' => $camaLabel,
             'cama_sugerencias' => $camaSugerencias,
+            'camas_aviso' => $camas === []
+                ? 'No hay camas desocupadas en este efector. Configure infraestructura (piso/sala/cama) o libere una cama.'
+                : '',
             'id_guardia' => $guardiaCtx['id_guardia'],
-            'id_tipo_ingreso_default' => $guardiaCtx['id_tipo_ingreso'],
+            'id_tipo_ingreso_default' => $fromGuardia
+                ? ($guardiaCtx['id_tipo_ingreso'] ?? 1)
+                : $guardiaCtx['id_tipo_ingreso'],
+            'id_profesional_efector_servicio_default' => $pesSesion,
             'condiciones_derivacion' => $guardiaCtx['condiciones_derivacion'],
             'obra_social_default' => $this->resolveObraSocialDefault($persona),
             'fecha_inicio' => date('Y-m-d'),
             'hora_inicio' => date('H:i'),
-            'profesionales' => $this->profesionalesOptions($idEfector),
-            'camas_disponibles' => $this->camasOptions($idEfector),
+            'profesionales' => $profesionales,
+            'camas_disponibles' => $camas,
             'coberturas' => $this->coberturasOptions($persona),
-            'efectores_origen' => $this->efectoresOptions(),
+            // Derivación: no volcar el catálogo provincial en el flujo desde guardia.
+            'efectores_origen' => $fromGuardia ? [] : $this->efectoresOptions(),
             'tipos_ingreso' => $this->tiposIngresoOptions(),
             'ingresa_en' => $this->enumOptions(SegNivelInternacion::INGRESO_EN),
             'ingresa_con' => $this->enumOptions(SegNivelInternacion::INGRESO_CON),
+            'desde_guardia' => $fromGuardia,
         ];
     }
 
@@ -122,8 +135,14 @@ final class InternacionIngresoService
         $model->scenario = SegNivelInternacion::INGRESO_PACIENTE;
         $model->id_persona = $idPersona;
         $model->id_cama = $idCama;
+        $idGuardia = (int) ($post['id_guardia'] ?? 0);
+        $idTipoIngreso = (int) ($post['id_tipo_ingreso'] ?? 0);
+        if ($idTipoIngreso <= 0 && $idGuardia > 0) {
+            $idTipoIngreso = 1; // Guardia
+        }
+
         $model->id_profesional_efector_servicio = (int) ($post['id_profesional_efector_servicio'] ?? 0);
-        $model->id_tipo_ingreso = (int) ($post['id_tipo_ingreso'] ?? 0);
+        $model->id_tipo_ingreso = $idTipoIngreso;
         $model->id_efector_origen = !empty($post['id_efector_origen'])
             ? (int) $post['id_efector_origen']
             : null;
@@ -132,10 +151,11 @@ final class InternacionIngresoService
         $model->datos_contacto_nombre = trim((string) ($post['datos_contacto_nombre'] ?? ''));
         $model->situacion_al_ingresar = trim((string) ($post['situacion_al_ingresar'] ?? ''));
         $model->obra_social = !empty($post['obra_social']) ? (int) $post['obra_social'] : null;
-        $model->fecha_inicio = $this->normalizeFechaInicio((string) ($post['fecha_inicio'] ?? ''));
-        $model->hora_inicio = trim((string) ($post['hora_inicio'] ?? ''));
+        $fechaRaw = trim((string) ($post['fecha_inicio'] ?? ''));
+        $horaRaw = trim((string) ($post['hora_inicio'] ?? ''));
+        $model->fecha_inicio = $this->normalizeFechaInicio($fechaRaw !== '' ? $fechaRaw : date('Y-m-d'));
+        $model->hora_inicio = $horaRaw !== '' ? $horaRaw : date('H:i');
 
-        $idGuardia = (int) ($post['id_guardia'] ?? 0);
         if ($idGuardia > 0) {
             $model->id_guardia = $idGuardia;
         }
@@ -291,15 +311,59 @@ final class InternacionIngresoService
     private function profesionalesOptions(int $idEfector): array
     {
         $profesionales = ProfesionalEfectorServicio::obtenerMedicosPorEfector($idEfector);
+        $seenPersona = [];
         $options = [];
         foreach ($profesionales as $pes) {
+            $idPersonaPes = (int) ($pes['id_persona'] ?? 0);
+            // Varios PES demo de la misma persona en el mismo servicio: una opción por persona.
+            if ($idPersonaPes > 0 && isset($seenPersona[$idPersonaPes])) {
+                continue;
+            }
+            if ($idPersonaPes > 0) {
+                $seenPersona[$idPersonaPes] = true;
+            }
             $options[] = [
                 'value' => (string) ($pes['id'] ?? ''),
                 'label' => (string) ($pes['datos'] ?? ''),
             ];
         }
 
+        $pesSesion = $this->resolvePesSesionEnLista($options);
+        if ($pesSesion === null) {
+            return $options;
+        }
+
+        usort($options, static function (array $a, array $b) use ($pesSesion): int {
+            $aMatch = (string) ($a['value'] ?? '') === $pesSesion ? 0 : 1;
+            $bMatch = (string) ($b['value'] ?? '') === $pesSesion ? 0 : 1;
+
+            return $aMatch <=> $bMatch;
+        });
+
         return $options;
+    }
+
+    /**
+     * @param list<array{value: string, label: string}> $options
+     */
+    private function resolvePesSesionEnLista(array $options): ?string
+    {
+        try {
+            $pesSesion = (int) Yii::$app->user->getIdProfesionalEfectorServicio();
+        } catch (\Throwable $e) {
+            return null;
+        }
+        if ($pesSesion <= 0) {
+            return null;
+        }
+        $value = (string) $pesSesion;
+        foreach ($options as $opt) {
+            if ((string) ($opt['value'] ?? '') === $value) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     /**

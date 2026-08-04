@@ -816,23 +816,18 @@
 
         document.getElementById('guardia-ingreso-id-persona').value = String(ctx.id_persona || idPersona);
         document.getElementById('guardia-ingreso-id-guardia').value = String(ctx.id_guardia || g.id);
+        var camas = ctx.camas_disponibles || [];
         fillSelectOptions(
           document.getElementById('guardia-ingreso-id-cama'),
-          ctx.camas_disponibles || [],
-          '— Elegir cama —',
+          camas,
+          camas.length ? '— Elegir cama —' : '— Sin camas disponibles —',
           ctx.id_cama
         );
         fillSelectOptions(
           document.getElementById('guardia-ingreso-id-pes'),
           ctx.profesionales || [],
           '— Elegir —',
-          null
-        );
-        fillSelectOptions(
-          document.getElementById('guardia-ingreso-tipo'),
-          ctx.tipos_ingreso || [],
-          '— Elegir —',
-          ctx.id_tipo_ingreso_default
+          ctx.id_profesional_efector_servicio_default || null
         );
         fillSelectOptions(
           document.getElementById('guardia-ingreso-en'),
@@ -854,14 +849,27 @@
         );
         var fechaEl = document.getElementById('guardia-ingreso-fecha');
         var horaEl = document.getElementById('guardia-ingreso-hora');
+        var tipoEl = document.getElementById('guardia-ingreso-tipo');
         if (fechaEl) fechaEl.value = ctx.fecha_inicio || '';
         if (horaEl) horaEl.value = ctx.hora_inicio || '';
+        if (tipoEl) tipoEl.value = String(ctx.id_tipo_ingreso_default || 1);
+        var avisoEl = document.getElementById('guardia-ingreso-aviso-camas');
+        if (avisoEl) {
+          var aviso = (ctx.camas_aviso || '').toString().trim();
+          if (aviso) {
+            avisoEl.textContent = aviso;
+            avisoEl.classList.remove('d-none');
+          } else {
+            avisoEl.textContent = '';
+            avisoEl.classList.add('d-none');
+          }
+        }
         var sitEl = document.getElementById('guardia-ingreso-situacion');
         if (sitEl) sitEl.value = '';
 
         if (loadingEl) loadingEl.classList.add('d-none');
         if (formEl) formEl.classList.remove('d-none');
-        if (submitBtn) submitBtn.disabled = false;
+        if (submitBtn) submitBtn.disabled = camas.length === 0;
       } catch (e) {
         if (loadingEl) loadingEl.classList.add('d-none');
         showIngresoError(e && e.message ? e.message : 'No se pudo cargar el ingreso.');

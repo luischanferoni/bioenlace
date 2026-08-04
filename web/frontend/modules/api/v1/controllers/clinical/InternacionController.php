@@ -346,6 +346,7 @@ class InternacionController extends BaseController
                 'id_persona' => (string) $idPersona,
                 'resumen_texto' => 'Ingreso — ' . ($ctx['paciente_nombre'] ?? 'paciente'),
                 'cama_label' => (string) ($ctx['cama_label'] ?? ''),
+                'camas_aviso' => (string) ($ctx['camas_aviso'] ?? ''),
                 'fecha_inicio' => (string) ($ctx['fecha_inicio'] ?? date('Y-m-d')),
                 'hora_inicio' => (string) ($ctx['hora_inicio'] ?? date('H:i')),
                 'obra_social' => $ctx['obra_social_default'] !== null
@@ -356,6 +357,7 @@ class InternacionController extends BaseController
                     : '',
                 'id_cama' => $ctx['id_cama'] !== null ? (string) $ctx['id_cama'] : '',
                 'id_guardia' => $ctx['id_guardia'] !== null ? (string) $ctx['id_guardia'] : '',
+                'id_profesional_efector_servicio' => (string) ($ctx['id_profesional_efector_servicio_default'] ?? ''),
             ]);
             $out = UiScreenService::renderUiDefinition('internacion', 'ingreso-formulario', $params, $params);
             $out['data'] = $ctx;
@@ -364,14 +366,23 @@ class InternacionController extends BaseController
                 'id_profesional_efector_servicio' => $ctx['profesionales'] ?? [],
                 'id_cama' => $ctx['camas_disponibles'] ?? [],
                 'obra_social' => $ctx['coberturas'] ?? [],
-                'id_efector_origen' => $ctx['efectores_origen'] ?? [],
-                'id_tipo_ingreso' => $ctx['tipos_ingreso'] ?? [],
                 'ingresa_en' => $ctx['ingresa_en'] ?? [],
                 'ingresa_con' => $ctx['ingresa_con'] ?? [],
             ];
 
             foreach ($out['blocks'] ?? [] as $idx => $block) {
-                if (!is_array($block) || ($block['kind'] ?? '') !== 'fields') {
+                if (!is_array($block)) {
+                    continue;
+                }
+                // Ocultar aviso de camas si no hay mensaje.
+                if (($block['kind'] ?? '') === 'message'
+                    && (string) ($block['id'] ?? '') === 'aviso_camas'
+                    && trim((string) ($ctx['camas_aviso'] ?? '')) === ''
+                ) {
+                    unset($out['blocks'][$idx]);
+                    continue;
+                }
+                if (($block['kind'] ?? '') !== 'fields') {
                     continue;
                 }
                 foreach ($block['fields'] ?? [] as $fIdx => $field) {
@@ -383,17 +394,12 @@ class InternacionController extends BaseController
                         $opts = $optionMap[$name];
                         if ($name === 'id_cama' && empty($params['id_cama'])) {
                             $field['options'] = array_merge(
-                                [['value' => '', 'label' => '— Elegir cama —']],
+                                [['value' => '', 'label' => empty($opts) ? '— Sin camas disponibles —' : '— Elegir cama —']],
                                 $opts
                             );
                         } elseif ($name === 'obra_social') {
                             $field['options'] = array_merge(
                                 [['value' => '', 'label' => '— Cobertura —']],
-                                $opts
-                            );
-                        } elseif ($name === 'id_efector_origen') {
-                            $field['options'] = array_merge(
-                                [['value' => '', 'label' => '— Efector origen —']],
                                 $opts
                             );
                         } else {
@@ -407,6 +413,7 @@ class InternacionController extends BaseController
                 }
                 $out['blocks'][$idx] = $block;
             }
+            $out['blocks'] = array_values($out['blocks'] ?? []);
         }
 
         return $out;

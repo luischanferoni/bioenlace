@@ -93,7 +93,9 @@ class HomePanelManifestTest extends Unit
         $ids = array_column($sections, 'id');
 
         $this->assertContains('staff_cobertura_activa', $ids);
+        $this->assertContains('staff_guardia_kpis', $ids);
         $this->assertContains('emergency_board', $ids);
         $this->assertSame('staff_cobertura_activa', $ids[0] ?? null);
+        $this->assertNotContains('emergency_indicators', $ids);
     }
 }

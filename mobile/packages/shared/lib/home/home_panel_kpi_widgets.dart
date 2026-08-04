@@ -86,7 +86,7 @@ HomePanelKpiGroup? _guardiaIndicatorsKpiGroup(Map<String, dynamic> d) {
     ),
     if (minMedico != null)
       HomePanelKpiItem(
-        label: 'Mediana a médico',
+        label: 'Mediana a médico (hoy)',
         value: formatDuracionMinutos(
           minMedico is num ? minMedico : num.tryParse(minMedico.toString()),
         ),

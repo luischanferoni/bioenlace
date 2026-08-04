@@ -1008,57 +1008,37 @@
       }
     }
 
-    async function loadTableroResumen(wrapEl) {
-      if (!wrapEl) return;
-      var api = window.BioenlaceNativePage;
-      if (!api) return;
-      try {
-        var url = api.apiV1Url('clinical/emergency-guardia/indicadores-resumen');
-        var json = await api.fetchJson(url, {
-          method: 'GET',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+    function kpiGroupFromEmergencyIndicators(d) {
+      if (!d) return null;
+      var tiempos = d.tiempos_hoy || {};
+      var items = [
+        { label: 'Activos', value: String(d.activos != null ? d.activos : 0) },
+        { label: 'Sin triage', value: String(d.sin_triage != null ? d.sin_triage : 0) },
+        { label: 'Ingresos hoy', value: String(d.ingresos_hoy != null ? d.ingresos_hoy : 0) },
+        {
+          label: 'Plazos incumplidos',
+          value: String(d.sla_incumplidos_tablero != null ? d.sla_incumplidos_tablero : 0),
+        },
+      ];
+      if (tiempos.minutos_a_medico != null) {
+        items.push({
+          label: 'Mediana a médico (hoy)',
+          value: formatDuracionMinutos(tiempos.minutos_a_medico),
         });
-        var d = json.data || {};
-        var el = wrapEl.querySelector('[data-role="tablero-resumen"]');
-        if (!el) return;
-        var parts = [];
-        if (d.activos != null) parts.push(d.activos + ' activos');
-        if (d.sin_triage != null) parts.push(d.sin_triage + ' sin triage');
-        if (d.sla_incumplidos_tablero != null) {
-          parts.push(d.sla_incumplidos_tablero + ' plazo(s) incumplido(s)');
+      }
+      return { title: '', items: items };
+    }
+
+    function findStaffKpiGroupData(panel) {
+      var sections = (panel && panel.sections) || [];
+      for (var i = 0; i < sections.length; i++) {
+        var sec = sections[i];
+        if (sec && sec.kind === 'staff_kpi_group' && sec.data && Array.isArray(sec.data.items) && sec.data.items.length) {
+          return sec.data;
         }
-        var t = d.tiempos_hoy || {};
-        if (t.minutos_a_medico != null) parts.push('mediana a médico: ' + formatDuracionMinutos(t.minutos_a_medico));
-        el.textContent = parts.join(' · ');
-        el.classList.remove('d-none');
-      } catch (e) { /* resumen opcional */ }
-    }
-
-    function bindTableroRefresh(wrapEl) {
-      if (!wrapEl) return;
-      var btn = wrapEl.querySelector('[data-role="tablero-refresh"]');
-      if (btn) {
-        btn.addEventListener('click', function () {
-          loadGuardiaTablero(false);
-        });
       }
-      var exportBtn = wrapEl.querySelector('[data-role="tablero-export-csv"]');
-      if (exportBtn) {
-        exportBtn.addEventListener('click', function (ev) {
-          var api = window.BioenlaceNativePage;
-          if (!api) return;
-          exportBtn.href = api.apiV1Url('clinical/emergency-guardia/indicadores-export-csv');
-        });
-      }
-    }
-
-    function setTableroUpdated(wrapEl) {
-      if (!wrapEl) return;
-      var el = wrapEl.querySelector('[data-role="tablero-updated"]');
-      if (el) {
-        var now = new Date();
-        el.textContent = 'Actualizado ' + now.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
-      }
+      var indicators = findPanelSection(panel, 'emergency_indicators');
+      return kpiGroupFromEmergencyIndicators(indicators && indicators.data);
     }
 
     function renderCoberturaActivaBanner(coberturaData, parentEl) {
@@ -1106,29 +1086,33 @@
       parentEl.insertBefore(box, parentEl.firstChild);
     }
 
-    function renderGuardiaTablero(items, indicatorsData, coberturaData) {
+    function renderGuardiaTablero(items, kpiGroupData, coberturaData) {
+      clearNode(container);
+
+      var panelFrag = importTemplate('tpl-clinical-list-panel-wrap');
+      var kpiSlot = panelFrag ? panelFrag.querySelector('[data-slot="kpi-sections"]') : null;
+      var listSlot = panelFrag ? panelFrag.querySelector('[data-slot="list-content"]') : null;
+      if (panelFrag) {
+        container.appendChild(panelFrag);
+      }
+      var listTarget = listSlot || container;
+
+      if (kpiSlot && kpiGroupData) {
+        renderStaffKpiGroup(kpiSlot, kpiGroupData);
+      }
+      if (coberturaData) {
+        renderCoberturaActivaBanner(coberturaData, listTarget);
+      }
+
       if (!items || !items.length) {
-        showListadoEmpty(msgEmptyGuardias);
-        if (coberturaData) {
-          renderCoberturaActivaBanner(coberturaData, container);
-        }
+        showListadoEmpty(msgEmptyGuardias, listTarget);
         return;
       }
-      clearNode(container);
+
       var wrapFrag = importTemplate('tpl-pacientes-guardias-wrap');
       if (!wrapFrag) return;
       var rowsSlot = wrapFrag.querySelector('[data-slot="guardias-rows"]');
-      var wrapRoot = wrapFrag.querySelector('[data-role="guardias-wrap"]');
-      container.appendChild(wrapFrag);
-      if (coberturaData) {
-        renderCoberturaActivaBanner(coberturaData, wrapRoot || container);
-      }
-      bindTableroRefresh(wrapRoot);
-      if (indicatorsData) {
-        applyTableroResumenFromData(wrapRoot, indicatorsData);
-      } else {
-        loadTableroResumen(wrapRoot);
-      }
+      listTarget.appendChild(wrapFrag);
 
       items.forEach(function (g) {
         var itemFrag = importTemplate('tpl-paciente-guardia-row');
@@ -1138,8 +1122,6 @@
         fillGuardiaTableroRow(row, g);
         rowsSlot.appendChild(row);
       });
-
-      setTableroUpdated(wrapRoot);
     }
 
     function fillCirugiaCard(colEl, c) {
@@ -1665,37 +1647,22 @@
       return null;
     }
 
-    function applyTableroResumenFromData(wrapEl, d) {
-      if (!wrapEl || !d) return;
-      var el = wrapEl.querySelector('[data-role="tablero-resumen"]');
-      if (!el) return;
-      var parts = [];
-      if (d.activos != null) parts.push(d.activos + ' activos');
-      if (d.sin_triage != null) parts.push(d.sin_triage + ' sin triage');
-      if (d.sla_incumplidos_tablero != null) {
-        parts.push(d.sla_incumplidos_tablero + ' plazo(s) incumplido(s)');
-      }
-      var t = d.tiempos_hoy || {};
-      if (t.minutos_a_medico != null) parts.push('mediana a médico: ' + formatDuracionMinutos(t.minutos_a_medico));
-      el.textContent = parts.join(' · ');
-      el.classList.remove('d-none');
-    }
-
     function renderStaffKpiGroup(wrapRoot, data) {
       if (!wrapRoot || !data || !Array.isArray(data.items) || !data.items.length) return;
       var groupFrag = importTemplate('tpl-staff-kpi-group');
       if (!groupFrag) return;
       var groupRoot = groupFrag.querySelector('[data-role="kpi-group"]');
       if (!groupRoot) return;
+      var titleWrap = groupRoot.querySelector('[data-slot="kpi-title-wrap"]');
       var titleEl = groupRoot.querySelector('[data-field="title"]');
       var titleText = data.title != null ? String(data.title).trim() : '';
-      if (titleEl) {
+      if (titleWrap && titleEl) {
         if (titleText) {
           titleEl.textContent = titleText;
-          titleEl.classList.remove('d-none');
+          titleWrap.classList.remove('d-none');
         } else {
           titleEl.textContent = '';
-          titleEl.classList.add('d-none');
+          titleWrap.classList.add('d-none');
         }
       }
       var slot = groupRoot.querySelector('[data-slot="kpi-items"]');
@@ -2723,8 +2690,11 @@
         var coberturaSec = findPanelSection(panel, 'staff_cobertura_activa');
         var boardSec = findPanelSection(panel, 'emergency_board');
         var items = boardSec && boardSec.data ? boardSec.data.items || [] : [];
-        var indicatorsSec = findPanelSection(panel, 'emergency_indicators');
-        renderGuardiaTablero(items, indicatorsSec ? indicatorsSec.data : null, coberturaSec ? coberturaSec.data : null);
+        renderGuardiaTablero(
+          items,
+          findStaffKpiGroupData(panel),
+          coberturaSec ? coberturaSec.data : null
+        );
         applyPanelChrome(panel);
         return;
       }
@@ -2807,17 +2777,15 @@
         if (options.sections) {
           var coberturaSecPoll = findPanelSection(panel, 'staff_cobertura_activa');
           var boardSecPoll = findPanelSection(panel, 'emergency_board');
-          var indSecPoll = findPanelSection(panel, 'emergency_indicators');
           if (boardSecPoll) {
             var itemsPoll = boardSecPoll.data ? boardSecPoll.data.items || [] : [];
             renderGuardiaTablero(
               itemsPoll,
-              indSecPoll ? indSecPoll.data : null,
+              findStaffKpiGroupData(panel),
               coberturaSecPoll ? coberturaSecPoll.data : null
             );
-          } else if (indSecPoll) {
-            var wrapRootPoll = container.querySelector('[data-role="guardias-wrap"]');
-            applyTableroResumenFromData(wrapRootPoll, indSecPoll.data);
+          } else {
+            renderFromPanel(panel);
           }
         } else {
           renderFromPanel(panel);
@@ -2834,7 +2802,7 @@
     async function loadGuardiaTablero(showSpinner) {
       await loadPanel({
         showSpinner: showSpinner,
-        sections: 'staff_cobertura_activa,emergency_board,emergency_indicators',
+        sections: 'staff_cobertura_activa,staff_guardia_kpis,emergency_board',
       });
     }
 

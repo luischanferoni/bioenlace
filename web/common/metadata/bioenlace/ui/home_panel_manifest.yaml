@@ -21,13 +21,13 @@ panels:
           provider: staff_cobertura_activa
           kind: staff_cobertura_activa
           poll_interval_seconds: 60
+        - id: staff_guardia_kpis
+          provider: staff_guardia_kpis
+          kind: staff_kpi_group
         - id: emergency_board
           provider: emergency_board
           kind: emergency_board
           poll_interval_seconds: 30
-        - id: emergency_indicators
-          provider: emergency_indicators
-          kind: emergency_indicators
     AMB:
       layout: clinical_list
       title: Pacientes del día

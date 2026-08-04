@@ -98,19 +98,7 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 
 <template id="tpl-pacientes-guardias-wrap">
     <div class="card" data-role="guardias-wrap">
-        <div class="card-header bg-light d-flex flex-wrap align-items-center justify-content-between gap-2">
-            <p class="text-muted small mb-0 d-none" data-role="tablero-resumen"></p>
-            <div class="d-flex gap-1 ms-auto">
-                <a href="#" class="btn btn-outline-secondary btn-sm" data-role="tablero-export-csv" download>Exportar CSV</a>
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-role="tablero-refresh">
-                    <i class="bi bi-arrow-clockwise"></i> Actualizar
-                </button>
-            </div>
-        </div>
         <div class="card-body p-0" data-slot="guardias-rows"></div>
-        <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2">
-            <span class="text-muted small" data-role="tablero-updated"></span>
-        </div>
     </div>
 </template>
 
@@ -283,22 +271,20 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 </template>
 
 <template id="tpl-staff-kpi-group">
-    <div class="card mb-4" data-role="kpi-group">
-        <div class="card-header">
+    <div class="card mb-3" data-role="kpi-group">
+        <div class="card-header d-none" data-slot="kpi-title-wrap">
             <h5 class="mb-0" data-field="title"></h5>
         </div>
         <div class="card-body">
-            <div class="row g-3" data-slot="kpi-items"></div>
+            <div class="d-flex flex-wrap gap-2" data-slot="kpi-items"></div>
         </div>
     </div>
 </template>
 
 <template id="tpl-staff-kpi-item">
-    <div class="col-md-4 col-lg-3">
-        <div class="border rounded p-3 h-100 text-center bg-light">
-            <div class="text-muted small mb-1" data-field="label"></div>
-            <div class="fs-4 fw-semibold" data-field="value"></div>
-        </div>
+    <div class="border rounded px-3 py-2 bg-white" style="min-width: 9.25rem; max-width: 11rem;" data-role="kpi-item">
+        <div class="text-muted small mb-1 text-truncate" data-field="label"></div>
+        <div class="fs-4 fw-semibold lh-1" data-field="value"></div>
     </div>
 </template>
 

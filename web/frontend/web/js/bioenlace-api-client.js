@@ -182,6 +182,25 @@
   };
 
   /**
+   * Reconstruye headers tras renovar JWT: no reutilizar Authorization viejo (pisaría el nuevo).
+   * @param {Object<string,string>|Headers|undefined} prev
+   * @returns {Object<string,string>}
+   */
+  function headersForJwtRetry(prev) {
+    var plain = {};
+    if (prev && typeof prev.forEach === 'function') {
+      prev.forEach(function (value, key) {
+        plain[key] = value;
+      });
+    } else if (prev && typeof prev === 'object') {
+      plain = Object.assign({}, prev);
+    }
+    delete plain.Authorization;
+    delete plain.authorization;
+    return NS.mergeHeaders(plain);
+  }
+
+  /**
    * @param {string} url
    * @param {RequestInit} opts
    * @param {boolean} jwtRetried
@@ -199,7 +218,7 @@
                 return { response: response, json: null };
               }
               var retryOpts = Object.assign({}, opts, {
-                headers: NS.mergeHeaders(opts.headers || {}),
+                headers: headersForJwtRetry(opts.headers),
               });
               return fetchJsonInternal(url, retryOpts, true);
             });
@@ -221,7 +240,7 @@
                 return { response: response, json: json };
               }
               var retryOpts = Object.assign({}, opts, {
-                headers: NS.mergeHeaders(opts.headers || {}),
+                headers: headersForJwtRetry(opts.headers),
               });
               return fetchJsonInternal(url, retryOpts, true);
             });
@@ -243,16 +262,30 @@
 
   /**
    * fetch + JSON con reintento de JWT vía sesión y redirección a login si persiste 401.
+   * Siempre fusiona headers base (Bearer, X-Client, …) aunque el caller pase `headers`
+   * parciales — si no, la 1.ª carga (p. ej. home/panel) sale sin Authorization y falla 401.
+   *
    * @param {string} url
    * @param {RequestInit=} options
    * @returns {Promise<{response: Response, json: *}>}
    */
   NS.fetchJson = function (url, options) {
     var opts = Object.assign({ credentials: 'same-origin' }, options || {});
-    if (!opts.headers) {
-      opts.headers = NS.mergeHeaders({ Accept: 'application/json' });
+    var extra = Object.assign({ Accept: 'application/json' }, opts.headers || {});
+
+    var run = function () {
+      opts.headers = NS.mergeHeaders(extra);
+      return fetchJsonInternal(url, opts, false);
+    };
+
+    // Primera pintura: layout puede tener apiAuthToken null; obtener JWT antes del 1.er API call.
+    if (!window.apiAuthToken) {
+      return NS.refreshWebJwtFromSession().then(function () {
+        return run();
+      });
     }
-    return fetchJsonInternal(url, opts, false);
+
+    return run();
   };
 
   /**

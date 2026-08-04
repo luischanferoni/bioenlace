@@ -95,12 +95,14 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                 $candidatosClinicos[] = $pes;
             }
 
-            // Condición laboral solo para asignaciones clínicas (PES con agenda). AdminEfector no la requiere.
-            if ($candidatosClinicos !== []
+            // Condición laboral / agenda solo para clínicas. Si AdminEfector está completo, se puede operar
+            // solo con ese PES aunque la parte clínica siga incompleta.
+            $sinCondicionLaboral = $candidatosClinicos !== []
                 && !ProfesionalEfectorServicioCondicionLaboral::existeAlgunaActivaParaPersonaEfector(
                     $idPersona,
                     $idEfector
-                )) {
+                );
+            if ($sinCondicionLaboral && $candidatosAdmin === []) {
                 $problemas[] = [
                     'id_efector' => $idEfector,
                     'nombre' => $nombreEfector,
@@ -113,7 +115,7 @@ class SesionOperativaProfesionalHabilitacionService extends Component
             $validPes = [];
             $agendasParaValidar = [];
 
-            if ($candidatosClinicos !== []) {
+            if ($candidatosClinicos !== [] && !$sinCondicionLaboral) {
                 foreach ($candidatosClinicos as $pes) {
                     $ag = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio((int) $pes->id);
                     if ($ag === null) {
@@ -127,13 +129,16 @@ class SesionOperativaProfesionalHabilitacionService extends Component
                 }
 
                 if ($agendasParaValidar !== [] && !ProfesionalEfectorServicioAgenda::validarGrupoSinSolapamientoEntreAgendas($agendasParaValidar)) {
-                    $problemas[] = [
-                        'id_efector' => $idEfector,
-                        'nombre' => $nombreEfector,
-                        'message' => 'La agenda tiene días solapados entre varios servicios en este efector. Corrija la configuración de agendas.',
-                        'contact' => $contact,
-                    ];
-                    continue;
+                    if ($candidatosAdmin === []) {
+                        $problemas[] = [
+                            'id_efector' => $idEfector,
+                            'nombre' => $nombreEfector,
+                            'message' => 'La agenda tiene días solapados entre varios servicios en este efector. Corrija la configuración de agendas.',
+                            'contact' => $contact,
+                        ];
+                        continue;
+                    }
+                    $validPes = [];
                 }
 
                 if ($validPes === []) {

@@ -160,20 +160,15 @@ class ProfesionalEfectorServicioController extends Controller
             return ['error' => true, 'message' => 'Asignación PES no encontrada.'];
         }
         $idPersona = (int) $pes->id_persona;
-        if ($idPersona <= 0) {
-            return ['error' => true, 'message' => 'Persona no encontrada para esta asignación.'];
+        $idEfector = (int) $pes->id_efector;
+        if ($idPersona <= 0 || $idEfector <= 0) {
+            return ['error' => true, 'message' => 'Persona o efector no encontrados para esta asignación.'];
         }
-        $idEfectores = ProfesionalEfectorServicio::find()
-            ->select(['id_efector'])
-            ->distinct()
-            ->where(['id_persona' => $idPersona, 'deleted_at' => null])
-            ->column();
-        foreach ($idEfectores as $idEf) {
-            try {
-                AdminEfectorAsignacionService::ensurePersonaEnEfector($idPersona, (int) $idEf);
-            } catch (\Throwable $e) {
-                return ['error' => true, 'message' => $e->getMessage()];
-            }
+        try {
+            // Solo el efector del PES clickeado (no propagar a DEV/otros centros de la misma persona).
+            AdminEfectorAsignacionService::ensurePersonaEnEfector($idPersona, $idEfector);
+        } catch (\Throwable $e) {
+            return ['error' => true, 'message' => $e->getMessage()];
         }
 
         return ['ok' => true];
@@ -184,9 +179,13 @@ class ProfesionalEfectorServicioController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $id_pes, 'deleted_at' => null]);
-        $idPersona = $pes !== null ? (int) $pes->id_persona : 0;
-        if ($idPersona > 0) {
-            AdminEfectorAsignacionService::removeAllForPersona($idPersona);
+        if ($pes === null) {
+            return ['ok' => true];
+        }
+        $idPersona = (int) $pes->id_persona;
+        $idEfector = (int) $pes->id_efector;
+        if ($idPersona > 0 && $idEfector > 0) {
+            AdminEfectorAsignacionService::removePersonaEnEfector($idPersona, $idEfector);
         }
 
         return ['ok' => true];

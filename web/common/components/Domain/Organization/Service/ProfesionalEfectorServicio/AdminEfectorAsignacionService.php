@@ -79,6 +79,28 @@ final class AdminEfectorAsignacionService
     }
 
     /**
+     * Quita PES AdminEfector activo de la persona en un efector.
+     */
+    public static function removePersonaEnEfector(int $idPersona, int $idEfector): void
+    {
+        if ($idPersona <= 0 || $idEfector <= 0) {
+            return;
+        }
+        $servicio = self::findSistemaServicio();
+        if ($servicio === null) {
+            return;
+        }
+        $pesAdm = ProfesionalEfectorServicio::findOneActivoPorPersonaEfectorServicio(
+            $idPersona,
+            $idEfector,
+            (int) $servicio->id_servicio
+        );
+        if ($pesAdm !== null) {
+            $pesAdm->delete();
+        }
+    }
+
+    /**
      * Quita PES AdminEfector activos de la persona (todos los efectores).
      */
     public static function removeAllForPersona(int $idPersona): void

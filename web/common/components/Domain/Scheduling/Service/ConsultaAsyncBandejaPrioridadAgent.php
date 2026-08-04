@@ -220,7 +220,7 @@ final class ConsultaAsyncBandejaPrioridadAgent
             '{{paciente}}' => (string) ($paciente['nombre_completo'] ?? 'Paciente'),
             '{{servicio}}' => (string) ($item['servicio'] ?? 'Servicio'),
         ];
-        $title = str_replace(array_keys($replace), array_values($replace), (string) ($pushTpl['title'] ?? 'SLA vencido'));
+        $title = str_replace(array_keys($replace), array_values($replace), (string) ($pushTpl['title'] ?? 'Plazo vencido'));
         $body = str_replace(array_keys($replace), array_values($replace), (string) ($pushTpl['body'] ?? ''));
 
         $push = new PushNotificationSender();

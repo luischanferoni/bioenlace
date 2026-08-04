@@ -701,7 +701,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (_consultasAsyncSlaIncumplidos > 0) ...[
           Align(
             alignment: Alignment.centerRight,
-            child: BioBadge.danger('$_consultasAsyncSlaIncumplidos SLA vencido'),
+            child: BioBadge.danger('$_consultasAsyncSlaIncumplidos plazo vencido'),
           ),
           BioSpacing.gapH(BioSpacing.sm),
         ],
@@ -931,7 +931,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
           if (slaIncumplido) ...[
             BioSpacing.gapH(BioSpacing.xs),
-            BioBadge.danger('SLA vencido${slaHoras != null ? ' ($slaHoras h)' : ''}'),
+            BioBadge.danger('Plazo vencido${slaHoras != null ? ' ($slaHoras h)' : ''}'),
           ],
           if (prioridadLabel.isNotEmpty || puedeTomar || abrirChat) ...[
             BioSpacing.gapH(BioSpacing.sm),
@@ -1204,12 +1204,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGuardiaTableroCard(EmergencyBoardItem g) {
-    final nivelColor = _colorFromHex(g.triageLevelColor) ??
-        (g.prioridadTriage != null
-            ? IntentPalette.of(
-                g.prioridadTriage! <= 2 ? UiIntent.danger : UiIntent.warning,
-              ).base
-            : context.bio.textMuted);
     final estadoIntent = g.needsTriage
         ? UiIntent.warning
         : (g.circuitoEstado == 'en_atencion'
@@ -1218,47 +1212,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return BioCard(
       onTap: () => _onGuardiaTap(g),
-      child: Container(
-        decoration: g.slaViolado
-            ? BoxDecoration(
-                border: Border.all(
-                  color: IntentPalette.of(UiIntent.danger).base.withOpacity(0.6),
-                  width: 2,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              )
-            : null,
-        padding: g.slaViolado ? const EdgeInsets.all(4) : EdgeInsets.zero,
-        child: Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(vertical: BioSpacing.xs),
-            decoration: BoxDecoration(
-              color: nivelColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: nivelColor, width: 2),
-            ),
-            child: Text(
-              g.prioridadTriage != null ? '${g.prioridadTriage}' : '?',
-              style: BioTypography.title.copyWith(
-                color: nivelColor,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          BioSpacing.gapW(BioSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(g.nombreCompleto, style: BioTypography.title),
-                if (g.documento != null && g.documento!.isNotEmpty) ...[
-                  BioSpacing.gapH(2),
-                  Text('Doc. ${g.documento}', style: BioTypography.bodySm),
-                ],
                 if (g.triageReasonText != null &&
                     g.triageReasonText!.isNotEmpty) ...[
                   BioSpacing.gapH(BioSpacing.xs),
@@ -1271,7 +1232,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     if (g.slaViolado)
                       BioBadge(
-                        label: g.slaTipo == 'triage' ? 'SLA triage' : 'SLA médico',
+                        label: g.slaTipo == 'triage'
+                            ? 'Plazo triage'
+                            : 'Plazo médico',
                         intent: UiIntent.danger,
                       ),
                     if (g.internacionPendiente)
@@ -1291,7 +1254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       intent: estadoIntent,
                     ),
                     Text(
-                      '${g.minutosEspera} min',
+                      formatDuracionMinutos(g.minutosEspera),
                       style: BioTypography.caption,
                     ),
                     if (g.profesionalAsignado != null &&
@@ -1332,7 +1295,6 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
         ],
-        ),
       ),
     );
   }

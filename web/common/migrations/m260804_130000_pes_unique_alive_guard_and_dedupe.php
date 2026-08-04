@@ -13,7 +13,11 @@ use yii\db\Query;
  * Esta migración:
  * 1) soft-delete de duplicados activos (conserva el id menor)
  * 2) soft-delete de PES demo sandbox huérfanos (sesión ya purgada / sin sesión viva)
- * 3) reemplaza el índice por columna generada `alive_guard` (1 si vigente, NULL si baja)
+ * 3) índices de soporte FK (`id_persona`/`id_servicio`) y luego reemplaza el unique
+ *    por columna generada `alive_guard` (1 si vigente, NULL si baja)
+ *
+ * Nota: el unique viejo era el único índice con prefijo `id_persona`; sin KEY propio
+ * MySQL rechaza DROP INDEX (errno 1553 / FK `fk_pes_persona`).
  */
 class m260804_130000_pes_unique_alive_guard_and_dedupe extends Migration
 {
@@ -36,12 +40,16 @@ class m260804_130000_pes_unique_alive_guard_and_dedupe extends Migration
     public function safeDown(): void
     {
         $pes = '{{%profesional_efector_servicio}}';
+        $this->db->schema->refreshTableSchema($pes);
         $schema = $this->db->schema->getTableSchema($pes, true);
         if ($schema === null) {
             return;
         }
 
         if (isset($schema->columns['alive_guard'])) {
+            // Mantener índices de soporte FK antes de soltar el unique.
+            $this->ensureNonUniqueIndex($pes, 'idx_pes_id_persona', ['id_persona']);
+            $this->ensureNonUniqueIndex($pes, 'idx_pes_id_servicio', ['id_servicio']);
             $this->dropIndexSafe($pes, 'ux_pes_persona_efector_servicio_alive');
             $this->dropColumn($pes, 'alive_guard');
             $this->createIndex(
@@ -172,30 +180,97 @@ class m260804_130000_pes_unique_alive_guard_and_dedupe extends Migration
      */
     private function replaceAliveUniqueIndex(string $pes, $schema): void
     {
+        // fk_pes_persona usa el unique compuesto (prefijo id_persona). Sin índice propio
+        // MySQL/MariaDB rechaza DROP INDEX (errno 1553).
+        $this->ensureNonUniqueIndex($pes, 'idx_pes_id_persona', ['id_persona']);
+        $this->ensureNonUniqueIndex($pes, 'idx_pes_id_servicio', ['id_servicio']);
+        // id_efector ya suele tener KEY `fk_pes_efector`; asegurar por si falta.
+        $this->ensureNonUniqueIndex($pes, 'fk_pes_efector', ['id_efector']);
+
         $this->dropIndexSafe($pes, 'ux_pes_persona_efector_servicio_alive');
 
-        if (!isset($schema->columns['alive_guard'])) {
+        $this->db->schema->refreshTableSchema($pes);
+        $schema = $this->db->schema->getTableSchema($pes, true);
+        if ($schema !== null && !isset($schema->columns['alive_guard'])) {
             // 1 = vigente (única); NULL = baja (varias permitidas en UNIQUE MySQL).
             $this->execute(
                 'ALTER TABLE ' . $this->db->quoteTableName($pes)
                 . ' ADD COLUMN `alive_guard` TINYINT GENERATED ALWAYS AS '
                 . '(IF(`deleted_at` IS NULL, 1, NULL)) VIRTUAL'
             );
+            $this->db->schema->refreshTableSchema($pes);
         }
 
-        $this->createIndex(
-            'ux_pes_persona_efector_servicio_alive',
-            $pes,
-            ['id_persona', 'id_efector', 'id_servicio', 'alive_guard'],
-            true
-        );
+        if (!$this->indexExists($pes, 'ux_pes_persona_efector_servicio_alive')) {
+            $this->createIndex(
+                'ux_pes_persona_efector_servicio_alive',
+                $pes,
+                ['id_persona', 'id_efector', 'id_servicio', 'alive_guard'],
+                true
+            );
+        }
         echo "    > índice único vigente vía alive_guard.\n";
+    }
+
+    /**
+     * @param list<string> $columns
+     */
+    private function ensureNonUniqueIndex(string $table, string $name, array $columns): void
+    {
+        if ($this->indexExists($table, $name)) {
+            return;
+        }
+        // Si ya hay otro índice no-único con exactamente esas columnas, no duplicar.
+        if ($this->hasNonUniqueIndexCovering($table, $columns)) {
+            return;
+        }
+        $this->createIndex($name, $table, $columns, false);
+        echo '    > índice FK soporte ' . $name . " (" . implode(',', $columns) . ")\n";
+    }
+
+    /**
+     * @param list<string> $columns
+     */
+    private function hasNonUniqueIndexCovering(string $table, array $columns): bool
+    {
+        $raw = $this->db->schema->getRawTableName($table);
+        $rows = (new Query())
+            ->from('information_schema.statistics')
+            ->select(['INDEX_NAME', 'SEQ_IN_INDEX', 'COLUMN_NAME', 'NON_UNIQUE'])
+            ->where([
+                'table_schema' => new \yii\db\Expression('DATABASE()'),
+                'table_name' => $raw,
+            ])
+            ->andWhere(['NON_UNIQUE' => 1])
+            ->orderBy(['INDEX_NAME' => SORT_ASC, 'SEQ_IN_INDEX' => SORT_ASC])
+            ->all($this->db);
+
+        $byIndex = [];
+        foreach ($rows as $row) {
+            $byIndex[(string) $row['INDEX_NAME']][] = (string) $row['COLUMN_NAME'];
+        }
+        foreach ($byIndex as $cols) {
+            if ($cols === $columns) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function dropIndexSafe(string $table, string $index): void
     {
+        if (!$this->indexExists($table, $index)) {
+            return;
+        }
+        $this->dropIndex($index, $table);
+    }
+
+    private function indexExists(string $table, string $index): bool
+    {
         $raw = $this->db->schema->getRawTableName($table);
-        $exists = (new Query())
+
+        return (new Query())
             ->from('information_schema.statistics')
             ->where([
                 'table_schema' => new \yii\db\Expression('DATABASE()'),
@@ -203,8 +278,5 @@ class m260804_130000_pes_unique_alive_guard_and_dedupe extends Migration
                 'index_name' => $index,
             ])
             ->exists($this->db);
-        if ($exists) {
-            $this->dropIndex($index, $table);
-        }
     }
 }

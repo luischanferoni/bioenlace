@@ -86,3 +86,19 @@ String _formatDateTimeAmigable(DateTime d) {
   }
   return '$fecha, $hora';
 }
+
+/// Duración a partir de minutos enteros: `45 min`, `1 h 30 min`, `2 d 3 h`.
+String formatDuracionMinutos(num? minutos) {
+  final total = minutos == null ? 0 : minutos.round();
+  final n = total < 0 ? 0 : total;
+  if (n < 60) return '$n min';
+
+  final days = n ~/ 1440;
+  final hours = (n % 1440) ~/ 60;
+  final mins = n % 60;
+  final parts = <String>[];
+  if (days > 0) parts.add('$days d');
+  if (hours > 0) parts.add('$hours h');
+  if (mins > 0 && days == 0) parts.add('$mins min');
+  return parts.isEmpty ? '0 min' : parts.join(' ');
+}

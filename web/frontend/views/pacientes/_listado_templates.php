@@ -120,14 +120,12 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 <template id="tpl-paciente-guardia-row">
     <div class="d-flex align-items-center justify-content-between p-3 mb-0 border-bottom guardia-tablero-row" data-role="guardia-row">
         <div class="d-flex align-items-start gap-3 flex-grow-1">
-            <span class="badge guardia-tablero-badge-nivel" data-field="nivel-badge">—</span>
             <div style="flex:1;">
                 <h5 class="mb-1" data-field="nombre"></h5>
-                <p class="mb-1 small text-muted"><span data-field="documento-line"></span></p>
                 <p class="mb-1 small" data-field="motivo-line"></p>
                 <div class="d-flex flex-wrap gap-2 small">
                     <span class="badge bg-secondary" data-field="circuito-badge"></span>
-                    <span class="badge bg-danger d-none" data-field="sla-badge">SLA</span>
+                    <span class="badge bg-danger d-none" data-field="sla-badge">Plazo</span>
                     <span class="badge bg-info text-dark d-none" data-field="internacion-badge">Cama pendiente</span>
                     <span class="text-muted" data-field="espera-line"></span>
                     <span class="text-muted d-none" data-field="profesional-line"></span>

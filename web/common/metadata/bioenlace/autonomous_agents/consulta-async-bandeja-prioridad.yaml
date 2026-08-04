@@ -35,5 +35,5 @@ sla_escalation:
   enabled: true
   urgency_bands: [A, B]
   staff_push:
-    title: "SLA vencido — consulta clínica por mensaje"
+    title: "Plazo vencido — consulta clínica por mensaje"
     body: "{{paciente}} · {{servicio}}. Responder cuanto antes."

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../format/datetime_friendly.dart';
 import '../theme/tokens/tokens.dart';
 import '../ui/bio_card.dart';
 import 'home_panel_api.dart';
@@ -80,18 +81,21 @@ HomePanelKpiGroup? _guardiaIndicatorsKpiGroup(Map<String, dynamic> d) {
       value: '${d['ingresos_hoy'] ?? 0}',
     ),
     HomePanelKpiItem(
-      label: 'SLA incumplidos',
+      label: 'Plazos incumplidos',
       value: '${d['sla_incumplidos_tablero'] ?? 0}',
     ),
     if (minMedico != null)
       HomePanelKpiItem(
         label: 'Mediana a médico',
-        value: '$minMedico min',
+        value: formatDuracionMinutos(
+          minMedico is num ? minMedico : num.tryParse(minMedico.toString()),
+        ),
       ),
   ];
 
   if (items.isEmpty) return null;
-  return HomePanelKpiGroup(title: 'Guardia', items: items);
+  // Sin título de grupo: el área de trabajo ya dice Emergencia.
+  return HomePanelKpiGroup(title: '', items: items);
 }
 
 /// Banner de contexto operativo (`kind: staff_session_context`).
@@ -177,12 +181,19 @@ class _KpiGroupCard extends StatelessWidget {
     final tokens = context.bio;
 
     return BioCard(
-      margin: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
+      margin: const EdgeInsets.fromLTRB(
+        BioSpacing.lg,
+        BioSpacing.md,
+        BioSpacing.lg,
+        0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(group.title, style: BioTypography.title),
-          BioSpacing.gapH(BioSpacing.md),
+          if (group.title.trim().isNotEmpty) ...[
+            Text(group.title, style: BioTypography.title),
+            BioSpacing.gapH(BioSpacing.md),
+          ],
           Wrap(
             spacing: BioSpacing.sm,
             runSpacing: BioSpacing.sm,

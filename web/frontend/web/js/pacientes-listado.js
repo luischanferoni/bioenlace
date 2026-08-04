@@ -399,6 +399,23 @@
       return e === 'finalizado' || e === 'derivado';
     }
 
+    function formatDuracionMinutos(minutos) {
+      if (window.BioenlaceFecha && typeof window.BioenlaceFecha.formatDuracionMinutos === 'function') {
+        return window.BioenlaceFecha.formatDuracionMinutos(minutos);
+      }
+      var n = Math.round(Number(minutos));
+      if (!isFinite(n) || n < 0) n = 0;
+      if (n < 60) return n + ' min';
+      var days = Math.floor(n / 1440);
+      var hours = Math.floor((n % 1440) / 60);
+      var mins = n % 60;
+      var parts = [];
+      if (days > 0) parts.push(days + ' d');
+      if (hours > 0) parts.push(hours + ' h');
+      if (mins > 0 && days === 0) parts.push(mins + ' min');
+      return parts.length ? parts.join(' ') : '0 min';
+    }
+
     function nombrePacienteGuardia(g) {
       var paciente = g.paciente || {};
       return paciente.nombre_completo || g.nombre_completo || '';
@@ -412,9 +429,6 @@
       } else {
         parts.push('guardia-tablero-row--nivel-' + String(level));
       }
-      if (g.sla_violado) {
-        parts.push('guardia-tablero-row--sla-violado');
-      }
       return parts.join(' ');
     }
 
@@ -424,27 +438,12 @@
       var paciente = g.paciente || {};
       var nombre = paciente.nombre_completo || g.nombre_completo || '';
       rowEl.querySelector('[data-field="nombre"]').textContent = nombre;
-      rowEl.querySelector('[data-field="documento-line"]').textContent =
-        (paciente.tipo_documento ? (paciente.tipo_documento + ': ') : (g.tipo_documento ? g.tipo_documento + ': ' : '')) +
-        (paciente.documento || g.documento || '');
 
       var triage = g.triage || {};
       var motivoLine = rowEl.querySelector('[data-field="motivo-line"]');
       if (motivoLine) {
         motivoLine.textContent = triage.reason_text || '';
         motivoLine.classList.toggle('d-none', !triage.reason_text);
-      }
-
-      var nivelBadge = rowEl.querySelector('[data-field="nivel-badge"]');
-      if (nivelBadge) {
-        if (g.prioridad_triage != null) {
-          nivelBadge.textContent = String(g.prioridad_triage);
-          nivelBadge.style.backgroundColor = triage.level_color || '#6c757d';
-          nivelBadge.classList.remove('bg-secondary');
-        } else {
-          nivelBadge.textContent = '?';
-          nivelBadge.className = 'badge bg-secondary guardia-tablero-badge-nivel';
-        }
       }
 
       var circuitoBadge = rowEl.querySelector('[data-field="circuito-badge"]');
@@ -455,7 +454,7 @@
       var esperaLine = rowEl.querySelector('[data-field="espera-line"]');
       if (esperaLine) {
         var min = g.minutos_espera != null ? g.minutos_espera : 0;
-        esperaLine.textContent = min + ' min en espera';
+        esperaLine.textContent = formatDuracionMinutos(min) + ' en espera';
       }
 
       var profLine = rowEl.querySelector('[data-field="profesional-line"]');
@@ -467,8 +466,11 @@
       var slaBadge = rowEl.querySelector('[data-field="sla-badge"]');
       if (slaBadge) {
         if (g.sla_violado) {
-          var slaLabel = g.sla_tipo === 'triage' ? 'SLA triage' : 'SLA médico';
-          slaBadge.textContent = slaLabel + (g.sla_umbral_minutos != null ? ' >' + g.sla_umbral_minutos + 'm' : '');
+          var slaLabel = g.sla_tipo === 'triage' ? 'Plazo triage' : 'Plazo médico';
+          if (g.sla_umbral_minutos != null) {
+            slaLabel += ' >' + formatDuracionMinutos(g.sla_umbral_minutos);
+          }
+          slaBadge.textContent = slaLabel;
           slaBadge.classList.remove('d-none');
         } else {
           slaBadge.classList.add('d-none');
@@ -1023,10 +1025,10 @@
         if (d.activos != null) parts.push(d.activos + ' activos');
         if (d.sin_triage != null) parts.push(d.sin_triage + ' sin triage');
         if (d.sla_incumplidos_tablero != null) {
-          parts.push(d.sla_incumplidos_tablero + ' SLA incumplido(s)');
+          parts.push(d.sla_incumplidos_tablero + ' plazo(s) incumplido(s)');
         }
         var t = d.tiempos_hoy || {};
-        if (t.minutos_a_medico != null) parts.push('mediana a médico: ' + t.minutos_a_medico + ' min');
+        if (t.minutos_a_medico != null) parts.push('mediana a médico: ' + formatDuracionMinutos(t.minutos_a_medico));
         el.textContent = parts.join(' · ');
         el.classList.remove('d-none');
       } catch (e) { /* resumen opcional */ }
@@ -1671,10 +1673,10 @@
       if (d.activos != null) parts.push(d.activos + ' activos');
       if (d.sin_triage != null) parts.push(d.sin_triage + ' sin triage');
       if (d.sla_incumplidos_tablero != null) {
-        parts.push(d.sla_incumplidos_tablero + ' SLA incumplido(s)');
+        parts.push(d.sla_incumplidos_tablero + ' plazo(s) incumplido(s)');
       }
       var t = d.tiempos_hoy || {};
-      if (t.minutos_a_medico != null) parts.push('mediana a médico: ' + t.minutos_a_medico + ' min');
+      if (t.minutos_a_medico != null) parts.push('mediana a médico: ' + formatDuracionMinutos(t.minutos_a_medico));
       el.textContent = parts.join(' · ');
       el.classList.remove('d-none');
     }
@@ -1685,7 +1687,17 @@
       if (!groupFrag) return;
       var groupRoot = groupFrag.querySelector('[data-role="kpi-group"]');
       if (!groupRoot) return;
-      groupRoot.querySelector('[data-field="title"]').textContent = data.title || 'Indicadores';
+      var titleEl = groupRoot.querySelector('[data-field="title"]');
+      var titleText = data.title != null ? String(data.title).trim() : '';
+      if (titleEl) {
+        if (titleText) {
+          titleEl.textContent = titleText;
+          titleEl.classList.remove('d-none');
+        } else {
+          titleEl.textContent = '';
+          titleEl.classList.add('d-none');
+        }
+      }
       var slot = groupRoot.querySelector('[data-slot="kpi-items"]');
       data.items.forEach(function (item) {
         var itemFrag = importTemplate('tpl-staff-kpi-item');
@@ -2432,7 +2444,7 @@
         slaSlot.classList.remove('d-none');
         var slaBadge = slaSlot.querySelector('[data-field="sla-badge"]');
         if (slaBadge) {
-          slaBadge.textContent = 'SLA vencido (' + (item.sla.horas_objetivo || '') + ' h)';
+          slaBadge.textContent = 'Plazo vencido (' + (item.sla.horas_objetivo || '') + ' h)';
         }
       } else if (slaSlot) {
         slaSlot.classList.add('d-none');
@@ -2480,7 +2492,7 @@
       targetEl.appendChild(wrapFrag);
       var slaResumen = wrapRoot.querySelector('[data-field="sla-resumen"]');
       if (slaResumen && data.sla_incumplidos > 0) {
-        slaResumen.textContent = data.sla_incumplidos + ' con SLA vencido';
+        slaResumen.textContent = data.sla_incumplidos + ' con plazo vencido';
         slaResumen.classList.remove('d-none');
       }
       var groupsSlot = wrapRoot.querySelector('[data-slot="async-groups"]');

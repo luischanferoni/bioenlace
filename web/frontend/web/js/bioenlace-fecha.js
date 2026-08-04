@@ -124,7 +124,37 @@
         return fecha + ', ' + hora;
     }
 
+    /**
+     * Duración a partir de minutos: `45 min`, `1 h 30 min`, `2 d 3 h`.
+     * @param {number|string|null|undefined} minutos
+     * @returns {string}
+     */
+    function formatDuracionMinutos(minutos) {
+        var n = Math.round(Number(minutos));
+        if (!isFinite(n) || n < 0) {
+            n = 0;
+        }
+        if (n < 60) {
+            return n + ' min';
+        }
+        var days = Math.floor(n / 1440);
+        var hours = Math.floor((n % 1440) / 60);
+        var mins = n % 60;
+        var parts = [];
+        if (days > 0) {
+            parts.push(days + ' d');
+        }
+        if (hours > 0) {
+            parts.push(hours + ' h');
+        }
+        if (mins > 0 && days === 0) {
+            parts.push(mins + ' min');
+        }
+        return parts.length ? parts.join(' ') : '0 min';
+    }
+
     NS.parseDateTime = parseDateTime;
     NS.formatNotificacion = formatNotificacion;
     NS.formatDateTimeAmigable = formatDateTimeAmigable;
+    NS.formatDuracionMinutos = formatDuracionMinutos;
 })(window);

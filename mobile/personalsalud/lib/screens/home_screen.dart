@@ -1254,7 +1254,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       intent: estadoIntent,
                     ),
                     Text(
-                      formatDuracionMinutos(g.minutosEspera),
+                      '${formatDuracionMinutos(g.minutosEspera)} en espera',
                       style: BioTypography.caption,
                     ),
                     if (g.profesionalAsignado != null &&

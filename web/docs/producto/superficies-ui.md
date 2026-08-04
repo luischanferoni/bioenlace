@@ -84,7 +84,7 @@ Referencias: [asistente-y-chat.md](./asistente-y-chat.md).
 
 ## Internación (IMP) en este modelo
 
-- **Mapa / ronda / indicadores** → inicio (panel IMP), no formulario clínico.
+- **Mapa / listado-ronda / indicadores** → inicio (panel IMP), no formulario clínico.
 - **Evolución, dx, meds, prácticas en piso** → timeline con `parent=INTERNACION`, `parent_id=<id_internacion>`.
 - **Alta, cambio de cama, ingreso desde guardia** → flows (`internacion.*-flow`) o shell operativo mínimo hasta migrar.
 - **`/internacion/view`** → ficha **administrativa** del episodio (cama, ingreso, alta), no pestañas clínicas MVC.

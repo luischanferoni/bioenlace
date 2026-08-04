@@ -27,7 +27,7 @@
 |------------|----------------|
 | Mapa + indicadores | Inicio web / app; `/internacion/index` (transitorio) |
 | Captura clínica piso | Timeline + formulario encounter (`parent=INTERNACION`) |
-| Ficha episodio (admin) | Web `/internacion/view`, `/internacion/ronda` |
+| Ficha episodio (admin) | Web `/internacion/view` |
 | Alta estructurada | Flow `internacion.alta-estructurada-flow` + API |
 | ABM plantillas | Web `/internacion-epicrisis-plantilla/index` |
 | Mapa móvil | app Personal de Salud — inicio (efector en sesión) |

@@ -3,11 +3,6 @@
  * Plantillas HTML del listado de pacientes (turnos / internados / guardia).
  * El JS clona estos <template> y asigna textos y URLs (página web común; sin SPA shell).
  */
-
-use yii\helpers\Html;
-use yii\helpers\Url;
-
-$urlInternacionRonda = Url::to(['internacion/ronda'], true);
 ?>
 
 <template id="tpl-pacientes-alert-empty">
@@ -69,28 +64,49 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 
 <template id="tpl-pacientes-internados-wrap">
     <div class="card" data-role="internados-wrap">
-        <div class="card-header">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h4 class="mb-0">Pacientes internados</h4>
+            <div class="btn-group btn-group-sm" role="group" aria-label="Orden de la ronda" data-role="internados-orden">
+                <button type="button" class="btn btn-outline-secondary active" data-orden="recorrido">Por recorrido</button>
+                <button type="button" class="btn btn-outline-secondary" data-orden="nombre">Por paciente</button>
+            </div>
         </div>
         <div class="card-body" data-slot="internados-rows"></div>
-        <div class="card-footer">
-            <a href="<?= Html::encode($urlInternacionRonda) ?>" class="btn btn-primary">Ronda de internación</a>
-        </div>
+    </div>
+</template>
+
+<template id="tpl-internados-group-piso">
+    <div class="mb-3" data-role="internados-piso">
+        <div class="px-2 py-1 mb-2 rounded bg-soft-primary text-primary fw-semibold small" data-field="piso-label"></div>
+        <div data-slot="salas"></div>
+    </div>
+</template>
+
+<template id="tpl-internados-group-sala">
+    <div class="mb-3" data-role="internados-sala">
+        <div class="px-2 py-1 mb-2 rounded bg-soft-success text-success fw-semibold small" data-field="sala-label"></div>
+        <div data-slot="pacientes"></div>
     </div>
 </template>
 
 <template id="tpl-paciente-internado-row">
-    <div class="d-flex align-items-center p-3 mb-2 bg-soft-gray rounded" data-role="internado-row">
-        <div class="ms-3" style="flex:1;">
+    <div class="d-flex align-items-start gap-3 p-3 mb-2 bg-soft-gray rounded" data-role="internado-row">
+        <div class="flex-shrink-0">
+            <span class="badge bg-dark" data-field="cama-badge">Cama</span>
+        </div>
+        <div class="flex-grow-1">
             <h5 class="card-title mb-0" data-field="nombre"></h5>
-            <p class="mb-1">
-                <strong>Piso:</strong> <span data-field="piso"></span>
-                <strong>Sala:</strong> <span data-field="sala"></span>
-                <strong>Cama:</strong> <span data-field="cama"></span>
+            <p class="mb-1 small text-muted d-none" data-slot="documento-line">
+                Doc. <span data-field="documento"></span>
+            </p>
+            <p class="mb-1 small text-muted d-none" data-slot="ubicacion-line">
+                <span data-field="piso"></span>
+                <span aria-hidden="true"> · </span>
+                <span data-field="sala"></span>
             </p>
             <div class="d-flex flex-wrap gap-2 mt-2">
-                <a href="#" class="p-2 btn btn-success btn-sm" data-role="link-atender" data-spa-nav="1">Atender paciente</a>
-                <a href="#" class="p-2 btn btn-outline-primary btn-sm d-none" data-role="link-historia" data-spa-nav="1" data-spa-title="Historia clínica">Historia clínica</a>
+                <a href="#" class="btn btn-success btn-sm" data-role="link-atender" data-spa-nav="1">Atender</a>
+                <a href="#" class="btn btn-outline-primary btn-sm d-none" data-role="link-historia" data-spa-nav="1" data-spa-title="Historia clínica">Historia</a>
             </div>
         </div>
     </div>
@@ -282,9 +298,9 @@ $urlInternacionRonda = Url::to(['internacion/ronda'], true);
 </template>
 
 <template id="tpl-staff-kpi-item">
-    <div class="border rounded px-2 py-2 bg-white" style="min-width: 6rem; max-width: 7.5rem; flex: 1 1 6rem;" data-role="kpi-item">
-        <div class="text-muted small mb-1" data-field="label" style="line-height: 1.2; white-space: normal;"></div>
-        <div class="fs-5 fw-semibold lh-1" data-field="value"></div>
+    <div class="border rounded px-2 py-2 bg-white d-flex flex-column" style="min-width: 6rem; max-width: 7.5rem; flex: 1 1 6rem; min-height: 4.75rem;" data-role="kpi-item">
+        <div class="text-muted small mb-1" data-field="label" style="line-height: 1.2; min-height: 2.4em; white-space: normal;"></div>
+        <div class="fs-5 fw-semibold lh-1 mt-auto" data-field="value"></div>
     </div>
 </template>
 

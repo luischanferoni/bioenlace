@@ -11,7 +11,6 @@ use yii\filters\VerbFilter;
 use common\models\SegNivelInternacion;
 use common\models\SegNivelInternacionRepository;
 use common\models\busquedas\SegNivelInternacionBusqueda;
-use common\models\InfraestructuraPiso;
 use common\models\Person\Persona;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
@@ -58,30 +57,13 @@ class InternacionController extends Controller
     }
 
     /**
-     * Rondas all SegNivelInternacion models.
+     * Legacy hub: el board IMP vive en site/index. Ronda integrada en el listado.
      * @return mixed
      * @no_intent_catalog
-    */
+     */
     public function actionRonda()
     {
-        $persona = Yii::$app->session['persona'];
-        $persona =  unserialize($persona);
-        $pacienteInternado = false;
-
-        if (isset($persona->id_persona) && SegNivelInternacion::personaInternada($persona->id_persona)) {
-
-            $pacienteInternado = true;
-        }
-
-        $pisos = new InfraestructuraPiso();
-        $efector = Yii::$app->user->getIdEfector();
-
-
-        $pisos_efector = $pisos->pisosPorEfector($efector);
-        return $this->render('ronda', [
-            'pisos_efector' => $pisos_efector
-
-        ]);
+        return $this->redirect(['site/index']);
     }
 
     public function formatearDatosProfesional($modeloPes)

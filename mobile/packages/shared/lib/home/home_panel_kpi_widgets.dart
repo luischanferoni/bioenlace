@@ -210,7 +210,8 @@ class _KpiTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 96,
+      width: 100,
+      height: 84,
       padding: const EdgeInsets.symmetric(
         horizontal: BioSpacing.sm,
         vertical: BioSpacing.sm,
@@ -223,14 +224,22 @@ class _KpiTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          SizedBox(
+            height: 32,
+            child: Text(
+              label,
+              style: BioTypography.caption.copyWith(color: tokens.textMuted),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const Spacer(),
           Text(
-            label,
-            style: BioTypography.caption.copyWith(color: tokens.textMuted),
-            maxLines: 2,
+            value,
+            style: BioTypography.h3,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          BioSpacing.gapH(BioSpacing.xs),
-          Text(value, style: BioTypography.h3),
         ],
       ),
     );

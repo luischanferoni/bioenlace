@@ -66,16 +66,25 @@ class InfraestructuraPiso extends \yii\db\ActiveRecord
     }
 
     /**
-     * Internados (camas ocupadas con datos de internación) del efector.
+     * Internados (camas ocupadas) del efector, ordenados para recorrido de ronda (piso → sala → cama).
+     *
      * @param int $id_efector
-     * @return array lista de ['id', 'id_persona', 'nombre', 'cama', 'sala', 'piso']
+     * @return list<array<string, mixed>>
      */
     public static function getInternadosPorEfector($id_efector)
     {
         $pisos = (new self())->pisosPorEfector($id_efector);
         $internados = [];
         foreach ($pisos as $piso) {
+            $pisoNro = (int) ($piso->nro_piso ?? 0);
+            $pisoDesc = trim((string) ($piso->descripcion ?? ''));
+            $pisoLabel = $pisoDesc !== '' ? $pisoDesc : ('Piso ' . $pisoNro);
+
             foreach ($piso->infraestructuraSalas as $sala) {
+                $salaNro = (int) ($sala->nro_sala ?? 0);
+                $salaDesc = trim((string) ($sala->descripcion ?? ''));
+                $salaLabel = $salaDesc !== '' ? $salaDesc : ('Sala ' . $salaNro);
+
                 foreach ($sala->infraestructuraCamas as $cama) {
                     if ($cama->estado !== 'ocupada') {
                         continue;
@@ -84,19 +93,35 @@ class InfraestructuraPiso extends \yii\db\ActiveRecord
                     if (!$int || !is_object($int)) {
                         continue;
                     }
-                    $id = $int->id;
+                    $id = (int) $int->id;
+                    $paciente = $int->paciente ?? null;
                     $internados[$id] = [
                         'id' => $id,
-                        'id_persona' => $int->id_persona,
-                        'nombre' => $int->paciente ? $int->paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D) : 'Sin nombre',
-                        'cama' => $cama->nro_cama,
-                        'sala' => $sala->nro_sala,
-                        'piso' => $piso->nro_piso,
+                        'id_persona' => (int) $int->id_persona,
+                        'nombre' => $paciente
+                            ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N_D)
+                            : 'Sin nombre',
+                        'documento' => $paciente ? (string) ($paciente->documento ?? '') : '',
+                        'cama' => (string) ($cama->nro_cama ?? ''),
+                        'sala' => $salaLabel,
+                        'piso' => $pisoLabel,
+                        'id_piso' => (int) $piso->id,
+                        'id_sala' => (int) $sala->id,
+                        'nro_piso' => $pisoNro,
+                        'nro_sala' => $salaNro,
+                        'nro_cama' => (int) ($cama->nro_cama ?? 0),
                     ];
                 }
             }
         }
-        return array_values($internados);
+
+        $list = array_values($internados);
+        usort($list, static function (array $a, array $b): int {
+            return [$a['nro_piso'], $a['nro_sala'], $a['nro_cama'], $a['nombre']]
+                <=> [$b['nro_piso'], $b['nro_sala'], $b['nro_cama'], $b['nombre']];
+        });
+
+        return $list;
     }
 
     /**

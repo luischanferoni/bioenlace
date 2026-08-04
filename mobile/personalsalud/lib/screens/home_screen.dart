@@ -60,6 +60,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _consultasAsyncSlaIncumplidos = 0;
   final Set<int> _tomandoAsyncIds = {};
   List<InternadoItem> _internados = [];
+  /// `recorrido` = piso→sala→cama; `nombre` = A–Z.
+  String _internadosOrden = 'recorrido';
   List<EmergencyBoardItem> _guardiaTablero = [];
   List<CirugiaAgendaItem> _cirugias = [];
   List<HomePanelKpiGroup> _kpiGroups = [];
@@ -1116,23 +1118,183 @@ class _HomeScreenState extends State<HomeScreen> {
         text: 'No hay pacientes internados.',
       );
     }
-    return ListView.separated(
-      padding: BioSpacing.pageAll,
-      itemCount: _internados.length,
-      separatorBuilder: (_, __) => BioSpacing.gapH(BioSpacing.sm),
-      itemBuilder: (context, index) {
-        final i = _internados[index];
-        return _buildSimpleTile(
-          icon: Icons.person_outline,
-          title: i.nombreCompleto,
-          subtitle: [
-            if (i.cama != null) 'Cama ${i.cama}',
-            if (i.sala != null) 'Sala ${i.sala}',
-            if (i.documento != null) 'Doc. ${i.documento}',
-          ].where((e) => e.isNotEmpty).join(' · '),
-          onTap: () => _onTapSinTimeline(context),
-        );
-      },
+
+    final entries = _internadosOrden == 'nombre'
+        ? _internadosEntriesPorNombre(_internados)
+        : _internadosEntriesPorRecorrido(_internados);
+
+    return RefreshIndicator(
+      onRefresh: () => _cargarListadoPacientes(silent: true),
+      child: ListView(
+        padding: BioSpacing.pageAll,
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          Row(
+            children: [
+              BioChip(
+                label: 'Por recorrido',
+                selected: _internadosOrden == 'recorrido',
+                onTap: () => setState(() => _internadosOrden = 'recorrido'),
+              ),
+              BioSpacing.gapW(BioSpacing.sm),
+              BioChip(
+                label: 'Por paciente',
+                selected: _internadosOrden == 'nombre',
+                onTap: () => setState(() => _internadosOrden = 'nombre'),
+              ),
+            ],
+          ),
+          BioSpacing.gapH(BioSpacing.md),
+          for (var i = 0; i < entries.length; i++) ...[
+            entries[i],
+            if (i < entries.length - 1) BioSpacing.gapH(BioSpacing.sm),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _internadosEntriesPorNombre(List<InternadoItem> items) {
+    final sorted = List<InternadoItem>.from(items)
+      ..sort((a, b) => a.nombreCompleto.toLowerCase().compareTo(b.nombreCompleto.toLowerCase()));
+    return [
+      for (final i in sorted) _buildInternadoCard(i, showUbicacion: true),
+    ];
+  }
+
+  List<Widget> _internadosEntriesPorRecorrido(List<InternadoItem> items) {
+    final byPiso = <String, List<InternadoItem>>{};
+    final pisoOrder = <String>[];
+    final pisoLabel = <String, String>{};
+    final pisoNro = <String, int>{};
+
+    for (final i in items) {
+      final key = i.idPiso?.toString() ?? (i.piso ?? '');
+      if (!byPiso.containsKey(key)) {
+        byPiso[key] = [];
+        pisoOrder.add(key);
+        pisoLabel[key] = (i.piso?.trim().isNotEmpty == true) ? i.piso! : 'Piso';
+        pisoNro[key] = i.nroPiso;
+      }
+      byPiso[key]!.add(i);
+    }
+    pisoOrder.sort((a, b) => (pisoNro[a] ?? 0).compareTo(pisoNro[b] ?? 0));
+
+    final out = <Widget>[];
+    for (final pisoKey in pisoOrder) {
+      final pisoItems = byPiso[pisoKey]!;
+      out.add(_internadosSectionHeader(pisoLabel[pisoKey]!, intent: UiIntent.primary));
+
+      final bySala = <String, List<InternadoItem>>{};
+      final salaOrder = <String>[];
+      final salaLabel = <String, String>{};
+      final salaNro = <String, int>{};
+      for (final i in pisoItems) {
+        final sKey = i.idSala?.toString() ?? (i.sala ?? '');
+        if (!bySala.containsKey(sKey)) {
+          bySala[sKey] = [];
+          salaOrder.add(sKey);
+          salaLabel[sKey] = (i.sala?.trim().isNotEmpty == true) ? i.sala! : 'Sala';
+          salaNro[sKey] = i.nroSala;
+        }
+        bySala[sKey]!.add(i);
+      }
+      salaOrder.sort((a, b) => (salaNro[a] ?? 0).compareTo(salaNro[b] ?? 0));
+
+      for (final salaKey in salaOrder) {
+        final salaItems = bySala[salaKey]!
+          ..sort((a, b) => a.nroCama.compareTo(b.nroCama));
+        out.add(_internadosSectionHeader(salaLabel[salaKey]!, intent: UiIntent.success));
+        for (final i in salaItems) {
+          out.add(_buildInternadoCard(i, showUbicacion: false));
+        }
+      }
+    }
+    return out;
+  }
+
+  Widget _internadosSectionHeader(String label, {required UiIntent intent}) {
+    final palette = IntentPalette.of(intent);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(
+        horizontal: BioSpacing.sm,
+        vertical: BioSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: palette.softBg,
+        borderRadius: BioRadius.all(BioRadius.sm),
+      ),
+      child: Text(
+        label,
+        style: BioTypography.bodySm.copyWith(
+          color: palette.base,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInternadoCard(InternadoItem i, {required bool showUbicacion}) {
+    final tokens = context.bio;
+    final meta = <String>[
+      if (showUbicacion && (i.piso?.isNotEmpty ?? false)) i.piso!,
+      if (showUbicacion && (i.sala?.isNotEmpty ?? false)) i.sala!,
+      if (i.documento?.isNotEmpty ?? false) 'Doc. ${i.documento}',
+    ].join(' · ');
+
+    return BioCard(
+      onTap: () => _verHistoriaClinica(
+        i.idPersona,
+        parent: 'INTERNACION',
+        parentId: i.id,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: tokens.paperBackground,
+              borderRadius: BioRadius.all(BioRadius.sm),
+              border: BioBorder.all(BorderWidth.thin, tokens.paperBorderDefault),
+            ),
+            child: Text(
+              i.cama != null && i.cama!.isNotEmpty ? 'Cama ${i.cama}' : 'Cama',
+              style: BioTypography.caption.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ),
+          BioSpacing.gapW(BioSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(i.nombreCompleto, style: BioTypography.title),
+                if (meta.isNotEmpty) ...[
+                  BioSpacing.gapH(2),
+                  Text(
+                    meta,
+                    style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+                  ),
+                ],
+                BioSpacing.gapH(BioSpacing.sm),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: BioButton.primary(
+                    label: 'Atender',
+                    size: BioButtonSize.sm,
+                    onPressed: () => _verHistoriaClinica(
+                      i.idPersona,
+                      parent: 'INTERNACION',
+                      parentId: i.id,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 

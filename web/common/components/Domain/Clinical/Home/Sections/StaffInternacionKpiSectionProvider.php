@@ -26,7 +26,8 @@ final class StaffInternacionKpiSectionProvider implements HomePanelSectionProvid
         $ocupacion = $d['ocupacion_pct'];
 
         return [
-            'title' => 'Internación',
+            // Sin título de grupo: el área de trabajo ya dice Pacientes internados / Internación.
+            'title' => '',
             'items' => [
                 [
                     'label' => 'Camas ocupadas',
@@ -37,11 +38,11 @@ final class StaffInternacionKpiSectionProvider implements HomePanelSectionProvid
                     'value' => $ocupacion !== null ? $ocupacion . '%' : '—',
                 ],
                 [
-                    'label' => 'Internaciones activas',
+                    'label' => 'Activas',
                     'value' => (string) ($d['internaciones_activas'] ?? 0),
                 ],
                 [
-                    'label' => 'Estadía media (días)',
+                    'label' => 'Estadía media',
                     'value' => $d['estadia_media_dias'] !== null ? (string) $d['estadia_media_dias'] : '—',
                 ],
             ],

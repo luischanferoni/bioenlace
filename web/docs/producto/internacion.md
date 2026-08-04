@@ -26,8 +26,11 @@ Estados operativos en mapa (`estado_mapa`):
 - `bloqueada` — fuera de servicio (con `motivo_estado` opcional)  
 - `aislamiento` — reservada / aislamiento  
 
-En web, acciones rápidas **B** / **A** / **L** (bloquear, aislamiento, liberar) vía API. Desde ronda/mapa, **Atender** abre la **historia clínica** con contexto de internación (no el formulario MVC legacy).
+En web, acciones rápidas **B** / **A** / **L** (bloquear, aislamiento, liberar) vía API. Desde el **listado de internados** (modo recorrido piso→sala) o el mapa, **Atender** abre la **historia clínica** con contexto de internación (no el formulario MVC legacy).
 
+## Ronda (listado IMP)
+
+No hay pantalla `/internacion/ronda`. La ronda es el listado del inicio IMP (`home/panel` → `inpatients`), con orden **por recorrido** (piso → sala → cama) o **por paciente** (A–Z). Misma API en web y móvil.
 ## Captura clínica en internación
 
 - Mismo pipeline que ambulatorio/guardia: timeline + `_formulario_consulta.php` → `POST …/clinical/encounter/guardar`.
@@ -92,7 +95,7 @@ Intents YAML (UI JSON descubierta, sin hardcode de pantalla):
 
 **Eliminado / 410:** captura por pestañas (`InternacionDiagnostico*`, `InternacionMedicamento*`, `InternacionPractica*`, `InternacionAtencionesEnfermeria*`, partials `internacion/v2/_view_*`).
 
-**Mantenido temporalmente:** `InternacionController` (index, view administrativo, create ingreso, ronda), historial `InternacionHcamaController` (index), ABM plantillas. Cambio de cama vía API + `#cambio-cama` en view.
+**Mantenido temporalmente:** `InternacionController` (index, view administrativo, create ingreso; `ronda` redirige al inicio), historial `InternacionHcamaController` (index), ABM plantillas. Cambio de cama vía API + `#cambio-cama` en view.
 
 ## Cobertura de plantel (agenda IMP)
 

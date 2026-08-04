@@ -13,6 +13,11 @@ class InternadoItem {
   final String? cama;
   final String? sala;
   final String? piso;
+  final int? idPiso;
+  final int? idSala;
+  final int nroPiso;
+  final int nroSala;
+  final int nroCama;
 
   InternadoItem({
     required this.id,
@@ -24,21 +29,38 @@ class InternadoItem {
     this.cama,
     this.sala,
     this.piso,
+    this.idPiso,
+    this.idSala,
+    this.nroPiso = 0,
+    this.nroSala = 0,
+    this.nroCama = 0,
   });
 
   factory InternadoItem.fromJson(Map<String, dynamic> json) {
+    int asInt(dynamic v) {
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+
     return InternadoItem(
-      id: (json['id'] as int?) ?? 0,
-      idPersona: (json['id_persona'] as int?) ?? 0,
+      id: asInt(json['id']),
+      idPersona: asInt(json['id_persona']),
       nombreCompleto: (json['nombre_completo'] as String?) ??
           (json['nombre'] as String?) ??
           'Sin nombre',
-      documento: json['documento'] as String?,
+      documento: (json['documento'] as String?)?.trim().isEmpty == true
+          ? null
+          : (json['documento'] as String?)?.trim(),
       fechaInicio: json['fecha_inicio'] as String?,
       horaInicio: json['hora_inicio'] as String?,
       cama: json['cama']?.toString(),
       sala: json['sala']?.toString(),
       piso: json['piso']?.toString(),
+      idPiso: json['id_piso'] != null ? asInt(json['id_piso']) : null,
+      idSala: json['id_sala'] != null ? asInt(json['id_sala']) : null,
+      nroPiso: asInt(json['nro_piso']),
+      nroSala: asInt(json['nro_sala']),
+      nroCama: asInt(json['nro_cama'] ?? json['cama']),
     );
   }
 }
@@ -60,6 +82,7 @@ class InternadosService {
     return headers;
   }
 
+  /// Preferir [HomePanelApi] sección `inpatients`. Este método queda por compat.
   Future<List<InternadoItem>> getInternados({int? efectorId}) async {
     try {
       final queryParams = <String, String>{};

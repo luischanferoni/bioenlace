@@ -102,6 +102,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       widget.resumenConsultaCargada ||
       _historiaClinicaData?.capturaPermitida == false;
 
+  bool get _esCapturaInternacion =>
+      (widget.consultParent ?? '').toUpperCase() == 'INTERNACION';
+
   bool _autoOpenedReview = false;
 
   @override
@@ -235,6 +238,19 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         data = await _historiaClinicaService.getHistoriaClinica(
           widget.personaId,
           turnoId: turnoId,
+          encounterId: widget.consultParent == 'ENCOUNTER'
+              ? widget.consultParentId
+              : null,
+          parent: (turnoId == null &&
+                  widget.consultParent != null &&
+                  widget.consultParent != 'ENCOUNTER')
+              ? widget.consultParent
+              : null,
+          parentId: (turnoId == null &&
+                  widget.consultParent != null &&
+                  widget.consultParent != 'ENCOUNTER')
+              ? widget.consultParentId
+              : null,
         );
       }
       if (!mounted) return;
@@ -267,7 +283,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return Scaffold(
       backgroundColor: tokens.paperBackground,
       appBar: BioAppBar(
-        title: _modoConsultaCargada ? 'Consulta cargada' : 'Historia clínica',
+        title: _modoConsultaCargada
+            ? 'Consulta cargada'
+            : (_esCapturaInternacion ? 'Evolución · internación' : 'Historia clínica'),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -360,31 +378,38 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                   BioSpacing.gapH(BioSpacing.md),
                                   _buildSignosVitales(
                                       _historiaClinicaData!.signosVitales),
-                                  BioSpacing.gapH(BioSpacing.md),
-                                  if (_historiaClinicaData!
-                                          .motivosConsultaPaciente
-                                          .motivosIntake
-                                          ?.tieneContenido ==
-                                      true) ...[
-                                    _buildMotivosIntake(
-                                      _historiaClinicaData!
-                                          .motivosConsultaPaciente
-                                          .motivosIntake!,
-                                    ),
+                                  if (_esCapturaInternacion) ...[
                                     BioSpacing.gapH(BioSpacing.md),
+                                    _buildContextoInternacion(
+                                      _historiaClinicaData!.contextoInternacion,
+                                    ),
+                                  ] else ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    if (_historiaClinicaData!
+                                            .motivosConsultaPaciente
+                                            .motivosIntake
+                                            ?.tieneContenido ==
+                                        true) ...[
+                                      _buildMotivosIntake(
+                                        _historiaClinicaData!
+                                            .motivosConsultaPaciente
+                                            .motivosIntake!,
+                                      ),
+                                      BioSpacing.gapH(BioSpacing.md),
+                                    ],
+                                    _buildMotivosConsulta(_historiaClinicaData!),
+                                    if (_historiaClinicaData!.carePackCohorte
+                                            ?.tieneContenido ==
+                                        true) ...[
+                                      BioSpacing.gapH(BioSpacing.md),
+                                      _buildCarePackCohorte(
+                                        _historiaClinicaData!.carePackCohorte!,
+                                      ),
+                                    ],
                                   ],
-                                  _buildMotivosConsulta(_historiaClinicaData!),
                                   if (_pendingCaptures.isNotEmpty) ...[
                                     BioSpacing.gapH(BioSpacing.md),
                                     _buildPendingCapturesPanel(),
-                                  ],
-                                  if (_historiaClinicaData!.carePackCohorte
-                                          ?.tieneContenido ==
-                                      true) ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildCarePackCohorte(
-                                      _historiaClinicaData!.carePackCohorte!,
-                                    ),
                                   ],
                                   if (_isAnalyzing) ...[
                                     BioSpacing.gapH(BioSpacing.md),
@@ -705,6 +730,54 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildContextoInternacion(ContextoInternacionHistoria? ctx) {
+    final parts = <String>[];
+    if (ctx != null && ctx.internacionId > 0) {
+      parts.add('Episodio #${ctx.internacionId}');
+    }
+    if (ctx != null && ctx.camaLabel.isNotEmpty) {
+      parts.add(ctx.camaLabel);
+    }
+    if (ctx != null && ctx.fechaInicio.isNotEmpty) {
+      parts.add('Ingreso ${ctx.fechaInicio}');
+    }
+    final resumen = parts.isEmpty
+        ? 'Internación en curso — documentá la evolución del día.'
+        : '${parts.join(' · ')} — documentá la evolución del día.';
+    final evoluciones = ctx?.evoluciones ?? const <EvolucionInternacionItem>[];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Internación en curso', style: BioTypography.title),
+        BioSpacing.gapH(BioSpacing.sm),
+        Text(resumen, style: BioTypography.bodySm),
+        BioSpacing.gapH(BioSpacing.sm),
+        if (evoluciones.isEmpty)
+          Text(
+            'Sin evoluciones previas en este episodio.',
+            style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
+          )
+        else ...[
+          Text('Evoluciones del episodio', style: BioTypography.bodySm),
+          BioSpacing.gapH(BioSpacing.xs),
+          for (final ev in evoluciones) ...[
+            if (ev.fecha.isNotEmpty)
+              Text(
+                ev.fecha,
+                style: BioTypography.caption.copyWith(color: context.bio.textMuted),
+              ),
+            Text(
+              ev.texto.isNotEmpty ? ev.texto : 'Evolución documentada',
+              style: BioTypography.body,
+            ),
+            BioSpacing.gapH(BioSpacing.sm),
+          ],
+        ],
+      ],
     );
   }
 
@@ -1483,7 +1556,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }) async {
     final text = _chatController.text.trim();
     if (text.isEmpty && _pendingAudioPath == null) {
-      _snack('Escriba o dicte la consulta.', UiIntent.warning);
+      _snack(
+        _esCapturaInternacion
+            ? 'Escribí o dictá la evolución.'
+            : 'Escriba o dicte la consulta.',
+        UiIntent.warning,
+      );
       return;
     }
     if (!_tieneContextoCaptura) {
@@ -2696,8 +2774,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           isSending: _captureBusy,
           sendIcon: Icons.fact_check_outlined,
           hintText: canCapture
-              ? 'Dictar o escribir la consulta…'
-              : 'Escribir consulta…',
+              ? (_esCapturaInternacion
+                  ? 'Dictar o escribir la evolución…'
+                  : 'Dictar o escribir la consulta…')
+              : (_esCapturaInternacion
+                  ? 'Escribir evolución…'
+                  : 'Escribir consulta…'),
           maxLines: 6,
           onVoice: canCapture &&
                   (_sttConfig.deviceEnabled || _sttConfig.serverEnabled)

@@ -8,6 +8,7 @@ use yii\bootstrap5\Modal;
 use common\models\Person\Persona;
 use common\helpers\TimelineHelper;
 use common\models\User;
+use common\models\Clinical\Encounter;
 use yii\web\View;
 
 
@@ -34,12 +35,20 @@ $this->title = $vistaConsultaCargada
 
 $parentQuery = Yii::$app->request->get('parent');
 $parentIdQuery = (int) Yii::$app->request->get('parent_id', 0);
+$parentUpper = strtoupper(trim((string) $parentQuery));
+$esContextoInternacion = $parentUpper === Encounter::PARENT_INTERNACION && $parentIdQuery > 0;
+$mostrarMotivosAmbulatorios = !$esContextoInternacion
+    && !in_array($parentUpper, [Encounter::PARENT_GUARDIA, Encounter::PARENT_CIRUGIA, Encounter::PARENT_GENERICO_EMER], true);
+
 $historiaClinicaQs = [];
 $verConsultaStaffPath = null;
-if (strtoupper((string) $parentQuery) === 'TURNO' && $parentIdQuery > 0) {
+if ($parentUpper === Encounter::PARENT_TURNO && $parentIdQuery > 0) {
     $historiaClinicaQs['turno_id'] = $parentIdQuery;
     $verConsultaStaffPath = '/api/v1/clinical/encounter/ver-consulta-como-staff?'
         . http_build_query(['turno_id' => $parentIdQuery]);
+} elseif ($esContextoInternacion) {
+    $historiaClinicaQs['parent'] = Encounter::PARENT_INTERNACION;
+    $historiaClinicaQs['parent_id'] = $parentIdQuery;
 }
 $historiaClinicaPath = '/api/v1/personas/' . (int) $persona->id_persona . '/historia-clinica';
 if ($historiaClinicaQs !== []) {
@@ -129,7 +138,8 @@ $this->registerJsFile(
                             <div id="tl_motivos_intake" class="text-body"></div>
                         </div>
 
-                        <div class="mb-3 pb-2 border-bottom border-2">
+                        <?php if ($mostrarMotivosAmbulatorios): ?>
+                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_motivos_ambulatorio_wrap">
                             <h6 class="mb-2 text-primary"><b>MOTIVOS DE ESTA CONSULTA</b></h6>
                             <p class="mb-0 text-muted" id="tl_motivos_consulta">Cargando...</p>
                             <div id="tl_motivos_consulta_mensajes" class="mt-2"></div>
@@ -139,6 +149,21 @@ $this->registerJsFile(
                             <h6 class="mb-2 text-primary"><b>ASISTENCIA PRE-CONSULTA (COHORTE)</b></h6>
                             <div id="tl_care_pack_cohorte" class="text-body"></div>
                         </div>
+                        <?php else: ?>
+                        <div id="tl_motivos_consulta" class="d-none" aria-hidden="true"></div>
+                        <div id="tl_motivos_consulta_mensajes" class="d-none" aria-hidden="true"></div>
+                        <div id="tl_care_pack_section" class="d-none" aria-hidden="true">
+                            <div id="tl_care_pack_cohorte"></div>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ($esContextoInternacion): ?>
+                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_internacion_contexto_section">
+                            <h6 class="mb-2 text-primary"><b>INTERNACIÓN EN CURSO</b></h6>
+                            <p class="mb-2 small text-muted" id="tl_internacion_resumen">Episodio #<?= (int) $parentIdQuery ?> — documentá la evolución del día.</p>
+                            <div id="tl_internacion_evoluciones" class="text-body"></div>
+                        </div>
+                        <?php endif; ?>
 
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_documentacion_medico_section" style="display:none;">
                             <h6 class="mb-2 text-primary"><b>Datos cargados</b></h6>
@@ -274,6 +299,7 @@ Modal::end();
     var timelineConfig = {
         pacienteId: <?= $persona->id_persona ?>,
         vistaConsultaCargada: <?= $vistaConsultaCargada ? 'true' : 'false' ?>,
+        modoCaptura: <?= json_encode($esContextoInternacion ? 'imp' : 'amb') ?>,
         endpoints: {
             curvasCrecimiento: <?= ($edad !== null && (int) $edad < 14) ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
@@ -304,9 +330,43 @@ Modal::end();
         el.innerHTML = badges || '<span class="ms-2">Sin datos</span>';
     }
 
+    function renderContextoInternacion(ctx) {
+        var resumenEl = document.getElementById('tl_internacion_resumen');
+        var listEl = document.getElementById('tl_internacion_evoluciones');
+        if (!listEl) return;
+        ctx = ctx || {};
+        if (resumenEl) {
+            var parts = [];
+            if (ctx.internacion_id) parts.push('Episodio #' + ctx.internacion_id);
+            if (ctx.cama_label) parts.push(ctx.cama_label);
+            if (ctx.fecha_inicio) parts.push('Ingreso ' + ctx.fecha_inicio);
+            resumenEl.textContent = (parts.length ? parts.join(' · ') : 'Internación en curso')
+                + ' — documentá la evolución del día.';
+        }
+        var evoluciones = ctx.evoluciones || [];
+        if (!evoluciones.length) {
+            listEl.innerHTML = '<p class="text-muted mb-0 small">Sin evoluciones previas en este episodio.</p>';
+            return;
+        }
+        var html = '<div class="small text-uppercase text-muted mb-2">Evoluciones del episodio</div><ul class="mb-0 ps-3">';
+        evoluciones.forEach(function (ev) {
+            html += '<li class="mb-2"><span class="text-muted small">'
+                + escMotivosHtml(ev.fecha || '')
+                + '</span><div style="white-space:pre-wrap">'
+                + escMotivosHtml(ev.texto || 'Evolución documentada')
+                + '</div></li>';
+        });
+        html += '</ul>';
+        listEl.innerHTML = html;
+    }
+
     function renderMotivos(texto, mp) {
         var el = document.getElementById('tl_motivos_consulta');
         if (!el) return;
+        if (timelineConfig.modoCaptura === 'imp') {
+            el.innerHTML = '';
+            return;
+        }
         mp = mp || {};
         var resumen = (mp.resumen && String(mp.resumen).trim() !== '')
             ? String(mp.resumen).trim()
@@ -616,9 +676,16 @@ Modal::end();
             renderBadges('tl_hallazgos', info.hallazgos || [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [].concat(info.antecedentes_personales || [], info.antecedentes_familiares || []), 'border border-gray text-gray');
             var mp = payload.data.motivos_consulta_paciente || {};
-            renderMotivos(info.motivos_consulta || null, mp);
-            renderMotivosIntake(mp.motivos_intake || null);
-            renderCarePackCohorte(payload.data.care_pack_cohorte || null);
+            if (timelineConfig.modoCaptura === 'imp') {
+                renderMotivos(null, null);
+                renderMotivosIntake(null);
+                renderCarePackCohorte(null);
+                renderContextoInternacion(payload.data.contexto_internacion || null);
+            } else {
+                renderMotivos(info.motivos_consulta || null, mp);
+                renderMotivosIntake(mp.motivos_intake || null);
+                renderCarePackCohorte(payload.data.care_pack_cohorte || null);
+            }
             renderDocumentacionMedico(null);
             var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
             if (boxMsgs) boxMsgs.innerHTML = '';

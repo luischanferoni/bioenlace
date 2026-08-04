@@ -1,6 +1,6 @@
 <?php
 /**
- * Vista parcial para el formulario de consulta
+ * Vista parcial para el formulario de consulta / evolución.
  * @var $paciente \common\models\Person\Persona
  * @var $idConfiguracion int|null
  * @var $idConsulta int|string|null
@@ -8,20 +8,32 @@
  * @var $parentId int|string|null
  * @var $motivoPacientePrefill string Resumen IA de motivos cargados por el paciente (pre-atención)
  */
+use yii\helpers\Url;
+use yii\helpers\Html;
+use common\models\Clinical\Encounter;
+
 $idConsulta = $idConsulta ?? null;
 $parent = $parent ?? null;
 $parentId = $parentId ?? null;
 $motivoPacientePrefill = trim((string) ($motivoPacientePrefill ?? ''));
 $sttClientConfig = \common\components\Platform\Ai\SpeechToText\SttConfigService::clientSnapshot();
-?>
-
-<?php
-use yii\helpers\Url;
-use yii\helpers\Html;
+$esEvolucionImp = strtoupper(trim((string) $parent)) === Encounter::PARENT_INTERNACION;
+if ($esEvolucionImp) {
+    $motivoPacientePrefill = '';
+}
+$formLabel = $esEvolucionImp ? 'Evolución' : 'Formulario de consulta';
+$placeholder = $esEvolucionImp
+    ? 'Escribí o dictá la evolución del paciente internado (estado actual, cambios clínicos, plan).'
+    : 'Escriba o dicte los detalles de la consulta. El asistente verificará motivos, evolución, diagnóstico, prácticas, etc.';
+$analyzeLabel = $esEvolucionImp ? 'Analizar evolución' : 'Analizar consulta';
+$analyzeTitle = $esEvolucionImp
+    ? 'Analizar la evolución con IA'
+    : 'Analizar la consulta con IA';
 ?>
 <form id="form-consulta-chat" method="POST" action="<?= Url::to(['/api/v1/clinical/encounter/guardar']) ?>"
       data-stt-config="<?= Html::encode(json_encode($sttClientConfig, JSON_UNESCAPED_UNICODE)) ?>"
-      data-url-inicio="<?= Html::encode(Url::to(['/site/index'])) ?>">
+      data-url-inicio="<?= Html::encode(Url::to(['/site/index'])) ?>"
+      data-modo-captura="<?= $esEvolucionImp ? 'imp' : 'amb' ?>">
     <?= Html::hiddenInput('id_persona', $paciente->id_persona) ?>
     <?php if (!empty($idConfiguracion)): ?>
         <?= Html::hiddenInput('id_configuracion', (int) $idConfiguracion) ?>
@@ -42,18 +54,17 @@ use yii\helpers\Html;
     </div>
     <?php endif; ?>
 
-    <!-- Formulario de entrada -->
     <div class="form-group mb-3" id="chat-form">
         <label for="chat-input" class="form-label">
-            <strong>Formulario de consulta</strong>
+            <strong><?= Html::encode($formLabel) ?></strong>
         </label>
-        <textarea 
-            class="form-control" 
-            id="chat-input" 
+        <textarea
+            class="form-control"
+            id="chat-input"
             name="consulta_texto"
             lang="es-AR"
-            rows="4" 
-            placeholder="Escriba o dicte los detalles de la consulta. El asistente verificará motivos, evolución, diagnóstico, prácticas, etc."
+            rows="4"
+            placeholder="<?= Html::encode($placeholder) ?>"
             style="border-width: 2px; resize: vertical;"><?= $motivoPacientePrefill !== '' ? Html::encode($motivoPacientePrefill) : '' ?></textarea>
         <div class="d-flex flex-wrap gap-2 mt-2 align-items-center">
             <button type="button" class="btn btn-sm btn-outline-secondary" id="encounter-dictate-btn" title="Dictar">
@@ -66,14 +77,12 @@ use yii\helpers\Html;
         <div id="encounter-stt-status" class="small mt-1 text-muted" role="status" aria-live="polite"></div>
     </div>
 
-    <!-- Boton analysis de consulta -->
     <div class="float-end mb-3" id="analyze-btn">
-        <button class="btn btn-outline-primary" type="button" id="analyze-consultation" title="Analizar la consulta con IA">
-            <i class="bi bi-clipboard2-check"></i>&nbsp;&nbsp;Analizar consulta
+        <button class="btn btn-outline-primary" type="button" id="analyze-consultation" title="<?= Html::encode($analyzeTitle) ?>">
+            <i class="bi bi-clipboard2-check"></i>&nbsp;&nbsp;<?= Html::encode($analyzeLabel) ?>
         </button>
     </div>
 
-    <!-- Área de revisión tras analizar -->
     <div id="agent-response" class="mt-3" style="display: none;">
         <div id="capture-review-root"></div>
         <div id="response-content" class="d-none" aria-hidden="true"></div>
@@ -91,8 +100,6 @@ use yii\helpers\Html;
         </div>
     </div>
 
-    <!-- Botones de contexto (se mostrarán dinámicamente) -->
     <div id="context-buttons" class="mt-2" style="display: none;">
-        <!-- Los botones se generarán dinámicamente -->
     </div>
 </form>

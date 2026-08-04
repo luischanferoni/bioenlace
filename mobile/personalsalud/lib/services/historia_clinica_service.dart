@@ -29,6 +29,8 @@ class HistoriaClinicaService {
     int personaId, {
     int? turnoId,
     int? encounterId,
+    String? parent,
+    int? parentId,
   }) async {
     try {
       final q = <String, String>{};
@@ -36,6 +38,12 @@ class HistoriaClinicaService {
         q['encounter_id'] = '$encounterId';
       } else if (turnoId != null && turnoId > 0) {
         q['turno_id'] = '$turnoId';
+      } else if (parent != null &&
+          parent.isNotEmpty &&
+          parentId != null &&
+          parentId > 0) {
+        q['parent'] = parent;
+        q['parent_id'] = '$parentId';
       }
       final uri = Uri.parse(
         '${AppConfig.apiUrl}/personas/$personaId/historia-clinica',
@@ -651,11 +659,83 @@ class DocumentacionMedico {
   }
 }
 
+class ContextoInternacionHistoria {
+  final int internacionId;
+  final String camaLabel;
+  final String fechaInicio;
+  final List<EvolucionInternacionItem> evoluciones;
+
+  ContextoInternacionHistoria({
+    required this.internacionId,
+    this.camaLabel = '',
+    this.fechaInicio = '',
+    this.evoluciones = const [],
+  });
+
+  factory ContextoInternacionHistoria.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return ContextoInternacionHistoria(internacionId: 0);
+    }
+    int asInt(dynamic v) {
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+
+    final raw = json['evoluciones'];
+    final list = <EvolucionInternacionItem>[];
+    if (raw is List) {
+      for (final e in raw) {
+        if (e is Map) {
+          list.add(EvolucionInternacionItem.fromJson(
+            Map<String, dynamic>.from(e),
+          ));
+        }
+      }
+    }
+
+    return ContextoInternacionHistoria(
+      internacionId: asInt(json['internacion_id']),
+      camaLabel: (json['cama_label'] ?? '').toString(),
+      fechaInicio: (json['fecha_inicio'] ?? '').toString(),
+      evoluciones: list,
+    );
+  }
+}
+
+class EvolucionInternacionItem {
+  final int encounterId;
+  final String fecha;
+  final String texto;
+  final String status;
+
+  EvolucionInternacionItem({
+    required this.encounterId,
+    this.fecha = '',
+    this.texto = '',
+    this.status = '',
+  });
+
+  factory EvolucionInternacionItem.fromJson(Map<String, dynamic> json) {
+    int asInt(dynamic v) {
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+
+    return EvolucionInternacionItem(
+      encounterId: asInt(json['encounter_id']),
+      fecha: (json['fecha'] ?? '').toString(),
+      texto: (json['texto'] ?? '').toString(),
+      status: (json['status'] ?? '').toString(),
+    );
+  }
+}
+
 class HistoriaClinicaResponse {
   final PersonaData persona;
   final InformacionMedica informacionMedica;
   final SignosVitalesClinica signosVitales;
   final MotivosConsultaPaciente motivosConsultaPaciente;
+  final ContextoInternacionHistoria? contextoInternacion;
   final CarePackCohorteStaff? carePackCohorte;
   final bool careCohortHabilitado;
   final DocumentacionMedico documentacionMedico;
@@ -670,6 +750,7 @@ class HistoriaClinicaResponse {
     required this.informacionMedica,
     required this.signosVitales,
     required this.motivosConsultaPaciente,
+    this.contextoInternacion,
     this.carePackCohorte,
     this.careCohortHabilitado = false,
     required this.documentacionMedico,
@@ -716,6 +797,11 @@ class HistoriaClinicaResponse {
           SignosVitalesClinica.fromJson(json['signos_vitales'] as Map<String, dynamic>?),
       motivosConsultaPaciente: MotivosConsultaPaciente.fromJson(
           json['motivos_consulta_paciente'] as Map<String, dynamic>?),
+      contextoInternacion: json['contexto_internacion'] is Map
+          ? ContextoInternacionHistoria.fromJson(
+              Map<String, dynamic>.from(json['contexto_internacion'] as Map),
+            )
+          : null,
       carePackCohorte: json['care_pack_cohorte'] is Map
           ? CarePackCohorteStaff.fromJson(
               Map<String, dynamic>.from(json['care_pack_cohorte'] as Map),

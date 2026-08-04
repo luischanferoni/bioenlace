@@ -19,6 +19,8 @@ use common\models\Scheduling\Turno;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\PersonasAntecedente;
 use common\models\ConsultaMotivosMessage;
+use common\models\SegNivelInternacion;
+use common\models\SegNivelInternacionHcama;
 use common\components\Domain\Clinical\Service\ConditionPresentationService;
 use common\components\Domain\Person\Service\PersonaSignosVitalesService;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
@@ -33,7 +35,8 @@ class PacientesController extends BaseController
      * Resumen de historia clínica para abrir HC / preparar captura (PENDIENTE / EN_ATENCION).
      *
      * GET /api/v1/personas/{id}/historia-clinica
-     * Query: `turno_id` o `encounter_id` — motivos pre-turno del encuentro (flujo captura staff).
+     * Query: `turno_id` o `encounter_id` — motivos pre-turno (flujo captura ambulatoria).
+     * Query: `parent=INTERNACION&parent_id=` — captura de evolución en piso (sin motivos AMB).
      * Sin query: auto-elige encounter + HC resumida del paciente.
      * Condiciones/alergias/antecedentes: solo si hay ventana de atención (turno PENDIENTE/EN_ATENCION)
      * o encounter no ambulatorio; no en turno ATENDIDO.
@@ -51,33 +54,68 @@ class PacientesController extends BaseController
         }
 
         $idEfector = (int) Yii::$app->user->getIdEfector();
+        $req = Yii::$app->request;
+        $parentParam = strtoupper(trim((string) $req->get('parent', '')));
+        $parentIdParam = (int) $req->get('parent_id', 0);
+        $esInternacion = $parentParam === Encounter::PARENT_INTERNACION && $parentIdParam > 0;
+
         $motivosLookup = new EncounterAppointmentReasonLookupService();
-        $motivosCtx = $this->buildMotivosHistoriaClinicaContext(
-            $persona,
-            $motivosLookup,
-            $idEfector
-        );
-        if ($motivosCtx['http_error'] !== null) {
-            return $motivosCtx['http_error'];
-        }
+        $contextoInternacion = null;
 
-        $motivosConsulta = $motivosCtx['motivos_consulta'];
-        $motivosConsultaPaciente = $motivosCtx['motivos_consulta_paciente'];
-        $capturaFlags = $motivosCtx['captura'] ?? [
-            'permitida' => null,
-            'motivo' => null,
-        ];
-
-        // Estado actual del paciente: solo en ventana de atención (captura) o encounter sin turno ambulatorio.
-        $encounterIdMotivos = (int) ($motivosConsultaPaciente['encounter_id'] ?? 0);
-        $mostrarEstadoPaciente = ($capturaFlags['permitida'] ?? null) === true
-            || (($capturaFlags['permitida'] ?? null) === null && $encounterIdMotivos > 0);
-
-        $carePackCohorte = null;
-        if (CarePackConfig::isEnabled() && $mostrarEstadoPaciente) {
-            if ($encounterIdMotivos > 0) {
-                $carePackCohorte = (new CarePackEncounterStaffService())->buildForEncounter($encounterIdMotivos);
+        if ($esInternacion) {
+            $contextoInternacion = $this->buildContextoInternacionHistoria(
+                (int) $persona->id_persona,
+                $parentIdParam
+            );
+            if ($contextoInternacion === null) {
+                return $this->error('Internación no válida para este paciente.', null, 404);
             }
+            $motivosConsulta = null;
+            $motivosConsultaPaciente = [
+                'encounter_id' => null,
+                'consulta_id' => null,
+                'turno_id' => null,
+                'turno' => null,
+                'contexto_explicito' => true,
+                'messages' => [],
+            ];
+            $capturaFlags = ['permitida' => true, 'motivo' => null];
+            $turnosConEncounter = [];
+            $mostrarEstadoPaciente = true;
+            $carePackCohorte = null;
+            $documentacionMedico = null;
+        } else {
+            $motivosCtx = $this->buildMotivosHistoriaClinicaContext(
+                $persona,
+                $motivosLookup,
+                $idEfector
+            );
+            if ($motivosCtx['http_error'] !== null) {
+                return $motivosCtx['http_error'];
+            }
+
+            $motivosConsulta = $motivosCtx['motivos_consulta'];
+            $motivosConsultaPaciente = $motivosCtx['motivos_consulta_paciente'];
+            $capturaFlags = $motivosCtx['captura'] ?? [
+                'permitida' => null,
+                'motivo' => null,
+            ];
+
+            // Estado actual del paciente: solo en ventana de atención (captura) o encounter sin turno ambulatorio.
+            $encounterIdMotivos = (int) ($motivosConsultaPaciente['encounter_id'] ?? 0);
+            $mostrarEstadoPaciente = ($capturaFlags['permitida'] ?? null) === true
+                || (($capturaFlags['permitida'] ?? null) === null && $encounterIdMotivos > 0);
+
+            $carePackCohorte = null;
+            if (CarePackConfig::isEnabled() && $mostrarEstadoPaciente) {
+                if ($encounterIdMotivos > 0) {
+                    $carePackCohorte = (new CarePackEncounterStaffService())->buildForEncounter($encounterIdMotivos);
+                }
+            }
+            $turnosConEncounter = $motivosCtx['turnos_con_encounter'];
+            $documentacionMedico = $mostrarEstadoPaciente
+                ? ($motivosCtx['documentacion_medico'] ?? null)
+                : null;
         }
 
         $condicionesActivas = [];
@@ -124,8 +162,6 @@ class PacientesController extends BaseController
             }
         }
 
-        $turnosConEncounter = $motivosCtx['turnos_con_encounter'];
-
         $simularSignos = false;
         if (defined('YII_DEBUG') && YII_DEBUG) {
             $simularSignos = (bool) Yii::$app->request->get('simular_signos', false);
@@ -160,12 +196,11 @@ class PacientesController extends BaseController
             ],
             'signos_vitales' => $signosVitales,
             'motivos_consulta_paciente' => $motivosConsultaPaciente,
+            'contexto_internacion' => $contextoInternacion,
             'care_pack_cohorte' => $carePackCohorte,
             'care_cohort_habilitado' => CarePackConfig::isEnabled(),
             'turnos_con_encounter' => $turnosConEncounter,
-            'documentacion_medico' => $mostrarEstadoPaciente
-                ? ($motivosCtx['documentacion_medico'] ?? null)
-                : null,
+            'documentacion_medico' => $documentacionMedico,
             'captura' => $capturaFlags,
             'historia_clinica' => [],
             'total_historia_clinica' => 0,
@@ -185,6 +220,78 @@ class PacientesController extends BaseController
             $conTurnoPrueba,
             $pesId
         );
+    }
+
+    /**
+     * Contexto de episodio IMP para HC / captura de evolución (sin motivos ambulatorios).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function buildContextoInternacionHistoria(int $personaId, int $internacionId): ?array
+    {
+        $internacion = SegNivelInternacion::findOne($internacionId);
+        if (
+            !$internacion instanceof SegNivelInternacion
+            || (int) $internacion->id_persona !== $personaId
+        ) {
+            return null;
+        }
+
+        $camaLabel = '';
+        $idCama = (int) ($internacion->id_cama ?? 0);
+        if ($idCama > 0) {
+            $cama = SegNivelInternacionHcama::getCamaActualLabel($idCama);
+            $camaLabel = trim((string) ($cama['label'] ?? ''));
+        }
+
+        $parentType = Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION];
+        $rows = Encounter::find()
+            ->andWhere([
+                'parent_type' => $parentType,
+                'parent_id' => $internacionId,
+                'subject_persona_id' => $personaId,
+            ])
+            ->andWhere(['deleted_at' => null])
+            ->orderBy(['period_start' => SORT_DESC, 'id' => SORT_DESC])
+            ->limit(25)
+            ->all();
+
+        $evoluciones = [];
+        foreach ($rows as $enc) {
+            if (!$enc instanceof Encounter) {
+                continue;
+            }
+            $texto = trim((string) ($enc->note ?? ''));
+            if ($texto === '') {
+                $texto = trim((string) ($enc->reason_text ?? ''));
+            }
+            if ($texto === '' || stripos($texto, 'Internación #') === 0) {
+                // Encounter contenedor del episodio sin nota clínica aún.
+                continue;
+            }
+            $fecha = (string) ($enc->period_start ?? $enc->created_at ?? '');
+            $evoluciones[] = [
+                'encounter_id' => (int) $enc->id,
+                'fecha' => $fecha,
+                'texto' => $texto,
+                'status' => (string) ($enc->status ?? ''),
+            ];
+        }
+
+        $fechaInicio = '';
+        if (!empty($internacion->fecha_inicio)) {
+            $fechaInicio = (string) $internacion->fecha_inicio;
+            if (!empty($internacion->hora_inicio)) {
+                $fechaInicio .= ' ' . substr((string) $internacion->hora_inicio, 0, 5);
+            }
+        }
+
+        return [
+            'internacion_id' => $internacionId,
+            'cama_label' => $camaLabel,
+            'fecha_inicio' => $fechaInicio,
+            'evoluciones' => $evoluciones,
+        ];
     }
 
     /**

@@ -68,7 +68,7 @@
             <h4 class="mb-0">Pacientes internados</h4>
             <div class="btn-group btn-group-sm" role="group" aria-label="Orden de la ronda" data-role="internados-orden">
                 <button type="button" class="btn btn-outline-secondary active" data-orden="recorrido">Por recorrido</button>
-                <button type="button" class="btn btn-outline-secondary" data-orden="nombre">Por paciente</button>
+                <button type="button" class="btn btn-outline-secondary ms-2" data-orden="nombre">Por paciente</button>
             </div>
         </div>
         <div class="card-body" data-slot="internados-rows"></div>
@@ -90,24 +90,27 @@
 </template>
 
 <template id="tpl-paciente-internado-row">
-    <div class="d-flex align-items-start gap-3 p-3 mb-2 bg-soft-gray rounded" data-role="internado-row">
-        <div class="flex-shrink-0">
-            <span class="badge bg-dark" data-field="cama-badge">Cama</span>
-        </div>
-        <div class="flex-grow-1">
-            <h5 class="card-title mb-0" data-field="nombre"></h5>
-            <p class="mb-1 small text-muted d-none" data-slot="documento-line">
-                Doc. <span data-field="documento"></span>
-            </p>
-            <p class="mb-1 small text-muted d-none" data-slot="ubicacion-line">
-                <span data-field="piso"></span>
-                <span aria-hidden="true"> · </span>
-                <span data-field="sala"></span>
-            </p>
-            <div class="d-flex flex-wrap gap-2 mt-2">
-                <a href="#" class="btn btn-success btn-sm" data-role="link-atender" data-spa-nav="1">Atender</a>
-                <a href="#" class="btn btn-outline-primary btn-sm d-none" data-role="link-historia" data-spa-nav="1" data-spa-title="Historia clínica">Historia</a>
+    <div class="d-flex align-items-start justify-content-between gap-3 p-3 mb-2 bg-soft-gray rounded" data-role="internado-row">
+        <div class="d-flex align-items-start gap-3 flex-grow-1">
+            <div class="flex-shrink-0">
+                <span class="badge bg-dark" data-field="cama-badge">Cama</span>
             </div>
+            <div class="flex-grow-1">
+                <h5 class="card-title mb-0" data-field="nombre"></h5>
+                <p class="mb-1 small text-muted d-none" data-slot="documento-line">
+                    Doc. <span data-field="documento"></span>
+                </p>
+                <p class="mb-1 small text-muted d-none" data-slot="ubicacion-line">
+                    <span data-field="piso"></span>
+                    <span aria-hidden="true"> · </span>
+                    <span data-field="sala"></span>
+                </p>
+            </div>
+        </div>
+        <div class="d-flex flex-column gap-1 ms-2 align-items-stretch" style="min-width: 7.5rem;">
+            <a href="#" class="btn btn-dark btn-sm" data-role="cta-atender" data-spa-nav="1" data-spa-title="Historia clínica">Atender</a>
+            <button type="button" class="btn btn-outline-info btn-sm" data-role="cta-cambio-cama">Cambio cama</button>
+            <button type="button" class="btn btn-outline-danger btn-sm" data-role="cta-alta">Alta</button>
         </div>
     </div>
 </template>

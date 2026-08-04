@@ -207,6 +207,17 @@
     border-color: var(--bioenlace-secondary) !important;
 }
 
+.btn-outline-secondary:focus {
+    box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25) !important;
+}
+
+.btn-outline-secondary:active,
+.btn-outline-secondary.active {
+    color: #fff !important;
+    background-color: var(--bioenlace-secondary) !important;
+    border-color: var(--bioenlace-secondary) !important;
+}
+
 .btn-success {
     background-color: var(--bioenlace-success) !important;
     border-color: var(--bioenlace-success) !important;

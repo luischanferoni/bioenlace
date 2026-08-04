@@ -1243,12 +1243,13 @@ class _HomeScreenState extends State<HomeScreen> {
       if (i.documento?.isNotEmpty ?? false) 'Doc. ${i.documento}',
     ].join(' · ');
 
+    void openAtender() => _verHistoriaClinica(
+          i.idPersona,
+          parent: 'INTERNACION',
+          parentId: i.id,
+        );
+
     return BioCard(
-      onTap: () => _verHistoriaClinica(
-        i.idPersona,
-        parent: 'INTERNACION',
-        parentId: i.id,
-      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1278,17 +1279,36 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
                 BioSpacing.gapH(BioSpacing.sm),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: BioButton.primary(
-                    label: 'Atender',
-                    size: BioButtonSize.sm,
-                    onPressed: () => _verHistoriaClinica(
-                      i.idPersona,
-                      parent: 'INTERNACION',
-                      parentId: i.id,
+                Wrap(
+                  spacing: BioSpacing.sm,
+                  runSpacing: BioSpacing.sm,
+                  children: [
+                    BioButton.primary(
+                      label: 'Atender',
+                      size: BioButtonSize.sm,
+                      onPressed: openAtender,
                     ),
-                  ),
+                    BioButton(
+                      label: 'Cambio cama',
+                      intent: UiIntent.info,
+                      variant: BioButtonVariant.outline,
+                      size: BioButtonSize.sm,
+                      onPressed: () => _openInternacionUiForm(
+                        i,
+                        path: '/clinical/internacion/${i.id}/cambio-cama-formulario',
+                        title: 'Cambio de cama',
+                      ),
+                    ),
+                    BioButton.outlineDanger(
+                      label: 'Alta',
+                      size: BioButtonSize.sm,
+                      onPressed: () => _openInternacionUiForm(
+                        i,
+                        path: '/clinical/internacion/${i.id}/alta-formulario',
+                        title: 'Alta hospitalaria',
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1296,6 +1316,39 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openInternacionUiForm(
+    InternadoItem i, {
+    required String path,
+    required String title,
+  }) async {
+    final token = _homePanelApi.authToken ?? widget.authToken;
+    if (token == null || token.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sesión no disponible para esta acción.')),
+      );
+      return;
+    }
+    final uri = Uri.parse(resolveApiAbsoluteUrl(path));
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UiJsonScreen(
+          apiAbsoluteUrl: uri.toString(),
+          authToken: token,
+          appClient: 'bioenlace-personalsalud',
+          title: title,
+          onSubmitSuccess: (_) async {
+            await _cargarListadoPacientes(silent: true);
+          },
+        ),
+      ),
+    );
+    if (mounted) {
+      await _cargarListadoPacientes(silent: true);
+    }
   }
 
   Color? _colorFromHex(String? hex) {

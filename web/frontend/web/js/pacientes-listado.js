@@ -82,7 +82,6 @@
     var esGuardia = root.getAttribute('data-es-guardia') === '1';
     var urlHistoriaBase = root.getAttribute('data-url-historia') || '';
     var urlVerConsultaBase = root.getAttribute('data-url-ver-consulta') || '';
-    var urlInternacionView = root.getAttribute('data-url-internacion-view') || '';
     var urlAsistente = root.getAttribute('data-url-asistente') || '';
 
     var msgEmptyTurnos = root.getAttribute('data-msg-empty-turnos') || 'Sin resultados.';
@@ -390,15 +389,26 @@
         }
       }
 
-      var urlView = urlInternacionView ? (urlInternacionView + '?id=' + encodeURIComponent(String(i.id))) : null;
-      var aAtender = rowEl.querySelector('[data-role="link-atender"]');
-      if (aAtender && urlView) aAtender.href = urlView;
-
       var urlHistoria = historiaConContexto(i.id_persona, { parent: 'INTERNACION', parent_id: i.id });
-      var aHist = rowEl.querySelector('[data-role="link-historia"]');
-      if (aHist && urlHistoria) {
-        aHist.href = urlHistoria;
-        aHist.classList.remove('d-none');
+      var ctaAtender = rowEl.querySelector('[data-role="cta-atender"]');
+      if (ctaAtender && urlHistoria) {
+        ctaAtender.href = urlHistoria;
+        ctaAtender.setAttribute('data-spa-title', 'Historia clínica');
+      }
+
+      var ctaCambio = rowEl.querySelector('[data-role="cta-cambio-cama"]');
+      if (ctaCambio) {
+        ctaCambio.onclick = function (ev) {
+          ev.preventDefault();
+          openCambioCamaModal(i);
+        };
+      }
+      var ctaAlta = rowEl.querySelector('[data-role="cta-alta"]');
+      if (ctaAlta) {
+        ctaAlta.onclick = function (ev) {
+          ev.preventDefault();
+          openAltaInternacionModal(i);
+        };
       }
     }
 
@@ -745,6 +755,10 @@
     var clinicalModal = null;
     var clinicalModalGuardiaId = 0;
     var ingresoCamaModal = null;
+    var cambioCamaModal = null;
+    var altaInternacionModal = null;
+    var cambioCamaInternacionId = null;
+    var altaInternacionId = null;
 
     function getClinicalModal() {
       if (!clinicalModal) {
@@ -1080,6 +1094,311 @@
         await loadGuardiaTablero(false);
       } catch (e) {
         showIngresoError(e && e.message ? e.message : 'No se pudo registrar el ingreso.');
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
+
+    function unwrapUiDefinitionPayload(json) {
+      var root = json;
+      if (json && json.data && json.data.kind === 'ui_definition') {
+        root = json.data;
+      }
+      var ctx = (root && root.kind === 'ui_definition')
+        ? (root.data || {})
+        : (json && json.data && !json.kind ? json.data : (json || {}));
+      return { root: root, ctx: ctx || {} };
+    }
+
+    function getCambioCamaModal() {
+      if (!cambioCamaModal) {
+        var el = document.getElementById('internacion-cambio-cama-modal');
+        if (el && window.bootstrap && window.bootstrap.Modal) {
+          cambioCamaModal = new window.bootstrap.Modal(el);
+        }
+      }
+      return cambioCamaModal;
+    }
+
+    function showCambioCamaError(msg) {
+      var errEl = document.getElementById('internacion-cambio-cama-error');
+      if (!errEl) return;
+      if (msg) {
+        errEl.textContent = msg;
+        errEl.classList.remove('d-none');
+      } else {
+        errEl.textContent = '';
+        errEl.classList.add('d-none');
+      }
+    }
+
+    async function openCambioCamaModal(item) {
+      var api = window.BioenlaceNativePage;
+      var modal = getCambioCamaModal();
+      if (!api || !modal || !item || !item.id) return;
+
+      cambioCamaInternacionId = item.id;
+      var nameEl = document.getElementById('internacion-cambio-cama-paciente');
+      if (nameEl) nameEl.textContent = item.nombre || ('Internación #' + item.id);
+      var loadingEl = document.getElementById('internacion-cambio-cama-loading');
+      var formEl = document.getElementById('internacion-cambio-cama-form');
+      var submitBtn = document.getElementById('internacion-cambio-cama-submit');
+      if (loadingEl) loadingEl.classList.remove('d-none');
+      if (formEl) formEl.classList.add('d-none');
+      if (submitBtn) submitBtn.disabled = true;
+      showCambioCamaError(null);
+      modal.show();
+
+      try {
+        var url = api.apiV1Url('clinical/internacion/' + item.id + '/cambio-cama-formulario');
+        var json = await api.fetchJson(url, {
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        var unwrapped = unwrapUiDefinitionPayload(json);
+        var ctx = unwrapped.ctx;
+        var camas = ctx.camas_disponibles || [];
+        if (!Array.isArray(camas)) {
+          throw new Error((json && json.message) || 'No se pudo cargar el cambio de cama.');
+        }
+        var camaActualEl = document.getElementById('internacion-cambio-cama-actual');
+        if (camaActualEl) {
+          camaActualEl.textContent = ctx.cama_actual_label
+            ? ('Cama actual: ' + ctx.cama_actual_label)
+            : '';
+        }
+        fillSelectOptions(
+          document.getElementById('internacion-cambio-cama-id-cama'),
+          camas,
+          '— Elegir cama —'
+        );
+        var motivoEl = document.getElementById('internacion-cambio-cama-motivo');
+        if (motivoEl) motivoEl.value = '';
+        if (loadingEl) loadingEl.classList.add('d-none');
+        if (formEl) formEl.classList.remove('d-none');
+        if (submitBtn) submitBtn.disabled = camas.length === 0;
+        if (camas.length === 0) {
+          showCambioCamaError('No hay camas disponibles para el cambio.');
+        }
+      } catch (e) {
+        if (loadingEl) loadingEl.classList.add('d-none');
+        showCambioCamaError(e && e.message ? e.message : 'No se pudo cargar el cambio de cama.');
+      }
+    }
+
+    async function submitCambioCamaModal() {
+      var api = window.BioenlaceNativePage;
+      if (!api || !cambioCamaInternacionId) return;
+      var idCama = (document.getElementById('internacion-cambio-cama-id-cama') || {}).value || '';
+      var motivo = (document.getElementById('internacion-cambio-cama-motivo') || {}).value || '';
+      if (!idCama || !motivo.trim()) {
+        showCambioCamaError('Completá cama destino y motivo.');
+        return;
+      }
+      var submitBtn = document.getElementById('internacion-cambio-cama-submit');
+      if (submitBtn) submitBtn.disabled = true;
+      showCambioCamaError(null);
+      try {
+        var url = api.apiV1Url(
+          'clinical/internacion/' + cambioCamaInternacionId + '/cambio-cama-formulario'
+        );
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ id_cama: idCama, motivo: motivo }),
+        });
+        var ok = json && (json.success === true || json.kind === 'ui_submit_result');
+        if (json && json.kind === 'ui_submit_result' && json.success === false) {
+          ok = false;
+        }
+        if (!ok && json && json.success === false) {
+          throw new Error(json.message || 'No se pudo registrar el cambio de cama.');
+        }
+        var modal = getCambioCamaModal();
+        if (modal) modal.hide();
+        await load();
+      } catch (e) {
+        showCambioCamaError(e && e.message ? e.message : 'No se pudo registrar el cambio de cama.');
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    }
+
+    function getAltaInternacionModal() {
+      if (!altaInternacionModal) {
+        var el = document.getElementById('internacion-alta-modal');
+        if (el && window.bootstrap && window.bootstrap.Modal) {
+          altaInternacionModal = new window.bootstrap.Modal(el);
+        }
+      }
+      return altaInternacionModal;
+    }
+
+    function showAltaInternacionError(msg) {
+      var errEl = document.getElementById('internacion-alta-error');
+      if (!errEl) return;
+      if (msg) {
+        errEl.textContent = msg;
+        errEl.classList.remove('d-none');
+      } else {
+        errEl.textContent = '';
+        errEl.classList.add('d-none');
+      }
+    }
+
+    function mapOptionsValueLabel(rows, valueKey, labelKey) {
+      return (rows || []).map(function (r) {
+        return {
+          value: String(r[valueKey] != null ? r[valueKey] : (r.value != null ? r.value : '')),
+          label: String(r[labelKey] != null ? r[labelKey] : (r.label != null ? r.label : '')),
+        };
+      });
+    }
+
+    async function openAltaInternacionModal(item) {
+      var api = window.BioenlaceNativePage;
+      var modal = getAltaInternacionModal();
+      if (!api || !modal || !item || !item.id) return;
+
+      altaInternacionId = item.id;
+      var nameEl = document.getElementById('internacion-alta-paciente');
+      if (nameEl) nameEl.textContent = item.nombre || ('Internación #' + item.id);
+      var loadingEl = document.getElementById('internacion-alta-loading');
+      var formEl = document.getElementById('internacion-alta-form');
+      var submitBtn = document.getElementById('internacion-alta-submit');
+      if (loadingEl) loadingEl.classList.remove('d-none');
+      if (formEl) formEl.classList.add('d-none');
+      if (submitBtn) submitBtn.disabled = true;
+      showAltaInternacionError(null);
+      modal.show();
+
+      try {
+        var url = api.apiV1Url('clinical/internacion/' + item.id + '/alta-formulario');
+        var json = await api.fetchJson(url, {
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        var unwrapped = unwrapUiDefinitionPayload(json);
+        var ctx = unwrapped.ctx;
+        var tipos = mapOptionsValueLabel(ctx.tipos_alta || [], 'id', 'label');
+        var plantillas = mapOptionsValueLabel(ctx.plantillas || [], 'id', 'nombre');
+        if (!Array.isArray(ctx.tipos_alta)) {
+          throw new Error((json && json.message) || 'No se pudo cargar el alta.');
+        }
+
+        var respEl = document.getElementById('internacion-alta-responsable');
+        if (respEl) {
+          respEl.textContent = ctx.responsable_nombre
+            ? ('Responsable: ' + ctx.responsable_nombre)
+            : '';
+        }
+        var fechaEl = document.getElementById('internacion-alta-fecha');
+        var horaEl = document.getElementById('internacion-alta-hora');
+        var now = new Date();
+        if (fechaEl) {
+          fechaEl.value = now.toISOString().slice(0, 10);
+        }
+        if (horaEl) {
+          horaEl.value = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+        fillSelectOptions(
+          document.getElementById('internacion-alta-tipo'),
+          tipos,
+          '— Elegir tipo —'
+        );
+        fillSelectOptions(
+          document.getElementById('internacion-alta-plantilla'),
+          plantillas,
+          '— Sin plantilla —'
+        );
+        var epicEl = document.getElementById('internacion-alta-epicrisis');
+        if (epicEl) epicEl.value = '';
+        ['internacion-alta-chk-med', 'internacion-alta-chk-ind', 'internacion-alta-chk-ped'].forEach(function (id) {
+          var chk = document.getElementById(id);
+          if (chk) chk.checked = false;
+        });
+
+        if (loadingEl) loadingEl.classList.add('d-none');
+        if (formEl) formEl.classList.remove('d-none');
+        if (submitBtn) submitBtn.disabled = false;
+      } catch (e) {
+        if (loadingEl) loadingEl.classList.add('d-none');
+        showAltaInternacionError(e && e.message ? e.message : 'No se pudo cargar el alta.');
+      }
+    }
+
+    async function onAltaPlantillaChange() {
+      var api = window.BioenlaceNativePage;
+      var sel = document.getElementById('internacion-alta-plantilla');
+      var ta = document.getElementById('internacion-alta-epicrisis');
+      if (!api || !sel || !ta || !altaInternacionId || !sel.value) return;
+      try {
+        var url = api.apiV1Url(
+          'clinical/internacion/' + altaInternacionId
+            + '/preview-plantilla-epicrisis?plantilla_id=' + encodeURIComponent(sel.value)
+        );
+        var json = await api.fetchJson(url, {
+          method: 'GET',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (json && json.success && json.data && json.data.epicrisis) {
+          ta.value = json.data.epicrisis;
+        }
+      } catch (e) {
+        /* preview opcional */
+      }
+    }
+
+    async function submitAltaInternacionModal() {
+      var api = window.BioenlaceNativePage;
+      if (!api || !altaInternacionId) return;
+      var payload = {
+        fecha_fin: (document.getElementById('internacion-alta-fecha') || {}).value || '',
+        hora_fin: (document.getElementById('internacion-alta-hora') || {}).value || '',
+        id_tipo_alta: (document.getElementById('internacion-alta-tipo') || {}).value || '',
+        plantilla_id: (document.getElementById('internacion-alta-plantilla') || {}).value || '',
+        epicrisis: (document.getElementById('internacion-alta-epicrisis') || {}).value || '',
+        checklist_medicacion: document.getElementById('internacion-alta-chk-med')
+          && document.getElementById('internacion-alta-chk-med').checked ? '1' : '',
+        checklist_indicaciones: document.getElementById('internacion-alta-chk-ind')
+          && document.getElementById('internacion-alta-chk-ind').checked ? '1' : '',
+        checklist_pedidos: document.getElementById('internacion-alta-chk-ped')
+          && document.getElementById('internacion-alta-chk-ped').checked ? '1' : '',
+      };
+      if (!payload.fecha_fin || !payload.hora_fin || !payload.id_tipo_alta || !payload.epicrisis.trim()) {
+        showAltaInternacionError('Completá fecha, hora, tipo de alta y epicrisis.');
+        return;
+      }
+      if (!payload.checklist_medicacion || !payload.checklist_indicaciones || !payload.checklist_pedidos) {
+        showAltaInternacionError('Confirmá el checklist de egreso.');
+        return;
+      }
+      var submitBtn = document.getElementById('internacion-alta-submit');
+      if (submitBtn) submitBtn.disabled = true;
+      showAltaInternacionError(null);
+      try {
+        var url = api.apiV1Url('clinical/internacion/' + altaInternacionId + '/alta-formulario');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify(payload),
+        });
+        var ok = json && (json.success === true || json.kind === 'ui_submit_result');
+        if (json && json.kind === 'ui_submit_result' && json.success === false) {
+          ok = false;
+        }
+        if (!ok && json && json.success === false) {
+          throw new Error(json.message || 'No se pudo registrar el alta.');
+        }
+        var modal = getAltaInternacionModal();
+        if (modal) modal.hide();
+        await load();
+      } catch (e) {
+        showAltaInternacionError(e && e.message ? e.message : 'No se pudo registrar el alta.');
         if (submitBtn) submitBtn.disabled = false;
       }
     }
@@ -3226,6 +3545,18 @@
     var ingresoCamaSubmit = document.getElementById('guardia-ingreso-submit');
     if (ingresoCamaSubmit) {
       ingresoCamaSubmit.addEventListener('click', submitIngresoCamaModal);
+    }
+    var cambioCamaSubmit = document.getElementById('internacion-cambio-cama-submit');
+    if (cambioCamaSubmit) {
+      cambioCamaSubmit.addEventListener('click', submitCambioCamaModal);
+    }
+    var altaInternacionSubmit = document.getElementById('internacion-alta-submit');
+    if (altaInternacionSubmit) {
+      altaInternacionSubmit.addEventListener('click', submitAltaInternacionModal);
+    }
+    var altaPlantillaSel = document.getElementById('internacion-alta-plantilla');
+    if (altaPlantillaSel) {
+      altaPlantillaSel.addEventListener('change', onAltaPlantillaChange);
     }
     var asyncChatSend = document.getElementById('async-chat-send');
     if (asyncChatSend) {

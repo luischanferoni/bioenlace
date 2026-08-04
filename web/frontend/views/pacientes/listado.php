@@ -80,15 +80,6 @@ $this->title = $esGuardia
 </div>
 <?php endif; ?>
 
-<?php if ($esImpPiso && is_array($mapaCtx)): ?>
-    <?= $this->render('//internacion/_mapa_panel', [
-        'pisos_efector' => $mapaCtx['pisos_efector'] ?? [],
-        'mapa' => $mapaCtx['mapa'] ?? null,
-        'pacienteInternado' => !empty($mapaCtx['paciente_internado']),
-        'formAction' => Url::to(['site/index', 'fecha' => $fecha]),
-    ]) ?>
-<?php endif; ?>
-
 <div id="pacientes-listado-container"
      data-fecha="<?= Html::encode($fecha) ?>"
      data-encounter="<?= Html::encode($encounter_class) ?>"
@@ -112,6 +103,15 @@ $this->title = $esGuardia
     <div id="pacientes-listado-content" class="d-none"></div>
     <div id="pacientes-listado-error" class="d-none alert alert-warning"></div>
 </div>
+
+<?php if ($esImpPiso && is_array($mapaCtx)): ?>
+    <?= $this->render('//internacion/_mapa_panel', [
+        'pisos_efector' => $mapaCtx['pisos_efector'] ?? [],
+        'mapa' => $mapaCtx['mapa'] ?? null,
+        'pacienteInternado' => !empty($mapaCtx['paciente_internado']),
+        'formAction' => Url::to(['site/index', 'fecha' => $fecha]),
+    ]) ?>
+<?php endif; ?>
 
 <?= $this->render('_listado_templates') ?>
 

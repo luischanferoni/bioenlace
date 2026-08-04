@@ -103,8 +103,8 @@ final class InternacionIndicadoresService
         ?float $media,
         ?float $mediana
     ): string {
+        // No concatenar el resumen del mapa: evita duplicar "Camas: …" en clientes.
         $lines = [
-            $mapaResumen,
             "Internaciones activas: {$activas}",
         ];
         if ($media !== null) {
@@ -114,6 +114,6 @@ final class InternacionIndicadoresService
             $lines[] = "Estadía mediana (días): {$mediana}";
         }
 
-        return implode("\n", array_filter($lines));
+        return implode(' · ', $lines);
     }
 }

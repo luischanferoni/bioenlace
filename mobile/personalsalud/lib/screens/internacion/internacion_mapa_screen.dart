@@ -24,26 +24,36 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
   bool _loading = true;
   String? _error;
   Map<String, dynamic>? _mapa;
-  Map<String, dynamic>? _indicadores;
+  int? _idPiso;
+  int? _idSala;
+  /// Catálogo completo para los selects (no depende del filtro activo).
+  List<Map<String, dynamic>> _pisosCatalog = const [];
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _load(bootstrapCatalog: true);
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool bootstrapCatalog = false}) async {
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final mapa = await _api.mapaCamas();
-      final ind = await _api.indicadoresResumen();
+      if (bootstrapCatalog || _pisosCatalog.isEmpty) {
+        final full = await _api.mapaCamas();
+        final pisos = (full['pisos'] as List<dynamic>? ?? [])
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+        if (!mounted) return;
+        _pisosCatalog = pisos;
+      }
+      final mapa = await _api.mapaCamas(idPiso: _idPiso, idSala: _idSala);
       if (!mounted) return;
       setState(() {
         _mapa = mapa;
-        _indicadores = ind;
         _loading = false;
       });
     } catch (e) {
@@ -68,19 +78,59 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
     }
   }
 
+  List<DropdownMenuItem<int?>> _pisoItems() {
+    final items = <DropdownMenuItem<int?>>[
+      const DropdownMenuItem<int?>(value: null, child: Text('Todos los pisos')),
+    ];
+    for (final piso in _pisosCatalog) {
+      final id = (piso['id'] as num?)?.toInt();
+      if (id == null) continue;
+      items.add(DropdownMenuItem<int?>(
+        value: id,
+        child: Text('${piso['descripcion'] ?? 'Piso $id'}'),
+      ));
+    }
+    return items;
+  }
+
+  List<DropdownMenuItem<int?>> _salaItems() {
+    final items = <DropdownMenuItem<int?>>[
+      const DropdownMenuItem<int?>(value: null, child: Text('Todas las salas')),
+    ];
+    if (_idPiso == null) return items;
+    for (final piso in _pisosCatalog) {
+      if ((piso['id'] as num?)?.toInt() != _idPiso) continue;
+      final salas = piso['salas'] as List<dynamic>? ?? [];
+      for (final sala in salas) {
+        if (sala is! Map) continue;
+        final id = (sala['id'] as num?)?.toInt();
+        if (id == null) continue;
+        items.add(DropdownMenuItem<int?>(
+          value: id,
+          child: Text('${sala['descripcion'] ?? 'Sala $id'}'),
+        ));
+      }
+    }
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.bio;
+    final resumen = (_mapa?['resumen'] is Map)
+        ? Map<String, dynamic>.from(_mapa!['resumen'] as Map)
+        : const <String, dynamic>{};
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mapa de camas'),
         actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _loading ? null : _load),
+                          IconButton(icon: const Icon(Icons.refresh), onPressed: _loading ? null : () => _load(bootstrapCatalog: true)),
         ],
       ),
-      body: _loading
+      body: _loading && _mapa == null
           ? const Center(child: CircularProgressIndicator())
-          : _error != null
+          : _error != null && _mapa == null
               ? Center(
                   child: Padding(
                     padding: BioSpacing.pageAll,
@@ -89,10 +139,7 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
                       children: [
                         BioAlert.danger(message: _error!),
                         BioSpacing.gapH(BioSpacing.md),
-                        BioButton(
-                          label: 'Reintentar',
-                          onPressed: _load,
-                        ),
+                        BioButton(label: 'Reintentar', onPressed: _load),
                       ],
                     ),
                   ),
@@ -100,17 +147,72 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
               : ListView(
                   padding: BioSpacing.pageAll,
                   children: [
-                    if (_mapa?['resumen_texto'] != null)
-                      Text(
-                        _mapa!['resumen_texto'].toString(),
-                        style: BioTypography.body,
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<int?>(
+                            value: _idPiso,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Piso',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            items: _pisoItems(),
+                            onChanged: _loading
+                                ? null
+                                : (v) {
+                                    setState(() {
+                                      _idPiso = v;
+                                      _idSala = null;
+                                    });
+                                    _load();
+                                  },
+                          ),
+                        ),
+                        BioSpacing.gapW(BioSpacing.sm),
+                        Expanded(
+                          child: DropdownButtonFormField<int?>(
+                            value: _idSala,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              labelText: 'Sala',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                            items: _salaItems(),
+                            onChanged: _loading || _idPiso == null
+                                ? null
+                                : (v) {
+                                    setState(() => _idSala = v);
+                                    _load();
+                                  },
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (resumen.isNotEmpty) ...[
+                      BioSpacing.gapH(BioSpacing.md),
+                      Wrap(
+                        spacing: BioSpacing.sm,
+                        runSpacing: BioSpacing.sm,
+                        children: [
+                          _kpiChip(tokens, 'Camas', '${resumen['camas_total'] ?? 0}'),
+                          _kpiChip(tokens, 'Ocupadas', '${resumen['ocupadas'] ?? 0}'),
+                          _kpiChip(
+                            tokens,
+                            'Ocupación',
+                            resumen['ocupacion_pct'] != null
+                                ? '${resumen['ocupacion_pct']}%'
+                                : '—',
+                          ),
+                          _kpiChip(tokens, 'Libres', '${resumen['libres'] ?? 0}'),
+                        ],
                       ),
-                    if (_indicadores?['resumen_texto'] != null) ...[
-                      BioSpacing.gapH(BioSpacing.sm),
-                      Text(
-                        _indicadores!['resumen_texto'].toString(),
-                        style: BioTypography.caption,
-                      ),
+                    ],
+                    if (_loading) ...[
+                      BioSpacing.gapH(BioSpacing.md),
+                      const LinearProgressIndicator(),
                     ],
                     BioSpacing.gapH(BioSpacing.lg),
                     ..._buildPisos(tokens),
@@ -119,15 +221,52 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
     );
   }
 
+  Widget _kpiChip(BioTokens tokens, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: tokens.paperBackground,
+        borderRadius: BioRadius.all(BioRadius.sm),
+        border: BioBorder.all(BorderWidth.thin, tokens.paperBorderDefault),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: BioTypography.caption.copyWith(color: tokens.textMuted)),
+          Text(value, style: BioTypography.title),
+        ],
+      ),
+    );
+  }
+
   List<Widget> _buildPisos(BioTokens tokens) {
     final pisos = _mapa?['pisos'] as List<dynamic>? ?? [];
+    if (pisos.isEmpty) {
+      return [
+        Text(
+          'No hay camas para mostrar con el filtro actual.',
+          style: BioTypography.bodySm.copyWith(color: tokens.textMuted),
+        ),
+      ];
+    }
     final widgets = <Widget>[];
     for (final piso in pisos) {
       if (piso is! Map) continue;
       widgets.add(
-        Text(
-          'Piso: ${piso['descripcion'] ?? ''}',
-          style: BioTypography.h3,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: IntentPalette.of(UiIntent.primary).softBg,
+            borderRadius: BioRadius.all(BioRadius.sm),
+          ),
+          child: Text(
+            '${piso['descripcion'] ?? 'Piso'}',
+            style: BioTypography.bodySm.copyWith(
+              color: IntentPalette.of(UiIntent.primary).base,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       );
       widgets.add(BioSpacing.gapH(BioSpacing.sm));
@@ -135,9 +274,21 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
       for (final sala in salas) {
         if (sala is! Map) continue;
         widgets.add(
-          Padding(
-            padding: const EdgeInsets.only(left: 8, bottom: 8),
-            child: Text('Sala: ${sala['descripcion'] ?? ''}', style: BioTypography.title),
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: IntentPalette.of(UiIntent.success).softBg,
+              borderRadius: BioRadius.all(BioRadius.sm),
+            ),
+            child: Text(
+              '${sala['descripcion'] ?? 'Sala'}',
+              style: BioTypography.bodySm.copyWith(
+                color: IntentPalette.of(UiIntent.success).base,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         );
         final camas = sala['camas'] as List<dynamic>? ?? [];
@@ -153,14 +304,12 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
               final camaId = (c['id'] as num?)?.toInt() ?? 0;
               return ActionChip(
                 label: Text(
-                  nombre != null && nombre.isNotEmpty ? '$nro · $nombre' : '$nro · $estado',
+                  nombre != null && nombre.isNotEmpty ? 'Cama $nro · $nombre' : 'Cama $nro · $estado',
                   style: const TextStyle(fontSize: 12),
                 ),
                 backgroundColor: _colorEstado(estado).withValues(alpha: 0.15),
                 side: BorderSide(color: _colorEstado(estado)),
-                onPressed: estado == 'ocupada'
-                    ? null
-                    : () => _accionesCama(camaId, estado),
+                onPressed: estado == 'ocupada' ? null : () => _accionesCama(camaId, estado),
               );
             }).toList(),
           ),
@@ -198,14 +347,10 @@ class _InternacionMapaScreenState extends State<InternacionMapaScreen> {
         ),
       ),
     );
-    if (choice == null || !mounted) return;
+    if (choice == null) return;
     try {
       await _api.marcarEstadoCama(camaId, choice);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cama actualizada')),
-      );
-      _load();
+      await _load();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

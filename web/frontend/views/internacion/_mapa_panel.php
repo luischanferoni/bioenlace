@@ -11,10 +11,11 @@ InternacionMapaAsset::register($this);
 
 $urlReset = $formAction;
 ?>
-<div class="card mb-4">
+<div class="card mb-4 mt-4">
     <div class="card-body">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
             <p class="mb-0 fw-semibold">Mapa de camas</p>
+            <p class="mb-0 small text-muted">Filtro del plano físico (la ronda de pacientes está arriba).</p>
         </div>
         <div class="row">
             <?= $this->render('_searchPorPisoSala', [

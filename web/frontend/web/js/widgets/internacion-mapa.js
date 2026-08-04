@@ -1,11 +1,11 @@
 /**
- * Mapa de camas: marcar bloqueada/aislamiento/libre e indicadores vía API v1.
+ * Mapa de camas: marcar bloqueada/aislamiento/libre vía API v1.
+ * Los KPIs viven en el panel de inicio (no duplicar resumen_texto aquí).
  */
 (function () {
   'use strict';
 
   function apiUrl(path) {
-    var base = (window.getBioenlaceApiClientHeaders && window.getBioenlaceApiClientHeaders()) || {};
     var origin = window.location.origin || '';
     return origin + '/api/v1' + path;
   }
@@ -19,20 +19,6 @@
       headers['Content-Type'] = 'application/json';
     }
     return fetch(apiUrl(path), Object.assign({}, opts, { headers: headers, credentials: 'same-origin' }));
-  }
-
-  function initIndicadores(root) {
-    var el = document.getElementById('internacion-indicadores-resumen');
-    if (!el) return;
-    apiFetch('/clinical/internacion/indicadores-resumen')
-      .then(function (r) { return r.json(); })
-      .then(function (json) {
-        if (!json || !json.success) return;
-        var d = json.data || {};
-        el.textContent = d.resumen_texto || '';
-        el.classList.remove('d-none');
-      })
-      .catch(function () {});
   }
 
   function marcarCama(camaId, estado, motivo) {
@@ -71,9 +57,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
-    var root = document.getElementById('internacion-mapa-root');
-    if (!root) return;
-    initIndicadores(root);
+    if (!document.getElementById('internacion-mapa-root')) return;
     bindMapaActions();
   });
 })();

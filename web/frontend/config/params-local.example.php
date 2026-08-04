@@ -26,10 +26,12 @@ return [
     //     'id_efector' => 0,
     //     'servicio_nombre' => 'MED GENERAL',
     //     'seed' => [
-    //         'pacientes' => 4,
+    //         'pacientes' => 6,
     //         'turnos' => 2,
     //         'with_agenda' => true,
     //         'with_consulta_amb' => true,
+    //         'with_consulta_async' => true,
+    //         'consultas_async' => 2,
     //         'with_guardia' => true,
     //         'with_internacion' => true,
     //     ],

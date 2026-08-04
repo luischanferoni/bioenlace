@@ -163,11 +163,14 @@ return [
         'id_efector' => 0,
         'servicio_nombre' => 'MED GENERAL',
         'seed' => [
-            'pacientes' => 4,
+            'pacientes' => 6,
             'turnos' => 2,
             'with_agenda' => true,
             /** Encounter AMB in-progress sobre el 1.er turno (captura clínica). */
             'with_consulta_amb' => true,
+            /** Consultas clínicas por mensaje (encounter VR planned → bandeja Virtual). */
+            'with_consulta_async' => true,
+            'consultas_async' => 2,
             /** Best-effort: no exige entitlement EMER para persistir la fila. */
             'with_guardia' => true,
             /** Crea piso/sala/cama efímeros + ingreso (sin assert HTTP). */

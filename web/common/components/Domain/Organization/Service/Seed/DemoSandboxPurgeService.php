@@ -66,6 +66,11 @@ final class DemoSandboxPurgeService
                 if ($idEncounter <= 0) {
                     continue;
                 }
+                try {
+                    \common\models\ConsultaChatMessage::deleteAll(['encounter_id' => $idEncounter]);
+                } catch (\Throwable $e) {
+                    $errors[] = 'chat ' . $idEncounter . ': ' . $e->getMessage();
+                }
                 $encounter = Encounter::findOne($idEncounter);
                 if ($encounter !== null && $encounter->deleted_at === null) {
                     $encounter->deleted_at = $now;
@@ -160,11 +165,23 @@ final class DemoSandboxPurgeService
                     continue;
                 }
                 $persona = Persona::findOne($idPaciente);
-                if ($persona !== null && (int) ($persona->id_user ?? 0) === 0) {
-                    $persona->documento = $this->retireDocumento((string) $persona->documento, $idPaciente);
-                    $persona->apellido = 'DemoPurged';
-                    $persona->save(false);
+                if ($persona === null) {
+                    continue;
                 }
+                $idUserPac = (int) ($persona->id_user ?? 0);
+                if ($idUserPac > 0) {
+                    $uPac = User::findOne($idUserPac);
+                    if ($uPac !== null) {
+                        $uPac->status = User::STATUS_INACTIVE;
+                        $uPac->username = 'x_p_' . $session->id . '_' . substr((string) $uPac->username, 0, 36);
+                        $uPac->email = 'purged_p_' . $session->id . '_' . $idPaciente . '@demo.bioenlace.local';
+                        $uPac->save(false);
+                    }
+                }
+                $persona->documento = $this->retireDocumento((string) $persona->documento, $idPaciente);
+                $persona->apellido = 'DemoPurged';
+                $persona->id_user = null;
+                $persona->save(false);
             }
 
             $staff = Persona::findOne((int) $session->id_persona);

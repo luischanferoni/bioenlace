@@ -3,9 +3,11 @@
 namespace common\components\Domain\Organization\Service\Seed;
 
 use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
+use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\components\Domain\Person\Util\CuilValidator;
+use common\components\Domain\Scheduling\Service\ConsultaAsyncInitialChatService;
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\Clinical\Encounter;
 use common\models\Guardia;
@@ -17,20 +19,29 @@ use common\models\Scheduling\Turno;
 use common\models\SegNivelInternacion;
 use common\models\SegNivelInternacionRepository;
 use common\models\SegNivelInternacionTipoIngreso;
+use common\models\User;
 use Yii;
 
 /**
- * Seed clínico mínimo para una sesión demo (pacientes, turnos, consulta AMB, guardia, internación).
+ * Seed clínico mínimo para una sesión demo (pacientes, turnos, consulta AMB, async VR, guardia, internación).
  */
 final class DemoSandboxClinicalSeedService
 {
     public const SEED_MARKER = 'seed:demo-sandbox-clinical';
+
+    /** Mensajes paciente para bandeja Virtual (Por tomar). */
+    private const ASYNC_MENSAJES = [
+        'Tengo dolor de garganta desde hace dos días y algo de fiebre. ¿Debo consultar presencial o alcanza con medicación?',
+        'Quería consultar por renovación de medicación para la presión. Sigo estable y sin efectos adversos.',
+    ];
 
     /**
      * @param array{
      *     pacientes?: int,
      *     turnos?: int,
      *     with_consulta_amb?: bool,
+     *     with_consulta_async?: bool,
+     *     consultas_async?: int,
      *     with_guardia?: bool,
      *     with_internacion?: bool
      * } $options
@@ -38,12 +49,14 @@ final class DemoSandboxClinicalSeedService
      *     paciente_ids: list<int>,
      *     turno_ids: list<int>,
      *     encounter_ids: list<int>,
+     *     async_encounter_ids: list<int>,
      *     guardia_ids: list<int>,
      *     internacion_ids: list<int>,
      *     cama_ids: list<int>,
      *     sala_ids: list<int>,
      *     piso_ids: list<int>,
-     *     documentos_pacientes: list<string>
+     *     documentos_pacientes: list<string>,
+     *     fecha_turnos: string
      * }
      */
     public function seedForStaff(
@@ -56,17 +69,23 @@ final class DemoSandboxClinicalSeedService
         $withGuardia = (bool) ($options['with_guardia'] ?? false);
         $withInternacion = (bool) ($options['with_internacion'] ?? false);
         $withConsultaAmb = (bool) ($options['with_consulta_amb'] ?? true);
+        $withConsultaAsync = (bool) ($options['with_consulta_async'] ?? true);
+        $nAsync = $withConsultaAsync
+            ? max(0, (int) ($options['consultas_async'] ?? 2))
+            : 0;
         $nTurnos = max(0, (int) ($options['turnos'] ?? 2));
         if ($withConsultaAmb && $nTurnos < 1) {
             $nTurnos = 1;
         }
-        $minPacientes = $nTurnos + ($withGuardia ? 1 : 0) + ($withInternacion ? 1 : 0);
+        $minPacientes = $nTurnos + $nAsync + ($withGuardia ? 1 : 0) + ($withInternacion ? 1 : 0);
         $nPacientes = max($minPacientes, max(1, (int) ($options['pacientes'] ?? 4)));
 
         $pacienteIds = [];
         $documentos = [];
         for ($i = 0; $i < $nPacientes; $i++) {
-            [$idPersona, $doc] = $this->createPaciente($i + 1);
+            // Pacientes de async llevan usuario: el chat inicial exige id_user.
+            $withUser = $i >= $nTurnos && $i < ($nTurnos + $nAsync);
+            [$idPersona, $doc] = $this->createPaciente($i + 1, $withUser);
             $pacienteIds[] = $idPersona;
             $documentos[] = $doc;
         }
@@ -104,7 +123,32 @@ final class DemoSandboxClinicalSeedService
             $encounterIds = $this->ensureConsultaAmbFromFirstTurno($turnoIds[0], $actingUserId);
         }
 
-        $nextIdx = $limit;
+        $asyncEncounterIds = [];
+        $asyncStart = $limit;
+        for ($i = 0; $i < $nAsync; $i++) {
+            $idx = $asyncStart + $i;
+            if (!isset($pacienteIds[$idx])) {
+                break;
+            }
+            try {
+                $mensaje = self::ASYNC_MENSAJES[$i % count(self::ASYNC_MENSAJES)];
+                $idEnc = $this->createConsultaAsync(
+                    $pacienteIds[$idx],
+                    $idEfector,
+                    $idServicio,
+                    $mensaje,
+                    $actingUserId
+                );
+                if ($idEnc > 0) {
+                    $asyncEncounterIds[] = $idEnc;
+                    $encounterIds[] = $idEnc;
+                }
+            } catch (\Throwable $e) {
+                Yii::warning('demo sandbox consulta async VR seed: ' . $e->getMessage(), __METHOD__);
+            }
+        }
+
+        $nextIdx = $asyncStart + $nAsync;
         $guardiaIds = [];
         if ($withGuardia && isset($pacienteIds[$nextIdx])) {
             try {
@@ -154,6 +198,7 @@ final class DemoSandboxClinicalSeedService
             . ' pacientes=' . count($pacienteIds)
             . ' turnos=' . count($turnoIds)
             . ' encounters=' . count($encounterIds)
+            . ' async_vr=' . count($asyncEncounterIds)
             . ' guardia=' . count($guardiaIds)
             . ' internacion=' . count($internacionIds)
             . ' fecha_turnos=' . $fecha,
@@ -164,6 +209,7 @@ final class DemoSandboxClinicalSeedService
             'paciente_ids' => $pacienteIds,
             'turno_ids' => $turnoIds,
             'encounter_ids' => $encounterIds,
+            'async_encounter_ids' => $asyncEncounterIds,
             'guardia_ids' => $guardiaIds,
             'internacion_ids' => $internacionIds,
             'cama_ids' => $camaIds,
@@ -172,6 +218,56 @@ final class DemoSandboxClinicalSeedService
             'documentos_pacientes' => $documentos,
             'fecha_turnos' => $fecha,
         ];
+    }
+
+    /**
+     * Solicitud async planificada (bandeja Virtual → Por tomar), sin PES asignado.
+     */
+    private function createConsultaAsync(
+        int $idPersona,
+        int $idEfector,
+        int $idServicio,
+        string $mensaje,
+        int $actingUserId
+    ): int {
+        $meta = [
+            'tipo' => 'consulta_async_solicitud',
+            'seed' => self::SEED_MARKER,
+            'urgency_band' => 'C',
+            'reserva_triage_code' => 'demo_sandbox',
+        ];
+
+        // Sin PES: queda en «Por tomar». id vacío evita que start() tome el PES de sesión Yii.
+        $encounter = (new EncounterLifecycleService())->start([
+            'subject_persona_id' => $idPersona,
+            'encounter_class' => Encounter::ENCOUNTER_CLASS_VR,
+            'service_id' => $idServicio,
+            'efector_id' => $idEfector,
+            'parent_type' => Encounter::PARENT_SOLICITUD_ASYNC,
+            'parent_id' => null,
+            'reason_text' => $mensaje,
+            'note' => json_encode($meta, JSON_UNESCAPED_UNICODE),
+            'id_profesional_efector_servicio' => '',
+        ]);
+        $encounter->status = EncounterStatus::PLANNED;
+        $encounter->id_profesional_efector_servicio = null;
+        ActiveRecordConsoleBlame::prepareForSave($encounter, $actingUserId);
+        if (!$encounter->save(false)) {
+            throw new \RuntimeException('No se pudo guardar encounter async demo.');
+        }
+
+        try {
+            (new ConsultaAsyncInitialChatService())->seedMensajePaciente(
+                $encounter,
+                $idPersona,
+                $mensaje,
+                $meta
+            );
+        } catch (\Throwable $e) {
+            Yii::warning('demo sandbox chat async: ' . $e->getMessage(), __METHOD__);
+        }
+
+        return (int) $encounter->id;
     }
 
     /**
@@ -378,7 +474,7 @@ final class DemoSandboxClinicalSeedService
     /**
      * @return array{0: int, 1: string}
      */
-    private function createPaciente(int $ordinal): array
+    private function createPaciente(int $ordinal, bool $withUser = false): array
     {
         for ($attempt = 0; $attempt < 10; $attempt++) {
             $suffix = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -406,6 +502,21 @@ final class DemoSandboxClinicalSeedService
             }
             $persona->cuil = CuilValidator::buildFromDni($documento);
             $persona->save(false, ['cuil']);
+
+            if ($withUser) {
+                $username = 'demo_p_' . $suffix;
+                $user = new User();
+                $user->username = $username;
+                $user->email = $username . '@demo.bioenlace.local';
+                $user->status = User::STATUS_ACTIVE;
+                $user->setPassword(bin2hex(random_bytes(12)));
+                $user->generateAuthKey();
+                if (!$user->save(false)) {
+                    throw new \RuntimeException('User paciente demo: ' . json_encode($user->getErrors()));
+                }
+                $persona->id_user = (int) $user->id;
+                $persona->save(false, ['id_user']);
+            }
 
             return [(int) $persona->id_persona, $documento];
         }

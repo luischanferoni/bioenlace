@@ -50,9 +50,11 @@ final class DemoSandboxSessionService
             $staff['id_servicio'],
             $staff['id_user'],
             [
-                'pacientes' => (int) ($seedCfg['pacientes'] ?? 4),
+                'pacientes' => (int) ($seedCfg['pacientes'] ?? 6),
                 'turnos' => (int) ($seedCfg['turnos'] ?? 2),
                 'with_consulta_amb' => (bool) ($seedCfg['with_consulta_amb'] ?? true),
+                'with_consulta_async' => (bool) ($seedCfg['with_consulta_async'] ?? true),
+                'consultas_async' => (int) ($seedCfg['consultas_async'] ?? 2),
                 'with_guardia' => (bool) ($seedCfg['with_guardia'] ?? true),
                 'with_internacion' => (bool) ($seedCfg['with_internacion'] ?? true),
             ]
@@ -82,6 +84,7 @@ final class DemoSandboxSessionService
             'paciente_ids' => $clinical['paciente_ids'],
             'turno_ids' => $clinical['turno_ids'],
             'encounter_ids' => $clinical['encounter_ids'],
+            'async_encounter_ids' => $clinical['async_encounter_ids'] ?? [],
             'guardia_ids' => $clinical['guardia_ids'],
             'internacion_ids' => $clinical['internacion_ids'],
             'cama_ids' => $clinical['cama_ids'],

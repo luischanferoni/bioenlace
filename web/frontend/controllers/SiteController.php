@@ -481,9 +481,10 @@ class SiteController extends Controller
                     }
                     $seed = $demoSession->getSeedPayload();
                     $seedHint = sprintf(
-                        ' Seed: %d turnos, %d consultas, %d guardia, %d internación.',
+                        ' Seed: %d turnos, %d consultas AMB/async, %d virtual (mensaje), %d guardia, %d internación.',
                         count($seed['turno_ids'] ?? []),
                         count($seed['encounter_ids'] ?? []),
+                        count($seed['async_encounter_ids'] ?? []),
                         count($seed['guardia_ids'] ?? []),
                         count($seed['internacion_ids'] ?? [])
                     );

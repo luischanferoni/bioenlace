@@ -26,20 +26,21 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 
 | Dato | Detalle |
 |------|---------|
-| Pacientes | 4 (documentos `37xxxxxx`) |
+| Pacientes | 6 (documentos `37xxxxxx`; los de async tienen user para chat) |
 | Turnos | 2 (día hábil, PES propio); el 1.º con encounter AMB |
 | Consulta AMB | 1 encounter `in-progress` vía `EncounterLifecycleService::ensureFromTurno` (captura clínica) |
+| Virtual (VR) | 2 solicitudes `SOLICITUD_ASYNC` en `planned` (bandeja «Por tomar» + mensaje inicial) |
 | Guardia | 1 episodio (`GuardiaIngresoService`, best-effort) |
 | Internación | 1 ingreso + piso/sala/cama **efímeros** (sin assert HTTP; lifecycle care plan best-effort) |
 
-Pacientes distintos para turnos / guardia / internación.
+Pacientes distintos para turnos / async / guardia / internación.
 
 ## Config (`demo_sandbox`)
 
 - `demo_sandbox_habilitado`
 - `efector_codigo_sisa` (default `DEV99002PRIV`), `id_efector` (0 = resolver por SISA), `servicio_nombre` (default MED GENERAL)
 - `ttl_seconds` (código), `session_ttl_seconds` (visita), `max_per_ip_hour`
-- `seed`: `pacientes`, `turnos`, `with_agenda`, `with_consulta_amb`, `with_guardia`, `with_internacion`
+- `seed`: `pacientes`, `turnos`, `with_agenda`, `with_consulta_amb`, `with_consulta_async`, `consultas_async`, `with_guardia`, `with_internacion`
 - `profiles.staff.mode`: `ephemeral` (default) o `shared_account` (legacy)
 
 ## Seguridad

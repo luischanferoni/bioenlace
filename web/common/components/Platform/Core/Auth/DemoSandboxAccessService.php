@@ -247,6 +247,7 @@ final class DemoSandboxAccessService
                 'pacientes' => count($seedPayload['paciente_ids'] ?? []),
                 'turnos' => count($seedPayload['turno_ids'] ?? []),
                 'encounters' => count($seedPayload['encounter_ids'] ?? []),
+                'async_vr' => count($seedPayload['async_encounter_ids'] ?? []),
                 'guardia' => count($seedPayload['guardia_ids'] ?? []),
                 'internacion' => count($seedPayload['internacion_ids'] ?? []),
                 'fecha_turnos' => (string) ($seedPayload['fecha_turnos'] ?? ''),

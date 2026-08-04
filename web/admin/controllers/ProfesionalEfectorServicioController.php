@@ -14,8 +14,7 @@ use yii\web\Response;
 use common\models\busquedas\ProfesionalEfectorServicioBusqueda;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Person\Persona;
-use common\models\Servicio;
-use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AdminEfectorAsignacionService;
 
 /**
  * Gestión backend de filas PES (`profesional_efector_servicio`): listados, admin efector, live search.
@@ -85,11 +84,10 @@ class ProfesionalEfectorServicioController extends Controller
             throw new NotFoundHttpException('Este usuario no posee una persona asociada');
         }
         $error = false;
-        // Este es el servicio que le otorga el rol de AdminEfector
-        // TODO: que el string AdminEfector venga de una constante
-        $admin_efector_servicio = Servicio::find()->where(['item_name' => 'AdminEfector'])->one();
-        if ($admin_efector_servicio === null) {
-            throw new NotFoundHttpException('Servicio AdminEfector no configurado.');
+        try {
+            $admin_efector_servicio = AdminEfectorAsignacionService::requireSistemaServicio();
+        } catch (\RuntimeException $e) {
+            throw new NotFoundHttpException($e->getMessage());
         }
         $idServAdmin = (int) $admin_efector_servicio->id_servicio;
 
@@ -103,7 +101,6 @@ class ProfesionalEfectorServicioController extends Controller
             ->asArray()
             ->all();
         $persona_efectores = ArrayHelper::getColumn($pesAdminRows, 'id_efector');
-        //var_dump($persona_efectores);die;
         if (Yii::$app->request->post()) {
 
             $transaction = \Yii::$app->db->beginTransaction();
@@ -113,10 +110,9 @@ class ProfesionalEfectorServicioController extends Controller
 
                 foreach ($id_efectores_a_crear as $id_efector_a_crear) {
                     try {
-                        ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
+                        AdminEfectorAsignacionService::ensurePersonaEnEfector(
                             (int) $persona->id_persona,
-                            (int) $id_efector_a_crear,
-                            $idServAdmin
+                            (int) $id_efector_a_crear
                         );
                     } catch (\Throwable $e) {
                         $error = [$e->getMessage()];
@@ -140,7 +136,6 @@ class ProfesionalEfectorServicioController extends Controller
                 $transaction->commit();
                 return $this->redirect(['user-management/user/view', 'id' => $id]);
             } catch (Exception $e) {
-                //var_dump($e->getMessage());die;
                 $transaction->rollBack();
             }
         }
@@ -156,19 +151,17 @@ class ProfesionalEfectorServicioController extends Controller
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $servicioAdminEfector = Servicio::find()->where(['item_name' => 'AdminEfector'])->one();
-        if ($servicioAdminEfector === null) {
-            return Json::encode(['error' => true, 'message' => 'Servicio AdminEfector no configurado.']);
+        if (AdminEfectorAsignacionService::findSistemaServicio() === null) {
+            return ['error' => true, 'message' => 'Servicio AdminEfector no configurado.'];
         }
-        $idServ = (int) $servicioAdminEfector->id_servicio;
 
         $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $id_pes, 'deleted_at' => null]);
         if ($pes === null) {
-            return Json::encode(['error' => true, 'message' => 'Asignación PES no encontrada.']);
+            return ['error' => true, 'message' => 'Asignación PES no encontrada.'];
         }
         $idPersona = (int) $pes->id_persona;
         if ($idPersona <= 0) {
-            return Json::encode(['error' => true, 'message' => 'Persona no encontrada para esta asignación.']);
+            return ['error' => true, 'message' => 'Persona no encontrada para esta asignación.'];
         }
         $idEfectores = ProfesionalEfectorServicio::find()
             ->select(['id_efector'])
@@ -177,47 +170,26 @@ class ProfesionalEfectorServicioController extends Controller
             ->column();
         foreach ($idEfectores as $idEf) {
             try {
-                ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
-                    $idPersona,
-                    (int) $idEf,
-                    $idServ
-                );
+                AdminEfectorAsignacionService::ensurePersonaEnEfector($idPersona, (int) $idEf);
             } catch (\Throwable $e) {
-                return Json::encode(['error' => true, 'message' => $e->getMessage()]);
+                return ['error' => true, 'message' => $e->getMessage()];
             }
         }
 
-        return "ok";
-
+        return ['ok' => true];
     }
 
     public function actionRemoveAdminEfector($id_pes)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
-        $servicioAdminEfector = Servicio::find()->where(['item_name' => 'AdminEfector'])->one();
-        if ($servicioAdminEfector === null) {
-            return "ok";
-        }
-        $idServ = (int) $servicioAdminEfector->id_servicio;
-
         $pes = ProfesionalEfectorServicio::findOne(['id' => (int) $id_pes, 'deleted_at' => null]);
         $idPersona = $pes !== null ? (int) $pes->id_persona : 0;
         if ($idPersona > 0) {
-            foreach (
-                ProfesionalEfectorServicio::find()
-                    ->where([
-                        'id_persona' => $idPersona,
-                        'id_servicio' => $idServ,
-                        'deleted_at' => null,
-                    ])
-                    ->all() as $pesAdm
-            ) {
-                $pesAdm->delete();
-            }
+            AdminEfectorAsignacionService::removeAllForPersona($idPersona);
         }
 
-        return "ok";
+        return ['ok' => true];
     }
 
     /**

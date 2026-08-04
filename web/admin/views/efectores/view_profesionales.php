@@ -136,7 +136,6 @@ $this->registerJs(
     $(document).ready(function() {
         $('.ajax_adminefector').click(function(e) {
             e.preventDefault();
-            let parent = $(this).parent();
             sweetAlertConfirm($(this).attr('alert_title'))
                 .then((result) => {
                     if (result.isConfirmed) {
@@ -145,9 +144,14 @@ $this->registerJs(
                         $.ajax({
                             url: url,
                             type: 'POST',
+                            dataType: 'json',
                             success: function (data) {
+                                if (data && data.error) {
+                                    alertaFlotante(data.message || 'Ocurrió un error', 'danger');
+                                    return;
+                                }
                                 alertaFlotante('Listo', 'success');
-                                parent.html(data);
+                                window.location.reload();
                             },
                             error: function () {
                                 alertaFlotante('Ocurrió un error', 'danger');

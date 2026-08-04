@@ -9,10 +9,8 @@ use common\models\Clinical\EncounterDefinition;
 use common\models\Efector;
 use common\models\Localidad;
 use common\models\Person\Persona;
-use common\models\Servicio;
-use common\models\ServiciosEfector;
 use common\models\User;
-use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
+use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AdminEfectorAsignacionService;
 use common\components\Platform\Core\Product\PricingPesByEncounterClassMetadata;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
@@ -32,7 +30,8 @@ final class InstitutionalEfectorSignupService
     /** Profesional independiente = efector unipersonal (mismo modelo, default max_pes=1). */
     public const PERFIL_CONSULTORIO = 'CONSULTORIO';
 
-    public const ITEM_NAME_ADMIN_EFECTOR = 'AdminEfector';
+    /** @deprecated usar {@see AdminEfectorAsignacionService::ITEM_NAME} */
+    public const ITEM_NAME_ADMIN_EFECTOR = AdminEfectorAsignacionService::ITEM_NAME;
 
     /**
      * @param array<string, mixed> $payload
@@ -492,35 +491,7 @@ final class InstitutionalEfectorSignupService
 
     private static function ensureAdminEfectorPes(int $idPersona, int $idEfector, int $actingUserId): void
     {
-        $servicio = Servicio::find()->where(['item_name' => self::ITEM_NAME_ADMIN_EFECTOR])->one();
-        if ($servicio === null) {
-            throw new \RuntimeException('Servicio AdminEfector no configurado en el sistema.');
-        }
-        $idServicio = (int) $servicio->id_servicio;
-
-        $exists = ServiciosEfector::findActive()
-            ->where(['id_servicio' => $idServicio, 'id_efector' => $idEfector])
-            ->exists();
-        if (!$exists) {
-            $now = date('Y-m-d H:i:s');
-            Yii::$app->db->createCommand()->insert('{{%servicios_efector}}', [
-                'id_servicio' => $idServicio,
-                'id_efector' => $idEfector,
-                'formas_atencion' => ServiciosEfector::DELEGAR_A_CADA_PROFESIONAL,
-                'pase_previo' => 0,
-                'created_by' => $actingUserId,
-                'updated_by' => $actingUserId,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ])->execute();
-        }
-
-        ProfesionalEfectorServicioAltaService::ensurePersonaServicioEnEfector(
-            $idPersona,
-            $idEfector,
-            $idServicio,
-            $actingUserId
-        );
+        AdminEfectorAsignacionService::ensurePersonaEnEfector($idPersona, $idEfector, $actingUserId);
     }
 
     private static function generateCodigoSisa(): string

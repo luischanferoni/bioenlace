@@ -151,6 +151,16 @@ class m260731_160000_servicios_catalogo_higiene extends Migration
                 continue;
             }
             $from = $byName[$name];
+            // Conservar la fila canónica de sistema (rol AdminEfector vía PES).
+            $itemName = (new Query())
+                ->from($servicios)
+                ->select(['item_name'])
+                ->where(['id_servicio' => $from])
+                ->scalar($this->db);
+            if (is_string($itemName) && strcasecmp(trim($itemName), 'AdminEfector') === 0) {
+                echo "    > conservado sistema AdminEfector (id={$from})\n";
+                continue;
+            }
             $this->purgeServicioFks($from);
             $this->delete($servicios, ['id_servicio' => $from]);
             echo "    > eliminado no-asistencial {$name} (id={$from})\n";

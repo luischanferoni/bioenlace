@@ -39,10 +39,6 @@ final class StaffGuardiaKpiSectionProvider implements HomePanelSectionProviderIn
                     'label' => 'Ingresos hoy',
                     'value' => (string) ($d['ingresos_hoy'] ?? 0),
                 ],
-                [
-                    'label' => 'Plazos',
-                    'value' => (string) ($d['sla_incumplidos_tablero'] ?? 0),
-                ],
             ],
         ];
     }

@@ -420,7 +420,7 @@
       var sinTriage = g.circuito_estado === 'espera_triage' || g.prioridad_triage == null;
       if (sinTriage) {
         var nivel = g.triage_espera_nivel || '';
-        if (nivel === 'rojo' || (g.sla_violado && g.sla_tipo === 'triage')) {
+        if (nivel === 'rojo') {
           return 'bg-danger';
         }
         if (nivel === 'naranja') {
@@ -435,8 +435,9 @@
     }
 
     function nombrePacienteGuardia(g) {
+      if (g.nombre_completo) return g.nombre_completo;
       var paciente = g.paciente || {};
-      return paciente.nombre_completo || g.nombre_completo || '';
+      return paciente.nombre_completo || '';
     }
 
     function nivelRowClass(g) {
@@ -453,9 +454,7 @@
     function fillGuardiaTableroRow(rowEl, g) {
       rowEl.className = 'd-flex align-items-center justify-content-between p-3 mb-0 border-bottom guardia-tablero-row ' + nivelRowClass(g);
 
-      var paciente = g.paciente || {};
-      var nombre = paciente.nombre_completo || g.nombre_completo || '';
-      rowEl.querySelector('[data-field="nombre"]').textContent = nombre;
+      rowEl.querySelector('[data-field="nombre"]').textContent = nombrePacienteGuardia(g);
 
       var triage = g.triage || {};
       var motivoLine = rowEl.querySelector('[data-field="motivo-line"]');
@@ -477,9 +476,14 @@
       }
 
       var profLine = rowEl.querySelector('[data-field="profesional-line"]');
-      if (profLine && g.profesional_asignado) {
-        profLine.textContent = 'Asignado: ' + g.profesional_asignado;
-        profLine.classList.remove('d-none');
+      if (profLine) {
+        if (g.profesional_asignado) {
+          profLine.textContent = 'Asignado: ' + g.profesional_asignado;
+          profLine.classList.remove('d-none');
+        } else {
+          profLine.textContent = '';
+          profLine.classList.add('d-none');
+        }
       }
 
       var slaBadge = rowEl.querySelector('[data-field="sla-badge"]');
@@ -1036,10 +1040,6 @@
           { label: 'Activos', value: String(d.activos != null ? d.activos : 0) },
           { label: 'Sin triage', value: String(d.sin_triage != null ? d.sin_triage : 0) },
           { label: 'Ingresos hoy', value: String(d.ingresos_hoy != null ? d.ingresos_hoy : 0) },
-          {
-            label: 'Plazos',
-            value: String(d.sla_incumplidos_tablero != null ? d.sla_incumplidos_tablero : 0),
-          },
         ],
       };
     }

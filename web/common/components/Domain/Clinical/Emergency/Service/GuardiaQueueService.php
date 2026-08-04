@@ -3,10 +3,8 @@
 namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
-use common\components\Domain\Clinical\PatientHistoriaUrl;
 use common\models\Clinical\DiagnosticReport;
 use common\models\Clinical\ServiceRequest;
-use common\models\Clinical\Encounter;
 use common\models\Efector;
 use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;
@@ -52,13 +50,9 @@ final class GuardiaQueueService
     {
         $query = $this->baseActiveQuery($idEfector, $filters);
         $rows = $query->all();
-        $items = [];
-        foreach ($rows as $guardia) {
-            $items[] = $this->serializeBoardRow($guardia);
-        }
-        usort($items, static function (array $a, array $b): int {
-            $pa = $a['prioridad_triage'];
-            $pb = $b['prioridad_triage'];
+        usort($rows, function (Guardia $a, Guardia $b): int {
+            $pa = $this->prioridadTriageForSort($a);
+            $pb = $this->prioridadTriageForSort($b);
             if ($pa === null && $pb !== null) {
                 return 1;
             }
@@ -69,8 +63,13 @@ final class GuardiaQueueService
                 return $pa <=> $pb;
             }
 
-            return strcmp((string) $a['ingreso_at'], (string) $b['ingreso_at']);
+            return strcmp($this->ingresoAt($a), $this->ingresoAt($b));
         });
+
+        $items = [];
+        foreach ($rows as $guardia) {
+            $items[] = $this->serializeBoardRow($guardia);
+        }
 
         return ['items' => $items, 'total' => count($items)];
     }
@@ -100,7 +99,7 @@ final class GuardiaQueueService
     {
         $guardia = Guardia::find()
             ->where(['id' => $guardiaId, 'id_efector' => $idEfector])
-            ->with(['paciente.tipoDocumento', 'profesionalEfectorServicio.persona'])
+            ->with(['paciente', 'profesionalEfectorServicio.persona'])
             ->one();
         if ($guardia === null) {
             return null;
@@ -123,7 +122,7 @@ final class GuardiaQueueService
         $query = Guardia::find()
             ->alias('g')
             ->where(['g.id_efector' => $idEfector])
-            ->with(['paciente.tipoDocumento', 'profesionalEfectorServicio.persona']);
+            ->with(['paciente', 'profesionalEfectorServicio.persona']);
 
         $soloActivos = !isset($filters['incluir_finalizados']) || !$filters['incluir_finalizados'];
         if ($soloActivos || ($filters['solo_activos'] ?? false)) {
@@ -149,24 +148,29 @@ final class GuardiaQueueService
     }
 
     /**
+     * Fila compacta del tablero / panel EMER (sin ruido ni nulls).
+     *
      * @return array<string, mixed>
      */
     private function serializeBoardRow(Guardia $guardia): array
     {
         $paciente = $guardia->paciente;
         $circuito = $this->circuito->effectiveEstado($guardia);
-        $ingresoAt = $guardia->ingreso_at
-            ?: ($guardia->created_at ?: ($guardia->fecha . ' ' . ($guardia->hora ?? '00:00:00')));
-        $minutos = max(0, (int) floor((time() - strtotime((string) $ingresoAt)) / 60));
+        $ingresoAt = $this->ingresoAt($guardia);
+        $minutos = max(0, (int) floor((time() - strtotime($ingresoAt)) / 60));
 
         $triage = GuardiaTriage::findOne(['guardia_id' => (int) $guardia->id]);
-        $triagePayload = null;
         $prioridad = $guardia->prioridad_triage !== null ? (int) $guardia->prioridad_triage : null;
+        $reasonText = null;
         if ($triage !== null) {
-            $triagePayload = $this->triageSerializer->serializeTriage($triage);
             $prioridad = (int) $triage->level;
+            $reason = trim((string) ($triage->reason_text ?? ''));
+            $reasonText = $reason !== '' ? $reason : null;
         }
 
+        $pesId = $guardia->id_profesional_efector_servicio
+            ? (int) $guardia->id_profesional_efector_servicio
+            : null;
         $pesNombre = null;
         if ($guardia->profesionalEfectorServicio && $guardia->profesionalEfectorServicio->persona) {
             $pesNombre = $guardia->profesionalEfectorServicio->persona->getNombreCompleto(
@@ -176,62 +180,75 @@ final class GuardiaQueueService
 
         $sla = $this->sla->evaluate($guardia, $minutos, $circuito, $prioridad);
         $internacion = $this->internacion->serializePendiente($guardia);
-        $clinical = $this->serializeClinicalCompact($guardia);
+        $clinical = $this->serializeClinicalBoardCounts($guardia);
 
-        return [
+        $row = [
             'id' => (int) $guardia->id,
             'id_persona' => (int) $guardia->id_persona,
-            'id_efector' => (int) $guardia->id_efector,
-            'estado' => $guardia->estado,
+            'nombre_completo' => $paciente
+                ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
+                : 'Sin nombre',
             'circuito_estado' => $circuito,
             'circuito_estado_label' => CircuitoEstado::label($circuito),
-            'prioridad_triage' => $prioridad,
-            'fecha' => $guardia->fecha,
-            'hora' => $guardia->hora,
-            'ingreso_at' => $ingresoAt,
             'minutos_espera' => $minutos,
-            'id_profesional_efector_servicio' => $guardia->id_profesional_efector_servicio,
-            'profesional_asignado' => $pesNombre,
-            'sla_violado' => $sla['sla_violado'],
-            'sla_tipo' => $sla['sla_tipo'],
-            'sla_umbral_minutos' => $sla['sla_umbral_minutos'],
-            'triage_espera_nivel' => $sla['triage_espera_nivel'],
-            'internacion_pendiente' => $internacion['internacion_pendiente'],
-            'internacion_ingreso_url' => $internacion['internacion_ingreso_url'],
-            'clinical' => $clinical,
-            'paciente' => [
-                'id' => $paciente ? (int) $paciente->id_persona : null,
-                'nombre_completo' => $paciente
-                    ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
-                    : 'Sin nombre',
-                'documento' => $paciente ? $paciente->documento : null,
-                'tipo_documento' => $paciente && $paciente->tipoDocumento
-                    ? $paciente->tipoDocumento->nombre
-                    : null,
-            ],
-            'triage' => $triagePayload,
         ];
+
+        if ($prioridad !== null) {
+            $row['prioridad_triage'] = $prioridad;
+        }
+        if ($pesNombre !== null && $pesNombre !== '') {
+            $row['profesional_asignado'] = $pesNombre;
+        }
+        if ($pesId !== null && $pesId > 0) {
+            $row['id_profesional_efector_servicio'] = $pesId;
+        }
+        if (!empty($sla['triage_espera_nivel'])) {
+            $row['triage_espera_nivel'] = $sla['triage_espera_nivel'];
+        }
+        if (!empty($sla['sla_violado']) && ($sla['sla_tipo'] ?? null) === 'medico') {
+            $row['sla_violado'] = true;
+            $row['sla_tipo'] = 'medico';
+            if ($sla['sla_umbral_minutos'] !== null) {
+                $row['sla_umbral_minutos'] = (int) $sla['sla_umbral_minutos'];
+            }
+        }
+        if (!empty($internacion['internacion_pendiente'])) {
+            $row['internacion_pendiente'] = true;
+            if (!empty($internacion['internacion_ingreso_url'])) {
+                $row['internacion_ingreso_url'] = $internacion['internacion_ingreso_url'];
+            }
+        }
+        if ($clinical !== null) {
+            $row['clinical'] = $clinical;
+        }
+        if ($reasonText !== null) {
+            $row['triage'] = ['reason_text' => $reasonText];
+        }
+
+        return $row;
+    }
+
+    private function ingresoAt(Guardia $guardia): string
+    {
+        return (string) ($guardia->ingreso_at
+            ?: ($guardia->created_at ?: ($guardia->fecha . ' ' . ($guardia->hora ?? '00:00:00'))));
+    }
+
+    private function prioridadTriageForSort(Guardia $guardia): ?int
+    {
+        return $guardia->prioridad_triage !== null ? (int) $guardia->prioridad_triage : null;
     }
 
     /**
-     * @return array<string, mixed>
+     * Contadores clínicos del listado; null si no hay nada que mostrar.
+     *
+     * @return array{orders_count: int, orders_lab_pending: int, laboratory_reports_count: int}|null
      */
-    private function serializeClinicalCompact(Guardia $guardia): array
+    private function serializeClinicalBoardCounts(Guardia $guardia): ?array
     {
-        $capturaUrl = PatientHistoriaUrl::captura(
-            (int) $guardia->id_persona,
-            Encounter::PARENT_GUARDIA,
-            (int) $guardia->id
-        );
         $encounter = $this->encounterResolver->findLatestForGuardia((int) $guardia->id);
         if ($encounter === null) {
-            return [
-                'encounter_id' => null,
-                'captura_url' => $capturaUrl,
-                'orders_count' => 0,
-                'orders_lab_pending' => 0,
-                'laboratory_reports_count' => 0,
-            ];
+            return null;
         }
 
         $encounterId = (int) $encounter->id;
@@ -253,9 +270,11 @@ final class GuardiaQueueService
             ->where(['encounter_id' => $encounterId, 'deleted_at' => null])
             ->count();
 
+        if ($ordersCount === 0 && $labPending === 0 && $labReportsCount === 0) {
+            return null;
+        }
+
         return [
-            'encounter_id' => $encounterId,
-            'captura_url' => $capturaUrl,
             'orders_count' => $ordersCount,
             'orders_lab_pending' => $labPending,
             'laboratory_reports_count' => $labReportsCount,

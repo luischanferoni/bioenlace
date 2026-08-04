@@ -74,10 +74,6 @@ HomePanelKpiGroup? _guardiaIndicatorsKpiGroup(Map<String, dynamic> d) {
       label: 'Ingresos hoy',
       value: '${d['ingresos_hoy'] ?? 0}',
     ),
-    HomePanelKpiItem(
-      label: 'Plazos',
-      value: '${d['sla_incumplidos_tablero'] ?? 0}',
-    ),
   ];
 
   if (items.isEmpty) return null;

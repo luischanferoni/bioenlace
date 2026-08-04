@@ -61,14 +61,18 @@ class EmergencyBoardItem {
     final paciente = json['paciente'] as Map<String, dynamic>?;
     final triage = json['triage'] as Map<String, dynamic>?;
     final clinical = json['clinical'] as Map<String, dynamic>? ?? {};
+    final rootNombre = (json['nombre_completo'] as String?)?.trim();
+    final nestedNombre = (paciente?['nombre_completo'] as String?)?.trim();
     return EmergencyBoardItem(
       id: (json['id'] as int?) ?? 0,
       idPersona: (json['id_persona'] as int?) ??
           (paciente?['id'] as int?) ??
           0,
-      nombreCompleto: (paciente?['nombre_completo'] as String?) ??
-          (json['nombre_completo'] as String?) ??
-          'Sin nombre',
+      nombreCompleto: (rootNombre != null && rootNombre.isNotEmpty)
+          ? rootNombre
+          : (nestedNombre != null && nestedNombre.isNotEmpty
+              ? nestedNombre
+              : 'Sin nombre'),
       documento: paciente?['documento'] as String? ?? json['documento'] as String?,
       tipoDocumento: paciente?['tipo_documento'] as String? ??
           json['tipo_documento'] as String?,

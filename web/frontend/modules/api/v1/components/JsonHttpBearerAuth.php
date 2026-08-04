@@ -198,13 +198,47 @@ class JsonHttpBearerAuth extends HttpBearerAuth
 
         try {
             if (isset($decoded->id_efector)) {
-                Yii::$app->user->setIdEfector((int) $decoded->id_efector);
+                $claimedEfector = (int) $decoded->id_efector;
+                // No reaplicar efector del JWT si la persona no tiene PES ahí (evita pisar DEMO/DEV con claims viejos p. ej. 863).
+                if ($persona !== null && $claimedEfector > 0) {
+                    $hasPes = ProfesionalEfectorServicio::find()
+                        ->where([
+                            'id_persona' => (int) $persona->id_persona,
+                            'id_efector' => $claimedEfector,
+                            'deleted_at' => null,
+                        ])
+                        ->exists();
+                    if ($hasPes) {
+                        Yii::$app->user->setIdEfector($claimedEfector);
+                    } else {
+                        Yii::warning(
+                            "JWT id_efector={$claimedEfector} ignorado: sin PES para persona {$persona->id_persona}.",
+                            'auth.jwt'
+                        );
+                    }
+                } elseif ($persona === null) {
+                    Yii::$app->user->setIdEfector($claimedEfector);
+                }
             }
             if (isset($decoded->servicio_actual)) {
                 Yii::$app->user->setServicioActual((int) $decoded->servicio_actual);
             }
             if (isset($decoded->id_profesional_efector_servicio)) {
-                Yii::$app->user->setIdProfesionalEfectorServicio((int) $decoded->id_profesional_efector_servicio);
+                $claimedPes = (int) $decoded->id_profesional_efector_servicio;
+                if ($persona !== null && $claimedPes > 0) {
+                    $pesOk = ProfesionalEfectorServicio::find()
+                        ->where([
+                            'id' => $claimedPes,
+                            'id_persona' => (int) $persona->id_persona,
+                            'deleted_at' => null,
+                        ])
+                        ->exists();
+                    if ($pesOk) {
+                        Yii::$app->user->setIdProfesionalEfectorServicio($claimedPes);
+                    }
+                } elseif ($persona === null) {
+                    Yii::$app->user->setIdProfesionalEfectorServicio($claimedPes);
+                }
             }
             if (isset($decoded->encounter_class)) {
                 Yii::$app->user->setEncounterClass((string) $decoded->encounter_class);

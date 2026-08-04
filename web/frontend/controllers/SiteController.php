@@ -8,6 +8,7 @@ use yii\web\BadRequestHttpException;
 use yii\helpers\ArrayHelper;
 
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
+use common\components\Platform\Core\Auth\DemoSandboxSessionService;
 use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use common\models\User;
@@ -16,6 +17,8 @@ use common\components\Domain\Clinical\Inpatient\Service\InternacionMapaWebContex
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Efector;
+use common\models\Person\Persona;
+use common\models\Platform\DemoSandboxSession;
 use frontend\components\WebApiJwtSessionService;
 use common\models\ProfesionalEfectorServicio;
 use common\models\Servicio;
@@ -204,6 +207,8 @@ class SiteController extends Controller
      */
     private function reestablecerContextoOperativoYRedirigir(array $body)
     {
+        $body = $this->pinDemoSandboxOperativeBody($body);
+
         try {
             $data = (new SesionOperativaService())->establecer($body);
         } catch (\InvalidArgumentException $e) {
@@ -221,6 +226,41 @@ class SiteController extends Controller
         }
 
         return $this->redirect($data['redirect_url'] ?? SesionOperativaService::redirectRouteForCurrentUser());
+    }
+
+    /**
+     * En visita demo: no permitir que un JWT/sesión corrupta (p. ej. efector 863) desvíe el contexto.
+     *
+     * @param array{efector_id?:int, servicio_id?:int, encounter_class?:string} $body
+     * @return array{efector_id:int, servicio_id:int, encounter_class?:string}
+     */
+    private function pinDemoSandboxOperativeBody(array $body): array
+    {
+        $sessionId = (int) Yii::$app->session->get(DemoSandboxSessionService::Yii_SESSION_KEY, 0);
+        if ($sessionId <= 0) {
+            return $body;
+        }
+
+        /** @var DemoSandboxSession|null $demo */
+        $demo = DemoSandboxSession::findOne($sessionId);
+        if ($demo === null || $demo->isPurged()) {
+            return $body;
+        }
+
+        $idEfector = (int) $demo->id_efector;
+        $idServicio = (int) $demo->id_servicio;
+        try {
+            DemoSandboxSessionService::assertIdEfectorEsPlantillaDev($idEfector);
+        } catch (\DomainException $e) {
+            Yii::error('demo pin: ' . $e->getMessage(), __METHOD__);
+
+            return $body;
+        }
+
+        $body['efector_id'] = $idEfector;
+        $body['servicio_id'] = $idServicio;
+
+        return $body;
     }
 
     /**
@@ -261,11 +301,11 @@ class SiteController extends Controller
     {
         $req = Yii::$app->request;
         try {
-            $data = (new SesionOperativaService())->establecer([
+            $data = (new SesionOperativaService())->establecer($this->pinDemoSandboxOperativeBody([
                 'efector_id' => (int) $req->post('idEfector'),
                 'servicio_id' => (int) $req->post('servicio'),
                 'encounter_class' => (string) $req->post('encounterClass'),
-            ]);
+            ]));
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
         } catch (\RuntimeException $e) {
@@ -393,8 +433,11 @@ class SiteController extends Controller
         }
 
         if (!Yii::$app->user->isGuest) {
+            // destroySession=false conserva la cookie de sesión, pero hay que limpiar
+            // contexto operativo / JWT previos (p. ej. efector 863) antes del login demo.
             Yii::$app->user->logout(false);
         }
+        $this->clearOperativeSessionContext();
 
         $demoTtl = max(600, (int) (Yii::$app->params['demo_sandbox']['session_ttl_seconds'] ?? 14400));
         try {
@@ -413,27 +456,28 @@ class SiteController extends Controller
         }
 
         if ($sessionId !== null && $sessionId > 0) {
-            Yii::$app->session->set(
-                \common\components\Platform\Core\Auth\DemoSandboxSessionService::Yii_SESSION_KEY,
-                $sessionId
-            );
+            Yii::$app->session->set(DemoSandboxSessionService::Yii_SESSION_KEY, $sessionId);
 
-            /** @var \common\models\Platform\DemoSandboxSession|null $demoSession */
-            $demoSession = \common\models\Platform\DemoSandboxSession::findOne($sessionId);
+            /** @var DemoSandboxSession|null $demoSession */
+            $demoSession = DemoSandboxSession::findOne($sessionId);
             if ($demoSession !== null && !$demoSession->isPurged()) {
                 try {
-                    \common\components\Platform\Core\Auth\DemoSandboxSessionService::assertIdEfectorEsPlantillaDev(
-                        (int) $demoSession->id_efector
-                    );
+                    DemoSandboxSessionService::assertIdEfectorEsPlantillaDev((int) $demoSession->id_efector);
                     try {
                         $established = (new SesionOperativaService())->establecer([
                             'efector_id' => (int) $demoSession->id_efector,
                             'servicio_id' => (int) $demoSession->id_servicio,
                             'encounter_class' => Encounter::ENCOUNTER_CLASS_AMB,
                         ]);
+                        if (!empty($established['context_token'])) {
+                            WebApiJwtSessionService::storeRawToken((string) $established['context_token']);
+                        } else {
+                            $this->mintWebJwtFromCurrentOperativeSession();
+                        }
                     } catch (\Throwable $e) {
                         Yii::warning('demo-entrar establecer: ' . $e->getMessage(), __METHOD__);
                         $established = $this->bootstrapDemoSesionOperativa($demoSession);
+                        $this->mintWebJwtFromCurrentOperativeSession();
                     }
                     $seed = $demoSession->getSeedPayload();
                     $seedHint = sprintf(
@@ -452,8 +496,13 @@ class SiteController extends Controller
                         . $seedHint
                     );
 
-                    // Ruta relativa tipada: evita createUrl suelto que a veces deja mal el shell.
-                    return $this->redirect(['site/index']);
+                    $indexParams = ['site/index'];
+                    $fechaTurnos = trim((string) ($seed['fecha_turnos'] ?? ''));
+                    if ($fechaTurnos !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fechaTurnos) === 1) {
+                        $indexParams['fecha'] = $fechaTurnos;
+                    }
+
+                    return $this->redirect($indexParams);
                 } catch (\Throwable $e) {
                     Yii::warning('demo-entrar sesion operativa: ' . $e->getMessage(), __METHOD__);
                 }
@@ -469,11 +518,57 @@ class SiteController extends Controller
     }
 
     /**
+     * Quita efector/PES/JWT de una sesión previa (logout(false) no los borra).
+     */
+    private function clearOperativeSessionContext(): void
+    {
+        $session = Yii::$app->session;
+        if (!$session->isActive) {
+            $session->open();
+        }
+        foreach ([
+            'idEfector',
+            'nombreEfector',
+            'efectores',
+            'servicios',
+            'servicio_actual',
+            'idProfesionalEfectorServicio',
+            'servicioYhorarioDeTurno',
+            'encounterClass',
+            'apiJwtToken',
+            DemoSandboxSessionService::Yii_SESSION_KEY,
+        ] as $key) {
+            $session->remove($key);
+        }
+    }
+
+    /**
+     * Emite JWT web con el contexto operativo ya fijado en sesión (AMB/PES/DEV).
+     */
+    private function mintWebJwtFromCurrentOperativeSession(): void
+    {
+        $identity = Yii::$app->user->identity;
+        if ($identity === null) {
+            return;
+        }
+        if ((int) ($identity->superadmin ?? 0) === 1) {
+            WebApiJwtSessionService::storeTokenForSuperadmin($identity);
+
+            return;
+        }
+        $persona = Persona::findOne(['id_user' => (int) $identity->id]);
+        if ($persona === null) {
+            return;
+        }
+        WebApiJwtSessionService::storeTokenForIdentity($identity, $persona);
+    }
+
+    /**
      * Fija sesión operativa demo sin pasar por entitlement (plantilla DEV sin billing).
      *
      * @return array{efector: array{id:int,nombre:string}, redirect_url: string}
      */
-    private function bootstrapDemoSesionOperativa(\common\models\Platform\DemoSandboxSession $demoSession): array
+    private function bootstrapDemoSesionOperativa(DemoSandboxSession $demoSession): array
     {
         $idEfector = (int) $demoSession->id_efector;
         $idServicio = (int) $demoSession->id_servicio;

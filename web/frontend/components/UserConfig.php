@@ -31,11 +31,10 @@ class UserConfig extends BaseUserConfig
                 $session->set('apellidoUsuario', $persona->apellido);
                 $session->set('nombreUsuario', $persona->nombre);
 
-                // Generar token JWT para que la SPA web use la API v1 igual que el móvil
-                WebApiJwtSessionService::storeTokenForIdentity($identity, $persona);
-
                 // BioenlaceDbManager arma permisos con contexto PES en sesión.
+                // JWT después del bootstrap: encodeToken copia id_efector/PES/encounter de sesión.
                 $this->tryBootstrapSingleEfectorSession($persona);
+                WebApiJwtSessionService::storeTokenForIdentity($identity, $persona);
             } else {
                 throw new NotFoundHttpException('Hubo un error con su usuario, comuníquese con los encargados del sistema.');
             }

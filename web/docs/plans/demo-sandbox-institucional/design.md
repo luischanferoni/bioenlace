@@ -19,6 +19,8 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 | Efector | Plantilla DEV por `efector_codigo_sisa` (default `DEV99002PRIV`); no usar un `id_efector` de producción |
 | Aislamiento | Un **PES + user** por visitante (scope médico); no tableros de todo el centro |
 | Tracking | `demo_sandbox_access` (código) + `demo_sandbox_session` (PES, payload seed, expires/purged) |
+| Entrada | `demo-entrar` limpia contexto previo, fija AMB en DEV, **persiste `context_token`**, redirect con `fecha` del seed |
+| Encounter | En visita demo, cambio AMB/EMER/IMP ancla efector/servicio a la sesión demo (nunca 863) |
 
 ## Seed por visita (defaults)
 

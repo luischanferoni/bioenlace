@@ -89,6 +89,8 @@ final class ProfesionalCoberturaActivaService
             }
         }
 
+        $mensajeSin = $sessionTiene ? null : self::mensajeSinCoberturaParaSesion($encounterClass);
+
         return [
             'title' => $encounterClass === Encounter::ENCOUNTER_CLASS_EMER
                 ? 'Plantel de guardia'
@@ -97,14 +99,31 @@ final class ProfesionalCoberturaActivaService
             'at' => $at,
             'items' => $items,
             'total' => count($items),
-            'empty_message' => count($items) === 0
-                ? 'Nadie con cobertura cargada en este momento.'
-                : null,
+            // No informar al clínico que el plantel del efector está vacío.
+            'empty_message' => null,
             'session' => [
                 'id_persona' => $idPersonaSesion > 0 ? $idPersonaSesion : null,
                 'tiene_cobertura' => $sessionTiene,
+                'mensaje_sin_cobertura' => $mensajeSin,
             ],
         ];
+    }
+
+    /**
+     * Texto accionable cuando la sesión no tiene cobertura vigente (EMER/IMP).
+     */
+    public static function mensajeSinCoberturaParaSesion(string $encounterClass): string
+    {
+        $encounterClass = strtoupper(trim($encounterClass));
+        if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
+            return 'No tenés cobertura vigente de piso. Para atender internados, cargá tu cobertura '
+                . 'desde el Asistente («Cargar mi cobertura») o pedile a coordinación / administración '
+                . 'del centro que te la asigne.';
+        }
+
+        return 'No tenés cobertura vigente en el plantel de guardia. Para ver el tablero y atender, '
+            . 'cargá tu cobertura desde el Asistente («Cargar mi cobertura») o pedile a coordinación / '
+            . 'administración del centro que te la asigne.';
     }
 
     /**

@@ -1766,10 +1766,12 @@
       title.textContent = coberturaData.title || 'Cobertura';
       box.appendChild(title);
       var session = coberturaData.session || {};
+      var mensajeSin = (session.mensaje_sin_cobertura || '').toString().trim();
       if (session.tiene_cobertura === false) {
         var warn = document.createElement('div');
         warn.className = 'text-warning small mb-1';
-        warn.textContent = 'No tenés cobertura vigente: no podrás tomar casos hasta cargarla.';
+        warn.textContent = mensajeSin ||
+          'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente («Cargar mi cobertura») o pedile a coordinación / administración del centro que te la asigne.';
         box.appendChild(warn);
       } else if (session.tiene_cobertura === true) {
         var ok = document.createElement('div');
@@ -1777,12 +1779,7 @@
         ok.textContent = 'Estás en el plantel activo.';
         box.appendChild(ok);
       }
-      if (!items.length) {
-        var empty = document.createElement('div');
-        empty.className = 'text-muted small';
-        empty.textContent = coberturaData.empty_message || 'Sin cobertura cargada.';
-        box.appendChild(empty);
-      } else {
+      if (items.length) {
         var row = document.createElement('div');
         row.className = 'd-flex flex-wrap gap-2';
         items.forEach(function (c) {
@@ -1817,6 +1814,14 @@
       }
       if (coberturaData) {
         renderCoberturaActivaBanner(coberturaData, listTarget);
+      }
+
+      var sessionCob = (coberturaData && coberturaData.session) ? coberturaData.session : {};
+      if (sessionCob.tiene_cobertura === false) {
+        var msgSin = (sessionCob.mensaje_sin_cobertura || '').toString().trim() ||
+          'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente o pedile a coordinación / administración del centro que te la asigne.';
+        showListadoEmpty(msgSin, listTarget);
+        return;
       }
 
       if (!items || !items.length) {

@@ -67,6 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Map<String, dynamic>> _coberturaActiva = [];
   String? _coberturaTitle;
   bool _sessionTieneCobertura = false;
+  String? _mensajeSinCobertura;
   Map<String, dynamic>? _staffContext;
   String _lastListKind = '';
   bool _isLoading = true;
@@ -241,6 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _coberturaActiva = [];
         _coberturaTitle = null;
         _sessionTieneCobertura = false;
+        _mensajeSinCobertura = null;
         _consultasAsync = [];
         _consultasAsyncGroups = [];
         _consultasAsyncSlaIncumplidos = 0;
@@ -270,10 +272,13 @@ class _HomeScreenState extends State<HomeScreen> {
         _coberturaTitle = cobertura.data['title'] as String?;
         final session = cobertura.data['session'];
         _sessionTieneCobertura = session is Map && session['tiene_cobertura'] == true;
+        final msg = session is Map ? session['mensaje_sin_cobertura'] : null;
+        _mensajeSinCobertura = msg is String && msg.trim().isNotEmpty ? msg.trim() : null;
       } else if (!partial) {
         _coberturaActiva = [];
         _coberturaTitle = null;
         _sessionTieneCobertura = false;
+        _mensajeSinCobertura = null;
       }
 
       final board = panel.sectionByKind('emergency_board');
@@ -345,7 +350,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _wrapWithPanelKpis(Widget child) {
-    if (_kpiGroups.isEmpty && _staffContext == null && _coberturaActiva.isEmpty) {
+    final showCobertura =
+        _coberturaActiva.isNotEmpty || (!_sessionTieneCobertura && _coberturaTitle != null);
+    if (_kpiGroups.isEmpty && _staffContext == null && !showCobertura) {
       return child;
     }
     return Column(
@@ -357,7 +364,7 @@ class _HomeScreenState extends State<HomeScreen> {
           HomePanelKpiGroupsList(groups: _kpiGroups),
           const SizedBox(height: BioSpacing.sm),
         ],
-        if (_coberturaActiva.isNotEmpty) ...[
+        if (showCobertura) ...[
           _buildCoberturaActivaStrip(),
           const SizedBox(height: BioSpacing.sm),
         ],
@@ -368,6 +375,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildCoberturaActivaStrip() {
     final title = _coberturaTitle ?? 'Cobertura';
+    final mensajeSin = _mensajeSinCobertura ??
+        'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente '
+            '(«Cargar mi cobertura») o pedile a coordinación / administración '
+            'del centro que te la asigne.';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
       child: Column(
@@ -375,34 +386,44 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(title, style: BioTypography.caption),
           const SizedBox(height: BioSpacing.xs),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _coberturaActiva.map((c) {
-                final persona = c['persona'] is Map
-                    ? Map<String, dynamic>.from(c['persona'] as Map)
-                    : <String, dynamic>{};
-                final nombre = (persona['nombre_completo'] as String?)?.trim();
-                final rol = (c['rol'] as String?)?.trim();
-                final inicio = (c['inicio'] as String?) ?? '';
-                final fin = (c['fin'] as String?) ?? '';
-                final horaIni = inicio.length >= 16 ? inicio.substring(11, 16) : inicio;
-                final horaFin = fin.length >= 16 ? fin.substring(11, 16) : fin;
-                final label = [
-                  if (nombre != null && nombre.isNotEmpty) nombre,
-                  if (rol != null && rol.isNotEmpty) rol,
-                  if (horaIni.isNotEmpty || horaFin.isNotEmpty) '$horaIni–$horaFin',
-                ].join(' · ');
-                return Padding(
-                  padding: const EdgeInsets.only(right: BioSpacing.xs),
-                  child: Chip(
-                    label: Text(label.isEmpty ? 'Cobertura' : label),
-                    visualDensity: VisualDensity.compact,
-                  ),
-                );
-              }).toList(),
+          if (!_sessionTieneCobertura) ...[
+            Text(
+              mensajeSin,
+              style: BioTypography.bodySm.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
             ),
-          ),
+            if (_coberturaActiva.isNotEmpty) const SizedBox(height: BioSpacing.xs),
+          ],
+          if (_coberturaActiva.isNotEmpty)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _coberturaActiva.map((c) {
+                  final persona = c['persona'] is Map
+                      ? Map<String, dynamic>.from(c['persona'] as Map)
+                      : <String, dynamic>{};
+                  final nombre = (persona['nombre_completo'] as String?)?.trim();
+                  final rol = (c['rol'] as String?)?.trim();
+                  final inicio = (c['inicio'] as String?) ?? '';
+                  final fin = (c['fin'] as String?) ?? '';
+                  final horaIni = inicio.length >= 16 ? inicio.substring(11, 16) : inicio;
+                  final horaFin = fin.length >= 16 ? fin.substring(11, 16) : fin;
+                  final label = [
+                    if (nombre != null && nombre.isNotEmpty) nombre,
+                    if (rol != null && rol.isNotEmpty) rol,
+                    if (horaIni.isNotEmpty || horaFin.isNotEmpty) '$horaIni–$horaFin',
+                  ].join(' · ');
+                  return Padding(
+                    padding: const EdgeInsets.only(right: BioSpacing.xs),
+                    child: Chip(
+                      label: Text(label.isEmpty ? 'Cobertura' : label),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
         ],
       ),
     );
@@ -1399,6 +1420,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGuardiaTableroList() {
+    if (!_sessionTieneCobertura) {
+      final msg = _mensajeSinCobertura ??
+          'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente '
+              '(«Cargar mi cobertura») o pedile a coordinación / administración '
+              'del centro que te la asigne.';
+      return _buildEmpty(
+        icon: Icons.badge_outlined,
+        text: msg,
+      );
+    }
     if (_guardiaTablero.isEmpty) {
       return _buildEmpty(
         icon: Icons.emergency_outlined,

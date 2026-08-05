@@ -355,9 +355,10 @@ class EmergencyGuardiaActions {
         builder: (ctx) => AlertDialog(
           title: const Text('Sin cobertura de guardia'),
           content: const Text(
-            'No tenés cobertura vigente en el plantel. '
-            'Podés intentar igual, pero el servidor puede rechazar la asignación. '
-            'Cargá tu cobertura (entrada/salida) antes de tomar casos.',
+            'No tenés cobertura vigente en el plantel de guardia. '
+            'Para atender, cargá tu cobertura desde el Asistente («Cargar mi cobertura») '
+            'o pedile a coordinación / administración del centro que te la asigne. '
+            'Podés intentar igual, pero el servidor puede rechazar la asignación.',
           ),
           actions: [
             TextButton(

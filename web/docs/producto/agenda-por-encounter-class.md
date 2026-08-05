@@ -28,7 +28,7 @@ Metadata: [`agenda-by-encounter-class.yaml`](../../common/metadata/bioenlace/org
 - API: `/api/v1/profesional-cobertura/*` (propio vs `*-para-recurso`); `listar-activas`; `elegir-pes`.
 - UI JSON: `elegir-pes` (asignación) → `gestionar` (fecha/hora + clase).
 - Intents: `profesional-cobertura.gestionar-propio` | `gestionar-staff`.
-- Panel inicio: sección `staff_cobertura_activa` en EMER e IMP piso (`session.tiene_cobertura`).
+- Panel inicio: sección `staff_cobertura_activa` en EMER e IMP piso (`session.tiene_cobertura`, `session.mensaje_sin_cobertura`). Sin cobertura EMER el tablero no expone pacientes.
 - **Tomar/asignar caso EMER** exige cobertura vigente (`operational.emer_assign_requires_cobertura`).
 
 No crea filas en `turnos` ni slots públicos.

@@ -52,13 +52,6 @@
           "include_in_submit": true
         },
         {
-          "name": "servicio_nombre",
-          "label": "Servicio",
-          "type": "display",
-          "required": false,
-          "include_in_submit": false
-        },
-        {
           "name": "fecha_inicio",
           "label": "Fecha de entrada",
           "type": "date",

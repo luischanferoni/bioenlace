@@ -130,6 +130,9 @@ vocab:
     - declarar mi cobertura
     - horario de guardia
     - mi plantel
+    - mis horarios
+    - configurar mis horarios
+    - mis horarios de guardia
   cobertura_staff_phrases:
     - cargar cobertura de
     - cobertura de un profesional
@@ -358,6 +361,8 @@ score_adjustments:
 
   - when_rule: own_agenda_config_edit
     apply:
+      - intent_id: profesional-horarios.gestionar-propio
+        delta: 35
       - intent_id: profesional-agenda.configurar-propio
         delta: 45
       - intent_id: data-access.editar
@@ -369,12 +374,14 @@ score_adjustments:
 
   - when_rule: own_cobertura_gestionar
     apply:
-      - intent_id: profesional-cobertura.gestionar-propio
+      - intent_id: profesional-horarios.gestionar-propio
         delta: 55
+      - intent_id: profesional-cobertura.gestionar-propio
+        delta: 35
       - intent_id: profesional-cobertura.gestionar-staff
         delta: -35
       - intent_id: profesional-agenda.configurar-propio
-        delta: -30
+        delta: -20
       - intent_id: profesional-agenda.configurar-staff
         delta: -30
       - intent_id_prefix: licencia.cargar
@@ -515,7 +522,7 @@ operational_fallbacks:
 
   - id: own_cobertura_gestionar_nl
     when_any_rule: [own_cobertura_gestionar]
-    intent_id: profesional-cobertura.gestionar-propio
+    intent_id: profesional-horarios.gestionar-propio
     confidence: 0.92
     method: rules_declarative_fallback
 

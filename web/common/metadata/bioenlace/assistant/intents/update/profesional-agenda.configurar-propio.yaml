@@ -11,13 +11,13 @@ description: "Modificar horarios, intervalo y formas de atención de tus cupos A
 rbac_route: "/api/profesional-agenda/configurar-agenda"
 
 keywords:
-  - mi agenda
+  - configurar mi agenda ambulatoria
   - modificar mi agenda
   - editar mi agenda
-  - mis horarios
   - configurar mi agenda
   - modificar horarios propios
   - agenda ambulatoria
+  - cupos ambulatorios
 
 intent_semantics:
   goal: Configurar la agenda AMB (cupos) de uno de tus servicios asignados en el efector de sesión.

@@ -2,15 +2,14 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalCobertura;
 
-use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\components\Platform\Ui\UiScreenService;
-use common\models\ProfesionalCobertura;
+use common\models\Clinical\Encounter;
 use common\models\ProfesionalEfectorServicio;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 
 /**
- * UI JSON: alta/edición de cobertura EMER/IMP (roster).
+ * UI JSON: plantilla semanal de cobertura EMER/IMP (materializa intervalos).
  */
 final class ProfesionalCoberturaUiFlowService
 {
@@ -34,22 +33,8 @@ final class ProfesionalCoberturaUiFlowService
     public static function handlePost(int $idEfector, array $post, bool $allowOwnPesFallback): array
     {
         try {
-            $payload = self::preparePayload($idEfector, $post, $allowOwnPesFallback);
-            $id = (int) ($post['id'] ?? 0);
-            if ($id > 0) {
-                $model = ProfesionalCobertura::findOne(['id' => $id, 'id_efector' => $idEfector, 'deleted_at' => null]);
-                if ($model === null) {
-                    throw new BadRequestHttpException('Cobertura no encontrada.');
-                }
-                if (!$allowOwnPesFallback) {
-                    // staff: ok
-                } elseif ((int) $model->id_persona !== self::requirePersonaFromSession()) {
-                    throw new ForbiddenHttpException('No puede editar coberturas de otro profesional.');
-                }
-                $result = ProfesionalCoberturaService::actualizar($model, $payload);
-            } else {
-                $result = ProfesionalCoberturaService::crear($payload);
-            }
+            $payload = self::preparePlantillaPayload($idEfector, $post, $allowOwnPesFallback);
+            $result = ProfesionalCoberturaPlantillaService::guardarYMaterializar($payload);
 
             if (!$result['ok']) {
                 $params = array_merge(self::defaults($idEfector, $post, $allowOwnPesFallback), $post);
@@ -62,11 +47,19 @@ final class ProfesionalCoberturaUiFlowService
                 return $ui;
             }
 
+            $created = (int) ($result['created'] ?? 0);
+
             return [
                 'success' => true,
                 'kind' => 'ui_submit_result',
                 'action_id' => 'profesional-cobertura.gestionar',
-                'data' => ProfesionalCoberturaService::toApiArray($result['model']),
+                'data' => [
+                    'mensaje' => $created === 1
+                        ? 'Se guardó el patrón y se generó 1 turno de cobertura.'
+                        : ('Se guardó el patrón y se generaron ' . $created . ' turnos de cobertura.'),
+                    'created' => $created,
+                    'plantilla_id' => isset($result['plantilla']) ? (int) $result['plantilla']->id : null,
+                ],
                 'errors' => null,
             ];
         } catch (\Throwable $e) {
@@ -86,57 +79,55 @@ final class ProfesionalCoberturaUiFlowService
      */
     private static function defaults(int $idEfector, array $query, bool $allowOwnPesFallback): array
     {
-        $classes = [];
-        foreach (AgendaByEncounterClassMetadata::coberturaClasses() as $code) {
-            $kind = AgendaByEncounterClassMetadata::loadConfig()['kinds'][$code] ?? [];
-            $classes[] = [
-                'value' => $code,
-                'label' => is_array($kind) ? (string) ($kind['label'] ?? $code) : $code,
-            ];
-        }
-
         $idPes = (int) ($query['id_profesional_efector_servicio'] ?? 0);
         if ($idPes <= 0 && $allowOwnPesFallback) {
             $idPes = (int) (\Yii::$app->user->getIdProfesionalEfectorServicio() ?? 0);
         }
 
+        $encounterClass = strtoupper(trim((string) ($query['encounter_class'] ?? Encounter::ENCOUNTER_CLASS_EMER)));
+        if ($encounterClass !== Encounter::ENCOUNTER_CLASS_EMER
+            && $encounterClass !== Encounter::ENCOUNTER_CLASS_IMP) {
+            $encounterClass = Encounter::ENCOUNTER_CLASS_EMER;
+        }
+
         $defaults = [
             'id_efector' => $idEfector,
             'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : ($query['id_profesional_efector_servicio'] ?? ''),
-            'encounter_class_options' => $classes,
-            'encounter_class' => (string) ($query['encounter_class'] ?? 'EMER'),
+            'encounter_class' => $encounterClass,
+            'vigente_desde' => date('Y-m-d'),
+            'semanas' => 4,
         ];
 
+        $idPersona = 0;
         if ($idPes > 0) {
             $pes = ProfesionalEfectorServicio::find()
                 ->where(['id' => $idPes, 'deleted_at' => null])
-                ->with('servicio')
                 ->one();
             if ($pes !== null && (int) $pes->id_efector === $idEfector) {
                 $defaults['id_servicio'] = (int) $pes->id_servicio;
-                $defaults['servicio_nombre'] = $pes->servicio !== null
-                    ? (string) $pes->servicio->nombre
-                    : ('Servicio #' . $pes->id_servicio);
+                $idPersona = (int) $pes->id_persona;
             }
         }
-        if (empty($defaults['servicio_nombre'])) {
-            $defaults['servicio_nombre'] = 'General del centro (sin servicio específico)';
+        if ($idPersona <= 0 && $allowOwnPesFallback) {
+            $idPersona = (int) (\Yii::$app->user->getIdPersona() ?? 0);
         }
-        $inicio = trim((string) ($query['inicio'] ?? ''));
-        $fin = trim((string) ($query['fin'] ?? ''));
-        if ($inicio !== '' && empty($query['fecha_inicio'])) {
-            $parts = self::splitDateTime($inicio);
-            $defaults['fecha_inicio'] = $parts['fecha'];
-            $defaults['hora_inicio'] = $parts['hora'];
-        }
-        if ($fin !== '' && empty($query['fecha_fin'])) {
-            $parts = self::splitDateTime($fin);
-            $defaults['fecha_fin'] = $parts['fecha'];
-            $defaults['hora_fin'] = $parts['hora'];
-        }
-        if (empty($query['fecha_inicio']) && empty($defaults['fecha_inicio'])) {
-            $defaults['fecha_inicio'] = date('Y-m-d');
-            $defaults['fecha_fin'] = date('Y-m-d');
+
+        if ($idPersona > 0) {
+            $plantilla = ProfesionalCoberturaPlantillaService::findActivaForContext(
+                $idPersona,
+                $idEfector,
+                $encounterClass,
+                $idPes > 0 ? $idPes : null
+            );
+            if ($plantilla !== null) {
+                $defaults['vigente_desde'] = (string) $plantilla->vigente_desde;
+                $defaults['semanas'] = (int) $plantilla->semanas;
+                foreach (['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'] as $col) {
+                    if (!empty($plantilla->$col)) {
+                        $defaults[$col] = (string) $plantilla->$col;
+                    }
+                }
+            }
         }
 
         return array_merge($query, $defaults);
@@ -146,7 +137,7 @@ final class ProfesionalCoberturaUiFlowService
      * @param array<string, mixed> $post
      * @return array<string, mixed>
      */
-    private static function preparePayload(int $idEfector, array $post, bool $allowOwnPesFallback): array
+    private static function preparePlantillaPayload(int $idEfector, array $post, bool $allowOwnPesFallback): array
     {
         $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
         $idPersona = (int) ($post['id_persona'] ?? 0);
@@ -169,92 +160,27 @@ final class ProfesionalCoberturaUiFlowService
             throw new BadRequestHttpException('id_persona o id_profesional_efector_servicio es requerido.');
         }
 
-        $inicio = self::resolveIntervalBound($post, 'inicio', 'fecha_inicio', 'hora_inicio');
-        $fin = self::resolveIntervalBound($post, 'fin', 'fecha_fin', 'hora_fin');
-        if ($inicio === '' || $fin === '') {
-            throw new BadRequestHttpException('Entrada y salida son obligatorias (fecha + hora).');
-        }
-
         $idServicio = $post['id_servicio'] ?? null;
         if ($idServicio === '' || $idServicio === null) {
-            $idServicio = null;
+            $idServicio = $pes !== null ? (int) $pes->id_servicio : null;
         } else {
             $idServicio = (int) $idServicio;
         }
-        if ($idServicio === null && $pes !== null) {
-            $idServicio = (int) $pes->id_servicio;
-        }
 
-        return [
+        $payload = [
             'id_persona' => $idPersona,
             'id_efector' => $idEfector,
             'id_servicio' => $idServicio,
             'id_profesional_efector_servicio' => $idPes > 0 ? $idPes : null,
             'encounter_class' => (string) ($post['encounter_class'] ?? ''),
-            'inicio' => $inicio,
-            'fin' => $fin,
+            'vigente_desde' => (string) ($post['vigente_desde'] ?? ''),
+            'semanas' => (int) ($post['semanas'] ?? 4),
         ];
-    }
-
-    /**
-     * @param array<string, mixed> $post
-     */
-    private static function resolveIntervalBound(array $post, string $fullKey, string $fechaKey, string $horaKey): string
-    {
-        $full = self::normalizeDateTime((string) ($post[$fullKey] ?? ''));
-        if ($full !== '') {
-            return $full;
-        }
-        $fecha = trim((string) ($post[$fechaKey] ?? ''));
-        $hora = trim((string) ($post[$horaKey] ?? ''));
-        if ($fecha === '' || $hora === '') {
-            return '';
-        }
-        if (preg_match('/^\d{1,2}:\d{2}$/', $hora)) {
-            $hora .= ':00';
+        foreach (['lunes_2', 'martes_2', 'miercoles_2', 'jueves_2', 'viernes_2', 'sabado_2', 'domingo_2'] as $col) {
+            $payload[$col] = $post[$col] ?? '';
         }
 
-        return self::normalizeDateTime($fecha . ' ' . $hora);
-    }
-
-    /**
-     * @return array{fecha: string, hora: string}
-     */
-    private static function splitDateTime(string $raw): array
-    {
-        $norm = self::normalizeDateTime($raw);
-        if ($norm === '') {
-            return ['fecha' => '', 'hora' => ''];
-        }
-        $ts = strtotime($norm);
-        if ($ts === false) {
-            return ['fecha' => '', 'hora' => ''];
-        }
-
-        return [
-            'fecha' => date('Y-m-d', $ts),
-            'hora' => date('H:i', $ts),
-        ];
-    }
-
-    private static function normalizeDateTime(string $raw): string
-    {
-        $raw = trim($raw);
-        if ($raw === '') {
-            return '';
-        }
-        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
-            return $raw . ' 00:00:00';
-        }
-        if (preg_match('/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$/', $raw)) {
-            return str_replace('T', ' ', $raw) . ':00';
-        }
-        if (preg_match('/^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}$/', $raw)) {
-            return str_replace('T', ' ', $raw);
-        }
-        $ts = strtotime($raw);
-
-        return $ts === false ? '' : date('Y-m-d H:i:s', $ts);
+        return $payload;
     }
 
     private static function requirePersonaFromSession(): int

@@ -13,8 +13,7 @@ categories:
         titulo: Para mí
         intent_ids:
           - condicion-laboral.editar-propio
-          - profesional-agenda.configurar-propio
-          - profesional-cobertura.gestionar-propio
+          - profesional-horarios.gestionar-propio
           - licencia.cargar-como-profesional-flow
       - id: team
         titulo: Para el personal
@@ -73,7 +72,7 @@ categories:
     intent_ids:
       - urgencias.ver-tablero-guardia
       - urgencias.triage-paciente-guardia
-      - profesional-cobertura.gestionar-propio
+      - profesional-horarios.gestionar-propio
 
   - id: internacion
     titulo: Internación
@@ -82,7 +81,7 @@ categories:
       - internacion.ingreso-flow
       - internacion.cambio-cama-flow
       - internacion.alta-estructurada-flow
-      - profesional-cobertura.gestionar-propio
+      - profesional-horarios.gestionar-propio
 
   - id: mi_provincia
     titulo: Mi provincia

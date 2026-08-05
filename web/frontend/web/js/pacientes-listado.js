@@ -1771,7 +1771,7 @@
         var warn = document.createElement('div');
         warn.className = 'text-warning small mb-1';
         warn.textContent = mensajeSin ||
-          'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente («Cargar mi cobertura») o pedile a coordinación / administración del centro que te la asigne.';
+          'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te la asigne.';
         box.appendChild(warn);
       } else if (session.tiene_cobertura === true) {
         var ok = document.createElement('div');

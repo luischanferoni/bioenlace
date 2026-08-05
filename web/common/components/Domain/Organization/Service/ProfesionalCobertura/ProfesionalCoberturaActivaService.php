@@ -117,12 +117,12 @@ final class ProfesionalCoberturaActivaService
         $encounterClass = strtoupper(trim($encounterClass));
         if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
             return 'No tenés cobertura vigente de piso. Para atender internados, cargá tu cobertura '
-                . 'desde el Asistente («Cargar mi cobertura») o pedile a coordinación / administración '
+                . 'desde el Asistente («Configurar mis horarios») o pedile a coordinación / administración '
                 . 'del centro que te la asigne.';
         }
 
         return 'No tenés cobertura vigente en el plantel de guardia. Para ver el tablero y atender, '
-            . 'cargá tu cobertura desde el Asistente («Cargar mi cobertura») o pedile a coordinación / '
+            . 'cargá tu cobertura desde el Asistente («Configurar mis horarios») o pedile a coordinación / '
             . 'administración del centro que te la asigne.';
     }
 

@@ -96,6 +96,63 @@ class ProfesionalCoberturaController extends BaseController
     }
 
     /**
+     * GET|POST /api/v1/profesional-cobertura/elegir-encounter-class
+     *
+     * Chips/lista AMB | EMER | IMP para el flujo «Mis horarios».
+     *
+     * @action_name Elegir tipo de horario (ambulatorio / guardia / internación)
+     * @entity Coberturas
+     * @tags cobertura,agenda,horarios,encounter
+     * @spa_presentation fullscreen
+     */
+    public function actionElegirEncounterClass(): array
+    {
+        $req = Yii::$app->request;
+        $this->requireEfectorId();
+        $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
+
+        $ui = \common\components\Platform\Ui\UiScreenService::handleScreen(
+            'profesional-cobertura',
+            'elegir-encounter-class',
+            $fromClient,
+            $req->isPost ? $req->post() : [],
+            static function (array $post): array {
+                return ['data' => ['ok' => true]];
+            }
+        );
+        if (($ui['kind'] ?? '') === 'ui_definition') {
+            $ui['action_id'] = 'profesional-cobertura.elegir-encounter-class';
+            if ((string) ($fromClient['solo_cobertura'] ?? '') === '1'
+                && isset($ui['blocks']) && is_array($ui['blocks'])) {
+                foreach ($ui['blocks'] as &$block) {
+                    if (!is_array($block) || ($block['kind'] ?? '') !== 'list') {
+                        continue;
+                    }
+                    $items = $block['items'] ?? [];
+                    if (!is_array($items)) {
+                        continue;
+                    }
+                    $filtered = [];
+                    foreach ($items as $it) {
+                        if (!is_array($it)) {
+                            continue;
+                        }
+                        $id = strtoupper(trim((string) ($it['id'] ?? '')));
+                        if ($id === 'EMER' || $id === 'IMP') {
+                            $filtered[] = $it;
+                        }
+                    }
+                    $block['items'] = $filtered;
+                    $block['title'] = '¿Guardia o internación?';
+                }
+                unset($block);
+            }
+        }
+
+        return $ui;
+    }
+
+    /**
      * GET|POST /api/v1/profesional-cobertura/gestionar
      *
      * @action_name Gestionar cobertura (guardia / internación)

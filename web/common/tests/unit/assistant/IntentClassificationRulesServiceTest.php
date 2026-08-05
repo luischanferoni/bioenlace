@@ -368,12 +368,12 @@ class IntentClassificationRulesServiceTest extends Unit
         $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
             [
                 new UiActionCatalogItem(
-                    'profesional-cobertura.gestionar-propio',
-                    'Cargar mi cobertura (guardia / internación)',
+                    'profesional-horarios.gestionar-propio',
+                    'Configurar mis horarios',
                     '',
                     null,
                     '/api/profesional-cobertura/gestionar',
-                    ['cargar mi cobertura', 'mi cobertura'],
+                    ['cargar mi cobertura', 'mis horarios'],
                     []
                 ),
                 new UiActionCatalogItem(
@@ -388,11 +388,11 @@ class IntentClassificationRulesServiceTest extends Unit
             ],
             []
         );
-        $catalog->byActionId['profesional-cobertura.gestionar-propio'] = $catalog->items[0];
+        $catalog->byActionId['profesional-horarios.gestionar-propio'] = $catalog->items[0];
         $catalog->byActionId['profesional-agenda.configurar-propio'] = $catalog->items[1];
 
         $fb = IntentClassificationRulesService::resolveOperationalFallback('Cargar mi cobertura', $catalog);
         $this->assertNotNull($fb);
-        $this->assertSame('profesional-cobertura.gestionar-propio', $fb['item']->action_id);
+        $this->assertSame('profesional-horarios.gestionar-propio', $fb['item']->action_id);
     }
 }

@@ -377,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final title = _coberturaTitle ?? 'Cobertura';
     final mensajeSin = _mensajeSinCobertura ??
         'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente '
-            '(«Cargar mi cobertura») o pedile a coordinación / administración '
+            '(«Configurar mis horarios») o pedile a coordinación / administración '
             'del centro que te la asigne.';
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
@@ -1423,7 +1423,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!_sessionTieneCobertura) {
       final msg = _mensajeSinCobertura ??
           'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente '
-              '(«Cargar mi cobertura») o pedile a coordinación / administración '
+              '(«Configurar mis horarios») o pedile a coordinación / administración '
               'del centro que te la asigne.';
       return _buildEmpty(
         icon: Icons.badge_outlined,

@@ -10,15 +10,8 @@
     {
       "kind": "fields",
       "id": "datos",
-      "title": "Cobertura (guardia / internación)",
+      "title": "Cobertura semanal (guardia / internación)",
       "fields": [
-        {
-          "name": "id",
-          "label": "",
-          "type": "hidden",
-          "required": false,
-          "include_in_submit": true
-        },
         {
           "name": "id_efector",
           "label": "",
@@ -42,46 +35,51 @@
         },
         {
           "name": "encounter_class",
-          "label": "Tipo de cobertura",
-          "type": "chips",
+          "label": "",
+          "type": "hidden",
           "required": true,
-          "options": [
-            { "value": "EMER", "label": "Urgencia / guardia" },
-            { "value": "IMP", "label": "Internación" }
-          ],
           "include_in_submit": true
         },
         {
-          "name": "fecha_inicio",
-          "label": "Fecha de entrada",
+          "name": "vigente_desde",
+          "label": "¿Desde qué fecha aplica este patrón?",
           "type": "date",
           "required": true,
           "include_in_submit": true,
           "layout": { "col": 6, "breakpoint": "md" }
         },
         {
-          "name": "hora_inicio",
-          "label": "Hora de entrada",
-          "type": "time",
+          "name": "semanas",
+          "label": "Semanas a generar",
+          "type": "number",
           "required": true,
+          "min": 1,
+          "max": 12,
+          "step": 1,
+          "hint": "Se generan los turnos de plantel a partir de la fecha, según el patrón semanal.",
           "include_in_submit": true,
           "layout": { "col": 6, "breakpoint": "md" }
         },
         {
-          "name": "fecha_fin",
-          "label": "Fecha de salida",
-          "type": "date",
-          "required": true,
-          "include_in_submit": true,
-          "layout": { "col": 6, "breakpoint": "md" }
-        },
-        {
-          "name": "hora_fin",
-          "label": "Hora de salida",
-          "type": "time",
-          "required": true,
-          "include_in_submit": true,
-          "layout": { "col": 6, "breakpoint": "md" }
+          "name": "weekly_scheduler_widget",
+          "label": "Horarios de cobertura por día",
+          "type": "custom_widget",
+          "widget_id": "weekly_scheduler",
+          "required": false,
+          "value_fields": [
+            "lunes_2",
+            "martes_2",
+            "miercoles_2",
+            "jueves_2",
+            "viernes_2",
+            "sabado_2",
+            "domingo_2"
+          ],
+          "assets": {
+            "css": ["/css/scheduler.css"],
+            "js": ["/js/scheduler.js", "/js/widgets/ui-widget-weekly-scheduler.js"]
+          },
+          "layout": { "col": 12, "breakpoint": "md" }
         }
       ]
     }

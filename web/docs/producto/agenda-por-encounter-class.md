@@ -23,13 +23,14 @@ Metadata: [`agenda-by-encounter-class.yaml`](../../common/metadata/bioenlace/org
 
 ## EMER / IMP — cobertura
 
-- Tabla `profesional_cobertura`: persona, efector, clase, `inicio`/`fin`, servicio opcional, PES opcional, rol/notas.
+- Tabla `profesional_cobertura`: intervalos absolutos (entrada/salida) materializados desde plantilla.
+- Plantilla `profesional_cobertura_plantilla`: patrón semanal (`lunes_2`…`domingo_2`, mismo CSV de horas que AMB) + `vigente_desde` + `semanas`.
+- Al guardar: reemplaza coberturas generadas (`notas` `plantilla:*`) en la ventana y crea intervalos contiguos por día.
 - Conflictos: solape de intervalos misma persona + mismo efector; y solape con cupos AMB (`cobertura_vs_amb_slots`).
-- API: `/api/v1/profesional-cobertura/*` (propio vs `*-para-recurso`); `listar-activas`; `elegir-pes`.
-- UI JSON: `elegir-pes` (asignación) → `gestionar` (fecha/hora + clase).
-- Intents: `profesional-cobertura.gestionar-propio` | `gestionar-staff`.
-- Panel inicio: sección `staff_cobertura_activa` en EMER e IMP piso (`session.tiene_cobertura`, `session.mensaje_sin_cobertura`). Sin cobertura EMER el tablero no expone pacientes.
-- NL / atajos: «Cargar mi cobertura» → `profesional-cobertura.gestionar-propio` (`intent-classification-rules.yaml` + shortcuts). Requiere grant del intent (migración `m260805_120000_profesional_cobertura_intent_grants`).
+- API: `/api/v1/profesional-cobertura/*`; `elegir-encounter-class`; `gestionar` (UI plantilla).
+- Intent unificado: `profesional-horarios.gestionar-propio` (servicio → AMB|EMER|IMP → agenda o cobertura).
+- Intent legado cobertura: `profesional-cobertura.gestionar-propio` | `gestionar-staff`.
+- Panel inicio: `staff_cobertura_activa` (`session.tiene_cobertura`, `session.mensaje_sin_cobertura`).
 - **Tomar/asignar caso EMER** exige cobertura vigente (`operational.emer_assign_requires_cobertura`).
 
 No crea filas en `turnos` ni slots públicos.

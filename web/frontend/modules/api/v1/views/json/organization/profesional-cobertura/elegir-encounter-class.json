@@ -1,0 +1,39 @@
+{
+  "ui_type": "ui_json",
+  "title": "Tipo de horario",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "list",
+      "id": "default",
+      "title": "¿Qué horarios querés configurar?",
+      "empty_message": "No hay tipos disponibles.",
+      "selection": { "mode": "single" },
+      "draft_field": "encounter_class",
+      "item": { "kind": "generic", "id_field": "id", "label_field": "name" },
+      "presentation": { "tile": "medium", "shape": "wide" },
+      "items": [
+        {
+          "id": "AMB",
+          "name": "Ambulatorio (turnos para pacientes)",
+          "meta": { "encounter_class": "AMB" }
+        },
+        {
+          "id": "EMER",
+          "name": "Urgencia / guardia (plantel)",
+          "meta": { "encounter_class": "EMER" }
+        },
+        {
+          "id": "IMP",
+          "name": "Internación (cobertura de piso)",
+          "meta": { "encounter_class": "IMP" }
+        }
+      ]
+    }
+  ]
+}

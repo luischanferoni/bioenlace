@@ -13,22 +13,21 @@ kinds:
       para solicitar turnos.
   EMER:
     storage: cobertura_interval
-    capacity_model: shift_roster
+    capacity_model: weekly_roster
     patient_booking: false
     service_filter: optional
     label: Urgencia / guardia (cobertura)
     description: >
-      Turnos de plantel con entrada y salida. Servicio opcional como filtro de ámbito.
-      No genera cupos ni filas en turnos de paciente.
+      Plantilla semanal de plantel (entrada/salida por día) materializada a intervalos.
+      Servicio opcional como filtro de ámbito. No genera cupos ni filas en turnos de paciente.
   IMP:
     storage: cobertura_interval
-    capacity_model: shift_roster
+    capacity_model: weekly_roster
     patient_booking: false
     service_filter: optional
     label: Internación (cobertura)
     description: >
-      Cobertura de piso/episodio con entrada y salida. Servicio o ámbito opcional.
-      No genera cupos ni filas en turnos de paciente.
+      Cobertura de piso con patrón semanal materializado. No genera cupos ni filas en turnos de paciente.
 
 conflicts:
   # Solape de intervalos de cobertura (EMER/IMP) misma persona + mismo efector.

@@ -119,6 +119,27 @@ vocab:
     - confirmar vínculo menor
     - vinculo pendiente menor
 
+  cobertura_own_phrases:
+    - cargar mi cobertura
+    - mi cobertura
+    - cobertura de guardia
+    - cobertura de piso
+    - turno de guardia
+    - plantel de guardia
+    - registrar mi cobertura
+    - declarar mi cobertura
+    - horario de guardia
+    - mi plantel
+  cobertura_staff_phrases:
+    - cargar cobertura de
+    - cobertura de un profesional
+    - cobertura del profesional
+    - cobertura profesional
+    - cobertura de personal
+    - cobertura de un colega
+    - asignar guardia
+    - plantel guardia
+
 match_rules:
   staff_agenda_config_edit:
     require_all: [edit_verbs, agenda_targets]
@@ -242,6 +263,19 @@ match_rules:
     require_any: [consultas_seguimiento_topics]
     forbid_any: [acute_new_symptom, clinical_symptoms]
 
+  own_cobertura_gestionar:
+    require_phrase_any: cobertura_own_phrases
+    forbid_any: [staff_third_party]
+    ai_hint: >-
+      Si el mensaje pide cargar/registrar la propia cobertura de guardia o piso (entrada/salida),
+      priorizá profesional-cobertura.gestionar-propio. No es agenda ambulatoria ni licencia.
+
+  staff_cobertura_gestionar:
+    require_phrase_any: cobertura_staff_phrases
+    ai_hint: >-
+      Si el mensaje pide cargar cobertura de guardia/piso de otro profesional del efector,
+      priorizá profesional-cobertura.gestionar-staff.
+
 score_adjustments:
   - when_rule: paciente_listar_turnos
     apply:
@@ -330,6 +364,30 @@ score_adjustments:
         delta: 15
       - intent_id: profesional-efector-servicio.crear-flow
         delta: -30
+      - intent_id_prefix: licencia.cargar
+        delta: -35
+
+  - when_rule: own_cobertura_gestionar
+    apply:
+      - intent_id: profesional-cobertura.gestionar-propio
+        delta: 55
+      - intent_id: profesional-cobertura.gestionar-staff
+        delta: -35
+      - intent_id: profesional-agenda.configurar-propio
+        delta: -30
+      - intent_id: profesional-agenda.configurar-staff
+        delta: -30
+      - intent_id_prefix: licencia.cargar
+        delta: -40
+
+  - when_rule: staff_cobertura_gestionar
+    apply:
+      - intent_id: profesional-cobertura.gestionar-staff
+        delta: 55
+      - intent_id: profesional-cobertura.gestionar-propio
+        delta: -25
+      - intent_id: profesional-agenda.configurar-staff
+        delta: -25
       - intent_id_prefix: licencia.cargar
         delta: -35
 
@@ -455,6 +513,18 @@ operational_fallbacks:
     confidence: 0.9
     method: rules_declarative_fallback
 
+  - id: own_cobertura_gestionar_nl
+    when_any_rule: [own_cobertura_gestionar]
+    intent_id: profesional-cobertura.gestionar-propio
+    confidence: 0.92
+    method: rules_declarative_fallback
+
+  - id: staff_cobertura_gestionar_nl
+    when_any_rule: [staff_cobertura_gestionar]
+    intent_id: profesional-cobertura.gestionar-staff
+    confidence: 0.92
+    method: rules_declarative_fallback
+
   - id: condicion_laboral_family_nl
     when_any_rule: [own_condicion_laboral, staff_condicion_laboral]
     intent_family: condicion-laboral.edit
@@ -511,6 +581,8 @@ chat_preprocess:
       - staff_data_access_list
       - staff_data_access_list_phrase
       - staff_data_access_edit
+      - own_cobertura_gestionar
+      - staff_cobertura_gestionar
 
   prompt:
     intro: 'Analizá el mensaje del usuario para un asistente de salud.'
@@ -530,7 +602,7 @@ chat_preprocess:
       from_goals: [informational, unclear, operational, in_flow_question]
       when_not_any_rule: [scheduling_operational, paciente_reservar_turno]
       to_goal: conversational
-    - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit]
+    - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit, own_cobertura_gestionar, staff_cobertura_gestionar]
       to_goal: operational
 
   heuristic_fallback:
@@ -542,7 +614,7 @@ chat_preprocess:
       goal: operational
     - when_any_rule: [paciente_delegar_representacion, paciente_solicitar_tutela, staff_verificar_tutela]
       goal: operational
-    - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit]
+    - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit, own_cobertura_gestionar, staff_cobertura_gestionar]
       goal: operational
     - when_rule: help_menu_query
       goal: informational

@@ -10,12 +10,17 @@ description: "Registrar o editar turnos de plantel EMER/IMP con entrada y salida
 rbac_route: "/api/profesional-cobertura/gestionar"
 
 keywords:
+  - cargar mi cobertura
   - mi cobertura
+  - cobertura de guardia
+  - cobertura de piso
   - mi guardia
   - turno de guardia
   - cobertura internación
   - horario de guardia
+  - plantel de guardia
   - plantel
+  - registrar mi cobertura
 
 intent_semantics:
   goal: Declarar cobertura propia de urgencia o internación (entrada/salida).

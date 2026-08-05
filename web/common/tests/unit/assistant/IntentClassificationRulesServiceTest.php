@@ -351,4 +351,48 @@ class IntentClassificationRulesServiceTest extends Unit
             IntentClassifier::scoreItemPublic($lower, $designar)
         );
     }
+
+    public function testCargarMiCoberturaIsOperationalAndMatchesOwnRule(): void
+    {
+        $msg = 'Cargar mi cobertura';
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches('own_cobertura_gestionar', $msg));
+        $this->assertTrue(IntentClassificationRulesService::isStaffDataAccessOperationalQuery($msg));
+        $this->assertSame(
+            'operational',
+            IntentClassificationRulesService::resolveHeuristicUserGoal($msg)
+        );
+    }
+
+    public function testOperationalFallbackRoutesCargarMiCobertura(): void
+    {
+        $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'profesional-cobertura.gestionar-propio',
+                    'Cargar mi cobertura (guardia / internación)',
+                    '',
+                    null,
+                    '/api/profesional-cobertura/gestionar',
+                    ['cargar mi cobertura', 'mi cobertura'],
+                    []
+                ),
+                new UiActionCatalogItem(
+                    'profesional-agenda.configurar-propio',
+                    'Configurar mi agenda',
+                    '',
+                    null,
+                    '/api/profesional-agenda/configurar-agenda',
+                    ['mi agenda'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['profesional-cobertura.gestionar-propio'] = $catalog->items[0];
+        $catalog->byActionId['profesional-agenda.configurar-propio'] = $catalog->items[1];
+
+        $fb = IntentClassificationRulesService::resolveOperationalFallback('Cargar mi cobertura', $catalog);
+        $this->assertNotNull($fb);
+        $this->assertSame('profesional-cobertura.gestionar-propio', $fb['item']->action_id);
+    }
 }

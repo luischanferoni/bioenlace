@@ -10,11 +10,16 @@ description: "Registrar turnos de plantel EMER/IMP (entrada/salida) para un prof
 rbac_route: "/api/profesional-cobertura/gestionar"
 
 keywords:
+  - cargar cobertura de
+  - cobertura de un profesional
+  - cobertura del profesional
   - cobertura profesional
+  - cobertura de personal
   - asignar guardia
   - plantel guardia
   - cobertura piso
   - roster internación
+  - cobertura de un colega
 
 intent_semantics:
   goal: Cargar cobertura EMER/IMP de un profesional del efector.

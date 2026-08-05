@@ -119,6 +119,9 @@ final class ProfesionalCoberturaUiFlowService
                     : ('Servicio #' . $pes->id_servicio);
             }
         }
+        if (empty($defaults['servicio_nombre'])) {
+            $defaults['servicio_nombre'] = 'General del centro (sin servicio específico)';
+        }
         $inicio = trim((string) ($query['inicio'] ?? ''));
         $fin = trim((string) ($query['fin'] ?? ''));
         if ($inicio !== '' && empty($query['fecha_inicio'])) {
@@ -147,6 +150,7 @@ final class ProfesionalCoberturaUiFlowService
     {
         $idPes = (int) ($post['id_profesional_efector_servicio'] ?? 0);
         $idPersona = (int) ($post['id_persona'] ?? 0);
+        $pes = null;
 
         if ($idPes > 0) {
             $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
@@ -177,6 +181,9 @@ final class ProfesionalCoberturaUiFlowService
         } else {
             $idServicio = (int) $idServicio;
         }
+        if ($idServicio === null && $pes !== null) {
+            $idServicio = (int) $pes->id_servicio;
+        }
 
         return [
             'id_persona' => $idPersona,
@@ -186,8 +193,6 @@ final class ProfesionalCoberturaUiFlowService
             'encounter_class' => (string) ($post['encounter_class'] ?? ''),
             'inicio' => $inicio,
             'fin' => $fin,
-            'rol' => isset($post['rol']) ? trim((string) $post['rol']) : null,
-            'notas' => isset($post['notas']) ? trim((string) $post['notas']) : null,
         ];
     }
 

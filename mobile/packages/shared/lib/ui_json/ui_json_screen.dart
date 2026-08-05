@@ -740,6 +740,37 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     }
   }
 
+  Future<void> _pickTime(Map<String, dynamic> field) async {
+    final name = field['name']?.toString() ?? '';
+    final raw = (_accum[name] ?? field['value']?.toString() ?? '').trim();
+    var initial = TimeOfDay.now();
+    final m = RegExp(r'^(\d{1,2}):(\d{2})').firstMatch(raw);
+    if (m != null) {
+      final h = int.tryParse(m.group(1)!);
+      final min = int.tryParse(m.group(2)!);
+      if (h != null && min != null && h >= 0 && h <= 23 && min >= 0 && min <= 59) {
+        initial = TimeOfDay(hour: h, minute: min);
+      }
+    }
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+      builder: (ctx, child) {
+        return MediaQuery(
+          data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+    );
+    if (picked != null && mounted) {
+      final hh = picked.hour.toString().padLeft(2, '0');
+      final mm = picked.minute.toString().padLeft(2, '0');
+      setState(() {
+        _setAccumField(name, '$hh:$mm');
+      });
+    }
+  }
+
   Future<List<Map<String, dynamic>>> _autoLoadAutocomplete(Map<String, dynamic> field) async {
     final name = field['name']?.toString() ?? '';
     if (name.isEmpty) return [];
@@ -1013,6 +1044,27 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           trailing: const Icon(Icons.calendar_today),
           onTap: () => _pickDate(field),
         );
+      case 'time':
+        final timeVal = _accum[name] ?? field['value']?.toString() ?? '';
+        if (timeVal.isNotEmpty) {
+          _accum.putIfAbsent(name, () => timeVal);
+        }
+        return ListTile(
+          title: Text(required ? '$label *' : label),
+          subtitle: Text((_accum[name] ?? '').isEmpty ? 'Elegir hora' : _accum[name]!),
+          trailing: const Icon(Icons.schedule),
+          onTap: () => _pickTime(field),
+        );
+      case 'display':
+        final displayVal = (field['value']?.toString() ?? _accum[name] ?? '').trim();
+        return ListTile(
+          contentPadding: EdgeInsets.zero,
+          title: label.isNotEmpty ? Text(label) : null,
+          subtitle: Text(
+            displayVal.isEmpty ? '—' : displayVal,
+            style: Theme.of(context).textTheme.bodyLarge,
+          ),
+        );
       case 'textarea':
         final readonly = field['readonly'] == true;
         final rowsRaw = field['rows'];
@@ -1144,12 +1196,22 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
           ],
         );
       default:
+        final readonly = field['readonly'] == true;
+        final initialText = field['value']?.toString() ?? _accum[name] ?? '';
+        if (initialText.isNotEmpty) {
+          _accum.putIfAbsent(name, () => initialText);
+        }
         return TextFormField(
-          initialValue: _accum[name] ?? '',
-          decoration: InputDecoration(labelText: required ? '$label *' : label),
+          initialValue: initialText,
+          readOnly: readonly,
+          enableSuggestions: !readonly,
+          decoration: InputDecoration(
+            labelText: required ? '$label *' : label,
+            filled: readonly,
+          ),
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
           cursorColor: Theme.of(context).colorScheme.primary,
-          onChanged: (v) => _setAccumField(name, v),
+          onChanged: readonly ? null : (v) => _setAccumField(name, v),
           validator: required ? (v) => (v == null || v.isEmpty) ? 'Requerido' : null : null,
         );
     }
@@ -1159,6 +1221,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     for (final f in _allFieldDefs()) {
       if (!_depsOk(f)) continue;
       if (f['type'] == 'hidden') continue;
+      if (f['type'] == 'display') continue;
       if (f['required'] == true) {
         final name = f['name']?.toString() ?? '';
         final v = _accum[name];

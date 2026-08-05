@@ -34,40 +34,31 @@
           "include_in_submit": true
         },
         {
+          "name": "id_servicio",
+          "label": "",
+          "type": "hidden",
+          "required": false,
+          "include_in_submit": true
+        },
+        {
           "name": "encounter_class",
           "label": "Tipo de cobertura",
-          "type": "select",
+          "type": "chips",
           "required": true,
           "options": [
             { "value": "EMER", "label": "Urgencia / guardia" },
             { "value": "IMP", "label": "Internación" }
           ],
-          "include_in_submit": true,
-          "layout": { "col": 6, "breakpoint": "md" }
-        },
-        {
-          "name": "id_servicio",
-          "label": "Servicio (opcional)",
-          "type": "select",
-          "required": false,
-          "options": "{{options}}",
-          "option_config": {
-            "source": "servicios",
-            "filter": "efector_servicios"
-          },
-          "hint": "Si elegiste asignación PES, se completa solo. Vacío = cobertura general del efector.",
-          "include_in_submit": true,
-          "layout": { "col": 6, "breakpoint": "md" }
+          "include_in_submit": true
         },
         {
           "name": "servicio_nombre",
-          "label": "Asignación",
-          "type": "text",
+          "label": "Servicio",
+          "type": "display",
           "required": false,
-          "readonly": true,
-          "include_in_submit": false,
-          "layout": { "col": 6, "breakpoint": "md" }
-        },        {
+          "include_in_submit": false
+        },
+        {
           "name": "fecha_inicio",
           "label": "Fecha de entrada",
           "type": "date",
@@ -78,9 +69,8 @@
         {
           "name": "hora_inicio",
           "label": "Hora de entrada",
-          "type": "text",
+          "type": "time",
           "required": true,
-          "placeholder": "HH:MM",
           "include_in_submit": true,
           "layout": { "col": 6, "breakpoint": "md" }
         },
@@ -95,26 +85,8 @@
         {
           "name": "hora_fin",
           "label": "Hora de salida",
-          "type": "text",
+          "type": "time",
           "required": true,
-          "placeholder": "HH:MM",
-          "include_in_submit": true,
-          "layout": { "col": 6, "breakpoint": "md" }
-        },
-        {
-          "name": "rol",
-          "label": "Rol en el turno",
-          "type": "text",
-          "required": false,
-          "placeholder": "Médico, triage, piso…",
-          "include_in_submit": true,
-          "layout": { "col": 6, "breakpoint": "md" }
-        },
-        {
-          "name": "notas",
-          "label": "Notas",
-          "type": "text",
-          "required": false,
           "include_in_submit": true,
           "layout": { "col": 6, "breakpoint": "md" }
         }

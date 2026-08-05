@@ -3945,6 +3945,12 @@
             case 'date':
                 html += renderDateField(field);
                 break;
+            case 'time':
+                html += renderTimeField(field);
+                break;
+            case 'display':
+                html += renderDisplayField(field);
+                break;
             case 'textarea':
                 html += renderTextareaField(field);
                 break;
@@ -4264,6 +4270,33 @@
         return html;
     }
 
+    /**
+     * Hora (HH:MM) nativa.
+     */
+    function renderTimeField(field) {
+        let v = field.value !== undefined && field.value !== null ? String(field.value).trim() : '';
+        if (/^\d{1,2}:\d{2}:\d{2}$/.test(v)) {
+            v = v.substring(0, 5);
+        }
+        let html = '<input type="time" class="form-control" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '"';
+        if (field.required) {
+            html += ' required';
+        }
+        html += '>';
+        return html;
+    }
+
+    /**
+     * Solo lectura (sin input editable).
+     */
+    function renderDisplayField(field) {
+        const v = field.value !== undefined && field.value !== null ? String(field.value).trim() : '';
+        if (v === '') {
+            return '<p class="form-control-plaintext text-muted mb-0">—</p>';
+        }
+        return '<p class="form-control-plaintext mb-0">' + escapeHtml(v) + '</p>';
+    }
+
     const SPA_FLATPICKR_LOCALE_ES = {
         weekdays: {
             shorthand: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
@@ -4358,7 +4391,13 @@
      * Renderizar campo de texto
      */
     function renderTextField(field) {
-        let html = '<input type="text" class="form-control" name="' + escapeHtml(field.name) + '" value="' + (field.value || '') + '"' + (field.required ? ' required' : '') + '>';
+        const ro = field.readonly === true || field.readonly === 1 || field.readonly === '1' || field.readonly === 'true';
+        const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
+        let html = '<input type="text" class="form-control" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '"'
+            + (field.required ? ' required' : '')
+            + (ro ? ' readonly' : '')
+            + (field.placeholder ? ' placeholder="' + escapeHtml(String(field.placeholder)) + '"' : '')
+            + '>';
         return html;
     }
 

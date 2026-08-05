@@ -13,7 +13,6 @@ use common\components\Platform\Core\Permission\BioenlaceAccessChecker;
 use common\components\Platform\Core\Permission\BioenlaceSessionPermissions;
 use common\models\User;
 
-use common\components\Domain\Clinical\Inpatient\Service\InternacionMapaWebContext;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Efector;
@@ -127,22 +126,11 @@ class SiteController extends Controller
         $esImpPiso = $encounterClass === Encounter::ENCOUNTER_CLASS_IMP
             && (!$idServicio || !Servicio::esServicioAgendaQuirurgica($idServicio));
 
-        $mapaCtx = null;
-        if ($esImpPiso) {
-            $idEfector = (int) Yii::$app->user->getIdEfector();
-            $mapaCtx = InternacionMapaWebContext::build(
-                $idEfector,
-                (int) (Yii::$app->request->post('piso') ?? 0) ?: null,
-                (int) (Yii::$app->request->post('sala') ?? 0) ?: null
-            );
-        }
-
         return $this->render('//pacientes/listado', [
             'fecha' => $fecha,
             'encounter_class' => $encounterClass,
             'id_servicio_actual' => $idServicio,
             'es_imp_piso' => $esImpPiso,
-            'mapa_ctx' => $mapaCtx,
         ]);
     }
 

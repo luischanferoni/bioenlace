@@ -15,7 +15,6 @@ $esVirtual = ($encounter_class === Encounter::ENCOUNTER_CLASS_VR);
 $esGuardia = ($encounter_class === Encounter::ENCOUNTER_CLASS_EMER);
 $esImpQuirurgico = ($encounter_class === Encounter::ENCOUNTER_CLASS_IMP && $idServicioActual && Servicio::esServicioAgendaQuirurgica($idServicioActual));
 $esImpPiso = !empty($es_imp_piso);
-$mapaCtx = $mapa_ctx ?? null;
 $fechaAnterior = date('Y-m-d', strtotime($fecha . ' -1 day'));
 $fechaSiguiente = date('Y-m-d', strtotime($fecha . ' +1 day'));
 $hoy = date('Y-m-d');
@@ -102,16 +101,6 @@ $this->title = $esGuardia
     <div id="pacientes-listado-content" class="d-none"></div>
     <div id="pacientes-listado-error" class="d-none alert alert-warning"></div>
 </div>
-
-<?php if ($esImpPiso && is_array($mapaCtx)): ?>
-    <?= $this->render('//internacion/_mapa_panel', [
-        'pisos_efector' => $mapaCtx['pisos_efector'] ?? [],
-        'mapa' => $mapaCtx['mapa'] ?? null,
-        // Inicio IMP = ronda/mapa de consulta; no es el flujo “asignar persona de sesión a cama”.
-        'pacienteInternado' => false,
-        'formAction' => Url::to(['site/index', 'fecha' => $fecha]),
-    ]) ?>
-<?php endif; ?>
 
 <?= $this->render('_listado_templates') ?>
 

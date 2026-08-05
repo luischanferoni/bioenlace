@@ -15,7 +15,6 @@ import '../services/consulta_async_api.dart';
 import 'emergency/emergency_guardia_actions.dart';
 import 'emergency/emergency_triage_screen.dart';
 import 'patient_timeline_screen.dart';
-import 'internacion/internacion_mapa_screen.dart';
 import 'chat_consulta_screen.dart';
 
 /// Pantalla principal del médico. Contenido según encounter class:
@@ -601,22 +600,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               if (_encounterClass == 'IMP') ...[
                 BioSpacing.gapW(BioSpacing.xs),
-                IconButton(
-                  icon: const Icon(Icons.bed_outlined),
-                  tooltip: 'Mapa de camas',
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => InternacionMapaScreen(
-                                authToken: widget.authToken,
-                                userId: widget.userId,
-                              ),
-                            ),
-                          );
-                        },
-                ),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: _isLoading ? null : _cargarListadoPacientes,

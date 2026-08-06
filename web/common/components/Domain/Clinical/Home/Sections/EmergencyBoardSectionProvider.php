@@ -36,12 +36,21 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
                 Encounter::ENCOUNTER_CLASS_EMER
             )
         ) {
+            $proxima = $idPersona > 0
+                ? ProfesionalCoberturaActivaService::proximaCoberturaInicio(
+                    $idPersona,
+                    $idEfector,
+                    Encounter::ENCOUNTER_CLASS_EMER
+                )
+                : null;
+
             return [
                 'items' => [],
                 'total' => 0,
                 'requires_cobertura' => true,
                 'empty_message' => ProfesionalCoberturaActivaService::mensajeSinCoberturaParaSesion(
-                    Encounter::ENCOUNTER_CLASS_EMER
+                    Encounter::ENCOUNTER_CLASS_EMER,
+                    ['proxima_inicio' => $proxima]
                 ),
             ];
         }

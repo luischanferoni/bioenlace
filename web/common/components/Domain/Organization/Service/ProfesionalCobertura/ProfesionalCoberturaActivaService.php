@@ -89,7 +89,15 @@ final class ProfesionalCoberturaActivaService
             }
         }
 
-        $mensajeSin = $sessionTiene ? null : self::mensajeSinCoberturaParaSesion($encounterClass);
+        $proximaInicio = null;
+        if (!$sessionTiene && $idPersonaSesion > 0) {
+            $proximaInicio = self::proximaCoberturaInicio($idPersonaSesion, $idEfector, $encounterClass, $at);
+        }
+        $mensajeSin = $sessionTiene
+            ? null
+            : self::mensajeSinCoberturaParaSesion($encounterClass, [
+                'proxima_inicio' => $proximaInicio,
+            ]);
 
         return [
             'title' => $encounterClass === Encounter::ENCOUNTER_CLASS_EMER
@@ -104,6 +112,7 @@ final class ProfesionalCoberturaActivaService
             'session' => [
                 'id_persona' => $idPersonaSesion > 0 ? $idPersonaSesion : null,
                 'tiene_cobertura' => $sessionTiene,
+                'proxima_cobertura_inicio' => $proximaInicio,
                 'mensaje_sin_cobertura' => $mensajeSin,
             ],
         ];
@@ -111,10 +120,24 @@ final class ProfesionalCoberturaActivaService
 
     /**
      * Texto accionable cuando la sesión no tiene cobertura vigente (EMER/IMP).
+     *
+     * @param array{proxima_inicio?: string|null} $ctx
      */
-    public static function mensajeSinCoberturaParaSesion(string $encounterClass): string
+    public static function mensajeSinCoberturaParaSesion(string $encounterClass, array $ctx = []): string
     {
         $encounterClass = strtoupper(trim($encounterClass));
+        $ambito = $encounterClass === Encounter::ENCOUNTER_CLASS_IMP
+            ? 'de piso'
+            : 'de guardia';
+        $proxima = isset($ctx['proxima_inicio']) ? trim((string) $ctx['proxima_inicio']) : '';
+        if ($proxima !== '') {
+            $cuando = self::formatFechaHoraCobertura($proxima);
+
+            return 'No estás en cobertura ' . $ambito . ' ahora. Tu próxima ventana de plantel es el '
+                . $cuando . '. Si necesitás estar activo ya, ajustá el patrón en el Asistente '
+                . '(«Configurar mis horarios») o pedile a coordinación / administración del centro.';
+        }
+
         if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
             return 'No tenés cobertura vigente de piso. Para atender internados, cargá tu cobertura '
                 . 'desde el Asistente («Configurar mis horarios») o pedile a coordinación / administración '
@@ -124,6 +147,54 @@ final class ProfesionalCoberturaActivaService
         return 'No tenés cobertura vigente en el plantel de guardia. Para ver el tablero y atender, '
             . 'cargá tu cobertura desde el Asistente («Configurar mis horarios») o pedile a coordinación / '
             . 'administración del centro que te la asigne.';
+    }
+
+    /**
+     * Próximo inicio de cobertura de la persona (después de `$at`), o null.
+     */
+    public static function proximaCoberturaInicio(
+        int $idPersona,
+        int $idEfector,
+        string $encounterClass,
+        ?string $atDateTime = null
+    ): ?string {
+        if ($idPersona <= 0 || $idEfector <= 0 || !AgendaByEncounterClassMetadata::isCoberturaClass($encounterClass)) {
+            return null;
+        }
+        $at = $atDateTime !== null && trim($atDateTime) !== ''
+            ? date('Y-m-d H:i:s', strtotime($atDateTime) ?: time())
+            : date('Y-m-d H:i:s');
+
+        $inicio = ProfesionalCobertura::find()
+            ->select(['inicio'])
+            ->andWhere([
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfector,
+                'encounter_class' => $encounterClass,
+                'deleted_at' => null,
+            ])
+            ->andWhere(['>', 'inicio', $at])
+            ->orderBy(['inicio' => SORT_ASC])
+            ->limit(1)
+            ->scalar();
+
+        if (!is_string($inicio) || trim($inicio) === '') {
+            return null;
+        }
+
+        return $inicio;
+    }
+
+    private static function formatFechaHoraCobertura(string $inicio): string
+    {
+        $ts = strtotime($inicio);
+        if ($ts === false) {
+            return $inicio;
+        }
+        $dias = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+        $dia = $dias[(int) date('w', $ts)] ?? '';
+
+        return trim($dia . ' ' . date('d/m', $ts) . ' a las ' . date('H:i', $ts));
     }
 
     /**

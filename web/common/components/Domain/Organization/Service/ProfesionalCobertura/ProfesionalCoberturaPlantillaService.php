@@ -90,7 +90,8 @@ final class ProfesionalCoberturaPlantillaService
                 $encounterClass,
                 $idPes > 0 ? $idPes : null,
                 $vigenteDesde,
-                $finVentana
+                $finVentana,
+                (int) $plantilla->id
             );
 
             $created = 0;
@@ -323,31 +324,53 @@ final class ProfesionalCoberturaPlantillaService
         return implode(',', $sorted);
     }
 
+    /**
+     * Soft-delete de intervalos generados por plantilla en la ventana a regenerar.
+     * Usa UPDATE masivo (evita fallos silenciosos de softDelete fila a fila).
+     */
     private static function softDeleteGeneratedInWindow(
         int $idPersona,
         int $idEfector,
         string $encounterClass,
         ?int $idPes,
         string $desde,
-        string $hasta
+        string $hasta,
+        ?int $plantillaId = null
     ): void {
-        $q = ProfesionalCobertura::find()
-            ->where([
+        $condition = [
+            'and',
+            [
                 'id_persona' => $idPersona,
                 'id_efector' => $idEfector,
                 'encounter_class' => $encounterClass,
                 'deleted_at' => null,
-            ])
-            ->andWhere(['>=', 'inicio', $desde . ' 00:00:00'])
-            ->andWhere(['<', 'inicio', $hasta . ' 00:00:00'])
-            ->andWhere(['like', 'notas', 'plantilla:', false]);
+            ],
+            ['>=', 'inicio', $desde . ' 00:00:00'],
+            ['<', 'inicio', $hasta . ' 00:00:00'],
+        ];
+        if ($plantillaId !== null && $plantillaId > 0) {
+            $condition[] = ['notas' => 'plantilla:' . $plantillaId];
+        } else {
+            // Prefijo estable de materialización; el `%` es comodín SQL.
+            $condition[] = ['like', 'notas', 'plantilla:%', false];
+        }
         if ($idPes !== null && $idPes > 0) {
-            $q->andWhere(['id_profesional_efector_servicio' => $idPes]);
+            $condition[] = ['id_profesional_efector_servicio' => $idPes];
         }
 
-        foreach ($q->all() as $row) {
-            /** @var ProfesionalCobertura $row */
-            $row->softDelete();
+        $now = date('Y-m-d H:i:s');
+        $deletedBy = null;
+        if (Yii::$app->has('user', true) && Yii::$app->user && !Yii::$app->user->isGuest) {
+            $deletedBy = (int) Yii::$app->user->id;
         }
+
+        ProfesionalCobertura::updateAll(
+            [
+                'deleted_at' => $now,
+                'deleted_by' => $deletedBy,
+                'updated_at' => $now,
+            ],
+            $condition
+        );
     }
 }

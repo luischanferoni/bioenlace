@@ -5,6 +5,10 @@ RewriteCond %{REQUEST_URI} /assets/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^ - [R=404,L]
 
+# Probes estáticos ausentes: no enrutar a Yii (InvalidRouteException en logs).
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(robots\.txt|favicon\.ico)$ - [R=404,L,NC]
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 

@@ -820,10 +820,25 @@ public function actionListaCandidatos(){
         $dni = Yii::$app->getRequest()->getQueryParam('dni');
         $sexo = Yii::$app->getRequest()->getQueryParam('sexo');
 
-        $respuesta = $this->mpiApi()->caller_mpi('coberturas?dni='.$dni."&sexo=".$sexo,'{}'); 
+        $dniLong = \common\components\Domain\Integrations\Mpi\MpiSeipaDni::toLongQueryParam(
+            is_scalar($dni) ? (string) $dni : null
+        );
+        if ($dniLong === null) {
+            $respuesta = [
+                'successful' => false,
+                'statusCode' => 400,
+                'message' => 'Documento no consultable en SEIPA (requiere DNI numérico)',
+                'data' => [],
+            ];
+        } else {
+            $respuesta = $this->mpiApi()->caller_mpi(
+                'coberturas?dni=' . rawurlencode($dniLong) . '&sexo=' . rawurlencode((string) $sexo),
+                '{}'
+            );
+        }
 
         return $this->renderAjax('viewpuco', [
-            'coberturas' => $respuesta,
+            'coberturas' => is_array($respuesta) ? $respuesta : ['statusCode' => 500, 'data' => []],
         ]);
     }
 

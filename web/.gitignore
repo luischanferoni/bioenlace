@@ -11,10 +11,8 @@
 # Archivos de configuración sensibles
 frontend/web/index.php
 frontend/web/index-test.php
-frontend/web/robots.txt
 admin/web/index.php
 admin/web/index-test.php
-admin/web/robots.txt
 
 # Uploads y archivos generados por usuarios
 frontend/web/uploads/*

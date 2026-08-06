@@ -43,14 +43,59 @@ class MpiApiClient extends Component
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
-        Yii::warning($url, 'mpi');
+        Yii::info($url, 'mpi');
 
         $resp = curl_exec($ch);
-        Yii::warning($resp, 'mpi');
+        $curlErr = curl_error($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $respuesta = json_decode((string) $resp, true);
-        Yii::warning($respuesta, 'mpi');
 
-        return is_array($respuesta) ? $respuesta : null;
+        if (!is_array($respuesta)) {
+            Yii::warning([
+                'url' => $url,
+                'httpCode' => $httpCode,
+                'curlError' => $curlErr,
+                'body' => is_string($resp) ? substr($resp, 0, 500) : null,
+            ], 'mpi');
+
+            return null;
+        }
+
+        if ($this->responseHasRemoteFault($respuesta)) {
+            Yii::warning([
+                'url' => $url,
+                'httpCode' => $httpCode,
+                'remoteFault' => $respuesta['data'][0] ?? $respuesta['data'] ?? null,
+            ], 'mpi');
+        }
+
+        return $respuesta;
+    }
+
+    /**
+     * SEIPA a veces responde HTTP 200 / successful=true con filas status 500 en `data`.
+     *
+     * @param array<string, mixed> $respuesta
+     */
+    private function responseHasRemoteFault(array $respuesta): bool
+    {
+        $data = $respuesta['data'] ?? null;
+        if (!is_array($data)) {
+            return false;
+        }
+        $rows = isset($data[0]) && is_array($data[0]) ? $data : [$data];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $status = (int) ($row['status'] ?? 0);
+            $httpStatus = strtoupper((string) ($row['httpStatus'] ?? ''));
+            if ($status >= 400 || str_contains($httpStatus, 'ERROR')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @deprecated Compatibilidad con código legacy. */
@@ -229,17 +274,24 @@ class MpiApiClient extends Component
             return $include_exceptions ? [[0 => 'Capacidad coberturas MPI deshabilitada']] : [];
         }
 
-        $cmd = sprintf('coberturas?dni=%s&sexo=%s', $dni, $sexo);
+        $dniLong = MpiSeipaDni::toLongQueryParam($dni);
+        if ($dniLong === null) {
+            Yii::info('MPI coberturas omitida: documento no numérico para SEIPA Long: ' . $dni, 'mpi');
+
+            return $include_exceptions ? [[0 => 'Documento no consultable en SEIPA (requiere DNI numérico)']] : [];
+        }
+
+        $cmd = sprintf('coberturas?dni=%s&sexo=%s', rawurlencode($dniLong), rawurlencode($sexo));
         $coberturas = [];
 
         try {
             $response = $this->call($cmd, '{}');
             $consulta_api_ok = false;
-            if ($response) {
+            if ($response && !$this->responseHasRemoteFault($response)) {
                 $consulta_api_ok = (
                     ($response['successful'] ?? 0) == 1
-                    && ($response['statusCode'] ?? 0) == 200
-                );
+                    || ($response['successful'] ?? false) === true
+                ) && ($response['statusCode'] ?? 0) == 200;
             }
 
             if ($consulta_api_ok) {
@@ -282,9 +334,16 @@ class MpiApiClient extends Component
             return null;
         }
 
+        $dniLong = MpiSeipaDni::toLongQueryParam($dni);
+        if ($dniLong === null) {
+            Yii::info('MPI domicilio omitido: documento no numérico para SEIPA Long: ' . $dni, 'mpi');
+
+            return null;
+        }
+
         $cmd = sprintf(
             'domicilio?dni=%s&sexo=%s',
-            rawurlencode($dni),
+            rawurlencode($dniLong),
             rawurlencode($sexo)
         );
 

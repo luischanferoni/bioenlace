@@ -42,11 +42,18 @@ final class RenaperGatewayService
             return null;
         }
 
+        $dniLong = MpiSeipaDni::toLongQueryParam($documento);
+        if ($dniLong === null) {
+            Yii::info('RENAPER omitido: documento no numérico para SEIPA Long: ' . $documento, 'renaper');
+
+            return null;
+        }
+
         try {
             /** @var MpiApiClient $mpi */
             $mpi = Yii::$app->mpi;
             $respuesta = $mpi->call(
-                'renaper?dni=' . rawurlencode($documento) . '&sexo=' . rawurlencode($sexo),
+                'renaper?dni=' . rawurlencode($dniLong) . '&sexo=' . rawurlencode($sexo),
                 '{}'
             );
             if (!is_array($respuesta)) {

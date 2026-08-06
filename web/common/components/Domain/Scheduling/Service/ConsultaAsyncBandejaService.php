@@ -93,8 +93,17 @@ final class ConsultaAsyncBandejaService
     {
         $porTomar = [];
         $mias = [];
+        $abiertos = [
+            EncounterStatus::PLANNED,
+            EncounterStatus::IN_PROGRESS,
+            EncounterStatus::ON_HOLD,
+        ];
         foreach ($items as $item) {
             if (!is_array($item)) {
+                continue;
+            }
+            $status = (string) ($item['status'] ?? '');
+            if (!in_array($status, $abiertos, true)) {
                 continue;
             }
             $asignacion = is_array($item['asignacion'] ?? null) ? $item['asignacion'] : [];
@@ -102,7 +111,7 @@ final class ConsultaAsyncBandejaService
             $puedeTomar = !empty($item['acciones']['tomar']);
             if ($esMio) {
                 $mias[] = $item;
-            } elseif ($puedeTomar || ($item['status'] ?? '') === EncounterStatus::PLANNED) {
+            } elseif ($puedeTomar || $status === EncounterStatus::PLANNED) {
                 $porTomar[] = $item;
             }
         }

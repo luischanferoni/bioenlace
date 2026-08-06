@@ -97,11 +97,28 @@ final class ConsultaAsyncLifecycleService
         $newStatus = $resolutionCode === 'cancelada_paciente'
             ? EncounterStatus::CANCELLED
             : EncounterStatus::FINISHED;
-        $encounter->status = $newStatus;
-        if ($encounter->period_end === null || $encounter->period_end === '') {
-            $encounter->period_end = date('Y-m-d H:i:s');
+        $periodEnd = ($encounter->period_end === null || $encounter->period_end === '')
+            ? date('Y-m-d H:i:s')
+            : (string) $encounter->period_end;
+        $now = date('Y-m-d H:i:s');
+        // updateAll: garantiza status finished/cancelled en BD (no depender de dirty attrs del AR).
+        $updated = Encounter::updateAll(
+            [
+                'status' => $newStatus,
+                'period_end' => $periodEnd,
+                'updated_at' => $now,
+            ],
+            [
+                'id' => (int) $encounter->id,
+                'deleted_at' => null,
+            ]
+        );
+        if ($updated < 1) {
+            throw new \RuntimeException('No se pudo cerrar la solicitud.');
         }
-        $encounter->save(false, ['status', 'period_end', 'updated_at', 'updated_by']);
+        $encounter->status = $newStatus;
+        $encounter->period_end = $periodEnd;
+        $encounter->updated_at = $now;
 
         $sys = new ConsultaAsyncSystemMessageService();
         if ($resolutionCode === 'cancelada_paciente') {

@@ -674,6 +674,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final esMio = asignacion['es_mio'] == true;
       final puedeTomar = acciones['tomar'] == true;
       final status = item['status']?.toString() ?? '';
+      const abiertos = {'planned', 'in-progress', 'on-hold'};
+      if (!abiertos.contains(status)) {
+        continue;
+      }
       if (esMio) {
         mias.add(item);
       } else if (puedeTomar || status == 'planned') {
@@ -975,7 +979,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _abrirChatAsync(Map<String, dynamic> item) {
+  void _abrirChatAsync(Map<String, dynamic> item) async {
     final encounterRaw = item['encounter_id'];
     final encounterId = encounterRaw is int
         ? encounterRaw
@@ -990,7 +994,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final servicio = item['servicio']?.toString().trim() ?? '';
     final titulo = servicio.isNotEmpty ? '$nombrePaciente · $servicio' : nombrePaciente;
 
-    Navigator.push(
+    await Navigator.push<bool>(
       context,
       MaterialPageRoute(
         builder: (_) => ChatConsultaScreen(
@@ -1002,6 +1006,9 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+    if (!mounted) return;
+    // Refresco al volver: las resueltas no deben quedar en «Las mías».
+    await _cargarListadoPacientes(silent: true);
   }
 
   Widget _seccionSubtitulo(String texto) {

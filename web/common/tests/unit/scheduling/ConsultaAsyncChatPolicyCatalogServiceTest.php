@@ -105,4 +105,21 @@ class ConsultaAsyncChatPolicyCatalogServiceTest extends Unit
         $svc = new ConsultaAsyncChatPolicyCatalogService();
         $this->assertSame(['imagen'], $svc->allowedUploadMessageTypesForPatient());
     }
+
+    public function testStaffFacingSystemContentTomada(): void
+    {
+        $svc = new ConsultaAsyncChatPolicyCatalogService();
+        $paciente = $svc->systemMessage('solicitud_tomada');
+        $this->assertNotSame('', $paciente);
+        $this->assertSame(
+            $svc->staffMessage('tomada_conversational'),
+            $svc->staffFacingSystemContent($paciente)
+        );
+        $pacienteStruct = $svc->systemMessage('solicitud_tomada_structured');
+        $this->assertSame(
+            $svc->staffMessage('tomada_structured'),
+            $svc->staffFacingSystemContent($pacienteStruct)
+        );
+        $this->assertNull($svc->staffFacingSystemContent('texto cualquiera'));
+    }
 }

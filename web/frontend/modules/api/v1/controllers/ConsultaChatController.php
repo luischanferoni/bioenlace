@@ -39,6 +39,15 @@ class ConsultaChatController extends BaseController
             return $err;
         }
 
+        $subject = $encounter->subject;
+        $meta = (new ConsultaAsyncEncounterMetaService())->fromEncounter($encounter);
+        $idPersona = (int) ($encounter->subject_persona_id ?? 0);
+        $intakeContext = (new ConsultaAsyncIntakeContextService())->buildFromMeta($meta, $idPersona);
+        $idPersonaViewer = (int) Yii::$app->user->getIdPersona();
+        $viewerEsPaciente = $idPersonaViewer > 0 && $idPersonaViewer === $idPersona;
+        $chatPolicy = (new ConsultaAsyncChatPolicyService())->resolveForEncounter($encounter, $viewerEsPaciente);
+        $policyCatalog = new ConsultaAsyncChatPolicyCatalogService();
+
         $messages = ConsultaChatMessage::find()
             ->where(['encounter_id' => $encounterId])
             ->orderBy(['created_at' => SORT_ASC])
@@ -53,6 +62,14 @@ class ConsultaChatController extends BaseController
                     $encounterId,
                     (string) $content
                 );
+            } elseif (
+                !$viewerEsPaciente
+                && ($message->message_type === 'sistema' || $message->user_role === 'sistema')
+            ) {
+                $staffFacing = $policyCatalog->staffFacingSystemContent((string) $content);
+                if ($staffFacing !== null) {
+                    $content = $staffFacing;
+                }
             }
             $formattedMessages[] = [
                 'id' => $message->id,
@@ -68,14 +85,6 @@ class ConsultaChatController extends BaseController
                 'is_read' => $message->is_read,
             ];
         }
-
-        $subject = $encounter->subject;
-        $meta = (new ConsultaAsyncEncounterMetaService())->fromEncounter($encounter);
-        $idPersona = (int) ($encounter->subject_persona_id ?? 0);
-        $intakeContext = (new ConsultaAsyncIntakeContextService())->buildFromMeta($meta, $idPersona);
-        $idPersonaViewer = (int) Yii::$app->user->getIdPersona();
-        $viewerEsPaciente = $idPersonaViewer > 0 && $idPersonaViewer === $idPersona;
-        $chatPolicy = (new ConsultaAsyncChatPolicyService())->resolveForEncounter($encounter, $viewerEsPaciente);
 
         return [
             'success' => true,

@@ -123,7 +123,7 @@ resolutions:
     suggest_turno: true
   consulta_resuelta:
     label: Consulta resuelta por mensaje
-    action_label: Resolver consulta
+    action_label: Marcar como resuelta
     notify_patient: true
   limite_conversacion:
     label: Límite de mensajes alcanzado
@@ -183,5 +183,10 @@ system_messages:
 staff_messages:
   tomada_conversational: Solicitud asignada. Podés responder por mensaje.
   tomada_structured: Solicitud asignada. Elegí una resolución para el paciente.
+
+# Al listar el chat para staff, sustituye el texto persistido (copy paciente) por staff_messages.
+system_message_staff_view:
+  solicitud_tomada: tomada_conversational
+  solicitud_tomada_structured: tomada_structured
 
 # Labels cortos históricos eliminados: usar solicitud_categorias.*.label vía catalog.

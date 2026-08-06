@@ -2708,7 +2708,8 @@
         if (json.success === false) {
           throw new Error(json.message || 'No se pudo cerrar la consulta.');
         }
-        await loadAsyncChatMessages(asyncChatState.encounterId);
+        var modal = getAsyncChatModal();
+        if (modal) modal.hide();
         await loadPanel({ showSpinner: false });
       } catch (e) {
         if (errEl) {

@@ -116,6 +116,8 @@ class ConsultaAsyncController extends BaseController
             return (new ConsultaAsyncLifecycleService())->cerrarComoStaff($encounterId, $resolution, $note);
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage());
+        } catch (\RuntimeException $e) {
+            throw new BadRequestHttpException($e->getMessage());
         }
     }
 }

@@ -139,6 +139,8 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
     setState(() => _sending = false);
     if (res['success'] == true) {
       await _loadMessages();
+      if (!mounted) return;
+      Navigator.pop(context, true);
     } else {
       _showError(res['message']?.toString() ?? 'No se pudo cerrar');
     }

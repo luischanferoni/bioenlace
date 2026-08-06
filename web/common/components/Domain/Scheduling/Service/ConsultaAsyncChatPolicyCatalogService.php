@@ -334,6 +334,40 @@ final class ConsultaAsyncChatPolicyCatalogService
     }
 
     /**
+     * Texto de sistema orientado a paciente → copy staff si hay mapeo en metadata.
+     * Solo mensajes estáticos (sin placeholders); si no hay match, null.
+     */
+    public function staffFacingSystemContent(string $patientFacingContent): ?string
+    {
+        $content = trim($patientFacingContent);
+        if ($content === '') {
+            return null;
+        }
+
+        $aliases = self::cached()['system_message_staff_view'] ?? [];
+        if (!is_array($aliases) || $aliases === []) {
+            return null;
+        }
+
+        foreach ($aliases as $systemKey => $staffKey) {
+            $systemKey = trim((string) $systemKey);
+            $staffKey = trim((string) $staffKey);
+            if ($systemKey === '' || $staffKey === '') {
+                continue;
+            }
+            $tpl = $this->systemMessage($systemKey);
+            if ($tpl === '' || $tpl !== $content) {
+                continue;
+            }
+            $staff = $this->staffMessage($staffKey);
+
+            return $staff !== '' ? $staff : null;
+        }
+
+        return null;
+    }
+
+    /**
      * Label de categoría para bandeja (`solicitud_tipo`). Acepta alias de flujo o código canónico.
      */
     public function solicitudTipoLabel(string $code): string

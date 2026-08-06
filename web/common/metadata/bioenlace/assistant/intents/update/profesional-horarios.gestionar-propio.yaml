@@ -51,52 +51,36 @@ subintents:
       - draft.id_profesional_efector_servicio
     provides:
       - draft.encounter_class
-    next_routing:
-      - when:
-          draft_equals:
-            encounter_class: "AMB"
-        next: configurar_agenda_amb
-      - when:
-          draft_equals:
-            encounter_class: "EMER"
-        next: configurar_cobertura
-      - when:
-          draft_equals:
-            encounter_class: "IMP"
-        next: configurar_cobertura
-      - when:
-          default: true
-        next: configurar_cobertura
+    next: configurar_horario
     open_ui:
       action_id: profesional-cobertura.elegir-encounter-class
 
-  - id: configurar_agenda_amb
-    assistant_text: "Configurá horarios e intervalo ambulatorios"
-    requires:
-      - draft.id_profesional_efector_servicio
-      - draft.id_servicio
-    provides:
-      - draft.agenda_ui_completed
-    next: ""
-    open_ui:
-      action_id: profesional-agenda.configurar-agenda
-      params:
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        id_servicio: "draft.id_servicio"
-        ui_step: datos
-
-  - id: configurar_cobertura
-    assistant_text: "Configurá el patrón semanal de cobertura"
+  # Un solo paso de plan: la mini-UI (agenda AMB vs cobertura EMER/IMP) se elige por draft.
+  - id: configurar_horario
+    assistant_text: "Configurá tus horarios"
     requires:
       - draft.id_profesional_efector_servicio
       - draft.encounter_class
     provides:
+      - draft.agenda_ui_completed
       - draft.cobertura_ui_completed
     next: ""
-    open_ui:
-      action_id: profesional-cobertura.gestionar
-      params:
-        modo: propio
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        id_servicio: "draft.id_servicio"
-        encounter_class: "draft.encounter_class"
+    open_ui_routing:
+      - when:
+          draft_equals:
+            encounter_class: "AMB"
+        open_ui:
+          action_id: profesional-agenda.configurar-agenda
+          params:
+            id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+            id_servicio: "draft.id_servicio"
+            ui_step: datos
+      - when:
+          default: true
+        open_ui:
+          action_id: profesional-cobertura.gestionar
+          params:
+            modo: propio
+            id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+            id_servicio: "draft.id_servicio"
+            encounter_class: "draft.encounter_class"

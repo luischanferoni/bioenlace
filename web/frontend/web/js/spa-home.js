@@ -1064,8 +1064,22 @@
         if (baseIdx < 0) {
             baseIdx = 0;
         }
-        const nextIdx = baseIdx + 1;
-        if (steps.length > 1 && nextIdx < steps.length) {
+        // Avance optimista solo si `next` apunta al vecino inmediato (flows lineales).
+        // Con saltos / ramas, el spinner queda en el paso actual hasta la respuesta del motor.
+        const nextId = steps[baseIdx] && steps[baseIdx].next != null
+            ? String(steps[baseIdx].next).trim()
+            : '';
+        let nextIdx = -1;
+        if (nextId !== '') {
+            for (let i = 0; i < steps.length; i++) {
+                const sid = steps[i] && steps[i].id != null ? String(steps[i].id).trim() : '';
+                if (sid !== '' && sid === nextId) {
+                    nextIdx = i;
+                    break;
+                }
+            }
+        }
+        if (nextIdx === baseIdx + 1 && nextIdx < steps.length) {
             applyOptimisticFlowStepStates(row, nextIdx);
             return resolveFlowStepMountAtIndex(row, nextIdx);
         }
@@ -1744,10 +1758,15 @@
                             textEl.textContent = flowStepDisplayText(st, idx);
                         }
                     }
-                    if (idx > activeIdx) {
+                    if (idx !== activeIdx) {
                         const uiMount = li.querySelector('.spa-flow-step-ui');
                         if (uiMount) {
-                            uiMount.innerHTML = '';
+                            // Pasos futuros: vacíos. Pasos previos con spinner optimista residual: limpiar.
+                            if (idx > activeIdx
+                                || uiMount.classList.contains('spa-flow-step-ui--loading')) {
+                                uiMount.innerHTML = '';
+                                setFlowStepUiLoadingState(uiMount, false);
+                            }
                         }
                     }
                 });

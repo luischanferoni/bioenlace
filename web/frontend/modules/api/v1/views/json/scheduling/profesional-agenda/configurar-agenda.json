@@ -82,7 +82,7 @@
         },
         {
           "name": "vigente_desde",
-          "label": "¿Desde qué fecha aplica este cambio?",
+          "label": "¿Desde qué fecha aplica esta agenda?",
           "type": "date",
           "required": true,
           "layout": { "col": 6, "breakpoint": "md" }

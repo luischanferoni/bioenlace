@@ -1079,11 +1079,18 @@ final class SubIntentEngine
     /**
      * Resuelve `open_ui` considerando ramas declarativas (p.ej. “cerca” vs listado normal).
      *
+     * Orden: `open_ui_routing` (draft) → `chooser` (texto) → `open_ui` directo.
+     *
      * @param array<string, mixed> $subintent
      * @return array<string, mixed>|null
      */
     private static function resolveOpenUiForSubintent(array $subintent, string $content, array $draft): ?array
     {
+        $fromRouting = self::resolveOpenUiFromRouting($subintent, $draft);
+        if ($fromRouting !== null) {
+            return $fromRouting;
+        }
+
         $direct = isset($subintent['open_ui']) && is_array($subintent['open_ui']) ? $subintent['open_ui'] : null;
         $chooser = isset($subintent['chooser']) && is_array($subintent['chooser']) ? $subintent['chooser'] : null;
         if ($chooser === null) {
@@ -1118,6 +1125,57 @@ final class SubIntentEngine
             $direct['__draft'] = $draft;
         }
         return $direct;
+    }
+
+    /**
+     * `open_ui_routing`: misma semántica que `next_routing` (`draft_equals` / `default`),
+     * para un solo subintent con mini-UI distinta según el draft.
+     *
+     * @param array<string, mixed> $subintent
+     * @param array<string, mixed> $draft
+     * @return array<string, mixed>|null
+     */
+    private static function resolveOpenUiFromRouting(array $subintent, array $draft): ?array
+    {
+        $routing = isset($subintent['open_ui_routing']) && is_array($subintent['open_ui_routing'])
+            ? $subintent['open_ui_routing']
+            : null;
+        if ($routing === null || $routing === []) {
+            return null;
+        }
+
+        $fallback = null;
+        foreach ($routing as $rule) {
+            if (!is_array($rule)) {
+                continue;
+            }
+            $when = isset($rule['when']) && is_array($rule['when']) ? $rule['when'] : null;
+            $open = isset($rule['open_ui']) && is_array($rule['open_ui']) ? $rule['open_ui'] : null;
+            if ($open === null || AssistantDraftNormalizer::scalarString($open['action_id'] ?? '') === '') {
+                continue;
+            }
+            if ($when === null) {
+                continue;
+            }
+            if (isset($when['default']) && $when['default'] === true) {
+                $fallback = $open;
+                continue;
+            }
+            if (isset($when['draft_equals']) && is_array($when['draft_equals'])
+                && self::draftMatchesEquals($draft, $when['draft_equals'])) {
+                $open['__draft'] = $draft;
+
+                return $open;
+            }
+        }
+
+        if ($fallback !== null) {
+            $fallback['__draft'] = $draft;
+
+            return $fallback;
+        }
+
+        return null;
     }
 
     private static function userWantsNearby(string $content): bool

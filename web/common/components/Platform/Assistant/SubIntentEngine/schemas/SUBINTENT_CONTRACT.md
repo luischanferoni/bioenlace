@@ -94,6 +94,7 @@ Solo deben usarse las siguientes propiedades en cada ítem. Cualquier otra clave
 | `next` | Id del siguiente subintent, o cadena vacía `""` si no hay siguiente paso lineal. |
 | `next_routing` | Alternativa a `next`: lista de ramas `{ when, next }` (ver motor: `draft_equals`, `default`). |
 | `open_ui` | Objeto **picker / pantalla embebible** vía catálogo: `action_id`, `params` (valores `draft.*`), `pass_content_as_query` opcional. |
+| `open_ui_routing` | Alternativa a `open_ui`: lista de ramas `{ when, open_ui }` con la misma semántica que `next_routing` (`draft_equals`, `default`). Un solo paso de plan, mini-UI distinta según el draft. |
 | `chooser` | Objeto con `when_user_says_nearby` / `otherwise`, cada uno con su propio `open_ui` (elección de lista vs cercanía). |
 | `hint` | Opcional: `{ entity, match_property }` para resolver menciones del preprocess → `hints[]` en el envelope (`id`, `value`, `draft_field` inferido de `provides`). |
 | `flow_submit` | Opcional en una rama terminal. Usa la misma forma que el cierre raíz y lo sobrescribe sólo para ese subintent. |
@@ -109,6 +110,29 @@ open_ui:
 ```
 
 **Query del mini-UI:** `SubIntentEngine::buildOpenUiResponse` arma `client_open.api.query`: `draft.<campo>` desde el borrador; literales (p. ej. `step: raiz`) tal cual. Los clientes (`spa-home.js`, `chat_screen.dart`) deben repetir la misma regla al resolver `flow_manifest.active_step.ui.tabs[].params` si cargan la URL sin pasar por `open_ui`.
+
+### Forma de `open_ui_routing`
+
+Misma idea que `next_routing`, pero elige la mini-UI del **mismo** subintent (evita pasos hermanos en el plan visual).
+
+```yaml
+open_ui_routing:
+  - when:
+      draft_equals:
+        encounter_class: "AMB"
+    open_ui:
+      action_id: profesional-agenda.configurar-agenda
+      params:
+        id_servicio: "draft.id_servicio"
+  - when:
+      default: true
+    open_ui:
+      action_id: profesional-cobertura.gestionar
+      params:
+        encounter_class: "draft.encounter_class"
+```
+
+Prioridad de resolución en el motor: `open_ui_routing` → `chooser` → `open_ui`.
 
 ### Forma de `flow_submit` (raíz del intent)
 

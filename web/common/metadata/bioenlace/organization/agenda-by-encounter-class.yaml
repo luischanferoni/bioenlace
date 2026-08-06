@@ -46,3 +46,5 @@ operational:
   emer_assign_requires_cobertura: true
   # Si no hay nadie con cobertura, permitir asignar igual (piloto / onboarding).
   emer_assign_allow_without_any_plantel: false
+  # Ver listado de internados (piso) exige cobertura IMP vigente de la sesión.
+  imp_view_requires_cobertura: true

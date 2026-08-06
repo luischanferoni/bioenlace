@@ -119,34 +119,34 @@ final class ProfesionalCoberturaActivaService
     }
 
     /**
-     * Texto accionable cuando la sesión no tiene cobertura vigente (EMER/IMP).
+     * Texto accionable cuando la sesión no tiene plantel vigente (EMER/IMP).
+     * Sin la palabra «cobertura» (UX clínico).
      *
      * @param array{proxima_inicio?: string|null} $ctx
      */
     public static function mensajeSinCoberturaParaSesion(string $encounterClass, array $ctx = []): string
     {
         $encounterClass = strtoupper(trim($encounterClass));
-        $ambito = $encounterClass === Encounter::ENCOUNTER_CLASS_IMP
-            ? 'de piso'
-            : 'de guardia';
+        $esPiso = $encounterClass === Encounter::ENCOUNTER_CLASS_IMP;
+        $ambito = $esPiso ? 'de piso' : 'de guardia';
         $proxima = isset($ctx['proxima_inicio']) ? trim((string) $ctx['proxima_inicio']) : '';
         if ($proxima !== '') {
             $cuando = self::formatFechaHoraCobertura($proxima);
 
-            return 'No estás en cobertura ' . $ambito . ' ahora. Tu próxima ventana de plantel es el '
-                . $cuando . '. Si necesitás estar activo ya, ajustá el patrón en el Asistente '
+            return 'No estás de plantel ' . $ambito . ' ahora. Tu próximo horario es el '
+                . $cuando . '. Si necesitás atender ya, configurá tus horarios en el Asistente '
                 . '(«Configurar mis horarios») o pedile a coordinación / administración del centro.';
         }
 
-        if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
-            return 'No tenés cobertura vigente de piso. Para atender internados, cargá tu cobertura '
-                . 'desde el Asistente («Configurar mis horarios») o pedile a coordinación / administración '
-                . 'del centro que te la asigne.';
+        if ($esPiso) {
+            return 'No tenés horario de plantel de piso cargado. Para ver internados, configurá tus '
+                . 'horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / '
+                . 'administración del centro que te los asigne.';
         }
 
-        return 'No tenés cobertura vigente en el plantel de guardia. Para ver el tablero y atender, '
-            . 'cargá tu cobertura desde el Asistente («Configurar mis horarios») o pedile a coordinación / '
-            . 'administración del centro que te la asigne.';
+        return 'No tenés horario de plantel de guardia cargado. Para ver el tablero y atender, '
+            . 'configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a '
+            . 'coordinación / administración del centro que te los asigne.';
     }
 
     /**

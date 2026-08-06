@@ -115,4 +115,12 @@ final class AgendaByEncounterClassMetadata
 
         return (bool) ($ops['emer_assign_allow_without_any_plantel'] ?? false);
     }
+
+    /** Ver listado de internados (piso) exige cobertura IMP vigente. */
+    public static function impViewRequiresCobertura(): bool
+    {
+        $ops = self::loadConfig()['operational'] ?? [];
+
+        return (bool) ($ops['imp_view_requires_cobertura'] ?? true);
+    }
 }

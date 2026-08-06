@@ -1757,25 +1757,8 @@
     }
 
     function renderCoberturaActivaBanner(coberturaData, parentEl) {
-      if (!coberturaData || !parentEl) return;
-      var session = coberturaData.session || {};
-      // Solo avisar cuando la sesión no está en cobertura ahora.
-      if (session.tiene_cobertura !== false) {
-        return;
-      }
-      var mensajeSin = (session.mensaje_sin_cobertura || '').toString().trim() ||
-        'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te la asigne.';
-      var box = document.createElement('div');
-      box.className = 'alert alert-light border mb-3 py-2';
-      var title = document.createElement('div');
-      title.className = 'fw-semibold small mb-1';
-      title.textContent = coberturaData.title || 'Cobertura';
-      box.appendChild(title);
-      var warn = document.createElement('div');
-      warn.className = 'text-warning small mb-1';
-      warn.textContent = mensajeSin;
-      box.appendChild(warn);
-      parentEl.insertBefore(box, parentEl.firstChild);
+      // Ya no se muestra banner superior: el aviso vive solo en el vacío centrado del listado.
+      return;
     }
 
     function renderGuardiaTablero(items, kpiGroupData, coberturaData) {
@@ -1799,7 +1782,7 @@
       var sessionCob = (coberturaData && coberturaData.session) ? coberturaData.session : {};
       if (sessionCob.tiene_cobertura === false) {
         var msgSin = (sessionCob.mensaje_sin_cobertura || '').toString().trim() ||
-          'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente o pedile a coordinación / administración del centro que te la asigne.';
+          'No tenés horario de plantel de guardia cargado. Configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te los asigne.';
         showListadoEmpty(msgSin, listTarget);
         return;
       }
@@ -3411,6 +3394,17 @@
         }
         var inpat = findPanelSection(panel, 'inpatients');
         if (inpat) {
+          var cobInpat = findPanelSection(panel, 'staff_cobertura_activa');
+          var sessionInpat = cobInpat && cobInpat.data && cobInpat.data.session
+            ? cobInpat.data.session
+            : {};
+          if (sessionInpat.tiene_cobertura === false) {
+            var msgInpat = (sessionInpat.mensaje_sin_cobertura || '').toString().trim() ||
+              'No tenés horario de plantel de piso cargado. Configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te los asigne.';
+            showListadoEmpty(msgInpat, panelParts.listTarget);
+            applyPanelChrome(panel);
+            return;
+          }
           renderInternados((inpat.data && inpat.data.items) || [], panelParts.listTarget);
           applyPanelChrome(panel);
           return;

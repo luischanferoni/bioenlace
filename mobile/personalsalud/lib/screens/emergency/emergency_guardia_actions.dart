@@ -353,11 +353,11 @@ class EmergencyGuardiaActions {
       final cont = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Sin cobertura de guardia'),
+          title: const Text('Sin horario de plantel'),
           content: const Text(
-            'No tenés cobertura vigente en el plantel de guardia. '
-            'Para atender, cargá tu cobertura desde el Asistente («Configurar mis horarios») '
-            'o pedile a coordinación / administración del centro que te la asigne. '
+            'No tenés horario de plantel de guardia cargado. '
+            'Para atender, configurá tus horarios en el Asistente («Configurar mis horarios») '
+            'o pedile a coordinación / administración del centro que te los asigne. '
             'Podés intentar igual, pero el servidor puede rechazar la asignación.',
           ),
           actions: [

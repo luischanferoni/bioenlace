@@ -241,29 +241,6 @@ $this->title = $esGuardia
         </div>
     </div>
 </div>
-<div class="modal fade" id="guardia-clinical-modal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Pedidos y laboratorio</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted small" id="guardia-clinical-paciente-nombre"></p>
-                <div id="guardia-clinical-loading" class="text-muted small">Cargando…</div>
-                <ul id="guardia-clinical-orders" class="list-group list-group-flush mb-3 d-none"></ul>
-                <ul id="guardia-clinical-lab" class="list-group list-group-flush mb-3 d-none"></ul>
-                <div class="border rounded p-3 mb-3">
-                    <label class="form-label" for="guardia-clinical-pedido-display">Nuevo pedido (laboratorio)</label>
-                    <input type="text" class="form-control form-control-sm mb-2" id="guardia-clinical-pedido-display" placeholder="Ej. Hemograma completo">
-                    <button type="button" class="btn btn-sm btn-primary" id="guardia-clinical-pedido-submit">Agregar pedido</button>
-                </div>
-                <a href="#" class="btn btn-outline-secondary btn-sm" id="guardia-clinical-captura-link" data-spa-nav="1">Abrir captura clínica</a>
-                <div id="guardia-clinical-error" class="alert alert-danger d-none mt-3 mb-0"></div>
-            </div>
-        </div>
-    </div>
-</div>
 <div class="modal fade" id="guardia-ingreso-cama-modal" tabindex="-1" aria-labelledby="guardiaIngresoCamaModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
         <div class="modal-content">

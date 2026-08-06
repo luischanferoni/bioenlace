@@ -190,43 +190,6 @@ class EmergencyGuardiaApi {
         .toList();
   }
 
-  Future<Map<String, dynamic>> getResumenClinico(int guardiaId) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/resumen-clinico',
-    );
-    final response = await http.get(uri, headers: _headers);
-    final decoded = json.decode(response.body);
-    if (response.statusCode != 200 ||
-        decoded is! Map<String, dynamic> ||
-        decoded['success'] != true) {
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error resumen clínico') : 'Error',
-      );
-    }
-    return (decoded['data'] as Map<String, dynamic>?) ?? {};
-  }
-
-  Future<void> crearPedido({
-    required int guardiaId,
-    required String display,
-    String category = 'laboratory',
-  }) async {
-    final uri = Uri.parse(
-      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/crear-pedido',
-    );
-    final response = await http.post(
-      uri,
-      headers: _headers,
-      body: json.encode({'display': display, 'category': category}),
-    );
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      final decoded = json.decode(response.body);
-      throw Exception(
-        decoded is Map ? (decoded['message'] ?? 'Error al crear pedido') : 'Error',
-      );
-    }
-  }
-
   Future<void> solicitarInternacion(int guardiaId, {int? idEfectorInternacion}) async {
     final uri = Uri.parse(
       '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/solicitar-internacion',

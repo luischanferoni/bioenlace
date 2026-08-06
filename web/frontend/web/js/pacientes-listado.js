@@ -750,14 +750,6 @@
         };
       }
 
-      var ctaClinical = rowEl.querySelector('[data-role="cta-clinical"]');
-      if (ctaClinical) {
-        ctaClinical.classList.toggle('d-none', cerrado);
-        ctaClinical.onclick = function () {
-          openClinicalModal(g);
-        };
-      }
-
       var ctaInternacion = rowEl.querySelector('[data-role="cta-internacion"]');
       if (ctaInternacion) {
         if (cerrado) {
@@ -778,113 +770,11 @@
       }
     }
 
-    var clinicalModal = null;
-    var clinicalModalGuardiaId = 0;
     var ingresoCamaModal = null;
     var cambioCamaModal = null;
     var altaInternacionModal = null;
     var cambioCamaInternacionId = null;
     var altaInternacionId = null;
-
-    function getClinicalModal() {
-      if (!clinicalModal) {
-        var el = document.getElementById('guardia-clinical-modal');
-        if (el && window.bootstrap && window.bootstrap.Modal) {
-          clinicalModal = new window.bootstrap.Modal(el);
-        }
-      }
-      return clinicalModal;
-    }
-
-    async function openClinicalModal(g) {
-      clinicalModalGuardiaId = g.id;
-      var nameEl = document.getElementById('guardia-clinical-paciente-nombre');
-      if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);
-      var errEl = document.getElementById('guardia-clinical-error');
-      if (errEl) errEl.classList.add('d-none');
-      var modal = getClinicalModal();
-      if (modal) modal.show();
-      await loadClinicalModalContent(g);
-    }
-
-    async function loadClinicalModalContent(g) {
-      var api = window.BioenlaceNativePage;
-      if (!api || !clinicalModalGuardiaId) return;
-      var loading = document.getElementById('guardia-clinical-loading');
-      var ordersEl = document.getElementById('guardia-clinical-orders');
-      var labEl = document.getElementById('guardia-clinical-lab');
-      var capturaLink = document.getElementById('guardia-clinical-captura-link');
-      if (loading) loading.classList.remove('d-none');
-      if (ordersEl) ordersEl.classList.add('d-none');
-      if (labEl) labEl.classList.add('d-none');
-      try {
-        var url = api.apiV1Url('clinical/emergency-guardia/' + clinicalModalGuardiaId + '/resumen-clinico');
-        var json = await api.fetchJson(url, {
-          method: 'GET',
-          headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        });
-        var d = json.data || {};
-        if (capturaLink && d.captura_url) {
-          capturaLink.href = d.captura_url;
-          capturaLink.classList.remove('d-none');
-        }
-        if (ordersEl) {
-          ordersEl.innerHTML = '';
-          (d.orders || []).forEach(function (o) {
-            var li = document.createElement('li');
-            li.className = 'list-group-item d-flex justify-content-between';
-            li.innerHTML = '<span>' + (o.display || 'Pedido') + '</span><span class="badge bg-secondary">' + (o.result_status || '') + '</span>';
-            ordersEl.appendChild(li);
-          });
-          ordersEl.classList.toggle('d-none', !(d.orders && d.orders.length));
-        }
-        if (labEl) {
-          labEl.innerHTML = '';
-          (d.laboratory_reports || []).forEach(function (r) {
-            var li = document.createElement('li');
-            li.className = 'list-group-item';
-            li.textContent = (r.display || 'Informe') + (r.issued_at ? ' — ' + r.issued_at : '');
-            labEl.appendChild(li);
-          });
-          labEl.classList.toggle('d-none', !(d.laboratory_reports && d.laboratory_reports.length));
-        }
-      } catch (e) {
-        var errEl = document.getElementById('guardia-clinical-error');
-        if (errEl) {
-          errEl.textContent = e && e.message ? e.message : 'No se pudo cargar el resumen.';
-          errEl.classList.remove('d-none');
-        }
-      } finally {
-        if (loading) loading.classList.add('d-none');
-      }
-    }
-
-    async function submitClinicalPedido() {
-      var api = window.BioenlaceNativePage;
-      var input = document.getElementById('guardia-clinical-pedido-display');
-      var display = input ? input.value.trim() : '';
-      if (!api || !clinicalModalGuardiaId || !display) return;
-      try {
-        var url = api.apiV1Url('clinical/emergency-guardia/' + clinicalModalGuardiaId + '/crear-pedido');
-        await api.fetchJson(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          body: JSON.stringify({ display: display, category: 'laboratory' }),
-        });
-        if (input) input.value = '';
-        await loadGuardiaTablero(false);
-        await loadClinicalModalContent({ id: clinicalModalGuardiaId });
-      } catch (e) {
-        var errEl = document.getElementById('guardia-clinical-error');
-        if (errEl) {
-          errEl.textContent = e && e.message ? e.message : 'No se pudo crear el pedido.';
-          errEl.classList.remove('d-none');
-        }
-      }
-    }
 
     async function solicitarInternacionGuardia(g) {
       var api = window.BioenlaceNativePage;
@@ -3543,10 +3433,6 @@
     var finalizarSubmit = document.getElementById('guardia-finalizar-submit');
     if (finalizarSubmit) {
       finalizarSubmit.addEventListener('click', submitFinalizarModal);
-    }
-    var clinicalPedidoSubmit = document.getElementById('guardia-clinical-pedido-submit');
-    if (clinicalPedidoSubmit) {
-      clinicalPedidoSubmit.addEventListener('click', submitClinicalPedido);
     }
     var ingresoCamaSubmit = document.getElementById('guardia-ingreso-submit');
     if (ingresoCamaSubmit) {

@@ -51,7 +51,7 @@ App **Personal de Salud**: registro FCM vía `POST /devices/push-token` (`appCli
 
 | Capacidad | API / UI |
 |-----------|----------|
-| Pedidos y lab en guardia | `GET …/resumen-clinico`, `POST …/crear-pedido`, modal web / menú móvil |
+| Pedidos y lab | Alta y seguimiento en la **captura clínica del encounter** (no hay atajo de pedidos en el tablero). El tablero solo muestra badges informativos de pedidos/lab pendientes. |
 | Internación (cama) | `POST …/solicitar-internacion`, badge en tablero, ingreso web `internacion/create?id_guardia=` |
 | SLA por efector | Tabla `efector_emergency_config`, flags `sla_violado` en tablero |
 | Export CSV indicadores | `GET …/indicadores-export-csv` |

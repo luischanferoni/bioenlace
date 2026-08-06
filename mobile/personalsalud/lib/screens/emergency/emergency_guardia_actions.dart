@@ -5,7 +5,7 @@ import 'package:shared/shared.dart';
 import '../../services/emergency_guardia_api.dart';
 import 'emergency_triage_screen.dart';
 
-/// Menú y CTAs del tablero de guardia (paridad con web: Triage, Pedidos/Lab, cama).
+/// Menú y CTAs del tablero de guardia (paridad con web: Triage, cama, egreso).
 class EmergencyGuardiaActions {
   EmergencyGuardiaActions._();
 
@@ -30,14 +30,6 @@ class EmergencyGuardiaActions {
         initialLevel: isRetriage ? item.prioridadTriage : null,
         initialReason: isRetriage ? item.triageReasonText : null,
       );
-
-  static Future<void> openPedidosLab({
-    required BuildContext context,
-    required EmergencyBoardItem item,
-    required EmergencyGuardiaApi api,
-    required VoidCallback onChanged,
-  }) =>
-      _clinical(context, item, api, onChanged);
 
   static Future<void> openCama({
     required BuildContext context,
@@ -125,17 +117,6 @@ class EmergencyGuardiaActions {
         ),
       ));
     }
-
-    actions.add(_ActionDef(
-      label: 'Pedidos / Lab',
-      icon: Icons.biotech_outlined,
-      onTap: () => openPedidosLab(
-        context: context,
-        item: item,
-        api: api,
-        onChanged: onChanged,
-      ),
-    ));
 
     if (item.internacionPendiente) {
       actions.add(_ActionDef(
@@ -235,88 +216,6 @@ class EmergencyGuardiaActions {
       ),
     );
     if (ok == true) onChanged();
-  }
-
-  static Future<void> _clinical(
-    BuildContext context,
-    EmergencyBoardItem item,
-    EmergencyGuardiaApi api,
-    VoidCallback onChanged,
-  ) async {
-    Map<String, dynamic> resumen;
-    try {
-      resumen = await api.getResumenClinico(item.id);
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
-      return;
-    }
-    if (!context.mounted) return;
-
-    final pedidoCtrl = TextEditingController();
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) {
-        final orders = resumen['orders'] as List<dynamic>? ?? [];
-        final labs = resumen['laboratory_reports'] as List<dynamic>? ?? [];
-        return AlertDialog(
-          title: Text('Pedidos — ${item.nombreCompleto}'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (orders.isEmpty && labs.isEmpty)
-                  const Text('Sin pedidos ni informes aún.'),
-                ...orders.map((o) {
-                  final m = o as Map<String, dynamic>;
-                  return Text('• ${m['display']} (${m['result_status']})');
-                }),
-                ...labs.map((r) {
-                  final m = r as Map<String, dynamic>;
-                  return Text('• ${m['display']}');
-                }),
-                BioSpacing.gapH(BioSpacing.md),
-                TextField(
-                  controller: pedidoCtrl,
-                  decoration: const InputDecoration(
-                    labelText: 'Nuevo pedido lab',
-                  ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cerrar'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final text = pedidoCtrl.text.trim();
-                if (text.isEmpty) return;
-                try {
-                  await api.crearPedido(guardiaId: item.id, display: text);
-                  if (ctx.mounted) Navigator.pop(ctx);
-                  onChanged();
-                } catch (e) {
-                  if (ctx.mounted) {
-                    ScaffoldMessenger.of(ctx).showSnackBar(
-                      SnackBar(content: Text('$e')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Agregar'),
-            ),
-          ],
-        );
-      },
-    );
-    pedidoCtrl.dispose();
   }
 
   static Future<void> _solicitarInternacion(

@@ -1513,18 +1513,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       );
                     },
                   ),
-                BioButton.neutral(
-                  label: 'Pedidos / Lab',
-                  size: BioButtonSize.sm,
-                  onPressed: () {
-                    EmergencyGuardiaActions.openPedidosLab(
-                      context: context,
-                      item: g,
-                      api: _emergencyApi,
-                      onChanged: refresh,
-                    );
-                  },
-                ),
                 BioButton(
                   label: g.internacionPendiente
                       ? 'Ingresar cama'

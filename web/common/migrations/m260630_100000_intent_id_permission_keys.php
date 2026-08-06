@@ -118,6 +118,9 @@ class m260630_100000_intent_id_permission_keys extends Migration
             if (!is_string($parent) || $parent === '') {
                 continue;
             }
+            if ($parent === $intentId) {
+                continue;
+            }
             if ((new Query())->from($childTable)->where(['parent' => $parent, 'child' => $intentId])->exists($this->db)) {
                 continue;
             }

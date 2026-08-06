@@ -180,6 +180,10 @@ class m260805_140000_profesional_cobertura_plantilla_y_horarios extends Migratio
             if (!is_string($parent) || $parent === '') {
                 continue;
             }
+            // Evitar self-loop: el intent ya es parent de la ruta `$source`.
+            if ($parent === $intentId) {
+                continue;
+            }
             if ((new Query())->from($childTable)->where([
                 'parent' => $parent,
                 'child' => $intentId,

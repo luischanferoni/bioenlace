@@ -88,6 +88,9 @@ class m260616_140000_edit_surface_intent_grants extends Migration
             if (!is_string($parent) || $parent === '') {
                 continue;
             }
+            if ($parent === $intentId) {
+                continue;
+            }
             if ((new Query())->from($childTable)->where(['parent' => $parent, 'child' => $intentId])->exists($this->db)) {
                 continue;
             }

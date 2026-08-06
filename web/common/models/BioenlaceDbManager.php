@@ -13,6 +13,82 @@ class BioenlaceDbManager extends DbManager
     public $efectorAssignmentTable;
 
     /**
+     * Yii {@see DbManager::getChildrenRecursive} reentra hijos ya visitados (diamantes) y no corta
+     * ciclos en `auth_item_child`. Eso deriva en OOM (p. ej. al armar permisos de sesión en site/index).
+     *
+     * {@inheritdoc}
+     */
+    protected function getChildrenRecursive($name, $childrenList, &$result)
+    {
+        if (!isset($childrenList[$name])) {
+            return;
+        }
+        foreach ($childrenList[$name] as $child) {
+            if (isset($result[$child])) {
+                continue;
+            }
+            $result[$child] = true;
+            $this->getChildrenRecursive($child, $childrenList, $result);
+        }
+    }
+
+    /**
+     * Corta ciclos al subir la jerarquía en checkAccess (mismo riesgo que getChildrenRecursive).
+     *
+     * @var array<string, true>
+     */
+    private array $checkAccessStack = [];
+
+    /**
+     * {@inheritdoc}
+     */
+    public function checkAccess($userId, $permissionName, $params = [])
+    {
+        $this->checkAccessStack = [];
+        try {
+            return parent::checkAccess($userId, $permissionName, $params);
+        } finally {
+            $this->checkAccessStack = [];
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function checkAccessRecursive($user, $itemName, $params, $assignments)
+    {
+        if (isset($this->checkAccessStack[$itemName])) {
+            Yii::warning("Ciclo RBAC detectado en checkAccessRecursive: {$itemName}", __METHOD__);
+
+            return false;
+        }
+        $this->checkAccessStack[$itemName] = true;
+        try {
+            return parent::checkAccessRecursive($user, $itemName, $params, $assignments);
+        } finally {
+            unset($this->checkAccessStack[$itemName]);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function checkAccessFromCache($user, $itemName, $params, $assignments)
+    {
+        if (isset($this->checkAccessStack[$itemName])) {
+            Yii::warning("Ciclo RBAC detectado en checkAccessFromCache: {$itemName}", __METHOD__);
+
+            return false;
+        }
+        $this->checkAccessStack[$itemName] = true;
+        try {
+            return parent::checkAccessFromCache($user, $itemName, $params, $assignments);
+        } finally {
+            unset($this->checkAccessStack[$itemName]);
+        }
+    }
+
+    /**
      * Cuando {@see $efectorAssignmentTable} es `profesional_efector_servicio`, los permisos/roles
      * por servicio se filtran por `id_persona` + `id_efector` de sesión (mismas columnas en PES).
      */

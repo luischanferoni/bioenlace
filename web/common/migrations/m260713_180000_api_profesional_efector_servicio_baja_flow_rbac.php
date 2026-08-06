@@ -147,6 +147,9 @@ class m260713_180000_api_profesional_efector_servicio_baja_flow_rbac extends Mig
             if (!is_string($parent) || $parent === '') {
                 continue;
             }
+            if ($parent === $newRoute) {
+                continue;
+            }
             if ((new Query())->from($childTable)->where([
                 'parent' => $parent,
                 'child' => $newRoute,
@@ -180,6 +183,9 @@ class m260713_180000_api_profesional_efector_servicio_baja_flow_rbac extends Mig
 
         foreach ($parents as $parent) {
             if (!is_string($parent) || $parent === '') {
+                continue;
+            }
+            if ($parent === $intentId) {
                 continue;
             }
             if ((new Query())->from($childTable)->where([

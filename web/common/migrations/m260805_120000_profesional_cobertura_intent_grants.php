@@ -93,6 +93,10 @@ class m260805_120000_profesional_cobertura_intent_grants extends Migration
             if (!is_string($parent) || $parent === '') {
                 continue;
             }
+            // Evitar self-loop: el intent ya es parent de la ruta `$source`.
+            if ($parent === $intentId) {
+                continue;
+            }
             if ((new Query())->from($childTable)->where([
                 'parent' => $parent,
                 'child' => $intentId,

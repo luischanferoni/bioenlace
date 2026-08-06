@@ -71,6 +71,9 @@ class m260616_150000_profesionales_distribucion_metric_intent_grants extends Mig
             if (!is_string($parent) || $parent === '') {
                 continue;
             }
+            if ($parent === $intentId) {
+                continue;
+            }
             if ((new Query())->from($childTable)->where(['parent' => $parent, 'child' => $intentId])->exists($this->db)) {
                 continue;
             }

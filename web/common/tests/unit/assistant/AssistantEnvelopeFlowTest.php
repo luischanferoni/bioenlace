@@ -8,6 +8,7 @@ use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 
 /**
  * Regresión: flows con `provides` (formulario) no deben romper el sobre con "Array to string conversion".
+ * El wire `kind: flow` omite scaffolds inactivos y metadata de manifiesto no usada por clientes.
  */
 class AssistantEnvelopeFlowTest extends Unit
 {
@@ -60,11 +61,23 @@ class AssistantEnvelopeFlowTest extends Unit
             '/api/v1/turnos/indicadores-agenda',
             $envelope['step']['client_open']['api']['route']
         );
+        $this->assertArrayHasKey('submit', $envelope);
         $this->assertTrue($envelope['submit']['active']);
         $this->assertSame('Consultar indicadores', $envelope['submit']['label']);
+        $this->assertArrayNotHasKey('dismiss', $envelope);
+        $this->assertArrayNotHasKey('hints', $envelope);
+        $this->assertArrayNotHasKey('draft_delta', $envelope['session']);
+        $this->assertSame(
+            ['fecha_desde', 'fecha_hasta', 'id_profesional_efector_servicio'],
+            $envelope['step']['provides']
+        );
+        $this->assertArrayNotHasKey('composer_capture', $envelope['step']);
+        $this->assertArrayNotHasKey('draft_keys', $envelope['manifest']);
+        $this->assertArrayNotHasKey('entry_subintent_id', $envelope['manifest']);
+        $this->assertArrayNotHasKey('schema_version', $envelope['manifest']);
     }
 
-    public function testFlowFromMotorToleratesArrayLikeClientOpenFields(): void
+    public function testFlowFromMotorOmitsInactiveScaffolds(): void
     {
         $motor = [
             'success' => true,
@@ -90,10 +103,13 @@ class AssistantEnvelopeFlowTest extends Unit
 
         $this->assertSame('flow', $envelope['kind']);
         $this->assertFalse($envelope['step']['active']);
-        $this->assertSame('', $envelope['step']['action_id']);
-        $this->assertSame('', $envelope['step']['client_open']['kind']);
-        $this->assertSame([], $envelope['step']['provides']);
-        $this->assertSame([], $envelope['step']['pending_fields']);
+        $this->assertArrayNotHasKey('action_id', $envelope['step']);
+        $this->assertArrayNotHasKey('client_open', $envelope['step']);
+        $this->assertArrayNotHasKey('provides', $envelope['step']);
+        $this->assertArrayNotHasKey('pending_fields', $envelope['step']);
+        $this->assertArrayNotHasKey('submit', $envelope);
+        $this->assertArrayNotHasKey('dismiss', $envelope);
+        $this->assertArrayNotHasKey('hints', $envelope);
     }
 
     public function testFlowFromMotorPreservesNativeClientOpenTargets(): void
@@ -155,5 +171,119 @@ class AssistantEnvelopeFlowTest extends Unit
         $this->assertTrue($envelope['step']['composer_capture']['active']);
         $this->assertSame('mensaje', $envelope['step']['composer_capture']['draft_field']);
         $this->assertFalse($envelope['step']['active']);
+        $this->assertArrayNotHasKey('client_open', $envelope['step']);
+        $this->assertSame(['draft.mensaje'], $envelope['step']['pending_fields']);
+    }
+
+    public function testFlowFromMotorStripsRedundantActiveStepUiWhenClientOpenPresent(): void
+    {
+        $motor = [
+            'success' => true,
+            'text' => 'Elegí el servicio',
+            'intent_id' => 'profesional-horarios.gestionar-propio',
+            'subintent_id' => 'select_servicio',
+            'open_ui' => [
+                'action_id' => 'profesional-efector-servicio.listar-mis-servicios-en-efector',
+                'client_open' => [
+                    'kind' => 'ui_json',
+                    'api' => [
+                        'route' => '/api/v1/profesional-efector-servicio/listar-mis-servicios-en-efector',
+                        'method' => 'GET|POST',
+                        'query' => ['incluir_sin_agenda' => '1'],
+                    ],
+                ],
+            ],
+            'provides' => ['id_servicio', 'id_profesional_efector_servicio'],
+            'flow_manifest' => [
+                'schema_version' => '1',
+                'intent_id' => 'profesional-horarios.gestionar-propio',
+                'action_name' => 'Configurar mis horarios',
+                'operation' => 'edit',
+                'crud_tone' => 'update',
+                'draft_keys' => ['id_servicio'],
+                'entry_subintent_id' => 'select_servicio',
+                'steps' => [
+                    [
+                        'id' => 'select_servicio',
+                        'assistant_text' => 'Elegí el servicio',
+                        'next' => 'select_encounter_class',
+                        'provides' => ['draft.id_servicio'],
+                    ],
+                ],
+                'active_subintent_id' => 'select_servicio',
+                'active_step' => [
+                    'id' => 'select_servicio',
+                    'assistant_text' => 'Elegí el servicio',
+                    'requires' => [],
+                    'provides' => ['draft.id_servicio'],
+                    'next' => 'select_encounter_class',
+                    'ui' => [
+                        'default_tab' => 'default',
+                        'tabs' => [
+                            [
+                                'id' => 'default',
+                                'label' => 'Elegir',
+                                'action_id' => 'profesional-efector-servicio.listar-mis-servicios-en-efector',
+                                'route' => '/api/v1/profesional-efector-servicio/listar-mis-servicios-en-efector',
+                                'params' => ['incluir_sin_agenda' => '1'],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+            'draft_delta' => ['id_servicio' => 3],
+        ];
+
+        $envelope = AssistantEnvelope::fromMotorResponse($motor);
+
+        $this->assertArrayNotHasKey('ui', $envelope['manifest']['active_step']);
+        $this->assertSame('select_servicio', $envelope['manifest']['active_step']['id']);
+        $this->assertSame('Elegí el servicio', $envelope['manifest']['active_step']['assistant_text']);
+        $this->assertArrayNotHasKey('requires', $envelope['manifest']['active_step']);
+        $this->assertArrayNotHasKey('draft_keys', $envelope['manifest']);
+        $this->assertSame(['id_servicio' => 3], $envelope['session']['draft_delta']);
+        $this->assertSame('ui_json', $envelope['step']['client_open']['kind']);
+    }
+
+    public function testFlowFromMotorKeepsMultiTabActiveStepUi(): void
+    {
+        $motor = [
+            'success' => true,
+            'text' => 'Elegí',
+            'intent_id' => 'demo.multi-tab',
+            'subintent_id' => 'pick',
+            'open_ui' => [
+                'action_id' => 'demo.a',
+                'client_open' => [
+                    'kind' => 'ui_json',
+                    'api' => [
+                        'route' => '/api/v1/demo/a',
+                        'method' => 'GET|POST',
+                    ],
+                ],
+            ],
+            'flow_manifest' => [
+                'intent_id' => 'demo.multi-tab',
+                'action_name' => 'Demo',
+                'steps' => [['id' => 'pick', 'assistant_text' => 'Elegí', 'next' => '']],
+                'active_subintent_id' => 'pick',
+                'active_step' => [
+                    'id' => 'pick',
+                    'assistant_text' => 'Elegí',
+                    'ui' => [
+                        'default_tab' => 'a',
+                        'tabs' => [
+                            ['id' => 'a', 'label' => 'A', 'route' => '/api/v1/demo/a'],
+                            ['id' => 'b', 'label' => 'B', 'route' => '/api/v1/demo/b'],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+
+        $envelope = AssistantEnvelope::fromMotorResponse($motor);
+
+        $this->assertArrayHasKey('ui', $envelope['manifest']['active_step']);
+        $this->assertCount(2, $envelope['manifest']['active_step']['ui']['tabs']);
     }
 }

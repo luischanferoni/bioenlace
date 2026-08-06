@@ -111,8 +111,10 @@ final class WhatsAppEnvelopeRenderer
         $text = trim((string) ($envelope['text'] ?? ''));
         $step = isset($envelope['step']) && is_array($envelope['step']) ? $envelope['step'] : [];
         $clientOpen = isset($step['client_open']) && is_array($step['client_open']) ? $step['client_open'] : null;
+        $hasUsableOpen = $clientOpen !== null
+            && trim((string) ($clientOpen['kind'] ?? '')) !== '';
 
-        if ($clientOpen !== null && $clientOpen !== []) {
+        if ($hasUsableOpen) {
             $deepLink = rtrim(WhatsAppConfig::get()['appDeepLinkBase'], '/') . '/';
             $msg = $text !== '' ? $text : AssistantChannelCopy::t('open_ui_button');
             $suffix = AssistantChannelCopy::t('open_ui_deep_link_suffix', ['url' => $deepLink]);

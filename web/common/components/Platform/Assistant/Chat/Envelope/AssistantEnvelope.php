@@ -12,6 +12,10 @@ use common\components\Platform\Ui\UiDefinitionTemplateManager;
 /**
  * Sobre público del chat (`kind`: message | interactive | flow).
  * Conversión única desde payloads internos de IntentEngine / SubIntentEngine.
+ *
+ * En `kind: flow` el wire omite scaffolds inactivos (`submit`/`dismiss`/`hints`/`composer_capture`)
+ * y recorta del manifiesto claves internas (`draft_keys`, `entry_subintent_id`, `schema_version`)
+ * y `active_step.ui` cuando ya viene `step.client_open` usable (salvo multi-tab).
  */
 final class AssistantEnvelope
 {
@@ -218,11 +222,14 @@ final class AssistantEnvelope
 
         $openUi = isset($motor['open_ui']) && is_array($motor['open_ui']) ? $motor['open_ui'] : null;
         $step = self::buildStepFromOpenUi($openUi, $motor, $manifest);
-        $step['composer_capture'] = self::buildComposerCapture(
+        $composerCapture = self::buildComposerCapture(
             isset($motor['composer_capture']) && is_array($motor['composer_capture'])
                 ? $motor['composer_capture']
                 : null
         );
+        if (!empty($composerCapture['active'])) {
+            $step['composer_capture'] = $composerCapture;
+        }
 
         $flowSubmit = isset($motor['flow_submit']) && is_array($motor['flow_submit']) ? $motor['flow_submit'] : null;
         $submit = self::buildSubmit($flowSubmit);
@@ -231,20 +238,35 @@ final class AssistantEnvelope
 
         $hints = self::normalizeHintsList($motor['hints'] ?? []);
 
-        return [
+        $step = self::slimStepForWire($step);
+        $manifest = self::slimManifestForWire($manifest, $step);
+
+        $session = [
+            'intent_id' => $intentId,
+            'subintent_id' => $subintentId,
+        ];
+        if (!self::isEmptyObjectMap($draftDelta)) {
+            $session['draft_delta'] = $draftDelta;
+        }
+
+        $out = [
             'kind' => 'flow',
             'text' => $text,
-            'session' => [
-                'intent_id' => $intentId,
-                'subintent_id' => $subintentId,
-                'draft_delta' => $draftDelta,
-            ],
+            'session' => $session,
             'manifest' => $manifest,
             'step' => $step,
-            'submit' => $submit,
-            'dismiss' => $dismiss,
-            'hints' => $hints,
         ];
+        if (!empty($submit['active'])) {
+            $out['submit'] = $submit;
+        }
+        if (!empty($dismiss['active'])) {
+            $out['dismiss'] = $dismiss;
+        }
+        if ($hints !== []) {
+            $out['hints'] = $hints;
+        }
+
+        return $out;
     }
 
     /**
@@ -607,15 +629,123 @@ final class AssistantEnvelope
     public static function emptyManifestScaffold(string $intentId): array
     {
         return [
-            'schema_version' => '1',
             'intent_id' => $intentId,
             'action_name' => '',
-            'draft_keys' => [],
-            'entry_subintent_id' => '',
             'steps' => [],
             'active_subintent_id' => '',
             'active_step' => (object) [],
         ];
+    }
+
+    /**
+     * Omite scaffolds vacíos y claves no usadas por clientes en el wire.
+     *
+     * @param array<string, mixed> $step
+     * @return array<string, mixed>
+     */
+    private static function slimStepForWire(array $step): array
+    {
+        $active = !empty($step['active']);
+        $out = ['active' => $active];
+        if ($active) {
+            $out['action_id'] = AssistantDraftNormalizer::scalarString($step['action_id'] ?? '');
+            $co = isset($step['client_open']) && is_array($step['client_open'])
+                ? $step['client_open']
+                : self::emptyClientOpen();
+            $out['client_open'] = $co;
+        }
+        if (isset($step['provides']) && is_array($step['provides']) && $step['provides'] !== []) {
+            $out['provides'] = $step['provides'];
+        }
+        if (isset($step['pending_fields']) && is_array($step['pending_fields']) && $step['pending_fields'] !== []) {
+            $out['pending_fields'] = $step['pending_fields'];
+        }
+        if (isset($step['composer_capture']) && is_array($step['composer_capture'])
+            && !empty($step['composer_capture']['active'])) {
+            $out['composer_capture'] = $step['composer_capture'];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Recorta el slice de manifiesto: sin metadata interna ni `ui` redundante con `step.client_open`.
+     *
+     * @param array<string, mixed> $manifest
+     * @param array<string, mixed> $step
+     * @return array<string, mixed>
+     */
+    private static function slimManifestForWire(array $manifest, array $step): array
+    {
+        unset(
+            $manifest['schema_version'],
+            $manifest['draft_keys'],
+            $manifest['entry_subintent_id']
+        );
+
+        $active = isset($manifest['active_step']) && is_array($manifest['active_step'])
+            ? $manifest['active_step']
+            : null;
+        if ($active === null) {
+            return $manifest;
+        }
+
+        $slimActive = [
+            'id' => AssistantDraftNormalizer::scalarString($active['id'] ?? ''),
+            'assistant_text' => AssistantDraftNormalizer::scalarString($active['assistant_text'] ?? ''),
+        ];
+        if (isset($active['composer_capture']) && is_array($active['composer_capture'])
+            && !empty($active['composer_capture']['active'])) {
+            $slimActive['composer_capture'] = $active['composer_capture'];
+        }
+
+        $ui = isset($active['ui']) && is_array($active['ui']) ? $active['ui'] : null;
+        if ($ui !== null && self::shouldKeepActiveStepUi($ui, $step)) {
+            $slimActive['ui'] = $ui;
+        }
+
+        $manifest['active_step'] = $slimActive;
+
+        return $manifest;
+    }
+
+    /**
+     * Conserva `active_step.ui` si hay multi-tab o si el paso no trae un `client_open` usable.
+     *
+     * @param array<string, mixed> $ui
+     * @param array<string, mixed> $step
+     */
+    private static function shouldKeepActiveStepUi(array $ui, array $step): bool
+    {
+        $tabs = isset($ui['tabs']) && is_array($ui['tabs']) ? $ui['tabs'] : [];
+        if (count($tabs) > 1) {
+            return true;
+        }
+        if (!empty($step['composer_capture']['active'])) {
+            return false;
+        }
+        if (empty($step['active'])) {
+            return true;
+        }
+        $co = isset($step['client_open']) && is_array($step['client_open']) ? $step['client_open'] : [];
+        $kind = AssistantDraftNormalizer::scalarString($co['kind'] ?? '');
+
+        return $kind === '';
+    }
+
+    /**
+     * @param mixed $value
+     */
+    private static function isEmptyObjectMap($value): bool
+    {
+        if (is_array($value)) {
+            return $value === [];
+        }
+        if (is_object($value)) {
+            return get_object_vars($value) === [];
+        }
+
+        return true;
     }
 
     /**

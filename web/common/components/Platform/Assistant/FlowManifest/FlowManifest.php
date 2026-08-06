@@ -39,20 +39,22 @@ final class FlowManifest
         $flow = isset($uiMeta['flow']) && is_array($uiMeta['flow']) ? $uiMeta['flow'] : [];
         $steps = isset($flow['steps']) && is_array($flow['steps']) ? $flow['steps'] : [];
 
-        // `steps` se usa principalmente para “plan” visual en clientes (lista de labels/orden).
-        // Para evitar payload duplicado, devolvemos una versión compacta sin `ui`.
+        // `steps` = plan visual / rewind en clientes (sin `ui` ni `requires`; el motor ya validó).
         $stepsCompact = [];
         foreach ($steps as $step) {
             if (!is_array($step) || empty($step['id'])) {
                 continue;
             }
-            $stepsCompact[] = [
+            $row = [
                 'id' => AssistantDraftNormalizer::scalarString($step['id'] ?? ''),
                 'assistant_text' => AssistantDraftNormalizer::scalarString($step['assistant_text'] ?? ''),
-                'requires' => isset($step['requires']) && is_array($step['requires']) ? $step['requires'] : [],
-                'provides' => isset($step['provides']) && is_array($step['provides']) ? $step['provides'] : [],
                 'next' => AssistantDraftNormalizer::scalarString($step['next'] ?? ''),
             ];
+            $provides = isset($step['provides']) && is_array($step['provides']) ? $step['provides'] : [];
+            if ($provides !== []) {
+                $row['provides'] = $provides;
+            }
+            $stepsCompact[] = $row;
         }
 
         $activeStep = null;
@@ -66,18 +68,15 @@ final class FlowManifest
             }
         }
 
+        // `AssistantEnvelope` recorta keys internas y `ui` redundante con `step.client_open`.
         return [
-            'schema_version' => AssistantDraftNormalizer::scalarString($uiMeta['schema_version'] ?? '', '1'),
             'intent_id' => AssistantDraftNormalizer::scalarString($flow['intent_id'] ?? '', $intentId),
             'action_name' => $actionName,
             'operation' => $flowMeta['operation'],
             'crud_tone' => $flowMeta['crud_tone'],
-            'draft_keys' => isset($flow['draft_keys']) && is_array($flow['draft_keys']) ? $flow['draft_keys'] : [],
-            'entry_subintent_id' => AssistantDraftNormalizer::scalarString($flow['entry_subintent_id'] ?? ''),
             'steps' => $stepsCompact,
             'active_subintent_id' => $activeSubintentId,
             'active_step' => $activeStep,
-            // `open_ui_hints` se puede derivar desde YAML; clientes usan `active_step.ui` y/o `open_ui` del payload principal.
         ];
     }
 
@@ -116,8 +115,6 @@ final class FlowManifest
         $stepCompact = [
             'id' => 'open',
             'assistant_text' => $text,
-            'requires' => [],
-            'provides' => [],
             'next' => '',
         ];
 
@@ -138,13 +135,10 @@ final class FlowManifest
         ];
 
         return [
-            'schema_version' => '1',
             'intent_id' => $intentId,
             'action_name' => $label,
             'operation' => $operation,
             'crud_tone' => IntentManifestMetadata::resolveCrudTone($operation),
-            'draft_keys' => [],
-            'entry_subintent_id' => 'open',
             'steps' => [$stepCompact],
             'active_subintent_id' => $subintentId,
             'active_step' => $activeStep,

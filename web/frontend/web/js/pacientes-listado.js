@@ -1758,43 +1758,23 @@
 
     function renderCoberturaActivaBanner(coberturaData, parentEl) {
       if (!coberturaData || !parentEl) return;
-      var items = coberturaData.items || [];
+      var session = coberturaData.session || {};
+      // Solo avisar cuando la sesión no está en cobertura ahora.
+      if (session.tiene_cobertura !== false) {
+        return;
+      }
+      var mensajeSin = (session.mensaje_sin_cobertura || '').toString().trim() ||
+        'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te la asigne.';
       var box = document.createElement('div');
       box.className = 'alert alert-light border mb-3 py-2';
       var title = document.createElement('div');
       title.className = 'fw-semibold small mb-1';
       title.textContent = coberturaData.title || 'Cobertura';
       box.appendChild(title);
-      var session = coberturaData.session || {};
-      var mensajeSin = (session.mensaje_sin_cobertura || '').toString().trim();
-      if (session.tiene_cobertura === false) {
-        var warn = document.createElement('div');
-        warn.className = 'text-warning small mb-1';
-        warn.textContent = mensajeSin ||
-          'No tenés cobertura vigente. Cargá tu cobertura desde el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te la asigne.';
-        box.appendChild(warn);
-      } else if (session.tiene_cobertura === true) {
-        var ok = document.createElement('div');
-        ok.className = 'text-success small mb-1';
-        ok.textContent = 'Estás en el plantel activo.';
-        box.appendChild(ok);
-      }
-      if (items.length) {
-        var row = document.createElement('div');
-        row.className = 'd-flex flex-wrap gap-2';
-        items.forEach(function (c) {
-          var chip = document.createElement('span');
-          chip.className = 'badge text-bg-secondary';
-          var nombre = (c.persona && c.persona.nombre_completo) ? c.persona.nombre_completo : 'Profesional';
-          var rol = c.rol ? ' · ' + c.rol : '';
-          var ini = (c.inicio || '').toString().substring(11, 16);
-          var fin = (c.fin || '').toString().substring(11, 16);
-          var horas = (ini || fin) ? ' · ' + ini + '–' + fin : '';
-          chip.textContent = nombre + rol + horas;
-          row.appendChild(chip);
-        });
-        box.appendChild(row);
-      }
+      var warn = document.createElement('div');
+      warn.className = 'text-warning small mb-1';
+      warn.textContent = mensajeSin;
+      box.appendChild(warn);
       parentEl.insertBefore(box, parentEl.firstChild);
     }
 

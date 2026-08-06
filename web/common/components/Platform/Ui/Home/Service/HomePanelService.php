@@ -46,6 +46,9 @@ final class HomePanelService
             'subject_persona_id' => isset($options['subject_persona_id'])
                 ? (int) $options['subject_persona_id']
                 : null,
+            'encounter_class' => $encounterClass !== null && $encounterClass !== ''
+                ? (string) $encounterClass
+                : null,
         ];
 
         $sections = $this->buildSections($panelDef['sections'], $context, $filterSectionIds, true);

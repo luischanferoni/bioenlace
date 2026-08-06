@@ -1055,7 +1055,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildInternadosList() {
     if (!_sessionTieneCobertura) {
-      final msg = _mensajeSinCobertura ?? _msgSinPlantelPisoFallback;
+      final msg = (_mensajeSinCobertura != null &&
+              !_mensajeSinCobertura!.toLowerCase().contains('guardia'))
+          ? _mensajeSinCobertura!
+          : _msgSinPlantelPisoFallback;
       return _buildEmpty(
         icon: Icons.badge_outlined,
         text: msg,

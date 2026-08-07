@@ -802,7 +802,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         BioSpacing.gapH(BioSpacing.sm),
         if (!tiene)
           Text(
-            'Sin signos vitales registrados en este episodio.',
+            'Sin signos vitales en este episodio. Se cargan en la captura de la consulta.',
             style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
           )
         else ...[

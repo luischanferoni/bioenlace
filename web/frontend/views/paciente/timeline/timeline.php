@@ -215,7 +215,7 @@ $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
                             </div>
                             <div id="tl_episodio_sv_ultimos" class="tl-episodio-sv-ultimos mb-2"></div>
                             <div id="tl_episodio_sv_chart" class="tl-episodio-sv-chart" style="min-height: 220px;"></div>
-                            <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales registrados en este episodio (triage o enfermería).</p>
+                            <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales en este episodio. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.</p>
                         </div>
                         <?php endif; ?>
 

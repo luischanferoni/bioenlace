@@ -727,24 +727,20 @@
 
       var ctaTomar = rowEl.querySelector('[data-role="cta-tomar"]');
       if (ctaTomar) {
-        var sinAsignar = !g.profesional_asignado && !g.id_profesional_efector_servicio;
-        ctaTomar.classList.toggle('d-none', !sinAsignar || cerrado);
-        ctaTomar.onclick = function () {
-          tomarCasoGuardia(g);
-        };
+        // Tomar caso absorbido por Atender (iniciar-atencion asigna PES).
+        ctaTomar.classList.add('d-none');
       }
 
       var ctaDerivar = rowEl.querySelector('[data-role="cta-derivar"]');
       if (ctaDerivar) {
-        ctaDerivar.classList.toggle('d-none', sinTriage || cerrado);
-        ctaDerivar.onclick = function () {
-          openDerivarModal(g);
-        };
+        // Derivación en captura clínica del encounter, no en tablero.
+        ctaDerivar.classList.add('d-none');
       }
 
       var ctaFinalizar = rowEl.querySelector('[data-role="cta-finalizar"]');
       if (ctaFinalizar) {
-        ctaFinalizar.classList.toggle('d-none', sinTriage || cerrado);
+        var enAtencion = g.circuito_estado === 'en_atencion';
+        ctaFinalizar.classList.toggle('d-none', !enAtencion || cerrado);
         ctaFinalizar.onclick = function () {
           openFinalizarModal(g);
         };

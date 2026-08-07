@@ -2,7 +2,7 @@ intent_id: urgencias.egreso-estructurado-flow
 version: 1
 
 action_name: "Egreso de guardia"
-description: "Para registrar el egreso estructurado de un paciente en guardia."
+description: "Cierre final del episodio: destino, diagnóstico y epicrisis, sin pedidos que retengan al paciente en guardia."
 rbac_route: "/api/clinical/emergency-guardia/egreso-formulario"
 keywords:
   - egreso guardia
@@ -13,9 +13,9 @@ keywords:
 
 intent_semantics:
   goal: >-
-    Cerrar el episodio de guardia con destino, diagnóstico operativo y epicrisis.
+    Cerrar el episodio de guardia como encounter final (destino, diagnóstico operativo, epicrisis).
   how: >-
-    Formulario UI con destino/conducta, epicrisis y checklist mínimo.
+    Formulario UI con destino/conducta, epicrisis y checklist (incluye confirmar que no hay retención por pedidos).
   outcome:
     - El circuito de guardia queda cerrado con documentación de egreso.
 

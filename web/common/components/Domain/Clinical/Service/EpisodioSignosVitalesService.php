@@ -279,7 +279,7 @@ final class EpisodioSignosVitalesService
                 $byMetric[$m] = [];
             }
             $byMetric[$m][] = [
-                'at' => (string) $p['at'],
+                'at' => $this->formatAtDisplay((string) $p['at']),
                 'value' => (float) $p['value'],
                 'source' => (string) $p['source'],
                 'ref_id' => $p['ref_id'] ?? null,
@@ -328,6 +328,23 @@ final class EpisodioSignosVitalesService
             'ultimos' => $ultimos,
             'total_points' => count($points),
         ];
+    }
+
+    /**
+     * Fecha legible es-AR: dd/MM/yyyy HH:mm (sin segundos).
+     */
+    private function formatAtDisplay(string $at): string
+    {
+        $at = trim($at);
+        if ($at === '') {
+            return '';
+        }
+        $ts = strtotime($at);
+        if ($ts === false) {
+            return $at;
+        }
+
+        return date('d/m/Y H:i', $ts);
     }
 
     /**

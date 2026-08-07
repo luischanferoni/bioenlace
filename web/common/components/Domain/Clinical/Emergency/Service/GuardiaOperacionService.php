@@ -64,6 +64,23 @@ final class GuardiaOperacionService
             throw new \InvalidArgumentException('No se puede atender un episodio cerrado o derivado.');
         }
 
+        $pesId = GuardiaEfectorAccess::resolvePesId(null);
+        // Atender implica tomar el caso: asignar PES de sesión si aún no hay profesional.
+        if (
+            $pesId !== null
+            && $pesId > 0
+            && (int) ($guardia->id_profesional_efector_servicio ?? 0) <= 0
+        ) {
+            ProfesionalCoberturaActivaService::assertPesPuedeAsignarEmer($pesId, $idEfector);
+            $guardia->id_profesional_efector_servicio = $pesId;
+            $guardia->updateAttributes(['id_profesional_efector_servicio' => $pesId]);
+            $this->circuito->recordEvent($guardiaId, CircuitoEventType::ASIGNACION, $pesId, [
+                'id_profesional_efector_servicio' => $pesId,
+                'via' => 'iniciar_atencion',
+            ]);
+            (new GuardiaPushNotifier())->notifyAssigned($guardia, $pesId);
+        }
+
         $guardia->circuito_estado = CircuitoEstado::EN_ATENCION;
         $guardia->estado = Guardia::ESTADO_ATENDIDA;
         $guardia->updateAttributes([
@@ -71,7 +88,6 @@ final class GuardiaOperacionService
             'estado' => $guardia->estado,
         ]);
 
-        $pesId = GuardiaEfectorAccess::resolvePesId(null);
         $this->circuito->recordEvent($guardiaId, CircuitoEventType::INICIO_ATENCION, $pesId);
 
         $encounter = $this->encounterResolver->findLatestForGuardia((int) $guardia->id);

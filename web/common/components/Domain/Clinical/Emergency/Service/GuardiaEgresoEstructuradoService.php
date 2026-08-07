@@ -54,6 +54,8 @@ final class GuardiaEgresoEstructuradoService
             'circuito_estado_label' => CircuitoEstado::label($this->circuito->effectiveEstado($guardia)),
             'destinos' => GuardiaEgresoDestino::options(),
             'responsable_pes_id' => $pesId > 0 ? $pesId : null,
+            'resumen_texto' => $nombre . ' — Egreso final de guardia: destino, diagnóstico operativo y epicrisis. '
+                . 'No indiques estudios ni derivaciones que retengan al paciente en el efector; esos van en la captura antes del egreso.',
             'egreso_formulario_path' => '/api/v1/clinical/emergency-guardia/'
                 . (int) $guardia->id . '/egreso-formulario',
         ];
@@ -89,10 +91,10 @@ final class GuardiaEgresoEstructuradoService
             );
         }
 
-        foreach (['checklist_indicaciones', 'checklist_epicrisis'] as $chk) {
+        foreach (['checklist_indicaciones', 'checklist_epicrisis', 'checklist_sin_retencion'] as $chk) {
             if (!$this->isTruthy($post[$chk] ?? null)) {
                 throw new \InvalidArgumentException(
-                    'Confirmá el checklist de egreso (indicaciones y epicrisis revisada).'
+                    'Confirmá el checklist de egreso (indicaciones, sin retención por pedidos y epicrisis).'
                 );
             }
         }
@@ -123,6 +125,7 @@ final class GuardiaEgresoEstructuradoService
         $meta = [
             'checklist_indicaciones' => true,
             'checklist_epicrisis' => true,
+            'checklist_sin_retencion' => true,
             'responsable_pes_id' => $pesId > 0 ? $pesId : null,
             'registrado_at' => date('c'),
             'destino_label' => GuardiaEgresoDestino::label($destino),

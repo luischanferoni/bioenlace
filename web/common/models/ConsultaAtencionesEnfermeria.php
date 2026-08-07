@@ -102,13 +102,22 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
     }
 
     /**
-     * Retorna los campos requeridos en lenguaje natural para prompts de IA
-     * @return array
+     * Campos en lenguaje natural para prompts de IA (signos vitales / enfermería).
+     * @return list<string>
      */
     public function requeridosPrompt()
     {
         return [
-            "Datos",
+            'TA sistolica',
+            'TA diastolica',
+            'Frecuencia cardiaca',
+            'Frecuencia respiratoria',
+            'Saturacion O2',
+            'Temperatura',
+            'Glucemia',
+            'Glasgow',
+            'Peso',
+            'Talla',
         ];
     }
 

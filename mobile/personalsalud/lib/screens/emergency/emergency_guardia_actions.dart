@@ -5,7 +5,7 @@ import 'package:shared/shared.dart';
 import '../../services/emergency_guardia_api.dart';
 import 'emergency_triage_screen.dart';
 
-/// Menú y CTAs del tablero de guardia (paridad con web: Triage, cama, egreso).
+/// Menú y CTAs del tablero de guardia (médico: Atender + egreso contextual).
 class EmergencyGuardiaActions {
   EmergencyGuardiaActions._();
 
@@ -72,6 +72,8 @@ class EmergencyGuardiaActions {
     onChanged();
   }
 
+  /// Menú ⋮ del médico: solo egreso cuando el episodio ya está en atención.
+  /// Triage/cama son staff (web); derivar y SV van en la captura del encounter.
   static Future<void> showActionSheet({
     required BuildContext context,
     required EmergencyBoardItem item,
@@ -82,77 +84,27 @@ class EmergencyGuardiaActions {
     if (episodioCerrado(item)) return;
 
     final actions = <_ActionDef>[];
-    if (item.needsTriage) {
-      actions.add(_ActionDef(
-        label: 'Triage',
-        icon: Icons.assignment_outlined,
-        onTap: () => openTriage(
-          context: context,
-          item: item,
-          api: api,
-          onChanged: onChanged,
-        ),
-      ));
-    } else {
-      actions.add(_ActionDef(
-        label: 'Actualizar triage',
-        icon: Icons.medical_information_outlined,
-        onTap: () => openTriage(
-          context: context,
-          item: item,
-          api: api,
-          onChanged: onChanged,
-          isRetriage: true,
-        ),
-      ));
-      actions.add(_ActionDef(
-        label: 'Tomar caso',
-        icon: Icons.person_add_alt_1_outlined,
-        onTap: () => _tomarCaso(
-          context,
-          item,
-          api,
-          onChanged,
-          sessionTieneCobertura: sessionTieneCobertura,
-        ),
-      ));
-    }
-
-    if (item.internacionPendiente) {
-      actions.add(_ActionDef(
-        label: 'Ingresar cama',
-        icon: Icons.hotel_outlined,
-        onTap: () => openCama(
-          context: context,
-          item: item,
-          api: api,
-          onChanged: onChanged,
-        ),
-      ));
-    } else {
-      actions.add(_ActionDef(
-        label: 'Solicitar cama',
-        icon: Icons.hotel_outlined,
-        onTap: () => openCama(
-          context: context,
-          item: item,
-          api: api,
-          onChanged: onChanged,
-        ),
-      ));
-    }
-
-    if (!item.needsTriage) {
-      actions.add(_ActionDef(
-        label: 'Derivar',
-        icon: Icons.transfer_within_a_station,
-        onTap: () => _derivar(context, item, api, onChanged),
-      ));
+    final enAtencion = (item.circuitoEstado ?? '') == 'en_atencion';
+    if (enAtencion && !item.needsTriage) {
       actions.add(_ActionDef(
         label: 'Egreso',
         icon: Icons.logout,
         onTap: () => _finalizar(context, item, api, onChanged),
       ));
+    }
+
+    if (actions.isEmpty) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            item.needsTriage
+                ? 'Pendiente de triage (admision / enfermería en web).'
+                : 'Atendé al paciente para egresar. La derivación se carga en la consulta.',
+          ),
+        ),
+      );
+      return;
     }
 
     await showModalBottomSheet<void>(

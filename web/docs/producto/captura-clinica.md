@@ -75,6 +75,12 @@ Al cerrar la atención, el review puede listar **problemas y tratamientos abiert
 | Especialidad / servicio | `EncounterDefinition` y registries (oftalmología, odontología, …) |
 | `parent` GUARDIA / INTERNACION | Banner de episodio (`contexto_episodio`); sin motivos AMB. Ver [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md) |
 
+## Guardia (EMER)
+
+En guardia el workflow incluye motivos, diagnóstico, medicación, prácticas, indicaciones, **signos vitales** (misma captura de texto/audio; se persisten como atención de enfermería del encounter) y **derivaciones**. Las cards de signos vitales del timeline (persona y episodio) son **solo lectura**; no hay un segundo formulario de SV en la HC.
+
+El **egreso** es el cierre final del episodio: destino, diagnóstico operativo y epicrisis, sin dejar pedidos o derivaciones que retengan al paciente en guardia. Ver [urgencias-guardia.md](./urgencias-guardia.md).
+
 ## Niveles de carga
 
 - Carga mínima: solo lo esencial para cerrar la atención.

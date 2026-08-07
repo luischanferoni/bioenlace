@@ -47,10 +47,12 @@ final class EncounterDefinitionWorkflowCatalog
             ],
             self::TEMPLATE_EMER_STANDARD => [
                 self::step('Motivos de consulta', 'ConsultaMotivos', false),
+                self::step('Signos vitales', 'ConsultaAtencionesEnfermeria', false),
                 self::step('Diagnóstico', 'DiagnosticoConsulta', false),
                 self::step('Medicación', 'ConsultaMedicamentos', false),
                 self::step('Prácticas realizadas', 'ConsultaPracticas', false),
                 self::step('Indicaciones', 'ConsultaIndicaciones', false),
+                self::step('Derivaciones', 'ConsultaDerivaciones', false),
             ],
             self::TEMPLATE_IMP_STANDARD => [
                 self::step('Evolución', 'DiagnosticoConsulta', false),

@@ -87,6 +87,12 @@
           "required": true
         },
         {
+          "name": "checklist_sin_retencion",
+          "label": "Sin pedidos ni estudios pendientes que retengan al paciente en guardia",
+          "type": "checkbox",
+          "required": true
+        },
+        {
           "name": "checklist_epicrisis",
           "label": "Epicrisis y destino revisados",
           "type": "checkbox",

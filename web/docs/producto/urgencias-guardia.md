@@ -6,20 +6,32 @@ Programa operativo de **triage + tablero** en efectores con `encounterClass = EM
 
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
-| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) | Tablero vía `GET /api/v1/home/panel`, triage modal, derivación, egreso, indicadores |
-| Médico guardia | app Personal de Salud (inicio EMER) | Tablero, triage, atender → captura clínica, menú (tomar caso, derivar, egreso, re-triage) |
+| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) | Tablero: triage / re-triage, solicitar o ingresar cama, indicadores. No sustituye la captura médica. |
+| Médico guardia | App Personal de Salud (inicio EMER) | Tablero de cola: **Atender** (tap) abre captura. Sin triage ni “tomar caso” explícito. **Egreso** solo con episodio en atención (o desde la HC). Derivación y signos vitales van en la **captura del encounter**. |
 | Dirección / calidad | Web inicio + job nocturno | Resumen en vivo; histórico en `guardia_metrics_daily` |
 
 No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** según contexto operativo.
+
+### Matriz de acciones (producto)
+
+| Capacidad | Quién | Dónde |
+|-----------|-------|--------|
+| Triage / actualizar | Staff | Tablero web (+ intent asistente de triage) |
+| Tomar caso | — (eliminado como acción) | `iniciar-atencion` asigna el PES de sesión si falta |
+| Atender | Médico | Tap en card / botón Atender → captura clínica |
+| Signos vitales | Staff en triage (opc.); médico en atención | Misma captura EMER; cards del timeline solo lectura |
+| Derivar | Médico | Bloque Derivaciones de la captura (no atajo de tablero) |
+| Egreso | Médico | Cierre **final**: diagnóstico / epicrisis; sin pedidos que retengan al paciente. Desde HC o tablero solo en `en_atencion` |
+| Cama | Staff / coordinación | Tablero web |
 
 ## Circuito operativo
 
 Estados canónicos (`circuito_estado`):
 
-1. `ingresado` / `espera_triage` — pendiente de triage  
-2. `espera_medico` — triage hecho, en cola  
-3. `en_atencion` — médico atendiendo (consulta al abrir captura)  
-4. `derivado` / `finalizado` — cierre administrativo  
+1. `ingresado` / `espera_triage` — pendiente de triage (staff)  
+2. `espera_medico` — triage hecho, en cola para el médico  
+3. `en_atencion` — médico atendiendo (consulta al abrir captura; asignación implícita)  
+4. `derivado` / `finalizado` — cierre (derivación en captura o egreso estructurado)
 
 Eventos auditable en `guardia_circuito_event` (incluye `re_triage`).
 
@@ -30,11 +42,11 @@ Base: `/api/v1/clinical/emergency-guardia`
 | Acción | Método | Notas |
 |--------|--------|-------|
 | Panel inicio (tablero) | `GET /api/v1/home/panel` | Sección `emergency_board` (+ `emergency_indicators`) |
-| Triage | `POST …/{id}/registrar-triage` | Manchester 1–5 + motivo + vitales opcionales |
-| Tomar caso | `POST …/{id}/asignar` | PES de sesión si no se envía body |
-| Atender | `POST …/{id}/iniciar-atencion` | Devuelve `captura_url` |
-| Derivar | `POST …/{id}/derivar` | `id_efector_derivacion`, condiciones |
-| Egreso | `POST …/{id}/finalizar` | Libro de guardia |
+| Triage | `POST …/{id}/registrar-triage` | Manchester 1–5 + motivo + vitales opcionales (staff) |
+| Asignar | `POST …/{id}/asignar` | Uso interno / legado; el flujo médico usa `iniciar-atencion` |
+| Atender | `POST …/{id}/iniciar-atencion` | Asigna PES de sesión si falta; devuelve `captura_url` |
+| Derivar | `POST …/{id}/derivar` | Preferir salida vía captura; endpoint operativo permanece |
+| Egreso | `POST …/{id}/finalizar` o UI `egreso-formulario` | Libro de guardia / egreso estructurado |
 | Indicadores | `GET …/indicadores-resumen` | Medianas y conteos del día |
 | Efectores derivación | `GET …/listar-efectores-derivacion` | Select de destino |
 
@@ -49,9 +61,9 @@ App **Personal de Salud**: registro FCM vía `POST /devices/push-token` (`appCli
 
 ## Captura clínica en guardia
 
-Al atender, la HC se abre con `parent=GUARDIA` y muestra el **banner de episodio** (triaje, circuito, médico, motivo), el **registro cronológico** y el CTA de **egreso estructurado**. Detalle: [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md).
+Al atender, la HC se abre con `parent=GUARDIA` y muestra el **banner de episodio** (triaje, circuito, médico, motivo), el **registro cronológico**, signos vitales en **solo lectura** y el formulario de captura EMER (motivos, diagnóstico, medicación, prácticas, indicaciones, **signos vitales**, **derivaciones**). El egreso estructurado cierra el episodio. Detalle: [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md) y [captura-clinica.md](./captura-clinica.md).
 
-Intent: `urgencias.egreso-estructurado-flow` → UI JSON `egreso-formulario`.
+Intent: `urgencias.egreso-estructurado-flow` → UI JSON `egreso-formulario` (destino, diagnóstico operativo, epicrisis; aviso si hay pedidos que retengan).
 
 ## Post-v1 (paquete A)
 
@@ -67,7 +79,7 @@ Intent: `urgencias.egreso-estructurado-flow` → UI JSON `egreso-formulario`.
 Intents YAML (sin hardcode de pantalla):
 
 - `urgencias.ver-tablero-guardia` — navega a inicio EMER  
-- `urgencias.triage-paciente-guardia` — flujo conversacional de triage (UI JSON `elegir-paciente-triage` → `registrar-triage-formulario`)  
+- `urgencias.triage-paciente-guardia` — flujo conversacional de triage (UI JSON `elegir-paciente-triage` → `registrar-triage-formulario`); orientado a staff  
 
 Catálogo: `ClinicalUiActionCatalog` + categoría en `CommonActionsService`.
 
@@ -92,11 +104,12 @@ php yii emergency-guardia/materialize-metrics
 ## Fuera de alcance actual
 
 - Vista web dedicada solo de indicadores (el resumen en inicio basta)  
-- Sonido automático en tablero al violar SLA (solo alerta visual por ahora)
+- Sonido automático en tablero al violar SLA (solo alerta visual por ahora)  
+- App móvil staff completa (triage/cama nativos); mientras tanto triage/cama en web  
 
 ## Cobertura de plantel (agenda EMER)
 
-El tablero clínico no es agenda de cupos. La disponibilidad del personal de guardia se declara como **cobertura** (`profesional_cobertura` materializada desde plantilla semanal `profesional_cobertura_plantilla`, `encounter_class = EMER`). El panel de inicio muestra la sección `staff_cobertura_activa` (`session.tiene_cobertura`, `session.mensaje_sin_cobertura` accionable). **Sin cobertura vigente** el tablero no lista pacientes (ni en API ni en UI); el mensaje orienta a «Configurar mis horarios» en el Asistente o a coordinación/administración del centro. **Asignar / tomar caso** exige cobertura vigente (metadata `emer_assign_requires_cobertura`). Ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
+El tablero clínico no es agenda de cupos. La disponibilidad del personal de guardia se declara como **cobertura** (`profesional_cobertura` materializada desde plantilla semanal `profesional_cobertura_plantilla`, `encounter_class = EMER`). El panel de inicio muestra la sección `staff_cobertura_activa` (`session.tiene_cobertura`, `session.mensaje_sin_cobertura` accionable). **Sin cobertura vigente** el tablero no lista pacientes (ni en API ni en UI); el mensaje orienta a «Configurar mis horarios» en el Asistente o a coordinación/administración del centro. **Iniciar atención / asignar** exige cobertura vigente (metadata `emer_assign_requires_cobertura`). Ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
 
 ## Referencias
 

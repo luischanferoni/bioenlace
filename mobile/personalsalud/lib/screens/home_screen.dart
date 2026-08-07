@@ -13,7 +13,6 @@ import '../services/internados_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/consulta_async_api.dart';
 import 'emergency/emergency_guardia_actions.dart';
-import 'emergency/emergency_triage_screen.dart';
 import 'patient_timeline_screen.dart';
 import 'chat_consulta_screen.dart';
 
@@ -949,7 +948,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (s.isEmpty) return '';
     final dt = DateTime.tryParse(s);
     if (dt == null) return s;
-    return DateFormat('d/M/y HH:mm', 'es').format(dt.toLocal());
+    return DateFormat('dd/MM/yyyy HH:mm', 'es').format(dt.toLocal());
   }
 
   Future<void> _tomarAsyncCaso(Map<String, dynamic> item) async {
@@ -1342,18 +1341,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _onGuardiaTap(EmergencyBoardItem g) async {
     if (g.needsTriage) {
-      final ok = await Navigator.push<bool>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => EmergencyTriageScreen(
-            guardiaId: g.id,
-            pacienteNombre: g.nombreCompleto,
-            api: _emergencyApi,
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Pendiente de triage. Lo registra admisión o enfermería en web.',
+            ),
           ),
-        ),
-      );
-      if (ok == true) {
-        await _cargarListadoPacientes(silent: true);
+        );
+      }
+      return;
+    }
+    if (!_sessionTieneCobertura) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _mensajeSinCobertura ?? _msgSinPlantelGuardiaFallback,
+            ),
+          ),
+        );
       }
       return;
     }
@@ -1494,42 +1501,25 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          if (!cerrado) ...[
+          if (!cerrado &&
+              !g.needsTriage &&
+              (g.circuitoEstado ?? '') == 'en_atencion') ...[
             BioSpacing.gapH(BioSpacing.sm),
-            Wrap(
-              spacing: BioSpacing.sm,
-              runSpacing: BioSpacing.sm,
-              children: [
-                if (g.needsTriage)
-                  BioButton.outlinePrimary(
-                    label: 'Triage',
-                    size: BioButtonSize.sm,
-                    onPressed: () {
-                      EmergencyGuardiaActions.openTriage(
-                        context: context,
-                        item: g,
-                        api: _emergencyApi,
-                        onChanged: refresh,
-                      );
-                    },
-                  ),
-                BioButton(
-                  label: g.internacionPendiente
-                      ? 'Ingresar cama'
-                      : 'Solicitar cama',
-                  intent: UiIntent.info,
-                  variant: BioButtonVariant.outline,
-                  size: BioButtonSize.sm,
-                  onPressed: () {
-                    EmergencyGuardiaActions.openCama(
-                      context: context,
-                      item: g,
-                      api: _emergencyApi,
-                      onChanged: refresh,
-                    );
-                  },
-                ),
-              ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: BioButton.outlinePrimary(
+                label: 'Egreso',
+                size: BioButtonSize.sm,
+                onPressed: () {
+                  EmergencyGuardiaActions.showActionSheet(
+                    context: context,
+                    item: g,
+                    api: _emergencyApi,
+                    onChanged: refresh,
+                    sessionTieneCobertura: _sessionTieneCobertura,
+                  );
+                },
+              ),
             ),
           ],
         ],

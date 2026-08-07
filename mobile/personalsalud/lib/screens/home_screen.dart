@@ -1365,7 +1365,11 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     try {
-      await _emergencyApi.iniciarAtencion(g.id);
+      final estado = g.circuitoEstado ?? '';
+      final yaEnAtencion = estado == 'en_atencion' || estado == 'atendido';
+      if (!yaEnAtencion) {
+        await _emergencyApi.iniciarAtencion(g.id);
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

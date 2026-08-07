@@ -50,6 +50,7 @@ final class GuardiaOperacionService
 
     /**
      * Marca en atención y devuelve URL de captura clínica (consulta se crea al abrir historia).
+     * Idempotente: si el episodio ya está en atención, no vuelve a registrar el evento.
      *
      * @return array<string, mixed>
      */
@@ -64,31 +65,40 @@ final class GuardiaOperacionService
             throw new \InvalidArgumentException('No se puede atender un episodio cerrado o derivado.');
         }
 
-        $pesId = GuardiaEfectorAccess::resolvePesId(null);
-        // Atender implica tomar el caso: asignar PES de sesión si aún no hay profesional.
-        if (
-            $pesId !== null
-            && $pesId > 0
-            && (int) ($guardia->id_profesional_efector_servicio ?? 0) <= 0
-        ) {
-            ProfesionalCoberturaActivaService::assertPesPuedeAsignarEmer($pesId, $idEfector);
-            $guardia->id_profesional_efector_servicio = $pesId;
-            $guardia->updateAttributes(['id_profesional_efector_servicio' => $pesId]);
-            $this->circuito->recordEvent($guardiaId, CircuitoEventType::ASIGNACION, $pesId, [
-                'id_profesional_efector_servicio' => $pesId,
-                'via' => 'iniciar_atencion',
+        $yaEnAtencion = $estado === CircuitoEstado::EN_ATENCION
+            || $estado === CircuitoEstado::ATENDIDO;
+
+        if (!$yaEnAtencion) {
+            $pesId = GuardiaEfectorAccess::resolvePesId(null);
+            // Atender implica tomar el caso: asignar PES de sesión si aún no hay profesional.
+            if (
+                $pesId !== null
+                && $pesId > 0
+                && (int) ($guardia->id_profesional_efector_servicio ?? 0) <= 0
+            ) {
+                ProfesionalCoberturaActivaService::assertPesPuedeAsignarEmer($pesId, $idEfector);
+                $guardia->id_profesional_efector_servicio = $pesId;
+                $guardia->updateAttributes(['id_profesional_efector_servicio' => $pesId]);
+                $this->circuito->recordEvent($guardiaId, CircuitoEventType::ASIGNACION, $pesId, [
+                    'id_profesional_efector_servicio' => $pesId,
+                    'via' => 'iniciar_atencion',
+                ]);
+                (new GuardiaPushNotifier())->notifyAssigned($guardia, $pesId);
+            }
+
+            $guardia->circuito_estado = CircuitoEstado::EN_ATENCION;
+            $guardia->estado = Guardia::ESTADO_ATENDIDA;
+            $guardia->updateAttributes([
+                'circuito_estado' => $guardia->circuito_estado,
+                'estado' => $guardia->estado,
             ]);
-            (new GuardiaPushNotifier())->notifyAssigned($guardia, $pesId);
+
+            $this->circuito->recordEvent(
+                $guardiaId,
+                CircuitoEventType::INICIO_ATENCION,
+                GuardiaEfectorAccess::resolvePesId(null)
+            );
         }
-
-        $guardia->circuito_estado = CircuitoEstado::EN_ATENCION;
-        $guardia->estado = Guardia::ESTADO_ATENDIDA;
-        $guardia->updateAttributes([
-            'circuito_estado' => $guardia->circuito_estado,
-            'estado' => $guardia->estado,
-        ]);
-
-        $this->circuito->recordEvent($guardiaId, CircuitoEventType::INICIO_ATENCION, $pesId);
 
         $encounter = $this->encounterResolver->findLatestForGuardia((int) $guardia->id);
         $capturaUrl = PatientHistoriaUrl::captura(
@@ -100,6 +110,7 @@ final class GuardiaOperacionService
         $out = $this->serializeOperacion($guardia);
         $out['captura_url'] = $capturaUrl;
         $out['encounter_id'] = $encounter !== null ? (int) $encounter->id : null;
+        $out['inicio_atencion_registrado'] = !$yaEnAtencion;
 
         return $out;
     }

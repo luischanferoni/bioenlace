@@ -1625,19 +1625,27 @@
       var api = window.BioenlaceNativePage;
       if (!api) return;
       try {
-        var url = api.apiV1Url('clinical/emergency-guardia/' + g.id + '/iniciar-atencion');
-        var json = await api.fetchJson(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-          },
-          body: '{}',
-        });
-        if (json.success === false) {
-          throw new Error(json.message || 'No se pudo iniciar la atención');
+        var yaEnAtencion = g.circuito_estado === 'en_atencion' || g.circuito_estado === 'atendido';
+        var captura = null;
+        if (!yaEnAtencion) {
+          var url = api.apiV1Url('clinical/emergency-guardia/' + g.id + '/iniciar-atencion');
+          var json = await api.fetchJson(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: '{}',
+          });
+          if (json.success === false) {
+            throw new Error(json.message || 'No se pudo iniciar la atención');
+          }
+          captura = json.data && json.data.captura_url;
         }
-        var captura = json.data && json.data.captura_url;
+        if (!captura && g.id_persona) {
+          captura = '/paciente/historia?id=' + encodeURIComponent(g.id_persona)
+            + '&parent=GUARDIA&parent_id=' + encodeURIComponent(g.id);
+        }
         if (captura) {
           window.location.href = captura;
         }

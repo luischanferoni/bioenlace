@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Presentation\EpisodioDateTimeFormatter;
+use common\models\Clinical\Encounter;
 use common\models\ConsultaAtencionesEnfermeria;
 use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;

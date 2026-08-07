@@ -10,7 +10,7 @@
     {
       "kind": "fields",
       "id": "datos",
-      "title": "Cobertura semanal (guardia / internación)",
+      "title": "",
       "fields": [
         {
           "name": "id_efector",

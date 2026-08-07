@@ -62,8 +62,7 @@ subintents:
       - draft.id_profesional_efector_servicio
       - draft.encounter_class
     provides:
-      - draft.agenda_ui_completed
-      - draft.cobertura_ui_completed
+      - draft.horario_ui_completed
     next: ""
     open_ui_routing:
       - when:

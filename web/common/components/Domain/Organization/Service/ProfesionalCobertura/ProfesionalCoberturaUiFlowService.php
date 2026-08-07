@@ -57,6 +57,8 @@ final class ProfesionalCoberturaUiFlowService
                     'mensaje' => $created === 1
                         ? 'Se guardó el patrón y se generó 1 turno de cobertura.'
                         : ('Se guardó el patrón y se generaron ' . $created . ' turnos de cobertura.'),
+                    'cobertura_ui_completed' => '1',
+                    'horario_ui_completed' => '1',
                     'created' => $created,
                     'plantilla_id' => isset($result['plantilla']) ? (int) $result['plantilla']->id : null,
                 ],

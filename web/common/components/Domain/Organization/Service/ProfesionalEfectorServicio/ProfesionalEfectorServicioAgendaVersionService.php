@@ -129,6 +129,7 @@ final class ProfesionalEfectorServicioAgendaVersionService
         return [
             'message' => 'Agenda guardada. Vigente desde ' . $vigenteDesde . '.',
             'agenda_ui_completed' => '1',
+            'horario_ui_completed' => '1',
             'id_agenda_version' => (int) $version->id,
             'preview' => $preview,
         ];

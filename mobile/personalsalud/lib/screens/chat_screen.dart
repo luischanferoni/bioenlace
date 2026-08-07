@@ -105,6 +105,32 @@ class ChatScreenState extends State<ChatScreen> {
     return message['flow_submit'] is Map;
   }
 
+  /// Paso sin `next` en el manifiesto (cierre por POST de la mini-UI, sin `flow_submit`).
+  /// Misma idea que `flowStepIsTerminal` en spa-home.
+  bool _messageFlowStepIsLast(Map<String, dynamic> message) {
+    final fm = message['flow_manifest'];
+    if (fm is! Map) return false;
+    final manifest = Map<String, dynamic>.from(fm);
+    final activeId = (message['subintent_id'] ?? manifest['active_subintent_id'] ?? '')
+        .toString()
+        .trim();
+    final activeStep = manifest['active_step'];
+    if (activeStep is Map) {
+      final next = activeStep['next']?.toString().trim() ?? '';
+      if (activeId.isEmpty || (activeStep['id']?.toString().trim() ?? '') == activeId) {
+        return next.isEmpty;
+      }
+    }
+    final steps = manifest['steps'];
+    if (steps is! List || activeId.isEmpty) return false;
+    for (final raw in steps) {
+      if (raw is! Map) continue;
+      if ((raw['id']?.toString().trim() ?? '') != activeId) continue;
+      return (raw['next']?.toString().trim() ?? '').isEmpty;
+    }
+    return false;
+  }
+
   String? _initialListSelectionForMessage(Map<String, dynamic> message) {
     final inlineUi = message['inline_ui'];
     final provided = inlineUi is Map && inlineUi['provided'] is Map
@@ -2681,12 +2707,13 @@ class ChatScreenState extends State<ChatScreen> {
                         const SizedBox(height: 4),
                       ],
                       Padding(
-                        padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 0.0, bottom: 0),
+                        // Mismo inset horizontal que `_buildFlowChatHeader` / `_buildFlowStepTitle`.
+                        padding: const EdgeInsets.symmetric(horizontal: BioSpacing.lg),
                         child: Align(
                           alignment: Alignment.topLeft,
                           child: ConstrainedBox(
                             constraints: BoxConstraints(
-                              maxWidth: MediaQuery.of(context).size.width - 32,
+                              maxWidth: MediaQuery.of(context).size.width - (BioSpacing.lg * 2),
                             ),
                             child: AnimatedSize(
                               duration: const Duration(milliseconds: 180),
@@ -2868,6 +2895,20 @@ class ChatScreenState extends State<ChatScreen> {
                                       },
                                     });
                                   });
+                                } else {
+                                  // Marcadores de cierre del submit (agenda_ui_completed, etc.).
+                                  final delta = <String, dynamic>{};
+                                  data.forEach((k, v) {
+                                    final key = k.toString();
+                                    if (key.isEmpty || key.startsWith('_')) return;
+                                    if (v == null) return;
+                                    if (v is Map || v is List) return;
+                                    final s = v.toString().trim();
+                                    if (s.isNotEmpty) delta[key] = s;
+                                  });
+                                  if (delta.isNotEmpty) {
+                                    setState(() => _applyDraftDelta(delta));
+                                  }
                                 }
                                 if (_messageIsTerminalFlowStep(message)) {
                                   setState(() {
@@ -2877,6 +2918,23 @@ class ChatScreenState extends State<ChatScreen> {
                                       message: message,
                                     );
                                   });
+                                  return;
+                                }
+                                // Paso final sin flow_submit: el POST de la UI ya cerró el flujo (spa-home).
+                                if (_messageFlowStepIsLast(message)) {
+                                  final activationSeq = message['flow_activation_seq'] is int
+                                      ? message['flow_activation_seq'] as int
+                                      : _flowActivationSeq;
+                                  await _collapseCompletedFlowActivation(
+                                    activationSeq: activationSeq,
+                                    submitData: Map<String, dynamic>.from(data),
+                                    flowActionTitle: _flowActionTitleFromMessage(message),
+                                    intentId: _intentId,
+                                    flowSnapshot: Map<String, dynamic>.from(_flowSnapshot),
+                                  );
+                                  if (!mounted) return;
+                                  setState(() => _clearFlowState());
+                                  _scrollToBottom();
                                   return;
                                 }
                                 // Para submits (fields/custom_widget) no hay draft_delta local; igualmente avanzamos el flow.

@@ -11,7 +11,7 @@
     {
       "kind": "list",
       "id": "default",
-      "title": "¿Qué horarios querés configurar?",
+      "title": "",
       "empty_message": "No hay tipos disponibles.",
       "selection": { "mode": "single" },
       "draft_field": "encounter_class",

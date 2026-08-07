@@ -1236,6 +1236,23 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     return true;
   }
 
+  /// Label del botón de campos: `actions[].type=submit` del descriptor, o «Confirmar».
+  String _fieldsSubmitLabel() {
+    final actions = _root?['actions'];
+    if (actions is List) {
+      for (final raw in actions) {
+        if (raw is! Map) continue;
+        final a = Map<String, dynamic>.from(raw);
+        final type = a['type']?.toString().trim().toLowerCase() ?? '';
+        final isSubmit = type == 'submit' || a['primary'] == true;
+        if (!isSubmit) continue;
+        final label = a['label']?.toString().trim() ?? '';
+        if (label.isNotEmpty) return label;
+      }
+    }
+    return 'Confirmar';
+  }
+
   Future<void> _submit() async {
     if (!_validateRequiredFields()) return;
     setState(() => _loading = true);
@@ -1887,11 +1904,13 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
               },
             ),
           const SizedBox(height: 4),
+          // Igual que spa-home: ocultar solo con hide_submit o paso con flow_submit
+          // (el host muestra «Confirmar y enviar»). En chat embebido sin flow_submit
+          // (p. ej. profesional-horarios.gestionar-propio) el POST lo hace este botón.
           if (b['hide_submit'] != true &&
               b['hide_submit'] != 1 &&
               b['hide_submit'] != '1' &&
-              !widget.isTerminalFlowStep &&
-              !(widget.embedded && widget.onDraftDelta != null))
+              !widget.isTerminalFlowStep)
             Row(
               children: [
                 if (widget.embedded && widget.onCancel != null) ...[
@@ -1903,7 +1922,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
                 ],
                 Expanded(
                   child: BioButton.primary(
-                    label: _formSubmitted ? 'Confirmado' : 'Confirmar',
+                    label: _formSubmitted ? 'Confirmado' : _fieldsSubmitLabel(),
                     fullWidth: true,
                     loading: _loading,
                     onPressed: (_loading || _formSubmitted) ? null : _submit,

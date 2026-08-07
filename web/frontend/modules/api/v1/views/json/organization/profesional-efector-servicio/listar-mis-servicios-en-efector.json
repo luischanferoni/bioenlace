@@ -11,7 +11,7 @@
     {
       "kind": "list",
       "id": "default",
-      "title": "Tus servicios en este efector",
+      "title": "",
       "empty_message": "No tenés servicios asignados en este efector.",
       "selection": { "mode": "single" },
       "draft_field": "id_servicio",

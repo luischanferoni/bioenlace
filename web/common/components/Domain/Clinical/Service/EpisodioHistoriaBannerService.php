@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Service;
 
+use common\components\Domain\Clinical\Presentation\EpisodioDateTimeFormatter;
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
@@ -66,9 +67,12 @@ final class EpisodioHistoriaBannerService
 
         $ingresoAt = trim((string) ($guardia->ingreso_at ?? ''));
         if ($ingresoAt === '') {
-            $fecha = trim((string) ($guardia->fecha ?? ''));
-            $hora = trim((string) ($guardia->hora ?? ''));
-            $ingresoAt = trim($fecha . ($hora !== '' ? ' ' . substr($hora, 0, 5) : ''));
+            $ingresoAt = EpisodioDateTimeFormatter::displayFromParts(
+                $guardia->fecha ?? null,
+                $guardia->hora ?? null
+            );
+        } else {
+            $ingresoAt = EpisodioDateTimeFormatter::display($ingresoAt);
         }
 
         $banner = $this->baseBanner(
@@ -80,6 +84,11 @@ final class EpisodioHistoriaBannerService
             $ingresoAt !== '' ? $ingresoAt : null
         );
         $banner['triage'] = $triage;
+        if (is_array($banner['triage']) && isset($banner['triage']['triaged_at'])) {
+            $banner['triage']['triaged_at'] = EpisodioDateTimeFormatter::display(
+                (string) $banner['triage']['triaged_at']
+            );
+        }
         $banner['ubicacion'] = null;
         $pesPersona = null;
         if ($guardia->profesionalEfectorServicio !== null) {
@@ -131,10 +140,10 @@ final class EpisodioHistoriaBannerService
 
         $fechaInicio = '';
         if (!empty($internacion->fecha_inicio)) {
-            $fechaInicio = (string) $internacion->fecha_inicio;
-            if (!empty($internacion->hora_inicio)) {
-                $fechaInicio .= ' ' . substr((string) $internacion->hora_inicio, 0, 5);
-            }
+            $fechaInicio = EpisodioDateTimeFormatter::displayFromParts(
+                (string) $internacion->fecha_inicio,
+                !empty($internacion->hora_inicio) ? (string) $internacion->hora_inicio : null
+            );
         }
 
         $motivo = trim((string) ($internacion->situacion_al_ingresar ?? ''));
@@ -253,7 +262,9 @@ final class EpisodioHistoriaBannerService
             if ($texto === '' || stripos($texto, 'Internación #') === 0) {
                 continue;
             }
-            $fecha = (string) ($enc->period_start ?? $enc->created_at ?? '');
+            $fecha = EpisodioDateTimeFormatter::display(
+                (string) ($enc->period_start ?? $enc->created_at ?? '')
+            );
             $evoluciones[] = [
                 'encounter_id' => (int) $enc->id,
                 'fecha' => $fecha,

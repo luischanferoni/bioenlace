@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Clinical\Service;
 
-use common\models\Clinical\Encounter;
+use common\components\Domain\Clinical\Presentation\EpisodioDateTimeFormatter;
 use common\models\ConsultaAtencionesEnfermeria;
 use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;
@@ -335,16 +335,7 @@ final class EpisodioSignosVitalesService
      */
     private function formatAtDisplay(string $at): string
     {
-        $at = trim($at);
-        if ($at === '') {
-            return '';
-        }
-        $ts = strtotime($at);
-        if ($ts === false) {
-            return $at;
-        }
-
-        return date('d/m/Y H:i', $ts);
+        return EpisodioDateTimeFormatter::display($at);
     }
 
     /**

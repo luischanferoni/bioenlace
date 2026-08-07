@@ -87,6 +87,25 @@ String _formatDateTimeAmigable(DateTime d) {
   return '$fecha, $hora';
 }
 
+/// Fecha de episodio (guardia / internación): `dd/MM/yyyy` o `dd/MM/yyyy HH:mm`.
+/// Acepta ISO/MySQL o un valor ya formateado.
+String formatEpisodioFecha(dynamic value) {
+  if (value == null) return '';
+  final s = value.toString().trim();
+  if (s.isEmpty) return '';
+  if (RegExp(r'^\d{2}/\d{2}/\d{4}( \d{2}:\d{2})?$').hasMatch(s)) {
+    return s;
+  }
+  final d = parseBioDateTime(s);
+  if (d == null) return s;
+  final hasTime = RegExp(r'\d{1,2}:\d{2}').hasMatch(s);
+  final fecha = '${_pad2(d.day)}/${_pad2(d.month)}/${d.year}';
+  if (!hasTime && d.hour == 0 && d.minute == 0 && d.second == 0) {
+    return fecha;
+  }
+  return '$fecha ${_horaCorta(d)}';
+}
+
 /// Duración a partir de minutos enteros: `45 min`, `1 h 30 min`, `2 d 3 h`.
 String formatDuracionMinutos(num? minutos) {
   final total = minutos == null ? 0 : minutos.round();

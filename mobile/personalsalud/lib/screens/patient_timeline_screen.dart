@@ -455,16 +455,30 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Widget _buildPacienteHeader(PersonaData persona) {
+    final meta = <String>[];
+    if (!_modoConsultaCargada && persona.edad != null) {
+      meta.add('${persona.edad} años');
+    }
+    final genero = (persona.generoTexto ?? '').trim();
+    if (!_modoConsultaCargada && genero.isNotEmpty) {
+      meta.add(genero);
+    }
+
     return BioCard.intent(
       intent: UiIntent.primary,
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(persona.nombreCompleto, style: BioTypography.h3),
-          ),
-          if (!_modoConsultaCargada && persona.edad != null)
-            Text('${persona.edad} años', style: BioTypography.title),
+          Text(persona.nombreCompleto, style: BioTypography.h3),
+          if (meta.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.xs),
+            Text(
+              meta.join(' · '),
+              style: BioTypography.title.copyWith(
+                color: context.bio.textMuted,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -925,7 +939,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                       BioBadge(label: it.typeLabel, intent: UiIntent.neutral),
                       if (it.occurredAt.isNotEmpty)
                         Text(
-                          it.occurredAt,
+                          formatEpisodioFecha(it.occurredAt),
                           style: BioTypography.caption
                               .copyWith(color: context.bio.textMuted),
                         ),
@@ -958,7 +972,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       '$tituloTipo #${ctx?.episodioId ?? widget.consultParentId ?? '—'}',
     ];
     if (ctx?.ingresoAt != null && ctx!.ingresoAt!.isNotEmpty) {
-      tituloParts.add('Ingreso ${ctx.ingresoAt}');
+      tituloParts.add('Ingreso ${formatEpisodioFecha(ctx.ingresoAt)}');
     }
 
     Color? triageColor;
@@ -1023,7 +1037,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                   ),
                 if (ctx.triageAt != null && ctx.triageAt!.isNotEmpty)
                   Text(
-                    ctx.triageAt!,
+                    formatEpisodioFecha(ctx.triageAt),
                     style: BioTypography.caption
                         .copyWith(color: context.bio.textMuted),
                   ),

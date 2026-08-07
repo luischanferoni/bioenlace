@@ -200,6 +200,10 @@ class PacientesController extends BaseController
 
         // La línea de tiempo / eventos agregados no se construye aquí (otro endpoint o servicio cuando corresponda).
 
+        $generoLabels = [1 => 'Femenino', 2 => 'Masculino', 3 => 'Otro', 4 => 'Indefinido'];
+        $generoCode = (int) ($persona->genero ?? 0);
+        $generoTexto = $generoLabels[$generoCode] ?? null;
+
         return $this->success([
             'persona' => [
                 'id' => (int) $persona->id_persona,
@@ -207,6 +211,8 @@ class PacientesController extends BaseController
                 'documento' => $persona->documento,
                 'edad' => $persona->edad,
                 'fecha_nacimiento' => $persona->fecha_nacimiento,
+                'genero' => $generoCode > 0 ? $generoCode : null,
+                'genero_texto' => $generoTexto,
             ],
             'informacion_medica' => [
                 'condiciones_activas' => $condicionesActivas,

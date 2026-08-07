@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Service;
 
+use common\components\Domain\Clinical\Presentation\EpisodioDateTimeFormatter;
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEventType;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\models\Clinical\Encounter;
@@ -480,6 +481,21 @@ final class EpisodioTimelineService
 
         if (count($items) > self::LIMIT_ITEMS) {
             $items = array_slice($items, 0, self::LIMIT_ITEMS);
+        }
+
+        foreach ($items as $idx => $it) {
+            if (!is_array($it)) {
+                continue;
+            }
+            $it['occurred_at'] = EpisodioDateTimeFormatter::display((string) ($it['occurred_at'] ?? ''));
+            if (isset($it['payload']) && is_array($it['payload'])) {
+                if (isset($it['payload']['triaged_at'])) {
+                    $it['payload']['triaged_at'] = EpisodioDateTimeFormatter::display(
+                        (string) $it['payload']['triaged_at']
+                    );
+                }
+            }
+            $items[$idx] = $it;
         }
 
         return [

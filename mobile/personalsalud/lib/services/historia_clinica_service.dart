@@ -1300,6 +1300,8 @@ class PersonaData {
   final String? fechaNacimiento;
   final int? edad;
   final String? sexo;
+  final int? genero;
+  final String? generoTexto;
 
   PersonaData({
     required this.id,
@@ -1308,6 +1310,8 @@ class PersonaData {
     this.fechaNacimiento,
     this.edad,
     this.sexo,
+    this.genero,
+    this.generoTexto,
   });
 
   factory PersonaData.fromJson(Map<String, dynamic> json) {
@@ -1335,6 +1339,11 @@ class PersonaData {
       fechaNacimiento: json['fecha_nacimiento'] as String?,
       edad: _parseInt(json['edad']),
       sexo: json['sexo'] as String?,
+      genero: _parseInt(json['genero']),
+      generoTexto: () {
+        final raw = (json['genero_texto'] ?? json['generoTexto'])?.toString().trim();
+        return (raw == null || raw.isEmpty) ? null : raw;
+      }(),
     );
   }
 }

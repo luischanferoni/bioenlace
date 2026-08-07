@@ -426,6 +426,22 @@ endif;
         return {};
     }
 
+    /** dd/MM/yyyy o dd/MM/yyyy HH:mm — alineado a API EpisodioDateTimeFormatter */
+    function formatEpisodioFecha(raw) {
+        var s = String(raw || '').trim();
+        if (!s) return '';
+        if (/^\d{2}\/\d{2}\/\d{4}( \d{2}:\d{2})?$/.test(s)) return s;
+        var m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2})(?::\d{2})?)?/);
+        if (m) {
+            var out = m[3] + '/' + m[2] + '/' + m[1];
+            if (m[4] != null) {
+                out += ' ' + String(m[4]).padStart(2, '0') + ':' + m[5];
+            }
+            return out;
+        }
+        return s;
+    }
+
     function renderBadges(containerId, items, badgeClass) {
         var el = document.getElementById(containerId);
         if (!el) return;
@@ -459,7 +475,7 @@ endif;
         var labelTipo = tipo === 'GUARDIA' ? 'Guardia' : (tipo === 'INTERNACION' ? 'Internación' : 'Episodio');
         if (tituloEl) {
             var parts = [labelTipo + ' #' + (ctx.episodio_id || '—')];
-            if (ctx.ingreso_at) parts.push('Ingreso ' + ctx.ingreso_at);
+            if (ctx.ingreso_at) parts.push('Ingreso ' + formatEpisodioFecha(ctx.ingreso_at));
             tituloEl.textContent = parts.join(' · ');
         }
         if (estadoEl) {
@@ -488,7 +504,7 @@ endif;
                 if (triageMeta) {
                     var metaParts = [];
                     if (triage.scale) metaParts.push(String(triage.scale));
-                    if (triage.triaged_at) metaParts.push(String(triage.triaged_at));
+                    if (triage.triaged_at) metaParts.push(formatEpisodioFecha(String(triage.triaged_at)));
                     triageMeta.textContent = metaParts.join(' · ');
                 }
             } else {
@@ -638,7 +654,7 @@ endif;
         var parts = [];
         if (ctx.internacion_id) parts.push('Episodio #' + ctx.internacion_id);
         if (ctx.cama_label) parts.push(ctx.cama_label);
-        if (ctx.fecha_inicio) parts.push('Ingreso ' + ctx.fecha_inicio);
+        if (ctx.fecha_inicio) parts.push('Ingreso ' + formatEpisodioFecha(ctx.fecha_inicio));
         if (ctx.medico && ctx.medico.nombre) parts.push(ctx.medico.nombre);
         resumenEl.textContent = (parts.length ? parts.join(' · ') : 'Internación en curso')
             + ' — documentá la evolución del día.';
@@ -787,7 +803,7 @@ endif;
             html += '<li class="tl-episodio-timeline-item" data-tl-type="' + escMotivosHtml(it.type || '') + '">';
             html += '<div class="tl-episodio-timeline-item__meta">';
             html += '<span class="badge tl-episodio-timeline-badge">' + escMotivosHtml(typeLabel) + '</span>';
-            html += '<span class="text-muted small">' + escMotivosHtml(it.occurred_at || '') + '</span>';
+            html += '<span class="text-muted small">' + escMotivosHtml(formatEpisodioFecha(it.occurred_at || '')) + '</span>';
             if (actor) {
                 html += '<span class="text-muted small">' + escMotivosHtml(actor) + '</span>';
             }

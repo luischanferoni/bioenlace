@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEventType;
+use common\components\Domain\Clinical\Presentation\EpisodioDateTimeFormatter;
 use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
 use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;
@@ -116,7 +117,7 @@ final class GuardiaTriageService
             'reason_code' => $row->reason_code,
             'reason_text' => $row->reason_text,
             'vitals' => $row->getVitalsArray(),
-            'triaged_at' => $row->triaged_at,
+            'triaged_at' => EpisodioDateTimeFormatter::display((string) ($row->triaged_at ?? '')),
             'id_profesional_efector_servicio' => $row->id_profesional_efector_servicio,
         ];
     }

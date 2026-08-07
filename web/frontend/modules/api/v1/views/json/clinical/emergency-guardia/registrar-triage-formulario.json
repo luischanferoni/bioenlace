@@ -17,21 +17,21 @@
         {
           "name": "guardia_id",
           "label": "ID guardia",
-          "type": "text",
+          "type": "hidden",
           "required": true,
           "readonly": true
         },
         {
           "name": "level",
-          "label": "Prioridad (1 = inmediato, 5 = no urgente)",
-          "type": "select",
+          "label": "Prioridad (Manchester)",
+          "type": "chips",
           "required": true,
           "options": [
-            { "value": "1", "label": "1 — Inmediato" },
-            { "value": "2", "label": "2 — Muy urgente" },
-            { "value": "3", "label": "3 — Urgente" },
-            { "value": "4", "label": "4 — Estándar" },
-            { "value": "5", "label": "5 — No urgente" }
+            { "value": "1", "label": "1" },
+            { "value": "2", "label": "2" },
+            { "value": "3", "label": "3" },
+            { "value": "4", "label": "4" },
+            { "value": "5", "label": "5" }
           ]
         },
         {

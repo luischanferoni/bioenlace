@@ -13,7 +13,9 @@ import '../models/pending_encounter_capture.dart';
 import '../models/timeline_event.dart';
 import '../services/historia_clinica_service.dart';
 import '../services/consulta_guardar_service.dart';
+import '../services/emergency_guardia_api.dart';
 import '../services/pending_encounter_capture_store.dart';
+import 'emergency/emergency_triage_screen.dart';
 
 class PatientTimelineScreen extends StatefulWidget {
   final int personaId;
@@ -389,23 +391,24 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                   BioSpacing.gapH(BioSpacing.md),
                                   _buildInformacionMedica(
                                       _historiaClinicaData!.informacionMedica),
+                                  BioSpacing.gapH(BioSpacing.md),
+                                  if (_esCapturaEpisodio)
+                                    _buildSignosVitalesEpisodio(
+                                      _historiaClinicaData!.signosVitalesEpisodio,
+                                    )
+                                  else
+                                    _buildSignosVitales(
+                                        _historiaClinicaData!.signosVitales),
                                   if (_esCapturaEpisodio) ...[
                                     BioSpacing.gapH(BioSpacing.md),
                                     _buildEpisodioBanner(
                                       _historiaClinicaData!.contextoEpisodio,
                                     ),
                                     BioSpacing.gapH(BioSpacing.md),
-                                    _buildSignosVitalesEpisodio(
-                                      _historiaClinicaData!.signosVitalesEpisodio,
-                                    ),
-                                    BioSpacing.gapH(BioSpacing.md),
                                     _buildTimelineEpisodio(
                                       _historiaClinicaData!.timelineEpisodio,
                                     ),
                                   ] else ...[
-                                    BioSpacing.gapH(BioSpacing.md),
-                                    _buildSignosVitales(
-                                        _historiaClinicaData!.signosVitales),
                                     BioSpacing.gapH(BioSpacing.md),
                                     if (_historiaClinicaData!
                                             .motivosConsultaPaciente
@@ -803,61 +806,83 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Signos vitales actuales',
-                style: BioTypography.title,
-              ),
-            ),
-            if (sv != null && sv.totalPoints > 0)
-              Text(
-                '${sv.totalPoints} medición${sv.totalPoints == 1 ? '' : 'es'}',
-                style: BioTypography.caption
-                    .copyWith(color: context.bio.textMuted),
-              ),
-          ],
-        ),
-        BioSpacing.gapH(BioSpacing.sm),
-        if (!tiene)
-          Text(
-            'Sin signos vitales. Se cargan en la captura de la consulta o en el triage.',
-            style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
-          )
-        else ...[
-          if (chips.isNotEmpty)
-            Wrap(
-              spacing: BioSpacing.xs,
-              runSpacing: BioSpacing.xs,
-              children: chips,
-            ),
-          if (sv!.series.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            for (final s in sv.series) ...[
-              Text(
-                '${s.label.isNotEmpty ? s.label : s.metric}'
-                '${s.unit.isNotEmpty ? ' (${s.unit})' : ''}',
-                style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
-              ),
-              for (final p in s.points.reversed.take(5))
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text(
-                    '${p.at}: ${p.value}${s.unit.isNotEmpty ? ' ${s.unit}' : ''}'
-                    '${p.source.isNotEmpty ? ' · ${p.source}' : ''}',
-                    style: BioTypography.caption
-                        .copyWith(color: context.bio.textMuted),
-                  ),
+    return BioCard.intent(
+      intent: UiIntent.info,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Signos vitales actuales',
+                  style: BioTypography.title,
                 ),
-              BioSpacing.gapH(BioSpacing.xs),
+              ),
+              if (sv != null && sv.totalPoints > 0)
+                Text(
+                  '${sv.totalPoints} medición${sv.totalPoints == 1 ? '' : 'es'}',
+                  style: BioTypography.caption
+                      .copyWith(color: context.bio.textMuted),
+                ),
+            ],
+          ),
+          BioSpacing.gapH(BioSpacing.md),
+          if (!tiene)
+            Text(
+              'Sin datos',
+              style: BioTypography.bodySm,
+            )
+          else ...[
+            if (chips.isNotEmpty)
+              Wrap(
+                spacing: BioSpacing.xs,
+                runSpacing: BioSpacing.xs,
+                children: chips,
+              ),
+            if (sv!.series.isNotEmpty) ...[
+              BioSpacing.gapH(BioSpacing.md),
+              ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text(
+                  'Historial (${sv.totalPoints} mediciones)',
+                  style: BioTypography.title,
+                ),
+                children: [
+                  for (final s in sv.series) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: BioSpacing.xs),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '${s.label.isNotEmpty ? s.label : s.metric}'
+                          '${s.unit.isNotEmpty ? ' (${s.unit})' : ''}',
+                          style: BioTypography.bodySm
+                              .copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                    for (final p in s.points.reversed.take(5))
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            '${p.at}: ${p.value}${s.unit.isNotEmpty ? ' ${s.unit}' : ''}'
+                            '${p.source.isNotEmpty ? ' · ${p.source}' : ''}',
+                            style: BioTypography.caption
+                                .copyWith(color: context.bio.textMuted),
+                          ),
+                        ),
+                      ),
+                    BioSpacing.gapH(BioSpacing.xs),
+                  ],
+                ],
+              ),
             ],
           ],
         ],
-      ],
+      ),
     );
   }
 
@@ -991,18 +1016,26 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       }
     }
 
-    final rows = <MapEntry<String, String>>[
-      MapEntry(
-        'Estado',
-        ctx?.estadoLabel ?? ctx?.estado ?? 'En curso',
-      ),
-      MapEntry(
-        'Motivo / ingreso',
-        (ctx?.motivo != null && ctx!.motivo!.isNotEmpty)
-            ? ctx.motivo!
-            : 'Sin motivo registrado',
-      ),
-    ];
+    final estado = ctx?.estadoLabel ?? ctx?.estado ?? 'En curso';
+    final motivo = (ctx?.motivo != null && ctx!.motivo!.isNotEmpty)
+        ? ctx.motivo!
+        : 'Sin motivo registrado';
+
+    Widget metaCell(String label, String value) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: BioTypography.caption.copyWith(
+              color: context.bio.textMuted,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Text(value, style: BioTypography.body),
+        ],
+      );
+    }
 
     return BioCard.intent(
       intent: esGuardia ? UiIntent.danger : UiIntent.info,
@@ -1040,17 +1073,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             ),
           ],
           BioSpacing.gapH(BioSpacing.sm),
-          for (final row in rows) ...[
-            Text(
-              row.key.toUpperCase(),
-              style: BioTypography.caption.copyWith(
-                color: context.bio.textMuted,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(row.value, style: BioTypography.body),
-            BioSpacing.gapH(BioSpacing.xs),
-          ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: metaCell('Estado', estado)),
+              BioSpacing.gapW(BioSpacing.md),
+              Expanded(child: metaCell('Motivo / ingreso', motivo)),
+            ],
+          ),
           if (ctx != null && ctx.acciones.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
             Wrap(
@@ -1071,10 +1101,36 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Future<void> _onEpisodioAccion(EpisodioAccionHistoria accion) async {
-    if (accion.apiRoute == null || accion.apiRoute!.isEmpty) {
+    if (accion.id == 'editar_triage') {
+      final guardiaId = widget.consultParentId ??
+          _historiaClinicaData?.contextoEpisodio?.episodioId ??
+          0;
+      if (guardiaId <= 0) return;
+      final token = widget.authToken;
+      if (token == null || token.isEmpty) return;
+      final ctx = _historiaClinicaData?.contextoEpisodio;
+      final persona = _historiaClinicaData?.persona;
+      final ok = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => EmergencyTriageScreen(
+            guardiaId: guardiaId,
+            pacienteNombre: persona?.nombreCompleto ?? 'Paciente',
+            api: EmergencyGuardiaApi(authToken: token),
+            isRetriage: ctx?.triageLevel != null,
+            initialLevel: ctx?.triageLevel,
+            initialReason: ctx?.motivo,
+          ),
+        ),
+      );
+      if (ok == true && mounted) {
+        await _cargarHistoriaClinica();
+      }
       return;
     }
-    if (accion.id != 'egreso_estructurado' && accion.id != 'editar_triage') {
+
+    if (accion.id != 'egreso_estructurado' ||
+        accion.apiRoute == null ||
+        accion.apiRoute!.isEmpty) {
       return;
     }
     final uri = Uri.parse(resolveApiAbsoluteUrl(accion.apiRoute!));

@@ -73,6 +73,9 @@ $this->registerJsFile(
     ]
 );
 $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
+if (!empty($esContextoGuardia)) {
+    $this->registerCssFile(Url::to('@web/css/guardia-tablero.css'));
+}
 
 ?>
 
@@ -99,7 +102,7 @@ $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
             <span class="tl-episodio-banner__triage-meta text-muted small" id="tl_episodio_triage_meta"></span>
         </div>
         <div class="tl-episodio-banner__grid">
-            <div class="tl-episodio-banner__cell">
+            <div class="tl-episodio-banner__cell tl-episodio-banner__cell--wide">
                 <span class="tl-episodio-banner__label">Episodio</span>
                 <span class="tl-episodio-banner__value" id="tl_episodio_titulo">Cargando…</span>
             </div>
@@ -107,7 +110,7 @@ $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
                 <span class="tl-episodio-banner__label">Estado</span>
                 <span class="tl-episodio-banner__value" id="tl_episodio_estado">—</span>
             </div>
-            <div class="tl-episodio-banner__cell tl-episodio-banner__cell--wide">
+            <div class="tl-episodio-banner__cell">
                 <span class="tl-episodio-banner__label">Motivo / ingreso</span>
                 <span class="tl-episodio-banner__value" id="tl_episodio_motivo">—</span>
             </div>
@@ -168,6 +171,40 @@ $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
                             </div>
                         </div>
 
+                        <!-- Signos vitales: misma ubicación y estilo en AMB / GUARDIA / INTERNACION -->
+                        <?php if ($esContextoEpisodio): ?>
+                        <div class="mb-2" id="tl_episodio_sv_section">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <h6 class="mb-0" id="signos-vitales-titulo">SIGNOS VITALES ACTUALES</h6>
+                                <span class="small text-muted" id="tl_episodio_sv_count"></span>
+                            </div>
+                            <div class="border-bottom border-2 mb-1"></div>
+                            <div id="tl_episodio_sv_ultimos" class="tl-episodio-sv-ultimos mb-2"></div>
+                            <div id="tl_episodio_sv_chart" class="tl-episodio-sv-chart" style="min-height: 220px;"></div>
+                            <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.</p>
+                        </div>
+                        <?php else: ?>
+                        <div class="mb-2" id="tl_sv_longitudinal_wrap">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <h6 class="mb-0" id="signos-vitales-titulo">SIGNOS VITALES ACTUALES</h6>
+                                <span id="signos-vitales-link" style="display: none;">
+                                    <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-signos-vitales">
+                                        <i class="bi bi-eye"></i> Ver todos
+                                    </a>
+                                </span>
+                            </div>
+                            <div class="border-bottom border-2 mb-1"></div>
+                            <div id="signos-vitales-actuales-content">
+                                <div class="text-center py-2">
+                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                        <span class="visually-hidden">Cargando...</span>
+                                    </div>
+                                    <span class="ms-2 text-muted">Cargando signos vitales...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_motivos_intake_section" style="display:none;">
                             <h6 class="mb-2 text-primary"><b>PREGUNTAS PREVIAS AL CHAT DE MOTIVOS</b></h6>
                             <div id="tl_motivos_intake" class="text-body"></div>
@@ -200,18 +237,6 @@ $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
                         <?php endif; ?>
 
                         <?php if ($esContextoEpisodio): ?>
-                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_episodio_sv_section">
-                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-                                <h6 class="mb-0 text-primary"><b>SIGNOS VITALES ACTUALES</b></h6>
-                                <span class="small text-muted" id="tl_episodio_sv_count"></span>
-                            </div>
-                            <div id="tl_episodio_sv_ultimos" class="tl-episodio-sv-ultimos mb-2"></div>
-                            <div id="tl_episodio_sv_chart" class="tl-episodio-sv-chart" style="min-height: 220px;"></div>
-                            <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.</p>
-                        </div>
-                        <?php endif; ?>
-
-                        <?php if ($esContextoEpisodio): ?>
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_episodio_timeline_section">
                             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
                                 <h6 class="mb-0 text-primary"><b>REGISTRO DEL EPISODIO</b></h6>
@@ -235,27 +260,6 @@ $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
                             <h6 class="mb-2 text-primary"><b>Datos cargados</b></h6>
                             <div id="tl_documentacion_medico" class="text-body"></div>
                         </div>
-
-                        <!-- Signos Vitales Actuales (AMB / longitudinal; en episodio se usa tl_episodio_sv_section) -->
-                        <div class="mb-2" id="tl_sv_longitudinal_wrap"<?= $esContextoEpisodio ? ' hidden' : '' ?>>
-                            <div class="d-flex align-items-center justify-content-between mb-1">
-                                <h6 class="mb-0" id="signos-vitales-titulo">SIGNOS VITALES ACTUALES</h6>
-                                <span id="signos-vitales-link" style="display: none;">
-                                    <a href="#" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modal-signos-vitales">
-                                        <i class="bi bi-eye"></i> Ver todos
-                                    </a>
-                                </span>
-                            </div>
-                            <div class="border-bottom border-2 mb-1"></div>
-                            <div id="signos-vitales-actuales-content">
-                                <div class="text-center py-2">
-                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                        <span class="visually-hidden">Cargando...</span>
-                                    </div>
-                                    <span class="ms-2 text-muted">Cargando signos vitales...</span>
-                                </div>
-                            </div>
-                        </div>                        
                     </div>
 
                     <!-- Contenido automático con loading -->
@@ -511,9 +515,15 @@ endif;
         acciones.forEach(function (a) {
             if (!a || !a.id) return;
             var btnClass = a.id === 'editar_triage' ? 'btn-outline-primary' : 'btn-danger';
+            var apiRoute = '';
+            if (a.api && a.api.route) {
+                apiRoute = String(a.api.route);
+            } else if (a.api_route) {
+                apiRoute = String(a.api_route);
+            }
             html += '<button type="button" class="btn btn-sm ' + btnClass + ' me-1 mb-1" data-tl-accion="'
                 + escMotivosHtml(a.id) + '"'
-                + (a.api_route ? ' data-tl-api-route="' + escMotivosHtml(a.api_route) + '"' : '')
+                + (apiRoute ? ' data-tl-api-route="' + escMotivosHtml(apiRoute) + '"' : '')
                 + '>'
                 + escMotivosHtml(a.label || a.id)
                 + '</button>';
@@ -581,19 +591,22 @@ endif;
                     }
                 });
             } else {
-                // Fallback: formulario mínimo alineado al UI JSON
+                // Fallback: niveles como items (mismo patrón que tablero), no <select>
                 var data = root.data || {};
                 var level = String(data.level || '3');
                 var reason = String(data.reason_text || '');
+                var levelBtns = [1, 2, 3, 4, 5].map(function (n) {
+                    var checked = String(n) === level ? ' checked' : '';
+                    return '<input type="radio" class="btn-check" name="level" id="tl-triage-level-' + n
+                        + '" value="' + n + '" autocomplete="off"' + checked + ' required>'
+                        + '<label class="btn btn-sm guardia-triage-level guardia-triage-level--' + n
+                        + '" for="tl-triage-level-' + n + '">' + n + '</label>';
+                }).join('');
                 contentEl.innerHTML = ''
                     + '<form id="tl-triage-form" class="p-1">'
                     + '<input type="hidden" name="guardia_id" value="' + escMotivosHtml(String(timelineConfig.parentId)) + '" />'
-                    + '<label class="form-label">Prioridad (1–5)</label>'
-                    + '<select class="form-select mb-2" name="level" required>'
-                    + [1,2,3,4,5].map(function (n) {
-                        return '<option value="' + n + '"' + (String(n) === level ? ' selected' : '') + '>' + n + '</option>';
-                    }).join('')
-                    + '</select>'
+                    + '<label class="form-label">Prioridad (Manchester)</label>'
+                    + '<div class="d-flex flex-wrap gap-2 mb-3" role="group">' + levelBtns + '</div>'
                     + '<label class="form-label">Motivo de consulta</label>'
                     + '<textarea class="form-control mb-2" name="reason_text" rows="3" required>' + escMotivosHtml(reason) + '</textarea>'
                     + '<div class="row g-2 mb-2">'
@@ -614,6 +627,8 @@ endif;
                     var fd = new FormData(form);
                     var body = {};
                     fd.forEach(function (v, k) { if (String(v).trim() !== '') body[k] = v; });
+                    var levelChecked = form.querySelector('input[name="level"]:checked');
+                    if (levelChecked) body.level = levelChecked.value;
                     try {
                         var postRes = await fetch(url, {
                             method: 'POST',

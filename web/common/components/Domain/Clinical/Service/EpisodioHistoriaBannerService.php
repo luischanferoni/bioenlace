@@ -98,8 +98,12 @@ final class EpisodioHistoriaBannerService
                 [
                     'id' => 'editar_triage',
                     'label' => $triageRow !== null ? 'Editar triage' : 'Registrar triage',
-                    'api_route' => '/clinical/emergency-guardia/registrar-triage-formulario'
-                        . '?guardia_id=' . $guardiaId,
+                    'kind' => 'ui_json',
+                    'api' => [
+                        'route' => '/clinical/emergency-guardia/registrar-triage-formulario'
+                            . '?guardia_id=' . $guardiaId,
+                        'method' => 'GET',
+                    ],
                 ],
             ];
 

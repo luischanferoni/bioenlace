@@ -851,6 +851,11 @@ class EpisodioAccionHistoria {
       method = (api['method'] ?? 'GET').toString();
       if (route.isEmpty) route = null;
     }
+    // Compat: algunos payloads usan api_route plano.
+    if (route == null || route.isEmpty) {
+      final flat = (json['api_route'] ?? '').toString().trim();
+      if (flat.isNotEmpty) route = flat;
+    }
     return EpisodioAccionHistoria(
       id: (json['id'] ?? '').toString(),
       label: (json['label'] ?? json['id'] ?? '').toString(),

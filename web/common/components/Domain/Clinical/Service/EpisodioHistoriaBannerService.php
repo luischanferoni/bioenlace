@@ -9,13 +9,12 @@ use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\models\Clinical\Encounter;
 use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;
-use common\models\Person\Persona;
 use common\models\SegNivelInternacion;
-use common\models\SegNivelInternacionHcama;
 
 /**
- * Banner de episodio para HC / captura EMER e IMP (triaje, ubicación, equipo, motivo).
+ * Banner de episodio para HC / captura EMER e IMP (triaje, estado, motivo, ingreso).
  * No sustituye el estado longitudinal del paciente (alergias, crónicos).
+ * Ubicación y «médico a cargo» no forman parte del banner (operación en tablero / cama).
  */
 final class EpisodioHistoriaBannerService
 {
@@ -43,7 +42,6 @@ final class EpisodioHistoriaBannerService
     {
         $guardia = Guardia::find()
             ->where(['id' => $guardiaId, 'id_efector' => $idEfector])
-            ->with(['profesionalEfectorServicio.persona'])
             ->one();
         if ($guardia === null || (int) $guardia->id_persona !== $personaId) {
             return null;
@@ -89,22 +87,21 @@ final class EpisodioHistoriaBannerService
                 (string) $banner['triage']['triaged_at']
             );
         }
-        $banner['ubicacion'] = null;
-        $pesPersona = null;
-        if ($guardia->profesionalEfectorServicio !== null) {
-            $pesPersona = $guardia->profesionalEfectorServicio->persona;
-        }
-        $banner['equipo'] = [
-            'medico' => $this->serializeMedicoPes(
-                $guardia->id_profesional_efector_servicio !== null
-                    ? (int) $guardia->id_profesional_efector_servicio
-                    : null,
-                $pesPersona
-            ),
-        ];
 
-        // Retiro / abandono: solo tablero (⋮ móvil o CTA web), no en la HC.
-        $banner['acciones'] = [];
+        $cerrado = in_array($estado, [
+            CircuitoEstado::FINALIZADO,
+            CircuitoEstado::DERIVADO,
+        ], true);
+        $banner['acciones'] = $cerrado
+            ? []
+            : [
+                [
+                    'id' => 'editar_triage',
+                    'label' => $triageRow !== null ? 'Editar triage' : 'Registrar triage',
+                    'api_route' => '/clinical/emergency-guardia/registrar-triage-formulario'
+                        . '?guardia_id=' . $guardiaId,
+                ],
+            ];
 
         return [
             'contexto_episodio' => $banner,
@@ -122,20 +119,12 @@ final class EpisodioHistoriaBannerService
     {
         $internacion = SegNivelInternacion::find()
             ->where(['id' => $internacionId])
-            ->with(['profesionalEfectorServicio.persona'])
             ->one();
         if (
             !$internacion instanceof SegNivelInternacion
             || (int) $internacion->id_persona !== $personaId
         ) {
             return null;
-        }
-
-        $camaLabel = '';
-        $idCama = (int) ($internacion->id_cama ?? 0);
-        if ($idCama > 0) {
-            $cama = SegNivelInternacionHcama::getCamaActualLabel($idCama);
-            $camaLabel = trim((string) ($cama['label'] ?? ''));
         }
 
         $fechaInicio = '';
@@ -149,17 +138,6 @@ final class EpisodioHistoriaBannerService
         $motivo = trim((string) ($internacion->situacion_al_ingresar ?? ''));
         $motivo = $motivo !== '' ? $motivo : null;
 
-        $pesPersona = null;
-        if ($internacion->profesionalEfectorServicio !== null) {
-            $pesPersona = $internacion->profesionalEfectorServicio->persona;
-        }
-        $medico = $this->serializeMedicoPes(
-            $internacion->id_profesional_efector_servicio !== null
-                ? (int) $internacion->id_profesional_efector_servicio
-                : null,
-            $pesPersona
-        );
-
         $evoluciones = $this->listEvolucionesInternacion($personaId, $internacionId);
 
         $banner = $this->baseBanner(
@@ -171,16 +149,12 @@ final class EpisodioHistoriaBannerService
             $fechaInicio !== '' ? $fechaInicio : null
         );
         $banner['triage'] = null;
-        $banner['ubicacion'] = $camaLabel !== '' ? ['label' => $camaLabel] : null;
-        $banner['equipo'] = ['medico' => $medico];
         $banner['acciones'] = [];
 
         $contextoInternacion = [
             'internacion_id' => $internacionId,
-            'cama_label' => $camaLabel,
             'fecha_inicio' => $fechaInicio,
             'evoluciones' => $evoluciones,
-            'medico' => $medico,
             'motivo' => $motivo,
         ];
 
@@ -208,28 +182,6 @@ final class EpisodioHistoriaBannerService
             'estado_label' => $estadoLabel,
             'motivo' => $motivo,
             'ingreso_at' => $ingresoAt,
-        ];
-    }
-
-    /**
-     * @return array{pes_id: int, nombre: string}|null
-     */
-    private function serializeMedicoPes(?int $pesId, $persona): ?array
-    {
-        if ($pesId === null || $pesId <= 0) {
-            return null;
-        }
-        $nombre = '';
-        if ($persona instanceof Persona) {
-            $nombre = trim((string) $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON));
-        }
-        if ($nombre === '') {
-            $nombre = 'PES #' . $pesId;
-        }
-
-        return [
-            'pes_id' => $pesId,
-            'nombre' => $nombre,
         ];
     }
 

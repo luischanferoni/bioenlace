@@ -188,7 +188,9 @@ class PacientesController extends BaseController
         if (defined('YII_DEBUG') && YII_DEBUG) {
             $simularSignos = (bool) Yii::$app->request->get('simular_signos', false);
         }
-        $signosVitales = $mostrarEstadoPaciente
+        // En episodio (AMB = llegada; GUARDIA/IMP = triage/enfermería del episodio) una sola
+        // superficie UX: SV del episodio como «actuales». Longitudinal solo fuera de episodio.
+        $signosVitales = ($mostrarEstadoPaciente && !$esInternacion && !$esGuardia)
             ? (new PersonaSignosVitalesService())->getSignosVitalesData($persona, $simularSignos)
             : [
                 'datos_sv' => [],

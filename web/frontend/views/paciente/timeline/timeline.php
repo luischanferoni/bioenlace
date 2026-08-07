@@ -107,14 +107,6 @@ $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
                 <span class="tl-episodio-banner__label">Estado</span>
                 <span class="tl-episodio-banner__value" id="tl_episodio_estado">—</span>
             </div>
-            <div class="tl-episodio-banner__cell">
-                <span class="tl-episodio-banner__label">Ubicación</span>
-                <span class="tl-episodio-banner__value" id="tl_episodio_ubicacion">—</span>
-            </div>
-            <div class="tl-episodio-banner__cell">
-                <span class="tl-episodio-banner__label">Médico a cargo</span>
-                <span class="tl-episodio-banner__value" id="tl_episodio_medico">—</span>
-            </div>
             <div class="tl-episodio-banner__cell tl-episodio-banner__cell--wide">
                 <span class="tl-episodio-banner__label">Motivo / ingreso</span>
                 <span class="tl-episodio-banner__value" id="tl_episodio_motivo">—</span>
@@ -203,19 +195,19 @@ $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
                         <?php if ($esContextoInternacion): ?>
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_internacion_contexto_section">
                             <h6 class="mb-2 text-primary"><b>INTERNACIÓN EN CURSO</b></h6>
-                            <p class="mb-2 small text-muted" id="tl_internacion_resumen">Episodio #<?= (int) $parentIdQuery ?> — documentá la evolución del día.</p>
+                            <p class="mb-2 small text-muted" id="tl_internacion_resumen">Documentá la evolución del día.</p>
                         </div>
                         <?php endif; ?>
 
                         <?php if ($esContextoEpisodio): ?>
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_episodio_sv_section">
                             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-                                <h6 class="mb-0 text-primary"><b>SIGNOS VITALES DEL EPISODIO</b></h6>
+                                <h6 class="mb-0 text-primary"><b>SIGNOS VITALES ACTUALES</b></h6>
                                 <span class="small text-muted" id="tl_episodio_sv_count"></span>
                             </div>
                             <div id="tl_episodio_sv_ultimos" class="tl-episodio-sv-ultimos mb-2"></div>
                             <div id="tl_episodio_sv_chart" class="tl-episodio-sv-chart" style="min-height: 220px;"></div>
-                            <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales en este episodio. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.</p>
+                            <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.</p>
                         </div>
                         <?php endif; ?>
 
@@ -244,8 +236,8 @@ $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
                             <div id="tl_documentacion_medico" class="text-body"></div>
                         </div>
 
-                        <!-- Signos Vitales Actuales -->
-                        <div class="mb-2">
+                        <!-- Signos Vitales Actuales (AMB / longitudinal; en episodio se usa tl_episodio_sv_section) -->
+                        <div class="mb-2" id="tl_sv_longitudinal_wrap"<?= $esContextoEpisodio ? ' hidden' : '' ?>>
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <h6 class="mb-0" id="signos-vitales-titulo">SIGNOS VITALES ACTUALES</h6>
                                 <span id="signos-vitales-link" style="display: none;">
@@ -465,8 +457,6 @@ endif;
         var tipo = String(ctx.tipo || root.getAttribute('data-episodio-tipo') || '');
         var tituloEl = document.getElementById('tl_episodio_titulo');
         var estadoEl = document.getElementById('tl_episodio_estado');
-        var ubiEl = document.getElementById('tl_episodio_ubicacion');
-        var medEl = document.getElementById('tl_episodio_medico');
         var motEl = document.getElementById('tl_episodio_motivo');
         var triageWrap = document.getElementById('tl_episodio_triage');
         var triageBadge = document.getElementById('tl_episodio_triage_badge');
@@ -474,20 +464,12 @@ endif;
 
         var labelTipo = tipo === 'GUARDIA' ? 'Guardia' : (tipo === 'INTERNACION' ? 'Internación' : 'Episodio');
         if (tituloEl) {
-            var parts = [labelTipo + ' #' + (ctx.episodio_id || '—')];
+            var parts = [labelTipo];
             if (ctx.ingreso_at) parts.push('Ingreso ' + formatEpisodioFecha(ctx.ingreso_at));
             tituloEl.textContent = parts.join(' · ');
         }
         if (estadoEl) {
             estadoEl.textContent = ctx.estado_label || ctx.estado || 'En curso';
-        }
-        if (ubiEl) {
-            var ubi = (ctx.ubicacion && ctx.ubicacion.label) ? String(ctx.ubicacion.label) : '';
-            ubiEl.textContent = ubi !== '' ? ubi : (tipo === 'GUARDIA' ? 'Sin box asignado' : 'Sin cama');
-        }
-        if (medEl) {
-            var med = ctx.equipo && ctx.equipo.medico ? ctx.equipo.medico : null;
-            medEl.textContent = (med && med.nombre) ? String(med.nombre) : 'Sin asignar';
         }
         if (motEl) {
             motEl.textContent = ctx.motivo ? String(ctx.motivo) : 'Sin motivo registrado';
@@ -528,8 +510,11 @@ endif;
         var html = '';
         acciones.forEach(function (a) {
             if (!a || !a.id) return;
-            html += '<button type="button" class="btn btn-sm btn-danger me-1 mb-1" data-tl-accion="'
-                + escMotivosHtml(a.id) + '">'
+            var btnClass = a.id === 'editar_triage' ? 'btn-outline-primary' : 'btn-danger';
+            html += '<button type="button" class="btn btn-sm ' + btnClass + ' me-1 mb-1" data-tl-accion="'
+                + escMotivosHtml(a.id) + '"'
+                + (a.api_route ? ' data-tl-api-route="' + escMotivosHtml(a.api_route) + '"' : '')
+                + '>'
                 + escMotivosHtml(a.label || a.id)
                 + '</button>';
         });
@@ -539,9 +524,122 @@ endif;
                 var id = btn.getAttribute('data-tl-accion');
                 if (id === 'egreso_estructurado') {
                     openEgresoGuardiaModal();
+                } else if (id === 'editar_triage') {
+                    openTriageGuardiaModal(btn.getAttribute('data-tl-api-route'));
                 }
             });
         });
+    }
+
+    async function openTriageGuardiaModal(apiRoute) {
+        if (!timelineConfig.parentId) return;
+        var route = apiRoute || ('/clinical/emergency-guardia/registrar-triage-formulario?guardia_id='
+            + encodeURIComponent(String(timelineConfig.parentId)));
+        var url = route.indexOf('/api/') === 0 || route.indexOf('http') === 0
+            ? route
+            : ('/api/v1' + (route.charAt(0) === '/' ? route : '/' + route));
+
+        var modalEl = document.getElementById('modal-general');
+        var contentEl = document.getElementById('modal-content');
+        var titleEl = document.getElementById('modal-title');
+        if (!modalEl || !contentEl || !window.bootstrap) {
+            window.location.href = url;
+            return;
+        }
+        contentEl.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+        if (titleEl) titleEl.textContent = 'Triage';
+        var modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+
+        try {
+            var headers = (window.BioenlaceApiClient && typeof window.BioenlaceApiClient.mergeHeaders === 'function')
+                ? window.BioenlaceApiClient.mergeHeaders({ 'X-Requested-With': 'XMLHttpRequest' })
+                : { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' };
+            var res = await fetch(url, { method: 'GET', credentials: 'same-origin', headers: headers });
+            var json = await res.json();
+            var root = json;
+            if (json && json.data && json.data.kind === 'ui_definition') {
+                root = json.data;
+            }
+            if (!root || root.kind !== 'ui_definition') {
+                throw new Error((json && json.message) || 'No se pudo cargar el triage.');
+            }
+            if (titleEl) titleEl.textContent = root.title || 'Triage';
+            if (window.SpaHome && typeof window.SpaHome.renderUiJsonInto === 'function') {
+                window.SpaHome.renderUiJsonInto(root, contentEl, {
+                    onSuccess: function () {
+                        modal.hide();
+                        loadTimelineSummary();
+                    }
+                });
+            } else if (typeof window.renderUiJsonBlocks === 'function') {
+                contentEl.innerHTML = '';
+                window.renderUiJsonBlocks(root, contentEl, {
+                    onSuccess: function () {
+                        modal.hide();
+                        loadTimelineSummary();
+                    }
+                });
+            } else {
+                // Fallback: formulario mínimo alineado al UI JSON
+                var data = root.data || {};
+                var level = String(data.level || '3');
+                var reason = String(data.reason_text || '');
+                contentEl.innerHTML = ''
+                    + '<form id="tl-triage-form" class="p-1">'
+                    + '<input type="hidden" name="guardia_id" value="' + escMotivosHtml(String(timelineConfig.parentId)) + '" />'
+                    + '<label class="form-label">Prioridad (1–5)</label>'
+                    + '<select class="form-select mb-2" name="level" required>'
+                    + [1,2,3,4,5].map(function (n) {
+                        return '<option value="' + n + '"' + (String(n) === level ? ' selected' : '') + '>' + n + '</option>';
+                    }).join('')
+                    + '</select>'
+                    + '<label class="form-label">Motivo de consulta</label>'
+                    + '<textarea class="form-control mb-2" name="reason_text" rows="3" required>' + escMotivosHtml(reason) + '</textarea>'
+                    + '<div class="row g-2 mb-2">'
+                    + '<div class="col-4"><label class="form-label">TA sys</label><input class="form-control" name="bp_sys" value="' + escMotivosHtml(String(data.bp_sys || '')) + '" /></div>'
+                    + '<div class="col-4"><label class="form-label">TA dia</label><input class="form-control" name="bp_dia" value="' + escMotivosHtml(String(data.bp_dia || '')) + '" /></div>'
+                    + '<div class="col-4"><label class="form-label">FC</label><input class="form-control" name="hr" value="' + escMotivosHtml(String(data.hr || '')) + '" /></div>'
+                    + '</div>'
+                    + '<div class="alert alert-danger d-none" id="tl-triage-error"></div>'
+                    + '<div class="d-flex justify-content-end gap-2">'
+                    + '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>'
+                    + '<button type="submit" class="btn btn-primary">Guardar</button>'
+                    + '</div></form>';
+                var form = document.getElementById('tl-triage-form');
+                form.addEventListener('submit', async function (ev) {
+                    ev.preventDefault();
+                    var errEl = document.getElementById('tl-triage-error');
+                    if (errEl) errEl.classList.add('d-none');
+                    var fd = new FormData(form);
+                    var body = {};
+                    fd.forEach(function (v, k) { if (String(v).trim() !== '') body[k] = v; });
+                    try {
+                        var postRes = await fetch(url, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: Object.assign({}, headers, { 'Content-Type': 'application/json' }),
+                            body: JSON.stringify(body),
+                        });
+                        var postJson = await postRes.json();
+                        if (postJson && postJson.success === false) {
+                            throw new Error(postJson.message || 'No se pudo guardar el triage.');
+                        }
+                        modal.hide();
+                        loadTimelineSummary();
+                    } catch (eSave) {
+                        if (errEl) {
+                            errEl.textContent = eSave && eSave.message ? String(eSave.message) : 'Error al guardar.';
+                            errEl.classList.remove('d-none');
+                        }
+                    }
+                });
+            }
+        } catch (e) {
+            contentEl.innerHTML = '<div class="alert alert-danger mb-0">'
+                + escMotivosHtml(e && e.message ? String(e.message) : 'Error al abrir triage.')
+                + '</div>';
+        }
     }
 
     function applyEgresoModoUi() {
@@ -652,12 +750,9 @@ endif;
         if (!resumenEl) return;
         ctx = ctx || {};
         var parts = [];
-        if (ctx.internacion_id) parts.push('Episodio #' + ctx.internacion_id);
-        if (ctx.cama_label) parts.push(ctx.cama_label);
         if (ctx.fecha_inicio) parts.push('Ingreso ' + formatEpisodioFecha(ctx.fecha_inicio));
-        if (ctx.medico && ctx.medico.nombre) parts.push(ctx.medico.nombre);
-        resumenEl.textContent = (parts.length ? parts.join(' · ') : 'Internación en curso')
-            + ' — documentá la evolución del día.';
+        resumenEl.textContent = (parts.length ? parts.join(' · ') + ' — ' : '')
+            + 'documentá la evolución del día.';
     }
 
     var _tlEpisodioItems = [];
@@ -1173,7 +1268,7 @@ endif;
             renderDocumentacionMedico(null);
             var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
             if (boxMsgs) boxMsgs.innerHTML = '';
-            if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
+            if (!esEpisodio && window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(payload.data.signos_vitales || null);
             }
             // Captura solo si el turno lo permite; no invocar formulario-consulta en solo lectura.

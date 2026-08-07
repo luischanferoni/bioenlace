@@ -331,9 +331,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                       children: [
                         Expanded(
                           child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(BioSpacing.md),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: BioSpacing.sm,
+                              vertical: BioSpacing.md,
+                            ),
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
                                 _buildPacienteHeader(
                                     _historiaClinicaData!.persona),
@@ -386,9 +389,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                   BioSpacing.gapH(BioSpacing.md),
                                   _buildInformacionMedica(
                                       _historiaClinicaData!.informacionMedica),
-                                  BioSpacing.gapH(BioSpacing.md),
-                                  _buildSignosVitales(
-                                      _historiaClinicaData!.signosVitales),
                                   if (_esCapturaEpisodio) ...[
                                     BioSpacing.gapH(BioSpacing.md),
                                     _buildEpisodioBanner(
@@ -403,6 +403,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                       _historiaClinicaData!.timelineEpisodio,
                                     ),
                                   ] else ...[
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildSignosVitales(
+                                        _historiaClinicaData!.signosVitales),
                                     BioSpacing.gapH(BioSpacing.md),
                                     if (_historiaClinicaData!
                                             .motivosConsultaPaciente
@@ -466,17 +469,23 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
     return BioCard.intent(
       intent: UiIntent.primary,
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(persona.nombreCompleto, style: BioTypography.h3),
+          Expanded(
+            child: Text(
+              persona.nombreCompleto,
+              style: BioTypography.h3,
+            ),
+          ),
           if (meta.isNotEmpty) ...[
-            BioSpacing.gapH(BioSpacing.xs),
+            BioSpacing.gapW(BioSpacing.sm),
             Text(
               meta.join(' · '),
               style: BioTypography.title.copyWith(
                 color: context.bio.textMuted,
               ),
+              textAlign: TextAlign.right,
             ),
           ],
         ],
@@ -801,7 +810,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           children: [
             Expanded(
               child: Text(
-                'Signos vitales del episodio',
+                'Signos vitales actuales',
                 style: BioTypography.title,
               ),
             ),
@@ -816,7 +825,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         BioSpacing.gapH(BioSpacing.sm),
         if (!tiene)
           Text(
-            'Sin signos vitales en este episodio. Se cargan en la captura de la consulta.',
+            'Sin signos vitales. Se cargan en la captura de la consulta o en el triage.',
             style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
           )
         else ...[
@@ -968,9 +977,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         : (_esCapturaGuardia ? 'GUARDIA' : 'INTERNACION');
     final esGuardia = tipo == 'GUARDIA';
     final tituloTipo = esGuardia ? 'Guardia' : 'Internación';
-    final tituloParts = <String>[
-      '$tituloTipo #${ctx?.episodioId ?? widget.consultParentId ?? '—'}',
-    ];
+    final tituloParts = <String>[tituloTipo];
     if (ctx?.ingresoAt != null && ctx!.ingresoAt!.isNotEmpty) {
       tituloParts.add('Ingreso ${formatEpisodioFecha(ctx.ingresoAt)}');
     }
@@ -990,18 +997,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         ctx?.estadoLabel ?? ctx?.estado ?? 'En curso',
       ),
       MapEntry(
-        'Ubicación',
-        (ctx?.ubicacionLabel != null && ctx!.ubicacionLabel!.isNotEmpty)
-            ? ctx.ubicacionLabel!
-            : (esGuardia ? 'Sin box asignado' : 'Sin cama'),
-      ),
-      MapEntry(
-        'Médico a cargo',
-        (ctx?.medicoNombre != null && ctx!.medicoNombre!.isNotEmpty)
-            ? ctx.medicoNombre!
-            : 'Sin asignar',
-      ),
-      MapEntry(
         'Motivo / ingreso',
         (ctx?.motivo != null && ctx!.motivo!.isNotEmpty)
             ? ctx.motivo!
@@ -1012,7 +1007,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return BioCard.intent(
       intent: esGuardia ? UiIntent.danger : UiIntent.info,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(tituloParts.join(' · '), style: BioTypography.title),
           if (ctx?.triageLevel != null) ...[
@@ -1076,9 +1071,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   }
 
   Future<void> _onEpisodioAccion(EpisodioAccionHistoria accion) async {
-    if (accion.id != 'egreso_estructurado' ||
-        accion.apiRoute == null ||
-        accion.apiRoute!.isEmpty) {
+    if (accion.apiRoute == null || accion.apiRoute!.isEmpty) {
+      return;
+    }
+    if (accion.id != 'egreso_estructurado' && accion.id != 'editar_triage') {
       return;
     }
     final uri = Uri.parse(resolveApiAbsoluteUrl(accion.apiRoute!));

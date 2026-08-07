@@ -14,6 +14,7 @@ use common\components\Domain\Clinical\Emergency\Service\GuardiaQueueService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaSlaService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\components\Platform\Ui\UiScreenService;
+use common\models\Emergency\GuardiaTriage;
 use frontend\modules\api\v1\controllers\BaseController;
 use Yii;
 use yii\web\ForbiddenHttpException;
@@ -444,12 +445,31 @@ class EmergencyGuardiaController extends BaseController
         if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
             $guardiaId = (int) ($req->get('guardia_id') ?? 0);
             if ($guardiaId > 0) {
+                $defaults = ['guardia_id' => (string) $guardiaId, 'level' => '3'];
+                $triageRow = GuardiaTriage::findOne(['guardia_id' => $guardiaId]);
+                if ($triageRow !== null) {
+                    $defaults['level'] = (string) (int) $triageRow->level;
+                    $defaults['reason_text'] = (string) ($triageRow->reason_text ?? '');
+                    $vitals = $triageRow->getVitalsArray() ?? [];
+                    if (isset($vitals['bp_sys'])) {
+                        $defaults['bp_sys'] = (string) $vitals['bp_sys'];
+                    }
+                    if (isset($vitals['bp_dia'])) {
+                        $defaults['bp_dia'] = (string) $vitals['bp_dia'];
+                    }
+                    if (isset($vitals['hr'])) {
+                        $defaults['hr'] = (string) $vitals['hr'];
+                    }
+                }
                 $out = UiScreenService::renderUiDefinition(
                     'emergency-guardia',
                     'registrar-triage-formulario',
                     $req->get(),
-                    ['guardia_id' => (string) $guardiaId, 'level' => '3']
+                    $defaults
                 );
+                if ($triageRow !== null && is_array($out)) {
+                    $out['title'] = 'Editar triage';
+                }
             }
         }
 

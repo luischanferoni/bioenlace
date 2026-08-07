@@ -28,24 +28,25 @@ flowchart LR
 
 1. Staff abre captura con `PatientHistoriaUrl::captura(persona, parent, parent_id)`.
 2. La HC pide `historia-clinica?parent=&parent_id=`.
-3. El dominio arma el **banner** (triaje, estado de circuito, ubicación, médico, motivo, ingreso).
+3. El dominio arma el **banner** (triaje, estado de circuito, motivo, ingreso).
 4. Debajo sigue el **estado actual del paciente** (alergias, crónicos) — capa longitudinal.
 5. El **registro del episodio** (`timeline_episodio`) lista hitos recientes→antiguos: circuito, triage, evoluciones, enfermería, pedidos, lab, medicación, interconsultas.
-6. Los **signos vitales del episodio** (`signos_vitales_episodio`) unen triage + enfermería de los encounters (curva en web, serie en móvil), distintos de los SV longitudinales del paciente.
+6. Los **signos vitales actuales** en episodio usan `signos_vitales_episodio` (triage + enfermería de la estadía), misma etiqueta UX que en AMB. No se duplica el bloque longitudinal.
 
 ## Banner (`contexto_episodio`)
 
 | Campo | Guardia | Internación |
 |-------|---------|-------------|
-| tipo / episodio_id | GUARDIA | INTERNACION |
+| tipo / episodio_id | GUARDIA (id en payload, no en título UI) | INTERNACION |
 | triage (nivel, color, hora) | Sí (Manchester) | No |
 | estado / circuito | `circuito_estado` | En curso (sin circuito EMER) |
-| ubicacion | Reservado (box aún no modelado) | Cama / sala / piso |
-| equipo.medico | PES asignado | PES del episodio |
 | motivo | Motivo de triage o situación al ingresar | Situación al ingresar |
 | ingreso_at | `ingreso_at` / fecha-hora | Fecha-hora de ingreso |
+| acciones | `editar_triage` (UI JSON) si el circuito no está cerrado | — |
 
-Compatibilidad: `contexto_internacion` se mantiene (cama + médico/motivo). Las evoluciones pasan al feed unificado.
+Ubicación física y médico a cargo **no** van en el banner HC (cama / asignación PES siguen en tablero y flujos operativos).
+
+Compatibilidad: `contexto_internacion` se mantiene (fecha/motivo/evoluciones). Las evoluciones pasan al feed unificado.
 
 ## Registro cronológico (`timeline_episodio`)
 
@@ -63,9 +64,9 @@ Compatibilidad: `contexto_internacion` se mantiene (cama + médico/motivo). Las 
 
 Servicio: `EpisodioTimelineService`. Query de encounters acepta `parent_type` corto o FQCN.
 
-## Signos vitales del episodio (`signos_vitales_episodio`)
+## Signos vitales actuales (`signos_vitales_episodio` en contexto de episodio)
 
-Servicio: `EpisodioSignosVitalesService`.
+Servicio: `EpisodioSignosVitalesService`. En AMB el bloque homónimo usa `PersonaSignosVitalesService` (longitudinal).
 
 | Fuente | Momento |
 |--------|---------|
@@ -85,9 +86,8 @@ UI web: chips de últimos + gráfica Plotly. Móvil: chips + últimas mediciones
 
 ## Próximos cortes (backlog)
 
-1. Ubicación física en guardia (box/puesto) y enfermero asignado.
-2. Valores críticos de lab destacados en el feed.
-3. Care-plan formal / B02 post-egreso domiciliario (hoy pautas de alarma en texto).
+1. Valores críticos de lab destacados en el feed.
+2. Care-plan formal / B02 post-egreso domiciliario (hoy pautas de alarma en texto).
 
 ## Egreso estructurado (conducta)
 

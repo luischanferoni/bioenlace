@@ -50,7 +50,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
     Color(0xFF3498DB),
   ];
 
-  static const _vitalFormatters = <TextInputFormatter>[
+  static final _vitalFormatters = <TextInputFormatter>[
     FilteringTextInputFormatter.digitsOnly,
     LengthLimitingTextInputFormatter(3),
   ];

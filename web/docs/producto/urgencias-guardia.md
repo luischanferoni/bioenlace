@@ -16,7 +16,8 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 
 | Capacidad | Quién | Dónde |
 |-----------|-------|--------|
-| Triage / actualizar | Staff | Tablero web (no en la historia clínica) |
+| Triage / actualizar | Staff | Tablero web |
+| Editar triage | Médico (y staff con HC abierta) | Historia clínica del episodio (`editar_triage` en banner); no en el tablero para el médico |
 | Tomar caso | — (eliminado) | `iniciar-atencion` asigna el PES de sesión si falta |
 | Atender | Médico | Tap en card → captura clínica |
 | Signos vitales | Staff en triage (opc.); médico en atención | Captura EMER; cards del timeline solo lectura |
@@ -71,7 +72,7 @@ App **Personal de Salud**: registro FCM vía `POST /devices/push-token` (`appCli
 
 ## Captura clínica en guardia
 
-Al atender, la HC se abre con `parent=GUARDIA` (banner + timeline + captura). **Sin** botones de triage ni “paciente se retiró” en el banner. Ver [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md).
+Al atender, la HC se abre con `parent=GUARDIA` (banner + timeline + captura). El médico puede **Editar triage** desde el banner; **Paciente se retiró** no aparece en la HC (solo tablero). Ver [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md).
 
 ## Post-v1 / evolución de configuración
 

@@ -4,7 +4,6 @@ namespace common\components\Domain\Clinical\Service;
 
 use common\components\Domain\Clinical\Presentation\EpisodioDateTimeFormatter;
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
-use common\components\Domain\Clinical\Emergency\Service\GuardiaBoardCapabilityService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\models\Clinical\Encounter;
@@ -25,17 +24,12 @@ final class EpisodioHistoriaBannerService
     /** @var GuardiaTriageService */
     private $triageSerializer;
 
-    /** @var GuardiaBoardCapabilityService */
-    private $boardCapabilities;
-
     public function __construct(
         ?GuardiaCircuitoService $circuito = null,
-        ?GuardiaTriageService $triageSerializer = null,
-        ?GuardiaBoardCapabilityService $boardCapabilities = null
+        ?GuardiaTriageService $triageSerializer = null
     ) {
         $this->circuito = $circuito ?? new GuardiaCircuitoService();
         $this->triageSerializer = $triageSerializer ?? new GuardiaTriageService();
-        $this->boardCapabilities = $boardCapabilities ?? new GuardiaBoardCapabilityService();
     }
 
     /**
@@ -98,19 +92,21 @@ final class EpisodioHistoriaBannerService
             CircuitoEstado::FINALIZADO,
             CircuitoEstado::DERIVADO,
         ], true);
-        $banner['acciones'] = [];
-        if (!$cerrado && $this->boardCapabilities->canTriage()) {
-            $banner['acciones'][] = [
-                'id' => 'editar_triage',
-                'label' => $triageRow !== null ? 'Editar triage' : 'Registrar triage',
-                'kind' => 'ui_json',
-                'api' => [
-                    'route' => '/clinical/emergency-guardia/registrar-triage-formulario'
-                        . '?guardia_id=' . $guardiaId,
-                    'method' => 'GET',
+        // Triage en tablero = staff; el médico edita desde HC (esta acción).
+        $banner['acciones'] = $cerrado
+            ? []
+            : [
+                [
+                    'id' => 'editar_triage',
+                    'label' => $triageRow !== null ? 'Editar triage' : 'Registrar triage',
+                    'kind' => 'ui_json',
+                    'api' => [
+                        'route' => '/clinical/emergency-guardia/registrar-triage-formulario'
+                            . '?guardia_id=' . $guardiaId,
+                        'method' => 'GET',
+                    ],
                 ],
             ];
-        }
 
         return [
             'contexto_episodio' => $banner,

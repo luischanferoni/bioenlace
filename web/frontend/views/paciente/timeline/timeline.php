@@ -352,6 +352,18 @@ Modal::end();
 
 if ($esContextoGuardia):
     Modal::begin([
+        'title' => 'Triage',
+        'id' => 'modal-triage-guardia',
+        'size' => Modal::SIZE_LARGE,
+    ]);
+    ?>
+<div id="tl-triage-modal-body" class="p-1">
+    <div class="text-center py-4 text-muted">Cargando…</div>
+</div>
+    <?php
+    Modal::end();
+
+    Modal::begin([
         'title' => 'Paciente se retiró',
         'id' => 'modal-egreso-guardia',
         'size' => Modal::SIZE_LARGE,
@@ -388,6 +400,14 @@ endif;
 <script>
 (function() {
     'use strict';
+
+    var triageModalEl = document.getElementById('modal-triage-guardia');
+    if (triageModalEl) {
+        triageModalEl.addEventListener('hidden.bs.modal', function () {
+            var body = document.getElementById('tl-triage-modal-body');
+            if (body) body.innerHTML = '';
+        });
+    }
 
     var btnVolver = document.getElementById('tl-btn-volver');
     if (btnVolver) {
@@ -550,9 +570,11 @@ endif;
             ? route
             : ('/api/v1' + (route.charAt(0) === '/' ? route : '/' + route));
 
-        var modalEl = document.getElementById('modal-general');
-        var contentEl = document.getElementById('modal-content');
-        var titleEl = document.getElementById('modal-title');
+        var modalEl = document.getElementById('modal-triage-guardia');
+        var contentEl = document.getElementById('tl-triage-modal-body');
+        var titleEl = modalEl
+            ? modalEl.querySelector('.modal-title')
+            : null;
         if (!modalEl || !contentEl || !window.bootstrap) {
             window.location.href = url;
             return;
@@ -580,6 +602,22 @@ endif;
                 });
             });
             return values;
+        }
+
+        function closeTriageModal() {
+            try {
+                modal.hide();
+            } catch (eHide) {}
+            contentEl.innerHTML = '';
+            // Evitar backdrop huérfano si quedó algún modal abierto.
+            document.querySelectorAll('.modal-backdrop').forEach(function (bd) {
+                if (!document.querySelector('.modal.show')) {
+                    bd.remove();
+                }
+            });
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
         }
 
         try {
@@ -629,7 +667,7 @@ endif;
                 + '<div class="alert alert-danger d-none" id="tl-triage-error"></div>'
                 + '<div class="d-flex justify-content-end gap-2">'
                 + '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>'
-                + '<button type="submit" class="btn btn-primary">Guardar</button>'
+                + '<button type="submit" class="btn btn-primary" id="tl-triage-submit">Guardar</button>'
                 + '</div></form>';
 
             if (window.BioenlaceTriageVitals) {
@@ -639,7 +677,9 @@ endif;
             var form = document.getElementById('tl-triage-form');
             form.addEventListener('submit', async function (ev) {
                 ev.preventDefault();
+                ev.stopPropagation();
                 var errEl = document.getElementById('tl-triage-error');
+                var submitBtn = document.getElementById('tl-triage-submit');
                 if (errEl) errEl.classList.add('d-none');
                 var reasonEl = form.querySelector('[name="reason_text"]');
                 var reasonVal = reasonEl ? String(reasonEl.value || '').trim() : '';
@@ -673,6 +713,7 @@ endif;
                         body[k] = String(vitalsCheck.vitals[k]);
                     });
                 }
+                if (submitBtn) submitBtn.disabled = true;
                 try {
                     var postRes = await fetch(url, {
                         method: 'POST',
@@ -684,19 +725,38 @@ endif;
                     if (postJson && postJson.success === false) {
                         throw new Error(postJson.message || 'No se pudo guardar el triage.');
                     }
-                    modal.hide();
-                    loadTimelineSummary();
+                    closeTriageModal();
+                    await refreshEpisodioAfterTriage();
                 } catch (eSave) {
                     if (errEl) {
                         errEl.textContent = eSave && eSave.message ? String(eSave.message) : 'Error al guardar.';
                         errEl.classList.remove('d-none');
                     }
+                    if (submitBtn) submitBtn.disabled = false;
                 }
             });
         } catch (e) {
             contentEl.innerHTML = '<div class="alert alert-danger mb-0">'
                 + escMotivosHtml(e && e.message ? String(e.message) : 'Error al abrir triage.')
                 + '</div>';
+        }
+    }
+
+    /** Solo banner + SV + registro del episodio (sin recargar captura ni meter HTML en el modal). */
+    async function refreshEpisodioAfterTriage() {
+        var endpoints = timelineConfig.endpoints || {};
+        if (!endpoints.historiaClinica) return;
+        try {
+            var resp = await fetch(endpoints.historiaClinica, { headers: bioHeaders() });
+            var payload = await resp.json();
+            if (!payload || payload.success !== true || !payload.data) {
+                return;
+            }
+            renderEpisodioBanner(payload.data.contexto_episodio || null);
+            renderTimelineEpisodio(payload.data.timeline_episodio || null);
+            renderSignosVitalesEpisodio(payload.data.signos_vitales_episodio || null);
+        } catch (e) {
+            console.warn('No se pudo refrescar el episodio tras triage', e);
         }
     }
 

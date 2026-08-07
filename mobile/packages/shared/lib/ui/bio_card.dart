@@ -91,6 +91,7 @@ class BioCard extends StatelessWidget {
     final tokens = context.bio;
     final radius = borderRadius ?? BorderRadius.circular(BioRadius.sm);
     final effectiveBorder = border ?? BioBorder.paperDefault;
+    final bg = color ?? tokens.paperSurface;
 
     Widget body = Padding(padding: padding, child: child);
 
@@ -111,33 +112,44 @@ class BioCard extends StatelessWidget {
       );
     }
 
-    final inner = Container(
-      margin: margin,
-      decoration: BoxDecoration(
-        color: color ?? tokens.paperSurface,
-        borderRadius: radius,
-        border: effectiveBorder,
-        boxShadow: shadow,
-      ),
-      child: ClipRRect(
-        borderRadius: radius,
-        child: body,
-      ),
+    // Material aporta el color de superficie: ListTile / ExpansionTile / ink
+    // necesitan un ancestro Material sin DecoratedBox opaco intermedio.
+    final shape = RoundedRectangleBorder(
+      borderRadius: radius,
+      side: effectiveBorder.top,
     );
 
-    if (onTap == null) return inner;
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: radius,
-        onTap: onTap,
-        hoverColor: PaperPalette.paper200,
-        focusColor: PaperPalette.paper200,
-        splashColor: PaperPalette.paper300.withValues(alpha: 0.35),
-        highlightColor: PaperPalette.paper200,
-        child: inner,
-      ),
+    Widget card = Material(
+      color: bg,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      shape: shape,
+      clipBehavior: Clip.antiAlias,
+      child: onTap == null
+          ? body
+          : InkWell(
+              onTap: onTap,
+              hoverColor: PaperPalette.paper200,
+              focusColor: PaperPalette.paper200,
+              splashColor: PaperPalette.paper300.withValues(alpha: 0.35),
+              highlightColor: PaperPalette.paper200,
+              child: body,
+            ),
     );
+
+    if (shadow != null && shadow!.isNotEmpty) {
+      return Container(
+        margin: margin,
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          boxShadow: shadow,
+        ),
+        child: card,
+      );
+    }
+    if (margin != EdgeInsets.zero) {
+      return Padding(padding: margin, child: card);
+    }
+    return card;
   }
 }

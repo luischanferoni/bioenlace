@@ -353,13 +353,13 @@ Modal::begin([
 echo "<div id='modal-signos-vitales-content'></div>";
 Modal::end();
 
-<?php if ($esContextoGuardia): ?>
-Modal::begin([
-    'title' => 'Egreso de guardia',
-    'id' => 'modal-egreso-guardia',
-    'size' => Modal::SIZE_LARGE,
-]);
-?>
+if ($esContextoGuardia):
+    Modal::begin([
+        'title' => 'Egreso de guardia',
+        'id' => 'modal-egreso-guardia',
+        'size' => Modal::SIZE_LARGE,
+    ]);
+    ?>
 <form id="tl-egreso-guardia-form" class="p-1">
     <input type="hidden" name="guardia_id" value="<?= (int) $parentIdQuery ?>" />
     <div class="row g-2">
@@ -410,8 +410,8 @@ Modal::begin([
         <button type="submit" class="btn btn-danger" id="tl-egreso-submit">Confirmar egreso</button>
     </div>
 </form>
-<?php
-Modal::end();
+    <?php
+    Modal::end();
 endif;
 ?>
 

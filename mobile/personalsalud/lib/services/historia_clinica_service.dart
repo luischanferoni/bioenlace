@@ -664,12 +664,16 @@ class ContextoInternacionHistoria {
   final String camaLabel;
   final String fechaInicio;
   final List<EvolucionInternacionItem> evoluciones;
+  final String? medicoNombre;
+  final String? motivo;
 
   ContextoInternacionHistoria({
     required this.internacionId,
     this.camaLabel = '',
     this.fechaInicio = '',
     this.evoluciones = const [],
+    this.medicoNombre,
+    this.motivo,
   });
 
   factory ContextoInternacionHistoria.fromJson(Map<String, dynamic>? json) {
@@ -693,11 +697,428 @@ class ContextoInternacionHistoria {
       }
     }
 
+    String? medicoNombre;
+    final medico = json['medico'];
+    if (medico is Map) {
+      final n = (medico['nombre'] ?? '').toString().trim();
+      if (n.isNotEmpty) medicoNombre = n;
+    }
+
+    final motivo = (json['motivo'] ?? '').toString().trim();
+
     return ContextoInternacionHistoria(
       internacionId: asInt(json['internacion_id']),
       camaLabel: (json['cama_label'] ?? '').toString(),
       fechaInicio: (json['fecha_inicio'] ?? '').toString(),
       evoluciones: list,
+      medicoNombre: medicoNombre,
+      motivo: motivo.isEmpty ? null : motivo,
+    );
+  }
+}
+
+/// Banner unificado de episodio EMER/IMP (`contexto_episodio` en historia-clinica).
+class ContextoEpisodioHistoria {
+  final String tipo;
+  final int episodioId;
+  final String? estado;
+  final String? estadoLabel;
+  final String? motivo;
+  final String? ingresoAt;
+  final String? ubicacionLabel;
+  final String? medicoNombre;
+  final int? triageLevel;
+  final String? triageLevelLabel;
+  final String? triageLevelColor;
+  final String? triageScale;
+  final String? triageAt;
+  final List<EpisodioAccionHistoria> acciones;
+
+  ContextoEpisodioHistoria({
+    required this.tipo,
+    required this.episodioId,
+    this.estado,
+    this.estadoLabel,
+    this.motivo,
+    this.ingresoAt,
+    this.ubicacionLabel,
+    this.medicoNombre,
+    this.triageLevel,
+    this.triageLevelLabel,
+    this.triageLevelColor,
+    this.triageScale,
+    this.triageAt,
+    this.acciones = const [],
+  });
+
+  bool get esGuardia => tipo.toUpperCase() == 'GUARDIA';
+  bool get esInternacion => tipo.toUpperCase() == 'INTERNACION';
+
+  factory ContextoEpisodioHistoria.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return ContextoEpisodioHistoria(tipo: '', episodioId: 0);
+    }
+    int asInt(dynamic v) {
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+
+    String? str(dynamic v) {
+      final s = (v ?? '').toString().trim();
+      return s.isEmpty ? null : s;
+    }
+
+    final ubicacion = json['ubicacion'];
+    final equipo = json['equipo'];
+    final triage = json['triage'];
+    String? ubicacionLabel;
+    if (ubicacion is Map) {
+      ubicacionLabel = str(ubicacion['label']);
+    }
+    String? medicoNombre;
+    if (equipo is Map) {
+      final med = equipo['medico'];
+      if (med is Map) {
+        medicoNombre = str(med['nombre']);
+      }
+    }
+    int? triageLevel;
+    String? triageLevelLabel;
+    String? triageLevelColor;
+    String? triageScale;
+    String? triageAt;
+    if (triage is Map) {
+      triageLevel = asInt(triage['level']);
+      if (triageLevel == 0) triageLevel = null;
+      triageLevelLabel = str(triage['level_label']);
+      triageLevelColor = str(triage['level_color']);
+      triageScale = str(triage['scale']);
+      triageAt = str(triage['triaged_at']);
+    }
+
+    final acciones = <EpisodioAccionHistoria>[];
+    final rawAcciones = json['acciones'];
+    if (rawAcciones is List) {
+      for (final e in rawAcciones) {
+        if (e is Map) {
+          acciones.add(
+            EpisodioAccionHistoria.fromJson(Map<String, dynamic>.from(e)),
+          );
+        }
+      }
+    }
+
+    return ContextoEpisodioHistoria(
+      tipo: (json['tipo'] ?? '').toString(),
+      episodioId: asInt(json['episodio_id']),
+      estado: str(json['estado']),
+      estadoLabel: str(json['estado_label']),
+      motivo: str(json['motivo']),
+      ingresoAt: str(json['ingreso_at']),
+      ubicacionLabel: ubicacionLabel,
+      medicoNombre: medicoNombre,
+      triageLevel: triageLevel,
+      triageLevelLabel: triageLevelLabel,
+      triageLevelColor: triageLevelColor,
+      triageScale: triageScale,
+      triageAt: triageAt,
+      acciones: acciones,
+    );
+  }
+}
+
+class EpisodioAccionHistoria {
+  final String id;
+  final String label;
+  final String kind;
+  final String? apiRoute;
+  final String? apiMethod;
+
+  EpisodioAccionHistoria({
+    required this.id,
+    required this.label,
+    this.kind = 'ui_json',
+    this.apiRoute,
+    this.apiMethod,
+  });
+
+  factory EpisodioAccionHistoria.fromJson(Map<String, dynamic> json) {
+    String? route;
+    String? method;
+    final api = json['api'];
+    if (api is Map) {
+      route = (api['route'] ?? '').toString();
+      method = (api['method'] ?? 'GET').toString();
+      if (route.isEmpty) route = null;
+    }
+    return EpisodioAccionHistoria(
+      id: (json['id'] ?? '').toString(),
+      label: (json['label'] ?? json['id'] ?? '').toString(),
+      kind: (json['kind'] ?? 'ui_json').toString(),
+      apiRoute: route,
+      apiMethod: method,
+    );
+  }
+}
+
+class TimelineEpisodioFeed {
+  final String parentType;
+  final int episodioId;
+  final List<TimelineEpisodioItem> items;
+
+  TimelineEpisodioFeed({
+    required this.parentType,
+    required this.episodioId,
+    this.items = const [],
+  });
+
+  factory TimelineEpisodioFeed.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return TimelineEpisodioFeed(parentType: '', episodioId: 0);
+    }
+    int asInt(dynamic v) {
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+
+    final raw = json['items'];
+    final list = <TimelineEpisodioItem>[];
+    if (raw is List) {
+      for (final e in raw) {
+        if (e is Map) {
+          list.add(TimelineEpisodioItem.fromJson(Map<String, dynamic>.from(e)));
+        }
+      }
+    }
+
+    return TimelineEpisodioFeed(
+      parentType: (json['parent_type'] ?? '').toString(),
+      episodioId: asInt(json['episodio_id']),
+      items: list,
+    );
+  }
+}
+
+class SignosVitalesEpisodio {
+  final String parentType;
+  final int episodioId;
+  final int totalPoints;
+  final Map<String, SignosVitalesEpisodioUltimo> ultimos;
+  final List<SignosVitalesEpisodioSerie> series;
+
+  SignosVitalesEpisodio({
+    required this.parentType,
+    required this.episodioId,
+    this.totalPoints = 0,
+    this.ultimos = const {},
+    this.series = const [],
+  });
+
+  bool get tieneDatos => totalPoints > 0 || series.isNotEmpty;
+
+  factory SignosVitalesEpisodio.fromJson(Map<String, dynamic>? json) {
+    if (json == null) {
+      return SignosVitalesEpisodio(parentType: '', episodioId: 0);
+    }
+    int asInt(dynamic v) {
+      if (v is int) return v;
+      return int.tryParse(v?.toString() ?? '') ?? 0;
+    }
+
+    final ultimos = <String, SignosVitalesEpisodioUltimo>{};
+    final rawUltimos = json['ultimos'];
+    if (rawUltimos is Map) {
+      rawUltimos.forEach((k, v) {
+        if (v is Map) {
+          ultimos[k.toString()] = SignosVitalesEpisodioUltimo.fromJson(
+            Map<String, dynamic>.from(v),
+          );
+        }
+      });
+    }
+
+    final series = <SignosVitalesEpisodioSerie>[];
+    final rawSeries = json['series'];
+    if (rawSeries is List) {
+      for (final e in rawSeries) {
+        if (e is Map) {
+          series.add(
+            SignosVitalesEpisodioSerie.fromJson(Map<String, dynamic>.from(e)),
+          );
+        }
+      }
+    }
+
+    return SignosVitalesEpisodio(
+      parentType: (json['parent_type'] ?? '').toString(),
+      episodioId: asInt(json['episodio_id']),
+      totalPoints: asInt(json['total_points']),
+      ultimos: ultimos,
+      series: series,
+    );
+  }
+}
+
+class SignosVitalesEpisodioUltimo {
+  final double? value;
+  final String? at;
+  final String? unit;
+  final String? label;
+  final String? source;
+  final double? sistolica;
+  final double? diastolica;
+
+  SignosVitalesEpisodioUltimo({
+    this.value,
+    this.at,
+    this.unit,
+    this.label,
+    this.source,
+    this.sistolica,
+    this.diastolica,
+  });
+
+  factory SignosVitalesEpisodioUltimo.fromJson(Map<String, dynamic> json) {
+    double? asDouble(dynamic v) {
+      if (v == null) return null;
+      if (v is num) return v.toDouble();
+      return double.tryParse(v.toString());
+    }
+
+    return SignosVitalesEpisodioUltimo(
+      value: asDouble(json['value']),
+      at: (json['at'] ?? '').toString().isEmpty ? null : json['at'].toString(),
+      unit: (json['unit'] ?? '').toString().isEmpty ? null : json['unit'].toString(),
+      label: (json['label'] ?? '').toString().isEmpty ? null : json['label'].toString(),
+      source: (json['source'] ?? '').toString().isEmpty ? null : json['source'].toString(),
+      sistolica: asDouble(json['sistolica']),
+      diastolica: asDouble(json['diastolica']),
+    );
+  }
+}
+
+class SignosVitalesEpisodioSerie {
+  final String metric;
+  final String label;
+  final String unit;
+  final List<SignosVitalesEpisodioPunto> points;
+
+  SignosVitalesEpisodioSerie({
+    required this.metric,
+    this.label = '',
+    this.unit = '',
+    this.points = const [],
+  });
+
+  factory SignosVitalesEpisodioSerie.fromJson(Map<String, dynamic> json) {
+    final pts = <SignosVitalesEpisodioPunto>[];
+    final raw = json['points'];
+    if (raw is List) {
+      for (final e in raw) {
+        if (e is Map) {
+          pts.add(SignosVitalesEpisodioPunto.fromJson(Map<String, dynamic>.from(e)));
+        }
+      }
+    }
+    return SignosVitalesEpisodioSerie(
+      metric: (json['metric'] ?? '').toString(),
+      label: (json['label'] ?? '').toString(),
+      unit: (json['unit'] ?? '').toString(),
+      points: pts,
+    );
+  }
+}
+
+class SignosVitalesEpisodioPunto {
+  final String at;
+  final double value;
+  final String source;
+
+  SignosVitalesEpisodioPunto({
+    required this.at,
+    required this.value,
+    this.source = '',
+  });
+
+  factory SignosVitalesEpisodioPunto.fromJson(Map<String, dynamic> json) {
+    double value = 0;
+    final v = json['value'];
+    if (v is num) {
+      value = v.toDouble();
+    } else {
+      value = double.tryParse(v?.toString() ?? '') ?? 0;
+    }
+    return SignosVitalesEpisodioPunto(
+      at: (json['at'] ?? '').toString(),
+      value: value,
+      source: (json['source'] ?? '').toString(),
+    );
+  }
+}
+
+class TimelineEpisodioItem {
+  final String type;
+  final String id;
+  final String occurredAt;
+  final String summary;
+  final String? actorNombre;
+  final int? encounterId;
+
+  TimelineEpisodioItem({
+    required this.type,
+    required this.id,
+    this.occurredAt = '',
+    this.summary = '',
+    this.actorNombre,
+    this.encounterId,
+  });
+
+  String get typeLabel {
+    switch (type) {
+      case 'circuito':
+        return 'Circuito';
+      case 'triage':
+        return 'Triage';
+      case 'evolucion_medica':
+        return 'Evolución';
+      case 'atencion_enfermeria':
+        return 'Enfermería';
+      case 'pedido':
+        return 'Pedido';
+      case 'resultado_lab':
+        return 'Lab';
+      case 'medicacion':
+        return 'Medicación';
+      case 'administracion':
+        return 'Admin.';
+      case 'interconsulta':
+        return 'Interconsulta';
+      default:
+        return type;
+    }
+  }
+
+  factory TimelineEpisodioItem.fromJson(Map<String, dynamic> json) {
+    int? asIntOrNull(dynamic v) {
+      if (v == null) return null;
+      if (v is int) return v;
+      return int.tryParse(v.toString());
+    }
+
+    String? actorNombre;
+    final actor = json['actor'];
+    if (actor is Map) {
+      final n = (actor['nombre'] ?? '').toString().trim();
+      if (n.isNotEmpty) actorNombre = n;
+    }
+
+    return TimelineEpisodioItem(
+      type: (json['type'] ?? '').toString(),
+      id: (json['id'] ?? '').toString(),
+      occurredAt: (json['occurred_at'] ?? '').toString(),
+      summary: (json['summary'] ?? '').toString(),
+      actorNombre: actorNombre,
+      encounterId: asIntOrNull(json['encounter_id']),
     );
   }
 }
@@ -736,6 +1157,9 @@ class HistoriaClinicaResponse {
   final SignosVitalesClinica signosVitales;
   final MotivosConsultaPaciente motivosConsultaPaciente;
   final ContextoInternacionHistoria? contextoInternacion;
+  final ContextoEpisodioHistoria? contextoEpisodio;
+  final TimelineEpisodioFeed? timelineEpisodio;
+  final SignosVitalesEpisodio? signosVitalesEpisodio;
   final CarePackCohorteStaff? carePackCohorte;
   final bool careCohortHabilitado;
   final DocumentacionMedico documentacionMedico;
@@ -751,6 +1175,9 @@ class HistoriaClinicaResponse {
     required this.signosVitales,
     required this.motivosConsultaPaciente,
     this.contextoInternacion,
+    this.contextoEpisodio,
+    this.timelineEpisodio,
+    this.signosVitalesEpisodio,
     this.carePackCohorte,
     this.careCohortHabilitado = false,
     required this.documentacionMedico,
@@ -800,6 +1227,21 @@ class HistoriaClinicaResponse {
       contextoInternacion: json['contexto_internacion'] is Map
           ? ContextoInternacionHistoria.fromJson(
               Map<String, dynamic>.from(json['contexto_internacion'] as Map),
+            )
+          : null,
+      contextoEpisodio: json['contexto_episodio'] is Map
+          ? ContextoEpisodioHistoria.fromJson(
+              Map<String, dynamic>.from(json['contexto_episodio'] as Map),
+            )
+          : null,
+      timelineEpisodio: json['timeline_episodio'] is Map
+          ? TimelineEpisodioFeed.fromJson(
+              Map<String, dynamic>.from(json['timeline_episodio'] as Map),
+            )
+          : null,
+      signosVitalesEpisodio: json['signos_vitales_episodio'] is Map
+          ? SignosVitalesEpisodio.fromJson(
+              Map<String, dynamic>.from(json['signos_vitales_episodio'] as Map),
             )
           : null,
       carePackCohorte: json['care_pack_cohorte'] is Map

@@ -73,6 +73,7 @@ Al cerrar la atención, el review puede listar **problemas y tratamientos abiert
 | `encounter_class` (AMB, EMER, IMP, …) | Clase FHIR y definición de workflow |
 | Rol (médico, enfermería, …) | Permisos y visibilidad en timeline |
 | Especialidad / servicio | `EncounterDefinition` y registries (oftalmología, odontología, …) |
+| `parent` GUARDIA / INTERNACION | Banner de episodio (`contexto_episodio`); sin motivos AMB. Ver [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md) |
 
 ## Niveles de carga
 

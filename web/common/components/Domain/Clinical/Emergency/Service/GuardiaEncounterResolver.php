@@ -12,11 +12,17 @@ final class GuardiaEncounterResolver
 {
     public function findLatestForGuardia(int $guardiaId): ?Encounter
     {
-        $parentType = Encounter::PARENT_CLASSES[Encounter::PARENT_GUARDIA] ?? Guardia::class;
+        $types = [
+            Encounter::PARENT_GUARDIA,
+            Encounter::PARENT_CLASSES[Encounter::PARENT_GUARDIA] ?? Guardia::class,
+            Guardia::class,
+            ltrim(Guardia::class, '\\'),
+        ];
+        $types = array_values(array_unique(array_filter($types)));
 
         return Encounter::find()
             ->where([
-                'parent_type' => $parentType,
+                'parent_type' => $types,
                 'parent_id' => $guardiaId,
                 'deleted_at' => null,
             ])

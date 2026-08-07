@@ -4,6 +4,7 @@ namespace frontend\modules\api\v1\controllers\clinical;
 
 use common\components\Domain\Clinical\Emergency\Service\GuardiaClinicalSummaryService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaEfectorAccess;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaEgresoEstructuradoService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaIndicadoresExportService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaIndicadoresService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaIngresoService;
@@ -30,6 +31,7 @@ use yii\web\Response;
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/iniciar-atencion
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/derivar
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/finalizar
+ * GET|POST /api/v1/clinical/emergency-guardia/<guardiaId>/egreso-formulario (UI JSON egreso estructurado)
  * GET  /api/v1/clinical/emergency-guardia/<guardiaId>/resumen-clinico
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/crear-pedido
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/solicitar-internacion
@@ -50,6 +52,7 @@ class EmergencyGuardiaController extends BaseController
     private GuardiaClinicalSummaryService $clinical;
     private GuardiaInternacionService $internacion;
     private GuardiaIndicadoresExportService $export;
+    private GuardiaEgresoEstructuradoService $egreso;
 
     public function init(): void
     {
@@ -62,6 +65,7 @@ class EmergencyGuardiaController extends BaseController
         $this->clinical = new GuardiaClinicalSummaryService();
         $this->internacion = new GuardiaInternacionService();
         $this->export = new GuardiaIndicadoresExportService();
+        $this->egreso = new GuardiaEgresoEstructuradoService();
     }
 
     public function actionIngresar(): array
@@ -204,6 +208,78 @@ class EmergencyGuardiaController extends BaseController
         }
 
         return $this->success($data, 'Egreso registrado');
+    }
+
+    /**
+     * Egreso estructurado (destino, diagnóstico operativo, epicrisis).
+     * GET|POST /api/v1/clinical/emergency-guardia/<guardiaId>/egreso-formulario
+     */
+    public function actionEgresoFormulario(int $guardiaId): array
+    {
+        $req = Yii::$app->request;
+        try {
+            $idEfector = $this->requireGuardiaEfector();
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
+        }
+
+        $out = UiScreenService::handleScreen(
+            'emergency-guardia',
+            'egreso-formulario',
+            $req->get(),
+            $req->post(),
+            function (array $post) use ($guardiaId, $idEfector): array {
+                $data = $this->egreso->registrar($guardiaId, $idEfector, $post);
+
+                return [
+                    'data' => $data,
+                    'message' => (string) ($data['message'] ?? 'Egreso de guardia registrado'),
+                ];
+            }
+        );
+
+        if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
+            try {
+                $ctx = $this->egreso->contexto($guardiaId, $idEfector);
+            } catch (\InvalidArgumentException $e) {
+                return $this->error($e->getMessage(), null, 400);
+            }
+
+            $params = array_merge($req->get(), [
+                'guardia_id' => (string) $guardiaId,
+                'fecha_fin' => date('Y-m-d'),
+                'hora_fin' => date('H:i'),
+                'resumen_texto' => 'Egreso de ' . ($ctx['paciente_nombre'] ?? 'paciente')
+                    . " (guardia #{$guardiaId})",
+            ]);
+            $out = UiScreenService::renderUiDefinition('emergency-guardia', 'egreso-formulario', $params, $params);
+            $out['data'] = $ctx;
+
+            $destinoOptions = array_map(static fn (array $d): array => [
+                'value' => (string) $d['value'],
+                'label' => (string) $d['label'],
+            ], $ctx['destinos'] ?? []);
+
+            foreach ($out['blocks'] ?? [] as $idx => $block) {
+                if (!is_array($block) || ($block['kind'] ?? '') !== 'fields') {
+                    continue;
+                }
+                foreach ($block['fields'] ?? [] as $fIdx => $field) {
+                    if (!is_array($field)) {
+                        continue;
+                    }
+                    if ((string) ($field['name'] ?? '') === 'destino_egreso') {
+                        $field['options'] = $destinoOptions;
+                    }
+                    $block['fields'][$fIdx] = $field;
+                }
+                $out['blocks'][$idx] = $block;
+            }
+        }
+
+        return $out;
     }
 
     public function actionResumenClinico(int $guardiaId): array

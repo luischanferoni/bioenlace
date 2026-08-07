@@ -247,6 +247,16 @@ final class ClinicalUiActionCatalog implements UiActionCatalogProviderInterface
                 true
             ),
             self::def(
+                'clinical.emergency-guardia.egreso-formulario',
+                'Egreso de guardia (UI)',
+                'Destino, diagnóstico operativo, epicrisis y checklist de egreso.',
+                '/api/clinical/emergency-guardia/egreso-formulario',
+                ['egreso guardia', 'epicrisis guardia', 'alta guardia', 'destino egreso'],
+                true,
+                null,
+                '/api/clinical/emergency-guardia/{guardia_id}/egreso-formulario'
+            ),
+            self::def(
                 'clinical.care-plan.adherencia-resumen-staff',
                 'Adherencia a tratamientos (staff)',
                 'Dashboard de planes activos y cumplimiento de actividades por efector.',

@@ -14,14 +14,14 @@ use common\components\Domain\Clinical\Service\EncounterJourney\EncounterMotivosI
 use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
-use common\models\ProfesionalEfectorServicio;
 use common\models\Scheduling\Turno;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\PersonasAntecedente;
 use common\models\ConsultaMotivosMessage;
-use common\models\SegNivelInternacion;
-use common\models\SegNivelInternacionHcama;
 use common\components\Domain\Clinical\Service\ConditionPresentationService;
+use common\components\Domain\Clinical\Service\EpisodioHistoriaBannerService;
+use common\components\Domain\Clinical\Service\EpisodioSignosVitalesService;
+use common\components\Domain\Clinical\Service\EpisodioTimelineService;
 use common\components\Domain\Person\Service\PersonaSignosVitalesService;
 use frontend\modules\api\v1\controllers\clinical\ClinicalAccessTrait;
 /**
@@ -37,6 +37,8 @@ class PacientesController extends BaseController
      * GET /api/v1/personas/{id}/historia-clinica
      * Query: `turno_id` o `encounter_id` — motivos pre-turno (flujo captura ambulatoria).
      * Query: `parent=INTERNACION&parent_id=` — captura de evolución en piso (sin motivos AMB).
+     * Query: `parent=GUARDIA&parent_id=` — captura de episodio de guardia (banner + timeline + sin motivos AMB).
+     * Respuesta episodio: `contexto_episodio`, `timeline_episodio` (y `contexto_internacion` si IMP).
      * Sin query: auto-elige encounter + HC resumida del paciente.
      * Condiciones/alergias/antecedentes: solo si hay ventana de atención (turno PENDIENTE/EN_ATENCION)
      * o encounter no ambulatorio; no en turno ATENDIDO.
@@ -58,18 +60,38 @@ class PacientesController extends BaseController
         $parentParam = strtoupper(trim((string) $req->get('parent', '')));
         $parentIdParam = (int) $req->get('parent_id', 0);
         $esInternacion = $parentParam === Encounter::PARENT_INTERNACION && $parentIdParam > 0;
+        $esGuardia = $parentParam === Encounter::PARENT_GUARDIA && $parentIdParam > 0;
 
         $motivosLookup = new EncounterAppointmentReasonLookupService();
         $contextoInternacion = null;
+        $contextoEpisodio = null;
+        $timelineEpisodio = null;
+        $signosVitalesEpisodio = null;
 
-        if ($esInternacion) {
-            $contextoInternacion = $this->buildContextoInternacionHistoria(
-                (int) $persona->id_persona,
-                $parentIdParam
-            );
-            if ($contextoInternacion === null) {
-                return $this->error('Internación no válida para este paciente.', null, 404);
+        if ($esInternacion || $esGuardia) {
+            $bannerSvc = new EpisodioHistoriaBannerService();
+            $bannerPack = $esInternacion
+                ? $bannerSvc->buildForInternacion((int) $persona->id_persona, $parentIdParam)
+                : $bannerSvc->buildForGuardia((int) $persona->id_persona, $parentIdParam, $idEfector);
+            if ($bannerPack === null) {
+                return $this->error(
+                    $esInternacion
+                        ? 'Internación no válida para este paciente.'
+                        : 'Guardia no válida para este paciente o efector.',
+                    null,
+                    404
+                );
             }
+            $contextoEpisodio = $bannerPack['contexto_episodio'];
+            $contextoInternacion = $bannerPack['contexto_internacion'];
+            $timelineSvc = new EpisodioTimelineService();
+            $timelineEpisodio = $esInternacion
+                ? $timelineSvc->buildForInternacion((int) $persona->id_persona, $parentIdParam)
+                : $timelineSvc->buildForGuardia((int) $persona->id_persona, $parentIdParam, $idEfector);
+            $svEpisodioSvc = new EpisodioSignosVitalesService($timelineSvc);
+            $signosVitalesEpisodio = $esInternacion
+                ? $svEpisodioSvc->buildForInternacion((int) $persona->id_persona, $parentIdParam)
+                : $svEpisodioSvc->buildForGuardia((int) $persona->id_persona, $parentIdParam, $idEfector);
             $motivosConsulta = null;
             $motivosConsultaPaciente = [
                 'encounter_id' => null,
@@ -195,7 +217,10 @@ class PacientesController extends BaseController
                 'motivos_consulta' => $motivosConsulta,
             ],
             'signos_vitales' => $signosVitales,
+            'signos_vitales_episodio' => $signosVitalesEpisodio,
             'motivos_consulta_paciente' => $motivosConsultaPaciente,
+            'contexto_episodio' => $contextoEpisodio,
+            'timeline_episodio' => $timelineEpisodio,
             'contexto_internacion' => $contextoInternacion,
             'care_pack_cohorte' => $carePackCohorte,
             'care_cohort_habilitado' => CarePackConfig::isEnabled(),
@@ -220,78 +245,6 @@ class PacientesController extends BaseController
             $conTurnoPrueba,
             $pesId
         );
-    }
-
-    /**
-     * Contexto de episodio IMP para HC / captura de evolución (sin motivos ambulatorios).
-     *
-     * @return array<string, mixed>|null
-     */
-    private function buildContextoInternacionHistoria(int $personaId, int $internacionId): ?array
-    {
-        $internacion = SegNivelInternacion::findOne($internacionId);
-        if (
-            !$internacion instanceof SegNivelInternacion
-            || (int) $internacion->id_persona !== $personaId
-        ) {
-            return null;
-        }
-
-        $camaLabel = '';
-        $idCama = (int) ($internacion->id_cama ?? 0);
-        if ($idCama > 0) {
-            $cama = SegNivelInternacionHcama::getCamaActualLabel($idCama);
-            $camaLabel = trim((string) ($cama['label'] ?? ''));
-        }
-
-        $parentType = Encounter::PARENT_CLASSES[Encounter::PARENT_INTERNACION];
-        $rows = Encounter::find()
-            ->andWhere([
-                'parent_type' => $parentType,
-                'parent_id' => $internacionId,
-                'subject_persona_id' => $personaId,
-            ])
-            ->andWhere(['deleted_at' => null])
-            ->orderBy(['period_start' => SORT_DESC, 'id' => SORT_DESC])
-            ->limit(25)
-            ->all();
-
-        $evoluciones = [];
-        foreach ($rows as $enc) {
-            if (!$enc instanceof Encounter) {
-                continue;
-            }
-            $texto = trim((string) ($enc->note ?? ''));
-            if ($texto === '') {
-                $texto = trim((string) ($enc->reason_text ?? ''));
-            }
-            if ($texto === '' || stripos($texto, 'Internación #') === 0) {
-                // Encounter contenedor del episodio sin nota clínica aún.
-                continue;
-            }
-            $fecha = (string) ($enc->period_start ?? $enc->created_at ?? '');
-            $evoluciones[] = [
-                'encounter_id' => (int) $enc->id,
-                'fecha' => $fecha,
-                'texto' => $texto,
-                'status' => (string) ($enc->status ?? ''),
-            ];
-        }
-
-        $fechaInicio = '';
-        if (!empty($internacion->fecha_inicio)) {
-            $fechaInicio = (string) $internacion->fecha_inicio;
-            if (!empty($internacion->hora_inicio)) {
-                $fechaInicio .= ' ' . substr((string) $internacion->hora_inicio, 0, 5);
-            }
-        }
-
-        return [
-            'internacion_id' => $internacionId,
-            'cama_label' => $camaLabel,
-            'fecha_inicio' => $fechaInicio,
-            'evoluciones' => $evoluciones,
-        ];
     }
 
     /**

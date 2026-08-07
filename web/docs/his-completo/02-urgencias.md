@@ -1,6 +1,6 @@
 ﻿# Urgencias / guardia
 
-**Madurez orientativa:** 4 / 4 (~95 %) — circuito v1 + post-v1 (pedidos/lab, cama, SLA, CSV, FCM médico) + triage UI JSON.
+**Madurez orientativa:** 4 / 4 (~95 %) — circuito v1 + post-v1 + HCD episodio (banner, timeline, SV, egreso estructurado).
 
 ## Lo que tenemos
 
@@ -13,24 +13,29 @@
 - [x] Asignación, inicio de atención con `captura_url`, derivación y egreso vía API.
 - [x] Indicadores resumen (medianas door-to-triage / door-to-doctor) + materialización diaria opcional.
 - [x] Push servidor y cliente FCM app Personal de Salud (`EMERGENCY_*`).
-- [x] Intents asistente `urgencias.ver-tablero-guardia` y `urgencias.triage-paciente-guardia`.
+- [x] Intents asistente `urgencias.ver-tablero-guardia`, `urgencias.triage-paciente-guardia`, `urgencias.egreso-estructurado-flow`.
 - [x] Pedidos y resultados de lab en tablero (`resumen-clinico`, `crear-pedido`).
 - [x] Solicitud de internación + badge “cama pendiente” + ingreso web con `id_guardia`.
 - [x] SLA por efector (`efector_emergency_config`) y alerta visual en tablero.
 - [x] Export CSV de indicadores (`indicadores-export-csv`).
+- [x] Banner + timeline de episodio en HC (`contexto_episodio`, `timeline_episodio`).
+- [x] Egreso estructurado (destino, diagnóstico operativo, epicrisis) UI JSON `egreso-formulario`.
+- [x] Signos vitales del episodio (triage + enfermería) con curva en web.
 
 ## Lo que falta (refinamiento)
 
 - [ ] Aviso sonoro en tablero al superar SLA.
 - [ ] Configuración SLA por UI de administración (hoy defaults en BD).
 - [ ] Pedidos con catálogo SNOMED / envío directo al LIS (sigue siendo indicación en Bioenlace).
+- [ ] Box/enfermero en guardia; valores críticos de lab; care-plan formal post-alta domiciliaria.
 
 ## En producto hoy
 
 - API base: `/api/v1/clinical/emergency-guardia`
 - Web/móvil: tablero en inicio con `encounterClass = EMER`
-- Asistente: `urgencias.ver-tablero-guardia`, `urgencias.triage-paciente-guardia`
+- HC episodio + egreso estructurado + SV del episodio
+- Asistente: tablero, triage, egreso estructurado
 
 ## Documentación de producto
 
-Ver [urgencias-guardia.md](../producto/urgencias-guardia.md).
+Ver [urgencias-guardia.md](../producto/urgencias-guardia.md) y [hcd-episodio-emergencia-internacion.md](../producto/hcd-episodio-emergencia-internacion.md).

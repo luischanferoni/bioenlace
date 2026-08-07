@@ -38,8 +38,12 @@ $parentQuery = Yii::$app->request->get('parent');
 $parentIdQuery = (int) Yii::$app->request->get('parent_id', 0);
 $parentUpper = strtoupper(trim((string) $parentQuery));
 $esContextoInternacion = $parentUpper === Encounter::PARENT_INTERNACION && $parentIdQuery > 0;
-$mostrarMotivosAmbulatorios = !$esContextoInternacion
-    && !in_array($parentUpper, [Encounter::PARENT_GUARDIA, Encounter::PARENT_CIRUGIA, Encounter::PARENT_GENERICO_EMER], true);
+$esContextoGuardia = $parentUpper === Encounter::PARENT_GUARDIA && $parentIdQuery > 0;
+$esContextoEpisodio = $esContextoInternacion || $esContextoGuardia;
+$mostrarMotivosAmbulatorios = !$esContextoEpisodio
+    && !in_array($parentUpper, [Encounter::PARENT_CIRUGIA, Encounter::PARENT_GENERICO_EMER], true);
+
+$modoCaptura = $esContextoInternacion ? 'imp' : ($esContextoGuardia ? 'emer' : 'amb');
 
 $historiaClinicaQs = [];
 $verConsultaStaffPath = null;
@@ -49,6 +53,9 @@ if ($parentUpper === Encounter::PARENT_TURNO && $parentIdQuery > 0) {
         . http_build_query(['turno_id' => $parentIdQuery]);
 } elseif ($esContextoInternacion) {
     $historiaClinicaQs['parent'] = Encounter::PARENT_INTERNACION;
+    $historiaClinicaQs['parent_id'] = $parentIdQuery;
+} elseif ($esContextoGuardia) {
+    $historiaClinicaQs['parent'] = Encounter::PARENT_GUARDIA;
     $historiaClinicaQs['parent_id'] = $parentIdQuery;
 }
 $historiaClinicaPath = '/api/v1/personas/' . (int) $persona->id_persona . '/historia-clinica';
@@ -65,6 +72,7 @@ $this->registerJsFile(
         'charset' => 'utf-8'
     ]
 );
+$this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
 
 ?>
 
@@ -82,6 +90,40 @@ $this->registerJsFile(
             <?= Html::encode($this->title) ?>
         </div>
     </div>
+
+<?php if ($esContextoEpisodio): ?>
+<div id="tl_episodio_banner" class="tl-episodio-banner mb-3" hidden data-episodio-tipo="<?= Html::encode($esContextoGuardia ? 'GUARDIA' : 'INTERNACION') ?>">
+    <div class="tl-episodio-banner__inner">
+        <div class="tl-episodio-banner__triage" id="tl_episodio_triage" hidden>
+            <span class="tl-episodio-banner__triage-badge" id="tl_episodio_triage_badge"></span>
+            <span class="tl-episodio-banner__triage-meta text-muted small" id="tl_episodio_triage_meta"></span>
+        </div>
+        <div class="tl-episodio-banner__grid">
+            <div class="tl-episodio-banner__cell">
+                <span class="tl-episodio-banner__label">Episodio</span>
+                <span class="tl-episodio-banner__value" id="tl_episodio_titulo">Cargando…</span>
+            </div>
+            <div class="tl-episodio-banner__cell">
+                <span class="tl-episodio-banner__label">Estado</span>
+                <span class="tl-episodio-banner__value" id="tl_episodio_estado">—</span>
+            </div>
+            <div class="tl-episodio-banner__cell">
+                <span class="tl-episodio-banner__label">Ubicación</span>
+                <span class="tl-episodio-banner__value" id="tl_episodio_ubicacion">—</span>
+            </div>
+            <div class="tl-episodio-banner__cell">
+                <span class="tl-episodio-banner__label">Médico a cargo</span>
+                <span class="tl-episodio-banner__value" id="tl_episodio_medico">—</span>
+            </div>
+            <div class="tl-episodio-banner__cell tl-episodio-banner__cell--wide">
+                <span class="tl-episodio-banner__label">Motivo / ingreso</span>
+                <span class="tl-episodio-banner__value" id="tl_episodio_motivo">—</span>
+            </div>
+        </div>
+        <div class="tl-episodio-banner__actions mt-2" id="tl_episodio_acciones" hidden></div>
+    </div>
+</div>
+<?php endif; ?>
 
 <!-- Primera fila: Datos del paciente (compacta) -->
 <div class="row mb-3">
@@ -162,7 +204,38 @@ $this->registerJsFile(
                         <div class="mb-3 pb-2 border-bottom border-2" id="tl_internacion_contexto_section">
                             <h6 class="mb-2 text-primary"><b>INTERNACIÓN EN CURSO</b></h6>
                             <p class="mb-2 small text-muted" id="tl_internacion_resumen">Episodio #<?= (int) $parentIdQuery ?> — documentá la evolución del día.</p>
-                            <div id="tl_internacion_evoluciones" class="text-body"></div>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ($esContextoEpisodio): ?>
+                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_episodio_sv_section">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                <h6 class="mb-0 text-primary"><b>SIGNOS VITALES DEL EPISODIO</b></h6>
+                                <span class="small text-muted" id="tl_episodio_sv_count"></span>
+                            </div>
+                            <div id="tl_episodio_sv_ultimos" class="tl-episodio-sv-ultimos mb-2"></div>
+                            <div id="tl_episodio_sv_chart" class="tl-episodio-sv-chart" style="min-height: 220px;"></div>
+                            <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales registrados en este episodio (triage o enfermería).</p>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if ($esContextoEpisodio): ?>
+                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_episodio_timeline_section">
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                <h6 class="mb-0 text-primary"><b>REGISTRO DEL EPISODIO</b></h6>
+                                <span class="small text-muted" id="tl_episodio_timeline_count"></span>
+                            </div>
+                            <div class="tl-episodio-timeline-filters mb-2" id="tl_episodio_timeline_filters" role="group" aria-label="Filtros del registro">
+                                <button type="button" class="btn btn-sm btn-outline-secondary active" data-tl-filter="all">Todos</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="clinico">Clínico</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="enfermeria">Enfermería</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="pedidos">Pedidos / lab</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="farmacos">Fármacos</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="circuito">Circuito</button>
+                            </div>
+                            <div id="tl_episodio_timeline_list" class="tl-episodio-timeline-list">
+                                <p class="text-muted mb-0 small">Cargando registro…</p>
+                            </div>
                         </div>
                         <?php endif; ?>
 
@@ -279,6 +352,67 @@ Modal::begin([
 ]);
 echo "<div id='modal-signos-vitales-content'></div>";
 Modal::end();
+
+<?php if ($esContextoGuardia): ?>
+Modal::begin([
+    'title' => 'Egreso de guardia',
+    'id' => 'modal-egreso-guardia',
+    'size' => Modal::SIZE_LARGE,
+]);
+?>
+<form id="tl-egreso-guardia-form" class="p-1">
+    <input type="hidden" name="guardia_id" value="<?= (int) $parentIdQuery ?>" />
+    <div class="row g-2">
+        <div class="col-md-6">
+            <label class="form-label">Fecha de egreso</label>
+            <input type="date" class="form-control" name="fecha_fin" required />
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Hora</label>
+            <input type="text" class="form-control" name="hora_fin" placeholder="HH:MM" required />
+        </div>
+        <div class="col-12">
+            <label class="form-label">Destino / conducta</label>
+            <select class="form-select" name="destino_egreso" id="tl-egreso-destino" required></select>
+        </div>
+        <div class="col-12" id="tl-egreso-derivacion-wrap" style="display:none;">
+            <label class="form-label">ID efector de derivación</label>
+            <input type="number" class="form-control" name="id_efector_derivacion" min="1" />
+            <label class="form-label mt-2">Condiciones de derivación</label>
+            <textarea class="form-control" name="condiciones_derivacion" rows="2"></textarea>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Diagnóstico operativo</label>
+            <textarea class="form-control" name="diagnostico_operativo" rows="2" required></textarea>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Epicrisis de guardia</label>
+            <textarea class="form-control" name="epicrisis" rows="5" required></textarea>
+        </div>
+        <div class="col-12">
+            <label class="form-label">Pautas de alarma (alta domiciliaria)</label>
+            <textarea class="form-control" name="pautas_alarma" rows="3"></textarea>
+        </div>
+        <div class="col-12">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="checklist_indicaciones" value="1" id="tl-egreso-chk-ind" required />
+                <label class="form-check-label" for="tl-egreso-chk-ind">Indicaciones explicadas al paciente o familiar</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="checklist_epicrisis" value="1" id="tl-egreso-chk-epi" required />
+                <label class="form-check-label" for="tl-egreso-chk-epi">Epicrisis y destino revisados</label>
+            </div>
+        </div>
+    </div>
+    <div class="alert alert-danger mt-3 d-none" id="tl-egreso-error"></div>
+    <div class="d-flex justify-content-end gap-2 mt-3">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-danger" id="tl-egreso-submit">Confirmar egreso</button>
+    </div>
+</form>
+<?php
+Modal::end();
+endif;
 ?>
 
 <script>
@@ -300,7 +434,9 @@ Modal::end();
     var timelineConfig = {
         pacienteId: <?= $persona->id_persona ?>,
         vistaConsultaCargada: <?= $vistaConsultaCargada ? 'true' : 'false' ?>,
-        modoCaptura: <?= json_encode($esContextoInternacion ? 'imp' : 'amb') ?>,
+        modoCaptura: <?= json_encode($modoCaptura) ?>,
+        parent: <?= json_encode($esContextoEpisodio ? $parentUpper : null) ?>,
+        parentId: <?= $esContextoEpisodio ? (int) $parentIdQuery : 'null' ?>,
         endpoints: {
             curvasCrecimiento: <?= ($edad !== null && (int) $edad < 14) ? "'" . \yii\helpers\Url::to(['personas/curvas-crecimiento', 'id' => $persona->id_persona]) . "'" : 'null' ?>,
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
@@ -331,40 +467,395 @@ Modal::end();
         el.innerHTML = badges || '<span class="ms-2">Sin datos</span>';
     }
 
-    function renderContextoInternacion(ctx) {
-        var resumenEl = document.getElementById('tl_internacion_resumen');
-        var listEl = document.getElementById('tl_internacion_evoluciones');
-        if (!listEl) return;
+    function renderEpisodioBanner(ctx) {
+        var root = document.getElementById('tl_episodio_banner');
+        if (!root) return;
         ctx = ctx || {};
-        if (resumenEl) {
-            var parts = [];
-            if (ctx.internacion_id) parts.push('Episodio #' + ctx.internacion_id);
-            if (ctx.cama_label) parts.push(ctx.cama_label);
-            if (ctx.fecha_inicio) parts.push('Ingreso ' + ctx.fecha_inicio);
-            resumenEl.textContent = (parts.length ? parts.join(' · ') : 'Internación en curso')
-                + ' — documentá la evolución del día.';
+        root.hidden = false;
+
+        var tipo = String(ctx.tipo || root.getAttribute('data-episodio-tipo') || '');
+        var tituloEl = document.getElementById('tl_episodio_titulo');
+        var estadoEl = document.getElementById('tl_episodio_estado');
+        var ubiEl = document.getElementById('tl_episodio_ubicacion');
+        var medEl = document.getElementById('tl_episodio_medico');
+        var motEl = document.getElementById('tl_episodio_motivo');
+        var triageWrap = document.getElementById('tl_episodio_triage');
+        var triageBadge = document.getElementById('tl_episodio_triage_badge');
+        var triageMeta = document.getElementById('tl_episodio_triage_meta');
+
+        var labelTipo = tipo === 'GUARDIA' ? 'Guardia' : (tipo === 'INTERNACION' ? 'Internación' : 'Episodio');
+        if (tituloEl) {
+            var parts = [labelTipo + ' #' + (ctx.episodio_id || '—')];
+            if (ctx.ingreso_at) parts.push('Ingreso ' + ctx.ingreso_at);
+            tituloEl.textContent = parts.join(' · ');
         }
-        var evoluciones = ctx.evoluciones || [];
-        if (!evoluciones.length) {
-            listEl.innerHTML = '<p class="text-muted mb-0 small">Sin evoluciones previas en este episodio.</p>';
+        if (estadoEl) {
+            estadoEl.textContent = ctx.estado_label || ctx.estado || 'En curso';
+        }
+        if (ubiEl) {
+            var ubi = (ctx.ubicacion && ctx.ubicacion.label) ? String(ctx.ubicacion.label) : '';
+            ubiEl.textContent = ubi !== '' ? ubi : (tipo === 'GUARDIA' ? 'Sin box asignado' : 'Sin cama');
+        }
+        if (medEl) {
+            var med = ctx.equipo && ctx.equipo.medico ? ctx.equipo.medico : null;
+            medEl.textContent = (med && med.nombre) ? String(med.nombre) : 'Sin asignar';
+        }
+        if (motEl) {
+            motEl.textContent = ctx.motivo ? String(ctx.motivo) : 'Sin motivo registrado';
+        }
+
+        var triage = ctx.triage;
+        if (triageWrap && triageBadge) {
+            if (triage && triage.level != null) {
+                triageWrap.hidden = false;
+                var color = triage.level_color || '#6c757d';
+                triageBadge.style.backgroundColor = color;
+                triageBadge.style.color = '#fff';
+                triageBadge.textContent = (triage.level_label || ('Nivel ' + triage.level));
+                if (triageMeta) {
+                    var metaParts = [];
+                    if (triage.scale) metaParts.push(String(triage.scale));
+                    if (triage.triaged_at) metaParts.push(String(triage.triaged_at));
+                    triageMeta.textContent = metaParts.join(' · ');
+                }
+            } else {
+                triageWrap.hidden = true;
+            }
+        }
+
+        renderEpisodioAcciones(ctx.acciones || []);
+    }
+
+    function renderEpisodioAcciones(acciones) {
+        var box = document.getElementById('tl_episodio_acciones');
+        if (!box) return;
+        acciones = Array.isArray(acciones) ? acciones : [];
+        if (!acciones.length) {
+            box.hidden = true;
+            box.innerHTML = '';
             return;
         }
-        var html = '<div class="small text-uppercase text-muted mb-2">Evoluciones del episodio</div><ul class="mb-0 ps-3">';
-        evoluciones.forEach(function (ev) {
-            html += '<li class="mb-2"><span class="text-muted small">'
-                + escMotivosHtml(ev.fecha || '')
-                + '</span><div style="white-space:pre-wrap">'
-                + escMotivosHtml(ev.texto || 'Evolución documentada')
-                + '</div></li>';
+        box.hidden = false;
+        var html = '';
+        acciones.forEach(function (a) {
+            if (!a || !a.id) return;
+            html += '<button type="button" class="btn btn-sm btn-danger me-1 mb-1" data-tl-accion="'
+                + escMotivosHtml(a.id) + '">'
+                + escMotivosHtml(a.label || a.id)
+                + '</button>';
+        });
+        box.innerHTML = html;
+        box.querySelectorAll('[data-tl-accion]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var id = btn.getAttribute('data-tl-accion');
+                if (id === 'egreso_estructurado') {
+                    openEgresoGuardiaModal();
+                }
+            });
+        });
+    }
+
+    async function openEgresoGuardiaModal() {
+        var modalEl = document.getElementById('modal-egreso-guardia');
+        if (!modalEl || !timelineConfig.parentId) return;
+        var form = document.getElementById('tl-egreso-guardia-form');
+        var errEl = document.getElementById('tl-egreso-error');
+        if (errEl) {
+            errEl.classList.add('d-none');
+            errEl.textContent = '';
+        }
+        var url = '/api/v1/clinical/emergency-guardia/' + timelineConfig.parentId + '/egreso-formulario';
+        try {
+            var resp = await fetch(url, { headers: bioHeaders() });
+            var payload = await resp.json();
+            var destinos = (payload && payload.data && payload.data.destinos) ? payload.data.destinos : [];
+            var sel = document.getElementById('tl-egreso-destino');
+            if (sel) {
+                sel.innerHTML = '<option value="">Elegí destino…</option>';
+                destinos.forEach(function (d) {
+                    var opt = document.createElement('option');
+                    opt.value = d.value;
+                    opt.textContent = d.label;
+                    sel.appendChild(opt);
+                });
+            }
+            if (form) {
+                var today = new Date();
+                var yyyy = today.getFullYear();
+                var mm = String(today.getMonth() + 1).padStart(2, '0');
+                var dd = String(today.getDate()).padStart(2, '0');
+                var fecha = form.querySelector('[name="fecha_fin"]');
+                var hora = form.querySelector('[name="hora_fin"]');
+                if (fecha && !fecha.value) fecha.value = yyyy + '-' + mm + '-' + dd;
+                if (hora && !hora.value) {
+                    hora.value = String(today.getHours()).padStart(2, '0') + ':'
+                        + String(today.getMinutes()).padStart(2, '0');
+                }
+            }
+        } catch (e) {
+            console.warn('No se pudo precargar destinos de egreso', e);
+        }
+        if (window.bootstrap && bootstrap.Modal) {
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        } else {
+            modalEl.classList.add('show');
+            modalEl.style.display = 'block';
+        }
+    }
+
+    function bindEgresoGuardiaForm() {
+        var form = document.getElementById('tl-egreso-guardia-form');
+        if (!form || form.getAttribute('data-bound') === '1') return;
+        form.setAttribute('data-bound', '1');
+        var destSel = document.getElementById('tl-egreso-destino');
+        var derWrap = document.getElementById('tl-egreso-derivacion-wrap');
+        if (destSel && derWrap) {
+            destSel.addEventListener('change', function () {
+                derWrap.style.display = destSel.value === 'DERIVACION' ? '' : 'none';
+            });
+        }
+        form.addEventListener('submit', async function (ev) {
+            ev.preventDefault();
+            var errEl = document.getElementById('tl-egreso-error');
+            var submitBtn = document.getElementById('tl-egreso-submit');
+            if (errEl) {
+                errEl.classList.add('d-none');
+                errEl.textContent = '';
+            }
+            var params = new URLSearchParams();
+            fd.forEach(function (v, k) {
+                params.append(k, v == null ? '' : String(v));
+            });
+            ['checklist_indicaciones', 'checklist_epicrisis'].forEach(function (n) {
+                if (!form.querySelector('[name="' + n + '"]:checked')) {
+                    params.set(n, '0');
+                } else {
+                    params.set(n, '1');
+                }
+            });
+            var fechaIso = params.get('fecha_fin');
+            if (fechaIso && /^\d{4}-\d{2}-\d{2}$/.test(String(fechaIso))) {
+                var p = String(fechaIso).split('-');
+                params.set('fecha_fin', p[2] + '/' + p[1] + '/' + p[0]);
+            }
+            if (submitBtn) submitBtn.disabled = true;
+            try {
+                var url = '/api/v1/clinical/emergency-guardia/' + timelineConfig.parentId + '/egreso-formulario';
+                var resp = await fetch(url, {
+                    method: 'POST',
+                    headers: Object.assign({}, bioHeaders(), {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }),
+                    body: params.toString()
+                });
+                var payload = await resp.json();
+                if (!resp.ok || (payload && payload.success === false)) {
+                    throw new Error((payload && payload.message) ? payload.message : 'No se pudo registrar el egreso.');
+                }
+                var modalEl = document.getElementById('modal-egreso-guardia');
+                if (modalEl && window.bootstrap && bootstrap.Modal) {
+                    bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+                }
+                window.location.href = <?= json_encode(Url::to(['/site/index'])) ?>;
+            } catch (e) {
+                if (errEl) {
+                    errEl.textContent = e && e.message ? String(e.message) : 'Error al egresar.';
+                    errEl.classList.remove('d-none');
+                }
+            } finally {
+                if (submitBtn) submitBtn.disabled = false;
+            }
+        });
+    }
+
+    function renderContextoInternacion(ctx) {
+        var resumenEl = document.getElementById('tl_internacion_resumen');
+        if (!resumenEl) return;
+        ctx = ctx || {};
+        var parts = [];
+        if (ctx.internacion_id) parts.push('Episodio #' + ctx.internacion_id);
+        if (ctx.cama_label) parts.push(ctx.cama_label);
+        if (ctx.fecha_inicio) parts.push('Ingreso ' + ctx.fecha_inicio);
+        if (ctx.medico && ctx.medico.nombre) parts.push(ctx.medico.nombre);
+        resumenEl.textContent = (parts.length ? parts.join(' · ') : 'Internación en curso')
+            + ' — documentá la evolución del día.';
+    }
+
+    var _tlEpisodioItems = [];
+    var _tlEpisodioFilter = 'all';
+
+    var TL_FILTER_TYPES = {
+        all: null,
+        clinico: ['evolucion_medica', 'triage'],
+        enfermeria: ['atencion_enfermeria'],
+        pedidos: ['pedido', 'resultado_lab', 'interconsulta'],
+        farmacos: ['medicacion', 'administracion'],
+        circuito: ['circuito', 'triage']
+    };
+
+    var TL_TYPE_LABEL = {
+        circuito: 'Circuito',
+        triage: 'Triage',
+        evolucion_medica: 'Evolución',
+        atencion_enfermeria: 'Enfermería',
+        pedido: 'Pedido',
+        resultado_lab: 'Lab',
+        medicacion: 'Medicación',
+        administracion: 'Admin.',
+        interconsulta: 'Interconsulta'
+    };
+
+    function renderTimelineEpisodio(feed) {
+        var listEl = document.getElementById('tl_episodio_timeline_list');
+        var countEl = document.getElementById('tl_episodio_timeline_count');
+        if (!listEl) return;
+        feed = feed || {};
+        _tlEpisodioItems = Array.isArray(feed.items) ? feed.items : [];
+        if (countEl) {
+            countEl.textContent = _tlEpisodioItems.length
+                ? (_tlEpisodioItems.length + ' hito' + (_tlEpisodioItems.length === 1 ? '' : 's'))
+                : '';
+        }
+        paintTimelineEpisodio();
+    }
+
+    function renderSignosVitalesEpisodio(sv) {
+        var chartEl = document.getElementById('tl_episodio_sv_chart');
+        var ultimosEl = document.getElementById('tl_episodio_sv_ultimos');
+        var emptyEl = document.getElementById('tl_episodio_sv_empty');
+        var countEl = document.getElementById('tl_episodio_sv_count');
+        if (!chartEl && !ultimosEl) return;
+        sv = sv || {};
+        var series = Array.isArray(sv.series) ? sv.series : [];
+        var ultimos = sv.ultimos || {};
+        var total = parseInt(sv.total_points || 0, 10) || 0;
+
+        if (countEl) {
+            countEl.textContent = total > 0 ? (total + ' medición' + (total === 1 ? '' : 'es')) : '';
+        }
+
+        if (ultimosEl) {
+            var chips = [];
+            var order = ['ta', 'fc', 'fr', 'sat_o2', 'temp', 'glucemia', 'glasgow'];
+            order.forEach(function (key) {
+                if (key === 'ta' && ultimos.ta) {
+                    var sys = ultimos.ta.sistolica;
+                    var dia = ultimos.ta.diastolica;
+                    if (sys != null || dia != null) {
+                        chips.push('<span class="badge text-bg-light border me-1 mb-1">TA '
+                            + (sys != null ? sys : '—') + '/' + (dia != null ? dia : '—')
+                            + ' <span class="text-muted">' + escMotivosHtml(ultimos.ta.at || '') + '</span></span>');
+                    }
+                    return;
+                }
+                var u = ultimos[key];
+                if (!u || u.value == null) return;
+                chips.push('<span class="badge text-bg-light border me-1 mb-1">'
+                    + escMotivosHtml(u.label || key) + ': <strong>' + escMotivosHtml(String(u.value))
+                    + '</strong> ' + escMotivosHtml(u.unit || '')
+                    + ' <span class="text-muted">' + escMotivosHtml(u.at || '') + '</span></span>');
+            });
+            ultimosEl.innerHTML = chips.join('') || '';
+        }
+
+        if (!series.length) {
+            if (chartEl) chartEl.innerHTML = '';
+            if (emptyEl) emptyEl.classList.remove('d-none');
+            return;
+        }
+        if (emptyEl) emptyEl.classList.add('d-none');
+
+        if (!chartEl || typeof Plotly === 'undefined') {
+            return;
+        }
+
+        var colors = {
+            ta_sys: '#dc3545',
+            ta_dia: '#fd7e14',
+            fc: '#0d6efd',
+            fr: '#20c997',
+            sat_o2: '#6f42c1',
+            temp: '#d63384',
+            glucemia: '#198754',
+            glasgow: '#6c757d'
+        };
+        var traces = series.map(function (s) {
+            var xs = (s.points || []).map(function (p) { return p.at; });
+            var ys = (s.points || []).map(function (p) { return p.value; });
+            return {
+                x: xs,
+                y: ys,
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: (s.label || s.metric) + (s.unit ? ' (' + s.unit + ')' : ''),
+                line: { color: colors[s.metric] || undefined, width: 2 },
+                marker: { size: 7 }
+            };
+        });
+        Plotly.newPlot(chartEl, traces, {
+            margin: { t: 24, r: 16, b: 40, l: 48 },
+            legend: { orientation: 'h', y: 1.15 },
+            xaxis: { title: '', automargin: true },
+            yaxis: { title: '', automargin: true, zeroline: false },
+            paper_bgcolor: 'rgba(0,0,0,0)',
+            plot_bgcolor: 'rgba(0,0,0,0)',
+            height: 260
+        }, { responsive: true, displayModeBar: false });
+    }
+
+    function paintTimelineEpisodio() {
+        var listEl = document.getElementById('tl_episodio_timeline_list');
+        if (!listEl) return;
+        var allowed = TL_FILTER_TYPES[_tlEpisodioFilter] || null;
+        var items = _tlEpisodioItems.filter(function (it) {
+            if (!allowed) return true;
+            return allowed.indexOf(it.type) !== -1;
+        });
+        if (!items.length) {
+            listEl.innerHTML = '<p class="text-muted mb-0 small">'
+                + (_tlEpisodioItems.length ? 'Sin hitos para este filtro.' : 'Sin hitos registrados en este episodio.')
+                + '</p>';
+            return;
+        }
+        var html = '<ul class="tl-episodio-timeline-ul list-unstyled mb-0">';
+        items.forEach(function (it) {
+            var typeLabel = TL_TYPE_LABEL[it.type] || it.type || 'Hito';
+            var actor = (it.actor && it.actor.nombre) ? String(it.actor.nombre) : '';
+            html += '<li class="tl-episodio-timeline-item" data-tl-type="' + escMotivosHtml(it.type || '') + '">';
+            html += '<div class="tl-episodio-timeline-item__meta">';
+            html += '<span class="badge tl-episodio-timeline-badge">' + escMotivosHtml(typeLabel) + '</span>';
+            html += '<span class="text-muted small">' + escMotivosHtml(it.occurred_at || '') + '</span>';
+            if (actor) {
+                html += '<span class="text-muted small">' + escMotivosHtml(actor) + '</span>';
+            }
+            html += '</div>';
+            html += '<div class="tl-episodio-timeline-item__summary">' + escMotivosHtml(it.summary || '') + '</div>';
+            html += '</li>';
         });
         html += '</ul>';
         listEl.innerHTML = html;
     }
 
+    function bindTimelineEpisodioFilters() {
+        var root = document.getElementById('tl_episodio_timeline_filters');
+        if (!root || root.getAttribute('data-bound') === '1') return;
+        root.setAttribute('data-bound', '1');
+        root.addEventListener('click', function (ev) {
+            var btn = ev.target.closest('[data-tl-filter]');
+            if (!btn) return;
+            _tlEpisodioFilter = btn.getAttribute('data-tl-filter') || 'all';
+            root.querySelectorAll('[data-tl-filter]').forEach(function (b) {
+                b.classList.toggle('active', b === btn);
+            });
+            paintTimelineEpisodio();
+        });
+    }
+
     function renderMotivos(texto, mp) {
         var el = document.getElementById('tl_motivos_consulta');
         if (!el) return;
-        if (timelineConfig.modoCaptura === 'imp') {
+        if (timelineConfig.modoCaptura === 'imp' || timelineConfig.modoCaptura === 'emer') {
             el.innerHTML = '';
             return;
         }
@@ -677,11 +1168,25 @@ Modal::end();
             renderBadges('tl_hallazgos', info.hallazgos || [], 'border border-warning text-warning');
             renderBadges('tl_antecedentes', [].concat(info.antecedentes_personales || [], info.antecedentes_familiares || []), 'border border-gray text-gray');
             var mp = payload.data.motivos_consulta_paciente || {};
-            if (timelineConfig.modoCaptura === 'imp') {
+            var esEpisodio = timelineConfig.modoCaptura === 'imp' || timelineConfig.modoCaptura === 'emer';
+            if (esEpisodio) {
                 renderMotivos(null, null);
                 renderMotivosIntake(null);
                 renderCarePackCohorte(null);
-                renderContextoInternacion(payload.data.contexto_internacion || null);
+                renderEpisodioBanner(payload.data.contexto_episodio || null);
+                if (timelineConfig.modoCaptura === 'imp') {
+                    renderContextoInternacion(payload.data.contexto_internacion || null);
+                }
+                bindTimelineEpisodioFilters();
+                bindEgresoGuardiaForm();
+                renderTimelineEpisodio(payload.data.timeline_episodio || null);
+                renderSignosVitalesEpisodio(payload.data.signos_vitales_episodio || null);
+                try {
+                    var qs = new URLSearchParams(window.location.search || '');
+                    if (qs.get('egreso') === '1' && timelineConfig.modoCaptura === 'emer') {
+                        openEgresoGuardiaModal();
+                    }
+                } catch (eEg) {}
             } else {
                 renderMotivos(info.motivos_consulta || null, mp);
                 renderMotivosIntake(mp.motivos_intake || null);

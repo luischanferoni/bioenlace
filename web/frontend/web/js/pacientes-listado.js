@@ -1501,6 +1501,13 @@
     }
 
     function openFinalizarModal(g) {
+      var idPersona = g.id_persona || g.idPersona || 0;
+      if (idPersona > 0 && g.id > 0) {
+        window.location.href = '/paciente/historia?id=' + encodeURIComponent(idPersona)
+          + '&parent=GUARDIA&parent_id=' + encodeURIComponent(g.id)
+          + '&egreso=1';
+        return;
+      }
       finalizarModalGuardiaId = g.id;
       var nameEl = document.getElementById('guardia-finalizar-paciente-nombre');
       if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);

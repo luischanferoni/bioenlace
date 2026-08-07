@@ -102,8 +102,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       widget.resumenConsultaCargada ||
       _historiaClinicaData?.capturaPermitida == false;
 
+  String _tlEpisodioFilter = 'all';
+
   bool get _esCapturaInternacion =>
       (widget.consultParent ?? '').toUpperCase() == 'INTERNACION';
+
+  bool get _esCapturaGuardia =>
+      (widget.consultParent ?? '').toUpperCase() == 'GUARDIA';
+
+  bool get _esCapturaEpisodio => _esCapturaInternacion || _esCapturaGuardia;
 
   bool _autoOpenedReview = false;
 
@@ -285,7 +292,11 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       appBar: BioAppBar(
         title: _modoConsultaCargada
             ? 'Consulta cargada'
-            : (_esCapturaInternacion ? 'Evolución · internación' : 'Historia clínica'),
+            : (_esCapturaGuardia
+                ? 'Atención · guardia'
+                : (_esCapturaInternacion
+                    ? 'Evolución · internación'
+                    : 'Historia clínica')),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -378,10 +389,18 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                                   BioSpacing.gapH(BioSpacing.md),
                                   _buildSignosVitales(
                                       _historiaClinicaData!.signosVitales),
-                                  if (_esCapturaInternacion) ...[
+                                  if (_esCapturaEpisodio) ...[
                                     BioSpacing.gapH(BioSpacing.md),
-                                    _buildContextoInternacion(
-                                      _historiaClinicaData!.contextoInternacion,
+                                    _buildEpisodioBanner(
+                                      _historiaClinicaData!.contextoEpisodio,
+                                    ),
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildSignosVitalesEpisodio(
+                                      _historiaClinicaData!.signosVitalesEpisodio,
+                                    ),
+                                    BioSpacing.gapH(BioSpacing.md),
+                                    _buildTimelineEpisodio(
+                                      _historiaClinicaData!.timelineEpisodio,
                                     ),
                                   ] else ...[
                                     BioSpacing.gapH(BioSpacing.md),
@@ -733,52 +752,337 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     );
   }
 
-  Widget _buildContextoInternacion(ContextoInternacionHistoria? ctx) {
-    final parts = <String>[];
-    if (ctx != null && ctx.internacionId > 0) {
-      parts.add('Episodio #${ctx.internacionId}');
+  Widget _buildSignosVitalesEpisodio(SignosVitalesEpisodio? sv) {
+    final tiene = sv != null && sv.tieneDatos;
+    final ultimos = sv?.ultimos ?? const <String, SignosVitalesEpisodioUltimo>{};
+    final chips = <Widget>[];
+    void addChip(String text) {
+      chips.add(
+        BioBadge(label: text, intent: UiIntent.neutral),
+      );
     }
-    if (ctx != null && ctx.camaLabel.isNotEmpty) {
-      parts.add(ctx.camaLabel);
+
+    final ta = ultimos['ta'];
+    if (ta != null && (ta.sistolica != null || ta.diastolica != null)) {
+      addChip(
+        'TA ${(ta.sistolica ?? '—')}/${(ta.diastolica ?? '—')}'
+        '${ta.at != null ? ' · ${ta.at}' : ''}',
+      );
     }
-    if (ctx != null && ctx.fechaInicio.isNotEmpty) {
-      parts.add('Ingreso ${ctx.fechaInicio}');
+    for (final key in ['fc', 'fr', 'sat_o2', 'temp', 'glucemia', 'glasgow']) {
+      final u = ultimos[key];
+      if (u == null || u.value == null) continue;
+      final label = u.label ?? key;
+      final unit = u.unit ?? '';
+      addChip(
+        '$label: ${u.value}${unit.isNotEmpty ? ' $unit' : ''}'
+        '${u.at != null ? ' · ${u.at}' : ''}',
+      );
     }
-    final resumen = parts.isEmpty
-        ? 'Internación en curso — documentá la evolución del día.'
-        : '${parts.join(' · ')} — documentá la evolución del día.';
-    final evoluciones = ctx?.evoluciones ?? const <EvolucionInternacionItem>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Internación en curso', style: BioTypography.title),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Signos vitales del episodio',
+                style: BioTypography.title,
+              ),
+            ),
+            if (sv != null && sv.totalPoints > 0)
+              Text(
+                '${sv.totalPoints} medición${sv.totalPoints == 1 ? '' : 'es'}',
+                style: BioTypography.caption
+                    .copyWith(color: context.bio.textMuted),
+              ),
+          ],
+        ),
         BioSpacing.gapH(BioSpacing.sm),
-        Text(resumen, style: BioTypography.bodySm),
-        BioSpacing.gapH(BioSpacing.sm),
-        if (evoluciones.isEmpty)
+        if (!tiene)
           Text(
-            'Sin evoluciones previas en este episodio.',
+            'Sin signos vitales registrados en este episodio.',
             style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
           )
         else ...[
-          Text('Evoluciones del episodio', style: BioTypography.bodySm),
-          BioSpacing.gapH(BioSpacing.xs),
-          for (final ev in evoluciones) ...[
-            if (ev.fecha.isNotEmpty)
-              Text(
-                ev.fecha,
-                style: BioTypography.caption.copyWith(color: context.bio.textMuted),
-              ),
-            Text(
-              ev.texto.isNotEmpty ? ev.texto : 'Evolución documentada',
-              style: BioTypography.body,
+          if (chips.isNotEmpty)
+            Wrap(
+              spacing: BioSpacing.xs,
+              runSpacing: BioSpacing.xs,
+              children: chips,
             ),
+          if (sv!.series.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
+            for (final s in sv.series) ...[
+              Text(
+                '${s.label.isNotEmpty ? s.label : s.metric}'
+                '${s.unit.isNotEmpty ? ' (${s.unit})' : ''}',
+                style: BioTypography.bodySm.copyWith(fontWeight: FontWeight.w600),
+              ),
+              for (final p in s.points.reversed.take(5))
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    '${p.at}: ${p.value}${s.unit.isNotEmpty ? ' ${s.unit}' : ''}'
+                    '${p.source.isNotEmpty ? ' · ${p.source}' : ''}',
+                    style: BioTypography.caption
+                        .copyWith(color: context.bio.textMuted),
+                  ),
+                ),
+              BioSpacing.gapH(BioSpacing.xs),
+            ],
           ],
         ],
       ],
     );
+  }
+
+  Widget _buildTimelineEpisodio(TimelineEpisodioFeed? feed) {
+    final all = feed?.items ?? const <TimelineEpisodioItem>[];
+    final filters = <MapEntry<String, String>>[
+      const MapEntry('all', 'Todos'),
+      const MapEntry('clinico', 'Clínico'),
+      const MapEntry('enfermeria', 'Enfermería'),
+      const MapEntry('pedidos', 'Pedidos'),
+      const MapEntry('farmacos', 'Fármacos'),
+      const MapEntry('circuito', 'Circuito'),
+    ];
+    Set<String>? allowed;
+    switch (_tlEpisodioFilter) {
+      case 'clinico':
+        allowed = {'evolucion_medica', 'triage'};
+        break;
+      case 'enfermeria':
+        allowed = {'atencion_enfermeria'};
+        break;
+      case 'pedidos':
+        allowed = {'pedido', 'resultado_lab', 'interconsulta'};
+        break;
+      case 'farmacos':
+        allowed = {'medicacion', 'administracion'};
+        break;
+      case 'circuito':
+        allowed = {'circuito', 'triage'};
+        break;
+      default:
+        allowed = null;
+    }
+    final items = allowed == null
+        ? all
+        : all.where((e) => allowed!.contains(e.type)).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text('Registro del episodio', style: BioTypography.title),
+            ),
+            if (all.isNotEmpty)
+              Text(
+                '${all.length} hito${all.length == 1 ? '' : 's'}',
+                style: BioTypography.caption
+                    .copyWith(color: context.bio.textMuted),
+              ),
+          ],
+        ),
+        BioSpacing.gapH(BioSpacing.sm),
+        Wrap(
+          spacing: BioSpacing.xs,
+          runSpacing: BioSpacing.xs,
+          children: [
+            for (final f in filters)
+              ChoiceChip(
+                label: Text(f.value),
+                selected: _tlEpisodioFilter == f.key,
+                onSelected: (_) {
+                  setState(() => _tlEpisodioFilter = f.key);
+                },
+              ),
+          ],
+        ),
+        BioSpacing.gapH(BioSpacing.sm),
+        if (items.isEmpty)
+          Text(
+            all.isEmpty
+                ? 'Sin hitos registrados en este episodio.'
+                : 'Sin hitos para este filtro.',
+            style: BioTypography.bodySm.copyWith(color: context.bio.textMuted),
+          )
+        else
+          for (final it in items) ...[
+            BioCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: BioSpacing.xs,
+                    runSpacing: BioSpacing.xs,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      BioBadge(label: it.typeLabel, intent: UiIntent.neutral),
+                      if (it.occurredAt.isNotEmpty)
+                        Text(
+                          it.occurredAt,
+                          style: BioTypography.caption
+                              .copyWith(color: context.bio.textMuted),
+                        ),
+                      if (it.actorNombre != null && it.actorNombre!.isNotEmpty)
+                        Text(
+                          it.actorNombre!,
+                          style: BioTypography.caption
+                              .copyWith(color: context.bio.textMuted),
+                        ),
+                    ],
+                  ),
+                  BioSpacing.gapH(BioSpacing.xs),
+                  Text(it.summary, style: BioTypography.body),
+                ],
+              ),
+            ),
+            BioSpacing.gapH(BioSpacing.sm),
+          ],
+      ],
+    );
+  }
+
+  Widget _buildEpisodioBanner(ContextoEpisodioHistoria? ctx) {
+    final tipo = (ctx?.tipo.isNotEmpty == true)
+        ? ctx!.tipo.toUpperCase()
+        : (_esCapturaGuardia ? 'GUARDIA' : 'INTERNACION');
+    final esGuardia = tipo == 'GUARDIA';
+    final tituloTipo = esGuardia ? 'Guardia' : 'Internación';
+    final tituloParts = <String>[
+      '$tituloTipo #${ctx?.episodioId ?? widget.consultParentId ?? '—'}',
+    ];
+    if (ctx?.ingresoAt != null && ctx!.ingresoAt!.isNotEmpty) {
+      tituloParts.add('Ingreso ${ctx.ingresoAt}');
+    }
+
+    Color? triageColor;
+    final hex = ctx?.triageLevelColor;
+    if (hex != null && hex.startsWith('#') && hex.length >= 7) {
+      final parsed = int.tryParse(hex.substring(1, 7), radix: 16);
+      if (parsed != null) {
+        triageColor = Color(0xFF000000 | parsed);
+      }
+    }
+
+    final rows = <MapEntry<String, String>>[
+      MapEntry(
+        'Estado',
+        ctx?.estadoLabel ?? ctx?.estado ?? 'En curso',
+      ),
+      MapEntry(
+        'Ubicación',
+        (ctx?.ubicacionLabel != null && ctx!.ubicacionLabel!.isNotEmpty)
+            ? ctx.ubicacionLabel!
+            : (esGuardia ? 'Sin box asignado' : 'Sin cama'),
+      ),
+      MapEntry(
+        'Médico a cargo',
+        (ctx?.medicoNombre != null && ctx!.medicoNombre!.isNotEmpty)
+            ? ctx.medicoNombre!
+            : 'Sin asignar',
+      ),
+      MapEntry(
+        'Motivo / ingreso',
+        (ctx?.motivo != null && ctx!.motivo!.isNotEmpty)
+            ? ctx.motivo!
+            : 'Sin motivo registrado',
+      ),
+    ];
+
+    return BioCard.intent(
+      intent: esGuardia ? UiIntent.danger : UiIntent.info,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(tituloParts.join(' · '), style: BioTypography.title),
+          if (ctx?.triageLevel != null) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Wrap(
+              spacing: BioSpacing.xs,
+              runSpacing: BioSpacing.xs,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                BioBadge(
+                  label: ctx!.triageLevelLabel ?? 'Nivel ${ctx.triageLevel}',
+                  intent: UiIntent.danger,
+                ),
+                if (triageColor != null)
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: triageColor,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                if (ctx.triageAt != null && ctx.triageAt!.isNotEmpty)
+                  Text(
+                    ctx.triageAt!,
+                    style: BioTypography.caption
+                        .copyWith(color: context.bio.textMuted),
+                  ),
+              ],
+            ),
+          ],
+          BioSpacing.gapH(BioSpacing.sm),
+          for (final row in rows) ...[
+            Text(
+              row.key.toUpperCase(),
+              style: BioTypography.caption.copyWith(
+                color: context.bio.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(row.value, style: BioTypography.body),
+            BioSpacing.gapH(BioSpacing.xs),
+          ],
+          if (ctx != null && ctx.acciones.isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Wrap(
+              spacing: BioSpacing.xs,
+              runSpacing: BioSpacing.xs,
+              children: [
+                for (final a in ctx.acciones)
+                  FilledButton.tonal(
+                    onPressed: () => _onEpisodioAccion(a),
+                    child: Text(a.label),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onEpisodioAccion(EpisodioAccionHistoria accion) async {
+    if (accion.id != 'egreso_estructurado' ||
+        accion.apiRoute == null ||
+        accion.apiRoute!.isEmpty) {
+      return;
+    }
+    final uri = Uri.parse(resolveApiAbsoluteUrl(accion.apiRoute!));
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UiJsonScreen(
+          apiAbsoluteUrl: uri.toString(),
+          authToken: widget.authToken,
+          appClient: 'bioenlace-personalsalud',
+          title: accion.label,
+          onSubmitSuccess: (_) async {
+            await _cargarHistoriaClinica();
+          },
+        ),
+      ),
+    );
+    await _cargarHistoriaClinica();
   }
 
   Widget _buildMotivosConsulta(HistoriaClinicaResponse hc) {
@@ -1557,7 +1861,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final text = _chatController.text.trim();
     if (text.isEmpty && _pendingAudioPath == null) {
       _snack(
-        _esCapturaInternacion
+        _esCapturaEpisodio
             ? 'Escribí o dictá la evolución.'
             : 'Escriba o dicte la consulta.',
         UiIntent.warning,
@@ -2774,10 +3078,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           isSending: _captureBusy,
           sendIcon: Icons.fact_check_outlined,
           hintText: canCapture
-              ? (_esCapturaInternacion
+              ? (_esCapturaEpisodio
                   ? 'Dictar o escribir la evolución…'
                   : 'Dictar o escribir la consulta…')
-              : (_esCapturaInternacion
+              : (_esCapturaEpisodio
                   ? 'Escribir evolución…'
                   : 'Escribir consulta…'),
           maxLines: 6,

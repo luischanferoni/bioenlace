@@ -1,0 +1,98 @@
+{
+  "ui_type": "ui_json",
+  "title": "Egreso de guardia",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "paciente",
+      "title": "Paciente",
+      "text_field": "resumen_texto",
+      "text": ""
+    },
+    {
+      "kind": "fields",
+      "id": "egreso",
+      "title": "Conducta / egreso",
+      "fields": [
+        {
+          "name": "guardia_id",
+          "label": "ID guardia",
+          "type": "text",
+          "required": true,
+          "readonly": true
+        },
+        {
+          "name": "fecha_fin",
+          "label": "Fecha de egreso",
+          "type": "date",
+          "required": true
+        },
+        {
+          "name": "hora_fin",
+          "label": "Hora",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "destino_egreso",
+          "label": "Destino / conducta",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "id_efector_derivacion",
+          "label": "Efector de derivación (si aplica)",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "condiciones_derivacion",
+          "label": "Condiciones de derivación",
+          "type": "textarea",
+          "required": false,
+          "rows": 2
+        },
+        {
+          "name": "diagnostico_operativo",
+          "label": "Diagnóstico operativo de guardia",
+          "type": "textarea",
+          "required": true,
+          "rows": 2
+        },
+        {
+          "name": "epicrisis",
+          "label": "Epicrisis de guardia",
+          "type": "textarea",
+          "required": true,
+          "rows": 5
+        },
+        {
+          "name": "pautas_alarma",
+          "label": "Pautas de alarma / care-plan (alta domiciliaria)",
+          "type": "textarea",
+          "required": false,
+          "rows": 3
+        },
+        {
+          "name": "checklist_indicaciones",
+          "label": "Indicaciones explicadas al paciente o familiar",
+          "type": "checkbox",
+          "required": true
+        },
+        {
+          "name": "checklist_epicrisis",
+          "label": "Epicrisis y destino revisados",
+          "type": "checkbox",
+          "required": true
+        }
+      ]
+    }
+  ]
+}

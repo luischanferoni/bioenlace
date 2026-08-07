@@ -400,42 +400,26 @@ class EmergencyGuardiaActions {
     EmergencyGuardiaApi api,
     VoidCallback onChanged,
   ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Egreso de guardia'),
-        content: Text(
-          '¿Confirma el egreso de ${item.nombreCompleto}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Confirmar'),
-          ),
-        ],
+    final uri = Uri.parse(
+      resolveApiAbsoluteUrl(
+        '/clinical/emergency-guardia/${item.id}/egreso-formulario',
       ),
     );
-    if (confirmed != true) return;
-
-    try {
-      await api.finalizar(item.id);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Egreso registrado')),
-        );
-      }
-      onChanged();
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo egresar: $e')),
-        );
-      }
-    }
+    if (!context.mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => UiJsonScreen(
+          apiAbsoluteUrl: uri.toString(),
+          authToken: api.authToken,
+          appClient: 'bioenlace-personalsalud',
+          title: 'Egreso de guardia',
+          onSubmitSuccess: (_) async {
+            onChanged();
+          },
+        ),
+      ),
+    );
+    onChanged();
   }
 }
 

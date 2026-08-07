@@ -47,6 +47,12 @@ Backend envía:
 
 App **Personal de Salud**: registro FCM vía `POST /devices/push-token` (`appClient: personalsalud-flutter`). Requiere `google-services.json` / configuración Firebase (mismo patrón que paciente).
 
+## Captura clínica en guardia
+
+Al atender, la HC se abre con `parent=GUARDIA` y muestra el **banner de episodio** (triaje, circuito, médico, motivo), el **registro cronológico** y el CTA de **egreso estructurado**. Detalle: [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md).
+
+Intent: `urgencias.egreso-estructurado-flow` → UI JSON `egreso-formulario`.
+
 ## Post-v1 (paquete A)
 
 | Capacidad | API / UI |

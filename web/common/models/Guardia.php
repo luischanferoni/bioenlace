@@ -38,6 +38,11 @@ use yii\helpers\Console;
  * @property string|null $circuito_estado
  * @property int|null $prioridad_triage
  * @property string|null $ingreso_at
+ * @property string|null $destino_egreso
+ * @property string|null $diagnostico_operativo
+ * @property string|null $epicrisis
+ * @property string|null $pautas_alarma
+ * @property string|null $egreso_meta_json
  */
 class Guardia extends \yii\db\ActiveRecord
 {
@@ -85,7 +90,8 @@ class Guardia extends \yii\db\ActiveRecord
         return [
             [['id_persona', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector',], 'integer'],
             [['fecha', 'hora', 'fecha_fin', 'hora_fin', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
-            [['ingresa_con', 'ingresa_en', 'estado', 'situacion_al_ingresar', 'condiciones_derivacion', 'datos_contacto_tel'], 'string'],
+            [['ingresa_con', 'ingresa_en', 'estado', 'situacion_al_ingresar', 'condiciones_derivacion', 'datos_contacto_tel', 'diagnostico_operativo', 'epicrisis', 'pautas_alarma', 'egreso_meta_json'], 'string'],
+            [['destino_egreso'], 'in', 'range' => \common\components\Domain\Clinical\Emergency\Enum\GuardiaEgresoDestino::values(), 'skipOnEmpty' => true],
             [['cobertura'], 'string', 'max' => 100],
             [['id_persona'], 'validarCombinacionUnica', 'on' => self::INGRESO_PACIENTE],
             [['ingresa_en', 'ingresa_con', 'fecha'], 'required', 'on' => self::INGRESO_PACIENTE],

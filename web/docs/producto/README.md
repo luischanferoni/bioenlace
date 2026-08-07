@@ -29,6 +29,7 @@ No es un índice de archivos del repositorio ni un manual de un solo endpoint.
 | [receta-electronica.md](./receta-electronica.md) | Receta emitida, PDF, paciente |
 | [interoperabilidad-historia-clinica.md](./interoperabilidad-historia-clinica.md) | Export FHIR de atención finalizada hacia red / Estado |
 | [urgencias-guardia.md](./urgencias-guardia.md) | Triage, tablero operativo, circuito EMER |
+| [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md) | Cockpit HCD de episodio (banner guardia/internación) |
 | [internacion.md](./internacion.md) | Mapa de camas, alta estructurada, plantillas de epicrisis (ABM) |
 | [superficies-ui.md](./superficies-ui.md) | Inicio vs captura encounter vs flows (web = móvil) |
 | [alta-cuenta-licencia.md](./alta-cuenta-licencia.md) | Self-service clínica/efector, solicitud ministerio, pago simulado |

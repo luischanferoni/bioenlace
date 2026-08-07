@@ -13,6 +13,9 @@ class EmergencyTriageScreen extends StatefulWidget {
   final bool isRetriage;
   final int? initialLevel;
   final String? initialReason;
+  final int? initialBpSys;
+  final int? initialBpDia;
+  final int? initialHr;
 
   const EmergencyTriageScreen({
     Key? key,
@@ -22,6 +25,9 @@ class EmergencyTriageScreen extends StatefulWidget {
     this.isRetriage = false,
     this.initialLevel,
     this.initialReason,
+    this.initialBpSys,
+    this.initialBpDia,
+    this.initialHr,
   }) : super(key: key);
 
   @override
@@ -31,9 +37,9 @@ class EmergencyTriageScreen extends StatefulWidget {
 class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
   late int _level;
   late final TextEditingController _reasonController;
-  final _hrController = TextEditingController();
-  final _sysController = TextEditingController();
-  final _diaController = TextEditingController();
+  late final TextEditingController _hrController;
+  late final TextEditingController _sysController;
+  late final TextEditingController _diaController;
   bool _saving = false;
 
   static const _levelColors = [
@@ -44,11 +50,25 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
     Color(0xFF3498DB),
   ];
 
+  static const _vitalFormatters = <TextInputFormatter>[
+    FilteringTextInputFormatter.digitsOnly,
+    LengthLimitingTextInputFormatter(3),
+  ];
+
   @override
   void initState() {
     super.initState();
     _level = widget.initialLevel ?? 3;
     _reasonController = TextEditingController(text: widget.initialReason ?? '');
+    _sysController = TextEditingController(
+      text: widget.initialBpSys != null ? '${widget.initialBpSys}' : '',
+    );
+    _diaController = TextEditingController(
+      text: widget.initialBpDia != null ? '${widget.initialBpDia}' : '',
+    );
+    _hrController = TextEditingController(
+      text: widget.initialHr != null ? '${widget.initialHr}' : '',
+    );
   }
 
   @override
@@ -60,6 +80,51 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
     super.dispose();
   }
 
+  String? _validateVital(String raw, String label, int min, int max) {
+    final s = raw.trim();
+    if (s.isEmpty) return null;
+    if (!RegExp(r'^\d{2,3}$').hasMatch(s)) {
+      return '$label: ingresá un entero de 2 o 3 dígitos.';
+    }
+    final n = int.parse(s);
+    if (n < min || n > max) {
+      return '$label debe estar entre $min y $max.';
+    }
+    return null;
+  }
+
+  /// Alineado con GuardiaTriageVitalsValidator (PHP).
+  String? _validateVitalsClient() {
+    final sysErr = _validateVital(_sysController.text, 'TA sistólica', 50, 250);
+    if (sysErr != null) return sysErr;
+    final diaErr = _validateVital(_diaController.text, 'TA diastólica', 30, 150);
+    if (diaErr != null) return diaErr;
+    final hrErr = _validateVital(_hrController.text, 'FC', 20, 250);
+    if (hrErr != null) return hrErr;
+
+    final sys = _sysController.text.trim();
+    final dia = _diaController.text.trim();
+    if (sys.isNotEmpty && dia.isNotEmpty) {
+      final s = int.parse(sys);
+      final d = int.parse(dia);
+      if (s <= d) {
+        return 'TA sistólica debe ser mayor que la diastólica.';
+      }
+    }
+    return null;
+  }
+
+  Map<String, dynamic>? _buildVitals() {
+    final out = <String, dynamic>{};
+    final sys = _sysController.text.trim();
+    final dia = _diaController.text.trim();
+    final hr = _hrController.text.trim();
+    if (sys.isNotEmpty) out['bp_sys'] = int.parse(sys);
+    if (dia.isNotEmpty) out['bp_dia'] = int.parse(dia);
+    if (hr.isNotEmpty) out['hr'] = int.parse(hr);
+    return out.isEmpty ? null : out;
+  }
+
   Future<void> _guardar() async {
     final reason = _reasonController.text.trim();
     if (reason.isEmpty) {
@@ -68,23 +133,20 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
       );
       return;
     }
+    final vitalsErr = _validateVitalsClient();
+    if (vitalsErr != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(vitalsErr)),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
-      final vitals = <String, dynamic>{};
-      if (_hrController.text.trim().isNotEmpty) {
-        vitals['hr'] = int.tryParse(_hrController.text.trim());
-      }
-      if (_sysController.text.trim().isNotEmpty) {
-        vitals['bp_sys'] = int.tryParse(_sysController.text.trim());
-      }
-      if (_diaController.text.trim().isNotEmpty) {
-        vitals['bp_dia'] = int.tryParse(_diaController.text.trim());
-      }
       await widget.api.registrarTriage(
         guardiaId: widget.guardiaId,
         level: _level,
         reasonText: reason,
-        vitals: vitals.isEmpty ? null : vitals,
+        vitals: _buildVitals(),
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -138,6 +200,11 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
           ),
           BioSpacing.gapH(BioSpacing.md),
           Text('Signos vitales (opcional)', style: BioTypography.title),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            'Enteros de 2–3 dígitos. TA sys 50–250 · TA dia 30–150 · FC 20–250.',
+            style: BioTypography.caption.copyWith(color: tokens.textMuted),
+          ),
           BioSpacing.gapH(BioSpacing.sm),
           Row(
             children: [
@@ -145,7 +212,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
                 child: TextField(
                   controller: _sysController,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: _vitalFormatters,
                   decoration: const InputDecoration(
                     labelText: 'TA sist.',
                     border: OutlineInputBorder(),
@@ -157,7 +224,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
                 child: TextField(
                   controller: _diaController,
                   keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  inputFormatters: _vitalFormatters,
                   decoration: const InputDecoration(
                     labelText: 'TA diast.',
                     border: OutlineInputBorder(),
@@ -170,7 +237,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
           TextField(
             controller: _hrController,
             keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            inputFormatters: _vitalFormatters,
             decoration: const InputDecoration(
               labelText: 'FC',
               border: OutlineInputBorder(),

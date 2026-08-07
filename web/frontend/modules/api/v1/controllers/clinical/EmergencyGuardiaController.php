@@ -417,21 +417,13 @@ class EmergencyGuardiaController extends BaseController
                 }
                 $idEfector = $this->requireGuardiaEfector('GuardiaEpisode.triage');
 
-                $vitals = [];
-                if (!empty($post['bp_sys'])) {
-                    $vitals['bp_sys'] = (int) $post['bp_sys'];
-                }
-                if (!empty($post['bp_dia'])) {
-                    $vitals['bp_dia'] = (int) $post['bp_dia'];
-                }
-                if (!empty($post['hr'])) {
-                    $vitals['hr'] = (int) $post['hr'];
-                }
-
                 $data = $this->triage->registrar($guardiaId, [
                     'level' => (int) ($post['level'] ?? 3),
                     'reason_text' => (string) ($post['reason_text'] ?? ''),
-                    'vitals' => $vitals,
+                    'vitals' => $post['vitals'] ?? null,
+                    'bp_sys' => $post['bp_sys'] ?? null,
+                    'bp_dia' => $post['bp_dia'] ?? null,
+                    'hr' => $post['hr'] ?? null,
                     'id_efector' => $idEfector,
                 ], $idEfector);
 
@@ -467,8 +459,11 @@ class EmergencyGuardiaController extends BaseController
                     $req->get(),
                     $defaults
                 );
-                if ($triageRow !== null && is_array($out)) {
-                    $out['title'] = 'Editar triage';
+                if (is_array($out)) {
+                    $out['values'] = $defaults;
+                    if ($triageRow !== null) {
+                        $out['title'] = 'Editar triage';
+                    }
                 }
             }
         }

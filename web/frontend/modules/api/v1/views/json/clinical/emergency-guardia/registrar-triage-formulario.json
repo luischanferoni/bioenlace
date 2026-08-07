@@ -45,19 +45,31 @@
           "name": "bp_sys",
           "label": "TA sistólica (opcional)",
           "type": "text",
-          "required": false
+          "required": false,
+          "inputmode": "numeric",
+          "maxlength": 3,
+          "pattern": "^\\d{2,3}$",
+          "hint": "Entero 50–250 (2–3 dígitos)"
         },
         {
           "name": "bp_dia",
           "label": "TA diastólica (opcional)",
           "type": "text",
-          "required": false
+          "required": false,
+          "inputmode": "numeric",
+          "maxlength": 3,
+          "pattern": "^\\d{2,3}$",
+          "hint": "Entero 30–150 (2–3 dígitos)"
         },
         {
           "name": "hr",
           "label": "FC (opcional)",
           "type": "text",
-          "required": false
+          "required": false,
+          "inputmode": "numeric",
+          "maxlength": 3,
+          "pattern": "^\\d{2,3}$",
+          "hint": "Entero 20–250 (2–3 dígitos)"
         }
       ]
     }

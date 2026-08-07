@@ -15,6 +15,10 @@ class GuardiaTableroAsset extends AssetBundle
         'css/guardia-tablero.css',
     ];
 
+    public $js = [
+        'js/bioenlace-triage-vitals.js',
+    ];
+
     public $depends = [
         AppAsset::class,
     ];

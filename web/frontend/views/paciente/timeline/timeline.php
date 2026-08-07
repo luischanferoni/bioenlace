@@ -8,6 +8,7 @@ use common\models\Person\Persona;
 use common\helpers\TimelineHelper;
 use common\models\User;
 use common\models\Clinical\Encounter;
+use frontend\assets\GuardiaTableroAsset;
 use yii\web\View;
 
 
@@ -74,7 +75,7 @@ $this->registerJsFile(
 );
 $this->registerCssFile(Url::to('@web/css/episodio-historia-banner.css'));
 if (!empty($esContextoGuardia)) {
-    $this->registerCssFile(Url::to('@web/css/guardia-tablero.css'));
+    GuardiaTableroAsset::register($this);
 }
 
 ?>
@@ -561,6 +562,26 @@ endif;
         var modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.show();
 
+        function fieldValuesFromUi(root) {
+            var values = {};
+            if (root && root.values && typeof root.values === 'object') {
+                Object.keys(root.values).forEach(function (k) {
+                    values[k] = root.values[k];
+                });
+            }
+            var blocks = (root && root.blocks) || [];
+            blocks.forEach(function (b) {
+                if (!b || !Array.isArray(b.fields)) return;
+                b.fields.forEach(function (f) {
+                    if (!f || !f.name) return;
+                    if (f.value !== undefined && f.value !== null && String(f.value) !== '') {
+                        values[f.name] = f.value;
+                    }
+                });
+            });
+            return values;
+        }
+
         try {
             var headers = (window.BioenlaceApiClient && typeof window.BioenlaceApiClient.mergeHeaders === 'function')
                 ? window.BioenlaceApiClient.mergeHeaders({ 'X-Requested-With': 'XMLHttpRequest' })
@@ -575,81 +596,103 @@ endif;
                 throw new Error((json && json.message) || 'No se pudo cargar el triage.');
             }
             if (titleEl) titleEl.textContent = root.title || 'Triage';
-            if (window.SpaHome && typeof window.SpaHome.renderUiJsonInto === 'function') {
-                window.SpaHome.renderUiJsonInto(root, contentEl, {
-                    onSuccess: function () {
-                        modal.hide();
-                        loadTimelineSummary();
-                    }
-                });
-            } else if (typeof window.renderUiJsonBlocks === 'function') {
-                contentEl.innerHTML = '';
-                window.renderUiJsonBlocks(root, contentEl, {
-                    onSuccess: function () {
-                        modal.hide();
-                        loadTimelineSummary();
-                    }
-                });
-            } else {
-                // Fallback: niveles como items (mismo patrón que tablero), no <select>
-                var data = root.data || {};
-                var level = String(data.level || '3');
-                var reason = String(data.reason_text || '');
-                var levelBtns = [1, 2, 3, 4, 5].map(function (n) {
-                    var checked = String(n) === level ? ' checked' : '';
-                    return '<input type="radio" class="btn-check" name="level" id="tl-triage-level-' + n
-                        + '" value="' + n + '" autocomplete="off"' + checked + ' required>'
-                        + '<label class="btn btn-sm guardia-triage-level guardia-triage-level--' + n
-                        + '" for="tl-triage-level-' + n + '">' + n + '</label>';
-                }).join('');
-                contentEl.innerHTML = ''
-                    + '<form id="tl-triage-form" class="p-1">'
-                    + '<input type="hidden" name="guardia_id" value="' + escMotivosHtml(String(timelineConfig.parentId)) + '" />'
-                    + '<label class="form-label">Prioridad (Manchester)</label>'
-                    + '<div class="d-flex flex-wrap gap-2 mb-3" role="group">' + levelBtns + '</div>'
-                    + '<label class="form-label">Motivo de consulta</label>'
-                    + '<textarea class="form-control mb-2" name="reason_text" rows="3" required>' + escMotivosHtml(reason) + '</textarea>'
-                    + '<div class="row g-2 mb-2">'
-                    + '<div class="col-4"><label class="form-label">TA sys</label><input class="form-control" name="bp_sys" value="' + escMotivosHtml(String(data.bp_sys || '')) + '" /></div>'
-                    + '<div class="col-4"><label class="form-label">TA dia</label><input class="form-control" name="bp_dia" value="' + escMotivosHtml(String(data.bp_dia || '')) + '" /></div>'
-                    + '<div class="col-4"><label class="form-label">FC</label><input class="form-control" name="hr" value="' + escMotivosHtml(String(data.hr || '')) + '" /></div>'
-                    + '</div>'
-                    + '<div class="alert alert-danger d-none" id="tl-triage-error"></div>'
-                    + '<div class="d-flex justify-content-end gap-2">'
-                    + '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>'
-                    + '<button type="submit" class="btn btn-primary">Guardar</button>'
-                    + '</div></form>';
-                var form = document.getElementById('tl-triage-form');
-                form.addEventListener('submit', async function (ev) {
-                    ev.preventDefault();
-                    var errEl = document.getElementById('tl-triage-error');
-                    if (errEl) errEl.classList.add('d-none');
-                    var fd = new FormData(form);
-                    var body = {};
-                    fd.forEach(function (v, k) { if (String(v).trim() !== '') body[k] = v; });
-                    var levelChecked = form.querySelector('input[name="level"]:checked');
-                    if (levelChecked) body.level = levelChecked.value;
-                    try {
-                        var postRes = await fetch(url, {
-                            method: 'POST',
-                            credentials: 'same-origin',
-                            headers: Object.assign({}, headers, { 'Content-Type': 'application/json' }),
-                            body: JSON.stringify(body),
-                        });
-                        var postJson = await postRes.json();
-                        if (postJson && postJson.success === false) {
-                            throw new Error(postJson.message || 'No se pudo guardar el triage.');
-                        }
-                        modal.hide();
-                        loadTimelineSummary();
-                    } catch (eSave) {
-                        if (errEl) {
-                            errEl.textContent = eSave && eSave.message ? String(eSave.message) : 'Error al guardar.';
-                            errEl.classList.remove('d-none');
-                        }
-                    }
-                });
+
+            var data = fieldValuesFromUi(root);
+            var level = String(data.level || '3');
+            var reason = String(data.reason_text || '');
+            var levelBtns = [1, 2, 3, 4, 5].map(function (n) {
+                var checked = String(n) === level ? ' checked' : '';
+                return '<input type="radio" class="btn-check" name="level" id="tl-triage-level-' + n
+                    + '" value="' + n + '" autocomplete="off"' + checked + ' required>'
+                    + '<label class="btn btn-sm guardia-triage-level guardia-triage-level--' + n
+                    + '" for="tl-triage-level-' + n + '">' + n + '</label>';
+            }).join('');
+            contentEl.innerHTML = ''
+                + '<form id="tl-triage-form" class="p-1">'
+                + '<input type="hidden" name="guardia_id" value="' + escMotivosHtml(String(timelineConfig.parentId)) + '" />'
+                + '<label class="form-label">Prioridad (Manchester)</label>'
+                + '<div class="d-flex flex-wrap gap-2 mb-3" role="group">' + levelBtns + '</div>'
+                + '<label class="form-label">Motivo de consulta</label>'
+                + '<textarea class="form-control mb-2" name="reason_text" rows="3" required>' + escMotivosHtml(reason) + '</textarea>'
+                + '<div class="row g-2 mb-2">'
+                + '<div class="col-4"><label class="form-label">TA sys</label>'
+                + '<input class="form-control" name="bp_sys" data-triage-vital="bp_sys" inputmode="numeric" maxlength="3" value="'
+                + escMotivosHtml(String(data.bp_sys || '')) + '" /></div>'
+                + '<div class="col-4"><label class="form-label">TA dia</label>'
+                + '<input class="form-control" name="bp_dia" data-triage-vital="bp_dia" inputmode="numeric" maxlength="3" value="'
+                + escMotivosHtml(String(data.bp_dia || '')) + '" /></div>'
+                + '<div class="col-4"><label class="form-label">FC</label>'
+                + '<input class="form-control" name="hr" data-triage-vital="hr" inputmode="numeric" maxlength="3" value="'
+                + escMotivosHtml(String(data.hr || '')) + '" /></div>'
+                + '</div>'
+                + '<p class="small text-muted mb-2">TA y FC: enteros de 2–3 dígitos (opcionales).</p>'
+                + '<div class="alert alert-danger d-none" id="tl-triage-error"></div>'
+                + '<div class="d-flex justify-content-end gap-2">'
+                + '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>'
+                + '<button type="submit" class="btn btn-primary">Guardar</button>'
+                + '</div></form>';
+
+            if (window.BioenlaceTriageVitals) {
+                window.BioenlaceTriageVitals.bindVitalInputs(contentEl);
             }
+
+            var form = document.getElementById('tl-triage-form');
+            form.addEventListener('submit', async function (ev) {
+                ev.preventDefault();
+                var errEl = document.getElementById('tl-triage-error');
+                if (errEl) errEl.classList.add('d-none');
+                var reasonEl = form.querySelector('[name="reason_text"]');
+                var reasonVal = reasonEl ? String(reasonEl.value || '').trim() : '';
+                if (!reasonVal) {
+                    if (errEl) {
+                        errEl.textContent = 'Indicá el motivo de consulta.';
+                        errEl.classList.remove('d-none');
+                    }
+                    return;
+                }
+                var levelChecked = form.querySelector('input[name="level"]:checked');
+                var vitalsCheck = window.BioenlaceTriageVitals
+                    ? window.BioenlaceTriageVitals.validateVitals(
+                        window.BioenlaceTriageVitals.readVitalsFromForm(form)
+                    )
+                    : { ok: true, vitals: undefined };
+                if (!vitalsCheck.ok) {
+                    if (errEl) {
+                        errEl.textContent = vitalsCheck.message;
+                        errEl.classList.remove('d-none');
+                    }
+                    return;
+                }
+                var body = {
+                    guardia_id: String(timelineConfig.parentId),
+                    level: levelChecked ? levelChecked.value : '3',
+                    reason_text: reasonVal,
+                };
+                if (vitalsCheck.vitals) {
+                    Object.keys(vitalsCheck.vitals).forEach(function (k) {
+                        body[k] = String(vitalsCheck.vitals[k]);
+                    });
+                }
+                try {
+                    var postRes = await fetch(url, {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: Object.assign({}, headers, { 'Content-Type': 'application/json' }),
+                        body: JSON.stringify(body),
+                    });
+                    var postJson = await postRes.json();
+                    if (postJson && postJson.success === false) {
+                        throw new Error(postJson.message || 'No se pudo guardar el triage.');
+                    }
+                    modal.hide();
+                    loadTimelineSummary();
+                } catch (eSave) {
+                    if (errEl) {
+                        errEl.textContent = eSave && eSave.message ? String(eSave.message) : 'Error al guardar.';
+                        errEl.classList.remove('d-none');
+                    }
+                }
+            });
         } catch (e) {
             contentEl.innerHTML = '<div class="alert alert-danger mb-0">'
                 + escMotivosHtml(e && e.message ? String(e.message) : 'Error al abrir triage.')

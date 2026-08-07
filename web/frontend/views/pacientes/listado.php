@@ -167,20 +167,21 @@ $this->title = $esGuardia
                     <label for="guardia-triage-reason" class="form-label">Motivo de consulta</label>
                     <textarea class="form-control" id="guardia-triage-reason" rows="2" required></textarea>
                 </div>
-                <div class="row g-2">
+                    <div class="row g-2">
                     <div class="col-4">
                         <label class="form-label" for="guardia-triage-bp-sys">TA sist.</label>
-                        <input type="number" class="form-control form-control-sm" id="guardia-triage-bp-sys" min="0">
+                        <input type="text" class="form-control form-control-sm" id="guardia-triage-bp-sys" data-triage-vital="bp_sys" name="bp_sys" inputmode="numeric" maxlength="3" autocomplete="off">
                     </div>
                     <div class="col-4">
                         <label class="form-label" for="guardia-triage-bp-dia">TA diast.</label>
-                        <input type="number" class="form-control form-control-sm" id="guardia-triage-bp-dia" min="0">
+                        <input type="text" class="form-control form-control-sm" id="guardia-triage-bp-dia" data-triage-vital="bp_dia" name="bp_dia" inputmode="numeric" maxlength="3" autocomplete="off">
                     </div>
                     <div class="col-4">
                         <label class="form-label" for="guardia-triage-hr">FC</label>
-                        <input type="number" class="form-control form-control-sm" id="guardia-triage-hr" min="0">
+                        <input type="text" class="form-control form-control-sm" id="guardia-triage-hr" data-triage-vital="hr" name="hr" inputmode="numeric" maxlength="3" autocomplete="off">
                     </div>
                 </div>
+                <p class="small text-muted mt-2 mb-0">TA y FC: enteros de 2–3 dígitos (opcionales).</p>
                 <div id="guardia-triage-error" class="alert alert-danger d-none mt-3 mb-0"></div>
             </div>
             <div class="modal-footer">

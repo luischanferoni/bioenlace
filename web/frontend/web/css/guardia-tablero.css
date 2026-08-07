@@ -93,3 +93,45 @@
 .guardia-triage-level:hover {
     box-shadow: none;
 }
+
+/* Chips UI JSON (asistente / SpaHome): mismos colores Manchester */
+.spa-ui-chip-btn[data-field="level"][data-value="1"] {
+    color: #c0392b;
+    border-color: #c0392b;
+}
+.spa-ui-chip-btn[data-field="level"][data-value="2"] {
+    color: #e67e22;
+    border-color: #e67e22;
+}
+.spa-ui-chip-btn[data-field="level"][data-value="3"] {
+    color: #b7950b;
+    border-color: #f1c40f;
+}
+.spa-ui-chip-btn[data-field="level"][data-value="4"] {
+    color: #27ae60;
+    border-color: #27ae60;
+}
+.spa-ui-chip-btn[data-field="level"][data-value="5"] {
+    color: #3498db;
+    border-color: #3498db;
+}
+.spa-ui-chip-btn[data-field="level"][data-value="1"].is-active {
+    color: #641e16;
+    background-color: rgba(192, 57, 43, 0.35);
+}
+.spa-ui-chip-btn[data-field="level"][data-value="2"].is-active {
+    color: #6e2c00;
+    background-color: rgba(230, 126, 34, 0.35);
+}
+.spa-ui-chip-btn[data-field="level"][data-value="3"].is-active {
+    color: #7d6608;
+    background-color: rgba(241, 196, 15, 0.45);
+}
+.spa-ui-chip-btn[data-field="level"][data-value="4"].is-active {
+    color: #145a32;
+    background-color: rgba(39, 174, 96, 0.35);
+}
+.spa-ui-chip-btn[data-field="level"][data-value="5"].is-active {
+    color: #1a5276;
+    background-color: rgba(52, 152, 219, 0.35);
+}

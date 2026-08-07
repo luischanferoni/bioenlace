@@ -49,10 +49,7 @@ final class GuardiaTriageService
             throw new \InvalidArgumentException('Se requiere reason_text.');
         }
         $reasonCode = isset($body['reason_code']) ? trim((string) $body['reason_code']) : null;
-        $vitals = $body['vitals'] ?? null;
-        if ($vitals !== null && !is_array($vitals)) {
-            throw new \InvalidArgumentException('vitals debe ser un objeto JSON.');
-        }
+        $vitals = GuardiaTriageVitalsValidator::normalizeFromBody($body);
 
         $pesId = GuardiaEfectorAccess::resolvePesId(
             isset($body['id_profesional_efector_servicio'])

@@ -4412,11 +4412,20 @@
     function renderTextField(field) {
         const ro = field.readonly === true || field.readonly === 1 || field.readonly === '1' || field.readonly === 'true';
         const v = field.value !== undefined && field.value !== null ? String(field.value) : '';
+        const vitalNames = { bp_sys: 1, bp_dia: 1, hr: 1 };
+        const isVital = !!vitalNames[String(field.name || '')];
         let html = '<input type="text" class="form-control" name="' + escapeHtml(field.name) + '" value="' + escapeHtml(v) + '"'
             + (field.required ? ' required' : '')
             + (ro ? ' readonly' : '')
             + (field.placeholder ? ' placeholder="' + escapeHtml(String(field.placeholder)) + '"' : '')
+            + (field.maxlength != null ? ' maxlength="' + escapeHtml(String(field.maxlength)) + '"' : (isVital ? ' maxlength="3"' : ''))
+            + (field.inputmode ? ' inputmode="' + escapeHtml(String(field.inputmode)) + '"' : (isVital ? ' inputmode="numeric"' : ''))
+            + (field.pattern ? ' pattern="' + escapeHtml(String(field.pattern)) + '"' : '')
+            + (isVital ? ' data-triage-vital="' + escapeHtml(String(field.name)) + '"' : '')
             + '>';
+        if (field.hint) {
+            html += '<div class="form-text">' + escapeHtml(String(field.hint)) + '</div>';
+        }
         return html;
     }
 
@@ -4429,7 +4438,7 @@
         let html = '<textarea class="form-control" name="' + escapeHtml(field.name) + '" rows="' + rows + '"'
             + (field.required ? ' required' : '')
             + (ro ? ' readonly' : '')
-            + '>' + (field.value || '') + '</textarea>';
+            + '>' + escapeHtml(field.value || '') + '</textarea>';
         return html;
     }
 
@@ -4459,6 +4468,10 @@
     function bindDynamicFormFieldControls(form) {
         if (!form) {
             return;
+        }
+
+        if (window.BioenlaceTriageVitals && typeof window.BioenlaceTriageVitals.bindVitalInputs === 'function') {
+            window.BioenlaceTriageVitals.bindVitalInputs(form);
         }
 
         form.querySelectorAll('.quick-option-btn, .spa-ui-chip-btn').forEach(function (btn) {

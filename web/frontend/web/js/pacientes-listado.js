@@ -1343,6 +1343,16 @@
         var levelRadio = document.getElementById('guardia-triage-level-' + String(g.prioridad_triage));
         if (levelRadio) levelRadio.checked = true;
       }
+      var vitals = triage.vitals || {};
+      var sysEl = document.getElementById('guardia-triage-bp-sys');
+      var diaEl = document.getElementById('guardia-triage-bp-dia');
+      var hrEl = document.getElementById('guardia-triage-hr');
+      if (sysEl) sysEl.value = triageModalIsRetriage && vitals.bp_sys != null ? String(vitals.bp_sys) : '';
+      if (diaEl) diaEl.value = triageModalIsRetriage && vitals.bp_dia != null ? String(vitals.bp_dia) : '';
+      if (hrEl) hrEl.value = triageModalIsRetriage && vitals.hr != null ? String(vitals.hr) : '';
+      if (window.BioenlaceTriageVitals) {
+        window.BioenlaceTriageVitals.bindVitalInputs(document.getElementById('guardia-triage-modal'));
+      }
       var errEl = document.getElementById('guardia-triage-error');
       if (errEl) errEl.classList.add('d-none');
       var modal = getTriageModal();
@@ -1581,13 +1591,20 @@
       }
       var levelInput = document.querySelector('input[name="guardia_triage_level"]:checked');
       var level = levelInput ? parseInt(levelInput.value, 10) : 3;
-      var vitals = {};
-      var sys = document.getElementById('guardia-triage-bp-sys');
-      var dia = document.getElementById('guardia-triage-bp-dia');
-      var hr = document.getElementById('guardia-triage-hr');
-      if (sys && sys.value) vitals.bp_sys = parseInt(sys.value, 10);
-      if (dia && dia.value) vitals.bp_dia = parseInt(dia.value, 10);
-      if (hr && hr.value) vitals.hr = parseInt(hr.value, 10);
+      var vitalsCheck = window.BioenlaceTriageVitals
+        ? window.BioenlaceTriageVitals.validateVitals({
+            bp_sys: (document.getElementById('guardia-triage-bp-sys') || {}).value,
+            bp_dia: (document.getElementById('guardia-triage-bp-dia') || {}).value,
+            hr: (document.getElementById('guardia-triage-hr') || {}).value,
+          })
+        : { ok: true, vitals: undefined };
+      if (!vitalsCheck.ok) {
+        if (errEl) {
+          errEl.textContent = vitalsCheck.message;
+          errEl.classList.remove('d-none');
+        }
+        return;
+      }
 
       var submitBtn = document.getElementById('guardia-triage-submit');
       if (submitBtn) submitBtn.disabled = true;
@@ -1602,7 +1619,7 @@
           body: JSON.stringify({
             level: level,
             reason_text: reason,
-            vitals: Object.keys(vitals).length ? vitals : undefined,
+            vitals: vitalsCheck.vitals,
           }),
         });
         if (json.success === false) {

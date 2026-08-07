@@ -41,6 +41,7 @@ class AppAsset extends AssetBundle
             'ajax-wrapper.js',
             // Bridge reutilizable para páginas nativas (tipo 1)
             'native-page-bridge.js',
+            'bioenlace-triage-vitals.js',
             'turnos.js',
             'encounter-capture-review.js',
             'timeline.js',

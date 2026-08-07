@@ -72,8 +72,8 @@ class EmergencyGuardiaActions {
     onChanged();
   }
 
-  /// Menú ⋮ del médico: egreso clínico solo con episodio en atención.
-  /// Egreso administrativo (fuga sin atención) es staff en web.
+  /// Menú ⋮ del médico: solo «Paciente se retiró» (cierra circuito).
+  /// La atención clínica es la captura del encounter; no hay egreso clínico.
   static Future<void> showActionSheet({
     required BuildContext context,
     required EmergencyBoardItem item,
@@ -87,7 +87,7 @@ class EmergencyGuardiaActions {
     final enAtencion = (item.circuitoEstado ?? '') == 'en_atencion';
     if (enAtencion && !item.needsTriage) {
       actions.add(_ActionDef(
-        label: 'Egreso',
+        label: 'Paciente se retiró',
         icon: Icons.logout,
         onTap: () => _finalizar(context, item, api, onChanged),
       ));
@@ -364,7 +364,7 @@ class EmergencyGuardiaActions {
           apiAbsoluteUrl: uri.toString(),
           authToken: api.authToken,
           appClient: 'bioenlace-personalsalud',
-          title: 'Egreso de guardia',
+          title: 'Paciente se retiró',
           onSubmitSuccess: (_) async {
             onChanged();
           },

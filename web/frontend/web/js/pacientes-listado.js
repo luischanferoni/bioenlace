@@ -739,9 +739,8 @@
 
       var ctaFinalizar = rowEl.querySelector('[data-role="cta-finalizar"]');
       if (ctaFinalizar) {
-        var enAtencion = g.circuito_estado === 'en_atencion';
         ctaFinalizar.classList.toggle('d-none', cerrado);
-        ctaFinalizar.textContent = enAtencion ? 'Egreso clínico' : 'Egreso / abandono';
+        ctaFinalizar.textContent = 'Paciente se retiró';
         ctaFinalizar.onclick = function () {
           openFinalizarModal(g);
         };
@@ -1498,24 +1497,14 @@
     }
 
     function openFinalizarModal(g) {
-      var idPersona = g.id_persona || g.idPersona || 0;
-      if (idPersona > 0 && g.id > 0) {
-        window.location.href = '/paciente/historia?id=' + encodeURIComponent(idPersona)
-          + '&parent=GUARDIA&parent_id=' + encodeURIComponent(g.id)
-          + '&egreso=1';
-        return;
-      }
       finalizarModalGuardiaId = g.id;
-      var enAtencion = g.circuito_estado === 'en_atencion';
       var nameEl = document.getElementById('guardia-finalizar-paciente-nombre');
       if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);
       var adminFields = document.getElementById('guardia-finalizar-admin-fields');
-      if (adminFields) adminFields.classList.toggle('d-none', enAtencion);
+      if (adminFields) adminFields.classList.remove('d-none');
       var helpEl = document.getElementById('guardia-finalizar-help');
       if (helpEl) {
-        helpEl.textContent = enAtencion
-          ? 'Abrí la historia clínica del paciente para el egreso clínico.'
-          : 'Egreso administrativo: fuga / abandono / retiro sin atención.';
+        helpEl.textContent = 'Registrá que el paciente se retiró / abandonó. No pide documentación clínica.';
       }
       var errEl = document.getElementById('guardia-finalizar-error');
       if (errEl) errEl.classList.add('d-none');

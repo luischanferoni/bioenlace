@@ -1,27 +1,27 @@
 intent_id: urgencias.egreso-estructurado-flow
-version: 1
+version: 2
 
-action_name: "Egreso de guardia"
-description: "Cierre final del episodio: destino, diagnóstico y epicrisis, sin pedidos que retengan al paciente en guardia."
+action_name: "Paciente se retiró"
+description: "Cierra el circuito de guardia por retiro / fuga / abandono. La documentación clínica queda en la captura del encounter."
 rbac_route: "/api/clinical/emergency-guardia/egreso-formulario"
 keywords:
+  - paciente se retiró
+  - fuga guardia
+  - abandono guardia
   - egreso guardia
-  - alta guardia
-  - epicrisis guardia
-  - destino egreso
-  - conducta guardia
+  - retiro sin atención
 
 intent_semantics:
   goal: >-
-    Cerrar el episodio de guardia como encounter final (destino, diagnóstico operativo, epicrisis).
+    Registrar que el paciente se retiró y cerrar el circuito operativo de guardia.
   how: >-
-    Formulario UI con destino/conducta, epicrisis y checklist (incluye confirmar que no hay retención por pedidos).
+    Formulario mínimo (fecha/hora, motivo FUGA, nota opcional). No pide diagnóstico ni epicrisis.
   outcome:
-    - El circuito de guardia queda cerrado con documentación de egreso.
+    - El circuito de guardia queda finalizado por retiro/abandono.
 
 subintents:
   - id: completar_egreso
-    assistant_text: "Completá destino, epicrisis y checklist de egreso"
+    assistant_text: "Confirmá fecha/hora del retiro"
     requires:
       - draft.guardia_id
     provides: []
@@ -38,10 +38,5 @@ flow_submit:
     fecha_fin: "draft.fecha_fin"
     hora_fin: "draft.hora_fin"
     destino_egreso: "draft.destino_egreso"
-    diagnostico_operativo: "draft.diagnostico_operativo"
-    epicrisis: "draft.epicrisis"
-    pautas_alarma: "draft.pautas_alarma"
-    id_efector_derivacion: "draft.id_efector_derivacion"
-    condiciones_derivacion: "draft.condiciones_derivacion"
-    checklist_indicaciones: "draft.checklist_indicaciones"
-    checklist_epicrisis: "draft.checklist_epicrisis"
+    nota_administrativa: "draft.nota_administrativa"
+    modo_egreso: "administrativo"

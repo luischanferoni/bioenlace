@@ -1,6 +1,6 @@
 {
   "ui_type": "ui_json",
-  "title": "Egreso de guardia",
+  "title": "Paciente se retiró",
   "ui_meta": {
     "schema_version": "1",
     "clients": {
@@ -18,7 +18,7 @@
     {
       "kind": "fields",
       "id": "egreso",
-      "title": "Conducta / egreso",
+      "title": "Retiro / abandono",
       "fields": [
         {
           "name": "guardia_id",
@@ -34,7 +34,7 @@
         },
         {
           "name": "fecha_fin",
-          "label": "Fecha de egreso",
+          "label": "Fecha",
           "type": "date",
           "required": true
         },
@@ -46,7 +46,7 @@
         },
         {
           "name": "destino_egreso",
-          "label": "Destino / conducta",
+          "label": "Motivo de cierre",
           "type": "select",
           "required": true,
           "options": []
@@ -57,58 +57,6 @@
           "type": "textarea",
           "required": false,
           "rows": 3
-        },
-        {
-          "name": "id_efector_derivacion",
-          "label": "Efector de derivación (si aplica)",
-          "type": "text",
-          "required": false
-        },
-        {
-          "name": "condiciones_derivacion",
-          "label": "Condiciones de derivación",
-          "type": "textarea",
-          "required": false,
-          "rows": 2
-        },
-        {
-          "name": "diagnostico_operativo",
-          "label": "Diagnóstico (confirmar desde captura)",
-          "type": "textarea",
-          "required": true,
-          "rows": 2
-        },
-        {
-          "name": "epicrisis",
-          "label": "Epicrisis / conducta (confirmar desde captura)",
-          "type": "textarea",
-          "required": true,
-          "rows": 5
-        },
-        {
-          "name": "pautas_alarma",
-          "label": "Pautas de alarma / care-plan (alta domiciliaria)",
-          "type": "textarea",
-          "required": false,
-          "rows": 3
-        },
-        {
-          "name": "checklist_indicaciones",
-          "label": "Indicaciones explicadas al paciente o familiar",
-          "type": "checkbox",
-          "required": true
-        },
-        {
-          "name": "checklist_sin_retencion",
-          "label": "Sin pedidos ni estudios pendientes que retengan al paciente en guardia",
-          "type": "checkbox",
-          "required": true
-        },
-        {
-          "name": "checklist_epicrisis",
-          "label": "Epicrisis y destino revisados",
-          "type": "checkbox",
-          "required": true
         }
       ]
     }

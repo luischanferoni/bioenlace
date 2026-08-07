@@ -355,18 +355,18 @@ Modal::end();
 
 if ($esContextoGuardia):
     Modal::begin([
-        'title' => 'Egreso de guardia',
+        'title' => 'Paciente se retiró',
         'id' => 'modal-egreso-guardia',
         'size' => Modal::SIZE_LARGE,
     ]);
     ?>
 <form id="tl-egreso-guardia-form" class="p-1">
     <input type="hidden" name="guardia_id" value="<?= (int) $parentIdQuery ?>" />
-    <input type="hidden" name="modo_egreso" id="tl-egreso-modo" value="" />
+    <input type="hidden" name="modo_egreso" id="tl-egreso-modo" value="administrativo" />
     <p class="small text-muted mb-2" id="tl-egreso-resumen"></p>
     <div class="row g-2">
         <div class="col-md-6">
-            <label class="form-label">Fecha de egreso</label>
+            <label class="form-label">Fecha</label>
             <input type="date" class="form-control" name="fecha_fin" required />
         </div>
         <div class="col-md-6">
@@ -374,50 +374,18 @@ if ($esContextoGuardia):
             <input type="text" class="form-control" name="hora_fin" placeholder="HH:MM" required />
         </div>
         <div class="col-12">
-            <label class="form-label">Destino / conducta</label>
+            <label class="form-label">Motivo de cierre</label>
             <select class="form-select" name="destino_egreso" id="tl-egreso-destino" required></select>
         </div>
-        <div class="col-12" id="tl-egreso-admin-wrap" style="display:none;">
-            <label class="form-label">Nota administrativa (opcional)</label>
+        <div class="col-12" id="tl-egreso-admin-wrap">
+            <label class="form-label">Nota (opcional)</label>
             <textarea class="form-control" name="nota_administrativa" id="tl-egreso-nota-admin" rows="3"></textarea>
-        </div>
-        <div class="col-12" id="tl-egreso-derivacion-wrap" style="display:none;">
-            <label class="form-label">ID efector de derivación</label>
-            <input type="number" class="form-control" name="id_efector_derivacion" min="1" />
-            <label class="form-label mt-2">Condiciones de derivación</label>
-            <textarea class="form-control" name="condiciones_derivacion" rows="2"></textarea>
-        </div>
-        <div id="tl-egreso-clinico-wrap" class="col-12">
-            <div class="mb-2">
-                <label class="form-label">Diagnóstico (confirmar desde captura)</label>
-                <textarea class="form-control" name="diagnostico_operativo" id="tl-egreso-diag" rows="2"></textarea>
-            </div>
-            <div class="mb-2">
-                <label class="form-label">Epicrisis / conducta (confirmar desde captura)</label>
-                <textarea class="form-control" name="epicrisis" id="tl-egreso-epi" rows="5"></textarea>
-            </div>
-            <div class="mb-2">
-                <label class="form-label">Pautas de alarma (alta domiciliaria)</label>
-                <textarea class="form-control" name="pautas_alarma" rows="3"></textarea>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="checklist_indicaciones" value="1" id="tl-egreso-chk-ind" />
-                <label class="form-check-label" for="tl-egreso-chk-ind">Indicaciones explicadas al paciente o familiar</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="checklist_sin_retencion" value="1" id="tl-egreso-chk-ret" />
-                <label class="form-check-label" for="tl-egreso-chk-ret">Sin pedidos ni estudios pendientes que retengan al paciente</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="checklist_epicrisis" value="1" id="tl-egreso-chk-epi" />
-                <label class="form-check-label" for="tl-egreso-chk-epi">Epicrisis y destino revisados</label>
-            </div>
         </div>
     </div>
     <div class="alert alert-danger mt-3 d-none" id="tl-egreso-error"></div>
     <div class="d-flex justify-content-end gap-2 mt-3">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <button type="submit" class="btn btn-danger" id="tl-egreso-submit">Confirmar egreso</button>
+        <button type="submit" class="btn btn-danger" id="tl-egreso-submit">Confirmar retiro</button>
     </div>
 </form>
     <?php
@@ -565,31 +533,9 @@ endif;
         });
     }
 
-    function applyEgresoModoUi(modo) {
-        var isAdmin = modo === 'administrativo';
-        var clinicoWrap = document.getElementById('tl-egreso-clinico-wrap');
-        var adminWrap = document.getElementById('tl-egreso-admin-wrap');
-        var derWrap = document.getElementById('tl-egreso-derivacion-wrap');
-        if (clinicoWrap) clinicoWrap.style.display = isAdmin ? 'none' : '';
-        if (adminWrap) adminWrap.style.display = isAdmin ? '' : 'none';
-        if (derWrap && isAdmin) derWrap.style.display = 'none';
-        ['tl-egreso-diag', 'tl-egreso-epi', 'tl-egreso-chk-ind', 'tl-egreso-chk-ret', 'tl-egreso-chk-epi']
-            .forEach(function (id) {
-                var el = document.getElementById(id);
-                if (!el) return;
-                if (isAdmin) {
-                    el.removeAttribute('required');
-                } else if (id === 'tl-egreso-diag' || id === 'tl-egreso-epi'
-                    || id.indexOf('chk') >= 0) {
-                    el.setAttribute('required', 'required');
-                }
-            });
+    function applyEgresoModoUi() {
         var titleEl = document.querySelector('#modal-egreso-guardia .modal-title');
-        if (titleEl) {
-            titleEl.textContent = isAdmin
-                ? 'Egreso administrativo (abandono / retiro)'
-                : 'Egreso clínico de guardia';
-        }
+        if (titleEl) titleEl.textContent = 'Paciente se retiró';
     }
 
     async function openEgresoGuardiaModal() {
@@ -606,32 +552,23 @@ endif;
             var resp = await fetch(url, { headers: bioHeaders() });
             var payload = await resp.json();
             var data = (payload && payload.data) ? payload.data : {};
-            var modo = data.modo_egreso || 'clinico';
             var modoEl = document.getElementById('tl-egreso-modo');
-            if (modoEl) modoEl.value = modo;
-            applyEgresoModoUi(modo);
+            if (modoEl) modoEl.value = 'administrativo';
+            applyEgresoModoUi();
             var resumenEl = document.getElementById('tl-egreso-resumen');
             if (resumenEl) resumenEl.textContent = data.resumen_texto || '';
             var destinos = Array.isArray(data.destinos) ? data.destinos : [];
             var sel = document.getElementById('tl-egreso-destino');
             if (sel) {
-                sel.innerHTML = modo === 'administrativo'
-                    ? ''
-                    : '<option value="">Elegí destino…</option>';
+                sel.innerHTML = '';
                 destinos.forEach(function (d) {
                     var opt = document.createElement('option');
                     opt.value = d.value;
                     opt.textContent = d.label;
                     sel.appendChild(opt);
                 });
-                if (modo === 'administrativo' && destinos.length) {
-                    sel.value = destinos[0].value;
-                }
+                if (destinos.length) sel.value = destinos[0].value;
             }
-            var diag = document.getElementById('tl-egreso-diag');
-            var epi = document.getElementById('tl-egreso-epi');
-            if (diag && data.diagnostico_operativo) diag.value = data.diagnostico_operativo;
-            if (epi && data.epicrisis) epi.value = data.epicrisis;
             if (form) {
                 var today = new Date();
                 var yyyy = today.getFullYear();
@@ -646,7 +583,7 @@ endif;
                 }
             }
         } catch (e) {
-            console.warn('No se pudo precargar destinos de egreso', e);
+            console.warn('No se pudo precargar egreso', e);
         }
         if (window.bootstrap && bootstrap.Modal) {
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
@@ -660,15 +597,6 @@ endif;
         var form = document.getElementById('tl-egreso-guardia-form');
         if (!form || form.getAttribute('data-bound') === '1') return;
         form.setAttribute('data-bound', '1');
-        var destSel = document.getElementById('tl-egreso-destino');
-        var derWrap = document.getElementById('tl-egreso-derivacion-wrap');
-        if (destSel && derWrap) {
-            destSel.addEventListener('change', function () {
-                var modoEl = document.getElementById('tl-egreso-modo');
-                var isAdmin = modoEl && modoEl.value === 'administrativo';
-                derWrap.style.display = (!isAdmin && destSel.value === 'DERIVACION') ? '' : 'none';
-            });
-        }
         form.addEventListener('submit', async function (ev) {
             ev.preventDefault();
             var errEl = document.getElementById('tl-egreso-error');
@@ -681,13 +609,6 @@ endif;
             var params = new URLSearchParams();
             fd.forEach(function (v, k) {
                 params.append(k, v == null ? '' : String(v));
-            });
-            ['checklist_indicaciones', 'checklist_epicrisis', 'checklist_sin_retencion'].forEach(function (n) {
-                if (!form.querySelector('[name="' + n + '"]:checked')) {
-                    params.set(n, '0');
-                } else {
-                    params.set(n, '1');
-                }
             });
             var fechaIso = params.get('fecha_fin');
             if (fechaIso && /^\d{4}-\d{2}-\d{2}$/.test(String(fechaIso))) {
@@ -707,7 +628,7 @@ endif;
                 });
                 var payload = await resp.json();
                 if (!resp.ok || (payload && payload.success === false)) {
-                    throw new Error((payload && payload.message) ? payload.message : 'No se pudo registrar el egreso.');
+                    throw new Error((payload && payload.message) ? payload.message : 'No se pudo registrar el retiro.');
                 }
                 var modalEl = document.getElementById('modal-egreso-guardia');
                 if (modalEl && window.bootstrap && bootstrap.Modal) {
@@ -716,7 +637,7 @@ endif;
                 window.location.href = <?= json_encode(Url::to(['/site/index'])) ?>;
             } catch (e) {
                 if (errEl) {
-                    errEl.textContent = e && e.message ? String(e.message) : 'Error al egresar.';
+                    errEl.textContent = e && e.message ? String(e.message) : 'Error al registrar retiro.';
                     errEl.classList.remove('d-none');
                 }
             } finally {

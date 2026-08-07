@@ -226,14 +226,13 @@ $this->title = $esGuardia
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="guardiaFinalizarModalLabel">Egreso de guardia</h5>
+                <h5 class="modal-title" id="guardiaFinalizarModalLabel">Paciente se retiró</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
                 <p class="text-muted small mb-3" id="guardia-finalizar-paciente-nombre"></p>
                 <p class="small" id="guardia-finalizar-help">
-                    Confirme el egreso del episodio. Si hubo atención médica, usá la historia clínica.
-                    Si el paciente se retiró sin atención, se registra como abandono.
+                    Registrá que el paciente se retiró / abandonó. No pide documentación clínica.
                 </p>
                 <div class="mb-2 d-none" id="guardia-finalizar-admin-fields">
                     <label class="form-label" for="guardia-finalizar-nota">Nota (opcional)</label>
@@ -243,7 +242,7 @@ $this->title = $esGuardia
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="guardia-finalizar-submit">Confirmar egreso</button>
+                <button type="button" class="btn btn-danger" id="guardia-finalizar-submit">Confirmar retiro</button>
             </div>
         </div>
     </div>

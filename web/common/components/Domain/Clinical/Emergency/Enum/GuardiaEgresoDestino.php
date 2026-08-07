@@ -77,7 +77,7 @@ final class GuardiaEgresoDestino
             self::INTERNACION => 'Pase a internación / UCI',
             self::QUIROFANO => 'Pase a quirófano',
             self::DERIVACION => 'Derivación a otra institución',
-            self::FUGA => 'Fuga / abandono / retiro sin atención',
+            self::FUGA => 'Paciente se retiró / fuga / abandono',
             self::DEFUNCION => 'Defunción',
         ];
 

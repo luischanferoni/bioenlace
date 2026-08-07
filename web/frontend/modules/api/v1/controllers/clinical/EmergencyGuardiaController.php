@@ -211,7 +211,7 @@ class EmergencyGuardiaController extends BaseController
     }
 
     /**
-     * Egreso estructurado (destino, diagnóstico operativo, epicrisis).
+     * Paciente se retiró (retiro / fuga / abandono).
      * GET|POST /api/v1/clinical/emergency-guardia/<guardiaId>/egreso-formulario
      */
     public function actionEgresoFormulario(int $guardiaId): array

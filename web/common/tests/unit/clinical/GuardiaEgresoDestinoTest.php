@@ -16,6 +16,7 @@ class GuardiaEgresoDestinoTest extends Unit
         $this->assertTrue(GuardiaEgresoDestino::requiresEfectorDerivacion(GuardiaEgresoDestino::DERIVACION));
         $this->assertTrue(GuardiaEgresoDestino::requestsInternacion(GuardiaEgresoDestino::INTERNACION));
         $this->assertNotEmpty(GuardiaEgresoDestino::options());
+        $this->assertSame('Paciente se retiró / fuga / abandono', GuardiaEgresoDestino::label(GuardiaEgresoDestino::FUGA));
         $this->assertTrue(GuardiaEgresoDestino::isAdministrativo(GuardiaEgresoDestino::FUGA));
         $this->assertFalse(GuardiaEgresoDestino::isAdministrativo(GuardiaEgresoDestino::ALTA_DOMICILIARIA));
         $adminOpts = GuardiaEgresoDestino::optionsForModo(GuardiaEgresoDestino::MODO_ADMINISTRATIVO);

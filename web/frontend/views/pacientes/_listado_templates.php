@@ -143,7 +143,7 @@
             <button type="button" class="btn btn-outline-secondary btn-sm d-none" data-role="cta-retriage">Actualizar triage</button>
             <button type="button" class="btn btn-outline-success btn-sm d-none" data-role="cta-tomar">Tomar caso</button>
             <button type="button" class="btn btn-outline-warning btn-sm d-none" data-role="cta-derivar">Derivar</button>
-            <button type="button" class="btn btn-outline-danger btn-sm d-none" data-role="cta-finalizar">Egreso</button>
+            <button type="button" class="btn btn-outline-danger btn-sm d-none" data-role="cta-finalizar">Paciente se retiró</button>
             <button type="button" class="btn btn-outline-info btn-sm d-none" data-role="cta-internacion">Solicitar cama</button>
         </div>
     </div>

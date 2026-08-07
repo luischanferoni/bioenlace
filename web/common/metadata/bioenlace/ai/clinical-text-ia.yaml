@@ -129,9 +129,9 @@ encounter_capture_extraction:
     DiagnosticoConsulta: diagnóstico, evolución o enfermedad nombrada por el profesional
     ConsultaMedicamentos: medicación mencionada o indicada; objetos Nombre+Tipo(mentioned|ordered)+Cantidad+Via+Frecuencia+tipos/duración — si Tipo=ordered exigir Cantidad y Frecuencia; mentioned basta el nombre
     ConsultaPracticas: mediciones o prácticas realizadas en la consulta (ECG, etc.); objetos Practica+Resultado+Codigo — Resultado y Codigo opcionales; nunca reposo/dieta/control; las cifras de signos vitales (TA, FC, FR, SatO2, temp) van en ConsultaAtencionesEnfermeria
-    ConsultaIndicaciones: instrucciones al paciente (reposo, hidratación, control); objetos Indicacion+Tipo(counseling|conditional|follow_up)+Plazo dias — plazo solo si Tipo=follow_up o hay días explícitos; nunca signos vitales ni TA
+    ConsultaDerivaciones: derivación/pedido a otro servicio del centro O conducta de guardia (pase a internación/UCI, derivación a otra institución); campos Servicio (área institucional), Acto, Modo (consulta|interconsulta|practica|estudio); si el profesional indica internar / UCI / cama, dejalo explícito en Servicio o Acto (p. ej. "internación")
+    ConsultaIndicaciones: instrucciones al paciente (reposo, hidratación, control, alta domiciliaria, pautas de alarma); objetos Indicacion+Tipo(counseling|conditional|follow_up)+Plazo dias — plazo solo si Tipo=follow_up o hay días explícitos; nunca signos vitales ni TA; en guardia, si da el alta o indica control, reflejalo acá
     ConsultaAtencionesEnfermeria: signos vitales medidos o dictados en la atención (TA sistólica/diastólica, FC, FR, saturación O2, temperatura, glucemia, Glasgow, peso, talla); sugerí cargarlos si el profesional menciona cifras o si faltan en el episodio
-    ConsultaDerivaciones: derivación/pedido a otro servicio del centro; campos Servicio (área institucional), Acto (práctica/estudio concreto, no el área), Modo (consulta|interconsulta|practica|estudio); si conocés SCTID numérico podés enviarlo en codigo o Acto code
     ConsultaPracticasOftalmologia: práctica o procedimiento oftalmológico
     ConsultaPracticasOftalmologiaEstudios: estudio oftalmológico solicitado o realizado
     ConsultasRecetaLentes: receta o indicación de lentes

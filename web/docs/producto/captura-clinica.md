@@ -77,7 +77,13 @@ Al cerrar la atención, el review puede listar **problemas y tratamientos abiert
 
 ## Guardia (EMER)
 
-En guardia el workflow incluye motivos, diagnóstico, medicación, prácticas, indicaciones, **signos vitales** (misma captura de texto/audio; se persisten como atención de enfermería del encounter) y **derivaciones**. Las cards de signos vitales del timeline (persona y episodio) son **solo lectura**; no hay un segundo formulario de SV en la HC.
+En guardia el workflow (`emer_standard` en `EncounterDefinition`) incluye motivos, diagnóstico, medicación, prácticas, indicaciones, **signos vitales** y **derivaciones**. Las cards de SV del timeline son **solo lectura**.
+
+**Conducta (alta, internación, derivación a otra área/institución)** se documenta en esa captura. Tras guardar, el dominio puede marcar pedido de cama si la captura indica pase a internación (`GuardiaEncounterOutcomeService`); el staff **ingresa la cama** en el tablero. El médico no tiene CTA “Solicitar cama”.
+
+**Paciente se retiró** no se ofrece en la HC: solo en el tablero (menú ⋮ / CTA web).
+
+Las secciones `requerido` y `campos_requeridos` de cada `EncounterDefinition` (por servicio + clase) definen qué exige el efector; la plantilla EMER se elige por `encounter_class = EMER`.
 
 El **egreso** es el cierre final del episodio: destino, diagnóstico operativo y epicrisis, sin dejar pedidos o derivaciones que retengan al paciente en guardia. Ver [urgencias-guardia.md](./urgencias-guardia.md).
 

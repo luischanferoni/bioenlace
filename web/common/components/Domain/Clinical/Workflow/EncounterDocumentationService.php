@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Workflow;
 
+use common\components\Domain\Clinical\Emergency\Service\GuardiaEncounterOutcomeService;
 use common\components\Domain\Clinical\Capture\ClinicalCaptureResolutionApplier;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\CarePlanService;
@@ -337,6 +338,16 @@ class EncounterDocumentationService extends Component
             $logger->registrar('CHECKPOINT', null, $this->snapshotPersistido($encounter), [
                 'metodo' => 'tras persist+finalize (commit)',
             ]);
+
+            try {
+                $diagnostico['guardia_outcome'] = (new GuardiaEncounterOutcomeService())
+                    ->applyAfterDocumentation($encounter, is_array($datosExtraidos) ? $datosExtraidos : []);
+            } catch (\Throwable $e) {
+                Yii::warning(
+                    'encounter.guardar guardia outcome: ' . $e->getMessage(),
+                    'encounter-doc'
+                );
+            }
 
             // Forzar conexión nueva antes de la IA (evita "MySQL server has gone away"
             // sobre el handle idle y commits fantasmas).

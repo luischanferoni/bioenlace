@@ -94,19 +94,8 @@ final class EpisodioHistoriaBannerService
             ),
         ];
 
-        $acciones = [];
-        if ($estado !== CircuitoEstado::FINALIZADO && $estado !== CircuitoEstado::DERIVADO) {
-            $acciones[] = [
-                'id' => 'egreso_estructurado',
-                'label' => 'Paciente se retiró',
-                'kind' => 'ui_json',
-                'api' => [
-                    'route' => '/api/v1/clinical/emergency-guardia/' . $guardiaId . '/egreso-formulario',
-                    'method' => 'GET',
-                ],
-            ];
-        }
-        $banner['acciones'] = $acciones;
+        // Retiro / abandono: solo tablero (⋮ móvil o CTA web), no en la HC.
+        $banner['acciones'] = [];
 
         return [
             'contexto_episodio' => $banner,

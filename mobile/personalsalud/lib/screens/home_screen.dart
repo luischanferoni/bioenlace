@@ -1501,27 +1501,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          if (!cerrado &&
-              !g.needsTriage &&
-              (g.circuitoEstado ?? '') == 'en_atencion') ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: BioButton.outlinePrimary(
-                label: 'Egreso',
-                size: BioButtonSize.sm,
-                onPressed: () {
-                  EmergencyGuardiaActions.showActionSheet(
-                    context: context,
-                    item: g,
-                    api: _emergencyApi,
-                    onChanged: refresh,
-                    sessionTieneCobertura: _sessionTieneCobertura,
-                  );
-                },
-              ),
-            ),
-          ],
         ],
       ),
     );

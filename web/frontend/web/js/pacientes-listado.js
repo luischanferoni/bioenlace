@@ -748,19 +748,15 @@
 
       var ctaInternacion = rowEl.querySelector('[data-role="cta-internacion"]');
       if (ctaInternacion) {
-        if (cerrado) {
+        // Solicitar cama: lo deduce la captura del médico (pase a internación).
+        // En tablero solo staff ingresa cama cuando ya hay pedido pendiente.
+        if (cerrado || !g.internacion_pendiente) {
           ctaInternacion.classList.add('d-none');
-        } else if (g.internacion_pendiente) {
+        } else {
           ctaInternacion.textContent = 'Ingresar cama';
           ctaInternacion.classList.remove('d-none');
           ctaInternacion.onclick = function () {
             openIngresoCamaModal(g);
-          };
-        } else {
-          ctaInternacion.textContent = 'Solicitar cama';
-          ctaInternacion.classList.remove('d-none');
-          ctaInternacion.onclick = function () {
-            solicitarInternacionGuardia(g);
           };
         }
       }

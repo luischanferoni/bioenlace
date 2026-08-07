@@ -27,15 +27,12 @@ if (is_object($persona) && is_object($persona->domicilioActivo)) {
 $barrioTexto = !empty($barrioNombre) ? $barrioNombre : 'Sin datos';
 $edad = is_object($persona) ? $persona->edad : null;
 $edadTexto = $edad !== null && $edad !== '' ? ((int) $edad) . ' años' : 'edad s/d';
-$nombrePaciente = is_object($persona)
-    ? $persona->getNombreCompleto(Persona::FORMATO_NOMBRE_A_OA_N_ON)
-    : '';
 $generoLabels = [1 => 'Femenino', 2 => 'Masculino', 3 => 'Otro', 4 => 'Indefinido'];
 $generoTexto = $generoLabels[(int) ($persona->genero ?? 0)] ?? 'Sin datos';
 $vistaConsultaCargada = strtolower((string) Yii::$app->request->get('vista', '')) === 'consulta';
 $this->title = $vistaConsultaCargada
-    ? ('Consulta cargada · ' . $nombrePaciente . ' | ' . $edadTexto)
-    : ($nombrePaciente . ' | ' . $edadTexto . ' · ' . $generoTexto . ' · Barrio: ' . $barrioTexto);
+    ? ('Consulta cargada · ' . $persona->apellido . ', ' . $persona->nombre . ' | ' . $edadTexto)
+    : ($persona->nombre . ' ' . $persona->otro_nombre . ', ' . $persona->apellido . ' | ' . $edadTexto . ' · ' . $generoTexto . ' · Barrio: ' . $barrioTexto);
 
 $parentQuery = Yii::$app->request->get('parent');
 $parentIdQuery = (int) Yii::$app->request->get('parent_id', 0);
@@ -72,46 +69,21 @@ $this->registerJsFile(
 ?>
 
 <div class="container-fluid py-2 px-3">
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <button type="button" class="btn btn-outline-secondary btn-sm" id="tl-btn-volver">
-            <i class="bi bi-arrow-left"></i> Volver
-        </button>
-        <a class="btn btn-outline-primary btn-sm" href="<?= Html::encode(Url::to(['/site/index'])) ?>">
-            Inicio
-        </a>
-        <?php if ($vistaConsultaCargada): ?>
-            <span class="badge bg-info text-dark">Consulta cargada</span>
-        <?php endif; ?>
-    </div>
-
-    <!-- Datos del paciente (destacados) -->
-    <div class="card border-2 border-primary bg-paper-50 mb-3" data-role="paciente-identidad">
-        <div class="card-body py-3 px-4">
-            <div class="d-flex align-items-start gap-3">
-                <i class="bi bi-person-circle text-primary flex-shrink-0" style="font-size: 2.25rem; line-height: 1;" aria-hidden="true"></i>
-                <div class="min-w-0 flex-grow-1">
-                    <div class="text-uppercase small text-primary fw-semibold mb-1">Paciente</div>
-                    <h1 class="h3 mb-2 text-break"><?= Html::encode($nombrePaciente) ?></h1>
-                    <div class="d-flex flex-wrap gap-3 gap-md-4">
-                        <div>
-                            <div class="text-muted small">Edad</div>
-                            <div class="fw-semibold"><?= Html::encode($edadTexto) ?></div>
-                        </div>
-                        <div>
-                            <div class="text-muted small">Género</div>
-                            <div class="fw-semibold"><?= Html::encode($generoTexto) ?></div>
-                        </div>
-                        <div>
-                            <div class="text-muted small">Barrio</div>
-                            <div class="fw-semibold"><?= Html::encode($barrioTexto) ?></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" id="tl-btn-volver">
+                <i class="bi bi-arrow-left"></i> Volver
+            </button>
+            <a class="btn btn-outline-primary btn-sm" href="<?= Html::encode(Url::to(['/site/index'])) ?>">
+                Inicio
+            </a>
+        </div>
+        <div class="fw-bold text-body text-truncate" style="font-size: 1.05rem;" title="<?= Html::encode($this->title) ?>">
+            <?= Html::encode($this->title) ?>
         </div>
     </div>
 
-<!-- Primera fila: Estado clínico actual -->
+<!-- Primera fila: Datos del paciente (compacta) -->
 <div class="row mb-3">
     <div class="col-12">
         <div class="card border-2 border-paper-300 bg-paper-50 mb-1">

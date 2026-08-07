@@ -230,15 +230,22 @@ $this->title = $esGuardia
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small mb-3" id="guardia-finalizar-paciente-nombre"></p>
-                <p class="small" id="guardia-finalizar-help">
-                    Registrá que el paciente se retiró / abandonó. No pide documentación clínica.
-                </p>
-                <div class="mb-2 d-none" id="guardia-finalizar-admin-fields">
-                    <label class="form-label" for="guardia-finalizar-nota">Nota (opcional)</label>
-                    <textarea class="form-control form-control-sm" id="guardia-finalizar-nota" rows="2"></textarea>
+                <p class="fw-semibold mb-3" id="guardia-finalizar-paciente-nombre"></p>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label" for="guardia-finalizar-fecha">Fecha</label>
+                        <input type="date" class="form-control form-control-sm" id="guardia-finalizar-fecha" required />
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label" for="guardia-finalizar-hora">Hora</label>
+                        <input type="text" class="form-control form-control-sm" id="guardia-finalizar-hora" placeholder="HH:MM" required />
+                    </div>
                 </div>
-                <div id="guardia-finalizar-error" class="alert alert-danger d-none mb-0"></div>
+                <div class="mb-0">
+                    <label class="form-label" for="guardia-finalizar-nota">Nota (opcional)</label>
+                    <textarea class="form-control form-control-sm" id="guardia-finalizar-nota" rows="3"></textarea>
+                </div>
+                <div id="guardia-finalizar-error" class="alert alert-danger d-none mt-3 mb-0"></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>

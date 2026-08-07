@@ -1500,12 +1500,20 @@
       finalizarModalGuardiaId = g.id;
       var nameEl = document.getElementById('guardia-finalizar-paciente-nombre');
       if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);
-      var adminFields = document.getElementById('guardia-finalizar-admin-fields');
-      if (adminFields) adminFields.classList.remove('d-none');
-      var helpEl = document.getElementById('guardia-finalizar-help');
-      if (helpEl) {
-        helpEl.textContent = 'Registrá que el paciente se retiró / abandonó. No pide documentación clínica.';
+      var now = new Date();
+      var fechaEl = document.getElementById('guardia-finalizar-fecha');
+      var horaEl = document.getElementById('guardia-finalizar-hora');
+      var notaEl = document.getElementById('guardia-finalizar-nota');
+      if (fechaEl) {
+        fechaEl.value = now.getFullYear() + '-'
+          + String(now.getMonth() + 1).padStart(2, '0') + '-'
+          + String(now.getDate()).padStart(2, '0');
       }
+      if (horaEl) {
+        horaEl.value = String(now.getHours()).padStart(2, '0') + ':'
+          + String(now.getMinutes()).padStart(2, '0');
+      }
+      if (notaEl) notaEl.value = '';
       var errEl = document.getElementById('guardia-finalizar-error');
       if (errEl) errEl.classList.add('d-none');
       var modal = getFinalizarModal();
@@ -1517,16 +1525,26 @@
       if (!api || !finalizarModalGuardiaId) return;
       var errEl = document.getElementById('guardia-finalizar-error');
       var submitBtn = document.getElementById('guardia-finalizar-submit');
+      var fechaEl = document.getElementById('guardia-finalizar-fecha');
+      var horaEl = document.getElementById('guardia-finalizar-hora');
+      var notaEl = document.getElementById('guardia-finalizar-nota');
+      var fecha = fechaEl ? String(fechaEl.value || '').trim() : '';
+      var hora = horaEl ? String(horaEl.value || '').trim() : '';
+      if (!fecha || !hora) {
+        if (errEl) {
+          errEl.textContent = 'Indicá fecha y hora.';
+          errEl.classList.remove('d-none');
+        }
+        return;
+      }
       if (submitBtn) submitBtn.disabled = true;
       try {
-        var notaEl = document.getElementById('guardia-finalizar-nota');
         var nota = notaEl ? String(notaEl.value || '').trim() : '';
         var url = api.apiV1Url('clinical/emergency-guardia/' + finalizarModalGuardiaId + '/egreso-formulario');
         var body = new URLSearchParams();
         body.set('modo_egreso', 'administrativo');
-        body.set('fecha_fin', new Date().toISOString().slice(0, 10));
-        body.set('hora_fin', String(new Date().getHours()).padStart(2, '0') + ':'
-          + String(new Date().getMinutes()).padStart(2, '0'));
+        body.set('fecha_fin', fecha);
+        body.set('hora_fin', hora);
         if (nota) body.set('nota_administrativa', nota);
         var json = await api.fetchJson(url, {
           method: 'POST',
@@ -1544,7 +1562,7 @@
         await loadGuardiaTablero(false);
       } catch (e) {
         if (errEl) {
-          errEl.textContent = e && e.message ? e.message : 'No se pudo registrar el egreso.';
+          errEl.textContent = e && e.message ? e.message : 'No se pudo registrar el retiro.';
           errEl.classList.remove('d-none');
         }
       } finally {

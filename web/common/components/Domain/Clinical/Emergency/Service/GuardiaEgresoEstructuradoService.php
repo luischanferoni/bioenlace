@@ -50,13 +50,6 @@ final class GuardiaEgresoEstructuradoService
         $estado = $this->circuito->effectiveEstado($guardia);
         $huboAtencion = in_array($estado, [CircuitoEstado::EN_ATENCION, CircuitoEstado::ATENDIDO], true);
 
-        $resumen = $nombre . ' — Confirmá que el paciente se retiró. '
-            . 'Esto cierra el circuito como retiro/abandono. '
-            . 'La documentación clínica (si hubo) queda en la captura.';
-        if ($huboAtencion) {
-            $resumen .= ' No sustituye la atención del encounter.';
-        }
-
         return [
             'guardia_id' => (int) $guardia->id,
             'id_persona' => (int) $guardia->id_persona,
@@ -67,7 +60,7 @@ final class GuardiaEgresoEstructuradoService
             'destino_egreso' => GuardiaEgresoDestino::FUGA,
             'hubo_atencion' => $huboAtencion,
             'responsable_pes_id' => $pesId > 0 ? $pesId : null,
-            'resumen_texto' => $resumen,
+            'resumen_texto' => $nombre,
             'egreso_formulario_path' => '/api/v1/clinical/emergency-guardia/'
                 . (int) $guardia->id . '/egreso-formulario',
         ];
@@ -100,7 +93,8 @@ final class GuardiaEgresoEstructuradoService
                 continue;
             }
             if (($block['kind'] ?? '') === 'message' && ($block['id'] ?? '') === 'paciente') {
-                $block['text'] = (string) ($ctx['resumen_texto'] ?? '');
+                $block['text'] = (string) ($ctx['paciente_nombre'] ?? $ctx['resumen_texto'] ?? '');
+                $block['title'] = '';
             }
             if (($block['kind'] ?? '') !== 'fields') {
                 $ui['blocks'][$idx] = $block;
@@ -121,7 +115,7 @@ final class GuardiaEgresoEstructuradoService
                 $fields[] = $field;
             }
             $block['fields'] = $fields;
-            $block['title'] = 'Confirmación';
+            unset($block['title']);
             $ui['blocks'][$idx] = $block;
         }
 

@@ -251,7 +251,7 @@ class EmergencyGuardiaController extends BaseController
                 'modo_egreso' => (string) ($ctx['modo_egreso'] ?? 'administrativo'),
                 'fecha_fin' => date('Y-m-d'),
                 'hora_fin' => date('H:i'),
-                'resumen_texto' => (string) ($ctx['resumen_texto'] ?? ''),
+                'resumen_texto' => (string) ($ctx['paciente_nombre'] ?? ''),
             ]);
             $out = UiScreenService::renderUiDefinition('emergency-guardia', 'egreso-formulario', $params, $params);
             $out = $this->egreso->shapeUiDefinition($out, $ctx);

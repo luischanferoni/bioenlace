@@ -362,7 +362,7 @@ if ($esContextoGuardia):
     ?>
 <form id="tl-egreso-guardia-form" class="p-1">
     <input type="hidden" name="modo_egreso" id="tl-egreso-modo" value="administrativo" />
-    <p class="small text-muted mb-2" id="tl-egreso-resumen"></p>
+    <p class="fw-semibold mb-3" id="tl-egreso-paciente-nombre"></p>
     <div class="row g-2">
         <div class="col-md-6">
             <label class="form-label">Fecha</label>
@@ -550,8 +550,8 @@ endif;
             var modoEl = document.getElementById('tl-egreso-modo');
             if (modoEl) modoEl.value = 'administrativo';
             applyEgresoModoUi();
-            var resumenEl = document.getElementById('tl-egreso-resumen');
-            if (resumenEl) resumenEl.textContent = data.resumen_texto || '';
+            var nombreEl = document.getElementById('tl-egreso-paciente-nombre');
+            if (nombreEl) nombreEl.textContent = data.paciente_nombre || data.resumen_texto || '';
             if (form) {
                 var today = new Date();
                 var yyyy = today.getFullYear();
@@ -559,11 +559,13 @@ endif;
                 var dd = String(today.getDate()).padStart(2, '0');
                 var fecha = form.querySelector('[name="fecha_fin"]');
                 var hora = form.querySelector('[name="hora_fin"]');
-                if (fecha && !fecha.value) fecha.value = yyyy + '-' + mm + '-' + dd;
-                if (hora && !hora.value) {
+                var nota = form.querySelector('[name="nota_administrativa"]');
+                if (fecha) fecha.value = yyyy + '-' + mm + '-' + dd;
+                if (hora) {
                     hora.value = String(today.getHours()).padStart(2, '0') + ':'
                         + String(today.getMinutes()).padStart(2, '0');
                 }
+                if (nota) nota.value = '';
             }
         } catch (e) {
             console.warn('No se pudo precargar egreso', e);

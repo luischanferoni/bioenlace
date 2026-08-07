@@ -11,14 +11,13 @@
     {
       "kind": "message",
       "id": "paciente",
-      "title": "Paciente",
+      "title": "",
       "text_field": "resumen_texto",
       "text": ""
     },
     {
       "kind": "fields",
       "id": "egreso",
-      "title": "Confirmación",
       "fields": [
         {
           "name": "modo_egreso",

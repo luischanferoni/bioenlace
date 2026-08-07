@@ -248,10 +248,10 @@ final class ClinicalUiActionCatalog implements UiActionCatalogProviderInterface
             ),
             self::def(
                 'clinical.emergency-guardia.egreso-formulario',
-                'Egreso de guardia (UI)',
-                'Destino, diagnóstico operativo, epicrisis y checklist de egreso.',
+                'Paciente se retiró (UI)',
+                'Confirmar retiro del paciente (fecha/hora; destino fijo FUGA).',
                 '/api/clinical/emergency-guardia/egreso-formulario',
-                ['egreso guardia', 'epicrisis guardia', 'alta guardia', 'destino egreso'],
+                ['paciente se retiró', 'fuga guardia', 'abandono guardia', 'egreso guardia'],
                 true,
                 null,
                 '/api/clinical/emergency-guardia/{guardia_id}/egreso-formulario'

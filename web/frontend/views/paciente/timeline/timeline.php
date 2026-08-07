@@ -361,7 +361,6 @@ if ($esContextoGuardia):
     ]);
     ?>
 <form id="tl-egreso-guardia-form" class="p-1">
-    <input type="hidden" name="guardia_id" value="<?= (int) $parentIdQuery ?>" />
     <input type="hidden" name="modo_egreso" id="tl-egreso-modo" value="administrativo" />
     <p class="small text-muted mb-2" id="tl-egreso-resumen"></p>
     <div class="row g-2">
@@ -374,10 +373,6 @@ if ($esContextoGuardia):
             <input type="text" class="form-control" name="hora_fin" placeholder="HH:MM" required />
         </div>
         <div class="col-12">
-            <label class="form-label">Motivo de cierre</label>
-            <select class="form-select" name="destino_egreso" id="tl-egreso-destino" required></select>
-        </div>
-        <div class="col-12" id="tl-egreso-admin-wrap">
             <label class="form-label">Nota (opcional)</label>
             <textarea class="form-control" name="nota_administrativa" id="tl-egreso-nota-admin" rows="3"></textarea>
         </div>
@@ -557,18 +552,6 @@ endif;
             applyEgresoModoUi();
             var resumenEl = document.getElementById('tl-egreso-resumen');
             if (resumenEl) resumenEl.textContent = data.resumen_texto || '';
-            var destinos = Array.isArray(data.destinos) ? data.destinos : [];
-            var sel = document.getElementById('tl-egreso-destino');
-            if (sel) {
-                sel.innerHTML = '';
-                destinos.forEach(function (d) {
-                    var opt = document.createElement('option');
-                    opt.value = d.value;
-                    opt.textContent = d.label;
-                    sel.appendChild(opt);
-                });
-                if (destinos.length) sel.value = destinos[0].value;
-            }
             if (form) {
                 var today = new Date();
                 var yyyy = today.getFullYear();

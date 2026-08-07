@@ -21,7 +21,7 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 | Atender | Médico | Tap en card / botón Atender → captura clínica |
 | Signos vitales | Staff en triage (opc.); médico en atención | Misma captura EMER; cards del timeline solo lectura |
 | Derivar | Médico | Bloque Derivaciones de la captura (no atajo de tablero) |
-| Paciente se retiró | Médico o staff | Cierra el circuito por retiro/fuga/abandono. Formulario mínimo (fecha/hora + nota). **No** pide diag/epicrisis |
+| Paciente se retiró | Médico o staff | Cierra el circuito como retiro/abandono (`FUGA` implícito). Solo fecha/hora + nota opcional |
 | Cama | Staff / coordinación | Tablero web |
 
 ### Qué NO es el egreso

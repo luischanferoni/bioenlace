@@ -18,15 +18,8 @@
     {
       "kind": "fields",
       "id": "egreso",
-      "title": "Retiro / abandono",
+      "title": "Confirmación",
       "fields": [
-        {
-          "name": "guardia_id",
-          "label": "ID guardia",
-          "type": "text",
-          "required": true,
-          "readonly": true
-        },
         {
           "name": "modo_egreso",
           "type": "hidden",
@@ -43,13 +36,6 @@
           "label": "Hora",
           "type": "text",
           "required": true
-        },
-        {
-          "name": "destino_egreso",
-          "label": "Motivo de cierre",
-          "type": "select",
-          "required": true,
-          "options": []
         },
         {
           "name": "nota_administrativa",

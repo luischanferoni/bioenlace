@@ -248,12 +248,9 @@ class EmergencyGuardiaController extends BaseController
             }
 
             $params = array_merge($req->get(), [
-                'guardia_id' => (string) $guardiaId,
-                'modo_egreso' => (string) ($ctx['modo_egreso'] ?? ''),
+                'modo_egreso' => (string) ($ctx['modo_egreso'] ?? 'administrativo'),
                 'fecha_fin' => date('Y-m-d'),
                 'hora_fin' => date('H:i'),
-                'diagnostico_operativo' => (string) ($ctx['diagnostico_operativo'] ?? ''),
-                'epicrisis' => (string) ($ctx['epicrisis'] ?? ''),
                 'resumen_texto' => (string) ($ctx['resumen_texto'] ?? ''),
             ]);
             $out = UiScreenService::renderUiDefinition('emergency-guardia', 'egreso-formulario', $params, $params);

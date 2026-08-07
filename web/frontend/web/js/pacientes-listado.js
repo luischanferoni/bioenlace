@@ -1524,7 +1524,6 @@
         var url = api.apiV1Url('clinical/emergency-guardia/' + finalizarModalGuardiaId + '/egreso-formulario');
         var body = new URLSearchParams();
         body.set('modo_egreso', 'administrativo');
-        body.set('destino_egreso', 'FUGA');
         body.set('fecha_fin', new Date().toISOString().slice(0, 10));
         body.set('hora_fin', String(new Date().getHours()).padStart(2, '0') + ':'
           + String(new Date().getMinutes()).padStart(2, '0'));

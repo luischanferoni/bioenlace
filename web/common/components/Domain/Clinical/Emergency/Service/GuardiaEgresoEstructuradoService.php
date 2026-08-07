@@ -9,10 +9,10 @@ use common\models\Persona;
 use Yii;
 
 /**
- * Egreso de guardia = cierre por retiro / fuga / abandono.
+ * Egreso de guardia = cierre por retiro / fuga / abandono (destino fijo FUGA).
  *
- * El médico documenta el encounter (captura); no hay “egreso clínico” con diag/epicrisis.
- * Esta acción solo registra que el paciente se retiró (con o sin atención previa).
+ * El médico documenta el encounter (captura); este formulario solo confirma retiro.
+ * guardia_id viene de la URL; el motivo no se elige — está asociado a esta acción.
  */
 final class GuardiaEgresoEstructuradoService
 {
@@ -30,9 +30,6 @@ final class GuardiaEgresoEstructuradoService
         $this->circuito = $circuito ?? new GuardiaCircuitoService();
     }
 
-    /**
-     * Único modo de este formulario: retiro / abandono.
-     */
     public function resolveModo(Guardia $guardia): string
     {
         return GuardiaEgresoDestino::MODO_ADMINISTRATIVO;
@@ -53,11 +50,11 @@ final class GuardiaEgresoEstructuradoService
         $estado = $this->circuito->effectiveEstado($guardia);
         $huboAtencion = in_array($estado, [CircuitoEstado::EN_ATENCION, CircuitoEstado::ATENDIDO], true);
 
-        $resumen = $nombre . ' — Paciente se retiró / abandono. '
-            . 'Cierra el circuito de guardia. La documentación clínica (si hubo) queda en la captura; '
-            . 'acá no se pide diagnóstico ni epicrisis.';
+        $resumen = $nombre . ' — Confirmá que el paciente se retiró. '
+            . 'Esto cierra el circuito como retiro/abandono. '
+            . 'La documentación clínica (si hubo) queda en la captura.';
         if ($huboAtencion) {
-            $resumen .= ' Usalo solo si el paciente se fue; no sustituye la captura del encounter.';
+            $resumen .= ' No sustituye la atención del encounter.';
         }
 
         return [
@@ -67,11 +64,9 @@ final class GuardiaEgresoEstructuradoService
             'circuito_estado' => $estado,
             'circuito_estado_label' => CircuitoEstado::label($estado),
             'modo_egreso' => GuardiaEgresoDestino::MODO_ADMINISTRATIVO,
+            'destino_egreso' => GuardiaEgresoDestino::FUGA,
             'hubo_atencion' => $huboAtencion,
-            'destinos' => GuardiaEgresoDestino::optionsForModo(GuardiaEgresoDestino::MODO_ADMINISTRATIVO),
             'responsable_pes_id' => $pesId > 0 ? $pesId : null,
-            'diagnostico_operativo' => '',
-            'epicrisis' => '',
             'resumen_texto' => $resumen,
             'egreso_formulario_path' => '/api/v1/clinical/emergency-guardia/'
                 . (int) $guardia->id . '/egreso-formulario',
@@ -79,20 +74,15 @@ final class GuardiaEgresoEstructuradoService
     }
 
     /**
-     * Formulario mínimo: fecha/hora, destino FUGA, nota opcional.
-     *
      * @param array<string, mixed> $ui
      * @param array<string, mixed> $ctx
      * @return array<string, mixed>
      */
     public function shapeUiDefinition(array $ui, array $ctx): array
     {
-        $destinoOptions = array_map(static fn (array $d): array => [
-            'value' => (string) $d['value'],
-            'label' => (string) $d['label'],
-        ], $ctx['destinos'] ?? []);
-
-        $clinicoOnly = [
+        $omit = [
+            'guardia_id' => true,
+            'destino_egreso' => true,
             'diagnostico_operativo' => true,
             'epicrisis' => true,
             'pautas_alarma' => true,
@@ -122,24 +112,16 @@ final class GuardiaEgresoEstructuradoService
                     continue;
                 }
                 $name = (string) ($field['name'] ?? '');
-                if (isset($clinicoOnly[$name])) {
+                if (isset($omit[$name])) {
                     continue;
-                }
-                if ($name === 'destino_egreso') {
-                    $field['options'] = $destinoOptions;
-                    $field['value'] = (string) ($destinoOptions[0]['value'] ?? GuardiaEgresoDestino::FUGA);
-                    $field['label'] = 'Motivo de cierre';
                 }
                 if ($name === 'modo_egreso') {
                     $field['value'] = GuardiaEgresoDestino::MODO_ADMINISTRATIVO;
                 }
-                if ($name === 'nota_administrativa') {
-                    $field['label'] = 'Nota (opcional)';
-                }
                 $fields[] = $field;
             }
             $block['fields'] = $fields;
-            $block['title'] = 'Retiro / abandono';
+            $block['title'] = 'Confirmación';
             $ui['blocks'][$idx] = $block;
         }
 
@@ -153,19 +135,9 @@ final class GuardiaEgresoEstructuradoService
     public function registrar(int $guardiaId, int $idEfector, array $post): array
     {
         $guardia = $this->loadActiva($guardiaId, $idEfector);
+        $destino = GuardiaEgresoDestino::FUGA;
 
-        $destino = strtoupper(trim((string) ($post['destino_egreso'] ?? $post['destino'] ?? GuardiaEgresoDestino::FUGA)));
-        if ($destino === '') {
-            $destino = GuardiaEgresoDestino::FUGA;
-        }
-        if (!in_array($destino, GuardiaEgresoDestino::valuesAdministrativos(), true)) {
-            throw new \InvalidArgumentException(
-                'El egreso desde este formulario solo admite retiro / fuga / abandono. '
-                . 'La atención clínica se documenta en la captura.'
-            );
-        }
-
-        $nota = trim((string) ($post['nota_administrativa'] ?? $post['condiciones_derivacion'] ?? ''));
+        $nota = trim((string) ($post['nota_administrativa'] ?? ''));
         $pesId = $this->resolvePesId($post);
         $meta = [
             'modo_egreso' => GuardiaEgresoDestino::MODO_ADMINISTRATIVO,
@@ -173,6 +145,7 @@ final class GuardiaEgresoEstructuradoService
             'registrado_at' => date('c'),
             'destino_label' => GuardiaEgresoDestino::label($destino),
             'responsable_pes_id' => $pesId > 0 ? $pesId : null,
+            'via' => 'paciente_se_retiro',
         ];
 
         $guardia->destino_egreso = $destino;
@@ -199,7 +172,7 @@ final class GuardiaEgresoEstructuradoService
         $result['modo_egreso'] = GuardiaEgresoDestino::MODO_ADMINISTRATIVO;
         $result['destino_egreso'] = $destino;
         $result['destino_egreso_label'] = GuardiaEgresoDestino::label($destino);
-        $result['message'] = 'Registrado: paciente se retiró (' . GuardiaEgresoDestino::label($destino) . ').';
+        $result['message'] = 'Registrado: paciente se retiró.';
 
         return $result;
     }

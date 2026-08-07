@@ -37,6 +37,5 @@ flow_submit:
     guardia_id: "draft.guardia_id"
     fecha_fin: "draft.fecha_fin"
     hora_fin: "draft.hora_fin"
-    destino_egreso: "draft.destino_egreso"
     nota_administrativa: "draft.nota_administrativa"
     modo_egreso: "administrativo"

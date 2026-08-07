@@ -249,34 +249,16 @@ class EmergencyGuardiaController extends BaseController
 
             $params = array_merge($req->get(), [
                 'guardia_id' => (string) $guardiaId,
+                'modo_egreso' => (string) ($ctx['modo_egreso'] ?? ''),
                 'fecha_fin' => date('Y-m-d'),
                 'hora_fin' => date('H:i'),
-                'resumen_texto' => 'Egreso de ' . ($ctx['paciente_nombre'] ?? 'paciente')
-                    . " (guardia #{$guardiaId})",
+                'diagnostico_operativo' => (string) ($ctx['diagnostico_operativo'] ?? ''),
+                'epicrisis' => (string) ($ctx['epicrisis'] ?? ''),
+                'resumen_texto' => (string) ($ctx['resumen_texto'] ?? ''),
             ]);
             $out = UiScreenService::renderUiDefinition('emergency-guardia', 'egreso-formulario', $params, $params);
+            $out = $this->egreso->shapeUiDefinition($out, $ctx);
             $out['data'] = $ctx;
-
-            $destinoOptions = array_map(static fn (array $d): array => [
-                'value' => (string) $d['value'],
-                'label' => (string) $d['label'],
-            ], $ctx['destinos'] ?? []);
-
-            foreach ($out['blocks'] ?? [] as $idx => $block) {
-                if (!is_array($block) || ($block['kind'] ?? '') !== 'fields') {
-                    continue;
-                }
-                foreach ($block['fields'] ?? [] as $fIdx => $field) {
-                    if (!is_array($field)) {
-                        continue;
-                    }
-                    if ((string) ($field['name'] ?? '') === 'destino_egreso') {
-                        $field['options'] = $destinoOptions;
-                    }
-                    $block['fields'][$fIdx] = $field;
-                }
-                $out['blocks'][$idx] = $block;
-            }
         }
 
         return $out;

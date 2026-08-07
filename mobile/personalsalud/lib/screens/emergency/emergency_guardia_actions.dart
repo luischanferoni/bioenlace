@@ -72,8 +72,8 @@ class EmergencyGuardiaActions {
     onChanged();
   }
 
-  /// Menú ⋮ del médico: solo egreso cuando el episodio ya está en atención.
-  /// Triage/cama son staff (web); derivar y SV van en la captura del encounter.
+  /// Menú ⋮ del médico: egreso clínico solo con episodio en atención.
+  /// Egreso administrativo (fuga sin atención) es staff en web.
   static Future<void> showActionSheet({
     required BuildContext context,
     required EmergencyBoardItem item,

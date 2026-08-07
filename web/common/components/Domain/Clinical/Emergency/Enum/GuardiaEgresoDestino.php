@@ -15,6 +15,9 @@ final class GuardiaEgresoDestino
     public const FUGA = 'FUGA';
     public const DEFUNCION = 'DEFUNCION';
 
+    public const MODO_CLINICO = 'clinico';
+    public const MODO_ADMINISTRATIVO = 'administrativo';
+
     /**
      * @return list<string>
      */
@@ -31,6 +34,41 @@ final class GuardiaEgresoDestino
         ];
     }
 
+    /**
+     * Destinos de egreso médico (hubo o está en atención).
+     *
+     * @return list<string>
+     */
+    public static function valuesClinicos(): array
+    {
+        return [
+            self::ALTA_DOMICILIARIA,
+            self::OBSERVACION,
+            self::INTERNACION,
+            self::QUIROFANO,
+            self::DERIVACION,
+            self::DEFUNCION,
+            self::FUGA,
+        ];
+    }
+
+    /**
+     * Destinos de egreso administrativo (sin atención médica): abandono / retiro.
+     *
+     * @return list<string>
+     */
+    public static function valuesAdministrativos(): array
+    {
+        return [
+            self::FUGA,
+        ];
+    }
+
+    public static function isAdministrativo(string $code): bool
+    {
+        return in_array($code, self::valuesAdministrativos(), true);
+    }
+
     public static function label(string $code): string
     {
         $map = [
@@ -39,7 +77,7 @@ final class GuardiaEgresoDestino
             self::INTERNACION => 'Pase a internación / UCI',
             self::QUIROFANO => 'Pase a quirófano',
             self::DERIVACION => 'Derivación a otra institución',
-            self::FUGA => 'Fuga / abandono',
+            self::FUGA => 'Fuga / abandono / retiro sin atención',
             self::DEFUNCION => 'Defunción',
         ];
 
@@ -51,8 +89,19 @@ final class GuardiaEgresoDestino
      */
     public static function options(): array
     {
+        return self::optionsForModo(self::MODO_CLINICO);
+    }
+
+    /**
+     * @return list<array{value: string, label: string}>
+     */
+    public static function optionsForModo(string $modo): array
+    {
+        $codes = $modo === self::MODO_ADMINISTRATIVO
+            ? self::valuesAdministrativos()
+            : self::valuesClinicos();
         $out = [];
-        foreach (self::values() as $code) {
+        foreach ($codes as $code) {
             $out[] = [
                 'value' => $code,
                 'label' => self::label($code),

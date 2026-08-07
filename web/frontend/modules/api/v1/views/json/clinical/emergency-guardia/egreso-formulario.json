@@ -28,6 +28,11 @@
           "readonly": true
         },
         {
+          "name": "modo_egreso",
+          "type": "hidden",
+          "required": true
+        },
+        {
           "name": "fecha_fin",
           "label": "Fecha de egreso",
           "type": "date",
@@ -47,6 +52,13 @@
           "options": []
         },
         {
+          "name": "nota_administrativa",
+          "label": "Nota (opcional)",
+          "type": "textarea",
+          "required": false,
+          "rows": 3
+        },
+        {
           "name": "id_efector_derivacion",
           "label": "Efector de derivación (si aplica)",
           "type": "text",
@@ -61,14 +73,14 @@
         },
         {
           "name": "diagnostico_operativo",
-          "label": "Diagnóstico operativo de guardia",
+          "label": "Diagnóstico (confirmar desde captura)",
           "type": "textarea",
           "required": true,
           "rows": 2
         },
         {
           "name": "epicrisis",
-          "label": "Epicrisis de guardia",
+          "label": "Epicrisis / conducta (confirmar desde captura)",
           "type": "textarea",
           "required": true,
           "rows": 5

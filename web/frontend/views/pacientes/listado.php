@@ -231,7 +231,14 @@ $this->title = $esGuardia
             </div>
             <div class="modal-body">
                 <p class="text-muted small mb-3" id="guardia-finalizar-paciente-nombre"></p>
-                <p class="small">Confirme el egreso del episodio en el tablero (libro de guardia).</p>
+                <p class="small" id="guardia-finalizar-help">
+                    Confirme el egreso del episodio. Si hubo atención médica, usá la historia clínica.
+                    Si el paciente se retiró sin atención, se registra como abandono.
+                </p>
+                <div class="mb-2 d-none" id="guardia-finalizar-admin-fields">
+                    <label class="form-label" for="guardia-finalizar-nota">Nota (opcional)</label>
+                    <textarea class="form-control form-control-sm" id="guardia-finalizar-nota" rows="2"></textarea>
+                </div>
                 <div id="guardia-finalizar-error" class="alert alert-danger d-none mb-0"></div>
             </div>
             <div class="modal-footer">

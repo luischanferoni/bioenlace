@@ -740,7 +740,8 @@
       var ctaFinalizar = rowEl.querySelector('[data-role="cta-finalizar"]');
       if (ctaFinalizar) {
         var enAtencion = g.circuito_estado === 'en_atencion';
-        ctaFinalizar.classList.toggle('d-none', !enAtencion || cerrado);
+        ctaFinalizar.classList.toggle('d-none', cerrado);
+        ctaFinalizar.textContent = enAtencion ? 'Egreso clínico' : 'Egreso / abandono';
         ctaFinalizar.onclick = function () {
           openFinalizarModal(g);
         };
@@ -1505,8 +1506,17 @@
         return;
       }
       finalizarModalGuardiaId = g.id;
+      var enAtencion = g.circuito_estado === 'en_atencion';
       var nameEl = document.getElementById('guardia-finalizar-paciente-nombre');
       if (nameEl) nameEl.textContent = nombrePacienteGuardia(g);
+      var adminFields = document.getElementById('guardia-finalizar-admin-fields');
+      if (adminFields) adminFields.classList.toggle('d-none', enAtencion);
+      var helpEl = document.getElementById('guardia-finalizar-help');
+      if (helpEl) {
+        helpEl.textContent = enAtencion
+          ? 'Abrí la historia clínica del paciente para el egreso clínico.'
+          : 'Egreso administrativo: fuga / abandono / retiro sin atención.';
+      }
       var errEl = document.getElementById('guardia-finalizar-error');
       if (errEl) errEl.classList.add('d-none');
       var modal = getFinalizarModal();
@@ -1520,14 +1530,23 @@
       var submitBtn = document.getElementById('guardia-finalizar-submit');
       if (submitBtn) submitBtn.disabled = true;
       try {
-        var url = api.apiV1Url('clinical/emergency-guardia/' + finalizarModalGuardiaId + '/finalizar');
+        var notaEl = document.getElementById('guardia-finalizar-nota');
+        var nota = notaEl ? String(notaEl.value || '').trim() : '';
+        var url = api.apiV1Url('clinical/emergency-guardia/' + finalizarModalGuardiaId + '/egreso-formulario');
+        var body = new URLSearchParams();
+        body.set('modo_egreso', 'administrativo');
+        body.set('destino_egreso', 'FUGA');
+        body.set('fecha_fin', new Date().toISOString().slice(0, 10));
+        body.set('hora_fin', String(new Date().getHours()).padStart(2, '0') + ':'
+          + String(new Date().getMinutes()).padStart(2, '0'));
+        if (nota) body.set('nota_administrativa', nota);
         var json = await api.fetchJson(url, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
             'X-Requested-With': 'XMLHttpRequest',
           },
-          body: '{}',
+          body: body.toString(),
         });
         if (json.success === false) {
           throw new Error(json.message || 'Error al finalizar');

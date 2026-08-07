@@ -96,9 +96,15 @@ final class EpisodioHistoriaBannerService
 
         $acciones = [];
         if ($estado !== CircuitoEstado::FINALIZADO && $estado !== CircuitoEstado::DERIVADO) {
+            $egresoLabel = (
+                $estado === CircuitoEstado::EN_ATENCION
+                || $estado === CircuitoEstado::ATENDIDO
+            )
+                ? 'Egreso clínico'
+                : 'Egreso administrativo (abandono)';
             $acciones[] = [
                 'id' => 'egreso_estructurado',
-                'label' => 'Registrar egreso',
+                'label' => $egresoLabel,
                 'kind' => 'ui_json',
                 'api' => [
                     'route' => '/api/v1/clinical/emergency-guardia/' . $guardiaId . '/egreso-formulario',

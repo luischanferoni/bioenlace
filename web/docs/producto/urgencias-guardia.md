@@ -6,8 +6,8 @@ Programa operativo de **triage + tablero** en efectores con `encounterClass = EM
 
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
-| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) | Tablero: triage / re-triage, solicitar o ingresar cama, indicadores. No sustituye la captura médica. |
-| Médico guardia | App Personal de Salud (inicio EMER) | Tablero de cola: **Atender** (tap) abre captura. Sin triage ni “tomar caso” explícito. **Egreso** solo con episodio en atención (o desde la HC). Derivación y signos vitales van en la **captura del encounter**. |
+| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) | Tablero: triage / re-triage, solicitar o ingresar cama, indicadores. **Egreso administrativo** (fuga/abandono) si el paciente se retira sin atención. No sustituye la captura médica. |
+| Médico guardia | App Personal de Salud (inicio EMER) | Tablero de cola: **Atender** (tap) abre captura. Sin triage ni “tomar caso” explícito. **Egreso clínico** solo con episodio en atención (o desde la HC). Derivación y signos vitales van en la **captura del encounter**. |
 | Dirección / calidad | Web inicio + job nocturno | Resumen en vivo; histórico en `guardia_metrics_daily` |
 
 No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** según contexto operativo.
@@ -21,8 +21,18 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 | Atender | Médico | Tap en card / botón Atender → captura clínica |
 | Signos vitales | Staff en triage (opc.); médico en atención | Misma captura EMER; cards del timeline solo lectura |
 | Derivar | Médico | Bloque Derivaciones de la captura (no atajo de tablero) |
-| Egreso | Médico | Cierre **final**: diagnóstico / epicrisis; sin pedidos que retengan al paciente. Desde HC o tablero solo en `en_atencion` |
+| Egreso clínico | Médico | Episodio `en_atencion`: destino + confirmación de diag/epicrisis **heredados de la captura** (no segundo dictado); checklists; sin pedidos que retengan |
+| Egreso administrativo | Staff | Sin atención médica: destino `FUGA` / abandono + fecha/hora (+ nota opcional). Sin diag/epicrisis clínicos |
 | Cama | Staff / coordinación | Tablero web |
+
+### Dos modos de egreso
+
+| | Clínico | Administrativo |
+|--|---------|----------------|
+| Cuándo | `circuito_estado = en_atencion` | Cualquier estado abierto **salvo** `en_atencion` (p. ej. espera triage/médico) |
+| Quién | Médico | Staff en tablero web (o HC) |
+| Qué pide | Destino (alta, observación, internación, quirófano, derivación, defunción, fuga) + confirmación de diag/epicrisis + checklists | Solo fuga/abandono/retiro + fecha/hora |
+| Idea | Cierra el **libro clínico** del episodio; la captura ya documentó el encounter | Cierra el **circuito** cuando no hubo médico |
 
 ## Circuito operativo
 
@@ -46,7 +56,7 @@ Base: `/api/v1/clinical/emergency-guardia`
 | Asignar | `POST …/{id}/asignar` | Uso interno / legado; el flujo médico usa `iniciar-atencion` |
 | Atender | `POST …/{id}/iniciar-atencion` | Asigna PES de sesión si falta; devuelve `captura_url` |
 | Derivar | `POST …/{id}/derivar` | Preferir salida vía captura; endpoint operativo permanece |
-| Egreso | `POST …/{id}/finalizar` o UI `egreso-formulario` | Libro de guardia / egreso estructurado |
+| Egreso | UI `egreso-formulario` (GET/POST) | Modo según circuito: clínico vs administrativo; `POST …/{id}/finalizar` queda como cierre operativo legacy |
 | Indicadores | `GET …/indicadores-resumen` | Medianas y conteos del día |
 | Efectores derivación | `GET …/listar-efectores-derivacion` | Select de destino |
 
@@ -63,7 +73,7 @@ App **Personal de Salud**: registro FCM vía `POST /devices/push-token` (`appCli
 
 Al atender, la HC se abre con `parent=GUARDIA` y muestra el **banner de episodio** (triaje, circuito, médico, motivo), el **registro cronológico**, signos vitales en **solo lectura** y el formulario de captura EMER (motivos, diagnóstico, medicación, prácticas, indicaciones, **signos vitales**, **derivaciones**). El egreso estructurado cierra el episodio. Detalle: [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md) y [captura-clinica.md](./captura-clinica.md).
 
-Intent: `urgencias.egreso-estructurado-flow` → UI JSON `egreso-formulario` (destino, diagnóstico operativo, epicrisis; aviso si hay pedidos que retengan).
+Intent: `urgencias.egreso-estructurado-flow` → UI JSON `egreso-formulario`. El descriptor se **filtra por modo** (`modo_egreso`): clínico (destino + confirmación diag/epicrisis + checklists) o administrativo (FUGA + nota).
 
 ## Post-v1 (paquete A)
 

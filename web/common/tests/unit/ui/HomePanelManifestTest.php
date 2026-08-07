@@ -30,6 +30,17 @@ class HomePanelManifestTest extends Unit
         $this->assertSame('paciente', $manifest->audiencePatientRole());
     }
 
+    public function testEmergencyTriageRolesExcludeMedico(): void
+    {
+        $manifest = new HomePanelManifest();
+        $roles = $manifest->emergencyTriageRoles();
+
+        $this->assertNotEmpty($roles);
+        $this->assertContains('enfermeria', $roles);
+        $this->assertContains('Administrativo', $roles);
+        $this->assertNotContains('Medico', $roles);
+    }
+
     public function testStaffOperationsPanelHasSessionContextAndKpis(): void
     {
         $manifest = new HomePanelManifest();

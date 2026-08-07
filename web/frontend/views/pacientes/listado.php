@@ -8,6 +8,7 @@ use yii\helpers\Json;
 use common\models\Clinical\Encounter;
 use common\models\Servicio;
 use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaBoardCapabilityService;
 
 $idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
 $esAmbulatorio = ($encounter_class === Encounter::ENCOUNTER_CLASS_AMB);
@@ -39,6 +40,7 @@ $metaEc = ($encounter_class && isset($encounterMeta[$encounter_class]))
 
 $encounterJson = Json::encode($encounter_class);
 $esPacienteHome = empty($encounter_class);
+$puedeTriageGuardia = $esGuardia && (new GuardiaBoardCapabilityService())->canTriage();
 
 $this->title = $esGuardia
     ? 'Tablero de guardia'
@@ -90,6 +92,7 @@ $this->title = $esGuardia
      data-msg-empty-guardias="<?= Html::encode('No hay pacientes en el tablero de guardia.') ?>"
      data-msg-empty-cirugias="<?= Html::encode('No hay cirugías agendadas para la fecha seleccionada.') ?>"
      data-es-guardia="<?= $esGuardia ? '1' : '0' ?>"
+     data-puede-triage="<?= $puedeTriageGuardia ? '1' : '0' ?>"
 >
     <div id="pacientes-listado-flash" class="d-none alert mb-3" role="status"></div>
     <div id="pacientes-listado-loading" class="text-center py-5">

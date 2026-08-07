@@ -42,7 +42,7 @@ flowchart LR
 | estado / circuito | `circuito_estado` | En curso (sin circuito EMER) |
 | motivo | Motivo de triage o situación al ingresar | Situación al ingresar |
 | ingreso_at | `ingreso_at` / fecha-hora | Fecha-hora de ingreso |
-| acciones | `editar_triage` (UI JSON) si el circuito no está cerrado | — |
+| acciones | `editar_triage` (UI JSON) solo staff triage (`triage_roles` del manifiesto) si el circuito no está cerrado; el médico no ve esta acción | — |
 
 Ubicación física y médico a cargo **no** van en el banner HC (cama / asignación PES siguen en tablero y flujos operativos).
 

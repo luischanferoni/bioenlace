@@ -16,6 +16,12 @@ panels:
     EMER:
       layout: clinical_board
       title: Tablero de guardia
+      # Triage / re-triage en tablero: staff (enfermería, admisión), no el médico.
+      capabilities:
+        triage_roles:
+          - enfermeria
+          - Administrativo
+          - AdminEfector
       sections:
         - id: staff_cobertura_activa
           provider: staff_cobertura_activa

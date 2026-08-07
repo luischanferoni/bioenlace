@@ -149,6 +149,29 @@ final class HomePanelManifest
         return $role !== '' ? $role : 'paciente';
     }
 
+    /**
+     * Roles autorizados a triage / re-triage en el tablero EMER (UI).
+     *
+     * @return list<string>
+     */
+    public function emergencyTriageRoles(): array
+    {
+        $manifest = $this->load();
+        $raw = $manifest['panels']['staff']['EMER']['capabilities']['triage_roles'] ?? [];
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $role) {
+            $role = trim((string) $role);
+            if ($role !== '') {
+                $out[] = $role;
+            }
+        }
+
+        return $out;
+    }
+
     public static function resetCacheForTests(): void
     {
         self::$cache = null;

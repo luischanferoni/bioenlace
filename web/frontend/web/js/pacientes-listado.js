@@ -80,6 +80,7 @@
     var fecha = root.getAttribute('data-fecha') || '';
     var encounter = root.getAttribute('data-encounter') || '';
     var esGuardia = root.getAttribute('data-es-guardia') === '1';
+    var puedeTriage = root.getAttribute('data-puede-triage') === '1';
     var urlHistoriaBase = root.getAttribute('data-url-historia') || '';
     var urlVerConsultaBase = root.getAttribute('data-url-ver-consulta') || '';
     var urlAsistente = root.getAttribute('data-url-asistente') || '';
@@ -711,7 +712,7 @@
 
       var ctaTriage = rowEl.querySelector('[data-role="cta-triage"]');
       if (ctaTriage) {
-        ctaTriage.classList.toggle('d-none', !sinTriage || cerrado);
+        ctaTriage.classList.toggle('d-none', !puedeTriage || !sinTriage || cerrado);
         ctaTriage.onclick = function () {
           openTriageModal(g, false);
         };
@@ -719,7 +720,7 @@
 
       var ctaRetriage = rowEl.querySelector('[data-role="cta-retriage"]');
       if (ctaRetriage) {
-        ctaRetriage.classList.toggle('d-none', sinTriage || cerrado);
+        ctaRetriage.classList.toggle('d-none', !puedeTriage || sinTriage || cerrado);
         ctaRetriage.onclick = function () {
           openTriageModal(g, true);
         };

@@ -14,6 +14,7 @@ use common\models\Person\Persona;
 use common\models\Platform\DemoSandboxSession;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
+use common\models\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
 use common\models\SegNivelInternacion;
 use common\models\SegNivelInternacionHcama;
@@ -337,12 +338,7 @@ final class DemoSandboxPurgeService
                 ->column($db);
             $pesIds = array_values(array_filter(array_map('intval', $pesIds)));
             if ($pesIds !== []) {
-                $db->createCommand()
-                    ->delete(
-                        ProfesionalEfectorServicioAgenda::tableName(),
-                        ['id_profesional_efector_servicio' => $pesIds]
-                    )
-                    ->execute();
+                $this->hardDeletePesChildren($db, $pesIds);
                 $counts['pes'] = (int) $db->createCommand()
                     ->delete(ProfesionalEfectorServicio::tableName(), ['id' => $pesIds])
                     ->execute();
@@ -443,6 +439,50 @@ final class DemoSandboxPurgeService
         $counts['errors'] = $errors;
 
         return $counts;
+    }
+
+    /**
+     * Hijos y FKs de PES antes del DELETE (mismo orden que ServiciosCatalogoFkPurgeTrait).
+     *
+     * @param list<int> $pesIds
+     */
+    private function hardDeletePesChildren(\yii\db\Connection $db, array $pesIds): void
+    {
+        if ($pesIds === []) {
+            return;
+        }
+
+        $childTables = [
+            ProfesionalEfectorServicioAgendaVersion::tableName(),
+            ProfesionalEfectorServicioAgenda::tableName(),
+            '{{%profesional_efector_servicio_condicion_laboral}}',
+            '{{%profesional_cobertura}}',
+            '{{%profesional_cobertura_plantilla}}',
+        ];
+        foreach ($childTables as $table) {
+            $schema = $db->schema->getTableSchema($table, true);
+            if ($schema === null || !isset($schema->columns['id_profesional_efector_servicio'])) {
+                continue;
+            }
+            $db->createCommand()
+                ->delete($table, ['id_profesional_efector_servicio' => $pesIds])
+                ->execute();
+        }
+
+        // Referencias nullable: no borrar filas clínicas, solo desvincular.
+        foreach ([
+            [Guardia::tableName(), 'id_profesional_efector_servicio'],
+            [Encounter::tableName(), 'id_profesional_efector_servicio'],
+            ['{{%turnos}}', 'id_profesional_efector_servicio'],
+        ] as [$table, $col]) {
+            $schema = $db->schema->getTableSchema($table, true);
+            if ($schema === null || !isset($schema->columns[$col])) {
+                continue;
+            }
+            $db->createCommand()
+                ->update($table, [$col => null], [$col => $pesIds])
+                ->execute();
+        }
     }
 
     private function retireDocumento(string $documento, int $id): string

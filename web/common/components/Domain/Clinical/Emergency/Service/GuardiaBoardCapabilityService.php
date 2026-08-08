@@ -20,7 +20,7 @@ final class GuardiaBoardCapabilityService
     }
 
     /**
-     * Triage / re-triage: enfermería / admisión (no el médico en tablero).
+     * Triage / re-triage en tablero (roles en home_panel_manifest.yaml).
      */
     public function canTriage(): bool
     {

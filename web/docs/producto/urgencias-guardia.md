@@ -7,7 +7,7 @@ Programa operativo de **triage + tablero** en efectores con `encounterClass = EM
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
 | Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) | Tablero: triage / re-triage, **Ingresar cama** (si hay pedido pendiente), indicadores. Puede registrar **Paciente se retiró**. |
-| Médico guardia | App Personal de Salud (inicio EMER) | Tablero: tap → captura del encounter. Conducta (alta, internación, derivación) **en la captura**. **Paciente se retiró** solo en menú ⋮ del tablero (no en la HC). |
+| Médico guardia | Web inicio EMER + app Personal de Salud | Tablero: **Triage** (si aún falta), **Atender** → captura del encounter. Conducta (alta, internación, derivación) **en la captura**. **Paciente se retiró** en tablero. |
 | Dirección / calidad | Web inicio + job nocturno | Resumen en vivo; histórico en `guardia_metrics_daily` |
 
 No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** según contexto operativo.
@@ -16,10 +16,10 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 
 | Capacidad | Quién | Dónde |
 |-----------|-------|--------|
-| Triage / actualizar | Staff | Tablero web |
-| Editar triage | Médico (y staff con HC abierta) | Historia clínica del episodio (`editar_triage` en banner); no en el tablero para el médico |
+| Triage / actualizar | Staff y médico | Tablero web |
+| Editar triage | Médico (y staff con HC abierta) | Historia clínica del episodio (`editar_triage` en banner); también re-triage en tablero |
 | Tomar caso | — (eliminado) | `iniciar-atencion` asigna el PES de sesión si falta |
-| Atender | Médico | Tap en card → captura clínica |
+| Atender | Médico | Tablero → captura clínica (requiere triage previo) |
 | Signos vitales | Staff en triage (opc.); médico en atención | Captura EMER; cards del timeline solo lectura |
 | Derivar / alta / pedir internación | Médico | **Captura del encounter** (`EncounterDefinition` EMER: secciones Derivaciones / Indicaciones). El sistema deduce y marca pedidos (p. ej. cama pendiente) |
 | Paciente se retiró | Médico o staff | Solo tablero (⋮ móvil / CTA web). Cierra circuito como `FUGA`. No aparece en la HC |

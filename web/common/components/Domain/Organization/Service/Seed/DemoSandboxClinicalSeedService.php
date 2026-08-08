@@ -3,6 +3,7 @@
 namespace common\components\Domain\Organization\Service\Seed;
 
 use common\components\Domain\Clinical\Emergency\Service\GuardiaCircuitoService;
+use common\components\Domain\Clinical\Emergency\Service\GuardiaTriageService;
 use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
@@ -333,6 +334,17 @@ final class DemoSandboxClinicalSeedService
         }
 
         (new GuardiaCircuitoService())->afterIngreso($model);
+
+        // Demo = médico: dejar el episodio listo para Atender (triaje inicial).
+        (new GuardiaTriageService())->registrar(
+            (int) $model->id,
+            [
+                'level' => 3,
+                'reason_text' => 'Motivo de consulta demo (triaje inicial).',
+                'id_profesional_efector_servicio' => $idPes,
+            ],
+            $idEfector
+        );
 
         return (int) $model->id;
     }

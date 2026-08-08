@@ -1009,23 +1009,133 @@ endif;
                 + '</p>';
             return;
         }
+        var groups = groupTimelineEpisodioItems(items);
         var html = '<ul class="tl-episodio-timeline-ul list-unstyled mb-0">';
-        items.forEach(function (it) {
-            var typeLabel = TL_TYPE_LABEL[it.type] || it.type || 'Hito';
-            var actor = (it.actor && it.actor.nombre) ? String(it.actor.nombre) : '';
-            html += '<li class="tl-episodio-timeline-item" data-tl-type="' + escMotivosHtml(it.type || '') + '">';
+        groups.forEach(function (group) {
+            var type = group.type || '';
+            var typeLabel = TL_TYPE_LABEL[type] || type || 'Hito';
+            var actor = group.actorKey || '';
+            var count = group.items.length;
+            html += '<li class="tl-episodio-timeline-item" data-tl-type="' + escMotivosHtml(type) + '">';
             html += '<div class="tl-episodio-timeline-item__meta">';
-            html += '<span class="badge tl-episodio-timeline-badge">' + escMotivosHtml(typeLabel) + '</span>';
-            html += '<span class="text-muted small">' + escMotivosHtml(formatEpisodioFecha(it.occurred_at || '')) + '</span>';
+            html += '<span class="badge tl-episodio-timeline-badge">' + escMotivosHtml(typeLabel);
+            if (count > 1) {
+                html += ' · ' + count;
+            }
+            html += '</span>';
+            html += '<span class="text-muted small">' + escMotivosHtml(formatEpisodioFecha(group.occurred_at || '')) + '</span>';
             if (actor) {
                 html += '<span class="text-muted small">' + escMotivosHtml(actor) + '</span>';
             }
             html += '</div>';
-            html += '<div class="tl-episodio-timeline-item__summary">' + escMotivosHtml(it.summary || '') + '</div>';
+            if (count === 1) {
+                var one = formatTimelineSummaryParts(group.items[0]);
+                html += '<div class="tl-episodio-timeline-item__summary">' + escMotivosHtml(one.text);
+                if (one.status) {
+                    html += ' <span class="tl-episodio-timeline-status">(' + escMotivosHtml(one.status) + ')</span>';
+                }
+                html += '</div>';
+            } else {
+                html += '<ul class="tl-episodio-timeline-group__list">';
+                group.items.forEach(function (it) {
+                    var part = formatTimelineSummaryParts(it);
+                    html += '<li>' + escMotivosHtml(part.text);
+                    if (part.status) {
+                        html += ' <span class="tl-episodio-timeline-status">(' + escMotivosHtml(part.status) + ')</span>';
+                    }
+                    html += '</li>';
+                });
+                html += '</ul>';
+            }
             html += '</li>';
         });
         html += '</ul>';
         listEl.innerHTML = html;
+    }
+
+    /** Tipos que se agrupan si son consecutivos (mismo minuto + actor). */
+    var TL_GROUPABLE_TYPES = {
+        pedido: true,
+        medicacion: true,
+        administracion: true,
+        resultado_lab: true,
+        interconsulta: true,
+        atencion_enfermeria: true
+    };
+
+    var TL_STATUS_LABEL = {
+        active: 'activo',
+        completed: 'completado',
+        draft: 'borrador',
+        'on-hold': 'en espera',
+        revoked: 'anulado',
+        cancelled: 'cancelado',
+        stopped: 'detenido',
+        finished: 'finalizado'
+    };
+
+    function timelineMinuteKey(occurredAt) {
+        var s = String(occurredAt || '').trim();
+        // dd/MM/yyyy HH:mm (API ya formateada) o ISO → misma granularidad de minuto
+        var mAr = s.match(/^(\d{2}\/\d{2}\/\d{4})(?:\s+(\d{2}:\d{2}))?/);
+        if (mAr) {
+            return mAr[1] + ' ' + (mAr[2] || '00:00');
+        }
+        var mIso = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2}))?/);
+        if (mIso) {
+            var hh = mIso[4] != null ? String(mIso[4]).padStart(2, '0') : '00';
+            var mm = mIso[5] != null ? mIso[5] : '00';
+            return mIso[3] + '/' + mIso[2] + '/' + mIso[1] + ' ' + hh + ':' + mm;
+        }
+        return s.slice(0, 16);
+    }
+
+    function groupTimelineEpisodioItems(items) {
+        var groups = [];
+        items.forEach(function (it) {
+            var type = it.type || '';
+            var actorKey = (it.actor && it.actor.nombre) ? String(it.actor.nombre) : '';
+            var timeKey = timelineMinuteKey(it.occurred_at);
+            var last = groups.length ? groups[groups.length - 1] : null;
+            var canGroup = !!TL_GROUPABLE_TYPES[type];
+            if (
+                canGroup
+                && last
+                && last.type === type
+                && last.timeKey === timeKey
+                && last.actorKey === actorKey
+            ) {
+                last.items.push(it);
+                return;
+            }
+            groups.push({
+                type: type,
+                timeKey: timeKey,
+                actorKey: actorKey,
+                occurred_at: it.occurred_at || '',
+                items: [it]
+            });
+        });
+        return groups;
+    }
+
+    function formatTimelineSummaryParts(it) {
+        var text = String((it && it.summary) || '').trim();
+        var status = '';
+        var payload = (it && it.payload) || {};
+        if (payload.status) {
+            status = String(payload.status);
+        }
+        var m = text.match(/\s·\s*(active|completed|draft|on-hold|revoked|cancelled|stopped|finished)\s*$/i);
+        if (m) {
+            if (!status) status = m[1];
+            text = text.slice(0, m.index).trim();
+        }
+        if (status) {
+            var key = String(status).toLowerCase();
+            status = TL_STATUS_LABEL[key] || status;
+        }
+        return { text: text, status: status };
     }
 
     function bindTimelineEpisodioFilters() {

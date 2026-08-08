@@ -144,19 +144,79 @@
   margin-bottom: 0.15rem;
 }
 
-.tl-episodio-timeline-badge {
-  background: #e9ecef;
-  color: #343a40;
+/* Bootstrap .badge suele forzar --bs-badge-color blanco: fijar contraste acá. */
+.badge.tl-episodio-timeline-badge {
+  --bs-badge-color: #212529;
+  background-color: #e9ecef;
+  color: #212529;
   font-weight: 600;
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  border: 1px solid transparent;
+}
+
+.tl-episodio-timeline-item[data-tl-type="evolucion_medica"] .badge.tl-episodio-timeline-badge {
+  background-color: #495057;
+  color: #fff;
+  --bs-badge-color: #fff;
+}
+
+.tl-episodio-timeline-item[data-tl-type="triage"] .badge.tl-episodio-timeline-badge,
+.tl-episodio-timeline-item[data-tl-type="circuito"] .badge.tl-episodio-timeline-badge {
+  background-color: #f8d7da;
+  color: #842029;
+  --bs-badge-color: #842029;
+  border-color: #f1aeb5;
+}
+
+.tl-episodio-timeline-item[data-tl-type="pedido"] .badge.tl-episodio-timeline-badge,
+.tl-episodio-timeline-item[data-tl-type="resultado_lab"] .badge.tl-episodio-timeline-badge,
+.tl-episodio-timeline-item[data-tl-type="interconsulta"] .badge.tl-episodio-timeline-badge {
+  background-color: #e0cffc;
+  color: #432874;
+  --bs-badge-color: #432874;
+  border-color: #c29ffa;
+}
+
+.tl-episodio-timeline-item[data-tl-type="medicacion"] .badge.tl-episodio-timeline-badge,
+.tl-episodio-timeline-item[data-tl-type="administracion"] .badge.tl-episodio-timeline-badge {
+  background-color: #ffe5d0;
+  color: #984c0c;
+  --bs-badge-color: #984c0c;
+  border-color: #ffc107;
+}
+
+.tl-episodio-timeline-item[data-tl-type="atencion_enfermeria"] .badge.tl-episodio-timeline-badge {
+  background-color: #d1e7dd;
+  color: #0f5132;
+  --bs-badge-color: #0f5132;
+  border-color: #a3cfbb;
 }
 
 .tl-episodio-timeline-item__summary {
   font-size: 0.92rem;
   line-height: 1.35;
   white-space: pre-wrap;
+}
+
+.tl-episodio-timeline-group__list {
+  margin: 0.2rem 0 0;
+  padding-left: 1.15rem;
+  list-style: disc;
+}
+
+.tl-episodio-timeline-group__list li {
+  margin-bottom: 0.2rem;
+  font-size: 0.92rem;
+  line-height: 1.35;
+}
+
+.tl-episodio-timeline-status {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #6c757d;
+  text-transform: lowercase;
 }
 
 .tl-episodio-sv-ultimos .badge {

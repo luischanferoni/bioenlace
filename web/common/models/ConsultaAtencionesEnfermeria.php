@@ -111,13 +111,13 @@ class ConsultaAtencionesEnfermeria extends \yii\db\ActiveRecord
             'TA sistolica',
             'TA diastolica',
             'Frecuencia cardiaca',
-            'Frecuencia respiratoria',
+            //'Frecuencia respiratoria',
             'Saturacion O2',
             'Temperatura',
-            'Glucemia',
-            'Glasgow',
-            'Peso',
-            'Talla',
+            //'Glucemia',
+            //'Glasgow',
+            //'Peso',
+            //'Talla',
         ];
     }
 

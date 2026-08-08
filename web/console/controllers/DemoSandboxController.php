@@ -46,9 +46,11 @@ class DemoSandboxController extends Controller
             ->hardDeletePurgedResidues();
         $this->stdout(
             sprintf(
-                "Hard-delete DemoPurged: guardias=%d encounters=%d pes=%d personas=%d users=%d\n",
+                "Hard-delete DemoPurged: guardias=%d encounters=%d turnos=%d internaciones=%d pes=%d personas=%d users=%d\n",
                 $result['guardias'],
                 $result['encounters'],
+                $result['turnos'] ?? 0,
+                $result['internaciones'] ?? 0,
                 $result['pes'],
                 $result['personas'],
                 $result['users']

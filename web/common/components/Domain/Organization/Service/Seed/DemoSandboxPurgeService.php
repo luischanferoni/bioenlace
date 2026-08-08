@@ -20,15 +20,111 @@ use common\models\SegNivelInternacion;
 use common\models\SegNivelInternacionHcama;
 use common\models\User;
 use Yii;
+use yii\db\Connection;
 use yii\db\Expression;
 use yii\db\Query;
 
 /**
  * Purga filas creadas por una sesión demo sandbox.
+ *
+ * Soft-purge: retiros / soft-delete + anonimización.
+ * Hard-delete: elimina residuos de personas DemoPurged sin dejar hijos clínicos huérfanos
+ * (tablas sin ON DELETE CASCADE según el esquema).
  */
 final class DemoSandboxPurgeService
 {
     private const APELLIDO_PURGED = 'DemoPurged';
+
+    /**
+     * Tablas hijas de encounter sin CASCADE confiable (o RESTRICT).
+     * Se borran por `encounter_id` y/o `id_consulta` si la columna existe.
+     *
+     * @var list<string>
+     */
+    private const ENCOUNTER_CHILD_TABLES = [
+        '{{%electronic_prescription}}',
+        '{{%interaccion_chat_clinico}}',
+        '{{%interaccion_motivos_consulta}}',
+        '{{%encounter_capture_analysis}}',
+        '{{%encounter_capture_audit}}',
+        '{{%encounter_capture}}',
+        '{{%encounter_patient_summary_publish_queue}}',
+        '{{%atenciones_enfermeria}}',
+        '{{%observation}}',
+        '{{%allergy_intolerance}}',
+        '{{%goal}}',
+        '{{%care_followup_response}}',
+        '{{%care_pack_job}}',
+        '{{%agent_run}}',
+        '{{%snomed_deferred_jobs}}',
+        '{{%persona_antecedentes}}',
+        '{{%practicas_personas}}',
+        '{{%practicas_personas_viejo}}',
+        '{{%personas_antecedentes_viejo}}',
+        '{{%tension_arterial}}',
+        '{{%valoracion_nutricional}}',
+        '{{%odonto_consulta_persona}}',
+        '{{%consultas_medicamentos_infusion_continua}}',
+        '{{%consultas_medicamentos_internacion}}',
+        '{{%sumar_autofacturacion_log}}',
+        // FHIR con CASCADE: se listan por si el schema local no tiene FK.
+        '{{%medication_request}}',
+        '{{%medication_administration}}',
+        '{{%service_request}}',
+        '{{%procedure}}',
+        '{{%clinical_condition}}',
+        '{{%clinical_impression}}',
+        '{{%device_request}}',
+        '{{%nutrition_order}}',
+        '{{%vision_prescription}}',
+        '{{%care_assistance_response}}',
+        '{{%care_encounter_pack}}',
+        '{{%care_followup_touchpoint_queue}}',
+        '{{%clinical_history_outbound_job}}',
+        '{{%encounter_patient_summary}}',
+        '{{%diagnostic_report}}',
+        '{{%care_plan}}',
+    ];
+
+    /**
+     * Filas clínicas ancladas a persona (subject / id_persona) sin CASCADE a personas.
+     *
+     * @var list<array{0: string, 1: string}>
+     */
+    private const PERSONA_CLINICAL_TABLES = [
+        ['{{%allergy_intolerance}}', 'subject_persona_id'],
+        ['{{%clinical_condition}}', 'subject_persona_id'],
+        ['{{%care_plan}}', 'subject_persona_id'],
+        ['{{%diagnostic_report}}', 'subject_persona_id'],
+        ['{{%electronic_prescription}}', 'subject_persona_id'],
+        ['{{%episode_of_care}}', 'subject_persona_id'],
+        ['{{%goal}}', 'subject_persona_id'],
+        ['{{%observation}}', 'subject_persona_id'],
+        ['{{%medication_request}}', 'subject_persona_id'],
+        ['{{%service_request}}', 'subject_persona_id'],
+        ['{{%procedure}}', 'subject_persona_id'],
+        ['{{%device_request}}', 'subject_persona_id'],
+        ['{{%nutrition_order}}', 'subject_persona_id'],
+        ['{{%clinical_impression}}', 'subject_persona_id'],
+        ['{{%care_assistance_response}}', 'subject_persona_id'],
+        ['{{%care_encounter_pack}}', 'subject_persona_id'],
+        ['{{%care_followup_response}}', 'subject_persona_id'],
+        ['{{%care_followup_touchpoint_queue}}', 'subject_persona_id'],
+        ['{{%care_pack_job}}', 'subject_persona_id'],
+        ['{{%clinical_history_outbound_job}}', 'subject_persona_id'],
+        ['{{%encounter_patient_summary}}', 'subject_persona_id'],
+        ['{{%encounter_capture}}', 'subject_persona_id'],
+        ['{{%encounter_capture_analysis}}', 'subject_persona_id'],
+        ['{{%agent_run}}', 'subject_persona_id'],
+        ['{{%atenciones_enfermeria}}', 'id_persona'],
+        ['{{%practicas_personas}}', 'id_persona'],
+        ['{{%tension_arterial}}', 'id_persona'],
+        ['{{%valoracion_nutricional}}', 'id_persona'],
+        ['{{%persona_antecedentes}}', 'id_persona'],
+        ['{{%odonto_consulta_persona}}', 'id_persona'],
+        ['{{%cirugia}}', 'id_persona'],
+        ['{{%documentos_externos}}', 'id_persona'],
+    ];
 
     /**
      * @return array{purged: bool, already: bool, errors: list<string>}
@@ -43,14 +139,21 @@ final class DemoSandboxPurgeService
         $payload = $session->getSeedPayload();
         $now = date('Y-m-d H:i:s');
 
+        $pacienteIds = $this->normalizeIds((array) ($payload['paciente_ids'] ?? []));
+
         $db = Yii::$app->db;
         $tx = $db->beginTransaction();
         try {
-            foreach ((array) ($payload['turno_ids'] ?? []) as $idTurno) {
-                $idTurno = (int) $idTurno;
-                if ($idTurno <= 0) {
-                    continue;
-                }
+            $turnoIds = $this->normalizeIds((array) ($payload['turno_ids'] ?? []));
+            if ($pacienteIds !== []) {
+                $extraTurnos = (new Query())
+                    ->select('id_turnos')
+                    ->from(Turno::tableName())
+                    ->where(['id_persona' => $pacienteIds])
+                    ->column($db);
+                $turnoIds = $this->normalizeIds(array_merge($turnoIds, $extraTurnos));
+            }
+            foreach ($turnoIds as $idTurno) {
                 try {
                     TurnoSlotClaimService::releaseForTurno($idTurno);
                 } catch (\Throwable $e) {
@@ -67,22 +170,20 @@ final class DemoSandboxPurgeService
                 }
             }
 
-            foreach ((array) ($payload['encounter_ids'] ?? []) as $idEncounter) {
-                $idEncounter = (int) $idEncounter;
-                if ($idEncounter <= 0) {
-                    continue;
-                }
-                try {
-                    \common\models\ConsultaChatMessage::deleteAll(['encounter_id' => $idEncounter]);
-                } catch (\Throwable $e) {
-                    $errors[] = 'chat ' . $idEncounter . ': ' . $e->getMessage();
-                }
-                $encounter = Encounter::findOne($idEncounter);
-                if ($encounter !== null && $encounter->deleted_at === null) {
-                    $encounter->deleted_at = $now;
-                    $encounter->save(false);
-                }
+            $encounterIds = $this->normalizeIds(array_merge(
+                (array) ($payload['encounter_ids'] ?? []),
+                (array) ($payload['async_encounter_ids'] ?? [])
+            ));
+            if ($pacienteIds !== []) {
+                $extraEncounters = (new Query())
+                    ->select('id')
+                    ->from(Encounter::tableName())
+                    ->where(['subject_persona_id' => $pacienteIds])
+                    ->andWhere(['deleted_at' => null])
+                    ->column($db);
+                $encounterIds = $this->normalizeIds(array_merge($encounterIds, $extraEncounters));
             }
+            $this->softDeleteEncounters($encounterIds, $now, $errors);
 
             foreach ((array) ($payload['internacion_ids'] ?? []) as $idInternacion) {
                 $idInternacion = (int) $idInternacion;
@@ -134,11 +235,16 @@ final class DemoSandboxPurgeService
                 }
             }
 
-            foreach ((array) ($payload['guardia_ids'] ?? []) as $idGuardia) {
-                $idGuardia = (int) $idGuardia;
-                if ($idGuardia <= 0) {
-                    continue;
-                }
+            $guardiaIds = $this->normalizeIds((array) ($payload['guardia_ids'] ?? []));
+            if ($pacienteIds !== []) {
+                $extraGuardias = (new Query())
+                    ->select('id')
+                    ->from(Guardia::tableName())
+                    ->where(['id_persona' => $pacienteIds])
+                    ->column($db);
+                $guardiaIds = $this->normalizeIds(array_merge($guardiaIds, $extraGuardias));
+            }
+            foreach ($guardiaIds as $idGuardia) {
                 $g = Guardia::findIncludingDeleted()->where(['id' => $idGuardia])->one();
                 if ($g !== null && $g->hasAttribute('deleted_at') && $g->deleted_at === null) {
                     $g->deleted_at = $now;
@@ -165,11 +271,7 @@ final class DemoSandboxPurgeService
                 $pes->save(false);
             }
 
-            foreach ((array) ($payload['paciente_ids'] ?? []) as $idPaciente) {
-                $idPaciente = (int) $idPaciente;
-                if ($idPaciente <= 0) {
-                    continue;
-                }
+            foreach ($pacienteIds as $idPaciente) {
                 $persona = Persona::findOne($idPaciente);
                 if ($persona === null) {
                     continue;
@@ -185,7 +287,7 @@ final class DemoSandboxPurgeService
                     }
                 }
                 $persona->documento = $this->retireDocumento((string) $persona->documento, $idPaciente);
-                $persona->apellido = 'DemoPurged';
+                $persona->apellido = self::APELLIDO_PURGED;
                 $persona->id_user = null;
                 $persona->save(false);
             }
@@ -193,7 +295,7 @@ final class DemoSandboxPurgeService
             $staff = Persona::findOne((int) $session->id_persona);
             if ($staff !== null) {
                 $staff->documento = $this->retireDocumento((string) $staff->documento, (int) $staff->id_persona);
-                $staff->apellido = 'DemoPurged';
+                $staff->apellido = self::APELLIDO_PURGED;
                 $staff->save(false);
             }
 
@@ -254,12 +356,14 @@ final class DemoSandboxPurgeService
     }
 
     /**
-     * Hard-delete residuos soft-deleted de demos anonimizadas (apellido DemoPurged).
+     * Hard-delete residuos de demos anonimizadas (apellido DemoPurged), sin huérfanos clínicos.
      *
      * @return array{
      *   personas: int,
      *   guardias: int,
      *   encounters: int,
+     *   turnos: int,
+     *   internaciones: int,
      *   pes: int,
      *   users: int,
      *   errors: list<string>
@@ -272,6 +376,8 @@ final class DemoSandboxPurgeService
             'personas' => 0,
             'guardias' => 0,
             'encounters' => 0,
+            'turnos' => 0,
+            'internaciones' => 0,
             'pes' => 0,
             'users' => 0,
             'errors' => [],
@@ -282,7 +388,7 @@ final class DemoSandboxPurgeService
             ->from(Persona::tableName())
             ->where(['apellido' => self::APELLIDO_PURGED])
             ->column(Yii::$app->db);
-        $personaIds = array_values(array_filter(array_map('intval', $personaIds)));
+        $personaIds = $this->normalizeIds($personaIds);
         if ($personaIds === []) {
             return $counts;
         }
@@ -290,58 +396,69 @@ final class DemoSandboxPurgeService
         $db = Yii::$app->db;
         $tx = $db->beginTransaction();
         try {
+            // 1) Guardias (todas, no solo soft-deleted)
             $guardiaIds = (new Query())
                 ->select('id')
                 ->from(Guardia::tableName())
                 ->where(['id_persona' => $personaIds])
-                ->andWhere(['not', ['deleted_at' => null]])
                 ->column($db);
-            $guardiaIds = array_values(array_filter(array_map('intval', $guardiaIds)));
-
+            $guardiaIds = $this->normalizeIds($guardiaIds);
             if ($guardiaIds !== []) {
-                $db->createCommand()
-                    ->delete(GuardiaCircuitoEvent::tableName(), ['guardia_id' => $guardiaIds])
-                    ->execute();
-                $db->createCommand()
-                    ->delete(GuardiaTriage::tableName(), ['guardia_id' => $guardiaIds])
-                    ->execute();
-                $counts['guardias'] = (int) $db->createCommand()
-                    ->delete(Guardia::tableName(), ['id' => $guardiaIds])
-                    ->execute();
+                $this->safeDelete($db, GuardiaCircuitoEvent::tableName(), ['guardia_id' => $guardiaIds], $errors);
+                $this->safeDelete($db, GuardiaTriage::tableName(), ['guardia_id' => $guardiaIds], $errors);
+                $counts['guardias'] = $this->safeDelete($db, Guardia::tableName(), ['id' => $guardiaIds], $errors);
             }
 
+            // 2) Encounters + hijos (incl. async y los de atención sin soft-delete previo)
             $encounterIds = (new Query())
                 ->select('id')
                 ->from(Encounter::tableName())
                 ->where(['subject_persona_id' => $personaIds])
-                ->andWhere(['not', ['deleted_at' => null]])
                 ->column($db);
-            $encounterIds = array_values(array_filter(array_map('intval', $encounterIds)));
+            $encounterIds = $this->normalizeIds($encounterIds);
             if ($encounterIds !== []) {
-                try {
-                    $db->createCommand()
-                        ->delete('{{%interaccion_chat_clinico}}', ['encounter_id' => $encounterIds])
-                        ->execute();
-                } catch (\Throwable $e) {
-                    $errors[] = 'chat: ' . $e->getMessage();
-                }
-                $counts['encounters'] = (int) $db->createCommand()
-                    ->delete(Encounter::tableName(), ['id' => $encounterIds])
-                    ->execute();
+                $this->hardDeleteEncounterChildren($db, $encounterIds, $errors);
+                $counts['encounters'] = $this->safeDelete($db, Encounter::tableName(), ['id' => $encounterIds], $errors);
             }
 
+            // 3) Turnos e internaciones anclados a la persona
+            $counts['turnos'] = $this->safeDelete($db, Turno::tableName(), ['id_persona' => $personaIds], $errors);
+
+            $internacionIds = (new Query())
+                ->select('id')
+                ->from(SegNivelInternacion::tableName())
+                ->where(['id_persona' => $personaIds])
+                ->column($db);
+            $internacionIds = $this->normalizeIds($internacionIds);
+            if ($internacionIds !== []) {
+                $this->safeDelete($db, SegNivelInternacionHcama::tableName(), ['id_internacion' => $internacionIds], $errors);
+                $counts['internaciones'] = $this->safeDelete(
+                    $db,
+                    SegNivelInternacion::tableName(),
+                    ['id' => $internacionIds],
+                    $errors
+                );
+            }
+
+            // 4) Residuos clínicos por persona (SET NULL / sin cascade desde encounter)
+            $this->hardDeletePersonaClinical($db, $personaIds, $errors);
+
+            // 5) PES soft-deleted (staff demo)
             $pesIds = (new Query())
                 ->select('id')
                 ->from(ProfesionalEfectorServicio::tableName())
                 ->where(['id_persona' => $personaIds])
                 ->andWhere(['not', ['deleted_at' => null]])
                 ->column($db);
-            $pesIds = array_values(array_filter(array_map('intval', $pesIds)));
+            $pesIds = $this->normalizeIds($pesIds);
             if ($pesIds !== []) {
                 $this->hardDeletePesChildren($db, $pesIds);
-                $counts['pes'] = (int) $db->createCommand()
-                    ->delete(ProfesionalEfectorServicio::tableName(), ['id' => $pesIds])
-                    ->execute();
+                $counts['pes'] = $this->safeDelete(
+                    $db,
+                    ProfesionalEfectorServicio::tableName(),
+                    ['id' => $pesIds],
+                    $errors
+                );
             }
 
             $userIds = [];
@@ -374,7 +491,6 @@ final class DemoSandboxPurgeService
                 array_map('intval', $userIdsFromEmail)
             )));
 
-            // Solo borrar persona DemoPurged si ya no tiene guardia/encounter/PES vivos ni soft-deleted.
             $personasToDelete = [];
             foreach ($personaIds as $idPersona) {
                 $stillHasGuardia = (new Query())
@@ -389,19 +505,25 @@ final class DemoSandboxPurgeService
                     ->from(ProfesionalEfectorServicio::tableName())
                     ->where(['id_persona' => $idPersona])
                     ->exists($db);
-                if (!$stillHasGuardia && !$stillHasEncounter && !$stillHasPes) {
+                $stillHasTurno = (new Query())
+                    ->from(Turno::tableName())
+                    ->where(['id_persona' => $idPersona])
+                    ->exists($db);
+                if (!$stillHasGuardia && !$stillHasEncounter && !$stillHasPes && !$stillHasTurno) {
                     $personasToDelete[] = $idPersona;
                 }
             }
 
             if ($personasToDelete !== []) {
-                $counts['personas'] = (int) $db->createCommand()
-                    ->delete(Persona::tableName(), ['id_persona' => $personasToDelete])
-                    ->execute();
+                $counts['personas'] = $this->safeDelete(
+                    $db,
+                    Persona::tableName(),
+                    ['id_persona' => $personasToDelete],
+                    $errors
+                );
             }
 
             if ($userIds !== []) {
-                // Usuarios huérfanos o ya desvinculados de persona
                 $orphanUsers = [];
                 foreach ($userIds as $uid) {
                     $linked = (new Query())
@@ -413,9 +535,7 @@ final class DemoSandboxPurgeService
                     }
                 }
                 if ($orphanUsers !== []) {
-                    $counts['users'] = (int) $db->createCommand()
-                        ->delete(User::tableName(), ['id' => $orphanUsers])
-                        ->execute();
+                    $counts['users'] = $this->safeDelete($db, User::tableName(), ['id' => $orphanUsers], $errors);
                 }
             }
 
@@ -430,6 +550,8 @@ final class DemoSandboxPurgeService
                 'personas' => 0,
                 'guardias' => 0,
                 'encounters' => 0,
+                'turnos' => 0,
+                'internaciones' => 0,
                 'pes' => 0,
                 'users' => 0,
                 'errors' => [$e->getMessage()],
@@ -442,11 +564,75 @@ final class DemoSandboxPurgeService
     }
 
     /**
-     * Hijos y FKs de PES antes del DELETE (mismo orden que ServiciosCatalogoFkPurgeTrait).
-     *
+     * @param list<int> $encounterIds
+     * @param list<string> $errors
+     */
+    private function softDeleteEncounters(array $encounterIds, string $now, array &$errors): void
+    {
+        foreach ($encounterIds as $idEncounter) {
+            try {
+                \common\models\ConsultaChatMessage::deleteAll(['encounter_id' => $idEncounter]);
+            } catch (\Throwable $e) {
+                $errors[] = 'chat ' . $idEncounter . ': ' . $e->getMessage();
+            }
+            $encounter = Encounter::findOne($idEncounter);
+            if ($encounter !== null && $encounter->deleted_at === null) {
+                $encounter->deleted_at = $now;
+                $encounter->save(false);
+            }
+        }
+    }
+
+    /**
+     * @param list<int> $encounterIds
+     * @param list<string> $errors
+     */
+    private function hardDeleteEncounterChildren(Connection $db, array $encounterIds, array &$errors): void
+    {
+        if ($encounterIds === []) {
+            return;
+        }
+
+        foreach (self::ENCOUNTER_CHILD_TABLES as $table) {
+            $schema = $db->schema->getTableSchema($table, true);
+            if ($schema === null) {
+                continue;
+            }
+            $condition = null;
+            if (isset($schema->columns['encounter_id'])) {
+                $condition = ['encounter_id' => $encounterIds];
+            } elseif (isset($schema->columns['id_consulta'])) {
+                $condition = ['id_consulta' => $encounterIds];
+            }
+            if ($condition === null) {
+                continue;
+            }
+            $this->safeDelete($db, $table, $condition, $errors);
+        }
+    }
+
+    /**
+     * @param list<int> $personaIds
+     * @param list<string> $errors
+     */
+    private function hardDeletePersonaClinical(Connection $db, array $personaIds, array &$errors): void
+    {
+        if ($personaIds === []) {
+            return;
+        }
+        foreach (self::PERSONA_CLINICAL_TABLES as [$table, $col]) {
+            $schema = $db->schema->getTableSchema($table, true);
+            if ($schema === null || !isset($schema->columns[$col])) {
+                continue;
+            }
+            $this->safeDelete($db, $table, [$col => $personaIds], $errors);
+        }
+    }
+
+    /**
      * @param list<int> $pesIds
      */
-    private function hardDeletePesChildren(\yii\db\Connection $db, array $pesIds): void
+    private function hardDeletePesChildren(Connection $db, array $pesIds): void
     {
         if ($pesIds === []) {
             return;
@@ -469,11 +655,10 @@ final class DemoSandboxPurgeService
                 ->execute();
         }
 
-        // Referencias nullable: no borrar filas clínicas, solo desvincular.
         foreach ([
             [Guardia::tableName(), 'id_profesional_efector_servicio'],
             [Encounter::tableName(), 'id_profesional_efector_servicio'],
-            ['{{%turnos}}', 'id_profesional_efector_servicio'],
+            [Turno::tableName(), 'id_profesional_efector_servicio'],
         ] as [$table, $col]) {
             $schema = $db->schema->getTableSchema($table, true);
             if ($schema === null || !isset($schema->columns[$col])) {
@@ -483,6 +668,30 @@ final class DemoSandboxPurgeService
                 ->update($table, [$col => null], [$col => $pesIds])
                 ->execute();
         }
+    }
+
+    /**
+     * @param array<string, mixed> $condition
+     * @param list<string> $errors
+     */
+    private function safeDelete(Connection $db, string $table, array $condition, array &$errors): int
+    {
+        try {
+            return (int) $db->createCommand()->delete($table, $condition)->execute();
+        } catch (\Throwable $e) {
+            $errors[] = $table . ': ' . $e->getMessage();
+
+            return 0;
+        }
+    }
+
+    /**
+     * @param list<mixed> $ids
+     * @return list<int>
+     */
+    private function normalizeIds(array $ids): array
+    {
+        return array_values(array_unique(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)));
     }
 
     private function retireDocumento(string $documento, int $id): string

@@ -85,6 +85,8 @@ En guardia el workflow (`emer_standard` en `EncounterDefinition`) incluye motivo
 
 Las secciones `requerido` y `campos_requeridos` de cada `EncounterDefinition` (por servicio + clase) definen qué exige el efector; la plantilla EMER se elige por `encounter_class = EMER`.
 
+Textos listos para pegar o dictar (alta, lab, derivación, incompletos, SCA, etc.): [textos-ejemplo-captura-emer.md](../qa/escenarios/urgencia/textos-ejemplo-captura-emer.md).
+
 El **egreso** es el cierre final del episodio: destino, diagnóstico operativo y epicrisis, sin dejar pedidos o derivaciones que retengan al paciente en guardia. Ver [urgencias-guardia.md](./urgencias-guardia.md).
 
 ## Niveles de carga

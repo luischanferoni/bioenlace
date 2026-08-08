@@ -55,7 +55,8 @@ Knobs: `require_captcha` (default true), `captcha_ttl_seconds`, `captcha_length`
 - Purga al logout (`AuthController::actionLogout`).
 - Cron: `php yii demo-sandbox/purge-expired`.
 - Limpieza hard de residuos anonimizados: `php yii demo-sandbox/hard-delete-purged`.
-- Purga: turnos → encounters AMB → internación (cierra + borra hcama/cama/sala/piso) → guardia → agenda/PES → pacientes/user.
+- **Purga (soft):** turnos del seed + turnos de pacientes demo → **todos** los encounters de esos pacientes (AMB seed, async VR, los creados al Atender en guardia) → internación (cierra + borra hcama/cama/sala/piso) → guardias de pacientes demo → agenda/PES → anonimiza pacientes/staff (`DemoPurged`) + desactiva users.
+- **Hard-delete:** para personas `DemoPurged`, borra guardias/encounters (aunque no estén soft-deleted), hijos clínicos sin FK cascade (`atenciones_enfermeria`, `encounter_capture*`, `practicas_personas`, `electronic_prescription`, etc.), FHIR con CASCADE, turnos, internaciones, PES y personas/users huérfanos. Objetivo: **sin filas clínicas huérfanas** de la visita demo.
 
 ## Servicios
 

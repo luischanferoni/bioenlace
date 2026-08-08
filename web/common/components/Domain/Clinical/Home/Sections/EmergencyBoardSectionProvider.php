@@ -46,7 +46,6 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
 
             return [
                 'items' => [],
-                'total' => 0,
                 'requires_cobertura' => true,
                 'empty_message' => ProfesionalCoberturaActivaService::mensajeSinCoberturaParaSesion(
                     Encounter::ENCOUNTER_CLASS_EMER,
@@ -55,6 +54,10 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
             ];
         }
 
-        return (new GuardiaQueueService())->tablero($idEfector, ['solo_activos' => true]);
+        $tablero = (new GuardiaQueueService())->tablero($idEfector, ['solo_activos' => true]);
+
+        return [
+            'items' => is_array($tablero['items'] ?? null) ? $tablero['items'] : [],
+        ];
     }
 }

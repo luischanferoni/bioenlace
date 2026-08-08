@@ -1442,7 +1442,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       spacing: BioSpacing.xs,
                       runSpacing: BioSpacing.xs,
                       children: [
-                        if (g.slaViolado && g.slaTipo == 'medico')
+                        if (g.slaViolado)
                           const BioBadge(
                             label: 'Plazo médico',
                             intent: UiIntent.danger,

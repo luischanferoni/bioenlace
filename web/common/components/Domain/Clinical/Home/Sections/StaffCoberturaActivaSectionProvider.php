@@ -29,7 +29,7 @@ final class StaffCoberturaActivaSectionProvider implements HomePanelSectionProvi
             $at = trim((string) $context['fecha']) . ' ' . date('H:i:s');
         }
 
-        return ProfesionalCoberturaActivaService::panelPayload($idEfector, $encounterClass, $at);
+        return ProfesionalCoberturaActivaService::homePanelGatePayload($idEfector, $encounterClass, $at);
     }
 
     /**

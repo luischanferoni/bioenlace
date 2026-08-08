@@ -66,7 +66,9 @@ final class ProfesionalCoberturaActivaService
     }
 
     /**
-     * @return array{items: list<array<string, mixed>>, total: int, encounter_class: string, at: string, session?: array<string, mixed>}
+     * Payload completo (API cobertura / listados de plantel).
+     *
+     * @return array{title: string, encounter_class: string, at: string, items: list<array<string, mixed>>, total: int, empty_message: null, session: array<string, mixed>}
      */
     public static function panelPayload(int $idEfector, string $encounterClass, ?string $atDateTime = null): array
     {
@@ -74,20 +76,65 @@ final class ProfesionalCoberturaActivaService
             ? date('Y-m-d H:i:s', strtotime($atDateTime) ?: time())
             : date('Y-m-d H:i:s');
         $items = self::listarActivas($idEfector, $encounterClass, $at);
+        $session = self::buildSessionGate($idEfector, $encounterClass, $at);
 
+        return [
+            'title' => $encounterClass === Encounter::ENCOUNTER_CLASS_EMER
+                ? 'Plantel de guardia'
+                : 'Cobertura de piso',
+            'encounter_class' => $encounterClass,
+            'at' => $at,
+            'items' => $items,
+            'total' => count($items),
+            // No informar al clínico que el plantel del efector está vacío.
+            'empty_message' => null,
+            'session' => $session,
+        ];
+    }
+
+    /**
+     * Gate de plantel para home/panel: solo lo que web/móvil usan (sin listar plantel).
+     *
+     * @return array{session: array{tiene_cobertura: bool, mensaje_sin_cobertura?: string}}
+     */
+    public static function homePanelGatePayload(
+        int $idEfector,
+        string $encounterClass,
+        ?string $atDateTime = null
+    ): array {
+        $at = $atDateTime !== null && trim($atDateTime) !== ''
+            ? date('Y-m-d H:i:s', strtotime($atDateTime) ?: time())
+            : date('Y-m-d H:i:s');
+        $session = self::buildSessionGate($idEfector, $encounterClass, $at);
+        $slim = [
+            'tiene_cobertura' => !empty($session['tiene_cobertura']),
+        ];
+        $msg = isset($session['mensaje_sin_cobertura'])
+            ? trim((string) $session['mensaje_sin_cobertura'])
+            : '';
+        if ($msg !== '') {
+            $slim['mensaje_sin_cobertura'] = $msg;
+        }
+
+        return ['session' => $slim];
+    }
+
+    /**
+     * @return array{
+     *   id_persona: int|null,
+     *   tiene_cobertura: bool,
+     *   proxima_cobertura_inicio: string|null,
+     *   mensaje_sin_cobertura: string|null
+     * }
+     */
+    private static function buildSessionGate(int $idEfector, string $encounterClass, string $at): array
+    {
         $idPersonaSesion = 0;
         if (\Yii::$app->has('user', true)) {
             $idPersonaSesion = (int) (\Yii::$app->user->getIdPersona() ?? 0);
         }
-        $sessionTiene = false;
-        if ($idPersonaSesion > 0) {
-            foreach ($items as $it) {
-                if ((int) ($it['id_persona'] ?? 0) === $idPersonaSesion) {
-                    $sessionTiene = true;
-                    break;
-                }
-            }
-        }
+        $sessionTiene = $idPersonaSesion > 0
+            && self::personaTieneCoberturaActiva($idPersonaSesion, $idEfector, $encounterClass, $at);
 
         $proximaInicio = null;
         if (!$sessionTiene && $idPersonaSesion > 0) {
@@ -100,21 +147,10 @@ final class ProfesionalCoberturaActivaService
             ]);
 
         return [
-            'title' => $encounterClass === Encounter::ENCOUNTER_CLASS_EMER
-                ? 'Plantel de guardia'
-                : 'Cobertura de piso',
-            'encounter_class' => $encounterClass,
-            'at' => $at,
-            'items' => $items,
-            'total' => count($items),
-            // No informar al clínico que el plantel del efector está vacío.
-            'empty_message' => null,
-            'session' => [
-                'id_persona' => $idPersonaSesion > 0 ? $idPersonaSesion : null,
-                'tiene_cobertura' => $sessionTiene,
-                'proxima_cobertura_inicio' => $proximaInicio,
-                'mensaje_sin_cobertura' => $mensajeSin,
-            ],
+            'id_persona' => $idPersonaSesion > 0 ? $idPersonaSesion : null,
+            'tiene_cobertura' => $sessionTiene,
+            'proxima_cobertura_inicio' => $proximaInicio,
+            'mensaje_sin_cobertura' => $mensajeSin,
         ];
     }
 
@@ -206,16 +242,23 @@ final class ProfesionalCoberturaActivaService
         string $encounterClass,
         ?string $atDateTime = null
     ): bool {
-        if ($idPersona <= 0 || $idEfector <= 0) {
+        if ($idPersona <= 0 || $idEfector <= 0 || !AgendaByEncounterClassMetadata::isCoberturaClass($encounterClass)) {
             return false;
         }
-        foreach (self::listarActivas($idEfector, $encounterClass, $atDateTime) as $row) {
-            if ((int) ($row['id_persona'] ?? 0) === $idPersona) {
-                return true;
-            }
-        }
+        $at = $atDateTime !== null && trim($atDateTime) !== ''
+            ? date('Y-m-d H:i:s', strtotime($atDateTime) ?: time())
+            : date('Y-m-d H:i:s');
 
-        return false;
+        return ProfesionalCobertura::find()
+            ->andWhere([
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfector,
+                'encounter_class' => $encounterClass,
+                'deleted_at' => null,
+            ])
+            ->andWhere(['<=', 'inicio', $at])
+            ->andWhere(['>', 'fin', $at])
+            ->exists();
     }
 
     /**

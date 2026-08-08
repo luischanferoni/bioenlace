@@ -661,7 +661,7 @@
       var slaBadge = rowEl.querySelector('[data-field="sla-badge"]');
       if (slaBadge) {
         // El plazo de triage se comunica coloreando "Espera triage".
-        if (g.sla_violado && g.sla_tipo === 'medico') {
+        if (g.sla_violado) {
           var slaLabel = 'Plazo médico';
           if (g.sla_umbral_minutos != null) {
             slaLabel += ' >' + formatDuracionMinutos(g.sla_umbral_minutos);

@@ -168,9 +168,6 @@ final class GuardiaQueueService
             $reasonText = $reason !== '' ? $reason : null;
         }
 
-        $pesId = $guardia->id_profesional_efector_servicio
-            ? (int) $guardia->id_profesional_efector_servicio
-            : null;
         $pesNombre = null;
         if ($guardia->profesionalEfectorServicio && $guardia->profesionalEfectorServicio->persona) {
             $pesNombre = $guardia->profesionalEfectorServicio->persona->getNombreCompleto(
@@ -199,20 +196,16 @@ final class GuardiaQueueService
         if ($pesNombre !== null && $pesNombre !== '') {
             $row['profesional_asignado'] = $pesNombre;
         }
-        if ($pesId !== null && $pesId > 0) {
-            $row['id_profesional_efector_servicio'] = $pesId;
-        }
         if (!empty($sla['triage_espera_nivel'])) {
             $row['triage_espera_nivel'] = $sla['triage_espera_nivel'];
         }
         if (!empty($sla['sla_violado']) && ($sla['sla_tipo'] ?? null) === 'medico') {
             $row['sla_violado'] = true;
-            $row['sla_tipo'] = 'medico';
             if ($sla['sla_umbral_minutos'] !== null) {
                 $row['sla_umbral_minutos'] = (int) $sla['sla_umbral_minutos'];
             }
         }
-            if (!empty($internacion['internacion_pendiente'])) {
+        if (!empty($internacion['internacion_pendiente'])) {
             $row['internacion_pendiente'] = true;
         }
         if ($clinical !== null) {
@@ -271,10 +264,18 @@ final class GuardiaQueueService
             return null;
         }
 
-        return [
-            'orders_count' => $ordersCount,
-            'orders_lab_pending' => $labPending,
-            'laboratory_reports_count' => $labReportsCount,
-        ];
+        // Solo claves con valor > 0 (clientes tratan ausente = 0).
+        $out = [];
+        if ($ordersCount > 0) {
+            $out['orders_count'] = $ordersCount;
+        }
+        if ($labPending > 0) {
+            $out['orders_lab_pending'] = $labPending;
+        }
+        if ($labReportsCount > 0) {
+            $out['laboratory_reports_count'] = $labReportsCount;
+        }
+
+        return $out !== [] ? $out : null;
     }
 }

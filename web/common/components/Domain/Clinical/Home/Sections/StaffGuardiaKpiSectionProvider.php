@@ -25,7 +25,6 @@ final class StaffGuardiaKpiSectionProvider implements HomePanelSectionProviderIn
         $d = (new GuardiaIndicadoresService())->resumen($idEfector);
 
         return [
-            'title' => '',
             'items' => [
                 [
                     'label' => 'Activos',

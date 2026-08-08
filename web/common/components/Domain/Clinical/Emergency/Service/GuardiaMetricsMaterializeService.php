@@ -57,6 +57,7 @@ final class GuardiaMetricsMaterializeService
             ->select('id_efector')
             ->from('{{%guardia}}')
             ->where(['fecha' => $fecha])
+            ->andWhere(['deleted_at' => null])
             ->distinct()
             ->column();
 

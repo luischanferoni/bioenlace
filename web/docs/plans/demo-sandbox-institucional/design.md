@@ -54,6 +54,7 @@ Knobs: `require_captcha` (default true), `captcha_ttl_seconds`, `captcha_length`
 
 - Purga al logout (`AuthController::actionLogout`).
 - Cron: `php yii demo-sandbox/purge-expired`.
+- Limpieza hard de residuos anonimizados: `php yii demo-sandbox/hard-delete-purged`.
 - Purga: turnos → encounters AMB → internación (cierra + borra hcama/cama/sala/piso) → guardia → agenda/PES → pacientes/user.
 
 ## Servicios

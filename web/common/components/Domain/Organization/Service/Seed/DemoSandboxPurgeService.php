@@ -4,6 +4,8 @@ namespace common\components\Domain\Organization\Service\Seed;
 
 use common\components\Domain\Scheduling\Service\TurnoSlotClaimService;
 use common\models\Clinical\Encounter;
+use common\models\Emergency\GuardiaCircuitoEvent;
+use common\models\Emergency\GuardiaTriage;
 use common\models\Guardia;
 use common\models\InfraestructuraCama;
 use common\models\InfraestructuraPiso;
@@ -18,12 +20,15 @@ use common\models\SegNivelInternacionHcama;
 use common\models\User;
 use Yii;
 use yii\db\Expression;
+use yii\db\Query;
 
 /**
  * Purga filas creadas por una sesión demo sandbox.
  */
 final class DemoSandboxPurgeService
 {
+    private const APELLIDO_PURGED = 'DemoPurged';
+
     /**
      * @return array{purged: bool, already: bool, errors: list<string>}
      */
@@ -133,8 +138,8 @@ final class DemoSandboxPurgeService
                 if ($idGuardia <= 0) {
                     continue;
                 }
-                $g = Guardia::findOne($idGuardia);
-                if ($g !== null && $g->hasAttribute('deleted_at')) {
+                $g = Guardia::findIncludingDeleted()->where(['id' => $idGuardia])->one();
+                if ($g !== null && $g->hasAttribute('deleted_at') && $g->deleted_at === null) {
                     $g->deleted_at = $now;
                     $g->save(false);
                 }
@@ -245,6 +250,199 @@ final class DemoSandboxPurgeService
             'purged' => $purged,
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Hard-delete residuos soft-deleted de demos anonimizadas (apellido DemoPurged).
+     *
+     * @return array{
+     *   personas: int,
+     *   guardias: int,
+     *   encounters: int,
+     *   pes: int,
+     *   users: int,
+     *   errors: list<string>
+     * }
+     */
+    public function hardDeletePurgedResidues(): array
+    {
+        $errors = [];
+        $counts = [
+            'personas' => 0,
+            'guardias' => 0,
+            'encounters' => 0,
+            'pes' => 0,
+            'users' => 0,
+            'errors' => [],
+        ];
+
+        $personaIds = (new Query())
+            ->select('id_persona')
+            ->from(Persona::tableName())
+            ->where(['apellido' => self::APELLIDO_PURGED])
+            ->column(Yii::$app->db);
+        $personaIds = array_values(array_filter(array_map('intval', $personaIds)));
+        if ($personaIds === []) {
+            return $counts;
+        }
+
+        $db = Yii::$app->db;
+        $tx = $db->beginTransaction();
+        try {
+            $guardiaIds = (new Query())
+                ->select('id')
+                ->from(Guardia::tableName())
+                ->where(['id_persona' => $personaIds])
+                ->andWhere(['not', ['deleted_at' => null]])
+                ->column($db);
+            $guardiaIds = array_values(array_filter(array_map('intval', $guardiaIds)));
+
+            if ($guardiaIds !== []) {
+                $db->createCommand()
+                    ->delete(GuardiaCircuitoEvent::tableName(), ['guardia_id' => $guardiaIds])
+                    ->execute();
+                $db->createCommand()
+                    ->delete(GuardiaTriage::tableName(), ['guardia_id' => $guardiaIds])
+                    ->execute();
+                $counts['guardias'] = (int) $db->createCommand()
+                    ->delete(Guardia::tableName(), ['id' => $guardiaIds])
+                    ->execute();
+            }
+
+            $encounterIds = (new Query())
+                ->select('id')
+                ->from(Encounter::tableName())
+                ->where(['subject_persona_id' => $personaIds])
+                ->andWhere(['not', ['deleted_at' => null]])
+                ->column($db);
+            $encounterIds = array_values(array_filter(array_map('intval', $encounterIds)));
+            if ($encounterIds !== []) {
+                try {
+                    $db->createCommand()
+                        ->delete('{{%interaccion_chat_clinico}}', ['encounter_id' => $encounterIds])
+                        ->execute();
+                } catch (\Throwable $e) {
+                    $errors[] = 'chat: ' . $e->getMessage();
+                }
+                $counts['encounters'] = (int) $db->createCommand()
+                    ->delete(Encounter::tableName(), ['id' => $encounterIds])
+                    ->execute();
+            }
+
+            $pesIds = (new Query())
+                ->select('id')
+                ->from(ProfesionalEfectorServicio::tableName())
+                ->where(['id_persona' => $personaIds])
+                ->andWhere(['not', ['deleted_at' => null]])
+                ->column($db);
+            $pesIds = array_values(array_filter(array_map('intval', $pesIds)));
+            if ($pesIds !== []) {
+                $db->createCommand()
+                    ->delete(
+                        ProfesionalEfectorServicioAgenda::tableName(),
+                        ['id_profesional_efector_servicio' => $pesIds]
+                    )
+                    ->execute();
+                $counts['pes'] = (int) $db->createCommand()
+                    ->delete(ProfesionalEfectorServicio::tableName(), ['id' => $pesIds])
+                    ->execute();
+            }
+
+            $userIds = [];
+            foreach ($personaIds as $idPersona) {
+                $persona = Persona::findOne($idPersona);
+                if ($persona === null) {
+                    continue;
+                }
+                $idUser = (int) ($persona->id_user ?? 0);
+                if ($idUser > 0) {
+                    $userIds[] = $idUser;
+                }
+            }
+            $userIdsFromEmail = (new Query())
+                ->select('id')
+                ->from(User::tableName())
+                ->where(['or',
+                    ['like', 'email', 'purged_%@demo.bioenlace.local', false],
+                    ['and',
+                        ['like', 'email', '%@demo.bioenlace.local', false],
+                        ['or',
+                            ['like', 'username', 'x\\_%', false],
+                            ['like', 'username', 'x\\_p\\_%', false],
+                        ],
+                    ],
+                ])
+                ->column($db);
+            $userIds = array_values(array_unique(array_merge(
+                $userIds,
+                array_map('intval', $userIdsFromEmail)
+            )));
+
+            // Solo borrar persona DemoPurged si ya no tiene guardia/encounter/PES vivos ni soft-deleted.
+            $personasToDelete = [];
+            foreach ($personaIds as $idPersona) {
+                $stillHasGuardia = (new Query())
+                    ->from(Guardia::tableName())
+                    ->where(['id_persona' => $idPersona])
+                    ->exists($db);
+                $stillHasEncounter = (new Query())
+                    ->from(Encounter::tableName())
+                    ->where(['subject_persona_id' => $idPersona])
+                    ->exists($db);
+                $stillHasPes = (new Query())
+                    ->from(ProfesionalEfectorServicio::tableName())
+                    ->where(['id_persona' => $idPersona])
+                    ->exists($db);
+                if (!$stillHasGuardia && !$stillHasEncounter && !$stillHasPes) {
+                    $personasToDelete[] = $idPersona;
+                }
+            }
+
+            if ($personasToDelete !== []) {
+                $counts['personas'] = (int) $db->createCommand()
+                    ->delete(Persona::tableName(), ['id_persona' => $personasToDelete])
+                    ->execute();
+            }
+
+            if ($userIds !== []) {
+                // Usuarios huérfanos o ya desvinculados de persona
+                $orphanUsers = [];
+                foreach ($userIds as $uid) {
+                    $linked = (new Query())
+                        ->from(Persona::tableName())
+                        ->where(['id_user' => $uid])
+                        ->exists($db);
+                    if (!$linked) {
+                        $orphanUsers[] = $uid;
+                    }
+                }
+                if ($orphanUsers !== []) {
+                    $counts['users'] = (int) $db->createCommand()
+                        ->delete(User::tableName(), ['id' => $orphanUsers])
+                        ->execute();
+                }
+            }
+
+            $tx->commit();
+        } catch (\Throwable $e) {
+            if ($tx->isActive) {
+                $tx->rollBack();
+            }
+            Yii::error('demo sandbox hard-delete: ' . $e->getMessage(), __METHOD__);
+
+            return [
+                'personas' => 0,
+                'guardias' => 0,
+                'encounters' => 0,
+                'pes' => 0,
+                'users' => 0,
+                'errors' => [$e->getMessage()],
+            ];
+        }
+
+        $counts['errors'] = $errors;
+
+        return $counts;
     }
 
     private function retireDocumento(string $documento, int $id): string

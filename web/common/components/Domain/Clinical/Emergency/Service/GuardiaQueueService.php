@@ -98,7 +98,7 @@ final class GuardiaQueueService
     public function detalle(int $guardiaId, int $idEfector): ?array
     {
         $guardia = Guardia::find()
-            ->where(['id' => $guardiaId, 'id_efector' => $idEfector])
+            ->where(['id' => $guardiaId, 'id_efector' => $idEfector, 'deleted_at' => null])
             ->with(['paciente', 'profesionalEfectorServicio.persona'])
             ->one();
         if ($guardia === null) {
@@ -121,7 +121,7 @@ final class GuardiaQueueService
     {
         $query = Guardia::find()
             ->alias('g')
-            ->where(['g.id_efector' => $idEfector])
+            ->where(['g.id_efector' => $idEfector, 'g.deleted_at' => null])
             ->with(['paciente', 'profesionalEfectorServicio.persona']);
 
         $soloActivos = !isset($filters['incluir_finalizados']) || !$filters['incluir_finalizados'];

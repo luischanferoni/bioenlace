@@ -33,6 +33,7 @@ final class GuardiaIndicadoresService
             ->from(['g' => Guardia::tableName()])
             ->leftJoin(['gt' => GuardiaTriage::tableName()], 'gt.guardia_id = g.id')
             ->where(['g.id_efector' => $idEfector])
+            ->andWhere(['g.deleted_at' => null])
             ->andWhere(['<>', 'g.estado', Guardia::ESTADO_FINALIZADA])
             ->andWhere(['gt.id' => null])
             ->count('*', Guardia::getDb());
@@ -41,6 +42,7 @@ final class GuardiaIndicadoresService
             ->select(['g.prioridad_triage', 'cnt' => 'COUNT(*)'])
             ->from(['g' => Guardia::tableName()])
             ->where(['g.id_efector' => $idEfector])
+            ->andWhere(['g.deleted_at' => null])
             ->andWhere(['<>', 'g.estado', Guardia::ESTADO_FINALIZADA])
             ->andWhere(['not', ['g.prioridad_triage' => null]])
             ->groupBy(['g.prioridad_triage'])
@@ -50,6 +52,7 @@ final class GuardiaIndicadoresService
             ->select(['g.circuito_estado', 'cnt' => 'COUNT(*)'])
             ->from(['g' => Guardia::tableName()])
             ->where(['g.id_efector' => $idEfector])
+            ->andWhere(['g.deleted_at' => null])
             ->andWhere(['<>', 'g.estado', Guardia::ESTADO_FINALIZADA])
             ->groupBy(['g.circuito_estado'])
             ->all(Guardia::getDb());

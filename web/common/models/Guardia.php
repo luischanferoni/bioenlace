@@ -67,6 +67,23 @@ class Guardia extends \yii\db\ActiveRecord
         return 'guardia';
     }
 
+    /**
+     * Listados y paneles: nunca incluyen soft-deleted.
+     * Para mantenimiento/purga usar {@see findIncludingDeleted()}.
+     */
+    public static function find()
+    {
+        return parent::find()->andWhere([self::tableName() . '.deleted_at' => null]);
+    }
+
+    /**
+     * Incluye filas con deleted_at (purga, auditoría, hard-delete).
+     */
+    public static function findIncludingDeleted()
+    {
+        return parent::find();
+    }
+
     public function behaviors()
     {
         return [

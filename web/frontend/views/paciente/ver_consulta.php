@@ -9,7 +9,8 @@ use yii\web\View;
  * No es historia clínica: no muestra estado actual del paciente.
  *
  * @var \common\models\Person\Persona|null $persona
- * @var int $turnoId
+ * @var int|null $turnoId
+ * @var int|null $encounterId
  * @var string $apiPath
  */
 
@@ -111,7 +112,7 @@ $js = <<<'JS'
         });
     }
     if (!api) {
-        showError('Falta turno_id para ver la consulta.');
+        showError('Falta turno_id o encounter_id para ver la consulta.');
         return;
     }
     fetch(api, { headers: bioHeaders(), credentials: 'same-origin' })

@@ -149,11 +149,18 @@
       return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
     }
 
-    /** Turno ATENDIDO → pantalla de consulta documentada (no HC). */
-    function verConsultaUrl(personaId, turnoId) {
-      if (!turnoId || !urlVerConsultaBase) return null;
+    /** Turno ATENDIDO o encounter documentado → pantalla de consulta (no HC). */
+    function verConsultaUrl(personaId, turnoId, encounterId) {
+      if (!urlVerConsultaBase) return null;
       var base = urlVerConsultaBase;
-      var q = 'turno_id=' + encodeURIComponent(turnoId);
+      var q = '';
+      if (encounterId) {
+        q = 'encounter_id=' + encodeURIComponent(encounterId);
+      } else if (turnoId) {
+        q = 'turno_id=' + encodeURIComponent(turnoId);
+      } else {
+        return null;
+      }
       if (personaId) q += '&id=' + encodeURIComponent(personaId);
       return base + (base.indexOf('?') >= 0 ? '&' : '?') + q;
     }
@@ -568,7 +575,11 @@
 
     function guardiaEpisodioCerrado(g) {
       var e = g.circuito_estado || '';
-      return e === 'finalizado' || e === 'derivado';
+      return e === 'finalizado' || e === 'derivado' || e === 'atendido';
+    }
+
+    function guardiaPuedeVerConsulta(g) {
+      return !!(g && g.encounter_id && (g.circuito_estado === 'atendido' || g.circuito_estado === 'derivado'));
     }
 
     function formatDuracionMinutos(minutos) {
@@ -710,8 +721,23 @@
         };
       }
 
+      var ctaVerConsulta = rowEl.querySelector('[data-role="cta-ver-consulta"]');
+      if (ctaVerConsulta) {
+        var urlVc = guardiaPuedeVerConsulta(g)
+          ? verConsultaUrl(g.id_persona, null, g.encounter_id)
+          : null;
+        if (urlVc) {
+          ctaVerConsulta.href = urlVc;
+          ctaVerConsulta.classList.remove('d-none');
+        } else {
+          ctaVerConsulta.removeAttribute('href');
+          ctaVerConsulta.classList.add('d-none');
+        }
+      }
+
       var ctaTriage = rowEl.querySelector('[data-role="cta-triage"]');
       if (ctaTriage) {
+        // Solo primer triage en tablero (staff). Re-triage / edición: solo en HC.
         ctaTriage.classList.toggle('d-none', !puedeTriage || !sinTriage || cerrado);
         ctaTriage.onclick = function () {
           openTriageModal(g, false);
@@ -720,10 +746,8 @@
 
       var ctaRetriage = rowEl.querySelector('[data-role="cta-retriage"]');
       if (ctaRetriage) {
-        ctaRetriage.classList.toggle('d-none', !puedeTriage || sinTriage || cerrado);
-        ctaRetriage.onclick = function () {
-          openTriageModal(g, true);
-        };
+        ctaRetriage.classList.add('d-none');
+        ctaRetriage.onclick = null;
       }
 
       var ctaTomar = rowEl.querySelector('[data-role="cta-tomar"]');
@@ -1643,7 +1667,14 @@
       var api = window.BioenlaceNativePage;
       if (!api) return;
       try {
-        var yaEnAtencion = g.circuito_estado === 'en_atencion' || g.circuito_estado === 'atendido';
+        if (guardiaPuedeVerConsulta(g)) {
+          var urlConsulta = verConsultaUrl(g.id_persona, null, g.encounter_id);
+          if (urlConsulta) {
+            window.location.href = urlConsulta;
+            return;
+          }
+        }
+        var yaEnAtencion = g.circuito_estado === 'en_atencion';
         var captura = null;
         if (!yaEnAtencion) {
           var url = api.apiV1Url('clinical/emergency-guardia/' + g.id + '/iniciar-atencion');

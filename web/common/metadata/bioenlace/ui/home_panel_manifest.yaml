@@ -16,10 +16,9 @@ panels:
     EMER:
       layout: clinical_board
       title: Tablero de guardia
-      # Triage / re-triage en tablero: staff y médico de guardia (API ya hereda vía home/panel).
+      # Primer triage en tablero: solo staff. Médico edita triage en HC (banner).
       capabilities:
         triage_roles:
-          - Medico
           - enfermeria
           - Administrativo
           - AdminEfector

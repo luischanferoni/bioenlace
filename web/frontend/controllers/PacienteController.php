@@ -75,9 +75,9 @@ class PacienteController extends Controller
     }
 
     /**
-     * Solo lectura de la consulta ya documentada por el médico (turno atendido).
+     * Solo lectura de la consulta ya documentada por el médico (turno o encounter de guardia).
      *
-     * GET /paciente/ver-consulta?turno_id=… [&id=persona]
+     * GET /paciente/ver-consulta?turno_id=… | encounter_id=… [&id=persona]
      * Consume GET /api/v1/clinical/encounter/ver-consulta-como-staff.
      * No muestra historia clínica / estado actual del paciente.
      *
@@ -88,32 +88,51 @@ class PacienteController extends Controller
         $this->layout = 'blanco';
 
         $turnoId = (int) Yii::$app->request->get('turno_id', 0);
-        if ($turnoId <= 0) {
-            throw new NotFoundHttpException('Indicá turno_id.');
-        }
-
-        $turno = \common\models\Scheduling\Turno::findActive()
-            ->andWhere(['id_turnos' => $turnoId])
-            ->one();
-        if ($turno === null) {
-            throw new NotFoundHttpException('Turno no encontrado.');
+        $encounterId = (int) Yii::$app->request->get('encounter_id', 0);
+        if ($turnoId <= 0 && $encounterId <= 0) {
+            throw new NotFoundHttpException('Indicá turno_id o encounter_id.');
         }
 
         $personaId = (int) Yii::$app->request->get('id', 0);
-        if ($personaId <= 0) {
-            $personaId = (int) $turno->id_persona;
-        }
-        if ($personaId !== (int) $turno->id_persona) {
-            throw new NotFoundHttpException('El turno no corresponde a esa persona.');
+        $apiQuery = [];
+
+        if ($encounterId > 0) {
+            $encounter = Encounter::findOne($encounterId);
+            if ($encounter === null || $encounter->deleted_at !== null) {
+                throw new NotFoundHttpException('Consulta no encontrada.');
+            }
+            $subjectId = (int) ($encounter->subject_persona_id ?? 0);
+            if ($personaId <= 0) {
+                $personaId = $subjectId;
+            }
+            if ($personaId <= 0 || $personaId !== $subjectId) {
+                throw new NotFoundHttpException('La consulta no corresponde a esa persona.');
+            }
+            $apiQuery['encounter_id'] = $encounterId;
+        } else {
+            $turno = \common\models\Scheduling\Turno::findActive()
+                ->andWhere(['id_turnos' => $turnoId])
+                ->one();
+            if ($turno === null) {
+                throw new NotFoundHttpException('Turno no encontrado.');
+            }
+            if ($personaId <= 0) {
+                $personaId = (int) $turno->id_persona;
+            }
+            if ($personaId !== (int) $turno->id_persona) {
+                throw new NotFoundHttpException('El turno no corresponde a esa persona.');
+            }
+            $apiQuery['turno_id'] = $turnoId;
         }
 
         $paciente = $this->findModel($personaId);
         $apiPath = '/api/v1/clinical/encounter/ver-consulta-como-staff?'
-            . http_build_query(['turno_id' => $turnoId]);
+            . http_build_query($apiQuery);
 
         return $this->render('ver_consulta', [
             'persona' => $paciente,
-            'turnoId' => $turnoId,
+            'turnoId' => $turnoId > 0 ? $turnoId : null,
+            'encounterId' => $encounterId > 0 ? $encounterId : null,
             'apiPath' => $apiPath,
         ]);
     }

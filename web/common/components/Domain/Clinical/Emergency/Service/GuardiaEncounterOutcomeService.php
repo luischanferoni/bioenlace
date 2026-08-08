@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Emergency\Service;
 
+use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\ServiceRequest;
 use common\models\Guardia;
@@ -10,17 +11,24 @@ use Yii;
 /**
  * Deducciones de conducta de guardia a partir de la captura del encounter (EMER).
  *
- * El médico no “solicita cama” en el tablero: si documenta pase a internación / UCI,
- * se marca el pedido de cama para que staff lo complete (ingresar cama).
+ * - Internación / UCI → pedido de cama (staff completa en tablero); no cierra a atendido.
+ * - Derivación institucional → circuito derivado.
+ * - Resto (alta, control, documentación clínica) → circuito atendido.
  */
 final class GuardiaEncounterOutcomeService
 {
     /** @var GuardiaInternacionService */
     private $internacion;
 
-    public function __construct(?GuardiaInternacionService $internacion = null)
-    {
+    /** @var GuardiaCircuitoService */
+    private $circuito;
+
+    public function __construct(
+        ?GuardiaInternacionService $internacion = null,
+        ?GuardiaCircuitoService $circuito = null
+    ) {
         $this->internacion = $internacion ?? new GuardiaInternacionService();
+        $this->circuito = $circuito ?? new GuardiaCircuitoService();
     }
 
     /**
@@ -32,6 +40,7 @@ final class GuardiaEncounterOutcomeService
         $out = [
             'applied' => false,
             'internacion_solicitada' => false,
+            'circuito_estado' => null,
         ];
 
         if (!$this->isGuardiaEncounter($encounter)) {
@@ -48,33 +57,61 @@ final class GuardiaEncounterOutcomeService
             return $out;
         }
 
+        $estadoActual = $this->circuito->effectiveEstado($guardia);
+        if (in_array($estadoActual, [CircuitoEstado::FINALIZADO, CircuitoEstado::DERIVADO], true)) {
+            $out['applied'] = true;
+            $out['circuito_estado'] = $estadoActual;
+
+            return $out;
+        }
+
+        $pesId = (int) ($encounter->id_profesional_efector_servicio ?? $guardia->id_profesional_efector_servicio ?? 0);
+        $pesId = $pesId > 0 ? $pesId : null;
+        $payloadBase = [
+            'source' => 'encounter_documentation',
+            'encounter_id' => (int) $encounter->id,
+        ];
+
+        // Internación ya pedida o resuelta: no pasar a atendido (staff / cama).
         if ($this->internacion->isPendienteInternacion($guardia)
             || $this->internacion->internacionResuelta($guardiaId)
         ) {
             $out['applied'] = true;
+            $out['circuito_estado'] = $estadoActual;
 
             return $out;
         }
 
-        if (!$this->signalsInternacion($encounter, $datosExtraidos)) {
-            return $out;
+        if ($this->signalsInternacion($encounter, $datosExtraidos)) {
+            $idEfector = (int) ($guardia->id_efector ?? $encounter->id_efector ?? 0);
+            if ($idEfector > 0) {
+                try {
+                    $this->internacion->solicitarInternacion($guardiaId, $idEfector, $idEfector);
+                    $out['applied'] = true;
+                    $out['internacion_solicitada'] = true;
+                    $out['circuito_estado'] = $this->circuito->effectiveEstado($guardia);
+
+                    return $out;
+                } catch (\Throwable $e) {
+                    Yii::warning(
+                        'GuardiaEncounterOutcome: no se pudo marcar internación: ' . $e->getMessage(),
+                        'emergency-guardia'
+                    );
+                }
+            }
         }
 
-        $idEfector = (int) ($guardia->id_efector ?? $encounter->id_efector ?? 0);
-        if ($idEfector <= 0) {
-            return $out;
-        }
-
-        try {
-            $this->internacion->solicitarInternacion($guardiaId, $idEfector, $idEfector);
+        if ($this->signalsDerivacionInstitucional($encounter, $datosExtraidos)) {
+            $this->circuito->afterDocumentacionDerivacion($guardia, $pesId, $payloadBase);
             $out['applied'] = true;
-            $out['internacion_solicitada'] = true;
-        } catch (\Throwable $e) {
-            Yii::warning(
-                'GuardiaEncounterOutcome: no se pudo marcar internación: ' . $e->getMessage(),
-                'emergency-guardia'
-            );
+            $out['circuito_estado'] = CircuitoEstado::DERIVADO;
+
+            return $out;
         }
+
+        $this->circuito->afterDocumentacionClinica($guardia, $pesId, $payloadBase);
+        $out['applied'] = true;
+        $out['circuito_estado'] = CircuitoEstado::ATENDIDO;
 
         return $out;
     }
@@ -90,6 +127,77 @@ final class GuardiaEncounterOutcomeService
      * @param array<string, mixed> $datosExtraidos
      */
     private function signalsInternacion(Encounter $encounter, array $datosExtraidos): bool
+    {
+        $haystack = $this->buildHaystack($encounter, $datosExtraidos);
+        if ($haystack === '') {
+            return false;
+        }
+
+        foreach ([
+            'internacion',
+            'internación',
+            'internar',
+            'pase a intern',
+            'ingreso a intern',
+            'unidad de cuidados intensivos',
+            ' uci',
+            'uci ',
+            'uti ',
+            ' uti',
+            'cama de intern',
+        ] as $needle) {
+            if (mb_strpos($haystack, $needle) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, mixed> $datosExtraidos
+     */
+    private function signalsDerivacionInstitucional(Encounter $encounter, array $datosExtraidos): bool
+    {
+        $srs = ServiceRequest::find()
+            ->where(['encounter_id' => (int) $encounter->id, 'deleted_at' => null])
+            ->andWhere(['category' => ['referral', 'derivacion', 'derivación']])
+            ->limit(1)
+            ->exists();
+        if ($srs) {
+            return true;
+        }
+
+        $haystack = $this->buildHaystack($encounter, $datosExtraidos);
+        if ($haystack === '') {
+            return false;
+        }
+
+        foreach ([
+            'derivación al hospital',
+            'derivacion al hospital',
+            'derivación a hospital',
+            'derivacion a hospital',
+            'hospital de referencia',
+            'otro efector',
+            'centro con hemodinamia',
+            'derivación inmediata',
+            'derivacion inmediata',
+            'traslado a',
+            'derivar a',
+        ] as $needle) {
+            if (mb_strpos($haystack, $needle) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array<string, mixed> $datosExtraidos
+     */
+    private function buildHaystack(Encounter $encounter, array $datosExtraidos): string
     {
         $blobs = [];
 
@@ -124,30 +232,7 @@ final class GuardiaEncounterOutcomeService
             $blobs[] = trim((string) ($sr->code ?? ''));
         }
 
-        $haystack = mb_strtolower(implode(' ', array_filter($blobs)));
-        if ($haystack === '') {
-            return false;
-        }
-
-        foreach ([
-            'internacion',
-            'internación',
-            'internar',
-            'pase a intern',
-            'ingreso a intern',
-            'unidad de cuidados intensivos',
-            ' uci',
-            'uci ',
-            'uti ',
-            ' uti',
-            'cama de intern',
-        ] as $needle) {
-            if (mb_strpos($haystack, $needle) !== false) {
-                return true;
-            }
-        }
-
-        return false;
+        return mb_strtolower(implode(' ', array_filter($blobs)));
     }
 
     /**

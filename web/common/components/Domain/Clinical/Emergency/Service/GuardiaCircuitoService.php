@@ -64,6 +64,53 @@ final class GuardiaCircuitoService
     }
 
     /**
+     * Cierre clínico tras captura (alta / control / documentación completa).
+     * No aplica si el episodio ya está derivado o finalizado.
+     *
+     * @param array<string, mixed>|null $payload
+     */
+    public function afterDocumentacionClinica(Guardia $guardia, ?int $pesId = null, ?array $payload = null): void
+    {
+        $estado = $this->effectiveEstado($guardia);
+        if (in_array($estado, [CircuitoEstado::ATENDIDO, CircuitoEstado::DERIVADO, CircuitoEstado::FINALIZADO], true)) {
+            return;
+        }
+
+        $guardia->circuito_estado = CircuitoEstado::ATENDIDO;
+        $guardia->estado = Guardia::ESTADO_ATENDIDA;
+        $guardia->updateAttributes([
+            'circuito_estado' => $guardia->circuito_estado,
+            'estado' => $guardia->estado,
+        ]);
+        $this->recordEvent((int) $guardia->id, CircuitoEventType::FIN_ATENCION, $pesId, $payload ?? [
+            'source' => 'encounter_documentation',
+        ]);
+    }
+
+    /**
+     * Derivación institucional deducida desde la captura.
+     *
+     * @param array<string, mixed>|null $payload
+     */
+    public function afterDocumentacionDerivacion(Guardia $guardia, ?int $pesId = null, ?array $payload = null): void
+    {
+        $estado = $this->effectiveEstado($guardia);
+        if (in_array($estado, [CircuitoEstado::DERIVADO, CircuitoEstado::FINALIZADO], true)) {
+            return;
+        }
+
+        $guardia->circuito_estado = CircuitoEstado::DERIVADO;
+        $guardia->estado = Guardia::ESTADO_ATENDIDA;
+        $guardia->updateAttributes([
+            'circuito_estado' => $guardia->circuito_estado,
+            'estado' => $guardia->estado,
+        ]);
+        $this->recordEvent((int) $guardia->id, CircuitoEventType::DERIVACION, $pesId, $payload ?? [
+            'source' => 'encounter_documentation',
+        ]);
+    }
+
+    /**
      * @param array<string, mixed>|null $payload
      */
     public function recordEvent(int $guardiaId, string $tipo, ?int $pesId = null, ?array $payload = null): void

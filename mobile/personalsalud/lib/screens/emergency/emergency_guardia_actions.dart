@@ -11,7 +11,7 @@ class EmergencyGuardiaActions {
 
   static bool episodioCerrado(EmergencyBoardItem g) {
     final e = g.circuitoEstado ?? '';
-    return e == 'finalizado' || e == 'derivado';
+    return e == 'finalizado' || e == 'derivado' || e == 'atendido';
   }
 
   static Future<void> openTriage({

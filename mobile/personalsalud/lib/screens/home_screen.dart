@@ -1340,6 +1340,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _onGuardiaTap(EmergencyBoardItem g) async {
+    if (g.puedeVerConsulta) {
+      await _verHistoriaClinica(
+        g.idPersona,
+        parent: 'ENCOUNTER',
+        parentId: g.encounterId,
+        resumenConsultaCargada: true,
+      );
+      return;
+    }
     if (g.needsTriage) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -1366,8 +1375,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     try {
       final estado = g.circuitoEstado ?? '';
-      final yaEnAtencion = estado == 'en_atencion' || estado == 'atendido';
-      if (!yaEnAtencion) {
+      if (estado != 'en_atencion') {
         await _emergencyApi.iniciarAtencion(g.id);
       }
     } catch (e) {
@@ -1496,9 +1504,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       },
                     ),
                   Icon(
-                    g.needsTriage
-                        ? Icons.assignment_outlined
-                        : Icons.chevron_right,
+                    g.puedeVerConsulta
+                        ? Icons.visibility_outlined
+                        : (g.needsTriage
+                            ? Icons.assignment_outlined
+                            : Icons.chevron_right),
                     color: context.bio.textMuted,
                   ),
                 ],
@@ -1523,6 +1533,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (g.circuitoEstado == 'en_atencion') {
       return UiIntent.info;
+    }
+    if (g.circuitoEstado == 'atendido') {
+      return UiIntent.success;
     }
     return UiIntent.neutral;
   }

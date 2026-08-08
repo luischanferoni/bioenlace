@@ -28,6 +28,8 @@ class EmergencyBoardItem {
   final int ordersCount;
   final int ordersLabPending;
   final int laboratoryReportsCount;
+  final int? encounterId;
+  final String? encounterStatus;
 
   EmergencyBoardItem({
     required this.id,
@@ -52,10 +54,19 @@ class EmergencyBoardItem {
     this.ordersCount = 0,
     this.ordersLabPending = 0,
     this.laboratoryReportsCount = 0,
+    this.encounterId,
+    this.encounterStatus,
   });
 
   bool get needsTriage =>
       circuitoEstado == 'espera_triage' || prioridadTriage == null;
+
+  bool get puedeVerConsulta {
+    final e = circuitoEstado ?? '';
+    return encounterId != null &&
+        encounterId! > 0 &&
+        (e == 'atendido' || e == 'derivado');
+  }
 
   factory EmergencyBoardItem.fromJson(Map<String, dynamic> json) {
     final paciente = json['paciente'] as Map<String, dynamic>?;
@@ -63,6 +74,7 @@ class EmergencyBoardItem {
     final clinical = json['clinical'] as Map<String, dynamic>? ?? {};
     final rootNombre = (json['nombre_completo'] as String?)?.trim();
     final nestedNombre = (paciente?['nombre_completo'] as String?)?.trim();
+    final encId = json['encounter_id'];
     return EmergencyBoardItem(
       id: (json['id'] as int?) ?? 0,
       idPersona: (json['id_persona'] as int?) ??
@@ -93,6 +105,10 @@ class EmergencyBoardItem {
       ordersCount: (clinical['orders_count'] as int?) ?? 0,
       ordersLabPending: (clinical['orders_lab_pending'] as int?) ?? 0,
       laboratoryReportsCount: (clinical['laboratory_reports_count'] as int?) ?? 0,
+      encounterId: encId is int
+          ? encId
+          : int.tryParse(encId?.toString() ?? ''),
+      encounterStatus: json['encounter_status'] as String?,
     );
   }
 }

@@ -177,7 +177,8 @@ final class GuardiaQueueService
 
         $sla = $this->sla->evaluate($guardia, $minutos, $circuito, $prioridad);
         $internacion = $this->internacion->serializePendiente($guardia);
-        $clinical = $this->serializeClinicalBoardCounts($guardia);
+        $encounter = $this->encounterResolver->findLatestForGuardia((int) $guardia->id);
+        $clinical = $this->serializeClinicalBoardCountsForEncounter($encounter);
 
         $row = [
             'id' => (int) $guardia->id,
@@ -189,6 +190,14 @@ final class GuardiaQueueService
             'circuito_estado_label' => CircuitoEstado::label($circuito),
             'minutos_espera' => $minutos,
         ];
+
+        if ($encounter !== null) {
+            $row['encounter_id'] = (int) $encounter->id;
+            $status = trim((string) ($encounter->status ?? ''));
+            if ($status !== '') {
+                $row['encounter_status'] = $status;
+            }
+        }
 
         if ($prioridad !== null) {
             $row['prioridad_triage'] = $prioridad;
@@ -236,7 +245,17 @@ final class GuardiaQueueService
      */
     private function serializeClinicalBoardCounts(Guardia $guardia): ?array
     {
-        $encounter = $this->encounterResolver->findLatestForGuardia((int) $guardia->id);
+        return $this->serializeClinicalBoardCountsForEncounter(
+            $this->encounterResolver->findLatestForGuardia((int) $guardia->id)
+        );
+    }
+
+    /**
+     * @param \common\models\Clinical\Encounter|null $encounter
+     * @return array{orders_count: int, orders_lab_pending: int, laboratory_reports_count: int}|null
+     */
+    private function serializeClinicalBoardCountsForEncounter($encounter): ?array
+    {
         if ($encounter === null) {
             return null;
         }

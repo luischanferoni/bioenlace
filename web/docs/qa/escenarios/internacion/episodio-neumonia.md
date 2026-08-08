@@ -6,6 +6,8 @@ El paciente **no** gestiona la internación desde la app paciente; el equipo usa
 
 ## Consulta de ejemplo
 
+Más dictados para captura IMP (régimen, balance, deterioro, alta clínica, etc.): [textos-ejemplo-captura-imp.md](./textos-ejemplo-captura-imp.md).
+
 **Paciente al ingreso (admisión o guardia):**
 
 > «Me internan por neumonía. Ya me hicieron la placa en guardia.»

@@ -37,6 +37,7 @@ No hay pantalla `/internacion/ronda`. La ronda es el listado del inicio IMP (`ho
 - Contexto: `PatientHistoriaUrl::captura($idPersona, Encounter::PARENT_INTERNACION, $idInternacion)`.
 - Banner de episodio + evoluciones: [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md).
 - Evoluciones, diagnósticos, medicación y prácticas del piso se documentan como **encounters IMP** vinculados al episodio (`parent_type` / `parent_id`), no en sub-controllers Yii retirados.
+- Textos listos para pegar o dictar (`imp_standard`): [textos-ejemplo-captura-imp.md](../qa/escenarios/internacion/textos-ejemplo-captura-imp.md).
 
 ## Alta estructurada (flow)
 

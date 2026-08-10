@@ -9,6 +9,7 @@ use common\helpers\TimelineHelper;
 use common\models\User;
 use common\models\Clinical\Encounter;
 use frontend\assets\GuardiaTableroAsset;
+use frontend\components\Clinical\EpisodioTimelineViewBuilder;
 use yii\web\View;
 
 
@@ -46,8 +47,17 @@ $mostrarMotivosAmbulatorios = !$esContextoEpisodio
 
 $modoCaptura = $esContextoInternacion ? 'imp' : ($esContextoGuardia ? 'emer' : 'amb');
 
+$timelineEpisodio = $timelineEpisodio ?? null;
+$timelineEpisodioGroups = $esContextoEpisodio
+    ? EpisodioTimelineViewBuilder::groupsFromFeed(is_array($timelineEpisodio) ? $timelineEpisodio : null)
+    : [];
+$timelineEpisodioItemCount = $esContextoEpisodio
+    ? EpisodioTimelineViewBuilder::itemCount(is_array($timelineEpisodio) ? $timelineEpisodio : null)
+    : 0;
+
 $historiaClinicaQs = [];
 $verConsultaStaffPath = null;
+$episodioTimelineHtmlPath = null;
 if ($parentUpper === Encounter::PARENT_TURNO && $parentIdQuery > 0) {
     $historiaClinicaQs['turno_id'] = $parentIdQuery;
     $verConsultaStaffPath = '/api/v1/clinical/encounter/ver-consulta-como-staff?'
@@ -55,9 +65,21 @@ if ($parentUpper === Encounter::PARENT_TURNO && $parentIdQuery > 0) {
 } elseif ($esContextoInternacion) {
     $historiaClinicaQs['parent'] = Encounter::PARENT_INTERNACION;
     $historiaClinicaQs['parent_id'] = $parentIdQuery;
+    $episodioTimelineHtmlPath = Url::to([
+        '/paciente/episodio-timeline-html',
+        'id' => (int) $persona->id_persona,
+        'parent' => Encounter::PARENT_INTERNACION,
+        'parent_id' => $parentIdQuery,
+    ]);
 } elseif ($esContextoGuardia) {
     $historiaClinicaQs['parent'] = Encounter::PARENT_GUARDIA;
     $historiaClinicaQs['parent_id'] = $parentIdQuery;
+    $episodioTimelineHtmlPath = Url::to([
+        '/paciente/episodio-timeline-html',
+        'id' => (int) $persona->id_persona,
+        'parent' => Encounter::PARENT_GUARDIA,
+        'parent_id' => $parentIdQuery,
+    ]);
 }
 $historiaClinicaPath = '/api/v1/personas/' . (int) $persona->id_persona . '/historia-clinica';
 if ($historiaClinicaQs !== []) {
@@ -252,7 +274,10 @@ if (!empty($esContextoGuardia)) {
                                 <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="circuito">Circuito</button>
                             </div>
                             <div id="tl_episodio_timeline_list">
-                                <p class="text-muted mb-0 small">Cargando registro…</p>
+                                <?= $this->render('_episodio_timeline_list', [
+                                    'groups' => $timelineEpisodioGroups,
+                                    'itemCount' => $timelineEpisodioItemCount,
+                                ]) ?>
                             </div>
                         </div>
                         <?php endif; ?>
@@ -432,7 +457,8 @@ endif;
             //vacunas: '<?= \yii\helpers\Url::to(['personas/vacunas', 'dni' => $persona->documento, 'sexo' => $persona->sexo_biologico]) ?>',
             formularioConsulta: '<?= Url::to(['paciente/formulario-consulta', 'id' => $persona->id_persona]) ?>',
             historiaClinica: <?= json_encode($vistaConsultaCargada ? null : $historiaClinicaPath, JSON_UNESCAPED_SLASHES) ?>,
-            verConsultaComoStaff: <?= json_encode($verConsultaStaffPath, JSON_UNESCAPED_SLASHES) ?>
+            verConsultaComoStaff: <?= json_encode($verConsultaStaffPath, JSON_UNESCAPED_SLASHES) ?>,
+            episodioTimelineHtml: <?= json_encode($episodioTimelineHtmlPath, JSON_UNESCAPED_SLASHES) ?>
         }
     };
 
@@ -755,8 +781,8 @@ endif;
                 return;
             }
             renderEpisodioBanner(payload.data.contexto_episodio || null);
-            renderTimelineEpisodio(payload.data.timeline_episodio || null);
             renderSignosVitalesEpisodio(payload.data.signos_vitales_episodio || null);
+            await refreshEpisodioTimelineHtml();
         } catch (e) {
             console.warn('No se pudo refrescar el episodio tras triage', e);
         }
@@ -875,9 +901,6 @@ endif;
             + 'documentá la evolución del día.';
     }
 
-    var _tlEpisodioItems = [];
-    var _tlEpisodioFilter = 'all';
-
     var TL_FILTER_TYPES = {
         all: null,
         clinico: ['evolucion_medica', 'triage'],
@@ -887,42 +910,80 @@ endif;
         circuito: ['circuito', 'triage']
     };
 
-    var TL_TYPE_LABEL = {
-        circuito: 'Circuito',
-        triage: 'Triage',
-        evolucion_medica: 'Evolución',
-        atencion_enfermeria: 'Enfermería',
-        pedido: 'Pedido',
-        resultado_lab: 'Lab',
-        medicacion: 'Medicación',
-        administracion: 'Admin.',
-        interconsulta: 'Interconsulta'
-    };
+    var _tlEpisodioFilter = 'all';
 
-    var TL_TYPE_BADGE = {
-        circuito: 'text-bg-danger',
-        triage: 'text-bg-danger',
-        evolucion_medica: 'text-bg-secondary',
-        atencion_enfermeria: 'text-bg-success',
-        pedido: 'text-bg-info',
-        resultado_lab: 'text-bg-info',
-        interconsulta: 'text-bg-info',
-        medicacion: 'text-bg-warning',
-        administracion: 'text-bg-warning'
-    };
-
-    function renderTimelineEpisodio(feed) {
-        var listEl = document.getElementById('tl_episodio_timeline_list');
+    function syncEpisodioTimelineCount() {
         var countEl = document.getElementById('tl_episodio_timeline_count');
-        if (!listEl) return;
-        feed = feed || {};
-        _tlEpisodioItems = Array.isArray(feed.items) ? feed.items : [];
-        if (countEl) {
-            countEl.textContent = _tlEpisodioItems.length
-                ? (_tlEpisodioItems.length + ' hito' + (_tlEpisodioItems.length === 1 ? '' : 's'))
-                : '';
+        var listEl = document.getElementById('tl_episodio_timeline_list');
+        if (!countEl || !listEl) return;
+        var src = listEl.querySelector('[data-tl-count-source]');
+        var ul = listEl.querySelector('[data-tl-timeline-ul]');
+        if (src && src.textContent) {
+            countEl.textContent = src.textContent;
+            return;
         }
-        paintTimelineEpisodio();
+        if (ul) {
+            var n = parseInt(ul.getAttribute('data-tl-item-count') || '0', 10) || 0;
+            countEl.textContent = n ? (n + ' hito' + (n === 1 ? '' : 's')) : '';
+            return;
+        }
+        countEl.textContent = '';
+    }
+
+    function applyEpisodioTimelineFilter() {
+        var listEl = document.getElementById('tl_episodio_timeline_list');
+        if (!listEl) return;
+        var allowed = TL_FILTER_TYPES[_tlEpisodioFilter] || null;
+        var items = listEl.querySelectorAll('[data-tl-type]');
+        var visible = 0;
+        items.forEach(function (li) {
+            var type = li.getAttribute('data-tl-type') || '';
+            var show = !allowed || allowed.indexOf(type) !== -1;
+            li.classList.toggle('d-none', !show);
+            if (show) visible += 1;
+        });
+        var emptyAll = listEl.querySelector('[data-tl-empty-all]');
+        var emptyFilter = listEl.querySelector('[data-tl-empty-filter]');
+        var ul = listEl.querySelector('[data-tl-timeline-ul]');
+        if (emptyFilter) {
+            var showFilterEmpty = !emptyAll && items.length > 0 && visible === 0;
+            emptyFilter.classList.toggle('d-none', !showFilterEmpty);
+        }
+        if (ul) {
+            ul.classList.toggle('d-none', visible === 0 && !!allowed);
+        }
+        syncEpisodioTimelineCount();
+    }
+
+    function bindTimelineEpisodioFilters() {
+        var root = document.getElementById('tl_episodio_timeline_filters');
+        if (!root || root.getAttribute('data-bound') === '1') return;
+        root.setAttribute('data-bound', '1');
+        root.addEventListener('click', function (ev) {
+            var btn = ev.target.closest('[data-tl-filter]');
+            if (!btn) return;
+            _tlEpisodioFilter = btn.getAttribute('data-tl-filter') || 'all';
+            root.querySelectorAll('[data-tl-filter]').forEach(function (b) {
+                b.classList.toggle('active', b === btn);
+            });
+            applyEpisodioTimelineFilter();
+        });
+        applyEpisodioTimelineFilter();
+    }
+
+    async function refreshEpisodioTimelineHtml() {
+        var endpoints = timelineConfig.endpoints || {};
+        var url = endpoints.episodioTimelineHtml;
+        var listEl = document.getElementById('tl_episodio_timeline_list');
+        if (!url || !listEl) return;
+        try {
+            var resp = await fetch(url, { headers: bioHeaders(), credentials: 'same-origin' });
+            if (!resp.ok) return;
+            listEl.innerHTML = await resp.text();
+            applyEpisodioTimelineFilter();
+        } catch (e) {
+            console.warn('No se pudo refrescar el HTML del registro de episodio', e);
+        }
     }
 
     function renderSignosVitalesEpisodio(sv) {
@@ -1007,165 +1068,6 @@ endif;
             plot_bgcolor: 'rgba(0,0,0,0)',
             height: 260
         }, { responsive: true, displayModeBar: false });
-    }
-
-    function paintTimelineEpisodio() {
-        var listEl = document.getElementById('tl_episodio_timeline_list');
-        if (!listEl) return;
-        var allowed = TL_FILTER_TYPES[_tlEpisodioFilter] || null;
-        var items = _tlEpisodioItems.filter(function (it) {
-            if (!allowed) return true;
-            return allowed.indexOf(it.type) !== -1;
-        });
-        if (!items.length) {
-            listEl.innerHTML = '<p class="text-muted mb-0 small">'
-                + (_tlEpisodioItems.length ? 'Sin hitos para este filtro.' : 'Sin hitos registrados en este episodio.')
-                + '</p>';
-            return;
-        }
-        var groups = groupTimelineEpisodioItems(items);
-        var html = '<ul class="tl-episodio-timeline list-unstyled mb-0">';
-        groups.forEach(function (group) {
-            var type = group.type || '';
-            var typeLabel = TL_TYPE_LABEL[type] || type || 'Hito';
-            var actor = group.actorKey || '';
-            var count = group.items.length;
-            var badgeClass = TL_TYPE_BADGE[type] || 'text-bg-light border text-dark';
-            html += '<li class="tl-episodio-timeline__item" data-tl-type="' + escMotivosHtml(type) + '">';
-            html += '<div class="d-flex flex-wrap align-items-center gap-2 mb-1">';
-            html += '<span class="badge ' + badgeClass + '">' + escMotivosHtml(typeLabel);
-            if (count > 1) {
-                html += ' · ' + count;
-            }
-            html += '</span>';
-            html += '<span class="text-muted small">' + escMotivosHtml(formatEpisodioFecha(group.occurred_at || '')) + '</span>';
-            if (actor) {
-                html += '<span class="text-muted small">' + escMotivosHtml(actor) + '</span>';
-            }
-            html += '</div>';
-            if (count === 1) {
-                var one = formatTimelineSummaryParts(group.items[0]);
-                html += '<div class="small text-break">' + escMotivosHtml(one.text);
-                if (one.status) {
-                    html += ' <span class="text-muted">(' + escMotivosHtml(one.status) + ')</span>';
-                }
-                html += '</div>';
-            } else {
-                html += '<ul class="mb-0 ps-3 small">';
-                group.items.forEach(function (it) {
-                    var part = formatTimelineSummaryParts(it);
-                    html += '<li class="mb-1">' + escMotivosHtml(part.text);
-                    if (part.status) {
-                        html += ' <span class="text-muted">(' + escMotivosHtml(part.status) + ')</span>';
-                    }
-                    html += '</li>';
-                });
-                html += '</ul>';
-            }
-            html += '</li>';
-        });
-        html += '</ul>';
-        listEl.innerHTML = html;
-    }
-
-    /** Tipos que se agrupan si son consecutivos (mismo minuto + actor). */
-    var TL_GROUPABLE_TYPES = {
-        pedido: true,
-        medicacion: true,
-        administracion: true,
-        resultado_lab: true,
-        interconsulta: true,
-        atencion_enfermeria: true
-    };
-
-    var TL_STATUS_LABEL = {
-        active: 'activo',
-        completed: 'completado',
-        draft: 'borrador',
-        'on-hold': 'en espera',
-        revoked: 'anulado',
-        cancelled: 'cancelado',
-        stopped: 'detenido',
-        finished: 'finalizado'
-    };
-
-    function timelineMinuteKey(occurredAt) {
-        var s = String(occurredAt || '').trim();
-        // dd/MM/yyyy HH:mm (API ya formateada) o ISO → misma granularidad de minuto
-        var mAr = s.match(/^(\d{2}\/\d{2}\/\d{4})(?:\s+(\d{2}:\d{2}))?/);
-        if (mAr) {
-            return mAr[1] + ' ' + (mAr[2] || '00:00');
-        }
-        var mIso = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{1,2}):(\d{2}))?/);
-        if (mIso) {
-            var hh = mIso[4] != null ? String(mIso[4]).padStart(2, '0') : '00';
-            var mm = mIso[5] != null ? mIso[5] : '00';
-            return mIso[3] + '/' + mIso[2] + '/' + mIso[1] + ' ' + hh + ':' + mm;
-        }
-        return s.slice(0, 16);
-    }
-
-    function groupTimelineEpisodioItems(items) {
-        var groups = [];
-        items.forEach(function (it) {
-            var type = it.type || '';
-            var actorKey = (it.actor && it.actor.nombre) ? String(it.actor.nombre) : '';
-            var timeKey = timelineMinuteKey(it.occurred_at);
-            var last = groups.length ? groups[groups.length - 1] : null;
-            var canGroup = !!TL_GROUPABLE_TYPES[type];
-            if (
-                canGroup
-                && last
-                && last.type === type
-                && last.timeKey === timeKey
-                && last.actorKey === actorKey
-            ) {
-                last.items.push(it);
-                return;
-            }
-            groups.push({
-                type: type,
-                timeKey: timeKey,
-                actorKey: actorKey,
-                occurred_at: it.occurred_at || '',
-                items: [it]
-            });
-        });
-        return groups;
-    }
-
-    function formatTimelineSummaryParts(it) {
-        var text = String((it && it.summary) || '').trim();
-        var status = '';
-        var payload = (it && it.payload) || {};
-        if (payload.status) {
-            status = String(payload.status);
-        }
-        var m = text.match(/\s·\s*(active|completed|draft|on-hold|revoked|cancelled|stopped|finished)\s*$/i);
-        if (m) {
-            if (!status) status = m[1];
-            text = text.slice(0, m.index).trim();
-        }
-        if (status) {
-            var key = String(status).toLowerCase();
-            status = TL_STATUS_LABEL[key] || status;
-        }
-        return { text: text, status: status };
-    }
-
-    function bindTimelineEpisodioFilters() {
-        var root = document.getElementById('tl_episodio_timeline_filters');
-        if (!root || root.getAttribute('data-bound') === '1') return;
-        root.setAttribute('data-bound', '1');
-        root.addEventListener('click', function (ev) {
-            var btn = ev.target.closest('[data-tl-filter]');
-            if (!btn) return;
-            _tlEpisodioFilter = btn.getAttribute('data-tl-filter') || 'all';
-            root.querySelectorAll('[data-tl-filter]').forEach(function (b) {
-                b.classList.toggle('active', b === btn);
-            });
-            paintTimelineEpisodio();
-        });
     }
 
     function renderMotivos(texto, mp) {
@@ -1495,7 +1397,6 @@ endif;
                 }
                 bindTimelineEpisodioFilters();
                 bindEgresoGuardiaForm();
-                renderTimelineEpisodio(payload.data.timeline_episodio || null);
                 renderSignosVitalesEpisodio(payload.data.signos_vitales_episodio || null);
                 try {
                     var qs = new URLSearchParams(window.location.search || '');
@@ -1607,6 +1508,9 @@ endif;
     }
 
     // Intentar inicializar inmediatamente y luego con reintentos
+    if (timelineConfig.modoCaptura === 'imp' || timelineConfig.modoCaptura === 'emer') {
+        bindTimelineEpisodioFilters();
+    }
     if (!inicializarTimeline()) {
         // Si el DOM está cargando, esperar a que esté listo
         if (document.readyState === 'loading') {

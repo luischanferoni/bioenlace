@@ -11,7 +11,9 @@ use common\models\Person\Persona;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\components\Domain\Clinical\Service\EncounterCaptureContextService;
+use common\components\Domain\Clinical\Service\EpisodioTimelineService;
 use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapService;
+use frontend\components\Clinical\EpisodioTimelineViewBuilder;
 use frontend\filters\SisseActionFilter;
 
 /**
@@ -27,7 +29,7 @@ class PacienteController extends Controller
         return [
             'access' => [
                 'class' => SisseActionFilter::className(),
-                'only' => ['historia', 'formulario-consulta', 'ver-consulta'],
+                'only' => ['historia', 'formulario-consulta', 'ver-consulta', 'episodio-timeline-html'],
                 'filtrosExtra' => [SisseActionFilter::FILTRO_CONTEXTO_PROFESIONAL],
             ],
         ];
@@ -68,10 +70,63 @@ class PacienteController extends Controller
         }
 
         // Migración: el resumen clínico se consume desde la API (GET /api/v1/personas/{id}/historia-clinica).
-        // El frontend sólo renderiza la vista.
+        // El registro de episodio (guardia/IMP) se renderiza en partials PHP; el JS solo filtra en DOM.
+        $timelineEpisodio = $this->loadTimelineEpisodioFeed(
+            (int) $paciente->id_persona,
+            $parent !== null ? (string) $parent : null,
+            $parentId
+        );
+
         return $this->render('timeline/timeline', [
             'persona' => $paciente,
+            'timelineEpisodio' => $timelineEpisodio,
         ]);
+    }
+
+    /**
+     * Fragmento HTML del registro de episodio (para refrescar tras triage / egreso).
+     *
+     * GET /paciente/episodio-timeline-html?id={persona}&parent=&parent_id=
+     *
+     * @no_intent_catalog
+     */
+    public function actionEpisodioTimelineHtml($id)
+    {
+        $paciente = $this->findModel($id);
+        $parent = Yii::$app->request->get('parent');
+        $parentId = (int) Yii::$app->request->get('parent_id', 0);
+        $feed = $this->loadTimelineEpisodioFeed((int) $paciente->id_persona, $parent !== null ? (string) $parent : null, $parentId);
+        $groups = EpisodioTimelineViewBuilder::groupsFromFeed($feed);
+        $itemCount = EpisodioTimelineViewBuilder::itemCount($feed);
+
+        Yii::$app->response->format = Response::FORMAT_HTML;
+
+        return $this->renderPartial('timeline/_episodio_timeline_list', [
+            'groups' => $groups,
+            'itemCount' => $itemCount,
+        ]);
+    }
+
+    /**
+     * @return array{parent_type: string, episodio_id: int, items: list<array<string, mixed>>}|null
+     */
+    private function loadTimelineEpisodioFeed(int $personaId, ?string $parent, int $parentId): ?array
+    {
+        $parentUpper = strtoupper(trim((string) $parent));
+        if ($parentId <= 0) {
+            return null;
+        }
+        $svc = new EpisodioTimelineService();
+        if ($parentUpper === Encounter::PARENT_GUARDIA) {
+            $idEfector = (int) Yii::$app->user->getIdEfector();
+
+            return $svc->buildForGuardia($personaId, $parentId, $idEfector);
+        }
+        if ($parentUpper === Encounter::PARENT_INTERNACION) {
+            return $svc->buildForInternacion($personaId, $parentId);
+        }
+
+        return null;
     }
 
     /**

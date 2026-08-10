@@ -3,9 +3,10 @@
  * Bootstrap no trae timeline vertical con puntos por tipo.
  * El banner y el resto del layout usan utilidades Bootstrap.
  */
-.tl-episodio-timeline {  
-  margin-left: 1.35rem;
-  padding-left: 0.85rem;
+.tl-episodio-timeline {
+  border-left: 2px solid var(--bs-border-color, #dee2e6);
+  margin-left: 0.35rem;
+  padding-left: 0.75rem !important;
 }
 
 .tl-episodio-timeline__item {

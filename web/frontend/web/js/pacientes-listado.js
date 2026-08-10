@@ -635,7 +635,7 @@
     }
 
     function fillGuardiaTableroRow(rowEl, g) {
-      rowEl.className = 'd-flex align-items-center justify-content-between p-3 mb-0 border-bottom guardia-tablero-row ' + nivelRowClass(g);
+      rowEl.className = 'd-flex align-items-center justify-content-between p-3 mb-0 border-bottom border-start border-4 guardia-tablero-row ' + nivelRowClass(g);
 
       rowEl.querySelector('[data-field="nombre"]').textContent = nombrePacienteGuardia(g);
 

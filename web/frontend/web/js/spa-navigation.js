@@ -149,7 +149,7 @@
         
         // Header con título y botón volver
         const header = document.createElement('div');
-        header.className = 'spa-page-header bg-white border-bottom shadow-sm';
+        header.className = 'spa-page-header sticky-top bg-white border-bottom shadow-sm';
         header.innerHTML = `
             <div class="container-fluid">
                 <div class="d-flex align-items-center gap-3 py-3 px-3">
@@ -164,7 +164,7 @@
 
         // Contenido
         const content = document.createElement('div');
-        content.className = 'spa-page-content';
+        content.className = 'spa-page-content w-100 p-4';
         content.innerHTML = page.content;
 
         pageElement.appendChild(header);

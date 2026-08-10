@@ -1,10 +1,9 @@
 /**
- * Estilos de la SPA / asistente (navegación stack, chat, flows).
- * Tokens de marca y papel: bootstrap-custom.css (AppAsset).
+ * Shell SPA / asistente: solo lo que Bootstrap no cubre.
+ * Tokens de marca: bootstrap-custom.css. Manchester: guardia-tablero.css.
  */
 
 :root {
-    /* Asistente: sticky toolbar y composer fijo */
     --navbar-height: 4.5rem;
     --spa-chat-toolbar-sticky-top: calc(var(--navbar-height) + 0.25rem);
     --spa-chat-composer-reserve: calc(7.25rem + env(safe-area-inset-bottom, 0px));
@@ -17,7 +16,7 @@
     }
 }
 
-/* Navegación Stack - Transiciones de páginas */
+/* Stack de páginas fullscreen */
 .spa-page {
     position: fixed;
     top: 0;
@@ -43,100 +42,6 @@
     z-index: 1;
 }
 
-.spa-pages-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: 1000;
-}
-
-/* Asegurar que el contenedor principal no limite el espacio */
-#spa-container {
-    position: relative;
-    width: 100%;
-    min-height: 100vh;
-}
-
-/* Las páginas del stack deben estar fuera del contenedor del layout */
-#spa-pages-container .spa-page {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-}
-
-/* Animación de entrada para respuesta */
-.spa-response-section {
-    animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Cards clickeables con expansión */
-.spa-card {
-    cursor: pointer;
-    transition: all 0.2s ease;
-    height: 100%;
-}
-
-.spa-card:hover {
-    transform: translateY(-2px);
-}
-
-.spa-card-expanding {
-    border-color: #0d6efd !important;
-}
-
-.spa-card-expanded {
-    border-color: #0d6efd !important;
-}
-
-/* Contenido expandido del card */
-.spa-card-expand-content {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #dee2e6;
-    animation: expandContent 0.3s ease;
-}
-
-@keyframes expandContent {
-    from {
-        opacity: 0;
-        max-height: 0;
-    }
-    to {
-        opacity: 1;
-        max-height: 1000px;
-    }
-}
-
-/* Header de página con botón volver */
-.spa-page-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-/* Contenido de página - ocupa todo el espacio disponible */
-.spa-page-content {
-    width: 100%;
-    min-height: calc(100vh - 60px);
-    padding: 1.5rem;
-}
-
-/* Asegurar que las páginas del stack estén por encima de todo */
 #spa-pages-container {
     position: fixed;
     top: 0;
@@ -151,27 +56,58 @@
     pointer-events: auto;
 }
 
-/* Menú vertical lateral - Desktop */
+.spa-page-content {
+    min-height: calc(100vh - 60px);
+}
+
+.spa-card {
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.spa-card:hover {
+    transform: translateY(-2px);
+}
+
+.spa-card-expanding,
+.spa-card-expanded {
+    border-color: var(--bs-primary, #0d6efd) !important;
+}
+
+.spa-card-expand-content {
+    animation: spa-expand-content 0.3s ease;
+}
+
+@keyframes spa-expand-content {
+    from { opacity: 0; max-height: 0; }
+    to { opacity: 1; max-height: 1000px; }
+}
+
+@keyframes spa-fade-in {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.spa-response-section {
+    animation: spa-fade-in 0.3s ease-in;
+}
+
+/* Menú lateral / bottom (layout no previsto por utilidades solas) */
 .sidebar-menu {
     width: 90px;
-    height: 500px; /* Altura fija definible - ajustar según necesidad */
+    height: 500px;
     position: sticky;
     top: calc(var(--navbar-height) + 16px);
-    z-index: 100; /* Por debajo del navbar sticky */
+    z-index: 100;
     flex-shrink: 0;
     overflow-y: auto;
     max-height: calc(100vh - var(--navbar-height) - 32px);
-}
-
-.sidebar-menu .nav {
-    height: 100%;
 }
 
 .sidebar-menu .nav-link {
     min-height: 80px;
 }
 
-/* Menú horizontal al bottom - Mobile */
 @media (max-width: 768px) {
     .sidebar-menu {
         position: fixed;
@@ -184,28 +120,26 @@
         max-height: 80px;
         border-radius: 20px 20px 0 0 !important;
         margin: 0 !important;
-        z-index: 100; /* Reducido para que esté por debajo del navbar */
+        z-index: 100;
     }
-    
+
     .sidebar-menu .nav {
         flex-direction: row;
         justify-content: space-around;
         align-items: center;
         height: 100%;
     }
-    
+
     .sidebar-menu .nav-link {
         min-height: auto;
         padding: 0.75rem 0.5rem;
         flex: 1;
     }
-    
-    /* Ajustar el contenido principal para que no quede oculto detrás del menú */
+
     #page_layout {
         padding-bottom: 100px !important;
     }
 
-    /* Asistente: menú inferior + composer elevado; padding en el bloque del asistente (ver .spa-asistente-root). */
     #page_layout:has(.spa-asistente-root) {
         padding-bottom: 0 !important;
     }
@@ -215,114 +149,32 @@ html:has(.spa-asistente-root) {
     scroll-padding-bottom: var(--spa-chat-composer-reserve);
 }
 
-/* Asistente: sin card; mensajes con el fondo del layout; toolbar sticky; composer fijo abajo. */
 .spa-asistente-root {
-    padding-bottom: 0;
     background-color: var(--bio-paper-25);
 }
 
-.spa-chat-root {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    overflow: visible;
-}
-
 .spa-chat-toolbar {
-    flex-shrink: 0;
     position: sticky;
     top: var(--spa-chat-toolbar-sticky-top);
     z-index: 1019;
     padding-top: 0.35rem;
     padding-bottom: 0.35rem;
-    background: transparent;
-    overflow: visible;
 }
 
 .spa-chat-toolbar .dropdown-menu {
     z-index: 1035;
 }
 
-.spa-chat-shortcuts-btn {
-    border-radius: 999px;
-}
-
-/* Estado inicial del chat: hint a ancho completo del panel de mensajes */
-#spa-chat-empty-hint {
-    width: 100%;
-}
-
-.spa-chat-empty-hint-inner {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.spa-chat-welcome-category-chips {
-    align-items: flex-start;
-    justify-content: flex-start;
-}
-
 .spa-chat-shortcuts-menu {
-    text-align: left;
     min-width: min(100vw - 2rem, 22rem);
 }
 
-.spa-chat-welcome-lead {
-    font-size: 0.95rem;
-    line-height: 1.35;
-}
-
-.spa-chat-welcome-category-title {
-    font-weight: 600;
-    font-size: 0.8125rem;
-    letter-spacing: 0.02em;
-    color: var(--bio-paper-500);
-}
-
-.spa-chat-welcome-subgroup-title {
-    font-weight: 600;
-    font-size: 0.75rem;
-    letter-spacing: 0.01em;
-    color: var(--bio-paper-400);
-    opacity: 0.92;
-}
-
-.spa-chat-welcome-subgroup:last-child {
-    margin-bottom: 0 !important;
-}
-
-.spa-ui-chip-btn {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.35rem 0.75rem;
-    font-size: 0.8125rem;
-    font-weight: 500;
-    line-height: 1.25;
-    color: var(--bio-paper-600, #4a5568);
-    background: var(--bio-paper-50, #fff);
-    border: 1px solid var(--bio-paper-300, #cbd5e0);
-    border-radius: 999px;
-    cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.spa-ui-chip-btn:hover {
-    border-color: var(--bio-primary-400, #4299e1);
-    color: var(--bio-primary-700, #2b6cb0);
-}
-
 .spa-ui-chip-btn.is-active {
+    font-weight: 600;
     color: var(--bio-primary-800, #2c5282);
     background: var(--bio-primary-50, #ebf8ff);
     border-color: var(--bio-primary-500, #3182ce);
-    font-weight: 600;
     box-shadow: inset 0 0 0 1px var(--bio-primary-500, #3182ce);
-}
-
-.spa-ui-date-input,
-.bio-ui-json-fields .flatpickr-input.form-control {
-    cursor: pointer;
 }
 
 .spa-chat-flow-ui .flatpickr-calendar.open,
@@ -343,61 +195,7 @@ html:has(.spa-asistente-root) {
     }
 }
 
-.spa-shortcut-card {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.35rem;
-    width: 100%;
-    text-align: left;
-    padding: 0.65rem 0.75rem;
-    border: 1px solid var(--bio-paper-200);
-    border-radius: 0.65rem;
-    background: var(--bio-paper-50);
-    color: inherit;
-    cursor: pointer;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-}
-
-.spa-shortcut-card:hover,
-.spa-shortcut-card:focus-visible {
-    border-color: var(--bioenlace-primary, var(--bs-primary, #54a0ff));
-    background: var(--bio-paper-25);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-    outline: none;
-}
-
-.spa-shortcut-card-body {
-    flex: 1;
-    min-width: 0;
-}
-
-.spa-shortcut-card-title {
-    display: block;
-    font-weight: 600;
-    font-size: 0.95rem;
-    line-height: 1.25;
-    color: var(--bioenlace-primary, var(--bs-primary, #54a0ff));
-}
-
-.spa-shortcut-card-desc {
-    display: block;
-    margin-top: 0.15rem;
-    font-size: 0.8125rem;
-    line-height: 1.35;
-    color: var(--bio-paper-500);
-}
-
-.spa-shortcut-card-chevron {
-    flex-shrink: 0;
-    font-size: 1.25rem;
-    line-height: 1;
-    color: var(--bio-paper-400);
-    padding-top: 0.1rem;
-}
-
 .spa-chat-messages {
-    overflow: visible;
-    min-height: 0;
     padding-bottom: var(--spa-chat-composer-reserve);
 }
 
@@ -416,11 +214,7 @@ html:has(.spa-asistente-root) {
     }
 }
 
-/* Composer: caja única textarea + botón embebido. */
-.spa-chat-input-wrap {
-    width: 100%;
-}
-
+/* Composer: caja única textarea + botón (no hay patrón BS equivalente) */
 .spa-query-input {
     display: flex;
     align-items: flex-end;
@@ -443,14 +237,12 @@ html:has(.spa-asistente-root) {
 .spa-chat-input {
     flex: 1 1 auto;
     min-width: 0;
-    box-sizing: border-box;
     display: block;
     width: 100%;
     margin: 0;
     resize: none;
     overflow-y: hidden;
     min-height: var(--spa-chat-input-min-height);
-    /* Máximo ~2 líneas (line-height 1.45 + padding vertical). */
     max-height: calc(1.45em * 2 + 1rem);
     padding: 0.5rem 0.35rem 0.5rem 1rem;
     font: inherit;
@@ -472,14 +264,13 @@ html:has(.spa-asistente-root) {
     outline: none;
 }
 
-.spa-chat-input:disabled {
+.spa-chat-input:disabled,
+.spa-query-input:has(.spa-chat-input:disabled) {
     opacity: 0.65;
     cursor: not-allowed;
 }
 
 .spa-query-input:has(.spa-chat-input:disabled) {
-    opacity: 0.65;
-    cursor: not-allowed;
     background-color: var(--bio-paper-100);
 }
 
@@ -506,7 +297,6 @@ html:has(.spa-asistente-root) {
 
 .spa-chat-send-btn:hover:not(:disabled) {
     background-color: var(--bioenlace-primary-hover, #0876ff);
-    box-shadow: 0 3px 8px rgba(84, 160, 255, 0.34);
 }
 
 .spa-chat-send-btn:active:not(:disabled) {
@@ -525,10 +315,6 @@ html:has(.spa-asistente-root) {
     transform: translateY(-0.04em);
 }
 
-.spa-chat-send-btn .spa-spinner {
-    line-height: 0;
-}
-
 .spa-chat-send-btn .spinner-border {
     --bs-spinner-width: 1rem;
     --bs-spinner-height: 1rem;
@@ -536,28 +322,9 @@ html:has(.spa-asistente-root) {
     border-right-color: transparent;
 }
 
-.spa-chat-composer-hint {
-    margin-top: 0.5rem;
-    padding-left: 0.25rem;
-    font-size: 0.8125rem;
-    line-height: 1.35;
-    color: var(--bio-paper-500);
-}
-
-/*
- * Burbuja: Bootstrap aporta forma/color (.p-2, .rounded-3, .bg-primary, …).
- * Hooks en el contenedor: .spa-chat-bubble--user | .spa-chat-bubble--assistant | .spa-chat-bubble--system
- * Hooks en el texto:       .spa-chat-bubble-text--user | .spa-chat-bubble-text--assistant
- */
 .spa-chat-bubble-text {
     font-size: 1.1rem;
     line-height: 1.45;
-}
-
-/* Bloque `intent_flow` a ancho completo (título h4 + mini-UI; no burbuja angosta) */
-.spa-chat-flow-row,
-.spa-chat-flow-turn {
-    max-width: 100%;
 }
 
 .spa-assistant-step-title {
@@ -567,17 +334,6 @@ html:has(.spa-asistente-root) {
     margin: 0 0 0.75rem 0;
     padding-bottom: 0.5rem;
     border-bottom: 2px solid var(--bs-border-color, #dee2e6);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-/* Encabezado del flujo: `action_name` pequeño + línea a ancho completo */
-.spa-flow-chat-header {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    margin: 0 0 0.25rem 0;
 }
 
 .spa-flow-chat-title {
@@ -586,64 +342,22 @@ html:has(.spa-asistente-root) {
     line-height: 1.3;
     text-align: center;
     margin: 0 0 0.35rem 0;
-    padding: 0;
-    border: none;
-    color: var(--bs-primary, #0d6efd);
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.spa-flow-chat-title--create {
-    color: var(--bs-primary, #0d6efd);
-}
-
-.spa-flow-chat-title--read {
-    color: var(--bs-dark, #212529);
-}
-
-.spa-flow-chat-title--update {
-    color: var(--bs-warning, #ffc107);
-}
-
-.spa-flow-chat-title--delete {
-    color: var(--bs-danger, #dc3545);
 }
 
 .spa-flow-chat-rule {
     display: block;
     width: 100%;
-    max-width: 100%;
     height: 0;
     margin: 0 0 0.5rem 0;
     border: none;
     border-bottom: 2px solid var(--bs-primary, #0d6efd);
-    box-sizing: border-box;
 }
 
-.spa-flow-chat-rule--create {
-    border-bottom-color: var(--bs-primary, #0d6efd);
-}
+.spa-flow-chat-rule--read { border-bottom-color: var(--bs-dark, #212529); }
+.spa-flow-chat-rule--update { border-bottom-color: var(--bs-warning, #ffc107); }
+.spa-flow-chat-rule--delete { border-bottom-color: var(--bs-danger, #dc3545); }
 
-.spa-flow-chat-rule--read {
-    border-bottom-color: var(--bs-dark, #212529);
-}
-
-.spa-flow-chat-rule--update {
-    border-bottom-color: var(--bs-warning, #ffc107);
-}
-
-.spa-flow-chat-rule--delete {
-    border-bottom-color: var(--bs-danger, #dc3545);
-}
-
-/* Flow completado: resumen único en lugar de mini-UIs */
-.spa-chat-flow-row--completed {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* Salida animada de mini-UIs / botón de confirmación antes del resumen */
+/* Animaciones de flow (no hay equivalente BS) */
 .spa-chat-flow-row--collapsing .spa-chat-flow-turn > :not(.spa-flow-chat-header) {
     opacity: 0;
     transform: translateY(-10px);
@@ -653,27 +367,9 @@ html:has(.spa-asistente-root) {
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     pointer-events: none;
-    transition:
-        opacity 0.62s ease-in-out,
-        transform 0.62s ease-in-out,
-        max-height 0.62s ease-in-out,
-        margin 0.62s ease-in-out,
-        padding 0.62s ease-in-out;
+    transition: opacity 0.62s ease-in-out, transform 0.62s ease-in-out, max-height 0.62s ease-in-out, margin 0.62s ease-in-out, padding 0.62s ease-in-out;
 }
 
-.spa-chat-flow-row--collapsing .spa-flow-steps-list,
-.spa-chat-flow-row--collapsing .spa-chat-flow-ui,
-.spa-chat-flow-row--collapsing .spa-flow-step-ui,
-.spa-chat-flow-row--collapsing .spa-flow-submit-inline,
-.spa-chat-flow-row--collapsing .spa-flow-step-text,
-.spa-chat-flow-row--collapsing .bio-ui-json-list,
-.spa-chat-flow-row--collapsing .bio-ui-json-fields {
-    opacity: 0;
-    transform: translateY(-8px);
-    transition: opacity 0.62s ease-in-out, transform 0.62s ease-in-out;
-}
-
-/* Entrada del mensaje de éxito */
 .spa-flow-completed-summary {
     opacity: 0;
     transform: translateY(12px);
@@ -685,7 +381,6 @@ html:has(.spa-asistente-root) {
     transform: translateY(0);
 }
 
-/* Flow descartado o paso anterior: no interactivo (mini-UIs atenuadas) */
 .spa-chat-flow-row--superseded {
     pointer-events: none;
 }
@@ -705,14 +400,8 @@ html:has(.spa-asistente-root) {
     pointer-events: none;
 }
 
-/* `assistant_text` de pasos cancelados / de otro flow */
 .spa-chat-flow-row--superseded .spa-flow-step-text,
-.spa-chat-flow-row--superseded .spa-assistant-step-title {
-    color: var(--bio-paper-500, var(--bs-secondary-color, #6c757d));
-    opacity: 0.85;
-}
-
-/* Encabezado del intent cancelado (título + línea) */
+.spa-chat-flow-row--superseded .spa-assistant-step-title,
 .spa-chat-flow-row--superseded .spa-flow-chat-title {
     color: var(--bio-paper-500, var(--bs-secondary-color, #6c757d));
     opacity: 0.85;
@@ -723,14 +412,7 @@ html:has(.spa-asistente-root) {
     opacity: 0.7;
 }
 
-/* Listado de pasos del flow: `assistant_text` de todos; UI solo en el paso activo */
-.spa-flow-steps-list {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-/* Timeline numerado (create / update multi-paso; no data-access.editar) */
+/* Timeline numerado de pasos de flow */
 .spa-flow-steps-list--numbered .spa-flow-step-item {
     position: relative;
     padding: 0 0 0.65rem 0;
@@ -752,12 +434,6 @@ html:has(.spa-asistente-root) {
     opacity: 0.45;
 }
 
-.spa-flow-step-track {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-}
-
 .spa-flow-step-num {
     flex-shrink: 0;
     width: 1.3rem;
@@ -770,7 +446,6 @@ html:has(.spa-asistente-root) {
     font-weight: 700;
     line-height: 1.3rem;
     text-align: center;
-    transition: background 0.25s ease, color 0.25s ease;
 }
 
 .spa-flow-step-item--active .spa-flow-step-num {
@@ -784,37 +459,6 @@ html:has(.spa-asistente-root) {
     color: #fff;
 }
 
-.spa-flow-steps-list--numbered .spa-flow-step-text {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1.3;
-    margin: 0 0 0.35rem 0;
-}
-
-.spa-flow-steps-list--numbered .spa-flow-step-item--pending .spa-flow-step-text {
-    color: var(--bio-paper-500);
-    font-weight: 500;
-    opacity: 0.8;
-}
-
-.spa-flow-steps-list--numbered .spa-flow-step-item--done .spa-flow-step-text {
-    color: var(--bio-paper-500);
-    font-weight: 500;
-}
-
-.spa-flow-steps-list--numbered .spa-flow-step-item--active .spa-flow-step-text {
-    color: var(--bio-paper-600);
-}
-
-.spa-flow-step-item {
-    margin: 0;
-    padding: 0;
-}
-
-.spa-flow-step-item:not(:last-child) {
-    margin-bottom: 0;
-}
-
 .spa-flow-step-body {
     flex: 1 1 auto;
     min-width: 0;
@@ -825,121 +469,62 @@ html:has(.spa-asistente-root) {
     padding-bottom: 0;
 }
 
+.spa-flow-step-text {
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 0;
+}
+
+.spa-flow-steps-list--numbered .spa-flow-step-text {
+    font-size: 0.8125rem;
+    margin: 0 0 0.35rem 0;
+}
+
+.spa-flow-step-item--pending .spa-flow-step-text,
 .spa-flow-step-item--done .spa-flow-step-text {
     color: var(--bs-secondary-color, #6c757d);
     font-weight: 500;
 }
 
 .spa-flow-step-item--pending .spa-flow-step-text {
-    color: var(--bs-secondary-color, #6c757d);
-    font-weight: 500;
     opacity: 0.75;
-}
-
-.spa-flow-step-item--active .spa-flow-step-text {
-    font-weight: 600;
-    color: inherit;
 }
 
 .spa-flow-step-ui:empty {
     display: none;
 }
 
-.spa-flow-step-ui.spa-flow-step-ui--loading,
-.spa-flow-step-ui:not(:empty) {
-    display: block;
-}
-
-.spa-flow-step-loading {
-    min-height: 2.5rem;
-}
-
-.spa-flow-step-loading-text {
-    font-size: 0.875rem;
-}
-
 .spa-flow-step-ui:not(:empty) {
     margin-top: 0.5rem;
-    margin-left: 0;
-}
-
-/* Texto del paso (`assistant_text`) */
-.spa-flow-step-text {
-    font-size: 1.125rem;
-    font-weight: 600;
-    line-height: 1.3;
-    text-align: left;
-    margin: 0;
-    padding: 0;
-    border: none;
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    color: inherit;
-}
-
-/* Confirmación de pasos / flow_submit: centrado, sin borde superior */
-.spa-flow-submit-inline {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    margin-top: 0.75rem;
-    padding: 0;
-    border: none;
-    box-sizing: border-box;
 }
 
 .spa-flow-submit-inline .btn {
     min-width: 10.5rem;
 }
 
-/* flow_submit integrado: oculto hasta que la mini-UI del paso terminó de montarse. */
 .spa-flow-submit-inline--pending {
     visibility: hidden;
     height: 0;
     overflow: hidden;
     margin: 0 !important;
     padding: 0 !important;
-    border: none !important;
 }
 
-/* Lista embebida UI JSON: transición suave al seleccionar ítem. */
-/* Bloques `kind: message` en mini-UI embebida (texto guía del asistente) */
 .bio-ui-json-message-body {
     font-size: 1.125rem;
     line-height: 1.45;
 }
 
-/* Edición dispersa: pasos apilados (sujeto → dato → formulario) */
-.bio-edit-sparse-chain .bio-ui-json-list-items button[data-embed-pick]:not(.border-3) {
-    opacity: 0.88;
-}
-
-.bio-edit-sparse-chain .bio-ui-json-list-items button[data-embed-pick].border-3 {
-    font-weight: 600;
-}
-
-.bio-ui-json-list--layout-table .bio-ui-json-list-table th {
-    font-size: 0.8125rem;
-    white-space: nowrap;
-}
-
-.bio-ui-json-list--layout-table .bio-ui-json-list-table td {
-    font-size: 0.875rem;
-    vertical-align: middle;
-}
-
 .bio-ui-json-list button[data-embed-pick="1"] {
-    transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.22s ease, opacity 0.22s ease;
+    transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.22s ease;
 }
 
 .bio-ui-json-list button[data-embed-pick="1"]:not(:disabled):active {
     transform: scale(0.98);
 }
 
-/* UI JSON list: presets `presentation.tile` × `presentation.shape` */
+/* Tiles UI JSON (presets presentation) */
 .bio-ui-json-list--tile-compact.bio-ui-json-list--shape-square button[data-embed-pick="1"] {
     min-width: 3.25rem;
     min-height: 3.25rem;
@@ -975,8 +560,6 @@ html:has(.spa-asistente-root) {
     min-height: 2.6rem;
     padding: 0.65rem 0.85rem;
 }
-
-/* UI JSON list (embebible): estilos por Bootstrap (sin clases custom de selección) */
 
 .spa-alertas-toggle-btn .spa-alertas-badge {
     position: absolute;

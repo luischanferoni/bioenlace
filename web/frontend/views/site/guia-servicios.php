@@ -1,58 +1,44 @@
 <?php
 
 /* @var $this yii\web\View */
-/* @var $form yii\bootstrap\ActiveForm */
-/* @var $model common\models\ContactForm */
 
 use yii\helpers\Html;
-use yii\bootstrap5\ActiveForm;
-use yii\captcha\Captcha;
-use frontend\assets\CustomAsset;
 
-
-
-CustomAsset::register($this);
 $this->title = 'Guía de Servicios y Centros de Salud';
 $this->params['breadcrumbs'][] = $this->title;
-
-
 ?>
 
-<style type="text/css">   
-    
-    .head-grupo1 {
-        color: #B23437;
-        border-color: #B23437;
-    }
-       
-</style>
+<div class="container py-4">
+    <h1 class="h3 mb-4"><?= Html::encode($this->title) ?></h1>
 
-<div class="site-contact">
-    <h1><?= Html::encode($this->title) ?></h1>
-	&nbsp;&nbsp;
-	
-	<div class="panel panel-primary <?= 'head-grupo1'?>">
-		<h4 align="center">COMUNICADO</h4>
-		&nbsp;
-		<p><b>En el marco de la Emergencia Sanitaria por COVID-19, los centros de salud han reorganizado sus servicios, por lo que los días y horarios informados en este portal pueden sufrir modificaciones.
-				Ante cualquier duda contáctese telefónicamente con su centro de salud.</b></p>
-	</div>
-	
-   <div class="container1">
-       
-        <div class="card">
-            <img src="<?= Yii ::getAlias('@web') ?>/images/santiago.png">
-            <h4>Santiago del Estero</h4>
-            <p>Guía de Servicios y Centros de Salud de la ciudad de Santiago del Estero.</p>
-            <?= Html::a('Ver más', ['site/centros-salud', 'id' => 4599]);?>            
-        </div>
-        
-        <div class="card">
-            <img src="<?= Yii ::getAlias('@web') ?>/images/banda.png">
-            <h4>La Banda</h4>
-            <p>Guía de Servicios y Centros de Salud de la ciudad de La Banda.</p>
-            <?= Html::a('Ver más', ['site/centros-salud', 'id' => 4518]);?>
-        </div>        
+    <div class="alert alert-danger" role="alert">
+        <h2 class="h5 alert-heading text-center">COMUNICADO</h2>
+        <p class="mb-0">
+            <strong>En el marco de la Emergencia Sanitaria por COVID-19, los centros de salud han reorganizado sus servicios, por lo que los días y horarios informados en este portal pueden sufrir modificaciones.
+            Ante cualquier duda contáctese telefónicamente con su centro de salud.</strong>
+        </p>
     </div>
-		
+
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <img class="card-img-top" src="<?= Html::encode(Yii::getAlias('@web')) ?>/images/santiago.png" alt="Santiago del Estero">
+                <div class="card-body">
+                    <h2 class="h5 card-title">Santiago del Estero</h2>
+                    <p class="card-text">Guía de Servicios y Centros de Salud de la ciudad de Santiago del Estero.</p>
+                    <?= Html::a('Ver más', ['site/centros-salud', 'id' => 4599], ['class' => 'stretched-link']); ?>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm">
+                <img class="card-img-top" src="<?= Html::encode(Yii::getAlias('@web')) ?>/images/banda.png" alt="La Banda">
+                <div class="card-body">
+                    <h2 class="h5 card-title">La Banda</h2>
+                    <p class="card-text">Guía de Servicios y Centros de Salud de la ciudad de La Banda.</p>
+                    <?= Html::a('Ver más', ['site/centros-salud', 'id' => 4518], ['class' => 'stretched-link']); ?>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

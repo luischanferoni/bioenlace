@@ -88,14 +88,14 @@ class NavSisse extends Widget
             $show = $active ? ' show' : '';
 
             $html = '<li class="mb-1">';
-            $html .= '<button class="btn btn-toggle align-items-center rounded' . $collapsed . '" data-bs-toggle="collapse" data-bs-target="#' . $id . '" aria-expanded="' . $expanded . '">';
+            $html .= '<button class="btn btn-toggle d-inline-flex align-items-center rounded fw-semibold py-1 px-2 text-body bg-transparent border-0' . $collapsed . '" data-bs-toggle="collapse" data-bs-target="#' . $id . '" aria-expanded="' . $expanded . '">';
             if ($icon) {
                 $html .= '<span class="me-2">' . $icon . '</span>';
             }
             $html .= $label;
             $html .= '</button>';
             $html .= '<div class="collapse' . $show . '" id="' . $id . '">';
-            $html .= '<ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small">';
+            $html .= '<ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">';
             $html .= $subHtml;
             $html .= '</ul>';
             $html .= '</div>';
@@ -117,7 +117,7 @@ class NavSisse extends Widget
         $activeClass = $active ? ' active' : '';
 
         $html = '<li>';
-        $html .= '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" class="link-dark rounded' . $activeClass . '">';
+        $html .= '<a href="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '" class="link-dark d-inline-block rounded py-1 px-2 text-decoration-none' . $activeClass . '">';
         if ($icon) {
             $html .= '<span class="me-2">' . $icon . '</span>';
         }

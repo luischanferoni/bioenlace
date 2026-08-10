@@ -159,7 +159,7 @@ $this->title = $esGuardia
                         <?php foreach (TriageScale::levelMeta() as $n => $meta): ?>
                         <input type="radio" class="btn-check" name="guardia_triage_level" id="guardia-triage-level-<?= (int) $n ?>" value="<?= (int) $n ?>"<?= (int) $n === 3 ? ' checked' : '' ?>>
                         <label
-                            class="btn btn-sm guardia-triage-level guardia-triage-level--<?= (int) $n ?>"
+                            class="btn btn-sm btn-outline-secondary fw-bold guardia-triage-level guardia-triage-level--<?= (int) $n ?>"
                             for="guardia-triage-level-<?= (int) $n ?>"
                             title="<?= Html::encode($meta['label']) ?>"
                         ><?= (int) $n ?></label>

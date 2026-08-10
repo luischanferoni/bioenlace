@@ -510,11 +510,17 @@
 
     const FLOW_CRUD_TONE_CLASSES = ['spa-flow-chat--create', 'spa-flow-chat--read', 'spa-flow-chat--update', 'spa-flow-chat--delete'];
     const FLOW_CRUD_TITLE_TONE_CLASSES = [
-        'spa-flow-chat-title--create',
-        'spa-flow-chat-title--read',
-        'spa-flow-chat-title--update',
-        'spa-flow-chat-title--delete'
+        'text-primary',
+        'text-dark',
+        'text-warning',
+        'text-danger'
     ];
+    const FLOW_CRUD_TITLE_TONE_BY_CRUD = {
+        create: 'text-primary',
+        read: 'text-dark',
+        update: 'text-warning',
+        delete: 'text-danger'
+    };
     const FLOW_CRUD_RULE_TONE_CLASSES = [
         'spa-flow-chat-rule--create',
         'spa-flow-chat-rule--read',
@@ -570,8 +576,8 @@
             return;
         }
         header.classList.add('spa-flow-chat--' + tone);
-        if (title) {
-            title.classList.add('spa-flow-chat-title--' + tone);
+        if (title && FLOW_CRUD_TITLE_TONE_BY_CRUD[tone]) {
+            title.classList.add(FLOW_CRUD_TITLE_TONE_BY_CRUD[tone]);
         }
         if (rule) {
             rule.classList.add('spa-flow-chat-rule--' + tone);
@@ -584,7 +590,8 @@
             return '';
         }
         const tone = flowCrudToneFromManifest(fm);
-        const titleClass = 'spa-flow-chat-title' + (tone ? ' spa-flow-chat-title--' + tone : '');
+        const titleTone = tone && FLOW_CRUD_TITLE_TONE_BY_CRUD[tone] ? ' ' + FLOW_CRUD_TITLE_TONE_BY_CRUD[tone] : '';
+        const titleClass = 'spa-flow-chat-title' + titleTone;
         const ruleClass = 'spa-flow-chat-rule' + (tone ? ' spa-flow-chat-rule--' + tone : '');
         const headerClass = 'spa-flow-chat-header' + (tone ? ' spa-flow-chat--' + tone : '');
         return '<div class="' + headerClass + '">'
@@ -803,7 +810,7 @@
             return;
         }
         var wrap = document.createElement('div');
-        wrap.className = 'spa-flow-submit-inline' +
+        wrap.className = 'spa-flow-submit-inline d-flex flex-column align-items-center w-100 mt-3' +
             (opts.deferReveal === true ? ' spa-flow-submit-inline--pending' : '');
         var btn = document.createElement('button');
         btn.type = 'button';
@@ -3374,7 +3381,7 @@
         html += '</div>';
         const effectiveRequiresConfirmation = requiresConfirmation && options.isTerminalFlowStep !== true;
         if (effectiveRequiresConfirmation) {
-            html += '<div class="spa-flow-submit-inline">';
+            html += '<div class="spa-flow-submit-inline d-flex flex-column align-items-center w-100 mt-3">';
             html += '<button type="button" class="btn btn-success" data-embed-confirm="1" disabled>' + escapeHtml(FLOW_SUBMIT_BUTTON_LABEL) + '</button>';
             html += '</div>';
         }
@@ -3719,7 +3726,7 @@
         const hideSubmit = block.hide_submit === true || block.hide_submit === 1 || block.hide_submit === '1'
             || options.isTerminalFlowStep === true;
         if (!hideSubmit) {
-            html += '<div class="spa-flow-submit-inline">';
+            html += '<div class="spa-flow-submit-inline d-flex flex-column align-items-center w-100 mt-3">';
             html += '<button type="button" class="btn btn-success" data-ui-json-submit="1">' + escapeHtml(FLOW_SUBMIT_BUTTON_LABEL) + '</button>';
             html += '</div>';
         }
@@ -4234,7 +4241,7 @@
             const label = typeof option === 'object' ? option.label : option;
             const active = current !== '' && String(value) === current ? ' is-active' : '';
             const pressed = active ? 'true' : 'false';
-            html += '<button type="button" class="spa-ui-chip-btn' + active + '" data-field="' + escapeHtml(field.name) + '" data-value="' + escapeHtml(value) + '" aria-pressed="' + pressed + '">' + escapeHtml(label) + '</button>';
+            html += '<button type="button" class="btn btn-sm btn-outline-secondary rounded-pill spa-ui-chip-btn' + active + '" data-field="' + escapeHtml(field.name) + '" data-value="' + escapeHtml(value) + '" aria-pressed="' + pressed + '">' + escapeHtml(label) + '</button>';
         });
         html += '</div>';
         return html;
@@ -5592,12 +5599,12 @@
     }
 
     function shortcutCardHtml(meta) {
-        return '<button type="button" class="spa-shortcut-card" data-shortcut-intent-id="' + escapeHtml(meta.iid) + '" data-shortcut-name="' + escapeHtml(meta.name) + '">' +
-            '<span class="spa-shortcut-card-body">' +
-            '<span class="spa-shortcut-card-title">' + escapeHtml(meta.name) + '</span>' +
-            (meta.desc ? '<span class="spa-shortcut-card-desc">' + escapeHtml(meta.desc) + '</span>' : '') +
+        return '<button type="button" class="btn btn-light border text-start w-100 d-flex align-items-start gap-2 py-2 px-3 spa-shortcut-card" data-shortcut-intent-id="' + escapeHtml(meta.iid) + '" data-shortcut-name="' + escapeHtml(meta.name) + '">' +
+            '<span class="flex-grow-1 min-w-0">' +
+            '<span class="d-block fw-semibold text-primary">' + escapeHtml(meta.name) + '</span>' +
+            (meta.desc ? '<span class="d-block small text-secondary mt-1">' + escapeHtml(meta.desc) + '</span>' : '') +
             '</span>' +
-            '<span class="spa-shortcut-card-chevron" aria-hidden="true">›</span>' +
+            '<span class="flex-shrink-0 text-secondary fs-5 lh-1" aria-hidden="true">›</span>' +
             '</button>';
     }
 
@@ -5671,7 +5678,7 @@
             if (subgroups.length > 0) {
                 let hasAny = false;
                 let sectionHtml = '<section class="spa-chat-welcome-category">';
-                sectionHtml += '<h3 class="spa-chat-welcome-category-title h6 mb-2">' + escapeHtml(title) + '</h3>';
+                sectionHtml += '<h3 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">' + escapeHtml(title) + '</h3>';
                 subgroups.forEach(function (sg) {
                     const sgTitle = sg && sg.titulo ? String(sg.titulo) : '';
                     const sgActions = sg && Array.isArray(sg.actions) ? sg.actions : [];
@@ -5681,7 +5688,7 @@
                     hasAny = true;
                     sectionHtml += '<div class="spa-chat-welcome-subgroup mb-2">';
                     if (sgTitle) {
-                        sectionHtml += '<h4 class="spa-chat-welcome-subgroup-title h6 mb-2">' + escapeHtml(sgTitle) + '</h4>';
+                        sectionHtml += '<h4 class="spa-chat-welcome-subgroup-title h6 mb-2 small fw-semibold text-secondary">' + escapeHtml(sgTitle) + '</h4>';
                     }
                     sectionHtml += '<div class="spa-shortcut-cards-grid">';
                     sectionHtml += appendShortcutCardsGridHtml(sgActions);
@@ -5697,7 +5704,7 @@
                 return;
             }
             html += '<section class="spa-chat-welcome-category">';
-            html += '<h3 class="spa-chat-welcome-category-title h6 mb-2">' + escapeHtml(title) + '</h3>';
+            html += '<h3 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">' + escapeHtml(title) + '</h3>';
             html += '<div class="spa-shortcut-cards-grid">';
             html += appendShortcutCardsGridHtml(actions);
             html += '</div></section>';
@@ -5719,7 +5726,7 @@
             return;
         }
         let html = '<div class="spa-chat-welcome-category">';
-        html += '<h3 class="spa-chat-welcome-category-title h6 mb-2">Atajos</h3>';
+        html += '<h3 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">Atajos</h3>';
         html += '<div class="spa-shortcut-cards-grid">';
         items.forEach(function (a) {
             const m = shortcutMetaFromAction(a);
@@ -5868,7 +5875,7 @@
             if (subgroups.length > 0) {
                 let hasAny = false;
                 let blockHtml = '<div>';
-                blockHtml += '<h4 class="spa-chat-welcome-category-title h6 mb-2">' + escapeHtml(title) + '</h4>';
+                blockHtml += '<h4 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">' + escapeHtml(title) + '</h4>';
                 subgroups.forEach(function (sg) {
                     const sgTitle = sg && sg.titulo ? String(sg.titulo) : '';
                     const sgActions = sg && Array.isArray(sg.actions) ? sg.actions : [];
@@ -5878,7 +5885,7 @@
                     hasAny = true;
                     blockHtml += '<div class="spa-chat-welcome-subgroup mb-2">';
                     if (sgTitle) {
-                        blockHtml += '<h5 class="spa-chat-welcome-subgroup-title h6 mb-2">' + escapeHtml(sgTitle) + '</h5>';
+                        blockHtml += '<h5 class="spa-chat-welcome-subgroup-title h6 mb-2 small fw-semibold text-secondary">' + escapeHtml(sgTitle) + '</h5>';
                     }
                     blockHtml += '<div class="spa-shortcut-cards-grid">';
                     sgActions.forEach(function (a) {
@@ -5902,7 +5909,7 @@
             }
 
             html += '<div>';
-            html += '<h4 class="spa-chat-welcome-category-title h6 mb-2">' + escapeHtml(title) + '</h4>';
+            html += '<h4 class="spa-chat-welcome-category-title h6 mb-2 fw-semibold text-secondary">' + escapeHtml(title) + '</h4>';
             html += '<div class="spa-shortcut-cards-grid">';
             actions.forEach(function (a) {
                 const m = shortcutMetaFromAction(a);

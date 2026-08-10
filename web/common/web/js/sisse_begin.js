@@ -31,13 +31,13 @@ function alertaFlotante(contenido, tipo) {
   $(".modal-header").append(
     '<div class="alert alert-' +
       tipo +
-      ' alert-dismissible fade show sisse-floating-alert position-fixed" role="alert">' +
+      ' alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3 shadow z-3" style="min-width:min(450px,90vw);opacity:0.95;z-index:99999;" role="alert">' +
       icon +
       contenido +
       "</div>"
   );
   window.setTimeout(function () {
-    $(".sisse-floating-alert").alert("close");
+    $(".modal-header .alert.position-fixed").alert("close");
   }, 6000);
 }
 

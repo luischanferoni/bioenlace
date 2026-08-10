@@ -107,7 +107,7 @@ $this->params['breadcrumbs'][] = $this->title;
                             'Nro.' . $num_hc,
                             ['personas/crear-numero-historia-clinica', 'id' => $model->id_persona],
                             $options = [
-                                'class' => 'linkaModalGeneral num-hc ms-2',
+                                'class' => 'linkaModalGeneral ms-2 fw-bold fs-5 text-primary',
                                 'data-title' => "Actualización Numero de Historia Clinica",
                                 'title' => 'Actualizar Numero de Historia Clinica',
                             ]

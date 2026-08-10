@@ -122,7 +122,7 @@
 </template>
 
 <template id="tpl-paciente-guardia-row">
-    <div class="d-flex align-items-center justify-content-between p-3 mb-0 border-bottom guardia-tablero-row" data-role="guardia-row">
+    <div class="d-flex align-items-center justify-content-between p-3 mb-0 border-bottom border-start border-4 guardia-tablero-row" data-role="guardia-row">
         <div class="d-flex align-items-start gap-3 flex-grow-1">
             <div style="flex:1;">
                 <h5 class="mb-1" data-field="nombre"></h5>

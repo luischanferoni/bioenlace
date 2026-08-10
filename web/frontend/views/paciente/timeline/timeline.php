@@ -643,7 +643,7 @@ endif;
                 var checked = String(n) === level ? ' checked' : '';
                 return '<input type="radio" class="btn-check" name="level" id="tl-triage-level-' + n
                     + '" value="' + n + '" autocomplete="off"' + checked + ' required>'
-                    + '<label class="btn btn-sm guardia-triage-level guardia-triage-level--' + n
+                    + '<label class="btn btn-sm btn-outline-secondary fw-bold guardia-triage-level guardia-triage-level--' + n
                     + '" for="tl-triage-level-' + n + '">' + n + '</label>';
             }).join('');
             contentEl.innerHTML = ''

@@ -19,7 +19,7 @@ $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAs
                         <button
                             type="button"
                             id="spa-shortcuts-toggle-btn"
-                            class="btn btn-outline-secondary btn-sm dropdown-toggle spa-chat-shortcuts-btn"
+                            class="btn btn-outline-secondary btn-sm dropdown-toggle rounded-pill"
                             data-bs-toggle="dropdown"
                             data-bs-auto-close="outside"
                             data-bs-display="static"
@@ -62,7 +62,7 @@ $this->registerJsFile('@web/js/spa-home.js', ['depends' => [BioenlaceApiClientAs
                         </button>
                     </div>
                 </div>
-                <p class="spa-chat-composer-hint mb-0">Enter para enviar, Shift+Enter para salto de línea.</p>
+                <p class="small text-secondary mb-0 mt-2 ps-1">Enter para enviar, Shift+Enter para salto de línea.</p>
             </div>
         </div>
     </div>

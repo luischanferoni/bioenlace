@@ -1582,9 +1582,10 @@ endif;
         
         // Verificar que los elementos del DOM estén presentes
         const signosVitalesContent = document.getElementById('signos-vitales-actuales-content');
+        const episodioSvSection = document.getElementById('tl_episodio_sv_section');
         const formularioContainer = document.getElementById('formulario-container');
         
-        if (!signosVitalesContent && !formularioContainer) {
+        if (!signosVitalesContent && !episodioSvSection && !formularioContainer) {
             console.warn('Elementos del timeline no encontrados en el DOM');
             return false;
         }

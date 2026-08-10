@@ -438,7 +438,7 @@ async function loadSignosVitalesActuales() {
     
     // Verificar que el elemento existe
     if (!content) {
-        console.error('Elemento signos-vitales-actuales-content no encontrado');
+        // En episodio (IMP/EMER) el contenedor AMB no existe; SV van por tl_episodio_sv_*.
         return;
     }
     
@@ -672,26 +672,30 @@ function initTimeline(config) {
     // Cargar última vacuna
     //loadUltimaVacuna();
     
-    // Signos vitales: con historia-clinica se rellenan desde loadTimelineSummary en la vista; si no, endpoint dedicado.
+    // Signos vitales longitudinales (AMB). En IMP/EMER el DOM usa tl_episodio_sv_* y
+    // loadTimelineSummary → renderSignosVitalesEpisodio; no existe este id.
     const endpointsCfg = config.endpoints || {};
     const signosDesdeHistoriaClinica = !!endpointsCfg.historiaClinica;
     const signosVitalesContent = document.getElementById('signos-vitales-actuales-content');
+    const esEpisodioSv = !!(
+        document.getElementById('tl_episodio_sv_section')
+        || config.modoCaptura === 'imp'
+        || config.modoCaptura === 'emer'
+    );
     if (signosVitalesContent) {
-        console.log('Elemento signos-vitales-actuales-content encontrado, cargando...');
         tlMountSvLoading(signosVitalesContent);
         if (signosDesdeHistoriaClinica) {
-            console.log('Signos vitales: pendiente de respuesta de historia-clínica');
+            /* se completa con historia-clínica */
         } else if (endpointsCfg.signosVitales) {
             loadSignosVitalesActuales();
         } else {
             tlMountMuted(signosVitalesContent, 'bi bi-info-circle', 'No hay fuente de signos vitales configurada');
         }
-    } else {
+    } else if (!esEpisodioSv) {
         console.warn('Elemento signos-vitales-actuales-content no encontrado, reintentando en 500ms...');
         setTimeout(function() {
             const retryContent = document.getElementById('signos-vitales-actuales-content');
             if (retryContent) {
-                console.log('Elemento encontrado en reintento, cargando signos vitales...');
                 tlMountSvLoading(retryContent);
                 const ep = (config.endpoints || {});
                 if (ep.historiaClinica) {

@@ -238,7 +238,7 @@ if (!empty($esContextoGuardia)) {
                         <?php endif; ?>
 
                         <?php if ($esContextoEpisodio): ?>
-                        <div class="mb-3 pb-2 border-2" id="tl_episodio_timeline_section">
+                        <div class="mb-3 pb-2" id="tl_episodio_timeline_section">
                             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
                                 <h6 class="mb-0 text-primary"><b>REGISTRO DEL EPISODIO</b></h6>
                                 <span class="small text-muted" id="tl_episodio_timeline_count"></span>
@@ -264,7 +264,7 @@ if (!empty($esContextoGuardia)) {
                     </div>
 
                     <!-- Contenido automático con loading -->
-                    <div class="col-12 ms-3 border-2">
+                    <div class="col-12 ms-3">
                         <!-- Loading inicial -->
                         <div id="loading-container" class="d-flex justify-content-center align-items-center py-4">
                             <div class="spinner-border text-primary" role="status">
@@ -280,7 +280,7 @@ if (!empty($esContextoGuardia)) {
                     </div>
 
                     <!-- Formulario de chat inteligente -->
-                    <div class="col-12">
+                    <div class="col-12 border-top border-2">
                         <div class="card border-0 bg-paper-50">
                             <div class="card-body p-3">
 

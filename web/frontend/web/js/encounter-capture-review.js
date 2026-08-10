@@ -122,10 +122,12 @@
         if (!root) {
             return set;
         }
-        root.querySelectorAll('[data-capture-item-id].active').forEach(function (el) {
-            var id = el.getAttribute('data-capture-item-id');
-            if (id) {
-                set.add(id);
+        root.querySelectorAll('[data-capture-item-id]').forEach(function (el) {
+            if (el.getAttribute('aria-pressed') === 'true' || el.classList.contains('active')) {
+                var id = el.getAttribute('data-capture-item-id');
+                if (id) {
+                    set.add(id);
+                }
             }
         });
         return set;
@@ -286,6 +288,53 @@
         parent.appendChild(frag);
     }
 
+    function applyItemChipVisual(btn, active) {
+        if (!btn) return;
+        var incomplete = btn.getAttribute('data-incomplete') === '1';
+        var isAi = btn.getAttribute('data-ai-suggestion') === '1';
+        var already = btn.getAttribute('data-already-active') === '1';
+        btn.classList.remove(
+            'btn-outline-primary',
+            'btn-outline-secondary',
+            'btn-outline-info',
+            'btn-outline-danger',
+            'btn-danger',
+            'active'
+        );
+        if (incomplete) {
+            // Solid vs outline: el tilde/selección debe verse en rojo incompleto.
+            btn.classList.add(active ? 'btn-danger' : 'btn-outline-danger');
+            if (active) btn.classList.add('active');
+        } else if (active) {
+            btn.classList.add('btn-outline-primary', 'active');
+        } else if (already) {
+            btn.classList.add('btn-outline-secondary');
+        } else if (isAi) {
+            btn.classList.add('btn-outline-info');
+        } else {
+            btn.classList.add('btn-outline-secondary');
+        }
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        var icon = btn.querySelector('i') || btn.querySelector('[data-field="icon"]');
+        if (icon) {
+            icon.className = active
+                ? 'bi bi-check-circle-fill me-1'
+                : 'bi bi-plus-circle me-1';
+        }
+    }
+
+    function clearIssueResolutionsInBlock(itemBlock) {
+        if (!itemBlock) return;
+        itemBlock.querySelectorAll('.capture-issue-option').forEach(function (opt) {
+            opt.classList.remove('active', 'btn-outline-primary');
+            opt.classList.add('btn-outline-secondary');
+            opt.setAttribute('aria-pressed', 'false');
+        });
+        itemBlock.querySelectorAll('.capture-issue-custom').forEach(function (input) {
+            input.value = '';
+        });
+    }
+
     function renderItemChip(item, isActive, isIncomplete) {
         var frag = tpl('tpl-capture-item-chip');
         if (!frag) return null;
@@ -303,24 +352,8 @@
         btn.setAttribute('data-incomplete', isIncomplete ? '1' : '0');
         btn.setAttribute('data-ai-suggestion', isAiSuggestion(item) ? '1' : '0');
         btn.setAttribute('data-already-active', isAlreadyActive(item) ? '1' : '0');
-        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
         btn.className = 'btn btn-sm capture-review-item me-1 mb-1';
-        if (isIncomplete) {
-            btn.classList.add('btn-danger');
-            if (active) btn.classList.add('active');
-        } else if (active) {
-            btn.classList.add('btn-outline-primary', 'active');
-        } else if (isAlreadyActive(item)) {
-            btn.classList.add('btn-outline-secondary');
-        } else if (isAiSuggestion(item)) {
-            btn.classList.add('btn-outline-info');
-        } else {
-            btn.classList.add('btn-outline-secondary');
-        }
-        var icon = btn.querySelector('[data-field="icon"]');
-        if (icon) {
-            icon.className = active ? 'bi bi-check-circle me-1' : 'bi bi-plus-circle me-1';
-        }
+        applyItemChipVisual(btn, active);
         setText(frag, '[data-field="label"]', label);
         return frag;
     }
@@ -374,15 +407,16 @@
         var chip = renderItemChip(item, isActive, !!incomplete);
         if (chipSlot && chip) appendChildren(chipSlot, chip);
 
+        var active = isActive !== false && !isAlreadyActive(item);
         if (itemIssues && itemIssues.length) {
             var issuesWrap = frag.querySelector('[data-slot="issues"]');
             var issuesRow = frag.querySelector('[data-slot="issues-row"]');
-            show(issuesWrap, true);
+            show(issuesWrap, active);
             itemIssues.forEach(function (issue) {
                 var iss = renderIssueBlock(issue);
                 if (iss && issuesRow) issuesRow.appendChild(iss);
             });
-        } else if (incomplete) {
+        } else if (incomplete && active) {
             var msgEl = frag.querySelector('[data-slot="incomplete-msg"]');
             show(msgEl, true);
             setText(frag, '[data-field="incomplete-msg"]', incompleteItemMessage(incomplete));
@@ -793,33 +827,24 @@
                 if (btn.getAttribute('data-already-active') === '1') {
                     return;
                 }
-                var willActivate = !btn.classList.contains('active');
-                var incomplete = btn.getAttribute('data-incomplete') === '1';
-                var isAi = btn.getAttribute('data-ai-suggestion') === '1';
-                btn.classList.toggle('active', willActivate);
-                btn.classList.remove(
-                    'btn-outline-primary',
-                    'btn-outline-secondary',
-                    'btn-outline-info',
-                    'btn-outline-danger',
-                    'btn-danger'
-                );
-                if (incomplete) {
-                    btn.classList.add('btn-danger');
-                } else if (willActivate) {
-                    btn.classList.add('btn-outline-primary');
-                } else if (isAi) {
-                    btn.classList.add('btn-outline-info');
-                } else {
-                    btn.classList.add('btn-outline-secondary');
+                var willActivate = btn.getAttribute('aria-pressed') !== 'true';
+                applyItemChipVisual(btn, willActivate);
+
+                var itemBlock = btn.closest('[data-capture-item-block]');
+                if (!willActivate) {
+                    clearIssueResolutionsInBlock(itemBlock);
                 }
-                btn.setAttribute('aria-pressed', willActivate ? 'true' : 'false');
-                var icon = btn.querySelector('i');
-                if (icon) {
-                    icon.className = willActivate
-                        ? 'bi bi-check-circle me-1'
-                        : 'bi bi-plus-circle me-1';
+                if (itemBlock) {
+                    var hasIssues = !!itemBlock.querySelector('[data-capture-issue-id]');
+                    if (hasIssues) {
+                        show(itemBlock.querySelector('[data-slot="issues"]'), willActivate);
+                    }
+                    var incompleteMsg = itemBlock.querySelector('[data-slot="incomplete-msg"]');
+                    if (incompleteMsg && btn.getAttribute('data-incomplete') === '1') {
+                        show(incompleteMsg, willActivate && !hasIssues);
+                    }
                 }
+
                 if (typeof onChange === 'function') {
                     onChange(collectStagedIds(root));
                 }

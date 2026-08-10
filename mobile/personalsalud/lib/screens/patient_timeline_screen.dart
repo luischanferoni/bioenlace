@@ -1934,6 +1934,13 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         _stagedItemIds.add(id);
       } else {
         _stagedItemIds.remove(id);
+        final prefix = '$id:';
+        _issueResolutions.removeWhere((key, _) => key.startsWith(prefix));
+        for (final entry in _issueCustomControllers.entries.toList()) {
+          if (entry.key.startsWith(prefix)) {
+            entry.value.clear();
+          }
+        }
       }
     });
   }
@@ -3041,13 +3048,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   ) {
     final incomplete = review.incompleteForItem(item.id);
     final itemIssues = review.issuesForItem(item.id);
+    final selected =
+        !item.alreadyActive && _stagedItemIds.contains(item.id);
     return Padding(
       padding: const EdgeInsets.only(bottom: BioSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildCaptureItemChip(item, incomplete: incomplete != null),
-          if (incomplete != null) ...[
+          if (selected && incomplete != null && itemIssues.isEmpty) ...[
             BioSpacing.gapH(BioSpacing.xs),
             Text(
               incomplete.message,
@@ -3056,7 +3065,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               ),
             ),
           ],
-          if (itemIssues.isNotEmpty) ...[
+          if (selected && itemIssues.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
             Text(
               'Completar datos',
@@ -3086,8 +3095,10 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     return BioChip(
       label: label,
       selected: selected,
-      filled: incomplete,
-      icon: selected ? Icons.check : null,
+      filled: incomplete && selected,
+      icon: selected
+          ? Icons.check_circle
+          : (incomplete ? Icons.add_circle_outline : Icons.add_circle_outline),
       intent: incomplete
           ? UiIntent.danger
           : (item.alreadyActive

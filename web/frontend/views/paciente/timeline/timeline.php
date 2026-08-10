@@ -179,8 +179,7 @@ if (!empty($esContextoGuardia)) {
                             <div class="d-flex align-items-center justify-content-between mb-1">
                                 <h6 class="mb-0" id="signos-vitales-titulo">SIGNOS VITALES ACTUALES</h6>
                                 <span class="small text-muted" id="tl_episodio_sv_count"></span>
-                            </div>
-                            <div class="border-bottom border-2 mb-1"></div>
+                            </div>                            
                             <div id="tl_episodio_sv_ultimos" class="mb-2"></div>
                             <div id="tl_episodio_sv_chart" class="w-100 border rounded bg-white p-1" style="min-height: 220px;"></div>
                             <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.</p>
@@ -239,7 +238,7 @@ if (!empty($esContextoGuardia)) {
                         <?php endif; ?>
 
                         <?php if ($esContextoEpisodio): ?>
-                        <div class="mb-3 pb-2 border-bottom border-2" id="tl_episodio_timeline_section">
+                        <div class="mb-3 pb-2 border-2" id="tl_episodio_timeline_section">
                             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
                                 <h6 class="mb-0 text-primary"><b>REGISTRO DEL EPISODIO</b></h6>
                                 <span class="small text-muted" id="tl_episodio_timeline_count"></span>
@@ -265,7 +264,7 @@ if (!empty($esContextoGuardia)) {
                     </div>
 
                     <!-- Contenido automático con loading -->
-                    <div class="col-12 ms-3 border-bottom border-2">
+                    <div class="col-12 ms-3 border-2">
                         <!-- Loading inicial -->
                         <div id="loading-container" class="d-flex justify-content-center align-items-center py-4">
                             <div class="spinner-border text-primary" role="status">

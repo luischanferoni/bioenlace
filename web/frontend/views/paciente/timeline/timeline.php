@@ -86,9 +86,6 @@ if (!empty($esContextoGuardia)) {
             <button type="button" class="btn btn-outline-secondary btn-sm" id="tl-btn-volver">
                 <i class="bi bi-arrow-left"></i> Volver
             </button>
-            <a class="btn btn-outline-primary btn-sm" href="<?= Html::encode(Url::to(['/site/index'])) ?>">
-                Inicio
-            </a>
         </div>
         <div class="fw-bold text-body text-truncate" style="font-size: 1.05rem;" title="<?= Html::encode($this->title) ?>">
             <?= Html::encode($this->title) ?>

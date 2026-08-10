@@ -38,6 +38,7 @@ Al analizar/guardar una captura, el review puede mostrar **problemas y tratamien
 - Resoluciones de condición: `condition_resolutions` en el body de guardar (mapa id → `clinical_status`).
 - Resoluciones de plan: `care_plan_resolutions` (mapa id → status CarePlan).
 - Automático: al guardar se completan planes agudos vinculados al encounter (`complete_acute`, default true); `continue_treatment` puede promover a plan crónico.
+- **Excepción:** el plan de categoría `inpatient` no se ofrece ni se cierra desde la captura; el alta hospitalaria (cama / `fecha_fin`) es el flow de alta estructurada.
 
 API puntual: `POST /api/v1/clinical/conditions/<id>/resolve|inactivate|transition`. Listado de abiertos: `GET /api/v1/clinical/conditions/open-problems`.
 

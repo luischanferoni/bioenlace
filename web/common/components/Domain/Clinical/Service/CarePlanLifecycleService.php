@@ -203,6 +203,14 @@ final class CarePlanLifecycleService
                     "El care plan #{$id} no pertenece al paciente de esta atención."
                 );
             }
+            if (
+                CarePlanCategory::closesOnlyViaEpisodeDischarge((string) ($plan->category ?? ''))
+                && in_array($status, [CarePlanStatus::COMPLETED, 'complete', CarePlanStatus::REVOKED, 'revoke'], true)
+            ) {
+                throw new \InvalidArgumentException(
+                    'El plan de internación se cierra con el alta estructurada (liberar cama), no desde la captura de la evolución.'
+                );
+            }
             $updated[] = $this->applyStatus($plan, $status);
         }
 

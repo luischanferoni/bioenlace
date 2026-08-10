@@ -50,4 +50,11 @@ class CarePlanLifecycleServiceTest extends Unit
         verify(CarePlanStatus::canTransition(CarePlanStatus::ON_HOLD, CarePlanStatus::ACTIVE))->true();
         verify(CarePlanStatus::canTransition(CarePlanStatus::ON_HOLD, CarePlanStatus::COMPLETED))->true();
     }
+
+    public function testInpatientClosesOnlyViaEpisodeDischarge(): void
+    {
+        verify(CarePlanCategory::closesOnlyViaEpisodeDischarge(CarePlanCategory::INPATIENT))->true();
+        verify(CarePlanCategory::closesOnlyViaEpisodeDischarge(CarePlanCategory::CHRONIC))->false();
+        verify(CarePlanCategory::closesOnlyViaEpisodeDischarge(CarePlanCategory::ACUTE_AMBULATORY))->false();
+    }
 }

@@ -57,6 +57,15 @@ final class CarePlanCategory
         return !in_array($category, self::PERSISTENT, true);
     }
 
+    /**
+     * Plan ligado al episodio hospitalario: se cierra con alta estructurada (cama / fecha_fin),
+     * no con chips de open_problems en la captura de una evolución.
+     */
+    public static function closesOnlyViaEpisodeDischarge(string $category): bool
+    {
+        return $category === self::INPATIENT;
+    }
+
     public static function isProgramLike(string $category): bool
     {
         return in_array($category, [self::PROGRAM, self::REHABILITATION, self::MENTAL_HEALTH, self::ODONTOLOGY], true);

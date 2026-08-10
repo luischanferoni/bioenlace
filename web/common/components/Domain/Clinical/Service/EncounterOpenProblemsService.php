@@ -175,6 +175,11 @@ final class EncounterOpenProblemsService
             ) {
                 continue;
             }
+            // Plan inpatient: el alta administrativa (fecha_fin / liberar cama) es el
+            // flow estructurado, no un chip de captura. Completarlo acá deja la cama ocupada.
+            if (CarePlanCategory::closesOnlyViaEpisodeDischarge((string) ($plan->category ?? ''))) {
+                continue;
+            }
             $title = trim((string) ($presented['title'] ?? ''));
             $categoryLabel = trim((string) ($presented['categoryLabel'] ?? $plan->category ?? ''));
             $detail = implode(' · ', $activities);

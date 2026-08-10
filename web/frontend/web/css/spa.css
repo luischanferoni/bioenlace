@@ -446,6 +446,7 @@ html:has(.spa-asistente-root) {
     font-weight: 700;
     line-height: 1.3rem;
     text-align: center;
+    display: block;
 }
 
 .spa-flow-step-item--active .spa-flow-step-num {
@@ -463,6 +464,8 @@ html:has(.spa-asistente-root) {
     flex: 1 1 auto;
     min-width: 0;
     padding-bottom: 1rem;
+    margin-left: 2rem;
+    margin-top: -1.2rem;
 }
 
 .spa-flow-step-item:last-child .spa-flow-step-body {

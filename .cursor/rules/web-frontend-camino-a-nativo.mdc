@@ -40,3 +40,9 @@ Referencia: listado pacientes (`_listado_templates.php` + `pacientes-listado.js`
 - Reescribir todo el producto en React/Vue “porque SPA”.
 - Meter HC/captura en UI JSON genérica.
 - Volver a armar pantallas densas con strings HTML en JS.
+
+## Fuera de alcance (no migrar a templates PHP)
+
+- `spa-home.js` y el renderer de **UI JSON** del asistente (compone pantallas desde manifests JSON).
+- Widgets `ui-widget-*` del asistente.
+- HTML **SSR** ya renderizado por el servidor (partials / `formularioHtml` / respuesta de vista).

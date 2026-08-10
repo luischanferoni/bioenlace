@@ -34,15 +34,6 @@
             : {};
     }
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        return String(text)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
-
     function formatFecha(iso) {
         if (window.BioenlaceFecha && typeof window.BioenlaceFecha.formatNotificacion === 'function') {
             return window.BioenlaceFecha.formatNotificacion(iso);
@@ -91,32 +82,59 @@
         }).then(function (r) { return r.json(); });
     };
 
-    function renderItems(items) {
+    function tpl(id) {
+        var t = document.getElementById(id);
+        if (!t || !t.content) return null;
+        return document.importNode(t.content, true);
+    }
+
+    function clear(el) {
+        if (el) el.replaceChildren();
+    }
+
+    function mountItems(listEl, items) {
+        clear(listEl);
         if (!items || !items.length) {
-            return '<p class="text-muted small mb-0 px-2 py-3">No hay alertas.</p>';
+            var empty = tpl('tpl-alertas-empty');
+            if (empty) {
+                var msg = empty.querySelector('[data-field="message"]');
+                if (msg) msg.textContent = 'No hay alertas.';
+                listEl.appendChild(empty);
+            }
+            return;
         }
-        var html = '<ul class="list-group list-group-flush bioenlace-alertas-list">';
+        var listFrag = tpl('tpl-alertas-list');
+        if (!listFrag) return;
+        var slot = listFrag.querySelector('[data-slot="items"]');
         items.forEach(function (it) {
+            var itemFrag = tpl('tpl-alerta-item');
+            if (!itemFrag) return;
+            var li = itemFrag.querySelector('li') || itemFrag.firstElementChild;
             var leida = it.leida_at != null && String(it.leida_at).trim() !== '';
+            if (!leida) li.classList.add('bioenlace-alerta-item--nueva');
             var tipo = it.tipo != null ? String(it.tipo) : '';
             var intent = intentDesdeTipo(tipo);
-            var dataAttr = '';
             if (intent) {
-                dataAttr = ' data-intent-id="' + escapeHtml(intent.id) + '"'
-                    + ' data-intent-name="' + escapeHtml(intent.name) + '"';
+                li.setAttribute('data-intent-id', intent.id);
+                li.setAttribute('data-intent-name', intent.name);
+            } else {
+                li.removeAttribute('data-intent-id');
+                li.removeAttribute('data-intent-name');
             }
             if (it.id != null) {
-                dataAttr += ' data-notif-id="' + escapeHtml(String(it.id)) + '"';
+                li.setAttribute('data-notif-id', String(it.id));
+            } else {
+                li.removeAttribute('data-notif-id');
             }
-            html += '<li class="list-group-item bioenlace-alerta-item' + (leida ? '' : ' bioenlace-alerta-item--nueva') + '"'
-                + dataAttr + ' role="button" tabindex="0">'
-                + '<div class="d-block fw-semibold small">' + escapeHtml(it.titulo || 'Aviso') + '</div>'
-                + '<span class="d-block small text-muted mt-1">' + escapeHtml(it.cuerpo || '') + '</span>'
-                + '<span class="d-block small text-muted mt-1">' + escapeHtml(formatFecha(it.created_at)) + '</span>'
-                + '</li>';
+            var tit = itemFrag.querySelector('[data-field="titulo"]');
+            if (tit) tit.textContent = it.titulo || 'Aviso';
+            var cuerpo = itemFrag.querySelector('[data-field="cuerpo"]');
+            if (cuerpo) cuerpo.textContent = it.cuerpo || '';
+            var fecha = itemFrag.querySelector('[data-field="fecha"]');
+            if (fecha) fecha.textContent = formatFecha(it.created_at);
+            slot.appendChild(itemFrag);
         });
-        html += '</ul>';
-        return html;
+        listEl.appendChild(listFrag);
     }
 
     function updateBadge(count) {
@@ -153,15 +171,27 @@
         panel.setAttribute('aria-hidden', 'false');
         var list = panel.querySelector('.spa-alertas-panel-body');
         if (list) {
-            list.innerHTML = '<p class="text-muted small px-2 py-3">Cargando…</p>';
+            clear(list);
+            var loading = tpl('tpl-alertas-loading');
+            if (loading) list.appendChild(loading);
         }
         NS.fetchList({ limit: 50 }).then(function (res) {
             if (!list) return;
             if (res && res.success && res.data) {
-                list.innerHTML = renderItems(res.data.items || []);
+                mountItems(list, res.data.items || []);
                 updateBadge(res.data.no_leidas || 0);
             } else {
-                list.innerHTML = '<p class="text-danger small px-2 py-3">No se pudieron cargar las alertas.</p>';
+                clear(list);
+                var err = tpl('tpl-alertas-empty');
+                if (err) {
+                    var msg = err.querySelector('[data-field="message"]');
+                    if (msg) {
+                        msg.textContent = 'No se pudieron cargar las alertas.';
+                        msg.classList.remove('text-muted');
+                        msg.classList.add('text-danger');
+                    }
+                    list.appendChild(err);
+                }
             }
         });
     }

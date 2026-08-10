@@ -1,13 +1,31 @@
 /**
  * Renderiza el bloque declarativo `capture_review` (API encounter/analizar) en el DOM.
+ * Camino A: estructura en <template> PHP; JS solo clona/rellena.
  */
 (function (window) {
     'use strict';
 
-    function escapeHtml(text) {
-        var div = document.createElement('div');
-        div.textContent = text == null ? '' : String(text);
-        return div.innerHTML;
+    function tpl(id) {
+        var t = document.getElementById(id);
+        if (!t || !t.content) return null;
+        return document.importNode(t.content, true);
+    }
+
+    function setText(root, sel, text) {
+        var el = root && root.querySelector ? root.querySelector(sel) : null;
+        if (el) el.textContent = text == null ? '' : String(text);
+    }
+
+    function show(el, on) {
+        if (!el) return;
+        el.classList.toggle('d-none', !on);
+    }
+
+    function appendChildren(parent, frag) {
+        if (!parent || !frag) return;
+        while (frag.firstChild) {
+            parent.appendChild(frag.firstChild);
+        }
     }
 
     function defaultStagedIds(review) {
@@ -65,7 +83,6 @@
                 if (!item || !item.id) {
                     return;
                 }
-                // Incluir si está tildado. source=ai/clinical es solo señal UI.
                 if (stagedIdSet.has(item.id)) {
                     rows.push(
                         item.payload && typeof item.payload === 'object'
@@ -227,128 +244,201 @@
         return 'En ' + cat + ' faltan: ' + fields + '.';
     }
 
+    function appendAlert(parent, message, variant, role) {
+        var frag = tpl('tpl-capture-alert');
+        if (!frag) return;
+        var root = frag.firstElementChild;
+        root.classList.add('alert-' + (variant || 'info'));
+        if (role) root.setAttribute('role', role);
+        setText(frag, '[data-field="message"]', message);
+        parent.appendChild(frag);
+    }
+
+    function appendTextBlock(parent, title, bodyText, asHtml) {
+        var frag = tpl(asHtml ? 'tpl-capture-text-block-html' : 'tpl-capture-text-block');
+        if (!frag) return;
+        setText(frag, '[data-field="title"]', title);
+        var body = frag.querySelector('[data-field="body"]');
+        if (body) {
+            if (asHtml) {
+                body.innerHTML = bodyText || '';
+            } else {
+                body.textContent = bodyText == null ? '' : String(bodyText);
+            }
+        }
+        parent.appendChild(frag);
+    }
+
     function renderItemChip(item, isActive, isIncomplete) {
+        var frag = tpl('tpl-capture-item-chip');
+        if (!frag) return null;
+        var btn = frag.querySelector('button') || frag.firstElementChild;
         var label = item.label || '';
         var subtitle = cleanSubtitle(item.subtitle);
         if (subtitle) {
             label += ' (' + subtitle + ')';
         }
         var active = isActive !== false;
-        var btnClass;
+        btn.setAttribute('data-capture-item-id', item.id || '');
+        btn.setAttribute('data-incomplete', isIncomplete ? '1' : '0');
+        btn.setAttribute('data-ai-suggestion', isAiSuggestion(item) ? '1' : '0');
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        btn.className = 'btn btn-sm capture-review-item me-1 mb-1';
         if (isIncomplete) {
-            btnClass = 'btn btn-sm btn-danger capture-review-item me-1 mb-1';
-            if (active) {
-                btnClass += ' active';
-            }
+            btn.classList.add('btn-danger');
+            if (active) btn.classList.add('active');
+        } else if (active) {
+            btn.classList.add('btn-outline-primary', 'active');
+        } else if (isAiSuggestion(item)) {
+            btn.classList.add('btn-outline-info');
         } else {
-            var baseClass = isAiSuggestion(item) ? 'btn-outline-info' : 'btn-outline-secondary';
-            btnClass = active
-                ? 'btn btn-sm btn-outline-primary capture-review-item active me-1 mb-1'
-                : 'btn btn-sm ' + baseClass + ' capture-review-item me-1 mb-1';
+            btn.classList.add('btn-outline-secondary');
         }
-        var iconClass = active ? 'bi bi-check-circle me-1' : 'bi bi-plus-circle me-1';
-        return (
-            '<button type="button" class="' +
-            btnClass +
-            '" data-capture-item-id="' +
-            escapeHtml(item.id) +
-            '" data-incomplete="' +
-            (isIncomplete ? '1' : '0') +
-            '" data-ai-suggestion="' +
-            (isAiSuggestion(item) ? '1' : '0') +
-            '" aria-pressed="' +
-            (active ? 'true' : 'false') +
-            '">' +
-            '<i class="' +
-            iconClass +
-            '"></i>' +
-            escapeHtml(label) +
-            '</button>'
-        );
+        var icon = btn.querySelector('[data-field="icon"]');
+        if (icon) {
+            icon.className = active ? 'bi bi-check-circle me-1' : 'bi bi-plus-circle me-1';
+        }
+        setText(frag, '[data-field="label"]', label);
+        return frag;
     }
 
     function renderIssueBlock(issue) {
         if (!issue || !issue.id) {
-            return '';
+            return null;
         }
-        var parts = [];
-        parts.push(
-            '<div class="col-12 col-md-6 col-lg-4 mb-2" data-capture-issue-id="' +
-                escapeHtml(issue.id) +
-                '">'
-        );
+        var frag = tpl('tpl-capture-issue');
+        if (!frag) return null;
+        var root = frag.firstElementChild;
+        root.setAttribute('data-capture-issue-id', issue.id);
         if (issue.field) {
-            parts.push(
-                '<div class="small mb-1">' + escapeHtml(issue.field) + '</div>'
-            );
+            var fieldEl = frag.querySelector('[data-slot="field"]');
+            show(fieldEl, true);
+            setText(frag, '[data-field="field"]', issue.field);
         }
         var options = Array.isArray(issue.options) ? issue.options : [];
-        if (options.length) {
-            parts.push('<div class="d-flex flex-wrap gap-1 mb-1">');
+        var optsSlot = frag.querySelector('[data-slot="options"]');
+        if (options.length && optsSlot) {
+            show(optsSlot, true);
+            optsSlot.classList.remove('d-none');
             options.forEach(function (opt) {
-                if (!opt || typeof opt.value === 'undefined') {
-                    return;
-                }
-                parts.push(
-                    '<button type="button" class="btn btn-sm btn-outline-secondary capture-issue-option me-1 mb-1" ' +
-                        'data-issue-id="' +
-                        escapeHtml(issue.id) +
-                        '" data-issue-value="' +
-                        escapeHtml(String(opt.value)) +
-                        '" aria-pressed="false">' +
-                        escapeHtml(opt.label || String(opt.value)) +
-                        '</button>'
-                );
+                if (!opt || typeof opt.value === 'undefined') return;
+                var optFrag = tpl('tpl-capture-issue-option');
+                if (!optFrag) return;
+                var optBtn = optFrag.querySelector('button') || optFrag.firstElementChild;
+                optBtn.setAttribute('data-issue-id', issue.id);
+                optBtn.setAttribute('data-issue-value', String(opt.value));
+                setText(optFrag, '[data-field="label"]', opt.label || String(opt.value));
+                optsSlot.appendChild(optFrag);
             });
-            parts.push('</div>');
         }
         if (issue.allow_custom === true) {
-            parts.push(
-                '<input type="text" class="form-control form-control-sm capture-issue-custom" ' +
-                    'data-issue-id="' +
-                    escapeHtml(issue.id) +
-                    '" placeholder="' +
-                    escapeHtml(options.length ? 'Otra opción…' : 'Completá el valor') +
-                    '">'
-            );
+            var custom = frag.querySelector('[data-field="custom"]');
+            if (custom) {
+                custom.classList.remove('d-none');
+                custom.setAttribute('data-issue-id', issue.id);
+                custom.placeholder = options.length ? 'Otra opción…' : 'Completá el valor';
+            }
         }
-        parts.push('</div>');
-        return parts.join('');
+        return frag;
     }
 
     function renderItemBlock(item, isActive, incomplete, itemIssues) {
-        var parts = [];
-        var isIncomplete = !!incomplete;
-        parts.push(
-            '<div class="capture-review-item-block mb-2" data-capture-item-block="' +
-                escapeHtml(item.id) +
-                '">'
-        );
-        parts.push(renderItemChip(item, isActive, isIncomplete));
+        var frag = tpl('tpl-capture-item-block');
+        if (!frag) return null;
+        var root = frag.firstElementChild;
+        root.setAttribute('data-capture-item-block', item.id || '');
+        var chipSlot = frag.querySelector('[data-slot="chip"]');
+        var chip = renderItemChip(item, isActive, !!incomplete);
+        if (chipSlot && chip) appendChildren(chipSlot, chip);
+
         if (itemIssues && itemIssues.length) {
-            parts.push('<div class="capture-review-item-issues mt-2">');
-            parts.push('<div class="small fw-semibold text-danger mb-1">Completar datos</div>');
-            parts.push('<div class="row g-2">');
+            var issuesWrap = frag.querySelector('[data-slot="issues"]');
+            var issuesRow = frag.querySelector('[data-slot="issues-row"]');
+            show(issuesWrap, true);
             itemIssues.forEach(function (issue) {
-                parts.push(renderIssueBlock(issue));
+                var iss = renderIssueBlock(issue);
+                if (iss && issuesRow) issuesRow.appendChild(iss);
             });
-            parts.push('</div>');
-            parts.push('</div>');
         } else if (incomplete) {
-            parts.push(
-                '<div class="text-danger small mt-1">' +
-                    escapeHtml(incompleteItemMessage(incomplete)) +
-                    '</div>'
-            );
+            var msgEl = frag.querySelector('[data-slot="incomplete-msg"]');
+            show(msgEl, true);
+            setText(frag, '[data-field="incomplete-msg"]', incompleteItemMessage(incomplete));
         }
-        parts.push('</div>');
-        return parts.join('');
+        return frag;
     }
 
+    function renderOpenProblemItem(item, kind, sharedOptions) {
+        if (!item || !item.id) {
+            return null;
+        }
+        var frag = tpl('tpl-capture-open-problem-item');
+        if (!frag) return null;
+        var root = frag.firstElementChild;
+        root.setAttribute('data-open-problem-kind', kind);
+        root.setAttribute('data-open-problem-id', String(item.id));
+        setText(frag, '[data-field="label"]', item.label || '');
+        if (item.detail) {
+            var detailEl = frag.querySelector('[data-slot="detail"]');
+            show(detailEl, true);
+            setText(frag, '[data-field="detail"]', String(item.detail));
+        }
+        var statusText = item.status_label || item.clinical_status || item.status || '';
+        if (statusText) {
+            var statusEl = frag.querySelector('[data-slot="status"]');
+            show(statusEl, true);
+            setText(frag, '[data-field="status"]', statusText);
+        }
+        var options = Array.isArray(item.options) && item.options.length
+            ? item.options
+            : Array.isArray(sharedOptions)
+              ? sharedOptions
+              : [];
+        var optsSlot = frag.querySelector('[data-slot="options"]');
+        if (options.length && optsSlot) {
+            show(optsSlot, true);
+            options.forEach(function (opt) {
+                if (!opt || typeof opt.value === 'undefined') return;
+                var optFrag = tpl('tpl-capture-open-problem-option');
+                if (!optFrag) return;
+                var optBtn = optFrag.querySelector('button') || optFrag.firstElementChild;
+                optBtn.setAttribute('data-problem-value', String(opt.value));
+                setText(optFrag, '[data-field="label"]', opt.label || String(opt.value));
+                optsSlot.appendChild(optFrag);
+            });
+        }
+        return frag;
+    }
+
+    function renderOpenProblems(openProblems) {
+        if (!openProblems || typeof openProblems !== 'object') {
+            return null;
+        }
+        var conditions = Array.isArray(openProblems.conditions) ? openProblems.conditions : [];
+        var carePlans = Array.isArray(openProblems.care_plans) ? openProblems.care_plans : [];
+        if (!conditions.length && !carePlans.length) {
+            return null;
+        }
+        var frag = tpl('tpl-capture-open-problems');
+        if (!frag) return null;
+        var slot = frag.querySelector('[data-slot="items"]');
+        conditions.forEach(function (item) {
+            var node = renderOpenProblemItem(item, 'condition', openProblems.condition_options);
+            if (node && slot) slot.appendChild(node);
+        });
+        carePlans.forEach(function (item) {
+            var node = renderOpenProblemItem(item, 'care_plan', openProblems.care_plan_options);
+            if (node && slot) slot.appendChild(node);
+        });
+        return frag;
+    }
+
+    /**
+     * @returns {{ node: DocumentFragment|null, stagedIds: string[] }}
+     */
     function render(review, options) {
         options = options || {};
         if (!review) {
-            return { html: '', stagedIds: [] };
+            return { node: null, stagedIds: [] };
         }
 
         var stagedIds = defaultStagedIds(review);
@@ -366,60 +456,67 @@
         stagedIds.forEach(function (id) {
             stagedSet[id] = true;
         });
-        var parts = [];
 
-        parts.push('<div class="capture-review-panel">');
-        parts.push(
-            '<div class="text-center mb-3">' +
-                '<span class="fw-semibold text-decoration-underline">Nota de esta atención</span>' +
-                '</div>'
-        );
+        var panelFrag = tpl('tpl-capture-panel');
+        if (!panelFrag) {
+            return { node: null, stagedIds: stagedIds };
+        }
+        var body = panelFrag.querySelector('[data-slot="body"]');
+        if (!body) {
+            return { node: panelFrag, stagedIds: stagedIds };
+        }
 
-        parts.push('<div class="mb-3">');
-        parts.push('<div class="fw-semibold mb-1">Texto registrado</div>');
-        parts.push('<div>' + escapeHtml(review.texto_original || '') + '</div>');
-        parts.push('</div>');
+        appendTextBlock(body, 'Texto registrado', review.texto_original || '', false);
 
         if (options.textoFormateado) {
-            parts.push('<div class="mb-3">');
-            parts.push('<div class="fw-semibold mb-1">Texto formateado</div>');
-            parts.push('<div class="texto-formateado">' + options.textoFormateado + '</div>');
-            parts.push('</div>');
+            appendTextBlock(body, 'Texto formateado', options.textoFormateado, true);
         } else if (
             review.texto_procesado &&
             review.texto_procesado.trim() &&
             review.texto_procesado.trim() !== (review.texto_original || '').trim()
         ) {
-            parts.push('<div class="mb-3">');
-            parts.push('<div class="fw-semibold mb-1">Texto procesado</div>');
-            parts.push('<div class="small">' + escapeHtml(review.texto_procesado) + '</div>');
-            parts.push('</div>');
+            var procFrag = tpl('tpl-capture-text-block');
+            if (procFrag) {
+                setText(procFrag, '[data-field="title"]', 'Texto procesado');
+                var procBody = procFrag.querySelector('[data-field="body"]');
+                if (procBody) {
+                    procBody.classList.add('small');
+                    procBody.textContent = review.texto_procesado;
+                }
+                body.appendChild(procFrag);
+            }
         }
 
         if (review.system_error) {
             var err = review.system_error;
-            parts.push('<div class="alert alert-danger" role="alert">');
-            parts.push('<h6 class="alert-heading"><i class="bi bi-exclamation-triangle-fill"></i> Error en el procesamiento</h6>');
-            parts.push('<p class="mb-0">' + escapeHtml(err.texto || '') + '</p>');
-            if (err.detalle) {
-                parts.push('<hr><p class="mb-0"><strong>Recomendación:</strong> ' + escapeHtml(err.detalle) + '</p>');
+            var errFrag = tpl('tpl-capture-system-error');
+            if (errFrag) {
+                setText(errFrag, '[data-field="texto"]', err.texto || '');
+                if (err.detalle) {
+                    var det = errFrag.querySelector('[data-slot="detalle"]');
+                    show(det, true);
+                    setText(errFrag, '[data-field="detalle"]', err.detalle);
+                }
+                body.appendChild(errFrag);
             }
-            parts.push('</div>');
         } else if (!hasExtractedContent(review)) {
-            parts.push(
-                '<div class="alert alert-info" role="status">La IA no extrajo datos estructurados. Podés confirmar igual con el texto registrado.</div>'
+            appendAlert(
+                body,
+                'La IA no extrajo datos estructurados. Podés confirmar igual con el texto registrado.',
+                'info',
+                'status'
             );
-            var missingOnly = review.datos_faltantes_detalle &&
+            var missingOnly =
+                review.datos_faltantes_detalle &&
                 Array.isArray(review.datos_faltantes_detalle.missing_categories)
-                ? review.datos_faltantes_detalle.missing_categories
-                : [];
+                    ? review.datos_faltantes_detalle.missing_categories
+                    : [];
             if (missingOnly.length) {
-                parts.push(
-                    '<div class="alert alert-warning" role="status">' +
-                        escapeHtml(
-                            'Faltan categorías obligatorias: ' + missingOnly.join(', ') + '.'
-                        ) +
-                        '</div>'
+                appendAlert(
+                    body,
+                    'Faltan categorías obligatorias: ' + missingOnly.join(', ') + '.',
+                    'warning',
+                    'status'
                 );
             }
         } else {
@@ -427,69 +524,69 @@
             var issuesByItemId = indexIssuesByItemId(review.issues);
             var renderedIssueIds = {};
 
-            parts.push('<div class="fw-semibold mb-2">Resultado del procesamiento</div>');
-            review.categories.forEach(function (cat) {
-                parts.push('<div class="mb-3">');
-                parts.push('<div class="small fw-semibold mb-1">');
-                parts.push(escapeHtml(cat.title || ''));
-                if (cat.required) {
-                    parts.push(' <span class="badge bg-danger">Requerido</span>');
-                }
-                parts.push('</div>');
+            var titleFrag = tpl('tpl-capture-resultado-title');
+            if (titleFrag) body.appendChild(titleFrag);
+
+            (review.categories || []).forEach(function (cat) {
+                var catFrag = tpl('tpl-capture-category');
+                if (!catFrag) return;
+                setText(catFrag, '[data-field="title"]', cat.title || '');
+                show(catFrag.querySelector('[data-slot="required"]'), !!cat.required);
+                var itemsSlot = catFrag.querySelector('[data-slot="items"]');
 
                 if (!cat.items || !cat.items.length) {
-                    var emptyClass = cat.required ? 'text-danger fw-bolder small' : 'text-warning fw-bolder small ps-3';
-                    var emptyMsg = cat.required
-                        ? 'Falta información en esta categoría.'
-                        : 'Sin datos en esta categoría.';
-                    parts.push('<p class="' + emptyClass + '">' + escapeHtml(emptyMsg) + '</p>');
+                    var emptyFrag = tpl('tpl-capture-cat-empty');
+                    if (emptyFrag) {
+                        var emptyP = emptyFrag.firstElementChild;
+                        emptyP.className = cat.required
+                            ? 'text-danger fw-bolder small'
+                            : 'text-warning fw-bolder small ps-3';
+                        setText(emptyFrag, '[data-field="message"]', cat.required
+                            ? 'Falta información en esta categoría.'
+                            : 'Sin datos en esta categoría.');
+                        if (itemsSlot) itemsSlot.appendChild(emptyFrag);
+                    }
                 } else {
                     var delTexto = cat.items.filter(function (item) {
                         return !isAiSuggestion(item);
                     });
                     var sugeridos = cat.items.filter(isAiSuggestion);
 
-                    if (delTexto.length) {
-                        delTexto.forEach(function (item) {
-                            var itemIssues = issuesByItemId[item.id] || [];
-                            itemIssues.forEach(function (iss) {
-                                if (iss && iss.id) {
-                                    renderedIssueIds[iss.id] = true;
-                                }
-                            });
-                            parts.push(
-                                renderItemBlock(
-                                    item,
-                                    !!stagedSet[item.id],
-                                    incompleteById[item.id] || null,
-                                    itemIssues
-                                )
-                            );
+                    delTexto.forEach(function (item) {
+                        var itemIssues = issuesByItemId[item.id] || [];
+                        itemIssues.forEach(function (iss) {
+                            if (iss && iss.id) renderedIssueIds[iss.id] = true;
                         });
-                    }
-                    if (sugeridos.length) {
-                        sugeridos.forEach(function (item) {
-                            var itemIssues = issuesByItemId[item.id] || [];
-                            itemIssues.forEach(function (iss) {
-                                if (iss && iss.id) {
-                                    renderedIssueIds[iss.id] = true;
-                                }
-                            });
-                            parts.push('<div class="mb-2">');
-                            parts.push(
-                                renderItemBlock(
-                                    item,
-                                    !!stagedSet[item.id],
-                                    incompleteById[item.id] || null,
-                                    itemIssues
-                                )
-                            );
-                            parts.push('<span class="text-info small">Sugerido por IA</span>');
-                            parts.push('</div>');
+                        var block = renderItemBlock(
+                            item,
+                            !!stagedSet[item.id],
+                            incompleteById[item.id] || null,
+                            itemIssues
+                        );
+                        if (block && itemsSlot) itemsSlot.appendChild(block);
+                    });
+                    sugeridos.forEach(function (item) {
+                        var itemIssues = issuesByItemId[item.id] || [];
+                        itemIssues.forEach(function (iss) {
+                            if (iss && iss.id) renderedIssueIds[iss.id] = true;
                         });
-                    }
+                        var aiWrap = tpl('tpl-capture-ai-wrap');
+                        var block = renderItemBlock(
+                            item,
+                            !!stagedSet[item.id],
+                            incompleteById[item.id] || null,
+                            itemIssues
+                        );
+                        if (aiWrap && block) {
+                            var itemSlot = aiWrap.querySelector('[data-slot="item"]');
+                            if (itemSlot) appendChildren(itemSlot, block);
+                            if (itemsSlot) itemsSlot.appendChild(aiWrap);
+                        } else if (block && itemsSlot) {
+                            itemsSlot.appendChild(block);
+                        }
+                    });
                 }
-                parts.push('</div>');
+                body.appendChild(catFrag);
             });
 
             var detalle = review.datos_faltantes_detalle || {};
@@ -497,12 +594,11 @@
                 ? detalle.missing_categories
                 : [];
             if (missingCats.length) {
-                parts.push(
-                    '<div class="alert alert-warning" role="status">' +
-                        escapeHtml(
-                            'Faltan categorías obligatorias: ' + missingCats.join(', ') + '.'
-                        ) +
-                        '</div>'
+                appendAlert(
+                    body,
+                    'Faltan categorías obligatorias: ' + missingCats.join(', ') + '.',
+                    'warning',
+                    'status'
                 );
             }
 
@@ -512,101 +608,25 @@
                 }
             );
             if (orphanIssues.length) {
-                parts.push('<div class="capture-review-issues mb-3">');
-                parts.push('<div class="fw-semibold mb-2 text-danger">Completar datos</div>');
-                orphanIssues.forEach(function (issue) {
-                    parts.push(renderIssueBlock(issue));
-                });
-                parts.push('</div>');
+                var issSec = tpl('tpl-capture-issues-section');
+                if (issSec) {
+                    var issSlot = issSec.querySelector('[data-slot="issues"]');
+                    orphanIssues.forEach(function (issue) {
+                        var iss = renderIssueBlock(issue);
+                        if (iss && issSlot) issSlot.appendChild(iss);
+                    });
+                    body.appendChild(issSec);
+                }
             }
         }
 
-        parts.push(renderOpenProblems(review.open_problems));
-
-        parts.push('</div>');
+        var openProblems = renderOpenProblems(review.open_problems);
+        if (openProblems) body.appendChild(openProblems);
 
         return {
-            html: parts.join(''),
+            node: panelFrag,
             stagedIds: stagedIds,
         };
-    }
-
-    function renderOpenProblems(openProblems) {
-        if (!openProblems || typeof openProblems !== 'object') {
-            return '';
-        }
-        var conditions = Array.isArray(openProblems.conditions) ? openProblems.conditions : [];
-        var carePlans = Array.isArray(openProblems.care_plans) ? openProblems.care_plans : [];
-        if (!conditions.length && !carePlans.length) {
-            return '';
-        }
-        var parts = [];
-        parts.push('<div class="capture-open-problems mb-3">');
-        parts.push('<div class="fw-semibold mb-2">Problemas y tratamientos abiertos</div>');
-        parts.push(
-            '<p class="small text-muted mb-2">Opcional: indicá el estado al cerrar. Si no elegís, se mantienen como están.</p>'
-        );
-        parts.push('<div class="row g-2">');
-        conditions.forEach(function (item) {
-            parts.push(renderOpenProblemItem(item, 'condition', openProblems.condition_options));
-        });
-        carePlans.forEach(function (item) {
-            parts.push(renderOpenProblemItem(item, 'care_plan', openProblems.care_plan_options));
-        });
-        parts.push('</div>');
-        parts.push('</div>');
-        return parts.join('');
-    }
-
-    function renderOpenProblemItem(item, kind, sharedOptions) {
-        if (!item || !item.id) {
-            return '';
-        }
-        var parts = [];
-        parts.push(
-            '<div class="col-12 col-md-6 col-lg-4 mb-3" data-open-problem-kind="' +
-                escapeHtml(kind) +
-                '" data-open-problem-id="' +
-                escapeHtml(String(item.id)) +
-                '">'
-        );
-        parts.push('<div class="small fw-semibold">' + escapeHtml(item.label || '') + '</div>');
-        if (item.detail) {
-            parts.push(
-                '<div class="text-muted small">' + escapeHtml(String(item.detail)) + '</div>'
-            );
-        }
-        if (item.status_label || item.status || item.clinical_status) {
-            parts.push(
-                '<div class="text-muted small mb-1">' +
-                    escapeHtml(item.status_label || item.clinical_status || item.status || '') +
-                    '</div>'
-            );
-        }
-        var options = Array.isArray(item.options) && item.options.length
-            ? item.options
-            : Array.isArray(sharedOptions)
-              ? sharedOptions
-              : [];
-        if (options.length) {
-            parts.push('<div class="d-flex flex-wrap gap-1">');
-            options.forEach(function (opt) {
-                if (!opt || typeof opt.value === 'undefined') {
-                    return;
-                }
-                parts.push(
-                    '<button type="button" class="btn btn-sm btn-outline-secondary capture-open-problem-option me-1 mb-1" ' +
-                        'data-problem-value="' +
-                        escapeHtml(String(opt.value)) +
-                        '" aria-pressed="false">' +
-                        escapeHtml(opt.label || String(opt.value)) +
-                        '</button>'
-                );
-            });
-            parts.push('</div>');
-        }
-        parts.push('</div>');
-        return parts.join('');
     }
 
     function collectOpenProblemResolutions(root) {

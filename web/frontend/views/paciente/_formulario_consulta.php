@@ -103,3 +103,4 @@ $analyzeTitle = $esEvolucionImp
     <div id="context-buttons" class="mt-2" style="display: none;">
     </div>
 </form>
+<?= $this->render('_capture_review_templates') ?>

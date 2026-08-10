@@ -429,7 +429,10 @@
         var rendered = window.EncounterCaptureReview.render(review, {
             textoFormateado: data.texto_formateado || null,
         });
-        this.reviewRoot.innerHTML = rendered.html;
+        this.reviewRoot.replaceChildren();
+        if (rendered && rendered.node) {
+            this.reviewRoot.appendChild(rendered.node);
+        }
         window.EncounterCaptureReview.bindItemToggles(
             this.reviewRoot,
             this.updateConfirmState.bind(this)

@@ -68,6 +68,28 @@ $this->title = $persona
     </div>
 </div>
 
+<template id="tpl-vc-care-answer">
+    <div class="mb-2">
+        <strong data-field="question"></strong><br>
+        <span data-field="answer"></span>
+    </div>
+</template>
+
+<template id="tpl-vc-care-notes">
+    <p class="mb-0"><em data-field="notes"></em></p>
+</template>
+
+<template id="tpl-vc-doc-section">
+    <div class="mb-3">
+        <div class="fw-semibold" data-field="titulo"></div>
+        <ul class="mb-0" data-slot="items"></ul>
+    </div>
+</template>
+
+<template id="tpl-vc-doc-item">
+    <li style="white-space:pre-wrap" data-field="text"></li>
+</template>
+
 <?php
 $js = <<<'JS'
 (function () {
@@ -85,13 +107,13 @@ $js = <<<'JS'
         }
         return {};
     }
-    function esc(s) {
-        if (s == null) return '';
-        return String(s)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+    function tpl(id) {
+        var t = document.getElementById(id);
+        if (!t || !t.content) return null;
+        return document.importNode(t.content, true);
+    }
+    function clear(el) {
+        if (el) el.replaceChildren();
     }
     function showError(msg) {
         if (loading) loading.classList.add('d-none');
@@ -151,18 +173,28 @@ $js = <<<'JS'
             var careEl = document.getElementById('vc-care-pack');
             if (care && care.assistance && careWrap && careEl) {
                 var a = care.assistance;
-                var html = '';
+                clear(careEl);
+                var hasCare = false;
                 (a.answers || []).forEach(function (ans) {
-                    html += '<div class="mb-2"><strong>' + esc(ans.question || '') + '</strong><br />'
-                        + esc(ans.answer || '') + '</div>';
+                    var frag = tpl('tpl-vc-care-answer');
+                    if (!frag) return;
+                    var q = frag.querySelector('[data-field="question"]');
+                    if (q) q.textContent = ans.question || '';
+                    var an = frag.querySelector('[data-field="answer"]');
+                    if (an) an.textContent = ans.answer || '';
+                    careEl.appendChild(frag);
+                    hasCare = true;
                 });
                 if (a.notes_for_staff) {
-                    html += '<p class="mb-0"><em>' + esc(a.notes_for_staff) + '</em></p>';
+                    var notes = tpl('tpl-vc-care-notes');
+                    if (notes) {
+                        var n = notes.querySelector('[data-field="notes"]');
+                        if (n) n.textContent = a.notes_for_staff;
+                        careEl.appendChild(notes);
+                        hasCare = true;
+                    }
                 }
-                if (html) {
-                    careEl.innerHTML = html;
-                    careWrap.style.display = '';
-                }
+                if (hasCare) careWrap.style.display = '';
             }
             var doc = d.documentacion_medico || {};
             var docWrap = document.getElementById('vc-doc-wrap');
@@ -170,15 +202,22 @@ $js = <<<'JS'
             var emptyEl = document.getElementById('vc-empty');
             var hasDoc = !!(doc.tiene_datos && doc.secciones && doc.secciones.length);
             if (hasDoc && docWrap && docEl) {
-                var dhtml = '';
+                clear(docEl);
                 doc.secciones.forEach(function (sec) {
-                    dhtml += '<div class="mb-3"><div class="fw-semibold">' + esc(sec.titulo || '') + '</div><ul class="mb-0">';
+                    var secFrag = tpl('tpl-vc-doc-section');
+                    if (!secFrag) return;
+                    var tit = secFrag.querySelector('[data-field="titulo"]');
+                    if (tit) tit.textContent = sec.titulo || '';
+                    var items = secFrag.querySelector('[data-slot="items"]');
                     (sec.items || []).forEach(function (item) {
-                        dhtml += '<li style="white-space:pre-wrap">' + esc(item) + '</li>';
+                        var li = tpl('tpl-vc-doc-item');
+                        if (!li) return;
+                        var tx = li.querySelector('[data-field="text"]');
+                        if (tx) tx.textContent = item;
+                        if (items) items.appendChild(li);
                     });
-                    dhtml += '</ul></div>';
+                    docEl.appendChild(secFrag);
                 });
-                docEl.innerHTML = dhtml;
                 docWrap.style.display = '';
             } else if (emptyEl && !resumen) {
                 emptyEl.style.display = '';

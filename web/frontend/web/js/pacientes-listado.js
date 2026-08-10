@@ -26,7 +26,11 @@
 
   function showError(errorEl, msg) {
     if (!errorEl) return;
-    errorEl.innerHTML = '<i class="bi bi-exclamation-triangle me-2"></i>' + String(msg || 'Error');
+    clearNode(errorEl);
+    var i = document.createElement('i');
+    i.className = 'bi bi-exclamation-triangle me-2';
+    errorEl.appendChild(i);
+    errorEl.appendChild(document.createTextNode(String(msg || 'Error')));
     errorEl.className = 'alert alert-warning';
     errorEl.classList.remove('d-none');
   }
@@ -2401,7 +2405,10 @@
           var label = String(line.label || '').trim();
           var value = String(line.value || '').trim();
           if (!label || !value) return;
-          linesSlot.appendChild(buildIntakeSection(label, escapeHtml(value)));
+          var valueEl = document.createElement('div');
+          valueEl.className = 'small';
+          valueEl.textContent = value;
+          linesSlot.appendChild(buildIntakeSection(label, valueEl));
         });
       }
 
@@ -2431,21 +2438,21 @@
           if (narrative.length > 600) {
             narrative = narrative.slice(0, 600) + '…';
           }
-          var bodyHtml = '';
+          var bodyNode = document.createElement('div');
+          bodyNode.className = 'small';
           if (metaParts.length) {
-            bodyHtml +=
-              '<div class="text-muted small mb-1">' +
-              escapeHtml(metaParts.join(' · ')) +
-              '</div>';
+            var meta = document.createElement('div');
+            meta.className = 'text-muted small mb-1';
+            meta.textContent = metaParts.join(' · ');
+            bodyNode.appendChild(meta);
           }
           if (narrative) {
-            bodyHtml += '<div>' + escapeHtml(narrative) + '</div>';
+            var narr = document.createElement('div');
+            narr.textContent = narrative;
+            bodyNode.appendChild(narr);
           }
           detailSlot.appendChild(
-            buildIntakeSection(
-              detail.title || 'Atención de referencia',
-              bodyHtml
-            )
+            buildIntakeSection(detail.title || 'Atención de referencia', bodyNode)
           );
         } else {
           detailSlot.classList.add('d-none');
@@ -2485,7 +2492,7 @@
       });
     }
 
-    function buildIntakeSection(title, bodyHtml) {
+    function buildIntakeSection(title, bodyNode) {
       var wrap = document.createElement('div');
       wrap.className = 'mb-3';
       var titleEl = document.createElement('div');
@@ -2495,19 +2502,10 @@
       var hr = document.createElement('hr');
       hr.className = 'my-1';
       wrap.appendChild(hr);
-      var body = document.createElement('div');
-      body.className = 'small';
-      body.innerHTML = bodyHtml;
-      wrap.appendChild(body);
+      if (bodyNode) {
+        wrap.appendChild(bodyNode);
+      }
       return wrap;
-    }
-
-    function escapeHtml(s) {
-      return String(s)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
     }
 
     function fillAsyncIntakeContext(colEl, item) {

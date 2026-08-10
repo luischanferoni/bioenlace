@@ -22,59 +22,124 @@
         return window.timelineVars.endpoints;
     }
 
-// Función para cargar contenido desde endpoint
+    function tlTpl(id) {
+        var t = document.getElementById(id);
+        if (!t || !t.content) return null;
+        return document.importNode(t.content, true);
+    }
+
+    function tlClear(el) {
+        if (el) el.replaceChildren();
+    }
+
+    function tlMountMuted(container, iconClass, message) {
+        if (!container) return;
+        var frag = tlTpl('tpl-tl-muted-icon');
+        if (!frag) {
+            container.textContent = message || '';
+            return;
+        }
+        var icon = frag.querySelector('[data-field="icon"]');
+        if (icon) icon.className = iconClass || 'bi bi-info-circle';
+        var msg = frag.querySelector('[data-field="message"]');
+        if (msg) msg.textContent = message || '';
+        tlClear(container);
+        container.appendChild(frag);
+    }
+
+    function tlMountAlert(container, variant, iconClass, message) {
+        if (!container) return;
+        var frag = tlTpl('tpl-tl-alert');
+        if (!frag) {
+            container.textContent = message || '';
+            return;
+        }
+        var root = frag.firstElementChild;
+        root.classList.add('alert-' + (variant || 'warning'));
+        root.textContent = '';
+        if (iconClass) {
+            var i = document.createElement('i');
+            i.className = iconClass;
+            root.appendChild(i);
+            root.appendChild(document.createTextNode(' '));
+        }
+        root.appendChild(document.createTextNode(message || ''));
+        tlClear(container);
+        container.appendChild(frag);
+    }
+
+    function tlMountSpinner(container, message) {
+        if (!container) return;
+        var frag = tlTpl('tpl-tl-modal-loading');
+        if (!frag) return;
+        var msg = frag.querySelector('[data-field="message"]');
+        if (msg) msg.textContent = message || 'Cargando...';
+        tlClear(container);
+        container.appendChild(frag);
+    }
+
+    function tlMountSvLoading(container) {
+        if (!container) return;
+        var frag = tlTpl('tpl-tl-sv-loading');
+        if (!frag) return;
+        tlClear(container);
+        container.appendChild(frag);
+    }
+
+// Función para cargar contenido desde endpoint (HTML SSR del servidor)
 async function loadContent(url, containerId, title) {
     try {
         const response = await fetch(url);
+        const container = document.getElementById(containerId);
+        if (!container) return;
         if (response.ok) {
             const html = await response.text();
-            const container = document.getElementById(containerId);
-            if (container) {
-                container.innerHTML = `                        
-                            <h6 class="mb-1 text-decoration-underline">${title}</h6>
-                            ${html}
-                `;
-                container.style.display = 'block';
+            var wrap = tlTpl('tpl-tl-content-wrap');
+            if (wrap) {
+                var titleEl = wrap.querySelector('[data-field="title"]');
+                if (titleEl) titleEl.textContent = title || '';
+                var body = wrap.querySelector('[data-slot="body"]');
+                if (body) body.innerHTML = html;
+                tlClear(container);
+                container.appendChild(wrap);
+            } else {
+                container.innerHTML = html;
             }
+            container.style.display = 'block';
         } else {
             console.error('Error cargando:', url, 'Status:', response.status);
-            // Mostrar mensaje de error en el contenedor
-            const container = document.getElementById(containerId);
-            if (container) {
-                container.innerHTML = `
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">${title}</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle"></i>
-                                No se pudo cargar el contenido. Intente nuevamente.
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.style.display = 'block';
+            var errCard = tlTpl('tpl-tl-content-error-card');
+            if (errCard) {
+                var tEl = errCard.querySelector('[data-field="title"]');
+                if (tEl) tEl.textContent = title || '';
+                var alertEl = errCard.querySelector('[data-field="alert"]');
+                if (alertEl) alertEl.classList.add('alert-warning');
+                var icon = errCard.querySelector('[data-field="icon"]');
+                if (icon) icon.className = 'bi bi-exclamation-triangle';
+                var msg = errCard.querySelector('[data-field="message"]');
+                if (msg) msg.textContent = ' No se pudo cargar el contenido. Intente nuevamente.';
+                tlClear(container);
+                container.appendChild(errCard);
             }
+            container.style.display = 'block';
         }
     } catch (error) {
         console.error('Error en la petición:', error);
-        // Mostrar mensaje de error en el contenedor
         const container = document.getElementById(containerId);
         if (container) {
-            container.innerHTML = `
-                <div class="card">
-                    <div class="card-header">
-                        <h6 class="mb-0">${title}</h6>
-                    </div>
-                    <div class="card-body">
-                        <div class="alert alert-danger">
-                            <i class="bi bi-x-circle"></i>
-                            Error de conexión. Verifique su conexión a internet.
-                        </div>
-                    </div>
-                </div>
-            `;
+            var errCard2 = tlTpl('tpl-tl-content-error-card');
+            if (errCard2) {
+                var tEl2 = errCard2.querySelector('[data-field="title"]');
+                if (tEl2) tEl2.textContent = title || '';
+                var alertEl2 = errCard2.querySelector('[data-field="alert"]');
+                if (alertEl2) alertEl2.classList.add('alert-danger');
+                var icon2 = errCard2.querySelector('[data-field="icon"]');
+                if (icon2) icon2.className = 'bi bi-x-circle';
+                var msg2 = errCard2.querySelector('[data-field="message"]');
+                if (msg2) msg2.textContent = ' Error de conexión. Verifique su conexión a internet.';
+                tlClear(container);
+                container.appendChild(errCard2);
+            }
             container.style.display = 'block';
         }
     }
@@ -155,7 +220,7 @@ function ocultarLoadingContainer() {
 // Función para cargar todas las vacunas en el modal
 async function loadTodasLasVacunas() {
     const modalContent = document.getElementById('modal-vacunas-content');
-    modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2">Cargando historial de vacunas...</p></div>';
+    tlMountSpinner(modalContent, 'Cargando historial de vacunas...');
     
     try {
         const endpoints = getEndpoints();
@@ -170,74 +235,83 @@ async function loadTodasLasVacunas() {
         }
     } catch (error) {
         console.error('Error cargando todas las vacunas:', error);
-        modalContent.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Error cargando el historial de vacunas</div>';
+        tlMountAlert(modalContent, 'danger', 'bi bi-exclamation-triangle', 'Error cargando el historial de vacunas');
     }
-}
-
-function escapeHtmlSignos(text) {
-    if (text === null || text === undefined || text === '') {
-        return '';
-    }
-    const div = document.createElement('div');
-    div.textContent = String(text);
-    return div.innerHTML;
 }
 
 function tieneValorSigno(v) {
     return v !== null && v !== undefined && String(v).trim() !== '';
 }
 
-function buildSignosVitalesActualesHtml(ultimosSv) {
+function mountSignosVitalesActuales(container, ultimosSv) {
+    if (!container) return;
     if (!ultimosSv) {
-        return '<div class="text-muted"><i class="bi bi-info-circle"></i> No se encontraron signos vitales registrados</div>';
+        tlMountMuted(container, 'bi bi-info-circle', 'No se encontraron signos vitales registrados');
+        return;
     }
     const peso = ultimosSv.peso && tieneValorSigno(ultimosSv.peso.value);
     const talla = ultimosSv.talla && tieneValorSigno(ultimosSv.talla.value);
     const imc = ultimosSv.imc && tieneValorSigno(ultimosSv.imc.value);
     const ta = ultimosSv.ta && tieneValorSigno(ultimosSv.ta.sistolica) && tieneValorSigno(ultimosSv.ta.diastolica);
     if (!peso && !talla && !imc && !ta) {
-        return '<div class="text-muted"><i class="bi bi-info-circle"></i> No se encontraron signos vitales registrados</div>';
+        tlMountMuted(container, 'bi bi-info-circle', 'No se encontraron signos vitales registrados');
+        return;
     }
-    const parts = [];
-    parts.push('<div class="row g-3 mb-3">');
-    if (peso) {
-        parts.push(
-            '<div class="col-md-3 col-sm-6"><div class="card h-100 border-0"><div class="card-body p-1">',
-            '<h6 class="card-title mb-2 d-flex align-items-center"><i class="bi bi-speedometer2 text-primary me-2"></i><span>Peso</span></h6>',
-            '<p class="card-text fw-bold mb-1 fs-6">', escapeHtmlSignos(ultimosSv.peso.value), ' kg</p>',
-            '</div></div></div>'
-        );
+    var row = tlTpl('tpl-tl-sv-actuales-row');
+    if (!row) return;
+    var cards = row.querySelector('[data-slot="cards"]') || row.firstElementChild;
+    function addCard(iconClass, label, valueText) {
+        var card = tlTpl('tpl-tl-sv-card');
+        if (!card) return;
+        var icon = card.querySelector('[data-field="icon"]');
+        if (icon) icon.className = iconClass + ' me-2';
+        var lab = card.querySelector('[data-field="label"]');
+        if (lab) lab.textContent = label;
+        var val = card.querySelector('[data-field="value"]');
+        if (val) val.textContent = valueText;
+        cards.appendChild(card);
     }
-    if (talla) {
-        parts.push(
-            '<div class="col-md-3 col-sm-6"><div class="card h-100 border-0"><div class="card-body p-1">',
-            '<h6 class="card-title mb-2 d-flex align-items-center"><i class="bi bi-rulers text-success me-2"></i><span>Altura</span></h6>',
-            '<p class="card-text fw-bold mb-1 fs-6">', escapeHtmlSignos(ultimosSv.talla.value), ' cm</p>',
-            '</div></div></div>'
-        );
-    }
-    if (imc) {
-        parts.push(
-            '<div class="col-md-3 col-sm-6"><div class="card h-100 border-0"><div class="card-body p-1">',
-            '<h6 class="card-title mb-2 d-flex align-items-center"><i class="bi bi-graph-up text-info me-2"></i><span>IMC</span></h6>',
-            '<p class="card-text fw-bold mb-1 fs-6">', escapeHtmlSignos(ultimosSv.imc.value), '</p>',
-            '</div></div></div>'
-        );
-    }
+    if (peso) addCard('bi bi-speedometer2 text-primary', 'Peso', String(ultimosSv.peso.value) + ' kg');
+    if (talla) addCard('bi bi-rulers text-success', 'Altura', String(ultimosSv.talla.value) + ' cm');
+    if (imc) addCard('bi bi-graph-up text-info', 'IMC', String(ultimosSv.imc.value));
     if (ta) {
-        parts.push(
-            '<div class="col-md-3 col-sm-6"><div class="card h-100 border-0"><div class="card-body p-1">',
-            '<h6 class="card-title mb-2 d-flex align-items-center"><i class="bi bi-heart-pulse text-danger me-2"></i><span>Tensión Arterial</span></h6>',
-            '<p class="card-text fw-bold mb-1 fs-6">',
-            escapeHtmlSignos(ultimosSv.ta.sistolica), '/', escapeHtmlSignos(ultimosSv.ta.diastolica), ' mmHg</p>',
-            '</div></div></div>'
+        addCard(
+            'bi bi-heart-pulse text-danger',
+            'Tensión Arterial',
+            String(ultimosSv.ta.sistolica) + '/' + String(ultimosSv.ta.diastolica) + ' mmHg'
         );
     }
-    parts.push('</div>');
-    return parts.join('');
+    tlClear(container);
+    container.appendChild(row);
 }
 
-function formatFilaSignosVitalesModal(row) {
+function fillSvCell(slot, text, badgeClass) {
+    if (!slot) return;
+    tlClear(slot);
+    if (text == null || text === '' || text === '-') {
+        var dash = tlTpl('tpl-tl-sv-dash');
+        if (dash) slot.appendChild(dash);
+        else slot.textContent = '-';
+        return;
+    }
+    if (badgeClass) {
+        var badge = tlTpl('tpl-tl-sv-badge');
+        if (badge) {
+            var b = badge.firstElementChild || badge.querySelector('.badge');
+            if (b) {
+                b.classList.add(badgeClass);
+                b.textContent = text;
+            }
+            slot.appendChild(badge);
+            return;
+        }
+    }
+    slot.textContent = text;
+}
+
+function mountFilaSignosVitalesModal(tbody, row) {
+    var frag = tlTpl('tpl-tl-sv-modal-row');
+    if (!frag) return;
     const fechaRaw = row.fecha_atencion != null && row.fecha_atencion !== '' ? row.fecha_atencion : row.fecha;
     let fechaCell = '-';
     if (fechaRaw) {
@@ -246,53 +320,72 @@ function formatFilaSignosVitalesModal(row) {
             const d = new Date(s);
             fechaCell = !isNaN(d.getTime())
                 ? d.toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                : escapeHtmlSignos(s);
+                : s;
         } else {
-            fechaCell = escapeHtmlSignos(s);
+            fechaCell = s;
         }
     }
-    let pa = '-';
+    var fechaEl = frag.querySelector('[data-field="fecha"]');
+    if (fechaEl) fechaEl.textContent = fechaCell;
+
+    let paText = null;
+    let paBadge = 'bg-primary';
     if (row.ta1_sistolica != null && row.ta1_sistolica !== '' && row.ta1_diastolica != null && row.ta1_diastolica !== '') {
-        pa = '<span class="badge bg-primary">' + escapeHtmlSignos(row.ta1_sistolica) + '/' + escapeHtmlSignos(row.ta1_diastolica) + ' mmHg</span>';
+        paText = String(row.ta1_sistolica) + '/' + String(row.ta1_diastolica) + ' mmHg';
     } else if (row.ta && String(row.ta).indexOf('/') !== -1) {
-        pa = '<span class="badge bg-primary">' + escapeHtmlSignos(row.ta) + ' mmHg</span>';
+        paText = String(row.ta) + ' mmHg';
     }
-    const fc = row.frecuencia_cardiaca != null && row.frecuencia_cardiaca !== ''
-        ? '<span class="badge bg-info">' + escapeHtmlSignos(row.frecuencia_cardiaca) + ' lpm</span>'
-        : (row.fc != null && row.fc !== '' ? '<span class="badge bg-info">' + escapeHtmlSignos(row.fc) + ' lpm</span>' : '<span class="text-muted">-</span>');
-    const temp = row.temperatura != null && row.temperatura !== ''
-        ? '<span class="badge bg-warning">' + escapeHtmlSignos(row.temperatura) + '°C</span>'
-        : '<span class="text-muted">-</span>';
-    const spo2 = row.saturacion_oxigeno != null && row.saturacion_oxigeno !== ''
-        ? '<span class="badge bg-success">' + escapeHtmlSignos(row.saturacion_oxigeno) + '%</span>'
-        : '<span class="text-muted">-</span>';
-    const peso = row.peso != null && row.peso !== '' ? escapeHtmlSignos(row.peso) + ' kg' : '<span class="text-muted">-</span>';
-    const alt = row.talla != null && row.talla !== '' ? escapeHtmlSignos(row.talla) + ' cm' : '<span class="text-muted">-</span>';
-    const imc = row.imc != null && row.imc !== ''
-        ? '<span class="badge bg-secondary">' + escapeHtmlSignos(Number(row.imc).toFixed(1)) + '</span>'
-        : '<span class="text-muted">-</span>';
-    return (
-        '<tr><td>' + fechaCell + '</td><td>' + pa + '</td><td>' + fc + '</td><td>' + temp + '</td><td>' + spo2 + '</td><td>' + peso + '</td><td>' + alt + '</td><td>' + imc + '</td></tr>'
-    );
+    fillSvCell(frag.querySelector('[data-slot="pa"]'), paText, paBadge);
+
+    let fcText = null;
+    if (row.frecuencia_cardiaca != null && row.frecuencia_cardiaca !== '') {
+        fcText = String(row.frecuencia_cardiaca) + ' lpm';
+    } else if (row.fc != null && row.fc !== '') {
+        fcText = String(row.fc) + ' lpm';
+    }
+    fillSvCell(frag.querySelector('[data-slot="fc"]'), fcText, 'bg-info');
+
+    const tempText = row.temperatura != null && row.temperatura !== ''
+        ? String(row.temperatura) + '°C'
+        : null;
+    fillSvCell(frag.querySelector('[data-slot="temp"]'), tempText, 'bg-warning');
+
+    const spo2Text = row.saturacion_oxigeno != null && row.saturacion_oxigeno !== ''
+        ? String(row.saturacion_oxigeno) + '%'
+        : null;
+    fillSvCell(frag.querySelector('[data-slot="spo2"]'), spo2Text, 'bg-success');
+
+    const pesoText = row.peso != null && row.peso !== '' ? String(row.peso) + ' kg' : null;
+    fillSvCell(frag.querySelector('[data-slot="peso"]'), pesoText, null);
+
+    const altText = row.talla != null && row.talla !== '' ? String(row.talla) + ' cm' : null;
+    fillSvCell(frag.querySelector('[data-slot="alt"]'), altText, null);
+
+    const imcText = row.imc != null && row.imc !== '' ? Number(row.imc).toFixed(1) : null;
+    fillSvCell(frag.querySelector('[data-slot="imc"]'), imcText, 'bg-secondary');
+
+    tbody.appendChild(frag);
 }
 
-function buildSignosVitalesModalHtml(datosSv) {
+function mountSignosVitalesModal(container, datosSv) {
+    if (!container) return;
+    var frag = tlTpl('tpl-tl-sv-modal');
+    if (!frag) return;
+    var empty = frag.querySelector('[data-slot="empty"]');
+    var tableWrap = frag.querySelector('[data-slot="table-wrap"]');
+    var tbody = frag.querySelector('[data-slot="tbody"]');
     if (!datosSv || !datosSv.length) {
-        return (
-            '<div class="signos-vitales-modal"><div class="card"><div class="card-header"><h5 class="card-title mb-0">' +
-            '<i class="bi bi-heart-pulse"></i> Historial de Signos Vitales</h5></div><div class="card-body">' +
-            '<div class="alert alert-info"><i class="bi bi-info-circle"></i> No se encontraron registros de signos vitales para este paciente.</div>' +
-            '</div></div></div>'
-        );
+        if (empty) empty.classList.remove('d-none');
+        if (tableWrap) tableWrap.classList.add('d-none');
+    } else {
+        if (empty) empty.classList.add('d-none');
+        if (tableWrap) tableWrap.classList.remove('d-none');
+        (datosSv || []).forEach(function (row) {
+            mountFilaSignosVitalesModal(tbody, row);
+        });
     }
-    const rows = datosSv.map(formatFilaSignosVitalesModal).join('');
-    return (
-        '<div class="signos-vitales-modal"><div class="card"><div class="card-header"><h5 class="card-title mb-0">' +
-        '<i class="bi bi-heart-pulse"></i> Historial de Signos Vitales</h5></div><div class="card-body">' +
-        '<div class="table-responsive"><table class="table table-striped table-hover">' +
-        '<thead class="table-dark"><tr><th>Fecha</th><th>Presión Arterial</th><th>Frecuencia Cardíaca</th><th>Temperatura</th><th>Saturación O₂</th><th>Peso</th><th>Altura</th><th>IMC</th></tr></thead>' +
-        '<tbody>' + rows + '</tbody></table></div></div></div></div>'
-    );
+    tlClear(container);
+    container.appendChild(frag);
 }
 
 /** Extra fijo para fetch JSON de signos vitales (solo se pasa a {@link window.BioenlaceApiClient.mergeHeaders}). */
@@ -311,7 +404,7 @@ function applySignosVitalesPayload(d) {
     if (!d) {
         window.timelineVars.signosVitalesDatosSv = [];
         if (content) {
-            content.innerHTML = '<div class="text-muted"><i class="bi bi-info-circle"></i> No se encontraron signos vitales registrados</div>';
+            tlMountMuted(content, 'bi bi-info-circle', 'No se encontraron signos vitales registrados');
         }
         const tituloEmpty = document.getElementById('signos-vitales-titulo');
         if (tituloEmpty) {
@@ -325,7 +418,7 @@ function applySignosVitalesPayload(d) {
     }
     window.timelineVars.signosVitalesDatosSv = Array.isArray(d.datos_sv) ? d.datos_sv : [];
     if (content) {
-        content.innerHTML = buildSignosVitalesActualesHtml(d.ultimos_sv);
+        mountSignosVitalesActuales(content, d.ultimos_sv);
     }
     const titulo = document.getElementById('signos-vitales-titulo');
     if (titulo) {
@@ -353,7 +446,7 @@ async function loadSignosVitalesActuales() {
     const endpoints = getEndpoints();
     if (!endpoints || !endpoints.signosVitales) {
         console.error('Endpoint de signos vitales no configurado');
-        content.innerHTML = '<div class="text-muted"><i class="bi bi-exclamation-triangle"></i> Error: Endpoint no configurado</div>';
+        tlMountMuted(content, 'bi bi-exclamation-triangle', 'Error: Endpoint no configurado');
         return;
     }
     
@@ -374,27 +467,10 @@ async function loadSignosVitalesActuales() {
             console.log('Datos recibidos:', data);
             
             if (data && data.success && data.data) {
-                const d = data.data;
-                if (content) {
-                    content.innerHTML = buildSignosVitalesActualesHtml(d.ultimos_sv);
-                    console.log('Contenido de signos vitales actualizado');
-                }
-                
-                // Actualizar título con fecha
-                const titulo = document.getElementById('signos-vitales-titulo');
-                if (titulo && d.fecha_titulo) {
-                    titulo.textContent = 'SIGNOS VITALES ACTUALES (' + d.fecha_titulo + ')';
-                }
-                
-                // Mostrar link si hay más signos vitales
-                const link = document.getElementById('signos-vitales-link');
-                if (link) {
-                    link.style.display = d.tiene_mas_sv ? 'block' : 'none';
-                }
+                applySignosVitalesPayload(data.data);
+                console.log('Contenido de signos vitales actualizado');
             } else {
-                if (content) {
-                    content.innerHTML = '<div class="text-muted"><i class="bi bi-info-circle"></i> No se pudieron cargar los signos vitales</div>';
-                }
+                tlMountMuted(content, 'bi bi-info-circle', 'No se pudieron cargar los signos vitales');
                 console.warn('Respuesta de signos vitales sin success:', data);
             }
             
@@ -408,7 +484,7 @@ async function loadSignosVitalesActuales() {
     } catch (error) {
         console.error('Error cargando signos vitales actuales:', error);
         if (content) {
-            content.innerHTML = '<div class="text-muted"><i class="bi bi-exclamation-triangle"></i> Error cargando signos vitales: ' + error.message + '</div>';
+            tlMountMuted(content, 'bi bi-exclamation-triangle', 'Error cargando signos vitales: ' + error.message);
         }
         // Ocultar loading incluso si hay error
         ocultarLoadingContainer();
@@ -418,7 +494,7 @@ async function loadSignosVitalesActuales() {
 // Función para cargar todos los signos vitales en el modal (API v1 JSON)
 async function loadTodosLosSignosVitales() {
     const modalContent = document.getElementById('modal-signos-vitales-content');
-    modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><p class="mt-2">Cargando historial de signos vitales...</p></div>';
+    tlMountSpinner(modalContent, 'Cargando historial de signos vitales...');
     
     try {
         const cached =
@@ -426,14 +502,13 @@ async function loadTodosLosSignosVitales() {
             Object.prototype.hasOwnProperty.call(window.timelineVars, 'signosVitalesDatosSv') &&
             Array.isArray(window.timelineVars.signosVitalesDatosSv);
         if (cached) {
-            modalContent.innerHTML = buildSignosVitalesModalHtml(window.timelineVars.signosVitalesDatosSv);
+            mountSignosVitalesModal(modalContent, window.timelineVars.signosVitalesDatosSv);
             return;
         }
 
         const endpoints = getEndpoints();
         if (!endpoints || !endpoints.signosVitales) {
-            modalContent.innerHTML =
-                '<div class="alert alert-warning"><i class="bi bi-info-circle"></i> No hay historial de signos vitales cargado.</div>';
+            tlMountAlert(modalContent, 'warning', 'bi bi-info-circle', 'No hay historial de signos vitales cargado.');
             return;
         }
         const url = endpoints.signosVitales;
@@ -446,16 +521,16 @@ async function loadTodosLosSignosVitales() {
         if (response.ok) {
             const data = await response.json();
             if (data && data.success && data.data && Array.isArray(data.data.datos_sv)) {
-                modalContent.innerHTML = buildSignosVitalesModalHtml(data.data.datos_sv);
+                mountSignosVitalesModal(modalContent, data.data.datos_sv);
             } else {
-                modalContent.innerHTML = '<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> No se pudo interpretar la respuesta del servidor.</div>';
+                tlMountAlert(modalContent, 'warning', 'bi bi-exclamation-triangle', 'No se pudo interpretar la respuesta del servidor.');
             }
         } else {
             throw new Error('Error en la respuesta');
         }
     } catch (error) {
         console.error('Error cargando todos los signos vitales:', error);
-        modalContent.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Error cargando el historial de signos vitales</div>';
+        tlMountAlert(modalContent, 'danger', 'bi bi-exclamation-triangle', 'Error cargando el historial de signos vitales');
     }
 }
 
@@ -533,13 +608,13 @@ async function cargarFormularioConsulta() {
             // Ocultar loading después de cargar el formulario
             ocultarLoadingContainer();
         } else {
-            container.innerHTML = '<div class="alert alert-danger">Error al cargar el formulario: ' + (data.error || 'Error desconocido') + '</div>';
+            tlMountAlert(container, 'danger', null, 'Error al cargar el formulario: ' + (data.error || 'Error desconocido'));
             // Ocultar loading incluso si hay error
             ocultarLoadingContainer();
         }
     } catch (error) {
         console.error('Error cargando estado del formulario:', error);
-        container.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle"></i> Error cargando el formulario de consulta</div>';
+        tlMountAlert(container, 'danger', 'bi bi-exclamation-triangle', 'Error cargando el formulario de consulta');
         // Ocultar loading incluso si hay error
         ocultarLoadingContainer();
     }
@@ -603,14 +678,13 @@ function initTimeline(config) {
     const signosVitalesContent = document.getElementById('signos-vitales-actuales-content');
     if (signosVitalesContent) {
         console.log('Elemento signos-vitales-actuales-content encontrado, cargando...');
-        signosVitalesContent.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><span class="ms-2 text-muted">Cargando signos vitales...</span></div>';
+        tlMountSvLoading(signosVitalesContent);
         if (signosDesdeHistoriaClinica) {
             console.log('Signos vitales: pendiente de respuesta de historia-clínica');
         } else if (endpointsCfg.signosVitales) {
             loadSignosVitalesActuales();
         } else {
-            signosVitalesContent.innerHTML =
-                '<div class="text-muted"><i class="bi bi-info-circle"></i> No hay fuente de signos vitales configurada</div>';
+            tlMountMuted(signosVitalesContent, 'bi bi-info-circle', 'No hay fuente de signos vitales configurada');
         }
     } else {
         console.warn('Elemento signos-vitales-actuales-content no encontrado, reintentando en 500ms...');
@@ -618,15 +692,14 @@ function initTimeline(config) {
             const retryContent = document.getElementById('signos-vitales-actuales-content');
             if (retryContent) {
                 console.log('Elemento encontrado en reintento, cargando signos vitales...');
-                retryContent.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Cargando...</span></div><span class="ms-2 text-muted">Cargando signos vitales...</span></div>';
+                tlMountSvLoading(retryContent);
                 const ep = (config.endpoints || {});
                 if (ep.historiaClinica) {
                     /* se completa con historia-clínica */
                 } else if (ep.signosVitales) {
                     loadSignosVitalesActuales();
                 } else {
-                    retryContent.innerHTML =
-                        '<div class="text-muted"><i class="bi bi-info-circle"></i> No hay fuente de signos vitales configurada</div>';
+                    tlMountMuted(retryContent, 'bi bi-info-circle', 'No hay fuente de signos vitales configurada');
                 }
             } else {
                 console.error('Elemento signos-vitales-actuales-content no encontrado después del reintento');

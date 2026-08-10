@@ -161,6 +161,119 @@
     <span class="text-muted">Consulta en solo lectura</span>
 </template>
 
+<template id="tpl-tl-muted-icon">
+    <div class="text-muted"><i data-field="icon"></i> <span data-field="message"></span></div>
+</template>
+
+<template id="tpl-tl-sv-loading">
+    <div class="text-center py-2">
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <span class="ms-2 text-muted">Cargando signos vitales...</span>
+    </div>
+</template>
+
+<template id="tpl-tl-sv-actuales-row">
+    <div class="row g-3 mb-3" data-slot="cards"></div>
+</template>
+
+<template id="tpl-tl-sv-card">
+    <div class="col-md-3 col-sm-6">
+        <div class="card h-100 border-0">
+            <div class="card-body p-1">
+                <h6 class="card-title mb-2 d-flex align-items-center">
+                    <i class="me-2" data-field="icon"></i><span data-field="label"></span>
+                </h6>
+                <p class="card-text fw-bold mb-1 fs-6" data-field="value"></p>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-tl-sv-modal">
+    <div class="signos-vitales-modal">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="bi bi-heart-pulse"></i> Historial de Signos Vitales</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info d-none" data-slot="empty">
+                    <i class="bi bi-info-circle"></i> No se encontraron registros de signos vitales para este paciente.
+                </div>
+                <div class="table-responsive d-none" data-slot="table-wrap">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Presión Arterial</th>
+                                <th>Frecuencia Cardíaca</th>
+                                <th>Temperatura</th>
+                                <th>Saturación O₂</th>
+                                <th>Peso</th>
+                                <th>Altura</th>
+                                <th>IMC</th>
+                            </tr>
+                        </thead>
+                        <tbody data-slot="tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-tl-sv-modal-row">
+    <tr>
+        <td data-field="fecha"></td>
+        <td data-slot="pa"></td>
+        <td data-slot="fc"></td>
+        <td data-slot="temp"></td>
+        <td data-slot="spo2"></td>
+        <td data-slot="peso"></td>
+        <td data-slot="alt"></td>
+        <td data-slot="imc"></td>
+    </tr>
+</template>
+
+<template id="tpl-tl-sv-badge">
+    <span class="badge" data-field="text"></span>
+</template>
+
+<template id="tpl-tl-sv-dash">
+    <span class="text-muted">-</span>
+</template>
+
+<template id="tpl-tl-content-wrap">
+    <div>
+        <h6 class="mb-1 text-decoration-underline" data-field="title"></h6>
+        <div data-slot="body"></div>
+    </div>
+</template>
+
+<template id="tpl-tl-content-error-card">
+    <div class="card">
+        <div class="card-header">
+            <h6 class="mb-0" data-field="title"></h6>
+        </div>
+        <div class="card-body">
+            <div class="alert mb-0" data-field="alert" role="alert">
+                <i data-field="icon"></i>
+                <span data-field="message"></span>
+            </div>
+        </div>
+    </div>
+</template>
+
+<template id="tpl-tl-modal-loading">
+    <div class="text-center py-4">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-2" data-field="message">Cargando...</p>
+    </div>
+</template>
+
 <template id="tpl-tl-triage-form">
     <form id="tl-triage-form" class="p-1">
         <input type="hidden" name="guardia_id" data-field="guardia_id" value="">

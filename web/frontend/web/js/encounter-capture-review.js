@@ -852,6 +852,49 @@
         });
     }
 
+    function applyResolutionsToDom(root, resolutions) {
+        if (!root || !resolutions || typeof resolutions !== 'object') {
+            return;
+        }
+        Object.keys(resolutions).forEach(function (issueId) {
+            var value = resolutions[issueId];
+            if (value === undefined || value === null || String(value).trim() === '') {
+                return;
+            }
+            var block = root.querySelector('[data-capture-issue-id="' + issueId.replace(/"/g, '\\"') + '"]');
+            if (!block) {
+                // fallback: attribute contains special chars — walk
+                block = null;
+                root.querySelectorAll('[data-capture-issue-id]').forEach(function (el) {
+                    if (el.getAttribute('data-capture-issue-id') === issueId) {
+                        block = el;
+                    }
+                });
+            }
+            if (!block) {
+                return;
+            }
+            var matched = false;
+            block.querySelectorAll('.capture-issue-option').forEach(function (btn) {
+                var v = btn.getAttribute('data-issue-value');
+                var on = String(v) === String(value);
+                btn.classList.toggle('active', on);
+                btn.classList.toggle('btn-outline-primary', on);
+                btn.classList.toggle('btn-outline-secondary', !on);
+                btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+                if (on) matched = true;
+            });
+            var custom = block.querySelector('.capture-issue-custom');
+            if (custom) {
+                if (!matched) {
+                    custom.value = String(value);
+                } else {
+                    custom.value = '';
+                }
+            }
+        });
+    }
+
     window.EncounterCaptureReview = {
         render: render,
         bindItemToggles: bindItemToggles,
@@ -865,5 +908,6 @@
         defaultStagedIds: defaultStagedIds,
         hasExtractedContent: hasExtractedContent,
         applyItemChipVisual: applyItemChipVisual,
+        applyResolutionsToDom: applyResolutionsToDom,
     };
 })(window);

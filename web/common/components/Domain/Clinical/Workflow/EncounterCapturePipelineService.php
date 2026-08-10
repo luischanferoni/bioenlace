@@ -429,10 +429,36 @@ final class EncounterCapturePipelineService
         }
 
         $resolutions = $body['resolutions'] ?? $body['resoluciones'] ?? null;
-        // No aplicar resolutions acá sobre el payload filtrado del cliente: los issue_id
-        // usan índices del análisis completo. EncounterDocumentationService aplica + filtra.
-        if (is_array($resolutions) && $resolutions !== []) {
-            // keep in body for documentation
+        if (!is_array($resolutions)) {
+            $resolutions = [];
+        }
+        $analysisLocal = is_array($analysis) ? $analysis : [];
+        $prevResolutions = [];
+        if (isset($analysisLocal['client_resolutions']) && is_array($analysisLocal['client_resolutions'])) {
+            $prevResolutions = $analysisLocal['client_resolutions'];
+        }
+        $mergedResolutions = array_merge($prevResolutions, $resolutions);
+
+        $fullCheckpoint = $capture->getDatosExtraidos();
+        if ($fullCheckpoint === [] && $analysisLocal !== []) {
+            $fullCheckpoint = $this->extractDatosExtraidosFromAnalizar($analysisLocal);
+        }
+        if ($mergedResolutions !== [] && $fullCheckpoint !== []) {
+            $categorias = $this->resolveCategoriasForCapture($capture, $body);
+            $fullCheckpoint = (new ClinicalCaptureResolutionApplier())->apply(
+                $fullCheckpoint,
+                $mergedResolutions,
+                $categorias
+            );
+            $capture->setDatosExtraidos($fullCheckpoint);
+        }
+        if ($mergedResolutions !== []) {
+            $analysisLocal['client_resolutions'] = $mergedResolutions;
+            $capture->setAnalysisResponse($analysisLocal);
+        }
+        if ($mergedResolutions !== [] || $fullCheckpoint !== []) {
+            $capture->updated_at = date('Y-m-d H:i:s');
+            $capture->save(false);
         }
 
         $blocking = EncounterCaptureReviewPresenter::blockingErrorFromExtraidos(
@@ -448,6 +474,10 @@ final class EncounterCapturePipelineService
         $saveBody['id_persona'] = $capture->subject_persona_id;
         $saveBody['subject_persona_id'] = $capture->subject_persona_id;
         $saveBody['datosExtraidos'] = $datosExtraidos;
+        $saveBody['resolutions'] = $mergedResolutions;
+        $saveBody['analisis_datos_extraidos'] = $fullCheckpoint !== []
+            ? $fullCheckpoint
+            : $capture->getDatosExtraidos();
         $saveBody['texto_original'] = $saveBody['texto_original']
             ?? $capture->transcript
             ?? '';
@@ -464,9 +494,6 @@ final class EncounterCapturePipelineService
         if ($capture->analysis_cache_token) {
             $saveBody['analysis_cache_token'] = $capture->analysis_cache_token;
         }
-        if (!isset($saveBody['analisis_datos_extraidos']) && !isset($saveBody['analisisDatosExtraidos'])) {
-            $saveBody['analisis_datos_extraidos'] = $capture->getDatosExtraidos();
-        }
         if ($capture->encounter_id) {
             $saveBody['id_consulta'] = $capture->encounter_id;
             $saveBody['encounter_id'] = $capture->encounter_id;
@@ -476,6 +503,12 @@ final class EncounterCapturePipelineService
         }
 
         $out = $this->documentation->guardar($saveBody);
+        // Si el dominio devolvió checkpoint resuelto, persistirlo para el próximo intento.
+        if (isset($out['analisis_datos_extraidos']) && is_array($out['analisis_datos_extraidos'])) {
+            $capture->setDatosExtraidos($out['analisis_datos_extraidos']);
+        } elseif (empty($out['success']) && $fullCheckpoint !== []) {
+            $capture->setDatosExtraidos($fullCheckpoint);
+        }
         $capture->attempts_save = (int) $capture->attempts_save + 1;
         $capture->updated_at = date('Y-m-d H:i:s');
         $capture->setStagedItemIds($capture->getStagedItemIds());
@@ -484,7 +517,7 @@ final class EncounterCapturePipelineService
         $acceptanceMeta = EncounterCaptureAuditService::buildAcceptanceMeta(
             $reviewForAudit,
             $capture->getStagedItemIds(),
-            is_array($resolutions) && $resolutions !== [] ? $resolutions : null
+            $mergedResolutions !== [] ? $mergedResolutions : null
         );
 
         if (empty($out['success'])) {

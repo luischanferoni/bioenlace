@@ -204,8 +204,26 @@ class EncounterDocumentationService extends Component
             $applier = new ClinicalCaptureResolutionApplier();
             // Resolutions usan índices del análisis completo (Medicación::1). Si el cliente
             // ya filtró filas, aplicar sobre el full y luego recortar por staged_item_ids.
-            if ($stagedItemIds !== [] && $fullExtraidos !== []) {
-                $working = $fullExtraidos;
+            // Preferir checkpoint del capture (analisis_datos_extraidos) sobre cache inmutable:
+            // ahí viven resolutions de intentos previos de guardado.
+            $checkpoint = [];
+            if (isset($body['analisis_datos_extraidos']) && is_array($body['analisis_datos_extraidos'])) {
+                $checkpoint = $body['analisis_datos_extraidos'];
+            } elseif (isset($body['analisisDatosExtraidos']) && is_array($body['analisisDatosExtraidos'])) {
+                $checkpoint = $body['analisisDatosExtraidos'];
+            }
+            if ($checkpoint !== [] && isset($checkpoint['datosExtraidos']) && is_array($checkpoint['datosExtraidos'])) {
+                $checkpoint = $checkpoint['datosExtraidos'];
+            }
+
+            if ($stagedItemIds !== []) {
+                if ($checkpoint !== [] && self::datosExtraidosLooksLikeCategories($checkpoint)) {
+                    $working = $checkpoint;
+                } elseif ($fullExtraidos !== []) {
+                    $working = $fullExtraidos;
+                } else {
+                    $working = $datosExtraidos;
+                }
             } elseif ($fullExtraidos !== []) {
                 $working = self::enrichExtraidosFromFullAnalysis($datosExtraidos, $fullExtraidos);
             } else {
@@ -216,12 +234,16 @@ class EncounterDocumentationService extends Component
                 $working = $applier->apply($working, $resolutions, $categorias);
             }
 
+            $stagedIndexMap = [];
             if ($stagedItemIds !== []) {
+                $stagedIndexMap = $applier->stagedIndexMap($stagedItemIds);
                 $datosExtraidos = $applier->filterByStagedItemIds($working, $stagedItemIds, $categorias);
             } else {
                 $datosExtraidos = $working;
             }
             $body['datosExtraidos'] = $datosExtraidos;
+            // Checkpoint resuelto (índices originales) para el caller / próximo intento.
+            $body['analisis_datos_extraidos'] = $working;
 
             $diagnostico['final_keys'] = array_keys($datosExtraidos);
             $diagnostico['final_counts'] = self::countCategories($datosExtraidos);
@@ -275,6 +297,12 @@ class EncounterDocumentationService extends Component
                 $datosExtraidos,
                 $categorias
             );
+            if ($completeness['tiene_datos_faltantes'] === true && $stagedIndexMap !== []) {
+                $completeness = $applier->remapCompletenessToOriginalIndices(
+                    $completeness,
+                    $stagedIndexMap
+                );
+            }
             if ($completeness['tiene_datos_faltantes'] === true) {
                 $message = trim((string) ($completeness['message'] ?? ''));
                 if ($message === '') {
@@ -290,6 +318,7 @@ class EncounterDocumentationService extends Component
                 ]);
                 $out['tiene_datos_faltantes'] = true;
                 $out['diagnostico_guardar'] = $diagnostico;
+                $out['analisis_datos_extraidos'] = $working;
                 $logger->finalizar($out);
 
                 return $this->clientGuardarResponse($out);

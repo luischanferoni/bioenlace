@@ -43,6 +43,98 @@ final class ClinicalCaptureResolutionApplier
     }
 
     /**
+     * Mapa newIndex → originalIndex por categoría, según orden de `Categoría::n` en staged.
+     * Tras filtrar, la fila 0 de Medicación puede ser la original `Medicación::1`.
+     *
+     * @param list<string> $stagedItemIds
+     * @return array<string, array<int, int>>
+     */
+    public function stagedIndexMap(array $stagedItemIds): array
+    {
+        $byCat = [];
+        foreach ($stagedItemIds as $id) {
+            if (!is_string($id) && !is_int($id)) {
+                continue;
+            }
+            $id = trim((string) $id);
+            if ($id === '' || preg_match('/^(.*)::(\d+)$/u', $id, $m) !== 1) {
+                continue;
+            }
+            $cat = (string) $m[1];
+            $byCat[$cat][] = (int) $m[2];
+        }
+        $map = [];
+        foreach ($byCat as $cat => $origIndices) {
+            // El filtro itera índices ascendentes; alinear el mapa a ese orden.
+            $uniq = array_values(array_unique($origIndices));
+            sort($uniq, SORT_NUMERIC);
+            foreach ($uniq as $newIdx => $origIdx) {
+                $map[$cat][$newIdx] = $origIdx;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Reescribe incomplete_items / issues a índices originales del capture_review.
+     *
+     * @param array<string, mixed> $completeness
+     * @param array<string, array<int, int>> $indexMap
+     * @return array<string, mixed>
+     */
+    public function remapCompletenessToOriginalIndices(array $completeness, array $indexMap): array
+    {
+        if ($indexMap === []) {
+            return $completeness;
+        }
+
+        $incomplete = [];
+        foreach ($completeness['incomplete_items'] ?? [] as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $cat = (string) ($item['category'] ?? '');
+            $newIdx = (int) ($item['index'] ?? 0);
+            if ($cat !== '' && isset($indexMap[$cat][$newIdx])) {
+                $item['index'] = $indexMap[$cat][$newIdx];
+            }
+            $incomplete[] = $item;
+        }
+        $completeness['incomplete_items'] = $incomplete;
+
+        $issues = [];
+        foreach ($completeness['issues'] ?? [] as $issue) {
+            if (!is_array($issue)) {
+                continue;
+            }
+            $id = (string) ($issue['id'] ?? '');
+            $parsed = ClinicalCaptureIssueFactory::parseIssueId($id);
+            if ($parsed !== null) {
+                $cat = $parsed['category'];
+                $newIdx = $parsed['index'];
+                if (isset($indexMap[$cat][$newIdx])) {
+                    $orig = $indexMap[$cat][$newIdx];
+                    $issue['id'] = ClinicalCaptureIssueFactory::issueId(
+                        $cat,
+                        $orig,
+                        $parsed['field']
+                    );
+                }
+            }
+            $issues[] = $issue;
+        }
+        $completeness['issues'] = $issues;
+
+        if ($incomplete !== [] || ($completeness['missing_categories'] ?? []) !== []) {
+            // Mensaje con índices ya remapeados en labels (el label no usa índice).
+            $completeness['message'] = $completeness['message'] ?? '';
+        }
+
+        return $completeness;
+    }
+
+    /**
      * Conserva solo filas referenciadas por staged_item_ids (`Categoría::índice`).
      * Los índices son los del análisis completo (antes de reindexar).
      *

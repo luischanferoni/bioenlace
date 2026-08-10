@@ -144,6 +144,37 @@ class ClinicalCaptureIssueResolutionTest extends Unit
         $this->assertSame('4', $filtered['Medicación'][0]['Frecuencia de administracion']);
     }
 
+    public function testRemapCompletenessUsesOriginalStagedIndex(): void
+    {
+        $applier = new ClinicalCaptureResolutionApplier();
+        $map = $applier->stagedIndexMap(['Medicación::1', 'Balance hídrico::0']);
+        $this->assertSame(1, $map['Medicación'][0]);
+        $this->assertSame(0, $map['Balance hídrico'][0]);
+
+        $completeness = [
+            'incomplete_items' => [
+                [
+                    'category' => 'Medicación',
+                    'index' => 0,
+                    'label' => 'antibiótico',
+                    'missing_fields' => ['Cantidad'],
+                ],
+            ],
+            'issues' => [
+                [
+                    'id' => 'Medicación::0:Cantidad',
+                    'field' => 'Cantidad',
+                    'options' => [],
+                    'allow_custom' => false,
+                ],
+            ],
+            'message' => 'x',
+        ];
+        $out = $applier->remapCompletenessToOriginalIndices($completeness, $map);
+        $this->assertSame(1, $out['incomplete_items'][0]['index']);
+        $this->assertSame('Medicación::1:Cantidad', $out['issues'][0]['id']);
+    }
+
     public function testBalanceCantidadBuildsAllowCustomIssue(): void
     {
         $input = \common\models\Clinical\Input\BalanceHidricoInput::fromExtractedRow([

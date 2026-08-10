@@ -99,6 +99,8 @@
         this.clientCaptureId = null;
         this.serverCaptureId = null;
         this.serverStage = null;
+        /** @type {Object.<string, string|number>} */
+        this.resolutionAccum = {};
 
         if (SpeechRecognitionCtor && this.textarea && this.sttConfig.device_enabled) {
             this.recognition = new SpeechRecognitionCtor();
@@ -390,6 +392,27 @@
         }
     };
 
+    EncounterCaptureForm.prototype.syncResolutionAccum = function () {
+        if (!window.EncounterCaptureReview || !this.reviewRoot) {
+            return this.resolutionAccum || {};
+        }
+        var live = window.EncounterCaptureReview.collectResolutions(this.reviewRoot);
+        var staged = window.EncounterCaptureReview.collectStagedIds(this.reviewRoot);
+        var merged = Object.assign({}, this.resolutionAccum || {}, live);
+        Object.keys(merged).forEach(function (issueId) {
+            var m = String(issueId).match(/^(.*)::(\d+):/);
+            if (!m) {
+                return;
+            }
+            var itemId = m[1] + '::' + m[2];
+            if (staged.size > 0 && !staged.has(itemId)) {
+                delete merged[issueId];
+            }
+        });
+        this.resolutionAccum = merged;
+        return merged;
+    };
+
     EncounterCaptureForm.prototype.updateConfirmState = function () {
         if (!this.confirmBtn) {
             return;
@@ -411,7 +434,7 @@
             return;
         }
         var staged = window.EncounterCaptureReview.collectStagedIds(this.reviewRoot);
-        var resolutions = window.EncounterCaptureReview.collectResolutions(this.reviewRoot);
+        var resolutions = this.syncResolutionAccum();
         var can =
             this.captureReview &&
             window.EncounterCaptureReview.canConfirm(this.captureReview, staged, resolutions);
@@ -441,6 +464,12 @@
             this.reviewRoot,
             this.updateConfirmState.bind(this)
         );
+        if (this.resolutionAccum && Object.keys(this.resolutionAccum).length) {
+            window.EncounterCaptureReview.applyResolutionsToDom(
+                this.reviewRoot,
+                this.resolutionAccum
+            );
+        }
 
         if (this.responseContent) {
             this.responseContent.innerHTML = '';
@@ -999,6 +1028,7 @@
             self.lastAnalysisPayload = payload;
             self.draftText = consulta || (payload.texto_original || payload.transcript || '');
             self.editSnapshot = null;
+            self.resolutionAccum = {};
             self.setEditingMode(false);
             if (self.responseEl) {
                 self.responseEl.style.display = 'block';
@@ -1252,7 +1282,7 @@
             !window.EncounterCaptureReview.canConfirm(
                 this.captureReview,
                 window.EncounterCaptureReview.collectStagedIds(this.reviewRoot),
-                window.EncounterCaptureReview.collectResolutions(this.reviewRoot)
+                this.syncResolutionAccum()
             )
         ) {
             var stagedNow = window.EncounterCaptureReview.collectStagedIds(this.reviewRoot);
@@ -1314,10 +1344,7 @@
             );
         }
 
-        var resolutions = {};
-        if (window.EncounterCaptureReview && this.reviewRoot) {
-            resolutions = window.EncounterCaptureReview.collectResolutions(this.reviewRoot);
-        }
+        var resolutions = this.syncResolutionAccum();
 
         var payload = mergeApiPayload({
             client_capture_id: this.ensureClientCaptureId(),
@@ -1417,6 +1444,10 @@
                         window.EncounterCaptureReview.bindIssueResolutions(
                             self.reviewRoot,
                             self.updateConfirmState.bind(self)
+                        );
+                        window.EncounterCaptureReview.applyResolutionsToDom(
+                            self.reviewRoot,
+                            self.resolutionAccum || {}
                         );
                     }
                     self.updateConfirmState();

@@ -9,8 +9,13 @@
         <div class="text-center mb-3">
             <span class="fw-semibold text-decoration-underline">Nota de esta atención</span>
         </div>
+        <div data-slot="advisories" class="mb-3"></div>
         <div data-slot="body"></div>
     </div>
+</template>
+
+<template id="tpl-capture-advisory">
+    <div class="alert mb-2" role="status" data-field="message"></div>
 </template>
 
 <template id="tpl-capture-text-block">

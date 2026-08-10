@@ -68,8 +68,12 @@ final class PatientAiContextBuilder
         return (int) $encounter->subject_persona_id;
     }
 
-    public function build(int $subjectPersonaId, string $profile = self::PROFILE_ENCOUNTER): string
-    {
+    public function build(
+        int $subjectPersonaId,
+        string $profile = self::PROFILE_ENCOUNTER,
+        ?string $episodeParent = null,
+        ?int $episodeParentId = null
+    ): string {
         if ($subjectPersonaId <= 0 || !$this->canAccess($subjectPersonaId)) {
             return '';
         }
@@ -87,6 +91,15 @@ final class PatientAiContextBuilder
             'allergies' => $this->collectAllergies($subjectPersonaId, $limits['max_allergies']),
         ];
 
+        $prior = $this->collectPriorEpisodeEvolutions(
+            $subjectPersonaId,
+            $episodeParent,
+            $episodeParentId
+        );
+        if ($prior !== []) {
+            $data['prior_evolutions'] = $prior;
+        }
+
         return self::formatBlock($data, $profile, $this->maxChars());
     }
 
@@ -95,7 +108,8 @@ final class PatientAiContextBuilder
      *   demographics?: array{edad?: int|string|null, sexo?: string|null},
      *   conditions?: list<string>,
      *   medications?: list<string>,
-     *   allergies?: list<string>
+     *   allergies?: list<string>,
+     *   prior_evolutions?: list<string>
      * } $data
      */
     public static function formatBlock(array $data, string $profile, int $maxChars): string
@@ -119,6 +133,14 @@ final class PatientAiContextBuilder
 
         if ($profile !== self::PROFILE_CONVERSATIONAL || ($data['medications'] ?? []) !== []) {
             self::appendListSection($lines, 'Medicación activa', $data['medications'] ?? [], 'Sin medicación activa registrada.');
+        }
+
+        $priors = $data['prior_evolutions'] ?? [];
+        if (is_array($priors) && $priors !== []) {
+            $lines[] = '- Evoluciones previas del episodio (no reextraer lo ya documentado; priorizar cambios clínicos):';
+            foreach ($priors as $prior) {
+                $lines[] = '  · ' . $prior;
+            }
         }
 
         $block = implode("\n", $lines);
@@ -279,6 +301,60 @@ final class PatientAiContextBuilder
         }
 
         return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function collectPriorEpisodeEvolutions(
+        int $subjectPersonaId,
+        ?string $episodeParent,
+        ?int $episodeParentId
+    ): array {
+        $parent = strtoupper(trim((string) $episodeParent));
+        $parentId = (int) ($episodeParentId ?? 0);
+        if (
+            $parentId <= 0
+            || !in_array($parent, [Encounter::PARENT_INTERNACION, Encounter::PARENT_GUARDIA], true)
+        ) {
+            return [];
+        }
+
+        $rows = Encounter::find()
+            ->select(['note', 'reason_text', 'period_start', 'created_at'])
+            ->where([
+                'parent_id' => $parentId,
+                'subject_persona_id' => $subjectPersonaId,
+                'deleted_at' => null,
+            ])
+            ->andWhere([
+                'or',
+                ['parent_type' => $parent],
+                ['parent_type' => Encounter::PARENT_CLASSES[$parent] ?? '__none__'],
+            ])
+            ->andWhere(['<>', 'status', \common\components\Domain\Clinical\Enum\EncounterStatus::IN_PROGRESS])
+            ->orderBy(['id' => SORT_DESC])
+            ->limit(3)
+            ->asArray()
+            ->all();
+
+        $out = [];
+        foreach ($rows as $row) {
+            $note = trim((string) ($row['note'] ?? ''));
+            if ($note === '') {
+                $note = trim((string) ($row['reason_text'] ?? ''));
+            }
+            if ($note === '') {
+                continue;
+            }
+            if (mb_strlen($note) > 280) {
+                $note = rtrim(mb_substr($note, 0, 279)) . '…';
+            }
+            $when = trim((string) ($row['period_start'] ?? $row['created_at'] ?? ''));
+            $out[] = ($when !== '' ? $when . ' — ' : '') . $note;
+        }
+
+        return $out;
     }
 
     /**

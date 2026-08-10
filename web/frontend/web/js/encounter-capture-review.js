@@ -36,12 +36,16 @@
         var out = [];
         (review.categories || []).forEach(function (cat) {
             (cat.items || []).forEach(function (item) {
-                if (item && item.id && !isAiSuggestion(item)) {
+                if (item && item.id && !isAiSuggestion(item) && !isAlreadyActive(item)) {
                     out.push(item.id);
                 }
             });
         });
         return out;
+    }
+
+    function isAlreadyActive(item) {
+        return !!item && (item.already_active === true || item.already_active === 1 || item.already_active === '1');
     }
 
     function hasExtractedContent(review) {
@@ -67,7 +71,7 @@
         }
         return (review.categories || []).some(function (c) {
             return (c.items || []).some(function (item) {
-                return !isAiSuggestion(item);
+                return !isAiSuggestion(item) && !isAlreadyActive(item);
             });
         });
     }
@@ -132,6 +136,9 @@
             return false;
         }
         if (review.system_error) {
+            return false;
+        }
+        if (review.puede_confirmar === false) {
             return false;
         }
         var texto = (review.texto_original || '').trim();
@@ -279,9 +286,13 @@
             label += ' (' + subtitle + ')';
         }
         var active = isActive !== false;
+        if (isAlreadyActive(item)) {
+            active = false;
+        }
         btn.setAttribute('data-capture-item-id', item.id || '');
         btn.setAttribute('data-incomplete', isIncomplete ? '1' : '0');
         btn.setAttribute('data-ai-suggestion', isAiSuggestion(item) ? '1' : '0');
+        btn.setAttribute('data-already-active', isAlreadyActive(item) ? '1' : '0');
         btn.setAttribute('aria-pressed', active ? 'true' : 'false');
         btn.className = 'btn btn-sm capture-review-item me-1 mb-1';
         if (isIncomplete) {
@@ -289,6 +300,8 @@
             if (active) btn.classList.add('active');
         } else if (active) {
             btn.classList.add('btn-outline-primary', 'active');
+        } else if (isAlreadyActive(item)) {
+            btn.classList.add('btn-outline-secondary');
         } else if (isAiSuggestion(item)) {
             btn.classList.add('btn-outline-info');
         } else {
@@ -444,14 +457,14 @@
         var stagedIds = defaultStagedIds(review);
         if ((!stagedIds || !stagedIds.length) && hasClinicalItems(review)) {
             stagedIds = [];
-            (review.categories || []).forEach(function (cat) {
-                (cat.items || []).forEach(function (item) {
-                    if (item && item.id && !isAiSuggestion(item)) {
-                        stagedIds.push(item.id);
-                    }
+                (review.categories || []).forEach(function (cat) {
+                    (cat.items || []).forEach(function (item) {
+                        if (item && item.id && !isAiSuggestion(item) && !isAlreadyActive(item)) {
+                            stagedIds.push(item.id);
+                        }
+                    });
                 });
-            });
-        }
+            }
         var stagedSet = {};
         stagedIds.forEach(function (id) {
             stagedSet[id] = true;
@@ -460,6 +473,19 @@
         var panelFrag = tpl('tpl-capture-panel');
         if (!panelFrag) {
             return { node: null, stagedIds: stagedIds };
+        }
+        var advisoriesSlot = panelFrag.querySelector('[data-slot="advisories"]');
+        if (advisoriesSlot) {
+            (Array.isArray(review.advisories) ? review.advisories : []).forEach(function (adv) {
+                if (!adv || !adv.message) return;
+                var advFrag = tpl('tpl-capture-advisory');
+                if (!advFrag) return;
+                var root = advFrag.firstElementChild;
+                var sev = String(adv.severity || 'warning');
+                root.classList.add('alert-' + (sev === 'danger' ? 'danger' : sev === 'info' ? 'info' : 'warning'));
+                setText(advFrag, '[data-field="message"]', adv.message);
+                advisoriesSlot.appendChild(advFrag);
+            });
         }
         var body = panelFrag.querySelector('[data-slot="body"]');
         if (!body) {
@@ -754,6 +780,9 @@
         }
         root.querySelectorAll('.capture-review-item').forEach(function (btn) {
             btn.addEventListener('click', function () {
+                if (btn.getAttribute('data-already-active') === '1') {
+                    return;
+                }
                 var willActivate = !btn.classList.contains('active');
                 var incomplete = btn.getAttribute('data-incomplete') === '1';
                 var isAi = btn.getAttribute('data-ai-suggestion') === '1';

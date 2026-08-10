@@ -8,6 +8,7 @@ use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresent
 use common\models\Clinical\Input\DerivacionInput;
 use common\components\Domain\Clinical\Service\EncounterCaptureAuditService;
 use common\components\Domain\Clinical\Service\EncounterOpenProblemsService;
+use common\components\Domain\Clinical\Service\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Platform\Ai\SpeechToText\DeviceSttQualityAssessor;
 use common\components\Platform\Ai\SpeechToText\SpeechToTextManager;
@@ -670,6 +671,7 @@ final class EncounterCapturePipelineService
             ($completeness['tiene_datos_faltantes'] ?? false) === true,
             $completeness
         );
+        $review = $this->applyEpisodeDedupToReview($capture, $review, $textoOriginal);
 
         $capture->setDatosExtraidos($datos);
         if ($analysis === []) {
@@ -1055,6 +1057,11 @@ final class EncounterCapturePipelineService
             } catch (\Throwable $e) {
                 unset($review['open_problems']);
             }
+            $review = $this->applyEpisodeDedupToReview(
+                $capture,
+                $review,
+                trim((string) ($analysisStored['texto_original'] ?? $capture->transcript ?? ''))
+            );
             $out['capture_review'] = $review;
         } elseif ($extraidos !== []) {
             // Sin review: solo entonces exponer extracción cruda.
@@ -1109,5 +1116,32 @@ final class EncounterCapturePipelineService
         }
 
         return [];
+    }
+
+    /**
+     * @param array<string, mixed> $review
+     * @return array<string, mixed>
+     */
+    private function applyEpisodeDedupToReview(
+        EncounterCapture $capture,
+        array $review,
+        string $texto
+    ): array {
+        $parent = strtoupper(trim((string) ($capture->parent ?? '')));
+        $parentId = (int) ($capture->parent_id ?? 0);
+        $subjectId = (int) ($capture->subject_persona_id ?? 0);
+        if ($parentId <= 0 || $subjectId <= 0) {
+            return $review;
+        }
+        $dedupSvc = new EpisodeCaptureDedupService();
+        $dedup = $dedupSvc->analyze(
+            $parent,
+            $parentId,
+            $subjectId,
+            $texto,
+            is_array($review['categories'] ?? null) ? $review['categories'] : []
+        );
+
+        return $dedupSvc->applyToReview($review, $dedup);
     }
 }

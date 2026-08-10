@@ -2170,9 +2170,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
 
       if (!mounted) return;
       final review = EncounterCaptureAnalysis.fromApiResponse(analysisPayload);
-      final staged = review.allItems.map((e) => e.id).toSet();
-      if (staged.isEmpty && review.defaultStagedItemIds.isNotEmpty) {
+      final staged = <String>{};
+      if (review.defaultStagedItemIds.isNotEmpty) {
         staged.addAll(review.defaultStagedItemIds);
+      } else {
+        staged.addAll(
+          review.allItems
+              .where((i) => i.isFromClinicalText && !i.alreadyActive)
+              .map((e) => e.id),
+        );
       }
       await _persistLocalDraft(
         texto: transcript,
@@ -2238,6 +2244,15 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     }
     if (review.systemError != null) {
       _snack('No se puede guardar: el análisis tiene errores de sistema.', UiIntent.warning);
+      return;
+    }
+    if (!review.puedeConfirmar) {
+      _snack(
+        review.datosFaltantesMensaje?.trim().isNotEmpty == true
+            ? review.datosFaltantesMensaje!
+            : 'Editá la nota: es casi idéntica a una evolución previa del episodio.',
+        UiIntent.warning,
+      );
       return;
     }
     // Si se extrajeron ítems del texto, exigir al menos uno tildado (evita guardar solo
@@ -2765,6 +2780,28 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               : review.textoOriginal,
           style: BioTypography.body,
         ),
+        if (review.advisories.isNotEmpty) ...[
+          BioSpacing.gapH(BioSpacing.md),
+          ...review.advisories.map((adv) {
+            final intent = adv.severity == 'danger'
+                ? UiIntent.danger
+                : (adv.severity == 'info' ? UiIntent.info : UiIntent.warning);
+            return Padding(
+              padding: const EdgeInsets.only(bottom: BioSpacing.sm),
+              child: BioAlert(
+                intent: intent,
+                message: adv.message,
+              ),
+            );
+          }),
+        ],
+        if (review.datosFaltantesMensaje != null &&
+            review.datosFaltantesMensaje!.trim().isNotEmpty &&
+            !review.puedeConfirmar &&
+            review.advisories.isEmpty) ...[
+          BioSpacing.gapH(BioSpacing.sm),
+          BioAlert.danger(message: review.datosFaltantesMensaje!),
+        ],
         if (review.textoProcesado != null &&
             review.textoProcesado!.trim().isNotEmpty &&
             review.textoProcesado!.trim() != review.textoOriginal.trim()) ...[
@@ -3040,7 +3077,8 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     EncounterCaptureItem item, {
     bool incomplete = false,
   }) {
-    final selected = _stagedItemIds.contains(item.id);
+    final selected =
+        !item.alreadyActive && _stagedItemIds.contains(item.id);
     final label = item.subtitle != null && item.subtitle!.isNotEmpty
         ? '${item.label} (${item.subtitle})'
         : item.label;
@@ -3052,8 +3090,14 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       icon: selected ? Icons.check : null,
       intent: incomplete
           ? UiIntent.danger
-          : (item.isFromClinicalText ? UiIntent.neutral : UiIntent.secondary),
-      onTap: _isSaving ? null : () => _toggleStagedItem(item.id, !selected),
+          : (item.alreadyActive
+              ? UiIntent.neutral
+              : (item.isFromClinicalText
+                  ? UiIntent.neutral
+                  : UiIntent.secondary)),
+      onTap: (_isSaving || item.alreadyActive)
+          ? null
+          : () => _toggleStagedItem(item.id, !selected),
     );
   }
 
@@ -3062,6 +3106,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final canConfirm = !_isSaving &&
         review != null &&
         review.systemError == null &&
+        review.puedeConfirmar &&
         review.textoOriginal.trim().isNotEmpty &&
         !(review.hasClinicalItems && _stagedItemIds.isEmpty) &&
         _allStagedIssuesResolved(review);

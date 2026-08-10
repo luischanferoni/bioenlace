@@ -58,4 +58,25 @@ class PatientAiContextBuilderTest extends \Codeception\Test\Unit
         verify($block)->stringContainsString('Sin alergias registradas.');
         verify($block)->stringContainsString('Sin condiciones activas registradas.');
     }
+
+    public function testFormatBlockIncluyeEvolucionesPreviasDelEpisodio()
+    {
+        $block = PatientAiContextBuilder::formatBlock(
+            [
+                'demographics' => ['edad' => 50, 'sexo' => 'Masculino'],
+                'allergies' => [],
+                'conditions' => [],
+                'medications' => [],
+                'prior_evolutions' => [
+                    '2026-08-09 — Primer día: neumonía, Sat 94 %.',
+                ],
+            ],
+            PatientAiContextBuilder::PROFILE_ENCOUNTER,
+            2400
+        );
+
+        verify($block)->stringContainsString('Evoluciones previas del episodio');
+        verify($block)->stringContainsString('priorizar cambios clínicos');
+        verify($block)->stringContainsString('Primer día: neumonía');
+    }
 }

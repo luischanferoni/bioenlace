@@ -72,7 +72,9 @@ El **alta administrativa** (epicrisis, checklist, liberar cama) es el flow `inte
 
 ## Tips al probar
 
-- Empezá por el **1** (ingreso) y seguí con el **2** o el **8** (alta clínica) en el mismo episodio.
+- Empezá por el **1** (ingreso) y seguí con el **2** o el **8** (alta clínica) en el mismo episodio: cada evolución debe documentar **cambios**, no re-pegar el mismo bloque (el sistema bloquea notas casi idénticas).
+- Si repetís un diagnóstico o medicación ya activa, el review lo marca “Ya activo en el episodio” y no lo vuelve a persistir.
+- Completar el chip de care plan de internación **no** es el alta administrativa; el egreso sigue siendo el flow de alta estructurada.
 - Para **régimen** y **balance**, nombrá **ingresos** y **egresos** por separado (el modelo guarda filas `Ingreso` / `Egreso` en ml, no el “balance neto”). Ej.: «ingresos 2200 ml, egresos 1800 ml». El neto +400 es informativo; si la IA arma solo «balance +400», el sistema pedirá elegir Ingreso o Egreso.
 - El **5** sirve para deterioro / pedido de UTI; el alta administrativa sigue siendo el flow de egreso.
 - El **6** y el **7** prueban autocorrección y campos faltantes.

@@ -4,6 +4,7 @@ namespace common\components\Domain\Clinical\Workflow;
 
 use common\components\Domain\Clinical\Emergency\Service\GuardiaEncounterOutcomeService;
 use common\components\Domain\Clinical\Capture\ClinicalCaptureResolutionApplier;
+use common\components\Domain\Clinical\Enum\EncounterStatus;
 use common\components\Domain\Clinical\Service\CarePlanLifecycleService;
 use common\components\Domain\Clinical\Service\CarePlanService;
 use common\components\Domain\Clinical\Service\ConditionLifecycleService;
@@ -273,6 +274,33 @@ class EncounterDocumentationService extends Component
                 $logger->finalizar($out);
 
                 return $this->clientGuardarResponse($out);
+            }
+
+            $parentKey = strtoupper(trim((string) ($body['parent'] ?? '')));
+            $parentIdBody = (int) ($body['parent_id'] ?? 0);
+            $noteText = (string) ($this->resolveCaptureNote($body) ?? $body['texto_original'] ?? $body['consulta_texto'] ?? '');
+            if (
+                $parentIdBody > 0
+                && (int) $idPersona > 0
+                && in_array($parentKey, [Encounter::PARENT_INTERNACION, Encounter::PARENT_GUARDIA], true)
+            ) {
+                $dedupSvc = new \common\components\Domain\Clinical\Service\EpisodeCaptureDedupService();
+                if ($dedupSvc->isNoteDuplicateOfPriorEvolutions(
+                    $noteText,
+                    $parentKey,
+                    $parentIdBody,
+                    (int) $idPersona
+                )) {
+                    $msg = 'Esta nota es casi idéntica a una evolución previa del mismo episodio. '
+                        . 'Editá el texto para documentar los cambios clínicos.';
+                    $out = $this->error(400, $msg, [
+                        'episode_note_duplicate' => true,
+                    ]);
+                    $out['diagnostico_guardar'] = $diagnostico;
+                    $logger->finalizar($out);
+
+                    return $this->clientGuardarResponse($out);
+                }
             }
 
             $paciente = $this->lifecycle->findSubject((int) $idPersona);
@@ -756,7 +784,15 @@ class EncounterDocumentationService extends Component
             }
         }
 
-        $existing = Encounter::find()
+        // Episodio (internación / guardia): una evolución = un encounter.
+        // Solo reutilizar un pase aún in-progress; finished → crear uno nuevo.
+        $isEpisodeParent = in_array(
+            $parent,
+            [Encounter::PARENT_INTERNACION, Encounter::PARENT_GUARDIA],
+            true
+        );
+
+        $query = Encounter::find()
             ->where([
                 'parent_id' => $parentId,
                 'subject_persona_id' => (int) $paciente->id_persona,
@@ -766,9 +802,13 @@ class EncounterDocumentationService extends Component
                 'or',
                 ['parent_type' => $parent],
                 ['parent_type' => Encounter::PARENT_CLASSES[$parent] ?? '__none__'],
-            ])
-            ->orderBy(['id' => SORT_DESC])
-            ->one();
+            ]);
+
+        if ($isEpisodeParent) {
+            $query->andWhere(['status' => EncounterStatus::IN_PROGRESS]);
+        }
+
+        $existing = $query->orderBy(['id' => SORT_DESC])->one();
 
         return $existing instanceof Encounter ? $existing : null;
     }
@@ -1272,6 +1312,9 @@ class EncounterDocumentationService extends Component
         if (!is_array($payload)) {
             return;
         }
+        $dedup = new \common\components\Domain\Clinical\Service\EpisodeCaptureDedupService();
+        $presentation = new \common\components\Domain\Clinical\Service\ConditionPresentationService();
+        $episodeIds = $this->episodeEncounterIdsFor($encounter);
         foreach ($payload as $row) {
             $condition = new Condition();
             $condition->encounter_id = $encounter->id;
@@ -1301,6 +1344,21 @@ class EncounterDocumentationService extends Component
             if ($condition->display === null || trim((string) $condition->display) === '') {
                 $condition->display = $condition->code;
             }
+            $key = $presentation->dedupeKeyForLabel(
+                (string) $condition->display,
+                (string) $condition->code
+            );
+            if (
+                $key !== ''
+                && $episodeIds !== []
+                && $dedup->hasActiveConditionKey((int) $encounter->subject_persona_id, $episodeIds, $key)
+            ) {
+                Yii::info(
+                    'Skip condition duplicada en episodio: ' . $key,
+                    'encounter-doc'
+                );
+                continue;
+            }
             $condition->recorded_date = date('Y-m-d H:i:s');
             $condition->save(false);
         }
@@ -1312,13 +1370,52 @@ class EncounterDocumentationService extends Component
     private function persistMedications(Encounter $encounter, ?\common\models\Clinical\CarePlan $carePlan, $payload): void
     {
         $rows = MedicationRequestService::normalizeExtractedMedicationPayload($payload);
+        $dedup = new \common\components\Domain\Clinical\Service\EpisodeCaptureDedupService();
+        $episodeIds = $this->episodeEncounterIdsFor($encounter);
         foreach ($rows as $row) {
+            $display = MedicationRequestService::resolveMedicationDisplay($row);
+            $displayKey = $dedup->normalizeKey($display);
+            if (
+                $displayKey !== ''
+                && $episodeIds !== []
+                && $dedup->hasActiveMedicationDisplay($episodeIds, $displayKey)
+            ) {
+                Yii::info('Skip medication duplicada en episodio: ' . $display, 'encounter-doc');
+                continue;
+            }
             try {
                 $this->medications->createFromExtractedRow($encounter, $carePlan, $row);
             } catch (\InvalidArgumentException $e) {
                 Yii::info('Skip medication vacío: ' . $e->getMessage(), 'encounter-doc');
             }
         }
+    }
+
+    /**
+     * @return list<int>
+     */
+    private function episodeEncounterIdsFor(Encounter $encounter): array
+    {
+        $parent = strtoupper(trim((string) ($encounter->parent_type ?? '')));
+        // parent_type puede ser FQCN; normalizar a clave corta.
+        foreach (Encounter::PARENT_CLASSES as $key => $fqcn) {
+            if ($parent === $key || $parent === $fqcn) {
+                $parent = $key;
+                break;
+            }
+        }
+        $parentId = (int) ($encounter->parent_id ?? 0);
+        $subjectId = (int) ($encounter->subject_persona_id ?? 0);
+        if (
+            $parentId <= 0
+            || $subjectId <= 0
+            || !in_array($parent, [Encounter::PARENT_INTERNACION, Encounter::PARENT_GUARDIA], true)
+        ) {
+            return [(int) $encounter->id];
+        }
+
+        return (new \common\components\Domain\Clinical\Service\EpisodeCaptureDedupService())
+            ->listEpisodeEncounterIds($parent, $parentId, $subjectId);
     }
 
     /**

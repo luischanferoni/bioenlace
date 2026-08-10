@@ -13,6 +13,7 @@ class EncounterCaptureAnalysis {
     this.missingCategories = const [],
     this.issues = const [],
     this.openProblems,
+    this.advisories = const [],
   });
 
   final String textoOriginal;
@@ -30,6 +31,8 @@ class EncounterCaptureAnalysis {
   final List<EncounterCaptureIssue> issues;
   /// Problemas/planes abiertos del paciente (cierre opcional).
   final EncounterOpenProblems? openProblems;
+  /// Avisos soft del dominio (p. ej. ítems ya activos / nota casi idéntica).
+  final List<EncounterCaptureAdvisory> advisories;
 
   bool get hasUnresolvedIssues => issues.isNotEmpty;
   bool get hasOpenProblems =>
@@ -63,13 +66,15 @@ class EncounterCaptureAnalysis {
       categories.any((c) => c.items.isNotEmpty) && systemError == null;
 
   /// Ítems anclados en el texto del profesional (los sugeridos por IA no cuentan:
-  /// vienen sin tildar y confirmarlos es opcional).
+  /// vienen sin tildar y confirmarlos es opcional). Excluye ya activos en episodio.
   bool get hasClinicalItems =>
-      categories.any((c) => c.items.any((i) => i.isFromClinicalText)) &&
+      categories.any((c) =>
+          c.items.any((i) => i.isFromClinicalText && !i.alreadyActive)) &&
       systemError == null;
 
   bool get canConfirmSave {
     if (systemError != null) return false;
+    if (!puedeConfirmar) return false;
     if (textoOriginal.trim().isEmpty) return false;
     return true;
   }
@@ -114,7 +119,11 @@ class EncounterCaptureAnalysis {
     final defaultIdsRaw = review['default_staged_item_ids'];
     final defaultIds = defaultIdsRaw is List
         ? defaultIdsRaw.map((e) => e.toString()).toList()
-        : categories.expand((c) => c.items.map((i) => i.id)).toList();
+        : categories
+            .expand((c) => c.items)
+            .where((i) => i.isFromClinicalText && !i.alreadyActive)
+            .map((i) => i.id)
+            .toList();
 
     String? faltantesMsg;
     var incompleteItems = const <EncounterIncompleteItem>[];
@@ -143,6 +152,7 @@ class EncounterCaptureAnalysis {
       missingCategories: missingCategories,
       issues: issues,
       openProblems: EncounterOpenProblems.fromJson(review['open_problems']),
+      advisories: _parseAdvisories(review['advisories']),
     );
   }
 
@@ -208,7 +218,11 @@ class EncounterCaptureAnalysis {
       }
     }
 
-    final defaultIds = categories.expand((c) => c.items.map((i) => i.id)).toList();
+    final defaultIds = categories
+        .expand((c) => c.items)
+        .where((i) => i.isFromClinicalText && !i.alreadyActive)
+        .map((i) => i.id)
+        .toList();
 
     String? faltantesMsg;
     var incompleteItems = const <EncounterIncompleteItem>[];
@@ -237,7 +251,18 @@ class EncounterCaptureAnalysis {
       missingCategories: missingCategories,
       issues: issues,
       openProblems: EncounterOpenProblems.fromJson(res['open_problems']),
+      advisories: _parseAdvisories(res['advisories']),
     );
+  }
+
+  static List<EncounterCaptureAdvisory> _parseAdvisories(dynamic raw) {
+    if (raw is! List) return const [];
+    return raw
+        .whereType<Map>()
+        .map((e) =>
+            EncounterCaptureAdvisory.fromJson(Map<String, dynamic>.from(e)))
+        .where((a) => a.message.isNotEmpty)
+        .toList();
   }
 
   static List<EncounterCaptureIssue> _parseIssues(dynamic raw) {
@@ -463,12 +488,13 @@ class EncounterCaptureAnalysis {
     return out;
   }
 
-  /// Ítems a forzar en el guardado además del stage UI.
-  /// Incluye extracción completa: source=ai excluía medicación/indicaciones y el
-  /// backend solo terminaba codificando el diagnóstico.
-  Set<String> get clinicalItemIds => allItems.map((e) => e.id).toSet();
+  /// Ítems anclados en texto clínico que aún no están activos en el episodio.
+  Set<String> get clinicalItemIds => allItems
+      .where((i) => i.isFromClinicalText && !i.alreadyActive)
+      .map((e) => e.id)
+      .toSet();
 
-  /// Stage efectivo = selección del usuario ∪ extracción completa.
+  /// Stage efectivo = selección del usuario ∪ extracción clínica no duplicada.
   Set<String> effectiveSaveItemIds(Set<String> stagedIds) => {
         ...stagedIds,
         ...clinicalItemIds,
@@ -521,6 +547,7 @@ class EncounterCaptureItem {
     required this.raw,
     this.subtitle,
     this.source,
+    this.alreadyActive = false,
   });
 
   final String id;
@@ -531,6 +558,9 @@ class EncounterCaptureItem {
 
   /// null = legacy / sin dato → se trata como texto clínico.
   final EncounterCaptureItemSource? source;
+
+  /// Ya activo en el episodio (no se tilda por defecto).
+  final bool alreadyActive;
 
   bool get isFromClinicalText => source != EncounterCaptureItemSource.ai;
 
@@ -553,6 +583,29 @@ class EncounterCaptureItem {
       source: sourceRaw == 'ai'
           ? EncounterCaptureItemSource.ai
           : EncounterCaptureItemSource.clinical,
+      alreadyActive: item['already_active'] == true ||
+          item['already_active'] == 1 ||
+          item['already_active']?.toString() == '1',
+    );
+  }
+}
+
+class EncounterCaptureAdvisory {
+  const EncounterCaptureAdvisory({
+    required this.message,
+    this.code,
+    this.severity = 'warning',
+  });
+
+  final String message;
+  final String? code;
+  final String severity;
+
+  factory EncounterCaptureAdvisory.fromJson(Map<String, dynamic> json) {
+    return EncounterCaptureAdvisory(
+      message: (json['message'] ?? '').toString().trim(),
+      code: json['code']?.toString(),
+      severity: (json['severity'] ?? 'warning').toString(),
     );
   }
 }

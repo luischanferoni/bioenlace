@@ -66,6 +66,8 @@ Detalle: [metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md) y [captura
 
 Al cerrar la atención, el review puede listar **problemas y tratamientos abiertos** del paciente para que el profesional confirme estado (resuelto, en pausa, etc.) sin preselección. Ver [planes-de-tratamiento.md](./planes-de-tratamiento.md).
 
+En **internación / guardia**, cada evolución es un encounter nuevo (salvo editar un `encounter_id` o continuar un pase `in-progress`). Una nota casi idéntica a una evolución previa **bloquea** el guardado; los ítems ya activos en el episodio no se tildan ni se reinsertan. Completar el care plan “Internación” no es el alta del episodio.
+
 ## Mutación por contexto
 
 | Dimensión | Efecto |

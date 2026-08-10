@@ -8,6 +8,7 @@ use common\components\Domain\Clinical\SpeechToText\ClinicalSpeechInputResolver;
 use common\components\Domain\Clinical\AiContext\PatientAiContextBuilder;
 use common\components\Domain\Clinical\Presentation\EncounterCaptureReviewPresenter;
 use common\components\Domain\Clinical\Service\EncounterOpenProblemsService;
+use common\components\Domain\Clinical\Service\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\Workflow\ClinicalOperationalContextResolver;
 use common\components\Domain\Clinical\Workflow\EncounterCaptureAnalysisCache;
 use common\components\Domain\Clinical\Workflow\EncounterDefinitionBootstrapService;
@@ -106,7 +107,8 @@ class ConsultaProcesamientoService extends Component
                 $textoLimpio,
                 $servicio->nombre,
                 $categorias,
-                PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body)
+                PatientAiContextBuilder::resolveSubjectPersonaIdFromBody($body),
+                $body
             );
 
             if ($resultadoIA) {
@@ -169,6 +171,26 @@ class ConsultaProcesamientoService extends Component
                 $completeness,
                 $openProblems
             );
+
+            $parentKey = strtoupper(trim((string) ($body['parent'] ?? '')));
+            $parentId = (int) ($body['parent_id'] ?? 0);
+            if (
+                $subjectPersonaId !== null
+                && (int) $subjectPersonaId > 0
+                && $parentId > 0
+                && in_array($parentKey, [\common\models\Clinical\Encounter::PARENT_INTERNACION, \common\models\Clinical\Encounter::PARENT_GUARDIA], true)
+            ) {
+                $dedupSvc = new EpisodeCaptureDedupService();
+                $dedup = $dedupSvc->analyze(
+                    $parentKey,
+                    $parentId,
+                    (int) $subjectPersonaId,
+                    $textoConsulta,
+                    is_array($captureReview['categories'] ?? null) ? $captureReview['categories'] : []
+                );
+                $captureReview = $dedupSvc->applyToReview($captureReview, $dedup);
+                $tieneDatosFaltantes = ($captureReview['tiene_datos_faltantes'] ?? false) === true;
+            }
 
             $definition = (new EncounterDefinitionBootstrapService())->resolveFromCaptureBody(
                 $body,
@@ -293,10 +315,21 @@ class ConsultaProcesamientoService extends Component
         }
     }
 
-    public function analizarConsultaConIA($texto, $servicio, $categorias, ?int $subjectPersonaId = null)
-    {
+    public function analizarConsultaConIA(
+        $texto,
+        $servicio,
+        $categorias,
+        ?int $subjectPersonaId = null,
+        array $body = []
+    ) {
         try {
-            $promptData = $this->generarPromptEspecializado($texto, $servicio, $categorias, $subjectPersonaId);
+            $promptData = $this->generarPromptEspecializado(
+                $texto,
+                $servicio,
+                $categorias,
+                $subjectPersonaId,
+                $body
+            );
 
             if ($promptData === null) {
                 Yii::error('No se pudo generar el prompt debido a errores en el JSON de ejemplo', 'consulta-ia');
@@ -517,8 +550,13 @@ class ConsultaProcesamientoService extends Component
         return \common\models\Clinical\EncounterDefinition::getCategoriasParaPrompt($configuracion);
     }
 
-    private function generarPromptEspecializado($texto, $servicio, $categorias, ?int $subjectPersonaId = null)
-    {
+    private function generarPromptEspecializado(
+        $texto,
+        $servicio,
+        $categorias,
+        ?int $subjectPersonaId = null,
+        array $body = []
+    ) {
         $jsonEjemplo = $this->generarJsonEjemplo($categorias);
 
         if ($jsonEjemplo === false) {
@@ -529,7 +567,9 @@ class ConsultaProcesamientoService extends Component
         if ($subjectPersonaId !== null && $subjectPersonaId > 0) {
             $patientBlock = (new PatientAiContextBuilder())->build(
                 $subjectPersonaId,
-                PatientAiContextBuilder::PROFILE_ENCOUNTER
+                PatientAiContextBuilder::PROFILE_ENCOUNTER,
+                isset($body['parent']) ? (string) $body['parent'] : null,
+                isset($body['parent_id']) ? (int) $body['parent_id'] : null
             );
         }
 

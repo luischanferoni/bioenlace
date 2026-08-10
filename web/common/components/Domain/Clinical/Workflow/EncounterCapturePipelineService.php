@@ -429,14 +429,10 @@ final class EncounterCapturePipelineService
         }
 
         $resolutions = $body['resolutions'] ?? $body['resoluciones'] ?? null;
-        if (is_array($resolutions) && $resolutions !== [] && is_array($datosExtraidos) && $datosExtraidos !== []) {
-            $categorias = $this->resolveCategoriasForCapture($capture, $body);
-            $datosExtraidos = (new ClinicalCaptureResolutionApplier())->apply(
-                $datosExtraidos,
-                $resolutions,
-                $categorias
-            );
-            $capture->setDatosExtraidos($datosExtraidos);
+        // No aplicar resolutions acá sobre el payload filtrado del cliente: los issue_id
+        // usan índices del análisis completo. EncounterDocumentationService aplica + filtra.
+        if (is_array($resolutions) && $resolutions !== []) {
+            // keep in body for documentation
         }
 
         $blocking = EncounterCaptureReviewPresenter::blockingErrorFromExtraidos(

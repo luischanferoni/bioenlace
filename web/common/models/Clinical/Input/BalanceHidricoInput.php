@@ -114,20 +114,34 @@ final class BalanceHidricoInput extends Model
     {
         $issues = [];
         foreach ($this->missingFieldsForCompleteness() as $field) {
-            if ($field !== self::FIELD_TIPO) {
-                // Cantidad: editar nota y reanalizar (sin catálogo cerrado).
+            if ($field === self::FIELD_TIPO) {
+                $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                    $category,
+                    $index,
+                    $field,
+                    [
+                        ['value' => ConsultaBalanceHidrico::TREG_INGRESO, 'label' => 'Ingreso (fluidos que entran)'],
+                        ['value' => ConsultaBalanceHidrico::TREG_EGRESO, 'label' => 'Egreso (fluidos que salen)'],
+                    ],
+                    false
+                );
                 continue;
             }
-            $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
-                $category,
-                $index,
-                $field,
-                [
-                    ['value' => ConsultaBalanceHidrico::TREG_INGRESO, 'label' => 'Ingreso (fluidos que entran)'],
-                    ['value' => ConsultaBalanceHidrico::TREG_EGRESO, 'label' => 'Egreso (fluidos que salen)'],
-                ],
-                false
-            );
+            if ($field === self::FIELD_CANTIDAD) {
+                $issues[] = \common\components\Domain\Clinical\Capture\ClinicalCaptureIssueFactory::make(
+                    $category,
+                    $index,
+                    $field,
+                    [
+                        ['value' => '500', 'label' => '500 ml'],
+                        ['value' => '1000', 'label' => '1000 ml'],
+                        ['value' => '1500', 'label' => '1500 ml'],
+                        ['value' => '2000', 'label' => '2000 ml'],
+                        ['value' => '2200', 'label' => '2200 ml'],
+                    ],
+                    true
+                );
+            }
         }
 
         return $issues;
@@ -147,6 +161,15 @@ final class BalanceHidricoInput extends Model
             if ($tmp->tipoRegistro !== null && $tmp->tipoRegistro !== '') {
                 $row[self::FIELD_TIPO] = $tmp->tipoRegistro;
                 $row['tipo_registro'] = $tmp->tipoRegistro;
+            }
+        }
+        if ($field === self::FIELD_CANTIDAD) {
+            $tmp = new self();
+            $tmp->cantidad = is_string($value) || is_numeric($value) ? (string) $value : '';
+            $tmp->normalizeCantidad();
+            if ($tmp->cantidad !== null && $tmp->cantidad !== '') {
+                $row[self::FIELD_CANTIDAD] = $tmp->cantidad;
+                $row['cantidad'] = $tmp->cantidad;
             }
         }
 

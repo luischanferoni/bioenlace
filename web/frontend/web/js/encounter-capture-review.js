@@ -864,5 +864,6 @@
         canConfirm: canConfirm,
         defaultStagedIds: defaultStagedIds,
         hasExtractedContent: hasExtractedContent,
+        applyItemChipVisual: applyItemChipVisual,
     };
 })(window);

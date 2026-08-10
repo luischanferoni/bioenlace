@@ -1383,6 +1383,42 @@
                     return;
                 } else {
                     self.showSaveAlert(msg || 'Error al guardar.', 'danger');
+                    var detalle =
+                        (data.guardar &&
+                            data.guardar.errors &&
+                            data.guardar.errors.datos_faltantes_detalle) ||
+                        null;
+                    if (
+                        detalle &&
+                        self.captureReview &&
+                        window.EncounterCaptureReview &&
+                        self.reviewRoot
+                    ) {
+                        var stagedKeep = window.EncounterCaptureReview.collectStagedIds(
+                            self.reviewRoot
+                        );
+                        if (Array.isArray(detalle.issues) && detalle.issues.length) {
+                            self.captureReview.issues = detalle.issues;
+                        }
+                        if (detalle.incomplete_items) {
+                            self.captureReview.datos_faltantes_detalle = detalle;
+                            self.captureReview.tiene_datos_faltantes = true;
+                        }
+                        self.captureReview.default_staged_item_ids = Array.from(stagedKeep);
+                        var rendered = window.EncounterCaptureReview.render(self.captureReview, {});
+                        self.reviewRoot.replaceChildren();
+                        if (rendered && rendered.node) {
+                            self.reviewRoot.appendChild(rendered.node);
+                        }
+                        window.EncounterCaptureReview.bindItemToggles(
+                            self.reviewRoot,
+                            self.updateConfirmState.bind(self)
+                        );
+                        window.EncounterCaptureReview.bindIssueResolutions(
+                            self.reviewRoot,
+                            self.updateConfirmState.bind(self)
+                        );
+                    }
                     self.updateConfirmState();
                 }
             })

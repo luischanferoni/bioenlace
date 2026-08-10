@@ -115,6 +115,53 @@ class ClinicalCaptureIssueResolutionTest extends Unit
         $this->assertSame([], $check['missing_fields']);
     }
 
+    public function testFilterByStagedKeepsResolvedRowByOriginalIndex(): void
+    {
+        $applier = new ClinicalCaptureResolutionApplier();
+        $full = [
+            'Medicación' => [
+                [
+                    'Nombre del medicamento' => 'antibiótico',
+                    'Tipo' => 'ordered',
+                    'Via de administracion' => 'EV',
+                ],
+                [
+                    'Nombre del medicamento' => 'antibiótico',
+                    'Tipo' => 'ordered',
+                    'Via de administracion' => 'oral',
+                ],
+            ],
+        ];
+        $resolved = $applier->apply($full, [
+            'Medicación::1:Cantidad' => '1 comprimido',
+            'Medicación::1:Frecuencia de administracion' => '4',
+        ], []);
+        $filtered = $applier->filterByStagedItemIds($resolved, ['Medicación::1'], []);
+
+        $this->assertCount(1, $filtered['Medicación']);
+        $this->assertSame('oral', $filtered['Medicación'][0]['Via de administracion']);
+        $this->assertSame('1 comprimido', $filtered['Medicación'][0]['Cantidad']);
+        $this->assertSame('4', $filtered['Medicación'][0]['Frecuencia de administracion']);
+    }
+
+    public function testBalanceCantidadBuildsAllowCustomIssue(): void
+    {
+        $input = \common\models\Clinical\Input\BalanceHidricoInput::fromExtractedRow([
+            'Tipo Registro' => 'Ingreso',
+        ]);
+        $issues = $input->buildIssues('Balance hídrico', 0);
+        $cantidad = null;
+        foreach ($issues as $issue) {
+            if (($issue['field'] ?? '') === \common\models\Clinical\Input\BalanceHidricoInput::FIELD_CANTIDAD) {
+                $cantidad = $issue;
+                break;
+            }
+        }
+        $this->assertNotNull($cantidad);
+        $this->assertTrue($cantidad['allow_custom']);
+        $this->assertNotEmpty($cantidad['options']);
+    }
+
     public function testCounselingDoesNotEmitPlazoIssue(): void
     {
         $input = IndicacionInput::fromExtractedRow([

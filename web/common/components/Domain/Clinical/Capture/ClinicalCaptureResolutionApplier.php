@@ -43,6 +43,65 @@ final class ClinicalCaptureResolutionApplier
     }
 
     /**
+     * Conserva solo filas referenciadas por staged_item_ids (`Categoría::índice`).
+     * Los índices son los del análisis completo (antes de reindexar).
+     *
+     * @param array<string, mixed> $extraidos
+     * @param list<string> $stagedItemIds
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    public function filterByStagedItemIds(
+        array $extraidos,
+        array $stagedItemIds,
+        array $categorias = []
+    ): array {
+        $keep = [];
+        foreach ($stagedItemIds as $id) {
+            if (!is_string($id) && !is_int($id)) {
+                continue;
+            }
+            $id = trim((string) $id);
+            if ($id === '' || preg_match('/^(.*)::(\d+)$/u', $id, $m) !== 1) {
+                continue;
+            }
+            $cat = (string) $m[1];
+            $idx = (int) $m[2];
+            if (!isset($keep[$cat])) {
+                $keep[$cat] = [];
+            }
+            $keep[$cat][$idx] = true;
+        }
+        if ($keep === []) {
+            return [];
+        }
+
+        $out = [];
+        if (isset($extraidos['Error'])) {
+            $out['Error'] = $extraidos['Error'];
+        }
+
+        foreach ($keep as $category => $indices) {
+            $key = $this->resolveExtraidosKey($extraidos, $category, $categorias);
+            if ($key === null) {
+                continue;
+            }
+            $rows = $this->normalizeRows($extraidos[$key] ?? null);
+            $filtered = [];
+            foreach ($rows as $i => $row) {
+                if (isset($indices[(int) $i])) {
+                    $filtered[] = $row;
+                }
+            }
+            if ($filtered !== []) {
+                $out[$key] = $filtered;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
      * @param array<string, mixed> $extraidos
      * @param list<array<string, mixed>> $categorias
      * @return array<string, mixed>

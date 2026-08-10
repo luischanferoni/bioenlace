@@ -125,22 +125,12 @@ class EncounterDocumentationService extends Component
                 $datosExtraidos = is_array($decoded) ? $decoded : [];
             }
 
+            $stagedItemIds = self::normalizeStagedItemIds(
+                $body['staged_item_ids'] ?? $body['stagedItemIds'] ?? null
+            );
             $resolutions = $body['resolutions'] ?? $body['resoluciones'] ?? null;
-            if (is_array($resolutions) && $resolutions !== [] && is_array($datosExtraidos) && $datosExtraidos !== []) {
-                $categorias = [];
-                $idCfg = is_numeric($idConfiguracion) ? (int) $idConfiguracion : 0;
-                if ($idCfg > 0) {
-                    $def = EncounterDefinition::findOne($idCfg);
-                    if ($def !== null) {
-                        $categorias = EncounterDefinition::getCategoriasParaPrompt($def);
-                    }
-                }
-                $datosExtraidos = (new ClinicalCaptureResolutionApplier())->apply(
-                    $datosExtraidos,
-                    $resolutions,
-                    $categorias
-                );
-                $body['datosExtraidos'] = $datosExtraidos;
+            if (!is_array($resolutions)) {
+                $resolutions = [];
             }
 
             $encounterId = $this->normalizeEncounterIdFromBody($body, $idConfiguracion);
@@ -159,6 +149,8 @@ class EncounterDocumentationService extends Component
                     || array_key_exists('analisisDatosExtraidos', $body),
                 'has_analysis_cache_token' => trim((string) ($body['analysis_cache_token'] ?? $body['analisis_cache_token'] ?? '')) !== '',
                 'datosExtraidos_type' => gettype($body['datosExtraidos'] ?? null),
+                'staged_item_ids_count' => count($stagedItemIds),
+                'resolutions_count' => count($resolutions),
             ], ['metodo' => 'EncounterDocumentationService::guardar']);
 
             $blockingError = EncounterCaptureReviewPresenter::blockingErrorFromExtraidos($datosExtraidos);
@@ -190,7 +182,6 @@ class EncounterDocumentationService extends Component
                 'counts' => $diagnostico['staged_counts'],
             ], ['metodo' => 'datosExtraidos staged']);
 
-            // Si el stage quedó incompleto, completar con el análisis completo (backup cliente + cache servidor).
             $fullMeta = $this->resolveFullAnalysisExtraidosWithMeta($body);
             $fullExtraidos = $fullMeta['extraidos'];
             $diagnostico['backup_fuentes'] = $fullMeta['fuentes'];
@@ -201,9 +192,36 @@ class EncounterDocumentationService extends Component
                 'counts' => self::countCategories($fullExtraidos),
             ], ['metodo' => 'resolveFullAnalysisExtraidos']);
 
-            if ($fullExtraidos !== []) {
-                $datosExtraidos = self::enrichExtraidosFromFullAnalysis($datosExtraidos, $fullExtraidos);
+            $categorias = [];
+            $idCfgEarly = is_numeric($idConfiguracion) ? (int) $idConfiguracion : 0;
+            if ($idCfgEarly > 0) {
+                $defEarly = EncounterDefinition::findOne($idCfgEarly);
+                if ($defEarly !== null) {
+                    $categorias = EncounterDefinition::getCategoriasParaPrompt($defEarly);
+                }
             }
+
+            $applier = new ClinicalCaptureResolutionApplier();
+            // Resolutions usan índices del análisis completo (Medicación::1). Si el cliente
+            // ya filtró filas, aplicar sobre el full y luego recortar por staged_item_ids.
+            if ($stagedItemIds !== [] && $fullExtraidos !== []) {
+                $working = $fullExtraidos;
+            } elseif ($fullExtraidos !== []) {
+                $working = self::enrichExtraidosFromFullAnalysis($datosExtraidos, $fullExtraidos);
+            } else {
+                $working = $datosExtraidos;
+            }
+
+            if ($resolutions !== []) {
+                $working = $applier->apply($working, $resolutions, $categorias);
+            }
+
+            if ($stagedItemIds !== []) {
+                $datosExtraidos = $applier->filterByStagedItemIds($working, $stagedItemIds, $categorias);
+            } else {
+                $datosExtraidos = $working;
+            }
+            $body['datosExtraidos'] = $datosExtraidos;
 
             $diagnostico['final_keys'] = array_keys($datosExtraidos);
             $diagnostico['final_counts'] = self::countCategories($datosExtraidos);
@@ -211,7 +229,8 @@ class EncounterDocumentationService extends Component
                 'keys' => $diagnostico['final_keys'],
                 'counts' => $diagnostico['final_counts'],
                 'payload_preview' => self::previewExtraidos($datosExtraidos),
-            ], ['metodo' => 'tras enrich']);
+                'staged_item_ids' => $stagedItemIds,
+            ], ['metodo' => 'tras apply+filter staged']);
 
             Yii::info(
                 'encounter.guardar categorias=' . implode(',', array_keys($datosExtraidos))
@@ -642,6 +661,29 @@ class EncounterDocumentationService extends Component
         }
 
         return $out;
+    }
+
+    /**
+     * @param mixed $raw
+     * @return list<string>
+     */
+    private static function normalizeStagedItemIds($raw): array
+    {
+        if (!is_array($raw)) {
+            return [];
+        }
+        $out = [];
+        foreach ($raw as $id) {
+            if (!is_string($id) && !is_int($id)) {
+                continue;
+            }
+            $id = trim((string) $id);
+            if ($id !== '' && preg_match('/^.+::\d+$/u', $id) === 1) {
+                $out[] = $id;
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 
     /**

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:shared/shared.dart';
 
 import '../../services/emergency_guardia_api.dart';
+import 'manchester_triage_colors.dart';
 
 /// Triage rápido (móvil) para un ingreso en guardia.
 class EmergencyTriageScreen extends StatefulWidget {
@@ -42,13 +43,7 @@ class _EmergencyTriageScreenState extends State<EmergencyTriageScreen> {
   late final TextEditingController _diaController;
   bool _saving = false;
 
-  static const _levelColors = [
-    Color(0xFFC0392B),
-    Color(0xFFE67E22),
-    Color(0xFFF1C40F),
-    Color(0xFF27AE60),
-    Color(0xFF3498DB),
-  ];
+  static const _levelColors = ManchesterTriageColors.levels;
 
   static final _vitalFormatters = <TextInputFormatter>[
     FilteringTextInputFormatter.digitsOnly,

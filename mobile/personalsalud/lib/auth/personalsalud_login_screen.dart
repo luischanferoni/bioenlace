@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,7 +89,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       _useBiometricLogin = established && hasToken && bioAvailable;
       _biometricAvailable = bioAvailable;
       _biometricType = bioType;
-      _demoAvailable = demoOn;
+      _demoAvailable = kDebugMode && demoOn;
       _checkingSession = false;
     });
   }
@@ -127,7 +128,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
   }
 
   Future<void> _enterDemo() async {
-    if (_submitting) return;
+    if (!kDebugMode || _submitting) return;
     setState(() => _submitting = true);
     try {
       final data = await DemoSandboxStaffAuth.enterAsMedico();

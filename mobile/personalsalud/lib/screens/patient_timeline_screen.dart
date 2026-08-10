@@ -16,6 +16,7 @@ import '../services/consulta_guardar_service.dart';
 import '../services/emergency_guardia_api.dart';
 import '../services/pending_encounter_capture_store.dart';
 import 'emergency/emergency_triage_screen.dart';
+import 'emergency/manchester_triage_colors.dart';
 
 class PatientTimelineScreen extends StatefulWidget {
   final int personaId;
@@ -1007,19 +1008,16 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       tituloParts.add('Ingreso ${formatEpisodioFecha(ctx.ingresoAt)}');
     }
 
-    Color? triageColor;
-    final hex = ctx?.triageLevelColor;
-    if (hex != null && hex.startsWith('#') && hex.length >= 7) {
-      final parsed = int.tryParse(hex.substring(1, 7), radix: 16);
-      if (parsed != null) {
-        triageColor = Color(0xFF000000 | parsed);
-      }
-    }
-
     final estado = ctx?.estadoLabel ?? ctx?.estado ?? 'En curso';
     final motivo = (ctx?.motivo != null && ctx!.motivo!.isNotEmpty)
         ? ctx.motivo!
         : 'Sin motivo registrado';
+    final triageScale = (ctx?.triageScale != null && ctx!.triageScale!.isNotEmpty)
+        ? ctx.triageScale!
+        : null;
+    final triageLevel = ctx?.triageLevel;
+    final triageLabel =
+        ctx?.triageLevelLabel ?? (triageLevel != null ? 'Nivel $triageLevel' : null);
 
     Widget metaCell(String label, String value) {
       return Column(
@@ -1037,50 +1035,62 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
     }
 
+    Widget triageBadge() {
+      final bg = ManchesterTriageColors.backgroundForLevel(triageLevel);
+      final fg = ManchesterTriageColors.foregroundForLevel(triageLevel);
+      return Container(
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(BioRadius.xs),
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BioSpacing.sm,
+          vertical: 2,
+        ),
+        child: Text(
+          triageLabel ?? 'Triage',
+          style: BioTypography.caption.copyWith(
+            color: fg,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+    }
+
     return BioCard.intent(
       intent: esGuardia ? UiIntent.danger : UiIntent.info,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(tituloParts.join(' · '), style: BioTypography.title),
-          if (ctx?.triageLevel != null) ...[
-            BioSpacing.gapH(BioSpacing.sm),
+          if (triageLevel != null) ...[
             Wrap(
               spacing: BioSpacing.xs,
               runSpacing: BioSpacing.xs,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                BioBadge(
-                  label: ctx!.triageLevelLabel ?? 'Nivel ${ctx.triageLevel}',
-                  intent: UiIntent.danger,
-                ),
-                if (triageColor != null)
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: triageColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                if (ctx.triageAt != null && ctx.triageAt!.isNotEmpty)
+                triageBadge(),
+                if (triageScale != null)
                   Text(
-                    formatEpisodioFecha(ctx.triageAt),
+                    triageScale,
                     style: BioTypography.caption
                         .copyWith(color: context.bio.textMuted),
                   ),
               ],
             ),
+            BioSpacing.gapH(BioSpacing.sm),
           ],
-          BioSpacing.gapH(BioSpacing.sm),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: metaCell('Estado', estado)),
+              Expanded(
+                child: metaCell('Episodio', tituloParts.join(' · ')),
+              ),
               BioSpacing.gapW(BioSpacing.md),
-              Expanded(child: metaCell('Motivo / ingreso', motivo)),
+              Expanded(child: metaCell('Estado', estado)),
             ],
           ),
+          BioSpacing.gapH(BioSpacing.sm),
+          metaCell('Motivo / ingreso', motivo),
           if (ctx != null && ctx.acciones.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
             Wrap(

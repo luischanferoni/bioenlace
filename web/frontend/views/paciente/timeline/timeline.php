@@ -92,28 +92,32 @@ if (!empty($esContextoGuardia)) {
         </div>
     </div>
 
-<?php if ($esContextoEpisodio): ?>
-<div id="tl_episodio_banner" class="tl-episodio-banner mb-3" hidden data-episodio-tipo="<?= Html::encode($esContextoGuardia ? 'GUARDIA' : 'INTERNACION') ?>">
-    <div class="tl-episodio-banner__inner">
-        <div class="tl-episodio-banner__triage" id="tl_episodio_triage" hidden>
-            <span class="tl-episodio-banner__triage-badge" id="tl_episodio_triage_badge"></span>
-            <span class="tl-episodio-banner__triage-meta text-muted small" id="tl_episodio_triage_meta"></span>
+<?php if ($esContextoEpisodio):
+    $episodioBannerAccent = $esContextoGuardia
+        ? 'border-danger bg-danger-subtle'
+        : 'border-primary bg-primary-subtle';
+?>
+<div id="tl_episodio_banner" class="mb-3" hidden data-episodio-tipo="<?= Html::encode($esContextoGuardia ? 'GUARDIA' : 'INTERNACION') ?>">
+    <div class="sticky-top rounded shadow-sm p-3 border-start border-4 <?= Html::encode($episodioBannerAccent) ?>">
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-2" id="tl_episodio_triage" hidden>
+            <span class="badge text-bg-secondary" id="tl_episodio_triage_badge"></span>
+            <span class="text-muted small" id="tl_episodio_triage_meta"></span>
         </div>
-        <div class="tl-episodio-banner__grid">
-            <div class="tl-episodio-banner__cell tl-episodio-banner__cell--wide">
-                <span class="tl-episodio-banner__label">Episodio</span>
-                <span class="tl-episodio-banner__value" id="tl_episodio_titulo">Cargando…</span>
+        <div class="row g-2">
+            <div class="col-12">
+                <span class="small text-uppercase text-muted fw-semibold d-block">Episodio</span>
+                <span class="fw-semibold d-block" id="tl_episodio_titulo">Cargando…</span>
             </div>
-            <div class="tl-episodio-banner__cell">
-                <span class="tl-episodio-banner__label">Estado</span>
-                <span class="tl-episodio-banner__value" id="tl_episodio_estado">—</span>
+            <div class="col-sm-6">
+                <span class="small text-uppercase text-muted fw-semibold d-block">Estado</span>
+                <span class="fw-semibold d-block" id="tl_episodio_estado">—</span>
             </div>
-            <div class="tl-episodio-banner__cell">
-                <span class="tl-episodio-banner__label">Motivo / ingreso</span>
-                <span class="tl-episodio-banner__value" id="tl_episodio_motivo">—</span>
+            <div class="col-sm-6">
+                <span class="small text-uppercase text-muted fw-semibold d-block">Motivo / ingreso</span>
+                <span class="fw-semibold d-block" id="tl_episodio_motivo">—</span>
             </div>
         </div>
-        <div class="tl-episodio-banner__actions mt-2" id="tl_episodio_acciones" hidden></div>
+        <div class="mt-2" id="tl_episodio_acciones" hidden></div>
     </div>
 </div>
 <?php endif; ?>
@@ -177,8 +181,8 @@ if (!empty($esContextoGuardia)) {
                                 <span class="small text-muted" id="tl_episodio_sv_count"></span>
                             </div>
                             <div class="border-bottom border-2 mb-1"></div>
-                            <div id="tl_episodio_sv_ultimos" class="tl-episodio-sv-ultimos mb-2"></div>
-                            <div id="tl_episodio_sv_chart" class="tl-episodio-sv-chart" style="min-height: 220px;"></div>
+                            <div id="tl_episodio_sv_ultimos" class="mb-2"></div>
+                            <div id="tl_episodio_sv_chart" class="w-100 border rounded bg-white p-1" style="min-height: 220px;"></div>
                             <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.</p>
                         </div>
                         <?php else: ?>
@@ -240,7 +244,7 @@ if (!empty($esContextoGuardia)) {
                                 <h6 class="mb-0 text-primary"><b>REGISTRO DEL EPISODIO</b></h6>
                                 <span class="small text-muted" id="tl_episodio_timeline_count"></span>
                             </div>
-                            <div class="tl-episodio-timeline-filters mb-2" id="tl_episodio_timeline_filters" role="group" aria-label="Filtros del registro">
+                            <div class="d-flex flex-wrap gap-1 mb-2" id="tl_episodio_timeline_filters" role="group" aria-label="Filtros del registro">
                                 <button type="button" class="btn btn-sm btn-outline-secondary active" data-tl-filter="all">Todos</button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="clinico">Clínico</button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="enfermeria">Enfermería</button>
@@ -248,7 +252,7 @@ if (!empty($esContextoGuardia)) {
                                 <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="farmacos">Fármacos</button>
                                 <button type="button" class="btn btn-sm btn-outline-secondary" data-tl-filter="circuito">Circuito</button>
                             </div>
-                            <div id="tl_episodio_timeline_list" class="tl-episodio-timeline-list">
+                            <div id="tl_episodio_timeline_list">
                                 <p class="text-muted mb-0 small">Cargando registro…</p>
                             </div>
                         </div>
@@ -894,6 +898,18 @@ endif;
         interconsulta: 'Interconsulta'
     };
 
+    var TL_TYPE_BADGE = {
+        circuito: 'text-bg-danger',
+        triage: 'text-bg-danger',
+        evolucion_medica: 'text-bg-secondary',
+        atencion_enfermeria: 'text-bg-success',
+        pedido: 'text-bg-info',
+        resultado_lab: 'text-bg-info',
+        interconsulta: 'text-bg-info',
+        medicacion: 'text-bg-warning',
+        administracion: 'text-bg-warning'
+    };
+
     function renderTimelineEpisodio(feed) {
         var listEl = document.getElementById('tl_episodio_timeline_list');
         var countEl = document.getElementById('tl_episodio_timeline_count');
@@ -1007,15 +1023,16 @@ endif;
             return;
         }
         var groups = groupTimelineEpisodioItems(items);
-        var html = '<ul class="tl-episodio-timeline-ul list-unstyled mb-0">';
+        var html = '<ul class="tl-episodio-timeline list-unstyled mb-0">';
         groups.forEach(function (group) {
             var type = group.type || '';
             var typeLabel = TL_TYPE_LABEL[type] || type || 'Hito';
             var actor = group.actorKey || '';
             var count = group.items.length;
-            html += '<li class="tl-episodio-timeline-item" data-tl-type="' + escMotivosHtml(type) + '">';
-            html += '<div class="tl-episodio-timeline-item__meta">';
-            html += '<span class="badge tl-episodio-timeline-badge">' + escMotivosHtml(typeLabel);
+            var badgeClass = TL_TYPE_BADGE[type] || 'text-bg-light border text-dark';
+            html += '<li class="tl-episodio-timeline__item" data-tl-type="' + escMotivosHtml(type) + '">';
+            html += '<div class="d-flex flex-wrap align-items-center gap-2 mb-1">';
+            html += '<span class="badge ' + badgeClass + '">' + escMotivosHtml(typeLabel);
             if (count > 1) {
                 html += ' · ' + count;
             }
@@ -1027,18 +1044,18 @@ endif;
             html += '</div>';
             if (count === 1) {
                 var one = formatTimelineSummaryParts(group.items[0]);
-                html += '<div class="tl-episodio-timeline-item__summary">' + escMotivosHtml(one.text);
+                html += '<div class="small text-break">' + escMotivosHtml(one.text);
                 if (one.status) {
-                    html += ' <span class="tl-episodio-timeline-status">(' + escMotivosHtml(one.status) + ')</span>';
+                    html += ' <span class="text-muted">(' + escMotivosHtml(one.status) + ')</span>';
                 }
                 html += '</div>';
             } else {
-                html += '<ul class="tl-episodio-timeline-group__list">';
+                html += '<ul class="mb-0 ps-3 small">';
                 group.items.forEach(function (it) {
                     var part = formatTimelineSummaryParts(it);
-                    html += '<li>' + escMotivosHtml(part.text);
+                    html += '<li class="mb-1">' + escMotivosHtml(part.text);
                     if (part.status) {
-                        html += ' <span class="tl-episodio-timeline-status">(' + escMotivosHtml(part.status) + ')</span>';
+                        html += ' <span class="text-muted">(' + escMotivosHtml(part.status) + ')</span>';
                     }
                     html += '</li>';
                 });

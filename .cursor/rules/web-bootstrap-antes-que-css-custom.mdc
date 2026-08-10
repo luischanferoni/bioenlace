@@ -1,0 +1,31 @@
+---
+description: Web Yii — Bootstrap primero; CSS custom solo si Bootstrap no alcanza
+globs: web/frontend/views/**/*.{php,css},web/frontend/web/css/**/*.css,web/frontend/web/js/**/*.js,web/common/web/css/**/*.css
+alwaysApply: false
+---
+
+# Web: Bootstrap antes que CSS custom
+
+## Principio
+
+En vistas web Yii y assets asociados: **usar utilidades y componentes de Bootstrap** (layout, tipografía, color, espaciado, bordes, cards, badges, alerts, sticky, flex/grid).
+
+**CSS custom** solo cuando el patrón es **muy específico** y Bootstrap no lo prevé (p. ej. línea vertical de timeline con pseudo-elementos, sticky con offset raro, contraste forzado sobre un widget de terceros).
+
+## Qué evitar
+
+- Clases BEM / namespaces por pantalla (`tl-episodio-banner__inner`, `mi-pantalla__grid`) que solo replican `d-flex`, `row`/`col`, `border`, `p-3`, `bg-light`, `sticky-top`, `small text-muted`, etc.
+- Hojas CSS nuevas por feature si el markup se resuelve con utilidades Bootstrap.
+- Duplicar en CSS lo que ya da `.btn`, `.badge`, `.card`, `.alert`, `.border-start`, `.gap-*`.
+
+## Qué sí justifica CSS custom
+
+- Decoración no cubierta (puntos/línea de timeline, máscaras, animaciones puntuales).
+- Overrides mínimos sobre un plugin (Plotly, FullCalendar, Select2) cuando las utilidades no llegan.
+- Tokens de marca del template **ya existentes** en el design system del repo (no inventar otra hoja paralela).
+
+## Checklist al tocar UI web
+
+1. ¿Hay utilidad/componente Bootstrap equivalente? → usarlo.
+2. ¿Hace falta un archivo CSS nuevo? → casi nunca; preferir clases en el markup.
+3. Si queda CSS: el mínimo indispensable, sin wrapper BEM por cada nodo.

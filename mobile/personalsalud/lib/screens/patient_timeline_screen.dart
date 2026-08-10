@@ -831,8 +831,9 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           BioSpacing.gapH(BioSpacing.md),
           if (!tiene)
             Text(
-              'Sin datos',
-              style: BioTypography.bodySm,
+              'Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.',
+              style: BioTypography.bodySm
+                  .copyWith(color: context.bio.textMuted),
             )
           else ...[
             if (chips.isNotEmpty)
@@ -1098,10 +1099,17 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
               runSpacing: BioSpacing.xs,
               children: [
                 for (final a in ctx.acciones)
-                  FilledButton.tonal(
-                    onPressed: () => _onEpisodioAccion(a),
-                    child: Text(a.label),
-                  ),
+                  a.id == 'editar_triage'
+                      ? BioButton.outlinePrimary(
+                          label: a.label,
+                          size: BioButtonSize.sm,
+                          onPressed: () => _onEpisodioAccion(a),
+                        )
+                      : BioButton.danger(
+                          label: a.label,
+                          size: BioButtonSize.sm,
+                          onPressed: () => _onEpisodioAccion(a),
+                        ),
               ],
             ),
           ],

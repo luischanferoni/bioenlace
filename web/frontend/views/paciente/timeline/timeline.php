@@ -203,7 +203,7 @@ if (!empty($esContextoGuardia)) {
                                 <span class="small text-muted" id="tl_episodio_sv_count"></span>
                             </div>                            
                             <div id="tl_episodio_sv_ultimos" class="mb-2"></div>
-                            <div id="tl_episodio_sv_chart" class="w-100 border rounded bg-white p-1" style="min-height: 220px;"></div>
+                            <div id="tl_episodio_sv_chart" class="w-100 border rounded bg-white p-1 d-none" style="min-height: 220px;"></div>
                             <p class="text-muted small mb-0 d-none" id="tl_episodio_sv_empty">Sin signos vitales. Se cargan en la captura de la consulta (texto/audio) o en el triage de admisión.</p>
                         </div>
                         <?php else: ?>
@@ -1077,11 +1077,19 @@ endif;
         }
 
         if (!series.length) {
-            if (chartEl) tlClear(chartEl);
-            if (emptyEl) emptyEl.classList.remove('d-none');
+            if (chartEl) {
+                if (typeof Plotly !== 'undefined' && chartEl.data) {
+                    try { Plotly.purge(chartEl); } catch (ePurge) {}
+                }
+                tlClear(chartEl);
+                chartEl.classList.add('d-none');
+            }
+            var hasUltimos = !!(ultimosEl && ultimosEl.childElementCount > 0);
+            if (emptyEl) emptyEl.classList.toggle('d-none', hasUltimos);
             return;
         }
         if (emptyEl) emptyEl.classList.add('d-none');
+        if (chartEl) chartEl.classList.remove('d-none');
 
         if (!chartEl || typeof Plotly === 'undefined') {
             return;

@@ -323,6 +323,8 @@ if (!empty($esContextoGuardia)) {
 </div>
 </div>
 
+<?= $this->render('_timeline_templates') ?>
+
 <?php
 
 Modal::begin([
@@ -469,6 +471,36 @@ endif;
         return {};
     }
 
+    /** Camino A: clonar <template> del partial; no concatenar HTML de estructura. */
+    function tlTpl(id) {
+        var tpl = document.getElementById(id);
+        if (!tpl) return null;
+        return document.importNode(tpl.content, true);
+    }
+
+    function tlSet(root, sel, text) {
+        var el = root && root.querySelector ? root.querySelector(sel) : null;
+        if (el) el.textContent = text == null ? '' : String(text);
+    }
+
+    function tlShow(el, on) {
+        if (!el) return;
+        el.classList.toggle('d-none', !on);
+    }
+
+    function tlClear(el) {
+        if (el) el.replaceChildren();
+    }
+
+    function tlAlert(message, variant) {
+        var frag = tlTpl('tpl-tl-alert');
+        if (!frag) return null;
+        var root = frag.firstElementChild;
+        root.classList.add('alert-' + (variant || 'warning'));
+        tlSet(frag, '[data-field="message"]', message);
+        return frag;
+    }
+
     /** dd/MM/yyyy o dd/MM/yyyy HH:mm — alineado a API EpisodioDateTimeFormatter */
     function formatEpisodioFecha(raw) {
         var s = String(raw || '').trim();
@@ -488,15 +520,29 @@ endif;
     function renderBadges(containerId, items, badgeClass) {
         var el = document.getElementById(containerId);
         if (!el) return;
+        tlClear(el);
         if (!items || !items.length) {
-            el.innerHTML = '<span class="ms-2">Sin datos</span>';
+            var empty = tlTpl('tpl-tl-empty-inline');
+            if (empty) el.appendChild(empty);
             return;
         }
-        var badges = items
-            .filter(function (x) { return x && x.termino; })
-            .map(function (x) { return '<span class="badge ' + badgeClass + ' me-1">' + String(x.termino).toUpperCase() + '</span>'; })
-            .join('');
-        el.innerHTML = badges || '<span class="ms-2">Sin datos</span>';
+        var any = false;
+        items.forEach(function (x) {
+            if (!x || !x.termino) return;
+            var frag = tlTpl('tpl-tl-badge');
+            if (!frag) return;
+            var badge = frag.querySelector('[data-field="termino"]');
+            if (badge) {
+                badge.className = 'badge me-1 ' + badgeClass;
+                badge.textContent = String(x.termino).toUpperCase();
+            }
+            el.appendChild(frag);
+            any = true;
+        });
+        if (!any) {
+            var empty2 = tlTpl('tpl-tl-empty-inline');
+            if (empty2) el.appendChild(empty2);
+        }
     }
 
     function renderEpisodioBanner(ctx) {
@@ -554,31 +600,25 @@ endif;
         var box = document.getElementById('tl_episodio_acciones');
         if (!box) return;
         acciones = Array.isArray(acciones) ? acciones : [];
+        tlClear(box);
         if (!acciones.length) {
             box.hidden = true;
-            box.innerHTML = '';
             return;
         }
         box.hidden = false;
-        var html = '';
         acciones.forEach(function (a) {
             if (!a || !a.id) return;
-            var btnClass = a.id === 'editar_triage' ? 'btn-outline-primary' : 'btn-danger';
+            var frag = tlTpl('tpl-tl-episodio-accion');
+            if (!frag) return;
+            var btn = frag.querySelector('button');
+            if (!btn) return;
+            btn.classList.add(a.id === 'editar_triage' ? 'btn-outline-primary' : 'btn-danger');
+            btn.setAttribute('data-tl-accion', String(a.id));
             var apiRoute = '';
-            if (a.api && a.api.route) {
-                apiRoute = String(a.api.route);
-            } else if (a.api_route) {
-                apiRoute = String(a.api_route);
-            }
-            html += '<button type="button" class="btn btn-sm ' + btnClass + ' me-1 mb-1" data-tl-accion="'
-                + escMotivosHtml(a.id) + '"'
-                + (apiRoute ? ' data-tl-api-route="' + escMotivosHtml(apiRoute) + '"' : '')
-                + '>'
-                + escMotivosHtml(a.label || a.id)
-                + '</button>';
-        });
-        box.innerHTML = html;
-        box.querySelectorAll('[data-tl-accion]').forEach(function (btn) {
+            if (a.api && a.api.route) apiRoute = String(a.api.route);
+            else if (a.api_route) apiRoute = String(a.api_route);
+            if (apiRoute) btn.setAttribute('data-tl-api-route', apiRoute);
+            btn.textContent = a.label || a.id;
             btn.addEventListener('click', function () {
                 var id = btn.getAttribute('data-tl-accion');
                 if (id === 'egreso_estructurado') {
@@ -587,6 +627,7 @@ endif;
                     openTriageGuardiaModal(btn.getAttribute('data-tl-api-route'));
                 }
             });
+            box.appendChild(frag);
         });
     }
 
@@ -607,7 +648,9 @@ endif;
             window.location.href = url;
             return;
         }
-        contentEl.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></div>';
+        contentEl.replaceChildren();
+        var spin = tlTpl('tpl-tl-spinner');
+        if (spin) contentEl.appendChild(spin);
         if (titleEl) titleEl.textContent = 'Triage';
         var modal = window.bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.show();
@@ -636,8 +679,7 @@ endif;
             try {
                 modal.hide();
             } catch (eHide) {}
-            contentEl.innerHTML = '';
-            // Evitar backdrop huérfano si quedó algún modal abierto.
+            contentEl.replaceChildren();
             document.querySelectorAll('.modal-backdrop').forEach(function (bd) {
                 if (!document.querySelector('.modal.show')) {
                     bd.remove();
@@ -666,37 +708,41 @@ endif;
             var data = fieldValuesFromUi(root);
             var level = String(data.level || '3');
             var reason = String(data.reason_text || '');
-            var levelBtns = [1, 2, 3, 4, 5].map(function (n) {
-                var checked = String(n) === level ? ' checked' : '';
-                return '<input type="radio" class="btn-check" name="level" id="tl-triage-level-' + n
-                    + '" value="' + n + '" autocomplete="off"' + checked + ' required>'
-                    + '<label class="btn btn-sm btn-outline-secondary fw-bold guardia-triage-level guardia-triage-level--' + n
-                    + '" for="tl-triage-level-' + n + '">' + n + '</label>';
-            }).join('');
-            contentEl.innerHTML = ''
-                + '<form id="tl-triage-form" class="p-1">'
-                + '<input type="hidden" name="guardia_id" value="' + escMotivosHtml(String(timelineConfig.parentId)) + '" />'
-                + '<label class="form-label">Prioridad (Manchester)</label>'
-                + '<div class="d-flex flex-wrap gap-2 mb-3" role="group">' + levelBtns + '</div>'
-                + '<label class="form-label">Motivo de consulta</label>'
-                + '<textarea class="form-control mb-2" name="reason_text" rows="3" required>' + escMotivosHtml(reason) + '</textarea>'
-                + '<div class="row g-2 mb-2">'
-                + '<div class="col-4"><label class="form-label">TA sys</label>'
-                + '<input class="form-control" name="bp_sys" data-triage-vital="bp_sys" inputmode="numeric" maxlength="3" value="'
-                + escMotivosHtml(String(data.bp_sys || '')) + '" /></div>'
-                + '<div class="col-4"><label class="form-label">TA dia</label>'
-                + '<input class="form-control" name="bp_dia" data-triage-vital="bp_dia" inputmode="numeric" maxlength="3" value="'
-                + escMotivosHtml(String(data.bp_dia || '')) + '" /></div>'
-                + '<div class="col-4"><label class="form-label">FC</label>'
-                + '<input class="form-control" name="hr" data-triage-vital="hr" inputmode="numeric" maxlength="3" value="'
-                + escMotivosHtml(String(data.hr || '')) + '" /></div>'
-                + '</div>'
-                + '<p class="small text-muted mb-2">TA y FC: enteros de 2–3 dígitos (opcionales).</p>'
-                + '<div class="alert alert-danger d-none" id="tl-triage-error"></div>'
-                + '<div class="d-flex justify-content-end gap-2">'
-                + '<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>'
-                + '<button type="submit" class="btn btn-primary" id="tl-triage-submit">Guardar</button>'
-                + '</div></form>';
+            var formFrag = tlTpl('tpl-tl-triage-form');
+            if (!formFrag) throw new Error('Falta template de triage.');
+            var guardiaInput = formFrag.querySelector('[data-field="guardia_id"]');
+            if (guardiaInput) guardiaInput.value = String(timelineConfig.parentId);
+            var reasonEl = formFrag.querySelector('[data-field="reason"]');
+            if (reasonEl) reasonEl.value = reason;
+            var bpSys = formFrag.querySelector('[data-field="bp_sys"]');
+            if (bpSys) bpSys.value = String(data.bp_sys || '');
+            var bpDia = formFrag.querySelector('[data-field="bp_dia"]');
+            if (bpDia) bpDia.value = String(data.bp_dia || '');
+            var hrEl = formFrag.querySelector('[data-field="hr"]');
+            if (hrEl) hrEl.value = String(data.hr || '');
+            var levelsSlot = formFrag.querySelector('[data-slot="levels"]');
+            if (levelsSlot) {
+                [1, 2, 3, 4, 5].forEach(function (n) {
+                    var lvlFrag = tlTpl('tpl-tl-triage-level');
+                    if (!lvlFrag) return;
+                    var input = lvlFrag.querySelector('[data-field="input"]');
+                    var label = lvlFrag.querySelector('[data-field="label"]');
+                    var id = 'tl-triage-level-' + n;
+                    if (input) {
+                        input.id = id;
+                        input.value = String(n);
+                        input.checked = String(n) === level;
+                    }
+                    if (label) {
+                        label.setAttribute('for', id);
+                        label.classList.add('guardia-triage-level--' + n);
+                        label.textContent = String(n);
+                    }
+                    levelsSlot.appendChild(lvlFrag);
+                });
+            }
+            contentEl.replaceChildren();
+            contentEl.appendChild(formFrag);
 
             if (window.BioenlaceTriageVitals) {
                 window.BioenlaceTriageVitals.bindVitalInputs(contentEl);
@@ -764,9 +810,9 @@ endif;
                 }
             });
         } catch (e) {
-            contentEl.innerHTML = '<div class="alert alert-danger mb-0">'
-                + escMotivosHtml(e && e.message ? String(e.message) : 'Error al abrir triage.')
-                + '</div>';
+            contentEl.replaceChildren();
+            var alertFrag = tlAlert(e && e.message ? String(e.message) : 'Error al abrir triage.', 'danger');
+            if (alertFrag) contentEl.appendChild(alertFrag);
         }
     }
 
@@ -1002,31 +1048,36 @@ endif;
         }
 
         if (ultimosEl) {
-            var chips = [];
+            tlClear(ultimosEl);
             var order = ['ta', 'fc', 'fr', 'sat_o2', 'temp', 'glucemia', 'glasgow'];
             order.forEach(function (key) {
+                var frag = tlTpl('tpl-tl-sv-chip');
+                if (!frag) return;
                 if (key === 'ta' && ultimos.ta) {
                     var sys = ultimos.ta.sistolica;
                     var dia = ultimos.ta.diastolica;
-                    if (sys != null || dia != null) {
-                        chips.push('<span class="badge text-bg-light border me-1 mb-1">TA '
-                            + (sys != null ? sys : '—') + '/' + (dia != null ? dia : '—')
-                            + ' <span class="text-muted">' + escMotivosHtml(ultimos.ta.at || '') + '</span></span>');
-                    }
+                    if (sys == null && dia == null) return;
+                    tlSet(frag, '[data-field="label"]', 'TA ' + (sys != null ? sys : '—') + '/' + (dia != null ? dia : '—') + ' ');
+                    tlSet(frag, '[data-field="at"]', ultimos.ta.at || '');
+                    ultimosEl.appendChild(frag);
                     return;
                 }
                 var u = ultimos[key];
                 if (!u || u.value == null) return;
-                chips.push('<span class="badge text-bg-light border me-1 mb-1">'
-                    + escMotivosHtml(u.label || key) + ': <strong>' + escMotivosHtml(String(u.value))
-                    + '</strong> ' + escMotivosHtml(u.unit || '')
-                    + ' <span class="text-muted">' + escMotivosHtml(u.at || '') + '</span></span>');
+                tlSet(frag, '[data-field="label"]', (u.label || key) + ': ');
+                var valEl = frag.querySelector('[data-field="value"]');
+                if (valEl) {
+                    valEl.classList.remove('d-none');
+                    valEl.textContent = String(u.value);
+                }
+                tlSet(frag, '[data-field="unit"]', u.unit ? (' ' + u.unit + ' ') : ' ');
+                tlSet(frag, '[data-field="at"]', u.at || '');
+                ultimosEl.appendChild(frag);
             });
-            ultimosEl.innerHTML = chips.join('') || '';
         }
 
         if (!series.length) {
-            if (chartEl) chartEl.innerHTML = '';
+            if (chartEl) tlClear(chartEl);
             if (emptyEl) emptyEl.classList.remove('d-none');
             return;
         }
@@ -1036,16 +1087,23 @@ endif;
             return;
         }
 
-        var colors = {
-            ta_sys: '#dc3545',
-            ta_dia: '#fd7e14',
-            fc: '#0d6efd',
-            fr: '#20c997',
-            sat_o2: '#6f42c1',
-            temp: '#d63384',
-            glucemia: '#198754',
-            glasgow: '#6c757d'
+        // Plotly no acepta clases CSS: se leen tokens Bootstrap (--bs-*) del tema.
+        var metricBsToken = {
+            ta_sys: 'danger',
+            ta_dia: 'warning',
+            fc: 'primary',
+            fr: 'info',
+            sat_o2: 'info',
+            temp: 'warning',
+            glucemia: 'success',
+            glasgow: 'secondary'
         };
+        var rootStyles = getComputedStyle(document.documentElement);
+        function bsColor(token) {
+            if (!token) return undefined;
+            var v = rootStyles.getPropertyValue('--bs-' + token).trim();
+            return v || undefined;
+        }
         var traces = series.map(function (s) {
             var xs = (s.points || []).map(function (p) { return p.at; });
             var ys = (s.points || []).map(function (p) { return p.value; });
@@ -1055,7 +1113,7 @@ endif;
                 type: 'scatter',
                 mode: 'lines+markers',
                 name: (s.label || s.metric) + (s.unit ? ' (' + s.unit + ')' : ''),
-                line: { color: colors[s.metric] || undefined, width: 2 },
+                line: { color: bsColor(metricBsToken[s.metric]), width: 2 },
                 marker: { size: 7 }
             };
         });
@@ -1073,8 +1131,8 @@ endif;
     function renderMotivos(texto, mp) {
         var el = document.getElementById('tl_motivos_consulta');
         if (!el) return;
+        tlClear(el);
         if (timelineConfig.modoCaptura === 'imp' || timelineConfig.modoCaptura === 'emer') {
-            el.innerHTML = '';
             return;
         }
         mp = mp || {};
@@ -1087,61 +1145,82 @@ endif;
         (mp.imagenes_adjuntas || []).forEach(function (img) {
             if (img && img.ref) imgsByRef[img.ref] = img.url || '';
         });
-        var html = '';
+
         if (resumen !== '') {
-            html += '<div class="mb-2"><span class="small text-uppercase text-muted">Resumen</span></div>';
-            html += '<div class="text-body tl-motivos-resumen" style="white-space:pre-wrap">';
+            var wrap = tlTpl('tpl-tl-motivos-resumen-wrap');
+            if (!wrap) return;
+            var slot = wrap.querySelector('[data-slot="resumen"]');
             var parts = resumen.split(/(\[imagen\d+\])/g);
             parts.forEach(function (part) {
                 var m = part.match(/^\[(imagen\d+)\]$/);
                 if (m && imgsByRef[m[1]]) {
-                    html += '<div class="my-2"><img class="tl-motivos-secure-media" data-secure-src="' + escMotivosHtml(imgsByRef[m[1]]) + '" alt="' + escMotivosHtml(m[1]) + '" style="max-width:100%;max-height:220px;border-radius:6px" /></div>';
+                    var imgFrag = tlTpl('tpl-tl-motivos-img');
+                    if (imgFrag) {
+                        var img = imgFrag.querySelector('[data-field="img"]');
+                        if (img) {
+                            img.setAttribute('data-secure-src', imgsByRef[m[1]]);
+                            img.alt = m[1];
+                        }
+                        slot.appendChild(imgFrag);
+                    }
                 } else if (part) {
-                    html += escMotivosHtml(part);
+                    slot.appendChild(document.createTextNode(part));
                 }
             });
-            html += '</div>';
-        } else if (mp.resumen_pendiente || mp.resumen_ia_pendiente) {
-            html += '<p class="text-muted mb-0">Generando resumen…</p>';
-        } else {
-            html += '<p class="text-muted mb-0">Sin motivos registrados para esta consulta.</p>';
-        }
-        var sug = mp.sugerencias_clinicas;
-        if (sug && (sug.diagnosticos_sugeridos || sug.practicas_sugeridas)) {
-            html += '<div class="mt-3 small text-uppercase text-muted">Orientación preliminar</div>';
-            if (sug.diagnosticos_sugeridos && sug.diagnosticos_sugeridos.length) {
-                html += '<div class="fw-semibold mt-2">Diagnósticos a considerar</div><ul class="mb-1">';
-                sug.diagnosticos_sugeridos.forEach(function (d) {
-                    html += '<li>' + escMotivosHtml(d.termino || '') + '</li>';
-                });
-                html += '</ul>';
+            var sug = mp.sugerencias_clinicas;
+            var sugSlot = wrap.querySelector('[data-slot="sugerencias"]');
+            if (sugSlot && sug && (sug.diagnosticos_sugeridos || sug.practicas_sugeridas)) {
+                var sugFrag = tlTpl('tpl-tl-motivos-sugerencias');
+                if (sugFrag) {
+                    if (sug.diagnosticos_sugeridos && sug.diagnosticos_sugeridos.length) {
+                        var dWrap = sugFrag.querySelector('[data-slot="diagnosticos"]');
+                        var dList = sugFrag.querySelector('[data-slot="diagnosticos-list"]');
+                        tlShow(dWrap, true);
+                        sug.diagnosticos_sugeridos.forEach(function (d) {
+                            var li = tlTpl('tpl-tl-li-text');
+                            if (li) {
+                                tlSet(li, '[data-field="text"]', d.termino || '');
+                                dList.appendChild(li);
+                            }
+                        });
+                    }
+                    if (sug.practicas_sugeridas && sug.practicas_sugeridas.length) {
+                        var pWrap = sugFrag.querySelector('[data-slot="practicas"]');
+                        var pList = sugFrag.querySelector('[data-slot="practicas-list"]');
+                        tlShow(pWrap, true);
+                        sug.practicas_sugeridas.forEach(function (p) {
+                            var li = tlTpl('tpl-tl-li-text');
+                            if (li) {
+                                tlSet(li, '[data-field="text"]', p.termino || '');
+                                pList.appendChild(li);
+                            }
+                        });
+                    }
+                    sugSlot.appendChild(sugFrag);
+                }
             }
-            if (sug.practicas_sugeridas && sug.practicas_sugeridas.length) {
-                html += '<div class="fw-semibold mt-2">Prácticas / estudios</div><ul class="mb-0">';
-                sug.practicas_sugeridas.forEach(function (p) {
-                    html += '<li>' + escMotivosHtml(p.termino || '') + '</li>';
-                });
-                html += '</ul>';
-            }
+            el.appendChild(wrap);
+            hydrateSecureTimelineMedia(el);
+            return;
         }
-        el.innerHTML = html;
-        hydrateSecureTimelineMedia(el);
-    }
 
-    function escMotivosHtml(s) {
-        if (s == null) return '';
-        var d = document.createElement('div');
-        d.textContent = String(s);
-        return d.innerHTML;
+        var muted = tlTpl('tpl-tl-motivos-muted');
+        if (muted) {
+            tlSet(muted, '[data-field="message"]',
+                (mp.resumen_pendiente || mp.resumen_ia_pendiente)
+                    ? 'Generando resumen…'
+                    : 'Sin motivos registrados para esta consulta.');
+            el.appendChild(muted);
+        }
     }
 
     function renderMotivosIntake(intake) {
         var section = document.getElementById('tl_motivos_intake_section');
         var el = document.getElementById('tl_motivos_intake');
         if (!section || !el) return;
+        tlClear(el);
         if (!intake || typeof intake !== 'object') {
             section.style.display = 'none';
-            el.innerHTML = '';
             return;
         }
         var answers = intake.answers || [];
@@ -1149,40 +1228,48 @@ endif;
         var status = intake.status ? String(intake.status) : '';
         if (!notes && (!answers || !answers.length) && status !== 'pending') {
             section.style.display = 'none';
-            el.innerHTML = '';
             return;
         }
         section.style.display = '';
-        var html = '';
+        var root = tlTpl('tpl-tl-intake-root');
+        if (!root) return;
         if (intake.title) {
-            html += '<div class="small text-muted mb-2">' + escMotivosHtml(intake.title) + '</div>';
+            var titleEl = root.querySelector('[data-slot="title"]');
+            tlShow(titleEl, true);
+            tlSet(root, '[data-field="title"]', intake.title);
         }
         if (notes !== '') {
-            html += '<div class="small text-uppercase text-muted">Orientación</div>';
-            html += '<p class="mb-2" style="white-space:pre-wrap">' + escMotivosHtml(notes) + '</p>';
+            tlShow(root.querySelector('[data-slot="notes-wrap"]'), true);
+            tlSet(root, '[data-field="notes"]', notes);
         }
         if (!answers || !answers.length) {
-            html += '<p class="text-muted mb-0">El paciente aún no completó las preguntas previas.</p>';
+            tlShow(root.querySelector('[data-slot="empty-answers"]'), true);
         } else {
-            html += '<div class="small text-uppercase text-muted">Respuestas del paciente</div>';
-            html += '<dl class="mb-0 mt-2">';
+            var ansWrap = root.querySelector('[data-slot="answers-wrap"]');
+            var ansSlot = root.querySelector('[data-slot="answers"]');
+            tlShow(ansWrap, true);
             answers.forEach(function (a) {
                 if (!a) return;
-                html += '<dt class="fw-semibold">' + escMotivosHtml(a.question || a.id || '') + '</dt>';
-                html += '<dd class="mb-2" style="white-space:pre-wrap">' + escMotivosHtml(a.answer || '') + '</dd>';
+                var row = tlTpl('tpl-tl-intake-answer');
+                if (!row) return;
+                tlSet(row, '[data-field="question"]', a.question || a.id || '');
+                tlSet(row, '[data-field="answer"]', a.answer || '');
+                // template wraps dt/dd in div — append children into dl
+                while (row.firstChild) {
+                    ansSlot.appendChild(row.firstChild);
+                }
             });
-            html += '</dl>';
         }
-        el.innerHTML = html;
+        el.appendChild(root);
     }
 
     function renderCarePackCohorte(cohorte) {
         var section = document.getElementById('tl_care_pack_section');
         var el = document.getElementById('tl_care_pack_cohorte');
         if (!section || !el) return;
+        tlClear(el);
         if (!cohorte || typeof cohorte !== 'object') {
             section.style.display = 'none';
-            el.innerHTML = '';
             return;
         }
         var assistance = cohorte.assistance || {};
@@ -1190,72 +1277,92 @@ endif;
         var notes = assistance.notes_for_staff ? String(assistance.notes_for_staff).trim() : '';
         if (!notes && (!answers || !answers.length)) {
             section.style.display = 'none';
-            el.innerHTML = '';
             return;
         }
         section.style.display = '';
-        var html = '';
+        var root = tlTpl('tpl-tl-care-pack-root');
+        if (!root) return;
         if (cohorte.cohort_key_short) {
-            html += '<div class="small text-muted mb-2">Cohorte ' + escMotivosHtml(cohorte.cohort_key_short) + '</div>';
+            var cohortEl = root.querySelector('[data-slot="cohort"]');
+            tlShow(cohortEl, true);
+            tlSet(root, '[data-field="cohort"]', 'Cohorte ' + cohorte.cohort_key_short);
         }
         var profile = cohorte.cohort_profile || {};
         var profileParts = ['life_stage', 'sexo', 'motive_cluster', 'jurisdiction']
             .map(function (k) { return profile[k] ? String(profile[k]) : ''; })
             .filter(function (v) { return v !== ''; });
         if (profileParts.length) {
-            html += '<div class="mb-2">' + escMotivosHtml(profileParts.join(' · ')) + '</div>';
+            var profileEl = root.querySelector('[data-slot="profile"]');
+            tlShow(profileEl, true);
+            tlSet(root, '[data-field="profile"]', profileParts.join(' · '));
         }
         if (notes !== '') {
-            html += '<div class="small text-uppercase text-muted">Orientación</div>';
-            html += '<p class="mb-2" style="white-space:pre-wrap">' + escMotivosHtml(notes) + '</p>';
+            tlShow(root.querySelector('[data-slot="notes-wrap"]'), true);
+            tlSet(root, '[data-field="notes"]', notes);
         }
         if (answers.length) {
-            html += '<div class="small text-uppercase text-muted">Respuestas del paciente</div><ul class="mb-0">';
+            var aWrap = root.querySelector('[data-slot="answers-wrap"]');
+            var aSlot = root.querySelector('[data-slot="answers"]');
+            tlShow(aWrap, true);
             answers.forEach(function (a) {
-                html += '<li class="mb-2"><strong>' + escMotivosHtml(a.question || a.id || '') + '</strong><br />'
-                    + escMotivosHtml(a.answer || '') + '</li>';
+                var li = tlTpl('tpl-tl-care-pack-answer');
+                if (!li) return;
+                tlSet(li, '[data-field="question"]', a.question || a.id || '');
+                tlSet(li, '[data-field="answer"]', a.answer || '');
+                aSlot.appendChild(li);
             });
-            html += '</ul>';
         } else if (assistance.status === 'submitted') {
-            html += '<p class="text-muted mb-0">Respuestas registradas.</p>';
+            tlShow(root.querySelector('[data-slot="empty-submitted"]'), true);
         } else {
-            html += '<p class="text-muted mb-0">El paciente aún no completó el cuestionario.</p>';
+            tlShow(root.querySelector('[data-slot="empty-pending"]'), true);
         }
         if (assistance.delta_requested) {
-            html += '<p class="mt-2 mb-0"><span class="badge bg-warning text-dark">Requiere adaptación del pack</span></p>';
+            tlShow(root.querySelector('[data-slot="delta"]'), true);
         }
-        el.innerHTML = html;
+        el.appendChild(root);
     }
 
     function renderMotivosPacienteApp(mp) {
         var box = document.getElementById('tl_motivos_consulta_mensajes');
         if (!box) return;
+        tlClear(box);
         var msgs = (mp && mp.messages) ? mp.messages : [];
-        if (!msgs.length) {
-            box.innerHTML = '';
-            return;
-        }
-        var html = '<div class="border rounded p-2 bg-light"><div class="small text-uppercase text-primary fw-bold mb-2">Mensajes del paciente (app)</div><ul class="list-unstyled mb-0">';
-        for (var i = 0; i < msgs.length; i++) {
-            var m = msgs[i];
-            var meta = escMotivosHtml(m.created_at || '');
-            var body = '';
+        if (!msgs.length) return;
+        var wrap = tlTpl('tpl-tl-mensajes-wrap');
+        if (!wrap) return;
+        var list = wrap.querySelector('[data-slot="list"]');
+        msgs.forEach(function (m) {
+            var item = tlTpl('tpl-tl-mensaje-item');
+            if (!item) return;
+            tlSet(item, '[data-field="meta"]', m.created_at || '');
+            var bodySlot = item.querySelector('[data-slot="body"]');
             var t = m.message_type || 'texto';
             if (t === 'texto') {
-                body = '<span style="white-space:pre-wrap">' + escMotivosHtml(m.content || '') + '</span>';
+                var tFrag = tlTpl('tpl-tl-mensaje-texto');
+                if (tFrag) {
+                    tlSet(tFrag, '[data-field="content"]', m.content || '');
+                    bodySlot.appendChild(tFrag);
+                }
             } else if (t === 'imagen') {
-                var u = m.content || '';
-                body = '<img class="tl-motivos-secure-media" data-secure-src="' + escMotivosHtml(u) + '" alt="Imagen adjunta" style="max-width:100%;max-height:220px;border-radius:6px" />';
+                var iFrag = tlTpl('tpl-tl-mensaje-imagen');
+                if (iFrag) {
+                    var img = iFrag.querySelector('[data-field="img"]');
+                    if (img) img.setAttribute('data-secure-src', m.content || '');
+                    bodySlot.appendChild(iFrag);
+                }
             } else if (t === 'audio') {
-                var au = m.content || '';
-                body = '<audio class="tl-motivos-secure-media" controls preload="none" data-secure-src="' + escMotivosHtml(au) + '" style="max-width:100%"></audio>';
+                var aFrag = tlTpl('tpl-tl-mensaje-audio');
+                if (aFrag) {
+                    var au = aFrag.querySelector('[data-field="audio"]');
+                    if (au) au.setAttribute('data-secure-src', m.content || '');
+                    bodySlot.appendChild(aFrag);
+                }
             } else {
-                body = escMotivosHtml(m.content || '');
+                bodySlot.appendChild(document.createTextNode(m.content || ''));
             }
-            html += '<li class="mb-2 pb-2 border-bottom border-light"><div class="small text-muted">' + meta + '</div>' + body + '</li>';
-        }
-        html += '</ul></div>';
-        box.innerHTML = html;
+            list.appendChild(item);
+        });
+        box.appendChild(wrap);
         hydrateSecureTimelineMedia(box);
     }
 
@@ -1293,21 +1400,25 @@ endif;
         var section = document.getElementById('tl_documentacion_medico_section');
         var el = document.getElementById('tl_documentacion_medico');
         if (!section || !el) return;
+        tlClear(el);
         if (!doc || !doc.tiene_datos || !doc.secciones || !doc.secciones.length) {
             section.style.display = 'none';
-            el.innerHTML = '';
             return;
         }
         section.style.display = '';
-        var html = '';
         doc.secciones.forEach(function (sec) {
-            html += '<div class="mb-3"><div class="fw-semibold">' + escMotivosHtml(sec.titulo || '') + '</div><ul class="mb-0">';
+            var secFrag = tlTpl('tpl-tl-doc-section');
+            if (!secFrag) return;
+            tlSet(secFrag, '[data-field="titulo"]', sec.titulo || '');
+            var itemsSlot = secFrag.querySelector('[data-slot="items"]');
             (sec.items || []).forEach(function (item) {
-                html += '<li style="white-space:pre-wrap">' + escMotivosHtml(item) + '</li>';
+                var li = tlTpl('tpl-tl-doc-item');
+                if (!li) return;
+                tlSet(li, '[data-field="text"]', item);
+                itemsSlot.appendChild(li);
             });
-            html += '</ul></div>';
+            el.appendChild(secFrag);
         });
-        el.innerHTML = html;
     }
 
     function applyStaffConsultaSoloLectura(data) {
@@ -1321,13 +1432,15 @@ endif;
         renderCarePackCohorte(data.care_pack_cohorte || null);
         renderDocumentacionMedico(data.documentacion_medico || null);
         var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
-        if (boxMsgs) boxMsgs.innerHTML = '';
+        tlClear(boxMsgs);
         var signos = document.getElementById('signos-vitales-actuales-content');
         if (signos) {
-            signos.innerHTML = '<span class="text-muted">Consulta en solo lectura</span>';
+            tlClear(signos);
+            var solo = tlTpl('tpl-tl-solo-lectura');
+            if (solo) signos.appendChild(solo);
         }
         var formBox = document.getElementById('formulario-container');
-        if (formBox) formBox.innerHTML = '';
+        tlClear(formBox);
         var loadingEl = document.getElementById('loading-container');
         if (loadingEl) loadingEl.style.display = 'none';
     }
@@ -1411,7 +1524,7 @@ endif;
             }
             renderDocumentacionMedico(null);
             var boxMsgs = document.getElementById('tl_motivos_consulta_mensajes');
-            if (boxMsgs) boxMsgs.innerHTML = '';
+            tlClear(boxMsgs);
             if (!esEpisodio && window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(payload.data.signos_vitales || null);
             }
@@ -1419,9 +1532,7 @@ endif;
             var captura = payload.data.captura || {};
             var formBox = document.getElementById('formulario-container');
             if (captura.permitida === false) {
-                if (formBox) {
-                    formBox.innerHTML = '';
-                }
+                tlClear(formBox);
                 var loadingEl = document.getElementById('loading-container');
                 if (loadingEl) {
                     loadingEl.style.display = 'none';
@@ -1439,15 +1550,15 @@ endif;
             renderCarePackCohorte(null);
             renderDocumentacionMedico(null);
             var boxMsgsErr = document.getElementById('tl_motivos_consulta_mensajes');
-            if (boxMsgsErr) boxMsgsErr.innerHTML = '';
+            tlClear(boxMsgsErr);
             if (window.TimelineJS && typeof window.TimelineJS.applySignosVitalesPayload === 'function') {
                 window.TimelineJS.applySignosVitalesPayload(null);
             }
             var formBoxErr = document.getElementById('formulario-container');
             if (formBoxErr && timelineConfig.vistaConsultaCargada) {
-                formBoxErr.innerHTML = '<div class="alert alert-warning mb-0">' +
-                    (e && e.message ? String(e.message) : 'No se pudo cargar la consulta.') +
-                    '</div>';
+                tlClear(formBoxErr);
+                var errAlert = tlAlert(e && e.message ? String(e.message) : 'No se pudo cargar la consulta.', 'warning');
+                if (errAlert) formBoxErr.appendChild(errAlert);
             }
             var loadingErr = document.getElementById('loading-container');
             if (loadingErr) loadingErr.style.display = 'none';

@@ -100,11 +100,11 @@ if (!empty($esContextoGuardia)) {
 <div id="tl_episodio_banner" class="mb-3" hidden data-episodio-tipo="<?= Html::encode($esContextoGuardia ? 'GUARDIA' : 'INTERNACION') ?>">
     <div class="sticky-top rounded shadow-sm p-3 border-start border-4 <?= Html::encode($episodioBannerAccent) ?>">
         <div class="d-flex flex-wrap align-items-center gap-2 mb-2" id="tl_episodio_triage" hidden>
-            <span class="badge text-bg-secondary" id="tl_episodio_triage_badge"></span>
+            <span class="badge" id="tl_episodio_triage_badge"></span>
             <span class="text-muted small" id="tl_episodio_triage_meta"></span>
         </div>
         <div class="row g-2">
-            <div class="col-12">
+            <div class="col-sm-6">
                 <span class="small text-uppercase text-muted fw-semibold d-block">Episodio</span>
                 <span class="fw-semibold d-block" id="tl_episodio_titulo">Cargando…</span>
             </div>
@@ -112,7 +112,7 @@ if (!empty($esContextoGuardia)) {
                 <span class="small text-uppercase text-muted fw-semibold d-block">Estado</span>
                 <span class="fw-semibold d-block" id="tl_episodio_estado">—</span>
             </div>
-            <div class="col-sm-6">
+            <div class="col-12">
                 <span class="small text-uppercase text-muted fw-semibold d-block">Motivo / ingreso</span>
                 <span class="fw-semibold d-block" id="tl_episodio_motivo">—</span>
             </div>
@@ -505,15 +505,17 @@ endif;
         if (triageWrap && triageBadge) {
             if (triage && triage.level != null) {
                 triageWrap.hidden = false;
-                var color = triage.level_color || '#6c757d';
-                triageBadge.style.backgroundColor = color;
-                triageBadge.style.color = '#fff';
+                var level = parseInt(triage.level, 10);
+                var levelClass = (level >= 1 && level <= 5)
+                    ? ('guardia-triage-badge--' + level)
+                    : 'guardia-triage-badge--none';
+                triageBadge.className = 'badge ' + levelClass;
+                triageBadge.style.backgroundColor = '';
+                triageBadge.style.color = '';
                 triageBadge.textContent = (triage.level_label || ('Nivel ' + triage.level));
                 if (triageMeta) {
-                    var metaParts = [];
-                    if (triage.scale) metaParts.push(String(triage.scale));
-                    if (triage.triaged_at) metaParts.push(formatEpisodioFecha(String(triage.triaged_at)));
-                    triageMeta.textContent = metaParts.join(' · ');
+                    triageMeta.textContent = triage.scale ? String(triage.scale) : '';
+                    triageMeta.hidden = !triageMeta.textContent;
                 }
             } else {
                 triageWrap.hidden = true;

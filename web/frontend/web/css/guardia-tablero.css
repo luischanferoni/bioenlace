@@ -29,6 +29,32 @@
 .guardia-tablero-row--nivel-5 { border-left-color: var(--manchester-5) !important; }
 .guardia-tablero-row--sin-triage { border-left-color: var(--manchester-none) !important; }
 
+/* Badge sólido de triage (banner HC / resumen) */
+.badge.guardia-triage-badge--1 {
+  background-color: var(--manchester-1);
+  color: #fff;
+}
+.badge.guardia-triage-badge--2 {
+  background-color: var(--manchester-2);
+  color: #fff;
+}
+.badge.guardia-triage-badge--3 {
+  background-color: var(--manchester-3);
+  color: var(--manchester-3-fg);
+}
+.badge.guardia-triage-badge--4 {
+  background-color: var(--manchester-4);
+  color: #fff;
+}
+.badge.guardia-triage-badge--5 {
+  background-color: var(--manchester-5);
+  color: #fff;
+}
+.badge.guardia-triage-badge--none {
+  background-color: var(--manchester-none);
+  color: #212529;
+}
+
 .guardia-triage-level--1,
 .spa-ui-chip-btn[data-field="level"][data-value="1"] {
   color: var(--manchester-1);

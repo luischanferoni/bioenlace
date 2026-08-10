@@ -2246,7 +2246,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _snack('No se puede guardar: el análisis tiene errores de sistema.', UiIntent.warning);
       return;
     }
-    if (!review.puedeConfirmar) {
+    if (review.episodeNoteDuplicate) {
       _snack(
         review.datosFaltantesMensaje?.trim().isNotEmpty == true
             ? review.datosFaltantesMensaje!
@@ -2797,7 +2797,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
         ],
         if (review.datosFaltantesMensaje != null &&
             review.datosFaltantesMensaje!.trim().isNotEmpty &&
-            !review.puedeConfirmar &&
+            review.episodeNoteDuplicate &&
             review.advisories.isEmpty) ...[
           BioSpacing.gapH(BioSpacing.sm),
           BioAlert.danger(message: review.datosFaltantesMensaje!),
@@ -3106,7 +3106,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final canConfirm = !_isSaving &&
         review != null &&
         review.systemError == null &&
-        review.puedeConfirmar &&
+        !review.episodeNoteDuplicate &&
         review.textoOriginal.trim().isNotEmpty &&
         !(review.hasClinicalItems && _stagedItemIds.isEmpty) &&
         _allStagedIssuesResolved(review);

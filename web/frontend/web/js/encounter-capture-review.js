@@ -138,8 +138,18 @@
         if (review.system_error) {
             return false;
         }
-        if (review.puede_confirmar === false) {
+        // puede_confirmar=false del análisis incluye issues incompletos (el cliente los
+        // resuelve). Solo bloquear de forma permanente si es nota casi idéntica.
+        var detalle = review.datos_faltantes_detalle;
+        if (detalle && detalle.episode_note_duplicate === true) {
             return false;
+        }
+        if (Array.isArray(review.advisories)) {
+            for (var a = 0; a < review.advisories.length; a++) {
+                if (review.advisories[a] && review.advisories[a].code === 'episode_note_duplicate') {
+                    return false;
+                }
+            }
         }
         var texto = (review.texto_original || '').trim();
         if (!texto) {

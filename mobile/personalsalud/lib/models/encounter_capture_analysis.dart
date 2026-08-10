@@ -14,6 +14,7 @@ class EncounterCaptureAnalysis {
     this.issues = const [],
     this.openProblems,
     this.advisories = const [],
+    this.episodeNoteDuplicate = false,
   });
 
   final String textoOriginal;
@@ -33,6 +34,8 @@ class EncounterCaptureAnalysis {
   final EncounterOpenProblems? openProblems;
   /// Avisos soft del dominio (p. ej. ítems ya activos / nota casi idéntica).
   final List<EncounterCaptureAdvisory> advisories;
+  /// Nota casi idéntica a una evolución previa: bloqueo hard hasta reeditar texto.
+  final bool episodeNoteDuplicate;
 
   bool get hasUnresolvedIssues => issues.isNotEmpty;
   bool get hasOpenProblems =>
@@ -74,7 +77,7 @@ class EncounterCaptureAnalysis {
 
   bool get canConfirmSave {
     if (systemError != null) return false;
-    if (!puedeConfirmar) return false;
+    if (episodeNoteDuplicate) return false;
     if (textoOriginal.trim().isEmpty) return false;
     return true;
   }
@@ -139,6 +142,10 @@ class EncounterCaptureAnalysis {
     final issues = _parseIssues(review['issues'] ??
         (detalle is Map ? detalle['issues'] : null));
 
+    final advisories = _parseAdvisories(review['advisories']);
+    final noteDup = (detalle is Map && detalle['episode_note_duplicate'] == true) ||
+        advisories.any((a) => a.code == 'episode_note_duplicate');
+
     return EncounterCaptureAnalysis(
       textoOriginal: (review['texto_original'] ?? '').toString(),
       textoProcesado: review['texto_procesado']?.toString(),
@@ -152,7 +159,8 @@ class EncounterCaptureAnalysis {
       missingCategories: missingCategories,
       issues: issues,
       openProblems: EncounterOpenProblems.fromJson(review['open_problems']),
-      advisories: _parseAdvisories(review['advisories']),
+      advisories: advisories,
+      episodeNoteDuplicate: noteDup,
     );
   }
 
@@ -238,6 +246,10 @@ class EncounterCaptureAnalysis {
     final issues = _parseIssues(res['issues'] ??
         (detalle is Map ? detalle['issues'] : null));
 
+    final advisories = _parseAdvisories(res['advisories']);
+    final noteDup = (detalle is Map && detalle['episode_note_duplicate'] == true) ||
+        advisories.any((a) => a.code == 'episode_note_duplicate');
+
     return EncounterCaptureAnalysis(
       textoOriginal: (res['texto_original'] ?? '').toString(),
       textoProcesado: res['texto_procesado']?.toString(),
@@ -251,7 +263,8 @@ class EncounterCaptureAnalysis {
       missingCategories: missingCategories,
       issues: issues,
       openProblems: EncounterOpenProblems.fromJson(res['open_problems']),
-      advisories: _parseAdvisories(res['advisories']),
+      advisories: advisories,
+      episodeNoteDuplicate: noteDup,
     );
   }
 

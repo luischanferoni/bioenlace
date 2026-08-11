@@ -175,6 +175,20 @@ class ClinicalCaptureIssueResolutionTest extends Unit
         $this->assertSame('Medicación::1:Cantidad', $out['issues'][0]['id']);
     }
 
+    public function testExtraidosForSaveEmptyStagedIsNoteOnly(): void
+    {
+        $applier = new ClinicalCaptureResolutionApplier();
+        $working = [
+            'Medicación' => [
+                ['Nombre del medicamento' => 'paracetamol', 'Tipo' => 'ordered'],
+            ],
+        ];
+        $this->assertSame([], $applier->extraidosForSave($working, [], []));
+        $this->assertSame($working, $applier->extraidosForSave($working, null, []));
+        $filtered = $applier->extraidosForSave($working, ['Medicación::0'], []);
+        $this->assertCount(1, $filtered['Medicación']);
+    }
+
     public function testBalanceCantidadBuildsAllowCustomIssue(): void
     {
         $input = \common\models\Clinical\Input\BalanceHidricoInput::fromExtractedRow([

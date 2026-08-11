@@ -435,6 +435,189 @@ final class EpisodeCaptureDedupService
     }
 
     /**
+     * Quita filas que el persist ya salta (condición/med/indicación activa en el episodio).
+     * Así la completitud no exige frecuencia/plazo de ítems destildados «ya activos».
+     *
+     * @param array<string, mixed> $extraidos
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    public function dropAlreadyActiveRows(
+        array $extraidos,
+        array $categorias,
+        string $parent,
+        int $parentId,
+        int $subjectPersonaId
+    ): array {
+        $parent = strtoupper(trim($parent));
+        if (
+            $extraidos === []
+            || $parentId <= 0
+            || $subjectPersonaId <= 0
+            || !in_array($parent, [Encounter::PARENT_INTERNACION, Encounter::PARENT_GUARDIA], true)
+        ) {
+            return $extraidos;
+        }
+        $encounterIds = $this->listEpisodeEncounterIds($parent, $parentId, $subjectPersonaId);
+        if ($encounterIds === []) {
+            return $extraidos;
+        }
+
+        $presentation = new ConditionPresentationService();
+        $activeMedKeys = $this->activeMedicationKeys($encounterIds);
+        $activeIndicationKeys = $this->activeIndicationKeys($encounterIds);
+        $out = $extraidos;
+
+        foreach ($categorias as $cat) {
+            if (!is_array($cat)) {
+                continue;
+            }
+            $title = trim((string) ($cat['titulo'] ?? $cat['title'] ?? ''));
+            $model = (string) ($cat['modelo'] ?? $cat['model'] ?? '');
+            $titleLower = mb_strtolower($title, 'UTF-8');
+            $key = $this->resolveExtraidosKey($out, $title, $model);
+            if ($key === null) {
+                continue;
+            }
+            $rows = $this->normalizeExtractedRows($out[$key] ?? null);
+            $kept = [];
+            foreach ($rows as $row) {
+                if ($this->extractedRowIsAlreadyActive(
+                    $row,
+                    $model,
+                    $titleLower,
+                    $subjectPersonaId,
+                    $encounterIds,
+                    $presentation,
+                    $activeMedKeys,
+                    $activeIndicationKeys
+                )) {
+                    continue;
+                }
+                $kept[] = $row;
+            }
+            if ($kept === []) {
+                unset($out[$key]);
+            } else {
+                $out[$key] = $kept;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $extraidos
+     */
+    private function resolveExtraidosKey(array $extraidos, string $title, string $modelo): ?string
+    {
+        foreach ([$title, $modelo] as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate !== '' && array_key_exists($candidate, $extraidos)) {
+                return $candidate;
+            }
+        }
+        $want = [];
+        foreach ([$title, $modelo] as $candidate) {
+            $candidate = trim($candidate);
+            if ($candidate !== '') {
+                $want[$this->normalizeKey($candidate)] = true;
+            }
+        }
+        if ($want === []) {
+            return null;
+        }
+        foreach ($extraidos as $k => $_) {
+            if (is_string($k) && isset($want[$this->normalizeKey($k)])) {
+                return $k;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param mixed $raw
+     * @return list<mixed>
+     */
+    private function normalizeExtractedRows($raw): array
+    {
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+        if (is_string($raw)) {
+            return trim($raw) !== '' ? [trim($raw)] : [];
+        }
+        if (!is_array($raw) || $raw === []) {
+            return [];
+        }
+        $i = 0;
+        foreach (array_keys($raw) as $k) {
+            if ($k !== $i) {
+                return [$raw];
+            }
+            $i++;
+        }
+
+        return array_values($raw);
+    }
+
+    /**
+     * @param mixed $row
+     * @param array<string, true> $activeMedKeys
+     * @param array<string, true> $activeIndicationKeys
+     */
+    private function extractedRowIsAlreadyActive(
+        $row,
+        string $model,
+        string $titleLower,
+        int $subjectPersonaId,
+        array $encounterIds,
+        ConditionPresentationService $presentation,
+        array $activeMedKeys,
+        array $activeIndicationKeys
+    ): bool {
+        $payload = is_array($row) ? $row : ['texto' => is_string($row) ? $row : ''];
+        if ($this->isConditionCategory($model, $titleLower)) {
+            $label = (string) (
+                $payload['termino']
+                ?? $payload['texto']
+                ?? $payload['descripcion']
+                ?? $payload['display']
+                ?? ''
+            );
+            $code = (string) ($payload['codigo'] ?? $payload['codigo_cie10'] ?? '');
+            $key = $presentation->dedupeKeyForLabel($label, $code);
+            return $key !== '' && $this->hasActiveConditionKey($subjectPersonaId, $encounterIds, $key);
+        }
+        if ($this->isMedicationCategory($model, $titleLower)) {
+            $display = (string) (
+                $payload['Nombre del medicamento']
+                ?? $payload['medication_display']
+                ?? $payload['display']
+                ?? $payload['texto']
+                ?? ''
+            );
+            $key = $this->normalizeKey($display);
+            return $key !== '' && isset($activeMedKeys[$key]);
+        }
+        if ($this->isIndicationCategory($model, $titleLower)) {
+            $ind = (string) (
+                $payload['Indicacion']
+                ?? $payload['indicacion']
+                ?? $payload['display']
+                ?? $payload['texto']
+                ?? ''
+            );
+            $tipo = (string) ($payload['Tipo'] ?? $payload['tipo'] ?? '');
+            $key = $this->normalizeKey($ind . '|' . $tipo);
+            return $key !== '' && isset($activeIndicationKeys[$key]);
+        }
+
+        return false;
+    }
+
+    /**
      * @param list<int> $encounterIds
      * @return array<string, true>
      */

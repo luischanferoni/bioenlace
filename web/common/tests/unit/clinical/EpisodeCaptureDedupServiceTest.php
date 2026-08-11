@@ -107,4 +107,21 @@ class EpisodeCaptureDedupServiceTest extends Unit
         $this->assertFalse($svc->hasActiveMedicationDisplay([], 'amoxicilina'));
         $this->assertFalse($svc->hasActiveConditionKey(0, [1], 'neumonia'));
     }
+
+    public function testDropAlreadyActiveRowsNoOpOutsideEpisode(): void
+    {
+        $svc = new EpisodeCaptureDedupService();
+        $extraidos = [
+            'Medicación' => [
+                ['Nombre del medicamento' => 'paracetamol'],
+            ],
+        ];
+        $categorias = [
+            ['titulo' => 'Medicación', 'modelo' => 'ConsultaMedicamentos'],
+        ];
+        $out = $svc->dropAlreadyActiveRows($extraidos, $categorias, Encounter::PARENT_TURNO, 1, 1);
+        $this->assertSame($extraidos, $out);
+        $out = $svc->dropAlreadyActiveRows($extraidos, $categorias, Encounter::PARENT_INTERNACION, 0, 1);
+        $this->assertSame($extraidos, $out);
+    }
 }

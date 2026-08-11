@@ -10,6 +10,7 @@ use common\components\Domain\Clinical\Service\CarePlanService;
 use common\components\Domain\Clinical\Service\ConditionLifecycleService;
 use common\components\Domain\Clinical\Service\EncounterAutomaticCodingService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Service\EpisodeCaptureDedupService;
 use common\components\Domain\Clinical\Service\MedicationRequestService;
 use common\components\Domain\Clinical\Service\ServiceRequestService;
 use common\components\Domain\Clinical\Service\TreatmentRequestSnomedCodingService;
@@ -234,8 +235,13 @@ class EncounterDocumentationService extends Component
                 $working = $applier->apply($working, $resolutions, $categorias);
             }
 
+            $stagedExplicit = array_key_exists('staged_item_ids', $body)
+                || array_key_exists('stagedItemIds', $body);
             $stagedIndexMap = [];
-            if ($stagedItemIds !== []) {
+            if ($stagedExplicit && $stagedItemIds === []) {
+                // Destildó todo (p. ej. ya activo en el episodio): solo se guarda la nota.
+                $datosExtraidos = [];
+            } elseif ($stagedItemIds !== []) {
                 $stagedIndexMap = $applier->stagedIndexMap($stagedItemIds);
                 $datosExtraidos = $applier->filterByStagedItemIds($working, $stagedItemIds, $categorias);
             } else {
@@ -293,6 +299,19 @@ class EncounterDocumentationService extends Component
             }
 
             $categorias = EncounterDefinition::getCategoriasParaPrompt($configuracion);
+            $parentKeyEarly = strtoupper(trim((string) ($body['parent'] ?? '')));
+            $parentIdEarly = (int) ($body['parent_id'] ?? 0);
+            if ($datosExtraidos !== [] && $parentIdEarly > 0 && (int) $idPersona > 0) {
+                $datosExtraidos = (new EpisodeCaptureDedupService())
+                    ->dropAlreadyActiveRows(
+                        $datosExtraidos,
+                        $categorias,
+                        $parentKeyEarly,
+                        $parentIdEarly,
+                        (int) $idPersona
+                    );
+                $body['datosExtraidos'] = $datosExtraidos;
+            }
             $completeness = (new EncounterCaptureCompletenessValidator())->validate(
                 $datosExtraidos,
                 $categorias

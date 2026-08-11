@@ -77,6 +77,27 @@ final class ClinicalCaptureResolutionApplier
     }
 
     /**
+     * Extraídos a persistir / validar: staged vacío explícito = solo nota (sin filas).
+     * Sin clave staged (legacy) = se usa el working completo.
+     *
+     * @param array<string, mixed> $working
+     * @param list<string>|null $stagedItemIds null = clave ausente
+     * @param list<array<string, mixed>> $categorias
+     * @return array<string, mixed>
+     */
+    public function extraidosForSave(array $working, ?array $stagedItemIds, array $categorias = []): array
+    {
+        if ($stagedItemIds === null) {
+            return $working;
+        }
+        if ($stagedItemIds === []) {
+            return [];
+        }
+
+        return $this->filterByStagedItemIds($working, $stagedItemIds, $categorias);
+    }
+
+    /**
      * Reescribe incomplete_items / issues a índices originales del capture_review.
      *
      * @param array<string, mixed> $completeness

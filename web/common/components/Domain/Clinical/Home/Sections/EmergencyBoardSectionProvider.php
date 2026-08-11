@@ -45,10 +45,15 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
                 )
                 : null;
 
+            $caps = new GuardiaBoardCapabilityService();
+
             return [
                 'items' => [],
                 'requires_cobertura' => true,
-                'puede_triage' => (new GuardiaBoardCapabilityService())->canTriage(),
+                'puede_triage' => $caps->canTriage(),
+                'puede_ingresar' => $caps->canIngresar(),
+                'puede_atender' => $caps->canAtender(),
+                'puede_documentar' => $caps->canDocumentar(),
                 'empty_message' => ProfesionalCoberturaActivaService::mensajeSinCoberturaParaSesion(
                     Encounter::ENCOUNTER_CLASS_EMER,
                     ['proxima_inicio' => $proxima]
@@ -57,10 +62,14 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
         }
 
         $tablero = (new GuardiaQueueService())->tablero($idEfector, ['solo_activos' => true]);
+        $caps = new GuardiaBoardCapabilityService();
 
         return [
             'items' => is_array($tablero['items'] ?? null) ? $tablero['items'] : [],
-            'puede_triage' => (new GuardiaBoardCapabilityService())->canTriage(),
+            'puede_triage' => $caps->canTriage(),
+            'puede_ingresar' => $caps->canIngresar(),
+            'puede_atender' => $caps->canAtender(),
+            'puede_documentar' => $caps->canDocumentar(),
         ];
     }
 }

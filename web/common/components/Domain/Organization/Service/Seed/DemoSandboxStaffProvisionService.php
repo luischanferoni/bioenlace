@@ -16,7 +16,7 @@ use Yii;
 /**
  * Provisiona un médico efímero (Persona+User+PES+agenda) en el efector demo.
  *
- * Identidades reservadas: documento 38xxxxxx, username demo_m_*.
+ * Identidades reservadas: documento 38xxxxxx, username demo_m_* / demo_e_* / demo_a_*.
  */
 final class DemoSandboxStaffProvisionService
 {

@@ -6,7 +6,7 @@ Programa operativo de **triage + tablero** en efectores con `encounterClass = EM
 
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
-| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) y app Personal de Salud | Tablero: **primer triage** (web y app; `puede_triage` en `home/panel`), **Ingresar cama** (si hay pedido pendiente), indicadores. Puede registrar **Paciente se retiró** mientras el episodio sea operable. |
+| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) y app Personal de Salud | Tablero: **Ingresar paciente** (solo admisión: `ingreso_roles` / `puede_ingresar`), **primer triage** (web y app; `puede_triage`), **Nota** de encounter sin tomar el caso (`documentar_roles` / `puede_documentar`, enfermería), **Ingresar cama** (si hay pedido pendiente), indicadores. Puede registrar **Paciente se retiró** mientras el episodio sea operable. **No** llama `iniciar-atencion`. |
 | Médico guardia | Web inicio EMER + app Personal de Salud | Tablero: **Atender** → captura del encounter (requiere triage). Conducta (alta, internación, derivación) **en la captura**. Tras documentar → **Ver consulta** (lectura). **Paciente se retiró** solo si aún está en atención (sin documentación de cierre). Triage del médico: solo en HC. |
 | Dirección / calidad | Web inicio + job nocturno | Resumen en vivo; histórico en `guardia_metrics_daily` |
 
@@ -16,10 +16,12 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 
 | Capacidad | Quién | Dónde |
 |-----------|-------|--------|
+| Ingreso a guardia | Administrativo / AdminEfector (`ingreso_roles` del manifiesto) | Tablero web y app Personal de Salud (`POST …/ingresar`) |
 | Primer triage | Staff (`triage_roles` del manifiesto) | Tablero web y app Personal de Salud (`espera_triage`) |
 | Editar / actualizar triage | Médico (y staff con HC abierta) | Historia clínica del episodio (`editar_triage` en banner). **No** en el tablero |
 | Tomar caso | — (eliminado) | `iniciar-atencion` asigna el PES de sesión si falta |
-| Atender | Médico | Tablero → captura clínica (requiere triage previo; episodio no `atendido`/`derivado`/`finalizado`) |
+| Atender | Médico (`atender_roles`) | Tablero → `POST …/iniciar-atencion` (toma el caso) → captura. Requiere triage; episodio no cerrado |
+| Nota (sin tomar el caso) | Enfermería (`documentar_roles`) | Tablero → HC `parent=GUARDIA` **sin** `iniciar-atencion` |
 | Ver consulta | Médico / staff | Tablero cuando `circuito_estado = atendido` (o `derivado` con encounter): lectura como AMB (`/paciente/ver-consulta?encounter_id=…`) |
 | Signos vitales | Staff en triage (opc.); médico en atención | Captura EMER; cards del timeline solo lectura |
 | Derivar / alta / pedir internación | Médico | **Captura del encounter** (`EncounterDefinition` EMER). El sistema deduce y mueve el circuito |
@@ -57,7 +59,8 @@ Base: `/api/v1/clinical/emergency-guardia`
 
 | Acción | Método | Notas |
 |--------|--------|-------|
-| Panel inicio (tablero) | `GET /api/v1/home/panel` | Sección `emergency_board` (+ `emergency_indicators`) |
+| Panel inicio (tablero) | `GET /api/v1/home/panel` | Sección `emergency_board` (+ `emergency_indicators`); flags `puede_triage` / `puede_ingresar` / `puede_atender` / `puede_documentar` |
+| Ingreso | `POST …/ingresar` | Admisión: `id_persona`, `ingresa_en`, `ingresa_con`. UI: `ingresar-formulario` / `buscar-persona-ingreso` |
 | Triage | `POST …/{id}/registrar-triage` | Manchester 1–5 + motivo + vitales opcionales (staff) |
 | Asignar | `POST …/{id}/asignar` | Uso interno / legado; el flujo médico usa `iniciar-atencion` |
 | Atender | `POST …/{id}/iniciar-atencion` | Asigna PES de sesión si falta; devuelve `captura_url` |

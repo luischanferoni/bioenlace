@@ -115,6 +115,14 @@
     </div>
 </template>
 
+<template id="tpl-guardia-board-toolbar">
+    <div class="d-flex justify-content-end mb-3" data-role="guardia-toolbar">
+        <button type="button" class="btn btn-primary btn-sm d-none" data-role="cta-ingresar-guardia">
+            <i class="bi bi-person-plus me-1"></i>Ingresar paciente
+        </button>
+    </div>
+</template>
+
 <template id="tpl-pacientes-guardias-wrap">
     <div class="card" data-role="guardias-wrap">
         <div class="card-body p-0" data-slot="guardias-rows"></div>
@@ -138,7 +146,8 @@
             </div>
         </div>
         <div class="d-flex flex-column gap-1 ms-2 align-items-stretch" style="min-width: 7.5rem;">
-            <a class="btn btn-dark btn-sm" href="#" data-role="cta-atender" data-spa-nav="1">Atender</a>
+            <a class="btn btn-dark btn-sm d-none" href="#" data-role="cta-atender" data-spa-nav="1">Atender</a>
+            <a class="btn btn-outline-dark btn-sm d-none" href="#" data-role="cta-documentar" data-spa-nav="1">Nota</a>
             <a class="btn btn-outline-dark btn-sm d-none" href="#" data-role="cta-ver-consulta" data-spa-nav="1">Ver consulta</a>
             <button type="button" class="btn btn-outline-primary btn-sm d-none" data-role="cta-triage">Triage</button>
             <button type="button" class="btn btn-outline-success btn-sm d-none" data-role="cta-tomar">Tomar caso</button>

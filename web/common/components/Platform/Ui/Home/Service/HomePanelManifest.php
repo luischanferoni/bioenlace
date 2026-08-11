@@ -156,8 +156,46 @@ final class HomePanelManifest
      */
     public function emergencyTriageRoles(): array
     {
+        return $this->emergencyCapabilityRoles('triage_roles');
+    }
+
+    /**
+     * Roles autorizados a ingresar pacientes al tablero EMER (UI).
+     *
+     * @return list<string>
+     */
+    public function emergencyIngresoRoles(): array
+    {
+        return $this->emergencyCapabilityRoles('ingreso_roles');
+    }
+
+    /**
+     * Roles que pueden **Atender** (iniciar-atencion) en el tablero EMER.
+     *
+     * @return list<string>
+     */
+    public function emergencyAtenderRoles(): array
+    {
+        return $this->emergencyCapabilityRoles('atender_roles');
+    }
+
+    /**
+     * Roles que pueden abrir la nota del encounter sin tomar el caso.
+     *
+     * @return list<string>
+     */
+    public function emergencyDocumentarRoles(): array
+    {
+        return $this->emergencyCapabilityRoles('documentar_roles');
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function emergencyCapabilityRoles(string $key): array
+    {
         $manifest = $this->load();
-        $raw = $manifest['panels']['staff']['EMER']['capabilities']['triage_roles'] ?? [];
+        $raw = $manifest['panels']['staff']['EMER']['capabilities'][$key] ?? [];
         if (!is_array($raw)) {
             return [];
         }

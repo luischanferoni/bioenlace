@@ -2,6 +2,7 @@
 
 namespace common\models\Platform;
 
+use common\models\Clinical\Encounter;
 use yii\db\ActiveRecord;
 
 /**
@@ -24,6 +25,7 @@ class DemoSandboxAccess extends ActiveRecord
 {
     public const ROLE_STAFF = 'staff';
     public const ROLE_ENFERMERIA = 'enfermeria';
+    public const ROLE_ADMINISTRATIVO = 'administrativo';
     public const ROLE_PACIENTE = 'paciente';
 
     public static function tableName(): string
@@ -36,12 +38,67 @@ class DemoSandboxAccess extends ActiveRecord
      */
     public static function roleValues(): array
     {
-        return [self::ROLE_STAFF, self::ROLE_ENFERMERIA, self::ROLE_PACIENTE];
+        return [
+            self::ROLE_STAFF,
+            self::ROLE_ENFERMERIA,
+            self::ROLE_ADMINISTRATIVO,
+            self::ROLE_PACIENTE,
+        ];
     }
 
     public static function isEphemeralStaffRole(string $role): bool
     {
-        return $role === self::ROLE_STAFF || $role === self::ROLE_ENFERMERIA;
+        return $role === self::ROLE_STAFF
+            || $role === self::ROLE_ENFERMERIA
+            || $role === self::ROLE_ADMINISTRATIVO;
+    }
+
+    /**
+     * @return 'medico'|'enfermeria'|'administrativo'
+     */
+    public static function staffKindForRole(string $role): string
+    {
+        if ($role === self::ROLE_ENFERMERIA) {
+            return 'enfermeria';
+        }
+        if ($role === self::ROLE_ADMINISTRATIVO) {
+            return 'administrativo';
+        }
+
+        return 'medico';
+    }
+
+    public static function roleForStaffKind(string $staffKind): string
+    {
+        if ($staffKind === 'enfermeria') {
+            return self::ROLE_ENFERMERIA;
+        }
+        if ($staffKind === 'administrativo') {
+            return self::ROLE_ADMINISTRATIVO;
+        }
+
+        return self::ROLE_STAFF;
+    }
+
+    public static function usernamePrefixForStaffKind(string $staffKind): string
+    {
+        if ($staffKind === 'enfermeria') {
+            return 'demo_e_';
+        }
+        if ($staffKind === 'administrativo') {
+            return 'demo_a_';
+        }
+
+        return 'demo_m_';
+    }
+
+    public static function defaultEncounterClassForRole(string $role): string
+    {
+        if ($role === self::ROLE_ENFERMERIA || $role === self::ROLE_ADMINISTRATIVO) {
+            return Encounter::ENCOUNTER_CLASS_EMER;
+        }
+
+        return Encounter::ENCOUNTER_CLASS_AMB;
     }
 
     public function rules(): array

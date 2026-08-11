@@ -17,6 +17,7 @@ use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Efector;
 use common\models\Person\Persona;
+use common\models\Platform\DemoSandboxAccess;
 use common\models\Platform\DemoSandboxSession;
 use frontend\components\WebApiJwtSessionService;
 use common\models\ProfesionalEfectorServicio;
@@ -455,7 +456,9 @@ class SiteController extends Controller
                         $established = (new SesionOperativaService())->establecer([
                             'efector_id' => (int) $demoSession->id_efector,
                             'servicio_id' => (int) $demoSession->id_servicio,
-                            'encounter_class' => Encounter::ENCOUNTER_CLASS_AMB,
+                            'encounter_class' => DemoSandboxAccess::defaultEncounterClassForRole(
+                                (string) $demoSession->role
+                            ),
                         ]);
                         if (!empty($established['context_token'])) {
                             WebApiJwtSessionService::storeRawToken((string) $established['context_token']);
@@ -569,7 +572,9 @@ class SiteController extends Controller
         Yii::$app->user->setNombreEfector($nombre);
         Yii::$app->user->setIdProfesionalEfectorServicio($idPes);
         Yii::$app->user->setServicioActual($idServicio);
-        Yii::$app->user->setEncounterClass(Encounter::ENCOUNTER_CLASS_AMB);
+        Yii::$app->user->setEncounterClass(
+            DemoSandboxAccess::defaultEncounterClassForRole((string) $demoSession->role)
+        );
 
         $pesEnEfector = ProfesionalEfectorServicio::find()
             ->where([

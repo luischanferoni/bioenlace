@@ -44,6 +44,10 @@ return [
     //             'label' => 'Enfermería demo (guardia e internación)',
     //             'mode' => 'ephemeral',
     //         ],
+    //         'administrativo' => [
+    //             'label' => 'Administrativo demo (ingreso a guardia)',
+    //             'mode' => 'ephemeral',
+    //         ],
     //     ],
     // ],
 

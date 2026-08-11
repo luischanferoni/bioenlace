@@ -3,7 +3,6 @@
 namespace common\components\Platform\Core\Auth;
 
 use common\components\Platform\Core\Auth\DemoSandboxCaptchaService;
-use common\models\Clinical\Encounter;
 use common\models\Clinical\EncounterDefinition;
 use common\models\Efector;
 use common\models\Person\Persona;
@@ -160,7 +159,7 @@ final class DemoSandboxAccessService
 
         if ($mode === self::MODE_EPHEMERAL) {
             // Provision ANTES de persistir el código: así id_user nunca queda null/0 ni apunta al seed 863.
-            $staffKind = $role === DemoSandboxAccess::ROLE_ENFERMERIA ? 'enfermeria' : 'medico';
+            $staffKind = DemoSandboxAccess::staffKindForRole($role);
             $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(null, $staffKind);
             $user = $provisioned['user'];
             $session = $provisioned['session'];
@@ -292,10 +291,12 @@ final class DemoSandboxAccessService
 
         $sessionId = null;
 
-        // Staff efímero: usuario ya provisionado en issue (demo_m_* / demo_e_*), nunca seed legacy.
+        // Staff efímero: usuario ya provisionado en issue (demo_m_* / demo_e_* / demo_a_*), nunca seed legacy.
         if (DemoSandboxAccess::isEphemeralStaffRole((string) $row->role)) {
             $username = (string) ($row->username ?? '');
-            $prefix = (string) $row->role === DemoSandboxAccess::ROLE_ENFERMERIA ? 'demo_e_' : 'demo_m_';
+            $prefix = DemoSandboxAccess::usernamePrefixForStaffKind(
+                DemoSandboxAccess::staffKindForRole((string) $row->role)
+            );
             if ((int) $row->id_user <= 0 || str_starts_with($username, 'medico_med_general_')) {
                 throw new \DomainException(
                     'Código demo inválido (cuenta legacy). Solicitá un acceso nuevo desde el sitio institucional.'
@@ -377,6 +378,13 @@ final class DemoSandboxAccessService
                 'mode' => self::MODE_EPHEMERAL,
             ];
         }
+        if ($role === DemoSandboxAccess::ROLE_ADMINISTRATIVO) {
+            return [
+                'username' => null,
+                'label' => 'Administrativo demo',
+                'mode' => self::MODE_EPHEMERAL,
+            ];
+        }
 
         $accounts = is_array($cfg['accounts'] ?? null) ? $cfg['accounts'] : [];
         if (isset($accounts[$role]) && is_array($accounts[$role])) {
@@ -423,8 +431,8 @@ final class DemoSandboxAccessService
     }
 
     /**
-     * Acceso demo para app Personal de Salud: provisiona médico efímero + seed y emite JWT
-     * con contexto operativo (AMB en plantilla DEV). Sin password ni enter_url.
+     * Acceso demo para app Personal de Salud: provisiona staff efímero + seed y emite JWT
+     * con contexto operativo (AMB médico / EMER enfermería y administrativo). Sin password ni enter_url.
      *
      * Captcha: solo si demo_sandbox.require_captcha_mobile=true (default false).
      *
@@ -481,7 +489,10 @@ final class DemoSandboxAccessService
         if ($mobileRole === '') {
             $mobileRole = DemoSandboxAccess::ROLE_STAFF;
         }
-        $staffKind = $mobileRole === DemoSandboxAccess::ROLE_ENFERMERIA ? 'enfermeria' : 'medico';
+        if (!DemoSandboxAccess::isEphemeralStaffRole($mobileRole)) {
+            $mobileRole = DemoSandboxAccess::ROLE_STAFF;
+        }
+        $staffKind = DemoSandboxAccess::staffKindForRole($mobileRole);
         $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(null, $staffKind);
         $user = $provisioned['user'];
         /** @var DemoSandboxSession $session */
@@ -517,9 +528,7 @@ final class DemoSandboxAccessService
 
         $row = new DemoSandboxAccess();
         $row->code_hash = self::hashCode($plain);
-        $row->role = $mobileRole === DemoSandboxAccess::ROLE_ENFERMERIA
-            ? DemoSandboxAccess::ROLE_ENFERMERIA
-            : DemoSandboxAccess::ROLE_STAFF;
+        $row->role = $mobileRole;
         if ($row->hasAttribute('mode')) {
             $row->mode = self::MODE_EPHEMERAL;
         }
@@ -546,13 +555,13 @@ final class DemoSandboxAccessService
         );
 
         $seedPayload = $session->getSeedPayload();
-        $encounterClass = Encounter::ENCOUNTER_CLASS_AMB;
-        $encounterLabel = (string) (EncounterDefinition::ENCOUNTER_CLASS[$encounterClass] ?? 'Ambulatoria');
+        $encounterClass = DemoSandboxAccess::defaultEncounterClassForRole($mobileRole);
+        $encounterLabel = (string) (EncounterDefinition::ENCOUNTER_CLASS[$encounterClass] ?? $encounterClass);
 
         $payload = [
             'user_id' => (int) $user->id,
             'email' => (string) $user->email,
-            'role' => 'medico',
+            'role' => $staffKind,
             'id_persona' => $idPersona,
             'id_efector' => $idEfector,
             'id_profesional_efector_servicio' => $idPes,
@@ -580,7 +589,7 @@ final class DemoSandboxAccessService
                 'id' => (int) $user->id,
                 'name' => (string) $user->username,
                 'email' => (string) $user->email,
-                'role' => 'medico',
+                'role' => $staffKind,
             ],
             'persona' => [
                 'id_persona' => $idPersona,
@@ -610,8 +619,8 @@ final class DemoSandboxAccessService
             ],
             'username' => $username,
             'mode' => self::MODE_EPHEMERAL,
-            'role' => DemoSandboxAccess::ROLE_STAFF,
-            'label' => 'Médico demo (captura y turnos)',
+            'role' => $mobileRole,
+            'label' => (string) ($this->resolveProfile($mobileRole)['label'] ?? $mobileRole),
         ];
     }
 

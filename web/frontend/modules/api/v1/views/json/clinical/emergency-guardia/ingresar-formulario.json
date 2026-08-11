@@ -1,0 +1,69 @@
+{
+  "ui_type": "ui_json",
+  "title": "Ingreso a guardia",
+  "ui_meta": {
+    "schema_version": "1",
+    "clients": {
+      "*": { "min_app_version": "1.0.0" },
+      "personalsalud-flutter": { "min_app_version": "1.0.0" }
+    }
+  },
+  "blocks": [
+    {
+      "kind": "message",
+      "id": "ayuda",
+      "title": "",
+      "text": "Buscá al paciente por apellido o documento. Quien ya está en la cola de este efector no aparece."
+    },
+    {
+      "kind": "fields",
+      "id": "ingreso",
+      "title": "Datos del ingreso",
+      "fields": [
+        {
+          "name": "id_persona",
+          "label": "Paciente",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "ingresa_en",
+          "label": "Ingresa en",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "ingresa_con",
+          "label": "Ingresa con",
+          "type": "select",
+          "required": true,
+          "options": []
+        },
+        {
+          "name": "datos_contacto_tel",
+          "label": "Teléfono de contacto",
+          "type": "text",
+          "required": false,
+          "max_length": 32,
+          "hint": "Obligatorio si ingresa con familiar, policía u otro."
+        },
+        {
+          "name": "situacion_al_ingresar",
+          "label": "Situación al ingresar",
+          "type": "textarea",
+          "required": false,
+          "rows": 2
+        },
+        {
+          "name": "cobertura",
+          "label": "Cobertura",
+          "type": "text",
+          "required": false,
+          "max_length": 100
+        }
+      ]
+    }
+  ]
+}

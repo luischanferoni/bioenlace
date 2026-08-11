@@ -7,8 +7,8 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 ## Flujo
 
 1. Institucional: captcha + `POST /api/v1/licencia/demo-acceso` (`role`, `email` opcional, honeypot).
-2. API **provisiona** médico `demo_m_*` + seed en efector DEV, persiste el código y responde `enter_url` + `username` + `id_efector`.
-3. Browser abre `/site/demo-entrar?code=…` → consume (solo login del user ya creado; rechaza `medico_med_general_*`).
+2. API **provisiona** staff efímero (`demo_m_*` médico, `demo_e_*` enfermería, `demo_a_*` administrativo) + seed en efector DEV, persiste el código y responde `enter_url` + `username` + `id_efector`.
+3. Browser abre `/site/demo-entrar?code=…` → consume (solo login del user ya creado; rechaza `medico_med_general_*`). Médico entra en **AMB**; enfermería y administrativo en **EMER**.
 4. Logout o TTL de sesión → purga de filas de esa visita.
 
 ## Modelo de datos
@@ -19,8 +19,8 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 | Efector | Plantilla DEV por `efector_codigo_sisa` (default `DEV99002PRIV`); no usar un `id_efector` de producción |
 | Aislamiento | Un **PES + user** por visitante (scope médico); no tableros de todo el centro |
 | Tracking | `demo_sandbox_access` (código) + `demo_sandbox_session` (PES, payload seed, expires/purged) |
-| Entrada | `demo-entrar` limpia contexto previo, fija AMB en DEV, **persiste `context_token`**, redirect con `fecha` del seed |
-| Móvil staff | `POST /api/v1/licencia/demo-acceso-mobile` → JWT + contexto AMB (sin captcha por default); botón **Probar demo** en login Personal de Salud |
+| Entrada | `demo-entrar` limpia contexto previo, fija encounter según rol (AMB médico / EMER enfermería y administrativo), **persiste `context_token`**, redirect con `fecha` del seed |
+| Móvil staff | `POST /api/v1/licencia/demo-acceso-mobile` → JWT + contexto (AMB o EMER según `role`); botón **Probar demo** en login Personal de Salud (médico por defecto) |
 | Encounter | En visita demo, cambio AMB/EMER/IMP ancla efector/servicio a la sesión demo (nunca 863) |
 
 ## Seed por visita (defaults)

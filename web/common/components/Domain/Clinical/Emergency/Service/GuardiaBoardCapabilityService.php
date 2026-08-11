@@ -7,7 +7,7 @@ use common\models\User;
 
 /**
  * Capacidades de UI del tablero EMER (roles desde home_panel_manifest.yaml).
- * No sustituye RBAC de API; define quién ve CTAs de triage en clientes.
+ * No sustituye RBAC de API; define quién ve CTAs (triage, ingreso, atender, nota).
  */
 final class GuardiaBoardCapabilityService
 {
@@ -24,7 +24,38 @@ final class GuardiaBoardCapabilityService
      */
     public function canTriage(): bool
     {
-        $roles = $this->manifest->emergencyTriageRoles();
+        return $this->hasAnyManifestRole($this->manifest->emergencyTriageRoles());
+    }
+
+    /**
+     * Ingreso de paciente a guardia (roles en home_panel_manifest.yaml).
+     */
+    public function canIngresar(): bool
+    {
+        return $this->hasAnyManifestRole($this->manifest->emergencyIngresoRoles());
+    }
+
+    /**
+     * Atender / iniciar-atencion (toma el caso). Roles en home_panel_manifest.yaml.
+     */
+    public function canAtender(): bool
+    {
+        return $this->hasAnyManifestRole($this->manifest->emergencyAtenderRoles());
+    }
+
+    /**
+     * Abrir nota de encounter sin tomar el caso (enfermería).
+     */
+    public function canDocumentar(): bool
+    {
+        return $this->hasAnyManifestRole($this->manifest->emergencyDocumentarRoles());
+    }
+
+    /**
+     * @param list<string> $roles
+     */
+    private function hasAnyManifestRole(array $roles): bool
+    {
         if ($roles === []) {
             return false;
         }

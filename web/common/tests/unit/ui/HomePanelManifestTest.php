@@ -41,6 +41,36 @@ class HomePanelManifestTest extends Unit
         $this->assertNotContains('Medico', $roles);
     }
 
+    public function testEmergencyIngresoRolesAreAdministrativoNotEnfermeria(): void
+    {
+        $manifest = new HomePanelManifest();
+        $roles = $manifest->emergencyIngresoRoles();
+
+        $this->assertNotEmpty($roles);
+        $this->assertContains('Administrativo', $roles);
+        $this->assertContains('AdminEfector', $roles);
+        $this->assertNotContains('enfermeria', $roles);
+        $this->assertNotContains('Medico', $roles);
+    }
+
+    public function testEmergencyAtenderRolesAreMedicoOnly(): void
+    {
+        $manifest = new HomePanelManifest();
+        $roles = $manifest->emergencyAtenderRoles();
+
+        $this->assertSame(['Medico'], $roles);
+    }
+
+    public function testEmergencyDocumentarRolesAreEnfermeria(): void
+    {
+        $manifest = new HomePanelManifest();
+        $roles = $manifest->emergencyDocumentarRoles();
+
+        $this->assertContains('enfermeria', $roles);
+        $this->assertNotContains('Medico', $roles);
+        $this->assertNotContains('Administrativo', $roles);
+    }
+
     public function testStaffOperationsPanelHasSessionContextAndKpis(): void
     {
         $manifest = new HomePanelManifest();

@@ -24,38 +24,25 @@ final class DemoSandboxSessionService
     /**
      * Crea staff temporal + seed clínico y registra la sesión.
      *
-     * @param 'medico'|'enfermeria' $staffKind
+     * @param 'medico'|'enfermeria'|'administrativo' $staffKind
      * @return array{user: User, session: DemoSandboxSession}
      */
     public function provisionEphemeralStaff(?int $idAccess = null, string $staffKind = 'medico'): array
     {
         $cfg = $this->config();
         $idEfector = $this->resolveIdEfector($cfg);
-        $isNurse = $staffKind === 'enfermeria';
-        $servicioNombre = $isNurse
-            ? trim((string) ($cfg['servicio_enfermeria_nombre'] ?? 'ENFERMERIA'))
-            : trim((string) ($cfg['servicio_nombre'] ?? 'MED GENERAL'));
-        if ($servicioNombre === '') {
-            $servicioNombre = $isNurse ? 'ENFERMERIA' : 'MED GENERAL';
-        }
-        $seedCfg = is_array($cfg['seed'] ?? null) ? $cfg['seed'] : [];
-        $withAgenda = $isNurse ? false : (bool) ($seedCfg['with_agenda'] ?? true);
-        $sessionTtl = max(600, (int) ($cfg['session_ttl_seconds'] ?? 14400));
+        $spec = $this->staffProvisionSpec($staffKind, $cfg);
+        $sessionTtl = (int) $spec['cobertura_ttl_seconds'];
 
         $staff = (new DemoSandboxStaffProvisionService())->provision(
             $idEfector,
-            $servicioNombre,
-            $withAgenda,
+            (string) $spec['servicio_nombre'],
+            (bool) $spec['with_agenda'],
             [
-                'rbac_role' => $isNurse ? 'enfermeria' : '',
-                'apellido' => $isNurse ? 'Enfermería' : 'Médico',
-                'username_prefix' => $isNurse ? 'demo_e_' : 'demo_m_',
-                'cobertura_classes' => $isNurse
-                    ? [
-                        \common\models\Clinical\Encounter::ENCOUNTER_CLASS_EMER,
-                        \common\models\Clinical\Encounter::ENCOUNTER_CLASS_IMP,
-                    ]
-                    : [],
+                'rbac_role' => (string) $spec['rbac_role'],
+                'apellido' => (string) $spec['apellido'],
+                'username_prefix' => (string) $spec['username_prefix'],
+                'cobertura_classes' => $spec['cobertura_classes'],
                 'cobertura_ttl_seconds' => $sessionTtl,
             ]
         );
@@ -66,13 +53,13 @@ final class DemoSandboxSessionService
             $staff['id_servicio'],
             $staff['id_user'],
             [
-                'pacientes' => (int) ($seedCfg['pacientes'] ?? 6),
-                'turnos' => $isNurse ? 0 : (int) ($seedCfg['turnos'] ?? 2),
-                'with_consulta_amb' => $isNurse ? false : (bool) ($seedCfg['with_consulta_amb'] ?? true),
-                'with_consulta_async' => $isNurse ? false : (bool) ($seedCfg['with_consulta_async'] ?? true),
-                'consultas_async' => $isNurse ? 0 : (int) ($seedCfg['consultas_async'] ?? 2),
-                'with_guardia' => (bool) ($seedCfg['with_guardia'] ?? true),
-                'with_internacion' => (bool) ($seedCfg['with_internacion'] ?? true),
+                'pacientes' => (int) $spec['pacientes'],
+                'turnos' => (int) $spec['turnos'],
+                'with_consulta_amb' => (bool) $spec['with_consulta_amb'],
+                'with_consulta_async' => (bool) $spec['with_consulta_async'],
+                'consultas_async' => (int) $spec['consultas_async'],
+                'with_guardia' => (bool) $spec['with_guardia'],
+                'with_internacion' => (bool) $spec['with_internacion'],
             ]
         );
 
@@ -84,7 +71,7 @@ final class DemoSandboxSessionService
         $now = date('Y-m-d H:i:s');
         $session = new DemoSandboxSession();
         $session->id_access = $idAccess;
-        $session->role = $isNurse ? DemoSandboxAccess::ROLE_ENFERMERIA : DemoSandboxAccess::ROLE_STAFF;
+        $session->role = (string) $spec['role'];
         $session->id_efector = $staff['id_efector'];
         $session->id_user = $staff['id_user'];
         $session->id_persona = $staff['id_persona'];
@@ -260,6 +247,101 @@ final class DemoSandboxSessionService
                 "El efector {$idEfector} tiene codigo_sisa={$codigo}, se esperaba {$codigoEsperado}."
             );
         }
+    }
+
+    /**
+     * @param array<string, mixed> $cfg
+     * @return array{
+     *     servicio_nombre: string,
+     *     with_agenda: bool,
+     *     rbac_role: string,
+     *     apellido: string,
+     *     username_prefix: string,
+     *     cobertura_classes: list<string>,
+     *     cobertura_ttl_seconds: int,
+     *     role: string,
+     *     pacientes: int,
+     *     turnos: int,
+     *     with_consulta_amb: bool,
+     *     with_consulta_async: bool,
+     *     consultas_async: int,
+     *     with_guardia: bool,
+     *     with_internacion: bool
+     * }
+     */
+    private function staffProvisionSpec(string $staffKind, array $cfg): array
+    {
+        $seedCfg = is_array($cfg['seed'] ?? null) ? $cfg['seed'] : [];
+        $sessionTtl = max(600, (int) ($cfg['session_ttl_seconds'] ?? 14400));
+        $pacientes = (int) ($seedCfg['pacientes'] ?? 6);
+        $withGuardia = (bool) ($seedCfg['with_guardia'] ?? true);
+        $withInternacion = (bool) ($seedCfg['with_internacion'] ?? true);
+        $emer = \common\models\Clinical\Encounter::ENCOUNTER_CLASS_EMER;
+        $imp = \common\models\Clinical\Encounter::ENCOUNTER_CLASS_IMP;
+
+        if ($staffKind === 'enfermeria') {
+            $servicioNombre = trim((string) ($cfg['servicio_enfermeria_nombre'] ?? 'ENFERMERIA'));
+
+            return [
+                'servicio_nombre' => $servicioNombre !== '' ? $servicioNombre : 'ENFERMERIA',
+                'with_agenda' => false,
+                'rbac_role' => 'enfermeria',
+                'apellido' => 'Enfermería',
+                'username_prefix' => DemoSandboxAccess::usernamePrefixForStaffKind('enfermeria'),
+                'cobertura_classes' => [$emer, $imp],
+                'cobertura_ttl_seconds' => $sessionTtl,
+                'role' => DemoSandboxAccess::ROLE_ENFERMERIA,
+                'pacientes' => $pacientes,
+                'turnos' => 0,
+                'with_consulta_amb' => false,
+                'with_consulta_async' => false,
+                'consultas_async' => 0,
+                'with_guardia' => $withGuardia,
+                'with_internacion' => $withInternacion,
+            ];
+        }
+
+        if ($staffKind === 'administrativo') {
+            $servicioNombre = trim((string) ($cfg['servicio_nombre'] ?? 'MED GENERAL'));
+
+            return [
+                'servicio_nombre' => $servicioNombre !== '' ? $servicioNombre : 'MED GENERAL',
+                'with_agenda' => false,
+                'rbac_role' => 'Administrativo',
+                'apellido' => 'Admisión',
+                'username_prefix' => DemoSandboxAccess::usernamePrefixForStaffKind('administrativo'),
+                'cobertura_classes' => [$emer],
+                'cobertura_ttl_seconds' => $sessionTtl,
+                'role' => DemoSandboxAccess::ROLE_ADMINISTRATIVO,
+                'pacientes' => $pacientes,
+                'turnos' => 0,
+                'with_consulta_amb' => false,
+                'with_consulta_async' => false,
+                'consultas_async' => 0,
+                'with_guardia' => $withGuardia,
+                'with_internacion' => $withInternacion,
+            ];
+        }
+
+        $servicioNombre = trim((string) ($cfg['servicio_nombre'] ?? 'MED GENERAL'));
+
+        return [
+            'servicio_nombre' => $servicioNombre !== '' ? $servicioNombre : 'MED GENERAL',
+            'with_agenda' => (bool) ($seedCfg['with_agenda'] ?? true),
+            'rbac_role' => '',
+            'apellido' => 'Médico',
+            'username_prefix' => DemoSandboxAccess::usernamePrefixForStaffKind('medico'),
+            'cobertura_classes' => [],
+            'cobertura_ttl_seconds' => $sessionTtl,
+            'role' => DemoSandboxAccess::ROLE_STAFF,
+            'pacientes' => $pacientes,
+            'turnos' => (int) ($seedCfg['turnos'] ?? 2),
+            'with_consulta_amb' => (bool) ($seedCfg['with_consulta_amb'] ?? true),
+            'with_consulta_async' => (bool) ($seedCfg['with_consulta_async'] ?? true),
+            'consultas_async' => (int) ($seedCfg['consultas_async'] ?? 2),
+            'with_guardia' => $withGuardia,
+            'with_internacion' => $withInternacion,
+        ];
     }
 
     /**

@@ -3,3 +3,4 @@
 - `puede_triage` en panel home.
 - Flutter: tap en espera de triage → pantalla nativa si el flag es true.
 - Demo: perfil `enfermeria` + RBAC + cobertura EMER/IMP.
+- Demo: perfil `administrativo` (`demo_a_*`, RBAC `Administrativo`, cobertura EMER, sesión EMER) + CTA **Ingresar paciente** (`ingreso_roles`).

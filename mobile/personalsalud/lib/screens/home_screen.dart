@@ -65,6 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
   List<HomePanelKpiGroup> _kpiGroups = [];
   bool _sessionTieneCobertura = false;
   bool _puedeTriage = false;
+  bool _puedeIngresar = false;
+  bool _puedeAtender = false;
+  bool _puedeDocumentar = false;
   String? _mensajeSinCobertura;
   Map<String, dynamic>? _staffContext;
   String _lastListKind = '';
@@ -239,6 +242,9 @@ class _HomeScreenState extends State<HomeScreen> {
         _cirugias = [];
         _sessionTieneCobertura = false;
         _puedeTriage = false;
+        _puedeIngresar = false;
+        _puedeAtender = false;
+        _puedeDocumentar = false;
         _mensajeSinCobertura = null;
         _consultasAsync = [];
         _consultasAsyncGroups = [];
@@ -278,6 +284,9 @@ class _HomeScreenState extends State<HomeScreen> {
             .map((e) => EmergencyBoardItem.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
         _puedeTriage = board.data['puede_triage'] == true;
+        _puedeIngresar = board.data['puede_ingresar'] == true;
+        _puedeAtender = board.data['puede_atender'] == true;
+        _puedeDocumentar = board.data['puede_documentar'] == true;
         _lastListKind = 'guardias';
       }
 
@@ -566,11 +575,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: _isLoading ? null : _cargarListadoPacientes,
                 ),
               ],
-            ] else if (_encounterClass == 'EMER')
+            ] else if (_encounterClass == 'EMER') ...[
+              if (_puedeIngresar) ...[
+                BioButton(
+                  label: 'Ingresar',
+                  icon: Icons.person_add_alt_1,
+                  intent: UiIntent.primary,
+                  size: BioButtonSize.sm,
+                  onPressed: () {
+                    EmergencyGuardiaActions.openIngreso(
+                      context: context,
+                      api: _emergencyApi,
+                      onChanged: () {
+                        _cargarListadoPacientes(silent: true);
+                      },
+                    );
+                  },
+                ),
+                BioSpacing.gapW(BioSpacing.xs),
+              ],
               IconButton(
                 icon: const Icon(Icons.refresh),
                 onPressed: _isLoading ? null : _cargarListadoPacientes,
               ),
+            ],
           ],
         ),
       ),
@@ -1387,24 +1415,42 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       return;
     }
-    try {
-      final estado = g.circuitoEstado ?? '';
-      if (estado != 'en_atencion') {
-        await _emergencyApi.iniciarAtencion(g.id);
+    if (_puedeAtender) {
+      try {
+        final estado = g.circuitoEstado ?? '';
+        if (estado != 'en_atencion') {
+          await _emergencyApi.iniciarAtencion(g.id);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('No se pudo iniciar atención: $e')),
+          );
+        }
+        return;
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('No se pudo iniciar atención: $e')),
-        );
-      }
+      _verHistoriaClinica(
+        g.idPersona,
+        parent: 'GUARDIA',
+        parentId: g.id,
+      );
       return;
     }
-    _verHistoriaClinica(
-      g.idPersona,
-      parent: 'GUARDIA',
-      parentId: g.id,
-    );
+    if (_puedeDocumentar) {
+      _verHistoriaClinica(
+        g.idPersona,
+        parent: 'GUARDIA',
+        parentId: g.id,
+      );
+      return;
+    }
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El médico atiende el caso. Enfermería registra triage o una nota.'),
+        ),
+      );
+    }
   }
 
   Widget _buildGuardiaTableroList() {

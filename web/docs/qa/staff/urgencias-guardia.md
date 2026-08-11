@@ -6,6 +6,16 @@ Trabajá con el efector en modo **guardia** ([transversal.md](./transversal.md))
 
 ---
 
+## Ingresar un paciente a guardia
+
+1. **Vos** (rol **Administrativo**) pulsá **Ingresar paciente** en el tablero.
+2. **Buscás** por apellido o documento y completás cómo llega (camina / silla / camilla) y con quién.
+3. **El sistema** lo deja en espera de triage.
+
+En la demo sandbox: perfil **Administrativo demo**; los pacientes de prueba se buscan por apellido (Alonso, Benitez, Castro…). El que ya está en cola no aparece.
+
+---
+
 ## Ver el tablero de guardia
 
 1. **Vos** entrás al inicio de pacientes / tablero de guardia.
@@ -32,10 +42,12 @@ Trabajá con el efector en modo **guardia** ([transversal.md](./transversal.md))
 
 ## Empezar a atender
 
-1. **Vos** iniciás la atención desde el tablero.
+1. **Vos** (médico) iniciás la atención desde el tablero (**Atender**).
 2. **El sistema** abre la captura clínica de ese ingreso de guardia.
 3. **Vos** documentás y guardás (ver [medico/captura-clinica.md](../medico/captura-clinica.md)).
 4. **El sistema** deja el caso en “en atención” mientras corresponda.
+
+Enfermería **no** usa Atender (`iniciar-atencion`): después del triage abre **Nota** (misma HC, sin tomar el caso).
 
 ---
 

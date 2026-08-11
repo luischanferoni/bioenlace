@@ -22,6 +22,16 @@ panels:
           - enfermeria
           - Administrativo
           - AdminEfector
+        # Admisión a guardia (no enfermería: el circuito de ingreso es administrativo).
+        ingreso_roles:
+          - Administrativo
+          - AdminEfector
+        # Tomar el caso + captura clínica (POST iniciar-atencion).
+        atender_roles:
+          - Medico
+        # Nota de encounter sin tomar el caso (enfermería).
+        documentar_roles:
+          - enfermeria
       sections:
         - id: staff_cobertura_activa
           provider: staff_cobertura_activa

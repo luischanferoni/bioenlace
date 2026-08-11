@@ -8,6 +8,5 @@
 
 ## Fuera de alcance de este plan
 
-- CTA de ingreso a guardia (Administrativo) en tablero — decisión de producto ya cerrada; UI aparte.
 - App distinta para enfermería.
 - Kardex / pestañas MVC de internación.

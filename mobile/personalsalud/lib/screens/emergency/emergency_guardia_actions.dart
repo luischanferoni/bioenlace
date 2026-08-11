@@ -31,6 +31,226 @@ class EmergencyGuardiaActions {
         initialReason: isRetriage ? item.triageReasonText : null,
       );
 
+  static Future<void> openIngreso({
+    required BuildContext context,
+    required EmergencyGuardiaApi api,
+    required VoidCallback onChanged,
+  }) async {
+    final qCtrl = TextEditingController();
+    final telCtrl = TextEditingController();
+    var ingresaEn = 'deambula';
+    var ingresaCon = 'solo';
+    String? selectedId;
+    String? selectedLabel;
+    var results = <Map<String, String>>[];
+    var searching = false;
+    String? error;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            Future<void> search(String q) async {
+              final term = q.trim();
+              if (term.length < 2) {
+                setState(() {
+                  results = [];
+                  searching = false;
+                });
+                return;
+              }
+              setState(() {
+                searching = true;
+                error = null;
+              });
+              try {
+                final rows = await api.buscarPersonaIngreso(term);
+                if (!context.mounted) return;
+                setState(() {
+                  results = rows;
+                  searching = false;
+                });
+              } catch (e) {
+                if (!context.mounted) return;
+                setState(() {
+                  searching = false;
+                  error = userFriendlyErrorMessage(e);
+                });
+              }
+            }
+
+            final needsTel =
+                ingresaCon == 'familiar' ||
+                ingresaCon == 'otro' ||
+                ingresaCon == 'policia';
+
+            return AlertDialog(
+              title: const Text('Ingresar paciente a guardia'),
+              content: SizedBox(
+                width: 420,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: qCtrl,
+                        decoration: const InputDecoration(
+                          labelText: 'Apellido o documento',
+                        ),
+                        onChanged: (v) {
+                          search(v);
+                        },
+                      ),
+                      if (searching) ...[
+                        BioSpacing.gapH(BioSpacing.sm),
+                        const LinearProgressIndicator(),
+                      ],
+                      if (results.isNotEmpty) ...[
+                        BioSpacing.gapH(BioSpacing.sm),
+                        ...results.take(8).map(
+                          (row) => ListTile(
+                            dense: true,
+                            title: Text(row['text'] ?? row['id'] ?? ''),
+                            selected: selectedId == row['id'],
+                            onTap: () {
+                              setState(() {
+                                selectedId = row['id'];
+                                selectedLabel = row['text'];
+                                results = [];
+                                qCtrl.text = row['text'] ?? '';
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                      if (selectedLabel != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text('Seleccionado: $selectedLabel'),
+                        ),
+                      BioSpacing.gapH(BioSpacing.md),
+                      DropdownButtonFormField<String>(
+                        initialValue: ingresaEn,
+                        decoration: const InputDecoration(labelText: 'Ingresa en'),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'deambula',
+                            child: Text('Deambulando'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'silla_de_rueda',
+                            child: Text('Silla de rueda'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'camilla',
+                            child: Text('Camilla'),
+                          ),
+                        ],
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() => ingresaEn = v);
+                        },
+                      ),
+                      BioSpacing.gapH(BioSpacing.sm),
+                      DropdownButtonFormField<String>(
+                        initialValue: ingresaCon,
+                        decoration: const InputDecoration(labelText: 'Ingresa con'),
+                        items: const [
+                          DropdownMenuItem(value: 'solo', child: Text('Solo')),
+                          DropdownMenuItem(
+                            value: 'familiar',
+                            child: Text('Familiar'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'policia',
+                            child: Text('Personal policial'),
+                          ),
+                          DropdownMenuItem(value: 'otro', child: Text('Otro')),
+                          DropdownMenuItem(
+                            value: 'no_sabe',
+                            child: Text('No sabe / no contesta'),
+                          ),
+                        ],
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() => ingresaCon = v);
+                        },
+                      ),
+                      if (needsTel) ...[
+                        BioSpacing.gapH(BioSpacing.sm),
+                        TextField(
+                          controller: telCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Teléfono de contacto',
+                          ),
+                        ),
+                      ],
+                      if (error != null) ...[
+                        BioSpacing.gapH(BioSpacing.sm),
+                        Text(error!, style: TextStyle(color: Colors.red[700])),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton(
+                  onPressed: () {
+                    final id = int.tryParse(selectedId ?? '') ?? 0;
+                    if (id <= 0) {
+                      setState(() => error = 'Elegí un paciente de la búsqueda.');
+                      return;
+                    }
+                    if (needsTel && telCtrl.text.trim().isEmpty) {
+                      setState(() => error = 'Indicá un teléfono de contacto.');
+                      return;
+                    }
+                    Navigator.pop(ctx, true);
+                  },
+                  child: const Text('Registrar ingreso'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    final tel = telCtrl.text.trim();
+    qCtrl.dispose();
+    telCtrl.dispose();
+    if (confirmed != true) return;
+    final id = int.tryParse(selectedId ?? '') ?? 0;
+    if (id <= 0) return;
+
+    try {
+      await api.ingresar(
+        idPersona: id,
+        ingresaEn: ingresaEn,
+        ingresaCon: ingresaCon,
+        datosContactoTel: tel.isEmpty ? null : tel,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Ingreso a guardia registrado')),
+        );
+      }
+      onChanged();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(userFriendlyErrorMessage(e))),
+        );
+      }
+    }
+  }
+
   static Future<void> openCama({
     required BuildContext context,
     required EmergencyBoardItem item,

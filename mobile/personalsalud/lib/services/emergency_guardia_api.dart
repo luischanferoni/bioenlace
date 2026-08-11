@@ -268,6 +268,63 @@ class EmergencyGuardiaApi {
     }
   }
 
+  Future<List<Map<String, String>>> buscarPersonaIngreso(String q) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/buscar-persona-ingreso',
+    ).replace(queryParameters: {'q': q});
+    final response = await http.get(uri, headers: _headers);
+    final decoded = json.decode(response.body);
+    if (response.statusCode != 200 ||
+        decoded is! Map<String, dynamic> ||
+        decoded['success'] != true) {
+      throw Exception(
+        decoded is Map ? (decoded['message'] ?? 'Error al buscar') : 'Error al buscar',
+      );
+    }
+    final data = decoded['data'];
+    final rows = data is Map ? (data['results'] as List<dynamic>? ?? []) : [];
+    return rows.map((e) {
+      final m = Map<String, dynamic>.from(e as Map);
+      return {
+        'id': m['id']?.toString() ?? '',
+        'text': m['text']?.toString() ?? '',
+      };
+    }).where((e) => e['id']!.isNotEmpty).toList();
+  }
+
+  Future<void> ingresar({
+    required int idPersona,
+    required String ingresaEn,
+    required String ingresaCon,
+    String? datosContactoTel,
+    String? situacionAlIngresar,
+  }) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/ingresar',
+    );
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: json.encode({
+        'id_persona': idPersona,
+        'ingresa_en': ingresaEn,
+        'ingresa_con': ingresaCon,
+        if (datosContactoTel != null && datosContactoTel.isNotEmpty)
+          'datos_contacto_tel': datosContactoTel,
+        if (situacionAlIngresar != null && situacionAlIngresar.isNotEmpty)
+          'situacion_al_ingresar': situacionAlIngresar,
+      }),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final decoded = json.decode(response.body);
+      throw Exception(
+        decoded is Map
+            ? (decoded['message'] ?? 'Error al ingresar')
+            : 'Error al ingresar',
+      );
+    }
+  }
+
   Future<void> registrarTriage({
     required int guardiaId,
     required int level,

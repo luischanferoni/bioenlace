@@ -19,8 +19,14 @@ class DemoSandboxAccessServiceTest extends Unit
     {
         $this->assertContains(DemoSandboxAccess::ROLE_STAFF, DemoSandboxAccess::roleValues());
         $this->assertContains(DemoSandboxAccess::ROLE_ENFERMERIA, DemoSandboxAccess::roleValues());
+        $this->assertContains(DemoSandboxAccess::ROLE_ADMINISTRATIVO, DemoSandboxAccess::roleValues());
         $this->assertContains(DemoSandboxAccess::ROLE_PACIENTE, DemoSandboxAccess::roleValues());
         $this->assertTrue(DemoSandboxAccess::isEphemeralStaffRole(DemoSandboxAccess::ROLE_ENFERMERIA));
+        $this->assertTrue(DemoSandboxAccess::isEphemeralStaffRole(DemoSandboxAccess::ROLE_ADMINISTRATIVO));
+        $this->assertSame('administrativo', DemoSandboxAccess::staffKindForRole(DemoSandboxAccess::ROLE_ADMINISTRATIVO));
+        $this->assertSame('demo_a_', DemoSandboxAccess::usernamePrefixForStaffKind('administrativo'));
+        $this->assertSame('EMER', DemoSandboxAccess::defaultEncounterClassForRole(DemoSandboxAccess::ROLE_ADMINISTRATIVO));
+        $this->assertSame('AMB', DemoSandboxAccess::defaultEncounterClassForRole(DemoSandboxAccess::ROLE_STAFF));
     }
 
     public function testListProfilesEphemeralFromProfilesConfig(): void

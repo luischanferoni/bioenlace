@@ -40,7 +40,11 @@ $metaEc = ($encounter_class && isset($encounterMeta[$encounter_class]))
 
 $encounterJson = Json::encode($encounter_class);
 $esPacienteHome = empty($encounter_class);
-$puedeTriageGuardia = $esGuardia && (new GuardiaBoardCapabilityService())->canTriage();
+$guardiaCaps = new GuardiaBoardCapabilityService();
+$puedeTriageGuardia = $esGuardia && $guardiaCaps->canTriage();
+$puedeIngresarGuardia = $esGuardia && $guardiaCaps->canIngresar();
+$puedeAtenderGuardia = $esGuardia && $guardiaCaps->canAtender();
+$puedeDocumentarGuardia = $esGuardia && $guardiaCaps->canDocumentar();
 
 $this->title = $esGuardia
     ? 'Tablero de guardia'
@@ -93,6 +97,9 @@ $this->title = $esGuardia
      data-msg-empty-cirugias="<?= Html::encode('No hay cirugías agendadas para la fecha seleccionada.') ?>"
      data-es-guardia="<?= $esGuardia ? '1' : '0' ?>"
      data-puede-triage="<?= $puedeTriageGuardia ? '1' : '0' ?>"
+     data-puede-ingresar="<?= $puedeIngresarGuardia ? '1' : '0' ?>"
+     data-puede-atender="<?= $puedeAtenderGuardia ? '1' : '0' ?>"
+     data-puede-documentar="<?= $puedeDocumentarGuardia ? '1' : '0' ?>"
 >
     <div id="pacientes-listado-flash" class="d-none alert mb-3" role="status"></div>
     <div id="pacientes-listado-loading" class="text-center py-5">
@@ -399,6 +406,57 @@ $this->title = $esGuardia
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-danger" id="internacion-alta-submit" disabled>Registrar alta</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="guardia-admitir-modal" tabindex="-1" aria-labelledby="guardiaAdmitirModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="guardiaAdmitirModalLabel">Ingresar paciente a guardia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small mb-3">Buscá por apellido o documento. Quien ya está en la cola de este efector no aparece.</p>
+                <div class="mb-3">
+                    <label class="form-label" for="guardia-admitir-q">Paciente</label>
+                    <input type="search" class="form-control" id="guardia-admitir-q" placeholder="Apellido o documento" autocomplete="off">
+                    <input type="hidden" id="guardia-admitir-id-persona" value="">
+                    <div id="guardia-admitir-results" class="list-group mt-2 small"></div>
+                    <div id="guardia-admitir-seleccion" class="form-text d-none"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="guardia-admitir-ingresa-en">Ingresa en</label>
+                    <select class="form-select" id="guardia-admitir-ingresa-en">
+                        <option value="deambula" selected>Deambulando (Caminando)</option>
+                        <option value="silla_de_rueda">Silla de Rueda</option>
+                        <option value="camilla">Camilla</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="guardia-admitir-ingresa-con">Ingresa con</label>
+                    <select class="form-select" id="guardia-admitir-ingresa-con">
+                        <option value="solo" selected>Solo</option>
+                        <option value="familiar">Familiar</option>
+                        <option value="policia">Personal Policial</option>
+                        <option value="otro">Otro</option>
+                        <option value="no_sabe">No sabe/No contesta</option>
+                    </select>
+                </div>
+                <div class="mb-3 d-none" id="guardia-admitir-tel-wrap">
+                    <label class="form-label" for="guardia-admitir-tel">Teléfono de contacto</label>
+                    <input type="text" class="form-control" id="guardia-admitir-tel" maxlength="32">
+                </div>
+                <div class="mb-0">
+                    <label class="form-label" for="guardia-admitir-situacion">Situación al ingresar (opcional)</label>
+                    <textarea class="form-control" id="guardia-admitir-situacion" rows="2"></textarea>
+                </div>
+                <div id="guardia-admitir-error" class="alert alert-danger d-none mt-3 mb-0"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="guardia-admitir-submit" disabled>Registrar ingreso</button>
             </div>
         </div>
     </div>

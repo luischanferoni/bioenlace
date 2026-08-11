@@ -161,11 +161,6 @@
         if (!isEpisodeNoteDuplicate(review)) {
             return '';
         }
-        var detalle = review.datos_faltantes_detalle;
-        var fromDetalle = detalle && String(detalle.message || '').trim();
-        if (fromDetalle) {
-            return fromDetalle;
-        }
         var list = Array.isArray(review.advisories) ? review.advisories : [];
         for (var i = 0; i < list.length; i++) {
             if (list[i] && list[i].code === 'episode_note_duplicate' && list[i].message) {

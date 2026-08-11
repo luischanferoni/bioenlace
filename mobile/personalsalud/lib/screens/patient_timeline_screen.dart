@@ -2253,15 +2253,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _snack('No se puede guardar: el análisis tiene errores de sistema.', UiIntent.warning);
       return;
     }
-    if (review.episodeNoteDuplicate) {
-      _snack(
-        review.datosFaltantesMensaje?.trim().isNotEmpty == true
-            ? review.datosFaltantesMensaje!
-            : 'Editá la nota: es casi idéntica a una evolución previa del episodio.',
-        UiIntent.warning,
-      );
-      return;
-    }
     if (!_allStagedIssuesResolved(review)) {
       _snack(
         'Completá los datos faltantes marcados antes de confirmar.',
@@ -2793,12 +2784,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
             );
           }),
         ],
-        if (review.datosFaltantesMensaje != null &&
-            review.datosFaltantesMensaje!.trim().isNotEmpty &&
-            review.episodeNoteDuplicate &&
-            review.advisories.isEmpty) ...[
+        if (review.episodeNoteDuplicate && review.advisories.isEmpty) ...[
           BioSpacing.gapH(BioSpacing.sm),
-          BioAlert.danger(message: review.datosFaltantesMensaje!),
+          BioAlert.danger(
+            message:
+                'Editá el texto: la nota es casi idéntica a una evolución previa del episodio.',
+          ),
         ],
         if (review.textoProcesado != null &&
             review.textoProcesado!.trim().isNotEmpty &&

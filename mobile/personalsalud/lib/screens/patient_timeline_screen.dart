@@ -2253,6 +2253,21 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       _snack('No se puede guardar: el análisis tiene errores de sistema.', UiIntent.warning);
       return;
     }
+    if (review.episodeNoteDuplicate) {
+      String? dupMsg;
+      for (final a in review.advisories) {
+        if (a.code == 'episode_note_duplicate' && a.message.trim().isNotEmpty) {
+          dupMsg = a.message;
+          break;
+        }
+      }
+      _snack(
+        dupMsg ??
+            'Editá el texto: la nota es casi idéntica a una evolución previa del episodio.',
+        UiIntent.warning,
+      );
+      return;
+    }
     if (!_allStagedIssuesResolved(review)) {
       _snack(
         'Completá los datos faltantes marcados antes de confirmar.',
@@ -2788,7 +2803,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           BioSpacing.gapH(BioSpacing.sm),
           BioAlert.danger(
             message:
-                'Esta nota es muy parecida a una evolución previa. Si confirmás, se guarda igual.',
+                'Esta nota es casi idéntica a una evolución previa. Editá el texto para documentar los cambios.',
           ),
         ],
         if (review.textoProcesado != null &&
@@ -3095,6 +3110,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final canConfirm = !_isSaving &&
         review != null &&
         review.systemError == null &&
+        !review.episodeNoteDuplicate &&
         review.textoOriginal.trim().isNotEmpty &&
         _allStagedIssuesResolved(review);
 

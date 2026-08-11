@@ -34,7 +34,7 @@ class EncounterCaptureAnalysis {
   final EncounterOpenProblems? openProblems;
   /// Avisos soft del dominio (p. ej. ítems ya activos / nota casi idéntica).
   final List<EncounterCaptureAdvisory> advisories;
-  /// Nota parecida a una evolución previa (aviso; no bloquea el guardado).
+  /// Nota casi idéntica a una evolución previa: hay que editar el texto.
   final bool episodeNoteDuplicate;
 
   bool get hasUnresolvedIssues => issues.isNotEmpty;

@@ -444,9 +444,18 @@
                 this.reviewRoot
             );
         this.confirmBtn.disabled = !can;
-        this.confirmBtn.title = can
-            ? 'Guardar en la historia clínica'
-            : 'Completá los datos faltantes de los ítems tildados.';
+        if (can) {
+            this.confirmBtn.title = 'Guardar en la historia clínica';
+        } else if (
+            window.EncounterCaptureReview.isEpisodeNoteDuplicate &&
+            window.EncounterCaptureReview.isEpisodeNoteDuplicate(this.captureReview)
+        ) {
+            this.confirmBtn.title =
+                window.EncounterCaptureReview.episodeNoteDuplicateMessage(this.captureReview) ||
+                'Editá el texto: la nota es casi idéntica a una evolución previa.';
+        } else {
+            this.confirmBtn.title = 'Completá los datos faltantes de los ítems tildados.';
+        }
     };
 
     EncounterCaptureForm.prototype.renderCaptureReview = function (data) {
@@ -1282,6 +1291,20 @@
                 this.lastAnalysisPayload.capture_review.system_error)
         ) {
             this.setStatus('No se puede guardar: el análisis tiene errores de sistema.', 'warning');
+            return;
+        }
+        if (
+            this.captureReview &&
+            window.EncounterCaptureReview &&
+            window.EncounterCaptureReview.isEpisodeNoteDuplicate &&
+            window.EncounterCaptureReview.isEpisodeNoteDuplicate(this.captureReview)
+        ) {
+            var dupMsg =
+                (window.EncounterCaptureReview.episodeNoteDuplicateMessage &&
+                    window.EncounterCaptureReview.episodeNoteDuplicateMessage(this.captureReview)) ||
+                'Editá el texto: la nota es casi idéntica a una evolución previa del episodio.';
+            this.setStatus(dupMsg, 'warning');
+            this.showSaveAlert(dupMsg, 'warning');
             return;
         }
         if (

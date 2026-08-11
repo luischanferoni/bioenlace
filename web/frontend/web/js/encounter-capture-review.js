@@ -167,7 +167,7 @@
                 return String(list[i].message);
             }
         }
-        return 'Esta nota es muy parecida a una evolución previa. Si confirmás, se guarda igual.';
+        return 'Esta nota es casi idéntica a una evolución previa. Editá el texto para documentar los cambios.';
     }
 
     function isElementShown(el) {
@@ -205,14 +205,16 @@
 
     /**
      * Guardar se habilita cuando los issues *visibles* de ítems tildados están resueltos.
-     * Destildar (ya activo / no persistir) no bloquea: se guarda la nota.
-     * La nota casi idéntica se avisa al confirmar, no apaga el botón.
+     * Destildar (ya activo) no bloquea. Nota casi idéntica sí: hay que editar el texto.
      */
     function canConfirm(review, stagedIdSet, resolutions, root) {
         if (!review) {
             return false;
         }
         if (review.system_error) {
+            return false;
+        }
+        if (isEpisodeNoteDuplicate(review)) {
             return false;
         }
         var texto = (review.texto_original || '').trim();

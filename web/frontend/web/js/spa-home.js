@@ -3926,6 +3926,9 @@
             html += '<input type="hidden" name="' + escapeHtml(name) + '" value="' + escapeHtml(v) + '">';
         });
         html += '<div class="table-responsive"><table class="w-100" data-weekly-scheduler-mount></table></div>';
+        if (field.hint) {
+            html += '<div class="form-text">' + escapeHtml(String(field.hint)) + '</div>';
+        }
         html += '</div>';
         return html;
     }

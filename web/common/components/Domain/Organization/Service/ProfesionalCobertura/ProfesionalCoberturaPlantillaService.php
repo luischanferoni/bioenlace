@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalCobertura;
 
+use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\models\Clinical\Encounter;
 use common\models\ProfesionalCobertura;
 use common\models\ProfesionalCoberturaPlantilla;
@@ -56,6 +57,16 @@ final class ProfesionalCoberturaPlantillaService
         }
 
         $idPes = (int) ($data['id_profesional_efector_servicio'] ?? 0);
+        $busy = AgendaWeeklyOccupancyService::busyHours(
+            $idPersona,
+            $idEfector,
+            $encounterClass,
+            $idPes > 0 ? $idPes : null
+        );
+        $overlapMsg = AgendaWeeklyOccupancyService::overlapError($dayVals, $busy);
+        if ($overlapMsg !== null) {
+            return ['ok' => false, 'errors' => ['_error' => [$overlapMsg]]];
+        }
         $idServicio = isset($data['id_servicio']) && $data['id_servicio'] !== '' && $data['id_servicio'] !== null
             ? (int) $data['id_servicio']
             : null;

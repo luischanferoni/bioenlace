@@ -2,7 +2,10 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Domain\Scheduling\Service\TurnoIndisponibilidadImpactService;
+use common\models\Clinical\Encounter;
+use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 use common\models\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Scheduling\Turno;
@@ -109,6 +112,10 @@ final class ProfesionalEfectorServicioAgendaVersionService
             );
         }
 
+        if (!AgendaConfigImpactProfile::isModalityOnlySubmit($post)) {
+            self::assertWeeklyOccupancy($idPes, $idEfector, $post);
+        }
+
         if ((int) $preview['turnos_en_conflicto'] > 0 && !$confirmar && $needsConfirm) {
             throw new BadRequestHttpException(
                 'Hay turnos que no encajan en la nueva grilla. Revise el impacto y confirme el cambio.'
@@ -200,6 +207,27 @@ final class ProfesionalEfectorServicioAgendaVersionService
         }
 
         return $ymd;
+    }
+
+    /**
+     * @param array<string, mixed> $post
+     */
+    private static function assertWeeklyOccupancy(int $idPes, int $idEfector, array $post): void
+    {
+        $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+        if ($pes === null) {
+            return;
+        }
+        $busy = AgendaWeeklyOccupancyService::busyHours(
+            (int) $pes->id_persona,
+            $idEfector,
+            Encounter::ENCOUNTER_CLASS_AMB,
+            $idPes
+        );
+        $msg = AgendaWeeklyOccupancyService::overlapError($post, $busy);
+        if ($msg !== null) {
+            throw new BadRequestHttpException($msg);
+        }
     }
 
     /**

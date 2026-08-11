@@ -90,6 +90,22 @@
                 data[d] = parseSlotsCsv(raw, accuracy);
             }
 
+            var busy = {};
+            var busyRaw = field.props && field.props.busy && typeof field.props.busy === 'object'
+                ? field.props.busy
+                : {};
+            for (var b = 1; b <= 7; b++) {
+                var bName = fieldNames[b - 1];
+                var bCsv = bName && busyRaw[bName] ? String(busyRaw[bName]) : '';
+                var hours = parseSlotsCsv(bCsv, 1);
+                if (hours.length) {
+                    busy[b] = hours;
+                    data[b] = (data[b] || []).filter(function (h) {
+                        return hours.indexOf(Math.floor(h / (accuracy > 0 ? accuracy : 1))) === -1;
+                    });
+                }
+            }
+
             var $table = $(root).find('[data-weekly-scheduler-mount]');
             if (!$table.length) {
                 return;
@@ -106,11 +122,13 @@
             $table.scheduler({
                 accuracy: accuracy,
                 data: data,
+                busy: busy,
                 onSelect: function () {
                     var valores = $table.scheduler('val');
                     syncHiddenFromVal(root, fieldNames, valores);
                 }
             });
+            syncHiddenFromVal(root, fieldNames, $table.scheduler('val'));
         }
     };
 })(window);

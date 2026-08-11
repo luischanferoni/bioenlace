@@ -5,12 +5,14 @@ class WeeklySchedulerWidget extends StatefulWidget {
   final List<String> fieldNames;
   final Map<String, String> values;
   final ValueChanged<Map<String, String>> onChanged;
+  final Map<String, Set<int>> busyHours;
 
   const WeeklySchedulerWidget({
     Key? key,
     required this.fieldNames,
     required this.values,
     required this.onChanged,
+    this.busyHours = const {},
   }) : super(key: key);
 
   @override
@@ -26,6 +28,11 @@ class _WeeklySchedulerWidgetState extends State<WeeklySchedulerWidget> {
   void initState() {
     super.initState();
     _slots = _buildSlotsFromValues();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _emit();
+      }
+    });
   }
 
   @override
@@ -41,9 +48,20 @@ class _WeeklySchedulerWidgetState extends State<WeeklySchedulerWidget> {
         }
       }
     }
+    if (!changed && oldWidget.busyHours != widget.busyHours) {
+      changed = true;
+    }
     if (changed) {
       _slots = _buildSlotsFromValues();
     }
+  }
+
+  bool _isBusy(int day, int hour) {
+    if (day < 0 || day >= widget.fieldNames.length) {
+      return false;
+    }
+    final name = widget.fieldNames[day];
+    return widget.busyHours[name]?.contains(hour) ?? false;
   }
 
   List<Set<int>> _buildSlotsFromValues() {
@@ -51,7 +69,9 @@ class _WeeklySchedulerWidgetState extends State<WeeklySchedulerWidget> {
     return List.generate(7, (i) {
       if (i >= n) return {};
       final raw = widget.values[widget.fieldNames[i]] ?? '';
-      return _parseCsv(raw);
+      final parsed = _parseCsv(raw);
+      parsed.removeWhere((h) => _isBusy(i, h));
+      return parsed;
     });
   }
 
@@ -75,6 +95,9 @@ class _WeeklySchedulerWidgetState extends State<WeeklySchedulerWidget> {
   }
 
   void _toggle(int day, int hour) {
+    if (_isBusy(day, hour)) {
+      return;
+    }
     setState(() {
       if (_slots[day].contains(hour)) {
         _slots[day].remove(hour);
@@ -107,11 +130,12 @@ class _WeeklySchedulerWidgetState extends State<WeeklySchedulerWidget> {
                   spacing: 3,
                   runSpacing: 3,
                   children: List.generate(24, (h) {
-                    final on = _slots[d].contains(h);
+                    final busy = _isBusy(d, h);
+                    final on = !busy && _slots[d].contains(h);
                     return FilterChip(
                       label: Text('$h', style: const TextStyle(fontSize: 10)),
                       selected: on,
-                      onSelected: (_) => _toggle(d, h),
+                      onSelected: busy ? null : (_) => _toggle(d, h),
                       visualDensity: VisualDensity.compact,
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     );

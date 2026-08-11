@@ -79,3 +79,24 @@
 .scheduler-disabled .scheduler-active {
   background-color: #acdd6d
 }
+
+.scheduler-busy {
+  background: repeating-linear-gradient(
+    45deg,
+    #e9ecef,
+    #e9ecef 3px,
+    #ced4da 3px,
+    #ced4da 6px
+  );
+  cursor: not-allowed;
+}
+
+.scheduler-busy.scheduler-active {
+  background: repeating-linear-gradient(
+    45deg,
+    #e9ecef,
+    #e9ecef 3px,
+    #ced4da 3px,
+    #ced4da 6px
+  );
+}

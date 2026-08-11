@@ -1,7 +1,7 @@
 # Agenda tipada por encounter_class
 
 **Tipo:** producto · organización / scheduling  
-**Última actualización:** 2026-07-10
+**Última actualización:** 2026-08-11
 
 ## Principio
 
@@ -26,7 +26,7 @@ Metadata: [`agenda-by-encounter-class.yaml`](../../common/metadata/bioenlace/org
 - Tabla `profesional_cobertura`: intervalos absolutos (entrada/salida) materializados desde plantilla.
 - Plantilla `profesional_cobertura_plantilla`: patrón semanal (`lunes_2`…`domingo_2`, mismo CSV de horas que AMB) + `vigente_desde` + `semanas`.
 - Al guardar: reemplaza coberturas generadas (`notas` `plantilla:*`) en la ventana y crea intervalos contiguos por día.
-- Conflictos: solape de intervalos misma persona + mismo efector; y solape con cupos AMB (`cobertura_vs_amb_slots`).
+- Conflictos: solape de intervalos misma persona + mismo efector; y solape con la **grilla semanal** AMB (`cobertura_vs_amb_slots`), leída del patrón `lunes_2`… (no de slots generados). Una agenda AMB en `SIN_ATENCION` igual ocupa esas horas. La UI pinta las celdas ocupadas en gris; el guardado rechaza la intersección. Cobertura de noche puede coexistir con ambulatorio de día.
 - API: `/api/v1/profesional-cobertura/*`; `elegir-encounter-class`; `gestionar` (UI plantilla).
 - Intent unificado: `profesional-horarios.gestionar-propio` (servicio → AMB|EMER|IMP → agenda o cobertura).
 - Intent legado cobertura: `profesional-cobertura.gestionar-propio` | `gestionar-staff`.

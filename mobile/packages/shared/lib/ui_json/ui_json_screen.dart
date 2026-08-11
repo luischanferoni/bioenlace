@@ -813,6 +813,8 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         final wid = field['widget_id']?.toString();
         if (wid == 'weekly_scheduler') {
           final vf = (field['value_fields'] as List?)?.map((e) => e.toString()).toList() ?? [];
+          final hint = field['hint']?.toString() ?? '';
+          final busy = _weeklySchedulerBusyHours(field);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -824,11 +826,17 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
               WeeklySchedulerWidget(
                 fieldNames: vf,
                 values: Map<String, String>.from(_accum),
+                busyHours: busy,
                 onChanged: (m) => setState(() {
                   _accum.addAll(m);
                   _scheduleTerminalFieldsDraftSync();
                 }),
               ),
+              if (hint.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(hint, style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+                ),
             ],
           );
         }
@@ -1370,6 +1378,35 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       }
       await cb(delta);
     }
+  }
+
+  Map<String, Set<int>> _weeklySchedulerBusyHours(Map<String, dynamic> field) {
+    final out = <String, Set<int>>{};
+    final props = field['props'];
+    if (props is! Map) {
+      return out;
+    }
+    final busy = props['busy'];
+    if (busy is! Map) {
+      return out;
+    }
+    busy.forEach((key, value) {
+      final name = key?.toString() ?? '';
+      if (name.isEmpty) {
+        return;
+      }
+      final hours = <int>{};
+      for (final part in value.toString().split(',')) {
+        final h = int.tryParse(part.trim());
+        if (h != null && h >= 0 && h < 24) {
+          hours.add(h);
+        }
+      }
+      if (hours.isNotEmpty) {
+        out[name] = hours;
+      }
+    });
+    return out;
   }
 
   void _setAccumField(String name, String value) {

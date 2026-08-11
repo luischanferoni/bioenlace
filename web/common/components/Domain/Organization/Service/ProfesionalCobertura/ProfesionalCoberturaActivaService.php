@@ -2,14 +2,12 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalCobertura;
 
-use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\AgendaSlotEngine;
+use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
 use common\models\ProfesionalCobertura;
 use common\models\ProfesionalEfectorServicio;
-use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\ProfesionalEfectorServicioAgendaVersion;
 use common\models\Servicio;
 
 /**
@@ -292,76 +290,42 @@ final class ProfesionalCoberturaActivaService
     }
 
     /**
-     * Solapes con cupos AMB de la misma persona en el efector (si metadata lo habilita).
+     * Solapes con la grilla semanal AMB de la misma persona en el efector
+     * (patrón lunes_2…, independiente de formas_atencion / slots generados).
      *
      * @return list<array<string, mixed>>
      */
     public static function detectAmbSlotConflicts(ProfesionalCobertura $model): array
     {
-        $conflictsMeta = AgendaByEncounterClassMetadata::loadConfig()['conflicts'] ?? [];
-        if (!(bool) ($conflictsMeta['cobertura_vs_amb_slots'] ?? false)) {
+        if (!AgendaByEncounterClassMetadata::coberturaVsAmbSlots()) {
             return [];
         }
 
         $idPersona = (int) $model->id_persona;
         $idEfector = (int) $model->id_efector;
-        $inicioTs = strtotime((string) $model->inicio);
-        $finTs = strtotime((string) $model->fin);
-        if ($idPersona <= 0 || $idEfector <= 0 || $inicioTs === false || $finTs === false) {
+        if ($idPersona <= 0 || $idEfector <= 0) {
             return [];
         }
 
-        $pesIds = ProfesionalEfectorServicio::find()
-            ->select(['id'])
-            ->where([
-                'id_persona' => $idPersona,
-                'id_efector' => $idEfector,
-                'deleted_at' => null,
-            ])
-            ->column();
-        if ($pesIds === []) {
+        $busy = AgendaWeeklyOccupancyService::busyHours(
+            $idPersona,
+            $idEfector,
+            (string) $model->encounter_class
+        );
+        $proposed = AgendaWeeklyOccupancyService::proposedHoursFromDatetimeRange(
+            (string) $model->inicio,
+            (string) $model->fin
+        );
+        $overlap = AgendaWeeklyOccupancyService::intersectingHours($proposed, $busy);
+        if ($overlap === []) {
             return [];
         }
 
-        $out = [];
-        $diaCursor = strtotime(date('Y-m-d', $inicioTs));
-        $diaFin = strtotime(date('Y-m-d', $finTs));
-        while ($diaCursor !== false && $diaFin !== false && $diaCursor <= $diaFin) {
-            $diaYmd = date('Y-m-d', $diaCursor);
-            foreach ($pesIds as $idPesRaw) {
-                $idPes = (int) $idPesRaw;
-                $version = ProfesionalEfectorServicioAgendaVersion::findVigenteParaPesEnFecha($idPes, $diaYmd);
-                $agendaLike = $version;
-                $intervalo = $version !== null ? $version->getIntervaloMinutosEfectivo() : null;
-                if ($agendaLike === null) {
-                    $agendaLike = ProfesionalEfectorServicioAgenda::findActivaPorProfesionalEfectorServicio($idPes);
-                    $intervalo = $agendaLike !== null ? $agendaLike->resolveIntervaloMinutosParaSlots() : null;
-                }
-                if ($agendaLike === null || $intervalo === null) {
-                    continue;
-                }
-                foreach (AgendaSlotEngine::slotsParaDia($agendaLike, $diaYmd, $intervalo) as $hhmm) {
-                    $slotTs = strtotime($diaYmd . ' ' . substr($hhmm, 0, 5) . ':00');
-                    if ($slotTs === false) {
-                        continue;
-                    }
-                    if ($slotTs >= $inicioTs && $slotTs < $finTs) {
-                        $out[] = [
-                            'kind' => 'amb_slot',
-                            'id_profesional_efector_servicio' => $idPes,
-                            'fecha' => $diaYmd,
-                            'hora' => substr($hhmm, 0, 5),
-                            'message' => 'Solapa con cupo AMB ' . $diaYmd . ' ' . substr($hhmm, 0, 5),
-                        ];
-                        // Un hallazgo por PES/día basta para avisar
-                        break;
-                    }
-                }
-            }
-            $diaCursor = strtotime('+1 day', $diaCursor);
-        }
-
-        return $out;
+        return [[
+            'kind' => 'amb_weekly_grid',
+            'message' => AgendaWeeklyOccupancyService::conflictMessage($overlap),
+            'hours' => AgendaWeeklyOccupancyService::toCsvMap($overlap),
+        ]];
     }
 
     /**

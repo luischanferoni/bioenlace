@@ -2,10 +2,12 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalEfectorServicio;
 
+use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Domain\Scheduling\Service\AgendaAtencionRemotaCatalogService;
 use common\components\Platform\Ui\UiScreenService;
+use common\models\Clinical\Encounter;
+use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
-use Yii;
 
 /**
  * Flujo UI configurar agenda: datos → (impacto) → persistir.
@@ -105,6 +107,7 @@ final class AgendaConfigUiFlowService
         $out = UiScreenService::renderUiDefinition('profesional-agenda', 'configurar-agenda', $params, null);
         $out = self::filterUiBlocks($out, self::STEP_DATOS, $onlyFields);
         $out = self::enrichAtencionRemotaCopy($out);
+        $out = self::withWeeklyOccupancy($out, $params);
         $out['action_id'] = 'profesional-agenda.configurar-agenda';
         $out['kind'] = 'ui_definition';
         $out['success'] = true;
@@ -354,5 +357,31 @@ final class AgendaConfigUiFlowService
         }
 
         return $out;
+    }
+
+    /**
+     * @param array<string, mixed> $ui
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    private static function withWeeklyOccupancy(array $ui, array $params): array
+    {
+        $idEfector = (int) ($params['id_efector'] ?? 0);
+        $idPes = (int) ($params['id_profesional_efector_servicio'] ?? 0);
+        $idPersona = 0;
+        if ($idPes > 0) {
+            $pes = ProfesionalEfectorServicio::findOne(['id' => $idPes, 'deleted_at' => null]);
+            if ($pes !== null) {
+                $idPersona = (int) $pes->id_persona;
+            }
+        }
+
+        return AgendaWeeklyOccupancyService::attachToUi(
+            $ui,
+            $idPersona,
+            $idEfector,
+            Encounter::ENCOUNTER_CLASS_AMB,
+            $idPes > 0 ? $idPes : null
+        );
     }
 }

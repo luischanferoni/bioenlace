@@ -32,7 +32,7 @@ kinds:
 conflicts:
   # Solape de intervalos de cobertura (EMER/IMP) misma persona + mismo efector.
   cobertura_overlap_same_persona_efector: true
-  # Cruce cobertura vs grilla AMB: avisa si hay cupos AMB en el intervalo.
+  # Cruce cobertura vs grilla AMB: patrón semanal (lunes_2…), no slots generados.
   cobertura_vs_amb_slots: true
 
 patient_exposure:

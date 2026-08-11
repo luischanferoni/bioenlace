@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\ProfesionalCobertura;
 
+use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Platform\Ui\UiScreenService;
 use common\models\Clinical\Encounter;
 use common\models\ProfesionalEfectorServicio;
@@ -23,7 +24,7 @@ final class ProfesionalCoberturaUiFlowService
         $out = UiScreenService::renderUiDefinition('profesional-cobertura', 'gestionar', $params, null);
         $out['action_id'] = 'profesional-cobertura.gestionar';
 
-        return $out;
+        return self::withWeeklyOccupancy($out, $params);
     }
 
     /**
@@ -44,7 +45,7 @@ final class ProfesionalCoberturaUiFlowService
                 $ui['conflicts'] = $result['conflicts'] ?? [];
                 $ui['action_id'] = 'profesional-cobertura.gestionar';
 
-                return $ui;
+                return self::withWeeklyOccupancy($ui, $params);
             }
 
             $created = (int) ($result['created'] ?? 0);
@@ -71,7 +72,7 @@ final class ProfesionalCoberturaUiFlowService
             $ui['errors'] = ['_error' => [$e->getMessage()]];
             $ui['action_id'] = 'profesional-cobertura.gestionar';
 
-            return $ui;
+            return self::withWeeklyOccupancy($ui, $params);
         }
     }
 
@@ -133,6 +134,38 @@ final class ProfesionalCoberturaUiFlowService
         }
 
         return array_merge($query, $defaults);
+    }
+
+    /**
+     * @param array<string, mixed> $ui
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    private static function withWeeklyOccupancy(array $ui, array $params): array
+    {
+        $idEfector = (int) ($params['id_efector'] ?? 0);
+        $idPes = (int) ($params['id_profesional_efector_servicio'] ?? 0);
+        $encounterClass = strtoupper(trim((string) ($params['encounter_class'] ?? Encounter::ENCOUNTER_CLASS_EMER)));
+        $idPersona = 0;
+        if ($idPes > 0) {
+            $pes = ProfesionalEfectorServicio::find()
+                ->where(['id' => $idPes, 'deleted_at' => null])
+                ->one();
+            if ($pes !== null) {
+                $idPersona = (int) $pes->id_persona;
+            }
+        }
+        if ($idPersona <= 0) {
+            $idPersona = (int) ($params['id_persona'] ?? 0);
+        }
+
+        return AgendaWeeklyOccupancyService::attachToUi(
+            $ui,
+            $idPersona,
+            $idEfector,
+            $encounterClass,
+            $idPes > 0 ? $idPes : null
+        );
     }
 
     /**

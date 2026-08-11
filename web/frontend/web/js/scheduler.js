@@ -162,6 +162,7 @@
     this.endCoord = null;
     // 控件的数据对象，所有操作不会更改 this.options.data
     this.data = $.extend(true, {}, this.options.data);
+    this.data = this.stripBusy(this.data);
     this.init();
   };
 
@@ -170,6 +171,7 @@
     locale: 'en', // i18n
     accuracy: 1, // how many cells of an hour
     data: [], // selected cells
+    busy: {}, // {1..7: [hourIndex, ...]} occupied by another agenda
     footer: true,
     multiple: true,
     disabled: false,
@@ -207,7 +209,7 @@
       '</tr>',
     HOUR_HEAD_CELL: '<th class="scheduler-hour-toggle" data-hour-toggle="%s" colspan="%s">%s</th>',
     DAY_ROW: '<tr data-index="%s"><td class="scheduler-day-toggle" data-day-toggle="%s">%s</td>%s</tr>',
-    HOUR_CELL: '<td class="scheduler-hour%s" data-row="%s" data-col="%s"></td>',
+    HOUR_CELL: '<td class="scheduler-hour%s" data-row="%s" data-col="%s"%s></td>',
     FOOT_ROW: '<tr><td colspan="%s"><span class="scheduler-tips">%s</span><a class="scheduler-reset">%s</a></td></tr>'
   };
 
@@ -342,11 +344,20 @@
       var cells = '';
       var selectedHours = data[i];
       for (var j = 0; j < cellOfRow; j++) {
+        var isBusy = me.isBusyCell(i, j);
+        var extraClass = '';
+        if (!isBusy && selectedHours && ~selectedHours.indexOf(j)) {
+          extraClass += ' scheduler-active';
+        }
+        if (isBusy) {
+          extraClass += ' scheduler-busy';
+        }
         cells += sprintf(
           $.fn.scheduler.templates.HOUR_CELL,
-          selectedHours && ~selectedHours.indexOf(j) ? ' scheduler-active' : '',
+          extraClass,
           i,
-          j
+          j,
+          isBusy ? ' title="Ocupado por otra agenda"' : ''
         );
       }
       rows += sprintf(
@@ -405,8 +416,11 @@
     if (this.options.disabled) {
       return;
     }
-    this.moving = true;
     var $cell = $(e.target);
+    if (this.isBusyCell($cell.data('row'), $cell.data('col'))) {
+      return;
+    }
+    this.moving = true;
     this.startCoord = [$cell.data('row'), $cell.data('col')];
     this.endCoord = this.startCoord.slice(0);
     this.selectMode = this.getCellSelectMode(this.startCoord);
@@ -528,7 +542,7 @@
         res[i] = current[i].slice(0);
       }
     }
-    return res;
+    return this.stripBusy(res);
   };
 
   /**
@@ -555,24 +569,22 @@
     var endRow = rowRange[1];
     var startCol = colRange[0];
     var endCol = colRange[1];
-    var rows = endRow - startRow + 1;
-    var cols = endCol - startCol + 1;
-    var total = rows * cols;
-
-    // 计算已使用的时间格子
-    // TODO 未过滤 disabled 的格子
+    var total = 0;
     var used = 0;
-    for (var i = 0; i < rows; i++) {
-      var day = startRow + i;
-      var data = this.data[day];
-      if (!data) {
-        continue;
-      }
-      for (var j = 0; j < data.length; j++) {
-        if (data[j] >= startCol && data[j] <= endCol) {
+    for (var i = startRow; i <= endRow; i++) {
+      var data = this.data[i] || [];
+      for (var c = startCol; c <= endCol; c++) {
+        if (this.isBusyCell(i, c)) {
+          continue;
+        }
+        total++;
+        if (~data.indexOf(c)) {
           used++;
         }
       }
+    }
+    if (total === 0) {
+      return SelectMode.NONE;
     }
 
     return total === used ? SelectMode.MINUS : SelectMode.JOIN;
@@ -592,9 +604,39 @@
     if (!this.options.multiple) {
       return SelectMode.REPLACE;
     }
-    // TODO 未过滤 disabled 的格子
+    if (this.isBusyCell(coord[0], coord[1])) {
+      return SelectMode.NONE;
+    }
     var day = this.data[coord[0]];
     return day && ~day.indexOf(coord[1]) ? SelectMode.MINUS : SelectMode.JOIN;
+  };
+
+  proto.isBusyCell = function (row, col) {
+    var busy = this.options.busy;
+    if (!busy || !busy[row] || !busy[row].length) {
+      return false;
+    }
+    var acc = this.options.accuracy > 0 ? this.options.accuracy : 1;
+    var hour = Math.floor(col / acc);
+    return busy[row].indexOf(hour) !== -1;
+  };
+
+  proto.stripBusy = function (data) {
+    var res = {};
+    var src = data || {};
+    for (var i = 1; i <= 7; i++) {
+      var row = src[i] ? src[i].slice(0) : [];
+      var kept = [];
+      for (var k = 0; k < row.length; k++) {
+        if (!this.isBusyCell(i, row[k])) {
+          kept.push(row[k]);
+        }
+      }
+      if (kept.length) {
+        res[i] = kept;
+      }
+    }
+    return res;
   };
 
   proto.sortCoord = function (num1, num2) {
@@ -623,8 +665,8 @@
     // setter
     if (toStr(data) === '[object Object]') {
       // TODO 数据结构校验
-      this.data = data;
-      this.update(data);
+      this.data = this.stripBusy(data);
+      this.update(this.data);
 
     } else { // getter
       return this.merge(this.data, {}, SelectMode.JOIN);

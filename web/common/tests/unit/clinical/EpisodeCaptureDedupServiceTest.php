@@ -41,7 +41,7 @@ class EpisodeCaptureDedupServiceTest extends Unit
         $this->assertSame([], $out['duplicate_item_ids']);
     }
 
-    public function testApplyToReviewBlocksNoteDuplicateAndFiltersStaged(): void
+    public function testApplyToReviewWarnsNoteDuplicateAndFiltersStaged(): void
     {
         $svc = new EpisodeCaptureDedupService();
         $review = [
@@ -78,8 +78,8 @@ class EpisodeCaptureDedupServiceTest extends Unit
 
         $out = $svc->applyToReview($review, $dedup);
 
-        $this->assertFalse($out['puede_confirmar']);
-        $this->assertTrue($out['tiene_datos_faltantes']);
+        $this->assertTrue($out['puede_confirmar']);
+        $this->assertFalse($out['tiene_datos_faltantes']);
         $this->assertSame(['Diagnósticos::1'], $out['default_staged_item_ids']);
         $this->assertTrue($out['categories'][0]['items'][0]['already_active']);
         $this->assertStringContainsString(
@@ -88,7 +88,7 @@ class EpisodeCaptureDedupServiceTest extends Unit
         );
         $this->assertArrayNotHasKey('already_active', $out['categories'][0]['items'][1]);
         $this->assertCount(2, $out['advisories']);
-        $this->assertTrue(($out['datos_faltantes_detalle']['episode_note_duplicate'] ?? false) === true);
+        $this->assertArrayNotHasKey('datos_faltantes_detalle', $out);
     }
 
     public function testApplyToReviewNoOpWhenDoesNotApply(): void

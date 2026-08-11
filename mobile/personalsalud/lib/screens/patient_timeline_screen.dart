@@ -2788,7 +2788,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           BioSpacing.gapH(BioSpacing.sm),
           BioAlert.danger(
             message:
-                'Editá el texto: la nota es casi idéntica a una evolución previa del episodio.',
+                'Esta nota es muy parecida a una evolución previa. Si confirmás, se guarda igual.',
           ),
         ],
         if (review.textoProcesado != null &&

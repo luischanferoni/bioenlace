@@ -167,7 +167,7 @@
                 return String(list[i].message);
             }
         }
-        return 'Editá el texto: la nota es casi idéntica a una evolución previa del episodio.';
+        return 'Esta nota es muy parecida a una evolución previa. Si confirmás, se guarda igual.';
     }
 
     function isElementShown(el) {

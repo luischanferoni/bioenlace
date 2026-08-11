@@ -343,33 +343,6 @@ class EncounterDocumentationService extends Component
                 return $this->clientGuardarResponse($out);
             }
 
-            $parentKey = strtoupper(trim((string) ($body['parent'] ?? '')));
-            $parentIdBody = (int) ($body['parent_id'] ?? 0);
-            $noteText = (string) ($this->resolveCaptureNote($body) ?? $body['texto_original'] ?? $body['consulta_texto'] ?? '');
-            if (
-                $parentIdBody > 0
-                && (int) $idPersona > 0
-                && in_array($parentKey, [Encounter::PARENT_INTERNACION, Encounter::PARENT_GUARDIA], true)
-            ) {
-                $dedupSvc = new \common\components\Domain\Clinical\Service\EpisodeCaptureDedupService();
-                if ($dedupSvc->isNoteDuplicateOfPriorEvolutions(
-                    $noteText,
-                    $parentKey,
-                    $parentIdBody,
-                    (int) $idPersona
-                )) {
-                    $msg = 'Esta nota es casi idéntica a una evolución previa del mismo episodio. '
-                        . 'Editá el texto para documentar los cambios clínicos.';
-                    $out = $this->error(400, $msg, [
-                        'episode_note_duplicate' => true,
-                    ]);
-                    $out['diagnostico_guardar'] = $diagnostico;
-                    $logger->finalizar($out);
-
-                    return $this->clientGuardarResponse($out);
-                }
-            }
-
             $paciente = $this->lifecycle->findSubject((int) $idPersona);
             if (!$paciente) {
                 $out = $this->error(400, 'Paciente no encontrado.');

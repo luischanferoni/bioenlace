@@ -12,7 +12,7 @@ use common\models\DiagnosticoConsulta;
 
 /**
  * Anti-duplicado de evoluciones en episodio (INTERNACION / GUARDIA):
- * nota casi idéntica a un pase previo + ítems ya activos en el episodio.
+ * aviso si la nota se parece a un pase previo + ítems ya activos en el episodio.
  */
 final class EpisodeCaptureDedupService
 {
@@ -65,9 +65,9 @@ final class EpisodeCaptureDedupService
         if ($noteDuplicate) {
             $advisories[] = [
                 'code' => self::ADVISORY_NOTE_DUPLICATE,
-                'severity' => 'danger',
-                'message' => 'Esta nota es casi idéntica a una evolución previa del mismo episodio. '
-                    . 'Editá el texto para documentar los cambios clínicos (una evolución debe ser incremental).',
+                'severity' => 'warning',
+                'message' => 'Esta nota es muy parecida a una evolución previa del mismo episodio. '
+                    . 'Conviene documentar los cambios clínicos; si confirmás, se guarda igual.',
             ];
         }
         if ($duplicateItemIds !== []) {
@@ -88,7 +88,8 @@ final class EpisodeCaptureDedupService
     }
 
     /**
-     * Aplica el resultado al capture_review (bloqueo por nota + staged + flags).
+     * Aplica el resultado al capture_review (aviso de nota + destildar ya activos).
+     * La nota parecida no bloquea confirmar: es advisory.
      *
      * @param array<string, mixed> $review
      * @param array<string, mixed> $dedup
@@ -154,29 +155,6 @@ final class EpisodeCaptureDedupService
         }
         if ($advisories !== []) {
             $review['advisories'] = $advisories;
-        }
-
-        if (($dedup['note_duplicate'] ?? false) === true) {
-            $review['tiene_datos_faltantes'] = true;
-            $review['puede_confirmar'] = false;
-            $msg = '';
-            foreach ($advisories as $adv) {
-                if (($adv['code'] ?? '') === self::ADVISORY_NOTE_DUPLICATE) {
-                    $msg = (string) $adv['message'];
-                    break;
-                }
-            }
-            $detalle = is_array($review['datos_faltantes_detalle'] ?? null)
-                ? $review['datos_faltantes_detalle']
-                : [
-                    'missing_categories' => [],
-                    'incomplete_items' => [],
-                    'message' => '',
-                ];
-            $prev = trim((string) ($detalle['message'] ?? ''));
-            $detalle['message'] = $prev === '' ? $msg : ($prev . ' ' . $msg);
-            $detalle['episode_note_duplicate'] = true;
-            $review['datos_faltantes_detalle'] = $detalle;
         }
 
         return $review;

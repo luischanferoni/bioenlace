@@ -7,12 +7,13 @@ use common\models\Clinical\Encounter;
 use common\models\ProfesionalCoberturaPlantilla;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
-use common\models\ProfesionalEfectorServicioAgendaVersion;
 
 /**
  * Horas de la grilla semanal ya tomadas por otra clase de encounter (misma persona + efector).
  * La ocupación se lee del patrón semanal (columnas lunes_2…), no de slots generados:
  * una agenda AMB en SIN_ATENCION igual ocupa el día/hora en el patrón.
+ * AMB usa el espejo `profesional_efector_servicio_agenda` (igual que configurar-agenda),
+ * no una versión vieja que siga vigente hasta la fecha de la grilla nueva.
  */
 final class AgendaWeeklyOccupancyService
 {
@@ -424,20 +425,14 @@ final class AgendaWeeklyOccupancyService
         }
 
         $busy = self::emptyByColumn();
+        // Misma fuente que configurar-agenda: espejo actual, no versiones aún vigentes
+        // con un patrón viejo (p. ej. vigente hasta mañana mientras el espejo ya es el nuevo).
         $agendas = ProfesionalEfectorServicioAgenda::find()
             ->where(['id_profesional_efector_servicio' => $pesIds])
             ->andWhere(['deleted_at' => null])
             ->all();
         foreach ($agendas as $agenda) {
             $busy = self::mergeByColumn($busy, self::hoursFromCsvMap($agenda->getAttributes(array_values(self::DAY_COLUMNS))));
-        }
-        $today = date('Y-m-d');
-        foreach ($pesIds as $idPesRaw) {
-            $version = ProfesionalEfectorServicioAgendaVersion::findVigenteParaPesEnFecha((int) $idPesRaw, $today);
-            if ($version === null) {
-                continue;
-            }
-            $busy = self::mergeByColumn($busy, self::hoursFromCsvMap($version->getAttributes(array_values(self::DAY_COLUMNS))));
         }
 
         return $busy;

@@ -133,50 +133,138 @@
         return set;
     }
 
-    function canConfirm(review, stagedIdSet, resolutions) {
+    function parseIssueItemId(issueId) {
+        var m = String(issueId || '').match(/^(.*)::(\d+):/);
+        if (!m) {
+            return null;
+        }
+        return m[1] + '::' + m[2];
+    }
+
+    function isEpisodeNoteDuplicate(review) {
+        if (!review) {
+            return false;
+        }
+        var detalle = review.datos_faltantes_detalle;
+        if (detalle && detalle.episode_note_duplicate === true) {
+            return true;
+        }
+        if (!Array.isArray(review.advisories)) {
+            return false;
+        }
+        return review.advisories.some(function (a) {
+            return a && a.code === 'episode_note_duplicate';
+        });
+    }
+
+    function episodeNoteDuplicateMessage(review) {
+        if (!isEpisodeNoteDuplicate(review)) {
+            return '';
+        }
+        var detalle = review.datos_faltantes_detalle;
+        var fromDetalle = detalle && String(detalle.message || '').trim();
+        if (fromDetalle) {
+            return fromDetalle;
+        }
+        var list = Array.isArray(review.advisories) ? review.advisories : [];
+        for (var i = 0; i < list.length; i++) {
+            if (list[i] && list[i].code === 'episode_note_duplicate' && list[i].message) {
+                return String(list[i].message);
+            }
+        }
+        return 'Editá el texto: la nota es casi idéntica a una evolución previa del episodio.';
+    }
+
+    function isElementShown(el) {
+        while (el && el.nodeType === 1) {
+            if (el.classList && el.classList.contains('d-none')) {
+                return false;
+            }
+            if (el.style && el.style.display === 'none') {
+                return false;
+            }
+            el = el.parentElement;
+        }
+        return true;
+    }
+
+    function resolutionValueFromBlock(block) {
+        if (!block) {
+            return null;
+        }
+        var active =
+            block.querySelector('.capture-issue-option.active') ||
+            block.querySelector('.capture-issue-option[aria-pressed="true"]');
+        if (active) {
+            var attr = active.getAttribute('data-issue-value');
+            if (attr != null && String(attr).trim() !== '') {
+                return String(attr);
+            }
+        }
+        var custom = block.querySelector('.capture-issue-custom');
+        if (custom && String(custom.value || '').trim() !== '') {
+            return String(custom.value).trim();
+        }
+        return null;
+    }
+
+    /**
+     * Guardar se habilita cuando los issues *visibles* de ítems tildados están resueltos.
+     * Destildar (ya activo / no persistir) no bloquea: se guarda la nota.
+     * La nota casi idéntica se avisa al confirmar, no apaga el botón.
+     */
+    function canConfirm(review, stagedIdSet, resolutions, root) {
         if (!review) {
             return false;
         }
         if (review.system_error) {
             return false;
         }
-        // puede_confirmar=false del análisis incluye issues incompletos (el cliente los
-        // resuelve). Solo bloquear de forma permanente si es nota casi idéntica.
-        var detalle = review.datos_faltantes_detalle;
-        if (detalle && detalle.episode_note_duplicate === true) {
-            return false;
-        }
-        if (Array.isArray(review.advisories)) {
-            for (var a = 0; a < review.advisories.length; a++) {
-                if (review.advisories[a] && review.advisories[a].code === 'episode_note_duplicate') {
-                    return false;
-                }
-            }
-        }
         var texto = (review.texto_original || '').trim();
         if (!texto) {
             return false;
         }
-        if (hasClinicalItems(review) && stagedIdSet.size === 0) {
-            return false;
-        }
         var resMap = resolutions && typeof resolutions === 'object' ? resolutions : {};
+        var staged = stagedIdSet && typeof stagedIdSet.has === 'function' ? stagedIdSet : new Set();
+
+        if (root) {
+            var blocks = root.querySelectorAll('[data-capture-issue-id]');
+            for (var b = 0; b < blocks.length; b++) {
+                var block = blocks[b];
+                var issueId = block.getAttribute('data-capture-issue-id');
+                if (!issueId || !isElementShown(block)) {
+                    continue;
+                }
+                var itemBlock = block.closest('[data-capture-item-block]');
+                var itemId = itemBlock
+                    ? itemBlock.getAttribute('data-capture-item-block')
+                    : parseIssueItemId(issueId);
+                if (itemId && !staged.has(itemId)) {
+                    continue;
+                }
+                var val = resMap[issueId];
+                if (val === undefined || val === null || String(val).trim() === '') {
+                    val = resolutionValueFromBlock(block);
+                }
+                if (val === undefined || val === null || String(val).trim() === '') {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         var issues = Array.isArray(review.issues) ? review.issues : [];
         for (var i = 0; i < issues.length; i++) {
             var issue = issues[i];
             if (!issue || !issue.id) {
                 continue;
             }
-            var m = String(issue.id).match(/^(.*)::(\d+):/);
-            if (m) {
-                var itemId = m[1] + '::' + m[2];
-                // Destildado (p. ej. ya activo en el episodio): no exigir sus campos.
-                if (!stagedIdSet.has(itemId)) {
-                    continue;
-                }
+            var parsedItemId = parseIssueItemId(issue.id);
+            if (parsedItemId && !staged.has(parsedItemId)) {
+                continue;
             }
-            var val = resMap[issue.id];
-            if (val === undefined || val === null || String(val).trim() === '') {
+            var v2 = resMap[issue.id];
+            if (v2 === undefined || v2 === null || String(v2).trim() === '') {
                 return false;
             }
         }
@@ -675,7 +763,14 @@
 
             var orphanIssues = (Array.isArray(review.issues) ? review.issues : []).filter(
                 function (issue) {
-                    return issue && issue.id && !renderedIssueIds[issue.id];
+                    if (!issue || !issue.id || renderedIssueIds[issue.id]) {
+                        return false;
+                    }
+                    var orphanItemId = parseIssueItemId(issue.id);
+                    if (orphanItemId && !stagedSet[orphanItemId]) {
+                        return false;
+                    }
+                    return true;
                 }
             );
             if (orphanIssues.length) {
@@ -736,14 +831,9 @@
             if (!issueId) {
                 return;
             }
-            var active = block.querySelector('.capture-issue-option.active');
-            if (active) {
-                out[issueId] = active.getAttribute('data-issue-value');
-                return;
-            }
-            var custom = block.querySelector('.capture-issue-custom');
-            if (custom && String(custom.value || '').trim() !== '') {
-                out[issueId] = String(custom.value).trim();
+            var val = resolutionValueFromBlock(block);
+            if (val != null) {
+                out[issueId] = val;
             }
         });
         return out;
@@ -903,6 +993,8 @@
         buildDatosExtraidos: buildDatosExtraidos,
         buildFullAnalisisExtraidos: buildFullAnalisisExtraidos,
         canConfirm: canConfirm,
+        isEpisodeNoteDuplicate: isEpisodeNoteDuplicate,
+        episodeNoteDuplicateMessage: episodeNoteDuplicateMessage,
         defaultStagedIds: defaultStagedIds,
         hasExtractedContent: hasExtractedContent,
         applyItemChipVisual: applyItemChipVisual,

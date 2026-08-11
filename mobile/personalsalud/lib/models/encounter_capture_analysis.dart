@@ -65,6 +65,16 @@ class EncounterCaptureAnalysis {
     return issues.where((i) => !claimed.contains(i.id)).toList();
   }
 
+  /// Huérfanos cuyo ítem está tildado (o el id no parsea). Destildados no se muestran.
+  List<EncounterCaptureIssue> orphanIssuesForStaged(Set<String> stagedItemIds) {
+    final itemIdRe = RegExp(r'^(.*)::(\d+):');
+    return orphanIssues.where((issue) {
+      final m = itemIdRe.firstMatch(issue.id);
+      if (m == null) return true;
+      return stagedItemIds.contains('${m.group(1)}::${m.group(2)}');
+    }).toList();
+  }
+
   bool get hasExtractedContent =>
       categories.any((c) => c.items.isNotEmpty) && systemError == null;
 

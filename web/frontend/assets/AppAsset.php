@@ -48,9 +48,18 @@ class AppAsset extends AssetBundle
             'encounter-capture-form.js',
         ];
         
+        $bustCache = [
+            'encounter-capture-review.js' => true,
+            'encounter-capture-form.js' => true,
+        ];
         foreach ($jsFiles as $file) {
             // Usar Url::to para generar la URL correcta desde @web
-            $this->js[] = \yii\helpers\Url::to('@web/js/' . $file, true);
+            $url = \yii\helpers\Url::to('@web/js/' . $file, true);
+            if (isset($bustCache[$file])) {
+                $abs = \Yii::getAlias('@frontend/web/js/' . $file);
+                $url .= '?v=' . (is_file($abs) ? filemtime($abs) : time());
+            }
+            $this->js[] = $url;
         }
     }
 

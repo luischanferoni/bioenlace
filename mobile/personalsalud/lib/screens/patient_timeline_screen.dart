@@ -2262,15 +2262,6 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
       );
       return;
     }
-    // Si se extrajeron ítems del texto, exigir al menos uno tildado (evita guardar solo
-    // texto y perder medicación/prácticas/indicaciones).
-    if (review.hasClinicalItems && _stagedItemIds.isEmpty) {
-      _snack(
-        'Seleccioná al menos un ítem del análisis antes de confirmar.',
-        UiIntent.warning,
-      );
-      return;
-    }
     if (!_allStagedIssuesResolved(review)) {
       _snack(
         'Completá los datos faltantes marcados antes de confirmar.',
@@ -2894,7 +2885,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
                 'Faltan categorías obligatorias: ${review.missingCategories.join(', ')}.',
           ),
         ],
-        ...review.orphanIssues.map(_buildCaptureIssueBlock),
+        ...review.orphanIssuesForStaged(_stagedItemIds).map(_buildCaptureIssueBlock),
         if (review.hasOpenProblems) ...[
           BioSpacing.gapH(BioSpacing.md),
           Text('Problemas y tratamientos abiertos', style: sectionTitleStyle),
@@ -3113,9 +3104,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     final canConfirm = !_isSaving &&
         review != null &&
         review.systemError == null &&
-        !review.episodeNoteDuplicate &&
         review.textoOriginal.trim().isNotEmpty &&
-        !(review.hasClinicalItems && _stagedItemIds.isEmpty) &&
         _allStagedIssuesResolved(review);
 
     return Container(

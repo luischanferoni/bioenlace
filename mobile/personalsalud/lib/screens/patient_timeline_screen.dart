@@ -2227,7 +2227,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     for (final issue in review.issues) {
       final m = RegExp(r'^(.*)::(\d+):').firstMatch(issue.id);
       final stagedId = m != null ? '${m.group(1)}::${m.group(2)}' : issue.id;
-      if (_stagedItemIds.isNotEmpty && !_stagedItemIds.contains(stagedId)) {
+      if (!_stagedItemIds.contains(stagedId)) {
         continue;
       }
       if (_issueResolutions.containsKey(issue.id)) {

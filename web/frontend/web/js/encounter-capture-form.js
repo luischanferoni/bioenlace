@@ -405,7 +405,7 @@
                 return;
             }
             var itemId = m[1] + '::' + m[2];
-            if (staged.size > 0 && !staged.has(itemId)) {
+            if (!staged.has(itemId)) {
                 delete merged[issueId];
             }
         });

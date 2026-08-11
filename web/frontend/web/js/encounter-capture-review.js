@@ -170,7 +170,8 @@
             var m = String(issue.id).match(/^(.*)::(\d+):/);
             if (m) {
                 var itemId = m[1] + '::' + m[2];
-                if (stagedIdSet.size > 0 && !stagedIdSet.has(itemId)) {
+                // Destildado (p. ej. ya activo en el episodio): no exigir sus campos.
+                if (!stagedIdSet.has(itemId)) {
                     continue;
                 }
             }

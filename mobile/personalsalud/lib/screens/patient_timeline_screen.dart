@@ -3048,8 +3048,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
   ) {
     final incomplete = review.incompleteForItem(item.id);
     final itemIssues = review.issuesForItem(item.id);
-    final selected =
-        !item.alreadyActive && _stagedItemIds.contains(item.id);
+    final selected = _stagedItemIds.contains(item.id);
     return Padding(
       padding: const EdgeInsets.only(bottom: BioSpacing.sm),
       child: Column(
@@ -3086,8 +3085,7 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
     EncounterCaptureItem item, {
     bool incomplete = false,
   }) {
-    final selected =
-        !item.alreadyActive && _stagedItemIds.contains(item.id);
+    final selected = _stagedItemIds.contains(item.id);
     final label = item.subtitle != null && item.subtitle!.isNotEmpty
         ? '${item.label} (${item.subtitle})'
         : item.label;
@@ -3101,14 +3099,12 @@ class _PatientTimelineScreenState extends State<PatientTimelineScreen> {
           : (incomplete ? Icons.add_circle_outline : Icons.add_circle_outline),
       intent: incomplete
           ? UiIntent.danger
-          : (item.alreadyActive
+          : (item.alreadyActive && !selected
               ? UiIntent.neutral
               : (item.isFromClinicalText
                   ? UiIntent.neutral
                   : UiIntent.secondary)),
-      onTap: (_isSaving || item.alreadyActive)
-          ? null
-          : () => _toggleStagedItem(item.id, !selected),
+      onTap: _isSaving ? null : () => _toggleStagedItem(item.id, !selected),
     );
   }
 

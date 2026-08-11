@@ -266,6 +266,11 @@ final class EpisodeCaptureDedupService
         return false;
     }
 
+    public function hasActiveIndicationKey(array $encounterIds, string $key): bool
+    {
+        return $key !== '' && $encounterIds !== [] && isset($this->activeIndicationKeys($encounterIds)[$key]);
+    }
+
     public function hasActiveMedicationDisplay(array $encounterIds, string $displayKey): bool
     {
         if ($displayKey === '' || $encounterIds === []) {

@@ -1549,7 +1549,18 @@ class EncounterDocumentationService extends Component
         if (!is_array($payload)) {
             return;
         }
+        $dedup = new \common\components\Domain\Clinical\Service\EpisodeCaptureDedupService();
+        $episodeIds = $this->episodeEncounterIdsFor($encounter);
         foreach ($payload as $row) {
+            if ($modelo === 'ConsultaIndicaciones' && is_array($row) && $episodeIds !== []) {
+                $ind = (string) ($row['Indicacion'] ?? $row['indicacion'] ?? $row['display'] ?? '');
+                $tipo = (string) ($row['Tipo'] ?? $row['tipo'] ?? $row['category'] ?? '');
+                $key = $dedup->normalizeKey($ind . '|' . $tipo);
+                if ($key !== '' && $dedup->hasActiveIndicationKey($episodeIds, $key)) {
+                    Yii::info('Skip indicacion duplicada en episodio: ' . $ind, 'encounter-doc');
+                    continue;
+                }
+            }
             try {
                 $this->serviceRequests->createFromExtractedRow($encounter, $row, $modelo, $carePlan);
             } catch (\InvalidArgumentException $e) {

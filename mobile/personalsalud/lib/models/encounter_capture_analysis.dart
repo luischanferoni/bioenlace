@@ -507,11 +507,8 @@ class EncounterCaptureAnalysis {
       .map((e) => e.id)
       .toSet();
 
-  /// Stage efectivo = selección del usuario ∪ extracción clínica no duplicada.
-  Set<String> effectiveSaveItemIds(Set<String> stagedIds) => {
-        ...stagedIds,
-        ...clinicalItemIds,
-      };
+  /// Stage efectivo = lo que el profesional tildó (destildar no se reintroduce).
+  Set<String> effectiveSaveItemIds(Set<String> stagedIds) => {...stagedIds};
 }
 
 class EncounterCaptureCategory {
@@ -572,7 +569,7 @@ class EncounterCaptureItem {
   /// null = legacy / sin dato → se trata como texto clínico.
   final EncounterCaptureItemSource? source;
 
-  /// Ya activo en el episodio (no se tilda por defecto).
+  /// Ya activo en el episodio (sale destildado; se puede tildar a mano).
   final bool alreadyActive;
 
   bool get isFromClinicalText => source != EncounterCaptureItemSource.ai;

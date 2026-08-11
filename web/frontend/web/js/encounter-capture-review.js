@@ -824,9 +824,6 @@
         }
         root.querySelectorAll('.capture-review-item').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                if (btn.getAttribute('data-already-active') === '1') {
-                    return;
-                }
                 var willActivate = btn.getAttribute('aria-pressed') !== 'true';
                 applyItemChipVisual(btn, willActivate);
 

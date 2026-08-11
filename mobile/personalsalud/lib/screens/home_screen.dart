@@ -64,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<CirugiaAgendaItem> _cirugias = [];
   List<HomePanelKpiGroup> _kpiGroups = [];
   bool _sessionTieneCobertura = false;
+  bool _puedeTriage = false;
   String? _mensajeSinCobertura;
   Map<String, dynamic>? _staffContext;
   String _lastListKind = '';
@@ -237,6 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _guardiaTablero = [];
         _cirugias = [];
         _sessionTieneCobertura = false;
+        _puedeTriage = false;
         _mensajeSinCobertura = null;
         _consultasAsync = [];
         _consultasAsyncGroups = [];
@@ -275,6 +277,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _guardiaTablero = items
             .map((e) => EmergencyBoardItem.fromJson(Map<String, dynamic>.from(e as Map)))
             .toList();
+        _puedeTriage = board.data['puede_triage'] == true;
         _lastListKind = 'guardias';
       }
 
@@ -1350,11 +1353,22 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     if (g.needsTriage) {
+      if (_puedeTriage) {
+        await EmergencyGuardiaActions.openTriage(
+          context: context,
+          item: g,
+          api: _emergencyApi,
+          onChanged: () {
+            _cargarListadoPacientes(silent: true);
+          },
+        );
+        return;
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Pendiente de triage. Lo registra admisión o enfermería en web.',
+              'Pendiente de triage. Lo registra admisión o enfermería.',
             ),
           ),
         );
@@ -1500,6 +1514,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           api: _emergencyApi,
                           onChanged: refresh,
                           sessionTieneCobertura: _sessionTieneCobertura,
+                          puedeTriage: _puedeTriage,
                         );
                       },
                     ),

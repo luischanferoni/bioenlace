@@ -28,8 +28,7 @@ final class EncounterDefinitionBootstrapService
         }
 
         $servicio = Servicio::findOne($serviceId);
-        $serviceName = $servicio !== null ? (string) $servicio->nombre : '';
-        $template = EncounterDefinitionWorkflowCatalog::templateForServiceName($serviceName, $encounterClass);
+        $template = EncounterDefinitionWorkflowCatalog::templateForServicio($servicio, $encounterClass);
 
         $model = new EncounterDefinition();
         $model->service_id = $serviceId;

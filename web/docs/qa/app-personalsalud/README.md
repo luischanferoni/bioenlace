@@ -22,6 +22,7 @@ Pruebas de humo en **`mobile/personalsalud`** (Android). Misma API y sesión ope
 | APS-06 | Usuario sin asignación a efector | Mensaje claro (no crash) |
 | APS-07 | Timeline paciente con turno — motivos cargados | Resumen del chat de motivos visible cuando el paciente envió mensajes y cerró la ventana de carga |
 | APS-08 | Tap en CTA consultorio del login | Abre el alta web con `perfil=consultorio` |
+| APS-09 | Login `enfermeria` + EMER, paciente en espera de triage | Tap abre triage Manchester (no snack «hacelo en web») |
 
 ## Cruzar con web
 

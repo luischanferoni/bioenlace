@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Clinical\Home\Sections;
 
+use common\components\Domain\Clinical\Emergency\Service\GuardiaBoardCapabilityService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaQueueService;
 use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
 use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaActivaService;
@@ -47,6 +48,7 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
             return [
                 'items' => [],
                 'requires_cobertura' => true,
+                'puede_triage' => (new GuardiaBoardCapabilityService())->canTriage(),
                 'empty_message' => ProfesionalCoberturaActivaService::mensajeSinCoberturaParaSesion(
                     Encounter::ENCOUNTER_CLASS_EMER,
                     ['proxima_inicio' => $proxima]
@@ -58,6 +60,7 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
 
         return [
             'items' => is_array($tablero['items'] ?? null) ? $tablero['items'] : [],
+            'puede_triage' => (new GuardiaBoardCapabilityService())->canTriage(),
         ];
     }
 }

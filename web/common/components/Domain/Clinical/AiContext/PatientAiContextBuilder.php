@@ -2,9 +2,14 @@
 
 namespace common\components\Domain\Clinical\AiContext;
 
+use common\components\Domain\Clinical\Enum\CarePlanCategory;
+use common\components\Domain\Clinical\Enum\CarePlanStatus;
 use common\components\Domain\Clinical\Enum\RequestStatus;
+use common\components\Domain\Clinical\Service\CarePlanPresentationService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
+use common\components\Domain\Clinical\Service\EpisodeOfCareService;
 use common\models\Clinical\AllergyIntolerance;
+use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
 use common\models\Clinical\MedicationRequest;
 use common\models\DiagnosticoConsultaRepository as DCRepo;
@@ -100,6 +105,11 @@ final class PatientAiContextBuilder
             $data['prior_evolutions'] = $prior;
         }
 
+        $carePlan = $this->collectInpatientCarePlan($episodeParent, $episodeParentId);
+        if ($carePlan !== []) {
+            $data['care_plan'] = $carePlan;
+        }
+
         return self::formatBlock($data, $profile, $this->maxChars());
     }
 
@@ -109,7 +119,8 @@ final class PatientAiContextBuilder
      *   conditions?: list<string>,
      *   medications?: list<string>,
      *   allergies?: list<string>,
-     *   prior_evolutions?: list<string>
+     *   prior_evolutions?: list<string>,
+     *   care_plan?: list<string>
      * } $data
      */
     public static function formatBlock(array $data, string $profile, int $maxChars): string
@@ -140,6 +151,14 @@ final class PatientAiContextBuilder
             $lines[] = '- Evoluciones previas del episodio (no reextraer lo ya documentado; priorizar cambios clínicos):';
             foreach ($priors as $prior) {
                 $lines[] = '  · ' . $prior;
+            }
+        }
+
+        $carePlan = $data['care_plan'] ?? [];
+        if (is_array($carePlan) && $carePlan !== []) {
+            $lines[] = '- Plan de cuidado indicado (seguir / documentar cumplimiento; no reindicar lo ya activo):';
+            foreach ($carePlan as $item) {
+                $lines[] = '  · ' . $item;
             }
         }
 
@@ -355,6 +374,45 @@ final class PatientAiContextBuilder
         }
 
         return $out;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function collectInpatientCarePlan(?string $episodeParent, ?int $episodeParentId): array
+    {
+        $parent = strtoupper(trim((string) $episodeParent));
+        $parentId = (int) $episodeParentId;
+        if ($parent !== Encounter::PARENT_INTERNACION || $parentId <= 0) {
+            return [];
+        }
+        $episode = (new EpisodeOfCareService())->findActiveForInternacion($parentId);
+        if ($episode === null) {
+            return [];
+        }
+        $plan = CarePlan::find()
+            ->andWhere([
+                'episode_of_care_id' => $episode->id,
+                'category' => CarePlanCategory::INPATIENT,
+            ])
+            ->andWhere(['status' => [CarePlanStatus::DRAFT, CarePlanStatus::ACTIVE, CarePlanStatus::ON_HOLD]])
+            ->andWhere(['deleted_at' => null])
+            ->orderBy(['id' => SORT_DESC])
+            ->one();
+        if (!$plan instanceof CarePlan) {
+            return [];
+        }
+        $summary = (new CarePlanPresentationService())->toPatientSummary($plan, true, 12);
+        $lines = [];
+        if (is_array($summary['activitySummaries'] ?? null)) {
+            foreach ($summary['activitySummaries'] as $line) {
+                if (is_string($line) && trim($line) !== '') {
+                    $lines[] = trim($line);
+                }
+            }
+        }
+
+        return $lines;
     }
 
     /**

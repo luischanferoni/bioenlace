@@ -80,11 +80,25 @@ class EmergencyGuardiaActions {
     required EmergencyGuardiaApi api,
     required VoidCallback onChanged,
     bool sessionTieneCobertura = true,
+    bool puedeTriage = false,
   }) async {
     if (episodioCerrado(item)) return;
 
     final actions = <_ActionDef>[];
     final enAtencion = (item.circuitoEstado ?? '') == 'en_atencion';
+    if (item.needsTriage && puedeTriage) {
+      actions.add(_ActionDef(
+        label: item.prioridadTriage != null ? 'Actualizar triage' : 'Registrar triage',
+        icon: Icons.assignment_outlined,
+        onTap: () => openTriage(
+          context: context,
+          item: item,
+          api: api,
+          onChanged: onChanged,
+          isRetriage: item.prioridadTriage != null,
+        ),
+      ));
+    }
     if (enAtencion && !item.needsTriage) {
       actions.add(_ActionDef(
         label: 'Paciente se retiró',
@@ -99,7 +113,7 @@ class EmergencyGuardiaActions {
         SnackBar(
           content: Text(
             item.needsTriage
-                ? 'Pendiente de triage (admision / enfermería en web).'
+                ? 'Pendiente de triage. Lo registra admisión o enfermería.'
                 : 'Atendé al paciente para egresar. La derivación se carga en la consulta.',
           ),
         ),

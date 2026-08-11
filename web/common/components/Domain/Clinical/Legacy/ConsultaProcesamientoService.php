@@ -101,7 +101,7 @@ class ConsultaProcesamientoService extends Component
                 );
             }
 
-            $categorias = $this->getModelosPorConfiguracion($idConfiguracion);
+            $categorias = $this->getModelosPorConfiguracion($idConfiguracion, $body);
 
             $resultadoIA = $this->analizarConsultaConIA(
                 $textoLimpio,
@@ -537,7 +537,11 @@ class ConsultaProcesamientoService extends Component
         ];
     }
 
-    public function getModelosPorConfiguracion($idConfiguracion)
+    /**
+     * @param array<string, mixed> $body
+     * @return list<array<string, mixed>>
+     */
+    public function getModelosPorConfiguracion($idConfiguracion, array $body = [])
     {
         if ($idConfiguracion === null || $idConfiguracion === '') {
             return [];
@@ -547,7 +551,8 @@ class ConsultaProcesamientoService extends Component
             return [];
         }
 
-        return \common\models\Clinical\EncounterDefinition::getCategoriasParaPrompt($configuracion);
+        return (new \common\components\Domain\Clinical\Workflow\EncounterCaptureCategoryResolver())
+            ->resolve($configuracion, $body);
     }
 
     private function generarPromptEspecializado(

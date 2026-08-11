@@ -23,6 +23,7 @@ use yii\db\ActiveRecord;
 class DemoSandboxAccess extends ActiveRecord
 {
     public const ROLE_STAFF = 'staff';
+    public const ROLE_ENFERMERIA = 'enfermeria';
     public const ROLE_PACIENTE = 'paciente';
 
     public static function tableName(): string
@@ -35,7 +36,12 @@ class DemoSandboxAccess extends ActiveRecord
      */
     public static function roleValues(): array
     {
-        return [self::ROLE_STAFF, self::ROLE_PACIENTE];
+        return [self::ROLE_STAFF, self::ROLE_ENFERMERIA, self::ROLE_PACIENTE];
+    }
+
+    public static function isEphemeralStaffRole(string $role): bool
+    {
+        return $role === self::ROLE_STAFF || $role === self::ROLE_ENFERMERIA;
     }
 
     public function rules(): array

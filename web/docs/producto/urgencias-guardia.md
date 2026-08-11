@@ -6,7 +6,7 @@ Programa operativo de **triage + tablero** en efectores con `encounterClass = EM
 
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
-| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) | Tablero: **primer triage**, **Ingresar cama** (si hay pedido pendiente), indicadores. Puede registrar **Paciente se retiró** mientras el episodio sea operable. |
+| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) y app Personal de Salud | Tablero: **primer triage** (web y app; `puede_triage` en `home/panel`), **Ingresar cama** (si hay pedido pendiente), indicadores. Puede registrar **Paciente se retiró** mientras el episodio sea operable. |
 | Médico guardia | Web inicio EMER + app Personal de Salud | Tablero: **Atender** → captura del encounter (requiere triage). Conducta (alta, internación, derivación) **en la captura**. Tras documentar → **Ver consulta** (lectura). **Paciente se retiró** solo si aún está en atención (sin documentación de cierre). Triage del médico: solo en HC. |
 | Dirección / calidad | Web inicio + job nocturno | Resumen en vivo; histórico en `guardia_metrics_daily` |
 
@@ -16,7 +16,7 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 
 | Capacidad | Quién | Dónde |
 |-----------|-------|--------|
-| Primer triage | Staff | Tablero web (`espera_triage`) |
+| Primer triage | Staff (`triage_roles` del manifiesto) | Tablero web y app Personal de Salud (`espera_triage`) |
 | Editar / actualizar triage | Médico (y staff con HC abierta) | Historia clínica del episodio (`editar_triage` en banner). **No** en el tablero |
 | Tomar caso | — (eliminado) | `iniciar-atencion` asigna el PES de sesión si falta |
 | Atender | Médico | Tablero → captura clínica (requiere triage previo; episodio no `atendido`/`derivado`/`finalizado`) |
@@ -102,7 +102,7 @@ php yii emergency-guardia/materialize-metrics
 ## Fuera de alcance actual
 
 - Vista web solo de indicadores  
-- App móvil staff completa (triage/cama nativos); triage/cama en web  
+- App móvil: primer triage nativo si `puede_triage`; ingreso a cama vía UI JSON. Ingreso a guardia (Administrativo) sigue pendiente de CTA.  
 
 ## Cobertura de plantel (agenda EMER)
 

@@ -272,8 +272,22 @@ final class ClinicalTextIaMetadata
             }
 
             $line = '- "' . $titulo . '"';
+            $flags = [];
+            if (($categoria['requerido'] ?? false) === true) {
+                $flags[] = 'requerido';
+            }
+            if (($categoria['sugerido'] ?? false) === true) {
+                $flags[] = 'sugerido';
+            }
+            if ($flags !== []) {
+                $line .= ' [' . implode(', ', $flags) . ']';
+            }
             if ($hint !== '') {
                 $line .= ': ' . $hint;
+            }
+            $planHints = $categoria['plan_hints'] ?? [];
+            if (is_array($planHints) && $planHints !== []) {
+                $line .= ' (plan de cuidado: ' . implode('; ', array_map('strval', $planHints)) . ')';
             }
             $line .= $subdatos;
             $lines[] = $line;

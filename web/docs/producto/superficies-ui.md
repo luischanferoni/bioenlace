@@ -9,7 +9,7 @@
 | Tipo | Qué muestra | Qué muta la UI |
 |------|-------------|----------------|
 | **Inicio / paneles** | Tableros, mapas, colas, KPIs, accesos rápidos | `encounter_class` + rol + efector/servicio en sesión |
-| **Captura clínica (encounter)** | Estado del paciente + registro del encuentro | Encounter + rol + **servicio del centro** (`EncounterDefinition` / `workflow_json`) |
+| **Captura clínica (encounter)** | Estado del paciente + registro del encuentro | Encounter + **servicio del centro** (`EncounterDefinition`) + overlay actor/CarePlan |
 | **Flows del asistente** | Acciones puntuales con pasos | Intent YAML + UI JSON descubierta |
 
 ```mermaid

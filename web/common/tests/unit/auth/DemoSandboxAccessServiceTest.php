@@ -18,7 +18,9 @@ class DemoSandboxAccessServiceTest extends Unit
     public function testRoleCatalog(): void
     {
         $this->assertContains(DemoSandboxAccess::ROLE_STAFF, DemoSandboxAccess::roleValues());
+        $this->assertContains(DemoSandboxAccess::ROLE_ENFERMERIA, DemoSandboxAccess::roleValues());
         $this->assertContains(DemoSandboxAccess::ROLE_PACIENTE, DemoSandboxAccess::roleValues());
+        $this->assertTrue(DemoSandboxAccess::isEphemeralStaffRole(DemoSandboxAccess::ROLE_ENFERMERIA));
     }
 
     public function testListProfilesEphemeralFromProfilesConfig(): void

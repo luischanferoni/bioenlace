@@ -184,9 +184,14 @@ return [
          * Perfiles CTA. mode=ephemeral crea PES+seed en POST demo-acceso (issue).
          * mode=shared_account reutiliza username (solo paciente; staff nunca usa legacy).
          */
+        'servicio_enfermeria_nombre' => 'ENFERMERIA',
         'profiles' => [
             'staff' => [
                 'label' => 'Médico demo (captura y turnos)',
+                'mode' => 'ephemeral',
+            ],
+            'enfermeria' => [
+                'label' => 'Enfermería demo (guardia e internación)',
                 'mode' => 'ephemeral',
             ],
             // 'paciente' => [

@@ -51,7 +51,7 @@ final class DemoSandboxAccessService
                     continue;
                 }
                 // Staff siempre efímero en el catálogo público.
-                $mode = $role === DemoSandboxAccess::ROLE_STAFF
+                $mode = DemoSandboxAccess::isEphemeralStaffRole($role)
                     ? self::MODE_EPHEMERAL
                     : self::normalizeMode((string) ($row['mode'] ?? self::MODE_EPHEMERAL));
                 if ($mode === self::MODE_SHARED_ACCOUNT) {
@@ -129,7 +129,7 @@ final class DemoSandboxAccessService
 
         $profile = $this->resolveProfile($role);
         // Staff: hard-force ephemeral (ignora accounts/shared legacy).
-        $mode = $role === DemoSandboxAccess::ROLE_STAFF
+        $mode = DemoSandboxAccess::isEphemeralStaffRole($role)
             ? self::MODE_EPHEMERAL
             : $profile['mode'];
 
@@ -160,7 +160,8 @@ final class DemoSandboxAccessService
 
         if ($mode === self::MODE_EPHEMERAL) {
             // Provision ANTES de persistir el código: así id_user nunca queda null/0 ni apunta al seed 863.
-            $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(null);
+            $staffKind = $role === DemoSandboxAccess::ROLE_ENFERMERIA ? 'enfermeria' : 'medico';
+            $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(null, $staffKind);
             $user = $provisioned['user'];
             $session = $provisioned['session'];
             $username = (string) $user->username;
@@ -291,9 +292,10 @@ final class DemoSandboxAccessService
 
         $sessionId = null;
 
-        // Staff: solo usuario ya provisionado en issue (demo_m_*), nunca seed legacy.
-        if ($row->role === DemoSandboxAccess::ROLE_STAFF) {
+        // Staff efímero: usuario ya provisionado en issue (demo_m_* / demo_e_*), nunca seed legacy.
+        if (DemoSandboxAccess::isEphemeralStaffRole((string) $row->role)) {
             $username = (string) ($row->username ?? '');
+            $prefix = (string) $row->role === DemoSandboxAccess::ROLE_ENFERMERIA ? 'demo_e_' : 'demo_m_';
             if ((int) $row->id_user <= 0 || str_starts_with($username, 'medico_med_general_')) {
                 throw new \DomainException(
                     'Código demo inválido (cuenta legacy). Solicitá un acceso nuevo desde el sitio institucional.'
@@ -303,7 +305,7 @@ final class DemoSandboxAccessService
             if ($user === null || (int) $user->status !== User::STATUS_ACTIVE) {
                 throw new \DomainException('La cuenta demo no está disponible.');
             }
-            if (!str_starts_with((string) $user->username, 'demo_m_')) {
+            if (!str_starts_with((string) $user->username, $prefix)) {
                 throw new \DomainException(
                     'Usuario demo inesperado (' . $user->username . '). Solicitá un acceso nuevo.'
                 );
@@ -350,7 +352,7 @@ final class DemoSandboxAccessService
         $profiles = is_array($cfg['profiles'] ?? null) ? $cfg['profiles'] : [];
         if (isset($profiles[$role]) && is_array($profiles[$role])) {
             $row = $profiles[$role];
-            $mode = $role === DemoSandboxAccess::ROLE_STAFF
+            $mode = DemoSandboxAccess::isEphemeralStaffRole($role)
                 ? self::MODE_EPHEMERAL
                 : self::normalizeMode((string) ($row['mode'] ?? self::MODE_EPHEMERAL));
 
@@ -365,6 +367,13 @@ final class DemoSandboxAccessService
             return [
                 'username' => null,
                 'label' => 'Médico demo',
+                'mode' => self::MODE_EPHEMERAL,
+            ];
+        }
+        if ($role === DemoSandboxAccess::ROLE_ENFERMERIA) {
+            return [
+                'username' => null,
+                'label' => 'Enfermería demo',
                 'mode' => self::MODE_EPHEMERAL,
             ];
         }
@@ -468,7 +477,12 @@ final class DemoSandboxAccessService
             );
         }
 
-        $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(null);
+        $mobileRole = trim((string) ($input['role'] ?? DemoSandboxAccess::ROLE_STAFF));
+        if ($mobileRole === '') {
+            $mobileRole = DemoSandboxAccess::ROLE_STAFF;
+        }
+        $staffKind = $mobileRole === DemoSandboxAccess::ROLE_ENFERMERIA ? 'enfermeria' : 'medico';
+        $provisioned = (new DemoSandboxSessionService())->provisionEphemeralStaff(null, $staffKind);
         $user = $provisioned['user'];
         /** @var DemoSandboxSession $session */
         $session = $provisioned['session'];
@@ -503,7 +517,9 @@ final class DemoSandboxAccessService
 
         $row = new DemoSandboxAccess();
         $row->code_hash = self::hashCode($plain);
-        $row->role = DemoSandboxAccess::ROLE_STAFF;
+        $row->role = $mobileRole === DemoSandboxAccess::ROLE_ENFERMERIA
+            ? DemoSandboxAccess::ROLE_ENFERMERIA
+            : DemoSandboxAccess::ROLE_STAFF;
         if ($row->hasAttribute('mode')) {
             $row->mode = self::MODE_EPHEMERAL;
         }

@@ -12,14 +12,14 @@ La captura es **una sola superficie** para ambulatorio, guardia, internación y 
 |-------|-----|
 | `paciente/historia` (timeline) | Estado del paciente, historial, **motivos pre-turno** (intake, chat, cohorte) |
 | `_formulario_consulta.php` | Entrada texto/audio + análisis + confirmación |
-| `PacienteController::actionFormularioConsulta` | Resuelve `id_configuracion` vía `EncounterDefinition` |
+| `PacienteController::actionFormularioConsulta` | Resuelve `id_configuracion` (`encounter_definition.id`) |
 
 **Contexto del formulario** (hidden / query):
 
 - `id_persona`
 - `parent` + `parent_id` — turno, internación, guardia, etc. (`Encounter::PARENT_*`)
 - `id_consulta` — id del encounter en curso (alias legacy; semántica = `encounter_id`)
-- `id_configuracion` — fila de `encounter_definition` (**servicio del centro** + `encounter_class` + workflow)
+- `id_configuracion` — id de `encounter_definition` (**servicio del centro** + `encounter_class` + workflow)
 
 Entrada desde listados: `PatientHistoriaUrl::captura($idPersona, $parent, $parentId)`.
 
@@ -54,7 +54,7 @@ flowchart TB
 ```
 
 1. **Entrada:** audio transcrito o texto libre.
-2. **Configuración:** `EncounterCaptureContextService::validarPermisoAtencion(parent, parent_id)` + lookup de `EncounterDefinition` → categorías/pasos del workflow.
+2. **Configuración:** `EncounterCaptureContextService::validarPermisoAtencion(parent, parent_id)` + lookup de `EncounterDefinition` (`service_id` + clase). Las categorías del prompt/completitud las resuelve `EncounterCaptureCategoryResolver`: workflow de la oferta + overlay del **actor** (PES `servicios.item_name` de sesión) + actividades del **CarePlan inpatient** (sugerido, no gate).
 3. **Análisis:** extracción de conceptos a campos del workflow (el médico revisa el HTML antes de guardar).
 4. **Guardado:** `EncounterDocumentationService` persiste FHIR; **codificación CIE-10/SNOMED** vía `encounter-codificacion-automatica` (IA elige códigos y los guarda en `clinical_condition`).
 
@@ -73,8 +73,8 @@ En **internación / guardia**, cada evolución es un encounter nuevo (salvo edit
 | Dimensión | Efecto |
 |-----------|--------|
 | `encounter_class` (AMB, EMER, IMP, …) | Clase FHIR y definición de workflow |
-| Rol (médico, enfermería, …) | Permisos y visibilidad en timeline |
-| Especialidad / servicio | `EncounterDefinition` y registries (oftalmología, odontología, …) |
+| Actor (PES `item_name`: médico, enfermería, …) | Overlay de categorías (p. ej. SV en IMP para enfermería); permisos y timeline |
+| Oferta del centro (`service_id`) | Fila `encounter_definition` y registries (oftalmología, odontología, …) |
 | `parent` GUARDIA / INTERNACION | Banner de episodio (`contexto_episodio`); sin motivos AMB. Ver [hcd-episodio-emergencia-internacion.md](./hcd-episodio-emergencia-internacion.md) |
 
 ## Guardia (EMER)
@@ -85,7 +85,9 @@ En guardia el workflow (`emer_standard` en `EncounterDefinition`) incluye motivo
 
 **Paciente se retiró** no se ofrece en la HC: solo en el tablero (menú ⋮ / CTA web).
 
-Las secciones `requerido` y `campos_requeridos` de cada `EncounterDefinition` (por servicio + clase) definen qué exige el efector; la plantilla EMER se elige por `encounter_class = EMER`.
+Las secciones `requerido` de cada `EncounterDefinition` (por servicio + clase) más el overlay de actor/CarePlan definen qué se pide en el prompt; la integridad al confirmar sigue en los `*Input` Yii. La plantilla EMER se elige por `encounter_class = EMER` (o `emer_nursing` si el servicio de la definición tiene `item_name=enfermeria`).
+
+En internación el enfermero documenta la **misma nota** de encounter. El médico indica el plan (actividades del CarePlan `inpatient`); la captura de enfermería marca esas secciones como **sugeridas** y agrega signos vitales al menú si la definición de la oferta clínica no los traía.
 
 Textos listos para pegar o dictar (alta, lab, derivación, incompletos, SCA, etc.): [textos-ejemplo-captura-emer.md](../qa/escenarios/urgencia/textos-ejemplo-captura-emer.md). Internación (evolución, régimen, balance, alta clínica): [textos-ejemplo-captura-imp.md](../qa/escenarios/internacion/textos-ejemplo-captura-imp.md).
 

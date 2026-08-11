@@ -25,6 +25,27 @@ class EncounterCaptureCompletenessValidatorTest extends Unit
         $this->assertStringContainsString('Diagnósticos', $result['message']);
     }
 
+    public function testCategoriaSugeridaVaciaNoBloquea(): void
+    {
+        $svc = new EncounterCaptureCompletenessValidator();
+        $result = $svc->validate(
+            [],
+            [
+                [
+                    'titulo' => 'Signos vitales',
+                    'modelo' => 'ConsultaAtencionesEnfermeria',
+                    'requerido' => false,
+                    'sugerido' => true,
+                    'campos_requeridos' => [],
+                ],
+            ]
+        );
+
+        $this->assertTrue($result['complete']);
+        $this->assertFalse($result['tiene_datos_faltantes']);
+        $this->assertSame([], $result['missing_categories']);
+    }
+
     public function testMedicacionSinDosisNiFrecuencia(): void
     {
         $svc = new EncounterCaptureCompletenessValidator();

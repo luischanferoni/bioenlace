@@ -14,6 +14,9 @@ final class EncounterDefinitionWorkflowCatalog
     public const TEMPLATE_AMB_ODONTOLOGY = 'amb_odontology';
     public const TEMPLATE_IMP_STANDARD = 'imp_standard';
     public const TEMPLATE_EMER_STANDARD = 'emer_standard';
+    public const TEMPLATE_AMB_NURSING = 'amb_nursing';
+    public const TEMPLATE_IMP_NURSING = 'imp_nursing';
+    public const TEMPLATE_EMER_NURSING = 'emer_nursing';
 
     /**
      * @return array<string, list<array<string, mixed>>>
@@ -61,6 +64,26 @@ final class EncounterDefinitionWorkflowCatalog
                 self::step('Régimen', 'ConsultaRegimen', false),
                 self::step('Balance hídrico', 'ConsultaBalanceHidrico', false),
             ],
+            self::TEMPLATE_AMB_NURSING => [
+                self::step('Motivos de consulta', 'ConsultaMotivos', false),
+                self::step('Signos vitales', 'ConsultaAtencionesEnfermeria', false),
+                self::step('Medicación', 'ConsultaMedicamentos', false),
+                self::step('Indicaciones', 'ConsultaIndicaciones', false),
+            ],
+            self::TEMPLATE_EMER_NURSING => [
+                self::step('Motivos de consulta', 'ConsultaMotivos', false),
+                self::step('Signos vitales', 'ConsultaAtencionesEnfermeria', false),
+                self::step('Medicación', 'ConsultaMedicamentos', false),
+                self::step('Indicaciones', 'ConsultaIndicaciones', false),
+            ],
+            self::TEMPLATE_IMP_NURSING => [
+                self::step('Signos vitales', 'ConsultaAtencionesEnfermeria', false),
+                self::step('Evolución', 'DiagnosticoConsulta', false),
+                self::step('Medicación', 'ConsultaMedicamentos', false),
+                self::step('Indicaciones', 'ConsultaIndicaciones', false),
+                self::step('Régimen', 'ConsultaRegimen', false),
+                self::step('Balance hídrico', 'ConsultaBalanceHidrico', false),
+            ],
         ];
     }
 
@@ -69,6 +92,31 @@ final class EncounterDefinitionWorkflowCatalog
         $steps = self::templates()[$templateKey] ?? self::templates()[self::TEMPLATE_AMB_STANDARD];
 
         return json_encode(['conf' => $steps], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    }
+
+    /**
+     * Plantilla según oferta del centro (`item_name` + nombre) y clase FHIR.
+     */
+    public static function templateForServicio(?\common\models\Servicio $servicio, string $encounterClass): string
+    {
+        $itemName = '';
+        $nombre = '';
+        if ($servicio !== null) {
+            $itemName = mb_strtolower(trim((string) $servicio->item_name));
+            $nombre = (string) $servicio->nombre;
+        }
+        if ($itemName === 'enfermeria') {
+            if ($encounterClass === Encounter::ENCOUNTER_CLASS_IMP) {
+                return self::TEMPLATE_IMP_NURSING;
+            }
+            if ($encounterClass === Encounter::ENCOUNTER_CLASS_EMER) {
+                return self::TEMPLATE_EMER_NURSING;
+            }
+
+            return self::TEMPLATE_AMB_NURSING;
+        }
+
+        return self::templateForServiceName($nombre, $encounterClass);
     }
 
     public static function templateForServiceName(string $serviceName, string $encounterClass): string

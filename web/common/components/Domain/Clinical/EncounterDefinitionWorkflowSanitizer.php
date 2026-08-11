@@ -101,7 +101,7 @@ final class EncounterDefinitionWorkflowSanitizer
         $report = [];
         foreach ($rows as $row) {
             $id = (int) ($row['id'] ?? 0);
-            $json = (string) ($row['workflow_json'] ?? $row['pasos_json'] ?? '');
+            $json = (string) ($row['workflow_json'] ?? '');
             $legacy = [];
             $error = null;
             try {

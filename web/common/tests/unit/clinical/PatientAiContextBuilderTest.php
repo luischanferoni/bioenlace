@@ -79,4 +79,24 @@ class PatientAiContextBuilderTest extends \Codeception\Test\Unit
         verify($block)->stringContainsString('priorizar cambios clínicos');
         verify($block)->stringContainsString('Primer día: neumonía');
     }
+
+    public function testFormatBlockIncluyePlanDeCuidadoInpatient()
+    {
+        $block = PatientAiContextBuilder::formatBlock(
+            [
+                'demographics' => ['edad' => 50, 'sexo' => 'Masculino'],
+                'allergies' => [],
+                'conditions' => [],
+                'medications' => [],
+                'care_plan' => [
+                    'Paracetamol 1 g — cada 8 h',
+                ],
+            ],
+            PatientAiContextBuilder::PROFILE_ENCOUNTER,
+            2400
+        );
+
+        verify($block)->stringContainsString('Plan de cuidado indicado');
+        verify($block)->stringContainsString('Paracetamol 1 g');
+    }
 }

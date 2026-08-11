@@ -2,6 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\Seed;
 
+use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\components\Domain\Person\Util\CuilValidator;
 use common\models\Efector;
@@ -36,8 +37,20 @@ final class DemoSandboxStaffProvisionService
      *     username: string,
      *     documento: string
      * }
+     * @param array{
+     *     rbac_role?: string,
+     *     apellido?: string,
+     *     username_prefix?: string,
+     *     cobertura_classes?: list<string>,
+     *     cobertura_ttl_seconds?: int
+     * } $options
      */
-    public function provision(int $idEfector, string $servicioNombre = 'MED GENERAL', bool $withAgenda = true): array
+    public function provision(
+        int $idEfector,
+        string $servicioNombre = 'MED GENERAL',
+        bool $withAgenda = true,
+        array $options = []
+    ): array
     {
         if ($idEfector <= 0) {
             throw new \InvalidArgumentException('id_efector inválido.');
@@ -55,18 +68,30 @@ final class DemoSandboxStaffProvisionService
         }
 
         $servicio = Servicio::find()->where(['nombre' => $servicioNombre])->one();
+        if ($servicio === null && strcasecmp($servicioNombre, 'ENFERMERIA') === 0) {
+            $servicio = Servicio::find()->where(['item_name' => 'enfermeria'])->one();
+        }
         if ($servicio === null) {
             throw new \InvalidArgumentException('Servicio "' . $servicioNombre . '" no encontrado.');
         }
         $idServicio = (int) $servicio->id_servicio;
 
-        [$documento, $username] = $this->allocateIdentity();
+        $usernamePrefix = trim((string) ($options['username_prefix'] ?? 'demo_m_'));
+        if ($usernamePrefix === '') {
+            $usernamePrefix = 'demo_m_';
+        }
+        [$documento, $username] = $this->allocateIdentity($usernamePrefix);
         $password = bin2hex(random_bytes(16));
 
         $db = Yii::$app->db;
         $tx = $db->beginTransaction();
         try {
-            [$persona, $user] = $this->createPersonaUser($documento, $username, $password);
+            [$persona, $user] = $this->createPersonaUser(
+                $documento,
+                $username,
+                $password,
+                (string) ($options['apellido'] ?? 'Médico')
+            );
             $actingUserId = (int) $user->id;
 
             $this->ensureServicioEnEfector($idServicio, $idEfector, $actingUserId);
@@ -83,6 +108,19 @@ final class DemoSandboxStaffProvisionService
             if ($withAgenda) {
                 $idAgenda = $this->ensureAgenda($idPes, $idEfector, $actingUserId);
             }
+
+            $rbacRole = trim((string) ($options['rbac_role'] ?? ''));
+            if ($rbacRole !== '') {
+                User::assignRole((int) $user->id, $rbacRole);
+            }
+            $this->ensureCobertura(
+                (int) $persona->id_persona,
+                $idEfector,
+                $idServicio,
+                $idPes,
+                $options['cobertura_classes'] ?? [],
+                (int) ($options['cobertura_ttl_seconds'] ?? 14400)
+            );
 
             $tx->commit();
         } catch (\Throwable $e) {
@@ -107,7 +145,7 @@ final class DemoSandboxStaffProvisionService
     /**
      * @return array{0: string, 1: string} documento, username
      */
-    private function allocateIdentity(): array
+    private function allocateIdentity(string $usernamePrefix = 'demo_m_'): array
     {
         for ($i = 0; $i < 12; $i++) {
             $suffix = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -116,7 +154,7 @@ final class DemoSandboxStaffProvisionService
                 continue;
             }
             $token = bin2hex(random_bytes(4));
-            $username = 'demo_m_' . $token;
+            $username = $usernamePrefix . $token;
             if (User::find()->where(['username' => $username])->exists()) {
                 continue;
             }
@@ -130,12 +168,16 @@ final class DemoSandboxStaffProvisionService
     /**
      * @return array{0: Persona, 1: User}
      */
-    private function createPersonaUser(string $documento, string $username, string $password): array
-    {
+    private function createPersonaUser(
+        string $documento,
+        string $username,
+        string $password,
+        string $apellido = 'Médico'
+    ): array {
         $persona = new Persona();
         $persona->scenario = Persona::SCENARIOCREATEUPDATE;
         $persona->nombre = 'Demo';
-        $persona->apellido = 'Médico';
+        $persona->apellido = $apellido !== '' ? $apellido : 'Médico';
         $persona->documento = $documento;
         $persona->fecha_nacimiento = '1988-06-12';
         $persona->id_tipodoc = 1;
@@ -167,6 +209,48 @@ final class DemoSandboxStaffProvisionService
         }
 
         return [$persona, $user];
+    }
+
+    /**
+     * @param list<string> $classes
+     */
+    private function ensureCobertura(
+        int $idPersona,
+        int $idEfector,
+        int $idServicio,
+        int $idPes,
+        array $classes,
+        int $ttlSeconds
+    ): void {
+        if ($classes === []) {
+            return;
+        }
+        $ttlSeconds = max(600, $ttlSeconds);
+        $inicio = date('Y-m-d H:i:s', time() - 60);
+        $fin = date('Y-m-d H:i:s', time() + $ttlSeconds);
+        foreach ($classes as $class) {
+            $class = trim((string) $class);
+            if ($class === '') {
+                continue;
+            }
+            $result = ProfesionalCoberturaService::crear([
+                'id_persona' => $idPersona,
+                'id_efector' => $idEfector,
+                'id_servicio' => $idServicio,
+                'id_profesional_efector_servicio' => $idPes,
+                'encounter_class' => $class,
+                'inicio' => $inicio,
+                'fin' => $fin,
+                'rol' => 'demo',
+                'notas' => self::SEED_MARKER,
+            ]);
+            if (empty($result['ok'])) {
+                Yii::warning(
+                    'Demo cobertura no creada class=' . $class . ' ' . json_encode($result['errors'] ?? []),
+                    __METHOD__
+                );
+            }
+        }
     }
 
     private function ensureServicioEnEfector(int $idServicio, int $idEfector, int $actingUserId): void

@@ -22,6 +22,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Auditoría adelantamiento turnos (A03) | `auditoria-adelantamiento-turnos/` | Campañas/ofertas + admin superadmin (Fase 0) |
 | Auditoría agentes autónomos | `auditoria-agentes-autonomos/` | agent_run genérico + A04 + resolución |
 | Demo sandbox institucional | `demo-sandbox-institucional/` | CTA Probar demo → código un solo uso |
+| Captura actor + enfermería | `captura-actor-enfermeria/` | Quitar alias ConsultasConfiguracion; overlay PES + CarePlan; app triage |
 
 ## Planes archivados (carpeta eliminada)
 

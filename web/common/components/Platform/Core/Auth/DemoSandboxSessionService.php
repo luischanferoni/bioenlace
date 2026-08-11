@@ -22,26 +22,42 @@ final class DemoSandboxSessionService
     public const Yii_SESSION_KEY = 'demo_sandbox_session_id';
 
     /**
-     * Crea médico temporal + seed clínico y registra la sesión.
+     * Crea staff temporal + seed clínico y registra la sesión.
      *
+     * @param 'medico'|'enfermeria' $staffKind
      * @return array{user: User, session: DemoSandboxSession}
      */
-    public function provisionEphemeralStaff(?int $idAccess = null): array
+    public function provisionEphemeralStaff(?int $idAccess = null, string $staffKind = 'medico'): array
     {
         $cfg = $this->config();
         $idEfector = $this->resolveIdEfector($cfg);
-        $servicioNombre = trim((string) ($cfg['servicio_nombre'] ?? 'MED GENERAL'));
+        $isNurse = $staffKind === 'enfermeria';
+        $servicioNombre = $isNurse
+            ? trim((string) ($cfg['servicio_enfermeria_nombre'] ?? 'ENFERMERIA'))
+            : trim((string) ($cfg['servicio_nombre'] ?? 'MED GENERAL'));
         if ($servicioNombre === '') {
-            $servicioNombre = 'MED GENERAL';
+            $servicioNombre = $isNurse ? 'ENFERMERIA' : 'MED GENERAL';
         }
         $seedCfg = is_array($cfg['seed'] ?? null) ? $cfg['seed'] : [];
-        $withAgenda = (bool) ($seedCfg['with_agenda'] ?? true);
+        $withAgenda = $isNurse ? false : (bool) ($seedCfg['with_agenda'] ?? true);
         $sessionTtl = max(600, (int) ($cfg['session_ttl_seconds'] ?? 14400));
 
         $staff = (new DemoSandboxStaffProvisionService())->provision(
             $idEfector,
             $servicioNombre,
-            $withAgenda
+            $withAgenda,
+            [
+                'rbac_role' => $isNurse ? 'enfermeria' : '',
+                'apellido' => $isNurse ? 'Enfermería' : 'Médico',
+                'username_prefix' => $isNurse ? 'demo_e_' : 'demo_m_',
+                'cobertura_classes' => $isNurse
+                    ? [
+                        \common\models\Clinical\Encounter::ENCOUNTER_CLASS_EMER,
+                        \common\models\Clinical\Encounter::ENCOUNTER_CLASS_IMP,
+                    ]
+                    : [],
+                'cobertura_ttl_seconds' => $sessionTtl,
+            ]
         );
 
         $clinical = (new DemoSandboxClinicalSeedService())->seedForStaff(
@@ -51,10 +67,10 @@ final class DemoSandboxSessionService
             $staff['id_user'],
             [
                 'pacientes' => (int) ($seedCfg['pacientes'] ?? 6),
-                'turnos' => (int) ($seedCfg['turnos'] ?? 2),
-                'with_consulta_amb' => (bool) ($seedCfg['with_consulta_amb'] ?? true),
-                'with_consulta_async' => (bool) ($seedCfg['with_consulta_async'] ?? true),
-                'consultas_async' => (int) ($seedCfg['consultas_async'] ?? 2),
+                'turnos' => $isNurse ? 0 : (int) ($seedCfg['turnos'] ?? 2),
+                'with_consulta_amb' => $isNurse ? false : (bool) ($seedCfg['with_consulta_amb'] ?? true),
+                'with_consulta_async' => $isNurse ? false : (bool) ($seedCfg['with_consulta_async'] ?? true),
+                'consultas_async' => $isNurse ? 0 : (int) ($seedCfg['consultas_async'] ?? 2),
                 'with_guardia' => (bool) ($seedCfg['with_guardia'] ?? true),
                 'with_internacion' => (bool) ($seedCfg['with_internacion'] ?? true),
             ]
@@ -68,7 +84,7 @@ final class DemoSandboxSessionService
         $now = date('Y-m-d H:i:s');
         $session = new DemoSandboxSession();
         $session->id_access = $idAccess;
-        $session->role = DemoSandboxAccess::ROLE_STAFF;
+        $session->role = $isNurse ? DemoSandboxAccess::ROLE_ENFERMERIA : DemoSandboxAccess::ROLE_STAFF;
         $session->id_efector = $staff['id_efector'];
         $session->id_user = $staff['id_user'];
         $session->id_persona = $staff['id_persona'];

@@ -2,7 +2,6 @@
 
 namespace common\models\Clinical;
 
-use common\components\Domain\Clinical\EncounterDefinitionWorkflowSanitizer;
 use Yii;
 use yii\db\ActiveRecord;
 
@@ -13,7 +12,6 @@ use yii\db\ActiveRecord;
  * @property int $service_id
  * @property string $encounter_class
  * @property string $workflow_json
- * @property string|null $pasos_legacy
  */
 class EncounterDefinition extends ActiveRecord
 {
@@ -68,30 +66,9 @@ class EncounterDefinition extends ActiveRecord
             [['service_id', 'encounter_class', 'workflow_json'], 'required'],
             [['service_id'], 'integer'],
             [['encounter_class'], 'string', 'max' => 10],
-            [['workflow_json', 'pasos_legacy'], 'string'],
+            [['workflow_json'], 'string'],
             [['created_at', 'updated_at', 'deleted_at'], 'safe'],
         ];
-    }
-
-    /** Compat lectura legacy {@see \common\models\ConsultasConfiguracion}. */
-    public function getPasos_json(): string
-    {
-        return (string) $this->workflow_json;
-    }
-
-    public function setPasos_json(string $value): void
-    {
-        $this->workflow_json = $value;
-    }
-
-    public function getId_servicio(): int
-    {
-        return (int) $this->service_id;
-    }
-
-    public function setId_servicio($value): void
-    {
-        $this->service_id = (int) $value;
     }
 
     public function getServicio(): \yii\db\ActiveQuery
@@ -100,59 +77,37 @@ class EncounterDefinition extends ActiveRecord
     }
 
     /**
-     * @return array{0: ?string, 1: ?string, 2: ?string, 3: ?int}
+     * Categorías crudas del workflow (oferta + clase). Overlay de actor/CarePlan:
+     * {@see \common\components\Domain\Clinical\Workflow\EncounterCaptureCategoryResolver}.
+     *
+     * @return list<array{titulo: string, modelo: string, requerido: bool, sugerido: bool, campos_requeridos: array}>
      */
-    public static function getUrlPorServicioYEncounterClass($idServicio, $encounterClass, $paso = null): array
+    public static function getCategoriasParaPrompt(self $definition): array
     {
-        $configuracion = static::find()
-            ->where(['service_id' => $idServicio, 'encounter_class' => $encounterClass])
-            ->andWhere('deleted_at is null')
-            ->one();
-
-        if (!$configuracion) {
-            Yii::error('Servicio sin encounter_definition, servicio: ' . $idServicio . ' encounterClass: ' . $encounterClass);
-
-            return [null, null, null, null];
-        }
-
-        $jsonPasos = json_decode($configuracion->workflow_json);
-        $arrayPasos = [];
-        foreach ($jsonPasos->conf as $output) {
-            $arrayPasos[] = $output->url;
-        }
-
-        if ($paso !== null) {
-            $urlAnterior = isset($arrayPasos[$paso - 1])
-                ? EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[$paso - 1])
-                : null;
-            $urlActual = isset($arrayPasos[$paso])
-                ? EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[$paso])
-                : null;
-            $urlSiguiente = isset($arrayPasos[$paso + 1])
-                ? EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[$paso + 1])
-                : null;
-        } else {
-            $urlAnterior = null;
-            $urlActual = EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[0] ?? null);
-            $urlSiguiente = isset($arrayPasos[1])
-                ? EncounterDefinitionWorkflowSanitizer::resolveStepUrl($arrayPasos[1])
-                : null;
-        }
-
-        return [$urlAnterior, $urlActual, $urlSiguiente, $configuracion->id];
-    }
-
-    public static function getCategoriasParaPrompt(self $configuracion): array
-    {
-        $jsonPasos = json_decode($configuracion->workflow_json);
+        $jsonPasos = json_decode((string) $definition->workflow_json);
         $categorias = [];
+        if (!is_object($jsonPasos) || !isset($jsonPasos->conf) || !is_iterable($jsonPasos->conf)) {
+            return [];
+        }
 
         foreach ($jsonPasos->conf as $output) {
+            if (!is_object($output) && !is_array($output)) {
+                continue;
+            }
+            $titulo = is_object($output) ? (string) ($output->titulo ?? '') : (string) ($output['titulo'] ?? '');
+            $modelo = is_object($output) ? ($output->relacion ?? '') : ($output['relacion'] ?? '');
+            $requerido = is_object($output)
+                ? (isset($output->requerido) ? (bool) $output->requerido : false)
+                : (isset($output['requerido']) ? (bool) $output['requerido'] : false);
+            $sugerido = is_object($output)
+                ? (isset($output->sugerido) ? (bool) $output->sugerido : false)
+                : (isset($output['sugerido']) ? (bool) $output['sugerido'] : false);
             $categorias[] = [
-                'titulo' => $output->titulo,
-                'modelo' => $output->relacion,
-                'requerido' => isset($output->requerido) ? (bool) $output->requerido : false,
-                'campos_requeridos' => self::obtenerCamposRequeridosDelModelo($output->relacion),
+                'titulo' => $titulo,
+                'modelo' => is_array($modelo) ? '' : (string) $modelo,
+                'requerido' => $requerido,
+                'sugerido' => $sugerido,
+                'campos_requeridos' => self::camposRequeridosDelModelo($modelo),
             ];
         }
 
@@ -163,7 +118,7 @@ class EncounterDefinition extends ActiveRecord
      * @param string|array $nombreModelo
      * @return array
      */
-    private static function obtenerCamposRequeridosDelModelo($nombreModelo): array
+    public static function camposRequeridosDelModelo($nombreModelo): array
     {
         if (is_array($nombreModelo)) {
             return [];

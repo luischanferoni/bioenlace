@@ -40,6 +40,10 @@ return [
     //             'label' => 'Médico demo (captura y turnos)',
     //             'mode' => 'ephemeral',
     //         ],
+    //         'enfermeria' => [
+    //             'label' => 'Enfermería demo (guardia e internación)',
+    //             'mode' => 'ephemeral',
+    //         ],
     //     ],
     // ],
 

@@ -3,10 +3,10 @@
 use yii\helpers\Html;
 
 /* @var $this yii\web\View */
-/* @var $model app\models\ConsultasConfiguracion */
+/* @var $model common\models\Clinical\EncounterDefinition */
 
-$this->title = 'Nueva Configuracion de Consulta';
-$this->params['breadcrumbs'][] = ['label' => 'Nueva Configuracion de Consulta', 'url' => ['index']];
+$this->title = 'Nueva definición de encounter';
+$this->params['breadcrumbs'][] = ['label' => 'Definiciones de encounter', 'url' => ['index']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="card">

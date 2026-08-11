@@ -753,7 +753,9 @@ final class EncounterCapturePipelineService
         }
         $def = EncounterDefinition::findOne($idConfig);
 
-        return $def !== null ? EncounterDefinition::getCategoriasParaPrompt($def) : [];
+        return $def !== null
+            ? (new EncounterCaptureCategoryResolver())->resolve($def, $body)
+            : [];
     }
 
     /**

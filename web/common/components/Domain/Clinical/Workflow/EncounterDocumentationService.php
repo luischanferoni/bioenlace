@@ -198,7 +198,7 @@ class EncounterDocumentationService extends Component
             if ($idCfgEarly > 0) {
                 $defEarly = EncounterDefinition::findOne($idCfgEarly);
                 if ($defEarly !== null) {
-                    $categorias = EncounterDefinition::getCategoriasParaPrompt($defEarly);
+                    $categorias = $this->categoriasForCapture($defEarly, $body);
                 }
             }
 
@@ -298,7 +298,7 @@ class EncounterDocumentationService extends Component
                 return $this->clientGuardarResponse($out);
             }
 
-            $categorias = EncounterDefinition::getCategoriasParaPrompt($configuracion);
+            $categorias = $this->categoriasForCapture($configuracion, $body);
             $parentKeyEarly = strtoupper(trim((string) ($body['parent'] ?? '')));
             $parentIdEarly = (int) ($body['parent_id'] ?? 0);
             if ($datosExtraidos !== [] && $parentIdEarly > 0 && (int) $idPersona > 0) {
@@ -411,7 +411,8 @@ class EncounterDocumentationService extends Component
                     $encounter,
                     $configuracion,
                     $datosExtraidos,
-                    $logger
+                    $logger,
+                    $body
                 );
                 $subjectId = (int) ($encounter->subject_persona_id ?: $idPersona);
                 if ($conditionResolutions !== []) {
@@ -1145,14 +1146,24 @@ class EncounterDocumentationService extends Component
      * @param array<string, mixed> $datosExtraidos
      * @return array<string, array<string, mixed>>
      */
+    /**
+     * @param array<string, mixed> $body
+     * @return list<array<string, mixed>>
+     */
+    private function categoriasForCapture(EncounterDefinition $definition, array $body = []): array
+    {
+        return (new EncounterCaptureCategoryResolver())->resolve($definition, $body);
+    }
+
     private function persistExtractedData(
         Encounter $encounter,
         EncounterDefinition $configuracion,
         array $datosExtraidos,
-        ?EncounterGuardarLogger $logger = null
+        ?EncounterGuardarLogger $logger = null,
+        array $body = []
     ): array {
         $this->assertEncounterPersisted($encounter);
-        $categorias = EncounterDefinition::getCategoriasParaPrompt($configuracion);
+        $categorias = $this->categoriasForCapture($configuracion, $body);
         $carePlan = null;
         $stats = [];
 
@@ -1186,14 +1197,7 @@ class EncounterDocumentationService extends Component
             }
             $stat['payload'] = true;
             $stat['rows'] = self::countExtractionRows($payload);
-            if (!$this->specialtyRegistry->isModelAllowed($configuracion, $modelo)) {
-                $stat['accion'] = 'blocked_specialty';
-                $stats[$modelo] = $stat;
-                if ($logger !== null) {
-                    $logger->registrar('PERSIST', null, $stat, ['metodo' => $modelo]);
-                }
-                continue;
-            }
+            // Allow-list = categorías resueltas (definición + overlay actor/CarePlan).
 
             switch ($modelo) {
                 case 'ConsultaMotivos':

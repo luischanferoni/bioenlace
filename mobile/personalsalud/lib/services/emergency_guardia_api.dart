@@ -292,28 +292,14 @@ class EmergencyGuardiaApi {
     }).where((e) => e['id']!.isNotEmpty).toList();
   }
 
-  Future<void> ingresar({
-    required int idPersona,
-    required String ingresaEn,
-    required String ingresaCon,
-    String? datosContactoTel,
-    String? situacionAlIngresar,
-  }) async {
+  Future<void> ingresar(Map<String, dynamic> body) async {
     final uri = Uri.parse(
       '${AppConfig.apiUrl}/clinical/emergency-guardia/ingresar',
     );
     final response = await http.post(
       uri,
       headers: _headers,
-      body: json.encode({
-        'id_persona': idPersona,
-        'ingresa_en': ingresaEn,
-        'ingresa_con': ingresaCon,
-        if (datosContactoTel != null && datosContactoTel.isNotEmpty)
-          'datos_contacto_tel': datosContactoTel,
-        if (situacionAlIngresar != null && situacionAlIngresar.isNotEmpty)
-          'situacion_al_ingresar': situacionAlIngresar,
-      }),
+      body: json.encode(body),
     );
     if (response.statusCode < 200 || response.statusCode >= 300) {
       final decoded = json.decode(response.body);

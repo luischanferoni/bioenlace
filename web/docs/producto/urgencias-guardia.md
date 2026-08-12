@@ -60,7 +60,7 @@ Base: `/api/v1/clinical/emergency-guardia`
 | Acción | Método | Notas |
 |--------|--------|-------|
 | Panel inicio (tablero) | `GET /api/v1/home/panel` | Sección `emergency_board` (+ `emergency_indicators`); flags `puede_triage` / `puede_ingresar` / `puede_atender` / `puede_documentar` |
-| Ingreso | `POST …/ingresar` | Admisión: `id_persona` **o** alta mínima (`apellido`, `nombre`, `documento`, `fecha_nacimiento`, `sexo_biologico`), `ingresa_en`, `ingresa_con`. UI: `ingresar-formulario` / `buscar-persona-ingreso` |
+| Ingreso | `POST …/ingresar` | Admisión: `id_persona` **o** alta mínima (`apellido`, `nombre`, `documento`, `fecha_nacimiento`, `sexo_biologico`), `ingresa_en`, `ingresa_con`. Búsqueda: `GET …/buscar-persona-ingreso` |
 | Triage | `POST …/{id}/registrar-triage` | Manchester 1–5 + motivo + vitales opcionales (staff) |
 | Asignar | `POST …/{id}/asignar` | Uso interno / legado; el flujo médico usa `iniciar-atencion` |
 | Atender | `POST …/{id}/iniciar-atencion` | Asigna PES de sesión si falta; devuelve `captura_url` |
@@ -104,7 +104,7 @@ php yii emergency-guardia/materialize-metrics
 
 ## Fuera de alcance actual
 
-- App móvil: primer triage nativo si `puede_triage`; ingreso a cama e **ingreso a guardia** vía UI JSON (`ingresar-formulario`).
+- App móvil: primer triage nativo si `puede_triage`; **ingreso a guardia** nativo (`EmergencyIngresoScreen`); ingreso a cama vía UI JSON de internación (asistente / flujos embebidos).
 
 ## Cobertura de plantel (agenda EMER)
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 import '../../services/emergency_guardia_api.dart';
+import 'emergency_ingreso_screen.dart';
 import 'emergency_triage_screen.dart';
 
 /// Menú y CTAs del tablero de guardia (médico: Atender + egreso contextual).
@@ -36,24 +37,13 @@ class EmergencyGuardiaActions {
     required EmergencyGuardiaApi api,
     required VoidCallback onChanged,
   }) async {
-    final uri = Uri.parse(
-      resolveApiAbsoluteUrl('/clinical/emergency-guardia/ingresar-formulario'),
-    );
-    if (!context.mounted) return;
-    await Navigator.of(context).push(
+    final ok = await Navigator.push<bool>(
+      context,
       MaterialPageRoute(
-        builder: (_) => UiJsonScreen(
-          apiAbsoluteUrl: uri.toString(),
-          authToken: api.authToken,
-          appClient: 'bioenlace-personalsalud',
-          title: 'Ingresar paciente a guardia',
-          onSubmitSuccess: (_) async {
-            onChanged();
-          },
-        ),
+        builder: (_) => EmergencyIngresoScreen(api: api),
       ),
     );
-    onChanged();
+    if (ok == true) onChanged();
   }
 
   static Future<void> openCama({

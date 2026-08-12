@@ -24,7 +24,6 @@ use yii\web\Response;
  * Urgencias / guardia: ingreso, triage y tablero operativo (staff / médico EMER).
  *
  * POST /api/v1/clinical/emergency-guardia/ingresar
- * GET|POST /api/v1/clinical/emergency-guardia/ingresar-formulario (UI JSON admisión)
  * GET  /api/v1/clinical/emergency-guardia/buscar-persona-ingreso
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/registrar-triage
  * GET  /api/v1/clinical/emergency-guardia/indicadores-resumen
@@ -85,51 +84,6 @@ class EmergencyGuardiaController extends BaseController
         }
 
         return $this->success($data, 'Ingreso a guardia registrado', 201);
-    }
-
-    /**
-     * UI JSON: admisión de paciente a guardia.
-     *
-     * GET|POST /api/v1/clinical/emergency-guardia/ingresar-formulario
-     *
-     * @tags clinical, emergency-guardia, staff, ui_json
-     */
-    public function actionIngresarFormulario(): array
-    {
-        $req = Yii::$app->request;
-        try {
-            $idEfector = $this->requireGuardiaEfector();
-        } catch (\InvalidArgumentException $e) {
-            return $this->error($e->getMessage(), null, 400);
-        } catch (ForbiddenHttpException $e) {
-            return $this->error($e->getMessage(), null, 403);
-        }
-
-        $out = UiScreenService::handleScreen(
-            'emergency-guardia',
-            'ingresar-formulario',
-            $req->get(),
-            $req->post(),
-            function (array $post) use ($idEfector): array {
-                $data = $this->ingreso->ingresar($post, $idEfector);
-
-                return [
-                    'data' => $data,
-                    'message' => 'Ingreso a guardia registrado',
-                ];
-            }
-        );
-
-        if (($out['kind'] ?? '') === 'ui_definition' && $req->getIsGet()) {
-            $q = $req->get('q');
-            $out = $this->hydrateIngresoFormulario(
-                $out,
-                $idEfector,
-                is_string($q) ? $q : null
-            );
-        }
-
-        return $out;
     }
 
     /**
@@ -546,42 +500,6 @@ class EmergencyGuardiaController extends BaseController
         }
 
         return $out;
-    }
-
-    /**
-     * @throws \InvalidArgumentException
-     * @throws ForbiddenHttpException
-     */
-    /**
-     * @param array<string, mixed> $ui
-     * @return array<string, mixed>
-     */
-    private function hydrateIngresoFormulario(array $ui, int $idEfector, ?string $q): array
-    {
-        $optionMap = [
-            'id_persona' => $this->ingreso->buscarCandidatos($idEfector, $q),
-            'ingresa_en' => $this->ingreso->opcionesIngresaEn(),
-            'ingresa_con' => $this->ingreso->opcionesIngresaCon(),
-        ];
-
-        foreach ($ui['blocks'] ?? [] as $idx => $block) {
-            if (!is_array($block) || (string) ($block['kind'] ?? '') !== 'fields') {
-                continue;
-            }
-            foreach ($block['fields'] ?? [] as $fIdx => $field) {
-                if (!is_array($field)) {
-                    continue;
-                }
-                $name = (string) ($field['name'] ?? '');
-                if (isset($optionMap[$name])) {
-                    $field['options'] = $optionMap[$name];
-                    $block['fields'][$fIdx] = $field;
-                }
-            }
-            $ui['blocks'][$idx] = $block;
-        }
-
-        return $ui;
     }
 
     private function requireGuardiaEfector(string $operationKey = 'GuardiaEpisode.view_board'): int

@@ -1907,19 +1907,18 @@
 
     function openAdmitirModal() {
       var modalEl = document.getElementById('guardia-admitir-modal');
-      var errEl = document.getElementById('guardia-admitir-error');
       if (!modalEl) {
-        if (errEl) {
-          errEl.textContent = 'No se encontró el formulario de ingreso. Recargá la página.';
-          errEl.classList.remove('d-none');
-        }
-        window.alert('No se encontró el formulario de ingreso. Recargá la página.');
+        showError(
+          errorEl,
+          'No se encontró el formulario de ingreso. Recargá la página (Ctrl+F5).'
+        );
         return;
       }
       var idEl = document.getElementById('guardia-admitir-id-persona');
       var qEl = document.getElementById('guardia-admitir-q');
       var results = document.getElementById('guardia-admitir-results');
       var sel = document.getElementById('guardia-admitir-seleccion');
+      var errEl = document.getElementById('guardia-admitir-error');
       var sit = document.getElementById('guardia-admitir-situacion');
       var tel = document.getElementById('guardia-admitir-tel');
       if (idEl) idEl.value = '';
@@ -1938,7 +1937,7 @@
       syncAdmitirSubmit();
       var modal = getAdmitirModal();
       if (!modal) {
-        window.alert('No se pudo abrir el formulario (Bootstrap no disponible).');
+        showError(errorEl, 'No se pudo abrir el formulario (Bootstrap no disponible).');
         return;
       }
       modal.show();

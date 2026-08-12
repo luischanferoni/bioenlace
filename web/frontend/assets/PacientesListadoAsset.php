@@ -10,9 +10,20 @@ use yii\web\View;
  */
 class PacientesListadoAsset extends AssetBundle
 {
+    /** @var list<class-string<AssetBundle>> */
     public $depends = [
         AppAsset::class,
     ];
+
+    /**
+     * @param list<class-string<AssetBundle>> $extraDepends
+     */
+    public static function registerWithDepends(View $view, array $extraDepends = []): void
+    {
+        $bundle = new static();
+        $bundle->depends = array_values(array_merge([AppAsset::class], $extraDepends));
+        $bundle->register($view);
+    }
 
     public function registerAssetFiles($view)
     {
@@ -26,7 +37,7 @@ class PacientesListadoAsset extends AssetBundle
             if (is_file($abs)) {
                 $url .= '?v=' . filemtime($abs);
             }
-            $view->registerJsFile($url, ['depends' => static::depends]);
+            $view->registerJsFile($url, ['depends' => $this->depends]);
         }
     }
 }

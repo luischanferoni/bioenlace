@@ -500,10 +500,10 @@ $this->title = $esGuardia
 
 <?php
 // Tras AppAsset: BioenlaceApiClient.mergeHeaders + native-page-bridge (BioenlaceNativePage).
-PacientesListadoAsset::$depends = [AppAsset::class];
+$panelJsDepends = [];
 if ($esGuardia) {
     GuardiaTableroAsset::register($this);
-    PacientesListadoAsset::$depends[] = GuardiaTableroAsset::class;
+    $panelJsDepends[] = GuardiaTableroAsset::class;
 }
-PacientesListadoAsset::register($this);
+PacientesListadoAsset::registerWithDepends($this, $panelJsDepends);
 ?>

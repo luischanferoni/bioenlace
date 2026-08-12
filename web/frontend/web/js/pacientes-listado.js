@@ -1842,11 +1842,115 @@
       wrap.classList.toggle('d-none', !(v === 'familiar' || v === 'otro' || v === 'policia'));
     }
 
+    function admitirAltaVisible() {
+      var wrap = document.getElementById('guardia-admitir-alta');
+      return !!(wrap && !wrap.classList.contains('d-none'));
+    }
+
+    function admitirAltaCompleta() {
+      if (!admitirAltaVisible()) return false;
+      var apellido = ((document.getElementById('guardia-admitir-apellido') || {}).value || '').trim();
+      var nombre = ((document.getElementById('guardia-admitir-nombre') || {}).value || '').trim();
+      var documento = ((document.getElementById('guardia-admitir-documento') || {}).value || '').trim();
+      var fecha = ((document.getElementById('guardia-admitir-fecha-nac') || {}).value || '').trim();
+      var sexo = ((document.getElementById('guardia-admitir-sexo') || {}).value || '').trim();
+      return apellido !== '' && nombre !== '' && documento !== '' && fecha !== '' && sexo !== '';
+    }
+
+    function setAdmitirAltaVisible(on) {
+      var wrap = document.getElementById('guardia-admitir-alta');
+      var toggle = document.getElementById('guardia-admitir-alta-toggle');
+      if (wrap) wrap.classList.toggle('d-none', !on);
+      if (toggle) toggle.classList.toggle('d-none', !!on);
+      if (on) {
+        var idEl = document.getElementById('guardia-admitir-id-persona');
+        var sel = document.getElementById('guardia-admitir-seleccion');
+        if (idEl) idEl.value = '';
+        if (sel) {
+          sel.textContent = '';
+          sel.classList.add('d-none');
+        }
+      }
+      syncAdmitirSubmit();
+    }
+
     function syncAdmitirSubmit() {
       var btn = document.getElementById('guardia-admitir-submit');
       var idEl = document.getElementById('guardia-admitir-id-persona');
       if (!btn || !idEl) return;
-      btn.disabled = !(parseInt(idEl.value, 10) > 0);
+      var idOk = parseInt(idEl.value, 10) > 0;
+      btn.disabled = !(idOk || admitirAltaCompleta());
+    }
+
+    function fieldOptionsFromUi(root, fieldName) {
+      var blocks = (root && root.blocks) || [];
+      for (var i = 0; i < blocks.length; i++) {
+        var fields = (blocks[i] && blocks[i].fields) || [];
+        for (var j = 0; j < fields.length; j++) {
+          if (fields[j] && fields[j].name === fieldName) {
+            return fields[j].options || [];
+          }
+        }
+      }
+      return [];
+    }
+
+    async function hydrateAdmitirFormulario() {
+      var api = window.BioenlaceNativePage;
+      if (!api) return;
+      try {
+        var url = api.apiV1Url('clinical/emergency-guardia/ingresar-formulario');
+        var json = await api.fetchJson(url, { method: 'GET' });
+        var root = json;
+        if (json && json.data && json.data.kind === 'ui_definition') {
+          root = json.data;
+        }
+        if (!root || root.kind !== 'ui_definition') {
+          root = json;
+        }
+        fillSelectOptions(
+          document.getElementById('guardia-admitir-ingresa-en'),
+          fieldOptionsFromUi(root, 'ingresa_en'),
+          null,
+          'deambula'
+        );
+        fillSelectOptions(
+          document.getElementById('guardia-admitir-ingresa-con'),
+          fieldOptionsFromUi(root, 'ingresa_con'),
+          null,
+          'solo'
+        );
+      } catch (e) {
+        fillSelectOptions(
+          document.getElementById('guardia-admitir-ingresa-en'),
+          [
+            { value: 'deambula', label: 'Deambulando (Caminando)' },
+            { value: 'silla_de_rueda', label: 'Silla de Rueda' },
+            { value: 'camilla', label: 'Camilla' },
+          ],
+          null,
+          'deambula'
+        );
+        fillSelectOptions(
+          document.getElementById('guardia-admitir-ingresa-con'),
+          [
+            { value: 'solo', label: 'Solo' },
+            { value: 'familiar', label: 'Familiar' },
+            { value: 'policia', label: 'Personal Policial' },
+            { value: 'otro', label: 'Otro' },
+            { value: 'no_sabe', label: 'No sabe/No contesta' },
+          ],
+          null,
+          'solo'
+        );
+      }
+    }
+
+    function resetAdmitirAltaFields() {
+      ['guardia-admitir-apellido', 'guardia-admitir-nombre', 'guardia-admitir-documento', 'guardia-admitir-fecha-nac', 'guardia-admitir-sexo', 'guardia-admitir-cobertura'].forEach(function (id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+      });
     }
 
     function openAdmitirModal() {
@@ -1867,10 +1971,13 @@
       if (errEl) errEl.classList.add('d-none');
       if (sit) sit.value = '';
       if (tel) tel.value = '';
+      resetAdmitirAltaFields();
+      setAdmitirAltaVisible(false);
       syncAdmitirTelVisibility();
       syncAdmitirSubmit();
       var modal = getAdmitirModal();
       if (modal) modal.show();
+      hydrateAdmitirFormulario();
       if (qEl) {
         setTimeout(function () { qEl.focus(); }, 200);
       }
@@ -1897,6 +2004,18 @@
           empty.className = 'text-muted';
           empty.textContent = 'Sin resultados.';
           results.appendChild(empty);
+          var altaHint = document.createElement('button');
+          altaHint.type = 'button';
+          altaHint.className = 'btn btn-outline-primary btn-sm mt-2';
+          altaHint.textContent = 'Registrar paciente nuevo';
+          altaHint.onclick = function () {
+            setAdmitirAltaVisible(true);
+            var docEl = document.getElementById('guardia-admitir-documento');
+            if (docEl && /^\d+$/.test(term)) docEl.value = term;
+            var apeEl = document.getElementById('guardia-admitir-apellido');
+            if (apeEl && !/^\d+$/.test(term) && !apeEl.value) apeEl.value = term;
+          };
+          results.appendChild(altaHint);
           return;
         }
         rows.forEach(function (row) {
@@ -1927,6 +2046,7 @@
         sel.classList.remove('d-none');
       }
       if (results) clearNode(results);
+      setAdmitirAltaVisible(false);
       syncAdmitirSubmit();
     }
 
@@ -1938,11 +2058,13 @@
       if (!api || !idEl) return;
       if (errEl) errEl.classList.add('d-none');
       var idPersona = parseInt(idEl.value, 10);
-      if (!(idPersona > 0)) return;
+      var altaOk = admitirAltaCompleta();
+      if (!(idPersona > 0) && !altaOk) return;
       var ingresaEn = (document.getElementById('guardia-admitir-ingresa-en') || {}).value || 'deambula';
       var ingresaCon = (document.getElementById('guardia-admitir-ingresa-con') || {}).value || 'solo';
       var tel = ((document.getElementById('guardia-admitir-tel') || {}).value || '').trim();
       var situacion = ((document.getElementById('guardia-admitir-situacion') || {}).value || '').trim();
+      var cobertura = ((document.getElementById('guardia-admitir-cobertura') || {}).value || '').trim();
       if ((ingresaCon === 'familiar' || ingresaCon === 'otro' || ingresaCon === 'policia') && tel === '') {
         if (errEl) {
           errEl.textContent = 'Indicá un teléfono de contacto.';
@@ -1952,14 +2074,23 @@
       }
       if (submitBtn) submitBtn.disabled = true;
       try {
-        var url = api.apiV1Url('clinical/emergency-guardia/ingresar');
+        var url = api.apiV1Url('clinical/emergency-guardia/ingresar-formulario');
         var body = {
-          id_persona: idPersona,
           ingresa_en: ingresaEn,
           ingresa_con: ingresaCon,
         };
+        if (idPersona > 0) {
+          body.id_persona = idPersona;
+        } else {
+          body.apellido = ((document.getElementById('guardia-admitir-apellido') || {}).value || '').trim();
+          body.nombre = ((document.getElementById('guardia-admitir-nombre') || {}).value || '').trim();
+          body.documento = ((document.getElementById('guardia-admitir-documento') || {}).value || '').trim();
+          body.fecha_nacimiento = ((document.getElementById('guardia-admitir-fecha-nac') || {}).value || '').trim();
+          body.sexo_biologico = ((document.getElementById('guardia-admitir-sexo') || {}).value || '').trim();
+        }
         if (tel) body.datos_contacto_tel = tel;
         if (situacion) body.situacion_al_ingresar = situacion;
+        if (cobertura) body.cobertura = cobertura;
         var json = await api.fetchJson(url, {
           method: 'POST',
           headers: {
@@ -1969,7 +2100,11 @@
           body: JSON.stringify(body),
         });
         if (json.success === false) {
-          throw new Error(json.message || 'No se pudo registrar el ingreso.');
+          var msg = json.message || 'No se pudo registrar el ingreso.';
+          if (json.errors && json.errors._error) {
+            msg = Array.isArray(json.errors._error) ? json.errors._error[0] : json.errors._error;
+          }
+          throw new Error(msg);
         }
         var modal = getAdmitirModal();
         if (modal) modal.hide();
@@ -3742,6 +3877,18 @@
     if (admitirCon) {
       admitirCon.addEventListener('change', syncAdmitirTelVisibility);
     }
+    var admitirAltaToggle = document.getElementById('guardia-admitir-alta-toggle');
+    if (admitirAltaToggle) {
+      admitirAltaToggle.addEventListener('click', function () {
+        setAdmitirAltaVisible(true);
+      });
+    }
+    ['guardia-admitir-apellido', 'guardia-admitir-nombre', 'guardia-admitir-documento', 'guardia-admitir-fecha-nac', 'guardia-admitir-sexo'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', syncAdmitirSubmit);
+      el.addEventListener('change', syncAdmitirSubmit);
+    });
     var derivarSubmit = document.getElementById('guardia-derivar-submit');
     if (derivarSubmit) {
       derivarSubmit.addEventListener('click', submitDerivarModal);

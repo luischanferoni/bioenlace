@@ -3,6 +3,7 @@
 namespace common\components\Domain\Clinical\Emergency\Service;
 
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
+use common\components\Domain\Person\Service\PersonaAltaOperativaService;
 use common\components\Domain\Person\Service\PersonaBusquedaAsistenteUiService;
 use common\models\Guardia;
 use common\models\InfraestructuraCama;
@@ -30,10 +31,7 @@ final class GuardiaIngresoService
      */
     public function ingresar(array $body, int $idEfector): array
     {
-        $idPersona = (int) ($body['id_persona'] ?? 0);
-        if ($idPersona <= 0) {
-            throw new \InvalidArgumentException('Se requiere id_persona.');
-        }
+        $idPersona = $this->resolverIdPersona($body);
 
         $ingresaEn = (string) ($body['ingresa_en'] ?? 'deambula');
         $ingresaCon = (string) ($body['ingresa_con'] ?? 'solo');
@@ -88,6 +86,28 @@ final class GuardiaIngresoService
             'fecha' => $model->fecha,
             'hora' => $model->hora,
         ];
+    }
+
+    /**
+     * Paciente conocido (`id_persona`) o alta mínima (apellido/nombre/documento/fecha/sexo).
+     *
+     * @param array<string, mixed> $body
+     */
+    private function resolverIdPersona(array $body): int
+    {
+        $idPersona = (int) ($body['id_persona'] ?? 0);
+        if ($idPersona > 0) {
+            return $idPersona;
+        }
+
+        $alta = new PersonaAltaOperativaService();
+        if (!$alta->pareceAlta($body)) {
+            throw new \InvalidArgumentException(
+                'Elegí un paciente de la búsqueda o registrá uno nuevo (apellido, nombre, documento, fecha de nacimiento y sexo).'
+            );
+        }
+
+        return (int) $alta->crearOReusar($body)->id_persona;
     }
 
     /**

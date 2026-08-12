@@ -3997,7 +3997,7 @@
      * Nota: implementación liviana para wizard web.
      */
     function renderAutocompleteField(field) {
-        const showSearch = field.show_search !== false;
+        const showSearch = field.show_search === true;
         const endpoint = field.endpoint || '';
         const filters = Array.isArray(field.filters) ? field.filters : [];
         const id = 'ac_' + (field.name || '').replace(/[^a-z0-9_]/gi, '_') + '_' + Math.floor(Math.random() * 100000);
@@ -4062,11 +4062,12 @@
                 const filters = JSON.parse(metaEl.getAttribute('data-ac-filters') || '[]');
                 const paramsMapping = JSON.parse(metaEl.getAttribute('data-ac-params') || '{}');
                 const params = buildEndpointParamsFromWizardForm(paramsMapping);
+                const showSearch = metaEl.getAttribute('data-ac-show-search') === '1';
 
                 panel.classList.remove('d-none');
                 panel.innerHTML = '<div class="text-muted small">Cargando...</div>';
                 try {
-                    const url = new URL(endpoint, window.location.origin);
+                    const url = new URL(resolveSpaFetchUrl(endpoint), window.location.origin);
                     Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
                     const res = await fetch(url.toString(), { headers: window.BioenlaceApiClient.mergeHeaders({ 'Accept': 'application/json' }) });
                     const data = await res.json();
@@ -4149,14 +4150,67 @@
                     }
 
                     // Fallback: intentar results/items/data as list
-                    const arr = Array.isArray(data.results) ? data.results
-                        : (data.data && Array.isArray(data.data.results) ? data.data.results
-                            : (Array.isArray(data.items) ? data.items : (Array.isArray(data.data) ? data.data : [])));
-                    items = arr.map(it => {
-                        const v = (it && typeof it === 'object') ? (it.id ?? it.value ?? '') : ('' + it);
-                        const l = (it && typeof it === 'object') ? (it.text ?? it.name ?? it.label ?? v) : ('' + it);
-                        return { value: '' + v, label: '' + l };
-                    });
+                    function parseAcItems(payload) {
+                        const arr = Array.isArray(payload.results) ? payload.results
+                            : (payload.data && Array.isArray(payload.data.results) ? payload.data.results
+                                : (Array.isArray(payload.items) ? payload.items : (Array.isArray(payload.data) ? payload.data : [])));
+                        return arr.map(it => {
+                            const v = (it && typeof it === 'object') ? (it.id ?? it.value ?? '') : ('' + it);
+                            const l = (it && typeof it === 'object') ? (it.text ?? it.name ?? it.label ?? v) : ('' + it);
+                            return { value: '' + v, label: '' + l };
+                        });
+                    }
+
+                    function bindAcItems(listEl, list) {
+                        listEl.innerHTML = list.length
+                            ? '<div class="d-flex flex-column gap-1">' + list.map(it => '<button type="button" class="btn btn-sm btn-outline-secondary text-start" data-ac-item="' + id + '" data-value="' + escapeHtml(it.value) + '" data-label="' + escapeHtml(it.label) + '">' + escapeHtml(it.label) + '</button>').join('') + '</div>'
+                            : '<div class="text-muted small">Sin resultados</div>';
+                        listEl.querySelectorAll('[data-ac-item="' + id + '"]').forEach(b => b.addEventListener('click', () => {
+                            const v = b.getAttribute('data-value') || '';
+                            const l = b.getAttribute('data-label') || '';
+                            const valueEl = document.getElementById(id + '_value');
+                            const textEl = document.getElementById(id + '_text');
+                            if (valueEl) valueEl.value = v;
+                            if (textEl) textEl.value = l;
+                            panel.classList.add('d-none');
+                        }));
+                    }
+
+                    async function fetchAc(q) {
+                        const u = new URL(resolveSpaFetchUrl(endpoint), window.location.origin);
+                        Object.keys(params).forEach(k => u.searchParams.set(k, params[k]));
+                        if (q) u.searchParams.set('q', q);
+                        const res2 = await fetch(u.toString(), { headers: window.BioenlaceApiClient.mergeHeaders({ 'Accept': 'application/json' }) });
+                        return parseAcItems(await res2.json());
+                    }
+
+                    if (showSearch) {
+                        panel.innerHTML = '<input type="search" class="form-control form-control-sm mb-2" data-ac-q="' + id + '" placeholder="Buscar por apellido o documento">'
+                            + '<div data-ac-list="' + id + '"><div class="text-muted small">Cargando...</div></div>';
+                        const qEl = panel.querySelector('[data-ac-q="' + id + '"]');
+                        const listEl = panel.querySelector('[data-ac-list="' + id + '"]');
+                        let t = null;
+                        async function run(q) {
+                            if (!listEl) return;
+                            listEl.innerHTML = '<div class="text-muted small">Cargando...</div>';
+                            try {
+                                bindAcItems(listEl, await fetchAc(q));
+                            } catch (eFetch) {
+                                listEl.innerHTML = '<div class="text-danger small">Error cargando opciones</div>';
+                            }
+                        }
+                        if (qEl) {
+                            qEl.addEventListener('input', function () {
+                                if (t) clearTimeout(t);
+                                const q = qEl.value;
+                                t = setTimeout(function () { run(q); }, 280);
+                            });
+                        }
+                        await run('');
+                        return;
+                    }
+
+                    items = parseAcItems(data);
                     panel.innerHTML = items.length
                         ? '<div class="d-flex gap-2 overflow-auto" style="white-space:nowrap;">' + items.map(it => '<button type="button" class="btn btn-sm btn-outline-secondary" data-ac-item="' + id + '" data-value="' + escapeHtml(it.value) + '" data-label="' + escapeHtml(it.label) + '">' + escapeHtml(it.label) + '</button>').join('') + '</div>'
                         : '<div class="text-muted small">Sin resultados</div>';

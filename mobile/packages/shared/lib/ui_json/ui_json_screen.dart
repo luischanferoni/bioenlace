@@ -32,6 +32,29 @@ String _humanizeExceptionMessage(Object e) {
   return userFriendlyErrorMessage(e);
 }
 
+List<Map<String, dynamic>> _parseAutocompleteResults(dynamic j) {
+  if (j is! Map) return [];
+  dynamic results = j['results'];
+  if (results is! List && j['data'] is Map) {
+    results = (j['data'] as Map)['results'];
+  }
+  if (results is! List && j['data'] is List) {
+    results = j['data'];
+  }
+  if (results is! List) return [];
+  final out = <Map<String, dynamic>>[];
+  for (final e in results) {
+    if (e is! Map) continue;
+    final m = Map<String, dynamic>.from(e);
+    final id = (m['id'] ?? m['value'] ?? '').toString();
+    if (id.isEmpty) continue;
+    m['id'] = id;
+    m['text'] = (m['text'] ?? m['label'] ?? m['name'] ?? id).toString();
+    out.add(m);
+  }
+  return out;
+}
+
 /// Web/desktop: arrastre con ratón y rueda/trackpad en listas horizontales anidadas (p. ej. chat).
 class _UiJsonWebScrollBehavior extends MaterialScrollBehavior {
   const _UiJsonWebScrollBehavior();
@@ -684,7 +707,10 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     return v.isNotEmpty;
   }
 
-  Future<List<Map<String, dynamic>>> _fetchAutocomplete(Map<String, dynamic> field) async {
+  Future<List<Map<String, dynamic>>> _fetchAutocomplete(
+    Map<String, dynamic> field, {
+    String? q,
+  }) async {
     final endpoint = field['endpoint']?.toString() ?? '';
     if (endpoint.isEmpty) return [];
     var uri = Uri.parse(resolveApiAbsoluteUrl(endpoint));
@@ -699,16 +725,17 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
         }
       });
     }
-    uri = uri.replace(queryParameters: qp);
+    final term = (q ?? '').trim();
+    if (term.isNotEmpty) {
+      qp['q'] = term;
+    }
+    uri = uri.replace(queryParameters: qp.isEmpty ? null : qp);
     final res = await http.get(uri, headers: _headers()).timeout(Duration(seconds: AppConfig.httpTimeoutSeconds));
     if (res.statusCode < 200 || res.statusCode >= 300) {
       throw Exception('Autocomplete HTTP ${res.statusCode}');
     }
     final j = jsonDecode(utf8.decode(res.bodyBytes));
-    if (j is! Map) return [];
-    final results = j['results'];
-    if (results is! List) return [];
-    return results.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+    return _parseAutocompleteResults(j);
   }
 
   String _autocompleteCacheKey(Map<String, dynamic> field) {
@@ -727,7 +754,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     final d = await showDatePicker(
       context: context,
       initialDate: initial,
-      firstDate: DateTime(1990),
+      firstDate: DateTime(1900),
       lastDate: DateTime(now.year + 5),
     );
     if (d != null && mounted) {
@@ -1110,6 +1137,21 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
               field['message']?.toString() ?? 'Complete: ${_dependsOn(field).join(", ")}',
               style: TextStyle(color: Colors.orange[800], fontSize: 13),
             ),
+          );
+        }
+
+        final showSearch = field['show_search'] == true;
+        if (showSearch) {
+          final hint = field['hint']?.toString() ?? '';
+          return _UiJsonSearchableAutocomplete(
+            label: required ? '$label *' : label,
+            hint: hint,
+            selectedId: _accum[name] ?? '',
+            fetchItems: (q) => _fetchAutocomplete(field, q: q),
+            onSelected: (id, text) {
+              _setAccumField(name, id);
+              n.value = id;
+            },
           );
         }
 
@@ -2007,3 +2049,137 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     return wrap(title: screenTitle, body: body);
   }
 }
+
+class _UiJsonSearchableAutocomplete extends StatefulWidget {
+  const _UiJsonSearchableAutocomplete({
+    required this.label,
+    required this.hint,
+    required this.selectedId,
+    required this.fetchItems,
+    required this.onSelected,
+  });
+
+  final String label;
+  final String hint;
+  final String selectedId;
+  final Future<List<Map<String, dynamic>>> Function(String q) fetchItems;
+  final void Function(String id, String text) onSelected;
+
+  @override
+  State<_UiJsonSearchableAutocomplete> createState() => _UiJsonSearchableAutocompleteState();
+}
+
+class _UiJsonSearchableAutocompleteState extends State<_UiJsonSearchableAutocomplete> {
+  final TextEditingController _q = TextEditingController();
+  Timer? _debounce;
+  List<Map<String, dynamic>> _items = [];
+  var _loading = false;
+  String? _error;
+  String? _selectedLabel;
+
+  @override
+  void initState() {
+    super.initState();
+    _search('');
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _q.dispose();
+    super.dispose();
+  }
+
+  void _onQueryChanged(String v) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 280), () {
+      _search(v);
+    });
+  }
+
+  Future<void> _search(String q) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final rows = await widget.fetchItems(q);
+      if (!mounted) return;
+      setState(() {
+        _items = rows;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _error = userFriendlyErrorMessage(e);
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(widget.label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _q,
+          decoration: const InputDecoration(
+            labelText: 'Buscar por apellido o documento',
+          ),
+          onChanged: _onQueryChanged,
+        ),
+        if (widget.hint.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(widget.hint, style: TextStyle(color: Colors.grey[700], fontSize: 12)),
+          ),
+        if (_loading) ...[
+          const SizedBox(height: 8),
+          const LinearProgressIndicator(),
+        ],
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(_error!, style: TextStyle(color: Colors.red[700])),
+        ],
+        if (_selectedLabel != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text('Seleccionado: $_selectedLabel'),
+          ),
+        if (_items.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          ..._items.take(12).map((row) {
+            final id = row['id']?.toString() ?? '';
+            final text = row['text']?.toString() ?? id;
+            final selected = id.isNotEmpty && id == widget.selectedId;
+            return ListTile(
+              dense: true,
+              contentPadding: EdgeInsets.zero,
+              title: Text(text),
+              selected: selected,
+              trailing: selected ? const Icon(Icons.check_circle, size: 20) : null,
+              onTap: () {
+                if (id.isEmpty) return;
+                setState(() {
+                  _selectedLabel = text;
+                  _items = [];
+                  _q.text = text;
+                });
+                widget.onSelected(id, text);
+              },
+            );
+          }),
+        ] else if (!_loading && _q.text.trim().length >= 2)
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: Text('Sin resultados. Completá el alta mínima si es un paciente nuevo.'),
+          ),
+      ],
+    );
+  }
+}
+

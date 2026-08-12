@@ -1775,9 +1775,20 @@
       }
 
       var sessionCob = (coberturaData && coberturaData.session) ? coberturaData.session : {};
-      if (sessionCob.tiene_cobertura === false) {
+      var sinCoberturaPlantel = sessionCob.tiene_cobertura === false;
+      if (sinCoberturaPlantel) {
         var msgSin = (sessionCob.mensaje_sin_cobertura || '').toString().trim() ||
           'No tenés horario de plantel de guardia cargado. Configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te los asigne.';
+        if (puedeIngresar) {
+          appendGuardiaIngresoToolbar(listTarget);
+          var avisoFrag = importTemplate('tpl-pacientes-alert-empty');
+          if (avisoFrag) {
+            var avisoMsg = avisoFrag.querySelector('[data-field="message"]');
+            if (avisoMsg) avisoMsg.textContent = msgSin;
+            listTarget.appendChild(avisoFrag);
+          }
+          return;
+        }
         showListadoEmpty(msgSin, listTarget);
         return;
       }
@@ -1817,6 +1828,13 @@
       if (btn) {
         btn.classList.remove('d-none');
         btn.setAttribute('type', 'button');
+        btn.onclick = function (ev) {
+          if (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+          }
+          openAdmitirModal();
+        };
       }
       listTarget.appendChild(frag);
     }
@@ -1888,11 +1906,20 @@
     }
 
     function openAdmitirModal() {
+      var modalEl = document.getElementById('guardia-admitir-modal');
+      var errEl = document.getElementById('guardia-admitir-error');
+      if (!modalEl) {
+        if (errEl) {
+          errEl.textContent = 'No se encontró el formulario de ingreso. Recargá la página.';
+          errEl.classList.remove('d-none');
+        }
+        window.alert('No se encontró el formulario de ingreso. Recargá la página.');
+        return;
+      }
       var idEl = document.getElementById('guardia-admitir-id-persona');
       var qEl = document.getElementById('guardia-admitir-q');
       var results = document.getElementById('guardia-admitir-results');
       var sel = document.getElementById('guardia-admitir-seleccion');
-      var errEl = document.getElementById('guardia-admitir-error');
       var sit = document.getElementById('guardia-admitir-situacion');
       var tel = document.getElementById('guardia-admitir-tel');
       if (idEl) idEl.value = '';
@@ -1910,7 +1937,11 @@
       syncAdmitirTelVisibility();
       syncAdmitirSubmit();
       var modal = getAdmitirModal();
-      if (modal) modal.show();
+      if (!modal) {
+        window.alert('No se pudo abrir el formulario (Bootstrap no disponible).');
+        return;
+      }
+      modal.show();
       if (qEl) {
         setTimeout(function () { qEl.focus(); }, 200);
       }
@@ -3796,7 +3827,7 @@
     if (admitirSubmit) {
       admitirSubmit.addEventListener('click', submitAdmitirModal);
     }
-    container.addEventListener('click', function (ev) {
+    root.addEventListener('click', function (ev) {
       var ingresarBtn = ev.target && ev.target.closest
         ? ev.target.closest('[data-role="cta-ingresar-guardia"]')
         : null;

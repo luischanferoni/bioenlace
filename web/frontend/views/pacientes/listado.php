@@ -2,6 +2,7 @@
 
 use frontend\assets\AppAsset;
 use frontend\assets\GuardiaTableroAsset;
+use frontend\assets\PacientesListadoAsset;
 use yii\helpers\Html;
 use yii\helpers\Url;
 use yii\helpers\Json;
@@ -499,11 +500,10 @@ $this->title = $esGuardia
 
 <?php
 // Tras AppAsset: BioenlaceApiClient.mergeHeaders + native-page-bridge (BioenlaceNativePage).
-$jsDepends = [AppAsset::class];
+PacientesListadoAsset::$depends = [AppAsset::class];
 if ($esGuardia) {
     GuardiaTableroAsset::register($this);
-    $jsDepends[] = GuardiaTableroAsset::class;
+    PacientesListadoAsset::$depends[] = GuardiaTableroAsset::class;
 }
-$this->registerJsFile('@web/js/async-consulta-chat.js', ['depends' => $jsDepends]);
-$this->registerJsFile('@web/js/pacientes-listado.js', ['depends' => $jsDepends]);
+PacientesListadoAsset::register($this);
 ?>

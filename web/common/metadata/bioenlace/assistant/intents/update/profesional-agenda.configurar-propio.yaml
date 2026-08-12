@@ -1,6 +1,10 @@
 intent_id: profesional-agenda.configurar-propio
 version: 1
 
+# Atajo canónico: profesional-horarios.gestionar-propio (elige AMB vs cobertura).
+shortcut:
+  hidden: true
+
 operation: edit
 intent_family: profesional-agenda.configurar
 domain_operation: DataAccess.edit

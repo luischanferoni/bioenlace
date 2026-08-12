@@ -54,15 +54,27 @@ class AssistantShortcutsRbacGrouperTest extends Unit
         $flows = [
             $this->flow('urgencias.ver-tablero-guardia'),
             [
-                'action_id' => 'urgencias.internal-only',
+                'action_id' => 'profesional-agenda.configurar-propio',
                 'shortcut_hidden' => true,
             ],
+            [
+                'action_id' => 'profesional-cobertura.gestionar-propio',
+                'shortcut_hidden' => true,
+            ],
+            $this->flow('profesional-horarios.gestionar-propio'),
         ];
 
         $cats = AssistantShortcutsRbacGrouper::buildCategoryDefinitions($flows);
-        $urgencias = $cats[0]['intent_ids'] ?? [];
+        $intentIds = [];
+        foreach ($cats as $cat) {
+            foreach ($cat['intent_ids'] as $id) {
+                $intentIds[] = $id;
+            }
+        }
 
-        $this->assertSame(['urgencias.ver-tablero-guardia'], $urgencias);
+        $this->assertContains('profesional-horarios.gestionar-propio', $intentIds);
+        $this->assertNotContains('profesional-agenda.configurar-propio', $intentIds);
+        $this->assertNotContains('profesional-cobertura.gestionar-propio', $intentIds);
     }
 
     public function testGroupIdFromIntentId(): void

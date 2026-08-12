@@ -1,6 +1,6 @@
 <?php
 use frontend\assets\AppAsset;
-use yii\bootstrap5\BootstrapAsset;
+use frontend\assets\LoginAsset;
 use yii\helpers\Html;
 
 /* @var $this \yii\web\View */
@@ -8,6 +8,7 @@ use yii\helpers\Html;
 
 $this->title = 'BIOENLACE';
 AppAsset::register($this);
+LoginAsset::register($this);
 
 ?>
 <?php $this->beginPage() ?>

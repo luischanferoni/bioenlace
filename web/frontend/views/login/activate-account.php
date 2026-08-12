@@ -52,7 +52,7 @@ $this->title = 'Activar cuenta';
 				</div>
 			</div>
 			<div class="col-lg-6 pe-0 d-none d-lg-block">
-				<div class="img-fluid" style="background-image: url('<?= Yii::getAlias('@web') ?>/images/portada.jpg'); min-height: 100vh"></div>
+				<div class="login-side-pattern" aria-hidden="true"></div>
 			</div>
 		</div>
 	</section>

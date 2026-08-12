@@ -13,11 +13,16 @@ use yii\helpers\Html;
 	<section class="login-content overflow-hidden">
 		<div class="row no-gutters align-items-center bg-white">
 			<div class="col-md-12 col-lg-6 align-self-center">
-				<img src="<?= Yii::getAlias('@web')?>/images/nuevo_logo.webp" width="160px" alt="" class="mx-auto d-block mb-5 mt-5 img-fluid">
-				<h3 class="text-center mb-5">BIOENLACE</h3>
-				<div class="row justify-content-center pt-5">
+				<img
+					src="<?= Yii::getAlias('@web') ?>/images/logo.svg"
+					alt="Bioenlace"
+					class="login-brand-logo mb-4 mt-5"
+					width="240"
+					height="51"
+				>
+				<div class="row justify-content-center pt-3">
 					<div class="col-md-9">
-						<div class="card  d-flex justify-content-center mb-0 auth-card iq-auth-form">
+						<div class="card d-flex justify-content-center mb-0 auth-card iq-auth-form">
 							<div class="card-body">
 								<h2 class="mb-5 text-center">Inicio de Sesión</h2>
 
@@ -37,7 +42,7 @@ use yii\helpers\Html;
 									->passwordInput(['placeholder' => $model->getAttributeLabel('password'), 'autocomplete' => 'off']) ?>
 
 								<?= (isset(Yii::$app->user->enableAutoLogin) && Yii::$app->user->enableAutoLogin) ? $form->field($model, 'rememberMe')->checkbox(['value' => true]) : '' ?>
-								
+
 								<div class="d-flex justify-content-center">
 									<?= Html::submitButton(
 										'Ingresar',
@@ -72,21 +77,8 @@ use yii\helpers\Html;
 			</div>
 
 			<div class="col-lg-6 pe-0">
-				<div class="img-fluid" style="background-image: url('<?=Yii::getAlias('@web')?>/images/portada.jpg');height: 100vh">
-					<svg
-						data-name="Layer 1"
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 1200 120"
-						preserveAspectRatio="none"
-						style="
-							opacity: 0.7;
-							width: 120%;
-							height: 300px;
-							fill: #85b9da;
-							transform: rotateY(180deg);">
-						<path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"></path>
-					</svg>
-				</div>
+				<div class="login-side-pattern" aria-hidden="true"></div>
 			</div>
+		</div>
 	</section>
 </div>

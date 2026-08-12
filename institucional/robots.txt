@@ -1,0 +1,10 @@
+# Sitio institucional público — https://bioenlace.io
+# La app clínica (app.bioenlace.io) usa Disallow: / por separado.
+
+User-agent: *
+Allow: /
+
+Disallow: /js/
+Disallow: /css/
+
+Sitemap: https://bioenlace.io/sitemap.xml

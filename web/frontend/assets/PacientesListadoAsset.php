@@ -2,6 +2,7 @@
 
 namespace frontend\assets;
 
+use yii\helpers\Url;
 use yii\web\AssetBundle;
 use yii\web\View;
 
@@ -15,6 +16,9 @@ class PacientesListadoAsset extends AssetBundle
         AppAsset::class,
     ];
 
+    /** @var list<string> */
+    public $js = [];
+
     /**
      * @param list<class-string<AssetBundle>> $extraDepends
      */
@@ -25,19 +29,22 @@ class PacientesListadoAsset extends AssetBundle
         $bundle->register($view);
     }
 
-    public function registerAssetFiles($view)
+    public function init(): void
     {
+        parent::init();
+
         $files = [
             'async-consulta-chat.js',
             'pacientes-listado.js',
         ];
+
         foreach ($files as $file) {
             $abs = \Yii::getAlias('@frontend/web/js/' . $file);
-            $url = \yii\helpers\Url::to('@web/js/' . $file, true);
+            $url = Url::to('@web/js/' . $file);
             if (is_file($abs)) {
                 $url .= '?v=' . filemtime($abs);
             }
-            $view->registerJsFile($url, ['depends' => $this->depends]);
+            $this->js[] = $url;
         }
     }
 }

@@ -1,7 +1,6 @@
 <?php
 
 use frontend\assets\AppAsset;
-use frontend\assets\BioenlaceUiJsonEmbedAsset;
 use frontend\assets\GuardiaTableroAsset;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -419,8 +418,74 @@ $this->title = $esGuardia
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <div id="guardia-admitir-loading" class="text-muted small py-3">Cargando formulario…</div>
-                <div id="guardia-admitir-ui-mount" class="d-none"></div>
+                <p class="text-muted small mb-3">Buscá por apellido o documento. Si no está en el sistema, registralo. Quien ya está en la cola de este efector no aparece.</p>
+                <div class="mb-3">
+                    <label class="form-label" for="guardia-admitir-q">Paciente conocido</label>
+                    <input type="search" class="form-control" id="guardia-admitir-q" placeholder="Apellido o documento" autocomplete="off">
+                    <input type="hidden" id="guardia-admitir-id-persona" value="">
+                    <div id="guardia-admitir-results" class="list-group mt-2 small"></div>
+                    <div id="guardia-admitir-seleccion" class="form-text d-none"></div>
+                    <button type="button" class="btn btn-link btn-sm px-0 mt-1" id="guardia-admitir-alta-toggle">El paciente no está en el sistema</button>
+                </div>
+                <div class="border rounded p-3 mb-3 d-none" id="guardia-admitir-alta">
+                    <div class="fw-semibold mb-2">Alta mínima</div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label" for="guardia-admitir-apellido">Apellido</label>
+                            <input type="text" class="form-control" id="guardia-admitir-apellido" maxlength="60">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="guardia-admitir-nombre">Nombre</label>
+                            <input type="text" class="form-control" id="guardia-admitir-nombre" maxlength="60">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="guardia-admitir-documento">Documento</label>
+                            <input type="text" class="form-control" id="guardia-admitir-documento" maxlength="8" inputmode="numeric">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="guardia-admitir-fecha-nac">Fecha de nacimiento</label>
+                            <input type="date" class="form-control" id="guardia-admitir-fecha-nac">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="guardia-admitir-sexo">Sexo</label>
+                            <select class="form-select" id="guardia-admitir-sexo">
+                                <option value="">—</option>
+                                <option value="1">Femenino</option>
+                                <option value="2">Masculino</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="guardia-admitir-ingresa-en">Ingresa en</label>
+                    <select class="form-select" id="guardia-admitir-ingresa-en">
+                        <option value="deambula" selected>Deambulando (Caminando)</option>
+                        <option value="silla_de_rueda">Silla de Rueda</option>
+                        <option value="camilla">Camilla</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="guardia-admitir-ingresa-con">Ingresa con</label>
+                    <select class="form-select" id="guardia-admitir-ingresa-con">
+                        <option value="solo" selected>Solo</option>
+                        <option value="familiar">Familiar</option>
+                        <option value="policia">Personal Policial</option>
+                        <option value="otro">Otro</option>
+                        <option value="no_sabe">No sabe/No contesta</option>
+                    </select>
+                </div>
+                <div class="mb-3 d-none" id="guardia-admitir-tel-wrap">
+                    <label class="form-label" for="guardia-admitir-tel">Teléfono de contacto</label>
+                    <input type="text" class="form-control" id="guardia-admitir-tel" maxlength="32">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="guardia-admitir-cobertura">Cobertura (opcional)</label>
+                    <input type="text" class="form-control" id="guardia-admitir-cobertura" maxlength="100">
+                </div>
+                <div class="mb-0">
+                    <label class="form-label" for="guardia-admitir-situacion">Situación al ingresar (opcional)</label>
+                    <textarea class="form-control" id="guardia-admitir-situacion" rows="2"></textarea>
+                </div>
                 <div id="guardia-admitir-error" class="alert alert-danger d-none mt-3 mb-0"></div>
             </div>
             <div class="modal-footer">
@@ -437,9 +502,7 @@ $this->title = $esGuardia
 $jsDepends = [AppAsset::class];
 if ($esGuardia) {
     GuardiaTableroAsset::register($this);
-    BioenlaceUiJsonEmbedAsset::register($this);
     $jsDepends[] = GuardiaTableroAsset::class;
-    $jsDepends[] = BioenlaceUiJsonEmbedAsset::class;
 }
 $this->registerJsFile('@web/js/async-consulta-chat.js', ['depends' => $jsDepends]);
 $this->registerJsFile('@web/js/pacientes-listado.js', ['depends' => $jsDepends]);

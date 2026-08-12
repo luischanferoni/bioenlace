@@ -70,22 +70,32 @@ class ClientContextMetadataTest extends Unit
         $this->assertFalse(ClientContextMetadata::isPacienteFacingAppClient('bioenlace-personalsalud'));
     }
 
-    public function testPacienteMobileShortcutDisplayFlags(): void
+    public function testPacienteMobileShortcutDisplayUsesRbacMode(): void
     {
-        $this->assertFalse(ClientContextMetadata::pacienteMobileShortcutUseYamlActionName());
         $this->assertTrue(ClientContextMetadata::pacienteMobileShortcutOmitSubgroups());
-        $this->assertSame(
-            'assistant-shortcuts-paciente.yaml',
-            ClientContextMetadata::pacienteMobileShortcutsCatalogBasename()
-        );
+        $display = ClientContextMetadata::shortcutsDisplayForAppClient('paciente-flutter');
+        $this->assertNotNull($display);
+        $this->assertSame('rbac', $display['mode']);
+        $this->assertTrue($display['omit_subgroups']);
     }
 
     public function testWhatsappPacienteShortcutsFromMetadata(): void
     {
         $display = ClientContextMetadata::shortcutsDisplayForAppClient('whatsapp-paciente');
         $this->assertNotNull($display);
-        $this->assertSame('assistant-shortcuts-whatsapp-paciente.yaml', $display['catalog_basename']);
+        $this->assertSame('rbac', $display['mode']);
         $this->assertTrue($display['omit_subgroups']);
         $this->assertNull(ClientContextMetadata::shortcutsDisplayForAppClient('web-frontend'));
+    }
+
+    public function testHideServicioNavbarRolesFromMetadata(): void
+    {
+        $roles = ClientContextMetadata::hideServicioNavbarRoles();
+        $this->assertContains('Administrativo', $roles);
+    }
+
+    public function testShouldHideServicioInNavbarForUnknownUser(): void
+    {
+        $this->assertFalse(ClientContextMetadata::shouldHideServicioInNavbar(0));
     }
 }

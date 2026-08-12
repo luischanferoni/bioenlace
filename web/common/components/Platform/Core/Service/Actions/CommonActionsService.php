@@ -2,10 +2,12 @@
 
 namespace common\components\Platform\Core\Service\Actions;
 
-use common\components\Platform\Assistant\Catalog\AssistantShortcutsCatalog;
+use common\components\Platform\Assistant\Catalog\AssistantShortcutsRbacGrouper;
+use common\components\Platform\Assistant\Catalog\AssistantShortcutsAssembler;
 use common\components\Platform\Assistant\UiActions\AssistantClientOpenEnricher;
 use common\components\Platform\Assistant\Catalog\IntentCatalogService;
 use common\components\Platform\Core\Product\ClientContextMetadata;
+use common\components\Platform\Core\Permission\RbacRoleQueryService;
 
 /**
  * Atajos de inicio: subconjunto ordenado de acciones.
@@ -42,8 +44,16 @@ final class CommonActionsService
             $byId[$aid] = $f;
         }
 
+        $catDefs = self::isRbacShortcutMode($display)
+            ? AssistantShortcutsRbacGrouper::buildCategoryDefinitions($available)
+            : AssistantShortcutsAssembler::buildCategoryDefinitions(
+                array_keys(RbacRoleQueryService::getUserRoles($userId)),
+                $available,
+                $catalogBasename
+            );
+
         $categories = [];
-        foreach (AssistantShortcutsCatalog::categories($catalogBasename) as $catDef) {
+        foreach ($catDefs as $catDef) {
             $payload = self::buildCategoryPayload($catDef, $byId, $display);
             if ($payload !== null) {
                 $categories[] = $payload;
@@ -67,7 +77,7 @@ final class CommonActionsService
     }
 
     /**
-     * @return array{catalog_basename: string, use_yaml_action_name: bool, omit_subgroups: bool}
+     * @return array{mode: string, catalog_basename: string, use_yaml_action_name: bool, omit_subgroups: bool}
      */
     private static function resolveDisplayOptions(?string $appClient): array
     {
@@ -77,10 +87,19 @@ final class CommonActionsService
         }
 
         return [
-            'catalog_basename' => 'assistant-shortcuts.yaml',
+            'mode' => 'rbac',
+            'catalog_basename' => '',
             'use_yaml_action_name' => false,
-            'omit_subgroups' => false,
+            'omit_subgroups' => true,
         ];
+    }
+
+    /**
+     * @param array{mode?: string, catalog_basename?: string, use_yaml_action_name?: bool, omit_subgroups?: bool} $display
+     */
+    private static function isRbacShortcutMode(array $display): bool
+    {
+        return trim((string) ($display['mode'] ?? 'rbac')) === 'rbac';
     }
 
     /**

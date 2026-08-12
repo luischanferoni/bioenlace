@@ -31,6 +31,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 ]) ?>
             <?= Html::endForm() ?>
             <?= Html::a('Integridad', ['integrity'], ['class' => 'btn btn-primary btn-sm']) ?>
+            <?= Html::a('Grupos de atajos', ['/shortcut-group/index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
         </div>
     </div>
 

@@ -5,20 +5,21 @@ version: 1
 mobile_paciente:
   app_client_ids:
     - paciente-flutter
-  shortcuts_catalog: assistant-shortcuts-paciente.yaml
   shortcut_display:
+    mode: rbac
     omit_subgroups: true
 
-# Canal WhatsApp (MVP): mismo rol paciente, catálogo de atajos reducido.
-# Impplica contexto no-web ({@see ClientContextService::isWebClient}): no omitir rol paciente ni filtrar flows como-paciente.
 whatsapp_paciente:
   app_client_ids:
     - whatsapp-paciente
-  shortcuts_catalog: assistant-shortcuts-whatsapp-paciente.yaml
   shortcut_display:
+    mode: rbac
     omit_subgroups: true
 
 web_staff:
+  hide_servicio_navbar_roles:
+    - Administrativo
+
   hide_paciente_flows:
     intent_ids:
       - atencion.necesito-atencion

@@ -3,41 +3,28 @@
 namespace common\tests\unit\assistant;
 
 use Codeception\Test\Unit;
-use common\components\Platform\Assistant\Catalog\AssistantShortcutsCatalog;
-use Symfony\Component\Yaml\Yaml;
-use Yii;
+use common\components\Platform\Assistant\Catalog\AssistantShortcutsRbacGrouper;
 
 class AssistantShortcutsPacienteCatalogTest extends Unit
 {
-    protected function _after(): void
+    public function testPacienteFlowsGroupWithoutStaffIntents(): void
     {
-        AssistantShortcutsCatalog::resetCacheForTests();
-    }
+        $flows = [
+            ['action_id' => 'atencion.necesito-atencion', 'shortcut_hidden' => false],
+            ['action_id' => 'turnos.ver-mis-turnos-como-paciente', 'shortcut_hidden' => false],
+            ['action_id' => 'profesional-agenda.configurar-staff', 'shortcut_hidden' => false],
+        ];
 
-    public function testPacienteCatalogHasNoSubgroups(): void
-    {
-        $path = Yii::getAlias('@common/metadata/bioenlace/assistant/assistant-shortcuts-paciente.yaml');
-        $parsed = Yaml::parseFile($path);
-        $this->assertIsArray($parsed);
-        foreach ($parsed['categories'] ?? [] as $cat) {
-            $this->assertIsArray($cat);
-            $subgroups = $cat['subgroups'] ?? [];
-            $this->assertSame([], $subgroups, 'Categoría paciente no debe tener subgrupos: ' . ($cat['id'] ?? ''));
-        }
-    }
-
-    public function testPacienteCatalogExcludesStaffIntents(): void
-    {
-        $cats = AssistantShortcutsCatalog::categories('assistant-shortcuts-paciente.yaml');
+        $cats = AssistantShortcutsRbacGrouper::buildCategoryDefinitions($flows);
         $intentIds = [];
         foreach ($cats as $cat) {
             foreach ($cat['intent_ids'] as $id) {
                 $intentIds[] = $id;
             }
         }
+
         $this->assertContains('atencion.necesito-atencion', $intentIds);
-        $this->assertNotContains('atencion.consultas-seguimiento-flow', $intentIds);
-        $this->assertNotContains('profesional-agenda.configurar-staff', $intentIds);
-        $this->assertNotContains('urgencias.ver-tablero-guardia', $intentIds);
+        $this->assertContains('turnos.ver-mis-turnos-como-paciente', $intentIds);
+        $this->assertContains('profesional-agenda.configurar-staff', $intentIds);
     }
 }

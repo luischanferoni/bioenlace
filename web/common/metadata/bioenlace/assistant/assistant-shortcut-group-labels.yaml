@@ -1,0 +1,38 @@
+# Respaldo inicial / re-import desde admin (ShortcutGroup → Importar desde YAML).
+# Fuente operativa: tabla assistant_shortcut_group (admin → Grupos de atajos).
+version: 1group_order:
+  - atencion
+  - turnos
+  - urgencias
+  - internacion
+  - condicion-laboral
+  - profesional-agenda
+  - profesional-cobertura
+  - profesional-efector-servicio
+  - profesional-horarios
+  - profesionales
+  - licencia
+  - tratamiento
+  - laboratorio
+  - receta
+  - personas
+  - plataforma
+  - paciente-contexto
+labels:
+  urgencias: Urgencias / guardia
+  internacion: Internación
+  turnos: Turnos
+  atencion: Atención
+  laboratorio: Laboratorio
+  receta: Recetas
+  tratamiento: Tratamiento
+  personas: Representación
+  plataforma: Ayuda y plataforma
+  paciente-contexto: Mi provincia
+  condicion-laboral: Condición laboral
+  profesional-agenda: Agenda
+  profesional-cobertura: Cobertura
+  profesional-efector-servicio: Personal en el efector
+  profesional-horarios: Horarios
+  profesionales: Profesionales del efector
+  licencia: Licencias

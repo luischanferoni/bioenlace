@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Core\Product;
 
+use common\components\Platform\Core\Permission\RbacRoleQueryService;
 use Symfony\Component\Yaml\Yaml;
 use Yii;
 
@@ -92,7 +93,7 @@ final class ClientContextMetadata
     /**
      * Perfil de atajos para un X-App-Client (mobile_paciente, whatsapp_paciente, …).
      *
-     * @return array{catalog_basename: string, use_yaml_action_name: bool, omit_subgroups: bool}|null
+     * @return array{mode: string, catalog_basename: string, use_yaml_action_name: bool, omit_subgroups: bool}|null
      */
     public static function shortcutsDisplayForAppClient(?string $appClientId): ?array
     {
@@ -101,28 +102,53 @@ final class ClientContextMetadata
             return null;
         }
 
-        $file = trim((string) ($section['shortcuts_catalog'] ?? ''));
-        if ($file === '') {
-            return null;
+        return self::shortcutsDisplayFromSection($section);
+    }
+
+    public static function shouldHideServicioInNavbar(int $userId): bool
+    {
+        if ($userId <= 0) {
+            return false;
         }
 
-        $display = $section['shortcut_display'] ?? [];
-        if (!is_array($display)) {
-            $display = [];
+        $hideRoles = self::hideServicioNavbarRoles();
+        if ($hideRoles === []) {
+            return false;
         }
 
-        return [
-            'catalog_basename' => $file,
-            'use_yaml_action_name' => ($display['use_yaml_action_name'] ?? false) === true,
-            'omit_subgroups' => ($display['omit_subgroups'] ?? false) === true,
-        ];
+        $userRoles = array_keys(RbacRoleQueryService::getUserRoles($userId));
+        foreach ($hideRoles as $role) {
+            if (in_array($role, $userRoles, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function hideServicioNavbarRoles(): array
+    {
+        $raw = self::webStaffSection()['hide_servicio_navbar_roles'] ?? [];
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($raw as $role) {
+            if (is_string($role) && trim($role) !== '') {
+                $out[] = trim($role);
+            }
+        }
+
+        return $out;
     }
 
     public static function pacienteMobileShortcutsCatalogBasename(): string
     {
-        $file = trim((string) (self::mobilePacienteSection()['shortcuts_catalog'] ?? ''));
-
-        return $file !== '' ? $file : 'assistant-shortcuts-paciente.yaml';
+        return '';
     }
 
     public static function pacienteMobileShortcutUseYamlActionName(): bool
@@ -225,6 +251,36 @@ final class ClientContextMetadata
         $section = self::loadConfig()['mobile_paciente'] ?? [];
 
         return is_array($section) ? $section : [];
+    }
+
+    /**
+     * @param array<string, mixed> $section
+     *
+     * @return array{mode: string, catalog_basename: string, use_yaml_action_name: bool, omit_subgroups: bool}|null
+     */
+    private static function shortcutsDisplayFromSection(array $section): ?array
+    {
+        $display = $section['shortcut_display'] ?? [];
+        if (!is_array($display)) {
+            $display = [];
+        }
+
+        $mode = trim((string) ($display['mode'] ?? 'rbac'));
+        if ($mode === '') {
+            $mode = 'rbac';
+        }
+
+        $file = trim((string) ($section['shortcuts_catalog'] ?? ''));
+        if ($mode !== 'rbac' && $file === '') {
+            return null;
+        }
+
+        return [
+            'mode' => $mode,
+            'catalog_basename' => $file,
+            'use_yaml_action_name' => ($display['use_yaml_action_name'] ?? false) === true,
+            'omit_subgroups' => ($display['omit_subgroups'] ?? false) === true,
+        ];
     }
 
     /**

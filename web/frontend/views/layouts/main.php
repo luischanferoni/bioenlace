@@ -10,6 +10,7 @@ use frontend\assets\AppAsset;
 use frontend\assets\BioenlaceApiClientAsset;
 use yii\helpers\Url;
 use common\models\Clinical\EncounterDefinition;
+use common\components\Platform\Core\Product\ClientContextMetadata;
 
 AppAsset::register($this);
 
@@ -62,6 +63,9 @@ if (Yii::$app->user->username) {
 } else {
     $user = '';
 }
+
+$hideServicioNavbar = !Yii::$app->user->isGuest
+    && ClientContextMetadata::shouldHideServicioInNavbar((int) Yii::$app->user->id);
 
 ?>
 
@@ -140,7 +144,7 @@ if (Yii::$app->user->username) {
                                 <span class="text-muted small"><?= Html::encode($efector_nombre) ?></span>
                             <?php endif; ?>
 
-                            <?php if (!empty($itemsMenuServicios) && count($itemsMenuServicios) > 1): ?>
+                            <?php if (!$hideServicioNavbar && !empty($itemsMenuServicios) && count($itemsMenuServicios) > 1): ?>
                                 <div class="dropdown">
                                     <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="dropdownServicio" data-bs-toggle="dropdown" aria-expanded="false">
                                         Servicio: <?= Html::encode($nombreServicio) ?>
@@ -155,7 +159,7 @@ if (Yii::$app->user->username) {
                                         <?php endforeach; ?>
                                     </ul>
                                 </div>
-                            <?php elseif (!empty($nombreServicio) && $nombreServicio !== "Seleccione un Servicio"): ?>
+                            <?php elseif (!$hideServicioNavbar && !empty($nombreServicio) && $nombreServicio !== "Seleccione un Servicio"): ?>
                                 <span class="text-muted small">Servicio: <?= Html::encode($nombreServicio) ?></span>
                             <?php endif; ?>
 

@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\UiActions\ActionMappingService;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Core\Permission\IntentAccessService;
-use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
+use common\components\Platform\Assistant\Catalog\IntentShortcutMetadata;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
 use common\components\Platform\Core\Permission\IntentPermissionResolver;
 use common\components\Platform\Ui\ApiV1HttpRoute;
@@ -153,6 +153,8 @@ final class YamlIntentCatalogService
                 'tags' => [],
                 'parameters' => [],
                 'intent_semantics' => $sem,
+                'shortcut_placements' => IntentShortcutMetadata::explicitPlacements($data),
+                'shortcut_hidden' => IntentShortcutMetadata::isHidden($data),
                 // Hint interno: intent ejecutable como flow YAML (no es `kind` del sobre HTTP).
                 'flow_capable' => true,
             ];

@@ -5,6 +5,7 @@ namespace frontend\controllers;
 use Yii;
 use yii\web\Controller;
 use yii\web\BadRequestHttpException;
+use yii\web\Response;
 use yii\helpers\ArrayHelper;
 
 use common\components\Platform\Core\Auth\DemoSandboxAccessService;
@@ -38,6 +39,24 @@ class SiteController extends Controller
                 'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
             ],
         ];
+    }
+
+    /**
+     * Probes de crawlers cuando el docroot enruta todo a index.php (sin .htaccess de frontend/web).
+     *
+     * @no_intent_catalog
+     */
+    public function actionRobotsTxt(): string
+    {
+        Yii::$app->response->format = Response::FORMAT_RAW;
+        Yii::$app->response->headers->set('Content-Type', 'text/plain; charset=UTF-8');
+
+        $path = Yii::getAlias('@webroot/robots.txt');
+        if (is_file($path)) {
+            return (string) file_get_contents($path);
+        }
+
+        return "User-agent: *\nDisallow: /\n";
     }
 
     /**

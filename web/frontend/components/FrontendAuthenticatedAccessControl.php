@@ -26,6 +26,7 @@ class FrontendAuthenticatedAccessControl extends ActionFilter
         'auth/captcha',
         'site/captcha',
         'site/error',
+        'site/robots-txt',
         'site/impersonate',
         'site/demo-entrar',
     ];

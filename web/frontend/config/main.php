@@ -101,6 +101,7 @@ return [
                 'user-management/auth/activate-account-receive/<token:[\w\-]+>' => 'auth/activate-account-receive',
                 'user-management/auth/confirm-email' => 'auth/confirm-email',
                 'user-management/auth/confirm-email-receive/<token:[\w\-]+>' => 'auth/confirm-email-receive',
+                'GET robots.txt' => 'site/robots-txt',
                 'turno/resolucion/<token:[\w\.\-\_=]+>' => 'turno-public/resolucion',
                 'site/inicio' => 'site/sesion-operativa',
                 'site/establecer-session-final' => 'site/establecer-sesion-final',

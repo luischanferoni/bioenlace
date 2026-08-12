@@ -180,6 +180,16 @@ final class HomePanelManifest
     }
 
     /**
+     * Roles que no ven Atender aunque hereden Medico vía PES (`servicios.item_name`).
+     *
+     * @return list<string>
+     */
+    public function emergencyAtenderExcludeRoles(): array
+    {
+        return $this->emergencyCapabilityRoles('atender_exclude_roles');
+    }
+
+    /**
      * Roles que pueden abrir la nota del encounter sin tomar el caso.
      *
      * @return list<string>

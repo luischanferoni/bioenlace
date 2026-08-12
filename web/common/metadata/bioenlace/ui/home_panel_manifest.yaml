@@ -27,8 +27,13 @@ panels:
           - Administrativo
           - AdminEfector
         # Tomar el caso + captura clínica (POST iniciar-atencion).
+        # Admisión puede tener PES sobre un servicio clínico (item_name Medico);
+        # igual no atiende: atender_exclude_roles gana.
         atender_roles:
           - Medico
+        atender_exclude_roles:
+          - Administrativo
+          - AdminEfector
         # Nota de encounter sin tomar el caso (enfermería).
         documentar_roles:
           - enfermeria

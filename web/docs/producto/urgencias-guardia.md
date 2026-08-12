@@ -20,7 +20,7 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 | Primer triage | Staff (`triage_roles` del manifiesto) | Tablero web y app Personal de Salud (`espera_triage`) |
 | Editar / actualizar triage | Médico (y staff con HC abierta) | Historia clínica del episodio (`editar_triage` en banner). **No** en el tablero |
 | Tomar caso | — (eliminado) | `iniciar-atencion` asigna el PES de sesión si falta |
-| Atender | Médico (`atender_roles`) | Tablero → `POST …/iniciar-atencion` (toma el caso) → captura. Requiere triage; episodio no cerrado |
+| Atender | Médico (`atender_roles`, no `atender_exclude_roles`) | Tablero → `POST …/iniciar-atencion` (toma el caso) → captura. Requiere triage; episodio no cerrado. Admisión no atiende aunque el PES herede `Medico`. |
 | Nota (sin tomar el caso) | Enfermería (`documentar_roles`) | Tablero → HC `parent=GUARDIA` **sin** `iniciar-atencion` |
 | Ver consulta | Médico / staff | Tablero cuando `circuito_estado = atendido` (o `derivado` con encounter): lectura como AMB (`/paciente/ver-consulta?encounter_id=…`) |
 | Signos vitales | Staff en triage (opc.); médico en atención | Captura EMER; cards del timeline solo lectura |

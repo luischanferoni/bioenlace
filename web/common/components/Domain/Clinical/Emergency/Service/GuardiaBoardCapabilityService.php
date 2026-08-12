@@ -37,9 +37,15 @@ final class GuardiaBoardCapabilityService
 
     /**
      * Atender / iniciar-atencion (toma el caso). Roles en home_panel_manifest.yaml.
+     * `atender_exclude_roles` (admisión) gana aunque el PES herede Medico.
      */
     public function canAtender(): bool
     {
+        $exclude = $this->manifest->emergencyAtenderExcludeRoles();
+        if ($exclude !== [] && $this->hasAnyManifestRole($exclude, false)) {
+            return false;
+        }
+
         return $this->hasAnyManifestRole($this->manifest->emergencyAtenderRoles());
     }
 
@@ -54,12 +60,12 @@ final class GuardiaBoardCapabilityService
     /**
      * @param list<string> $roles
      */
-    private function hasAnyManifestRole(array $roles): bool
+    private function hasAnyManifestRole(array $roles, bool $superAdminAllowed = true): bool
     {
         if ($roles === []) {
             return false;
         }
 
-        return User::hasRole($roles, true);
+        return User::hasRole($roles, $superAdminAllowed);
     }
 }

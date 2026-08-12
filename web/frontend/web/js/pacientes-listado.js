@@ -3534,6 +3534,22 @@
       };
     }
 
+    function applyEmergencyBoardCapabilities(data) {
+      if (!data || typeof data !== 'object') return;
+      if (typeof data.puede_triage === 'boolean') {
+        puedeTriage = data.puede_triage;
+      }
+      if (typeof data.puede_ingresar === 'boolean') {
+        puedeIngresar = data.puede_ingresar;
+      }
+      if (typeof data.puede_atender === 'boolean') {
+        puedeAtender = data.puede_atender;
+      }
+      if (typeof data.puede_documentar === 'boolean') {
+        puedeDocumentar = data.puede_documentar;
+      }
+    }
+
     function renderFromPanel(panel) {
       var layout = panel.layout || '';
       if (layout === 'staff_dashboard') {
@@ -3544,6 +3560,7 @@
       if (layout === 'clinical_board') {
         var coberturaSec = findPanelSection(panel, 'staff_cobertura_activa');
         var boardSec = findPanelSection(panel, 'emergency_board');
+        applyEmergencyBoardCapabilities(boardSec && boardSec.data ? boardSec.data : null);
         var items = boardSec && boardSec.data ? boardSec.data.items || [] : [];
         renderGuardiaTablero(
           items,

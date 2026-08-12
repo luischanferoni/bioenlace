@@ -59,6 +59,10 @@ class HomePanelManifestTest extends Unit
         $roles = $manifest->emergencyAtenderRoles();
 
         $this->assertSame(['Medico'], $roles);
+        $exclude = $manifest->emergencyAtenderExcludeRoles();
+        $this->assertContains('Administrativo', $exclude);
+        $this->assertContains('AdminEfector', $exclude);
+        $this->assertNotContains('Medico', $exclude);
     }
 
     public function testEmergencyDocumentarRolesAreEnfermeria(): void

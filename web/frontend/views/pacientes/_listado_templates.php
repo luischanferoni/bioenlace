@@ -117,7 +117,7 @@
 
 <template id="tpl-guardia-board-toolbar">
     <div class="d-flex justify-content-end mb-3" data-role="guardia-toolbar">
-        <button type="button" class="btn btn-primary btn-sm d-none" data-role="cta-ingresar-guardia">
+        <button type="button" class="btn btn-primary btn-sm d-none" data-role="cta-ingresar-guardia" data-prevent-nav="1">
             <i class="bi bi-person-plus me-1"></i>Ingresar paciente
         </button>
     </div>

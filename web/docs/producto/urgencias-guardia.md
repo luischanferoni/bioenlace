@@ -6,7 +6,7 @@ Programa operativo de **triage + tablero** en efectores con `encounterClass = EM
 
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
-| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) y app Personal de Salud | Tablero: **Ingresar paciente** solo en la **app Personal de Salud** (`ingreso_roles` + `ingreso_clients: mobile`; escaneo de DNI). Web: cola, **primer triage**, **Nota** de encounter sin tomar el caso (`documentar_roles` / `puede_documentar`, enfermería), **Ingresar cama** (si hay pedido pendiente), indicadores. Puede registrar **Paciente se retiró** mientras el episodio sea operable. **No** llama `iniciar-atencion`. |
+| Staff (enfermería, admisión) | Web inicio (`site/index` con EMER) y app Personal de Salud | Tablero: **Ingresar paciente** (`ingreso_roles`). Web: paciente **conocido** o **NN**; DNI/Didit no. Leyenda: si no está en el sistema, usar la app Personal de Salud (escaneo de DNI). App: conocido, DNI, Didit o NN (`ingreso_dni_clients: mobile`). Cola, **primer triage**, **Nota** de encounter sin tomar el caso (`documentar_roles` / `puede_documentar`, enfermería), **Ingresar cama** (si hay pedido pendiente), indicadores. Puede registrar **Paciente se retiró** mientras el episodio sea operable. **No** llama `iniciar-atencion`. |
 | Médico guardia | Web inicio EMER + app Personal de Salud | Tablero: **Atender** → captura del encounter (requiere triage). Conducta (alta, internación, derivación) **en la captura**. Tras documentar → **Ver consulta** (lectura). **Paciente se retiró** solo si aún está en atención (sin documentación de cierre). Triage del médico: solo en HC. |
 | Dirección / calidad | Web inicio + job nocturno | Resumen en vivo; histórico en `guardia_metrics_daily` |
 
@@ -16,7 +16,7 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 
 | Capacidad | Quién | Dónde |
 |-----------|-------|--------|
-| Ingreso a guardia | Administrativo / AdminEfector (`ingreso_roles` del manifiesto) | Solo app Personal de Salud (`ingreso_clients: mobile`; `POST …/ingresar`). Identidad: paciente conocido, DNI, Didit o NN (identidad pendiente); no ficha tipeada. Web no ofrece el CTA. |
+| Ingreso a guardia | Administrativo / AdminEfector (`ingreso_roles` del manifiesto) | Web y app (`POST …/ingresar`). Identidad: paciente conocido o NN en ambos; DNI/Didit solo app (`ingreso_dni_clients: mobile`). No ficha tipeada. |
 | Primer triage | Staff (`triage_roles` del manifiesto) | Tablero web y app Personal de Salud (`espera_triage`) |
 | Editar / actualizar triage | Médico (y staff con HC abierta) | Historia clínica del episodio (`editar_triage` en banner). **No** en el tablero |
 | Tomar caso | — (eliminado) | `iniciar-atencion` asigna el PES de sesión si falta |
@@ -59,8 +59,8 @@ Base: `/api/v1/clinical/emergency-guardia`
 
 | Acción | Método | Notas |
 |--------|--------|-------|
-| Panel inicio (tablero) | `GET /api/v1/home/panel` | Sección `emergency_board` (+ `emergency_indicators`); flags `puede_triage` / `puede_ingresar` / `puede_atender` / `puede_documentar` |
-| Ingreso | `POST …/ingresar` | Solo canal `mobile` (app Personal de Salud). Admisión: `id_persona`, DNI (`codigo_barras` **o** `documento` + `sexo_biologico`), Didit (`verification_id`) **o** `identidad_pendiente` (NN, sin DNI inventado). Vincular después: `POST …/{id}/vincular-identidad`. Núcleo: `RegistroStaffPacienteService`. `ingresa_en`, `ingresa_con`. Búsqueda: `GET …/buscar-persona-ingreso` |
+| Panel inicio (tablero) | `GET /api/v1/home/panel` | Sección `emergency_board` (+ `emergency_indicators`); flags `puede_triage` / `puede_ingresar` / `puede_ingresar_dni` / `puede_atender` / `puede_documentar` |
+| Ingreso | `POST …/ingresar` | Web: `id_persona` o `identidad_pendiente` (NN). App: además DNI (`codigo_barras` **o** `documento` + `sexo_biologico`) o Didit (`verification_id`). Vincular después: `POST …/{id}/vincular-identidad` (web: paciente conocido; app: también DNI/Didit). Núcleo: `RegistroStaffPacienteService`. `ingresa_en`, `ingresa_con`. Búsqueda: `GET …/buscar-persona-ingreso` |
 | Triage | `POST …/{id}/registrar-triage` | Manchester 1–5 + motivo + vitales opcionales (staff) |
 | Asignar | `POST …/{id}/asignar` | Uso interno / legado; el flujo médico usa `iniciar-atencion` |
 | Atender | `POST …/{id}/iniciar-atencion` | Asigna PES de sesión si falta; devuelve `captura_url` |
@@ -104,7 +104,7 @@ php yii emergency-guardia/materialize-metrics
 
 ## Fuera de alcance actual
 
-- App móvil: primer triage nativo si `puede_triage`; **ingreso a guardia** nativo (`EmergencyIngresoScreen`); ingreso a cama vía UI JSON de internación (asistente / flujos embebidos).
+- App móvil: primer triage nativo si `puede_triage`; **ingreso a guardia** nativo (`EmergencyIngresoScreen`, incluye DNI/Didit); ingreso a cama vía UI JSON de internación (asistente / flujos embebidos).
 
 ## Cobertura de plantel (agenda EMER)
 

@@ -52,6 +52,7 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
                 'requires_cobertura' => true,
                 'puede_triage' => $caps->canTriage(),
                 'puede_ingresar' => $caps->canIngresar(),
+                'puede_ingresar_dni' => $caps->canIngresarConDni(),
                 'puede_atender' => $caps->canAtender(),
                 'puede_documentar' => $caps->canDocumentar(),
                 'empty_message' => ProfesionalCoberturaActivaService::mensajeSinCoberturaParaSesion(
@@ -68,6 +69,7 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
             'items' => is_array($tablero['items'] ?? null) ? $tablero['items'] : [],
             'puede_triage' => $caps->canTriage(),
             'puede_ingresar' => $caps->canIngresar(),
+            'puede_ingresar_dni' => $caps->canIngresarConDni(),
             'puede_atender' => $caps->canAtender(),
             'puede_documentar' => $caps->canDocumentar(),
         ];

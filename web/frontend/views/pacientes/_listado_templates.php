@@ -116,7 +116,8 @@
 </template>
 
 <template id="tpl-guardia-board-toolbar">
-    <div class="d-flex justify-content-end mb-3" data-role="guardia-toolbar">
+    <div class="d-flex flex-wrap align-items-center justify-content-end gap-2 mb-3" data-role="guardia-toolbar">
+        <p class="text-muted small mb-0 me-auto d-none" data-role="guardia-ingreso-dni-hint">Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).</p>
         <button type="button" class="btn btn-primary btn-sm d-none" data-role="cta-ingresar-guardia">
             <i class="bi bi-person-plus me-1"></i>Ingresar paciente
         </button>

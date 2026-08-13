@@ -34,7 +34,7 @@ final class GuardiaIngresoService
      */
     public function ingresar(array $body, int $idEfector): array
     {
-        $this->assertCanalIngreso();
+        $this->assertIdentidadDniPermitida($body);
         $pendiente = $this->usarIdentidadPendiente($body);
         $idPersona = $pendiente
             ? (int) (new PersonaIdentidadPendienteService())->crearPlaceholder()->id_persona
@@ -105,7 +105,7 @@ final class GuardiaIngresoService
      */
     public function vincularIdentidad(int $guardiaId, array $body, int $idEfector): array
     {
-        $this->assertCanalIngreso();
+        $this->assertIdentidadDniPermitida($body);
         $guardia = Guardia::findOne(['id' => $guardiaId, 'id_efector' => $idEfector]);
         if ($guardia === null) {
             throw new \InvalidArgumentException('No se encontró el episodio de guardia.');
@@ -177,15 +177,21 @@ final class GuardiaIngresoService
         }
     }
 
-    private function assertCanalIngreso(): void
+    /**
+     * Web no identifica con DNI/Didit: solo paciente conocido o NN.
+     *
+     * @param array<string, mixed> $body
+     */
+    private function assertIdentidadDniPermitida(array $body): void
     {
-        if ((new HomePanelManifest())->allowsEmergencyIngresoForCurrentClient()) {
+        if ((new HomePanelManifest())->allowsEmergencyIngresoDniForCurrentClient()) {
             return;
         }
-
-        throw new \InvalidArgumentException(
-            'El ingreso a guardia se hace desde la app Personal de Salud.'
-        );
+        if (self::pareceIdentidadDidit($body) || self::pareceIdentidadDni($body)) {
+            throw new \InvalidArgumentException(
+                'Para identificar con DNI usá la app Personal de Salud.'
+            );
+        }
     }
 
     /**
@@ -256,7 +262,6 @@ final class GuardiaIngresoService
      */
     public function buscarCandidatos(int $idEfector, ?string $q, int $limit = 30): array
     {
-        $this->assertCanalIngreso();
         if ($idEfector <= 0) {
             return [];
         }

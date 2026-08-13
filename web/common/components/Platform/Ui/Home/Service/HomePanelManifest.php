@@ -170,18 +170,19 @@ final class HomePanelManifest
     }
 
     /**
-     * Clientes que pueden ingresar (`web` / `mobile`). Vacío = todos.
+     * Clientes que pueden identificar con DNI/Didit al ingresar (`web` / `mobile`).
+     * Vacío = todos. Web suele quedar afuera: ahí solo conocido o NN.
      *
      * @return list<string>
      */
-    public function emergencyIngresoClients(): array
+    public function emergencyIngresoDniClients(): array
     {
-        return $this->emergencyCapabilityRoles('ingreso_clients');
+        return $this->emergencyCapabilityRoles('ingreso_dni_clients');
     }
 
-    public function allowsEmergencyIngresoForCurrentClient(): bool
+    public function allowsEmergencyIngresoDniForCurrentClient(): bool
     {
-        $allowed = $this->emergencyIngresoClients();
+        $allowed = $this->emergencyIngresoDniClients();
         if ($allowed === []) {
             return true;
         }

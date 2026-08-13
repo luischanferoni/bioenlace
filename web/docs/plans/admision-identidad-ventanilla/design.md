@@ -26,7 +26,7 @@ Domicilio: igual que la app (cron / gateway), no edición en ventanilla.
 
 Ya no: `PersonaAltaOperativaService` (teclado libre).
 
-La UI (web modal / Flutter) primero **consulta** `preview-renaper-como-staff` (lector) o completa Didit (hosted web / SDK nativo), muestra confirmación de solo lectura, y al confirmar llama a `ingresar` con documento+sexo, código de barras o `verification_id` (el dominio vuelve a validar; no confía en campos editables de nombre).
+La UI web ofrece paciente **conocido** o **NN** (leyenda: si no está en el sistema, app Personal de Salud para escanear DNI). DNI/Didit solo en app (`ingreso_dni_clients: mobile`): consulta `preview-renaper-como-staff` o Didit, confirmación de solo lectura, y al confirmar `ingresar` con documento+sexo, código de barras o `verification_id` (el dominio vuelve a validar; no confía en campos editables de nombre).
 
 ## Sesión de ventanilla (fase 4)
 

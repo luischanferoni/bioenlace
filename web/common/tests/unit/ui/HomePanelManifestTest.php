@@ -53,10 +53,10 @@ class HomePanelManifestTest extends Unit
         $this->assertNotContains('Medico', $roles);
     }
 
-    public function testEmergencyIngresoClientsAreMobileOnly(): void
+    public function testEmergencyIngresoDniClientsAreMobileOnly(): void
     {
         $manifest = new HomePanelManifest();
-        $clients = $manifest->emergencyIngresoClients();
+        $clients = $manifest->emergencyIngresoDniClients();
 
         $this->assertSame(['mobile'], $clients);
         $this->assertNotContains('web', $clients);

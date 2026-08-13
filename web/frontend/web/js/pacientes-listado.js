@@ -145,6 +145,7 @@
     var esGuardia = root.getAttribute('data-es-guardia') === '1';
     var puedeTriage = root.getAttribute('data-puede-triage') === '1';
     var puedeIngresar = root.getAttribute('data-puede-ingresar') === '1';
+    var puedeIngresarDni = root.getAttribute('data-puede-ingresar-dni') === '1';
     var puedeAtender = root.getAttribute('data-puede-atender') === '1';
     var puedeDocumentar = root.getAttribute('data-puede-documentar') === '1';
     var puedeVentanilla = root.getAttribute('data-puede-ventanilla') === '1';
@@ -1897,6 +1898,10 @@
       if (!puedeIngresar || !listTarget) return;
       var frag = importTemplate('tpl-guardia-board-toolbar');
       if (!frag) return;
+      var hint = frag.querySelector('[data-role="guardia-ingreso-dni-hint"]');
+      if (hint) {
+        hint.classList.toggle('d-none', puedeIngresarDni);
+      }
       var btn = frag.querySelector('[data-role="cta-ingresar-guardia"]');
       if (btn) {
         btn.classList.remove('d-none');
@@ -1939,18 +1944,24 @@
     }
 
     function admitirAltaCompleta() {
-      if (!admitirAltaVisible()) return false;
       var nn = document.getElementById('guardia-admitir-nn');
       if (nn && nn.value === '1') return true;
+      if (!admitirAltaVisible()) return false;
       var box = document.getElementById('guardia-admitir-preview-box');
       return !!(box && box.getAttribute('data-confirmed') === '1');
+    }
+
+    function admiteDniEnModal() {
+      return admitirMode === 'ventanilla' || puedeIngresarDni;
     }
 
     function setAdmitirAltaVisible(on) {
       var wrap = document.getElementById('guardia-admitir-alta');
       var toggle = document.getElementById('guardia-admitir-alta-toggle');
+      var allowDni = admiteDniEnModal();
+      if (!allowDni) on = false;
       if (wrap) wrap.classList.toggle('d-none', !on);
-      if (toggle) toggle.classList.toggle('d-none', !!on);
+      if (toggle) toggle.classList.toggle('d-none', !!on || !allowDni);
       if (on) {
         var idEl = document.getElementById('guardia-admitir-id-persona');
         var sel = document.getElementById('guardia-admitir-seleccion');
@@ -1999,11 +2010,18 @@
       var nn = document.getElementById('guardia-admitir-nn');
       var box = document.getElementById('guardia-admitir-preview-box');
       var vid = admitirVerificationIdEl();
+      var idEl = document.getElementById('guardia-admitir-id-persona');
+      var sel = document.getElementById('guardia-admitir-seleccion');
+      if (idEl) idEl.value = '';
       if (nn) nn.value = '1';
       if (vid) vid.value = '';
+      if (sel) {
+        sel.textContent = 'Identidad pendiente (NN). Se vincula cuando aparezca el DNI.';
+        sel.classList.remove('d-none');
+      }
       if (box) {
         box.textContent = 'Identidad pendiente (NN). Se vincula cuando aparezca el DNI.';
-        box.classList.remove('d-none');
+        box.classList.toggle('d-none', !admitirAltaVisible());
         box.setAttribute('data-confirmed', '1');
       }
       syncAdmitirSubmit();
@@ -2132,6 +2150,11 @@
       if (ep) ep.classList.toggle('d-none', isVentanilla);
       var telWrap = document.getElementById('guardia-admitir-tel-wrap');
       if (telWrap && isVentanilla) telWrap.classList.add('d-none');
+      var showDni = admiteDniEnModal();
+      var dniHint = document.getElementById('guardia-admitir-dni-hint');
+      if (dniHint) dniHint.classList.toggle('d-none', isVentanilla || showDni);
+      var altaToggle = document.getElementById('guardia-admitir-alta-toggle');
+      if (altaToggle) altaToggle.classList.toggle('d-none', !showDni);
       var nnBtn = document.getElementById('guardia-admitir-nn-btn');
       if (nnBtn) nnBtn.classList.toggle('d-none', isVentanilla);
       resetAdmitirAltaFields();
@@ -2191,7 +2214,11 @@
       if (ep) ep.classList.add('d-none');
       var nnBtn = document.getElementById('guardia-admitir-nn-btn');
       if (nnBtn) nnBtn.classList.add('d-none');
-      setAdmitirAltaVisible(true);
+      var dniHint = document.getElementById('guardia-admitir-dni-hint');
+      if (dniHint) dniHint.classList.toggle('d-none', puedeIngresarDni);
+      var altaToggle = document.getElementById('guardia-admitir-alta-toggle');
+      if (altaToggle) altaToggle.classList.toggle('d-none', !puedeIngresarDni);
+      setAdmitirAltaVisible(!!puedeIngresarDni);
     }
 
     async function searchAdmitirCandidatos(q) {
@@ -2216,16 +2243,23 @@
           empty.className = 'text-muted';
           empty.textContent = 'Sin resultados.';
           results.appendChild(empty);
-          var altaHint = document.createElement('button');
-          altaHint.type = 'button';
-          altaHint.className = 'btn btn-outline-primary btn-sm mt-2';
-          altaHint.textContent = 'Identificar con DNI';
-          altaHint.onclick = function () {
-            setAdmitirAltaVisible(true);
-            var docEl = document.getElementById('guardia-admitir-documento');
-            if (docEl && /^\d+$/.test(term)) docEl.value = term;
-          };
-          results.appendChild(altaHint);
+          if (admiteDniEnModal()) {
+            var altaHint = document.createElement('button');
+            altaHint.type = 'button';
+            altaHint.className = 'btn btn-outline-primary btn-sm mt-2';
+            altaHint.textContent = 'Identificar con DNI';
+            altaHint.onclick = function () {
+              setAdmitirAltaVisible(true);
+              var docEl = document.getElementById('guardia-admitir-documento');
+              if (docEl && /^\d+$/.test(term)) docEl.value = term;
+            };
+            results.appendChild(altaHint);
+          } else if (admitirMode !== 'ventanilla') {
+            var appHint = document.createElement('p');
+            appHint.className = 'text-muted small mb-0 mt-2';
+            appHint.textContent = 'Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).';
+            results.appendChild(appHint);
+          }
           return;
         }
         rows.forEach(function (row) {
@@ -4047,6 +4081,9 @@
       }
       if (typeof data.puede_ingresar === 'boolean') {
         puedeIngresar = data.puede_ingresar;
+      }
+      if (typeof data.puede_ingresar_dni === 'boolean') {
+        puedeIngresarDni = data.puede_ingresar_dni;
       }
       if (typeof data.puede_atender === 'boolean') {
         puedeAtender = data.puede_atender;

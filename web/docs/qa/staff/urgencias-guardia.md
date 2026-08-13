@@ -8,12 +8,12 @@ Trabajá con el efector en modo **guardia** ([transversal.md](./transversal.md))
 
 ## Ingresar un paciente a guardia
 
-El ingreso (y vincular DNI a un NN) es **solo en la app Personal de Salud**, para escanear el DNI. En la web el tablero no muestra **Ingresar paciente**.
+En la **web** podés ingresar un paciente **que ya está en el sistema** o como **NN**. Si no está en el sistema, la leyenda indica usar la **app Personal de Salud** para escanear el DNI.
 
-1. **Vos** (rol **Administrativo**) en la app, con sesión de **guardia**, pulsá **Ingresar paciente**.
-2. **Buscás** por apellido o documento. Si no está, **identificás con DNI** (código de barras / documento+sexo), **foto Didit**, o **Sin documento / NN** si está inconsciente. No se inventa DNI. Cuando aparece el documento, **Identificar** en el tablero de la app vincula el episodio.
+1. **Vos** (rol **Administrativo**), con sesión de **guardia**, pulsá **Ingresar paciente**.
+2. **Buscás** por apellido o documento y elegís al paciente. Si no está: en web usá **Sin documento / NN** o la app para DNI; en la app también podés **identificar con DNI** (código de barras / documento+sexo) o **foto Didit**. No se inventa DNI. Cuando aparece el documento, **Identificar** vincula el episodio (web: paciente conocido; app: también DNI).
 3. **Completás** cómo llega (camina / silla / camilla), con quién, y opcionalmente cobertura y situación.
-4. **El sistema** lo deja en espera de triage. En la web se ve en la cola.
+4. **El sistema** lo deja en espera de triage.
 
 En la demo sandbox: perfil **Administrativo demo**; los pacientes de prueba se buscan por apellido (Alonso, Benitez, Castro…). El que ya está en cola no aparece.
 

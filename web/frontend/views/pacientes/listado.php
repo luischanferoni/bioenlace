@@ -45,6 +45,7 @@ $esPacienteHome = empty($encounter_class);
 $guardiaCaps = new GuardiaBoardCapabilityService();
 $puedeTriageGuardia = $esGuardia && $guardiaCaps->canTriage();
 $puedeIngresarGuardia = $esGuardia && $guardiaCaps->canIngresar();
+$puedeIngresarDniGuardia = $puedeIngresarGuardia && $guardiaCaps->canIngresarConDni();
 $puedeAtenderGuardia = $esGuardia && $guardiaCaps->canAtender();
 $puedeDocumentarGuardia = $esGuardia && $guardiaCaps->canDocumentar();
 $puedeVentanilla = !$esPacienteHome && User::hasRole(['Administrativo']);
@@ -101,6 +102,7 @@ $this->title = $esGuardia
      data-es-guardia="<?= $esGuardia ? '1' : '0' ?>"
      data-puede-triage="<?= $puedeTriageGuardia ? '1' : '0' ?>"
      data-puede-ingresar="<?= $puedeIngresarGuardia ? '1' : '0' ?>"
+     data-puede-ingresar-dni="<?= $puedeIngresarDniGuardia ? '1' : '0' ?>"
      data-puede-atender="<?= $puedeAtenderGuardia ? '1' : '0' ?>"
      data-puede-documentar="<?= $puedeDocumentarGuardia ? '1' : '0' ?>"
      data-puede-ventanilla="<?= $puedeVentanilla ? '1' : '0' ?>"
@@ -190,7 +192,9 @@ $this->title = $esGuardia
                     <input type="hidden" id="guardia-admitir-vincular-id" value="">
                     <div id="guardia-admitir-results" class="list-group mt-2 small"></div>
                     <div id="guardia-admitir-seleccion" class="form-text d-none"></div>
-                    <button type="button" class="btn btn-link btn-sm px-0 mt-1" id="guardia-admitir-alta-toggle">Identificar con DNI</button>
+                    <p class="text-muted small mb-2 mt-2" id="guardia-admitir-dni-hint">Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).</p>
+                    <button type="button" class="btn btn-link btn-sm px-0 mt-1 d-none" id="guardia-admitir-alta-toggle">Identificar con DNI</button>
+                    <button type="button" class="btn btn-outline-warning btn-sm mt-2 d-none" id="guardia-admitir-nn-btn">Sin documento / NN</button>
                 </div>
                 <div class="border rounded p-3 mb-3 d-none" id="guardia-admitir-alta">
                     <div class="fw-semibold mb-2">Identidad con DNI</div>
@@ -215,7 +219,6 @@ $this->title = $esGuardia
                     <div class="d-flex flex-wrap gap-2 mt-2">
                         <button type="button" class="btn btn-outline-primary btn-sm" id="guardia-admitir-preview">Consultar identidad</button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" id="guardia-admitir-didit">Foto del DNI (Didit)</button>
-                        <button type="button" class="btn btn-outline-warning btn-sm" id="guardia-admitir-nn-btn">Sin documento / NN</button>
                     </div>
                     <div id="guardia-admitir-preview-box" class="alert alert-light border mt-2 mb-0 d-none small"></div>
                 </div>

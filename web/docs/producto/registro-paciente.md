@@ -43,8 +43,7 @@ El **login del personal** (web y app Personal de Salud) usa un **usuario Yii** q
 - **Cambio de efector**: AdminEfector del nuevo centro **vincula** la misma persona/usuario; no se crea otro login.
 - La **app móvil Personal de Salud no registra** personal; solo login + sesión operativa.
 
-El endpoint `registrar-como-staff` y flujos Didit/RENAPER del asistente sirven para **dar de alta personas paciente** desde el staff, no para autoregistro del personal. El ingreso a guardia reutiliza el mismo núcleo (`RegistroStaffPacienteService`: `dni_lector` o `didit`). Un episodio NN usa un placeholder **sin documento** (`identidad_pendiente`); al vincular no se fusiona MPI. Detalle operativo: [admin_efector/gestion-efector.md](../qa/admin_efector/gestion-efector.md) § Usuarios del efector.
-| **Sistema** | Cron de verificación domicilio MPI; encauzamiento por contexto paciente |
+El endpoint `registrar-como-staff` y flujos Didit/RENAPER del asistente sirven para **dar de alta personas paciente** desde el staff, no para autoregistro del personal. El ingreso a guardia reutiliza el mismo núcleo (`RegistroStaffPacienteService`: `dni_lector` o `didit`) **en la app**; en web el ingreso es paciente conocido o NN (sin DNI/Didit). Un episodio NN usa un placeholder **sin documento** (`identidad_pendiente`); al vincular no se fusiona MPI. Detalle operativo: [admin_efector/gestion-efector.md](../qa/admin_efector/gestion-efector.md) § Usuarios del efector.
 
 ## Autoregistro (app paciente)
 

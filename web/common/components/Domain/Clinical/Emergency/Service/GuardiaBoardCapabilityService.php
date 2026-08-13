@@ -28,15 +28,23 @@ final class GuardiaBoardCapabilityService
     }
 
     /**
-     * Ingreso de paciente a guardia (roles + canal en home_panel_manifest.yaml).
+     * Ingreso de paciente a guardia (roles en home_panel_manifest.yaml).
      */
     public function canIngresar(): bool
     {
-        if (!$this->manifest->allowsEmergencyIngresoForCurrentClient()) {
+        return $this->hasAnyManifestRole($this->manifest->emergencyIngresoRoles());
+    }
+
+    /**
+     * Identificar con DNI/Didit al ingresar (roles + `ingreso_dni_clients`).
+     */
+    public function canIngresarConDni(): bool
+    {
+        if (!$this->canIngresar()) {
             return false;
         }
 
-        return $this->hasAnyManifestRole($this->manifest->emergencyIngresoRoles());
+        return $this->manifest->allowsEmergencyIngresoDniForCurrentClient();
     }
 
     /**

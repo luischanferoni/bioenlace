@@ -134,5 +134,5 @@ Permisos API staff heredan del mismo perfil que operaba búsqueda/alta de person
 - [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — visión general paciente y personal de salud
 - [sesion-paciente-app.md](./sesion-paciente-app.md) — sesión, bloqueo local y reingreso Didit
 - [asistente-y-chat.md](./asistente-y-chat.md) — entrada staff a pantallas embebidas
-- [representacion-paciente.md](./representacion-paciente.md) — operar por otro paciente (tutela/delegación) o sesión de ventanilla (admisión, TTL)
+- [representacion-paciente.md](./representacion-paciente.md) — operar por otro paciente (tutela/delegación)
 - [turnos.md](./turnos.md) — reserva con `id_persona` o `subject_persona_id` según actor

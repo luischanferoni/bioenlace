@@ -14,7 +14,7 @@ La grilla de cupos es solo `encounter_class = AMB`. Guardia e internación usan 
 - **Tutor o representante:** puede reservar y gestionar turnos **de otro paciente** (menor sin cuenta o adulto que delegó), fijando `subject_persona_id` o el contexto «A cargo de» en móvil. Ver [representacion-paciente.md](./representacion-paciente.md).
 - **Profesional y administración del efector:** calendario, alta para terceros, sobreturnos, cancelación masiva de un día.
 - **Staff (admisión / enfermería):** alta de persona vía asistente (lector DNI / Didit); no implica fijar paciente en la sesión operativa del staff — ver [registro-paciente.md](./registro-paciente.md).
-- **Administrativo en ventanilla:** tras identificar con DNI/Didit, sesión temporal (`ventanilla_sesion`, TTL) para sacar o ver turnos **como el paciente**. No es tutela ni cambia el efector/encounter del staff. Ver [representacion-paciente.md](./representacion-paciente.md).
+- **Administrativo:** alta de turno para un paciente desde el asistente / agenda del efector. No hay UI de “ventanilla” (identificar y operar como el paciente). Ver [representacion-paciente.md](./representacion-paciente.md).
 - **Sistema:** recordatorios y avisos cuando cambia la agenda o el turno entra en conflicto (**push**; WhatsApp utility **no** habilitado — ver [notificaciones](#notificaciones-push-y-whatsapp)).
 
 ## Cómo funciona (reserva paciente)

@@ -149,9 +149,7 @@ Implementación: `PersonRepresentationNotifyRecipientService`.
 
 ## Sesión de ventanilla (admisión)
 
-No es tutela ni delegación. El administrativo identifica al paciente (DNI / Didit, no NN) y abre una fila `ventanilla_sesion` con TTL (`common/metadata/bioenlace/person/ventanilla-sesion.yaml`). El JWT sigue siendo del staff; `PersonRepresentationSubjectService` usa ese sujeto **solo** para `scheduling.turno`. Cerrar o vencer la sesión vuelve al staff a operar por su cuenta.
-
-API: `POST/GET /api/v1/ventanilla-sesion/{iniciar,estado,cerrar,buscar-persona}`. No modifica la sesión operativa (efector / encounter).
+No es tutela ni delegación. El dominio (`ventanilla_sesion`, TTL en YAML) permite que admisión actúe **como el paciente** en turnos. **No hay UI web** (botón / modal / banner retirados). API: `POST/GET /api/v1/ventanilla-sesion/{iniciar,estado,cerrar,buscar-persona}`. No modifica la sesión operativa (efector / encounter).
 
 ## Fuera de alcance
 

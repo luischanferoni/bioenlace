@@ -20,7 +20,7 @@ Referencia BD: [roles-desde-bd.md](../roles-desde-bd.md).
 | [reportes-nomenclador.md](./reportes-nomenclador.md) | Nomencladores y planillas |
 | [asistente.md](./asistente.md) | Frases del asistente (staff) |
 | [notificaciones-automaticas.md](./notificaciones-automaticas.md) | Pushes y avisos automáticos |
-| [registro-paciente-staff.md](./registro-paciente-staff.md) | Alta de paciente desde web/asistente; ventanilla |
+| [registro-paciente-staff.md](./registro-paciente-staff.md) | Alta de paciente desde web/asistente |
 
 Captura clínica (médico): [medico/captura-clinica.md](../medico/captura-clinica.md).
 

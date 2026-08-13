@@ -10,7 +10,6 @@ use common\models\Clinical\Encounter;
 use common\models\Servicio;
 use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaBoardCapabilityService;
-use common\models\User;
 
 $idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
 $esAmbulatorio = ($encounter_class === Encounter::ENCOUNTER_CLASS_AMB);
@@ -48,7 +47,6 @@ $puedeIngresarGuardia = $esGuardia && $guardiaCaps->canIngresar();
 $puedeIngresarDniGuardia = $puedeIngresarGuardia && $guardiaCaps->canIngresarConDni();
 $puedeAtenderGuardia = $esGuardia && $guardiaCaps->canAtender();
 $puedeDocumentarGuardia = $esGuardia && $guardiaCaps->canDocumentar();
-$puedeVentanilla = !$esPacienteHome && User::hasRole(['Administrativo']);
 
 $this->title = $esGuardia
     ? 'Tablero de guardia'
@@ -105,27 +103,7 @@ $this->title = $esGuardia
      data-puede-ingresar-dni="<?= $puedeIngresarDniGuardia ? '1' : '0' ?>"
      data-puede-atender="<?= $puedeAtenderGuardia ? '1' : '0' ?>"
      data-puede-documentar="<?= $puedeDocumentarGuardia ? '1' : '0' ?>"
-     data-puede-ventanilla="<?= $puedeVentanilla ? '1' : '0' ?>"
 >
-    <?php if ($puedeVentanilla): ?>
-    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-        <button type="button" class="btn btn-outline-primary btn-sm" data-role="cta-ventanilla-identificar">
-            Identificar paciente
-        </button>
-    </div>
-    <div id="ventanilla-banner" class="alert alert-info d-none d-flex flex-wrap align-items-center gap-2 mb-3" role="status">
-        <div>
-            <strong>Ventanilla:</strong>
-            <span data-field="nombre"></span>
-            <span class="text-muted small ms-1" data-field="ttl"></span>
-        </div>
-        <div class="ms-auto d-flex flex-wrap gap-2">
-            <a class="btn btn-sm btn-primary" data-role="ventanilla-turno" href="#">Sacar turno</a>
-            <a class="btn btn-sm btn-outline-primary" data-role="ventanilla-mis-turnos" href="#">Ver turnos</a>
-            <button type="button" class="btn btn-sm btn-outline-secondary" data-role="ventanilla-cerrar">Cerrar</button>
-        </div>
-    </div>
-    <?php endif; ?>
     <div id="pacientes-listado-flash" class="d-none alert mb-3" role="status"></div>
     <div id="pacientes-listado-loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
@@ -187,40 +165,12 @@ $this->title = $esGuardia
                     <label class="form-label" for="guardia-admitir-q">Paciente conocido</label>
                     <input type="search" class="form-control" id="guardia-admitir-q" placeholder="Apellido o documento" autocomplete="off">
                     <input type="hidden" id="guardia-admitir-id-persona" value="">
-                    <input type="hidden" id="guardia-admitir-verification-id" value="">
                     <input type="hidden" id="guardia-admitir-nn" value="">
                     <input type="hidden" id="guardia-admitir-vincular-id" value="">
                     <div id="guardia-admitir-results" class="list-group mt-2 small"></div>
                     <div id="guardia-admitir-seleccion" class="form-text d-none"></div>
                     <p class="text-muted small mb-2 mt-2" id="guardia-admitir-dni-hint">Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).</p>
-                    <button type="button" class="btn btn-link btn-sm px-0 mt-1 d-none" id="guardia-admitir-alta-toggle">Identificar con DNI</button>
                     <button type="button" class="btn btn-outline-warning btn-sm mt-2 d-none" id="guardia-admitir-nn-btn">Sin documento / NN</button>
-                </div>
-                <div class="border rounded p-3 mb-3 d-none" id="guardia-admitir-alta">
-                    <div class="fw-semibold mb-2">Identidad con DNI</div>
-                    <div class="mb-2">
-                        <label class="form-label" for="guardia-admitir-barcode">Código de barras del DNI (opcional)</label>
-                        <input type="text" class="form-control" id="guardia-admitir-barcode" autocomplete="off">
-                    </div>
-                    <div class="row g-2">
-                        <div class="col-md-6">
-                            <label class="form-label" for="guardia-admitir-documento">Documento</label>
-                            <input type="text" class="form-control" id="guardia-admitir-documento" maxlength="8" inputmode="numeric">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="guardia-admitir-sexo">Sexo (como en el DNI)</label>
-                            <select class="form-select" id="guardia-admitir-sexo">
-                                <option value="">—</option>
-                                <option value="1">Femenino</option>
-                                <option value="2">Masculino</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-wrap gap-2 mt-2">
-                        <button type="button" class="btn btn-outline-primary btn-sm" id="guardia-admitir-preview">Consultar identidad</button>
-                        <button type="button" class="btn btn-outline-secondary btn-sm" id="guardia-admitir-didit">Foto del DNI (Didit)</button>
-                    </div>
-                    <div id="guardia-admitir-preview-box" class="alert alert-light border mt-2 mb-0 d-none small"></div>
                 </div>
                 <div id="guardia-admitir-episodio-fields">
                 <div class="mb-3">

@@ -10,7 +10,7 @@ Tras identificar (DNI/Didit): contexto temporal para turnos de autogestión, TTL
 - [x] Enganche en `PersonRepresentationSubjectService` (no en sesión operativa).
 - [x] API `POST/GET …/ventanilla-sesion/{iniciar,estado,cerrar,buscar-persona}`.
 - [x] RBAC: rutas de ventanilla heredan de `/personas/buscar-persona`; `crear/listar-como-paciente` al rol `Administrativo`.
-- [x] Web: banner + modal de identidad (sin episodio ni NN). Sin Flutter en este corte.
+- [x] API + dominio. UI web (banner / modal) retirada: no se usa en producto.
 - [x] Docs producto/QA.
 
 ## Fuera

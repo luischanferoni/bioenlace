@@ -43,15 +43,6 @@ Turnos paciente (app): [paciente/turnos.md](../paciente/turnos.md).
 
 ---
 
-## Web — Ventanilla (admisión actúa como el paciente)
-
-1. **Vos** identificás al paciente (DNI / Didit) — ver [registro-paciente-staff.md](./registro-paciente-staff.md#identificar-en-ventanilla-turnos).
-2. **Vos** pulsá **Sacar turno** en el banner.
-3. **El sistema** reserva el turno a nombre de ese paciente; el JWT sigue siendo el tuyo.
-4. Al vencer el TTL o al **Cerrar**, ya no operás por ese paciente.
-
----
-
 ## Web — Cancelar turno de un paciente
 
 **Intent:** `turnos.cancelar-para-paciente-flow`

@@ -32,7 +32,7 @@ La UI web ofrece paciente **conocido** o **NN** (leyenda: si no está en el sist
 
 Tras DNI/Didit: fila `ventanilla_sesion` (staff, sujeto, efector, método, `expires_at`) + knob YAML `ttl_minutes`. El JWT sigue siendo del staff; el sujeto se resuelve en `PersonRepresentationSubjectService` **solo** para `scheduling.turno`. No usa `person_related`, ni `subjectPersonaPaciente`, ni cambia la sesión operativa (efector / encounter).
 
-UI web: banner en Pacientes + el mismo modal de identidad (sin NN ni datos de episodio). Los intents `turnos.crear-como-paciente` / `ver-mis-turnos-como-paciente` se re-muestran en el catálogo staff **solo** con ventanilla activa (`unhide_paciente_intent_ids` en el YAML).
+UI web de ventanilla (botón / modal / banner) **retirada**. Los intents `turnos.crear-como-paciente` / `ver-mis-turnos-como-paciente` se re-muestran en el catálogo staff **solo** con ventanilla activa vía API (`unhide_paciente_intent_ids` en el YAML).
 
 ## Selfie
 

@@ -53,6 +53,15 @@ class HomePanelManifestTest extends Unit
         $this->assertNotContains('Medico', $roles);
     }
 
+    public function testEmergencyIngresoClientsAreMobileOnly(): void
+    {
+        $manifest = new HomePanelManifest();
+        $clients = $manifest->emergencyIngresoClients();
+
+        $this->assertSame(['mobile'], $clients);
+        $this->assertNotContains('web', $clients);
+    }
+
     public function testEmergencyAtenderRolesAreMedicoOnly(): void
     {
         $manifest = new HomePanelManifest();

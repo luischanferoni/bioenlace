@@ -7,6 +7,7 @@ use common\components\Domain\Clinical\Emergency\Enum\CircuitoEventType;
 use common\components\Domain\Person\Service\PersonaBusquedaAsistenteUiService;
 use common\components\Domain\Person\Service\PersonaIdentidadPendienteService;
 use common\components\Domain\Person\Service\PersonaIdentidadResolverService;
+use common\components\Platform\Ui\Home\Service\HomePanelManifest;
 use common\models\Guardia;
 use common\models\InfraestructuraCama;
 use common\models\InfraestructuraPiso;
@@ -33,6 +34,7 @@ final class GuardiaIngresoService
      */
     public function ingresar(array $body, int $idEfector): array
     {
+        $this->assertCanalIngreso();
         $pendiente = $this->usarIdentidadPendiente($body);
         $idPersona = $pendiente
             ? (int) (new PersonaIdentidadPendienteService())->crearPlaceholder()->id_persona
@@ -103,6 +105,7 @@ final class GuardiaIngresoService
      */
     public function vincularIdentidad(int $guardiaId, array $body, int $idEfector): array
     {
+        $this->assertCanalIngreso();
         $guardia = Guardia::findOne(['id' => $guardiaId, 'id_efector' => $idEfector]);
         if ($guardia === null) {
             throw new \InvalidArgumentException('No se encontró el episodio de guardia.');
@@ -174,6 +177,17 @@ final class GuardiaIngresoService
         }
     }
 
+    private function assertCanalIngreso(): void
+    {
+        if ((new HomePanelManifest())->allowsEmergencyIngresoForCurrentClient()) {
+            return;
+        }
+
+        throw new \InvalidArgumentException(
+            'El ingreso a guardia se hace desde la app Personal de Salud.'
+        );
+    }
+
     /**
      * @param array<string, mixed> $body
      */
@@ -242,6 +256,7 @@ final class GuardiaIngresoService
      */
     public function buscarCandidatos(int $idEfector, ?string $q, int $limit = 30): array
     {
+        $this->assertCanalIngreso();
         if ($idEfector <= 0) {
             return [];
         }

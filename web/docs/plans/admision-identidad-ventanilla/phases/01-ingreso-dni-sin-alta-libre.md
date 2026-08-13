@@ -8,8 +8,8 @@ El camino feliz de **Ingresar paciente** no crea persona tipeando ficha. Identid
 
 - [x] `GuardiaIngresoService` deja de usar `PersonaAltaOperativaService`.
 - [x] Body de alta: `codigo_barras` **o** `documento` + `sexo_biologico`; el dominio llama `RegistroStaffPacienteService`.
-- [x] Modal web: consultar identidad (preview RENAPER), datos de solo lectura, confirmar ingreso.
-- [x] App Personal de Salud: misma regla.
+- [x] Modal web: consultar identidad (preview RENAPER), datos de solo lectura, confirmar ingreso. *(Después: ingreso solo en app; web ya no ofrece el CTA.)*
+- [x] App Personal de Salud: misma regla. Ingreso de guardia queda en este canal (`ingreso_clients: mobile`).
 - [x] Docs producto/QA de ingreso.
 - [x] NN / Didit **no** en esta fase (mensaje claro si RENAPER no encuentra).
 

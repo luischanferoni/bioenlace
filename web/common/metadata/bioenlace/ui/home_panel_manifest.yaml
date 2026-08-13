@@ -23,6 +23,9 @@ panels:
           - Administrativo
           - AdminEfector
         # Admisión a guardia (no enfermería: el circuito de ingreso es administrativo).
+        # Solo app Personal de Salud: ahí se escanea el DNI. Lista vacía = todos los clientes.
+        ingreso_clients:
+          - mobile
         ingreso_roles:
           - Administrativo
           - AdminEfector

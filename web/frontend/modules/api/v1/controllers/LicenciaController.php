@@ -209,7 +209,7 @@ class LicenciaController extends BaseController
      * Acceso demo staff para app Personal de Salud (JWT + contexto AMB, sin password).
      *
      * POST /api/v1/licencia/demo-acceso-mobile
-     * Body: { "website"?: "", "email"?: "..." }  (honeypot website)
+     * Body: { "role"?: "staff"|"enfermeria"|"administrativo", "website"?: "", "email"?: "..." }
      *
      * @action_name Solicitar acceso demo sandbox (móvil staff)
      */
@@ -227,7 +227,7 @@ class LicenciaController extends BaseController
         try {
             $data = (new DemoSandboxAccessService())->issueMobileStaff($body);
 
-            return $this->success($data, 'Demo lista. Sesión temporal de médico.');
+            return $this->success($data, 'Demo lista. Sesión temporal de staff.');
         } catch (\DomainException $e) {
             $msg = $e->getMessage();
             $status = str_contains($msg, 'Demasiados') ? 429 : 400;

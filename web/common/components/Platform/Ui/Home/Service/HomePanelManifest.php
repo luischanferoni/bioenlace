@@ -170,6 +170,29 @@ final class HomePanelManifest
     }
 
     /**
+     * Clientes que pueden ingresar (`web` / `mobile`). Vacío = todos.
+     *
+     * @return list<string>
+     */
+    public function emergencyIngresoClients(): array
+    {
+        return $this->emergencyCapabilityRoles('ingreso_clients');
+    }
+
+    public function allowsEmergencyIngresoForCurrentClient(): bool
+    {
+        $allowed = $this->emergencyIngresoClients();
+        if ($allowed === []) {
+            return true;
+        }
+        $client = \common\components\Platform\Core\Service\ClientContextService::isWebClient()
+            ? 'web'
+            : 'mobile';
+
+        return in_array($client, $allowed, true);
+    }
+
+    /**
      * Roles que pueden **Atender** (iniciar-atencion) en el tablero EMER.
      *
      * @return list<string>

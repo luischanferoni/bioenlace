@@ -28,10 +28,14 @@ final class GuardiaBoardCapabilityService
     }
 
     /**
-     * Ingreso de paciente a guardia (roles en home_panel_manifest.yaml).
+     * Ingreso de paciente a guardia (roles + canal en home_panel_manifest.yaml).
      */
     public function canIngresar(): bool
     {
+        if (!$this->manifest->allowsEmergencyIngresoForCurrentClient()) {
+            return false;
+        }
+
         return $this->hasAnyManifestRole($this->manifest->emergencyIngresoRoles());
     }
 

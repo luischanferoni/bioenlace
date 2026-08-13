@@ -47,6 +47,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
   bool _obscurePassword = true;
   bool _submitting = false;
   bool _demoAvailable = false;
+  List<DemoSandboxProfile> _demoProfiles = const [];
 
   @override
   void initState() {
@@ -82,14 +83,15 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       await PersonalsaludSessionPrefs.clearInvalidAuthSession();
     }
 
-    final demoOn = await DemoSandboxStaffAuth.probeEnabled();
+    final demoProfiles = await DemoSandboxStaffAuth.listStaffProfiles();
 
     if (!mounted) return;
     setState(() {
       _useBiometricLogin = established && hasToken && bioAvailable;
       _biometricAvailable = bioAvailable;
       _biometricType = bioType;
-      _demoAvailable = kDebugMode && demoOn;
+      _demoProfiles = demoProfiles;
+      _demoAvailable = kDebugMode && demoProfiles.isNotEmpty;
       _checkingSession = false;
     });
   }
@@ -127,11 +129,63 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
     );
   }
 
-  Future<void> _enterDemo() async {
+  Future<DemoSandboxProfile?> _pickDemoProfile() async {
+    if (_demoProfiles.isEmpty) return null;
+    if (_demoProfiles.length == 1) return _demoProfiles.first;
+    return showModalBottomSheet<DemoSandboxProfile>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: BioSpacing.pageHorizontal.copyWith(top: BioSpacing.sm),
+                child: Text(
+                  'Elegí con qué rol entrar',
+                  style: BioTypography.title.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ),
+              BioSpacing.gapH(BioSpacing.sm),
+              ..._demoProfiles.map(
+                (p) => ListTile(
+                  leading: Icon(_iconForDemoRole(p.role)),
+                  title: Text(p.label),
+                  onTap: () => Navigator.of(sheetCtx).pop(p),
+                ),
+              ),
+              BioSpacing.gapH(BioSpacing.sm),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  IconData _iconForDemoRole(String role) {
+    switch (role) {
+      case 'enfermeria':
+        return Icons.medical_services_outlined;
+      case 'administrativo':
+        return Icons.badge_outlined;
+      default:
+        return Icons.health_and_safety_outlined;
+    }
+  }
+
+  Future<void> _onProbarDemo() async {
+    if (!kDebugMode || _submitting) return;
+    final profile = await _pickDemoProfile();
+    if (profile == null || !mounted) return;
+    await _enterDemo(profile);
+  }
+
+  Future<void> _enterDemo(DemoSandboxProfile profile) async {
     if (!kDebugMode || _submitting) return;
     setState(() => _submitting = true);
     try {
-      final data = await DemoSandboxStaffAuth.enterAsMedico();
+      final data = await DemoSandboxStaffAuth.enter(role: profile.role);
       final payload = data['data'] is Map
           ? Map<String, dynamic>.from(data['data'] as Map)
           : <String, dynamic>{};
@@ -153,7 +207,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
       final userId = (user['id'] ?? persona['id_persona'] ?? '').toString();
       final userName = user['name']?.toString().trim() ??
           '${persona['nombre'] ?? ''} ${persona['apellido'] ?? ''}'.trim();
-      final displayName = userName.isNotEmpty ? userName : 'Médico demo';
+      final displayName = userName.isNotEmpty ? userName : profile.label;
 
       await PersonalsaludSessionPrefs.clearOnLogout();
       await _persistLogin(
@@ -517,7 +571,7 @@ class _PersonalsaludLoginScreenState extends State<PersonalsaludLoginScreen> {
                     variant: BioButtonVariant.soft,
                     fullWidth: true,
                     loading: _submitting,
-                    onPressed: _submitting ? null : _enterDemo,
+                    onPressed: _submitting ? null : _onProbarDemo,
                   ),
                 ],
                 BioSpacing.gapH(BioSpacing.lg),

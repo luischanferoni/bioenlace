@@ -48,6 +48,7 @@
 | ID | Pri | Pasos resumidos | Esperado |
 |----|-----|-----------------|----------|
 | URG-01 | 🔴 | Tablero con sesión guardia | Cola visible |
+| URG-06 | 🔴 | Ingresar paciente (app Personal de Salud) | Aparece en cola; web no ofrece el CTA |
 | URG-02 | 🔴 | Triage Manchester | Clasificación guardada |
 | URG-03 | 🟡 | Atender y guardar captura | Caso en atención / cerrado |
 | URG-04 | 🟡 | Derivar a otro hospital | Sale de cola activa |

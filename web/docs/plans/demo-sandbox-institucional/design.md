@@ -20,7 +20,7 @@ CTA **Probar demo** en el sitio institucional → código de un solo uso → log
 | Aislamiento | Un **PES + user** por visitante (scope médico); no tableros de todo el centro |
 | Tracking | `demo_sandbox_access` (código) + `demo_sandbox_session` (PES, payload seed, expires/purged) |
 | Entrada | `demo-entrar` limpia contexto previo, fija encounter según rol (AMB médico / EMER enfermería y administrativo), **persiste `context_token`**, redirect con `fecha` del seed |
-| Móvil staff | `POST /api/v1/licencia/demo-acceso-mobile` → JWT + contexto (AMB o EMER según `role`); botón **Probar demo** en login Personal de Salud (médico por defecto) |
+| Móvil staff | `POST /api/v1/licencia/demo-acceso-mobile` → JWT + contexto (AMB o EMER según `role`); **Probar demo** en login Personal de Salud elige el perfil (`demo-perfiles`) |
 | Encounter | En visita demo, cambio AMB/EMER/IMP ancla efector/servicio a la sesión demo (nunca 863) |
 
 ## Seed por visita (defaults)

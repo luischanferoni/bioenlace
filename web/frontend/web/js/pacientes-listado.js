@@ -645,6 +645,10 @@
       return e === 'finalizado' || e === 'derivado' || e === 'atendido';
     }
 
+    function guardiaSinTriage(g) {
+      return !(Number(g && g.prioridad_triage) >= 1);
+    }
+
     function guardiaPuedeVerConsulta(g) {
       return !!(g && g.encounter_id && (g.circuito_estado === 'atendido' || g.circuito_estado === 'derivado'));
     }
@@ -667,7 +671,7 @@
     }
 
     function circuitoBadgeClass(g) {
-      var sinTriage = g.circuito_estado === 'espera_triage' || g.prioridad_triage == null;
+      var sinTriage = guardiaSinTriage(g);
       if (sinTriage) {
         var nivel = g.triage_espera_nivel || '';
         if (nivel === 'rojo') {
@@ -693,7 +697,7 @@
     function nivelRowClass(g) {
       var parts = [];
       var level = g.prioridad_triage;
-      if (level == null || level === '') {
+      if (!(Number(level) >= 1)) {
         parts.push('guardia-tablero-row--sin-triage');
       } else {
         parts.push('guardia-tablero-row--nivel-' + String(level));
@@ -783,7 +787,7 @@
       }
 
       var cerrado = guardiaEpisodioCerrado(g);
-      var sinTriage = g.circuito_estado === 'espera_triage' || g.prioridad_triage == null;
+      var sinTriage = guardiaSinTriage(g);
       var ctaAtender = rowEl.querySelector('[data-role="cta-atender"]');
       if (ctaAtender) {
         ctaAtender.classList.toggle('d-none', !puedeAtender || sinTriage || cerrado);

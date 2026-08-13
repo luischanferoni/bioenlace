@@ -60,8 +60,7 @@ class EmergencyBoardItem {
     this.identidadPendiente = false,
   });
 
-  bool get needsTriage =>
-      circuitoEstado == 'espera_triage' || prioridadTriage == null;
+  bool get needsTriage => prioridadTriage == null || prioridadTriage! < 1;
 
   bool get puedeVerConsulta {
     final e = circuitoEstado ?? '';
@@ -78,9 +77,9 @@ class EmergencyBoardItem {
     final nestedNombre = (paciente?['nombre_completo'] as String?)?.trim();
     final encId = json['encounter_id'];
     return EmergencyBoardItem(
-      id: (json['id'] as int?) ?? 0,
-      idPersona: (json['id_persona'] as int?) ??
-          (paciente?['id'] as int?) ??
+      id: _asInt(json['id']) ?? 0,
+      idPersona: _asInt(json['id_persona']) ??
+          _asInt(paciente?['id']) ??
           0,
       nombreCompleto: (rootNombre != null && rootNombre.isNotEmpty)
           ? rootNombre
@@ -93,8 +92,8 @@ class EmergencyBoardItem {
       estado: json['estado'] as String?,
       circuitoEstado: json['circuito_estado'] as String?,
       circuitoEstadoLabel: json['circuito_estado_label'] as String?,
-      prioridadTriage: json['prioridad_triage'] as int?,
-      minutosEspera: (json['minutos_espera'] as int?) ?? 0,
+      prioridadTriage: _asInt(json['prioridad_triage']),
+      minutosEspera: _asInt(json['minutos_espera']) ?? 0,
       profesionalAsignado: json['profesional_asignado'] as String?,
       triageLevelLabel: triage?['level_label'] as String?,
       triageLevelColor: triage?['level_color'] as String?,
@@ -104,15 +103,20 @@ class EmergencyBoardItem {
       triageEsperaNivel: json['triage_espera_nivel'] as String?,
       internacionPendiente: json['internacion_pendiente'] == true,
       internacionIngresoUrl: json['internacion_ingreso_url'] as String?,
-      ordersCount: (clinical['orders_count'] as int?) ?? 0,
-      ordersLabPending: (clinical['orders_lab_pending'] as int?) ?? 0,
-      laboratoryReportsCount: (clinical['laboratory_reports_count'] as int?) ?? 0,
-      encounterId: encId is int
-          ? encId
-          : int.tryParse(encId?.toString() ?? ''),
+      ordersCount: _asInt(clinical['orders_count']) ?? 0,
+      ordersLabPending: _asInt(clinical['orders_lab_pending']) ?? 0,
+      laboratoryReportsCount: _asInt(clinical['laboratory_reports_count']) ?? 0,
+      encounterId: _asInt(encId),
       encounterStatus: json['encounter_status'] as String?,
       identidadPendiente: json['identidad_pendiente'] == true,
     );
+  }
+
+  static int? _asInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
   }
 }
 

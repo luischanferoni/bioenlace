@@ -1582,9 +1582,58 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+          if (_guardiaPrimaryActions(g, cerrado: cerrado).isNotEmpty) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Wrap(
+              spacing: BioSpacing.sm,
+              runSpacing: BioSpacing.sm,
+              children: _guardiaPrimaryActions(g, cerrado: cerrado),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  List<Widget> _guardiaPrimaryActions(
+    EmergencyBoardItem g, {
+    required bool cerrado,
+  }) {
+    if (cerrado) return const [];
+    final actions = <Widget>[];
+    if (g.needsTriage && _puedeTriage) {
+      actions.add(
+        BioButton.outlinePrimary(
+          label: 'Triage',
+          size: BioButtonSize.sm,
+          onPressed: () => EmergencyGuardiaActions.openTriage(
+            context: context,
+            item: g,
+            api: _emergencyApi,
+            onChanged: () => _cargarListadoPacientes(silent: true),
+          ),
+        ),
+      );
+    }
+    if (_puedeAtender && !g.needsTriage) {
+      actions.add(
+        BioButton.primary(
+          label: 'Atender',
+          size: BioButtonSize.sm,
+          onPressed: () => _onGuardiaTap(g),
+        ),
+      );
+    }
+    if (_puedeDocumentar && !_puedeAtender && !g.needsTriage) {
+      actions.add(
+        BioButton.outlinePrimary(
+          label: 'Nota',
+          size: BioButtonSize.sm,
+          onPressed: () => _onGuardiaTap(g),
+        ),
+      );
+    }
+    return actions;
   }
 
   UiIntent _guardiaCircuitoIntent(EmergencyBoardItem g) {

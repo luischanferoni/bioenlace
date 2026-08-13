@@ -9,7 +9,7 @@ Trabajá con el efector en modo **guardia** ([transversal.md](./transversal.md))
 ## Ingresar un paciente a guardia
 
 1. **Vos** (rol **Administrativo**) pulsá **Ingresar paciente** en el tablero.
-2. **Buscás** por apellido o documento. Si no está en el sistema, **registrás** apellido, nombre, documento, fecha de nacimiento y sexo.
+2. **Buscás** por apellido o documento. Si no está, **identificás con DNI** (RENAPER / código de barras), **foto Didit**, o **Sin documento / NN** si está inconsciente. No se inventa DNI. Cuando aparece el documento, **Identificar** en el tablero vincula el episodio.
 3. **Completás** cómo llega (camina / silla / camilla), con quién, y opcionalmente cobertura y situación.
 4. **El sistema** lo deja en espera de triage.
 

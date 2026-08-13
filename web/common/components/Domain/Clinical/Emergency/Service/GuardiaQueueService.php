@@ -180,12 +180,16 @@ final class GuardiaQueueService
         $encounter = $this->encounterResolver->findLatestForGuardia((int) $guardia->id);
         $clinical = $this->serializeClinicalBoardCountsForEncounter($encounter);
 
+        $pendiente = (int) ($guardia->identidad_pendiente ?? 0) === 1;
         $row = [
             'id' => (int) $guardia->id,
             'id_persona' => (int) $guardia->id_persona,
-            'nombre_completo' => $paciente
-                ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
-                : 'Sin nombre',
+            'identidad_pendiente' => $pendiente,
+            'nombre_completo' => $pendiente
+                ? ('NN · #' . (int) $guardia->id)
+                : ($paciente
+                    ? $paciente->getNombreCompleto(Persona::FORMATO_NOMBRE_A_N)
+                    : 'Sin nombre'),
             'circuito_estado' => $circuito,
             'circuito_estado_label' => CircuitoEstado::label($circuito),
             'minutos_espera' => $minutos,

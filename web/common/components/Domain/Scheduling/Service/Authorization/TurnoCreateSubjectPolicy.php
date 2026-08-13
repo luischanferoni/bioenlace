@@ -6,11 +6,11 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
-use common\components\Domain\Person\Representation\Service\PersonRepresentationAccessService;
 use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
+use yii\web\ForbiddenHttpException;
 
 /**
- * Alta de turno: sujeto del turno (yo o representado) con permiso SCHEDULING_TURNO.
+ * Alta de turno: sujeto del turno (yo, representado o ventanilla) con permiso SCHEDULING_TURNO.
  */
 final class TurnoCreateSubjectPolicy implements DomainOperationPolicyInterface
 {
@@ -21,19 +21,13 @@ final class TurnoCreateSubjectPolicy implements DomainOperationPolicyInterface
             throw new \InvalidArgumentException('Se requieren parámetros de alta.');
         }
 
-        $subjectSvc = new PersonRepresentationSubjectService();
-        $subject = $subjectSvc->resolveSubjectPersonaId($params);
-        $actor = $ctx->idPersona;
-        if ($actor <= 0) {
-            throw new DomainOperationForbiddenException('Sesión sin persona.');
-        }
-        if ($subject === $actor) {
-            return;
-        }
-
-        $access = new PersonRepresentationAccessService();
-        if (!$access->canAct($actor, $subject, RepresentationPermission::SCHEDULING_TURNO)) {
-            throw new DomainOperationForbiddenException('No tenés permiso para operar por este paciente.');
+        try {
+            (new PersonRepresentationSubjectService())->resolveAndAuthorize(
+                $params,
+                RepresentationPermission::SCHEDULING_TURNO
+            );
+        } catch (ForbiddenHttpException $e) {
+            throw new DomainOperationForbiddenException($e->getMessage());
         }
     }
 }

@@ -43,7 +43,7 @@ El **login del personal** (web y app Personal de Salud) usa un **usuario Yii** q
 - **Cambio de efector**: AdminEfector del nuevo centro **vincula** la misma persona/usuario; no se crea otro login.
 - La **app móvil Personal de Salud no registra** personal; solo login + sesión operativa.
 
-El endpoint `registrar-como-staff` y flujos Didit/RENAPER del asistente sirven para **dar de alta personas paciente** desde el staff, no para autoregistro del personal. Detalle operativo: [admin_efector/gestion-efector.md](../qa/admin_efector/gestion-efector.md) § Usuarios del efector.
+El endpoint `registrar-como-staff` y flujos Didit/RENAPER del asistente sirven para **dar de alta personas paciente** desde el staff, no para autoregistro del personal. El ingreso a guardia reutiliza el mismo núcleo (`RegistroStaffPacienteService`: `dni_lector` o `didit`). Un episodio NN usa un placeholder **sin documento** (`identidad_pendiente`); al vincular no se fusiona MPI. Detalle operativo: [admin_efector/gestion-efector.md](../qa/admin_efector/gestion-efector.md) § Usuarios del efector.
 | **Sistema** | Cron de verificación domicilio MPI; encauzamiento por contexto paciente |
 
 ## Autoregistro (app paciente)
@@ -135,5 +135,5 @@ Permisos API staff heredan del mismo perfil que operaba búsqueda/alta de person
 - [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — visión general paciente y personal de salud
 - [sesion-paciente-app.md](./sesion-paciente-app.md) — sesión, bloqueo local y reingreso Didit
 - [asistente-y-chat.md](./asistente-y-chat.md) — entrada staff a pantallas embebidas
-- [representacion-paciente.md](./representacion-paciente.md) — operar por otro paciente (sujeto explícito, no sesión staff)
+- [representacion-paciente.md](./representacion-paciente.md) — operar por otro paciente (tutela/delegación) o sesión de ventanilla (admisión, TTL)
 - [turnos.md](./turnos.md) — reserva con `id_persona` o `subject_persona_id` según actor

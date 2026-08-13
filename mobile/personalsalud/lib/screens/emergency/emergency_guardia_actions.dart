@@ -36,11 +36,17 @@ class EmergencyGuardiaActions {
     required BuildContext context,
     required EmergencyGuardiaApi api,
     required VoidCallback onChanged,
+    int? vincularGuardiaId,
+    String? vincularNombre,
   }) async {
     final ok = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => EmergencyIngresoScreen(api: api),
+        builder: (_) => EmergencyIngresoScreen(
+          api: api,
+          vincularGuardiaId: vincularGuardiaId,
+          vincularNombre: vincularNombre,
+        ),
       ),
     );
     if (ok == true) onChanged();
@@ -96,10 +102,24 @@ class EmergencyGuardiaActions {
     required VoidCallback onChanged,
     bool sessionTieneCobertura = true,
     bool puedeTriage = false,
+    bool puedeIngresar = false,
   }) async {
     if (episodioCerrado(item)) return;
 
     final actions = <_ActionDef>[];
+    if (item.identidadPendiente && puedeIngresar) {
+      actions.add(_ActionDef(
+        label: 'Identificar',
+        icon: Icons.badge_outlined,
+        onTap: () => openIngreso(
+          context: context,
+          api: api,
+          onChanged: onChanged,
+          vincularGuardiaId: item.id,
+          vincularNombre: item.nombreCompleto,
+        ),
+      ));
+    }
     final enAtencion = (item.circuitoEstado ?? '') == 'en_atencion';
     if (item.needsTriage && puedeTriage) {
       actions.add(_ActionDef(

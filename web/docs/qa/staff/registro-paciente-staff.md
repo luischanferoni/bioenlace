@@ -13,3 +13,15 @@
 5. **CTX-12:** La búsqueda antigua de candidatos duplicados **ya no existe** — solo el flujo nuevo de registro.
 
 Ver también búsqueda y alta transversal: [transversal.md](./transversal.md).
+
+---
+
+## Identificar en ventanilla (turnos)
+
+1. **Vos** (rol **Administrativo**, sesión ambulatoria) pulsá **Identificar paciente**.
+2. **Buscás** o identificás con DNI / Didit (no NN).
+3. **El sistema** muestra un banner con el paciente y el tiempo restante.
+4. **Vos** pulsá **Sacar turno** o **Ver turnos** (flujos de autogestión del paciente, no los de “dar turno” de secretaría).
+5. Al terminar, **Cerrar**. La sesión operativa (efector / servicio) no cambia.
+
+TTL por defecto: 15 minutos (`ventanilla-sesion.yaml`).

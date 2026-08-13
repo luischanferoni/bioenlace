@@ -24,6 +24,7 @@ use yii\web\Response;
  * Urgencias / guardia: ingreso, triage y tablero operativo (staff / médico EMER).
  *
  * POST /api/v1/clinical/emergency-guardia/ingresar
+ * POST /api/v1/clinical/emergency-guardia/<guardiaId>/vincular-identidad
  * GET  /api/v1/clinical/emergency-guardia/buscar-persona-ingreso
  * POST /api/v1/clinical/emergency-guardia/<guardiaId>/registrar-triage
  * GET  /api/v1/clinical/emergency-guardia/indicadores-resumen
@@ -84,6 +85,31 @@ class EmergencyGuardiaController extends BaseController
         }
 
         return $this->success($data, 'Ingreso a guardia registrado', 201);
+    }
+
+    /**
+     * Vincula DNI/Didit/paciente conocido a un episodio con identidad pendiente.
+     *
+     * POST /api/v1/clinical/emergency-guardia/<guardiaId>/vincular-identidad
+     */
+    public function actionVincularIdentidad(int $guardiaId): array
+    {
+        try {
+            $idEfector = $this->requireGuardiaEfector();
+            $data = $this->ingreso->vincularIdentidad(
+                $guardiaId,
+                Yii::$app->request->post(),
+                $idEfector
+            );
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (ForbiddenHttpException $e) {
+            return $this->error($e->getMessage(), null, 403);
+        } catch (\RuntimeException $e) {
+            return $this->error($e->getMessage(), null, 500);
+        }
+
+        return $this->success($data, 'Identidad vinculada');
     }
 
     /**

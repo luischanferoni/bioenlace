@@ -181,6 +181,16 @@ final class ProductMetadataPaths
         return self::organizationDir() . DIRECTORY_SEPARATOR . 'efector-atributos.yaml';
     }
 
+    public static function personDir(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'person';
+    }
+
+    public static function ventanillaSesionFile(): string
+    {
+        return self::personDir() . DIRECTORY_SEPARATOR . 'ventanilla-sesion.yaml';
+    }
+
     public static function schedulingDir(): string
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'scheduling';

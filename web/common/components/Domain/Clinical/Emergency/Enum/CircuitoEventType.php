@@ -12,6 +12,7 @@ final class CircuitoEventType
     public const FIN_ATENCION = 'fin_atencion';
     public const DERIVACION = 'derivacion';
     public const EGRESO = 'egreso';
+    public const IDENTIDAD_VINCULADA = 'identidad_vinculada';
 
     public static function label(?string $tipo): string
     {
@@ -24,6 +25,7 @@ final class CircuitoEventType
             self::FIN_ATENCION => 'Fin de atención',
             self::DERIVACION => 'Derivación',
             self::EGRESO => 'Egreso',
+            self::IDENTIDAD_VINCULADA => 'Identidad vinculada',
         ];
 
         return $map[$tipo ?? ''] ?? (($tipo !== null && $tipo !== '') ? $tipo : 'Evento de circuito');

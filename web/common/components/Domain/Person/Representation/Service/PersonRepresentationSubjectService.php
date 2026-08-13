@@ -3,6 +3,7 @@
 namespace common\components\Domain\Person\Representation\Service;
 
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
+use common\components\Domain\Person\Ventanilla\VentanillaSesionService;
 use common\models\Person\PersonRelatedAuditLog;
 use common\models\Scheduling\Turno;
 use Yii;
@@ -37,6 +38,11 @@ final class PersonRepresentationSubjectService
             return $fromRequest;
         }
 
+        $fromVentanilla = (new VentanillaSesionService())->sujetoActivo();
+        if ($fromVentanilla !== null && $fromVentanilla > 0) {
+            return $fromVentanilla;
+        }
+
         $fromSession = (int) (Yii::$app->session->get(self::SESSION_KEY) ?? 0);
         if ($fromSession > 0) {
             return $fromSession;
@@ -54,12 +60,25 @@ final class PersonRepresentationSubjectService
         if ($subjectPersonaId <= 0) {
             throw new ForbiddenHttpException('Sujeto de atención inválido.');
         }
+        $ventanilla = new VentanillaSesionService();
+        $ventanillaSujeto = $ventanilla->sujetoActivo();
         if ($subjectPersonaId === $actor) {
+            if ($ventanillaSujeto !== null && $ventanillaSujeto !== $actor) {
+                throw new ForbiddenHttpException(
+                    'Hay una sesión de ventanilla activa. Cerrala para operar por tu cuenta, o actuá por el paciente identificado.'
+                );
+            }
+
             return;
         }
-        if (!$this->accessService->canAct($actor, $subjectPersonaId, $permission)) {
-            throw new ForbiddenHttpException('No tenés permiso para operar por este paciente.');
+        if ($this->accessService->canAct($actor, $subjectPersonaId, $permission)) {
+            return;
         }
+        if ($ventanilla->canAct($actor, $subjectPersonaId, $permission)) {
+            return;
+        }
+
+        throw new ForbiddenHttpException('No tenés permiso para operar por este paciente.');
     }
 
     /**

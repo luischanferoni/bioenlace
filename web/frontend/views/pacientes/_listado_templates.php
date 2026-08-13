@@ -139,6 +139,7 @@
                     <span class="badge bg-secondary" data-field="circuito-badge"></span>
                     <span class="badge bg-danger d-none" data-field="sla-badge">Plazo</span>
                     <span class="badge bg-info text-dark d-none" data-field="internacion-badge">Cama pendiente</span>
+                    <span class="badge bg-warning text-dark d-none" data-field="identidad-badge">Identidad pendiente</span>
                     <span class="text-muted" data-field="espera-line"></span>
                     <span class="text-muted d-none" data-field="profesional-line"></span>
                 </div>
@@ -149,6 +150,7 @@
             <a class="btn btn-dark btn-sm d-none" href="#" data-role="cta-atender" data-spa-nav="1">Atender</a>
             <a class="btn btn-outline-dark btn-sm d-none" href="#" data-role="cta-documentar" data-spa-nav="1">Nota</a>
             <a class="btn btn-outline-dark btn-sm d-none" href="#" data-role="cta-ver-consulta" data-spa-nav="1">Ver consulta</a>
+            <button type="button" class="btn btn-outline-warning btn-sm d-none" data-role="cta-identificar">Identificar</button>
             <button type="button" class="btn btn-outline-primary btn-sm d-none" data-role="cta-triage">Triage</button>
             <button type="button" class="btn btn-outline-success btn-sm d-none" data-role="cta-tomar">Tomar caso</button>
             <button type="button" class="btn btn-outline-warning btn-sm d-none" data-role="cta-derivar">Derivar</button>

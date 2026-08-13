@@ -16,7 +16,7 @@ No hay pantalla web dedicada `guardia/tablero`: el tablero vive en **inicio** se
 
 | Capacidad | Quién | Dónde |
 |-----------|-------|--------|
-| Ingreso a guardia | Administrativo / AdminEfector (`ingreso_roles` del manifiesto) | Tablero web y app Personal de Salud (`POST …/ingresar`) |
+| Ingreso a guardia | Administrativo / AdminEfector (`ingreso_roles` del manifiesto) | Tablero web y app Personal de Salud (`POST …/ingresar`). Identidad: paciente conocido, DNI, Didit o NN (identidad pendiente); no ficha tipeada. |
 | Primer triage | Staff (`triage_roles` del manifiesto) | Tablero web y app Personal de Salud (`espera_triage`) |
 | Editar / actualizar triage | Médico (y staff con HC abierta) | Historia clínica del episodio (`editar_triage` en banner). **No** en el tablero |
 | Tomar caso | — (eliminado) | `iniciar-atencion` asigna el PES de sesión si falta |
@@ -60,7 +60,7 @@ Base: `/api/v1/clinical/emergency-guardia`
 | Acción | Método | Notas |
 |--------|--------|-------|
 | Panel inicio (tablero) | `GET /api/v1/home/panel` | Sección `emergency_board` (+ `emergency_indicators`); flags `puede_triage` / `puede_ingresar` / `puede_atender` / `puede_documentar` |
-| Ingreso | `POST …/ingresar` | Admisión: `id_persona` **o** alta mínima (`apellido`, `nombre`, `documento`, `fecha_nacimiento`, `sexo_biologico`), `ingresa_en`, `ingresa_con`. Búsqueda: `GET …/buscar-persona-ingreso` |
+| Ingreso | `POST …/ingresar` | Admisión: `id_persona`, DNI (`codigo_barras` **o** `documento` + `sexo_biologico`), Didit (`verification_id`) **o** `identidad_pendiente` (NN, sin DNI inventado). Vincular después: `POST …/{id}/vincular-identidad`. Núcleo: `RegistroStaffPacienteService`. `ingresa_en`, `ingresa_con`. Búsqueda: `GET …/buscar-persona-ingreso` |
 | Triage | `POST …/{id}/registrar-triage` | Manchester 1–5 + motivo + vitales opcionales (staff) |
 | Asignar | `POST …/{id}/asignar` | Uso interno / legado; el flujo médico usa `iniciar-atencion` |
 | Atender | `POST …/{id}/iniciar-atencion` | Asigna PES de sesión si falta; devuelve `captura_url` |

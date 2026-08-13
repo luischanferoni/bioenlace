@@ -12,6 +12,7 @@ use yii\helpers\Console;
  *
  * @property int $id
  * @property int|null $id_persona
+ * @property int $identidad_pendiente
  * @property string|null $fecha
  * @property string|null $hora
  * @property string|null $fecha_fin
@@ -105,7 +106,7 @@ class Guardia extends \yii\db\ActiveRecord
     public function rules()
     {
         return [
-            [['id_persona', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector',], 'integer'],
+            [['id_persona', 'identidad_pendiente', 'id_profesional_efector_servicio', 'created_by', 'updated_by', 'deleted_by', 'id_efector_derivacion', 'notificar_internacion_id_efector', 'id_efector',], 'integer'],
             [['fecha', 'hora', 'fecha_fin', 'hora_fin', 'created_at', 'updated_at', 'deleted_at'], 'safe'],
             [['ingresa_con', 'ingresa_en', 'estado', 'situacion_al_ingresar', 'condiciones_derivacion', 'datos_contacto_tel', 'diagnostico_operativo', 'epicrisis', 'pautas_alarma', 'egreso_meta_json'], 'string'],
             [['destino_egreso'], 'in', 'range' => \common\components\Domain\Clinical\Emergency\Enum\GuardiaEgresoDestino::values(), 'skipOnEmpty' => true],
@@ -182,6 +183,9 @@ class Guardia extends \yii\db\ActiveRecord
 
     public function validarCombinacionUnica($attribute, $params, $validator)
     {
+        if ((int) ($this->identidad_pendiente ?? 0) === 1 || (int) $this->id_persona <= 0) {
+            return;
+        }
         $existe = self::find()
             ->where([
                 'id_persona' => $this->id_persona,

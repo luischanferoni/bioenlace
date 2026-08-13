@@ -37,6 +37,7 @@
 | TUR-09 | 🟢 | Sobreturno staff | Aparece en agenda |
 | TUR-10 | 🟢 | Marcar no vino | Estado ausente |
 | TUR-11 | 🟡 | Cancelación con lista de espera | Aviso al siguiente |
+| TUR-12 | 🟡 | Ventanilla: identificar + sacar turno | Turno a nombre del paciente; al cerrar/vencer ya no opera por él |
 
 → [turnos-agenda.md](./turnos-agenda.md)
 

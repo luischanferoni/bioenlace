@@ -23,6 +23,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Auditoría agentes autónomos | `auditoria-agentes-autonomos/` | agent_run genérico + A04 + resolución |
 | Demo sandbox institucional | `demo-sandbox-institucional/` | CTA Probar demo → código un solo uso |
 | Captura actor + enfermería | `captura-actor-enfermeria/` | Quitar alias ConsultasConfiguracion; overlay PES + CarePlan; app triage |
+| Admisión: identidad + ventanilla | `admision-identidad-ventanilla/` | Ingreso DNI (sin alta libre); Didit; NN; sesión de mostrador |
 
 ## Planes archivados (carpeta eliminada)
 

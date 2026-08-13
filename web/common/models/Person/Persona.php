@@ -76,6 +76,8 @@ class Persona extends \yii\db\ActiveRecord
     */
     const SCENARIOCREATEUPDATE = 'scenarioregistrar';
     const SCENARIOSEARCH = 'scenariobuscar';
+    /** Placeholder NN de un episodio: sin documento ni ficha tipeada. */
+    const SCENARIO_IDENTIDAD_PENDIENTE = 'scenarioidentidadpendiente';
     /*
     *   Para establecer id_user, asociando asi a una persona con un usuario del sistema
     */
@@ -101,6 +103,7 @@ class Persona extends \yii\db\ActiveRecord
             self::SCENARIOCREATEUPDATE      =>  ['id_tipodoc', 'fecha_nacimiento', 'apellido', 'apellido_materno', 'apellido_paterno', 'otro_apellido', 'otro_nombre', 'nombre', 'documento', 'sexo_biologico', 'genero', 'sexo_biologico', 'id_estado_civil', 'acredita_identidad'],
             self::SCENARIOSEARCH      =>  ['id_tipodoc', 'fecha_nacimiento', 'apellido', 'apellido_materno', 'apellido_paterno', 'otro_apellido', 'otro_nombre', 'nombre', 'documento', 'genero', 'sexo_biologico', 'fecha_nacimiento_1', 'motivo_acredita', 'acredita_identidad'],
             self::SCENARIOUSERUPDATE   =>  ['id_user'],
+            self::SCENARIO_IDENTIDAD_PENDIENTE => ['apellido', 'nombre', 'documento', 'acredita_identidad', 'sexo_biologico', 'genero', 'sexo', 'id_tipodoc', 'id_estado_civil', 'documento_propio'],
         ];
     }
     // get scenarios
@@ -132,6 +135,7 @@ class Persona extends \yii\db\ActiveRecord
             [$allscenarios[self::SCENARIOCREATEUPDATE], 'required', 'on' => self::SCENARIOCREATEUPDATE],
             [$allscenarios[self::SCENARIOSEARCH], 'required', 'on' => self::SCENARIOSEARCH],
             [$allscenarios[self::SCENARIOUSERUPDATE], 'required', 'on' => self::SCENARIOUSERUPDATE],
+            [['apellido', 'nombre', 'acredita_identidad'], 'required', 'on' => self::SCENARIO_IDENTIDAD_PENDIENTE],
             [['acredita_identidad', 'id_tipodoc', 'documento_propio', 'genero', 'sexo_biologico', 'id_estado_civil', 'id_user'], 'integer'],
             ['motivo_acredita', 'motivoCondicional', 'on' => self::SCENARIOSEARCH, 'skipOnEmpty' => false],
             ['id_user', 'unique', 'on' => self::SCENARIOUSERUPDATE],

@@ -1520,6 +1520,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             label: 'Cama pend.',
                             intent: UiIntent.info,
                           ),
+                        if (g.identidadPendiente)
+                          const BioBadge(
+                            label: 'Identidad pendiente',
+                            intent: UiIntent.warning,
+                          ),
                         if (g.ordersLabPending > 0)
                           BioBadge(
                             label: '${g.ordersLabPending} lab pend.',
@@ -1561,6 +1566,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           onChanged: refresh,
                           sessionTieneCobertura: _sessionTieneCobertura,
                           puedeTriage: _puedeTriage,
+                          puedeIngresar: _puedeIngresar,
                         );
                       },
                     ),

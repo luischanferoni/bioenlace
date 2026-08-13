@@ -10,6 +10,7 @@ use common\models\Clinical\Encounter;
 use common\models\Servicio;
 use common\components\Domain\Clinical\Emergency\Enum\TriageScale;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaBoardCapabilityService;
+use common\models\User;
 
 $idServicioActual = isset($id_servicio_actual) ? (int) $id_servicio_actual : 0;
 $esAmbulatorio = ($encounter_class === Encounter::ENCOUNTER_CLASS_AMB);
@@ -46,6 +47,7 @@ $puedeTriageGuardia = $esGuardia && $guardiaCaps->canTriage();
 $puedeIngresarGuardia = $esGuardia && $guardiaCaps->canIngresar();
 $puedeAtenderGuardia = $esGuardia && $guardiaCaps->canAtender();
 $puedeDocumentarGuardia = $esGuardia && $guardiaCaps->canDocumentar();
+$puedeVentanilla = !$esPacienteHome && User::hasRole(['Administrativo']);
 
 $this->title = $esGuardia
     ? 'Tablero de guardia'
@@ -101,7 +103,27 @@ $this->title = $esGuardia
      data-puede-ingresar="<?= $puedeIngresarGuardia ? '1' : '0' ?>"
      data-puede-atender="<?= $puedeAtenderGuardia ? '1' : '0' ?>"
      data-puede-documentar="<?= $puedeDocumentarGuardia ? '1' : '0' ?>"
+     data-puede-ventanilla="<?= $puedeVentanilla ? '1' : '0' ?>"
 >
+    <?php if ($puedeVentanilla): ?>
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <button type="button" class="btn btn-outline-primary btn-sm" data-role="cta-ventanilla-identificar">
+            Identificar paciente
+        </button>
+    </div>
+    <div id="ventanilla-banner" class="alert alert-info d-none d-flex flex-wrap align-items-center gap-2 mb-3" role="status">
+        <div>
+            <strong>Ventanilla:</strong>
+            <span data-field="nombre"></span>
+            <span class="text-muted small ms-1" data-field="ttl"></span>
+        </div>
+        <div class="ms-auto d-flex flex-wrap gap-2">
+            <a class="btn btn-sm btn-primary" data-role="ventanilla-turno" href="#">Sacar turno</a>
+            <a class="btn btn-sm btn-outline-primary" data-role="ventanilla-mis-turnos" href="#">Ver turnos</a>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-role="ventanilla-cerrar">Cerrar</button>
+        </div>
+    </div>
+    <?php endif; ?>
     <div id="pacientes-listado-flash" class="d-none alert mb-3" role="status"></div>
     <div id="pacientes-listado-loading" class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
@@ -159,36 +181,32 @@ $this->title = $esGuardia
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small mb-3">Buscá por apellido o documento. Si no está en el sistema, registralo. Quien ya está en la cola de este efector no aparece.</p>
+                <p class="text-muted small mb-3" id="guardia-admitir-hint">Buscá por apellido o documento. Si no está, identificá con DNI (RENAPER), foto Didit o identidad pendiente (NN). Quien ya está en la cola de este efector no aparece.</p>
                 <div class="mb-3">
                     <label class="form-label" for="guardia-admitir-q">Paciente conocido</label>
                     <input type="search" class="form-control" id="guardia-admitir-q" placeholder="Apellido o documento" autocomplete="off">
                     <input type="hidden" id="guardia-admitir-id-persona" value="">
+                    <input type="hidden" id="guardia-admitir-verification-id" value="">
+                    <input type="hidden" id="guardia-admitir-nn" value="">
+                    <input type="hidden" id="guardia-admitir-vincular-id" value="">
                     <div id="guardia-admitir-results" class="list-group mt-2 small"></div>
                     <div id="guardia-admitir-seleccion" class="form-text d-none"></div>
-                    <button type="button" class="btn btn-link btn-sm px-0 mt-1" id="guardia-admitir-alta-toggle">El paciente no está en el sistema</button>
+                    <button type="button" class="btn btn-link btn-sm px-0 mt-1" id="guardia-admitir-alta-toggle">Identificar con DNI</button>
                 </div>
                 <div class="border rounded p-3 mb-3 d-none" id="guardia-admitir-alta">
-                    <div class="fw-semibold mb-2">Alta mínima</div>
+                    <div class="fw-semibold mb-2">Identidad con DNI</div>
+                    <p class="text-muted small mb-2">Los datos personales los trae RENAPER, el código de barras o Didit (foto del DNI + selfie). No se cargan a mano.</p>
+                    <div class="mb-2">
+                        <label class="form-label" for="guardia-admitir-barcode">Código de barras del DNI (opcional)</label>
+                        <input type="text" class="form-control" id="guardia-admitir-barcode" autocomplete="off">
+                    </div>
                     <div class="row g-2">
                         <div class="col-md-6">
-                            <label class="form-label" for="guardia-admitir-apellido">Apellido</label>
-                            <input type="text" class="form-control" id="guardia-admitir-apellido" maxlength="60">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="guardia-admitir-nombre">Nombre</label>
-                            <input type="text" class="form-control" id="guardia-admitir-nombre" maxlength="60">
-                        </div>
-                        <div class="col-md-4">
                             <label class="form-label" for="guardia-admitir-documento">Documento</label>
                             <input type="text" class="form-control" id="guardia-admitir-documento" maxlength="8" inputmode="numeric">
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="guardia-admitir-fecha-nac">Fecha de nacimiento</label>
-                            <input type="date" class="form-control" id="guardia-admitir-fecha-nac">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="guardia-admitir-sexo">Sexo</label>
+                        <div class="col-md-6">
+                            <label class="form-label" for="guardia-admitir-sexo">Sexo (como en el DNI)</label>
                             <select class="form-select" id="guardia-admitir-sexo">
                                 <option value="">—</option>
                                 <option value="1">Femenino</option>
@@ -196,7 +214,14 @@ $this->title = $esGuardia
                             </select>
                         </div>
                     </div>
+                    <div class="d-flex flex-wrap gap-2 mt-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="guardia-admitir-preview">Consultar identidad</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="guardia-admitir-didit">Foto del DNI (Didit)</button>
+                        <button type="button" class="btn btn-outline-warning btn-sm" id="guardia-admitir-nn-btn">Sin documento / NN</button>
+                    </div>
+                    <div id="guardia-admitir-preview-box" class="alert alert-light border mt-2 mb-0 d-none small"></div>
                 </div>
+                <div id="guardia-admitir-episodio-fields">
                 <div class="mb-3">
                     <label class="form-label" for="guardia-admitir-ingresa-en">Ingresa en</label>
                     <select class="form-select" id="guardia-admitir-ingresa-en">
@@ -226,6 +251,7 @@ $this->title = $esGuardia
                 <div class="mb-0">
                     <label class="form-label" for="guardia-admitir-situacion">Situación al ingresar (opcional)</label>
                     <textarea class="form-control" id="guardia-admitir-situacion" rows="2"></textarea>
+                </div>
                 </div>
                 <div id="guardia-admitir-error" class="alert alert-danger d-none mt-3 mb-0"></div>
             </div>

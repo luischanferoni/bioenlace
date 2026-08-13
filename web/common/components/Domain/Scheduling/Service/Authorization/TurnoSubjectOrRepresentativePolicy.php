@@ -6,11 +6,12 @@ use common\components\Platform\Core\Permission\Domain\DomainOperationContext;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyInterface;
 use common\components\Domain\Person\Representation\Enum\RepresentationPermission;
-use common\components\Domain\Person\Representation\Service\PersonRepresentationAccessService;
+use common\components\Domain\Person\Representation\Service\PersonRepresentationSubjectService;
 use common\models\Scheduling\Turno;
+use yii\web\ForbiddenHttpException;
 
 /**
- * Paciente titular o representante con permiso de agenda sobre el turno.
+ * Paciente titular, representante o ventanilla con permiso de agenda sobre el turno.
  */
 final class TurnoSubjectOrRepresentativePolicy implements DomainOperationPolicyInterface
 {
@@ -20,22 +21,13 @@ final class TurnoSubjectOrRepresentativePolicy implements DomainOperationPolicyI
             throw new \InvalidArgumentException('Se requiere un Turno.');
         }
 
-        $actor = $ctx->idPersona;
-        if ($actor <= 0) {
-            throw new DomainOperationForbiddenException('Sesión sin persona.');
-        }
-
-        $subject = (int) $resource->id_persona;
-        if ($subject <= 0) {
-            throw new DomainOperationForbiddenException('Turno sin paciente.');
-        }
-        if ($subject === $actor) {
-            return;
-        }
-
-        $access = new PersonRepresentationAccessService();
-        if (!$access->canAct($actor, $subject, RepresentationPermission::SCHEDULING_TURNO)) {
-            throw new DomainOperationForbiddenException('No tenés permiso para operar por este paciente.');
+        try {
+            (new PersonRepresentationSubjectService())->assertCanAct(
+                (int) $resource->id_persona,
+                RepresentationPermission::SCHEDULING_TURNO
+            );
+        } catch (ForbiddenHttpException $e) {
+            throw new DomainOperationForbiddenException($e->getMessage());
         }
     }
 }

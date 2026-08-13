@@ -1,0 +1,7 @@
+# Knob operativo: duración de la sesión de mostrador (no integridad).
+ttl_minutes: 15
+# Intents de autogestión que el catálogo web staff vuelve a mostrar
+# solo mientras hay ventanilla activa (no hardcode en el filtro).
+unhide_paciente_intent_ids:
+  - turnos.crear-como-paciente
+  - turnos.ver-mis-turnos-como-paciente

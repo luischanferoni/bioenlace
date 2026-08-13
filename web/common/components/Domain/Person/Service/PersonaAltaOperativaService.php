@@ -5,7 +5,10 @@ namespace common\components\Domain\Person\Service;
 use common\models\Person\Persona;
 
 /**
- * Alta operativa mínima de Persona (admisión / guardia): no KYC ni MPI.
+ * @deprecated El ingreso a guardia usa {@see RegistroStaffPacienteService} (DNI / RENAPER).
+ * No crear Persona desde ficha tipeada. Conservado por tests legacy.
+ *
+ * Alta operativa mínima de Persona: no KYC ni MPI.
  * Si el documento ya existe, reusa esa fila.
  */
 final class PersonaAltaOperativaService

@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Core\Service;
 
+use common\components\Domain\Person\Ventanilla\VentanillaSesionMetadata;
+use common\components\Domain\Person\Ventanilla\VentanillaSesionService;
 use common\components\Platform\Core\Product\ClientContextMetadata;
 use Yii;
 
@@ -93,14 +95,53 @@ final class ClientContextService
         if (!self::shouldOmitPacienteRole()) {
             return $items;
         }
+        $unhide = self::ventanillaUnhideIntentMap();
         $out = [];
         foreach ($items as $flow) {
-            if (!is_array($flow) || self::isPacienteOnlyFlow($flow)) {
+            if (!is_array($flow)) {
+                continue;
+            }
+            if (self::isPacienteOnlyFlow($flow) && !self::isUnhiddenPacienteFlow($flow, $unhide)) {
                 continue;
             }
             $out[] = $flow;
         }
 
         return $out;
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    private static function ventanillaUnhideIntentMap(): array
+    {
+        try {
+            $subject = (new VentanillaSesionService())->sujetoActivo();
+        } catch (\Throwable $e) {
+            return [];
+        }
+        if ($subject === null || $subject <= 0) {
+            return [];
+        }
+        $map = [];
+        foreach (VentanillaSesionMetadata::unhidePacienteIntentIds() as $id) {
+            $map[$id] = true;
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param array<string, mixed> $flow
+     * @param array<string, true> $unhide
+     */
+    private static function isUnhiddenPacienteFlow(array $flow, array $unhide): bool
+    {
+        if ($unhide === []) {
+            return false;
+        }
+        $intentId = trim((string) ($flow['action_id'] ?? $flow['intent_id'] ?? ''));
+
+        return $intentId !== '' && isset($unhide[$intentId]);
     }
 }

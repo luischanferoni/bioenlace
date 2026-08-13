@@ -30,6 +30,7 @@ class EmergencyBoardItem {
   final int laboratoryReportsCount;
   final int? encounterId;
   final String? encounterStatus;
+  final bool identidadPendiente;
 
   EmergencyBoardItem({
     required this.id,
@@ -56,6 +57,7 @@ class EmergencyBoardItem {
     this.laboratoryReportsCount = 0,
     this.encounterId,
     this.encounterStatus,
+    this.identidadPendiente = false,
   });
 
   bool get needsTriage =>
@@ -109,6 +111,7 @@ class EmergencyBoardItem {
           ? encId
           : int.tryParse(encId?.toString() ?? ''),
       encounterStatus: json['encounter_status'] as String?,
+      identidadPendiente: json['identidad_pendiente'] == true,
     );
   }
 }
@@ -292,6 +295,44 @@ class EmergencyGuardiaApi {
     }).where((e) => e['id']!.isNotEmpty).toList();
   }
 
+  /// Preview RENAPER / DNI before alta staff (`POST /registro/preview-renaper-como-staff`).
+  Future<Map<String, dynamic>> previewRenaperComoStaff({
+    String? documento,
+    int? sexoBiologico,
+    String? codigoBarras,
+  }) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/registro/preview-renaper-como-staff',
+    );
+    final body = <String, dynamic>{
+      if (codigoBarras != null && codigoBarras.isNotEmpty)
+        'codigo_barras': codigoBarras,
+      if (documento != null && documento.isNotEmpty) 'documento': documento,
+      if (sexoBiologico != null) 'sexo_biologico': sexoBiologico,
+    };
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: json.encode(body),
+    );
+    final decoded = json.decode(response.body);
+    if (response.statusCode < 200 ||
+        response.statusCode >= 300 ||
+        decoded is! Map<String, dynamic> ||
+        decoded['success'] == false) {
+      throw Exception(
+        decoded is Map
+            ? (decoded['message'] ?? 'No se pudo consultar la identidad')
+            : 'No se pudo consultar la identidad',
+      );
+    }
+    final data = decoded['data'];
+    if (data is Map<String, dynamic>) {
+      return data;
+    }
+    return decoded;
+  }
+
   Future<void> ingresar(Map<String, dynamic> body) async {
     final uri = Uri.parse(
       '${AppConfig.apiUrl}/clinical/emergency-guardia/ingresar',
@@ -307,6 +348,25 @@ class EmergencyGuardiaApi {
         decoded is Map
             ? (decoded['message'] ?? 'Error al ingresar')
             : 'Error al ingresar',
+      );
+    }
+  }
+
+  Future<void> vincularIdentidad(int guardiaId, Map<String, dynamic> body) async {
+    final uri = Uri.parse(
+      '${AppConfig.apiUrl}/clinical/emergency-guardia/$guardiaId/vincular-identidad',
+    );
+    final response = await http.post(
+      uri,
+      headers: _headers,
+      body: json.encode(body),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      final decoded = json.decode(response.body);
+      throw Exception(
+        decoded is Map
+            ? (decoded['message'] ?? 'Error al vincular identidad')
+            : 'Error al vincular identidad',
       );
     }
   }

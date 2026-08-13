@@ -199,6 +199,8 @@ return [
                 'OPTIONS api/<version:\w+>/clinical/history-exchange/ver-estado' => '<version>/clinical/history-exchange/ver-estado',
                 'POST api/<version:\w+>/clinical/emergency-guardia/ingresar' => '<version>/clinical/emergency-guardia/ingresar',
                 'OPTIONS api/<version:\w+>/clinical/emergency-guardia/ingresar' => '<version>/clinical/emergency-guardia/ingresar',
+                'POST api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/vincular-identidad' => '<version>/clinical/emergency-guardia/vincular-identidad',
+                'OPTIONS api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/vincular-identidad' => '<version>/clinical/emergency-guardia/vincular-identidad',
                 'GET api/<version:\w+>/clinical/emergency-guardia/buscar-persona-ingreso' => '<version>/clinical/emergency-guardia/buscar-persona-ingreso',
                 'OPTIONS api/<version:\w+>/clinical/emergency-guardia/buscar-persona-ingreso' => '<version>/clinical/emergency-guardia/buscar-persona-ingreso',
                 'POST api/<version:\w+>/clinical/emergency-guardia/<guardiaId:\d+>/registrar-triage' => '<version>/clinical/emergency-guardia/registrar-triage',
@@ -444,6 +446,11 @@ return [
                 'OPTIONS api/<version:\w+>/person-representation/preferencias-como-paciente' => '<version>/person-representation/preferencias-como-paciente',
                 'POST api/<version:\w+>/person-representation/establecer-sujeto-paciente' => '<version>/person-representation/establecer-sujeto-paciente',
                 'OPTIONS api/<version:\w+>/person-representation/establecer-sujeto-paciente' => '<version>/person-representation/establecer-sujeto-paciente',
+
+                'POST api/<version:\w+>/ventanilla-sesion/iniciar' => '<version>/ventanilla-sesion/iniciar',
+                'GET api/<version:\w+>/ventanilla-sesion/estado' => '<version>/ventanilla-sesion/estado',
+                'POST api/<version:\w+>/ventanilla-sesion/cerrar' => '<version>/ventanilla-sesion/cerrar',
+                'GET api/<version:\w+>/ventanilla-sesion/buscar-persona' => '<version>/ventanilla-sesion/buscar-persona',
 
                 'GET api/<version:\w+>/paciente-contexto/obtener-como-paciente' => '<version>/paciente-contexto/obtener-como-paciente',
                 'POST api/<version:\w+>/paciente-contexto/obtener-como-paciente' => '<version>/paciente-contexto/obtener-como-paciente',

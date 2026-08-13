@@ -129,6 +129,48 @@
   };
 
   /**
+   * Mensaje para UI: no exponer "Failed to fetch" / HTTP crudo.
+   * Los mensajes de dominio (API en español) se dejan tal cual.
+   *
+   * @param {string|Error|null|undefined} err
+   * @returns {string}
+   */
+  NS.friendlyErrorMessage = function (err) {
+    if (err && err.name === 'AbortError') {
+      return '';
+    }
+    var raw = '';
+    if (typeof err === 'string') {
+      raw = err;
+    } else if (err && err.message != null) {
+      raw = String(err.message);
+    }
+    var msg = raw.trim();
+    var lower = msg.toLowerCase();
+    if (
+      msg === '' ||
+      lower === 'failed to fetch' ||
+      lower.indexOf('failed to fetch') !== -1 ||
+      lower.indexOf('networkerror') === 0 ||
+      lower === 'load failed' ||
+      lower === 'network request failed' ||
+      lower === 'the internet connection appears to be offline.'
+    ) {
+      return 'No hay conexión. Probá de nuevo en un momento.';
+    }
+    if (lower.indexOf('se esperaba json') === 0) {
+      return 'No se pudo completar la consulta. Probá de nuevo.';
+    }
+    if (/^HTTP 5\d\d/.test(msg)) {
+      return 'El servicio no está disponible. Probá de nuevo en un momento.';
+    }
+    if (/^HTTP \d+/.test(msg)) {
+      return 'No se pudo completar la consulta. Probá de nuevo.';
+    }
+    return msg;
+  };
+
+  /**
    * Extrae mensaje legible del cuerpo JSON de error API ({ message, error, errors._error }).
    * @param {string|object|null|undefined} body
    * @returns {string}
@@ -257,6 +299,11 @@
         }
         return { response: response, json: json };
       });
+    }).catch(function (e) {
+      if (e && e.name === 'AbortError') {
+        throw e;
+      }
+      throw new Error(NS.friendlyErrorMessage(e));
     });
   }
 

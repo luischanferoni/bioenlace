@@ -24,13 +24,72 @@
     return m ? m[1] : s;
   }
 
+  function friendlyErrorMessage(errOrMsg) {
+    if (window.BioenlaceApiClient && typeof window.BioenlaceApiClient.friendlyErrorMessage === 'function') {
+      return window.BioenlaceApiClient.friendlyErrorMessage(errOrMsg);
+    }
+    var msg = errOrMsg && errOrMsg.message ? String(errOrMsg.message) : String(errOrMsg || '');
+    if (!msg || /failed to fetch/i.test(msg)) {
+      return 'No hay conexión. Probá de nuevo en un momento.';
+    }
+    return msg;
+  }
+
+  var panelToastTimer = null;
+
+  function showPanelToast(msg) {
+    var text = String(msg || '').trim();
+    if (!text) return;
+    var existing = document.getElementById('pacientes-listado-toast');
+    if (existing) existing.remove();
+    if (panelToastTimer) {
+      window.clearTimeout(panelToastTimer);
+      panelToastTimer = null;
+    }
+    var wrap = document.createElement('div');
+    wrap.id = 'pacientes-listado-toast';
+    wrap.className = 'alert alert-warning alert-dismissible fade show shadow-sm';
+    wrap.setAttribute('role', 'status');
+    wrap.style.cssText =
+      'position:fixed;bottom:1rem;right:1rem;z-index:1080;max-width:min(420px,92vw);';
+    var icon = document.createElement('i');
+    icon.className = 'bi bi-exclamation-triangle me-2';
+    wrap.appendChild(icon);
+    wrap.appendChild(document.createTextNode(text));
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn-close';
+    btn.setAttribute('data-bs-dismiss', 'alert');
+    btn.setAttribute('aria-label', 'Cerrar');
+    wrap.appendChild(btn);
+    document.body.appendChild(wrap);
+    panelToastTimer = window.setTimeout(function () {
+      panelToastTimer = null;
+      if (window.bootstrap && window.bootstrap.Alert) {
+        try {
+          window.bootstrap.Alert.getOrCreateInstance(wrap).close();
+          return;
+        } catch (e) { /* ignore */ }
+      }
+      wrap.remove();
+    }, 5000);
+    wrap.addEventListener('closed.bs.alert', function () {
+      wrap.remove();
+    });
+  }
+
   function showError(errorEl, msg) {
-    if (!errorEl) return;
+    var text = friendlyErrorMessage(msg);
+    if (!text) return;
+    if (!errorEl) {
+      showPanelToast(text);
+      return;
+    }
     clearNode(errorEl);
     var i = document.createElement('i');
     i.className = 'bi bi-exclamation-triangle me-2';
     errorEl.appendChild(i);
-    errorEl.appendChild(document.createTextNode(String(msg || 'Error')));
+    errorEl.appendChild(document.createTextNode(text));
     errorEl.className = 'alert alert-warning';
     errorEl.classList.remove('d-none');
   }
@@ -2066,12 +2125,6 @@
       var titleEl = document.getElementById('guardiaAdmitirModalLabel');
       if (titleEl) {
         titleEl.textContent = isVentanilla ? 'Identificar paciente (ventanilla)' : 'Ingresar paciente a guardia';
-      }
-      var hintEl = document.getElementById('guardia-admitir-hint');
-      if (hintEl) {
-        hintEl.textContent = isVentanilla
-          ? 'Buscá por apellido o documento. Si no está, identificá con DNI (RENAPER) o foto Didit. No se usa NN en ventanilla.'
-          : 'Buscá por apellido o documento. Si no está, identificá con DNI (RENAPER), foto Didit o identidad pendiente (NN). Quien ya está en la cola de este efector no aparece.';
       }
       var submitBtn = document.getElementById('guardia-admitir-submit');
       if (submitBtn) submitBtn.textContent = isVentanilla ? 'Iniciar ventanilla' : 'Registrar ingreso';
@@ -4127,11 +4180,19 @@
           renderFromPanel(panel);
         }
         setLoading(false);
+        errorEl.classList.add('d-none');
 
         if (api.bindSpaNavLinks) api.bindSpaNavLinks(container);
       } catch (e) {
         setLoading(false);
-        showError(errorEl, e && e.message ? e.message : 'No se pudo cargar el panel.');
+        var msg = friendlyErrorMessage(e) || 'No se pudo cargar el panel.';
+        var background = options.showSpinner === false;
+        var hasContent = container && !container.classList.contains('d-none') && container.childNodes.length > 0;
+        if (background && hasContent) {
+          showPanelToast(msg);
+          return;
+        }
+        showError(errorEl, msg);
       }
     }
 

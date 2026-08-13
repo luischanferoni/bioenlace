@@ -43,11 +43,6 @@ $this->registerJs(
         <h1 class="h4 mb-0"><?= Html::encode($this->title) ?></h1>
     </div>
 
-    <p class="text-muted">
-        Alta sin MPI: identidad por <strong>lector de DNI</strong> o <strong>foto del documento (Didit)</strong>.
-        El domicilio se obtiene de RENAPER en segundo plano (mismo flujo que la app paciente).
-    </p>
-
     <ul class="nav nav-tabs" id="registroPacienteTabs" role="tablist">
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="tab-lector" data-bs-toggle="tab" data-bs-target="#panel-lector" type="button" role="tab">
@@ -67,7 +62,6 @@ $this->registerJs(
                 <input class="form-check-input" type="checkbox" id="registro-paciente-lector" checked>
                 <label class="form-check-label" for="registro-paciente-lector">Activar lector de código (PDF417)</label>
             </div>
-            <p class="small text-muted">Escaneá el reverso del DNI. Los datos se validan en RENAPER antes del alta.</p>
             <dl class="row small mb-2">
                 <dt class="col-sm-2">DNI</dt>
                 <dd class="col-sm-10" id="registro-paciente-documento">—</dd>
@@ -88,9 +82,6 @@ $this->registerJs(
                 <input type="hidden" id="registro-paciente-verification-id" value="<?= Html::encode($diditVerificationId) ?>">
                 <button type="button" class="btn btn-primary" id="btn-registrar-desde-didit">Confirmar alta con Didit</button>
             <?php else: ?>
-                <p class="small text-muted">
-                    Se abrirá la verificación Didit en una nueva página. El paciente (o usted con el DNI físico) completa foto y validación.
-                </p>
                 <button type="button" class="btn btn-primary" id="btn-iniciar-didit">Iniciar verificación Didit</button>
             <?php endif; ?>
         </div>

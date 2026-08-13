@@ -360,15 +360,6 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
       body: ListView(
         padding: const EdgeInsets.all(BioSpacing.md),
         children: [
-          Text(
-            _esVincular
-                ? 'Vinculá este episodio con DNI, Didit o un paciente conocido.'
-                : 'Buscá por apellido o documento. Si no está, identificá con DNI '
-                    '(RENAPER), foto Didit o identidad pendiente (NN). '
-                    'Quien ya está en la cola de este efector no aparece.',
-            style: BioTypography.bodySm,
-          ),
-          BioSpacing.gapH(BioSpacing.md),
           TextField(
             controller: _searchController,
             decoration: InputDecoration(
@@ -414,12 +405,6 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
           if (_altaVisible) ...[
             BioSpacing.gapH(BioSpacing.md),
             Text('Identidad con DNI', style: BioTypography.title),
-            BioSpacing.gapH(BioSpacing.sm),
-            Text(
-              'Los datos personales los trae RENAPER, el código de barras o Didit '
-              '(foto del DNI + selfie). No se cargan a mano.',
-              style: BioTypography.bodySm,
-            ),
             BioSpacing.gapH(BioSpacing.sm),
             TextField(
               controller: _barcodeController,

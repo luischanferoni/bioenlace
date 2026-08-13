@@ -181,7 +181,6 @@ $this->title = $esGuardia
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted small mb-3" id="guardia-admitir-hint">Buscá por apellido o documento. Si no está, identificá con DNI (RENAPER), foto Didit o identidad pendiente (NN). Quien ya está en la cola de este efector no aparece.</p>
                 <div class="mb-3">
                     <label class="form-label" for="guardia-admitir-q">Paciente conocido</label>
                     <input type="search" class="form-control" id="guardia-admitir-q" placeholder="Apellido o documento" autocomplete="off">
@@ -195,7 +194,6 @@ $this->title = $esGuardia
                 </div>
                 <div class="border rounded p-3 mb-3 d-none" id="guardia-admitir-alta">
                     <div class="fw-semibold mb-2">Identidad con DNI</div>
-                    <p class="text-muted small mb-2">Los datos personales los trae RENAPER, el código de barras o Didit (foto del DNI + selfie). No se cargan a mano.</p>
                     <div class="mb-2">
                         <label class="form-label" for="guardia-admitir-barcode">Código de barras del DNI (opcional)</label>
                         <input type="text" class="form-control" id="guardia-admitir-barcode" autocomplete="off">

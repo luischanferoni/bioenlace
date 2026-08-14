@@ -178,7 +178,7 @@ final class GuardiaIngresoService
     }
 
     /**
-     * Web no identifica con DNI/Didit: solo paciente conocido o NN.
+     * Clientes autorizados para identificar con DNI escaneado (`web` / `mobile`).
      *
      * @param array<string, mixed> $body
      */

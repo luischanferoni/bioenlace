@@ -23,9 +23,10 @@ panels:
           - Administrativo
           - AdminEfector
         # Admisión a guardia (no enfermería: el circuito de ingreso es administrativo).
-        # DNI/Didit solo en app Personal de Salud. Web: paciente conocido o NN.
+        # DNI por escaneo PDF417: app (cámara) y web (lector hardware).
         ingreso_dni_clients:
           - mobile
+          - web
         ingreso_roles:
           - Administrativo
           - AdminEfector

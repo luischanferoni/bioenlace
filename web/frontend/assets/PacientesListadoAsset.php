@@ -14,6 +14,7 @@ class PacientesListadoAsset extends AssetBundle
     /** @var list<class-string<AssetBundle>> */
     public $depends = [
         AppAsset::class,
+        \common\assets\DniBarcodeAsset::class,
     ];
 
     /** @var list<string> */
@@ -34,6 +35,7 @@ class PacientesListadoAsset extends AssetBundle
         parent::init();
 
         $files = [
+            'widgets/dni-barcode.js',
             'async-consulta-chat.js',
             'pacientes-listado.js',
         ];

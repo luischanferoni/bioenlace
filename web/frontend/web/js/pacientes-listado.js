@@ -1901,10 +1901,6 @@
       if (!puedeIngresar || !listTarget) return;
       var frag = importTemplate('tpl-guardia-board-toolbar');
       if (!frag) return;
-      var hint = frag.querySelector('[data-role="guardia-ingreso-dni-hint"]');
-      if (hint) {
-        hint.classList.toggle('d-none', puedeIngresarDni);
-      }
       var btn = frag.querySelector('[data-role="cta-ingresar-guardia"]');
       if (btn) {
         btn.classList.remove('d-none');
@@ -1922,6 +1918,166 @@
 
     var admitirModal = null;
     var admitirSearchTimer = null;
+    var admitirScannerAttached = false;
+    var admitirScannerListening = false;
+
+    function admitirDniEscaneado() {
+      var codigoEl = document.getElementById('guardia-admitir-codigo-barras');
+      return !!(codigoEl && (codigoEl.value || '').trim());
+    }
+
+    function clearAdmitirDniScan() {
+      var codigoEl = document.getElementById('guardia-admitir-codigo-barras');
+      var preview = document.getElementById('guardia-admitir-dni-preview');
+      var statusEl = document.getElementById('guardia-admitir-escaneo-status');
+      if (codigoEl) codigoEl.value = '';
+      if (preview) {
+        preview.innerHTML = '';
+        preview.classList.add('d-none');
+      }
+      if (statusEl) {
+        statusEl.textContent = '';
+        statusEl.classList.add('d-none');
+      }
+      admitirScannerListening = false;
+      syncAdmitirScanUi();
+    }
+
+    function syncAdmitirScanUi() {
+      var scanBtn = document.getElementById('guardia-admitir-escanear-dni');
+      var idEl = document.getElementById('guardia-admitir-id-persona');
+      var nn = document.getElementById('guardia-admitir-nn');
+      var idOk = parseInt((idEl && idEl.value) || '', 10) > 0;
+      var nnOk = !!(nn && nn.value === '1');
+      var scanned = admitirDniEscaneado();
+      var showScan = puedeIngresarDni && !idOk && !nnOk && !scanned;
+      if (scanBtn) {
+        scanBtn.classList.toggle('d-none', !showScan);
+        scanBtn.classList.toggle('active', admitirScannerListening);
+      }
+    }
+
+    function renderAdmitirDniPreview(data) {
+      var preview = document.getElementById('guardia-admitir-dni-preview');
+      if (!preview) return;
+      if (!data || data.encontrado !== true) {
+        preview.innerHTML =
+          '<div class="alert alert-warning mb-0 py-2">No se encontró en RENAPER. Revisá el código e intentá de nuevo.</div>';
+        preview.classList.remove('d-none');
+        return;
+      }
+      var label = window.BioenlaceDniBarcode
+        ? window.BioenlaceDniBarcode.formatPreviewLabel(data)
+        : '';
+      preview.innerHTML =
+        '<div class="alert alert-success mb-0 py-2">' +
+        '<strong>Paciente detectado</strong><br>' +
+        (label || 'Identidad verificada') +
+        '</div>';
+      preview.classList.remove('d-none');
+    }
+
+    function ensureAdmitirScanner() {
+      if (!puedeIngresarDni || admitirScannerAttached || typeof onScan === 'undefined') {
+        return;
+      }
+      admitirScannerAttached = true;
+      onScan.attachTo(document, {
+        reactToKeyDown: true,
+        reactToPaste: true,
+        timeBeforeScanTest: 200,
+        avgTimeByChar: 30,
+        onScan: function (sCode) {
+          if (!admitirScannerListening) return;
+          processAdmitirDniScan(sCode);
+        },
+      });
+    }
+
+    function startAdmitirDniScan() {
+      if (!puedeIngresarDni) return;
+      ensureAdmitirScanner();
+      clearAdmitirDniScan();
+      var idEl = document.getElementById('guardia-admitir-id-persona');
+      var sel = document.getElementById('guardia-admitir-seleccion');
+      var nn = document.getElementById('guardia-admitir-nn');
+      if (idEl) idEl.value = '';
+      if (nn) nn.value = '';
+      if (sel) {
+        sel.textContent = '';
+        sel.classList.add('d-none');
+      }
+      admitirScannerListening = true;
+      var statusEl = document.getElementById('guardia-admitir-escaneo-status');
+      if (statusEl) {
+        statusEl.textContent =
+          'Apuntá el lector al código PDF417 del DNI y escaneá.';
+        statusEl.classList.remove('d-none');
+      }
+      syncAdmitirScanUi();
+      syncAdmitirSubmit();
+    }
+
+    async function processAdmitirDniScan(sCode) {
+      var api = window.BioenlaceNativePage;
+      var errEl = document.getElementById('guardia-admitir-error');
+      if (!api) return;
+      if (errEl) errEl.classList.add('d-none');
+      var parsed = window.BioenlaceDniBarcode
+        ? window.BioenlaceDniBarcode.parse(sCode)
+        : null;
+      if (!parsed) {
+        if (errEl) {
+          errEl.textContent = 'Código de DNI no reconocido.';
+          errEl.classList.remove('d-none');
+        }
+        return;
+      }
+      var statusEl = document.getElementById('guardia-admitir-escaneo-status');
+      if (statusEl) {
+        statusEl.textContent = 'Consultando RENAPER…';
+      }
+      try {
+        var url = api.apiV1Url('registro/preview-renaper-como-staff');
+        var json = await api.fetchJson(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+          body: JSON.stringify({ codigo_barras: parsed.codigo_barras }),
+        });
+        if (json.success === false) {
+          throw new Error(json.message || 'No se pudo consultar RENAPER.');
+        }
+        var payload = json.data || json;
+        if (payload.identity) {
+          payload.identity.codigo_barras = parsed.codigo_barras;
+        }
+        if (payload.encontrado !== true) {
+          throw new Error(payload.mensaje || 'No se encontró la persona en RENAPER.');
+        }
+        var codigoEl = document.getElementById('guardia-admitir-codigo-barras');
+        if (codigoEl) codigoEl.value = parsed.codigo_barras;
+        admitirScannerListening = false;
+        if (statusEl) {
+          statusEl.textContent = '';
+          statusEl.classList.add('d-none');
+        }
+        renderAdmitirDniPreview(payload);
+        syncAdmitirScanUi();
+        syncAdmitirSubmit();
+      } catch (e) {
+        if (statusEl) {
+          statusEl.textContent = '';
+          statusEl.classList.add('d-none');
+        }
+        if (errEl) {
+          errEl.textContent = e && e.message ? e.message : 'Error al consultar RENAPER.';
+          errEl.classList.remove('d-none');
+        }
+      }
+    }
 
     function getAdmitirModal() {
       if (admitirModal) return admitirModal;
@@ -1949,13 +2105,15 @@
       var idEl = document.getElementById('guardia-admitir-id-persona');
       if (!btn || !idEl) return;
       var idOk = parseInt(idEl.value, 10) > 0;
-      btn.disabled = !(idOk || admitirNnConfirmado());
+      btn.disabled = !(idOk || admitirNnConfirmado() || admitirDniEscaneado());
+      syncAdmitirScanUi();
     }
 
     function setAdmitirNnConfirmed() {
       var nn = document.getElementById('guardia-admitir-nn');
       var idEl = document.getElementById('guardia-admitir-id-persona');
       var sel = document.getElementById('guardia-admitir-seleccion');
+      clearAdmitirDniScan();
       if (idEl) idEl.value = '';
       if (nn) nn.value = '1';
       if (sel) {
@@ -1997,6 +2155,7 @@
       if (ep) ep.classList.remove('d-none');
       var nnBtn = document.getElementById('guardia-admitir-nn-btn');
       if (nnBtn) nnBtn.classList.remove('d-none');
+      clearAdmitirDniScan();
       syncAdmitirTelVisibility();
       syncAdmitirSubmit();
     }
@@ -2008,6 +2167,8 @@
         showError(errorEl, 'No se pudo abrir el formulario (Bootstrap no disponible).');
         return;
       }
+      ensureAdmitirScanner();
+      syncAdmitirScanUi();
       modal.show();
       if (qEl) {
         setTimeout(function () { qEl.focus(); }, 200);
@@ -2062,7 +2223,9 @@
           results.appendChild(empty);
           var appHint = document.createElement('p');
           appHint.className = 'text-muted small mb-0 mt-2';
-          appHint.textContent = 'Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).';
+          appHint.textContent = puedeIngresarDni
+            ? 'Si no está en el sistema, usá el botón «Escanear DNI».'
+            : 'Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).';
           results.appendChild(appHint);
           return;
         }
@@ -2089,6 +2252,7 @@
       var sel = document.getElementById('guardia-admitir-seleccion');
       var results = document.getElementById('guardia-admitir-results');
       var nn = document.getElementById('guardia-admitir-nn');
+      clearAdmitirDniScan();
       if (idEl) idEl.value = String(id || '');
       if (nn) nn.value = '';
       if (sel) {
@@ -2102,13 +2266,19 @@
     function buildAdmitirIdentidadBody() {
       var body = {};
       var idEl = document.getElementById('guardia-admitir-id-persona');
+      var codigoEl = document.getElementById('guardia-admitir-codigo-barras');
       var idPersona = parseInt((idEl && idEl.value) || '', 10);
+      var codigo = codigoEl ? (codigoEl.value || '').trim() : '';
       if (idPersona > 0) {
         body.id_persona = idPersona;
         return body;
       }
       if (admitirNnConfirmado()) {
         body.identidad_pendiente = true;
+        return body;
+      }
+      if (codigo) {
+        body.codigo_barras = codigo;
       }
       return body;
     }
@@ -2122,7 +2292,8 @@
       if (errEl) errEl.classList.add('d-none');
       var idPersona = parseInt(idEl.value, 10);
       var altaOk = admitirNnConfirmado();
-      if (!(idPersona > 0) && !altaOk) return;
+      var dniOk = admitirDniEscaneado();
+      if (!(idPersona > 0) && !altaOk && !dniOk) return;
       var ingresaEn = (document.getElementById('guardia-admitir-ingresa-en') || {}).value || 'deambula';
       var ingresaCon = (document.getElementById('guardia-admitir-ingresa-con') || {}).value || 'solo';
       var tel = ((document.getElementById('guardia-admitir-tel') || {}).value || '').trim();
@@ -3959,6 +4130,10 @@
     var admitirNnBtn = document.getElementById('guardia-admitir-nn-btn');
     if (admitirNnBtn) {
       admitirNnBtn.addEventListener('click', setAdmitirNnConfirmed);
+    }
+    var admitirScanBtn = document.getElementById('guardia-admitir-escanear-dni');
+    if (admitirScanBtn) {
+      admitirScanBtn.addEventListener('click', startAdmitirDniScan);
     }
     var derivarSubmit = document.getElementById('guardia-derivar-submit');
     if (derivarSubmit) {

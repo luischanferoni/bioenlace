@@ -162,14 +162,23 @@ $this->title = $esGuardia
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <label class="form-label" for="guardia-admitir-q">Paciente conocido</label>
+                    <label class="form-label" for="guardia-admitir-q">Buscar paciente</label>
                     <input type="search" class="form-control" id="guardia-admitir-q" placeholder="Apellido o documento" autocomplete="off">
                     <input type="hidden" id="guardia-admitir-id-persona" value="">
                     <input type="hidden" id="guardia-admitir-nn" value="">
                     <input type="hidden" id="guardia-admitir-vincular-id" value="">
+                    <input type="hidden" id="guardia-admitir-codigo-barras" value="">
                     <div id="guardia-admitir-results" class="list-group mt-2 small"></div>
                     <div id="guardia-admitir-seleccion" class="form-text d-none"></div>
-                    <p class="text-muted small mb-2 mt-2" id="guardia-admitir-dni-hint">Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).</p>
+                    <div class="alert alert-warning py-2 px-3 small d-flex align-items-start gap-2 mb-2 mt-2" id="guardia-admitir-dni-hint" role="note">
+                        <i class="bi bi-exclamation-circle-fill flex-shrink-0" aria-hidden="true"></i>
+                        <span>Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).</span>
+                    </div>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-1 d-none" id="guardia-admitir-escanear-dni">
+                        <i class="bi bi-upc-scan me-1" aria-hidden="true"></i>Escanear DNI
+                    </button>
+                    <div id="guardia-admitir-escaneo-status" class="form-text text-primary d-none mt-1"></div>
+                    <div id="guardia-admitir-dni-preview" class="d-none mt-2"></div>
                     <button type="button" class="btn btn-outline-warning btn-sm mt-2 d-none" id="guardia-admitir-nn-btn">Sin documento / NN</button>
                 </div>
                 <div id="guardia-admitir-episodio-fields">

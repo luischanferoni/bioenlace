@@ -15,6 +15,23 @@ class EmergencyGuardiaActions {
     return e == 'finalizado' || e == 'derivado' || e == 'atendido';
   }
 
+  /// Staff (admisión / enfermería): mientras el episodio sea operable (paridad web).
+  /// Médico: solo si aún está en atención y no falta triage.
+  static bool puedeRegistrarPacienteSeRetiro({
+    required EmergencyBoardItem item,
+    required bool puedeAtender,
+    bool puedeTriage = false,
+    bool puedeIngresar = false,
+  }) {
+    if (episodioCerrado(item)) return false;
+    if (puedeAtender) {
+      final enAtencion = (item.circuitoEstado ?? '') == 'en_atencion';
+      return enAtencion && !item.needsTriage;
+    }
+    if (puedeTriage || puedeIngresar) return true;
+    return false;
+  }
+
   static Future<void> openTriage({
     required BuildContext context,
     required EmergencyBoardItem item,
@@ -93,14 +110,14 @@ class EmergencyGuardiaActions {
     onChanged();
   }
 
-  /// Menú ⋮ del médico: solo «Paciente se retiró» (cierra circuito).
-  /// La atención clínica es la captura del encounter; no hay egreso clínico.
+  /// Menú ⋮ del tablero: triage, identidad y «Paciente se retiró» según rol.
   static Future<void> showActionSheet({
     required BuildContext context,
     required EmergencyBoardItem item,
     required EmergencyGuardiaApi api,
     required VoidCallback onChanged,
     bool sessionTieneCobertura = true,
+    bool puedeAtender = false,
     bool puedeTriage = false,
     bool puedeIngresar = false,
   }) async {
@@ -120,7 +137,6 @@ class EmergencyGuardiaActions {
         ),
       ));
     }
-    final enAtencion = (item.circuitoEstado ?? '') == 'en_atencion';
     if (item.needsTriage && puedeTriage) {
       actions.add(_ActionDef(
         label: item.prioridadTriage != null ? 'Actualizar triage' : 'Registrar triage',
@@ -134,24 +150,28 @@ class EmergencyGuardiaActions {
         ),
       ));
     }
-    if (enAtencion && !item.needsTriage) {
+    if (puedeRegistrarPacienteSeRetiro(
+      item: item,
+      puedeAtender: puedeAtender,
+      puedeTriage: puedeTriage,
+      puedeIngresar: puedeIngresar,
+    )) {
       actions.add(_ActionDef(
         label: 'Paciente se retiró',
         icon: Icons.logout,
-        onTap: () => _finalizar(context, item, api, onChanged),
+        onTap: () => openPacienteSeRetiro(context, item, api, onChanged),
       ));
     }
 
     if (actions.isEmpty) {
       if (!context.mounted) return;
+      final mensaje = item.needsTriage
+          ? 'Pendiente de triage. Lo registra admisión o enfermería.'
+          : (puedeAtender
+              ? 'Atendé al paciente para egresar. La derivación se carga en la consulta.'
+              : 'No hay acciones disponibles para este caso.');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            item.needsTriage
-                ? 'Pendiente de triage. Lo registra admisión o enfermería.'
-                : 'Atendé al paciente para egresar. La derivación se carga en la consulta.',
-          ),
-        ),
+        SnackBar(content: Text(mensaje)),
       );
       return;
     }
@@ -395,7 +415,7 @@ class EmergencyGuardiaActions {
     }
   }
 
-  static Future<void> _finalizar(
+  static Future<void> openPacienteSeRetiro(
     BuildContext context,
     EmergencyBoardItem item,
     EmergencyGuardiaApi api,

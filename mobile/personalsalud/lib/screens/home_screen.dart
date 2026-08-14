@@ -1565,6 +1565,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           api: _emergencyApi,
                           onChanged: refresh,
                           sessionTieneCobertura: _sessionTieneCobertura,
+                          puedeAtender: _puedeAtender,
                           puedeTriage: _puedeTriage,
                           puedeIngresar: _puedeIngresar,
                         );
@@ -1630,6 +1631,26 @@ class _HomeScreenState extends State<HomeScreen> {
           label: 'Nota',
           size: BioButtonSize.sm,
           onPressed: () => _onGuardiaTap(g),
+        ),
+      );
+    }
+    if (!_puedeAtender &&
+        EmergencyGuardiaActions.puedeRegistrarPacienteSeRetiro(
+          item: g,
+          puedeAtender: _puedeAtender,
+          puedeTriage: _puedeTriage,
+          puedeIngresar: _puedeIngresar,
+        )) {
+      actions.add(
+        BioButton.outlinePrimary(
+          label: 'Se retiró',
+          size: BioButtonSize.sm,
+          onPressed: () => EmergencyGuardiaActions.openPacienteSeRetiro(
+            context,
+            g,
+            _emergencyApi,
+            () => _cargarListadoPacientes(silent: true),
+          ),
         ),
       );
     }

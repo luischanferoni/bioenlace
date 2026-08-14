@@ -26,7 +26,10 @@ class PacientesListadoAsset extends AssetBundle
     public static function registerWithDepends(View $view, array $extraDepends = []): void
     {
         $bundle = new static();
-        $bundle->depends = array_values(array_merge([AppAsset::class], $extraDepends));
+        $bundle->depends = array_values(array_merge(
+            [AppAsset::class, \common\assets\DniBarcodeAsset::class],
+            $extraDepends
+        ));
         $bundle->register($view);
     }
 

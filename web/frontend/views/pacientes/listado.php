@@ -168,18 +168,21 @@ $this->title = $esGuardia
                     <input type="hidden" id="guardia-admitir-nn" value="">
                     <input type="hidden" id="guardia-admitir-vincular-id" value="">
                     <input type="hidden" id="guardia-admitir-codigo-barras" value="">
+                    <input type="text" id="guardia-admitir-scan-capture" class="visually-hidden" autocomplete="off" aria-hidden="true" tabindex="-1">
                     <div id="guardia-admitir-results" class="list-group mt-2 small"></div>
                     <div id="guardia-admitir-seleccion" class="form-text d-none"></div>
-                    <div class="alert alert-warning py-2 px-3 small d-flex align-items-start gap-2 mb-2 mt-2" id="guardia-admitir-dni-hint" role="note">
+                    <p class="alert alert-warning py-2 px-3 small mb-2 mt-2 d-flex align-items-start gap-2" id="guardia-admitir-dni-hint" role="note">
                         <i class="bi bi-exclamation-circle-fill flex-shrink-0" aria-hidden="true"></i>
                         <span>Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).</span>
+                    </p>
+                    <div id="guardia-admitir-acciones-wrap" class="d-none d-flex justify-content-center align-items-center gap-2 flex-wrap mt-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm d-none" id="guardia-admitir-escanear-dni">
+                            <i class="bi bi-upc-scan me-1" aria-hidden="true"></i>Escanear DNI
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm d-none" id="guardia-admitir-nn-btn">Sin documento / NN</button>
                     </div>
-                    <button type="button" class="btn btn-outline-primary btn-sm mt-1 d-none" id="guardia-admitir-escanear-dni">
-                        <i class="bi bi-upc-scan me-1" aria-hidden="true"></i>Escanear DNI
-                    </button>
-                    <div id="guardia-admitir-escaneo-status" class="form-text text-primary d-none mt-1"></div>
+                    <div id="guardia-admitir-escaneo-status" class="form-text text-primary text-center d-none mt-2 mb-0"></div>
                     <div id="guardia-admitir-dni-preview" class="d-none mt-2"></div>
-                    <button type="button" class="btn btn-outline-warning btn-sm mt-2 d-none" id="guardia-admitir-nn-btn">Sin documento / NN</button>
                 </div>
                 <div id="guardia-admitir-episodio-fields">
                 <div class="mb-3">

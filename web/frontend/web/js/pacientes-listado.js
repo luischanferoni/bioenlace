@@ -1945,15 +1945,28 @@
 
     function syncAdmitirScanUi() {
       var scanBtn = document.getElementById('guardia-admitir-escanear-dni');
+      var nnBtn = document.getElementById('guardia-admitir-nn-btn');
+      var wrap = document.getElementById('guardia-admitir-acciones-wrap');
       var idEl = document.getElementById('guardia-admitir-id-persona');
       var nn = document.getElementById('guardia-admitir-nn');
+      var vincularEl = document.getElementById('guardia-admitir-vincular-id');
+      var vincularId = parseInt((vincularEl && vincularEl.value) || '', 10);
+      var isVincular = vincularId > 0;
       var idOk = parseInt((idEl && idEl.value) || '', 10) > 0;
       var nnOk = !!(nn && nn.value === '1');
       var scanned = admitirDniEscaneado();
-      var showScan = puedeIngresarDni && !idOk && !nnOk && !scanned;
+      var showActions = !idOk && !nnOk && !scanned;
+      var showScan = puedeIngresarDni && showActions;
+      var showNn = !isVincular && showActions;
+      if (wrap) {
+        wrap.classList.toggle('d-none', !showScan && !showNn);
+      }
       if (scanBtn) {
         scanBtn.classList.toggle('d-none', !showScan);
         scanBtn.classList.toggle('active', admitirScannerListening);
+      }
+      if (nnBtn) {
+        nnBtn.classList.toggle('d-none', !showNn);
       }
     }
 
@@ -1978,8 +1991,11 @@
     }
 
     function ensureAdmitirScanner() {
-      if (!puedeIngresarDni || admitirScannerAttached || typeof onScan === 'undefined') {
-        return;
+      if (!puedeIngresarDni || admitirScannerAttached) {
+        return typeof onScan !== 'undefined';
+      }
+      if (typeof onScan === 'undefined') {
+        return false;
       }
       admitirScannerAttached = true;
       onScan.attachTo(document, {
@@ -1987,16 +2003,37 @@
         reactToPaste: true,
         timeBeforeScanTest: 200,
         avgTimeByChar: 30,
+        minLength: 6,
         onScan: function (sCode) {
           if (!admitirScannerListening) return;
           processAdmitirDniScan(sCode);
         },
       });
+      return true;
+    }
+
+    function focusAdmitirScanCapture() {
+      var qEl = document.getElementById('guardia-admitir-q');
+      var capture = document.getElementById('guardia-admitir-scan-capture');
+      if (qEl) qEl.blur();
+      if (capture) {
+        capture.value = '';
+        capture.focus();
+      }
     }
 
     function startAdmitirDniScan() {
       if (!puedeIngresarDni) return;
-      ensureAdmitirScanner();
+      var errEl = document.getElementById('guardia-admitir-error');
+      if (!ensureAdmitirScanner()) {
+        if (errEl) {
+          errEl.textContent =
+            'No se pudo iniciar el lector de códigos. Recargá la página (Ctrl+F5).';
+          errEl.classList.remove('d-none');
+        }
+        return;
+      }
+      if (errEl) errEl.classList.add('d-none');
       clearAdmitirDniScan();
       var idEl = document.getElementById('guardia-admitir-id-persona');
       var sel = document.getElementById('guardia-admitir-seleccion');
@@ -2008,6 +2045,7 @@
         sel.classList.add('d-none');
       }
       admitirScannerListening = true;
+      focusAdmitirScanCapture();
       var statusEl = document.getElementById('guardia-admitir-escaneo-status');
       if (statusEl) {
         statusEl.textContent =
@@ -2153,8 +2191,6 @@
       if (submitBtn) submitBtn.textContent = 'Registrar ingreso';
       var ep = document.getElementById('guardia-admitir-episodio-fields');
       if (ep) ep.classList.remove('d-none');
-      var nnBtn = document.getElementById('guardia-admitir-nn-btn');
-      if (nnBtn) nnBtn.classList.remove('d-none');
       clearAdmitirDniScan();
       syncAdmitirTelVisibility();
       syncAdmitirSubmit();
@@ -2198,8 +2234,7 @@
       if (submitBtn) submitBtn.textContent = 'Vincular identidad';
       var ep = document.getElementById('guardia-admitir-episodio-fields');
       if (ep) ep.classList.add('d-none');
-      var nnBtn = document.getElementById('guardia-admitir-nn-btn');
-      if (nnBtn) nnBtn.classList.add('d-none');
+      syncAdmitirScanUi();
     }
 
     async function searchAdmitirCandidatos(q) {

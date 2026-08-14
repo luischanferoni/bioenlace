@@ -17,7 +17,5 @@ class DniBarcodeAsset extends AssetBundle
     ];
 
     /** @var list<class-string<AssetBundle>> */
-    public $depends = [
-        AppAsset::class,
-    ];
+    public $depends = [];
 }

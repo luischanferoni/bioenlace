@@ -10,7 +10,8 @@ use common\components\Platform\Core\Product\ClientContextMetadata;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 
 /**
- * Atajos de inicio: subconjunto ordenado de **intents** con grant explícito (sin rutas sueltas).
+ * Atajos de inicio: intents del asistente con grant explícito.
+ * No incluyen pantallas nativas (tablero, home, Flutter); esas se abren fuera del chat.
  *
  * Importante:
  * - Para flows conversacionales, la acción se ejecuta vía `/api/v1/asistente/enviar` con `action_id`.

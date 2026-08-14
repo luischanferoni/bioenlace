@@ -2357,10 +2357,8 @@
                 }
 
                 if (okNative) {
-                    const webPath = co.web && typeof co.web.path === 'string' ? co.web.path.trim() : '';
-                    if (webPath !== '') {
-                        spaNavigateToUrl(webPath, flowActionTitle || 'Inicio');
-                    }
+                    // El asistente no lanza UIs nativas (tablero, home, pantallas Flutter).
+                    // El texto del paso basta; el staff usa el inicio / app nativa.
                     setTimeout(scrollChatToBottom, 20);
                     return;
                 }

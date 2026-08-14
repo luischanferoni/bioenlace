@@ -2,11 +2,47 @@
 
 namespace common\components\Platform\Assistant\Catalog;
 
+use common\components\Platform\Core\Permission\IntentManifestIndex;
+
 /**
  * Metadata de atajo en manifiestos de intent ({@see intents/*.yaml} → clave `shortcut` / `shortcuts`).
+ *
+ * Atajos = intents del asistente con UI genérica embebible. No lanzan pantallas nativas.
  */
 final class IntentShortcutMetadata
 {
+    /**
+     * True si algún open_ui del intent abre una pantalla nativa (web path / mobile screen).
+     */
+    public static function opensNativeUi(string $intentId): bool
+    {
+        $intentId = trim($intentId);
+        if ($intentId === '') {
+            return false;
+        }
+
+        $meta = IntentManifestIndex::get($intentId);
+        if ($meta === null) {
+            return false;
+        }
+
+        foreach ($meta['open_ui_steps'] ?? [] as $step) {
+            if (!is_array($step)) {
+                continue;
+            }
+            $actionId = trim((string) ($step['action_id'] ?? ''));
+            if ($actionId === '') {
+                continue;
+            }
+            $clientOpen = UiActionCatalogProviderRegistry::clientOpenForActionId($actionId);
+            if (is_array($clientOpen) && trim((string) ($clientOpen['kind'] ?? '')) === 'native') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * @param array<string, mixed> $manifest
      *

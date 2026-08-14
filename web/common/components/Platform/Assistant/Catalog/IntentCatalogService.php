@@ -48,8 +48,32 @@ final class IntentCatalogService
         $all = YamlIntentCatalogService::discoverAll($useCache);
         $filtered = YamlIntentCatalogService::filterByIntentGrant($all, $userId);
         $filtered = ClientContextService::filterPacienteFlows($filtered);
+        $filtered = self::filterByPacienteOffering($filtered);
 
-        return self::filterByPacienteOffering($filtered);
+        return self::excludeNativeOpenUi($filtered);
+    }
+
+    /**
+     * Atajos no lanzan UIs nativas: solo intents con UI genérica dentro del asistente.
+     *
+     * @param array<int, array<string, mixed>> $flows
+     * @return array<int, array<string, mixed>>
+     */
+    private static function excludeNativeOpenUi(array $flows): array
+    {
+        $out = [];
+        foreach ($flows as $flow) {
+            if (!is_array($flow)) {
+                continue;
+            }
+            $intentId = trim((string) ($flow['action_id'] ?? ''));
+            if ($intentId !== '' && IntentShortcutMetadata::opensNativeUi($intentId)) {
+                continue;
+            }
+            $out[] = $flow;
+        }
+
+        return $out;
     }
 
     /**

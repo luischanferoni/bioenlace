@@ -262,6 +262,17 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
     await _procesarCodigoBarras(codigo.trim());
   }
 
+  void _limpiarIdentidadElegida() {
+    setState(() {
+      _selectedPersonaId = null;
+      _selectedPersonaLabel = null;
+      _nnPendiente = false;
+      _limpiarEscaneoDni();
+      _searchController.clear();
+      _candidatos = [];
+    });
+  }
+
   Widget _buildPacienteResumen() {
     if (!_mostrarResumenPaciente) return const SizedBox.shrink();
 
@@ -289,29 +300,34 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            title,
-            style: BioTypography.caption.copyWith(
-              color: palette.base,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.4,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: BioTypography.caption.copyWith(
+                    color: palette.base,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+              ),
+              IconButton(
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                tooltip: 'Quitar selección',
+                onPressed: _limpiarIdentidadElegida,
+                icon: Icon(Icons.close, color: palette.base, size: 20),
+              ),
+            ],
           ),
           BioSpacing.gapH(BioSpacing.xs),
           Text(
             body,
             style: BioTypography.title.copyWith(fontWeight: FontWeight.w600),
           ),
-          if (_identidadLabel != null && _selectedPersonaId == null) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: _consultandoIdentidad ? null : _escanearDni,
-                child: const Text('Escanear otro DNI'),
-              ),
-            ),
-          ],
         ],
       ),
     );

@@ -1941,6 +1941,46 @@
       el.classList.add('d-none');
     }
 
+    function clearAdmitirIdentidadElegida() {
+      var idEl = document.getElementById('guardia-admitir-id-persona');
+      var nn = document.getElementById('guardia-admitir-nn');
+      var qEl = document.getElementById('guardia-admitir-q');
+      var results = document.getElementById('guardia-admitir-results');
+      if (idEl) idEl.value = '';
+      if (nn) nn.value = '';
+      if (qEl) qEl.value = '';
+      if (results) clearNode(results);
+      clearAdmitirDniScan();
+      clearAdmitirPacienteResumen();
+      syncAdmitirSubmit();
+    }
+
+    function admitirResumenDismissBtn() {
+      return (
+        '<button type="button" class="btn-close flex-shrink-0 mt-1" ' +
+        'data-role="admitir-resumen-clear" aria-label="Quitar selección"></button>'
+      );
+    }
+
+    function admitirResumenAlertHtml(intent, title, bodyHtml) {
+      var alertClass =
+        intent === 'warning' ? 'alert-warning border-warning' : 'alert-success border-success';
+      var titleClass =
+        intent === 'warning' ? '' : ' text-success-emphasis';
+      return (
+        '<div class="alert ' + alertClass + ' border py-3 px-3 mb-0">' +
+        '<div class="d-flex align-items-start justify-content-between gap-2">' +
+        '<div class="flex-grow-1 min-w-0">' +
+        '<div class="small text-uppercase fw-semibold' + titleClass + ' mb-1">' +
+        title +
+        '</div>' +
+        bodyHtml +
+        '</div>' +
+        admitirResumenDismissBtn() +
+        '</div></div>'
+      );
+    }
+
     function renderAdmitirPacienteResumen(html) {
       var el = document.getElementById('guardia-admitir-paciente-resumen');
       if (!el) return;
@@ -1954,10 +1994,11 @@
 
     function renderAdmitirPacienteSeleccionado(label) {
       renderAdmitirPacienteResumen(
-        '<div class="alert alert-success border border-success py-3 px-3 mb-0">' +
-        '<div class="small text-uppercase fw-semibold text-success-emphasis mb-1">Paciente seleccionado</div>' +
-        '<div class="fs-5 fw-semibold mb-0">' + admitirEscapeHtml(label) + '</div>' +
-        '</div>'
+        admitirResumenAlertHtml(
+          'success',
+          'Paciente seleccionado',
+          '<div class="fs-5 fw-semibold mb-0">' + admitirEscapeHtml(label) + '</div>'
+        )
       );
     }
 
@@ -1985,28 +2026,31 @@
       var idOk = parseInt((idEl && idEl.value) || '', 10) > 0;
       var nnOk = !!(nn && nn.value === '1');
       var scanned = admitirDniEscaneado();
-      var showActions = !idOk && !nnOk && !scanned;
-      var showScan = puedeIngresarDni && showActions;
-      var showNn = !isVincular && showActions;
+      var showIngresoActions = !idOk && !nnOk && !scanned;
+      var showVincularActions = !idOk && !scanned;
+      var showScan = puedeIngresarDni && (isVincular ? showVincularActions : showIngresoActions);
+      var showNn = !isVincular && showIngresoActions;
       if (wrap) {
-        wrap.classList.toggle('d-none', !showScan && !showNn);
+        wrap.classList.toggle('d-none', isVincular ? !showScan : !showScan && !showNn);
       }
       if (scanBtn) {
         scanBtn.classList.toggle('d-none', !showScan);
         scanBtn.classList.toggle('active', admitirScannerListening);
       }
       if (nnBtn) {
-        nnBtn.classList.toggle('d-none', !showNn);
+        // Identificar NN: solo búsqueda + escaneo; no registrar otro NN.
+        nnBtn.classList.toggle('d-none', isVincular || !showNn);
       }
     }
 
     function renderAdmitirDniPreview(data) {
       if (!data || data.encontrado !== true) {
         renderAdmitirPacienteResumen(
-          '<div class="alert alert-warning border border-warning py-3 px-3 mb-0">' +
-          '<div class="small text-uppercase fw-semibold mb-1">Paciente detectado</div>' +
-          '<div class="mb-0">No se encontró en RENAPER. Revisá el código e intentá de nuevo.</div>' +
-          '</div>'
+          admitirResumenAlertHtml(
+            'warning',
+            'Paciente detectado',
+            '<div class="mb-0">No se encontró en RENAPER. Revisá el código e intentá de nuevo.</div>'
+          )
         );
         return;
       }
@@ -2014,10 +2058,13 @@
         ? window.BioenlaceDniBarcode.formatPreviewLabel(data)
         : '';
       renderAdmitirPacienteResumen(
-        '<div class="alert alert-success border border-success py-3 px-3 mb-0">' +
-        '<div class="small text-uppercase fw-semibold text-success-emphasis mb-1">Paciente detectado</div>' +
-        '<div class="fs-5 fw-semibold mb-0">' + admitirEscapeHtml(label || 'Identidad verificada') + '</div>' +
-        '</div>'
+        admitirResumenAlertHtml(
+          'success',
+          'Paciente detectado',
+          '<div class="fs-5 fw-semibold mb-0">' +
+            admitirEscapeHtml(label || 'Identidad verificada') +
+            '</div>'
+        )
       );
     }
 
@@ -2181,10 +2228,11 @@
       if (idEl) idEl.value = '';
       if (nn) nn.value = '1';
       renderAdmitirPacienteResumen(
-        '<div class="alert alert-warning border border-warning py-3 px-3 mb-0">' +
-        '<div class="small text-uppercase fw-semibold mb-1">Identidad pendiente (NN)</div>' +
-        '<div class="mb-0">Se vincula cuando aparezca el DNI.</div>' +
-        '</div>'
+        admitirResumenAlertHtml(
+          'warning',
+          'Identidad pendiente (NN)',
+          '<div class="mb-0">Se vincula cuando aparezca el DNI.</div>'
+        )
       );
       syncAdmitirSubmit();
     }
@@ -4189,6 +4237,17 @@
     var admitirScanBtn = document.getElementById('guardia-admitir-escanear-dni');
     if (admitirScanBtn) {
       admitirScanBtn.addEventListener('click', startAdmitirDniScan);
+    }
+    var admitirModalEl = document.getElementById('guardia-admitir-modal');
+    if (admitirModalEl) {
+      admitirModalEl.addEventListener('click', function (ev) {
+        var clearBtn = ev.target && ev.target.closest
+          ? ev.target.closest('[data-role="admitir-resumen-clear"]')
+          : null;
+        if (!clearBtn) return;
+        ev.preventDefault();
+        clearAdmitirIdentidadElegida();
+      });
     }
     var derivarSubmit = document.getElementById('guardia-derivar-submit');
     if (derivarSubmit) {

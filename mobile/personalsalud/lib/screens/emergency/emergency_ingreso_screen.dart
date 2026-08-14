@@ -83,6 +83,11 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
   bool get _esVincular =>
       widget.vincularGuardiaId != null && widget.vincularGuardiaId! > 0;
 
+  bool get _mostrarResumenPaciente =>
+      _selectedPersonaLabel != null ||
+      (_nnPendiente && !_esVincular) ||
+      (_identidadLabel != null && _selectedPersonaId == null);
+
   Future<void> _buscar(String q) async {
     final term = q.trim();
     if (term.length < 2) {
@@ -257,6 +262,61 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
     await _procesarCodigoBarras(codigo.trim());
   }
 
+  Widget _buildPacienteResumen() {
+    if (!_mostrarResumenPaciente) return const SizedBox.shrink();
+
+    final UiIntent intent;
+    final String title;
+    final String body;
+
+    if (_selectedPersonaLabel != null) {
+      intent = UiIntent.success;
+      title = 'Paciente seleccionado';
+      body = _selectedPersonaLabel!;
+    } else if (_nnPendiente) {
+      intent = UiIntent.warning;
+      title = 'Identidad pendiente (NN)';
+      body = 'Se vincula cuando aparezca el DNI.';
+    } else {
+      intent = UiIntent.success;
+      title = 'Paciente detectado';
+      body = _identidadLabel ?? '';
+    }
+
+    final palette = IntentPalette.of(intent);
+    return BioCard.intent(
+      intent: intent,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            title,
+            style: BioTypography.caption.copyWith(
+              color: palette.base,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.4,
+            ),
+          ),
+          BioSpacing.gapH(BioSpacing.xs),
+          Text(
+            body,
+            style: BioTypography.title.copyWith(fontWeight: FontWeight.w600),
+          ),
+          if (_identidadLabel != null && _selectedPersonaId == null) ...[
+            BioSpacing.gapH(BioSpacing.sm),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                onPressed: _consultandoIdentidad ? null : _escanearDni,
+                child: const Text('Escanear otro DNI'),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -296,13 +356,6 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
               _buscar(v);
             },
           ),
-          if (_selectedPersonaLabel != null) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            Text(
-              'Seleccionado: $_selectedPersonaLabel',
-              style: BioTypography.bodySm,
-            ),
-          ],
           if (_candidatos.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
             ..._candidatos.map(
@@ -329,13 +382,6 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
               child: const Text('Sin documento / NN'),
             ),
           ],
-          if (_nnPendiente && !_esVincular) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            Text(
-              'Identidad pendiente (NN). Se vincula cuando aparezca el DNI.',
-              style: BioTypography.bodySm,
-            ),
-          ],
           if (_mostrarEscanearDni) ...[
             BioSpacing.gapH(BioSpacing.md),
             OutlinedButton.icon(
@@ -346,26 +392,9 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
               ),
             ),
           ],
-          if (_identidadLabel != null && _selectedPersonaId == null) ...[
-            BioSpacing.gapH(BioSpacing.sm),
-            BioCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text('Paciente detectado', style: BioTypography.title),
-                  BioSpacing.gapH(BioSpacing.xs),
-                  Text(_identidadLabel!, style: BioTypography.bodySm),
-                  BioSpacing.gapH(BioSpacing.sm),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: _consultandoIdentidad ? null : _escanearDni,
-                      child: const Text('Escanear otro DNI'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          if (_mostrarResumenPaciente) ...[
+            BioSpacing.gapH(BioSpacing.md),
+            _buildPacienteResumen(),
           ],
           if (!_esVincular) ...[
             BioSpacing.gapH(BioSpacing.md),

@@ -170,7 +170,6 @@ $this->title = $esGuardia
                     <input type="hidden" id="guardia-admitir-codigo-barras" value="">
                     <input type="text" id="guardia-admitir-scan-capture" class="visually-hidden" autocomplete="off" aria-hidden="true" tabindex="-1">
                     <div id="guardia-admitir-results" class="list-group mt-2 small"></div>
-                    <div id="guardia-admitir-seleccion" class="form-text d-none"></div>
                     <p class="alert alert-warning py-2 px-3 small mb-2 mt-2 d-flex align-items-start gap-2" id="guardia-admitir-dni-hint" role="note">
                         <i class="bi bi-exclamation-circle-fill flex-shrink-0" aria-hidden="true"></i>
                         <span>Si no está en el sistema, ingresalo desde la app Personal de Salud (escaneo de DNI).</span>
@@ -182,8 +181,8 @@ $this->title = $esGuardia
                         <button type="button" class="btn btn-outline-warning btn-sm" id="guardia-admitir-nn-btn">Sin documento / NN</button>
                     </div>
                     <div id="guardia-admitir-escaneo-status" class="form-text text-primary text-center d-none mt-2 mb-0"></div>
-                    <div id="guardia-admitir-dni-preview" class="d-none mt-2"></div>
                 </div>
+                <div id="guardia-admitir-paciente-resumen" class="d-none mb-3"></div>
                 <div id="guardia-admitir-episodio-fields">
                 <div class="mb-3">
                     <label class="form-label" for="guardia-admitir-ingresa-en">Ingresa en</label>

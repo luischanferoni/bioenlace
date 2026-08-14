@@ -1926,15 +1926,45 @@
       return !!(codigoEl && (codigoEl.value || '').trim());
     }
 
+    function admitirEscapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    function clearAdmitirPacienteResumen() {
+      var el = document.getElementById('guardia-admitir-paciente-resumen');
+      if (!el) return;
+      el.innerHTML = '';
+      el.classList.add('d-none');
+    }
+
+    function renderAdmitirPacienteResumen(html) {
+      var el = document.getElementById('guardia-admitir-paciente-resumen');
+      if (!el) return;
+      if (!html) {
+        clearAdmitirPacienteResumen();
+        return;
+      }
+      el.innerHTML = html;
+      el.classList.remove('d-none');
+    }
+
+    function renderAdmitirPacienteSeleccionado(label) {
+      renderAdmitirPacienteResumen(
+        '<div class="alert alert-success border border-success py-3 px-3 mb-0">' +
+        '<div class="small text-uppercase fw-semibold text-success-emphasis mb-1">Paciente seleccionado</div>' +
+        '<div class="fs-5 fw-semibold mb-0">' + admitirEscapeHtml(label) + '</div>' +
+        '</div>'
+      );
+    }
+
     function clearAdmitirDniScan() {
       var codigoEl = document.getElementById('guardia-admitir-codigo-barras');
-      var preview = document.getElementById('guardia-admitir-dni-preview');
       var statusEl = document.getElementById('guardia-admitir-escaneo-status');
       if (codigoEl) codigoEl.value = '';
-      if (preview) {
-        preview.innerHTML = '';
-        preview.classList.add('d-none');
-      }
       if (statusEl) {
         statusEl.textContent = '';
         statusEl.classList.add('d-none');
@@ -1971,23 +2001,24 @@
     }
 
     function renderAdmitirDniPreview(data) {
-      var preview = document.getElementById('guardia-admitir-dni-preview');
-      if (!preview) return;
       if (!data || data.encontrado !== true) {
-        preview.innerHTML =
-          '<div class="alert alert-warning mb-0 py-2">No se encontró en RENAPER. Revisá el código e intentá de nuevo.</div>';
-        preview.classList.remove('d-none');
+        renderAdmitirPacienteResumen(
+          '<div class="alert alert-warning border border-warning py-3 px-3 mb-0">' +
+          '<div class="small text-uppercase fw-semibold mb-1">Paciente detectado</div>' +
+          '<div class="mb-0">No se encontró en RENAPER. Revisá el código e intentá de nuevo.</div>' +
+          '</div>'
+        );
         return;
       }
       var label = window.BioenlaceDniBarcode
         ? window.BioenlaceDniBarcode.formatPreviewLabel(data)
         : '';
-      preview.innerHTML =
-        '<div class="alert alert-success mb-0 py-2">' +
-        '<strong>Paciente detectado</strong><br>' +
-        (label || 'Identidad verificada') +
-        '</div>';
-      preview.classList.remove('d-none');
+      renderAdmitirPacienteResumen(
+        '<div class="alert alert-success border border-success py-3 px-3 mb-0">' +
+        '<div class="small text-uppercase fw-semibold text-success-emphasis mb-1">Paciente detectado</div>' +
+        '<div class="fs-5 fw-semibold mb-0">' + admitirEscapeHtml(label || 'Identidad verificada') + '</div>' +
+        '</div>'
+      );
     }
 
     function ensureAdmitirScanner() {
@@ -2035,15 +2066,11 @@
       }
       if (errEl) errEl.classList.add('d-none');
       clearAdmitirDniScan();
+      clearAdmitirPacienteResumen();
       var idEl = document.getElementById('guardia-admitir-id-persona');
-      var sel = document.getElementById('guardia-admitir-seleccion');
       var nn = document.getElementById('guardia-admitir-nn');
       if (idEl) idEl.value = '';
       if (nn) nn.value = '';
-      if (sel) {
-        sel.textContent = '';
-        sel.classList.add('d-none');
-      }
       admitirScannerListening = true;
       focusAdmitirScanCapture();
       var statusEl = document.getElementById('guardia-admitir-escaneo-status');
@@ -2150,14 +2177,15 @@
     function setAdmitirNnConfirmed() {
       var nn = document.getElementById('guardia-admitir-nn');
       var idEl = document.getElementById('guardia-admitir-id-persona');
-      var sel = document.getElementById('guardia-admitir-seleccion');
       clearAdmitirDniScan();
       if (idEl) idEl.value = '';
       if (nn) nn.value = '1';
-      if (sel) {
-        sel.textContent = 'Identidad pendiente (NN). Se vincula cuando aparezca el DNI.';
-        sel.classList.remove('d-none');
-      }
+      renderAdmitirPacienteResumen(
+        '<div class="alert alert-warning border border-warning py-3 px-3 mb-0">' +
+        '<div class="small text-uppercase fw-semibold mb-1">Identidad pendiente (NN)</div>' +
+        '<div class="mb-0">Se vincula cuando aparezca el DNI.</div>' +
+        '</div>'
+      );
       syncAdmitirSubmit();
     }
 
@@ -2165,7 +2193,6 @@
       var idEl = document.getElementById('guardia-admitir-id-persona');
       var qEl = document.getElementById('guardia-admitir-q');
       var results = document.getElementById('guardia-admitir-results');
-      var sel = document.getElementById('guardia-admitir-seleccion');
       var errEl = document.getElementById('guardia-admitir-error');
       var sit = document.getElementById('guardia-admitir-situacion');
       var tel = document.getElementById('guardia-admitir-tel');
@@ -2174,10 +2201,7 @@
       if (idEl) idEl.value = '';
       if (qEl) qEl.value = '';
       if (results) clearNode(results);
-      if (sel) {
-        sel.textContent = '';
-        sel.classList.add('d-none');
-      }
+      clearAdmitirPacienteResumen();
       if (errEl) errEl.classList.add('d-none');
       if (sit) sit.value = '';
       if (tel) tel.value = '';
@@ -2284,16 +2308,12 @@
 
     function pickAdmitirPersona(id, label) {
       var idEl = document.getElementById('guardia-admitir-id-persona');
-      var sel = document.getElementById('guardia-admitir-seleccion');
       var results = document.getElementById('guardia-admitir-results');
       var nn = document.getElementById('guardia-admitir-nn');
       clearAdmitirDniScan();
       if (idEl) idEl.value = String(id || '');
       if (nn) nn.value = '';
-      if (sel) {
-        sel.textContent = 'Seleccionado: ' + (label || id);
-        sel.classList.remove('d-none');
-      }
+      renderAdmitirPacienteSeleccionado(label || String(id || ''));
       if (results) clearNode(results);
       syncAdmitirSubmit();
     }

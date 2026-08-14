@@ -179,7 +179,7 @@ $this->title = $esGuardia
                         <button type="button" class="btn btn-outline-primary btn-sm d-none" id="guardia-admitir-escanear-dni">
                             <i class="bi bi-upc-scan me-1" aria-hidden="true"></i>Escanear DNI
                         </button>
-                        <button type="button" class="btn btn-outline-warning btn-sm d-none" id="guardia-admitir-nn-btn">Sin documento / NN</button>
+                        <button type="button" class="btn btn-outline-warning btn-sm" id="guardia-admitir-nn-btn">Sin documento / NN</button>
                     </div>
                     <div id="guardia-admitir-escaneo-status" class="form-text text-primary text-center d-none mt-2 mb-0"></div>
                     <div id="guardia-admitir-dni-preview" class="d-none mt-2"></div>

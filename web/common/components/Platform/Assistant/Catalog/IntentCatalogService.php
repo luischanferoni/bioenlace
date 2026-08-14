@@ -39,6 +39,20 @@ final class IntentCatalogService
     }
 
     /**
+     * Intents para atajos de inicio: grant explícito intent_id (sin promoción por rbac_route).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public static function getAvailableShortcutsForUser(int $userId, bool $useCache = true): array
+    {
+        $all = YamlIntentCatalogService::discoverAll($useCache);
+        $filtered = YamlIntentCatalogService::filterByIntentGrant($all, $userId);
+        $filtered = ClientContextService::filterPacienteFlows($filtered);
+
+        return self::filterByPacienteOffering($filtered);
+    }
+
+    /**
      * @param array<int, array<string, mixed>> $flows
      * @return array<int, array<string, mixed>>
      */

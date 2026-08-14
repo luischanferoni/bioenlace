@@ -1,7 +1,30 @@
-# Manifiesto del panel de inicio (web site/index + apps).
-# El orquestador HomePanelService interpreta audience + encounter_class.
+# =============================================================================
+# Panel de inicio — manifiesto de composición UI (NO es RBAC)
+# =============================================================================
+#
+# Consumidores:
+#   - Web staff     → site/index (audiencia staff + encounter_class en sesión)
+#   - App Personal de Salud (staff) → GET /api/v1/home/panel
+#   - App Paciente (móvil) → GET /api/v1/home/panel (audiencia patient)
+#
+# La web NO tiene superficie paciente: el bloque `panels.patient` aplica solo
+# cuando HomePanelAudienceResolver resuelve audiencia «patient» (rol paciente,
+# sin rol staff ni sesión operativa EMER/AMB/IMP/VR).
+#
+# Resolución (HomePanelManifest::resolve):
+#   staff + encounter_class EMER|AMB|VR|IMP → panels.staff.<clase>
+#   staff sin encounter_class               → panels.staff_operations
+#   patient (solo móvil)                    → panels.patient
+#   invitado / sin contexto                 → panels.fallback
+#
+# RBAC HTTP: capability YAML (guardia.*, panel.*) — sync a auth_item.
+# Este archivo solo define layout, secciones y CTAs EMER (capability_id + exclusiones UX).
+#
+# IMP: sub-variantes imp_surgical / imp_floor las resuelve HomePanelStaffPanelSliceRegistry.
+# =============================================================================
 
 audience:
+  # Roles Yii que cuentan como «staff» para el panel clínico
   staff_roles:
     - Medico
     - enfermeria
@@ -9,14 +32,16 @@ audience:
     - AdminEfector
     - facturista
     - nivelCentral
+  # Rol único paciente (app móvil; no web)
   patient_role: paciente
 
 panels:
+  # --- Staff con encounter_class fijado en sesión operativa ---
   staff:
     EMER:
       layout: clinical_board
       title: Tablero de guardia
-      # CTAs del tablero: capability_id RBAC (+ exclusiones UX que no duplican reglas de dominio).
+      # CTAs tablero: capability_id + knobs UX (no sustituyen grants en auth_item)
       capabilities:
         triage: guardia.triage
         triage_ui_exclude_roles:
@@ -44,6 +69,7 @@ panels:
           provider: emergency_board
           kind: emergency_board
           poll_interval_seconds: 30
+
     AMB:
       layout: clinical_list
       title: Pacientes del día
@@ -54,6 +80,7 @@ panels:
         - id: appointments_day
           provider: appointments_day
           kind: appointments_day
+
     VR:
       layout: clinical_list
       title: Consultas clínicas por mensaje
@@ -61,9 +88,11 @@ panels:
         - id: async_consultations_queue
           provider: async_consultations_queue
           kind: async_consultations_queue
+
     IMP:
       layout: clinical_list
       title: Internación
+      # Slice registry elige imp_surgical vs imp_floor según servicio/sesión
       imp_surgical:
         sections:
           - id: staff_surgery_kpis
@@ -84,10 +113,8 @@ panels:
           - id: inpatients
             provider: inpatients
             kind: inpatients
-  fallback:
-    layout: staff_dashboard
-    title: Panel operativo
-    sections: []
+
+  # Staff logueado sin encounter_class (elegir modalidad / efector)
   staff_operations:
     layout: staff_dashboard
     title: Panel operativo
@@ -107,6 +134,13 @@ panels:
       - id: staff_internacion_kpis
         provider: staff_internacion_kpis
         kind: staff_kpi_group
+
+  fallback:
+    layout: staff_dashboard
+    title: Panel operativo
+    sections: []
+
+  # --- Solo app móvil paciente (HomePanelAudienceResolver → patient) ---
   patient:
     layout: patient_home
     title: Inicio

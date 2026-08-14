@@ -10,7 +10,7 @@ use common\components\Platform\Core\Product\ClientContextMetadata;
 use common\components\Platform\Core\Permission\RbacRoleQueryService;
 
 /**
- * Atajos de inicio: subconjunto ordenado de acciones.
+ * Atajos de inicio: subconjunto ordenado de **intents** con grant explícito (sin rutas sueltas).
  *
  * Importante:
  * - Para flows conversacionales, la acción se ejecuta vía `/api/v1/asistente/enviar` con `action_id`.
@@ -34,7 +34,7 @@ final class CommonActionsService
         $display = self::resolveDisplayOptions($appClient);
         $catalogBasename = $display['catalog_basename'];
 
-        $available = IntentCatalogService::getAvailableUiForUser($userId, true);
+        $available = IntentCatalogService::getAvailableShortcutsForUser($userId, true);
         $byId = [];
         foreach ($available as $f) {
             $aid = isset($f['action_id']) ? (string) $f['action_id'] : '';

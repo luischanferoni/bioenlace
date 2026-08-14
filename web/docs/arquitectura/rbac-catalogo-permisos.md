@@ -46,7 +46,8 @@ rol → encounter.capturar (type 2) → /api/clinical/encounter/captura-guardar 
 | CTAs tablero EMER | `ui/home_panel_manifest.yaml` (`capability_id`, exclusiones UX por rol) |
 | Staff métricas / edición (migrado) | Intent con `metric_id` o `edit_surface_id` |
 | Pasos UI dentro de flow | Derivados del intent; `FlowStepAccessService` + `X-Flow-Intent-Id` |
-| Listado NL / IA / atajos | `IntentAccessService` vía catálogo intents |
+| Listado NL / IA | `IntentAccessService::userCanExecuteIntent` vía catálogo intents |
+| Atajos inicio | `IntentAccessService::userHasIntentGrant` — solo grant explícito intent_id |
 | Campos editables | `fields` / `field_groups` en YAML del intent |
 | Migración legacy → capability | `intent-grant-migration-map.yaml` (`capability_grant_sources`) |
 | Alias deprecados | `legacy-permission-aliases.yaml` |

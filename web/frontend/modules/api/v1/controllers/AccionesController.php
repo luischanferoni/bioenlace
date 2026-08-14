@@ -13,7 +13,7 @@ use common\components\Platform\Core\Service\Actions\CommonActionsService;
 class AccionesController extends BaseController
 {
     /**
-     * Lista acciones comunes (permiso RBAC ya aplicado en {@see CommonActionsService} vía ActionMappingService).
+     * Lista acciones comunes (atajos): intents con grant explícito vía {@see CommonActionsService}.
      *
      * Query opcional: limit (1–50, default 12).
      */

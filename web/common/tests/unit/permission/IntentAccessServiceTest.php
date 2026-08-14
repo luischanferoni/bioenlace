@@ -8,8 +8,8 @@ use common\components\Platform\Core\Permission\IntentAccessService;
 use common\components\Platform\Core\Permission\IntentPermissionResolver;
 
 /**
- * Listado de intents y ejecución comparten {@see IntentAccessService}.
- * Sin permiso de intent ni ruta API del manifiesto → excluido del catálogo.
+ * Listado de intents y ejecución comparten {@see IntentAccessService::userCanExecuteIntent}.
+ * Atajos usan {@see IntentAccessService::userHasIntentGrant} (sin promoción por ruta).
  */
 final class IntentAccessServiceTest extends Unit
 {
@@ -40,5 +40,29 @@ final class IntentAccessServiceTest extends Unit
         $this->assertFalse(IntentAccessService::userCanExecuteIntent(0, 'demo.intent'));
         $this->assertFalse(IntentAccessService::userCanExecuteIntent(-1, 'demo.intent'));
         $this->assertFalse(IntentAccessService::userCanExecuteIntent(1, ''));
+    }
+
+    public function testUserHasIntentGrantRequiresExplicitGrant(): void
+    {
+        $this->assertFalse(IntentAccessService::userHasIntentGrant(0, 'demo.intent'));
+        $this->assertFalse(IntentAccessService::userHasIntentGrant(999_999, 'demo.intent'));
+        $this->assertFalse(IntentAccessService::userHasIntentGrant(1, ''));
+    }
+
+    public function testFilterByIntentGrantExcludesWhenNoIntentGrant(): void
+    {
+        $intentId = 'urgencias.ver-tablero-guardia';
+        if (!YamlIntentCatalogService::intentExists($intentId)) {
+            $this->markTestSkipped('Intent fixture not present');
+        }
+
+        $items = [
+            [
+                'action_id' => $intentId,
+                'rbac_route' => '/api/home/panel',
+            ],
+        ];
+
+        $this->assertSame([], YamlIntentCatalogService::filterByIntentGrant($items, 999_999));
     }
 }

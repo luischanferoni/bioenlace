@@ -223,6 +223,31 @@ final class YamlIntentCatalogService
         return $out;
     }
 
+    /**
+     * Atajos: solo intents con grant explícito ({@see IntentAccessService::userHasIntentGrant}).
+     *
+     * @param array<int, array<string, mixed>> $items salida de {@see discoverAll}
+     * @return array<int, array<string, mixed>>
+     */
+    public static function filterByIntentGrant(array $items, int $userId): array
+    {
+        $out = [];
+        foreach ($items as $flow) {
+            if (!is_array($flow)) {
+                continue;
+            }
+            $intentId = isset($flow['action_id']) ? AssistantDraftNormalizer::scalarString($flow['action_id']) : '';
+            if ($intentId === '' || !self::intentExists($intentId)) {
+                continue;
+            }
+            if (IntentAccessService::userHasIntentGrant($userId, $intentId)) {
+                $out[] = $flow;
+            }
+        }
+
+        return $out;
+    }
+
     public static function userIdCanPermissionKey(int $userId, string $permissionKey): bool
     {
         $permissionKey = trim($permissionKey);

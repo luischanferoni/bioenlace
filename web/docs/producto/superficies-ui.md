@@ -49,7 +49,7 @@ flowchart TB
   | AMB | `clinical_list` | KPIs agenda + turnos del día |
   | IMP piso | `clinical_list` | KPIs internación + internados |
   | IMP quirúrgico | `clinical_list` | KPIs quirófano + cirugías del día |
-- **Paciente en app móvil** — inicio con próximos turnos (sin pestaña de historial), condiciones activas y planes de tratamiento vía API (`GET /home/panel`, audiencia `patient`). Turnos anteriores: intent `turnos.ver-turnos-anteriores-como-paciente` (listado corto). No hay superficie web de paciente en producción; el layout `patient_home` del manifiesto es legado técnico del mismo endpoint.
+- **Paciente (solo app móvil)** — inicio con próximos turnos, condiciones activas y planes vía `GET /home/panel` (audiencia `patient`). La app paciente Flutter consume el mismo endpoint que staff; **no hay home web para paciente**. El bloque `panels.patient` del manifiesto existe por ese cliente móvil (`panel.paciente_home` en RBAC).
 - Secciones KPI (`kind: staff_kpi_group`) y providers registrados en `product-registries.php` → `homePanelSectionProviders`.
 - **No** es lugar de captura clínica ni de formularios largos por pestaña.
 

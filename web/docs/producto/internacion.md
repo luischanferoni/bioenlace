@@ -1,6 +1,6 @@
 ﻿# Internación — producto
 
-Gestión del **episodio de internación** en el efector: camas, indicadores operativos, alta estructurada con epicrisis y **administración de plantillas** por institución. La fuente de verdad es la API v1 `clinical/internacion` y `clinical/internacion-epicrisis-plantilla`; web y app Personal de Salud consumen la misma capa.
+Gestión del **episodio de internación** en el efector: camas, indicadores operativos y **administración de plantillas** de epicrisis por institución. La fuente de verdad es la API v1 `clinical/internacion` y `clinical/internacion-epicrisis-plantilla`; web y app Personal de Salud consumen la misma capa.
 
 Modelo de superficies (web = móvil): [superficies-ui.md](./superficies-ui.md).
 
@@ -8,9 +8,9 @@ Modelo de superficies (web = móvil): [superficies-ui.md](./superficies-ui.md).
 
 | Rol | Superficie | Comportamiento |
 |-----|------------|----------------|
-| Staff de piso / admisión | **Inicio** — mapa de camas (`/internacion/index` o intent `internacion.mapa-camas-flow`) | Libre, ocupada, bloqueada, aislamiento; indicadores |
+| Staff de piso / admisión | **Inicio** — mapa de camas (`/internacion/index` o intent `internacion.mapa-camas-flow`) | Libre, ocupada, bloqueada, aislamiento; indicadores. **No** decide el alta. |
 | Médico / enfermería en piso | **Captura clínica** — timeline + formulario encounter | `parent=INTERNACION`, `parent_id=<id_internacion>`; workflow IMP por servicio del centro |
-| Médico / coordinación | **Flow** — alta estructurada (`internacion.alta-estructurada-flow`) | Epicrisis, plantilla, checklist → externación |
+| Médico | **Captura del encounter** | Indica el **alta clínica** al documentar el diagnóstico (misma línea que [guardia](./urgencias-guardia.md)). El resto de roles no puede decidir el alta. |
 | Staff | **Ficha episodio** — `/internacion/view` | Datos administrativos (cama, ingreso); enlace a historia clínica; **sin** pestañas clínicas MVC |
 | Administración clínica | Web `/internacion-epicrisis-plantilla/*` | ABM plantillas epicrisis del efector |
 | Médico (IMP) | app Personal de Salud — inicio con efector en sesión | Mapa de camas (misma API que web) |
@@ -26,11 +26,12 @@ Estados operativos en mapa (`estado_mapa`):
 - `bloqueada` — fuera de servicio (con `motivo_estado` opcional)  
 - `aislamiento` — reservada / aislamiento  
 
-En web, acciones rápidas **B** / **A** / **L** (bloquear, aislamiento, liberar) vía API. Desde el **listado de internados** (modo recorrido piso→sala) o el mapa, **Atender** abre la **historia clínica** con contexto de internación (no el formulario MVC legacy).
+En web, acciones rápidas **B** / **A** / **L** (bloquear, aislamiento, liberar) vía API. Desde el **listado de internados** (modo recorrido piso→sala) o el mapa, **Atender** abre la **historia clínica** con contexto de internación (no el formulario MVC legacy). No hay CTA de alta en el tablero: el alta la indica el médico en la captura.
 
 ## Ronda (listado IMP)
 
 No hay pantalla `/internacion/ronda`. La ronda es el listado del inicio IMP (`home/panel` → `inpatients`), con orden **por recorrido** (piso → sala → cama) o **por paciente** (A–Z). Misma API en web y móvil.
+
 ## Captura clínica en internación
 
 - Mismo pipeline que ambulatorio/guardia: timeline + `_formulario_consulta.php` → `POST …/clinical/encounter/guardar`.
@@ -39,16 +40,13 @@ No hay pantalla `/internacion/ronda`. La ronda es el listado del inicio IMP (`ho
 - Evoluciones, diagnósticos, medicación y prácticas del piso se documentan como **encounters IMP** vinculados al episodio (`parent_type` / `parent_id`), no en sub-controllers Yii retirados.
 - Textos listos para pegar o dictar (`imp_standard`): [textos-ejemplo-captura-imp.md](../qa/escenarios/internacion/textos-ejemplo-captura-imp.md).
 
-## Alta estructurada (flow)
+## Alta clínica (como guardia)
 
-Flujo guiado por UI JSON (`internacion/alta-formulario`):
+El médico **documenta el encounter** y, al establecer el diagnóstico de egreso, **indica el alta**. No hay intent de asistente ni segundo formulario en el tablero para que otro rol dé el alta.
 
-1. Checklist y tipo de alta.  
-2. Selección de **plantilla de epicrisis** (opcional) con vista previa.  
-3. Epicrisis editable; responsable de sesión (PES) en checklist.  
-4. Persistencia vía servicio de dominio → `doExternacion`.
+Completar el care plan “Internación” **no** es el alta del episodio. El cierre de cama / `fecha_fin` (`doExternacion`) sigue en dominio; la ficha administrativa puede mostrar el formulario de externación de forma transitoria hasta cablear el outcome IMP al guardar la captura (equivalente a `GuardiaEncounterOutcomeService`).
 
-**Placeholders** al aplicar plantilla: `{paciente}`, `{fecha_ingreso}`, `{dias_internacion}`, `{documento}`.
+Plantillas de epicrisis: ABM institucional (placeholders `{paciente}`, `{fecha_ingreso}`, `{dias_internacion}`, `{documento}`).
 
 ## Plantillas de epicrisis (ABM)
 
@@ -64,7 +62,7 @@ Tabla `internacion_epicrisis_plantilla`:
 | Crear / editar | `/create`, `/update/<id>` | `POST …/crear`, `PUT/PATCH …/actualizar/<id>` |
 | Activar / desactivar | POST en grilla | `POST …/activar/<id>`, `POST …/desactivar/<id>` |
 | Listar (operativo, solo activas) | — | `GET …/internacion/plantillas-epicrisis` |
-| Vista previa en alta | panel en flow / view | `GET …/internacion/<id>/preview-plantilla-epicrisis` |
+| Vista previa | ficha / API | `GET …/internacion/<id>/preview-plantilla-epicrisis` |
 
 ## API principal — internación operativa
 
@@ -76,7 +74,7 @@ Base: `/api/v1/clinical/internacion`
 | Indicadores | `GET indicadores-resumen` | Ocupación %, activas, estadía media/mediana |
 | Marcar estado cama | `POST cama/<camaId>/marcar-estado` | `estado_mapa`, `motivo` opcional |
 | Cambio de cama | `GET\|POST <internacionId>/cambio-cama-formulario` | UI JSON + submit; intent `internacion.cambio-cama-flow` |
-| Alta formulario | `GET\|POST <internacionId>/alta-formulario` | UI JSON + submit; intent `internacion.alta-estructurada-flow` |
+| Alta formulario | `GET\|POST <internacionId>/alta-formulario` | Transitorio (ficha); no hay intent de asistente |
 | Plantillas (uso) | `GET plantillas-epicrisis` | Solo activas para el efector |
 | Preview plantilla | `GET <internacionId>/preview-plantilla-epicrisis` | Query `plantilla_id` |
 
@@ -89,9 +87,10 @@ Ingreso desde urgencias: `internacion/create?id_guardia=` tras `POST …/emergen
 Intents YAML (UI JSON descubierta, sin hardcode de pantalla):
 
 - `internacion.mapa-camas-flow` — mapa + listado embebible  
-- `internacion.alta-estructurada-flow` — formulario de alta  
 - `internacion.cambio-cama-flow` — traslado a otra cama  
 - *(backlog)* `internacion.ingreso-flow`
+
+No hay intent de alta: el egreso lo indica el médico en la captura.
 
 ## Retiro MVC clínico (clean-legacy)
 

@@ -50,12 +50,11 @@ Elegí el efector en modo **internación** ([transversal.md](./transversal.md)).
 
 ---
 
-## Alta con epicrisis
+## Alta clínica (médico, en el encounter)
 
-1. **Vos** iniciás el alta estructurada.
-2. **El sistema** te guía por los pasos (resumen, epicrisis, motivo de egreso…).
-3. **Vos** completás y confirmás.
-4. **El sistema** da de alta la internación, libera la cama y cierra el episodio.
+1. **Vos** (médico) abrís la captura del internado y documentás el diagnóstico de egreso.
+2. **El sistema** registra el alta clínica en ese encounter (misma línea que guardia).
+3. El resto de roles **no** decide el alta: no hay CTA ni intent de asistente para ello.
 
 ---
 
@@ -64,7 +63,7 @@ Elegí el efector en modo **internación** ([transversal.md](./transversal.md)).
 1. **Vos** (con permiso) administrás plantillas de epicrisis.
 2. **El sistema** lista las plantillas del efector.
 3. **Vos** creás, editás o desactivás una.
-4. Al dar un alta, **podés** elegir plantilla y el sistema **rellena** parte del texto.
+4. Las plantillas arman textos de epicrisis reutilizables para el efector.
 
 ---
 

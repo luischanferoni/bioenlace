@@ -428,63 +428,6 @@ $this->title = $esGuardia
         </div>
     </div>
 </div>
-
-<div class="modal fade" id="internacion-alta-modal" tabindex="-1" aria-labelledby="internacionAltaModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="internacionAltaModalLabel">Alta hospitalaria</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-            </div>
-            <div class="modal-body">
-                <p class="text-muted small mb-2" id="internacion-alta-paciente"></p>
-                <p class="text-muted small mb-2" id="internacion-alta-responsable"></p>
-                <div id="internacion-alta-loading" class="text-muted small">Cargando…</div>
-                <div id="internacion-alta-form" class="d-none">
-                    <div class="row g-2 mb-2">
-                        <div class="col-md-4">
-                            <label class="form-label" for="internacion-alta-fecha">Fecha de alta</label>
-                            <input type="date" class="form-control form-control-sm" id="internacion-alta-fecha" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label" for="internacion-alta-hora">Hora</label>
-                            <input type="time" class="form-control form-control-sm" id="internacion-alta-hora" required>
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label" for="internacion-alta-tipo">Tipo de alta</label>
-                            <select class="form-select form-select-sm" id="internacion-alta-tipo" required></select>
-                        </div>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label" for="internacion-alta-plantilla">Plantilla de epicrisis</label>
-                        <select class="form-select form-select-sm" id="internacion-alta-plantilla"></select>
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label" for="internacion-alta-epicrisis">Epicrisis</label>
-                        <textarea class="form-control form-control-sm" id="internacion-alta-epicrisis" rows="6" required></textarea>
-                    </div>
-                    <div class="form-check mb-1">
-                        <input class="form-check-input" type="checkbox" id="internacion-alta-chk-med">
-                        <label class="form-check-label" for="internacion-alta-chk-med">Medicación e indicaciones entregadas</label>
-                    </div>
-                    <div class="form-check mb-1">
-                        <input class="form-check-input" type="checkbox" id="internacion-alta-chk-ind">
-                        <label class="form-check-label" for="internacion-alta-chk-ind">Indicaciones explicadas al paciente/familiar</label>
-                    </div>
-                    <div class="form-check mb-0">
-                        <input class="form-check-input" type="checkbox" id="internacion-alta-chk-ped">
-                        <label class="form-check-label" for="internacion-alta-chk-ped">Pedidos pendientes resueltos o planificados</label>
-                    </div>
-                </div>
-                <div id="internacion-alta-error" class="alert alert-danger d-none mt-3 mb-0"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-danger" id="internacion-alta-submit" disabled>Registrar alta</button>
-            </div>
-        </div>
-    </div>
-</div>
 <?php endif; ?>
 
 <?php

@@ -69,7 +69,7 @@ Referencias: [captura-clinica.md](./captura-clinica.md).
 ## Flows (asistente)
 
 - Todo lo que encaje como **wizard conversacional** → intent + UI JSON, no vista MVC tradicional.
-- Ejemplos: alta estructurada, mapa de camas embebible, triage guardia.
+- Ejemplos: mapa de camas embebible, cambio de cama, triage guardia.
 
 Referencias: [asistente-y-chat.md](./asistente-y-chat.md).
 

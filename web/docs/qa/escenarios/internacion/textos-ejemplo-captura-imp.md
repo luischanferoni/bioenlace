@@ -6,7 +6,7 @@ Contexto de producto: [captura clínica](../../producto/captura-clinica.md) · [
 
 Abrí HC con `parent=INTERNACION` (Atender desde mapa/listado de camas). La integridad de campos la define el **modelo Yii / `EncounterDefinition`**, no la IA.
 
-El **alta administrativa** (epicrisis, checklist, liberar cama) es el flow `internacion.alta-estructurada-flow`; estos textos documentan la evolución clínica del día. Podés anticipar el egreso en la captura y completar el alta estructurada después.
+El **alta** la indica el **médico en esta captura** al documentar el diagnóstico de egreso (misma línea que guardia). El resto de roles no decide el alta. Estos textos cubren evoluciones de piso y el dictado de alta clínica.
 
 ---
 
@@ -52,9 +52,9 @@ El **alta administrativa** (epicrisis, checklist, liberar cama) es el flow `inte
 
 ---
 
-## 8. Alta clínica (previa al flow de egreso)
+## 8. Alta clínica
 
-> Egreso por mejoría. Neumonía de la comunidad tratada, afebril 48 horas, Sat 97 % aire ambiente, deambula solo. TA 118/70, FC 72, FR 16, T 36,4, glucemia 98, Glasgow 15. Paso a amoxicilina 875 mg VO cada 12 horas por 3 días más. Régimen libre. Indicaciones: control ambulatorio en 7 días, reposo relativo, hidratación, reconsulta si fiebre, disnea o dolor torácico. Epicrisis a completar en alta estructurada.
+> Egreso por mejoría. Neumonía de la comunidad tratada, afebril 48 horas, Sat 97 % aire ambiente, deambula solo. TA 118/70, FC 72, FR 16, T 36,4, glucemia 98, Glasgow 15. Paso a amoxicilina 875 mg VO cada 12 horas por 3 días más. Régimen libre. Indicaciones: control ambulatorio en 7 días, reposo relativo, hidratación, reconsulta si fiebre, disnea o dolor torácico.
 
 ---
 
@@ -74,8 +74,8 @@ El **alta administrativa** (epicrisis, checklist, liberar cama) es el flow `inte
 
 - Empezá por el **1** (ingreso) y seguí con el **2** o el **8** (alta clínica) en el mismo episodio: cada evolución debe documentar **cambios**, no re-pegar el mismo bloque (el sistema bloquea notas casi idénticas).
 - Si repetís un diagnóstico o medicación ya activa, el review lo marca “Ya activo en el episodio” y no lo vuelve a persistir.
-- Completar el chip de care plan de internación **no** es el alta administrativa; el egreso sigue siendo el flow de alta estructurada.
+- Completar el chip de care plan de internación **no** es el alta; el egreso lo indica el médico en la captura (texto **8**).
 - Para **régimen** y **balance**, nombrá **ingresos** y **egresos** por separado (el modelo guarda filas `Ingreso` / `Egreso` en ml, no el “balance neto”). Ej.: «ingresos 2200 ml, egresos 1800 ml». El neto +400 es informativo; si la IA arma solo «balance +400», el sistema pedirá elegir Ingreso o Egreso.
-- El **5** sirve para deterioro / pedido de UTI; el alta administrativa sigue siendo el flow de egreso.
+- El **5** sirve para deterioro / pedido de UTI.
 - El **6** y el **7** prueban autocorrección y campos faltantes.
-- Tras una evolución de alta (**8**), cerrá el episodio con [alta estructurada](../../producto/internacion.md#alta-estructurada-flow) (epicrisis + liberar cama).
+- El **8** es el dictado de **alta clínica** (solo médico).

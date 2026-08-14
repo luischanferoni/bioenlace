@@ -66,7 +66,7 @@ Detalle: [metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md) y [captura
 
 Al cerrar la atención, el review puede listar **problemas y tratamientos abiertos** del paciente para que el profesional confirme estado (resuelto, en pausa, etc.) sin preselección. Ver [planes-de-tratamiento.md](./planes-de-tratamiento.md).
 
-En **internación / guardia**, cada evolución es un encounter nuevo (salvo editar un `encounter_id` o continuar un pase `in-progress`). Una nota casi idéntica a una evolución previa **bloquea** el guardado; los ítems ya activos en el episodio no se tildan ni se reinsertan. Completar el care plan “Internación” no es el alta del episodio.
+En **internación / guardia**, cada evolución es un encounter nuevo (salvo editar un `encounter_id` o continuar un pase `in-progress`). Una nota casi idéntica a una evolución previa **bloquea** el guardado; los ítems ya activos en el episodio no se tildan ni se reinsertan. Completar el care plan “Internación” no es el alta del episodio. El alta la indica el **médico en la captura** al documentar el diagnóstico (misma línea que guardia); otros roles no deciden el alta.
 
 ## Mutación por contexto
 
@@ -109,5 +109,5 @@ La captura puede iniciarse desde la conversación integrada o desde el timeline;
 ## Lo que no es captura clínica
 
 - Tableros de inicio (guardia, mapa de camas, agenda).
-- Flows operativos (alta de internación, cambio de cama).
+- Flows operativos (cambio de cama, mapa de camas). El alta de internación no es un flow: va en la captura del médico.
 - Vistas MVC legacy por pestaña (`internacion-diagnostico/*`, etc.) — retiradas en migración legacy.

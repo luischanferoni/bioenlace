@@ -13,7 +13,7 @@ Episodio FHIR: `EpisodeOfCare` + `CarePlan` category `inpatient` + `Encounter` c
 ## Ciclo de vida
 
 - **Ingreso:** `CarePlanLifecycleService::onInternacionAdmission()` (desde `InternacionController` o `InpatientClinicalContext::ensure`).
-- **Alta:** `CarePlanLifecycleService::completeOnDischarge()` (desde `SegNivelInternacionRepository::doExternacion`).
+- **Alta:** `CarePlanLifecycleService::completeOnDischarge()` (desde `SegNivelInternacionRepository::doExternacion`). En producto el médico indica el alta en la captura del encounter (como guardia); no hay intent de asistente.
 
 ## API
 

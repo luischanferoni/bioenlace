@@ -16,7 +16,8 @@ use Yii;
 use yii\web\ForbiddenHttpException;
 
 /**
- * Internación: mapa de camas, indicadores y alta estructurada (staff).
+ * Internación: mapa de camas, indicadores, cambio de cama e ingreso (staff).
+ * El alta la indica el médico en la captura del encounter; alta-formulario es transitorio (ficha).
  *
  * GET  /api/v1/clinical/internacion/mapa-camas
  * GET  /api/v1/clinical/internacion/indicadores-resumen

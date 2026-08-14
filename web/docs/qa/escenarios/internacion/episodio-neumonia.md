@@ -70,17 +70,17 @@ Más dictados para captura IMP (régimen, balance, deterioro, alta clínica, etc
 
 ---
 
-## Personal de salud — alta estructurada
+## Personal de salud — alta clínica
 
-1. **Vos** iniciás el **alta** desde la ficha del internado o el flujo guiado de alta.
-2. **El sistema** guía tipo de alta, checklist y **epicrisis** (puede ofrecer una plantilla del centro).
-3. **Vos** completás la epicrisis (guion de alta) y confirmás.
-4. **El sistema** da de alta al paciente, **libera** la cama y cierra el episodio.
+1. **Vos** (médico) abrís **Atender** y dictás o pegás el egreso (diagnóstico y conducta de alta).
+2. **El sistema** interpreta la captura como en el resto de evoluciones.
+3. **Vos** confirmás el diagnóstico de egreso.
+4. **El sistema** registra el alta clínica en el encounter. El resto de roles **no** tiene acción de alta en el tablero ni en el asistente.
 
 **Qué verificar**
 
-- La cama vuelve a **libre** en el mapa.
-- La epicrisis queda en la historia del paciente.
+- No aparece un atajo / intent de “alta estructurada” en el asistente.
+- Enfermería / admisión no pueden dar el alta desde el listado.
 
 ---
 

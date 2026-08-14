@@ -110,7 +110,6 @@
         <div class="d-flex flex-column gap-1 ms-2 align-items-stretch" style="min-width: 7.5rem;">
             <a href="#" class="btn btn-dark btn-sm" data-role="cta-atender" data-spa-nav="1" data-spa-title="Historia clínica">Atender</a>
             <button type="button" class="btn btn-outline-info btn-sm" data-role="cta-cambio-cama">Cambio cama</button>
-            <button type="button" class="btn btn-outline-danger btn-sm" data-role="cta-alta">Alta</button>
         </div>
     </div>
 </template>

@@ -152,10 +152,10 @@ Eso define un **wedge** claro: instituciones que quieren **mejor operación ambu
 - Ingreso desde guardia con trazabilidad al episodio de urgencia.
 - **Mapa de camas** en web y app Personal de Salud: libre, ocupada, bloqueada, aislamiento; cambio de estado desde web.
 - **Indicadores** de ocupación y estadía (media/mediana) en tablero web y cabecera operativa.
-- **Alta estructurada** con epicrisis, checklist, responsable de sesión y vista previa de plantilla.
+- **Alta clínica** en la captura del médico (diagnóstico de egreso); plantillas de epicrisis institucionales.
 - **Plantillas de epicrisis** por efector/servicio (y globales de sistema) con placeholders clínicos.
 - **ABM administrativo** de plantillas en web (alta, edición, activar/desactivar).
-- Flujos de asistente para mapa de camas y alta estructurada (formularios guiados en conversación).
+- Flujos de asistente para mapa de camas (formularios guiados en conversación). El alta la indica el médico en la captura.
 - **Continuidad clínica al ingreso y al alta:** al internar se abre el episodio de cuidado de internación con su plan asociado; al dar el alta hospitalaria ese plan se cierra junto con el episodio (salvo continuidad ambulatoria explícita que el producto aún no expone en pantalla).
 
 **Lo que falta**
@@ -388,6 +388,6 @@ Orden orientativo de **retorno vs esfuerzo**, no compromiso de roadmap (actualiz
 | **6** | **Facturación integrada** | Enterprise revenue; integraciones pesadas por institución. |
 | **7** | **Farmacia + stock / quirófano + logística** | Módulos largos; vender por proyecto cuando el cliente lo exija. |
 
-**Hecho recientemente (no repetir como prioridad inmediata):** guardia post-v1 (pedidos, cama, SLA, CSV); triage con formularios guiados en asistente; métricas de agenda para staff (no-show y plazos de acceso); dashboard de adherencia a planes de tratamiento; internación operativa (mapa, indicadores, alta estructurada, ABM plantillas de epicrisis, mapa móvil en internación); **núcleo clínico unificado** (registro de atención ambulatoria, planes de tratamiento con ciclo de vida, cierre de plan al alta de internación) en sustitución del modelo legacy de consulta en canales nuevos.
+**Hecho recientemente (no repetir como prioridad inmediata):** guardia post-v1 (pedidos, cama, SLA, CSV); triage con formularios guiados en asistente; métricas de agenda para staff (no-show y plazos de acceso); dashboard de adherencia a planes de tratamiento; internación operativa (mapa, indicadores, alta clínica en captura, ABM plantillas de epicrisis, mapa móvil en internación); **núcleo clínico unificado** (registro de atención ambulatoria, planes de tratamiento con ciclo de vida, cierre de plan al alta de internación) en sustitución del modelo legacy de consulta en canales nuevos.
 
 **Nota sobre el PDF:** si existe `informe-ejecutivo.pdf` en esta carpeta, regenerarlo desde este Markdown tras cada revisión sustancial.

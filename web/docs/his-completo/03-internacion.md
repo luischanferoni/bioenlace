@@ -10,10 +10,10 @@
 - [x] Ingreso desde guardia con `id_guardia` y cierre del pendiente en tablero.
 - [x] **Mapa de camas (API + web + móvil IMP):** libre, ocupada, bloqueada, aislamiento; acciones B/A/L en web; chips en app Personal de Salud.
 - [x] **Indicadores:** ocupación %, internaciones activas, estadía media/mediana (API + resumen en web).
-- [x] **Alta estructurada:** epicrisis, plantillas por efector/servicio, responsable de sesión, checklist → `doExternacion`.
+- [x] **Alta clínica en el encounter** (misma línea que guardia): el médico la indica al documentar el diagnóstico; el resto de roles no decide el alta. Sin intent de asistente.
 - [x] **Plantillas epicrisis** (`internacion_epicrisis_plantilla`) con placeholders `{paciente}`, `{fecha_ingreso}`, `{dias_internacion}`, `{documento}`.
 - [x] **ABM plantillas** (web `/internacion-epicrisis-plantilla/*` + API `clinical/internacion-epicrisis-plantilla/*`): alta, edición, activar/desactivar por efector; globales editables solo por superadmin.
-- [x] Intents asistente `internacion.mapa-camas-flow` e `internacion.alta-estructurada-flow`.
+- [x] Intent asistente `internacion.mapa-camas-flow` (y `internacion.cambio-cama-flow`).
 
 ## Lo que falta
 
@@ -28,7 +28,7 @@
 | Mapa + indicadores | Inicio web / app; `/internacion/index` (transitorio) |
 | Captura clínica piso | Timeline + formulario encounter (`parent=INTERNACION`) |
 | Ficha episodio (admin) | Web `/internacion/view` |
-| Alta estructurada | Flow `internacion.alta-estructurada-flow` + API |
+| Alta clínica | Captura del encounter (médico); no hay flow de asistente |
 | ABM plantillas | Web `/internacion-epicrisis-plantilla/index` |
 | Mapa móvil | app Personal de Salud — inicio (efector en sesión) |
 | API operativa | `GET/POST /api/v1/clinical/internacion/*` |

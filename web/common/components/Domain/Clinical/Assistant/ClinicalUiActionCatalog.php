@@ -280,16 +280,6 @@ final class ClinicalUiActionCatalog implements UiActionCatalogProviderInterface
                 ['indicadores internación', 'ocupación camas', 'estadía']
             ),
             self::def(
-                'clinical.internacion.alta-formulario',
-                'Alta hospitalaria (UI)',
-                'Epicrisis y checklist de egreso estructurado.',
-                '/api/clinical/internacion/alta-formulario',
-                ['alta internación', 'epicrisis', 'egreso hospitalario'],
-                true,
-                null,
-                '/api/clinical/internacion/{internacion_id}/alta-formulario'
-            ),
-            self::def(
                 'clinical.internacion.cambio-cama-formulario',
                 'Cambio de cama (UI)',
                 'Traslado del paciente internado a otra cama del efector.',

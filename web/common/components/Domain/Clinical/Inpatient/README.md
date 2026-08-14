@@ -1,6 +1,6 @@
 # Clinical — Internación operativa (`Inpatient`)
 
-Servicios de **gestión de internación** en el efector: mapa de camas, ingreso, cambio de cama, alta estructurada, epicrisis, indicadores.
+Servicios de **gestión de internación** en el efector: mapa de camas, ingreso, cambio de cama, epicrisis, indicadores. El alta clínica la indica el médico en el encounter.
 
 - **`Service/`** — `Internacion*Service`, acceso por efector.
 

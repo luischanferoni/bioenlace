@@ -51,7 +51,7 @@ No hay comando de compilación de `ui_type=flow` hacia `views/json`. El servidor
 | `urgencias.ver-tablero-guardia` | Guardia EMER |
 | `urgencias.triage-paciente-guardia` | Triage Manchester (UI JSON) |
 | `internacion.mapa-camas-flow` | Mapa de camas |
-| `internacion.alta-estructurada-flow` | Alta estructurada |
+| `internacion.cambio-cama-flow` | Cambio de cama |
 | `turnos.indicadores-agenda-flow` | KPIs agenda staff |
 | `tratamiento.adherencia-resumen-staff` | Adherencia care plans |
 | `personas.vincular-menor-flow` | Tutela verificada (menor sin cuenta) |

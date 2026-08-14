@@ -378,7 +378,7 @@ Solo ítems con **paso de decisión** (compromiso, matices o volumen de datos HI
 | Campo | Valor |
 |-------|--------|
 | **Grado** | D2 |
-| **Trigger** | `Encounter` IMP finalizado / alta estructurada |
+| **Trigger** | `Encounter` IMP con alta clínica indicada por el médico |
 | **Política** | Plantilla por motivo de internación; días 1, 7, 30 |
 | **Efecto** | Preguntas + checklist medicación; escalamiento |
 | **Base hoy** | [internacion.md](../internacion.md) |

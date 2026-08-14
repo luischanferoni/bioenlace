@@ -208,7 +208,7 @@ final class CarePlanLifecycleService
                 && in_array($status, [CarePlanStatus::COMPLETED, 'complete', CarePlanStatus::REVOKED, 'revoke'], true)
             ) {
                 throw new \InvalidArgumentException(
-                    'El plan de internación se cierra con el alta estructurada (liberar cama), no desde la captura de la evolución.'
+                    'El plan de internación se cierra cuando el médico indica el alta en el encounter, no desde este chip.'
                 );
             }
             $updated[] = $this->applyStatus($plan, $status);

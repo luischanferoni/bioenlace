@@ -1307,15 +1307,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         title: 'Cambio de cama',
                       ),
                     ),
-                    BioButton.outlineDanger(
-                      label: 'Alta',
-                      size: BioButtonSize.sm,
-                      onPressed: () => _openInternacionUiForm(
-                        i,
-                        path: '/clinical/internacion/${i.id}/alta-formulario',
-                        title: 'Alta hospitalaria',
-                      ),
-                    ),
                   ],
                 ),
               ],

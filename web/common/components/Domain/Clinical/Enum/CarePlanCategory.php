@@ -58,8 +58,8 @@ final class CarePlanCategory
     }
 
     /**
-     * Plan ligado al episodio hospitalario: se cierra con alta estructurada (cama / fecha_fin),
-     * no con chips de open_problems en la captura de una evolución.
+     * Plan ligado al episodio hospitalario: se cierra con el alta clínica del médico
+     * (cama / fecha_fin), no con chips de open_problems en la captura de una evolución.
      */
     public static function closesOnlyViaEpisodeDischarge(string $category): bool
     {

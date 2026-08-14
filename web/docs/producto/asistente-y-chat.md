@@ -61,7 +61,6 @@ Ejemplos de flujos conversacionales con UI JSON (YAML en `SubIntentEngine/schema
 | Urgencias | `urgencias.ver-tablero-guardia` | Navegar al tablero EMER |
 | Urgencias | `urgencias.triage-paciente-guardia` | Lista sin triage → formulario Manchester |
 | Internación | `internacion.mapa-camas-flow` | Mapa de camas del efector |
-| Internación | `internacion.alta-estructurada-flow` | Alta con epicrisis y plantilla |
 | Internación | `internacion.cambio-cama-flow` | Traslado de cama en internación activa |
 | Agenda | `turnos.indicadores-agenda-flow` | KPIs no-show y lead time (staff) |
 | Planes | `tratamiento.adherencia-resumen-staff` | Dashboard adherencia por efector |

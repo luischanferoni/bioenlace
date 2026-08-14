@@ -1,6 +1,10 @@
 intent_id: care-packs.asistencia-pre-consulta-flow
 version: 1
 
+# Atajo del asistente: no. El cuestionario vive en la app paciente (pre-consulta nativa).
+shortcut:
+  hidden: true
+
 action_name: "Cuestionario pre-consulta"
 description: "Completar preguntas de asistencia antes de la consulta."
 rbac_route: "/api/care-packs/assistance"

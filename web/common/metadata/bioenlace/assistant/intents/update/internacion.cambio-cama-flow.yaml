@@ -1,6 +1,10 @@
 intent_id: internacion.cambio-cama-flow
 version: 1
 
+# Atajo: no. Requiere internación activa; se lanza desde el listado/mapa (CTA Cambio cama).
+shortcut:
+  hidden: true
+
 action_name: "Cambio de cama"
 description: "Cambiar a un paciente internado de cama."
 rbac_route: "/api/clinical/episode-of-care/by-internacion"

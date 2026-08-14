@@ -1,6 +1,9 @@
 intent_id: data-access.listar
 version: 1
 
+shortcut:
+  hidden: true
+
 action_name: "Listado staff"
 description: "Métricas en modo filas del catálogo DataAccess (sin flow conversacional)."
 rbac_route: "/api/listar"

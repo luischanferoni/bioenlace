@@ -86,6 +86,27 @@ final class IntentShortcutMetadata
     }
 
     /**
+     * Atajo de inicio: flow YAML embebible, no nativo, no interno sin pasos.
+     *
+     * @param array<string, mixed> $flow fila de {@see YamlIntentCatalogService::discoverAll}
+     */
+    public static function isEligibleCatalogShortcut(array $flow): bool
+    {
+        if (($flow['shortcut_hidden'] ?? false) === true) {
+            return false;
+        }
+        $intentId = trim((string) ($flow['action_id'] ?? ''));
+        if ($intentId !== '' && self::opensNativeUi($intentId)) {
+            return false;
+        }
+        if (array_key_exists('has_subintents', $flow) && $flow['has_subintents'] !== true) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * @param mixed $raw
      *
      * @return list<array{

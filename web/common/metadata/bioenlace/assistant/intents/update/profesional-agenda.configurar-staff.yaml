@@ -7,7 +7,7 @@ domain_operation: DataAccess.edit
 edit_surface_id: ProfesionalEfectorServicioAgenda
 
 action_name: "Agenda ambulatoria de un profesional"
-description: "Modificar cupos AMB (horarios/intervalo) de un profesional del efector. Guardia e internación van por cobertura."
+description: "Modificar cupos AMB (horarios/intervalo) de un profesional del efector. Guardia e internación se cargan como horarios de plantel."
 rbac_route: "/api/profesional-agenda/configurar-agenda"
 
 keywords:

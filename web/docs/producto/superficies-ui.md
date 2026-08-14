@@ -24,8 +24,8 @@ flowchart TB
     FC[Formulario encounter]
   end
   subgraph flows [Asistente]
-    F1[Alta internación]
-    F2[Mapa camas embebido]
+    F1[Mapa camas embebido]
+    F2[Horarios / agenda]
   end
   inicio -->|Atender| captura
   inicio -->|Operación| flows

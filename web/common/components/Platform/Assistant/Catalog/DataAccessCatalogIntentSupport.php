@@ -16,15 +16,20 @@ use common\components\Platform\Core\DataAccess\DataAccessMetricDiscoveryService;
 final class DataAccessCatalogIntentSupport
 {
     /** @var list<string> */
-    private const CATALOG_INTENT_IDS = [
+    public const GENERIC_INTENT_IDS = [
         'data-access.info',
         'data-access.listar',
         'data-access.editar',
     ];
 
+    public static function isGenericIntentId(string $intentId): bool
+    {
+        return in_array(trim($intentId), self::GENERIC_INTENT_IDS, true);
+    }
+
     public static function isCatalogOnlyIntent(string $intentId): bool
     {
-        if (!in_array(trim($intentId), self::CATALOG_INTENT_IDS, true)) {
+        if (!self::isGenericIntentId($intentId)) {
             return false;
         }
 

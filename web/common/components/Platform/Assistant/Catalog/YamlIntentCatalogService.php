@@ -27,7 +27,7 @@ final class YamlIntentCatalogService
     {
         $cache = Yii::$app->cache;
         // Cache key debe cambiar cuando cambian los YAML (keywords/rules/etc.).
-        $cacheKeyBase = 'yaml_intents_catalog_v7';
+        $cacheKeyBase = 'yaml_intents_catalog_v8';
 
         $base = IntentSchemaPaths::baseDir();
         $files = IntentSchemaPaths::discoverYamlFiles();
@@ -92,7 +92,7 @@ final class YamlIntentCatalogService
                 continue;
             }
 
-            if (DataAccessCatalogIntentSupport::isCatalogOnlyIntent($intentId)) {
+            if (DataAccessCatalogIntentSupport::isGenericIntentId($intentId)) {
                 continue;
             }
 
@@ -155,6 +155,7 @@ final class YamlIntentCatalogService
                 'intent_semantics' => $sem,
                 'shortcut_placements' => IntentShortcutMetadata::explicitPlacements($data),
                 'shortcut_hidden' => IntentShortcutMetadata::isHidden($data),
+                'has_subintents' => self::manifestHasSubintents($data),
                 // Hint interno: intent ejecutable como flow YAML (no es `kind` del sobre HTTP).
                 'flow_capable' => true,
             ];
@@ -261,13 +262,31 @@ final class YamlIntentCatalogService
         return IntentAccessService::userCanExecuteIntent($userId, $permissionKey);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
+    private static function manifestHasSubintents(array $data): bool
+    {
+        $subintents = $data['subintents'] ?? null;
+        if (!is_array($subintents) || $subintents === []) {
+            return false;
+        }
+        foreach ($subintents as $sub) {
+            if (is_array($sub) && trim((string) ($sub['id'] ?? '')) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public static function intentExists(string $intentId): bool
     {
         $intentId = trim($intentId);
         if ($intentId === '') {
             return false;
         }
-        if (DataAccessCatalogIntentSupport::isCatalogOnlyIntent($intentId)) {
+        if (DataAccessCatalogIntentSupport::isGenericIntentId($intentId)) {
             return false;
         }
 

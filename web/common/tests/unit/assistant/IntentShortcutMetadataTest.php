@@ -26,4 +26,31 @@ class IntentShortcutMetadataTest extends Unit
     {
         $this->assertFalse(IntentShortcutMetadata::opensNativeUi(''));
     }
+
+    public function testHiddenFlowIsNotEligibleShortcut(): void
+    {
+        $this->assertFalse(IntentShortcutMetadata::isEligibleCatalogShortcut([
+            'action_id' => 'internacion.cambio-cama-flow',
+            'shortcut_hidden' => true,
+            'has_subintents' => true,
+        ]));
+    }
+
+    public function testIntentWithoutSubintentsIsNotEligibleShortcut(): void
+    {
+        $this->assertFalse(IntentShortcutMetadata::isEligibleCatalogShortcut([
+            'action_id' => 'internacion.epicrisis-plantilla-admin',
+            'shortcut_hidden' => false,
+            'has_subintents' => false,
+        ]));
+    }
+
+    public function testRunnableFlowIsEligibleShortcut(): void
+    {
+        $this->assertTrue(IntentShortcutMetadata::isEligibleCatalogShortcut([
+            'action_id' => 'internacion.mapa-camas-flow',
+            'shortcut_hidden' => false,
+            'has_subintents' => true,
+        ]));
+    }
 }

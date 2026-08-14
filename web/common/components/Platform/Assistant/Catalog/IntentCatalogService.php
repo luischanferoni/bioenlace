@@ -50,24 +50,20 @@ final class IntentCatalogService
         $filtered = ClientContextService::filterPacienteFlows($filtered);
         $filtered = self::filterByPacienteOffering($filtered);
 
-        return self::excludeNativeOpenUi($filtered);
+        return self::excludeNonEmbeddableShortcuts($filtered);
     }
 
     /**
-     * Atajos no lanzan UIs nativas: solo intents con UI genérica dentro del asistente.
+     * Atajos no lanzan UIs nativas ni intents internos/incompletos: solo flows YAML embebibles.
      *
      * @param array<int, array<string, mixed>> $flows
      * @return array<int, array<string, mixed>>
      */
-    private static function excludeNativeOpenUi(array $flows): array
+    private static function excludeNonEmbeddableShortcuts(array $flows): array
     {
         $out = [];
         foreach ($flows as $flow) {
-            if (!is_array($flow)) {
-                continue;
-            }
-            $intentId = trim((string) ($flow['action_id'] ?? ''));
-            if ($intentId !== '' && IntentShortcutMetadata::opensNativeUi($intentId)) {
+            if (!is_array($flow) || !IntentShortcutMetadata::isEligibleCatalogShortcut($flow)) {
                 continue;
             }
             $out[] = $flow;

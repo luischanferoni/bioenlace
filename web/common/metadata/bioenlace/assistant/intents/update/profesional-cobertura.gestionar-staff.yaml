@@ -5,24 +5,24 @@ operation: edit
 intent_family: profesional-cobertura.gestionar
 domain_operation: DataAccess.edit
 
-action_name: "Cargar cobertura de un profesional (staff)"
-description: "Registrar turnos de plantel EMER/IMP (entrada/salida) para un profesional del efector. No mezcla con cupos AMB."
+action_name: "Horarios de guardia / internación de un profesional"
+description: "Cargar horarios de plantel (entrada/salida) de guardia o internación para un profesional del efector. No mezcla con la agenda ambulatoria."
 rbac_route: "/api/profesional-cobertura/gestionar"
 
 keywords:
-  - cargar cobertura de
-  - cobertura de un profesional
-  - cobertura del profesional
-  - cobertura profesional
-  - cobertura de personal
+  - horarios de guardia de un profesional
+  - horarios de internación de un profesional
+  - horarios de piso
+  - cargar horarios de plantel
+  - horario de guardia de un colega
   - asignar guardia
   - plantel guardia
-  - cobertura piso
   - roster internación
-  - cobertura de un colega
+  - cobertura de un profesional
+  - cargar cobertura de
 
 intent_semantics:
-  goal: Cargar cobertura EMER/IMP de un profesional del efector.
+  goal: Cargar horarios EMER/IMP de un profesional del efector.
   how: Elegís el profesional, la asignación (servicio) y cargás entrada/salida por clase.
   constraints:
     - Solo staff del efector.
@@ -51,7 +51,7 @@ subintents:
         id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
 
   - id: gestionar_cobertura
-    assistant_text: "Completá la cobertura"
+    assistant_text: "Completá los horarios de plantel"
     requires:
       - draft.id_profesional_efector_servicio
     provides:

@@ -87,8 +87,8 @@ Ingreso desde urgencias: `internacion/create?id_guardia=` tras `POST …/emergen
 Intents YAML (UI JSON descubierta, sin hardcode de pantalla):
 
 - `internacion.mapa-camas-flow` — mapa + listado embebible  
-- `internacion.cambio-cama-flow` — traslado a otra cama  
-- *(backlog)* `internacion.ingreso-flow`
+
+Cambio de cama e ingreso **no** son atajos: se lanzan desde el tablero (paciente ya elegido). ABM de plantillas de epicrisis es pantalla nativa web, no flow del asistente.
 
 No hay intent de alta: el egreso lo indica el médico en la captura.
 

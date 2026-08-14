@@ -7,6 +7,11 @@ use common\components\Platform\Core\Product\ClientContextMetadata;
 
 class ClientContextMetadataTest extends Unit
 {
+    protected function _before(): void
+    {
+        ClientContextMetadata::resetCacheForTests();
+    }
+
     protected function _after(): void
     {
         ClientContextMetadata::resetCacheForTests();
@@ -17,6 +22,10 @@ class ClientContextMetadataTest extends Unit
         $this->assertTrue(ClientContextMetadata::isPacienteOnlyFlow([
             'action_id' => 'atencion.necesito-atencion',
             'rbac_route' => '/api/test',
+        ]));
+        $this->assertTrue(ClientContextMetadata::isPacienteOnlyFlow([
+            'action_id' => 'care-packs.asistencia-pre-consulta-flow',
+            'rbac_route' => '/api/care-packs/assistance',
         ]));
     }
 

@@ -12,7 +12,7 @@ use Yii;
  */
 final class AssistantShortcutGroupRegistry
 {
-    private const CACHE_KEY = 'assistant_shortcut_group_registry_v1';
+    private const CACHE_KEY = 'assistant_shortcut_group_registry_v2';
 
     private const CACHE_TTL = 3600;
 

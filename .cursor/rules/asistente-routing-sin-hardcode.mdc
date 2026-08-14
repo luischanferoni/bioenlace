@@ -46,4 +46,4 @@ Los parches rápidos de routing (boost en PHP, fallback con intent fijo, alias e
 ## Excepciones
 
 - Umbrales técnicos (`RULES_MIN_SCORE`, timeouts).
-- `DataAccessCatalogIntentSupport::CATALOG_INTENT_IDS` — registry estable de intents genéricos (3 ids), no reglas de producto.
+- `DataAccessCatalogIntentSupport::GENERIC_INTENT_IDS` — registry estable de intents genéricos (3 ids), no reglas de producto.

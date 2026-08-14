@@ -54,6 +54,10 @@ class DataAccessCatalogTest extends Unit
         $this->assertIsArray($plan);
         $this->assertSame('grouped', $plan['default'] ?? null);
         $this->assertArrayHasKey('modes', $plan);
+        $this->assertSame(
+            'organization.profesionales_distribucion_info',
+            $catalog->getPresentationHandler('profesionales_conteo_por_servicio_efector')
+        );
     }
 
     public function testLoadsMultiFileConfig(): void

@@ -53,4 +53,19 @@ class IntentShortcutMetadataTest extends Unit
             'has_subintents' => true,
         ]));
     }
+
+    public function testEgresoAndStaffHoursIntentsAreHiddenInYaml(): void
+    {
+        foreach ([
+            'urgencias.egreso-estructurado-flow',
+            'profesional-agenda.configurar-staff',
+            'profesional-cobertura.gestionar-staff',
+        ] as $intentId) {
+            $file = \common\components\Platform\Assistant\Catalog\IntentSchemaPaths::resolveFileForIntentId($intentId);
+            $this->assertNotNull($file, $intentId);
+            $data = \Symfony\Component\Yaml\Yaml::parseFile($file);
+            $this->assertIsArray($data);
+            $this->assertTrue(IntentShortcutMetadata::isHidden($data), $intentId);
+        }
+    }
 }

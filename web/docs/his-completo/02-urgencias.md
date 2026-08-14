@@ -13,7 +13,7 @@
 - [x] Asignación, inicio de atención con `captura_url`, derivación y egreso vía API.
 - [x] Indicadores resumen (medianas door-to-triage / door-to-doctor) + materialización diaria opcional.
 - [x] Push servidor y cliente FCM app Personal de Salud (`EMERGENCY_*`).
-- [x] Intents asistente `urgencias.ver-tablero-guardia`, `urgencias.triage-paciente-guardia`, `urgencias.egreso-estructurado-flow`.
+- [x] Intents asistente `urgencias.ver-tablero-guardia`, `urgencias.triage-paciente-guardia`. **Paciente se retiró** es CTA del tablero, no atajo.
 - [x] Pedidos y resultados de lab en tablero (`resumen-clinico`, `crear-pedido`).
 - [x] Solicitud de internación + badge “cama pendiente” + ingreso web con `id_guardia`.
 - [x] SLA por efector (`efector_emergency_config`) y alerta visual en tablero.

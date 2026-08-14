@@ -1,6 +1,10 @@
 intent_id: urgencias.egreso-estructurado-flow
 version: 2
 
+# Atajo: no. «Paciente se retiró» es CTA del tablero (requiere guardia_id).
+shortcut:
+  hidden: true
+
 action_name: "Paciente se retiró"
 description: "Cierra el circuito de guardia por retiro / fuga / abandono. La documentación clínica queda en la captura del encounter."
 rbac_route: "/api/clinical/emergency-guardia/egreso-formulario"

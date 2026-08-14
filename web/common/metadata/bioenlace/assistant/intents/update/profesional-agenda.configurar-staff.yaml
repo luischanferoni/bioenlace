@@ -1,6 +1,10 @@
 intent_id: profesional-agenda.configurar-staff
 version: 1
 
+# Atajo canónico: profesional-horarios.gestionar-propio (elige AMB vs plantel).
+shortcut:
+  hidden: true
+
 operation: edit
 intent_family: profesional-agenda.configurar
 domain_operation: DataAccess.edit

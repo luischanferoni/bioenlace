@@ -95,6 +95,4 @@ API: `GET|POST /api/v1/clinical/emergency-guardia/{id}/egreso-formulario`.
 
 Campos: destino (`ALTA_DOMICILIARIA`, `OBSERVACION`, `INTERNACION`, `QUIROFANO`, `DERIVACION`, `FUGA`, `DEFUNCION`), diagnóstico operativo, epicrisis (≥20), pautas de alarma (obligatorias en alta domiciliaria), checklist.
 
-Efectos según destino: derivación setea efector; internación solicita cama; luego cierra circuito (`finalizar`). Intent asistente: `urgencias.egreso-estructurado-flow`.
-
-CTA en banner HC (`acciones`) y en tablero (redirige a HC con `?egreso=1`).
+Efectos según destino: derivación setea efector; internación solicita cama; luego cierra circuito (`finalizar`). **Paciente se retiró** es CTA del tablero, no atajo del asistente ni acción del banner HC.

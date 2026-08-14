@@ -173,6 +173,7 @@ info_list:
     keywords:
       - profesionales por servicio
       - distribucion por especialidad
+    presentation_handler: organization.profesionales_distribucion_info
     scope_checker: efector_sesion
     required_groups:
       - ProfesionalEfectorServicio.asignacion

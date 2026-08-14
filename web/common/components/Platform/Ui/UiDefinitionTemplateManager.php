@@ -323,6 +323,12 @@ class UiDefinitionTemplateManager
                     if (isset($params[$textKey]) && $params[$textKey] !== null && $params[$textKey] !== '') {
                         $b['text'] = (string) $params[$textKey];
                     }
+                    $titleKey = isset($b['title_field']) && is_string($b['title_field']) && $b['title_field'] !== ''
+                        ? $b['title_field']
+                        : null;
+                    if ($titleKey !== null && isset($params[$titleKey]) && $params[$titleKey] !== null && $params[$titleKey] !== '') {
+                        $b['title'] = (string) $params[$titleKey];
+                    }
                 }
             }
             unset($b);

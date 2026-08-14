@@ -32,6 +32,7 @@ use common\components\Domain\Organization\DataAccess\Filter\ServicioRolFromMenti
 use common\components\Domain\Organization\DataAccess\Scope\EfectorSesionScopeChecker;
 use common\components\Domain\Organization\DataAccess\Scope\EfectorSesionViaPesScopeChecker;
 use common\components\Domain\Organization\Presentation\ProfesionalesConteoInfoPresentation;
+use common\components\Domain\Organization\Presentation\ProfesionalesDistribucionInfoPresentation;
 use common\components\Domain\Organization\Presentation\ProfesionalesListadoRowsPresentation;
 use common\components\Domain\Organization\Service\Authorization\OrganizationEfectorSesionPolicy;
 use common\components\Domain\Organization\Service\Authorization\OrganizationPesEfectorPolicy;
@@ -113,6 +114,7 @@ return [
     'metricPresentationHandlers' => [
         'info' => [
             'organization.profesionales_conteo_info' => ProfesionalesConteoInfoPresentation::class,
+            'organization.profesionales_distribucion_info' => ProfesionalesDistribucionInfoPresentation::class,
         ],
         'list' => [
             'organization.profesionales_listado_rows' => ProfesionalesListadoRowsPresentation::class,

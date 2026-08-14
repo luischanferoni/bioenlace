@@ -72,8 +72,6 @@ capabilities:
       - /api/clinical/emergency-guardia/egreso-formulario
     default_roles:
       - Medico
-    related_intents:
-      - urgencias.egreso-estructurado-flow
 
   - capability_id: guardia.operaciones_staff
     description: Operaciones de guardia (derivación, pedidos, SLA, internación)

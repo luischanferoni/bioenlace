@@ -96,7 +96,8 @@ Hoy la deducción de internación usa señales en Derivaciones/Indicaciones + te
 
 - `urgencias.ver-tablero-guardia` — navega a inicio EMER  
 - `urgencias.triage-paciente-guardia` — triage (staff)  
-- `urgencias.egreso-estructurado-flow` — paciente se retiró  
+
+**Paciente se retiró** no es atajo del asistente: CTA del tablero (requiere el episodio).  
 
 ## Operación
 

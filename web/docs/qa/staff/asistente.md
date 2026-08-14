@@ -59,12 +59,9 @@ Detalle: [turnos-agenda.md](./turnos-agenda.md).
 
 ## Profesionales y métricas (staff)
 
-Atajo **Profesional, agenda y condición laboral** → **Para el personal**:
+Atajos de **terceros** (conteo/listado, condición laboral de un profesional, teleconsulta) solo si el rol tiene grant explícito (p. ej. AdminEfector). Médico: **mis** horarios / condición / licencia.
 
-- `profesionales.conteo-efector`
-- `profesionales.listado-efector`
-- `profesionales.distribucion-servicio-efector`
-- `condicion-laboral.editar-staff`, `profesional-agenda.configurar-staff`, etc.
+Agenda o plantel de otro no es atajo: NL si hay grant.
 
 ---
 

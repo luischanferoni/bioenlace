@@ -1,6 +1,10 @@
 intent_id: profesional-cobertura.gestionar-staff
 version: 1
 
+# Atajo canónico: profesional-horarios.gestionar-propio (elige AMB vs plantel).
+shortcut:
+  hidden: true
+
 operation: edit
 intent_family: profesional-cobertura.gestionar
 domain_operation: DataAccess.edit

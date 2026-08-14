@@ -1,5 +1,7 @@
 # Build Android en Windows (proyecto en `D:`)
 
+Flutter actual exige **Gradle ≥ 8.14**, **AGP ≥ 8.11.1** y **Kotlin ≥ 2.2.20** (wrapper + `settings.gradle.kts` de cada app). No subir a AGP 9 salvo migración de DSL.
+
 ## Error «different roots» (Kotlin + Pub cache)
 
 Si el repo está en `D:\` y el Pub cache en `C:\Users\...\AppData\Local\Pub\Cache`, Gradle/Kotlin puede fallar al compilar plugins (`record_android`, etc.) con:

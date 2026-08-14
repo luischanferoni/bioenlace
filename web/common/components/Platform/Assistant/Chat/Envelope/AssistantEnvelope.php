@@ -470,6 +470,13 @@ final class AssistantEnvelope
                 continue;
             }
             $actionId = AssistantDraftNormalizer::scalarString($tab['action_id'] ?? '');
+            $providerOpen = $actionId !== ''
+                ? \common\components\Platform\Assistant\Catalog\UiActionCatalogProviderRegistry::clientOpenForActionId($actionId)
+                : null;
+            if (is_array($providerOpen) && AssistantDraftNormalizer::scalarString($providerOpen['kind'] ?? '') !== '') {
+                return $providerOpen;
+            }
+
             $action = [
                 'action_id' => $actionId !== '' ? $actionId : 'flow.ui',
                 'display_name' => $actionId,

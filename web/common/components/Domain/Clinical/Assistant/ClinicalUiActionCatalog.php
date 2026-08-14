@@ -317,7 +317,38 @@ final class ClinicalUiActionCatalog implements UiActionCatalogProviderInterface
      */
     public static function forUser(int $userId): array
     {
-        return YamlIntentCatalogService::filterByRbac(self::discoverAll(), $userId);
+        $out = [];
+        foreach (self::discoverAll() as $def) {
+            if (!is_array($def)) {
+                continue;
+            }
+            $route = trim((string) ($def['rbac_route'] ?? $def['route'] ?? ''));
+            if ($route === '') {
+                continue;
+            }
+            if (YamlIntentCatalogService::userIdCanPermissionKey($userId, $route)) {
+                $out[] = $def;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public static function clientOpenForActionId(string $actionId): ?array
+    {
+        $def = self::definitionByActionId($actionId);
+        if ($def === null) {
+            return null;
+        }
+        $clientOpen = $def['client_open'] ?? null;
+        if (!is_array($clientOpen) || trim((string) ($clientOpen['kind'] ?? '')) === '') {
+            return null;
+        }
+
+        return $clientOpen;
     }
 
     /**

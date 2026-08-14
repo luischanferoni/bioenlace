@@ -2357,7 +2357,10 @@
                 }
 
                 if (okNative) {
-                    // Pantallas nativas: solo apps móviles. En web el texto del flujo basta; no montar UI ni redirigir.
+                    const webPath = co.web && typeof co.web.path === 'string' ? co.web.path.trim() : '';
+                    if (webPath !== '') {
+                        spaNavigateToUrl(webPath, flowActionTitle || 'Inicio');
+                    }
                     setTimeout(scrollChatToBottom, 20);
                     return;
                 }

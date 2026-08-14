@@ -434,6 +434,12 @@ html:has(.spa-asistente-root) {
     opacity: 0.45;
 }
 
+.spa-flow-step-track {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+}
+
 .spa-flow-step-num {
     flex-shrink: 0;
     width: 1.3rem;
@@ -464,8 +470,6 @@ html:has(.spa-asistente-root) {
     flex: 1 1 auto;
     min-width: 0;
     padding-bottom: 1rem;
-    margin-left: 2rem;
-    margin-top: -1.2rem;
 }
 
 .spa-flow-step-item:last-child .spa-flow-step-body {

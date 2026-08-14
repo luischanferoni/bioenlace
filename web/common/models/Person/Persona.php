@@ -997,7 +997,7 @@ class Persona extends \yii\db\ActiveRecord
 
         $sexo = [1 => 'F', 2 => 'M'];
 
-        return $sexo[$this->sexo_biologico];
+        return $sexo[$this->sexo_biologico] ?? null;
     }
 
     public function getSexoTexto()
@@ -1005,7 +1005,7 @@ class Persona extends \yii\db\ActiveRecord
 
         $sexo = [1 => 'Femenino', 2 => 'Masculino'];
 
-        return $sexo[$this->sexo_biologico];
+        return $sexo[$this->sexo_biologico] ?? null;
     }
 
     public function getGeneroTexto()
@@ -1013,7 +1013,7 @@ class Persona extends \yii\db\ActiveRecord
 
         $genero = [1 => 'Femenino', 2 => 'Masculino', 3 => 'Otro'];
 
-        return $genero[$this->genero];
+        return $genero[$this->genero] ?? null;
     }
 
     public function getGrupoEtareoSumar($fecha_prestacion)

@@ -386,7 +386,7 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
           if (_selectedPersonaLabel != null) ...[
             BioSpacing.gapH(BioSpacing.sm),
             Text('Seleccionado: $_selectedPersonaLabel',
-                style: BioTypography.bodySecondary),
+                style: BioTypography.bodySm),
           ],
           if (_candidatos.isNotEmpty) ...[
             BioSpacing.gapH(BioSpacing.sm),
@@ -471,7 +471,7 @@ class _EmergencyIngresoScreenState extends State<EmergencyIngresoScreen> {
             if (_identidadLabel != null) ...[
               BioSpacing.gapH(BioSpacing.sm),
               Text('Identidad: $_identidadLabel',
-                  style: BioTypography.bodySecondary),
+                  style: BioTypography.bodySm),
             ],
           ],
           if (!_esVincular) ...[

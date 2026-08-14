@@ -150,23 +150,45 @@ final class HomePanelManifest
     }
 
     /**
-     * Roles autorizados a triage / re-triage en el tablero EMER (UI).
+     * capability_id RBAC para CTAs EMER (p. ej. triage → guardia.triage).
+     */
+    public function emergencyCapabilityId(string $manifestKey): string
+    {
+        $manifest = $this->load();
+        $raw = $manifest['panels']['staff']['EMER']['capabilities'][$manifestKey] ?? null;
+        if (is_string($raw)) {
+            return trim($raw);
+        }
+
+        return '';
+    }
+
+    /**
+     * Exclusiones UX sobre RBAC (p. ej. médico no triagea desde tablero).
      *
+     * @return list<string>
+     */
+    public function emergencyCapabilityUiExcludeRoles(string $manifestKey): array
+    {
+        return $this->emergencyCapabilityRoles($manifestKey . '_ui_exclude_roles');
+    }
+
+    /**
+     * @deprecated Preferir {@see emergencyCapabilityId()} + CapabilityAccessService
      * @return list<string>
      */
     public function emergencyTriageRoles(): array
     {
-        return $this->emergencyCapabilityRoles('triage_roles');
+        return $this->legacyRolesForCapability('triage', 'triage_ui_exclude_roles');
     }
 
     /**
-     * Roles autorizados a ingresar pacientes al tablero EMER (UI).
-     *
+     * @deprecated Preferir {@see emergencyCapabilityId()} + CapabilityAccessService
      * @return list<string>
      */
     public function emergencyIngresoRoles(): array
     {
-        return $this->emergencyCapabilityRoles('ingreso_roles');
+        return $this->legacyRolesForCapability('ingreso');
     }
 
     /**
@@ -194,13 +216,12 @@ final class HomePanelManifest
     }
 
     /**
-     * Roles que pueden **Atender** (iniciar-atencion) en el tablero EMER.
-     *
+     * @deprecated Preferir {@see emergencyCapabilityId()} + CapabilityAccessService
      * @return list<string>
      */
     public function emergencyAtenderRoles(): array
     {
-        return $this->emergencyCapabilityRoles('atender_roles');
+        return $this->legacyRolesForCapability('atender');
     }
 
     /**
@@ -214,13 +235,36 @@ final class HomePanelManifest
     }
 
     /**
-     * Roles que pueden abrir la nota del encounter sin tomar el caso.
-     *
+     * @deprecated Preferir {@see emergencyCapabilityId()} + CapabilityAccessService
      * @return list<string>
      */
     public function emergencyDocumentarRoles(): array
     {
-        return $this->emergencyCapabilityRoles('documentar_roles');
+        return $this->legacyRolesForCapability('documentar');
+    }
+
+    /**
+     * Roles efectivos = default_roles del capability YAML − ui_exclude (solo metadata).
+     *
+     * @return list<string>
+     */
+    private function legacyRolesForCapability(string $capabilityManifestKey, ?string $excludeKey = null): array
+    {
+        $capabilityId = $this->emergencyCapabilityId($capabilityManifestKey);
+        if ($capabilityId === '') {
+            return [];
+        }
+
+        $roles = \common\components\Platform\Core\Permission\CapabilityManifestIndex::defaultRolesForCapability($capabilityId);
+        if ($excludeKey !== null) {
+            $exclude = array_flip($this->emergencyCapabilityRoles($excludeKey));
+            $roles = array_values(array_filter(
+                $roles,
+                static fn (string $role): bool => !isset($exclude[$role])
+            ));
+        }
+
+        return $roles;
     }
 
     /**

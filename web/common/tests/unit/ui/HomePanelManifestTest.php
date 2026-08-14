@@ -3,6 +3,7 @@
 namespace common\tests\unit\ui;
 
 use Codeception\Test\Unit;
+use common\components\Platform\Core\Permission\CapabilityManifestIndex;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use common\components\Platform\Ui\Home\Service\HomePanelManifest;
 use Symfony\Component\Yaml\Yaml;
@@ -12,6 +13,7 @@ class HomePanelManifestTest extends Unit
     protected function _after(): void
     {
         HomePanelManifest::resetCacheForTests();
+        CapabilityManifestIndex::resetCacheForTests();
     }
 
     public function testAudienceStaffRolesFromMetadata(): void
@@ -24,10 +26,15 @@ class HomePanelManifestTest extends Unit
         $this->assertNotContains('paciente', $roles);
     }
 
-    public function testAudiencePatientRoleFromMetadata(): void
+    public function testEmergencyCapabilityIdsFromManifest(): void
     {
         $manifest = new HomePanelManifest();
-        $this->assertSame('paciente', $manifest->audiencePatientRole());
+
+        $this->assertSame('guardia.triage', $manifest->emergencyCapabilityId('triage'));
+        $this->assertSame('guardia.ingreso', $manifest->emergencyCapabilityId('ingreso'));
+        $this->assertSame('guardia.atender', $manifest->emergencyCapabilityId('atender'));
+        $this->assertSame('encounter.documentar_nota', $manifest->emergencyCapabilityId('documentar'));
+        $this->assertSame('guardia.retiro_administrativo', $manifest->emergencyCapabilityId('retiro_administrativo'));
     }
 
     public function testEmergencyTriageRolesExcludeMedico(): void
@@ -53,13 +60,13 @@ class HomePanelManifestTest extends Unit
         $this->assertNotContains('Medico', $roles);
     }
 
-    public function testEmergencyIngresoDniClientsAreMobileOnly(): void
+    public function testEmergencyIngresoDniClientsIncludeWebAndMobile(): void
     {
         $manifest = new HomePanelManifest();
         $clients = $manifest->emergencyIngresoDniClients();
 
-        $this->assertSame(['mobile'], $clients);
-        $this->assertNotContains('web', $clients);
+        $this->assertContains('mobile', $clients);
+        $this->assertContains('web', $clients);
     }
 
     public function testEmergencyAtenderRolesAreMedicoOnly(): void
@@ -79,9 +86,15 @@ class HomePanelManifestTest extends Unit
         $manifest = new HomePanelManifest();
         $roles = $manifest->emergencyDocumentarRoles();
 
-        $this->assertContains('enfermeria', $roles);
+        $this->assertSame(['enfermeria'], $roles);
         $this->assertNotContains('Medico', $roles);
         $this->assertNotContains('Administrativo', $roles);
+    }
+
+    public function testAudiencePatientRoleFromMetadata(): void
+    {
+        $manifest = new HomePanelManifest();
+        $this->assertSame('paciente', $manifest->audiencePatientRole());
     }
 
     public function testStaffOperationsPanelHasSessionContextAndKpis(): void

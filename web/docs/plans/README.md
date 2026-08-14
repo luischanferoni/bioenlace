@@ -24,6 +24,7 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Demo sandbox institucional | `demo-sandbox-institucional/` | CTA Probar demo → código un solo uso |
 | Captura actor + enfermería | `captura-actor-enfermeria/` | Quitar alias ConsultasConfiguracion; overlay PES + CarePlan; app triage |
 | Admisión: identidad + ventanilla | `admision-identidad-ventanilla/` | Ingreso DNI (sin alta libre); Didit; NN; sesión de mostrador |
+| RBAC capabilities UI nativa | `rbac-capabilities-ui-nativa/` | Permisos assignables fuera de intents; guardia + encounter + panel |
 
 ## Planes archivados (carpeta eliminada)
 

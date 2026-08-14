@@ -8,7 +8,7 @@ use yii\db\Query;
 use yii\rbac\Item;
 
 /**
- * Copia grants rol→permiso según intent-grant-migration-map.yaml.
+ * Copia grants rol→permiso según intent-grant-migration-map.yaml (intents y capabilities).
  */
 final class IntentGrantMigrationService
 {
@@ -46,11 +46,43 @@ final class IntentGrantMigrationService
                 if ($intentId === '') {
                     continue;
                 }
-                if ($this->ensurePermission($authItem, $intentId, $now)) {
+                if ($this->ensurePermission($authItem, $intentId, $now, 'Intent ' . $intentId)) {
                     $createdPermissions++;
                 }
                 $roleGrants += $this->copyRoleGrants($childTable, $source, $intentId, $errors);
             }
+        }
+
+        foreach ($map['capability_grant_sources'] ?? [] as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $source = trim((string) ($row['source_permission'] ?? ''));
+            $targets = $row['capability_targets'] ?? [];
+            if ($source === '' || !is_array($targets)) {
+                continue;
+            }
+
+            foreach ($targets as $capabilityId) {
+                $capabilityId = trim((string) $capabilityId);
+                if ($capabilityId === '') {
+                    continue;
+                }
+                $capMeta = CapabilityManifestIndex::get($capabilityId);
+                if ($capMeta === null) {
+                    $errors[] = 'Capability destino desconocida: ' . $capabilityId;
+                    continue;
+                }
+                $description = trim((string) ($capMeta['description'] ?? ''));
+                if ($this->ensurePermission($authItem, $capabilityId, $now, $description !== '' ? $description : $capabilityId)) {
+                    $createdPermissions++;
+                }
+                $roleGrants += $this->copyRoleGrants($childTable, $source, $capabilityId, $errors);
+            }
+        }
+
+        if ($roleGrants > 0) {
+            BioenlaceRbacRevision::bump();
         }
 
         return [
@@ -61,41 +93,46 @@ final class IntentGrantMigrationService
     }
 
     /**
-     * @return array{role_grant_sources: list<array<string, mixed>>, attribute_grant_sources: list<array<string, mixed>>}
+     * @return array{
+     *   role_grant_sources: list<array<string, mixed>>,
+     *   capability_grant_sources: list<array<string, mixed>>,
+     *   attribute_grant_sources: list<array<string, mixed>>
+     * }
      */
     private function loadMap(): array
     {
         $file = ProductMetadataPaths::intentGrantMigrationMapFile();
         if (!is_file($file)) {
-            return ['role_grant_sources' => [], 'attribute_grant_sources' => []];
+            return ['role_grant_sources' => [], 'capability_grant_sources' => [], 'attribute_grant_sources' => []];
         }
 
         try {
             $parsed = Yaml::parseFile($file);
         } catch (\Throwable $e) {
-            return ['role_grant_sources' => [], 'attribute_grant_sources' => []];
+            return ['role_grant_sources' => [], 'capability_grant_sources' => [], 'attribute_grant_sources' => []];
         }
 
         if (!is_array($parsed)) {
-            return ['role_grant_sources' => [], 'attribute_grant_sources' => []];
+            return ['role_grant_sources' => [], 'capability_grant_sources' => [], 'attribute_grant_sources' => []];
         }
 
         return [
             'role_grant_sources' => is_array($parsed['role_grant_sources'] ?? null) ? $parsed['role_grant_sources'] : [],
+            'capability_grant_sources' => is_array($parsed['capability_grant_sources'] ?? null) ? $parsed['capability_grant_sources'] : [],
             'attribute_grant_sources' => is_array($parsed['attribute_grant_sources'] ?? null) ? $parsed['attribute_grant_sources'] : [],
         ];
     }
 
-    private function ensurePermission(string $authItem, string $intentId, int $now): bool
+    private function ensurePermission(string $authItem, string $permissionKey, int $now, string $description): bool
     {
-        if ((new Query())->from($authItem)->where(['name' => $intentId])->exists()) {
+        if ((new Query())->from($authItem)->where(['name' => $permissionKey])->exists()) {
             return false;
         }
 
         \Yii::$app->db->createCommand()->insert($authItem, [
-            'name' => $intentId,
+            'name' => $permissionKey,
             'type' => Item::TYPE_PERMISSION,
-            'description' => 'Intent ' . $intentId,
+            'description' => $description,
             'rule_name' => null,
             'data' => null,
             'created_at' => $now,

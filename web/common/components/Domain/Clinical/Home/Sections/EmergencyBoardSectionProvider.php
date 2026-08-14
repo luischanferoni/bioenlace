@@ -55,6 +55,7 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
                 'puede_ingresar_dni' => $caps->canIngresarConDni(),
                 'puede_atender' => $caps->canAtender(),
                 'puede_documentar' => $caps->canDocumentar(),
+                'puede_retiro' => $caps->canRetiroEnTablero(),
                 'empty_message' => ProfesionalCoberturaActivaService::mensajeSinCoberturaParaSesion(
                     Encounter::ENCOUNTER_CLASS_EMER,
                     ['proxima_inicio' => $proxima]
@@ -72,6 +73,7 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
             'puede_ingresar_dni' => $caps->canIngresarConDni(),
             'puede_atender' => $caps->canAtender(),
             'puede_documentar' => $caps->canDocumentar(),
+            'puede_retiro' => $caps->canRetiroEnTablero(),
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace admin\controllers;
 
 use common\components\Platform\Core\Permission\CatalogPermissionSyncService;
+use common\components\Platform\Core\Permission\CapabilityPermissionSyncService;
 use common\components\Platform\Core\Permission\PermissionCatalogService;
 use common\components\Platform\Core\Permission\PermissionRolesAssignmentService;
 use common\components\Platform\Core\Permission\RolePermissionAssignmentService;
@@ -13,7 +14,7 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 
 /**
- * Catálogo de permisos declarativos (intents) e integridad.
+ * Catálogo de permisos declarativos (intents + capabilities UI nativa) e integridad.
  */
 class PermissionCatalogController extends Controller
 {
@@ -28,7 +29,9 @@ class PermissionCatalogController extends Controller
                 'actions' => [
                     'integrity' => ['GET', 'POST'],
                     'sync' => ['POST'],
+                    'sync-capabilities' => ['POST'],
                     'edit-intent-roles' => ['GET', 'POST'],
+                    'edit-capability-roles' => ['GET', 'POST'],
                 ],
             ],
         ];
@@ -39,6 +42,7 @@ class PermissionCatalogController extends Controller
         $catalog = new PermissionCatalogService();
         $rolesByKey = [];
         $intentInAuth = [];
+        $capabilityInAuth = [];
         $assignment = new RolePermissionAssignmentService();
         $matrix = new \common\components\Platform\Core\Permission\RolePermissionMatrixService();
 
@@ -51,18 +55,43 @@ class PermissionCatalogController extends Controller
             $rolesByKey[$key] = $matrix->buildMatrixRowRoles($key);
         }
 
+        foreach ($catalog->listCapabilities() as $capability) {
+            $key = trim((string) ($capability['key'] ?? ''));
+            if ($key === '') {
+                continue;
+            }
+            $capabilityInAuth[$key] = $assignment->permissionExistsInAuthItem($key);
+            $rolesByKey[$key] = $matrix->buildMatrixRowRoles($key);
+        }
+
+        foreach ($catalog->listDeprecatedPermissions() as $legacy) {
+            $key = trim((string) ($legacy['key'] ?? ''));
+            if ($key === '') {
+                continue;
+            }
+            $rolesByKey[$key] = $matrix->buildMatrixRowRoles($key);
+        }
+
         $unregisteredIntents = count(array_filter(
             $intentInAuth,
+            static fn (bool $ok): bool => !$ok
+        ));
+        $unregisteredCapabilities = count(array_filter(
+            $capabilityInAuth,
             static fn (bool $ok): bool => !$ok
         ));
 
         return $this->render('index', [
             'intents' => $catalog->listIntents(),
+            'capabilities' => $catalog->listCapabilities(),
+            'deprecatedPermissions' => $catalog->listDeprecatedPermissions(),
             'flowSteps' => $catalog->listFlowStepDependencies(),
             'rolesByKey' => $rolesByKey,
             'intentInAuth' => $intentInAuth,
+            'capabilityInAuth' => $capabilityInAuth,
             'roleNames' => $assignment->listRoleNames(),
             'unregisteredIntentsCount' => $unregisteredIntents,
+            'unregisteredCapabilitiesCount' => $unregisteredCapabilities,
         ]);
     }
 
@@ -78,6 +107,24 @@ class PermissionCatalogController extends Controller
         $matrix = new \common\components\Platform\Core\Permission\RolePermissionMatrixService();
 
         return $this->render('view-intent', [
+            'manifest' => $manifest,
+            'roles' => $key !== '' ? $matrix->buildMatrixRowRoles($key) : [],
+            'inAuthItem' => $key !== '' && $assignment->permissionExistsInAuthItem($key),
+        ]);
+    }
+
+    public function actionViewCapability(string $capability_id)
+    {
+        $manifest = (new PermissionCatalogService())->buildCapabilityManifest($capability_id);
+        if ($manifest === null) {
+            throw new NotFoundHttpException('Capability no encontrada.');
+        }
+
+        $key = trim((string) ($manifest['key'] ?? ''));
+        $assignment = new RolePermissionAssignmentService();
+        $matrix = new \common\components\Platform\Core\Permission\RolePermissionMatrixService();
+
+        return $this->render('view-capability', [
             'manifest' => $manifest,
             'roles' => $key !== '' ? $matrix->buildMatrixRowRoles($key) : [],
             'inAuthItem' => $key !== '' && $assignment->permissionExistsInAuthItem($key),
@@ -116,6 +163,30 @@ class PermissionCatalogController extends Controller
         return $this->redirect(['index']);
     }
 
+    public function actionSyncCapabilities()
+    {
+        $result = (new CapabilityPermissionSyncService())->sync(
+            applyDefaultRoles: true,
+            linkRelatedIntents: true,
+            propagateFromHomePanel: true
+        );
+        $msg = sprintf(
+            'Capabilities: %d creada(s), %d enlace(s) ruta, %d grant(s) rol, %d intent link(s), %d panel prop.',
+            $result['created'],
+            $result['linked'],
+            $result['role_grants'],
+            $result['intent_links'],
+            $result['panel_propagated']
+        );
+        if ($result['errors'] !== []) {
+            Yii::$app->session->setFlash('error', $msg . ' Errores: ' . implode('; ', $result['errors']));
+        } else {
+            Yii::$app->session->setFlash('success', $msg);
+        }
+
+        return $this->redirect(['index', 'tab' => 'capabilities']);
+    }
+
     /** @deprecated Redirige al CRUD de roles (intents por rol). */
     public function actionEditRole(string $role)
     {
@@ -123,6 +194,11 @@ class PermissionCatalogController extends Controller
     }
 
     public function actionEditIntentRoles(string $key)
+    {
+        return $this->editPermissionRoles($key);
+    }
+
+    public function actionEditCapabilityRoles(string $key)
     {
         return $this->editPermissionRoles($key);
     }
@@ -147,16 +223,24 @@ class PermissionCatalogController extends Controller
         $catalog = new PermissionCatalogService();
         $catalogRow = $catalog->findPermissionRow($key);
         if ($catalogRow === null) {
-            throw new NotFoundHttpException('Intent no encontrado en el catálogo.');
+            throw new NotFoundHttpException('Permiso no encontrado en el catálogo.');
         }
 
-        $intentId = trim((string) ($catalogRow['intent_id'] ?? ''));
-        $fieldManifest = $intentId !== '' ? $catalog->buildIntentFieldManifest($intentId) : null;
+        $kind = (string) ($catalogRow['kind'] ?? 'intent');
+        $fieldManifest = null;
+        if ($kind === 'intent') {
+            $intentId = trim((string) ($catalogRow['intent_id'] ?? ''));
+            $fieldManifest = $intentId !== '' ? $catalog->buildIntentFieldManifest($intentId) : null;
+        }
 
         $service = new PermissionRolesAssignmentService();
         $assignment = new RolePermissionAssignmentService();
         $roleNames = $assignment->listRoleNames();
         $assignedRoles = array_flip($service->rolesWithPermission($key));
+
+        $backUrl = $kind === 'capability'
+            ? ['view-capability', 'capability_id' => $key]
+            : ['view-intent', 'intent_id' => (string) ($catalogRow['intent_id'] ?? $key)];
 
         if (Yii::$app->request->isPost) {
             $selected = Yii::$app->request->post('roles', []);
@@ -170,7 +254,9 @@ class PermissionCatalogController extends Controller
                 Yii::$app->session->setFlash('error', $e->getMessage());
             }
 
-            return $this->redirect(['edit-intent-roles', 'key' => $key]);
+            return $this->redirect($kind === 'capability'
+                ? ['edit-capability-roles', 'key' => $key]
+                : ['edit-intent-roles', 'key' => $key]);
         }
 
         return $this->render('edit-permission-roles', [
@@ -180,6 +266,7 @@ class PermissionCatalogController extends Controller
             'roleNames' => $roleNames,
             'assignedRoles' => $assignedRoles,
             'inAuthItem' => $assignment->permissionExistsInAuthItem($key),
+            'backUrl' => $backUrl,
         ]);
     }
 }

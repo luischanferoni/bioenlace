@@ -21,6 +21,7 @@
 - [x] Banner + timeline de episodio en HC (`contexto_episodio`, `timeline_episodio`).
 - [x] Egreso estructurado (destino, diagnóstico operativo, epicrisis) UI JSON `egreso-formulario`.
 - [x] Signos vitales del episodio (triage + enfermería) con curva en web.
+- [x] RBAC capabilities UI nativa (`guardia.*`, panel EMER) — admin + sync; ver [rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md).
 
 ## Lo que falta (refinamiento)
 

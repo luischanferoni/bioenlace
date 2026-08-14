@@ -19,8 +19,9 @@ class CatalogIntegrityController extends Controller
         $summary = $result['summary'];
 
         $this->stdout(sprintf(
-            "Catálogo permisos: %d intent(s), %d atributo(s), %d paso(s) open_ui\n",
+            "Catálogo permisos: %d intent(s), %d capability(s), %d atributo(s), %d paso(s) open_ui\n",
             (int) ($summary['intents'] ?? 0),
+            (int) ($summary['capabilities'] ?? 0),
             (int) ($summary['attributes'] ?? 0),
             (int) ($summary['flow_steps'] ?? 0)
         ));

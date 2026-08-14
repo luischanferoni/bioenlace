@@ -2,12 +2,13 @@
 
 namespace common\components\Domain\Clinical\Emergency\Service;
 
+use common\components\Platform\Core\Permission\CapabilityAccessService;
 use common\components\Platform\Ui\Home\Service\HomePanelManifest;
 use common\models\User;
+use Yii;
 
 /**
- * Capacidades de UI del tablero EMER (roles desde home_panel_manifest.yaml).
- * No sustituye RBAC de API; define quién ve CTAs (triage, ingreso, atender, nota).
+ * Capacidades de UI del tablero EMER: RBAC ({@see CapabilityAccessService}) + exclusiones UX del manifiesto.
  */
 final class GuardiaBoardCapabilityService
 {
@@ -19,25 +20,20 @@ final class GuardiaBoardCapabilityService
         $this->manifest = $manifest ?? new HomePanelManifest();
     }
 
-    /**
-     * Triage / re-triage en tablero (roles en home_panel_manifest.yaml).
-     */
     public function canTriage(): bool
     {
-        return $this->hasAnyManifestRole($this->manifest->emergencyTriageRoles());
+        if (!$this->userCanEmergencyCapability('triage')) {
+            return false;
+        }
+
+        return !$this->userHasAnyRole($this->manifest->emergencyCapabilityUiExcludeRoles('triage'), false);
     }
 
-    /**
-     * Ingreso de paciente a guardia (roles en home_panel_manifest.yaml).
-     */
     public function canIngresar(): bool
     {
-        return $this->hasAnyManifestRole($this->manifest->emergencyIngresoRoles());
+        return $this->userCanEmergencyCapability('ingreso');
     }
 
-    /**
-     * Identificar con DNI/Didit al ingresar (roles + `ingreso_dni_clients`).
-     */
     public function canIngresarConDni(): bool
     {
         if (!$this->canIngresar()) {
@@ -47,32 +43,72 @@ final class GuardiaBoardCapabilityService
         return $this->manifest->allowsEmergencyIngresoDniForCurrentClient();
     }
 
-    /**
-     * Atender / iniciar-atencion (toma el caso). Roles en home_panel_manifest.yaml.
-     * `atender_exclude_roles` (admisión) gana aunque el PES herede Medico.
-     */
     public function canAtender(): bool
     {
-        $exclude = $this->manifest->emergencyAtenderExcludeRoles();
-        if ($exclude !== [] && $this->hasAnyManifestRole($exclude, false)) {
+        if ($this->userHasAnyRole($this->manifest->emergencyAtenderExcludeRoles(), false)) {
             return false;
         }
 
-        return $this->hasAnyManifestRole($this->manifest->emergencyAtenderRoles());
+        return $this->userCanEmergencyCapability('atender');
+    }
+
+    public function canDocumentar(): bool
+    {
+        return $this->userCanEmergencyCapability('documentar');
+    }
+
+    /** Retiro administrativo (admisión / ventanilla). */
+    public function canRetiroAdministrativo(): bool
+    {
+        return $this->userCanEmergencyCapability('retiro_administrativo');
+    }
+
+    /** Egreso clínico (médico). */
+    public function canRetiroClinico(): bool
+    {
+        return $this->userCanEmergencyCapability('retiro_clinico');
     }
 
     /**
-     * Abrir nota de encounter sin tomar el caso (enfermería).
+     * ¿Puede registrar «Paciente se retiró» en algún caso del tablero?
      */
-    public function canDocumentar(): bool
+    public function canRetiroEnTablero(): bool
     {
-        return $this->hasAnyManifestRole($this->manifest->emergencyDocumentarRoles());
+        return $this->canRetiroAdministrativo()
+            || $this->canRetiroClinico()
+            || $this->canTriage()
+            || $this->canIngresar()
+            || $this->canAtender();
+    }
+
+    private function userCanEmergencyCapability(string $manifestKey): bool
+    {
+        $capabilityId = $this->manifest->emergencyCapabilityId($manifestKey);
+        if ($capabilityId === '') {
+            return false;
+        }
+
+        $userId = $this->currentUserId();
+        if ($userId <= 0) {
+            return false;
+        }
+
+        return CapabilityAccessService::userCanExecuteCapability($userId, $capabilityId);
+    }
+
+    private function currentUserId(): int
+    {
+        if (!Yii::$app->has('user', true) || Yii::$app->user->isGuest) {
+            return 0;
+        }
+
+        return (int) Yii::$app->user->id;
     }
 
     /**
      * @param list<string> $roles
      */
-    private function hasAnyManifestRole(array $roles, bool $superAdminAllowed = true): bool
+    private function userHasAnyRole(array $roles, bool $superAdminAllowed = true): bool
     {
         if ($roles === []) {
             return false;

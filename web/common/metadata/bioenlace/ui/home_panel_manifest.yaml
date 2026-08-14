@@ -16,31 +16,22 @@ panels:
     EMER:
       layout: clinical_board
       title: Tablero de guardia
-      # Primer triage en tablero: solo staff. Médico edita triage en HC (banner).
+      # CTAs del tablero: capability_id RBAC (+ exclusiones UX que no duplican reglas de dominio).
       capabilities:
-        triage_roles:
-          - enfermeria
-          - Administrativo
-          - AdminEfector
-        # Admisión a guardia (no enfermería: el circuito de ingreso es administrativo).
-        # DNI por escaneo PDF417: app (cámara) y web (lector hardware).
+        triage: guardia.triage
+        triage_ui_exclude_roles:
+          - Medico
+        ingreso: guardia.ingreso
         ingreso_dni_clients:
           - mobile
           - web
-        ingreso_roles:
-          - Administrativo
-          - AdminEfector
-        # Tomar el caso + captura clínica (POST iniciar-atencion).
-        # Admisión puede tener PES sobre un servicio clínico (item_name Medico);
-        # igual no atiende: atender_exclude_roles gana.
-        atender_roles:
-          - Medico
+        atender: guardia.atender
         atender_exclude_roles:
           - Administrativo
           - AdminEfector
-        # Nota de encounter sin tomar el caso (enfermería).
-        documentar_roles:
-          - enfermeria
+        documentar: encounter.documentar_nota
+        retiro_administrativo: guardia.retiro_administrativo
+        retiro_clinico: guardia.egreso_clinico
       sections:
         - id: staff_cobertura_activa
           provider: staff_cobertura_activa

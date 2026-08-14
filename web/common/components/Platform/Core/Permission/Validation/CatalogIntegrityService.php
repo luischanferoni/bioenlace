@@ -4,9 +4,11 @@ namespace common\components\Platform\Core\Permission\Validation;
 
 use common\components\Platform\Assistant\Catalog\IntentSchemaPaths;
 use common\components\Platform\Core\DataAccess\Validation\DataAccessCatalogCheckService;
+use common\components\Platform\Core\Permission\CapabilityManifestIndex;
 use common\components\Platform\Core\Permission\IntentFamilyCatalog;
 use common\components\Platform\Core\Permission\IntentManifestIndex;
 use common\components\Platform\Core\Permission\IntentManifestMetadata;
+use common\components\Platform\Core\Permission\LegacyPermissionAliasIndex;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use common\components\Platform\Core\Permission\Domain\DomainOperationPolicyRegistry;
 use common\components\Platform\Core\Permission\PermissionCatalogService;
@@ -27,6 +29,7 @@ final class CatalogIntegrityService
     {
         IntentManifestIndex::resetCache();
         IntentSchemaPaths::resetIndexCache();
+        CapabilityManifestIndex::resetCacheForTests();
         IntentFamilyCatalog::resetCache();
 
         $errors = (new DataAccessCatalogCheckService())->run();
@@ -34,6 +37,7 @@ final class CatalogIntegrityService
 
         $errors = array_merge($errors, $this->checkDuplicateIntentIds());
         $errors = array_merge($errors, $this->checkIntentsHavePermissionOrRoute());
+        $errors = array_merge($errors, $this->checkCapabilitiesIntegrity());
         $errors = array_merge($errors, $this->checkIntentExtendedMetadata());
         $warnings = array_merge($warnings, $this->checkIntentExtendedMetadataWarnings());
         $errors = array_merge($errors, $this->checkIntentFamilies());
@@ -49,6 +53,8 @@ final class CatalogIntegrityService
         $errors = array_merge($errors, $this->checkDomainOperationEmptyPolicies());
         $warnings = array_merge($warnings, $this->checkDomainOperationsCatalogCoverage());
         $warnings = array_merge($warnings, $this->checkLogicalPermissionRoutePollution());
+        $warnings = array_merge($warnings, $this->checkGuardiaRoutesLegacyListadoPacientes());
+        $warnings = array_merge($warnings, $this->checkLegacyPermissionWithoutReplacementCapability());
 
         $errors = array_values(array_unique($errors));
         $warnings = array_values(array_unique($warnings));
@@ -68,6 +74,7 @@ final class CatalogIntegrityService
                     static fn (array $meta): bool => (bool) ($meta['uses_extended_contract'] ?? false)
                 )),
                 'attributes' => count((new PermissionCatalogService())->listAttributes()),
+                'capabilities' => count(CapabilityManifestIndex::all()),
                 'flow_steps' => count((new PermissionCatalogService())->listFlowStepDependencies()),
             ],
         ];
@@ -116,6 +123,25 @@ final class CatalogIntegrityService
             $rbac = trim((string) ($meta['rbac_route'] ?? ''));
             if ($rbac === '') {
                 $errors[] = 'Intent «' . $intentId . '»: falta rbac_route';
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function checkCapabilitiesIntegrity(): array
+    {
+        $errors = [];
+        foreach (CapabilityManifestIndex::all() as $capabilityId => $meta) {
+            $routes = $meta['routes'] ?? [];
+            if (!is_array($routes) || $routes === []) {
+                $errors[] = 'Capability «' . $capabilityId . '»: sin rutas API enlazadas';
+            }
+            if (trim((string) ($meta['description'] ?? '')) === '') {
+                $errors[] = 'Capability «' . $capabilityId . '»: falta description';
             }
         }
 
@@ -542,6 +568,124 @@ final class CatalogIntegrityService
                 }
                 $warnings[] = 'RBAC: «' . $permission . '» enlazado a ruta «' . $route
                     . '» fuera del rbac_route del intent; revisar auth_item_child';
+            }
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Rutas emergency-guardia que siguen colgando solo de listado_pacientes sin capability padre.
+     *
+     * @return list<string>
+     */
+    private function checkGuardiaRoutesLegacyListadoPacientes(): array
+    {
+        if (!Yii::$app->has('db')) {
+            return [];
+        }
+
+        $childTable = Yii::$app->db->schema->getTableSchema('{{%auth_item_child}}', true);
+        if ($childTable === null) {
+            return [];
+        }
+
+        /** @var array<string, true> $guardiaRoutes */
+        $guardiaRoutes = [];
+        /** @var array<string, true> $guardiaCapabilityIds */
+        $guardiaCapabilityIds = [];
+        foreach (CapabilityManifestIndex::all() as $capabilityId => $meta) {
+            if (strncmp($capabilityId, 'guardia.', 8) !== 0) {
+                continue;
+            }
+            $guardiaCapabilityIds[$capabilityId] = true;
+            foreach ($meta['routes'] ?? [] as $route) {
+                if (!is_string($route) || trim($route) === '') {
+                    continue;
+                }
+                $guardiaRoutes['/' . ltrim(trim($route), '/')] = true;
+            }
+        }
+
+        if ($guardiaRoutes === []) {
+            return [];
+        }
+
+        $warnings = [];
+        foreach (array_keys($guardiaRoutes) as $route) {
+            $parents = (new \yii\db\Query())
+                ->select('parent')
+                ->from('{{%auth_item_child}}')
+                ->where(['child' => $route])
+                ->column();
+            if ($parents === []) {
+                continue;
+            }
+
+            $hasCapabilityParent = false;
+            $hasListadoPacientes = false;
+            foreach ($parents as $parent) {
+                if (!is_string($parent)) {
+                    continue;
+                }
+                if (isset($guardiaCapabilityIds[$parent])) {
+                    $hasCapabilityParent = true;
+                }
+                if ($parent === 'listado_pacientes') {
+                    $hasListadoPacientes = true;
+                }
+            }
+
+            if ($hasListadoPacientes && !$hasCapabilityParent) {
+                $warnings[] = 'Ruta guardia «' . $route
+                    . '» solo alcanzable vía listado_pacientes; ejecutar sync-capabilities y revisar grants';
+            }
+        }
+
+        return $warnings;
+    }
+
+    /**
+     * Roles con permiso legacy sin la capability de reemplazo (legacy-permission-aliases.yaml).
+     *
+     * @return list<string>
+     */
+    private function checkLegacyPermissionWithoutReplacementCapability(): array
+    {
+        if (!Yii::$app->has('db')) {
+            return [];
+        }
+
+        $childTable = Yii::$app->db->schema->getTableSchema('{{%auth_item_child}}', true);
+        if ($childTable === null) {
+            return [];
+        }
+
+        $warnings = [];
+        foreach (LegacyPermissionAliasIndex::all() as $legacy => $meta) {
+            $capability = trim((string) ($meta['replacement_capability'] ?? ''));
+            if ($capability === '') {
+                continue;
+            }
+
+            $rolesWithLegacy = (new \yii\db\Query())
+                ->select('parent')
+                ->from('{{%auth_item_child}}')
+                ->where(['child' => $legacy])
+                ->column();
+
+            foreach ($rolesWithLegacy as $role) {
+                if (!is_string($role) || $role === '') {
+                    continue;
+                }
+                $hasCapability = (new \yii\db\Query())
+                    ->from('{{%auth_item_child}}')
+                    ->where(['parent' => $role, 'child' => $capability])
+                    ->exists();
+                if (!$hasCapability) {
+                    $warnings[] = 'Rol «' . $role . '» tiene «' . $legacy
+                        . '» sin «' . $capability . '»; ejecutar catalog-permission/migrate-grants';
+                }
             }
         }
 

@@ -1,0 +1,13 @@
+version: 1
+
+# Permisos legacy operativos → capabilities UI nativa assignables.
+# Migración idempotente: intent-grant-migration-map.yaml (capability_grant_sources).
+
+deprecated_permissions:
+  - permission_key: analisis
+    replacement_capability: encounter.capturar
+    note: Captura clínica encounter (pipeline audio/texto). Asignar roles en Catálogo → encounter.capturar.
+
+  - permission_key: front_ver_historial_paciente
+    replacement_capability: encounter.ver_como_staff
+    note: Ver consulta / historia como staff. Asignar roles en Catálogo → encounter.ver_como_staff.

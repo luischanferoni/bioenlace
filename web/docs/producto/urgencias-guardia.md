@@ -41,6 +41,12 @@ Al guardar la captura, `GuardiaEncounterOutcomeService`:
 
 Detalle de captura: [captura-clinica.md](./captura-clinica.md). Plantilla: `EncounterDefinitionWorkflowCatalog::TEMPLATE_EMER_STANDARD`. Textos de ejemplo: [textos-ejemplo-captura-emer.md](../qa/escenarios/urgencia/textos-ejemplo-captura-emer.md).
 
+## Autorización (RBAC)
+
+Las acciones del tablero y de encounter en UI nativa se gobiernan con **capabilities** assignables (`guardia.*`, `encounter.*`, `panel.*`), sincronizadas a rutas API. El manifiesto `home_panel_manifest.yaml` define visibilidad de CTAs (`capability_id`, exclusiones por rol); el **403** lo resuelve RBAC + dominio.
+
+Documentación: [rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md), ADR [autorizacion-capabilities-ui-nativa.md](../decisions/autorizacion-capabilities-ui-nativa.md).
+
 ## Circuito operativo
 
 Estados canónicos (`circuito_estado`):

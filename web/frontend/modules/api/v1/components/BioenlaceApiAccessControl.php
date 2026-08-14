@@ -39,7 +39,6 @@ class BioenlaceApiAccessControl extends ActionFilter
         '/api/paciente-contexto/actualizar-como-paciente',
         '/api/paciente-contexto/sugerir-provincias-como-paciente',
         '/api/paciente-contexto/buscar-recurso-provincial-como-paciente',
-        '/api/home/panel',
         '/api/person-representation/solicitar-menor-como-tutor',
         '/api/person-representation/mis-vinculos-como-tutor',
         '/api/person-representation/designar-representante',

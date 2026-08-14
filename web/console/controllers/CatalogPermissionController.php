@@ -3,6 +3,7 @@
 namespace console\controllers;
 
 use common\components\Platform\Core\Permission\CatalogPermissionSyncService;
+use common\components\Platform\Core\Permission\CapabilityPermissionSyncService;
 use yii\console\Controller;
 use yii\console\ExitCode;
 
@@ -17,9 +18,20 @@ class CatalogPermissionController extends Controller
     /** @var bool Ejecutar borrado real (sin flag = solo listar candidatos) */
     public bool $execute = false;
 
+    /** @var bool Aplicar default_roles del YAML al sincronizar capabilities */
+    public bool $applyDefaultRoles = false;
+
+    /** @var bool Propagar rutas guardia desde padres de /api/home/panel */
+    public bool $propagatePanel = false;
+
     public function options($actionID): array
     {
-        return array_merge(parent::options($actionID), ['inheritRoles', 'execute']);
+        return array_merge(parent::options($actionID), [
+            'inheritRoles',
+            'execute',
+            'applyDefaultRoles',
+            'propagatePanel',
+        ]);
     }
 
     public function actionSync(): int
@@ -46,6 +58,46 @@ class CatalogPermissionController extends Controller
         foreach ((new CatalogPermissionSyncService())->collectDefinitions() as $def) {
             $route = $def['legacy_route'] !== '' ? ' → ' . $def['legacy_route'] : '';
             $this->stdout($def['key'] . ' [' . $def['kind'] . ']' . $route . "\n");
+        }
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Sincroniza capabilities UI nativa (permission/capabilities/*.yaml) → auth_item.
+     *
+     * Staging/prod tras migrate: --applyDefaultRoles=1 --propagatePanel=1
+     */
+    public function actionSyncCapabilities(): int
+    {
+        $result = (new CapabilityPermissionSyncService())->sync(
+            applyDefaultRoles: $this->applyDefaultRoles,
+            linkRelatedIntents: true,
+            propagateFromHomePanel: $this->propagatePanel
+        );
+
+        $this->stdout(sprintf(
+            "Capabilities: creados=%d enlazados=%d grants_rol=%d intent_links=%d panel_prop=%d omitidos=%d\n",
+            $result['created'],
+            $result['linked'],
+            $result['role_grants'],
+            $result['intent_links'],
+            $result['panel_propagated'],
+            $result['skipped']
+        ));
+
+        foreach ($result['errors'] as $err) {
+            $this->stderr(' - ' . $err . "\n");
+        }
+
+        return $result['errors'] === [] ? ExitCode::OK : ExitCode::UNSPECIFIED_ERROR;
+    }
+
+    public function actionListCapabilities(): int
+    {
+        foreach ((new CapabilityPermissionSyncService())->collectDefinitions() as $def) {
+            $routes = $def['routes'] !== [] ? ' → ' . implode(', ', $def['routes']) : '';
+            $this->stdout($def['key'] . ' [' . $def['kind'] . ']' . $routes . "\n");
         }
 
         return ExitCode::OK;

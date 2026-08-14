@@ -1,0 +1,91 @@
+# Capabilities UI nativa — guardia / urgencias EMER.
+# Assignables en admin; rutas enlazadas vía catalog-permission/sync-capabilities.
+
+capabilities:
+  - capability_id: guardia.view_board
+    description: Ver tablero operativo de guardia
+    assignable: true
+    routes:
+      - /api/clinical/emergency-guardia/ver
+      - /api/clinical/emergency-guardia/indicadores-resumen
+    default_roles:
+      - Administrativo
+      - AdminEfector
+      - enfermeria
+      - Medico
+    related_intents:
+      - urgencias.ver-tablero-guardia
+      - GuardiaEpisode.view_board
+
+  - capability_id: guardia.ingreso
+    description: Admisión e identidad en guardia (UI nativa web/móvil)
+    assignable: true
+    routes:
+      - /api/clinical/emergency-guardia/ingresar
+      - /api/clinical/emergency-guardia/ingresar-formulario
+      - /api/clinical/emergency-guardia/buscar-persona-ingreso
+      - /api/clinical/emergency-guardia/vincular-identidad
+      - /api/registro/preview-renaper-como-staff
+      - /api/registro/crear-sesion-didit-como-staff
+    default_roles:
+      - Administrativo
+      - AdminEfector
+
+  - capability_id: guardia.triage
+    description: Registrar o actualizar triage en guardia
+    assignable: true
+    routes:
+      - /api/clinical/emergency-guardia/registrar-triage
+      - /api/clinical/emergency-guardia/registrar-triage-formulario
+      - /api/clinical/emergency-guardia/elegir-paciente-triage
+    default_roles:
+      - Administrativo
+      - AdminEfector
+      - enfermeria
+      - Medico
+    related_intents:
+      - urgencias.triage-paciente-guardia
+      - GuardiaEpisode.triage
+
+  - capability_id: guardia.atender
+    description: Tomar caso e iniciar atención clínica en guardia
+    assignable: true
+    routes:
+      - /api/clinical/emergency-guardia/iniciar-atencion
+      - /api/clinical/emergency-guardia/asignar
+    default_roles:
+      - Medico
+
+  - capability_id: guardia.retiro_administrativo
+    description: Paciente se retiró — cierre administrativo del circuito
+    assignable: true
+    routes:
+      - /api/clinical/emergency-guardia/egreso-formulario
+    default_roles:
+      - Administrativo
+      - AdminEfector
+
+  - capability_id: guardia.egreso_clinico
+    description: Egreso estructurado clínico en guardia
+    assignable: true
+    routes:
+      - /api/clinical/emergency-guardia/egreso-formulario
+    default_roles:
+      - Medico
+    related_intents:
+      - urgencias.egreso-estructurado-flow
+
+  - capability_id: guardia.operaciones_staff
+    description: Operaciones de guardia (derivación, pedidos, SLA, internación)
+    assignable: true
+    routes:
+      - /api/clinical/emergency-guardia/derivar
+      - /api/clinical/emergency-guardia/finalizar
+      - /api/clinical/emergency-guardia/listar-efectores-derivacion
+      - /api/clinical/emergency-guardia/resumen-clinico
+      - /api/clinical/emergency-guardia/crear-pedido
+      - /api/clinical/emergency-guardia/solicitar-internacion
+      - /api/clinical/emergency-guardia/indicadores-export-csv
+      - /api/clinical/emergency-guardia/sla-config
+    default_roles:
+      - Medico

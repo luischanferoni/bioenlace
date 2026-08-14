@@ -7,6 +7,7 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Dominio clínico FHIR | Producto, modelo, API clínica, greenfield | [fhir-clinical.md](./fhir-clinical.md) |
 | Protocolos de cuidado | PlanDefinition-lite en BD (Nación/Provincia); ABM superadmin | [care-protocols-plandefinition-lite.md](./care-protocols-plandefinition-lite.md) |
 | Autorización solo por intents | RBAC assignable = intent_id; retiro grants atributo | [autorizacion-solo-por-intents.md](./autorizacion-solo-por-intents.md) |
+| Capabilities UI nativa | RBAC assignable guardia/encounter/panel fuera de intents NL | [autorizacion-capabilities-ui-nativa.md](./autorizacion-capabilities-ui-nativa.md) |
 | Captura clínica: Yii vs YAML | Integridad en `*Input` / servicios; YAML = prompts y knobs | [captura-clinica-contratos-yii-vs-yaml.md](./captura-clinica-contratos-yii-vs-yaml.md) |
 | Pedido servicio × acto | `servicios` = oferta del centro; actos SNOMED; glosario anti-confusión | [pedido-atencion-linea-acto.md](./pedido-atencion-linea-acto.md) |
 

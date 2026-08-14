@@ -45,5 +45,14 @@ role_grant_sources:
     intent_targets:
       - profesional-efector-servicio.baja-flow
 
+# Legacy front_* / permisos operativos → capabilities UI nativa (Fase 6).
+capability_grant_sources:
+  - source_permission: analisis
+    capability_targets:
+      - encounter.capturar
+  - source_permission: front_ver_historial_paciente
+    capability_targets:
+      - encounter.ver_como_staff
+
 # Futuro: Entidad.atributo.read|info|edit → intents concretos (fase 6).
 attribute_grant_sources: []

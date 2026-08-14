@@ -10,44 +10,77 @@ use yii\widgets\ActiveForm;
 /* @var $roleNames list<string> */
 /* @var $assignedRoles array<string, int> */
 /* @var $inAuthItem bool */
+/* @var $backUrl array<int, string> */
+
+$kind = (string) ($catalogRow['kind'] ?? 'intent');
+$isCapability = $kind === 'capability';
 
 $this->title = 'Roles: ' . $permissionKey;
-$this->params['breadcrumbs'][] = ['label' => 'Catálogo de permisos', 'url' => ['index']];
+$this->params['breadcrumbs'][] = ['label' => 'Catálogo de permisos', 'url' => ['index', 'tab' => $isCapability ? 'capabilities' : 'intents']];
 $this->params['breadcrumbs'][] = $this->title;
 ?>
 <div class="permission-catalog-edit-permission-roles">
 
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <h1 class="h2 mb-0"><?= Html::encode($this->title) ?></h1>
-        <?= Html::a('Volver al catálogo', ['index'], ['class' => 'btn btn-outline-secondary btn-sm']) ?>
+        <?= Html::a('Volver', $backUrl, ['class' => 'btn btn-outline-secondary btn-sm']) ?>
     </div>
 
     <?php if (!$inAuthItem): ?>
         <div class="alert alert-warning">
-            Este intent no está en <code>auth_item</code>.
-            <?= Html::a('Sincronizar catálogo', ['sync'], [
-                'class' => 'btn btn-sm btn-warning ms-2',
-                'data' => ['method' => 'post'],
-            ]) ?>
+            Este permiso no está en <code>auth_item</code>.
+            <?php if ($isCapability): ?>
+                <?= Html::a('Sincronizar capabilities', ['sync-capabilities'], [
+                    'class' => 'btn btn-sm btn-warning ms-2',
+                    'data' => ['method' => 'post'],
+                ]) ?>
+            <?php else: ?>
+                <?= Html::a('Sincronizar catálogo', ['sync'], [
+                    'class' => 'btn btn-sm btn-warning ms-2',
+                    'data' => ['method' => 'post'],
+                ]) ?>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 
-    <p class="text-muted small">
-        Intent <code><?= Html::encode((string) ($catalogRow['intent_id'] ?? '')) ?></code>
-        <?php if (!empty($catalogRow['rbac_route'])): ?>
-            · API <code><?= Html::encode((string) $catalogRow['rbac_route']) ?></code>
+    <?php if ($isCapability): ?>
+        <p class="text-muted small">
+            Capability <code><?= Html::encode((string) ($catalogRow['capability_id'] ?? $permissionKey)) ?></code>
+            · <?= Html::a('Ver detalle', ['view-capability', 'capability_id' => $permissionKey]) ?>
+        </p>
+        <?php
+        $routes = is_array($catalogRow['routes'] ?? null) ? $catalogRow['routes'] : [];
+        if ($routes !== []):
+            ?>
+            <div class="card mb-3">
+                <div class="card-header py-2"><strong>Rutas API enlazadas</strong></div>
+                <div class="card-body py-2 small">
+                    <?php foreach ($routes as $route): ?>
+                        <div><code><?= Html::encode((string) $route) ?></code></div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
         <?php endif; ?>
-        · <?= Html::a('Ver manifiesto completo', ['view-intent', 'intent_id' => (string) ($catalogRow['intent_id'] ?? '')]) ?>
-    </p>
+    <?php else: ?>
+        <p class="text-muted small">
+            Intent <code><?= Html::encode((string) ($catalogRow['intent_id'] ?? '')) ?></code>
+            <?php if (!empty($catalogRow['rbac_route'])): ?>
+                · API <code><?= Html::encode((string) $catalogRow['rbac_route']) ?></code>
+            <?php endif; ?>
+            · <?= Html::a('Ver manifiesto completo', ['view-intent', 'intent_id' => (string) ($catalogRow['intent_id'] ?? '')]) ?>
+        </p>
 
-    <?php if (is_array($fieldManifest)): ?>
-        <?= $this->render('_intent-field-manifest', ['manifest' => $fieldManifest]) ?>
+        <?php if (is_array($fieldManifest)): ?>
+            <?= $this->render('_intent-field-manifest', ['manifest' => $fieldManifest]) ?>
+        <?php endif; ?>
     <?php endif; ?>
 
     <?php $form = ActiveForm::begin(['method' => 'post']); ?>
 
     <div class="card">
-        <div class="card-header"><strong>Roles con este intent</strong></div>
+        <div class="card-header">
+            <strong>Roles con este <?= $isCapability ? 'capability' : 'intent' ?></strong>
+        </div>
         <div class="card-body">
             <?php foreach ($roleNames as $roleName): ?>
                 <?php $id = 'role_' . md5($roleName); ?>

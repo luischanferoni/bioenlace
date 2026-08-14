@@ -1,0 +1,23 @@
+# Capabilities — panel de inicio staff (Fase 5 endurecerá auth en /api/home/panel).
+
+capabilities:
+  - capability_id: panel.staff_clinical
+    description: Cargar panel de inicio con secciones clínicas (EMER, AMB, IMP, VR)
+    assignable: true
+    routes:
+      - /api/home/panel
+    default_roles:
+      - Administrativo
+      - AdminEfector
+      - enfermeria
+      - Medico
+      - facturista
+      - nivelCentral
+
+  - capability_id: panel.paciente_home
+    description: Panel de inicio paciente
+    assignable: true
+    routes:
+      - /api/home/panel
+    default_roles:
+      - paciente

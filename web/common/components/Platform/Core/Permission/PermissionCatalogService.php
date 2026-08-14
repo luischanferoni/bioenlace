@@ -43,6 +43,46 @@ final class PermissionCatalogService
     }
 
     /**
+     * Capabilities UI nativa ({@see CapabilityManifestIndex}).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listCapabilities(): array
+    {
+        $rows = [];
+        foreach (CapabilityManifestIndex::all() as $capabilityId => $meta) {
+            $rows[] = [
+                'kind' => 'capability',
+                'key' => $capabilityId,
+                'capability_id' => $capabilityId,
+                'description' => $meta['description'] ?? '',
+                'routes' => $meta['routes'] ?? [],
+                'default_roles' => $meta['default_roles'] ?? [],
+                'related_intents' => $meta['related_intents'] ?? [],
+                'assignable' => (bool) ($meta['assignable'] ?? true),
+            ];
+        }
+        usort($rows, static fn (array $a, array $b): int => strcmp((string) $a['capability_id'], (string) $b['capability_id']));
+
+        return $rows;
+    }
+
+    /**
+     * Permisos legacy con capability de reemplazo (solo lectura admin / integridad).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listDeprecatedPermissions(): array
+    {
+        $rows = [];
+        foreach (LegacyPermissionAliasIndex::all() as $key => $meta) {
+            $rows[] = array_merge(['kind' => 'legacy_permission', 'key' => $key], $meta);
+        }
+
+        return $rows;
+    }
+
+    /**
      * Atributos declarados para grants read/info/edit (data-access-config).
      *
      * @deprecated Convivencia integridad/migración; no usar para asignación admin.
@@ -107,25 +147,74 @@ final class PermissionCatalogService
     }
 
     /**
-     * Fila del catálogo assignable (solo intents).
+     * Fila del catálogo assignable (intent o capability UI nativa).
      *
      * @return array<string, mixed>|null
      */
     public function findPermissionRow(string $permissionKey): ?array
     {
         $permissionKey = trim($permissionKey);
-        if ($permissionKey === '' || !$this->isIntentPermissionKey($permissionKey)) {
+        if ($permissionKey === '') {
             return null;
         }
 
-        foreach ($this->listIntents() as $row) {
-            $key = trim((string) ($row['key'] ?? ''));
-            if ($key !== '' && strncmp($key, '/api/', 5) !== 0 && $key === $permissionKey) {
-                return $row;
+        if ($this->isIntentPermissionKey($permissionKey)) {
+            foreach ($this->listIntents() as $row) {
+                $key = trim((string) ($row['key'] ?? ''));
+                if ($key !== '' && strncmp($key, '/api/', 5) !== 0 && $key === $permissionKey) {
+                    return $row;
+                }
+            }
+        }
+
+        if ($this->isCapabilityPermissionKey($permissionKey)) {
+            foreach ($this->listCapabilities() as $row) {
+                if (($row['key'] ?? '') === $permissionKey) {
+                    return $row;
+                }
             }
         }
 
         return null;
+    }
+
+    public function isCatalogPermissionKey(string $permissionKey): bool
+    {
+        return $this->isIntentPermissionKey($permissionKey)
+            || $this->isCapabilityPermissionKey($permissionKey);
+    }
+
+    public function isCapabilityPermissionKey(string $permissionKey): bool
+    {
+        $permissionKey = trim($permissionKey);
+        if ($permissionKey === '') {
+            return false;
+        }
+
+        return CapabilityManifestIndex::get($permissionKey) !== null;
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function buildCapabilityManifest(string $capabilityId): ?array
+    {
+        $capabilityId = trim($capabilityId);
+        $meta = CapabilityManifestIndex::get($capabilityId);
+        if ($meta === null) {
+            return null;
+        }
+
+        return [
+            'kind' => 'capability',
+            'key' => $capabilityId,
+            'capability_id' => $capabilityId,
+            'description' => $meta['description'] ?? '',
+            'routes' => $meta['routes'] ?? [],
+            'default_roles' => $meta['default_roles'] ?? [],
+            'related_intents' => $meta['related_intents'] ?? [],
+            'assignable' => (bool) ($meta['assignable'] ?? true),
+        ];
     }
 
     public function isIntentPermissionKey(string $permissionKey): bool

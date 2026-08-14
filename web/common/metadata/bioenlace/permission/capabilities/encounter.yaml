@@ -1,0 +1,44 @@
+# Capabilities UI nativa — encounter clínico (staff).
+
+capabilities:
+  - capability_id: encounter.ver_como_staff
+    description: Ver consulta documentada como staff (solo lectura)
+    assignable: true
+    routes:
+      - /api/clinical/encounter/ver-consulta-como-staff
+      - /api/clinical/encounter-staff-summary/ver-consulta-como-staff
+      - /api/pacientes/historia-clinica
+    default_roles:
+      - Medico
+      - enfermeria
+      - Administrativo
+      - AdminEfector
+
+  - capability_id: encounter.capturar
+    description: Pipeline completo de captura clínica (encounter)
+    assignable: true
+    routes:
+      - /api/clinical/encounter/analizar
+      - /api/clinical/encounter/guardar
+      - /api/clinical/encounter/captura-analizar
+      - /api/clinical/encounter/captura-aplicar-resoluciones
+      - /api/clinical/encounter/captura-audio
+      - /api/clinical/encounter/captura-crear-o-subir
+      - /api/clinical/encounter/captura-descartar
+      - /api/clinical/encounter/captura-guardar
+      - /api/clinical/encounter/captura-listar
+      - /api/clinical/encounter/captura-transcribir
+      - /api/clinical/encounter/captura-ver
+    default_roles:
+      - Medico
+
+  - capability_id: encounter.documentar_nota
+    description: Nota de encounter sin tomar el caso (enfermería en guardia)
+    assignable: true
+    routes:
+      - /api/clinical/encounter/captura-listar
+      - /api/clinical/encounter/captura-ver
+      - /api/clinical/encounter/captura-crear-o-subir
+      - /api/clinical/encounter/captura-guardar
+    default_roles:
+      - enfermeria

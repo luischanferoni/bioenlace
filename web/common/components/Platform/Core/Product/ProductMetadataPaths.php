@@ -86,6 +86,16 @@ final class ProductMetadataPaths
         return self::permissionDir() . DIRECTORY_SEPARATOR . 'intent-grant-migration-map.yaml';
     }
 
+    public static function legacyPermissionAliasesFile(): string
+    {
+        return self::permissionDir() . DIRECTORY_SEPARATOR . 'legacy-permission-aliases.yaml';
+    }
+
+    public static function capabilitiesDir(): string
+    {
+        return self::permissionDir() . DIRECTORY_SEPARATOR . 'capabilities';
+    }
+
     public static function homePanelManifestFile(): string
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'home_panel_manifest.yaml';

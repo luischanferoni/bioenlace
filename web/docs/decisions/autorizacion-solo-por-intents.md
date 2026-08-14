@@ -24,9 +24,10 @@ Eso duplicaba reglas (mismo eje «sobre quién actúo» en YAML, dominio y grant
 
 ## Consecuencias
 
-- Admin catálogo: solo intents + vista de manifiesto de campos (solo lectura).
+- Admin catálogo: intents + capabilities UI nativa + vista de manifiesto de campos (solo lectura).
 - Integridad: grants atributo en `auth_item` son **error** (`catalog-integrity/check`).
 - Autorización runtime de métricas y superficies edit ya no usa grants atómicos por atributo.
+- **Capabilities** (`guardia.*`, `encounter.*`, `panel.*`) complementan intents para UIs nativas — ver [autorizacion-capabilities-ui-nativa.md](./autorizacion-capabilities-ui-nativa.md).
 - Nuevos dominios staff deben declarar YAML intent antes de exponer API/asistente.
 
 ## Referencias

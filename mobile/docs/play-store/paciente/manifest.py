@@ -1,14 +1,12 @@
 """Manifiesto Play Store — app paciente.
 
-Rutas `src` / `out` relativas a mobile/docs/ (assets_root por defecto).
-Cuando muevas imágenes, actualizá solo estos paths.
+Rutas `src` / `out` relativas a `ASSETS_ROOT` (desde mobile/docs/).
 """
 from __future__ import annotations
 
 APP_ID = "paciente"
 
-# Relativo a mobile/docs/. Ej. "play-store/paciente" cuando reorganicés assets.
-ASSETS_ROOT = "."
+ASSETS_ROOT = "play-store/paciente"
 
 # Relativo a mobile/ (no a docs): logo compartido del paquete shared.
 LOGO = "packages/shared/assets/branding/logo.png"

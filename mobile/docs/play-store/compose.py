@@ -115,11 +115,7 @@ def main() -> None:
     if args.kind in ("all", "feature"):
         run_feature(manifest)
     if args.kind in ("all", "screenshots"):
-        # Fuentes staff aún no listas: en --kind all omitimos src faltantes.
-        skip_missing = args.skip_missing or (
-            args.app == "personalsalud" and args.kind == "all"
-        )
-        run_screenshots(manifest, skip_missing=skip_missing)
+        run_screenshots(manifest, skip_missing=args.skip_missing)
 
 
 if __name__ == "__main__":

@@ -32,7 +32,7 @@ Equivalente operativo al panel **Pacientes del día** (consultorio).
 
 **Intent (ocupación / slots):** `turnos.consultar-ocupacion-dia-flow`
 
-**Intent (configurar mi agenda):** `profesional-agenda.configurar-propio` — Atajo **Profesional, agenda y condición laboral** → **Para mí**
+**Intent (configurar mis horarios):** `profesional-horarios.gestionar-propio` — atajo **Horarios** (ambulatorio, guardia o internación)
 
 1. **Vos** elegís ver el día, consultar ocupación o abrir la configuración de horarios propios.
 2. **El sistema** muestra la grilla, los turnos del día o el formulario de horarios.

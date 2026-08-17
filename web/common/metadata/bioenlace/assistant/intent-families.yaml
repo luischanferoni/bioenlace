@@ -28,7 +28,6 @@ families:
   profesional-agenda.configurar:
     operation: edit
     members:
-      - profesional-agenda.configurar-propio
       - profesional-agenda.configurar-staff
 
   profesional-horarios.gestionar:

@@ -30,12 +30,12 @@ role_grant_sources:
       - profesionales.listado-efector
   - source_permission: data-access.editar
     intent_targets:
-      - profesional-agenda.configurar-propio
+      - profesional-horarios.gestionar-propio
       - profesional-agenda.configurar-staff
       - profesional-identidad.editar-staff
   - source_permission: DataAccess.edit
     intent_targets:
-      - profesional-agenda.configurar-propio
+      - profesional-horarios.gestionar-propio
       - profesional-agenda.configurar-staff
       - profesional-identidad.editar-staff
   - source_permission: profesional-efector-servicio.crear-flow

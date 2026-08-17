@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/tokens/tokens.dart';
+
 /// Grilla semanal mínima (7 días × 24 h) ↔ strings CSV `lunes_2`…`domingo_2` (índices 0–23), alineado a web/scheduler.
 class WeeklySchedulerWidget extends StatefulWidget {
   final List<String> fieldNames;
@@ -23,6 +25,7 @@ class _WeeklySchedulerWidgetState extends State<WeeklySchedulerWidget> {
   late List<Set<int>> _slots;
 
   static const _labels = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+  static const double _cellSize = 28;
 
   @override
   void initState() {
@@ -110,34 +113,46 @@ class _WeeklySchedulerWidgetState extends State<WeeklySchedulerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.bio;
+    final primary = IntentPalette.of(UiIntent.primary);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(7, (d) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: BioSpacing.sm),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               SizedBox(
                 width: 36,
-                child: Text(
-                  d < _labels.length ? _labels[d] : '$d',
-                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                height: _cellSize,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    d < _labels.length ? _labels[d] : '$d',
+                    style: BioTypography.bodySm.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: tokens.textBody,
+                    ),
+                  ),
                 ),
               ),
               Expanded(
                 child: Wrap(
-                  spacing: 3,
-                  runSpacing: 3,
+                  spacing: BioSpacing.xs,
+                  runSpacing: BioSpacing.xs,
                   children: List.generate(24, (h) {
                     final busy = _isBusy(d, h);
                     final on = !busy && _slots[d].contains(h);
-                    return FilterChip(
-                      label: Text('$h', style: const TextStyle(fontSize: 10)),
+                    return _HourCell(
+                      hour: h,
+                      size: _cellSize,
                       selected: on,
-                      onSelected: busy ? null : (_) => _toggle(d, h),
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      busy: busy,
+                      tokens: tokens,
+                      primary: primary,
+                      onTap: busy ? null : () => _toggle(d, h),
                     );
                   }),
                 ),
@@ -146,6 +161,78 @@ class _WeeklySchedulerWidgetState extends State<WeeklySchedulerWidget> {
           ),
         );
       }),
+    );
+  }
+}
+
+/// Celda de hora de tamaño fijo: la selección solo cambia color (sin tilde ni reflow).
+class _HourCell extends StatelessWidget {
+  const _HourCell({
+    required this.hour,
+    required this.size,
+    required this.selected,
+    required this.busy,
+    required this.tokens,
+    required this.primary,
+    required this.onTap,
+  });
+
+  final int hour;
+  final double size;
+  final bool selected;
+  final bool busy;
+  final BioTokens tokens;
+  final IntentPalette primary;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color bg;
+    final Color fg;
+    final Color border;
+    if (busy) {
+      bg = tokens.paperSurfaceSunken;
+      fg = tokens.textMuted;
+      border = tokens.paperBorderDefault;
+    } else if (selected) {
+      bg = primary.softBg;
+      fg = primary.softFg;
+      border = primary.border;
+    } else {
+      bg = tokens.paperSurface;
+      fg = tokens.textBody;
+      border = tokens.paperBorderDefault;
+    }
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(BioRadius.xs),
+        splashColor: PaperPalette.paper300.withValues(alpha: 0.35),
+        highlightColor: PaperPalette.paper200,
+        child: AnimatedContainer(
+          duration: BioMotion.fast,
+          curve: BioMotion.standard,
+          width: size,
+          height: size,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(BioRadius.xs),
+            border: Border.all(color: border, width: BorderWidth.thin),
+          ),
+          child: Text(
+            '$hour',
+            style: BioTypography.bodySm.copyWith(
+              color: fg,
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              height: 1,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -57,7 +57,7 @@ flowchart TD
 
 Al **configurar agenda**, el profesional ve un texto que distingue videollamada (switch opcional) y consulta clínica por mensaje (no requiere el switch). El campo pasó a llamarse «Acepto videollamada en esta agenda».
 
-En el listado del día, si la agenda no tiene remoto habilitado, el insight incluye enlace a **Configurar mi agenda** (asistente).
+En el listado del día, si la agenda no tiene remoto habilitado, el insight incluye enlace a **Configurar mis horarios** (asistente).
 
 En los KPI de agenda (30 días), si hubo turnos presenciales con triage `sugerido`, aparece el indicador **Presencial (remoto posible)**.
 

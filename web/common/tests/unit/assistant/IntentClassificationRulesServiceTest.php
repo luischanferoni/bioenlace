@@ -373,25 +373,66 @@ class IntentClassificationRulesServiceTest extends Unit
                     '',
                     null,
                     '/api/profesional-cobertura/gestionar',
-                    ['cargar mi cobertura', 'mis horarios'],
+                    ['cargar mi cobertura', 'mis horarios', 'modificar mi agenda'],
                     []
                 ),
                 new UiActionCatalogItem(
-                    'profesional-agenda.configurar-propio',
-                    'Configurar mi agenda',
+                    'profesional-agenda.configurar-staff',
+                    'Agenda ambulatoria de un profesional',
                     '',
                     null,
                     '/api/profesional-agenda/configurar-agenda',
-                    ['mi agenda'],
+                    ['modificar agenda de un profesional'],
                     []
                 ),
             ],
             []
         );
         $catalog->byActionId['profesional-horarios.gestionar-propio'] = $catalog->items[0];
-        $catalog->byActionId['profesional-agenda.configurar-propio'] = $catalog->items[1];
+        $catalog->byActionId['profesional-agenda.configurar-staff'] = $catalog->items[1];
 
         $fb = IntentClassificationRulesService::resolveOperationalFallback('Cargar mi cobertura', $catalog);
+        $this->assertNotNull($fb);
+        $this->assertSame('profesional-horarios.gestionar-propio', $fb['item']->action_id);
+    }
+
+    public function testOperationalFallbackRoutesModificarMiAgendaToHorariosUnificado(): void
+    {
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'own_agenda_config_edit',
+            'necesito modificar mi agenda'
+        ));
+
+        $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'profesional-horarios.gestionar-propio',
+                    'Configurar mis horarios',
+                    '',
+                    null,
+                    '/api/profesional-cobertura/gestionar',
+                    ['modificar mi agenda', 'mi agenda'],
+                    []
+                ),
+                new UiActionCatalogItem(
+                    'profesional-agenda.configurar-staff',
+                    'Agenda ambulatoria de un profesional',
+                    '',
+                    null,
+                    '/api/profesional-agenda/configurar-agenda',
+                    ['modificar agenda de un profesional'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['profesional-horarios.gestionar-propio'] = $catalog->items[0];
+        $catalog->byActionId['profesional-agenda.configurar-staff'] = $catalog->items[1];
+
+        $fb = IntentClassificationRulesService::resolveOperationalFallback(
+            'necesito modificar mi agenda',
+            $catalog
+        );
         $this->assertNotNull($fb);
         $this->assertSame('profesional-horarios.gestionar-propio', $fb['item']->action_id);
     }

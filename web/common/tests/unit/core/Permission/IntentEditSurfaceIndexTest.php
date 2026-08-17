@@ -17,8 +17,8 @@ class IntentEditSurfaceIndexTest extends Unit
     public function testBindsAgendaAndIdentidadSurfaces(): void
     {
         $agendaIntents = IntentEditSurfaceIndex::intentsForSurface('ProfesionalEfectorServicioAgenda');
-        $this->assertContains('profesional-agenda.configurar-propio', $agendaIntents);
         $this->assertContains('profesional-agenda.configurar-staff', $agendaIntents);
+        $this->assertNotContains('profesional-agenda.configurar-propio', $agendaIntents);
 
         $this->assertSame(
             'profesional-identidad.editar-staff',

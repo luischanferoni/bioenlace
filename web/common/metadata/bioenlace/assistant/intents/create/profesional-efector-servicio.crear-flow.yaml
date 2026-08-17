@@ -70,8 +70,8 @@ business_rules:
         intent_id: profesional-agenda.configurar-staff
         reset_flow: true
       - id: mi_agenda
-        label: "Mi agenda (mis servicios)"
-        intent_id: profesional-agenda.configurar-propio
+        label: "Mis horarios (agenda o plantel)"
+        intent_id: profesional-horarios.gestionar-propio
         reset_flow: true
 
 subintents:

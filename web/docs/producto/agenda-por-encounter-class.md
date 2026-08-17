@@ -17,7 +17,7 @@ Metadata: [`agenda-by-encounter-class.yaml`](../../common/metadata/bioenlace/org
 
 ## AMB (sin cambio de idea)
 
-- Configuración: intents `profesional-agenda.configurar-*`, API `/api/v1/profesional-agenda/*`.
+- Configuración propia: intent `profesional-horarios.gestionar-propio` (servicio → AMB|EMER|IMP → agenda o plantel). API agenda AMB `/api/v1/profesional-agenda/*`.
 - Reserva paciente: `TurnoSlotFinder` + `turnos.*-como-paciente` solo sobre agendas `encounter_class = AMB`.
 - Encounter desde turno: sigue siendo AMB.
 
@@ -29,7 +29,7 @@ Metadata: [`agenda-by-encounter-class.yaml`](../../common/metadata/bioenlace/org
 - Conflictos: solape de intervalos misma persona + mismo efector; y solape con la **grilla semanal** AMB (`cobertura_vs_amb_slots`), leída del patrón `lunes_2`… (no de slots generados). Una agenda AMB en `SIN_ATENCION` igual ocupa esas horas. La UI pinta las celdas ocupadas en gris; el guardado rechaza la intersección. Cobertura de noche puede coexistir con ambulatorio de día.
 - API: `/api/v1/profesional-cobertura/*`; `elegir-encounter-class`; `gestionar` (UI plantilla).
 - Intent unificado (atajo): `profesional-horarios.gestionar-propio` (servicio → AMB|EMER|IMP → agenda o plantel).
-- Intents legado (no atajo): `profesional-agenda.configurar-*`, `profesional-cobertura.gestionar-*`.
+- Intents staff / cobertura directa (no atajo propio): `profesional-agenda.configurar-staff`, `profesional-cobertura.gestionar-*`.
 - Panel inicio: `staff_cobertura_activa` (`session.tiene_cobertura`, `session.mensaje_sin_cobertura`).
 - **Tomar/asignar caso EMER** exige cobertura vigente (`operational.emer_assign_requires_cobertura`).
 

@@ -24,7 +24,7 @@ class AgendaAtencionRemotaCatalogServiceTest extends Unit
     public function testInsightAgendaConfigTieneActionId(): void
     {
         $cfg = (new AgendaAtencionRemotaCatalogService())->insightAgendaConfig();
-        $this->assertSame('profesional-agenda.configurar-propio', $cfg['action_id']);
+        $this->assertSame('profesional-horarios.gestionar-propio', $cfg['action_id']);
         $this->assertNotSame('', $cfg['link_label']);
     }
 }

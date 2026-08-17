@@ -11,8 +11,8 @@ configurar_agenda:
       No cambia turnos ya confirmados. La consulta clínica por mensaje funciona aunque dejes esto en No.
 
 insight_agenda_config:
-  action_id: profesional-agenda.configurar-propio
-  link_label: Configurar mi agenda
+  action_id: profesional-horarios.gestionar-propio
+  link_label: Configurar mis horarios
   assistant_url_path: /site/asistente
 
 kpi:

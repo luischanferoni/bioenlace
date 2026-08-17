@@ -165,8 +165,8 @@ match_rules:
     require_all: [edit_verbs, own_scope, agenda_targets]
     forbid_any: [alta_verbs, baja_verbs]
     ai_hint: >-
-      Si el mensaje pide modificar la agenda u horarios propios (mi/mis), priorizá el intent
-      de edición dispersa cuyo catálogo cubra edición de agenda del profesional autenticado.
+      Si el mensaje pide modificar la agenda u horarios propios (mi/mis), priorizá
+      configurar horarios propios (ambulatorio, guardia o internación).
 
   staff_list_not_count:
     require_any: [list_verbs]
@@ -362,8 +362,6 @@ score_adjustments:
   - when_rule: own_agenda_config_edit
     apply:
       - intent_id: profesional-horarios.gestionar-propio
-        delta: 35
-      - intent_id: profesional-agenda.configurar-propio
         delta: 45
       - intent_id: data-access.editar
         delta: 15
@@ -380,8 +378,6 @@ score_adjustments:
         delta: 35
       - intent_id: profesional-cobertura.gestionar-staff
         delta: -35
-      - intent_id: profesional-agenda.configurar-propio
-        delta: -20
       - intent_id: profesional-agenda.configurar-staff
         delta: -30
       - intent_id_prefix: licencia.cargar
@@ -516,7 +512,7 @@ operational_fallbacks:
   - id: own_agenda_config_edit_nl
     requires_staff_data_access: true
     when_any_rule: [own_agenda_config_edit]
-    intent_id: profesional-agenda.configurar-propio
+    intent_id: profesional-horarios.gestionar-propio
     confidence: 0.9
     method: rules_declarative_fallback
 

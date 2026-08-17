@@ -52,7 +52,7 @@ Si no aparece la opción de videollamada, el centro puede tener solo turnos pres
 
 ### Una sola vez — habilitar videollamada en tu agenda
 
-1. **Vos** entrás a **Configurar mi agenda**.
+1. **Vos** entrás a **Configurar mis horarios** (atajo **Horarios**).
 2. **Vos** activás la opción de aceptar videollamada en esa agenda.
 3. **El sistema** guarda la preferencia.
 

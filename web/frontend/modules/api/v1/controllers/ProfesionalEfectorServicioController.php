@@ -479,12 +479,16 @@ class ProfesionalEfectorServicioController extends BaseController
             }
             $nombre = $pes->servicio !== null ? (string) $pes->servicio->nombre : ('Servicio #' . $pes->id_servicio);
             $acepta = $pes->servicio !== null && strtoupper(trim((string) $pes->servicio->acepta_turnos)) === 'SI' ? 'SI' : 'NO';
+            $idPes = (int) $pes->id;
             $items[] = [
                 'id' => (int) $pes->id_servicio,
                 'name' => $nombre,
                 'meta' => [
-                    'id_profesional_efector_servicio' => (int) $pes->id,
+                    'id_profesional_efector_servicio' => $idPes,
                     'acepta_turnos' => $acepta,
+                    'draft' => [
+                        'id_profesional_efector_servicio' => (string) $idPes,
+                    ],
                 ],
             ];
         }

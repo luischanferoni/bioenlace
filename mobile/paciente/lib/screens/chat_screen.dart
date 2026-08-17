@@ -54,6 +54,8 @@ class ChatScreenState extends State<ChatScreen> {
   Map<String, dynamic> _flowSnapshot = {};
   String? _intentId;
   String? _subintentId;
+  /// Evita re-POST del mismo auto-pick si el motor reentrega el mismo paso.
+  String? _lastFlowAutoPickKey;
 
   /// Incrementa al iniciar cada activación de un flow (reinicio tras otro flow o atajo con reset).
   int _flowActivationSeq = 0;
@@ -356,6 +358,22 @@ class ChatScreenState extends State<ChatScreen> {
       return;
     }
 
+    final pickKey =
+        '${_intentId ?? ''}|${_subintentId ?? ''}|${pick.draftField}|${pick.itemId}';
+    if (_lastFlowAutoPickKey == pickKey) {
+      message['_flow_single_pick_done'] = true;
+      AppDiagnosticLog.trace(
+        'flow_auto_pick',
+        'skip_same_pick',
+        data: {
+          'draft_field': pick.draftField,
+          'item_id': pick.itemId,
+          'subintent_id': _subintentId,
+        },
+      );
+      return;
+    }
+
     message['_flow_single_pick_in_flight'] = true;
     message['_flow_auto_selected_id'] = pick.itemId;
     if (mounted) setState(() {});
@@ -414,6 +432,7 @@ class ChatScreenState extends State<ChatScreen> {
         if (data is Map) {
           message['_flow_single_pick_done'] = true;
           message.remove('_flow_single_pick_attempts');
+          _lastFlowAutoPickKey = pickKey;
           if (mounted) {
             setState(() => _flowAdvancing = false);
           }
@@ -927,6 +946,7 @@ class ChatScreenState extends State<ChatScreen> {
     // según el draft (que ahora refleja sólo lo que el usuario ya eligió).
     _subintentId = null;
     _asistenteService.currentSubintentId = null;
+    _lastFlowAutoPickKey = null;
     if (messageIndex >= 0 && messageIndex < _chatHistory.length) {
       final m = _chatHistory[messageIndex];
       m.remove('_flow_single_pick_attempts');
@@ -938,6 +958,7 @@ class ChatScreenState extends State<ChatScreen> {
 
   void _beginNewFlowActivation() {
     _flowActivationSeq++;
+    _lastFlowAutoPickKey = null;
   }
 
   void _stampFlowActivationOnMessage(Map<String, dynamic> message) {
@@ -992,6 +1013,7 @@ class ChatScreenState extends State<ChatScreen> {
     _asistenteService.currentIntentId = null;
     _asistenteService.currentSubintentId = null;
     _asistenteService.draft = {};
+    _lastFlowAutoPickKey = null;
   }
 
   /// Texto legible a partir de `ui_submit_result.data` + contexto del flow.

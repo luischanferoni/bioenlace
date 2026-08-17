@@ -1386,39 +1386,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
   }) async {
     final cb = widget.onDraftDelta;
     if (cb != null) {
-      final delta = <String, dynamic>{draftField: id};
-      if (item != null && item.isNotEmpty) {
-        delta['_flow_item_$draftField'] = item;
-        final meta = item['meta'];
-        if (draftField == 'id_servicio' && meta is Map) {
-          final pesRaw = meta['id_profesional_efector_servicio'];
-          final pesId = pesRaw?.toString().trim() ?? '';
-          if (pesId.isNotEmpty) {
-            delta['id_profesional_efector_servicio'] = pesId;
-          }
-        }
-        // Acciones de hub/protocolo: meta.draft aporta claves (p. ej. intake_tipo).
-        if (meta is Map) {
-          final metaDraft = meta['draft'];
-          if (metaDraft is Map) {
-            metaDraft.forEach((k, v) {
-              final key = k?.toString().trim() ?? '';
-              final sv = v?.toString().trim() ?? '';
-              if (key.isEmpty || sv.isEmpty) return;
-              delta[key] = sv;
-            });
-          }
-          final outcome = meta['outcome']?.toString().trim() ?? '';
-          if (outcome.isNotEmpty) {
-            delta['protocol_action_outcome'] = outcome;
-          }
-          final protocolId = meta['protocol_id']?.toString().trim() ?? '';
-          if (protocolId.isNotEmpty) {
-            delta['protocol_id'] = protocolId;
-          }
-        }
-      }
-      await cb(delta);
+      await cb(UiJsonSingleListPick.draftDeltaFor(
+        draftField: draftField,
+        itemId: id,
+        item: item,
+      ));
     }
   }
 

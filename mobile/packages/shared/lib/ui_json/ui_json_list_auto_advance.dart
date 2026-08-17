@@ -71,30 +71,49 @@ class UiJsonSingleListPick {
     return out;
   }
 
-  Map<String, dynamic> toDraftDelta() {
-    final delta = <String, dynamic>{
-      draftField: itemId,
-      '_flow_item_$draftField': item,
-    };
+  Map<String, dynamic> toDraftDelta() => draftDeltaFor(
+        draftField: draftField,
+        itemId: itemId,
+        item: item,
+      );
+
+  /// Mismo delta que el tap en lista (`_applyListEmbedDraft` / spa-home).
+  static Map<String, dynamic> draftDeltaFor({
+    required String draftField,
+    required String itemId,
+    Map<String, dynamic>? item,
+  }) {
+    final delta = <String, dynamic>{draftField: itemId};
+    if (item == null || item.isEmpty) {
+      return delta;
+    }
+    delta['_flow_item_$draftField'] = item;
     final meta = item['meta'];
-    if (meta is Map) {
-      final metaDraft = meta['draft'];
-      if (metaDraft is Map) {
-        metaDraft.forEach((k, v) {
-          final key = k?.toString().trim() ?? '';
-          final sv = v?.toString().trim() ?? '';
-          if (key.isEmpty || sv.isEmpty) return;
-          delta[key] = sv;
-        });
-      }
-      final outcome = meta['outcome']?.toString().trim() ?? '';
-      if (outcome.isNotEmpty) {
-        delta['protocol_action_outcome'] = outcome;
-      }
-      final protocolId = meta['protocol_id']?.toString().trim() ?? '';
-      if (protocolId.isNotEmpty) {
-        delta['protocol_id'] = protocolId;
-      }
+    if (meta is! Map) {
+      return delta;
+    }
+    // Lista de servicios propios: el PES viene en meta (y, si hay, en meta.draft).
+    final pesRaw = meta['id_profesional_efector_servicio'];
+    final pesId = pesRaw?.toString().trim() ?? '';
+    if (pesId.isNotEmpty) {
+      delta['id_profesional_efector_servicio'] = pesId;
+    }
+    final metaDraft = meta['draft'];
+    if (metaDraft is Map) {
+      metaDraft.forEach((k, v) {
+        final key = k?.toString().trim() ?? '';
+        final sv = v?.toString().trim() ?? '';
+        if (key.isEmpty || sv.isEmpty) return;
+        delta[key] = sv;
+      });
+    }
+    final outcome = meta['outcome']?.toString().trim() ?? '';
+    if (outcome.isNotEmpty) {
+      delta['protocol_action_outcome'] = outcome;
+    }
+    final protocolId = meta['protocol_id']?.toString().trim() ?? '';
+    if (protocolId.isNotEmpty) {
+      delta['protocol_id'] = protocolId;
     }
     return delta;
   }

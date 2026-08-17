@@ -51,7 +51,7 @@
     {
       "kind": "fields",
       "id": "datos",
-      "title": "Configuración de agenda",
+      "title": "",
       "fields": [
         {
           "name": "ui_step",
@@ -125,7 +125,7 @@
         {
           "name": "formas_atencion",
           "label": "Forma de atención",
-          "type": "select",
+          "type": "chips",
           "required": true,
           "options": [
             { "value": "ORDEN_LLEGADA", "label": "Orden de llegada" },
@@ -137,7 +137,7 @@
         {
           "name": "acepta_consultas_online",
           "label": "Teleconsulta en esta agenda",
-          "type": "select",
+          "type": "chips",
           "required": false,
           "include_in_submit": true,
           "options": [

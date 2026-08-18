@@ -391,6 +391,14 @@ final class IntentClassificationRulesService
             if (!is_array($whenAny) || !self::matchesAnyRule($message, $whenAny)) {
                 continue;
             }
+            $whenNot = trim((string) ($fb['when_not_rule'] ?? ''));
+            if ($whenNot !== '' && self::ruleMatches($whenNot, $message)) {
+                continue;
+            }
+            $whenNotAny = $fb['when_not_any_rule'] ?? [];
+            if (is_array($whenNotAny) && $whenNotAny !== [] && self::matchesAnyRule($message, $whenNotAny)) {
+                continue;
+            }
             $intentId = trim((string) ($fb['intent_id'] ?? ''));
             if ($intentId === '') {
                 continue;

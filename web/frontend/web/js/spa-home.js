@@ -1280,8 +1280,9 @@
 
     // Estado conversacional (flow) — similar al cliente Flutter.
     let currentIntentId = null;
-    let currentSubintentId = null;
+    let lastUserChatContent = '';
     let draft = {};
+    let currentSubintentId = null;
     let flowSnapshot = {};
     /** Último manifiesto del flow activo (pasos, paso terminal, etc.). */
     let currentFlowManifest = null;
@@ -2275,7 +2276,10 @@
                             draft = {};
                             flowSnapshot = {};
                             writeFlowState();
-                            handleSendQuery('');
+                            const origin = String((ch.content != null && String(ch.content).trim() !== '')
+                                ? ch.content
+                                : lastUserChatContent).trim();
+                            handleSendQuery(origin, { startIntent: true });
                         });
                         row.appendChild(b);
                     });
@@ -2580,7 +2584,8 @@
     /**
      * Manejar envío de consulta
      */
-    function handleSendQuery(contentOverride) {
+    function handleSendQuery(contentOverride, sendOpts) {
+        const startIntent = !!(sendOpts && sendOpts.startIntent);
         const raw = (typeof contentOverride === 'string')
             ? contentOverride
             : (queryInput ? queryInput.value : '');
@@ -2620,6 +2625,9 @@
             } catch (e) {
                 // ignore
             }
+            if (query !== '') {
+                lastUserChatContent = query;
+            }
         }
 
         // En modo chat, agregar burbuja de usuario antes de enviar (si hay texto).
@@ -2633,7 +2641,7 @@
         const body = {};
 
         // Texto libre = nueva consulta al IntentEngine; se conserva el flow solo para “cerca…” (misma heurística que SubIntentEngine).
-        if (currentIntentId && query !== '' && !userSaysNearbyForEfectorChooser(query) && !currentComposerCapture) {
+        if (currentIntentId && query !== '' && !userSaysNearbyForEfectorChooser(query) && !currentComposerCapture && !startIntent) {
             supersedeAllFlowRows();
             currentIntentId = null;
             currentSubintentId = null;

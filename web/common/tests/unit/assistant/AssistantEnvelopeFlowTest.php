@@ -286,4 +286,18 @@ class AssistantEnvelopeFlowTest extends Unit
         $this->assertArrayHasKey('ui', $envelope['manifest']['active_step']);
         $this->assertCount(2, $envelope['manifest']['active_step']['ui']['tabs']);
     }
+
+    public function testInteractiveButtonKeepsOriginContent(): void
+    {
+        $envelope = AssistantEnvelope::interactive('Oferta', [
+            [
+                'label' => 'Solicitar Atención',
+                'intent_id' => 'atencion.necesito-atencion',
+                'content' => 'Necesito una ecografía',
+            ],
+        ]);
+
+        $this->assertSame('interactive', $envelope['kind']);
+        $this->assertSame('Necesito una ecografía', $envelope['buttons'][0]['content']);
+    }
 }

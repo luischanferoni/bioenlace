@@ -82,6 +82,27 @@ vocab:
     - dame un turno
     - turno para mi
     - turno con mi
+  # Habla de acto/estudio (alinhar con acto_nl_aliases de pedido-atencion.yaml).
+  paciente_pedido_estudio_phrases:
+    - necesito una ecografia
+    - necesito un estudio
+    - necesito una radiografia
+    - necesito una mamografia
+    - turno para estudio
+    - turno para ecografia
+    - turno para mamografia
+    - turno para radiografia
+    - turno para laboratorio
+    - turno para kinesio
+    - analisis de sangre
+    - analisis de orina
+    - ecografia
+    - mamografia
+    - radiografia
+    - ultrasonido
+    - kinesiologia
+    - kinesio
+    - fisioterapia
   consultas_seguimiento_phrases:
     - renovar medicacion
     - renovar medicación
@@ -249,6 +270,14 @@ match_rules:
       Si el paciente pide sacar, pedir, reservar, solicitar o agendar un turno (aunque nombre una oferta o «mi dentista»),
       priorizá turnos.crear-como-paciente: el flow hidrata la oferta si puede y desambigua solo si el pedido es genérico.
       No confundir con «mis turnos», con «última vez que fui» ni con síntomas sin pedido de turno.
+
+  paciente_pedido_estudio:
+    require_phrase_any: paciente_pedido_estudio_phrases
+    forbid_any: [turnos_anteriores_topics]
+    ai_hint: >-
+      Si pide un estudio o práctica concreto (ecografía, mamografía, laboratorio, kinesio) sin ser
+      «última vez que fui» ni listar turnos, priorizá atencion.necesito-atencion (camino estudio).
+      Eso es operational: no lo trates como charla clínica.
 
   help_menu_query:
     require_any: [help_menu]
@@ -524,6 +553,18 @@ score_adjustments:
       - intent_id: turnos.crear-como-paciente
         delta: -15
 
+  - when_rule: paciente_pedido_estudio
+    when_not_rule: paciente_ultimo_en_oferta
+    apply:
+      - intent_id: atencion.necesito-atencion
+        delta: 55
+      - intent_id: turnos.crear-como-paciente
+        delta: -25
+      - intent_id: turnos.ver-mis-turnos-como-paciente
+        delta: -25
+      - intent_id: laboratorio.ver-resultados-como-paciente
+        delta: -30
+
 operational_fallbacks:
   - id: paciente_ultimo_en_oferta_nl
     when_any_rule: [paciente_ultimo_en_oferta]
@@ -612,6 +653,13 @@ operational_fallbacks:
     confidence: 0.9
     method: rules_declarative_fallback
 
+  - id: paciente_pedido_estudio_nl
+    when_any_rule: [paciente_pedido_estudio]
+    when_not_any_rule: [paciente_ultimo_en_oferta, paciente_reservar_turno, paciente_listar_turnos]
+    intent_id: atencion.necesito-atencion
+    confidence: 0.91
+    method: rules_declarative_fallback
+
   - id: consultas_seguimiento_nl
     when_any_rule: [consultas_seguimiento_followup, consultas_seguimiento_topics_only]
     when_not_rule: scheduling_operational
@@ -644,8 +692,8 @@ chat_preprocess:
   prompt:
     intro: 'Analizá el mensaje del usuario para un asistente de salud.'
     rules:
-      - 'user_goal operational si pide una acción del sistema (sacar/reservar/solicitar/cancelar turno, agenda) o consulta datos propios resolubles (mis turnos, última vez en una oferta del centro, listados).'
-      - 'conversational si hay saludo, síntomas, lesiones, malestar o charla clínica — aunque también pregunten hospital cerca, dónde atenderse o qué servicio conviene. Eso NO es operational: primero orientación + oferta; no abras un flow.'
+      - 'user_goal operational si pide una acción del sistema (sacar/reservar/solicitar/cancelar turno, agenda), un estudio o práctica concreto (ecografía, mamografía, laboratorio, kinesio) o consulta datos propios resolubles (mis turnos, última vez en una oferta del centro, listados).'
+      - 'conversational si hay saludo, síntomas, lesiones, malestar o charla clínica — aunque también pregunten hospital cerca, dónde atenderse o qué servicio conviene. Eso NO es operational: primero orientación + oferta; no abras un flow. Pedir un estudio/práctica concreto SÍ es operational.'
       - 'informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas, quejas clínicas ni consultas de plantilla/conteo de profesionales del efector.'
       - 'No uses category servicio para síntomas, partes del cuerpo ni malestar; esas menciones van solo en normalized_text.'
       - 'meta: preguntas sobre el asistente o la app (no operativas).'
@@ -657,17 +705,19 @@ chat_preprocess:
     # Síntomas → charla con oferta (botón). Solo queda operational si pide turno/agenda explícito.
     - when_rule: clinical_symptom
       from_goals: [informational, unclear, operational, in_flow_question]
-      when_not_any_rule: [scheduling_operational, paciente_reservar_turno]
+      when_not_any_rule: [scheduling_operational, paciente_reservar_turno, paciente_pedido_estudio]
       to_goal: conversational
     - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit, own_cobertura_gestionar, staff_cobertura_gestionar]
       to_goal: operational
-    - when_any_rule: [paciente_ultimo_en_oferta, paciente_turnos_anteriores, paciente_listar_turnos, paciente_reservar_turno]
+    - when_any_rule: [paciente_ultimo_en_oferta, paciente_turnos_anteriores, paciente_listar_turnos, paciente_reservar_turno, paciente_pedido_estudio]
       to_goal: operational
 
   heuristic_fallback:
     - when_rule: scheduling_operational
       goal: operational
     - when_any_rule: [paciente_ultimo_en_oferta, paciente_turnos_anteriores, paciente_listar_turnos, paciente_reservar_turno]
+      goal: operational
+    - when_rule: paciente_pedido_estudio
       goal: operational
     - when_any_rule: [consultas_seguimiento_followup, consultas_seguimiento_topics_only]
       goal: operational
@@ -697,6 +747,8 @@ conversational_channel:
     3) Si hay un bloque "Oferta disponible", conectá con Bioenlace usando SOLO ese resumen y esas capacidades: explicá qué permite el botón de abajo. No digas que escriban "Quiero turno…" si ya hay botón. No prometas mapa, cercanía, teleconsulta ni otros pasos si no están en capacidades.
     4) Si no hay "Oferta disponible", no prometas botones ni caminos concretos de la app; invitá a describir la necesidad con sus palabras.
     5) Si preguntan cómo contactar al profesional, aclará que el contacto es agendando una consulta por la app; no des teléfonos, emails ni direcciones inventadas.
+
+    Pedir un estudio o práctica (ecografía, laboratorio, mamografía, kinesio) no es charla de síntomas: el sistema debe abrir Solicitar Atención, no quedarse en orientación.
 
     Si piden una acción operativa concreta (turno, cancelar, ver agenda) y no hay oferta, invitalos a decirlo con sus palabras; no hace falta listar menús largos.
 

@@ -54,6 +54,7 @@ class ChatScreenState extends State<ChatScreen> {
   Map<String, dynamic> _flowSnapshot = {};
   String? _intentId;
   String? _subintentId;
+  String _lastUserUtterance = '';
   /// Evita re-POST del mismo auto-pick si el motor reentrega el mismo paso.
   String? _lastFlowAutoPickKey;
 
@@ -252,7 +253,11 @@ class ChatScreenState extends State<ChatScreen> {
   }
 
   /// Un solo POST de avance de flow a la vez (evita ráfagas que resetean la conexión).
-  Future<Map<String, dynamic>> _postFlowAdvance({String? actionId}) async {
+  Future<Map<String, dynamic>> _postFlowAdvance({
+    String? actionId,
+    String content = '',
+    bool keepIntent = false,
+  }) async {
     var waitedMs = 0;
     while (_flowAdvanceLocked && waitedMs < 8000) {
       await Future<void>.delayed(const Duration(milliseconds: 250));
@@ -268,22 +273,37 @@ class ChatScreenState extends State<ChatScreen> {
     _flowAdvanceLocked = true;
     try {
       if (actionId != null && actionId.isNotEmpty) {
-        return await _asistenteService.procesarInteraccion('', actionId: actionId);
+        return await _asistenteService.procesarInteraccion(
+          content,
+          actionId: actionId,
+          keepIntent: keepIntent,
+        );
       }
-      return await _asistenteService.procesarInteraccion('');
+      return await _asistenteService.procesarInteraccion(
+        content,
+        keepIntent: keepIntent,
+      );
     } finally {
       _flowAdvanceLocked = false;
     }
   }
 
-  Future<Map<String, dynamic>> _postFlowAdvanceWithRetry({String? actionId}) async {
+  Future<Map<String, dynamic>> _postFlowAdvanceWithRetry({
+    String? actionId,
+    String content = '',
+    bool keepIntent = false,
+  }) async {
     Object? lastError;
     for (var attempt = 1; attempt <= _flowAdvanceMaxAttempts; attempt++) {
       if (attempt > 1) {
         await Future<void>.delayed(Duration(milliseconds: 900 * attempt));
       }
       try {
-        final res = await _postFlowAdvance(actionId: actionId);
+        final res = await _postFlowAdvance(
+          actionId: actionId,
+          content: content,
+          keepIntent: keepIntent,
+        );
         if (res['success'] == true) {
           return res;
         }
@@ -1871,7 +1891,13 @@ class ChatScreenState extends State<ChatScreen> {
         _asistenteService.draft = Map<String, dynamic>.from(_draft);
       }
 
-      final result = await _postFlowAdvanceWithRetry();
+      final origin = (opt['content']?.toString().trim().isNotEmpty == true)
+          ? opt['content'].toString().trim()
+          : _lastUserUtterance.trim();
+      final result = await _postFlowAdvanceWithRetry(
+        content: origin,
+        keepIntent: true,
+      );
       if (!mounted) return;
 
       if (result['success'] != true) {
@@ -2033,6 +2059,7 @@ class ChatScreenState extends State<ChatScreen> {
         'content': text,
         'timestamp': DateTime.now(),
       });
+      _lastUserUtterance = text;
       _messageController.clear();
     });
 
@@ -2149,6 +2176,7 @@ class ChatScreenState extends State<ChatScreen> {
         'content': text,
         'timestamp': DateTime.now(),
       });
+      _lastUserUtterance = text;
       _messageController.clear();
     });
     _scrollToBottom();

@@ -162,10 +162,12 @@ class AsistenteService {
   Future<Map<String, dynamic>> procesarInteraccion(
     String textoInteraccionUsuario, {
     String? actionId,
+    bool keepIntent = false,
   }) async {
     try {
       final trimmedIn = textoInteraccionUsuario.trim();
-      if ((actionId == null || actionId.isEmpty) &&
+      if (!keepIntent &&
+          (actionId == null || actionId.isEmpty) &&
           trimmedIn.isNotEmpty &&
           !asistenteUserSaysNearbyForEfectorChooser(textoInteraccionUsuario)) {
         resetFlow();

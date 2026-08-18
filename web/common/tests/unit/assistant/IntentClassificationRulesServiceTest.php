@@ -245,6 +245,106 @@ class IntentClassificationRulesServiceTest extends Unit
         ));
     }
 
+    public function testPacientePedidoEstudioAbreSolicitarAtencion(): void
+    {
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'paciente_pedido_estudio',
+            'Necesito una ecografía'
+        ));
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'paciente_pedido_estudio',
+            'turno para mamografía'
+        ));
+        $this->assertFalse(IntentClassificationRulesService::ruleMatches(
+            'paciente_pedido_estudio',
+            'me duele la cabeza'
+        ));
+        $this->assertSame(
+            'operational',
+            IntentClassificationRulesService::applyChatPreprocessGoalOverrides(
+                'Necesito una ecografía',
+                'conversational'
+            )
+        );
+        $this->assertSame(
+            'operational',
+            IntentClassificationRulesService::resolveHeuristicUserGoal('Necesito una ecografía')
+        );
+
+        $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'atencion.necesito-atencion',
+                    'Solicitar Atención',
+                    '',
+                    null,
+                    '/api/turnos/crear-como-paciente',
+                    ['ecografía'],
+                    []
+                ),
+                new UiActionCatalogItem(
+                    'turnos.crear-como-paciente',
+                    'Reservar turno',
+                    '',
+                    null,
+                    '/api/turnos/crear-como-paciente',
+                    ['turno'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['atencion.necesito-atencion'] = $catalog->items[0];
+        $catalog->byActionId['turnos.crear-como-paciente'] = $catalog->items[1];
+
+        $fb = IntentClassificationRulesService::resolveOperationalFallback(
+            'Necesito una ecografía',
+            $catalog
+        );
+        $this->assertNotNull($fb);
+        $this->assertSame('atencion.necesito-atencion', $fb['item']->action_id);
+    }
+
+    public function testPedidoEstudioNoPisaUltimaVezEnOferta(): void
+    {
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'paciente_ultimo_en_oferta',
+            'cuando fui a kinesio'
+        ));
+        $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'turnos.ver-ultimo-en-oferta-como-paciente',
+                    'Última vez',
+                    '',
+                    null,
+                    '/api/turnos/listar-como-paciente',
+                    ['última vez'],
+                    []
+                ),
+                new UiActionCatalogItem(
+                    'atencion.necesito-atencion',
+                    'Solicitar Atención',
+                    '',
+                    null,
+                    '/api/turnos/crear-como-paciente',
+                    ['kinesio'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['turnos.ver-ultimo-en-oferta-como-paciente'] = $catalog->items[0];
+        $catalog->byActionId['atencion.necesito-atencion'] = $catalog->items[1];
+
+        $fb = IntentClassificationRulesService::resolveOperationalFallback(
+            'cuando fui a kinesio',
+            $catalog
+        );
+        $this->assertNotNull($fb);
+        $this->assertSame('turnos.ver-ultimo-en-oferta-como-paciente', $fb['item']->action_id);
+    }
+
     public function testOperationalFallbackUltimoEnOferta()
     {
         $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(

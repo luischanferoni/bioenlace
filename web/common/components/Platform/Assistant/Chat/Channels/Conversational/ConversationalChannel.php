@@ -140,25 +140,29 @@ final class ConversationalChannel
             }
         }
 
-        return self::finalizeResponse($text, $offer);
+        return self::finalizeResponse($text, $offer, $content);
     }
 
     /**
      * @param array{label: string, intent_id: string, summary: string, capabilities: list<string>}|null $offer
      * @return array<string, mixed>
      */
-    private static function finalizeResponse(string $text, ?array $offer): array
+    private static function finalizeResponse(string $text, ?array $offer, string $originContent = ''): array
     {
         if ($offer === null) {
             return AssistantEnvelope::message($text);
         }
 
-        return AssistantEnvelope::interactive($text, [
-            [
-                'label' => $offer['label'],
-                'intent_id' => $offer['intent_id'],
-            ],
-        ]);
+        $button = [
+            'label' => $offer['label'],
+            'intent_id' => $offer['intent_id'],
+        ];
+        $origin = trim($originContent);
+        if ($origin !== '') {
+            $button['content'] = $origin;
+        }
+
+        return AssistantEnvelope::interactive($text, [$button]);
     }
 
     private static function shouldOfferBookingButton(string $content, string $formattedHistory = ''): bool

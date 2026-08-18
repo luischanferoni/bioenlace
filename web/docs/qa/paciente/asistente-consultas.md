@@ -12,7 +12,7 @@ No hace falta la frase exacta. Si el tipo está en **Hoy**, algo parecido deber�
 
 ## Cómo usar este catálogo
 
-1. **Vos** escribís el ejemplo (o una variante).
+1. **Vos** escribís el ejemplo de la columna (o una variante). Si hay 1. y 2., son dos envíos: primero el 1, después el 2.
 2. **El sistema** clasifica: charla clínica, flujo operativo o menú/ayuda.
 3. **Vos** marcás si abrió el camino correcto y si **no** prometió lo que no puede hacer (diagnóstico, receta, teléfono inventado, turno en urgencia).
 
@@ -56,19 +56,11 @@ Hacia dónde va el producto (agentes, educación post-consulta, preguntas dinám
 
 Canal **conversacional**: empatía breve, orientación prudente y botón **Solicitar Atención**. No abrir reserva de agenda si no pidió turno.
 
-| Tipo | Ejemplo | Cobertura | Qué deberías ver |
-|------|---------|-----------|------------------|
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
 | Síntoma suelto | *«Me duele la cabeza desde anoche»* | **Hoy** | Charla + oferta Solicitar Atención |
 | Síntoma + parte del cuerpo | *«Tengo un pinchazo en el pecho cuando respiro»* | **Hoy** | Igual; no diagnóstico |
 | Varios síntomas juntos | *«Tengo fiebre, tos y me duele el cuerpo»* | **Hoy** | Charla + oferta |
-| Evolución | *«Empezó ayer y se me fue poniendo peor»* | **Hoy** | Continúa la charla sin repetir |
-| Comparar con algo conocido | *«Es como la gastritis que tuve el año pasado»* | **Hoy** | Orientación; no confirma el diagnóstico viejo |
-| Pedir qué hacer | *«¿Qué hago con esto?»* | **Hoy** | Orientación + oferta de atención |
-| Pedir a qué servicio ir | *«¿Esto es de clínica o de traumatología?»* | **Hoy** | Sugiere tipo de servicio; no nombra un médico inventado |
-| Pedir si es urgente | *«¿Esto es para guardia o puedo esperar?»* | **Hoy** | Si hay alarma, camino urgencia; si no, orientación |
-| Pedir si puede esperar al turno | *«¿Puedo aguantar hasta el jueves?»* | **Hoy** | No da alta médica; invita a atención |
-| Pedir automedicación | *«¿Puedo tomar ibuprofeno?»* | **Fuera** | No receta; sugiere consultar |
-| Pedir diagnóstico | *«¿Será un infarto?»* | **Fuera** | No diagnostica; si hay alarma, urgencia / 107 |
 | Lesión / traumatismo | *«Me caí de la bici y se me hinchó el tobillo»* | **Hoy** | Charla + Solicitar Atención |
 | Salud mental | *«Estoy muy ansioso y no puedo dormir»* | **Hoy** | Empatía + oferta; no es queja de la app |
 | Pediatría (tutor) | *«Mi nene de 3 años tiene 39 de fiebre»* | **Hoy** | Charla; turno del menor exige representación activa |
@@ -76,6 +68,19 @@ Canal **conversacional**: empatía breve, orientación prudente y botón **Solic
 | Post-operatorio | *«Me operaron el viernes y me arde la herida»* | **Hoy** | Oferta de atención; no interpreta la cirugía |
 | Efecto de un medicamento | *«Arranqué el enalapril y me mareo»* | **Hoy** | No ajusta la dosis solo; Control/Seguimiento o atención |
 | Alarma clásica | *«Me falta el aire y me suda el pecho»* | **Hoy** | Urgencia / 107; **no** reserva ambulatoria |
+
+**1.** enviá · **2.** enviá (no en el mismo mensaje; no toques el botón entre medio). Oferta en el 2; la de arriba se apaga.
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| Evolución | 1. *«Tengo fiebre, tos y me duele el cuerpo»*<br>2. *«Empezó ayer y se me fue poniendo peor»* | **Hoy** | Sigue la charla sin repetir; oferta en el 2 |
+| Comparar con algo conocido | 1. *«Me duele la panza»*<br>2. *«Es como la gastritis que tuve el año pasado»* | **Hoy** | Orientación; no confirma el diagnóstico viejo |
+| Pedir qué hacer | 1. *«Tengo fiebre, tos y me duele el cuerpo»*<br>2. *«¿Qué hago con esto?»* | **Hoy** | Orientación + oferta de atención |
+| Pedir a qué servicio ir | 1. *«Me caí de la bici y se me hinchó el tobillo»*<br>2. *«¿Esto es de clínica o de traumatología?»* | **Hoy** | Sugiere tipo de servicio; no nombra un médico inventado |
+| Pedir si es urgente | 1. *«Tengo un pinchazo en el pecho cuando respiro»*<br>2. *«¿Esto es para guardia o puedo esperar?»* | **Hoy** | Si hay alarma, camino urgencia; si no, orientación |
+| Pedir si puede esperar al turno | 1. *«Me duele la cabeza desde anoche»*<br>2. *«¿Puedo aguantar hasta el jueves?»* | **Hoy** | No da alta médica; invita a atención |
+| Pedir automedicación | 1. *«Me duele la cabeza desde anoche»*<br>2. *«¿Puedo tomar ibuprofeno?»* | **Fuera** | No receta; sugiere consultar |
+| Pedir diagnóstico | 1. *«Tengo un pinchazo en el pecho cuando respiro»*<br>2. *«¿Será un infarto?»* | **Fuera** | No diagnostica; si hay alarma, urgencia / 107 |
 
 Detalle del árbol de alarmas: [triage-reserva-turno.md](../../producto/triage-reserva-turno.md).
 

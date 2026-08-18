@@ -4739,11 +4739,34 @@
      * Manejar teclado en textarea
      */
     function handleKeyDown(e) {
-        // Enter para enviar, Shift+Enter para nueva línea
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendQuery();
+        if (e.isComposing || e.keyCode === 229) {
+            return;
         }
+        const isEnter = e.key === 'Enter' || e.code === 'Enter' || e.code === 'NumpadEnter';
+        if (!isEnter) {
+            return;
+        }
+        if (e.shiftKey) {
+            e.preventDefault();
+            insertTextAtCursor(queryInput, '\n');
+            handleInput();
+            return;
+        }
+        e.preventDefault();
+        handleSendQuery();
+    }
+
+    function insertTextAtCursor(el, text) {
+        if (!el) {
+            return;
+        }
+        const start = el.selectionStart == null ? el.value.length : el.selectionStart;
+        const end = el.selectionEnd == null ? start : el.selectionEnd;
+        const v = String(el.value || '');
+        el.value = v.slice(0, start) + text + v.slice(end);
+        const pos = start + text.length;
+        el.selectionStart = pos;
+        el.selectionEnd = pos;
     }
 
     /**
@@ -4758,7 +4781,7 @@
         const styles = window.getComputedStyle(queryInput);
         const lineHeight = parseFloat(styles.lineHeight) || (parseFloat(styles.fontSize) || 16) * 1.45;
         const padY = (parseFloat(styles.paddingTop) || 0) + (parseFloat(styles.paddingBottom) || 0);
-        const maxPx = Math.ceil(lineHeight * 2 + padY);
+        const maxPx = Math.ceil(lineHeight * 6 + padY);
         const next = Math.min(queryInput.scrollHeight, maxPx);
         queryInput.style.height = next + 'px';
         queryInput.style.overflowY = queryInput.scrollHeight > maxPx ? 'auto' : 'hidden';

@@ -243,7 +243,7 @@ html:has(.spa-asistente-root) {
     resize: none;
     overflow-y: hidden;
     min-height: var(--spa-chat-input-min-height);
-    max-height: calc(1.45em * 2 + 1rem);
+    max-height: calc(1.45em * 6 + 1rem);
     padding: 0.5rem 0.35rem 0.5rem 1rem;
     font: inherit;
     font-size: 1rem;

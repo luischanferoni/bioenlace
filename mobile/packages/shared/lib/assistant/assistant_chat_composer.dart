@@ -33,7 +33,7 @@ class AssistantChatComposerBar extends StatefulWidget {
     required this.onSend,
     required this.isSending,
     this.hintText = kAssistantComposerDefaultHint,
-    this.maxLines = 2,
+    this.maxLines = 6,
     this.leading,
     this.attachments,
     this.focusNode,
@@ -210,7 +210,8 @@ class _AssistantChatComposerBarState extends State<AssistantChatComposerBar> {
                 minLines: 1,
                 maxLines: widget.maxLines,
                 keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.send,
+                textInputAction: TextInputAction.newline,
+                textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   hintText: widget.hintText,
                   hintStyle: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
@@ -238,13 +239,6 @@ class _AssistantChatComposerBarState extends State<AssistantChatComposerBar> {
                     vertical: BioSpacing.md,
                   ),
                 ),
-                onSubmitted: (_) {
-                  if (widget.controller.text.trim().isNotEmpty) {
-                    widget.onSend();
-                  } else if (widget.onVoice != null) {
-                    widget.onVoice!();
-                  }
-                },
                 enabled: !widget.isSending,
               ),
             ),

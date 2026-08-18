@@ -25,7 +25,8 @@ Ver [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 1. **Halt / banda A** → no teleconsulta; no se completa reserva (urgencia).
 2. **Banda B** → presencial preferido (no se ofrece elección remota).
 3. Nodos con `teleconsulta_elegibilidad` explícita prevalecen sobre la raíz genérica.
-4. Raíz `control_cronico` → sugerido; `tramite_admin` → permitido (si el servicio lo admite).
+4. Raíz `seguimiento_cronico` → sugerido; `estudio_pedido` → **excluido** (estudios y prácticas son presenciales en el centro).
+5. Raíz `tramite_admin` → permitido (si el servicio lo admite).
 
 ## Reglas de servicio
 

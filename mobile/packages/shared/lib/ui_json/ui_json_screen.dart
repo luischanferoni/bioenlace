@@ -1566,8 +1566,16 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     Widget renderListBlock(Map<String, dynamic> b) {
       final itemsRaw = b['items'];
       final items = itemsRaw is List ? itemsRaw : const [];
-      if (uiJsonListIsReadOnly(b)) {
+      if (uiJsonListUsesTableLayout(b)) {
         return uiJsonReadOnlyListTable(
+          block: b,
+          items: items,
+          textTheme: theme.textTheme,
+        );
+      }
+      if (uiJsonListIsReadOnly(b)) {
+        return uiJsonReadOnlyListCards(
+          context: context,
           block: b,
           items: items,
           textTheme: theme.textTheme,

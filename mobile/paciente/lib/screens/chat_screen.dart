@@ -1190,28 +1190,7 @@ class ChatScreenState extends State<ChatScreen> {
     String stepText, {
     bool muted = false,
   }) {
-    final tokens = context.bio;
-    final stepColor = muted ? tokens.textMuted : tokens.textTitle;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        BioSpacing.lg,
-        BioSpacing.xs,
-        BioSpacing.lg,
-        0,
-      ),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          stepText,
-          textAlign: TextAlign.left,
-          style: BioTypography.title.copyWith(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: stepColor,
-          ),
-        ),
-      ),
-    );
+    return FlowStepTitle(text: stepText, muted: muted);
   }
 
   /// Cierra el flujo del asistente sin persistir; vuelve al mensaje inicial (sin llamar a la API).

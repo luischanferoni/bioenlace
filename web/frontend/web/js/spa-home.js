@@ -3285,6 +3285,19 @@
         return '';
     }
 
+    function uiJsonListUsesTableLayout(block) {
+        const p = block.presentation && typeof block.presentation === 'object' ? block.presentation : {};
+        if (String(p.layout || '').trim().toLowerCase() === 'table') {
+            return true;
+        }
+        const tile = String(p.tile || '').trim();
+        const shape = String(p.shape || '').trim();
+        if (tile || shape) {
+            return false;
+        }
+        return uiJsonListIsReadOnly(block);
+    }
+
     function renderUiJsonListTableBlock(block, container) {
         const title = block.title ? String(block.title) : '';
         const items = Array.isArray(block.items) ? block.items : [];
@@ -3318,9 +3331,40 @@
         container.innerHTML = html;
     }
 
+    function renderUiJsonListCardsBlock(block, container) {
+        const title = block.title ? String(block.title) : '';
+        const items = Array.isArray(block.items) ? block.items : [];
+        const emptyMsg = block.empty_message ? String(block.empty_message) : 'No hay registros que coincidan con los filtros.';
+        let html = '<div class="bio-ui-json-list bio-ui-json-list--layout-cards">';
+        if (title) {
+            html += '<div class="fw-semibold mb-2">' + escapeHtml(title) + '</div>';
+        }
+        if (items.length === 0) {
+            html += '<div class="small text-muted mb-0">' + escapeHtml(emptyMsg) + '</div>';
+        } else {
+            html += '<ul class="list-unstyled mb-0">';
+            items.forEach(function (it) {
+                if (!it || typeof it !== 'object') {
+                    return;
+                }
+                const label = uiJsonListCellValue(it, 'name')
+                    || uiJsonListCellValue(it, 'label')
+                    || uiJsonListCellValue(it, 'id');
+                html += '<li class="bio-ui-json-list-card">' + escapeHtml(label) + '</li>';
+            });
+            html += '</ul>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
     function renderUiJsonListBlock(block, container, options = {}) {
-        if (uiJsonListIsReadOnly(block)) {
+        if (uiJsonListUsesTableLayout(block)) {
             renderUiJsonListTableBlock(block, container);
+            return;
+        }
+        if (uiJsonListIsReadOnly(block)) {
+            renderUiJsonListCardsBlock(block, container);
             return;
         }
         const title = block.title ? String(block.title) : '';

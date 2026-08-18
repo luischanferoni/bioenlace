@@ -31,7 +31,8 @@ intent_semantics:
     Mostrar el último turno pasado filtrado por oferta del centro cuando la mención se puede cruzar;
     si no, un listado corto de turnos anteriores para que la persona elija.
   how: >-
-    Resume en el chat (fecha, oferta, profesional) y abre el listado de turnos pasados.
+    Resume en el chat (si cruzó la oferta: fecha y profesional) y abre el listado de turnos pasados.
+    Si no cruzó, el chat solo explica; los ítems van en la lista UI, no repetidos en el texto.
   constraints:
     - No inventa fechas. No usa el extracto de HC del chat conversacional.
     - Odontología / dentista es un ejemplo de habla; el filtro es id_servicio institucional.

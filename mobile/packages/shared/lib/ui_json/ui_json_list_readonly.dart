@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../theme/tokens/tokens.dart';
+
 /// Listas `kind: list` sin selección (p. ej. DataAccess /listar).
 bool uiJsonListIsReadOnly(Map<String, dynamic> block) {
   final selection = block['selection'];
@@ -17,6 +19,22 @@ bool uiJsonListIsReadOnly(Map<String, dynamic> block) {
   }
   final draft = block['draft_field']?.toString().trim() ?? '';
   return draft.isEmpty;
+}
+
+/// Tabla staff (`presentation.layout: table`) vs tarjetas (tile/shape, p. ej. turnos paciente).
+bool uiJsonListUsesTableLayout(Map<String, dynamic> block) {
+  final pres = block['presentation'];
+  if (pres is Map) {
+    if (pres['layout']?.toString().trim().toLowerCase() == 'table') {
+      return true;
+    }
+    final tile = pres['tile']?.toString().trim() ?? '';
+    final shape = pres['shape']?.toString().trim() ?? '';
+    if (tile.isNotEmpty || shape.isNotEmpty) {
+      return false;
+    }
+  }
+  return uiJsonListIsReadOnly(block);
 }
 
 List<Map<String, String>> uiJsonListColumnsFromBlock(Map<String, dynamic> block) {
@@ -143,6 +161,85 @@ Widget uiJsonReadOnlyListTable({
           );
         },
       ),
+    ],
+  );
+}
+
+String _readOnlyItemLabel(Map<String, dynamic> item) {
+  final name = uiJsonListCellValue(item, 'name');
+  if (name.isNotEmpty) {
+    return name;
+  }
+  final label = uiJsonListCellValue(item, 'label');
+  if (label.isNotEmpty) {
+    return label;
+  }
+  return uiJsonListCellValue(item, 'id');
+}
+
+/// Listado informativo en tarjetas a ancho completo (sin columna «Nombre»).
+Widget uiJsonReadOnlyListCards({
+  required BuildContext context,
+  required Map<String, dynamic> block,
+  required List<dynamic> items,
+  required TextTheme textTheme,
+}) {
+  final title = block['title']?.toString().trim() ?? '';
+  final emptyMessage = (block['empty_message'] ?? block['list_empty_message'])?.toString().trim() ?? '';
+  final tokens = context.bio;
+
+  if (items.isEmpty) {
+    final msg = emptyMessage.isNotEmpty
+        ? emptyMessage
+        : 'No hay registros que coincidan con los filtros.';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (title.isNotEmpty) ...[
+          Text(title, style: textTheme.titleSmall),
+          const SizedBox(height: 4),
+        ],
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          child: Text(msg, style: textTheme.bodyMedium),
+        ),
+      ],
+    );
+  }
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (title.isNotEmpty) ...[
+        Text(title, style: textTheme.titleSmall),
+        const SizedBox(height: BioSpacing.sm),
+      ],
+      for (var i = 0; i < items.length; i++)
+        if (items[i] is Map)
+          Padding(
+            padding: EdgeInsets.only(top: i == 0 ? 0 : BioSpacing.sm),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: tokens.paperSurfaceSunken,
+                borderRadius: BorderRadius.circular(BioRadius.sm),
+                border: Border.all(color: tokens.paperBorderDefault),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BioSpacing.md,
+                  vertical: BioSpacing.sm,
+                ),
+                child: Text(
+                  _readOnlyItemLabel(Map<String, dynamic>.from(items[i] as Map)),
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w400,
+                    color: tokens.textBody,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ),
+          ),
     ],
   );
 }

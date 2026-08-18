@@ -99,17 +99,9 @@ final class TurnosVerMisTurnosFlowDraftHydrator
                 ? 'No tenés turnos anteriores para mostrar.'
                 : 'No tenés turnos pendientes por ahora.';
         } else {
-            $total = isset($data['total']) ? (int) $data['total'] : count($lines);
-            if ($esPasados) {
-                $header = $total > count($lines)
-                    ? 'Tus turnos anteriores (últimos ' . count($lines) . ' de ' . $total . '):'
-                    : 'Tus turnos anteriores:';
-            } else {
-                $header = $total > count($lines)
-                    ? 'Tus próximos turnos (mostrando ' . count($lines) . ' de ' . $total . '):'
-                    : 'Tus próximos turnos:';
-            }
-            $draft['assistant_text'] = $header . "\n" . implode("\n", $lines);
+            $draft['assistant_text'] = $esPasados
+                ? 'Tus turnos anteriores:'
+                : 'Tus próximos turnos:';
         }
 
         $body['draft'] = $draft;
@@ -180,11 +172,15 @@ final class TurnosVerMisTurnosFlowDraftHydrator
         $body = implode("\n", $lines);
         if ($offerMatched) {
             $donde = $offerLabel !== '' ? $offerLabel : 'esa oferta';
+            if ($body === '') {
+                return 'La última vez en ' . $donde . '.';
+            }
 
             return 'La última vez en ' . $donde . ":\n" . $body;
         }
 
-        return "No pude cruzar esa mención con una oferta del centro. Tus últimos turnos:\n" . $body;
+        // Sin cruce: el listado UI JSON es la fuente; no volcar ítems al chat (duplica y en móvil sale en negrita).
+        return 'No pude cruzar esa mención con una oferta del centro. Te muestro tus últimos turnos.';
     }
 
     /**

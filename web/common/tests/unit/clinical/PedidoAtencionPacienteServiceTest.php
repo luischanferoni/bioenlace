@@ -158,5 +158,41 @@ class PedidoAtencionPacienteServiceTest extends Unit
         $opts = $svc->opcionesActoParaTriagePaso();
         $this->assertCount(1, $opts);
         $this->assertSame(CodingSystems::SNOMED . '|16310003', $opts[0]['code']);
+        $this->assertSame('Ecografía', $opts[0]['label']);
+    }
+
+    public function testHidratarDesdeMensajeEcografia(): void
+    {
+        $catalog = new InMemoryLineaActoCatalog(
+            [
+                [
+                    'code' => '16310003',
+                    'system' => CodingSystems::SNOMED,
+                    'display' => 'Diagnostic ultrasonography',
+                ],
+                [
+                    'code' => '71651007',
+                    'system' => CodingSystems::SNOMED,
+                    'display' => 'Mammography',
+                ],
+            ],
+            [
+                [
+                    'linea_id' => 11,
+                    'linea_label' => 'RADIOLOGIA',
+                    'code' => '16310003',
+                    'system' => CodingSystems::SNOMED,
+                    'preferente' => true,
+                ],
+            ]
+        );
+        $svc = new PedidoAtencionPacienteService(new PedidoAtencionService($catalog), $catalog);
+        $draft = [];
+        $svc->hidratarDesdeMensaje($draft, 'Necesito una ecografía');
+
+        $this->assertSame(PedidoAtencionPacienteService::TRIAGE_RAIZ_ESTUDIO, $draft['triage_raiz']);
+        $this->assertSame(CodingSystems::SNOMED . '|16310003', $draft['pedido_acto']);
+        $this->assertSame('11', (string) $draft['id_servicio_asignado']);
+        $this->assertSame(PedidoAtencion::MODO_ESTUDIO, $draft[PedidoAtencionPacienteService::DRAFT_MODO]);
     }
 }

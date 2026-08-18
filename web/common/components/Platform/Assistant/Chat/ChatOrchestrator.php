@@ -44,7 +44,14 @@ final class ChatOrchestrator
                 return ['success' => false, 'error' => $e->getMessage()];
             }
 
+            $hydratorDelta = [];
+            if (isset($body['_hydrator_draft_delta']) && is_array($body['_hydrator_draft_delta'])) {
+                $hydratorDelta = $body['_hydrator_draft_delta'];
+            }
+            unset($body['_hydrator_draft_delta']);
+
             $motor = SubIntentEngine::process($body, $userId);
+            $motor = FlowDraftHydratorService::mergeDeltaIntoMotor($motor, $hydratorDelta);
 
             return self::finalizeMotor($motor);
         }

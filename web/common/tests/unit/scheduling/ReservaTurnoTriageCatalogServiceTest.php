@@ -63,5 +63,6 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
             $byCode[(string) ($row['code'] ?? '')] = $row;
         }
         $this->assertSame('Control/Seguimiento', $byCode['seguimiento_cronico']['label'] ?? null);
+        $this->assertSame('Estudio o práctica', $byCode['estudio_pedido']['label'] ?? null);
     }
 }

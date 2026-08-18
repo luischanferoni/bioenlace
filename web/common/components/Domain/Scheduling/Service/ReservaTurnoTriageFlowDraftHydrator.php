@@ -14,6 +14,7 @@ final class ReservaTurnoTriageFlowDraftHydrator
     public static function hydrateWithOptions(array &$body, array $options = []): void
     {
         $draft = isset($body['draft']) && is_array($body['draft']) ? $body['draft'] : [];
+        $content = isset($body['content']) ? trim((string) $body['content']) : '';
         $catalog = new ReservaTurnoTriageCatalogService();
         $compiled = $catalog->compileSelections($draft);
 
@@ -23,10 +24,11 @@ final class ReservaTurnoTriageFlowDraftHydrator
             $draft['tipo_atencion_sugerido'] = $compiled['suggests_tipo_atencion'];
         }
 
+        (new \common\components\Domain\Clinical\Access\PedidoAtencionPacienteService())
+            ->hidratarDesdeMensaje($draft, $content);
         (new TeleconsultaElegibilidadService())->aplicarFlagsEnDraft($draft);
         (new ReservaModalidadAtencionService())->aplicarFlagsEnDraft($draft);
         (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
-        (new \common\components\Domain\Clinical\Access\PedidoAtencionPacienteService())->aplicarFlagsEnDraft($draft);
 
         $body['draft'] = $draft;
     }

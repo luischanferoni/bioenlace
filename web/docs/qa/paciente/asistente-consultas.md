@@ -12,9 +12,13 @@ No hace falta la frase exacta. Si el tipo está en **Hoy**, algo parecido deber�
 
 ## Cómo usar este catálogo
 
-1. **Vos** escribís el ejemplo de la columna (o una variante). Si hay 1. y 2., son dos envíos: primero el 1, después el 2.
+1. **Vos** escribís el ejemplo de la columna (o una variante). Si hay **1.** y **2.**, son dos envíos: primero el 1, después el 2.
 2. **El sistema** clasifica: charla clínica, flujo operativo o menú/ayuda.
 3. **Vos** marcás si abrió el camino correcto y si **no** prometió lo que no puede hacer (diagnóstico, receta, teléfono inventado, turno en urgencia).
+
+**Suelto a propósito:** el primer mensaje ya es el pedido (*«Quiero un turno»*, *«Mis análisis»*). Sirve para probar que el asistente **enruta en frío**.
+
+**Cadena:** el 2 solo tiene sentido después del 1 (centro, horario, “el de…”, “eso”, modalidad). No lo pegues solo.
 
 Tres puertas cubren la mayoría de la vida del paciente:
 
@@ -96,32 +100,32 @@ Atajo **Solicitar Atención** (`atencion.necesito-atencion`): malestar nuevo, es
 |------|---------|-----------|------------------|
 | Malestar nuevo, genérico | *«Necesito atención, me siento mal»* | **Hoy** | Solicitar Atención → malestar |
 | Malestar + zona | *«Me duele la panza del lado derecho»* | **Hoy** | Malestar → zona / detalle |
-| Estudio / práctica | *«Necesito una ecografía»* / *«turno para mamografía»* / *«kinesio»* | **Hoy** | Camino estudio o práctica (acto → oferta del centro) |
+| Estudio / práctica | *«Necesito una ecografía»* / *«turno para mamografía»* / *«kinesio»* | **Hoy** | Solicitar Atención con **motivo y acto preseleccionados** (chips en español: Ecografía, Mamografía, Kinesiología…). Confirmar y seguir a modalidad / oferta del centro |
 | Laboratorio como acto | *«Quiero sacar turno para análisis de sangre»* | **Hoy** | Estudio/práctica, no el listado de resultados |
 | Control / seguimiento | *«Tengo que controlar la diabetes»* | **Hoy** | Hub Control/Seguimiento |
 | Control por edad/sexo | *«¿Me toca alguna vacuna?»* / *«control ginecológico»* | **Hoy** | Hub: control recomendado si aplica |
 | Urgencia declarada | *«Es una urgencia, ¿adónde voy?»* | **Hoy** | Categoría de alarma; banda A sin reserva en app |
-| 107 / guardia | *«¿Llamo al 107 o voy a la guardia del centro?»* | **Hoy** | Derivación; no cupo ambulatorio |
 | Ver un médico (vago) | *«Quiero ver a un médico»* | **Hoy** | Solicitar Atención o charla + botón |
 | Pedir el de siempre | *«Quiero turno con la doctora Pérez»* | **Hoy** | Agenda; el profesional aparece si hay PES y cupo |
 | Pedir un servicio del centro | *«Turno en odontología»* | **Hoy** | Elige oferta del **centro**, no “especialidad” suelta |
 | Pedir “el mío” por oferta | *«Solicita un turno para mi dentista»* | **Hoy** | `turnos.crear-como-paciente` (no charla empática). Cruza la mención con la oferta; si “dentista” no matchea el nombre, elegís el servicio. **No** confirma el turno solo |
 | Pedir un especialista | *«Necesito un cardiólogo»* | **Hoy** | Hub de medicina clínica; especialista suele pedir derivación vigente |
-| Centro más cerca | *«El más cercano a mi casa»* | **Hoy** | Mapa / centros cercanos en el flujo de reserva |
-| Centro concreto | *«En CIS Banda»* | **Hoy** | Filtra efector si está en contexto |
-| Preferencia de día/hora | *«La semana que viene a la tarde»* | **Hoy** | Lo usa al elegir slot; no reserva a ciegas |
 | Solo sacar turno | *«Quiero un turno»* | **Hoy** | `turnos.crear-como-paciente` |
-| Teleconsulta | *«¿Puedo hacerlo por videollamada?»* | **Hoy** | Paso modalidad solo si triage y servicio lo permiten |
-| Consulta por mensaje | *«No puedo ir, ¿le puedo escribir al médico?»* | **Hoy** | Control/Seguimiento o modalidad mensaje; no promete respuesta inmediata |
-| Presencial sí o sí | *«Tiene que ser presencial, no quiero video»* | **Hoy** | Fija presencial |
 
-**1.** enviá · **2.** enviá (no en el mismo mensaje). El 1 asume que ya viste que no hay horarios (en el flow o porque lo decís).
+**1.** enviá · **2.** enviá (no en el mismo mensaje).
 
 | Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
 |------|--------------------------|-----------|------------------|
-| No hay cupo | 1. *«No hay turnos, ¿qué hago?»* | **Hoy** | Mensaje claro: otras fechas, otro profesional o consulta por mensaje si aplica. **No** inventa horarios |
-| Aviso cuando se libere | 1. *«No hay turnos, ¿qué hago?»*<br>2. *«Avisame cuando haya un hueco»* | **Hoy** | 1. Igual que arriba. 2. **No** te anota en una lista de espera. Si **ya tenés un turno más adelante**, puede avisarte por **push** para adelantarlo (no por WhatsApp). Si no tenés turno, no promete que te va a llamar cuando se libere uno |
-| Ya tengo turno, quiero más temprano | 1. *«Tengo turno la semana que viene»*<br>2. *«Si se libera uno antes, avisame»* | **Hoy** / **Pantalla** | 1. Lista de pendientes. 2. Explica el adelanto por notificación; no confirma un cupo en el chat. El sí/no del hueco llega en **Alertas** (`TURNO_ADVANCE_OFFER`) |
+| Centro más cerca | 1. *«Quiero un turno»*<br>2. *«El más cercano a mi casa»* | **Hoy** | 1. Reserva. 2. Mapa / centros cercanos; no reserva a ciegas |
+| Centro concreto | 1. *«Quiero un turno»*<br>2. *«En CIS Banda»* | **Hoy** | 1. Reserva. 2. Filtra ese efector si está en tu contexto (provincia/sector) |
+| Preferencia de día/hora | 1. *«Quiero un turno»*<br>2. *«La semana que viene a la tarde»* | **Hoy** | 1. Reserva. 2. Lo usa al elegir slot; no confirma horario solo |
+| Videollamada | 1. *«Quiero un turno»*<br>2. *«¿Puedo hacerlo por videollamada?»* | **Hoy** | 1. Reserva. 2. Paso modalidad **solo** si triage y el servicio/PES lo permiten; si no, sigue presencial |
+| Presencial sí o sí | 1. *«Quiero un turno»*<br>2. *«Tiene que ser presencial, no quiero video»* | **Hoy** | 1. Reserva. 2. Fija presencial |
+| Consulta por mensaje | 1. *«Tengo que controlar la diabetes»*<br>2. *«No puedo ir, ¿le puedo escribir al médico?»* | **Hoy** | 1. Hub Control/Seguimiento. 2. Modalidad mensaje; no promete respuesta inmediata |
+| 107 o guardia del centro | 1. *«Me falta el aire y me suda el pecho»*<br>2. *«¿Llamo al 107 o voy a la guardia del centro?»* | **Hoy** | 1. Urgencia; **no** reserva ambulatoria. 2. Derivación (107 vs guardia); no inventa dirección ni da un cupo |
+| No hay cupo | 1. *«Quiero un turno»*<br>2. *«No hay turnos, ¿qué hago?»* | **Hoy** | 1. Reserva hasta que no hay horarios. 2. Otras fechas, otro profesional o consulta por mensaje. **No** inventa horarios |
+| Aviso cuando se libere | 1. *«No hay turnos, ¿qué hago?»*<br>2. *«Avisame cuando haya un hueco»* | **Hoy** | 1. Igual que arriba. 2. **No** te anota en una lista. Si **ya tenés un turno más adelante**, aviso por **push**. Si no, no promete que te va a llamar |
+| Ya tengo turno, quiero más temprano | 1. *«¿Qué turnos tengo?»*<br>2. *«Si se libera uno antes, avisame»* | **Hoy** / **Pantalla** | 1. Pendientes. 2. Explica el adelanto por notificación; no confirma un cupo en el chat (`TURNO_ADVANCE_OFFER`) |
 
 Contexto de provincia/sector: [contexto-registro.md](./contexto-registro.md). Teleconsulta: [teleconsulta-elegibilidad.md](../../producto/teleconsulta-elegibilidad.md). Hub reserva: [medicina-clinica-hub-reserva.md](../../producto/medicina-clinica-hub-reserva.md). Adelanto cuando otro cancela: [turnos.md](../../producto/turnos.md) (agente A03).
 
@@ -134,23 +138,28 @@ Flujos: [turnos.md](./turnos.md).
 | Tipo | Ejemplo | Cobertura | Qué deberías ver |
 |------|---------|-----------|------------------|
 | Listar próximos | *«¿Qué turnos tengo?»* | **Hoy** | `turnos.ver-mis-turnos-como-paciente` (no el historial) |
-| Detalle de uno | *«¿A qué hora es el de mañana?»* | **Hoy** | Lista o detalle del pendiente |
-| Con quién / dónde | *«¿Con quién es y en qué consultorio?»* | **Pantalla** | Datos del turno si están; no inventar consultorio |
-| Cómo llegar | *«¿Dónde queda el centro?»* | **Pantalla** / **Fuera** | No inventar dirección si no está en contexto |
-| Qué llevar | *«¿Tengo que llevar estudios?»* | **Pantalla** / **Fuera** | Puede vivir en motivos/pre-consulta; no inventar preparación |
 | Cancelar | *«Cancelá el turno del martes»* | **Hoy** | `turnos.cancelar-como-paciente-flow` |
 | Cancelar “el de…” | *«Cancelá el de odontología»* | **Hoy** | Elige entre pendientes |
 | Reprogramar | *«Pasame el turno al jueves»* | **Hoy** | `turnos.modificar-como-paciente-flow` |
 | Confirmar que voy | *«Confirmo que voy mañana»* | **Hoy** | `turnos.confirmar-asistencia-flow` |
-| No voy a llegar | *«Voy a llegar tarde, ¿me esperan?»* | **Fuera** | No promete que el profesional espera |
 | Política de plazos | *«¿Hasta cuándo puedo cancelar?»* | **Hoy** | `turnos.consultar-politica-autogestion-flow` |
 | Reubicar (agenda rota) | *«Me cancelaron el turno, quiero otro horario»* | **Hoy** | `turnos.reubicar-como-paciente-flow` si está en resolución |
-| Aceptar adelanto | *«Sí, acepto el turno de mañana a las 10»* | **Pantalla** | Suele venir de **push** `TURNO_ADVANCE_OFFER` |
-| Rechazar adelanto | *«No, me quedo con el mío»* | **Pantalla** | El turno original sigue |
 | Historial de citas | *«Mostrame los turnos que ya tuve»* | **Hoy** | `turnos.ver-turnos-anteriores-como-paciente` (no los próximos) |
 | Última vez en una oferta | *«Decime cuándo fue la última vez que fui al dentista»* | **Hoy** | `turnos.ver-ultimo-en-oferta-como-paciente` (odontología es un ejemplo). **No** usa el extracto de HC ni `atencion.ver-ultima-como-paciente` |
 | Turno duplicado / conflicto | *«Tengo dos turnos el mismo día»* | **Pantalla** | Resolución desde inicio / push |
-| Recordatorio | *«Avisame una hora antes»* | **Pantalla** | Preferencias / push; el chat puede no configurar el aviso |
+
+**1.** enviá · **2.** enviá. Aceptar/rechazar adelanto: el 1 es la **alerta push**, no un mensaje suelto al chat.
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| Detalle de uno | 1. *«¿Qué turnos tengo?»*<br>2. *«¿A qué hora es el de mañana?»* | **Hoy** | 1. Lista. 2. Detalle de ese pendiente |
+| Con quién / dónde | 1. *«¿Qué turnos tengo?»*<br>2. *«¿Con quién es y en qué consultorio?»* | **Pantalla** | Datos del turno si están; no inventar consultorio |
+| Cómo llegar | 1. *«¿Qué turnos tengo?»*<br>2. *«¿Dónde queda el centro?»* | **Pantalla** / **Fuera** | No inventar dirección si no está en contexto |
+| Qué llevar | 1. *«¿Qué turnos tengo?»*<br>2. *«¿Tengo que llevar estudios?»* | **Pantalla** / **Fuera** | Puede vivir en motivos/pre-consulta; no inventar preparación |
+| No voy a llegar | 1. *«¿Qué turnos tengo?»*<br>2. *«Voy a llegar tarde, ¿me esperan?»* | **Fuera** | No promete que el profesional espera |
+| Recordatorio | 1. *«¿Qué turnos tengo?»*<br>2. *«Avisame una hora antes»* | **Pantalla** | Preferencias / push; el chat puede no configurar el aviso |
+| Aceptar adelanto | 1. *(push «Se liberó un turno más temprano»)*<br>2. *«Sí, acepto el turno de mañana a las 10»* | **Pantalla** | `TURNO_ADVANCE_OFFER`; no es un primer mensaje del asistente |
+| Rechazar adelanto | 1. *(mismo push)*<br>2. *«No, me quedo con el mío»* | **Pantalla** | El turno original sigue |
 
 Adelantamiento por cancelación: [turnos.md](../../producto/turnos.md) (agente A03).
 
@@ -167,10 +176,15 @@ El chat de **motivos** no es el mismo hilo que el asistente general. El cuestion
 | Contar el motivo | *«Voy por el dolor de rodilla que no se me pasa»* | **Pantalla** | Chat de motivos en la ventana (~4 h antes) |
 | Completar intake | *«Las preguntas de antes de la consulta»* | **Pantalla** | Formulario previo al chat de motivos |
 | Cuestionario de cohorte | *«Las preguntas del control de hipertensión»* | **Pantalla** | Pack de asistencia si hay cohorte |
-| Audio de motivos | *«Te mando un audio de lo que me pasa»* | **Pantalla** | Se guarda en el hilo de motivos |
-| Ya lo dije | *«¿El médico va a ver lo que escribí?»* | **Hoy** / **Pantalla** | Sí: el equipo lo ve en historia clínica |
 | Ventana cerrada | *«No me deja cargar motivos»* | **Hoy** | Mensaje de fuera de ventana; no error crudo |
-| Preparación | *«¿Tengo que ir en ayunas?»* | **Fuera** | No inventar indicación; puede estar en el pack |
+
+**1.** enviá · **2.** enviá (el 1 es en el **chat de motivos** o con un turno ya listado).
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| Audio de motivos | 1. *«Voy por el dolor de rodilla que no se me pasa»*<br>2. *«Te mando un audio de lo que me pasa»* | **Pantalla** | Se guarda en el hilo de motivos |
+| Ya lo dije | 1. *(enviaste motivos)*<br>2. *«¿El médico va a ver lo que escribí?»* | **Hoy** / **Pantalla** | Sí: el equipo lo ve en historia clínica |
+| Preparación | 1. *«¿Qué turnos tengo?»*<br>2. *«¿Tengo que ir en ayunas?»* | **Fuera** | No inventar indicación; puede estar en el pack |
 
 ---
 
@@ -179,11 +193,16 @@ El chat de **motivos** no es el mismo hilo que el asistente general. El cuestion
 | Tipo | Ejemplo | Cobertura | Qué deberías ver |
 |------|---------|-----------|------------------|
 | Estoy en la sala | *«Ya llegué, ¿me van a llamar?»* | **Fuera** | No opera la fila de admisión |
-| Videollamada | *«¿Cómo entro a la videollamada?»* | **Pantalla** | Enlace / pantalla del turno remoto |
-| No me atiende | *«Estoy en la llamada y no entra nadie»* | **Pantalla** / **Fuera** | No inventar estado del profesional |
-| Consulta por mensaje: estado | *«¿Ya leyeron lo que mandé?»* | **Pantalla** | Card de consultas por mensaje en inicio |
-| Consulta por mensaje: agregar dato | *«Se me olvidó decir que tomo enalapril»* | **Pantalla** | Sigue el hilo async si está abierto |
 | Guardia (familiar) | *«Mi mamá está en guardia, ¿cómo va?»* | **Fuera** | Tablero EMER es del personal, no del paciente |
+
+**1.** enviá · **2.** enviá.
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| Videollamada | 1. *«¿Qué turnos tengo?»*<br>2. *«¿Cómo entro a la videollamada?»* | **Pantalla** | Enlace / pantalla del turno remoto si ese turno es video |
+| No me atiende | 1. *«¿Cómo entro a la videollamada?»*<br>2. *«Estoy en la llamada y no entra nadie»* | **Pantalla** / **Fuera** | No inventar estado del profesional |
+| Consulta por mensaje: estado | 1. *«No puedo ir, ¿le puedo escribir al médico?»*<br>2. *«¿Ya leyeron lo que mandé?»* | **Pantalla** | Card de consultas por mensaje en inicio |
+| Consulta por mensaje: agregar dato | 1. *(hilo async abierto)*<br>2. *«Se me olvidó decir que tomo enalapril»* | **Pantalla** | Sigue el hilo si está abierto |
 
 Consulta por mensaje: [consultas-seguimiento.md](../../producto/consultas-seguimiento.md).
 
@@ -197,13 +216,18 @@ Pasos: [laboratorio-receta-planes.md](./laboratorio-receta-planes.md). Producto:
 |------|---------|-----------|------------------|
 | Última atención | *«¿Qué me dijo el médico ayer?»* | **Hoy** | `atencion.ver-ultima-como-paciente` o detalle del resumen |
 | Historial de atenciones | *«Mis consultas anteriores»* | **Hoy** | Atajo **Mis atenciones** (`atencion.mis-atenciones-como-paciente`) |
-| Indicaciones | *«¿Qué indicaciones me dejaron?»* | **Hoy** | En el resumen publicado |
-| Diagnóstico en claro | *«¿Qué significa lo que me pusieron?»* | **Fuera** | El resumen puede estar en lenguaje claro; el chat no diagnostica de nuevo |
-| Pedidos | *«¿Qué estudios me pidieron?»* | **Hoy** | Enlaces en el detalle de la atención |
 | Resumen aún no listo | *«Todavía no veo el resumen»* | **Hoy** | Mensaje de que aún no se publicó (cola post-cierre) |
-| Cómo evolucionar | *«¿Cuándo tengo que volver si no mejoro?»* | **Futuro** | Educación / touchpoint; hoy puede degradar a Solicitar Atención |
 | Certificado / constancia | *«Necesito el certificado para el trabajo»* | **Fuera** | No hay emisión desde el chat paciente |
 | Epicrisis / internación | *«Me dieron el alta, ¿dónde está el informe?»* | **Fuera** | Expediente amplio es del personal |
+
+**1.** enviá · **2.** enviá.
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| Indicaciones | 1. *«¿Qué me dijo el médico ayer?»*<br>2. *«¿Qué indicaciones me dejaron?»* | **Hoy** | En el resumen publicado |
+| Diagnóstico en claro | 1. *«¿Qué me dijo el médico ayer?»*<br>2. *«¿Qué significa lo que me pusieron?»* | **Fuera** | El resumen puede estar en lenguaje claro; el chat no diagnostica de nuevo |
+| Pedidos | 1. *«¿Qué me dijo el médico ayer?»*<br>2. *«¿Qué estudios me pidieron?»* | **Hoy** | Enlaces en el detalle de la atención |
+| Cómo evolucionar | 1. *«¿Qué me dijo el médico ayer?»*<br>2. *«¿Cuándo tengo que volver si no mejoro?»* | **Futuro** | Educación / touchpoint; hoy puede degradar a Solicitar Atención |
 
 ---
 
@@ -212,16 +236,21 @@ Pasos: [laboratorio-receta-planes.md](./laboratorio-receta-planes.md). Producto:
 | Tipo | Ejemplo | Cobertura | Qué deberías ver |
 |------|---------|-----------|------------------|
 | Ver recetas | *«Mostrame mis recetas»* | **Hoy** | `receta.ver-recetas-como-paciente` |
-| PDF / farmacia | *«Mandame el PDF para la farmacia»* | **Hoy** | Detalle + descarga PDF |
-| Código de verificación | *«¿Cuál es el código de la receta?»* | **Pantalla** | En el detalle de la receta emitida |
 | Renovar | *«Se me está por terminar el enalapril»* | **Hoy** | Solicitar Atención → Control/Seguimiento (no listado de recetas) |
 | Repetir | *«Repetíme la receta de siempre»* | **Hoy** | Mismo hub; consulta por mensaje |
 | Ajuste | *«La metformina me cae mal, ¿me la pueden cambiar?»* | **Hoy** | Hub: solicitar ajuste |
-| Dosis / horario | *«¿A qué hora tomo la pastilla de la noche?»* | **Pantalla** | Plan / recordatorios; el chat no cambia la indicación |
-| Interacción | *«¿Puedo tomar esto con alcohol?»* | **Fuera** | No receta ni da indicación farmacológica |
-| Receta vencida | *«Esta receta ya venció»* | **Hoy** | Visible en listado; renovar por seguimiento |
-| Anulada | *«El médico me dijo que la anularon»* | **Hoy** | Estado en listado; no re-emite el chat |
 | Stock / farmacia del hospital | *«¿Lo tienen en la farmacia del centro?»* | **Fuera** | Dispensación no es canal paciente |
+
+**1.** enviá · **2.** enviá.
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| PDF / farmacia | 1. *«Mostrame mis recetas»*<br>2. *«Mandame el PDF para la farmacia»* | **Hoy** | Detalle + descarga PDF |
+| Código de verificación | 1. *«Mostrame mis recetas»*<br>2. *«¿Cuál es el código de la receta?»* | **Pantalla** | En el detalle de la receta emitida |
+| Dosis / horario | 1. *«Mostrame mis recetas»*<br>2. *«¿A qué hora tomo la pastilla de la noche?»* | **Pantalla** | Plan / recordatorios; el chat no cambia la indicación |
+| Interacción | 1. *«Mostrame mis recetas»*<br>2. *«¿Puedo tomar esto con alcohol?»* | **Fuera** | No receta ni da indicación farmacológica |
+| Receta vencida | 1. *«Mostrame mis recetas»*<br>2. *«Esta receta ya venció»* | **Hoy** | Visible en listado; renovar por seguimiento |
+| Anulada | 1. *«Mostrame mis recetas»*<br>2. *«El médico me dijo que la anularon»* | **Hoy** | Estado en listado; no re-emite el chat |
 
 Renovación y ajuste: [consultas-seguimiento.md](../../producto/consultas-seguimiento.md). Receta: [receta-electronica.md](../../producto/receta-electronica.md).
 
@@ -232,13 +261,18 @@ Renovación y ajuste: [consultas-seguimiento.md](../../producto/consultas-seguim
 | Tipo | Ejemplo | Cobertura | Qué deberías ver |
 |------|---------|-----------|------------------|
 | Listar | *«Mis análisis»* / *«resultados de sangre»* | **Hoy** | `laboratorio.ver-resultados-como-paciente` |
-| El último | *«¿Ya salió el de ayer?»* | **Hoy** | Lista; vacío claro si aún no ingresó |
-| Un analito | *«¿Cómo está el colesterol?»* | **Pantalla** | Detalle del informe; el chat no interpreta |
-| Interpretar | *«¿Está alto el TSH?»* | **Fuera** | Push puede decir normal/control/crítico; no explica clínica |
-| PDF | *«Descargame el PDF del laboratorio»* | **Hoy** | Descarga desde el detalle |
 | Imagen (RX, eco) | *«¿Dónde veo la placa?»* | **Fuera** | El listado paciente es informes de laboratorio |
 | Pedido pendiente | *«Todavía no me hice los análisis que me pidieron»* | **Pantalla** | Pedido en el resumen de atención |
 | Dónde hacérmelos | *«¿Dónde puedo hacerme la sangre?»* | **Fuera** | No inventar laboratorio externo |
+
+**1.** enviá · **2.** enviá.
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| El último | 1. *«Mis análisis»*<br>2. *«¿Ya salió el de ayer?»* | **Hoy** | Lista; vacío claro si aún no ingresó |
+| Un analito | 1. *«Mis análisis»*<br>2. *«¿Cómo está el colesterol?»* | **Pantalla** | Detalle del informe; el chat no interpreta |
+| Interpretar | 1. *«Mis análisis»*<br>2. *«¿Está alto el TSH?»* | **Fuera** | Push puede decir normal/control/crítico; no explica clínica |
+| PDF | 1. *«Mis análisis»*<br>2. *«Descargame el PDF del laboratorio»* | **Hoy** | Descarga desde el detalle |
 
 Ingesta y avisos: [laboratorio.md](../../producto/laboratorio.md).
 
@@ -250,13 +284,18 @@ Ingesta y avisos: [laboratorio.md](../../producto/laboratorio.md).
 |------|---------|-----------|------------------|
 | Planes activos | *«¿Qué tratamientos tengo?»* | **Pantalla** | Card / detalle de plan en inicio |
 | Recordatorios | *«Activá las alarmas de las pastillas»* | **Hoy** | `tratamiento.recordatorios-como-paciente` |
-| Marcar adherencia | *«Ya tomé la de las 8»* | **Pantalla** | Si el plan lo permite en la app |
-| Duda del plan | *«No entiendo para qué es esta pastilla»* | **Hoy** | Control/Seguimiento (consulta por mensaje), no receta |
 | Evolución | *«Cuento cómo me fue con el tratamiento»* | **Hoy** | Hub: consulta o evolución |
 | Condición del inicio | *«Abrí lo de mi hipertensión»* | **Pantalla** | Card **Tus condiciones** → acciones del hub |
 | Control recomendado | *«Me aparece una vacuna, ¿qué hago?»* | **Hoy** | Hub: control recomendado (no es indicación médica firme) |
-| Post-consulta programado | *«Me llegó ‘¿cómo evolucionó?’»* | **Pantalla** / **Futuro** | Touchpoint de cohorte si hay pack |
 | Educación | *«Explicame mi diabetes en simple»* | **Futuro** | No exigir módulo educativo en smoke |
+
+**1.** enviá · **2.** enviá.
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| Marcar adherencia | 1. *«Activá las alarmas de las pastillas»*<br>2. *«Ya tomé la de las 8»* | **Pantalla** | Si el plan lo permite en la app |
+| Duda del plan | 1. *«¿Qué tratamientos tengo?»*<br>2. *«No entiendo para qué es esta pastilla»* | **Hoy** | Control/Seguimiento (consulta por mensaje), no receta |
+| Post-consulta programado | 1. *(push «¿cómo evolucionó?»)*<br>2. *«Me llegó ‘¿cómo evolucionó?’»* | **Pantalla** / **Futuro** | Touchpoint de cohorte si hay pack |
 
 Planes: [planes-de-tratamiento.md](../../producto/planes-de-tratamiento.md). Protocolos del hub: [solicitar-atencion.md](../../producto/solicitar-atencion.md).
 
@@ -307,8 +346,13 @@ Smoke WhatsApp: [asistente-whatsapp.md](./asistente-whatsapp.md).
 | Teléfono del centro | *«¿Cuál es el teléfono de admisión?»* | **Fuera** | No inventar teléfono |
 | Horario de guardia | *«¿Hasta qué hora atiende la guardia?»* | **Fuera** | No inventar horario |
 | Cobertura / obra social | *«¿Atienden con PAMI?»* | **Fuera** | Facturación/cobertura no es canal paciente |
-| Turno de otro efector | *«En el hospital de la capital»* | **Hoy** | Solo centros del contexto (provincia/sector) |
 | Profesionales del centro | *«¿Qué médicos hay?»* | **Pantalla** | Aparecen al reservar; no un listado staff |
+
+**1.** enviá · **2.** enviá.
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| Turno de otro efector | 1. *«Quiero un turno»*<br>2. *«En el hospital de la capital»* | **Hoy** | Solo centros del contexto (provincia/sector) |
 
 ---
 
@@ -336,13 +380,13 @@ Un mismo pedido llega de diez maneras. Probar al menos una variante “sucia” 
 |----------|---------|-----------|------------------|
 | Ortografía / abreviación | *«kiero tno c la perez»* | **Hoy** | Reserva o desambiguación; no error |
 | Audio / voz | *«[audio] me duele acá…»* | **Pantalla** | Motivos sí; WhatsApp media aún fuera de smoke |
-| Foto | *«Te mando foto de la herida»* | **Futuro** / **Pantalla** | Motivos pueden aceptar foto; WA media no es smoke |
+| Foto | 1. *(chat de motivos)*<br>2. *«Te mando foto de la herida»* | **Futuro** / **Pantalla** | Motivos pueden aceptar foto; WA media no es smoke |
 | Mezcla síntoma + turno | *«Me duele la espalda, sacame un turno para el lunes»* | **Hoy** | Pedido explícito de turno → operativo; si solo síntoma, charla primero |
 | Mezcla receta + urgencia | *«Se me acabó la insulina y estoy mal»* | **Hoy** | Priorizar malestar/urgencia, no solo renovar |
 | Por un tercero sin representación | *«Sacá turno para mi vieja»* | **Hoy** | No opera por otra persona sin delegación |
 | Cambio de tema a mitad | *«Cancelá el de mañana. Ah, y ¿salieron los análisis?»* | **Hoy** | Un flujo a la vez; el segundo puede quedar para el siguiente mensaje |
 | Enfado | *«Esto es un desastre, cancelen todo»* | **Hoy** | Cancelar o queja; no abrir malestar clínico |
-| Confirmación corta | *«sí»* / *«el de las 10»* | **Hoy** | Solo tiene sentido **dentro** de un flow ya abierto |
+| Confirmación corta | 1. *(flow abierto: te mostró horarios o una lista)*<br>2. *«sí»* / *«el de las 10»* | **Hoy** | Solo tiene sentido **dentro** de un flow ya abierto |
 
 ---
 
@@ -358,7 +402,7 @@ El asistente **interpreta** y abre un flow o una lista; **no** actúa en silenci
 | Misma idea, otra oferta | *«¿Cuándo fui a kinesio?»* | **Hoy** | El mismo intent; kinesio / cardiología / etc. |
 | Nombre de la oferta en el centro | *«Última cita en odontología»* | **Hoy** | Más fácil de cruzar que el coloquial “dentista” |
 | Última atención (resumen clínico) | *«¿Qué me dijo el médico ayer?»* | **Hoy** | `atencion.ver-ultima-como-paciente` — no es “última vez al dentista” |
-| Alergia / condición en charla de síntoma | *«Me duele la cabeza, ¿puedo tomar ibuprofeno?»* | **Hoy** | Charla prudente; **no** receta. El extracto de HC (si está activo) solo evita contradecir alergias; no responde historial de turnos |
+| Alergia / condición en charla de síntoma | 1. *«Me duele la cabeza»*<br>2. *«¿Puedo tomar ibuprofeno?»* | **Hoy** | Charla prudente; **no** receta. El extracto de HC (si está activo) solo evita contradecir alergias; no responde historial de turnos |
 | Dato que no está en turnos ni HC acotada | *«¿Cuánto medía mi hijo en el último control?»* | **Fuera** | No hay intent; no inventar. Puede degradar a atenciones o a “no lo tengo acá” |
 | Pedir “el de siempre” por nombre | *«Quiero turno con la doctora Pérez»* | **Hoy** | Reserva; el PES aparece si hay cupo |
 | Pedir “el mío” por oferta | *«Turno para mi dentista»* / *«con mi kinesiólogo»* | **Hoy** | Reserva; hint de oferta o de profesional. Si no cruza, elegís servicio/profesional. No reserva a ciegas |

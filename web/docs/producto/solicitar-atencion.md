@@ -58,7 +58,7 @@ Decisión: [../decisions/care-protocols-plandefinition-lite.md](../decisions/car
 | Situación | Camino |
 |-----------|--------|
 | Malestar agudo, «necesito atención», alarmas | Solicitar Atención → Malestar / Urgencia |
-| Ecografía, laboratorio, kinesio, mamografía… | Solicitar Atención → **Estudio o práctica** (acto → línea) |
+| Ecografía, laboratorio, kinesio, mamografía… | Solicitar Atención → **Estudio o práctica** (acto → línea). Si el mensaje nombra el acto (*«necesito una ecografía»*), el draft hidrata motivo + chip en español. |
 | Renovar/ajustar medicación, control, consulta por mensaje, evolución | Solicitar Atención → **Control/Seguimiento** (hub) |
 | Solo «sacar turno» sin motivo clínico | `turnos.crear-como-paciente` (sin triage de motivos) |
 | Care pack pre/post consulta | Journey de encounter — [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md) |

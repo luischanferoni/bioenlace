@@ -35,9 +35,15 @@ final class PedidoAtencionPacienteService
     {
         $out = [];
         foreach ($this->actosReservables() as $acto) {
+            $system = (string) $acto['system'];
+            $code = (string) $acto['code'];
+            $patientLabel = PedidoAtencionMetadata::patientLabelForActo($code, $system);
+            $display = trim((string) $acto['display']);
             $out[] = [
-                'code' => $acto['system'] . '|' . $acto['code'],
-                'label' => $acto['display'] !== '' ? $acto['display'] : $acto['code'],
+                'code' => $system . '|' . $code,
+                'label' => $patientLabel !== null && $patientLabel !== ''
+                    ? $patientLabel
+                    : ($display !== '' ? $display : $code),
                 'urgency_band' => null,
                 'halts_booking' => false,
             ];
@@ -205,14 +211,36 @@ final class PedidoAtencionPacienteService
     }
 
     /**
+     * Completa `pedido_acto` / `triage_raiz` si el mensaje nombra un acto reservable único.
+     *
+     * @param array<string, mixed> $draft
+     */
+    public function hidratarDesdeMensaje(array &$draft, string $content): void
+    {
+        $rawActo = trim((string) ($draft[self::DRAFT_ACTO] ?? ''));
+        if ($rawActo === '') {
+            $matched = $this->matchActoTextoReservable($content);
+            if ($matched !== null) {
+                $draft[self::DRAFT_ACTO] = $matched['system'] . '|' . $matched['code'];
+                $raiz = trim((string) ($draft['triage_raiz'] ?? ''));
+                if ($raiz === '') {
+                    $draft['triage_raiz'] = self::TRIAGE_RAIZ_ESTUDIO;
+                }
+            }
+        }
+
+        $this->aplicarFlagsEnDraft($draft);
+    }
+
+    /**
      * Match liviano de texto libre contra actos reservables (1 hit → tipado).
      *
      * @return array{code: string, system: string, display: string}|null
      */
     public function matchActoTextoReservable(string $texto): ?array
     {
-        $norm = mb_strtolower(trim($texto), 'UTF-8');
-        if ($norm === '' || mb_strlen($norm) < 3) {
+        $norm = PedidoAtencionMetadata::foldNlText($texto);
+        if ($norm === '' || mb_strlen($norm, 'UTF-8') < 3) {
             return null;
         }
 
@@ -222,16 +250,24 @@ final class PedidoAtencionPacienteService
             $code = (string) $acto['code'];
             $system = (string) $acto['system'];
             $display = trim((string) $acto['display']);
-            $displayNorm = mb_strtolower($display, 'UTF-8');
+            $patientLabel = PedidoAtencionMetadata::patientLabelForActo($code, $system);
             $row = [
                 'code' => $code,
                 'system' => $system,
-                'display' => $display !== '' ? $display : $code,
+                'display' => $patientLabel !== null && $patientLabel !== ''
+                    ? $patientLabel
+                    : ($display !== '' ? $display : $code),
             ];
-            if ($displayNorm === $norm || $code === trim($texto)) {
-                $exact[] = $row;
-            } elseif ($displayNorm !== '' && (str_contains($displayNorm, $norm) || str_contains($norm, $displayNorm))) {
-                $partial[] = $row;
+            $keys = PedidoAtencionMetadata::matchKeysForActo($code, $system, $display);
+            foreach ($keys as $key) {
+                if ($key === $norm || $code === trim($texto)) {
+                    $exact[] = $row;
+                    break;
+                }
+                if (PedidoAtencionMetadata::nlTextHitsKey($texto, $key)) {
+                    $partial[] = $row;
+                    break;
+                }
             }
         }
         if (count($exact) === 1) {

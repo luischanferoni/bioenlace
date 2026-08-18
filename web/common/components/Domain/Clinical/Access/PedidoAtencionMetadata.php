@@ -129,6 +129,7 @@ final class PedidoAtencionMetadata
             'modos' => [],
             'capacity_rules' => [],
             'linea_nl_aliases' => [],
+            'acto_nl_aliases' => [],
             'acto_coding' => [],
         ];
 
@@ -155,6 +156,7 @@ final class PedidoAtencionMetadata
             'modos',
             'capacity_rules',
             'linea_nl_aliases',
+            'acto_nl_aliases',
             'acto_coding',
         ] as $key) {
             if (isset($data[$key]) && is_array($data[$key])) {
@@ -201,6 +203,141 @@ final class PedidoAtencionMetadata
                     ];
                 }
             }
+        }
+
+        return null;
+    }
+
+    /**
+     * Etiqueta de paciente para un acto (YAML). El FSN SNOMED no se muestra en chips.
+     */
+    public static function patientLabelForActo(string $code, string $system): ?string
+    {
+        $row = self::actoNlRow($code, $system);
+        if ($row === null) {
+            return null;
+        }
+        $label = trim((string) ($row['label'] ?? ''));
+
+        return $label !== '' ? $label : null;
+    }
+
+    /**
+     * Claves plegadas para match NL de un acto (label + aliases + display de catálogo).
+     *
+     * @return list<string>
+     */
+    public static function matchKeysForActo(string $code, string $system, string $catalogDisplay = ''): array
+    {
+        $out = [];
+        $row = self::actoNlRow($code, $system);
+        if ($row !== null) {
+            $label = trim((string) ($row['label'] ?? ''));
+            if ($label !== '') {
+                $out[] = $label;
+            }
+            $aliases = $row['aliases'] ?? [];
+            if (is_array($aliases)) {
+                foreach ($aliases as $alias) {
+                    $a = trim((string) $alias);
+                    if ($a !== '') {
+                        $out[] = $a;
+                    }
+                }
+            }
+        }
+        $display = trim($catalogDisplay);
+        if ($display !== '') {
+            $out[] = $display;
+        }
+
+        $folded = [];
+        foreach ($out as $raw) {
+            $n = self::foldNlAlias($raw);
+            if ($n !== '') {
+                $folded[$n] = true;
+            }
+        }
+
+        return array_keys($folded);
+    }
+
+    /**
+     * ¿El texto (frase o token) contiene esta clave NL?
+     */
+    public static function nlTextHitsKey(string $text, string $key): bool
+    {
+        $haystack = self::foldNlAlias($text);
+        $alias = self::foldNlAlias($key);
+        if ($haystack === '' || $alias === '' || mb_strlen($alias, 'UTF-8') < 3) {
+            return false;
+        }
+        if ($haystack === $alias) {
+            return true;
+        }
+        if (str_contains($alias, ' ')) {
+            return str_contains($haystack, $alias);
+        }
+        $quoted = preg_quote($alias, '/');
+        if (preg_match('/(?:^|[^a-z0-9])' . $quoted . '(?:$|[^a-z0-9])/u', $haystack) === 1) {
+            return true;
+        }
+        // Token suelto (p. ej. "ultrasonography") contra FSN más largo.
+        if (!str_contains($haystack, ' ')
+            && mb_strlen($haystack, 'UTF-8') >= 4
+            && str_contains($alias, $haystack)
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function foldNlText(string $text): string
+    {
+        return self::foldNlAlias($text);
+    }
+
+    /**
+     * @return array{code: string, code_system: string, label: string, aliases: list<string>}|null
+     */
+    private static function actoNlRow(string $code, string $system): ?array
+    {
+        $code = trim($code);
+        $system = trim($system);
+        if ($code === '' || $system === '') {
+            return null;
+        }
+        $raw = self::load()['acto_nl_aliases'] ?? null;
+        if (!is_array($raw)) {
+            return null;
+        }
+        foreach ($raw as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $rowCode = trim((string) ($row['code'] ?? ''));
+            $rowSystem = trim((string) ($row['code_system'] ?? CodingSystems::SNOMED));
+            if ($rowCode !== $code || $rowSystem !== $system) {
+                continue;
+            }
+            $aliases = [];
+            $rawAliases = $row['aliases'] ?? [];
+            if (is_array($rawAliases)) {
+                foreach ($rawAliases as $alias) {
+                    $a = trim((string) $alias);
+                    if ($a !== '') {
+                        $aliases[] = $a;
+                    }
+                }
+            }
+
+            return [
+                'code' => $rowCode,
+                'code_system' => $rowSystem,
+                'label' => trim((string) ($row['label'] ?? '')),
+                'aliases' => $aliases,
+            ];
         }
 
         return null;

@@ -239,4 +239,14 @@ class PedidoAtencionServiceTest extends Unit
 
         $this->assertNull(PedidoAtencionMetadata::resolveLineaSpecialtyFromNl('algo inventado xyz'));
     }
+
+    public function testActoNlAliasEcografiaEnEspanol(): void
+    {
+        $this->assertSame(
+            'Ecografía',
+            PedidoAtencionMetadata::patientLabelForActo('16310003', CodingSystems::SNOMED)
+        );
+        $this->assertTrue(PedidoAtencionMetadata::nlTextHitsKey('Necesito una ecografía', 'ecografia'));
+        $this->assertSame('Estudio de imagen', PedidoAtencionMetadata::defaultActoForModo(PedidoAtencion::MODO_ESTUDIO)['display'] ?? null);
+    }
 }

@@ -259,7 +259,14 @@ final class IntentEngine
                 ];
             }
 
+            $hydratorDelta = [];
+            if (isset($flowBody['_hydrator_draft_delta']) && is_array($flowBody['_hydrator_draft_delta'])) {
+                $hydratorDelta = $flowBody['_hydrator_draft_delta'];
+            }
+            unset($flowBody['_hydrator_draft_delta']);
+
             $flow = SubIntentEngine::process($flowBody, $userId);
+            $flow = FlowDraftHydratorService::mergeDeltaIntoMotor($flow, $hydratorDelta);
 
             if (!empty($flow['success']) && is_array($flow)) {
                 unset($flow['success']);

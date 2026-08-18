@@ -12,19 +12,19 @@ defaults_por_modo:
   consulta:
     code: "11429006"
     code_system: http://snomed.info/sct
-    display: Consultation
+    display: Consulta
   interconsulta:
     code: "183515008"
     code_system: http://snomed.info/sct
-    display: Referral to physician
+    display: Interconsulta
   practica:
     code: "71388002"
     code_system: http://snomed.info/sct
-    display: Procedure
+    display: Práctica
   estudio:
     code: "363679005"
     code_system: http://snomed.info/sct
-    display: Imaging
+    display: Estudio de imagen
 
 modos:
   - consulta
@@ -44,6 +44,51 @@ capacity_rules:
     act_ecl: "<< 11429006 |Consultation|"
   - match_tipo: procedimiento
     act_ecl: "<< 91251008 |Physical therapy procedure|"
+
+# Habla paciente → acto (chips en español). El FSN SNOMED sigue en `actos_clinicos.display`.
+acto_nl_aliases:
+  - code: "16310003"
+    code_system: http://snomed.info/sct
+    label: Ecografía
+    aliases:
+      - ecografia
+      - eco
+      - ultrasonido
+      - ultrasonografia
+      - ultrasonography
+      - ultrasound
+  - code: "363680008"
+    code_system: http://snomed.info/sct
+    label: Radiografía
+    aliases:
+      - radiografia
+      - rayos x
+      - rayos
+      - radiographic
+  - code: "71651007"
+    code_system: http://snomed.info/sct
+    label: Mamografía
+    aliases:
+      - mamografia
+      - mammography
+  - code: "15220000"
+    code_system: http://snomed.info/sct
+    label: Laboratorio
+    aliases:
+      - laboratorio
+      - analisis
+      - analisis de sangre
+      - analisis de orina
+      - laboratory
+  - code: "91251008"
+    code_system: http://snomed.info/sct
+    label: Kinesiología
+    aliases:
+      - kinesio
+      - kinesiologia
+      - fisioterapia
+      - rehabilitacion
+      - physical therapy
 
 # Texto libre de la IA / dictado → tipología de oferta (specialty_*).
 # Luego se resuelve a filas `servicios` con ese código (único → ítem; 0/N → se descarta el ítem).

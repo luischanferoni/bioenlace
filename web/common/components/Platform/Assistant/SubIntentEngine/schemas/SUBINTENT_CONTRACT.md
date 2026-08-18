@@ -80,6 +80,8 @@ Handlers viven en **servicios de dominio** (`common/components/{Domain}/Service/
 
 Si el hydrator escribe `draft.assistant_text`, el motor lo usa como texto del paso (prioridad sobre `assistant_text` del YAML). Sirve para resúmenes canal-agnósticos (p. ej. listado de turnos en chat).
 
+Las claves escalares que el hydrator **agrega o cambia** (salvo `assistant_text`) vuelven al cliente en `session.draft_delta`, para preseleccionar chips y no perder el dato en el turno siguiente.
+
 ## Nodo `subintents[]` — claves soportadas
 
 Solo deben usarse las siguientes propiedades en cada ítem. Cualquier otra clave es **no portátil** (el motor la ignora hoy).

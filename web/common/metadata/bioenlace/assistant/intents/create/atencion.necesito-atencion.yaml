@@ -133,6 +133,7 @@ draft_keys_extra:
 subintents:
 - id: triage_raiz
   assistant_text: Motivo
+  review_prefilled: true
   provides:
   - draft.triage_raiz
   next_routing:

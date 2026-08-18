@@ -6,7 +6,7 @@ use Codeception\Test\Unit;
 use common\components\Platform\Assistant\SubIntentEngine\SubIntentEngine;
 
 /**
- * Regresión: Motivo prellenado (estudio) no debe re-mostrarse al confirmar sin/con subintent_id.
+ * Regresión: estudio prellenado abre Motivo primero; confirmar avanza sin loop.
  */
 class SolicitarAtencionTriageFlowTest extends Unit
 {
@@ -24,7 +24,7 @@ class SolicitarAtencionTriageFlowTest extends Unit
         ];
     }
 
-    public function testEstudioPrefilledSinSubintentAbreActoNoMotivo(): void
+    public function testEstudioPrefilledAbreMotivoPrimero(): void
     {
         $response = SubIntentEngine::process([
             'intent_id' => self::INTENT,
@@ -32,7 +32,7 @@ class SolicitarAtencionTriageFlowTest extends Unit
         ], 0);
 
         $this->assertTrue($response['success'] ?? false);
-        $this->assertSame('select_pedido_acto', $response['subintent_id'] ?? null);
+        $this->assertSame('triage_raiz', $response['subintent_id'] ?? null);
         $this->assertSame(
             'turnos.reserva-triage-paso',
             $response['open_ui']['action_id'] ?? null

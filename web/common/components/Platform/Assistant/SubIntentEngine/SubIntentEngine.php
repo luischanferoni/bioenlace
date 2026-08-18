@@ -177,12 +177,10 @@ final class SubIntentEngine
                 ], $hints), $intentId, $currentId);
             }
 
-            // `review_prefilled`: al *llegar* desde otro paso (hops > 1), mostrar el picker
-            // aunque `provides` ya venga del hydrator. No aplica al paso en el que empezó
-            // este process() (hop 1): eso es confirmación, primer ingreso o rewind sin
-            // `subintent_id`. Si se re-mostrara el paso 0 prellenado, confirmar Motivo
-            // sin `subintent_id` volvería a Motivo.
-            if (!empty($current['review_prefilled']) && $hops > 1) {
+            // Algunos pickers deben revisarse aun cuando un enlace/hydrator haya prellenado
+            // su `provides`. Al reenviar ese mismo subintent tras confirmarlo, el paso avanza.
+            // El cliente debe mandar `subintent_id` al confirmar; si va vacío, re-muestra el paso.
+            if (!empty($current['review_prefilled']) && $currentId !== $subintentId) {
                 $reviewOpen = self::resolveOpenUiForSubintent($current, $content, $draft);
                 $reviewActionId = AssistantDraftNormalizer::scalarString(
                     is_array($reviewOpen) ? ($reviewOpen['action_id'] ?? '') : ''

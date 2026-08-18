@@ -9,9 +9,17 @@ El chat del asistente mezcla, en la práctica, dos orígenes de texto:
 | Origen | Qué es | Dónde se usa |
 |--------|--------|----------------|
 | **Historial del hilo** | Últimos mensajes de **esa** conversación con el asistente | Para no repetir y seguir el hilo (*«empezó ayer…»*) |
-| **Extracto de historia clínica** | Edad, sexo, alergias, condiciones y medicación **acotados** (no la HC completa ni resúmenes de atenciones previas) | Para que la respuesta conversacional no ignore alergias o tratamientos ya registrados |
+| **Extracto de historia clínica** | Edad, sexo, alergias, condiciones y medicación **acotados** (no la HC completa ni fechas de turnos ni resúmenes de atenciones previas) | Referencia mínima en **charla de síntomas**, para no contradecir lo ya registrado. No es el expediente para responder “cuándo fui a…” |
 
 El historial del hilo es parte del servicio que la persona ya está usando. El extracto de HC es más sensible: sale del expediente hacia el modelo.
+
+### Para qué sirve (y para qué no) en el chat
+
+El canal conversacional pide empatía corta, no recetar y, si hay síntoma, el botón **Solicitar Atención**. El extracto **no cambia el desenlace** en la mayoría de esos mensajes: el flow de atención hace el trabajo.
+
+Ejemplo donde sí aporta: *«Me duele la cabeza, ¿puedo tomar ibuprofeno?»* Si hay alergia a AINE en el extracto, la respuesta puede negarse a orientar con analgésicos y ofrecer atención. Sin extracto, el riesgo es un consejo de mostrador (que el propio prompt intenta prohibir).
+
+**No** sirve para *«¿cuándo fue la última vez que fui al dentista?»*: esa fecha no está en el extracto. Eso es un **intent de lectura** sobre turnos / oferta del centro, no más texto en el prompt. Ver [asistente-y-chat.md](./asistente-y-chat.md).
 
 Tres usos de ese extracto (mismos datos, distinta puerta):
 

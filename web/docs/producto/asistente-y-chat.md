@@ -35,6 +35,34 @@ flowchart TB
 
 Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`.
 
+## Qué interpreta y qué no resuelve el modelo
+
+Bioenlace **entiende la necesidad** y **abre el camino que ya existe** (flow, lista, hub) para que la persona lo complete. Eso escala: el dato vive en la API (turnos, oferta del centro, PES, acto); no se pega al prompt la historia clínica completa, ni el catálogo del efector, ni la provincia.
+
+```mermaid
+flowchart LR
+  M[Mensaje]
+  I[Interpretar necesidad]
+  F[Flow / lista / hub]
+  U[La persona confirma]
+  C[Charla corta + botón]
+  M --> I
+  I -->|acción resoluble| F --> U
+  I -->|aún no hay acción| C --> F
+```
+
+| Tipo de pedido | Qué hace Bioenlace | Qué no hace |
+|----------------|--------------------|-------------|
+| Síntoma o “qué hago” | Charla breve y oferta **Solicitar Atención** | Diagnosticar ni recetar en el chat |
+| Turno / cancelar / ver lo mío | Intent operativo; hidrata el **draft** con lo que ya dijo | Completar la reserva sin que confirme |
+| “Mi {oferta}” (*dentista*, *kinesiólogo*…) | Misma reserva; intenta cruzar la mención con la **oferta del centro** (no con una especialidad suelta) | Un intent por profesión |
+| “Última vez en {oferta}” | Lectura de turnos pasados, filtrada si se puede cruzar la oferta | Preguntarle la fecha a Gemini con la HC |
+| “Sacalo vos / elegí y confirmá” | Abre el flow; la persona elige y confirma | Agendar a ciegas en su nombre |
+
+Si el flow tiene muchos pasos, la palanca es **hidratar el borrador** (servicio, centro, “el mío”), no alargar el prompt. El conversacional queda para lo que todavía no es una acción.
+
+Anclas genéricas (odontología es solo un ejemplo de habla): [asistente-consultas.md](../qa/paciente/asistente-consultas.md). Servicio vs PES vs acto: [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md). Extracto de HC: [ia-datos-y-privacidad.md](./ia-datos-y-privacidad.md).
+
 ## Superficies
 
 Tres tipos de UI: **inicio**, **captura del encounter**, **flows** (asistente). Detalle: [superficies-ui.md](./superficies-ui.md).
@@ -42,7 +70,7 @@ Tres tipos de UI: **inicio**, **captura del encounter**, **flows** (asistente). 
 **WhatsApp** es el mismo asistente paciente, solo ante mensajes **iniciados por el paciente**. Los avisos proactivos (recordatorios, reubicación) siguen en **push**. Si un paso necesita pantalla rica, se invita a abrir Bioenlace. Hay que vincular el número a la cuenta (confirmación explícita).
 
 Smoke WhatsApp: [qa/paciente/asistente-whatsapp.md](../qa/paciente/asistente-whatsapp.md).  
-Qué puede preguntar un paciente: [qa/paciente/asistente-consultas.md](../qa/paciente/asistente-consultas.md).
+Qué puede preguntar un paciente: [qa/paciente/asistente-consultas.md](../qa/paciente/asistente-consultas.md) (incluye “mi dentista”, última vez en una oferta y pedidos de que el asistente lo haga solo).
 
 ## Puertas frecuentes (paciente)
 
@@ -50,6 +78,7 @@ Qué puede preguntar un paciente: [qa/paciente/asistente-consultas.md](../qa/pac
 |----------|--------|
 | Malestar, estudio, control o urgencia | `atencion.necesito-atencion` — [solicitar-atencion.md](./solicitar-atencion.md) |
 | Solo sacar turno (sin motivo clínico) | `turnos.crear-como-paciente` — [turnos.md](./turnos.md) |
+| Última vez en una oferta del centro | `turnos.ver-ultimo-en-oferta-como-paciente` |
 | Tutela / delegación | `personas.vincular-menor-flow`, `personas.designar-representante-flow` — [representacion-paciente.md](./representacion-paciente.md) |
 
 El personal usa otros intents (tablero de guardia, mapa de camas, KPIs de agenda, adherencia). Ver el área correspondiente.
@@ -58,9 +87,7 @@ Otros usos del mismo stack (no siempre el mismo clasificador): motivos pre-consu
 
 ## Datos de salud en el chat
 
-El hilo reciente se usa para seguir la charla. Además, si la persona no lo apagó en Configuración, un **extracto acotado** de alergias, condiciones y medicación viaja al modelo (Vertex / Gemini). Motivos pre-consulta y captura del médico no dependen de ese interruptor.
-
-Contrato con Google, candado del extracto y qué se puede apagar: [ia-datos-y-privacidad.md](./ia-datos-y-privacidad.md).
+El hilo reciente sirve para seguir la charla (*«empezó ayer…»*). El extracto de HC en conversacional es **estrecho**: no responde “cuándo fui a X” ni reemplaza un intent de lectura. Sirve para no contradecir una alergia o condición **si** el texto se va hacia consejo. Ejemplo y candado: [ia-datos-y-privacidad.md](./ia-datos-y-privacidad.md).
 
 ## Costos
 

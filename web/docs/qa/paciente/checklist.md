@@ -93,6 +93,8 @@
 | AST-11 | 🟢 | “Quiero vincular a mi hijo” | Tutela (no delegación) |
 | AST-12 | 🟢 | “kiero tno” (ortografía sucia) | Enruta a reserva o desambigua; no error |
 | AST-13 | 🟡 | Configuración: apagar *Resumen de historia en el asistente* y escribir un síntoma | Charla y botón siguen; no asume alergias/medicación del expediente |
+| AST-14 | 🟡 | *«Solicita un turno para mi dentista»* | `turnos.crear-como-paciente` (no empatía); no confirma el turno solo |
+| AST-15 | 🟡 | *«Última vez que fui al dentista»* | `turnos.ver-ultimo-en-oferta-como-paciente`; no última atención genérica ni fecha inventada |
 
 → [asistente.md](./asistente.md) · Catálogo completo: [asistente-consultas.md](./asistente-consultas.md)
 

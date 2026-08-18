@@ -49,6 +49,21 @@ vocab:
     - citas pasadas
     - ver turnos anteriores
     - listar turnos anteriores
+  paciente_ultimo_en_oferta_phrases:
+    - ultima vez que fui
+    - última vez que fui
+    - cuando fui al
+    - cuándo fui al
+    - cuando fui a
+    - cuándo fui a
+    - cuando fue la ultima
+    - cuándo fue la última
+    - ultima cita en
+    - última cita en
+    - ultima vez al
+    - última vez al
+    - ultima vez en
+    - última vez en
   paciente_reservar_turno_phrases:
     - necesito un turno
     - necesito turno
@@ -60,6 +75,13 @@ vocab:
     - reservar un turno
     - agendar un turno
     - agendar turno
+    - solicita un turno
+    - solicitar un turno
+    - solicita turno
+    - sacame un turno
+    - dame un turno
+    - turno para mi
+    - turno con mi
   consultas_seguimiento_phrases:
     - renovar medicacion
     - renovar medicación
@@ -213,13 +235,20 @@ match_rules:
       Si el paciente pide ver turnos anteriores, pasados o el historial de citas (no los próximos),
       priorizá turnos.ver-turnos-anteriores-como-paciente.
 
+  paciente_ultimo_en_oferta:
+    require_phrase_any: paciente_ultimo_en_oferta_phrases
+    ai_hint: >-
+      Si pregunta cuándo fue la última vez que asistió a una oferta del centro (dentista, kinesio, odontología, etc.),
+      priorizá turnos.ver-ultimo-en-oferta-como-paciente. No es conversacional ni la última atención genérica:
+      es lectura de turnos pasados cruzada con la oferta institucional, no un intent por profesión.
+
   paciente_reservar_turno:
     require_phrase_any: paciente_reservar_turno_phrases
     forbid_any: []
     ai_hint: >-
-      Si el paciente pide sacar, pedir, reservar o agendar un turno de forma genérica (sin especialidad ni síntomas),
-      priorizá turnos.crear-como-paciente: el flow desambigua entre reserva directa y asistencia guiada (triage).
-      No confundir con «mis turnos» ni con síntomas sin pedido de turno.
+      Si el paciente pide sacar, pedir, reservar, solicitar o agendar un turno (aunque nombre una oferta o «mi dentista»),
+      priorizá turnos.crear-como-paciente: el flow hidrata la oferta si puede y desambigua solo si el pedido es genérico.
+      No confundir con «mis turnos», con «última vez que fui» ni con síntomas sin pedido de turno.
 
   help_menu_query:
     require_any: [help_menu]
@@ -301,12 +330,29 @@ score_adjustments:
     apply:
       - intent_id: turnos.ver-turnos-anteriores-como-paciente
         delta: 60
+      - intent_id: turnos.ver-ultimo-en-oferta-como-paciente
+        delta: -25
       - intent_id: turnos.ver-mis-turnos-como-paciente
         delta: -45
       - intent_id: turnos.crear-como-paciente
         delta: -35
       - intent_id: atencion.necesito-atencion
         delta: -35
+
+  - when_rule: paciente_ultimo_en_oferta
+    apply:
+      - intent_id: turnos.ver-ultimo-en-oferta-como-paciente
+        delta: 65
+      - intent_id: turnos.ver-turnos-anteriores-como-paciente
+        delta: -20
+      - intent_id: atencion.ver-ultima-como-paciente
+        delta: -35
+      - intent_id: turnos.ver-mis-turnos-como-paciente
+        delta: -40
+      - intent_id: turnos.crear-como-paciente
+        delta: -40
+      - intent_id: atencion.necesito-atencion
+        delta: -40
 
   - when_rule: paciente_reservar_turno
     apply:
@@ -479,6 +525,12 @@ score_adjustments:
         delta: -15
 
 operational_fallbacks:
+  - id: paciente_ultimo_en_oferta_nl
+    when_any_rule: [paciente_ultimo_en_oferta]
+    intent_id: turnos.ver-ultimo-en-oferta-como-paciente
+    confidence: 0.93
+    method: rules_declarative_fallback
+
   - id: paciente_turnos_anteriores_nl
     when_any_rule: [paciente_turnos_anteriores]
     intent_id: turnos.ver-turnos-anteriores-como-paciente
@@ -592,7 +644,7 @@ chat_preprocess:
   prompt:
     intro: 'Analizá el mensaje del usuario para un asistente de salud.'
     rules:
-      - 'user_goal operational solo si pide una acción explícita del sistema (sacar/reservar/cancelar/reprogramar turno, agenda) o consulta/modifica datos operativos del centro/personal (conteo, listado, editar agenda del staff).'
+      - 'user_goal operational si pide una acción del sistema (sacar/reservar/solicitar/cancelar turno, agenda) o consulta datos propios resolubles (mis turnos, última vez en una oferta del centro, listados).'
       - 'conversational si hay saludo, síntomas, lesiones, malestar o charla clínica — aunque también pregunten hospital cerca, dónde atenderse o qué servicio conviene. Eso NO es operational: primero orientación + oferta; no abras un flow.'
       - 'informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas, quejas clínicas ni consultas de plantilla/conteo de profesionales del efector.'
       - 'No uses category servicio para síntomas, partes del cuerpo ni malestar; esas menciones van solo en normalized_text.'
@@ -609,9 +661,13 @@ chat_preprocess:
       to_goal: conversational
     - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit, own_cobertura_gestionar, staff_cobertura_gestionar]
       to_goal: operational
+    - when_any_rule: [paciente_ultimo_en_oferta, paciente_turnos_anteriores, paciente_listar_turnos, paciente_reservar_turno]
+      to_goal: operational
 
   heuristic_fallback:
     - when_rule: scheduling_operational
+      goal: operational
+    - when_any_rule: [paciente_ultimo_en_oferta, paciente_turnos_anteriores, paciente_listar_turnos, paciente_reservar_turno]
       goal: operational
     - when_any_rule: [consultas_seguimiento_followup, consultas_seguimiento_topics_only]
       goal: operational

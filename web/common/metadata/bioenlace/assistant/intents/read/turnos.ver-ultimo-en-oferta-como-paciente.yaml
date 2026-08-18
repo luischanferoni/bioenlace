@@ -1,0 +1,61 @@
+intent_id: turnos.ver-ultimo-en-oferta-como-paciente
+version: 1
+
+action_name: "Última vez en un servicio"
+description: >-
+  Consultar el último turno pasado en una oferta del centro (odontología, kinesio, etc.).
+  No es un intent por profesión: la mención coloquial se cruza con la oferta institucional.
+rbac_route: "/api/turnos/listar-como-paciente"
+keywords:
+  - última vez que fui
+  - ultima vez que fui
+  - cuándo fui al
+  - cuando fui al
+  - última cita en
+  - ultima cita en
+  - última vez al dentista
+  - ultima vez al dentista
+  - última vez al kinesiólogo
+  - última vez en odontología
+  - cuándo fue la última vez
+
+intent_semantics:
+  summary: >-
+    Consultá cuándo fue tu último turno en un área del centro (la que nombraste o, si no se cruza, tus últimos turnos).
+  capabilities:
+    - ver_turnos_propios
+  goal: >-
+    Mostrar el último turno pasado filtrado por oferta del centro cuando la mención se puede cruzar;
+    si no, un listado corto de turnos anteriores para que la persona elija.
+  how: >-
+    Resume en el chat (fecha, oferta, profesional) y abre el listado de turnos pasados.
+  constraints:
+    - No inventa fechas. No usa el extracto de HC del chat conversacional.
+    - Odontología / dentista es un ejemplo de habla; el filtro es id_servicio institucional.
+  outcome:
+    - El paciente ve la última cita en esa oferta o un listado corto si la mención no cruzó.
+  keyphrases:
+    - última vez que fui al dentista
+    - cuándo fui a kinesio
+    - última cita en odontología
+
+draft_hydrator:
+  handler: scheduling.turnos_listar_como_paciente
+  alcance: pasados
+  limit: 10
+  solo_ultimo: true
+  filtro_oferta_desde_mensaje: true
+
+subintents:
+  - id: ver_ultimo
+    assistant_text: "Tu último turno en esa oferta"
+    provides: []
+    next: ""
+    hint:
+      entity: servicio
+      match_property: nombre
+    open_ui:
+      action_id: turnos.listar-como-paciente
+      params:
+        alcance: pasados
+        limit: "5"

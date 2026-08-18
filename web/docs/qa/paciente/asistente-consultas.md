@@ -105,6 +105,7 @@ Atajo **Solicitar Atención** (`atencion.necesito-atencion`): malestar nuevo, es
 | Ver un médico (vago) | *«Quiero ver a un médico»* | **Hoy** | Solicitar Atención o charla + botón |
 | Pedir el de siempre | *«Quiero turno con la doctora Pérez»* | **Hoy** | Agenda; el profesional aparece si hay PES y cupo |
 | Pedir un servicio del centro | *«Turno en odontología»* | **Hoy** | Elige oferta del **centro**, no “especialidad” suelta |
+| Pedir “el mío” por oferta | *«Solicita un turno para mi dentista»* | **Hoy** | `turnos.crear-como-paciente` (no charla empática). Cruza la mención con la oferta; si “dentista” no matchea el nombre, elegís el servicio. **No** confirma el turno solo |
 | Pedir un especialista | *«Necesito un cardiólogo»* | **Hoy** | Hub de medicina clínica; especialista suele pedir derivación vigente |
 | Centro más cerca | *«El más cercano a mi casa»* | **Hoy** | Mapa / centros cercanos en el flujo de reserva |
 | Centro concreto | *«En CIS Banda»* | **Hoy** | Filtra efector si está en contexto |
@@ -141,6 +142,7 @@ Flujos: [turnos.md](./turnos.md).
 | Aceptar adelanto | *«Sí, acepto el turno de mañana a las 10»* | **Pantalla** | Suele venir de **push** `TURNO_ADVANCE_OFFER` |
 | Rechazar adelanto | *«No, me quedo con el mío»* | **Pantalla** | El turno original sigue |
 | Historial de citas | *«Mostrame los turnos que ya tuve»* | **Hoy** | `turnos.ver-turnos-anteriores-como-paciente` (no los próximos) |
+| Última vez en una oferta | *«Decime cuándo fue la última vez que fui al dentista»* | **Hoy** | `turnos.ver-ultimo-en-oferta-como-paciente` (odontología es un ejemplo). **No** usa el extracto de HC ni `atencion.ver-ultima-como-paciente` |
 | Turno duplicado / conflicto | *«Tengo dos turnos el mismo día»* | **Pantalla** | Resolución desde inicio / push |
 | Recordatorio | *«Avisame una hora antes»* | **Pantalla** | Preferencias / push; el chat puede no configurar el aviso |
 
@@ -338,6 +340,38 @@ Un mismo pedido llega de diez maneras. Probar al menos una variante “sucia” 
 
 ---
 
+## 15. Datos personales, pasado y “hacelo vos”
+
+El asistente **interpreta** y abre un flow o una lista; **no** actúa en silencio con tu historia ni completa trámites sin que confirmes. Tesis: [asistente-y-chat.md](../../producto/asistente-y-chat.md). Odontología / dentista es **habla**, no un intent propio: se cruza con la **oferta del centro** (servicio institucional), no con una especialidad suelta.
+
+### Menciones de lo mío o del pasado
+
+| Tipo | Ejemplo | Cobertura | Qué deberías ver |
+|------|---------|-----------|------------------|
+| Última vez en una oferta | *«Decime cuándo fue la última vez que fui al dentista»* | **Hoy** | `turnos.ver-ultimo-en-oferta-como-paciente`. Si cruza la oferta, fecha + profesional; si “dentista” no matchea el nombre (p. ej. el servicio se llama Odontología), lista corta de turnos pasados para que ubiques la línea. **No** inventa la fecha |
+| Misma idea, otra oferta | *«¿Cuándo fui a kinesio?»* | **Hoy** | El mismo intent; kinesio / cardiología / etc. |
+| Nombre de la oferta en el centro | *«Última cita en odontología»* | **Hoy** | Más fácil de cruzar que el coloquial “dentista” |
+| Última atención (resumen clínico) | *«¿Qué me dijo el médico ayer?»* | **Hoy** | `atencion.ver-ultima-como-paciente` — no es “última vez al dentista” |
+| Alergia / condición en charla de síntoma | *«Me duele la cabeza, ¿puedo tomar ibuprofeno?»* | **Hoy** | Charla prudente; **no** receta. El extracto de HC (si está activo) solo evita contradecir alergias; no responde historial de turnos |
+| Dato que no está en turnos ni HC acotada | *«¿Cuánto medía mi hijo en el último control?»* | **Fuera** | No hay intent; no inventar. Puede degradar a atenciones o a “no lo tengo acá” |
+| Pedir “el de siempre” por nombre | *«Quiero turno con la doctora Pérez»* | **Hoy** | Reserva; el PES aparece si hay cupo |
+| Pedir “el mío” por oferta | *«Turno para mi dentista»* / *«con mi kinesiólogo»* | **Hoy** | Reserva; hint de oferta o de profesional. Si no cruza, elegís servicio/profesional. No reserva a ciegas |
+
+### Que el asistente lo haga por vos
+
+| Tipo | Ejemplo | Cobertura | Qué deberías ver |
+|------|---------|-----------|------------------|
+| Sacar el turno vos | *«Sacame el turno, no me preguntes»* | **Hoy** | Abre `turnos.crear-como-paciente` o Solicitar Atención; **sigue** pidiendo servicio/centro/horario. No confirma solo |
+| Elegí el más cercano y listo | *«Agendá en el más cercano a las 10»* | **Hoy** | Puede abrir mapa / slots; **vos** confirmás el cupo |
+| Cancelá todos | *«Cancelá todos mis turnos»* | **Hoy** / **Pantalla** | Cancelación de **uno** (o lista para elegir). No borra la agenda entera en un paso silencioso |
+| Hablá con el médico por mí | *«Decile al doctor que me duele»* | **Fuera** | No envía mensajes al profesional. Consulta por mensaje / Solicitar Atención si aplica |
+| Completá los motivos vos | *«Inventá el motivo de la consulta»* | **Fuera** | Motivos los escribe el paciente en su ventana |
+| Usá toda mi HC y contestá | *«Leé mi historia y decime qué tengo»* | **Fuera** | No diagnostica. Extracto acotado solo en charla de síntomas (opt-out en Configuración) |
+
+Si el flow se siente largo, lo correcto es que **hidrate** lo que ya dijiste (oferta, “el mío”), no que Gemini cierre el trámite.
+
+---
+
 ## No confundir (enrutado)
 
 Si el mensaje mezcla temas, gana la **acción explícita** (cancelar, sacar turno, ver recetas) salvo alarma / síntoma agudo.
@@ -357,6 +391,9 @@ Si el mensaje mezcla temas, gana la **acción explícita** (cancelar, sacar turn
 | *«Vincular a mi hijo»* | Delegar representante | Tutela de menor |
 | *«Que mi hija gestione mis turnos»* | Tutela | Designar representante |
 | *«Sacá turno para mi vieja»* sin delegación | Turno de un tercero | Explicar representación |
+| *«Solicita un turno para mi dentista»* | Charla empática / Solicitar Atención por síntoma | `turnos.crear-como-paciente` (oferta del centro) |
+| *«Última vez que fui al dentista»* | Extracto de HC / última atención genérica | `turnos.ver-ultimo-en-oferta-como-paciente` |
+| *«Sacalo vos y confirmá»* | Reserva cerrada sin pantallas | Mismo flow; **vos** elegís y confirmás |
 
 ---
 

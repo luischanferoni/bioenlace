@@ -20,6 +20,12 @@ keywords:
   - agendar un turno
   - autogestión
   - agendar cita
+  - solicita un turno
+  - solicitar un turno
+  - sacame un turno
+  - turno para mi
+  - turno con mi dentista
+  - turno en odontología
 
 intent_semantics:
   summary: >-
@@ -48,6 +54,8 @@ intent_semantics:
     - sacar turno en un centro de salud
     - necesito un turno
     - quiero un turno
+    - solicita un turno para mi dentista
+    - turno en odontología
     - elegir servicio y horario disponible
 
 draft_keys_extra:
@@ -61,10 +69,10 @@ business_rules:
     when: pre_flow
     checker: content_regex
     require_any:
-      - "^(necesito|quiero|pedir|pido|sacar|reservar|agendar)(\\s+un)?\\s+turno\\b"
+      - "^(necesito|quiero|pedir|pido|sacar|reservar|agendar|solicita|solicitar)(\\s+un)?\\s+turno\\b"
       - "^turno(\\s+por\\s+favor)?\\.?$"
     forbid_any:
-      - "\\b(con|de)\\s+\\S+"
+      - "\\b(con|de|para)\\s+\\S+"
       - "\\b(cancelar|reprogramar|reubicar|modificar|ver|listar|mis)\\b"
     user_message: >-
       ¿Sabés con qué especialista o servicio querés el turno, o preferís que te guiemos según lo que te pasa?

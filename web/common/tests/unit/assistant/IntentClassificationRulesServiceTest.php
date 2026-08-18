@@ -223,6 +223,62 @@ class IntentClassificationRulesServiceTest extends Unit
             'paciente_reservar_turno',
             'ver mis turnos'
         ));
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'paciente_reservar_turno',
+            'solicita un turno para mi dentista'
+        ));
+    }
+
+    public function testPacienteUltimoEnOfertaRuleMatchesDentistaComoEjemplo()
+    {
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'paciente_ultimo_en_oferta',
+            'decime cuando fue la ultima vez que fui al dentista'
+        ));
+        $this->assertTrue(IntentClassificationRulesService::ruleMatches(
+            'paciente_ultimo_en_oferta',
+            'cuando fui a kinesio'
+        ));
+        $this->assertFalse(IntentClassificationRulesService::ruleMatches(
+            'paciente_ultimo_en_oferta',
+            'quiero un turno'
+        ));
+    }
+
+    public function testOperationalFallbackUltimoEnOferta()
+    {
+        $catalog = \common\components\Platform\Assistant\IntentEngine\UiActionCatalog::fromItems(
+            [
+                new UiActionCatalogItem(
+                    'turnos.ver-ultimo-en-oferta-como-paciente',
+                    'Última vez en un servicio',
+                    '',
+                    null,
+                    '/api/turnos/listar-como-paciente',
+                    ['última vez que fui'],
+                    []
+                ),
+                new UiActionCatalogItem(
+                    'turnos.crear-como-paciente',
+                    'Turno',
+                    '',
+                    null,
+                    '/api/turnos/crear-como-paciente',
+                    ['turno'],
+                    []
+                ),
+            ],
+            []
+        );
+        $catalog->byActionId['turnos.ver-ultimo-en-oferta-como-paciente'] = $catalog->items[0];
+        $catalog->byActionId['turnos.crear-como-paciente'] = $catalog->items[1];
+
+        $fb = IntentClassificationRulesService::resolveOperationalFallback(
+            'cuándo fue la última vez que fui al dentista',
+            $catalog
+        );
+        $this->assertNotNull($fb);
+        $this->assertSame('turnos.ver-ultimo-en-oferta-como-paciente', $fb['item']->action_id);
     }
 
     public function testStaffDataAccessEditExcludesScheduling(): void

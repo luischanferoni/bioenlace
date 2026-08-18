@@ -3633,6 +3633,7 @@
         }
 
         let singleAutoTimer = null;
+        let prefillAutoTimer = null;
         if (container.__bioenlaceListPickHandler) {
             try {
                 container.removeEventListener('click', container.__bioenlaceListPickHandler);
@@ -3645,6 +3646,10 @@
             if (singleAutoTimer) {
                 clearTimeout(singleAutoTimer);
                 singleAutoTimer = null;
+            }
+            if (prefillAutoTimer) {
+                clearTimeout(prefillAutoTimer);
+                prefillAutoTimer = null;
             }
             const editSparseCtx = options.editSparse && typeof options.editSparse === 'object'
                 ? options.editSparse
@@ -3718,8 +3723,10 @@
             });
         }
 
+        let prefilledId = '';
         if (draftField && draft && draft[draftField] != null) {
             const preId = String(draft[draftField]).trim();
+            prefilledId = preId;
             if (isMultiple && preId !== '') {
                 preId.split(',').forEach(function (part) {
                     const id = String(part || '').trim();
@@ -3741,16 +3748,23 @@
 
         const pickButtons = allPickButtons();
         if (options.enableFlowChainAutoAdvance === true
-            && pickButtons.length === 1
             && !requiresConfirmation
             && draftField) {
-            singleAutoTimer = setTimeout(function () {
-                singleAutoTimer = null;
-                if (isListPickLocked()) return;
-                const only = allPickButtons()[0];
-                if (!only || only.disabled) return;
-                only.click();
-            }, SPA_LIST_SINGLE_AUTO_INTRO_MS);
+            if (pickButtons.length === 1) {
+                singleAutoTimer = setTimeout(function () {
+                    singleAutoTimer = null;
+                    if (isListPickLocked()) return;
+                    const only = allPickButtons()[0];
+                    if (!only || only.disabled) return;
+                    only.click();
+                }, SPA_LIST_SINGLE_AUTO_INTRO_MS);
+            } else if (prefilledId !== '' && itemsById[prefilledId]) {
+                prefillAutoTimer = setTimeout(function () {
+                    prefillAutoTimer = null;
+                    if (isListPickLocked()) return;
+                    confirmSelection();
+                }, SPA_LIST_SINGLE_AUTO_INTRO_MS);
+            }
         }
     }
 

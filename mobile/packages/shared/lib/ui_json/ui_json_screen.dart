@@ -580,7 +580,11 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
       return;
     }
 
-    final pick = UiJsonSingleListPick.fromDefinition(_root!);
+    final presetId = widget.initialListEmbedSelectedId?.trim() ?? '';
+    final pick = UiJsonSingleListPick.fromDefinition(_root!) ??
+        (presetId.isNotEmpty
+            ? UiJsonSingleListPick.fromInitialSelection(_root!, presetId)
+            : null);
     if (pick == null) {
       _flowChainAutoScheduled = false;
       return;

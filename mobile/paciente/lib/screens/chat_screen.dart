@@ -48,7 +48,6 @@ class ChatScreenState extends State<ChatScreen> {
   bool _isSending = false;
   bool _flowAdvancing = false;
   bool _flowAdvanceLocked = false;
-  static const int _flowAutoPickMaxAttempts = 3;
   static const int _flowAdvanceMaxAttempts = 3;
   Map<String, dynamic> _draft = {};
   Map<String, dynamic> _flowSnapshot = {};
@@ -343,220 +342,6 @@ class ChatScreenState extends State<ChatScreen> {
         fallback: 'No se pudo avanzar. Intentá de nuevo.',
       ),
     };
-  }
-
-  /// Auto-avance en el host del chat (misma semántica que la SPA: lista de 1 ítem).
-  Future<void> _autoAdvanceFlowSingleListIfNeeded({
-    required Map<String, dynamic> message,
-    required int messageIndex,
-    required Map<String, dynamic> inlineUi,
-    required Map<String, dynamic> definition,
-  }) async {
-    if (message['flow_superseded'] == true ||
-        message['_flow_single_pick_done'] == true ||
-        message['_flow_single_pick_in_flight'] == true) {
-      return;
-    }
-
-    final attempts = message['_flow_single_pick_attempts'] is int
-        ? message['_flow_single_pick_attempts'] as int
-        : 0;
-    if (attempts >= _flowAutoPickMaxAttempts) {
-      return;
-    }
-
-    final activeIid = _intentId;
-    if (activeIid != null && activeIid.isNotEmpty) {
-      final lastIdx = _lastFlowInteractiveMessageIndex(activeIid);
-      if (lastIdx != null && messageIndex != lastIdx) {
-        return;
-      }
-    }
-
-    final pick = UiJsonSingleListPick.fromDefinition(definition);
-    if (pick == null) {
-      return;
-    }
-
-    final pickKey =
-        '${_intentId ?? ''}|${_subintentId ?? ''}|${pick.draftField}|${pick.itemId}';
-    if (_lastFlowAutoPickKey == pickKey) {
-      message['_flow_single_pick_done'] = true;
-      AppDiagnosticLog.trace(
-        'flow_auto_pick',
-        'skip_same_pick',
-        data: {
-          'draft_field': pick.draftField,
-          'item_id': pick.itemId,
-          'subintent_id': _subintentId,
-        },
-      );
-      return;
-    }
-
-    message['_flow_single_pick_in_flight'] = true;
-    message['_flow_auto_selected_id'] = pick.itemId;
-    if (mounted) setState(() {});
-
-    await Future<void>.delayed(const Duration(milliseconds: 480));
-    if (!mounted) {
-      message['_flow_single_pick_in_flight'] = false;
-      AppDiagnosticLog.trace(
-        'flow_auto_pick',
-        'aborted_unmounted',
-        data: {'message_index': messageIndex},
-      );
-      return;
-    }
-
-    if (activeIid != null && activeIid.isNotEmpty) {
-      final lastIdx = _lastFlowInteractiveMessageIndex(activeIid);
-      if (lastIdx != null && messageIndex < lastIdx) {
-        message['_flow_single_pick_in_flight'] = false;
-        return;
-      }
-    }
-
-    _applyDraftDelta(pick.toDraftDelta());
-    _applyInlineUiQueryToDraft(inlineUi);
-    _asistenteService.draft = Map<String, dynamic>.from(_draft);
-    if (mounted) setState(() {});
-
-    if (_messageIsTerminalFlowStep(message)) {
-      message['_flow_single_pick_done'] = true;
-      message['_flow_single_pick_in_flight'] = false;
-      if (mounted) {
-        setState(() {
-          if (message['_flow_submit_missing'] is List) {
-            message.remove('_flow_submit_missing');
-          }
-        });
-      }
-      AppDiagnosticLog.trace(
-        'flow_auto_pick',
-        'terminal_merge_only',
-        data: {
-          'draft_field': pick.draftField,
-          'item_id': pick.itemId,
-        },
-      );
-      return;
-    }
-
-    setState(() => _flowAdvancing = true);
-    try {
-      final res = await _postFlowAdvanceWithRetry();
-      if (!mounted) return;
-      if (res['success'] == true) {
-        final data = res['data'];
-        if (data is Map) {
-          message['_flow_single_pick_done'] = true;
-          message.remove('_flow_single_pick_attempts');
-          _lastFlowAutoPickKey = pickKey;
-          if (mounted) {
-            setState(() => _flowAdvancing = false);
-          }
-          await _handleFlowEnvelopeResponse(Map<String, dynamic>.from(data));
-          AppDiagnosticLog.trace(
-            'flow_auto_pick',
-            'chat_advance_ok',
-            data: {
-              'draft_field': pick.draftField,
-              'item_id': pick.itemId,
-            },
-          );
-        } else {
-          setState(() {
-            _flowAdvancing = false;
-            _isSending = false;
-          });
-        }
-      } else {
-        final friendly = res['message']?.toString() ??
-            'No se pudo avanzar automáticamente. Tocá la opción en la lista.';
-        message['_flow_single_pick_attempts'] = attempts + 1;
-        unawaited(AppDiagnosticLog.reportIssue(
-          'flow_auto_pick',
-          'chat_advance_failed',
-          data: {
-            'draft_field': pick.draftField,
-            'item_id': pick.itemId,
-            'attempt': attempts + 1,
-            'message': friendly,
-          },
-        ));
-        if (attempts + 1 < _flowAutoPickMaxAttempts) {
-          message['_flow_single_pick_in_flight'] = false;
-          if (mounted) {
-            setState(() => _flowAdvancing = false);
-          }
-          await Future<void>.delayed(Duration(milliseconds: 1000 * (attempts + 1)));
-          if (!mounted) return;
-          unawaited(_autoAdvanceFlowSingleListIfNeeded(
-            message: message,
-            messageIndex: messageIndex,
-            inlineUi: inlineUi,
-            definition: definition,
-          ));
-          return;
-        }
-        setState(() {
-          _flowAdvancing = false;
-          _isSending = false;
-          _chatHistory.add({
-            'type': 'bot',
-            'content': friendly,
-            'timestamp': DateTime.now(),
-          });
-        });
-      }
-    } catch (e, st) {
-      message['_flow_single_pick_attempts'] = attempts + 1;
-      unawaited(AppDiagnosticLog.reportIssue(
-        'flow_auto_pick',
-        'chat_advance_error',
-        data: {
-          'attempt': attempts + 1,
-          'error': e.toString(),
-          'stack': st.toString().split('\n').take(3).join(' | '),
-        },
-      ));
-      if (attempts + 1 < _flowAutoPickMaxAttempts) {
-        message['_flow_single_pick_in_flight'] = false;
-        if (mounted) {
-          setState(() => _flowAdvancing = false);
-        }
-        await Future<void>.delayed(Duration(milliseconds: 1000 * (attempts + 1)));
-        if (!mounted) return;
-        unawaited(_autoAdvanceFlowSingleListIfNeeded(
-          message: message,
-          messageIndex: messageIndex,
-          inlineUi: inlineUi,
-          definition: definition,
-        ));
-        return;
-      }
-      if (mounted) {
-        setState(() {
-          _flowAdvancing = false;
-          _isSending = false;
-          _chatHistory.add({
-            'type': 'bot',
-            'content': userFriendlyErrorMessage(
-              e,
-              fallback: 'No se pudo avanzar automáticamente. Tocá la opción en la lista.',
-            ),
-            'timestamp': DateTime.now(),
-          });
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _flowAdvancing = false);
-      }
-      message['_flow_single_pick_in_flight'] = false;
-    }
-    _scrollToBottom();
   }
 
   /// `flow_submit` visible: sin `inline_ui` (submit-only) o tras `onEmbeddedReady` del paso.
@@ -3248,23 +3033,6 @@ class ChatScreenState extends State<ChatScreen> {
                                   : (def) {
                                       if (inlineUi is! Map) return;
                                       inlineUi['ui_definition'] = def;
-                                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                                        if (!mounted) return;
-                                        final activeIid = _intentId;
-                                        if (activeIid != null && activeIid.isNotEmpty) {
-                                          final lastIdx =
-                                              _lastFlowInteractiveMessageIndex(activeIid);
-                                          if (lastIdx != null && index != lastIdx) {
-                                            return;
-                                          }
-                                        }
-                                        unawaited(_autoAdvanceFlowSingleListIfNeeded(
-                                          message: message,
-                                          messageIndex: index,
-                                          inlineUi: Map<String, dynamic>.from(inlineUi),
-                                          definition: def,
-                                        ));
-                                      });
                                     },
                               onEmbeddedReady: flowUiDisabled
                                   ? null
@@ -3279,7 +3047,8 @@ class ChatScreenState extends State<ChatScreen> {
                                         _chatHistory[index]['_flow_dismiss_ready'] = true;
                                       });
                                     },
-                              enableFlowChainAutoAdvance: false,
+                              enableFlowChainAutoAdvance: !flowUiDisabled &&
+                                  !_messageIsTerminalFlowStep(message),
                               isTerminalFlowStep: _messageIsTerminalFlowStep(message) || showingLicenciaImpact,
                               initialListEmbedSelectedId: _initialListSelectionForMessage(message),
                               apiAbsoluteUrl: showingLicenciaImpact

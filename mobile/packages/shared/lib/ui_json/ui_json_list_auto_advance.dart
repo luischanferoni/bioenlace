@@ -55,6 +55,60 @@ class UiJsonSingleListPick {
     return null;
   }
 
+  /// Lista con varias opciones pero una ya elegida (hydrator / `review_prefilled`).
+  static UiJsonSingleListPick? fromInitialSelection(
+    Map<String, dynamic> definition,
+    String selectedId,
+  ) {
+    final preId = selectedId.trim();
+    if (preId.isEmpty) return null;
+
+    final blocks = definition['blocks'];
+    if (blocks is! List) return null;
+
+    for (final bRaw in _blocksOrderedForRender(blocks)) {
+      if (bRaw is! Map) continue;
+      final b = Map<String, dynamic>.from(bRaw);
+      if (b['kind']?.toString() != 'list') continue;
+
+      final itemsRaw = b['items'];
+      final pickable = _pickableItems(b, itemsRaw is List ? itemsRaw : const []);
+      if (pickable.isEmpty) continue;
+
+      final selection = b['selection'] is Map
+          ? Map<String, dynamic>.from(b['selection'] as Map)
+          : const <String, dynamic>{};
+      final mode = selection['mode']?.toString().trim().toLowerCase() ?? '';
+      if (mode == 'none') continue;
+      final isMultiple = mode == 'multiple';
+      final rawRequires = selection.containsKey('requires_confirmation')
+          ? selection['requires_confirmation'] == true
+          : isMultiple;
+      if (rawRequires) continue;
+
+      final draftField = b['draft_field']?.toString() ?? '';
+      if (draftField.isEmpty) continue;
+
+      Map<String, dynamic>? matched;
+      for (final it in pickable) {
+        final id = itemIdFromBlock(b, it);
+        if (id == preId) {
+          matched = it;
+          break;
+        }
+      }
+      if (matched == null) continue;
+
+      return UiJsonSingleListPick(
+        draftField: draftField,
+        itemId: preId,
+        item: matched,
+      );
+    }
+
+    return null;
+  }
+
   static List<Map<String, dynamic>> _pickableItems(
     Map<String, dynamic> block,
     List<dynamic> itemsRaw,

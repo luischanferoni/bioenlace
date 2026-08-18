@@ -15,6 +15,7 @@ use Yii;
 final class ConversationalHistoryWindow
 {
     private const BOT_SENDER = 'BOT';
+    private const PATIENT_PREFIX = 'Paciente: ';
     private const DEFAULT_MAX_TURNOS = 5;
     private const DEFAULT_MAX_CHARS = 3200;
 
@@ -93,6 +94,30 @@ final class ConversationalHistoryWindow
         $lines = self::trimToBudget($lines, $maxTurnos, $maxChars);
 
         return $lines === [] ? '' : implode("\n", $lines);
+    }
+
+    /**
+     * Texto del paciente en la ventana formateada (sin líneas del asistente).
+     */
+    public static function extractPatientLines(string $formattedHistory): string
+    {
+        $formattedHistory = trim($formattedHistory);
+        if ($formattedHistory === '') {
+            return '';
+        }
+        $out = [];
+        foreach (preg_split('/\R/u', $formattedHistory) ?: [] as $line) {
+            $line = trim((string) $line);
+            if (!str_starts_with($line, self::PATIENT_PREFIX)) {
+                continue;
+            }
+            $text = trim(substr($line, strlen(self::PATIENT_PREFIX)));
+            if ($text !== '') {
+                $out[] = $text;
+            }
+        }
+
+        return implode("\n", $out);
     }
 
     public static function isEligibleLine(string $text): bool

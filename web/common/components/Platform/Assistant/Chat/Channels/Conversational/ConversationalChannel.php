@@ -30,7 +30,7 @@ final class ConversationalChannel
     /**
      * @param array{label: string, intent_id: string, summary: string, capabilities: list<string>}|null $offer
      */
-    public static function buildPrompt(string $content, int $userId, ?array $offer = null): string
+    public static function buildPrompt(string $content, int $userId, ?array $offer = null, ?string $formattedHistory = null): string
     {
         $content = trim($content);
         $parts = [rtrim(self::stablePromptPrefix())];
@@ -44,7 +44,7 @@ final class ConversationalChannel
             $parts[] = $offerBlock;
         }
 
-        $history = ConversationalHistoryWindow::formatForPrompt($userId, $content);
+        $history = $formattedHistory ?? ConversationalHistoryWindow::formatForPrompt($userId, $content);
         if ($history !== '') {
             $parts[] = '';
             $parts[] = 'Historial reciente (del más antiguo al más reciente):';
@@ -113,11 +113,12 @@ final class ConversationalChannel
             return AssistantEnvelope::message('');
         }
 
-        $offer = self::shouldOfferBookingButton($content)
+        $history = ConversationalHistoryWindow::formatForPrompt($userId, $content);
+        $offer = self::shouldOfferBookingButton($content, $history)
             ? self::resolveBookingOffer($userId)
             : null;
 
-        $prompt = self::buildPrompt($content, $userId, $offer);
+        $prompt = self::buildPrompt($content, $userId, $offer, $history);
 
         $text = null;
         try {
@@ -160,16 +161,11 @@ final class ConversationalChannel
         ]);
     }
 
-    private static function shouldOfferBookingButton(string $content): bool
+    private static function shouldOfferBookingButton(string $content, string $formattedHistory = ''): bool
     {
-        $cfg = IntentClassificationRulesService::conversationalChannelConfig();
-        $buttonCfg = $cfg['booking_button'] ?? [];
-        if (!is_array($buttonCfg)) {
-            return false;
-        }
-        $whenRule = trim((string) ($buttonCfg['when_rule'] ?? ''));
+        $patientHistory = ConversationalHistoryWindow::extractPatientLines($formattedHistory);
 
-        return $whenRule !== '' && IntentClassificationRulesService::ruleMatches($whenRule, $content);
+        return IntentClassificationRulesService::conversationalBookingOfferMatches($content, $patientHistory);
     }
 
     /**

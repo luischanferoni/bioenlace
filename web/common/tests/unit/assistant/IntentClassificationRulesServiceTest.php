@@ -112,6 +112,21 @@ class IntentClassificationRulesServiceTest extends Unit
         $this->assertFalse(IntentClassificationRulesService::isClinicalSymptomContent('quiero un turno'));
     }
 
+    public function testBookingOfferContinuesWhenHistoryHasSymptom(): void
+    {
+        $this->assertFalse(IntentClassificationRulesService::conversationalBookingOfferMatches(
+            'Empezó ayer y se me fue poniendo peor'
+        ));
+        $this->assertTrue(IntentClassificationRulesService::conversationalBookingOfferMatches(
+            'Empezó ayer y se me fue poniendo peor',
+            'Tengo fiebre, tos y me duele el cuerpo'
+        ));
+        $this->assertTrue(IntentClassificationRulesService::conversationalBookingOfferMatches(
+            'Tengo fiebre, tos y me duele el cuerpo'
+        ));
+        $this->assertFalse(IntentClassificationRulesService::conversationalBookingOfferMatches('quiero un turno'));
+    }
+
     public function testGoalOverrideSymptomPlusHospitalNearGoesConversational(): void
     {
         $msg = 'estoy con dolor de cabeza de hace varios dias, me gustaría saber que hospital tengo cerca que este atendiendo';

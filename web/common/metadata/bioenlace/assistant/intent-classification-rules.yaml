@@ -678,6 +678,8 @@ conversational_channel:
     vincular_menor: solicitar tutela de un menor
   booking_button:
     when_rule: clinical_symptom
+    # Si el mensaje actual no matchea (evolución, “¿qué hago?”), ofrecer igual si el historial reciente del paciente sí.
+    when_history_rule: clinical_symptom
     intent_priority:
       - atencion.necesito-atencion
       - turnos.crear-como-paciente

@@ -412,6 +412,11 @@ html:has(.spa-asistente-root) {
     opacity: 0.7;
 }
 
+.spa-intent-remediation--superseded {
+    pointer-events: none;
+    opacity: 0.55;
+}
+
 /* Timeline numerado de pasos de flow */
 .spa-flow-steps-list--numbered .spa-flow-step-item {
     position: relative;

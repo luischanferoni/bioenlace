@@ -75,4 +75,12 @@ class ConversationalHistoryWindowTest extends \Codeception\Test\Unit
         verify(count($trimmed))->equals(4);
         verify($trimmed[0])->equals('Paciente: tres');
     }
+
+    public function testExtractPatientLinesIgnoraAsistente()
+    {
+        $formatted = "Paciente: Tengo fiebre, tos y me duele el cuerpo\nAsistente: Entiendo.\nPaciente: Empezó ayer";
+        verify(ConversationalHistoryWindow::extractPatientLines($formatted))
+            ->equals("Tengo fiebre, tos y me duele el cuerpo\nEmpezó ayer");
+        verify(ConversationalHistoryWindow::extractPatientLines(''))->equals('');
+    }
 }

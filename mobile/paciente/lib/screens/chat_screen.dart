@@ -880,9 +880,18 @@ class ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _supersedeOfferButtons() {
+    for (final m in _chatHistory) {
+      if (m['type'] == 'bot' && _messageInteractiveButtons(m).isNotEmpty) {
+        m['flow_superseded'] = true;
+      }
+    }
+  }
+
   void _supersedeAllFlowInteractiveMessages() {
     for (final m in _chatHistory) {
-      if (m['type'] == 'bot' && _messageHasFlowInteractiveUi(m)) {
+      if (m['type'] != 'bot') continue;
+      if (_messageHasFlowInteractiveUi(m) || _messageInteractiveButtons(m).isNotEmpty) {
         m['flow_superseded'] = true;
       }
     }
@@ -991,6 +1000,7 @@ class ChatScreenState extends State<ChatScreen> {
     // Nota (Cambio 1): los pasos previos del MISMO flow activo NO se marcan
     // `flow_superseded`. Quedan clickables para "rebobinar" — el tap dispara
     // `_truncateFlowAfter` y el motor recalcula desde ese paso.
+    _supersedeOfferButtons();
   }
 
   void _applyDraftDelta(Map<String, dynamic> delta) {
@@ -1860,6 +1870,7 @@ class ChatScreenState extends State<ChatScreen> {
     final prevIntent = _intentId;
     setState(() {
       _isSending = true;
+      _supersedeOfferButtons();
       if (resetFlow || (prevIntent != null && prevIntent != intentId)) {
         _beginNewFlowActivation();
       }
@@ -3118,13 +3129,16 @@ class ChatScreenState extends State<ChatScreen> {
                             final label = opt['label']?.toString() ??
                                 opt['intent_id']?.toString() ??
                                 'Opción';
-                            return ActionChip(
+                            final offerDisabled = flowUiDisabled || _isSending;
+                            return Opacity(
+                              opacity: flowUiDisabled ? 0.55 : 1,
+                              child: ActionChip(
                               label: Text(
                                 label,
                                 style: tt.labelLarge?.copyWith(fontSize: 12),
                               ),
                               avatar: const Icon(Icons.alt_route, size: 16),
-                              onPressed: _isSending
+                              onPressed: offerDisabled
                                   ? null
                                   : () => _onRemediationChoice(opt),
                               backgroundColor: cs.primary.withValues(alpha: 0.12),
@@ -3132,6 +3146,7 @@ class ChatScreenState extends State<ChatScreen> {
                                 fontSize: 12,
                                 color: cs.primary,
                               ),
+                            ),
                             );
                           }).toList(),
                         ),

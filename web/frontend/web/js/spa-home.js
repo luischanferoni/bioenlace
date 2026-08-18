@@ -147,6 +147,18 @@
         chatMessagesDiv.querySelectorAll('.spa-chat-flow-row').forEach(disableFlowRowInteractions);
     }
 
+    function supersedePreviousInteractiveButtons() {
+        if (!chatMessagesDiv) {
+            return;
+        }
+        chatMessagesDiv.querySelectorAll('.spa-intent-remediation').forEach(function (row) {
+            row.classList.add('spa-intent-remediation--superseded');
+            row.querySelectorAll('button').forEach(function (b) {
+                b.disabled = true;
+            });
+        });
+    }
+
     function supersedeDiscardedFlowRows(activeIntentId) {
         if (!chatMessagesDiv || !activeIntentId) {
             return;
@@ -2232,6 +2244,7 @@
                 setLoadingState(false);
                 removeFlowPlanStrip();
                 supersedeAllFlowRows();
+                supersedePreviousInteractiveButtons();
                 const remText = primaryText || 'Elegí una opción';
                 const wrap = appendChatBubble('bot', '<div class="mb-0 spa-chat-bubble-text spa-chat-bubble-text--assistant">' + escapeHtml(remText) + '</div>');
                 const buttons = Array.isArray(envelope.buttons) ? envelope.buttons : [];
@@ -2254,6 +2267,7 @@
                             });
                             b.classList.remove('btn-outline-secondary');
                             b.classList.add('btn-secondary');
+                            supersedePreviousInteractiveButtons();
                             supersedeAllFlowRows();
                             beginNewFlowActivation();
                             currentIntentId = String(ch.intent_id);
@@ -2301,6 +2315,7 @@
 
             // Flow conversacional: mini-UI en bloque a ancho completo (no burbuja angosta).
             if (kind === 'flow') {
+                supersedePreviousInteractiveButtons();
                 const fm = assistantFlowManifest(envelope);
                 if (fm && typeof fm === 'object') {
                     currentFlowManifest = fm;

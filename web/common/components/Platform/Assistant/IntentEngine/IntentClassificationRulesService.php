@@ -301,6 +301,28 @@ final class IntentClassificationRulesService
         return is_array($cfg) ? $cfg : [];
     }
 
+    /**
+     * ¿Adjuntar el botón de oferta del canal conversacional?
+     * Metadata: conversational_channel.booking_button.when_rule / when_history_rule.
+     */
+    public static function conversationalBookingOfferMatches(string $content, string $patientHistory = ''): bool
+    {
+        $cfg = self::conversationalChannelConfig()['booking_button'] ?? [];
+        if (!is_array($cfg)) {
+            return false;
+        }
+        $whenRule = trim((string) ($cfg['when_rule'] ?? ''));
+        if ($whenRule !== '' && self::ruleMatches($whenRule, $content)) {
+            return true;
+        }
+        $historyRule = trim((string) ($cfg['when_history_rule'] ?? ''));
+        if ($historyRule === '' || trim($patientHistory) === '') {
+            return false;
+        }
+
+        return self::ruleMatches($historyRule, $patientHistory);
+    }
+
     public static function scoreAdjustment(string $message, string $actionId): int
     {
         $actionId = trim($actionId);

@@ -34,38 +34,21 @@ Ver [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 - **`ninguna`** (default tras migración): presencial en reserva hub; se salta modalidad remota.
 - **`todas` / `algunas`:** ver allowlist `servicio_teleconsulta_caso` para hub; especialistas con derivación requieren política que permita remoto.
 
-Configuración operativa: UI staff AdminEfector (`servicio-teleconsulta.configurar-efector-flow`) o columna `servicios.teleconsulta_politica` + allowlist.
+Configuración operativa: asistente **Política de teleconsulta por servicio** o columna `servicios.teleconsulta_politica` + allowlist.
 
 ## Flujo del asistente (`atencion.necesito-atencion`)
 
 Orden: triage → **servicio** → **modalidad** (condicional) → centro → profesional → día → horario.
 
-Tras elegir servicio, el hydrator fija:
+Tras elegir servicio: si hay videollamada ofrecible, sigue el paso de modalidad; si no, se fija presencial y salta a centro.
 
-- `teleconsulta_ofrecible = 1` → siguiente paso `select_tipo_atencion`.
-- `teleconsulta_ofrecible = 0` → `tipo_atencion = presencial` y salto directo a centro.
+Al persistir un turno de videollamada, el dominio comprueba que la agenda vigente del profesional acepte consultas online.
 
-API modalidad: `GET /api/v1/turnos/reserva-triage-paso?step=modalidad&id_servicio_asignado=…` filtra opciones vía `TeleconsultaElegibilidadService::opcionesModalidadParaDraft()`.
+## Personal de salud
 
-## Agenda del profesional
+La agenda del día muestra **Presencial** / **Teleconsulta** en cada turno.
 
-En **Configurar agenda** (`/api/v1/profesional-agenda/configurar-agenda`), campo `acepta_consultas_online`.
-
-Al persistir turno teleconsulta, `TurnoPersistService::assertAgendaAceptaTeleconsultaPorPes` valida que la agenda vigente del PES lo permita.
-
-## app Personal de Salud
-
-La agenda del día expone `tipo_atencion` en cada turno; la lista muestra badge **Presencial** / **Teleconsulta**.
-
-## Migración
-
-`m260607_100000_servicios_teleconsulta_politica`: columna `teleconsulta_politica` + tabla `servicio_teleconsulta_caso`.
-
-## Evolución prevista
-
-- Códigos SNOMED / terminología clínica en lugar de solo códigos internos de triage.
-- Slots diferenciados presencial/remoto (hoy comparten grilla).
-- Insight educativo en listado del día y consulta clínica por mensaje (async) sin turno: [atencion-remota-async.md](./atencion-remota-async.md).
+Insight en listado del día, consulta por mensaje y política por servicio: [atencion-remota-async.md](./atencion-remota-async.md).
 
 Ver también: [triage-reserva-turno.md](./triage-reserva-turno.md), [turnos.md](./turnos.md), [medicina-clinica-hub-reserva.md](./medicina-clinica-hub-reserva.md).
 

@@ -75,7 +75,9 @@ flowchart LR
 
 **Qué NO hace:** no reemplaza la lógica de negocio de turnos, laboratorio o recetas; esas reglas viven en **servicios de dominio** detrás de la API. El SubIntentEngine **orquesta la conversación** y llama a esas APIs cuando el YAML indica `open_ui` o envío de formulario.
 
-**Enriquecimiento del borrador (`draft_hydrator`):** algunos pasos envían solo parte de los datos (p. ej. el cliente manda `id_servicio` pero no el PES). Eso **no** se resuelve con `if (intent_id)` en el orquestador: el YAML del intent declara un `handler` registrado; `FlowDraftHydratorService` lo ejecuta en la capa de dominio antes de avanzar el flow. Ver contrato en `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
+Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`. Contrato de pasos: `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
+
+**Enriquecimiento del borrador (`draft_hydrator`):** algunos pasos envían solo parte de los datos (p. ej. el cliente manda `id_servicio` pero no el PES). Eso **no** se resuelve con `if (intent_id)` en el orquestador: el YAML del intent declara un `handler` registrado; `FlowDraftHydratorService` lo ejecuta en la capa de dominio antes de avanzar el flow.
 
 ---
 
@@ -125,4 +127,4 @@ Comparten ideas de draft y permisos, pero **no siempre** pasan por el clasificad
 
 - Experiencia de usuario: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md)
 - Turnos, laboratorio, recetas, guardia, internación: [producto/README.md](../producto/README.md)
-- Intents clínicos recientes (tabla resumida): sección “Intents de dominio” en [asistente-y-chat.md](../producto/asistente-y-chat.md)
+- Intents y frases paciente: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md), [qa/paciente/asistente-consultas.md](../qa/paciente/asistente-consultas.md)

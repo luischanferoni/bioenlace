@@ -1,6 +1,6 @@
 # Turnos (app paciente)
 
-[← Paciente](./README.md) · Más detalle: [turnos.md](../../producto/turnos.md) · Frases: [asistente.md](./asistente.md)
+[← Paciente](./README.md) · Más detalle: [turnos.md](../../producto/turnos.md) · Frases: [asistente.md](./asistente.md) · Catálogo: [asistente-consultas.md](./asistente-consultas.md)
 
 Requisito de contexto: [contexto-registro.md](./contexto-registro.md).
 

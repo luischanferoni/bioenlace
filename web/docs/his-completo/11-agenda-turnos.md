@@ -1,42 +1,32 @@
 ﻿# Agenda y turnos
 
-**Madurez orientativa:** 3,25 / 4 (~81 %)
+**Madurez orientativa:** 3,5 / 4 (~88 %)
 
 ## Lo que tenemos
 
-- [x] Agenda **AMB** por profesional–efector–servicio (PES) y cupos reservables (única expuesta a pacientes).
-- [x] **Cobertura EMER/IMP** (`profesional_cobertura`): roster entrada/salida; conflictos por solape; no genera turnos paciente. Ver [agenda-por-encounter-class.md](../producto/agenda-por-encounter-class.md).
-- [x] Autogestión del paciente: reservar, cancelar, reprogramar según política del efector (**solo AMB**).
-- [x] Turnos en conflicto / en resolución tras cambios de agenda AMB (staff y paciente).
-- [x] Sobreturno y cancelación masiva de día (staff).
-- [x] Notificaciones push (recordatorios, cambios, resumen de atención listo, etc.).
-- [x] Alta de turno por staff para terceros.
-- [x] Acciones guiadas por conversación para flujos de turnos.
-- [x] **Métricas de acceso (staff):** no-show (`SIN_ATENDER` por paciente), tasa sobre cerrados y mediana/promedio de días reserva → cita (`/api/v1/turnos/indicadores-agenda`, intent `turnos.indicadores-agenda-flow`).
-- [x] Anti no-show v1 basado en reglas históricas calculadas al vuelo.
-- [x] **Espejo NIS FHIR (v1):** pull `Appointment` → `turnos`, onboarding Schedule → PES, push de estados salientes — desactivado por defecto; ver [interoperabilidad-agendamiento-fhir.md](../producto/interoperabilidad-agendamiento-fhir.md).
+- [x] Agenda ambulatoria por profesional–efector–servicio (PES) y cupos reservables (única grilla para pacientes).
+- [x] Cobertura de guardia e internación (roster), distinta de los turnos; conflicto con la grilla semanal al guardar.
+- [x] Autogestión del paciente: reservar, cancelar, reprogramar, confirmar asistencia, según política del efector.
+- [x] Triage de motivo y alarmas antes de reservar; banda A no saca turno en la app.
+- [x] Teleconsulta en reserva cuando el servicio y el caso lo permiten.
+- [x] Turnos en resolución si cambia la agenda; shortlist de horarios; auto-reubicación con opt-in.
+- [x] Adelantamiento si se libera un cupo; escalada email/SMS si no hay respuesta al push; cierre de loop sin respuesta.
+- [x] Anti no-show por reglas (confirmación extra o liberación de cupo).
+- [x] Ruteo si no hay cupo tras el triage (mensaje, tele, primaria, espera).
+- [x] Sobreturno y cancelación masiva de un día (staff); alta de turno para terceros.
+- [x] Representación: tutor o delegado opera turnos del sujeto.
+- [x] Indicadores de acceso (no-show, lead time) para el equipo.
+- [x] Espejo de citas con red FHIR (entrante/saliente); desactivado por defecto hasta piloto.
 
 ## Lo que falta
 
-- [x] **Teleconsulta en reserva:** política por servicio, elegibilidad por triage, modalidad condicional en `atencion.necesito-atencion`, `acepta_consultas_online` en agenda PES, badge en app Personal de Salud. Ver [teleconsulta-elegibilidad.md](../producto/teleconsulta-elegibilidad.md).
-- [x] **Control/Seguimiento en Solicitar Atención:** hub paciente (tratamientos, condiciones, protocolos) antes de turno/async. Ver [solicitar-atencion.md](../producto/solicitar-atencion.md).
-- [ ] Cruce de conflictos cobertura vs grilla AMB (licencias / indisponibilidad unificada).
-- [x] Conflicto cobertura vs grilla semanal AMB al guardar roster (`cobertura_vs_amb_slots`), también en UI (celdas ocupadas). Independiente de `formas_atencion`.
-- [x] Plantel activo en panel EMER/IMP (`staff_cobertura_activa`).
-- [ ] Lista de espera nacional entre efectores con priorización clínica.
-- [ ] Integración con obras sociales / autorizaciones en el mismo flujo de reserva.
-- [ ] Piloto en producción NIS MSAL (datos reales + cron habilitado).
-- [ ] Slots diferenciados presencial/remoto (hoy comparten grilla).
-- [ ] Panel histórico exportable (CSV/PDF) y benchmarks entre servicios del efector.
-- [ ] Eventos canónicos completos para atención, no-show, corrección, cancelación y reprogramación, con actor y origen.
-- [ ] Perfil factual persistido y versionado por persona, ventana y alcance.
-- [ ] Separación formal entre perfil, preferencias y políticas de intervención.
-- [ ] Explicabilidad y corrección del historial para paciente o representante.
-- [ ] Evaluación de equidad y shadow mode antes de acciones anti no-show de alto impacto.
+- [ ] Lista de espera entre efectores con priorización clínica.
+- [ ] Obras sociales / autorizaciones en el mismo flujo de reserva.
+- [ ] Slots separados presencial / remoto (hoy comparten grilla).
+- [ ] Piloto en producción con datos reales de red nacional de turnos.
+- [ ] Panel histórico exportable (CSV/PDF) y comparación entre servicios.
+- [ ] Perfil factual persistido (asistencia, no-show, cancelación) separado de preferencias y políticas.
 
-## En producto hoy
+## Documentación de producto
 
-- API cupos: `GET /api/v1/turnos/indicadores-agenda`
-- API cobertura: `/api/v1/profesional-cobertura/*`
-- Asistente: `turnos.indicadores-agenda-flow`, `profesional-cobertura.gestionar-*`
-- Historia: [turnos.md](../producto/turnos.md), [agenda-por-encounter-class.md](../producto/agenda-por-encounter-class.md)
+[turnos.md](../producto/turnos.md) · [triage-reserva-turno.md](../producto/triage-reserva-turno.md) · [teleconsulta-elegibilidad.md](../producto/teleconsulta-elegibilidad.md) · [agenda-por-encounter-class.md](../producto/agenda-por-encounter-class.md) · [interoperabilidad-agendamiento-fhir.md](../producto/interoperabilidad-agendamiento-fhir.md) · [agentes-autonomos.md](../producto/agentes-autonomos.md)

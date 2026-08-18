@@ -69,6 +69,7 @@ La clasificación NL que habla de tratamiento, receta o seguimiento enruta a `at
 
 - [triage-reserva-turno.md](./triage-reserva-turno.md) — alarmas, bandas, modalidad, persistencia en turno
 - [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md)
-- [consultas-seguimiento.md](./consultas-seguimiento.md) — async y acciones de tratamiento
+- [consultas-seguimiento.md](./consultas-seguimiento.md) — renovar, ajustar, consulta por mensaje
 - [turnos.md](./turnos.md)
-- QA: [../qa/escenarios/seguimiento/README.md](../qa/escenarios/seguimiento/README.md)
+- Frases de prueba: [../qa/paciente/asistente-consultas.md](../qa/paciente/asistente-consultas.md)
+- QA escenario: [../qa/escenarios/seguimiento/README.md](../qa/escenarios/seguimiento/README.md)

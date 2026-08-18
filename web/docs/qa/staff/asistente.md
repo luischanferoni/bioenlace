@@ -5,7 +5,7 @@
 El asistente entiende **frases en castellano** o elegís un **Atajo** visible. Te guía paso a paso.
 
 **Web (personal):** abrís el asistente y escribís.  
-Frases paciente (app): [paciente/asistente.md](../paciente/asistente.md).
+Frases paciente (app): [paciente/asistente.md](../paciente/asistente.md). Catálogo amplio: [paciente/asistente-consultas.md](../paciente/asistente-consultas.md).
 
 ---
 

@@ -80,11 +80,19 @@
 
 | ID | Pri | Pasos resumidos | Esperado |
 |----|-----|-----------------|----------|
-| AST-01 | 🔴 | “Quiero un turno” (contexto OK) | Flujo turnos |
+| AST-01 | 🔴 | “Quiero un turno” (contexto OK) | Flujo turnos (`turnos.crear-como-paciente`) |
 | AST-02 | 🔴 | Igual sin provincia | Bloqueo o mensaje |
 | AST-03 | 🟡 | “Cancelar turno” | Flujo cancelación |
+| AST-04 | 🔴 | “Me duele la cabeza” (sin pedir turno) | Charla + oferta Solicitar Atención; **no** agenda pura |
+| AST-05 | 🔴 | “Me falta el aire y me suda el pecho” | Urgencia / 107; **no** reserva ambulatoria |
 | AST-06 | 🟢 | Ministerio de salud provincia | FAQ correcta |
+| AST-07 | 🟡 | “Mis turnos” vs “turnos que ya tuve” | Próximos vs historial |
+| AST-08 | 🟡 | “Se me termina el enalapril” | Solicitar Atención → Control/Seguimiento; **no** listado de recetas |
+| AST-09 | 🟡 | “Mis análisis” vs “turno para análisis” | Resultados vs estudio/práctica |
+| AST-10 | 🟢 | “La app se cuelga” | Queja; **no** Solicitar Atención |
+| AST-11 | 🟢 | “Quiero vincular a mi hijo” | Tutela (no delegación) |
+| AST-12 | 🟢 | “kiero tno” (ortografía sucia) | Enruta a reserva o desambigua; no error |
 
-→ [asistente.md](./asistente.md)
+→ [asistente.md](./asistente.md) · Catálogo completo: [asistente-consultas.md](./asistente-consultas.md)
 
 Checklist staff / médico / admin: [staff/checklist.md](../staff/checklist.md), [medico/checklist.md](../medico/checklist.md), [admin_efector/checklist.md](../admin_efector/checklist.md).

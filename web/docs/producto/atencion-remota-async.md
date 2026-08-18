@@ -1,24 +1,23 @@
 # Atención remota y consulta clínica por mensaje
 
-## Denominación
-
-| Término | Uso |
-|---------|-----|
-| **Consulta clínica por mensaje** | Nombre de producto: atención asincrónica por chat, sin turno ni videollamada; responde un profesional real. |
-| **Consulta async** | Nombre técnico (`SOLICITUD_ASYNC`, encounter VR, bandeja staff). |
-| **Videollamada** | Atención remota **con** turno reservado (no es consulta clínica por mensaje). |
-
-Detalle del flujo paciente de renovación / dudas / seguimiento: [consultas-seguimiento.md](./consultas-seguimiento.md).
-
 ## De qué se trata
 
-Bioenlace puede atender algunos motivos de consulta **sin que el paciente concurra presencialmente**: por **videollamada** (con turno reservado) o por **consulta clínica por mensaje** (consulta async, sin turno ni video). La adopción es gradual: el personal médico sigue operando en presencial mientras el sistema educa y, más adelante, ofrece modalidades remotas al paciente y opt-in en la agenda del profesional.
+Algunos motivos se atienden **sin concurrir presencialmente**:
+
+| Canal | Qué es |
+|-------|--------|
+| **Videollamada** | Atención remota **con** turno reservado |
+| **Consulta clínica por mensaje** | Chat asincrónico, sin turno ni video; responde un profesional real (`SOLICITUD_ASYNC`) |
+
+No es consulta inmediata. La adopción es gradual: el equipo puede seguir en presencial mientras se ofrece remoto al paciente y opt-in en la agenda.
+
+Renovación, ajuste y evolución (paciente): [consultas-seguimiento.md](./consultas-seguimiento.md). Puerta: [solicitar-atencion.md](./solicitar-atencion.md). Reglas de modalidad: [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md).
 
 ## Actores
 
-- **Paciente** — reserva o solicita atención vía asistente (**Solicitar Atención** / `atencion.necesito-atencion`). Malestar y urgencia: triage + modalidad. Consulta por mensaje y seguimiento: motivo **Control/Seguimiento** — ver [solicitar-atencion.md](./solicitar-atencion.md) y [consultas-seguimiento.md](./consultas-seguimiento.md).
-- **Profesional (PES)** — atiende turnos del día; puede habilitar remoto en su agenda (`acepta_consultas_online`).
-- **Admin efector** — política de teleconsulta por servicio y métricas agregadas del efector.
+- **Paciente** — Solicitar Atención: malestar/urgencia (triage + modalidad) o Control/Seguimiento (mensaje).
+- **Profesional** — turnos del día; puede aceptar videollamada en su agenda.
+- **Admin efector** — política de teleconsulta por servicio.
 
 ## Cómo funciona (etapa 0 — observación staff)
 
@@ -86,7 +85,6 @@ Desde el asistente (**Política de teleconsulta por servicio**), configura por c
 
 ## Relación con el resto
 
-- [triage-reserva-turno.md](./triage-reserva-turno.md) — motivo y alarmas al reservar.
-- [consultas-seguimiento.md](./consultas-seguimiento.md) — flujo paciente de consulta clínica por mensaje y seguimiento (sin triage de malestar nuevo).
-- [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md) — reglas de modalidad en reserva.
-- [turnos.md](./turnos.md) — agenda y listado del día.
+- [triage-reserva-turno.md](./triage-reserva-turno.md) — alarmas al reservar
+- [consultas-seguimiento.md](./consultas-seguimiento.md) — hub Control/Seguimiento
+- [turnos.md](./turnos.md) — agenda y listado del día

@@ -103,7 +103,7 @@ Código compartido: `mobile/packages/shared/lib/person/person_representation_*.d
 ## Asistente web / SPA
 
 - Catálogo: `PersonRepresentationUiActionCatalog` (registrado en `UiActionCatalog`).
-- Flows YAML en `SubIntentEngine/schemas/intents/personas.*.yaml`.
+- Flows YAML: `common/metadata/bioenlace/assistant/intents/` (`personas.vincular-menor-flow`, `personas.designar-representante-flow`).
 - Acción hub con `client_open.kind: native` → móvil; web → configuración.
 
 ## Staff

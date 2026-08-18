@@ -2,52 +2,37 @@
 
 [← Paciente](./README.md)
 
-El asistente entiende **frases en castellano** o elegís un **Atajo** visible. Te guía paso a paso y al final hace lo que pediste o te muestra una pantalla.
+El asistente entiende **frases en castellano** o un **Atajo** visible. Te guía paso a paso y al final hace lo que pediste o abre una pantalla.
 
-Si **no tenés permiso**, te lo dice. Si **sí**, te guía con mensajes y botones.
+Si **no tenés permiso**, te lo dice.
+
+**Catálogo de consultas** (tipos, ejemplo, cobertura y qué no confundir): [asistente-consultas.md](./asistente-consultas.md).  
+WhatsApp (mismo asistente, solo si el paciente escribe primero): [asistente-whatsapp.md](./asistente-whatsapp.md).
 
 ---
 
-## Cómo probar cualquier flujo
+## Cómo probar
 
 1. **Vos** escribís algo parecido a los ejemplos (no hace falta la frase exacta).
-2. **El sistema** empieza el asistente paso a paso.
+2. **El sistema** clasifica y abre el flujo o una charla con botón.
 3. **Vos** respondés cada pregunta.
-4. **El sistema** confirma al final o explica qué falta.
+4. **El sistema** confirma o explica qué falta.
+
+Requisito de contexto para turnos: [contexto-registro.md](./contexto-registro.md). Checklist: [checklist.md](./checklist.md) (AST).
 
 ---
 
-## Turnos
+## Smoke mínimo
 
-Detalle: [turnos.md](./turnos.md).
+Con contexto de provincia/sector OK:
 
-| Qué querés | Intent / atajo | Ejemplos |
-|------------|----------------|----------|
-| Sacar turno | `atencion.necesito-atencion`, `turnos.crear-como-paciente` | Atajo **Atención**; *«quiero un turno»* |
-| Cancelar | `turnos.cancelar-como-paciente-flow` | Atajo **Turnos**; *«cancelar turno»* |
-| Cambiar | `turnos.modificar-como-paciente-flow` | *«reprogramar»*, *«cambiar mi turno»* |
-| Confirmar asistencia | `turnos.confirmar-asistencia-flow` | *«confirmo que voy»* |
-| Política de cancelación | `turnos.consultar-politica-autogestion-flow` | *«cuánto antes puedo cancelar»* |
-| Ministerio de salud | `paciente-contexto.recurso-provincial-como-paciente-flow` | *«ministerio de salud de mi provincia»* |
+| Frase | Debería abrir |
+|-------|----------------|
+| *«quiero un turno»* | Reserva (`turnos.crear-como-paciente`) |
+| *«me duele la cabeza»* | Charla + **Solicitar Atención** (no agenda pura) |
+| *«cancelar turno»* | Cancelación |
+| *«mis análisis»* | Laboratorio |
+| *«mis recetas»* | Recetas |
+| *«mis atenciones»* | Historial de visitas |
 
-Requisito de contexto para turnos: [contexto-registro.md](./contexto-registro.md).
-
----
-
-## Laboratorio y recetas
-
-| Qué querés | Ejemplos | Qué deberías ver |
-|------------|----------|------------------|
-| Análisis | *«mis laboratorios»*, *«resultados de sangre»* | Lista de estudios |
-| Recetas | *«mis recetas»* | Lista de recetas |
-| Mis atenciones | Atajo **Mis atenciones** | Listado de visitas |
-
-Detalle: [laboratorio-receta-planes.md](./laboratorio-receta-planes.md).
-
----
-
-## Si no te entiende
-
-1. Probá una frase más concreta (*«cancelar turno del martes»*).
-2. El sistema puede mostrar **botones** con acciones para elegir con un clic.
-3. Si tu rol no puede hacer eso, **te dice** que no tenés permiso.
+Si no entiende: frase más concreta (*«cancelar turno del martes»*), o elegí un botón. Pasos de reserva: [turnos.md](./turnos.md). Lab/recetas: [laboratorio-receta-planes.md](./laboratorio-receta-planes.md).

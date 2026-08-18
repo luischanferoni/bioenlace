@@ -2,8 +2,7 @@
 
 Procesos **proactivos** en los que el sistema toma un **paso de decisión** (compromiso, matices o volumen de datos del HIS) bajo política auditable. Se distinguen **agente** (reglas + datos) y **agente IA** (el paso decisorio usa modelo).
 
-Definición y backlog histórico: [ideas-a-futuro/agentes-autonomos-backlog.md](./ideas-a-futuro/agentes-autonomos-backlog.md).  
-Plan de implementación: [planes/agentes-autonomos-implementacion.md](./planes/agentes-autonomos-implementacion.md).
+Definición corta y backlog de ideas **no** construidas: [ideas-a-futuro/agentes-autonomos-backlog.md](./ideas-a-futuro/agentes-autonomos-backlog.md).
 
 ---
 
@@ -259,9 +258,15 @@ Ver [internacion.md](./internacion.md).
 
 ---
 
-## En implementación / backlog (sin agentes IA)
+## Pendiente (no son fichas de producción)
 
-Agentes IA (C03, D02, redacción pushes): diferidos.
+| ID | Qué falta |
+|----|-----------|
+| **C03** | Agente IA: clasificar puerta de entrada desde texto libre (banda + flujo) |
+| **D02** | Agente IA: borrador de resumen al paciente al cerrar (humano publica) |
+| — | Redacción IA de pushes **después** de una regla (el desenlace ya lo fijó el YAML) |
+
+Detalle y lo que **no** es agente: [ideas-a-futuro/agentes-autonomos-backlog.md](./ideas-a-futuro/agentes-autonomos-backlog.md).
 
 ---
 

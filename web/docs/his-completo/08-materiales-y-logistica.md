@@ -1,10 +1,10 @@
 # Materiales y logística
 
-**Madurez orientativa:** 1–2/4
+**Madurez orientativa:** 1,5 / 4 (~38 %)
 
 ## Lo que tenemos
 
-- [x] Consumos registrados en internación y parte de consultas.
+- [x] Consumos registrados en internación y parte de las atenciones.
 - [x] Nomencladores de prácticas y suministros en configuraciones existentes.
 
 ## Lo que falta

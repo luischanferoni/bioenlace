@@ -1,91 +1,44 @@
 # Triage al reservar turno (paciente)
 
-## Objetivo
+## De qué se trata
 
-Antes de elegir **servicio y horario**, el paciente responde un **árbol fijo** en lenguaje simple: motivo, alarmas de seguridad, zona y evolución del malestar. No es diagnóstico; alimenta el turno y la preparación del encuentro (y complementa los [motivos pre-consulta](./motivos-consulta.md) posteriores).
+Antes de elegir **servicio y horario**, el paciente recorre un **árbol fijo** en lenguaje simple: motivo, alarmas, zona y evolución. No es diagnóstico. Alimenta el turno y la preparación del encuentro.
+
+La puerta de producto es [Solicitar Atención](./solicitar-atencion.md). Este documento cubre **alarmas, bandas y persistencia**. Motivos ricos (chat/intake) después de reservar: [recorrido-pre-post-consulta.md](./recorrido-pre-post-consulta.md).
 
 ## Principios
 
-1. **Seguridad primero:** preguntas de alarma con **banda A** → no se completa la reserva; pantalla de derivación a urgencia / 107.
-2. **Catálogo declarativo:** nodos en `web/common/components/Domain/Scheduling/metadata/reserva_triage_catalog_v1.yaml` (códigos internos, etiquetas para el usuario).
-3. **Sin hardcode en orquestadores:** el flujo conversacional está en `atencion.necesito-atencion.yaml`; la lógica de compilación en `ReservaTurnoTriageCatalogService`, elegibilidad remota en `TeleconsultaElegibilidadService` y enriquecimiento vía `scheduling.reserva_triage` (`FlowDraftHydratorRegistry`).
-4. **IA opcional después:** texto libre en confirmación (`triage_nota`); el lote de motivos pre-consulta sigue siendo el canal rico de IA.
+1. **Seguridad primero:** alarma en **banda A** → no se reserva en la app; derivación a urgencia / 107.
+2. **Catálogo declarativo:** nodos en metadata de scheduling (`reserva_triage_catalog_v1.yaml`). El flujo conversacional es `atencion.necesito-atencion`.
+3. **IA después:** texto libre opcional en confirmación; el lote de motivos pre-consulta es el canal rico de IA.
 
-## Intent del asistente
+*«Sacar turno»* sin motivo clínico usa `turnos.crear-como-paciente` (sin este árbol).
 
-- **`atencion.necesito-atencion`** (**Solicitar Atención**): Malestar nuevo, **Control/Seguimiento** y Urgencia — ver [solicitar-atencion.md](./solicitar-atencion.md). Async / tratamiento: [consultas-seguimiento.md](./consultas-seguimiento.md).
-- **`turnos.crear-como-paciente`** — solo agenda (sin triage de motivos); clasificación por frases tipo “sacar turno”.
+## Recorrido
 
-## Pasos del flujo (asistente / SPA)
+| Paso | Qué hace |
+|------|----------|
+| Motivo raíz | Malestar nuevo, Control/Seguimiento, Urgencia (y estudio/práctica en Solicitar Atención) |
+| Hub control | Solo Control/Seguimiento — [consultas-seguimiento.md](./consultas-seguimiento.md) |
+| Alarmas | Si banda A → pantalla 107 / guardia, sin cupo |
+| Zona, detalle, evolución | Según el malestar |
+| Servicio del centro | Oferta institucional; en ambulatorio suele ser medicina clínica — [medicina-clinica-hub-reserva.md](./medicina-clinica-hub-reserva.md) |
+| Modalidad | Solo si el servicio y el triage permiten remoto — [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md) |
+| Centro → profesional → horario | Igual que la reserva de agenda |
 
-| Paso | Subintent | API UI |
-|------|-----------|--------|
-| Motivo (raíz) | `triage_raiz` | `GET /api/v1/turnos/reserva-triage-paso?step=raiz` — **Malestar nuevo**, **Control/Seguimiento**, **Urgencia** |
-| Hub control (solo Control/Seguimiento) | `cs_hub` | `GET /api/v1/consultas-seguimiento/hub` |
-| Alarmas | `triage_alarmas` | `?step=alarmas` |
-| Urgencia (solo banda A) | `triage_urgencia` | `GET /api/v1/turnos/reserva-triage-urgencia` |
-| Zona corporal | `triage_zona` | `?step=zona&triage_raiz=…` |
-| Detalle | `triage_detalle` | `?step=detalle&triage_zona=…` |
-| Evolución | `triage_evolucion` | `?step=evolucion` |
-| Servicio | `select_servicio` | `servicios.elegir-acepta-turnos` (+ query triage para filtrar por rol sugerido) |
-| Modalidad (si aplica) | `select_tipo_atencion` | `?step=modalidad&id_servicio_asignado=…` + campos triage |
-| Centro → profesional → día → horario | (sin cambios) | flujo turnos existente |
+## Bandas
 
-**Atajos por motivo raíz (Solicitar Atención):**
-
-- `malestar_nuevo` → zona → (detalle/evolución) → servicio → modalidad si aplica.
-- `seguimiento_cronico` → hub Control/Seguimiento → ramas por ancla.
-- `urgencia` → categoría → pantalla de derivación (sin reserva).
-
-**Servicio (Medicina clínica hub):**
-
-- Tras el triage ambulatorio, el paciente solo ve **Medicina clínica / generalistas** (`reserva_modo=hub_paciente`).
-- Especialistas: turno solo con **derivación vigente** del clínico; modalidad **solo teleconsulta**.
-- Detalle: [medicina-clinica-hub-reserva.md](./medicina-clinica-hub-reserva.md).
-
-**Modalidad (presencial / remoto) con clínica:**
-
-- El paso aparece **después del servicio**, solo si `teleconsulta_ofercible = 1` en el draft (hydrator).
-- Si el servicio o el triage no permiten remoto, se fija `tipo_atencion = presencial` y se salta la pantalla.
-- Detalle de reglas: [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md).
-
-## Persistencia
-
-Columnas en `turnos` (migración `m260602_150000_turnos_reserva_triage_columns`):
-
-| Columna | Uso |
-|---------|-----|
-| `reserva_triage_code` | Código hoja principal (última selección significativa) |
-| `urgency_band` | `A`–`D` (máxima banda del recorrido) |
-| `reserva_triage_meta_json` | Trayectoria (`path`) + versión de catálogo |
-
-Validación al crear: `TurnoPersistService` + `assertCanPersistBooking` (rechaza banda A y campos incompletos según raíz).
-
-## API auxiliar
-
-- `GET /api/v1/turnos/reserva-triage-catalogo` — metadatos de pasos (clientes nativos).
-- Permisos RBAC heredados de `crear-como-paciente` (`m260602_150001_api_turnos_reserva_triage_rbac`).
-
-## Bandas (orientativo)
-
-| Banda | Significado operativo |
-|-------|----------------------|
+| Banda | Significado |
+|-------|-------------|
 | A | Alarma actual → no reservar en app |
 | B | Prioridad alta / evaluar presencial pronto |
 | C | Ambulatorio programable habitual |
 | D | Control / trámite / baja urgencia |
 
+El turno guarda el código de hoja, la banda máxima y la trayectoria del catálogo. No se persiste una reserva en banda A.
+
 ## Relación con teleconsulta
 
-- Política por servicio: `servicios.teleconsulta_politica` (`ninguna` | `todas` | `algunas`) y allowlist `servicio_teleconsulta_caso`.
-- Nodos del catálogo pueden marcar `teleconsulta_elegibilidad` o sugerir `tipo_atencion: teleconsulta`.
-- El profesional habilita teleconsulta en su PES con `acepta_consultas_online` al configurar agenda.
-- Al reservar remoto, el listado de profesionales filtra solo quienes aceptan consultas online.
+La política del **servicio del centro**, los nodos del catálogo y el switch de agenda del profesional (`acepta_consultas_online`) deciden si aparece videollamada. Detalle: [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md). Si no hay cupo tras el triage, un agente puede sugerir canal alternativo — [agentes-autonomos.md](./agentes-autonomos.md) (A05).
 
-## Evolución prevista
-
-- Repreguntas IA solo sobre `triage_nota` o texto libre.
-- Reutilizar el mismo catálogo en app móvil paciente sin duplicar árbol en Dart.
-- Rol `oftalmologia` en nodos oculares del catálogo cuando se agreguen ramas de triage oftalmológico.
-
-Ver también: [solicitar-atencion.md](./solicitar-atencion.md), [turnos.md](./turnos.md), [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md), [motivos-consulta.md](./motivos-consulta.md).
+Ver también: [solicitar-atencion.md](./solicitar-atencion.md), [turnos.md](./turnos.md).

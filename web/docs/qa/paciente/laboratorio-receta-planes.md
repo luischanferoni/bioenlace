@@ -1,6 +1,6 @@
 # Laboratorio, recetas y tratamientos (paciente)
 
-[← Paciente](./README.md)
+[← Paciente](./README.md) · Frases del chat: [asistente-consultas.md](./asistente-consultas.md)
 
 ---
 

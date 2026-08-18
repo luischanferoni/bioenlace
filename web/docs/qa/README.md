@@ -14,7 +14,7 @@ Cada guía incluye guion de consulta, pasos del paciente, pasos del personal y c
 
 | Carpeta | Quién prueba | Rol RBAC | Superficie |
 |---------|--------------|----------|------------|
-| [paciente/](./paciente/README.md) | Usuario paciente | `paciente` | App móvil paciente |
+| [paciente/](./paciente/README.md) | Usuario paciente | `paciente` | App móvil paciente · [catálogo de consultas al asistente](./paciente/asistente-consultas.md) |
 | [app-personalsalud/](./app-personalsalud/README.md) | Cualquier personal con usuario del centro | Según rol | App móvil Personal de Salud |
 | [medico/](./medico/README.md) | Médico / profesional clínico | `Medico` | Web y app Personal de Salud (captura, agenda propia) |
 | [staff/](./staff/README.md) | Recepción, enfermería, coordinación | `Administrativo`, `enfermeria`, … | Web y app Personal de Salud (operación diaria) |

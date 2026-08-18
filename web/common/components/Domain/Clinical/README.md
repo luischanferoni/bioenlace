@@ -8,6 +8,7 @@ Dominio FHIR clínico (Encounter, CarePlan, órdenes).
 |---------|-----------|
 | `Enum/` | Vocabularios (`CarePlanStatus`, `CarePlanCategory`, `EncounterStatus`, …) |
 | `Support/` | Metadatos JSON (`CarePlanProgramMeta`) |
+| `AiContext/` | Extracto acotado de HC para prompts (`PatientAiContextBuilder`) |
 | `Service/` | Negocio sin HTTP (`CarePlanService`, `CarePlanLifecycleService`, `EncounterAccessService`, …) |
 | `Workflow/` | Flujos compuestos (`EncounterDocumentationService`) |
 | `Specialty/` | Odontología, oftalmología (Fase 7); ver [Specialty/README.md](Specialty/README.md) |

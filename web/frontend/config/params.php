@@ -53,6 +53,7 @@ return [
     /**
      * Bloque clínico acotado en prompts IA (captura, motivos batch, chat conversacional).
      * max_chars ≈ 600 tokens; perfiles limitan ítems por sección.
+     * Perfil conversational: solo la persona de sesión y si no apagó el extracto en Configuración.
      */
     'patient_ai_context' => [
         'max_chars' => 2400,

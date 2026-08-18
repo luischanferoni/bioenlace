@@ -56,6 +56,12 @@ El personal usa otros intents (tablero de guardia, mapa de camas, KPIs de agenda
 
 Otros usos del mismo stack (no siempre el mismo clasificador): motivos pre-consulta, captura clínica con audio/texto.
 
+## Datos de salud en el chat
+
+El hilo reciente se usa para seguir la charla. Además, si la persona no lo apagó en Configuración, un **extracto acotado** de alergias, condiciones y medicación viaja al modelo (Vertex / Gemini). Motivos pre-consulta y captura del médico no dependen de ese interruptor.
+
+Contrato con Google, candado del extracto y qué se puede apagar: [ia-datos-y-privacidad.md](./ia-datos-y-privacidad.md).
+
 ## Costos
 
 Conversación (app o WhatsApp reactivo): [costos-api §1](../costos/costos-api.md#1-conversación-con-el-paciente) y [§7](../costos/costos-api.md#7-whatsapp-cloud-api-paciente). Índice: [costos/](../costos/README.md).

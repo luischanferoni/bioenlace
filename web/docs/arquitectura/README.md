@@ -12,5 +12,6 @@ Explica piezas que atraviesan varios módulos del producto. Hoy el foco principa
 ## Relacionado
 
 - Narrativa de producto del chat: [producto/asistente-y-chat.md](../producto/asistente-y-chat.md)
+- IA, Vertex (encargado) y consentimiento: [producto/ia-datos-y-privacidad.md](../producto/ia-datos-y-privacidad.md)
 - ADR captura: [decisions/captura-clinica-contratos-yii-vs-yaml.md](../decisions/captura-clinica-contratos-yii-vs-yaml.md)
 - Código: `web/common/components/Platform/Assistant/`

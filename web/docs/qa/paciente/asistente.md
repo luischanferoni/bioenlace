@@ -9,6 +9,8 @@ Si **no tenés permiso**, te lo dice.
 **Catálogo de consultas** (tipos, ejemplo, cobertura y qué no confundir): [asistente-consultas.md](./asistente-consultas.md).  
 WhatsApp (mismo asistente, solo si el paciente escribe primero): [asistente-whatsapp.md](./asistente-whatsapp.md).
 
+**Resumen de historia en el asistente:** en Configuración hay un interruptor (encendido por defecto). Apagado, el chat **sigue** respondiendo y ofreciendo botones; no usa alergias/condiciones/medicación del expediente. Motivos pre-turno y lo que ve el médico **no** cambian. Detalle: [ia-datos-y-privacidad.md](../../producto/ia-datos-y-privacidad.md).
+
 ---
 
 ## Cómo probar

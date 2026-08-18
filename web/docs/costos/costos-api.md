@@ -157,7 +157,7 @@ A **5.000 profesionales**, solo los seis contextos del Apartado 1 (sin §3 ni in
 
 ### Contexto clínico en prompts IA
 
-Implementación: `common/components/Domain/Clinical/AiContext/PatientAiContextBuilder.php` (`patient_ai_context` en `params.php`).
+Implementación: `PatientAiContextBuilder` (`patient_ai_context` en `params.php`). El perfil **conversacional** respeta el interruptor del paciente y solo arma el bloque para la persona de sesión — [ia-datos-y-privacidad.md](../producto/ia-datos-y-privacidad.md).
 
 | Flujo | Perfil | Qué incluye | Tokens input extra (ref.) |
 |-------|--------|-------------|---------------------------|

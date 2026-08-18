@@ -114,6 +114,9 @@ return [
                 'OPTIONS api/<version:\w+>/asistente/estado' => '<version>/chat/estado',
                 'POST api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
                 'OPTIONS api/<version:\w+>/asistente/enviar' => '<version>/chat/recibir',
+                'GET api/<version:\w+>/asistente/preferencias-como-paciente' => '<version>/chat/preferencias-como-paciente',
+                'PUT api/<version:\w+>/asistente/preferencias-como-paciente' => '<version>/chat/actualizar-preferencias-como-paciente',
+                'OPTIONS api/<version:\w+>/asistente/preferencias-como-paciente' => '<version>/chat/preferencias-como-paciente',
 
                 // WhatsApp Cloud API (webhook público; firma Meta).
                 // controllerMap id = whatsapp (WhatsAppWebhookController → whats-app-webhook nativo).

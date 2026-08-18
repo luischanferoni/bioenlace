@@ -92,6 +92,7 @@
 | AST-10 | 🟢 | “La app se cuelga” | Queja; **no** Solicitar Atención |
 | AST-11 | 🟢 | “Quiero vincular a mi hijo” | Tutela (no delegación) |
 | AST-12 | 🟢 | “kiero tno” (ortografía sucia) | Enruta a reserva o desambigua; no error |
+| AST-13 | 🟡 | Configuración: apagar *Resumen de historia en el asistente* y escribir un síntoma | Charla y botón siguen; no asume alergias/medicación del expediente |
 
 → [asistente.md](./asistente.md) · Catálogo completo: [asistente-consultas.md](./asistente-consultas.md)
 

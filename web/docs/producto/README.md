@@ -60,6 +60,7 @@ No es un índice del repositorio ni el manual de un endpoint. Para probar: [qa/]
 |-----------|------|
 | [asistente-y-chat.md](./asistente-y-chat.md) | Conversación y acciones en lenguaje natural |
 | [catalogo-usos-ia.md](./catalogo-usos-ia.md) | Contextos de modelo (telemetría y costos) |
+| [ia-datos-y-privacidad.md](./ia-datos-y-privacidad.md) | Vertex como encargado, extracto de HC y consentimiento del paciente |
 | [agentes-autonomos.md](./agentes-autonomos.md) | Agentes proactivos en producción |
 
 Frases que un paciente podría decir (para probar enrutado): [qa/paciente/asistente-consultas.md](../qa/paciente/asistente-consultas.md).

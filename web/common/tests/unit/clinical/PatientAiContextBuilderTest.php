@@ -99,4 +99,58 @@ class PatientAiContextBuilderTest extends \Codeception\Test\Unit
         verify($block)->stringContainsString('Plan de cuidado indicado');
         verify($block)->stringContainsString('Paracetamol 1 g');
     }
+
+    public function testMayAccessConversationalSoloSiMismoSujeto()
+    {
+        verify(PatientAiContextBuilder::mayAccessSubject(
+            10,
+            PatientAiContextBuilder::PROFILE_CONVERSATIONAL,
+            false,
+            10,
+            99
+        ))->true();
+
+        verify(PatientAiContextBuilder::mayAccessSubject(
+            10,
+            PatientAiContextBuilder::PROFILE_CONVERSATIONAL,
+            false,
+            11,
+            99
+        ))->false();
+
+        verify(PatientAiContextBuilder::mayAccessSubject(
+            10,
+            PatientAiContextBuilder::PROFILE_CONVERSATIONAL,
+            true,
+            0,
+            0
+        ))->false();
+    }
+
+    public function testMayAccessMotivosEnConsolaOStaff()
+    {
+        verify(PatientAiContextBuilder::mayAccessSubject(
+            10,
+            PatientAiContextBuilder::PROFILE_MOTIVOS,
+            true,
+            0,
+            0
+        ))->true();
+
+        verify(PatientAiContextBuilder::mayAccessSubject(
+            10,
+            PatientAiContextBuilder::PROFILE_ENCOUNTER,
+            false,
+            0,
+            5
+        ))->true();
+
+        verify(PatientAiContextBuilder::mayAccessSubject(
+            10,
+            PatientAiContextBuilder::PROFILE_ENCOUNTER,
+            false,
+            0,
+            0
+        ))->false();
+    }
 }

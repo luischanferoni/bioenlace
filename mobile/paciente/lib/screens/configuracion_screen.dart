@@ -112,6 +112,8 @@ class _ConfiguracionScreenState extends State<ConfiguracionScreen> {
         children: [
           CarePlanReminderGlobalSwitch(authToken: widget.authToken),
           BioDivider.subtle(),
+          AssistantHcContextSwitch(authToken: widget.authToken),
+          BioDivider.subtle(),
           ListenableBuilder(
             listenable: PacienteContextScope.instance,
             builder: (context, _) {

@@ -45,6 +45,8 @@ export 'http/bioenlace_http_trace.dart';
 export 'format/datetime_friendly.dart';
 export 'assistant/atajo_shortcut_cards.dart';
 export 'assistant/welcome_shortcuts_panel.dart';
+export 'assistant/assistant_patient_preferences_api.dart';
+export 'assistant/assistant_hc_context_switch.dart';
 export 'clinical/care_pack_navigation.dart';
 export 'clinical/encounter_journey_api.dart';
 export 'clinical/encounter_journey_navigation.dart';

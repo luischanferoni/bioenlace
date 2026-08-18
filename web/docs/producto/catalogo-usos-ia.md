@@ -62,7 +62,7 @@ flowchart LR
 | Reservar turno, menú, wizard | — | No (reglas + `SubIntentEngine`) |
 | Clasificar intent (motor global) | `intent-engine-classification` | Solo si reglas + IA del classifier |
 
-Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md).
+Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · Datos al modelo y consentimiento: [ia-datos-y-privacidad.md](./ia-datos-y-privacidad.md).
 
 **Onboarding y día a día:** en costos se modela como volumen aparte ([costos-api §3](../costos/costos-api.md#3-agente-de-ia-para-onboarding-y-tareas-del-día-a-día)); en código **no hay un contexto dedicado** — las preguntas libres reutilizan el mismo stack del asistente (`asistente-preprocess` y, si aplica, conversacional).
 
@@ -154,6 +154,7 @@ Matriz ahorro / caché: [matriz-casos-uso.md](../costos/estrategias-reduccion/ma
 
 - [apps-paciente-personalsalud.md](./apps-paciente-personalsalud.md) — experiencia global
 - [asistente-y-chat.md](./asistente-y-chat.md) — conversación
+- [ia-datos-y-privacidad.md](./ia-datos-y-privacidad.md) — Vertex / CDPA, extracto de HC, interruptor del paciente
 - [captura-clinica.md](./captura-clinica.md) — dictado médico
 - [costos-api.md § COGS](../costos/costos-api.md#cogs-abreviatura) — definición de costo variable
 - Palancas por contexto (modelo, caché, STT): [proveedor-modelo-tokens.md](../costos/estrategias-reduccion/proveedor-modelo-tokens.md) y [estrategias-reduccion/README.md](../costos/estrategias-reduccion/README.md)

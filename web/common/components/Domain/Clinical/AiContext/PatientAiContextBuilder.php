@@ -8,6 +8,7 @@ use common\components\Domain\Clinical\Enum\RequestStatus;
 use common\components\Domain\Clinical\Service\CarePlanPresentationService;
 use common\components\Domain\Clinical\Service\EncounterLifecycleService;
 use common\components\Domain\Clinical\Service\EpisodeOfCareService;
+use common\components\Domain\Person\Service\PersonaAsistentePreferenciasService;
 use common\models\Clinical\AllergyIntolerance;
 use common\models\Clinical\CarePlan;
 use common\models\Clinical\Encounter;
@@ -79,7 +80,14 @@ final class PatientAiContextBuilder
         ?string $episodeParent = null,
         ?int $episodeParentId = null
     ): string {
-        if ($subjectPersonaId <= 0 || !$this->canAccess($subjectPersonaId)) {
+        if ($subjectPersonaId <= 0 || !$this->canAccess($subjectPersonaId, $profile)) {
+            return '';
+        }
+
+        if (
+            $profile === self::PROFILE_CONVERSATIONAL
+            && !(new PersonaAsistentePreferenciasService())->usaResumenHcEnAsistente($subjectPersonaId)
+        ) {
             return '';
         }
 
@@ -307,19 +315,63 @@ final class PatientAiContextBuilder
         return implode(', ', $parts);
     }
 
-    private function canAccess(int $subjectPersonaId): bool
+    /**
+     * Candado por perfil. Conversacional = solo la persona de sesión.
+     * Motivos/captura: uno mismo, staff con PES, o job de consola (sin sesión web).
+     */
+    public static function mayAccessSubject(
+        int $subjectPersonaId,
+        string $profile,
+        bool $isConsole,
+        int $sessionPersonaId,
+        int $sessionPesId
+    ): bool {
+        if ($subjectPersonaId < 1) {
+            return false;
+        }
+
+        $isSelf = $sessionPersonaId > 0 && $sessionPersonaId === $subjectPersonaId;
+
+        if ($profile === self::PROFILE_CONVERSATIONAL) {
+            return $isSelf;
+        }
+
+        if ($isConsole) {
+            return true;
+        }
+
+        if ($isSelf) {
+            return true;
+        }
+
+        return $sessionPesId > 0;
+    }
+
+    private function canAccess(int $subjectPersonaId, string $profile): bool
     {
-        $sessionPersona = (int) Yii::$app->user->getIdPersona();
-        if ($sessionPersona > 0 && $sessionPersona === $subjectPersonaId) {
-            return true;
+        $isConsole = Yii::$app instanceof \yii\console\Application;
+        $sessionPersona = 0;
+        $sessionPes = 0;
+
+        if (!$isConsole && Yii::$app->has('user', true)) {
+            $user = Yii::$app->user;
+            if ($user !== null && method_exists($user, 'getIsGuest') && !$user->getIsGuest()) {
+                if (method_exists($user, 'getIdPersona')) {
+                    $sessionPersona = (int) $user->getIdPersona();
+                }
+                if (method_exists($user, 'getIdProfesionalEfectorServicio')) {
+                    $sessionPes = (int) $user->getIdProfesionalEfectorServicio();
+                }
+            }
         }
 
-        $idPes = (int) Yii::$app->user->getIdProfesionalEfectorServicio();
-        if ($idPes > 0) {
-            return true;
-        }
-
-        return false;
+        return self::mayAccessSubject(
+            $subjectPersonaId,
+            $profile,
+            $isConsole,
+            $sessionPersona,
+            $sessionPes
+        );
     }
 
     /**

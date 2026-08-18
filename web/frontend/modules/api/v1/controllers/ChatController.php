@@ -3,6 +3,7 @@
 namespace frontend\modules\api\v1\controllers;
 
 use Yii;
+use common\components\Domain\Person\Service\PersonaAsistentePreferenciasService;
 use common\components\Platform\Assistant\Chat\ChatOrchestrator;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Core\Db\BioenlaceDb;
@@ -17,6 +18,8 @@ use common\models\AsistenteInteraccion;
  *   Request: `content`, `action_id`, o modo flow (`intent_id`, `subintent_id`, `draft`, `interaction`).
  *   HTTP 200: payload del sobre (sin wrapper `{ success, message, data }`).
  *   HTTP 400: errores del motor (`success: false` interno, no convertido a sobre).
+ * - GET `asistente/preferencias-como-paciente` — extracto de HC en el chat (sí mismo).
+ * - PUT `asistente/preferencias-como-paciente` — body `usa_resumen_hc_en_asistente`.
  */
 class ChatController extends BaseController
 {
@@ -128,5 +131,60 @@ class ChatController extends BaseController
         }
 
         return $out;
+    }
+
+    /**
+     * GET /api/v1/asistente/preferencias-como-paciente
+     *
+     * @action_name Preferencias del asistente (paciente)
+     * @entity Asistente
+     * @tags paciente, asistente, privacidad
+     */
+    public function actionPreferenciasComoPaciente()
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            return $this->error('Sesión sin persona.', null, 400);
+        }
+
+        return $this->success(
+            (new PersonaAsistentePreferenciasService())->getForPersona($idPersona),
+            'Preferencias del asistente'
+        );
+    }
+
+    /**
+     * PUT /api/v1/asistente/preferencias-como-paciente
+     *
+     * @action_name Actualizar preferencias del asistente (paciente)
+     * @entity Asistente
+     * @tags paciente, asistente, privacidad
+     */
+    public function actionActualizarPreferenciasComoPaciente()
+    {
+        $idPersona = (int) Yii::$app->user->getIdPersona();
+        if ($idPersona <= 0) {
+            return $this->error('Sesión sin persona.', null, 400);
+        }
+
+        $body = Yii::$app->request->getBodyParams();
+        if (empty($body)) {
+            $body = Yii::$app->request->post();
+        }
+        if (!is_array($body)) {
+            return $this->error('Cuerpo JSON inválido', null, 400);
+        }
+
+        try {
+            $data = (new PersonaAsistentePreferenciasService())->saveForPersona($idPersona, $body);
+        } catch (\InvalidArgumentException $e) {
+            return $this->error($e->getMessage(), null, 400);
+        } catch (\RuntimeException $e) {
+            Yii::error('asistente preferencias: ' . $e->getMessage(), 'asistente');
+
+            return $this->error('No se pudieron guardar las preferencias', null, 500);
+        }
+
+        return $this->success($data, 'Preferencias guardadas');
     }
 }

@@ -28,7 +28,7 @@
     <main class="legal-main">
         <div class="container legal-container">
             <header class="legal-header">
-                <p class="legal-eyebrow">Última actualización: 29 de junio de 2026</p>
+                <p class="legal-eyebrow">Última actualización: 18 de agosto de 2026</p>
                 <h1>Política de privacidad</h1>
                 <p class="legal-lead">
                     Esta política describe cómo <strong>Bioenlace</strong> trata los datos personales y de salud
@@ -92,9 +92,15 @@
                         <li>Cumplir obligaciones legales en materia de salud y protección de datos personales.</li>
                     </ul>
                     <p>
-                        El procesamiento con <strong>inteligencia artificial</strong> (clasificación de mensajes, resúmenes clínicos,
-                        transcripción de audio) se realiza para las funciones que ves en la app; no usamos tus datos clínicos
+                        El procesamiento con <strong>inteligencia artificial</strong> (clasificación de mensajes, orientación en el chat,
+                        resúmenes clínicos, transcripción de audio) se realiza para las funciones que ves en la app; no usamos tus datos clínicos
                         para publicidad ni para entrenar modelos de terceros con fines comerciales ajenos al servicio.
+                    </p>
+                    <p>
+                        En el <strong>asistente conversacional</strong>, además de los mensajes de esa charla, podemos enviar al modelo
+                        un extracto acotado de tu historia (alergias, condiciones y medicación registradas) para que la respuesta no las ignore.
+                        Podés desactivar ese extracto en <strong>Configuración → Resumen de historia en el asistente</strong>.
+                        Eso no apaga el chat ni cambia lo que el equipo de salud usa en la consulta (motivos previos al turno y captura clínica).
                     </p>
                 </section>
 
@@ -117,7 +123,13 @@
                     <ul>
                         <li>Infraestructura en nube y bases de datos.</li>
                         <li>Servicios de notificaciones push (Firebase Cloud Messaging).</li>
-                        <li>APIs de inteligencia artificial y transcripción de voz (p. ej. Google Vertex / Gemini, Groq u otros configurados).</li>
+                        <li>
+                            APIs de inteligencia artificial y transcripción de voz (p. ej. <strong>Google Vertex AI / Gemini</strong>, Groq u otros configurados).
+                            Google actúa como <strong>encargado</strong> del tratamiento bajo el contrato de Google Cloud y el
+                            Cloud Data Processing Addendum (CDPA): el modelo se usa para inferencia del servicio.
+                            En Vertex de pago, Google declara que no usa datos del cliente para entrenar o ajustar modelos salvo permiso o instrucción explícita.
+                            El procesamiento puede ocurrir en la región configurada del proyecto (por defecto fuera de Argentina).
+                        </li>
                         <li>Verificación de identidad (Didit u equivalente en el flujo de registro).</li>
                         <li>Videollamada o mensajería, cuando tu institución habilite esas funciones.</li>
                     </ul>

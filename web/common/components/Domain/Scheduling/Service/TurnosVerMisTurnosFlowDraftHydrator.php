@@ -167,7 +167,7 @@ final class TurnosVerMisTurnosFlowDraftHydrator
                 return 'No encuentro un turno anterior en ' . $offerLabel . '.';
             }
 
-            return 'No encuentro un turno anterior para esa mención. Si no aparece en el listado, puede que no haya quedado registrado en la app.';
+            return 'No encontré esa última visita en tus turnos. Si no aparece abajo, puede que no haya quedado registrada en la app.';
         }
         $body = implode("\n", $lines);
         if ($offerMatched) {
@@ -179,8 +179,8 @@ final class TurnosVerMisTurnosFlowDraftHydrator
             return 'La última vez en ' . $donde . ":\n" . $body;
         }
 
-        // Sin cruce: el listado UI JSON es la fuente; no volcar ítems al chat (duplica y en móvil sale en negrita).
-        return 'No pude cruzar esa mención con una oferta del centro. Te muestro tus últimos turnos.';
+        // Sin match de habla→oferta: el listado UI es la fuente; no volcar ítems al chat.
+        return 'No encontré esa última visita. Te muestro tus turnos más recientes, por si la reconocés.';
     }
 
     /**

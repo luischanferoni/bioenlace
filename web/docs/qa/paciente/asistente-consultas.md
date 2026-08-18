@@ -348,7 +348,7 @@ El asistente **interpreta** y abre un flow o una lista; **no** actúa en silenci
 
 | Tipo | Ejemplo | Cobertura | Qué deberías ver |
 |------|---------|-----------|------------------|
-| Última vez en una oferta | *«Decime cuándo fue la última vez que fui al dentista»* | **Hoy** | `turnos.ver-ultimo-en-oferta-como-paciente`. Si cruza la oferta, fecha + profesional; si “dentista” no matchea el nombre (p. ej. el servicio se llama Odontología), lista corta de turnos pasados para que ubiques la línea. **No** inventa la fecha |
+| Última vez en una oferta | *«Decime cuándo fue la última vez que fui al dentista»* | **Hoy** | `turnos.ver-ultimo-en-oferta-como-paciente`. Si cruza la oferta, fecha + profesional; si “dentista” no matchea el nombre (p. ej. el servicio se llama Odontología): *«No encontré esa última visita…»* y lista corta de turnos recientes. **No** inventa la fecha |
 | Misma idea, otra oferta | *«¿Cuándo fui a kinesio?»* | **Hoy** | El mismo intent; kinesio / cardiología / etc. |
 | Nombre de la oferta en el centro | *«Última cita en odontología»* | **Hoy** | Más fácil de cruzar que el coloquial “dentista” |
 | Última atención (resumen clínico) | *«¿Qué me dijo el médico ayer?»* | **Hoy** | `atencion.ver-ultima-como-paciente` — no es “última vez al dentista” |

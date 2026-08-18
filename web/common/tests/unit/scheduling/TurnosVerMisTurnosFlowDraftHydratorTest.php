@@ -44,8 +44,8 @@ class TurnosVerMisTurnosFlowDraftHydratorTest extends \Codeception\Test\Unit
             '',
             ['• Lunes · Clínica']
         );
-        verify($sinMatch)->stringContainsString('No pude cruzar esa mención');
-        verify($sinMatch)->stringContainsString('Te muestro tus últimos turnos');
+        verify($sinMatch)->stringContainsString('No encontré esa última visita');
+        verify($sinMatch)->stringContainsString('turnos más recientes');
         verify(str_contains($sinMatch, 'Lunes · Clínica'))->false();
         verify(str_contains($sinMatch, '•'))->false();
     }

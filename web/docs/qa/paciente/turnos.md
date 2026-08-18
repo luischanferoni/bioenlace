@@ -44,8 +44,12 @@ Escenario completo: [medicina general](../escenarios/ambulatorio/medicina-genera
 
 **Sin cupo**
 
-1. **Vos** seguís el flujo cuando no hay horarios.
-2. **El sistema** ofrece otras fechas, otro profesional o — si aplica — inscripción en lista de espera.
+1. **Vos** seguís el flujo cuando no hay horarios y, si querés, escribís *«No hay turnos, ¿qué hago?»*.
+2. **El sistema** ofrece otras fechas, otro profesional o consulta por mensaje si aplica. **No** inventa horarios ni te anota en una lista de espera.
+3. **Vos** (opcional) *«Avisame cuando haya un hueco»*.
+4. **El sistema** no promete un aviso si no tenés turno. Si **ya tenés uno más adelante**, el hueco se ofrece por **push** (adelantamiento), no por el chat.
+
+Cadena de frases: [asistente-consultas.md](./asistente-consultas.md) (§ Pedir atención).
 
 **Filtro sector / provincia**
 

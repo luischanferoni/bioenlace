@@ -114,10 +114,16 @@ Atajo **Solicitar Atención** (`atencion.necesito-atencion`): malestar nuevo, es
 | Teleconsulta | *«¿Puedo hacerlo por videollamada?»* | **Hoy** | Paso modalidad solo si triage y servicio lo permiten |
 | Consulta por mensaje | *«No puedo ir, ¿le puedo escribir al médico?»* | **Hoy** | Control/Seguimiento o modalidad mensaje; no promete respuesta inmediata |
 | Presencial sí o sí | *«Tiene que ser presencial, no quiero video»* | **Hoy** | Fija presencial |
-| No hay cupo | *«No hay turnos, ¿qué hago?»* | **Hoy** | Mensaje claro; no inventa horarios |
-| Lista de espera | *«Avisame cuando haya un hueco»* | **Futuro** | Hoy puede no existir; no fallar el smoke |
 
-Contexto de provincia/sector: [contexto-registro.md](./contexto-registro.md). Teleconsulta: [teleconsulta-elegibilidad.md](../../producto/teleconsulta-elegibilidad.md). Hub reserva: [medicina-clinica-hub-reserva.md](../../producto/medicina-clinica-hub-reserva.md).
+**1.** enviá · **2.** enviá (no en el mismo mensaje). El 1 asume que ya viste que no hay horarios (en el flow o porque lo decís).
+
+| Tipo | Ejemplo (pegar / enviar) | Cobertura | Qué deberías ver |
+|------|--------------------------|-----------|------------------|
+| No hay cupo | 1. *«No hay turnos, ¿qué hago?»* | **Hoy** | Mensaje claro: otras fechas, otro profesional o consulta por mensaje si aplica. **No** inventa horarios |
+| Aviso cuando se libere | 1. *«No hay turnos, ¿qué hago?»*<br>2. *«Avisame cuando haya un hueco»* | **Hoy** | 1. Igual que arriba. 2. **No** te anota en una lista de espera. Si **ya tenés un turno más adelante**, puede avisarte por **push** para adelantarlo (no por WhatsApp). Si no tenés turno, no promete que te va a llamar cuando se libere uno |
+| Ya tengo turno, quiero más temprano | 1. *«Tengo turno la semana que viene»*<br>2. *«Si se libera uno antes, avisame»* | **Hoy** / **Pantalla** | 1. Lista de pendientes. 2. Explica el adelanto por notificación; no confirma un cupo en el chat. El sí/no del hueco llega en **Alertas** (`TURNO_ADVANCE_OFFER`) |
+
+Contexto de provincia/sector: [contexto-registro.md](./contexto-registro.md). Teleconsulta: [teleconsulta-elegibilidad.md](../../producto/teleconsulta-elegibilidad.md). Hub reserva: [medicina-clinica-hub-reserva.md](../../producto/medicina-clinica-hub-reserva.md). Adelanto cuando otro cancela: [turnos.md](../../producto/turnos.md) (agente A03).
 
 ---
 
@@ -394,6 +400,7 @@ Si el mensaje mezcla temas, gana la **acción explícita** (cancelar, sacar turn
 | *«Solicita un turno para mi dentista»* | Charla empática / Solicitar Atención por síntoma | `turnos.crear-como-paciente` (oferta del centro) |
 | *«Última vez que fui al dentista»* | Extracto de HC / última atención genérica | `turnos.ver-ultimo-en-oferta-como-paciente` |
 | *«Sacalo vos y confirmá»* | Reserva cerrada sin pantallas | Mismo flow; **vos** elegís y confirmás |
+| *«Avisame cuando haya un hueco»* | Lista de espera / “te anoto y te llamo” | Sin cupo: otras fechas o mensaje. Adelanto solo si **ya hay** turno posterior, por **push** |
 
 ---
 

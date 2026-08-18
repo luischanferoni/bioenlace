@@ -32,7 +32,8 @@ Aplica a **web, API, asistente, móvil y jobs** — no solo al asistente SPA.
 
 ## Asistente (casos frecuentes)
 
-- **Flujo conversacional**: `schemas/intents/*.yaml` + `SubIntentEngine`.
+- **Flujo conversacional**: `assistant/intents/{create,read,update,delete}/**/*.yaml` + `SubIntentEngine`.
+- **Lectura genérica** (“cuántos / listar / último X”): métrica DataAccess + YAML en `intents/read/` (`metric_id`, params hidratados). Pantallas que no caben: `intents/read/flows/`. No reabrir `data-access.info|listar` como intents NL.
 - **Enriquecer draft antes del motor**: clave raíz `draft_hydrator` en el YAML → `FlowDraftHydratorService` (no en `ChatOrchestrator`).
 - **Pantallas embebibles**: `views/json/…` + API; clientes consumen JSON genéricamente.
 - **Atajos visibles**: `schemas/assistant-shortcuts.yaml` (ver también [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc)).

@@ -21,6 +21,8 @@ Los endpoints `/api/info`, `/api/listar`, `/api/editar` siguen como **transporte
 - `DataAccessGenericChannelRetirement` — catálogo NL sin `data-access.*` cuando todo migró
 - `IntentMetricIndex`, `IntentEditSurfaceIndex` — enlaces declarativos YAML ↔ métrica/superficie
 
+Layout de intents de lectura: métricas en `assistant/intents/read/`; pantallas/flows en `read/flows/`. Ver [asistente-lectura-data-access.md](../../../../docs/arquitectura/asistente-lectura-data-access.md).
+
 ## Extender un dominio staff
 
 1. Crear intent(s) YAML con `metric_id` o `edit_surface_id`, `domain_operation`, `fields` si aplica.
@@ -38,3 +40,4 @@ Los endpoints `/api/info`, `/api/listar`, `/api/editar` siguen como **transporte
 
 - [rbac-catalogo-permisos.md](../../../../docs/arquitectura/rbac-catalogo-permisos.md)
 - [autorizacion-solo-por-intents.md](../../../../docs/decisions/autorizacion-solo-por-intents.md)
+- [asistente-lectura-data-access.md](../../../../docs/arquitectura/asistente-lectura-data-access.md)

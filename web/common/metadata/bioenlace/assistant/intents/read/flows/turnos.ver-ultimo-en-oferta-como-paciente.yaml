@@ -1,6 +1,9 @@
 intent_id: turnos.ver-ultimo-en-oferta-como-paciente
 version: 1
 
+# Candidato a DataAccess.list (params hidratados: alcance, id_servicio, limit). Hoy usa listado paciente.
+# No es un intent por profesión: la mención coloquial se cruza con la oferta institucional.
+
 action_name: "Última vez en un servicio"
 description: >-
   Consultar el último turno pasado en una oferta del centro (odontología, kinesio, etc.).

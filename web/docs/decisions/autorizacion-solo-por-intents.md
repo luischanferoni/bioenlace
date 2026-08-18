@@ -13,7 +13,7 @@ Eso duplicaba reglas (mismo eje «sobre quién actúo» en YAML, dominio y grant
 
 - **Permiso assignable en admin y RBAC runtime:** solo `intent_id` (y rutas API `/api/...` como enlaces técnicos).
 - **Dominios migrados** (condición laboral, profesionales métricas, agenda PES, identidad staff): intents concretos con `domain_operation`, `fields`, `subject_resolution` y whitelist en servicios de dominio.
-- **Canal genérico `data-access.*`:** retirado del catálogo NL del asistente cuando todas las métricas/superficies tienen intent enlazado; los endpoints `/api/info|listar|editar` permanecen como transporte HTTP para `open_ui` de intents concretos hasta su retiro final.
+- **Canal genérico `data-access.*`:** retirado del catálogo NL del asistente cuando todas las métricas/superficies tienen intent enlazado; los endpoints `/api/info|listar|editar` permanecen como transporte HTTP para `open_ui` de intents concretos hasta su retiro final. Layout: métricas en `intents/read/`; lecturas de producto que aún no son métrica en `intents/read/flows/` — [asistente-lectura-data-access.md](../arquitectura/asistente-lectura-data-access.md).
 - **Grants legacy `Entidad.atributo.*`:** migrar con `catalog-permission/migrate-grants` y eliminar de `auth_item` con `catalog-permission/prune-attributes` (tras backup).
 
 ## Alternativas descartadas

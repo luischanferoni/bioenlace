@@ -20,7 +20,8 @@ Los parches rápidos de routing (boost en PHP, fallback con intent fijo, alias e
 | Vocabulario NL, match rules, score boosts/penalties, fallbacks operativos, `ai_hint` | `SubIntentEngine/schemas/intent-classification-rules.yaml` |
 | Atajos visibles (curación producto) | `SubIntentEngine/schemas/assistant-shortcuts.yaml` |
 | Keywords métricas / edit surfaces / prefill sujeto | `SubIntentEngine/schemas/data-access-config/*.yaml` |
-| Flujos multi-paso | `SubIntentEngine/schemas/intents/*.yaml` |
+| Flujos multi-paso | `assistant/intents/{create,read,update,delete}/**/*.yaml` |
+| Lectura métrica (conteo/listado) | `assistant/intents/read/*.yaml` + `data-access-config` (no intents NL `data-access.*`) |
 | Catálogo `data-access.*` (sin YAML flow) | `Catalog/DataAccessUiActionCatalog.php` + `DataAccessCatalogIntentSupport.php` |
 
 ## Motores (solo interpretan metadata)

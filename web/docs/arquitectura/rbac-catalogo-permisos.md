@@ -41,7 +41,7 @@ rol → encounter.capturar (type 2) → /api/clinical/encounter/captura-guardar 
 
 | Canal | Cadena |
 |-------|--------|
-| Operaciones asistente | `schemas/intents/{create,read,update,delete}/` + `intent-families.yaml` |
+| Operaciones asistente | `assistant/intents/{create,read,update,delete}/` (métricas en `read/`; pantallas en `read/flows/`) + `intent-families.yaml` |
 | UI nativa guardia / encounter / panel | `permission/capabilities/*.yaml` + sync a `auth_item` |
 | CTAs tablero EMER | `ui/home_panel_manifest.yaml` (`capability_id`, exclusiones UX por rol) |
 | Staff métricas / edición (migrado) | Intent con `metric_id` o `edit_surface_id` |
@@ -166,3 +166,4 @@ web/common/metadata/bioenlace/
 
 - [autorizacion-solo-por-intents.md](../decisions/autorizacion-solo-por-intents.md) — intents como permiso assignable base
 - [autorizacion-capabilities-ui-nativa.md](../decisions/autorizacion-capabilities-ui-nativa.md) — capabilities para UIs nativas
+- [asistente-lectura-data-access.md](./asistente-lectura-data-access.md) — lecturas: motor DataAccess + RBAC por intent

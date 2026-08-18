@@ -1,0 +1,27 @@
+---
+description: Lecturas del asistente — motor DataAccess + RBAC por intent; flows aparte
+globs: web/common/metadata/bioenlace/assistant/intents/read/**,web/common/components/Platform/Core/DataAccess/**,web/common/components/Platform/Assistant/Catalog/IntentSchemaPaths.php
+alwaysApply: false
+---
+
+# Asistente: lecturas genéricas
+
+`intents/read/` es un **motor de consulta**: `intent_id` (RBAC) + params hidratados + DataAccess. No un cajón de pantallas.
+
+## Preferir
+
+- Pregunta “cuántos / listar / último X”: métrica en `data-access-config` + YAML en `read/` con `metric_id` y `open_ui` `data-access.info` o `data-access.listar`.
+- Filtros (efector, `id_servicio` institucional, alcance, límite) en draft / `draft_hydrator`, no `if (intent_id)` en orquestadores.
+
+## No
+
+- Reintroducir `data-access.info` | `data-access.listar` como intents NL (ADR `autorizacion-solo-por-intents`).
+- Borrar las puertas `profesionales.*` que ya envuelven métricas: **son** el motor, no duplicados a eliminar.
+- Intent one-off que duplica un `metric_id` existente.
+- Modelar actos o profesiones como filas de `servicios` (filtro = oferta del centro).
+
+## Si no cabe
+
+Wizard, tablero, listado de producto sin métrica → `intents/read/flows/`. Documentar si es candidato a métrica.
+
+Docs: `web/docs/arquitectura/asistente-lectura-data-access.md`, `web/docs/producto/asistente-y-chat.md`.

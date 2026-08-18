@@ -79,5 +79,6 @@ Extensiones **no comprometidas** (sin mezclar con lo que ya corre): [ideas-a-fut
 ## Otros mapas
 
 - [Arquitectura del asistente](../arquitectura/asistente-motores.md)
+- [Lecturas del asistente](../arquitectura/asistente-lectura-data-access.md)
 - [Madurez HIS](../his-completo/README.md)
 - [Costos IA/infra](../costos/README.md)

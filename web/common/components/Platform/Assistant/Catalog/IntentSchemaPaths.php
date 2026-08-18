@@ -7,7 +7,8 @@ use common\components\Platform\Core\Product\ProductMetadataPaths;
 /**
  * Rutas y resolución de manifiestos YAML de intents (`metadata/.../assistant/intents/`).
  *
- * Soporta layout plano (`<intent_id>.yaml`) y subcarpetas CRUD (`create/`, `read/`, `update/`, `delete/`).
+ * Soporta layout plano (`<intent_id>.yaml`), subcarpetas CRUD (`create/`, `read/`, `update/`, `delete/`)
+ * y anidamiento bajo esas categorías (`read/flows/…`). La categoría es el primer segmento bajo `intents/`.
  */
 final class IntentSchemaPaths
 {
@@ -48,13 +49,25 @@ final class IntentSchemaPaths
             if (!is_dir($subdir)) {
                 continue;
             }
-            $nested = glob($subdir . DIRECTORY_SEPARATOR . '*.yaml') ?: [];
-            $files = array_merge($files, $nested);
+            $files = array_merge($files, self::collectYamlRecursive($subdir));
         }
 
         sort($files);
 
         return array_values(array_filter($files, static fn (string $p): bool => is_file($p)));
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function collectYamlRecursive(string $dir): array
+    {
+        $files = glob($dir . DIRECTORY_SEPARATOR . '*.yaml') ?: [];
+        foreach (glob($dir . DIRECTORY_SEPARATOR . '*', GLOB_ONLYDIR) ?: [] as $child) {
+            $files = array_merge($files, self::collectYamlRecursive($child));
+        }
+
+        return $files;
     }
 
     /**
@@ -76,7 +89,8 @@ final class IntentSchemaPaths
     }
 
     /**
-     * Categoría CRUD inferida desde la carpeta del archivo, o null si está en la raíz.
+     * Categoría CRUD: primer segmento bajo `intents/` (`read/flows/x.yaml` → `read`).
+     * Null si el YAML está en la raíz de `intents/`.
      */
     public static function categoryForIntentId(string $intentId): ?string
     {
@@ -94,13 +108,23 @@ final class IntentSchemaPaths
         if ($base === false) {
             return null;
         }
-        $dir = dirname(realpath($absolutePath) ?: $absolutePath);
-        $category = basename($dir);
-        if ($dir === $base || !in_array($category, self::CATEGORIES, true)) {
+        $resolved = realpath($absolutePath);
+        if ($resolved === false) {
+            $resolved = $absolutePath;
+        }
+        $baseNorm = rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $base), DIRECTORY_SEPARATOR);
+        $pathNorm = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $resolved);
+        $prefix = $baseNorm . DIRECTORY_SEPARATOR;
+        if (stripos($pathNorm, $prefix) !== 0) {
+            return null;
+        }
+        $relative = substr($pathNorm, strlen($prefix));
+        $first = explode(DIRECTORY_SEPARATOR, $relative)[0] ?? '';
+        if ($first === '' || !in_array($first, self::CATEGORIES, true)) {
             return null;
         }
 
-        return $category;
+        return $first;
     }
 
     /**

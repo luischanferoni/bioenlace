@@ -92,7 +92,7 @@ Solo deben usarse las siguientes propiedades en cada ítem. Cualquier otra clave
 | `assistant_text` | Texto guía para prompt / UI de pasos. |
 | `requires` | Lista de campos requeridos en el draft, forma `draft.<clave>` o `<clave>` según el YAML (el motor normaliza internamente). |
 | `provides` | Lista de claves que completa la mini-UI de este paso al confirmar selección (o que el POST de una pantalla previa escribe en `draft` vía `data` del cliente). |
-| `review_prefilled` | Si es `true`, un paso con `open_ui` se muestra una vez aunque `provides` ya venga completo por enlace o hydrator. El valor se presenta preseleccionado y la confirmación del mismo `subintent_id` permite avanzar. |
+| `review_prefilled` | Si es `true`, un paso con `open_ui` se muestra al **llegar desde el paso anterior** aunque `provides` ya venga completo por enlace o hydrator (chips preseleccionadas). No retiene el paso en el que **empezó** este `process()` (confirmación, primer ingreso o rewind sin `subintent_id`). No usarlo en el primer subintent del YAML: choca con rewind/`subintent_id` vacío. |
 | `next` | Id del siguiente subintent, o cadena vacía `""` si no hay siguiente paso lineal. |
 | `next_routing` | Alternativa a `next`: lista de ramas `{ when, next }` (ver motor: `draft_equals`, `default`). |
 | `open_ui` | Objeto **picker / pantalla embebible** vía catálogo: `action_id`, `params` (valores `draft.*`), `pass_content_as_query` opcional. |

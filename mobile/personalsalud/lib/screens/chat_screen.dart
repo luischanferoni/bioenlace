@@ -900,14 +900,31 @@ class ChatScreenState extends State<ChatScreen> {
     return null;
   }
 
+  String? _subintentIdFromFlowMessage(Map<String, dynamic> message) {
+    final fm = message['flow_manifest'];
+    if (fm is! Map) {
+      return null;
+    }
+    final active = fm['active_subintent_id']?.toString().trim();
+    if (active != null && active.isNotEmpty) {
+      return active;
+    }
+    final step = fm['active_step'];
+    if (step is Map) {
+      final id = step['id']?.toString().trim();
+      if (id != null && id.isNotEmpty) {
+        return id;
+      }
+    }
+    return null;
+  }
+
   /// Cambio 1: al tocar un list de un paso anterior, se eliminan los mensajes
   /// posteriores del mismo flow y se limpian las keys del draft que esos pasos
   /// proveyeron (`flow_provides`). Luego el motor recalcula desde el paso editado.
   ///
-  /// Importante: resetea también `_subintentId` (y el del service). Si no, el
-  /// próximo `procesarInteraccion('')` mandaría el `subintent_id` del último paso
-  /// que el cliente vió (p. ej. `elegir-slot`) y el motor intentaría retomar desde
-  /// ahí con un draft incompleto, en vez de recalcular desde el primer paso.
+  /// El próximo POST debe llevar el `subintent_id` del paso re-elegido (como la SPA).
+  /// Si se manda vacío, `review_prefilled` del primer paso puede re-mostrar Motivo.
   void _truncateFlowAfter(int messageIndex) {
     if (messageIndex < 0 || messageIndex >= _chatHistory.length - 1) return;
     final activeIntent = _intentId;
@@ -940,10 +957,12 @@ class ChatScreenState extends State<ChatScreen> {
       _flowSnapshot.remove(k);
     }
     _asistenteService.draft = Map<String, dynamic>.from(_draft);
-    // Reset del subintent activo: el motor empezará desde subintents[0] y avanzará
-    // según el draft (que ahora refleja sólo lo que el usuario ya eligió).
-    _subintentId = null;
-    _asistenteService.currentSubintentId = null;
+    String? rewindId;
+    if (messageIndex >= 0 && messageIndex < _chatHistory.length) {
+      rewindId = _subintentIdFromFlowMessage(_chatHistory[messageIndex]);
+    }
+    _subintentId = rewindId;
+    _asistenteService.currentSubintentId = rewindId;
     _lastFlowAutoPickKey = null;
     if (messageIndex >= 0 && messageIndex < _chatHistory.length) {
       final m = _chatHistory[messageIndex];

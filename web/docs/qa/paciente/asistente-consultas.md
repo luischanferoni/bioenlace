@@ -100,7 +100,7 @@ Atajo **Solicitar Atención** (`atencion.necesito-atencion`): malestar nuevo, es
 |------|---------|-----------|------------------|
 | Malestar nuevo, genérico | *«Necesito atención, me siento mal»* | **Hoy** | Solicitar Atención → malestar |
 | Malestar + zona | *«Me duele la panza del lado derecho»* | **Hoy** | Malestar → zona / detalle |
-| Estudio / práctica | *«Necesito una ecografía»* / *«turno para mamografía»* / *«kinesio»* | **Hoy** | Abre **Solicitar Atención** (no charla + botón). Motivo y acto preseleccionados (chips en español). Confirmar y seguir a modalidad / oferta del centro |
+| Estudio / práctica | *«Necesito una ecografía»* / *«turno para mamografía»* / *«kinesio»* | **Hoy** | Abre **Solicitar Atención** (no charla + botón) en **Estudio o práctica** con el acto en español ya marcado (p. ej. Ecografía). Confirmar y seguir a modalidad / oferta del centro. No debe volver a Motivo al confirmar. |
 | Laboratorio como acto | *«Quiero sacar turno para análisis de sangre»* | **Hoy** | Estudio/práctica, no el listado de resultados |
 | Control / seguimiento | *«Tengo que controlar la diabetes»* | **Hoy** | Hub Control/Seguimiento |
 | Control por edad/sexo | *«¿Me toca alguna vacuna?»* / *«control ginecológico»* | **Hoy** | Hub: control recomendado si aplica |

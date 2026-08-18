@@ -128,6 +128,9 @@ class ConsultasSeguimientoFlowYamlTest extends Unit
 
         $this->assertArrayHasKey('cs_select_care_plan', $byId);
         $this->assertTrue($byId['cs_select_care_plan']['review_prefilled'] ?? false);
+        $this->assertArrayHasKey('triage_raiz', $byId);
+        $this->assertFalse($byId['triage_raiz']['review_prefilled'] ?? false);
+        $this->assertTrue($byId['select_pedido_acto']['review_prefilled'] ?? false);
         $this->assertArrayHasKey('cs_select_medicamentos', $byId);
         $this->assertArrayHasKey('cs_captura_ajuste_motivo', $byId);
 

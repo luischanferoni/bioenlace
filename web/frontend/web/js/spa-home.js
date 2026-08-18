@@ -3539,7 +3539,7 @@
                     clearFlowStepUiFromIndex(flowRow, pickedStepIdx + 1);
                     clearFlowUiCacheForRow(flowRow);
                 }
-                if (pickedStepIdx < activeIdx && currentFlowManifest) {
+                if (pickedStepIdx <= activeIdx && currentFlowManifest) {
                     const rewindSteps = Array.isArray(currentFlowManifest.steps) ? currentFlowManifest.steps : [];
                     const rewindStep = rewindSteps[pickedStepIdx];
                     if (rewindStep && rewindStep.id != null) {

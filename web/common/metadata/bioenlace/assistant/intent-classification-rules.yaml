@@ -21,7 +21,9 @@ vocab:
   list_phrases:
     - profesionales del centro
     - medicos del centro
-  clinical_symptoms: '\b(problema|dolor|duele|sintoma|síntoma|malestar|enfermo|fiebre|tos|nausea|náusea|vomito|vómito|mareo|hinchazon|hinchazón|presion|presión|diabetes|hipertension|hipertensión|chichon|chichón|golpe|hematoma|moreton|moretón|bulto|hinchado|inflamado|cabeza|manos|pies|brazo|pierna|herida|sangra|sangrado)\b'
+  # Match sobre mensaje ya en minúsculas y sin tildes.
+  clinical_symptoms: '\b(problema|dolor|duele|sintoma|malestar|enfermo|fiebre|tos|nausea|vomito|mareo|hinchazon|hincho|hinchado|inflamado|presion|diabetes|hipertension|chichon|golpe|hematoma|moreton|bulto|herida|sangra|sangro|sangrado|pinchazo|punzada|ardor|arde|picazon|comezon|ahogo|asfixia|palpitacion|sudor|suda|ansioso|ansiedad|insomnio|lastim|molestia|respiro|respirar|respiracion)\b|falta.{0,24}aire|no puedo dormir|me siento mal'
+  clinical_body_parts: '\b(cabeza|cuello|garganta|oido|oidos|ojo|ojos|nariz|pecho|torax|corazon|pulmon|abdomen|panza|estomago|barriga|espalda|brazo|brazos|mano|manos|hombro|codo|muneca|pierna|piernas|pie|pies|rodilla|tobillo|cadera|diente|dientes|muela|piel|cuerpo)\b'
   scheduling_ops: '\b(turno|turnos|reservar|sacar turno|cancelar turno|cancelar|agenda|cita|reprogramar|sobreturno)\b'
   turnos_anteriores_topics: '\b(turnos?\s+anteriores|turnos?\s+pasados|historial\s+de\s+turnos|citas?\s+anteriores|citas?\s+pasadas|turnos?\s+que\s+tuve|mis\s+turnos\s+pasados)\b'
   paciente_mis_turnos_phrases:
@@ -193,7 +195,7 @@ match_rules:
     forbid_any: [scheduling_ops]
 
   clinical_symptom:
-    require_any: [clinical_symptoms]
+    require_any: [clinical_symptoms, clinical_body_parts]
 
   scheduling_operational:
     require_any: [scheduling_ops]

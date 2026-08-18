@@ -97,6 +97,18 @@ class IntentClassificationRulesServiceTest extends Unit
     public function testClinicalSymptomRuleMatches(): void
     {
         $this->assertTrue(IntentClassificationRulesService::isClinicalSymptomContent('me duele la cabeza'));
+        $this->assertTrue(IntentClassificationRulesService::isClinicalSymptomContent(
+            'Tengo un pinchazo en el pecho cuando respiro'
+        ));
+        $this->assertTrue(IntentClassificationRulesService::isClinicalSymptomContent(
+            'Me falta el aire y me suda el pecho'
+        ));
+        $this->assertTrue(IntentClassificationRulesService::isClinicalSymptomContent(
+            'Me caí de la bici y se me hinchó el tobillo'
+        ));
+        $this->assertTrue(IntentClassificationRulesService::isClinicalSymptomContent(
+            'Estoy muy ansioso y no puedo dormir'
+        ));
         $this->assertFalse(IntentClassificationRulesService::isClinicalSymptomContent('quiero un turno'));
     }
 

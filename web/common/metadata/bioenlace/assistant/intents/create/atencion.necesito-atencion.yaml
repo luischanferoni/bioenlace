@@ -453,7 +453,7 @@ subintents:
       id_profesional_efector_servicio: draft.id_profesional_efector_servicio
       fecha: draft.fecha_turno
 - id: select_dia_teleconsulta
-  assistant_text: Día
+  assistant_text: "Día (teleconsulta con Medicina General)"
   requires:
   - draft.tipo_atencion
   provides:
@@ -467,7 +467,7 @@ subintents:
       triage_zona: draft.triage_zona
       care_plan_id: draft.care_plan_id
 - id: select_slot_teleconsulta
-  assistant_text: Horario
+  assistant_text: "Horario (teleconsulta con Medicina General)"
   requires:
   - draft.tipo_atencion
   - draft.fecha_turno
@@ -741,7 +741,7 @@ subintents:
       id_profesional_efector_servicio: draft.id_profesional_efector_servicio
       fecha: draft.fecha_turno
 - id: cs_select_dia_teleconsulta
-  assistant_text: Día
+  assistant_text: "Día (teleconsulta con Medicina General)"
   requires:
   - draft.tipo_atencion
   - draft.care_plan_id
@@ -754,7 +754,7 @@ subintents:
       reserva_modo: teleconsulta_hub
       care_plan_id: draft.care_plan_id
 - id: cs_select_slot_teleconsulta
-  assistant_text: Horario
+  assistant_text: "Horario (teleconsulta con Medicina General)"
   requires:
   - draft.tipo_atencion
   - draft.fecha_turno

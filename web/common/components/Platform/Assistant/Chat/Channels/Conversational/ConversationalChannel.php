@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\Chat\Channels\Conversational;
 
 use common\components\Ai\IAManager;
+use common\components\Domain\Content\Service\InfoContentAssistantService;
 use common\components\Platform\Assistant\Chat\Conversational\ConversationalChannelProviderRegistry;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
@@ -111,6 +112,18 @@ final class ConversationalChannel
         $content = trim($content);
         if ($content === '') {
             return AssistantEnvelope::message('');
+        }
+
+        $idEfector = null;
+        try {
+            $id = Yii::$app->user->getIdEfector();
+            $idEfector = $id > 0 ? (int) $id : null;
+        } catch (\Throwable $e) {
+        }
+
+        $infoArticle = InfoContentAssistantService::tryResolveFromText($content, $userId, $idEfector);
+        if ($infoArticle !== null) {
+            return $infoArticle;
         }
 
         $history = ConversationalHistoryWindow::formatForPrompt($userId, $content);

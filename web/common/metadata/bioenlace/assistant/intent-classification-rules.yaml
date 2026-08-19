@@ -694,7 +694,7 @@ chat_preprocess:
     rules:
       - 'user_goal operational si pide una acción del sistema (sacar/reservar/solicitar/cancelar turno, agenda), un estudio o práctica concreto (ecografía, mamografía, laboratorio, kinesio) o consulta datos propios resolubles (mis turnos, última vez en una oferta del centro, listados).'
       - 'conversational si hay saludo, síntomas, lesiones, malestar o charla clínica — aunque también pregunten hospital cerca, dónde atenderse o qué servicio conviene. Eso NO es operational: primero orientación + oferta; no abras un flow. Pedir un estudio/práctica concreto SÍ es operational.'
-      - 'informational solo si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones; no usar informational para síntomas, quejas clínicas ni consultas de plantilla/conteo de profesionales del efector.'
+      - 'informational si pregunta qué puede hacer la app, pide ayuda/menú o lista de opciones, o hace una consulta genérica sobre cómo funciona algo del sistema (qué es la teleconsulta, cómo saco turno, qué es representación/tutela, cómo vinculo a mi hijo). No usar informational para síntomas, quejas clínicas ni consultas de plantilla/conteo de profesionales del efector.'
       - 'No uses category servicio para síntomas, partes del cuerpo ni malestar; esas menciones van solo en normalized_text.'
       - 'meta: preguntas sobre el asistente o la app (no operativas).'
       - 'normalized_text: corregí ortografía y expandí abreviaturas clínicas comunes; conservá síntomas y el sentido completo del mensaje (no borres el malestar si también pide cercanía).'

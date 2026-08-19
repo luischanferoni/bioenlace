@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Informational;
 
+use common\components\Domain\Content\Service\InfoContentAssistantService;
 use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
@@ -9,7 +10,7 @@ use common\components\Platform\Assistant\IntentEngine\IntentEngine;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 
 /**
- * Canal informativo / meta: listar capacidades o mensaje guía.
+ * Canal informativo / meta: listar capacidades, contenido editorial o mensaje guía.
  */
 final class InformationalChannel
 {
@@ -20,6 +21,16 @@ final class InformationalChannel
     {
         if (IntentEngine::isListAllQueryPublic($content)) {
             return self::finalize(IntentEngine::processQuery($content, $userId, null));
+        }
+
+        $infoArticle = InfoContentAssistantService::tryResolveFromText(
+            $content,
+            $userId,
+            self::currentIdEfector(),
+            null
+        );
+        if ($infoArticle !== null) {
+            return $infoArticle;
         }
 
         if (!self::isCapabilityMenuQuery($content)) {
@@ -51,6 +62,17 @@ final class InformationalChannel
     public static function isCapabilityMenuQuery(string $content): bool
     {
         return IntentClassificationRulesService::isCapabilityMenuQuery($content);
+    }
+
+    private static function currentIdEfector(): ?int
+    {
+        try {
+            $id = \Yii::$app->user->getIdEfector();
+
+            return $id > 0 ? (int) $id : null;
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 
     /**

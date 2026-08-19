@@ -173,9 +173,9 @@ final class TeleconsultaElegibilidadService
             return self::ELEG_PRESENCIAL_PREFERIDO;
         }
 
-        $eleg = ReservaTriageTeleconsultaElegibilidad::elegibilidadParaCodigos(
-            $this->codigosCasoDesdeDraft($draft)
-        );
+        $codigos = $this->codigosCasoDesdeDraft($draft);
+
+        $eleg = ReservaTriageTeleconsultaElegibilidad::elegibilidadParaCodigos($codigos);
         if ($eleg !== null && in_array($eleg, [
             self::ELEG_EXCLUIDO,
             self::ELEG_PRESENCIAL_PREFERIDO,
@@ -183,6 +183,11 @@ final class TeleconsultaElegibilidadService
             self::ELEG_SUGERIDO,
         ], true)) {
             return $eleg;
+        }
+
+        $catalogEleg = $this->elegibilidadDesdeCatalogo($codigos);
+        if ($catalogEleg !== null) {
+            return $catalogEleg;
         }
 
         return self::ELEG_PERMITIDO;
@@ -320,6 +325,33 @@ final class TeleconsultaElegibilidadService
         );
 
         return $pendientes !== [];
+    }
+
+    /**
+     * Fallback: lee `teleconsulta_elegibilidad` declarada en nodos del catálogo YAML.
+     *
+     * @param list<string> $codigos
+     */
+    private function elegibilidadDesdeCatalogo(array $codigos): ?string
+    {
+        $catalog = new ReservaTurnoTriageCatalogService();
+        foreach ($codigos as $codigo) {
+            $node = $catalog->findNode($codigo);
+            if ($node === null) {
+                continue;
+            }
+            $eleg = trim((string) ($node['teleconsulta_elegibilidad'] ?? ''));
+            if ($eleg !== '' && in_array($eleg, [
+                self::ELEG_EXCLUIDO,
+                self::ELEG_PRESENCIAL_PREFERIDO,
+                self::ELEG_PERMITIDO,
+                self::ELEG_SUGERIDO,
+            ], true)) {
+                return $eleg;
+            }
+        }
+
+        return null;
     }
 
     private static function normalizarPolitica(string $raw): string

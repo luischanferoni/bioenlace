@@ -92,22 +92,27 @@ nodes:
     step: zona
     parent: malestar_nuevo
     label: "Panza, digestión o náuseas"
+    teleconsulta_elegibilidad: presencial_preferido
   - code: zona_musculoesqueletico
     step: zona
     parent: malestar_nuevo
     label: "Espalda, huesos, músculos o articulaciones"
+    teleconsulta_elegibilidad: presencial_preferido
   - code: zona_piel
     step: zona
     parent: malestar_nuevo
     label: "Piel (sarpullido, herida, etc.)"
+    teleconsulta_elegibilidad: presencial_preferido
   - code: zona_sistemas
     step: zona
     parent: malestar_nuevo
     label: "Ojos, boca o dientes"
+    teleconsulta_elegibilidad: presencial_preferido
   - code: zona_genitourinario
     step: zona
     parent: malestar_nuevo
     label: "Ginecológico, embarazo o urinario"
+    teleconsulta_elegibilidad: presencial_preferido
   - code: zona_general
     step: zona
     parent: malestar_nuevo

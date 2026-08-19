@@ -102,7 +102,8 @@ Atajo **Solicitar Atención** (`atencion.necesito-atencion`): malestar nuevo, es
 | Tipo | Ejemplo | Cobertura | Qué deberías ver |
 |------|---------|-----------|------------------|
 | Malestar nuevo, genérico | *«Necesito atención, me siento mal»* | **Hoy** | Solicitar Atención → malestar |
-| Malestar + zona | *«Me duele la panza del lado derecho»* | **Hoy** | Malestar → zona / detalle |
+| Malestar + zona | *«Me duele la panza del lado derecho»* | **Hoy** | Malestar → sistema corporal (digestión) → modalidad → servicio filtrado |
+| Embarazo / ginecológico | *«Estoy de 20 semanas y sangro un poco»* | **Hoy** | Charla + Solicitar Atención → malestar → **Ginecológico, embarazo o urinario** → ginecología/obstetricia (o Med General si no hay turnos) |
 | Estudio / práctica | *«Necesito una ecografía»* / *«turno para mamografía»* / *«kinesio»* | **Hoy** | Abre **Solicitar Atención** (no charla + botón). **Motivo** con Estudio o práctica preseleccionado → avanza solo a **Estudio o práctica** (Ecografía en español) → modalidad / oferta del centro |
 | Laboratorio como acto | *«Quiero sacar turno para análisis de sangre»* | **Hoy** | Estudio/práctica, no el listado de resultados |
 | Control / seguimiento | *«Tengo que controlar la diabetes»* | **Hoy** | Hub Control/Seguimiento |

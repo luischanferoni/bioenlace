@@ -13,7 +13,7 @@ steps:
     title: "¿Qué tipo de urgencia es?"
     draft_field: triage_alarmas
   zona:
-    title: "¿Dónde o qué área te molesta?"
+    title: "¿Qué tipo de malestar es?"
     draft_field: triage_zona
 
 nodes:
@@ -79,23 +79,23 @@ nodes:
     urgency_band: A
     halts_booking: true
 
-  # --- Zona (malestar nuevo → filtra servicios) ---
+  # --- Zona / sistema corporal (malestar nuevo → filtra servicios) ---
   - code: zona_cabeza_cuello
     step: zona
     parent: malestar_nuevo
-    label: "Cabeza o cuello"
+    label: "Cabeza, cuello o mareos"
   - code: zona_pecho
     step: zona
     parent: malestar_nuevo
-    label: "Pecho o respiración"
+    label: "Pecho, corazón o respiración"
   - code: zona_abdomen
     step: zona
     parent: malestar_nuevo
-    label: "Panza (abdomen)"
-  - code: zona_espalda
+    label: "Panza, digestión o náuseas"
+  - code: zona_musculoesqueletico
     step: zona
     parent: malestar_nuevo
-    label: "Espalda o musculatura"
+    label: "Espalda, huesos, músculos o articulaciones"
   - code: zona_piel
     step: zona
     parent: malestar_nuevo
@@ -103,4 +103,12 @@ nodes:
   - code: zona_sistemas
     step: zona
     parent: malestar_nuevo
-    label: "Ojos, boca/dientes u otro"
+    label: "Ojos, boca o dientes"
+  - code: zona_genitourinario
+    step: zona
+    parent: malestar_nuevo
+    label: "Ginecológico, embarazo o urinario"
+  - code: zona_general
+    step: zona
+    parent: malestar_nuevo
+    label: "Síntoma general (fiebre, cansancio u otro)"

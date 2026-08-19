@@ -22,12 +22,12 @@ class ReservaTriageServicioSugeridoServiceTest extends Unit
         $this->assertNotNull($res->mensaje_orientacion);
     }
 
-    public function testTraumatologiaDesdeEspaldaSinAutogestionDirecta(): void
+    public function testTraumatologiaDesdeMusculoesqueleticoSinAutogestionDirecta(): void
     {
         $resolver = new ReservaTriageServicioRolResolver();
         $res = $resolver->resolveDesdeDraft([
             'triage_raiz' => 'malestar_nuevo',
-            'triage_zona' => 'zona_espalda',
+            'triage_zona' => 'zona_musculoesqueletico',
         ]);
         $this->assertFalse($res->autogestion_disponible);
     }

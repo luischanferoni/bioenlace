@@ -13,9 +13,10 @@ class m260819_120000_reserva_triage_zona_fallback_clinica extends Migration
     /** @var list<string> */
     private const ZONAS = [
         'zona_abdomen',
-        'zona_espalda',
+        'zona_musculoesqueletico',
         'zona_piel',
         'zona_sistemas',
+        'zona_genitourinario',
     ];
 
     public function safeUp(): void

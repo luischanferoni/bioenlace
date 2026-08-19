@@ -21,7 +21,7 @@ La puerta de producto es [Solicitar Atención](./solicitar-atencion.md). Este do
 | Motivo raíz | Malestar nuevo, Control/Seguimiento, Urgencia (y estudio/práctica en Solicitar Atención) |
 | Hub control | Solo Control/Seguimiento — [consultas-seguimiento.md](./consultas-seguimiento.md) |
 | Alarmas | Si banda A → pantalla 107 / guardia, sin cupo |
-| Zona, detalle, evolución | Según el malestar |
+| Zona, detalle, evolución | Según el malestar; ocho sistemas corporales (cabeza, pecho, digestión, musculoesquelético, piel, ojos/boca, genitourinario, general) |
 | Servicio del centro | Oferta institucional; en ambulatorio suele ser medicina clínica — [medicina-clinica-hub-reserva.md](./medicina-clinica-hub-reserva.md) |
 | Modalidad | Solo si el servicio y el triage permiten remoto — [teleconsulta-elegibilidad.md](./teleconsulta-elegibilidad.md) |
 | Centro → profesional → horario | Igual que la reserva de agenda |

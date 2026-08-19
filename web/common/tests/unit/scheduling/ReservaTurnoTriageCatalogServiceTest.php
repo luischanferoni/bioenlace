@@ -65,4 +65,16 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
         $this->assertSame('Control/Seguimiento', $byCode['seguimiento_cronico']['label'] ?? null);
         $this->assertSame('Estudio o práctica', $byCode['estudio_pedido']['label'] ?? null);
     }
+
+    public function testZonaListaSistemasCorporales(): void
+    {
+        $svc = new ReservaTurnoTriageCatalogService();
+        $options = $svc->getOptionsForStep('zona', 'malestar_nuevo');
+        $codes = array_column($options, 'code');
+        $this->assertContains('zona_genitourinario', $codes);
+        $this->assertContains('zona_general', $codes);
+        $this->assertContains('zona_musculoesqueletico', $codes);
+        $this->assertNotContains('zona_espalda', $codes);
+        $this->assertCount(8, $codes);
+    }
 }

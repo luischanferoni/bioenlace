@@ -12,12 +12,29 @@ En este flujo, **servicio** = oferta de salud del **centro** (área agendable), 
 
 | Motivo (UI) | Código | Qué sigue |
 |-------------|--------|-----------|
-| **Malestar nuevo** | `malestar_nuevo` | Zona → modalidad → **servicio del centro** → agenda |
+| **Malestar nuevo** | `malestar_nuevo` | Sistema corporal (zona) → modalidad → **servicio del centro** → agenda |
 | **Estudio o práctica** | `estudio_pedido` | **Acto** clínico (SNOMED) → turno **presencial** en el centro (sin videollamada) → servicio(s) con agenda |
 | **Control/Seguimiento** | `seguimiento_cronico` | **Hub** de anclas (tratamiento, condición, protocolo, consulta general/previa, control general) |
 | **Urgencia** | `urgencia` | Categoría de alarma → si banda A, **no** reserva en app (derivación 107 / guardia) |
 
 Catálogo: `Scheduling/metadata/reserva_triage_catalog_v1.yaml`. Flujo: `intents/create/atencion.necesito-atencion.yaml`. Pedido servicio×acto: [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
+
+### Sistemas corporales (malestar nuevo)
+
+Tras elegir **Malestar nuevo**, el paciente indica el **tipo de malestar** (no un órgano aislado). Ocho opciones, alineadas al Review of Systems:
+
+| Opción (UI) | Código | Servicio(s) sugerido(s) |
+|-------------|--------|-------------------------|
+| Cabeza, cuello o mareos | `zona_cabeza_cuello` | Med General |
+| Pecho, corazón o respiración | `zona_pecho` | Med General |
+| Panza, digestión o náuseas | `zona_abdomen` | Gastroenterología (+ Med General fallback) |
+| Espalda, huesos, músculos o articulaciones | `zona_musculoesqueletico` | Traumatología (+ Med General fallback) |
+| Piel | `zona_piel` | Dermatología (+ Med General fallback) |
+| Ojos, boca o dientes | `zona_sistemas` | Oftalmología / Odontología (+ Med General fallback) |
+| Ginecológico, embarazo o urinario | `zona_genitourinario` | Ginecología / Obstetricia (+ Med General fallback) |
+| Síntoma general (fiebre, cansancio u otro) | `zona_general` | Med General |
+
+Mapeo en BD: `reserva_triage_codigo_servicio`. El código legacy `zona_espalda` sigue resolviendo en drafts antiguos.
 
 ## Hub Control/Seguimiento
 

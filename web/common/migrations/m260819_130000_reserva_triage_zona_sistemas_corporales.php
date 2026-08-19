@@ -12,6 +12,16 @@ class m260819_130000_reserva_triage_zona_sistemas_corporales extends Migration
 {
     private const TABLE = '{{%reserva_triage_codigo_servicio}}';
 
+    private const TABLE_ELEG = '{{%reserva_triage_teleconsulta_elegibilidad}}';
+
+    private const ZONAS_PRESENCIAL_PREFERIDO = [
+        'zona_abdomen',
+        'zona_musculoesqueletico',
+        'zona_piel',
+        'zona_sistemas',
+        'zona_genitourinario',
+    ];
+
     public function safeUp(): void
     {
         if ($this->db->schema->getTableSchema(self::TABLE, true) === null) {
@@ -25,6 +35,8 @@ class m260819_130000_reserva_triage_zona_sistemas_corporales extends Migration
         foreach ($this->reglasEspecialidad() as [$codigo, $patrones, $prioridad, $notas]) {
             $this->seedCodigoConPatrones($codigo, $patrones, $prioridad, $notas);
         }
+
+        $this->seedTeleconsultaPresencialPreferido();
     }
 
     public function safeDown(): void
@@ -35,6 +47,10 @@ class m260819_130000_reserva_triage_zona_sistemas_corporales extends Migration
 
         foreach (['zona_musculoesqueletico', 'zona_genitourinario'] as $codigo) {
             $this->delete(self::TABLE, ['triage_codigo' => $codigo]);
+        }
+
+        if ($this->db->schema->getTableSchema(self::TABLE_ELEG, true) !== null) {
+            $this->delete(self::TABLE_ELEG, ['triage_codigo' => self::ZONAS_PRESENCIAL_PREFERIDO]);
         }
     }
 
@@ -75,6 +91,31 @@ class m260819_130000_reserva_triage_zona_sistemas_corporales extends Migration
             ['zona_musculoesqueletico', ['traumatolog', 'ortoped'], 20, 'Espalda/huesos/músculos → traumatología'],
             ['zona_genitourinario', ['ginecolog', 'obstetr', 'urolog'], 20, 'Ginecológico/embarazo/urinario'],
         ];
+    }
+
+    private function seedTeleconsultaPresencialPreferido(): void
+    {
+        if ($this->db->schema->getTableSchema(self::TABLE_ELEG, true) === null) {
+            echo "m260819_130000: sin tabla reserva_triage_teleconsulta_elegibilidad, omitido teleconsulta.\n";
+
+            return;
+        }
+
+        foreach (self::ZONAS_PRESENCIAL_PREFERIDO as $codigo) {
+            $exists = (int) $this->db->createCommand(
+                'SELECT COUNT(*) FROM ' . self::TABLE_ELEG . ' WHERE triage_codigo = :c',
+                [':c' => $codigo]
+            )->queryScalar();
+            if ($exists > 0) {
+                continue;
+            }
+            $this->insert(self::TABLE_ELEG, [
+                'triage_codigo' => $codigo,
+                'elegibilidad' => 'presencial_preferido',
+                'prioridad' => 30,
+                'notas' => 'Zona especialidad → presencial; teleconsulta solo con Med General (zona_general/zona_cabeza_cuello/zona_pecho)',
+            ]);
+        }
     }
 
     /**

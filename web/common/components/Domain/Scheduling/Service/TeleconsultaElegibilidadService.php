@@ -135,7 +135,8 @@ final class TeleconsultaElegibilidadService
         }
         $elegClinica = $this->resolverElegibilidadClinica($draft, $compiled);
 
-        return $elegClinica !== self::ELEG_EXCLUIDO;
+        return $elegClinica !== self::ELEG_EXCLUIDO
+            && $elegClinica !== self::ELEG_PRESENCIAL_PREFERIDO;
     }
 
     /**

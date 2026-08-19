@@ -267,6 +267,7 @@ subintents:
       triage_raiz: draft.triage_raiz
 - id: triage_zona
   assistant_text: Zona
+  review_prefilled: true
   requires:
   - draft.triage_raiz
   provides:

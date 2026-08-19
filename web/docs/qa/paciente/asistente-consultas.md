@@ -4,7 +4,7 @@
 
 Mapa de **todo lo que un paciente podría decirle** al asistente (app o WhatsApp), con **un ejemplo de cada tipo**. Sirve para probar enrutado, degradación y que no se abra el flujo equivocado.
 
-Producto de fondo: [asistente-y-chat.md](../../producto/asistente-y-chat.md), [solicitar-atencion.md](../../producto/solicitar-atencion.md), [apps-paciente-personalsalud.md](../../producto/apps-paciente-personalsalud.md).
+Producto de fondo: [asistente-y-chat.md](../../producto/asistente-y-chat.md), [solicitar-atencion.md](../../producto/solicitar-atencion.md), [apps-paciente-personalsalud.md](../../producto/apps-paciente-personalsalud.md), [contenido-informativo.md](../../producto/contenido-informativo.md).
 
 No hace falta la frase exacta. Si el tipo está en **Hoy**, algo parecido debería enrutar bien.
 
@@ -20,7 +20,7 @@ No hace falta la frase exacta. Si el tipo está en **Hoy**, algo parecido deber�
 
 **Cadena:** el 2 solo tiene sentido después del 1 (centro, horario, “el de…”, “eso”, modalidad). No lo pegues solo.
 
-Tres puertas cubren la mayoría de la vida del paciente:
+Cuatro puertas cubren la mayoría de la vida del paciente:
 
 ```mermaid
 flowchart LR
@@ -28,9 +28,11 @@ flowchart LR
   P --> A["Me pasa algo"]
   P --> B["Trámite de agenda"]
   P --> C["Ver lo mío"]
+  P --> D["¿Cómo funciona?"]
   A --> SA[Solicitar Atención o charla + botón]
   B --> TU[Intents de turnos]
   C --> MI[Atenciones, recetas, lab, planes]
+  D --> IC[Contenido informativo de BD]
 ```
 
 | Puerta | Qué busca el paciente | Camino típico |
@@ -38,6 +40,7 @@ flowchart LR
 | Me pasa algo | Síntoma, estudio, control, urgencia | Charla + atajo **Solicitar Atención** (`atencion.necesito-atencion`) |
 | Trámite de agenda | Sacar / ver / cancelar / mover / confirmar | Intents `turnos.*` |
 | Ver lo mío | Resumen, recetas, lab, recordatorios, representación | Intents de lectura / hub nativo |
+| ¿Cómo funciona? | Qué es representación, teleconsulta, turnos, la app | **Contenido informativo** (artículo editorial de BD, no charla IA) |
 
 ---
 
@@ -67,7 +70,7 @@ Canal **conversacional**: empatía breve, orientación prudente y botón **Solic
 | Varios síntomas juntos | *«Tengo fiebre, tos y me duele el cuerpo»* | **Hoy** | Charla + oferta |
 | Lesión / traumatismo | *«Me caí de la bici y se me hinchó el tobillo»* | **Hoy** | Charla + Solicitar Atención |
 | Salud mental | *«Estoy muy ansioso y no puedo dormir»* | **Hoy** | Empatía + oferta; no es queja de la app |
-| Pediatría (tutor) | *«Mi nene de 3 años tiene 39 de fiebre»* | **Hoy** | Charla; turno del menor exige representación activa |
+| Pediatría (tutor) | *«Mi nene de 3 años tiene 39 de fiebre»* | **Hoy** | Charla; turno del menor exige representación activa. Si el paciente pregunta "qué es representación" o "cómo vinculo a mi hijo", el asistente responde con **contenido informativo** (artículo editorial, no charla IA) |
 | Embarazo | *«Estoy de 20 semanas y sangro un poco»* | **Hoy** | Prudencia; puede ser urgencia |
 | Post-operatorio | *«Me operaron el viernes y me arde la herida»* | **Hoy** | Oferta de atención; no interpreta la cirugía |
 | Efecto de un medicamento | *«Arranqué el enalapril y me mareo»* | **Hoy** | No ajusta la dosis solo; Control/Seguimiento o atención |
@@ -108,7 +111,7 @@ Atajo **Solicitar Atención** (`atencion.necesito-atencion`): malestar nuevo, es
 | Ver un médico (vago) | *«Quiero ver a un médico»* | **Hoy** | Solicitar Atención o charla + botón |
 | Pedir el de siempre | *«Quiero turno con la doctora Pérez»* | **Hoy** | Agenda; el profesional aparece si hay PES y cupo |
 | Pedir un servicio del centro | *«Turno en odontología»* | **Hoy** | Elige oferta del **centro**, no “especialidad” suelta |
-| Pedir “el mío” por oferta | *«Solicita un turno para mi dentista»* | **Hoy** | `turnos.crear-como-paciente` (no charla empática). Cruza la mención con la oferta; si “dentista” no matchea el nombre, elegís el servicio. **No** confirma el turno solo |
+| Pedir “el mío” por oferta | *«Solicita un turno para mi dentista»* | **Hoy** | `turnos.crear-como-paciente` (no charla empática). Cruza la mención con la oferta usando **sinónimos de servicios** (servicio-synonyms.yaml): “dentista” → ODONTOLOGIA, “oculista” → OFTALMOLOGIA, etc. Si aun así no matchea (el centro no tiene ese servicio), elegís manualmente. **No** confirma el turno solo |
 | Pedir un especialista | *«Necesito un cardiólogo»* | **Hoy** | Hub de medicina clínica; especialista suele pedir derivación vigente |
 | Solo sacar turno | *«Quiero un turno»* | **Hoy** | `turnos.crear-como-paciente` |
 
@@ -314,6 +317,8 @@ Producto: [representacion-paciente.md](../../producto/representacion-paciente.md
 | Aviso N9 | *«Avisame si alguien actúa por mí»* | **Pantalla** | Configuración de alertas |
 | Revocar | *«Sacá a mi hermano de representantes»* | **Pantalla** | Hub de representación |
 
+| Qué es representación | *«¿Qué es la representación?»* / *«¿Cómo vinculo a mi hijo?»* | **Hoy** | **Contenido informativo** (artículo editorial de BD, no charla IA). Responde con el artículo `representacion` del topic más específico (efector → provincia → producto). Admin: `/admin/info-content-article` |
+
 No confundir tutela (menor sin cuenta, verifica el staff) con delegación (otro adulto con cuenta, activa al instante).
 
 ---
@@ -367,8 +372,13 @@ Smoke WhatsApp: [asistente-whatsapp.md](./asistente-whatsapp.md).
 | Sugerencia | *«Deberían avisar si el médico se atrasa»* | **Hoy** | Queja / sugerencia |
 | Facturación | *«¿Cuánto me van a cobrar?»* | **Fuera** | No cotiza |
 | Privacidad | *«¿Quién ve mis datos?»* | **Fuera** | No improvisar política legal en el chat |
+| Qué es teleconsulta | *«¿Qué es la teleconsulta?»* / *«¿Cómo funciona la videollamada?»* | **Hoy** | **Contenido informativo** (artículo editorial). No charla IA |
+| Cómo saco turno | *«¿Cómo saco un turno?»* / *«¿Cómo funciona?»* | **Hoy** | Contenido informativo o menú de atajos |
+| Qué es Bioenlace | *«¿Qué es Bioenlace?»* / *«¿Para qué sirve la app?»* | **Hoy** | Contenido informativo (artículo que_es_bioenlace) |
 
 La queja **no** es para síntomas ni urgencias.
+
+**Contenido informativo:** artículos editoriales administrables desde /admin/info-content-article. Cada artículo tiene un topic, keywords para matcheo, y alcance jerárquico (efector → provincia → producto). El asistente los resuelve antes de caer a la IA conversacional o al menú de capacidades. Ver [contenido-informativo.md](../../producto/contenido-informativo.md).
 
 ---
 
@@ -405,7 +415,7 @@ El asistente **interpreta** y abre un flow o una lista; **no** actúa en silenci
 | Alergia / condición en charla de síntoma | 1. *«Me duele la cabeza»*<br>2. *«¿Puedo tomar ibuprofeno?»* | **Hoy** | Charla prudente; **no** receta. El extracto de HC (si está activo) solo evita contradecir alergias; no responde historial de turnos |
 | Dato que no está en turnos ni HC acotada | *«¿Cuánto medía mi hijo en el último control?»* | **Fuera** | No hay intent; no inventar. Puede degradar a atenciones o a “no lo tengo acá” |
 | Pedir “el de siempre” por nombre | *«Quiero turno con la doctora Pérez»* | **Hoy** | Reserva; el PES aparece si hay cupo |
-| Pedir “el mío” por oferta | *«Turno para mi dentista»* / *«con mi kinesiólogo»* | **Hoy** | Reserva; hint de oferta o de profesional. Si no cruza, elegís servicio/profesional. No reserva a ciegas |
+| Pedir “el mío” por oferta | *«Turno para mi dentista»* / *«con mi kinesiólogo»* | **Hoy** | Reserva; hint de oferta o de profesional con **sinónimos** (servicio-synonyms.yaml: dentista→odontología, kinesio→kinesiología, etc.). Si aun así no cruza, elegís servicio/profesional. No reserva a ciegas |
 
 ### Que el asistente lo haga por vos
 
@@ -444,6 +454,7 @@ Si el mensaje mezcla temas, gana la **acción explícita** (cancelar, sacar turn
 | *«Solicita un turno para mi dentista»* | Charla empática / Solicitar Atención por síntoma | `turnos.crear-como-paciente` (oferta del centro) |
 | *«Última vez que fui al dentista»* | Extracto de HC / última atención genérica | `turnos.ver-ultimo-en-oferta-como-paciente` |
 | *«Sacalo vos y confirmá»* | Reserva cerrada sin pantallas | Mismo flow; **vos** elegís y confirmás |
+| *«¿Qué es la representación?»* | Charla IA improvisada | **Contenido informativo** (artículo editorial de BD) |
 | *«Avisame cuando haya un hueco»* | Lista de espera / “te anoto y te llamo” | Sin cupo: otras fechas o mensaje. Adelanto solo si **ya hay** turno posterior, por **push** |
 
 ---
@@ -459,3 +470,5 @@ Si el mensaje mezcla temas, gana la **acción explícita** (cancelar, sacar turn
 | [checklist.md](./checklist.md) | Casos AST a marcar |
 | [solicitar-atencion.md](../../producto/solicitar-atencion.md) | Puerta malestar / estudio / seguimiento / urgencia |
 | [asistente-y-chat.md](../../producto/asistente-y-chat.md) | Cómo conversa Bioenlace |
+| [contenido-informativo.md](../../producto/contenido-informativo.md) | Artículos editoriales (representación, teleconsulta, turnos, etc.) |
+| [asistente-motores.md](../../arquitectura/asistente-motores.md) | IntentEngine, SubIntentEngine, contenido informativo, sinónimos |

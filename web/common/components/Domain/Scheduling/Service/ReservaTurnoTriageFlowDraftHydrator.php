@@ -2,6 +2,8 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
+use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
+
 /**
  * Enriquece el draft del asistente tras pasos de triage (halt, banda, sugerencia teleconsulta).
  */
@@ -15,6 +17,9 @@ final class ReservaTurnoTriageFlowDraftHydrator
     {
         $draft = isset($body['draft']) && is_array($body['draft']) ? $body['draft'] : [];
         $content = isset($body['content']) ? trim((string) $body['content']) : '';
+
+        self::hydrateMaletarNuevoFromContent($draft, $content);
+
         $catalog = new ReservaTurnoTriageCatalogService();
         $compiled = $catalog->compileSelections($draft);
 
@@ -31,5 +36,26 @@ final class ReservaTurnoTriageFlowDraftHydrator
         (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
 
         $body['draft'] = $draft;
+    }
+
+    /**
+     * Si el content describe síntomas y triage_raiz no está seteado,
+     * preselecciona malestar_nuevo. Se ejecuta antes de compileSelections
+     * para que el catálogo de triage ya tenga la raíz al compilar.
+     *
+     * @param array<string, mixed> $draft
+     */
+    private static function hydrateMaletarNuevoFromContent(array &$draft, string $content): void
+    {
+        if (trim((string) ($draft['triage_raiz'] ?? '')) !== '') {
+            return;
+        }
+        if ($content === '') {
+            return;
+        }
+
+        if (IntentClassificationRulesService::isClinicalSymptomContent($content)) {
+            $draft['triage_raiz'] = 'malestar_nuevo';
+        }
     }
 }

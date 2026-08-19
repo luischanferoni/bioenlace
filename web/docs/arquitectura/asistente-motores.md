@@ -108,6 +108,22 @@ sequenceDiagram
 
 ---
 
+## Contenido informativo (InfoContentResolverService)
+
+Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", antes de caer a la IA conversacional o al menú de capacidades, el asistente busca en la tabla `info_content_article` un artículo editorial que matchee por keywords.
+
+**Resolución jerárquica:** efector → provincia → producto (global). Si el centro tiene un artículo específico sobre el topic, ese prevalece.
+
+**Integración:** `InformationalChannel` y `ConversationalChannel` llaman a `InfoContentAssistantService::tryResolveFromText()` antes de su lógica habitual. Si hay match, devuelven el artículo como `AssistantEnvelope::message()`.
+
+**Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
+
+## Sinónimos de servicios (HintServiceSynonyms)
+
+El matcher fuzzy de hints (`HintEntityMatcher`) enriquece los terms del usuario con sinónimos de servicios de salud cuando la entidad es `servicio`. Mapa en `terminology/servicio-synonyms.yaml` (ej. "dentista" → odontología, "oculista" → oftalmología). Esto permite que "turno para mi dentista" preseleccione el servicio ODONTOLOGIA sin depender del LLM para generar el sinónimo.
+
+---
+
 ## Otros entrypoints (mismo stack, otro canal)
 
 WhatsApp Cloud API (paciente) entra por `whatsapp/webhook`, resuelve identidad y llama al **mismo** `ChatOrchestrator`; solo cambia el transporte y el render (texto/botones/listas). **Alcance:** mensajes iniciados por el paciente; utility proactiva **no** habilitada — [costos-api §7](../costos/costos-api.md#7-whatsapp-cloud-api-paciente). Smoke: [qa/paciente/asistente-whatsapp.md](../qa/paciente/asistente-whatsapp.md).

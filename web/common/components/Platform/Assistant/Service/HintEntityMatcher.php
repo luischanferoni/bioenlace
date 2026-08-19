@@ -14,7 +14,7 @@ final class HintEntityMatcher
      * @param list<array<string, mixed>> $candidates cada fila: id + match_property
      * @return array{id: string, value: string, score: float}|null
      */
-    public static function match(array $terms, array $candidates, string $matchProperty): ?array
+    public static function match(array $terms, array $candidates, string $matchProperty, string $entity = ''): ?array
     {
         $matchProperty = trim($matchProperty);
         if ($matchProperty === '' || $candidates === []) {
@@ -24,6 +24,10 @@ final class HintEntityMatcher
         $terms = self::normalizeTerms($terms);
         if ($terms === []) {
             return null;
+        }
+
+        if (trim($entity) === 'servicio') {
+            $terms = HintServiceSynonyms::enrichTerms($terms);
         }
 
         $best = null;

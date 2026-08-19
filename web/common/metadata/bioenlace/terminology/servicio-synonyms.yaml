@@ -1,0 +1,241 @@
+# Sinónimos coloquiales → nombre institucional de servicios de salud.
+# Usado por HintEntityMatcher para resolver menciones del paciente
+# (ej. "dentista" → matchea "ODONTOLOGIA").
+#
+# Cada clave es el nombre normalizado (lowercase, sin tildes) del servicio
+# en la BD. Los valores son alias coloquiales que el paciente podría usar.
+# El matcher enriquece los terms del usuario con estos alias inversos.
+#
+# {@see HintServiceSynonyms}
+version: 1
+
+synonyms:
+  odontologia:
+    - dentista
+    - diente
+    - dientes
+    - muela
+    - muelas
+    - dolor de muela
+    - caries
+
+  oftalmologia:
+    - oculista
+    - ojos
+    - vista
+    - vision
+    - lentes
+    - anteojos
+
+  traumatologia:
+    - traumatologo
+    - fractura
+    - huesos
+    - esguince
+    - yeso
+
+  kinesiologia:
+    - kinesiologo
+    - kinesio
+    - fisioterapia
+    - fisioterapeuta
+    - rehabilitacion
+
+  dermatologia:
+    - dermatologo
+    - piel
+    - derma
+
+  cardiologia:
+    - cardiologo
+    - corazon
+
+  ginecologia:
+    - ginecologo
+    - gineco
+
+  obstetricia:
+    - obstetra
+    - embarazo
+    - parto
+    - prenatal
+
+  pediatria:
+    - pediatra
+
+  urologia:
+    - urologo
+
+  neurologia:
+    - neurologo
+    - nervios
+
+  endocrinologia:
+    - endocrinologo
+    - tiroides
+    - diabetes
+
+  gastroenterologia:
+    - gastroenterologo
+    - gastro
+    - estomago
+    - digestivo
+
+  otorrinolaringologia:
+    - otorrino
+    - oido
+    - garganta
+    - nariz
+
+  neumonologia:
+    - neumonologo
+    - pulmon
+    - pulmones
+
+  psiquiatria:
+    - psiquiatra
+
+  psicologia:
+    - psicologo
+    - psicologa
+    - terapia
+
+  nutricion:
+    - nutricionista
+    - dieta
+    - dietista
+
+  fonoaudiologia:
+    - fonoaudiologo
+    - fonoaudiologa
+    - fono
+
+  enfermeria:
+    - enfermero
+    - enfermera
+
+  med general:
+    - clinico
+    - clinica
+    - medico clinico
+    - medicina general
+    - generalista
+    - medico de cabecera
+    - medico general
+
+  med clinica:
+    - clinico
+    - clinica
+    - medicina clinica
+    - medico clinico
+
+  cirugia:
+    - cirujano
+    - operacion
+    - quirofano
+
+  cirugia general:
+    - cirujano general
+
+  nefrologia:
+    - nefrologo
+    - rinon
+    - rinones
+    - dialisis
+
+  reumatologia:
+    - reumatologo
+    - reuma
+    - artritis
+
+  oncologia:
+    - oncologo
+    - cancer
+    - tumor
+
+  hematologia:
+    - hematologo
+    - sangre
+    - anemia
+
+  infectologia:
+    - infectologo
+
+  alergologia:
+    - alergologo
+    - alergista
+    - alergia
+    - alergias
+
+  diabetologia:
+    - diabetologo
+    - diabetes
+
+  proctologia:
+    - proctologo
+    - hemorroides
+
+  mastologia:
+    - mastologo
+    - mama
+    - mamas
+    - seno
+
+  neonatologia:
+    - neonatologo
+
+  geriatria:
+    - geriatra
+    - adulto mayor
+    - tercera edad
+
+  toxicologia:
+    - toxicologo
+
+  flebologia:
+    - flebologo
+    - varices
+
+  medicina laboral:
+    - laboral
+    - apto medico
+    - apto fisico
+
+  medicina del trabajo:
+    - laboral
+    - apto medico
+
+  ecografia:
+    - ecografo
+    - eco
+
+  laboratorio:
+    - analisis
+    - analisis de sangre
+    - hemograma
+
+  radiologia:
+    - radiologo
+    - radiografia
+    - rayos
+    - rayos x
+    - rx
+
+  tomografia:
+    - tomografo
+    - tac
+    - scanner
+
+  resonancia:
+    - resonancia magnetica
+    - rmn
+
+  farmacia:
+    - farmaceutico
+    - medicamentos
+    - remedios
+
+  vacunatorio:
+    - vacuna
+    - vacunas
+    - vacunacion

@@ -156,6 +156,11 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'snomed-terminology.yaml';
     }
 
+    public static function servicioSynonymsFile(): string
+    {
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'terminology' . DIRECTORY_SEPARATOR . 'servicio-synonyms.yaml';
+    }
+
     public static function clinicalDir(): string
     {
         return self::baseDir() . DIRECTORY_SEPARATOR . 'clinical';

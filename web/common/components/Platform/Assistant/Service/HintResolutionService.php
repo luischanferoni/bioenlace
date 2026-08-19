@@ -29,7 +29,7 @@ final class HintResolutionService
             return null;
         }
 
-        return HintEntityMatcher::match($terms, $candidates, $matchProperty);
+        return HintEntityMatcher::match($terms, $candidates, $matchProperty, $entity);
     }
 
     /**

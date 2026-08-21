@@ -123,6 +123,11 @@ final class AssistantDraftNormalizer
         return $out;
     }
 
+    public static function routeHasUnresolvedPlaceholders(string $route): bool
+    {
+        return preg_match('/\{[\w-]+\}/', $route) === 1;
+    }
+
     /**
      * @param array<string, mixed> $arr
      */

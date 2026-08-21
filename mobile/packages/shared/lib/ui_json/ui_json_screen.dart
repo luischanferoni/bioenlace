@@ -141,24 +141,49 @@ String resolveApiAbsoluteUrl(String routeOrPath) {
   return '$base/$r';
 }
 
+bool routeHasUnresolvedPlaceholders(String route) {
+  return RegExp(r'\{[\w-]+\}').hasMatch(route);
+}
+
+String? _providedScalar(dynamic v) {
+  if (v is Map && v.containsKey('value')) {
+    v = v['value'];
+  }
+  if (v == null) return null;
+  final s = v.toString().trim();
+  return s.isEmpty ? null : s;
+}
+
 /// Aplica parámetros `provided` (formato backend: {k: {value,source}}) al route `/api/v1/<entidad>/<accion>`.
+/// Sustituye `{campo}` en el path; si queda algún placeholder, devuelve vacío (no es una URL fetcheable).
 String applyProvidedParamsToRoute(String routeOrPath, Map<String, dynamic>? provided) {
+  var path = routeOrPath.trim();
+  if (path.isEmpty) return '';
+  if (provided != null && provided.isNotEmpty) {
+    path = path.replaceAllMapped(RegExp(r'\{([\w-]+)\}'), (m) {
+      final key = m.group(1) ?? '';
+      final s = key.isEmpty ? null : _providedScalar(provided[key]);
+      if (s == null) return m.group(0)!;
+      return Uri.encodeComponent(s);
+    });
+  }
+  if (routeHasUnresolvedPlaceholders(path)) {
+    return '';
+  }
   // Importante (Flutter Web): si devolvemos un path relativo (`/api/v1/...`),
   // el navegador lo resuelve contra el origin actual (p. ej. http://localhost:55275).
   // Por eso SIEMPRE resolvemos a URL absoluta primero.
-  final base = resolveApiAbsoluteUrl(routeOrPath);
+  final base = resolveApiAbsoluteUrl(path);
+  if (routeHasUnresolvedPlaceholders(base)) {
+    return '';
+  }
   if (provided == null || provided.isEmpty) return base;
   Uri uri = Uri.parse(base);
   final qp = <String, String>{...uri.queryParameters};
   provided.forEach((k, v) {
     if (k.toString().isEmpty) return;
-    dynamic value = v;
-    if (v is Map && v.containsKey('value')) {
-      value = v['value'];
-    }
-    if (value == null) return;
-    final s = value.toString();
-    if (s.isEmpty) return;
+    final s = _providedScalar(v);
+    if (s == null) return;
     qp[k.toString()] = s;
   });
   uri = uri.replace(queryParameters: qp);
@@ -413,7 +438,7 @@ class _UiJsonScreenState extends State<UiJsonScreen> {
     if (!mounted) return;
 
     final url = widget.apiAbsoluteUrl.trim();
-    if (url.isEmpty) {
+    if (url.isEmpty || routeHasUnresolvedPlaceholders(url)) {
       setState(() {
         _error = 'No se pudo cargar la pantalla (falta la ruta del servidor).';
         _loading = false;

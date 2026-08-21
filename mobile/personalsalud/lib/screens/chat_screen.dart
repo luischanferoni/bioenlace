@@ -1732,7 +1732,10 @@ class ChatScreenState extends State<ChatScreen> {
       qp['latitud'] = '${pos.latitude}';
       qp['longitud'] = '${pos.longitude}';
     }
-    var u = Uri.parse(resolveApiAbsoluteUrl(route));
+    var u = Uri.parse(applyProvidedParamsToRoute(route, draftForQuery));
+    if (u.toString().isEmpty) {
+      return null;
+    }
     final merged = <String, String>{...u.queryParameters, ...qp};
     _ensureServicioQueryForEfectoresListado(route, merged, draftForQuery);
     u = u.replace(queryParameters: merged);
@@ -1768,7 +1771,7 @@ class ChatScreenState extends State<ChatScreen> {
     final out = <String, dynamic>{};
     for (final e in _draft.entries) {
       final k = e.key.toString();
-      if (!k.startsWith('id_')) {
+      if (!k.startsWith('id_') && !k.endsWith('_id')) {
         continue;
       }
       final v = e.value;
@@ -1923,9 +1926,11 @@ class ChatScreenState extends State<ChatScreen> {
       final effectiveProvided = _mergeDraftIdsWithProvided(providedRaw);
       // Igual que la SPA: `api.query` del descriptor + query desde draft/provided (p. ej. id_servicio_asignado).
       var apiAbs = _clientOpenUiJsonAbsoluteUrl(co);
-      if (effectiveProvided.isNotEmpty) {
-        final base = apiAbs.trim().isNotEmpty ? apiAbs : resolveApiAbsoluteUrl(route);
-        apiAbs = applyProvidedParamsToRoute(base, effectiveProvided);
+      final base = apiAbs.trim().isNotEmpty ? apiAbs : resolveApiAbsoluteUrl(route);
+      apiAbs = applyProvidedParamsToRoute(base, effectiveProvided);
+      if (apiAbs.isEmpty) {
+        _showErrorSnackbar('Falta un dato para abrir esta pantalla.');
+        return true;
       }
       // Contrato nuevo: el motor abre SIEMPRE inline automáticamente.
       final title = action['display_name']?.toString() ?? action['action_id']?.toString() ?? 'Formulario';

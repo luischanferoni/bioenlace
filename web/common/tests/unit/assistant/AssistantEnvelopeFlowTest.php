@@ -18,6 +18,22 @@ class AssistantEnvelopeFlowTest extends Unit
         $this->assertSame('ok', AssistantDraftNormalizer::scalarString(' ok '));
     }
 
+    public function testApplyRoutePlaceholdersResolvesOrRejects(): void
+    {
+        $template = '/api/v1/clinical/internacion/{internacion_id}/cambio-cama-formulario';
+        $this->assertTrue(AssistantDraftNormalizer::routeHasUnresolvedPlaceholders($template));
+        $this->assertNull(AssistantDraftNormalizer::applyRoutePlaceholders($template, []));
+        $this->assertSame(
+            '/api/v1/clinical/internacion/42/cambio-cama-formulario',
+            AssistantDraftNormalizer::applyRoutePlaceholders($template, ['internacion_id' => 42])
+        );
+        $this->assertFalse(
+            AssistantDraftNormalizer::routeHasUnresolvedPlaceholders(
+                '/api/v1/clinical/internacion/42/cambio-cama-formulario'
+            )
+        );
+    }
+
     public function testFlowFromMotorTurnosIndicadoresLikePayload(): void
     {
         $motor = [

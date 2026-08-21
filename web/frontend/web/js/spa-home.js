@@ -12,8 +12,15 @@
     const SPA_LIST_SINGLE_AUTO_INTRO_MS = 480;
 
     /** URL absoluta para fetch desde el shell (misma regla que loadPageContent). */
+    function routeHasUnresolvedPlaceholders(url) {
+        return /\{[\w-]+\}/.test(String(url || ''));
+    }
+
     function resolveSpaFetchUrl(url) {
         if (!url) return '';
+        if (routeHasUnresolvedPlaceholders(url)) {
+            return '';
+        }
         if (url.startsWith('http://') || url.startsWith('https://')) {
             return url;
         }
@@ -4972,7 +4979,7 @@
 
         if (kind === 'ui_json') {
             const api = co.api || {};
-            return api.route || action.route || action.url || '';
+            return applyDraftPlaceholdersToRoute(api.route || action.route || action.url || '');
         }
 
         if (kind === 'native') {
@@ -4985,7 +4992,7 @@
                 return url;
             }
             const api = co.api || {};
-            const route = api.route || action.route || action.url || '';
+            const route = applyDraftPlaceholdersToRoute(api.route || action.route || action.url || '');
             if (api.query && typeof api.query === 'object' && Object.keys(api.query).length > 0) {
                 return route + '?' + new URLSearchParams(api.query).toString();
             }

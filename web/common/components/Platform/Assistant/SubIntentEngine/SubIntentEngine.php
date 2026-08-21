@@ -153,7 +153,7 @@ final class SubIntentEngine
                 }
                 $open = self::resolveOpenUiForSubintent($current, $content, $draft);
                 $actionId = AssistantDraftNormalizer::scalarString(is_array($open) ? ($open['action_id'] ?? '') : '');
-                if (is_array($open) && $actionId !== '' && !self::openUiBlockedByMissingDraft($open, $missingRequires)) {
+                if (is_array($open) && $actionId !== '' && self::canOpenUi($open, $missingRequires, $draft)) {
                     return self::buildOpenUiResponse(
                         $intentId,
                         $currentId,
@@ -188,7 +188,7 @@ final class SubIntentEngine
                 if (
                     is_array($reviewOpen)
                     && $reviewActionId !== ''
-                    && !self::openUiBlockedByMissingDraft($reviewOpen, $missingRequires)
+                    && self::canOpenUi($reviewOpen, $missingRequires, $draft)
                 ) {
                     return self::buildOpenUiResponse(
                         $intentId,
@@ -211,7 +211,9 @@ final class SubIntentEngine
                 $openActionId = AssistantDraftNormalizer::scalarString(
                     is_array($openWhenComplete) ? ($openWhenComplete['action_id'] ?? '') : ''
                 );
-                if (is_array($openWhenComplete) && $openActionId !== '') {
+                if (is_array($openWhenComplete) && $openActionId !== ''
+                    && self::canOpenUi($openWhenComplete, $missingRequires, $draft)
+                ) {
                     return self::buildOpenUiResponse(
                         $intentId,
                         $currentId,
@@ -1344,6 +1346,28 @@ final class SubIntentEngine
     }
 
     /**
+     * @param array<string, mixed> $openUiDef
+     * @param list<string> $missingRequires
+     * @param array<string, mixed> $draft
+     */
+    private static function canOpenUi(array $openUiDef, array $missingRequires, array $draft): bool
+    {
+        if (self::openUiBlockedByMissingDraft($openUiDef, $missingRequires)) {
+            return false;
+        }
+        $actionId = AssistantDraftNormalizer::scalarString($openUiDef['action_id'] ?? '');
+        if ($actionId === '') {
+            return false;
+        }
+        $route = \common\components\Platform\Assistant\Catalog\UiActionCatalogProviderRegistry::httpRouteForActionId($actionId);
+        if ($route === '' || !str_contains($route, '{')) {
+            return true;
+        }
+
+        return AssistantDraftNormalizer::applyRoutePlaceholders($route, $draft) !== null;
+    }
+
+    /**
      * No abrir mini-UI si `open_ui.params` referencia campos del draft que aún faltan.
      *
      * @param array<string, mixed> $openUiDef
@@ -1413,6 +1437,9 @@ final class SubIntentEngine
         $draft = isset($openUiDef['__draft']) && is_array($openUiDef['__draft']) ? $openUiDef['__draft'] : [];
         $resolved = AssistantDraftNormalizer::applyRoutePlaceholders($routeRaw, $draft);
         if ($resolved === null) {
+            unset($co['api']['route']);
+            $open['client_open'] = $co;
+
             return;
         }
         $co['api']['route'] = $resolved;

@@ -7,22 +7,21 @@ use common\components\Domain\Scheduling\Service\ReservaTurnoTriageCatalogService
 
 class ReservaTurnoTriageCatalogServiceTest extends Unit
 {
-    public function testUrgenciaCategoriaHaltsBooking(): void
+    public function testUrgenciaRaizHaltsBooking(): void
     {
         $svc = new ReservaTurnoTriageCatalogService();
-        $this->assertTrue($svc->nodeHaltsBooking('urg_cat_cardiaco'));
-        $this->assertTrue($svc->nodeHaltsBooking('urg_cat_neurologico'));
+        $this->assertTrue($svc->nodeHaltsBooking('urgencia'));
     }
 
-    public function testCaminoUrgenciaDetectsHalt(): void
+    public function testCaminoUrgenciaDetectsHaltSinCategoria(): void
     {
         $svc = new ReservaTurnoTriageCatalogService();
         $compiled = $svc->compileSelections([
             'triage_raiz' => 'urgencia',
-            'triage_alarmas' => 'urg_cat_respiratorio',
         ]);
         $this->assertTrue($compiled['reserva_triage_halt']);
         $this->assertSame('A', $compiled['urgency_band']);
+        $this->assertSame('urgencia', $compiled['reserva_triage_code']);
     }
 
     public function testMalestarNuevoRequiereZona(): void
@@ -46,7 +45,6 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
         $this->expectException(\InvalidArgumentException::class);
         $svc->assertCanPersistBooking([
             'triage_raiz' => 'urgencia',
-            'triage_alarmas' => 'urg_cat_trauma_sangrado',
         ]);
     }
 

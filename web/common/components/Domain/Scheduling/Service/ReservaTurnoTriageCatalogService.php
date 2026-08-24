@@ -315,11 +315,7 @@ final class ReservaTurnoTriageCatalogService
             return;
         }
         if ($raiz === 'urgencia') {
-            if (trim((string) ($selections['triage_alarmas'] ?? '')) === '') {
-                throw new \InvalidArgumentException('Indicá el tipo de urgencia antes de confirmar.');
-            }
-
-            return;
+            throw new \InvalidArgumentException($this->getHaltMessageBandA());
         }
         if ($raiz === 'seguimiento_cronico') {
             return;

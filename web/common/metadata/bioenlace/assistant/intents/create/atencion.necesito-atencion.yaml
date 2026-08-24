@@ -66,11 +66,11 @@ intent_semantics:
     Control/Seguimiento → tipo (general / tratamiento / consulta previa) → necesidad o mensaje → async
     o turno.
 
-    Urgencia → categoría → derivación a guardia/emergencias.'
+    Urgencia → derivación a guardia/emergencias (107), sin reserva.'
   preconditions:
   - El usuario puede autogestionar turnos ambulatorios no urgentes.
   constraints:
-  - Urgencia (raíz o categoría banda A/B con halt): no se completa reserva.
+  - Urgencia (raíz): no se completa reserva; pantalla 107 / guardia.
   - Malestar nuevo presencial: servicios filtrados por zona (p. ej. pecho no muestra oftalmología).
   - Estudio: solo líneas vinculadas al acto con agenda (`acepta_turnos`).
   - Modalidad obligatoria salvo pantalla de urgencia terminal.
@@ -138,7 +138,7 @@ subintents:
   - when:
       draft_equals:
         triage_raiz: urgencia
-    next: triage_urgencia_categoria
+    next: triage_urgencia
   - when:
       draft_equals:
         triage_raiz: malestar_nuevo
@@ -244,25 +244,6 @@ subintents:
       condition_codigo: draft.condition_codigo
       condition_ref: draft.condition_ref
       protocol_id: draft.protocol_id
-- id: triage_urgencia_categoria
-  assistant_text: Tipo de urgencia
-  requires:
-  - draft.triage_raiz
-  provides:
-  - draft.triage_alarmas
-  next_routing:
-  - when:
-      draft_equals:
-        reserva_triage_halt: '1'
-    next: triage_urgencia
-  - when:
-      default: true
-    next: triage_urgencia
-  open_ui:
-    action_id: turnos.reserva-triage-paso
-    params:
-      step: urgencia_categoria
-      triage_raiz: draft.triage_raiz
 - id: triage_zona
   assistant_text: Zona
   review_prefilled: true

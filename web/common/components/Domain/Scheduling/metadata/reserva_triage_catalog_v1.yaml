@@ -9,9 +9,6 @@ steps:
   raiz:
     title: "¿Qué necesitás?"
     draft_field: triage_raiz
-  urgencia_categoria:
-    title: "¿Qué tipo de urgencia es?"
-    draft_field: triage_alarmas
   zona:
     title: "¿Qué tipo de malestar es?"
     draft_field: triage_zona
@@ -33,49 +30,6 @@ nodes:
   - code: urgencia
     step: raiz
     label: "Urgencia"
-    urgency_band: A
-
-  # --- Categorías de urgencia (camino urgencia) ---
-  - code: urg_cat_neurologico
-    step: urgencia_categoria
-    parent: urgencia
-    label: "Neurológico (confusión, convulsión, debilidad cara/brazo/habla)"
-    urgency_band: A
-    halts_booking: true
-  - code: urg_cat_cardiaco
-    step: urgencia_categoria
-    parent: urgencia
-    label: "Cardíaco (dolor fuerte en el pecho o desmayo)"
-    urgency_band: A
-    halts_booking: true
-  - code: urg_cat_respiratorio
-    step: urgencia_categoria
-    parent: urgencia
-    label: "Respiratorio (falta de aire importante)"
-    urgency_band: A
-    halts_booking: true
-  - code: urg_cat_trauma_sangrado
-    step: urgencia_categoria
-    parent: urgencia
-    label: "Trauma y/o sangrado abundante"
-    urgency_band: A
-    halts_booking: true
-  - code: urg_cat_abdominal
-    step: urgencia_categoria
-    parent: urgencia
-    label: "Abdominal agudo (dolor de panza muy fuerte)"
-    urgency_band: A
-    halts_booking: true
-  - code: urg_cat_fiebre
-    step: urgencia_categoria
-    parent: urgencia
-    label: "Fiebre muy alta con mucho malestar"
-    urgency_band: B
-    halts_booking: true
-  - code: urg_cat_otro
-    step: urgencia_categoria
-    parent: urgencia
-    label: "Otro cuadro urgente"
     urgency_band: A
     halts_booking: true
 

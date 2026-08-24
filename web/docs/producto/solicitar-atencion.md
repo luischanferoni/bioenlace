@@ -15,7 +15,7 @@ En este flujo, **servicio** = oferta de salud del **centro** (área agendable), 
 | **Malestar nuevo** | `malestar_nuevo` | Sistema corporal (zona) → modalidad → **servicio del centro** → agenda |
 | **Estudio o práctica** | `estudio_pedido` | **Acto** clínico (SNOMED) → turno **presencial** en el centro (sin videollamada) → servicio(s) con agenda |
 | **Control/Seguimiento** | `seguimiento_cronico` | **Hub** de anclas (tratamiento, condición, protocolo, consulta general/previa, control general) |
-| **Urgencia** | `urgencia` | Categoría de alarma → si banda A, **no** reserva en app (derivación 107 / guardia) |
+| **Urgencia** | `urgencia` | **No** reserva en app → pantalla 107 / guardia |
 
 Catálogo: `Scheduling/metadata/reserva_triage_catalog_v1.yaml`. Flujo: `intents/create/atencion.necesito-atencion.yaml`. Pedido servicio×acto: [../decisions/pedido-atencion-linea-acto.md](../decisions/pedido-atencion-linea-acto.md).
 

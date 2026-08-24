@@ -153,7 +153,7 @@ class TurnosController extends BaseController
      * Paso embebible del triage de reserva (lista de opciones del catálogo).
      *
      * GET|POST /api/v1/turnos/reserva-triage-paso
-     * Query/body: `step` (raiz|urgencia_categoria|zona|modalidad); hijos usan `triage_raiz` o `parent_code`.
+     * Query/body: `step` (raiz|zona|modalidad|pedido_acto); hijos usan `triage_raiz` o `parent_code`.
      *
      * @action_name Paso triage reserva turno
      * @entity Turnos
@@ -166,7 +166,7 @@ class TurnosController extends BaseController
         $step = isset($params['step']) ? trim((string) $params['step']) : '';
         if ($step === '') {
             throw new BadRequestHttpException(
-                'step es obligatorio (raiz, urgencia_categoria, zona, modalidad, pedido_acto). '
+                'step es obligatorio (raiz, zona, modalidad, pedido_acto). '
                 . 'En flujos del asistente debe venir en query desde open_ui.params del subintent.'
             );
         }
@@ -286,9 +286,6 @@ class TurnosController extends BaseController
     private function reservaTriageParentForStep(string $step, array $params): string
     {
         if ($step === 'zona') {
-            return trim((string) ($params['triage_raiz'] ?? $params['parent_code'] ?? ''));
-        }
-        if ($step === 'urgencia_categoria') {
             return trim((string) ($params['triage_raiz'] ?? $params['parent_code'] ?? ''));
         }
 

@@ -5,6 +5,7 @@ namespace common\components\Platform\Assistant\SubIntentEngine;
 use common\components\Platform\Assistant\Catalog\DataAccessCatalogIntentSupport;
 use common\components\Platform\Assistant\Catalog\IntentMetricCatalogSupport;
 use common\components\Platform\Assistant\Catalog\YamlIntentManifestLoader;
+use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalHistoryWindow;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Core\Permission\IntentSubjectResolutionService;
 
@@ -16,8 +17,13 @@ final class FlowDraftHydratorService
     /**
      * @param array<string, mixed> $body
      */
-    public static function hydrateFromIntentManifest(string $intentId, array &$body): void
+    public static function hydrateFromIntentManifest(string $intentId, array &$body, int $userId = 0): void
     {
+        if ($userId > 0 && trim((string) ($body['_patient_history'] ?? '')) === '') {
+            $content = trim((string) ($body['content'] ?? ''));
+            $formatted = ConversationalHistoryWindow::formatForPrompt($userId, $content);
+            $body['_patient_history'] = ConversationalHistoryWindow::extractPatientLines($formatted);
+        }
         $before = isset($body['draft']) && is_array($body['draft']) ? $body['draft'] : [];
         self::applyDeclaredHydrator($intentId, $body);
         $after = isset($body['draft']) && is_array($body['draft']) ? $body['draft'] : [];
@@ -27,6 +33,7 @@ final class FlowDraftHydratorService
         } else {
             unset($body['_hydrator_draft_delta']);
         }
+        unset($body['_patient_history']);
     }
 
     /**

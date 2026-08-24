@@ -35,7 +35,7 @@ final class ChatOrchestrator
             }
 
             try {
-                FlowDraftHydratorService::hydrateFromIntentManifest($intentId, $body);
+                FlowDraftHydratorService::hydrateFromIntentManifest($intentId, $body, $userId);
             } catch (\yii\web\ForbiddenHttpException $e) {
                 return ['success' => false, 'error' => $e->getMessage()];
             } catch (\InvalidArgumentException $e) {

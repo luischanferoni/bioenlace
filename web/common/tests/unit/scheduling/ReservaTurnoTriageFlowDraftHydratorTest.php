@@ -34,4 +34,31 @@ class ReservaTurnoTriageFlowDraftHydratorTest extends Unit
 
         $this->assertSame('zona_pecho', $body['draft']['triage_zona'] ?? null);
     }
+
+    public function testHidrataZonaDesdeHistorialSiElMensajeEsFollowUp(): void
+    {
+        $body = [
+            'content' => '¿Qué hago con esto?',
+            '_patient_history' => "Tengo fiebre, tos y me duele el cuerpo",
+            'draft' => [],
+        ];
+
+        ReservaTurnoTriageFlowDraftHydrator::hydrateWithOptions($body);
+
+        $this->assertSame('malestar_nuevo', $body['draft']['triage_raiz'] ?? null);
+        $this->assertSame('zona_pecho', $body['draft']['triage_zona'] ?? null);
+    }
+
+    public function testNoUsaHistorialSiElMensajePideEstudio(): void
+    {
+        $body = [
+            'content' => 'Necesito una ecografía',
+            '_patient_history' => "Tengo fiebre, tos y me duele el cuerpo",
+            'draft' => [],
+        ];
+
+        ReservaTurnoTriageFlowDraftHydrator::hydrateWithOptions($body);
+
+        $this->assertNotSame('malestar_nuevo', $body['draft']['triage_raiz'] ?? null);
+    }
 }

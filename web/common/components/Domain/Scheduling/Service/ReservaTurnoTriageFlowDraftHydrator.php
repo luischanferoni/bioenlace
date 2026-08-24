@@ -18,8 +18,12 @@ final class ReservaTurnoTriageFlowDraftHydrator
         $draft = isset($body['draft']) && is_array($body['draft']) ? $body['draft'] : [];
         $content = isset($body['content']) ? trim((string) $body['content']) : '';
         $catalog = new ReservaTurnoTriageCatalogService();
+        $symptomText = self::symptomTextForHydration(
+            $content,
+            trim((string) ($body['_patient_history'] ?? ''))
+        );
 
-        self::hydrateMaletarNuevoFromContent($draft, $content, $catalog);
+        self::hydrateMaletarNuevoFromContent($draft, $symptomText, $catalog);
 
         $compiled = $catalog->compileSelections($draft);
 
@@ -36,6 +40,30 @@ final class ReservaTurnoTriageFlowDraftHydrator
         (new ReservaTriageServicioSugeridoService())->aplicarFlagsEnDraft($draft);
 
         $body['draft'] = $draft;
+    }
+
+    /**
+     * Si el mensaje actual no trae síntoma, usa el último del historial del paciente
+     * (follow-up “¿qué hago?”). No pisa un pedido de estudio/turno explícito.
+     */
+    private static function symptomTextForHydration(string $content, string $patientHistory): string
+    {
+        if (IntentClassificationRulesService::isClinicalSymptomContent($content)) {
+            return $content;
+        }
+        if (IntentClassificationRulesService::matchesAnyRule($content, [
+            'scheduling_operational',
+            'paciente_reservar_turno',
+            'paciente_pedido_estudio',
+        ])) {
+            return $content;
+        }
+        $fromHistory = IntentClassificationRulesService::lastLineMatchingRule(
+            $patientHistory,
+            'clinical_symptom'
+        );
+
+        return $fromHistory !== '' ? $fromHistory : $content;
     }
 
     /**

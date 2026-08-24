@@ -3,6 +3,7 @@
 namespace common\components\Platform\Assistant\Chat\Routing;
 
 use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalChannel;
+use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalHistoryWindow;
 use common\components\Platform\Assistant\Chat\Channels\Informational\InformationalChannel;
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
@@ -41,8 +42,18 @@ final class ChatRouter
             $queryText = $content;
         }
 
+        $formattedHistory = $userId > 0
+            ? ConversationalHistoryWindow::formatForPrompt($userId, $content)
+            : '';
+        $patientHistory = ConversationalHistoryWindow::extractPatientLines($formattedHistory);
+
         // Cinturón de seguridad: síntomas → conversational aunque el preprocess IA diga operational.
-        $goal = IntentClassificationRulesService::applyChatPreprocessGoalOverrides($queryText, $goal, $content);
+        $goal = IntentClassificationRulesService::applyChatPreprocessGoalOverrides(
+            $queryText,
+            $goal,
+            $content,
+            $patientHistory
+        );
 
         if (ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
             return OperationalChannel::handle($content, null, $userId);
@@ -54,7 +65,7 @@ final class ChatRouter
                 return OperationalChannel::handle($content, null, $userId);
 
             case 'conversational':
-                return ConversationalChannel::handle($content, $userId);
+                return ConversationalChannel::handle($content, $userId, $formattedHistory);
 
             case 'informational':
             case 'meta':

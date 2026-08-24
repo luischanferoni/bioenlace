@@ -707,6 +707,11 @@ chat_preprocess:
       from_goals: [informational, unclear, operational, in_flow_question]
       when_not_any_rule: [scheduling_operational, paciente_reservar_turno, paciente_pedido_estudio]
       to_goal: conversational
+    # Follow-up (“¿qué hago?”, evolución) tras un síntoma: charla + oferta; no abras el flow sin el primer mensaje.
+    - when_history_rule: clinical_symptom
+      from_goals: [informational, unclear, operational, in_flow_question]
+      when_not_any_rule: [scheduling_operational, paciente_reservar_turno, paciente_pedido_estudio]
+      to_goal: conversational
     - when_any_rule: [staff_data_access_count_or_resumen, staff_data_access_list, staff_data_access_list_phrase, staff_data_access_edit, own_cobertura_gestionar, staff_cobertura_gestionar]
       to_goal: operational
     - when_any_rule: [paciente_ultimo_en_oferta, paciente_turnos_anteriores, paciente_listar_turnos, paciente_reservar_turno, paciente_pedido_estudio]

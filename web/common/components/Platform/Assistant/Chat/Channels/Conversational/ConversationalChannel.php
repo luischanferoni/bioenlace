@@ -107,7 +107,7 @@ final class ConversationalChannel
     /**
      * @return array<string, mixed>
      */
-    public static function handle(string $content, int $userId): array
+    public static function handle(string $content, int $userId, ?string $formattedHistory = null): array
     {
         $content = trim($content);
         if ($content === '') {
@@ -126,10 +126,12 @@ final class ConversationalChannel
             return $infoArticle;
         }
 
-        $history = ConversationalHistoryWindow::formatForPrompt($userId, $content);
+        $history = $formattedHistory ?? ConversationalHistoryWindow::formatForPrompt($userId, $content);
+        $patientHistory = ConversationalHistoryWindow::extractPatientLines($history);
         $offer = self::shouldOfferBookingButton($content, $history)
             ? self::resolveBookingOffer($userId)
             : null;
+        $origin = self::bookingOfferOriginContent($content, $patientHistory);
 
         $prompt = self::buildPrompt($content, $userId, $offer, $history);
 
@@ -153,7 +155,30 @@ final class ConversationalChannel
             }
         }
 
-        return self::finalizeResponse($text, $offer, $content);
+        return self::finalizeResponse($text, $offer, $origin);
+    }
+
+    /**
+     * Texto que viaja en el botón al abrir el flow: el síntoma, no el follow-up (“¿qué hago?”).
+     */
+    public static function bookingOfferOriginContent(string $content, string $patientHistory = ''): string
+    {
+        $content = trim($content);
+        $cfg = IntentClassificationRulesService::conversationalChannelConfig()['booking_button'] ?? [];
+        if (!is_array($cfg)) {
+            return $content;
+        }
+        $whenRule = trim((string) ($cfg['when_rule'] ?? ''));
+        if ($whenRule !== '' && IntentClassificationRulesService::ruleMatches($whenRule, $content)) {
+            return $content;
+        }
+        $historyRule = trim((string) ($cfg['when_history_rule'] ?? $whenRule));
+        if ($historyRule === '') {
+            return $content;
+        }
+        $fromHistory = IntentClassificationRulesService::lastLineMatchingRule($patientHistory, $historyRule);
+
+        return $fromHistory !== '' ? $fromHistory : $content;
     }
 
     /**

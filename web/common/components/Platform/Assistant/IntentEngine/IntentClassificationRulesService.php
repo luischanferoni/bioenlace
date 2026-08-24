@@ -152,14 +152,36 @@ final class IntentClassificationRulesService
     }
 
     /**
+     * Última línea (más reciente) de un texto multilínea que matchea la regla, o vacío.
+     */
+    public static function lastLineMatchingRule(string $multilineText, string $ruleId): string
+    {
+        $ruleId = trim($ruleId);
+        if ($ruleId === '') {
+            return '';
+        }
+        $lines = preg_split('/\R/u', $multilineText) ?: [];
+        for ($i = count($lines) - 1; $i >= 0; $i--) {
+            $line = trim((string) $lines[$i]);
+            if ($line !== '' && self::ruleMatches($ruleId, $line)) {
+                return $line;
+            }
+        }
+
+        return '';
+    }
+
+    /**
      * Aplica overrides declarativos de user_goal.
      * `$alsoMatchText` (p. ej. mensaje original) evita que un normalized_text de la IA
      * sin síntomas saltee el desvío a conversational.
+     * `$historyText` alimenta `when_history_rule` (follow-up tras un síntoma).
      */
     public static function applyChatPreprocessGoalOverrides(
         string $normalized,
         string $goal,
-        ?string $alsoMatchText = null
+        ?string $alsoMatchText = null,
+        string $historyText = ''
     ): string {
         $overrides = self::chatPreprocessSection()['goal_overrides'] ?? [];
         if (!is_array($overrides)) {
@@ -179,10 +201,17 @@ final class IntentClassificationRulesService
 
             $whenRule = trim((string) ($block['when_rule'] ?? ''));
             $whenAny = $block['when_any_rule'] ?? [];
+            $whenHistory = trim((string) ($block['when_history_rule'] ?? ''));
             $matches = false;
             if ($whenRule !== '' && self::anyTextMatchesRule($whenRule, $texts)) {
                 $matches = true;
             } elseif (is_array($whenAny) && $whenAny !== [] && self::anyTextMatchesAnyRule($texts, $whenAny)) {
+                $matches = true;
+            } elseif (
+                $whenHistory !== ''
+                && trim($historyText) !== ''
+                && self::ruleMatches($whenHistory, $historyText)
+            ) {
                 $matches = true;
             }
             if (!$matches) {

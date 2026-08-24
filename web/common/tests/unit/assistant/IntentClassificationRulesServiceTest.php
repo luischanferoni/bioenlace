@@ -127,6 +127,39 @@ class IntentClassificationRulesServiceTest extends Unit
         $this->assertFalse(IntentClassificationRulesService::conversationalBookingOfferMatches('quiero un turno'));
     }
 
+    public function testGoalOverrideFollowUpUsesSymptomHistory(): void
+    {
+        $history = "Tengo fiebre, tos y me duele el cuerpo";
+        $this->assertSame(
+            'conversational',
+            IntentClassificationRulesService::applyChatPreprocessGoalOverrides(
+                '¿Qué hago con esto?',
+                'operational',
+                null,
+                $history
+            )
+        );
+        $this->assertSame(
+            'operational',
+            IntentClassificationRulesService::applyChatPreprocessGoalOverrides(
+                'quiero un turno',
+                'operational',
+                null,
+                $history
+            )
+        );
+    }
+
+    public function testLastLineMatchingRulePrefersMostRecentSymptom(): void
+    {
+        $history = "Tengo fiebre, tos y me duele el cuerpo\n¿Qué hago con esto?";
+        $this->assertSame(
+            'Tengo fiebre, tos y me duele el cuerpo',
+            IntentClassificationRulesService::lastLineMatchingRule($history, 'clinical_symptom')
+        );
+        $this->assertSame('', IntentClassificationRulesService::lastLineMatchingRule($history, 'paciente_reservar_turno'));
+    }
+
     public function testGoalOverrideSymptomPlusHospitalNearGoesConversational(): void
     {
         $msg = 'estoy con dolor de cabeza de hace varios dias, me gustaría saber que hospital tengo cerca que este atendiendo';

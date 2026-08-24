@@ -241,7 +241,7 @@ final class IntentEngine
                 'hints' => $hints,
             ];
             try {
-                FlowDraftHydratorService::hydrateFromIntentManifest($item->action_id, $flowBody);
+                FlowDraftHydratorService::hydrateFromIntentManifest($item->action_id, $flowBody, $userId);
             } catch (\yii\web\ForbiddenHttpException $e) {
                 return [
                     'success' => false,

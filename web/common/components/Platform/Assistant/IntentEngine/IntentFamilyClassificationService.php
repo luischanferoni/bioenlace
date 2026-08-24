@@ -68,56 +68,41 @@ final class IntentFamilyClassificationService
      */
     private function resolveFamilyOperationalFallback(string $message, int $userId, UiActionCatalog $catalog): ?array
     {
-        foreach (IntentClassificationRulesService::familyOperationalFallbacks() as $fb) {
-            if (!is_array($fb)) {
-                continue;
-            }
-            if (!empty($fb['requires_staff_data_access'])
-                && !IntentClassificationRulesService::isStaffDataAccessOperationalQuery($message)) {
-                continue;
-            }
-            $whenAny = $fb['when_any_rule'] ?? [];
-            if (!is_array($whenAny) || !IntentClassificationRulesService::matchesAnyRule($message, $whenAny)) {
-                continue;
-            }
-
-            $familyId = trim((string) ($fb['intent_family'] ?? ''));
-            if ($familyId === '') {
-                continue;
-            }
-
-            $resolver = new IntentFamilyResolutionService();
-            $resolved = $resolver->inferPreferredMemberFromMessage($userId, $familyId, $message);
-            if ($resolved !== null) {
-                $item = $catalog->byActionId[$resolved] ?? null;
-                if ($item instanceof UiActionCatalogItem) {
-                    return [
-                        'item' => $item,
-                        'confidence' => (float) ($fb['confidence'] ?? 0.9),
-                        'method' => trim((string) ($fb['method'] ?? 'rules_family_fallback')),
-                    ];
-                }
-            }
-
-            $placeholder = $catalog->byActionId[$resolver->listAccessibleMembers($userId, $familyId)[0] ?? ''] ?? null;
-            if (!$placeholder instanceof UiActionCatalogItem) {
-                continue;
-            }
-
-            $disambiguation = $this->buildDisambiguationPayload($familyId, $userId, $resolver);
-            if ($disambiguation === null) {
-                continue;
-            }
-
-            return [
-                'item' => $placeholder,
-                'confidence' => (float) ($fb['confidence'] ?? 0.85),
-                'method' => trim((string) ($fb['method'] ?? 'rules_family_fallback')),
-                'disambiguation' => $disambiguation,
-            ];
+        if (!\common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy::looksLikeConditionLaboral($message)) {
+            return null;
         }
 
-        return null;
+        $familyId = 'condicion-laboral.edit';
+        $resolver = new IntentFamilyResolutionService();
+        $resolved = $resolver->inferPreferredMemberFromMessage($userId, $familyId, $message);
+        if ($resolved !== null) {
+            $item = $catalog->byActionId[$resolved] ?? null;
+            if ($item instanceof UiActionCatalogItem) {
+                return [
+                    'item' => $item,
+                    'confidence' => 0.88,
+                    'method' => 'rules_family_fallback',
+                ];
+            }
+        }
+
+        $members = $resolver->listAccessibleMembers($userId, $familyId);
+        $placeholder = $catalog->byActionId[$members[0] ?? ''] ?? null;
+        if (!$placeholder instanceof UiActionCatalogItem) {
+            return null;
+        }
+
+        $disambiguation = $this->buildDisambiguationPayload($familyId, $userId, $resolver);
+        if ($disambiguation === null) {
+            return null;
+        }
+
+        return [
+            'item' => $placeholder,
+            'confidence' => 0.85,
+            'method' => 'rules_family_fallback',
+            'disambiguation' => $disambiguation,
+        ];
     }
 
     /**

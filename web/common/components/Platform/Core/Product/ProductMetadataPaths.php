@@ -46,9 +46,9 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'globals';
     }
 
-    public static function intentClassificationRulesFile(): string
+    public static function conversationalChannelFile(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'intent-classification-rules.yaml';
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'conversational-channel.yaml';
     }
 
     public static function intentFamiliesFile(): string

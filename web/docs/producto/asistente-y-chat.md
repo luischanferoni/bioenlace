@@ -35,6 +35,8 @@ flowchart TB
 
 Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`.
 
+Clasificación: keywords del intent + desambiguación si hay empate. Canal (charla vs trámite): política en código; copy del chat clínico en `conversational-channel.yaml`.
+
 ## Qué interpreta y qué no resuelve el modelo
 
 Bioenlace **entiende la necesidad** y **abre el camino que ya existe** (flow, lista, hub) para que la persona lo complete. Eso escala: el dato vive en la API (turnos, oferta del centro, PES, acto); no se pega al prompt la historia clínica completa, ni el catálogo del efector, ni la provincia.

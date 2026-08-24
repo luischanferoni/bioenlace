@@ -10,7 +10,7 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 |------|-----------|
 | `assistant/intents/` | Flows conversacionales del asistente (YAML por `intent_id`) |
 | `assistant/globals/` | Piezas reutilizables entre flows |
-| `assistant/intent-classification-rules.yaml` | Vocabulario NL, score, fallbacks operativos |
+| `assistant/conversational-channel.yaml` | Prompt / labels / oferta del canal conversacional |
 | `assistant/assistant-shortcuts.yaml` | Atajos visibles del asistente |
 | `assistant/assistant-shortcuts-paciente.yaml` | Atajos app paciente |
 | `assistant/assistant-shortcuts-whatsapp-paciente.yaml` | Atajos MVP canal WhatsApp paciente |
@@ -29,4 +29,4 @@ Contrato de pasos YAML: `common/components/Platform/Assistant/SubIntentEngine/sc
 
 Handlers de dominio (hydrators, políticas, scope, filtros, presentación, panel home, canal conversacional): `common/config/product-registries.php` vía `ProductRegistryConfig`.
 
-Reglas NL del preprocess del chat y del clasificador: `assistant/intent-classification-rules.yaml` (`chat_preprocess`, `conversational_channel`, `match_rules`).
+Canal conversacional (copy): `assistant/conversational-channel.yaml`. Política síntoma/trámite: `ChatChannelPolicy` (PHP).

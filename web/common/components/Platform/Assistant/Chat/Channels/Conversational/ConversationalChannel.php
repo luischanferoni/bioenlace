@@ -4,28 +4,21 @@ namespace common\components\Platform\Assistant\Chat\Channels\Conversational;
 
 use common\components\Ai\IAManager;
 use common\components\Domain\Content\Service\InfoContentAssistantService;
-use common\components\Platform\Assistant\Chat\Conversational\ConversationalChannelProviderRegistry;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
-use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
+use common\components\Platform\Assistant\Chat\Conversational\ConversationalChannelProviderRegistry;
 use Yii;
 
 /**
- * Canal conversacional: preprocess + respuesta automática con ventana acotada de historial.
- *
- * Prompt y reglas de booking: metadata ({@see IntentClassificationRulesService::conversationalChannelConfig()}).
- * Contexto de paciente: providers en {@see ConversationalChannelProviderRegistry}.
- * Oferta de botón: mismo intent resuelto para el prompt (`summary`/`capabilities`) y el envelope.
+ * Canal conversacional: copy en {@see ChatConversationalConfig}; cuándo ofrecer botón en {@see ChatChannelPolicy}.
  */
 final class ConversationalChannel
 {
     public static function stablePromptPrefix(): string
     {
-        $cfg = IntentClassificationRulesService::conversationalChannelConfig();
-        $prompt = trim((string) ($cfg['stable_prompt'] ?? ''));
-
-        return $prompt !== '' ? $prompt : 'Respondé en español, breve y amable.';
+        return ChatConversationalConfig::stablePrompt();
     }
 
     /**
@@ -50,7 +43,6 @@ final class ConversationalChannel
         $parts[] = 'Mensaje actual del paciente:';
         $parts[] = $content;
 
-        // Oferta al final: responde primero la pregunta; el botón es apoyo, no el centro.
         $offerBlock = self::formatOfferForPrompt($offer, $history !== '');
         if ($offerBlock !== '') {
             $parts[] = '';
@@ -61,8 +53,6 @@ final class ConversationalChannel
     }
 
     /**
-     * Bloque inyectado al prompt cuando hay oferta de botón (testable sin catálogo).
-     *
      * @param array{label?: string, intent_id?: string, summary?: string, capabilities?: list<string>}|null $offer
      */
     public static function formatOfferForPrompt(?array $offer, bool $continuingConversation = false): string
@@ -133,7 +123,7 @@ final class ConversationalChannel
 
         $history = $formattedHistory ?? ConversationalHistoryWindow::formatForPrompt($userId, $content);
         $patientHistory = ConversationalHistoryWindow::extractPatientLines($history);
-        $offer = self::shouldOfferBookingButton($content, $history)
+        $offer = ChatChannelPolicy::shouldOfferBookingButton($content, $patientHistory)
             ? self::resolveBookingOffer($userId)
             : null;
         $origin = self::bookingOfferOriginContent($content, $patientHistory);
@@ -153,35 +143,19 @@ final class ConversationalChannel
         }
 
         if ($text === null || $text === '') {
-            $cfg = IntentClassificationRulesService::conversationalChannelConfig();
-            $text = trim((string) ($cfg['empty_response_fallback'] ?? ''));
-            if ($text === '') {
-                $text = 'Entiendo tu consulta.';
-            }
+            $text = ChatConversationalConfig::emptyResponseFallback();
         }
 
         return self::finalizeResponse($text, $offer, $origin);
     }
 
-    /**
-     * Texto que viaja en el botón al abrir el flow: el síntoma, no el follow-up (“¿qué hago?”).
-     */
     public static function bookingOfferOriginContent(string $content, string $patientHistory = ''): string
     {
         $content = trim($content);
-        $cfg = IntentClassificationRulesService::conversationalChannelConfig()['booking_button'] ?? [];
-        if (!is_array($cfg)) {
+        if (ChatChannelPolicy::isClinicalSymptomContent($content)) {
             return $content;
         }
-        $whenRule = trim((string) ($cfg['when_rule'] ?? ''));
-        if ($whenRule !== '' && IntentClassificationRulesService::ruleMatches($whenRule, $content)) {
-            return $content;
-        }
-        $historyRule = trim((string) ($cfg['when_history_rule'] ?? $whenRule));
-        if ($historyRule === '') {
-            return $content;
-        }
-        $fromHistory = IntentClassificationRulesService::lastLineMatchingRule($patientHistory, $historyRule);
+        $fromHistory = ChatChannelPolicy::lastLineMatchingClinicalSymptom($patientHistory);
 
         return $fromHistory !== '' ? $fromHistory : $content;
     }
@@ -208,51 +182,27 @@ final class ConversationalChannel
         return AssistantEnvelope::interactive($text, [$button]);
     }
 
-    private static function shouldOfferBookingButton(string $content, string $formattedHistory = ''): bool
-    {
-        $patientHistory = ConversationalHistoryWindow::extractPatientLines($formattedHistory);
-
-        return IntentClassificationRulesService::conversationalBookingOfferMatches($content, $patientHistory);
-    }
-
     /**
      * @return array{label: string, intent_id: string, summary: string, capabilities: list<string>}|null
      */
     private static function resolveBookingOffer(int $userId): ?array
     {
-        $cfg = IntentClassificationRulesService::conversationalChannelConfig();
-        $buttonCfg = $cfg['booking_button'] ?? [];
-        if (!is_array($buttonCfg)) {
-            return null;
-        }
-
-        $labels = $buttonCfg['labels'] ?? [];
-        if (!is_array($labels)) {
-            $labels = [];
-        }
-
         $catalog = UiActionCatalog::forUser($userId);
-        foreach ($buttonCfg['intent_priority'] ?? [] as $intentId) {
-            if (!is_string($intentId) || trim($intentId) === '') {
-                continue;
-            }
-            $intentId = trim($intentId);
+        foreach (ChatConversationalConfig::bookingOfferIntentPriority() as $intentId) {
             $item = $catalog->byActionId[$intentId] ?? null;
-            if ($item === null) {
-                continue;
+            if ($item instanceof UiActionCatalogItem) {
+                return self::offerFromCatalogItem($item);
             }
-
-            return self::offerFromCatalogItem($item, $labels);
         }
 
-        $prefix = trim((string) ($buttonCfg['intent_prefix_fallback'] ?? ''));
+        $prefix = ChatConversationalConfig::bookingOfferIntentPrefixFallback();
         if ($prefix === '') {
             return null;
         }
 
         foreach ($catalog->items as $item) {
             if (str_starts_with($item->action_id, $prefix)) {
-                return self::offerFromCatalogItem($item, $labels);
+                return self::offerFromCatalogItem($item);
             }
         }
 
@@ -260,16 +210,11 @@ final class ConversationalChannel
     }
 
     /**
-     * @param array<string, mixed> $labels
      * @return array{label: string, intent_id: string, summary: string, capabilities: list<string>}
      */
-    private static function offerFromCatalogItem(UiActionCatalogItem $item, array $labels): array
+    private static function offerFromCatalogItem(UiActionCatalogItem $item): array
     {
-        $fallbackLabel = trim((string) ($labels[$item->action_id] ?? ''));
-        $label = $item->display_name !== ''
-            ? $item->display_name
-            : ($fallbackLabel !== '' ? $fallbackLabel : $item->action_id);
-
+        $label = $item->display_name !== '' ? $item->display_name : $item->action_id;
         $sem = is_array($item->intent_semantics) ? $item->intent_semantics : [];
         $summary = trim((string) ($sem['summary'] ?? ''));
         $capabilities = [];
@@ -293,12 +238,7 @@ final class ConversationalChannel
      */
     private static function formatCapabilityLines(array $capabilities): array
     {
-        $cfg = IntentClassificationRulesService::conversationalChannelConfig();
-        $labelMap = $cfg['capability_labels'] ?? [];
-        if (!is_array($labelMap)) {
-            $labelMap = [];
-        }
-
+        $labelMap = ChatConversationalConfig::capabilityLabels();
         $lines = [];
         foreach ($capabilities as $cap) {
             if (!is_string($cap) || trim($cap) === '') {

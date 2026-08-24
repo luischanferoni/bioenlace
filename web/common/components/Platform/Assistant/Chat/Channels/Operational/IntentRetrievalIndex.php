@@ -2,7 +2,6 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Operational;
 
-use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Platform\Assistant\IntentEngine\IntentClassifier;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
@@ -42,38 +41,7 @@ final class IntentRetrievalIndex
             $out = array_slice($catalog->items, 0, min($k, count($catalog->items)));
         }
 
-        return self::ensureDeclarativeFallbackInTopK($message, $catalog, $out, $k);
-    }
-
-    /**
-     * Si hay fallback operativo declarativo, el intent debe entrar en top-K aunque el score base sea bajo.
-     *
-     * @param UiActionCatalogItem[] $items
-     * @return UiActionCatalogItem[]
-     */
-    private static function ensureDeclarativeFallbackInTopK(
-        string $message,
-        UiActionCatalog $catalog,
-        array $items,
-        int $k
-    ): array {
-        // Incluir fallbacks operativos declarativos (paciente y staff) en el top-K.
-        $fallback = IntentClassificationRulesService::resolveOperationalFallback($message, $catalog);
-        if ($fallback === null || !$fallback['item'] instanceof UiActionCatalogItem) {
-            return $items;
-        }
-        $target = $fallback['item'];
-        foreach ($items as $it) {
-            if ($it->action_id === $target->action_id) {
-                return $items;
-            }
-        }
-        array_unshift($items, $target);
-        if (count($items) > $k) {
-            $items = array_slice($items, 0, $k);
-        }
-
-        return $items;
+        return $out;
     }
 
     private static function scoreItem(string $messageLower, UiActionCatalogItem $item): int

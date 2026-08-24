@@ -4,12 +4,11 @@ namespace common\components\Platform\Assistant\Chat\Preprocess;
 
 use Yii;
 use common\components\Ai\IAManager;
-use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 
 /**
  * Preprocess: canal (user_goal), texto normalizado y extracciones (spans).
  *
- * Detección léxica y overrides de goal: metadata {@see IntentClassificationRulesService}.
+ * Política de canal: {@see ChatChannelPolicy}. Copy conversacional: otro YAML.
  */
 final class ChatPreprocessService
 {
@@ -22,24 +21,26 @@ final class ChatPreprocessService
         'unclear',
     ];
 
+    private const ENTITY_CATEGORIES = ['servicio', 'efector', 'persona', 'profesional', 'turno'];
+
     public static function isClinicalSymptomContent(string $content): bool
     {
-        return IntentClassificationRulesService::isClinicalSymptomContent($content);
+        return ChatChannelPolicy::isClinicalSymptomContent($content);
     }
 
     public static function isStaffDataAccessQuery(string $content): bool
     {
-        return IntentClassificationRulesService::isStaffDataAccessQuery($content);
+        return ChatChannelPolicy::isStaffDataAccessQuery($content);
     }
 
     public static function isStaffDataAccessEditQuery(string $content): bool
     {
-        return IntentClassificationRulesService::isStaffDataAccessEditQuery($content);
+        return ChatChannelPolicy::isStaffDataAccessEditQuery($content);
     }
 
     public static function isStaffDataAccessOperationalQuery(string $content): bool
     {
-        return IntentClassificationRulesService::isStaffDataAccessOperationalQuery($content);
+        return ChatChannelPolicy::isStaffDataAccessOperationalQuery($content);
     }
 
     /**
@@ -47,9 +48,7 @@ final class ChatPreprocessService
      */
     public static function allowedEntityCategories(): array
     {
-        $fromMeta = IntentClassificationRulesService::chatPreprocessEntityCategories();
-
-        return $fromMeta !== [] ? $fromMeta : ['servicio', 'efector', 'persona', 'profesional', 'turno'];
+        return self::ENTITY_CATEGORIES;
     }
 
     /**
@@ -77,7 +76,36 @@ final class ChatPreprocessService
 
     public static function stablePromptPrefix(): string
     {
-        return IntentClassificationRulesService::chatPreprocessStablePromptPrefix();
+        $categories = json_encode(self::allowedEntityCategories(), JSON_UNESCAPED_UNICODE);
+        $goals = json_encode(self::GOALS, JSON_UNESCAPED_UNICODE);
+
+        return <<<PROMPT
+Analizá el mensaje del usuario para un asistente de salud.
+
+Respondé ÚNICAMENTE con JSON:
+{
+  "normalized_text": "mensaje limpio, ortografía corregida y abreviaturas médicas abiertas cuando aplique",
+  "user_goal": "uno de {$goals}",
+  "action_text": "fragmento que expresa la acción pedida o vacío",
+  "extractions": [
+    {
+      "span": "fragmento mencionado (no palabras sueltas)",
+      "category": "una de {$categories}",
+      "synonyms": ["0-2 variantes ortográficas o abreviaturas"]
+    }
+  ]
+}
+
+Reglas:
+- user_goal operational si pide una acción del sistema (turno, agenda, estudio/práctica concreto) o consulta datos propios resolubles.
+- conversational si hay saludo, síntomas, lesiones o charla clínica (aunque también pregunten hospital cerca). Pedir un estudio/práctica concreto SÍ es operational.
+- informational si pregunta qué puede hacer la app, menú/ayuda o cómo funciona algo del sistema.
+- No uses category servicio para síntomas ni partes del cuerpo.
+- extractions: solo entidades del mundo (servicio, centro, persona), no verbos.
+- synonyms: máximo 2 strings por extracción.
+
+Mensaje:
+PROMPT;
     }
 
     public static function userMessagePart(string $content): string
@@ -158,11 +186,7 @@ final class ChatPreprocessService
             }
         }
 
-        $goal = IntentClassificationRulesService::applyChatPreprocessGoalOverrides(
-            $normalized,
-            $goal,
-            $fallbackContent
-        );
+        $goal = ChatChannelPolicy::resolveUserGoal($normalized, $goal, $fallbackContent);
 
         return [
             'normalized_text' => $normalized,
@@ -177,7 +201,7 @@ final class ChatPreprocessService
      */
     private static function heuristicFallback(string $content): array
     {
-        $goal = IntentClassificationRulesService::resolveHeuristicUserGoal($content);
+        $goal = ChatChannelPolicy::heuristicUserGoal($content);
 
         return [
             'normalized_text' => $content,

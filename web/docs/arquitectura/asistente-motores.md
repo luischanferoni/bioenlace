@@ -51,9 +51,10 @@ flowchart LR
 
 **Señales que usa:**
 
-- Texto del usuario.
-- Permisos (qué rutas API puede llamar).
-- Metadatos del intent (objetivo, palabras clave, restricciones) definidos en YAML bajo `common/metadata/bioenlace/assistant/intents/`.
+- Texto del usuario y permisos (rutas API del catálogo).
+- `keywords` e `intent_semantics` del YAML de cada intent.
+- Si dos intents empatan de cerca → **desambiguación** (botones); no boosts entre `intent_id`.
+- Canal (síntoma → conversational, etc.): `ChatChannelPolicy` (PHP). Copy: `conversational-channel.yaml`.
 
 ---
 

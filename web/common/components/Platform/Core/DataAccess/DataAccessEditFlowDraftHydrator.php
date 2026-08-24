@@ -3,7 +3,7 @@
 namespace common\components\Platform\Core\DataAccess;
 
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
-use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Service\AssistantDraftNormalizer;
 use common\components\Platform\Core\DataAccess\Edit\EditSparseAspectIds;
 use common\components\Domain\Organization\Service\Efectores\OrganizationEfectorAccess;
@@ -112,8 +112,8 @@ final class DataAccessEditFlowDraftHydrator
         PermissionContext $ctx,
         array $params
     ): ?string {
-        if (IntentClassificationRulesService::ruleMatches('staff_agenda_config_edit', $content)
-            || IntentClassificationRulesService::ruleMatches('own_agenda_config_edit', $content)) {
+        if (ChatChannelPolicy::suggestsStaffAgendaEdit($content)
+            || ChatChannelPolicy::suggestsOwnAgendaEdit($content)) {
             $candidate = 'ProfesionalEfectorServicioAgenda';
             if ($auth->userCanAccessEditSurface($ctx, $candidate, $params)) {
                 return $candidate;
@@ -197,7 +197,7 @@ final class DataAccessEditFlowDraftHydrator
             return;
         }
         $ruleId = trim((string) ($resolver['prefill_session_id_persona_when_rule'] ?? ''));
-        if ($ruleId === '' || !IntentClassificationRulesService::ruleMatches($ruleId, $content)) {
+        if ($ruleId === '' || !ChatChannelPolicy::namedPredicate($ruleId, $content)) {
             return;
         }
         $idPersona = (int) \Yii::$app->user->getIdPersona();

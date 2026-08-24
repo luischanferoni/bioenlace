@@ -7,8 +7,8 @@ use common\components\Platform\Assistant\Chat\Channels\Conversational\Conversati
 use common\components\Platform\Assistant\Chat\Channels\Informational\InformationalChannel;
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
-use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 
 /**
  * Enruta por user_goal tras preprocess.
@@ -48,7 +48,7 @@ final class ChatRouter
         $patientHistory = ConversationalHistoryWindow::extractPatientLines($formattedHistory);
 
         // Cinturón de seguridad: síntomas → conversational aunque el preprocess IA diga operational.
-        $goal = IntentClassificationRulesService::applyChatPreprocessGoalOverrides(
+        $goal = ChatChannelPolicy::resolveUserGoal(
             $queryText,
             $goal,
             $content,

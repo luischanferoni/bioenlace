@@ -1,6 +1,6 @@
 ---
-description: Routing del asistente — metadata declarativa, sin hardcode de intents en PHP/prompts
-globs: web/common/components/Platform/Assistant/**/*.php,web/common/components/Platform/Assistant/SubIntentEngine/schemas/**
+description: Routing del asistente — keywords en intents, desambiguación genérica, canal en PHP + copy YAML
+globs: web/common/components/Platform/Assistant/**/*.php,web/common/metadata/bioenlace/assistant/**
 alwaysApply: false
 ---
 
@@ -8,43 +8,36 @@ alwaysApply: false
 
 ## Principio
 
-No enumerar `intent_id`, regex de dominio ni `best_id = …` en orquestadores (`OperationalChannel`, `IntentClassifier`, `IntentIdAliasResolver`, hydrators) ni en prompts de IA.
+No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la acción”.
 
-Los parches rápidos de routing (boost en PHP, fallback con intent fijo, alias en constante) fueron el origen de esta regla — **no repetir**: si falla la clasificación, extender `intent-classification-rules.yaml` (o metadata de catálogo), no otra excepción en código.
+**Clasificación de acción (qué intent abrir):**
+
+1. `keywords` / `intent_semantics` en el YAML de **cada intent**.
+2. `IntentClassifier`: score por keywords; ganador claro → lanza; empate → desambiguación con botones.
+3. IA solo si no hay señal suficiente.
+
+**Canal (charla vs trámite vs menú):** lógica en `ChatChannelPolicy` (PHP). No es configuración de intents.
+
+**Copy conversacional:** `assistant/conversational-channel.yaml` (prompt, labels, prioridad del botón Solicitar Atención).
 
 ## Dónde va cada cosa
 
-| Necesidad | Archivo metadata |
-|-----------|------------------|
-| Alias legacy → intent canónico | `SubIntentEngine/schemas/intent-aliases.yaml` |
-| Vocabulario NL, match rules, score boosts/penalties, fallbacks operativos, `ai_hint` | `SubIntentEngine/schemas/intent-classification-rules.yaml` |
-| Atajos visibles (curación producto) | `SubIntentEngine/schemas/assistant-shortcuts.yaml` |
-| Keywords métricas / edit surfaces / prefill sujeto | `SubIntentEngine/schemas/data-access-config/*.yaml` |
-| Flujos multi-paso | `assistant/intents/{create,read,update,delete}/**/*.yaml` |
-| Lectura métrica (conteo/listado) | `assistant/intents/read/*.yaml` + `data-access-config` (no intents NL `data-access.*`) |
-| Catálogo `data-access.*` (sin YAML flow) | `Catalog/DataAccessUiActionCatalog.php` + `DataAccessCatalogIntentSupport.php` |
-
-## Motores (solo interpretan metadata)
-
-- `IntentClassificationRulesService` — reglas YAML; **único** lugar de score adjustments declarativos.
-- `IntentAliasCatalog` — alias YAML.
-- `AssistantShortcutsCatalog` — atajos YAML.
-- `YamlIntentCatalogService::postOnlyFlowClosureRoutes()` — rutas POST de `flow_submit` (no listas fijas en PHP).
-
-## Prohibido
-
-- `if ($actionId === 'data-access.editar')` (o similar) en `IntentClassifier` / `OperationalChannel` para routing de producto.
-- Líneas en prompts IA del tipo `best_id = data-access.editar` o cualquier intent_id fijo.
-- Arrays PHP de alias, shortcuts o rutas POST de cierre de flow.
-- Llamadas desde hydrators de dominio a métodos del classifier; usar claves en `subject_resolver` (p. ej. `prefill_session_id_persona_when_rule` → rule id en YAML).
+| Necesidad | Dónde |
+|-----------|--------|
+| Frases NL del intent, flow, `when`/`next` sobre draft | `assistant/intents/**/*.yaml` |
+| Prompt / labels del canal conversacional | `assistant/conversational-channel.yaml` |
+| ¿Síntoma o turno? ¿Menú? ¿Staff list/edit? | `ChatChannelPolicy` (PHP) |
+| Alias legacy | `assistant/intent-aliases.yaml` (path vigente) |
+| Atajos visibles | `assistant/assistant-shortcuts.yaml` |
 
 ## Al agregar routing NL
 
-1. Extender vocab/match_rules/score_adjustments en `intent-classification-rules.yaml`.
-2. Si hace falta pista para IA, añadir `ai_hint` en la rule (texto genérico, sin ids).
-3. Tests en `common/tests/unit/assistant/IntentClassificationRulesServiceTest.php`.
+1. Enriquecer `keywords` del intent.
+2. Empate ambiguo entre dos puertas: unificar flow o desambiguación del motor — no un YAML de boost.
+3. Cambiar política de canal (p. ej. qué cuenta como síntoma): ajustar `ChatChannelPolicy`.
+4. Cambiar tono/copy del chat clínico: `conversational-channel.yaml`.
 
 ## Excepciones
 
-- Umbrales técnicos (`RULES_MIN_SCORE`, timeouts).
-- `DataAccessCatalogIntentSupport::GENERIC_INTENT_IDS` — registry estable de intents genéricos (3 ids), no reglas de producto.
+- Umbrales técnicos del classifier (`RULES_MIN_SCORE`, márgenes).
+- Predicados nombrados estables (`own_agenda_config_edit`) solo para cablear DataAccess `subject_resolver`.

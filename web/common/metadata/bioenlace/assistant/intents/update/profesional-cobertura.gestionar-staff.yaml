@@ -24,6 +24,8 @@ keywords:
   - roster internación
   - cobertura de un profesional
   - cargar cobertura de
+  - horarios de plantel de un profesional
+  - plantel de guardia de un profesional
 
 intent_semantics:
   goal: Cargar horarios EMER/IMP de un profesional del efector.

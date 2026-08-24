@@ -13,18 +13,9 @@ action_name: "Cargar mi cobertura (guardia / internación)"
 description: "Patrón semanal de plantel EMER/IMP con vigencia. Preferí «Mis horarios» si también configurás ambulatorio."
 rbac_route: "/api/profesional-cobertura/gestionar"
 
-keywords:
-  - cargar mi cobertura
-  - mi cobertura
-  - cobertura de guardia
-  - cobertura de piso
-  - mi guardia
-  - turno de guardia
-  - cobertura internación
-  - horario de guardia
-  - plantel de guardia
-  - plantel
-  - registrar mi cobertura
+# Atajo oculto: la puerta canónica es profesional-horarios.gestionar-propio.
+# Sin keywords NL propias para no empatar con el hub de «mis horarios».
+keywords: []
 
 intent_semantics:
   goal: Declarar cobertura propia de urgencia o internación (patrón semanal).

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Scheduling\Service;
 
-use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 
 /**
  * Enriquece el draft del asistente tras pasos de triage (halt, banda, sugerencia teleconsulta).
@@ -48,20 +48,13 @@ final class ReservaTurnoTriageFlowDraftHydrator
      */
     private static function symptomTextForHydration(string $content, string $patientHistory): string
     {
-        if (IntentClassificationRulesService::isClinicalSymptomContent($content)) {
+        if (ChatChannelPolicy::isClinicalSymptomContent($content)) {
             return $content;
         }
-        if (IntentClassificationRulesService::matchesAnyRule($content, [
-            'scheduling_operational',
-            'paciente_reservar_turno',
-            'paciente_pedido_estudio',
-        ])) {
+        if (ChatChannelPolicy::isExplicitOperationalCareRequest($content)) {
             return $content;
         }
-        $fromHistory = IntentClassificationRulesService::lastLineMatchingRule(
-            $patientHistory,
-            'clinical_symptom'
-        );
+        $fromHistory = ChatChannelPolicy::lastLineMatchingClinicalSymptom($patientHistory);
 
         return $fromHistory !== '' ? $fromHistory : $content;
     }
@@ -85,7 +78,7 @@ final class ReservaTurnoTriageFlowDraftHydrator
             return;
         }
 
-        if (IntentClassificationRulesService::isClinicalSymptomContent($content)) {
+        if (ChatChannelPolicy::isClinicalSymptomContent($content)) {
             $draft['triage_raiz'] = 'malestar_nuevo';
             self::hydrateZonaFromContent($draft, $content, $catalog);
         }

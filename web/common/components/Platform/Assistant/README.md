@@ -24,13 +24,12 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 - **Registries producto**: `common/config/product-registries.php` vía `Core/Product/ProductRegistryConfig.php`
 - **Mini-UIs** (`ui_json` / wizard): `frontend/modules/api/v1/views/json/<entidad>/<accion>.json`
 
-## Clasificación IA (señal semántica)
+## Clasificación NL
 
-Los intents YAML pueden declarar `intent_semantics` (`summary`/`capabilities` + `goal/how/preconditions/constraints/outcome/keyphrases`) para mejorar:
-
-- la clasificación por IA (cuando el texto no matchea keywords literales),
-- la explicación (`match.ai.why`) y desambiguación (`kind=intent_remediation`, `rule_id=ai_disambiguation`), y
-- la oferta conversacional: `ConversationalChannel` inyecta `summary`/`capabilities` del intent del botón en el prompt (ver `Chat/Channels/Conversational/README.md`).
+1. **Keywords** del YAML de cada intent → score.
+2. **Ganador claro** → lanza; **empate** → desambiguación con botones.
+3. **IA** solo si no hay señal suficiente.
+4. **Canal** (síntoma vs trámite): `ChatChannelPolicy`. **Copy** conversacional: `conversational-channel.yaml`.
 
 ## Entrypoints importantes
 

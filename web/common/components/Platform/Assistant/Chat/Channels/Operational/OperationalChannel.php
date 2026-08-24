@@ -4,8 +4,6 @@ namespace common\components\Platform\Assistant\Chat\Channels\Operational;
 
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
-use common\components\Platform\Assistant\IntentEngine\IntentFamilyClassificationService;
-use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
 use common\components\Platform\Assistant\IntentEngine\IntentClassifier;
 use common\components\Platform\Assistant\IntentEngine\IntentEngine;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
@@ -51,13 +49,7 @@ final class OperationalChannel
             return self::finalize(IntentEngine::processQuery($queryText, $userId, null));
         }
 
-        // Reglas declarativas antes de top-K e IA (fallbacks YAML con `operational_fallbacks`).
-        $declarative = IntentClassificationRulesService::resolveOperationalFallback($queryText, $catalog);
-        if ($declarative !== null) {
-            $declarative = (new IntentFamilyClassificationService())->refine($declarative, $queryText, $userId, $catalog);
-            return self::buildFromClassification($declarative, $queryText, $userId);
-        }
-
+        // Keywords del catálogo → ganador claro o desambiguación (sin forzar intent_id por YAML).
         $top = IntentRetrievalIndex::topK($queryText, $catalog, 8);
         $classification = IntentClassifier::classifyAmongItems($queryText, $top, $catalog, $userId);
 

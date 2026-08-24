@@ -36,7 +36,7 @@ class IntentClassifierStaffAgendaEditTest extends Unit
             IntentClassifier::scoreItemPublic($messageLower, $editar),
             $configurarScore
         );
-        $this->assertGreaterThanOrEqual(70, $configurarScore);
+        $this->assertGreaterThanOrEqual(30, $configurarScore);
     }
 
     public function testCrearAgendaIsNotStaffAgendaEdit(): void

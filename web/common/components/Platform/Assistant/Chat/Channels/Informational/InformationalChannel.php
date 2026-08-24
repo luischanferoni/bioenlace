@@ -5,7 +5,7 @@ namespace common\components\Platform\Assistant\Chat\Channels\Informational;
 use common\components\Domain\Content\Service\InfoContentAssistantService;
 use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
-use common\components\Platform\Assistant\IntentEngine\IntentClassificationRulesService;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\IntentEngine\IntentEngine;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 
@@ -37,7 +37,7 @@ final class InformationalChannel
             return ConversationalChannel::handle($content, $userId);
         }
 
-        if (IntentClassificationRulesService::isClinicalSymptomContent($content)) {
+        if (ChatChannelPolicy::isClinicalSymptomContent($content)) {
             return ConversationalChannel::handle($content, $userId);
         }
 
@@ -61,7 +61,7 @@ final class InformationalChannel
      */
     public static function isCapabilityMenuQuery(string $content): bool
     {
-        return IntentClassificationRulesService::isCapabilityMenuQuery($content);
+        return ChatChannelPolicy::isCapabilityMenuQuery($content);
     }
 
     private static function currentIdEfector(): ?int

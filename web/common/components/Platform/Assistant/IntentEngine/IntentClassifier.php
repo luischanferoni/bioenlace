@@ -4,16 +4,26 @@ namespace common\components\Platform\Assistant\IntentEngine;
 
 use Yii;
 use common\components\Ai\IAManager;
-use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 
 /**
- * Clasificación: reglas sobre keywords del catálogo; IA solo en {@see classify()} (catálogo completo).
- * El canal operativo usa {@see classifyAmongItems()} sin segunda IA (match PHP sobre normalized_text).
+ * Clasificación NL → intent del catálogo.
+ *
+ * Reglas: score por keywords del intent (YAML descriptivo). Ganador claro → lanza.
+ * Empate cercano entre vecinos → desambiguación con botones (sin boost/penalidad por intent_id).
+ * IA solo si no hay señal suficiente por keywords.
  */
 final class IntentClassifier
 {
     private const RULES_MIN_SCORE = 30;
+
+    /** Confianza mínima para aceptar ganador por reglas sin pasar por IA. */
     private const RULES_HIGH_CONFIDENCE = 0.7;
+
+    /** Margen mínimo entre 1.º y 2.º para considerar ganador claro. */
+    private const CLEAR_MARGIN = 20;
+
+    /** Si el 2.º está dentro de este margen del 1.º (ambos ≥ MIN), se desambigua. */
+    private const CLOSE_MARGIN = 20;
 
     /**
      * @return array{
@@ -38,15 +48,11 @@ final class IntentClassifier
         }
 
         $rules = self::classifyByRules($message, $catalog->items);
-        if ($rules !== null && $rules['confidence'] >= self::RULES_HIGH_CONFIDENCE) {
+        if ($rules !== null && isset($rules['disambiguation'])) {
             return (new IntentFamilyClassificationService())->refine($rules, $message, $userId, $catalog);
         }
-
-        if (ChatPreprocessService::isStaffDataAccessOperationalQuery($message)) {
-            $declarative = IntentClassificationRulesService::resolveOperationalFallback($message, $catalog);
-            if ($declarative !== null) {
-                return (new IntentFamilyClassificationService())->refine($declarative, $message, $userId, $catalog);
-            }
+        if ($rules !== null && $rules['confidence'] >= self::RULES_HIGH_CONFIDENCE) {
+            return (new IntentFamilyClassificationService())->refine($rules, $message, $userId, $catalog);
         }
 
         $ai = self::classifyByAi($message, $catalog, $rules);
@@ -59,30 +65,103 @@ final class IntentClassifier
 
     /**
      * @param UiActionCatalogItem[] $items
-     * @return array{item:UiActionCatalogItem,confidence:float,method:string}|null
+     * @return array<string, mixed>|null
      */
     private static function classifyByRules(string $message, array $items): ?array
     {
         $messageLower = mb_strtolower(trim($message), 'UTF-8');
-        $best = null;
-        $bestScore = 0;
-
-        foreach ($items as $item) {
-            $score = self::scoreItem($messageLower, $item);
-            if ($score > $bestScore) {
-                $bestScore = $score;
-                $best = $item;
-            }
-        }
-
-        if ($best === null || $bestScore < self::RULES_MIN_SCORE) {
+        $ranked = self::rankItems($messageLower, $items);
+        if ($ranked === [] || $ranked[0]['s'] < self::RULES_MIN_SCORE) {
             return null;
         }
 
+        $best = $ranked[0];
+        $second = $ranked[1] ?? null;
+        $margin = $second !== null ? ((int) $best['s'] - (int) $second['s']) : PHP_INT_MAX;
+
+        if (
+            $second !== null
+            && (int) $second['s'] >= self::RULES_MIN_SCORE
+            && $margin < self::CLEAR_MARGIN
+        ) {
+            $candidates = [];
+            foreach ($ranked as $row) {
+                if ((int) $row['s'] < self::RULES_MIN_SCORE) {
+                    break;
+                }
+                if ((int) $best['s'] - (int) $row['s'] > self::CLOSE_MARGIN) {
+                    break;
+                }
+                $candidates[] = $row['it'];
+                if (count($candidates) >= 3) {
+                    break;
+                }
+            }
+            if (count($candidates) >= 2) {
+                return self::buildRulesDisambiguation($candidates, $best['it']);
+            }
+        }
+
+        $confidence = min((int) $best['s'] / 100, 1.0);
+        if ($margin >= self::CLEAR_MARGIN || (int) $best['s'] >= 55) {
+            $confidence = max($confidence, 0.75);
+        }
+
         return [
-            'item' => $best,
-            'confidence' => min($bestScore / 100, 1.0),
+            'item' => $best['it'],
+            'confidence' => $confidence,
             'method' => 'rules',
+        ];
+    }
+
+    /**
+     * @param UiActionCatalogItem[] $items
+     * @return list<array{s:int,it:UiActionCatalogItem}>
+     */
+    private static function rankItems(string $messageLower, array $items): array
+    {
+        $scored = [];
+        foreach ($items as $item) {
+            $score = self::scoreItem($messageLower, $item);
+            if ($score > 0) {
+                $scored[] = ['s' => $score, 'it' => $item];
+            }
+        }
+        usort($scored, static function ($a, $b) {
+            return (int) $b['s'] <=> (int) $a['s'];
+        });
+
+        return $scored;
+    }
+
+    /**
+     * @param UiActionCatalogItem[] $candidates
+     * @return array<string, mixed>
+     */
+    private static function buildRulesDisambiguation(array $candidates, UiActionCatalogItem $primary): array
+    {
+        $remediation = [];
+        foreach ($candidates as $it) {
+            $label = trim((string) $it->display_name);
+            if ($label === '') {
+                $label = $it->action_id;
+            }
+            $remediation[] = [
+                'id' => $it->action_id,
+                'label' => $label,
+                'intent_id' => $it->action_id,
+                'reset_flow' => true,
+            ];
+        }
+
+        return [
+            'item' => $primary,
+            'confidence' => 0.55,
+            'method' => 'rules_disambiguation',
+            'disambiguation' => [
+                'text' => '¿Cuál de estas opciones necesitás?',
+                'remediation' => $remediation,
+            ],
         ];
     }
 
@@ -92,7 +171,7 @@ final class IntentClassifier
     }
 
     /**
-     * Clasificación sobre un subconjunto del catálogo (top-K): solo reglas PHP (keywords / semántica YAML).
+     * Clasificación sobre un subconjunto del catálogo (top-K): solo reglas PHP (keywords).
      *
      * @param UiActionCatalogItem[] $items
      * @return array<string, mixed>|null
@@ -108,62 +187,51 @@ final class IntentClassifier
         return (new IntentFamilyClassificationService())->refine($rules, $message, $userId, $catalog);
     }
 
-    /**
-     * @param UiActionCatalogItem[] $items
-     */
-    private static function catalogSubset(UiActionCatalog $catalog, array $items): UiActionCatalog
-    {
-        $byId = [];
-        foreach ($items as $it) {
-            $byId[$it->action_id] = $it;
-        }
-
-        return UiActionCatalog::fromItems(array_values($items), $byId);
-    }
-
     private static function scoreItem(string $messageLower, UiActionCatalogItem $item): int
     {
         $score = 0;
 
-        // match por action_id y display_name
         foreach ([$item->action_id, $item->display_name] as $s) {
-            $s = mb_strtolower(trim($s), 'UTF-8');
+            $s = mb_strtolower(trim((string) $s), 'UTF-8');
             if ($s !== '' && mb_stripos($messageLower, $s) !== false) {
                 $score += 40;
             }
         }
 
+        // Una sola mejor keyword: evita que tokens sueltos acumulados empaten frases específicas.
+        $bestKeyword = 0;
         $messageFolded = self::foldAccents($messageLower);
         foreach ($item->keywords as $keyword) {
-            $keywordLower = mb_strtolower(trim($keyword), 'UTF-8');
+            $keywordLower = mb_strtolower(trim((string) $keyword), 'UTF-8');
             if ($keywordLower === '') {
                 continue;
             }
             $keywordFolded = self::foldAccents($keywordLower);
+            $hit = 0;
             if ($messageLower === $keywordLower || $messageFolded === $keywordFolded) {
-                // Frase exacta (p. ej. «mis turnos»): supera RULES_MIN_SCORE sin depender solo del delta YAML.
-                $score += 50;
-                continue;
-            }
-            if (mb_stripos($messageLower, $keywordLower) !== false
+                $hit = 60;
+            } elseif (mb_stripos($messageLower, $keywordLower) !== false
                 || mb_stripos($messageFolded, $keywordFolded) !== false) {
-                $score += 20;
+                $words = preg_split('/\s+/u', $keywordFolded, -1, PREG_SPLIT_NO_EMPTY);
+                $wordCount = is_array($words) ? count($words) : 1;
+                $hit = 15 + min(35, $wordCount * 8);
+            }
+            if ($hit > $bestKeyword) {
+                $bestKeyword = $hit;
             }
         }
 
-        $score += IntentClassificationRulesService::scoreAdjustment($messageLower, $item->action_id);
-
-        return $score;
+        return $score + $bestKeyword;
     }
 
     public static function messageSuggestsStaffAgendaEdit(string $message): bool
     {
-        return IntentClassificationRulesService::ruleMatches('staff_agenda_config_edit', $message);
+        return \common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy::suggestsStaffAgendaEdit($message);
     }
 
     public static function messageSuggestsOwnAgendaEdit(string $message): bool
     {
-        return IntentClassificationRulesService::ruleMatches('own_agenda_config_edit', $message);
+        return \common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy::suggestsOwnAgendaEdit($message);
     }
 
     private static function foldAccents(string $text): string
@@ -182,20 +250,12 @@ final class IntentClassifier
     public static function suggestByRules(string $message, UiActionCatalog $catalog, int $limit = 6): array
     {
         $messageLower = mb_strtolower(trim($message), 'UTF-8');
-        $scored = [];
-        foreach ($catalog->items as $it) {
-            $s = self::scoreItem($messageLower, $it);
-            if ($s > 0) {
-                $scored[] = ['s' => $s, 'it' => $it];
-            }
-        }
-        usort($scored, static function ($a, $b) {
-            return (int) $b['s'] <=> (int) $a['s'];
-        });
+        $ranked = self::rankItems($messageLower, $catalog->items);
         $out = [];
-        foreach (array_slice($scored, 0, max(0, $limit)) as $row) {
+        foreach (array_slice($ranked, 0, max(0, $limit)) as $row) {
             $out[] = $row['it'];
         }
+
         return $out;
     }
 
@@ -219,26 +279,22 @@ final class IntentClassifier
                 return $i->toAiCandidateArray();
             }, $catalog->items);
 
+            $hintPayload = null;
+            if ($rulesHint !== null && ($rulesHint['item'] ?? null) instanceof UiActionCatalogItem) {
+                $hintPayload = [
+                    'id' => $rulesHint['item']->action_id,
+                    'confidence' => $rulesHint['confidence'] ?? null,
+                ];
+            }
+
             $toon = json_encode(
                 [
                     'm' => $message,
-                    'hint' => $rulesHint !== null ? [
-                        'id' => $rulesHint['item']->action_id,
-                        'confidence' => $rulesHint['confidence'],
-                    ] : null,
+                    'hint' => $hintPayload,
                     'c' => $candidates,
                 ],
                 JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
             );
-
-            $aiHints = IntentClassificationRulesService::aiPromptHintLines();
-            $aiHintsBlock = '';
-            if ($aiHints !== []) {
-                $aiHintsBlock = "- Pistas declarativas de routing (prioridad sobre heurísticas propias):\n";
-                foreach ($aiHints as $hint) {
-                    $aiHintsBlock .= '  - ' . $hint . "\n";
-                }
-            }
 
             $prompt = <<<PROMPT
 Tarea: elegir el mejor intent para el mensaje del usuario.
@@ -253,7 +309,6 @@ Reglas:
 - Si dos intents son plausibles y falta una condición clave, marca needs_disambiguation y propone opciones.
 - En remediation[*].intent_id solo ids de c[*].id (nunca inventes ids).
 - Nunca elijas un intent cuyo goal/how contradiga el mensaje; preferí intent_semantics sobre suposiciones.
-{$aiHintsBlock}
 Responde ÚNICAMENTE con JSON:
 {
   "best_id": "id o NONE",
@@ -350,4 +405,3 @@ PROMPT;
         }
     }
 }
-

@@ -75,12 +75,23 @@ class RequestDeduplicator
             return 1.0;
         }
 
+        // levenshtein() solo admite hasta 255 caracteres; con -1 la fórmula
+        // infla la similitud. Prompts largos (asistente conversacional) comparten
+        // prefijo estable: la similitud por palabras reutilizaría la respuesta
+        // del turno anterior. Sin match exacto → no deduplicar.
+        if (strlen($p1) > 255 || strlen($p2) > 255) {
+            return 0.0;
+        }
+
         $maxLen = max(strlen($p1), strlen($p2));
         if ($maxLen === 0) {
             return 1.0;
         }
 
         $distancia = levenshtein($p1, $p2);
+        if ($distancia < 0) {
+            return 0.0;
+        }
         $similitudLevenshtein = 1 - ($distancia / $maxLen);
 
         $palabras1 = array_filter(explode(' ', $p1));
@@ -92,6 +103,12 @@ class RequestDeduplicator
         $similitudPalabras = $totalPalabras > 0 ? ($palabrasComunes / $totalPalabras) : 0;
 
         return ($similitudLevenshtein * 0.3) + ($similitudPalabras * 0.7);
+    }
+
+    /** @internal tests */
+    public static function resetCacheForTests(): void
+    {
+        self::$requestCache = [];
     }
 
     private static function limpiarExpirados()

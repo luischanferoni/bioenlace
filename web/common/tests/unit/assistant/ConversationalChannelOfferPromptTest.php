@@ -48,4 +48,17 @@ class ConversationalChannelOfferPromptTest extends \Codeception\Test\Unit
         verify(ConversationalChannel::bookingOfferOriginContent('Me duele la cabeza', $history))
             ->equals('Me duele la cabeza');
     }
+
+    public function testFormatOfferEnContinuacionPriorizaPreguntaActual(): void
+    {
+        $block = ConversationalChannel::formatOfferForPrompt([
+            'label' => 'Solicitar Atención',
+            'intent_id' => 'atencion.necesito-atencion',
+            'summary' => 'Te guía según lo que necesitás.',
+            'capabilities' => ['urgencia_guardia_info'],
+        ], true);
+
+        verify(str_contains($block, 'respondé primero'))->true();
+        verify(str_contains($block, 'No reinicies empatía'))->true();
+    }
 }

@@ -138,7 +138,7 @@ final class VertexContextCacheSimulator
                     return null;
                 }
                 return [
-                    'cache_key' => 'asistente-conversational:v2',
+                    'cache_key' => 'asistente-conversational:v3',
                     'stable' => substr($fullPrompt, 0, $pos + strlen($marker)),
                     'variable' => substr($fullPrompt, $pos + strlen($marker)),
                 ];

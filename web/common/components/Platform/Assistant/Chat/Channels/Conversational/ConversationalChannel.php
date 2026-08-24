@@ -39,12 +39,6 @@ final class ConversationalChannel
         $idPersona = (int) Yii::$app->user->getIdPersona();
         ConversationalChannelProviderRegistry::appendPatientContext($idPersona, $parts);
 
-        $offerBlock = self::formatOfferForPrompt($offer);
-        if ($offerBlock !== '') {
-            $parts[] = '';
-            $parts[] = $offerBlock;
-        }
-
         $history = $formattedHistory ?? ConversationalHistoryWindow::formatForPrompt($userId, $content);
         if ($history !== '') {
             $parts[] = '';
@@ -56,6 +50,13 @@ final class ConversationalChannel
         $parts[] = 'Mensaje actual del paciente:';
         $parts[] = $content;
 
+        // Oferta al final: responde primero la pregunta; el botón es apoyo, no el centro.
+        $offerBlock = self::formatOfferForPrompt($offer, $history !== '');
+        if ($offerBlock !== '') {
+            $parts[] = '';
+            $parts[] = $offerBlock;
+        }
+
         return implode("\n", $parts);
     }
 
@@ -64,7 +65,7 @@ final class ConversationalChannel
      *
      * @param array{label?: string, intent_id?: string, summary?: string, capabilities?: list<string>}|null $offer
      */
-    public static function formatOfferForPrompt(?array $offer): string
+    public static function formatOfferForPrompt(?array $offer, bool $continuingConversation = false): string
     {
         if ($offer === null) {
             return '';
@@ -99,7 +100,11 @@ final class ConversationalChannel
             $lines[] = '- Capacidades: no declaradas; no prometas mapa, cercanía, servicios concretos ni pasos del flow.';
         }
 
-        $lines[] = 'Si el paciente pide algo que no esté en capacidades ni en el resumen, aclará que esa opción no está disponible por ese camino y sugerí describir la necesidad con otras palabras.';
+        if ($continuingConversation) {
+            $lines[] = 'Hay historial: respondé primero la pregunta o duda del mensaje actual. No reinicies empatía ni reexpliques todo el botón; una mención breve alcanza.';
+        } else {
+            $lines[] = 'Si el paciente pide algo que no esté en capacidades ni en el resumen, aclará que esa opción no está disponible por ese camino y sugerí describir la necesidad con otras palabras.';
+        }
 
         return implode("\n", $lines);
     }

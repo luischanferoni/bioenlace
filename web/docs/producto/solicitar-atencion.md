@@ -34,6 +34,8 @@ Tras elegir **Malestar nuevo**, el paciente indica el **tipo de malestar** (no u
 | Ginecológico, embarazo o urinario | `zona_genitourinario` | Ginecología / Obstetricia (+ Med General fallback) |
 | Síntoma general (fiebre, cansancio u otro) | `zona_general` | Med General |
 
+Ansiedad, insomnio u otro malestar sin órgano caen en **Síntoma general**.
+
 Mapeo en BD: `reserva_triage_codigo_servicio`. El código legacy `zona_espalda` sigue resolviendo en drafts antiguos.
 
 ## Hub Control/Seguimiento

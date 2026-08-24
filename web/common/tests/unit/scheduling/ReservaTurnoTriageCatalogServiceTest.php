@@ -77,4 +77,22 @@ class ReservaTurnoTriageCatalogServiceTest extends Unit
         $this->assertNotContains('zona_espalda', $codes);
         $this->assertCount(8, $codes);
     }
+
+    public function testInfiereZonaGeneralDesdeAnsiedadEInsomnio(): void
+    {
+        $svc = new ReservaTurnoTriageCatalogService();
+        $this->assertSame(
+            'zona_general',
+            $svc->inferZonaCodeFromText('Estoy muy ansioso y no puedo dormir')
+        );
+        $this->assertSame(
+            'zona_abdomen',
+            $svc->inferZonaCodeFromText('Me duele la panza del lado derecho')
+        );
+        $this->assertSame(
+            'zona_cabeza_cuello',
+            $svc->inferZonaCodeFromText('Me duele la cabeza y estoy ansioso')
+        );
+        $this->assertNull($svc->inferZonaCodeFromText('Quiero un turno'));
+    }
 }

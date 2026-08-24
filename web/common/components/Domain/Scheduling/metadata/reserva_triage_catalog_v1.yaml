@@ -84,31 +84,138 @@ nodes:
     step: zona
     parent: malestar_nuevo
     label: "Cabeza, cuello o mareos"
+    match_keywords:
+      - cabeza
+      - cuello
+      - mareo
+      - vértigo
+      - vertigo
+      - migraña
+      - migrana
+      - jaqueca
+      - nuca
   - code: zona_pecho
     step: zona
     parent: malestar_nuevo
     label: "Pecho, corazón o respiración"
+    match_keywords:
+      - pecho
+      - corazón
+      - corazon
+      - respira
+      - pulmon
+      - pulmón
+      - tos
+      - ahogo
+      - taquicardia
   - code: zona_abdomen
     step: zona
     parent: malestar_nuevo
     label: "Panza, digestión o náuseas"
+    match_keywords:
+      - panza
+      - abdomen
+      - estómago
+      - estomago
+      - digestión
+      - digestion
+      - náusea
+      - nausea
+      - vómito
+      - vomito
+      - diarrea
+      - intestin
   - code: zona_musculoesqueletico
     step: zona
     parent: malestar_nuevo
     label: "Espalda, huesos, músculos o articulaciones"
+    match_keywords:
+      - espalda
+      - columna
+      - hueso
+      - músculo
+      - musculo
+      - articulac
+      - rodilla
+      - tobillo
+      - hombro
+      - cadera
+      - cintura
+      - lumbar
+      - cervical
+      - fractura
+      - esguince
   - code: zona_piel
     step: zona
     parent: malestar_nuevo
     label: "Piel (sarpullido, herida, etc.)"
+    match_keywords:
+      - piel
+      - sarpullido
+      - erupción
+      - erupcion
+      - herida
+      - quemadura
+      - roncha
+      - picazón
+      - picazon
+      - eczema
+      - psoriasis
   - code: zona_sistemas
     step: zona
     parent: malestar_nuevo
     label: "Ojos, boca o dientes"
+    match_keywords:
+      - ojo
+      - vista
+      - visión
+      - vision
+      - diente
+      - muela
+      - boca
+      - dental
+      - oído
+      - oido
+      - garganta
   - code: zona_genitourinario
     step: zona
     parent: malestar_nuevo
     label: "Ginecológico, embarazo o urinario"
+    match_keywords:
+      - embaraz
+      - semanas de gestac
+      - semanas y sangr
+      - parto
+      - gineco
+      - útero
+      - utero
+      - ovario
+      - menstrua
+      - regla
+      - vagina
+      - vulva
+      - flujo vaginal
+      - mamografia
+      - mamografía
+      - próstata
+      - prostata
+      - orina
+      - urina
+      - vejiga
   - code: zona_general
     step: zona
     parent: malestar_nuevo
     label: "Síntoma general (fiebre, cansancio u otro)"
+    match_keywords:
+      - fiebre
+      - cansancio
+      - fatiga
+      - decaimiento
+      - malestar general
+      - ansioso
+      - ansiedad
+      - insomnio
+      - no puedo dormir
+      - depresión
+      - depresion
+      - salud mental

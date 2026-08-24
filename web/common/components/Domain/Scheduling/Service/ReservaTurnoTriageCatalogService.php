@@ -93,6 +93,54 @@ final class ReservaTurnoTriageCatalogService
         )));
     }
 
+    /**
+     * Primera zona cuyo match_keywords aparece en el texto (orden del catálogo: específicas antes que general).
+     */
+    public function inferZonaCodeFromText(string $text): ?string
+    {
+        $lower = mb_strtolower(trim($text), 'UTF-8');
+        if ($lower === '') {
+            return null;
+        }
+        $generalNode = null;
+        foreach ($this->allNodes() as $node) {
+            if (($node['step'] ?? '') !== 'zona') {
+                continue;
+            }
+            $code = trim((string) ($node['code'] ?? ''));
+            if ($code === 'zona_general') {
+                $generalNode = $node;
+                continue;
+            }
+            $hit = self::zonaNodeMatchesText($node, $lower);
+            if ($hit !== null) {
+                return $hit;
+            }
+        }
+
+        return $generalNode !== null ? self::zonaNodeMatchesText($generalNode, $lower) : null;
+    }
+
+    /**
+     * @param array<string, mixed> $node
+     */
+    private static function zonaNodeMatchesText(array $node, string $lower): ?string
+    {
+        $code = trim((string) ($node['code'] ?? ''));
+        $keywords = $node['match_keywords'] ?? [];
+        if ($code === '' || !is_array($keywords)) {
+            return null;
+        }
+        foreach ($keywords as $kw) {
+            $kw = mb_strtolower(trim((string) $kw), 'UTF-8');
+            if ($kw !== '' && str_contains($lower, $kw)) {
+                return $code;
+            }
+        }
+
+        return null;
+    }
+
     public function findNode(string $code): ?array
     {
         $code = trim($code);

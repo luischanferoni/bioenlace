@@ -23,7 +23,8 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.bioenlace.personalsalud"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler 13+ requiere compileSdk 37 (Flutter default hoy: 36).
+    compileSdk = maxOf(flutter.compileSdkVersion, 37)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

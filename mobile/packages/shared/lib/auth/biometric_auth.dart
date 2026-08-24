@@ -62,49 +62,54 @@ class BiometricAuth {
     try {
       final didAuthenticate = await _auth.authenticate(
         localizedReason: localizedReason,
-        options: const AuthenticationOptions(
-          biometricOnly: true,
-          stickyAuth: true,
-        ),
+        biometricOnly: true,
+        persistAcrossBackgrounding: true,
       );
       return {
         'success': didAuthenticate,
         'error':
             didAuthenticate ? null : 'Autenticación cancelada por el usuario',
       };
-    } on PlatformException catch (e) {
+    } on LocalAuthException catch (e) {
       String? errorMessage;
       bool isUserCancel = false;
 
       switch (e.code) {
-        case 'NotAvailable':
+        case LocalAuthExceptionCode.noBiometricHardware:
+        case LocalAuthExceptionCode.noCredentialsSet:
           errorMessage = 'La autenticación biométrica no está disponible';
           break;
-        case 'NotEnrolled':
+        case LocalAuthExceptionCode.noBiometricsEnrolled:
           errorMessage =
               'No hay huellas digitales registradas en el dispositivo';
           break;
-        case 'LockedOut':
+        case LocalAuthExceptionCode.temporaryLockout:
           errorMessage =
               'La autenticación biométrica está bloqueada temporalmente';
           break;
-        case 'PermanentlyLockedOut':
+        case LocalAuthExceptionCode.biometricLockout:
           errorMessage =
               'La autenticación biométrica está bloqueada permanentemente';
           break;
-        case 'UserCancel':
-        case '10': // BiometricPrompt.ERROR_USER_CANCELED
+        case LocalAuthExceptionCode.userCanceled:
+        case LocalAuthExceptionCode.systemCanceled:
           errorMessage = null;
           isUserCancel = true;
           break;
         default:
           errorMessage =
-              'Error en la autenticación: ${e.message ?? "Error desconocido"}';
+              'Error en la autenticación: ${e.description ?? e.code.name}';
       }
       return {
         'success': false,
         'error': errorMessage,
         'isUserCancel': isUserCancel,
+      };
+    } on PlatformException catch (e) {
+      return {
+        'success': false,
+        'error':
+            'Error en la autenticación: ${e.message ?? "Error desconocido"}',
       };
     } catch (e) {
       return {

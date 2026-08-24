@@ -42,7 +42,7 @@ class CarePlanLocalReminderService {
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const ios = DarwinInitializationSettings();
     await _plugin.initialize(
-      const InitializationSettings(android: android, iOS: ios),
+      settings: const InitializationSettings(android: android, iOS: ios),
       onDidReceiveNotificationResponse: _onNotificationTap,
     );
 
@@ -261,11 +261,11 @@ class CarePlanLocalReminderService {
         });
 
         await _plugin.zonedSchedule(
-          notifId,
-          notifTitle,
-          body,
-          scheduledAt,
-          const NotificationDetails(
+          id: notifId,
+          title: notifTitle,
+          body: body,
+          scheduledDate: scheduledAt,
+          notificationDetails: const NotificationDetails(
             android: AndroidNotificationDetails(
               channelId,
               channelName,
@@ -275,8 +275,6 @@ class CarePlanLocalReminderService {
             iOS: DarwinNotificationDetails(),
           ),
           androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-          uiLocalNotificationDateInterpretation:
-              UILocalNotificationDateInterpretation.absoluteTime,
           payload: payload,
         );
         count++;

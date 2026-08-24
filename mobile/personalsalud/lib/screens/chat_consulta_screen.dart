@@ -175,27 +175,21 @@ class _ChatConsultaScreenState extends State<ChatConsultaScreen> {
   }
 
   Future<void> _pickDocument() async {
-    final result = await FilePicker.platform.pickFiles(
+    final picked = await FilePicker.pickFile(
       type: FileType.custom,
       allowedExtensions: const ['pdf'],
-      withData: kIsWeb,
     );
-    if (result == null || result.files.isEmpty || !mounted) return;
-    final picked = result.files.single;
+    if (picked == null || !mounted) return;
     if (kIsWeb) {
-      if (picked.bytes == null || picked.bytes!.isEmpty) {
+      final bytes = await picked.readAsBytes();
+      if (bytes.isEmpty) {
         _showError('No se pudo leer el PDF');
         return;
       }
-      await _uploadBytes(picked.bytes!, picked.name, 'documento');
+      await _uploadBytes(bytes, picked.name, 'documento');
       return;
     }
-    final path = picked.path;
-    if (path == null || path.isEmpty) {
-      _showError('No se pudo leer el PDF');
-      return;
-    }
-    await _uploadFile(XFile(path), 'documento');
+    await _uploadFile(picked.xFile, 'documento');
   }
 
   Future<void> _uploadBytes(List<int> bytes, String name, String messageType) async {

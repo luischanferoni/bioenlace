@@ -4,17 +4,15 @@ action_name: Solicitar Atención
 description: Contanos qué necesitás; te guiamos a turno, control, teleconsulta o derivación según el caso.
 rbac_route: /api/turnos/crear-como-paciente
 keywords:
-- solicitar atención
 - solicitar atencion
-- necesito atención
 - necesito atencion
 - me siento mal
 - me duele
-- qué hago
-- ayuda médica
-- ver un médico
-- consulta médica
-- atención médica
+- que hago
+- ayuda medica
+- ver un medico
+- consulta medica
+- atencion medica
 - control
 - seguimiento
 - control de seguimiento
@@ -29,18 +27,18 @@ keywords:
 - consulta por mensaje
 - consulta clinica por mensaje
 - ecografia
-- ecografía
 - estudio
 - radiografia
-- radiografía
 - mamografia
-- mamografía
 - laboratorio
 - kinesio
 - kinesiologia
-- kinesiología
 - necesito un estudio
 - sacar turno para estudio
+- necesito una ecografia
+- necesito una mamografia
+- turno para laboratorio
+- turno para ecografia
 intent_semantics:
   summary: >-
     Te guía según lo que necesitás: malestar nuevo (elegís servicio y centro, inclusive cercanos en mapa),

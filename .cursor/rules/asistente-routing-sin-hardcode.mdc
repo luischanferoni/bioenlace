@@ -12,9 +12,9 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 
 **Clasificación de acción (qué intent abrir):**
 
-1. `keywords` / `intent_semantics` en el YAML de **cada intent**.
-2. `IntentClassifier`: score por keywords; ganador claro → lanza; empate → desambiguación con botones.
-3. IA solo si no hay señal suficiente.
+1. `keywords` / `intent_semantics` en el YAML de **cada intent** (keywords ricas; el preprocess normaliza ortografía y el match hace fold de acentos).
+2. `IntentClassifier`: **solo** score PHP por keywords; ganador claro → lanza; empate → desambiguación. **Sin IA** de clasificación.
+3. Si no hay match → no-match / sugerencias del catálogo.
 
 **Canal (charla vs trámite vs menú):** lógica en `ChatChannelPolicy` (PHP). No es configuración de intents.
 

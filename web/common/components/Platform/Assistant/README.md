@@ -26,9 +26,9 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 
 ## Clasificación NL
 
-1. **Keywords** del YAML de cada intent → score.
+1. **Keywords** del YAML de cada intent → score PHP (sin IA de clasificación).
 2. **Ganador claro** → lanza; **empate** → desambiguación con botones.
-3. **IA** solo si no hay señal suficiente.
+3. Si no hay match → no-match / sugerencias.
 4. **Canal** (síntoma vs trámite): `ChatChannelPolicy`. **Copy** conversacional: `conversational-channel.yaml`.
 
 ## Entrypoints importantes

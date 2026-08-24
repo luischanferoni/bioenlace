@@ -1,30 +1,21 @@
 intent_id: condicion-laboral.editar-propio
 version: 1
-
 operation: edit
 intent_family: condicion-laboral.edit
 domain_operation: ProfesionalEfectorServicio.condicion_laboral_own
-
-action_name: "Mi condición laboral"
-description: "Modificar vigencia de condición laboral sobre una asignación PES propia en el efector."
-rbac_route: "/api/profesional-efector-servicio/editar-condicion-laboral"
-
+action_name: 'Mi condición laboral'
+description: 'Modificar vigencia de condición laboral sobre una asignación PES propia en el efector.'
+rbac_route: /api/profesional-efector-servicio/editar-condicion-laboral
 keywords:
-  - mi condición laboral
-  - mi licencia
-  - editar mi vigencia
-  - cambiar mi licencia
-  - actualizar mi ausencia
-
+  - 'mi condición laboral'
+  - 'mi licencia'
+  - 'editar mi vigencia'
+  - 'cambiar mi licencia'
+  - 'actualizar mi ausencia'
 intent_semantics:
-  goal: Editar la condición laboral vigente sobre una asignación propia en el efector de sesión.
-  how: Elegís el servicio afectado y actualizás tipo y fechas en el formulario de condición laboral.
-  constraints:
-    - Solo sobre tus propias asignaciones PES en el efector actual.
-
+  summary: 'Editar la condición laboral vigente sobre una asignación propia en el efector de sesión.'
 subject_resolution:
   handler: organization.pes_own_in_efector
-
 field_groups:
   vigencia:
     label: Vigencia
@@ -32,34 +23,35 @@ field_groups:
       - id_condicion_laboral
       - fecha_inicio
       - fecha_fin
-
 fields:
-  - name: id_condicion_laboral
+  -
+    name: id_condicion_laboral
     keywords:
-      - tipo de licencia
-      - condición laboral
-      - motivo de ausencia
-  - name: fecha_inicio
+      - 'tipo de licencia'
+      - 'condición laboral'
+      - 'motivo de ausencia'
+  -
+    name: fecha_inicio
     keywords:
       - desde
       - inicio
-      - fecha de inicio
-  - name: fecha_fin
+      - 'fecha de inicio'
+  -
+    name: fecha_fin
     keywords:
       - hasta
       - fin
-      - fecha de fin
-
+      - 'fecha de fin'
 field_resolution:
   reject_keywords:
     - apellido
     - nombre
     - documento
     - dni
-
 subintents:
-  - id: elegir_servicio
-    assistant_text: "Servicio"
+  -
+    id: elegir_servicio
+    assistant_text: Servicio
     provides:
       - draft.id_profesional_efector_servicio
       - draft.id_servicio
@@ -67,11 +59,11 @@ subintents:
     open_ui:
       action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
       params:
-        incluir_sin_agenda: "1"
-
-  - id: editar_vigencia
-    assistant_text: "Tipo y fechas de vigencia"
-    provides: []
-    next: ""
+        incluir_sin_agenda: '1'
+  -
+    id: editar_vigencia
+    assistant_text: 'Tipo y fechas de vigencia'
+    provides: {  }
+    next: ''
     open_ui:
       action_id: profesional-efector-servicio.editar-condicion-laboral

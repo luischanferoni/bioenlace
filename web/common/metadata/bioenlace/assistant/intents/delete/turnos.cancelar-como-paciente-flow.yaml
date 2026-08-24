@@ -1,53 +1,41 @@
 intent_id: turnos.cancelar-como-paciente-flow
 version: 1
-
-action_name: "Cancelar turno"
-description: "Para cancelar un turno pendiente."
-rbac_route: "/api/turnos/cancelar-como-paciente"
+action_name: 'Cancelar turno'
+description: 'Para cancelar un turno pendiente.'
+rbac_route: /api/turnos/cancelar-como-paciente
 keywords:
-  - cancelar turno
-  - anular turno
-  - dar de baja turno
-  - no puedo ir al turno
-
+  - 'cancelar turno'
+  - 'anular turno'
+  - 'dar de baja turno'
+  - 'no puedo ir al turno'
 intent_semantics:
-  summary: >-
-    Cancelá un turno pendiente propio eligiendo el turno y el motivo.
+  summary: 'Cancelá un turno pendiente propio eligiendo el turno y el motivo.'
   capabilities:
     - ver_turnos_propios
     - cancelar_turno_propio
-  goal: >-
-    Cancelar un turno propio que siga pendiente.
-  how: >-
-    Lista de turnos pendientes → pantalla de motivo (códigos PAC_*) → confirmación final (POST cancelar, sin descriptor GET en ese paso).
-  preconditions:
-    - Turno en estado pendiente y perteneciente al paciente autenticado.
-  outcome:
-    - Turno cancelado con motivo de paciente y razón auditada.
-
 subintents:
-  - id: select_turno
-    assistant_text: "Turno a cancelar"
+  -
+    id: select_turno
+    assistant_text: 'Turno a cancelar'
     provides:
       - draft.id
     next: select_motivo
     open_ui:
       action_id: turnos.elegir-pendiente-como-paciente
-
-  - id: select_motivo
-    assistant_text: "Motivo de la cancelación"
+  -
+    id: select_motivo
+    assistant_text: 'Motivo de la cancelación'
     requires:
       - draft.id
     provides:
       - draft.razon_cancelacion
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.elegir-motivo-cancelacion-como-paciente
       params:
-        id: "draft.id"
-
+        id: draft.id
 flow_submit:
   action_id: turnos.cancelar-como-paciente
   params:
-    id: "draft.id"
-    razon_cancelacion: "draft.razon_cancelacion"
+    id: draft.id
+    razon_cancelacion: draft.razon_cancelacion

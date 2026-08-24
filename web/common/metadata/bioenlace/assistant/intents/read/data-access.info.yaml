@@ -1,17 +1,12 @@
 intent_id: data-access.info
 version: 1
-
 shortcut:
   hidden: true
-
-action_name: "Consulta informativa staff"
-description: "Métricas aggregate/grouped del catálogo DataAccess (sin flow conversacional)."
-rbac_route: "/api/info"
+action_name: 'Consulta informativa staff'
+description: 'Métricas aggregate/grouped del catálogo DataAccess (sin flow conversacional).'
+rbac_route: /api/info
 keywords:
-  - info staff
+  - 'info staff'
   - conteo
   - métrica
-  - resumen datos
-
-intent_semantics:
-  goal: Consultar métricas informativas autorizadas por grupo de atributos.
+  - 'resumen datos'

@@ -1,32 +1,23 @@
 intent_id: condicion-laboral.editar-staff
 version: 1
-
 operation: edit
 intent_family: condicion-laboral.edit
 domain_operation: ProfesionalEfectorServicio.condicion_laboral_staff
-
-action_name: "Condición laboral de un profesional"
-description: "Registrar o modificar condición laboral de un profesional del efector (staff)."
-rbac_route: "/api/profesional-efector-servicio/crear-condicion-laboral"
-
+action_name: 'Condición laboral de un profesional'
+description: 'Registrar o modificar condición laboral de un profesional del efector (staff).'
+rbac_route: /api/profesional-efector-servicio/crear-condicion-laboral
 keywords:
-  - condición laboral de un profesional
-  - licencia de otro médico
-  - cargar licencia staff
-  - vigencia de un profesional
-  - ausencia de un colega
-
+  - 'condición laboral de un profesional'
+  - 'licencia de otro médico'
+  - 'cargar licencia staff'
+  - 'vigencia de un profesional'
+  - 'ausencia de un colega'
 intent_semantics:
-  goal: Registrar o editar condición laboral de un profesional del efector en sesión (staff).
-  how: Elegís profesional y servicio, completás tipo y fechas; el dominio valida que el PES pertenezca al efector.
-  constraints:
-    - Solo profesionales con asignación en el efector de sesión.
-
+  summary: 'Registrar o editar condición laboral de un profesional del efector en sesión (staff).'
 subject_resolution:
   handler: organization.pes_staff_in_efector
   open_ui:
     action_id: profesional-efector-servicio.listar-por-efector
-
 field_groups:
   vigencia:
     label: Vigencia
@@ -34,44 +25,45 @@ field_groups:
       - id_condicion_laboral
       - fecha_inicio
       - fecha_fin
-
 fields:
-  - name: id_condicion_laboral
+  -
+    name: id_condicion_laboral
     keywords:
-      - tipo de licencia
-      - condición laboral
-  - name: fecha_inicio
+      - 'tipo de licencia'
+      - 'condición laboral'
+  -
+    name: fecha_inicio
     keywords:
       - desde
       - inicio
-  - name: fecha_fin
+  -
+    name: fecha_fin
     keywords:
       - hasta
       - fin
-
 field_resolution:
   reject_keywords:
     - apellido
     - nombre
     - documento
     - dni
-
 subintents:
-  - id: elegir_profesional
-    assistant_text: "Elegí el profesional del efector"
+  -
+    id: elegir_profesional
+    assistant_text: 'Elegí el profesional del efector'
     provides:
       - draft.id_profesional_efector_servicio
     next: cargar_vigencia
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector
       params:
-        excluir_id_persona_sesion: "1"
-
-  - id: cargar_vigencia
-    assistant_text: "Completá la condición laboral del profesional"
-    provides: []
-    next: ""
+        excluir_id_persona_sesion: '1'
+  -
+    id: cargar_vigencia
+    assistant_text: 'Completá la condición laboral del profesional'
+    provides: {  }
+    next: ''
     open_ui:
       action_id: profesional-efector-servicio.crear-condicion-laboral
       params:
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio

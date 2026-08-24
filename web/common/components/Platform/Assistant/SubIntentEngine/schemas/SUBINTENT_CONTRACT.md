@@ -20,13 +20,14 @@ Fuente de verdad para las claves que **`SubIntentEngine`** lee y combina con el 
 
 ### `intent_semantics` (raíz del intent)
 
-Señal para clasificación IA y, cuando exista, para el canal conversacional (texto alineado al botón real).
+Señal para el canal conversacional (oferta del botón) y desambiguación entre miembros de una `intent_family`.
 
 | Clave | Uso |
 |--------|-----|
-| `summary` | Texto corto orientado al paciente: qué logra al abrir este intent (sin inventar pasos que el flow no tenga). |
+| `summary` | Texto corto orientado al usuario: qué logra al abrir este intent. También etiqueta desambiguación entre variantes de familia. |
 | `capabilities` | Lista de IDs estables de lo que el flow **sí** ofrece. El canal conversacional solo debe prometer IDs presentes aquí. |
-| `goal` / `how` / `preconditions` / `constraints` / `outcome` / `keyphrases` | Señal de clasificación (como hasta ahora). |
+
+Omitir el bloque entero en intents staff/operativos que no participan del canal conversacional ni de familias NL. Las frases de descubrimiento van en `keywords` del intent, no en `intent_semantics`.
 
 Vocabulario inicial de `capabilities` (ampliar solo documentando acá):
 

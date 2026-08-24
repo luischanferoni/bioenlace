@@ -10,7 +10,7 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 |------|-----------|
 | `assistant/intents/` | Flows conversacionales del asistente (YAML por `intent_id`) |
 | `assistant/globals/` | Piezas reutilizables entre flows |
-| `assistant/conversational-channel.yaml` | Prompt / labels / oferta del canal conversacional |
+| `assistant/conversational-channel.yaml` | `stable_prompt`, `prompt_fragments` y labels del canal conversacional |
 | `assistant/assistant-shortcuts.yaml` | Atajos visibles del asistente |
 | `assistant/assistant-shortcuts-paciente.yaml` | Atajos app paciente |
 | `assistant/assistant-shortcuts-whatsapp-paciente.yaml` | Atajos MVP canal WhatsApp paciente |

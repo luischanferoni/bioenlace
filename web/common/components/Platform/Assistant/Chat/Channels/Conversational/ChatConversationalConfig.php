@@ -29,9 +29,59 @@ final class ChatConversationalConfig
 
     public static function stablePrompt(): string
     {
-        $prompt = trim((string) (self::load()['stable_prompt'] ?? ''));
+        $template = trim((string) (self::load()['stable_prompt'] ?? ''));
+        if ($template === '') {
+            return 'Respondé en español, breve y amable.';
+        }
 
-        return $prompt !== '' ? $prompt : 'Respondé en español, breve y amable.';
+        return self::applyPromptPlaceholders($template);
+    }
+
+    /**
+     * Fragmento de copy del prompt ({@see conversational-channel.yaml} → prompt_fragments).
+     * Ruta con punto: offer.header, offer.continuing_line, etc.
+     */
+    public static function promptFragment(string $path, string $default = ''): string
+    {
+        $raw = self::load()['prompt_fragments'] ?? [];
+        if (!is_array($raw)) {
+            return $default;
+        }
+
+        $node = $raw;
+        foreach (explode('.', $path) as $segment) {
+            if (!is_array($node) || !array_key_exists($segment, $node)) {
+                return $default;
+            }
+            $node = $node[$segment];
+        }
+
+        if (!is_string($node)) {
+            return $default;
+        }
+
+        $text = trim($node);
+
+        return $text !== '' ? self::applyPromptPlaceholders($text) : $default;
+    }
+
+    /**
+     * @param array<string, string> $extra
+     */
+    public static function formatPromptFragment(string $path, array $extra = [], string $default = ''): string
+    {
+        $template = self::promptFragment($path, $default);
+        if ($template === '') {
+            return '';
+        }
+
+        $vars = array_merge(self::basePromptPlaceholders(), $extra);
+        $out = $template;
+        foreach ($vars as $key => $value) {
+            $out = str_replace('{' . $key . '}', $value, $out);
+        }
+
+        return $out;
     }
 
     public static function emptyResponseFallback(): string
@@ -107,5 +157,26 @@ final class ChatConversationalConfig
         }
 
         return self::$config;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private static function basePromptPlaceholders(): array
+    {
+        $raw = self::load()['prompt_fragments']['offer_block_title'] ?? 'Oferta disponible';
+        $title = is_string($raw) ? trim($raw) : 'Oferta disponible';
+
+        return ['offer_block_title' => $title !== '' ? $title : 'Oferta disponible'];
+    }
+
+    private static function applyPromptPlaceholders(string $text): string
+    {
+        $out = $text;
+        foreach (self::basePromptPlaceholders() as $key => $value) {
+            $out = str_replace('{' . $key . '}', $value, $out);
+        }
+
+        return $out;
     }
 }

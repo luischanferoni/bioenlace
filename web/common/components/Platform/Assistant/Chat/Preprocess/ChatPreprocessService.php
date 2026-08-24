@@ -8,7 +8,8 @@ use common\components\Ai\IAManager;
 /**
  * Preprocess: canal (user_goal), texto normalizado y extracciones (spans).
  *
- * Política de canal: {@see ChatChannelPolicy}. Copy conversacional: otro YAML.
+ * Prompt IA: goals globales (HIS / sistema). Casos de producto (síntoma vs trámite):
+ * {@see ChatChannelPolicy}. Copy conversacional: otro YAML.
  */
 final class ChatPreprocessService
 {
@@ -76,11 +77,13 @@ final class ChatPreprocessService
 
     public static function stablePromptPrefix(): string
     {
-        $categories = json_encode(self::allowedEntityCategories(), JSON_UNESCAPED_UNICODE);
+        $categoriesList = self::allowedEntityCategories();
+        $categories = json_encode($categoriesList, JSON_UNESCAPED_UNICODE);
         $goals = json_encode(self::GOALS, JSON_UNESCAPED_UNICODE);
+        $categoriesHuman = implode(', ', $categoriesList);
 
         return <<<PROMPT
-Analizá el mensaje del usuario para un asistente de salud.
+Clasificá el mensaje del usuario para el asistente de un HIS (sistema de historia clínica y gestión de salud).
 
 Respondé ÚNICAMENTE con JSON:
 {
@@ -97,11 +100,15 @@ Respondé ÚNICAMENTE con JSON:
 }
 
 Reglas:
-- user_goal operational si pide una acción del sistema (turno, agenda, estudio/práctica concreto) o consulta datos propios resolubles.
-- conversational si hay saludo, síntomas, lesiones o charla clínica (aunque también pregunten hospital cerca). Pedir un estudio/práctica concreto SÍ es operational.
-- informational si pregunta qué puede hacer la app, menú/ayuda o cómo funciona algo del sistema.
+- operational: quiere hacer o consultar algo en el sistema.
+- conversational: saludo, síntomas, malestar o charla clínica sin pedido concreto al sistema.
+- informational: menú, ayuda o cómo funciona el sistema en general.
+- in_flow_question: pregunta sobre un flujo ya en curso.
+- meta: preguntas sobre el asistente mismo.
+- unclear: no se puede clasificar con confianza.
+- normalized_text: corregí ortografía y expandí abreviaturas clínicas; conservá el sentido completo.
 - No uses category servicio para síntomas ni partes del cuerpo.
-- extractions: solo entidades del mundo (servicio, centro, persona), no verbos.
+- extractions: solo entidades del mundo ({$categoriesHuman}), no verbos.
 - synonyms: máximo 2 strings por extracción.
 
 Mensaje:

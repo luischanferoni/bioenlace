@@ -4,6 +4,7 @@ namespace common\components\Platform\Assistant\Chat\Channels\Conversational;
 
 use common\components\Ai\IAManager;
 use common\components\Domain\Content\Service\InfoContentAssistantService;
+use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
@@ -32,24 +33,90 @@ final class ConversationalChannel
         $idPersona = (int) Yii::$app->user->getIdPersona();
         ConversationalChannelProviderRegistry::appendPatientContext($idPersona, $parts);
 
-        $history = $formattedHistory ?? ConversationalHistoryWindow::formatForPrompt($userId, $content);
-        if ($history !== '') {
+        $facts = self::formatPreprocessFacts();
+        if ($facts !== '') {
             $parts[] = '';
-            $parts[] = 'Historial reciente (del más antiguo al más reciente):';
+            $parts[] = $facts;
+        }
+
+        $history = $formattedHistory ?? ConversationalHistoryWindow::formatForPrompt($userId, $content);
+        $continuing = $history !== '';
+        if ($continuing) {
+            $parts[] = '';
+            $parts[] = ChatConversationalConfig::promptFragment(
+                'conversation_header',
+                'Conversación previa (más antigua → más reciente):'
+            );
             $parts[] = $history;
+            $parts[] = ChatConversationalConfig::promptFragment(
+                'continuation_hint',
+                'Continuación: respondé al mensaje actual.'
+            );
+        }
+
+        $messageForPrompt = ChatPreprocessContext::normalizedText();
+        if ($messageForPrompt === '') {
+            $messageForPrompt = $content;
         }
 
         $parts[] = '';
-        $parts[] = 'Mensaje actual del paciente:';
-        $parts[] = $content;
+        $parts[] = ChatConversationalConfig::promptFragment(
+            'current_message_header',
+            'Mensaje actual del paciente:'
+        );
+        $parts[] = $messageForPrompt;
 
-        $offerBlock = self::formatOfferForPrompt($offer, $history !== '');
+        $offerBlock = self::formatOfferForPrompt($offer, $continuing);
         if ($offerBlock !== '') {
             $parts[] = '';
             $parts[] = $offerBlock;
         }
 
         return implode("\n", $parts);
+    }
+
+    /**
+     * Hechos ya interpretados (sin narrar enrutamiento). Vacío si no hay preprocess útil.
+     * El texto normalizado va en «Mensaje actual»; acá solo acción/menciones adicionales.
+     */
+    public static function formatPreprocessFacts(): string
+    {
+        $normalized = ChatPreprocessContext::normalizedText();
+        $actionText = ChatPreprocessContext::actionText();
+        $extractions = ChatPreprocessContext::extractions();
+
+        $lines = [];
+        if ($actionText !== '' && $actionText !== $normalized) {
+            $line = ChatConversationalConfig::formatPromptFragment(
+                'facts_action_line',
+                ['action' => $actionText],
+                'Acción mencionada: {action}'
+            );
+            if ($line !== '') {
+                $lines[] = '- ' . $line;
+            }
+        }
+        foreach ($extractions as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $span = isset($row['span']) ? trim((string) $row['span']) : '';
+            $category = isset($row['category']) ? trim((string) $row['category']) : '';
+            if ($span === '') {
+                continue;
+            }
+            $lines[] = $category !== ''
+                ? '- ' . $category . ': ' . $span
+                : '- ' . $span;
+        }
+
+        if ($lines === []) {
+            return '';
+        }
+
+        $header = ChatConversationalConfig::promptFragment('facts_header', 'Hechos:');
+
+        return $header . "\n" . implode("\n", $lines);
     }
 
     /**
@@ -69,31 +136,65 @@ final class ConversationalChannel
             $capabilities = [];
         }
 
-        $lines = ['Oferta disponible en esta respuesta (se mostrará un botón; alineá el texto con esto):'];
+        $lines = [
+            ChatConversationalConfig::promptFragment(
+                'offer.header',
+                'Oferta disponible (botón en la respuesta; alineá el texto con esto):'
+            ),
+        ];
         if ($label !== '') {
-            $lines[] = '- Botón: "' . $label . '"';
+            $buttonLine = ChatConversationalConfig::formatPromptFragment(
+                'offer.button_line',
+                ['label' => $label],
+                'Botón: "{label}"'
+            );
+            if ($buttonLine !== '') {
+                $lines[] = '- ' . $buttonLine;
+            }
         }
         if ($intentId !== '') {
-            $lines[] = '- intent_id: ' . $intentId;
+            $intentLine = ChatConversationalConfig::formatPromptFragment(
+                'offer.intent_id_line',
+                ['intent_id' => $intentId],
+                'intent_id: {intent_id}'
+            );
+            if ($intentLine !== '') {
+                $lines[] = '- ' . $intentLine;
+            }
         }
         if ($summary !== '') {
-            $lines[] = '- Qué hace: ' . $summary;
+            $summaryLine = ChatConversationalConfig::formatPromptFragment(
+                'offer.summary_line',
+                ['summary' => $summary],
+                'Qué hace: {summary}'
+            );
+            if ($summaryLine !== '') {
+                $lines[] = '- ' . $summaryLine;
+            }
         }
 
         $capLines = self::formatCapabilityLines($capabilities);
         if ($capLines !== []) {
-            $lines[] = '- Capacidades (solo podés mencionar estas; no inventes otras):';
+            $capHeader = ChatConversationalConfig::promptFragment(
+                'offer.capabilities_header',
+                'Capacidades (solo podés mencionar estas):'
+            );
+            $lines[] = '- ' . $capHeader;
             foreach ($capLines as $capLine) {
                 $lines[] = '  - ' . $capLine;
             }
         } elseif ($summary === '') {
-            $lines[] = '- Capacidades: no declaradas; no prometas mapa, cercanía, servicios concretos ni pasos del flow.';
+            $lines[] = '- ' . ChatConversationalConfig::promptFragment(
+                'offer.capabilities_missing',
+                'Capacidades: no declaradas; no prometas pasos del flow.'
+            );
         }
 
         if ($continuingConversation) {
-            $lines[] = 'Hay historial: respondé primero la pregunta o duda del mensaje actual. No reinicies empatía ni reexpliques todo el botón; una mención breve alcanza.';
-        } else {
-            $lines[] = 'Si el paciente pide algo que no esté en capacidades ni en el resumen, aclará que esa opción no está disponible por ese camino y sugerí describir la necesidad con otras palabras.';
+            $lines[] = '- ' . ChatConversationalConfig::promptFragment(
+                'offer.continuing_line',
+                'Conversación en curso: mención breve al botón si ya se ofreció.'
+            );
         }
 
         return implode("\n", $lines);

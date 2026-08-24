@@ -1,58 +1,52 @@
 intent_id: profesional-agenda.configurar-staff
 version: 1
-
-# Atajo canónico: profesional-horarios.gestionar-propio (elige AMB vs plantel).
 shortcut:
   hidden: true
-
 operation: edit
 intent_family: profesional-agenda.configurar
 domain_operation: DataAccess.edit
 edit_surface_id: ProfesionalEfectorServicioAgenda
-
-action_name: "Agenda ambulatoria de un profesional"
-description: "Modificar cupos AMB (horarios/intervalo) de un profesional del efector. Guardia e internación se cargan como horarios de plantel."
-rbac_route: "/api/profesional-agenda/configurar-agenda"
-
+action_name: 'Agenda ambulatoria de un profesional'
+description: 'Modificar cupos AMB (horarios/intervalo) de un profesional del efector. Guardia e internación se cargan como horarios de plantel.'
+rbac_route: /api/profesional-agenda/configurar-agenda
 keywords:
-  - modificar agenda de un profesional
-  - modificar la agenda de un profesional
-  - editar agenda del personal
-  - editar agenda de un profesional
-  - modificar horarios del medico
-  - editar horarios del profesional
-  - configurar agenda profesional
-  - agenda ambulatoria profesional
-  - formas de atencion de un profesional
-  - modificar las formas de atencion
-  - modificar formas de atencion
-  - horarios ambulatorios de un profesional
-
+  - 'modificar agenda de un profesional'
+  - 'modificar la agenda de un profesional'
+  - 'editar agenda del personal'
+  - 'editar agenda de un profesional'
+  - 'modificar horarios del medico'
+  - 'editar horarios del profesional'
+  - 'configurar agenda profesional'
+  - 'agenda ambulatoria profesional'
+  - 'formas de atencion de un profesional'
+  - 'modificar las formas de atencion'
+  - 'modificar formas de atencion'
+  - 'horarios ambulatorios de un profesional'
 intent_semantics:
-  goal: Configurar agenda AMB (cupos) de un profesional del efector (staff).
-  how: Elegís profesional y servicio, luego editás horarios e intervalo.
-  constraints:
-    - Solo profesionales con PES en el efector de sesión.
-    - Solo encounter_class AMB; no mezclar con roster EMER/IMP.
-
+  summary: 'Configurar agenda AMB (cupos) de un profesional del efector (staff).'
 fields:
-  - name: vigente_desde
-  - name: intervalo_minutos
-  - name: weekly_scheduler_widget
-  - name: formas_atencion
-  - name: acepta_consultas_online
-
+  -
+    name: vigente_desde
+  -
+    name: intervalo_minutos
+  -
+    name: weekly_scheduler_widget
+  -
+    name: formas_atencion
+  -
+    name: acepta_consultas_online
 subintents:
-  - id: select_profesional
-    assistant_text: "Profesional"
+  -
+    id: select_profesional
+    assistant_text: Profesional
     provides:
       - draft.id_profesional_efector_servicio
     next: select_servicio
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector
-
-  - id: select_servicio
-    assistant_text: "Servicio"
+  -
+    id: select_servicio
+    assistant_text: Servicio
     requires:
       - draft.id_profesional_efector_servicio
     provides:
@@ -61,19 +55,19 @@ subintents:
     open_ui:
       action_id: profesional-efector-servicio.listar-servicios-en-efector
       params:
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-
-  - id: configurar_agenda
-    assistant_text: "Configurá horarios e intervalo"
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+  -
+    id: configurar_agenda
+    assistant_text: 'Configurá horarios e intervalo'
     requires:
       - draft.id_profesional_efector_servicio
       - draft.id_servicio
     provides:
       - draft.agenda_ui_completed
-    next: ""
+    next: ''
     open_ui:
       action_id: profesional-agenda.configurar-agenda
       params:
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        id_servicio: "draft.id_servicio"
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+        id_servicio: draft.id_servicio
         ui_step: datos

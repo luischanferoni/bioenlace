@@ -1,46 +1,37 @@
 intent_id: profesional-horarios.gestionar-propio
 version: 1
-
 operation: edit
 intent_family: profesional-horarios.gestionar
 domain_operation: DataAccess.edit
-
-action_name: "Configurar mis horarios (ambulatorio / guardia / internación)"
-description: "Elegís el servicio y el tipo de horario: agenda de turnos AMB, o cobertura semanal de guardia/piso."
-rbac_route: "/api/profesional-cobertura/gestionar"
-
+action_name: 'Configurar mis horarios (ambulatorio / guardia / internación)'
+description: 'Elegís el servicio y el tipo de horario: agenda de turnos AMB, o cobertura semanal de guardia/piso.'
+rbac_route: /api/profesional-cobertura/gestionar
 keywords:
-  - mis horarios
-  - configurar mis horarios
-  - mi agenda
-  - modificar mi agenda
-  - editar mi agenda
-  - configurar mi agenda
-  - configurar mi agenda ambulatoria
-  - modificar horarios propios
-  - cargar mi cobertura
-  - mi cobertura
-  - cobertura de guardia
-  - cobertura de piso
-  - horario de guardia
-  - plantel de guardia
-  - agenda ambulatoria
-  - configurar agenda
-
+  - 'mis horarios'
+  - 'configurar mis horarios'
+  - 'mi agenda'
+  - 'modificar mi agenda'
+  - 'editar mi agenda'
+  - 'configurar mi agenda'
+  - 'configurar mi agenda ambulatoria'
+  - 'modificar horarios propios'
+  - 'cargar mi cobertura'
+  - 'mi cobertura'
+  - 'cobertura de guardia'
+  - 'cobertura de piso'
+  - 'horario de guardia'
+  - 'plantel de guardia'
+  - 'agenda ambulatoria'
+  - 'configurar agenda'
 intent_semantics:
-  goal: Configurar horarios propios según la clase de encuentro (AMB cupos, EMER/IMP plantel semanal).
-  how: Elegís el servicio, el tipo (ambulatorio / guardia / internación) y completás la UI correspondiente.
-  constraints:
-    - AMB genera cupos reservables; EMER/IMP solo plantel (sin turnos de paciente).
-    - Cobertura usa patrón semanal + vigencia y materializa intervalos.
-
+  summary: 'Configurar horarios propios según la clase de encuentro (AMB cupos, EMER/IMP plantel semanal).'
 draft_hydrator:
   handler: organization.pes_from_servicio
   require_own_pes: true
-
 subintents:
-  - id: select_servicio
-    assistant_text: "Elegí el servicio"
+  -
+    id: select_servicio
+    assistant_text: 'Elegí el servicio'
     provides:
       - draft.id_servicio
       - draft.id_profesional_efector_servicio
@@ -48,10 +39,10 @@ subintents:
     open_ui:
       action_id: profesional-efector-servicio.listar-mis-servicios-en-efector
       params:
-        incluir_sin_agenda: "1"
-
-  - id: select_encounter_class
-    assistant_text: "¿Ambulatorio, guardia o internación?"
+        incluir_sin_agenda: '1'
+  -
+    id: select_encounter_class
+    assistant_text: '¿Ambulatorio, guardia o internación?'
     requires:
       - draft.id_profesional_efector_servicio
     provides:
@@ -59,32 +50,25 @@ subintents:
     next: configurar_horario
     open_ui:
       action_id: profesional-cobertura.elegir-encounter-class
-
-  # Un solo paso de plan: la mini-UI (agenda AMB vs cobertura EMER/IMP) se elige por draft.
-  - id: configurar_horario
-    assistant_text: "Configurá tus horarios"
+  -
+    id: configurar_horario
+    assistant_text: 'Configurá tus horarios'
     requires:
       - draft.id_profesional_efector_servicio
       - draft.encounter_class
     provides:
       - draft.horario_ui_completed
-    next: ""
+    next: ''
     open_ui_routing:
-      - when:
-          draft_equals:
-            encounter_class: "AMB"
+      -
+        when:
+          draft_equals: { encounter_class: AMB }
         open_ui:
           action_id: profesional-agenda.configurar-agenda
-          params:
-            id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-            id_servicio: "draft.id_servicio"
-            ui_step: datos
-      - when:
+          params: { id_profesional_efector_servicio: draft.id_profesional_efector_servicio, id_servicio: draft.id_servicio, ui_step: datos }
+      -
+        when:
           default: true
         open_ui:
           action_id: profesional-cobertura.gestionar
-          params:
-            modo: propio
-            id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-            id_servicio: "draft.id_servicio"
-            encounter_class: "draft.encounter_class"
+          params: { modo: propio, id_profesional_efector_servicio: draft.id_profesional_efector_servicio, id_servicio: draft.id_servicio, encounter_class: draft.encounter_class }

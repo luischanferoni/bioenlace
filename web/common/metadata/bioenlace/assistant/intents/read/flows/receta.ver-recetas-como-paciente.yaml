@@ -1,44 +1,35 @@
 intent_id: receta.ver-recetas-como-paciente
 version: 1
-
-action_name: "Ver mis recetas electrónicas"
-description: "Ver tus recetas electrónicas."
-rbac_route: "/api/clinical/electronic-prescription/mis-recetas-como-paciente"
+action_name: 'Ver mis recetas electrónicas'
+description: 'Ver tus recetas electrónicas.'
+rbac_route: /api/clinical/electronic-prescription/mis-recetas-como-paciente
 keywords:
-  - mis recetas
-  - receta electrónica
-  - receta digital
-  - medicación prescrita
-  - ver recetas
-
+  - 'mis recetas'
+  - 'receta electrónica'
+  - 'receta digital'
+  - 'medicación prescrita'
+  - 'ver recetas'
 intent_semantics:
-  summary: >-
-    Consultá tus recetas electrónicas emitidas, con detalle y descarga PDF.
+  summary: 'Consultá tus recetas electrónicas emitidas, con detalle y descarga PDF.'
   capabilities:
     - ver_recetas
-  goal: >-
-    Mostrar las recetas electrónicas ya emitidas en Bioenlace, con detalle y PDF.
-  how: >-
-    Lista de recetas → detalle con medicación → descarga PDF generada en servidor.
-  outcome:
-    - El paciente consulta y puede descargar sus recetas.
-
 subintents:
-  - id: ver_listado
-    assistant_text: "Elegí una receta electrónica"
+  -
+    id: ver_listado
+    assistant_text: 'Elegí una receta electrónica'
     provides:
       - draft.prescription_id
     next: ver_detalle
     open_ui:
       action_id: clinical.electronic-prescription.mis-recetas-como-paciente
-
-  - id: ver_detalle
-    assistant_text: "Detalle de la receta"
+  -
+    id: ver_detalle
+    assistant_text: 'Detalle de la receta'
     requires:
       - draft.prescription_id
-    provides: []
-    next: ""
+    provides: {  }
+    next: ''
     open_ui:
       action_id: clinical.electronic-prescription.ver-receta-como-paciente
       params:
-        prescription_id: "draft.prescription_id"
+        prescription_id: draft.prescription_id

@@ -1,49 +1,37 @@
 intent_id: turnos.conflicto-agenda-flow
 version: 1
-
-action_name: "Resolver cambio de horario por agenda"
-description: "Para resolver un cambio de horario en tu turno."
-rbac_route: "/api/turnos/resolver-conflicto-agenda-como-paciente"
+action_name: 'Resolver cambio de horario por agenda'
+description: 'Para resolver un cambio de horario en tu turno.'
+rbac_route: /api/turnos/resolver-conflicto-agenda-como-paciente
 keywords:
-  - conflicto agenda
-  - cambio de horario
-  - turno desalineado
-  - reprogramar por agenda
-  - horario anterior siguiente
-
-intent_semantics:
-  goal: >-
-    Resolver un turno propio marcado con conflicto tras un cambio de intervalo u horarios del profesional.
-  how: >-
-    Lista de turnos con conflicto pendiente → elección antes/despues/cancelar → POST de resolución.
-  preconditions:
-    - Turno EN_RESOLUCION por cambio de agenda con opciones vecinas (antes/después).
-  outcome:
-    - Turno vuelve a PENDIENTE en horario vecino o CANCELADO; resolución cerrada.
-
+  - 'conflicto agenda'
+  - 'cambio de horario'
+  - 'turno desalineado'
+  - 'reprogramar por agenda'
+  - 'horario anterior siguiente'
 subintents:
-  - id: select_turno
-    assistant_text: "Turno afectado"
+  -
+    id: select_turno
+    assistant_text: 'Turno afectado'
     provides:
       - draft.id
     next: select_eleccion
     open_ui:
       action_id: turnos.elegir-conflicto-agenda-como-paciente
-
-  - id: select_eleccion
-    assistant_text: "Nueva opción"
+  -
+    id: select_eleccion
+    assistant_text: 'Nueva opción'
     requires:
       - draft.id
     provides:
       - draft.eleccion
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.elegir-resolucion-conflicto-agenda-como-paciente
       params:
-        id: "draft.id"
-
+        id: draft.id
 flow_submit:
   action_id: turnos.resolver-conflicto-agenda-como-paciente
   params:
-    id: "draft.id"
-    eleccion: "draft.eleccion"
+    id: draft.id
+    eleccion: draft.eleccion

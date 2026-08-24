@@ -1,46 +1,34 @@
 intent_id: personas.vincular-menor-flow
 version: 1
-
-action_name: "Solicitar tutela de menor"
-description: "Un padre, madre o tutor solicita operar por un menor sin cuenta (queda pendiente hasta que el centro lo verifique)."
-rbac_route: "/api/person-representation/solicitar-menor-como-tutor"
+action_name: 'Solicitar tutela de menor'
+description: 'Un padre, madre o tutor solicita operar por un menor sin cuenta (queda pendiente hasta que el centro lo verifique).'
+rbac_route: /api/person-representation/solicitar-menor-como-tutor
 keywords:
-  - vincular hijo
-  - vincular menor
-  - agregar hijo
-  - tutela menor
-  - mi hijo
-  - mi hija
-  - menor a cargo
-  - quiero vincular a mi hijo menor
-  - solicitar tutela
-  - tutela de menor
-
+  - 'vincular hijo'
+  - 'vincular menor'
+  - 'agregar hijo'
+  - 'tutela menor'
+  - 'mi hijo'
+  - 'mi hija'
+  - 'menor a cargo'
+  - 'quiero vincular a mi hijo menor'
+  - 'solicitar tutela'
+  - 'tutela de menor'
 intent_semantics:
-  summary: >-
-    Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.
+  summary: 'Solicitá tutela sobre un menor sin cuenta; el centro debe verificarla antes de activarla.'
   capabilities:
     - vincular_menor
-  goal: >-
-    El tutor (padre, madre o tutor legal) inicia una solicitud de tutela sobre un menor sin cuenta.
-  how: >-
-    Completar parentesco, documento del menor y evidencia si aplica → estado pending hasta verificación del staff del centro.
-  preconditions:
-    - Adulto con cuenta en la app paciente.
-  outcome:
-    - Solicitud registrada; el vínculo pasa a active solo cuando el staff la aprueba.
-
 subintents:
-  - id: gestionar_tutela
-    assistant_text: "Solicitud de tutela"
-    provides: []
-    next: ""
+  -
+    id: gestionar_tutela
+    assistant_text: 'Solicitud de tutela'
+    provides: {  }
+    next: ''
     open_ui:
       action_id: person-representation.hub
       client_open:
         kind: native
         mobile:
           screen_id: person_representation_hub
-
 flow_submit:
   action_id: person-representation.solicitar-menor-como-tutor

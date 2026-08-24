@@ -124,7 +124,7 @@ final class VertexContextCacheSimulator
         switch ($contexto) {
             case 'asistente-preprocess':
                 return [
-                    'cache_key' => 'asistente-preprocess:v1',
+                    'cache_key' => 'asistente-preprocess:v2',
                     'stable' => ChatPreprocessService::stablePromptPrefix(),
                     'variable' => ChatPreprocessService::userMessagePart(
                         self::extractUserFromPreprocessPrompt($fullPrompt)
@@ -138,7 +138,7 @@ final class VertexContextCacheSimulator
                     return null;
                 }
                 return [
-                    'cache_key' => 'asistente-conversational:v3',
+                    'cache_key' => 'asistente-conversational:v6',
                     'stable' => substr($fullPrompt, 0, $pos + strlen($marker)),
                     'variable' => substr($fullPrompt, $pos + strlen($marker)),
                 ];

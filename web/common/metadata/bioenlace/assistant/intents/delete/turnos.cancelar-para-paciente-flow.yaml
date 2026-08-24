@@ -1,36 +1,26 @@
 intent_id: turnos.cancelar-para-paciente-flow
 version: 1
-
-action_name: "Cancelar turno (gestión)"
-description: "Para cancelar un turno para un paciente."
-rbac_route: "/api/turnos/cancelar-operativo"
+action_name: 'Cancelar turno (gestión)'
+description: 'Para cancelar un turno para un paciente.'
+rbac_route: /api/turnos/cancelar-operativo
 keywords:
-  - cancelar turno paciente
-  - baja operativa turno
-  - anular cita gestión
-
-intent_semantics:
-  goal: >-
-    Cancelar un turno en el efector actual (gestión, no autogestión del paciente).
-  how: >-
-    Pantalla cancelar-operativo con id del turno y motivo opcional.
-  outcome:
-    - Cancelación directa (pedido del paciente) o turno EN_RESOLUCION para que el paciente reubique.
-
+  - 'cancelar turno paciente'
+  - 'baja operativa turno'
+  - 'anular cita gestión'
 subintents:
-  - id: cancelar
-    assistant_text: "Turno a cancelar"
+  -
+    id: cancelar
+    assistant_text: 'Turno a cancelar'
     provides:
       - draft.id
       - draft.razon_cancelacion
       - draft.canal
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.cancelar-operativo
-
 flow_submit:
   action_id: turnos.cancelar-operativo
   params:
-    id: "draft.id"
-    razon_cancelacion: "draft.razon_cancelacion"
-    canal: "draft.canal"
+    id: draft.id
+    razon_cancelacion: draft.razon_cancelacion
+    canal: draft.canal

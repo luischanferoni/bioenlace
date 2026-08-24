@@ -1,54 +1,33 @@
 intent_id: profesional-efector-servicio.baja-flow
 version: 1
-
-action_name: "Quitar profesional de un servicio"
-description: "Dar de baja la asignación de un profesional a un servicio del efector."
-rbac_route: "/api/profesional-efector-servicio/baja-flow"
+action_name: 'Quitar profesional de un servicio'
+description: 'Dar de baja la asignación de un profesional a un servicio del efector.'
+rbac_route: /api/profesional-efector-servicio/baja-flow
 keywords:
-  - quitar profesional del servicio
-  - dar de baja profesional
-  - desasignar profesional
-  - sacar profesional del efector
-  - eliminar asignación profesional
-  - quitar PES
-  - baja de profesional en servicio
-
-intent_semantics:
-  goal: >-
-    Quitar (soft-delete) la asignación persona–efector–servicio de un profesional
-    en el efector de sesión.
-  how: >-
-    Elegís el profesional y el servicio; se informa el impacto en turnos a futuro.
-    Si hay turnos pendientes, confirmás el impacto y al enviar se reorganizan
-    (pasan a resolución con notificación al paciente) y luego se da de baja el vínculo.
-  preconditions:
-    - Efector operativo en sesión.
-    - Permisos para dar de baja asignaciones en el efector.
-  constraints:
-    - Solo asignaciones activas del efector de sesión.
-    - Si hay turnos pendientes a futuro, hace falta acusar el impacto antes de confirmar.
-  outcome:
-    - Turnos pendientes afectados en resolución (si había) con notificación.
-    - Asignación PES marcada como eliminada (soft-delete).
-  keyphrases:
-    - quitar profesional de un servicio
-    - desasignar médico del servicio
-    - dar de baja asignación en el efector
-
+  - 'quitar profesional del servicio'
+  - 'dar de baja profesional'
+  - 'desasignar profesional'
+  - 'sacar profesional del efector'
+  - 'eliminar asignación profesional'
+  - 'quitar PES'
+  - 'baja de profesional en servicio'
+  - 'quitar profesional de un servicio'
+  - 'desasignar médico del servicio'
+  - 'dar de baja asignación en el efector'
 draft_keys_extra:
   - impacto_baja_revisado
-
 subintents:
-  - id: select_profesional
-    assistant_text: "Profesional a dar de baja"
+  -
+    id: select_profesional
+    assistant_text: 'Profesional a dar de baja'
     provides:
       - draft.id_profesional_efector_servicio
     next: select_servicio
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector
-
-  - id: select_servicio
-    assistant_text: "Servicio a desasignar"
+  -
+    id: select_servicio
+    assistant_text: 'Servicio a desasignar'
     requires:
       - draft.id_profesional_efector_servicio
     provides:
@@ -57,26 +36,25 @@ subintents:
     open_ui:
       action_id: profesional-efector-servicio.listar-servicios-en-efector
       params:
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        incluir_sin_agenda: "1"
-
-  - id: revisar_impacto
-    assistant_text: "Impacto en turnos"
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+        incluir_sin_agenda: '1'
+  -
+    id: revisar_impacto
+    assistant_text: 'Impacto en turnos'
     requires:
       - draft.id_profesional_efector_servicio
       - draft.id_servicio
     provides:
       - draft.impacto_baja_revisado
-    next: ""
+    next: ''
     open_ui:
       action_id: profesional-efector-servicio.preview-impacto-baja
       params:
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        id_servicio: "draft.id_servicio"
-
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+        id_servicio: draft.id_servicio
 flow_submit:
   action_id: profesional-efector-servicio.baja-flow
   params:
-    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-    id_servicio: "draft.id_servicio"
-    impacto_baja_revisado: "draft.impacto_baja_revisado"
+    id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+    id_servicio: draft.id_servicio
+    impacto_baja_revisado: draft.impacto_baja_revisado

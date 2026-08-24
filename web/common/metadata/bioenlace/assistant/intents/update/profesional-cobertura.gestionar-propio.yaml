@@ -1,36 +1,23 @@
 intent_id: profesional-cobertura.gestionar-propio
 version: 1
-
-# Atajo canónico: profesional-horarios.gestionar-propio (elige AMB vs cobertura).
 shortcut:
   hidden: true
-
 operation: edit
 intent_family: profesional-cobertura.gestionar
 domain_operation: DataAccess.edit
-
-action_name: "Cargar mi cobertura (guardia / internación)"
-description: "Patrón semanal de plantel EMER/IMP con vigencia. Preferí «Mis horarios» si también configurás ambulatorio."
-rbac_route: "/api/profesional-cobertura/gestionar"
-
-# Atajo oculto: la puerta canónica es profesional-horarios.gestionar-propio.
-# Sin keywords NL propias para no empatar con el hub de «mis horarios».
-keywords: []
-
+action_name: 'Cargar mi cobertura (guardia / internación)'
+description: 'Patrón semanal de plantel EMER/IMP con vigencia. Preferí «Mis horarios» si también configurás ambulatorio.'
+rbac_route: /api/profesional-cobertura/gestionar
+keywords: {  }
 intent_semantics:
-  goal: Declarar cobertura propia de urgencia o internación (patrón semanal).
-  how: Elegís la asignación, el tipo EMER/IMP y los rangos por día con vigencia.
-  constraints:
-    - No genera turnos reservables para pacientes.
-    - La agenda de cupos ambulatorios se configura en Mis horarios (rama AMB).
-
+  summary: 'Declarar cobertura propia de urgencia o internación (patrón semanal).'
 draft_hydrator:
   handler: organization.pes_from_servicio
   require_own_pes: true
-
 subintents:
-  - id: select_pes
-    assistant_text: "Elegí el servicio / asignación"
+  -
+    id: select_pes
+    assistant_text: 'Elegí el servicio / asignación'
     provides:
       - draft.id_profesional_efector_servicio
     next: select_encounter_class
@@ -38,9 +25,9 @@ subintents:
       action_id: profesional-cobertura.elegir-pes
       params:
         modo: propio
-
-  - id: select_encounter_class
-    assistant_text: "¿Guardia o internación?"
+  -
+    id: select_encounter_class
+    assistant_text: '¿Guardia o internación?'
     requires:
       - draft.id_profesional_efector_servicio
     provides:
@@ -49,19 +36,19 @@ subintents:
     open_ui:
       action_id: profesional-cobertura.elegir-encounter-class
       params:
-        solo_cobertura: "1"
-
-  - id: gestionar_cobertura
-    assistant_text: "Completá el patrón semanal de cobertura"
+        solo_cobertura: '1'
+  -
+    id: gestionar_cobertura
+    assistant_text: 'Completá el patrón semanal de cobertura'
     requires:
       - draft.id_profesional_efector_servicio
       - draft.encounter_class
     provides:
       - draft.cobertura_ui_completed
-    next: ""
+    next: ''
     open_ui:
       action_id: profesional-cobertura.gestionar
       params:
         modo: propio
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        encounter_class: "draft.encounter_class"
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+        encounter_class: draft.encounter_class

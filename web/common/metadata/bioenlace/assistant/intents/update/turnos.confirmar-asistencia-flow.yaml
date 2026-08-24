@@ -1,51 +1,41 @@
 intent_id: turnos.confirmar-asistencia-flow
 version: 1
-
-action_name: "Confirmar asistencia al turno"
-description: "Para confirmar que vas a asistir a un turno."
-rbac_route: "/api/turnos/confirmar-asistencia-como-paciente"
+action_name: 'Confirmar asistencia al turno'
+description: 'Para confirmar que vas a asistir a un turno.'
+rbac_route: /api/turnos/confirmar-asistencia-como-paciente
 keywords:
-  - confirmar turno
-  - confirmar asistencia
-  - voy a ir
-  - asistiré al turno
-
+  - 'confirmar turno'
+  - 'confirmar asistencia'
+  - 'voy a ir'
+  - 'asistiré al turno'
 intent_semantics:
-  summary: >-
-    Confirmá que vas a asistir a un turno pendiente propio.
+  summary: 'Confirmá que vas a asistir a un turno pendiente propio.'
   capabilities:
     - ver_turnos_propios
     - confirmar_asistencia
-  goal: >-
-    Confirmar asistencia a un turno propio pendiente.
-  how: >-
-    Lista de turnos pendientes → pantalla de confirmación → POST confirmar-asistencia.
-  outcome:
-    - Turno marcado con asistencia confirmada.
-
 subintents:
-  - id: select_turno
-    assistant_text: "Turno a confirmar"
+  -
+    id: select_turno
+    assistant_text: 'Turno a confirmar'
     provides:
       - draft.id
     next: confirmar
     open_ui:
       action_id: turnos.elegir-pendiente-como-paciente
-
-  - id: confirmar
-    assistant_text: "Confirmación"
+  -
+    id: confirmar
+    assistant_text: Confirmación
     requires:
       - draft.id
     provides:
       - draft.token
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.confirmar-asistencia-como-paciente
       params:
-        id: "draft.id"
-
+        id: draft.id
 flow_submit:
   action_id: turnos.confirmar-asistencia-como-paciente
   params:
-    id: "draft.id"
-    token: "draft.token"
+    id: draft.id
+    token: draft.token

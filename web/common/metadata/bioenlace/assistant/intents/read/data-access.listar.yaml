@@ -1,17 +1,12 @@
 intent_id: data-access.listar
 version: 1
-
 shortcut:
   hidden: true
-
-action_name: "Listado staff"
-description: "Métricas en modo filas del catálogo DataAccess (sin flow conversacional)."
-rbac_route: "/api/listar"
+action_name: 'Listado staff'
+description: 'Métricas en modo filas del catálogo DataAccess (sin flow conversacional).'
+rbac_route: /api/listar
 keywords:
   - listar
   - listado
-  - mostrar listado
-  - ver listado
-
-intent_semantics:
-  goal: Listar filas de métricas autorizadas por grupo de atributos.
+  - 'mostrar listado'
+  - 'ver listado'

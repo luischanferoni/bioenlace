@@ -1,50 +1,40 @@
 intent_id: urgencias.triage-paciente-guardia
 version: 1
-
-action_name: "Triage en guardia"
-description: "Registrar la prioridad de un paciente en guardia."
-rbac_route: "/api/home/panel"
+action_name: 'Triage en guardia'
+description: 'Registrar la prioridad de un paciente en guardia.'
+rbac_route: /api/home/panel
 keywords:
   - triage
-  - clasificar urgencia
-  - prioridad guardia
+  - 'clasificar urgencia'
+  - 'prioridad guardia'
   - manchester
-  - enfermería triage
-
-intent_semantics:
-  goal: >-
-    Clasificar la urgencia del paciente y ordenar la cola.
-  how: >-
-    Elegir ingreso sin triage y completar nivel, motivo y signos opcionales en formulario UI.
-  outcome:
-    - Prioridad y motivo quedan registrados en el episodio.
-
+  - 'enfermería triage'
 subintents:
-  - id: elegir_paciente
-    assistant_text: "Elegí el paciente en guardia pendiente de triage"
+  -
+    id: elegir_paciente
+    assistant_text: 'Elegí el paciente en guardia pendiente de triage'
     provides:
       - draft.guardia_id
     next: registrar_triage
     open_ui:
       action_id: clinical.emergency-guardia.elegir-paciente-triage
-
-  - id: registrar_triage
-    assistant_text: "Completá nivel (1–5), motivo y signos vitales si corresponde"
+  -
+    id: registrar_triage
+    assistant_text: 'Completá nivel (1–5), motivo y signos vitales si corresponde'
     requires:
       - draft.guardia_id
-    provides: []
-    next: ""
+    provides: {  }
+    next: ''
     open_ui:
       action_id: clinical.emergency-guardia.registrar-triage-formulario
       params:
-        guardia_id: "draft.guardia_id"
-
+        guardia_id: draft.guardia_id
 flow_submit:
   action_id: clinical.emergency-guardia.registrar-triage-formulario
   params:
-    guardia_id: "draft.guardia_id"
-    level: "draft.level"
-    reason_text: "draft.reason_text"
-    bp_sys: "draft.bp_sys"
-    bp_dia: "draft.bp_dia"
-    hr: "draft.hr"
+    guardia_id: draft.guardia_id
+    level: draft.level
+    reason_text: draft.reason_text
+    bp_sys: draft.bp_sys
+    bp_dia: draft.bp_dia
+    hr: draft.hr

@@ -1,50 +1,40 @@
 intent_id: profesional-cobertura.gestionar-staff
 version: 1
-
-# Atajo canónico: profesional-horarios.gestionar-propio (elige AMB vs plantel).
 shortcut:
   hidden: true
-
 operation: edit
 intent_family: profesional-cobertura.gestionar
 domain_operation: DataAccess.edit
-
-action_name: "Horarios de guardia / internación de un profesional"
-description: "Cargar horarios de plantel (entrada/salida) de guardia o internación para un profesional del efector. No mezcla con la agenda ambulatoria."
-rbac_route: "/api/profesional-cobertura/gestionar"
-
+action_name: 'Horarios de guardia / internación de un profesional'
+description: 'Cargar horarios de plantel (entrada/salida) de guardia o internación para un profesional del efector. No mezcla con la agenda ambulatoria.'
+rbac_route: /api/profesional-cobertura/gestionar
 keywords:
-  - horarios de guardia de un profesional
-  - horarios de internación de un profesional
-  - horarios de piso
-  - cargar horarios de plantel
-  - horario de guardia de un colega
-  - asignar guardia
-  - plantel guardia
-  - roster internación
-  - cobertura de un profesional
-  - cargar cobertura de
-  - horarios de plantel de un profesional
-  - plantel de guardia de un profesional
-
+  - 'horarios de guardia de un profesional'
+  - 'horarios de internación de un profesional'
+  - 'horarios de piso'
+  - 'cargar horarios de plantel'
+  - 'horario de guardia de un colega'
+  - 'asignar guardia'
+  - 'plantel guardia'
+  - 'roster internación'
+  - 'cobertura de un profesional'
+  - 'cargar cobertura de'
+  - 'horarios de plantel de un profesional'
+  - 'plantel de guardia de un profesional'
 intent_semantics:
-  goal: Cargar horarios EMER/IMP de un profesional del efector.
-  how: Elegís el profesional, la asignación (servicio) y cargás entrada/salida por clase.
-  constraints:
-    - Solo staff del efector.
-    - No expone slots a pacientes.
-
+  summary: 'Cargar horarios EMER/IMP de un profesional del efector.'
 subintents:
-  - id: select_profesional
-    assistant_text: "Elegí el profesional"
+  -
+    id: select_profesional
+    assistant_text: 'Elegí el profesional'
     provides:
       - draft.id_profesional_efector_servicio
     next: select_pes
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector
-
-  - id: select_pes
-    assistant_text: "Elegí el servicio / asignación"
+  -
+    id: select_pes
+    assistant_text: 'Elegí el servicio / asignación'
     requires:
       - draft.id_profesional_efector_servicio
     provides:
@@ -54,17 +44,17 @@ subintents:
       action_id: profesional-cobertura.elegir-pes
       params:
         modo: staff
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-
-  - id: gestionar_cobertura
-    assistant_text: "Completá los horarios de plantel"
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+  -
+    id: gestionar_cobertura
+    assistant_text: 'Completá los horarios de plantel'
     requires:
       - draft.id_profesional_efector_servicio
     provides:
       - draft.cobertura_ui_completed
-    next: ""
+    next: ''
     open_ui:
       action_id: profesional-cobertura.gestionar
       params:
         modo: staff
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio

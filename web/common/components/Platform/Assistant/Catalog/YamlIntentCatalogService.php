@@ -126,15 +126,9 @@ final class YamlIntentCatalogService
 
             $sem = null;
             if (isset($data['intent_semantics']) && is_array($data['intent_semantics'])) {
-                $sem = $data['intent_semantics'];
-                // Si hay keyphrases semánticas, sumarlas a keywords para mejorar el scoring por reglas.
-                if (isset($sem['keyphrases']) && is_array($sem['keyphrases'])) {
-                    foreach ($sem['keyphrases'] as $ph) {
-                        if (is_string($ph) && trim($ph) !== '') {
-                            $kw[] = trim($ph);
-                        }
-                    }
-                    $kw = array_values(array_unique($kw));
+                $sem = self::normalizeIntentSemantics($data['intent_semantics']);
+                if ($sem === []) {
+                    $sem = null;
                 }
             }
 
@@ -260,6 +254,30 @@ final class YamlIntentCatalogService
         }
 
         return IntentAccessService::userCanExecuteIntent($userId, $permissionKey);
+    }
+
+    /**
+     * @param array<string, mixed> $sem
+     * @return array{summary?: string, capabilities?: list<string>}
+     */
+    private static function normalizeIntentSemantics(array $sem): array
+    {
+        $out = [];
+        $summary = trim((string) ($sem['summary'] ?? ''));
+        if ($summary !== '') {
+            $out['summary'] = $summary;
+        }
+        $capabilities = [];
+        foreach ($sem['capabilities'] ?? [] as $cap) {
+            if (is_string($cap) && trim($cap) !== '') {
+                $capabilities[] = trim($cap);
+            }
+        }
+        if ($capabilities !== []) {
+            $out['capabilities'] = array_values(array_unique($capabilities));
+        }
+
+        return $out;
     }
 
     /**

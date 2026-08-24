@@ -1,35 +1,36 @@
 intent_id: turnos.crear-como-paciente
 version: 3
-
-action_name: "Turno con un especialista"
-description: "Elegir servicio, centro de salud, profesional y horario (sin repreguntar motivo clínico)."
-rbac_route: "/api/turnos/crear-como-paciente"
+action_name: 'Turno con un especialista'
+description: 'Elegir servicio, centro de salud, profesional y horario (sin repreguntar motivo clínico).'
+rbac_route: /api/turnos/crear-como-paciente
 keywords:
   - turno
-  - sacar turno
-  - sacar un turno
-  - reservar turno
-  - reservar un turno
-  - pedir turno
-  - pedir un turno
-  - necesito un turno
-  - necesito turno
-  - quiero un turno
-  - quiero turno
-  - agendar turno
-  - agendar un turno
+  - 'sacar turno'
+  - 'sacar un turno'
+  - 'reservar turno'
+  - 'reservar un turno'
+  - 'pedir turno'
+  - 'pedir un turno'
+  - 'necesito un turno'
+  - 'necesito turno'
+  - 'quiero un turno'
+  - 'quiero turno'
+  - 'agendar turno'
+  - 'agendar un turno'
   - autogestión
-  - agendar cita
-  - solicita un turno
-  - solicitar un turno
-  - sacame un turno
-  - turno para mi
-  - turno con mi dentista
-  - turno en odontología
-
+  - 'agendar cita'
+  - 'solicita un turno'
+  - 'solicitar un turno'
+  - 'sacame un turno'
+  - 'turno para mi'
+  - 'turno con mi dentista'
+  - 'turno en odontología'
+  - 'reservar una cita'
+  - 'sacar turno en un centro de salud'
+  - 'solicita un turno para mi dentista'
+  - 'elegir servicio y horario disponible'
 intent_semantics:
-  summary: >-
-    Reservá un turno eligiendo servicio, centro (podés buscar cercanos en mapa), profesional y horario disponible.
+  summary: 'Reservá un turno eligiendo servicio, centro (podés buscar cercanos en mapa), profesional y horario disponible.'
   capabilities:
     - elige_servicio
     - elige_centro
@@ -37,58 +38,36 @@ intent_semantics:
     - elige_profesional
     - elige_horario
     - reserva_turno
-  goal: >-
-    Reservar un turno de atención seleccionando servicio, centro de salud, profesional y un horario disponible.
-  how: >-
-    Servicio → centro → profesional → día con cupos → horario; al tener slot, confirmación.
-  preconditions:
-    - El usuario puede autogestionar turnos.
-    - Existe disponibilidad (slots) para el servicio/centro/profesional elegidos.
-  constraints:
-    - Para ver días/horarios debe existir un profesional y un centro seleccionados.
-    - La opción “cercano” requiere geolocalización del cliente.
-  outcome:
-    - Turno creado/confirmado para el slot seleccionado.
-  keyphrases:
-    - reservar una cita
-    - sacar turno en un centro de salud
-    - necesito un turno
-    - quiero un turno
-    - solicita un turno para mi dentista
-    - turno en odontología
-    - elegir servicio y horario disponible
-
 draft_keys_extra:
   - tipo_atencion
   - fecha_turno
-
-# Pedido genérico («necesito un turno»): desambiguar vs asistencia guiada (triage).
-# Al elegir botón el cliente reenvía content vacío → esta regla no vuelve a disparar.
 business_rules:
-  - id: reserva_directa_vs_asistencia_guiada
+  -
+    id: reserva_directa_vs_asistencia_guiada
     when: pre_flow
     checker: content_regex
     require_any:
-      - "^(necesito|quiero|pedir|pido|sacar|reservar|agendar|solicita|solicitar)(\\s+un)?\\s+turno\\b"
-      - "^turno(\\s+por\\s+favor)?\\.?$"
+      - '^(necesito|quiero|pedir|pido|sacar|reservar|agendar|solicita|solicitar)(\s+un)?\s+turno\b'
+      - '^turno(\s+por\s+favor)?\.?$'
     forbid_any:
-      - "\\b(con|de|para)\\s+\\S+"
-      - "\\b(cancelar|reprogramar|reubicar|modificar|ver|listar|mis)\\b"
-    user_message: >-
-      ¿Sabés con qué especialista o servicio querés el turno, o preferís que te guiemos según lo que te pasa?
+      - \b(con|de|para)\s+\S+
+      - \b(cancelar|reprogramar|reubicar|modificar|ver|listar|mis)\b
+    user_message: '¿Sabés con qué especialista o servicio querés el turno, o preferís que te guiemos según lo que te pasa?'
     remediation:
-      - id: turno_especialista
-        label: "Turno con un especialista"
+      -
+        id: turno_especialista
+        label: 'Turno con un especialista'
         intent_id: turnos.crear-como-paciente
         reset_flow: true
-      - id: asistencia_guiada
-        label: "Solicitar Atención"
+      -
+        id: asistencia_guiada
+        label: 'Solicitar Atención'
         intent_id: atencion.necesito-atencion
         reset_flow: true
-
 subintents:
-  - id: select_servicio
-    assistant_text: "Servicio"
+  -
+    id: select_servicio
+    assistant_text: Servicio
     provides:
       - draft.id_servicio_asignado
     next: select_efector
@@ -97,9 +76,9 @@ subintents:
       match_property: nombre
     open_ui:
       action_id: servicios.elegir-acepta-turnos
-
-  - id: select_efector
-    assistant_text: "Centro de salud"
+  -
+    id: select_efector
+    assistant_text: 'Centro de salud'
     requires:
       - draft.id_servicio_asignado
     provides:
@@ -112,16 +91,14 @@ subintents:
       when_user_says_nearby:
         open_ui:
           action_id: efectores.listar-por-servicio-cercano
-          params:
-            id_servicio: "draft.id_servicio_asignado"
+          params: { id_servicio: draft.id_servicio_asignado }
       otherwise:
         open_ui:
           action_id: efectores.listar-por-servicio
-          params:
-            id_servicio: "draft.id_servicio_asignado"
-
-  - id: select_profesional
-    assistant_text: "Profesional"
+          params: { id_servicio: draft.id_servicio_asignado }
+  -
+    id: select_profesional
+    assistant_text: Profesional
     requires:
       - draft.id_efector
       - draft.id_servicio_asignado
@@ -134,11 +111,11 @@ subintents:
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
       params:
-        id_efector: "draft.id_efector"
-        id_servicio: "draft.id_servicio_asignado"
-
-  - id: select_dia
-    assistant_text: "Día"
+        id_efector: draft.id_efector
+        id_servicio: draft.id_servicio_asignado
+  -
+    id: select_dia
+    assistant_text: Día
     requires:
       - draft.id_profesional_efector_servicio
     provides:
@@ -147,30 +124,29 @@ subintents:
     open_ui:
       action_id: turnos.slots-dias-disponibles-como-paciente
       params:
-        id_servicio: "draft.id_servicio_asignado"
-        id_efector: "draft.id_efector"
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-
-  - id: select_slot
-    assistant_text: "Horario"
+        id_servicio: draft.id_servicio_asignado
+        id_efector: draft.id_efector
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+  -
+    id: select_slot
+    assistant_text: Horario
     requires:
       - draft.id_profesional_efector_servicio
       - draft.fecha_turno
     provides:
       - draft.slot_id
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.slots-disponibles-como-paciente
       params:
-        id_servicio: "draft.id_servicio_asignado"
-        id_efector: "draft.id_efector"
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        fecha: "draft.fecha_turno"
-
+        id_servicio: draft.id_servicio_asignado
+        id_efector: draft.id_efector
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+        fecha: draft.fecha_turno
 flow_submit:
   action_id: turnos.crear-como-paciente
   params:
-    slot_id: "draft.slot_id"
-    id_servicio_asignado: "draft.id_servicio_asignado"
-    id_efector: "draft.id_efector"
-    tipo_atencion: "draft.tipo_atencion"
+    slot_id: draft.slot_id
+    id_servicio_asignado: draft.id_servicio_asignado
+    id_efector: draft.id_efector
+    tipo_atencion: draft.tipo_atencion

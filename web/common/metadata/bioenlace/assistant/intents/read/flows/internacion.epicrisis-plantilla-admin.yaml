@@ -1,17 +1,11 @@
 intent_id: internacion.epicrisis-plantilla-admin
 version: 1
-
-# Atajo: no. ABM nativo web (`/internacion-epicrisis-plantilla`); sin subintents / UI JSON.
 shortcut:
   hidden: true
-
-action_name: "ABM plantillas epicrisis"
-description: "Administrar plantillas de epicrisis de internación por efector."
-rbac_route: "/api/clinical/internacion-epicrisis-plantilla/listar-admin"
+action_name: 'ABM plantillas epicrisis'
+description: 'Administrar plantillas de epicrisis de internación por efector.'
+rbac_route: /api/clinical/internacion-epicrisis-plantilla/listar-admin
 keywords:
-  - plantillas epicrisis
-  - epicrisis internación
-  - plantilla alta hospitalaria
-
-intent_semantics:
-  goal: Configurar plantillas reutilizables de epicrisis de internación.
+  - 'plantillas epicrisis'
+  - 'epicrisis internación'
+  - 'plantilla alta hospitalaria'

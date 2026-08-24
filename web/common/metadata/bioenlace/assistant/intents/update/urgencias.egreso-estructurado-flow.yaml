@@ -1,45 +1,33 @@
 intent_id: urgencias.egreso-estructurado-flow
 version: 2
-
-# Atajo: no. «Paciente se retiró» es CTA del tablero (requiere guardia_id).
 shortcut:
   hidden: true
-
-action_name: "Paciente se retiró"
-description: "Cierra el circuito de guardia por retiro / fuga / abandono. La documentación clínica queda en la captura del encounter."
-rbac_route: "/api/clinical/emergency-guardia/egreso-formulario"
+action_name: 'Paciente se retiró'
+description: 'Cierra el circuito de guardia por retiro / fuga / abandono. La documentación clínica queda en la captura del encounter.'
+rbac_route: /api/clinical/emergency-guardia/egreso-formulario
 keywords:
-  - paciente se retiró
-  - fuga guardia
-  - abandono guardia
-  - egreso guardia
-  - retiro sin atención
-
-intent_semantics:
-  goal: >-
-    Registrar que el paciente se retiró y cerrar el circuito operativo de guardia.
-  how: >-
-    Formulario mínimo (fecha/hora, motivo FUGA, nota opcional). No pide diagnóstico ni epicrisis.
-  outcome:
-    - El circuito de guardia queda finalizado por retiro/abandono.
-
+  - 'paciente se retiró'
+  - 'fuga guardia'
+  - 'abandono guardia'
+  - 'egreso guardia'
+  - 'retiro sin atención'
 subintents:
-  - id: completar_egreso
-    assistant_text: "Confirmá fecha/hora del retiro"
+  -
+    id: completar_egreso
+    assistant_text: 'Confirmá fecha/hora del retiro'
     requires:
       - draft.guardia_id
-    provides: []
-    next: ""
+    provides: {  }
+    next: ''
     open_ui:
       action_id: clinical.emergency-guardia.egreso-formulario
       params:
-        guardia_id: "draft.guardia_id"
-
+        guardia_id: draft.guardia_id
 flow_submit:
   action_id: clinical.emergency-guardia.egreso-formulario
   params:
-    guardia_id: "draft.guardia_id"
-    fecha_fin: "draft.fecha_fin"
-    hora_fin: "draft.hora_fin"
-    nota_administrativa: "draft.nota_administrativa"
-    modo_egreso: "administrativo"
+    guardia_id: draft.guardia_id
+    fecha_fin: draft.fecha_fin
+    hora_fin: draft.hora_fin
+    nota_administrativa: draft.nota_administrativa
+    modo_egreso: administrativo

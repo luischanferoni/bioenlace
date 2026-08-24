@@ -50,7 +50,7 @@ final class IntentFamilyResolutionService
     }
 
     /**
-     * @return list<array{intent_id: string, action_name: string, goal: string, how: string}>
+     * @return list<array{intent_id: string, action_name: string, summary: string}>
      */
     public function listDisambiguationOptions(int $userId, string $familyId): array
     {
@@ -62,11 +62,14 @@ final class IntentFamilyResolutionService
                 continue;
             }
             $semantics = is_array($manifest['intent_semantics'] ?? null) ? $manifest['intent_semantics'] : [];
+            $summary = trim((string) ($semantics['summary'] ?? ''));
+            if ($summary === '') {
+                $summary = trim((string) ($manifest['description'] ?? ''));
+            }
             $options[] = [
                 'intent_id' => $intentId,
                 'action_name' => trim((string) ($manifest['action_name'] ?? $intentId)),
-                'goal' => trim((string) ($semantics['goal'] ?? '')),
-                'how' => trim((string) ($semantics['how'] ?? '')),
+                'summary' => $summary,
             ];
         }
 
@@ -154,14 +157,6 @@ final class IntentFamilyResolutionService
                 if ($kw !== '' && str_contains($foldedMessage, $kw)) {
                     $score += 4;
                 }
-            }
-        }
-
-        $semantics = is_array($manifest['intent_semantics'] ?? null) ? $manifest['intent_semantics'] : [];
-        foreach ($semantics['constraints'] ?? [] as $constraint) {
-            $constraint = mb_strtolower(trim((string) $constraint), 'UTF-8');
-            if ($constraint !== '' && str_contains($foldedMessage, 'mi ') && str_contains($constraint, 'propia')) {
-                $score += 8;
             }
         }
 

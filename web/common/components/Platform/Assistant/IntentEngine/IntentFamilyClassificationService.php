@@ -155,9 +155,9 @@ final class IntentFamilyClassificationService
                 continue;
             }
             $label = trim((string) ($opt['action_name'] ?? $intentId));
-            $goal = trim((string) ($opt['goal'] ?? ''));
-            if ($goal !== '') {
-                $label .= ' — ' . $goal;
+            $summary = trim((string) ($opt['summary'] ?? ''));
+            if ($summary !== '') {
+                $label .= ' — ' . $summary;
             }
             $remediation[] = [
                 'id' => 'family_' . $familyId . '_' . $i,
@@ -178,15 +178,15 @@ final class IntentFamilyClassificationService
     }
 
     /**
-     * @param list<array{intent_id: string, action_name: string, goal: string, how: string}> $options
+     * @param list<array{intent_id: string, action_name: string, summary: string}> $options
      */
     private function disambiguationPromptText(array $options): string
     {
         $parts = [];
         foreach ($options as $opt) {
-            $goal = trim((string) ($opt['goal'] ?? ''));
-            if ($goal !== '') {
-                $parts[] = $goal;
+            $summary = trim((string) ($opt['summary'] ?? ''));
+            if ($summary !== '') {
+                $parts[] = $summary;
             }
         }
         if ($parts !== []) {

@@ -1,55 +1,43 @@
 intent_id: turnos.modificar-como-paciente-flow
 version: 1
-
-action_name: "Cambiar horario de turno"
-description: "Para cambiar el horario de tus turnos pendientes."
-rbac_route: "/api/turnos/reprogramar-como-paciente"
+action_name: 'Cambiar horario de turno'
+description: 'Para cambiar el horario de tus turnos pendientes.'
+rbac_route: /api/turnos/reprogramar-como-paciente
 keywords:
-  - modificar turno
-  - cambiar turno
-  - reprogramar turno
-  - mover cita
-  - otro horario
-
+  - 'modificar turno'
+  - 'cambiar turno'
+  - 'reprogramar turno'
+  - 'mover cita'
+  - 'otro horario'
 intent_semantics:
-  summary: >-
-    Cambiá la fecha u horario de un turno pendiente propio eligiendo un nuevo slot disponible.
+  summary: 'Cambiá la fecha u horario de un turno pendiente propio eligiendo un nuevo slot disponible.'
   capabilities:
     - ver_turnos_propios
     - elige_horario
     - reprogramar_turno_propio
-  goal: >-
-    Reprogramar un turno propio a otra fecha/hora (y profesional PES) disponible.
-  how: >-
-    Lista de turnos pendientes → elección del nuevo horario (slots) → confirmación final (POST reprogramar, sin descriptor GET en ese paso).
-  preconditions:
-    - Política del efector permite reprogramación por app cuando aplica.
-  outcome:
-    - Turno actualizado a la nueva fecha/hora.
-
 subintents:
-  - id: select_turno
-    assistant_text: "Turno a modificar"
+  -
+    id: select_turno
+    assistant_text: 'Turno a modificar'
     provides:
       - draft.id
     next: select_slot
     open_ui:
       action_id: turnos.elegir-pendiente-como-paciente
-
-  - id: select_slot
-    assistant_text: "Nuevo horario"
+  -
+    id: select_slot
+    assistant_text: 'Nuevo horario'
     requires:
       - draft.id
     provides:
       - draft.slot_id
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.slots-reprogramar-como-paciente
       params:
-        id: "draft.id"
-
+        id: draft.id
 flow_submit:
   action_id: turnos.reprogramar-como-paciente
   params:
-    id: "draft.id"
-    slot_id: "draft.slot_id"
+    id: draft.id
+    slot_id: draft.slot_id

@@ -1,39 +1,29 @@
 intent_id: turnos.consultar-ocupacion-dia-flow
 version: 1
-
-action_name: "Consultar ocupación del día"
-description: "Ver horarios disponibles y ocupación del día."
-rbac_route: "/api/turnos/consultar-ocupacion-dia"
+action_name: 'Consultar ocupación del día'
+description: 'Ver horarios disponibles y ocupación del día.'
+rbac_route: /api/turnos/consultar-ocupacion-dia
 keywords:
-  - ocupación del día
-  - disponibilidad día
-  - slots del día
-  - agenda ocupación
-
-intent_semantics:
-  goal: >-
-    Consultar ocupación y slots de un día para planificación operativa.
-  how: >-
-    Pantalla consultar-ocupacion-dia (fecha, servicio o PES).
-  outcome:
-    - Payload con eventos/slots del día consultado.
-
+  - 'ocupación del día'
+  - 'disponibilidad día'
+  - 'slots del día'
+  - 'agenda ocupación'
 subintents:
-  - id: consultar
-    assistant_text: "Día y agenda"
+  -
+    id: consultar
+    assistant_text: 'Día y agenda'
     provides:
       - draft.dia
       - draft.id_servicio
       - draft.id_profesional_efector_servicio
       - draft.formato
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.consultar-ocupacion-dia
-
 flow_submit:
   action_id: turnos.consultar-ocupacion-dia
   params:
-    dia: "draft.dia"
-    id_servicio: "draft.id_servicio"
-    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-    formato: "draft.formato"
+    dia: draft.dia
+    id_servicio: draft.id_servicio
+    id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+    formato: draft.formato

@@ -1,29 +1,20 @@
 intent_id: urgencias.ver-tablero-guardia
 version: 1
-
-action_name: "Ver tablero de guardia"
-description: "Ver la lista de pacientes en guardia."
-rbac_route: "/api/home/panel"
+action_name: 'Ver tablero de guardia'
+description: 'Ver la lista de pacientes en guardia.'
+rbac_route: /api/home/panel
 keywords:
-  - tablero guardia
+  - 'tablero guardia'
   - urgencias
   - guardia
-  - sala de espera
-  - pacientes en guardia
-  - cola de emergencia
-
-intent_semantics:
-  goal: >-
-    Mostrar el tablero operativo de guardia con prioridad de triage y tiempos de espera.
-  how: >-
-    Abre el inicio con ámbito EMER; requiere sesión operativa en guardia/urgencias.
-  outcome:
-    - El staff ve y actualiza la cola en tiempo casi real.
-
+  - 'sala de espera'
+  - 'pacientes en guardia'
+  - 'cola de emergencia'
 subintents:
-  - id: abrir_tablero
-    assistant_text: "Abro el tablero de guardia"
-    provides: []
-    next: ""
+  -
+    id: abrir_tablero
+    assistant_text: 'Abro el tablero de guardia'
+    provides: {  }
+    next: ''
     open_ui:
       action_id: clinical.home.panel

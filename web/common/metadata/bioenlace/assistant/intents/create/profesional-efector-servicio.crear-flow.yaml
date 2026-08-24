@@ -1,141 +1,120 @@
 intent_id: profesional-efector-servicio.crear-flow
 version: 1
-
-action_name: "Alta profesional en efector y agenda"
-description: "Agregar un profesional a un servicio y, si corresponde, crear su agenda."
-rbac_route: "/api/profesional-efector-servicio/crear-flow"
+action_name: 'Alta profesional en efector y agenda'
+description: 'Agregar un profesional a un servicio y, si corresponde, crear su agenda.'
+rbac_route: /api/profesional-efector-servicio/crear-flow
 keywords:
   - agenda
-  - cargar agenda
-  - cargar la agenda
-  - agregar profesional
-  - agenda médico
-  - agenda medico
-  - horarios médico
-  - horarios medico
-
-intent_semantics:
-  goal: >-
-    Dar de alta la asignación de una persona a un servicio del efector (persona + efector + servicio)
-    y, si el servicio admite turnos, abrir la configuración de una agenda nueva.
-  how: >-
-    Buscar persona en el padrón, elegir un servicio del establecimiento (efector en sesión).
-    Al completar ese paso se persiste el vínculo persona–efector–servicio; si el servicio acepta turnos sigue la pantalla de configuración de agenda (horarios e intervalo) y luego el cierre declarativo del flujo (`flow_submit`), si no, el cierre ocurre al terminar la selección de servicio.
-  preconditions:
-    - Efector operativo en sesión.
-    - Permisos para dar de alta asignaciones en el efector.
-  constraints:
-    - La búsqueda de persona en padrón usa texto; el listado de servicios del efector se carga completo (filtro opcional por nombre vía `q` en la API).
-    - No se puede elegir una persona que ya tenga asignación en el efector.
-    - Si la persona no tiene CUIL cargado, el flujo solicita el CUIL antes de elegir servicio (obligatorio para alta PES clínica).
-    - Agenda solo si servicios.acepta_turnos = SI.
-  outcome:
-    - Asignación persona–efector–servicio persistida.
-    - Agenda configurada cuando el servicio acepta turnos.
-  keyphrases:
-    - alta de profesional en efector y servicio
-    - asociar persona a servicio del efector
-    - configurar disponibilidad si el servicio tiene turnos
-
+  - 'cargar agenda'
+  - 'cargar la agenda'
+  - 'agregar profesional'
+  - 'agenda médico'
+  - 'agenda medico'
+  - 'horarios médico'
+  - 'horarios medico'
+  - 'alta de profesional en efector y servicio'
+  - 'asociar persona a servicio del efector'
+  - 'configurar disponibilidad si el servicio tiene turnos'
 draft_keys_extra:
   - servicio_acepta_turnos
   - id_persona
   - persona_requiere_cuil
   - cuil
   - agenda_ui_completed
-
 draft_hydrator:
   handler: organization.pes_crear_alta
-
 business_rules:
-  - id: agenda_alta_vs_solo_horarios
+  -
+    id: agenda_alta_vs_solo_horarios
     when: pre_flow
     checker: content_regex
     require_any:
-      - "(cargar|configurar|editar|modificar|actualizar).*(agenda|horario|formas?\\s+de\\s+atencion|teleconsulta|intervalo)"
-      - "(agenda|horario|formas?\\s+de\\s+atencion).*(profesional|m[eé]dico|doctor)"
+      - '(cargar|configurar|editar|modificar|actualizar).*(agenda|horario|formas?\s+de\s+atencion|teleconsulta|intervalo)'
+      - '(agenda|horario|formas?\s+de\s+atencion).*(profesional|m[eé]dico|doctor)'
     forbid_any:
-      - "crear|agregar|nuevo|alta|asociar|recurso humano"
-      - "formas?\\s+de\\s+atencion|forma\\s+de\\s+atencion|teleconsulta|intervalo"
-    user_message: >-
-      Parece que querés trabajar con agenda u horarios de un profesional.
-      ¿Necesitás el flujo completo (asociar profesional y servicio) o solo cargar horarios porque ya tiene el servicio con turnos?
+      - 'crear|agregar|nuevo|alta|asociar|recurso humano'
+      - 'formas?\s+de\s+atencion|forma\s+de\s+atencion|teleconsulta|intervalo'
+    user_message: 'Parece que querés trabajar con agenda u horarios de un profesional. ¿Necesitás el flujo completo (asociar profesional y servicio) o solo cargar horarios porque ya tiene el servicio con turnos?'
     remediation:
-      - id: flujo_completo
-        label: "Flujo completo (profesional / servicio / agenda si aplica)"
+      -
+        id: flujo_completo
+        label: 'Flujo completo (profesional / servicio / agenda si aplica)'
         intent_id: profesional-efector-servicio.crear-flow
         reset_flow: true
-      - id: solo_agenda
-        label: "Solo horarios (agenda existente)"
+      -
+        id: solo_agenda
+        label: 'Solo horarios (agenda existente)'
         intent_id: profesional-agenda.configurar-staff
         reset_flow: true
-      - id: mi_agenda
-        label: "Mis horarios (agenda o plantel)"
+      -
+        id: mi_agenda
+        label: 'Mis horarios (agenda o plantel)'
         intent_id: profesional-horarios.gestionar-propio
         reset_flow: true
-
 subintents:
-  - id: select_persona
-    assistant_text: "Persona"
+  -
+    id: select_persona
+    assistant_text: Persona
     provides:
       - draft.id_persona
     next_routing:
-      - when:
-          draft_equals:
-            persona_requiere_cuil: "SI"
+      -
+        when:
+          draft_equals: { persona_requiere_cuil: SI }
         next: capture_cuil
-      - when:
+      -
+        when:
           default: true
         next: select_servicio
     open_ui:
       action_id: persona.buscar-para-asistente
       pass_content_as_query: q
       params:
-        excluir_en_efector: "1"
-
-  - id: capture_cuil
-    assistant_text: "CUIL del profesional"
+        excluir_en_efector: '1'
+  -
+    id: capture_cuil
+    assistant_text: 'CUIL del profesional'
     provides:
       - draft.cuil
     next: select_servicio
     open_ui:
       action_id: profesional-efector-servicio.cargar-cuil-profesional
       params:
-        id_persona: "draft.id_persona"
-
-  - id: select_servicio
-    assistant_text: "Servicio"
+        id_persona: draft.id_persona
+  -
+    id: select_servicio
+    assistant_text: Servicio
     provides:
       - draft.id_servicio
     next_routing:
-      - when:
-          draft_equals:
-            servicio_acepta_turnos: "SI"
+      -
+        when:
+          draft_equals: { servicio_acepta_turnos: SI }
         next: configurar_agenda_datos
-      - when:
+      -
+        when:
           default: true
-        next: ""
+        next: ''
     open_ui:
       action_id: efectores.listar-servicios-habilitados
-
-  - id: configurar_agenda_datos
-    assistant_text: "Agenda"
+  -
+    id: configurar_agenda_datos
+    assistant_text: Agenda
     provides:
       - draft.agenda_ui_completed
     requires:
       - draft.id_profesional_efector_servicio
       - draft.id_servicio
-    next: ""
+    next: ''
     open_ui:
       action_id: profesional-agenda.configurar-agenda
       params:
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        id_servicio: "draft.id_servicio"
-        ui_step: "datos"
-
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+        id_servicio: draft.id_servicio
+        ui_step: datos
 flow_submit:
   action_id: profesional-efector-servicio.crear-flow
   params:
-    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-    id_servicio: "draft.id_servicio"
-    id_persona: "draft.id_persona"
+    id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+    id_servicio: draft.id_servicio
+    id_persona: draft.id_persona

@@ -63,4 +63,11 @@ final class ChatPreprocessContext
         $d = self::get();
         return isset($d['normalized_text']) ? trim((string) $d['normalized_text']) : '';
     }
+
+    public static function actionText(): string
+    {
+        $d = self::get();
+
+        return isset($d['action_text']) ? trim((string) $d['action_text']) : '';
+    }
 }

@@ -1,33 +1,23 @@
 intent_id: turnos.no-se-presento-flow
 version: 1
-
-action_name: "Marcar no se presentó"
-description: "Para marcar que un paciente no asistió a un turno."
-rbac_route: "/api/turnos/no-se-presento"
+action_name: 'Marcar no se presentó'
+description: 'Para marcar que un paciente no asistió a un turno.'
+rbac_route: /api/turnos/no-se-presento
 keywords:
-  - no se presentó
+  - 'no se presentó'
   - inasistencia
-  - ausente turno
-  - paciente no vino
-
-intent_semantics:
-  goal: >-
-    Marcar un turno como no presentado en gestión operativa.
-  how: >-
-    Pantalla con id del turno → POST no-se-presento.
-  outcome:
-    - Turno actualizado según reglas de lifecycle (inasistencia).
-
+  - 'ausente turno'
+  - 'paciente no vino'
 subintents:
-  - id: registrar
-    assistant_text: "Turno"
+  -
+    id: registrar
+    assistant_text: Turno
     provides:
       - draft.id
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.no-se-presento
-
 flow_submit:
   action_id: turnos.no-se-presento
   params:
-    id: "draft.id"
+    id: draft.id

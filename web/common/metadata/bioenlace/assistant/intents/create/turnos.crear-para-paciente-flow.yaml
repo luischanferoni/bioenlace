@@ -1,43 +1,31 @@
 intent_id: turnos.crear-para-paciente-flow
 version: 1
-
-action_name: "Crear turno para paciente"
-description: "Para crear un turno para un paciente."
-rbac_route: "/api/turnos/crear-para-paciente"
+action_name: 'Crear turno para paciente'
+description: 'Para crear un turno para un paciente.'
+rbac_route: /api/turnos/crear-para-paciente
 keywords:
-  - crear turno paciente
-  - agendar para paciente
-  - turno operativo
-  - dar turno a paciente
-
-intent_semantics:
-  goal: >-
-    Crear un turno para un paciente distinto del usuario de sesión (staff).
-  how: >-
-    Pantalla crear-para-paciente con datos del beneficiario y slot; submit POST.
-  preconditions:
-    - Permiso operativo; efector en sesión cuando aplica.
-  outcome:
-    - Turno pendiente creado para id_persona indicado.
-
+  - 'crear turno paciente'
+  - 'agendar para paciente'
+  - 'turno operativo'
+  - 'dar turno a paciente'
 subintents:
-  - id: crear
-    assistant_text: "Datos del turno"
+  -
+    id: crear
+    assistant_text: 'Datos del turno'
     provides:
       - draft.id_persona
       - draft.slot_id
       - draft.id_servicio_asignado
       - draft.id_efector
       - draft.id_profesional_efector_servicio
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.crear-para-paciente
-
 flow_submit:
   action_id: turnos.crear-para-paciente
   params:
-    id_persona: "draft.id_persona"
-    slot_id: "draft.slot_id"
-    id_servicio_asignado: "draft.id_servicio_asignado"
-    id_efector: "draft.id_efector"
-    id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
+    id_persona: draft.id_persona
+    slot_id: draft.slot_id
+    id_servicio_asignado: draft.id_servicio_asignado
+    id_efector: draft.id_efector
+    id_profesional_efector_servicio: draft.id_profesional_efector_servicio

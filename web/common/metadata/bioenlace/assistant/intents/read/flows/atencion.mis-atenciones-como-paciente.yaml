@@ -1,46 +1,35 @@
 intent_id: atencion.mis-atenciones-como-paciente
 version: 1
-
-action_name: "Ver mis atenciones"
-description: "Ver tus atenciones y sus resúmenes."
-# Permiso base (listar). Detalle/última/UI/HTTP se otorgan al paciente en migración RBAC
-# (m260715_120000…): el push móvil llama ver-resumen sin X-Flow-Intent-Id.
-rbac_route: "/api/clinical/encounter-patient-summary/listar-atenciones-como-paciente"
+action_name: 'Ver mis atenciones'
+description: 'Ver tus atenciones y sus resúmenes.'
+rbac_route: /api/clinical/encounter-patient-summary/listar-atenciones-como-paciente
 keywords:
-  - mis atenciones
-  - mis consultas
-  - historial de consultas
-  - atenciones anteriores
-  - resumen de atención
-
+  - 'mis atenciones'
+  - 'mis consultas'
+  - 'historial de consultas'
+  - 'atenciones anteriores'
+  - 'resumen de atención'
 intent_semantics:
-  summary: >-
-    Revisá tus atenciones ambulatorias finalizadas y el resumen de cada una.
+  summary: 'Revisá tus atenciones ambulatorias finalizadas y el resumen de cada una.'
   capabilities:
     - ver_atenciones
-  goal: >-
-    Mostrar atenciones ambulatorias ya finalizadas con resumen publicado (texto IA).
-  how: >-
-    Lista de atenciones → detalle con resumen, recetas y pedidos vinculados.
-  outcome:
-    - El paciente consulta qué ocurrió en cada atención.
-
 subintents:
-  - id: ver_listado
-    assistant_text: "Elegí una atención"
+  -
+    id: ver_listado
+    assistant_text: 'Elegí una atención'
     provides:
       - draft.encounter_id
     next: ver_detalle
     open_ui:
       action_id: clinical.encounter.mis-atenciones-como-paciente
-
-  - id: ver_detalle
-    assistant_text: "Resumen de la atención"
+  -
+    id: ver_detalle
+    assistant_text: 'Resumen de la atención'
     requires:
       - draft.encounter_id
-    provides: []
-    next: ""
+    provides: {  }
+    next: ''
     open_ui:
       action_id: clinical.encounter.ver-resumen-atencion-como-paciente
       params:
-        encounter_id: "draft.encounter_id"
+        encounter_id: draft.encounter_id

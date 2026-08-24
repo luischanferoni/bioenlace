@@ -1,58 +1,46 @@
 intent_id: turnos.reubicar-como-paciente-flow
 version: 1
-
-action_name: "Reubicar turno"
-description: "Para elegir un nuevo horario cuando tu turno necesita reubicación."
-rbac_route: "/api/turnos/reubicar-como-paciente"
+action_name: 'Reubicar turno'
+description: 'Para elegir un nuevo horario cuando tu turno necesita reubicación.'
+rbac_route: /api/turnos/reubicar-como-paciente
 keywords:
-  - reubicar turno
-  - turno en resolución
-  - cambiar profesional turno
-  - nuevo turno consultorio
-
+  - 'reubicar turno'
+  - 'turno en resolución'
+  - 'cambiar profesional turno'
+  - 'nuevo turno consultorio'
 intent_semantics:
-  summary: >-
-    Si tu turno quedó en reubicación, elegí de nuevo servicio, centro, profesional y horario.
+  summary: 'Si tu turno quedó en reubicación, elegí de nuevo servicio, centro, profesional y horario.'
   capabilities:
     - reubicar_turno_propio
     - elige_servicio
     - elige_centro
     - elige_profesional
     - elige_horario
-  goal: >-
-    Reubicar un turno propio marcado EN_RESOLUCION (impacto de agenda, gestión del consultorio, etc.).
-  how: >-
-    Elegir turno en resolución → servicio → centro → profesional → día → horario (mañana/tarde) → confirmación POST reubicar.
-  preconditions:
-    - Turno en estado EN_RESOLUCION con fila pendiente en turno_resolucion.
-  outcome:
-    - Turno vuelve a PENDIENTE con nueva asignación; resolución cerrada.
-
 draft_keys_extra:
   - id_servicio_asignado
   - id_efector
   - id_profesional_efector_servicio
   - fecha_turno
-
 subintents:
-  - id: select_turno
-    assistant_text: "Turno a reubicar"
+  -
+    id: select_turno
+    assistant_text: 'Turno a reubicar'
     provides:
       - draft.id
     next: select_servicio
     open_ui:
       action_id: turnos.elegir-en-resolucion-como-paciente
-
-  - id: select_servicio
-    assistant_text: "Servicio"
+  -
+    id: select_servicio
+    assistant_text: Servicio
     provides:
       - draft.id_servicio_asignado
     next: select_efector
     open_ui:
       action_id: servicios.elegir-acepta-turnos
-
-  - id: select_efector
-    assistant_text: "Centro de salud"
+  -
+    id: select_efector
+    assistant_text: 'Centro de salud'
     requires:
       - draft.id_servicio_asignado
     provides:
@@ -62,16 +50,14 @@ subintents:
       when_user_says_nearby:
         open_ui:
           action_id: efectores.listar-por-servicio-cercano
-          params:
-            id_servicio: "draft.id_servicio_asignado"
+          params: { id_servicio: draft.id_servicio_asignado }
       otherwise:
         open_ui:
           action_id: efectores.listar-por-servicio
-          params:
-            id_servicio: "draft.id_servicio_asignado"
-
-  - id: select_profesional
-    assistant_text: "Profesional"
+          params: { id_servicio: draft.id_servicio_asignado }
+  -
+    id: select_profesional
+    assistant_text: Profesional
     requires:
       - draft.id_efector
       - draft.id_servicio_asignado
@@ -81,11 +67,11 @@ subintents:
     open_ui:
       action_id: profesional-efector-servicio.listar-por-efector-servicio-acepta-turnos
       params:
-        id_efector: "draft.id_efector"
-        id_servicio: "draft.id_servicio_asignado"
-
-  - id: select_dia
-    assistant_text: "Día"
+        id_efector: draft.id_efector
+        id_servicio: draft.id_servicio_asignado
+  -
+    id: select_dia
+    assistant_text: Día
     requires:
       - draft.id
       - draft.id_profesional_efector_servicio
@@ -95,35 +81,34 @@ subintents:
     open_ui:
       action_id: turnos.slots-dias-reubicar-como-paciente
       params:
-        id: "draft.id"
-        id_efector: "draft.id_efector"
-        id_servicio_asignado: "draft.id_servicio_asignado"
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        mismo_profesional: "0"
-
-  - id: select_slot
-    assistant_text: "Horario"
+        id: draft.id
+        id_efector: draft.id_efector
+        id_servicio_asignado: draft.id_servicio_asignado
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+        mismo_profesional: '0'
+  -
+    id: select_slot
+    assistant_text: Horario
     requires:
       - draft.id
       - draft.id_profesional_efector_servicio
       - draft.fecha_turno
     provides:
       - draft.slot_id
-    next: ""
+    next: ''
     open_ui:
       action_id: turnos.slots-reubicar-como-paciente
       params:
-        id: "draft.id"
-        id_efector: "draft.id_efector"
-        id_servicio_asignado: "draft.id_servicio_asignado"
-        id_profesional_efector_servicio: "draft.id_profesional_efector_servicio"
-        fecha: "draft.fecha_turno"
-        mismo_profesional: "0"
-
+        id: draft.id
+        id_efector: draft.id_efector
+        id_servicio_asignado: draft.id_servicio_asignado
+        id_profesional_efector_servicio: draft.id_profesional_efector_servicio
+        fecha: draft.fecha_turno
+        mismo_profesional: '0'
 flow_submit:
   action_id: turnos.reubicar-como-paciente
   params:
-    id: "draft.id"
-    slot_id: "draft.slot_id"
-    id_efector: "draft.id_efector"
-    id_servicio_asignado: "draft.id_servicio_asignado"
+    id: draft.id
+    slot_id: draft.slot_id
+    id_efector: draft.id_efector
+    id_servicio_asignado: draft.id_servicio_asignado

@@ -3,9 +3,9 @@
 namespace common\components\Platform\Assistant\Chat\Preprocess;
 
 /**
- * Política de canal del asistente (síntoma vs trámite, menú, staff data-access).
+ * Predicados de dominio del asistente (síntoma, menú, staff data-access, oferta de botón).
  *
- * Vive en PHP: es lógica estable del motor, no configuración de producto por intent.
+ * No clasifica `user_goal`: eso lo decide el preprocess IA.
  * Copy conversacional: {@see \common\components\Platform\Assistant\Chat\Channels\Conversational\ChatConversationalConfig}.
  *
  * Predicados nombrados (p. ej. `own_agenda_config_edit`) solo para cablear metadata
@@ -224,57 +224,6 @@ final class ChatChannelPolicy
         return self::lastLineMatchingClinicalSymptom($patientHistory) !== '';
     }
 
-    /**
-     * Ajusta el user_goal del preprocess (IA o heurística).
-     */
-    public static function resolveUserGoal(
-        string $normalized,
-        string $goal,
-        ?string $alsoMatchText = null,
-        string $historyText = ''
-    ): string {
-        $texts = self::matchTexts($normalized, $alsoMatchText);
-
-        if (self::anyText(static fn (string $t) => self::isClinicalSymptomContent($t), $texts)
-            && !self::anyText(static fn (string $t) => self::isExplicitOperationalCareRequest($t), $texts)
-        ) {
-            if (in_array($goal, ['informational', 'unclear', 'operational', 'in_flow_question'], true)) {
-                return 'conversational';
-            }
-        }
-
-        if ($historyText !== ''
-            && self::isClinicalSymptomContent($historyText)
-            && !self::anyText(static fn (string $t) => self::isExplicitOperationalCareRequest($t), $texts)
-            && in_array($goal, ['informational', 'unclear', 'operational', 'in_flow_question'], true)
-        ) {
-            return 'conversational';
-        }
-
-        if (self::anyText(static fn (string $t) => self::isStaffDataAccessOperationalQuery($t), $texts)
-            || self::anyText(static fn (string $t) => self::isExplicitOperationalCareRequest($t), $texts)
-        ) {
-            return 'operational';
-        }
-
-        return $goal;
-    }
-
-    public static function heuristicUserGoal(string $content): string
-    {
-        if (self::isExplicitOperationalCareRequest($content) || self::isStaffDataAccessOperationalQuery($content)) {
-            return 'operational';
-        }
-        if (self::isCapabilityMenuQuery($content)) {
-            return 'informational';
-        }
-        if (self::isGreeting($content) || self::isClinicalSymptomContent($content)) {
-            return 'conversational';
-        }
-
-        return 'unclear';
-    }
-
     private static function looksLikeOwnCoberturaOrPlantel(string $message): bool
     {
         $f = self::fold($message);
@@ -304,38 +253,5 @@ final class ChatChannelPolicy
             || str_contains($f, 'horarios de plantel')
             || str_contains($f, 'cobertura de un profesional')
             || str_contains($f, 'horarios de guardia de un');
-    }
-
-    /**
-     * @return list<string>
-     */
-    private static function matchTexts(string $normalized, ?string $also): array
-    {
-        $out = [];
-        $n = trim($normalized);
-        if ($n !== '') {
-            $out[] = $n;
-        }
-        $o = $also !== null ? trim($also) : '';
-        if ($o !== '' && ($out === [] || $o !== $out[0])) {
-            $out[] = $o;
-        }
-
-        return $out;
-    }
-
-    /**
-     * @param callable(string): bool $fn
-     * @param list<string> $texts
-     */
-    private static function anyText(callable $fn, array $texts): bool
-    {
-        foreach ($texts as $t) {
-            if ($fn($t)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }

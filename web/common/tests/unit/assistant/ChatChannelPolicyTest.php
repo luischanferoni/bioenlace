@@ -14,21 +14,6 @@ class ChatChannelPolicyTest extends Unit
         $this->assertFalse(ChatChannelPolicy::isClinicalSymptomContent('quiero un turno'));
     }
 
-    public function testSymptomGoesConversationalUnlessExplicitTurno(): void
-    {
-        $this->assertSame(
-            'conversational',
-            ChatChannelPolicy::resolveUserGoal(
-                'estoy con dolor de cabeza, hospital cerca',
-                'operational'
-            )
-        );
-        $this->assertSame(
-            'operational',
-            ChatChannelPolicy::resolveUserGoal('me duele la cabeza y quiero un turno', 'operational')
-        );
-    }
-
     public function testBookingOfferAfterSymptomHistory(): void
     {
         $this->assertFalse(ChatChannelPolicy::shouldOfferBookingButton('Empezó ayer y se me fue poniendo peor'));
@@ -54,10 +39,10 @@ class ChatChannelPolicyTest extends Unit
         $this->assertFalse(ChatChannelPolicy::isStaffDataAccessEditQuery('modificar turno del paciente'));
     }
 
-    public function testStudyRequestIsOperational(): void
+    public function testStudyRequestDetection(): void
     {
-        $this->assertSame('operational', ChatChannelPolicy::heuristicUserGoal('Necesito una ecografía'));
         $this->assertTrue(ChatChannelPolicy::isStudyOrPracticeRequest('Necesito una ecografía'));
+        $this->assertTrue(ChatChannelPolicy::isExplicitOperationalCareRequest('Necesito una ecografía'));
     }
 
     public function testNamedPredicateOwnAgenda(): void
@@ -69,10 +54,9 @@ class ChatChannelPolicyTest extends Unit
         $this->assertFalse(ChatChannelPolicy::namedPredicate('unknown_rule', 'hola'));
     }
 
-    public function testCargarMiCoberturaIsOperationalHeuristic(): void
+    public function testCargarMiCoberturaIsStaffOperationalQuery(): void
     {
         $msg = 'Cargar mi cobertura';
         $this->assertTrue(ChatChannelPolicy::isStaffDataAccessOperationalQuery($msg));
-        $this->assertSame('operational', ChatChannelPolicy::heuristicUserGoal($msg));
     }
 }

@@ -7,7 +7,6 @@ use common\components\Platform\Assistant\Chat\Channels\Conversational\Conversati
 use common\components\Platform\Assistant\Chat\Channels\Informational\InformationalChannel;
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
-use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 
 /**
@@ -34,30 +33,19 @@ final class ChatRouter
         }
 
         $preprocess = ChatPreprocessService::run($content, $userId);
+        if ($preprocess === null) {
+            return AssistantEnvelope::message(
+                'No pudimos interpretar tu mensaje en este momento. Probá de nuevo en unos segundos.'
+            );
+        }
+
         \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
 
         $goal = isset($preprocess['user_goal']) ? trim((string) $preprocess['user_goal']) : 'unclear';
-        $queryText = isset($preprocess['normalized_text']) ? trim((string) $preprocess['normalized_text']) : $content;
-        if ($queryText === '') {
-            $queryText = $content;
-        }
 
         $formattedHistory = $userId > 0
             ? ConversationalHistoryWindow::formatForPrompt($userId, $content)
             : '';
-        $patientHistory = ConversationalHistoryWindow::extractPatientLines($formattedHistory);
-
-        // Cinturón de seguridad: síntomas → conversational aunque el preprocess IA diga operational.
-        $goal = ChatChannelPolicy::resolveUserGoal(
-            $queryText,
-            $goal,
-            $content,
-            $patientHistory
-        );
-
-        if (ChatPreprocessService::isStaffDataAccessOperationalQuery($queryText)) {
-            return OperationalChannel::handle($content, null, $userId);
-        }
 
         switch ($goal) {
             case 'operational':

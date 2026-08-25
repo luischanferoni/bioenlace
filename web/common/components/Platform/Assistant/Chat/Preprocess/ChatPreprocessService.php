@@ -8,8 +8,8 @@ use common\components\Ai\IAManager;
 /**
  * Preprocess: canal (user_goal), texto normalizado y extracciones (spans).
  *
- * Prompt IA: goals globales (HIS / sistema). Casos de producto (síntoma vs trámite):
- * {@see ChatChannelPolicy}. Copy conversacional: otro YAML.
+ * El `user_goal` lo decide la IA; no hay piso PHP ni fallback heurístico si la IA falla.
+ * Predicados de dominio (síntoma, staff data-access): {@see ChatChannelPolicy}.
  */
 final class ChatPreprocessService
 {
@@ -54,25 +54,21 @@ final class ChatPreprocessService
 
     /**
      * @return array{
+     *   ok: bool,
      *   normalized_text: string,
      *   user_goal: string,
      *   action_text: string,
      *   extractions: list<array{span: string, category: string, synonyms: list<string>}>
-     * }
+     * }|null null = falló la IA (sin clasificar por heurística)
      */
-    public static function run(string $content, int $userId): array
+    public static function run(string $content, int $userId): ?array
     {
         $content = trim($content);
         if ($content === '') {
             return self::emptyResult('');
         }
 
-        $ia = self::runAi($content);
-        if ($ia !== null) {
-            return $ia;
-        }
-
-        return self::heuristicFallback($content);
+        return self::runAi($content);
     }
 
     public static function stablePromptPrefix(): string
@@ -84,6 +80,12 @@ final class ChatPreprocessService
 
         return <<<PROMPT
 Clasificá el mensaje del usuario para el asistente de un HIS (sistema de historia clínica y gestión de salud).
+
+Alcance válido (solo esto entra a un canal):
+- Salud, síntomas o malestar del paciente autenticado.
+- Gestiones en Bioenlace sobre sí mismo (turnos, estudios, controles, representación/tutela formal, cuestionarios, lectura de lo propio).
+- Ayuda sobre cómo funciona el producto para hacer esas gestiones.
+- Preguntas sobre un flujo ya abierto o sobre el asistente.
 
 Respondé ÚNICAMENTE con JSON:
 {
@@ -99,16 +101,17 @@ Respondé ÚNICAMENTE con JSON:
   ]
 }
 
-Reglas:
-- operational: quiere hacer o consultar algo en el sistema.
-- conversational: saludo, síntomas, malestar o charla clínica sin pedido concreto al sistema.
-- informational: menú, ayuda o cómo funciona el sistema en general.
+Reglas de user_goal (elige uno; debe encajar en el alcance válido):
+- operational: ejecutar o consultar un trámite concreto en el sistema.
+- conversational: saludo, o charla sobre su salud/malestar sin trámite concreto.
+- informational: menú o cómo funciona el producto para gestiones del alcance (aunque mencione "turno" si solo pregunta).
 - in_flow_question: pregunta sobre un flujo ya en curso.
-- meta: preguntas sobre el asistente mismo.
-- unclear: no se puede clasificar con confianza.
+- meta: pregunta sobre el asistente mismo.
+- unclear: el mensaje no encaja con claridad en ninguno de los anteriores o no está en el alcance válido.
+
+Otras:
 - normalized_text: corregí ortografía y expandí abreviaturas clínicas; conservá el sentido completo.
-- No uses category servicio para síntomas ni partes del cuerpo.
-- extractions: solo entidades del mundo ({$categoriesHuman}), no verbos.
+- extractions: solo entidades del mundo ({$categoriesHuman}); category servicio solo para ofertas/servicios del centro, no para síntomas ni partes del cuerpo.
 - synonyms: máximo 2 strings por extracción.
 
 Mensaje:
@@ -126,7 +129,13 @@ PROMPT;
     }
 
     /**
-     * @return array<string, mixed>|null
+     * @return array{
+     *   ok: bool,
+     *   normalized_text: string,
+     *   user_goal: string,
+     *   action_text: string,
+     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>
+     * }|null
      */
     private static function runAi(string $content): ?array
     {
@@ -146,7 +155,13 @@ PROMPT;
 
     /**
      * @param array<string, mixed> $raw
-     * @return array<string, mixed>
+     * @return array{
+     *   ok: bool,
+     *   normalized_text: string,
+     *   user_goal: string,
+     *   action_text: string,
+     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>
+     * }
      */
     private static function normalizeResult(array $raw, string $fallbackContent): array
     {
@@ -193,9 +208,8 @@ PROMPT;
             }
         }
 
-        $goal = ChatChannelPolicy::resolveUserGoal($normalized, $goal, $fallbackContent);
-
         return [
+            'ok' => true,
             'normalized_text' => $normalized,
             'user_goal' => $goal,
             'action_text' => $actionText,
@@ -204,26 +218,18 @@ PROMPT;
     }
 
     /**
-     * @return array<string, mixed>
-     */
-    private static function heuristicFallback(string $content): array
-    {
-        $goal = ChatChannelPolicy::heuristicUserGoal($content);
-
-        return [
-            'normalized_text' => $content,
-            'user_goal' => $goal,
-            'action_text' => $goal === 'operational' ? $content : '',
-            'extractions' => [],
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
+     * @return array{
+     *   ok: bool,
+     *   normalized_text: string,
+     *   user_goal: string,
+     *   action_text: string,
+     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>
+     * }
      */
     private static function emptyResult(string $content): array
     {
         return [
+            'ok' => true,
             'normalized_text' => $content,
             'user_goal' => 'unclear',
             'action_text' => '',

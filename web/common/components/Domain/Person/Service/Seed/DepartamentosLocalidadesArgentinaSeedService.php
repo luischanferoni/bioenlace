@@ -24,14 +24,6 @@ final class DepartamentosLocalidadesArgentinaSeedService
     /** Localidad cabecera Santa Fe (La Capital) — Georef/BAHRA. */
     public const COD_BAHRA_SANTA_FE = '82063170';
 
-    /** Preferencia de PK legacy en Bioenlace (Santiago del Estero). */
-    public const PREFERRED_ID_PROVINCIA_SDE = 1;
-
-    /** Preferencia de PK legacy en Bioenlace (Santa Fe). */
-    public const PREFERRED_ID_PROVINCIA_SF = 86;
-
-    public const EFECTOR_SANTA_FE_DEMO_ID = 1509;
-
     public const COD_INDEC_SANTIAGO = '86';
 
     public const COD_INDEC_SANTA_FE = '82';
@@ -212,29 +204,21 @@ final class DepartamentosLocalidadesArgentinaSeedService
         $idLocalidadSde = $this->requireLocalidadIdByCodBahra(self::COD_BAHRA_SANTIAGO_DEL_ESTERO);
         $idLocalidadSf = $this->requireLocalidadIdByCodBahra(self::COD_BAHRA_SANTA_FE);
 
-        $this->assertLocalidadEnProvinciaPreferida(
-            $idLocalidadSde,
-            self::PREFERRED_ID_PROVINCIA_SDE,
-            'Santiago del Estero',
-            self::COD_INDEC_SANTIAGO
-        );
-        $this->assertLocalidadEnProvinciaPreferida(
-            $idLocalidadSf,
-            self::PREFERRED_ID_PROVINCIA_SF,
-            'Santa Fe',
-            self::COD_INDEC_SANTA_FE
-        );
+        $this->assertLocalidadEnProvinciaPorCodIndec($idLocalidadSde, self::COD_INDEC_SANTIAGO);
+        $this->assertLocalidadEnProvinciaPorCodIndec($idLocalidadSf, self::COD_INDEC_SANTA_FE);
+
+        $idEfectorSfDemo = $this->demoEfectorSantaFeId();
 
         $updatedSde = Yii::$app->db->createCommand()->update(
             '{{%efectores}}',
             ['id_localidad' => $idLocalidadSde],
-            ['not', ['id_efector' => self::EFECTOR_SANTA_FE_DEMO_ID]]
+            ['not', ['id_efector' => $idEfectorSfDemo]]
         )->execute();
 
         $updatedSf = Yii::$app->db->createCommand()->update(
             '{{%efectores}}',
             ['id_localidad' => $idLocalidadSf],
-            ['id_efector' => self::EFECTOR_SANTA_FE_DEMO_ID]
+            ['id_efector' => $idEfectorSfDemo]
         )->execute();
 
         return [
@@ -266,7 +250,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
     private function mapProvinciaIdByCodIndec(): array
     {
         $map = [];
-        foreach ((new Query())->from('{{%geo_provincias}}')->select(['id_provincia', 'cod_indec'])->where(['id_pais' => \common\models\Pais::ID_ARGENTINA])->all() as $row) {
+        foreach ((new Query())->from('{{%geo_provincias}}')->select(['id_provincia', 'cod_indec'])->where(['id_pais' => (int) \common\models\Pais::requireByIso2('AR')->id_pais])->all() as $row) {
             $cod = str_pad(trim((string) $row['cod_indec']), 2, '0', STR_PAD_LEFT);
             $map[$cod] = (int) $row['id_provincia'];
         }
@@ -304,12 +288,8 @@ final class DepartamentosLocalidadesArgentinaSeedService
         return (int) $id;
     }
 
-    private function assertLocalidadEnProvinciaPreferida(
-        int $idLocalidad,
-        int $preferredIdProvincia,
-        string $nombreProvincia,
-        string $codIndec
-    ): void {
+    private function assertLocalidadEnProvinciaPorCodIndec(int $idLocalidad, string $codIndec): void
+    {
         $idProvincia = (new Query())
             ->select('d.id_provincia')
             ->from(['l' => '{{%geo_localidades}}'])
@@ -322,36 +302,35 @@ final class DepartamentosLocalidadesArgentinaSeedService
         }
         $idProvincia = (int) $idProvincia;
 
-        $preferred = Provincia::findOne($preferredIdProvincia);
-        if ($preferred instanceof Provincia) {
-            $normPreferred = mb_strtolower((string) $preferred->nombre, 'UTF-8');
-            $normExpected = mb_strtolower($nombreProvincia, 'UTF-8');
-            if (mb_strpos($normPreferred, $normExpected) !== false || mb_strpos($normExpected, $normPreferred) !== false) {
-                if ($idProvincia !== $preferredIdProvincia) {
-                    throw new \RuntimeException(sprintf(
-                        'Localidad %d pertenece a id_provincia=%d; se esperaba %d (%s).',
-                        $idLocalidad,
-                        $idProvincia,
-                        $preferredIdProvincia,
-                        $nombreProvincia
-                    ));
-                }
-
-                return;
-            }
-        }
-
-        $byCod = Provincia::findOne(['cod_indec' => $codIndec, 'id_pais' => \common\models\Pais::ID_ARGENTINA]);
-        if ($byCod instanceof Provincia && (int) $byCod->id_provincia === $idProvincia) {
+        $expected = Provincia::findOne([
+            'cod_indec' => str_pad(trim($codIndec), 2, '0', STR_PAD_LEFT),
+            'id_pais' => (int) \common\models\Pais::requireByIso2('AR')->id_pais,
+        ]);
+        if ($expected instanceof Provincia && (int) $expected->id_provincia === $idProvincia) {
             return;
         }
 
         throw new \RuntimeException(sprintf(
-            'No se pudo validar provincia de localidad %d (id_provincia=%d, preferida=%d, cod_indec=%s).',
+            'Localidad %d pertenece a id_provincia=%d; se esperaba provincia AR cod_indec=%s.',
             $idLocalidad,
             $idProvincia,
-            $preferredIdProvincia,
             $codIndec
         ));
+    }
+
+    /**
+     * Efector demo Santa Fe: params seedDemoEfectorSantaFeId (fixture de entorno, no fila de catálogo en el modelo).
+     */
+    private function demoEfectorSantaFeId(): int
+    {
+        $id = 1509;
+        if (Yii::$app->has('params')) {
+            $configured = Yii::$app->params['seedDemoEfectorSantaFeId'] ?? null;
+            if (is_numeric($configured) && (int) $configured > 0) {
+                $id = (int) $configured;
+            }
+        }
+
+        return $id;
     }
 }

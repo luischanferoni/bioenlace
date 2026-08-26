@@ -40,27 +40,29 @@ final class GeoRecursosInstitucionalesSeedService
         }
 
         $recursos = 0;
-        $recursos += $this->upsertRecurso(Pais::ID_ARGENTINA, '86', $tipo, [
+        $idAr = (int) Pais::requireByIso2('AR')->id_pais;
+        $idUy = (int) Pais::requireByIso2('UY')->id_pais;
+        $recursos += $this->upsertRecurso($idAr, '86', $tipo, [
             'nombre' => 'Ministerio de Salud de Santiago del Estero',
             'direccion' => 'Av. Juan Bautista Alberdi 601, Santiago del Estero',
             'telefono' => '0385-421-0100',
         ]);
-        $recursos += $this->upsertRecurso(Pais::ID_ARGENTINA, '14', $tipo, [
+        $recursos += $this->upsertRecurso($idAr, '14', $tipo, [
             'nombre' => 'Ministerio de Salud de la Provincia de Buenos Aires',
             'direccion' => 'Calle 7 entre 50 y 51, La Plata',
             'telefono' => '0221-429-3400',
         ]);
-        $recursos += $this->upsertRecurso(Pais::ID_ARGENTINA, '82', $tipo, [
+        $recursos += $this->upsertRecurso($idAr, '82', $tipo, [
             'nombre' => 'Ministerio de Salud de Santa Fe',
             'direccion' => 'San Martín 2627, Santa Fe',
             'telefono' => '0342-450-6500',
         ]);
-        $recursos += $this->upsertRecursoNacional(Pais::ID_ARGENTINA, $tipo, [
+        $recursos += $this->upsertRecursoNacional($idAr, $tipo, [
             'nombre' => 'Ministerio de Salud de la Nación',
             'direccion' => 'Av. Paseo Colón 195, CABA',
             'telefono' => '0800-222-3362',
         ]);
-        $recursos += $this->upsertRecurso(Pais::ID_URUGUAY, 'MO', $tipo, [
+        $recursos += $this->upsertRecurso($idUy, 'MO', $tipo, [
             'nombre' => 'Ministerio de Salud Pública (Uruguay)',
             'direccion' => '18 de Julio 1892, Montevideo',
             'telefono' => '0800-8855',

@@ -3,7 +3,9 @@
 namespace common\models;
 
 /**
- * País geográfico (ISO 3166-1 alpha-2).
+ * País geográfico (ISO 3166-1 alpha-2). Fuente de verdad: tabla geo_paises.
+ *
+ * No declarar países concretos aquí: se agregan por seed/migración.
  *
  * @property int $id_pais
  * @property string $iso2
@@ -13,11 +15,6 @@ namespace common\models;
  */
 class Pais extends \yii\db\ActiveRecord
 {
-    public const ID_ARGENTINA = 1;
-    public const ID_URUGUAY = 2;
-    public const ISO_AR = 'AR';
-    public const ISO_UY = 'UY';
-
     public static function tableName()
     {
         return 'geo_paises';
@@ -46,5 +43,34 @@ class Pais extends \yii\db\ActiveRecord
         }
 
         return self::findOne(['iso2' => $iso2]);
+    }
+
+    /**
+     * @throws \RuntimeException si el país no está sembrado en geo_paises
+     */
+    public static function requireByIso2(string $iso2): self
+    {
+        $pais = self::findByIso2($iso2);
+        if ($pais === null) {
+            throw new \RuntimeException('País no encontrado en geo_paises (iso2=' . strtoupper(trim($iso2)) . '). Ejecutá el seed correspondiente.');
+        }
+
+        return $pais;
+    }
+
+    /**
+     * País por defecto de producto ({@see params geoDefaultIso2}).
+     */
+    public static function defaultPais(): ?self
+    {
+        $iso2 = 'AR';
+        if (class_exists(\Yii::class, false) && \Yii::$app !== null && \Yii::$app->has('params')) {
+            $configured = \Yii::$app->params['geoDefaultIso2'] ?? null;
+            if (is_string($configured) && trim($configured) !== '') {
+                $iso2 = trim($configured);
+            }
+        }
+
+        return self::findByIso2($iso2);
     }
 }

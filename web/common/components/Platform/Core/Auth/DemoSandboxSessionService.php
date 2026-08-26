@@ -171,7 +171,7 @@ final class DemoSandboxSessionService
             // Solo aceptar override si YA es plantilla DEV con el mismo codigo_sisa.
             if (
                 $efOverride !== null
-                && $override !== EfectorDemoSeedService::DEFAULT_EFECTOR_REF
+                && $override !== EfectorDemoSeedService::defaultEfectorRefId()
                 && str_starts_with($codOverride, 'DEV')
                 && $codOverride === $codigo
             ) {
@@ -224,10 +224,10 @@ final class DemoSandboxSessionService
         if ($idEfector <= 0) {
             throw new \DomainException('id_efector demo inválido.');
         }
-        if ($idEfector === EfectorDemoSeedService::DEFAULT_EFECTOR_REF) {
+        if ($idEfector === EfectorDemoSeedService::defaultEfectorRefId()) {
             throw new \DomainException(
                 'La plantilla demo no puede ser el efector real '
-                . EfectorDemoSeedService::DEFAULT_EFECTOR_REF
+                . EfectorDemoSeedService::defaultEfectorRefId()
                 . '. Sacá id_efector=863 de params-local y usá efector_codigo_sisa=DEV99002PRIV.'
             );
         }

@@ -8,19 +8,18 @@ use Yii;
 
 /**
  * Seed de vecinos por país (grafo en geo_provincia_vecinos).
+ * Mapas por iso2 viven en el seed (no en el modelo Pais).
  */
 final class ProvinciaVecinosSeedService
 {
     /**
      * @return array{inserted: int, skipped: int}
      */
-    public function upsertForPais(int $idPais): array
+    public function upsertForIso2(string $iso2): array
     {
-        $map = match ($idPais) {
-            Pais::ID_ARGENTINA => self::vecinosArgentinaPorCod(),
-            Pais::ID_URUGUAY => self::vecinosUruguayPorCod(),
-            default => throw new \InvalidArgumentException('Sin mapa de vecinos para id_pais=' . $idPais),
-        };
+        $pais = Pais::requireByIso2($iso2);
+        $map = $this->vecinosPorCodForIso2((string) $pais->iso2);
+        $idPais = (int) $pais->id_pais;
 
         $byCod = [];
         foreach (Provincia::find()->where(['id_pais' => $idPais])->all() as $p) {
@@ -61,6 +60,18 @@ final class ProvinciaVecinosSeedService
         }
 
         return ['inserted' => $inserted, 'skipped' => $skipped];
+    }
+
+    /**
+     * @return array<string, list<string>>
+     */
+    public function vecinosPorCodForIso2(string $iso2): array
+    {
+        return match (strtoupper(trim($iso2))) {
+            'AR' => self::vecinosArgentinaPorCod(),
+            'UY' => self::vecinosUruguayPorCod(),
+            default => throw new \InvalidArgumentException('Sin mapa de vecinos para iso2=' . $iso2),
+        };
     }
 
     /**

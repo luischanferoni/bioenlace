@@ -52,7 +52,7 @@ final class ProvinciasArgentinaSeedService
      */
     public function upsertAll(): array
     {
-        $idPais = Pais::ID_ARGENTINA;
+        $idPais = (int) Pais::requireByIso2('AR')->id_pais;
         $rows = self::canonicalRows();
         $this->realignCodIndecByCanonicalNombre($rows, $idPais);
         $inserted = 0;
@@ -94,7 +94,7 @@ final class ProvinciasArgentinaSeedService
             }
 
             $provincia = new Provincia();
-            $provincia->id_provincia = $this->resolveIdProvincia($codIndec);
+            $provincia->id_provincia = $this->resolveIdProvincia($codIndec, $idPais);
             $provincia->id_pais = $idPais;
             $provincia->cod_indec = $codIndec;
             $provincia->nombre = $row['nombre'];
@@ -116,7 +116,7 @@ final class ProvinciasArgentinaSeedService
         ];
     }
 
-    private function resolveIdProvincia(string $codIndec): int
+    private function resolveIdProvincia(string $codIndec, int $idPais): int
     {
         $preferred = (int) $codIndec;
         if ($preferred > 0) {
@@ -124,7 +124,7 @@ final class ProvinciasArgentinaSeedService
             if ($byId === null) {
                 return $preferred;
             }
-            if ((string) $byId->cod_indec === $codIndec && (int) $byId->id_pais === Pais::ID_ARGENTINA) {
+            if ((string) $byId->cod_indec === $codIndec && (int) $byId->id_pais === $idPais) {
                 return $preferred;
             }
         }

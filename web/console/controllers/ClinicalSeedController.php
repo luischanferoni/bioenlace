@@ -121,7 +121,7 @@ class ClinicalSeedController extends Controller
         $this->stdout(
             "\nAdmin: filtrá por provincia o sector en /admin/efectores.\n"
             . "Paciente: contexto PUBLICO + provincia del CAP demo / PRIVADO + provincia del efector "
-            . EfectorDemoSeedService::DEFAULT_EFECTOR_REF . " para probar offering.\n",
+            . EfectorDemoSeedService::defaultEfectorRefId() . " para probar offering.\n",
             Console::FG_YELLOW
         );
 
@@ -248,7 +248,7 @@ class ClinicalSeedController extends Controller
         try {
             $result = (new \common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService())->upsertAll();
             $vecinos = (new \common\components\Domain\Person\Service\Seed\ProvinciaVecinosSeedService())
-                ->upsertForPais(\common\models\Pais::ID_ARGENTINA);
+                ->upsertForIso2('AR');
         } catch (\Throwable $e) {
             $this->stderr($e->getMessage() . "\n", Console::FG_RED);
 
@@ -279,7 +279,7 @@ class ClinicalSeedController extends Controller
         try {
             $result = (new \common\components\Domain\Person\Service\Seed\ProvinciasUruguaySeedService())->upsertAll();
             $vecinos = (new \common\components\Domain\Person\Service\Seed\ProvinciaVecinosSeedService())
-                ->upsertForPais(\common\models\Pais::ID_URUGUAY);
+                ->upsertForIso2('UY');
         } catch (\Throwable $e) {
             $this->stderr($e->getMessage() . "\n", Console::FG_RED);
 
@@ -377,7 +377,7 @@ class ClinicalSeedController extends Controller
                         "Efectores: %d → SDE (loc %d); efector %d → Santa Fe (loc %d, filas %d).\n",
                         $ef['actualizados_sde'],
                         $ef['santiago_localidad'],
-                        \common\components\Domain\Person\Service\Seed\DepartamentosLocalidadesArgentinaSeedService::EFECTOR_SANTA_FE_DEMO_ID,
+                        (int) (\Yii::$app->params['seedDemoEfectorSantaFeId'] ?? 1509),
                         $ef['santa_fe_localidad'],
                         $ef['actualizados_sf']
                     ),

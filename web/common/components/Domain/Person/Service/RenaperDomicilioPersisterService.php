@@ -87,11 +87,13 @@ final class RenaperDomicilioPersisterService
      */
     public function resolveProvincia(array $renaper): ?Provincia
     {
+        // RENAPER es fuente argentina: el país se resuelve desde BD por iso2, no por constante de modelo.
+        $idPaisAr = (int) \common\models\Pais::requireByIso2('AR')->id_pais;
         $codIndec = trim((string) ($renaper['id_provincia'] ?? $renaper['cod_provincia'] ?? ''));
         if ($codIndec !== '') {
             $codIndec = str_pad($codIndec, 2, '0', STR_PAD_LEFT);
             $provincia = Provincia::find()
-                ->where(['cod_indec' => $codIndec, 'id_pais' => \common\models\Pais::ID_ARGENTINA])
+                ->where(['cod_indec' => $codIndec, 'id_pais' => $idPaisAr])
                 ->one();
             if ($provincia instanceof Provincia) {
                 return $provincia;
@@ -103,7 +105,7 @@ final class RenaperDomicilioPersisterService
             return null;
         }
 
-        $candidatas = Provincia::find()->where(['id_pais' => \common\models\Pais::ID_ARGENTINA])->all();
+        $candidatas = Provincia::find()->where(['id_pais' => $idPaisAr])->all();
         foreach ($candidatas as $provincia) {
             if ($this->normalizeNombreProvincia((string) $provincia->nombre) === $nombre) {
                 return $provincia;

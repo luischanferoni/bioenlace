@@ -22,7 +22,23 @@ final class EfectorDemoSeedService
 
     public const COD_SISA_PRIVATE = 'DEV99002PRIV';
 
-    /** Efector de referencia (Santiago del Estero en prod). */
+    /**
+     * Efector de referencia para demos (Santiago del Estero en prod típico).
+     * Override: params seedDemoEfectorRefId — no es fila de catálogo en el modelo Efector.
+     */
+    public static function defaultEfectorRefId(): int
+    {
+        if (class_exists(\Yii::class, false) && \Yii::$app !== null && \Yii::$app->has('params')) {
+            $configured = \Yii::$app->params['seedDemoEfectorRefId'] ?? null;
+            if (is_numeric($configured) && (int) $configured > 0) {
+                return (int) $configured;
+            }
+        }
+
+        return 863;
+    }
+
+    /** @deprecated Usar {@see defaultEfectorRefId()} */
     public const DEFAULT_EFECTOR_REF = 863;
 
     private const DEV_LOCALIDAD_OTRA_PROV_COD_BAHRA = 'DEV99001SF';
@@ -67,8 +83,9 @@ final class EfectorDemoSeedService
     /**
      * @return array<string, mixed>
      */
-    public function upsertPublicOtraProvincia(int $idEfectorReferencia = self::DEFAULT_EFECTOR_REF): array
+    public function upsertPublicOtraProvincia(?int $idEfectorReferencia = null): array
     {
+        $idEfectorReferencia = $idEfectorReferencia ?? self::defaultEfectorRefId();
         $localidad = $this->findLocalidadEnOtraProvincia($idEfectorReferencia);
         $provinciaNombre = $this->resolveProvinciaNombreForLocalidad($localidad);
 
@@ -88,8 +105,9 @@ final class EfectorDemoSeedService
     /**
      * @return array<string, mixed>
      */
-    public function upsertClinicaPrivada(int $idEfectorReferencia = self::DEFAULT_EFECTOR_REF): array
+    public function upsertClinicaPrivada(?int $idEfectorReferencia = null): array
     {
+        $idEfectorReferencia = $idEfectorReferencia ?? self::defaultEfectorRefId();
         $localidad = $this->findLocalidadHome($idEfectorReferencia);
         $provinciaNombre = $this->resolveProvinciaNombreForLocalidad($localidad);
 
@@ -201,8 +219,9 @@ final class EfectorDemoSeedService
         ];
     }
 
-    private function findLocalidadHome(int $idEfectorPreferido = self::DEFAULT_EFECTOR_REF): Localidad
+    private function findLocalidadHome(?int $idEfectorPreferido = null): Localidad
     {
+        $idEfectorPreferido = $idEfectorPreferido ?? self::defaultEfectorRefId();
         $seed = $this->findLocalidadByCodBahra(self::DEV_LOCALIDAD_HOME_COD_BAHRA);
         if ($seed !== null) {
             return $seed;

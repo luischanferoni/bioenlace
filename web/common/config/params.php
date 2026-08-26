@@ -284,6 +284,25 @@ return [
     // 'productMetadataDir' => dirname(__DIR__) . '/metadata/bioenlace',
 
     /**
+     * ISO 3166-1 alpha-2 del país por defecto (sugerencias geo / fallback IP).
+     * Debe existir en geo_paises tras el seed.
+     */
+    'geoDefaultIso2' => 'AR',
+
+    /**
+     * Códigos de subdivisión a priorizar cuando GeoIP no da región (clave = iso2).
+     * Opcional; si falta la clave, el orden queda alfabético.
+     */
+    'geoSuggestionFallbackCodigos' => [
+        'AR' => ['86', '14', '06', '82', '02'],
+        'UY' => ['MO', 'CA', 'SJ'],
+    ],
+
+    /** Fixtures demo/seed (IDs de entorno; no catálogo en modelos). */
+    'seedDemoEfectorRefId' => 863,
+    'seedDemoEfectorSantaFeId' => 1509,
+
+    /**
      * Capacidades MPI/SEIPA habilitadas. renaper (identidad), coberturas y domicilio por defecto.
      * {@see \common\components\Domain\Integrations\Mpi\MpiCapability}
      */

@@ -61,7 +61,7 @@ final class DemoSandboxStaffProvisionService
         }
         // Nunca provisionar sandbox en un centro real (p. ej. 863).
         $codigoSisa = trim((string) $efector->codigo_sisa);
-        if ($idEfector === EfectorDemoSeedService::DEFAULT_EFECTOR_REF || !str_starts_with($codigoSisa, 'DEV')) {
+        if ($idEfector === EfectorDemoSeedService::defaultEfectorRefId() || !str_starts_with($codigoSisa, 'DEV')) {
             throw new \InvalidArgumentException(
                 "Sandbox solo en plantilla DEV (recibido id_efector={$idEfector}, codigo_sisa={$codigoSisa})."
             );

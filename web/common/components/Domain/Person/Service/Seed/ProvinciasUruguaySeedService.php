@@ -47,7 +47,7 @@ final class ProvinciasUruguaySeedService
      */
     public function upsertAll(): array
     {
-        $idPais = Pais::ID_URUGUAY;
+        $idPais = (int) Pais::requireByIso2('UY')->id_pais;
         $rows = self::canonicalRows();
         $inserted = 0;
         $updated = 0;

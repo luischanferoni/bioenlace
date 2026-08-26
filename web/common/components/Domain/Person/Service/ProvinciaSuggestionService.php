@@ -12,12 +12,6 @@ use yii\db\Query;
  */
 final class ProvinciaSuggestionService
 {
-    /** @var list<string> fallbacks AR si GeoIP falla */
-    private const FALLBACK_COD_AR = ['86', '14', '06', '82', '02'];
-
-    /** @var list<string> */
-    private const FALLBACK_COD_UY = ['MO', 'CA', 'SJ'];
-
     /** @var array<int, list<int>>|null */
     private static ?array $vecinosCache = null;
 
@@ -61,7 +55,7 @@ final class ProvinciaSuggestionService
         if ($codHint !== null && isset($byCod[$codHint])) {
             $this->appendProvinciaAndVecinos($orderedIds, (int) $byCod[$codHint]->id_provincia, $vecinosById, $byId);
         } else {
-            foreach ($this->fallbackCodsForPais((int) $pais->id_pais) as $cod) {
+            foreach ($this->fallbackCodsForIso2((string) $pais->iso2) as $cod) {
                 if (!isset($byCod[$cod])) {
                     continue;
                 }
@@ -122,7 +116,7 @@ final class ProvinciaSuggestionService
             }
         }
 
-        return Pais::findOne(Pais::ID_ARGENTINA);
+        return Pais::defaultPais();
     }
 
     /**
@@ -181,12 +175,28 @@ final class ProvinciaSuggestionService
     /**
      * @return list<string>
      */
-    private function fallbackCodsForPais(int $idPais): array
+    private function fallbackCodsForIso2(string $iso2): array
     {
-        return match ($idPais) {
-            Pais::ID_URUGUAY => self::FALLBACK_COD_UY,
-            default => self::FALLBACK_COD_AR,
-        };
+        $iso2 = strtoupper(trim($iso2));
+        $map = [];
+        if (Yii::$app->has('params')) {
+            $configured = Yii::$app->params['geoSuggestionFallbackCodigos'] ?? null;
+            if (is_array($configured)) {
+                $map = $configured;
+            }
+        }
+        $list = $map[$iso2] ?? [];
+        if (!is_array($list)) {
+            return [];
+        }
+        $out = [];
+        foreach ($list as $cod) {
+            if (is_string($cod) || is_int($cod)) {
+                $out[] = $this->normalizeCod((string) $cod);
+            }
+        }
+
+        return $out;
     }
 
     /**
@@ -220,7 +230,9 @@ final class ProvinciaSuggestionService
     private function resolveIso2FromIp(string $ip): ?string
     {
         if ($ip === '' || $this->isPrivateIp($ip)) {
-            return Pais::ISO_AR;
+            $default = Pais::defaultPais();
+
+            return $default !== null ? (string) $default->iso2 : null;
         }
 
         try {
@@ -246,7 +258,9 @@ final class ProvinciaSuggestionService
     private function resolveSubdivisionCodFromIp(string $ip, Pais $pais): ?string
     {
         if ($ip === '' || $this->isPrivateIp($ip)) {
-            return (int) $pais->id_pais === Pais::ID_URUGUAY ? 'MO' : '86';
+            $fallbacks = $this->fallbackCodsForIso2((string) $pais->iso2);
+
+            return $fallbacks[0] ?? null;
         }
 
         try {

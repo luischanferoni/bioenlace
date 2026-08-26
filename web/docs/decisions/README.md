@@ -9,11 +9,12 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Autorización solo por intents | RBAC assignable = intent_id; retiro grants atributo | [autorizacion-solo-por-intents.md](./autorizacion-solo-por-intents.md) |
 | Capabilities UI nativa | RBAC assignable guardia/encounter/panel fuera de intents NL | [autorizacion-capabilities-ui-nativa.md](./autorizacion-capabilities-ui-nativa.md) |
 | Captura clínica: Yii vs YAML | Integridad en `*Input` / servicios; YAML = prompts y knobs | [captura-clinica-contratos-yii-vs-yaml.md](./captura-clinica-contratos-yii-vs-yaml.md) |
+| Runtime datos vs metadata | Maestros/catálogos en BD + seed console; YAML = composición | [runtime-datos-vs-metadata.md](./runtime-datos-vs-metadata.md) |
 | Pedido servicio × acto | `servicios` = oferta del centro; actos SNOMED; glosario anti-confusión | [pedido-atencion-linea-acto.md](./pedido-atencion-linea-acto.md) |
 
 Glosario producto (servicio / PES / acto): [producto/glosario-servicio-pes-acto.md](../producto/glosario-servicio-pes-acto.md).
 
-Guía transversal (no ADR): [arquitectura/metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md).
+Guía transversal (no ADR): [arquitectura/metadata-yaml-uso.md](../arquitectura/metadata-yaml-uso.md), [arquitectura/runtime-datos-y-metadata.md](../arquitectura/runtime-datos-y-metadata.md).
 
 ## Formato sugerido para nuevas entradas
 

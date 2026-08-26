@@ -161,7 +161,7 @@ Propuesta:
 | Llamadas API | Opcional `X-Capability-Id` para trazabilidad; no obligatorio si RBAC por ruta está bien |
 | Asistente | Mantener `X-Flow-Intent-Id`; FlowStep sigue para pasos dentro de flow |
 
-## `home_panel_manifest.yaml`
+## `home-panel-manifest.yaml`
 
 Evolución (Fase 5):
 
@@ -194,7 +194,7 @@ Acciones concretas Fase 2:
 | API access | `web/frontend/modules/api/v1/components/BioenlaceApiAccessControl.php` |
 | Flow steps | `web/common/components/Platform/Core/Permission/FlowStepAccessService.php` |
 | Capabilities UI | `web/common/components/Domain/Clinical/Emergency/Service/GuardiaBoardCapabilityService.php` |
-| Manifiesto panel | `web/common/metadata/bioenlace/ui/home_panel_manifest.yaml` |
+| Manifiesto panel | `web/common/metadata/bioenlace/ui/home-panel-manifest.yaml` |
 | Ghost inheritance | `web/common/components/Platform/Core/Permission/RbacRouteGhostInheritanceService.php` |
 
 ## ADR al cierre

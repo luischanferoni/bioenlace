@@ -6,7 +6,7 @@ Una sola fuente para «quién ve qué CTA» alineada con RBAC; reducir lógica d
 
 ## Tareas
 
-### 5.1 `home_panel_manifest.yaml`
+### 5.1 `home-panel-manifest.yaml`
 
 - [ ] Reemplazar listas sueltas (`triage_roles`, `ingreso_roles`, …) por referencias:
   ```yaml

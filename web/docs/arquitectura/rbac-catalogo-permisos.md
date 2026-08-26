@@ -25,7 +25,7 @@ Documentación estable del modelo de autorización Bioenlace: motor Yii, **permi
 | Capability UI | `CapabilityManifestIndex`, `CapabilityAccessService`, `CapabilityPermissionSyncService` | Clave = `capability_id`; UIs nativas + rutas API enlazadas |
 | Flow step | `FlowStepAccessService`, header `X-Flow-Intent-Id` | Pasos `open_ui` heredan intent padre |
 | Dominio recurso | `DomainOperationAuthorizer`, políticas en `domain-operation-policies.yaml` | ¿Sobre **este** PES/turno/encounter/efector? |
-| Manifiesto UX | `home_panel_manifest.yaml`, `GuardiaBoardCapabilityService` | Visibilidad CTAs (complementa RBAC; no lo sustituye) |
+| Manifiesto UX | `home-panel-manifest.yaml`, `GuardiaBoardCapabilityService` | Visibilidad CTAs (complementa RBAC; no lo sustituye) |
 | Admin catálogo | `PermissionCatalogController` | Intents, capabilities, integridad, roles |
 | Identidad | `common\models\User`, `AuthController` | Login, contraseña, confirmación e-mail |
 
@@ -41,9 +41,9 @@ rol → encounter.capturar (type 2) → /api/clinical/encounter/captura-guardar 
 
 | Canal | Cadena |
 |-------|--------|
-| Operaciones asistente | `assistant/intents/{create,read,update,delete}/` (métricas en `read/`; pantallas en `read/flows/`) + `intent-families.yaml` |
+| Operaciones asistente | `assistant/intents/{create,read,update,delete}/` (métricas en `read/`; pantallas en `read/flows/`) + `assistant/routing/intent-families.yaml` |
 | UI nativa guardia / encounter / panel | `permission/capabilities/*.yaml` + sync a `auth_item` |
-| CTAs tablero EMER | `ui/home_panel_manifest.yaml` (`capability_id`, exclusiones UX por rol) |
+| CTAs tablero EMER | `ui/home-panel-manifest.yaml` (`capability_id`, exclusiones UX por rol) |
 | Staff métricas / edición (migrado) | Intent con `metric_id` o `edit_surface_id` |
 | Pasos UI dentro de flow | Derivados del intent; `FlowStepAccessService` + `X-Flow-Intent-Id` |
 | Listado NL / IA | `IntentAccessService::userCanExecuteIntent` vía catálogo intents |
@@ -157,9 +157,9 @@ web/common/components/Platform/Core/Permission/
 web/common/metadata/bioenlace/
   assistant/intents/
   permission/capabilities/
-  permission/intent-grant-migration-map.yaml
+  permission/migration/intent-grant-migration-map.yaml
   permission/legacy-permission-aliases.yaml
-  ui/home_panel_manifest.yaml
+  ui/home-panel-manifest.yaml
 ```
 
 ## ADR relacionados

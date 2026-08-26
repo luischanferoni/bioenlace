@@ -22,7 +22,7 @@ Completitud: `requerido` vacío bloquea; `sugerido` vacío no. Filas extraídas 
 
 ## App Personal de Salud
 
-`GET /home/panel` sección `emergency_board` incluye `puede_triage` (`GuardiaBoardCapabilityService` + `home_panel_manifest.yaml` `triage_roles`). Flutter abre `EmergencyTriageScreen` si es true; si no, mensaje para médico.
+`GET /home/panel` sección `emergency_board` incluye `puede_triage` (`GuardiaBoardCapabilityService` + `home-panel-manifest.yaml` `triage_roles`). Flutter abre `EmergencyTriageScreen` si es true; si no, mensaje para médico.
 
 ## Demo
 

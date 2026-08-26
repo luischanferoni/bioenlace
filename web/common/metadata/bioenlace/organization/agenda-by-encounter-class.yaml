@@ -1,4 +1,7 @@
-# Agenda tipada por encounter_class (FHIR).
+# Tipo: knob
+# Propósito: agenda tipada por encounter_class (FHIR).
+# Consumidor: ProductMetadataPaths::agendaByEncounterClassFile()
+# No poner aquí: reglas de cupo/persistencia (dominio Scheduling).
 # AMB = cupos reservables (paciente). EMER/IMP = cobertura/roster (solo staff).
 version: 1
 

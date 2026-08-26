@@ -1,5 +1,7 @@
-# Reglas de resolución de hints del asistente (entidades en flows YAML).
-# {@see HintResolutionMetadata} — no hardcodear intent_id en Platform.
+# Tipo: routing
+# Propósito: reglas de resolución de hints del asistente (entidades en flows YAML).
+# Consumidor: HintResolutionMetadata / ProductMetadataPaths::hintResolutionFile()
+# No poner aquí: intent_id hardcodeados en Platform.
 version: 1
 
 scheduling:

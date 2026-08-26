@@ -1,0 +1,11 @@
+# Tipo: knob
+# Propósito: política operativa pre-envío RDI (agente E03).
+# Consumidor: PrescriptionRdiPreSubmitValidationAgent / ProductMetadataPaths::agentFile()
+# No poner aquí: integridad hard (PES, diagnóstico, medicamento, posología) — ElectronicPrescription + PrescriptionRdiPreSubmitValidationService.
+# Este YAML solo ajusta umbrales; su ausencia no desactiva los gates hard.
+version: 2
+agent_id: prescription-rdi-pre-submit
+
+policy:
+  block_duplicate_medication_hours: 24
+  min_diagnosis_display_length: 3

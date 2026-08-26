@@ -1,7 +1,7 @@
 version: 1
 
 # Permisos legacy operativos → capabilities UI nativa assignables.
-# Migración idempotente: intent-grant-migration-map.yaml (capability_grant_sources).
+# Migración idempotente: permission/migration/intent-grant-migration-map.yaml (capability_grant_sources).
 
 deprecated_permissions:
   - permission_key: analisis

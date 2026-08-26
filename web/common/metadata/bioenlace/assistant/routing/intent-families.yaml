@@ -1,6 +1,9 @@
+# Tipo: routing
+# Propósito: familias NL (variantes propio/staff del mismo eje de producto).
+# Consumidor: IntentFamilyCatalog / ProductMetadataPaths::intentFamiliesFile()
+# No poner aquí: keywords de un intent concreto (van en intents/**/*.yaml).
 version: 1
 
-# Familias NL: agrupan variantes de contexto (propio/staff) del mismo eje de producto.
 # Cada miembro debe declarar intent_family y operation coherentes en su YAML.
 
 families:

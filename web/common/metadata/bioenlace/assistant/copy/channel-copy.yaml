@@ -1,5 +1,7 @@
-# Copy del asistente por canal/perfil de cliente.
-# {@see AssistantChannelCopy} — no hardcodear «pantalla», «wizard», etc. en motores.
+# Tipo: copy
+# Propósito: textos UX del asistente por canal/perfil de cliente.
+# Consumidor: AssistantChannelCopy / ProductMetadataPaths::assistantChannelCopyFile()
+# No poner aquí: predicados de canal (ChatChannelPolicy) ni intent_id en motores.
 #
 # profile_id = clave de sección en client-context.yaml que matchea X-App-Client
 # (mobile_paciente, whatsapp_paciente, …) o `default`.

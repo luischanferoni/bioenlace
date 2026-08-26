@@ -9,12 +9,12 @@ Complementa [`capas-y-metadata-sin-hardcode.mdc`](capas-y-metadata-sin-hardcode.
 
 ## Qué SÍ va en YAML / metadata
 
-- Composición de producto: intents, flows, UI JSON, atajos, catálogos RBAC/ABAC.
+- Composición de producto: intents, flows, UI JSON, atajos, catálogos RBAC/ABAC declarativos.
 - Esquema de extracción NL (campos que la IA *puede* devolver).
 - Knobs operativos: umbrales, timeouts, overrides de post-proceso, flags de política.
 - Manifiestos que motores genéricos interpretan (`SubIntentEngine`, `UiScreenService`, …).
 
-## Qué NO va en YAML (va en Yii / dominio)
+## Qué NO va en YAML
 
 | Decisión | Dónde |
 |----------|--------|
@@ -22,8 +22,9 @@ Complementa [`capas-y-metadata-sin-hardcode.mdc`](capas-y-metadata-sin-hardcode.
 | Obligatoriedad contextual (`when`) | Modelo Yii (p. ej. plazo solo si `follow_up`) |
 | Gates hard de agentes (RDI, etc.) | Escenarios/policy en PHP; YAML solo knobs |
 | Issues resolubles (opciones sin preselección) | `buildIssues()` / `applyResolutionToRow` en `*Input` |
+| Lookup de hechos en request (geo, recursos, maestros) | **BD** + seed console — ver [`runtime-datos-vs-metadata.mdc`](runtime-datos-vs-metadata.mdc) |
 
-Si falta el YAML, **los gates hard y la integridad siguen activos** con defaults de dominio.
+Si falta el YAML de composición, **los gates hard y la integridad siguen activos** con defaults de dominio.
 
 ## Anti-patrones
 
@@ -31,10 +32,13 @@ Si falta el YAML, **los gates hard y la integridad siguen activos** con defaults
 - `required_when` / `field_schema` de integridad en YAML (duplica Yii).
 - “Si no hay YAML, el gate pasa” en agentes o post-proceso.
 - Completar silenciosamente campos clínicos faltantes con IA; sugerir opciones, confirma el profesional.
+- Maestros/catálogos de runtime en metadata “porque son pocas filas”.
 
 ## Al dudar
 
 1. ¿Es composición / knob / prompt? → metadata.
-2. ¿Es “válido / bloquea guardado”? → modelo o servicio de dominio.
-3. ADR: `web/docs/decisions/captura-clinica-contratos-yii-vs-yaml.md`
-4. Guía: `web/docs/arquitectura/metadata-yaml-uso.md`
+2. ¿Es lookup de hechos en request? → BD (+ cache); seed en console.
+3. ¿Es “válido / bloquea guardado”? → modelo o servicio de dominio.
+4. ADR integridad: `web/docs/decisions/captura-clinica-contratos-yii-vs-yaml.md`
+5. ADR runtime/cognitivo: `web/docs/decisions/runtime-datos-vs-metadata.md`
+6. Guías: `web/docs/arquitectura/metadata-yaml-uso.md`, `runtime-datos-y-metadata.md`

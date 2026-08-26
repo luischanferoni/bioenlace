@@ -6,7 +6,7 @@ use yii\db\Migration;
 /**
  * Seed idempotente: 24 jurisdicciones argentinas en {{%geo_provincias}} (contexto paciente).
  *
- * Fuente: common/metadata/bioenlace/geo/provincias-argentina.yaml
+ * Fuente histórica: dump Georef (eliminado del repo; one-shot). Datos en BD.
  */
 class m260629_120000_seed_provincias_argentina extends Migration
 {

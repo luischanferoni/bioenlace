@@ -125,7 +125,7 @@ Equivalente al paso followup de `run-jobs`. Solo si querés separar cargas; en l
 
 Tras publicar el resumen al paciente, el cron programa touchpoints (`CareFollowupSchedulerService`) y el job envía push con formulario corto.
 
-**Agente B01 (rama decisoria):** cuando el paciente responde, `CareFollowupBranchingAgent` evalúa reglas en `autonomous_agents/care-followup-branching.yaml`:
+**Agente B01 (rama decisoria):** cuando el paciente responde, `CareFollowupBranchingAgent` evalúa reglas en `agents/care-followup-branching.yaml`:
 
 - Empeoramiento o síntomas intensos → push al profesional (`CARE_FOLLOWUP_STAFF_ALERT`).
 - Adherencia baja → mensaje educativo al paciente.

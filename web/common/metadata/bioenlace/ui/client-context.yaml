@@ -1,5 +1,7 @@
-# Reglas de contexto cliente web vs móvil (Bioenlace / salud).
-# {@see ClientContextMetadata} — no hardcodear intents de paciente en Platform.
+# Tipo: manifest
+# Propósito: reglas de contexto cliente web vs móvil (app_client_ids, shortcuts).
+# Consumidor: ClientContextMetadata / ProductMetadataPaths::clientContextFile()
+# No poner aquí: intents de paciente hardcodeados en Platform.
 version: 1
 
 mobile_paciente:

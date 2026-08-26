@@ -9,7 +9,7 @@
 
 ## Problema
 
-Hoy conviven **intents del asistente**, **rutas API** (`/api/...`), **capabilities en YAML** (`home_panel_manifest.yaml`) y **permisos legacy** (`front_*`, `listado_pacientes`) sin una fuente assignable única para UIs nativas (web `pacientes/listado`, Flutter `personalsalud`).
+Hoy conviven **intents del asistente**, **rutas API** (`/api/...`), **capabilities en YAML** (`home-panel-manifest.yaml`) y **permisos legacy** (`front_*`, `listado_pacientes`) sin una fuente assignable única para UIs nativas (web `pacientes/listado`, Flutter `personalsalud`).
 
 Síntomas observados en producción/staging:
 
@@ -37,7 +37,7 @@ Síntomas observados en producción/staging:
 | RBAC API | `BioenlaceApiAccessControl`, `ApiRoutePermissionResolver`, `FlowStepAccessService` |
 | Sync intents | `CatalogPermissionSyncService`, `php yii catalog-permission/sync` |
 | Catálogo admin | `/admin/permission-catalog/index` |
-| Capabilities UI EMER | `home_panel_manifest.yaml`, `GuardiaBoardCapabilityService` |
+| Capabilities UI EMER | `home-panel-manifest.yaml`, `GuardiaBoardCapabilityService` |
 | Panel + tablero | `HomeController`, `EmergencyBoardSectionProvider` |
 | Guardia API | `EmergencyGuardiaController`, migraciones `*emergency*rbac*` |
 | Encounter API | `EncounterController`, `EncounterStaffSummaryController` |

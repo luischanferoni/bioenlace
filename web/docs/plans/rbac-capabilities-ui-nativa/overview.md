@@ -4,7 +4,7 @@
 
 Unificar autorización de **UIs nativas** (web shell + app móvil) y **endpoints API que no son flujos del asistente**, sin abandonar el modelo intent-first del asistente conversacional.
 
-Resultado: cada operación de producto assignable en admin tiene una **clave estable** (`intent_id` o `capability_id`) enlazada a rutas `/api/...`, alineada con `home_panel_manifest.yaml` y verificable en CI.
+Resultado: cada operación de producto assignable en admin tiene una **clave estable** (`intent_id` o `capability_id`) enlazada a rutas `/api/...`, alineada con `home-panel-manifest.yaml` y verificable en CI.
 
 ## Principio de capas (no negociable)
 
@@ -14,7 +14,7 @@ RBAC (¿tiene la operación?) → Dominio (¿sobre ESTE recurso?) → Servicio
 
 - **RBAC** responde «¿este rol puede invocar esta operación?».
 - **Dominio** (`EncounterAccessService`, `EfectorAccessService`, …) responde «¿sobre este encounter/efector/PES?».
-- **Manifiesto UI** (`home_panel_manifest`, `client_open`) responde «¿mostramos el CTA en este cliente?» — **no sustituye RBAC**.
+- **Manifiesto UI** (`home-panel-manifest`, `client_open`) responde «¿mostramos el CTA en este cliente?» — **no sustituye RBAC**.
 
 ## Alcance
 

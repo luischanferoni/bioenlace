@@ -1,5 +1,16 @@
+# Tipo: catalog
+# Propósito: recursos institucionales (ministerio, etc.) por provincia para FAQ / contexto paciente.
+# Consumidor: ProvincialResourceLookupService / ProductMetadataPaths::recursosProvincialesFile()
+#
+# ¿Por qué YAML y no BD?
+#   - Contenido de producto sparse (pocas provincias), versionado en git, sin UI de admin.
+#   - No es maestro geográfico: las provincias viven en geo_provincias (BD).
+#   - Si crece (muchas provincias, edición por staff, multi-tenant) → migrar a tabla.
+#
+# ¿Por qué no PHP?
+#   - Teléfonos/direcciones cambian; mejor editar datos sin tocar código de dominio.
 version: 1
-# Recursos institucionales por provincia (cod_indec). Lookup genérico para asistente / FAQ.
+
 recursos:
   ministerio_salud:
     aliases:

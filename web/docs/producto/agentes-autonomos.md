@@ -11,7 +11,7 @@ Definición corta y backlog de ideas **no** construidas: [ideas-a-futuro/agentes
 ```mermaid
 flowchart LR
   EV[Evento dominio]
-  POL[YAML autonomous_agents / params]
+  POL[YAML agents / params]
   ENG[Motor de reglas]
   ACT[Acción dominio]
   AUD[agent_run]
@@ -22,7 +22,7 @@ flowchart LR
 
 | Pieza | Ubicación |
 |-------|-----------|
-| Política declarativa | `common/metadata/bioenlace/autonomous_agents/` |
+| Política declarativa | `common/metadata/bioenlace/agents/` |
 | Motor genérico | `AutonomousAgentRuleEngine` |
 | Auditoría | tabla `agent_run`, `AgentRunRecorder` |
 | Acciones | Servicios de dominio (push, turnos, lab, cohortes) |
@@ -52,7 +52,7 @@ Ver [captura-clinica.md](./captura-clinica.md) y [catalogo-usos-ia.md](./catalog
 |-------|--------|
 | **Tipo** | Agente (reglas) |
 | **Trigger** | Paciente envía formulario de seguimiento (`CarePackFollowupService::submitResponses`) |
-| **Política** | `autonomous_agents/care-followup-branching.yaml` |
+| **Política** | `agents/care-followup-branching.yaml` |
 | **Decisiones** | Empeoramiento o intensidad alta → alerta staff; adherencia baja → mensaje educativo al paciente |
 | **Efecto** | Push `CARE_FOLLOWUP_STAFF_ALERT` al PES del encounter; push educativo al paciente si aplica |
 | **Auditoría** | `agent_run` (`agent_id`: `care-followup-branching`) |
@@ -65,7 +65,7 @@ Requiere `care_cohort.enabled`. Ver [asistencia-cohortes.md](./asistencia-cohort
 |-------|--------|
 | **Tipo** | Agente (reglas LOINC) |
 | **Trigger** | Ingesta nueva de `DiagnosticReport` (`LaboratoryIngestService`) |
-| **Política** | `autonomous_agents/post-lab-classification.yaml` |
+| **Política** | `agents/post-lab-classification.yaml` |
 | **Decisiones** | normal / control / critical por analito |
 | **Efecto** | Push paciente; push staff si crítico y encounter con PES |
 | **Auditoría** | `agent_run` (`agent_id`: `post-lab-classification`) |
@@ -78,7 +78,7 @@ Ver [laboratorio.md](./laboratorio.md).
 |-------|--------|
 | **Tipo** | Agente (reglas) |
 | **Trigger** | Cancelación con slot libre ≥ T−24 h (`TurnoLifecycleService::cancelar`, masiva, FHIR inbound) |
-| **Política** | `autonomous_agents/turno-advance-offer.yaml` (D+2→D+1 misma franja, step 2 h, corte T−6 h, sin hold) |
+| **Política** | `agents/turno-advance-offer.yaml` (D+2→D+1 misma franja, step 2 h, corte T−6 h, sin hold) |
 | **Decisiones** | Oferta secuencial a turnos posteriores compatibles con push activo; una aceptación y fin |
 | **Efecto** | Push `TURNO_ADVANCE_OFFER`; al aceptar, **reprograma** el turno existente bajo lock de slot |
 | **API paciente** | `adelantar-oferta-como-paciente` |
@@ -94,7 +94,7 @@ El perfil conductual **no** ordena ni excluye candidatos; sólo puede mejorar te
 |-------|--------|
 | **Tipo** | Agente (orquestación temporal) |
 | **Trigger** | Sin respuesta tras push `TURNO_REQUIERE_REUBICACION` |
-| **Política** | `autonomous_agents/turno-resolucion-multicanal.yaml` (push → email → SMS) |
+| **Política** | `agents/turno-resolucion-multicanal.yaml` (push → email → SMS) |
 | **Decisiones** | Canal siguiente; ventana horaria legal; link firmado con TTL |
 | **Efecto** | Email/SMS stub con URL pública `/turno/resolucion/{token}` |
 | **Cron** | `yii turno-notificacion/run` (misma cola programada) |
@@ -109,7 +109,7 @@ Ver [turnos.md](./turnos.md).
 |-------|--------|
 | **Tipo** | Agente (reglas) |
 | **Trigger** | Timeout tras push/multicanal (72 h por defecto) con resolución aún pendiente |
-| **Política** | `autonomous_agents/turno-resolucion-loop-close.yaml` |
+| **Política** | `agents/turno-resolucion-loop-close.yaml` |
 | **Decisiones** | Banda C/D → escalar staff; default → cancelar turno y liberar cupo |
 | **Efecto** | Push `TURNO_RESOLUCION_SIN_RESPUESTA` o `TURNO_RESOLUCION_STAFF_ESCALATE`; adelantamiento A03 si cancela |
 | **Cron** | `yii turno-notificacion/run` (`TIPO_RESOLUCION_LOOP_CLOSE`) |
@@ -124,7 +124,7 @@ Ver [turnos.md](./turnos.md).
 |-------|--------|
 | **Tipo** | Agente (reglas fijas sobre historial BD; no es ML) |
 | **Trigger** | Checkpoints T−48 h y T−2 h (`programarNotificaciones` al crear/reprogramar turno) |
-| **Política** | `autonomous_agents/turno-antinoshow.yaml` |
+| **Política** | `agents/turno-antinoshow.yaml` |
 | **Decisiones** | Nivel low/medium/high calculado al vuelo; confirmación extra; liberar cupo T−24 h si alto riesgo sin confirmar |
 | **Efecto** | Push `TURNO_ANTINOSHOW_CONFIRM` / recordatorio; `TURNO_ANTINOSHOW_LIBERADO` + adelantamiento A03 si aplica |
 | **Cron** | `yii turno-notificacion/run` |
@@ -141,7 +141,7 @@ Ver [turnos.md](./turnos.md).
 |-------|--------|
 | **Tipo** | Agente (score en metadata + BD) |
 | **Trigger** | Turno pasa a `EN_RESOLUCION` y se envía push de reubicación |
-| **Política** | `autonomous_agents/turno-resolucion-shortlist.yaml` |
+| **Política** | `agents/turno-resolucion-shortlist.yaml` |
 | **Decisiones** | Top 2–3 slots (mismo PES, vecinos, proximidad) — el paciente elige y confirma |
 | **Efecto** | Push `TURNO_REQUIERE_REUBICACION` con `shortlist` JSON; API `elegir-shortlist-resolucion-como-paciente` |
 | **Auditoría** | `agent_run` (`agent_id`: `turno-resolucion-shortlist`) |
@@ -153,7 +153,7 @@ Ver [turnos.md](./turnos.md).
 |-------|--------|
 | **Tipo** | Agente (score + preferencias en BD) |
 | **Trigger** | Turno en `EN_RESOLUCION`, antes del push de reubicación |
-| **Política** | `autonomous_agents/turno-resolucion-auto-reserva.yaml` + `turno-resolucion-shortlist.yaml` (pool) |
+| **Política** | `agents/turno-resolucion-auto-reserva.yaml` + `turno-resolucion-shortlist.yaml` (pool) |
 | **Consentimiento** | Opt-in paciente (`persona_agenda_preferencias.auto_reserva_resolucion`) + política efector |
 | **Decisiones** | Un slot si score ≥ umbral y brecha vs. segundo candidato; si no → shortlist/grilla |
 | **Efecto** | Push `TURNO_AUTO_REUBICADO_RESOLUCION`; API `preferencias-agenda-como-paciente` |
@@ -166,7 +166,7 @@ Ver [turnos.md](./turnos.md).
 |-------|--------|
 | **Tipo** | Agente (score en metadata + datos bandeja) |
 | **Trigger** | Nueva `SOLICITUD_ASYNC`, mensaje paciente, refresco bandeja staff |
-| **Política** | `autonomous_agents/consulta-async-bandeja-prioridad.yaml` + SLA en `consulta_async_bandeja.yaml` |
+| **Política** | `agents/consulta-async-bandeja-prioridad.yaml` + SLA en `consulta_async_bandeja.yaml` |
 | **Decisiones** | Orden sugerido; escalamiento push staff si SLA vencido (bandas A/B) |
 | **Efecto** | Listado staff reordenado; badge prioridad; push `CONSULTA_ASYNC_SLA_ESCALATE_STAFF` |
 | **Auditoría** | `agent_run` (`agent_id`: `consulta-async-bandeja-prioridad`) |
@@ -180,7 +180,7 @@ Ver [atencion-remota-async.md](./atencion-remota-async.md).
 |-------|--------|
 | **Tipo** | Agente (score + pedidos en BD) |
 | **Trigger** | Ingesta de `DiagnosticReport` sin referencia FHIR unívoca |
-| **Política** | `autonomous_agents/lab-encounter-link.yaml` |
+| **Política** | `agents/lab-encounter-link.yaml` |
 | **Decisiones** | Auto-vincular si score + brecha; si no → bandeja staff |
 | **API staff** | `listar-pendientes-vincular-como-staff`, `vincular-informe-a-encounter-como-staff` |
 | **Auditoría** | `agent_run` (`agent_id`: `lab-encounter-link`) |
@@ -194,7 +194,7 @@ Ver [laboratorio.md](./laboratorio.md).
 |-------|--------|
 | **Tipo** | Agente (auditoría sobre cola existente) |
 | **Trigger** | Job FHIR HC fallido o dead-letter (`ClinicalHistoryOutboundProcessorService`) |
-| **Política** | `autonomous_agents/integration-retry.yaml` + `clinicalHistoryExchange.retry` |
+| **Política** | `agents/integration-retry.yaml` + `clinicalHistoryExchange.retry` |
 | **Efecto** | `agent_run`; log/push ops si `integrationRetry.ops_persona_ids` |
 | **Flag** | `autonomous_agent_integration_retry_enabled` |
 
@@ -206,7 +206,7 @@ Ver [interoperabilidad-historia-clinica.md](./interoperabilidad-historia-clinica
 |-------|--------|
 | **Tipo** | Agente (reglas triage + modalidad) |
 | **Trigger** | Grilla de slots vacía tras triage de reserva |
-| **Política** | `autonomous_agents/reserva-triage-post-cupo-routing.yaml` |
+| **Política** | `agents/reserva-triage-post-cupo-routing.yaml` |
 | **Decisiones** | async / tele hub / primaria / lista de espera / halt banda A |
 | **Efecto** | Push `RESERVA_TRIAGE_CANAL_ALTERNATIVO` + `routing_recommendation` en API |
 | **Auditoría** | `agent_run` (`agent_id`: `reserva-triage-post-cupo-routing`) |
@@ -220,7 +220,7 @@ Ver [turnos.md](./turnos.md), [triage-reserva-turno.md](./triage-reserva-turno.m
 |-------|--------|
 | **Tipo** | Agente (reglas + touchpoints programados) |
 | **Trigger** | Alta hospitalaria (`InternacionAltaEstructuradaService::registrarAlta`) |
-| **Política** | `autonomous_agents/post-discharge-followup.yaml` |
+| **Política** | `agents/post-discharge-followup.yaml` |
 | **Decisiones** | Programa default o cirugía; touchpoints días 1, 7, 30 |
 | **Efecto** | Cola `care_followup_touchpoint_queue`; rama B01 en respuestas |
 | **Auditoría** | `agent_run` (`agent_id`: `post-discharge-followup`) |
@@ -234,7 +234,7 @@ Ver [internacion.md](./internacion.md).
 |-------|--------|
 | **Tipo** | Agente (reglas de validación) |
 | **Trigger** | `ElectronicPrescriptionService::issue` antes de emitir |
-| **Política** | Integridad en modelos/servicio; umbrales en `autonomous_agents/prescription-rdi-pre-submit.yaml` |
+| **Política** | Integridad en modelos/servicio; umbrales en `agents/prescription-rdi-pre-submit.yaml` |
 | **Decisiones** | Bloquear si faltan PES, diagnóstico, código, posología; anti-duplicado según umbral (default 24 h) |
 | **Efecto** | `InvalidArgumentException` al prescriptor; no se emite |
 | **Auditoría** | `agent_run` (`agent_id`: `prescription-rdi-pre-submit`) |
@@ -248,7 +248,7 @@ Ver [receta-electronica.md](./receta-electronica.md).
 |-------|--------|
 | **Tipo** | Agente (score sobre mapa de camas) |
 | **Trigger** | Contexto de ingreso (`InternacionIngresoService::contextoIngreso`) |
-| **Política** | `autonomous_agents/internacion-cama-sugerencia.yaml` |
+| **Política** | `agents/internacion-cama-sugerencia.yaml` |
 | **Decisiones** | Top N camas por O2, aislamiento, pediatría, servicio |
 | **Efecto** | Campo `cama_sugerencias` en API ingreso; humano confirma |
 | **Auditoría** | `agent_run` (`agent_id`: `internacion-cama-sugerencia`) |

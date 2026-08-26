@@ -4,7 +4,7 @@
 
 Filtros: `agent_id`, `outcome`, `trigger_type`, persona, fechas. Detalle con facts/decision JSON.
 
-Catálogo de agentes: YAML en `autonomous_agents/` ∪ distinct en BD.
+Catálogo de agentes: YAML en `agents/` ∪ distinct en BD.
 
 ## A04 (`/antinoshow-audit`)
 

@@ -164,7 +164,7 @@ final class TurnoBehaviorProfileContract
             return self::$cache;
         }
 
-        $path = ProductMetadataPaths::turnoBehaviorProfileContractFile();
+        $path = ProductMetadataPaths::turnoBehaviorProfileFile();
         if (!is_file($path)) {
             if (class_exists(\Yii::class, false)) {
                 Yii::warning('TurnoBehaviorProfileContract: falta ' . $path, __METHOD__);

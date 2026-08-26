@@ -1,30 +1,74 @@
 # Metadata del producto Bioenlace
 
-Metadata declarativa específica del rubro (salud). Los **motores genéricos** la consumen vía `common\components\Platform\Core\Product\ProductMetadataPaths`.
+Metadata **declarativa del rubro** (salud). Los motores genéricos la consumen vía
+`common\components\Platform\Core\Product\ProductMetadataPaths`.
 
-Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente fijar `productMetadataDir` en `common/config/params-local.php`.
+**No es config de Yii.** `common/config/main.php` / `params.php` = runtime (DB, components, secretos).
+Esta carpeta = composición del producto (flows, knobs, copy, catálogos, manifiestos).
+Cableado `handler_id →` PHP: `common/config/product-registries.php`.
+
+Para otro vertical: copiar la carpeta, ajustar YAML y opcionalmente
+`productMetadataDir` en `params-local.php`.
+
+Guía de límites YAML vs Yii: [`web/docs/arquitectura/metadata-yaml-uso.md`](../../../docs/arquitectura/metadata-yaml-uso.md).  
+Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-datos-y-metadata.md`](../../../docs/arquitectura/runtime-datos-y-metadata.md).
+
+## Tipología de archivos
+
+| Tipo | Qué es | Qué no es |
+|------|--------|-----------|
+| **flow** | Guion conversacional (`when`/`next`, pantallas, draft) | Integridad clínica ni gates hard |
+| **knob** | Umbrales, flags, overrides sobre policy PHP | Fuente de verdad de «¿puede emitirse?» |
+| **copy** | Textos UX / prompts por canal o perfil | Predicados de dominio (van en PHP) |
+| **routing** | Familias NL, hints, booking CTA, thread tags | `if intent_id` en orquestadores |
+| **manifest** | Composición de superficie (panel, client-context, screen-params) | RBAC HTTP (eso es `permission/`) |
+| **auth** | Capabilities, políticas de recurso, aliases legacy | Autorización ad hoc en controllers |
+
+**No** usar metadata para maestros/catálogos de lookup en request (provincias, vecinos, recursos institucionales, etc.): van en **BD** + seed **console**. Ver ADR runtime datos vs metadata.
+
+> Seeds one-shot / dumps Georef no viven aquí. Geo: tablas `geo_*` + console por país.
+## Plantilla de cabecera (YAML nuevos o al tocar)
+
+```yaml
+# Tipo: flow | knob | copy | routing | manifest | auth
+# Propósito: una línea
+# Consumidor: ClassName / ProductMetadataPaths::foo()
+# No poner aquí: integridad clínica / gates hard / maestros de lookup (van en BD)
+```
 
 ## Estructura
 
-| Ruta | Contenido |
-|------|-----------|
-| `assistant/intents/` | Flows conversacionales del asistente (YAML por `intent_id`) |
-| `assistant/globals/` | Piezas reutilizables entre flows |
-| `assistant/prompts/` | Prompts por canal (`preprocess`, `conversational_clinical`, `informational_conversational`, `ambiguous_conversational`) |
-| `assistant/routing/` | `intent-families`, `hint-resolution`, `booking-offer` |
-| `assistant/copy/channel-copy.yaml` | Textos UX del asistente por perfil de cliente |
-| `assistant/assistant-shortcuts.yaml` | Atajos visibles del asistente |
-| `permission/domain-operation-policies.yaml` | Operaciones RBAC → políticas de recurso |
-| `ui/home_panel_manifest.yaml` | Layout del panel de inicio staff/paciente |
-| `ui/client-context.yaml` | Contextos por cliente (`mobile_paciente`, `whatsapp_paciente`) y ocultamiento staff |
-| `ui/json-domains.yaml` | Entidad API → carpeta `views/json/{dominio}/` |
-| `ui/screen-params.yaml` | Expansión de params UI (p. ej. `slot_id` turnos) |
-| `ui/select-option-sources.yaml` | Fuentes `option_config.source` → provider de dominio |
-| `ai/clinical-text-ia.yaml` | Prompts SNOMED, captura clínica, codificación automática y léxico clínico (`clinical_lexicon`) |
-| `terminology/snomed-terminology.yaml` | ECL canónicos, codificación IA, perfiles Snowstorm |
+| Ruta | Tipo | Contenido |
+|------|------|-----------|
+| `assistant/intents/` | flow | Flows por `intent_id` (`create`/`read`/`update`/`delete`) |
+| `assistant/globals/` | flow | Piezas reutilizables entre flows |
+| `assistant/prompts/` | copy | Prompts por canal (`preprocess`, `conversational_clinical`, …) |
+| `assistant/routing/` | routing | `intent-families`, `hint-resolution`, `booking-offer`, `thread-state` |
+| `assistant/copy/channel-copy.yaml` | copy | Textos UX por perfil de cliente (`X-App-Client`) |
+| `assistant/assistant-shortcuts.yaml` | manifest | Atajos visibles (si el catálogo está desplegado) |
+| `assistant/assistant-shortcut-group-labels.yaml` | manifest | Etiquetas/orden de grupos de atajos |
+| `agents/` | knob | Política operativa por `agent_id` (umbrales; gates hard en dominio) |
+| `permission/` | auth | `domain-operation-policies`, `legacy-permission-aliases`, `capabilities/` |
+| `permission/migration/` | auth | Mapas one-shot de grants (`intent-grant-migration-map`) |
+| `ui/home-panel-manifest.yaml` | manifest | Layout panel inicio staff/paciente |
+| `ui/client-context.yaml` | manifest | Contextos por cliente y ocultamiento staff |
+| `ui/json-domains.yaml` | catalog | Entidad API → carpeta `views/json/{dominio}/` |
+| `ui/screen-params.yaml` | manifest | Expansión de params UI |
+| `ui/select-option-sources.yaml` | catalog | `option_config.source` → provider de dominio |
+| `ui/paciente-contexto-offering.yaml` | manifest | Ofertas de contexto paciente |
+| `ai/clinical-text-ia.yaml` | copy + knob | Prompts SNOMED/captura + overrides de post-proceso |
+| `ai/ai-cost-reference.yaml` | catalog | Tarifas/referencia de costo IA |
+| `terminology/` | catalog | SNOMED ECL, sinónimos de servicio institucional |
+| `clinical/pedido-atencion.yaml` | knob + catalog | Systems, modos, capacity_rules, aliases NL de acto |
+| `organization/` | knob | Agenda por encounter class, pricing PES, atributos efector |
+| `scheduling/turno-behavior-profile.yaml` | catalog | Eventos/métricas de comportamiento (no risk policy) |
+| `person/ventanilla-sesion.yaml` | knob | Ventanilla / sesión persona |
+| `person/recursos-provinciales.yaml` | *(legacy → BD)* | Migrar a `geo_*` / seed console; no patrón a copiar |
+| `integrations/` | *(revisar)* | Si es lookup runtime → BD; si es mapa de motor → OK |
 
-Contrato de pasos YAML: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
+> Geo: tablas `geo_*` + seeds console por país (plan multi-país). No dumps en metadata. `person/recursos-provinciales.yaml` es legacy hasta migrar a BD.
 
-Handlers de dominio (hydrators, políticas, scope, filtros, presentación, panel home, canal conversacional): `common/config/product-registries.php` vía `ProductRegistryConfig`.
+Contrato de pasos de intent: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 
-Canal conversacional (copy): `assistant/prompts/conversational_clinical.yaml`. Booking: `assistant/routing/booking-offer.yaml`. Política síntoma/trámite: `ChatChannelPolicy` (PHP).
+Canal síntoma/trámite/menú: `ChatChannelPolicy` (PHP). Copy clínico: `assistant/prompts/conversational_clinical.yaml`.
+Booking CTA: `assistant/routing/booking-offer.yaml`.

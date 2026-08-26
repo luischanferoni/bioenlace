@@ -3,25 +3,60 @@
 namespace common\components\Domain\Person\Service\Seed;
 
 use common\models\Provincia;
-use Symfony\Component\Yaml\Yaml;
 use Yii;
 use yii\db\Query;
 
 /**
  * Carga idempotente las 24 jurisdicciones argentinas en {{%geo_provincias}}.
  *
- * Fuente: @common/metadata/bioenlace/geo/provincias-argentina.yaml
+ * Definición canónica en {@see self::canonicalRows()} (seed de dominio, no metadata YAML).
  */
 final class ProvinciasArgentinaSeedService
 {
     public const EXPECTED_COUNT = 24;
 
     /**
+     * @return list<array{cod_indec: string, nombre: string, region_pais: string, superficie: int}>
+     */
+    public static function canonicalRows(): array
+    {
+        return [
+            ['cod_indec' => '02', 'nombre' => 'CABA', 'region_pais' => 'Pampeana', 'superficie' => 203],
+            ['cod_indec' => '06', 'nombre' => 'Buenos Aires', 'region_pais' => 'Pampeana', 'superficie' => 307571],
+            ['cod_indec' => '10', 'nombre' => 'Catamarca', 'region_pais' => 'Norte', 'superficie' => 102602],
+            ['cod_indec' => '14', 'nombre' => 'Córdoba', 'region_pais' => 'Centro', 'superficie' => 165321],
+            ['cod_indec' => '18', 'nombre' => 'Corrientes', 'region_pais' => 'Litoral', 'superficie' => 88199],
+            ['cod_indec' => '22', 'nombre' => 'Chaco', 'region_pais' => 'Litoral', 'superficie' => 99633],
+            ['cod_indec' => '26', 'nombre' => 'Chubut', 'region_pais' => 'Patagonia', 'superficie' => 224686],
+            ['cod_indec' => '30', 'nombre' => 'Entre Ríos', 'region_pais' => 'Litoral', 'superficie' => 78781],
+            ['cod_indec' => '34', 'nombre' => 'Formosa', 'region_pais' => 'Litoral', 'superficie' => 72906],
+            ['cod_indec' => '38', 'nombre' => 'Jujuy', 'region_pais' => 'Norte', 'superficie' => 53219],
+            ['cod_indec' => '42', 'nombre' => 'La Pampa', 'region_pais' => 'Pampeana', 'superficie' => 143440],
+            ['cod_indec' => '46', 'nombre' => 'La Rioja', 'region_pais' => 'Cuyo', 'superficie' => 89680],
+            ['cod_indec' => '50', 'nombre' => 'Mendoza', 'region_pais' => 'Cuyo', 'superficie' => 148827],
+            ['cod_indec' => '54', 'nombre' => 'Misiones', 'region_pais' => 'Litoral', 'superficie' => 29801],
+            ['cod_indec' => '58', 'nombre' => 'Neuquén', 'region_pais' => 'Patagonia', 'superficie' => 94078],
+            ['cod_indec' => '62', 'nombre' => 'Río Negro', 'region_pais' => 'Patagonia', 'superficie' => 203013],
+            ['cod_indec' => '66', 'nombre' => 'Salta', 'region_pais' => 'Norte', 'superficie' => 155488],
+            ['cod_indec' => '70', 'nombre' => 'San Juan', 'region_pais' => 'Cuyo', 'superficie' => 89651],
+            ['cod_indec' => '74', 'nombre' => 'San Luis', 'region_pais' => 'Cuyo', 'superficie' => 76748],
+            ['cod_indec' => '78', 'nombre' => 'Santa Cruz', 'region_pais' => 'Patagonia', 'superficie' => 243943],
+            ['cod_indec' => '82', 'nombre' => 'Santa Fe', 'region_pais' => 'Centro', 'superficie' => 133007],
+            ['cod_indec' => '86', 'nombre' => 'Santiago del Estero', 'region_pais' => 'Norte', 'superficie' => 136351],
+            ['cod_indec' => '90', 'nombre' => 'Tucumán', 'region_pais' => 'Norte', 'superficie' => 22524],
+            ['cod_indec' => '94', 'nombre' => 'Tierra del Fuego', 'region_pais' => 'Patagonia', 'superficie' => 21185],
+        ];
+    }
+
+    /**
      * @return array{inserted: int, updated: int, total: int, codigos: list<string>}
      */
     public function upsertAll(): array
     {
-        $rows = $this->loadDefinition();
+        $rows = self::canonicalRows();
+        if (count($rows) < self::EXPECTED_COUNT) {
+            throw new \RuntimeException('Definición canónica incompleta de provincias.');
+        }
         $this->realignCodIndecByCanonicalNombre($rows);
         $inserted = 0;
         $updated = 0;
@@ -82,50 +117,6 @@ final class ProvinciasArgentinaSeedService
         ];
     }
 
-    /**
-     * @return list<array{cod_indec: string, nombre: string, region_pais: string, superficie: int}>
-     */
-    private function loadDefinition(): array
-    {
-        $path = Yii::getAlias('@common/metadata/bioenlace/geo/provincias-argentina.yaml');
-        if (!is_file($path)) {
-            throw new \RuntimeException('No se encontró provincias-argentina.yaml');
-        }
-        $parsed = Yaml::parseFile($path);
-        if (!is_array($parsed)) {
-            throw new \RuntimeException('provincias-argentina.yaml inválido');
-        }
-        $provincias = $parsed['provincias'] ?? [];
-        if (!is_array($provincias) || count($provincias) < self::EXPECTED_COUNT) {
-            throw new \RuntimeException('provincias-argentina.yaml debe declarar al menos ' . self::EXPECTED_COUNT . ' provincias.');
-        }
-
-        $out = [];
-        foreach ($provincias as $row) {
-            if (!is_array($row)) {
-                continue;
-            }
-            $cod = str_pad(trim((string) ($row['cod_indec'] ?? '')), 2, '0', STR_PAD_LEFT);
-            $nombre = trim((string) ($row['nombre'] ?? ''));
-            $region = trim((string) ($row['region_pais'] ?? ''));
-            $superficie = (int) ($row['superficie'] ?? 0);
-            if ($cod === '' || $nombre === '' || $region === '' || $superficie <= 0) {
-                throw new \RuntimeException('Provincia incompleta en YAML (cod_indec=' . $cod . ').');
-            }
-            if (mb_strlen($nombre) > 20 || mb_strlen($region) > 20) {
-                throw new \RuntimeException('Nombre o región excede 20 caracteres (cod_indec=' . $cod . ').');
-            }
-            $out[] = [
-                'cod_indec' => $cod,
-                'nombre' => $nombre,
-                'region_pais' => $region,
-                'superficie' => $superficie,
-            ];
-        }
-
-        return $out;
-    }
-
     private function resolveIdProvincia(string $codIndec): int
     {
         $preferred = (int) $codIndec;
@@ -176,7 +167,6 @@ final class ProvinciasArgentinaSeedService
         }
 
         foreach ($pending as $i => [$provincia]) {
-            // cod_indec es varchar(2): temporales fuera del rango INDEC oficial.
             $provincia->cod_indec = chr(ord('a') + intdiv($i, 10)) . (string) ($i % 10);
             if (!$provincia->save(false, ['cod_indec'])) {
                 throw new \RuntimeException(

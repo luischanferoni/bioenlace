@@ -1,5 +1,8 @@
 # =============================================================================
-# Panel de inicio — manifiesto de composición UI (NO es RBAC)
+# Tipo: manifest
+# Propósito: composición UI del panel de inicio (NO es RBAC).
+# Consumidor: HomePanelService / HomePanelManifest / ProductMetadataPaths::homePanelManifestFile()
+# No poner aquí: grants RBAC ni capabilities assignables (van en permission/capabilities/).
 # =============================================================================
 #
 # Consumidores:

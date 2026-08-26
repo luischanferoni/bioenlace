@@ -1,4 +1,4 @@
-﻿# Urgencias / guardia — producto
+# Urgencias / guardia — producto
 
 Programa operativo de **triage + tablero** en efectores con `encounterClass = EMER`. La fuente de verdad es la API v1 `clinical/emergency-guardia`; web y móvil consumen la misma capa.
 
@@ -43,7 +43,7 @@ Detalle de captura: [captura-clinica.md](./captura-clinica.md). Plantilla: `Enco
 
 ## Autorización (RBAC)
 
-Las acciones del tablero y de encounter en UI nativa se gobiernan con **capabilities** assignables (`guardia.*`, `encounter.*`, `panel.*`), sincronizadas a rutas API. El manifiesto `home_panel_manifest.yaml` define visibilidad de CTAs (`capability_id`, exclusiones por rol); el **403** lo resuelve RBAC + dominio.
+Las acciones del tablero y de encounter en UI nativa se gobiernan con **capabilities** assignables (`guardia.*`, `encounter.*`, `panel.*`), sincronizadas a rutas API. El manifiesto `home-panel-manifest.yaml` define visibilidad de CTAs (`capability_id`, exclusiones por rol); el **403** lo resuelve RBAC + dominio.
 
 Documentación: [rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md), ADR [autorizacion-capabilities-ui-nativa.md](../decisions/autorizacion-capabilities-ui-nativa.md).
 

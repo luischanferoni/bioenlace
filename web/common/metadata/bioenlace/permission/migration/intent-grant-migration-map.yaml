@@ -1,7 +1,9 @@
-version: 1
-
-# Mapeo idempotente grants rol → intents (fase 3 piloto condición laboral).
+# Tipo: auth
+# Propósito: mapeo idempotente grants rol → intents/capabilities (migración one-shot).
+# Consumidor: IntentGrantMigrationService / ProductMetadataPaths::intentGrantMigrationMapFile()
+# No poner aquí: capabilities nuevas (permission/capabilities/) ni policies de recurso.
 # Ejecutar: php yii catalog-permission/migrate-grants
+version: 1
 
 role_grant_sources:
   - source_permission: licencia.cargar-como-profesional-flow

@@ -1,6 +1,7 @@
-# Contrato factual de eventos y métricas de comportamiento en turnos (V1).
-# Consumido por TurnoBehaviorProfileContract / materializador.
-# No incluye risk_level ni umbrales de política anti no-show.
+# Tipo: catalog
+# Propósito: eventos y métricas de comportamiento en turnos (V1).
+# Consumidor: TurnoBehaviorProfileContract / ProductMetadataPaths::turnoBehaviorProfileFile()
+# No poner aquí: risk_level ni umbrales de política anti no-show (van en agents/turno-antinoshow).
 version: 1
 contract_id: turno-behavior-profile
 

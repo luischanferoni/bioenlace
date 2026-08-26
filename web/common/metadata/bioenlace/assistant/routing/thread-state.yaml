@@ -1,5 +1,7 @@
-# Estado de hilo del asistente (dominio + certeza).
-# {@see AssistantThreadStateService}
+# Tipo: routing
+# Propósito: tags de hilo del asistente (dominio + certeza) desde user_goal.
+# Consumidor: AssistantThreadStateService / ProductMetadataPaths::threadStateFile()
+# No poner aquí: clasificación de intents ni copy de canal.
 version: 1
 
 # user_goal → thread_tag (dominio del hilo)

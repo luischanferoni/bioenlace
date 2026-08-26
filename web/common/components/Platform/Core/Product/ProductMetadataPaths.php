@@ -149,7 +149,9 @@ final class ProductMetadataPaths
 
     public static function intentGrantMigrationMapFile(): string
     {
-        return self::permissionDir() . DIRECTORY_SEPARATOR . 'intent-grant-migration-map.yaml';
+        return self::permissionDir()
+            . DIRECTORY_SEPARATOR . 'migration'
+            . DIRECTORY_SEPARATOR . 'intent-grant-migration-map.yaml';
     }
 
     public static function legacyPermissionAliasesFile(): string
@@ -164,7 +166,7 @@ final class ProductMetadataPaths
 
     public static function homePanelManifestFile(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'home_panel_manifest.yaml';
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'ui' . DIRECTORY_SEPARATOR . 'home-panel-manifest.yaml';
     }
 
     public static function clientContextFile(): string
@@ -179,7 +181,7 @@ final class ProductMetadataPaths
 
     public static function recursosProvincialesFile(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'geo' . DIRECTORY_SEPARATOR . 'recursos-provinciales.yaml';
+        return self::personDir() . DIRECTORY_SEPARATOR . 'recursos-provinciales.yaml';
     }
 
     public static function uiJsonDomainsFile(): string
@@ -207,14 +209,30 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'ai' . DIRECTORY_SEPARATOR . 'ai-cost-reference.yaml';
     }
 
-    public static function autonomousAgentsDir(): string
+    /**
+     * Políticas operativas de agentes (`agents/{agent_id}.yaml`).
+     * Knobs/umbrales; gates hard viven en dominio.
+     */
+    public static function agentsDir(): string
     {
-        return self::baseDir() . DIRECTORY_SEPARATOR . 'autonomous_agents';
+        return self::baseDir() . DIRECTORY_SEPARATOR . 'agents';
     }
 
+    /** @deprecated Usar {@see agentsDir()} */
+    public static function autonomousAgentsDir(): string
+    {
+        return self::agentsDir();
+    }
+
+    public static function agentFile(string $agentId): string
+    {
+        return self::agentsDir() . DIRECTORY_SEPARATOR . $agentId . '.yaml';
+    }
+
+    /** @deprecated Usar {@see agentFile()} */
     public static function autonomousAgentFile(string $agentId): string
     {
-        return self::autonomousAgentsDir() . DIRECTORY_SEPARATOR . $agentId . '.yaml';
+        return self::agentFile($agentId);
     }
 
     public static function snomedTerminologyFile(): string
@@ -277,8 +295,14 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'scheduling';
     }
 
+    public static function turnoBehaviorProfileFile(): string
+    {
+        return self::schedulingDir() . DIRECTORY_SEPARATOR . 'turno-behavior-profile.yaml';
+    }
+
+    /** @deprecated Usar {@see turnoBehaviorProfileFile()} */
     public static function turnoBehaviorProfileContractFile(): string
     {
-        return self::schedulingDir() . DIRECTORY_SEPARATOR . 'turno-behavior-profile-contract.yaml';
+        return self::turnoBehaviorProfileFile();
     }
 }

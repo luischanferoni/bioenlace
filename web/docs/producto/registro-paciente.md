@@ -106,7 +106,7 @@ Persistente por persona; guía encauzamiento de producto:
 | `id_provincia_contexto` | Provincia de referencia del paciente (y del representante al actuar por otro) |
 | Verificación domicilio | Estados y reintentos; domicilio MPI inmutable desde apps |
 
-Servicios de offering leen metadata YAML (`paciente-contexto-offering.yaml`, `recursos-provinciales.yaml`) — sin reglas hardcodeadas en orquestadores.
+Servicios de offering leen metadata YAML (`paciente-contexto-offering.yaml`, `person/recursos-provinciales.yaml`) — sin reglas hardcodeadas en orquestadores.
 
 ## API principal
 

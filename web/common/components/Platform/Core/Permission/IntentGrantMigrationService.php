@@ -8,7 +8,7 @@ use yii\db\Query;
 use yii\rbac\Item;
 
 /**
- * Copia grants rol→permiso según intent-grant-migration-map.yaml (intents y capabilities).
+ * Copia grants rol→permiso según permission/migration/intent-grant-migration-map.yaml (intents y capabilities).
  */
 final class IntentGrantMigrationService
 {

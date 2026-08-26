@@ -82,7 +82,7 @@ Cuando un turno se **cancela** y el slot queda libre con al menos **24 h** de an
 3. El paciente **acepta** con `POST …/adelantar-oferta-como-paciente` (`offer_token`); se **reprograma** el turno existente (no se crea uno nuevo). Una aceptación cierra la campaña; el horario que deja libre no dispara otra campaña.
 4. El cron `yii turno-advance-offer/run` avanza campañas vencidas; `yii turno-advance-offer/repair` recupera cancelaciones elegibles sin campaña.
 
-Flag: `autonomous_agent_advance_offer_enabled`. Metadata: `autonomous_agents/turno-advance-offer.yaml`. Detalle: [agentes-autonomos.md](./agentes-autonomos.md).
+Flag: `autonomous_agent_advance_offer_enabled`. Metadata: `agents/turno-advance-offer.yaml`. Detalle: [agentes-autonomos.md](./agentes-autonomos.md).
 
 ## Escalada multicanal (agente A02, v1)
 

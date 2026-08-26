@@ -1,5 +1,7 @@
-# Prioridad CTA clinical + etiquetas de capabilities para el prompt de oferta.
-# {@see ChatConversationalConfig}
+# Tipo: routing
+# Propósito: prioridad CTA booking + etiquetas de capabilities para oferta conversacional.
+# Consumidor: ChatConversationalConfig / ProductMetadataPaths::bookingOfferFile()
+# No poner aquí: predicados síntoma/trámite (ChatChannelPolicy).
 version: 1
 
 booking_offer_intent_priority:

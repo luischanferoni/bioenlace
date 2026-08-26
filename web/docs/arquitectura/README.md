@@ -6,6 +6,7 @@ Explica piezas que atraviesan varios módulos del producto. Hoy el foco principa
 |-----------|-----------|
 | [common-components.md](./common-components.md) | Organización de `web/common/components/` (leer antes de mover código) |
 | [metadata-yaml-uso.md](./metadata-yaml-uso.md) | Qué va en YAML vs modelos Yii / dominio (integridad, gates, knobs) |
+| [runtime-datos-y-metadata.md](./runtime-datos-y-metadata.md) | Maestros en BD vs metadata; mapa cognitivo + escala; caso geo |
 | [asistente-motores.md](./asistente-motores.md) | IntentEngine y SubIntentEngine: qué hace cada uno y cómo encadenan |
 | [asistente-lectura-data-access.md](./asistente-lectura-data-access.md) | Lecturas: motor DataAccess + RBAC por intent (no YAML one-off) |
 | [rbac-catalogo-permisos.md](./rbac-catalogo-permisos.md) | RBAC Yii, permisos por `intent_id`, catálogo admin, identidad sin webvimark |

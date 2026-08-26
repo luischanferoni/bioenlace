@@ -45,7 +45,7 @@ final class AgentRunAuditQueryService
     public function listAgentIds(): array
     {
         $fromYaml = [];
-        $dir = ProductMetadataPaths::autonomousAgentsDir();
+        $dir = ProductMetadataPaths::agentsDir();
         if (is_dir($dir)) {
             foreach (glob($dir . DIRECTORY_SEPARATOR . '*.yaml') ?: [] as $file) {
                 $fromYaml[] = basename((string) $file, '.yaml');

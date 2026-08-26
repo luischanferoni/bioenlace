@@ -33,5 +33,5 @@ Eso duplicaba reglas (mismo eje «sobre quién actúo» en YAML, dominio y grant
 ## Referencias
 
 - [rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md)
-- `common/metadata/bioenlace/permission/intent-grant-migration-map.yaml`
+- `common/metadata/bioenlace/permission/migration/intent-grant-migration-map.yaml`
 - CLI: `php yii catalog-permission/sync`, `migrate-grants`, `prune-attributes`

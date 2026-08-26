@@ -35,7 +35,7 @@ Las preferencias declaradas por la persona permanecen separadas del comportamien
 - `TurnoAgendaMetricsService`.
 - Ejecuciones auditadas en `agent_run`.
 - Preferencias en `persona_agenda_preferencias`.
-- Metadata `autonomous_agents/turno-antinoshow.yaml`.
+- Metadata `agents/turno-antinoshow.yaml`.
 
 ## Orden de ejecución
 

@@ -1,5 +1,7 @@
-# Prompts y heurísticas de IA para texto clínico (Bioenlace).
-# {@see ClinicalTextIaMetadata}
+# Tipo: copy + knob
+# Propósito: prompts y heurísticas de IA para texto clínico (SNOMED, captura, léxico).
+# Consumidor: ClinicalTextIaMetadata / ProductMetadataPaths::clinicalTextIaFile()
+# No poner aquí: required_when de integridad clínica (modelos *Input Yii).
 version: 1
 
 snomed_context:

@@ -1,0 +1,37 @@
+---
+description: Runtime potente + mapa cognitivo — BD para maestros, YAML solo composición, seeds en console
+alwaysApply: true
+---
+
+# Runtime de datos vs metadata (cognitivo + escala)
+
+Complementa [`metadata-yaml-uso.mdc`](metadata-yaml-uso.mdc) y [`capas-y-metadata-sin-hardcode.mdc`](capas-y-metadata-sin-hardcode.mdc).
+
+**Desde el comienzo:** alto volumen y claridad de “dónde está” — no “optimizar después”.
+
+## Dónde va cada cosa
+
+| Tipo | Runtime | Población |
+|------|---------|-----------|
+| Maestro / catálogo consultado en requests (geo, recursos, hechos) | **BD** + cache | **Console seed** (archivo de import opcional; el request no lo lee) |
+| Algoritmo / adapter / policy | **PHP dominio** | Código |
+| Flow, knob, copy, routing, manifest UI, auth declarativa | **Metadata YAML** | Git |
+| Arranque app (DB, secretos) | **Yii config** | `common/config/` |
+
+## Qué SÍ / NO en metadata YAML
+
+- **Sí:** composición que motores genéricos interpretan; knobs; prompts; manifiestos.
+- **No:** listas de hechos para lookup en hot path; dumps one-shot; vecinos/recursos/provincias “porque son pocos”.
+- **No:** integridad clínica / gates hard (siguen en Yii/dominio).
+
+## Checklist (todo el proyecto, no solo geo)
+
+1. ¿El request hace lookup de este dato? → BD (+ cache), no `Yaml::parseFile` en el service de request.
+2. ¿Es guion/umbral/texto de motor? → YAML metadata.
+3. ¿Es cómo cargar el maestro? → console seed, separado del runtime.
+4. ¿Alguien nuevo lo buscaría bajo `geo_*` / Domain o bajo `metadata/`? Si dudás, probablemente BD.
+
+## Caso de referencia
+
+Geo multi-país y rollout: [`web/docs/arquitectura/runtime-datos-y-metadata.md`](web/docs/arquitectura/runtime-datos-y-metadata.md).  
+ADR: [`web/docs/decisions/runtime-datos-vs-metadata.md`](web/docs/decisions/runtime-datos-vs-metadata.md).

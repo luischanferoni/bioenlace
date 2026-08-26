@@ -6,7 +6,8 @@ use Symfony\Component\Yaml\Yaml;
 use Yii;
 
 /**
- * Carga políticas de agentes autónomos desde {@see ProductMetadataPaths::autonomousAgentsDir()}.
+ * Carga políticas (knobs) de agentes desde {@see ProductMetadataPaths::agentsDir()}.
+ * Gates hard e integridad siguen en el dominio; la ausencia del YAML no los desactiva.
  */
 final class AutonomousAgentMetadata
 {
@@ -32,7 +33,7 @@ final class AutonomousAgentMetadata
             return $cached === [] ? null : $cached;
         }
 
-        $path = ProductMetadataPaths::autonomousAgentFile($agentId);
+        $path = ProductMetadataPaths::agentFile($agentId);
         if (!is_file($path)) {
             self::$cache[$agentId] = [];
 

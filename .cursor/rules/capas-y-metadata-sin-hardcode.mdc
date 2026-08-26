@@ -37,7 +37,7 @@ Aplica a **web, API, asistente, móvil y jobs** — no solo al asistente SPA.
 - **Enriquecer draft antes del motor**: clave raíz `draft_hydrator` en el YAML → `FlowDraftHydratorService` (no en `ChatOrchestrator`).
 - **Pantallas embebibles**: `views/json/…` + API; clientes consumen JSON genéricamente.
 - **Atajos visibles**: `schemas/assistant-shortcuts.yaml` (ver también [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc)).
-- **Routing NL**: keywords en el YAML de cada intent + desambiguación en `IntentClassifier`; canal (síntoma/trámite) en `ChatChannelPolicy`; copy en `conversational-channel.yaml`. Ver [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc).
+- **Routing NL**: keywords en el YAML de cada intent + desambiguación en `IntentClassifier`; canal (síntoma/trámite) en `ChatChannelPolicy`; copy en `assistant/prompts/conversational_clinical.yaml`. Ver [`asistente-routing-sin-hardcode.mdc`](asistente-routing-sin-hardcode.mdc).
 
 ## Excepciones razonables
 

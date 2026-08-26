@@ -3,17 +3,50 @@
 namespace common\components\Domain\Person\Service;
 
 use common\models\Provincia;
-use Symfony\Component\Yaml\Yaml;
 use Yii;
-use yii\helpers\ArrayHelper;
 
 /**
- * Ordena provincias para contexto paciente (geolocalización IP + vecinos declarativos).
+ * Ordena provincias para contexto paciente (geolocalización IP + vecinos).
+ *
+ * El grafo de vecinos es constante de dominio (geografía INDEC estable), no metadata
+ * de producto ni filas de BD: no hay beneficio en YAML/admin para un mapa fijo de 24 claves.
  */
 final class ProvinciaSuggestionService
 {
     /** @var list<string> */
     private const FALLBACK_COD_INDEC = ['86', '14', '06', '82', '02'];
+
+    /**
+     * Vecinos por cod_indec (INDEC) para priorizar provincias según geolocalización.
+     *
+     * @var array<string, list<string>>
+     */
+    private const VECINOS_POR_COD_INDEC = [
+        '02' => ['06', '14', '82'],
+        '06' => ['02', '14', '82', '86'],
+        '10' => ['14', '18', '22', '86'],
+        '14' => ['06', '10', '18', '22', '86'],
+        '18' => ['10', '14', '22', '86'],
+        '22' => ['14', '18', '86', '34'],
+        '26' => ['30', '42', '50', '62'],
+        '30' => ['26', '42', '50'],
+        '34' => ['22', '86', '90'],
+        '38' => ['46', '66', '90'],
+        '42' => ['26', '30', '50', '62', '74'],
+        '46' => ['38', '66', '90'],
+        '50' => ['26', '30', '42', '62', '70', '74'],
+        '54' => ['58', '78', '86'],
+        '58' => ['54', '78', '86'],
+        '62' => ['26', '42', '50', '74'],
+        '66' => ['38', '46', '90'],
+        '70' => ['50', '74', '82'],
+        '74' => ['42', '50', '62', '70', '82'],
+        '78' => ['54', '58', '86'],
+        '82' => ['06', '14', '18', '22', '86'],
+        '86' => ['10', '14', '22', '66', '82', '90'],
+        '90' => ['34', '38', '46', '66', '82', '86'],
+        '94' => ['78', '26', '58'],
+    ];
 
     /**
      * Todas las provincias de BD, primero las más cercanas a la IP del cliente.
@@ -35,7 +68,7 @@ final class ProvinciaSuggestionService
 
         $ip = $ip ?? $this->resolveClientIp();
         $codIndec = $this->resolveCodIndecFromIp($ip);
-        $vecinos = $this->loadVecinosMap();
+        $vecinos = self::VECINOS_POR_COD_INDEC;
 
         $orderedCods = [];
         if ($codIndec !== null && $codIndec !== '' && isset($byCod[$codIndec])) {
@@ -160,24 +193,6 @@ final class ProvinciaSuggestionService
         }
 
         return null;
-    }
-
-    /**
-     * @return array<string, list<string>>
-     */
-    private function loadVecinosMap(): array
-    {
-        $path = Yii::getAlias('@common/metadata/bioenlace/geo/provincias-vecinas.yaml');
-        if (!is_file($path)) {
-            return [];
-        }
-        $parsed = Yaml::parseFile($path);
-        if (!is_array($parsed)) {
-            return [];
-        }
-        $map = $parsed['vecinos_por_cod_indec'] ?? [];
-
-        return is_array($map) ? $map : [];
     }
 
     private function normalize(string $value): string

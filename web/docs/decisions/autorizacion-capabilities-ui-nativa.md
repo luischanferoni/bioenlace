@@ -11,7 +11,7 @@ Tras [autorizacion-solo-por-intents.md](./autorizacion-solo-por-intents.md), los
 En paralelo convivían:
 
 1. **Rutas API** (`/api/...`) en `auth_item_child`
-2. **Capabilities UX** en `home_panel_manifest.yaml` (visibilidad de botones, no sustituyen RBAC)
+2. **Capabilities UX** en `home-panel-manifest.yaml` (visibilidad de botones, no sustituyen RBAC)
 3. **Permisos legacy** (`analisis`, `front_ver_historial_paciente`, `listado_pacientes` como padre de rutas guardia)
 4. **Dominio** (`EncounterAccessService`, reglas de episodio guardia)
 
@@ -35,7 +35,7 @@ RBAC ruta (rol → capability → /api/...)
 ```
 
 - **YAML capabilities:** `common/metadata/bioenlace/permission/capabilities/*.yaml` — `routes`, `default_roles`, `related_intents` (enlace opcional intent → capability).
-- **Manifiesto panel:** `home_panel_manifest.yaml` referencia `capability_id` en CTAs EMER; no reemplaza grants RBAC.
+- **Manifiesto panel:** `home-panel-manifest.yaml` referencia `capability_id` en CTAs EMER; no reemplaza grants RBAC.
 - **Admin:** pestaña «Capabilities UI nativa» en catálogo de permisos; asignación de roles paritaria a intents.
 - **Legacy:** `legacy-permission-aliases.yaml` + `intent-grant-migration-map.yaml` (`capability_grant_sources`) migran grants sin SQL manual.
 
@@ -62,5 +62,5 @@ RBAC ruta (rol → capability → /api/...)
 
 - [rbac-catalogo-permisos.md](../arquitectura/rbac-catalogo-permisos.md)
 - [autorizacion-solo-por-intents.md](./autorizacion-solo-por-intents.md)
-- Metadata: `permission/capabilities/`, `permission/legacy-permission-aliases.yaml`, `ui/home_panel_manifest.yaml`
+- Metadata: `permission/capabilities/`, `permission/legacy-permission-aliases.yaml`, `ui/home-panel-manifest.yaml`
 - CLI: `catalog-permission/sync-capabilities`, `catalog-permission/migrate-grants`, `catalog-integrity/check`

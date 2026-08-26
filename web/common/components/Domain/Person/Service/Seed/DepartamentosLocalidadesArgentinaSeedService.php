@@ -9,7 +9,8 @@ use yii\db\Query;
 /**
  * Seed idempotente de departamentos y localidades (Argentina, Georef/INDEC).
  *
- * Fuente: @common/metadata/bioenlace/geo/departamentos-localidades-argentina.json.gz
+ * Seed one-shot: el dump Georef ya no vive en el repo; los datos están en BD.
+ * Re-seed completo no está soportado (usar backup / migración histórica).
  */
 final class DepartamentosLocalidadesArgentinaSeedService
 {
@@ -253,32 +254,10 @@ final class DepartamentosLocalidadesArgentinaSeedService
      */
     private function loadDefinition(): array
     {
-        $path = Yii::getAlias('@common/metadata/bioenlace/geo/departamentos-localidades-argentina.json.gz');
-        if (!is_file($path)) {
-            throw new \RuntimeException('No se encontró departamentos-localidades-argentina.json.gz');
-        }
-        $raw = @gzdecode((string) file_get_contents($path));
-        if ($raw === false || $raw === '') {
-            throw new \RuntimeException('No se pudo descomprimir departamentos-localidades-argentina.json.gz');
-        }
-        $parsed = json_decode($raw, true);
-        if (!is_array($parsed)) {
-            throw new \RuntimeException('JSON geográfico inválido');
-        }
-        $departamentos = $parsed['departamentos'] ?? null;
-        $localidades = $parsed['localidades'] ?? null;
-        if (!is_array($departamentos) || count($departamentos) < self::EXPECTED_DEPARTAMENTOS) {
-            throw new \RuntimeException('El seed debe declarar al menos ' . self::EXPECTED_DEPARTAMENTOS . ' departamentos.');
-        }
-        if (!is_array($localidades) || count($localidades) < self::EXPECTED_LOCALIDADES) {
-            throw new \RuntimeException('El seed debe declarar al menos ' . self::EXPECTED_LOCALIDADES . ' localidades.');
-        }
-
-        return [
-            'version' => $parsed['version'] ?? null,
-            'departamentos' => $departamentos,
-            'localidades' => $localidades,
-        ];
+        throw new \RuntimeException(
+            'Seed Georef eliminado del repo (era one-shot). Departamentos/localidades viven en BD; '
+            . 'para un entorno vacío restaurá desde backup o reaplicá la migración histórica con el dump original.'
+        );
     }
 
     /**

@@ -267,10 +267,10 @@ class ClinicalSeedController extends Controller
     }
 
     /**
-     * Seed departamentos + localidades (Georef) y reasigna efectores a capitales SDE / Santa Fe demo.
+     * Seed departamentos + localidades — obsoleto: dump Georef fuera del repo (datos en BD).
+     * El comando falla al intentar re-seed completo.
      *
      * php yii clinical-seed/departamentos-localidades-argentina
-     * php yii clinical-seed/departamentos-localidades-argentina --reasignarEfectores=0
      */
     public function actionDepartamentosLocalidadesArgentina(int $reasignarEfectores = 1): int
     {

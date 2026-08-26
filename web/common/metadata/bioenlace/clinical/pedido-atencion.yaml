@@ -1,5 +1,8 @@
-# Pedido de atención (servicio institucional × acto)
-
+# Tipo: knob + catalog
+# Propósito: pedido de atención (servicio institucional × acto SNOMED/LOINC).
+# Consumidor: ProductMetadataPaths::pedidoAtencionFile() / coding y capacity domain services
+# No poner aquí: filas de `servicios` como actos; integrity de PedidoAtencion en Yii/dominio.
+#
 # Systems admitidos (CodeableConcept). Sin code system local.
 allowed_systems:
   - http://snomed.info/sct

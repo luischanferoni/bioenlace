@@ -40,7 +40,7 @@ flowchart LR
 
 ## Clasificación y notificación (agente B03)
 
-Tras **ingestar un informe nuevo** con estado `final`, `PostLabClassificationAgent` evalúa analitos (LOINC + umbrales) según `autonomous_agents/post-lab-classification.yaml`:
+Tras **ingestar un informe nuevo** con estado `final`, `PostLabClassificationAgent` evalúa analitos (LOINC + umbrales) según `agents/post-lab-classification.yaml`:
 
 | Severidad | Efecto |
 |-----------|--------|

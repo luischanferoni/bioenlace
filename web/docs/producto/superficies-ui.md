@@ -1,4 +1,4 @@
-﻿# Superficies de UI — web y móvil
+# Superficies de UI — web y móvil
 
 ## Principio
 
@@ -36,7 +36,7 @@ flowchart TB
 ## Inicio (página de inicio del médico)
 
 - Equivalente al **home de la app Personal de Salud**: muta según rol y `encounter_class` en sesión. Datos: **`GET /api/v1/home/panel`** (web `site/index`, móvil staff).
-- Manifiesto declarativo: `web/common/metadata/bioenlace/ui/home_panel_manifest.yaml` (resuelto por `HomePanelService` + `HomePanelManifest`).
+- Manifiesto declarativo: `web/common/metadata/bioenlace/ui/home-panel-manifest.yaml` (resuelto por `HomePanelService` + `HomePanelManifest`).
 - **Audiencia** (`HomePanelAudienceResolver`, roles en bloque `audience` del manifiesto):
   - `staff` — sesión operativa (`encounter_class`), efector+servicio, o rol staff (Médico, enfermería, Admin efector, etc.).
   - `patient` — rol paciente sin rol staff (app móvil paciente).

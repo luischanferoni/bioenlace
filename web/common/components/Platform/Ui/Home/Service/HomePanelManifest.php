@@ -6,7 +6,7 @@ use common\components\Platform\Core\Product\ProductMetadataPaths;
 use Symfony\Component\Yaml\Yaml;
 
 /**
- * Resuelve layout y secciones del panel desde home_panel_manifest.yaml.
+ * Resuelve layout y secciones del panel desde home-panel-manifest.yaml.
  */
 final class HomePanelManifest
 {

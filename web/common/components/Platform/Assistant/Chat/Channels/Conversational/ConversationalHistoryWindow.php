@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Conversational;
 
+use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
 use Yii;
@@ -9,8 +10,8 @@ use Yii;
 /**
  * Ventana acotada del historial del chat para el canal conversacional.
  *
- * Evita prompts gigantes: tope de turnos, tope de caracteres y corte al encontrar
- * un salto operativo ([action_id:…]).
+ * Evita prompts gigantes: tope de turnos, tope de caracteres, corte operativo
+ * y filtro por hilo de dominio ({@see thread_tag} en metadata).
  */
 final class ConversationalHistoryWindow
 {
@@ -21,8 +22,10 @@ final class ConversationalHistoryWindow
 
     /**
      * Texto multilínea "Paciente: … / Asistente: …" o vacío si no hay historial útil.
+     *
+     * @param string $threadTag Si no vacío, solo incluye turnos del hilo (o sin tag hasta otro dominio).
      */
-    public static function formatForPrompt(int $userId, string $currentContent): string
+    public static function formatForPrompt(int $userId, string $currentContent, string $threadTag = ''): string
     {
         $uidStr = (string) $userId;
         $conversacion = AsistenteConversacion::findOne([
@@ -43,7 +46,7 @@ final class ConversationalHistoryWindow
             ->limit($fetchLimit)
             ->all();
 
-        return self::buildFromInteractions($rows, $uidStr, $currentContent, $maxTurnos, $maxChars);
+        return self::buildFromInteractions($rows, $uidStr, $currentContent, $maxTurnos, $maxChars, $threadTag);
     }
 
     /**
@@ -54,9 +57,11 @@ final class ConversationalHistoryWindow
         string $userId,
         string $currentContent,
         int $maxTurnos,
-        int $maxChars
+        int $maxChars,
+        string $threadTag = ''
     ): string {
         $currentTrimmed = trim($currentContent);
+        $threadTag = trim($threadTag);
         $lines = [];
         $skippedCurrentDuplicate = false;
 
@@ -71,6 +76,12 @@ final class ConversationalHistoryWindow
             }
 
             if (self::isOperationalBoundary($text)) {
+                break;
+            }
+
+            $rowTag = AssistantThreadStateService::threadTagFromMetadata($row->metadata ?? null);
+            if ($threadTag !== '' && $rowTag !== '' && $rowTag !== $threadTag) {
+                // Otro dominio: no mezclar hilos.
                 break;
             }
 

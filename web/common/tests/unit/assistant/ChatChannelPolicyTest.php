@@ -14,18 +14,35 @@ class ChatChannelPolicyTest extends Unit
         $this->assertFalse(ChatChannelPolicy::isClinicalSymptomContent('quiero un turno'));
     }
 
-    public function testBookingOfferOnlyOnCurrentClinicalMessage(): void
+    public function testBookingOfferUsesActiveThreadHistoryOrCertainty(): void
     {
         $this->assertFalse(ChatChannelPolicy::shouldOfferBookingButton('Empezó ayer y se me fue poniendo peor'));
-        $this->assertFalse(ChatChannelPolicy::shouldOfferBookingButton(
+        $this->assertTrue(ChatChannelPolicy::shouldOfferBookingButton(
             'Empezó ayer y se me fue poniendo peor',
             'Tengo fiebre, tos y me duele el cuerpo'
         ));
         $this->assertTrue(ChatChannelPolicy::shouldOfferBookingButton('Tengo fiebre, tos y me duele el cuerpo'));
         $this->assertFalse(ChatChannelPolicy::shouldOfferBookingButton(
             'cómo saco un turno',
-            'Tengo fiebre, tos y me duele el cuerpo'
+            ''
         ));
+        $this->assertTrue(ChatChannelPolicy::shouldOfferBookingButton(
+            'cómo saco un turno',
+            '',
+            true
+        ));
+        $this->assertFalse(ChatChannelPolicy::shouldOfferBookingButton('hola', '', true));
+        $this->assertTrue(ChatChannelPolicy::shouldOfferBookingButton(
+            'estoy bien ahora',
+            'Me duele la cabeza'
+        ));
+    }
+
+    public function testGreetingOnly(): void
+    {
+        $this->assertTrue(ChatChannelPolicy::isGreetingOnly('hola'));
+        $this->assertTrue(ChatChannelPolicy::isGreetingOnly('Buen día!'));
+        $this->assertFalse(ChatChannelPolicy::isGreetingOnly('hola me duele la cabeza'));
     }
 
     public function testStaffAgendaEditPredicates(): void

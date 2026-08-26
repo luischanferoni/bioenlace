@@ -35,7 +35,20 @@ flowchart TB
 
 Los YAML de flujo viven en `common/metadata/bioenlace/assistant/intents/`.
 
-Clasificación: keywords del intent + desambiguación si hay empate. Canal (charla vs trámite): política en código; copy del chat clínico en `conversational-channel.yaml`.
+Clasificación de acción: keywords del intent + desambiguación si hay empate (sin IA eligiendo `intent_id`).
+
+**Canales** (preprocess IA → `user_goal`):
+
+| Canal | Rol | Botones |
+|-------|-----|---------|
+| Clinical | Saludo / malestar **propio** | Solicitar Atención si hay síntoma en el hilo (o certeza); saludo solo → sin CTA |
+| Informational | Cómo funciona el producto | Artículo + CTA a intent(s) del artículo |
+| Ambiguous | Dominio poco claro / desvío de hilo | Preguntas fijas para encauzar |
+| Operational | Trámite concreto | Flow del intent |
+
+Hilos: no se mezcla historial clínico con ayuda de producto; un cambio de dominio puede pasar por ambiguous. Metadata de prompts: `assistant/prompts/`; booking: `assistant/routing/booking-offer.yaml`.
+
+Contenido editorial: [contenido-informativo.md](./contenido-informativo.md).
 
 ## Qué interpreta y qué no resuelve el modelo
 

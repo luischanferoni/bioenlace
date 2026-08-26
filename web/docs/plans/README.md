@@ -25,12 +25,12 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Captura actor + enfermería | `captura-actor-enfermeria/` | Quitar alias ConsultasConfiguracion; overlay PES + CarePlan; app triage |
 | Admisión: identidad + ventanilla | `admision-identidad-ventanilla/` | Ingreso DNI (sin alta libre); Didit; NN; sesión de mostrador |
 | RBAC capabilities UI nativa | `rbac-capabilities-ui-nativa/` | Permisos assignables fuera de intents; guardia + encounter + panel |
-| Asistente: canales, chat, info_content | `asistente-canales-chat-info/` | Fases 01–03 hechas; 04–05 pendientes |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
+| Asistente: canales, chat, info_content | [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [producto/contenido-informativo.md](../producto/contenido-informativo.md) + QA [asistente-consultas.md](../qa/paciente/asistente-consultas.md) |
 | Control/Seguimiento + protocolos | [producto/solicitar-atencion.md](../producto/solicitar-atencion.md) + [decisions/care-protocols-plandefinition-lite.md](../decisions/care-protocols-plandefinition-lite.md) |
 | Atención remota y async | [producto/atencion-remota-async.md](../producto/atencion-remota-async.md) |
 | Cohortes — asistencia + batch IA | [producto/asistencia-cohortes.md](../producto/asistencia-cohortes.md) |

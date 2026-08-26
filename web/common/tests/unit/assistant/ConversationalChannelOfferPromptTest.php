@@ -54,11 +54,11 @@ class ConversationalChannelOfferPromptTest extends \Codeception\Test\Unit
         verify(str_contains($block, 'no declaradas'))->true();
     }
 
-    public function testBookingOfferOriginUsaMensajeActual(): void
+    public function testBookingOfferOriginUsaSintomaDelHiloActivo(): void
     {
         $history = "Tengo fiebre, tos y me duele el cuerpo";
         verify(ConversationalChannel::bookingOfferOriginContent('¿Qué hago con esto?', $history))
-            ->equals('¿Qué hago con esto?');
+            ->equals('Tengo fiebre, tos y me duele el cuerpo');
         verify(ConversationalChannel::bookingOfferOriginContent('Me duele la cabeza', $history))
             ->equals('Me duele la cabeza');
     }

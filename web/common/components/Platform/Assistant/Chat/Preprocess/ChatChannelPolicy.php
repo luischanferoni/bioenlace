@@ -213,14 +213,53 @@ final class ChatChannelPolicy
     }
 
     /**
-     * Ofrecer botón Solicitar Atención solo si el mensaje actual es clínico.
-     * El historial global no arrastra la oferta (evita CTA en ayuda de producto).
+     * Ofrecer botón Solicitar Atención en clinical:
+     * - síntoma en mensaje actual, o
+     * - síntoma en historial del hilo activo, o
+     * - certeza del hilo (salvo saludo puro sin síntoma en el hilo).
+     *
+     * Saludo solo (sin síntoma en hilo) → sin CTA.
+     * Tras síntoma propio, aunque diga «estoy bien» → sí CTA.
      */
-    public static function shouldOfferBookingButton(string $content, string $patientHistory = ''): bool
-    {
-        unset($patientHistory);
+    public static function shouldOfferBookingButton(
+        string $content,
+        string $patientHistory = '',
+        bool $threadOffersCta = false
+    ): bool {
+        $hasSymptomNow = self::isClinicalSymptomContent($content);
+        $hasSymptomInThread = self::lastLineMatchingClinicalSymptom($patientHistory) !== '';
 
-        return self::isClinicalSymptomContent($content);
+        if ($hasSymptomNow || $hasSymptomInThread) {
+            return true;
+        }
+
+        if (self::isGreetingOnly($content)) {
+            return false;
+        }
+
+        return $threadOffersCta;
+    }
+
+    /**
+     * Mensaje que es solo saludo (sin síntoma ni pedido clínico).
+     */
+    public static function isGreetingOnly(string $message): bool
+    {
+        if (!self::isGreeting($message)) {
+            return false;
+        }
+        if (self::isClinicalSymptomContent($message)) {
+            return false;
+        }
+        if (self::isExplicitOperationalCareRequest($message) || self::isStudyOrPracticeRequest($message)) {
+            return false;
+        }
+
+        $f = self::fold($message);
+
+        // Saludo + poco más (hola, buenas, hey…).
+        return (bool) preg_match('/^(hola|buenas|buen dia|buen día|hey|ola)([!.\s]*)?$/u', $f)
+            || (bool) preg_match('/^(hola|buenas|buen dia|buen día)\b.{0,24}$/u', $f);
     }
 
     private static function looksLikeOwnCoberturaOrPlantel(string $message): bool

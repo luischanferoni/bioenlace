@@ -101,7 +101,7 @@ final class ChatConversationalConfig
      */
     public static function capabilityLabels(): array
     {
-        $raw = self::load()['capability_labels'] ?? [];
+        $raw = self::loadBooking()['capability_labels'] ?? [];
         if (!is_array($raw)) {
             return [];
         }

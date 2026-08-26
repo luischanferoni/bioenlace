@@ -1,13 +1,15 @@
-# Canal conversacional
+# Canal conversational_clinical
 
-Respuesta libre con IA (empatía, orientación) y, cuando aplica, botón a un intent del catálogo.
+Respuesta libre con IA (empatía, orientación) y, cuando aplica, botón **Solicitar Atención**.
 
-## Oferta alineada al botón
+## Cuándo hay CTA
 
-1. Si `ChatChannelPolicy` detecta síntoma (mensaje o historial), se ofrece un intent de `booking_offer_intent_priority` vía `UiActionCatalog` (RBAC).
-2. Del YAML del intent se leen `intent_semantics.summary` y `intent_semantics.capabilities` (solo esas claves; el resto va en `keywords` o se omite).
-3. Ese bloque se inyecta en el prompt (`formatOfferForPrompt`) y el mismo intent se emite como botón en el envelope.
-4. Etiquetas humanas de capabilities: `conversational-channel.yaml` → `capability_labels`.
-5. Copy del prompt: `stable_prompt` + `prompt_fragments` en ese YAML (`ChatConversationalConfig::promptFragment`); PHP solo ensambla bloques variables.
+1. Síntoma en el mensaje actual, o en el historial del **hilo clinical** activo.
+2. Certeza del hilo (`thread-state.yaml`) por encima del umbral — salvo saludo puro sin síntoma.
+3. Tras un síntoma propio, aunque diga «estoy bien» → sí CTA.
+4. Saludo solo (`hola`) sin síntoma en el hilo → sin CTA.
 
-El modelo solo debe prometer lo declarado en esa oferta.
+Prioridad de intents y `capability_labels`: `assistant/routing/booking-offer.yaml`.
+Prompt / fragments: `assistant/prompts/conversational_clinical.yaml`.
+
+Del YAML del intent de oferta se leen `intent_semantics.summary` y `capabilities` (ficha corta para el prompt). Keywords de descubrimiento van en `keywords` del intent.

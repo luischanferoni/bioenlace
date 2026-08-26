@@ -6,9 +6,12 @@ use Yii;
 use common\components\Domain\Person\Service\PersonaAsistentePreferenciasService;
 use common\components\Platform\Assistant\Chat\ChatOrchestrator;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Platform\Assistant\Chat\Thread\AssistantThreadContext;
+use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 use common\components\Platform\Core\Db\BioenlaceDb;
 use common\models\AsistenteConversacion;
 use common\models\AsistenteInteraccion;
+use yii\helpers\Json;
 
 /**
  * Asistente conversacional vía {@see ChatOrchestrator}.
@@ -55,11 +58,13 @@ class ChatController extends BaseController
 
         $userId = (int) Yii::$app->user->id;
         $uidStr = (string) $userId;
+        AssistantThreadContext::clear();
 
         if (isset($body['senderId']) && (string) $body['senderId'] !== $uidStr) {
             return $this->error('senderId no coincide con el usuario autenticado', null, 403);
         }
 
+        $interaccionUsuario = null;
         if ($intentId === '') {
             $textoPersistUsuario = $content !== ''
                 ? $content
@@ -88,6 +93,7 @@ class ChatController extends BaseController
             ]);
             if (!$interaccionUsuario->save()) {
                 Yii::error('No se pudo guardar interacción usuario: ' . json_encode($interaccionUsuario->errors), 'asistente');
+                $interaccionUsuario = null;
             }
         }
 
@@ -111,6 +117,16 @@ class ChatController extends BaseController
         BioenlaceDb::ensureConnection();
 
         if ($intentId === '') {
+            $meta = AssistantThreadStateService::metadataForPersistence();
+            $metaJson = $meta !== [] ? Json::encode($meta) : null;
+
+            if ($interaccionUsuario !== null && $metaJson !== null) {
+                $interaccionUsuario->metadata = $metaJson;
+                if (!$interaccionUsuario->save(false)) {
+                    Yii::error('No se pudo actualizar metadata interacción usuario', 'asistente');
+                }
+            }
+
             $replyText = ChatOrchestrator::botReplyTextForPersistence($out);
 
             $conversacion = AsistenteConversacion::findOne(['usuario_id' => $uidStr, 'bot_id' => 'BOT']);
@@ -123,12 +139,15 @@ class ChatController extends BaseController
                     'status' => 'enviado',
                     'message_type' => 'texto',
                     'is_resent' => 0,
+                    'metadata' => $metaJson,
                 ]);
                 if (!$interaccionBot->save()) {
                     Yii::error('No se pudo guardar interacción bot: ' . json_encode($interaccionBot->errors), 'asistente');
                 }
             }
         }
+
+        AssistantThreadContext::clear();
 
         return $out;
     }

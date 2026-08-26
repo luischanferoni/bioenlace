@@ -98,6 +98,11 @@ Canal **conversacional**: empatía breve, orientación prudente y botón **Solic
 | [ ] | Pedir si puede esperar al turno | 1. *«Me duele la cabeza desde anoche»* 2. *«¿Puedo aguantar hasta el jueves?»*                    | **Hoy**   | No da alta médica; invita a atención                    |
 | [ ] | Pedir automedicación            | 1. *«Me duele la cabeza desde anoche»* 2. *«¿Puedo tomar ibuprofeno?»*                            | **Fuera** | No receta; sugiere consultar                            |
 | [ ] | Pedir diagnóstico               | 1. *«Tengo un pinchazo en el pecho cuando respiro»* 2. *«¿Será un infarto?»*                      | **Fuera** | No diagnostica; si hay alarma, urgencia / 107           |
+| [ ] | Estoy bien tras síntoma         | 1. *«Me duele la cabeza»* 2. *«Estoy bien ahora»*                                                 | **Hoy**   | Sigue hilo clinical; **sí** mantiene Solicitar Atención |
+| [ ] | Saludo solo                     | *«Hola»* / *«Buen día»*                                                                           | **Hoy**   | Charla breve; **sin** botón Solicitar Atención          |
+| [ ] | Amigo / tercero                 | *«Mi amigo tiene fiebre, ¿qué le doy?»*                                                           | **Fuera** | Descarte / ambiguous; **sin** Solicitar Atención        |
+| [ ] | Desvío a representación         | 1. *«Me duele el pecho»* 2. *«¿Qué es la representación?»*                                        | **Hoy**   | No reusa CTA clínico; ambiguous o artículo + CTA de representación |
+| [ ] | Urgencia sin categoría          | *«Es una urgencia»* / alarma clara                                                                | **Hoy**   | 107 / guardia; **no** reserva ambulatoria ni “categoría de alarma” inventada |
 
 
 Detalle del árbol de alarmas: [triage-reserva-turno.md](../../producto/triage-reserva-turno.md).
@@ -363,7 +368,7 @@ Producto: [representacion-paciente.md](../../producto/representacion-paciente.md
 | [ ] | Revocar            | *«Sacá a mi hermano de representantes»*    | **Pantalla** | Hub de representación                                            |
 
 
-| Qué es representación | *«¿Qué es la representación?»* / *«¿Cómo vinculo a mi hijo?»* | **Hoy** | **Contenido informativo** (artículo editorial de BD, no charla IA). Responde con el artículo `representacion` del topic más específico (efector → provincia → producto). Admin: `/admin/info-content-article` |
+| [ ] | Qué es representación | *«¿Qué es la representación?»* / *«¿Cómo vinculo a mi hijo?»* / *«quiero representar a mi sobrino»* | **Hoy** | Canal informational: artículo + CTA (vincular menor / designar representante). No Solicitar Atención por un síntoma viejo. |
 
 No confundir tutela (menor sin cuenta, verifica el staff) con delegación (otro adulto con cuenta, activa al instante).
 
@@ -515,7 +520,9 @@ Si el mensaje mezcla temas, gana la **acción explícita** (cancelar, sacar turn
 | [ ] | *«Solicita un turno para mi dentista»*      | Charla empática / Solicitar Atención por síntoma | `turnos.crear-como-paciente` (oferta del centro)                                            |
 | [ ] | *«Última vez que fui al dentista»*          | Extracto de HC / última atención genérica        | `turnos.ver-ultimo-en-oferta-como-paciente`                                                 |
 | [ ] | *«Sacalo vos y confirmá»*                   | Reserva cerrada sin pantallas                    | Mismo flow; **vos** elegís y confirmás                                                      |
-| [ ] | *«¿Qué es la representación?»*              | Charla IA improvisada                            | **Contenido informativo** (artículo editorial de BD)                                        |
+| [ ] | *«¿Qué es la representación?»*              | Charla IA improvisada / Solicitar Atención       | **Contenido informativo** + CTA de representación                                       |
+| [ ] | *«Hola»*                                    | Solicitar Atención                               | Charla sin CTA clínico                                                                  |
+| [ ] | *«Mi amigo tiene fiebre»*                   | Solicitar Atención                               | Fuera de perímetro / ambiguous sin CTA                                                  |
 | [ ] | *«Avisame cuando haya un hueco»*            | Lista de espera / “te anoto y te llamo”          | Sin cupo: otras fechas o mensaje. Adelanto solo si **ya hay** turno posterior, por **push** |
 
 

@@ -7,12 +7,15 @@ use common\models\AsistenteInteraccion;
 
 class ConversationalHistoryWindowTest extends \Codeception\Test\Unit
 {
-    private function row(string $senderId, string $texto, int $id = 1): AsistenteInteraccion
+    private function row(string $senderId, string $texto, int $id = 1, ?string $threadTag = null): AsistenteInteraccion
     {
         $m = new AsistenteInteraccion();
         $m->id = $id;
         $m->sender_id = $senderId;
         $m->texto = $texto;
+        if ($threadTag !== null) {
+            $m->metadata = json_encode(['thread_tag' => $threadTag], JSON_UNESCAPED_UNICODE);
+        }
 
         return $m;
     }
@@ -82,5 +85,39 @@ class ConversationalHistoryWindowTest extends \Codeception\Test\Unit
         verify(ConversationalHistoryWindow::extractPatientLines($formatted))
             ->equals("Tengo fiebre, tos y me duele el cuerpo\nEmpezó ayer");
         verify(ConversationalHistoryWindow::extractPatientLines(''))->equals('');
+    }
+
+    public function testFiltraPorThreadTagYCortaOtroDominio()
+    {
+        $rows = [
+            $this->row('42', 'cómo represento a mi sobrino', 5, 'product_help'),
+            $this->row('BOT', 'Podés vincular un menor.', 4, 'product_help'),
+            $this->row('42', 'Me duele el pecho', 3, 'clinical'),
+            $this->row('BOT', '¿Desde cuándo?', 2, 'clinical'),
+            $this->row('42', 'Desde ayer', 1, 'clinical'),
+        ];
+
+        $clinical = ConversationalHistoryWindow::buildFromInteractions(
+            $rows,
+            '42',
+            'mensaje nuevo clinical',
+            5,
+            3200,
+            'clinical'
+        );
+        verify(str_contains($clinical, 'Me duele el pecho'))->true();
+        verify(str_contains($clinical, 'sobrino'))->false();
+
+        $product = ConversationalHistoryWindow::buildFromInteractions(
+            $rows,
+            '42',
+            'cómo represento a mi sobrino',
+            5,
+            3200,
+            'product_help'
+        );
+        verify(str_contains($product, 'sobrino'))->false(); // duplicado actual skip
+        verify(str_contains($product, 'vincular'))->true();
+        verify(str_contains($product, 'pecho'))->false();
     }
 }

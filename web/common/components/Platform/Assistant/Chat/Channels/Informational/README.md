@@ -1,5 +1,7 @@
-# Canal informativo (fase 2)
+# Canal informational_conversational
 
-Respuestas informativas sin flujo operativo.
+Ayuda de producto: artículo `info_content` + IA anclada a la fuente + botones CTA (RBAC).
 
-No implementado en Fase 1.
+- Prompt: `assistant/prompts/informational_conversational.yaml`
+- Sin artículo → mensaje corto / menú / meta (no cae a clinical)
+- Visibilidad: si el artículo declara `intent_ids` y el usuario no puede ninguno → no se sirve

@@ -122,6 +122,11 @@ final class ProductMetadataPaths
         return self::assistantRoutingFile('hint-resolution');
     }
 
+    public static function threadStateFile(): string
+    {
+        return self::assistantRoutingFile('thread-state');
+    }
+
     public static function assistantShortcutsFile(?string $basename = null): string
     {
         $file = trim((string) ($basename ?? ''));

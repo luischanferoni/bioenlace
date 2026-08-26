@@ -10,9 +10,10 @@ use common\components\Platform\Assistant\Chat\Channels\Informational\Information
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 
 /**
- * Enruta por user_goal tras preprocess.
+ * Enruta por user_goal tras preprocess (+ hilo / desvío).
  */
 final class ChatRouter
 {
@@ -39,6 +40,8 @@ final class ChatRouter
                 );
             }
 
+            AssistantThreadStateService::observe($userId, 'operational', $content);
+
             return OperationalChannel::handle($content, $actionId, $userId);
         }
 
@@ -55,9 +58,19 @@ final class ChatRouter
             ? ChatPreprocessService::canonicalizeGoal((string) $preprocess['user_goal'])
             : 'ambiguous_conversational';
 
-        $formattedHistory = $userId > 0
-            ? ConversationalHistoryWindow::formatForPrompt($userId, $content)
-            : '';
+        $observed = AssistantThreadStateService::observe($userId, $goal, $content);
+        $goal = $observed['goal'];
+        $preprocess['user_goal'] = $goal;
+        \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
+
+        $formattedHistory = '';
+        if ($userId > 0 && empty($observed['clear_history'])) {
+            $formattedHistory = ConversationalHistoryWindow::formatForPrompt(
+                $userId,
+                $content,
+                $observed['thread_tag']
+            );
+        }
 
         return self::dispatchByGoal($goal, $content, $userId, $formattedHistory);
     }
@@ -77,9 +90,18 @@ final class ChatRouter
             'action_text' => '',
             'extractions' => [],
         ]);
-        $formattedHistory = $userId > 0
-            ? ConversationalHistoryWindow::formatForPrompt($userId, $content)
-            : '';
+
+        $observed = AssistantThreadStateService::observe($userId, $channel, $content);
+        $channel = $observed['goal'];
+
+        $formattedHistory = '';
+        if ($userId > 0 && empty($observed['clear_history'])) {
+            $formattedHistory = ConversationalHistoryWindow::formatForPrompt(
+                $userId,
+                $content,
+                $observed['thread_tag']
+            );
+        }
 
         return self::dispatchByGoal($channel, $content, $userId, $formattedHistory);
     }

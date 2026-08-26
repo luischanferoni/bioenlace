@@ -210,11 +210,16 @@ final class ConversationalChannel
         }
 
         $history = $formattedHistory ?? ConversationalHistoryWindow::formatForPrompt($userId, $content);
-        // Oferta solo por mensaje actual clínico (no historial global de otros hilos).
-        $offer = ChatChannelPolicy::shouldOfferBookingButton($content)
+        $patientHistory = ConversationalHistoryWindow::extractPatientLines($history);
+        // CTA: certeza del hilo clinical (fase 04) o síntoma en mensaje / hilo activo.
+        $offer = ChatChannelPolicy::shouldOfferBookingButton(
+            $content,
+            $patientHistory,
+            \common\components\Platform\Assistant\Chat\Thread\AssistantThreadContext::offerCta()
+        )
             ? self::resolveBookingOffer($userId)
             : null;
-        $origin = self::bookingOfferOriginContent($content);
+        $origin = self::bookingOfferOriginContent($content, $patientHistory);
 
         $prompt = self::buildPrompt($content, $userId, $offer, $history);
 
@@ -239,9 +244,14 @@ final class ConversationalChannel
 
     public static function bookingOfferOriginContent(string $content, string $patientHistory = ''): string
     {
-        unset($patientHistory); // historial global ya no alimenta la oferta (fase 01).
+        $content = trim($content);
+        if (ChatChannelPolicy::isClinicalSymptomContent($content)) {
+            return $content;
+        }
+        // Solo historial del hilo clinical activo (ya filtrado por ConversationalHistoryWindow).
+        $fromHistory = ChatChannelPolicy::lastLineMatchingClinicalSymptom($patientHistory);
 
-        return trim($content);
+        return $fromHistory !== '' ? $fromHistory : $content;
     }
 
     /**

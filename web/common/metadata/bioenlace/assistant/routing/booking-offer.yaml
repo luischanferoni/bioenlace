@@ -1,5 +1,5 @@
-# Prioridad del botón Solicitar Atención en conversational_clinical.
-# {@see ChatConversationalConfig::bookingOfferIntentPriority}
+# Prioridad CTA clinical + etiquetas de capabilities para el prompt de oferta.
+# {@see ChatConversationalConfig}
 version: 1
 
 booking_offer_intent_priority:
@@ -8,3 +8,35 @@ booking_offer_intent_priority:
   - turnos.crear-para-paciente
 
 booking_offer_intent_prefix_fallback: turnos.crear
+
+# Solo intents de oferta clinical necesitan summary/capabilities en su YAML;
+# estas etiquetas humanizan los ids en el prompt.
+capability_labels:
+  triage_malestar: guía por síntoma hacia un servicio adecuado
+  pedido_estudio_acto: pedir estudio o práctica con agenda
+  control_seguimiento: control, tratamiento o consulta previa
+  urgencia_guardia_info: orientación a guardia sin reserva ambulatoria
+  elige_servicio: elegir el servicio clínico
+  elige_modalidad: elegir presencial, teleconsulta u otra modalidad
+  elige_centro: elegir centro de salud
+  mapa_centros_cercanos: buscar centros cercanos en un mapa
+  elige_profesional: elegir profesional
+  elige_horario: elegir día y horario
+  reserva_turno: confirmar el turno
+  consulta_por_mensaje: consulta clínica por mensaje
+  teleconsulta: modalidad teleconsulta
+  ver_turnos_propios: ver turnos propios
+  cancelar_turno_propio: cancelar un turno propio
+  reprogramar_turno_propio: cambiar fecha u horario de un turno
+  reubicar_turno_propio: reubicar un turno en resolución
+  confirmar_asistencia: confirmar asistencia a un turno
+  ver_atenciones: ver atenciones finalizadas
+  ver_ultima_atencion: ver la última atención
+  ver_resultados_lab: ver resultados de laboratorio
+  ver_recetas: ver recetas electrónicas
+  recordatorios_tratamiento: configurar recordatorios de tratamiento
+  recurso_provincial_contacto: datos de contacto de recursos provinciales
+  enviar_queja: enviar una queja operativa
+  asistencia_pre_consulta: completar cuestionario pre-consulta
+  designar_representante: designar un representante
+  vincular_menor: solicitar tutela de un menor

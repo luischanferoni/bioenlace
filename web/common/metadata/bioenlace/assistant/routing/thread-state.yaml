@@ -1,0 +1,35 @@
+# Estado de hilo del asistente (dominio + certeza).
+# {@see AssistantThreadStateService}
+version: 1
+
+# user_goal → thread_tag (dominio del hilo)
+goal_to_thread_tag:
+  conversational_clinical: clinical
+  informational_conversational: product_help
+  meta: product_help
+  operational: operational
+  in_flow_question: operational
+  ambiguous_conversational: ambiguous
+
+certainty:
+  # Tras síntoma clínico en el mensaje actual
+  symptom_confidence: 0.85
+  # Incremento por follow-up en el mismo hilo clínico (sin síntoma nuevo)
+  followup_delta: 0.15
+  # Umbral para ofrecer CTA (Solicitar Atención) en clinical
+  cta_threshold: 0.7
+  confidence_min: 0.0
+  confidence_max: 1.0
+
+diversion:
+  # Si el dominio del mensaje ≠ hilo activo (salvo ambiguous/operational),
+  # forzar encauzamiento ambiguous y no reusar historial del hilo anterior.
+  force_ambiguous: true
+  # Tags que no disparan desvío al entrar (arranque / re-encauzar)
+  ignore_from_tags:
+    - ambiguous
+    - ''
+  # Tags destino que no se tratan como desvío hacia ambiguous
+  ignore_to_tags:
+    - ambiguous
+    - operational

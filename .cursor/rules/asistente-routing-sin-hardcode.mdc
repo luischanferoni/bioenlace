@@ -28,7 +28,7 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 | Prompt preprocess / por canal | `assistant/prompts/*.yaml` |
 | Prompt / labels del canal conversacional clínico | `assistant/prompts/conversational_clinical.yaml` |
 | Botones de encauzamiento ambiguous | `assistant/prompts/ambiguous_conversational.yaml` |
-| Prioridad CTA booking | `assistant/routing/booking-offer.yaml` |
+| Prioridad CTA booking + capability_labels | `assistant/routing/booking-offer.yaml` |
 | Copy UX por perfil | `assistant/copy/channel-copy.yaml` |
 | Familias NL / hints | `assistant/routing/intent-families.yaml`, `hint-resolution.yaml` |
 | ¿Síntoma o turno? ¿Menú? ¿Staff list/edit? | `ChatChannelPolicy` (PHP) |

@@ -29,7 +29,7 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 1. **Keywords** del YAML de cada intent → score PHP (sin IA de clasificación).
 2. **Ganador claro** → lanza; **empate** → desambiguación con botones.
 3. Si no hay match → no-match / sugerencias.
-4. **Canal** (síntoma vs trámite): `ChatChannelPolicy`. **Copy** conversacional: `conversational-channel.yaml`.
+4. **Canal** (`user_goal` preprocess): clinical / informational / ambiguous / operational. Predicados de dominio: `ChatChannelPolicy`. Prompts: `assistant/prompts/`. Booking CTA: `assistant/routing/booking-offer.yaml`. Hilos: `assistant/routing/thread-state.yaml`.
 
 ## Entrypoints importantes
 

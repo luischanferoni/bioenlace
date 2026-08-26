@@ -47,6 +47,7 @@ $this->params['breadcrumbs'][] = $this->title;
                 'value' => $model->efector ? $model->efector->nombre : '-',
             ],
             'keywords',
+            'intent_ids',
             [
                 'attribute' => 'activo',
                 'value' => $model->activo ? 'Activo' : 'Inactivo',

@@ -46,19 +46,80 @@ final class ProductMetadataPaths
         return self::assistantDir() . DIRECTORY_SEPARATOR . 'globals';
     }
 
+    public static function assistantPromptsDir(): string
+    {
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'prompts';
+    }
+
+    public static function assistantCopyDir(): string
+    {
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'copy';
+    }
+
+    public static function assistantRoutingDir(): string
+    {
+        return self::assistantDir() . DIRECTORY_SEPARATOR . 'routing';
+    }
+
+    public static function assistantPromptFile(string $basename): string
+    {
+        $name = trim($basename);
+        if ($name === '') {
+            return self::assistantPromptsDir();
+        }
+        if (!str_ends_with($name, '.yaml')) {
+            $name .= '.yaml';
+        }
+
+        return self::assistantPromptsDir() . DIRECTORY_SEPARATOR . $name;
+    }
+
+    public static function assistantRoutingFile(string $basename): string
+    {
+        $name = trim($basename);
+        if ($name === '') {
+            return self::assistantRoutingDir();
+        }
+        if (!str_ends_with($name, '.yaml')) {
+            $name .= '.yaml';
+        }
+
+        return self::assistantRoutingDir() . DIRECTORY_SEPARATOR . $name;
+    }
+
     public static function conversationalChannelFile(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'conversational-channel.yaml';
+        return self::assistantPromptFile('conversational_clinical');
+    }
+
+    public static function preprocessPromptFile(): string
+    {
+        return self::assistantPromptFile('preprocess');
+    }
+
+    public static function informationalConversationalFile(): string
+    {
+        return self::assistantPromptFile('informational_conversational');
+    }
+
+    public static function ambiguousConversationalFile(): string
+    {
+        return self::assistantPromptFile('ambiguous_conversational');
+    }
+
+    public static function bookingOfferFile(): string
+    {
+        return self::assistantRoutingFile('booking-offer');
     }
 
     public static function intentFamiliesFile(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'intent-families.yaml';
+        return self::assistantRoutingFile('intent-families');
     }
 
     public static function hintResolutionFile(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'hint-resolution.yaml';
+        return self::assistantRoutingFile('hint-resolution');
     }
 
     public static function assistantShortcutsFile(?string $basename = null): string
@@ -73,7 +134,7 @@ final class ProductMetadataPaths
 
     public static function assistantChannelCopyFile(): string
     {
-        return self::assistantDir() . DIRECTORY_SEPARATOR . 'channel-copy.yaml';
+        return self::assistantCopyDir() . DIRECTORY_SEPARATOR . 'channel-copy.yaml';
     }
 
     public static function domainOperationPoliciesFile(): string

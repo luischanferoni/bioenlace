@@ -55,6 +55,7 @@ final class CatalogIntegrityService
         $warnings = array_merge($warnings, $this->checkLogicalPermissionRoutePollution());
         $warnings = array_merge($warnings, $this->checkGuardiaRoutesLegacyListadoPacientes());
         $warnings = array_merge($warnings, $this->checkLegacyPermissionWithoutReplacementCapability());
+        $warnings = array_merge($warnings, $this->checkInfoContentIntentIds());
 
         $errors = array_values(array_unique($errors));
         $warnings = array_values(array_unique($warnings));
@@ -844,5 +845,49 @@ final class CatalogIntegrityService
         }
 
         return $errors;
+    }
+
+    /**
+     * intent_ids de info_content_article deben existir en el catálogo de intents.
+     *
+     * @return list<string>
+     */
+    private function checkInfoContentIntentIds(): array
+    {
+        $warnings = [];
+        if (!Yii::$app->has('db')) {
+            return $warnings;
+        }
+
+        $table = Yii::$app->db->schema->getTableSchema('{{%info_content_article}}', true);
+        if ($table === null || !isset($table->columns['intent_ids'])) {
+            return $warnings;
+        }
+
+        $rows = (new \yii\db\Query())
+            ->select(['id', 'topic', 'scope', 'intent_ids'])
+            ->from('{{%info_content_article}}')
+            ->where(['and',
+                ['not', ['intent_ids' => null]],
+                ['<>', 'intent_ids', ''],
+            ])
+            ->all();
+
+        foreach ($rows as $row) {
+            $raw = trim((string) ($row['intent_ids'] ?? ''));
+            foreach (\common\models\InfoContentArticle::splitCsv($raw) as $intentId) {
+                if (IntentManifestIndex::get($intentId) === null) {
+                    $warnings[] = 'info_content_article id=' . (int) $row['id']
+                        . ' topic=' . (string) $row['topic']
+                        . ': intent_id desconocido «' . $intentId . '»';
+                }
+            }
+            if ((string) ($row['scope'] ?? '') !== 'producto' && $raw !== '') {
+                $warnings[] = 'info_content_article id=' . (int) $row['id']
+                    . ': intent_ids solo deberían declararse en scope producto (CTA hereda del producto)';
+            }
+        }
+
+        return $warnings;
     }
 }

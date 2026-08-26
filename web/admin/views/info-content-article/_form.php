@@ -40,6 +40,16 @@ use common\models\Efector;
     <?= $form->field($model, 'keywords')->textInput(['maxlength' => 500])
         ->hint('Palabras clave separadas por coma. El asistente usa estas para matchear el mensaje del usuario.') ?>
 
+    <?php if ($model->scope === InfoContentArticle::SCOPE_PRODUCTO || $model->isNewRecord): ?>
+        <?= $form->field($model, 'intent_ids')->textInput(['maxlength' => 500])
+            ->hint('intent_id separados por coma (CTA). Solo en alcance Producto; provincia/efector heredan. Deben existir en el catálogo.') ?>
+    <?php else: ?>
+        <div class="alert alert-info">
+            Los CTA (intents) se definen en el artículo de alcance <strong>Producto</strong> del mismo tema.
+            Este override solo cambia el contenido.
+        </div>
+    <?php endif; ?>
+
     <?= $form->field($model, 'priority')->textInput(['type' => 'number'])
         ->hint('Mayor número = más prioritario dentro del mismo scope.') ?>
 

@@ -3,7 +3,7 @@
 | Campo | Valor |
 |-------|--------|
 | Slug | `asistente-canales-chat-info` |
-| Estado | Definición / inicio |
+| Estado | En ejecución — Fases 01–03 hechas; 04–05 pendientes |
 | Superficie | Preprocess, router, canales chat, `info_content_article`, metadata assistant YAML, intents paciente |
 
 ## Índice

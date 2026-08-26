@@ -54,11 +54,11 @@ class ConversationalChannelOfferPromptTest extends \Codeception\Test\Unit
         verify(str_contains($block, 'no declaradas'))->true();
     }
 
-    public function testBookingOfferOriginUsaSintomaDelHistorial(): void
+    public function testBookingOfferOriginUsaMensajeActual(): void
     {
         $history = "Tengo fiebre, tos y me duele el cuerpo";
         verify(ConversationalChannel::bookingOfferOriginContent('¿Qué hago con esto?', $history))
-            ->equals('Tengo fiebre, tos y me duele el cuerpo');
+            ->equals('¿Qué hago con esto?');
         verify(ConversationalChannel::bookingOfferOriginContent('Me duele la cabeza', $history))
             ->equals('Me duele la cabeza');
     }
@@ -105,7 +105,7 @@ class ConversationalChannelOfferPromptTest extends \Codeception\Test\Unit
     {
         ChatPreprocessContext::set([
             'normalized_text' => 'me duele la cabeza',
-            'user_goal' => 'conversational',
+            'user_goal' => 'conversational_clinical',
             'action_text' => '',
             'extractions' => [
                 ['span' => 'Hospital Central', 'category' => 'efector', 'synonyms' => []],
@@ -124,7 +124,7 @@ class ConversationalChannelOfferPromptTest extends \Codeception\Test\Unit
     {
         ChatPreprocessContext::set([
             'normalized_text' => 'me duele la cabeza',
-            'user_goal' => 'conversational',
+            'user_goal' => 'conversational_clinical',
             'action_text' => '',
             'extractions' => [],
         ]);

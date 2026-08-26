@@ -3,6 +3,7 @@
 namespace common\tests\unit\content;
 
 use Codeception\Test\Unit;
+use common\components\Domain\Content\Service\InfoContentAssistantService;
 use common\components\Domain\Content\Service\InfoContentResolverService;
 use common\models\InfoContentArticle;
 
@@ -30,6 +31,16 @@ class InfoContentResolverServiceTest extends Unit
         $article = InfoContentResolverService::resolveByText('qué es la representación');
         if ($article === null) {
             $this->markTestSkipped('Seed no aplicado.');
+        }
+
+        $this->assertSame('representacion', $article->topic);
+    }
+
+    public function testResolveByTextMatchesRepresentarStem(): void
+    {
+        $article = InfoContentResolverService::resolveByText('quiero representar a mi sobrino');
+        if ($article === null) {
+            $this->markTestSkipped('Seed no aplicado o keywords sin stem.');
         }
 
         $this->assertSame('representacion', $article->topic);
@@ -82,6 +93,61 @@ class InfoContentResolverServiceTest extends Unit
         $a = new InfoContentArticle();
         $a->keywords = '';
         $this->assertSame([], $a->getKeywordList());
+    }
+
+    public function testIntentIdListParsing(): void
+    {
+        $a = new InfoContentArticle();
+        $a->intent_ids = 'personas.vincular-menor-flow, personas.designar-representante-flow';
+        $this->assertSame(
+            ['personas.vincular-menor-flow', 'personas.designar-representante-flow'],
+            $a->getIntentIdList()
+        );
+    }
+
+    public function testTextMatchesTokenStem(): void
+    {
+        $this->assertTrue(InfoContentResolverService::textMatchesToken(
+            'quiero representar a un menor',
+            'representacion'
+        ));
+        $this->assertTrue(InfoContentResolverService::textMatchesToken(
+            'explicame la representacion',
+            'representar'
+        ));
+        $this->assertFalse(InfoContentResolverService::textMatchesToken(
+            'hola mundo',
+            'representacion'
+        ));
+    }
+
+    public function testLooseStem(): void
+    {
+        $this->assertSame(
+            InfoContentResolverService::looseStem('representacion'),
+            InfoContentResolverService::looseStem('representar')
+        );
+        $this->assertSame('represent', InfoContentResolverService::looseStem('representar'));
+    }
+
+    public function testBuildArticlePromptAnchored(): void
+    {
+        $prompt = InfoContentAssistantService::buildArticlePrompt(
+            '¿Qué es?',
+            'Título',
+            'Cuerpo fuente.'
+        );
+        $this->assertStringContainsString('SOLO la fuente inyectada', $prompt);
+        $this->assertStringContainsString('Cuerpo fuente.', $prompt);
+        $this->assertStringContainsString('¿Qué es?', $prompt);
+    }
+
+    public function testVisibilityWithoutIntentsIsTrue(): void
+    {
+        $a = new InfoContentArticle();
+        $a->scope = InfoContentArticle::SCOPE_PRODUCTO;
+        $a->intent_ids = '';
+        $this->assertTrue(InfoContentResolverService::isVisibleToUser($a, 1));
     }
 
     private function ensureSeedExists(): void

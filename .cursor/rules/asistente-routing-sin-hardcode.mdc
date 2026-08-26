@@ -16,16 +16,21 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 2. `IntentClassifier`: **solo** score PHP por keywords; ganador claro → lanza; empate → desambiguación. **Sin IA** de clasificación.
 3. Si no hay match → no-match / sugerencias del catálogo.
 
-**Canal (charla vs trámite vs menú):** lógica en `ChatChannelPolicy` (PHP). No es configuración de intents.
+**Canal (charla vs trámite vs menú vs ambiguous):** `user_goal` del preprocess IA → `ChatRouter`. Predicados de dominio (síntoma, menú, staff) en `ChatChannelPolicy` (PHP). No es configuración de intents.
 
-**Copy conversacional:** `assistant/conversational-channel.yaml` (prompt, labels, prioridad del botón Solicitar Atención).
+**Copy conversacional:** `assistant/prompts/conversational_clinical.yaml`. Encauzamiento ambiguous: `assistant/prompts/ambiguous_conversational.yaml`. Preprocess: `assistant/prompts/preprocess.yaml`.
 
 ## Dónde va cada cosa
 
 | Necesidad | Dónde |
 |-----------|--------|
 | Frases NL del intent, flow, `when`/`next` sobre draft | `assistant/intents/**/*.yaml` |
-| Prompt / labels del canal conversacional | `assistant/conversational-channel.yaml` |
+| Prompt preprocess / por canal | `assistant/prompts/*.yaml` |
+| Prompt / labels del canal conversacional clínico | `assistant/prompts/conversational_clinical.yaml` |
+| Botones de encauzamiento ambiguous | `assistant/prompts/ambiguous_conversational.yaml` |
+| Prioridad CTA booking | `assistant/routing/booking-offer.yaml` |
+| Copy UX por perfil | `assistant/copy/channel-copy.yaml` |
+| Familias NL / hints | `assistant/routing/intent-families.yaml`, `hint-resolution.yaml` |
 | ¿Síntoma o turno? ¿Menú? ¿Staff list/edit? | `ChatChannelPolicy` (PHP) |
 | Alias legacy | `assistant/intent-aliases.yaml` (path vigente) |
 | Atajos visibles | `assistant/assistant-shortcuts.yaml` |
@@ -35,7 +40,9 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 1. Enriquecer `keywords` del intent.
 2. Empate ambiguo entre dos puertas: unificar flow o desambiguación del motor — no un YAML de boost.
 3. Cambiar política de canal (p. ej. qué cuenta como síntoma): ajustar `ChatChannelPolicy`.
-4. Cambiar tono/copy del chat clínico: `conversational-channel.yaml`.
+4. Cambiar tono/copy del chat clínico: `assistant/prompts/conversational_clinical.yaml`.
+5. Cambiar opciones de encauzamiento: `assistant/prompts/ambiguous_conversational.yaml`.
+6. Cambiar prompt preprocess: `assistant/prompts/preprocess.yaml`.
 
 ## Excepciones
 

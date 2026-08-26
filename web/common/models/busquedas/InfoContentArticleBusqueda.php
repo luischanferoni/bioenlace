@@ -13,7 +13,7 @@ class InfoContentArticleBusqueda extends InfoContentArticle
         return [
             [['id', 'id_provincia', 'id_efector', 'priority'], 'integer'],
             [['activo'], 'boolean'],
-            [['topic', 'title', 'scope', 'keywords'], 'safe'],
+            [['topic', 'title', 'scope', 'keywords', 'intent_ids'], 'safe'],
         ];
     }
 

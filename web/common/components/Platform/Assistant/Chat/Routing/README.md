@@ -1,5 +1,12 @@
-# Routing (fase 2)
+# Routing
 
-Despacho por `user_goal` hacia canales (`Operational`, `Conversational`, `Informational`).
+Despacho por `user_goal` (preprocess IA) hacia canales:
 
-No implementado en Fase 1.
+| Goal | Canal |
+|------|--------|
+| `operational` / `in_flow_question` | `OperationalChannel` |
+| `conversational_clinical` | `ConversationalChannel` |
+| `informational_conversational` / `meta` | `InformationalChannel` |
+| `ambiguous_conversational` | `AmbiguousChannel` (botones fijos → `assistant.channel.*`) |
+
+Alias legacy (`conversational`, `informational`, `unclear`) → nombres canónicos en `ChatPreprocessService::canonicalizeGoal`.

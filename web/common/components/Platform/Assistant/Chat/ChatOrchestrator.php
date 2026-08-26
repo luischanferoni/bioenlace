@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat;
 
+use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannelConfig;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
@@ -23,6 +24,14 @@ final class ChatOrchestrator
     public static function handle(array $body, int $userId): array
     {
         $intentId = AssistantDraftNormalizer::scalarString($body['intent_id'] ?? '');
+
+        if ($intentId !== '' && AmbiguousChannelConfig::isSteerIntentId($intentId)) {
+            $content = AssistantDraftNormalizer::scalarString($body['content'] ?? '');
+            $channel = AmbiguousChannelConfig::channelFromSteerIntentId($intentId);
+            $motor = ChatRouter::routeForcedChannel($channel, $content, $userId);
+
+            return self::finalizeMotor($motor);
+        }
 
         if ($intentId !== '') {
             if (!IntentAccessService::userCanExecuteIntent($userId, $intentId)) {

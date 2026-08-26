@@ -14,14 +14,18 @@ class ChatChannelPolicyTest extends Unit
         $this->assertFalse(ChatChannelPolicy::isClinicalSymptomContent('quiero un turno'));
     }
 
-    public function testBookingOfferAfterSymptomHistory(): void
+    public function testBookingOfferOnlyOnCurrentClinicalMessage(): void
     {
         $this->assertFalse(ChatChannelPolicy::shouldOfferBookingButton('Empezó ayer y se me fue poniendo peor'));
-        $this->assertTrue(ChatChannelPolicy::shouldOfferBookingButton(
+        $this->assertFalse(ChatChannelPolicy::shouldOfferBookingButton(
             'Empezó ayer y se me fue poniendo peor',
             'Tengo fiebre, tos y me duele el cuerpo'
         ));
         $this->assertTrue(ChatChannelPolicy::shouldOfferBookingButton('Tengo fiebre, tos y me duele el cuerpo'));
+        $this->assertFalse(ChatChannelPolicy::shouldOfferBookingButton(
+            'cómo saco un turno',
+            'Tengo fiebre, tos y me duele el cuerpo'
+        ));
     }
 
     public function testStaffAgendaEditPredicates(): void

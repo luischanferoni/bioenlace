@@ -107,10 +107,12 @@ PHP solo ensambla; un loader por canal.
 - Prompt preprocess con alcance positivo.
 - Urgencia sin categoría de alarma (flow → 107 directo).
 - `intent_semantics` aligerado (summary/capabilities) en muchos YAML — pendiente migrar/eliminar según fase info_content.
+- Fase 01: goals renombrados + alias; `AmbiguousChannel` + YAML; informational sin caer a clinical; clinical sin `tryResolveFromText`; oferta booking solo por mensaje actual.
+- Fase 02: prompts en `assistant/prompts/`; routing en `assistant/routing/`; copy en `assistant/copy/`; loader `AssistantMetadataLoader`.
+- Fase 03: `intent_ids` en artículos; IA informational anclada; CTA RBAC; match tolerante; seed `pre_consulta`.
 
 ## Deuda explícita a resolver en fases
 
-- `shouldOfferBookingButton` aún mira historial clínico global.
-- Informational aún puede caer a ConversationalChannel.
-- InfoContent aún se consulta desde ConversationalChannel.
-- Dump estático de artículo sin 2ª IA informational.
+- Limpieza residual `intent_semantics` de oferta en YAML (checklist 03 / fase 05).
+- Hilos / desvío / certeza (fase 04).
+- Ofertas/botones y limpieza residual (fase 05).

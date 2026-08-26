@@ -2,6 +2,8 @@
 
 namespace common\components\Platform\Assistant\Chat\Preprocess;
 
+use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
+use common\components\Platform\Core\Product\ProductMetadataPaths;
 use Yii;
 use common\components\Ai\IAManager;
 
@@ -9,17 +11,24 @@ use common\components\Ai\IAManager;
  * Preprocess: canal (user_goal), texto normalizado y extracciones (spans).
  *
  * El `user_goal` lo decide la IA; no hay piso PHP ni fallback heurístico si la IA falla.
- * Predicados de dominio (síntoma, staff data-access): {@see ChatChannelPolicy}.
+ * Prompt: {@see prompts/preprocess.yaml}. Predicados de dominio: {@see ChatChannelPolicy}.
  */
 final class ChatPreprocessService
 {
     public const GOALS = [
         'operational',
-        'conversational',
-        'informational',
+        'conversational_clinical',
+        'informational_conversational',
+        'ambiguous_conversational',
         'in_flow_question',
         'meta',
-        'unclear',
+    ];
+
+    /** Alias legacy del modelo / prompts previos → goal canónico. */
+    private const GOAL_ALIASES = [
+        'conversational' => 'conversational_clinical',
+        'informational' => 'informational_conversational',
+        'unclear' => 'ambiguous_conversational',
     ];
 
     private const ENTITY_CATEGORIES = ['servicio', 'efector', 'persona', 'profesional', 'turno'];
@@ -52,6 +61,27 @@ final class ChatPreprocessService
         return self::ENTITY_CATEGORIES;
     }
 
+    public static function canonicalizeGoal(string $goal): string
+    {
+        $goal = trim($goal);
+        if ($goal === '') {
+            return 'ambiguous_conversational';
+        }
+        if (isset(self::GOAL_ALIASES[$goal])) {
+            $goal = self::GOAL_ALIASES[$goal];
+        }
+        if (!in_array($goal, self::GOALS, true)) {
+            return 'ambiguous_conversational';
+        }
+
+        return $goal;
+    }
+
+    public static function resetCacheForTests(): void
+    {
+        AssistantMetadataLoader::resetCacheForTests();
+    }
+
     /**
      * @return array{
      *   ok: bool,
@@ -73,49 +103,21 @@ final class ChatPreprocessService
 
     public static function stablePromptPrefix(): string
     {
+        $config = AssistantMetadataLoader::load(ProductMetadataPaths::preprocessPromptFile());
+        $template = AssistantMetadataLoader::dotString($config, 'stable_prompt');
+        if ($template === '') {
+            Yii::warning('ChatPreprocessService: stable_prompt vacío en preprocess.yaml', __METHOD__);
+
+            return 'Mensaje:';
+        }
+
         $categoriesList = self::allowedEntityCategories();
-        $categories = json_encode($categoriesList, JSON_UNESCAPED_UNICODE);
-        $goals = json_encode(self::GOALS, JSON_UNESCAPED_UNICODE);
-        $categoriesHuman = implode(', ', $categoriesList);
 
-        return <<<PROMPT
-Clasificá el mensaje del usuario para el asistente de un HIS (sistema de historia clínica y gestión de salud).
-
-Alcance válido (solo esto entra a un canal):
-- Salud, síntomas o malestar del paciente autenticado.
-- Gestiones en Bioenlace sobre sí mismo (turnos, estudios, controles, representación/tutela formal, cuestionarios, lectura de lo propio).
-- Ayuda sobre cómo funciona el producto para hacer esas gestiones.
-- Preguntas sobre un flujo ya abierto o sobre el asistente.
-
-Respondé ÚNICAMENTE con JSON:
-{
-  "normalized_text": "mensaje limpio, ortografía corregida y abreviaturas médicas abiertas cuando aplique",
-  "user_goal": "uno de {$goals}",
-  "action_text": "fragmento que expresa la acción pedida o vacío",
-  "extractions": [
-    {
-      "span": "fragmento mencionado (no palabras sueltas)",
-      "category": "una de {$categories}",
-      "synonyms": ["0-2 variantes ortográficas o abreviaturas"]
-    }
-  ]
-}
-
-Reglas de user_goal (elige uno; debe encajar en el alcance válido):
-- operational: ejecutar o consultar un trámite concreto en el sistema.
-- conversational: saludo, o charla sobre su salud/malestar sin trámite concreto.
-- informational: menú o cómo funciona el producto para gestiones del alcance (aunque mencione "turno" si solo pregunta).
-- in_flow_question: pregunta sobre un flujo ya en curso.
-- meta: pregunta sobre el asistente mismo.
-- unclear: el mensaje no encaja con claridad en ninguno de los anteriores o no está en el alcance válido.
-
-Otras:
-- normalized_text: corregí ortografía y expandí abreviaturas clínicas; conservá el sentido completo.
-- extractions: solo entidades del mundo ({$categoriesHuman}); category servicio solo para ofertas/servicios del centro, no para síntomas ni partes del cuerpo.
-- synonyms: máximo 2 strings por extracción.
-
-Mensaje:
-PROMPT;
+        return AssistantMetadataLoader::applyPlaceholders($template, [
+            'goals_json' => json_encode(self::GOALS, JSON_UNESCAPED_UNICODE),
+            'categories_json' => json_encode($categoriesList, JSON_UNESCAPED_UNICODE),
+            'categories_human' => implode(', ', $categoriesList),
+        ]);
     }
 
     public static function userMessagePart(string $content): string
@@ -165,10 +167,8 @@ PROMPT;
      */
     private static function normalizeResult(array $raw, string $fallbackContent): array
     {
-        $goal = isset($raw['user_goal']) ? trim((string) $raw['user_goal']) : 'unclear';
-        if (!in_array($goal, self::GOALS, true)) {
-            $goal = 'unclear';
-        }
+        $goal = isset($raw['user_goal']) ? trim((string) $raw['user_goal']) : 'ambiguous_conversational';
+        $goal = self::canonicalizeGoal($goal);
 
         $normalized = isset($raw['normalized_text']) ? trim((string) $raw['normalized_text']) : '';
         if ($normalized === '') {
@@ -231,7 +231,7 @@ PROMPT;
         return [
             'ok' => true,
             'normalized_text' => $content,
-            'user_goal' => 'unclear',
+            'user_goal' => 'ambiguous_conversational',
             'action_text' => '',
             'extractions' => [],
         ];

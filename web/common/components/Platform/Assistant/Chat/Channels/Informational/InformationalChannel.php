@@ -3,7 +3,8 @@
 namespace common\components\Platform\Assistant\Chat\Channels\Informational;
 
 use common\components\Domain\Content\Service\InfoContentAssistantService;
-use common\components\Platform\Assistant\Chat\Channels\Conversational\ConversationalChannel;
+use common\components\Platform\Assistant\Chat\Channels\Ambiguous\AmbiguousChannel;
+use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\IntentEngine\IntentEngine;
@@ -11,6 +12,7 @@ use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 
 /**
  * Canal informativo / meta: listar capacidades, contenido editorial o mensaje guía.
+ * No cae al canal clínico: sin artículo → menú, mensaje corto o ambiguous.
  */
 final class InformationalChannel
 {
@@ -33,14 +35,46 @@ final class InformationalChannel
             return $infoArticle;
         }
 
-        if (!self::isCapabilityMenuQuery($content)) {
-            return ConversationalChannel::handle($content, $userId);
+        if (self::isCapabilityMenuQuery($content)) {
+            return self::capabilityMenu($userId);
         }
 
-        if (ChatChannelPolicy::isClinicalSymptomContent($content)) {
-            return ConversationalChannel::handle($content, $userId);
+        $goal = ChatPreprocessContext::userGoal();
+        if ($goal === 'meta') {
+            return AssistantEnvelope::message(
+                InformationalChannelConfig::message(
+                    'meta_intro',
+                    'Soy el asistente de Bioenlace. Contame qué necesitás.'
+                )
+            );
         }
 
+        // Ayuda de producto sin artículo: no mezclar con charla clínica.
+        if (trim($content) === '') {
+            return AmbiguousChannel::handle();
+        }
+
+        return AssistantEnvelope::message(
+            InformationalChannelConfig::message(
+                'no_article',
+                'No encontré una guía sobre eso. Reformulá la pregunta o pedime el trámite concreto.'
+            )
+        );
+    }
+
+    /**
+     * Pregunta explícita por capacidades/menú (no síntomas ni charla clínica).
+     */
+    public static function isCapabilityMenuQuery(string $content): bool
+    {
+        return ChatChannelPolicy::isCapabilityMenuQuery($content);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function capabilityMenu(int $userId): array
+    {
         $catalog = UiActionCatalog::forUser($userId);
         $buttons = [];
         foreach (array_slice($catalog->items, 0, 8) as $it) {
@@ -51,17 +85,12 @@ final class InformationalChannel
         }
 
         return AssistantEnvelope::interactive(
-            'Estas son algunas cosas que podés hacer. Elegí una opción o contame qué necesitás.',
+            InformationalChannelConfig::message(
+                'capability_menu_intro',
+                'Estas son algunas cosas que podés hacer. Elegí una opción o contame qué necesitás.'
+            ),
             $buttons
         );
-    }
-
-    /**
-     * Pregunta explícita por capacidades/menú (no síntomas ni charla clínica).
-     */
-    public static function isCapabilityMenuQuery(string $content): bool
-    {
-        return ChatChannelPolicy::isCapabilityMenuQuery($content);
     }
 
     private static function currentIdEfector(): ?int

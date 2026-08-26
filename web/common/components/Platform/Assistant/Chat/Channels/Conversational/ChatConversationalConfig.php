@@ -2,21 +2,26 @@
 
 namespace common\components\Platform\Assistant\Chat\Channels\Conversational;
 
+use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
-use Symfony\Component\Yaml\Yaml;
-use Yii;
 
 /**
- * Metadata de copy del canal conversacional ({@see conversational-channel.yaml}).
+ * Metadata del canal conversational_clinical ({@see prompts/conversational_clinical.yaml}).
+ * Prioridad booking: {@see routing/booking-offer.yaml}.
  */
 final class ChatConversationalConfig
 {
     /** @var array<string, mixed>|null */
     private static ?array $config = null;
 
+    /** @var array<string, mixed>|null */
+    private static ?array $bookingConfig = null;
+
     public static function resetCacheForTests(): void
     {
         self::$config = null;
+        self::$bookingConfig = null;
+        AssistantMetadataLoader::resetCacheForTests();
     }
 
     /**
@@ -38,7 +43,7 @@ final class ChatConversationalConfig
     }
 
     /**
-     * Fragmento de copy del prompt ({@see conversational-channel.yaml} → prompt_fragments).
+     * Fragmento de copy del prompt ({@see prompts/conversational_clinical.yaml} → prompt_fragments).
      * Ruta con punto: offer.header, offer.continuing_line, etc.
      */
     public static function promptFragment(string $path, string $default = ''): string
@@ -115,23 +120,15 @@ final class ChatConversationalConfig
      */
     public static function bookingOfferIntentPriority(): array
     {
-        $raw = self::load()['booking_offer_intent_priority'] ?? [];
-        if (!is_array($raw)) {
-            return [];
-        }
-        $out = [];
-        foreach ($raw as $id) {
-            if (is_string($id) && trim($id) !== '') {
-                $out[] = trim($id);
-            }
-        }
-
-        return $out;
+        return AssistantMetadataLoader::dotStringList(self::loadBooking(), 'booking_offer_intent_priority');
     }
 
     public static function bookingOfferIntentPrefixFallback(): string
     {
-        return trim((string) (self::load()['booking_offer_intent_prefix_fallback'] ?? ''));
+        return AssistantMetadataLoader::dotString(
+            self::loadBooking(),
+            'booking_offer_intent_prefix_fallback'
+        );
     }
 
     /**
@@ -142,21 +139,24 @@ final class ChatConversationalConfig
         if (self::$config !== null) {
             return self::$config;
         }
-        $path = ProductMetadataPaths::conversationalChannelFile();
-        if (!is_file($path)) {
-            self::$config = [];
 
-            return self::$config;
-        }
-        try {
-            $parsed = Yaml::parseFile($path);
-            self::$config = is_array($parsed) ? $parsed : [];
-        } catch (\Throwable $e) {
-            Yii::warning('ChatConversationalConfig: ' . $e->getMessage(), __METHOD__);
-            self::$config = [];
-        }
+        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::conversationalChannelFile());
 
         return self::$config;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private static function loadBooking(): array
+    {
+        if (self::$bookingConfig !== null) {
+            return self::$bookingConfig;
+        }
+
+        self::$bookingConfig = AssistantMetadataLoader::load(ProductMetadataPaths::bookingOfferFile());
+
+        return self::$bookingConfig;
     }
 
     /**
@@ -172,11 +172,6 @@ final class ChatConversationalConfig
 
     private static function applyPromptPlaceholders(string $text): string
     {
-        $out = $text;
-        foreach (self::basePromptPlaceholders() as $key => $value) {
-            $out = str_replace('{' . $key . '}', $value, $out);
-        }
-
-        return $out;
+        return AssistantMetadataLoader::applyPlaceholders($text, self::basePromptPlaceholders());
     }
 }

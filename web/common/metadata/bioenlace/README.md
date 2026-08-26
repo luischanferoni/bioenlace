@@ -10,12 +10,10 @@ Para desplegar otro vertical: copiar esta carpeta, ajustar YAML y opcionalmente 
 |------|-----------|
 | `assistant/intents/` | Flows conversacionales del asistente (YAML por `intent_id`) |
 | `assistant/globals/` | Piezas reutilizables entre flows |
-| `assistant/conversational-channel.yaml` | `stable_prompt`, `prompt_fragments` y labels del canal conversacional |
+| `assistant/prompts/` | Prompts por canal (`preprocess`, `conversational_clinical`, `informational_conversational`, `ambiguous_conversational`) |
+| `assistant/routing/` | `intent-families`, `hint-resolution`, `booking-offer` |
+| `assistant/copy/channel-copy.yaml` | Textos UX del asistente por perfil de cliente |
 | `assistant/assistant-shortcuts.yaml` | Atajos visibles del asistente |
-| `assistant/assistant-shortcuts-paciente.yaml` | Atajos app paciente |
-| `assistant/assistant-shortcuts-whatsapp-paciente.yaml` | Atajos MVP canal WhatsApp paciente |
-| `assistant/channel-copy.yaml` | Textos UX del asistente por perfil de cliente (sin «pantalla» hardcode) |
-| `assistant/hint-resolution.yaml` | Intents/prefixes de hints por entidad (scheduling, organization, person) |
 | `permission/domain-operation-policies.yaml` | Operaciones RBAC → políticas de recurso |
 | `ui/home_panel_manifest.yaml` | Layout del panel de inicio staff/paciente |
 | `ui/client-context.yaml` | Contextos por cliente (`mobile_paciente`, `whatsapp_paciente`) y ocultamiento staff |
@@ -29,4 +27,4 @@ Contrato de pasos YAML: `common/components/Platform/Assistant/SubIntentEngine/sc
 
 Handlers de dominio (hydrators, políticas, scope, filtros, presentación, panel home, canal conversacional): `common/config/product-registries.php` vía `ProductRegistryConfig`.
 
-Canal conversacional (copy): `assistant/conversational-channel.yaml`. Política síntoma/trámite: `ChatChannelPolicy` (PHP).
+Canal conversacional (copy): `assistant/prompts/conversational_clinical.yaml`. Booking: `assistant/routing/booking-offer.yaml`. Política síntoma/trámite: `ChatChannelPolicy` (PHP).

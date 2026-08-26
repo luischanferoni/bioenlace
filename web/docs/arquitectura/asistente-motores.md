@@ -115,7 +115,7 @@ Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", antes de cae
 
 **Resolución jerárquica:** efector → provincia → producto (global). Si el centro tiene un artículo específico sobre el topic, ese prevalece.
 
-**Integración:** `InformationalChannel` y `ConversationalChannel` llaman a `InfoContentAssistantService::tryResolveFromText()` antes de su lógica habitual. Si hay match, devuelven el artículo como `AssistantEnvelope::message()`.
+**Integración:** `InformationalChannel` llama a `InfoContentAssistantService::tryResolveFromText()`. Si hay match visible (RBAC), responde con IA anclada a la fuente + botones CTA; si la IA falla, dump del artículo (sin inventar).
 
 **Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
 

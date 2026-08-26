@@ -3,7 +3,6 @@
 namespace common\components\Platform\Assistant\Chat\Channels\Conversational;
 
 use common\components\Ai\IAManager;
-use common\components\Domain\Content\Service\InfoContentAssistantService;
 use common\components\Platform\Assistant\Chat\ChatPreprocessContext;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
@@ -210,24 +209,12 @@ final class ConversationalChannel
             return AssistantEnvelope::message('');
         }
 
-        $idEfector = null;
-        try {
-            $id = Yii::$app->user->getIdEfector();
-            $idEfector = $id > 0 ? (int) $id : null;
-        } catch (\Throwable $e) {
-        }
-
-        $infoArticle = InfoContentAssistantService::tryResolveFromText($content, $userId, $idEfector);
-        if ($infoArticle !== null) {
-            return $infoArticle;
-        }
-
         $history = $formattedHistory ?? ConversationalHistoryWindow::formatForPrompt($userId, $content);
-        $patientHistory = ConversationalHistoryWindow::extractPatientLines($history);
-        $offer = ChatChannelPolicy::shouldOfferBookingButton($content, $patientHistory)
+        // Oferta solo por mensaje actual clínico (no historial global de otros hilos).
+        $offer = ChatChannelPolicy::shouldOfferBookingButton($content)
             ? self::resolveBookingOffer($userId)
             : null;
-        $origin = self::bookingOfferOriginContent($content, $patientHistory);
+        $origin = self::bookingOfferOriginContent($content);
 
         $prompt = self::buildPrompt($content, $userId, $offer, $history);
 
@@ -252,13 +239,9 @@ final class ConversationalChannel
 
     public static function bookingOfferOriginContent(string $content, string $patientHistory = ''): string
     {
-        $content = trim($content);
-        if (ChatChannelPolicy::isClinicalSymptomContent($content)) {
-            return $content;
-        }
-        $fromHistory = ChatChannelPolicy::lastLineMatchingClinicalSymptom($patientHistory);
+        unset($patientHistory); // historial global ya no alimenta la oferta (fase 01).
 
-        return $fromHistory !== '' ? $fromHistory : $content;
+        return trim($content);
     }
 
     /**

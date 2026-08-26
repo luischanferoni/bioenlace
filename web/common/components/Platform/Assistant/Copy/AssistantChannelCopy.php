@@ -2,10 +2,8 @@
 
 namespace common\components\Platform\Assistant\Copy;
 
+use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ClientContextMetadata;
-use common\components\Platform\Core\Product\ProductMetadataPaths;
-use Symfony\Component\Yaml\Yaml;
-use Yii;
 use yii\web\Request;
 
 /**
@@ -69,6 +67,7 @@ final class AssistantChannelCopy
     public static function resetCacheForTests(): void
     {
         self::$config = null;
+        AssistantMetadataLoader::resetCacheForTests();
     }
 
     /**
@@ -80,23 +79,12 @@ final class AssistantChannelCopy
             return self::$config;
         }
 
-        self::$config = ['messages' => []];
-        $path = ProductMetadataPaths::assistantChannelCopyFile();
-        if (!is_file($path)) {
-            return self::$config;
-        }
-
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            Yii::warning('AssistantChannelCopy: YAML inválido: ' . $e->getMessage(), __METHOD__);
-
-            return self::$config;
-        }
-
-        if (is_array($data) && isset($data['messages']) && is_array($data['messages'])) {
-            self::$config['messages'] = $data['messages'];
-        }
+        $data = AssistantMetadataLoader::load(
+            \common\components\Platform\Core\Product\ProductMetadataPaths::assistantChannelCopyFile()
+        );
+        self::$config = [
+            'messages' => is_array($data['messages'] ?? null) ? $data['messages'] : [],
+        ];
 
         return self::$config;
     }

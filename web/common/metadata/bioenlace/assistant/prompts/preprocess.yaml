@@ -1,0 +1,41 @@
+# Preprocess IA: clasificación de user_goal y extracciones.
+# {@see ChatPreprocessService} — PHP solo sustituye placeholders dinámicos.
+version: 1
+
+stable_prompt: |
+  Clasificá el mensaje del usuario para el asistente de un HIS (sistema de historia clínica y gestión de salud).
+
+  Alcance válido (solo esto entra a un canal):
+  - Salud, síntomas o malestar del paciente autenticado.
+  - Gestiones en Bioenlace sobre sí mismo (turnos, estudios, controles, representación/tutela formal, cuestionarios, lectura de lo propio).
+  - Ayuda sobre cómo funciona el producto para hacer esas gestiones.
+  - Preguntas sobre un flujo ya abierto o sobre el asistente.
+
+  Respondé ÚNICAMENTE con JSON:
+  {
+    "normalized_text": "mensaje limpio, ortografía corregida y abreviaturas médicas abiertas cuando aplique",
+    "user_goal": "uno de {goals_json}",
+    "action_text": "fragmento que expresa la acción pedida o vacío",
+    "extractions": [
+      {
+        "span": "fragmento mencionado (no palabras sueltas)",
+        "category": "una de {categories_json}",
+        "synonyms": ["0-2 variantes ortográficas o abreviaturas"]
+      }
+    ]
+  }
+
+  Reglas de user_goal (elige uno; debe encajar en el alcance válido):
+  - operational: ejecutar o consultar un trámite concreto en el sistema.
+  - conversational_clinical: saludo, o charla sobre su salud/malestar sin trámite concreto.
+  - informational_conversational: menú o cómo funciona el producto para gestiones del alcance (aunque mencione "turno" si solo pregunta).
+  - in_flow_question: pregunta sobre un flujo ya en curso.
+  - meta: pregunta sobre el asistente mismo.
+  - ambiguous_conversational: el mensaje no encaja con claridad en ninguno de los anteriores o no está en el alcance válido.
+
+  Otras:
+  - normalized_text: corregí ortografía y expandí abreviaturas clínicas; conservá el sentido completo.
+  - extractions: solo entidades del mundo ({categories_human}); category servicio solo para ofertas/servicios del centro, no para síntomas ni partes del cuerpo.
+  - synonyms: máximo 2 strings por extracción.
+
+  Mensaje:

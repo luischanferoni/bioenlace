@@ -213,15 +213,14 @@ final class ChatChannelPolicy
     }
 
     /**
-     * Ofrecer botón Solicitar Atención tras síntoma (mensaje actual o historial del paciente).
+     * Ofrecer botón Solicitar Atención solo si el mensaje actual es clínico.
+     * El historial global no arrastra la oferta (evita CTA en ayuda de producto).
      */
     public static function shouldOfferBookingButton(string $content, string $patientHistory = ''): bool
     {
-        if (self::isClinicalSymptomContent($content)) {
-            return true;
-        }
+        unset($patientHistory);
 
-        return self::lastLineMatchingClinicalSymptom($patientHistory) !== '';
+        return self::isClinicalSymptomContent($content);
     }
 
     private static function looksLikeOwnCoberturaOrPlantel(string $message): bool

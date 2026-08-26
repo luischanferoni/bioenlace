@@ -1,0 +1,10 @@
+# Prioridad del botón Solicitar Atención en conversational_clinical.
+# {@see ChatConversationalConfig::bookingOfferIntentPriority}
+version: 1
+
+booking_offer_intent_priority:
+  - atencion.necesito-atencion
+  - turnos.crear-como-paciente
+  - turnos.crear-para-paciente
+
+booking_offer_intent_prefix_fallback: turnos.crear

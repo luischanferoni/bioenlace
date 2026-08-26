@@ -12,8 +12,9 @@ class ChatPreprocessPromptTest extends Unit
         $prompt = ChatPreprocessService::stablePromptPrefix();
 
         $this->assertStringContainsString('HIS', $prompt);
-        $this->assertStringContainsString('operational: quiere hacer o consultar algo en el sistema', $prompt);
-        $this->assertStringContainsString('conversational: saludo, síntomas, malestar', $prompt);
+        $this->assertStringContainsString('operational: ejecutar o consultar un trámite concreto', $prompt);
+        $this->assertStringContainsString('conversational_clinical: saludo, o charla sobre su salud', $prompt);
+        $this->assertStringContainsString('ambiguous_conversational:', $prompt);
         $this->assertStringNotContainsString('ecografía', $prompt);
         $this->assertStringNotContainsString('estudio/práctica', $prompt);
         $this->assertStringNotContainsString('hospital cerca', $prompt);

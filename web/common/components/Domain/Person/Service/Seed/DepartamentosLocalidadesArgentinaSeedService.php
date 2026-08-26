@@ -266,7 +266,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
     private function mapProvinciaIdByCodIndec(): array
     {
         $map = [];
-        foreach ((new Query())->from('{{%geo_provincias}}')->select(['id_provincia', 'cod_indec'])->all() as $row) {
+        foreach ((new Query())->from('{{%geo_provincias}}')->select(['id_provincia', 'cod_indec'])->where(['id_pais' => \common\models\Pais::ID_ARGENTINA])->all() as $row) {
             $cod = str_pad(trim((string) $row['cod_indec']), 2, '0', STR_PAD_LEFT);
             $map[$cod] = (int) $row['id_provincia'];
         }
@@ -341,7 +341,7 @@ final class DepartamentosLocalidadesArgentinaSeedService
             }
         }
 
-        $byCod = Provincia::findOne(['cod_indec' => $codIndec]);
+        $byCod = Provincia::findOne(['cod_indec' => $codIndec, 'id_pais' => \common\models\Pais::ID_ARGENTINA]);
         if ($byCod instanceof Provincia && (int) $byCod->id_provincia === $idProvincia) {
             return;
         }

@@ -63,10 +63,9 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 | `organization/` | knob | Agenda por encounter class, pricing PES, atributos efector |
 | `scheduling/turno-behavior-profile.yaml` | catalog | Eventos/métricas de comportamiento (no risk policy) |
 | `person/ventanilla-sesion.yaml` | knob | Ventanilla / sesión persona |
-| `person/recursos-provinciales.yaml` | *(legacy → BD)* | Migrar a `geo_*` / seed console; no patrón a copiar |
 | `integrations/` | *(revisar)* | Si es lookup runtime → BD; si es mapa de motor → OK |
 
-> Geo: tablas `geo_*` + seeds console por país (plan multi-país). No dumps en metadata. `person/recursos-provinciales.yaml` es legacy hasta migrar a BD.
+> Geo multi-país: tablas `geo_paises`, `geo_provincias`, `geo_provincia_vecinos`, `geo_recursos_*`. Seeds: `php yii clinical-seed/geo-multipais`.
 
 Contrato de pasos de intent: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 

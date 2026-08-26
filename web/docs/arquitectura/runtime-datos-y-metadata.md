@@ -36,12 +36,12 @@ Plantilla para el resto del proyecto:
 
 1. `geo_paises` + `geo_provincias.id_pais` + unique (país, código subdivision).
 2. `geo_provincia_vecinos` en BD (no constante PHP).
-3. Recursos institucionales en BD (no `person/recursos-provinciales.yaml` en runtime).
-4. `ProvinciaSuggestionService`: país (IP o query `iso2`) → provincias de ese país → vecinos desde BD.
-5. API sugerir: query opcional de país; cada fila con `id_pais` / `iso2`.
-6. Contexto paciente: exporta país derivado de la provincia; UX país → provincia si hace falta.
-7. Seeds por país en console (`…-argentina`, `…-uruguay` de prueba).
-8. MPI: adapter nuestro mapea respuesta externa → `id_provincia`; no reescribir el MPI.
+3. Recursos institucionales en BD (`geo_recursos_*`; seed `clinical-seed/geo-multipais`).
+4. `ProvinciaSuggestionService`: país (IP o query `iso2`/`id_pais`) → provincias de ese país → vecinos desde BD.
+5. API sugerir: query opcional de país; cada fila con `id_pais` / `iso2`; incluye listado `paises`.
+6. Contexto paciente: exporta país derivado de la provincia.
+7. Seeds por país en console (`provincias-argentina`, `provincias-uruguay`, `geo-multipais`).
+8. MPI/RENAPER: resolución de provincia acotada a AR (`id_pais`); extender adapter por país cuando haya fuente.
 
 ## Rollout al resto de YAML
 

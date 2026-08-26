@@ -2,138 +2,205 @@
 
 namespace common\components\Domain\Person\Service;
 
+use common\models\Pais;
 use common\models\Provincia;
 use Yii;
+use yii\db\Query;
 
 /**
- * Ordena provincias para contexto paciente (geolocalización IP + vecinos).
- *
- * El grafo de vecinos es constante de dominio (geografía INDEC estable), no metadata
- * de producto ni filas de BD: no hay beneficio en YAML/admin para un mapa fijo de 24 claves.
+ * Ordena provincias de un país (IP o iso2) usando vecinos en BD.
  */
 final class ProvinciaSuggestionService
 {
+    /** @var list<string> fallbacks AR si GeoIP falla */
+    private const FALLBACK_COD_AR = ['86', '14', '06', '82', '02'];
+
     /** @var list<string> */
-    private const FALLBACK_COD_INDEC = ['86', '14', '06', '82', '02'];
+    private const FALLBACK_COD_UY = ['MO', 'CA', 'SJ'];
 
-    /**
-     * Vecinos por cod_indec (INDEC) para priorizar provincias según geolocalización.
-     *
-     * @var array<string, list<string>>
-     */
-    private const VECINOS_POR_COD_INDEC = [
-        '02' => ['06', '14', '82'],
-        '06' => ['02', '14', '82', '86'],
-        '10' => ['14', '18', '22', '86'],
-        '14' => ['06', '10', '18', '22', '86'],
-        '18' => ['10', '14', '22', '86'],
-        '22' => ['14', '18', '86', '34'],
-        '26' => ['30', '42', '50', '62'],
-        '30' => ['26', '42', '50'],
-        '34' => ['22', '86', '90'],
-        '38' => ['46', '66', '90'],
-        '42' => ['26', '30', '50', '62', '74'],
-        '46' => ['38', '66', '90'],
-        '50' => ['26', '30', '42', '62', '70', '74'],
-        '54' => ['58', '78', '86'],
-        '58' => ['54', '78', '86'],
-        '62' => ['26', '42', '50', '74'],
-        '66' => ['38', '46', '90'],
-        '70' => ['50', '74', '82'],
-        '74' => ['42', '50', '62', '70', '82'],
-        '78' => ['54', '58', '86'],
-        '82' => ['06', '14', '18', '22', '86'],
-        '86' => ['10', '14', '22', '66', '82', '90'],
-        '90' => ['34', '38', '46', '66', '82', '86'],
-        '94' => ['78', '26', '58'],
-    ];
+    /** @var array<int, list<int>>|null */
+    private static ?array $vecinosCache = null;
 
-    /**
-     * Todas las provincias de BD, primero las más cercanas a la IP del cliente.
-     *
-     * @return list<array{id_provincia: int, nombre: string, cod_indec: string}>
-     */
-    public function listarOrdenadasPorProximidadIp(?string $ip = null): array
+    public static function resetCacheForTests(): void
     {
-        $provincias = Provincia::find()->all();
+        self::$vecinosCache = null;
+    }
+
+    /**
+     * @return list<array{id_provincia: int, nombre: string, cod_indec: string, id_pais: int, iso2: string, pais: string}>
+     */
+    public function sugerirPorIp(?string $ip = null, ?string $iso2 = null, ?int $idPais = null): array
+    {
+        $pais = $this->resolvePais($ip, $iso2, $idPais);
+        if ($pais === null) {
+            return [];
+        }
+
+        $provincias = Provincia::find()->where(['id_pais' => (int) $pais->id_pais])->all();
         if ($provincias === []) {
             return [];
         }
 
         $byCod = [];
+        $byId = [];
         foreach ($provincias as $provincia) {
-            $cod = str_pad(trim((string) $provincia->cod_indec), 2, '0', STR_PAD_LEFT);
+            $cod = $this->normalizeCod((string) $provincia->cod_indec);
             $byCod[$cod] = $provincia;
+            $byId[(int) $provincia->id_provincia] = $provincia;
         }
 
         $ip = $ip ?? $this->resolveClientIp();
-        $codIndec = $this->resolveCodIndecFromIp($ip);
-        $vecinos = self::VECINOS_POR_COD_INDEC;
+        $codHint = null;
+        if ($iso2 === null && $idPais === null) {
+            $codHint = $this->resolveSubdivisionCodFromIp($ip, $pais);
+        }
 
-        $orderedCods = [];
-        if ($codIndec !== null && $codIndec !== '' && isset($byCod[$codIndec])) {
-            $orderedCods[] = $codIndec;
-            foreach ($vecinos[$codIndec] ?? [] as $vecino) {
-                $vecino = str_pad(trim((string) $vecino), 2, '0', STR_PAD_LEFT);
-                if (!in_array($vecino, $orderedCods, true) && isset($byCod[$vecino])) {
-                    $orderedCods[] = $vecino;
-                }
-            }
+        $vecinosById = $this->loadVecinosMap(array_keys($byId));
+
+        $orderedIds = [];
+        if ($codHint !== null && isset($byCod[$codHint])) {
+            $this->appendProvinciaAndVecinos($orderedIds, (int) $byCod[$codHint]->id_provincia, $vecinosById, $byId);
         } else {
-            foreach (self::FALLBACK_COD_INDEC as $cod) {
+            foreach ($this->fallbackCodsForPais((int) $pais->id_pais) as $cod) {
                 if (!isset($byCod[$cod])) {
                     continue;
                 }
-                if (!in_array($cod, $orderedCods, true)) {
-                    $orderedCods[] = $cod;
-                }
-                foreach ($vecinos[$cod] ?? [] as $vecino) {
-                    $vecino = str_pad(trim((string) $vecino), 2, '0', STR_PAD_LEFT);
-                    if (!in_array($vecino, $orderedCods, true) && isset($byCod[$vecino])) {
-                        $orderedCods[] = $vecino;
-                    }
-                }
+                $this->appendProvinciaAndVecinos($orderedIds, (int) $byCod[$cod]->id_provincia, $vecinosById, $byId);
             }
         }
 
-        $remaining = array_keys($byCod);
-        usort($remaining, static function (string $a, string $b) use ($byCod): int {
-            return strcasecmp((string) $byCod[$a]->nombre, (string) $byCod[$b]->nombre);
+        $remaining = array_keys($byId);
+        usort($remaining, static function (int $a, int $b) use ($byId): int {
+            return strcasecmp((string) $byId[$a]->nombre, (string) $byId[$b]->nombre);
         });
-        foreach ($remaining as $cod) {
-            if (!in_array($cod, $orderedCods, true)) {
-                $orderedCods[] = $cod;
+        foreach ($remaining as $id) {
+            if (!in_array($id, $orderedIds, true)) {
+                $orderedIds[] = $id;
             }
         }
 
         $out = [];
-        foreach ($orderedCods as $cod) {
-            if (!isset($byCod[$cod])) {
-                continue;
-            }
-            $out[] = $this->exportProvincia($byCod[$cod]);
+        foreach ($orderedIds as $id) {
+            $out[] = $this->exportProvincia($byId[$id], $pais);
         }
 
         return $out;
     }
 
     /**
-     * @return list<array{id_provincia: int, nombre: string, cod_indec: string}>
+     * @return list<array{id_pais: int, iso2: string, nombre: string}>
      */
-    public function sugerirPorIp(?string $ip = null): array
+    public function listarPaises(): array
     {
-        return $this->listarOrdenadasPorProximidadIp($ip);
+        $out = [];
+        foreach (Pais::find()->orderBy(['nombre' => SORT_ASC])->all() as $pais) {
+            $out[] = [
+                'id_pais' => (int) $pais->id_pais,
+                'iso2' => (string) $pais->iso2,
+                'nombre' => (string) $pais->nombre,
+            ];
+        }
+
+        return $out;
+    }
+
+    private function resolvePais(?string $ip, ?string $iso2, ?int $idPais): ?Pais
+    {
+        if ($idPais !== null && $idPais > 0) {
+            return Pais::findOne($idPais);
+        }
+        if ($iso2 !== null && trim($iso2) !== '') {
+            return Pais::findByIso2($iso2);
+        }
+
+        $ip = $ip ?? $this->resolveClientIp();
+        $fromIp = $this->resolveIso2FromIp($ip);
+        if ($fromIp !== null) {
+            $pais = Pais::findByIso2($fromIp);
+            if ($pais instanceof Pais) {
+                return $pais;
+            }
+        }
+
+        return Pais::findOne(Pais::ID_ARGENTINA);
     }
 
     /**
-     * @return array{id_provincia: int, nombre: string, cod_indec: string}
+     * @param list<int> $orderedIds
+     * @param array<int, list<int>> $vecinosById
+     * @param array<int, Provincia> $byId
      */
-    private function exportProvincia(Provincia $provincia): array
+    private function appendProvinciaAndVecinos(array &$orderedIds, int $id, array $vecinosById, array $byId): void
+    {
+        if (!isset($byId[$id])) {
+            return;
+        }
+        if (!in_array($id, $orderedIds, true)) {
+            $orderedIds[] = $id;
+        }
+        foreach ($vecinosById[$id] ?? [] as $vecinoId) {
+            if (!isset($byId[$vecinoId])) {
+                continue;
+            }
+            if (!in_array($vecinoId, $orderedIds, true)) {
+                $orderedIds[] = $vecinoId;
+            }
+        }
+    }
+
+    /**
+     * @param list<int> $idsProvincia
+     * @return array<int, list<int>>
+     */
+    private function loadVecinosMap(array $idsProvincia): array
+    {
+        if ($idsProvincia === []) {
+            return [];
+        }
+        if (self::$vecinosCache === null) {
+            self::$vecinosCache = [];
+            $rows = (new Query())
+                ->from('{{%geo_provincia_vecinos}}')
+                ->select(['id_provincia', 'id_provincia_vecina'])
+                ->all();
+            foreach ($rows as $row) {
+                $from = (int) $row['id_provincia'];
+                $to = (int) $row['id_provincia_vecina'];
+                self::$vecinosCache[$from][] = $to;
+            }
+        }
+
+        $out = [];
+        foreach ($idsProvincia as $id) {
+            $out[$id] = self::$vecinosCache[$id] ?? [];
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function fallbackCodsForPais(int $idPais): array
+    {
+        return match ($idPais) {
+            Pais::ID_URUGUAY => self::FALLBACK_COD_UY,
+            default => self::FALLBACK_COD_AR,
+        };
+    }
+
+    /**
+     * @return array{id_provincia: int, nombre: string, cod_indec: string, id_pais: int, iso2: string, pais: string}
+     */
+    private function exportProvincia(Provincia $provincia, Pais $pais): array
     {
         return [
             'id_provincia' => (int) $provincia->id_provincia,
             'nombre' => (string) $provincia->nombre,
-            'cod_indec' => str_pad(trim((string) $provincia->cod_indec), 2, '0', STR_PAD_LEFT),
+            'cod_indec' => $this->normalizeCod((string) $provincia->cod_indec),
+            'id_pais' => (int) $pais->id_pais,
+            'iso2' => (string) $pais->iso2,
+            'pais' => (string) $pais->nombre,
         ];
     }
 
@@ -150,10 +217,36 @@ final class ProvinciaSuggestionService
         return (string) $req->userIP;
     }
 
-    private function resolveCodIndecFromIp(string $ip): ?string
+    private function resolveIso2FromIp(string $ip): ?string
     {
         if ($ip === '' || $this->isPrivateIp($ip)) {
-            return '86';
+            return Pais::ISO_AR;
+        }
+
+        try {
+            $url = 'http://ip-api.com/json/' . rawurlencode($ip) . '?fields=status,countryCode';
+            $raw = @file_get_contents($url);
+            if ($raw === false) {
+                return null;
+            }
+            $data = json_decode($raw, true);
+            if (!is_array($data) || ($data['status'] ?? '') !== 'success') {
+                return null;
+            }
+            $code = strtoupper(trim((string) ($data['countryCode'] ?? '')));
+
+            return $code !== '' ? $code : null;
+        } catch (\Throwable $e) {
+            Yii::warning('GeoIP pais: ' . $e->getMessage(), 'paciente_contexto');
+
+            return null;
+        }
+    }
+
+    private function resolveSubdivisionCodFromIp(string $ip, Pais $pais): ?string
+    {
+        if ($ip === '' || $this->isPrivateIp($ip)) {
+            return (int) $pais->id_pais === Pais::ID_URUGUAY ? 'MO' : '86';
         }
 
         try {
@@ -166,7 +259,7 @@ final class ProvinciaSuggestionService
             if (!is_array($data) || ($data['status'] ?? '') !== 'success') {
                 return null;
             }
-            if (strtoupper((string) ($data['countryCode'] ?? '')) !== 'AR') {
+            if (strtoupper((string) ($data['countryCode'] ?? '')) !== strtoupper((string) $pais->iso2)) {
                 return null;
             }
             $region = trim((string) ($data['regionName'] ?? ''));
@@ -174,7 +267,7 @@ final class ProvinciaSuggestionService
                 return null;
             }
 
-            return $this->matchProvinciaCodIndec($region);
+            return $this->matchProvinciaCod($region, (int) $pais->id_pais);
         } catch (\Throwable $e) {
             Yii::warning('GeoIP provincia: ' . $e->getMessage(), 'paciente_contexto');
 
@@ -182,17 +275,30 @@ final class ProvinciaSuggestionService
         }
     }
 
-    private function matchProvinciaCodIndec(string $regionName): ?string
+    private function matchProvinciaCod(string $regionName, int $idPais): ?string
     {
         $norm = $this->normalize($regionName);
-        foreach (Provincia::find()->all() as $provincia) {
+        foreach (Provincia::find()->where(['id_pais' => $idPais])->all() as $provincia) {
             $pNorm = $this->normalize((string) $provincia->nombre);
             if ($pNorm === $norm || str_contains($pNorm, $norm) || str_contains($norm, $pNorm)) {
-                return str_pad(trim((string) $provincia->cod_indec), 2, '0', STR_PAD_LEFT);
+                return $this->normalizeCod((string) $provincia->cod_indec);
             }
         }
 
         return null;
+    }
+
+    private function normalizeCod(string $value): string
+    {
+        $value = trim($value);
+        if ($value === '') {
+            return $value;
+        }
+        if (ctype_digit($value) && strlen($value) <= 2) {
+            return str_pad($value, 2, '0', STR_PAD_LEFT);
+        }
+
+        return strtoupper($value);
     }
 
     private function normalize(string $value): string

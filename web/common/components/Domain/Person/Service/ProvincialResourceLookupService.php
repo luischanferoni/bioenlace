@@ -2,13 +2,12 @@
 
 namespace common\components\Domain\Person\Service;
 
-use common\components\Platform\Core\Product\ProductMetadataPaths;
+use common\models\GeoRecursoInstitucional;
+use common\models\GeoRecursoTipoAlias;
 use common\models\Provincia;
-use Symfony\Component\Yaml\Yaml;
-use Yii;
 
 /**
- * Lookup declarativo de recursos institucionales por provincia de contexto.
+ * Lookup de recursos institucionales desde BD (no metadata YAML).
  */
 final class ProvincialResourceLookupService
 {
@@ -21,108 +20,88 @@ final class ProvincialResourceLookupService
         if ($provincia === null) {
             return null;
         }
+        $provincia->populateRelation('pais', $provincia->pais);
 
-        $codIndec = (string) $provincia->cod_indec;
-        $catalog = $this->loadCatalog();
         $type = trim($resourceType);
         if ($type === '' && $queryHint !== null) {
-            $type = $this->inferTypeFromQuery($queryHint, $catalog) ?? '';
+            $type = $this->inferTypeFromQuery($queryHint) ?? '';
         }
         if ($type === '') {
             return null;
         }
 
-        $def = $catalog['recursos'][$type] ?? null;
-        if (!is_array($def)) {
+        if ($queryHint !== null && !$this->queryMatchesType($queryHint, $type)) {
             return null;
         }
 
-        if ($queryHint !== null && !$this->queryMatchesAliases($queryHint, $def)) {
+        $row = GeoRecursoInstitucional::findOne([
+            'tipo' => $type,
+            'id_pais' => (int) $provincia->id_pais,
+            'id_provincia' => $idProvincia,
+        ]);
+        if ($row === null) {
+            $row = GeoRecursoInstitucional::find()
+                ->where([
+                    'tipo' => $type,
+                    'id_pais' => (int) $provincia->id_pais,
+                ])
+                ->andWhere(['id_provincia' => null])
+                ->one();
+        }
+        if ($row === null) {
             return null;
         }
 
-        $row = $def['por_cod_indec'][$codIndec] ?? null;
-        if (!is_array($row)) {
-            return null;
-        }
+        $pais = $provincia->pais;
 
         return [
             'tipo' => $type,
             'id_provincia' => $idProvincia,
             'provincia' => (string) $provincia->nombre,
-            'cod_indec' => $codIndec,
-            'recurso' => $row,
+            'cod_indec' => (string) $provincia->cod_indec,
+            'id_pais' => (int) $provincia->id_pais,
+            'iso2' => $pais !== null ? (string) $pais->iso2 : null,
+            'recurso' => [
+                'nombre' => (string) $row->nombre,
+                'direccion' => $row->direccion,
+                'telefono' => $row->telefono,
+            ],
         ];
     }
 
-    /**
-     * @param array<string, mixed> $catalog
-     */
-    private function inferTypeFromQuery(string $query, array $catalog): ?string
+    private function inferTypeFromQuery(string $query): ?string
     {
         $q = mb_strtolower(trim($query));
         if ($q === '') {
             return null;
         }
-        $recursos = $catalog['recursos'] ?? [];
-        if (!is_array($recursos)) {
-            return null;
-        }
-        foreach ($recursos as $type => $def) {
-            if (!is_array($def)) {
-                continue;
-            }
-            if ($this->queryMatchesAliases($query, $def)) {
-                return (string) $type;
+        foreach (GeoRecursoTipoAlias::find()->all() as $aliasRow) {
+            $a = mb_strtolower(trim((string) $aliasRow->alias));
+            if ($a !== '' && str_contains($q, $a)) {
+                return (string) $aliasRow->tipo;
             }
         }
 
         return null;
     }
 
-    /**
-     * @param array<string, mixed> $def
-     */
-    private function queryMatchesAliases(string $query, array $def): bool
+    private function queryMatchesType(string $query, string $tipo): bool
     {
         $q = mb_strtolower(trim($query));
         if ($q === '') {
             return true;
         }
-        $aliases = $def['aliases'] ?? [];
-        if (!is_array($aliases)) {
+        $aliases = GeoRecursoTipoAlias::find()->where(['tipo' => $tipo])->all();
+        if ($aliases === []) {
             return true;
         }
-        foreach ($aliases as $alias) {
-            if (!is_string($alias)) {
-                continue;
-            }
-            $a = mb_strtolower(trim($alias));
+        foreach ($aliases as $aliasRow) {
+            $a = mb_strtolower(trim((string) $aliasRow->alias));
             if ($a !== '' && str_contains($q, $a)) {
                 return true;
             }
         }
 
         return false;
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function loadCatalog(): array
-    {
-        $path = ProductMetadataPaths::recursosProvincialesFile();
-        if (!is_file($path)) {
-            return [];
-        }
-        try {
-            $data = Yaml::parseFile($path);
-        } catch (\Throwable $e) {
-            Yii::warning('ProvincialResourceLookup: ' . $e->getMessage(), __METHOD__);
-
-            return [];
-        }
-
-        return is_array($data) ? $data : [];
     }
 }

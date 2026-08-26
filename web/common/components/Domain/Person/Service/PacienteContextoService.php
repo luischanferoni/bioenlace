@@ -52,10 +52,14 @@ final class PacienteContextoService
         if ($ctx->id_provincia_contexto) {
             $p = Provincia::findOne((int) $ctx->id_provincia_contexto);
             if ($p instanceof Provincia) {
+                $pais = $p->pais;
                 $provincia = [
                     'id_provincia' => (int) $p->id_provincia,
                     'nombre' => (string) $p->nombre,
                     'cod_indec' => (string) $p->cod_indec,
+                    'id_pais' => (int) $p->id_pais,
+                    'iso2' => $pais !== null ? (string) $pais->iso2 : null,
+                    'pais' => $pais !== null ? (string) $pais->nombre : null,
                 ];
             }
         }

@@ -2,14 +2,13 @@
 
 namespace common\components\Domain\Person\Service\Seed;
 
+use common\models\Pais;
 use common\models\Provincia;
 use Yii;
 use yii\db\Query;
 
 /**
- * Carga idempotente las 24 jurisdicciones argentinas en {{%geo_provincias}}.
- *
- * Definición canónica en {@see self::canonicalRows()} (seed de dominio, no metadata YAML).
+ * Seed console: 24 jurisdicciones AR en geo_provincias (+ id_pais).
  */
 final class ProvinciasArgentinaSeedService
 {
@@ -53,11 +52,9 @@ final class ProvinciasArgentinaSeedService
      */
     public function upsertAll(): array
     {
+        $idPais = Pais::ID_ARGENTINA;
         $rows = self::canonicalRows();
-        if (count($rows) < self::EXPECTED_COUNT) {
-            throw new \RuntimeException('Definición canónica incompleta de provincias.');
-        }
-        $this->realignCodIndecByCanonicalNombre($rows);
+        $this->realignCodIndecByCanonicalNombre($rows, $idPais);
         $inserted = 0;
         $updated = 0;
         $codigos = [];
@@ -65,18 +62,19 @@ final class ProvinciasArgentinaSeedService
         foreach ($rows as $row) {
             $codIndec = $row['cod_indec'];
             $codigos[] = $codIndec;
-            $existing = Provincia::findOne(['cod_indec' => $codIndec]);
+            $existing = Provincia::findOne(['id_pais' => $idPais, 'cod_indec' => $codIndec]);
             if ($existing === null && $codIndec === '02') {
-                $legacy = Provincia::findOne(['cod_indec' => '00']);
+                $legacy = Provincia::findOne(['id_pais' => $idPais, 'cod_indec' => '00']);
                 if ($legacy instanceof Provincia) {
                     $existing = $legacy;
                 }
             }
             if ($existing === null) {
-                $existing = $this->findByCanonicalNombre($row['nombre']);
+                $existing = $this->findByCanonicalNombre($row['nombre'], $idPais);
             }
 
             if ($existing instanceof Provincia) {
+                $existing->id_pais = $idPais;
                 $existing->nombre = $row['nombre'];
                 $existing->region_pais = $row['region_pais'];
                 $existing->superficie = $row['superficie'];
@@ -87,7 +85,7 @@ final class ProvinciasArgentinaSeedService
                 }
                 if (!$existing->save()) {
                     throw new \RuntimeException(
-                        'No se pudo actualizar provincia ' . $codIndec . ': ' . json_encode($existing->getErrors())
+                        'No se pudo actualizar provincia AR ' . $codIndec . ': ' . json_encode($existing->getErrors())
                     );
                 }
                 $updated++;
@@ -97,13 +95,14 @@ final class ProvinciasArgentinaSeedService
 
             $provincia = new Provincia();
             $provincia->id_provincia = $this->resolveIdProvincia($codIndec);
+            $provincia->id_pais = $idPais;
             $provincia->cod_indec = $codIndec;
             $provincia->nombre = $row['nombre'];
             $provincia->region_pais = $row['region_pais'];
             $provincia->superficie = $row['superficie'];
             if (!$provincia->save()) {
                 throw new \RuntimeException(
-                    'No se pudo insertar provincia ' . $codIndec . ': ' . json_encode($provincia->getErrors())
+                    'No se pudo insertar provincia AR ' . $codIndec . ': ' . json_encode($provincia->getErrors())
                 );
             }
             $inserted++;
@@ -125,7 +124,7 @@ final class ProvinciasArgentinaSeedService
             if ($byId === null) {
                 return $preferred;
             }
-            if ((string) $byId->cod_indec === $codIndec) {
+            if ((string) $byId->cod_indec === $codIndec && (int) $byId->id_pais === Pais::ID_ARGENTINA) {
                 return $preferred;
             }
         }
@@ -138,11 +137,9 @@ final class ProvinciasArgentinaSeedService
     }
 
     /**
-     * Corrige swaps históricos de cod_indec (p. ej. 82/86) alineando por nombre canónico.
-     *
      * @param list<array{cod_indec: string, nombre: string, region_pais: string, superficie: int}> $rows
      */
-    private function realignCodIndecByCanonicalNombre(array $rows): void
+    private function realignCodIndecByCanonicalNombre(array $rows, int $idPais): void
     {
         $byNombre = [];
         foreach ($rows as $row) {
@@ -150,7 +147,7 @@ final class ProvinciasArgentinaSeedService
         }
 
         $pending = [];
-        foreach (Provincia::find()->all() as $provincia) {
+        foreach (Provincia::find()->where(['id_pais' => $idPais])->all() as $provincia) {
             $key = $this->normalizeNombre((string) $provincia->nombre);
             if (!isset($byNombre[$key])) {
                 continue;
@@ -185,10 +182,10 @@ final class ProvinciasArgentinaSeedService
         }
     }
 
-    private function findByCanonicalNombre(string $nombre): ?Provincia
+    private function findByCanonicalNombre(string $nombre, int $idPais): ?Provincia
     {
         $target = $this->normalizeNombre($nombre);
-        foreach (Provincia::find()->all() as $provincia) {
+        foreach (Provincia::find()->where(['id_pais' => $idPais])->all() as $provincia) {
             if ($this->normalizeNombre((string) $provincia->nombre) === $target) {
                 return $provincia;
             }

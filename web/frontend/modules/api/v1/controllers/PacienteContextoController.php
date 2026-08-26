@@ -74,7 +74,7 @@ class PacienteContextoController extends BaseController
     /**
      * GET|POST /api/v1/paciente-contexto/sugerir-provincias-como-paciente
      *
-     * Devuelve todas las provincias ordenadas por proximidad a la IP del cliente.
+     * Query opcional: iso2 (AR|UY|…) o id_pais. Sin filtro → país por IP (default AR).
      *
      * @action_name Sugerir provincias por IP
      * @entity PacienteContexto
@@ -87,11 +87,25 @@ class PacienteContextoController extends BaseController
             throw new BadRequestHttpException('Sesión sin persona.');
         }
 
-        $provincias = (new ProvinciaSuggestionService())->sugerirPorIp();
+        $params = $this->mergedParams();
+        $iso2 = isset($params['iso2']) ? trim((string) $params['iso2']) : null;
+        $idPais = isset($params['id_pais']) ? (int) $params['id_pais'] : null;
+        if ($idPais !== null && $idPais <= 0) {
+            $idPais = null;
+        }
+        if ($iso2 === '') {
+            $iso2 = null;
+        }
+
+        $service = new ProvinciaSuggestionService();
+        $provincias = $service->sugerirPorIp(null, $iso2, $idPais);
 
         return [
             'success' => true,
-            'data' => ['provincias' => $provincias],
+            'data' => [
+                'provincias' => $provincias,
+                'paises' => $service->listarPaises(),
+            ],
         ];
     }
 

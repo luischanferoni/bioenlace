@@ -90,7 +90,9 @@ final class RenaperDomicilioPersisterService
         $codIndec = trim((string) ($renaper['id_provincia'] ?? $renaper['cod_provincia'] ?? ''));
         if ($codIndec !== '') {
             $codIndec = str_pad($codIndec, 2, '0', STR_PAD_LEFT);
-            $provincia = Provincia::find()->where(['cod_indec' => $codIndec])->one();
+            $provincia = Provincia::find()
+                ->where(['cod_indec' => $codIndec, 'id_pais' => \common\models\Pais::ID_ARGENTINA])
+                ->one();
             if ($provincia instanceof Provincia) {
                 return $provincia;
             }
@@ -101,7 +103,7 @@ final class RenaperDomicilioPersisterService
             return null;
         }
 
-        $candidatas = Provincia::find()->all();
+        $candidatas = Provincia::find()->where(['id_pais' => \common\models\Pais::ID_ARGENTINA])->all();
         foreach ($candidatas as $provincia) {
             if ($this->normalizeNombreProvincia((string) $provincia->nombre) === $nombre) {
                 return $provincia;

@@ -247,6 +247,8 @@ class ClinicalSeedController extends Controller
     {
         try {
             $result = (new \common\components\Domain\Person\Service\Seed\ProvinciasArgentinaSeedService())->upsertAll();
+            $vecinos = (new \common\components\Domain\Person\Service\Seed\ProvinciaVecinosSeedService())
+                ->upsertForPais(\common\models\Pais::ID_ARGENTINA);
         } catch (\Throwable $e) {
             $this->stderr($e->getMessage() . "\n", Console::FG_RED);
 
@@ -255,10 +257,77 @@ class ClinicalSeedController extends Controller
 
         $this->stdout(
             sprintf(
-                "Provincias Argentina: %d en catálogo, %d insertadas, %d actualizadas.\n",
+                "Provincias AR: %d catálogo, %d insertadas, %d actualizadas. Vecinos +%d.\n",
                 $result['total'],
                 $result['inserted'],
-                $result['updated']
+                $result['updated'],
+                $vecinos['inserted']
+            ),
+            Console::FG_GREEN
+        );
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Seed de prueba: departamentos de Uruguay + vecinos.
+     *
+     * php yii clinical-seed/provincias-uruguay
+     */
+    public function actionProvinciasUruguay(): int
+    {
+        try {
+            $result = (new \common\components\Domain\Person\Service\Seed\ProvinciasUruguaySeedService())->upsertAll();
+            $vecinos = (new \common\components\Domain\Person\Service\Seed\ProvinciaVecinosSeedService())
+                ->upsertForPais(\common\models\Pais::ID_URUGUAY);
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+
+        $this->stdout(
+            sprintf(
+                "Provincias UY: %d catálogo, %d insertadas, %d actualizadas. Vecinos +%d.\n",
+                $result['total'],
+                $result['inserted'],
+                $result['updated'],
+                $vecinos['inserted']
+            ),
+            Console::FG_GREEN
+        );
+
+        return ExitCode::OK;
+    }
+
+    /**
+     * Seed completo multi-país: AR + UY + vecinos + recursos institucionales.
+     *
+     * php yii clinical-seed/geo-multipais
+     */
+    public function actionGeoMultipais(): int
+    {
+        $ar = $this->actionProvinciasArgentina();
+        if ($ar !== ExitCode::OK) {
+            return $ar;
+        }
+        $uy = $this->actionProvinciasUruguay();
+        if ($uy !== ExitCode::OK) {
+            return $uy;
+        }
+        try {
+            $rec = (new \common\components\Domain\Person\Service\Seed\GeoRecursosInstitucionalesSeedService())->upsertDefaults();
+        } catch (\Throwable $e) {
+            $this->stderr($e->getMessage() . "\n", Console::FG_RED);
+
+            return ExitCode::DATAERR;
+        }
+        $this->stdout(
+            sprintf(
+                "Recursos institucionales: tipos=%d aliases(+)=%d recursos=%d.\n",
+                $rec['tipos'],
+                $rec['aliases'],
+                $rec['recursos']
             ),
             Console::FG_GREEN
         );

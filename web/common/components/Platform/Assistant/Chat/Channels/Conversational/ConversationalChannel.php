@@ -128,11 +128,13 @@ final class ConversationalChannel
         }
 
         $label = trim((string) ($offer['label'] ?? ''));
-        $intentId = trim((string) ($offer['intent_id'] ?? ''));
         $summary = trim((string) ($offer['summary'] ?? ''));
         $capabilities = $offer['capabilities'] ?? [];
         if (!is_array($capabilities)) {
             $capabilities = [];
+        }
+        if (count($capabilities) > 4) {
+            $capabilities = array_slice($capabilities, 0, 4);
         }
 
         $lines = [
@@ -149,16 +151,6 @@ final class ConversationalChannel
             );
             if ($buttonLine !== '') {
                 $lines[] = '- ' . $buttonLine;
-            }
-        }
-        if ($intentId !== '') {
-            $intentLine = ChatConversationalConfig::formatPromptFragment(
-                'offer.intent_id_line',
-                ['intent_id' => $intentId],
-                'intent_id: {intent_id}'
-            );
-            if ($intentLine !== '') {
-                $lines[] = '- ' . $intentLine;
             }
         }
         if ($summary !== '') {

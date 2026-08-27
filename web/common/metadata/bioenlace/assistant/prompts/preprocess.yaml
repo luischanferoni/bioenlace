@@ -3,7 +3,8 @@
 version: 1
 
 stable_prompt: |
-  Clasificá el mensaje del usuario para el asistente de un HIS (sistema de historia clínica y gestión de salud).
+  Clasificá el mensaje del usuario para el asistente de Bioenlace: sistema de salud
+  del paciente (turnos, estudios, controles, representación), no asistente clínico.
 
   Alcance válido (solo esto entra a un canal):
   - Salud, síntomas o malestar del paciente autenticado.
@@ -26,12 +27,12 @@ stable_prompt: |
   }
 
   Reglas de user_goal (elige uno; debe encajar en el alcance válido):
-  - operational: ejecutar o consultar un trámite concreto en el sistema.
-  - conversational_clinical: saludo, o charla sobre su salud/malestar sin trámite concreto.
-  - informational_conversational: menú o cómo funciona el producto para gestiones del alcance (aunque mencione "turno" si solo pregunta).
+  - operational: ejecutar o consultar un trámite concreto en el sistema (sacar turno, cancelar, ver recetas, estudio con acto nombrado, etc.).
+  - clinical: malestar, síntoma o preocupación por su salud propia, o seguimiento de eso en el hilo, sin trámite explícito todavía. No incluye saludo solo.
+  - informational: cómo funciona Bioenlace o un trámite (aunque mencione "turno" si solo pregunta cómo). Incluye saludo solo (hola, buen día) sin síntoma.
   - in_flow_question: pregunta sobre un flujo ya en curso.
   - meta: pregunta sobre el asistente mismo.
-  - ambiguous_conversational: el mensaje no encaja con claridad en ninguno de los anteriores o no está en el alcance válido.
+  - ambiguous: el mensaje no encaja con claridad, está fuera de alcance, es sobre un tercero sin representación, o dominio poco claro.
 
   Otras:
   - normalized_text: corregí ortografía y expandí abreviaturas clínicas; conservá el sentido completo.

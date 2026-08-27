@@ -31,7 +31,7 @@ CRUD en `/admin/info-content-article`. Integridad: los `intent_ids` deben existi
 
 Solo el canal **informational** resuelve artículos (el clinical no busca content editorial).
 
-1. Preprocess clasifica `informational_conversational` / `meta`.
+1. Preprocess clasifica `informational` / `meta`.
 2. Match por keywords → artículo más específico del topic.
 3. Si declara intents y el usuario no puede ninguno → no se sirve.
 4. Respuesta: IA con fuente inyectada; si la IA falla → dump del artículo (sin inventar).

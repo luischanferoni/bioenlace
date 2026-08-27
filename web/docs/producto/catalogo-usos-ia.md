@@ -23,7 +23,7 @@ Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte
 | Contexto | Quién | Para qué | Frecuencia típica | Código principal |
 |----------|-------|----------|-------------------|------------------|
 | `asistente-preprocess` | Paciente o staff en chat | Normalizar mensaje, fijar `user_goal`, extracciones ligeras | **Cada mensaje raíz** del asistente | `ChatPreprocessService` |
-| `asistente-conversational` | Paciente (chat) | Respuesta en lenguaje natural (síntomas, orientación, empatía) | Cuando `user_goal` = conversacional | `ConversationalChannel` |
+| `asistente-conversational` | Paciente (chat) | Respuesta breve en canal `clinical` (empatía + orientación prudente) | Cuando `user_goal` = `clinical` | `ConversationalChannel` |
 | `intent-engine-classification` | Paciente o staff | Elegir intent del catálogo cuando las reglas no alcanzan confianza | Ocasional (fallback del motor de intents) | `IntentClassifier` → `IntentEngine` |
 | `motivos-consulta-batch` | Sistema (cron/lote) | Resumir el hilo de motivos en `encounter.reason_text` | **1× por consulta** al cerrar ventana de motivos | `AppointmentReasonBatchService` |
 | `motivos-consulta-insights` | Sistema (tras el lote) | Sugerencias orientativas: hipótesis diagnósticas y prácticas (máx. 5 c/u) | **1× por consulta** si hay resumen de motivos | `AppointmentReasonClinicalInsightsService` |
@@ -58,7 +58,7 @@ flowchart LR
 | Paso | Contexto IA | ¿Siempre IA? |
 |------|-------------|--------------|
 | Entender el mensaje | `asistente-preprocess` | Sí (mensaje con texto nuevo) |
-| Charla clínica / síntomas | `asistente-conversational` | Solo si es conversacional |
+| Charla clinical (malestar sin trámite) | `asistente-conversational` | Solo si `user_goal` = `clinical` |
 | Reservar turno, menú, wizard | — | No (reglas + `SubIntentEngine`) |
 | Clasificar intent (motor global) | `intent-engine-classification` | Solo si reglas + IA del classifier |
 

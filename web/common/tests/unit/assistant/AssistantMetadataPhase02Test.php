@@ -28,9 +28,9 @@ class AssistantMetadataPhase02Test extends Unit
     public function testPromptYamlFilesExist(): void
     {
         $this->assertFileExists(ProductMetadataPaths::preprocessPromptFile());
-        $this->assertFileExists(ProductMetadataPaths::conversationalChannelFile());
-        $this->assertFileExists(ProductMetadataPaths::informationalConversationalFile());
-        $this->assertFileExists(ProductMetadataPaths::ambiguousConversationalFile());
+        $this->assertFileExists(ProductMetadataPaths::clinicalChannelFile());
+        $this->assertFileExists(ProductMetadataPaths::informationalChannelFile());
+        $this->assertFileExists(ProductMetadataPaths::ambiguousChannelFile());
         $this->assertFileExists(ProductMetadataPaths::assistantChannelCopyFile());
         $this->assertFileExists(ProductMetadataPaths::bookingOfferFile());
         $this->assertFileExists(ProductMetadataPaths::intentFamiliesFile());
@@ -40,16 +40,16 @@ class AssistantMetadataPhase02Test extends Unit
     public function testPreprocessPromptLoadedFromYaml(): void
     {
         $prompt = ChatPreprocessService::stablePromptPrefix();
-        $this->assertStringContainsString('conversational_clinical', $prompt);
-        $this->assertStringContainsString('ambiguous_conversational', $prompt);
+        $this->assertStringContainsString('"clinical"', $prompt);
+        $this->assertStringContainsString('"ambiguous"', $prompt);
         $this->assertStringNotContainsString('{goals_json}', $prompt);
     }
 
     public function testClinicalPromptIncludesPerimetro(): void
     {
         $prompt = ChatConversationalConfig::stablePrompt();
-        $this->assertStringContainsString('Perímetro', $prompt);
-        $this->assertStringContainsString('HIS', $prompt);
+        $this->assertStringContainsString('canal clinical', $prompt);
+        $this->assertStringContainsString('sistema de salud', $prompt);
     }
 
     public function testBookingOfferFromRoutingYaml(): void

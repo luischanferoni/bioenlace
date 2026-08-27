@@ -17,18 +17,21 @@ final class ChatPreprocessService
 {
     public const GOALS = [
         'operational',
-        'conversational_clinical',
-        'informational_conversational',
-        'ambiguous_conversational',
+        'clinical',
+        'informational',
+        'ambiguous',
         'in_flow_question',
         'meta',
     ];
 
     /** Alias legacy del modelo / prompts previos → goal canónico. */
     private const GOAL_ALIASES = [
-        'conversational' => 'conversational_clinical',
-        'informational' => 'informational_conversational',
-        'unclear' => 'ambiguous_conversational',
+        'conversational' => 'clinical',
+        'conversational_clinical' => 'clinical',
+        'informational' => 'informational',
+        'informational_conversational' => 'informational',
+        'unclear' => 'ambiguous',
+        'ambiguous_conversational' => 'ambiguous',
     ];
 
     private const ENTITY_CATEGORIES = ['servicio', 'efector', 'persona', 'profesional', 'turno'];
@@ -65,13 +68,13 @@ final class ChatPreprocessService
     {
         $goal = trim($goal);
         if ($goal === '') {
-            return 'ambiguous_conversational';
+            return 'ambiguous';
         }
         if (isset(self::GOAL_ALIASES[$goal])) {
             $goal = self::GOAL_ALIASES[$goal];
         }
         if (!in_array($goal, self::GOALS, true)) {
-            return 'ambiguous_conversational';
+            return 'ambiguous';
         }
 
         return $goal;
@@ -167,7 +170,7 @@ final class ChatPreprocessService
      */
     private static function normalizeResult(array $raw, string $fallbackContent): array
     {
-        $goal = isset($raw['user_goal']) ? trim((string) $raw['user_goal']) : 'ambiguous_conversational';
+        $goal = isset($raw['user_goal']) ? trim((string) $raw['user_goal']) : 'ambiguous';
         $goal = self::canonicalizeGoal($goal);
 
         $normalized = isset($raw['normalized_text']) ? trim((string) $raw['normalized_text']) : '';
@@ -231,7 +234,7 @@ final class ChatPreprocessService
         return [
             'ok' => true,
             'normalized_text' => $content,
-            'user_goal' => 'ambiguous_conversational',
+            'user_goal' => 'ambiguous',
             'action_text' => '',
             'extractions' => [],
         ];

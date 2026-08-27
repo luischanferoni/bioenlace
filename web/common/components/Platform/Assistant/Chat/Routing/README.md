@@ -1,12 +1,10 @@
-# Routing
+# Enruta por `user_goal` tras preprocess (+ hilo / desvío).
 
-Despacho por `user_goal` (preprocess IA) hacia canales:
-
-| Goal | Canal |
-|------|--------|
+| `user_goal` | Handler |
+|-------------|---------|
+| `clinical` | `ConversationalChannel` |
+| `informational` / `meta` | `InformationalChannel` |
+| `ambiguous` | `AmbiguousChannel` (botones fijos → `assistant.channel.*`) |
 | `operational` / `in_flow_question` | `OperationalChannel` |
-| `conversational_clinical` | `ConversationalChannel` |
-| `informational_conversational` / `meta` | `InformationalChannel` |
-| `ambiguous_conversational` | `AmbiguousChannel` (botones fijos → `assistant.channel.*`) |
 
-Alias legacy (`conversational`, `informational`, `unclear`) → nombres canónicos en `ChatPreprocessService::canonicalizeGoal`.
+Alias legacy (`conversational_clinical`, `informational_conversational`, …) se canonicalizan en `ChatPreprocessService::canonicalizeGoal`.

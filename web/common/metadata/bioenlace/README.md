@@ -42,7 +42,7 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 |------|------|-----------|
 | `assistant/intents/` | flow | Flows por `intent_id` (`create`/`read`/`update`/`delete`) |
 | `assistant/globals/` | flow | Piezas reutilizables entre flows |
-| `assistant/prompts/` | copy | Prompts por canal (`preprocess`, `conversational_clinical`, …) |
+| `assistant/prompts/` | copy | Prompts por canal (`preprocess`, `clinical`, `informational`, `ambiguous`, …) |
 | `assistant/routing/` | routing | `intent-families`, `hint-resolution`, `booking-offer`, `thread-state` |
 | `assistant/copy/channel-copy.yaml` | copy | Textos UX por perfil de cliente (`X-App-Client`) |
 | `assistant/assistant-shortcuts.yaml` | manifest | Atajos visibles (si el catálogo está desplegado) |
@@ -69,5 +69,5 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 
 Contrato de pasos de intent: `common/components/Platform/Assistant/SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`.
 
-Canal síntoma/trámite/menú: `ChatChannelPolicy` (PHP). Copy clínico: `assistant/prompts/conversational_clinical.yaml`.
+Canal síntoma/trámite/menú: `ChatChannelPolicy` (PHP). Copy clinical: `assistant/prompts/clinical.yaml`.
 Booking CTA: `assistant/routing/booking-offer.yaml`.

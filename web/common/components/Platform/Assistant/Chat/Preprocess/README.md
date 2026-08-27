@@ -1,9 +1,9 @@
 # Preprocess
 
-IA de preproceso: `normalized_text`, `user_goal`, `action_text`, `extractions`.
+Clasificación IA de cada mensaje raíz: `user_goal`, texto normalizado, extracciones.
 
-El `user_goal` lo decide la IA (sin piso PHP ni fallback heurístico). Si la IA falla, el router responde error y no clasifica.
+Goals canónicos: `operational`, `clinical`, `informational`, `ambiguous`, `in_flow_question`, `meta`.
 
-Goals canónicos: `operational`, `conversational_clinical`, `informational_conversational`, `ambiguous_conversational`, `in_flow_question`, `meta`. Alias legacy (`conversational`, `informational`, `unclear`) en `ChatPreprocessService::canonicalizeGoal`.
+Alias legacy (`conversational`, `conversational_clinical`, `informational`, `informational_conversational`, `unclear`, `ambiguous_conversational`) en `ChatPreprocessService::canonicalizeGoal`.
 
-Predicados de dominio (síntoma, staff data-access, menú): `ChatChannelPolicy`.
+Prompt: `assistant/prompts/preprocess.yaml`. Predicados PHP: `ChatChannelPolicy`.

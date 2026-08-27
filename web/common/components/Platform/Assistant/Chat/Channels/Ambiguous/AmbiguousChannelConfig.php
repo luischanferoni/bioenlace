@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata de encauzamiento ambiguous ({@see prompts/ambiguous_conversational.yaml}).
+ * Metadata de encauzamiento ambiguous ({@see prompts/ambiguous.yaml}).
  */
 final class AmbiguousChannelConfig
 {
@@ -90,7 +90,7 @@ final class AmbiguousChannelConfig
             return self::$config;
         }
 
-        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::ambiguousConversationalFile());
+        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::ambiguousChannelFile());
 
         return self::$config;
     }

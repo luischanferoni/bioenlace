@@ -7,14 +7,15 @@ use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
 
 class ChatPreprocessPromptTest extends Unit
 {
-    public function testStablePromptEsGenericoDeHis(): void
+    public function testStablePromptEsGenericoSistemaSalud(): void
     {
         $prompt = ChatPreprocessService::stablePromptPrefix();
 
-        $this->assertStringContainsString('HIS', $prompt);
+        $this->assertStringContainsString('sistema de salud', $prompt);
         $this->assertStringContainsString('operational: ejecutar o consultar un trámite concreto', $prompt);
-        $this->assertStringContainsString('conversational_clinical: saludo, o charla sobre su salud', $prompt);
-        $this->assertStringContainsString('ambiguous_conversational:', $prompt);
+        $this->assertStringContainsString('clinical:', $prompt);
+        $this->assertStringContainsString('ambiguous:', $prompt);
+        $this->assertStringContainsString('No incluye saludo solo', $prompt);
         $this->assertStringNotContainsString('ecografía', $prompt);
         $this->assertStringNotContainsString('estudio/práctica', $prompt);
         $this->assertStringNotContainsString('hospital cerca', $prompt);

@@ -54,7 +54,7 @@ flowchart LR
 - Texto del usuario y permisos (rutas API del catálogo).
 - `keywords` e `intent_semantics` del YAML de cada intent.
 - Si dos intents empatan de cerca → **desambiguación** (botones); no boosts entre `intent_id`.
-- Canal (síntoma → conversational, etc.): `ChatChannelPolicy` (PHP). Copy: `assistant/prompts/conversational_clinical.yaml`.
+- Canal (síntoma → `clinical`, etc.): `ChatChannelPolicy` (PHP). Copy: `assistant/prompts/clinical.yaml`.
 
 ---
 

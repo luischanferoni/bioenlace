@@ -41,10 +41,10 @@ Clasificación de acción: keywords del intent + desambiguación si hay empate (
 
 | Canal | Rol | Botones |
 |-------|-----|---------|
-| Clinical | Saludo / malestar **propio** | Solicitar Atención si hay síntoma en el hilo (o certeza); saludo solo → sin CTA |
-| Informational | Cómo funciona el producto | Artículo + CTA a intent(s) del artículo |
-| Ambiguous | Dominio poco claro / desvío de hilo | Preguntas fijas para encauzar |
-| Operational | Trámite concreto | Flow del intent |
+| **clinical** | Malestar o preocupación por **su** salud sin trámite explícito | Solicitar Atención si hay síntoma en el hilo (o certeza) |
+| **informational** | Cómo funciona el producto; **saludo solo** sin síntoma | Artículo + CTA a intent(s) del artículo |
+| **ambiguous** | Dominio poco claro / desvío de hilo | Preguntas fijas para encauzar |
+| **operational** | Trámite concreto | Flow del intent |
 
 Hilos: no se mezcla historial clínico con ayuda de producto; un cambio de dominio puede pasar por ambiguous. Metadata de prompts: `assistant/prompts/`; booking: `assistant/routing/booking-offer.yaml`.
 

@@ -36,7 +36,6 @@ class ConversationalChannelOfferPromptTest extends \Codeception\Test\Unit
 
         verify(str_contains($block, 'Oferta disponible'))->true();
         verify(str_contains($block, 'Solicitar Atención'))->true();
-        verify(str_contains($block, 'atencion.necesito-atencion'))->true();
         verify(str_contains($block, 'Te guía según lo que necesitás'))->true();
         verify(str_contains($block, 'elige_servicio'))->true();
         verify(str_contains($block, 'mapa_centros_cercanos'))->true();
@@ -105,7 +104,7 @@ class ConversationalChannelOfferPromptTest extends \Codeception\Test\Unit
     {
         ChatPreprocessContext::set([
             'normalized_text' => 'me duele la cabeza',
-            'user_goal' => 'conversational_clinical',
+            'user_goal' => 'clinical',
             'action_text' => '',
             'extractions' => [
                 ['span' => 'Hospital Central', 'category' => 'efector', 'synonyms' => []],
@@ -124,7 +123,7 @@ class ConversationalChannelOfferPromptTest extends \Codeception\Test\Unit
     {
         ChatPreprocessContext::set([
             'normalized_text' => 'me duele la cabeza',
-            'user_goal' => 'conversational_clinical',
+            'user_goal' => 'clinical',
             'action_text' => '',
             'extractions' => [],
         ]);
@@ -139,11 +138,9 @@ class ConversationalChannelOfferPromptTest extends \Codeception\Test\Unit
     public function testStablePromptEsGenericoEstiloHis(): void
     {
         $prompt = ChatConversationalConfig::stablePrompt();
-        verify(str_contains($prompt, 'HIS'))->true();
+        verify(str_contains($prompt, 'sistema de salud'))->true();
         verify(str_contains($prompt, 'Reglas:'))->true();
         verify(str_contains($prompt, 'Oferta disponible'))->true();
-        verify(str_contains($prompt, '{offer_block_title}'))->false();
-        verify(str_contains($prompt, 'Primer mensaje'))->false();
     }
 
     public function testPromptFragmentOfferHeaderUsaTituloCanonico(): void

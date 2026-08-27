@@ -1,5 +1,5 @@
-# Canal ambiguous_conversational: encauzamiento sin 2.ª IA.
-# Botones → intent_id `assistant.channel.<next_channel>` (ChatOrchestrator / ChatRouter).
+# Canal ambiguous: encauzamiento sin 2.ª IA.
+# Botones → intent_id `assistant.channel.<next_channel>` (ChatRouter).
 version: 1
 
 prompt_text: >
@@ -9,12 +9,12 @@ prompt_text: >
 options:
   - id: clinical
     label: Es sobre mi salud o malestar
-    next_channel: conversational_clinical
+    next_channel: clinical
     content: Quiero hablar de mi salud
 
   - id: product_help
     label: Cómo funciona la app o un trámite
-    next_channel: informational_conversational
+    next_channel: informational
     content: Quiero entender cómo funciona Bioenlace
 
   - id: do_now

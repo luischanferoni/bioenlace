@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata del canal informational ({@see prompts/informational_conversational.yaml}).
+ * Metadata del canal informational ({@see prompts/informational.yaml}).
  */
 final class InformationalChannelConfig
 {
@@ -94,7 +94,7 @@ final class InformationalChannelConfig
             return self::$config;
         }
 
-        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::informationalConversationalFile());
+        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::informationalChannelFile());
 
         return self::$config;
     }

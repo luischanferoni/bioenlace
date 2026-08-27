@@ -45,7 +45,7 @@ final class AssistantThreadStateService
 
     /**
      * Observa el mensaje, actualiza estado de conversación y fija {@see AssistantThreadContext}.
-     * Si hay desvío de dominio, puede reescribir el goal a ambiguous_conversational.
+     * Si hay desvío de dominio, puede reescribir el goal a ambiguous.
      *
      * @return array{goal: string, thread_tag: string, clear_history: bool, offer_cta: bool}
      */
@@ -65,7 +65,7 @@ final class AssistantThreadStateService
             $clearHistory = true;
             $confidence = 0.0;
             if (self::shouldForceAmbiguous($incomingTag)) {
-                $goal = 'ambiguous_conversational';
+                $goal = 'ambiguous';
                 $incomingTag = self::tagFromGoal($goal);
             }
         }

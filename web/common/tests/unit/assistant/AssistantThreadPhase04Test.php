@@ -26,6 +26,7 @@ class AssistantThreadPhase04Test extends Unit
 
     public function testTagFromGoal(): void
     {
+        $this->assertSame('clinical', AssistantThreadStateService::tagFromGoal('clinical'));
         $this->assertSame('clinical', AssistantThreadStateService::tagFromGoal('conversational_clinical'));
         $this->assertSame('product_help', AssistantThreadStateService::tagFromGoal('informational'));
         $this->assertSame('ambiguous', AssistantThreadStateService::tagFromGoal('unclear'));
@@ -34,8 +35,8 @@ class AssistantThreadPhase04Test extends Unit
 
     public function testClinicalSymptomRaisesConfidenceAndCta(): void
     {
-        $r = AssistantThreadStateService::observe(0, 'conversational_clinical', 'me duele la cabeza');
-        $this->assertSame('conversational_clinical', $r['goal']);
+        $r = AssistantThreadStateService::observe(0, 'clinical', 'me duele la cabeza');
+        $this->assertSame('clinical', $r['goal']);
         $this->assertSame('clinical', $r['thread_tag']);
         $this->assertTrue($r['offer_cta']);
         $this->assertFalse($r['clear_history']);
@@ -44,9 +45,9 @@ class AssistantThreadPhase04Test extends Unit
 
     public function testDiversionToProductHelpForcesAmbiguous(): void
     {
-        AssistantThreadStateService::observe(0, 'conversational_clinical', 'tengo fiebre');
-        $r = AssistantThreadStateService::observe(0, 'informational_conversational', 'cómo saco un turno');
-        $this->assertSame('ambiguous_conversational', $r['goal']);
+        AssistantThreadStateService::observe(0, 'clinical', 'tengo fiebre');
+        $r = AssistantThreadStateService::observe(0, 'informational', 'cómo saco un turno');
+        $this->assertSame('ambiguous', $r['goal']);
         $this->assertSame('ambiguous', $r['thread_tag']);
         $this->assertTrue($r['clear_history']);
         $this->assertTrue(AssistantThreadContext::diverted());
@@ -54,7 +55,7 @@ class AssistantThreadPhase04Test extends Unit
 
     public function testDiversionToOperationalDoesNotForceAmbiguous(): void
     {
-        AssistantThreadStateService::observe(0, 'conversational_clinical', 'tengo fiebre');
+        AssistantThreadStateService::observe(0, 'clinical', 'tengo fiebre');
         $r = AssistantThreadStateService::observe(0, 'operational', 'cancelar mi turno');
         $this->assertSame('operational', $r['goal']);
         $this->assertSame('operational', $r['thread_tag']);
@@ -63,9 +64,9 @@ class AssistantThreadPhase04Test extends Unit
 
     public function testFromAmbiguousDoesNotCountAsDiversion(): void
     {
-        AssistantThreadStateService::observe(0, 'ambiguous_conversational', 'asdf');
-        $r = AssistantThreadStateService::observe(0, 'conversational_clinical', 'me duele');
-        $this->assertSame('conversational_clinical', $r['goal']);
+        AssistantThreadStateService::observe(0, 'ambiguous', 'asdf');
+        $r = AssistantThreadStateService::observe(0, 'clinical', 'me duele');
+        $this->assertSame('clinical', $r['goal']);
         $this->assertFalse($r['clear_history']);
     }
 

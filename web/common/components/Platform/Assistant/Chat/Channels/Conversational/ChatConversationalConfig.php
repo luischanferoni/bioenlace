@@ -6,7 +6,7 @@ use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 
 /**
- * Metadata del canal conversational_clinical ({@see prompts/conversational_clinical.yaml}).
+ * Metadata del canal clinical ({@see prompts/clinical.yaml}).
  * Prioridad booking: {@see routing/booking-offer.yaml}.
  */
 final class ChatConversationalConfig
@@ -43,7 +43,7 @@ final class ChatConversationalConfig
     }
 
     /**
-     * Fragmento de copy del prompt ({@see prompts/conversational_clinical.yaml} → prompt_fragments).
+     * Fragmento de copy del prompt ({@see prompts/clinical.yaml} → prompt_fragments).
      * Ruta con punto: offer.header, offer.continuing_line, etc.
      */
     public static function promptFragment(string $path, string $default = ''): string
@@ -140,7 +140,7 @@ final class ChatConversationalConfig
             return self::$config;
         }
 
-        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::conversationalChannelFile());
+        self::$config = AssistantMetadataLoader::load(ProductMetadataPaths::clinicalChannelFile());
 
         return self::$config;
     }

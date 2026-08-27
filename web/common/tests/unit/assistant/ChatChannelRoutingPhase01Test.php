@@ -22,28 +22,32 @@ class ChatChannelRoutingPhase01Test extends Unit
 
     public function testCanonicalizeGoalAliases(): void
     {
-        $this->assertSame('conversational_clinical', ChatPreprocessService::canonicalizeGoal('conversational'));
-        $this->assertSame('informational_conversational', ChatPreprocessService::canonicalizeGoal('informational'));
-        $this->assertSame('ambiguous_conversational', ChatPreprocessService::canonicalizeGoal('unclear'));
-        $this->assertSame('ambiguous_conversational', ChatPreprocessService::canonicalizeGoal('no-existe'));
+        $this->assertSame('clinical', ChatPreprocessService::canonicalizeGoal('conversational'));
+        $this->assertSame('clinical', ChatPreprocessService::canonicalizeGoal('conversational_clinical'));
+        $this->assertSame('informational', ChatPreprocessService::canonicalizeGoal('informational'));
+        $this->assertSame('informational', ChatPreprocessService::canonicalizeGoal('informational_conversational'));
+        $this->assertSame('ambiguous', ChatPreprocessService::canonicalizeGoal('unclear'));
+        $this->assertSame('ambiguous', ChatPreprocessService::canonicalizeGoal('ambiguous_conversational'));
+        $this->assertSame('ambiguous', ChatPreprocessService::canonicalizeGoal('no-existe'));
         $this->assertSame('operational', ChatPreprocessService::canonicalizeGoal('operational'));
     }
 
     public function testGoalsIncludeRenamedChannels(): void
     {
-        $this->assertContains('conversational_clinical', ChatPreprocessService::GOALS);
-        $this->assertContains('informational_conversational', ChatPreprocessService::GOALS);
-        $this->assertContains('ambiguous_conversational', ChatPreprocessService::GOALS);
+        $this->assertContains('clinical', ChatPreprocessService::GOALS);
+        $this->assertContains('informational', ChatPreprocessService::GOALS);
+        $this->assertContains('ambiguous', ChatPreprocessService::GOALS);
         $this->assertNotContains('unclear', ChatPreprocessService::GOALS);
         $this->assertNotContains('conversational', ChatPreprocessService::GOALS);
+        $this->assertNotContains('conversational_clinical', ChatPreprocessService::GOALS);
     }
 
     public function testStablePromptListsNewGoals(): void
     {
         $prompt = ChatPreprocessService::stablePromptPrefix();
-        $this->assertStringContainsString('conversational_clinical', $prompt);
-        $this->assertStringContainsString('informational_conversational', $prompt);
-        $this->assertStringContainsString('ambiguous_conversational', $prompt);
+        $this->assertStringContainsString('"clinical"', $prompt);
+        $this->assertStringContainsString('"informational"', $prompt);
+        $this->assertStringContainsString('"ambiguous"', $prompt);
         $this->assertStringContainsString('Alcance válido', $prompt);
     }
 
@@ -61,7 +65,7 @@ class ChatChannelRoutingPhase01Test extends Unit
 
     public function testDispatchAmbiguousReturnsInteractive(): void
     {
-        $out = ChatRouter::dispatchByGoal('ambiguous_conversational', 'asdf qwerty', 0);
+        $out = ChatRouter::dispatchByGoal('ambiguous', 'asdf qwerty', 0);
         $this->assertSame('interactive', $out['kind']);
         $this->assertNotEmpty($out['buttons']);
     }
@@ -74,10 +78,16 @@ class ChatChannelRoutingPhase01Test extends Unit
 
     public function testSteerIntentPrefix(): void
     {
-        $this->assertTrue(AmbiguousChannelConfig::isSteerIntentId('assistant.channel.conversational_clinical'));
+        $this->assertTrue(AmbiguousChannelConfig::isSteerIntentId('assistant.channel.clinical'));
         $this->assertSame(
-            'conversational_clinical',
-            AmbiguousChannelConfig::channelFromSteerIntentId('assistant.channel.conversational_clinical')
+            'clinical',
+            AmbiguousChannelConfig::channelFromSteerIntentId('assistant.channel.clinical')
+        );
+        $this->assertSame(
+            'clinical',
+            ChatPreprocessService::canonicalizeGoal(
+                AmbiguousChannelConfig::channelFromSteerIntentId('assistant.channel.conversational_clinical')
+            )
         );
         $this->assertFalse(AmbiguousChannelConfig::isSteerIntentId('atencion.necesito-atencion'));
     }

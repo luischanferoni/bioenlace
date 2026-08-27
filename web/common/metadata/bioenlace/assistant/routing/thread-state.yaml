@@ -6,12 +6,12 @@ version: 1
 
 # user_goal → thread_tag (dominio del hilo)
 goal_to_thread_tag:
-  conversational_clinical: clinical
-  informational_conversational: product_help
+  clinical: clinical
+  informational: product_help
   meta: product_help
   operational: operational
   in_flow_question: operational
-  ambiguous_conversational: ambiguous
+  ambiguous: ambiguous
 
 certainty:
   # Tras síntoma clínico en el mensaje actual

@@ -18,7 +18,7 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 
 **Canal (charla vs trámite vs menú vs ambiguous):** `user_goal` del preprocess IA → `ChatRouter`. Predicados de dominio (síntoma, menú, staff) en `ChatChannelPolicy` (PHP). No es configuración de intents.
 
-**Copy conversacional:** `assistant/prompts/conversational_clinical.yaml`. Encauzamiento ambiguous: `assistant/prompts/ambiguous_conversational.yaml`. Preprocess: `assistant/prompts/preprocess.yaml`.
+**Copy canal clinical:** `assistant/prompts/clinical.yaml`. Encauzamiento ambiguous: `assistant/prompts/ambiguous.yaml`. Preprocess: `assistant/prompts/preprocess.yaml`.
 
 ## Dónde va cada cosa
 
@@ -26,8 +26,8 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 |-----------|--------|
 | Frases NL del intent, flow, `when`/`next` sobre draft | `assistant/intents/**/*.yaml` |
 | Prompt preprocess / por canal | `assistant/prompts/*.yaml` |
-| Prompt / labels del canal conversacional clínico | `assistant/prompts/conversational_clinical.yaml` |
-| Botones de encauzamiento ambiguous | `assistant/prompts/ambiguous_conversational.yaml` |
+| Prompt / labels del canal clinical | `assistant/prompts/clinical.yaml` |
+| Botones de encauzamiento ambiguous | `assistant/prompts/ambiguous.yaml` |
 | Prioridad CTA booking + capability_labels | `assistant/routing/booking-offer.yaml` |
 | Copy UX por perfil | `assistant/copy/channel-copy.yaml` |
 | Familias NL / hints | `assistant/routing/intent-families.yaml`, `hint-resolution.yaml` |
@@ -40,8 +40,8 @@ No enumerar `intent_id` en orquestadores ni en prompts de IA para “elegir la a
 1. Enriquecer `keywords` del intent.
 2. Empate ambiguo entre dos puertas: unificar flow o desambiguación del motor — no un YAML de boost.
 3. Cambiar política de canal (p. ej. qué cuenta como síntoma): ajustar `ChatChannelPolicy`.
-4. Cambiar tono/copy del chat clínico: `assistant/prompts/conversational_clinical.yaml`.
-5. Cambiar opciones de encauzamiento: `assistant/prompts/ambiguous_conversational.yaml`.
+4. Cambiar tono/copy del canal clinical: `assistant/prompts/clinical.yaml`.
+5. Cambiar opciones de encauzamiento: `assistant/prompts/ambiguous.yaml`.
 6. Cambiar prompt preprocess: `assistant/prompts/preprocess.yaml`.
 
 ## Excepciones

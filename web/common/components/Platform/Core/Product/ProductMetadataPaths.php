@@ -87,9 +87,15 @@ final class ProductMetadataPaths
         return self::assistantRoutingDir() . DIRECTORY_SEPARATOR . $name;
     }
 
+    public static function clinicalChannelFile(): string
+    {
+        return self::assistantPromptFile('clinical');
+    }
+
+    /** @deprecated alias {@see clinicalChannelFile()} */
     public static function conversationalChannelFile(): string
     {
-        return self::assistantPromptFile('conversational_clinical');
+        return self::clinicalChannelFile();
     }
 
     public static function preprocessPromptFile(): string
@@ -97,14 +103,26 @@ final class ProductMetadataPaths
         return self::assistantPromptFile('preprocess');
     }
 
-    public static function informationalConversationalFile(): string
+    public static function informationalChannelFile(): string
     {
-        return self::assistantPromptFile('informational_conversational');
+        return self::assistantPromptFile('informational');
     }
 
+    /** @deprecated alias {@see informationalChannelFile()} */
+    public static function informationalConversationalFile(): string
+    {
+        return self::informationalChannelFile();
+    }
+
+    public static function ambiguousChannelFile(): string
+    {
+        return self::assistantPromptFile('ambiguous');
+    }
+
+    /** @deprecated alias {@see ambiguousChannelFile()} */
     public static function ambiguousConversationalFile(): string
     {
-        return self::assistantPromptFile('ambiguous_conversational');
+        return self::ambiguousChannelFile();
     }
 
     public static function bookingOfferFile(): string

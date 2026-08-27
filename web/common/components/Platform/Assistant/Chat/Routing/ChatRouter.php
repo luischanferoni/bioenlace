@@ -56,7 +56,7 @@ final class ChatRouter
 
         $goal = isset($preprocess['user_goal'])
             ? ChatPreprocessService::canonicalizeGoal((string) $preprocess['user_goal'])
-            : 'ambiguous_conversational';
+            : 'ambiguous';
 
         $observed = AssistantThreadStateService::observe($userId, $goal, $content);
         $goal = $observed['goal'];
@@ -122,14 +122,14 @@ final class ChatRouter
             case 'in_flow_question':
                 return OperationalChannel::handle($content, null, $userId);
 
-            case 'conversational_clinical':
+            case 'clinical':
                 return ConversationalChannel::handle($content, $userId, $formattedHistory);
 
-            case 'informational_conversational':
+            case 'informational':
             case 'meta':
                 return InformationalChannel::handle($content, $userId);
 
-            case 'ambiguous_conversational':
+            case 'ambiguous':
             default:
                 return AmbiguousChannel::handle();
         }

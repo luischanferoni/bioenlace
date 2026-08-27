@@ -13,7 +13,7 @@
 - [x] Captura clínica unificada en piso (mismo pipeline que ambulatorio/guardia; banner de episodio).
 - [x] Alta clínica en el encounter: la indica el médico al documentar; el resto de roles no decide el alta.
 - [x] Plantillas de epicrisis por efector (y globales) con ABM en web.
-- [x] Cobertura de plantel de piso (roster IMP), distinta de la grilla de turnos.
+- [x] Horario de presencia de piso (IMP), distinto de la grilla de turnos.
 - [x] Sugerencia de cama al ingresar (ranking; el humano confirma).
 - [x] Seguimiento post-alta programado (touchpoints; ramas según respuestas).
 

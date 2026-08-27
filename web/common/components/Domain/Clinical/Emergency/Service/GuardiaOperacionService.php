@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Emergency\Service;
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEstado;
 use common\components\Domain\Clinical\Emergency\Enum\CircuitoEventType;
 use common\components\Domain\Clinical\PatientHistoriaUrl;
-use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaActivaService;
+use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioActivaService;
 use common\models\Clinical\Encounter;
 use common\models\Guardia;
 use Yii;
@@ -36,7 +36,7 @@ final class GuardiaOperacionService
         if ($idPes <= 0) {
             throw new \InvalidArgumentException('Se requiere id_profesional_efector_servicio.');
         }
-        ProfesionalCoberturaActivaService::assertPesPuedeAsignarEmer($idPes, $idEfector);
+        ProfesionalHorarioActivaService::assertPesPuedeAsignarEmer($idPes, $idEfector);
         $guardia->id_profesional_efector_servicio = $idPes;
         $guardia->updateAttributes(['id_profesional_efector_servicio' => $idPes]);
         $this->circuito->recordEvent($guardiaId, CircuitoEventType::ASIGNACION, $idPes, [
@@ -76,7 +76,7 @@ final class GuardiaOperacionService
                 && $pesId > 0
                 && (int) ($guardia->id_profesional_efector_servicio ?? 0) <= 0
             ) {
-                ProfesionalCoberturaActivaService::assertPesPuedeAsignarEmer($pesId, $idEfector);
+                ProfesionalHorarioActivaService::assertPesPuedeAsignarEmer($pesId, $idEfector);
                 $guardia->id_profesional_efector_servicio = $pesId;
                 $guardia->updateAttributes(['id_profesional_efector_servicio' => $pesId]);
                 $this->circuito->recordEvent($guardiaId, CircuitoEventType::ASIGNACION, $pesId, [

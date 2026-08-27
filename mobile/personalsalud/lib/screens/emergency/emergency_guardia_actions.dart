@@ -116,7 +116,7 @@ class EmergencyGuardiaActions {
     required EmergencyBoardItem item,
     required EmergencyGuardiaApi api,
     required VoidCallback onChanged,
-    bool sessionTieneCobertura = true,
+    bool sessionTieneHorario = true,
     bool puedeAtender = false,
     bool puedeTriage = false,
     bool puedeIngresar = false,
@@ -267,15 +267,15 @@ class EmergencyGuardiaActions {
     EmergencyBoardItem item,
     EmergencyGuardiaApi api,
     VoidCallback onChanged, {
-    bool sessionTieneCobertura = true,
+    bool sessionTieneHorario = true,
   }) async {
-    if (!sessionTieneCobertura) {
+    if (!sessionTieneHorario) {
       final cont = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Sin horario de plantel'),
+          title: const Text('Sin horario'),
           content: const Text(
-            'No tenés horario de plantel de guardia cargado. '
+            'No tenés horario de guardia cargado. '
             'Para atender, configurá tus horarios en el Asistente («Configurar mis horarios») '
             'o pedile a coordinación / administración del centro que te los asigne. '
             'Podés intentar igual, pero el servidor puede rechazar la asignación.',

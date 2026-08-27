@@ -61,9 +61,9 @@ panels:
         retiro_administrativo: guardia.retiro_administrativo
         retiro_clinico: guardia.egreso_clinico
       sections:
-        - id: staff_cobertura_activa
-          provider: staff_cobertura_activa
-          kind: staff_cobertura_activa
+        - id: staff_horario_activo
+          provider: staff_horario_activo
+          kind: staff_horario_activo
           poll_interval_seconds: 60
         - id: staff_guardia_kpis
           provider: staff_guardia_kpis
@@ -106,9 +106,9 @@ panels:
             kind: surgeries_day
       imp_floor:
         sections:
-          - id: staff_cobertura_activa
-            provider: staff_cobertura_activa
-            kind: staff_cobertura_activa
+          - id: staff_horario_activo
+            provider: staff_horario_activo
+            kind: staff_horario_activo
             poll_interval_seconds: 60
           - id: staff_internacion_kpis
             provider: staff_internacion_kpis

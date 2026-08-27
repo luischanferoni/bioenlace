@@ -32,7 +32,7 @@ No es un índice del repositorio ni el manual de un endpoint. Para probar: [qa/]
 |-----------|------|
 | [turnos.md](./turnos.md) | Reserva AMB, cancelación, reubicación, avisos |
 | [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md) | Servicio del centro vs PES vs acto SNOMED |
-| [agenda-por-encounter-class.md](./agenda-por-encounter-class.md) | AMB cupos vs EMER/IMP cobertura |
+| [agenda-por-encounter-class.md](./agenda-por-encounter-class.md) | AMB cupos vs EMER/IMP horarios |
 | [interoperabilidad-agendamiento-fhir.md](./interoperabilidad-agendamiento-fhir.md) | Espejo de citas NIS HAPI ↔ turnos |
 
 ## Consulta, resultados y tratamiento

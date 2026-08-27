@@ -88,8 +88,8 @@ class IntentClassifierKeywordRoutingTest extends Unit
                 ['modificar agenda de un profesional'],
             ],
             [
-                'profesional-cobertura.gestionar-propio',
-                'Cargar mi cobertura (guardia / internación)',
+                'profesional-horarios.gestionar-staff',
+                'Horarios de guardia / internación de un profesional',
                 [],
             ],
         ]);

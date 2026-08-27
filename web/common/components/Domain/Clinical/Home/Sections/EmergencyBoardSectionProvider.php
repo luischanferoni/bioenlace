@@ -5,7 +5,7 @@ namespace common\components\Domain\Clinical\Home\Sections;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaBoardCapabilityService;
 use common\components\Domain\Clinical\Emergency\Service\GuardiaQueueService;
 use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
-use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaActivaService;
+use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioActivaService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Clinical\Encounter;
@@ -31,14 +31,14 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
             $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
         }
         if ($idPersona <= 0
-            || !ProfesionalCoberturaActivaService::personaTieneCoberturaActiva(
+            || !ProfesionalHorarioActivaService::personaTieneHorarioActivo(
                 $idPersona,
                 $idEfector,
                 Encounter::ENCOUNTER_CLASS_EMER
             )
         ) {
             $proxima = $idPersona > 0
-                ? ProfesionalCoberturaActivaService::proximaCoberturaInicio(
+                ? ProfesionalHorarioActivaService::proximoHorarioInicio(
                     $idPersona,
                     $idEfector,
                     Encounter::ENCOUNTER_CLASS_EMER
@@ -56,7 +56,7 @@ final class EmergencyBoardSectionProvider implements HomePanelSectionProviderInt
                 'puede_atender' => $caps->canAtender(),
                 'puede_documentar' => $caps->canDocumentar(),
                 'puede_retiro' => $caps->canRetiroEnTablero(),
-                'empty_message' => ProfesionalCoberturaActivaService::mensajeSinCoberturaParaSesion(
+                'empty_message' => ProfesionalHorarioActivaService::mensajeSinHorarioParaSesion(
                     Encounter::ENCOUNTER_CLASS_EMER,
                     ['proxima_inicio' => $proxima]
                 ),

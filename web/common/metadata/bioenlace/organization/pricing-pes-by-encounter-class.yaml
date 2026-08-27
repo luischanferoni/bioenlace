@@ -160,18 +160,18 @@ sellable_classes:
       - patient_booking
   EMER:
     label: Urgencia / guardia
-    short: Tablero y plantel de guardia
+    short: Tablero y horarios de guardia
     includes_patient_chat: false
     audio_included: true
     videollamada_allowed: false
     includes:
-      - Cobertura / roster EMER
+      - Horario de presencia EMER
       - Tablero de guardia
       - Captura clínica EMER (dictado incluido)
       - Motivos de consulta (audio según uso real)
     product_gates:
       - session_encounter_class
-      - emer_cobertura
+      - emer_horario
       - emer_tablero
   IMP:
     label: Internación
@@ -180,13 +180,13 @@ sellable_classes:
     audio_included: true
     videollamada_allowed: false
     includes:
-      - Cobertura / roster IMP
+      - Horario de presencia IMP
       - Mapa de camas
       - Captura / evoluciones (dictado incluido)
       - Motivos de consulta (audio según uso real)
     product_gates:
       - session_encounter_class
-      - imp_cobertura
+      - imp_horario
       - imp_mapa
 
 non_sellable_default: disabled

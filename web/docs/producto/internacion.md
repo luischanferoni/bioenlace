@@ -98,9 +98,9 @@ No hay intent de alta: el egreso lo indica el médico en la captura.
 
 **Mantenido temporalmente:** `InternacionController` (index, view administrativo, create ingreso; `ronda` redirige al inicio), historial `InternacionHcamaController` (index), ABM plantillas. Cambio de cama vía API + `#cambio-cama` en view.
 
-## Cobertura de plantel (agenda IMP)
+## Horario de presencia (agenda IMP)
 
-El mapa de camas no es agenda de citas. La disponibilidad del personal de piso se declara como **cobertura** (`profesional_cobertura`, `encounter_class = IMP`). Ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
+El mapa de camas no es agenda de citas. La disponibilidad del personal de piso se declara como **horario** (`profesional_horario`, `encounter_class = IMP`). Ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
 
 ## Fuera de alcance actual
 

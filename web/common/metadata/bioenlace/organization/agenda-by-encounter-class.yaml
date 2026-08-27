@@ -2,7 +2,7 @@
 # Propósito: agenda tipada por encounter_class (FHIR).
 # Consumidor: ProductMetadataPaths::agendaByEncounterClassFile()
 # No poner aquí: reglas de cupo/persistencia (dominio Scheduling).
-# AMB = cupos reservables (paciente). EMER/IMP = cobertura/roster (solo staff).
+# AMB = cupos reservables (paciente). EMER/IMP = horario de presencia (solo staff).
 version: 1
 
 kinds:
@@ -15,39 +15,39 @@ kinds:
       Grilla semanal por PES con intervalo fijo. Única agenda expuesta a pacientes
       para solicitar turnos.
   EMER:
-    storage: cobertura_interval
-    capacity_model: weekly_roster
+    storage: horario_interval
+    capacity_model: weekly_presence
     patient_booking: false
     service_filter: optional
-    label: Urgencia / guardia (cobertura)
+    label: Urgencia / guardia (horarios)
     description: >
-      Plantilla semanal de plantel (entrada/salida por día) materializada a intervalos.
+      Plantilla semanal de horarios (entrada/salida por día) materializada a intervalos.
       Servicio opcional como filtro de ámbito. No genera cupos ni filas en turnos de paciente.
   IMP:
-    storage: cobertura_interval
-    capacity_model: weekly_roster
+    storage: horario_interval
+    capacity_model: weekly_presence
     patient_booking: false
     service_filter: optional
-    label: Internación (cobertura)
+    label: Internación (horarios)
     description: >
-      Cobertura de piso con patrón semanal materializado. No genera cupos ni filas en turnos de paciente.
+      Horario de piso con patrón semanal materializado. No genera cupos ni filas en turnos de paciente.
 
 conflicts:
-  # Solape de intervalos de cobertura (EMER/IMP) misma persona + mismo efector.
-  cobertura_overlap_same_persona_efector: true
-  # Cruce cobertura vs grilla AMB: patrón semanal (lunes_2…), no slots generados.
-  cobertura_vs_amb_slots: true
+  # Solape de intervalos de horario (EMER/IMP) misma persona + mismo efector.
+  horario_overlap_same_persona_efector: true
+  # Cruce horario vs grilla AMB: patrón semanal (lunes_2…), no slots generados.
+  horario_vs_amb_slots: true
 
 patient_exposure:
   # Solo agendas AMB (y servicios con acepta_turnos) entran al funnel de reserva.
   slot_finder_encounter_classes:
     - AMB
-  forbid_cobertura_in_turnos: true
+  forbid_horario_in_turnos: true
 
 operational:
-  # Asignar / tomar caso en guardia exige cobertura EMER vigente de esa persona en el efector.
-  emer_assign_requires_cobertura: true
-  # Si no hay nadie con cobertura, permitir asignar igual (piloto / onboarding).
-  emer_assign_allow_without_any_plantel: false
-  # Ver listado de internados (piso) exige cobertura IMP vigente de la sesión.
-  imp_view_requires_cobertura: true
+  # Asignar / tomar caso en guardia exige horario EMER vigente de esa persona en el efector.
+  emer_assign_requires_horario: true
+  # Si no hay nadie con horario, permitir asignar igual (piloto / onboarding).
+  emer_assign_allow_without_any_presence: false
+  # Ver listado de internados (piso) exige horario IMP vigente de la sesión.
+  imp_view_requires_horario: true

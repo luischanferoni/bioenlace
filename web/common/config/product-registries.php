@@ -15,7 +15,7 @@ use common\components\Domain\Clinical\CareCohort\Assistant\CarePackUiActionCatal
 use common\components\Domain\Clinical\Home\InpatientHomePanelSliceResolver;
 use common\components\Domain\Clinical\Home\Sections\EmergencyBoardSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\EmergencyIndicatorsSectionProvider;
-use common\components\Domain\Clinical\Home\Sections\StaffCoberturaActivaSectionProvider;
+use common\components\Domain\Clinical\Home\Sections\StaffHorarioActivoSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\InpatientsSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\PatientCarePlansActiveSectionProvider;
 use common\components\Domain\Clinical\Home\Sections\PatientConditionsActiveSectionProvider;
@@ -172,7 +172,7 @@ return [
     'homePanelSectionProviders' => [
         'emergency_board' => EmergencyBoardSectionProvider::class,
         'emergency_indicators' => EmergencyIndicatorsSectionProvider::class,
-        'staff_cobertura_activa' => StaffCoberturaActivaSectionProvider::class,
+        'staff_horario_activo' => StaffHorarioActivoSectionProvider::class,
         'appointments_day' => AppointmentsDaySectionProvider::class,
         'async_consultations_queue' => StaffConsultaAsyncBandejaSectionProvider::class,
         'inpatients' => InpatientsSectionProvider::class,

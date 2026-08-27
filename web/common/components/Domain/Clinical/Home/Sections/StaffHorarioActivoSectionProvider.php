@@ -3,16 +3,16 @@
 namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Domain\Organization\Service\Authorization\EfectorAccessService;
-use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaActivaService;
+use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioActivaService;
 use common\components\Platform\Core\Permission\Domain\DomainOperationForbiddenException;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Clinical\Encounter;
 use Yii;
 
 /**
- * Plantel / cobertura activa según encounter_class del panel (EMER o IMP).
+ * Horario activo según encounter_class del panel (EMER o IMP).
  */
-final class StaffCoberturaActivaSectionProvider implements HomePanelSectionProviderInterface
+final class StaffHorarioActivoSectionProvider implements HomePanelSectionProviderInterface
 {
     public function build(array $context): array
     {
@@ -29,7 +29,7 @@ final class StaffCoberturaActivaSectionProvider implements HomePanelSectionProvi
             $at = trim((string) $context['fecha']) . ' ' . date('H:i:s');
         }
 
-        return ProfesionalCoberturaActivaService::homePanelGatePayload($idEfector, $encounterClass, $at);
+        return ProfesionalHorarioActivaService::homePanelGatePayload($idEfector, $encounterClass, $at);
     }
 
     /**

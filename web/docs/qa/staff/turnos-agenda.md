@@ -106,7 +106,7 @@ Tras registrar una derivación en [medico/captura-clinica.md](../medico/captura-
 
 **Intent (mis horarios AMB / guardia / internación):** `profesional-horarios.gestionar-propio` — atajo **Horarios**
 
-Configurar agenda o plantel de **otro** profesional no es atajo: NL (`profesional-agenda.configurar-staff` / `profesional-cobertura.gestionar-staff`) si el rol tiene grant.
+Configurar agenda u horario de **otro** profesional no es atajo: NL (`profesional-agenda.configurar-staff` / `profesional-horarios.gestionar-staff`) si el rol tiene grant.
 
 1. **Vos** elegís consultar ocupación o abrir la configuración de horarios (propio o de staff).
 2. **El sistema** muestra la grilla, los turnos del día o el formulario de horarios.

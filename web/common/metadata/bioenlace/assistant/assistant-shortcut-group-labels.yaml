@@ -1,13 +1,13 @@
 # Respaldo inicial / re-import desde admin (ShortcutGroup → Importar desde YAML).
 # Fuente operativa: tabla assistant_shortcut_group (admin → Grupos de atajos).
-version: 1group_order:
+version: 1
+group_order:
   - atencion
   - turnos
   - urgencias
   - internacion
   - condicion-laboral
   - profesional-agenda
-  - profesional-cobertura
   - profesional-efector-servicio
   - profesional-horarios
   - profesionales
@@ -31,7 +31,6 @@ labels:
   paciente-contexto: Mi provincia
   condicion-laboral: Condición laboral
   profesional-agenda: Agenda
-  profesional-cobertura: Horarios de plantel
   profesional-efector-servicio: Personal en el efector
   profesional-horarios: Horarios
   profesionales: Profesionales del efector

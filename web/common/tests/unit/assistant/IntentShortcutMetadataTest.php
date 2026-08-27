@@ -59,7 +59,7 @@ class IntentShortcutMetadataTest extends Unit
         foreach ([
             'urgencias.egreso-estructurado-flow',
             'profesional-agenda.configurar-staff',
-            'profesional-cobertura.gestionar-staff',
+            'profesional-horarios.gestionar-staff',
         ] as $intentId) {
             $file = \common\components\Platform\Assistant\Catalog\IntentSchemaPaths::resolveFileForIntentId($intentId);
             $this->assertNotNull($file, $intentId);

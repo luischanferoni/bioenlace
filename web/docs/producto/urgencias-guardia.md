@@ -113,7 +113,7 @@ php yii emergency-guardia/materialize-metrics
 
 - App móvil: primer triage nativo si `puede_triage`; **ingreso a guardia** nativo (`EmergencyIngresoScreen`, incluye DNI/Didit); ingreso a cama vía UI JSON de internación (asistente / flujos embebidos).
 
-## Cobertura de plantel (agenda EMER)
+## Horario de presencia (agenda EMER)
 
 Ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
 

@@ -45,14 +45,14 @@ final class AgendaByEncounterClassMetadata
     /**
      * @return list<string>
      */
-    public static function coberturaClasses(): array
+    public static function horarioIntervalClasses(): array
     {
         $out = [];
         foreach (self::loadConfig()['kinds'] ?? [] as $code => $kind) {
             if (!is_array($kind)) {
                 continue;
             }
-            if (($kind['storage'] ?? '') === 'cobertura_interval') {
+            if (($kind['storage'] ?? '') === 'horario_interval') {
                 $out[] = (string) $code;
             }
         }
@@ -60,9 +60,9 @@ final class AgendaByEncounterClassMetadata
         return $out !== [] ? $out : [Encounter::ENCOUNTER_CLASS_EMER, Encounter::ENCOUNTER_CLASS_IMP];
     }
 
-    public static function isCoberturaClass(string $encounterClass): bool
+    public static function isHorarioIntervalClass(string $encounterClass): bool
     {
-        return in_array($encounterClass, self::coberturaClasses(), true);
+        return in_array($encounterClass, self::horarioIntervalClasses(), true);
     }
 
     public static function isPatientBookingClass(string $encounterClass): bool
@@ -95,39 +95,39 @@ final class AgendaByEncounterClassMetadata
         return $out !== [] ? $out : [Encounter::ENCOUNTER_CLASS_AMB];
     }
 
-    public static function coberturaOverlapSamePersonaEfector(): bool
+    public static function horarioOverlapSamePersonaEfector(): bool
     {
         $conflicts = self::loadConfig()['conflicts'] ?? [];
 
-        return (bool) ($conflicts['cobertura_overlap_same_persona_efector'] ?? true);
+        return (bool) ($conflicts['horario_overlap_same_persona_efector'] ?? true);
     }
 
-    public static function coberturaVsAmbSlots(): bool
+    public static function horarioVsAmbSlots(): bool
     {
         $conflicts = self::loadConfig()['conflicts'] ?? [];
 
-        return (bool) ($conflicts['cobertura_vs_amb_slots'] ?? true);
+        return (bool) ($conflicts['horario_vs_amb_slots'] ?? true);
     }
 
-    public static function emerAssignRequiresCobertura(): bool
+    public static function emerAssignRequiresHorario(): bool
     {
         $ops = self::loadConfig()['operational'] ?? [];
 
-        return (bool) ($ops['emer_assign_requires_cobertura'] ?? true);
+        return (bool) ($ops['emer_assign_requires_horario'] ?? true);
     }
 
-    public static function emerAssignAllowWithoutAnyPlantel(): bool
+    public static function emerAssignAllowWithoutAnyPresence(): bool
     {
         $ops = self::loadConfig()['operational'] ?? [];
 
-        return (bool) ($ops['emer_assign_allow_without_any_plantel'] ?? false);
+        return (bool) ($ops['emer_assign_allow_without_any_presence'] ?? false);
     }
 
-    /** Ver listado de internados (piso) exige cobertura IMP vigente. */
-    public static function impViewRequiresCobertura(): bool
+    /** Ver listado de internados (piso) exige horario IMP vigente. */
+    public static function impViewRequiresHorario(): bool
     {
         $ops = self::loadConfig()['operational'] ?? [];
 
-        return (bool) ($ops['imp_view_requires_cobertura'] ?? true);
+        return (bool) ($ops['imp_view_requires_horario'] ?? true);
     }
 }

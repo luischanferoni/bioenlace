@@ -8,7 +8,7 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Plantilla semanal de cobertura EMER/IMP (rangos por día → materializa a profesional_cobertura).
+ * Plantilla semanal de horario de presencia EMER/IMP (rangos por día → materializa a profesional_horario).
  *
  * @property int $id
  * @property int $id_persona
@@ -32,7 +32,7 @@ use yii\db\ActiveRecord;
  * @property int|null $updated_by
  * @property int|null $deleted_by
  */
-class ProfesionalCoberturaPlantilla extends ActiveRecord
+class ProfesionalHorarioPlantilla extends ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
 
@@ -48,7 +48,7 @@ class ProfesionalCoberturaPlantilla extends ActiveRecord
 
     public static function tableName()
     {
-        return 'profesional_cobertura_plantilla';
+        return 'profesional_horario_plantilla';
     }
 
     public function behaviors()
@@ -93,7 +93,7 @@ class ProfesionalCoberturaPlantilla extends ActiveRecord
 
     public function validateEncounterClass(): void
     {
-        if (!AgendaByEncounterClassMetadata::isCoberturaClass((string) $this->encounter_class)) {
+        if (!AgendaByEncounterClassMetadata::isHorarioIntervalClass((string) $this->encounter_class)) {
             $this->addError('encounter_class', 'La plantilla solo admite EMER o IMP.');
         }
     }
@@ -103,7 +103,7 @@ class ProfesionalCoberturaPlantilla extends ActiveRecord
         return [
             'vigente_desde' => 'Vigente desde',
             'semanas' => 'Semanas a generar',
-            'encounter_class' => 'Tipo de cobertura',
+            'encounter_class' => 'Tipo de horario',
         ];
     }
 }

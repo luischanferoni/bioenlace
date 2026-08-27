@@ -5,7 +5,7 @@ namespace common\tests\unit\organization;
 use Codeception\Test\Unit;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalCobertura;
+use common\models\ProfesionalHorario;
 
 class AgendaByEncounterClassTest extends Unit
 {
@@ -23,18 +23,18 @@ class AgendaByEncounterClassTest extends Unit
         $this->assertFalse(AgendaByEncounterClassMetadata::isPatientBookingClass(Encounter::ENCOUNTER_CLASS_IMP));
     }
 
-    public function testCoberturaClasses(): void
+    public function testHorarioIntervalClasses(): void
     {
-        $classes = AgendaByEncounterClassMetadata::coberturaClasses();
+        $classes = AgendaByEncounterClassMetadata::horarioIntervalClasses();
         $this->assertContains(Encounter::ENCOUNTER_CLASS_EMER, $classes);
         $this->assertContains(Encounter::ENCOUNTER_CLASS_IMP, $classes);
-        $this->assertTrue(AgendaByEncounterClassMetadata::isCoberturaClass(Encounter::ENCOUNTER_CLASS_EMER));
-        $this->assertFalse(AgendaByEncounterClassMetadata::isCoberturaClass(Encounter::ENCOUNTER_CLASS_AMB));
+        $this->assertTrue(AgendaByEncounterClassMetadata::isHorarioIntervalClass(Encounter::ENCOUNTER_CLASS_EMER));
+        $this->assertFalse(AgendaByEncounterClassMetadata::isHorarioIntervalClass(Encounter::ENCOUNTER_CLASS_AMB));
     }
 
-    public function testCoberturaRejectsAmbClass(): void
+    public function testHorarioRejectsAmbClass(): void
     {
-        $model = new ProfesionalCobertura();
+        $model = new ProfesionalHorario();
         $model->id_persona = 1;
         $model->id_efector = 1;
         $model->encounter_class = Encounter::ENCOUNTER_CLASS_AMB;
@@ -44,9 +44,9 @@ class AgendaByEncounterClassTest extends Unit
         $this->assertArrayHasKey('encounter_class', $model->errors);
     }
 
-    public function testCoberturaRequiresFinAfterInicio(): void
+    public function testHorarioRequiresFinAfterInicio(): void
     {
-        $model = new ProfesionalCobertura();
+        $model = new ProfesionalHorario();
         $model->id_persona = 1;
         $model->id_efector = 1;
         $model->encounter_class = Encounter::ENCOUNTER_CLASS_EMER;
@@ -56,16 +56,16 @@ class AgendaByEncounterClassTest extends Unit
         $this->assertArrayHasKey('fin', $model->errors);
     }
 
-    public function testCoberturaVsAmbSlotsEnabled(): void
+    public function testHorarioVsAmbSlotsEnabled(): void
     {
         $conflicts = AgendaByEncounterClassMetadata::loadConfig()['conflicts'] ?? [];
-        $this->assertTrue((bool) ($conflicts['cobertura_vs_amb_slots'] ?? false));
-        $this->assertTrue(AgendaByEncounterClassMetadata::coberturaVsAmbSlots());
+        $this->assertTrue((bool) ($conflicts['horario_vs_amb_slots'] ?? false));
+        $this->assertTrue(AgendaByEncounterClassMetadata::horarioVsAmbSlots());
     }
 
-    public function testEmerAssignRequiresCobertura(): void
+    public function testEmerAssignRequiresHorario(): void
     {
-        $this->assertTrue(AgendaByEncounterClassMetadata::emerAssignRequiresCobertura());
-        $this->assertFalse(AgendaByEncounterClassMetadata::emerAssignAllowWithoutAnyPlantel());
+        $this->assertTrue(AgendaByEncounterClassMetadata::emerAssignRequiresHorario());
+        $this->assertFalse(AgendaByEncounterClassMetadata::emerAssignAllowWithoutAnyPresence());
     }
 }

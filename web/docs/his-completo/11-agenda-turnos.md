@@ -5,7 +5,7 @@
 ## Lo que tenemos
 
 - [x] Agenda ambulatoria por profesional–efector–servicio (PES) y cupos reservables (única grilla para pacientes).
-- [x] Cobertura de guardia e internación (roster), distinta de los turnos; conflicto con la grilla semanal al guardar.
+- [x] Horario de guardia e internación (presencia), distinto de los turnos; conflicto con la grilla semanal al guardar.
 - [x] Autogestión del paciente: reservar, cancelar, reprogramar, confirmar asistencia, según política del efector.
 - [x] Triage de motivo y alarmas antes de reservar; banda A no saca turno en la app.
 - [x] Teleconsulta en reserva cuando el servicio y el caso lo permiten.

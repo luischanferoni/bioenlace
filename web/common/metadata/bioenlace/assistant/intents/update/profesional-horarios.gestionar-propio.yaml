@@ -4,8 +4,8 @@ operation: edit
 intent_family: profesional-horarios.gestionar
 domain_operation: DataAccess.edit
 action_name: 'Configurar mis horarios (ambulatorio / guardia / internación)'
-description: 'Elegís el servicio y el tipo de horario: agenda de turnos AMB, o cobertura semanal de guardia/piso.'
-rbac_route: /api/profesional-cobertura/gestionar
+description: 'Elegís el servicio y el tipo de horario: agenda de turnos AMB, o horario semanal de guardia/piso.'
+rbac_route: /api/profesional-horarios/gestionar
 keywords:
   - 'mis horarios'
   - 'configurar mis horarios'
@@ -24,7 +24,7 @@ keywords:
   - 'agenda ambulatoria'
   - 'configurar agenda'
 intent_semantics:
-  summary: 'Configurar horarios propios según la clase de encuentro (AMB cupos, EMER/IMP plantel semanal).'
+  summary: 'Configurar horarios propios según la clase de encuentro (AMB cupos, EMER/IMP horario semanal).'
 draft_hydrator:
   handler: organization.pes_from_servicio
   require_own_pes: true
@@ -49,7 +49,7 @@ subintents:
       - draft.encounter_class
     next: configurar_horario
     open_ui:
-      action_id: profesional-cobertura.elegir-encounter-class
+      action_id: profesional-horarios.elegir-encounter-class
   -
     id: configurar_horario
     assistant_text: 'Configurá tus horarios'
@@ -70,5 +70,5 @@ subintents:
         when:
           default: true
         open_ui:
-          action_id: profesional-cobertura.gestionar
+          action_id: profesional-horarios.gestionar
           params: { modo: propio, id_profesional_efector_servicio: draft.id_profesional_efector_servicio, id_servicio: draft.id_servicio, encounter_class: draft.encounter_class }

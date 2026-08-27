@@ -82,7 +82,7 @@ Ejemplo CIS: **20.000** atenciones ambulatorio (dictado incluido) → tramo Gran
 | Clase | Label | Qué habilita |
 |-------|-------|--------------|
 | **AMB** | Ambulatorio | Agenda cupos, turnos paciente, captura AMB |
-| **EMER** | Urgencia / guardia | Cobertura roster, tablero guardia, captura EMER |
+| **EMER** | Urgencia / guardia | Horarios de presencia, tablero guardia, captura EMER |
 | **IMP** | Internación | Cobertura piso, mapa camas, captura IMP |
 
 ---

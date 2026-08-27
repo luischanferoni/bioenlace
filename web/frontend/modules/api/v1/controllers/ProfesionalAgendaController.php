@@ -20,7 +20,7 @@ use common\models\ProfesionalEfectorServicioAgenda;
 /**
  * Agenda profesional AMB (día operativo / cupos) y CRUD de agendas laborales por servicio ({@see ProfesionalEfectorServicioAgenda}).
  *
- * **Modelo:** 1 efector → PES → **1 agenda AMB** por asignación. EMER/IMP: {@see ProfesionalCoberturaController}.
+ * **Modelo:** 1 efector → PES → **1 agenda AMB** por asignación. EMER/IMP: {@see ProfesionalHorariosController}.
  *
  * **Listado siempre:** el detalle por ítem viene en cada fila del listado; no hay acciones `ver-*`.
  *

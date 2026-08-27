@@ -1,6 +1,6 @@
 <?php
 
-namespace common\components\Domain\Organization\Service\ProfesionalCobertura;
+namespace common\components\Domain\Organization\Service\ProfesionalHorario;
 
 use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Platform\Ui\UiScreenService;
@@ -10,9 +10,9 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 
 /**
- * UI JSON: plantilla semanal de cobertura EMER/IMP (materializa intervalos).
+ * UI JSON: plantilla semanal de horario de presencia EMER/IMP (materializa intervalos).
  */
-final class ProfesionalCoberturaUiFlowService
+final class ProfesionalHorarioUiFlowService
 {
     /**
      * @param array<string, mixed> $query
@@ -21,8 +21,8 @@ final class ProfesionalCoberturaUiFlowService
     public static function renderForm(int $idEfector, array $query, bool $allowOwnPesFallback): array
     {
         $params = self::defaults($idEfector, $query, $allowOwnPesFallback);
-        $out = UiScreenService::renderUiDefinition('profesional-cobertura', 'gestionar', $params, null);
-        $out['action_id'] = 'profesional-cobertura.gestionar';
+        $out = UiScreenService::renderUiDefinition('profesional-horarios', 'gestionar', $params, null);
+        $out['action_id'] = 'profesional-horarios.gestionar';
 
         return self::withWeeklyOccupancy($out, $params);
     }
@@ -35,15 +35,15 @@ final class ProfesionalCoberturaUiFlowService
     {
         try {
             $payload = self::preparePlantillaPayload($idEfector, $post, $allowOwnPesFallback);
-            $result = ProfesionalCoberturaPlantillaService::guardarYMaterializar($payload);
+            $result = ProfesionalHorarioPlantillaService::guardarYMaterializar($payload);
 
             if (!$result['ok']) {
                 $params = array_merge(self::defaults($idEfector, $post, $allowOwnPesFallback), $post);
-                $ui = UiScreenService::renderUiDefinition('profesional-cobertura', 'gestionar', $params, $params);
+                $ui = UiScreenService::renderUiDefinition('profesional-horarios', 'gestionar', $params, $params);
                 $ui['success'] = false;
                 $ui['errors'] = $result['errors'] ?? ['_error' => ['No se pudo guardar.']];
                 $ui['conflicts'] = $result['conflicts'] ?? [];
-                $ui['action_id'] = 'profesional-cobertura.gestionar';
+                $ui['action_id'] = 'profesional-horarios.gestionar';
 
                 return self::withWeeklyOccupancy($ui, $params);
             }
@@ -53,12 +53,11 @@ final class ProfesionalCoberturaUiFlowService
             return [
                 'success' => true,
                 'kind' => 'ui_submit_result',
-                'action_id' => 'profesional-cobertura.gestionar',
+                'action_id' => 'profesional-horarios.gestionar',
                 'data' => [
                     'mensaje' => $created === 1
-                        ? 'Se guardó el patrón y se generó 1 turno de cobertura.'
-                        : ('Se guardó el patrón y se generaron ' . $created . ' turnos de cobertura.'),
-                    'cobertura_ui_completed' => '1',
+                        ? 'Se guardó el patrón y se generó 1 intervalo de horario.'
+                        : ('Se guardó el patrón y se generaron ' . $created . ' intervalos de horario.'),
                     'horario_ui_completed' => '1',
                     'created' => $created,
                     'plantilla_id' => isset($result['plantilla']) ? (int) $result['plantilla']->id : null,
@@ -67,10 +66,10 @@ final class ProfesionalCoberturaUiFlowService
             ];
         } catch (\Throwable $e) {
             $params = array_merge(self::defaults($idEfector, $post, $allowOwnPesFallback), $post);
-            $ui = UiScreenService::renderUiDefinition('profesional-cobertura', 'gestionar', $params, $params);
+            $ui = UiScreenService::renderUiDefinition('profesional-horarios', 'gestionar', $params, $params);
             $ui['success'] = false;
             $ui['errors'] = ['_error' => [$e->getMessage()]];
-            $ui['action_id'] = 'profesional-cobertura.gestionar';
+            $ui['action_id'] = 'profesional-horarios.gestionar';
 
             return self::withWeeklyOccupancy($ui, $params);
         }
@@ -116,7 +115,7 @@ final class ProfesionalCoberturaUiFlowService
         }
 
         if ($idPersona > 0) {
-            $plantilla = ProfesionalCoberturaPlantillaService::findActivaForContext(
+            $plantilla = ProfesionalHorarioPlantillaService::findActivaForContext(
                 $idPersona,
                 $idEfector,
                 $encounterClass,
@@ -184,7 +183,7 @@ final class ProfesionalCoberturaUiFlowService
                 throw new BadRequestHttpException('PES inválido para el efector.');
             }
             if ($allowOwnPesFallback && (int) $pes->id_persona !== self::requirePersonaFromSession()) {
-                throw new ForbiddenHttpException('Solo puede cargar cobertura propia.');
+                throw new ForbiddenHttpException('Solo puede cargar horario propio.');
             }
             $idPersona = (int) $pes->id_persona;
         } elseif ($allowOwnPesFallback) {

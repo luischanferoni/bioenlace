@@ -61,7 +61,7 @@ Detalle: [turnos-agenda.md](./turnos-agenda.md).
 
 Atajos de **terceros** (conteo/listado, condición laboral de un profesional, teleconsulta) solo si el rol tiene grant explícito (p. ej. AdminEfector). Médico: **mis** horarios / condición / licencia.
 
-Agenda o plantel de otro no es atajo: NL si hay grant.
+Agenda u horario de otro no es atajo: NL si hay grant.
 
 ---
 

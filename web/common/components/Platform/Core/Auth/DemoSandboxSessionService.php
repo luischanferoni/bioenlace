@@ -32,7 +32,7 @@ final class DemoSandboxSessionService
         $cfg = $this->config();
         $idEfector = $this->resolveIdEfector($cfg);
         $spec = $this->staffProvisionSpec($staffKind, $cfg);
-        $sessionTtl = (int) $spec['cobertura_ttl_seconds'];
+        $sessionTtl = (int) $spec['horario_ttl_seconds'];
 
         $staff = (new DemoSandboxStaffProvisionService())->provision(
             $idEfector,
@@ -42,8 +42,8 @@ final class DemoSandboxSessionService
                 'rbac_role' => (string) $spec['rbac_role'],
                 'apellido' => (string) $spec['apellido'],
                 'username_prefix' => (string) $spec['username_prefix'],
-                'cobertura_classes' => $spec['cobertura_classes'],
-                'cobertura_ttl_seconds' => $sessionTtl,
+                'horario_classes' => $spec['horario_classes'],
+                'horario_ttl_seconds' => $sessionTtl,
             ]
         );
 
@@ -257,8 +257,8 @@ final class DemoSandboxSessionService
      *     rbac_role: string,
      *     apellido: string,
      *     username_prefix: string,
-     *     cobertura_classes: list<string>,
-     *     cobertura_ttl_seconds: int,
+     *     horario_classes: list<string>,
+     *     horario_ttl_seconds: int,
      *     role: string,
      *     pacientes: int,
      *     turnos: int,
@@ -288,8 +288,8 @@ final class DemoSandboxSessionService
                 'rbac_role' => 'enfermeria',
                 'apellido' => 'Enfermería',
                 'username_prefix' => DemoSandboxAccess::usernamePrefixForStaffKind('enfermeria'),
-                'cobertura_classes' => [$emer, $imp],
-                'cobertura_ttl_seconds' => $sessionTtl,
+                'horario_classes' => [$emer, $imp],
+                'horario_ttl_seconds' => $sessionTtl,
                 'role' => DemoSandboxAccess::ROLE_ENFERMERIA,
                 'pacientes' => $pacientes,
                 'turnos' => 0,
@@ -310,8 +310,8 @@ final class DemoSandboxSessionService
                 'rbac_role' => 'Administrativo',
                 'apellido' => 'Admisión',
                 'username_prefix' => DemoSandboxAccess::usernamePrefixForStaffKind('administrativo'),
-                'cobertura_classes' => [$emer],
-                'cobertura_ttl_seconds' => $sessionTtl,
+                'horario_classes' => [$emer],
+                'horario_ttl_seconds' => $sessionTtl,
                 'role' => DemoSandboxAccess::ROLE_ADMINISTRATIVO,
                 'pacientes' => $pacientes,
                 'turnos' => 0,
@@ -331,8 +331,8 @@ final class DemoSandboxSessionService
             'rbac_role' => '',
             'apellido' => 'Médico',
             'username_prefix' => DemoSandboxAccess::usernamePrefixForStaffKind('medico'),
-            'cobertura_classes' => [],
-            'cobertura_ttl_seconds' => $sessionTtl,
+            'horario_classes' => [],
+            'horario_ttl_seconds' => $sessionTtl,
             'role' => DemoSandboxAccess::ROLE_STAFF,
             'pacientes' => $pacientes,
             'turnos' => (int) ($seedCfg['turnos'] ?? 2),

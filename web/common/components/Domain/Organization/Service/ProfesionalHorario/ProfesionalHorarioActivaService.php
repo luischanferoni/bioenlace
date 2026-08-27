@@ -1,22 +1,22 @@
 <?php
 
-namespace common\components\Domain\Organization\Service\ProfesionalCobertura;
+namespace common\components\Domain\Organization\Service\ProfesionalHorario;
 
 use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\models\Clinical\Encounter;
 use common\models\Person\Persona;
-use common\models\ProfesionalCobertura;
 use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalHorario;
 use common\models\Servicio;
 
 /**
- * Consultas de cobertura activa y conflictos vs grilla AMB.
+ * Consultas de horario activo y conflictos vs grilla AMB.
  */
-final class ProfesionalCoberturaActivaService
+final class ProfesionalHorarioActivaService
 {
     /**
-     * Coberturas vigentes en un instante (default: ahora) para un efector y clase.
+     * Horarios vigentes en un instante (default: ahora) para un efector y clase.
      *
      * @return list<array<string, mixed>>
      */
@@ -26,7 +26,7 @@ final class ProfesionalCoberturaActivaService
         ?string $atDateTime = null,
         ?int $idServicio = null
     ): array {
-        if ($idEfector <= 0 || !AgendaByEncounterClassMetadata::isCoberturaClass($encounterClass)) {
+        if ($idEfector <= 0 || !AgendaByEncounterClassMetadata::isHorarioIntervalClass($encounterClass)) {
             return [];
         }
 
@@ -34,7 +34,7 @@ final class ProfesionalCoberturaActivaService
             ? date('Y-m-d H:i:s', strtotime($atDateTime) ?: time())
             : date('Y-m-d H:i:s');
 
-        $q = ProfesionalCobertura::find()
+        $q = ProfesionalHorario::find()
             ->alias('c')
             ->andWhere([
                 'c.id_efector' => $idEfector,
@@ -53,7 +53,7 @@ final class ProfesionalCoberturaActivaService
             ]);
         }
 
-        /** @var list<ProfesionalCobertura> $rows */
+        /** @var list<ProfesionalHorario> $rows */
         $rows = $q->with(['persona', 'servicio'])->all();
         $out = [];
         foreach ($rows as $row) {
@@ -64,7 +64,7 @@ final class ProfesionalCoberturaActivaService
     }
 
     /**
-     * Payload completo (API cobertura / listados de plantel).
+     * Payload completo (API horario / listados).
      *
      * @return array{title: string, encounter_class: string, at: string, items: list<array<string, mixed>>, total: int, empty_message: null, session: array<string, mixed>}
      */
@@ -78,22 +78,21 @@ final class ProfesionalCoberturaActivaService
 
         return [
             'title' => $encounterClass === Encounter::ENCOUNTER_CLASS_EMER
-                ? 'Plantel de guardia'
-                : 'Cobertura de piso',
+                ? 'Horarios de guardia'
+                : 'Horarios de piso',
             'encounter_class' => $encounterClass,
             'at' => $at,
             'items' => $items,
             'total' => count($items),
-            // No informar al clínico que el plantel del efector está vacío.
             'empty_message' => null,
             'session' => $session,
         ];
     }
 
     /**
-     * Gate de plantel para home/panel: solo lo que web/móvil usan (sin listar plantel).
+     * Gate de horario para home/panel: solo lo que web/móvil usan.
      *
-     * @return array{session: array{tiene_cobertura: bool, mensaje_sin_cobertura?: string}}
+     * @return array{session: array{tiene_horario: bool, mensaje_sin_horario?: string}}
      */
     public static function homePanelGatePayload(
         int $idEfector,
@@ -105,13 +104,13 @@ final class ProfesionalCoberturaActivaService
             : date('Y-m-d H:i:s');
         $session = self::buildSessionGate($idEfector, $encounterClass, $at);
         $slim = [
-            'tiene_cobertura' => !empty($session['tiene_cobertura']),
+            'tiene_horario' => !empty($session['tiene_horario']),
         ];
-        $msg = isset($session['mensaje_sin_cobertura'])
-            ? trim((string) $session['mensaje_sin_cobertura'])
+        $msg = isset($session['mensaje_sin_horario'])
+            ? trim((string) $session['mensaje_sin_horario'])
             : '';
         if ($msg !== '') {
-            $slim['mensaje_sin_cobertura'] = $msg;
+            $slim['mensaje_sin_horario'] = $msg;
         }
 
         return ['session' => $slim];
@@ -120,9 +119,9 @@ final class ProfesionalCoberturaActivaService
     /**
      * @return array{
      *   id_persona: int|null,
-     *   tiene_cobertura: bool,
-     *   proxima_cobertura_inicio: string|null,
-     *   mensaje_sin_cobertura: string|null
+     *   tiene_horario: bool,
+     *   proximo_horario_inicio: string|null,
+     *   mensaje_sin_horario: string|null
      * }
      */
     private static function buildSessionGate(int $idEfector, string $encounterClass, string $at): array
@@ -132,74 +131,73 @@ final class ProfesionalCoberturaActivaService
             $idPersonaSesion = (int) (\Yii::$app->user->getIdPersona() ?? 0);
         }
         $sessionTiene = $idPersonaSesion > 0
-            && self::personaTieneCoberturaActiva($idPersonaSesion, $idEfector, $encounterClass, $at);
+            && self::personaTieneHorarioActivo($idPersonaSesion, $idEfector, $encounterClass, $at);
 
         $proximaInicio = null;
         if (!$sessionTiene && $idPersonaSesion > 0) {
-            $proximaInicio = self::proximaCoberturaInicio($idPersonaSesion, $idEfector, $encounterClass, $at);
+            $proximaInicio = self::proximoHorarioInicio($idPersonaSesion, $idEfector, $encounterClass, $at);
         }
         $mensajeSin = $sessionTiene
             ? null
-            : self::mensajeSinCoberturaParaSesion($encounterClass, [
+            : self::mensajeSinHorarioParaSesion($encounterClass, [
                 'proxima_inicio' => $proximaInicio,
             ]);
 
         return [
             'id_persona' => $idPersonaSesion > 0 ? $idPersonaSesion : null,
-            'tiene_cobertura' => $sessionTiene,
-            'proxima_cobertura_inicio' => $proximaInicio,
-            'mensaje_sin_cobertura' => $mensajeSin,
+            'tiene_horario' => $sessionTiene,
+            'proximo_horario_inicio' => $proximaInicio,
+            'mensaje_sin_horario' => $mensajeSin,
         ];
     }
 
     /**
-     * Texto accionable cuando la sesión no tiene plantel vigente (EMER/IMP).
-     * Sin la palabra «cobertura» (UX clínico).
+     * Texto accionable cuando la sesión no tiene horario vigente (EMER/IMP).
      *
      * @param array{proxima_inicio?: string|null} $ctx
      */
-    public static function mensajeSinCoberturaParaSesion(string $encounterClass, array $ctx = []): string
+    public static function mensajeSinHorarioParaSesion(string $encounterClass, array $ctx = []): string
     {
         $encounterClass = strtoupper(trim($encounterClass));
         $esPiso = $encounterClass === Encounter::ENCOUNTER_CLASS_IMP;
         $ambito = $esPiso ? 'de piso' : 'de guardia';
         $proxima = isset($ctx['proxima_inicio']) ? trim((string) $ctx['proxima_inicio']) : '';
         if ($proxima !== '') {
-            $cuando = self::formatFechaHoraCobertura($proxima);
+            $cuando = self::formatFechaHoraHorario($proxima);
 
-            return 'No estás de plantel ' . $ambito . ' ahora. Tu próximo horario es el '
+            return 'No estás ' . $ambito . ' ahora. Tu próximo horario es el '
                 . $cuando . '. Si necesitás atender ya, configurá tus horarios en el Asistente '
                 . '(«Configurar mis horarios») o pedile a coordinación / administración del centro.';
         }
 
         if ($esPiso) {
-            return 'No tenés horario de plantel de piso cargado. Para ver internados, configurá tus '
+            return 'No tenés horario de piso cargado. Para ver internados, configurá tus '
                 . 'horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / '
                 . 'administración del centro que te los asigne.';
         }
 
-        return 'No tenés horario de plantel de guardia cargado. Para ver el tablero y atender, '
+        return 'No tenés horario de guardia cargado. Para ver el tablero y atender, '
             . 'configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a '
             . 'coordinación / administración del centro que te los asigne.';
     }
 
     /**
-     * Próximo inicio de cobertura de la persona (después de `$at`), o null.
+     * Próximo inicio de horario de la persona (después de `$at`), o null.
      */
-    public static function proximaCoberturaInicio(
+    public static function proximoHorarioInicio(
         int $idPersona,
         int $idEfector,
         string $encounterClass,
         ?string $atDateTime = null
     ): ?string {
-        if ($idPersona <= 0 || $idEfector <= 0 || !AgendaByEncounterClassMetadata::isCoberturaClass($encounterClass)) {
+        if ($idPersona <= 0 || $idEfector <= 0 || !AgendaByEncounterClassMetadata::isHorarioIntervalClass($encounterClass)) {
             return null;
         }
         $at = $atDateTime !== null && trim($atDateTime) !== ''
             ? date('Y-m-d H:i:s', strtotime($atDateTime) ?: time())
             : date('Y-m-d H:i:s');
 
-        $inicio = ProfesionalCobertura::find()
+        $inicio = ProfesionalHorario::find()
             ->select(['inicio'])
             ->andWhere([
                 'id_persona' => $idPersona,
@@ -219,7 +217,7 @@ final class ProfesionalCoberturaActivaService
         return $inicio;
     }
 
-    private static function formatFechaHoraCobertura(string $inicio): string
+    private static function formatFechaHoraHorario(string $inicio): string
     {
         $ts = strtotime($inicio);
         if ($ts === false) {
@@ -232,22 +230,22 @@ final class ProfesionalCoberturaActivaService
     }
 
     /**
-     * ¿La persona tiene cobertura activa de la clase en el efector?
+     * ¿La persona tiene horario activo de la clase en el efector?
      */
-    public static function personaTieneCoberturaActiva(
+    public static function personaTieneHorarioActivo(
         int $idPersona,
         int $idEfector,
         string $encounterClass,
         ?string $atDateTime = null
     ): bool {
-        if ($idPersona <= 0 || $idEfector <= 0 || !AgendaByEncounterClassMetadata::isCoberturaClass($encounterClass)) {
+        if ($idPersona <= 0 || $idEfector <= 0 || !AgendaByEncounterClassMetadata::isHorarioIntervalClass($encounterClass)) {
             return false;
         }
         $at = $atDateTime !== null && trim($atDateTime) !== ''
             ? date('Y-m-d H:i:s', strtotime($atDateTime) ?: time())
             : date('Y-m-d H:i:s');
 
-        return ProfesionalCobertura::find()
+        return ProfesionalHorario::find()
             ->andWhere([
                 'id_persona' => $idPersona,
                 'id_efector' => $idEfector,
@@ -266,7 +264,7 @@ final class ProfesionalCoberturaActivaService
      */
     public static function assertPesPuedeAsignarEmer(int $idPes, int $idEfector): void
     {
-        if (!AgendaByEncounterClassMetadata::emerAssignRequiresCobertura()) {
+        if (!AgendaByEncounterClassMetadata::emerAssignRequiresHorario()) {
             return;
         }
 
@@ -276,15 +274,15 @@ final class ProfesionalCoberturaActivaService
         }
 
         $idPersona = (int) $pes->id_persona;
-        $plantel = self::listarActivas($idEfector, Encounter::ENCOUNTER_CLASS_EMER);
-        if ($plantel === [] && AgendaByEncounterClassMetadata::emerAssignAllowWithoutAnyPlantel()) {
+        $activos = self::listarActivas($idEfector, Encounter::ENCOUNTER_CLASS_EMER);
+        if ($activos === [] && AgendaByEncounterClassMetadata::emerAssignAllowWithoutAnyPresence()) {
             return;
         }
 
-        if (!self::personaTieneCoberturaActiva($idPersona, $idEfector, Encounter::ENCOUNTER_CLASS_EMER)) {
+        if (!self::personaTieneHorarioActivo($idPersona, $idEfector, Encounter::ENCOUNTER_CLASS_EMER)) {
             throw new \InvalidArgumentException(
-                'Para tomar o asignar el caso hace falta cobertura de guardia vigente. '
-                . 'Cargá el plantel (entrada/salida) antes de asignar.'
+                'Para tomar o asignar el caso hace falta horario de guardia vigente. '
+                . 'Cargá tus horarios (entrada/salida) antes de asignar.'
             );
         }
     }
@@ -295,9 +293,9 @@ final class ProfesionalCoberturaActivaService
      *
      * @return list<array<string, mixed>>
      */
-    public static function detectAmbSlotConflicts(ProfesionalCobertura $model): array
+    public static function detectAmbSlotConflicts(ProfesionalHorario $model): array
     {
-        if (!AgendaByEncounterClassMetadata::coberturaVsAmbSlots()) {
+        if (!AgendaByEncounterClassMetadata::horarioVsAmbSlots()) {
             return [];
         }
 
@@ -331,9 +329,9 @@ final class ProfesionalCoberturaActivaService
     /**
      * @return array<string, mixed>
      */
-    private static function serializeActiva(ProfesionalCobertura $row): array
+    private static function serializeActiva(ProfesionalHorario $row): array
     {
-        $base = ProfesionalCoberturaService::toApiArray($row);
+        $base = ProfesionalHorarioService::toApiArray($row);
         $persona = $row->persona;
         if ($persona instanceof Persona) {
             $base['persona'] = [

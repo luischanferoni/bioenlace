@@ -642,8 +642,8 @@ final class DemoSandboxPurgeService
             ProfesionalEfectorServicioAgendaVersion::tableName(),
             ProfesionalEfectorServicioAgenda::tableName(),
             '{{%profesional_efector_servicio_condicion_laboral}}',
-            '{{%profesional_cobertura}}',
-            '{{%profesional_cobertura_plantilla}}',
+            '{{%profesional_horario}}',
+            '{{%profesional_horario_plantilla}}',
         ];
         foreach ($childTables as $table) {
             $schema = $db->schema->getTableSchema($table, true);

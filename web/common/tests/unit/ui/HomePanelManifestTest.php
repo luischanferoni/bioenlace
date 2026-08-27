@@ -147,7 +147,7 @@ class HomePanelManifestTest extends Unit
         $sections = $raw['panels']['staff']['IMP']['imp_floor']['sections'] ?? [];
         $ids = array_column($sections, 'id');
 
-        $this->assertContains('staff_cobertura_activa', $ids);
+        $this->assertContains('staff_horario_activo', $ids);
         $this->assertContains('staff_internacion_kpis', $ids);
         $this->assertContains('inpatients', $ids);
     }
@@ -159,10 +159,10 @@ class HomePanelManifestTest extends Unit
         $sections = $raw['panels']['staff']['EMER']['sections'] ?? [];
         $ids = array_column($sections, 'id');
 
-        $this->assertContains('staff_cobertura_activa', $ids);
+        $this->assertContains('staff_horario_activo', $ids);
         $this->assertContains('staff_guardia_kpis', $ids);
         $this->assertContains('emergency_board', $ids);
-        $this->assertSame('staff_cobertura_activa', $ids[0] ?? null);
+        $this->assertSame('staff_horario_activo', $ids[0] ?? null);
         $this->assertNotContains('emergency_indicators', $ids);
     }
 }

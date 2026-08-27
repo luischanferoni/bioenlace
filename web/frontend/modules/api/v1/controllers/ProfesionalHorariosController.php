@@ -6,29 +6,29 @@ use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
-use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaActivaService;
-use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaService;
-use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaUiFlowService;
-use common\models\ProfesionalCobertura;
+use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioActivaService;
+use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioService;
+use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioUiFlowService;
+use common\models\ProfesionalHorario;
 use common\models\ProfesionalEfectorServicio;
 
 /**
- * Cobertura / roster EMER e IMP (entrada–salida). No expone cupos a pacientes.
+ * Horario de presencia EMER e IMP (entrada–salida). No expone cupos a pacientes.
  *
- * **RBAC** `/api/profesional-cobertura/...` (sin v1):
+ * **RBAC** `/api/profesional-horarios/...` (sin v1):
  * - propio: listar, crear, actualizar, eliminar, gestionar, elegir-pes, listar-activas
  * - staff: *-para-recurso (+ id_efector / id_persona o PES)
  */
-class ProfesionalCoberturaController extends BaseController
+class ProfesionalHorariosController extends BaseController
 {
     /**
-     * GET|POST /api/v1/profesional-cobertura/elegir-pes
+     * GET|POST /api/v1/profesional-horarios/elegir-pes
      *
-     * Lista PES del profesional (propio o staff) para asociar cobertura a un servicio.
+     * Lista PES del profesional (propio o staff) para asociar horario a un servicio.
      *
-     * @action_name Elegir asignación PES para cobertura
-     * @entity Coberturas
-     * @tags cobertura,pes,servicio
+     * @action_name Elegir asignación PES para horario
+     * @entity Horarios
+     * @tags horario,pes,servicio
      * @spa_presentation fullscreen
      */
     public function actionElegirPes(): array
@@ -39,7 +39,7 @@ class ProfesionalCoberturaController extends BaseController
         $modoStaff = ((string) ($fromClient['modo'] ?? '') === 'staff');
 
         $ui = \common\components\Platform\Ui\UiScreenService::handleScreen(
-            'profesional-cobertura',
+            'profesional-horarios',
             'elegir-pes',
             $fromClient,
             $req->isPost ? $req->post() : [],
@@ -89,20 +89,20 @@ class ProfesionalCoberturaController extends BaseController
                 ];
             }
             $ui = \common\components\Platform\Ui\UiScreenService::withListBlockItems($ui, $uiItems);
-            $ui['action_id'] = 'profesional-cobertura.elegir-pes';
+            $ui['action_id'] = 'profesional-horarios.elegir-pes';
         }
 
         return $ui;
     }
 
     /**
-     * GET|POST /api/v1/profesional-cobertura/elegir-encounter-class
+     * GET|POST /api/v1/profesional-horarios/elegir-encounter-class
      *
      * Chips/lista AMB | EMER | IMP para el flujo «Mis horarios».
      *
      * @action_name Elegir tipo de horario (ambulatorio / guardia / internación)
-     * @entity Coberturas
-     * @tags cobertura,agenda,horarios,encounter
+     * @entity Horarios
+     * @tags horario,agenda,horarios,encounter
      * @spa_presentation fullscreen
      */
     public function actionElegirEncounterClass(): array
@@ -112,7 +112,7 @@ class ProfesionalCoberturaController extends BaseController
         $fromClient = array_merge($req->get(), $req->isPost ? $req->post() : []);
 
         $ui = \common\components\Platform\Ui\UiScreenService::handleScreen(
-            'profesional-cobertura',
+            'profesional-horarios',
             'elegir-encounter-class',
             $fromClient,
             $req->isPost ? $req->post() : [],
@@ -121,8 +121,8 @@ class ProfesionalCoberturaController extends BaseController
             }
         );
         if (($ui['kind'] ?? '') === 'ui_definition') {
-            $ui['action_id'] = 'profesional-cobertura.elegir-encounter-class';
-            if ((string) ($fromClient['solo_cobertura'] ?? '') === '1'
+            $ui['action_id'] = 'profesional-horarios.elegir-encounter-class';
+            if ((string) ($fromClient['solo_horario_interval'] ?? '') === '1'
                 && isset($ui['blocks']) && is_array($ui['blocks'])) {
                 foreach ($ui['blocks'] as &$block) {
                     if (!is_array($block) || ($block['kind'] ?? '') !== 'list') {
@@ -153,11 +153,11 @@ class ProfesionalCoberturaController extends BaseController
     }
 
     /**
-     * GET|POST /api/v1/profesional-cobertura/gestionar
+     * GET|POST /api/v1/profesional-horarios/gestionar
      *
-     * @action_name Gestionar cobertura (guardia / internación)
-     * @entity Coberturas
-     * @tags cobertura,guardia,internacion,roster,agenda
+     * @action_name Gestionar horario (guardia / internación)
+     * @entity Horarios
+     * @tags horario,guardia,internacion,agenda
      * @spa_presentation fullscreen
      */
     public function actionGestionar(): array
@@ -168,14 +168,14 @@ class ProfesionalCoberturaController extends BaseController
         $allowOwn = !((string) ($fromClient['modo'] ?? '') === 'staff');
 
         if ($req->isPost) {
-            return ProfesionalCoberturaUiFlowService::handlePost($idEfector, $fromClient, $allowOwn);
+            return ProfesionalHorarioUiFlowService::handlePost($idEfector, $fromClient, $allowOwn);
         }
 
-        return ProfesionalCoberturaUiFlowService::renderForm($idEfector, $fromClient, $allowOwn);
+        return ProfesionalHorarioUiFlowService::renderForm($idEfector, $fromClient, $allowOwn);
     }
 
     /**
-     * GET /api/v1/profesional-cobertura/listar-activas
+     * GET /api/v1/profesional-horarios/listar-activas
      *
      * Query: encounter_class=EMER|IMP, opcional at=YYYY-MM-DD HH:MM:SS
      */
@@ -188,12 +188,12 @@ class ProfesionalCoberturaController extends BaseController
 
         return [
             'success' => true,
-            'data' => ProfesionalCoberturaActivaService::panelPayload($idEfector, $class, $at),
+            'data' => ProfesionalHorarioActivaService::panelPayload($idEfector, $class, $at),
         ];
     }
 
     /**
-     * GET /api/v1/profesional-cobertura/listar
+     * GET /api/v1/profesional-horarios/listar
      */
     public function actionListar(): array
     {
@@ -208,7 +208,7 @@ class ProfesionalCoberturaController extends BaseController
     }
 
     /**
-     * GET /api/v1/profesional-cobertura/listar-para-recurso
+     * GET /api/v1/profesional-horarios/listar-para-recurso
      */
     public function actionListarParaRecurso(): array
     {
@@ -233,7 +233,7 @@ class ProfesionalCoberturaController extends BaseController
     }
 
     /**
-     * POST /api/v1/profesional-cobertura/crear
+     * POST /api/v1/profesional-horarios/crear
      */
     public function actionCrear(): array
     {
@@ -241,7 +241,7 @@ class ProfesionalCoberturaController extends BaseController
     }
 
     /**
-     * POST /api/v1/profesional-cobertura/crear-para-recurso
+     * POST /api/v1/profesional-horarios/crear-para-recurso
      */
     public function actionCrearParaRecurso(): array
     {
@@ -249,7 +249,7 @@ class ProfesionalCoberturaController extends BaseController
     }
 
     /**
-     * PUT|PATCH /api/v1/profesional-cobertura/actualizar/<id>
+     * PUT|PATCH /api/v1/profesional-horarios/actualizar/<id>
      *
      * @param int $id
      */
@@ -259,7 +259,7 @@ class ProfesionalCoberturaController extends BaseController
     }
 
     /**
-     * PUT|PATCH /api/v1/profesional-cobertura/actualizar-para-recurso/<id>
+     * PUT|PATCH /api/v1/profesional-horarios/actualizar-para-recurso/<id>
      *
      * @param int $id
      */
@@ -269,7 +269,7 @@ class ProfesionalCoberturaController extends BaseController
     }
 
     /**
-     * DELETE /api/v1/profesional-cobertura/eliminar/<id>
+     * DELETE /api/v1/profesional-horarios/eliminar/<id>
      *
      * @param int $id
      */
@@ -279,7 +279,7 @@ class ProfesionalCoberturaController extends BaseController
     }
 
     /**
-     * DELETE /api/v1/profesional-cobertura/eliminar-para-recurso/<id>
+     * DELETE /api/v1/profesional-horarios/eliminar-para-recurso/<id>
      *
      * @param int $id
      */
@@ -294,10 +294,10 @@ class ProfesionalCoberturaController extends BaseController
      */
     private function listResponse(array $params): array
     {
-        $rows = ProfesionalCoberturaService::queryListado($params)->limit(500)->all();
+        $rows = ProfesionalHorarioService::queryListado($params)->limit(500)->all();
         $data = [];
         foreach ($rows as $row) {
-            $data[] = ProfesionalCoberturaService::toApiArray($row);
+            $data[] = ProfesionalHorarioService::toApiArray($row);
         }
 
         return ['success' => true, 'data' => $data];
@@ -326,10 +326,10 @@ class ProfesionalCoberturaController extends BaseController
         }
         $merged['id_efector'] = $idEfector;
 
-        $result = ProfesionalCoberturaService::crear($merged);
+        $result = ProfesionalHorarioService::crear($merged);
         if (!$result['ok']) {
             return $this->error(
-                'No se pudo crear la cobertura.',
+                'No se pudo crear el horario.',
                 array_merge($result['errors'] ?? [], ['conflicts' => $result['conflicts'] ?? []]),
                 422
             );
@@ -339,8 +339,8 @@ class ProfesionalCoberturaController extends BaseController
 
         return [
             'success' => true,
-            'message' => 'Cobertura creada.',
-            'data' => ProfesionalCoberturaService::toApiArray($result['model']),
+            'message' => 'Horario creado.',
+            'data' => ProfesionalHorarioService::toApiArray($result['model']),
         ];
     }
 
@@ -358,10 +358,10 @@ class ProfesionalCoberturaController extends BaseController
         $body['id_efector'] = (int) $model->id_efector;
         $body['id_persona'] = (int) $model->id_persona;
 
-        $result = ProfesionalCoberturaService::actualizar($model, $body);
+        $result = ProfesionalHorarioService::actualizar($model, $body);
         if (!$result['ok']) {
             return $this->error(
-                'No se pudo actualizar la cobertura.',
+                'No se pudo actualizar el horario.',
                 array_merge($result['errors'] ?? [], ['conflicts' => $result['conflicts'] ?? []]),
                 422
             );
@@ -369,8 +369,8 @@ class ProfesionalCoberturaController extends BaseController
 
         return [
             'success' => true,
-            'message' => 'Cobertura actualizada.',
-            'data' => ProfesionalCoberturaService::toApiArray($result['model']),
+            'message' => 'Horario actualizado.',
+            'data' => ProfesionalHorarioService::toApiArray($result['model']),
         ];
     }
 
@@ -382,19 +382,19 @@ class ProfesionalCoberturaController extends BaseController
         $model = $this->findOwned($id, $paraRecurso);
         $model->delete();
 
-        return ['success' => true, 'message' => 'Cobertura eliminada.'];
+        return ['success' => true, 'message' => 'Horario eliminado.'];
     }
 
-    private function findOwned(int $id, bool $paraRecurso): ProfesionalCobertura
+    private function findOwned(int $id, bool $paraRecurso): ProfesionalHorario
     {
         $idEfector = $this->requireEfectorId();
-        /** @var ProfesionalCobertura|null $model */
-        $model = ProfesionalCobertura::findOne(['id' => $id, 'id_efector' => $idEfector, 'deleted_at' => null]);
+        /** @var ProfesionalHorario|null $model */
+        $model = ProfesionalHorario::findOne(['id' => $id, 'id_efector' => $idEfector, 'deleted_at' => null]);
         if ($model === null) {
-            throw new NotFoundHttpException('Cobertura no encontrada.');
+            throw new NotFoundHttpException('Horario no encontrado.');
         }
         if (!$paraRecurso && (int) $model->id_persona !== (int) Yii::$app->user->getIdPersona()) {
-            throw new ForbiddenHttpException('No puede modificar coberturas de otro profesional.');
+            throw new ForbiddenHttpException('No puede modificar Horarios de otro profesional.');
         }
 
         return $model;

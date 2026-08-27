@@ -9,7 +9,7 @@ use yii\db\ActiveRecord;
  * Agenda AMB por asignación profesional–efector–servicio (cupos reservables).
  *
  * Tabla: `profesional_efector_servicio_agenda`
- * Solo `encounter_class = AMB`. EMER/IMP usan {@see ProfesionalCobertura}.
+ * Solo `encounter_class = AMB`. EMER/IMP usan {@see ProfesionalHorario}.
  *
  * @property int $id
  * @property int $id_profesional_efector_servicio

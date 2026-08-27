@@ -130,7 +130,7 @@ open_ui_routing:
   - when:
       default: true
     open_ui:
-      action_id: profesional-cobertura.gestionar
+      action_id: profesional-horarios.gestionar
       params:
         encounter_class: "draft.encounter_class"
 ```

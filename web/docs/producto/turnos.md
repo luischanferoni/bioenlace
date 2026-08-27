@@ -6,7 +6,7 @@ Un **turno** es la cita **ambulatoria (AMB)** entre una persona y un profesional
 
 El `id_servicio` del turno es la **oferta institucional** (área que el efector brinda), no la especialidad del título del profesional ni un acto SNOMED. Ver [glosario-servicio-pes-acto.md](./glosario-servicio-pes-acto.md).
 
-La grilla de cupos es solo `encounter_class = AMB`. Guardia e internación usan **cobertura** (roster), no turnos de paciente — ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
+La grilla de cupos es solo `encounter_class = AMB`. Guardia e internación usan **horario de presencia**, no turnos de paciente — ver [agenda-por-encounter-class.md](./agenda-por-encounter-class.md).
 
 ## Actores
 

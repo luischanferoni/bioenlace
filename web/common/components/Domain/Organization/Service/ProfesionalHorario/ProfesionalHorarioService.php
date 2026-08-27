@@ -1,24 +1,24 @@
 <?php
 
-namespace common\components\Domain\Organization\Service\ProfesionalCobertura;
+namespace common\components\Domain\Organization\Service\ProfesionalHorario;
 
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
-use common\models\ProfesionalCobertura;
 use common\models\ProfesionalEfectorServicio;
+use common\models\ProfesionalHorario;
 use common\models\Servicio;
 use yii\db\ActiveQuery;
 
 /**
- * CRUD y serialización de coberturas EMER/IMP (roster entrada/salida).
+ * CRUD y serialización de horarios de presencia EMER/IMP (entrada/salida).
  */
-final class ProfesionalCoberturaService
+final class ProfesionalHorarioService
 {
     /**
      * @param array<string, mixed> $params
      */
     public static function queryListado(array $params): ActiveQuery
     {
-        $q = ProfesionalCobertura::find()->alias('c')->andWhere(['c.deleted_at' => null]);
+        $q = ProfesionalHorario::find()->alias('c')->andWhere(['c.deleted_at' => null]);
 
         if (!empty($params['id_efector'])) {
             $q->andWhere(['c.id_efector' => (int) $params['id_efector']]);
@@ -44,17 +44,17 @@ final class ProfesionalCoberturaService
 
     /**
      * @param array<string, mixed> $data
-     * @return array{ok:bool, model?:ProfesionalCobertura, errors?:array<string, mixed>, conflicts?:list<array<string, mixed>>}
+     * @return array{ok:bool, model?:ProfesionalHorario, errors?:array<string, mixed>, conflicts?:list<array<string, mixed>>}
      */
     public static function crear(array $data): array
     {
-        $model = new ProfesionalCobertura();
+        $model = new ProfesionalHorario();
         self::applyPayload($model, $data);
         $conflicts = self::detectConflicts($model);
         if ($conflicts !== []) {
             return [
                 'ok' => false,
-                'errors' => ['_conflicto' => ['Hay conflictos de cobertura o con agenda ambulatoria.']],
+                'errors' => ['_conflicto' => ['Hay conflictos de horario o con agenda ambulatoria.']],
                 'conflicts' => $conflicts,
             ];
         }
@@ -70,16 +70,16 @@ final class ProfesionalCoberturaService
 
     /**
      * @param array<string, mixed> $data
-     * @return array{ok:bool, model?:ProfesionalCobertura, errors?:array<string, mixed>, conflicts?:list<array<string, mixed>>}
+     * @return array{ok:bool, model?:ProfesionalHorario, errors?:array<string, mixed>, conflicts?:list<array<string, mixed>>}
      */
-    public static function actualizar(ProfesionalCobertura $model, array $data): array
+    public static function actualizar(ProfesionalHorario $model, array $data): array
     {
         self::applyPayload($model, $data, true);
         $conflicts = self::detectConflicts($model);
         if ($conflicts !== []) {
             return [
                 'ok' => false,
-                'errors' => ['_conflicto' => ['Hay conflictos de cobertura o con agenda ambulatoria.']],
+                'errors' => ['_conflicto' => ['Hay conflictos de horario o con agenda ambulatoria.']],
                 'conflicts' => $conflicts,
             ];
         }
@@ -96,11 +96,11 @@ final class ProfesionalCoberturaService
     /**
      * @return list<array<string, mixed>>
      */
-    public static function detectConflicts(ProfesionalCobertura $model): array
+    public static function detectConflicts(ProfesionalHorario $model): array
     {
         $out = [];
-        if (AgendaByEncounterClassMetadata::coberturaOverlapSamePersonaEfector()) {
-            $rows = ProfesionalCobertura::findSolapes(
+        if (AgendaByEncounterClassMetadata::horarioOverlapSamePersonaEfector()) {
+            $rows = ProfesionalHorario::findSolapes(
                 (int) $model->id_persona,
                 (int) $model->id_efector,
                 (string) $model->inicio,
@@ -108,11 +108,11 @@ final class ProfesionalCoberturaService
                 $model->isNewRecord ? null : (int) $model->id
             );
             foreach ($rows as $row) {
-                $out[] = array_merge(self::toApiArray($row), ['kind' => 'cobertura_overlap']);
+                $out[] = array_merge(self::toApiArray($row), ['kind' => 'horario_overlap']);
             }
         }
 
-        foreach (ProfesionalCoberturaActivaService::detectAmbSlotConflicts($model) as $amb) {
+        foreach (ProfesionalHorarioActivaService::detectAmbSlotConflicts($model) as $amb) {
             $out[] = $amb;
         }
 
@@ -122,7 +122,7 @@ final class ProfesionalCoberturaService
     /**
      * @param array<string, mixed> $data
      */
-    public static function applyPayload(ProfesionalCobertura $model, array $data, bool $isUpdate = false): void
+    public static function applyPayload(ProfesionalHorario $model, array $data, bool $isUpdate = false): void
     {
         $allowed = [
             'id_persona',
@@ -177,7 +177,7 @@ final class ProfesionalCoberturaService
     /**
      * @return array<string, mixed>
      */
-    public static function toApiArray(ProfesionalCobertura $model): array
+    public static function toApiArray(ProfesionalHorario $model): array
     {
         $row = $model->toArray([
             'id',

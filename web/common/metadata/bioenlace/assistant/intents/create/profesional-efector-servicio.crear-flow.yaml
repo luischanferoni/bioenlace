@@ -48,7 +48,7 @@ business_rules:
         reset_flow: true
       -
         id: mi_agenda
-        label: 'Mis horarios (agenda o plantel)'
+        label: 'Mis horarios (agenda o guardia/piso)'
         intent_id: profesional-horarios.gestionar-propio
         reset_flow: true
 subintents:

@@ -1641,12 +1641,12 @@
       return kpiGroupFromEmergencyIndicators(indicators && indicators.data);
     }
 
-    function renderCoberturaActivaBanner(coberturaData, parentEl) {
+    function renderHorarioActivoBanner(horarioData, parentEl) {
       // Ya no se muestra banner superior: el aviso vive solo en el vacío centrado del listado.
       return;
     }
 
-    function renderGuardiaTablero(items, kpiGroupData, coberturaData) {
+    function renderGuardiaTablero(items, kpiGroupData, horarioData) {
       clearNode(container);
 
       var panelFrag = importTemplate('tpl-clinical-list-panel-wrap');
@@ -1660,15 +1660,15 @@
       if (kpiSlot && kpiGroupData) {
         renderStaffKpiGroup(kpiSlot, kpiGroupData);
       }
-      if (coberturaData) {
-        renderCoberturaActivaBanner(coberturaData, listTarget);
+      if (horarioData) {
+        renderHorarioActivoBanner(horarioData, listTarget);
       }
 
-      var sessionCob = (coberturaData && coberturaData.session) ? coberturaData.session : {};
-      var sinCoberturaPlantel = sessionCob.tiene_cobertura === false;
-      if (sinCoberturaPlantel) {
-        var msgSin = (sessionCob.mensaje_sin_cobertura || '').toString().trim() ||
-          'No tenés horario de plantel de guardia cargado. Configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te los asigne.';
+      var sessionHor = (horarioData && horarioData.session) ? horarioData.session : {};
+      var sinHorario = sessionHor.tiene_horario === false;
+      if (sinHorario) {
+        var msgSin = (sessionHor.mensaje_sin_horario || '').toString().trim() ||
+          'No tenés horario de guardia cargado. Configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te los asigne.';
         if (puedeIngresar) {
           appendGuardiaIngresoToolbar(listTarget);
           var avisoFrag = importTemplate('tpl-pacientes-alert-empty');
@@ -3788,9 +3788,9 @@
       var kpiSections = (panel.sections || []).filter(function (sec) {
         return sec.kind === 'staff_kpi_group' && sec.data && Array.isArray(sec.data.items) && sec.data.items.length;
       });
-      var coberturaSec = findPanelSection(panel, 'staff_cobertura_activa');
+      var horarioSec = findPanelSection(panel, 'staff_horario_activo');
       var asyncSec = findPanelSection(panel, 'async_consultations_queue');
-      if (!kpiSections.length && !asyncSec && !coberturaSec) {
+      if (!kpiSections.length && !asyncSec && !horarioSec) {
         return { listTarget: container, asyncSlot: null, asyncSec: null };
       }
       clearNode(container);
@@ -3805,8 +3805,8 @@
       kpiSections.forEach(function (sec) {
         renderStaffKpiGroup(kpiSlot, sec.data);
       });
-      if (coberturaSec && coberturaSec.data) {
-        renderCoberturaActivaBanner(coberturaSec.data, listSlot || container);
+      if (horarioSec && horarioSec.data) {
+        renderHorarioActivoBanner(horarioSec.data, listSlot || container);
       }
       return {
         listTarget: listSlot || container,
@@ -3842,14 +3842,14 @@
         return;
       }
       if (layout === 'clinical_board') {
-        var coberturaSec = findPanelSection(panel, 'staff_cobertura_activa');
+        var horarioSec = findPanelSection(panel, 'staff_horario_activo');
         var boardSec = findPanelSection(panel, 'emergency_board');
         applyEmergencyBoardCapabilities(boardSec && boardSec.data ? boardSec.data : null);
         var items = boardSec && boardSec.data ? boardSec.data.items || [] : [];
         renderGuardiaTablero(
           items,
           findStaffKpiGroupData(panel),
-          coberturaSec ? coberturaSec.data : null
+          horarioSec ? horarioSec.data : null
         );
         applyPanelChrome(panel);
         return;
@@ -3867,13 +3867,13 @@
         }
         var inpat = findPanelSection(panel, 'inpatients');
         if (inpat) {
-          var cobInpat = findPanelSection(panel, 'staff_cobertura_activa');
-          var sessionInpat = cobInpat && cobInpat.data && cobInpat.data.session
-            ? cobInpat.data.session
+          var horInpat = findPanelSection(panel, 'staff_horario_activo');
+          var sessionInpat = horInpat && horInpat.data && horInpat.data.session
+            ? horInpat.data.session
             : {};
-          if (sessionInpat.tiene_cobertura === false) {
-            var msgInpat = (sessionInpat.mensaje_sin_cobertura || '').toString().trim() ||
-              'No tenés horario de plantel de piso cargado. Configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te los asigne.';
+          if (sessionInpat.tiene_horario === false) {
+            var msgInpat = (sessionInpat.mensaje_sin_horario || '').toString().trim() ||
+              'No tenés horario de piso cargado. Configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / administración del centro que te los asigne.';
             showListadoEmpty(msgInpat, panelParts.listTarget);
             applyPanelChrome(panel);
             return;
@@ -3942,14 +3942,14 @@
 
         var panel = json.data || {};
         if (options.sections) {
-          var coberturaSecPoll = findPanelSection(panel, 'staff_cobertura_activa');
+          var horarioSecPoll = findPanelSection(panel, 'staff_horario_activo');
           var boardSecPoll = findPanelSection(panel, 'emergency_board');
           if (boardSecPoll) {
             var itemsPoll = boardSecPoll.data ? boardSecPoll.data.items || [] : [];
             renderGuardiaTablero(
               itemsPoll,
               findStaffKpiGroupData(panel),
-              coberturaSecPoll ? coberturaSecPoll.data : null
+              horarioSecPoll ? horarioSecPoll.data : null
             );
           } else {
             renderFromPanel(panel);
@@ -3977,7 +3977,7 @@
     async function loadGuardiaTablero(showSpinner) {
       await loadPanel({
         showSpinner: showSpinner,
-        sections: 'staff_cobertura_activa,staff_guardia_kpis,emergency_board',
+        sections: 'staff_horario_activo,staff_guardia_kpis,emergency_board',
       });
     }
 

@@ -7,9 +7,9 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * Cobertura / roster de personal para EMER e IMP (entrada–salida).
+ * Horario de presencia EMER/IMP (entrada–salida).
  *
- * Tabla: `profesional_cobertura`
+ * Tabla: `profesional_horario`
  * No genera cupos ni turnos de paciente.
  *
  * @property int $id
@@ -29,13 +29,13 @@ use yii\db\ActiveRecord;
  * @property int|null $updated_by
  * @property int|null $deleted_by
  */
-class ProfesionalCobertura extends ActiveRecord
+class ProfesionalHorario extends ActiveRecord
 {
     use \common\traits\SoftDeleteDateTimeTrait;
 
     public static function tableName()
     {
-        return 'profesional_cobertura';
+        return 'profesional_horario';
     }
 
     public function behaviors()
@@ -80,10 +80,10 @@ class ProfesionalCobertura extends ActiveRecord
 
     public function validateEncounterClass(): void
     {
-        if (!AgendaByEncounterClassMetadata::isCoberturaClass((string) $this->encounter_class)) {
+        if (!AgendaByEncounterClassMetadata::isHorarioIntervalClass((string) $this->encounter_class)) {
             $this->addError(
                 'encounter_class',
-                'La cobertura solo admite clases ' . implode(', ', AgendaByEncounterClassMetadata::coberturaClasses()) . '.'
+                'El horario solo admite clases ' . implode(', ', AgendaByEncounterClassMetadata::horarioIntervalClasses()) . '.'
             );
         }
     }
@@ -139,7 +139,7 @@ class ProfesionalCobertura extends ActiveRecord
     }
 
     /**
-     * Solapes activos de la misma persona en el efector (cualquier clase de cobertura).
+     * Solapes activos de la misma persona en el efector (cualquier clase de horario EMER/IMP).
      *
      * @return list<self>
      */

@@ -25,7 +25,7 @@ trait ServiciosCatalogoFkPurgeTrait
             'servicio_teleconsulta_caso',
             'infraestructura_sala',
             'integration_fhir_service_code',
-            'profesional_cobertura',
+            'profesional_horario',
         ];
     }
 

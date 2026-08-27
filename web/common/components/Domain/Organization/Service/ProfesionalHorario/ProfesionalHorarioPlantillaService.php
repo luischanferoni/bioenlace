@@ -1,22 +1,22 @@
 <?php
 
-namespace common\components\Domain\Organization\Service\ProfesionalCobertura;
+namespace common\components\Domain\Organization\Service\ProfesionalHorario;
 
 use common\components\Domain\Organization\Service\AgendaWeeklyOccupancyService;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalCobertura;
-use common\models\ProfesionalCoberturaPlantilla;
+use common\models\ProfesionalHorario;
+use common\models\ProfesionalHorarioPlantilla;
 use common\models\ProfesionalEfectorServicio;
 use Yii;
 
 /**
- * Guarda plantilla semanal de cobertura y materializa intervalos en profesional_cobertura.
+ * Guarda plantilla semanal de horario de presencia y materializa intervalos en profesional_horario.
  */
-final class ProfesionalCoberturaPlantillaService
+final class ProfesionalHorarioPlantillaService
 {
     /**
      * @param array<string, mixed> $data
-     * @return array{ok: bool, plantilla?: ProfesionalCoberturaPlantilla, created?: int, errors?: array<string, list<string>>, conflicts?: list<array<string, mixed>>}
+     * @return array{ok: bool, plantilla?: ProfesionalHorarioPlantilla, created?: int, errors?: array<string, list<string>>, conflicts?: list<array<string, mixed>>}
      */
     public static function guardarYMaterializar(array $data): array
     {
@@ -45,7 +45,7 @@ final class ProfesionalCoberturaPlantillaService
 
         $dayVals = [];
         $hasAny = false;
-        foreach (ProfesionalCoberturaPlantilla::DAY_COLUMNS as $col) {
+        foreach (ProfesionalHorarioPlantilla::DAY_COLUMNS as $col) {
             $raw = isset($data[$col]) ? trim((string) $data[$col]) : '';
             $dayVals[$col] = $raw !== '' ? self::normalizeHourCsv($raw) : null;
             if ($dayVals[$col] !== null && $dayVals[$col] !== '') {
@@ -119,13 +119,13 @@ final class ProfesionalCoberturaPlantillaService
                     'fin' => $interval['fin'],
                     'notas' => 'plantilla:' . (int) $plantilla->id,
                 ];
-                $result = ProfesionalCoberturaService::crear($payload);
+                $result = ProfesionalHorarioService::crear($payload);
                 if (!$result['ok']) {
                     $tx->rollBack();
 
                     return [
                         'ok' => false,
-                        'errors' => $result['errors'] ?? ['_error' => ['No se pudo materializar la cobertura.']],
+                        'errors' => $result['errors'] ?? ['_error' => ['No se pudo materializar el horario.']],
                         'conflicts' => $result['conflicts'] ?? [],
                     ];
                 }
@@ -157,8 +157,8 @@ final class ProfesionalCoberturaPlantillaService
         int $idEfector,
         string $encounterClass,
         ?int $idPes
-    ): ?ProfesionalCoberturaPlantilla {
-        $q = ProfesionalCoberturaPlantilla::find()
+    ): ?ProfesionalHorarioPlantilla {
+        $q = ProfesionalHorarioPlantilla::find()
             ->where([
                 'id_persona' => $idPersona,
                 'id_efector' => $idEfector,
@@ -171,7 +171,7 @@ final class ProfesionalCoberturaPlantillaService
             $q->andWhere(['id_profesional_efector_servicio' => null]);
         }
 
-        /** @var ProfesionalCoberturaPlantilla|null $row */
+        /** @var ProfesionalHorarioPlantilla|null $row */
         $row = $q->orderBy(['id' => SORT_DESC])->one();
 
         return $row;
@@ -182,12 +182,12 @@ final class ProfesionalCoberturaPlantillaService
         int $idEfector,
         string $encounterClass,
         ?int $idPes
-    ): ProfesionalCoberturaPlantilla {
+    ): ProfesionalHorarioPlantilla {
         $existing = self::findActivaForContext($idPersona, $idEfector, $encounterClass, $idPes);
         if ($existing !== null) {
             return $existing;
         }
-        $m = new ProfesionalCoberturaPlantilla();
+        $m = new ProfesionalHorarioPlantilla();
         $m->id_persona = $idPersona;
         $m->id_efector = $idEfector;
         $m->encounter_class = $encounterClass;
@@ -202,7 +202,7 @@ final class ProfesionalCoberturaPlantillaService
      * @return list<array{inicio: string, fin: string}>
      */
     public static function expandIntervals(
-        ProfesionalCoberturaPlantilla $plantilla,
+        ProfesionalHorarioPlantilla $plantilla,
         string $vigenteDesde,
         int $semanas
     ): array {
@@ -221,7 +221,7 @@ final class ProfesionalCoberturaPlantillaService
                 break;
             }
             $n = (int) date('N', $ts); // 1=lun … 7=dom
-            $col = ProfesionalCoberturaPlantilla::DAY_COLUMNS[$n] ?? null;
+            $col = ProfesionalHorarioPlantilla::DAY_COLUMNS[$n] ?? null;
             if ($col === null) {
                 continue;
             }
@@ -375,7 +375,7 @@ final class ProfesionalCoberturaPlantillaService
             $deletedBy = (int) Yii::$app->user->id;
         }
 
-        ProfesionalCobertura::updateAll(
+        ProfesionalHorario::updateAll(
             [
                 'deleted_at' => $now,
                 'deleted_by' => $deletedBy,

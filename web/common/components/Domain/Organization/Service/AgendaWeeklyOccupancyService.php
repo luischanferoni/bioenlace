@@ -4,7 +4,7 @@ namespace common\components\Domain\Organization\Service;
 
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\models\Clinical\Encounter;
-use common\models\ProfesionalCoberturaPlantilla;
+use common\models\ProfesionalHorarioPlantilla;
 use common\models\ProfesionalEfectorServicio;
 use common\models\ProfesionalEfectorServicioAgenda;
 
@@ -37,7 +37,7 @@ final class AgendaWeeklyOccupancyService
         'domingo_2' => 'Domingo',
     ];
 
-    public const HINT_BUSY = 'Las celdas en gris ya están tomadas por otra agenda de este profesional en el efector (otro tipo de encounter). Podés elegir horas libres; por ejemplo cobertura de noche si el ambulatorio es de día.';
+    public const HINT_BUSY = 'Las celdas en gris ya están tomadas por otra agenda de este profesional en el efector (otro tipo de encounter). Podés elegir horas libres; por ejemplo horario de noche si el ambulatorio es de día.';
 
     /**
      * @return array<string, list<int>> columna → horas 0–23 ocupadas
@@ -54,27 +54,27 @@ final class AgendaWeeklyOccupancyService
         $editingEncounterClass = strtoupper(trim($editingEncounterClass));
         $busy = self::emptyByColumn();
 
-        if (AgendaByEncounterClassMetadata::coberturaVsAmbSlots()
+        if (AgendaByEncounterClassMetadata::horarioVsAmbSlots()
             && $editingEncounterClass !== Encounter::ENCOUNTER_CLASS_AMB
         ) {
             $busy = self::mergeByColumn($busy, self::hoursFromAmbAgendas($idPersona, $idEfector, null));
         }
 
         if ($editingEncounterClass === Encounter::ENCOUNTER_CLASS_AMB) {
-            if (AgendaByEncounterClassMetadata::coberturaVsAmbSlots()) {
+            if (AgendaByEncounterClassMetadata::horarioVsAmbSlots()) {
                 $busy = self::mergeByColumn(
                     $busy,
-                    self::hoursFromCoberturaPlantillas($idPersona, $idEfector, null)
+                    self::hoursFromHorarioPlantillas($idPersona, $idEfector, null)
                 );
             }
             $busy = self::mergeByColumn(
                 $busy,
                 self::hoursFromAmbAgendas($idPersona, $idEfector, $excludePesId)
             );
-        } elseif (AgendaByEncounterClassMetadata::coberturaOverlapSamePersonaEfector()) {
+        } elseif (AgendaByEncounterClassMetadata::horarioOverlapSamePersonaEfector()) {
             $busy = self::mergeByColumn(
                 $busy,
-                self::hoursFromCoberturaPlantillas($idPersona, $idEfector, $editingEncounterClass)
+                self::hoursFromHorarioPlantillas($idPersona, $idEfector, $editingEncounterClass)
             );
         }
 
@@ -441,12 +441,12 @@ final class AgendaWeeklyOccupancyService
     /**
      * @return array<string, list<int>>
      */
-    private static function hoursFromCoberturaPlantillas(
+    private static function hoursFromHorarioPlantillas(
         int $idPersona,
         int $idEfector,
         ?string $excludeEncounterClass
     ): array {
-        $q = ProfesionalCoberturaPlantilla::find()
+        $q = ProfesionalHorarioPlantilla::find()
             ->where([
                 'id_persona' => $idPersona,
                 'id_efector' => $idEfector,

@@ -37,12 +37,7 @@ families:
     operation: edit
     members:
       - profesional-horarios.gestionar-propio
-
-  profesional-cobertura.gestionar:
-    operation: edit
-    members:
-      - profesional-cobertura.gestionar-propio
-      - profesional-cobertura.gestionar-staff
+      - profesional-horarios.gestionar-staff
 
   profesional-identidad.editar:
     operation: edit

@@ -2,7 +2,7 @@
 
 namespace common\components\Domain\Organization\Service\Seed;
 
-use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaService;
+use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioService;
 use common\components\Domain\Organization\Service\ProfesionalEfectorServicio\ProfesionalEfectorServicioAltaService;
 use common\components\Domain\Person\Util\CuilValidator;
 use common\models\Efector;
@@ -41,8 +41,8 @@ final class DemoSandboxStaffProvisionService
      *     rbac_role?: string,
      *     apellido?: string,
      *     username_prefix?: string,
-     *     cobertura_classes?: list<string>,
-     *     cobertura_ttl_seconds?: int
+     *     horario_classes?: list<string>,
+     *     horario_ttl_seconds?: int
      * } $options
      */
     public function provision(
@@ -113,13 +113,13 @@ final class DemoSandboxStaffProvisionService
             if ($rbacRole !== '') {
                 User::assignRole((int) $user->id, $rbacRole);
             }
-            $this->ensureCobertura(
+            $this->ensureHorario(
                 (int) $persona->id_persona,
                 $idEfector,
                 $idServicio,
                 $idPes,
-                $options['cobertura_classes'] ?? [],
-                (int) ($options['cobertura_ttl_seconds'] ?? 14400)
+                $options['horario_classes'] ?? [],
+                (int) ($options['horario_ttl_seconds'] ?? 14400)
             );
 
             $tx->commit();
@@ -214,7 +214,7 @@ final class DemoSandboxStaffProvisionService
     /**
      * @param list<string> $classes
      */
-    private function ensureCobertura(
+    private function ensureHorario(
         int $idPersona,
         int $idEfector,
         int $idServicio,
@@ -233,7 +233,7 @@ final class DemoSandboxStaffProvisionService
             if ($class === '') {
                 continue;
             }
-            $result = ProfesionalCoberturaService::crear([
+            $result = ProfesionalHorarioService::crear([
                 'id_persona' => $idPersona,
                 'id_efector' => $idEfector,
                 'id_servicio' => $idServicio,
@@ -246,7 +246,7 @@ final class DemoSandboxStaffProvisionService
             ]);
             if (empty($result['ok'])) {
                 Yii::warning(
-                    'Demo cobertura no creada class=' . $class . ' ' . json_encode($result['errors'] ?? []),
+                    'Demo horario no creado class=' . $class . ' ' . json_encode($result['errors'] ?? []),
                     __METHOD__
                 );
             }

@@ -1,13 +1,13 @@
-intent_id: profesional-cobertura.gestionar-staff
+intent_id: profesional-horarios.gestionar-staff
 version: 1
 shortcut:
   hidden: true
 operation: edit
-intent_family: profesional-cobertura.gestionar
+intent_family: profesional-horarios.gestionar
 domain_operation: DataAccess.edit
 action_name: 'Horarios de guardia / internación de un profesional'
-description: 'Cargar horarios de plantel (entrada/salida) de guardia o internación para un profesional del efector. No mezcla con la agenda ambulatoria.'
-rbac_route: /api/profesional-cobertura/gestionar
+description: 'Cargar horarios (entrada/salida) de guardia o internación para un profesional del efector. No mezcla con la agenda ambulatoria.'
+rbac_route: /api/profesional-horarios/gestionar
 keywords:
   - 'horarios de guardia de un profesional'
   - 'horarios de internación de un profesional'
@@ -39,22 +39,22 @@ subintents:
       - draft.id_profesional_efector_servicio
     provides:
       - draft.id_profesional_efector_servicio
-    next: gestionar_cobertura
+    next: gestionar_horario
     open_ui:
-      action_id: profesional-cobertura.elegir-pes
+      action_id: profesional-horarios.elegir-pes
       params:
         modo: staff
         id_profesional_efector_servicio: draft.id_profesional_efector_servicio
   -
-    id: gestionar_cobertura
-    assistant_text: 'Completá los horarios de plantel'
+    id: gestionar_horario
+    assistant_text: 'Completá los horarios'
     requires:
       - draft.id_profesional_efector_servicio
     provides:
-      - draft.cobertura_ui_completed
+      - draft.horario_ui_completed
     next: ''
     open_ui:
-      action_id: profesional-cobertura.gestionar
+      action_id: profesional-horarios.gestionar
       params:
         modo: staff
         id_profesional_efector_servicio: draft.id_profesional_efector_servicio

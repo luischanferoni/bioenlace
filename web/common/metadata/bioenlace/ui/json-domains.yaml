@@ -7,7 +7,7 @@ entity_domains:
   turnos-perfil: scheduling
   consultas-seguimiento: scheduling
   profesional-agenda: scheduling
-  profesional-cobertura: organization
+  profesional-horarios: organization
   servicio-teleconsulta: scheduling
   efectores: scheduling
   servicios: scheduling

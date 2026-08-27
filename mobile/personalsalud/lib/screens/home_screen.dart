@@ -63,12 +63,12 @@ class _HomeScreenState extends State<HomeScreen> {
   List<EmergencyBoardItem> _guardiaTablero = [];
   List<CirugiaAgendaItem> _cirugias = [];
   List<HomePanelKpiGroup> _kpiGroups = [];
-  bool _sessionTieneCobertura = false;
+  bool _sessionTieneHorario = false;
   bool _puedeTriage = false;
   bool _puedeIngresar = false;
   bool _puedeAtender = false;
   bool _puedeDocumentar = false;
-  String? _mensajeSinCobertura;
+  String? _mensajeSinHorario;
   Map<String, dynamic>? _staffContext;
   String _lastListKind = '';
   bool _isLoading = true;
@@ -161,7 +161,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final panel = await _homePanelApi.getPanel(
         fecha: fechaStr,
         sections: silent && _encounterClass == 'EMER'
-            ? 'staff_cobertura_activa,emergency_board,emergency_indicators'
+            ? 'staff_horario_activo,emergency_board,emergency_indicators'
             : null,
       );
       if (!mounted) return;
@@ -203,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _rememberTableroPollInterval(HomePanelResponse panel) {
     final candidates = <int>[];
-    for (final kind in ['emergency_board', 'staff_cobertura_activa']) {
+    for (final kind in ['emergency_board', 'staff_horario_activo']) {
       final sec = panel.sectionByKind(kind)?.pollIntervalSeconds;
       if (sec != null && sec > 0) {
         candidates.add(sec);
@@ -240,12 +240,12 @@ class _HomeScreenState extends State<HomeScreen> {
         _internados = [];
         _guardiaTablero = [];
         _cirugias = [];
-        _sessionTieneCobertura = false;
+        _sessionTieneHorario = false;
         _puedeTriage = false;
         _puedeIngresar = false;
         _puedeAtender = false;
         _puedeDocumentar = false;
-        _mensajeSinCobertura = null;
+        _mensajeSinHorario = null;
         _consultasAsync = [];
         _consultasAsyncGroups = [];
         _consultasAsyncSlaIncumplidos = 0;
@@ -266,15 +266,15 @@ class _HomeScreenState extends State<HomeScreen> {
         _staffContext = null;
       }
 
-      final cobertura = panel.sectionByKind('staff_cobertura_activa');
-      if (cobertura != null) {
-        final session = cobertura.data['session'];
-        _sessionTieneCobertura = session is Map && session['tiene_cobertura'] == true;
-        final msg = session is Map ? session['mensaje_sin_cobertura'] : null;
-        _mensajeSinCobertura = msg is String && msg.trim().isNotEmpty ? msg.trim() : null;
+      final horario = panel.sectionByKind('staff_horario_activo');
+      if (horario != null) {
+        final session = horario.data['session'];
+        _sessionTieneHorario = session is Map && session['tiene_horario'] == true;
+        final msg = session is Map ? session['mensaje_sin_horario'] : null;
+        _mensajeSinHorario = msg is String && msg.trim().isNotEmpty ? msg.trim() : null;
       } else if (!partial) {
-        _sessionTieneCobertura = false;
-        _mensajeSinCobertura = null;
+        _sessionTieneHorario = false;
+        _mensajeSinHorario = null;
       }
 
       final board = panel.sectionByKind('emergency_board');
@@ -367,13 +367,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  static const String _msgSinPlantelGuardiaFallback =
-      'No tenés horario de plantel de guardia cargado. Para ver el tablero y atender, '
+  static const String _msgSinHorarioGuardiaFallback =
+      'No tenés horario de guardia cargado. Para ver el tablero y atender, '
       'configurá tus horarios en el Asistente («Configurar mis horarios») o pedile a '
       'coordinación / administración del centro que te los asigne.';
 
-  static const String _msgSinPlantelPisoFallback =
-      'No tenés horario de plantel de piso cargado. Para ver internados, configurá tus '
+  static const String _msgSinHorarioPisoFallback =
+      'No tenés horario de piso cargado. Para ver internados, configurá tus '
       'horarios en el Asistente («Configurar mis horarios») o pedile a coordinación / '
       'administración del centro que te los asigne.';
 
@@ -1091,11 +1091,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildInternadosList() {
-    if (!_sessionTieneCobertura) {
-      final msg = (_mensajeSinCobertura != null &&
-              !_mensajeSinCobertura!.toLowerCase().contains('guardia'))
-          ? _mensajeSinCobertura!
-          : _msgSinPlantelPisoFallback;
+    if (!_sessionTieneHorario) {
+      final msg = (_mensajeSinHorario != null &&
+              !_mensajeSinHorario!.toLowerCase().contains('guardia'))
+          ? _mensajeSinHorario!
+          : _msgSinHorarioPisoFallback;
       return _buildEmpty(
         icon: Icons.badge_outlined,
         text: msg,
@@ -1394,12 +1394,12 @@ class _HomeScreenState extends State<HomeScreen> {
       }
       return;
     }
-    if (!_sessionTieneCobertura) {
+    if (!_sessionTieneHorario) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _mensajeSinCobertura ?? _msgSinPlantelGuardiaFallback,
+              _mensajeSinHorario ?? _msgSinHorarioGuardiaFallback,
             ),
           ),
         );
@@ -1445,8 +1445,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildGuardiaTableroList() {
-    if (!_sessionTieneCobertura) {
-      final msg = _mensajeSinCobertura ?? _msgSinPlantelGuardiaFallback;
+    if (!_sessionTieneHorario) {
+      final msg = _mensajeSinHorario ?? _msgSinHorarioGuardiaFallback;
       return _buildEmpty(
         icon: Icons.badge_outlined,
         text: msg,
@@ -1555,7 +1555,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           item: g,
                           api: _emergencyApi,
                           onChanged: refresh,
-                          sessionTieneCobertura: _sessionTieneCobertura,
+                          sessionTieneHorario: _sessionTieneHorario,
                           puedeAtender: _puedeAtender,
                           puedeTriage: _puedeTriage,
                           puedeIngresar: _puedeIngresar,

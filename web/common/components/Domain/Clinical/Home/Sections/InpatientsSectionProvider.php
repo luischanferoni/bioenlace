@@ -3,7 +3,7 @@
 namespace common\components\Domain\Clinical\Home\Sections;
 
 use common\components\Domain\Clinical\Home\StaffClinicalDayListService;
-use common\components\Domain\Organization\Service\ProfesionalCobertura\ProfesionalCoberturaActivaService;
+use common\components\Domain\Organization\Service\ProfesionalHorario\ProfesionalHorarioActivaService;
 use common\components\Platform\Core\Product\AgendaByEncounterClassMetadata;
 use common\components\Platform\Ui\Home\Service\Sections\HomePanelSectionProviderInterface;
 use common\models\Clinical\Encounter;
@@ -23,17 +23,17 @@ final class InpatientsSectionProvider implements HomePanelSectionProviderInterfa
             $idPersona = (int) (Yii::$app->user->getIdPersona() ?? 0);
         }
 
-        if (AgendaByEncounterClassMetadata::impViewRequiresCobertura()
+        if (AgendaByEncounterClassMetadata::impViewRequiresHorario()
             && ($idPersona <= 0
                 || $idEfector <= 0
-                || !ProfesionalCoberturaActivaService::personaTieneCoberturaActiva(
+                || !ProfesionalHorarioActivaService::personaTieneHorarioActivo(
                     $idPersona,
                     $idEfector,
                     Encounter::ENCOUNTER_CLASS_IMP
                 ))
         ) {
             $proxima = ($idPersona > 0 && $idEfector > 0)
-                ? ProfesionalCoberturaActivaService::proximaCoberturaInicio(
+                ? ProfesionalHorarioActivaService::proximoHorarioInicio(
                     $idPersona,
                     $idEfector,
                     Encounter::ENCOUNTER_CLASS_IMP
@@ -44,7 +44,7 @@ final class InpatientsSectionProvider implements HomePanelSectionProviderInterfa
                 'items' => [],
                 'total' => 0,
                 'requires_cobertura' => true,
-                'empty_message' => ProfesionalCoberturaActivaService::mensajeSinCoberturaParaSesion(
+                'empty_message' => ProfesionalHorarioActivaService::mensajeSinHorarioParaSesion(
                     Encounter::ENCOUNTER_CLASS_IMP,
                     ['proxima_inicio' => $proxima]
                 ),

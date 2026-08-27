@@ -56,7 +56,7 @@
           "min": 1,
           "max": 12,
           "step": 1,
-          "hint": "Se generan los turnos de plantel a partir de la fecha, según el patrón semanal.",
+          "hint": "Se generan los intervalos de horario a partir de la fecha, según el patrón semanal.",
           "include_in_submit": true,
           "layout": { "col": 6, "breakpoint": "md" }
         },
@@ -87,7 +87,7 @@
   "actions": [
     {
       "id": "guardar",
-      "label": "Guardar cobertura",
+      "label": "Guardar horario",
       "type": "submit",
       "primary": true
     }

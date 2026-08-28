@@ -54,6 +54,11 @@ final class InformationalChannel
             return AmbiguousChannel::handle();
         }
 
+        $hisAnswer = InfoContentAssistantService::tryAnswerFromHisContext($content, $userId);
+        if ($hisAnswer !== null) {
+            return $hisAnswer;
+        }
+
         return AssistantEnvelope::message(
             InformationalChannelConfig::message(
                 'no_article',

@@ -2,6 +2,7 @@
 
 namespace common\components\Platform\Assistant\Chat\Preprocess;
 
+use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Metadata\AssistantMetadataLoader;
 use common\components\Platform\Core\Product\ProductMetadataPaths;
 use Yii;
@@ -34,7 +35,7 @@ final class ChatPreprocessService
         'ambiguous_conversational' => 'ambiguous',
     ];
 
-    private const ENTITY_CATEGORIES = ['servicio', 'efector', 'persona', 'profesional', 'turno'];
+    private const ENTITY_CATEGORIES = ['servicio', 'efector', 'persona', 'profesional', 'turno', 'tiempo'];
 
     public static function isClinicalSymptomContent(string $content): bool
     {
@@ -91,7 +92,8 @@ final class ChatPreprocessService
      *   normalized_text: string,
      *   user_goal: string,
      *   action_text: string,
-     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>
+     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>,
+     *   context_areas: list<string>
      * }|null null = falló la IA (sin clasificar por heurística)
      */
     public static function run(string $content, int $userId): ?array
@@ -120,6 +122,7 @@ final class ChatPreprocessService
             'goals_json' => json_encode(self::GOALS, JSON_UNESCAPED_UNICODE),
             'categories_json' => json_encode($categoriesList, JSON_UNESCAPED_UNICODE),
             'categories_human' => implode(', ', $categoriesList),
+            'context_areas_catalog' => AssistantContextHISArea::catalogForPreprocess(),
         ]);
     }
 
@@ -217,7 +220,29 @@ final class ChatPreprocessService
             'user_goal' => $goal,
             'action_text' => $actionText,
             'extractions' => $extractions,
+            'context_areas' => self::normalizeContextAreas($raw['context_areas'] ?? []),
         ];
+    }
+
+    /**
+     * @param mixed $rawAreas
+     * @return list<string>
+     */
+    public static function normalizeContextAreas($rawAreas): array
+    {
+        if (!is_array($rawAreas)) {
+            return [];
+        }
+        $out = [];
+        foreach ($rawAreas as $row) {
+            $id = trim((string) $row);
+            if ($id === '' || !AssistantContextHISArea::isValid($id)) {
+                continue;
+            }
+            $out[] = $id;
+        }
+
+        return array_values(array_unique($out));
     }
 
     /**
@@ -226,7 +251,8 @@ final class ChatPreprocessService
      *   normalized_text: string,
      *   user_goal: string,
      *   action_text: string,
-     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>
+     *   extractions: list<array{span: string, category: string, synonyms: list<string>}>,
+     *   context_areas: list<string>
      * }
      */
     private static function emptyResult(string $content): array
@@ -237,6 +263,7 @@ final class ChatPreprocessService
             'user_goal' => 'ambiguous',
             'action_text' => '',
             'extractions' => [],
+            'context_areas' => [],
         ];
     }
 }

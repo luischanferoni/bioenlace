@@ -8,6 +8,7 @@ use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalog;
 use common\components\Platform\Assistant\IntentEngine\UiActionCatalogItem;
+use common\components\Platform\Assistant\Context\AssistantContextAssemblyService;
 use common\components\Platform\Assistant\Chat\Conversational\ConversationalChannelProviderRegistry;
 use Yii;
 
@@ -28,6 +29,12 @@ final class ConversationalChannel
     {
         $content = trim($content);
         $parts = [rtrim(self::stablePromptPrefix())];
+
+        $hisContext = AssistantContextAssemblyService::assembleForChannel('clinical', $userId);
+        if (!$hisContext->isEmpty()) {
+            $parts[] = '';
+            $parts[] = $hisContext->promptSection;
+        }
 
         $idPersona = (int) Yii::$app->user->getIdPersona();
         ConversationalChannelProviderRegistry::appendPatientContext($idPersona, $parts);
@@ -253,7 +260,9 @@ final class ConversationalChannel
     private static function finalizeResponse(string $text, ?array $offer, string $originContent = ''): array
     {
         if ($offer === null) {
-            return AssistantEnvelope::message($text);
+            return AssistantContextAssemblyService::attachDebugIfEnabled(
+                AssistantEnvelope::message($text)
+            );
         }
 
         $button = [
@@ -265,7 +274,9 @@ final class ConversationalChannel
             $button['content'] = $origin;
         }
 
-        return AssistantEnvelope::interactive($text, [$button]);
+        return AssistantContextAssemblyService::attachDebugIfEnabled(
+            AssistantEnvelope::interactive($text, [$button])
+        );
     }
 
     /**

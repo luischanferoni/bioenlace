@@ -1,5 +1,5 @@
-# Preprocess IA: clasificación de user_goal y extracciones.
-# {@see ChatPreprocessService} — PHP solo sustituye placeholders dinámicos.
+# Preprocess IA: clasificación de user_goal, context_areas (áreas HIS) y extracciones.
+# {@see ChatPreprocessService} — PHP sustituye placeholders dinámicos.
 version: 1
 
 stable_prompt: |
@@ -12,11 +12,14 @@ stable_prompt: |
   - Ayuda sobre cómo funciona el producto para hacer esas gestiones.
   - Preguntas sobre un flujo ya abierto o sobre el asistente.
 
+  {context_areas_catalog}
+
   Respondé ÚNICAMENTE con JSON:
   {
     "normalized_text": "mensaje limpio, ortografía corregida y abreviaturas médicas abiertas cuando aplique",
     "user_goal": "uno de {goals_json}",
     "action_text": "fragmento que expresa la acción pedida o vacío",
+    "context_areas": ["claves de área HIS de la lista anterior, o [] si saludo/meta sin datos"],
     "extractions": [
       {
         "span": "fragmento mencionado (no palabras sueltas)",
@@ -33,6 +36,12 @@ stable_prompt: |
   - in_flow_question: pregunta sobre un flujo ya en curso.
   - meta: pregunta sobre el asistente mismo.
   - ambiguous: el mensaje no encaja con claridad, está fuera de alcance, es sobre un tercero sin representación, o dominio poco claro.
+
+  Reglas de context_areas:
+  - Solo claves de la lista de áreas HIS.
+  - Saludo solo, meta o mensaje sin necesidad de datos del sistema → [].
+  - Preguntas sobre citas/turnos, llegar tarde, cancelar, horarios → incluir appointments si aplica.
+  - Preguntas sobre guía de producto sin datos personales → product si aplica.
 
   Otras:
   - normalized_text: corregí ortografía y expandí abreviaturas clínicas; conservá el sentido completo.

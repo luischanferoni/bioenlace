@@ -70,4 +70,25 @@ final class ChatPreprocessContext
 
         return isset($d['action_text']) ? trim((string) $d['action_text']) : '';
     }
+
+    /**
+     * @return list<string>
+     */
+    public static function contextAreas(): array
+    {
+        $d = self::get();
+        $areas = $d['context_areas'] ?? [];
+        if (!is_array($areas)) {
+            return [];
+        }
+        $out = [];
+        foreach ($areas as $row) {
+            $id = trim((string) $row);
+            if ($id !== '') {
+                $out[] = $id;
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
 }

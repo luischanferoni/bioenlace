@@ -65,7 +65,10 @@ use common\components\Domain\Scheduling\Assistant\SchedulingUiScreenParamsExpand
 use common\components\Domain\Scheduling\Service\ConsultasSeguimientoFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\SolicitarAtencionFlowDraftHydrator;
-use common\components\Domain\Scheduling\Service\TurnosVerMisTurnosFlowDraftHydrator;
+use common\components\Domain\Scheduling\Assistant\Context\AppointmentCurrentAspectLoader;
+use common\components\Domain\Scheduling\Assistant\Context\AppointmentHistorySubjectAtSiteAspectLoader;
+use common\components\Domain\Scheduling\Assistant\Context\AppointmentSchedulingSetupAspectLoader;
+use common\components\Domain\Scheduling\Assistant\Context\SiteAppointmentPoliciesAspectLoader;
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoConfirmationPushReceiptProjector;
 use common\components\Domain\Scheduling\Service\BehaviorProfile\TurnoAdvancePushReceiptProjector;
 use common\components\Platform\Ui\Home\Service\Sections\ActionCardsSectionProvider;
@@ -138,6 +141,13 @@ return [
 
     'conversationalChannelProviders' => [
         ClinicalConversationalChannelProvider::class,
+    ],
+
+    'assistantContextAspectLoaders' => [
+        AppointmentCurrentAspectLoader::class,
+        SiteAppointmentPoliciesAspectLoader::class,
+        AppointmentSchedulingSetupAspectLoader::class,
+        AppointmentHistorySubjectAtSiteAspectLoader::class,
     ],
 
     'hintCandidateProviders' => [

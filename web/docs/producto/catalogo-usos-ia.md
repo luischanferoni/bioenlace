@@ -22,8 +22,9 @@ Este documento cubre sobre todo la **IA generativa** y enlaza STT donde comparte
 
 | Contexto | Quién | Para qué | Frecuencia típica | Código principal |
 |----------|-------|----------|-------------------|------------------|
-| `asistente-preprocess` | Paciente o staff en chat | Normalizar mensaje, fijar `user_goal`, extracciones ligeras | **Cada mensaje raíz** del asistente | `ChatPreprocessService` |
-| `asistente-conversational` | Paciente (chat) | Respuesta breve en canal `clinical` (empatía + orientación prudente) | Cuando `user_goal` = `clinical` | `ConversationalChannel` |
+| `asistente-preprocess` | Paciente o staff en chat | Normalizar mensaje, fijar `user_goal`, **`context_areas`**, extracciones ligeras | **Cada mensaje raíz** del asistente | `ChatPreprocessService` |
+| `asistente-conversational` | Paciente (chat) | Respuesta breve en canal `clinical` (empatía + orientación prudente) + bloque `context:his` si aplica | Cuando `user_goal` = `clinical` | `ConversationalChannel` |
+| `asistente-informational` | Paciente (chat) | Respuesta anclada a artículo **o** volcado HIS sin artículo | Cuando `user_goal` = `informational` / `meta` con 2ª IA | `InfoContentAssistantService` |
 | `intent-engine-classification` | Paciente o staff | Elegir intent del catálogo cuando las reglas no alcanzan confianza | Ocasional (fallback del motor de intents) | `IntentClassifier` → `IntentEngine` |
 | `motivos-consulta-batch` | Sistema (cron/lote) | Resumir el hilo de motivos en `encounter.reason_text` | **1× por consulta** al cerrar ventana de motivos | `AppointmentReasonBatchService` |
 | `motivos-consulta-insights` | Sistema (tras el lote) | Sugerencias orientativas: hipótesis diagnósticas y prácticas (máx. 5 c/u) | **1× por consulta** si hay resumen de motivos | `AppointmentReasonClinicalInsightsService` |
@@ -49,18 +50,23 @@ flowchart LR
   P[asistente-preprocess]
   R{user_goal}
   C[asistente-conversational]
+  I[asistente-informational]
   O[Reglas / flujos sin 2.ª IA]
   M --> P --> R
-  R -->|conversacional| C
+  R -->|clinical| C
+  R -->|informational / meta| I
   R -->|operacional / unclear| O
 ```
 
 | Paso | Contexto IA | ¿Siempre IA? |
 |------|-------------|--------------|
-| Entender el mensaje | `asistente-preprocess` | Sí (mensaje con texto nuevo) |
-| Charla clinical (malestar sin trámite) | `asistente-conversational` | Solo si `user_goal` = `clinical` |
+| Entender el mensaje | `asistente-preprocess` | Sí (mensaje con texto nuevo); incluye catálogo de áreas HIS |
+| Charla clinical (malestar sin trámite) | `asistente-conversational` | Solo si `user_goal` = `clinical`; prompt puede incluir `context:his` |
+| Ayuda de producto / preguntas con datos HIS | `asistente-informational` | Si hay artículo, saludo con HIS, o `context_areas` sin guía |
 | Reservar turno, menú, wizard | — | No (reglas + `SubIntentEngine`) |
 | Clasificar intent (motor global) | `intent-engine-classification` | Solo si reglas + IA del classifier |
+
+El volcado HIS (`context:his`) aumenta el tamaño del prompt de la 2ª IA cuando `context_areas` no es vacío; caps en `asistente_context_max_aspects` y `asistente_context_max_chars`. ADR: [asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md).
 
 Detalle de producto: [asistente-y-chat.md](./asistente-y-chat.md) · Motor: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · Datos al modelo y consentimiento: [ia-datos-y-privacidad.md](./ia-datos-y-privacidad.md).
 

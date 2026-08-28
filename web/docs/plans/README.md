@@ -25,13 +25,13 @@ Espacio **temporal** para programas de trabajo grandes (varias fases, varios PR)
 | Captura actor + enfermería | `captura-actor-enfermeria/` | Quitar alias ConsultasConfiguracion; overlay PES + CarePlan; app triage |
 | Admisión: identidad + ventanilla | `admision-identidad-ventanilla/` | Ingreso DNI (sin alta libre); Didit; NN; sesión de mostrador |
 | RBAC capabilities UI nativa | `rbac-capabilities-ui-nativa/` | Permisos assignables fuera de intents; guardia + encounter + panel |
-| Contexto HIS asistente (áreas + aspectos) | `asistente-contexto-his/` | Preprocess `context_areas`; loaders por aspecto; volcado 2ª IA |
 
 ## Planes archivados (carpeta eliminada)
 
 | Plan | Documentación estable |
 |------|------------------------|
 | Asistente: canales, chat, info_content | [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [producto/contenido-informativo.md](../producto/contenido-informativo.md) + QA [asistente-consultas.md](../qa/paciente/asistente-consultas.md) |
+| Contexto HIS asistente (áreas + aspectos) | [producto/asistente-y-chat.md](../producto/asistente-y-chat.md) + [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md) + [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) |
 | Control/Seguimiento + protocolos | [producto/solicitar-atencion.md](../producto/solicitar-atencion.md) + [decisions/care-protocols-plandefinition-lite.md](../decisions/care-protocols-plandefinition-lite.md) |
 | Atención remota y async | [producto/atencion-remota-async.md](../producto/atencion-remota-async.md) |
 | Cohortes — asistencia + batch IA | [producto/asistencia-cohortes.md](../producto/asistencia-cohortes.md) |

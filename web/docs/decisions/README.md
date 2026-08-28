@@ -10,6 +10,7 @@ Registro de decisiones **cerradas** que afectan a más de un módulo o que convi
 | Capabilities UI nativa | RBAC assignable guardia/encounter/panel fuera de intents NL | [autorizacion-capabilities-ui-nativa.md](./autorizacion-capabilities-ui-nativa.md) |
 | Captura clínica: Yii vs YAML | Integridad en `*Input` / servicios; YAML = prompts y knobs | [captura-clinica-contratos-yii-vs-yaml.md](./captura-clinica-contratos-yii-vs-yaml.md) |
 | Runtime datos vs metadata | Maestros/catálogos en BD + seed console; YAML = composición | [runtime-datos-vs-metadata.md](./runtime-datos-vs-metadata.md) |
+| Contexto HIS asistente | Preprocess `context_areas`; aspectos + loaders PHP; volcado 2ª IA | [asistente-contexto-his-areas-aspectos.md](./asistente-contexto-his-areas-aspectos.md) |
 | Pedido servicio × acto | `servicios` = oferta del centro; actos SNOMED; glosario anti-confusión | [pedido-atencion-linea-acto.md](./pedido-atencion-linea-acto.md) |
 
 Glosario producto (servicio / PES / acto): [producto/glosario-servicio-pes-acto.md](../producto/glosario-servicio-pes-acto.md).

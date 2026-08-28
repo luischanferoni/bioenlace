@@ -9,6 +9,9 @@ final class AssistantContextAspectLoaderRegistry
     /** @var array<string, AssistantContextAspectLoaderInterface>|null */
     private static ?array $byAspect = null;
 
+    /** @var array<string, array<string, mixed>> */
+    private static array $loadCache = [];
+
     /**
      * @return array<string, mixed>
      */
@@ -19,7 +22,29 @@ final class AssistantContextAspectLoaderRegistry
             return ['error' => 'aspect_loader_not_registered'];
         }
 
-        return $loader->load($ctx);
+        $cacheKey = self::cacheKey($aspectKey, $ctx);
+        if (isset(self::$loadCache[$cacheKey])) {
+            return self::$loadCache[$cacheKey];
+        }
+
+        $data = $loader->load($ctx);
+        self::$loadCache[$cacheKey] = $data;
+
+        return $data;
+    }
+
+    private static function cacheKey(string $aspectKey, AssistantContextLoadContext $ctx): string
+    {
+        $anchors = $ctx->anchors;
+
+        return implode('|', [
+            trim($aspectKey),
+            (string) $anchors->subjectPersonaId,
+            (string) $anchors->appointmentId,
+            (string) $anchors->siteId,
+            (string) $anchors->pesId,
+            (string) $anchors->serviceId,
+        ]);
     }
 
     public static function loaderFor(string $aspectKey): ?AssistantContextAspectLoaderInterface
@@ -51,5 +76,6 @@ final class AssistantContextAspectLoaderRegistry
     public static function resetForTests(): void
     {
         self::$byAspect = null;
+        self::$loadCache = [];
     }
 }

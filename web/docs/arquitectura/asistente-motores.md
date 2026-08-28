@@ -115,9 +115,31 @@ Cuando el paciente pregunta "¿qué es X?" o "¿cómo funciona X?", antes de cae
 
 **Resolución jerárquica:** efector → provincia → producto (global). Si el centro tiene un artículo específico sobre el topic, ese prevalece.
 
-**Integración:** `InformationalChannel` llama a `InfoContentAssistantService::tryResolveFromText()`. Si hay match visible (RBAC), responde con IA anclada a la fuente + botones CTA; si la IA falla, dump del artículo (sin inventar).
+**Integración:** `InformationalChannel` llama a `InfoContentAssistantService::tryResolveFromText()`. Si hay match visible (RBAC), responde con IA anclada a la fuente + botones CTA; si la IA falla, dump del artículo (sin inventar). Sin artículo pero con `context_areas` del preprocess → `tryAnswerFromHisContext()` (IA + volcado HIS).
 
 **Administración:** CRUD en `/admin/info-content-article`. Producto: [contenido-informativo.md](../producto/contenido-informativo.md).
+
+## Contexto HIS (áreas + aspectos)
+
+Segunda capa de contexto para canales que usan **2ª IA** (`clinical`, `informational`). Complementa el extracto estrecho de HC en conversacional; no reemplaza intents de lectura ni DataAccess.
+
+| Pieza | Ubicación | Rol |
+|-------|-----------|-----|
+| Áreas | `AssistantContextHISArea` | Catálogo en preprocess → `context_areas` |
+| Aspectos | `AssistantContextHISAreaAspect` | Claves JSON del volcado (`appointment.current`, …) |
+| Anclas | `AssistantContextAnchorResolver` | Sujeto, cita referencia, `site_id`, PES |
+| Plan | `AssistantContextAreaAspectResolver` | Áreas + extracciones → lista de aspectos |
+| Loaders | `Domain/*/Assistant/Context/*AspectLoader` | Un aspecto → JSON HIS desde AR/servicios |
+| Registry | `product-registries.php` → `assistantContextAspectLoaders` | Cableado loaders |
+| Ensamblaje | `AssistantContextAssemblyService` | Orquesta y formatea `--- context:his ---` |
+
+Flujo: preprocess persiste `context_areas` en `ChatPreprocessContext` → assembly resuelve anclas y aspectos → loaders (cache request-scoped) → `ConversationalChannel` / `InfoContentAssistantService` inyectan el bloque antes del mensaje o del artículo.
+
+MVP implementado: área `appointments` (cita actual, políticas del centro, setup de agenda, historial opcional). Otras áreas reservadas en enum hasta tener loaders.
+
+Parámetros Yii: `asistente_context_max_aspects`, `asistente_context_max_chars`, `asistente_context_history_limit`, `asistente_context_debug` (envelope `context_applied`).
+
+ADR: [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md). Producto: [asistente-y-chat.md](../producto/asistente-y-chat.md).
 
 ## Sinónimos de servicios (HintServiceSynonyms)
 

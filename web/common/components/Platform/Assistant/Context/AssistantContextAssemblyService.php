@@ -97,6 +97,7 @@ final class AssistantContextAssemblyService
     public static function resetForTests(): void
     {
         self::$lastResult = null;
+        AssistantContextAspectLoaderRegistry::resetForTests();
     }
 
     /**

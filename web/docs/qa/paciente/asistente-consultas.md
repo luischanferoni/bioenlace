@@ -425,10 +425,13 @@ Smoke WhatsApp: [asistente-whatsapp.md](./asistente-whatsapp.md).
 | [ ] | Cómo saco turno     | *«¿Cómo saco un turno?»*                                           | **Hoy**   | Informational (artículo turnos) **o** operational si pide ejecutar; no mezclar |
 | [ ] | Qué es Bioenlace    | *«¿Qué es Bioenlace?»* / *«¿Para qué sirve la app?»*               | **Hoy**   | Artículo `que_es_bioenlace` (puede no tener CTA único) |
 | [ ] | Pre-consulta (concepto) | *«¿Para qué son las preguntas antes del turno?»*               | **Hoy** / **Futuro** | Artículo concepto pre-consulta + CTA al flow; **no** explicar pregunta a pregunta del pack |
+| [ ] | Llegar tarde al turno   | *«¿Voy a tener problemas si llego 10 min tarde al turno?»*        | **Hoy**   | Informational + volcado HIS (`appointments`); respuesta prudente; **no** prometer que esperan si `limitations` dice que no hay tolerancia registrada |
+| [ ] | Saludo solo             | *«Hola»* / *«Buen día»*                                         | **Hoy**   | Informational corto; `context_areas` vacío → **sin** volcado HIS ni loaders |
+| [ ] | Pregunta citas sin guía | *«¿Puedo cancelar el turno de mañana?»* (sin artículo)          | **Hoy**   | Informational + HIS si preprocess activó `appointments`; no inventar políticas del centro |
 
 La queja **no** es para síntomas ni urgencias. Saludo solo: ver §1 casos borde.
 
-**Contenido informativo:** artículos en `info_content_article` (topic, keywords, scope efector→provincia→producto). Destino: respuesta anclada al artículo + CTA a intent(s) con RBAC. Ver [contenido-informativo.md](../../producto/contenido-informativo.md).
+**Contenido informativo:** artículos en `info_content_article` (topic, keywords, scope efector→provincia→producto). Destino: respuesta anclada al artículo + CTA a intent(s) con RBAC. Sin artículo pero con datos HIS: volcado `context:his` en la 2ª IA (ver casos tardanza / cancelar arriba). Ver [contenido-informativo.md](../../producto/contenido-informativo.md).
 
 ---
 

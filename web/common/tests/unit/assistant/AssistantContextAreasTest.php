@@ -37,6 +37,16 @@ class AssistantContextAreasTest extends Unit
         $this->assertSame([], ChatPreprocessService::normalizeContextAreas(null));
     }
 
+    public function testNormalizeContextAreasEmptyForGreetingScenario(): void
+    {
+        $this->assertSame([], ChatPreprocessService::normalizeContextAreas([]));
+    }
+
+    public function testCatalogListsAllNineAreas(): void
+    {
+        $this->assertCount(9, AssistantContextHISArea::all());
+    }
+
     public function testAreaAspectPlanForAppointmentsWithoutHistory(): void
     {
         $anchors = new AssistantContextAnchorBag();

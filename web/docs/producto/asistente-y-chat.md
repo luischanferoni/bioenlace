@@ -50,6 +50,35 @@ Hilos: no se mezcla historial clínico con ayuda de producto; un cambio de domin
 
 Contenido editorial: [contenido-informativo.md](./contenido-informativo.md).
 
+## Contexto HIS en la 2ª IA
+
+Cuando el paciente pregunta algo que **necesita datos del sistema** (próximo turno, reglas del centro, llegar tarde) pero no hay un artículo editorial, Bioenlace **no** pega la historia clínica completa al prompt. Usa un volcado acotado del HIS con vocabulario operativo.
+
+```mermaid
+flowchart LR
+  P[Preprocess IA]
+  A[context_areas]
+  R[PHP: anclas + aspectos]
+  L[Loaders → JSON HIS]
+  I[2ª IA clinical / informational]
+  P --> A --> R --> L --> I
+```
+
+| Concepto | Quién lo ve | Qué es |
+|----------|-------------|--------|
+| **Área HIS** | Preprocess (`context_areas`) | Tema top-level: `appointments`, `product`, … |
+| **Aspecto** | 2ª IA (clave JSON en volcado) | Unidad de carga: `appointment.current`, `site.appointment.policies`, … |
+| **Entidad** | Solo PHP (loaders) | `Turno`, `EfectorTurnosConfig`, … — **no** aparece en prompts |
+
+Reglas de producto:
+
+- Saludo solo o meta sin datos → `context_areas: []` → **sin loaders**.
+- El preprocess **no** elige aspectos ni SQL; PHP resuelve anclas y aspectos tras el preprocess.
+- El bloque en prompt es `--- context:his ---` con JSON; incluye `limitations` (p. ej. no afirmar tolerancia de llegada si el sistema no la registra).
+- Canal **informational** sin artículo pero con áreas HIS: respuesta con IA + volcado (no mensaje genérico `no_article`).
+
+Detalle técnico: [arquitectura/asistente-motores.md](../arquitectura/asistente-motores.md) · ADR: [decisions/asistente-contexto-his-areas-aspectos.md](../decisions/asistente-contexto-his-areas-aspectos.md).
+
 ## Qué interpreta y qué no resuelve el modelo
 
 Bioenlace **entiende la necesidad** y **abre el camino que ya existe** (flow, lista, hub) para que la persona lo complete. Eso escala: el dato vive en la API (turnos, oferta del centro, PES, acto); no se pega al prompt la historia clínica completa, ni el catálogo del efector, ni la provincia.

@@ -80,4 +80,19 @@ class ChatChannelPolicyTest extends Unit
         $msg = 'Cargar mi cobertura';
         $this->assertTrue(ChatChannelPolicy::isStaffDataAccessOperationalQuery($msg));
     }
+
+    public function testLateArrivalIsPolicyQuestionNotOperationalExecution(): void
+    {
+        $msg = 'voy a tener problemas si llego 10min tarde al turno?';
+        $this->assertTrue(ChatChannelPolicy::isAppointmentPolicyQuestion($msg));
+        $this->assertFalse(ChatChannelPolicy::requestsOperationalTramiteExecution($msg));
+        $this->assertFalse(ChatChannelPolicy::isExplicitOperationalCareRequest($msg));
+    }
+
+    public function testWantTurnoIsOperationalExecution(): void
+    {
+        $msg = 'quiero un turno con un especialista';
+        $this->assertFalse(ChatChannelPolicy::isAppointmentPolicyQuestion($msg));
+        $this->assertTrue(ChatChannelPolicy::requestsOperationalTramiteExecution($msg));
+    }
 }

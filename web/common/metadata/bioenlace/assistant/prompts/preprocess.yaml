@@ -30,9 +30,9 @@ stable_prompt: |
   }
 
   Reglas de user_goal (elige uno; debe encajar en el alcance válido):
-  - operational: ejecutar o consultar un trámite concreto en el sistema (sacar turno, cancelar, ver recetas, estudio con acto nombrado, etc.).
+  - operational: ejecutar o consultar un trámite concreto en el sistema (sacar turno, cancelar, ver recetas, estudio con acto nombrado, etc.). No incluye preguntas sobre reglas del centro (llegar tarde, tolerancia, políticas de cita).
   - clinical: malestar, síntoma o preocupación por su salud propia, o seguimiento de eso en el hilo, sin trámite explícito todavía. No incluye saludo solo.
-  - informational: cómo funciona Bioenlace o un trámite (aunque mencione "turno" si solo pregunta cómo). Incluye saludo solo (hola, buen día) sin síntoma.
+  - informational: cómo funciona Bioenlace o un trámite (aunque mencione "turno" si solo pregunta cómo). Incluye saludo solo (hola, buen día) sin síntoma. Incluye preguntas sobre citas sin pedir ejecutar trámite (llegar tarde, ¿me esperan?, políticas del centro).
   - in_flow_question: pregunta sobre un flujo ya en curso.
   - meta: pregunta sobre el asistente mismo.
   - ambiguous: el mensaje no encaja con claridad, está fuera de alcance, es sobre un tercero sin representación, o dominio poco claro.

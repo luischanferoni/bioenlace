@@ -19,6 +19,12 @@ final class ChatChannelPolicy
 
     private const SCHEDULING = '/\b(turno|turnos|reservar|sacar turno|cancelar turno|cancelar|agenda|cita|reprogramar|sobreturno)\b/u';
 
+    /** Pregunta sobre efectos/reglas de una cita (no pedido de trámite). */
+    private const SCHEDULING_POLICY_QUESTION = '/\b(tengo problemas|voy a tener|va a pasar|puedo llegar|me van a|habra problema|habrá problema|que pasa si|qué pasa si|pasa algo si|me esperan|esperan si|problemas si|problema si)\b|\b(llego|llegar)\b.{0,24}\btarde\b/u';
+
+    /** Verbo de ejecución de trámite de agenda (sacar, cancelar, ver mis…). */
+    private const SCHEDULING_EXECUTION = '/\b(sacar|reservar|pedir|solicitar|cancelar|anular|reprogramar|mover|cambiar el turno|confirmar|quiero un turno|quiero turno|necesito turno|necesito un turno|dar de baja|ver mis turnos|mis turnos|mis citas)\b/u';
+
     private const STUDY_REQUEST = '/\b(ecografia|ecografía|mamografia|mamografía|radiografia|radiografía|ultrasonido|laboratorio|kinesio|kinesiologia|fisioterapia|analisis de sangre|analisis de orina|necesito una|necesito un estudio|turno para (estudio|ecografia|mamografia|radiografia|laboratorio|kinesio))\b/u';
 
     private const EDIT_VERB = '/\b(editar|modificar|actualizar|cambiar|corregir|ajustar|configurar)\b/u';
@@ -87,7 +93,41 @@ final class ChatChannelPolicy
     /** Pedido explícito de trámite (turno/estudio) — no dejar solo en charla. */
     public static function isExplicitOperationalCareRequest(string $message): bool
     {
-        return self::isSchedulingRequest($message) || self::isStudyOrPracticeRequest($message);
+        return self::requestsOperationalTramiteExecution($message) || self::isStudyOrPracticeRequest($message);
+    }
+
+    /**
+     * Pregunta sobre reglas o consecuencias de una cita (llegar tarde, tolerancia), no ejecutar trámite.
+     */
+    public static function isAppointmentPolicyQuestion(string $message): bool
+    {
+        $f = self::fold($message);
+        if ($f === '' || !preg_match(self::SCHEDULING, $f)) {
+            return false;
+        }
+
+        return (bool) preg_match(self::SCHEDULING_POLICY_QUESTION, $f);
+    }
+
+    /**
+     * El usuario pide ejecutar o consultar un trámite operativo de agenda (no solo políticas del centro).
+     */
+    public static function requestsOperationalTramiteExecution(string $message): bool
+    {
+        if (self::isStudyOrPracticeRequest($message)) {
+            return true;
+        }
+
+        $f = self::fold($message);
+        if ($f === '' || !preg_match(self::SCHEDULING, $f)) {
+            return false;
+        }
+
+        if (self::isAppointmentPolicyQuestion($message)) {
+            return false;
+        }
+
+        return (bool) preg_match(self::SCHEDULING_EXECUTION, $f);
     }
 
     public static function isCapabilityMenuQuery(string $message): bool

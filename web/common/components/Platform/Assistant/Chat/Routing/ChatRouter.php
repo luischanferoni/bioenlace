@@ -9,7 +9,9 @@ use common\components\Platform\Assistant\Chat\Channels\Conversational\Conversati
 use common\components\Platform\Assistant\Chat\Channels\Informational\InformationalChannel;
 use common\components\Platform\Assistant\Chat\Channels\Operational\OperationalChannel;
 use common\components\Platform\Assistant\Chat\Envelope\AssistantEnvelope;
+use common\components\Platform\Assistant\Chat\Preprocess\ChatChannelPolicy;
 use common\components\Platform\Assistant\Chat\Preprocess\ChatPreprocessService;
+use common\components\Platform\Assistant\Context\AssistantContextHISArea;
 use common\components\Platform\Assistant\Chat\Thread\AssistantThreadStateService;
 
 /**
@@ -57,6 +59,10 @@ final class ChatRouter
         $goal = isset($preprocess['user_goal'])
             ? ChatPreprocessService::canonicalizeGoal((string) $preprocess['user_goal'])
             : 'ambiguous';
+
+        $goal = self::refineGoalForHisContext($goal, $content, $preprocess);
+        $preprocess['user_goal'] = $goal;
+        \common\components\Platform\Assistant\Chat\ChatPreprocessContext::set($preprocess);
 
         $observed = AssistantThreadStateService::observe($userId, $goal, $content);
         $goal = $observed['goal'];
@@ -133,5 +139,35 @@ final class ChatRouter
             default:
                 return AmbiguousChannel::handle();
         }
+    }
+
+    /**
+     * Preguntas sobre datos/reglas del HIS con context_areas → informational (no IntentEngine).
+     *
+     * @param array<string, mixed> $preprocess
+     */
+    private static function refineGoalForHisContext(string $goal, string $content, array &$preprocess): string
+    {
+        $goal = ChatPreprocessService::canonicalizeGoal($goal);
+        $areas = ChatPreprocessService::normalizeContextAreas($preprocess['context_areas'] ?? []);
+
+        if (ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
+            $areas = array_values(array_unique(array_merge($areas, [AssistantContextHISArea::APPOINTMENTS])));
+            $preprocess['context_areas'] = $areas;
+        }
+
+        if ($areas === []) {
+            return $goal;
+        }
+
+        if ($goal === 'operational' && !ChatChannelPolicy::requestsOperationalTramiteExecution($content)) {
+            return 'informational';
+        }
+
+        if ($goal === 'ambiguous' && ChatChannelPolicy::isAppointmentPolicyQuestion($content)) {
+            return 'informational';
+        }
+
+        return $goal;
     }
 }

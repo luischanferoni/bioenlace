@@ -92,12 +92,6 @@ final class ProductMetadataPaths
         return self::assistantPromptFile('clinical');
     }
 
-    /** @deprecated alias {@see clinicalChannelFile()} */
-    public static function conversationalChannelFile(): string
-    {
-        return self::clinicalChannelFile();
-    }
-
     public static function preprocessPromptFile(): string
     {
         return self::assistantPromptFile('preprocess');
@@ -108,21 +102,9 @@ final class ProductMetadataPaths
         return self::assistantPromptFile('informational');
     }
 
-    /** @deprecated alias {@see informationalChannelFile()} */
-    public static function informationalConversationalFile(): string
-    {
-        return self::informationalChannelFile();
-    }
-
     public static function ambiguousChannelFile(): string
     {
         return self::assistantPromptFile('ambiguous');
-    }
-
-    /** @deprecated alias {@see ambiguousChannelFile()} */
-    public static function ambiguousConversationalFile(): string
-    {
-        return self::ambiguousChannelFile();
     }
 
     public static function bookingOfferFile(): string
@@ -231,21 +213,9 @@ final class ProductMetadataPaths
         return self::baseDir() . DIRECTORY_SEPARATOR . 'agents';
     }
 
-    /** @deprecated Usar {@see agentsDir()} */
-    public static function autonomousAgentsDir(): string
-    {
-        return self::agentsDir();
-    }
-
     public static function agentFile(string $agentId): string
     {
         return self::agentsDir() . DIRECTORY_SEPARATOR . $agentId . '.yaml';
-    }
-
-    /** @deprecated Usar {@see agentFile()} */
-    public static function autonomousAgentFile(string $agentId): string
-    {
-        return self::agentFile($agentId);
     }
 
     public static function snomedTerminologyFile(): string
@@ -311,11 +281,5 @@ final class ProductMetadataPaths
     public static function turnoBehaviorProfileFile(): string
     {
         return self::schedulingDir() . DIRECTORY_SEPARATOR . 'turno-behavior-profile.yaml';
-    }
-
-    /** @deprecated Usar {@see turnoBehaviorProfileFile()} */
-    public static function turnoBehaviorProfileContractFile(): string
-    {
-        return self::turnoBehaviorProfileFile();
     }
 }

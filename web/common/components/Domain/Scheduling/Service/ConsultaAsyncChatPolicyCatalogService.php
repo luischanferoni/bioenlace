@@ -305,24 +305,6 @@ final class ConsultaAsyncChatPolicyCatalogService
         return null;
     }
 
-    /**
-     * @deprecated Usar resolveSolicitudCategoria / solicitudCategoriaFromMeta.
-     * Conservado para compat con tests y callers legacy.
-     */
-    public function solicitudMessageType(string $operacion): string
-    {
-        $map = self::cached()['solicitud_message_types'] ?? [];
-        if (!is_array($map)) {
-            return 'solicitud_consulta';
-        }
-        $op = trim($operacion);
-        if ($op !== '' && isset($map[$op])) {
-            return trim((string) $map[$op]);
-        }
-
-        return trim((string) ($map['default'] ?? 'solicitud_consulta'));
-    }
-
     public function systemMessage(string $key): string
     {
         $map = self::cached()['system_messages'] ?? [];

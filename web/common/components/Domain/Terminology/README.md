@@ -8,7 +8,6 @@ Namespace: `common\components\Domain\Terminology\…`
 |-------|-----|
 | `Snomed/SnowstormClient` | Cliente HTTP Snowstorm; búsqueda por perfil metadata |
 | `Snomed/CodificadorSnomedIA` | Codificación semántica post-extracción IA |
-| `Snomed/DeferredSnomedProcessor` | Jobs diferidos de codificación |
 | `Snomed/SnomedCategoryCatalog` | Categorías codificación (ECL vía metadata) |
 | `Snomed/SnomedSearchProfileCatalog` | Perfiles autocomplete |
 | `Snomed/SnomedContextualPromptBuilder` | Prompts embeddings SNOMED |

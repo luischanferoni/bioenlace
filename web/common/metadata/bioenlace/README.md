@@ -41,7 +41,6 @@ Maestros vs metadata (runtime + cognitivo): [`web/docs/arquitectura/runtime-dato
 | Ruta | Tipo | Contenido |
 |------|------|-----------|
 | `assistant/intents/` | flow | Flows por `intent_id` (`create`/`read`/`update`/`delete`) |
-| `assistant/globals/` | flow | Piezas reutilizables entre flows |
 | `assistant/prompts/` | copy | Prompts por canal (`preprocess`, `clinical`, `informational`, `ambiguous`, …) |
 | `assistant/routing/` | routing | `intent-families`, `hint-resolution`, `booking-offer`, `thread-state` |
 | `assistant/copy/channel-copy.yaml` | copy | Textos UX por perfil de cliente (`X-App-Client`) |

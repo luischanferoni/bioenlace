@@ -20,7 +20,6 @@ Este feature agrupa el stack del **asistente**: descubrimiento de UIs, catálogo
 ## Fuentes de verdad
 
 - **Conversación por intent**: `common/metadata/bioenlace/assistant/intents/*.yaml` — contrato: `SubIntentEngine/schemas/SUBINTENT_CONTRACT.md`
-- **Piezas reutilizables**: `common/metadata/bioenlace/assistant/globals/*.yaml`
 - **Registries producto**: `common/config/product-registries.php` vía `Core/Product/ProductRegistryConfig.php`
 - **Mini-UIs** (`ui_json` / wizard): `frontend/modules/api/v1/views/json/<entidad>/<accion>.json`
 

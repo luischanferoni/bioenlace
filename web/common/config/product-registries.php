@@ -64,6 +64,7 @@ use common\components\Domain\Scheduling\Assistant\SchedulingUiSelectOptionSource
 use common\components\Domain\Scheduling\Assistant\SchedulingUiScreenParamsExpander;
 use common\components\Domain\Scheduling\Service\ConsultasSeguimientoFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\ReservaTurnoTriageFlowDraftHydrator;
+use common\components\Domain\Scheduling\Service\TurnosVerMisTurnosFlowDraftHydrator;
 use common\components\Domain\Scheduling\Service\SolicitarAtencionFlowDraftHydrator;
 use common\components\Domain\Scheduling\Assistant\Context\AppointmentCurrentAspectLoader;
 use common\components\Domain\Scheduling\Assistant\Context\AppointmentHistorySubjectAtSiteAspectLoader;

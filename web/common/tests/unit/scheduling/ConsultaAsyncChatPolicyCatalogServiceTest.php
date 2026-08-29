@@ -20,11 +20,17 @@ class ConsultaAsyncChatPolicyCatalogServiceTest extends Unit
         $this->assertContains('ajuste', $ops);
     }
 
-    public function testSolicitudMessageTypes(): void
+    public function testSolicitudCategoriaFromLegacyMessageType(): void
     {
         $svc = new ConsultaAsyncChatPolicyCatalogService();
-        $this->assertSame('solicitud_renovacion', $svc->solicitudMessageType('renovacion'));
-        $this->assertSame('solicitud_ajuste', $svc->solicitudMessageType('ajuste'));
+        $this->assertSame(
+            ConsultaAsyncChatPolicyCatalogService::CATEGORIA_RENOVACION_MEDICACION,
+            $svc->solicitudCategoriaFromLegacyMessageType('solicitud_renovacion')
+        );
+        $this->assertSame(
+            ConsultaAsyncChatPolicyCatalogService::CATEGORIA_AJUSTE_MEDICACION,
+            $svc->solicitudCategoriaFromLegacyMessageType('solicitud_ajuste')
+        );
     }
 
     public function testSolicitudCategoriasCanonicaYLabels(): void

@@ -4,6 +4,7 @@ namespace common\tests\unit\clinical;
 
 use Codeception\Test\Unit;
 use common\components\Domain\Clinical\Text\EncounterCaptureClinicalTermValidator;
+use common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Text\EncounterCaptureTerminologyLookup;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
 
@@ -20,7 +21,7 @@ class EncounterCaptureClinicalTermValidatorTest extends Unit
         $lookup->expects($this->never())->method('matchesClinicalTerm');
 
         $validator = new EncounterCaptureClinicalTermValidator($lookup);
-        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+        $config = EncounterCaptureExtractionPostProcessPolicy::filterConfig();
         $config['validate_terminology'] = false;
 
         $this->assertTrue($validator->isPlausibleExtraction('fiebre', 'fiebre', $config));
@@ -32,7 +33,7 @@ class EncounterCaptureClinicalTermValidatorTest extends Unit
         $lookup->method('matchesClinicalTerm')->willReturn(false);
 
         $validator = new EncounterCaptureClinicalTermValidator($lookup);
-        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+        $config = EncounterCaptureExtractionPostProcessPolicy::filterConfig();
 
         $this->assertFalse($validator->isPlausibleExtraction('pelota', 'pelota', $config));
         $this->assertFalse($validator->isPlausibleDiagnosisExtraction('pelota', 'pelota', $config));
@@ -46,7 +47,7 @@ class EncounterCaptureClinicalTermValidatorTest extends Unit
         $lookup->method('wasTerminologyServiceUnavailable')->willReturn(false);
 
         $validator = new EncounterCaptureClinicalTermValidator($lookup);
-        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+        $config = EncounterCaptureExtractionPostProcessPolicy::filterConfig();
 
         $this->assertTrue($validator->isPlausibleDiagnosisExtraction('gripe', 'gripe', $config));
         $this->assertFalse($validator->isPlausibleDiagnosisExtraction('pelota', 'pelota', $config));
@@ -58,7 +59,7 @@ class EncounterCaptureClinicalTermValidatorTest extends Unit
         $lookup->expects($this->never())->method('matchesClinicalTerm');
 
         $validator = new EncounterCaptureClinicalTermValidator($lookup);
-        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+        $config = EncounterCaptureExtractionPostProcessPolicy::filterConfig();
 
         $this->assertTrue($validator->isPlausibleDiagnosisExtraction('gripe', 'gripe', $config));
         $this->assertTrue($validator->isPlausibleDiagnosisExtraction('pelota', 'pelota', $config));
@@ -70,7 +71,7 @@ class EncounterCaptureClinicalTermValidatorTest extends Unit
         $lookup->expects($this->never())->method('matchesClinicalTerm');
 
         $validator = new EncounterCaptureClinicalTermValidator($lookup);
-        $config = ClinicalTextIaMetadata::encounterCaptureFilterConfig();
+        $config = EncounterCaptureExtractionPostProcessPolicy::filterConfig();
         $config['validate_terminology'] = false;
 
         $this->assertTrue(

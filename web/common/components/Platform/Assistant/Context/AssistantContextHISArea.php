@@ -64,19 +64,4 @@ final class AssistantContextHISArea
 
         return implode("\n", $lines);
     }
-
-    /**
-     * @return list<AssistantContextHISAreaAspect>
-     */
-    public static function defaultAspects(string $areaId): array
-    {
-        $out = [];
-        foreach (AssistantContextHISAreaAspect::allForArea($areaId) as $aspect) {
-            if (AssistantContextHISAreaAspect::isImplemented($aspect)) {
-                $out[] = $aspect;
-            }
-        }
-
-        return $out;
-    }
 }

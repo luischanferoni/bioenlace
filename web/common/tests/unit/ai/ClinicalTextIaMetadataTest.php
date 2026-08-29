@@ -3,6 +3,7 @@
 namespace common\tests\unit\ai;
 
 use Codeception\Test\Unit;
+use common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy;
 use common\components\Domain\Clinical\Text\MedicalLlmConfidenceService;
 use common\components\Domain\Terminology\Snomed\SnomedContextualPromptBuilder;
 use common\components\Platform\Core\Product\ClinicalTextIaMetadata;
@@ -53,20 +54,20 @@ class ClinicalTextIaMetadataTest extends Unit
     public function testClinicalLexiconMatchesNarrativeFraming(): void
     {
         $this->assertTrue(
-            ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern(
+            EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern(
                 'Paciente refiere fiebre',
                 'narrative_framing'
             )
         );
         $this->assertFalse(
-            ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern('gripe', 'narrative_framing')
+            EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern('gripe', 'narrative_framing')
         );
     }
 
     public function testClinicalLexiconMatchesSubjectiveComplaintCefalea(): void
     {
         $this->assertTrue(
-            ClinicalTextIaMetadata::textMatchesClinicalLexiconPattern(
+            EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern(
                 'Cefalea tensional de una semana, sin signos de alarma.',
                 'subjective_complaint'
             )

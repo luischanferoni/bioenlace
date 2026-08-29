@@ -297,49 +297,6 @@ final class ClinicalTextIaMetadata
     }
 
     /**
-     * @return array<string, mixed>
-     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::relocateConfig()}
-     */
-    public static function encounterCaptureRelocateConfig(): array
-    {
-        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::relocateConfig();
-    }
-
-    /**
-     * @return array<string, mixed>
-     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::filterConfig()}
-     */
-    public static function encounterCaptureFilterConfig(): array
-    {
-        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::filterConfig();
-    }
-
-    /**
-     * @return array<string, mixed>
-     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::backfillConfig()}
-     */
-    public static function encounterCaptureBackfillMotivosConfig(): array
-    {
-        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::backfillConfig();
-    }
-
-    /**
-     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::clinicalLexiconPattern()}
-     */
-    public static function clinicalLexiconPattern(string $key): ?string
-    {
-        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::clinicalLexiconPattern($key);
-    }
-
-    /**
-     * @deprecated Usar {@see EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern()}
-     */
-    public static function textMatchesClinicalLexiconPattern(string $text, string $key): bool
-    {
-        return \common\components\Domain\Clinical\Text\EncounterCaptureExtractionPostProcessPolicy::textMatchesClinicalLexiconPattern($text, $key);
-    }
-
-    /**
      * Overrides crudos de post_process desde YAML (sin defaults de dominio).
      *
      * @return array<string, mixed>
@@ -397,15 +354,6 @@ final class ClinicalTextIaMetadata
         }
 
         return '/' . str_replace('/', '\\/', $pattern) . '/iu';
-    }
-
-    /**
-     * @return array<string, mixed>
-     * @deprecated Preferir {@see rawEncounterCapturePostProcess()}
-     */
-    private static function encounterCapturePostProcessConfig(): array
-    {
-        return self::rawEncounterCapturePostProcess();
     }
 
     public static function llmConfidenceContextTerms(): array

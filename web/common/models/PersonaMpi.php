@@ -32,7 +32,7 @@ use Yii;
  * @property string|null $fecha_mod Fecha en que se realizo la modificacion
  * @property int|null $id_user
  *
- * @property Alergias[] $alergias
+ * @property \common\models\Clinical\AllergyIntolerance[] $alergias
  * @property Embarazos[] $embarazos
  * @property PersonaMails[] $personaMails
  * @property PersonaTelefono[] $personaTelefonos
